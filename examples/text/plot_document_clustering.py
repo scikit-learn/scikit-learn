@@ -99,8 +99,8 @@ print(f"{len(dataset.data)} documents - {true_k} categories")
 #   assignment have an ARI of 0.0 in expectation.
 #
 # If the ground truth labels are not known, evaluation can only be performed
-# using the model results itself. In that case, the Silhouette Coefficient comes
-# in handy.
+# using the model results itself. In that case, the :ref:`Silhouette Coefficient
+# <sphx_glr_auto_examples_cluster_plot_kmeans_silhouette_analysis.py>` comes in handy.
 #
 # For more reference, see :ref:`clustering_evaluation`.
 
