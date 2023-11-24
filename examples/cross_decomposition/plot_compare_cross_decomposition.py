@@ -180,6 +180,7 @@ X_test_r, Y_test_r = cca.transform(X_test, Y_test)
 # ~~~~~~~~~~~~~~
 
 from sklearn.cross_decomposition import SPLS
+
 spls = SPLS(n_components=2, penalty_x=0.1, penalty_y=0.1)
 spls.fit(X_train, Y_train)
 X_train_r, Y_train_r = spls.transform(X_train, Y_train)

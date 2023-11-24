@@ -41,8 +41,8 @@ Y = np.concatenate([latents, noise_columns_Y], axis=1)
 # Splitting the data into training and test sets
 X_train = X[: n // 2]
 Y_train = Y[: n // 2]
-X_test = X[n // 2:]
-Y_test = Y[n // 2:]
+X_test = X[n // 2 :]
+Y_test = Y[n // 2 :]
 
 # Creating SPLS and PLSCanonical models
 # SPLS model uses a grid search to find the best penalty parameters,
@@ -74,12 +74,15 @@ plt.subplot(121)
 bar1 = np.arange(len(spls_x_weights[0]))  # Positions for SPLS bars
 bar2 = [x + bar_width for x in bar1]  # Positions for PLSCanonical bars
 
-plt.bar(bar1, spls_x_weights[0], width=bar_width, label='SPLS')
-plt.bar(bar2, plsca_x_weights[0], width=bar_width, label='PLSCanonical')
-plt.xlabel('Variables')
-plt.ylabel('Weights')
-plt.title('x-weights (1st canonical vector)')
-plt.xticks([r + bar_width / 2 for r in range(len(spls_x_weights[0]))], ['Var1', 'Var2', 'Var3', 'Var4', 'Var5', 'Var6'])
+plt.bar(bar1, spls_x_weights[0], width=bar_width, label="SPLS")
+plt.bar(bar2, plsca_x_weights[0], width=bar_width, label="PLSCanonical")
+plt.xlabel("Variables")
+plt.ylabel("Weights")
+plt.title("x-weights (1st canonical vector)")
+plt.xticks(
+    [r + bar_width / 2 for r in range(len(spls_x_weights[0]))],
+    ["Var1", "Var2", "Var3", "Var4", "Var5", "Var6"],
+)
 plt.legend()
 
 # Plot for y-weights
@@ -87,9 +90,9 @@ plt.subplot(122)
 bar1 = np.arange(len(spls_y_weights[0]))  # Positions for SPLS bars
 bar2 = [x + bar_width for x in bar1]  # Positions for PLSCanonical bars
 
-plt.bar(bar1, spls_y_weights[0], width=bar_width, label='SPLS')
-plt.bar(bar2, plsca_y_weights[0], width=bar_width, label='PLSCanonical')
-plt.xlabel('Variables')
-plt.ylabel('Weights')
-plt.title('y-weights (1st canonical vector)')
+plt.bar(bar1, spls_y_weights[0], width=bar_width, label="SPLS")
+plt.bar(bar2, plsca_y_weights[0], width=bar_width, label="PLSCanonical")
+plt.xlabel("Variables")
+plt.ylabel("Weights")
+plt.title("y-weights (1st canonical vector)")
 plt.show()

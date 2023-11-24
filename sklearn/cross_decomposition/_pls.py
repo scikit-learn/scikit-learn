@@ -57,7 +57,7 @@ def _pinv2_old(a):
 
 
 def _get_first_singular_vectors_power_method(
-        X, Y, mode="A", max_iter=500, tol=1e-06, norm_y_weights=False
+    X, Y, mode="A", max_iter=500, tol=1e-06, norm_y_weights=False
 ):
     """Return the first left and right singular vectors of X'Y.
 
@@ -125,7 +125,9 @@ def _get_first_singular_vectors_svd(X, Y):
     return U[:, 0], Vt[0, :]
 
 
-def _get_first_singular_vectors_pmd(X, Y, max_iter=500, tol=1e-06, tau_x=1.0, tau_y=1.0):
+def _get_first_singular_vectors_pmd(
+    X, Y, max_iter=500, tol=1e-06, tau_x=1.0, tau_y=1.0
+):
     eps = np.finfo(X.dtype).eps
     try:
         y_score = next(col for col in Y.T if np.any(np.abs(col) > eps))
@@ -223,16 +225,16 @@ class _PLS(
 
     @abstractmethod
     def __init__(
-            self,
-            n_components=2,
-            *,
-            scale=True,
-            deflation_mode="regression",
-            mode="A",
-            algorithm="nipals",
-            max_iter=500,
-            tol=1e-06,
-            copy=True,
+        self,
+        n_components=2,
+        *,
+        scale=True,
+        deflation_mode="regression",
+        mode="A",
+        algorithm="nipals",
+        max_iter=500,
+        tol=1e-06,
+        copy=True,
     ):
         self.n_components = n_components
         self.deflation_mode = deflation_mode
@@ -655,7 +657,7 @@ class PLSRegression(_PLS):
     #     - "pls" with function oscorespls.fit(X, Y)
 
     def __init__(
-            self, n_components=2, *, scale=True, max_iter=500, tol=1e-06, copy=True
+        self, n_components=2, *, scale=True, max_iter=500, tol=1e-06, copy=True
     ):
         super().__init__(
             n_components=n_components,
@@ -802,14 +804,14 @@ class PLSCanonical(_PLS):
     # y_weights to one.
 
     def __init__(
-            self,
-            n_components=2,
-            *,
-            scale=True,
-            algorithm="nipals",
-            max_iter=500,
-            tol=1e-06,
-            copy=True,
+        self,
+        n_components=2,
+        *,
+        scale=True,
+        algorithm="nipals",
+        max_iter=500,
+        tol=1e-06,
+        copy=True,
     ):
         super().__init__(
             n_components=n_components,
@@ -916,7 +918,7 @@ class CCA(_PLS):
         _parameter_constraints.pop(param)
 
     def __init__(
-            self, n_components=2, *, scale=True, max_iter=500, tol=1e-06, copy=True
+        self, n_components=2, *, scale=True, max_iter=500, tol=1e-06, copy=True
     ):
         super().__init__(
             n_components=n_components,
@@ -1226,20 +1228,21 @@ class SPLS(PLSCanonical):
     SPLS()
     >>> X_c, Y_c = spls.transform(X, Y)
     """
+
     _parameter_constraints: dict = {**_PLS._parameter_constraints}
     for param in ("deflation_mode", "mode"):
         _parameter_constraints.pop(param)
 
     def __init__(
-            self,
-            n_components=2,
-            *,
-            scale=True,
-            max_iter=500,
-            tol=1e-06,
-            copy=True,
-            penalty_x=1.0,
-            penalty_y=1.0,
+        self,
+        n_components=2,
+        *,
+        scale=True,
+        max_iter=500,
+        tol=1e-06,
+        copy=True,
+        penalty_x=1.0,
+        penalty_y=1.0,
     ):
         super().__init__(
             n_components=n_components,
@@ -1261,7 +1264,7 @@ def _soft_threshold(x, c, tol=1e-6, eps=0.0):
 
     def f(delta):
         coef = np.clip(x - delta, 0, None) - np.clip(-x - delta, 0, None)
-        if np.sum(coef ** 2) == 0:
+        if np.sum(coef**2) == 0:
             coef[:] = 1000
         else:
             coef /= np.sqrt(np.dot(coef, coef)) + eps
@@ -1275,6 +1278,8 @@ def _soft_threshold(x, c, tol=1e-6, eps=0.0):
         raise RuntimeError("Minimization failed to converge")
 
     delta = result.x
-    coef = np.where(x - delta > 0, x - delta, 0) - np.where(-x - delta > 0, -x - delta, 0)
+    coef = np.where(x - delta > 0, x - delta, 0) - np.where(
+        -x - delta > 0, -x - delta, 0
+    )
     coef /= np.sqrt(np.dot(coef, coef)) + eps
     return coef
