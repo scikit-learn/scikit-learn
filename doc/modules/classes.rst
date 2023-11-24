@@ -1434,6 +1434,26 @@ details.
    pipeline.make_pipeline
    pipeline.make_union
 
+
+.. _polynomial_chaos_ref:
+
+:mod:`sklearn.polynomial_chaos`: Polynomial Chaos expansions
+============================================================
+
+.. automodule:: sklearn.polynomial_chaos
+   :no-members:
+   :no-inherited-members:
+
+**User guide:** See the :ref:`polynomial_chaos` section for further details.
+
+.. currentmodule:: sklearn
+
+.. autosummary::
+  :toctree: generated/
+  :template: class.rst
+
+  polynomial_chaos.PolynomialChaosRegressor
+
 .. _preprocessing_ref:
 
 :mod:`sklearn.preprocessing`: Preprocessing and Normalization
@@ -1463,6 +1483,7 @@ details.
    preprocessing.Normalizer
    preprocessing.OneHotEncoder
    preprocessing.OrdinalEncoder
+   preprocessing.OrthogonalPolynomialFeatures
    preprocessing.PolynomialFeatures
    preprocessing.PowerTransformer
    preprocessing.QuantileTransformer
