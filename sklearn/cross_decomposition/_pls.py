@@ -1241,6 +1241,8 @@ class SPLS(PLSCanonical):
         "max_iter": [Interval(Integral, 1, None, closed="left")],
         "tol": [Interval(Real, 0, None, closed="left")],
         "copy": ["boolean"],
+        "penalty_x": [Interval(Real, 0, 1, closed="both")],
+        "penalty_y": [Interval(Real, 0, 1, closed="both")],
     }
 
     def __init__(
