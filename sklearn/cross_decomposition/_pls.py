@@ -1212,7 +1212,9 @@ class SPLS(PLSCanonical):
 
     References
     ----------
-    Witten, D. M., Tibshirani, R., & Hastie, T. (2009). A penalized matrix decomposition, with applications to sparse principal components and canonical correlation analysis. Biostatistics, 10(3), 515-534.
+    Witten, D. M., Tibshirani, R., & Hastie, T. (2009). A penalized matrix
+    decomposition, with applications to sparse principal components and
+    canonical correlation analysis. Biostatistics, 10(3), 515-534.
 
     Examples
     --------
