@@ -1133,7 +1133,7 @@ class SPLS(PLSCanonical):
 
     Parameters
     ----------
-    n_components : int, default=2
+    n_components : int, default=1
         Number of components to keep. Should be in `[1, min(n_samples,
         n_features, n_targets)]`.
 
@@ -1247,7 +1247,7 @@ class SPLS(PLSCanonical):
 
     def __init__(
         self,
-        n_components=2,
+        n_components=1,
         *,
         scale=True,
         max_iter=500,
