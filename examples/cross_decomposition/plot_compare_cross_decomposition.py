@@ -6,6 +6,7 @@ Compare cross decomposition methods
 Simple usage of various cross decomposition algorithms:
 
 - PLSCanonical
+- SPLS
 - PLSRegression, with multivariate response, a.k.a. PLS2
 - PLSRegression, with univariate response, a.k.a. PLS1
 - CCA
@@ -169,3 +170,17 @@ cca = CCA(n_components=2)
 cca.fit(X_train, Y_train)
 X_train_r, Y_train_r = cca.transform(X_train, Y_train)
 X_test_r, Y_test_r = cca.transform(X_test, Y_test)
+
+
+# %%
+# Sparse PLS
+# -------------------------
+#
+# Transform data
+# ~~~~~~~~~~~~~~
+
+from sklearn.cross_decomposition import SPLS
+spls = SPLS(n_components=2, penalty_x=0.1, penalty_y=0.1)
+spls.fit(X_train, Y_train)
+X_train_r, Y_train_r = spls.transform(X_train, Y_train)
+X_test_r, Y_test_r = spls.transform(X_test, Y_test)

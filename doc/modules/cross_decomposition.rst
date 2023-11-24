@@ -42,7 +42,7 @@ multicollinearity among the features. By contrast, standard linear regression
 would fail in these cases unless it is regularized.
 
 Classes included in this module are :class:`PLSRegression`,
-:class:`PLSCanonical`, :class:`CCA` and :class:`PLSSVD`
+:class:`PLSCanonical`, :class:`CCA`, :class:`PLSSVD`, and :class:`SPLS`
 
 PLSCanonical
 ------------
@@ -180,6 +180,16 @@ Since :class:`CCA` involves the inversion of :math:`X_k^TX_k` and
 :math:`Y_k^TY_k`, this estimator can be unstable if the number of features or
 targets is greater than the number of samples.
 
+Sparse Partial Least Squares (SPLS)
+-----------------------------------
+
+:class:`SPLS` is an extension of the Partial Least Squares method that incorporates element-wise sparsity on the weights of the PLS components [2]_. This is achieved by combining the PLS algorithm with Lasso (L1) regularization. The inclusion of sparsity allows :class:`SPLS` to perform both dimensionality reduction and variable selection simultaneously.
+
+This method is particularly useful in scenarios with high-dimensional data, where identifying the most relevant variables is as important as dimensionality reduction. :class:`SPLS` can effectively discover the underlying structure in the data, focusing on the most informative features while ignoring irrelevant ones.
+
+In the :class:`SPLS` algorithm, penalty parameters control the degree of sparsity in the model. These parameters can be optimized using techniques like grid search to find the best balance between dimensionality reduction and feature selection.
+
+:class:`SPLS` is suitable for cases where traditional PLS might identify too many non-informative variables due to the lack of an inherent mechanism for feature selection. It is also beneficial when the interpretability of the model is crucial, as :class:`SPLS` provides a more concise representation of the data by highlighting the most critical features.
 
 .. topic:: Reference:
 
@@ -187,8 +197,13 @@ targets is greater than the number of samples.
       the two-block case
       <https://stat.uw.edu/sites/default/files/files/reports/2000/tr371.pdf>`_
       JA Wegelin
+   .. [2] `A penalized matrix decomposition, with applications to sparse principal components and canonical
+      correlation analysis
+      <https://pubmed.ncbi.nlm.nih.gov/19377034/>`_
+      D Witten
 
 .. topic:: Examples:
 
     * :ref:`sphx_glr_auto_examples_cross_decomposition_plot_compare_cross_decomposition.py`
     * :ref:`sphx_glr_auto_examples_cross_decomposition_plot_pcr_vs_pls.py`
+    * :ref:`sphx_glr_auto_examples_cross_decomposition_plot_sparse_pls.py`

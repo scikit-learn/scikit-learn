@@ -88,7 +88,7 @@ from ._testing import (
 from .validation import _num_samples, has_fit_parameter
 
 REGRESSION_DATASET = None
-CROSS_DECOMPOSITION = ["PLSCanonical", "PLSRegression", "CCA", "PLSSVD"]
+CROSS_DECOMPOSITION = ["PLSCanonical", "PLSRegression", "CCA", "PLSSVD", "SPLS"]
 
 
 def _yield_checks(estimator):

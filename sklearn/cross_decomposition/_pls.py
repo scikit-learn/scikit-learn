@@ -1210,9 +1210,9 @@ class SPLS(PLSCanonical):
     PLSSVD : Partial Least Square SVD.
     PLSCanonical : Partial Least Squares Canonical.
 
-    Main ref: Witten, A penalized matrix decomposition, with applications to sparse principal components and canonical correlation analysis
-    https://pubmed.ncbi.nlm.nih.gov/19377034/
-    https://rdrr.io/cran/PMA/man/CCA.html
+    References
+    ----------
+    Witten, D. M., Tibshirani, R., & Hastie, T. (2009). A penalized matrix decomposition, with applications to sparse principal components and canonical correlation analysis. Biostatistics, 10(3), 515-534.
 
     Examples
     --------
