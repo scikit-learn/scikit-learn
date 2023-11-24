@@ -348,7 +348,7 @@ Changelog
 - |API| :class:`feature_selection.SelectKBest` and
   :class:`feature_selection.GenericUnivariateSelect` with `mode='k_best'
   now shows a warning when `k` is greater than the number of features.
-  :pr:`xxxxx` by `Thomas Fan`_.
+  :pr:`27841` by `Thomas Fan`_.
 
 :mod:`sklearn.inspection`
 .........................
