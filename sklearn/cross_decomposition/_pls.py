@@ -1225,7 +1225,7 @@ class SPLS(PLSCanonical):
     >>> Y = [[0.1, -0.2], [0.9, 1.1], [6.2, 5.9], [11.9, 12.3]]
     >>> spls = SPLS(n_components=1, penalty_x=0.5, penalty_y=0.5)
     >>> spls.fit(X, Y)
-    SPLS()
+    SPLS(n_components=1, penalty_x=0.5, penalty_y=0.5)
     >>> X_c, Y_c = spls.transform(X, Y)
     """
 
