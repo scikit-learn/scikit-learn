@@ -289,6 +289,10 @@ Changelog
   Based on :user:`Alexander Tarashansky <atarashansky>`'s implementation in `scanpy <https://github.com/scverse/scanpy>`.
   :pr:`18689` by :user:`Isaac Virshup <ivirshup>` and :user:`Andrey Portnoy <andportnoy>`.
 
+- |Fix| :func:`decomposition.dict_learning_online` does not ignore anymore the parameter
+  `max_iter`.
+  :pr:`27834` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 :mod:`sklearn.ensemble`
 .......................
 
