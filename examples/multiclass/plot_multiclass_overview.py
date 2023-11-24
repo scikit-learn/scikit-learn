@@ -29,7 +29,7 @@ will review them.
 # the dataset from OpenML.
 from sklearn.datasets import fetch_openml
 
-X, y = fetch_openml(data_id=181, as_frame=True, return_X_y=True, parser="pandas")
+X, y = fetch_openml(data_id=181, as_frame=True, return_X_y=True)
 
 # %%
 # To know the type of data science problem we are dealing with, we can check
