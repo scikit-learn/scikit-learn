@@ -638,20 +638,20 @@ def test_forest_multioutput_integral_regression_target(ForestRegressor):
     estimator.fit(X, y)
 
     n_samples_bootstrap = _get_n_samples_bootstrap(len(X), estimator.max_samples)
-    nsamples_test = 3
-    oob_pred = np.zeros([nsamples_test, 2])
-    for isample, sample in enumerate(X[:nsamples_test]):
-        nsamples_oob = 0
+    n_samples_test = 3
+    oob_pred = np.zeros([n_samples_test, 2])
+    for sample_idx, sample in enumerate(X[:n_samples_test]):
+        n_samples_oob = 0
         oob_pred_sample = np.zeros(2)
         for tree in estimator.estimators_:
-            sample_idx = _generate_sample_indices(
+            oob_sample_indices = _generate_sample_indices(
                 tree.random_state, len(X), n_samples_bootstrap
             )
-            if isample not in sample_idx:
-                nsamples_oob += 1
-                oob_pred_sample += tree.predict(np.atleast_2d(sample))[0]
-        oob_pred[isample] = oob_pred_sample / nsamples_oob
-    assert (oob_pred == estimator.oob_prediction_[:nsamples_test]).all()
+            if sample_idx not in oob_sample_indices:
+                n_samples_oob += 1
+                oob_pred_sample += tree.predict(sample.reshape(1, -1)).squeeze()
+        oob_pred[sample_idx] = oob_pred_sample / n_samples_oob
+    assert_allclose(oob_pred, estimator.oob_prediction_[:n_samples_test])
 
 
 @pytest.mark.parametrize("oob_score", [True, False])
