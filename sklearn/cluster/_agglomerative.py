@@ -782,6 +782,10 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
 
         .. versionadded:: 1.2
 
+        .. deprecated:: 1.4
+           `metric=None` is deprecated in 1.4 and will be removed in 1.6.
+           Let `metric` be the default value (i.e. `"euclidean"`) instead.
+
     memory : str or object with the joblib.Memory interface, default=None
         Used to cache the output of the computation of the tree.
         By default, no caching is done. If a string is given, it is the
@@ -904,8 +908,6 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
         "metric": [
             StrOptions(set(_VALID_METRICS) | {"precomputed"}),
             callable,
-            # equivalent to "euclidean" used during the deprecation of `affinity`
-            # parameter
             Hidden(None),
         ],
         "memory": [str, HasMethods("cache"), None],
@@ -974,7 +976,19 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
             Returns the fitted instance.
         """
         memory = check_memory(self.memory)
-        self._metric = "euclidean" if self.metric is None else self.metric
+
+        # TODO(1.6): remove in 1.6
+        if self.metric is None:
+            warnings.warn(
+                (
+                    "`metric=None` is deprecated in 1.4 and will be removed in 1.6. "
+                    "Let `metric` be the default value (i.e. `'euclidean'`) instead."
+                ),
+                FutureWarning,
+            )
+            self._metric = "euclidean"
+        else:
+            self._metric = self.metric
 
         if not ((self.n_clusters is None) ^ (self.distance_threshold is None)):
             raise ValueError(
@@ -1109,6 +1123,10 @@ class FeatureAgglomeration(
 
         .. versionadded:: 1.2
 
+        .. deprecated:: 1.4
+           `metric=None` is deprecated in 1.4 and will be removed in 1.6.
+           Let `metric` be the default value (i.e. `"euclidean"`) instead.
+
     memory : str or object with the joblib.Memory interface, default=None
         Used to cache the output of the computation of the tree.
         By default, no caching is done. If a string is given, it is the
@@ -1235,7 +1253,6 @@ class FeatureAgglomeration(
         "metric": [
             StrOptions(set(_VALID_METRICS) | {"precomputed"}),
             callable,
-            # equivalent to "euclidean" used during the deprecation of `affinity`
             Hidden(None),
         ],
         "memory": [str, HasMethods("cache"), None],
