@@ -13,8 +13,9 @@ sparsity in the weights.
 
 """
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
+
 from sklearn.cross_decomposition import SPLS, PLSCanonical
 from sklearn.model_selection import GridSearchCV
 

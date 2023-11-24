@@ -1258,7 +1258,8 @@ class SPLS(PLSCanonical):
 
 def _soft_threshold(x, c, tol=1e-6, eps=0.0):
     """
-    Searches for threshold delta such that the 1-norm of weights w is less than or equal to c and the 2-norm is equal to 1.
+    Searches for threshold delta such that the 1-norm of weights w is less
+    than or equal to c and the 2-norm is equal to 1.
     """
     x /= np.sqrt(np.dot(x, x)) + eps
 
