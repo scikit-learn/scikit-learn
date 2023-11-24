@@ -62,18 +62,6 @@ def test_one_hot_encoder_handle_unknown(handle_unknown):
     assert_allclose(X2, X2_passed)
 
 
-def test_one_hot_encoder_not_fitted():
-    X = np.array([["a"], ["b"]])
-    enc = OneHotEncoder(categories=["a", "b"])
-    msg = (
-        "This OneHotEncoder instance is not fitted yet. "
-        "Call 'fit' with appropriate arguments before using this "
-        "estimator."
-    )
-    with pytest.raises(NotFittedError, match=msg):
-        enc.transform(X)
-
-
 @pytest.mark.parametrize("handle_unknown", ["ignore", "infrequent_if_exist"])
 def test_one_hot_encoder_handle_unknown_strings(handle_unknown):
     X = np.array(["11111111", "22", "333", "4444"]).reshape((-1, 1))
@@ -2603,3 +2591,18 @@ def test_ordinal_encoder_max_categories_array_like_invalid_types():
 
     with pytest.raises(ValueError, match=msg):
         ordinal.fit(X)
+
+
+@pytest.mark.parametrize("Encoder", [OneHotEncoder, OrdinalEncoder])
+def test_encoder_not_fitted(Encoder):
+    """Check that we raise a `NotFittedError` by calling transform before fit with
+    the encoders.
+
+    One could expect that the passing the `categories` argument to the encoder
+    would make it stateless. However, `fit` is making a couple of check, such as the
+    position of `np.nan`.
+    """
+    X = np.array([["A"], ["B"], ["C"]], dtype=object)
+    encoder = Encoder(categories=[["A", "B", "C"]])
+    with pytest.raises(NotFittedError):
+        encoder.transform(X)

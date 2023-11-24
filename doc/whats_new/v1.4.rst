@@ -520,6 +520,10 @@ Changelog
   restricted to setting a global maximum number of output categories.
   :pr:`26284` by :user:`Andrew Wang <Andrew-Wang-IB45>`.
 
+- |Fix| Raise a `NotFittedError` in :class:`preprocessing.OrdinalEncoder` when calling
+  `transform` without calling `fit` since `categories` always requires to be checked.
+  :pr:`27821` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 :mod:`sklearn.tree`
 ...................
 
