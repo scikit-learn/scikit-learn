@@ -221,6 +221,8 @@ class _PLS(
         "max_iter": [Interval(Integral, 1, None, closed="left")],
         "tol": [Interval(Real, 0, None, closed="left")],
         "copy": ["boolean"],
+        "penalty_x": [Interval(Real, 0.0, 1.0, closed="both")],
+        "penalty_y": [Interval(Real, 0.0, 1.0, closed="both")],
     }
 
     @abstractmethod
@@ -1122,10 +1124,11 @@ class PLSSVD(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
 class SPLS(PLSCanonical):
     """Sparse Partial Least Squares.
 
-    This transformer performs a Sparse Partial Least Squares on the cross-
-    covariance matrix `X'Y`. It is able to project both the training data `X`
-    and the targets `Y`. The training data `X` is projected on the left
-    singular vectors, while the targets are projected on the right singular
+    This transformer performs a Sparse Partial Least Squares [2] on the cross-
+    covariance matrix `X'Y` using Penalized Matrix Decomposition [1].
+    It is able to project both the training data `X`and the targets `Y`.
+    The training data `X` is projected on the left singular vectors,
+    while the targets are projected on the right singular
     vectors.
 
     Read more in the :ref:`User Guide <cross_decomposition>`.
@@ -1214,9 +1217,14 @@ class SPLS(PLSCanonical):
 
     References
     ----------
-    Witten, D. M., Tibshirani, R., & Hastie, T. (2009). A penalized matrix
+    [1] Witten, D. M., Tibshirani, R., & Hastie, T. (2009). A penalized matrix
     decomposition, with applications to sparse principal components and
     canonical correlation analysis. Biostatistics, 10(3), 515-534.
+    [2] Mihalik, A., Chapman, J., Adams, R. A., Winter, N. R., Ferreira, F. S.,
+    Shawe-Taylor, J., ... & Alzheimer’s Disease Neuroimaging Initiative. (2022).
+    Canonical correlation analysis and partial least squares for identifying
+    brain-behaviour associations: a tutorial and a comparative study. Biological
+    Psychiatry: Cognitive Neuroscience and Neuroimaging.
 
     Examples
     --------
