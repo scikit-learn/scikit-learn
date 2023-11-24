@@ -900,6 +900,7 @@ def test_dict_learning_online_numerical_consistency(method):
         batch_size=10,
         random_state=0,
         method=method,
+        tol=1e-1,
     )
     U_32, V_32 = dict_learning_online(
         X.astype(np.float32),
@@ -909,6 +910,7 @@ def test_dict_learning_online_numerical_consistency(method):
         batch_size=10,
         random_state=0,
         method=method,
+        tol=1e-1,
     )
 
     # Optimal solution (U*, V*) is not unique.

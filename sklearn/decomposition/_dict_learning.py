@@ -7,6 +7,7 @@ import itertools
 import sys
 import time
 from numbers import Integral, Real
+from warnings import warn
 
 import numpy as np
 from joblib import effective_n_jobs
@@ -696,12 +697,15 @@ def dict_learning_online(
     alpha : float, default=1
         Sparsity controlling parameter.
 
-
     max_iter : int, default=100
         Maximum number of iterations over the complete dataset before
         stopping independently of any early stopping criterion heuristics.
 
         .. versionadded:: 1.1
+
+        .. deprecated:: 1.4
+           `max_iter=None` is deprecated in 1.4 and will be removed in 1.6.
+           Use the default value (i.e. `100`) instead.
 
     return_code : bool, default=True
         Whether to also return the code U or just the dictionary `V`.
@@ -764,7 +768,7 @@ def dict_learning_online(
 
     tol : float, default=1e-3
         Control early stopping based on the norm of the differences in the
-        dictionary between 2 steps. Used only if `max_iter` is not None.
+        dictionary between 2 steps.
 
         To disable early stopping based on changes in the dictionary, set
         `tol` to 0.0.
@@ -773,8 +777,7 @@ def dict_learning_online(
 
     max_no_improvement : int, default=10
         Control early stopping based on the consecutive number of mini batches
-        that does not yield an improvement on the smoothed cost function. Used only if
-        `max_iter` is not None.
+        that does not yield an improvement on the smoothed cost function.
 
         To disable convergence detection based on cost function, set
         `max_no_improvement` to None.
@@ -802,6 +805,17 @@ def dict_learning_online(
     SparsePCA : Sparse Principal Components Analysis.
     MiniBatchSparsePCA : Mini-batch Sparse Principal Components Analysis.
     """
+    # TODO(1.6): remove in 1.6
+    if max_iter is None:
+        warn(
+            (
+                "max_iter=None is deprecated in 1.4 and will be removed in 1.6. "
+                "Use the default value (i.e. 100) instead."
+            ),
+            DeprecationWarning,
+        )
+        max_iter = 100
+
     transform_algorithm = "lasso_" + method
 
     est = MiniBatchDictionaryLearning(
@@ -1654,6 +1668,10 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
 
         .. versionadded:: 1.1
 
+        .. deprecated:: 1.4
+           `max_iter=None` is deprecated in 1.4 and will be removed in 1.6.
+           Use the default value (i.e. `1_000`) instead.
+
     fit_algorithm : {'lars', 'cd'}, default='lars'
         The algorithm used:
 
@@ -1750,7 +1768,7 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
 
     tol : float, default=1e-3
         Control early stopping based on the norm of the differences in the
-        dictionary between 2 steps. Used only if `max_iter` is not None.
+        dictionary between 2 steps.
 
         To disable early stopping based on changes in the dictionary, set
         `tol` to 0.0.
@@ -1759,8 +1777,7 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
 
     max_no_improvement : int, default=10
         Control early stopping based on the consecutive number of mini batches
-        that does not yield an improvement on the smoothed cost function. Used only if
-        `max_iter` is not None.
+        that does not yield an improvement on the smoothed cost function.
 
         To disable convergence detection based on cost function, set
         `max_no_improvement` to None.
@@ -1835,8 +1852,6 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
     _parameter_constraints: dict = {
         "n_components": [Interval(Integral, 1, None, closed="left"), None],
         "alpha": [Interval(Real, 0, None, closed="left")],
-        # `max_iter=None` is equivalent to 1_000 and was used during n_iter deprecation
-        # Hide it to not silently support it.
         "max_iter": [Interval(Integral, 0, None, closed="left"), Hidden(None)],
         "fit_algorithm": [StrOptions({"cd", "lars"})],
         "n_jobs": [None, Integral],
@@ -2113,7 +2128,16 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
         )
         self._B = np.zeros((n_features, self._n_components), dtype=X_train.dtype)
 
-        max_iter = 1_000 if self.max_iter is None else self.max_iter
+        # TODO(1.6): remove in 1.6
+        if self.max_iter is None:
+            warn(
+                "max_iter=None is deprecated in version 1.4 and will be removed in "
+                "version 1.6. Use max_iter=1_000 instead."
+            )
+            max_iter = 1_000
+        else:
+            max_iter = self.max_iter
+
         # Attributes to monitor the convergence
         self._ewa_cost = None
         self._ewa_cost_min = None
