@@ -3,12 +3,15 @@ Testing for the nearest centroid module.
 """
 import numpy as np
 import pytest
-from numpy.testing import assert_array_almost_equal, assert_array_equal
-from scipy import sparse as sp
 
 from sklearn import datasets
 from sklearn.neighbors import NearestCentroid
 from sklearn.utils import check_random_state
+from sklearn.utils._testing import (
+    assert_allclose,
+    assert_array_almost_equal,
+    assert_array_equal,
+)
 from sklearn.utils.fixes import CSR_CONTAINERS
 
 # toy sample
@@ -17,8 +20,6 @@ y = [-1, -1, -1, 1, 1, 1]
 T = [[-1, -1], [2, 2], [3, 2]]
 T_nan = np.asarray([[-1, -1], [2, 2], [3, 2]], dtype=np.float64)
 T_nan[0][0] = float("nan")
-T_zero_var = [[1, 2], [1, 2], [1, 2], [1, 2], [1, 2], [1, 2]]
-T_zero_var_csr = sp.csr_matrix([[1, 2], [1, 2], [1, 2], [1, 2], [1, 2], [1, 2]])
 true_result = [-1, 1, 1]
 true_result_prior1 = [-1, 1, 1]
 
@@ -241,79 +242,47 @@ def test_features_zero_var():
         clf.fit(X, y)
 
 
-def test_neg_priors():
-    # Test negative priors.
-
+def test_negative_priors_error():
+    """Check that we raise an error when the user-defined priors are negative."""
     clf = NearestCentroid(priors=[-2, 4])
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="priors must be non-negative"):
         clf.fit(X, y)
 
 
-def test_wrong_priors():
-    # Test normalizing priors that don't sum to 1.
-    clf = NearestCentroid(priors=[2, 4])
+def test_warn_non_normalized_priors():
+    """Check that we raise a warning and normalize the user-defined priors when they
+    don't sum to 1.
+    """
+    priors = [2, 4]
+    clf = NearestCentroid(priors=priors)
     with pytest.warns(
         UserWarning,
         match="The priors do not sum to 1. Normalizing such that it sums to one.",
     ):
         clf.fit(X, y)
 
+    assert_allclose(clf.class_priors_, np.asarray(priors) / np.asarray(priors).sum())
 
-def test_manhattan_decision_func_error():
-    # Make sure error is raised when calling decision_function with
-    # manhattan metric.
 
-    clf = NearestCentroid(metric="manhattan", priors=[0.2, 0.8])
-    clf.fit(X, y)
+@pytest.mark.parametrize(
+    "response_method", ["decision_function", "predict_proba", "predict_log_proba"]
+)
+def test_method_not_available_with_manhattan(response_method):
+    """Check that we raise an AttributeError with Manhattan metric when trying
+    to call a non-thresholded response method.
+    """
+    clf = NearestCentroid(metric="manhattan").fit(X, y)
     with pytest.raises(AttributeError):
-        clf.decision_function(T)
+        getattr(clf, response_method)(X)
 
 
-def test_manhattan_pred_proba_error():
-    # Make sure error is raised when calling predict_proba with
-    # manhattan metric.
+@pytest.mark.parametrize("array_constructor", [np.array] + CSR_CONTAINERS)
+def test_error_zero_variances(array_constructor):
+    """Check that we raise an error when the variance for all features is zero."""
+    X = np.ones((len(y), 2))
+    X[:, 1] *= 2
+    X = array_constructor(X)
 
-    clf = NearestCentroid(metric="manhattan", priors=[0.2, 0.8])
-    clf.fit(X, y)
-    with pytest.raises(AttributeError):
-        clf.predict_proba(T)
-
-
-def test_manhattan_pred_log_proba_error():
-    # Make sure error is raised when calling predict_log_proba with
-    # manhattan metric.
-
-    clf = NearestCentroid(metric="manhattan", priors=[0.2, 0.8])
-    clf.fit(X, y)
-    with pytest.raises(AttributeError):
-        clf.predict_log_proba(T)
-
-
-def test_zero_var():
-    clf = NearestCentroid(priors=[0.2, 0.8])
-    with pytest.raises(ValueError):
-        clf.fit(T_zero_var, y)
-
-
-@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
-def test_zero_var_csr(csr_container):
-    T_zero_var_csr = csr_container(T_zero_var)
-    clf = NearestCentroid(priors=[0.2, 0.8])
-    with pytest.raises(ValueError):
-        clf.fit(T_zero_var_csr, y)
-
-
-def test_nan():
-    clf = NearestCentroid(priors=[0.2, 0.8], shrink_threshold=0.5)
-    clf.fit(X, y)
-    with pytest.raises(ValueError):
-        clf.decision_function(T_nan)
-
-
-@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
-def test_nan_sparse(csr_container):
-    T_nan_csr = csr_container(T_nan)
-    clf = NearestCentroid(priors=[0.2, 0.8], shrink_threshold=0.5)
-    clf.fit(X, y)
-    with pytest.raises(ValueError):
-        clf.decision_function(T_nan_csr)
+    clf = NearestCentroid()
+    with pytest.raises(ValueError, match="All features have zero variance"):
+        clf.fit(X, y)

@@ -270,7 +270,8 @@ class NearestCentroid(
         )
         if any(self.within_class_std_dev_ == 0):
             warnings.warn(
-                "self.within_class_std_dev_ has at least 1 zerostandard deviation"
+                "self.within_class_std_dev_ has at least 1 zerostandard deviation."
+                "Inputs within the same classes for at least 1 feature are identical."
             )
 
         err_msg = "All features have zero variance. Division by zero."
