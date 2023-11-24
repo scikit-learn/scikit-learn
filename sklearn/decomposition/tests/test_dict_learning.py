@@ -972,3 +972,12 @@ def test_cd_work_on_joblib_memmapped_data(monkeypatch):
 
     # This must run and complete without error.
     dict_learner.fit(X_train)
+
+
+# TODO(1.6): remove in 1.6
+def test_xxx():
+    warn_msg = "`max_iter=None` is deprecated in version 1.4 and will be removed"
+    with pytest.warns(FutureWarning, match=warn_msg):
+        MiniBatchDictionaryLearning(max_iter=None, random_state=0).fit(X)
+    with pytest.warns(FutureWarning, match=warn_msg):
+        dict_learning_online(X, max_iter=None, random_state=0)

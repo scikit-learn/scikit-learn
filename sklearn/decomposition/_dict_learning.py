@@ -809,10 +809,10 @@ def dict_learning_online(
     if max_iter is None:
         warn(
             (
-                "max_iter=None is deprecated in 1.4 and will be removed in 1.6. "
-                "Use the default value (i.e. 100) instead."
+                "`max_iter=None` is deprecated in version 1.4 and will be removed in "
+                "version 1.6. Use the default value (i.e. `100`) instead."
             ),
-            DeprecationWarning,
+            FutureWarning,
         )
         max_iter = 100
 
@@ -2131,8 +2131,11 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
         # TODO(1.6): remove in 1.6
         if self.max_iter is None:
             warn(
-                "max_iter=None is deprecated in version 1.4 and will be removed in "
-                "version 1.6. Use max_iter=1_000 instead."
+                (
+                    "`max_iter=None` is deprecated in version 1.4 and will be removed"
+                    " in version 1.6. Use the default value (i.e. `1_000`) instead."
+                ),
+                FutureWarning,
             )
             max_iter = 1_000
         else:

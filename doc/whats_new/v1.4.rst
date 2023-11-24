@@ -293,6 +293,11 @@ Changelog
   `max_iter`.
   :pr:`27834` by :user:`Guillaume Lemaitre <glemaitre>`.
 
+- |API| The option `max_iter=None` in :class:`decomposition.MiniBatchDictionaryLearning`
+  and :func:`decomposition.dict_learning_online` is deprecated and will be removed in
+  version 1.6. Use the default value instead.
+  :pr:`27834` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 :mod:`sklearn.ensemble`
 .......................
 
