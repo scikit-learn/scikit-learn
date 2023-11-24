@@ -273,7 +273,7 @@ def test_method_not_available_with_manhattan(response_method):
     """
     clf = NearestCentroid(metric="manhattan").fit(X, y)
     with pytest.raises(AttributeError):
-        getattr(clf, response_method)(X)
+        getattr(clf, response_method)(T)
 
 
 @pytest.mark.parametrize("array_constructor", [np.array] + CSR_CONTAINERS)
