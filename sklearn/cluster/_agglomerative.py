@@ -776,7 +776,7 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
 
     metric : str or callable, default="euclidean"
         Metric used to compute the linkage. Can be "euclidean", "l1", "l2",
-        "manhattan", "cosine", or "precomputed".If linkage is "ward", only
+        "manhattan", "cosine", or "precomputed". If linkage is "ward", only
         "euclidean" is accepted. If "precomputed", a distance matrix is needed
         as input for the fit method.
 
