@@ -246,6 +246,9 @@ performing vector quantization on an image refer to
  * :ref:`sphx_glr_auto_examples_cluster_plot_cluster_iris.py`: Example usage of K-Means
    using the iris dataset
 
+ * :ref:`sphx_glr_auto_examples_text_plot_document_clustering.py`: Document clustering
+   using KMeans and MiniBatchKMeans based on sparse data
+
 Low-level parallelism
 ---------------------
 
@@ -307,8 +310,8 @@ small, as shown in the example and cited reference.
  * :ref:`sphx_glr_auto_examples_cluster_plot_mini_batch_kmeans.py`: Comparison of KMeans and
    MiniBatchKMeans
 
- * :ref:`sphx_glr_auto_examples_text_plot_document_clustering.py`: Document clustering using sparse
-   MiniBatchKMeans
+ * :ref:`sphx_glr_auto_examples_text_plot_document_clustering.py`: Document clustering
+   using KMeans and MiniBatchKMeans based on sparse data
 
  * :ref:`sphx_glr_auto_examples_cluster_plot_dict_face_patches.py`
 
