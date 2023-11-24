@@ -257,9 +257,12 @@ class NearestCentroid(
                 # TODO(1.5) remove warning when metric is only manhattan or euclidean
                 if self.metric != "euclidean":
                     warnings.warn(
-                        "Averaging for metrics other than "
-                        "euclidean and manhattan not supported. "
-                        "The average is set to be the mean."
+                        (
+                            "Averaging for metrics other than "
+                            "euclidean and manhattan not supported. "
+                            "The average is set to be the mean."
+                        ),
+                        UserWarning,
                     )
                 self.centroids_[cur_class] = X[center_mask].mean(axis=0)
 
@@ -270,7 +273,7 @@ class NearestCentroid(
         )
         if any(self.within_class_std_dev_ == 0):
             warnings.warn(
-                "self.within_class_std_dev_ has at least 1 zerostandard deviation."
+                "self.within_class_std_dev_ has at least 1 zero standard deviation."
                 "Inputs within the same classes for at least 1 feature are identical."
             )
 
