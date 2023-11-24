@@ -487,7 +487,7 @@ class MiniBatchSparsePCA(_BaseSparsePCA):
         *,
         alpha=1,
         ridge_alpha=0.01,
-        max_iter=None,
+        max_iter=1_000,
         callback=None,
         batch_size=3,
         verbose=False,
