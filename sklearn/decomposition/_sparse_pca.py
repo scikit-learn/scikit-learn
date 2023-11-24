@@ -475,10 +475,6 @@ class MiniBatchSparsePCA(_BaseSparsePCA):
     _parameter_constraints: dict = {
         **_BaseSparsePCA._parameter_constraints,
         "max_iter": [Interval(Integral, 0, None, closed="left"), Hidden(None)],
-        "n_iter": [
-            Interval(Integral, 0, None, closed="left"),
-            Hidden(StrOptions({"deprecated"})),
-        ],
         "callback": [None, callable],
         "batch_size": [Interval(Integral, 1, None, closed="left")],
         "shuffle": ["boolean"],
