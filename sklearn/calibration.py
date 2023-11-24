@@ -460,7 +460,7 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
                     n_jobs=self.n_jobs,
                     params=routed_params.estimator.fit,
                 )
-                if predictions.ndim == 1:
+                if len(self.classes_) == 2:
                     # Ensure shape (n_samples, 1) in the binary case
                     if method_name == "predict_proba":
                         # Select the probability column of the postive class
