@@ -348,7 +348,7 @@ def test_sanity_check_pls_canonical_random(Est):
 
 def test_sanity_check_spls():
     # Sanity check for PLSCanonical and SPLS
-    # TODO: check against the R-package pma
+    # Check this against R package PMA?
     n = 500
     p_noise = 10
     q_noise = 5
