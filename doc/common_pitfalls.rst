@@ -211,7 +211,7 @@ method is used during fitting and predicting::
     >>> from sklearn.model_selection import cross_val_score
     >>> scores = cross_val_score(pipeline, X, y)
     >>> print(f"Mean accuracy: {scores.mean():.2f}+/-{scores.std():.2f}")
-    Mean accuracy: 0.45+/-0.07
+    Mean accuracy: 0.46+/-0.07
 
 How to avoid data leakage
 -------------------------

@@ -205,6 +205,29 @@ General Concepts
         exceptional behaviours on the estimator using semantic :term:`estimator
         tags`.
 
+    cross-fitting
+    cross fitting
+        A resampling method that iteratively partitions data into mutually
+        exclusive subsets to fit two stages. During the first stage, the
+        mutually exclusive subsets enable predictions or transformations to be
+        computed on data not seen during training. The computed data is then
+        used in the second stage. The objective is to avoid having any
+        overfitting in the first stage introduce bias into the input data
+        distribution of the second stage.
+        For examples of its use, see: :class:`~preprocessing.TargetEncoder`,
+        :class:`~ensemble.StackingClassifier`,
+        :class:`~ensemble.StackingRegressor` and
+        :class:`~calibration.CalibratedClassifierCV`.
+
+    cross-validation
+    cross validation
+        A resampling method that iteratively partitions data into mutually
+        exclusive 'train' and 'test' subsets so model performance can be
+        evaluated on unseen data. This conserves data as avoids the need to hold
+        out a 'validation' dataset and accounts for variability as multiple
+        rounds of cross validation are generally performed.
+        See :ref:`User Guide <cross_validation>` for more details.
+
     deprecation
         We use deprecation to slowly violate our :term:`backwards
         compatibility` assurances, usually to:
@@ -1055,7 +1078,7 @@ Metadata Routing
         meta-estimator uses the given :term:`groups`, and it also passes it
         along to some of its sub-objects, such as a :term:`CV splitter`.
 
-Please refer to :ref:`Metadta Routing User Guide <metadata_routing>` for more
+Please refer to :ref:`Metadata Routing User Guide <metadata_routing>` for more
 information.
 
 .. _glossary_target_types:
@@ -1708,7 +1731,7 @@ functions or non-estimator constructors.
         For these models, the number of iterations, reported via
         ``len(estimators_)`` or ``n_iter_``, corresponds the total number of
         estimators/iterations learnt since the initialization of the model.
-        Thus, if a model was already initialized with `N`` estimators, and `fit`
+        Thus, if a model was already initialized with `N` estimators, and `fit`
         is called with ``n_estimators`` or ``max_iter`` set to `M`, the model
         will train `M - N` new estimators.
 

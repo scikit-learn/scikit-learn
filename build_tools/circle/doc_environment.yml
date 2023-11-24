@@ -22,7 +22,7 @@ dependencies:
   - seaborn
   - memory_profiler
   - compilers
-  - sphinx=6.0.0
+  - sphinx
   - sphinx-gallery
   - sphinx-copybutton
   - numpydoc

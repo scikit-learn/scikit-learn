@@ -12,9 +12,11 @@ from abc import ABCMeta, abstractmethod
 
 import numpy as np
 from scipy import linalg
+from scipy.sparse import issparse
 
 from ..base import BaseEstimator, ClassNamePrefixFeaturesOutMixin, TransformerMixin
-from ..utils._array_api import _add_to_diagonal, get_namespace
+from ..utils._array_api import _add_to_diagonal, device, get_namespace
+from ..utils.sparsefuncs import _implicit_column_offset
 from ..utils.validation import check_is_fitted
 
 
@@ -47,7 +49,9 @@ class _BasePCA(
             components_ = components_ * xp.sqrt(exp_var[:, np.newaxis])
         exp_var_diff = exp_var - self.noise_variance_
         exp_var_diff = xp.where(
-            exp_var > self.noise_variance_, exp_var_diff, xp.asarray(0.0)
+            exp_var > self.noise_variance_,
+            exp_var_diff,
+            xp.asarray(0.0, device=device(exp_var)),
         )
         cov = (components_.T * exp_var_diff) @ components_
         _add_to_diagonal(cov, self.noise_variance_, xp)
@@ -87,7 +91,9 @@ class _BasePCA(
             components_ = components_ * xp.sqrt(exp_var[:, np.newaxis])
         exp_var_diff = exp_var - self.noise_variance_
         exp_var_diff = xp.where(
-            exp_var > self.noise_variance_, exp_var_diff, xp.asarray(0.0)
+            exp_var > self.noise_variance_,
+            exp_var_diff,
+            xp.asarray(0.0, device=device(exp_var)),
         )
         precision = components_ @ components_.T / self.noise_variance_
         _add_to_diagonal(precision, 1.0 / exp_var_diff, xp)
@@ -122,7 +128,7 @@ class _BasePCA(
 
         Parameters
         ----------
-        X : array-like of shape (n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             New data, where `n_samples` is the number of samples
             and `n_features` is the number of features.
 
@@ -136,9 +142,14 @@ class _BasePCA(
 
         check_is_fitted(self)
 
-        X = self._validate_data(X, dtype=[xp.float64, xp.float32], reset=False)
+        X = self._validate_data(
+            X, accept_sparse=("csr", "csc"), dtype=[xp.float64, xp.float32], reset=False
+        )
         if self.mean_ is not None:
-            X = X - self.mean_
+            if issparse(X):
+                X = _implicit_column_offset(X, self.mean_)
+            else:
+                X = X - self.mean_
         X_transformed = X @ self.components_.T
         if self.whiten:
             X_transformed /= xp.sqrt(self.explained_variance_)
