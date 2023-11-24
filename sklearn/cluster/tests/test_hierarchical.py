@@ -894,6 +894,6 @@ def test_precomputed_connectivity_metric_with_2_connected_components():
 )
 def test_deprecation_warning_metric_None(Agglomeration):
     X = np.array([[1, 2], [1, 4], [1, 0], [4, 2], [4, 4], [4, 0]])
-    warn_msg = "`metric=None` is deprecated in 1.4 and will be removed in 1.6"
+    warn_msg = "`metric=None` is deprecated in version 1.4 and will be removed"
     with pytest.warns(FutureWarning, match=warn_msg):
         Agglomeration(metric=None).fit(X)

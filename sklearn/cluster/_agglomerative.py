@@ -981,8 +981,9 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
         if self.metric is None:
             warnings.warn(
                 (
-                    "`metric=None` is deprecated in 1.4 and will be removed in 1.6. "
-                    "Let `metric` be the default value (i.e. `'euclidean'`) instead."
+                    "`metric=None` is deprecated in version 1.4 and will be removed in "
+                    "version 1.6. Let `metric` be the default value "
+                    "(i.e. `'euclidean'`) instead."
                 ),
                 FutureWarning,
             )
