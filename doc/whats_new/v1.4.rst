@@ -253,6 +253,16 @@ Changelog
   with `np.int64` indices are not supported.
   :pr:`27240` by :user:`Yao Xiao <Charlie-XIAO>`.
 
+:mod:`sklearn.cross_decomposition`
+.......................
+
+- |MajorFeature| Added :class:`cross_decomposition.SPLS`, a new class implementing
+  Sparse Partial Least Squares (SPLS). This feature extends the PLS family by
+  introducing sparsity into the model, making it particularly effective for
+  high-dimensional data analysis. It combines the aspects of both PLS and Lasso
+  regression to enhance dimensionality reduction and variable selection.
+  See :pr:27836 by :user:James Chapman <jameschapman19>
+
 :mod:`sklearn.datasets`
 .......................
 
