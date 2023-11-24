@@ -221,8 +221,6 @@ class _PLS(
         "max_iter": [Interval(Integral, 1, None, closed="left")],
         "tol": [Interval(Real, 0, None, closed="left")],
         "copy": ["boolean"],
-        "penalty_x": [Interval(Real, 0.0, 1.0, closed="both")],
-        "penalty_y": [Interval(Real, 0.0, 1.0, closed="both")],
     }
 
     @abstractmethod
@@ -1237,9 +1235,13 @@ class SPLS(PLSCanonical):
     >>> X_c, Y_c = spls.transform(X, Y)
     """
 
-    _parameter_constraints: dict = {**_PLS._parameter_constraints}
-    for param in ("deflation_mode", "mode"):
-        _parameter_constraints.pop(param)
+    _parameter_constraints: dict = {
+        "n_components": [Interval(Integral, 1, None, closed="left")],
+        "scale": ["boolean"],
+        "max_iter": [Interval(Integral, 1, None, closed="left")],
+        "tol": [Interval(Real, 0, None, closed="left")],
+        "copy": ["boolean"],
+    }
 
     def __init__(
         self,
