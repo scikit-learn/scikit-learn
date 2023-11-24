@@ -8,7 +8,6 @@
 # License: BSD 3 clause
 
 import warnings
-from functools import partial
 from inspect import signature
 from math import log
 from numbers import Integral, Real
@@ -45,6 +44,7 @@ from .utils._param_validation import (
     validate_params,
 )
 from .utils._plotting import _BinaryClassifierCurveDisplayMixin
+from .utils._response import _get_response_values, _process_predict_proba
 from .utils.metadata_routing import (
     MetadataRouter,
     MethodMapping,
@@ -56,6 +56,7 @@ from .utils.parallel import Parallel, delayed
 from .utils.validation import (
     _check_method_params,
     _check_pos_label_consistency,
+    _check_response_method,
     _check_sample_weight,
     _num_samples,
     check_consistent_length,
@@ -359,9 +360,14 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
             check_is_fitted(self.estimator, attributes=["classes_"])
             self.classes_ = self.estimator.classes_
 
-            pred_method, method_name = _get_prediction_method(estimator)
-            n_classes = len(self.classes_)
-            predictions = _compute_predictions(pred_method, method_name, X, n_classes)
+            predictions, _ = _get_response_values(
+                estimator,
+                X,
+                response_method=["decision_function", "predict_proba"],
+            )
+            if predictions.ndim == 1:
+                # Reshape binary output from `(n_samples,)` to `(n_samples, 1)`
+                predictions = predictions.reshape(-1, 1)
 
             calibrated_classifier = _fit_calibrator(
                 estimator,
@@ -376,7 +382,6 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
             # Set `classes_` using all `y`
             label_encoder_ = LabelEncoder().fit(y)
             self.classes_ = label_encoder_.classes_
-            n_classes = len(self.classes_)
 
             if _routing_enabled():
                 routed_params = process_routing(
@@ -443,9 +448,11 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
                 )
             else:
                 this_estimator = clone(estimator)
-                _, method_name = _get_prediction_method(this_estimator)
-                pred_method = partial(
-                    cross_val_predict,
+                method_name = _check_response_method(
+                    this_estimator,
+                    ["decision_function", "predict_proba"],
+                ).__name__
+                predictions = cross_val_predict(
                     estimator=this_estimator,
                     X=X,
                     y=y,
@@ -454,9 +461,17 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
                     n_jobs=self.n_jobs,
                     params=routed_params.estimator.fit,
                 )
-                predictions = _compute_predictions(
-                    pred_method, method_name, X, n_classes
-                )
+                if len(self.classes_) == 2:
+                    # Ensure shape (n_samples, 1) in the binary case
+                    if method_name == "predict_proba":
+                        # Select the probability column of the postive class
+                        predictions = _process_predict_proba(
+                            y_pred=predictions,
+                            target_type="binary",
+                            classes=self.classes_,
+                            pos_label=self.classes_[1],
+                        )
+                    predictions = predictions.reshape(-1, 1)
 
                 this_estimator.fit(X, y, **routed_params.estimator.fit)
                 # Note: Here we don't pass on fit_params because the supported
@@ -620,80 +635,20 @@ def _fit_classifier_calibrator_pair(
 
     estimator.fit(X_train, y_train, **fit_params_train)
 
-    n_classes = len(classes)
-    pred_method, method_name = _get_prediction_method(estimator)
-    predictions = _compute_predictions(pred_method, method_name, X_test, n_classes)
+    predictions, _ = _get_response_values(
+        estimator,
+        X_test,
+        response_method=["decision_function", "predict_proba"],
+    )
+    if predictions.ndim == 1:
+        # Reshape binary output from `(n_samples,)` to `(n_samples, 1)`
+        predictions = predictions.reshape(-1, 1)
 
     sw_test = None if sample_weight is None else _safe_indexing(sample_weight, test)
     calibrated_classifier = _fit_calibrator(
         estimator, predictions, y_test, classes, method, sample_weight=sw_test
     )
     return calibrated_classifier
-
-
-def _get_prediction_method(clf):
-    """Return prediction method.
-
-    `decision_function` method of `clf` returned, if it
-    exists, otherwise `predict_proba` method returned.
-
-    Parameters
-    ----------
-    clf : Estimator instance
-        Fitted classifier to obtain the prediction method from.
-
-    Returns
-    -------
-    prediction_method : callable
-        The prediction method.
-    method_name : str
-        The name of the prediction method.
-    """
-    if hasattr(clf, "decision_function"):
-        method = getattr(clf, "decision_function")
-        return method, "decision_function"
-
-    if hasattr(clf, "predict_proba"):
-        method = getattr(clf, "predict_proba")
-        return method, "predict_proba"
-
-
-def _compute_predictions(pred_method, method_name, X, n_classes):
-    """Return predictions for `X` and reshape binary outputs to shape
-    (n_samples, 1).
-
-    Parameters
-    ----------
-    pred_method : callable
-        Prediction method.
-
-    method_name: str
-        Name of the prediction method
-
-    X : array-like or None
-        Data used to obtain predictions.
-
-    n_classes : int
-        Number of classes present.
-
-    Returns
-    -------
-    predictions : array-like, shape (X.shape[0], len(clf.classes_))
-        The predictions. Note if there are 2 classes, array is of shape
-        (X.shape[0], 1).
-    """
-    predictions = pred_method(X=X)
-
-    if method_name == "decision_function":
-        if predictions.ndim == 1:
-            predictions = predictions[:, np.newaxis]
-    elif method_name == "predict_proba":
-        if n_classes == 2:
-            predictions = predictions[:, 1:]
-    else:  # pragma: no cover
-        # this branch should be unreachable.
-        raise ValueError(f"Invalid prediction method: {method_name}")
-    return predictions
 
 
 def _fit_calibrator(clf, predictions, y, classes, method, sample_weight=None):
@@ -789,9 +744,16 @@ class _CalibratedClassifier:
         proba : array, shape (n_samples, n_classes)
             The predicted probabilities. Can be exact zeros.
         """
+        predictions, _ = _get_response_values(
+            self.estimator,
+            X,
+            response_method=["decision_function", "predict_proba"],
+        )
+        if predictions.ndim == 1:
+            # Reshape binary output from `(n_samples,)` to `(n_samples, 1)`
+            predictions = predictions.reshape(-1, 1)
+
         n_classes = len(self.classes)
-        pred_method, method_name = _get_prediction_method(self.estimator)
-        predictions = _compute_predictions(pred_method, method_name, X, n_classes)
 
         label_encoder = LabelEncoder().fit(self.classes)
         pos_class_indices = label_encoder.transform(self.estimator.classes_)
