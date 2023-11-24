@@ -1018,7 +1018,7 @@ def fetch_openml(
     else:
         parser_ = parser
 
-    if as_frame or parser_ == "pandas":
+    if parser_ == "pandas":
         try:
             check_pandas_support("`fetch_openml`")
         except ImportError as exc:
@@ -1028,13 +1028,13 @@ def fetch_openml(
                     "Alternatively, explicitly set `as_frame=False` and "
                     "`parser='liac-arff'`."
                 )
-                raise ImportError(err_msg) from exc
             else:
                 err_msg = (
-                    f"Using `parser={parser_!r}` requires pandas to be installed. "
-                    "Alternatively, explicitly set `parser='liac-arff'`."
+                    f"Using `parser={parser!r}` requires pandas to be installed when "
+                    "the data are dense. Alternatively, explicitly set "
+                    "`parser='liac-arff'`."
                 )
-                raise ImportError(err_msg) from exc
+            raise ImportError(err_msg) from exc
 
     if return_sparse:
         if as_frame:
