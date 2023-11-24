@@ -892,7 +892,7 @@ def test_calibration_with_fit_params(fit_params_type, data):
         np.ones(N_SAMPLES),
     ],
 )
-def test_calibration_with_sample_weight_base_estimator(sample_weight, data):
+def test_calibration_with_sample_weight_estimator(sample_weight, data):
     """Tests that sample_weight is passed to the underlying base
     estimator.
     """
@@ -903,7 +903,7 @@ def test_calibration_with_sample_weight_base_estimator(sample_weight, data):
     pc_clf.fit(X, y, sample_weight=sample_weight)
 
 
-def test_calibration_without_sample_weight_base_estimator(data):
+def test_calibration_without_sample_weight_estimator(data):
     """Check that even if the estimator doesn't support
     sample_weight, fitting with sample_weight still works.
 
@@ -967,27 +967,6 @@ def test_calibrated_classifier_cv_zeros_sample_weights_equivalence(method, ensem
     y_pred_without_weights = calibrated_clf_without_weights.predict_proba(X)
 
     assert_allclose(y_pred_with_weights, y_pred_without_weights)
-
-
-# TODO(1.4): Remove
-def test_calibrated_classifier_error_base_estimator(data):
-    """Check that we raise an error is a user set both `base_estimator` and
-    `estimator`."""
-    calibrated_classifier = CalibratedClassifierCV(
-        base_estimator=LogisticRegression(), estimator=LogisticRegression()
-    )
-    with pytest.raises(ValueError, match="Both `base_estimator` and `estimator`"):
-        calibrated_classifier.fit(*data)
-
-
-# TODO(1.4): Remove
-def test_calibrated_classifier_deprecation_base_estimator(data):
-    """Check that we raise a warning regarding the deprecation of
-    `base_estimator`."""
-    calibrated_classifier = CalibratedClassifierCV(base_estimator=LogisticRegression())
-    warn_msg = "`base_estimator` was renamed to `estimator`"
-    with pytest.warns(FutureWarning, match=warn_msg):
-        calibrated_classifier.fit(*data)
 
 
 def test_calibration_with_non_sample_aligned_fit_param(data):
