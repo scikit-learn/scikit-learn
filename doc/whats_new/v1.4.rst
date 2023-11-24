@@ -254,7 +254,7 @@ Changelog
   :pr:`27240` by :user:`Yao Xiao <Charlie-XIAO>`.
 
 :mod:`sklearn.cross_decomposition`
-.......................
+...................................
 
 - |MajorFeature| Added :class:`cross_decomposition.SPLS`, a new class implementing
   Sparse Partial Least Squares (SPLS). This feature extends the PLS family by
