@@ -1,0 +1,480 @@
+"""Polynomial chaos regression"""
+
+# Authors: Pieterjan Robbe
+# License: BSD 3 clause
+
+# import statements
+import numpy as np
+
+# sklearn imports
+from ..base import BaseEstimator, RegressorMixin, _fit_context, clone
+from ..utils._param_validation \
+    import Integral, Interval, Iterable, StrOptions, HasMethods
+
+# qualified import statements
+from scipy.stats import uniform, norm
+
+# sklearn imports
+from ._adaptive import BasisIncrementStrategy
+from ..linear_model._base import LinearRegression
+from ..preprocessing._orthogonal import OrthogonalPolynomialFeatures
+from ..utils._orthogonal_polynomial import Polynomial
+from ..pipeline import Pipeline
+from ..utils.validation \
+    import check_is_fitted, check_X_y, _get_feature_names, column_or_1d
+
+class PolynomialChaosRegressor(BaseEstimator, RegressorMixin):
+    """Polynomial Chaos regression.
+
+    In addition to the standard scikit-learn estimator API, this estimator:
+
+        * allows the computation of statistics (mean and variance) of the
+          output, and
+        * enables global sensitivity analysis through the calculation of main-
+          and total-effect Sobol sensitivity indices.
+
+    Read more in the :ref:`User Guide <polynomial_chaos>`.
+
+    Parameters
+    ----------
+    degree : int, default=2
+        The maximum degree of the Polynomial Chaos expansion.
+
+    distibution : scpiy.stats distribution or tuple (distribution_1, \
+        distribution_2, ...), default=None
+        Distribution of the input parameter(s) of the Polynomial Chaos
+        expansion. If a single distribution is given, it specifies the
+        distributions for all input features. If a tuple (`distribution_1`,
+        `distribution_2`, ...) is passed, then `distribution_1` is the
+        distribution of the first feature, `distribution_2` is the distribution
+        of the second feature, and so on. Note that when a tuple is passed, its
+        length must be consistent with the the number of input features and the
+        number of columns in `multiindices` (when the latter is provided). If
+        `distribution = None`, we will assume a uniform distribution where the
+        lower and upper bounds are extracted from the input features.
+
+    truncation : {'full_tensor', 'total_degree', 'hyperbolic_cross', \
+        'Zaremba_cross'}, default='total_degree'
+        The truncation rule that should be used to determine the shape of the
+        basis of the Polynomial Chaos expansion. The default is
+        `'total_degree'`.
+
+    weights : array_like, default=None
+        Optional weights that can be used to select certain basis terms where
+        higher-degree polynomials should be used in the basis. A larger value
+        for the weight of a certain feature indicates that a higher-degree
+        polynomial is used. The weights must be all positive. When `weights =
+        None`, an unweighted multiindex set will be used. The default is
+        `None`.
+
+    solver : LinearModel, default=LinearRegression(fit_intercept=False)
+        The :class:`~sklearn.linear_model.LinearModel` used to solve for the
+        coefficients of the Polynomial Chaos expansion. This should be another
+        `LinearModel` that has a :term:`fit` method. Make sure to set
+        `fit_intercept = False`.
+    
+    multiindices : ndarray of shape (`n_output_features_`, `n_features_in_`), \
+        default=None
+        The combination of `degree`, `truncation` and `weights` provides a
+        flexible way to define the Polynomial Chaos basis. To allow for even
+        more fine-grained control, this optional argument allows to specify an
+        arbitrary set of basis terms that will be used instead. When this
+        argument is provided, it supersedes the values in `degree`,
+        `truncation` and `weights`. If `multiindices = None`, then the
+        multiindex set shape given in `truncation` will be used. The default is
+        `None`.
+
+    scale_outputs : bool, default=True
+        When true, the output features are scaled to have zero mean and unit
+        variance before the Polynomial Chaos expansion is fitted. In certain
+        cases, this option can improve the numerics.
+
+    Attributes
+    ----------
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+    multiindices_ : array-like of shape (n_terms, n_features_in_)
+        An array with the combinations of input features and polynomial degrees
+        that constitute the Polynomial Chaos basis. Every row in this array
+        contains a single multiindex.
+
+    coef_ : array-like of length (n_terms,)
+        The coefficients of this Polynomial Chaos expansion.
+
+    output_mean_ : float
+        The mean of the output (when `scale_outputs = True`).
+
+    output_std_ : float
+        The standard deviation of the output (when `scale_outputs = True`).
+
+    Examples
+    --------
+    """
+    _parameter_constraints: dict = {
+        "degree":        [Interval(Integral, 0, None, closed="left")],
+        "distibution":   [HasMethods("dist"), "array_like", None],
+        "truncation" :   [StrOptions({"full_tensor", "total_degree", 
+                              "hyperbolic_cross", "Zaremba_cross"})],
+        "weights":       ["array-like", None],
+        "solver":        [HasMethods("fit"), None],
+        "multiindices":  ["array-like", None],
+        "scale_outputs": [bool]
+    }
+
+    def __init__(self, distribution=None, degree=2, truncation="total_degree",
+                 weights=None, solver=None, multiindices=None,
+                 scale_outputs=True):
+        self.distribution = distribution
+        self.degree = degree
+        self.truncation = truncation
+        self.weights = weights
+        self.solver = solver
+        self.multiindices = multiindices
+        self.scale_outputs = scale_outputs
+
+    @_fit_context(prefer_skip_nested_validation=True)
+    def fit(self, X, y, strategy="gerstner_griebel", max_iter=1):
+        """Fit Polynomial Chaos regression model.
+
+        Parameters
+        ----------
+        X : array-like of shape (n_samples, n_features) or list of object
+            Feature vectors or other representations of training data.
+
+        y : array-like of shape (n_samples,) or (n_samples, n_targets)
+            Target values.
+
+        strategy : {'gerstner_griebel'}, default='gerstner_griebel'
+            Basis increment strategy. After the first :term:`fit`, we can use a
+            basis increment strategy to add more polynomials to the basis where
+            further refinement is needed. Only the adaptive basis growth
+            procedure from [Gerstner2003]_ is implemented at the moment. In
+            this method, we use the variance contribution of each polynomial
+            term to select the multiindices that are suitable for further
+            refinement.
+
+        max_iter : int
+            Maximum number of iterations with the adaptive algorithm. The
+            default is `1`, meaning that the basis will not be incremented.
+
+        Returns
+        -------
+        self : object
+            PolynomialChaosRegressor class instance.
+        """
+        # check input features
+        self.feature_names_in_ = _get_feature_names(X)
+        X, y = check_X_y(X, y)
+        self.n_features_in_ = X.shape[1]
+
+        # cannot perform regression with less than 2 data points
+        if len(y) < 2:
+            raise ValueError(f"expected more than 1 sample, got {len(y)}")
+        
+        # check distributions
+        if self.distribution == None:
+            data_min = np.amin(X, axis=0)
+            data_max = np.amax(X, axis=0)
+            self.distributions_ = \
+                [uniform(a, b) for a, b in zip(data_min, data_max)]
+        elif hasattr(self.distribution, "dist"):
+            self.distributions_ = [self.distribution]*self.n_features_in_
+        elif isinstance(self.distribution, Iterable):
+            self.distributions_ = list(self.distribution)
+            if not len(self.distributions_) == self.n_features_in_:
+                raise ValueError(
+                    f"the number of distributions does not match the number "
+                    f"of input features, got {len(self.distributions_)} but "
+                    f"expected {self.n_features_in_}"
+                )
+            for j, distribution in enumerate(self.distributions_):
+                if not hasattr(distribution, "dist"):
+                    raise ValueError(
+                        f"distributions must be all of type 'scipy.stats' "
+                        f"frozen distribution, but the distribution at index "
+                        f"{j} has type '{type(distribution)}'"
+                    )
+        else:
+            raise ValueError(
+                f"distribution must be a 'scipy.stats' frozen distribution "
+                f"or a tuple/list, got '{type(self.distribution)}'"
+            )
+
+        # check solver
+        if self.solver is None:
+            solver = LinearRegression(fit_intercept=False)
+        else: # isinstance(self.solver, LinearModel)
+            if self.solver.fit_intercept: # force solvers to have fit_intercept
+                raise ValueError(
+                    "make sure to set 'fit_intercept=False' in solver"
+                )
+            solver = clone(self.solver)
+        
+        # get orthogonal polynomials for each distribution
+        self.polynomials_ = list()
+        for distribution in self.distributions_:
+            self.polynomials_.append(
+                Polynomial.from_distribution(distribution)
+            )
+
+        # scale features
+        X_scaled = np.zeros_like(X)
+        for j, (distribution, polynomial) in \
+            enumerate(zip(self.distributions_, self.polynomials_)):
+            X_scaled[:, j] = \
+                polynomial.scale_features_from_distribution(
+                    X[:, j], distribution
+                )
+
+        # scale outputs
+        self.output_mean_ = np.mean(y) if self.scale_outputs else 0
+        self.output_std_ = np.std(y) if self.scale_outputs else 1
+        y = y - self.output_mean_
+        y = y/self.output_std_
+
+        self.multiindices_ = self.multiindices
+        self.strategy_ = BasisIncrementStrategy.from_string(strategy)
+
+        # adaptive basis growth
+        for iter in range(max_iter):
+        
+            # create orthogonal polynomial basis transformer
+            basis = OrthogonalPolynomialFeatures(
+                self.degree, 
+                [str(polynomial) for polynomial in self.polynomials_],
+                truncation=self.truncation,
+                weights=self.weights, 
+                multiindices=self.multiindices_
+            )
+        
+            # create pipeline
+            self.pipeline_ = Pipeline([
+                ("basis", basis),
+                ("solver", solver)
+            ])
+
+            # solve for coefficients
+            self.pipeline_.fit(X_scaled, y)
+
+            # for convenient access to multiindices, norms and coefficients
+            self.multiindices_ =self.pipeline_["basis"].multiindices_
+            self.norms_ = self.pipeline_["basis"].norms_
+            self.coef_ = self.pipeline_["solver"].coef_
+
+            # do not update multiindices in last iteration
+            if iter < max_iter - 1:
+                self.multiindices_ = self.strategy_.propose(self)
+
+        # by convention, fit returns itself
+        return self
+
+    def predict(self, X):
+        """Predict using this Polynomial Chaos model.
+
+        Parameters
+        ----------
+        X : array-like of shape (n_samples, n_features)
+            Points where the Polynomial Chaos expansion should be evaluated.
+
+        Returns
+        -------
+        y : ndarray of shape (n_samples,)
+            Polynomial Chaos predictions in query points.
+        """
+        # check if this estiamtor is fitted
+        check_is_fitted(self)
+
+        # check size of input features
+        if X.shape[1] != self.n_features_in_:
+            raise ValueError(
+                f"{self.n_features_in_} input features are required, got "
+                f"{X.shape[1]}"
+            )
+        X = self._validate_data(X)
+                                
+        # scale features
+        X_scaled = np.zeros_like(X)
+        for j, (distribution, polynomial) in \
+            enumerate(zip(self.distributions_, self.polynomials_)):
+            X_scaled[:, j] = \
+                polynomial.scale_features_from_distribution(
+                    X[:, j], distribution
+                )
+
+        y_fit = self.pipeline_.predict(X_scaled)
+        return y_fit*self.output_std_ + self.output_mean_
+
+    def joint_sens(self, *args):
+        r"""Returns the joint sensivitivity index for the given input
+        feature(s).
+
+        Given a Polynomial Chaos expansion
+
+        .. math::
+            y = \sum_u c_u \Psi_u(\xi)
+
+        the Polynomial Chaos-based Sobol indices can be computed as
+
+        .. math::
+            S_{\{i_0, i_1, \ldots, i_s\}} = \sum_{u \in \mathcal{I}} c_u^2 
+            \mathbb{E}[\Psi_u^2] / \mathbb{V}[y]
+
+        where :math:`\mathcal{I}` is the set of multiindices for which all 
+        components at indices :math:`i_0, i_1, \ldots, i_s` are positive, and
+        all other components are :math:`0`.
+
+        When only one input feature is provided, this corresponds to the main
+        Sobol sensitivity index. When two or more input features are provided,
+        this corresponds to the joint Sobol sensitivity index.
+
+        When the features are named, this method accepts any combination of
+        input feature names. If the features are unnamed, this method accepts
+        the index of the input features. Duplicate features or feature names
+        are not accepted.
+
+        Parameters
+        ----------
+        features : int or str, or tuple of int or str
+            Input features to compute the joint sensitivity index of. If a
+            single `int` or `str` argument is given, we return the main
+            sensitivity index of the input feature with the given index or
+            name. If a `tuple` of `int`\ s or `str`\ s is given, we return the
+            joint sensitivity index of the input features with the given
+            indices or names. In the latter case, the input features must be
+            all `int`\ s or all `str`\ s. Feature indices or names must be
+            unique.
+
+        Returns
+        -------
+        sensitivity_index : float
+            The joint sensitivity index for the given set of input features.    
+        """
+        check_is_fitted(self)
+
+        # input checking
+        dtype = type(args[0])
+        for arg in args:
+            if not isinstance(arg, dtype):
+                raise ValueError("inputs must be all string or all int")
+        if dtype == str:
+            if self.feature_names_in_ is None:
+                raise ValueError("feature names have not been set")
+            idcs = np.zeros(len(args), dtype=int)
+            for j, arg in enumerate(args):
+                if not arg in self.feature_names_in_:
+                    raise ValueError(f"feature '{arg}' not found")
+                idcs[j] = np.where(self.feature_names_in_ == arg)[0][0]
+        else:
+            idcs = column_or_1d(args)
+        if len(np.unique(idcs)) != len(idcs):
+            raise ValueError("features must be unique")
+        if (len(args) > self.n_features_in_ or 
+            np.any(idcs > self.n_features_in_)):
+            raise ValueError(
+                f"this model has only {self.n_features_in_} features"
+            )
+        
+        # actually compute the joint sensitivity index
+        joint_sens = 0
+        for j, index in enumerate(self.multiindices_):
+            if (np.sum(index != 0) == len(idcs) and 
+                all(i > 0 for i in index[idcs])):
+                joint_sens += \
+                    self.output_std_**2 * self.coef_[j]**2 * self.norms_[j]**2
+                
+        return joint_sens / self.var()
+
+    def main_sens(self):
+        r"""Returns the main sensitivity indices.
+
+        Given a Polynomial Chaos expansion
+
+        .. math::
+            y = \sum_u c_u \Psi_u(\xi)
+
+        the main Polynomial Chaos-based Sobol indices can be computed as
+
+        .. math::
+            S_{j} = \sum_{u \in \mathcal{I}_j} c_u^2 
+            \mathbb{E}[\Psi_u^2] / \mathbb{V}[y]
+
+        where :math:`\mathcal{I}_j` is the set of multiindices for which the
+        :math:`j`\ th coordinate (and only that coordinate) is larger than 0.
+        This sensitivity index expresses the effect on the output variance of
+        varying only the :math:`j`\ th parameter .
+        """
+        check_is_fitted(self)
+        return [self.joint_sens(i) for i in range(self.n_features_in_)]
+
+    def total_sens(self):
+        r"""Returns the total sensitivity indices.
+
+        Given a Polynomial Chaos expansion
+
+        .. math::
+            y = \sum_u c_u \Psi_u(\xi)
+
+        the main Polynomial Chaos-based Sobol indices can be computed as
+
+        .. math::
+            S_{j}^T = \sum_{u \in \mathcal{I}_j^T} c_u^2 
+            \mathbb{E}[\Psi_u^2] / \mathbb{V}[y]
+
+        where :math:`\mathcal{I}_j^T` is the set of multiindices for which the
+        :math:`j`\ th coordinate, amongst others, is larger than 0. This
+        sensitivity index expresses the effect on the output variance of
+        varying the :math:`j`\ th parameter, including all interaction terms.
+        """
+        check_is_fitted(self)
+        t = np.zeros(self.n_features_in_)
+        for i in range(self.n_features_in_):
+            for j, index in enumerate(self.multiindices_):
+                if not index[i] > 0:
+                    continue
+                t[i] += \
+                    self.output_std_**2 * self.coef_[j]**2 * self.norms_[j]**2
+        return list(t / self.var())
+    
+    def mean(self):
+        r"""Returns the Polynomial Chaos approximation for the mean of the
+        response.
+        
+        Given a Polynomial Chaos expansion
+
+        .. math::
+            y = \sum_u c_u \Psi_u(\xi)
+
+        the mean of the response :math:`y` is
+
+        .. math::
+            \mathbb{E}[y] = c_0
+        
+        """
+        check_is_fitted(self)
+        for j, index in enumerate(self.multiindices_):
+            if np.all(index == 0):
+                return self.coef_[j]*self.output_std_ + self.output_mean_
+        return 0
+
+    def var(self):
+        r"""Returns the Polynomial Chaos approximation for the variance of the response.
+        
+        Given a Polynomial Chaos approximation
+
+        .. math::
+            y = \sum_u c_u \Psi_u(\xi)
+
+        the variance of the response :math:`y` is
+
+        .. math::
+            \mathbb{V}[y] = \sum_{u > 0} c_u^2 \mathbb{E}[\Psi_u^2]
+        
+        """
+        check_is_fitted(self)
+        var = 0
+        for j, index in enumerate(self.multiindices_):
+            if np.any(index > 0):
+                var += \
+                    self.output_std_**2 * self.coef_[j]**2 * self.norms_[j]**2
+        return var
