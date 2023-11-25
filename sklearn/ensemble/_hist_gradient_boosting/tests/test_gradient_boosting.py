@@ -888,6 +888,29 @@ def test_early_stopping_with_sample_weights(monkeypatch):
         assert "sample_weight" in arg_list[1]
 
 
+def test_raw_predict_is_called_with_custom_scorer():
+    """Custom scorer will still call _raw_predict."""
+
+    mock_scorer = Mock(side_effect=get_scorer("neg_median_absolute_error"))
+
+    X, y = make_regression(random_state=0)
+    hist = HistGradientBoostingRegressor(
+        max_iter=2,
+        early_stopping=True,
+        random_state=0,
+        scoring=mock_scorer,
+    )
+    mock_raw_predict = Mock(side_effect=hist._raw_predict)
+    hist._raw_predict = mock_raw_predict
+    hist.fit(X, y)
+
+    # `_raw_predict` and scorer is called twice (train and val) for the baseline score,
+    # and twice per iteration (train and val) after that. So 6 times in total for
+    # `max_iter=2`.
+    assert mock_raw_predict.call_count == 6
+    assert mock_scorer.call_count == 6
+
+
 @pytest.mark.parametrize(
     "Est", (HistGradientBoostingClassifier, HistGradientBoostingRegressor)
 )
