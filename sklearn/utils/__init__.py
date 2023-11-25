@@ -1,6 +1,7 @@
 """
 The :mod:`sklearn.utils` module includes various utilities.
 """
+
 import math
 import numbers
 import platform
@@ -80,6 +81,7 @@ __all__ = [
 
 IS_PYPY = platform.python_implementation() == "PyPy"
 _IS_32BIT = 8 * struct.calcsize("P") == 32
+_IS_WASM = platform.machine() in ["wasm32", "wasm64"]
 
 
 def _in_unstable_openblas_configuration():
@@ -95,7 +97,7 @@ def _in_unstable_openblas_configuration():
     if not open_blas_used:
         return False
 
-    # OpenBLAS 0.3.16 fixed unstability for arm64, see:
+    # OpenBLAS 0.3.16 fixed instability for arm64, see:
     # https://github.com/xianyi/OpenBLAS/blob/1b6db3dbba672b4f8af935bd43a1ff6cff4d20b7/Changelog.txt#L56-L58 # noqa
     openblas_arm64_stable_version = parse_version("0.3.16")
     for info in modules_info:
@@ -368,14 +370,15 @@ def _safe_indexing(X, indices, *, axis=0):
     if (
         axis == 1
         and indices_dtype == "str"
-        and not (_is_pandas_df(X) or _is_polars_df(X))
+        and not (_is_pandas_df(X) or _use_interchange_protocol(X))
     ):
         raise ValueError(
-            "Specifying the columns using strings is only supported for "
-            "pandas DataFrames"
+            "Specifying the columns using strings is only supported for dataframes."
         )
 
     if hasattr(X, "iloc"):
+        # TODO: we should probably use _is_pandas_df(X) instead but this would
+        # require updating some tests such as test_train_test_split_mock_pandas.
         return _pandas_indexing(X, indices, indices_dtype, axis=axis)
     elif _is_polars_df(X):
         return _polars_indexing(X, indices, indices_dtype, axis=axis)
@@ -422,15 +425,13 @@ def _safe_assign(X, values, *, row_indexer=None, column_indexer=None):
         X[row_indexer, column_indexer] = values
 
 
-def _get_column_indices_bool_int(key, n_columns):
-    # Convert key into positive indexes
+def _get_column_indices_for_bool_or_int(key, n_columns):
+    # Convert key into list of positive integer indexes
     try:
         idx = _safe_indexing(np.arange(n_columns), key)
     except IndexError as e:
         raise ValueError(
-            "all features must be in [0, {}] or [-{}, 0]".format(
-                n_columns - 1, n_columns
-            )
+            f"all features must be in [0, {n_columns - 1}] or [-{n_columns}, 0]"
         ) from e
     return np.atleast_1d(idx).tolist()
 
@@ -450,14 +451,13 @@ def _get_column_indices(X, key):
         # we get an empty list
         return []
     elif key_dtype in ("bool", "int"):
-        return _get_column_indices_bool_int(key, n_columns)
+        return _get_column_indices_for_bool_or_int(key, n_columns)
     else:
         try:
             all_columns = X.columns
         except AttributeError:
             raise ValueError(
-                "Specifying the columns using strings is only "
-                "supported for pandas DataFrames"
+                "Specifying the columns using strings is only supported for dataframes."
             )
         if isinstance(key, str):
             columns = [key]
@@ -498,11 +498,13 @@ def _get_column_indices_interchange(X_interchange, key, key_dtype):
         # we get an empty list
         return []
     elif key_dtype in ("bool", "int"):
-        return _get_column_indices_bool_int(key, n_columns)
+        return _get_column_indices_for_bool_or_int(key, n_columns)
     else:
         column_names = list(X_interchange.column_names())
 
         if isinstance(key, slice):
+            if key.step not in [1, None]:
+                raise NotImplementedError("key.step must be 1 or None")
             start, stop = key.start, key.stop
             if start is not None:
                 start = column_names.index(start)
@@ -1145,7 +1147,11 @@ def is_scalar_nan(x):
     >>> is_scalar_nan([np.nan])
     False
     """
-    return isinstance(x, numbers.Real) and math.isnan(x)
+    return (
+        not isinstance(x, numbers.Integral)
+        and isinstance(x, numbers.Real)
+        and math.isnan(x)
+    )
 
 
 def _approximate_mode(class_counts, n_draws, rng):

@@ -6,14 +6,13 @@ from itertools import chain
 
 import numpy as np
 import pytest
-import scipy.sparse as sp
 
 from sklearn import config_context
 from sklearn.utils import (
     _approximate_mode,
     _determine_key_type,
     _get_column_indices,
-    _get_column_indices_interchange,
+    _is_polars_df,
     _message_with_time,
     _print_elapsed_time,
     _safe_assign,
@@ -36,6 +35,7 @@ from sklearn.utils._testing import (
     assert_array_equal,
     assert_no_warnings,
 )
+from sklearn.utils.fixes import CSC_CONTAINERS, CSR_CONTAINERS
 
 # toy array
 X_toy = np.arange(9).reshape((3, 3))
@@ -161,21 +161,23 @@ def test_resample_stratify_2dy():
     assert y.ndim == 2
 
 
-def test_resample_stratify_sparse_error():
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_resample_stratify_sparse_error(csr_container):
     # resample must be ndarray
     rng = np.random.RandomState(0)
     n_samples = 100
     X = rng.normal(size=(n_samples, 2))
     y = rng.randint(0, 2, size=n_samples)
-    stratify = sp.csr_matrix(y)
-    with pytest.raises(TypeError, match="A sparse matrix was passed"):
+    stratify = csr_container(y)
+    with pytest.raises(TypeError, match="Sparse data was passed"):
         X, y = resample(X, y, n_samples=50, random_state=rng, stratify=stratify)
 
 
-def test_safe_mask():
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_safe_mask(csr_container):
     random_state = check_random_state(0)
     X = random_state.rand(5, 4)
-    X_csr = sp.csr_matrix(X)
+    X_csr = csr_container(X)
     mask = [False, False, True, True, True]
 
     mask = safe_mask(X, mask)
@@ -294,8 +296,7 @@ def test_safe_indexing_2d_container_axis_1(array_type, indices_type, indices):
 
     if isinstance(indices[0], str) and array_type != "dataframe":
         err_msg = (
-            "Specifying the columns using strings is only supported "
-            "for pandas DataFrames"
+            "Specifying the columns using strings is only supported for dataframes"
         )
         with pytest.raises(ValueError, match=err_msg):
             _safe_indexing(array, indices_converted, axis=1)
@@ -396,8 +397,7 @@ def test_safe_indexing_2d_scalar_axis_1(array_type, expected_output_type, indice
 
     if isinstance(indices, str) and array_type != "dataframe":
         err_msg = (
-            "Specifying the columns using strings is only supported "
-            "for pandas DataFrames"
+            "Specifying the columns using strings is only supported for dataframes"
         )
         with pytest.raises(ValueError, match=err_msg):
             _safe_indexing(array, indices, axis=1)
@@ -516,14 +516,15 @@ def test_shuffle_on_ndim_equals_three():
     assert set(to_tuple(A)) == S
 
 
-def test_shuffle_dont_convert_to_array():
+@pytest.mark.parametrize("csc_container", CSC_CONTAINERS)
+def test_shuffle_dont_convert_to_array(csc_container):
     # Check that shuffle does not try to convert to numpy arrays with float
     # dtypes can let any indexable datastructure pass-through.
     a = ["a", "b", "c"]
     b = np.array(["a", "b", "c"], dtype=object)
     c = [1, 2, 3]
     d = MockDataFrame(np.array([["a", 0], ["b", 1], ["c", 2]], dtype=object))
-    e = sp.csc_matrix(np.arange(6).reshape(3, 2))
+    e = csc_container(np.arange(6).reshape(3, 2))
     a_s, b_s, c_s, d_s, e_s = shuffle(a, b, c, d, e, random_state=0)
 
     assert a_s == ["c", "b", "a"]
@@ -765,11 +766,21 @@ def test_safe_assign(array_type):
 
 
 def test_get_column_indices_interchange():
-    """Check _get_column_indices_interchange for edge cases."""
+    """Check _get_column_indices for edge cases with the interchange"""
     pd = pytest.importorskip("pandas", minversion="1.5")
 
     df = pd.DataFrame([[1, 2, 3], [4, 5, 6]], columns=["a", "b", "c"])
-    df_interchange = df.__dataframe__()
+
+    # Hide the fact that this is a pandas dataframe to trigger the dataframe protocol
+    # code path.
+    class MockDataFrame:
+        def __init__(self, df):
+            self._df = df
+
+        def __getattr__(self, name):
+            return getattr(self._df, name)
+
+    df_mocked = MockDataFrame(df)
 
     key_results = [
         (slice(1, None), [1, 2]),
@@ -783,16 +794,15 @@ def test_get_column_indices_interchange():
         ([], []),
     ]
     for key, result in key_results:
-        assert (
-            _get_column_indices_interchange(
-                df_interchange, key, _determine_key_type(key)
-            )
-            == result
-        )
+        assert _get_column_indices(df_mocked, key) == result
 
     msg = "A given column is not a column of the dataframe"
     with pytest.raises(ValueError, match=msg):
-        _get_column_indices_interchange(df_interchange, ["not_a_column"], "str")
+        _get_column_indices(df_mocked, ["not_a_column"])
+
+    msg = "key.step must be 1 or None"
+    with pytest.raises(NotImplementedError, match=msg):
+        _get_column_indices(df_mocked, slice("a", None, 2))
 
 
 def test_polars_indexing():
@@ -824,3 +834,14 @@ def test_polars_indexing():
     for key in axis_0_keys:
         out = _safe_indexing(df, key, axis=0)
         assert_frame_equal(df[key], out)
+
+
+def test__is_polars_df():
+    """Check that _is_polars_df return False for non-dataframe objects."""
+
+    class LooksLikePolars:
+        def __init__(self):
+            self.columns = ["a", "b"]
+            self.schema = ["a", "b"]
+
+    assert not _is_polars_df(LooksLikePolars())

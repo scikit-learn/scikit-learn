@@ -123,6 +123,22 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
                     )
                     raise ValueError(msg)
 
+                # `nan` must be the last stated category
+                for category in cats[:-1]:
+                    if is_scalar_nan(category):
+                        raise ValueError(
+                            "Nan should be the last element in user"
+                            f" provided categories, see categories {cats}"
+                            f" in column #{i}"
+                        )
+
+                if cats.size != len(_unique(cats)):
+                    msg = (
+                        f"In column {i}, the predefined categories"
+                        " contain duplicate elements."
+                    )
+                    raise ValueError(msg)
+
                 if Xi.dtype.kind not in "OUS":
                     sorted_cats = np.sort(cats)
                     error_msg = (
@@ -130,9 +146,7 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
                     )
                     # if there are nans, nan should be the last element
                     stop_idx = -1 if np.isnan(sorted_cats[-1]) else None
-                    if np.any(sorted_cats[:stop_idx] != cats[:stop_idx]) or (
-                        np.isnan(sorted_cats[-1]) and not np.isnan(sorted_cats[-1])
-                    ):
+                    if np.any(sorted_cats[:stop_idx] != cats[:stop_idx]):
                         raise ValueError(error_msg)
 
                 if handle_unknown == "error":
@@ -450,7 +464,7 @@ class OneHotEncoder(_BaseEncoder):
     The features are encoded using a one-hot (aka 'one-of-K' or 'dummy')
     encoding scheme. This creates a binary column for each category and
     returns a sparse matrix or dense array (depending on the ``sparse_output``
-    parameter)
+    parameter).
 
     By default, the encoder derives the categories based on the unique values
     in each feature. Alternatively, you can also specify the `categories`
@@ -522,7 +536,8 @@ class OneHotEncoder(_BaseEncoder):
            `sparse_output` instead.
 
     sparse_output : bool, default=True
-        Will return sparse matrix if set True else will return an array.
+        When ``True``, it returns a :class:`scipy.sparse.csr_matrix`,
+        i.e. a sparse matrix in "Compressed Sparse Row" (CSR) format.
 
         .. versionadded:: 1.2
            `sparse` was renamed to `sparse_output`
@@ -995,8 +1010,12 @@ class OneHotEncoder(_BaseEncoder):
         """
         Transform X using one-hot encoding.
 
-        If there are infrequent categories for a feature, the infrequent
-        categories will be grouped into a single category.
+        If `sparse_output=True` (default), it returns an instance of
+        :class:`scipy.sparse._csr.csr_matrix` (CSR format).
+
+        If there are infrequent categories for a feature, set by specifying
+        `max_categories` or `min_frequency`, the infrequent categories are
+        grouped into a single category.
 
         Parameters
         ----------
@@ -1012,11 +1031,13 @@ class OneHotEncoder(_BaseEncoder):
         """
         check_is_fitted(self)
         transform_output = _get_output_config("transform", estimator=self)["dense"]
-        if transform_output == "pandas" and self.sparse_output:
+        if transform_output != "default" and self.sparse_output:
+            capitalize_transform_output = transform_output.capitalize()
             raise ValueError(
-                "Pandas output does not support sparse data. Set sparse_output=False to"
-                " output pandas DataFrames or disable pandas output via"
-                ' `ohe.set_output(transform="default").'
+                f"{capitalize_transform_output} output does not support sparse data."
+                f" Set sparse_output=False to output {transform_output} dataframes or"
+                f" disable {capitalize_transform_output} output via"
+                '` ohe.set_output(transform="default").'
             )
 
         # validation of X happens in _check_X called by _transform
@@ -1579,6 +1600,7 @@ class OrdinalEncoder(OneToOneFeatureMixin, _BaseEncoder):
         X_out : ndarray of shape (n_samples, n_features)
             Transformed input.
         """
+        check_is_fitted(self, "categories_")
         X_int, X_mask = self._transform(
             X,
             handle_unknown=self.handle_unknown,
