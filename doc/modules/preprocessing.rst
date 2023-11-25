@@ -1369,6 +1369,7 @@ There are 4 different types of predefined multiindex set shapes:
 
     where :math:`w_j` is the :math:`j`\ th weight and :math:`k` is the degree of
     the index set.
+    
 The weights allow us to select certain preferential features where higher-degree
 polynomials should be used. Below is an illustration of the (unweighted) multiindex set
 shapes for `degree=6`.
