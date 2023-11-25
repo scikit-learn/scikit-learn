@@ -875,7 +875,8 @@ def test_early_stopping_with_sample_weights(monkeypatch):
     )
     hist.fit(X, y, sample_weight=sample_weight)
 
-    # For scorer is called three times per iteration. (2 x 3 = 6)
+    # For scorer is called twice (train and val) for the baseline score, and twice
+    # per iteration (train and val) after that. So 6 times in total for `max_iter=2`.
     assert mock_scorer.call_count == 6
     for arg_list in mock_scorer.call_args_list:
         assert "sample_weight" in arg_list[1]

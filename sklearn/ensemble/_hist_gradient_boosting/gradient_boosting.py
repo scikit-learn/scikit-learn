@@ -105,7 +105,28 @@ def _update_leaves_values(loss, grower, y_true, raw_prediction, sample_weight):
 
 @contextmanager
 def _patch_raw_predict(estimator, raw_predictions):
-    """Context manager that patches _raw_predict to return raw_predictions."""
+    """Context manager that patches _raw_predict to return raw_predictions.
+
+    `raw_predictions` is typically a precomputed array to avoid redundant
+    state-wise computations fitting with early stopping enabled: in this case
+    `raw_predictions` is incrementally updated whenever we add a tree to the
+    boosted ensemble.
+
+    Note: this makes fitting HistGradientBoosting* models inherently non thread
+    safe at fit time. However thread-safety at fit time was never guaranteed nor
+    enforced for scikit-learn estimators in general.
+
+    Thread-safety at prediction/transform time is another matter as those
+    operations are typically side-effect free and therefore often thread-safe by
+    default for most scikit-learn models and would like to keep it that way.
+    Therefore this context manager should only be used at fit time.
+
+    TODO: in the future, we could explore the possibility to extend the scorer
+    public API to expose a way to compute vales from raw predictions. That would
+    probably require also making the scorer aware of the inverse link function
+    used by the estimator which is typically private API for now, hence the need
+    for this patching mechanism. 
+    """
     orig_raw_predict = estimator._raw_predict
 
     def _patched_raw_predicts(*args, **kwargs):
@@ -758,7 +779,8 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                     )
 
                     # If the scorer is a predefined string, then we optimize
-                    # the evaluation by using the raw predictions.
+                    # the evaluation by re-using the incrementally updated raw
+                    # predictions.
                     if scoring_is_predefined_string:
                         raw_predictions_small_train = raw_predictions[
                             indices_small_train
@@ -934,8 +956,8 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                     )
 
                 else:
-                    # If the scorer is a predefined string, then we optimize
-                    # the evaluation by using the raw predictions.
+                    # If the scorer is a predefined string, then we optimize the evaluation
+                    # by re-using the incrementally computed raw predictions.
                     if scoring_is_predefined_string:
                         raw_predictions_small_train = raw_predictions[
                             indices_small_train
@@ -1063,7 +1085,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             y_small_train = self.classes_[y_small_train.astype(int)]
 
         self.train_score_.append(
-            self._score_with_patch(
+            self._score_with_raw_predictions(
                 X_binned_small_train,
                 y_small_train,
                 sample_weight_small_train,
@@ -1075,7 +1097,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             if is_classifier(self):
                 y_val = self.classes_[y_val.astype(int)]
             self.validation_score_.append(
-                self._score_with_patch(
+                self._score_with_raw_predictions(
                     X_binned_val, y_val, sample_weight_val, raw_predictions_val
                 )
             )
@@ -1083,7 +1105,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         else:
             return self._should_stop(self.train_score_)
 
-    def _score_with_patch(self, X, y, sample_weight, raw_predictions=None):
+    def _score_with_raw_predictions(self, X, y, sample_weight, raw_predictions=None):
         if raw_predictions is None:
             patcher_raw_predict = nullcontext()
         else:
