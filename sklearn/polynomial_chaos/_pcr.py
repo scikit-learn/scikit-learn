@@ -45,7 +45,7 @@ class PolynomialChaosRegressor(BaseEstimator, RegressorMixin):
 
     Parameters
     ----------
-    distibution : scpiy.stats distribution or tuple (distribution_1, \
+    distribution : scpiy.stats distribution or tuple (distribution_1, \
         distribution_2, ...), default=None
         Distribution of the input parameter(s) of the Polynomial Chaos
         expansion. If a single distribution is given, it specifies the
@@ -81,8 +81,7 @@ class PolynomialChaosRegressor(BaseEstimator, RegressorMixin):
         `LinearModel` that has a :term:`fit` method. Make sure to set
         `fit_intercept = False`.
 
-    multiindices : ndarray of shape (n_output_features_, n_features_in_), \
-        default=None
+    multiindices : ndarray of shape (n_output_features_, n_features_in_), default=None
         The combination of `degree`, `truncation` and `weights` provides a
         flexible way to define the Polynomial Chaos basis. To allow for even
         more fine-grained control, this optional argument allows to specify an
@@ -116,6 +115,9 @@ class PolynomialChaosRegressor(BaseEstimator, RegressorMixin):
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
+
+    norms_ : array-like of shape (n_terms,)
+        The norm of each polynomial basis terms.
 
     output_mean_ : float
         The mean of the output (when `scale_outputs = True`).
@@ -368,7 +370,7 @@ class PolynomialChaosRegressor(BaseEstimator, RegressorMixin):
 
         Parameters
         ----------
-        features : int or str, or tuple of int or str
+        *features : int or str
             Input features to compute the joint sensitivity index of. If a
             single `int` or `str` argument is given, we return the main
             sensitivity index of the input feature with the given index or
