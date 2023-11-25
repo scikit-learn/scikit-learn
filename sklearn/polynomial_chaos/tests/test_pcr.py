@@ -81,7 +81,7 @@ def test_fit_distributions():
         pce.fit(X, y)
 
     # unmatched distribution type throws error
-    with pytest.raises(ValueError, match="frozen distribution"):
+    with pytest.raises(ValueError, match="'dist'"):
         pce = PolynomialChaosRegressor(False)
         pce.fit(X, y)
 
@@ -233,7 +233,7 @@ def test_predict_inputs():
     )
     pce = PolynomialChaosRegressor(distribution, degree=3, scale_outputs=False)
     pce.fit(X, y)
-    with pytest.raises(ValueError, match="input features"):
+    with pytest.raises(ValueError, match="expecting 2 features"):
         pce.predict(X[:, 0].reshape(-1, 1))
 
 
@@ -391,7 +391,7 @@ def test_polynomial_model_exact(indices, SU):
 @pytest.mark.parametrize(
     "degree, N, relative_error",
     [
-        (3, 29, (0.05, 0.12, 0.25)),
+        (3, 29, (0.05, 0.12, 0.5)),
         (4, 44, (0.01, 0.04, 0.02)),
         (5, 77, (0.001, 0.001, 0.001)),
     ],

@@ -6,6 +6,12 @@ import numpy as np
 # sklearn imports
 from ..base import BaseEstimator, TransformerMixin, _fit_context
 from ..utils._multiindexset import MultiIndexSet
+from ..utils._orthogonal_polynomial import (  # noqa: F401
+    Hermite,
+    Jacobi,
+    Laguerre,
+    Legendre,
+)
 from ..utils._param_validation import Integral, Interval, Iterable, StrOptions
 from ..utils.validation import (
     _check_feature_names_in,
@@ -83,6 +89,10 @@ class OrthogonalPolynomialFeatures(BaseEstimator, TransformerMixin):
     ----------
     n_features_in_ : int
         Number of features seen during :term:`fit`.
+
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
 
     n_features_out_ : int
         The total number of orthogonal polynomial output features.
@@ -234,7 +244,7 @@ class OrthogonalPolynomialFeatures(BaseEstimator, TransformerMixin):
                 self.polynomials_.append(
                     poly() if len(params) == 0 else poly(*params)
                 )
-            except (ValueError, TypeError):
+            except Exception:
                 raise ValueError(
                     f"could not interpret the polynomial at index {j} "
                     f"as a valid polynomial, got '{polynomial}'"
@@ -286,6 +296,9 @@ class OrthogonalPolynomialFeatures(BaseEstimator, TransformerMixin):
 
         # check if fit has been called
         check_is_fitted(self)
+        X = self._validate_data(
+            X, reset=False, accept_sparse=False, ensure_2d=True
+        )
         n_samples, n_features = X.shape
 
         # compute the 1d polynomial features

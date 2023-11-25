@@ -102,6 +102,10 @@ class PolynomialChaosRegressor(BaseEstimator, RegressorMixin):
     n_features_in_ : int
         Number of features seen during :term:`fit`.
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
     multiindices_ : array-like of shape (n_terms, n_features_in_)
         An array with the combinations of input features and polynomial degrees
         that constitute the Polynomial Chaos basis. Every row in this array
@@ -121,8 +125,8 @@ class PolynomialChaosRegressor(BaseEstimator, RegressorMixin):
     """
 
     _parameter_constraints: dict = {
+        "distribution": [HasMethods("dist"), "array-like", None],
         "degree": [Interval(Integral, 0, None, closed="left")],
-        "distibution": [HasMethods("dist"), "array_like", None],
         "truncation": [
             StrOptions({
                 "full_tensor",
@@ -307,13 +311,8 @@ class PolynomialChaosRegressor(BaseEstimator, RegressorMixin):
         # check if this estiamtor is fitted
         check_is_fitted(self)
 
-        # check size of input features
-        if X.shape[1] != self.n_features_in_:
-            raise ValueError(
-                f"{self.n_features_in_} input features are required, got "
-                f"{X.shape[1]}"
-            )
-        X = self._validate_data(X)
+        # check input features
+        X = self._validate_data(X, reset=False, ensure_2d=True)
 
         # scale features
         X_scaled = np.zeros_like(X)
