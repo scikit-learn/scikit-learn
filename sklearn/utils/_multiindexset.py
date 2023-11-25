@@ -91,16 +91,12 @@ class MultiIndexSet(ABC):
 
         # check dimension
         if not isinstance(dimension, Integral) or dimension < 1:
-            raise ValueError(
-                f"dimension must be a non-negative int, got '{dimension}'"
-            )
+            raise ValueError(f"dimension must be a non-negative int, got '{dimension}'")
         self.dimension = dimension
 
         # check degree
         if not isinstance(degree, Integral) or degree < 0:
-            raise ValueError(
-                f"degree must be a non-negative int, got '{degree}'"
-            )
+            raise ValueError(f"degree must be a non-negative int, got '{degree}'")
         self.degree = degree
 
         # check weights
@@ -214,8 +210,7 @@ class FullTensor(MultiIndexSet):
 
     def _contains(self, index):
         return all(
-            idx / weight <= self.degree
-            for idx, weight in zip(index, self.weights)
+            idx / weight <= self.degree for idx, weight in zip(index, self.weights)
         )
 
 
@@ -234,8 +229,7 @@ class TotalDegree(MultiIndexSet):
 
     def _contains(self, index):
         return (
-            sum(idx / weight for idx, weight in zip(index, self.weights))
-            <= self.degree
+            sum(idx / weight for idx, weight in zip(index, self.weights)) <= self.degree
         )
 
 
@@ -277,9 +271,6 @@ class ZarembaCross(MultiIndexSet):
             return False
         else:
             return (
-                prod(
-                    max(1, i / weight)
-                    for i, weight in zip(index, self.weights)
-                )
+                prod(max(1, i / weight) for i, weight in zip(index, self.weights))
                 <= self.degree
             )

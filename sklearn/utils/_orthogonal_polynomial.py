@@ -97,9 +97,7 @@ class Polynomial(ABC):
 
         # check degree
         if not isinstance(degree, Integral) or degree < 0:
-            raise ValueError(
-                f"degree must be a non-negative int, got '{degree}'"
-            )
+            raise ValueError(f"degree must be a non-negative int, got '{degree}'")
 
         # compute Vandermonde matrix
         return self._vandermonde(points, degree)
@@ -237,9 +235,7 @@ class Polynomial(ABC):
         """
         # check degree
         if not isinstance(degree, Integral) or degree < 0:
-            raise ValueError(
-                f"degree must be a non-negative int, got '{degree}'"
-            )
+            raise ValueError(f"degree must be a non-negative int, got '{degree}'")
 
         # compute norm
         return np.sqrt(self._norm_squared(degree))
@@ -289,9 +285,7 @@ class Jacobi(Polynomial):
 
         # set alpha
         if not isinstance(alpha, Real):
-            raise ValueError(
-                f"alpha must be float or int, got '{type(alpha)}'"
-            )
+            raise ValueError(f"alpha must be float or int, got '{type(alpha)}'")
         if not (alpha > 0):
             raise ValueError(f"alpha must be > 0, got '{alpha}'")
         self.alpha = alpha

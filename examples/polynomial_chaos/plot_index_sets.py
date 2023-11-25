@@ -120,9 +120,7 @@ truncations = [
 ]
 _, axes = plt.subplots(2, 2)
 for ax, truncation in zip(axes.ravel(), truncations):
-    pce = PolynomialChaosRegressor(
-        distribution, degree=6, truncation=truncation
-    )
+    pce = PolynomialChaosRegressor(distribution, degree=6, truncation=truncation)
     pce.fit(X, y)
     plot_coefficients(pce, ax, s=100)
     ax.set_title(truncation.capitalize().replace("_", " "))

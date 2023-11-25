@@ -91,9 +91,7 @@ def test_fit_predefined_multiindex_set_shape(truncation, n_terms):
 )
 def test_fit_predefined_multiindex_set_shape_weighted(truncation, n_terms):
     X = np.linspace(0, 1, num=6).reshape(3, 2)
-    poly = OrthogonalPolynomialFeatures(
-        6, truncation=truncation, weights=(1, 3 / 5)
-    )
+    poly = OrthogonalPolynomialFeatures(6, truncation=truncation, weights=(1, 3 / 5))
     X_trans = poly.fit_transform(X)
     assert X_trans.shape[0] == 3
     assert X_trans.shape[1] == n_terms

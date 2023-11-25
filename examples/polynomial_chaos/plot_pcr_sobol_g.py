@@ -134,9 +134,7 @@ pce = PolynomialChaosRegressor(distribution, degree=1)
 pce.fit(X, y)
 errors = [np.linalg.norm(pce.main_sens() - S) / np.linalg.norm(S)]
 iters = [1]
-solver = LassoCV(
-    fit_intercept=False, alphas=np.logspace(-12, 2, 25), max_iter=100000
-)
+solver = LassoCV(fit_intercept=False, alphas=np.logspace(-12, 2, 25), max_iter=100000)
 for i in range(10, 35, 5):
     pce = PolynomialChaosRegressor(distribution, degree=1, solver=solver)
     pce.fit(X, y, max_iter=i)

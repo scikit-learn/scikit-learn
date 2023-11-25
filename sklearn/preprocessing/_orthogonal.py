@@ -241,9 +241,7 @@ class OrthogonalPolynomialFeatures(BaseEstimator, TransformerMixin):
                 terms = polynomial.split("_")
                 poly = eval(f"{terms[0].capitalize()}")
                 params = [float(param) for param in terms[1:]]
-                self.polynomials_.append(
-                    poly() if len(params) == 0 else poly(*params)
-                )
+                self.polynomials_.append(poly() if len(params) == 0 else poly(*params))
             except Exception:
                 raise ValueError(
                     f"could not interpret the polynomial at index {j} "
@@ -256,9 +254,7 @@ class OrthogonalPolynomialFeatures(BaseEstimator, TransformerMixin):
             m = m_type(n_features, self.degree, weights=self.weights)
             self.multiindices_ = np.vstack(list(m.indices()))
         else:  # a set of custom multiindices was provided
-            self.multiindices_ = check_array(
-                list(self.multiindices), dtype="int64"
-            )
+            self.multiindices_ = check_array(list(self.multiindices), dtype="int64")
 
         # get maximum required polynomial degree for each feature
         self.maximum_degrees_ = np.amax(self.multiindices_, axis=0)
@@ -296,9 +292,7 @@ class OrthogonalPolynomialFeatures(BaseEstimator, TransformerMixin):
 
         # check if fit has been called
         check_is_fitted(self)
-        X = self._validate_data(
-            X, reset=False, accept_sparse=False, ensure_2d=True
-        )
+        X = self._validate_data(X, reset=False, accept_sparse=False, ensure_2d=True)
         n_samples, n_features = X.shape
 
         # compute the 1d polynomial features

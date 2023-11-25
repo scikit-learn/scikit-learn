@@ -130,9 +130,7 @@ def test_from_distribution(distribution, polynomial_type):
         Polynomial.from_distribution(maxwell())
 
     # passes
-    assert isinstance(
-        Polynomial.from_distribution(distribution), polynomial_type
-    )
+    assert isinstance(Polynomial.from_distribution(distribution), polynomial_type)
 
 
 # test scale features from distribution
@@ -153,12 +151,8 @@ def test_scale_features_from_distribution(distribution, mean, std):
     X_1d = distribution.rvs((n, 1), random_state=random_state)
     X_2d = distribution.rvs((n, 2), random_state=random_state)
     polynomial = Polynomial.from_distribution(distribution)
-    X_1d_trans = polynomial.scale_features_from_distribution(
-        X_1d, distribution
-    )
-    X_2d_trans = polynomial.scale_features_from_distribution(
-        X_2d, distribution
-    )
+    X_1d_trans = polynomial.scale_features_from_distribution(X_1d, distribution)
+    X_2d_trans = polynomial.scale_features_from_distribution(X_2d, distribution)
     assert abs(X_1d_trans.mean() - mean) < 0.01
     assert abs(X_1d_trans.std() - std) < 0.01
     assert abs(X_2d_trans.mean() - mean) < 0.01
@@ -175,9 +169,7 @@ def test_scale_features_from_distribution(distribution, mean, std):
 
     # unmatched distribution type
     with pytest.raises(ValueError, match="maxwell"):
-        polynomial.scale_features_from_distribution(
-            maxwell.rvs((n, 1)), maxwell()
-        )
+        polynomial.scale_features_from_distribution(maxwell.rvs((n, 1)), maxwell())
 
 
 # test norm

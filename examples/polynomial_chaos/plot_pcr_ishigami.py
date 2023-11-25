@@ -35,11 +35,7 @@ b = 0.1
 
 
 def ishigami(X):
-    y = (
-        np.sin(X[:, 0])
-        + a * np.sin(X[:, 1]) ** 2
-        + b * X[:, 2] ** 4 * np.sin(X[:, 0])
-    )
+    y = np.sin(X[:, 0]) + a * np.sin(X[:, 1]) ** 2 + b * X[:, 2] ** 4 * np.sin(X[:, 0])
     return y
 
 
@@ -175,9 +171,7 @@ joint = list()
 joint.append(pce.joint_sens(0, 1))
 joint.append(pce.joint_sens(0, 2))
 joint.append(pce.joint_sens(1, 2))
-DataFrame(
-    {"predicted": joint, "exact": [S12, S13, S23]}, index=["S12", "S13", "S23"]
-)
+DataFrame({"predicted": joint, "exact": [S12, S13, S23]}, index=["S12", "S13", "S23"])
 
 # %%
 # Convergence of the sensitivity indices
@@ -249,9 +243,7 @@ from scipy.stats import sobol_indices
 
 
 def ishigami(x):
-    return (
-        np.sin(x[0]) + a * np.sin(x[1]) ** 2 + b * (x[2] ** 4) * np.sin(x[0])
-    )
+    return np.sin(x[0]) + a * np.sin(x[1]) ** 2 + b * (x[2] ** 4) * np.sin(x[0])
 
 
 total_sens_sampling = list()

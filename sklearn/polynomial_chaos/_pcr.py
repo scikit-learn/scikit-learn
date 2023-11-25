@@ -202,9 +202,7 @@ class PolynomialChaosRegressor(BaseEstimator, RegressorMixin):
         if self.distribution is None:
             data_min = np.amin(X, axis=0)
             data_max = np.amax(X, axis=0)
-            self.distributions_ = [
-                uniform(a, b) for a, b in zip(data_min, data_max)
-            ]
+            self.distributions_ = [uniform(a, b) for a, b in zip(data_min, data_max)]
         elif hasattr(self.distribution, "dist"):
             self.distributions_ = [self.distribution] * self.n_features_in_
         elif isinstance(self.distribution, Iterable):
@@ -232,20 +230,14 @@ class PolynomialChaosRegressor(BaseEstimator, RegressorMixin):
         if self.solver is None:
             solver = LinearRegression(fit_intercept=False)
         else:  # isinstance(self.solver, LinearModel)
-            if (
-                self.solver.fit_intercept
-            ):  # force solvers to have fit_intercept
-                raise ValueError(
-                    "make sure to set 'fit_intercept=False' in solver"
-                )
+            if self.solver.fit_intercept:  # force solvers to have fit_intercept
+                raise ValueError("make sure to set 'fit_intercept=False' in solver")
             solver = clone(self.solver)
 
         # get orthogonal polynomials for each distribution
         self.polynomials_ = list()
         for distribution in self.distributions_:
-            self.polynomials_.append(
-                Polynomial.from_distribution(distribution)
-            )
+            self.polynomials_.append(Polynomial.from_distribution(distribution))
 
         # scale features
         X_scaled = np.zeros_like(X)
@@ -390,23 +382,15 @@ class PolynomialChaosRegressor(BaseEstimator, RegressorMixin):
             idcs = column_or_1d(args)
         if len(np.unique(idcs)) != len(idcs):
             raise ValueError("features must be unique")
-        if len(args) > self.n_features_in_ or np.any(
-            idcs > self.n_features_in_
-        ):
-            raise ValueError(
-                f"this model has only {self.n_features_in_} features"
-            )
+        if len(args) > self.n_features_in_ or np.any(idcs > self.n_features_in_):
+            raise ValueError(f"this model has only {self.n_features_in_} features")
 
         # actually compute the joint sensitivity index
         joint_sens = 0
         for j, index in enumerate(self.multiindices_):
-            if np.sum(index != 0) == len(idcs) and all(
-                i > 0 for i in index[idcs]
-            ):
+            if np.sum(index != 0) == len(idcs) and all(i > 0 for i in index[idcs]):
                 joint_sens += (
-                    self.output_std_**2
-                    * self.coef_[j] ** 2
-                    * self.norms_[j] ** 2
+                    self.output_std_**2 * self.coef_[j] ** 2 * self.norms_[j] ** 2
                 )
 
         return joint_sens / self.var()
@@ -458,11 +442,7 @@ class PolynomialChaosRegressor(BaseEstimator, RegressorMixin):
             for j, index in enumerate(self.multiindices_):
                 if not index[i] > 0:
                     continue
-                t[i] += (
-                    self.output_std_**2
-                    * self.coef_[j] ** 2
-                    * self.norms_[j] ** 2
-                )
+                t[i] += self.output_std_**2 * self.coef_[j] ** 2 * self.norms_[j] ** 2
         return list(t / self.var())
 
     def mean(self):
@@ -504,9 +484,5 @@ class PolynomialChaosRegressor(BaseEstimator, RegressorMixin):
         var = 0
         for j, index in enumerate(self.multiindices_):
             if np.any(index > 0):
-                var += (
-                    self.output_std_**2
-                    * self.coef_[j] ** 2
-                    * self.norms_[j] ** 2
-                )
+                var += self.output_std_**2 * self.coef_[j] ** 2 * self.norms_[j] ** 2
         return var

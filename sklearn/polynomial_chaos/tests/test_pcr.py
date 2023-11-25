@@ -118,9 +118,7 @@ def test_fit_solvers():
 
     # unknown solver type raises error
     with pytest.raises(ValueError, match="fit"):
-        pce = PolynomialChaosRegressor(
-            (uniform(), uniform()), degree=12, solver=False
-        )
+        pce = PolynomialChaosRegressor((uniform(), uniform()), degree=12, solver=False)
         pce.fit(X, y)
 
 
@@ -208,9 +206,7 @@ def test_grid_search_1_polynomial():
     solver = LassoCV(
         fit_intercept=False, alphas=np.logspace(-12, 2, 25), max_iter=100000
     )
-    pce = PolynomialChaosRegressor(
-        distribution, solver=solver, scale_outputs=False
-    )
+    pce = PolynomialChaosRegressor(distribution, solver=solver, scale_outputs=False)
     pceCV = GridSearchCV(pce, param_grid, cv=KFold(n_splits=5))
     pceCV.fit(X, y)
     assert pceCV.best_params_["degree"] == 4
@@ -309,10 +305,7 @@ def test_pandas():
 
     assert abs(pce.joint_sens("feature0") - 25 / 91) < 1e-12
     assert abs(pce.joint_sens("feature0", "feature1") - 5 / 91) < 1e-12
-    assert (
-        abs(pce.joint_sens("feature0", "feature1", "feature2") - 1 / 91)
-        < 1e-12
-    )
+    assert abs(pce.joint_sens("feature0", "feature1", "feature2") - 1 / 91) < 1e-12
 
 
 # Verify input checking for joint_sens
@@ -403,9 +396,7 @@ def test_polynomial_model(degree, N, relative_error):
     pce.fit(X, y)
 
     for idcs in ((0,), (1,), (2,)):
-        assert (pce.joint_sens(*idcs) - 25 / 91) / (25 / 91) < relative_error[
-            0
-        ]
+        assert (pce.joint_sens(*idcs) - 25 / 91) / (25 / 91) < relative_error[0]
 
     for idcs in ((0, 1), (1, 2), (0, 2)):
         assert (pce.joint_sens(*idcs) - 5 / 91) / (5 / 91) < relative_error[1]
@@ -450,16 +441,10 @@ def test_ishigami(degree, N, main, total):
     dimension = 3
     pce = PolynomialChaosRegressor(uniform(-np.pi, 2 * np.pi), degree=degree)
     X = np.pi * get_samples(degree, dimension)[:N, :]
-    y = (
-        np.sin(X[:, 0])
-        + a * np.sin(X[:, 1]) ** 2
-        + b * X[:, 2] ** 4 * np.sin(X[:, 0])
-    )
+    y = np.sin(X[:, 0]) + a * np.sin(X[:, 1]) ** 2 + b * X[:, 2] ** 4 * np.sin(X[:, 0])
     pce.fit(X, y)
 
-    for j, idcs in enumerate(
-        ((0,), (1,), (2,), (0, 1), (0, 2), (1, 2), (0, 1, 2))
-    ):
+    for j, idcs in enumerate(((0,), (1,), (2,), (0, 1), (0, 2), (1, 2), (0, 1, 2))):
         assert abs(pce.joint_sens(*idcs) - main[j]) < 1e-4
 
     for j, tot in enumerate(total):
