@@ -6,7 +6,7 @@
 
 Computation times
 =================
-**00:01.136** total execution time for 296 files **from all galleries**:
+**00:01.245** total execution time for 297 files **from all galleries**:
 
 .. container::
 
@@ -32,8 +32,8 @@ Computation times
    * - Example
      - Time
      - Mem (MB)
-   * - :ref:`sphx_glr_auto_examples_polynomial_chaos_plot_pcr_ishigami.py` (``../examples/polynomial_chaos/plot_pcr_ishigami.py``)
-     - 00:01.136
+   * - :ref:`sphx_glr_auto_examples_polynomial_chaos_plot_simple_1d.py` (``../examples/polynomial_chaos/plot_simple_1d.py``)
+     - 00:01.245
      - 0.0
    * - :ref:`sphx_glr_auto_examples_applications_plot_cyclical_feature_engineering.py` (``../examples/applications/plot_cyclical_feature_engineering.py``)
      - 00:00.000
@@ -60,6 +60,9 @@ Computation times
      - 00:00.000
      - 0.0
    * - :ref:`sphx_glr_auto_examples_applications_plot_stock_market.py` (``../examples/applications/plot_stock_market.py``)
+     - 00:00.000
+     - 0.0
+   * - :ref:`sphx_glr_auto_examples_applications_plot_time_series_lagged_features.py` (``../examples/applications/plot_time_series_lagged_features.py``)
      - 00:00.000
      - 0.0
    * - :ref:`sphx_glr_auto_examples_applications_plot_tomography_l1_reconstruction.py` (``../examples/applications/plot_tomography_l1_reconstruction.py``)
@@ -776,19 +779,19 @@ Computation times
    * - :ref:`sphx_glr_auto_examples_neural_networks_plot_rbm_logistic_classification.py` (``../examples/neural_networks/plot_rbm_logistic_classification.py``)
      - 00:00.000
      - 0.0
+   * - :ref:`sphx_glr_auto_examples_polynomial_chaos_plot_simple_1d.py` (``../examples/polynomial_chaos/plot_simple_1d.py``)
+     - 00:00.000
+     - 0.0
    * - :ref:`sphx_glr_auto_examples_polynomial_chaos_plot_index_sets.py` (``../examples/polynomial_chaos/plot_index_sets.py``)
+     - 00:00.000
+     - 0.0
+   * - :ref:`sphx_glr_auto_examples_polynomial_chaos_plot_pcr_ishigami.py` (``../examples/polynomial_chaos/plot_pcr_ishigami.py``)
      - 00:00.000
      - 0.0
    * - :ref:`sphx_glr_auto_examples_polynomial_chaos_plot_pcr_noisy_data.py` (``../examples/polynomial_chaos/plot_pcr_noisy_data.py``)
      - 00:00.000
      - 0.0
    * - :ref:`sphx_glr_auto_examples_polynomial_chaos_plot_pcr_sobol_g.py` (``../examples/polynomial_chaos/plot_pcr_sobol_g.py``)
-     - 00:00.000
-     - 0.0
-   * - :ref:`sphx_glr_auto_examples_polynomial_chaos_plot_simple_1d.py` (``../examples/polynomial_chaos/plot_simple_1d.py``)
-     - 00:00.000
-     - 0.0
-   * - :ref:`sphx_glr_auto_examples_polynomial_chaos_plot_pcr_ishigami.py` (``../examples/polynomial_chaos/plot_pcr_ishigami.py``)
      - 00:00.000
      - 0.0
    * - :ref:`sphx_glr_auto_examples_preprocessing_plot_all_scaling.py` (``../examples/preprocessing/plot_all_scaling.py``)
