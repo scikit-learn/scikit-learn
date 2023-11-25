@@ -1321,11 +1321,13 @@ a ``degree``, a ``truncation`` rule, and optional ``weights``.
     >>> poly = OrthogonalPolynomialFeatures(degree=4, truncation="total_degree", weights=(1, 1/2))
     >>> X_transformed = poly.fit_transform(X)
     >>> a = np.zeros((5, 5), dtype=int)
-    >>> for multiindex in poly.multiindices_:
-    ...     a[*multiindex] = 1
+    >>> for m in poly.multiindices_:
+    ...     a[m[0], m[1]] = 1
     ... 
     >>> for row in a[::-1]:
-    ...     print(*["x" if x else " " for x in row])
+    ...     for x in row:
+    ...             print("x" if x else " ", end=" ")
+    ...     print()
     ... 
     x          
     x          
