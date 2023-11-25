@@ -73,7 +73,7 @@ class OrthogonalPolynomialFeatures(BaseEstimator, TransformerMixin):
         = None`, an unweighted multiindex set will be used. The default is
         `None`.
 
-    indices : array-like of shape (n_output_features_, n_features_in_), \
+    multiindices : array-like of shape (n_output_features_, n_features_in_), \
         dtype=np.int64, default=None
         The combination of `degree`, `truncation` and `weights` provides a
         flexible way to define various multiindex set shapes that govern which
@@ -87,24 +87,30 @@ class OrthogonalPolynomialFeatures(BaseEstimator, TransformerMixin):
 
     Attributes
     ----------
-    n_features_in_ : int
-        Number of features seen during :term:`fit`.
-
     feature_names_in_ : ndarray of shape (n_features_in_,)
         Names of features seen during :term:`fit`. Defined only when `X`
         has feature names that are all strings.
 
-    n_output_features_ : int
-        The total number of orthogonal polynomial output features.
+    maximum_degrees_ : array-like of shape (n_features_in_,)
+        The maximum degree of the orthogonal polynomial output features for
+        each input feature.
 
     multiindices_ : array-like of shape (n_output_features_, n_features_in_)
         An array with the combinations of input features that will be used to
         compose the output features. Every row in this array contains a single
         multiindex.
 
-    maximum_degrees_ : array-like of shape (n_features_in_,)
-        The maximum degree of the orthogonal polynomial output features for
-        each input feature.
+    norms_ : array-like of shape (n_output_features_,)
+        The norms of the polynomials used during :term:`fit`.
+
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+    n_output_features_ : int
+        The total number of orthogonal polynomial output features.
+
+    polynomials_ : array-like of shape (n_output_features_,)
+        The orthogonal polynomials used during :term:`fit`.
 
     See Also
     --------

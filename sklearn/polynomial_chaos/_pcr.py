@@ -45,9 +45,6 @@ class PolynomialChaosRegressor(BaseEstimator, RegressorMixin):
 
     Parameters
     ----------
-    degree : int, default=2
-        The maximum degree of the Polynomial Chaos expansion.
-
     distibution : scpiy.stats distribution or tuple (distribution_1, \
         distribution_2, ...), default=None
         Distribution of the input parameter(s) of the Polynomial Chaos
@@ -60,6 +57,9 @@ class PolynomialChaosRegressor(BaseEstimator, RegressorMixin):
         number of columns in `multiindices` (when the latter is provided). If
         `distribution = None`, we will assume a uniform distribution where the
         lower and upper bounds are extracted from the input features.
+
+    degree : int, default=2
+        The maximum degree of the Polynomial Chaos expansion.
 
     truncation : {'full_tensor', 'total_degree', 'hyperbolic_cross', \
         'Zaremba_cross'}, default='total_degree'
@@ -99,8 +99,11 @@ class PolynomialChaosRegressor(BaseEstimator, RegressorMixin):
 
     Attributes
     ----------
-    n_features_in_ : int
-        Number of features seen during :term:`fit`.
+    coef_ : array-like of length (n_terms,)
+        The coefficients of this Polynomial Chaos expansion.
+
+    distributions_ : array-like of length (n_terms,)
+        The input distributions seen during :term:`fit`.
 
     feature_names_in_ : ndarray of shape (n_features_in_,)
         Names of features seen during :term:`fit`. Defined only when `X`
@@ -111,8 +114,8 @@ class PolynomialChaosRegressor(BaseEstimator, RegressorMixin):
         that constitute the Polynomial Chaos basis. Every row in this array
         contains a single multiindex.
 
-    coef_ : array-like of length (n_terms,)
-        The coefficients of this Polynomial Chaos expansion.
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
 
     output_mean_ : float
         The mean of the output (when `scale_outputs = True`).
@@ -120,8 +123,25 @@ class PolynomialChaosRegressor(BaseEstimator, RegressorMixin):
     output_std_ : float
         The standard deviation of the output (when `scale_outputs = True`).
 
+    pipeline_ : sklearn.pipeline.Pipeline
+        The pipeline used during :term:`fit`.
+
+    polynomials_ : array-like of shape (n_features_in_,)
+        The orthogonal polynomial types for each input.
+
+    strategy_ : skleanr.polynomial_chaos.BasisIncrementStrategy
+        The adaptive basis growth strategy used during :term:`fit`.
+
     Examples
     --------
+    >>> import numpy as np
+    >>> from scipy.stats import uniform
+    >>> from sklearn.polynomial_chaos import PolynomialChaosRegressor
+    >>> X = np.linspace(0, 1).reshape(-1, 2)
+    >>> y = np.prod((3 * X**2 + 1) / 2, axis=1)
+    >>> pce = PolynomialChaosRegressor(uniform(), degree=4)
+    >>> _ = pce.fit(X, y)
+    >>> sens = pce.total_sens()
     """
 
     _parameter_constraints: dict = {
@@ -319,9 +339,8 @@ class PolynomialChaosRegressor(BaseEstimator, RegressorMixin):
         y_fit = self.pipeline_.predict(X_scaled)
         return y_fit * self.output_std_ + self.output_mean_
 
-    def joint_sens(self, *args):
-        r"""Returns the joint sensivitivity index for the given input
-        feature(s).
+    def joint_sens(self, *features):
+        r"""Return the joint sensivitivity indices.
 
         Given a Polynomial Chaos expansion
 
@@ -367,23 +386,23 @@ class PolynomialChaosRegressor(BaseEstimator, RegressorMixin):
         check_is_fitted(self)
 
         # input checking
-        dtype = type(args[0])
-        for arg in args:
+        dtype = type(features[0])
+        for arg in features:
             if not isinstance(arg, dtype):
                 raise ValueError("inputs must be all string or all int")
         if dtype == str:
             if self.feature_names_in_ is None:
                 raise ValueError("feature names have not been set")
-            idcs = np.zeros(len(args), dtype=int)
-            for j, arg in enumerate(args):
+            idcs = np.zeros(len(features), dtype=int)
+            for j, arg in enumerate(features):
                 if arg not in self.feature_names_in_:
                     raise ValueError(f"feature '{arg}' not found")
                 idcs[j] = np.where(self.feature_names_in_ == arg)[0][0]
         else:
-            idcs = column_or_1d(args)
+            idcs = column_or_1d(features)
         if len(np.unique(idcs)) != len(idcs):
             raise ValueError("features must be unique")
-        if len(args) > self.n_features_in_ or np.any(idcs > self.n_features_in_):
+        if len(features) > self.n_features_in_ or np.any(idcs > self.n_features_in_):
             raise ValueError(f"this model has only {self.n_features_in_} features")
 
         # actually compute the joint sensitivity index
@@ -397,7 +416,7 @@ class PolynomialChaosRegressor(BaseEstimator, RegressorMixin):
         return joint_sens / self.var()
 
     def main_sens(self):
-        r"""Returns the main sensitivity indices.
+        r"""Return the main sensitivity indices.
 
         Given a Polynomial Chaos expansion
 
@@ -414,12 +433,17 @@ class PolynomialChaosRegressor(BaseEstimator, RegressorMixin):
         :math:`j`\ th coordinate (and only that coordinate) is larger than 0.
         This sensitivity index expresses the effect on the output variance of
         varying only the :math:`j`\ th parameter .
+
+        Returns
+        -------
+        sensitivity_indices : array-like
+            The main-effectt Sobol  sensitivity indices for all input features.
         """
         check_is_fitted(self)
         return [self.joint_sens(i) for i in range(self.n_features_in_)]
 
     def total_sens(self):
-        r"""Returns the total sensitivity indices.
+        r"""Return the total sensitivity indices.
 
         Given a Polynomial Chaos expansion
 
@@ -436,6 +460,11 @@ class PolynomialChaosRegressor(BaseEstimator, RegressorMixin):
         :math:`j`\ th coordinate, amongst others, is larger than 0. This
         sensitivity index expresses the effect on the output variance of
         varying the :math:`j`\ th parameter, including all interaction terms.
+
+        Returns
+        -------
+        sensitivity_indices : array-like
+            The total-effectt Sobol  sensitivity indices for all input features.
         """
         check_is_fitted(self)
         t = np.zeros(self.n_features_in_)
@@ -447,8 +476,7 @@ class PolynomialChaosRegressor(BaseEstimator, RegressorMixin):
         return list(t / self.var())
 
     def mean(self):
-        r"""Returns the Polynomial Chaos approximation for the mean of the
-        response.
+        r"""Return the approximation for the mean of the model output.
 
         Given a Polynomial Chaos expansion
 
@@ -460,6 +488,10 @@ class PolynomialChaosRegressor(BaseEstimator, RegressorMixin):
         .. math::
             \mathbb{E}[y] = c_0
 
+        Returns
+        -------
+        mean : float
+            The approximation for the mean of the model output.
         """
         check_is_fitted(self)
         for j, index in enumerate(self.multiindices_):
@@ -468,7 +500,7 @@ class PolynomialChaosRegressor(BaseEstimator, RegressorMixin):
         return 0
 
     def var(self):
-        r"""Returns the Polynomial Chaos approximation for the variance of the response.
+        r"""Return the approximation for the variance of the model output.
 
         Given a Polynomial Chaos approximation
 
@@ -480,6 +512,10 @@ class PolynomialChaosRegressor(BaseEstimator, RegressorMixin):
         .. math::
             \mathbb{V}[y] = \sum_{u > 0} c_u^2 \mathbb{E}[\Psi_u^2]
 
+        Returns
+        -------
+        var : float
+            The approximation for the variance of the model output.
         """
         check_is_fitted(self)
         var = 0
