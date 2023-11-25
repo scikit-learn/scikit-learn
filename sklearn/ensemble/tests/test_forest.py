@@ -636,7 +636,9 @@ def test_forest_multioutput_integral_regression_target(ForestRegressor):
     rng = np.random.RandomState(42)
     X = iris.data
     y = rng.randint(low=0, high=10, size=(iris.data.shape[0], 2))
-    estimator = ForestRegressor(n_estimators=20, oob_score=True, bootstrap=True)
+    estimator = ForestRegressor(
+        n_estimators=20, oob_score=True, bootstrap=True, random_state=0
+    )
     estimator.fit(X, y)
 
     n_samples_bootstrap = _get_n_samples_bootstrap(len(X), estimator.max_samples)
