@@ -348,11 +348,9 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         ):
             if X_is_dataframe and (X.dtypes == "category").any():
                 warnings.warn(
-                    (
-                        "The categorical_features parameter will change to 'from_dtype'"
-                        " in v1.6. The 'from_dtype' option automatically treats"
-                        " categorical dtypes in a DataFrame as categorical features."
-                    ),
+                    "The categorical_features parameter will change to 'from_dtype'"
+                    " in v1.6. The 'from_dtype' option automatically treats"
+                    " categorical dtypes in a DataFrame as categorical features.",
                     FutureWarning,
                 )
             categorical_features = None
@@ -956,8 +954,8 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                     )
 
                 else:
-                    # If the scorer is a predefined string, then we optimize the evaluation
-                    # by re-using the incrementally computed raw predictions.
+                    # If the scorer is a predefined string, then we optimize the
+                    # evaluation by re-using the incrementally computed raw predictions.
                     if scoring_is_predefined_string:
                         raw_predictions_small_train = raw_predictions[
                             indices_small_train
