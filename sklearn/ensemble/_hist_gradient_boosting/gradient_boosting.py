@@ -125,7 +125,7 @@ def _patch_raw_predict(estimator, raw_predictions):
     public API to expose a way to compute vales from raw predictions. That would
     probably require also making the scorer aware of the inverse link function
     used by the estimator which is typically private API for now, hence the need
-    for this patching mechanism. 
+    for this patching mechanism.
     """
     orig_raw_predict = estimator._raw_predict
 
