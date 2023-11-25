@@ -16,12 +16,15 @@ where the input feature :math:`x \in [0, 10]`.
 # %%
 # Let's fix the random seed for reproducibility.
 import numpy as np
+
 np.random.seed(2023)
+
 
 # %%
 # First, define the true model :math:`y = x \sin(x)`.
 def model(X):
     return (X * np.sin(X)).ravel()
+
 
 # %%
 # Suppose :math:`x` is an input feature that is uniformly distributed between 0
@@ -39,7 +42,7 @@ y = model(X)
 # :math:`\eta\sim\mathcal{N}(0, \sigma)` to the model outputs, with
 # :math:`\sigma = 0.5`.
 sigma = 0.5
-eta = sigma*np.random.randn(*y.shape)
+eta = sigma * np.random.randn(*y.shape)
 y = y + eta
 
 # %%
@@ -99,13 +102,14 @@ for pce in pces:
 # Plotting the test error as a function of the polynomial degree clearly
 # illustrates the effect of overfitting.
 from matplotlib.ticker import MaxNLocator
+
 plt.plot(degrees, training_errors, marker="o", label="training")
 plt.plot(degrees, test_errors, marker="o", label="test")
 plt.xlabel("polynomial degree")
 plt.gca().xaxis.set_major_locator(MaxNLocator(integer=True))
 plt.ylabel("mean absolute error")
 plt.legend(frameon=False)
-plt.title('using LinearRegression')
+plt.title("using LinearRegression")
 plt.show()
 
 # %%
@@ -119,12 +123,10 @@ plt.show()
 # for the coefficients. In a Polynomial Chaos expansion, we can use, for
 # example, `LASSO (least absolute shrinkage and selection operator)
 # <https://en.wikipedia.org/wiki/Lasso_(statistics)>`_. This is implemented in
-# `scikit-learn` as :class:`~sklearn.linear_model.LassoCV`. 
+# `scikit-learn` as :class:`~sklearn.linear_model.LassoCV`.
 from sklearn.linear_model import LassoCV
 
-solver = solver=LassoCV(fit_intercept=False,
-                        max_iter=100000,
-                        tol=1e-1)
+solver = solver = LassoCV(fit_intercept=False, max_iter=100000, tol=1e-1)
 
 # %%
 # Let's refit the Polynomimal Chaos expansions using this new solver.
@@ -149,7 +151,7 @@ plt.xlabel("polynomial degree")
 plt.gca().xaxis.set_major_locator(MaxNLocator(integer=True))
 plt.ylabel("mean absolute error")
 plt.legend(frameon=False)
-plt.title('using LassoCV')
+plt.title("using LassoCV")
 plt.show()
 
 # %%
@@ -167,5 +169,5 @@ plt.show()
 # See also
 #   * :ref:`sphx_glr_auto_examples_polynomial_chaos_plot_index_sets.py` for an
 #     example with more than one feature.
-#   * :ref:`sphx_glr_auto_examples_polynomial_chaos_plot_pcr_noisy_data.py` 
+#   * :ref:`sphx_glr_auto_examples_polynomial_chaos_plot_pcr_noisy_data.py`
 #     for an example with more details on how to avoid overfitting.

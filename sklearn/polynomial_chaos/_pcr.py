@@ -6,22 +6,30 @@
 # import statements
 import numpy as np
 
+# qualified import statements
+from scipy.stats import uniform
+
 # sklearn imports
 from ..base import BaseEstimator, RegressorMixin, _fit_context, clone
-from ..utils._param_validation \
-    import Integral, Interval, Iterable, StrOptions, HasMethods
-
-# qualified import statements
-from scipy.stats import uniform, norm
-
-# sklearn imports
-from ._adaptive import BasisIncrementStrategy
 from ..linear_model._base import LinearRegression
+from ..pipeline import Pipeline
 from ..preprocessing._orthogonal import OrthogonalPolynomialFeatures
 from ..utils._orthogonal_polynomial import Polynomial
-from ..pipeline import Pipeline
-from ..utils.validation \
-    import check_is_fitted, check_X_y, _get_feature_names, column_or_1d
+from ..utils._param_validation import (
+    HasMethods,
+    Integral,
+    Interval,
+    Iterable,
+    StrOptions,
+)
+from ..utils.validation import (
+    _get_feature_names,
+    check_is_fitted,
+    check_X_y,
+    column_or_1d,
+)
+from ._adaptive import BasisIncrementStrategy
+
 
 class PolynomialChaosRegressor(BaseEstimator, RegressorMixin):
     """Polynomial Chaos regression.
@@ -72,7 +80,7 @@ class PolynomialChaosRegressor(BaseEstimator, RegressorMixin):
         coefficients of the Polynomial Chaos expansion. This should be another
         `LinearModel` that has a :term:`fit` method. Make sure to set
         `fit_intercept = False`.
-    
+
     multiindices : ndarray of shape (`n_output_features_`, `n_features_in_`), \
         default=None
         The combination of `degree`, `truncation` and `weights` provides a
@@ -111,20 +119,34 @@ class PolynomialChaosRegressor(BaseEstimator, RegressorMixin):
     Examples
     --------
     """
+
     _parameter_constraints: dict = {
-        "degree":        [Interval(Integral, 0, None, closed="left")],
-        "distibution":   [HasMethods("dist"), "array_like", None],
-        "truncation" :   [StrOptions({"full_tensor", "total_degree", 
-                              "hyperbolic_cross", "Zaremba_cross"})],
-        "weights":       ["array-like", None],
-        "solver":        [HasMethods("fit"), None],
-        "multiindices":  ["array-like", None],
-        "scale_outputs": [bool]
+        "degree": [Interval(Integral, 0, None, closed="left")],
+        "distibution": [HasMethods("dist"), "array_like", None],
+        "truncation": [
+            StrOptions({
+                "full_tensor",
+                "total_degree",
+                "hyperbolic_cross",
+                "Zaremba_cross",
+            })
+        ],
+        "weights": ["array-like", None],
+        "solver": [HasMethods("fit"), None],
+        "multiindices": ["array-like", None],
+        "scale_outputs": [bool],
     }
 
-    def __init__(self, distribution=None, degree=2, truncation="total_degree",
-                 weights=None, solver=None, multiindices=None,
-                 scale_outputs=True):
+    def __init__(
+        self,
+        distribution=None,
+        degree=2,
+        truncation="total_degree",
+        weights=None,
+        solver=None,
+        multiindices=None,
+        scale_outputs=True,
+    ):
         self.distribution = distribution
         self.degree = degree
         self.truncation = truncation
@@ -171,46 +193,49 @@ class PolynomialChaosRegressor(BaseEstimator, RegressorMixin):
         # cannot perform regression with less than 2 data points
         if len(y) < 2:
             raise ValueError(f"expected more than 1 sample, got {len(y)}")
-        
+
         # check distributions
-        if self.distribution == None:
+        if self.distribution is None:
             data_min = np.amin(X, axis=0)
             data_max = np.amax(X, axis=0)
-            self.distributions_ = \
-                [uniform(a, b) for a, b in zip(data_min, data_max)]
+            self.distributions_ = [
+                uniform(a, b) for a, b in zip(data_min, data_max)
+            ]
         elif hasattr(self.distribution, "dist"):
-            self.distributions_ = [self.distribution]*self.n_features_in_
+            self.distributions_ = [self.distribution] * self.n_features_in_
         elif isinstance(self.distribution, Iterable):
             self.distributions_ = list(self.distribution)
             if not len(self.distributions_) == self.n_features_in_:
                 raise ValueError(
-                    f"the number of distributions does not match the number "
+                    "the number of distributions does not match the number "
                     f"of input features, got {len(self.distributions_)} but "
                     f"expected {self.n_features_in_}"
                 )
             for j, distribution in enumerate(self.distributions_):
                 if not hasattr(distribution, "dist"):
                     raise ValueError(
-                        f"distributions must be all of type 'scipy.stats' "
-                        f"frozen distribution, but the distribution at index "
+                        "distributions must be all of type 'scipy.stats' "
+                        "frozen distribution, but the distribution at index "
                         f"{j} has type '{type(distribution)}'"
                     )
         else:
             raise ValueError(
-                f"distribution must be a 'scipy.stats' frozen distribution "
+                "distribution must be a 'scipy.stats' frozen distribution "
                 f"or a tuple/list, got '{type(self.distribution)}'"
             )
 
         # check solver
         if self.solver is None:
             solver = LinearRegression(fit_intercept=False)
-        else: # isinstance(self.solver, LinearModel)
-            if self.solver.fit_intercept: # force solvers to have fit_intercept
+        else:  # isinstance(self.solver, LinearModel)
+            if (
+                self.solver.fit_intercept
+            ):  # force solvers to have fit_intercept
                 raise ValueError(
                     "make sure to set 'fit_intercept=False' in solver"
                 )
             solver = clone(self.solver)
-        
+
         # get orthogonal polynomials for each distribution
         self.polynomials_ = list()
         for distribution in self.distributions_:
@@ -220,45 +245,42 @@ class PolynomialChaosRegressor(BaseEstimator, RegressorMixin):
 
         # scale features
         X_scaled = np.zeros_like(X)
-        for j, (distribution, polynomial) in \
-            enumerate(zip(self.distributions_, self.polynomials_)):
-            X_scaled[:, j] = \
-                polynomial.scale_features_from_distribution(
-                    X[:, j], distribution
-                )
+        for j, (distribution, polynomial) in enumerate(
+            zip(self.distributions_, self.polynomials_)
+        ):
+            X_scaled[:, j] = polynomial.scale_features_from_distribution(
+                X[:, j], distribution
+            )
 
         # scale outputs
         self.output_mean_ = np.mean(y) if self.scale_outputs else 0
         self.output_std_ = np.std(y) if self.scale_outputs else 1
         y = y - self.output_mean_
-        y = y/self.output_std_
+        y = y / self.output_std_
 
         self.multiindices_ = self.multiindices
         self.strategy_ = BasisIncrementStrategy.from_string(strategy)
 
         # adaptive basis growth
         for iter in range(max_iter):
-        
+
             # create orthogonal polynomial basis transformer
             basis = OrthogonalPolynomialFeatures(
-                self.degree, 
+                self.degree,
                 [str(polynomial) for polynomial in self.polynomials_],
                 truncation=self.truncation,
-                weights=self.weights, 
-                multiindices=self.multiindices_
+                weights=self.weights,
+                multiindices=self.multiindices_,
             )
-        
+
             # create pipeline
-            self.pipeline_ = Pipeline([
-                ("basis", basis),
-                ("solver", solver)
-            ])
+            self.pipeline_ = Pipeline([("basis", basis), ("solver", solver)])
 
             # solve for coefficients
             self.pipeline_.fit(X_scaled, y)
 
             # for convenient access to multiindices, norms and coefficients
-            self.multiindices_ =self.pipeline_["basis"].multiindices_
+            self.multiindices_ = self.pipeline_["basis"].multiindices_
             self.norms_ = self.pipeline_["basis"].norms_
             self.coef_ = self.pipeline_["solver"].coef_
 
@@ -292,18 +314,18 @@ class PolynomialChaosRegressor(BaseEstimator, RegressorMixin):
                 f"{X.shape[1]}"
             )
         X = self._validate_data(X)
-                                
+
         # scale features
         X_scaled = np.zeros_like(X)
-        for j, (distribution, polynomial) in \
-            enumerate(zip(self.distributions_, self.polynomials_)):
-            X_scaled[:, j] = \
-                polynomial.scale_features_from_distribution(
-                    X[:, j], distribution
-                )
+        for j, (distribution, polynomial) in enumerate(
+            zip(self.distributions_, self.polynomials_)
+        ):
+            X_scaled[:, j] = polynomial.scale_features_from_distribution(
+                X[:, j], distribution
+            )
 
         y_fit = self.pipeline_.predict(X_scaled)
-        return y_fit*self.output_std_ + self.output_mean_
+        return y_fit * self.output_std_ + self.output_mean_
 
     def joint_sens(self, *args):
         r"""Returns the joint sensivitivity index for the given input
@@ -317,10 +339,10 @@ class PolynomialChaosRegressor(BaseEstimator, RegressorMixin):
         the Polynomial Chaos-based Sobol indices can be computed as
 
         .. math::
-            S_{\{i_0, i_1, \ldots, i_s\}} = \sum_{u \in \mathcal{I}} c_u^2 
+            S_{\{i_0, i_1, \ldots, i_s\}} = \sum_{u \in \mathcal{I}} c_u^2
             \mathbb{E}[\Psi_u^2] / \mathbb{V}[y]
 
-        where :math:`\mathcal{I}` is the set of multiindices for which all 
+        where :math:`\mathcal{I}` is the set of multiindices for which all
         components at indices :math:`i_0, i_1, \ldots, i_s` are positive, and
         all other components are :math:`0`.
 
@@ -348,7 +370,7 @@ class PolynomialChaosRegressor(BaseEstimator, RegressorMixin):
         Returns
         -------
         sensitivity_index : float
-            The joint sensitivity index for the given set of input features.    
+            The joint sensitivity index for the given set of input features.
         """
         check_is_fitted(self)
 
@@ -362,27 +384,32 @@ class PolynomialChaosRegressor(BaseEstimator, RegressorMixin):
                 raise ValueError("feature names have not been set")
             idcs = np.zeros(len(args), dtype=int)
             for j, arg in enumerate(args):
-                if not arg in self.feature_names_in_:
+                if arg not in self.feature_names_in_:
                     raise ValueError(f"feature '{arg}' not found")
                 idcs[j] = np.where(self.feature_names_in_ == arg)[0][0]
         else:
             idcs = column_or_1d(args)
         if len(np.unique(idcs)) != len(idcs):
             raise ValueError("features must be unique")
-        if (len(args) > self.n_features_in_ or 
-            np.any(idcs > self.n_features_in_)):
+        if len(args) > self.n_features_in_ or np.any(
+            idcs > self.n_features_in_
+        ):
             raise ValueError(
                 f"this model has only {self.n_features_in_} features"
             )
-        
+
         # actually compute the joint sensitivity index
         joint_sens = 0
         for j, index in enumerate(self.multiindices_):
-            if (np.sum(index != 0) == len(idcs) and 
-                all(i > 0 for i in index[idcs])):
-                joint_sens += \
-                    self.output_std_**2 * self.coef_[j]**2 * self.norms_[j]**2
-                
+            if np.sum(index != 0) == len(idcs) and all(
+                i > 0 for i in index[idcs]
+            ):
+                joint_sens += (
+                    self.output_std_**2
+                    * self.coef_[j] ** 2
+                    * self.norms_[j] ** 2
+                )
+
         return joint_sens / self.var()
 
     def main_sens(self):
@@ -396,7 +423,7 @@ class PolynomialChaosRegressor(BaseEstimator, RegressorMixin):
         the main Polynomial Chaos-based Sobol indices can be computed as
 
         .. math::
-            S_{j} = \sum_{u \in \mathcal{I}_j} c_u^2 
+            S_{j} = \sum_{u \in \mathcal{I}_j} c_u^2
             \mathbb{E}[\Psi_u^2] / \mathbb{V}[y]
 
         where :math:`\mathcal{I}_j` is the set of multiindices for which the
@@ -418,7 +445,7 @@ class PolynomialChaosRegressor(BaseEstimator, RegressorMixin):
         the main Polynomial Chaos-based Sobol indices can be computed as
 
         .. math::
-            S_{j}^T = \sum_{u \in \mathcal{I}_j^T} c_u^2 
+            S_{j}^T = \sum_{u \in \mathcal{I}_j^T} c_u^2
             \mathbb{E}[\Psi_u^2] / \mathbb{V}[y]
 
         where :math:`\mathcal{I}_j^T` is the set of multiindices for which the
@@ -432,14 +459,17 @@ class PolynomialChaosRegressor(BaseEstimator, RegressorMixin):
             for j, index in enumerate(self.multiindices_):
                 if not index[i] > 0:
                     continue
-                t[i] += \
-                    self.output_std_**2 * self.coef_[j]**2 * self.norms_[j]**2
+                t[i] += (
+                    self.output_std_**2
+                    * self.coef_[j] ** 2
+                    * self.norms_[j] ** 2
+                )
         return list(t / self.var())
-    
+
     def mean(self):
         r"""Returns the Polynomial Chaos approximation for the mean of the
         response.
-        
+
         Given a Polynomial Chaos expansion
 
         .. math::
@@ -449,17 +479,17 @@ class PolynomialChaosRegressor(BaseEstimator, RegressorMixin):
 
         .. math::
             \mathbb{E}[y] = c_0
-        
+
         """
         check_is_fitted(self)
         for j, index in enumerate(self.multiindices_):
             if np.all(index == 0):
-                return self.coef_[j]*self.output_std_ + self.output_mean_
+                return self.coef_[j] * self.output_std_ + self.output_mean_
         return 0
 
     def var(self):
         r"""Returns the Polynomial Chaos approximation for the variance of the response.
-        
+
         Given a Polynomial Chaos approximation
 
         .. math::
@@ -469,12 +499,15 @@ class PolynomialChaosRegressor(BaseEstimator, RegressorMixin):
 
         .. math::
             \mathbb{V}[y] = \sum_{u > 0} c_u^2 \mathbb{E}[\Psi_u^2]
-        
+
         """
         check_is_fitted(self)
         var = 0
         for j, index in enumerate(self.multiindices_):
             if np.any(index > 0):
-                var += \
-                    self.output_std_**2 * self.coef_[j]**2 * self.norms_[j]**2
+                var += (
+                    self.output_std_**2
+                    * self.coef_[j] ** 2
+                    * self.norms_[j] ** 2
+                )
         return var

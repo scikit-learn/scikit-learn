@@ -7,18 +7,18 @@ This example illustrates how to use Polynomial Chaos regression with adaptive
 basis growth to perform a Global Sensitivity Analysis of the Sobol function.
 The Sobol function (also known as the :math:`G` function, because it was
 denoted as such in the original paper by Sobol), is a well-known test problem
-in uncertainty quantification and sensitivity analysis [Saltelli2000]_. It is 
+in uncertainty quantification and sensitivity analysis [Saltelli2000]_. It is
 defined as
 
 .. math::
     y = \prod_{j=1}^d \frac{|4x_j - 2| + a_j}{1 + a_j}
 
 where the inputs :math:`x_j, j = 1, 2, \ldots, d` follow a standard uniform
-distribution, and the coefficients :math:`a_j` are nonnegative. 
+distribution, and the coefficients :math:`a_j` are nonnegative.
 
 .. topic: References
 
-    .. [Saltelli2000] `Saltelli, Andrea, et al. "Global sensitivity analysis: 
+    .. [Saltelli2000] `Saltelli, Andrea, et al. "Global sensitivity analysis:
        the primer." John Wiley & Sons, 2008.`
 
 """
@@ -26,6 +26,7 @@ distribution, and the coefficients :math:`a_j` are nonnegative.
 # %%
 # Let's fix the random seed for reproducibility.
 import numpy as np
+
 np.random.seed(2023)
 
 # %%
@@ -46,7 +47,7 @@ X = distribution.rvs((85, dimension))
 # Next, evaluate the model in each of the training samples.
 from math import prod
 
-y = prod((abs(4*X_j - 2) + a_j) / (1 + a_j) for a_j, X_j in zip(a, X.T))
+y = prod((abs(4 * X_j - 2) + a_j) / (1 + a_j) for a_j, X_j in zip(a, X.T))
 
 # %%
 # Then, define a Polynomial Chaos expansion and fit the data. We use a 2nd
@@ -55,7 +56,7 @@ y = prod((abs(4*X_j - 2) + a_j) / (1 + a_j) for a_j, X_j in zip(a, X.T))
 #
 # .. math::
 #   P = \frac{(d + k)!}{d!k!}
-# 
+#
 # where :math:`d` is the dimension (i.e., the number of input features), and
 # :math:`k` is the degree of the polynomial. In our case, we have :math:`d = 4`
 # and :math:`k = 2`, so there are :math:`P = 15` basis terms.
@@ -84,13 +85,16 @@ pce.fit(X, y)
 # .. math::
 #    D_j = \frac{1}{3(1 + a_j)^2}.
 #
-from pandas import DataFrame
 import matplotlib.pyplot as plt
-D = 1 / (3*(1 + a)**2)
+from pandas import DataFrame
+
+D = 1 / (3 * (1 + a) ** 2)
 V = prod(D + 1) - 1
 S = D / V
-df = DataFrame({"predicted": pce.main_sens(), "exact": S},
-               index=[f"S{j}" for j in range(dimension)])
+df = DataFrame(
+    {"predicted": pce.main_sens(), "exact": S},
+    index=[f"S{j}" for j in range(dimension)],
+)
 df["predicted"].plot.bar()
 plt.ylabel("main sensitivity indices")
 df
@@ -103,8 +107,10 @@ df
 # rapidly with the maximum degree of the polynomials.
 from math import factorial
 
-N = [factorial(dimension + degree) // factorial(dimension) // factorial(degree)
-        for degree in range(10)]
+N = [
+    factorial(dimension + degree) // factorial(dimension) // factorial(degree)
+    for degree in range(10)
+]
 DataFrame(N, columns=["# basis terms"]).rename_axis(index="degree")
 
 # %%
@@ -126,14 +132,15 @@ from sklearn.linear_model import LassoCV
 
 pce = PolynomialChaosRegressor(distribution, degree=1)
 pce.fit(X, y)
-errors = [np.linalg.norm(pce.main_sens() - S)/np.linalg.norm(S)]
+errors = [np.linalg.norm(pce.main_sens() - S) / np.linalg.norm(S)]
 iters = [1]
-solver = LassoCV(fit_intercept=False, alphas=np.logspace(-12, 2, 25), 
-                 max_iter=100000)
+solver = LassoCV(
+    fit_intercept=False, alphas=np.logspace(-12, 2, 25), max_iter=100000
+)
 for i in range(10, 35, 5):
     pce = PolynomialChaosRegressor(distribution, degree=1, solver=solver)
     pce.fit(X, y, max_iter=i)
-    errors.append(np.linalg.norm(pce.main_sens() - S)/np.linalg.norm(S))
+    errors.append(np.linalg.norm(pce.main_sens() - S) / np.linalg.norm(S))
     iters.append(i)
 
 # %%

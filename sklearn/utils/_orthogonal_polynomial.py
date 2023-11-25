@@ -42,19 +42,18 @@ array([[ 1.        ,  0.        , -0.5       , -0.        ],
 """
 
 # import statements
-import numpy as np
-
-# qualified import statements
-from abc import ABC, abstractmethod # for abstract classes
+from abc import ABC, abstractmethod  # for abstract classes
 from math import factorial
+
+import numpy as np
 from numpy.polynomial.hermite_e import hermevander
 from numpy.polynomial.laguerre import lagvander
 from numpy.polynomial.legendre import legvander
 from scipy.special import eval_jacobi, gamma
 
-# sklearn imports
-from ..utils.validation import check_array, column_or_1d
 from ..utils._param_validation import Integral, Real
+from ..utils.validation import check_array, column_or_1d
+
 
 class Polynomial(ABC):
     """An abstract base class for polynomials."""
@@ -63,9 +62,9 @@ class Polynomial(ABC):
         pass
 
     def vandermonde(self, points, degree):
-        r"""Returns the generalized Vandermonde matrix associated with this 
+        r"""Returns the generalized Vandermonde matrix associated with this
         orthogonal polynomial.
-        
+
         For a given set of :math:`n` points :math:`\mathbf x`, this function
         constructs the generalized Vandermonde matrix :math:`V` of dimensions
         :math:`n \times (k + 1)`, where :math:`k` is the degree of this
@@ -73,7 +72,7 @@ class Polynomial(ABC):
 
         .. math::
             V_{i, j} = \phi_j(x_i)
-        
+
         Parameters
         ----------
         points : array-like of length (`n_points`)
@@ -84,7 +83,7 @@ class Polynomial(ABC):
             The maximum degree :math:`k` of this orthogonal polynomial to
             consider. The number of columns in the Vandermonde matrix will be
             acual to :math:`k + 1`.
-        
+
         Returns
         -------
         V : array-like of shape (`n_points`, `degree + 1`)
@@ -95,16 +94,16 @@ class Polynomial(ABC):
             points = column_or_1d(points)
         except ValueError:
             raise ValueError("could not interpret points as 1d array")
-        
+
         # check degree
         if not isinstance(degree, Integral) or degree < 0:
             raise ValueError(
                 f"degree must be a non-negative int, got '{degree}'"
             )
-        
+
         # compute Vandermonde matrix
         return self._vandermonde(points, degree)
-    
+
     @abstractmethod
     def _vandermonde(self, points, degree):
         """This method must be overriden by concrete classes."""
@@ -124,7 +123,7 @@ class Polynomial(ABC):
     # everything else should still work out of the box.
     @classmethod
     def from_distribution(cls, distribution):
-        """Return an orthogonal polynomial that corresponds to the given 
+        """Return an orthogonal polynomial that corresponds to the given
         distribution.
 
         Parameters
@@ -139,13 +138,13 @@ class Polynomial(ABC):
         -------
         polynomial : Polynomial
             An instance of the corresponding orthogonal polynomial.
-        
+
         Note
         ----
         The polynomials are orthogonal with respect to a certain weight
         function. When that weight function is equal to the probability
         density function of a random variable, the polynomials can be used
-        as a basis to represent this random variable. 
+        as a basis to represent this random variable.
 
         When extending the Polynomial class with a new orthogonal polynomial
         type, this method should be able to automatically detect that new
@@ -173,7 +172,7 @@ class Polynomial(ABC):
                 else:
                     return polynomial()
         raise ValueError(f"no polynomial type matches distribution {name}'")
-    
+
     # returns the `scipy.stats` distribution name
     @staticmethod
     @abstractmethod
@@ -202,7 +201,7 @@ class Polynomial(ABC):
                 "this distribution does not have a 'dist' attribute and "
                 "cannot be interpreted as a 'scipy.stats' frozen distribution"
             )
-        
+
         # check features
         try:
             X = check_array(X, ensure_2d=False)
@@ -212,24 +211,25 @@ class Polynomial(ABC):
         # scale features
         if distribution.dist.name != self._distribution():
             raise ValueError(
-                f"this orthogonal polynomial can only scale features "
+                "this orthogonal polynomial can only scale features "
                 f"according to '{self._distribution()}' distributions, got "
                 f"'{distribution.dist.name}' distribution instead"
             )
-        _, loc, scale = distribution.dist._parse_args(*distribution.args, 
-                                                      **distribution.kwds)
+        _, loc, scale = distribution.dist._parse_args(
+            *distribution.args, **distribution.kwds
+        )
         return (X - loc) / scale
-    
-    # Not an abstract static method because polynomials may be parametrized 
+
+    # Not an abstract static method because polynomials may be parametrized
     # (e.g. Jacobi polynomials)
     def norm(self, degree):
         """Returns the norm of this orthogonal polynomial of the given degree.
-        
+
         Parameters
         ----------
         degree : int
             The degree of this orthogonal polynomial to consider.
-        
+
         Returns
         -------
         norm : float
@@ -240,28 +240,30 @@ class Polynomial(ABC):
             raise ValueError(
                 f"degree must be a non-negative int, got '{degree}'"
             )
-        
-        # compute norm 
+
+        # compute norm
         return np.sqrt(self._norm_squared(degree))
 
     def _norm_squared(self, degree):
         """This method must be overriden by concrete classes."""
-    
+
     def __repr__(self):
         return self.__class__.__name__
-    
+
+
 class Hermite(Polynomial):
     """A class representing Hermite polynomials."""
 
     def _vandermonde(self, points, degree):
         return hermevander(points, degree)
-    
+
     @staticmethod
     def _distribution():
         return "norm"
-    
+
     def _norm_squared(self, degree):
         return factorial(degree)
+
 
 class Jacobi(Polynomial):
     """A class representing Jacobi polynomials."""
@@ -272,13 +274,12 @@ class Jacobi(Polynomial):
         if shape_params is not None:
             if alpha is not None or beta is not None:
                 raise ValueError(
-                    "both 'shape_params' and 'alpha' and 'beta' are "
-                    "specified"
+                    "both 'shape_params' and 'alpha' and 'beta' are specified"
                 )
             if len(shape_params) != 2:
                 raise ValueError(
-                    f"need exactly 2 parameters to generate Jacobi polynomial "
-                    f"from distribution shape parameters, got "
+                    "need exactly 2 parameters to generate Jacobi polynomial "
+                    "from distribution shape parameters, got "
                     f"{len(shape_params)}"
                 )
             # for a `Beta(alpha, beta)` distribution, the associated Jacobi
@@ -297,9 +298,7 @@ class Jacobi(Polynomial):
 
         # set beta
         if not isinstance(beta, Real):
-            raise ValueError(
-                f"beta must be float or int, got '{type(beta)}'"
-            )
+            raise ValueError(f"beta must be float or int, got '{type(beta)}'")
         if not (beta > 0):
             raise ValueError(f"beta must be > 0, got '{beta}'")
         self.beta = beta
@@ -309,51 +308,59 @@ class Jacobi(Polynomial):
         for j in range(degree + 1):
             V[:, j] = eval_jacobi(j, self.alpha, self.beta, points)
         return V
-    
+
     @staticmethod
     def _distribution():
         return "beta"
-    
+
     # Jacobi polynomials are associated with the beta distribution,
-    # and are supported on [-1, 1]. Since the beta distribution is defined on 
-    # [0, 1], we additionally need to scale the features from [0, 1] to 
+    # and are supported on [-1, 1]. Since the beta distribution is defined on
+    # [0, 1], we additionally need to scale the features from [0, 1] to
     # [-1, 1].
     def scale_features_from_distribution(self, X, distribution):
         X = super().scale_features_from_distribution(X, distribution)
-        return 2*X - 1
-    
+        return 2 * X - 1
+
     def _norm_squared(self, degree):
         # the alpha and beta here are parameters for the Jacobi polynomial
-        term1 = 1.0 / (2*degree + self.alpha + self.beta + 1)
-        term2 = gamma(self.alpha + self.beta + 2)\
-            / gamma(self.alpha + 1) / gamma(self.beta + 1)
-        term3 = gamma(degree + self.alpha + 1) \
-            * gamma(degree + self.beta + 1) \
-            / factorial(degree) / gamma(degree + self.alpha + self.beta + 1)
+        term1 = 1.0 / (2 * degree + self.alpha + self.beta + 1)
+        term2 = (
+            gamma(self.alpha + self.beta + 2)
+            / gamma(self.alpha + 1)
+            / gamma(self.beta + 1)
+        )
+        term3 = (
+            gamma(degree + self.alpha + 1)
+            * gamma(degree + self.beta + 1)
+            / factorial(degree)
+            / gamma(degree + self.alpha + self.beta + 1)
+        )
         return term1 * term2 * term3
-    
+
     def __repr__(self):
         return f"Jacobi_{self.alpha}_{self.beta}"
-    
+
+
 class Laguerre(Polynomial):
     """A class representing Laguerre polynomials."""
 
     def _vandermonde(self, points, degree):
         return lagvander(points, degree)
-    
+
     @staticmethod
     def _distribution():
         return "expon"
-    
+
     def _norm_squared(self, degree):
         return 1
+
 
 class Legendre(Polynomial):
     """A class representing Legendre polynomials."""
 
     def _vandermonde(self, points, degree):
         return legvander(points, degree)
-    
+
     @staticmethod
     def _distribution():
         return "uniform"
@@ -364,7 +371,7 @@ class Legendre(Polynomial):
     # [0, 1] to [-1, 1].
     def scale_features_from_distribution(self, X, distribution):
         X = super().scale_features_from_distribution(X, distribution)
-        return 2*X - 1
-    
+        return 2 * X - 1
+
     def _norm_squared(self, degree):
-        return 1 / (2*degree + 1)
+        return 1 / (2 * degree + 1)

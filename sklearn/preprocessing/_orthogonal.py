@@ -6,14 +6,16 @@ import numpy as np
 # sklearn imports
 from ..base import BaseEstimator, TransformerMixin, _fit_context
 from ..utils._multiindexset import MultiIndexSet
-from ..utils._orthogonal_polynomial import Hermite, Jacobi, Laguerre, Legendre
-from ..utils._param_validation \
-    import Integral, Interval, Iterable, StrOptions, HasMethods
-from ..utils.validation \
-    import check_array, check_is_fitted, _check_feature_names_in
+from ..utils._param_validation import Integral, Interval, Iterable, StrOptions
+from ..utils.validation import (
+    _check_feature_names_in,
+    check_array,
+    check_is_fitted,
+)
+
 
 class OrthogonalPolynomialFeatures(BaseEstimator, TransformerMixin):
-    """Generate orthogonal polynomial and interaction features.
+    r"""Generate orthogonal polynomial and interaction features.
 
     Generate a new feature matrix consisting of combinations of orthogonal
     polynomials of the features. This is an extension of
@@ -33,7 +35,7 @@ class OrthogonalPolynomialFeatures(BaseEstimator, TransformerMixin):
 
     Read more in the
     :ref:`User Guide <generating_orthogonal_polynomial_features>`.
-    
+
     Parameters
     ----------
     degree : int, default=2
@@ -64,7 +66,7 @@ class OrthogonalPolynomialFeatures(BaseEstimator, TransformerMixin):
         in the output features. The weights must be all positive. When `weights
         = None`, an unweighted multiindex set will be used. The default is
         `None`.
-    
+
     indices : array-like of shape (`n_output_features_`, `n_features_in_`), \
         dtype=np.int64, default=None
         The combination of `degree`, `truncation` and `weights` provides a
@@ -86,12 +88,12 @@ class OrthogonalPolynomialFeatures(BaseEstimator, TransformerMixin):
         The total number of orthogonal polynomial output features.
 
     multiindices_ : array-like of shape (n_features_out_, n_features_in_)
-        An array with the combinations of input features that will be used to 
+        An array with the combinations of input features that will be used to
         compose the output features. Every row in this array contains a single
         multiindex.
 
     maximum_degrees_ : array-like of shape (n_features_in_,)
-        The maximum degree of the orthogonal polynomial output features for 
+        The maximum degree of the orthogonal polynomial output features for
         each input feature.
 
     See Also
@@ -107,7 +109,7 @@ class OrthogonalPolynomialFeatures(BaseEstimator, TransformerMixin):
     -----
     Be aware that the number of output features scales exponentially in the
     number of input features and the `degree`. High degrees can cause
-    overfitting, see 
+    overfitting, see
     :ref:`sphx_glr_auto_examples_polynomial_chaos_plot_simple_1d.py`.
 
     Examples
@@ -125,17 +127,31 @@ class OrthogonalPolynomialFeatures(BaseEstimator, TransformerMixin):
            [ 1.  ,  0.4 , -0.26,  0.6 ,  0.24,  0.04],
            [ 1.  ,  0.8 ,  0.46,  1.  ,  0.8 ,  1.  ]])
     """
+
     _parameter_constraints: dict = {
-        "degree":       [Interval(Integral, 0, None, closed="left")],
-        "polynomial":   [str, "array-like"],
-        "truncation" :  [StrOptions({"full_tensor", "total_degree", 
-                          "hyperbolic_cross", "Zaremba_cross"})],
-        "weights":      ["array-like", None],
-        "multiindices": ["array-like", Iterable, None]
+        "degree": [Interval(Integral, 0, None, closed="left")],
+        "polynomial": [str, "array-like"],
+        "truncation": [
+            StrOptions({
+                "full_tensor",
+                "total_degree",
+                "hyperbolic_cross",
+                "Zaremba_cross",
+            })
+        ],
+        "weights": ["array-like", None],
+        "multiindices": ["array-like", Iterable, None],
     }
 
-    def __init__(self, degree=2, polynomial="Legendre", *, 
-                 truncation="total_degree", weights=None, multiindices=None):
+    def __init__(
+        self,
+        degree=2,
+        polynomial="Legendre",
+        *,
+        truncation="total_degree",
+        weights=None,
+        multiindices=None,
+    ):
         self.degree = degree
         self.polynomial = polynomial
         self.truncation = truncation
@@ -169,12 +185,13 @@ class OrthogonalPolynomialFeatures(BaseEstimator, TransformerMixin):
             feature_names.append(
                 "*".join(
                     f"{polynomial.__class__.__name__}{index}({input_feature})"
-                    for polynomial, index, input_feature 
-                        in zip(self.polynomials_, multiindex, input_features)
+                    for polynomial, index, input_feature in zip(
+                        self.polynomials_, multiindex, input_features
+                    )
                 )
             )
         return np.asarray(feature_names, dtype=object)
-        
+
     @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y=None):
         """
@@ -200,11 +217,11 @@ class OrthogonalPolynomialFeatures(BaseEstimator, TransformerMixin):
         # check polynomial
         polynomials = self.polynomial
         if isinstance(polynomials, str):
-            polynomials = [polynomials]*n_features
+            polynomials = [polynomials] * n_features
         polynomials = list(polynomials)
         if not len(polynomials) == n_features:
             raise ValueError(
-                f"the number of polynomials does not match the number of "
+                "the number of polynomials does not match the number of "
                 f"input features, got {len(polynomials)} but "
                 f"expected {n_features}"
             )
@@ -217,21 +234,22 @@ class OrthogonalPolynomialFeatures(BaseEstimator, TransformerMixin):
                 self.polynomials_.append(
                     poly() if len(params) == 0 else poly(*params)
                 )
-            except:
+            except (ValueError, TypeError):
                 raise ValueError(
                     f"could not interpret the polynomial at index {j} "
                     f"as a valid polynomial, got '{polynomial}'"
                 )
-            
+
         # generate multiindex set
-        if self.multiindices is None: # no multiindices were provided
+        if self.multiindices is None:  # no multiindices were provided
             m_type = MultiIndexSet.from_string(self.truncation)
             m = m_type(n_features, self.degree, weights=self.weights)
             self.multiindices_ = np.vstack(list(m.indices()))
-        else: # a set of custom multiindices was provided
-            self.multiindices_ = \
-                check_array(list(self.multiindices), dtype="int64")
-        
+        else:  # a set of custom multiindices was provided
+            self.multiindices_ = check_array(
+                list(self.multiindices), dtype="int64"
+            )
+
         # get maximum required polynomial degree for each feature
         self.maximum_degrees_ = np.amax(self.multiindices_, axis=0)
 
@@ -249,7 +267,7 @@ class OrthogonalPolynomialFeatures(BaseEstimator, TransformerMixin):
 
         # by convention, fit returns self
         return self
-        
+
     def transform(self, X):
         """Transform data to orthogonal polynomial features.
 

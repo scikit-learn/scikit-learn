@@ -29,13 +29,12 @@ New incremental basis strategies can easily be added by inheriting from the
 abstract `BasisIncrementStrategy` class and overriding the `propose` method.
 """
 
-import numpy as np
-
 # qualified import statements
-from abc import ABC, abstractmethod # for abstract classes
+from abc import ABC, abstractmethod  # for abstract classes
+
 
 class BasisIncrementStrategy(ABC):
-    """An abstract base class for incremental Polynomial Chaos basis growth 
+    """An abstract base class for incremental Polynomial Chaos basis growth
     strategies."""
 
     def __init__(self):
@@ -45,7 +44,7 @@ class BasisIncrementStrategy(ABC):
     def propose(self, pce):
         """Propose the next multiindex set given the current Polynomial Chaos
         expansion.
-        
+
         Parameters
         ----------
         pce : PolynomialChaosRegressor
@@ -61,13 +60,13 @@ class BasisIncrementStrategy(ABC):
     def from_string(name):
         """Returns the adaptive basis groth strategy with the given name, if it
         exists.
-        
+
         Parameters
         ----------
         name : str
             The name of the adaptive basis growth strategy (lower case and
             using underscore separators).
-            
+
         Returns
         -------
         strategy : BasisIncrementStrategy
@@ -79,10 +78,11 @@ class BasisIncrementStrategy(ABC):
             if strategy.__name__ == name_:
                 return strategy()
         raise ValueError(f"unknown strategy type '{name}'")
-    
+
+
 class GerstnerGriebel(BasisIncrementStrategy):
     """Adaptive basis growth strategy from Gerstner & Griebel, 2010.
-    
+
     In this algorithm, the set of multiindices are split into an 'old' and
     'active' set. The 'old' multiindex set contains all indices for which all
     forward neighbors (i.e., all multiindices that have one of the coordinates
@@ -114,13 +114,13 @@ class GerstnerGriebel(BasisIncrementStrategy):
                 for d in range(pce.n_features_in_):
                     index_to_test = index.copy()
                     index_to_test[d] += 1
-                    if not index_to_test in multiindices:
+                    if index_to_test not in multiindices:
                         is_old = False
                         break
                 # if so, add multiindex to the old set
                 if is_old:
                     self.old.append(index)
-                else: # otherwise, add to active set
+                else:  # otherwise, add to active set
                     self.active.append(index)
 
         # find the multiindex with the maximum variance contribution
@@ -128,7 +128,7 @@ class GerstnerGriebel(BasisIncrementStrategy):
         best_index = self.active[0]
         for index in self.active:
             j = multiindices.index(index)
-            contribution = pce.coef_[j]**2 * pce.norms_[j]**2
+            contribution = pce.coef_[j] ** 2 * pce.norms_[j] ** 2
             if contribution > max_contribution:
                 max_contribution = contribution
                 best_index = index
@@ -142,14 +142,14 @@ class GerstnerGriebel(BasisIncrementStrategy):
         for d in range(pce.n_features_in_):
             new_index = best_index.copy()
             new_index[d] += 1
-            # if not new_index in self.active: 
+            # if not new_index in self.active:
             valid = True
             for j in range(pce.n_features_in_):
                 backward_index = new_index.copy()
                 backward_index[j] -= 1
                 if backward_index[j] < 0:
                     continue
-                if not backward_index in self.old:
+                if backward_index not in self.old:
                     valid = False
                     break
             if valid:

@@ -3,17 +3,25 @@ import numpy as np
 import pytest
 
 # sklearn imports
-from sklearn.utils._multiindexset import \
-    MultiIndexSet, FullTensor, TotalDegree, HyperbolicCross, ZarembaCross
+from sklearn.utils._multiindexset import (
+    FullTensor,
+    HyperbolicCross,
+    MultiIndexSet,
+    TotalDegree,
+    ZarembaCross,
+)
+
 
 # check multiindex set sizes
 @pytest.mark.parametrize(
-"multiindex_set, size", [
-    (FullTensor, 512),
-    (TotalDegree, 120),
-    (HyperbolicCross, 38),
-    (ZarembaCross, 98)
-])
+    "multiindex_set, size",
+    [
+        (FullTensor, 512),
+        (TotalDegree, 120),
+        (HyperbolicCross, 38),
+        (ZarembaCross, 98),
+    ],
+)
 def test_indices(multiindex_set, size):
 
     # dimension 3, degree 7
@@ -22,21 +30,25 @@ def test_indices(multiindex_set, size):
     # generate indices
     assert len(list(multiindex_set.indices())) == size
 
+
 # check weighted multiindex set sizes
 @pytest.mark.parametrize(
-"multiindex_set, size", [
-    (FullTensor, 28),
-    (TotalDegree, 17),
-    (HyperbolicCross, 11),
-    (ZarembaCross, 15)
-])
+    "multiindex_set, size",
+    [
+        (FullTensor, 28),
+        (TotalDegree, 17),
+        (HyperbolicCross, 11),
+        (ZarembaCross, 15),
+    ],
+)
 def test_indices_weighted(multiindex_set, size):
 
     # dimension 2, degree 6, weights (1, 3/5)
-    multiindex_set = multiindex_set(2, 6, weights=(1, 3/5))
+    multiindex_set = multiindex_set(2, 6, weights=(1, 3 / 5))
 
     # generate indices
     assert len(list(multiindex_set.indices())) == size
+
 
 # check dimension
 def test_dimension():
@@ -48,13 +60,14 @@ def test_dimension():
     # dimension < 0 throws error
     with pytest.raises(ValueError, match="-1"):
         TotalDegree(-1, 2)
-    
+
     # dimension = 0 throws error
     with pytest.raises(ValueError, match="0"):
         TotalDegree(0, 2)
 
     # passes
     TotalDegree(1, 2)
+
 
 # check degree
 def test_degree():
@@ -72,6 +85,7 @@ def test_degree():
 
     # passes
     TotalDegree(3, 1)
+
 
 # checks on weights
 def test_weights():
@@ -106,20 +120,24 @@ def test_weights():
     # weights as generator passes
     TotalDegree(3, 2, weights=(j for j in range(1, 4)))
 
+
 # special checks for Zaremba cross
 def test_Zaremba():
 
     # test degree 0
     len(list(ZarembaCross(3, 0).indices())) == 1
 
+
 # test lookup from string
 @pytest.mark.parametrize(
-"name, upper_case_name, multiindex_set", [
-    ("full_tensor", "FullTensor", FullTensor),
-    ("total_degree", "TotalDegree", TotalDegree),
-    ("hyperbolic_cross", "HyperbolicCross", HyperbolicCross),
-    ("Zaremba_cross", "ZarembaCross", ZarembaCross)
-])
+    "name, upper_case_name, multiindex_set",
+    [
+        ("full_tensor", "FullTensor", FullTensor),
+        ("total_degree", "TotalDegree", TotalDegree),
+        ("hyperbolic_cross", "HyperbolicCross", HyperbolicCross),
+        ("Zaremba_cross", "ZarembaCross", ZarembaCross),
+    ],
+)
 def test_from_string(name, upper_case_name, multiindex_set):
 
     # unknown multiindex set type throws error
@@ -133,14 +151,15 @@ def test_from_string(name, upper_case_name, multiindex_set):
     # passes
     assert MultiIndexSet.from_string(name) == multiindex_set
 
+
 # test print method
 def test_print():
-    
+
     # unweighted
     multiindex_set = TotalDegree(2, 3)
     assert "3" in str(multiindex_set)
     assert "2" in str(multiindex_set)
 
     # weighted
-    multiindex_set = TotalDegree(2, 3, weights=(1, 3/5))
+    multiindex_set = TotalDegree(2, 3, weights=(1, 3 / 5))
     assert "weights" in str(multiindex_set)

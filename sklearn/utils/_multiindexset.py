@@ -49,7 +49,7 @@ Currently, the following multiindex set shapes are implemented (illustrated for
   x x x x x
   x x x x x
 
-New multiindexset types can easily be added by extending the `MultiIndexSet` 
+New multiindexset types can easily be added by extending the `MultiIndexSet`
 base clase, and providing an implementation for the `_contains` method.
 
 Example
@@ -63,27 +63,28 @@ Example
 """
 
 # qualified import statements
-from abc import ABC, abstractmethod # for abstract classes
-from math import prod # make prod peer to sum
+from abc import ABC, abstractmethod  # for abstract classes
+from math import prod  # make prod peer to sum
 from re import sub
 
 # sklearn imports
 from ..utils._param_validation import Integral, Iterable, Real
 
+
 class MultiIndexSet(ABC):
     """An abstract base class for multiindex sets.
 
-        Parameters
-        ----------
-        dimension : int
-            The dimension :math:`d` of this multiindex set.
+    Parameters
+    ----------
+    dimension : int
+        The dimension :math:`d` of this multiindex set.
 
-        degree : int
-            The degree :math:`k` of this multiindex set.
-            
-        weights : array-like of length (`dimension`)
-            Optional weights :math:`w_j, 1 < j <d` associated with this 
-            multiindex set.
+    degree : int
+        The degree :math:`k` of this multiindex set.
+
+    weights : array-like of length (`dimension`)
+        Optional weights :math:`w_j, 1 < j <d` associated with this
+        multiindex set.
     """
 
     def __init__(self, dimension, degree, weights=None):
@@ -94,43 +95,43 @@ class MultiIndexSet(ABC):
                 f"dimension must be a non-negative int, got '{dimension}'"
             )
         self.dimension = dimension
-        
+
         # check degree
         if not isinstance(degree, Integral) or degree < 0:
             raise ValueError(
                 f"degree must be a non-negative int, got '{degree}'"
             )
         self.degree = degree
-        
+
         # check weights
         if weights is None:
-            self.weights = [1]*self.dimension
+            self.weights = [1] * self.dimension
         elif isinstance(weights, Iterable):
-            weights = list(weights) # weights can be a generator
+            weights = list(weights)  # weights can be a generator
             for j, weight in enumerate(weights):
                 if not isinstance(weight, Real):
                     raise ValueError(
-                        f"weights must be numbers, but the weight at position "
+                        "weights must be numbers, but the weight at position "
                         f"{j} has type '{type(weight).__name__}'"
                     )
                 if not (weight > 0):
                     raise ValueError(
-                        f"weights must be > 0, but the weight at position "
+                        "weights must be > 0, but the weight at position "
                         f"{j} has value '{weight}'"
                     )
             if len(weights) != self.dimension:
                 raise ValueError(
-                    f"number of weights must be equal to the dimension of the "
+                    "number of weights must be equal to the dimension of the "
                     f"multiindex set, expected {self.dimension}, got "
                     f"{len(weights)}"
                 )
             self.weights = weights
         else:
             raise ValueError(
-                f"could not interpret weights of type "
+                "could not interpret weights of type "
                 f"'{type(weights).__name__}' as valid weights"
             )
-        
+
     def indices(self):
         """Returns all indices in this multiindex set.
 
@@ -139,18 +140,18 @@ class MultiIndexSet(ABC):
         indices : generator
             A generator that supplies the multiindices in this multiindex set.
         """
-        j = 0 # parameter that loops over dimensions
-        index = [0 for _ in range(self.dimension)] # [0, 0, ..., 0]
-        yield index.copy() # don't forget to return the zero index
+        j = 0  # parameter that loops over dimensions
+        index = [0 for _ in range(self.dimension)]  # [0, 0, ..., 0]
+        yield index.copy()  # don't forget to return the zero index
         while True:
             index[j] += 1
-            if not self._contains(index): # index not a part of the index set
-                if j == self.dimension - 1: # all dimensions have been visited
+            if not self._contains(index):  # index not a part of the index set
+                if j == self.dimension - 1:  # all dimensions have been visited
                     break
                 index[j] = 0
-                j += 1 # move to the next dimension
+                j += 1  # move to the next dimension
             else:
-                j = 0 # restart with first index
+                j = 0  # restart with first index
                 yield index.copy()
 
     @abstractmethod
@@ -169,13 +170,13 @@ class MultiIndexSet(ABC):
     @staticmethod
     def from_string(name):
         """Returns the multiindex set with the given name, if it exists.
-        
+
         Parameters
         ----------
         name : str
             The name of the multiindex set (lower case and using underscore
             separators).
-            
+
         Returns
         -------
         multiindex_set : MultiIndexSet
@@ -196,13 +197,14 @@ class MultiIndexSet(ABC):
             out += f" with weights {self.weights}"
         out += ">"
         return out
-    
+
+
 class FullTensor(MultiIndexSet):
     r"""A full tensor multiindex set.
-    
+
     The indices :math:`\boldsymbol{\ell} = \{\ell_j\}_{j=1}^d` in this index
     set satisfy
-    
+
     .. math:
         \frac{\ell_j}{w_j} < k
 
@@ -211,15 +213,18 @@ class FullTensor(MultiIndexSet):
     """
 
     def _contains(self, index):
-        return all(idx/weight <= self.degree
-            for idx, weight in zip(index, self.weights))
-    
+        return all(
+            idx / weight <= self.degree
+            for idx, weight in zip(index, self.weights)
+        )
+
+
 class TotalDegree(MultiIndexSet):
     r"""A total degree multiindex set.
-    
+
     The indices :math:`\boldsymbol{\ell} = \{\ell_j\}_{j=1}^d` in this index
     set satisfy
-    
+
     .. math:
         \sum_{j} \frac{\ell_j}{w_j} < k
 
@@ -228,15 +233,18 @@ class TotalDegree(MultiIndexSet):
     """
 
     def _contains(self, index):
-        return sum(idx/weight
-            for idx, weight in zip(index, self.weights)) <= self.degree
+        return (
+            sum(idx / weight for idx, weight in zip(index, self.weights))
+            <= self.degree
+        )
+
 
 class HyperbolicCross(MultiIndexSet):
     r"""A hyperbolic cross multiindex set.
-    
+
     The indices :math:`\boldsymbol{\ell} = \{\ell_j\}_{j=1}^d` in this index
     set satisfy
-    
+
     .. math:
         \prod_{j} \left(\frac{\ell_j}{w_j} + 1\right) - 1 < k
 
@@ -245,15 +253,18 @@ class HyperbolicCross(MultiIndexSet):
     """
 
     def _contains(self, index):
-        return prod(idx/weight + 1
-            for idx, weight in zip(index, self.weights)) <= self.degree + 1
-    
+        return (
+            prod(idx / weight + 1 for idx, weight in zip(index, self.weights))
+            <= self.degree + 1
+        )
+
+
 class ZarembaCross(MultiIndexSet):
     r"""A Zaremba cross multiindex set.
-    
+
     The indices :math:`\boldsymbol{\ell} = \{\ell_j\}_{j=1}^d` in this index
     set satisfy
-    
+
     .. math:
         \prod_{j} \max\left(\frac{\ell_j}{w_j}, 1\right) < k
 
@@ -265,5 +276,10 @@ class ZarembaCross(MultiIndexSet):
         if not self.degree:
             return False
         else:
-            return prod(max(1, i/weight)
-                for i, weight in zip(index, self.weights)) <= self.degree
+            return (
+                prod(
+                    max(1, i / weight)
+                    for i, weight in zip(index, self.weights)
+                )
+                <= self.degree
+            )

@@ -1,4 +1,4 @@
-"""
+r"""
 ===============================================================================
 Global sensitivity analysis of the Ishigami function
 ===============================================================================
@@ -17,7 +17,7 @@ usually chosen as :math:`a = 7` and :math:`b = 0.1`.
 
 .. topic: References
 
-    .. [Saltelli2000] `Saltelli, Andrea, et al. "Global sensitivity analysis: 
+    .. [Saltelli2000] `Saltelli, Andrea, et al. "Global sensitivity analysis:
        the primer." John Wiley & Sons, 2008.`
 
 """
@@ -25,15 +25,23 @@ usually chosen as :math:`a = 7` and :math:`b = 0.1`.
 # %%
 # Let's fix the random seed for reproducibility.
 import numpy as np
+
 np.random.seed(2023)
 
 # %%
 # First, let's define the model.
 a = 7
 b = 0.1
+
+
 def ishigami(X):
-    y = np.sin(X[:, 0]) + a*np.sin(X[:, 1])**2 + b*X[:, 2]**4*np.sin(X[:, 0])
+    y = (
+        np.sin(X[:, 0])
+        + a * np.sin(X[:, 1]) ** 2
+        + b * X[:, 2] ** 4 * np.sin(X[:, 0])
+    )
     return y
+
 
 # %%
 # Next, let's generate some input/output data. If we store the input features
@@ -41,7 +49,7 @@ def ishigami(X):
 from pandas import DataFrame
 from scipy.stats import uniform
 
-distribution = uniform(loc=-np.pi, scale=2*np.pi)
+distribution = uniform(loc=-np.pi, scale=2 * np.pi)
 X = distribution.rvs((660, 3))
 y = ishigami(X)
 X = DataFrame(data=X, columns=("$x_1$", "$x_2$", "$x_3$"))
@@ -53,7 +61,7 @@ X = DataFrame(data=X, columns=("$x_1$", "$x_2$", "$x_3$"))
 #
 # .. math::
 #   P = \frac{(d + k)!}{d!k!}
-# 
+#
 # where :math:`d` is the dimension (i.e., the number of input features), and
 # :math:`k` is the degree of the polynomial. In our case, we have :math:`d = 3`
 # and :math:`k = 9`, so there are :math:`P = 220` basis terms.
@@ -71,11 +79,12 @@ X_test = DataFrame(data=X_test, columns=("$x_1$", "$x_2$", "$x_3$"))
 # %%
 # We can vizualize the goodness-of-fit as follows.
 import matplotlib.pyplot as plt
+
 from sklearn.metrics import PredictionErrorDisplay
 
-PredictionErrorDisplay.from_predictions(y_true=y_test,
-                                        y_pred=pce.predict(X_test), 
-                                        kind="actual_vs_predicted")
+PredictionErrorDisplay.from_predictions(
+    y_true=y_test, y_pred=pce.predict(X_test), kind="actual_vs_predicted"
+)
 plt.show()
 
 # %%
@@ -94,13 +103,15 @@ plt.show()
 # and
 #
 # .. math::
-#   \mathbb{V}[y] = \frac{a^2}{8} + \frac{b\pi^4}{5} + \frac{b^2\pi^8}{18} + 
+#   \mathbb{V}[y] = \frac{a^2}{8} + \frac{b\pi^4}{5} + \frac{b^2\pi^8}{18} +
 #       \frac{1}{2} \approx 13.844588
 #
-mean = a/2
-var = a**2/8 + b*np.pi**4/5 + b**2*np.pi**8/18 + 1/2
-DataFrame({"predicted": [pce.mean(), pce.var()], "exact": [mean, var]},
-          index=["mean", "variance"])
+mean = a / 2
+var = a**2 / 8 + b * np.pi**4 / 5 + b**2 * np.pi**8 / 18 + 1 / 2
+DataFrame(
+    {"predicted": [pce.mean(), pce.var()], "exact": [mean, var]},
+    index=["mean", "variance"],
+)
 
 # %%
 # We can also extract the main-effect sensitivity indices from the Polynomial
@@ -114,11 +125,13 @@ DataFrame({"predicted": [pce.mean(), pce.var()], "exact": [mean, var]},
 #   S_2 &= \frac{a^2}{8} \bigg/ \mathbb{V}[y] \approx 0.442411 \\
 #   S_3 &= 0
 #
-S1 = (b*np.pi**4/5 + b**2*np.pi**8/50 + 1/2) / var
-S2 = (a**2/8) / var
+S1 = (b * np.pi**4 / 5 + b**2 * np.pi**8 / 50 + 1 / 2) / var
+S2 = (a**2 / 8) / var
 S3 = 0
-df = DataFrame({"predicted": pce.main_sens(), "exact": [S1, S2, S3]},
-               index=["S1", "S2", "S3"])
+df = DataFrame(
+    {"predicted": pce.main_sens(), "exact": [S1, S2, S3]},
+    index=["S1", "S2", "S3"],
+)
 df["predicted"].plot.bar()
 plt.ylabel("main sensitivity indices")
 df
@@ -130,18 +143,20 @@ df
 # including interaction effects. The exact values are
 #
 # .. math::
-#    S_1^T &= \left( \frac{1}{2} \left(1 + {b\pi^4}{5}\right)^2 + 
-#          \frac{8b^2\pi^8}{225} \right) \bigg/ \mathbb{V}[y] \approx 
+#    S_1^T &= \left( \frac{1}{2} \left(1 + {b\pi^4}{5}\right)^2 +
+#          \frac{8b^2\pi^8}{225} \right) \bigg/ \mathbb{V}[y] \approx
 #          0.557589 \\
 #    S_2^T &= \frac{a^2}{8} \bigg/ \mathbb{V}[y] \approx 0.442411 \\
-#    S_3^T &= \left(\frac{8b^2\pi^8}{225}\right) \bigg/ \mathbb{V}[y] 
+#    S_3^T &= \left(\frac{8b^2\pi^8}{225}\right) \bigg/ \mathbb{V}[y]
 #          \approx 0.442411 \\
 #
-S1_t = (1/2*(1 + b*np.pi**4/5)**2 + 8*b**2*np.pi**8/225) / var
-S2_t = (a**2/8) / var
-S3_t = (8*b**2*np.pi**8/225) / var
-df = DataFrame({"predicted": pce.total_sens(), "exact": [S1_t, S2_t, S3_t]},
-               index=["S1_t", "S2_t", "S3_t"])
+S1_t = (1 / 2 * (1 + b * np.pi**4 / 5) ** 2 + 8 * b**2 * np.pi**8 / 225) / var
+S2_t = (a**2 / 8) / var
+S3_t = (8 * b**2 * np.pi**8 / 225) / var
+df = DataFrame(
+    {"predicted": pce.total_sens(), "exact": [S1_t, S2_t, S3_t]},
+    index=["S1_t", "S2_t", "S3_t"],
+)
 df["predicted"].plot.bar()
 plt.ylabel("total sensitivity indices")
 df
@@ -149,19 +164,20 @@ df
 # %%
 # Only one of the joint sensitivity indices, :math:`S_{13}`, is nonzero. It's
 # exact value is
-# 
+#
 # .. math::
 #   S_{13} = \left(\frac{8b^2\pi^8}{225}\right) \bigg/ \mathbb{V}[y]
 #
 S12 = 0
-S13 = 8*b**2*np.pi**8/225 / var
+S13 = 8 * b**2 * np.pi**8 / 225 / var
 S23 = 0
 joint = list()
 joint.append(pce.joint_sens(0, 1))
 joint.append(pce.joint_sens(0, 2))
 joint.append(pce.joint_sens(1, 2))
-DataFrame({"predicted": joint, "exact": [S12, S13, S23]},
-          index=["S12", "S13", "S23"])
+DataFrame(
+    {"predicted": joint, "exact": [S12, S13, S23]}, index=["S12", "S13", "S23"]
+)
 
 # %%
 # Convergence of the sensitivity indices
@@ -172,7 +188,7 @@ DataFrame({"predicted": joint, "exact": [S12, S13, S23]},
 #
 # .. math::
 #   N = d \times \frac{(d + k)!}{d!k!}
-# 
+#
 # where :math:`d` is the dimension (i.e., the number of input features), and
 # :math:`k` is the degree of the polynomial. This is to avoid an
 # underdetermined system when computing the values of the coefficients in the
@@ -196,10 +212,19 @@ total_sens = np.vstack(total_sens).T
 # of learning points. We observe that the sensitivity indices converge rapidly
 # to the exact values.
 for j, sens in enumerate([S1_t, S2_t, S3_t]):
-    plt.plot(n_samples, total_sens[j], label=f"$S_{j + 1}$", color=f"C{j}", 
-             marker="o")
-    plt.plot(n_samples, np.full(len(n_samples), sens), color=f"C{j}", 
-             linestyle="dashed")
+    plt.plot(
+        n_samples,
+        total_sens[j],
+        label=f"$S_{j + 1}$",
+        color=f"C{j}",
+        marker="o",
+    )
+    plt.plot(
+        n_samples,
+        np.full(len(n_samples), sens),
+        color=f"C{j}",
+        linestyle="dashed",
+    )
 plt.xlabel("number of training points")
 plt.ylabel("sensivity indices")
 plt.title("Global sensitivity analysis (Polynomial Chaos)")
@@ -222,25 +247,38 @@ plt.show()
 # :math:`n` is a power of 2.
 from scipy.stats import sobol_indices
 
+
 def ishigami(x):
-    return np.sin(x[0]) + a*np.sin(x[1])**2 + b*(x[2]**4)*np.sin(x[0])
+    return (
+        np.sin(x[0]) + a * np.sin(x[1]) ** 2 + b * (x[2] ** 4) * np.sin(x[0])
+    )
+
 
 total_sens_sampling = list()
 n_samples_sampling = list()
 for log_n in range(2, 12):
     n = 2**log_n
-    indices = sobol_indices(func=ishigami, n=n, dists=[distribution]*3)
+    indices = sobol_indices(func=ishigami, n=n, dists=[distribution] * 3)
     total_sens_sampling.append(indices.total_order)
-    n_samples_sampling.append(n * 5) # 5 is dimension + 2
+    n_samples_sampling.append(n * 5)  # 5 is dimension + 2
 total_sens_sampling = np.vstack(total_sens_sampling).T
 
 # %%
 # Now we recreate the same figure as before.
 for j, sens in enumerate([S1_t, S2_t, S3_t]):
-    plt.plot(n_samples_sampling, total_sens_sampling[j], label=f"$S_{j + 1}$", 
-             color=f"C{j}", marker="o")
-    plt.plot(n_samples_sampling, np.full(len(n_samples_sampling), sens),
-             color=f"C{j}", linestyle="dashed")
+    plt.plot(
+        n_samples_sampling,
+        total_sens_sampling[j],
+        label=f"$S_{j + 1}$",
+        color=f"C{j}",
+        marker="o",
+    )
+    plt.plot(
+        n_samples_sampling,
+        np.full(len(n_samples_sampling), sens),
+        color=f"C{j}",
+        linestyle="dashed",
+    )
 plt.xlabel("number of training points")
 plt.ylabel("sensivity indices")
 plt.title("Global sensitivity analysis (sampling approach)")
@@ -256,7 +294,7 @@ plt.show()
 # %%
 # See also
 #   * :ref:`sphx_glr_auto_examples_polynomial_chaos_plot_pcr_sobol_g.py` for
-#     an example of how to adaptively construct the multiindex set in the 
+#     an example of how to adaptively construct the multiindex set in the
 #     Polynomial Chaos expansion to compute senstivity indices.
 #   * :ref:`sphx_glr_auto_examples_polynomial_chaos_plot_pcr_noisy_data.py` for
 #     an example of how to use sparse solvers to deal with noisy measurements.
