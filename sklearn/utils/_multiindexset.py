@@ -54,10 +54,10 @@ base clase, and providing an implementation for the `_contains` method.
 
 Example
 -------
->>> from sklearn.utils._multiindices import TotalDegree
->>> m = TotalDegree(2, 3) # dimension 2, degree 3
->>> indices = list(m.indices())
->>> indices
+>> from sklearn.utils._multiindices import TotalDegree
+>> m = TotalDegree(2, 3) # dimension 2, degree 3
+>> indices = list(m.indices())
+>> indices
 [[0, 0], [1, 0], [2, 0], [3, 0], [0, 1], [1, 1], [2, 1], [0, 2], [1, 2], [0, 3]
 ]
 """
