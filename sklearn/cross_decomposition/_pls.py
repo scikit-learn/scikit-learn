@@ -1229,9 +1229,9 @@ class SPLS(PLSCanonical):
     >>> from sklearn.cross_decomposition import SPLS
     >>> X = [[0., 0., 1.], [1.,0.,0.], [2.,2.,2.], [2.,5.,4.]]
     >>> Y = [[0.1, -0.2], [0.9, 1.1], [6.2, 5.9], [11.9, 12.3]]
-    >>> spls = SPLS(n_components=1, penalty_x=0.5, penalty_y=0.5)
+    >>> spls = SPLS(n_components=2, penalty_x=0.5, penalty_y=0.5)
     >>> spls.fit(X, Y)
-    SPLS(n_components=1, penalty_x=0.5, penalty_y=0.5)
+    SPLS(n_components=2, penalty_x=0.5, penalty_y=0.5)
     >>> X_c, Y_c = spls.transform(X, Y)
     """
 
@@ -1247,7 +1247,7 @@ class SPLS(PLSCanonical):
 
     def __init__(
         self,
-        n_components=1,
+        n_components=2,
         *,
         scale=True,
         max_iter=500,
