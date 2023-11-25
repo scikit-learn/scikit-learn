@@ -874,12 +874,12 @@ def test_early_stopping_with_sample_weights(monkeypatch):
         random_state=0,
         scoring="neg_median_absolute_error",
     )
-    mock_hist_predict = Mock(side_effect=hist._raw_predict)
-    hist._raw_predict = mock_hist_predict
+    mock_raw_predict = Mock(side_effect=hist._raw_predict)
+    hist._raw_predict = mock_raw_predict
     hist.fit(X, y, sample_weight=sample_weight)
 
     # _raw_predict should never be called with scoring as a string
-    assert mock_hist_predict.call_count == 0
+    assert mock_raw_predict.call_count == 0
 
     # For scorer is called twice (train and val) for the baseline score, and twice
     # per iteration (train and val) after that. So 6 times in total for `max_iter=2`.
