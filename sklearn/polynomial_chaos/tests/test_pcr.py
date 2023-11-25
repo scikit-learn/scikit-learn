@@ -522,7 +522,7 @@ def test_sobol_order_2():
         ),
         (
             7,
-            533,
+            990,  # 533
             (
                 0.5999,
                 0.2677,
@@ -547,7 +547,6 @@ def test_sobol(degree, N, main, total, tol):
     X = (get_samples(degree, dimension)[:N, :] + 1) / 2
     X2 = np.hstack([X, 1 / 2 * np.ones_like(X)])
     y = prod((abs(4 * X_j - 2) + a_j) / (1 + a_j) for a_j, X_j in zip(a, X2.T))
-    X = X[:, :4]
     pce.fit(X, y)
 
     joint = (
