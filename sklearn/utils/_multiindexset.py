@@ -88,7 +88,6 @@ class MultiIndexSet(ABC):
     """
 
     def __init__(self, dimension, degree, weights=None):
-
         # check dimension
         if not isinstance(dimension, Integral) or dimension < 1:
             raise ValueError(f"dimension must be a non-negative int, got '{dimension}'")

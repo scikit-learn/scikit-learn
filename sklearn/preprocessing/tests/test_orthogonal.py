@@ -12,11 +12,13 @@ def test_fit_transform():
     X = np.linspace(0, 1, num=6).reshape(3, 2)
     poly = OrthogonalPolynomialFeatures()
     X_trans = poly.fit_transform(X)
-    X_exact = np.array([
-        [1.0, 0.0, -0.5, 0.2, 0.0, -0.44],
-        [1.0, 0.4, -0.26, 0.6, 0.24, 0.04],
-        [1.0, 0.8, 0.46, 1.0, 0.8, 1.0],
-    ])
+    X_exact = np.array(
+        [
+            [1.0, 0.0, -0.5, 0.2, 0.0, -0.44],
+            [1.0, 0.4, -0.26, 0.6, 0.24, 0.04],
+            [1.0, 0.8, 0.46, 1.0, 0.8, 1.0],
+        ]
+    )
     assert np.linalg.norm(X_trans - X_exact) < 1e-15
 
 
@@ -25,17 +27,18 @@ def test_fit_transform_hybrid():
     X = np.linspace(0, 1, num=6).reshape(3, 2)
     poly = OrthogonalPolynomialFeatures(polynomial=("Legendre", "Hermite"))
     X_trans = poly.fit_transform(X)
-    X_exact = np.array([
-        [1.0, 0.0, -0.5, 0.2, 0.0, -0.96],
-        [1.0, 0.4, -0.26, 0.6, 0.24, -0.64],
-        [1.0, 0.8, 0.46, 1.0, 0.8, 0.0],
-    ])
+    X_exact = np.array(
+        [
+            [1.0, 0.0, -0.5, 0.2, 0.0, -0.96],
+            [1.0, 0.4, -0.26, 0.6, 0.24, -0.64],
+            [1.0, 0.8, 0.46, 1.0, 0.8, 0.0],
+        ]
+    )
     assert np.linalg.norm(X_trans - X_exact) < 1e-15
 
 
 # check polynomial argument
 def test_fit_polynomial():
-
     # unmatched number of input features and number of polynomials throws error
     with pytest.raises(ValueError, match="polynomial"):
         X = np.linspace(0, 1, num=9).reshape(3, 3)

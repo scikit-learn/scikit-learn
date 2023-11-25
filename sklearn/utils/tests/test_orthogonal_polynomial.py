@@ -70,7 +70,6 @@ def test_constructors(polynomial, nargs, error_type):
     ],
 )
 def test_vandermonde(polynomial, points, degree, expected):
-
     # generate vandermonde matrices
     V = polynomial.vandermonde(points, degree)
 
@@ -80,7 +79,6 @@ def test_vandermonde(polynomial, points, degree, expected):
 
 # check vandermonde points
 def test_vandermonde_points():
-
     # non-numeric input throws error
     with pytest.raises(ValueError):
         Legendre().vandermonde("wololo", 2)
@@ -96,7 +94,6 @@ def test_vandermonde_points():
 
 # check vandermonde degree
 def test_vandermonde_degree():
-
     # non-integer degree throws error
     with pytest.raises(ValueError, match="wololo"):
         Legendre().vandermonde([-1, 0, 1], "wololo")
@@ -120,7 +117,6 @@ def test_vandermonde_degree():
     ],
 )
 def test_from_distribution(distribution, polynomial_type):
-
     # unfrozen distribution type throws error
     with pytest.raises(ValueError, match="dist"):
         Polynomial.from_distribution(uniform)
@@ -144,7 +140,6 @@ def test_from_distribution(distribution, polynomial_type):
     ],
 )
 def test_scale_features_from_distribution(distribution, mean, std):
-
     # passes
     n = 100_000
     random_state = check_random_state(17)
@@ -183,7 +178,6 @@ def test_scale_features_from_distribution(distribution, mean, std):
     ],
 )
 def test_norm(polynomial, norm):
-
     # non-integer degree throws error
     with pytest.raises(ValueError, match="wololo"):
         polynomial.norm("wololo")
@@ -222,7 +216,6 @@ def test_norm_numerically(distribution, polynomial, tolerance):
 
 # special test for Jacobi
 def test_jacobi():
-
     # negative alpha raises error
     with pytest.raises(ValueError, match="alpha"):
         Jacobi(0, 1)
@@ -258,7 +251,6 @@ def test_jacobi():
 
 # test print method
 def test_print():
-
     # default
     polynomial = Legendre()
     assert "Legendre" in str(polynomial)

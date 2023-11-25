@@ -265,7 +265,6 @@ class Jacobi(Polynomial):
     """A class representing Jacobi polynomials."""
 
     def __init__(self, alpha=None, beta=None, shape_params=None):
-
         # get alpha and beta from shape parameters, if provided
         if shape_params is not None:
             if alpha is not None or beta is not None:

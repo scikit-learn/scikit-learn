@@ -23,7 +23,6 @@ from sklearn.utils._multiindexset import (
     ],
 )
 def test_indices(multiindex_set, size):
-
     # dimension 3, degree 7
     multiindex_set = multiindex_set(3, 7)
 
@@ -42,7 +41,6 @@ def test_indices(multiindex_set, size):
     ],
 )
 def test_indices_weighted(multiindex_set, size):
-
     # dimension 2, degree 6, weights (1, 3/5)
     multiindex_set = multiindex_set(2, 6, weights=(1, 3 / 5))
 
@@ -52,7 +50,6 @@ def test_indices_weighted(multiindex_set, size):
 
 # check dimension
 def test_dimension():
-
     # non-int dimension throws error
     with pytest.raises(ValueError, match="wololo"):
         TotalDegree("wololo", 2)
@@ -71,7 +68,6 @@ def test_dimension():
 
 # check degree
 def test_degree():
-
     # non-int degree throws error
     with pytest.raises(ValueError, match="wololo"):
         TotalDegree(3, "wololo")
@@ -89,7 +85,6 @@ def test_degree():
 
 # checks on weights
 def test_weights():
-
     # weights with different type throws error
     with pytest.raises(ValueError, match="weights"):
         TotalDegree(3, 2, weights=1)
@@ -123,7 +118,6 @@ def test_weights():
 
 # special checks for Zaremba cross
 def test_Zaremba():
-
     # test degree 0
     len(list(ZarembaCross(3, 0).indices())) == 1
 
@@ -139,7 +133,6 @@ def test_Zaremba():
     ],
 )
 def test_from_string(name, upper_case_name, multiindex_set):
-
     # unknown multiindex set type throws error
     with pytest.raises(ValueError, match="type"):
         MultiIndexSet.from_string("wololo")
@@ -154,7 +147,6 @@ def test_from_string(name, upper_case_name, multiindex_set):
 
 # test print method
 def test_print():
-
     # unweighted
     multiindex_set = TotalDegree(2, 3)
     assert "3" in str(multiindex_set)

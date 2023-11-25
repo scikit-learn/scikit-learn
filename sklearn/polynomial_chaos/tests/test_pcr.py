@@ -57,7 +57,6 @@ def test_1d_fit():
 
 # Test fitting with distributions
 def test_fit_distributions():
-
     # generate data
     random_state = check_random_state(17)
     X = uniform().rvs((28, 2), random_state=random_state)
@@ -93,7 +92,6 @@ def test_fit_distributions():
 
 # Test fit with solvers
 def test_fit_solvers():
-
     # generate data
     random_state = check_random_state(17)
     X = uniform().rvs((28, 2), random_state=random_state)
@@ -150,7 +148,6 @@ def test_solvers_with_noise(solver):
 
 # Test input checking for fit
 def test_fit_inputs():
-
     # only 1 data point throws an error
     with pytest.raises(ValueError, match="more than 1 sample"):
         pce = PolynomialChaosRegressor()

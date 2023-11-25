@@ -128,12 +128,14 @@ class PolynomialChaosRegressor(BaseEstimator, RegressorMixin):
         "distribution": [HasMethods("dist"), "array-like", None],
         "degree": [Interval(Integral, 0, None, closed="left")],
         "truncation": [
-            StrOptions({
-                "full_tensor",
-                "total_degree",
-                "hyperbolic_cross",
-                "Zaremba_cross",
-            })
+            StrOptions(
+                {
+                    "full_tensor",
+                    "total_degree",
+                    "hyperbolic_cross",
+                    "Zaremba_cross",
+                }
+            )
         ],
         "weights": ["array-like", None],
         "solver": [HasMethods("fit"), None],
@@ -259,7 +261,6 @@ class PolynomialChaosRegressor(BaseEstimator, RegressorMixin):
 
         # adaptive basis growth
         for iter in range(max_iter):
-
             # create orthogonal polynomial basis transformer
             basis = OrthogonalPolynomialFeatures(
                 self.degree,

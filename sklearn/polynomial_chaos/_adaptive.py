@@ -99,7 +99,6 @@ class GerstnerGriebel(BasisIncrementStrategy):
     """
 
     def propose(self, pce):
-
         # interpret multiindices as list of lists for convenience
         multiindices = pce.multiindices_.tolist()
 

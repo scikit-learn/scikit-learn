@@ -142,12 +142,14 @@ class OrthogonalPolynomialFeatures(BaseEstimator, TransformerMixin):
         "degree": [Interval(Integral, 0, None, closed="left")],
         "polynomial": [str, "array-like"],
         "truncation": [
-            StrOptions({
-                "full_tensor",
-                "total_degree",
-                "hyperbolic_cross",
-                "Zaremba_cross",
-            })
+            StrOptions(
+                {
+                    "full_tensor",
+                    "total_degree",
+                    "hyperbolic_cross",
+                    "Zaremba_cross",
+                }
+            )
         ],
         "weights": ["array-like", None],
         "multiindices": ["array-like", Iterable, None],

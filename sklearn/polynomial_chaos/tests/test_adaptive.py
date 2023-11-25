@@ -18,7 +18,6 @@ from sklearn.utils import check_random_state
 
 # Check from string
 def test_from_string():
-
     # passes
     strategy = BasisIncrementStrategy.from_string("gerstner_griebel")
     assert isinstance(strategy, GerstnerGriebel)
