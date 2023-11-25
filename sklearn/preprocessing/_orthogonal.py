@@ -73,7 +73,7 @@ class OrthogonalPolynomialFeatures(BaseEstimator, TransformerMixin):
         = None`, an unweighted multiindex set will be used. The default is
         `None`.
 
-    indices : array-like of shape (`n_output_features_`, `n_features_in_`), \
+    indices : array-like of shape (n_output_features_, n_features_in_), \
         dtype=np.int64, default=None
         The combination of `degree`, `truncation` and `weights` provides a
         flexible way to define various multiindex set shapes that govern which
@@ -90,14 +90,14 @@ class OrthogonalPolynomialFeatures(BaseEstimator, TransformerMixin):
     n_features_in_ : int
         Number of features seen during :term:`fit`.
 
-    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+    feature_names_in_ : ndarray of shape (n_features_in_,)
         Names of features seen during :term:`fit`. Defined only when `X`
         has feature names that are all strings.
 
-    n_features_out_ : int
+    n_output_features_ : int
         The total number of orthogonal polynomial output features.
 
-    multiindices_ : array-like of shape (n_features_out_, n_features_in_)
+    multiindices_ : array-like of shape (n_output_features_, n_features_in_)
         An array with the combinations of input features that will be used to
         compose the output features. Every row in this array contains a single
         multiindex.
@@ -262,13 +262,13 @@ class OrthogonalPolynomialFeatures(BaseEstimator, TransformerMixin):
         self.maximum_degrees_ = np.amax(self.multiindices_, axis=0)
 
         # set number of output features
-        self.n_features_out_ = self.multiindices_.shape[0]
+        self.n_output_features_ = self.multiindices_.shape[0]
 
         # compute the norms of each orthogonal polynomial
         # NOTE: This is useful for global sensitivity analysis using Polynomial
         # Chaos regression, which requires access to the norms of the
         # orthogonal polynomials in the basis.
-        self.norms_ = np.ones(self.n_features_out_)
+        self.norms_ = np.ones(self.n_output_features_)
         for j, index in enumerate(self.multiindices_):
             for dim in range(n_features):
                 self.norms_[j] *= self.polynomials_[dim].norm(index[dim])
@@ -281,13 +281,13 @@ class OrthogonalPolynomialFeatures(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        X : array-like of shape (`n_samples`, `n_features`)
+        X : array-like of shape (n_samples, n_features_in_)
             The data to transform, one data point on every row.
 
         Returns
         -------
-        X_trans : `ndarray` of shape (`n_samples`, `n_features_out`)
-            The matrix of features, where `n_features_out` is the number of
+        X_trans : ndarray of shape (n_samples, n_output_features_)
+            The matrix of features, where `n_output_features_` is the number of
             othogonal polynomial features generated from all combinations of
             input features.
         """
@@ -305,7 +305,7 @@ class OrthogonalPolynomialFeatures(BaseEstimator, TransformerMixin):
             )
 
         # compose output features by multiplying 1d polynomial features
-        X_trans = np.ones((n_samples, self.n_features_out_))
+        X_trans = np.ones((n_samples, self.n_output_features_))
         for j, index in enumerate(self.multiindices_):
             for dim in range(n_features):
                 X_trans[:, j] *= polynomial_features[dim][:, index[dim]]

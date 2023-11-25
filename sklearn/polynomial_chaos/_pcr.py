@@ -81,7 +81,7 @@ class PolynomialChaosRegressor(BaseEstimator, RegressorMixin):
         `LinearModel` that has a :term:`fit` method. Make sure to set
         `fit_intercept = False`.
 
-    multiindices : ndarray of shape (`n_output_features_`, `n_features_in_`), \
+    multiindices : ndarray of shape (n_output_features_, n_features_in_), \
         default=None
         The combination of `degree`, `truncation` and `weights` provides a
         flexible way to define the Polynomial Chaos basis. To allow for even
@@ -102,7 +102,7 @@ class PolynomialChaosRegressor(BaseEstimator, RegressorMixin):
     n_features_in_ : int
         Number of features seen during :term:`fit`.
 
-    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+    feature_names_in_ : ndarray of shape (n_features_in_,)
         Names of features seen during :term:`fit`. Defined only when `X`
         has feature names that are all strings.
 

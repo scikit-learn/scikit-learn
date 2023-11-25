@@ -239,44 +239,50 @@ plt.show()
 # total number of model evaluations is :math:`n \times (d + 2)`, where, for the
 # Ishigami function, the dimension :math:`d = 3`. The method only works if
 # :math:`n` is a power of 2.
-from scipy.stats import sobol_indices
+try:
+    from scipy.stats import sobol_indices
 
+    scipy_has_sobol_indices = True
+except ImportError:
+    scipy_has_sobol_indices = False
 
-def ishigami(x):
-    return np.sin(x[0]) + a * np.sin(x[1]) ** 2 + b * (x[2] ** 4) * np.sin(x[0])
+if scipy_has_sobol_indices:
+    from scipy.stats import sobol_indices
 
+    def ishigami(x):
+        return np.sin(x[0]) + a * np.sin(x[1]) ** 2 + b * (x[2] ** 4) * np.sin(x[0])
 
-total_sens_sampling = list()
-n_samples_sampling = list()
-for log_n in range(2, 12):
-    n = 2**log_n
-    indices = sobol_indices(func=ishigami, n=n, dists=[distribution] * 3)
-    total_sens_sampling.append(indices.total_order)
-    n_samples_sampling.append(n * 5)  # 5 is dimension + 2
-total_sens_sampling = np.vstack(total_sens_sampling).T
+    total_sens_sampling = list()
+    n_samples_sampling = list()
+    for log_n in range(2, 12):
+        n = 2**log_n
+        indices = sobol_indices(func=ishigami, n=n, dists=[distribution] * 3)
+        total_sens_sampling.append(indices.total_order)
+        n_samples_sampling.append(n * 5)  # 5 is dimension + 2
+    total_sens_sampling = np.vstack(total_sens_sampling).T
 
-# %%
-# Now we recreate the same figure as before.
-for j, sens in enumerate([S1_t, S2_t, S3_t]):
-    plt.plot(
-        n_samples_sampling,
-        total_sens_sampling[j],
-        label=f"$S_{j + 1}$",
-        color=f"C{j}",
-        marker="o",
-    )
-    plt.plot(
-        n_samples_sampling,
-        np.full(len(n_samples_sampling), sens),
-        color=f"C{j}",
-        linestyle="dashed",
-    )
-plt.xlabel("number of training points")
-plt.ylabel("sensivity indices")
-plt.title("Global sensitivity analysis (sampling approach)")
-plt.ylim(0, 1)
-plt.legend(frameon=False)
-plt.show()
+    # %%
+    # Now we recreate the same figure as before.
+    for j, sens in enumerate([S1_t, S2_t, S3_t]):
+        plt.plot(
+            n_samples_sampling,
+            total_sens_sampling[j],
+            label=f"$S_{j + 1}$",
+            color=f"C{j}",
+            marker="o",
+        )
+        plt.plot(
+            n_samples_sampling,
+            np.full(len(n_samples_sampling), sens),
+            color=f"C{j}",
+            linestyle="dashed",
+        )
+    plt.xlabel("number of training points")
+    plt.ylabel("sensivity indices")
+    plt.title("Global sensitivity analysis (sampling approach)")
+    plt.ylim(0, 1)
+    plt.legend(frameon=False)
+    plt.show()
 
 # %%
 # Notice how the sensitivity indices converge much slower this time. (Note the
