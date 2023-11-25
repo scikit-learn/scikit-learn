@@ -1858,12 +1858,14 @@ def normalize(X, norm="l2", *, axis=1, copy=True, return_norm=False):
     else:  # axis == 1:
         sparse_format = "csr"
 
+    xp, _ = get_namespace(X)
+
     X = check_array(
         X,
         accept_sparse=sparse_format,
         copy=copy,
         estimator="the normalize function",
-        dtype=FLOAT_DTYPES,
+        dtype=_array_api.supported_float_dtypes(xp),
     )
     if axis == 0:
         X = X.T
@@ -1887,13 +1889,13 @@ def normalize(X, norm="l2", *, axis=1, copy=True, return_norm=False):
             X.data[mask] /= norms_elementwise[mask]
     else:
         if norm == "l1":
-            norms = np.abs(X).sum(axis=1)
+            norms = xp.sum(xp.abs(X), axis=1)
         elif norm == "l2":
             norms = row_norms(X)
         elif norm == "max":
-            norms = np.max(abs(X), axis=1)
+            norms = xp.max(xp.abs(X), axis=1)
         norms = _handle_zeros_in_scale(norms, copy=False)
-        X /= norms[:, np.newaxis]
+        X /= norms[:, None]
 
     if axis == 0:
         X = X.T
@@ -2031,7 +2033,7 @@ class Normalizer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         return normalize(X, norm=self.norm, axis=1, copy=copy)
 
     def _more_tags(self):
-        return {"stateless": True}
+        return {"stateless": True, "array_api_support": True}
 
 
 @validate_params(

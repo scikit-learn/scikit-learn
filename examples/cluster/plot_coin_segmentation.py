@@ -65,7 +65,7 @@ n_regions = 26
 # Compute and visualize the resulting regions
 
 # Computing a few extra eigenvectors may speed up the eigen_solver.
-# The spectral clustering quality may also benetif from requesting
+# The spectral clustering quality may also benefit from requesting
 # extra regions for segmentation.
 n_regions_plus = 3
 
