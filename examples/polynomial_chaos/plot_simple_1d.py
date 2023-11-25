@@ -74,6 +74,7 @@ plt.legend(bbox_to_anchor=(1, 1), frameon=False, loc="upper left")
 plt.xlabel("$x$")
 plt.ylabel("$f(x)$")
 plt.title("Polynomial Chaos approximations")
+plt.tight_layout(pad=1.2)
 plt.show()
 
 # %%

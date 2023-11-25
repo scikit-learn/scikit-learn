@@ -48,7 +48,7 @@ orthogonal polynomial for each feature depends on the given input distribution.
 The coefficients in the PC expansion are then computed by solving a linear
 regression problem.
 
-.. figure:: ../auto_examples/polynomial_chaos/images/sphx_glr_plot_pcr_simple_1d_001.png
+.. figure:: ../auto_examples/polynomial_chaos/images/sphx_glr_plot_simple_1d_001.png
    :target: ../auto_examples/polynomial_chaos/plot_simple_1d.html
    :align: center
 
