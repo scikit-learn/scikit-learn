@@ -34,7 +34,10 @@ from sklearn.ensemble import (
     RandomForestRegressor,
     RandomTreesEmbedding,
 )
-from sklearn.ensemble._forest import _generate_sample_indices, _get_n_samples_bootstrap
+from sklearn.ensemble._forest import (
+    _generate_unsampled_indices,
+    _get_n_samples_bootstrap,
+)
 from sklearn.exceptions import NotFittedError
 from sklearn.metrics import (
     explained_variance_score,
@@ -637,21 +640,21 @@ def test_forest_multioutput_integral_regression_target(ForestRegressor):
     X = iris.data
     y = rng.randint(low=0, high=10, size=(iris.data.shape[0], 2))
     estimator = ForestRegressor(
-        n_estimators=20, oob_score=True, bootstrap=True, random_state=0
+        n_estimators=30, oob_score=True, bootstrap=True, random_state=0
     )
     estimator.fit(X, y)
 
     n_samples_bootstrap = _get_n_samples_bootstrap(len(X), estimator.max_samples)
-    n_samples_test = 3
+    n_samples_test = X.shape[0] // 4
     oob_pred = np.zeros([n_samples_test, 2])
     for sample_idx, sample in enumerate(X[:n_samples_test]):
         n_samples_oob = 0
         oob_pred_sample = np.zeros(2)
         for tree in estimator.estimators_:
-            oob_sample_indices = _generate_sample_indices(
+            oob_unsampled_indices = _generate_unsampled_indices(
                 tree.random_state, len(X), n_samples_bootstrap
             )
-            if sample_idx not in oob_sample_indices:
+            if sample_idx in oob_unsampled_indices:
                 n_samples_oob += 1
                 oob_pred_sample += tree.predict(sample.reshape(1, -1)).squeeze()
         oob_pred[sample_idx] = oob_pred_sample / n_samples_oob
