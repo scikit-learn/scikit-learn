@@ -617,6 +617,7 @@ def test_classifier_error_oob_score_multiclass_multioutput(ForestClassifier):
     """Check that we raise an error with when requesting OOB score with
     multiclass-multioutput classification target.
     """
+    rng = np.random.RandomState(42)
     X = iris.data
     y = rng.randint(low=0, high=5, size=(iris.data.shape[0], 2))
     y_type = type_of_target(y)
