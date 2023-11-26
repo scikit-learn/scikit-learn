@@ -14,6 +14,7 @@ from pytest import importorskip
 
 import sklearn
 from sklearn._config import config_context
+from sklearn._min_dependencies import dependent_packages
 from sklearn.base import BaseEstimator
 from sklearn.datasets import make_blobs
 from sklearn.ensemble import RandomForestRegressor
@@ -24,7 +25,6 @@ from sklearn.linear_model import ARDRegression
 from sklearn.metrics.tests.test_score_objects import EstimatorWithFit
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.random_projection import _sparse_random_matrix
-from sklearn._min_dependencies import dependent_packages
 from sklearn.svm import SVR
 from sklearn.utils import (
     _safe_indexing,
