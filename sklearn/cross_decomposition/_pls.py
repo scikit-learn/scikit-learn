@@ -1286,7 +1286,14 @@ def _soft_threshold(x, c, tol=1e-6, eps=0.0):
     if np.linalg.norm(x, ord=1) <= c:
         return x
 
-    result = minimize(f, x0=np.zeros(1,), bounds=[(0, 1)], tol=tol)
+    result = minimize(
+        f,
+        x0=np.zeros(
+            1,
+        ),
+        bounds=[(0, 1)],
+        tol=tol,
+    )
     if not result.success:
         raise RuntimeError("Minimization failed to converge")
 
