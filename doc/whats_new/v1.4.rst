@@ -247,7 +247,7 @@ Changelog
 - |MajorFeature| Adds `polars <https://www.pola.rs>`__ input support to
   :class:`compose.ColumnTransformer` through the `DataFrame Interchange Protocol
   <https://data-apis.org/dataframe-protocol/latest/purpose_and_scope.html>`__.
-  The minimum support version for polars is `0.19.12`. :pr:`26683` by `Thomas Fan`_.
+  The minimum supported version for polars is `0.19.12`. :pr:`26683` by `Thomas Fan`_.
 
 - |API| |FIX| :class:`~compose.ColumnTransformer` now replaces `"passthrough"`
   with a corresponding :class:`~preprocessing.FunctionTransformer` in the
