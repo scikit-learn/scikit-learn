@@ -341,11 +341,6 @@ def _num_features(X):
         raise TypeError(message) from err
 
 
-def _use_interchange_protocol(X):
-    """Use interchange protocol for non-pandas dataframes that follow the protocol."""
-    return not _is_pandas_df(X) and hasattr(X, "__dataframe__")
-
-
 def _num_samples(x):
     """Return number of samples in array-like x."""
     message = "Expected sequence or array-like, got %s" % type(x)
