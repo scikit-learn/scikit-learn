@@ -492,6 +492,7 @@ def _get_column_indices(X, key):
 
 def _get_column_indices_interchange(X_interchange, key, key_dtype):
     """Same as _get_column_indices but for X with __dataframe__ protocol."""
+
     n_columns = X_interchange.num_columns()
 
     if isinstance(key, (list, tuple)) and not key:

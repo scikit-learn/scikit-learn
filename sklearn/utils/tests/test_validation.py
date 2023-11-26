@@ -24,6 +24,7 @@ from sklearn.linear_model import ARDRegression
 from sklearn.metrics.tests.test_score_objects import EstimatorWithFit
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.random_projection import _sparse_random_matrix
+from sklearn._min_dependencies import dependent_packages
 from sklearn.svm import SVR
 from sklearn.utils import (
     _safe_indexing,
@@ -1756,7 +1757,11 @@ def test_is_pandas_df_pandas_not_installed(hide_available_pandas):
 
 @pytest.mark.parametrize(
     "constructor_name, minversion",
-    [("pyarrow", "12.0.0"), ("dataframe", "1.5.0"), ("polars", "0.18.2")],
+    [
+        ("pyarrow", dependent_packages["pyarrow"][0]),
+        ("dataframe", dependent_packages["pandas"][0]),
+        ("polars", dependent_packages["polars"][0]),
+    ],
 )
 def test_is_polars_df_other_libraries(constructor_name, minversion):
     df = _convert_container(
