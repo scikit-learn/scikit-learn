@@ -73,8 +73,8 @@ class OrthogonalPolynomialFeatures(BaseEstimator, TransformerMixin):
         = None`, an unweighted multiindex set will be used. The default is
         `None`.
 
-    multiindices : array-like of shape (n_output_features_, n_features_in_), \
-        dtype=np.int64, default=None
+    multiindices : array-like of shape \
+        (n_output_features_, n_features_in_), dtype=np.int64, default=None
         The combination of `degree`, `truncation` and `weights` provides a
         flexible way to define various multiindex set shapes that govern which
         combinations of input features to retain in the output features. To

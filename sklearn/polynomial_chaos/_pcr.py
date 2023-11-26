@@ -81,7 +81,8 @@ class PolynomialChaosRegressor(BaseEstimator, RegressorMixin):
         `LinearModel` that has a :term:`fit` method. Make sure to set
         `fit_intercept = False`.
 
-    multiindices : ndarray of shape (n_output_features_, n_features_in_), default=None
+    multiindices : ndarray of shape \
+        (n_output_features_, n_features_in_), default=None
         The combination of `degree`, `truncation` and `weights` provides a
         flexible way to define the Polynomial Chaos basis. To allow for even
         more fine-grained control, this optional argument allows to specify an
@@ -133,6 +134,11 @@ class PolynomialChaosRegressor(BaseEstimator, RegressorMixin):
 
     strategy_ : skleanr.polynomial_chaos.BasisIncrementStrategy
         The adaptive basis growth strategy used during :term:`fit`.
+
+    See Also
+    --------
+    :class:`~sklearn.preprocessing.OrthogonalPolynomialFeatures`: Transformer
+        that maps features into orhtogonal polynomial features.
 
     Examples
     --------
