@@ -348,7 +348,6 @@ is extremely small. It is enabled by default when the desired number of
 components is less than 10 (strict) and the number of samples is more than 200
 (strict). See :class:`KernelPCA` for details.
 
-|details-end|
 
 .. topic:: References:
 
@@ -371,6 +370,8 @@ components is less than 10 (strict) and the number of samples is more than 200
       `scipy.sparse.linalg.eigsh documentation
       <https://docs.scipy.org/doc/scipy/reference/generated/scipy.sparse.linalg.eigsh.html>`_
       R. B. Lehoucq, D. C. Sorensen, and C. Yang, (1998)
+
+|details-end|
 
 
 .. _LSA:
@@ -426,7 +427,6 @@ To also transform a test set :math:`X`, we multiply it with :math:`V_k`:
     We present LSA in a different way that matches the scikit-learn API better,
     but the singular values found are the same.
 
-|details-end|
 
 :class:`TruncatedSVD` is very similar to :class:`PCA`, but differs
 in that the matrix :math:`X` does not need to be centered.
@@ -453,6 +453,9 @@ compensating for LSA's erroneous assumptions about textual data.
     *Introduction to Information Retrieval*, Cambridge University Press,
     chapter 18: `Matrix decompositions & latent semantic indexing
     <https://nlp.stanford.edu/IR-book/pdf/18lsi.pdf>`_
+
+
+|details-end|
 
 
 .. _DictionaryLearning:
@@ -913,6 +916,8 @@ The 'cd' solver can only optimize the Frobenius norm. Due to the
 underlying non-convexity of NMF, the different solvers may converge to
 different minima, even when optimizing the same distance function.
 
+|details-end|
+
 NMF is best used with the ``fit_transform`` method, which returns the matrix W.
 The matrix H is stored into the fitted model in the ``components_`` attribute;
 the method ``transform`` will decompose a new matrix X_new based on these
@@ -927,7 +932,7 @@ stored components::
     >>> X_new = np.array([[1, 0], [1, 6.1], [1, 0], [1, 4], [3.2, 1], [0, 4]])
     >>> W_new = model.transform(X_new)
 
-|details-end|
+
 
 .. topic:: Examples:
 
