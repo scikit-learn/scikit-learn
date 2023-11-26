@@ -323,6 +323,7 @@ eigensolvers can provide speedup with very low precision loss.
 |details-start|
 **Eigensolvers**
 |details-split|
+
 The optional parameter ``eigen_solver='randomized'`` can be used to
 *significantly* reduce the computation time when the number of requested
 ``n_components`` is small compared with the number of samples. It relies on
