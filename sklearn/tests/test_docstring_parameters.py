@@ -232,15 +232,6 @@ def test_fit_docstring_attributes(name, Estimator):
     if Estimator.__name__ in ("LinearSVC", "LinearSVR"):
         est.set_params(dual="auto")
 
-    # TODO(1.4): TO BE REMOVED for 1.4 (avoid FutureWarning)
-    if Estimator.__name__ in (
-        "MultinomialNB",
-        "ComplementNB",
-        "BernoulliNB",
-        "CategoricalNB",
-    ):
-        est.set_params(force_alpha=True)
-
     # TODO(1.6): remove (avoid FutureWarning)
     if Estimator.__name__ in ("NMF", "MiniBatchNMF"):
         est.set_params(n_components="auto")
