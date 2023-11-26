@@ -1,6 +1,6 @@
 """Testing utilities."""
 
-# Copyright (c) 2011, 2012
+# Copyright (c) 2011, 2012, 2023
 # Authors: Pietro Berkes,
 #          Andreas Muller
 #          Mathieu Blondel
@@ -9,6 +9,7 @@
 #          Denis Engemann
 #          Giorgio Patrini
 #          Thierry Guillemot
+#          Yuhki Yano
 # License: BSD 3 clause
 import atexit
 import contextlib
@@ -781,6 +782,9 @@ def _convert_container(
     elif constructor_name == "slice":
         return slice(container[0], container[1])
     elif constructor_name == "sparse_csr":
+        # TODO: when we depend on SciPy>=1.8 return `csr_array` instead and change
+        # the case bellow from `sparse_csr_array` to `sparse_csr_matrix` and make
+        # it return a `csr_matrix`.
         return sp.sparse.csr_matrix(container, dtype=dtype)
     elif constructor_name == "sparse_csr_array":
         if sp_version >= parse_version("1.8"):
@@ -789,7 +793,7 @@ def _convert_container(
             f"sparse_csr_array is only available with scipy>=1.8.0, got {sp_version}"
         )
     elif constructor_name == "sparse_csc":
-        return sp.sparse.csc_matrix(container, dtype=dtype)
+        return csr_container(dtype=dtype)
     elif constructor_name == "sparse_csc_array":
         if sp_version >= parse_version("1.8"):
             return sp.sparse.csc_array(container, dtype=dtype)
