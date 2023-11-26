@@ -3,7 +3,6 @@ from itertools import product
 from math import prod
 
 import numpy as np
-import pandas as pd
 import pytest
 from numpy.polynomial.legendre import legroots
 from scipy.stats import beta, expon, norm, uniform
@@ -292,6 +291,7 @@ def test_zero_mean():
 
 # Check for named features
 def test_pandas():
+    pd = pytest.importorskip("pandas")
     distribution = uniform()
     random_state = check_random_state(17)
     X = distribution.rvs((116, 3), random_state=random_state)
@@ -307,6 +307,7 @@ def test_pandas():
 
 # Verify input checking for joint_sens
 def test_joint_sens_inputs():
+    pd = pytest.importorskip("pandas")
     distribution = uniform()
     random_state = check_random_state(17)
     X = distribution.rvs((116, 3), random_state=random_state)
