@@ -621,6 +621,7 @@ def test_pls_constant_y():
 
     assert_allclose(pls.x_rotations_, 0)
 
+
 def test_spls_constant_y():
     """Checks warning when y is constant. Non-regression test for #19831"""
     rng = np.random.RandomState(42)
