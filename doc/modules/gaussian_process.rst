@@ -239,8 +239,10 @@ also invariant to rotations in the input space. For more details, we refer to
 Chapter 4 of [RW2006]_. For guidance on how to best combine different kernels,
 we refer to [Duv2014]_.
 
-Gaussian Process Kernel API
----------------------------
+|details-start|
+**Gaussian Process Kernel API**
+|details-split|
+
 The main usage of a :class:`Kernel` is to compute the GP's covariance between
 datapoints. For this, the method ``__call__`` of the kernel can be called. This
 method can either be used to compute the "auto-covariance" of all pairs of
@@ -323,6 +325,7 @@ only isotropic distances. The parameter ``gamma`` is considered to be a
 hyperparameter and may be optimized. The other kernel parameters are set
 directly at initialization and are kept fixed.
 
+|details-end|
 
 Basic kernels
 -------------
@@ -383,7 +386,13 @@ Matérn kernel
 -------------
 The :class:`Matern` kernel is a stationary kernel and a generalization of the
 :class:`RBF` kernel. It has an additional parameter :math:`\nu` which controls
-the smoothness of the resulting function. It is parameterized by a length-scale parameter :math:`l>0`, which can either be a scalar (isotropic variant of the kernel) or a vector with the same number of dimensions as the inputs :math:`x` (anisotropic variant of the kernel). The kernel is given by:
+the smoothness of the resulting function. It is parameterized by a length-scale parameter :math:`l>0`, which can either be a scalar (isotropic variant of the kernel) or a vector with the same number of dimensions as the inputs :math:`x` (anisotropic variant of the kernel). 
+
+|details-start|
+**Mathematical implementation of Matérn kernel**
+|details-split|
+
+The kernel is given by:
 
 .. math::
 
@@ -413,6 +422,9 @@ differentiable (as assumed by the RBF kernel) but at least once (:math:`\nu =
 
 The flexibility of controlling the smoothness of the learned function via :math:`\nu`
 allows adapting to the properties of the true underlying functional relation.
+
+|details-end|
+
 The prior and posterior of a GP resulting from a Matérn kernel are shown in
 the following figure:
 

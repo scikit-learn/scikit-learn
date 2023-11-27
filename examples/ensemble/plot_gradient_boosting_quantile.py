@@ -190,6 +190,7 @@ pd.DataFrame(results).set_index("model").style.apply(highlight_min)
 # (underestimation for this asymmetric noise) but is also naturally robust to
 # outliers and overfits less.
 #
+# .. _calibration-section:
 # Calibration of the confidence interval
 # --------------------------------------
 #
