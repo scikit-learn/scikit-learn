@@ -221,14 +221,12 @@ def test_omp_return_path_prop_with_gram():
 def test_omp_cv():
     y_ = y[:, 0]
     gamma_ = gamma[:, 0]
-    ompcv = OrthogonalMatchingPursuitCV(
-        normalize=True, fit_intercept=False, max_iter=10
-    )
+    ompcv = OrthogonalMatchingPursuitCV(fit_intercept=False, max_iter=10)
     ompcv.fit(X, y_)
     assert ompcv.n_nonzero_coefs_ == n_nonzero_coefs
     assert_array_almost_equal(ompcv.coef_, gamma_)
     omp = OrthogonalMatchingPursuit(
-        normalize=True, fit_intercept=False, n_nonzero_coefs=ompcv.n_nonzero_coefs_
+        fit_intercept=False, n_nonzero_coefs=ompcv.n_nonzero_coefs_
     )
     omp.fit(X, y_)
     assert_array_almost_equal(ompcv.coef_, omp.coef_)

@@ -16,7 +16,7 @@ from scipy.linalg.lapack import get_lapack_funcs
 from ..base import MultiOutputMixin, RegressorMixin, _fit_context
 from ..model_selection import check_cv
 from ..utils import Bunch, as_float_array, check_array
-from ..utils._param_validation import Hidden, Interval, StrOptions, validate_params
+from ..utils._param_validation import Interval, StrOptions, validate_params
 from ..utils.metadata_routing import (
     MetadataRouter,
     MethodMapping,
@@ -714,7 +714,6 @@ class OrthogonalMatchingPursuit(MultiOutputMixin, RegressorMixin, LinearModel):
         "n_nonzero_coefs": [Interval(Integral, 1, None, closed="left"), None],
         "tol": [Interval(Real, 0, None, closed="left"), None],
         "fit_intercept": ["boolean"],
-        "normalize": ["boolean", Hidden(StrOptions({"deprecated"}))],
         "precompute": [StrOptions({"auto"}), "boolean"],
     }
 
@@ -724,13 +723,11 @@ class OrthogonalMatchingPursuit(MultiOutputMixin, RegressorMixin, LinearModel):
         n_nonzero_coefs=None,
         tol=None,
         fit_intercept=True,
-        normalize="deprecated",
         precompute="auto",
     ):
         self.n_nonzero_coefs = n_nonzero_coefs
         self.tol = tol
         self.fit_intercept = fit_intercept
-        self.normalize = normalize
         self.precompute = precompute
 
     @_fit_context(prefer_skip_nested_validation=True)
@@ -754,7 +751,7 @@ class OrthogonalMatchingPursuit(MultiOutputMixin, RegressorMixin, LinearModel):
         n_features = X.shape[1]
 
         X, y, X_offset, y_offset, X_scale, Gram, Xy = _pre_fit(
-            X, y, None, self.precompute, False, self.fit_intercept, copy=True
+            X, y, None, self.precompute, self.fit_intercept, copy=True
         )
 
         if y.ndim == 1:
@@ -802,7 +799,6 @@ def _omp_path_residues(
     y_test,
     copy=True,
     fit_intercept=True,
-    normalize=False,
     max_iter=100,
 ):
     """Compute the residues on left-out data for a full LARS path.
@@ -856,11 +852,6 @@ def _omp_path_residues(
         y_test = as_float_array(y_test, copy=False)
         y_test -= y_mean
 
-    if normalize:
-        norms = np.sqrt(np.sum(X_train**2, axis=0))
-        nonzeros = np.flatnonzero(norms)
-        X_train[:, nonzeros] /= norms[nonzeros]
-
     coefs = orthogonal_mp(
         X_train,
         y_train,
@@ -872,8 +863,6 @@ def _omp_path_residues(
     )
     if coefs.ndim == 1:
         coefs = coefs[:, np.newaxis]
-    if normalize:
-        coefs[nonzeros] /= norms[nonzeros][:, np.newaxis]
 
     return np.dot(coefs.T, X_test.T) - y_test
 
@@ -991,7 +980,6 @@ class OrthogonalMatchingPursuitCV(RegressorMixin, LinearModel):
     _parameter_constraints: dict = {
         "copy": ["boolean"],
         "fit_intercept": ["boolean"],
-        "normalize": ["boolean", Hidden(StrOptions({"deprecated"}))],
         "max_iter": [Interval(Integral, 0, None, closed="left"), None],
         "cv": ["cv_object"],
         "n_jobs": [Integral, None],
@@ -1003,7 +991,6 @@ class OrthogonalMatchingPursuitCV(RegressorMixin, LinearModel):
         *,
         copy=True,
         fit_intercept=True,
-        normalize="deprecated",
         max_iter=None,
         cv=None,
         n_jobs=None,
@@ -1011,7 +998,6 @@ class OrthogonalMatchingPursuitCV(RegressorMixin, LinearModel):
     ):
         self.copy = copy
         self.fit_intercept = fit_intercept
-        self.normalize = normalize
         self.max_iter = max_iter
         self.cv = cv
         self.n_jobs = n_jobs
@@ -1068,7 +1054,6 @@ class OrthogonalMatchingPursuitCV(RegressorMixin, LinearModel):
                 y[test],
                 self.copy,
                 self.fit_intercept,
-                False,
                 max_iter,
             )
             for train, test in cv.split(X, **routed_params.splitter.split)
@@ -1083,13 +1068,7 @@ class OrthogonalMatchingPursuitCV(RegressorMixin, LinearModel):
         omp = OrthogonalMatchingPursuit(
             n_nonzero_coefs=best_n_nonzero_coefs,
             fit_intercept=self.fit_intercept,
-            normalize=False,
-        )
-
-        # avoid duplicating warning for deprecated normalize
-        with warnings.catch_warnings():
-            warnings.filterwarnings("ignore", category=FutureWarning)
-            omp.fit(X, y)
+        ).fit(X, y)
 
         self.coef_ = omp.coef_
         self.intercept_ = omp.intercept_

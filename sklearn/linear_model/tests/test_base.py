@@ -17,7 +17,7 @@ from sklearn.linear_model._base import (
     _rescale_data,
     make_dataset,
 )
-from sklearn.preprocessing import StandardScaler, add_dummy_feature
+from sklearn.preprocessing import add_dummy_feature
 from sklearn.utils._testing import (
     assert_allclose,
     assert_array_almost_equal,
@@ -378,34 +378,21 @@ def test_preprocess_data(global_random_seed):
     X = rng.rand(n_samples, n_features)
     y = rng.rand(n_samples)
     expected_X_mean = np.mean(X, axis=0)
-    expected_X_scale = np.std(X, axis=0) * np.sqrt(X.shape[0])
+    np.std(X, axis=0) * np.sqrt(X.shape[0])
     expected_y_mean = np.mean(y, axis=0)
 
-    Xt, yt, X_mean, y_mean, X_scale = _preprocess_data(
-        X, y, fit_intercept=False, normalize=False
-    )
+    Xt, yt, X_mean, y_mean, X_scale = _preprocess_data(X, y, fit_intercept=False)
     assert_array_almost_equal(X_mean, np.zeros(n_features))
     assert_array_almost_equal(y_mean, 0)
     assert_array_almost_equal(X_scale, np.ones(n_features))
     assert_array_almost_equal(Xt, X)
     assert_array_almost_equal(yt, y)
 
-    Xt, yt, X_mean, y_mean, X_scale = _preprocess_data(
-        X, y, fit_intercept=True, normalize=False
-    )
+    Xt, yt, X_mean, y_mean, X_scale = _preprocess_data(X, y, fit_intercept=True)
     assert_array_almost_equal(X_mean, expected_X_mean)
     assert_array_almost_equal(y_mean, expected_y_mean)
     assert_array_almost_equal(X_scale, np.ones(n_features))
     assert_array_almost_equal(Xt, X - expected_X_mean)
-    assert_array_almost_equal(yt, y - expected_y_mean)
-
-    Xt, yt, X_mean, y_mean, X_scale = _preprocess_data(
-        X, y, fit_intercept=True, normalize=True
-    )
-    assert_array_almost_equal(X_mean, expected_X_mean)
-    assert_array_almost_equal(y_mean, expected_y_mean)
-    assert_array_almost_equal(X_scale, expected_X_scale)
-    assert_array_almost_equal(Xt, (X - expected_X_mean) / expected_X_scale)
     assert_array_almost_equal(yt, y - expected_y_mean)
 
 
@@ -422,15 +409,11 @@ def test_preprocess_data_multioutput(global_random_seed, sparse_container):
     if sparse_container is not None:
         X = sparse_container(X)
 
-    _, yt, _, y_mean, _ = _preprocess_data(X, y, fit_intercept=False, normalize=False)
+    _, yt, _, y_mean, _ = _preprocess_data(X, y, fit_intercept=False)
     assert_array_almost_equal(y_mean, np.zeros(n_outputs))
     assert_array_almost_equal(yt, y)
 
-    _, yt, _, y_mean, _ = _preprocess_data(X, y, fit_intercept=True, normalize=False)
-    assert_array_almost_equal(y_mean, expected_y_mean)
-    assert_array_almost_equal(yt, y - y_mean)
-
-    _, yt, _, y_mean, _ = _preprocess_data(X, y, fit_intercept=True, normalize=True)
+    _, yt, _, y_mean, _ = _preprocess_data(X, y, fit_intercept=True)
     assert_array_almost_equal(y_mean, expected_y_mean)
     assert_array_almost_equal(yt, y - y_mean)
 
@@ -481,7 +464,6 @@ def test_preprocess_data_weighted(sparse_container, global_random_seed):
         X,
         y,
         fit_intercept=True,
-        normalize=False,
         sample_weight=sample_weight,
     )
     assert_array_almost_equal(X_mean, expected_X_mean)
@@ -491,52 +473,6 @@ def test_preprocess_data_weighted(sparse_container, global_random_seed):
         assert_array_almost_equal(Xt.toarray(), X.toarray())
     else:
         assert_array_almost_equal(Xt, X - expected_X_mean)
-    assert_array_almost_equal(yt, y - expected_y_mean)
-
-    # normalize is True
-    Xt, yt, X_mean, y_mean, X_scale = _preprocess_data(
-        X,
-        y,
-        fit_intercept=True,
-        normalize=True,
-        sample_weight=sample_weight,
-    )
-
-    assert_array_almost_equal(X_mean, expected_X_mean)
-    assert_array_almost_equal(y_mean, expected_y_mean)
-    assert_array_almost_equal(X_scale, expected_X_scale)
-
-    if sparse_container is not None:
-        # X is not centered
-        assert_array_almost_equal(Xt.toarray(), X.toarray() / expected_X_scale)
-    else:
-        assert_array_almost_equal(Xt, (X - expected_X_mean) / expected_X_scale)
-
-    # _preprocess_data with normalize=True scales the data by the feature-wise
-    # euclidean norms while StandardScaler scales the data by the feature-wise
-    # standard deviations.
-    # The two are equivalent up to a ratio of np.sqrt(n_samples) if unweighted
-    # or np.sqrt(sample_weight.sum()) if weighted.
-    if sparse_container is not None:
-        scaler = StandardScaler(with_mean=False).fit(X, sample_weight=sample_weight)
-
-        # Non-constant features are scaled similarly with np.sqrt(n_samples)
-        assert_array_almost_equal(
-            scaler.transform(X).toarray()[:, :2] / np.sqrt(sample_weight.sum()),
-            Xt.toarray()[:, :2],
-        )
-
-        # Constant features go through un-scaled.
-        assert_array_almost_equal(
-            scaler.transform(X).toarray()[:, 2:], Xt.toarray()[:, 2:]
-        )
-    else:
-        scaler = StandardScaler(with_mean=True).fit(X, sample_weight=sample_weight)
-        assert_array_almost_equal(scaler.mean_, X_mean)
-        assert_array_almost_equal(
-            scaler.transform(X) / np.sqrt(sample_weight.sum()),
-            Xt,
-        )
     assert_array_almost_equal(yt, y - expected_y_mean)
 
 
@@ -549,33 +485,20 @@ def test_sparse_preprocess_data_offsets(global_random_seed, lil_container):
     X = lil_container(X)
     y = rng.rand(n_samples)
     XA = X.toarray()
-    expected_X_scale = np.std(XA, axis=0) * np.sqrt(X.shape[0])
+    np.std(XA, axis=0) * np.sqrt(X.shape[0])
 
-    Xt, yt, X_mean, y_mean, X_scale = _preprocess_data(
-        X, y, fit_intercept=False, normalize=False
-    )
+    Xt, yt, X_mean, y_mean, X_scale = _preprocess_data(X, y, fit_intercept=False)
     assert_array_almost_equal(X_mean, np.zeros(n_features))
     assert_array_almost_equal(y_mean, 0)
     assert_array_almost_equal(X_scale, np.ones(n_features))
     assert_array_almost_equal(Xt.toarray(), XA)
     assert_array_almost_equal(yt, y)
 
-    Xt, yt, X_mean, y_mean, X_scale = _preprocess_data(
-        X, y, fit_intercept=True, normalize=False
-    )
+    Xt, yt, X_mean, y_mean, X_scale = _preprocess_data(X, y, fit_intercept=True)
     assert_array_almost_equal(X_mean, np.mean(XA, axis=0))
     assert_array_almost_equal(y_mean, np.mean(y, axis=0))
     assert_array_almost_equal(X_scale, np.ones(n_features))
     assert_array_almost_equal(Xt.toarray(), XA)
-    assert_array_almost_equal(yt, y - np.mean(y, axis=0))
-
-    Xt, yt, X_mean, y_mean, X_scale = _preprocess_data(
-        X, y, fit_intercept=True, normalize=True
-    )
-    assert_array_almost_equal(X_mean, np.mean(XA, axis=0))
-    assert_array_almost_equal(y_mean, np.mean(y, axis=0))
-    assert_array_almost_equal(X_scale, expected_X_scale)
-    assert_array_almost_equal(Xt.toarray(), XA / expected_X_scale)
     assert_array_almost_equal(yt, y - np.mean(y, axis=0))
 
 
@@ -585,7 +508,7 @@ def test_csr_preprocess_data(csr_container):
     X, y = make_regression()
     X[X < 2.5] = 0.0
     csr = csr_container(X)
-    csr_, y, _, _, _ = _preprocess_data(csr, y, True)
+    csr_, y, _, _, _ = _preprocess_data(csr, y, fit_intercept=True)
     assert csr_.format == "csr"
 
 
@@ -598,7 +521,9 @@ def test_preprocess_copy_data_no_checks(sparse_container, to_copy):
     if sparse_container is not None:
         X = sparse_container(X)
 
-    X_, y_, _, _, _ = _preprocess_data(X, y, True, copy=to_copy, check_input=False)
+    X_, y_, _, _, _ = _preprocess_data(
+        X, y, fit_intercept=True, copy=to_copy, check_input=False
+    )
 
     if to_copy and sparse_container is not None:
         assert not np.may_share_memory(X_.data, X.data)
@@ -623,69 +548,64 @@ def test_dtype_preprocess_data(global_random_seed):
     y_64 = np.asarray(y, dtype=np.float64)
 
     for fit_intercept in [True, False]:
-        for normalize in [True, False]:
-            Xt_32, yt_32, X_mean_32, y_mean_32, X_scale_32 = _preprocess_data(
-                X_32,
-                y_32,
-                fit_intercept=fit_intercept,
-                normalize=normalize,
-            )
+        Xt_32, yt_32, X_mean_32, y_mean_32, X_scale_32 = _preprocess_data(
+            X_32,
+            y_32,
+            fit_intercept=fit_intercept,
+        )
 
-            Xt_64, yt_64, X_mean_64, y_mean_64, X_scale_64 = _preprocess_data(
-                X_64,
-                y_64,
-                fit_intercept=fit_intercept,
-                normalize=normalize,
-            )
+        Xt_64, yt_64, X_mean_64, y_mean_64, X_scale_64 = _preprocess_data(
+            X_64,
+            y_64,
+            fit_intercept=fit_intercept,
+        )
 
-            Xt_3264, yt_3264, X_mean_3264, y_mean_3264, X_scale_3264 = _preprocess_data(
-                X_32,
-                y_64,
-                fit_intercept=fit_intercept,
-                normalize=normalize,
-            )
+        Xt_3264, yt_3264, X_mean_3264, y_mean_3264, X_scale_3264 = _preprocess_data(
+            X_32,
+            y_64,
+            fit_intercept=fit_intercept,
+        )
 
-            Xt_6432, yt_6432, X_mean_6432, y_mean_6432, X_scale_6432 = _preprocess_data(
-                X_64,
-                y_32,
-                fit_intercept=fit_intercept,
-                normalize=normalize,
-            )
+        Xt_6432, yt_6432, X_mean_6432, y_mean_6432, X_scale_6432 = _preprocess_data(
+            X_64,
+            y_32,
+            fit_intercept=fit_intercept,
+        )
 
-            assert Xt_32.dtype == np.float32
-            assert yt_32.dtype == np.float32
-            assert X_mean_32.dtype == np.float32
-            assert y_mean_32.dtype == np.float32
-            assert X_scale_32.dtype == np.float32
+        assert Xt_32.dtype == np.float32
+        assert yt_32.dtype == np.float32
+        assert X_mean_32.dtype == np.float32
+        assert y_mean_32.dtype == np.float32
+        assert X_scale_32.dtype == np.float32
 
-            assert Xt_64.dtype == np.float64
-            assert yt_64.dtype == np.float64
-            assert X_mean_64.dtype == np.float64
-            assert y_mean_64.dtype == np.float64
-            assert X_scale_64.dtype == np.float64
+        assert Xt_64.dtype == np.float64
+        assert yt_64.dtype == np.float64
+        assert X_mean_64.dtype == np.float64
+        assert y_mean_64.dtype == np.float64
+        assert X_scale_64.dtype == np.float64
 
-            assert Xt_3264.dtype == np.float32
-            assert yt_3264.dtype == np.float32
-            assert X_mean_3264.dtype == np.float32
-            assert y_mean_3264.dtype == np.float32
-            assert X_scale_3264.dtype == np.float32
+        assert Xt_3264.dtype == np.float32
+        assert yt_3264.dtype == np.float32
+        assert X_mean_3264.dtype == np.float32
+        assert y_mean_3264.dtype == np.float32
+        assert X_scale_3264.dtype == np.float32
 
-            assert Xt_6432.dtype == np.float64
-            assert yt_6432.dtype == np.float64
-            assert X_mean_6432.dtype == np.float64
-            assert y_mean_6432.dtype == np.float64
-            assert X_scale_6432.dtype == np.float64
+        assert Xt_6432.dtype == np.float64
+        assert yt_6432.dtype == np.float64
+        assert X_mean_6432.dtype == np.float64
+        assert y_mean_6432.dtype == np.float64
+        assert X_scale_6432.dtype == np.float64
 
-            assert X_32.dtype == np.float32
-            assert y_32.dtype == np.float32
-            assert X_64.dtype == np.float64
-            assert y_64.dtype == np.float64
+        assert X_32.dtype == np.float32
+        assert y_32.dtype == np.float32
+        assert X_64.dtype == np.float64
+        assert y_64.dtype == np.float64
 
-            assert_array_almost_equal(Xt_32, Xt_64)
-            assert_array_almost_equal(yt_32, yt_64)
-            assert_array_almost_equal(X_mean_32, X_mean_64)
-            assert_array_almost_equal(y_mean_32, y_mean_64)
-            assert_array_almost_equal(X_scale_32, X_scale_64)
+        assert_array_almost_equal(Xt_32, Xt_64)
+        assert_array_almost_equal(yt_32, yt_64)
+        assert_array_almost_equal(X_mean_32, X_mean_64)
+        assert_array_almost_equal(y_mean_32, y_mean_64)
+        assert_array_almost_equal(X_scale_32, X_scale_64)
 
 
 @pytest.mark.parametrize("n_targets", [None, 2])

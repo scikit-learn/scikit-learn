@@ -32,7 +32,6 @@ from ..base import (
     RegressorMixin,
     _fit_context,
 )
-from ..preprocessing._data import _is_constant_feature
 from ..utils import check_array, check_random_state
 from ..utils._array_api import get_namespace
 from ..utils._seq_dataset import (
@@ -41,9 +40,9 @@ from ..utils._seq_dataset import (
     CSRDataset32,
     CSRDataset64,
 )
-from ..utils.extmath import _incremental_mean_and_var, safe_sparse_dot
+from ..utils.extmath import safe_sparse_dot
 from ..utils.parallel import Parallel, delayed
-from ..utils.sparsefuncs import inplace_column_scale, mean_variance_axis
+from ..utils.sparsefuncs import mean_variance_axis
 from ..utils.validation import FLOAT_DTYPES, _check_sample_weight, check_is_fitted
 
 # TODO: bayesian_ridge_regression and bayesian_regression_ard
@@ -110,8 +109,8 @@ def make_dataset(X, y, sample_weight, random_state=None):
 def _preprocess_data(
     X,
     y,
+    *,
     fit_intercept,
-    normalize=False,
     copy=True,
     copy_y=True,
     sample_weight=None,
@@ -141,7 +140,6 @@ def _preprocess_data(
         If copy=True a copy of the input X is triggered, otherwise operations are
         inplace.
         If input X is dense, then X_out is centered.
-        If normalize is True, then X_out is rescaled (dense and sparse case)
     y_out : {ndarray, sparse matrix} of shape (n_samples,) or (n_samples, n_targets)
         Centered version of y. Likely performed inplace on input y.
     X_offset : ndarray of shape (n_features,)
@@ -170,39 +168,12 @@ def _preprocess_data(
         if sp.issparse(X):
             X_offset, X_var = mean_variance_axis(X, axis=0, weights=sample_weight)
         else:
-            if normalize:
-                X_offset, X_var, _ = _incremental_mean_and_var(
-                    X,
-                    last_mean=0.0,
-                    last_variance=0.0,
-                    last_sample_count=0.0,
-                    sample_weight=sample_weight,
-                )
-            else:
-                X_offset = np.average(X, axis=0, weights=sample_weight)
+            X_offset = np.average(X, axis=0, weights=sample_weight)
 
             X_offset = X_offset.astype(X.dtype, copy=False)
             X -= X_offset
 
-        if normalize:
-            X_var = X_var.astype(X.dtype, copy=False)
-            # Detect constant features on the computed variance, before taking
-            # the np.sqrt. Otherwise constant features cannot be detected with
-            # sample weights.
-            constant_mask = _is_constant_feature(X_var, X_offset, X.shape[0])
-            if sample_weight is None:
-                X_var *= X.shape[0]
-            else:
-                X_var *= sample_weight.sum()
-            X_scale = np.sqrt(X_var, out=X_var)
-            X_scale[constant_mask] = 1.0
-            if sp.issparse(X):
-                inplace_column_scale(X, 1.0 / X_scale)
-            else:
-                X /= X_scale
-        else:
-            X_scale = np.ones(X.shape[1], dtype=X.dtype)
-
+        X_scale = np.ones(X.shape[1], dtype=X.dtype)
         y_offset = np.average(y, axis=0, weights=sample_weight)
         y -= y_offset
     else:
@@ -747,7 +718,6 @@ def _pre_fit(
     y,
     Xy,
     precompute,
-    normalize,
     fit_intercept,
     copy,
     check_input=True,
@@ -767,7 +737,6 @@ def _pre_fit(
             X,
             y,
             fit_intercept=fit_intercept,
-            normalize=normalize,
             copy=False,
             check_input=check_input,
             sample_weight=sample_weight,
@@ -778,7 +747,6 @@ def _pre_fit(
             X,
             y,
             fit_intercept=fit_intercept,
-            normalize=normalize,
             copy=copy,
             check_input=check_input,
             sample_weight=sample_weight,
@@ -789,18 +757,12 @@ def _pre_fit(
             # This triggers copies anyway.
             X, y, _ = _rescale_data(X, y, sample_weight=sample_weight)
 
-    # FIXME: 'normalize' to be removed in 1.4
     if hasattr(precompute, "__array__"):
-        if (
-            fit_intercept
-            and not np.allclose(X_offset, np.zeros(n_features))
-            or normalize
-            and not np.allclose(X_scale, np.ones(n_features))
-        ):
+        if fit_intercept and not np.allclose(X_offset, np.zeros(n_features)):
             warnings.warn(
                 (
                     "Gram matrix was provided but X was centered to fit "
-                    "intercept, or X was normalized : recomputing Gram matrix."
+                    "intercept: recomputing Gram matrix."
                 ),
                 UserWarning,
             )

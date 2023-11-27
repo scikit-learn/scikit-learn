@@ -983,8 +983,7 @@ def test_overrided_gram_matrix():
     clf = ElasticNet(selection="cyclic", tol=1e-8, precompute=Gram)
     warning_message = (
         "Gram matrix was provided but X was centered"
-        " to fit intercept, "
-        "or X was normalized : recomputing Gram matrix."
+        " to fit intercept: recomputing Gram matrix."
     )
     with pytest.warns(UserWarning, match=warning_message):
         clf.fit(X, y)
