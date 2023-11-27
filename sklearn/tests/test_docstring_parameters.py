@@ -224,11 +224,7 @@ def test_fit_docstring_attributes(name, Estimator):
         # default raises an error, perplexity must be less than n_samples
         est.set_params(perplexity=2)
 
-    # TODO(1.4): TO BE REMOVED for 1.4 (avoid FutureWarning)
-    if Estimator.__name__ in ("KMeans", "MiniBatchKMeans"):
-        est.set_params(n_init="auto")
-
-    # TODO(1.4): TO BE REMOVED for 1.5 (avoid FutureWarning)
+    # TODO(1.5): TO BE REMOVED for 1.5 (avoid FutureWarning)
     if Estimator.__name__ in ("LinearSVC", "LinearSVR"):
         est.set_params(dual="auto")
 
