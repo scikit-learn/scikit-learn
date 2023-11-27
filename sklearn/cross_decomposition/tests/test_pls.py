@@ -621,6 +621,18 @@ def test_pls_constant_y():
 
     assert_allclose(pls.x_rotations_, 0)
 
+def test_spls_constant_y():
+    """Checks warning when y is constant. Non-regression test for #19831"""
+    rng = np.random.RandomState(42)
+    x = rng.rand(100, 3)
+    y = np.zeros(100)
+
+    spls = SPLS()
+
+    msg = "Y residual is constant at iteration"
+    with pytest.warns(UserWarning, match=msg):
+        spls.fit(x, y)
+
 
 @pytest.mark.parametrize("PLSEstimator", [PLSRegression, PLSCanonical, CCA, SPLS])
 def test_pls_coef_shape(PLSEstimator):

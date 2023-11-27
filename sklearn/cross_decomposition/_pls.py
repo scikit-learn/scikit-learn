@@ -348,14 +348,21 @@ class _PLS(
                 # Replace columns that are all close to zero with zeros
                 Yk_mask = np.all(np.abs(Yk) < 10 * Y_eps, axis=0)
                 Yk[:, Yk_mask] = 0.0
-                x_weights, y_weights, n_iter_ = _get_first_singular_vectors_pmd(
-                    Xk,
-                    Yk,
-                    max_iter=self.max_iter,
-                    tol=self.tol,
-                    tau_x=self.penalty_x * np.sqrt(Xk.shape[1]),
-                    tau_y=self.penalty_y * np.sqrt(Yk.shape[1]),
-                )
+                try:
+                    x_weights, y_weights, n_iter_ = _get_first_singular_vectors_pmd(
+                        Xk,
+                        Yk,
+                        max_iter=self.max_iter,
+                        tol=self.tol,
+                        tau_x=self.penalty_x * np.sqrt(Xk.shape[1]),
+                        tau_y=self.penalty_y * np.sqrt(Yk.shape[1]),
+                    )
+                except StopIteration as e:
+                    if str(e) != "Y residual is constant":
+                        raise
+                    warnings.warn(f"Y residual is constant at iteration {k}")
+                    break
+
                 self.n_iter_.append(n_iter_)
 
             # inplace sign flip for consistency across solvers and archs
@@ -1271,7 +1278,7 @@ class SPLS(PLSCanonical):
         self.penalty_y = penalty_y
 
 
-def _soft_threshold(x, c, tol: float = 1e-6, eps: float = 0.0):
+def _soft_threshold(x, c, tol, eps):
     """
     Searches for threshold delta such that the 1-norm of weights w is less
     than or equal to c and the 2-norm is equal to 1.
