@@ -679,8 +679,8 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         for Xs, name in zip(result, names):
             if not getattr(Xs, "ndim", 0) == 2 and not hasattr(Xs, "__dataframe__"):
                 raise ValueError(
-                    "The output of the '{0}' transformer should be 2D (scipy "
-                    "matrix, array, or DataFrames).".format(name)
+                    "The output of the '{0}' transformer should be 2D (numpy array, "
+                    "scipy sparse array, dataframe).".format(name)
                 )
 
     def _record_output_indices(self, Xs):
