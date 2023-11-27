@@ -137,11 +137,11 @@ def _get_first_singular_vectors_pmd(
     x_weights_old = 100  # init to big value for first convergence check
 
     for i in range(max_iter):
-        x_weights = np.dot(X.T, y_score) / np.dot(y_score, y_score)
+        x_weights = np.dot(X.T, y_score) / (np.dot(y_score, y_score)+eps)
         x_weights = _soft_threshold(x_weights, tau_x, tol=tol, eps=eps)
         x_score = np.dot(X, x_weights)
 
-        y_weights = np.dot(Y.T, x_score) / np.dot(x_score.T, x_score)
+        y_weights = np.dot(Y.T, x_score) / (np.dot(x_score.T, x_score)+eps)
 
         y_weights = _soft_threshold(y_weights, tau_y, tol=tol, eps=eps)
 
@@ -370,12 +370,11 @@ class _PLS(
             y_scores = np.dot(Yk, y_weights) / y_ss
 
             # Deflation: subtract rank-one approx to obtain Xk+1 and Yk+1
-            x_loadings = np.dot(x_scores, Xk) / np.dot(x_scores, x_scores)
+            x_loadings = np.dot(x_scores, Xk) / max(np.dot(x_scores, x_scores),self.tol) #ensures that the denominator is not zero
             Xk -= np.outer(x_scores, x_loadings)
-
             if self.deflation_mode == "canonical":
                 # regress Yk on y_score
-                y_loadings = np.dot(y_scores, Yk) / np.dot(y_scores, y_scores)
+                y_loadings = np.dot(y_scores, Yk) / max(np.dot(y_scores, y_scores),self.tol) #ensures that the denominator is not zero
                 Yk -= np.outer(y_scores, y_loadings)
             if self.deflation_mode == "regression":
                 # regress Yk on x_score
