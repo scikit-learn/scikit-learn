@@ -55,6 +55,7 @@ from sklearn.preprocessing import LabelBinarizer
 from sklearn.utils import shuffle
 from sklearn.utils._array_api import (
     _atol_for_type,
+    _convert_to_numpy,
     yield_namespace_device_dtype_combinations,
 )
 from sklearn.utils._testing import (
@@ -1747,9 +1748,7 @@ def check_array_api_metric(
         metric_xp = metric(y_true_xp, y_pred_xp, sample_weight=sample_weight)
 
         if not isinstance(metric_xp, float):
-            # If the result is not a scalar, the array has to be in the CPU
-            # before transforming it to a numpy array.
-            metric_xp = xp.asarray(metric_xp, device="cpu")
+            metric_xp = _convert_to_numpy(metric_xp, xp)
 
         assert_allclose(
             metric_xp,
