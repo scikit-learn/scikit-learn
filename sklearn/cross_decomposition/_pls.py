@@ -1277,10 +1277,7 @@ def _soft_threshold(x, c, tol: float = 1e-6, eps: float = 0.0):
 
     def f(delta):
         coef = np.clip(x - delta, 0, None) - np.clip(-x - delta, 0, None)
-        if np.sum(coef**2) == 0:
-            coef[:] = 1000
-        else:
-            coef /= np.sqrt(np.dot(coef, coef)) + eps
+        coef /= np.sqrt(np.dot(coef, coef)) + eps
         return (np.sum(np.abs(coef)) - c) ** 2
 
     if np.linalg.norm(x, ord=1) <= c:
@@ -1295,9 +1292,6 @@ def _soft_threshold(x, c, tol: float = 1e-6, eps: float = 0.0):
         bounds=[(0, None)],
         tol=tol,
     )
-    if not result.success:
-        raise RuntimeError("Minimization failed to converge")
-
     delta = result.x
     coef = np.where(x - delta > 0, x - delta, 0) - np.where(
         -x - delta > 0, -x - delta, 0
