@@ -615,7 +615,7 @@ class PLSRegression(_PLS):
     x_rotations_ : ndarray of shape (n_features, n_components)
         The projection matrix used to transform `X`.
 
-    y_rotations_ : ndarray of shape (n_features, n_components)
+    y_rotations_ : ndarray of shape (n_targets, n_components)
         The projection matrix used to transform `Y`.
 
     coef_ : ndarray of shape (n_target, n_features)
@@ -759,7 +759,7 @@ class PLSCanonical(_PLS):
     x_rotations_ : ndarray of shape (n_features, n_components)
         The projection matrix used to transform `X`.
 
-    y_rotations_ : ndarray of shape (n_features, n_components)
+    y_rotations_ : ndarray of shape (n_targets, n_components)
         The projection matrix used to transform `Y`.
 
     coef_ : ndarray of shape (n_targets, n_features)
@@ -881,7 +881,7 @@ class CCA(_PLS):
     x_rotations_ : ndarray of shape (n_features, n_components)
         The projection matrix used to transform `X`.
 
-    y_rotations_ : ndarray of shape (n_features, n_components)
+    y_rotations_ : ndarray of shape (n_targets, n_components)
         The projection matrix used to transform `Y`.
 
     coef_ : ndarray of shape (n_targets, n_features)
