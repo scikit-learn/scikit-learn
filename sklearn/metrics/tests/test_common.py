@@ -1869,4 +1869,10 @@ def yield_metric_checker_combinations(metric_checkers=metric_checkers):
 )
 @pytest.mark.parametrize("metric, check_func", yield_metric_checker_combinations())
 def test_array_api_compliance(metric, array_namespace, device, dtype, check_func):
+    if (
+        metric == mean_absolute_error
+        and check_func == check_array_api_regression_metric
+        and array_namespace == "cupy.array_api"
+    ):
+        pytest.xfail(reason="module 'cupy.array_api' has no attribute 'swapaxes'")
     check_func(metric, array_namespace, device, dtype)
