@@ -4692,7 +4692,7 @@ def _check_set_output_transform_polars_context(name, transformer_orig, context):
         if isinstance(columns, np.ndarray):
             columns = columns.tolist()
 
-        return pl.DataFrame(X, schema=columns)
+        return pl.DataFrame(X, schema=columns, orient="row")
 
     _check_set_output_transform_dataframe(
         name,
