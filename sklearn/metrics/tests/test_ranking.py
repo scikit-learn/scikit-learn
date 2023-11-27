@@ -1847,6 +1847,17 @@ def test_ndcg_ignore_ties_with_k():
     )
 
 
+def test_ndcg_negative_ndarray_error():
+    """Check that we raise an error if `y_true` contain negative value when attending
+    to compte the NDCG score.
+    """
+    y_true = np.array([[-0.89, -0.53, -0.47, 0.39, 0.56]])
+    y_score = np.array([[0.07, 0.31, 0.75, 0.33, 0.27]])
+    expected_message = "ndcg_score should not be used on negative y_true values"
+    with pytest.raises(ValueError, match=expected_message):
+        ndcg_score(y_true, y_score)
+
+
 def test_ndcg_invariant():
     y_true = np.arange(70).reshape(7, 10)
     y_score = y_true + np.random.RandomState(0).uniform(-0.2, 0.2, size=y_true.shape)
