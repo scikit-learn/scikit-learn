@@ -183,6 +183,7 @@ and classes are impacted:
   :user:`Yao Xiao <Charlie-XIAO>`;
 - :class:`preprocessing.PolynomialFeatures` in :pr:`27166` by
   :user:`Mohit Joshi <work-mohit>`.
+- :class:`cluster.SpectralClustering` in :pr:`27161` by :user:`Bharat Raghunathan <bharatr21>`;
 - :class:`random_projection.GaussianRandomProjection` in :pr:`27314` by
   :user:`Stefanie Senger <StefanieSenger>`.
 - :class:`random_projection.SparseRandomProjection`in :pr:`27314` by
