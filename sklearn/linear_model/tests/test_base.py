@@ -13,7 +13,6 @@ from scipy import linalg, sparse
 from sklearn.datasets import load_iris, make_regression, make_sparse_uncorrelated
 from sklearn.linear_model import LinearRegression
 from sklearn.linear_model._base import (
-    _deprecate_normalize,
     _preprocess_data,
     _rescale_data,
     make_dataset,
@@ -146,42 +145,6 @@ def test_fit_intercept():
     assert lr2_with_intercept.coef_.shape == lr2_without_intercept.coef_.shape
     assert lr3_with_intercept.coef_.shape == lr3_without_intercept.coef_.shape
     assert lr2_without_intercept.coef_.ndim == lr3_without_intercept.coef_.ndim
-
-
-def test_error_on_wrong_normalize():
-    normalize = "wrong"
-    error_msg = "Leave 'normalize' to its default"
-    with pytest.raises(ValueError, match=error_msg):
-        _deprecate_normalize(normalize, "estimator")
-
-
-# TODO(1.4): remove
-@pytest.mark.parametrize("normalize", [True, False, "deprecated"])
-def test_deprecate_normalize(normalize):
-    # test all possible case of the normalize parameter deprecation
-    if normalize == "deprecated":
-        # no warning
-        output = False
-        expected = None
-        warning_msg = []
-    else:
-        output = normalize
-        expected = FutureWarning
-        warning_msg = ["1.4"]
-        if not normalize:
-            warning_msg.append("default value")
-        else:
-            warning_msg.append("StandardScaler(")
-
-    if expected is None:
-        with warnings.catch_warnings():
-            warnings.simplefilter("error", FutureWarning)
-            _normalize = _deprecate_normalize(normalize, "estimator")
-    else:
-        with pytest.warns(expected) as record:
-            _normalize = _deprecate_normalize(normalize, "estimator")
-        assert all([warning in str(record[0].message) for warning in warning_msg])
-    assert _normalize == output
 
 
 def test_linear_regression_sparse(global_random_seed):

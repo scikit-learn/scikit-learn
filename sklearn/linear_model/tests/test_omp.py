@@ -1,7 +1,6 @@
 # Author: Vlad Niculae
 # License: BSD 3 clause
 
-import warnings
 
 import numpy as np
 import pytest
@@ -37,30 +36,6 @@ y *= 10
 G, Xy = np.dot(X.T, X), np.dot(X.T, y)
 # this makes X (n_samples, n_features)
 # and y (n_samples, 3)
-
-
-# TODO(1.4): remove
-@pytest.mark.parametrize(
-    "OmpModel", [OrthogonalMatchingPursuit, OrthogonalMatchingPursuitCV]
-)
-@pytest.mark.parametrize(
-    "normalize, n_warnings", [(True, 1), (False, 1), ("deprecated", 0)]
-)
-def test_assure_warning_when_normalize(OmpModel, normalize, n_warnings):
-    # check that we issue a FutureWarning when normalize was set
-    rng = check_random_state(0)
-    n_samples = 200
-    n_features = 2
-    X = rng.randn(n_samples, n_features)
-    X[X < 0.1] = 0.0
-    y = rng.rand(n_samples)
-
-    model = OmpModel(normalize=normalize)
-    with warnings.catch_warnings(record=True) as rec:
-        warnings.simplefilter("always", FutureWarning)
-        model.fit(X, y)
-
-    assert len([w.message for w in rec]) == n_warnings
 
 
 def test_correct_shapes():

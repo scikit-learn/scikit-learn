@@ -37,7 +37,7 @@ from ..utils._metadata_requests import (
 )
 from ..utils._param_validation import Hidden, Interval, StrOptions, validate_params
 from ..utils.parallel import Parallel, delayed
-from ._base import LinearModel, LinearRegression, _deprecate_normalize, _preprocess_data
+from ._base import LinearModel, LinearRegression, _preprocess_data
 
 SOLVE_TRIANGULAR_ARGS = {"check_finite": False}
 
@@ -897,20 +897,6 @@ class Lars(MultiOutputMixin, RegressorMixin, LinearModel):
     verbose : bool or int, default=False
         Sets the verbosity amount.
 
-    normalize : bool, default=False
-        This parameter is ignored when ``fit_intercept`` is set to False.
-        If True, the regressors X will be normalized before regression by
-        subtracting the mean and dividing by the l2-norm.
-        If you wish to standardize, please use
-        :class:`~sklearn.preprocessing.StandardScaler` before calling ``fit``
-        on an estimator with ``normalize=False``.
-
-        .. versionchanged:: 1.2
-           default changed from True to False in 1.2.
-
-        .. deprecated:: 1.2
-            ``normalize`` was deprecated in version 1.2 and will be removed in 1.4.
-
     precompute : bool, 'auto' or array-like , default='auto'
         Whether to use a precomputed Gram matrix to speed up
         calculations. If set to ``'auto'`` let us decide. The Gram
@@ -1162,10 +1148,6 @@ class Lars(MultiOutputMixin, RegressorMixin, LinearModel):
         """
         X, y = self._validate_data(X, y, y_numeric=True, multi_output=True)
 
-        _normalize = _deprecate_normalize(
-            self.normalize, estimator_name=self.__class__.__name__
-        )
-
         alpha = getattr(self, "alpha", 0.0)
         if hasattr(self, "n_nonzero_coefs"):
             alpha = 0.0  # n_nonzero_coefs parametrization takes priority
@@ -1185,7 +1167,7 @@ class Lars(MultiOutputMixin, RegressorMixin, LinearModel):
             max_iter=max_iter,
             alpha=alpha,
             fit_path=self.fit_path,
-            normalize=_normalize,
+            normalize=False,
             Xy=Xy,
         )
 
@@ -1219,20 +1201,6 @@ class LassoLars(Lars):
 
     verbose : bool or int, default=False
         Sets the verbosity amount.
-
-    normalize : bool, default=False
-        This parameter is ignored when ``fit_intercept`` is set to False.
-        If True, the regressors X will be normalized before regression by
-        subtracting the mean and dividing by the l2-norm.
-        If you wish to standardize, please use
-        :class:`~sklearn.preprocessing.StandardScaler` before calling ``fit``
-        on an estimator with ``normalize=False``.
-
-        .. versionchanged:: 1.2
-           default changed from True to False in 1.2.
-
-        .. deprecated:: 1.2
-            ``normalize`` was deprecated in version 1.2 and will be removed in 1.4.
 
     precompute : bool, 'auto' or array-like, default='auto'
         Whether to use a precomputed Gram matrix to speed up
@@ -1457,20 +1425,6 @@ def _lars_path_residues(
         'lasso' for expected small values of alpha in the doc of LassoLarsCV
         and LassoLarsIC.
 
-    normalize : bool, default=False
-        This parameter is ignored when ``fit_intercept`` is set to False.
-        If True, the regressors X will be normalized before regression by
-        subtracting the mean and dividing by the l2-norm.
-        If you wish to standardize, please use
-        :class:`~sklearn.preprocessing.StandardScaler` before calling ``fit``
-        on an estimator with ``normalize=False``.
-
-        .. versionchanged:: 1.2
-           default changed from True to False in 1.2.
-
-        .. deprecated:: 1.2
-            ``normalize`` was deprecated in version 1.2 and will be removed in 1.4.
-
     max_iter : int, default=500
         Maximum number of iterations to perform.
 
@@ -1554,20 +1508,6 @@ class LarsCV(Lars):
 
     max_iter : int, default=500
         Maximum number of iterations to perform.
-
-    normalize : bool, default=False
-        This parameter is ignored when ``fit_intercept`` is set to False.
-        If True, the regressors X will be normalized before regression by
-        subtracting the mean and dividing by the l2-norm.
-        If you wish to standardize, please use
-        :class:`~sklearn.preprocessing.StandardScaler` before calling ``fit``
-        on an estimator with ``normalize=False``.
-
-        .. versionchanged:: 1.2
-           default changed from True to False in 1.2.
-
-        .. deprecated:: 1.2
-            ``normalize`` was deprecated in version 1.2 and will be removed in 1.4.
 
     precompute : bool, 'auto' or array-like , default='auto'
         Whether to use a precomputed Gram matrix to speed up
@@ -1760,10 +1700,6 @@ class LarsCV(Lars):
         """
         _raise_for_params(params, self, "fit")
 
-        _normalize = _deprecate_normalize(
-            self.normalize, estimator_name=self.__class__.__name__
-        )
-
         X, y = self._validate_data(X, y, y_numeric=True)
         X = as_float_array(X, copy=self.copy_X)
         y = as_float_array(y, copy=self.copy_X)
@@ -1796,7 +1732,7 @@ class LarsCV(Lars):
                 copy=False,
                 method=self.method,
                 verbose=max(0, self.verbose - 1),
-                normalize=_normalize,
+                normalize=False,
                 fit_intercept=self.fit_intercept,
                 max_iter=self.max_iter,
                 eps=self.eps,
@@ -1847,7 +1783,7 @@ class LarsCV(Lars):
             alpha=best_alpha,
             Xy=None,
             fit_path=True,
-            normalize=_normalize,
+            normalize=False,
         )
         return self
 
@@ -1895,20 +1831,6 @@ class LassoLarsCV(LarsCV):
 
     max_iter : int, default=500
         Maximum number of iterations to perform.
-
-    normalize : bool, default=False
-        This parameter is ignored when ``fit_intercept`` is set to False.
-        If True, the regressors X will be normalized before regression by
-        subtracting the mean and dividing by the l2-norm.
-        If you wish to standardize, please use
-        :class:`~sklearn.preprocessing.StandardScaler` before calling ``fit``
-        on an estimator with ``normalize=False``.
-
-        .. versionchanged:: 1.2
-           default changed from True to False in 1.2.
-
-        .. deprecated:: 1.2
-            ``normalize`` was deprecated in version 1.2 and will be removed in 1.4.
 
     precompute : bool or 'auto' , default='auto'
         Whether to use a precomputed Gram matrix to speed up
@@ -2114,20 +2036,6 @@ class LassoLarsIC(LassoLars):
     verbose : bool or int, default=False
         Sets the verbosity amount.
 
-    normalize : bool, default=False
-        This parameter is ignored when ``fit_intercept`` is set to False.
-        If True, the regressors X will be normalized before regression by
-        subtracting the mean and dividing by the l2-norm.
-        If you wish to standardize, please use
-        :class:`~sklearn.preprocessing.StandardScaler` before calling ``fit``
-        on an estimator with ``normalize=False``.
-
-        .. versionchanged:: 1.2
-           default changed from True to False in 1.2.
-
-        .. deprecated:: 1.2
-            ``normalize`` was deprecated in version 1.2 and will be removed in 1.4.
-
     precompute : bool, 'auto' or array-like, default='auto'
         Whether to use a precomputed Gram matrix to speed up
         calculations. If set to ``'auto'`` let us decide. The Gram
@@ -2314,16 +2222,12 @@ class LassoLarsIC(LassoLars):
         self : object
             Returns an instance of self.
         """
-        _normalize = _deprecate_normalize(
-            self.normalize, estimator_name=self.__class__.__name__
-        )
-
         if copy_X is None:
             copy_X = self.copy_X
         X, y = self._validate_data(X, y, y_numeric=True)
 
         X, y, Xmean, ymean, Xstd = _preprocess_data(
-            X, y, self.fit_intercept, _normalize, copy_X
+            X, y, self.fit_intercept, False, copy_X
         )
 
         Gram = self.precompute
