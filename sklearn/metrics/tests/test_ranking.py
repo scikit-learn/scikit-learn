@@ -20,7 +20,7 @@ from sklearn.metrics import (
     label_ranking_loss,
     ndcg_score,
     precision_recall_curve,
-    roc_auc_score,♡
+    roc_auc_score,
     roc_curve,
     top_k_accuracy_score,
 )
