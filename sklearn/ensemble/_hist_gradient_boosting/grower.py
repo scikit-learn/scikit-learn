@@ -603,6 +603,9 @@ class TreeGrower:
                     smallest_child.allowed_features,
                 )
             )
+            # node.histograms is reused in largest_child.histograms. To break cyclic
+            # memory references and help garbage collection, we set it to None.
+            node.histograms = None
             self.total_compute_hist_time += time() - tic
 
             tic = time()
@@ -618,8 +621,9 @@ class TreeGrower:
                 if child.is_leaf:
                     del child.histograms
 
-        # We do not release the memory of node.histograms as it is reused in one of the
-        # child nodes.
+        # Release memory used by histograms as they are no longer needed for
+        # internal nodes once children histograms have been computed.
+        del node.histograms
 
         return left_child_node, right_child_node
 
