@@ -900,7 +900,7 @@ be continuously extended to the definitions of :math:`d_{KL}` and :math:`d_{IS}`
 respectively.
 
 |details-start|
-**More about implementation and usage of NMF**
+**NMF implemented solvers**
 |details-split|
 
 :class:`NMF` implements two solvers, using Coordinate Descent ('cd') [5]_, and
