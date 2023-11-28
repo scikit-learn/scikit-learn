@@ -384,7 +384,7 @@ Truncated singular value decomposition and latent semantic analysis
 where :math:`k` is a user-specified parameter.
 
 |details-start|
-**About truncated SVD and latent semantic analysis(LSA)**
+**About truncated SVD and latent semantic analysis (LSA)**
 |details-split|
 
 When truncated SVD is applied to term-document matrices
