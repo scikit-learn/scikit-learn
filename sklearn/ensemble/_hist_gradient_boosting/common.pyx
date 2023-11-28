@@ -10,6 +10,11 @@ X_BINNED_DTYPE = np.uint8  # hence max_bins == 256
 G_H_DTYPE = np.float32
 X_BITSET_INNER_DTYPE = np.uint32
 
+# Note that we use Y_DTYPE=float64 to avoid issues with floating point precision when
+# summing gradients and hessians. Those are difficult to protect via tools like
+# (Kahan-) Neumaier summation as in https://github.com/python/cpython/issues/100425
+# or pairwise summation as in https://github.com/numpy/numpy/pull/3685 due to the way
+# histograms are summed (dynamic bin). See also comment in _subtract_histograms.
 HISTOGRAM_DTYPE = np.dtype([
     ('sum_gradients', Y_DTYPE),  # sum of sample gradients in bin
     ('sum_hessians', Y_DTYPE),  # sum of sample hessians in bin
