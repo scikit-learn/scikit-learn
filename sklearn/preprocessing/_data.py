@@ -3304,6 +3304,9 @@ class PowerTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         """Return inverse-transformed input x following Yeo-Johnson inverse
         transform with parameter lambda.
         """
+        if lmbda == 1:
+            return x
+
         x_inv = np.zeros_like(x)
         pos = x >= 0
 
@@ -3325,6 +3328,8 @@ class PowerTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         """Return transformed input x following Yeo-Johnson transform with
         parameter lambda.
         """
+        if lmbda == 1:
+            return x
 
         out = np.zeros_like(x)
         pos = x >= 0  # binary mask
