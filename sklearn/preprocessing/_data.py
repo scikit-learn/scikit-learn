@@ -12,7 +12,8 @@ import warnings
 from numbers import Integral, Real
 
 import numpy as np
-from scipy import sparse, stats
+import scipy
+from scipy import optimize, sparse, stats
 from scipy.special import boxcox
 from scipy.stats import yeojohnson
 
@@ -27,6 +28,7 @@ from ..utils import _array_api, check_array
 from ..utils._array_api import get_namespace
 from ..utils._param_validation import Interval, Options, StrOptions, validate_params
 from ..utils.extmath import _incremental_mean_and_var, row_norms
+from ..utils.fixes import parse_version
 from ..utils.sparsefuncs import (
     incr_mean_variance_axis,
     inplace_column_scale,
@@ -3344,9 +3346,36 @@ class PowerTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
 
         Like for Box-Cox, MLE is done via the brent optimizer.
         """
+        x_tiny = np.finfo(np.float64).tiny
+
+        def _neg_log_likelihood(lmbda):
+            """Return the negative log likelihood of the observed data x as a
+            function of lambda."""
+            x_trans = yeojohnson(x, lmbda)
+            n_samples = x.shape[0]
+            x_trans_var = x_trans.var()
+
+            # Reject transformed data that would raise a RuntimeWarning in np.log
+            if x_trans_var < x_tiny:
+                return np.inf
+
+            log_var = np.log(x_trans_var)
+            loglike = -n_samples / 2 * log_var
+            loglike += (lmbda - 1) * (np.sign(x) * np.log1p(np.abs(x))).sum()
+
+            return -loglike
+
         # the computation of lambda is influenced by NaNs so we need to
         # get rid of them
         x = x[~np.isnan(x)]
+
+        # TODO: remove this when minimum version of scipy >= 1.9.0
+        scipy_version = parse_version(scipy.__version__)
+        min_scipy_version = "1.9.0"
+        if scipy_version < parse_version(min_scipy_version):
+            # choosing bracket -2, 2 like for boxcox
+            return optimize.brent(_neg_log_likelihood, brack=(-2, 2))
+
         _, lmbda = yeojohnson(x, lmbda=None)
         return lmbda
 
