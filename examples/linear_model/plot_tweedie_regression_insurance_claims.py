@@ -222,10 +222,6 @@ from sklearn.preprocessing import (
 
 df = load_mtpl2()
 
-# Note: filter out claims with zero amount, as the severity model
-# requires strictly positive target values.
-df.loc[(df["ClaimAmount"] == 0) & (df["ClaimNb"] >= 1), "ClaimNb"] = 0
-
 # Correct for unreasonable observations (that might be data error)
 # and a few exceptionally large claim amounts
 df["ClaimNb"] = df["ClaimNb"].clip(upper=4)
