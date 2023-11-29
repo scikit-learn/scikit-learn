@@ -345,6 +345,12 @@ Changelog
   is a predefined metric listed in :func:`metrics.get_scorer_names` and
   early stopping is enabled. :pr:`26163` by `Thomas Fan`_.
 
+- |Efficiency| :class:`ensemble.HistGradientBoostingClassifier` and
+  :class:`ensemble.HistGradientBoostingRegressor` are now a bit faster by reusing
+  the parent node's histogram as children node's histogram in the subtraction trick.
+  In effect, less memory has to be allocated and deallocated.
+  :pr:`27865` by :user:`Christian Lorentzen <lorentzenchr>`.
+
 - |API| In :class:`ensemble.AdaBoostClassifier`, the `algorithm` argument `SAMME.R` was
   deprecated and will be removed in 1.6. :pr:`26830` by :user:`Stefanie Senger
   <StefanieSenger>`.
