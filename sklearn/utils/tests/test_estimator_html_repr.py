@@ -1,4 +1,5 @@
 import html
+import locale
 import re
 from contextlib import closing
 from io import StringIO
@@ -26,6 +27,7 @@ from sklearn.preprocessing import OneHotEncoder, StandardScaler
 from sklearn.svm import LinearSVC, LinearSVR
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.utils._estimator_html_repr import (
+    _get_css_style,
     _get_visual_block,
     _HTMLDocumentationLinkMixin,
     _write_label_html,
@@ -464,3 +466,34 @@ def test_html_documentation_link_mixin_get_doc_link():
     mixin._doc_link_url_param_generator = url_param_generator
 
     assert mixin._get_doc_link() == "https://website.com/value_1.value_2.html"
+
+
+@pytest.fixture
+def set_non_utf8_locale():
+    """Pytest fixture to set non utf-8 locale during the test.
+
+    The locale is set to the original one after the test has run.
+    """
+    try:
+        locale.setlocale(locale.LC_CTYPE, "C")
+    except locale.Error:
+        pytest.skip("'C' locale is not available on this OS")
+
+    yield
+
+    # Resets the locale to the original one. Python calls setlocale(LC_TYPE, "")
+    # at startup according to
+    # https://docs.python.org/3/library/locale.html#background-details-hints-tips-and-caveats.
+    # This assumes that no other locale changes have been made. For some reason,
+    # on some platforms, trying to restore locale with something like
+    # locale.setlocale(locale.LC_CTYPE, locale.getlocale()) raises a
+    # locale.Error: unsupported locale setting
+    locale.setlocale(locale.LC_CTYPE, "")
+
+
+def test_non_utf8_locale(set_non_utf8_locale):
+    """Checks that utf8 encoding is used when reading the CSS file.
+
+    Non-regression test for https://github.com/scikit-learn/scikit-learn/issues/27725
+    """
+    _get_css_style()

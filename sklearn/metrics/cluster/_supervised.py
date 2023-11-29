@@ -139,6 +139,16 @@ def contingency_matrix(
         otherwise with the ``dtype`` argument. If ``eps`` is given, the dtype
         will be float.
         Will be a ``sklearn.sparse.csr_matrix`` if ``sparse=True``.
+
+    Examples
+    --------
+    >>> from sklearn.metrics.cluster import contingency_matrix
+    >>> labels_true = [0, 0, 1, 1, 2, 2]
+    >>> labels_pred = [1, 0, 2, 1, 0, 2]
+    >>> contingency_matrix(labels_true, labels_pred)
+    array([[1, 1, 0],
+           [0, 1, 1],
+           [1, 0, 1]])
     """
 
     if eps is not None and sparse:
