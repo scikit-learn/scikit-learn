@@ -6,9 +6,8 @@
 import itertools
 import sys
 import time
-import warnings
-from math import ceil
 from numbers import Integral, Real
+from warnings import warn
 
 import numpy as np
 from joblib import effective_n_jobs
@@ -648,26 +647,12 @@ def _dict_learning(
         return code, dictionary, errors
 
 
-def _check_warn_deprecated(param, name, default, additional_message=None):
-    if param != "deprecated":
-        msg = (
-            f"'{name}' is deprecated in version 1.1 and will be removed in version 1.4."
-        )
-        if additional_message:
-            msg += f" {additional_message}"
-        warnings.warn(msg, FutureWarning)
-        return param
-    else:
-        return default
-
-
 def dict_learning_online(
     X,
     n_components=2,
     *,
     alpha=1,
-    n_iter="deprecated",
-    max_iter=None,
+    max_iter=100,
     return_code=True,
     dict_init=None,
     callback=None,
@@ -676,11 +661,7 @@ def dict_learning_online(
     shuffle=True,
     n_jobs=None,
     method="lars",
-    iter_offset="deprecated",
     random_state=None,
-    return_inner_stats="deprecated",
-    inner_stats="deprecated",
-    return_n_iter="deprecated",
     positive_dict=False,
     positive_code=False,
     method_max_iter=1000,
@@ -716,19 +697,15 @@ def dict_learning_online(
     alpha : float, default=1
         Sparsity controlling parameter.
 
-    n_iter : int, default=100
-        Number of mini-batch iterations to perform.
-
-        .. deprecated:: 1.1
-           `n_iter` is deprecated in 1.1 and will be removed in 1.4. Use
-           `max_iter` instead.
-
-    max_iter : int, default=None
+    max_iter : int, default=100
         Maximum number of iterations over the complete dataset before
         stopping independently of any early stopping criterion heuristics.
-        If ``max_iter`` is not None, ``n_iter`` is ignored.
 
         .. versionadded:: 1.1
+
+        .. deprecated:: 1.4
+           `max_iter=None` is deprecated in 1.4 and will be removed in 1.6.
+           Use the default value (i.e. `100`) instead.
 
     return_code : bool, default=True
         Whether to also return the code U or just the dictionary `V`.
@@ -767,44 +744,12 @@ def dict_learning_online(
           Lasso solution (`linear_model.Lasso`). Lars will be faster if
           the estimated components are sparse.
 
-    iter_offset : int, default=0
-        Number of previous iterations completed on the dictionary used for
-        initialization.
-
-        .. deprecated:: 1.1
-           `iter_offset` serves internal purpose only and will be removed in 1.4.
-
     random_state : int, RandomState instance or None, default=None
         Used for initializing the dictionary when ``dict_init`` is not
         specified, randomly shuffling the data when ``shuffle`` is set to
         ``True``, and updating the dictionary. Pass an int for reproducible
         results across multiple function calls.
         See :term:`Glossary <random_state>`.
-
-    return_inner_stats : bool, default=False
-        Return the inner statistics A (dictionary covariance) and B
-        (data approximation). Useful to restart the algorithm in an
-        online setting. If `return_inner_stats` is `True`, `return_code` is
-        ignored.
-
-        .. deprecated:: 1.1
-           `return_inner_stats` serves internal purpose only and will be removed in 1.4.
-
-    inner_stats : tuple of (A, B) ndarrays, default=None
-        Inner sufficient statistics that are kept by the algorithm.
-        Passing them at initialization is useful in online settings, to
-        avoid losing the history of the evolution.
-        `A` `(n_components, n_components)` is the dictionary covariance matrix.
-        `B` `(n_features, n_components)` is the data approximation matrix.
-
-        .. deprecated:: 1.1
-           `inner_stats` serves internal purpose only and will be removed in 1.4.
-
-    return_n_iter : bool, default=False
-        Whether or not to return the number of iterations.
-
-        .. deprecated:: 1.1
-           `return_n_iter` will be removed in 1.4 and n_iter will never be returned.
 
     positive_dict : bool, default=False
         Whether to enforce positivity when finding the dictionary.
@@ -823,7 +768,7 @@ def dict_learning_online(
 
     tol : float, default=1e-3
         Control early stopping based on the norm of the differences in the
-        dictionary between 2 steps. Used only if `max_iter` is not None.
+        dictionary between 2 steps.
 
         To disable early stopping based on changes in the dictionary, set
         `tol` to 0.0.
@@ -832,8 +777,7 @@ def dict_learning_online(
 
     max_no_improvement : int, default=10
         Control early stopping based on the consecutive number of mini batches
-        that does not yield an improvement on the smoothed cost function. Used only if
-        `max_iter` is not None.
+        that does not yield an improvement on the smoothed cost function.
 
         To disable convergence detection based on cost function, set
         `max_no_improvement` to None.
@@ -861,218 +805,45 @@ def dict_learning_online(
     SparsePCA : Sparse Principal Components Analysis.
     MiniBatchSparsePCA : Mini-batch Sparse Principal Components Analysis.
     """
-    deps = (return_n_iter, return_inner_stats, iter_offset, inner_stats)
-    if max_iter is not None and not all(arg == "deprecated" for arg in deps):
-        raise ValueError(
-            "The following arguments are incompatible with 'max_iter': "
-            "return_n_iter, return_inner_stats, iter_offset, inner_stats"
+    # TODO(1.6): remove in 1.6
+    if max_iter is None:
+        warn(
+            (
+                "`max_iter=None` is deprecated in version 1.4 and will be removed in "
+                "version 1.6. Use the default value (i.e. `100`) instead."
+            ),
+            FutureWarning,
         )
+        max_iter = 100
 
-    iter_offset = _check_warn_deprecated(iter_offset, "iter_offset", default=0)
-    return_inner_stats = _check_warn_deprecated(
-        return_inner_stats,
-        "return_inner_stats",
-        default=False,
-        additional_message="From 1.4 inner_stats will never be returned.",
-    )
-    inner_stats = _check_warn_deprecated(inner_stats, "inner_stats", default=None)
-    return_n_iter = _check_warn_deprecated(
-        return_n_iter,
-        "return_n_iter",
-        default=False,
-        additional_message=(
-            "From 1.4 'n_iter' will never be returned. Refer to the 'n_iter_' and "
-            "'n_steps_' attributes of the MiniBatchDictionaryLearning object instead."
-        ),
-    )
+    transform_algorithm = "lasso_" + method
 
-    if max_iter is not None:
-        transform_algorithm = "lasso_" + method
+    est = MiniBatchDictionaryLearning(
+        n_components=n_components,
+        alpha=alpha,
+        max_iter=max_iter,
+        n_jobs=n_jobs,
+        fit_algorithm=method,
+        batch_size=batch_size,
+        shuffle=shuffle,
+        dict_init=dict_init,
+        random_state=random_state,
+        transform_algorithm=transform_algorithm,
+        transform_alpha=alpha,
+        positive_code=positive_code,
+        positive_dict=positive_dict,
+        transform_max_iter=method_max_iter,
+        verbose=verbose,
+        callback=callback,
+        tol=tol,
+        max_no_improvement=max_no_improvement,
+    ).fit(X)
 
-        est = MiniBatchDictionaryLearning(
-            n_components=n_components,
-            alpha=alpha,
-            n_iter=n_iter,
-            n_jobs=n_jobs,
-            fit_algorithm=method,
-            batch_size=batch_size,
-            shuffle=shuffle,
-            dict_init=dict_init,
-            random_state=random_state,
-            transform_algorithm=transform_algorithm,
-            transform_alpha=alpha,
-            positive_code=positive_code,
-            positive_dict=positive_dict,
-            transform_max_iter=method_max_iter,
-            verbose=verbose,
-            callback=callback,
-            tol=tol,
-            max_no_improvement=max_no_improvement,
-        ).fit(X)
-
-        if not return_code:
-            return est.components_
-        else:
-            code = est.transform(X)
-            return code, est.components_
-
-    # TODO(1.4) remove the whole old behavior
-    # Fallback to old behavior
-
-    n_iter = _check_warn_deprecated(
-        n_iter, "n_iter", default=100, additional_message="Use 'max_iter' instead."
-    )
-
-    if n_components is None:
-        n_components = X.shape[1]
-
-    if method not in ("lars", "cd"):
-        raise ValueError("Coding method not supported as a fit algorithm.")
-
-    _check_positive_coding(method, positive_code)
-
-    method = "lasso_" + method
-
-    t0 = time.time()
-    n_samples, n_features = X.shape
-    # Avoid integer division problems
-    alpha = float(alpha)
-    random_state = check_random_state(random_state)
-
-    # Init V with SVD of X
-    if dict_init is not None:
-        dictionary = dict_init
+    if not return_code:
+        return est.components_
     else:
-        _, S, dictionary = randomized_svd(X, n_components, random_state=random_state)
-        dictionary = S[:, np.newaxis] * dictionary
-    r = len(dictionary)
-    if n_components <= r:
-        dictionary = dictionary[:n_components, :]
-    else:
-        dictionary = np.r_[
-            dictionary,
-            np.zeros((n_components - r, dictionary.shape[1]), dtype=dictionary.dtype),
-        ]
-
-    if verbose == 1:
-        print("[dict_learning]", end=" ")
-
-    if shuffle:
-        X_train = X.copy()
-        random_state.shuffle(X_train)
-    else:
-        X_train = X
-
-    X_train = check_array(
-        X_train, order="C", dtype=[np.float64, np.float32], copy=False
-    )
-
-    # Fortran-order dict better suited for the sparse coding which is the
-    # bottleneck of this algorithm.
-    dictionary = check_array(dictionary, order="F", dtype=X_train.dtype, copy=False)
-    dictionary = np.require(dictionary, requirements="W")
-
-    batches = gen_batches(n_samples, batch_size)
-    batches = itertools.cycle(batches)
-
-    # The covariance of the dictionary
-    if inner_stats is None:
-        A = np.zeros((n_components, n_components), dtype=X_train.dtype)
-        # The data approximation
-        B = np.zeros((n_features, n_components), dtype=X_train.dtype)
-    else:
-        A = inner_stats[0].copy()
-        B = inner_stats[1].copy()
-
-    # If n_iter is zero, we need to return zero.
-    ii = iter_offset - 1
-
-    for ii, batch in zip(range(iter_offset, iter_offset + n_iter), batches):
-        this_X = X_train[batch]
-        dt = time.time() - t0
-        if verbose == 1:
-            sys.stdout.write(".")
-            sys.stdout.flush()
-        elif verbose:
-            if verbose > 10 or ii % ceil(100.0 / verbose) == 0:
-                print(
-                    "Iteration % 3i (elapsed time: % 3is, % 4.1fmn)" % (ii, dt, dt / 60)
-                )
-
-        this_code = sparse_encode(
-            this_X,
-            dictionary,
-            algorithm=method,
-            alpha=alpha,
-            n_jobs=n_jobs,
-            check_input=False,
-            positive=positive_code,
-            max_iter=method_max_iter,
-            verbose=verbose,
-        )
-
-        # Update the auxiliary variables
-        if ii < batch_size - 1:
-            theta = float((ii + 1) * batch_size)
-        else:
-            theta = float(batch_size**2 + ii + 1 - batch_size)
-        beta = (theta + 1 - batch_size) / (theta + 1)
-
-        A *= beta
-        A += np.dot(this_code.T, this_code)
-        B *= beta
-        B += np.dot(this_X.T, this_code)
-
-        # Update dictionary in place
-        _update_dict(
-            dictionary,
-            this_X,
-            this_code,
-            A,
-            B,
-            verbose=verbose,
-            random_state=random_state,
-            positive=positive_dict,
-        )
-
-        # Maybe we need a stopping criteria based on the amount of
-        # modification in the dictionary
-        if callback is not None:
-            callback(locals())
-
-    if return_inner_stats:
-        if return_n_iter:
-            return dictionary, (A, B), ii - iter_offset + 1
-        else:
-            return dictionary, (A, B)
-    if return_code:
-        if verbose > 1:
-            print("Learning code...", end=" ")
-        elif verbose == 1:
-            print("|", end=" ")
-        code = sparse_encode(
-            X,
-            dictionary,
-            algorithm=method,
-            alpha=alpha,
-            n_jobs=n_jobs,
-            check_input=False,
-            positive=positive_code,
-            max_iter=method_max_iter,
-            verbose=verbose,
-        )
-        if verbose > 1:
-            dt = time.time() - t0
-            print("done (total time: % 3is, % 4.1fmn)" % (dt, dt / 60))
-        if return_n_iter:
-            return code, dictionary, ii - iter_offset + 1
-        else:
-            return code, dictionary
-
-    if return_n_iter:
-        return dictionary, ii - iter_offset + 1
-    else:
-        return dictionary
+        code = est.transform(X)
+        return code, est.components_
 
 
 @validate_params(
@@ -1227,7 +998,7 @@ def dict_learning(
         positive_code=positive_code,
         positive_dict=positive_dict,
         transform_max_iter=method_max_iter,
-    )
+    ).set_output(transform="default")
     code = estimator.fit_transform(X)
     if return_n_iter:
         return (
@@ -1692,7 +1463,7 @@ class DictionaryLearning(_BaseSparseCoding, BaseEstimator):
     >>> from sklearn.datasets import make_sparse_coded_signal
     >>> from sklearn.decomposition import DictionaryLearning
     >>> X, dictionary, code = make_sparse_coded_signal(
-    ...     n_samples=100, n_components=15, n_features=20, n_nonzero_coefs=10,
+    ...     n_samples=30, n_components=15, n_features=20, n_nonzero_coefs=10,
     ...     random_state=42,
     ... )
     >>> dict_learner = DictionaryLearning(
@@ -1704,7 +1475,7 @@ class DictionaryLearning(_BaseSparseCoding, BaseEstimator):
     We can check the level of sparsity of `X_transformed`:
 
     >>> np.mean(X_transformed == 0)
-    0.41...
+    0.52...
 
     We can compare the average squared euclidean norm of the reconstruction
     error of the sparse coded signal relative to the squared euclidean norm of
@@ -1712,7 +1483,7 @@ class DictionaryLearning(_BaseSparseCoding, BaseEstimator):
 
     >>> X_hat = X_transformed @ dict_learner.components_
     >>> np.mean(np.sum((X_hat - X) ** 2, axis=1) / np.sum(X ** 2, axis=1))
-    0.07...
+    0.05...
     """
 
     _parameter_constraints: dict = {
@@ -1891,19 +1662,15 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
     alpha : float, default=1
         Sparsity controlling parameter.
 
-    n_iter : int, default=1000
-        Total number of iterations over data batches to perform.
-
-        .. deprecated:: 1.1
-           ``n_iter`` is deprecated in 1.1 and will be removed in 1.4. Use
-           ``max_iter`` instead.
-
-    max_iter : int, default=None
+    max_iter : int, default=1_000
         Maximum number of iterations over the complete dataset before
         stopping independently of any early stopping criterion heuristics.
-        If ``max_iter`` is not None, ``n_iter`` is ignored.
 
         .. versionadded:: 1.1
+
+        .. deprecated:: 1.4
+           `max_iter=None` is deprecated in 1.4 and will be removed in 1.6.
+           Use the default value (i.e. `1_000`) instead.
 
     fit_algorithm : {'lars', 'cd'}, default='lars'
         The algorithm used:
@@ -2001,7 +1768,7 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
 
     tol : float, default=1e-3
         Control early stopping based on the norm of the differences in the
-        dictionary between 2 steps. Used only if `max_iter` is not None.
+        dictionary between 2 steps.
 
         To disable early stopping based on changes in the dictionary, set
         `tol` to 0.0.
@@ -2010,8 +1777,7 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
 
     max_no_improvement : int, default=10
         Control early stopping based on the consecutive number of mini batches
-        that does not yield an improvement on the smoothed cost function. Used only if
-        `max_iter` is not None.
+        that does not yield an improvement on the smoothed cost function.
 
         To disable convergence detection based on cost function, set
         `max_no_improvement` to None.
@@ -2062,16 +1828,16 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
     >>> from sklearn.datasets import make_sparse_coded_signal
     >>> from sklearn.decomposition import MiniBatchDictionaryLearning
     >>> X, dictionary, code = make_sparse_coded_signal(
-    ...     n_samples=100, n_components=15, n_features=20, n_nonzero_coefs=10,
+    ...     n_samples=30, n_components=15, n_features=20, n_nonzero_coefs=10,
     ...     random_state=42)
     >>> dict_learner = MiniBatchDictionaryLearning(
     ...     n_components=15, batch_size=3, transform_algorithm='lasso_lars',
-    ...     transform_alpha=0.1, random_state=42)
+    ...     transform_alpha=0.1, max_iter=20, random_state=42)
     >>> X_transformed = dict_learner.fit_transform(X)
 
     We can check the level of sparsity of `X_transformed`:
 
-    >>> np.mean(X_transformed == 0) < 0.5
+    >>> np.mean(X_transformed == 0) > 0.5
     True
 
     We can compare the average squared euclidean norm of the reconstruction
@@ -2080,17 +1846,13 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
 
     >>> X_hat = X_transformed @ dict_learner.components_
     >>> np.mean(np.sum((X_hat - X) ** 2, axis=1) / np.sum(X ** 2, axis=1))
-    0.057...
+    0.052...
     """
 
     _parameter_constraints: dict = {
         "n_components": [Interval(Integral, 1, None, closed="left"), None],
         "alpha": [Interval(Real, 0, None, closed="left")],
-        "n_iter": [
-            Interval(Integral, 0, None, closed="left"),
-            Hidden(StrOptions({"deprecated"})),
-        ],
-        "max_iter": [Interval(Integral, 0, None, closed="left"), None],
+        "max_iter": [Interval(Integral, 0, None, closed="left"), Hidden(None)],
         "fit_algorithm": [StrOptions({"cd", "lars"})],
         "n_jobs": [None, Integral],
         "batch_size": [Interval(Integral, 1, None, closed="left")],
@@ -2117,8 +1879,7 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
         n_components=None,
         *,
         alpha=1,
-        n_iter="deprecated",
-        max_iter=None,
+        max_iter=1_000,
         fit_algorithm="lars",
         n_jobs=None,
         batch_size=256,
@@ -2148,7 +1909,6 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
         )
         self.n_components = n_components
         self.alpha = alpha
-        self.n_iter = n_iter
         self.max_iter = max_iter
         self.fit_algorithm = fit_algorithm
         self.dict_init = dict_init
@@ -2346,19 +2106,6 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
         )
 
         self._check_params(X)
-
-        if self.n_iter != "deprecated":
-            warnings.warn(
-                (
-                    "'n_iter' is deprecated in version 1.1 and will be removed "
-                    "in version 1.4. Use 'max_iter' and let 'n_iter' to its default "
-                    "value instead. 'n_iter' is also ignored if 'max_iter' is "
-                    "specified."
-                ),
-                FutureWarning,
-            )
-            n_iter = self.n_iter
-
         self._random_state = check_random_state(self.random_state)
 
         dictionary = self._initialize_dict(X, self._random_state)
@@ -2381,60 +2128,52 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
         )
         self._B = np.zeros((n_features, self._n_components), dtype=X_train.dtype)
 
-        if self.max_iter is not None:
-            # Attributes to monitor the convergence
-            self._ewa_cost = None
-            self._ewa_cost_min = None
-            self._no_improvement = 0
-
-            batches = gen_batches(n_samples, self._batch_size)
-            batches = itertools.cycle(batches)
-            n_steps_per_iter = int(np.ceil(n_samples / self._batch_size))
-            n_steps = self.max_iter * n_steps_per_iter
-
-            i = -1  # to allow max_iter = 0
-
-            for i, batch in zip(range(n_steps), batches):
-                X_batch = X_train[batch]
-
-                batch_cost = self._minibatch_step(
-                    X_batch, dictionary, self._random_state, i
-                )
-
-                if self._check_convergence(
-                    X_batch, batch_cost, dictionary, old_dict, n_samples, i, n_steps
-                ):
-                    break
-
-                # XXX callback param added for backward compat in #18975 but a common
-                # unified callback API should be preferred
-                if self.callback is not None:
-                    self.callback(locals())
-
-                old_dict[:] = dictionary
-
-            self.n_steps_ = i + 1
-            self.n_iter_ = np.ceil(self.n_steps_ / n_steps_per_iter)
+        # TODO(1.6): remove in 1.6
+        if self.max_iter is None:
+            warn(
+                (
+                    "`max_iter=None` is deprecated in version 1.4 and will be removed"
+                    " in version 1.6. Use the default value (i.e. `1_000`) instead."
+                ),
+                FutureWarning,
+            )
+            max_iter = 1_000
         else:
-            # TODO remove this branch in 1.4
-            n_iter = 1000 if self.n_iter == "deprecated" else self.n_iter
+            max_iter = self.max_iter
 
-            batches = gen_batches(n_samples, self._batch_size)
-            batches = itertools.cycle(batches)
+        # Attributes to monitor the convergence
+        self._ewa_cost = None
+        self._ewa_cost_min = None
+        self._no_improvement = 0
 
-            for i, batch in zip(range(n_iter), batches):
-                self._minibatch_step(X_train[batch], dictionary, self._random_state, i)
+        batches = gen_batches(n_samples, self._batch_size)
+        batches = itertools.cycle(batches)
+        n_steps_per_iter = int(np.ceil(n_samples / self._batch_size))
+        n_steps = max_iter * n_steps_per_iter
 
-                trigger_verbose = self.verbose and i % ceil(100.0 / self.verbose) == 0
-                if self.verbose > 10 or trigger_verbose:
-                    print(f"{i} batches processed.")
+        i = -1  # to allow max_iter = 0
 
-                if self.callback is not None:
-                    self.callback(locals())
+        for i, batch in zip(range(n_steps), batches):
+            X_batch = X_train[batch]
 
-            self.n_steps_ = n_iter
-            self.n_iter_ = np.ceil(n_iter / int(np.ceil(n_samples / self._batch_size)))
+            batch_cost = self._minibatch_step(
+                X_batch, dictionary, self._random_state, i
+            )
 
+            if self._check_convergence(
+                X_batch, batch_cost, dictionary, old_dict, n_samples, i, n_steps
+            ):
+                break
+
+            # XXX callback param added for backward compat in #18975 but a common
+            # unified callback API should be preferred
+            if self.callback is not None:
+                self.callback(locals())
+
+            old_dict[:] = dictionary
+
+        self.n_steps_ = i + 1
+        self.n_iter_ = np.ceil(self.n_steps_ / n_steps_per_iter)
         self.components_ = dictionary
 
         return self

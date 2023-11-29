@@ -74,7 +74,7 @@ Bug fixes
   in case of ties at the per-class vote level by computing the correct
   per-class sum of prediction scores. By `Andreas Müller`_.
 
-- Made :func:`cross_validation.cross_val_score` and
+- Made `cross_validation.cross_val_score` and
   `grid_search.GridSearchCV` accept Python lists as input data.
   This is especially useful for cross-validation and model selection of
   text processing pipelines. By `Andreas Müller`_.
@@ -252,7 +252,7 @@ Enhancements
   samples dependency.
   By `Daniel Nouri`_ and `Olivier Grisel`_.
 
-- Add multi-output support to :class:`gaussian_process.GaussianProcess`
+- Add multi-output support to :class:`gaussian_process.GaussianProcessRegressor`
   by John Novak.
 
 - Support for precomputed distance matrices in nearest neighbor estimators
