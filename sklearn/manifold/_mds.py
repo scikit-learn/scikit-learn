@@ -15,7 +15,7 @@ from ..base import BaseEstimator, _fit_context
 from ..isotonic import IsotonicRegression
 from ..metrics import euclidean_distances
 from ..utils import check_array, check_random_state, check_symmetric
-from ..utils._param_validation import Hidden, Interval, StrOptions, validate_params
+from ..utils._param_validation import Interval, StrOptions, validate_params
 from ..utils.parallel import Parallel, delayed
 
 
@@ -180,11 +180,7 @@ def _smacof_single(
         "eps": [Interval(Real, 0, None, closed="left")],
         "random_state": ["random_state"],
         "return_n_iter": ["boolean"],
-        "normalized_stress": [
-            "boolean",
-            StrOptions({"auto"}),
-            Hidden(StrOptions({"warn"})),
-        ],
+        "normalized_stress": ["boolean", StrOptions({"auto"})],
     },
     prefer_skip_nested_validation=True,
 )
@@ -201,7 +197,7 @@ def smacof(
     eps=1e-3,
     random_state=None,
     return_n_iter=False,
-    normalized_stress="warn",
+    normalized_stress="auto",
 ):
     """Compute multidimensional scaling using the SMACOF algorithm.
 
@@ -277,11 +273,14 @@ def smacof(
     return_n_iter : bool, default=False
         Whether or not to return the number of iterations.
 
-    normalized_stress : bool or "auto" default=False
+    normalized_stress : bool or "auto" default="auto"
         Whether use and return normed stress value (Stress-1) instead of raw
         stress calculated by default. Only supported in non-metric MDS.
 
         .. versionadded:: 1.2
+
+        .. versionchanged:: 1.4
+           The default value changed from `False` to `"auto"` in version 1.4.
 
     Returns
     -------
@@ -313,18 +312,6 @@ def smacof(
 
     dissimilarities = check_array(dissimilarities)
     random_state = check_random_state(random_state)
-
-    # TODO(1.4): Remove
-    if normalized_stress == "warn":
-        warnings.warn(
-            (
-                "The default value of `normalized_stress` will change to `'auto'` in"
-                " version 1.4. To suppress this warning, manually set the value of"
-                " `normalized_stress`."
-            ),
-            FutureWarning,
-        )
-        normalized_stress = False
 
     if normalized_stress == "auto":
         normalized_stress = not metric
@@ -445,11 +432,14 @@ class MDS(BaseEstimator):
             Pre-computed dissimilarities are passed directly to ``fit`` and
             ``fit_transform``.
 
-    normalized_stress : bool or "auto" default=False
+    normalized_stress : bool or "auto" default="auto"
         Whether use and return normed stress value (Stress-1) instead of raw
         stress calculated by default. Only supported in non-metric MDS.
 
         .. versionadded:: 1.2
+
+        .. versionchanged:: 1.4
+           The default value changed from `False` to `"auto"` in version 1.4.
 
     Attributes
     ----------
@@ -518,6 +508,9 @@ class MDS(BaseEstimator):
     >>> X_transformed = embedding.fit_transform(X[:100])
     >>> X_transformed.shape
     (100, 2)
+
+    For a more detailed example of usage, see:
+    :ref:`sphx_glr_auto_examples_manifold_plot_mds.py`
     """
 
     _parameter_constraints: dict = {
@@ -530,11 +523,7 @@ class MDS(BaseEstimator):
         "n_jobs": [None, Integral],
         "random_state": ["random_state"],
         "dissimilarity": [StrOptions({"euclidean", "precomputed"})],
-        "normalized_stress": [
-            "boolean",
-            StrOptions({"auto"}),
-            Hidden(StrOptions({"warn"})),
-        ],
+        "normalized_stress": ["boolean", StrOptions({"auto"})],
     }
 
     def __init__(
@@ -549,7 +538,7 @@ class MDS(BaseEstimator):
         n_jobs=None,
         random_state=None,
         dissimilarity="euclidean",
-        normalized_stress="warn",
+        normalized_stress="auto",
     ):
         self.n_components = n_components
         self.dissimilarity = dissimilarity

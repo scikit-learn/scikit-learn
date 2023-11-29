@@ -465,7 +465,7 @@ Linear kernel
 
     >>> svc = svm.SVC(kernel='linear')
 
-.. image:: /auto_examples/svm/images/sphx_glr_plot_svm_kernels_001.png
+.. image:: /auto_examples/svm/images/sphx_glr_plot_svm_kernels_002.png
    :target: ../../auto_examples/svm/plot_svm_kernels.html
 
 Polynomial kernel
@@ -477,7 +477,7 @@ Polynomial kernel
     ...               degree=3)
     >>> # degree: polynomial degree
 
-.. image:: /auto_examples/svm/images/sphx_glr_plot_svm_kernels_002.png
+.. image:: /auto_examples/svm/images/sphx_glr_plot_svm_kernels_003.png
    :target: ../../auto_examples/svm/plot_svm_kernels.html
 
 RBF kernel (Radial Basis Function)
@@ -489,7 +489,17 @@ RBF kernel (Radial Basis Function)
     >>> # gamma: inverse of size of
     >>> # radial kernel
 
-.. image:: /auto_examples/svm/images/sphx_glr_plot_svm_kernels_003.png
+.. image:: /auto_examples/svm/images/sphx_glr_plot_svm_kernels_004.png
+   :target: ../../auto_examples/svm/plot_svm_kernels.html
+
+Sigmoid kernel
+^^^^^^^^^^^^^^
+
+::
+
+    >>> svc = svm.SVC(kernel='sigmoid')
+
+.. image:: /auto_examples/svm/images/sphx_glr_plot_svm_kernels_005.png
    :target: ../../auto_examples/svm/plot_svm_kernels.html
 
 

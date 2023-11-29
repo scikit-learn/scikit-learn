@@ -15,7 +15,10 @@ import numpy as np
 from sklearn.neighbors._base import _check_precomputed
 
 from ..base import ClassifierMixin, _fit_context
-from ..metrics._pairwise_distances_reduction import ArgKminClassMode
+from ..metrics._pairwise_distances_reduction import (
+    ArgKminClassMode,
+    RadiusNeighborsClassMode,
+)
 from ..utils._param_validation import StrOptions
 from ..utils.extmath import weighted_mode
 from ..utils.fixes import _mode
@@ -78,9 +81,10 @@ class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
         nature of the problem.
 
     p : float, default=2
-        Power parameter for the Minkowski metric. When p = 1, this is
-        equivalent to using manhattan_distance (l1), and euclidean_distance
-        (l2) for p = 2. For arbitrary p, minkowski_distance (l_p) is used.
+        Power parameter for the Minkowski metric. When p = 1, this is equivalent
+        to using manhattan_distance (l1), and euclidean_distance (l2) for p = 2.
+        For arbitrary p, minkowski_distance (l_p) is used. This parameter is expected
+        to be positive.
 
     metric : str or callable, default='minkowski'
         Metric to use for distance computation. Default is "minkowski", which
@@ -442,6 +446,7 @@ class RadiusNeighborsClassifier(RadiusNeighborsMixin, ClassifierMixin, Neighbors
         Power parameter for the Minkowski metric. When p = 1, this is
         equivalent to using manhattan_distance (l1), and euclidean_distance
         (l2) for p = 2. For arbitrary p, minkowski_distance (l_p) is used.
+        This parameter is expected to be positive.
 
     metric : str or callable, default='minkowski'
         Metric to use for distance computation. Default is "minkowski", which
@@ -468,6 +473,10 @@ class RadiusNeighborsClassifier(RadiusNeighborsMixin, ClassifierMixin, Neighbors
           or list of manual labels if multi-output is used.
         - 'most_frequent' : assign the most frequent label of y to outliers.
         - None : when any outlier is detected, ValueError will be raised.
+
+        The outlier label should be selected from among the unique 'Y' labels.
+        If it is specified with a different value a warning will be raised and
+        all class probabilities of outliers will be assigned to be 0.
 
     metric_params : dict, default=None
         Additional keyword arguments for the metric function.
@@ -712,8 +721,38 @@ class RadiusNeighborsClassifier(RadiusNeighborsMixin, ClassifierMixin, Neighbors
             The class probabilities of the input samples. Classes are ordered
             by lexicographic order.
         """
-
+        check_is_fitted(self, "_fit_method")
         n_queries = _num_samples(X)
+
+        metric, metric_kwargs = _adjusted_metric(
+            metric=self.metric, metric_kwargs=self.metric_params, p=self.p
+        )
+
+        if (
+            self.weights == "uniform"
+            and self._fit_method == "brute"
+            and not self.outputs_2d_
+            and RadiusNeighborsClassMode.is_usable_for(X, self._fit_X, metric)
+        ):
+            probabilities = RadiusNeighborsClassMode.compute(
+                X=X,
+                Y=self._fit_X,
+                radius=self.radius,
+                weights=self.weights,
+                Y_labels=self._y,
+                unique_Y_labels=self.classes_,
+                outlier_label=self.outlier_label,
+                metric=metric,
+                metric_kwargs=metric_kwargs,
+                strategy="parallel_on_X",
+                # `strategy="parallel_on_X"` has in practice be shown
+                # to be more efficient than `strategy="parallel_on_Y``
+                # on many combination of datasets.
+                # Hence, we choose to enforce it here.
+                # For more information, see:
+                # https://github.com/scikit-learn/scikit-learn/pull/26828/files#r1282398471  # noqa
+            )
+            return probabilities
 
         neigh_dist, neigh_ind = self.radius_neighbors(X)
         outlier_mask = np.zeros(n_queries, dtype=bool)

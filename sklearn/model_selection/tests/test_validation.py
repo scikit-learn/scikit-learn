@@ -10,7 +10,7 @@ from time import sleep
 
 import numpy as np
 import pytest
-from scipy.sparse import coo_matrix, csr_matrix, issparse
+from scipy.sparse import issparse
 
 from sklearn.base import BaseEstimator, clone
 from sklearn.cluster import KMeans
@@ -88,6 +88,7 @@ from sklearn.utils._testing import (
     assert_array_almost_equal,
     assert_array_equal,
 )
+from sklearn.utils.fixes import COO_CONTAINERS, CSR_CONTAINERS
 from sklearn.utils.validation import _num_samples
 
 
@@ -244,11 +245,11 @@ class MockClassifier:
                 "MockClassifier extra fit_param sparse_param.shape "
                 "is ({0}, {1}), should be ({2}, {3})"
             )
-            assert sparse_param.shape == P_sparse.shape, fmt.format(
+            assert sparse_param.shape == P.shape, fmt.format(
                 sparse_param.shape[0],
                 sparse_param.shape[1],
-                P_sparse.shape[0],
-                P_sparse.shape[1],
+                P.shape[0],
+                P.shape[1],
             )
         return self
 
@@ -270,16 +271,17 @@ class MockClassifier:
 # XXX: use 2D array, since 1D X is being detected as a single sample in
 # check_consistent_length
 X = np.ones((10, 2))
-X_sparse = coo_matrix(X)
 y = np.array([0, 0, 1, 1, 2, 2, 3, 3, 4, 4])
 # The number of samples per class needs to be > n_splits,
 # for StratifiedKFold(n_splits=3)
 y2 = np.array([1, 1, 1, 2, 2, 2, 3, 3, 3, 3])
-P_sparse = coo_matrix(np.eye(5))
+P = np.eye(5)
 
 
-def test_cross_val_score():
+@pytest.mark.parametrize("coo_container", COO_CONTAINERS)
+def test_cross_val_score(coo_container):
     clf = MockClassifier()
+    X_sparse = coo_container(X)
 
     for a in range(-10, 10):
         clf.a = a
@@ -399,7 +401,8 @@ def test_cross_validate_nested_estimator():
 
 
 @pytest.mark.parametrize("use_sparse", [False, True])
-def test_cross_validate(use_sparse: bool):
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_cross_validate(use_sparse: bool, csr_container):
     # Compute train and test mse/r2 scores
     cv = KFold()
 
@@ -412,8 +415,8 @@ def test_cross_validate(use_sparse: bool):
     clf = SVC(kernel="linear", random_state=0)
 
     if use_sparse:
-        X_reg = csr_matrix(X_reg)
-        X_clf = csr_matrix(X_clf)
+        X_reg = csr_container(X_reg)
+        X_clf = csr_container(X_clf)
 
     for X, y, est in ((X_reg, y_reg, reg), (X_clf, y_clf, clf)):
         # It's okay to evaluate regression metrics on classification too
@@ -681,15 +684,16 @@ def test_cross_val_score_precomputed():
         cross_val_score(svm, linear_kernel.tolist(), y)
 
 
-def test_cross_val_score_fit_params():
+@pytest.mark.parametrize("coo_container", COO_CONTAINERS)
+def test_cross_val_score_fit_params(coo_container):
     clf = MockClassifier()
     n_samples = X.shape[0]
     n_classes = len(np.unique(y))
 
-    W_sparse = coo_matrix(
+    W_sparse = coo_container(
         (np.array([1]), (np.array([1]), np.array([0]))), shape=(10, 1)
     )
-    P_sparse = coo_matrix(np.eye(5))
+    P_sparse = coo_container(np.eye(5))
 
     DUMMY_INT = 42
     DUMMY_STR = "42"
@@ -775,10 +779,11 @@ def test_cross_val_score_with_score_func_regression():
     assert_array_almost_equal(ev_scores, [0.94, 0.97, 0.97, 0.99, 0.92], 2)
 
 
-def test_permutation_score():
+@pytest.mark.parametrize("coo_container", COO_CONTAINERS)
+def test_permutation_score(coo_container):
     iris = load_iris()
     X = iris.data
-    X_sparse = coo_matrix(X)
+    X_sparse = coo_container(X)
     y = iris.target
     svm = SVC(kernel="linear")
     cv = StratifiedKFold(2)
@@ -914,7 +919,8 @@ def test_cross_val_score_multilabel():
     assert_almost_equal(score_samples, [1, 1 / 2, 3 / 4, 1 / 2, 1 / 4])
 
 
-def test_cross_val_predict():
+@pytest.mark.parametrize("coo_container", COO_CONTAINERS)
+def test_cross_val_predict(coo_container):
     X, y = load_diabetes(return_X_y=True)
     cv = KFold()
 
@@ -938,7 +944,7 @@ def test_cross_val_predict():
 
     Xsp = X.copy()
     Xsp *= Xsp > np.median(Xsp)
-    Xsp = coo_matrix(Xsp)
+    Xsp = coo_container(Xsp)
     preds = cross_val_predict(est, Xsp, y)
     assert_array_almost_equal(len(preds), len(y))
 
@@ -1054,10 +1060,11 @@ def test_cross_val_predict_predict_log_proba_shape():
     assert preds.shape == (150, 3)
 
 
-def test_cross_val_predict_input_types():
+@pytest.mark.parametrize("coo_container", COO_CONTAINERS)
+def test_cross_val_predict_input_types(coo_container):
     iris = load_iris()
     X, y = iris.data, iris.target
-    X_sparse = coo_matrix(X)
+    X_sparse = coo_container(X)
     multioutput_y = np.column_stack([y, y[::-1]])
 
     clf = Ridge(fit_intercept=False, random_state=0)
@@ -1162,11 +1169,12 @@ def test_cross_val_predict_y_none():
     assert_allclose(X, y_hat_proba)
 
 
-def test_cross_val_score_sparse_fit_params():
+@pytest.mark.parametrize("coo_container", COO_CONTAINERS)
+def test_cross_val_score_sparse_fit_params(coo_container):
     iris = load_iris()
     X, y = iris.data, iris.target
     clf = MockClassifier()
-    fit_params = {"sparse_sample_weight": coo_matrix(np.eye(X.shape[0]))}
+    fit_params = {"sparse_sample_weight": coo_container(np.eye(X.shape[0]))}
     a = cross_val_score(clf, X, y, params=fit_params, cv=3)
     assert_array_equal(a, np.ones(3))
 
@@ -1739,7 +1747,8 @@ def test_check_is_permutation():
     assert not _check_is_permutation(np.hstack((p, 0)), 100)
 
 
-def test_cross_val_predict_sparse_prediction():
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_cross_val_predict_sparse_prediction(csr_container):
     # check that cross_val_predict gives same result for sparse and dense input
     X, y = make_multilabel_classification(
         n_classes=2,
@@ -1748,8 +1757,8 @@ def test_cross_val_predict_sparse_prediction():
         return_indicator=True,
         random_state=1,
     )
-    X_sparse = csr_matrix(X)
-    y_sparse = csr_matrix(y)
+    X_sparse = csr_container(X)
+    y_sparse = csr_container(y)
     classif = OneVsRestClassifier(SVC(kernel="linear"))
     preds = cross_val_predict(classif, X, y, cv=10)
     preds_sparse = cross_val_predict(classif, X_sparse, y_sparse, cv=10)
@@ -2406,6 +2415,39 @@ def test_learning_curve_partial_fit_regressors():
 
     # Does not error
     learning_curve(MLPRegressor(), X, y, exploit_incremental_learning=True, cv=2)
+
+
+def test_learning_curve_some_failing_fits_warning(global_random_seed):
+    """Checks for fit failures in `learning_curve` and raises the required warning"""
+
+    X, y = make_classification(
+        n_samples=30,
+        n_classes=3,
+        n_informative=6,
+        shuffle=False,
+        random_state=global_random_seed,
+    )
+    # sorting the target to trigger SVC error on the 2 first splits because a single
+    # class is present
+    sorted_idx = np.argsort(y)
+    X, y = X[sorted_idx], y[sorted_idx]
+
+    svc = SVC()
+    warning_message = "10 fits failed out of a total of 25"
+
+    with pytest.warns(FitFailedWarning, match=warning_message):
+        _, train_score, test_score, *_ = learning_curve(
+            svc, X, y, cv=5, error_score=np.nan
+        )
+
+    # the first 2 splits should lead to warnings and thus np.nan scores
+    for idx in range(2):
+        assert np.isnan(train_score[idx]).all()
+        assert np.isnan(test_score[idx]).all()
+
+    for idx in range(2, train_score.shape[0]):
+        assert not np.isnan(train_score[idx]).any()
+        assert not np.isnan(test_score[idx]).any()
 
 
 def test_cross_validate_return_indices(global_random_seed):

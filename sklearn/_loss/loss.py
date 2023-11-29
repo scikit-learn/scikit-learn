@@ -191,13 +191,14 @@ class BaseLoss:
         if raw_prediction.ndim == 2 and raw_prediction.shape[1] == 1:
             raw_prediction = raw_prediction.squeeze(1)
 
-        return self.closs.loss(
+        self.closs.loss(
             y_true=y_true,
             raw_prediction=raw_prediction,
             sample_weight=sample_weight,
             loss_out=loss_out,
             n_threads=n_threads,
         )
+        return loss_out
 
     def loss_gradient(
         self,
@@ -252,7 +253,7 @@ class BaseLoss:
         if gradient_out.ndim == 2 and gradient_out.shape[1] == 1:
             gradient_out = gradient_out.squeeze(1)
 
-        return self.closs.loss_gradient(
+        self.closs.loss_gradient(
             y_true=y_true,
             raw_prediction=raw_prediction,
             sample_weight=sample_weight,
@@ -260,6 +261,7 @@ class BaseLoss:
             gradient_out=gradient_out,
             n_threads=n_threads,
         )
+        return loss_out, gradient_out
 
     def gradient(
         self,
@@ -301,13 +303,14 @@ class BaseLoss:
         if gradient_out.ndim == 2 and gradient_out.shape[1] == 1:
             gradient_out = gradient_out.squeeze(1)
 
-        return self.closs.gradient(
+        self.closs.gradient(
             y_true=y_true,
             raw_prediction=raw_prediction,
             sample_weight=sample_weight,
             gradient_out=gradient_out,
             n_threads=n_threads,
         )
+        return gradient_out
 
     def gradient_hessian(
         self,
@@ -365,7 +368,7 @@ class BaseLoss:
         if hessian_out.ndim == 2 and hessian_out.shape[1] == 1:
             hessian_out = hessian_out.squeeze(1)
 
-        return self.closs.gradient_hessian(
+        self.closs.gradient_hessian(
             y_true=y_true,
             raw_prediction=raw_prediction,
             sample_weight=sample_weight,
@@ -373,6 +376,7 @@ class BaseLoss:
             hessian_out=hessian_out,
             n_threads=n_threads,
         )
+        return gradient_out, hessian_out
 
     def __call__(self, y_true, raw_prediction, sample_weight=None, n_threads=1):
         """Compute the weighted average loss.
@@ -1093,7 +1097,7 @@ class HalfMultinomialLoss(BaseLoss):
         elif proba_out is None:
             proba_out = np.empty_like(gradient_out)
 
-        return self.closs.gradient_proba(
+        self.closs.gradient_proba(
             y_true=y_true,
             raw_prediction=raw_prediction,
             sample_weight=sample_weight,
@@ -1101,6 +1105,7 @@ class HalfMultinomialLoss(BaseLoss):
             proba_out=proba_out,
             n_threads=n_threads,
         )
+        return gradient_out, proba_out
 
 
 class ExponentialLoss(BaseLoss):

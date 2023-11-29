@@ -10,7 +10,6 @@ from tempfile import mkdtemp
 import joblib
 import numpy as np
 import pytest
-from scipy import sparse
 
 from sklearn.base import BaseEstimator, TransformerMixin, clone, is_classifier
 from sklearn.cluster import KMeans
@@ -33,6 +32,10 @@ from sklearn.neighbors import LocalOutlierFactor
 from sklearn.pipeline import FeatureUnion, Pipeline, make_pipeline, make_union
 from sklearn.preprocessing import FunctionTransformer, StandardScaler
 from sklearn.svm import SVC
+from sklearn.tests.metadata_routing_common import (
+    ConsumingTransformer,
+    check_recorded_metadata,
+)
 from sklearn.utils._metadata_requests import COMPOSITE_METHODS, METHODS
 from sklearn.utils._testing import (
     MinimalClassifier,
@@ -42,6 +45,7 @@ from sklearn.utils._testing import (
     assert_array_almost_equal,
     assert_array_equal,
 )
+from sklearn.utils.fixes import CSR_CONTAINERS
 from sklearn.utils.validation import check_is_fitted
 
 iris = load_iris()
@@ -481,7 +485,8 @@ def test_predict_methods_with_predict_params(method_name):
     assert pipe.named_steps["clf"].got_attribute
 
 
-def test_feature_union():
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_feature_union(csr_container):
     # basic sanity check for feature union
     X = iris.data
     X -= X.mean(axis=0)
@@ -500,7 +505,7 @@ def test_feature_union():
     # test if it also works for sparse input
     # We use a different svd object to control the random_state stream
     fs = FeatureUnion([("svd", svd), ("select", select)])
-    X_sp = sparse.csr_matrix(X)
+    X_sp = csr_container(X)
     X_sp_transformed = fs.fit_transform(X_sp, y)
     assert_array_almost_equal(X_transformed, X_sp_transformed.toarray())
 
@@ -1735,34 +1740,10 @@ class SimpleEstimator(BaseEstimator):
         assert prop is not None
 
 
-class SimpleTransformer(BaseEstimator, TransformerMixin):
-    def fit(self, X, y, sample_weight=None, prop=None):
-        assert sample_weight is not None
-        assert prop is not None
-        return self
-
-    def transform(self, X, sample_weight=None, prop=None):
-        assert sample_weight is not None
-        assert prop is not None
-        return X
-
-    def fit_transform(self, X, y, sample_weight=None, prop=None):
-        # implementing ``fit_transform`` is necessary since
-        # ``TransformerMixin.fit_transform`` doesn't route any metadata to
-        # ``transform``, while here we want ``transform`` to receive
-        # ``sample_weight`` and ``prop``.
-        assert sample_weight is not None
-        assert prop is not None
-        return self.fit(X, y, sample_weight, prop).transform(X, sample_weight, prop)
-
-    def inverse_transform(self, X, sample_weight=None, prop=None):
-        assert sample_weight is not None
-        assert prop is not None
-        return X
-
-
 @pytest.mark.usefixtures("enable_slep006")
-def test_metadata_routing_for_pipeline():
+# split and partial_fit not relevant for pipelines
+@pytest.mark.parametrize("method", sorted(set(METHODS) - {"split", "partial_fit"}))
+def test_metadata_routing_for_pipeline(method):
     """Test that metadata is routed correctly for pipelines."""
 
     def set_request(est, method, **kwarg):
@@ -1780,41 +1761,70 @@ def test_metadata_routing_for_pipeline():
             getattr(est, f"set_{method}_request")(**kwarg)
         return est
 
-    # split and partial_fit not relevant for pipelines
-    methods = set(METHODS) - {"split", "partial_fit"}
+    X, y = [[1]], [1]
+    sample_weight, prop, metadata = [1], "a", "b"
 
-    for method in methods:
-        # test that metadata is routed correctly for pipelines when requested
-        est = SimpleEstimator()
-        est = set_request(est, method, sample_weight=True, prop=True)
-        trs = (
-            SimpleTransformer()
-            .set_fit_request(sample_weight=True, prop=True)
-            .set_transform_request(sample_weight=True, prop=True)
-            .set_inverse_transform_request(sample_weight=True, prop=True)
+    # test that metadata is routed correctly for pipelines when requested
+    est = SimpleEstimator()
+    est = set_request(est, method, sample_weight=True, prop=True)
+    est = set_request(est, "fit", sample_weight=True, prop=True)
+    trs = (
+        ConsumingTransformer()
+        .set_fit_request(sample_weight=True, metadata=True)
+        .set_transform_request(sample_weight=True, metadata=True)
+        .set_inverse_transform_request(sample_weight=True, metadata=True)
+    )
+    pipeline = Pipeline([("trs", trs), ("estimator", est)])
+
+    if "fit" not in method:
+        pipeline = pipeline.fit(
+            [[1]], [1], sample_weight=sample_weight, prop=prop, metadata=metadata
         )
-        pipeline = Pipeline([("trs", trs), ("estimator", est)])
+
+    try:
+        getattr(pipeline, method)(
+            X, y, sample_weight=sample_weight, prop=prop, metadata=metadata
+        )
+    except TypeError:
+        # Some methods don't accept y
+        getattr(pipeline, method)(
+            X, sample_weight=sample_weight, prop=prop, metadata=metadata
+        )
+
+    # Make sure the transformer has received the metadata
+    # For the transformer, always only `fit` and `transform` are called.
+    check_recorded_metadata(
+        obj=trs, method="fit", sample_weight=sample_weight, metadata=metadata
+    )
+    check_recorded_metadata(
+        obj=trs, method="transform", sample_weight=sample_weight, metadata=metadata
+    )
+
+
+@pytest.mark.usefixtures("enable_slep006")
+# split and partial_fit not relevant for pipelines
+# sorted is here needed to make `pytest -nX` work. W/o it, tests are collected
+# in different orders between workers and that makes it fail.
+@pytest.mark.parametrize("method", sorted(set(METHODS) - {"split", "partial_fit"}))
+def test_metadata_routing_error_for_pipeline(method):
+    """Test that metadata is not routed for pipelines when not requested."""
+    X, y = [[1]], [1]
+    sample_weight, prop = [1], "a"
+    est = SimpleEstimator()
+    # here not setting sample_weight request and leaving it as None
+    pipeline = Pipeline([("estimator", est)])
+    error_message = (
+        "[sample_weight, prop] are passed but are not explicitly set as requested"
+        f" or not for SimpleEstimator.{method}"
+    )
+    with pytest.raises(ValueError, match=re.escape(error_message)):
         try:
-            getattr(pipeline, method)([[1]], [1], sample_weight=[1], prop="a")
+            # passing X, y positional as the first two arguments
+            getattr(pipeline, method)(X, y, sample_weight=sample_weight, prop=prop)
         except TypeError:
-            getattr(pipeline, method)([[1]], sample_weight=[1], prop="a")
-
-        # test that metadata is not routed for pipelines when not requested
-        est = SimpleEstimator()
-        # here not setting sample_weight request and leaving it as None
-        pipeline = Pipeline([("estimator", est)])
-        error_message = (
-            "[sample_weight, prop] are passed but are not explicitly set as requested"
-            f" or not for SimpleEstimator.{method}"
-        )
-        with pytest.raises(ValueError, match=re.escape(error_message)):
-            try:
-                # passing X, y positional as the first two arguments
-                getattr(pipeline, method)([[1]], [1], sample_weight=[1], prop="a")
-            except TypeError:
-                # not all methods accept y (like `predict`), so here we only
-                # pass X as a positional arg.
-                getattr(pipeline, method)([[1]], sample_weight=[1], prop="a")
+            # not all methods accept y (like `predict`), so here we only
+            # pass X as a positional arg.
+            getattr(pipeline, method)(X, sample_weight=sample_weight, prop=prop)
 
 
 @pytest.mark.parametrize(
