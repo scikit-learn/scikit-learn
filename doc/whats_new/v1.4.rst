@@ -183,6 +183,7 @@ and classes are impacted:
   :user:`Yao Xiao <Charlie-XIAO>`;
 - :class:`preprocessing.PolynomialFeatures` in :pr:`27166` by
   :user:`Mohit Joshi <work-mohit>`.
+- :class:`cluster.SpectralClustering` in :pr:`27161` by :user:`Bharat Raghunathan <bharatr21>`;
 - :class:`random_projection.GaussianRandomProjection` in :pr:`27314` by
   :user:`Stefanie Senger <StefanieSenger>`.
 - :class:`random_projection.SparseRandomProjection`in :pr:`27314` by
@@ -289,6 +290,17 @@ Changelog
   Based on :user:`Alexander Tarashansky <atarashansky>`'s implementation in `scanpy <https://github.com/scverse/scanpy>`.
   :pr:`18689` by :user:`Isaac Virshup <ivirshup>` and :user:`Andrey Portnoy <andportnoy>`.
 
+- |Fix| :func:`decomposition.dict_learning_online` does not ignore anymore the parameter
+  `max_iter`.
+  :pr:`27834` by :user:`Guillaume Lemaitre <glemaitre>`.
+
+- |API| The option `max_iter=None` in
+  :class:`decomposition.MiniBatchDictionaryLearning`,
+  :class:`decomposition.MiniBatchSparsePCA`, and
+  :func:`decomposition.dict_learning_online` is deprecated and will be removed in
+  version 1.6. Use the default value instead.
+  :pr:`27834` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 :mod:`sklearn.ensemble`
 .......................
 
@@ -328,15 +340,26 @@ Changelog
   :class:`ensemble.GradientBoostingRegressor` when trained on sparse data.
   :pr:`26957` by `Thomas Fan`_.
 
+- |Efficiency| :class:`ensemble.HistGradientBoostingClassifier` and
+  :class:`ensemble.HistGradientBoostingRegressor` is now faster when `scoring`
+  is a predefined metric listed in :func:`metrics.get_scorer_names` and
+  early stopping is enabled. :pr:`26163` by `Thomas Fan`_.
+
 - |API| In :class:`ensemble.AdaBoostClassifier`, the `algorithm` argument `SAMME.R` was
   deprecated and will be removed in 1.6. :pr:`26830` by :user:`Stefanie Senger
   <StefanieSenger>`.
+
 - |Enhancement| A fitted property, ``estimators_samples_``, was added to all Forest methods,
   including
   :class:`ensemble.RandomForestClassifier`, :class:`ensemble.RandomForestRegressor`,
   :class:`ensemble.ExtraTreesClassifier` and :class:`ensemble.ExtraTreesRegressor`,
   which allows to retrieve the training sample indices used for each tree estimator.
   :pr:`26736` by :user:`Adam Li <adam2392>`.
+
+- |Fix| Raises a `ValueError` in :class:`ensemble.RandomForestRegressor` and
+  :class:`ensemble.ExtraTreesRegressor` when requesting OOB score with multioutput model
+  for the targets being all rounded to integer. It was recognized as a multiclass problem.
+  :pr:`27817` by :user:`Daniele Ongari <danieleongari>`
 
 :mod:`sklearn.feature_selection`
 ................................
@@ -479,7 +502,7 @@ Changelog
 
 - |Fix| Improve error message for :class:`neighbors.LocalOutlierFactor`
   when it is invoked with `n_samples = n_neighbors`.
-  :pr:`23317` by :user:`Bharat Raghunathan <Bharat123rox>`.
+  :pr:`23317` by :user:`Bharat Raghunathan <bharatr21>`.
 
 :mod:`sklearn.preprocessing`
 ............................
@@ -513,6 +536,10 @@ Changelog
 - |Fix| :class:`preprocessing.OneHotEncoder` and :class:`preprocessing.OrdinalEncoder`
   raise an exception if the user provided categories contain duplicates.
   :pr:`27328` by :user:`Xuefeng Xu <xuefeng-xu>`.
+
+- |Fix| Raise a `NotFittedError` in :class:`preprocessing.OrdinalEncoder` when calling
+  `transform` without calling `fit` since `categories` always requires to be checked.
+  :pr:`27821` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 :mod:`sklearn.tree`
 ...................
