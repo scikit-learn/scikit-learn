@@ -522,6 +522,10 @@ Changelog
   missing indices twice to improve efficiency.
   :pr:`27017` by :user:`Xuefeng Xu <xuefeng-xu>`.
 
+- |Efficiency| Improves efficiency in :class:`preprocessing.OneHotEncoder` and
+  :class:`preprocessing.OrdinalEncoder` in checking `nan`.
+  :pr:`27760` by :user:`Xuefeng Xu <xuefeng-xu>`.
+
 - |Enhancement| Improves warnings in :class:`preprocessing.FunctionTransformer` when
   `func` returns a pandas dataframe and the output is configured to be pandas.
   :pr:`26944` by `Thomas Fan`_.
