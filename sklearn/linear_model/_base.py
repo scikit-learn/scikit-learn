@@ -116,23 +116,28 @@ def _preprocess_data(
     sample_weight=None,
     check_input=True,
 ):
-    """Center and scale data.
+    """Common data preprocessing for fitting linear models.
 
-    Centers data to have mean zero along axis 0. If fit_intercept=False or if
-    the X is a sparse matrix, no centering is done, but normalization can still
-    be applied. The function returns the statistics necessary to reconstruct
-    the input data, which are X_offset, y_offset, X_scale, such that the output
+    This helper is in charge of the following steps:
 
-        X = (X - X_offset) / X_scale
+    - Ensure that `sample_weight` is an array or `None`.
+    - If `check_input=True`, perform standard input validation of `X`, `y`.
+    - Perform copies if requested to avoid side-effects in case of inplace
+      modifications of the input.
 
-    X_scale is the L2 norm of X - X_offset. If sample_weight is not None,
-    then the weighted mean of X and y is zero, and not the mean itself. If
-    fit_intercept=True, the mean, eventually weighted, is returned, independently
-    of whether X was centered (option used for optimization with sparse data in
-    coordinate_descend).
+    Then, if `fit_intercept=True` this preprocessing centers both `X` and `y` as
+    follows:
+        - if `X` is dense, center the data and
+        store the mean vector in `X_offset`.
+        - if `X` is sparse, store the mean in `X_offset`
+        without centering `X`. The centering is expected to be handled by the
+        linear solver where appropriate.
+        - in either case, always center `y` and store the mean in `y_offset`.
+        - both `X_offset` and `y_offset` are always weighted by `sample_weight`
+          if not set to `None`.
 
-    This is here because nearly all linear models will want their data to be
-    centered. This function also systematically makes y consistent with X.dtype
+    If `fit_intercept=False`, no centering is performed and `X_offset`, `y_offset`
+    are set to zero.
 
     Returns
     -------
@@ -141,12 +146,14 @@ def _preprocess_data(
         inplace.
         If input X is dense, then X_out is centered.
     y_out : {ndarray, sparse matrix} of shape (n_samples,) or (n_samples, n_targets)
-        Centered version of y. Likely performed inplace on input y.
+        Centered version of y. Possibly performed inplace on input y depending
+        on the copy_y parameter.
     X_offset : ndarray of shape (n_features,)
         The mean per column of input X.
     y_offset : float or ndarray of shape (n_features,)
     X_scale : ndarray of shape (n_features,)
-        The standard deviation per column of input X.
+        Always an array of ones. TODO: refactor the code base to make it
+        possible to remove this unused variable.
     """
     if isinstance(sample_weight, numbers.Number):
         sample_weight = None
@@ -173,17 +180,18 @@ def _preprocess_data(
             X_offset = X_offset.astype(X.dtype, copy=False)
             X -= X_offset
 
-        X_scale = np.ones(X.shape[1], dtype=X.dtype)
         y_offset = np.average(y, axis=0, weights=sample_weight)
         y -= y_offset
     else:
         X_offset = np.zeros(X.shape[1], dtype=X.dtype)
-        X_scale = np.ones(X.shape[1], dtype=X.dtype)
         if y.ndim == 1:
             y_offset = X.dtype.type(0)
         else:
             y_offset = np.zeros(y.shape[1], dtype=X.dtype)
 
+    # XXX: X_scale is no longer needed. It is an historic artifact from the
+    # time where linear model exposed the normalize parameter.
+    X_scale = np.ones(X.shape[1], dtype=X.dtype)
     return X, y, X_offset, y_offset, X_scale
 
 
