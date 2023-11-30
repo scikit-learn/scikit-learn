@@ -194,6 +194,7 @@ jobs:
       py38_conda_forge_openblas_ubuntu_2204:
         DISTRIB: 'conda'
         LOCK_FILE: './build_tools/azure/py38_conda_forge_openblas_ubuntu_2204_linux-64_conda.lock'
+        CHECK_WARNINGS: 'true'
         COVERAGE: 'false'
         SKLEARN_TESTS_GLOBAL_RANDOM_SEED: '0'  # non-default seed
 
