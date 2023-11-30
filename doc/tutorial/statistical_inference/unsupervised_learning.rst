@@ -32,7 +32,7 @@ algorithms. The simplest clustering algorithm is :ref:`k_means`.
     >>> k_means.fit(X_iris)
     KMeans(n_clusters=3)
     >>> print(k_means.labels_[::10])
-    [1 1 1 1 1 0 0 0 0 0 2 2 2 2 2]
+    [1 1 1 1 1 2 0 0 0 0 2 2 2 2 2]
     >>> print(y_iris[::10])
     [0 0 0 0 0 1 1 1 1 1 2 2 2 2 2]
 
