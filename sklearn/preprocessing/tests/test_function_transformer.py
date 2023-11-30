@@ -487,7 +487,7 @@ def test_function_transformer_ufunc_inconsistent_feature_names_out():
     """Check that we raise an error when the column names of the transformed container
     do not match the ones provided by `feature_names_out`.
 
-    Here, `func` is set of a NumPy `ufunc`.
+    Here, `func` is set to a NumPy `ufunc`.
 
     Non-regression test for:
     https://github.com/scikit-learn/scikit-learn/issues/27695
