@@ -41,6 +41,7 @@ from ...utils.validation import (
     _check_monotonic_cst,
     _check_sample_weight,
     _check_y,
+    _is_pandas_df,
     check_array,
     check_consistent_length,
     check_is_fitted,
@@ -349,8 +350,8 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             Indicates whether a feature is categorical. If no feature is
             categorical, this is None.
         """
-        X_is_dataframe = hasattr(X, "__dataframe__")
-        if X_is_dataframe:
+        if hasattr(X, "__dataframe__"):
+            X_is_dataframe = True
             categorical_columns_mask = np.asarray(
                 [
                     c.dtype[0].name == "CATEGORICAL"
@@ -358,7 +359,15 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                 ]
             )
             X_has_categorical_columns = categorical_columns_mask.any()
+        # pandas versions < 1.5.1 do not support the dataframe interchange
+        # protocol so we inspect X.dtypes directly
+        elif _is_pandas_df(X):
+            X_is_dataframe = True
+            categorical_columns_mask = X.dtypes.values == "category"
+            X_has_categorical_columns = categorical_columns_mask.any()
         else:
+            X_is_dataframe = False
+            categorical_columns_mask = None
             X_has_categorical_columns = False
 
         # TODO(1.6): Remove warning and change default to "from_dtype" in v1.6
