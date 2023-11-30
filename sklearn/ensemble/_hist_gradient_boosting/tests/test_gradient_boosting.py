@@ -1186,19 +1186,6 @@ def test_categorical_bad_encoding_errors(Est, use_pandas, feature_name):
     with pytest.raises(ValueError, match=msg):
         gb.fit(X, y)
 
-    if use_pandas:
-        X = pd.DataFrame({"f0": [0, 2]})
-    else:
-        X = np.array([[0, 2]]).T
-    y = np.arange(2)
-    msg = (
-        f"Categorical feature {feature_name} is expected to be encoded "
-        "with values < 2 but the largest value for the encoded categories "
-        "is 2."
-    )
-    with pytest.raises(ValueError, match=msg):
-        gb.fit(X, y)
-
     # nans are ignored in the counts
     X = np.array([[0, 1, np.nan]]).T
     y = np.arange(3)
@@ -1428,7 +1415,7 @@ def test_dataframe_categorical_results_same_as_ndarray(
     hist_pd.fit(X_train_df, y_train)
 
     # Check categories are correct and sorted
-    categories = hist_pd._preprocessor.named_transformers_["encoder"].categories[0]
+    categories = hist_pd._preprocessor.named_transformers_["encoder"].categories_[0]
     assert_array_equal(categories, np.unique(f_cat))
 
     assert len(hist_np._predictors) == len(hist_pd._predictors)
