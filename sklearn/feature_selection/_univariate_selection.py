@@ -584,7 +584,7 @@ class SelectPercentile(_BaseFilter):
     Ties between features with equal scores will be broken in an unspecified
     way.
 
-    This filter supports unsupervised feature selection that only request `X` for
+    This filter supports unsupervised feature selection that only requests `X` for
     computing the scores.
 
     Examples
@@ -689,7 +689,7 @@ class SelectKBest(_BaseFilter):
     Ties between features with equal scores will be broken in an unspecified
     way.
 
-    This filter supports unsupervised feature selection that only request `X` for
+    This filter supports unsupervised feature selection that only requests `X` for
     computing the scores.
 
     Examples
