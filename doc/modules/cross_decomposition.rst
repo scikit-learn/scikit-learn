@@ -42,7 +42,7 @@ multicollinearity among the features. By contrast, standard linear regression
 would fail in these cases unless it is regularized.
 
 Classes included in this module are :class:`PLSRegression`,
-:class:`PLSCanonical`, :class:`CCA` and :class:`PLSSVD`
+:class:`PLSCanonical`, :class:`CCA`, :class:`PLSSVD`, and :class:`RidgeCCA`.
 
 PLSCanonical
 ------------
@@ -180,6 +180,14 @@ Since :class:`CCA` involves the inversion of :math:`X_k^TX_k` and
 :math:`Y_k^TY_k`, this estimator can be unstable if the number of features or
 targets is greater than the number of samples.
 
+Ridge Canonical Correlation Analysis
+-----------------------------------−
+
+:class:`RCCA` is a regularized version of :class:`CCA`, where the
+regularization parameter `alpha` controls the amount of regularization.
+At `alpha_x=0` and `alpha_y=0`, :class:`RCCA` is equivalent to :class:`CCA`. At `alpha_x=1`
+and `alpha_y=1`, :class:`RCCA` is equivalent to :class:`PLSCanonical`.
+
 
 .. topic:: Reference:
 
@@ -187,8 +195,13 @@ targets is greater than the number of samples.
       the two-block case
       <https://stat.uw.edu/sites/default/files/files/reports/2000/tr371.pdf>`_
       JA Wegelin
+    .. [2] `Canonical ridge and econometrics of joint production.
+        Journal of econometrics 4.2 (1976): 147-166`_
+        H Vinod
+
 
 .. topic:: Examples:
 
     * :ref:`sphx_glr_auto_examples_cross_decomposition_plot_compare_cross_decomposition.py`
     * :ref:`sphx_glr_auto_examples_cross_decomposition_plot_pcr_vs_pls.py`
+    * :ref:`sphx_glr_auto_examples_cross_decomposition_plot_ridge_cca.py`

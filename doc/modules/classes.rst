@@ -234,6 +234,7 @@ details.
    cross_decomposition.PLSCanonical
    cross_decomposition.PLSRegression
    cross_decomposition.PLSSVD
+    cross_decoposition.RidgeCCA
 
 .. _datasets_ref:
 

@@ -9,7 +9,7 @@ from sklearn.cross_decomposition._pls import (
     _center_scale_xy,
     _get_first_singular_vectors_power_method,
     _get_first_singular_vectors_svd,
-    _svd_flip_1d,
+    _svd_flip_1d, RidgeCCA,
 )
 from sklearn.datasets import load_linnerud, make_regression
 from sklearn.ensemble import VotingRegressor
@@ -341,6 +341,36 @@ def test_sanity_check_pls_canonical_random():
 
     assert_matrix_orthogonal(pls._x_scores)
     assert_matrix_orthogonal(pls._y_scores)
+
+
+def test_sanity_check_ridge_cca():
+    # Sanity check for PLSCanonical on random data
+    # The results were checked against the R-package plspm
+    n = 500
+    p_noise = 10
+    q_noise = 5
+    # 2 latents vars:
+    rng = check_random_state(11)
+    l1 = rng.normal(size=n)
+    l2 = rng.normal(size=n)
+    latents = np.array([l1, l2]).T
+    X = latents + rng.normal(size=2 * n).reshape((n, 2))
+    Y = latents + rng.normal(size=2 * n).reshape((n, 2))
+    X = np.concatenate((X, rng.normal(size=p_noise * n).reshape(n, p_noise)), axis=1)
+    Y = np.concatenate((Y, rng.normal(size=q_noise * n).reshape(n, q_noise)), axis=1)
+
+    rcca = RidgeCCA(n_components=1, alpha_x=1.0, alpha_y=1.0)
+    zx_ridge,zy_ridge=rcca.fit_transform(X, Y)
+
+    pls = PLSSVD(n_components=1)
+    zx_pls,zy_pls=pls.fit_transform(X, Y)
+
+    assert_array_almost_equal(np.abs(zx_ridge), np.abs(zx_pls))
+    assert_array_almost_equal(np.abs(zy_ridge), np.abs(zy_pls))
+
+
+
+
 
 
 def test_convergence_fail():
