@@ -311,7 +311,13 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
 
     def _check_categories(self):
         encoder = self._preprocessor.named_transformers_["encoder"]
-        for feature_idx, categories in enumerate(encoder.categories_):
+        known_categories = [None] * self._preprocessor.n_features_in_
+        categorical_column_indices = np.arange(self._preprocessor.n_features_in_)[
+            self._preprocessor.output_indices_["encoder"]
+        ]
+        for feature_idx, categories in zip(
+            categorical_column_indices, encoder.categories_
+        ):
             # OrdinalEncoder always puts np.nan as the last category if the
             # training data has missing values. Here we remove it because it is
             # already added by the _BinMapper.
@@ -327,12 +333,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                     f"have a cardinality <= {self.max_bins} but actually "
                     f"has a cardinality of {categories.size}."
                 )
-        known_categories = [None] * self._preprocessor.n_features_in_
-        cat_indices = np.arange(self._preprocessor.n_features_in_)[
-            self._preprocessor.output_indices_["encoder"]
-        ]
-        for idx, categories in zip(cat_indices, encoder.categories_):
-            known_categories[idx] = np.arange(len(categories), dtype=X_DTYPE)
+            known_categories[feature_idx] = np.arange(len(categories), dtype=X_DTYPE)
         return known_categories
 
     def _check_categorical_features(self, X):
