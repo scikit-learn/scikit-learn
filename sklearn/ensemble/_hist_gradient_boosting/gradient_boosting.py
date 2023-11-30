@@ -303,7 +303,6 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         # The ColumnTransformer's output places the categorical features at the
         # beginning
         categorical_remapped = np.zeros(n_features, dtype=bool)
-        self.is_categorical_.sum()
         categorical_remapped[self._preprocessor.output_indices_["encoder"]] = True
         self._is_categorical_remapped = categorical_remapped
 
