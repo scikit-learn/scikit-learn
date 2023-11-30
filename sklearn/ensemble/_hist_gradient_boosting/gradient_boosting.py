@@ -363,7 +363,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         # protocol so we inspect X.dtypes directly
         elif _is_pandas_df(X):
             X_is_dataframe = True
-            categorical_columns_mask = X.dtypes.values == "category"
+            categorical_columns_mask = np.asarray(X.dtypes == "category")
             X_has_categorical_columns = categorical_columns_mask.any()
         else:
             X_is_dataframe = False
