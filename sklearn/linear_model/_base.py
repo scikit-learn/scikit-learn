@@ -774,6 +774,9 @@ def _pre_fit(
                 ),
                 UserWarning,
             )
+            # TODO: instead of warning and recomputing, we could just center
+            # the user provided Gram matrix a-posteriori (after making a copy
+            # when `copy=True`).
             # recompute Gram
             precompute = "auto"
             Xy = None
