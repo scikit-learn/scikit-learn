@@ -316,6 +316,16 @@ Changelog
   dtype as categories in the algorithm. `categorical_features="from_dtype"` will become
   the default in v1.6. :pr:`26411` by `Thomas Fan`_.
 
+- |Feature| the `categorical_features="from_dtype"` option of
+  :class:`ensemble.HistGradientBoostingClassifier` and
+  :class:`ensemble.HistGradientBoostingRegressor` described above is also
+  supported for other dataframes supporting the dataframe interchange protocol,
+  such as polars dataframes. Categorical features no longer need to be encoded
+  with numbers. When categorical features are numbers, the maximum value no
+  longer needs to be smaller than `max_bins`; only the number of (unique)
+  categories must be smaller than `max_bins`. :pr:`27835` by :user:`Jérôme
+  Dockès <jeromedockes>`.
+
 - |Feature| :class:`ensemble.RandomForestClassifier`,
   :class:`ensemble.RandomForestRegressor`, :class:`ensemble.ExtraTreesClassifier`
   and :class:`ensemble.ExtraTreesRegressor` now support monotonic constraints,
