@@ -226,7 +226,8 @@ df = load_mtpl2()
 df["ClaimNb"] = df["ClaimNb"].clip(upper=4)
 df["Exposure"] = df["Exposure"].clip(upper=1)
 df["ClaimAmount"] = df["ClaimAmount"].clip(upper=200000)
-# If the claim amount is 0 then the number of claims should also be 0 
+# If the claim amount is 0, then we do not count it as a claim.
+# As the severity needs positive claim amounts, this way frequency and severity are consistent with each other.
 df.loc[(df["ClaimAmount"] == 0) & (df["ClaimNb"] >= 1), "ClaimNb"] = 0
 
 log_scale_transformer = make_pipeline(
