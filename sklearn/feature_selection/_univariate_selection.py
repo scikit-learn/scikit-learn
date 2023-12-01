@@ -703,9 +703,9 @@ class SelectKBest(_BaseFilter):
 
     def _check_params(self, X, y):
         if not isinstance(self.k, str) and self.k > X.shape[1]:
-            raise ValueError(
-                f"k should be <= n_features = {X.shape[1]}; "
-                f"got {self.k}. Use k='all' to return all features."
+            warnings.warn(
+                f"k={self.k} is greater than n_features={X.shape[1]}. "
+                "All the features will be returned."
             )
 
     def _get_support_mask(self):
