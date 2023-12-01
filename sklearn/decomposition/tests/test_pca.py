@@ -19,6 +19,7 @@ from sklearn.utils._array_api import (
 from sklearn.utils._testing import _array_api_for_tests, assert_allclose
 from sklearn.utils.estimator_checks import (
     _get_check_estimator_ids,
+    check_array_api_input,
     check_array_api_input_and_values,
 )
 from sklearn.utils.fixes import CSC_CONTAINERS, CSR_CONTAINERS
@@ -859,7 +860,7 @@ def check_array_api_get_precision(name, estimator, array_namespace, device, dtyp
     "estimator",
     [
         PCA(n_components=2, svd_solver="full"),
-        PCA(n_components=2, svd_solver="full", whiten=True),
+        PCA(n_components=0.1, svd_solver="full", whiten=True),
         PCA(
             n_components=2,
             svd_solver="randomized",
@@ -870,6 +871,28 @@ def check_array_api_get_precision(name, estimator, array_namespace, device, dtyp
     ids=_get_check_estimator_ids,
 )
 def test_pca_array_api_compliance(estimator, check, array_namespace, device, dtype):
+    name = estimator.__class__.__name__
+    check(name, estimator, array_namespace, device=device, dtype=dtype)
+
+
+@pytest.mark.parametrize(
+    "array_namespace, device, dtype", yield_namespace_device_dtype_combinations()
+)
+@pytest.mark.parametrize(
+    "check",
+    [check_array_api_input, check_array_api_get_precision],
+    ids=_get_check_estimator_ids,
+)
+@pytest.mark.parametrize(
+    "estimator",
+    [
+        # PCA with mle cannot use check_array_api_input_and_values because of
+        # rounding errors in the noisy (low variance) components.
+        PCA(n_components="mle", svd_solver="full"),
+    ],
+    ids=_get_check_estimator_ids,
+)
+def test_pca_mle_array_api_compliance(estimator, check, array_namespace, device, dtype):
     name = estimator.__class__.__name__
     check(name, estimator, array_namespace, device=device, dtype=dtype)
 
