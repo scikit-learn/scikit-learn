@@ -307,12 +307,16 @@ def _get_data_info_by_name(
         )
         res = json_data["data"]["dataset"]
         if len(res) > 1:
-            warn(
+            first_version = version = res[0]["version"]
+            warning_msg = (
                 "Multiple active versions of the dataset matching the name"
-                " {name} exist. Versions may be fundamentally different, "
-                "returning version"
-                " {version}.".format(name=name, version=res[0]["version"])
+                f" {name} exist. Versions may be fundamentally different, "
+                f"returning version {first_version}. "
+                "Available versions:\n"
             )
+            for r in res:
+                warning_msg += f"- version {r['version']}, status: {r['status']}\n"
+            warn(warning_msg)
         return res[0]
 
     # an integer version has been provided

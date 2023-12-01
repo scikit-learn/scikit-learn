@@ -1103,10 +1103,12 @@ def test_fetch_openml_iris_warn_multiple_version(monkeypatch, gzip_response):
 
     _monkey_patch_webbased_functions(monkeypatch, data_id, gzip_response)
 
-    msg = (
+    msg = re.escape(
         "Multiple active versions of the dataset matching the name"
         " iris exist. Versions may be fundamentally different, "
-        "returning version 1."
+        "returning version 1. Available versions:\n"
+        "- version 1, status: active\n"
+        "- version 3, status: active\n"
     )
     with pytest.warns(UserWarning, match=msg):
         fetch_openml(
