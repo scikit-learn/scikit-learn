@@ -1486,15 +1486,16 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
           features.
         - str array-like: names of categorical features (assuming the training
           data has feature names).
-        - `"from_dtype"`: Pandas categorical dtypes are considered categorical.
-          The input must be a pandas DataFrame to use this feature.
+        - `"from_dtype"`: dataframe columns with dtype "category" are
+          considered to be categorical features. The input must be an object
+          exposing a ``__dataframe__`` method such as pandas or polars
+          DataFrames to use this feature.
 
         For each categorical feature, there must be at most `max_bins` unique
-        categories, and each categorical value must be less then `max_bins - 1`.
-        Negative values for categorical features are treated as missing values.
-        All categorical values are converted to floating point numbers.
-        This means that categorical values of 1.0 and 1 are treated as
-        the same category.
+        categories. Negative values for categorical features encoded as numeric
+        dtypes are treated as missing values. All categorical values are
+        converted to floating point numbers. This means that categorical values
+        of 1.0 and 1 are treated as the same category.
 
         Read more in the :ref:`User Guide <categorical_support_gbdt>`.
 
@@ -1861,15 +1862,16 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
           features.
         - str array-like: names of categorical features (assuming the training
           data has feature names).
-        - `"from_dtype"`: Pandas categorical dtypes are considered categorical.
-          The input must be a pandas DataFrame to use this feature.
+        - `"from_dtype"`: dataframe columns with dtype "category" are
+          considered to be categorical features. The input must be an object
+          exposing a ``__dataframe__`` method such as pandas or polars
+          DataFrames to use this feature.
 
         For each categorical feature, there must be at most `max_bins` unique
-        categories, and each categorical value must be less then `max_bins - 1`.
-        Negative values for categorical features are treated as missing values.
-        All categorical values are converted to floating point numbers.
-        This means that categorical values of 1.0 and 1 are treated as
-        the same category.
+        categories. Negative values for categorical features encoded as numeric
+        dtypes are treated as missing values. All categorical values are
+        converted to floating point numbers. This means that categorical values
+        of 1.0 and 1 are treated as the same category.
 
         Read more in the :ref:`User Guide <categorical_support_gbdt>`.
 
