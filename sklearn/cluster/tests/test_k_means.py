@@ -1,7 +1,6 @@
 """Testing for K-means"""
 import re
 import sys
-import warnings
 from io import StringIO
 
 import numpy as np
@@ -1123,24 +1122,6 @@ def test_inertia(dtype, global_random_seed):
     assert_allclose(inertia_dense, inertia_sparse, rtol=rtol)
     assert_allclose(inertia_dense, expected, rtol=rtol)
     assert_allclose(inertia_sparse, expected, rtol=rtol)
-
-
-# TODO(1.4): Remove
-@pytest.mark.parametrize("Klass, default_n_init", [(KMeans, 10), (MiniBatchKMeans, 3)])
-def test_change_n_init_future_warning(Klass, default_n_init):
-    est = Klass(n_init=1)
-    with warnings.catch_warnings():
-        warnings.simplefilter("error", FutureWarning)
-        est.fit(X)
-
-    default_n_init = 10 if Klass.__name__ == "KMeans" else 3
-    msg = (
-        f"The default value of `n_init` will change from {default_n_init} to 'auto'"
-        " in 1.4"
-    )
-    est = Klass()
-    with pytest.warns(FutureWarning, match=msg):
-        est.fit(X)
 
 
 @pytest.mark.parametrize("Klass, default_n_init", [(KMeans, 10), (MiniBatchKMeans, 3)])
