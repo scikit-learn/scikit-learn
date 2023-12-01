@@ -579,6 +579,11 @@ Changelog
   raise an exception if the user provided categories contain duplicates.
   :pr:`27328` by :user:`Xuefeng Xu <xuefeng-xu>`.
 
+- |Fix| :class:`preprocessing.FunctionTransformer` raises an error at `transform` if
+  the output of `get_feature_names_out` is not consistent with the column names of the
+  output container if those are defined.
+  :pr:`27801` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 - |Fix| Raise a `NotFittedError` in :class:`preprocessing.OrdinalEncoder` when calling
   `transform` without calling `fit` since `categories` always requires to be checked.
   :pr:`27821` by :user:`Guillaume Lemaitre <glemaitre>`.
