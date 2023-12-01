@@ -222,15 +222,12 @@ from sklearn.preprocessing import (
 
 df = load_mtpl2()
 
-# Note: filter out claims with zero amount, as the severity model
-# requires strictly positive target values.
-df.loc[(df["ClaimAmount"] == 0) & (df["ClaimNb"] >= 1), "ClaimNb"] = 0
-
-# Correct for unreasonable observations (that might be data error)
-# and a few exceptionally large claim amounts
+# Clean unreasonable observations / possible data errors
 df["ClaimNb"] = df["ClaimNb"].clip(upper=4)
 df["Exposure"] = df["Exposure"].clip(upper=1)
 df["ClaimAmount"] = df["ClaimAmount"].clip(upper=200000)
+# If the claim amount is 0 then the number of claims should also be 0 
+df.loc[(df["ClaimAmount"] == 0) & (df["ClaimNb"] >= 1), "ClaimNb"] = 0
 
 log_scale_transformer = make_pipeline(
     FunctionTransformer(func=np.log), StandardScaler()
