@@ -782,7 +782,7 @@ def _convert_container(
     elif constructor_name == "slice":
         return slice(container[0], container[1])
     elif constructor_name == "sparse_csr":
-        return sp.sparse.csc_matrix(container, dtype=dtype)
+        return sp.sparse.csr_matrix(container, dtype=dtype)
     elif constructor_name == "sparse_csr_array":
         if sp_version >= parse_version("1.8"):
             return sp.sparse.csc_array(container, dtype=dtype)
