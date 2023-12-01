@@ -374,7 +374,7 @@ Changelog
   not check for nans during input validation.
   :pr:`21807` by `Thomas Fan`_.
 
-- |API| :class:`feature_selection.SelectKBest` and
+- |Enhancement| :class:`feature_selection.SelectKBest` and
   :class:`feature_selection.GenericUnivariateSelect` with `mode='k_best'`
   now shows a warning when `k` is greater than the number of features.
   :pr:`27841` by `Thomas Fan`_.
