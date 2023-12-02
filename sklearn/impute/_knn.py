@@ -179,7 +179,7 @@ class KNNImputer(_BaseImputer):
 
         mask_fit_X_col : ndarray of shape (n_potential_donors,)
             Missing mask for fit_X_col.
-            
+
         Returns
         -------
         imputed_values: ndarray of shape (n_receivers,)
