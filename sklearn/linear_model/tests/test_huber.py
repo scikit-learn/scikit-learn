@@ -15,6 +15,8 @@ from sklearn.utils._testing import (
 )
 from sklearn.utils.fixes import CSR_CONTAINERS
 
+from ...exceptions import ConvergenceWarning
+
 
 def make_regression_with_outliers(n_samples=50, n_features=20):
     rng = np.random.RandomState(0)
@@ -214,3 +216,13 @@ def test_huber_bool():
     X, y = make_regression(n_samples=200, n_features=2, noise=4.0, random_state=0)
     X_bool = X > 0
     HuberRegressor().fit(X_bool, y)
+
+
+def test_huber_convergence_failure():
+    # test that the huber regressor raises a warning if the L-BFGS-B optimizer
+    # does not converge in a pathological case
+    X = np.array([10, 11, 28]).reshape(-1, 1)
+    y = np.log(np.array([5000.0, 5000.0, 5000.0]))
+    sample_weights = np.array([2.0, 2.0, 2.0])
+    with pytest.warns(ConvergenceWarning):
+        HuberRegressor().fit(X, y, sample_weights)
