@@ -12,7 +12,7 @@ dependencies:
   - joblib
   - threadpoolctl
   - matplotlib
-  - pandas<2.1
+  - pandas
   - pyamg
   - pytest
   - pytest-xdist=2.5.0
@@ -22,7 +22,7 @@ dependencies:
   - seaborn
   - memory_profiler
   - compilers
-  - sphinx=6.0.0
+  - sphinx
   - sphinx-gallery
   - sphinx-copybutton
   - numpydoc

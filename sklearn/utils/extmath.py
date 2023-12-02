@@ -78,11 +78,18 @@ def row_norms(X, squared=False):
     if sparse.issparse(X):
         X = X.tocsr()
         norms = csr_row_norms(X)
+        if not squared:
+            norms = np.sqrt(norms)
     else:
-        norms = np.einsum("ij,ij->i", X, X)
-
-    if not squared:
-        np.sqrt(norms, norms)
+        xp, _ = get_namespace(X)
+        if _is_numpy_namespace(xp):
+            X = np.asarray(X)
+            norms = np.einsum("ij,ij->i", X, X)
+            norms = xp.asarray(norms)
+        else:
+            norms = xp.sum(xp.multiply(X, X), axis=1)
+        if not squared:
+            norms = xp.sqrt(norms)
     return norms
 
 
@@ -1204,14 +1211,10 @@ def stable_cumsum(arr, axis=None, rtol=1e-05, atol=1e-08):
     out : ndarray
         Array with the cumulative sums along the chosen axis.
     """
-    xp, _ = get_namespace(arr)
-
-    out = xp.cumsum(arr, axis=axis, dtype=np.float64)
-    expected = xp.sum(arr, axis=axis, dtype=np.float64)
-    if not xp.all(
-        xp.isclose(
-            out.take(-1, axis=axis), expected, rtol=rtol, atol=atol, equal_nan=True
-        )
+    out = np.cumsum(arr, axis=axis, dtype=np.float64)
+    expected = np.sum(arr, axis=axis, dtype=np.float64)
+    if not np.allclose(
+        out.take(-1, axis=axis), expected, rtol=rtol, atol=atol, equal_nan=True
     ):
         warnings.warn(
             (

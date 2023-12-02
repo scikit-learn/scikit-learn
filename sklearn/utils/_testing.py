@@ -771,7 +771,7 @@ def _convert_container(
         return pa.Table.from_pydict(data)
     elif constructor_name == "polars":
         pl = pytest.importorskip("polars", minversion=minversion)
-        return pl.DataFrame(container, schema=columns_name)
+        return pl.DataFrame(container, schema=columns_name, orient="row")
     elif constructor_name == "series":
         pd = pytest.importorskip("pandas", minversion=minversion)
         return pd.Series(container, dtype=dtype)
@@ -1047,18 +1047,11 @@ def _array_api_for_tests(array_namespace, device, dtype):
                 "Skipping MPS device test because PYTORCH_ENABLE_MPS_FALLBACK is not "
                 "set."
             )
-        if not xp.has_mps:
-            if not xp.backends.mps.is_built():
-                raise SkipTest(
-                    "MPS is not available because the current PyTorch install was not "
-                    "built with MPS enabled."
-                )
-            else:
-                raise SkipTest(
-                    "MPS is not available because the current MacOS version is not"
-                    " 12.3+ and/or you do not have an MPS-enabled device on this"
-                    " machine."
-                )
+        if not xp.backends.mps.is_built():
+            raise SkipTest(
+                "MPS is not available because the current PyTorch install was not "
+                "built with MPS enabled."
+            )
     elif array_namespace in {"cupy", "cupy.array_api"}:  # pragma: nocover
         import cupy
 
