@@ -212,9 +212,8 @@ class KNNImputer(_BaseImputer):
             imputed_values = np.ma.median(donors, axis=1).data
         else:
             raise ValueError("Invalid imputation strategy. Use 'mean' or 'median'.")
-
         return imputed_values
-        
+
     @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y=None):
         """Fit the imputer on X.
