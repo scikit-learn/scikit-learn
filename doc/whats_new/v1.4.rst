@@ -353,6 +353,12 @@ Changelog
   :pr:`13649` by :user:`Samuel Ronsin <samronsin>`,
   initiated by :user:`Patrick O'Reilly <pat-oreilly>`.
 
+- |Efficiency| :class:`ensemble.HistGradientBoostingClassifier` and
+  :class:`ensemble.HistGradientBoostingRegressor` are now a bit faster by reusing
+  the parent node's histogram as children node's histogram in the subtraction trick.
+  In effect, less memory has to be allocated and deallocated.
+  :pr:`27865` by :user:`Christian Lorentzen <lorentzenchr>`.
+
 - |Efficiency| :class:`ensemble.GradientBoostingClassifier` is faster,
   for binary and in particular for multiclass problems thanks to the private loss
   function module.
