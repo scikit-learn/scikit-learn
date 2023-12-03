@@ -310,7 +310,7 @@ Changelog
 - |Fix| :func:`decomposition.dict_learning_online` does not ignore anymore the parameter
   `max_iter`.
   :pr:`27834` by :user:`Guillaume Lemaitre <glemaitre>`.
-  
+
 - |Fix| The `degree` parameter in the :class:`decomposition.KernelPCA`
   constructor now accepts real values instead of only integral values in
   accordance with the `degree` parameter of the
@@ -339,6 +339,12 @@ Changelog
   dtype as categories in the algorithm. `categorical_features="from_dtype"` will become
   the default in v1.6. :pr:`26411` by `Thomas Fan`_.
 
+- |MajorFeature| :class:`ensemble.HistGradientBoostingClassifier` and
+  :class:`ensemble.HistGradientBoostingRegressor` got the new parameter
+  `max_features` to specify the proportion of randomly chosen features considered
+  in each split.
+  :pr:`27139` by :user:`Christian Lorentzen <lorentzenchr>`.
+
 - |Feature| :class:`ensemble.RandomForestClassifier`,
   :class:`ensemble.RandomForestRegressor`, :class:`ensemble.ExtraTreesClassifier`
   and :class:`ensemble.ExtraTreesRegressor` now support monotonic constraints,
@@ -346,12 +352,6 @@ Changelog
   Missing values in the train data and multi-output targets are not supported.
   :pr:`13649` by :user:`Samuel Ronsin <samronsin>`,
   initiated by :user:`Patrick O'Reilly <pat-oreilly>`.
-
-- |Feature| :class:`ensemble.HistGradientBoostingClassifier` and
-  :class:`ensemble.HistGradientBoostingRegressor` got the new parameter
-  `max_features` to specify the proportion of randomly chosen features considered
-  in each split.
-  :pr:`27139` by :user:`Christian Lorentzen <lorentzenchr>`.
 
 - |Efficiency| :class:`ensemble.GradientBoostingClassifier` is faster,
   for binary and in particular for multiclass problems thanks to the private loss
