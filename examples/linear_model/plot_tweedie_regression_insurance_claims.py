@@ -222,7 +222,9 @@ from sklearn.preprocessing import (
 
 df = load_mtpl2()
 
-# Clean unreasonable observations / possible data errors
+
+# Correct for unreasonable observations (that might be data error)
+# and a few exceptionally large claim amounts
 df["ClaimNb"] = df["ClaimNb"].clip(upper=4)
 df["Exposure"] = df["Exposure"].clip(upper=1)
 df["ClaimAmount"] = df["ClaimAmount"].clip(upper=200000)
