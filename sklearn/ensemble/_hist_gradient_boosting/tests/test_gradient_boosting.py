@@ -31,6 +31,7 @@ from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import KBinsDiscretizer, MinMaxScaler, OneHotEncoder
 from sklearn.utils import shuffle
 from sklearn.utils._openmp_helpers import _openmp_effective_n_threads
+from sklearn.utils._testing import _convert_container
 
 n_threads = _openmp_effective_n_threads()
 
@@ -1449,7 +1450,7 @@ def test_dataframe_categorical_results_same_as_ndarray(
     dataframe_lib, HistGradientBoosting
 ):
     """Check that pandas categorical give the same results as ndarray."""
-    px = pytest.importorskip(dataframe_lib)
+    pytest.importorskip(dataframe_lib)
 
     rng = np.random.RandomState(42)
     n_samples = 5_000
@@ -1463,8 +1464,13 @@ def test_dataframe_categorical_results_same_as_ndarray(
 
     X = np.c_[f_num, f_cat]
     f_cat = [f"cat{c:0>3}" for c in f_cat]
-    dtype = "category" if dataframe_lib == "pandas" else px.Categorical
-    X_df = px.DataFrame({"f_num": f_num, "f_cat": px.Series(f_cat, dtype=dtype)})
+    constructor_name = {"pandas": "dataframe"}.get(dataframe_lib, dataframe_lib)
+    X_df = _convert_container(
+        np.asarray([f_num, f_cat]).T,
+        constructor_name,
+        ["f_num", "f_cat"],
+        categorical_feature_names=["f_cat"],
+    )
 
     X_train, X_test, X_train_df, X_test_df, y_train, y_test = train_test_split(
         X, X_df, y, random_state=0
@@ -1498,15 +1504,16 @@ def test_dataframe_categorical_results_same_as_ndarray(
 )
 def test_dataframe_categorical_errors(dataframe_lib, HistGradientBoosting):
     """Check error cases for pandas categorical feature."""
-    px = pytest.importorskip(dataframe_lib)
-
+    pytest.importorskip(dataframe_lib)
     msg = "Categorical feature 'f_cat' is expected to have a cardinality <= 16"
     hist = HistGradientBoosting(categorical_features="from_dtype", max_bins=16)
 
     rng = np.random.RandomState(42)
     f_cat = rng.randint(0, high=100, size=100).astype(str)
-    dtype = "category" if dataframe_lib == "pandas" else px.Categorical
-    X_df = px.DataFrame({"f_cat": px.Series(f_cat, dtype=dtype)})
+    constructor_name = {"pandas": "dataframe"}.get(dataframe_lib, dataframe_lib)
+    X_df = _convert_container(
+        f_cat[:, None], constructor_name, ["f_cat"], categorical_feature_names=["f_cat"]
+    )
     y = rng.randint(0, high=2, size=100)
 
     with pytest.raises(ValueError, match=msg):
@@ -1516,7 +1523,7 @@ def test_dataframe_categorical_errors(dataframe_lib, HistGradientBoosting):
 @pytest.mark.parametrize("dataframe_lib", ["pandas", "polars"])
 def test_categorical_different_order_same_model(dataframe_lib):
     """Check that the order of the categorical gives same model."""
-    px = pytest.importorskip(dataframe_lib)
+    pytest.importorskip(dataframe_lib)
     rng = np.random.RandomState(42)
     n_samples = 1_000
     f_ints = rng.randint(low=0, high=2, size=n_samples)
@@ -1529,10 +1536,19 @@ def test_categorical_different_order_same_model(dataframe_lib):
     # Construct categorical where 0 -> A and 1 -> B and 1 -> A and 0 -> B
     f_cat_a_b = np.asarray(["A", "B"])[f_ints]
     f_cat_b_a = np.asarray(["B", "A"])[f_ints]
-
-    dtype = "category" if dataframe_lib == "pandas" else px.Categorical
-    df_a_b = px.DataFrame({"f_cat": px.Series(f_cat_a_b, dtype=dtype)})
-    df_b_a = px.DataFrame({"f_cat": px.Series(f_cat_b_a, dtype=dtype)})
+    constructor_name = {"pandas": "dataframe"}.get(dataframe_lib, dataframe_lib)
+    df_a_b = _convert_container(
+        f_cat_a_b[:, None],
+        constructor_name,
+        ["f_cat"],
+        categorical_feature_names=["f_cat"],
+    )
+    df_b_a = _convert_container(
+        f_cat_b_a[:, None],
+        constructor_name,
+        ["f_cat"],
+        categorical_feature_names=["f_cat"],
+    )
 
     hist_a_b = HistGradientBoostingClassifier(
         categorical_features="from_dtype", random_state=0

@@ -721,7 +721,12 @@ def assert_run_python_script(source_code, timeout=60):
 
 
 def _convert_container(
-    container, constructor_name, columns_name=None, dtype=None, minversion=None
+    container,
+    constructor_name,
+    columns_name=None,
+    dtype=None,
+    minversion=None,
+    categorical_feature_names=None,
 ):
     """Convert a given container to a specific array-like with a dtype.
 
@@ -761,7 +766,11 @@ def _convert_container(
         return sp.sparse.csr_matrix(container, dtype=dtype)
     elif constructor_name == "dataframe":
         pd = pytest.importorskip("pandas", minversion=minversion)
-        return pd.DataFrame(container, columns=columns_name, dtype=dtype, copy=False)
+        result = pd.DataFrame(container, columns=columns_name, dtype=dtype, copy=False)
+        if categorical_feature_names is not None:
+            for col in categorical_feature_names:
+                result[col] = result[col].astype("category")
+        return result
     elif constructor_name == "pyarrow":
         pa = pytest.importorskip("pyarrow", minversion=minversion)
         array = np.asarray(container)
@@ -771,7 +780,11 @@ def _convert_container(
         return pa.Table.from_pydict(data)
     elif constructor_name == "polars":
         pl = pytest.importorskip("polars", minversion=minversion)
-        return pl.DataFrame(container, schema=columns_name, orient="row")
+        result = pl.DataFrame(container, schema=columns_name, orient="row")
+        if categorical_feature_names is not None:
+            for col in categorical_feature_names:
+                result = result.with_columns(pl.col(col).cast(pl.Categorical))
+        return result
     elif constructor_name == "series":
         pd = pytest.importorskip("pandas", minversion=minversion)
         return pd.Series(container, dtype=dtype)
