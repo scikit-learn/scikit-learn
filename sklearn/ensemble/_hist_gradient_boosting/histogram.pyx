@@ -224,7 +224,7 @@ cdef class HistogramBuilder:
 
     def compute_histograms_subtraction(
         HistogramBuilder self,
-        hist_struct [:, ::1] parent_histograms,        # IN
+        hist_struct [:, ::1] parent_histograms,        # IN and OUT
         hist_struct [:, ::1] sibling_histograms,       # IN
         const unsigned int [:] allowed_features=None,  # IN
     ):
@@ -252,16 +252,14 @@ cdef class HistogramBuilder:
         -------
         histograms : ndarray of HISTOGRAM_DTYPE, shape(n_features, n_bins)
             The computed histograms of the current node.
+            We repurpose parent_histograms for this and don't need to allocate new
+            memory.
         """
 
         cdef:
             int feature_idx
             int f_idx
             int n_allowed_features = self.n_features
-            hist_struct [:, ::1] histograms = np.empty(
-                shape=(self.n_features, self.n_bins),
-                dtype=HISTOGRAM_DTYPE
-            )
             bint has_interaction_cst = allowed_features is not None
             int n_threads = self.n_threads
 
@@ -281,9 +279,8 @@ cdef class HistogramBuilder:
                 self.n_bins,
                 parent_histograms,
                 sibling_histograms,
-                histograms,
             )
-        return histograms
+        return parent_histograms
 
 
 cpdef void _build_histogram_naive(
@@ -313,25 +310,16 @@ cpdef void _build_histogram_naive(
 cpdef void _subtract_histograms(
         const int feature_idx,
         unsigned int n_bins,
-        hist_struct [:, ::1] hist_a,  # IN
+        hist_struct [:, ::1] hist_a,  # IN and OUT
         hist_struct [:, ::1] hist_b,  # IN
-        hist_struct [:, ::1] out) noexcept nogil:  # OUT
-    """compute (hist_a - hist_b) in out"""
+) noexcept nogil:  # OUT
+    """compute hist_a = hist_a - hist_b"""
     cdef:
         unsigned int i = 0
     for i in range(n_bins):
-        out[feature_idx, i].sum_gradients = (
-            hist_a[feature_idx, i].sum_gradients -
-            hist_b[feature_idx, i].sum_gradients
-        )
-        out[feature_idx, i].sum_hessians = (
-            hist_a[feature_idx, i].sum_hessians -
-            hist_b[feature_idx, i].sum_hessians
-        )
-        out[feature_idx, i].count = (
-            hist_a[feature_idx, i].count -
-            hist_b[feature_idx, i].count
-        )
+        hist_a[feature_idx, i].sum_gradients -= hist_b[feature_idx, i].sum_gradients
+        hist_a[feature_idx, i].sum_hessians -= hist_b[feature_idx, i].sum_hessians
+        hist_a[feature_idx, i].count -= hist_b[feature_idx, i].count
 
 
 cpdef void _build_histogram(
