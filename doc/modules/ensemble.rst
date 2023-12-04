@@ -125,9 +125,9 @@ larger than 10,000**. The early-stopping behaviour is controlled via the
 ``early_stopping``, ``scoring``, ``validation_fraction``,
 ``n_iter_no_change``, and ``tol`` parameters. It is possible to early-stop
 using an arbitrary :term:`scorer`, or just the training or validation loss.
-Note that for technical reasons, using a scorer is significantly slower than
-using the loss. By default, early-stopping is performed if there are at least
-10,000 samples in the training set, and uses the validation loss.
+Note that for technical reasons, using a callable as a scorer is significantly slower
+than using the loss. By default, early-stopping is performed if there are at least
+10,000 samples in the training set, using the validation loss.
 
 Missing values support
 ^^^^^^^^^^^^^^^^^^^^^^
@@ -885,9 +885,9 @@ from a sample drawn with replacement (i.e., a bootstrap sample) from the
 training set.
 
 Furthermore, when splitting each node during the construction of a tree, the
-best split is found either from all input features or a random subset of size
-``max_features``. (See the :ref:`parameter tuning guidelines
-<random_forest_parameters>` for more details).
+best split is found through an exhaustive search of the features values of 
+either all input features or a random subset of size ``max_features``. 
+(See the :ref:`parameter tuning guidelines <random_forest_parameters>` for more details.)
 
 The purpose of these two sources of randomness is to decrease the variance of
 the forest estimator. Indeed, individual decision trees typically exhibit high

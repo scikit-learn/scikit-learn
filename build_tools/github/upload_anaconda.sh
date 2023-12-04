@@ -3,7 +3,8 @@
 set -e
 set -x
 
-if [ "$GITHUB_EVENT_NAME" == "schedule" ]; then
+# Note: build_wheels.sh has the same branch (only for NumPy 2.0 transition)
+if [[ "$GITHUB_EVENT_NAME" == "schedule" || "$CIRRUS_CRON" == "nightly" ]]; then
     ANACONDA_ORG="scientific-python-nightly-wheels"
     ANACONDA_TOKEN="$SCIKIT_LEARN_NIGHTLY_UPLOAD_TOKEN"
 else
