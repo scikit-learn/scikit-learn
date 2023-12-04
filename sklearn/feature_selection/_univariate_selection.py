@@ -1008,7 +1008,7 @@ class SelectThreshold(_BaseFilter):
         `y=None` in the signature of `score_func`.
 
     threshold : float, default=0.5
-        Score threshold above which a feature is selected
+        Score threshold above which a feature is selected.
 
     Attributes
     ----------
