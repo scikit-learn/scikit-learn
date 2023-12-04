@@ -690,7 +690,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         except ImportError:
             return
         for Xs, name in zip(result, names):
-            if not hasattr(Xs, "dtypes"):
+            if not _is_pandas_df(Xs):
                 continue
             for col_name, dtype in Xs.dtypes.to_dict().items():
                 if getattr(dtype, "na_value", None) is not pd.NA:
