@@ -357,10 +357,9 @@ Changelog
 - |Feature| the `categorical_features="from_dtype"` option of
   :class:`ensemble.HistGradientBoostingClassifier` and
   :class:`ensemble.HistGradientBoostingRegressor` described above is also
-  supported for other dataframes supporting the dataframe interchange protocol,
-  such as polars dataframes. Categorical features no longer need to be encoded
-  with numbers. When categorical features are numbers, the maximum value no
-  longer needs to be smaller than `max_bins`; only the number of (unique)
+  supported for polars dataframes. Categorical features no longer need to be
+  encoded with numbers. When categorical features are numbers, the maximum value
+  no longer needs to be smaller than `max_bins`; only the number of (unique)
   categories must be smaller than `max_bins`. :pr:`27835` by :user:`Jérôme
   Dockès <jeromedockes>`.
 
