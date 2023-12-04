@@ -768,8 +768,8 @@ def _convert_container(
         pd = pytest.importorskip("pandas", minversion=minversion)
         result = pd.DataFrame(container, columns=columns_name, dtype=dtype, copy=False)
         if categorical_feature_names is not None:
-            for col in categorical_feature_names:
-                result[col] = result[col].astype("category")
+            for col_name in categorical_feature_names:
+                result[col_name] = result[col_name].astype("category")
         return result
     elif constructor_name == "pyarrow":
         pa = pytest.importorskip("pyarrow", minversion=minversion)
@@ -777,13 +777,20 @@ def _convert_container(
         if columns_name is None:
             columns_name = [f"col{i}" for i in range(array.shape[1])]
         data = {name: array[:, i] for i, name in enumerate(columns_name)}
-        return pa.Table.from_pydict(data)
+        result = pa.Table.from_pydict(data)
+        if categorical_feature_names is not None:
+            for col_idx, col_name in enumerate(result.column_names):
+                if col_name in categorical_feature_names:
+                    result = result.set_column(
+                        col_idx, col_name, result.column(col_name).dictionary_encode()
+                    )
+        return result
     elif constructor_name == "polars":
         pl = pytest.importorskip("polars", minversion=minversion)
         result = pl.DataFrame(container, schema=columns_name, orient="row")
         if categorical_feature_names is not None:
-            for col in categorical_feature_names:
-                result = result.with_columns(pl.col(col).cast(pl.Categorical))
+            for col_name in categorical_feature_names:
+                result = result.with_columns(pl.col(col_name).cast(pl.Categorical))
         return result
     elif constructor_name == "series":
         pd = pytest.importorskip("pandas", minversion=minversion)
