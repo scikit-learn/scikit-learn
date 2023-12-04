@@ -70,8 +70,6 @@ jobs:
           - os: windows-latest
             python: 312
             platform_id: win_amd64
-            # TODO: remove when Python 3.12 is released
-            prerelease: "True"
 
           # Linux 64 bit manylinux2014
           - os: ubuntu-latest
@@ -97,8 +95,6 @@ jobs:
             python: 312
             platform_id: manylinux_x86_64
             manylinux_image: manylinux2014
-            # TODO: remove when Python 3.12 is released
-            prerelease: "True"
 
           # MacOS x86_64
           - os: macos-latest
@@ -116,8 +112,6 @@ jobs:
           - os: macos-latest
             python: 312
             platform_id: macosx_x86_64
-            # TODO: remove when Python 3.12 is released
-            prerelease: "True"
 
           # MacOS arm64
           # The wheel for the latest Python version is built and tested on

@@ -8,7 +8,7 @@ Scikit-learn defines a simple API for creating visualizations for machine
 learning. The key features of this API is to run calculations once and to have
 the flexibility to adjust the visualizations after the fact. This section is
 intended for developers who wish to develop or maintain plotting tools. For
-usage, users should refer to the :ref`User Guide <visualizations>`.
+usage, users should refer to the :ref:`User Guide <visualizations>`.
 
 Plotting API Overview
 ---------------------
