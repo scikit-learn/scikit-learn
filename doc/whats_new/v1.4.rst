@@ -401,6 +401,12 @@ Changelog
 :mod:`sklearn.feature_selection`
 ................................
 
+- |Enhancement| :class:`feature_selection.SelectKBest`,
+  :class:`feature_selection.SelectPercentile`, and
+  :class:`feature_selection.GenericUnivariateSelect` now support unsupervised
+  feature selection by providing a `score_func` taking `X` and `y=None`.
+  :pr:`27721` by :user:`Guillaume Lemaitre <glemaitre>.`
+
 - |Fix| :class:`feature_selection.RFE` and :class:`feature_selection.RFECV` do
   not check for nans during input validation.
   :pr:`21807` by `Thomas Fan`_.
