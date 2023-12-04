@@ -429,6 +429,12 @@ Changelog
   proportional to the number of coefficients (`n_features * n_classes`).
   :pr:`27417` by :user:`Christian Lorentzen <lorentzenchr>`.
 
+- |Fix| Ensure that the `sigma_` attribute of
+  :class:`linear_model.ARDRegression` and :class:`linear_model.BayesianRidge`
+  always as dtype `float32` when fitted on `float32` data, even with the type
+  promition rules of numpy 2.
+  :pr:`27899` by :user:`Olivier Grisel <ogrisel>`.
+
 :mod:`sklearn.metrics`
 ......................
 
