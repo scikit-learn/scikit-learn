@@ -832,9 +832,10 @@ def test_invalid_k():
     X = [[0, 1, 0], [0, -1, -1], [0, 0.5, 0.5]]
     y = [1, 0, 1]
 
-    with pytest.raises(ValueError):
+    msg = "k=4 is greater than n_features=3. All the features will be returned."
+    with pytest.warns(UserWarning, match=msg):
         SelectKBest(k=4).fit(X, y)
-    with pytest.raises(ValueError):
+    with pytest.warns(UserWarning, match=msg):
         GenericUnivariateSelect(mode="k_best", param=4).fit(X, y)
 
 
