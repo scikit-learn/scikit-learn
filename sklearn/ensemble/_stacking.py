@@ -26,7 +26,6 @@ from ..preprocessing import LabelEncoder
 from ..utils import Bunch
 from ..utils._estimator_html_repr import _VisualBlock
 from ..utils._param_validation import HasMethods, StrOptions
-from ..utils._tags import _safe_tags
 from ..utils.metadata_routing import (
     _raise_for_unsupported_routing,
     _RoutingNotSupportedMixin,
@@ -383,19 +382,6 @@ class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble, metaclass=ABCM
             "parallel", [final_estimator], names=["final_estimator"], dash_wrapped=False
         )
         return _VisualBlock("serial", (parallel, final_block), dash_wrapped=False)
-
-    def _more_tags(self):
-        try:
-            allow_nan = all(
-                _safe_tags(est[1])["allow_nan"] if est[1] != "drop" else True
-                for est in self.estimators
-            )
-        except Exception:
-            # If `estimators` does not comply with our API (list of tuples) then it will
-            # fail. In this case, we assume that `allow_nan` is False but the parameter
-            # validation will raise an error during `fit`.
-            allow_nan = False
-        return {"allow_nan": allow_nan}
 
 
 class StackingClassifier(_RoutingNotSupportedMixin, ClassifierMixin, _BaseStacking):
