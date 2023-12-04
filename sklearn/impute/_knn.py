@@ -210,8 +210,7 @@ class KNNImputer(_BaseImputer):
             imputed_values = np.ma.average(donors, axis=1, weights=weight_matrix).data
         elif self.strategy == "median":
             imputed_values = np.ma.median(donors, axis=1).data
-        else:
-            raise ValueError("Invalid imputation strategy. Use 'mean' or 'median'.")
+            
         return imputed_values
 
     @_fit_context(prefer_skip_nested_validation=True)
