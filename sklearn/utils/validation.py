@@ -348,6 +348,9 @@ def _num_samples(x):
         # Don't get num_samples from an ensembles length!
         raise TypeError(message)
 
+    if _use_interchange_protocol(x):
+        return x.__dataframe__().num_rows()
+
     if not hasattr(x, "__len__") and not hasattr(x, "shape"):
         if hasattr(x, "__array__"):
             x = np.asarray(x)
