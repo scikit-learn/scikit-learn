@@ -236,14 +236,46 @@ Changelog
 :mod:`sklearn.cluster`
 ......................
 
-- |API| : `kdtree` and `balltree` values are now deprecated and are renamed as
+- |Fix| The `degree` parameter in the :class:`cluster.SpectralClustering`
+  constructor now accepts real values instead of only integral values in
+  accordance with the `degree` parameter of the
+  :class:`sklearn.metrics.pairwise.polynomial_kernel`. :pr:`27668` by
+  :user:`Nolan McMahon <NolantheNerd>`.
+
+- |API| `kdtree` and `balltree` values are now deprecated and are renamed as
   `kd_tree` and `ball_tree` respectively for the `algorithm` parameter of
   :class:`cluster.HDBSCAN` ensuring consistency in naming convention.
   `kdtree` and `balltree` values will be removed in 1.6.
   :pr:`26744` by :user:`Shreesha Kumar Bhat <Shreesha3112>`.
 
+- |Fix| Fixes a bug in :class:`cluster.OPTICS` where the cluster correction based
+  on predecessor was not using the right indexing. It would lead to inconsistent results
+  depedendent on the order of the data.
+  :pr:`26459` by :user:`Haoying Zhang <stevezhang1999>` and
+  :user:`Guillaume Lemaitre <glemaitre>`.
+
+- |Fix| Improve error message when checking the number of connected components
+  in the `fit` method of :class:`cluster.HDBSCAN`.
+  :pr:`27678` by :user:`Ganesh Tata <tataganesh>`.
+
+- |Fix| Create copy of precomputed sparse matrix within the
+  `fit` method of `cluster.DBSCAN` to avoid in-place modification of
+  the sparse matrix.
+  :pr:`27651` by :user:`Ganesh Tata <tataganesh>`.
+
+- |API| The option `metric=None` in
+  :class:`cluster.AggomerativeClustering` and :class:`cluster.FeatureAgglomeration`
+  is deprecated in version 1.4 and will be removed in version 1.6. Use the default
+  value instead.
+  :pr:`27828` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 :mod:`sklearn.compose`
 ......................
+
+- |MajorFeature| Adds `polars <https://www.pola.rs>`__ input support to
+  :class:`compose.ColumnTransformer` through the `DataFrame Interchange Protocol
+  <https://data-apis.org/dataframe-protocol/latest/purpose_and_scope.html>`__.
+  The minimum supported version for polars is `0.19.12`. :pr:`26683` by `Thomas Fan`_.
 
 - |API| |FIX| :class:`~compose.ColumnTransformer` now replaces `"passthrough"`
   with a corresponding :class:`~preprocessing.FunctionTransformer` in the
@@ -294,6 +326,12 @@ Changelog
   `max_iter`.
   :pr:`27834` by :user:`Guillaume Lemaitre <glemaitre>`.
 
+- |Fix| The `degree` parameter in the :class:`decomposition.KernelPCA`
+  constructor now accepts real values instead of only integral values in
+  accordance with the `degree` parameter of the
+  :class:`sklearn.metrics.pairwise.polynomial_kernel`. :pr:`27668` by
+  :user:`Nolan McMahon <NolantheNerd>`.
+
 - |API| The option `max_iter=None` in
   :class:`decomposition.MiniBatchDictionaryLearning`,
   :class:`decomposition.MiniBatchSparsePCA`, and
@@ -326,6 +364,12 @@ Changelog
   categories must be smaller than `max_bins`. :pr:`27835` by :user:`Jérôme
   Dockès <jeromedockes>`.
 
+- |MajorFeature| :class:`ensemble.HistGradientBoostingClassifier` and
+  :class:`ensemble.HistGradientBoostingRegressor` got the new parameter
+  `max_features` to specify the proportion of randomly chosen features considered
+  in each split.
+  :pr:`27139` by :user:`Christian Lorentzen <lorentzenchr>`.
+
 - |Feature| :class:`ensemble.RandomForestClassifier`,
   :class:`ensemble.RandomForestRegressor`, :class:`ensemble.ExtraTreesClassifier`
   and :class:`ensemble.ExtraTreesRegressor` now support monotonic constraints,
@@ -334,11 +378,11 @@ Changelog
   :pr:`13649` by :user:`Samuel Ronsin <samronsin>`,
   initiated by :user:`Patrick O'Reilly <pat-oreilly>`.
 
-- |Feature| :class:`ensemble.HistGradientBoostingClassifier` and
-  :class:`ensemble.HistGradientBoostingRegressor` got the new parameter
-  `max_features` to specify the proportion of randomly chosen features considered
-  in each split.
-  :pr:`27139` by :user:`Christian Lorentzen <lorentzenchr>`.
+- |Efficiency| :class:`ensemble.HistGradientBoostingClassifier` and
+  :class:`ensemble.HistGradientBoostingRegressor` are now a bit faster by reusing
+  the parent node's histogram as children node's histogram in the subtraction trick.
+  In effect, less memory has to be allocated and deallocated.
+  :pr:`27865` by :user:`Christian Lorentzen <lorentzenchr>`.
 
 - |Efficiency| :class:`ensemble.GradientBoostingClassifier` is faster,
   for binary and in particular for multiclass problems thanks to the private loss
@@ -354,6 +398,10 @@ Changelog
   :class:`ensemble.HistGradientBoostingRegressor` is now faster when `scoring`
   is a predefined metric listed in :func:`metrics.get_scorer_names` and
   early stopping is enabled. :pr:`26163` by `Thomas Fan`_.
+
+- |Fix| Fixes :class:`ensemble.IsolationForest` when the input is a sparse matrix and
+  `contamination` is set to a float value.
+  :pr:`27645` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 - |API| In :class:`ensemble.AdaBoostClassifier`, the `algorithm` argument `SAMME.R` was
   deprecated and will be removed in 1.6. :pr:`26830` by :user:`Stefanie Senger
@@ -374,9 +422,20 @@ Changelog
 :mod:`sklearn.feature_selection`
 ................................
 
+- |Enhancement| :class:`feature_selection.SelectKBest`,
+  :class:`feature_selection.SelectPercentile`, and
+  :class:`feature_selection.GenericUnivariateSelect` now support unsupervised
+  feature selection by providing a `score_func` taking `X` and `y=None`.
+  :pr:`27721` by :user:`Guillaume Lemaitre <glemaitre>.`
+
 - |Fix| :class:`feature_selection.RFE` and :class:`feature_selection.RFECV` do
   not check for nans during input validation.
   :pr:`21807` by `Thomas Fan`_.
+
+- |Enhancement| :class:`feature_selection.SelectKBest` and
+  :class:`feature_selection.GenericUnivariateSelect` with `mode='k_best'`
+  now shows a warning when `k` is greater than the number of features.
+  :pr:`27841` by `Thomas Fan`_.
 
 :mod:`sklearn.inspection`
 .........................
@@ -391,6 +450,16 @@ Changelog
 - |API| :class:`inspection.DecisionBoundaryDisplay` raise an `AttributeError` instead
   of a `ValueError` when an estimator does not implement the requested response method.
   :pr:`27291` by :user:`Guillaume Lemaitre <glemaitre>`.
+
+:mod:`sklearn.kernel_ridge`
+...........................
+
+- |Fix| The `degree` parameter in the :class:`kernel_ridge.KernelRidge`
+  constructor now accepts real values instead of only integral values in
+  accordance with the `degree` parameter of the
+  :class:`sklearn.metrics.pairwise.polynomial_kernel`. :pr:`27668` by
+  :user:`Nolan McMahon <NolantheNerd>`.
+
 
 :mod:`sklearn.linear_model`
 ...........................
@@ -550,6 +619,11 @@ Changelog
 - |Fix| :class:`preprocessing.OneHotEncoder` and :class:`preprocessing.OrdinalEncoder`
   raise an exception if the user provided categories contain duplicates.
   :pr:`27328` by :user:`Xuefeng Xu <xuefeng-xu>`.
+
+- |Fix| :class:`preprocessing.FunctionTransformer` raises an error at `transform` if
+  the output of `get_feature_names_out` is not consistent with the column names of the
+  output container if those are defined.
+  :pr:`27801` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 - |Fix| Raise a `NotFittedError` in :class:`preprocessing.OrdinalEncoder` when calling
   `transform` without calling `fit` since `categories` always requires to be checked.

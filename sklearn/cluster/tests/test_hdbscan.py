@@ -401,6 +401,23 @@ def test_hdbscan_sparse_distances_too_few_nonzero(csr_container):
         HDBSCAN(metric="precomputed").fit(X)
 
 
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_hdbscan_sparse_distances_disconnected_graph(csr_container):
+    """
+    Tests that HDBSCAN raises the correct error when the distance matrix
+    has multiple connected components.
+    """
+    # Create symmetric sparse matrix with 2 connected components
+    X = np.zeros((20, 20))
+    X[:5, :5] = 1
+    X[5:, 15:] = 1
+    X = X + X.T
+    X = csr_container(X)
+    msg = "HDBSCAN cannot be perfomed on a disconnected graph"
+    with pytest.raises(ValueError, match=msg):
+        HDBSCAN(metric="precomputed").fit(X)
+
+
 def test_hdbscan_tree_invalid_metric():
     """
     Tests that HDBSCAN correctly raises an error for invalid metric choices.
