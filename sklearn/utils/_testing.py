@@ -745,6 +745,8 @@ def _convert_container(
         container.
     minversion : str, default=None
         Minimum version for package to install.
+    categorical_feature_names : list of str, default=None
+        List of column names to cast to categorical dtype.
 
     Returns
     -------
