@@ -699,6 +699,11 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
             Returns self.
         """
         self._validate_params()
+        if self.metric == "precomputed" and self.store_centers is not None:
+            raise ValueError(
+                "Cannot store centers when using a precomputed distance matrix."
+            )
+
         self._metric_params = self.metric_params or {}
         if self.metric != "precomputed":
             # Non-precomputed matrices may contain non-finite values.
