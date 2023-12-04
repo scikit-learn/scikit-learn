@@ -54,8 +54,8 @@ multiple interfaces):
 
 :Transformer:
 
-    For filtering or modifying the data, in a supervised or unsupervised
-    way, implements::
+    For modifying the data (but not filtering or adding rows), in a supervised
+    or unsupervised way, implements::
 
       new_data = transformer.transform(data)
 

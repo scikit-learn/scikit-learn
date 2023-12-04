@@ -1,10 +1,12 @@
 import re
 import warnings
+from unittest.mock import Mock
 
 import numpy as np
 import pytest
 from numpy.testing import assert_allclose, assert_array_equal
 
+import sklearn
 from sklearn._loss.loss import (
     AbsoluteError,
     HalfBinomialLoss,
@@ -23,7 +25,7 @@ from sklearn.ensemble._hist_gradient_boosting.binning import _BinMapper
 from sklearn.ensemble._hist_gradient_boosting.common import G_H_DTYPE
 from sklearn.ensemble._hist_gradient_boosting.grower import TreeGrower
 from sklearn.exceptions import NotFittedError
-from sklearn.metrics import mean_gamma_deviance, mean_poisson_deviance
+from sklearn.metrics import get_scorer, mean_gamma_deviance, mean_poisson_deviance
 from sklearn.model_selection import cross_val_score, train_test_split
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import KBinsDiscretizer, MinMaxScaler, OneHotEncoder
@@ -494,7 +496,7 @@ def test_small_trainset():
     gb = HistGradientBoostingClassifier()
 
     # Compute the small training set
-    X_small, y_small, _ = gb._get_small_trainset(
+    X_small, y_small, *_ = gb._get_small_trainset(
         X, y, seed=42, sample_weight_train=None
     )
 
@@ -846,6 +848,67 @@ def test_early_stopping_on_test_set_with_warm_start():
     # does not raise on second call
     gb.set_params(max_iter=2)
     gb.fit(X, y)
+
+
+def test_early_stopping_with_sample_weights(monkeypatch):
+    """Check that sample weights is passed in to the scorer and _raw_predict is not
+    called."""
+
+    mock_scorer = Mock(side_effect=get_scorer("neg_median_absolute_error"))
+
+    def mock_check_scoring(estimator, scoring):
+        assert scoring == "neg_median_absolute_error"
+        return mock_scorer
+
+    monkeypatch.setattr(
+        sklearn.ensemble._hist_gradient_boosting.gradient_boosting,
+        "check_scoring",
+        mock_check_scoring,
+    )
+
+    X, y = make_regression(random_state=0)
+    sample_weight = np.ones_like(y)
+    hist = HistGradientBoostingRegressor(
+        max_iter=2,
+        early_stopping=True,
+        random_state=0,
+        scoring="neg_median_absolute_error",
+    )
+    mock_raw_predict = Mock(side_effect=hist._raw_predict)
+    hist._raw_predict = mock_raw_predict
+    hist.fit(X, y, sample_weight=sample_weight)
+
+    # _raw_predict should never be called with scoring as a string
+    assert mock_raw_predict.call_count == 0
+
+    # For scorer is called twice (train and val) for the baseline score, and twice
+    # per iteration (train and val) after that. So 6 times in total for `max_iter=2`.
+    assert mock_scorer.call_count == 6
+    for arg_list in mock_scorer.call_args_list:
+        assert "sample_weight" in arg_list[1]
+
+
+def test_raw_predict_is_called_with_custom_scorer():
+    """Custom scorer will still call _raw_predict."""
+
+    mock_scorer = Mock(side_effect=get_scorer("neg_median_absolute_error"))
+
+    X, y = make_regression(random_state=0)
+    hist = HistGradientBoostingRegressor(
+        max_iter=2,
+        early_stopping=True,
+        random_state=0,
+        scoring=mock_scorer,
+    )
+    mock_raw_predict = Mock(side_effect=hist._raw_predict)
+    hist._raw_predict = mock_raw_predict
+    hist.fit(X, y)
+
+    # `_raw_predict` and scorer is called twice (train and val) for the baseline score,
+    # and twice per iteration (train and val) after that. So 6 times in total for
+    # `max_iter=2`.
+    assert mock_raw_predict.call_count == 6
+    assert mock_scorer.call_count == 6
 
 
 @pytest.mark.parametrize(

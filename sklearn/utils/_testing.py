@@ -771,7 +771,7 @@ def _convert_container(
         return pa.Table.from_pydict(data)
     elif constructor_name == "polars":
         pl = pytest.importorskip("polars", minversion=minversion)
-        return pl.DataFrame(container, schema=columns_name)
+        return pl.DataFrame(container, schema=columns_name, orient="row")
     elif constructor_name == "series":
         pd = pytest.importorskip("pandas", minversion=minversion)
         return pd.Series(container, dtype=dtype)
