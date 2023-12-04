@@ -766,7 +766,7 @@ def _convert_container(
         return np.asarray(container, dtype=dtype)
     elif constructor_name == "sparse":
         return sp.sparse.csr_matrix(container, dtype=dtype)
-    elif constructor_name == "dataframe":
+    elif constructor_name in ("pandas", "dataframe"):
         pd = pytest.importorskip("pandas", minversion=minversion)
         result = pd.DataFrame(container, columns=columns_name, dtype=dtype, copy=False)
         if categorical_feature_names is not None:
