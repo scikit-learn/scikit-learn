@@ -192,7 +192,7 @@ def get_data(dataset_name):
         del row
         del col
     else:
-        X = fetch_openml(dataset_name, parser="auto").data
+        X = fetch_openml(dataset_name).data
     return X
 
 
