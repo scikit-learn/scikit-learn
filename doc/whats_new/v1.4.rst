@@ -248,7 +248,11 @@ Changelog
   `kdtree` and `balltree` values will be removed in 1.6.
   :pr:`26744` by :user:`Shreesha Kumar Bhat <Shreesha3112>`.
 
-- |FIX| : Create copy of precomputed sparse matrix within the
+- |Fix| Improve error message when checking the number of connected components
+  in the `fit` method of :class:`cluster.HDBSCAN`.
+  :pr:`27678` by :user:`Ganesh Tata <tataganesh>`.
+
+- |Fix| Create copy of precomputed sparse matrix within the
   `fit` method of `cluster.DBSCAN` to avoid in-place modification of
   the sparse matrix.
   :pr:`27651` by :user:`Ganesh Tata <tataganesh>`.
