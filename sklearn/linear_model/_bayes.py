@@ -300,7 +300,7 @@ class BayesianRidge(RegressorMixin, LinearModel):
         X, y, X_offset_, y_offset_, X_scale_ = _preprocess_data(
             X,
             y,
-            self.fit_intercept,
+            fit_intercept=self.fit_intercept,
             copy=self.copy_X,
             sample_weight=sample_weight,
         )
@@ -694,7 +694,7 @@ class ARDRegression(RegressorMixin, LinearModel):
         coef_ = np.zeros(n_features, dtype=X.dtype)
 
         X, y, X_offset_, y_offset_, X_scale_ = _preprocess_data(
-            X, y, self.fit_intercept, copy=self.copy_X
+            X, y, fit_intercept=self.fit_intercept, copy=self.copy_X
         )
 
         self.X_offset_ = X_offset_

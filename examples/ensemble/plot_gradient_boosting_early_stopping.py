@@ -1,6 +1,6 @@
 """
 ===================================
-Early stopping of Gradient Boosting
+Early stopping in Gradient Boosting
 ===================================
 
 Gradient boosting is an ensembling technique where several weak learners

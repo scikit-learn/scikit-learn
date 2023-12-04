@@ -17,11 +17,18 @@ from scipy import sparse
 from ..base import BaseEstimator, ClusterMixin, _fit_context
 from ..metrics.pairwise import _VALID_METRICS
 from ..neighbors import NearestNeighbors
-from ..utils._param_validation import Interval, StrOptions
+from ..utils._param_validation import Interval, StrOptions, validate_params
 from ..utils.validation import _check_sample_weight
 from ._dbscan_inner import dbscan_inner
 
 
+@validate_params(
+    {
+        "X": ["array-like", "sparse matrix"],
+        "sample_weight": ["array-like", None],
+    },
+    prefer_skip_nested_validation=False,
+)
 def dbscan(
     X,
     eps=0.5,
@@ -384,9 +391,10 @@ class DBSCAN(ClusterMixin, BaseEstimator):
         if self.metric == "precomputed" and sparse.issparse(X):
             # set the diagonal to explicit values, as a point is its own
             # neighbor
+            X = X.copy()  # copy to avoid in-place modification
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore", sparse.SparseEfficiencyWarning)
-                X.setdiag(X.diagonal())  # XXX: modifies X's internals in-place
+                X.setdiag(X.diagonal())
 
         neighbors_model = NearestNeighbors(
             radius=self.eps,

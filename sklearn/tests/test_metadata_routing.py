@@ -74,7 +74,7 @@ class SimplePipeline(BaseEstimator):
 
     def fit(self, X, y, **fit_params):
         self.steps_ = []
-        params = process_routing(self, "fit", fit_params)
+        params = process_routing(self, "fit", **fit_params)
         X_transformed = X
         for i, step in enumerate(self.steps[:-1]):
             transformer = clone(step).fit(
@@ -93,7 +93,7 @@ class SimplePipeline(BaseEstimator):
     def predict(self, X, **predict_params):
         check_is_fitted(self)
         X_transformed = X
-        params = process_routing(self, "predict", predict_params)
+        params = process_routing(self, "predict", **predict_params)
         for i, step in enumerate(self.steps_[:-1]):
             X_transformed = step.transform(X, **params.get(f"step_{i}").transform)
 
@@ -215,9 +215,7 @@ def test_default_requests():
         "sample_weight": None,
         "metadata": None,
     }
-    assert trs_request.transform.requests == {
-        "sample_weight": None,
-    }
+    assert trs_request.transform.requests == {"metadata": None, "sample_weight": None}
     assert_request_is_empty(trs_request)
 
     est_request = get_routing_for_object(ConsumingClassifier())
@@ -230,15 +228,15 @@ def test_default_requests():
 
 def test_process_routing_invalid_method():
     with pytest.raises(TypeError, match="Can only route and process input"):
-        process_routing(ConsumingClassifier(), "invalid_method", {})
+        process_routing(ConsumingClassifier(), "invalid_method", **{})
 
 
 def test_process_routing_invalid_object():
     class InvalidObject:
         pass
 
-    with pytest.raises(AttributeError, match="has not implemented the routing"):
-        process_routing(InvalidObject(), "fit", {})
+    with pytest.raises(AttributeError, match="either implement the routing method"):
+        process_routing(InvalidObject(), "fit", **{})
 
 
 def test_simple_metadata_routing():
@@ -300,7 +298,7 @@ def test_nested_routing():
             MetaTransformer(
                 transformer=ConsumingTransformer()
                 .set_fit_request(metadata=True, sample_weight=False)
-                .set_transform_request(sample_weight=True)
+                .set_transform_request(sample_weight=True, metadata=False)
             ),
             WeightedMetaRegressor(
                 estimator=ConsumingRegressor()
@@ -317,14 +315,14 @@ def test_nested_routing():
         pipeline.steps_[0].transformer_, "fit", metadata=my_groups, sample_weight=None
     )
     check_recorded_metadata(
-        pipeline.steps_[0].transformer_, "transform", sample_weight=w1
+        pipeline.steps_[0].transformer_, "transform", sample_weight=w1, metadata=None
     )
     check_recorded_metadata(pipeline.steps_[1], "fit", sample_weight=w2)
     check_recorded_metadata(pipeline.steps_[1].estimator_, "fit", sample_weight=w3)
 
     pipeline.predict(X, sample_weight=w3)
     check_recorded_metadata(
-        pipeline.steps_[0].transformer_, "transform", sample_weight=w3
+        pipeline.steps_[0].transformer_, "transform", sample_weight=w3, metadata=None
     )
 
 
@@ -794,7 +792,8 @@ def test_metadata_routing_get_param_names():
         == "{'$self_request': {'fit': {'sample_weight': 'self_weights'}, 'score':"
         " {'sample_weight': None}}, 'trs': {'mapping': [{'callee': 'fit', 'caller':"
         " 'fit'}], 'router': {'fit': {'sample_weight': 'transform_weights',"
-        " 'metadata': None}, 'transform': {'sample_weight': None}}}}"
+        " 'metadata': None}, 'transform': {'sample_weight': None, 'metadata': None},"
+        " 'inverse_transform': {'sample_weight': None, 'metadata': None}}}}"
     )
 
     assert router._get_param_names(

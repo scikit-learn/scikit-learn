@@ -495,7 +495,7 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
                 if combi:
                     out_col = 1
                     for col_idx in combi:
-                        out_col = X[:, col_idx].multiply(out_col)
+                        out_col = X[:, [col_idx]].multiply(out_col)
                     columns.append(out_col)
                 else:
                     bias = sparse.csc_matrix(np.ones((X.shape[0], 1)))
