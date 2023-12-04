@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 =========================================================
 K-means Clustering
@@ -23,15 +22,15 @@ The plot shows:
 # Modified for documentation by Jaques Grobler
 # License: BSD 3 clause
 
-import numpy as np
 import matplotlib.pyplot as plt
 
 # Though the following import is not directly being used, it is required
 # for 3D projection to work with matplotlib < 3.2
 import mpl_toolkits.mplot3d  # noqa: F401
+import numpy as np
 
-from sklearn.cluster import KMeans
 from sklearn import datasets
+from sklearn.cluster import KMeans
 
 np.random.seed(5)
 
@@ -40,8 +39,8 @@ X = iris.data
 y = iris.target
 
 estimators = [
-    ("k_means_iris_8", KMeans(n_clusters=8, n_init="auto")),
-    ("k_means_iris_3", KMeans(n_clusters=3, n_init="auto")),
+    ("k_means_iris_8", KMeans(n_clusters=8)),
+    ("k_means_iris_3", KMeans(n_clusters=3)),
     ("k_means_iris_bad_init", KMeans(n_clusters=3, n_init=1, init="random")),
 ]
 

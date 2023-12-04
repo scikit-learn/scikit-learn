@@ -1,56 +1,91 @@
 """Test the split module"""
-import warnings
-import pytest
 import re
+import warnings
+from itertools import combinations, combinations_with_replacement, permutations
+
 import numpy as np
-from scipy.sparse import coo_matrix, csc_matrix, csr_matrix
+import pytest
 from scipy import stats
+from scipy.sparse import issparse
 from scipy.special import comb
-from itertools import combinations
-from itertools import combinations_with_replacement
-from itertools import permutations
 
-from sklearn.utils._testing import assert_allclose
-from sklearn.utils._testing import assert_array_almost_equal
-from sklearn.utils._testing import assert_array_equal
-from sklearn.utils._testing import ignore_warnings
-from sklearn.utils.validation import _num_samples
-from sklearn.utils._mocking import MockDataFrame
-
-from sklearn.model_selection import cross_val_score
-from sklearn.model_selection import KFold
-from sklearn.model_selection import StratifiedKFold
-from sklearn.model_selection import GroupKFold
-from sklearn.model_selection import TimeSeriesSplit
-from sklearn.model_selection import LeaveOneOut
-from sklearn.model_selection import LeaveOneGroupOut
-from sklearn.model_selection import LeavePOut
-from sklearn.model_selection import LeavePGroupsOut
-from sklearn.model_selection import ShuffleSplit
-from sklearn.model_selection import GroupShuffleSplit
-from sklearn.model_selection import StratifiedShuffleSplit
-from sklearn.model_selection import PredefinedSplit
-from sklearn.model_selection import check_cv
-from sklearn.model_selection import train_test_split
-from sklearn.model_selection import GridSearchCV
-from sklearn.model_selection import RepeatedKFold
-from sklearn.model_selection import RepeatedStratifiedKFold
-from sklearn.model_selection import StratifiedGroupKFold
-
+from sklearn import config_context
+from sklearn.datasets import load_digits, make_classification
 from sklearn.dummy import DummyClassifier
-
-from sklearn.model_selection._split import _validate_shuffle_split
-from sklearn.model_selection._split import _build_repr
-from sklearn.model_selection._split import _yields_constant_splits
-
-from sklearn.datasets import load_digits
-from sklearn.datasets import make_classification
-
+from sklearn.model_selection import (
+    GridSearchCV,
+    GroupKFold,
+    GroupShuffleSplit,
+    KFold,
+    LeaveOneGroupOut,
+    LeaveOneOut,
+    LeavePGroupsOut,
+    LeavePOut,
+    PredefinedSplit,
+    RepeatedKFold,
+    RepeatedStratifiedKFold,
+    ShuffleSplit,
+    StratifiedGroupKFold,
+    StratifiedKFold,
+    StratifiedShuffleSplit,
+    TimeSeriesSplit,
+    check_cv,
+    cross_val_score,
+    train_test_split,
+)
+from sklearn.model_selection._split import (
+    _build_repr,
+    _validate_shuffle_split,
+    _yields_constant_splits,
+)
 from sklearn.svm import SVC
+from sklearn.tests.metadata_routing_common import assert_request_is_empty
+from sklearn.utils._array_api import (
+    _convert_to_numpy,
+    get_namespace,
+    yield_namespace_device_dtype_combinations,
+)
+from sklearn.utils._array_api import (
+    device as array_api_device,
+)
+from sklearn.utils._mocking import MockDataFrame
+from sklearn.utils._testing import (
+    assert_allclose,
+    assert_array_almost_equal,
+    assert_array_equal,
+    ignore_warnings,
+)
+from sklearn.utils.estimator_checks import (
+    _array_api_for_tests,
+)
+from sklearn.utils.fixes import COO_CONTAINERS, CSC_CONTAINERS, CSR_CONTAINERS
+from sklearn.utils.validation import _num_samples
+
+NO_GROUP_SPLITTERS = [
+    KFold(),
+    StratifiedKFold(),
+    TimeSeriesSplit(),
+    LeaveOneOut(),
+    LeavePOut(p=2),
+    ShuffleSplit(),
+    StratifiedShuffleSplit(test_size=0.5),
+    PredefinedSplit([1, 1, 2, 2]),
+    RepeatedKFold(),
+    RepeatedStratifiedKFold(),
+]
+
+GROUP_SPLITTERS = [
+    GroupKFold(),
+    LeavePGroupsOut(n_groups=1),
+    StratifiedGroupKFold(),
+    LeaveOneGroupOut(),
+    GroupShuffleSplit(),
+]
+
+ALL_SPLITTERS = NO_GROUP_SPLITTERS + GROUP_SPLITTERS  # type: ignore
 
 X = np.ones(10)
 y = np.arange(10) // 2
-P_sparse = coo_matrix(np.eye(5))
 test_groups = (
     np.array([1, 1, 1, 1, 2, 2, 2, 3, 3, 3, 3, 3]),
     np.array([0, 0, 0, 1, 1, 1, 2, 2, 2, 3, 3, 3]),
@@ -790,7 +825,7 @@ def test_stratified_shuffle_split_iter():
             assert len(train) + len(test) == y.size
             assert len(train) == train_size
             assert len(test) == test_size
-            assert_array_equal(np.lib.arraysetops.intersect1d(train, test), [])
+            assert_array_equal(np.intersect1d(train, test), [])
 
 
 def test_stratified_shuffle_split_even():
@@ -947,8 +982,8 @@ def test_group_shuffle_split():
             # First test: no train group is in the test set and vice versa
             l_train_unique = np.unique(l[train])
             l_test_unique = np.unique(l[test])
-            assert not np.any(np.in1d(l[train], l_test_unique))
-            assert not np.any(np.in1d(l[test], l_train_unique))
+            assert not np.any(np.isin(l[train], l_test_unique))
+            assert not np.any(np.isin(l[test], l_train_unique))
 
             # Second test: train and test add up to all the data
             assert l[train].size + l[test].size == l.size
@@ -1231,9 +1266,74 @@ def test_train_test_split_default_test_size(train_size, exp_train, exp_test):
     assert len(X_test) == exp_test
 
 
-def test_train_test_split():
+@pytest.mark.parametrize(
+    "array_namespace, device, dtype", yield_namespace_device_dtype_combinations()
+)
+@pytest.mark.parametrize(
+    "shuffle,stratify",
+    (
+        (True, None),
+        (True, np.hstack((np.ones(6), np.zeros(4)))),
+        # stratification only works with shuffling
+        (False, None),
+    ),
+)
+def test_array_api_train_test_split(shuffle, stratify, array_namespace, device, dtype):
+    xp, device, dtype = _array_api_for_tests(array_namespace, device, dtype)
+
     X = np.arange(100).reshape((10, 10))
-    X_s = coo_matrix(X)
+    y = np.arange(10)
+
+    X_np = X.astype(dtype)
+    X_xp = xp.asarray(X_np, device=device)
+
+    y_np = y.astype(dtype)
+    y_xp = xp.asarray(y_np, device=device)
+
+    X_train_np, X_test_np, y_train_np, y_test_np = train_test_split(
+        X_np, y, random_state=0, shuffle=shuffle, stratify=stratify
+    )
+    with config_context(array_api_dispatch=True):
+        if stratify is not None:
+            stratify_xp = xp.asarray(stratify)
+        else:
+            stratify_xp = stratify
+        X_train_xp, X_test_xp, y_train_xp, y_test_xp = train_test_split(
+            X_xp, y_xp, shuffle=shuffle, stratify=stratify_xp, random_state=0
+        )
+
+        # Check that namespace is preserved, has to happen with
+        # array_api_dispatch enabled.
+        assert get_namespace(X_train_xp)[0] == get_namespace(X_xp)[0]
+        assert get_namespace(X_test_xp)[0] == get_namespace(X_xp)[0]
+        assert get_namespace(y_train_xp)[0] == get_namespace(y_xp)[0]
+        assert get_namespace(y_test_xp)[0] == get_namespace(y_xp)[0]
+
+    # Check device and dtype is preserved on output
+    assert array_api_device(X_train_xp) == array_api_device(X_xp)
+    assert array_api_device(y_train_xp) == array_api_device(y_xp)
+    assert array_api_device(X_test_xp) == array_api_device(X_xp)
+    assert array_api_device(y_test_xp) == array_api_device(y_xp)
+
+    assert X_train_xp.dtype == X_xp.dtype
+    assert y_train_xp.dtype == y_xp.dtype
+    assert X_test_xp.dtype == X_xp.dtype
+    assert y_test_xp.dtype == y_xp.dtype
+
+    assert_allclose(
+        _convert_to_numpy(X_train_xp, xp=xp),
+        X_train_np,
+    )
+    assert_allclose(
+        _convert_to_numpy(X_test_xp, xp=xp),
+        X_test_np,
+    )
+
+
+@pytest.mark.parametrize("coo_container", COO_CONTAINERS)
+def test_train_test_split(coo_container):
+    X = np.arange(100).reshape((10, 10))
+    X_s = coo_container(X)
     y = np.arange(10)
 
     # simple test
@@ -1319,16 +1419,17 @@ def test_train_test_split_pandas():
         assert isinstance(X_test, InputFeatureType)
 
 
-def test_train_test_split_sparse():
+@pytest.mark.parametrize(
+    "sparse_container", COO_CONTAINERS + CSC_CONTAINERS + CSR_CONTAINERS
+)
+def test_train_test_split_sparse(sparse_container):
     # check that train_test_split converts scipy sparse matrices
     # to csr, as stated in the documentation
     X = np.arange(100).reshape((10, 10))
-    sparse_types = [csr_matrix, csc_matrix, coo_matrix]
-    for InputFeatureType in sparse_types:
-        X_s = InputFeatureType(X)
-        X_train, X_test = train_test_split(X_s)
-        assert isinstance(X_train, csr_matrix)
-        assert isinstance(X_test, csr_matrix)
+    X_s = sparse_container(X)
+    X_train, X_test = train_test_split(X_s)
+    assert issparse(X_train) and X_train.format == "csr"
+    assert issparse(X_test) and X_test.format == "csr"
 
 
 def test_train_test_split_mock_pandas():
@@ -1765,7 +1866,11 @@ def test_nested_cv():
     cvs = [
         LeaveOneGroupOut(),
         StratifiedKFold(n_splits=2),
+        LeaveOneOut(),
         GroupKFold(n_splits=3),
+        StratifiedKFold(),
+        StratifiedGroupKFold(),
+        StratifiedShuffleSplit(n_splits=3, random_state=0),
     ]
 
     for inner_cv, outer_cv in combinations_with_replacement(cvs, 2):
@@ -1776,7 +1881,7 @@ def test_nested_cv():
             error_score="raise",
         )
         cross_val_score(
-            gs, X=X, y=y, groups=groups, cv=outer_cv, fit_params={"groups": groups}
+            gs, X=X, y=y, groups=groups, cv=outer_cv, params={"groups": groups}
         )
 
 
@@ -1894,3 +1999,25 @@ def test_random_state_shuffle_false(Klass):
 )
 def test_yields_constant_splits(cv, expected):
     assert _yields_constant_splits(cv) == expected
+
+
+@pytest.mark.parametrize("cv", ALL_SPLITTERS, ids=[str(cv) for cv in ALL_SPLITTERS])
+def test_splitter_get_metadata_routing(cv):
+    """Check get_metadata_routing returns the correct MetadataRouter."""
+    assert hasattr(cv, "get_metadata_routing")
+    metadata = cv.get_metadata_routing()
+    if cv in GROUP_SPLITTERS:
+        assert metadata.split.requests["groups"] is True
+    elif cv in NO_GROUP_SPLITTERS:
+        assert not metadata.split.requests
+
+    assert_request_is_empty(metadata, exclude=["split"])
+
+
+@pytest.mark.parametrize("cv", ALL_SPLITTERS, ids=[str(cv) for cv in ALL_SPLITTERS])
+def test_splitter_set_split_request(cv):
+    """Check set_split_request is defined for group splitters and not for others."""
+    if cv in GROUP_SPLITTERS:
+        assert hasattr(cv, "set_split_request")
+    elif cv in NO_GROUP_SPLITTERS:
+        assert not hasattr(cv, "set_split_request")

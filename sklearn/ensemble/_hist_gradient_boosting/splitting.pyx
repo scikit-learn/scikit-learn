@@ -9,10 +9,11 @@
 
 cimport cython
 from cython.parallel import prange
+cimport numpy as cnp
 import numpy as np
+from libc.math cimport INFINITY, ceil
 from libc.stdlib cimport malloc, free, qsort
 from libc.string cimport memcpy
-from numpy.math cimport INFINITY
 
 from .common cimport X_BINNED_DTYPE_C
 from .common cimport Y_DTYPE_C
@@ -23,6 +24,8 @@ from .common cimport MonotonicConstraint
 from ._bitset cimport init_bitset
 from ._bitset cimport set_bitset
 from ._bitset cimport in_bitset
+
+cnp.import_array()
 
 
 cdef struct split_info_struct:
@@ -155,6 +158,11 @@ cdef class Splitter:
         be ignored.
     hessians_are_constant: bool, default is False
         Whether hessians are constant.
+    feature_fraction_per_split : float, default=1
+        Proportion of randomly chosen features in each and every node split.
+        This is a form of regularization, smaller values make the trees weaker
+        learners and might prevent overfitting.
+    rng : Generator
     n_threads : int, default=1
         Number of OpenMP threads to use.
     """
@@ -171,6 +179,8 @@ cdef class Splitter:
         Y_DTYPE_C min_hessian_to_split
         unsigned int min_samples_leaf
         Y_DTYPE_C min_gain_to_split
+        Y_DTYPE_C feature_fraction_per_split
+        rng
 
         unsigned int [::1] partition
         unsigned int [::1] left_indices_buffer
@@ -189,6 +199,8 @@ cdef class Splitter:
                  unsigned int min_samples_leaf=20,
                  Y_DTYPE_C min_gain_to_split=0.,
                  unsigned char hessians_are_constant=False,
+                 Y_DTYPE_C feature_fraction_per_split=1.0,
+                 rng=np.random.RandomState(),
                  unsigned int n_threads=1):
 
         self.X_binned = X_binned
@@ -196,13 +208,15 @@ cdef class Splitter:
         self.n_bins_non_missing = n_bins_non_missing
         self.missing_values_bin_idx = missing_values_bin_idx
         self.has_missing_values = has_missing_values
-        self.monotonic_cst = monotonic_cst
         self.is_categorical = is_categorical
+        self.monotonic_cst = monotonic_cst
         self.l2_regularization = l2_regularization
         self.min_hessian_to_split = min_hessian_to_split
         self.min_samples_leaf = min_samples_leaf
         self.min_gain_to_split = min_gain_to_split
         self.hessians_are_constant = hessians_are_constant
+        self.feature_fraction_per_split = feature_fraction_per_split
+        self.rng = rng
         self.n_threads = n_threads
 
         # The partition array maps each sample index into the leaves of the
@@ -475,6 +489,9 @@ cdef class Splitter:
             const signed char [::1] monotonic_cst = self.monotonic_cst
             int n_threads = self.n_threads
             bint has_interaction_cst = False
+            Y_DTYPE_C feature_fraction_per_split = self.feature_fraction_per_split
+            cnp.npy_bool [:] subsample_mask
+            int n_subsampled_features
 
         has_interaction_cst = allowed_features is not None
         if has_interaction_cst:
@@ -482,13 +499,26 @@ cdef class Splitter:
         else:
             n_allowed_features = self.n_features
 
+        if feature_fraction_per_split < 1.0:
+            # We do all random sampling before the nogil and make sure that we sample
+            # exactly n_subsampled_features >= 1 features.
+            n_subsampled_features = max(
+                1,
+                int(ceil(feature_fraction_per_split * n_allowed_features)),
+            )
+            subsample_mask_arr = np.full(n_allowed_features, False)
+            subsample_mask_arr[:n_subsampled_features] = True
+            self.rng.shuffle(subsample_mask_arr)
+            # https://github.com/numpy/numpy/issues/18273
+            subsample_mask = subsample_mask_arr
+
         with nogil:
 
             split_infos = <split_info_struct *> malloc(
                 n_allowed_features * sizeof(split_info_struct))
 
-            # split_info_idx is index of split_infos of size n_features_allowed
-            # features_idx is the index of the feature column in X
+            # split_info_idx is index of split_infos of size n_allowed_features.
+            # features_idx is the index of the feature column in X.
             for split_info_idx in prange(n_allowed_features, schedule='static',
                                          num_threads=n_threads):
                 if has_interaction_cst:
@@ -499,12 +529,19 @@ cdef class Splitter:
                 split_infos[split_info_idx].feature_idx = feature_idx
 
                 # For each feature, find best bin to split on
-                # Start with a gain of -1 (if no better split is found, that
+                # Start with a gain of -1 if no better split is found, that
                 # means one of the constraints isn't respected
-                # (min_samples_leaf, etc) and the grower will later turn the
+                # (min_samples_leaf, etc.) and the grower will later turn the
                 # node into a leaf.
                 split_infos[split_info_idx].gain = -1
                 split_infos[split_info_idx].is_categorical = is_categorical[feature_idx]
+
+                # Note that subsample_mask is indexed by split_info_idx and not by
+                # feature_idx because we only need to exclude the same features again
+                # and again. We do NOT need to access the features directly by using
+                # allowed_features.
+                if feature_fraction_per_split < 1.0 and not subsample_mask[split_info_idx]:
+                    continue
 
                 if is_categorical[feature_idx]:
                     self._find_best_bin_to_split_category(
@@ -569,15 +606,15 @@ cdef class Splitter:
         free(split_infos)
         return out
 
-    cdef unsigned int _find_best_feature_to_split_helper(
+    cdef int _find_best_feature_to_split_helper(
         self,
         split_info_struct * split_infos,  # IN
         int n_allowed_features,
     ) noexcept nogil:
         """Return the index of split_infos with the best feature split."""
         cdef:
-            unsigned int split_info_idx
-            unsigned int best_split_info_idx = 0
+            int split_info_idx
+            int best_split_info_idx = 0
 
         for split_info_idx in range(1, n_allowed_features):
             if (split_infos[split_info_idx].gain > split_infos[best_split_info_idx].gain):
@@ -961,7 +998,7 @@ cdef class Splitter:
 
             for i in range(middle):
                 sorted_cat_idx = i if direction == 1 else n_used_bins - 1 - i
-                bin_idx = cat_infos[sorted_cat_idx].bin_idx;
+                bin_idx = cat_infos[sorted_cat_idx].bin_idx
 
                 n_samples_left += feature_hist[bin_idx].count
                 n_samples_right = n_samples - n_samples_left
@@ -975,18 +1012,22 @@ cdef class Splitter:
                 sum_gradient_left += feature_hist[bin_idx].sum_gradients
                 sum_gradient_right = sum_gradients - sum_gradient_left
 
-                if (n_samples_left < self.min_samples_leaf or
-                    sum_hessian_left < self.min_hessian_to_split):
+                if (
+                    n_samples_left < self.min_samples_leaf or
+                    sum_hessian_left < self.min_hessian_to_split
+                ):
                     continue
-                if (n_samples_right < self.min_samples_leaf or
-                    sum_hessian_right < self.min_hessian_to_split):
+                if (
+                    n_samples_right < self.min_samples_leaf or
+                    sum_hessian_right < self.min_hessian_to_split
+                ):
                     break
 
                 gain = _split_gain(sum_gradient_left, sum_hessian_left,
-                                    sum_gradient_right, sum_hessian_right,
-                                    loss_current_node, monotonic_cst,
-                                    lower_bound, upper_bound,
-                                    self.l2_regularization)
+                                   sum_gradient_right, sum_hessian_right,
+                                   loss_current_node, monotonic_cst,
+                                   lower_bound, upper_bound,
+                                   self.l2_regularization)
                 if gain > best_gain and gain > self.min_gain_to_split:
                     found_better_split = True
                     best_gain = gain
@@ -995,7 +1036,6 @@ cdef class Splitter:
                     best_sum_hessian_left = sum_hessian_left
                     best_n_samples_left = n_samples_left
                     best_direction = direction
-
 
         if found_better_split:
             split_info.gain = best_gain
@@ -1070,8 +1110,8 @@ cdef inline Y_DTYPE_C _split_gain(
                                     lower_bound, upper_bound,
                                     l2_regularization)
     value_right = compute_node_value(sum_gradient_right, sum_hessian_right,
-                                    lower_bound, upper_bound,
-                                    l2_regularization)
+                                     lower_bound, upper_bound,
+                                     l2_regularization)
 
     if ((monotonic_cst == MonotonicConstraint.POS and value_left > value_right) or
             (monotonic_cst == MonotonicConstraint.NEG and value_left < value_right)):

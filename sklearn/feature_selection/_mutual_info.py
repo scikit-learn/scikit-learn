@@ -1,18 +1,19 @@
 # Author: Nikolay Mayorov <n59_ru@hotmail.com>
 # License: 3-clause BSD
 
-import numpy as np
 from numbers import Integral
+
+import numpy as np
 from scipy.sparse import issparse
 from scipy.special import digamma
 
 from ..metrics.cluster import mutual_info_score
-from ..neighbors import NearestNeighbors, KDTree
+from ..neighbors import KDTree, NearestNeighbors
 from ..preprocessing import scale
 from ..utils import check_random_state
-from ..utils.validation import check_array, check_X_y
-from ..utils.multiclass import check_classification_targets
 from ..utils._param_validation import Interval, StrOptions, validate_params
+from ..utils.multiclass import check_classification_targets
+from ..utils.validation import check_array, check_X_y
 
 
 def _compute_mi_cc(x, y, n_neighbors):
@@ -30,8 +31,8 @@ def _compute_mi_cc(x, y, n_neighbors):
     Returns
     -------
     mi : float
-        Estimated mutual information. If it turned out to be negative it is
-        replace by 0.
+        Estimated mutual information in nat units. If it turned out to be
+        negative it is replaced by 0.
 
     Notes
     -----
@@ -95,8 +96,8 @@ def _compute_mi_cd(c, d, n_neighbors):
     Returns
     -------
     mi : float
-        Estimated mutual information. If it turned out to be negative it is
-        replace by 0.
+        Estimated mutual information in nat units. If it turned out to be
+        negative it is replaced by 0.
 
     Notes
     -----
@@ -244,8 +245,8 @@ def _estimate_mi(
     Returns
     -------
     mi : ndarray, shape (n_features,)
-        Estimated mutual information between each feature and the target.
-        A negative value will be replaced by 0.
+        Estimated mutual information between each feature and the target in
+        nat units. A negative value will be replaced by 0.
 
     References
     ----------
@@ -279,15 +280,12 @@ def _estimate_mi(
 
     rng = check_random_state(random_state)
     if np.any(continuous_mask):
-        if copy:
-            X = X.copy()
-
+        X = X.astype(np.float64, copy=copy)
         X[:, continuous_mask] = scale(
             X[:, continuous_mask], with_mean=False, copy=False
         )
 
         # Add small noise to continuous features as advised in Kraskov et. al.
-        X = X.astype(np.float64, copy=False)
         means = np.maximum(1, np.mean(np.abs(X[:, continuous_mask]), axis=0))
         X[:, continuous_mask] += (
             1e-10
@@ -319,7 +317,8 @@ def _estimate_mi(
         "n_neighbors": [Interval(Integral, 1, None, closed="left")],
         "copy": ["boolean"],
         "random_state": ["random_state"],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def mutual_info_regression(
     X, y, *, discrete_features="auto", n_neighbors=3, copy=True, random_state=None
@@ -371,7 +370,8 @@ def mutual_info_regression(
     Returns
     -------
     mi : ndarray, shape (n_features,)
-        Estimated mutual information between each feature and the target.
+        Estimated mutual information between each feature and the target in
+        nat units.
 
     Notes
     -----
@@ -408,7 +408,8 @@ def mutual_info_regression(
         "n_neighbors": [Interval(Integral, 1, None, closed="left")],
         "copy": ["boolean"],
         "random_state": ["random_state"],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def mutual_info_classif(
     X, y, *, discrete_features="auto", n_neighbors=3, copy=True, random_state=None
@@ -460,7 +461,8 @@ def mutual_info_classif(
     Returns
     -------
     mi : ndarray, shape (n_features,)
-        Estimated mutual information between each feature and the target.
+        Estimated mutual information between each feature and the target in
+        nat units.
 
     Notes
     -----

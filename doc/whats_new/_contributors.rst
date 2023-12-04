@@ -38,7 +38,7 @@
 
 .. _Vlad Niculae: https://vene.ro/
 
-.. _Edouard Duchesnay: https://sites.google.com/site/duchesnay/home
+.. _Edouard Duchesnay: https://duchesnay.github.io/
 
 .. _Peter Prettenhofer: https://sites.google.com/site/peterprettenhofer/
 
@@ -177,3 +177,5 @@
 .. _Nicolas Hug: https://github.com/NicolasHug
 
 .. _Guillaume Lemaitre: https://github.com/glemaitre
+
+.. _Tim Head: https://betatim.github.io/

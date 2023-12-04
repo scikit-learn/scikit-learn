@@ -14,22 +14,18 @@ are supervised learning methods based on applying Bayes' theorem with strong
 #
 # License: BSD 3 clause
 import warnings
-
 from abc import ABCMeta, abstractmethod
-from numbers import Real, Integral
+from numbers import Integral, Real
 
 import numpy as np
 from scipy.special import logsumexp
 
-from .base import BaseEstimator, ClassifierMixin
-from .preprocessing import binarize
-from .preprocessing import LabelBinarizer
-from .preprocessing import label_binarize
+from .base import BaseEstimator, ClassifierMixin, _fit_context
+from .preprocessing import LabelBinarizer, binarize, label_binarize
+from .utils._param_validation import Interval
 from .utils.extmath import safe_sparse_dot
 from .utils.multiclass import _check_partial_fit_first_call
-from .utils.validation import check_is_fitted, check_non_negative
-from .utils.validation import _check_sample_weight
-from .utils._param_validation import Interval, Hidden, StrOptions
+from .utils.validation import _check_sample_weight, check_is_fitted, check_non_negative
 
 __all__ = [
     "BernoulliNB",
@@ -239,6 +235,7 @@ class GaussianNB(_BaseNB):
         self.priors = priors
         self.var_smoothing = var_smoothing
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y, sample_weight=None):
         """Fit Gaussian Naive Bayes according to X, y.
 
@@ -262,7 +259,6 @@ class GaussianNB(_BaseNB):
         self : object
             Returns the instance itself.
         """
-        self._validate_params()
         y = self._validate_data(y=y)
         return self._partial_fit(
             X, y, np.unique(y), _refit=True, sample_weight=sample_weight
@@ -346,6 +342,7 @@ class GaussianNB(_BaseNB):
 
         return total_mu, total_var
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def partial_fit(self, X, y, classes=None, sample_weight=None):
         """Incremental fit on a batch of samples.
 
@@ -386,8 +383,6 @@ class GaussianNB(_BaseNB):
         self : object
             Returns the instance itself.
         """
-        self._validate_params()
-
         return self._partial_fit(
             X, y, classes, _refit=False, sample_weight=sample_weight
         )
@@ -472,7 +467,7 @@ class GaussianNB(_BaseNB):
         classes = self.classes_
 
         unique_y = np.unique(y)
-        unique_y_in_classes = np.in1d(unique_y, classes)
+        unique_y_in_classes = np.isin(unique_y, classes)
 
         if not np.all(unique_y_in_classes):
             raise ValueError(
@@ -535,10 +530,10 @@ class _BaseDiscreteNB(_BaseNB):
         "alpha": [Interval(Real, 0, None, closed="left"), "array-like"],
         "fit_prior": ["boolean"],
         "class_prior": ["array-like", None],
-        "force_alpha": ["boolean", Hidden(StrOptions({"warn"}))],
+        "force_alpha": ["boolean"],
     }
 
-    def __init__(self, alpha=1.0, fit_prior=True, class_prior=None, force_alpha="warn"):
+    def __init__(self, alpha=1.0, fit_prior=True, class_prior=None, force_alpha=True):
         self.alpha = alpha
         self.fit_prior = fit_prior
         self.class_prior = class_prior
@@ -621,17 +616,7 @@ class _BaseDiscreteNB(_BaseNB):
             if alpha_min < 0:
                 raise ValueError("All values in alpha must be greater than 0.")
         alpha_lower_bound = 1e-10
-        # TODO(1.4): Replace w/ deprecation of self.force_alpha
-        # See gh #22269
-        _force_alpha = self.force_alpha
-        if _force_alpha == "warn" and alpha_min < alpha_lower_bound:
-            _force_alpha = False
-            warnings.warn(
-                "The default value for `force_alpha` will change to `True` in 1.4. To"
-                " suppress this warning, manually set the value of `force_alpha`.",
-                FutureWarning,
-            )
-        if alpha_min < alpha_lower_bound and not _force_alpha:
+        if alpha_min < alpha_lower_bound and not self.force_alpha:
             warnings.warn(
                 "alpha too small will result in numeric errors, setting alpha ="
                 f" {alpha_lower_bound:.1e}. Use `force_alpha=True` to keep alpha"
@@ -640,6 +625,7 @@ class _BaseDiscreteNB(_BaseNB):
             return np.maximum(alpha, alpha_lower_bound)
         return alpha
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def partial_fit(self, X, y, classes=None, sample_weight=None):
         """Incremental fit on a batch of samples.
 
@@ -678,9 +664,6 @@ class _BaseDiscreteNB(_BaseNB):
             Returns the instance itself.
         """
         first_call = not hasattr(self, "classes_")
-
-        if first_call:
-            self._validate_params()
 
         X, y = self._check_X_y(X, y, reset=first_call)
         _, n_features = X.shape
@@ -725,6 +708,7 @@ class _BaseDiscreteNB(_BaseNB):
         self._update_class_log_prior(class_prior=class_prior)
         return self
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y, sample_weight=None):
         """Fit Naive Bayes classifier according to X, y.
 
@@ -745,7 +729,6 @@ class _BaseDiscreteNB(_BaseNB):
         self : object
             Returns the instance itself.
         """
-        self._validate_params()
         X, y = self._check_X_y(X, y)
         _, n_features = X.shape
 
@@ -804,14 +787,14 @@ class MultinomialNB(_BaseDiscreteNB):
         Additive (Laplace/Lidstone) smoothing parameter
         (set alpha=0 and force_alpha=True, for no smoothing).
 
-    force_alpha : bool, default=False
+    force_alpha : bool, default=True
         If False and alpha is less than 1e-10, it will set alpha to
         1e-10. If True, alpha will remain unchanged. This may cause
         numerical errors if alpha is too close to 0.
 
         .. versionadded:: 1.2
-        .. deprecated:: 1.2
-           The default value of `force_alpha` will change to `True` in v1.4.
+        .. versionchanged:: 1.4
+           The default value of `force_alpha` changed to `True`.
 
     fit_prior : bool, default=True
         Whether to learn class prior probabilities or not.
@@ -873,15 +856,15 @@ class MultinomialNB(_BaseDiscreteNB):
     >>> X = rng.randint(5, size=(6, 100))
     >>> y = np.array([1, 2, 3, 4, 5, 6])
     >>> from sklearn.naive_bayes import MultinomialNB
-    >>> clf = MultinomialNB(force_alpha=True)
+    >>> clf = MultinomialNB()
     >>> clf.fit(X, y)
-    MultinomialNB(force_alpha=True)
+    MultinomialNB()
     >>> print(clf.predict(X[2:3]))
     [3]
     """
 
     def __init__(
-        self, *, alpha=1.0, force_alpha="warn", fit_prior=True, class_prior=None
+        self, *, alpha=1.0, force_alpha=True, fit_prior=True, class_prior=None
     ):
         super().__init__(
             alpha=alpha,
@@ -930,14 +913,14 @@ class ComplementNB(_BaseDiscreteNB):
         Additive (Laplace/Lidstone) smoothing parameter
         (set alpha=0 and force_alpha=True, for no smoothing).
 
-    force_alpha : bool, default=False
+    force_alpha : bool, default=True
         If False and alpha is less than 1e-10, it will set alpha to
         1e-10. If True, alpha will remain unchanged. This may cause
         numerical errors if alpha is too close to 0.
 
         .. versionadded:: 1.2
-        .. deprecated:: 1.2
-           The default value of `force_alpha` will change to `True` in v1.4.
+        .. versionchanged:: 1.4
+           The default value of `force_alpha` changed to `True`.
 
     fit_prior : bool, default=True
         Only used in edge case with a single class in the training set.
@@ -1007,9 +990,9 @@ class ComplementNB(_BaseDiscreteNB):
     >>> X = rng.randint(5, size=(6, 100))
     >>> y = np.array([1, 2, 3, 4, 5, 6])
     >>> from sklearn.naive_bayes import ComplementNB
-    >>> clf = ComplementNB(force_alpha=True)
+    >>> clf = ComplementNB()
     >>> clf.fit(X, y)
-    ComplementNB(force_alpha=True)
+    ComplementNB()
     >>> print(clf.predict(X[2:3]))
     [3]
     """
@@ -1023,7 +1006,7 @@ class ComplementNB(_BaseDiscreteNB):
         self,
         *,
         alpha=1.0,
-        force_alpha="warn",
+        force_alpha=True,
         fit_prior=True,
         class_prior=None,
         norm=False,
@@ -1081,14 +1064,14 @@ class BernoulliNB(_BaseDiscreteNB):
         Additive (Laplace/Lidstone) smoothing parameter
         (set alpha=0 and force_alpha=True, for no smoothing).
 
-    force_alpha : bool, default=False
+    force_alpha : bool, default=True
         If False and alpha is less than 1e-10, it will set alpha to
         1e-10. If True, alpha will remain unchanged. This may cause
         numerical errors if alpha is too close to 0.
 
         .. versionadded:: 1.2
-        .. deprecated:: 1.2
-           The default value of `force_alpha` will change to `True` in v1.4.
+        .. versionchanged:: 1.4
+           The default value of `force_alpha` changed to `True`.
 
     binarize : float or None, default=0.0
         Threshold for binarizing (mapping to booleans) of sample features.
@@ -1161,9 +1144,9 @@ class BernoulliNB(_BaseDiscreteNB):
     >>> X = rng.randint(5, size=(6, 100))
     >>> Y = np.array([1, 2, 3, 4, 4, 5])
     >>> from sklearn.naive_bayes import BernoulliNB
-    >>> clf = BernoulliNB(force_alpha=True)
+    >>> clf = BernoulliNB()
     >>> clf.fit(X, Y)
-    BernoulliNB(force_alpha=True)
+    BernoulliNB()
     >>> print(clf.predict(X[2:3]))
     [3]
     """
@@ -1177,7 +1160,7 @@ class BernoulliNB(_BaseDiscreteNB):
         self,
         *,
         alpha=1.0,
-        force_alpha="warn",
+        force_alpha=True,
         binarize=0.0,
         fit_prior=True,
         class_prior=None,
@@ -1251,14 +1234,14 @@ class CategoricalNB(_BaseDiscreteNB):
         Additive (Laplace/Lidstone) smoothing parameter
         (set alpha=0 and force_alpha=True, for no smoothing).
 
-    force_alpha : bool, default=False
+    force_alpha : bool, default=True
         If False and alpha is less than 1e-10, it will set alpha to
         1e-10. If True, alpha will remain unchanged. This may cause
         numerical errors if alpha is too close to 0.
 
         .. versionadded:: 1.2
-        .. deprecated:: 1.2
-           The default value of `force_alpha` will change to `True` in v1.4.
+        .. versionchanged:: 1.4
+           The default value of `force_alpha` changed to `True`.
 
     fit_prior : bool, default=True
         Whether to learn class prior probabilities or not.
@@ -1333,9 +1316,9 @@ class CategoricalNB(_BaseDiscreteNB):
     >>> X = rng.randint(5, size=(6, 100))
     >>> y = np.array([1, 2, 3, 4, 5, 6])
     >>> from sklearn.naive_bayes import CategoricalNB
-    >>> clf = CategoricalNB(force_alpha=True)
+    >>> clf = CategoricalNB()
     >>> clf.fit(X, y)
-    CategoricalNB(force_alpha=True)
+    CategoricalNB()
     >>> print(clf.predict(X[2:3]))
     [3]
     """
@@ -1354,7 +1337,7 @@ class CategoricalNB(_BaseDiscreteNB):
         self,
         *,
         alpha=1.0,
-        force_alpha="warn",
+        force_alpha=True,
         fit_prior=True,
         class_prior=None,
         min_categories=None,

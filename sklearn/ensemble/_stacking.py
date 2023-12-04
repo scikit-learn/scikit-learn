@@ -10,34 +10,36 @@ from numbers import Integral
 import numpy as np
 import scipy.sparse as sparse
 
-from ..base import clone
-from ..base import ClassifierMixin, RegressorMixin, TransformerMixin
-from ..base import is_classifier, is_regressor
+from ..base import (
+    ClassifierMixin,
+    RegressorMixin,
+    TransformerMixin,
+    _fit_context,
+    clone,
+    is_classifier,
+    is_regressor,
+)
 from ..exceptions import NotFittedError
-from ..utils._estimator_html_repr import _VisualBlock
-
-from ._base import _fit_single_estimator
-from ._base import _BaseHeterogeneousEnsemble
-
-from ..linear_model import LogisticRegression
-from ..linear_model import RidgeCV
-
-from ..model_selection import cross_val_predict
-from ..model_selection import check_cv
-
+from ..linear_model import LogisticRegression, RidgeCV
+from ..model_selection import check_cv, cross_val_predict
 from ..preprocessing import LabelEncoder
-
 from ..utils import Bunch
-from ..utils.multiclass import check_classification_targets, type_of_target
-from ..utils.metaestimators import available_if
-from ..utils.parallel import delayed, Parallel
+from ..utils._estimator_html_repr import _VisualBlock
 from ..utils._param_validation import HasMethods, StrOptions
+from ..utils.metadata_routing import (
+    _raise_for_unsupported_routing,
+    _RoutingNotSupportedMixin,
+)
+from ..utils.metaestimators import available_if
+from ..utils.multiclass import check_classification_targets, type_of_target
+from ..utils.parallel import Parallel, delayed
 from ..utils.validation import (
     _check_feature_names_in,
     _check_response_method,
     check_is_fitted,
     column_or_1d,
 )
+from ._base import _BaseHeterogeneousEnsemble, _fit_single_estimator
 
 
 def _estimator_has(attr):
@@ -159,6 +161,10 @@ class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble, metaclass=ABCM
 
         return method_name
 
+    @_fit_context(
+        # estimators in Stacking*.estimators are not validated yet
+        prefer_skip_nested_validation=False
+    )
     def fit(self, X, y, sample_weight=None):
         """Fit the estimators.
 
@@ -184,9 +190,6 @@ class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble, metaclass=ABCM
         -------
         self : object
         """
-
-        self._validate_params()
-
         # all_estimators contains all estimators, the one to be fitted and the
         # 'drop' string.
         names, all_estimators = self._validate_estimators()
@@ -255,7 +258,7 @@ class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble, metaclass=ABCM
                     cv=deepcopy(cv),
                     method=meth,
                     n_jobs=self.n_jobs,
-                    fit_params=fit_params,
+                    params=fit_params,
                     verbose=self.verbose,
                 )
                 for est, meth in zip(all_estimators, self.stack_method_)
@@ -381,7 +384,7 @@ class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble, metaclass=ABCM
         return _VisualBlock("serial", (parallel, final_block), dash_wrapped=False)
 
 
-class StackingClassifier(ClassifierMixin, _BaseStacking):
+class StackingClassifier(_RoutingNotSupportedMixin, ClassifierMixin, _BaseStacking):
     """Stack of estimators with a final classifier.
 
     Stacked generalization consists in stacking the output of individual
@@ -544,7 +547,7 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
     >>> estimators = [
     ...     ('rf', RandomForestClassifier(n_estimators=10, random_state=42)),
     ...     ('svr', make_pipeline(StandardScaler(),
-    ...                           LinearSVC(random_state=42)))
+    ...                           LinearSVC(dual="auto", random_state=42)))
     ... ]
     >>> clf = StackingClassifier(
     ...     estimators=estimators, final_estimator=LogisticRegression()
@@ -642,6 +645,7 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
         self : object
             Returns a fitted instance of estimator.
         """
+        _raise_for_unsupported_routing(self, "fit", sample_weight=sample_weight)
         check_classification_targets(y)
         if type_of_target(y) == "multilabel-indicator":
             self._label_encoder = [LabelEncoder().fit(yk) for yk in y.T]
@@ -762,7 +766,7 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
         return super()._sk_visual_block_with_final_estimator(final_estimator)
 
 
-class StackingRegressor(RegressorMixin, _BaseStacking):
+class StackingRegressor(_RoutingNotSupportedMixin, RegressorMixin, _BaseStacking):
     """Stack of estimators with a final regressor.
 
     Stacked generalization consists in stacking the output of individual
@@ -887,7 +891,7 @@ class StackingRegressor(RegressorMixin, _BaseStacking):
     >>> X, y = load_diabetes(return_X_y=True)
     >>> estimators = [
     ...     ('lr', RidgeCV()),
-    ...     ('svr', LinearSVR(random_state=42))
+    ...     ('svr', LinearSVR(dual="auto", random_state=42))
     ... ]
     >>> reg = StackingRegressor(
     ...     estimators=estimators,
@@ -953,6 +957,7 @@ class StackingRegressor(RegressorMixin, _BaseStacking):
         self : object
             Returns a fitted instance.
         """
+        _raise_for_unsupported_routing(self, "fit", sample_weight=sample_weight)
         y = column_or_1d(y, warn=True)
         return super().fit(X, y, sample_weight)
 

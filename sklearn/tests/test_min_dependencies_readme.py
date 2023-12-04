@@ -2,11 +2,12 @@
 
 
 import os
-import re
 import platform
+import re
 from pathlib import Path
 
 import pytest
+
 import sklearn
 from sklearn._min_dependencies import dependent_packages
 from sklearn.utils.fixes import parse_version
@@ -73,12 +74,15 @@ def test_min_dependencies_pyproject_toml():
     pyproject_build_min_versions = {}
     for requirement in build_requirements:
         if ">=" in requirement:
+            # Don't check NumPy: this requirement is only build time.
+            if "numpy>=1.25" in requirement:
+                continue
             package, version = requirement.split(">=")
             package = package.lower()
             pyproject_build_min_versions[package] = version
 
     # Only scipy and cython are listed in pyproject.toml
-    # NumPy is more complex using oldest-supported-numpy.
+    # NumPy is more complex using oldest-supported-numpy or >=1.25.
     assert set(["scipy", "cython"]) == set(pyproject_build_min_versions)
 
     for package, version in pyproject_build_min_versions.items():

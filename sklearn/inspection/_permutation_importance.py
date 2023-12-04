@@ -1,20 +1,27 @@
 """Permutation importance for estimators."""
 import numbers
+
 import numpy as np
 
 from ..ensemble._bagging import _generate_indices
-from ..metrics import check_scoring
+from ..metrics import check_scoring, get_scorer_names
 from ..metrics._scorer import _check_multimetric_scoring, _MultimetricScorer
 from ..model_selection._validation import _aggregate_score_dicts
-from ..utils import Bunch, _safe_indexing
-from ..utils import check_random_state
-from ..utils import check_array
-from ..utils.parallel import delayed, Parallel
+from ..utils import Bunch, _safe_indexing, check_array, check_random_state
+from ..utils._param_validation import (
+    HasMethods,
+    Integral,
+    Interval,
+    RealNotInt,
+    StrOptions,
+    validate_params,
+)
+from ..utils.parallel import Parallel, delayed
 
 
 def _weights_scorer(scorer, estimator, X, y, sample_weight):
     if sample_weight is not None:
-        return scorer(estimator, X, y, sample_weight)
+        return scorer(estimator, X, y, sample_weight=sample_weight)
     return scorer(estimator, X, y)
 
 
@@ -99,6 +106,30 @@ def _create_importances_bunch(baseline_score, permuted_score):
     )
 
 
+@validate_params(
+    {
+        "estimator": [HasMethods(["fit"])],
+        "X": ["array-like"],
+        "y": ["array-like", None],
+        "scoring": [
+            StrOptions(set(get_scorer_names())),
+            callable,
+            list,
+            tuple,
+            dict,
+            None,
+        ],
+        "n_repeats": [Interval(Integral, 1, None, closed="left")],
+        "n_jobs": [Integral, None],
+        "random_state": ["random_state"],
+        "sample_weight": ["array-like", None],
+        "max_samples": [
+            Interval(Integral, 1, None, closed="left"),
+            Interval(RealNotInt, 0, 1, closed="right"),
+        ],
+    },
+    prefer_skip_nested_validation=True,
+)
 def permutation_importance(
     estimator,
     X,
@@ -242,8 +273,8 @@ def permutation_importance(
 
     if not isinstance(max_samples, numbers.Integral):
         max_samples = int(max_samples * X.shape[0])
-    elif not (0 < max_samples <= X.shape[0]):
-        raise ValueError("max_samples must be in (0, n_samples]")
+    elif max_samples > X.shape[0]:
+        raise ValueError("max_samples must be <= n_samples")
 
     if callable(scoring):
         scorer = scoring

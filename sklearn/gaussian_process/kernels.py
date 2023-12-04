@@ -1,17 +1,22 @@
-"""Kernels for Gaussian process regression and classification.
-
-The kernels in this module allow kernel-engineering, i.e., they can be
-combined via the "+" and "*" operators or be exponentiated with a scalar
-via "**". These sum and product expressions can also contain scalar values,
-which are automatically converted to a constant kernel.
-
-All kernels allow (analytic) gradient-based hyperparameter optimization.
-The space of hyperparameters can be specified by giving lower und upper
-boundaries for the value of each hyperparameter (the search space is thus
-rectangular). Instead of specifying bounds, hyperparameters can also be
-declared to be "fixed", which causes these hyperparameters to be excluded from
-optimization.
 """
+The :mod:`sklearn.gaussian_process.kernels` module implements a set of kernels that
+can be combined by operators and used in Gaussian processes.
+"""
+
+# Kernels for Gaussian process regression and classification.
+#
+# The kernels in this module allow kernel-engineering, i.e., they can be
+# combined via the "+" and "*" operators or be exponentiated with a scalar
+# via "**". These sum and product expressions can also contain scalar values,
+# which are automatically converted to a constant kernel.
+#
+# All kernels allow (analytic) gradient-based hyperparameter optimization.
+# The space of hyperparameters can be specified by giving lower und upper
+# boundaries for the value of each hyperparameter (the search space is thus
+# rectangular). Instead of specifying bounds, hyperparameters can also be
+# declared to be "fixed", which causes these hyperparameters to be excluded from
+# optimization.
+
 
 # Author: Jan Hendrik Metzen <jhm@informatik.uni-bremen.de>
 # License: BSD 3 clause
@@ -19,21 +24,20 @@ optimization.
 # Note: this module is strongly inspired by the kernel module of the george
 #       package.
 
+import math
+import warnings
 from abc import ABCMeta, abstractmethod
 from collections import namedtuple
-import math
 from inspect import signature
 
 import numpy as np
-from scipy.special import kv, gamma
-from scipy.spatial.distance import pdist, cdist, squareform
+from scipy.spatial.distance import cdist, pdist, squareform
+from scipy.special import gamma, kv
 
-from ..metrics.pairwise import pairwise_kernels
 from ..base import clone
-from ..utils.validation import _num_samples
 from ..exceptions import ConvergenceWarning
-
-import warnings
+from ..metrics.pairwise import pairwise_kernels
+from ..utils.validation import _num_samples
 
 
 def _check_length_scale(X, length_scale):
@@ -1945,7 +1949,7 @@ class ExpSineSquared(StationaryKernelMixin, NormalizedKernelMixin, Kernel):
         \frac{ 2\sin^2(\pi d(x_i, x_j)/p) }{ l^ 2} \right)
 
     where :math:`l` is the length scale of the kernel, :math:`p` the
-    periodicity of the kernel and :math:`d(\\cdot,\\cdot)` is the
+    periodicity of the kernel and :math:`d(\cdot,\cdot)` is the
     Euclidean distance.
 
     Read more in the :ref:`User Guide <gp_kernels>`.

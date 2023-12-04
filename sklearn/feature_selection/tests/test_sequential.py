@@ -1,27 +1,27 @@
-import pytest
-import scipy
 import numpy as np
+import pytest
 from numpy.testing import assert_array_equal
 
-from sklearn.preprocessing import StandardScaler
-from sklearn.pipeline import make_pipeline
-from sklearn.feature_selection import SequentialFeatureSelector
-from sklearn.datasets import make_regression, make_blobs
-from sklearn.linear_model import LinearRegression
-from sklearn.ensemble import HistGradientBoostingRegressor
-from sklearn.model_selection import cross_val_score
 from sklearn.cluster import KMeans
+from sklearn.datasets import make_blobs, make_classification, make_regression
+from sklearn.ensemble import HistGradientBoostingRegressor
+from sklearn.feature_selection import SequentialFeatureSelector
+from sklearn.linear_model import LinearRegression
+from sklearn.model_selection import LeaveOneGroupOut, cross_val_score
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import StandardScaler
+from sklearn.utils.fixes import CSR_CONTAINERS
 
 
 def test_bad_n_features_to_select():
     n_features = 5
     X, y = make_regression(n_features=n_features)
     sfs = SequentialFeatureSelector(LinearRegression(), n_features_to_select=n_features)
-    with pytest.raises(ValueError, match="n_features_to_select must be either"):
+    with pytest.raises(ValueError, match="n_features_to_select must be < n_features"):
         sfs.fit(X, y)
 
 
-@pytest.mark.filterwarnings("ignore:Leaving `n_features_to_select` to ")
 @pytest.mark.parametrize("direction", ("forward", "backward"))
 @pytest.mark.parametrize("n_features_to_select", (1, 5, 9, "auto"))
 def test_n_features_to_select(direction, n_features_to_select):
@@ -37,7 +37,7 @@ def test_n_features_to_select(direction, n_features_to_select):
     )
     sfs.fit(X, y)
 
-    if n_features_to_select in ("auto", None):
+    if n_features_to_select == "auto":
         n_features_to_select = n_features // 2
 
     assert sfs.get_support(indices=True).shape[0] == n_features_to_select
@@ -133,7 +133,6 @@ def test_n_features_to_select_stopping_criterion(direction):
         assert (removed_cv_score - sfs_cv_score) <= tol
 
 
-@pytest.mark.filterwarnings("ignore:Leaving `n_features_to_select` to ")
 @pytest.mark.parametrize("direction", ("forward", "backward"))
 @pytest.mark.parametrize(
     "n_features_to_select, expected",
@@ -185,12 +184,12 @@ def test_sanity(seed, direction, n_features_to_select, expected_selected_feature
     assert_array_equal(sfs.get_support(indices=True), expected_selected_features)
 
 
-@pytest.mark.filterwarnings("ignore:Leaving `n_features_to_select` to ")
-def test_sparse_support():
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_sparse_support(csr_container):
     # Make sure sparse data is supported
 
     X, y = make_regression(n_features=10)
-    X = scipy.sparse.csr_matrix(X)
+    X = csr_container(X)
     sfs = SequentialFeatureSelector(
         LinearRegression(), n_features_to_select="auto", cv=2
     )
@@ -239,17 +238,6 @@ def test_pipeline_support():
     pipe = make_pipeline(StandardScaler(), sfs)
     pipe.fit(X, y)
     pipe.transform(X)
-
-
-# FIXME : to be removed in 1.3
-def test_raise_deprecation_warning():
-    """Check that we raise a FutureWarning with `n_features_to_select`."""
-    n_samples, n_features = 50, 3
-    X, y = make_regression(n_samples, n_features, random_state=0)
-
-    warn_msg = "Leaving `n_features_to_select` to None is deprecated"
-    with pytest.warns(FutureWarning, match=warn_msg):
-        SequentialFeatureSelector(LinearRegression()).fit(X, y)
 
 
 @pytest.mark.parametrize("n_features_to_select", (2, 3))
@@ -314,3 +302,22 @@ def test_backward_neg_tol():
 
     assert 0 < sfs.get_support().sum() < X.shape[1]
     assert new_score < initial_score
+
+
+def test_cv_generator_support():
+    """Check that no exception raised when cv is generator
+
+    non-regression test for #25957
+    """
+    X, y = make_classification(random_state=0)
+
+    groups = np.zeros_like(y, dtype=int)
+    groups[y.size // 2 :] = 1
+
+    cv = LeaveOneGroupOut()
+    splits = cv.split(X, y, groups=groups)
+
+    knc = KNeighborsClassifier(n_neighbors=5)
+
+    sfs = SequentialFeatureSelector(knc, n_features_to_select=5, cv=splits)
+    sfs.fit(X, y)

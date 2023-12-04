@@ -1,35 +1,39 @@
-import warnings
-import unittest
-import os
 import atexit
+import os
+import unittest
+import warnings
 
 import numpy as np
-
+import pytest
 from scipy import sparse
 
-import pytest
-
-from sklearn.utils.deprecation import deprecated
-from sklearn.utils.metaestimators import available_if
-from sklearn.utils._testing import (
-    assert_raises,
-    assert_no_warnings,
-    set_random_state,
-    assert_raise_message,
-    ignore_warnings,
-    check_docstring_parameters,
-    assert_allclose_dense_sparse,
-    assert_raises_regex,
-    TempMemmap,
-    create_memmap_backed_data,
-    _delete_folder,
-    _convert_container,
-    raises,
-    assert_allclose,
-)
-
-from sklearn.tree import DecisionTreeClassifier
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.utils import _IS_WASM
+from sklearn.utils._testing import (
+    TempMemmap,
+    _convert_container,
+    _delete_folder,
+    assert_allclose,
+    assert_allclose_dense_sparse,
+    assert_no_warnings,
+    assert_raise_message,
+    assert_raises,
+    assert_raises_regex,
+    check_docstring_parameters,
+    create_memmap_backed_data,
+    ignore_warnings,
+    raises,
+    set_random_state,
+)
+from sklearn.utils.deprecation import deprecated
+from sklearn.utils.fixes import (
+    CSC_CONTAINERS,
+    CSR_CONTAINERS,
+    parse_version,
+    sp_version,
+)
+from sklearn.utils.metaestimators import available_if
 
 
 def test_set_random_state():
@@ -41,10 +45,11 @@ def test_set_random_state():
     assert tree.random_state == 3
 
 
-def test_assert_allclose_dense_sparse():
+@pytest.mark.parametrize("csr_container", CSC_CONTAINERS)
+def test_assert_allclose_dense_sparse(csr_container):
     x = np.arange(9).reshape(3, 3)
     msg = "Not equal to tolerance "
-    y = sparse.csc_matrix(x)
+    y = csr_container(x)
     for X in [x, y]:
         # basic compare
         with pytest.raises(AssertionError, match=msg):
@@ -55,7 +60,7 @@ def test_assert_allclose_dense_sparse():
         assert_allclose_dense_sparse(x, y)
 
     A = sparse.diags(np.ones(5), offsets=0).tocsr()
-    B = sparse.csr_matrix(np.ones((1, 5)))
+    B = csr_container(np.ones((1, 5)))
     with pytest.raises(AssertionError, match="Arrays are not equal"):
         assert_allclose_dense_sparse(B, A)
 
@@ -452,19 +457,27 @@ def test_check_docstring_parameters():
     mock_meta = MockMetaEstimator(delegate=MockEst())
     mock_meta_name = mock_meta.__class__.__name__
     assert incorrect == [
-        "sklearn.utils.tests.test_testing.f_check_param_definition There "
-        "was no space between the param name and colon ('a: int')",
-        "sklearn.utils.tests.test_testing.f_check_param_definition There "
-        "was no space between the param name and colon ('b:')",
-        "sklearn.utils.tests.test_testing.f_check_param_definition There "
-        "was no space between the param name and colon ('d:int')",
+        (
+            "sklearn.utils.tests.test_testing.f_check_param_definition There "
+            "was no space between the param name and colon ('a: int')"
+        ),
+        (
+            "sklearn.utils.tests.test_testing.f_check_param_definition There "
+            "was no space between the param name and colon ('b:')"
+        ),
+        (
+            "sklearn.utils.tests.test_testing.f_check_param_definition There "
+            "was no space between the param name and colon ('d:int')"
+        ),
     ]
 
     messages = [
         [
             "In function: sklearn.utils.tests.test_testing.f_bad_order",
-            "There's a parameter name mismatch in function docstring w.r.t."
-            " function signature, at index 0 diff: 'b' != 'a'",
+            (
+                "There's a parameter name mismatch in function docstring w.r.t."
+                " function signature, at index 0 diff: 'b' != 'a'"
+            ),
             "Full diff:",
             "- ['b', 'a']",
             "+ ['a', 'b']",
@@ -472,8 +485,10 @@ def test_check_docstring_parameters():
         [
             "In function: "
             + "sklearn.utils.tests.test_testing.f_too_many_param_docstring",
-            "Parameters in function docstring have more items w.r.t. function"
-            " signature, first extra item: c",
+            (
+                "Parameters in function docstring have more items w.r.t. function"
+                " signature, first extra item: c"
+            ),
             "Full diff:",
             "- ['a', 'b']",
             "+ ['a', 'b', 'c']",
@@ -481,16 +496,20 @@ def test_check_docstring_parameters():
         ],
         [
             "In function: sklearn.utils.tests.test_testing.f_missing",
-            "Parameters in function docstring have less items w.r.t. function"
-            " signature, first missing item: b",
+            (
+                "Parameters in function docstring have less items w.r.t. function"
+                " signature, first missing item: b"
+            ),
             "Full diff:",
             "- ['a', 'b']",
             "+ ['a']",
         ],
         [
             "In function: sklearn.utils.tests.test_testing.Klass.f_missing",
-            "Parameters in function docstring have less items w.r.t. function"
-            " signature, first missing item: X",
+            (
+                "Parameters in function docstring have less items w.r.t. function"
+                " signature, first missing item: X"
+            ),
             "Full diff:",
             "- ['X', 'y']",
             "+ []",
@@ -498,8 +517,10 @@ def test_check_docstring_parameters():
         [
             "In function: "
             + f"sklearn.utils.tests.test_testing.{mock_meta_name}.predict",
-            "There's a parameter name mismatch in function docstring w.r.t."
-            " function signature, at index 0 diff: 'X' != 'y'",
+            (
+                "There's a parameter name mismatch in function docstring w.r.t."
+                " function signature, at index 0 diff: 'X' != 'y'"
+            ),
             "Full diff:",
             "- ['X']",
             "?   ^",
@@ -523,8 +544,10 @@ def test_check_docstring_parameters():
         ],
         [
             "In function: " + f"sklearn.utils.tests.test_testing.{mock_meta_name}.fit",
-            "Parameters in function docstring have less items w.r.t. function"
-            " signature, first missing item: X",
+            (
+                "Parameters in function docstring have less items w.r.t. function"
+                " signature, first missing item: X"
+            ),
             "Full diff:",
             "- ['X', 'y']",
             "+ []",
@@ -585,42 +608,35 @@ def test_tempmemmap(monkeypatch):
     assert registration_counter.nb_calls == 2
 
 
-@pytest.mark.parametrize("aligned", [False, True])
-def test_create_memmap_backed_data(monkeypatch, aligned):
+@pytest.mark.xfail(_IS_WASM, reason="memmap not fully supported")
+def test_create_memmap_backed_data(monkeypatch):
     registration_counter = RegistrationCounter()
     monkeypatch.setattr(atexit, "register", registration_counter)
 
     input_array = np.ones(3)
-    data = create_memmap_backed_data(input_array, aligned=aligned)
+    data = create_memmap_backed_data(input_array)
     check_memmap(input_array, data)
     assert registration_counter.nb_calls == 1
 
-    data, folder = create_memmap_backed_data(
-        input_array, return_folder=True, aligned=aligned
-    )
+    data, folder = create_memmap_backed_data(input_array, return_folder=True)
     check_memmap(input_array, data)
     assert folder == os.path.dirname(data.filename)
     assert registration_counter.nb_calls == 2
 
     mmap_mode = "r+"
-    data = create_memmap_backed_data(input_array, mmap_mode=mmap_mode, aligned=aligned)
+    data = create_memmap_backed_data(input_array, mmap_mode=mmap_mode)
     check_memmap(input_array, data, mmap_mode)
     assert registration_counter.nb_calls == 3
 
     input_list = [input_array, input_array + 1, input_array + 2]
-    mmap_data_list = create_memmap_backed_data(input_list, aligned=aligned)
+    mmap_data_list = create_memmap_backed_data(input_list)
     for input_array, data in zip(input_list, mmap_data_list):
         check_memmap(input_array, data)
     assert registration_counter.nb_calls == 4
 
-    with pytest.raises(
-        ValueError,
-        match=(
-            "When creating aligned memmap-backed arrays, input must be a single array"
-            " or a sequence of arrays"
-        ),
-    ):
-        create_memmap_backed_data([input_array, "not-an-array"], aligned=True)
+    output_data, other = create_memmap_backed_data([input_array, "not-an-array"])
+    check_memmap(input_array, output_data)
+    assert other == "not-an-array"
 
 
 @pytest.mark.parametrize(
@@ -630,8 +646,10 @@ def test_create_memmap_backed_data(monkeypatch, aligned):
         ("tuple", tuple),
         ("array", np.ndarray),
         ("sparse", sparse.csr_matrix),
-        ("sparse_csr", sparse.csr_matrix),
-        ("sparse_csc", sparse.csc_matrix),
+        # using `zip` will only keep the available sparse containers
+        # depending of the installed SciPy version
+        *zip(["sparse_csr", "sparse_csr_array"], CSR_CONTAINERS),
+        *zip(["sparse_csc", "sparse_csc_array"], CSC_CONTAINERS),
         ("dataframe", lambda: pytest.importorskip("pandas").DataFrame),
         ("series", lambda: pytest.importorskip("pandas").Series),
         ("index", lambda: pytest.importorskip("pandas").Index),
@@ -660,6 +678,7 @@ def test_convert_container(
         # instead of the whole file
         container_type = container_type()
     container = [0, 1]
+
     container_converted = _convert_container(
         container,
         constructor_name,
@@ -675,6 +694,24 @@ def test_convert_container(
         assert container_converted.dtype == dtype
     elif hasattr(container_converted, "dtypes"):
         assert container_converted.dtypes[0] == dtype
+
+
+@pytest.mark.skipif(
+    sp_version >= parse_version("1.8"),
+    reason="sparse arrays are available as of scipy 1.8.0",
+)
+@pytest.mark.parametrize("constructor_name", ["sparse_csr_array", "sparse_csc_array"])
+@pytest.mark.parametrize("dtype", [np.int32, np.int64, np.float32, np.float64])
+def test_convert_container_raise_when_sparray_not_available(constructor_name, dtype):
+    """Check that if we convert to sparse array but sparse array are not supported
+    (scipy<1.8.0), we should raise an explicit error."""
+    container = [0, 1]
+
+    with pytest.raises(
+        ValueError,
+        match=f"only available with scipy>=1.8.0, got {sp_version}",
+    ):
+        _convert_container(container, constructor_name, dtype=dtype)
 
 
 def test_raises():
