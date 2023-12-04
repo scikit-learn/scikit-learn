@@ -261,7 +261,7 @@ Changelog
 
 - |Fix| Raises a proper `ValueError` when `metric="precomputed"` and requested storing
   centers via the parameter `store_centers`.
-  :pr:`xxx` by :user:`Guillaume Lemaitre <glemaitre>`.
+  :pr:`27898` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 :mod:`sklearn.compose`
 ......................
