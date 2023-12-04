@@ -431,8 +431,8 @@ Changelog
 
 - |Fix| Ensure that the `sigma_` attribute of
   :class:`linear_model.ARDRegression` and :class:`linear_model.BayesianRidge`
-  always as dtype `float32` when fitted on `float32` data, even with the type
-  promition rules of numpy 2.
+  always has a `float32` dtype when fitted on `float32` data, even with the
+  type promotion rules of numpy 2.
   :pr:`27899` by :user:`Olivier Grisel <ogrisel>`.
 
 :mod:`sklearn.metrics`
