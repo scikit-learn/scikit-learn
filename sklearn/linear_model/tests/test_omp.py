@@ -128,8 +128,6 @@ def test_orthogonal_mp_gram_readonly():
     assert_array_almost_equal(gamma[:, 0], gamma_gram, decimal=2)
 
 
-# TODO(1.4): 'normalize' to be removed
-@pytest.mark.filterwarnings("ignore:'normalize' was deprecated")
 def test_estimator():
     omp = OrthogonalMatchingPursuit(n_nonzero_coefs=n_nonzero_coefs)
     omp.fit(X, y[:, 0])
@@ -216,8 +214,6 @@ def test_omp_return_path_prop_with_gram():
     assert_array_almost_equal(path[:, :, -1], last)
 
 
-# TODO(1.4): 'normalize' to be removed
-@pytest.mark.filterwarnings("ignore:'normalize' was deprecated")
 def test_omp_cv():
     y_ = y[:, 0]
     gamma_ = gamma[:, 0]
@@ -232,8 +228,6 @@ def test_omp_cv():
     assert_array_almost_equal(ompcv.coef_, omp.coef_)
 
 
-# TODO(1.4): 'normalize' to be removed
-@pytest.mark.filterwarnings("ignore:'normalize' was deprecated")
 def test_omp_reaches_least_squares():
     # Use small simple data; it's a sanity check but OMP can stop early
     rng = check_random_state(0)
