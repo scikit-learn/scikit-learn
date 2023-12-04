@@ -296,6 +296,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         )
         self._preprocessor.set_output(transform="default")
         X = self._preprocessor.fit_transform(X)
+        # check categories found by the OrdinalEncoder and get their encoded values
         known_categories = self._check_categories()
         self.n_features_in_ = self._preprocessor.n_features_in_
         with suppress(AttributeError):
@@ -310,6 +311,23 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         return X, known_categories
 
     def _check_categories(self):
+        """Check categories found by the preprocessor and return their encoded values.
+
+        Returns a list of length ``self.n_features_in_``, with one entry per
+        input feature.
+
+        For non-categorical features, the corresponding entry is ``None``.
+
+        For categorical features, the corresponding entry is an array
+        containing the categories as encoded by the preprocessor (an
+        ``OrdinalEncoder``), excluding missing values. The entry is therefore
+        ``np.arange(n_categories)`` where ``n_categories`` is the number of
+        unique values in the considered feature column, after removing missing
+        values.
+
+        If ``n_categories > self.max_bins`` for any feature, a ``ValueError``
+        is raised.
+        """
         encoder = self._preprocessor.named_transformers_["encoder"]
         known_categories = [None] * self._preprocessor.n_features_in_
         categorical_column_indices = np.arange(self._preprocessor.n_features_in_)[
