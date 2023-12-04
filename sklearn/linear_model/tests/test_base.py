@@ -378,7 +378,6 @@ def test_preprocess_data(global_random_seed):
     X = rng.rand(n_samples, n_features)
     y = rng.rand(n_samples)
     expected_X_mean = np.mean(X, axis=0)
-    np.std(X, axis=0) * np.sqrt(X.shape[0])
     expected_y_mean = np.mean(y, axis=0)
 
     Xt, yt, X_mean, y_mean, X_scale = _preprocess_data(X, y, fit_intercept=False)
@@ -485,7 +484,6 @@ def test_sparse_preprocess_data_offsets(global_random_seed, lil_container):
     X = lil_container(X)
     y = rng.rand(n_samples)
     XA = X.toarray()
-    np.std(XA, axis=0) * np.sqrt(X.shape[0])
 
     Xt, yt, X_mean, y_mean, X_scale = _preprocess_data(X, y, fit_intercept=False)
     assert_array_almost_equal(X_mean, np.zeros(n_features))
