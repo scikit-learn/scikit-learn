@@ -325,21 +325,6 @@ def test_iforest_with_n_jobs_does_not_segfault(csc_container):
     IsolationForest(n_estimators=10, max_samples=256, n_jobs=2).fit(X)
 
 
-# TODO(1.4): remove in 1.4
-def test_base_estimator_property_deprecated():
-    X = np.array([[1, 2], [3, 4]])
-    y = np.array([1, 0])
-    model = IsolationForest()
-    model.fit(X, y)
-
-    warn_msg = (
-        "Attribute `base_estimator_` was deprecated in version 1.2 and "
-        "will be removed in 1.4. Use `estimator_` instead."
-    )
-    with pytest.warns(FutureWarning, match=warn_msg):
-        model.base_estimator_
-
-
 def test_iforest_preserve_feature_names():
     """Check that feature names are preserved when contamination is not "auto".
 
@@ -356,3 +341,23 @@ def test_iforest_preserve_feature_names():
     with warnings.catch_warnings():
         warnings.simplefilter("error", UserWarning)
         model.fit(X)
+
+
+@pytest.mark.parametrize("sparse_container", CSC_CONTAINERS + CSR_CONTAINERS)
+def test_iforest_sparse_input_float_contamination(sparse_container):
+    """Check that `IsolationForest` accepts sparse matrix input and float value for
+    contamination.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/27626
+    """
+    X, _ = make_classification(n_samples=50, n_features=4, random_state=0)
+    X = sparse_container(X)
+    X.sort_indices()
+    contamination = 0.1
+    iforest = IsolationForest(
+        n_estimators=5, contamination=contamination, random_state=0
+    ).fit(X)
+
+    X_decision = iforest.decision_function(X)
+    assert (X_decision < 0).sum() / X.shape[0] == pytest.approx(contamination)
