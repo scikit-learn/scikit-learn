@@ -117,10 +117,6 @@ wheels_upload_task:
   upload_script: |
     conda install curl unzip -y
 
-    if [[ "$CIRRUS_CRON" == "nightly" ]]; then
-      export GITHUB_EVENT_NAME="schedule"
-    fi
-
     # Download and show wheels
     curl https://api.cirrus-ci.com/v1/artifact/build/$CIRRUS_BUILD_ID/wheels.zip --output wheels.zip
     unzip wheels.zip

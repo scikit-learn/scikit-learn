@@ -45,6 +45,16 @@ if [[ $(uname) == "Darwin" ]]; then
     fi
 fi
 
+
+if [[ "$GITHUB_EVENT_NAME" == "schedule" || "$CIRRUS_CRON" == "nightly" ]]; then
+    # Nightly build:  See also `../github/upload_anaconda.sh` (same branching).
+    # To help with NumPy 2.0 transition, ensure that we use the NumPy 2.0
+    # nightlies.  This lives on the edge and opts-in to all pre-releases.
+    # That could be an issue, in which case no-build-isolation and a targeted
+    # NumPy install may be necessary, instead.
+    export CIBW_BUILD_FRONTEND='pip; args: --pre --extra-index-url "https://pypi.anaconda.org/scientific-python-nightly-wheels/simple"'
+fi
+
 # The version of the built dependencies are specified
 # in the pyproject.toml file, while the tests are run
 # against the most recent version of the dependencies
