@@ -42,11 +42,11 @@ def test_graphviz_toy():
         'node [shape=box, fontname="helvetica"] ;\n'
         'edge [fontname="helvetica"] ;\n'
         '0 [label="x[0] <= 0.0\\ngini = 0.5\\nsamples = 6\\n'
-        'value = [3, 3]"] ;\n'
-        '1 [label="gini = 0.0\\nsamples = 3\\nvalue = [3, 0]"] ;\n'
+        'value = [0.5, 0.5]"] ;\n'
+        '1 [label="gini = 0.0\\nsamples = 3\\nvalue = [1, 0]"] ;\n'
         "0 -> 1 [labeldistance=2.5, labelangle=45, "
         'headlabel="True"] ;\n'
-        '2 [label="gini = 0.0\\nsamples = 3\\nvalue = [0, 3]"] ;\n'
+        '2 [label="gini = 0.0\\nsamples = 3\\nvalue = [0, 1]"] ;\n'
         "0 -> 2 [labeldistance=2.5, labelangle=-45, "
         'headlabel="False"] ;\n'
         "}"
@@ -71,13 +71,13 @@ def test_graphviz_toy():
         'fontname="sans"] ;\n'
         'edge [fontname="sans"] ;\n'
         "0 [label=<x<SUB>0</SUB> &le; 0.0<br/>samples = 100.0%<br/>"
-        'value = [0.5, 0.5]>, fillcolor="#ffffff"] ;\n'
-        "1 [label=<samples = 50.0%<br/>value = [1.0, 0.0]>, "
-        'fillcolor="#e58139"] ;\n'
+        'value = [0.083, 0.083]>, fillcolor="#ffffff"] ;\n'
+        "1 [label=<samples = 50.0%<br/>value = [0.333, 0.0]>, "
+        'fillcolor="#f6d5bd"] ;\n'
         "0 -> 1 [labeldistance=2.5, labelangle=45, "
         'headlabel="True"] ;\n'
-        "2 [label=<samples = 50.0%<br/>value = [0.0, 1.0]>, "
-        'fillcolor="#399de5"] ;\n'
+        "2 [label=<samples = 50.0%<br/>value = [0.0, 0.333]>, "
+        'fillcolor="#bddef6"] ;\n'
         "0 -> 2 [labeldistance=2.5, labelangle=-45, "
         'headlabel="False"] ;\n'
         "}"
@@ -92,7 +92,7 @@ def test_graphviz_toy():
         'node [shape=box, fontname="helvetica"] ;\n'
         'edge [fontname="helvetica"] ;\n'
         '0 [label="x[0] <= 0.0\\ngini = 0.5\\nsamples = 6\\n'
-        'value = [3, 3]\\nclass = y[0]"] ;\n'
+        'value = [0.5, 0.5]\\nclass = y[0]"] ;\n'
         '1 [label="(...)"] ;\n'
         "0 -> 1 ;\n"
         '2 [label="(...)"] ;\n'
@@ -112,7 +112,7 @@ def test_graphviz_toy():
         'fontname="helvetica"] ;\n'
         'edge [fontname="helvetica"] ;\n'
         '0 [label="node #0\\nx[0] <= 0.0\\ngini = 0.5\\n'
-        'samples = 6\\nvalue = [3, 3]", fillcolor="#ffffff"] ;\n'
+        'samples = 6\\nvalue = [0.5, 0.5]", fillcolor="#ffffff"] ;\n'
         '1 [label="(...)", fillcolor="#C0C0C0"] ;\n'
         "0 -> 1 ;\n"
         '2 [label="(...)", fillcolor="#C0C0C0"] ;\n'
@@ -135,22 +135,22 @@ def test_graphviz_toy():
         'fontname="helvetica"] ;\n'
         'edge [fontname="helvetica"] ;\n'
         '0 [label="x[0] <= 0.0\\nsamples = 6\\n'
-        "value = [[3.0, 1.5, 0.0]\\n"
-        '[3.0, 1.0, 0.5]]", fillcolor="#ffffff"] ;\n'
-        '1 [label="samples = 3\\nvalue = [[3, 0, 0]\\n'
-        '[3, 0, 0]]", fillcolor="#e58139"] ;\n'
+        "value = [[0.667, 0.333, 0.0]\\n"
+        '[0.667, 0.222, 0.111]]", fillcolor="#ffffff"] ;\n'
+        '1 [label="samples = 3\\nvalue = [[1, 0, 0]\\n'
+        '[1, 0, 0]]", fillcolor="#e58139"] ;\n'
         "0 -> 1 [labeldistance=2.5, labelangle=45, "
         'headlabel="True"] ;\n'
         '2 [label="x[0] <= 1.5\\nsamples = 3\\n'
-        "value = [[0.0, 1.5, 0.0]\\n"
-        '[0.0, 1.0, 0.5]]", fillcolor="#f1bd97"] ;\n'
+        "value = [[0.0, 1.0, 0.0]\\n"
+        '[0.0, 0.667, 0.333]]", fillcolor="#f1bd97"] ;\n'
         "0 -> 2 [labeldistance=2.5, labelangle=-45, "
         'headlabel="False"] ;\n'
         '3 [label="samples = 2\\nvalue = [[0, 1, 0]\\n'
         '[0, 1, 0]]", fillcolor="#e58139"] ;\n'
         "2 -> 3 ;\n"
-        '4 [label="samples = 1\\nvalue = [[0.0, 0.5, 0.0]\\n'
-        '[0.0, 0.0, 0.5]]", fillcolor="#e58139"] ;\n'
+        '4 [label="samples = 1\\nvalue = [[0, 1, 0]\\n'
+        '[0, 0, 1]]", fillcolor="#e58139"] ;\n'
         "2 -> 4 ;\n"
         "}"
     )
@@ -231,11 +231,11 @@ def test_graphviz_feature_class_names_array_support(constructor):
         'node [shape=box, fontname="helvetica"] ;\n'
         'edge [fontname="helvetica"] ;\n'
         '0 [label="feature0 <= 0.0\\ngini = 0.5\\nsamples = 6\\n'
-        'value = [3, 3]"] ;\n'
-        '1 [label="gini = 0.0\\nsamples = 3\\nvalue = [3, 0]"] ;\n'
+        'value = [0.5, 0.5]"] ;\n'
+        '1 [label="gini = 0.0\\nsamples = 3\\nvalue = [1, 0]"] ;\n'
         "0 -> 1 [labeldistance=2.5, labelangle=45, "
         'headlabel="True"] ;\n'
-        '2 [label="gini = 0.0\\nsamples = 3\\nvalue = [0, 3]"] ;\n'
+        '2 [label="gini = 0.0\\nsamples = 3\\nvalue = [0, 1]"] ;\n'
         "0 -> 2 [labeldistance=2.5, labelangle=-45, "
         'headlabel="False"] ;\n'
         "}"
@@ -252,12 +252,12 @@ def test_graphviz_feature_class_names_array_support(constructor):
         'node [shape=box, fontname="helvetica"] ;\n'
         'edge [fontname="helvetica"] ;\n'
         '0 [label="x[0] <= 0.0\\ngini = 0.5\\nsamples = 6\\n'
-        'value = [3, 3]\\nclass = yes"] ;\n'
-        '1 [label="gini = 0.0\\nsamples = 3\\nvalue = [3, 0]\\n'
+        'value = [0.5, 0.5]\\nclass = yes"] ;\n'
+        '1 [label="gini = 0.0\\nsamples = 3\\nvalue = [1, 0]\\n'
         'class = yes"] ;\n'
         "0 -> 1 [labeldistance=2.5, labelangle=45, "
         'headlabel="True"] ;\n'
-        '2 [label="gini = 0.0\\nsamples = 3\\nvalue = [0, 3]\\n'
+        '2 [label="gini = 0.0\\nsamples = 3\\nvalue = [0, 1]\\n'
         'class = no"] ;\n'
         "0 -> 2 [labeldistance=2.5, labelangle=-45, "
         'headlabel="False"] ;\n'
@@ -390,9 +390,9 @@ def test_export_text():
 
     expected_report = dedent("""
     |--- feature_1 <= 0.00
-    |   |--- weights: [3.00, 0.00] class: -1
+    |   |--- weights: [1.00, 0.00] class: -1
     |--- feature_1 >  0.00
-    |   |--- weights: [0.00, 3.00] class: 1
+    |   |--- weights: [0.00, 1.00] class: 1
     """).lstrip()
     assert export_text(clf, show_weights=True) == expected_report
 
@@ -486,10 +486,10 @@ def test_plot_tree_entropy(pyplot):
     assert len(nodes) == 3
     assert (
         nodes[0].get_text()
-        == "first feat <= 0.0\nentropy = 1.0\nsamples = 6\nvalue = [3, 3]"
+        == "first feat <= 0.0\nentropy = 1.0\nsamples = 6\nvalue = [0.5, 0.5]"
     )
-    assert nodes[1].get_text() == "entropy = 0.0\nsamples = 3\nvalue = [3, 0]"
-    assert nodes[2].get_text() == "entropy = 0.0\nsamples = 3\nvalue = [0, 3]"
+    assert nodes[1].get_text() == "entropy = 0.0\nsamples = 3\nvalue = [1, 0]"
+    assert nodes[2].get_text() == "entropy = 0.0\nsamples = 3\nvalue = [0, 1]"
 
 
 def test_plot_tree_gini(pyplot):
@@ -506,10 +506,10 @@ def test_plot_tree_gini(pyplot):
     assert len(nodes) == 3
     assert (
         nodes[0].get_text()
-        == "first feat <= 0.0\ngini = 0.5\nsamples = 6\nvalue = [3, 3]"
+        == "first feat <= 0.0\ngini = 0.5\nsamples = 6\nvalue = [0.5, 0.5]"
     )
-    assert nodes[1].get_text() == "gini = 0.0\nsamples = 3\nvalue = [3, 0]"
-    assert nodes[2].get_text() == "gini = 0.0\nsamples = 3\nvalue = [0, 3]"
+    assert nodes[1].get_text() == "gini = 0.0\nsamples = 3\nvalue = [1, 0]"
+    assert nodes[2].get_text() == "gini = 0.0\nsamples = 3\nvalue = [0, 1]"
 
 
 def test_not_fitted_tree(pyplot):
