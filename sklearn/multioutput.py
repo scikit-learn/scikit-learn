@@ -672,16 +672,12 @@ class _BaseChain(BaseEstimator, metaclass=ABCMeta):
                 X_aug = np.hstack((X, previous_predictions))
 
             feature_predictions, _ = _get_response_values(
-                estimator,
-                X_aug,
-                response_method=chain_method,
+                estimator, X_aug, response_method=chain_method,
             )
             Y_feature_chain[:, chain_idx] = feature_predictions
 
             output_predictions, _ = _get_response_values(
-                estimator,
-                X_aug,
-                response_method=output_method,
+                estimator, X_aug, response_method=output_method,
             )
             Y_output_chain[:, chain_idx] = output_predictions
 
@@ -755,8 +751,7 @@ class _BaseChain(BaseEstimator, metaclass=ABCMeta):
 
         if hasattr(self, "chain_method"):
             chain_method = _check_response_method(
-                self.base_estimator,
-                self.chain_method,
+                self.base_estimator, self.chain_method,
             ).__name__
             self.chain_method_ = chain_method
         else:
@@ -860,7 +855,7 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
         - An iterable yielding (train, test) splits as arrays of indices.
 
     chain_method : {'predict', 'predict_proba', 'predict_log_proba', \
-        'decision_function'} or list of such str's, default='predict'
+            'decision_function'} or list of such str's, default='predict'
 
         Prediction method to be used by estimators in the chain for
         the 'prediction' features of previous estimators in the chain.
@@ -899,7 +894,7 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
         The order of labels in the classifier chain.
 
     chain_method_ : str
-        Prediction method used by estimators in the chain for the 'prediction'
+        Prediction method used by estimators in the chain for the prediction
         features.
 
     n_features_in_ : int

@@ -497,10 +497,8 @@ def test_classifier_chain_fit_and_predict_with_linear_svc(chain_method):
     # Fit classifier chain and verify predict performance using LinearSVC
     X, Y = generate_multilabel_dataset_with_correlations()
     classifier_chain = ClassifierChain(
-        LinearSVC(dual="auto"),
-        chain_method=chain_method,
-    )
-    classifier_chain.fit(X, Y)
+        LinearSVC(dual="auto"), chain_method=chain_method,
+    ).fit(X, Y)
 
     Y_pred = classifier_chain.predict(X)
     assert Y_pred.shape == Y.shape
@@ -518,12 +516,10 @@ def test_classifier_chain_fit_and_predict_with_sparse_data(csr_container):
     X, Y = generate_multilabel_dataset_with_correlations()
     X_sparse = csr_container(X)
 
-    classifier_chain = ClassifierChain(LogisticRegression())
-    classifier_chain.fit(X_sparse, Y)
+    classifier_chain = ClassifierChain(LogisticRegression()).fit(X_sparse, Y)
     Y_pred_sparse = classifier_chain.predict(X_sparse)
 
-    classifier_chain = ClassifierChain(LogisticRegression())
-    classifier_chain.fit(X, Y)
+    classifier_chain = ClassifierChain(LogisticRegression()).fit(X, Y)
     Y_pred_dense = classifier_chain.predict(X)
 
     assert_array_equal(Y_pred_sparse, Y_pred_dense)
