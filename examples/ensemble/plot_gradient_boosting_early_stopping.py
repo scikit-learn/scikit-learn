@@ -31,8 +31,9 @@ efficiency in gradient boosting.
 # %%
 # Data Preparation
 # ----------------
-# First we load and prepares the California Housing Prices dataset for training and evaluation.
-# It subsets the dataset, splits it into training and validation sets.
+# First we load and prepares the California Housing Prices dataset for
+# training and evaluation. It subsets the dataset, splits it into training
+# and validation sets.
 
 # Authors: Vighnesh Birodkar <vighneshbirodkar@nyu.edu>
 #          Raghav RV <rvraghav93@gmail.com>
@@ -50,7 +51,8 @@ from sklearn.model_selection import train_test_split
 data = fetch_california_housing()
 X, y = data.data[:600], data.target[:600]
 
-X_train, X_val, y_train, y_val = train_test_split(X, y, test_size=0.2, random_state=42)
+X_train, X_val, y_train, y_val = train_test_split(X, y, test_size=0.2,
+                                                  random_state=42)
 
 # %%
 # Model Training and Comparison
@@ -85,9 +87,9 @@ estimators_with = gbm_with_early_stopping.n_estimators_
 # Error Calculation
 # -----------------
 # The code calculates the :func:`~sklearn.metrics.mean_squared_error` for both
-# training and validation datasets for the models trained in the previous section.
-# It computes the errors for each boosting iteration. The purpose is to assess the
-# performance and convergence of the models.
+# training and validation datasets for the models trained in the previous
+# section. It computes the errors for each boosting iteration. The purpose is
+# to assess the performance and convergence of the models.
 
 train_errors_without = []
 val_errors_without = []
@@ -169,7 +171,7 @@ plt.show()
 # generalizes better to unseen data. This is achieved by stopping the training
 # process before overfitting occurs.
 #
-# - **Improving Training Efficiency:** We compared training times between models
-# with and without early stopping. The model with early stopping achieved
-# comparable accuracy while requiring significantly fewer estimators, resulting
-# in faster training.
+# - **Improving Training Efficiency:** We compared training times between
+# models with and without early stopping. The model with early stopping
+# achieved comparable accuracy while requiring significantly fewer
+# estimators, resulting in faster training.
