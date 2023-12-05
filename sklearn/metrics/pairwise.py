@@ -987,15 +987,11 @@ def haversine_distances(X, Y=None):
     {
         "X": ["array-like", "sparse matrix"],
         "Y": ["array-like", "sparse matrix", None],
-        "sum_over_features": ["boolean", Hidden(StrOptions({"deprecated"}))],
     },
     prefer_skip_nested_validation=True,
 )
-def manhattan_distances(X, Y=None, *, sum_over_features="deprecated"):
+def manhattan_distances(X, Y=None):
     """Compute the L1 distances between the vectors in X and Y.
-
-    With sum_over_features equal to False it returns the componentwise
-    distances.
 
     Read more in the :ref:`User Guide <metrics>`.
 
@@ -1008,24 +1004,10 @@ def manhattan_distances(X, Y=None, *, sum_over_features="deprecated"):
         An array where each row is a sample and each column is a feature.
         If `None`, method uses `Y=X`.
 
-    sum_over_features : bool, default=True
-        If True the function returns the pairwise distance matrix
-        else it returns the componentwise L1 pairwise-distances.
-        Not supported for sparse matrix inputs.
-
-        .. deprecated:: 1.2
-            ``sum_over_features`` was deprecated in version 1.2 and will be removed in
-            1.4.
-
     Returns
     -------
-    D : ndarray of shape (n_samples_X * n_samples_Y, n_features) or \
-            (n_samples_X, n_samples_Y)
-        If sum_over_features is False shape is
-        (n_samples_X * n_samples_Y, n_features) and D contains the
-        componentwise L1 pairwise-distances (ie. absolute difference),
-        else shape is (n_samples_X, n_samples_Y) and D contains
-        the pairwise L1 distances.
+    D : ndarray of shape (n_samples_X, n_samples_Y)
+        Pairwise L1 distances.
 
     Notes
     -----
@@ -1047,27 +1029,9 @@ def manhattan_distances(X, Y=None, *, sum_over_features="deprecated"):
     array([[0., 2.],
            [4., 4.]])
     """
-    # TODO(1.4): remove sum_over_features
-    if sum_over_features != "deprecated":
-        warnings.warn(
-            (
-                "`sum_over_features` is deprecated in version 1.2 and will be"
-                " removed in version 1.4."
-            ),
-            FutureWarning,
-        )
-    else:
-        sum_over_features = True
-
     X, Y = check_pairwise_arrays(X, Y)
 
     if issparse(X) or issparse(Y):
-        if not sum_over_features:
-            raise TypeError(
-                "sum_over_features=%r not supported for sparse matrices"
-                % sum_over_features
-            )
-
         X = csr_matrix(X, copy=False)
         Y = csr_matrix(Y, copy=False)
         X.sum_duplicates()  # this also sorts indices in-place
@@ -1076,12 +1040,7 @@ def manhattan_distances(X, Y=None, *, sum_over_features="deprecated"):
         _sparse_manhattan(X.data, X.indices, X.indptr, Y.data, Y.indices, Y.indptr, D)
         return D
 
-    if sum_over_features:
-        return distance.cdist(X, Y, "cityblock")
-
-    D = X[:, np.newaxis, :] - Y[np.newaxis, :, :]
-    D = np.abs(D, D)
-    return D.reshape((-1, X.shape[1]))
+    return distance.cdist(X, Y, "cityblock")
 
 
 @validate_params(
