@@ -14,6 +14,7 @@ from sklearn.cross_decomposition import PLSSVD, RidgeCCA
 plssvd = PLSSVD(n_components=1)
 ridgecca = RidgeCCA(n_components=1, alpha_x=1.0, alpha_y=1.0)
 
+
 def compute_bench(n_samples, features_range, n_repeats=5):
     results = defaultdict(lambda: [])
 
@@ -48,19 +49,23 @@ def compute_bench(n_samples, features_range, n_repeats=5):
 
     return results
 
+
 def plot_results(results, features_range):
     plt.figure(figsize=(10, 6))
     for method, times in results.items():
         mean_times = np.mean(times, axis=1)
         std_times = np.std(times, axis=1)
-        plt.errorbar(features_range, mean_times, yerr=std_times, label=method, capsize=5)
+        plt.errorbar(
+            features_range, mean_times, yerr=std_times, label=method, capsize=5
+        )
 
-    plt.xlabel('Number of Features')
-    plt.ylabel('Time (seconds)')
-    plt.title('Benchmarking Ridge and SVD Solvers for CCA')
+    plt.xlabel("Number of Features")
+    plt.ylabel("Time (seconds)")
+    plt.title("Benchmarking Ridge and SVD Solvers for CCA")
     plt.legend()
     plt.grid(True)
     plt.show()
+
 
 if __name__ == "__main__":
     n_samples = 100

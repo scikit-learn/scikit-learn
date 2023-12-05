@@ -6,10 +6,11 @@ from numpy.testing import assert_allclose, assert_array_almost_equal, assert_arr
 
 from sklearn.cross_decomposition import CCA, PLSSVD, PLSCanonical, PLSRegression
 from sklearn.cross_decomposition._pls import (
+    RidgeCCA,
     _center_scale_xy,
     _get_first_singular_vectors_power_method,
     _get_first_singular_vectors_svd,
-    _svd_flip_1d, RidgeCCA,
+    _svd_flip_1d,
 )
 from sklearn.datasets import load_linnerud, make_regression
 from sklearn.ensemble import VotingRegressor
@@ -360,17 +361,13 @@ def test_sanity_check_ridge_cca():
     Y = np.concatenate((Y, rng.normal(size=q_noise * n).reshape(n, q_noise)), axis=1)
 
     rcca = RidgeCCA(n_components=1, alpha_x=1.0, alpha_y=1.0)
-    zx_ridge,zy_ridge=rcca.fit_transform(X, Y)
+    zx_ridge, zy_ridge = rcca.fit_transform(X, Y)
 
     pls = PLSSVD(n_components=1)
-    zx_pls,zy_pls=pls.fit_transform(X, Y)
+    zx_pls, zy_pls = pls.fit_transform(X, Y)
 
     assert_array_almost_equal(np.abs(zx_ridge), np.abs(zx_pls))
     assert_array_almost_equal(np.abs(zy_ridge), np.abs(zy_pls))
-
-
-
-
 
 
 def test_convergence_fail():
