@@ -670,12 +670,16 @@ class _BaseChain(BaseEstimator, metaclass=ABCMeta):
             X_aug = hstack((X, previous_predictions))
 
             feature_predictions, _ = _get_response_values(
-                estimator, X_aug, response_method=chain_method,
+                estimator,
+                X_aug,
+                response_method=chain_method,
             )
             Y_feature_chain[:, chain_idx] = feature_predictions
 
             output_predictions, _ = _get_response_values(
-                estimator, X_aug, response_method=output_method,
+                estimator,
+                X_aug,
+                response_method=output_method,
             )
             Y_output_chain[:, chain_idx] = output_predictions
 
@@ -749,7 +753,8 @@ class _BaseChain(BaseEstimator, metaclass=ABCMeta):
 
         if hasattr(self, "chain_method"):
             chain_method = _check_response_method(
-                self.base_estimator, self.chain_method,
+                self.base_estimator,
+                self.chain_method,
             ).__name__
             self.chain_method_ = chain_method
         else:
