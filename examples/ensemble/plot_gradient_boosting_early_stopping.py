@@ -4,23 +4,24 @@ Early stopping in Gradient Boosting
 ===================================
 
 Gradient Boosting is an ensemble technique that combines multiple weak
-learners, typically regression trees, to create a robust and powerful
+learners, typically decision trees, to create a robust and powerful
 predictive model. It does so in an iterative fashion, where each new stage
 (tree) corrects the errors of the previous ones.
 
-Early stopping is a feature in Gradient Boosting that allows us to find
+Early stopping is a technique in Gradient Boosting that allows us to find
 the optimal number of iterations required to build a model that generalizes
-well to unseen data. The concept is simple: we set aside a portion of our
-dataset as a validation set (specified using `validation_fraction`) to assess
-the model's performance during training. As the model is iteratively built
-with additional stages (trees), its performance on the validation set is
-continuously monitored.
+well to unseen data and avoids overfitting. The concept is simple: we set
+aside a portion of our dataset as a validation set (specified using
+`validation_fraction`) to assess the model's performance during training.
+As the model is iteratively built with additional stages (trees), its
+performance on the validation set is monitored as a function of the
+number of steps.
 
 Early stopping becomes effective when the model's performance on the
-validation set plateaus or worsens over a certain number of consecutive stages
-(specified by `n_iter_no_change`) without a significant improvement. This
-signals that the model has reached a point where further iterations may lead
-to overfitting, and it's time to stop training.
+validation set plateaus or worsens (within deviations specified by `tol`)
+over a certain number of consecutive stages (specified by `n_iter_no_change`).
+This signals that the model has reached a point where further iterations may
+lead to overfitting, and it's time to stop training.
 
 The number of estimators (trees) in the final model, when early stopping is
 applied, can be accessed using the `n_estimators_` attribute. Overall, early
@@ -51,16 +52,17 @@ from sklearn.model_selection import train_test_split
 data = fetch_california_housing()
 X, y = data.data[:600], data.target[:600]
 
-X_train, X_val, y_train, y_val = train_test_split(X, y, test_size=0.2,
-                                                  random_state=42)
+X_train, X_val, y_train, y_val = (
+    train_test_split(X, y, test_size=0.2, random_state=42)
+)
 
 # %%
 # Model Training and Comparison
 # -----------------------------
 # Two :class:`~sklearn.ensemble.GradientBoostingRegressor` models are trained:
-# one without early stopping and another with early stopping. The purpose is to
-# compare their performance. It also calculates the training time and the
-# `n_estimators_` used by both models.
+# one with and another without early stopping. The purpose is to compare their
+# performance. It also calculates the training time and the `n_estimators_`
+# used by both models.
 
 start_time = time.time()
 gbm_no_early_stopping = GradientBoostingRegressor(
