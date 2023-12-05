@@ -36,8 +36,6 @@ efficiency in gradient boosting.
 # training and evaluation. It subsets the dataset, splits it into training
 # and validation sets.
 
-# Authors: Vighnesh Birodkar <vighneshbirodkar@nyu.edu>
-#          Raghav RV <rvraghav93@gmail.com>
 # License: BSD 3 clause
 
 import time
@@ -62,26 +60,24 @@ X_train, X_val, y_train, y_val = train_test_split(X, y, test_size=0.2, random_st
 # performance. It also calculates the training time and the `n_estimators_`
 # used by both models.
 
-start_time = time.time()
-gbm_no_early_stopping = GradientBoostingRegressor(
-    n_estimators=1000, max_depth=5, learning_rate=0.1, random_state=42
-)
-gbm_no_early_stopping.fit(X_train, y_train)
-training_time_without = time.time() - start_time
-estimators_without = gbm_no_early_stopping.n_estimators_
+params = dict(n_estimators=1000, max_depth=5, learning_rate=0.1, random_state=42)
 
-start_time = time.time()
-gbm_with_early_stopping = GradientBoostingRegressor(
-    n_estimators=1000,
-    max_depth=5,
-    learning_rate=0.1,
+gbm_full = GradientBoostingRegressor(**params)
+gbm_early_stopping = GradientBoostingRegressor(
+    **params,
     validation_fraction=0.1,
     n_iter_no_change=10,
-    random_state=42,
 )
-gbm_with_early_stopping.fit(X_train, y_train)
-training_time_with = time.time() - start_time
-estimators_with = gbm_with_early_stopping.n_estimators_
+
+start_time = time.time()
+gbm_full.fit(X_train, y_train)
+training_time_full = time.time() - start_time
+n_estimators_full = gbm_full.n_estimators_
+
+start_time = time.time()
+gbm_early_stopping.fit(X_train, y_train)
+training_time_early_stopping = time.time() - start_time
+estimators_early_stopping = gbm_early_stopping.n_estimators_
 
 # %%
 # Error Calculation
@@ -99,8 +95,8 @@ val_errors_with = []
 
 for i, (train_pred, val_pred) in enumerate(
     zip(
-        gbm_no_early_stopping.staged_predict(X_train),
-        gbm_no_early_stopping.staged_predict(X_val),
+        gbm_full.staged_predict(X_train),
+        gbm_full.staged_predict(X_val),
     )
 ):
     train_errors_without.append(mean_squared_error(y_train, train_pred))
@@ -108,8 +104,8 @@ for i, (train_pred, val_pred) in enumerate(
 
 for i, (train_pred, val_pred) in enumerate(
     zip(
-        gbm_with_early_stopping.staged_predict(X_train),
-        gbm_with_early_stopping.staged_predict(X_val),
+        gbm_early_stopping.staged_predict(X_train),
+        gbm_early_stopping.staged_predict(X_val),
     )
 ):
     train_errors_with.append(mean_squared_error(y_train, train_pred))
@@ -124,33 +120,34 @@ for i, (train_pred, val_pred) in enumerate(
 # 3. Creating a bar chart to compare the training times and the estimator used
 # of the models with and without early stopping.
 
-plt.figure(figsize=(15, 6))
+fig, axes = plt.subplots(ncols=3, figsize=(12, 4))
 
-plt.subplot(1, 3, 1)
-plt.plot(train_errors_without, label="Training Error (No Early Stopping)")
-plt.plot(train_errors_with, label="Training Error (With Early Stopping)")
-plt.xlabel("Boosting Iterations")
-plt.ylabel("MSE (Training)")
-plt.legend()
+axes[0].plot(train_errors_without, label="gbm_full")
+axes[0].plot(train_errors_with, label="gbm_early_stopping")
+axes[0].set_xlabel("Boosting Iterations")
+axes[0].set_ylabel("MSE (Training)")
+axes[0].set_yscale("log")
+axes[0].legend()
+axes[0].set_title("Training Error")
 
-plt.subplot(1, 3, 2)
-plt.plot(val_errors_without, label="Validation Error (No Early Stopping)")
-plt.plot(val_errors_with, label="Validation Error (With Early Stopping)")
-plt.xlabel("Boosting Iterations")
-plt.ylabel("MSE (Validation)")
-plt.legend()
+axes[1].plot(val_errors_without, label="gbm_full")
+axes[1].plot(val_errors_with, label="gbm_early_stopping")
+axes[1].set_xlabel("Boosting Iterations")
+axes[1].set_ylabel("MSE (Validation)")
+axes[1].set_yscale("log")
+axes[1].legend()
+axes[1].set_title("Validation Error")
 
-plt.subplot(1, 3, 3)
-training_times = [training_time_without, training_time_with]
-labels = ["No Early Stopping", "With Early Stopping"]
-bars = plt.bar(labels, training_times)
-plt.ylabel("Training Time (s)")
+training_times = [training_time_full, training_time_early_stopping]
+labels = ["gbm_full", "gbm_early_stopping"]
+bars = axes[2].bar(labels, training_times)
+axes[2].set_ylabel("Training Time (s)")
 
-for bar, n_estimators in zip(bars, [estimators_without, estimators_with]):
+for bar, n_estimators in zip(bars, [n_estimators_full, estimators_early_stopping]):
     height = bar.get_height()
-    plt.text(
+    axes[2].text(
         bar.get_x() + bar.get_width() / 2,
-        height + 0.01,
+        height + 0.001,
         f"Estimators: {n_estimators}",
         ha="center",
         va="bottom",
@@ -158,6 +155,12 @@ for bar, n_estimators in zip(bars, [estimators_without, estimators_with]):
 
 plt.tight_layout()
 plt.show()
+
+# %%
+# The difference in training error between the `gbm_full` and the
+# `gbm_early_stopping` is likely because early stopping prevents the model
+# from fitting the training data too closely and allows it to generalize
+# better to unseen data.
 
 # %%
 # Summary
