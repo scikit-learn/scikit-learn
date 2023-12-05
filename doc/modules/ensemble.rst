@@ -125,9 +125,9 @@ larger than 10,000**. The early-stopping behaviour is controlled via the
 ``early_stopping``, ``scoring``, ``validation_fraction``,
 ``n_iter_no_change``, and ``tol`` parameters. It is possible to early-stop
 using an arbitrary :term:`scorer`, or just the training or validation loss.
-Note that for technical reasons, using a scorer is significantly slower than
-using the loss. By default, early-stopping is performed if there are at least
-10,000 samples in the training set, and uses the validation loss.
+Note that for technical reasons, using a callable as a scorer is significantly slower
+than using the loss. By default, early-stopping is performed if there are at least
+10,000 samples in the training set, using the validation loss.
 
 Missing values support
 ^^^^^^^^^^^^^^^^^^^^^^
@@ -231,10 +231,18 @@ categorical features::
 
   >>> gbdt = HistGradientBoostingClassifier(categorical_features=[0])
 
+When the input is a DataFrame, it is also possible to pass a list of column
+names::
+
+  >>> gbdt = HistGradientBoostingClassifier(categorical_features=["site", "manufacturer"])
+
+Finally, when the input is a DataFrame we can use
+`categorical_features="from_dtype"` in which case all columns with a categorical
+`dtype` will be treated as categorical features.
+
 The cardinality of each categorical feature must be less than the `max_bins`
-parameter, and each categorical feature is expected to be encoded in
-`[0, max_bins - 1]`. To that end, it might be useful to pre-process the data
-with an :class:`~sklearn.preprocessing.OrdinalEncoder` as done in
+parameter. For an example using histogram-based gradient boosting on categorical
+features, see
 :ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_categorical.py`.
 
 If there are missing values during training, the missing values will be
@@ -740,8 +748,10 @@ of ``learning_rate`` require larger numbers of weak learners to maintain
 a constant training error. Empirical evidence suggests that small
 values of ``learning_rate`` favor better test error. [HTF]_
 recommend to set the learning rate to a small constant
-(e.g. ``learning_rate <= 0.1``) and choose ``n_estimators`` by early
-stopping. For a more detailed discussion of the interaction between
+(e.g. ``learning_rate <= 0.1``) and choose ``n_estimators`` large enough
+that early stopping applies,
+see :ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_early_stopping.py`
+for a more detailed discussion of the interaction between
 ``learning_rate`` and ``n_estimators`` see [R2007]_.
 
 Subsampling
@@ -883,9 +893,9 @@ from a sample drawn with replacement (i.e., a bootstrap sample) from the
 training set.
 
 Furthermore, when splitting each node during the construction of a tree, the
-best split is found either from all input features or a random subset of size
-``max_features``. (See the :ref:`parameter tuning guidelines
-<random_forest_parameters>` for more details).
+best split is found through an exhaustive search of the features values of
+either all input features or a random subset of size ``max_features``.
+(See the :ref:`parameter tuning guidelines <random_forest_parameters>` for more details.)
 
 The purpose of these two sources of randomness is to decrease the variance of
 the forest estimator. Indeed, individual decision trees typically exhibit high
