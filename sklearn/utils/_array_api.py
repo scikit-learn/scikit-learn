@@ -1,7 +1,7 @@
 """Tools to support array_api."""
 import itertools
 import math
-from functools import wraps
+from functools import lru_cache, wraps
 
 import numpy
 import scipy.special as special
@@ -74,7 +74,7 @@ def _check_array_api_dispatch(array_api_dispatch):
             )
 
 
-def device(x):
+def device(*array_list):
     """Hardware device the array data resides on.
 
     Parameters
@@ -87,9 +87,20 @@ def device(x):
     out : device
         `device` object (see the "Device Support" section of the array API spec).
     """
-    if isinstance(x, (numpy.ndarray, numpy.generic)):
-        return "cpu"
-    return x.device
+    if not array_list:
+        raise ValueError("At least one input array expected, got none.")
+
+    devices = set()
+    for array in array_list:
+        if isinstance(array, (numpy.ndarray, numpy.generic)):
+            devices.add("cpu")
+        else:
+            devices.add(array.device)
+
+    if len(devices) > 1:
+        raise ValueError("Input arrays use different devices.")
+
+    return devices.pop()
 
 
 def size(x):
@@ -167,7 +178,25 @@ def _isdtype_single(dtype, kind, *, xp):
         return dtype == kind
 
 
-def supported_float_dtypes(xp):
+@lru_cache
+def _supports_dtype(xp, device, dtype):
+    if not hasattr(xp, dtype):
+        return False
+
+    dtype = getattr(xp, dtype)
+
+    try:
+        array = xp.ones((1,), device=device, dype=dtype)
+        array += array
+        float(array[0])
+    except Exception:
+        return False
+
+    return True
+
+
+@lru_cache
+def supported_float_dtypes(xp, device=None):
     """Supported floating point types for the namespace
 
     Note: float16 is not officially part of the Array API spec at the
@@ -176,20 +205,11 @@ def supported_float_dtypes(xp):
 
     https://data-apis.org/array-api/latest/API_specification/data_types.html
     """
-    if hasattr(xp, "float16"):
-        return (xp.float64, xp.float32, xp.float16)
-    else:
-        return (xp.float64, xp.float32)
-
-
-def max_precision_float_dtype(xp, device):
-    """Highest precision float dtype support by namespace and device"""
-    # temporary hack while waiting for a proper inspection API, see:
-    # https://github.com/data-apis/array-api/issues/640
-    if xp.__name__ in {"array_api_compat.torch", "torch"} and device.type == "mps":
-        return xp.float32
-    else:
-        return xp.float64
+    return tuple(
+        getattr(xp, dtype)
+        for dtype in ["float16", "float32", "float64"]
+        if _supports_dtype(xp, device, dtype)
+    )
 
 
 class _ArrayAPIWrapper:
@@ -462,12 +482,14 @@ def _weighted_sum(sample_score, sample_weight, normalize=False, xp=None):
     # torch tensor). However, this might interact in unexpected ways (break?)
     # with lazy Array API implementations. See:
     # https://github.com/data-apis/array-api/issues/642
+    input_arrays = [sample_score]
+    if sample_weight is not None:
+        input_arrays = [sample_score, sample_weight]
+
     if xp is None:
-        # Make sure the scores and weights belong to the same namespace
-        if sample_weight is not None:
-            xp, _ = get_namespace(sample_score, sample_weight)
-        else:
-            xp, _ = get_namespace(sample_score)
+        xp, _ = get_namespace(*input_arrays)
+
+    device_ = device(*input_arrays)
 
     if normalize and _is_numpy_namespace(xp):
         sample_score_np = numpy.asarray(sample_score)
@@ -477,28 +499,53 @@ def _weighted_sum(sample_score, sample_weight, normalize=False, xp=None):
             sample_weight_np = None
         return float(numpy.average(sample_score_np, weights=sample_weight_np))
 
-    if not xp.isdtype(sample_score.dtype, "real floating"):
-        sample_score = xp.astype(
-            sample_score, max_precision_float_dtype(xp, device(sample_score))
-        )
+    if sample_weight is None:
+        sum_ = float(xp.sum(sample_score))
+        n_sample = sample_score.shape[0]
+        if normalize and n_sample != 0:
+            return sum_ / n_sample
+        return sum_
 
-    if sample_weight is not None:
-        sample_weight = xp.asarray(
-            sample_weight, dtype=sample_score.dtype, device=device(sample_score)
-        )
+    sample_weight = xp.asarray(sample_weight)
+
+    dtype_kinds = set()
 
     if normalize:
-        if sample_weight is not None:
-            scale = xp.sum(sample_weight)
-        else:
-            scale = sample_score.shape[0]
+        scale = float(xp.sum(sample_weight))
         if scale != 0:
-            sample_score = sample_score / scale
+            dtype_kinds.add("real floating")
+        else:
+            normalize = False
 
-    if sample_weight is not None:
-        return float(sample_score @ sample_weight)
+    if xp.isdtype(sample_score.dtype, "real floating"):
+        dtype_kinds.add("real floating")
+    elif xp.isdtype(sample_score.dtype, "integral"):
+        dtype_kinds.add("integral")
     else:
-        return float(xp.sum(sample_score))
+        dtype_kinds.add("other")
+
+    if xp.isdtype(sample_weight.dtype, "real floating"):
+        dtype_kinds.add("real floating")
+    elif xp.isdtype(sample_weight.dtype, "integral"):
+        dtype_kinds.add("integral")
+    else:
+        dtype_kinds.add("other")
+
+    cast_to_float64 = len(dtype_kinds) > 1
+
+    if cast_to_float64 and not _supports_dtype(xp, device, "float64"):
+        sample_score = numpy.from_dlpack(sample_score)
+        sample_weight = numpy.from_dlpack(sample_weight)
+        return _weighted_sum(sample_score, sample_weight, normalize=normalize)
+
+    if cast_to_float64:
+        sample_score = xp.asarray(sample_score, dtype=xp.float64, device=device_)
+        sample_weight = xp.asarray(sample_weight, dtype=xp.float64, device=device_)
+
+    if normalize:
+        sample_score = sample_score / scale
+
+    return float(sample_score @ sample_weight)
 
 
 def _average(array, axis=None, weights=None, xp=None):
@@ -508,15 +555,20 @@ def _average(array, axis=None, weights=None, xp=None):
     if _is_numpy_namespace(xp):
         return numpy.average(array, axis=axis, weights=weights)
 
-    a = xp.asarray(array, dtype=xp.float64)
+    if (
+        not xp.isdtype(array.dtype, "real floating")
+        or weights is not None
+        and not xp.isdtype(weights.dtype, "real floating")
+    ):
+        raise ValueError(
+            "If not numpy arrays, inputs are expected to have real floating dtype."
+        )
 
     if weights is None:
-        return xp.mean(a, axis=axis)
-    # Cast weights to floats
-    weights = xp.asarray(weights, dtype=max_precision_float_dtype(xp, device(weights)))
+        return xp.mean(array, axis=axis)
 
     # Sanity checks
-    if a.shape != weights.shape:
+    if array.shape != weights.shape:
         if axis is None:
             raise TypeError(
                 "Axis must be specified when shapes of a and weights differ."
@@ -525,16 +577,17 @@ def _average(array, axis=None, weights=None, xp=None):
             raise TypeError("1D weights expected when shapes of a and weights differ.")
         else:
             # If weights are 1D, add singleton dimensions for broadcasting
-            shape = [1] * a.ndim
-            shape[axis] = a.shape[axis]
+            shape = [1] * array.ndim
+            shape[axis] = array.shape[axis]
             weights = xp.reshape(weights, shape)
-        if weights.shape[axis] != a.shape[axis]:
+        if weights.shape[axis] != array.shape[axis]:
             raise ValueError("Length of weights not compatible with specified axis.")
 
     scale = xp.sum(weights, axis=axis)
     if xp.any(scale == 0.0):
         raise ZeroDivisionError("Weights sum to zero, can't be normalized")
-    return xp.sum(xp.multiply(a, weights), axis=axis) / scale
+
+    return xp.sum(xp.multiply(array, weights), axis=axis) / scale
 
 
 def _nanmin(X, axis=None):
