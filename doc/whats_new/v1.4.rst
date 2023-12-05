@@ -414,6 +414,12 @@ Changelog
   for the targets being all rounded to integer. It was recognized as a multiclass problem.
   :pr:`27817` by :user:`Daniele Ongari <danieleongari>`
 
+- |Fix| Changes estimator tags to acknowledge that
+  :class:`ensemble.VotingClassifier`, :class:`ensemble.VotingRegressor`,
+  :class:`ensemble.StackingClassifier`, :class:`ensemble.StackingRegressor`,
+  support missing values if all `estimators` support missing values.
+  :pr:`27710` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 :mod:`sklearn.feature_selection`
 ................................
 
