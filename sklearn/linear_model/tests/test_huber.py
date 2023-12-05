@@ -218,10 +218,14 @@ def test_huber_bool():
 
 
 def test_huber_convergence_failure():
-    # test that the huber regressor raises a warning if the L-BFGS-B optimizer
-    # does not converge in a pathological case
+    """Check that we raise a `ConvergenceWarning` on pathological case without
+    raising an error.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/27777
+    """
     X = np.array([10, 11, 28]).reshape(-1, 1)
     y = np.log(np.array([5000.0, 5000.0, 5000.0]))
-    sample_weights = np.array([2.0, 2.0, 2.0])
+    sample_weights = np.array([2.0, 2.0, 2000.0])
     with pytest.warns(ConvergenceWarning):
-        HuberRegressor().fit(X, y, sample_weights)
+        HuberRegressor().fit(X, y, sample_weight=sample_weight)
