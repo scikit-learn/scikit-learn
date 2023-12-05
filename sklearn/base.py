@@ -17,7 +17,7 @@ from . import __version__
 from ._config import config_context, get_config
 from .exceptions import InconsistentVersionWarning
 from .utils import _IS_32BIT
-from .utils._estimator_html_repr import estimator_html_repr
+from .utils._estimator_html_repr import _HTMLDocumentationLinkMixin, estimator_html_repr
 from .utils._metadata_requests import _MetadataRequester, _routing_enabled
 from .utils._param_validation import validate_parameter_constraints
 from .utils._set_output import _SetOutputMixin
@@ -134,7 +134,7 @@ def _clone_parametrized(estimator, *, safe=True):
     return new_object
 
 
-class BaseEstimator(_MetadataRequester):
+class BaseEstimator(_HTMLDocumentationLinkMixin, _MetadataRequester):
     """Base class for all estimators in scikit-learn.
 
     Notes
@@ -239,27 +239,6 @@ class BaseEstimator(_MetadataRequester):
                 valid_params[key] = value
 
         for key, sub_params in nested_params.items():
-            # TODO(1.4): remove specific handling of "base_estimator".
-            # The "base_estimator" key is special. It was deprecated and
-            # renamed to "estimator" for several estimators. This means we
-            # need to translate it here and set sub-parameters on "estimator",
-            # but only if the user did not explicitly set a value for
-            # "base_estimator".
-            if (
-                key == "base_estimator"
-                and valid_params[key] == "deprecated"
-                and self.__module__.startswith("sklearn.")
-            ):
-                warnings.warn(
-                    (
-                        f"Parameter 'base_estimator' of {self.__class__.__name__} is"
-                        " deprecated in favor of 'estimator'. See"
-                        f" {self.__class__.__name__}'s docstring for more details."
-                    ),
-                    FutureWarning,
-                    stacklevel=2,
-                )
-                key = "estimator"
             valid_params[key].set_params(**sub_params)
 
         return self

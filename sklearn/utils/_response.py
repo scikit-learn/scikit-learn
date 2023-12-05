@@ -114,14 +114,16 @@ def _get_response_values(
     X,
     response_method,
     pos_label=None,
+    return_response_method_used=False,
 ):
-    """Compute the response values of a classifier or a regressor.
+    """Compute the response values of a classifier, an outlier detector, or a regressor.
 
     The response values are predictions such that it follows the following shape:
 
     - for binary classification, it is a 1d array of shape `(n_samples,)`;
     - for multiclass classification, it is a 2d array of shape `(n_samples, n_classes)`;
     - for multilabel classification, it is a 2d array of shape `(n_samples, n_outputs)`;
+    - for outlier detection, it is a 1d array of shape `(n_samples,)`;
     - for regression, it is a 1d array of shape `(n_samples,)`.
 
     If `estimator` is a binary classifier, also return the label for the
@@ -134,17 +136,18 @@ def _get_response_values(
     Parameters
     ----------
     estimator : estimator instance
-        Fitted classifier or regressor or a fitted :class:`~sklearn.pipeline.Pipeline`
-        in which the last estimator is a classifier or a regressor.
+        Fitted classifier, outlier detector, or regressor or a
+        fitted :class:`~sklearn.pipeline.Pipeline` in which the last estimator is a
+        classifier, an outlier detector, or a regressor.
 
     X : {array-like, sparse matrix} of shape (n_samples, n_features)
         Input values.
 
-    response_method : {"predict_proba", "decision_function", "predict"} or \
-            list of such str
+    response_method : {"predict_proba", "predict_log_proba", "decision_function", \
+            "predict"} or list of such str
         Specifies the response method to use get prediction from an estimator
-        (i.e. :term:`predict_proba`, :term:`decision_function` or
-        :term:`predict`). Possible choices are:
+        (i.e. :term:`predict_proba`, :term:`predict_log_proba`,
+        :term:`decision_function` or :term:`predict`). Possible choices are:
 
         - if `str`, it corresponds to the name to the method to return;
         - if a list of `str`, it provides the method names in order of
@@ -153,8 +156,14 @@ def _get_response_values(
 
     pos_label : int, float, bool or str, default=None
         The class considered as the positive class when computing
-        the metrics. By default, `estimators.classes_[1]` is
+        the metrics. If `None` and target is 'binary', `estimators.classes_[1]` is
         considered as the positive class.
+
+    return_response_method_used : bool, default=False
+        Whether to return the response method used to compute the response
+        values.
+
+        .. versionadded:: 1.4
 
     Returns
     -------
@@ -165,7 +174,14 @@ def _get_response_values(
 
     pos_label : int, float, bool, str or None
         The class considered as the positive class when computing
-        the metrics. Returns `None` if `estimator` is a regressor.
+        the metrics. Returns `None` if `estimator` is a regressor or an outlier
+        detector.
+
+    response_method_used : str
+        The response method used to compute the response values. Only returned
+        if `return_response_method_used` is `True`.
+
+        .. versionadded:: 1.4
 
     Raises
     ------
@@ -175,7 +191,7 @@ def _get_response_values(
         If the response method can be applied to a classifier only and
         `estimator` is a regressor.
     """
-    from sklearn.base import is_classifier  # noqa
+    from sklearn.base import is_classifier, is_outlier_detector  # noqa
 
     if is_classifier(estimator):
         prediction_method = _check_response_method(estimator, response_method)
@@ -193,7 +209,7 @@ def _get_response_values(
 
         y_pred = prediction_method(X)
 
-        if prediction_method.__name__ == "predict_proba":
+        if prediction_method.__name__ in ("predict_proba", "predict_log_proba"):
             y_pred = _process_predict_proba(
                 y_pred=y_pred,
                 target_type=target_type,
@@ -207,6 +223,9 @@ def _get_response_values(
                 classes=classes,
                 pos_label=pos_label,
             )
+    elif is_outlier_detector(estimator):
+        prediction_method = _check_response_method(estimator, response_method)
+        y_pred, pos_label = prediction_method(X), None
     else:  # estimator is a regressor
         if response_method != "predict":
             raise ValueError(
@@ -215,8 +234,11 @@ def _get_response_values(
                 "should be 'predict'. Got a regressor with response_method="
                 f"{response_method} instead."
             )
-        y_pred, pos_label = estimator.predict(X), None
+        prediction_method = estimator.predict
+        y_pred, pos_label = prediction_method(X), None
 
+    if return_response_method_used:
+        return y_pred, pos_label, prediction_method.__name__
     return y_pred, pos_label
 
 

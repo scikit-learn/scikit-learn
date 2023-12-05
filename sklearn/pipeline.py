@@ -18,11 +18,14 @@ from scipy import sparse
 from .base import TransformerMixin, _fit_context, clone
 from .exceptions import NotFittedError
 from .preprocessing import FunctionTransformer
-from .utils import Bunch, _print_elapsed_time, check_pandas_support
+from .utils import Bunch, _print_elapsed_time
 from .utils._estimator_html_repr import _VisualBlock
 from .utils._metadata_requests import METHODS
 from .utils._param_validation import HasMethods, Hidden
-from .utils._set_output import _get_output_config, _safe_set_output
+from .utils._set_output import (
+    _get_container_adapter,
+    _safe_set_output,
+)
 from .utils._tags import _safe_tags
 from .utils.metadata_routing import (
     MetadataRouter,
@@ -179,8 +182,11 @@ class Pipeline(_BaseComposition):
             Configure output of `transform` and `fit_transform`.
 
             - `"default"`: Default output format of a transformer
-            - `"pandas"`: DataFrame output
+            - `"polars"`: Polars output
             - `None`: Transform configuration is unchanged
+
+            .. versionadded:: 1.4
+                `"polars"` option was added.
 
         Returns
         -------
@@ -1400,7 +1406,7 @@ class FeatureUnion(_RoutingNotSupportedMixin, TransformerMixin, _BaseComposition
     array([[ 1.5       ,  3.0...,  0.8...],
            [-1.5       ,  5.7..., -0.4...]])
     >>> # An estimator's parameter can be set using '__' syntax
-    >>> union.set_params(pca__n_components=1).fit_transform(X)
+    >>> union.set_params(svd__n_components=1).fit_transform(X)
     array([[ 1.5       ,  3.0...],
            [-1.5       ,  5.7...]])
 
@@ -1674,10 +1680,9 @@ class FeatureUnion(_RoutingNotSupportedMixin, TransformerMixin, _BaseComposition
         return self._hstack(Xs)
 
     def _hstack(self, Xs):
-        config = _get_output_config("transform", self)
-        if config["dense"] == "pandas" and all(hasattr(X, "iloc") for X in Xs):
-            pd = check_pandas_support("transform")
-            return pd.concat(Xs, axis=1)
+        adapter = _get_container_adapter("transform", self)
+        if adapter and all(adapter.is_supported_container(X) for X in Xs):
+            return adapter.hstack(Xs)
 
         if any(sparse.issparse(f) for f in Xs):
             Xs = sparse.hstack(Xs).tocsr()
