@@ -664,12 +664,10 @@ class _BaseChain(BaseEstimator, metaclass=ABCMeta):
         # `RegressorChain` does not have a `chain_method_` parameter so we
         # default to "predict"
         chain_method = getattr(self, "chain_method_", "predict")
+        hstack = sp.hstack if sp.issparse(X) else np.hstack
         for chain_idx, estimator in enumerate(self.estimators_):
             previous_predictions = Y_feature_chain[:, :chain_idx]
-            if sp.issparse(X):
-                X_aug = sp.hstack((X, previous_predictions))
-            else:
-                X_aug = np.hstack((X, previous_predictions))
+            X_aug = hstack((X, previous_predictions))
 
             feature_predictions, _ = _get_response_values(
                 estimator, X_aug, response_method=chain_method,
@@ -781,6 +779,7 @@ class _BaseChain(BaseEstimator, metaclass=ABCMeta):
                     cv=self.cv,
                     method=chain_method,
                 )
+                # `predict_proba` output is 2D, we use only output for classes[-1]
                 if cv_result.ndim > 1:
                     cv_result = cv_result[:, 1]
                 if sp.issparse(X_aug):
