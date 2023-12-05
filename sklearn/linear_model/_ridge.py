@@ -1979,9 +1979,6 @@ class _RidgeGCV(LinearModel):
             Parameters to be passed to the underlying scorer.
 
             .. versionadded:: 1.4
-                Only available if `enable_metadata_routing=True`,
-                which can be set by using
-                ``sklearn.set_config(enable_metadata_routing=True)``.
                 See :ref:`Metadata Routing User Guide <metadata_routing>` for
                 more details.
 
@@ -2467,7 +2464,7 @@ class RidgeCV(MultiOutputMixin, RegressorMixin, _BaseRidgeCV):
             will have the same weight.
 
         **params : dict, default=None
-            Parameters to be passed to GridSearchCV or the underlying scorer.
+            Parameters to be passed to the underlying scorer.
 
             .. versionadded:: 1.4
                 Only available if `enable_metadata_routing=True`,
@@ -2656,7 +2653,7 @@ class RidgeClassifierCV(_RidgeClassifierMixin, _BaseRidgeCV):
             will have the same weight.
 
         **params : dict, default=None
-            Parameters to be passed to GridSearchCV or the underlying scorer.
+            Parameters to be passed to the underlying scorer.
 
             .. versionadded:: 1.4
                 Only available if `enable_metadata_routing=True`,
