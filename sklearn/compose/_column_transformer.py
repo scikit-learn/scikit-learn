@@ -688,7 +688,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         try:
             import pandas as pd
         except ImportError:
-            raise
+            return
         for Xs, name in zip(result, names):
             if not _is_pandas_df(Xs):
                 continue
