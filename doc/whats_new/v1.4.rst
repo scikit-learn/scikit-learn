@@ -350,9 +350,14 @@ Changelog
 
 - |MajorFeature| :class:`ensemble.HistGradientBoostingClassifier` and
   :class:`ensemble.HistGradientBoostingRegressor` supports
-  `categorical_features="from_dtype"`, which treats columns with Pandas Categorical
-  dtype as categories in the algorithm. `categorical_features="from_dtype"` will become
-  the default in v1.6. :pr:`26411` by `Thomas Fan`_.
+  `categorical_features="from_dtype"`, which treats columns with Pandas or
+  Polars Categorical dtype as categories in the algorithm.
+  `categorical_features="from_dtype"` will become the default in v1.6.
+  Categorical features no longer need to be encoded with numbers. When
+  categorical features are numbers, the maximum value no longer needs to be
+  smaller than `max_bins`; only the number of (unique) categories must be
+  smaller than `max_bins`. :pr:`26411` by `Thomas Fan`_ and :pr:`27835` by
+  :user:`Jérôme Dockès <jeromedockes>`.
 
 - |MajorFeature| :class:`ensemble.HistGradientBoostingClassifier` and
   :class:`ensemble.HistGradientBoostingRegressor` got the new parameter
