@@ -158,9 +158,9 @@ plt.show()
 
 # %%
 # The difference in training error between the `gbm_full` and the
-# `gbm_early_stopping` is likely because early stopping prevents the model
-# from fitting the training data too closely and allows it to generalize
-# better to unseen data.
+# `gbm_early_stopping` stems from the fact that `gbm_early_stopping` sets
+# aside `validation_fraction` of the training data as internal validation set.
+# Early stopping is decided based on this internal validation score.
 
 # %%
 # Summary
