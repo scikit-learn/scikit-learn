@@ -22,20 +22,6 @@ validation set plateaus or worsens over a certain number of consecutive stages
 signals that the model has reached a point where further iterations may lead
 to overfitting, and it's time to stop training.
 
-In our example with the `GradientBoostingRegressor` model on the California
-Housing Prices dataset, we have demonstrated the practical benefits of early
-stopping:
-
-- **Preventing Overfitting:** We showed how the validation error stabilizes
-or starts to increase after a certain point, indicating that the model
-generalizes better to unseen data. This is achieved by stopping the training
-process before overfitting occurs.
-
-- **Improving Training Efficiency:** We compared training times between models
-with and without early stopping. The model with early stopping achieved
-comparable accuracy while requiring significantly fewer estimators, resulting
-in faster training.
-
 The number of estimators (trees) in the final model, when early stopping is
 applied, can be accessed using the `n_estimators_` attribute. Overall, early
 stopping is a valuable tool to strike a balance between model performance and
@@ -45,12 +31,11 @@ efficiency in gradient boosting.
 # %%
 # Data Preparation
 # ----------------
-# Loads and prepares the California Housing Prices dataset for training and evaluation.
+# First we load and prepares the California Housing Prices dataset for training and evaluation.
 # It subsets the dataset, splits it into training and validation sets.
 
 # Authors: Vighnesh Birodkar <vighneshbirodkar@nyu.edu>
 #          Raghav RV <rvraghav93@gmail.com>
-#          Kushan Sharma <kushansharma1@gmail.com>
 # License: BSD 3 clause
 
 import time
@@ -171,3 +156,20 @@ for bar, n_estimators in zip(bars, [estimators_without, estimators_with]):
 
 plt.tight_layout()
 plt.show()
+
+# %%
+# Summary
+# -------
+# In our example with the :class:`~sklearn.ensemble.GradientBoostingRegressor`
+# model on the California Housing Prices dataset, we have demonstrated the
+# practical benefits of early stopping:
+#
+# - **Preventing Overfitting:** We showed how the validation error stabilizes
+# or starts to increase after a certain point, indicating that the model
+# generalizes better to unseen data. This is achieved by stopping the training
+# process before overfitting occurs.
+#
+# - **Improving Training Efficiency:** We compared training times between models
+# with and without early stopping. The model with early stopping achieved
+# comparable accuracy while requiring significantly fewer estimators, resulting
+# in faster training.
