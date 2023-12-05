@@ -793,6 +793,8 @@ cdef inline void _move_sums_regression(
         sum_1 = 0
         sum_2 = sum_total
     """
+    with gil:
+        print("_move_sums_regression")
     cdef:
         intp_t i
         intp_t n_bytes = criterion.n_outputs * sizeof(float64_t)
@@ -835,6 +837,7 @@ cdef class RegressionCriterion(Criterion):
         n_samples : intp_t
             The total number of samples to fit on
         """
+        print("RegressionCriterion __cinit__")
         # Default values
         self.start = 0
         self.pos = 0
@@ -871,6 +874,8 @@ cdef class RegressionCriterion(Criterion):
         This initializes the criterion at node sample_indices[start:end] and children
         sample_indices[start:start] and sample_indices[start:end].
         """
+        with gil:
+            print("RegressionCriterion init")
         # Initialize fields
         self.y = y
         self.sample_weight = sample_weight
@@ -910,6 +915,7 @@ cdef class RegressionCriterion(Criterion):
 
     cdef void init_sum_missing(self):
         """Init sum_missing to hold sums for missing values."""
+        print("RegressionCriterion init_sum_missing")
         self.sum_missing = np.zeros(self.n_outputs, dtype=np.float64)
 
     cdef void init_missing(self, intp_t n_missing) noexcept nogil:
@@ -918,6 +924,8 @@ cdef class RegressionCriterion(Criterion):
         This method assumes that caller placed the missing samples in
         self.sample_indices[-n_missing:]
         """
+        with gil:
+            print("RegressionCriterion init_missing")
         cdef intp_t i, p, k
         cdef float64_t y_ik
         cdef float64_t w_y_ik
@@ -946,6 +954,8 @@ cdef class RegressionCriterion(Criterion):
 
     cdef int reset(self) except -1 nogil:
         """Reset the criterion at pos=start."""
+        with gil:
+            print("RegressionCriterion reset")
         self.pos = self.start
         _move_sums_regression(
             self,
@@ -959,6 +969,8 @@ cdef class RegressionCriterion(Criterion):
 
     cdef int reverse_reset(self) except -1 nogil:
         """Reset the criterion at pos=end."""
+        with gil:
+            print("RegressionCriterion reverse_reset")
         self.pos = self.end
         _move_sums_regression(
             self,
@@ -972,6 +984,8 @@ cdef class RegressionCriterion(Criterion):
 
     cdef int update(self, intp_t new_pos) except -1 nogil:
         """Updated statistics by moving sample_indices[pos:new_pos] to the left."""
+        with gil:
+            print("RegressionCriterion update")
         cdef const float64_t[:] sample_weight = self.sample_weight
         cdef const intp_t[:] sample_indices = self.sample_indices
 
@@ -1035,6 +1049,8 @@ cdef class RegressionCriterion(Criterion):
 
     cdef void node_value(self, float64_t* dest) noexcept nogil:
         """Compute the node value of sample_indices[start:end] into dest."""
+        with gil:
+            print("RegressionCriterion node_value")
         cdef intp_t k
 
         for k in range(self.n_outputs):
@@ -1042,6 +1058,8 @@ cdef class RegressionCriterion(Criterion):
 
     cdef inline void clip_node_value(self, float64_t* dest, float64_t lower_bound, float64_t upper_bound) noexcept nogil:
         """Clip the value in dest between lower_bound and upper_bound for monotonic constraints."""
+        with gil:
+            print("RegressionCriterion clip_node_value")
         if dest[0] < lower_bound:
             dest[0] = lower_bound
         elif dest[0] > upper_bound:
@@ -1054,6 +1072,8 @@ cdef class RegressionCriterion(Criterion):
         Monotonicity constraints are only supported for single-output trees we can safely assume
         n_outputs == 1.
         """
+        with gil:
+            print("RegressionCriterion middle_value")
         return (
             (self.sum_left[0] / (2 * self.weighted_n_left)) +
             (self.sum_right[0] / (2 * self.weighted_n_right))
@@ -1066,11 +1086,14 @@ cdef class RegressionCriterion(Criterion):
         float64_t upper_bound,
     ) noexcept nogil:
         """Check monotonicity constraint is satisfied at the current regression split"""
+        with gil:
+            print("RegressionCriterion check_monotonicity")
         cdef:
             float64_t value_left = self.sum_left[0] / self.weighted_n_left
             float64_t value_right = self.sum_right[0] / self.weighted_n_right
 
         return self._check_monotonicity(monotonic_cst, lower_bound, upper_bound, value_left, value_right)
+
 
 cdef class MSE(RegressionCriterion):
     """Mean squared error impurity criterion.
@@ -1685,3 +1708,341 @@ cdef class Poisson(RegressionCriterion):
 
                 poisson_loss += w * xlogy(y[i, k], y[i, k] / y_mean)
         return poisson_loss / (weight_sum * n_outputs)
+
+cdef class HuberLossPlaceholder(RegressionCriterion):
+    """Debugging placeholder for Huber Loss.
+
+        MSE = var_left + var_right
+    """
+
+    cdef float64_t node_impurity(self) noexcept nogil:
+        """Evaluate the impurity of the current node.
+
+        Evaluate the MSE criterion as impurity of the current node,
+        i.e. the impurity of sample_indices[start:end]. The smaller the impurity the
+        better.
+        """
+        with gil:
+            print("HuberLossPlaceholder node_impurity")
+        cdef float64_t impurity
+        cdef intp_t k
+
+        impurity = self.sq_sum_total / self.weighted_n_node_samples
+        for k in range(self.n_outputs):
+            impurity -= (self.sum_total[k] / self.weighted_n_node_samples)**2.0
+
+        return impurity / self.n_outputs
+
+    cdef float64_t proxy_impurity_improvement(self) noexcept nogil:
+        """Compute a proxy of the impurity reduction.
+
+        This method is used to speed up the search for the best split.
+        It is a proxy quantity such that the split that maximizes this value
+        also maximizes the impurity improvement. It neglects all constant terms
+        of the impurity decrease for a given split.
+
+        The absolute impurity improvement is only computed by the
+        impurity_improvement method once the best split has been found.
+
+        The MSE proxy is derived from
+
+            sum_{i left}(y_i - y_pred_L)^2 + sum_{i right}(y_i - y_pred_R)^2
+            = sum(y_i^2) - n_L * mean_{i left}(y_i)^2 - n_R * mean_{i right}(y_i)^2
+
+        Neglecting constant terms, this gives:
+
+            - 1/n_L * sum_{i left}(y_i)^2 - 1/n_R * sum_{i right}(y_i)^2
+        """
+        with gil:
+            print("HuberLossPlaceholder proxy_impurity_improvement")
+        cdef intp_t k
+        cdef float64_t proxy_impurity_left = 0.0
+        cdef float64_t proxy_impurity_right = 0.0
+
+        for k in range(self.n_outputs):
+            proxy_impurity_left += self.sum_left[k] * self.sum_left[k]
+            proxy_impurity_right += self.sum_right[k] * self.sum_right[k]
+
+        return (proxy_impurity_left / self.weighted_n_left +
+                proxy_impurity_right / self.weighted_n_right)
+
+    cdef void children_impurity(self, float64_t* impurity_left,
+                                float64_t* impurity_right) noexcept nogil:
+        """Evaluate the impurity in children nodes.
+
+        i.e. the impurity of the left child (sample_indices[start:pos]) and the
+        impurity the right child (sample_indices[pos:end]).
+        """
+        with gil:
+            print("HuberLossPlaceholder children_impurity")
+        cdef const float64_t[:] sample_weight = self.sample_weight
+        cdef const intp_t[:] sample_indices = self.sample_indices
+        cdef intp_t pos = self.pos
+        cdef intp_t start = self.start
+
+        cdef float64_t y_ik
+
+        cdef float64_t sq_sum_left = 0.0
+        cdef float64_t sq_sum_right
+
+        cdef intp_t i
+        cdef intp_t p
+        cdef intp_t k
+        cdef float64_t w = 1.0
+
+        for p in range(start, pos):
+            i = sample_indices[p]
+
+            if sample_weight is not None:
+                w = sample_weight[i]
+
+            for k in range(self.n_outputs):
+                y_ik = self.y[i, k]
+                sq_sum_left += w * y_ik * y_ik
+
+        sq_sum_right = self.sq_sum_total - sq_sum_left
+
+        impurity_left[0] = sq_sum_left / self.weighted_n_left
+        impurity_right[0] = sq_sum_right / self.weighted_n_right
+
+        for k in range(self.n_outputs):
+            impurity_left[0] -= (self.sum_left[k] / self.weighted_n_left) ** 2.0
+            impurity_right[0] -= (self.sum_right[k] / self.weighted_n_right) ** 2.0
+
+        impurity_left[0] /= self.n_outputs
+        impurity_right[0] /= self.n_outputs
+
+cdef class Huber(RegressionCriterion):
+    """Huber loss criterion.
+
+    Huber loss is less sensitive to outliers in data than mean squared error.
+    """
+
+    cdef float64_t delta
+
+    def __cinit__(self, intp_t n_outputs, intp_t n_samples):
+        """Initialize parameters for this criterion.
+
+        Parameters
+        ----------
+        n_outputs : intp_t
+            The number of targets to be predicted
+
+        n_samples : intp_t
+            The total number of samples to fit on
+        """
+        print("Huber__cinit__")
+        cdef float64_t delta = 1.0
+        self.delta = delta
+
+        self.start = 0
+        self.pos = 0
+        self.end = 0
+
+        self.n_outputs = n_outputs
+        self.n_samples = n_samples
+        self.n_node_samples = 0
+        self.weighted_n_node_samples = 0.0
+        self.weighted_n_left = 0.0
+        self.weighted_n_right = 0.0
+        self.weighted_n_missing = 0.0
+
+        self.sq_sum_total = 0.0
+
+        self.sum_total = np.zeros(n_outputs, dtype=np.float64)
+        self.sum_left = np.zeros(n_outputs, dtype=np.float64)
+        self.sum_right = np.zeros(n_outputs, dtype=np.float64)
+
+    cdef int init(
+        self,
+        const float64_t[:, ::1] y,
+        const float64_t[:] sample_weight,
+        float64_t weighted_n_samples,
+        const intp_t[:] sample_indices,
+        intp_t start,
+        intp_t end,
+    ) except -1 nogil:
+        """Initialize the criterion."""
+        with gil:
+            print("Huber init")
+        # Initialize fields
+        self.y = y
+        self.sample_weight = sample_weight
+        self.sample_indices = sample_indices
+        self.start = start
+        self.end = end
+        self.n_node_samples = end - start
+        self.weighted_n_samples = weighted_n_samples
+        self.weighted_n_node_samples = 0.
+
+        cdef intp_t i
+        cdef intp_t p
+        cdef intp_t k
+        cdef float64_t y_ik
+        cdef float64_t w_y_ik
+        cdef float64_t w = 1.0
+        cdef float64_t diff
+        self.sq_sum_total = 0.0
+        memset(&self.sum_total[0], 0, self.n_outputs * sizeof(float64_t))
+
+        for p in range(start, end):
+            i = sample_indices[p]
+
+            if sample_weight is not None:
+                w = sample_weight[i]
+
+            for k in range(self.n_outputs):
+                y_ik = self.y[i, k]
+                w_y_ik = w * y_ik
+                self.sum_total[k] += w_y_ik
+                diff = y_ik - self.sum_total[k] / self.weighted_n_node_samples
+                if abs(diff) <= self.delta:
+                    self.sq_sum_total += w * 0.5 * diff * diff
+                else:
+                    self.sq_sum_total += w * (self.delta * abs(diff) - 0.5 * self.delta * self.delta)
+
+            self.weighted_n_node_samples += w
+
+        # Reset to pos=start
+        self.reset()
+        return 0
+
+    cdef int update(self, intp_t new_pos) except -1 nogil:
+        """Updated statistics by moving sample_indices[pos:new_pos] to the left."""
+        with gil:
+            print("Huber update")
+        cdef const float64_t[:] sample_weight = self.sample_weight
+        cdef const intp_t[:] sample_indices = self.sample_indices
+
+        cdef intp_t pos = self.pos
+        cdef intp_t end_non_missing = self.end - self.n_missing
+        cdef intp_t i
+        cdef intp_t p
+        cdef intp_t k
+        cdef float64_t w = 1.0
+        cdef float64_t diff
+
+        if (new_pos - pos) <= (end_non_missing - new_pos):
+            for p in range(pos, new_pos):
+                i = sample_indices[p]
+
+                if sample_weight is not None:
+                    w = sample_weight[i]
+
+                for k in range(self.n_outputs):
+                    diff = self.y[i, k] - self.sum_left[k] / self.weighted_n_left
+                    if abs(diff) <= self.delta:
+                        self.sum_left[k] += w * 0.5 * diff * diff
+                    else:
+                        self.sum_left[k] += w * (self.delta * abs(diff) - 0.5 * self.delta * self.delta)
+
+                self.weighted_n_left += w
+        else:
+            self.reverse_reset()
+
+            for p in range(end_non_missing - 1, new_pos - 1, -1):
+                i = sample_indices[p]
+
+                if sample_weight is not None:
+                    w = sample_weight[i]
+
+                for k in range(self.n_outputs):
+                    diff = self.y[i, k] - self.sum_left[k] / self.weighted_n_left
+                    if abs(diff) <= self.delta:
+                        self.sum_left[k] -= w * 0.5 * diff * diff
+                    else:
+                        self.sum_left[k] -= w * (self.delta * abs(diff) - 0.5 * self.delta * self.delta)
+
+                self.weighted_n_left -= w
+
+        self.weighted_n_right = (self.weighted_n_node_samples -
+                                self.weighted_n_left)
+        for k in range(self.n_outputs):
+            self.sum_right[k] = self.sum_total[k] - self.sum_left[k]
+
+        self.pos = new_pos
+        return 0
+
+    cdef float64_t node_impurity(self) noexcept nogil:
+        """Evaluate the impurity of the current node."""
+        with gil:
+            print("Huber node_impurity")
+        cdef float64_t impurity = 0.0
+        cdef intp_t k
+        cdef float64_t diff
+
+        for k in range(self.n_outputs):
+            diff = self.sum_total[k] / self.weighted_n_node_samples
+            if abs(diff) <= self.delta:
+                impurity += 0.5 * diff * diff
+            else:
+                impurity += self.delta * abs(diff) - 0.5 * self.delta * self.delta
+
+        return impurity / self.n_outputs
+
+    cdef float64_t proxy_impurity_improvement(self) noexcept nogil:
+        """Compute a proxy of the impurity reduction."""
+        with gil:
+            print("Huber proxy_impurity_improvement")
+        cdef intp_t k
+        cdef float64_t proxy_impurity_left = 0.0
+        cdef float64_t proxy_impurity_right = 0.0
+        cdef float64_t diff_left, diff_right
+
+        for k in range(self.n_outputs):
+            diff_left = self.sum_left[k] / self.weighted_n_left
+            diff_right = self.sum_right[k] / self.weighted_n_right
+            if abs(diff_left) <= self.delta:
+                proxy_impurity_left += 0.5 * diff_left * diff_left
+            else:
+                proxy_impurity_left += self.delta * abs(diff_left) - 0.5 * self.delta * self.delta
+            if abs(diff_right) <= self.delta:
+                proxy_impurity_right += 0.5 * diff_right * diff_right
+            else:
+                proxy_impurity_right += self.delta * abs(diff_right) - 0.5 * self.delta * self.delta
+
+        return proxy_impurity_left + proxy_impurity_right
+
+    cdef void children_impurity(self, float64_t* impurity_left,
+                                float64_t* impurity_right) noexcept nogil:
+        """Evaluate the impurity in children nodes."""
+        with gil:
+            print("Huber children_impurity")
+
+        cdef const float64_t[:] sample_weight = self.sample_weight
+        cdef const intp_t[:] sample_indices = self.sample_indices
+        cdef intp_t pos = self.pos
+        cdef intp_t start = self.start
+
+        cdef float64_t y_ik
+        cdef float64_t diff
+
+        cdef float64_t huber_sum_left = 0.0
+        cdef float64_t huber_sum_right
+
+        cdef intp_t i
+        cdef intp_t p
+        cdef intp_t k
+        cdef float64_t w = 1.0
+
+        for p in range(start, pos):
+            i = sample_indices[p]
+
+            if sample_weight is not None:
+                w = sample_weight[i]
+
+            for k in range(self.n_outputs):
+                y_ik = self.y[i, k]
+                diff = y_ik - self.sum_left[k] / self.weighted_n_left
+                if abs(diff) <= self.delta:
+                    huber_sum_left += w * 0.5 * diff * diff
+                else:
+                    huber_sum_left += w * (self.delta * abs(diff) - 0.5 * self.delta * self.delta)
+
+        huber_sum_right = self.sq_sum_total - huber_sum_left
+
+        impurity_left[0] = huber_sum_left / self.weighted_n_left
+        impurity_right[0] = huber_sum_right / self.weighted_n_right
+
+        impurity_left[0] /= self.n_outputs
+        impurity_right[0] /= self.n_outputs

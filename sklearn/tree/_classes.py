@@ -78,6 +78,7 @@ CRITERIA_REG = {
     "friedman_mse": _criterion.FriedmanMSE,
     "absolute_error": _criterion.MAE,
     "poisson": _criterion.Poisson,
+    "huber": _criterion.Huber,
 }
 
 DENSE_SPLITTERS = {"best": _splitter.BestSplitter, "random": _splitter.RandomSplitter}
@@ -1319,7 +1320,7 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
     _parameter_constraints: dict = {
         **BaseDecisionTree._parameter_constraints,
         "criterion": [
-            StrOptions({"squared_error", "friedman_mse", "absolute_error", "poisson"}),
+            StrOptions({"squared_error", "friedman_mse", "absolute_error", "poisson", "huber"}),
             Hidden(Criterion),
         ],
     }
