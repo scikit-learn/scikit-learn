@@ -358,9 +358,14 @@ Changelog
 
 - |MajorFeature| :class:`ensemble.HistGradientBoostingClassifier` and
   :class:`ensemble.HistGradientBoostingRegressor` supports
-  `categorical_features="from_dtype"`, which treats columns with Pandas Categorical
-  dtype as categories in the algorithm. `categorical_features="from_dtype"` will become
-  the default in v1.6. :pr:`26411` by `Thomas Fan`_.
+  `categorical_features="from_dtype"`, which treats columns with Pandas or
+  Polars Categorical dtype as categories in the algorithm.
+  `categorical_features="from_dtype"` will become the default in v1.6.
+  Categorical features no longer need to be encoded with numbers. When
+  categorical features are numbers, the maximum value no longer needs to be
+  smaller than `max_bins`; only the number of (unique) categories must be
+  smaller than `max_bins`. :pr:`26411` by `Thomas Fan`_ and :pr:`27835` by
+  :user:`Jérôme Dockès <jeromedockes>`.
 
 - |MajorFeature| :class:`ensemble.HistGradientBoostingClassifier` and
   :class:`ensemble.HistGradientBoostingRegressor` got the new parameter
@@ -489,6 +494,12 @@ Changelog
   :class:`linear_model.LogisticRegressionCV` uses a little less memory. The effect is
   proportional to the number of coefficients (`n_features * n_classes`).
   :pr:`27417` by :user:`Christian Lorentzen <lorentzenchr>`.
+
+- |Fix| Ensure that the `sigma_` attribute of
+  :class:`linear_model.ARDRegression` and :class:`linear_model.BayesianRidge`
+  always has a `float32` dtype when fitted on `float32` data, even with the
+  type promotion rules of numpy 2.
+  :pr:`27899` by :user:`Olivier Grisel <ogrisel>`.
 
 :mod:`sklearn.metrics`
 ......................
