@@ -22,7 +22,6 @@ cnp.import_array()
 
 from scipy.special.cython_special cimport xlogy
 
-from ..utils._typedefs cimport float32_t
 from ._utils cimport log
 from ._utils cimport WeightedMedianCalculator
 
@@ -168,6 +167,12 @@ cdef class Criterion:
         """
         pass
 
+    # cdef float64_t sum_left_(self) noexcept nogil:
+    #     pass
+    # cdef float64_t sum_right_(self) noexcept nogil:
+    #     pass
+    # cdef float64_t sum_missing_(self) noexcept nogil:
+    #     pass
     cdef float64_t proxy_impurity_improvement(self) noexcept nogil:
         """Compute a proxy of the impurity reduction.
 
@@ -569,10 +574,11 @@ cdef class ClassificationCriterion(Criterion):
         dest : float64_t pointer
             The memory address which we will save the node value into.
         """
-        cdef intp_t k
+        cdef intp_t k, c
 
         for k in range(self.n_outputs):
-            memcpy(dest, &self.sum_total[k, 0], self.n_classes[k] * sizeof(float64_t))
+            for c in range(self.n_classes[k]):
+                dest[c] = self.sum_total[k, c] / self.weighted_n_node_samples
             dest += self.max_n_classes
 
     cdef void clip_node_value(
@@ -584,17 +590,13 @@ cdef class ClassificationCriterion(Criterion):
         - single-output trees and
         - binary classifications.
         """
-        cdef:
-            float64_t total_weighted_count = dest[0] + dest[1]
-            float64_t scaled_lower_bound = (<float32_t>lower_bound) * total_weighted_count
-            float64_t scaled_upper_bound = (<float32_t>upper_bound) * total_weighted_count
-        if dest[0] < scaled_lower_bound:
-            dest[0] = scaled_lower_bound
-        elif dest[0] > scaled_upper_bound:
-            dest[0] = scaled_upper_bound
+        if dest[0] < lower_bound:
+            dest[0] = lower_bound
+        elif dest[0] > upper_bound:
+            dest[0] = upper_bound
 
-        # Values for binary classification must sum to total_weighted_count.
-        dest[1] = total_weighted_count - dest[0]
+        # Values for binary classification must sum to 1.
+        dest[1] = 1 - dest[0]
 
     cdef inline float64_t middle_value(self) noexcept nogil:
         """Compute the middle value of a split for monotonicity constraints as the simple average
