@@ -350,6 +350,10 @@ Changelog
   proportional to the number of coefficients (`n_features * n_classes`).
   :pr:`27417` by :user:`Christian Lorentzen <lorentzenchr>`.
 
+- |Fix| :class:`linear_model.RidgeCV` and :class:`RidgeClassifierCV` correctly pass
+  `sample_weight` to the underlying scorer when `cv` is None.
+  :pr:`27560` by :user:`Omar Salman <OmarManzoor>`.
+
 :mod:`sklearn.metrics`
 ......................
 

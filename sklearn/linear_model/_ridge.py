@@ -2234,6 +2234,8 @@ class _BaseRidgeCV(LinearModel):
                 )
             else:
                 routed_params = Bunch(scorer=Bunch(score={}))
+                if sample_weight is not None:
+                    routed_params.scorer.score["sample_weight"] = sample_weight
 
             estimator = _RidgeGCV(
                 alphas,

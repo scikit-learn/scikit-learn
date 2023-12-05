@@ -71,7 +71,7 @@ iris = datasets.load_iris()
 X_iris, y_iris = iris.data, iris.target
 
 
-def _accuracy_callable(y_test, y_pred):
+def _accuracy_callable(y_test, y_pred, **kwargs):
     return np.mean(y_test == y_pred)
 
 
@@ -1174,7 +1174,7 @@ def test_ridge_regression_custom_scoring(sparse_container, cv):
     # check that custom scoring is working as expected
     # check the tie breaking strategy (keep the first alpha tried)
 
-    def _dummy_score(y_test, y_pred):
+    def _dummy_score(y_test, y_pred, **kwargs):
         return 0.42
 
     X = X_iris if sparse_container is None else sparse_container(X_iris)
