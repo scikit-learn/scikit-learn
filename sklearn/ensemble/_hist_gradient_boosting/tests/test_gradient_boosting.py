@@ -31,6 +31,7 @@ from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import KBinsDiscretizer, MinMaxScaler, OneHotEncoder
 from sklearn.utils import shuffle
 from sklearn.utils._openmp_helpers import _openmp_effective_n_threads
+from sklearn.utils._testing import _convert_container
 
 n_threads = _openmp_effective_n_threads()
 
@@ -1249,19 +1250,6 @@ def test_categorical_bad_encoding_errors(Est, use_pandas, feature_name):
     with pytest.raises(ValueError, match=msg):
         gb.fit(X, y)
 
-    if use_pandas:
-        X = pd.DataFrame({"f0": [0, 2]})
-    else:
-        X = np.array([[0, 2]]).T
-    y = np.arange(2)
-    msg = (
-        f"Categorical feature {feature_name} is expected to be encoded "
-        "with values < 2 but the largest value for the encoded categories "
-        "is 2."
-    )
-    with pytest.raises(ValueError, match=msg):
-        gb.fit(X, y)
-
     # nans are ignored in the counts
     X = np.array([[0, 1, np.nan]]).T
     y = np.arange(3)
@@ -1453,13 +1441,16 @@ def test_unknown_category_that_are_negative():
     assert_allclose(hist.predict(X_test_neg), hist.predict(X_test_nan))
 
 
+@pytest.mark.parametrize("dataframe_lib", ["pandas", "polars"])
 @pytest.mark.parametrize(
     "HistGradientBoosting",
     [HistGradientBoostingClassifier, HistGradientBoostingRegressor],
 )
-def test_pandas_categorical_results_same_as_ndarray(HistGradientBoosting):
+def test_dataframe_categorical_results_same_as_ndarray(
+    dataframe_lib, HistGradientBoosting
+):
     """Check that pandas categorical give the same results as ndarray."""
-    pd = pytest.importorskip("pandas")
+    pytest.importorskip(dataframe_lib)
 
     rng = np.random.RandomState(42)
     n_samples = 5_000
@@ -1472,9 +1463,12 @@ def test_pandas_categorical_results_same_as_ndarray(HistGradientBoosting):
     y = (f_cat % 3 == 0) & (f_num > 0.2)
 
     X = np.c_[f_num, f_cat]
-    X_df = pd.DataFrame(
-        {"f_num": f_num, "f_cat": pd.Series(f_cat, dtype="category")},
-        columns=["f_num", "f_cat"],
+    f_cat = [f"cat{c:0>3}" for c in f_cat]
+    X_df = _convert_container(
+        np.asarray([f_num, f_cat]).T,
+        dataframe_lib,
+        ["f_num", "f_cat"],
+        categorical_feature_names=["f_cat"],
     )
 
     X_train, X_test, X_train_df, X_test_df, y_train, y_test = train_test_split(
@@ -1489,7 +1483,7 @@ def test_pandas_categorical_results_same_as_ndarray(HistGradientBoosting):
     hist_pd.fit(X_train_df, y_train)
 
     # Check categories are correct and sorted
-    categories = hist_pd._preprocessor.named_transformers_["encoder"].categories[0]
+    categories = hist_pd._preprocessor.named_transformers_["encoder"].categories_[0]
     assert_array_equal(categories, np.unique(f_cat))
 
     assert len(hist_np._predictors) == len(hist_pd._predictors)
@@ -1502,29 +1496,32 @@ def test_pandas_categorical_results_same_as_ndarray(HistGradientBoosting):
     assert_allclose(hist_np.predict(X_test), hist_pd.predict(X_test_df))
 
 
+@pytest.mark.parametrize("dataframe_lib", ["pandas", "polars"])
 @pytest.mark.parametrize(
     "HistGradientBoosting",
     [HistGradientBoostingClassifier, HistGradientBoostingRegressor],
 )
-def test_pandas_categorical_errors(HistGradientBoosting):
+def test_dataframe_categorical_errors(dataframe_lib, HistGradientBoosting):
     """Check error cases for pandas categorical feature."""
-    pd = pytest.importorskip("pandas")
-
+    pytest.importorskip(dataframe_lib)
     msg = "Categorical feature 'f_cat' is expected to have a cardinality <= 16"
     hist = HistGradientBoosting(categorical_features="from_dtype", max_bins=16)
 
     rng = np.random.RandomState(42)
-    f_cat = rng.randint(0, high=100, size=100)
-    X_df = pd.DataFrame({"f_cat": pd.Series(f_cat, dtype="category")})
+    f_cat = rng.randint(0, high=100, size=100).astype(str)
+    X_df = _convert_container(
+        f_cat[:, None], dataframe_lib, ["f_cat"], categorical_feature_names=["f_cat"]
+    )
     y = rng.randint(0, high=2, size=100)
 
     with pytest.raises(ValueError, match=msg):
         hist.fit(X_df, y)
 
 
-def test_categorical_different_order_same_model():
+@pytest.mark.parametrize("dataframe_lib", ["pandas", "polars"])
+def test_categorical_different_order_same_model(dataframe_lib):
     """Check that the order of the categorical gives same model."""
-    pd = pytest.importorskip("pandas")
+    pytest.importorskip(dataframe_lib)
     rng = np.random.RandomState(42)
     n_samples = 1_000
     f_ints = rng.randint(low=0, high=2, size=n_samples)
@@ -1535,12 +1532,20 @@ def test_categorical_different_order_same_model():
     y[flipped] = 1 - y[flipped]
 
     # Construct categorical where 0 -> A and 1 -> B and 1 -> A and 0 -> B
-    f_cat = pd.Categorical(f_ints)
-    f_cat_a_b = f_cat.rename_categories({0: "A", 1: "B"})
-    f_cat_b_a = f_cat.rename_categories({0: "B", 1: "A"})
-
-    df_a_b = pd.DataFrame({"f_cat": f_cat_a_b})
-    df_b_a = pd.DataFrame({"f_cat": f_cat_b_a})
+    f_cat_a_b = np.asarray(["A", "B"])[f_ints]
+    f_cat_b_a = np.asarray(["B", "A"])[f_ints]
+    df_a_b = _convert_container(
+        f_cat_a_b[:, None],
+        dataframe_lib,
+        ["f_cat"],
+        categorical_feature_names=["f_cat"],
+    )
+    df_b_a = _convert_container(
+        f_cat_b_a[:, None],
+        dataframe_lib,
+        ["f_cat"],
+        categorical_feature_names=["f_cat"],
+    )
 
     hist_a_b = HistGradientBoostingClassifier(
         categorical_features="from_dtype", random_state=0
@@ -1559,7 +1564,14 @@ def test_categorical_different_order_same_model():
 
 # TODO(1.6): Remove warning and change default in 1.6
 def test_categorical_features_warn():
-    """Raise warning when there are categorical features in the input DataFrame."""
+    """Raise warning when there are categorical features in the input DataFrame.
+
+    This is not tested for polars because polars categories must always be
+    strings and strings can only be handled as categories. Therefore the
+    situation in which a categorical column is currently being treated as
+    numbers and in the future will be treated as categories cannot occur with
+    polars.
+    """
     pd = pytest.importorskip("pandas")
     X = pd.DataFrame({"a": pd.Series([1, 2, 3], dtype="category"), "b": [4, 5, 6]})
     y = [0, 1, 0]
