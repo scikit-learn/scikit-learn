@@ -253,6 +253,14 @@ Changelog
   with `np.int64` indices are not supported.
   :pr:`27240` by :user:`Yao Xiao <Charlie-XIAO>`.
 
+:mod:`sklearn.cross_decomposition`
+...................................
+
+- |MajorFeature| Added :class:`cross_decomposition.RidgeCCA`, a new class implementing
+  Ridge CCA (RidgeCCA). This feature extends the CCA and PLS family by
+  introducing tunable l2 regularization.
+  See :pr:`27878` by :user:`James Chapman <jameschapman19>`.
+
 :mod:`sklearn.datasets`
 .......................
 
