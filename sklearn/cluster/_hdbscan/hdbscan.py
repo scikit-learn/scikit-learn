@@ -41,7 +41,7 @@ from warnings import warn
 import numpy as np
 from scipy.sparse import csgraph, issparse
 
-from ...base import BaseEstimator, ClusterMixin
+from ...base import BaseEstimator, ClusterMixin, _fit_context
 from ...metrics import pairwise_distances
 from ...metrics._dist_metrics import DistanceMetric
 from ...neighbors import BallTree, KDTree, NearestNeighbors
@@ -680,6 +680,10 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
         self.store_centers = store_centers
         self.copy = copy
 
+    @_fit_context(
+        # HDBSCAN.metric is not validated yet
+        prefer_skip_nested_validation=False
+    )
     def fit(self, X, y=None):
         """Find clusters based on hierarchical density-based clustering.
 
@@ -698,7 +702,6 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
         self : object
             Returns self.
         """
-        self._validate_params()
         if self.metric == "precomputed" and self.store_centers is not None:
             raise ValueError(
                 "Cannot store centers when using a precomputed distance matrix."
