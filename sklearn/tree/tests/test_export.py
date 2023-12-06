@@ -390,9 +390,9 @@ def test_export_text():
 
     expected_report = dedent("""
     |--- feature_1 <= 0.00
-    |   |--- weights: [1.00, 0.00] class: -1
+    |   |--- weights: [3.00, 0.00] class: -1
     |--- feature_1 >  0.00
-    |   |--- weights: [0.00, 1.00] class: 1
+    |   |--- weights: [0.00, 3.00] class: 1
     """).lstrip()
     assert export_text(clf, show_weights=True) == expected_report
 

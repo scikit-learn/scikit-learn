@@ -1073,14 +1073,17 @@ def export_text(
 
     export_text.report = ""
 
-    def _add_leaf(value, class_name, indent):
+    def _add_leaf(value, weighted_n_node_samples, class_name, indent):
         val = ""
-        is_classification = isinstance(decision_tree, DecisionTreeClassifier)
-        if show_weights or not is_classification:
+        if isinstance(decision_tree, DecisionTreeClassifier):
+            if show_weights:
+                val = ["{1:.{0}f}, ".format(decimals, v * weighted_n_node_samples) for v in value]
+                val = "[" + "".join(val)[:-2] + "]"
+                weighted_n_node_samples
+            val += " class: " + str(class_name)
+        else:
             val = ["{1:.{0}f}, ".format(decimals, v) for v in value]
             val = "[" + "".join(val)[:-2] + "]"
-        if is_classification:
-            val += " class: " + str(class_name)
         export_text.report += value_fmt.format(indent, "", val)
 
     def print_tree_recurse(node, depth):
@@ -1096,6 +1099,8 @@ def export_text(
 
         if tree_.n_classes[0] != 1 and tree_.n_outputs == 1:
             class_name = class_names[class_name]
+
+        weighted_n_node_samples = tree_.weighted_n_node_samples[node]
 
         if depth <= max_depth + 1:
             info_fmt = ""
@@ -1114,11 +1119,11 @@ def export_text(
                 export_text.report += info_fmt_right
                 print_tree_recurse(tree_.children_right[node], depth + 1)
             else:  # leaf
-                _add_leaf(value, class_name, indent)
+                _add_leaf(value, weighted_n_node_samples, class_name, indent)
         else:
             subtree_depth = _compute_depth(tree_, node)
             if subtree_depth == 1:
-                _add_leaf(value, class_name, indent)
+                _add_leaf(value, weighted_n_node_samples, class_name, indent)
             else:
                 trunc_report = "truncated branch of depth %d" % subtree_depth
                 export_text.report += truncation_fmt.format(indent, trunc_report)
