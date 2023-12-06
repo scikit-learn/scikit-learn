@@ -684,5 +684,4 @@ def test_rmse_rmsle_parameter(old_func, new_func):
     [check_array_api_compute_metric],
 )
 def test_r2_score_array_api_compliance(check, array_namespace, _device, dtype):
-    name = r2_score.__class__.__name__
-    check(name, r2_score, array_namespace, _device=_device, dtype=dtype)
+    check(r2_score, array_namespace, _device=_device, dtype=dtype)

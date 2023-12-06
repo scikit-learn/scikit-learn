@@ -1,7 +1,7 @@
 """Tools to support array_api."""
 import itertools
 import math
-from functools import lru_cache, wraps
+from functools import wraps
 
 import numpy
 import scipy.special as special
@@ -92,7 +92,9 @@ def device(*array_list):
 
     devices = set()
     for array in array_list:
-        if isinstance(array, (numpy.ndarray, numpy.generic)):
+        if isinstance(array, (numpy.ndarray, numpy.generic)) or not hasattr(
+            array, "device"
+        ):
             devices.add("cpu")
         else:
             devices.add(array.device)
@@ -178,7 +180,6 @@ def _isdtype_single(dtype, kind, *, xp):
         return dtype == kind
 
 
-@lru_cache
 def _supports_dtype(xp, device, dtype):
     if not hasattr(xp, dtype):
         return False
@@ -186,7 +187,7 @@ def _supports_dtype(xp, device, dtype):
     dtype = getattr(xp, dtype)
 
     try:
-        array = xp.ones((1,), device=device, dype=dtype)
+        array = xp.ones((1,), device=device, dtype=dtype)
         array += array
         float(array[0])
     except Exception:
@@ -195,7 +196,6 @@ def _supports_dtype(xp, device, dtype):
     return True
 
 
-@lru_cache
 def supported_float_dtypes(xp, device=None):
     """Supported floating point types for the namespace
 
@@ -533,9 +533,9 @@ def _weighted_sum(sample_score, sample_weight, normalize=False, xp=None):
 
     cast_to_float64 = len(dtype_kinds) > 1
 
-    if cast_to_float64 and not _supports_dtype(xp, device, "float64"):
-        sample_score = numpy.from_dlpack(sample_score)
-        sample_weight = numpy.from_dlpack(sample_weight)
+    if cast_to_float64 and not _supports_dtype(xp, device_, "float64"):
+        sample_score = numpy.from_dlpack(sample_score, copy=True)
+        sample_weight = numpy.from_dlpack(sample_weight, copy=True)
         return _weighted_sum(sample_score, sample_weight, normalize=normalize)
 
     if cast_to_float64:
@@ -553,7 +553,7 @@ def _average(array, axis=None, weights=None, xp=None):
     if xp is None:
         xp, _ = get_namespace(array)
     if _is_numpy_namespace(xp):
-        return numpy.average(array, axis=axis, weights=weights)
+        return xp.asarray(numpy.average(array, axis=axis, weights=weights))
 
     if (
         not xp.isdtype(array.dtype, "real floating")

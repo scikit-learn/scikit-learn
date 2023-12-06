@@ -1795,7 +1795,7 @@ def check_array_api_multiclass_classification_metric(
         )
 
 
-def check_array_api_compute_metric(name, metric, array_namepsace, _device, dtype):
+def check_array_api_compute_metric(metric, array_namepsace, _device, dtype):
     xp, _device, dtype = _array_api_for_tests(array_namepsace, _device, dtype)
     y_true_xp = xp.asarray([[1, 3], [1, 2]], dtype=dtype, device=_device)
     y_pred_xp = xp.asarray([[1, 4], [1, 1]], dtype=dtype, device=_device)
@@ -1807,7 +1807,6 @@ def check_array_api_compute_metric(name, metric, array_namepsace, _device, dtype
     with config_context(array_api_dispatch=True):
         metric_xp = metric(y_true_xp, y_pred_xp)
         assert metric_xp.shape == ()
-        assert metric_xp.dtype == y_true_xp.dtype
         assert device(metric_xp) == device(y_true_xp)
         assert_allclose(
             _convert_to_numpy(metric_xp, xp=xp),

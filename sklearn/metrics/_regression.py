@@ -36,7 +36,6 @@ from scipy.special import xlogy
 from ..exceptions import UndefinedMetricWarning
 from ..utils._array_api import (
     _average,
-    _is_numpy_namespace,
     _supports_dtype,
     device,
     get_namespace,
@@ -874,7 +873,7 @@ def _assemble_r2_explained_variance(
 ):
     """Common part used by explained variance score and :math:`R^2` score."""
     if xp is None:
-        input_arrays = numerator, denominator
+        input_arrays = [numerator, denominator]
         if multioutput is not None and not isinstance(multioutput, str):
             input_arrays.append(multioutput)
         xp, _ = get_namespace(*input_arrays)
@@ -1206,15 +1205,15 @@ def r2_score(
     if sample_weight is not None:
         input_arrays.append(sample_weight)
 
-    if multioutput is not None and not isinstance(multioutput, str):
-        multioutput_is_array = True
+    multioutput_is_array = multioutput is not None and not isinstance(multioutput, str)
+    if multioutput_is_array:
         input_arrays.append(multioutput)
 
-    xp, _ = get_namespace(*input_arrays)
+    xp, is_array_api_compliant = get_namespace(*input_arrays)
     input_xp = xp
     device_ = device(*input_arrays)
 
-    if not _supports_dtype(xp, device, "float64"):
+    if not _supports_dtype(xp, device_, "float64"):
         y_true = np.from_dlpack(y_true)
         y_pred = np.from_dlpack(y_pred)
         if sample_weight is not None:
@@ -1223,7 +1222,9 @@ def r2_score(
             multioutput = np.from_dlpack(multioutput)
         xp, _ = get_namespace(y_true)
 
-    dtype = "numeric" if _is_numpy_namespace(xp) else supported_float_dtypes(xp, device)
+    dtype = (
+        "numeric" if not is_array_api_compliant else supported_float_dtypes(xp, device_)
+    )
 
     y_type, y_true, y_pred, multioutput = _check_reg_targets(
         y_true, y_pred, multioutput, dtype=dtype, xp=xp
@@ -1243,7 +1244,7 @@ def r2_score(
 
     numerator = xp.sum(weight * (y_true - y_pred) ** 2, axis=0, dtype=xp.float64)
     denominator = xp.sum(
-        weight * (y_true - _average(y_true, axis=0, weights=sample_weight, xp=xp)),
+        weight * (y_true - _average(y_true, axis=0, weights=sample_weight, xp=xp)) ** 2,
         axis=0,
         dtype=xp.float64,
     )
@@ -1257,7 +1258,12 @@ def r2_score(
         xp=xp,
     )
 
-    return input_xp.asarray(result, device=device_)
+    result = input_xp.asarray(result, device=device_)
+    result = result.reshape((-1,))
+    if result.size == 1:
+        return result[0]
+
+    return result
 
 
 @validate_params(
