@@ -6,7 +6,6 @@ from numpy.testing import assert_allclose
 from scipy import optimize
 from scipy.special import factorial, xlogy
 
-from sklearn import datasets
 from sklearn.dummy import DummyRegressor
 from sklearn.exceptions import UndefinedMetricWarning
 from sklearn.metrics import (
@@ -28,16 +27,12 @@ from sklearn.metrics import (
     root_mean_squared_log_error,
 )
 from sklearn.metrics._regression import _check_reg_targets
-from sklearn.metrics.tests.test_common import check_array_api_compute_metric
 from sklearn.model_selection import GridSearchCV
-from sklearn.utils._array_api import yield_namespace_device_dtype_combinations
 from sklearn.utils._testing import (
     assert_almost_equal,
     assert_array_almost_equal,
     assert_array_equal,
 )
-
-iris = datasets.load_iris()
 
 
 def test_regression_metrics(n_samples=50):
@@ -674,14 +669,3 @@ def test_rmse_rmsle_parameter(old_func, new_func):
     )
     actual = new_func(y_true, y_pred, sample_weight=sw, multioutput="raw_values")
     assert_allclose(expected, actual)
-
-
-@pytest.mark.parametrize(
-    "array_namespace, _device, dtype", yield_namespace_device_dtype_combinations()
-)
-@pytest.mark.parametrize(
-    "check",
-    [check_array_api_compute_metric],
-)
-def test_r2_score_array_api_compliance(check, array_namespace, _device, dtype):
-    check(r2_score, array_namespace, _device=_device, dtype=dtype)
