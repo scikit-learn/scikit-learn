@@ -1077,7 +1077,10 @@ def export_text(
         val = ""
         if isinstance(decision_tree, DecisionTreeClassifier):
             if show_weights:
-                val = ["{1:.{0}f}, ".format(decimals, v * weighted_n_node_samples) for v in value]
+                val = [
+                    "{1:.{0}f}, ".format(decimals, v * weighted_n_node_samples)
+                    for v in value
+                ]
                 val = "[" + "".join(val)[:-2] + "]"
                 weighted_n_node_samples
             val += " class: " + str(class_name)
