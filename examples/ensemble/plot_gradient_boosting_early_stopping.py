@@ -28,6 +28,8 @@ applied, can be accessed using the `n_estimators_` attribute. Overall, early
 stopping is a valuable tool to strike a balance between model performance and
 efficiency in gradient boosting.
 
+License: BSD 3 clause
+
 """
 # %%
 # Data Preparation
@@ -35,8 +37,6 @@ efficiency in gradient boosting.
 # First we load and prepares the California Housing Prices dataset for
 # training and evaluation. It subsets the dataset, splits it into training
 # and validation sets.
-
-# License: BSD 3 clause
 
 import time
 
