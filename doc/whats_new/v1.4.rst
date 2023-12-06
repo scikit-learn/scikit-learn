@@ -269,6 +269,10 @@ Changelog
   value instead.
   :pr:`27828` by :user:`Guillaume Lemaitre <glemaitre>`.
 
+- |Fix| Raises a proper `ValueError` when `metric="precomputed"` and requested storing
+  centers via the parameter `store_centers`.
+  :pr:`27898` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 :mod:`sklearn.compose`
 ......................
 
