@@ -167,12 +167,6 @@ cdef class Criterion:
         """
         pass
 
-    # cdef float64_t sum_left_(self) noexcept nogil:
-    #     pass
-    # cdef float64_t sum_right_(self) noexcept nogil:
-    #     pass
-    # cdef float64_t sum_missing_(self) noexcept nogil:
-    #     pass
     cdef float64_t proxy_impurity_improvement(self) noexcept nogil:
         """Compute a proxy of the impurity reduction.
 
