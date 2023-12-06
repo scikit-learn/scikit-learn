@@ -18,7 +18,7 @@ particular, we will evaluate:
   category support <categorical_support_gbdt>` of the
   :class:`~ensemble.HistGradientBoostingRegressor` estimator.
 
-We will work with the Ames Lowa Housing dataset which consists of numerical
+We will work with the Ames Iowa Housing dataset which consists of numerical
 and categorical features, where the houses' sales prices is the target.
 
 """
