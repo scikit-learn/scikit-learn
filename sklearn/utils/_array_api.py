@@ -79,8 +79,8 @@ def device(*array_list):
 
     Parameters
     ----------
-    x : array
-        Array instance from NumPy or an array API compatible library.
+    *array_list : arrays
+        List of array instances from NumPy or an array API compatible library.
 
     Returns
     -------
@@ -207,7 +207,7 @@ def supported_float_dtypes(xp, device=None):
     """
     return tuple(
         getattr(xp, dtype)
-        for dtype in ["float16", "float32", "float64"]
+        for dtype in ["float64", "float32", "float16"]
         if _supports_dtype(xp, device, dtype)
     )
 
@@ -548,12 +548,21 @@ def _weighted_sum(sample_score, sample_weight, normalize=False, xp=None):
     return float(sample_score @ sample_weight)
 
 
+def _flatten_if_single(array, xp):
+    if array.size == 1:
+        return xp.reshape(array, (-1,))[0]
+
+    return array
+
+
 def _average(array, axis=None, weights=None, xp=None):
     """Port of np.average to support the Array API."""
     if xp is None:
         xp, _ = get_namespace(array)
     if _is_numpy_namespace(xp):
-        return xp.asarray(numpy.average(array, axis=axis, weights=weights))
+        return _flatten_if_single(
+            xp.asarray(numpy.average(array, axis=axis, weights=weights)), xp
+        )
 
     if (
         not xp.isdtype(array.dtype, "real floating")
@@ -565,7 +574,7 @@ def _average(array, axis=None, weights=None, xp=None):
         )
 
     if weights is None:
-        return xp.mean(array, axis=axis)
+        return _flatten_if_single(xp.mean(array, axis=axis), xp)
 
     # Sanity checks
     if array.shape != weights.shape:
@@ -587,7 +596,9 @@ def _average(array, axis=None, weights=None, xp=None):
     if xp.any(scale == 0.0):
         raise ZeroDivisionError("Weights sum to zero, can't be normalized")
 
-    return xp.sum(xp.multiply(array, weights), axis=axis) / scale
+    return _flatten_if_single(
+        xp.sum(xp.multiply(array, weights), axis=axis) / scale, xp
+    )
 
 
 def _nanmin(X, axis=None):
