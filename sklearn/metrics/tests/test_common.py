@@ -1741,14 +1741,14 @@ def check_array_api_metric(
     if dtype is not None:
         dtype = getattr(xp, dtype)
 
-    y_true_xp = xp.asarray(y_true_np, device=device, dtype=xp.dtype)
-    y_pred_xp = xp.asarray(y_pred_np, device=device, dtype=xp.dtype)
+    y_true_xp = xp.asarray(y_true_np, device=device, dtype=dtype)
+    y_pred_xp = xp.asarray(y_pred_np, device=device, dtype=dtype)
 
     metric_np = metric(y_true_np, y_pred_np, sample_weight=sample_weight)
 
     with config_context(array_api_dispatch=True):
         if sample_weight is not None:
-            sample_weight = xp.asarray(sample_weight, device=device, dtype=xp.dtype)
+            sample_weight = xp.asarray(sample_weight, device=device, dtype=dtype)
         metric_xp = metric(y_true_xp, y_pred_xp, sample_weight=sample_weight)
 
         assert_allclose(
