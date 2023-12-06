@@ -567,6 +567,12 @@ Changelog
   object in the parameter grid if it's an estimator. :pr:`26786` by `Adrin
   Jalali`_.
 
+:mod:`sklearn.multioutput`
+..........................
+
+- |Enhancement| Add method `predict_log_proba` to :class:`multioutput.ClassifierChain`.
+  :pr:`27720` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 :mod:`sklearn.neighbors`
 ........................
 
