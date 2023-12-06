@@ -350,9 +350,14 @@ Changelog
 
 - |MajorFeature| :class:`ensemble.HistGradientBoostingClassifier` and
   :class:`ensemble.HistGradientBoostingRegressor` supports
-  `categorical_features="from_dtype"`, which treats columns with Pandas Categorical
-  dtype as categories in the algorithm. `categorical_features="from_dtype"` will become
-  the default in v1.6. :pr:`26411` by `Thomas Fan`_.
+  `categorical_features="from_dtype"`, which treats columns with Pandas or
+  Polars Categorical dtype as categories in the algorithm.
+  `categorical_features="from_dtype"` will become the default in v1.6.
+  Categorical features no longer need to be encoded with numbers. When
+  categorical features are numbers, the maximum value no longer needs to be
+  smaller than `max_bins`; only the number of (unique) categories must be
+  smaller than `max_bins`. :pr:`26411` by `Thomas Fan`_ and :pr:`27835` by
+  :user:`Jérôme Dockès <jeromedockes>`.
 
 - |MajorFeature| :class:`ensemble.HistGradientBoostingClassifier` and
   :class:`ensemble.HistGradientBoostingRegressor` got the new parameter
@@ -408,6 +413,12 @@ Changelog
   :class:`ensemble.ExtraTreesRegressor` when requesting OOB score with multioutput model
   for the targets being all rounded to integer. It was recognized as a multiclass problem.
   :pr:`27817` by :user:`Daniele Ongari <danieleongari>`
+
+- |Fix| Changes estimator tags to acknowledge that
+  :class:`ensemble.VotingClassifier`, :class:`ensemble.VotingRegressor`,
+  :class:`ensemble.StackingClassifier`, :class:`ensemble.StackingRegressor`,
+  support missing values if all `estimators` support missing values.
+  :pr:`27710` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 :mod:`sklearn.feature_selection`
 ................................
@@ -555,6 +566,12 @@ Changelog
   :class:`model_selection.HalvingGridSearchCV` now don't change the given
   object in the parameter grid if it's an estimator. :pr:`26786` by `Adrin
   Jalali`_.
+
+:mod:`sklearn.multioutput`
+..........................
+
+- |Enhancement| Add method `predict_log_proba` to :class:`multioutput.ClassifierChain`.
+  :pr:`27720` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 :mod:`sklearn.neighbors`
 ........................
