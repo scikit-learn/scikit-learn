@@ -271,14 +271,15 @@ class _BaseTreeExporter:
                 # Find max and min values in leaf nodes for regression
                 self.colors["bounds"] = (np.min(tree.value), np.max(tree.value))
         if tree.n_outputs == 1:
-            node_val = tree.value[node_id][0, :] / tree.weighted_n_node_samples[node_id]
-            if tree.n_classes[0] == 1:
-                # Regression or degraded classification with single class
-                node_val = tree.value[node_id][0, :]
-                if isinstance(node_val, Iterable) and self.colors["bounds"] is not None:
-                    # Only unpack the float only for the regression tree case.
-                    # Classification tree requires an Iterable in `get_color`.
-                    node_val = node_val.item()
+            node_val = tree.value[node_id][0, :]
+            if (
+                tree.n_classes[0] == 1
+                and isinstance(node_val, Iterable)
+                and self.colors["bounds"] is not None
+            ):
+                # Unpack the float only for the regression tree case.
+                # Classification tree requires an Iterable in `get_color`.
+                node_val = node_val.item()
         else:
             # If multi-output color node by impurity
             node_val = -tree.impurity[node_id]
@@ -347,9 +348,9 @@ class _BaseTreeExporter:
             node_string += str(tree.n_node_samples[node_id]) + characters[4]
 
         # Write node class distribution / regression value
-        if self.proportion and tree.n_classes[0] != 1:
+        if not self.proportion and tree.n_classes[0] != 1:
             # For classification this will show the proportion of samples
-            value = value / tree.weighted_n_node_samples[node_id]
+            value = value * tree.weighted_n_node_samples[node_id]
         if labels:
             node_string += "value = "
         if tree.n_classes[0] == 1:
