@@ -1738,17 +1738,16 @@ def check_array_api_metric(
     metric, array_namespace, device, dtype, y_true_np, y_pred_np, sample_weight=None
 ):
     xp, device, dtype = _array_api_for_tests(array_namespace, device, dtype)
-    if dtype is not None:
-        dtype = getattr(xp, dtype)
+    dtype_ = None if dtype is None else getattr(xp, dtype)
 
-    y_true_xp = xp.asarray(y_true_np, device=device, dtype=dtype)
-    y_pred_xp = xp.asarray(y_pred_np, device=device, dtype=dtype)
+    y_true_xp = xp.asarray(y_true_np, device=device, dtype=dtype_)
+    y_pred_xp = xp.asarray(y_pred_np, device=device, dtype=dtype_)
 
     metric_np = metric(y_true_np, y_pred_np, sample_weight=sample_weight)
 
     with config_context(array_api_dispatch=True):
         if sample_weight is not None:
-            sample_weight = xp.asarray(sample_weight, device=device, dtype=dtype)
+            sample_weight = xp.asarray(sample_weight, device=device, dtype=dtype_)
         metric_xp = metric(y_true_xp, y_pred_xp, sample_weight=sample_weight)
 
         assert_allclose(
@@ -1800,10 +1799,10 @@ def check_array_api_multiclass_classification_metric(
 
 def check_array_api_compute_metric(metric, array_namepsace, _device, dtype):
     xp, _device, dtype = _array_api_for_tests(array_namepsace, _device, dtype)
-    if dtype is not None:
-        dtype = getattr(xp, dtype)
-    y_true_xp = xp.asarray([[1, 3], [1, 2]], dtype=dtype, device=_device)
-    y_pred_xp = xp.asarray([[1, 4], [1, 1]], dtype=dtype, device=_device)
+    dtype_ = None if dtype is None else getattr(xp, dtype)
+
+    y_true_xp = xp.asarray([[1, 3], [1, 2]], dtype=dtype_, device=_device)
+    y_pred_xp = xp.asarray([[1, 4], [1, 1]], dtype=dtype_, device=_device)
 
     y_true_np = _convert_to_numpy(y_true_xp, xp)
     y_pred_np = _convert_to_numpy(y_pred_xp, xp)
