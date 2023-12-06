@@ -883,7 +883,7 @@ class _BaseRidge(LinearModel, metaclass=ABCMeta):
         X, y, X_offset, y_offset, X_scale = _preprocess_data(
             X,
             y,
-            self.fit_intercept,
+            fit_intercept=self.fit_intercept,
             copy=self.copy_X,
             sample_weight=sample_weight,
         )
@@ -2008,7 +2008,7 @@ class _RidgeGCV(LinearModel):
         X, y, X_offset, y_offset, X_scale = _preprocess_data(
             X,
             y,
-            self.fit_intercept,
+            fit_intercept=self.fit_intercept,
             copy=self.copy_X,
             sample_weight=sample_weight,
         )
