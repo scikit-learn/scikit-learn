@@ -575,7 +575,7 @@ cdef class ClassificationCriterion(Criterion):
                 dest[c] = self.sum_total[k, c] / self.weighted_n_node_samples
             dest += self.max_n_classes
 
-    cdef void clip_node_value(
+    cdef inline void clip_node_value(
         self, float64_t * dest, float64_t lower_bound, float64_t upper_bound
     ) noexcept nogil:
         """Clip the values in dest such that predicted probabilities stay between
