@@ -11,12 +11,12 @@ requires = [
     "numpy>=1.25; python_version>='3.9'",
     "oldest-supported-numpy; python_version<'3.9'",
 
-    "scipy>=1.5.0",
+    "scipy>=1.5.2",
 ]
 
 [tool.black]
 line-length = 88
-target_version = ['py38', 'py39', 'py310']
+target_version = ['py39', 'py310', 'py311', 'py312']
 preview = true
 exclude = '''
 /(
