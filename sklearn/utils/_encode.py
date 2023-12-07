@@ -57,12 +57,27 @@ def _unique(values, *, return_inverse=False, return_counts=False):
 
 def _unique_pandas(values, *, return_counts=False):
     if return_counts:
-        value_counts = values.value_counts(dropna=False, sort=False).sort_index()
+        value_counts = values.value_counts(dropna=False, sort=False)
+        # sort categorical columns in lexical order to be consistent with order
+        # obtained when sorting after conversion to numpy array
+        try:
+            value_counts.index = value_counts.index.reorder_categories(
+                value_counts.index.categories.sort_values()
+            )
+        except AttributeError:
+            pass
+        value_counts = value_counts.sort_index()
         return value_counts.index.to_numpy(), value_counts.to_numpy()
     unique = values.unique()
     # unique returns a NumpyExtensionArray for extension dtypes and a numpy
     # array for other dtypes
     if hasattr(unique, "sort_values"):
+        # sort categorical columns in lexical order to be consistent with order
+        # obtained when sorting after conversion to numpy array
+        try:
+            unique = unique.reorder_categories(unique.categories.sort_values())
+        except AttributeError:
+            pass
         return unique.sort_values().to_numpy()
     if unique.dtype != object:
         return np.sort(unique)
