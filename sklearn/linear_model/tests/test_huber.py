@@ -226,6 +226,6 @@ def test_huber_convergence_failure():
     """
     X = np.array([10, 11, 28]).reshape(-1, 1)
     y = np.log(np.array([5000.0, 5000.0, 5000.0]))
-    sample_weights = np.array([2.0, 2.0, 2000.0])
+    sample_weight = np.array([2.0, 2.0, 2000.0])
     with pytest.warns(ConvergenceWarning):
         HuberRegressor().fit(X, y, sample_weight=sample_weight)
