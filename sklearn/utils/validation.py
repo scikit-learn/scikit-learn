@@ -2026,6 +2026,16 @@ def _is_pandas_df(X):
     return False
 
 
+def _is_pandas_series(x):
+    if hasattr(x, "iloc") and hasattr(x, "dtype"):
+        try:
+            pd = sys.modules["pandas"]
+        except KeyError:
+            return False
+        return isinstance(x, pd.Series)
+    return False
+
+
 def _is_polars_df(X):
     """Return True if the X is a polars dataframe."""
     if hasattr(X, "columns") and hasattr(X, "schema"):
@@ -2035,6 +2045,16 @@ def _is_polars_df(X):
         except KeyError:
             return False
         return isinstance(X, pl.DataFrame)
+    return False
+
+
+def _is_polars_series(x):
+    if hasattr(x, "gather"):
+        try:
+            pl = sys.modules["polars"]
+        except KeyError:
+            return False
+        return isinstance(x, pl.Series)
     return False
 
 

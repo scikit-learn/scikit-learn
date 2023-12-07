@@ -4,7 +4,8 @@ from typing import NamedTuple
 
 import numpy as np
 
-from . import is_scalar_nan
+from ..utils import is_scalar_nan
+from ..utils.validation import _is_pandas_series, _is_polars_series
 
 
 def _unique(values, *, return_inverse=False, return_counts=False):
@@ -38,6 +39,12 @@ def _unique(values, *, return_inverse=False, return_counts=False):
         The number of times each of the unique values comes up in the original
         array. Only provided if `return_counts` is True.
     """
+    if not return_inverse:
+        if _is_pandas_series(values):
+            return _unique_pandas(values, return_counts=return_counts)
+        if _is_polars_series(values):
+            return _unique_polars(values, return_counts=return_counts)
+    values = np.asarray(values)
     if values.dtype == object:
         return _unique_python(
             values, return_inverse=return_inverse, return_counts=return_counts
@@ -46,6 +53,64 @@ def _unique(values, *, return_inverse=False, return_counts=False):
     return _unique_np(
         values, return_inverse=return_inverse, return_counts=return_counts
     )
+
+
+def _unique_pandas(values, *, return_counts=False):
+    if return_counts:
+        value_counts = values.value_counts(dropna=False, sort=False).sort_index()
+        return value_counts.index.to_numpy(), value_counts.to_numpy()
+    unique = values.unique()
+    # unique returns a NumpyExtensionArray for extension dtypes and a numpy
+    # array for other dtypes
+    if hasattr(unique, "sort_values"):
+        return unique.sort_values().to_numpy()
+    if unique.dtype != object:
+        return np.sort(unique)
+    return _unique_python(unique, return_counts=False, return_inverse=False)
+
+
+def _polars_arg_sort(values):
+    # polars categorical variables may use physical ordering (order by the
+    # encoded value), here we want to sort by lexical order (the category's
+    # value) to be consistent with other containers
+    #
+    # we rely on arg_sort because it hase the nulls_last parameter whereas sort
+    # does not
+    try:
+        values = values.cat.set_ordering("lexical")
+    except Exception:
+        # non-categorical dtype, ordering does not apply
+        pass
+    return values.arg_sort(nulls_last=True)
+
+
+def _polars_merge_null_nan(values, counts=None):
+    # polars unique() may contain both null and NaN; after converting to numpy
+    # they are both np.nan so we remove the duplicate.
+    if len(values) < 2 or not is_scalar_nan(values[-2]):
+        if counts is None:
+            return values
+        else:
+            return values, counts
+    values = values[:-1]
+    if counts is None:
+        return values
+    counts = counts.copy()
+    counts[-2] += counts[-1]
+    counts = counts[:-1]
+    return values, counts
+
+
+def _unique_polars(values, *, return_counts=False):
+    if return_counts:
+        value_counts = values.value_counts(sort=False)
+        order = _polars_arg_sort(value_counts[""])
+        values = value_counts[""].gather(order).to_numpy()
+        counts = value_counts["counts"].gather(order).to_numpy()
+        return _polars_merge_null_nan(values, counts)
+    unique = values.unique()
+    order = _polars_arg_sort(unique)
+    return _polars_merge_null_nan(unique.gather(order).to_numpy())
 
 
 def _unique_np(values, return_inverse=False, return_counts=False):
