@@ -680,10 +680,11 @@ def test_check_estimator():
     )
     with warnings.catch_warnings(record=True) as records:
         warnings.filterwarnings(
-            "error",
+            "always",
             category=DeprecationWarning,
             message=(
-                "is deprecated and will be removed in v1.13.0; use `X.format` instead."
+                "`getformat` is deprecated and will be removed in v1.13.0; use"
+                " `X.format` instead."
             ),
         )
         with raises(AssertionError, match=msg):
