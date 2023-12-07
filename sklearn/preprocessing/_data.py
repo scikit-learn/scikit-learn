@@ -156,8 +156,8 @@ def scale(X, *, axis=0, with_mean=True, with_std=True, copy=True):
 
     copy : bool, default=True
         If False, try to avoid a copy and scale in place.
-        This is not guaranteed to always work in place; e.g. if the data is 
-        a numpy array with an int dtype, a copy will be returned even with 
+        This is not guaranteed to always work in place; e.g. if the data is
+        a numpy array with an int dtype, a copy will be returned even with
         copy=False.
 
     Returns
