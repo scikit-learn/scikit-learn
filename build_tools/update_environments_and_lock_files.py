@@ -280,7 +280,7 @@ conda_build_metadata_list = [
         ],
         "pip_dependencies": ["sphinxext-opengraph"],
         "package_constraints": {
-            "python": "3.8",
+            "python": "3.9",
             "numpy": "min",
             "scipy": "min",
             "matplotlib": "min",

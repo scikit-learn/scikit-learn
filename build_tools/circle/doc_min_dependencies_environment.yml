@@ -4,7 +4,7 @@
 channels:
   - conda-forge
 dependencies:
-  - python=3.8
+  - python=3.9
   - numpy=1.19.5  # min
   - blas
   - scipy=1.5.2  # min
@@ -18,7 +18,7 @@ dependencies:
   - pytest-xdist=2.5.0
   - pillow
   - setuptools
-  - scikit-image=0.16.2  # min
+  - scikit-image=0.17.2  # min
   - seaborn
   - memory_profiler
   - compilers
