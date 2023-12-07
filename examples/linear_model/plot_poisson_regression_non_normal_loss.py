@@ -32,7 +32,7 @@ policyholders.
 
 .. [1]  A. Noll, R. Salzmann and M.V. Wuthrich, Case Study: French Motor
     Third-Party Liability Claims (November 8, 2018). `doi:10.2139/ssrn.3164764
-    <http://dx.doi.org/10.2139/ssrn.3164764>`_
+    <https://doi.org/10.2139/ssrn.3164764>`_
 
 """
 
@@ -53,7 +53,7 @@ import pandas as pd
 # https://www.openml.org/d/41214
 from sklearn.datasets import fetch_openml
 
-df = fetch_openml(data_id=41214, as_frame=True, parser="pandas").frame
+df = fetch_openml(data_id=41214, as_frame=True).frame
 df
 
 # %%
@@ -209,7 +209,7 @@ score_estimator(dummy, df_test)
 # ---------------------------
 #
 # We start by modeling the target variable with the (l2 penalized) least
-# squares linear regression model, more comonly known as Ridge regression. We
+# squares linear regression model, more commonly known as Ridge regression. We
 # use a low penalization `alpha`, as we expect such a linear model to under-fit
 # on such a large dataset.
 

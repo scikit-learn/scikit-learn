@@ -1,6 +1,5 @@
 import numpy as np
 import pytest
-import scipy.sparse
 
 from sklearn.datasets import make_classification, make_regression
 from sklearn.ensemble import (
@@ -15,6 +14,8 @@ from sklearn.tree import (
     ExtraTreeClassifier,
     ExtraTreeRegressor,
 )
+from sklearn.utils._testing import assert_allclose
+from sklearn.utils.fixes import CSC_CONTAINERS
 
 TREE_CLASSIFIER_CLASSES = [DecisionTreeClassifier, ExtraTreeClassifier]
 TREE_REGRESSOR_CLASSES = [DecisionTreeRegressor, ExtraTreeRegressor]
@@ -31,8 +32,13 @@ TREE_BASED_REGRESSOR_CLASSES = TREE_REGRESSOR_CLASSES + [
 @pytest.mark.parametrize("TreeClassifier", TREE_BASED_CLASSIFIER_CLASSES)
 @pytest.mark.parametrize("depth_first_builder", (True, False))
 @pytest.mark.parametrize("sparse_splitter", (True, False))
+@pytest.mark.parametrize("csc_container", CSC_CONTAINERS)
 def test_monotonic_constraints_classifications(
-    TreeClassifier, depth_first_builder, sparse_splitter, global_random_seed
+    TreeClassifier,
+    depth_first_builder,
+    sparse_splitter,
+    global_random_seed,
+    csc_container,
 ):
     n_samples = 1000
     n_samples_train = 900
@@ -70,25 +76,36 @@ def test_monotonic_constraints_classifications(
     if hasattr(est, "n_estimators"):
         est.set_params(**{"n_estimators": 5})
     if sparse_splitter:
-        X_train = scipy.sparse.csc_matrix(X_train)
+        X_train = csc_container(X_train)
     est.fit(X_train, y_train)
-    y = est.predict_proba(X_test)[:, 1]
+    proba_test = est.predict_proba(X_test)
+
+    assert np.logical_and(
+        proba_test >= 0.0, proba_test <= 1.0
+    ).all(), "Probability should always be in [0, 1] range."
+    assert_allclose(proba_test.sum(axis=1), 1.0)
 
     # Monotonic increase constraint, it applies to the positive class
-    assert np.all(est.predict_proba(X_test_0incr)[:, 1] >= y)
-    assert np.all(est.predict_proba(X_test_0decr)[:, 1] <= y)
+    assert np.all(est.predict_proba(X_test_0incr)[:, 1] >= proba_test[:, 1])
+    assert np.all(est.predict_proba(X_test_0decr)[:, 1] <= proba_test[:, 1])
 
     # Monotonic decrease constraint, it applies to the positive class
-    assert np.all(est.predict_proba(X_test_1incr)[:, 1] <= y)
-    assert np.all(est.predict_proba(X_test_1decr)[:, 1] >= y)
+    assert np.all(est.predict_proba(X_test_1incr)[:, 1] <= proba_test[:, 1])
+    assert np.all(est.predict_proba(X_test_1decr)[:, 1] >= proba_test[:, 1])
 
 
 @pytest.mark.parametrize("TreeRegressor", TREE_BASED_REGRESSOR_CLASSES)
 @pytest.mark.parametrize("depth_first_builder", (True, False))
 @pytest.mark.parametrize("sparse_splitter", (True, False))
 @pytest.mark.parametrize("criterion", ("absolute_error", "squared_error"))
+@pytest.mark.parametrize("csc_container", CSC_CONTAINERS)
 def test_monotonic_constraints_regressions(
-    TreeRegressor, depth_first_builder, sparse_splitter, criterion, global_random_seed
+    TreeRegressor,
+    depth_first_builder,
+    sparse_splitter,
+    criterion,
+    global_random_seed,
+    csc_container,
 ):
     n_samples = 1000
     n_samples_train = 900
@@ -130,7 +147,7 @@ def test_monotonic_constraints_regressions(
     if hasattr(est, "n_estimators"):
         est.set_params(**{"n_estimators": 5})
     if sparse_splitter:
-        X_train = scipy.sparse.csc_matrix(X_train)
+        X_train = csc_container(X_train)
     est.fit(X_train, y_train)
     y = est.predict(X_test)
     # Monotonic increase constraint
