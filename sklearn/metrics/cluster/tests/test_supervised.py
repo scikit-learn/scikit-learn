@@ -121,6 +121,47 @@ def test_not_complete_and_not_homogeneous_labeling():
     assert_almost_equal(v, 0.52, 2)
 
 
+def test_perfect_matches_with_weighting():
+    assert v_measure_score([], [], sample_weight=[]) == pytest.approx(1.0)
+    assert v_measure_score([], [], sample_weight=[1.0]) == pytest.approx(1.0)
+    assert v_measure_score([], [], sample_weight=[0.0]) == pytest.approx(1.0)
+    assert v_measure_score([0], [1], sample_weight=[1.0]) == pytest.approx(1.0)
+    assert v_measure_score([0], [1], sample_weight=[0.0]) == pytest.approx(1.0)
+    assert v_measure_score(
+        [0, 0, 0], [0, 0, 0], sample_weight=[0.0, 1.0, 42.0]
+    ) == pytest.approx(1.0)
+    assert v_measure_score(
+        [0, 1, 2], [42, 7, 2], sample_weight=[0.0, 1.0, 42.0]
+    ) == pytest.approx(1.0)
+
+
+def test_homogeneous_but_not_complete_labeling_with_weighting():
+    h, c, v = homogeneity_completeness_v_measure(
+        [0, 0, 0, 1, 1, 1], [0, 0, 0, 1, 2, 2], sample_weight=[0, 1, 42, 3, 2, 1]
+    )
+    assert_almost_equal(h, 1.00, 2)
+    assert_almost_equal(c, 0.81, 2)
+    assert_almost_equal(v, 0.90, 2)
+
+
+def test_complete_but_not_homogeneous_labeling_with_weighting():
+    h, c, v = homogeneity_completeness_v_measure(
+        [0, 0, 1, 1, 2, 2], [0, 0, 1, 1, 1, 1], sample_weight=[0, 1, 42, 3, 2, 1]
+    )
+    assert_almost_equal(h, 0.30, 2)
+    assert_almost_equal(c, 1.00, 2)
+    assert_almost_equal(v, 0.47, 2)
+
+
+def test_not_complete_and_not_homogeneous_labeling_with_weighting():
+    h, c, v = homogeneity_completeness_v_measure(
+        [0, 0, 0, 1, 1, 1], [0, 1, 0, 1, 2, 2], sample_weight=[0, 1, 42, 3, 2, 1]
+    )
+    assert_almost_equal(h, 0.88, 2)
+    assert_almost_equal(c, 0.64, 2)
+    assert_almost_equal(v, 0.74, 2)
+
+
 def test_beta_parameter():
     # test for when beta passed to
     # homogeneity_completeness_v_measure
@@ -260,6 +301,21 @@ def test_entropy():
     assert entropy([1, 1, 1, 1]) == 0
 
 
+def test_entropy_with_weighting():
+    ent = entropy([0, 0, 42.0], [1, 1, 1])
+    assert_almost_equal(ent, 0.6365141, 5)
+    assert_almost_equal(entropy([], []), 1)
+    ent = entropy([0, 0, 42.0], [0, 0, 0])
+    assert_almost_equal(ent, 1)
+    ent = entropy([0, 0, 42.0], [0, 0, 1])
+    assert_almost_equal(ent, 0)
+    ent = entropy([0, 0, 42.0], [3.0, 2.0, 0.0])
+    assert_almost_equal(ent, 0)
+    ent = entropy([0, 0, 42.0], [3.0, 2.0, 1.0])
+    assert_almost_equal(ent, 0.4505612, 5)
+    assert_almost_equal(entropy([], [1.0, 0.0]), 1)
+
+
 def test_contingency_matrix():
     labels_a = np.array([1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3])
     labels_b = np.array([1, 1, 1, 1, 2, 1, 2, 2, 2, 2, 3, 1, 3, 3, 3, 2, 2])
@@ -268,6 +324,31 @@ def test_contingency_matrix():
     assert_array_almost_equal(C, C2)
     C = contingency_matrix(labels_a, labels_b, eps=0.1)
     assert_array_almost_equal(C, C2 + 0.1)
+
+
+def test_contingency_matrix_with_weighting():
+    labels_a = np.array([1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3])
+    labels_b = np.array([1, 1, 1, 1, 2, 1, 2, 2, 2, 2, 3, 1, 3, 3, 3, 2, 2])
+
+    sample_weight = np.ones(len(labels_a))
+    C = contingency_matrix(labels_a, labels_b, sample_weight=sample_weight)
+    C2 = np.histogram2d(labels_a, labels_b, bins=(np.arange(1, 5), np.arange(1, 5)))[0]
+    assert_array_almost_equal(C, C2)
+
+    sample_weight = np.zeros(len(labels_a))
+    C = contingency_matrix(labels_a, labels_b, sample_weight=sample_weight)
+    C2 = np.zeros((3, 3))
+    assert_array_almost_equal(C, C2)
+
+    sample_weight = np.array([0, 1, 0, 0, 2, 0, 42, 0, 2, 2, 3, 0, 3, 0, 3, 42, 2])
+    C = contingency_matrix(labels_a, labels_b, sample_weight=sample_weight)
+    C2 = np.histogram2d(
+        labels_a,
+        labels_b,
+        bins=(np.arange(1, 5), np.arange(1, 5)),
+        weights=sample_weight,
+    )[0]
+    assert_array_almost_equal(C, C2)
 
 
 def test_contingency_matrix_sparse():

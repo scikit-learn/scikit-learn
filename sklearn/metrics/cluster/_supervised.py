@@ -98,11 +98,18 @@ def _generalized_average(U, V, average_method):
         "eps": [Interval(Real, 0, None, closed="left"), None],
         "sparse": ["boolean"],
         "dtype": "no_validation",  # delegate the validation to SciPy
+        "sample_weight": ["array-like", None],
     },
     prefer_skip_nested_validation=True,
 )
 def contingency_matrix(
-    labels_true, labels_pred, *, eps=None, sparse=False, dtype=np.int64
+    labels_true,
+    labels_pred,
+    *,
+    eps=None,
+    sparse=False,
+    dtype=np.int64,
+    sample_weight=None,
 ):
     """Build a contingency matrix describing the relationship between labels.
 
@@ -129,6 +136,9 @@ def contingency_matrix(
         Output dtype. Ignored if `eps` is not `None`.
 
         .. versionadded:: 0.24
+
+    sample_weight : array-like of shape (n_samples,), default=None
+        The weights for each observation in labels_true.
 
     Returns
     -------
@@ -158,11 +168,15 @@ def contingency_matrix(
     clusters, cluster_idx = np.unique(labels_pred, return_inverse=True)
     n_classes = classes.shape[0]
     n_clusters = clusters.shape[0]
+
+    if sample_weight is None:
+        sample_weight = np.ones(class_idx.shape[0])
+
     # Using coo_matrix to accelerate simple histogram calculation,
     # i.e. bins are consecutive integers
     # Currently, coo_matrix is faster than histogram2d for simple cases
     contingency = sp.coo_matrix(
-        (np.ones(class_idx.shape[0]), (class_idx, cluster_idx)),
+        (sample_weight, (class_idx, cluster_idx)),
         shape=(n_classes, n_clusters),
         dtype=dtype,
     )
@@ -174,6 +188,7 @@ def contingency_matrix(
         if eps is not None:
             # don't use += as contingency is integer
             contingency = contingency + eps
+
     return contingency
 
 
@@ -457,10 +472,13 @@ def adjusted_rand_score(labels_true, labels_pred):
         "labels_true": ["array-like"],
         "labels_pred": ["array-like"],
         "beta": [Interval(Real, 0, None, closed="left")],
+        "sample_weight": ["array-like", None],
     },
     prefer_skip_nested_validation=True,
 )
-def homogeneity_completeness_v_measure(labels_true, labels_pred, *, beta=1.0):
+def homogeneity_completeness_v_measure(
+    labels_true, labels_pred, *, beta=1.0, sample_weight=None
+):
     """Compute the homogeneity and completeness and V-Measure scores at once.
 
     Those metrics are based on normalized conditional entropy measures of
@@ -502,6 +520,10 @@ def homogeneity_completeness_v_measure(labels_true, labels_pred, *, beta=1.0):
         strongly in the calculation. If ``beta`` is less than 1,
         ``homogeneity`` is weighted more strongly.
 
+    sample_weight : array-like of shape (n_samples,), default=None
+        The weights for each observation in labels_true. If ``None``, all
+        observations are assigned equal weight (default behavior).
+
     Returns
     -------
     homogeneity : float
@@ -524,10 +546,15 @@ def homogeneity_completeness_v_measure(labels_true, labels_pred, *, beta=1.0):
     if len(labels_true) == 0:
         return 1.0, 1.0, 1.0
 
-    entropy_C = entropy(labels_true)
-    entropy_K = entropy(labels_pred)
+    if sample_weight is not None and sum(sample_weight) == 0:
+        return 1.0, 1.0, 1.0
 
-    contingency = contingency_matrix(labels_true, labels_pred, sparse=True)
+    entropy_C = entropy(labels_true, sample_weight=sample_weight)
+    entropy_K = entropy(labels_pred, sample_weight=sample_weight)
+
+    contingency = contingency_matrix(
+        labels_true, labels_pred, sparse=True, sample_weight=sample_weight
+    )
     MI = mutual_info_score(None, None, contingency=contingency)
 
     homogeneity = MI / (entropy_C) if entropy_C else 1.0
@@ -550,10 +577,11 @@ def homogeneity_completeness_v_measure(labels_true, labels_pred, *, beta=1.0):
     {
         "labels_true": ["array-like"],
         "labels_pred": ["array-like"],
+        "sample_weight": ["array-like", None],
     },
     prefer_skip_nested_validation=True,
 )
-def homogeneity_score(labels_true, labels_pred):
+def homogeneity_score(labels_true, labels_pred, sample_weight=None):
     """Homogeneity metric of a cluster labeling given a ground truth.
 
     A clustering result satisfies homogeneity if all of its clusters
@@ -576,6 +604,9 @@ def homogeneity_score(labels_true, labels_pred):
 
     labels_pred : array-like of shape (n_samples,)
         Cluster labels to evaluate.
+
+    sample_weight : array-like of shape (n_samples,), default=None
+        The weights for each observation in labels_true.
 
     Returns
     -------
@@ -619,17 +650,20 @@ def homogeneity_score(labels_true, labels_pred):
       >>> print("%.6f" % homogeneity_score([0, 0, 1, 1], [0, 0, 0, 0]))
       0.0...
     """
-    return homogeneity_completeness_v_measure(labels_true, labels_pred)[0]
+    return homogeneity_completeness_v_measure(
+        labels_true, labels_pred, sample_weight=sample_weight
+    )[0]
 
 
 @validate_params(
     {
         "labels_true": ["array-like"],
         "labels_pred": ["array-like"],
+        "sample_weight": ["array-like", None],
     },
     prefer_skip_nested_validation=True,
 )
-def completeness_score(labels_true, labels_pred):
+def completeness_score(labels_true, labels_pred, sample_weight=None):
     """Compute completeness metric of a cluster labeling given a ground truth.
 
     A clustering result satisfies completeness if all the data points
@@ -652,6 +686,9 @@ def completeness_score(labels_true, labels_pred):
 
     labels_pred : array-like of shape (n_samples,)
         Cluster labels to evaluate.
+
+    sample_weight : array-like of shape (n_samples,), default=None
+        The weights for each observation in labels_true.
 
     Returns
     -------
@@ -695,7 +732,9 @@ def completeness_score(labels_true, labels_pred):
       >>> print(completeness_score([0, 0, 0, 0], [0, 1, 2, 3]))
       0.0
     """
-    return homogeneity_completeness_v_measure(labels_true, labels_pred)[1]
+    return homogeneity_completeness_v_measure(
+        labels_true, labels_pred, sample_weight=sample_weight
+    )[1]
 
 
 @validate_params(
@@ -703,10 +742,11 @@ def completeness_score(labels_true, labels_pred):
         "labels_true": ["array-like"],
         "labels_pred": ["array-like"],
         "beta": [Interval(Real, 0, None, closed="left")],
+        "sample_weight": ["array-like", None],
     },
     prefer_skip_nested_validation=True,
 )
-def v_measure_score(labels_true, labels_pred, *, beta=1.0):
+def v_measure_score(labels_true, labels_pred, *, beta=1.0, sample_weight=None):
     """V-measure cluster labeling given a ground truth.
 
     This score is identical to :func:`normalized_mutual_info_score` with
@@ -741,6 +781,9 @@ def v_measure_score(labels_true, labels_pred, *, beta=1.0):
         If ``beta`` is greater than 1, ``completeness`` is weighted more
         strongly in the calculation. If ``beta`` is less than 1,
         ``homogeneity`` is weighted more strongly.
+
+    sample_weight : array-like of shape (n_samples,), default=None
+        The weights for each observation in labels_true.
 
     Returns
     -------
@@ -799,7 +842,9 @@ def v_measure_score(labels_true, labels_pred, *, beta=1.0):
       >>> print("%.6f" % v_measure_score([0, 0, 1, 1], [0, 0, 0, 0]))
       0.0...
     """
-    return homogeneity_completeness_v_measure(labels_true, labels_pred, beta=beta)[2]
+    return homogeneity_completeness_v_measure(
+        labels_true, labels_pred, beta=beta, sample_weight=sample_weight
+    )[2]
 
 
 @validate_params(
@@ -807,10 +852,13 @@ def v_measure_score(labels_true, labels_pred, *, beta=1.0):
         "labels_true": ["array-like", None],
         "labels_pred": ["array-like", None],
         "contingency": ["array-like", "sparse matrix", None],
+        "sample_weight": ["array-like", None],
     },
     prefer_skip_nested_validation=True,
 )
-def mutual_info_score(labels_true, labels_pred, *, contingency=None):
+def mutual_info_score(
+    labels_true, labels_pred, *, contingency=None, sample_weight=None
+):
     """Mutual Information between two clusterings.
 
     The Mutual Information is a measure of the similarity between two labels
@@ -853,6 +901,9 @@ def mutual_info_score(labels_true, labels_pred, *, contingency=None):
         is ``None``, it will be computed, otherwise the given value is used,
         with ``labels_true`` and ``labels_pred`` ignored.
 
+    sample_weight : array-like of shape (n_samples,), default=None
+        The weights for each observation in labels_true.
+
     Returns
     -------
     mi : float
@@ -870,12 +921,14 @@ def mutual_info_score(labels_true, labels_pred, *, contingency=None):
     """
     if contingency is None:
         labels_true, labels_pred = check_clusterings(labels_true, labels_pred)
-        contingency = contingency_matrix(labels_true, labels_pred, sparse=True)
+        contingency = contingency_matrix(
+            labels_true, labels_pred, sparse=True, sample_weight=sample_weight
+        )
     else:
         contingency = check_array(
             contingency,
             accept_sparse=["csr", "csc", "coo"],
-            dtype=[int, np.int32, np.int64],
+            dtype=[int, np.int32, np.int64, np.float64, np.float32],
         )
 
     if isinstance(contingency, np.ndarray):
@@ -898,9 +951,7 @@ def mutual_info_score(labels_true, labels_pred, *, contingency=None):
     log_contingency_nm = np.log(nz_val)
     contingency_nm = nz_val / contingency_sum
     # Don't need to calculate the full outer product, just for non-zeroes
-    outer = pi.take(nzx).astype(np.int64, copy=False) * pj.take(nzy).astype(
-        np.int64, copy=False
-    )
+    outer = pi.take(nzx) * pj.take(nzy)
     log_outer = -np.log(outer) + log(pi.sum()) + log(pj.sum())
     mi = (
         contingency_nm * (log_contingency_nm - log(contingency_sum))
@@ -1247,16 +1298,20 @@ def fowlkes_mallows_score(labels_true, labels_pred, *, sparse=False):
 @validate_params(
     {
         "labels": ["array-like"],
+        "sample_weight": ["array-like", None],
     },
     prefer_skip_nested_validation=True,
 )
-def entropy(labels):
+def entropy(labels, sample_weight=None):
     """Calculate the entropy for a labeling.
 
     Parameters
     ----------
     labels : array-like of shape (n_samples,), dtype=int
         The labels.
+
+    sample_weight : array-like of shape (n_samples,), dtype=float, default=None
+        The weights for each observation in labels.
 
     Returns
     -------
@@ -1267,10 +1322,18 @@ def entropy(labels):
     -----
     The logarithm used is the natural logarithm (base-e).
     """
+
     if len(labels) == 0:
         return 1.0
+
+    if sample_weight is not None and sum(sample_weight) == 0:
+        return 1.0
+
+    if sample_weight is None:
+        sample_weight = np.full(len(labels), 1.0)
+
     label_idx = np.unique(labels, return_inverse=True)[1]
-    pi = np.bincount(label_idx).astype(np.float64)
+    pi = np.bincount(label_idx, weights=sample_weight).astype(np.float64)
     pi = pi[pi > 0]
 
     # single cluster => zero entropy
