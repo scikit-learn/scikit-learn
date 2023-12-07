@@ -568,15 +568,18 @@ cdef class ClassificationCriterion(Criterion):
         dest : float64_t pointer
             The memory address which we will save the node value into.
         """
-        cdef intp_t k
+        cdef intp_t k, c
 
         for k in range(self.n_outputs):
-            memcpy(dest, &self.sum_total[k, 0], self.n_classes[k] * sizeof(float64_t))
+            for c in range(self.n_classes[k]):
+                dest[c] = self.sum_total[k, c] / self.weighted_n_node_samples
             dest += self.max_n_classes
 
-    cdef void clip_node_value(self, float64_t * dest, float64_t lower_bound, float64_t upper_bound) noexcept nogil:
-        """Clip the value in dest between lower_bound and upper_bound for monotonic constraints.
-
+    cdef inline void clip_node_value(
+        self, float64_t * dest, float64_t lower_bound, float64_t upper_bound
+    ) noexcept nogil:
+        """Clip the values in dest such that predicted probabilities stay between
+        `lower_bound` and `upper_bound` when monotonic constraints are enforced.
         Note that monotonicity constraints are only supported for:
         - single-output trees and
         - binary classifications.
@@ -586,7 +589,7 @@ cdef class ClassificationCriterion(Criterion):
         elif dest[0] > upper_bound:
             dest[0] = upper_bound
 
-        # Class proportions for binary classification must sum to 1.
+        # Values for binary classification must sum to 1.
         dest[1] = 1 - dest[0]
 
     cdef inline float64_t middle_value(self) noexcept nogil:
