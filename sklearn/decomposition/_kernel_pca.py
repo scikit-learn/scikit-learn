@@ -4,23 +4,29 @@
 #         Sylvain Marie <sylvain.marie@schneider-electric.com>
 # License: BSD 3 clause
 
-import numpy as np
 from numbers import Integral, Real
+
+import numpy as np
 from scipy import linalg
+from scipy.linalg import eigh
 from scipy.sparse.linalg import eigsh
 
-from ..utils._arpack import _init_arpack_v0
-from ..utils.fixes import _eigh
-from ..utils.extmath import svd_flip, _randomized_eigsh
-from ..utils.validation import (
-    check_is_fitted,
-    _check_psd_eigenvalues,
+from ..base import (
+    BaseEstimator,
+    ClassNamePrefixFeaturesOutMixin,
+    TransformerMixin,
+    _fit_context,
 )
-from ..utils._param_validation import Interval, StrOptions
 from ..exceptions import NotFittedError
-from ..base import BaseEstimator, TransformerMixin, ClassNamePrefixFeaturesOutMixin
-from ..preprocessing import KernelCenterer
 from ..metrics.pairwise import pairwise_kernels
+from ..preprocessing import KernelCenterer
+from ..utils._arpack import _init_arpack_v0
+from ..utils._param_validation import Interval, StrOptions
+from ..utils.extmath import _randomized_eigsh, svd_flip
+from ..utils.validation import (
+    _check_psd_eigenvalues,
+    check_is_fitted,
+)
 
 
 class KernelPCA(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
@@ -50,7 +56,7 @@ class KernelPCA(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator
         Kernel coefficient for rbf, poly and sigmoid kernels. Ignored by other
         kernels. If ``gamma`` is ``None``, then it is set to ``1/n_features``.
 
-    degree : int, default=3
+    degree : float, default=3
         Degree for poly kernels. Ignored by other kernels.
 
     coef0 : float, default=1
@@ -245,7 +251,7 @@ class KernelPCA(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator
             Interval(Real, 0, None, closed="left"),
             None,
         ],
-        "degree": [Interval(Integral, 0, None, closed="left")],
+        "degree": [Interval(Real, 0, None, closed="left")],
         "coef0": [Interval(Real, None, None, closed="neither")],
         "kernel_params": [dict, None],
         "alpha": [Interval(Real, 0, None, closed="left")],
@@ -334,7 +340,7 @@ class KernelPCA(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator
 
         if eigen_solver == "dense":
             # Note: subset_by_index specifies the indices of smallest/largest to return
-            self.eigenvalues_, self.eigenvectors_ = _eigh(
+            self.eigenvalues_, self.eigenvectors_ = eigh(
                 K, subset_by_index=(K.shape[0] - n_components, K.shape[0] - 1)
             )
         elif eigen_solver == "arpack":
@@ -404,6 +410,7 @@ class KernelPCA(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator
         self.dual_coef_ = linalg.solve(K, X, assume_a="pos", overwrite_a=True)
         self.X_transformed_fit_ = X_transformed
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y=None):
         """Fit the model from data in X.
 
@@ -421,13 +428,11 @@ class KernelPCA(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator
         self : object
             Returns the instance itself.
         """
-        self._validate_params()
-
         if self.fit_inverse_transform and self.kernel == "precomputed":
             raise ValueError("Cannot fit_inverse_transform with a precomputed kernel.")
         X = self._validate_data(X, accept_sparse="csr", copy=self.copy_X)
         self.gamma_ = 1 / X.shape[1] if self.gamma is None else self.gamma
-        self._centerer = KernelCenterer()
+        self._centerer = KernelCenterer().set_output(transform="default")
         K = self._get_kernel(X)
         self._fit_transform(K)
 

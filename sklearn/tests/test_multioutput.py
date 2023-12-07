@@ -1,41 +1,61 @@
-import pytest
-import numpy as np
-import scipy.sparse as sp
-from joblib import cpu_count
 import re
 
-from sklearn.utils._testing import assert_almost_equal
-from sklearn.utils._testing import assert_array_equal
-from sklearn.utils._testing import assert_array_almost_equal
+import numpy as np
+import pytest
+from joblib import cpu_count
+
 from sklearn import datasets
-from sklearn.base import clone
-from sklearn.datasets import make_classification
-from sklearn.datasets import load_linnerud
-from sklearn.datasets import make_multilabel_classification
-from sklearn.datasets import make_regression
-from sklearn.ensemble import GradientBoostingRegressor, RandomForestClassifier
+from sklearn.base import ClassifierMixin, clone
+from sklearn.datasets import (
+    load_linnerud,
+    make_classification,
+    make_multilabel_classification,
+    make_regression,
+)
+from sklearn.dummy import DummyClassifier, DummyRegressor
+from sklearn.ensemble import (
+    GradientBoostingRegressor,
+    RandomForestClassifier,
+    StackingRegressor,
+)
 from sklearn.exceptions import NotFittedError
-from sklearn.linear_model import Lasso
-from sklearn.linear_model import LogisticRegression
-from sklearn.linear_model import OrthogonalMatchingPursuit
-from sklearn.linear_model import Ridge
-from sklearn.linear_model import SGDClassifier
-from sklearn.linear_model import SGDRegressor
-from sklearn.linear_model import LinearRegression
+from sklearn.impute import SimpleImputer
+from sklearn.linear_model import (
+    Lasso,
+    LinearRegression,
+    LogisticRegression,
+    OrthogonalMatchingPursuit,
+    PassiveAggressiveClassifier,
+    Ridge,
+    SGDClassifier,
+    SGDRegressor,
+)
 from sklearn.metrics import jaccard_score, mean_squared_error
+from sklearn.model_selection import GridSearchCV, train_test_split
 from sklearn.multiclass import OneVsRestClassifier
-from sklearn.multioutput import ClassifierChain, RegressorChain
-from sklearn.multioutput import MultiOutputClassifier
-from sklearn.multioutput import MultiOutputRegressor
+from sklearn.multioutput import (
+    ClassifierChain,
+    MultiOutputClassifier,
+    MultiOutputRegressor,
+    RegressorChain,
+)
+from sklearn.pipeline import make_pipeline
 from sklearn.svm import LinearSVC
 from sklearn.tree import DecisionTreeClassifier
-from sklearn.base import ClassifierMixin
 from sklearn.utils import shuffle
-from sklearn.model_selection import GridSearchCV, train_test_split
-from sklearn.dummy import DummyRegressor, DummyClassifier
-from sklearn.pipeline import make_pipeline
-from sklearn.impute import SimpleImputer
-from sklearn.ensemble import StackingRegressor
+from sklearn.utils._testing import (
+    assert_almost_equal,
+    assert_array_almost_equal,
+    assert_array_equal,
+)
+from sklearn.utils.fixes import (
+    BSR_CONTAINERS,
+    COO_CONTAINERS,
+    CSC_CONTAINERS,
+    CSR_CONTAINERS,
+    DOK_CONTAINERS,
+    LIL_CONTAINERS,
+)
 
 
 def test_multi_target_regression():
@@ -88,25 +108,29 @@ def test_multi_target_regression_one_target():
         rgr.fit(X, y)
 
 
-def test_multi_target_sparse_regression():
+@pytest.mark.parametrize(
+    "sparse_container",
+    CSR_CONTAINERS
+    + CSC_CONTAINERS
+    + COO_CONTAINERS
+    + LIL_CONTAINERS
+    + DOK_CONTAINERS
+    + BSR_CONTAINERS,
+)
+def test_multi_target_sparse_regression(sparse_container):
     X, y = datasets.make_regression(n_targets=3, random_state=0)
     X_train, y_train = X[:50], y[:50]
     X_test = X[50:]
 
-    for sparse in [
-        sp.csr_matrix,
-        sp.csc_matrix,
-        sp.coo_matrix,
-        sp.dok_matrix,
-        sp.lil_matrix,
-    ]:
-        rgr = MultiOutputRegressor(Lasso(random_state=0))
-        rgr_sparse = MultiOutputRegressor(Lasso(random_state=0))
+    rgr = MultiOutputRegressor(Lasso(random_state=0))
+    rgr_sparse = MultiOutputRegressor(Lasso(random_state=0))
 
-        rgr.fit(X_train, y_train)
-        rgr_sparse.fit(sparse(X_train), y_train)
+    rgr.fit(X_train, y_train)
+    rgr_sparse.fit(sparse_container(X_train), y_train)
 
-        assert_almost_equal(rgr.predict(X_test), rgr_sparse.predict(sparse(X_test)))
+    assert_almost_equal(
+        rgr.predict(X_test), rgr_sparse.predict(sparse_container(X_test))
+    )
 
 
 def test_multi_target_sample_weights_api():
@@ -484,10 +508,11 @@ def test_classifier_chain_fit_and_predict_with_linear_svc():
     assert not hasattr(classifier_chain, "predict_proba")
 
 
-def test_classifier_chain_fit_and_predict_with_sparse_data():
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_classifier_chain_fit_and_predict_with_sparse_data(csr_container):
     # Fit classifier chain with sparse data
     X, Y = generate_multilabel_dataset_with_correlations()
-    X_sparse = sp.csr_matrix(X)
+    X_sparse = csr_container(X)
 
     classifier_chain = ClassifierChain(LogisticRegression())
     classifier_chain.fit(X_sparse, Y)
@@ -523,7 +548,8 @@ def test_classifier_chain_vs_independent_models():
     )
 
 
-def test_base_chain_fit_and_predict():
+@pytest.mark.parametrize("response_method", ["predict_proba", "predict_log_proba"])
+def test_base_chain_fit_and_predict(response_method):
     # Fit base chain and verify predict performance
     X, Y = generate_multilabel_dataset_with_correlations()
     chains = [RegressorChain(Ridge()), ClassifierChain(LogisticRegression())]
@@ -535,17 +561,20 @@ def test_base_chain_fit_and_predict():
             range(X.shape[1], X.shape[1] + Y.shape[1])
         )
 
-    Y_prob = chains[1].predict_proba(X)
+    Y_prob = getattr(chains[1], response_method)(X)
+    if response_method == "predict_log_proba":
+        Y_prob = np.exp(Y_prob)
     Y_binary = Y_prob >= 0.5
     assert_array_equal(Y_binary, Y_pred)
 
     assert isinstance(chains[1], ClassifierMixin)
 
 
-def test_base_chain_fit_and_predict_with_sparse_data_and_cv():
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_base_chain_fit_and_predict_with_sparse_data_and_cv(csr_container):
     # Fit base chain with sparse data cross_val_predict
     X, Y = generate_multilabel_dataset_with_correlations()
-    X_sparse = sp.csr_matrix(X)
+    X_sparse = csr_container(X)
     base_chains = [
         ClassifierChain(LogisticRegression(), cv=3),
         RegressorChain(Ridge(), cv=3),
@@ -766,6 +795,20 @@ def test_multioutputregressor_ducktypes_fitted_estimator():
 
     # Does not raise
     reg.predict(X)
+
+
+@pytest.mark.parametrize(
+    "Cls, method", [(ClassifierChain, "fit"), (MultiOutputClassifier, "partial_fit")]
+)
+def test_fit_params_no_routing(Cls, method):
+    """Check that we raise an error when passing metadata not requested by the
+    underlying classifier.
+    """
+    X, y = make_classification(n_samples=50)
+    clf = Cls(PassiveAggressiveClassifier())
+
+    with pytest.raises(ValueError, match="is only supported if"):
+        getattr(clf, method)(X, y, test=1)
 
 
 def test_multioutput_regressor_has_partial_fit():

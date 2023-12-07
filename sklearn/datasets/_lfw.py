@@ -8,22 +8,22 @@ over the internet, all details are available on the official website:
 # Copyright (c) 2011 Olivier Grisel <olivier.grisel@ensta.org>
 # License: BSD 3 clause
 
-from os import listdir, makedirs, remove
-from os.path import join, exists, isdir
-from ..utils._param_validation import validate_params, Interval, Hidden, StrOptions
-from numbers import Integral, Real
 import logging
+from numbers import Integral, Real
+from os import PathLike, listdir, makedirs, remove
+from os.path import exists, isdir, join
 
 import numpy as np
 from joblib import Memory
 
+from ..utils import Bunch
+from ..utils._param_validation import Hidden, Interval, StrOptions, validate_params
 from ._base import (
-    get_data_home,
-    _fetch_remote,
     RemoteFileMetadata,
+    _fetch_remote,
+    get_data_home,
     load_descr,
 )
-from ..utils import Bunch
 
 logger = logging.getLogger(__name__)
 
@@ -88,7 +88,7 @@ def _check_fetch_lfw(data_home=None, funneled=True, download_if_missing=True):
                 logger.info("Downloading LFW metadata: %s", target.url)
                 _fetch_remote(target, dirname=lfw_home)
             else:
-                raise IOError("%s is missing" % target_filepath)
+                raise OSError("%s is missing" % target_filepath)
 
     if funneled:
         data_folder_path = join(lfw_home, "lfw_funneled")
@@ -104,7 +104,7 @@ def _check_fetch_lfw(data_home=None, funneled=True, download_if_missing=True):
                 logger.info("Downloading LFW data (~200MB): %s", archive.url)
                 _fetch_remote(archive, dirname=lfw_home)
             else:
-                raise IOError("%s is missing" % archive_path)
+                raise OSError("%s is missing" % archive_path)
 
         import tarfile
 
@@ -234,7 +234,7 @@ def _fetch_lfw_people(
 
 @validate_params(
     {
-        "data_home": [str, None],
+        "data_home": [str, PathLike, None],
         "funneled": ["boolean"],
         "resize": [Interval(Real, 0, None, closed="neither"), None],
         "min_faces_per_person": [Interval(Integral, 0, None, closed="left"), None],
@@ -242,7 +242,8 @@ def _fetch_lfw_people(
         "slice_": [tuple, Hidden(None)],
         "download_if_missing": ["boolean"],
         "return_X_y": ["boolean"],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def fetch_lfw_people(
     *,
@@ -271,7 +272,7 @@ def fetch_lfw_people(
 
     Parameters
     ----------
-    data_home : str, default=None
+    data_home : str or path-like, default=None
         Specify another download and cache folder for the datasets. By default
         all scikit-learn data is stored in '~/scikit_learn_data' subfolders.
 
@@ -297,7 +298,7 @@ def fetch_lfw_people(
         correlation from the background.
 
     download_if_missing : bool, default=True
-        If False, raise a IOError if the data is not locally available
+        If False, raise an OSError if the data is not locally available
         instead of trying to download the data from the source site.
 
     return_X_y : bool, default=False
@@ -430,13 +431,14 @@ def _fetch_lfw_pairs(
 @validate_params(
     {
         "subset": [StrOptions({"train", "test", "10_folds"})],
-        "data_home": [str, None],
+        "data_home": [str, PathLike, None],
         "funneled": ["boolean"],
         "resize": [Interval(Real, 0, None, closed="neither"), None],
         "color": ["boolean"],
         "slice_": [tuple, Hidden(None)],
         "download_if_missing": ["boolean"],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def fetch_lfw_pairs(
     *,
@@ -478,7 +480,7 @@ def fetch_lfw_pairs(
         official evaluation set that is meant to be used with a 10-folds
         cross validation.
 
-    data_home : str, default=None
+    data_home : str or path-like, default=None
         Specify another download and cache folder for the datasets. By
         default all scikit-learn data is stored in '~/scikit_learn_data'
         subfolders.
@@ -500,7 +502,7 @@ def fetch_lfw_pairs(
         correlation from the background.
 
     download_if_missing : bool, default=True
-        If False, raise a IOError if the data is not locally available
+        If False, raise an OSError if the data is not locally available
         instead of trying to download the data from the source site.
 
     Returns

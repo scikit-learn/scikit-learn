@@ -12,7 +12,6 @@ normally from `sklearn.ensemble`.
 
 import warnings
 
-
 warnings.warn(
     "Since version 1.0, "
     "it is not needed to import enable_hist_gradient_boosting anymore. "

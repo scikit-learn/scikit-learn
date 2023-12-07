@@ -12,8 +12,7 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import GridSearchCV
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
-
-from sklearn.utils.parallel import delayed, Parallel
+from sklearn.utils.parallel import Parallel, delayed
 
 
 def get_working_memory():

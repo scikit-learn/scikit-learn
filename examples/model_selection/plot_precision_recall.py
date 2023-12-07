@@ -100,6 +100,7 @@ matrix as a binary prediction (micro-averaging).
 #
 # We will use a Linear SVC classifier to differentiate two types of irises.
 import numpy as np
+
 from sklearn.datasets import load_iris
 from sklearn.model_selection import train_test_split
 
@@ -198,8 +199,7 @@ y_score = classifier.decision_function(X_test)
 # %%
 # The average precision score in multi-label settings
 # ...................................................
-from sklearn.metrics import precision_recall_curve
-from sklearn.metrics import average_precision_score
+from sklearn.metrics import average_precision_score, precision_recall_curve
 
 # For each class
 precision = dict()
@@ -232,8 +232,9 @@ _ = display.ax_.set_title("Micro-averaged over all classes")
 # %%
 # Plot Precision-Recall curve for each class and iso-f1 curves
 # ............................................................
-import matplotlib.pyplot as plt
 from itertools import cycle
+
+import matplotlib.pyplot as plt
 
 # setup plot details
 colors = cycle(["navy", "turquoise", "darkorange", "cornflowerblue", "teal"])
@@ -268,8 +269,6 @@ handles, labels = display.ax_.get_legend_handles_labels()
 handles.extend([l])
 labels.extend(["iso-f1 curves"])
 # set the legend and the axes
-ax.set_xlim([0.0, 1.0])
-ax.set_ylim([0.0, 1.05])
 ax.legend(handles=handles, labels=labels, loc="best")
 ax.set_title("Extension of Precision-Recall curve to multi-class")
 

@@ -1,30 +1,26 @@
-from time import time
+import warnings
 from collections import namedtuple
 from numbers import Integral, Real
-import warnings
+from time import time
 
-from scipy import stats
 import numpy as np
+from scipy import stats
 
-from ..base import clone
+from ..base import _fit_context, clone
 from ..exceptions import ConvergenceWarning
 from ..preprocessing import normalize
 from ..utils import (
+    _safe_assign,
+    _safe_indexing,
     check_array,
     check_random_state,
     is_scalar_nan,
-    _safe_assign,
-    _safe_indexing,
 )
-from ..utils.validation import FLOAT_DTYPES, check_is_fitted
-from ..utils.validation import _check_feature_names_in
 from ..utils._mask import _get_mask
 from ..utils._param_validation import HasMethods, Interval, StrOptions
-
-from ._base import _BaseImputer
-from ._base import SimpleImputer
-from ._base import _check_inputs_dtype
-
+from ..utils.metadata_routing import _RoutingNotSupportedMixin
+from ..utils.validation import FLOAT_DTYPES, _check_feature_names_in, check_is_fitted
+from ._base import SimpleImputer, _BaseImputer, _check_inputs_dtype
 
 _ImputerTriplet = namedtuple(
     "_ImputerTriplet", ["feat_idx", "neighbor_feat_idx", "estimator"]
@@ -51,7 +47,7 @@ def _assign_where(X1, X2, cond):
         X1[cond] = X2[cond]
 
 
-class IterativeImputer(_BaseImputer):
+class IterativeImputer(_RoutingNotSupportedMixin, _BaseImputer):
     """Multivariate imputer that estimates each feature from all the others.
 
     A strategy for imputing missing values by modeling each feature with
@@ -278,6 +274,10 @@ class IterativeImputer(_BaseImputer):
     array([[ 6.9584...,  2.       ,  3.        ],
            [ 4.       ,  2.6000...,  6.        ],
            [10.       ,  4.9999...,  9.        ]])
+
+    For a more detailed example see
+    :ref:`sphx_glr_auto_examples_impute_plot_missing_values.py` or
+    :ref:`sphx_glr_auto_examples_impute_plot_iterative_imputer_variants_comparison.py`.
     """
 
     _parameter_constraints: dict = {
@@ -627,7 +627,7 @@ class IterativeImputer(_BaseImputer):
                 strategy=self.initial_strategy,
                 fill_value=self.fill_value,
                 keep_empty_features=self.keep_empty_features,
-            )
+            ).set_output(transform="default")
             X_filled = self.initial_imputer_.fit_transform(X)
         else:
             X_filled = self.initial_imputer_.transform(X)
@@ -681,6 +681,10 @@ class IterativeImputer(_BaseImputer):
             )
         return limit
 
+    @_fit_context(
+        # IterativeImputer.estimator is not validated yet
+        prefer_skip_nested_validation=False
+    )
     def fit_transform(self, X, y=None):
         """Fit the imputer on `X` and return the transformed `X`.
 
@@ -698,7 +702,6 @@ class IterativeImputer(_BaseImputer):
         Xt : array-like, shape (n_samples, n_features)
             The imputed input data.
         """
-        self._validate_params()
         self.random_state_ = getattr(
             self, "random_state_", check_random_state(self.random_state)
         )

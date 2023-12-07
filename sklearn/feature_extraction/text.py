@@ -12,28 +12,26 @@ build feature vectors from text documents.
 """
 
 import array
+import re
+import unicodedata
+import warnings
 from collections import defaultdict
 from collections.abc import Mapping
 from functools import partial
 from numbers import Integral
 from operator import itemgetter
-import re
-import unicodedata
-import warnings
 
 import numpy as np
 import scipy.sparse as sp
 
-from ..base import BaseEstimator, TransformerMixin, OneToOneFeatureMixin
+from ..base import BaseEstimator, OneToOneFeatureMixin, TransformerMixin, _fit_context
+from ..exceptions import NotFittedError
 from ..preprocessing import normalize
+from ..utils import _IS_32BIT
+from ..utils._param_validation import HasMethods, Interval, RealNotInt, StrOptions
+from ..utils.validation import FLOAT_DTYPES, check_array, check_is_fitted
 from ._hash import FeatureHasher
 from ._stop_words import ENGLISH_STOP_WORDS
-from ..utils.validation import check_is_fitted, check_array, FLOAT_DTYPES
-from ..utils import _IS_32BIT
-from ..exceptions import NotFittedError
-from ..utils._param_validation import StrOptions, Interval, HasMethods
-from ..utils._param_validation import RealNotInt
-
 
 __all__ = [
     "HashingVectorizer",
@@ -604,6 +602,9 @@ class HashingVectorizer(
 
     The hash function employed is the signed 32-bit version of Murmurhash3.
 
+    For an efficiency comparison of the different feature extractors, see
+    :ref:`sphx_glr_auto_examples_text_plot_hashing_vs_dict_vectorizer.py`.
+
     Read more in the :ref:`User Guide <text_feature_extraction>`.
 
     Parameters
@@ -635,7 +636,7 @@ class HashingVectorizer(
         'ascii' is a fast method that only works on characters that have
         a direct ASCII mapping.
         'unicode' is a slightly slower method that works on any character.
-        None (default) does nothing.
+        None (default) means no character normalization is performed.
 
         Both 'ascii' and 'unicode' use NFKD normalization from
         :func:`unicodedata.normalize`.
@@ -801,6 +802,7 @@ class HashingVectorizer(
         self.alternate_sign = alternate_sign
         self.dtype = dtype
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def partial_fit(self, X, y=None):
         """Only validates estimator's parameters.
 
@@ -820,10 +822,9 @@ class HashingVectorizer(
         self : object
             HashingVectorizer instance.
         """
-        # TODO: only validate during the first call
-        self._validate_params()
         return self
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y=None):
         """Only validates estimator's parameters.
 
@@ -843,8 +844,6 @@ class HashingVectorizer(
         self : object
             HashingVectorizer instance.
         """
-        self._validate_params()
-
         # triggers a parameter validation
         if isinstance(X, str):
             raise ValueError(
@@ -921,7 +920,7 @@ class HashingVectorizer(
 
 def _document_frequency(X):
     """Count the number of non-zero values for each feature in sparse X."""
-    if sp.isspmatrix_csr(X):
+    if sp.issparse(X) and X.format == "csr":
         return np.bincount(X.indices, minlength=X.shape[1])
     else:
         return np.diff(X.indptr)
@@ -936,6 +935,9 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
     If you do not provide an a-priori dictionary and you do not use an analyzer
     that does some kind of feature selection then the number of features will
     be equal to the vocabulary size found by analyzing the data.
+
+    For an efficiency comparison of the different feature extractors, see
+    :ref:`sphx_glr_auto_examples_text_plot_hashing_vs_dict_vectorizer.py`.
 
     Read more in the :ref:`User Guide <text_feature_extraction>`.
 
@@ -968,7 +970,7 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
         'ascii' is a fast method that only works on characters that have
         a direct ASCII mapping.
         'unicode' is a slightly slower method that works on any characters.
-        None (default) does nothing.
+        None (default) means no character normalization is performed.
 
         Both 'ascii' and 'unicode' use NFKD normalization from
         :func:`unicodedata.normalize`.
@@ -1338,6 +1340,7 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
         self.fit_transform(raw_documents)
         return self
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit_transform(self, raw_documents, y=None):
         """Learn the vocabulary dictionary and return document-term matrix.
 
@@ -1365,7 +1368,6 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
                 "Iterable over raw text documents expected, string object received."
             )
 
-        self._validate_params()
         self._validate_ngram_range()
         self._warn_for_unused_params()
         self._validate_vocabulary()
@@ -1549,7 +1551,7 @@ class TfidfTransformer(
           similarity between two vectors is their dot product when l2 norm has
           been applied.
         - 'l1': Sum of absolute values of vector elements is 1.
-          See :func:`preprocessing.normalize`.
+          See :func:`~sklearn.preprocessing.normalize`.
         - None: No normalization.
 
     use_idf : bool, default=True
@@ -1639,12 +1641,13 @@ class TfidfTransformer(
         self.smooth_idf = smooth_idf
         self.sublinear_tf = sublinear_tf
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y=None):
         """Learn the idf vector (global term weights).
 
         Parameters
         ----------
-        X : sparse matrix of shape n_samples, n_features)
+        X : sparse matrix of shape (n_samples, n_features)
             A matrix of term/token counts.
 
         y : None
@@ -1655,8 +1658,6 @@ class TfidfTransformer(
         self : object
             Fitted transformer.
         """
-        self._validate_params()
-
         # large sparse data is not supported for 32bit platforms because
         # _document_frequency uses np.bincount which works on arrays of
         # dtype NPY_INTP which is int32 for 32bit platforms. See #20923
@@ -1722,8 +1723,7 @@ class TfidfTransformer(
             # name:
             check_is_fitted(self, attributes=["idf_"], msg="idf vector is not fitted")
 
-            # *= doesn't work
-            X = X * self._idf_diag
+            X = X @ self._idf_diag
 
         if self.norm is not None:
             X = normalize(X, norm=self.norm, copy=False)
@@ -1760,6 +1760,12 @@ class TfidfVectorizer(CountVectorizer):
     Equivalent to :class:`CountVectorizer` followed by
     :class:`TfidfTransformer`.
 
+    For an example of usage, see
+    :ref:`sphx_glr_auto_examples_text_plot_document_classification_20newsgroups.py`.
+
+    For an efficiency comparison of the different feature extractors, see
+    :ref:`sphx_glr_auto_examples_text_plot_hashing_vs_dict_vectorizer.py`.
+
     Read more in the :ref:`User Guide <text_feature_extraction>`.
 
     Parameters
@@ -1791,7 +1797,7 @@ class TfidfVectorizer(CountVectorizer):
         'ascii' is a fast method that only works on characters that have
         a direct ASCII mapping.
         'unicode' is a slightly slower method that works on any characters.
-        None (default) does nothing.
+        None (default) means no character normalization is performed.
 
         Both 'ascii' and 'unicode' use NFKD normalization from
         :func:`unicodedata.normalize`.
@@ -1886,7 +1892,8 @@ class TfidfVectorizer(CountVectorizer):
     binary : bool, default=False
         If True, all non-zero term counts are set to 1. This does not mean
         outputs will have only 0/1 values, only that the tf term in tf-idf
-        is binary. (Set idf and normalization to False to get 0/1 outputs).
+        is binary. (Set `binary` to True, `use_idf` to False and
+        `norm` to None to get 0/1 outputs).
 
     dtype : dtype, default=float64
         Type of the matrix returned by fit_transform() or transform().
@@ -1898,7 +1905,7 @@ class TfidfVectorizer(CountVectorizer):
           similarity between two vectors is their dot product when l2 norm has
           been applied.
         - 'l1': Sum of absolute values of vector elements is 1.
-          See :func:`preprocessing.normalize`.
+          See :func:`~sklearn.preprocessing.normalize`.
         - None: No normalization.
 
     use_idf : bool, default=True
@@ -2073,6 +2080,7 @@ class TfidfVectorizer(CountVectorizer):
                 UserWarning,
             )
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, raw_documents, y=None):
         """Learn vocabulary and idf from training set.
 
@@ -2089,7 +2097,6 @@ class TfidfVectorizer(CountVectorizer):
         self : object
             Fitted vectorizer.
         """
-        self._validate_params()
         self._check_params()
         self._warn_for_unused_params()
         self._tfidf = TfidfTransformer(

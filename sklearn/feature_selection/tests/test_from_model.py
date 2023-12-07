@@ -1,34 +1,36 @@
 import re
-import pytest
-import numpy as np
 import warnings
 from unittest.mock import Mock
 
-from sklearn.utils._testing import assert_array_almost_equal
-from sklearn.utils._testing import assert_array_equal
-from sklearn.utils._testing import assert_allclose
-from sklearn.utils._testing import skip_if_32bit
-from sklearn.utils._testing import MinimalClassifier
+import numpy as np
+import pytest
 
 from sklearn import datasets
+from sklearn.base import BaseEstimator
 from sklearn.cross_decomposition import CCA, PLSCanonical, PLSRegression
 from sklearn.datasets import make_friedman1
+from sklearn.decomposition import PCA
+from sklearn.ensemble import HistGradientBoostingClassifier, RandomForestClassifier
 from sklearn.exceptions import NotFittedError
+from sklearn.feature_selection import SelectFromModel
 from sklearn.linear_model import (
-    LogisticRegression,
-    SGDClassifier,
-    Lasso,
-    LassoCV,
     ElasticNet,
     ElasticNetCV,
+    Lasso,
+    LassoCV,
+    LogisticRegression,
+    PassiveAggressiveClassifier,
+    SGDClassifier,
 )
-from sklearn.svm import LinearSVC
-from sklearn.feature_selection import SelectFromModel
-from sklearn.ensemble import RandomForestClassifier, HistGradientBoostingClassifier
-from sklearn.linear_model import PassiveAggressiveClassifier
-from sklearn.base import BaseEstimator
 from sklearn.pipeline import make_pipeline
-from sklearn.decomposition import PCA
+from sklearn.svm import LinearSVC
+from sklearn.utils._testing import (
+    MinimalClassifier,
+    assert_allclose,
+    assert_array_almost_equal,
+    assert_array_equal,
+    skip_if_32bit,
+)
 
 
 class NaNTag(BaseEstimator):

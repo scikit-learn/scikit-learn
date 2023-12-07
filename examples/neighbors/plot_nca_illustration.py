@@ -12,12 +12,13 @@ space. Please refer to the :ref:`User Guide <nca>` for more information.
 
 # License: BSD 3 clause
 
-import numpy as np
 import matplotlib.pyplot as plt
-from sklearn.datasets import make_classification
-from sklearn.neighbors import NeighborhoodComponentsAnalysis
+import numpy as np
 from matplotlib import cm
 from scipy.special import logsumexp
+
+from sklearn.datasets import make_classification
+from sklearn.neighbors import NeighborhoodComponentsAnalysis
 
 # %%
 # Original points
