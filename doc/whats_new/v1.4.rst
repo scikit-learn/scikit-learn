@@ -269,6 +269,10 @@ Changelog
   value instead.
   :pr:`27828` by :user:`Guillaume Lemaitre <glemaitre>`.
 
+- |Fix| Raises a proper `ValueError` when `metric="precomputed"` and requested storing
+  centers via the parameter `store_centers`.
+  :pr:`27898` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 :mod:`sklearn.compose`
 ......................
 
@@ -566,6 +570,12 @@ Changelog
   :class:`model_selection.HalvingGridSearchCV` now don't change the given
   object in the parameter grid if it's an estimator. :pr:`26786` by `Adrin
   Jalali`_.
+
+:mod:`sklearn.multioutput`
+..........................
+
+- |Enhancement| Add method `predict_log_proba` to :class:`multioutput.ClassifierChain`.
+  :pr:`27720` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 :mod:`sklearn.neighbors`
 ........................
