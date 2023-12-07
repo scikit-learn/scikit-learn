@@ -9,8 +9,9 @@
 
 cimport cython
 from cython.parallel import prange
+cimport numpy as cnp
 import numpy as np
-from libc.math cimport INFINITY
+from libc.math cimport INFINITY, ceil
 from libc.stdlib cimport malloc, free, qsort
 from libc.string cimport memcpy
 
@@ -23,6 +24,8 @@ from .common cimport MonotonicConstraint
 from ._bitset cimport init_bitset
 from ._bitset cimport set_bitset
 from ._bitset cimport in_bitset
+
+cnp.import_array()
 
 
 cdef struct split_info_struct:
@@ -155,6 +158,11 @@ cdef class Splitter:
         be ignored.
     hessians_are_constant: bool, default is False
         Whether hessians are constant.
+    feature_fraction_per_split : float, default=1
+        Proportion of randomly chosen features in each and every node split.
+        This is a form of regularization, smaller values make the trees weaker
+        learners and might prevent overfitting.
+    rng : Generator
     n_threads : int, default=1
         Number of OpenMP threads to use.
     """
@@ -171,6 +179,8 @@ cdef class Splitter:
         Y_DTYPE_C min_hessian_to_split
         unsigned int min_samples_leaf
         Y_DTYPE_C min_gain_to_split
+        Y_DTYPE_C feature_fraction_per_split
+        rng
 
         unsigned int [::1] partition
         unsigned int [::1] left_indices_buffer
@@ -189,6 +199,8 @@ cdef class Splitter:
                  unsigned int min_samples_leaf=20,
                  Y_DTYPE_C min_gain_to_split=0.,
                  unsigned char hessians_are_constant=False,
+                 Y_DTYPE_C feature_fraction_per_split=1.0,
+                 rng=np.random.RandomState(),
                  unsigned int n_threads=1):
 
         self.X_binned = X_binned
@@ -196,13 +208,15 @@ cdef class Splitter:
         self.n_bins_non_missing = n_bins_non_missing
         self.missing_values_bin_idx = missing_values_bin_idx
         self.has_missing_values = has_missing_values
-        self.monotonic_cst = monotonic_cst
         self.is_categorical = is_categorical
+        self.monotonic_cst = monotonic_cst
         self.l2_regularization = l2_regularization
         self.min_hessian_to_split = min_hessian_to_split
         self.min_samples_leaf = min_samples_leaf
         self.min_gain_to_split = min_gain_to_split
         self.hessians_are_constant = hessians_are_constant
+        self.feature_fraction_per_split = feature_fraction_per_split
+        self.rng = rng
         self.n_threads = n_threads
 
         # The partition array maps each sample index into the leaves of the
@@ -475,6 +489,9 @@ cdef class Splitter:
             const signed char [::1] monotonic_cst = self.monotonic_cst
             int n_threads = self.n_threads
             bint has_interaction_cst = False
+            Y_DTYPE_C feature_fraction_per_split = self.feature_fraction_per_split
+            cnp.npy_bool [:] subsample_mask
+            int n_subsampled_features
 
         has_interaction_cst = allowed_features is not None
         if has_interaction_cst:
@@ -482,13 +499,26 @@ cdef class Splitter:
         else:
             n_allowed_features = self.n_features
 
+        if feature_fraction_per_split < 1.0:
+            # We do all random sampling before the nogil and make sure that we sample
+            # exactly n_subsampled_features >= 1 features.
+            n_subsampled_features = max(
+                1,
+                int(ceil(feature_fraction_per_split * n_allowed_features)),
+            )
+            subsample_mask_arr = np.full(n_allowed_features, False)
+            subsample_mask_arr[:n_subsampled_features] = True
+            self.rng.shuffle(subsample_mask_arr)
+            # https://github.com/numpy/numpy/issues/18273
+            subsample_mask = subsample_mask_arr
+
         with nogil:
 
             split_infos = <split_info_struct *> malloc(
                 n_allowed_features * sizeof(split_info_struct))
 
-            # split_info_idx is index of split_infos of size n_features_allowed
-            # features_idx is the index of the feature column in X
+            # split_info_idx is index of split_infos of size n_allowed_features.
+            # features_idx is the index of the feature column in X.
             for split_info_idx in prange(n_allowed_features, schedule='static',
                                          num_threads=n_threads):
                 if has_interaction_cst:
@@ -505,6 +535,13 @@ cdef class Splitter:
                 # node into a leaf.
                 split_infos[split_info_idx].gain = -1
                 split_infos[split_info_idx].is_categorical = is_categorical[feature_idx]
+
+                # Note that subsample_mask is indexed by split_info_idx and not by
+                # feature_idx because we only need to exclude the same features again
+                # and again. We do NOT need to access the features directly by using
+                # allowed_features.
+                if feature_fraction_per_split < 1.0 and not subsample_mask[split_info_idx]:
+                    continue
 
                 if is_categorical[feature_idx]:
                     self._find_best_bin_to_split_category(
