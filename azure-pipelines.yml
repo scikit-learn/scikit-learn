@@ -191,9 +191,9 @@ jobs:
       )
     commitMessage: dependencies['git_commit']['outputs']['commit.message']
     matrix:
-      py38_conda_forge_openblas_ubuntu_2204:
+      py39_conda_forge_openblas_ubuntu_2204:
         DISTRIB: 'conda'
-        LOCK_FILE: './build_tools/azure/py38_conda_forge_openblas_ubuntu_2204_linux-64_conda.lock'
+        LOCK_FILE: './build_tools/azure/py39_conda_forge_openblas_ubuntu_2204_linux-64_conda.lock'
         CHECK_WARNINGS: 'true'
         COVERAGE: 'false'
         SKLEARN_TESTS_GLOBAL_RANDOM_SEED: '0'  # non-default seed
@@ -311,9 +311,9 @@ jobs:
         not(contains(dependencies['git_commit']['outputs']['commit.message'], '[ci skip]'))
       )
     matrix:
-      py38_conda_forge_mkl:
+      py39_conda_forge_mkl:
         DISTRIB: 'conda'
-        LOCK_FILE: ./build_tools/azure/py38_conda_forge_mkl_win-64_conda.lock
+        LOCK_FILE: ./build_tools/azure/py39_conda_forge_mkl_win-64_conda.lock
         CHECK_WARNINGS: 'true'
         # The Azure Windows runner is typically much slower than other CI
         # runners due to the lack of compiler cache. Running the tests with
