@@ -206,7 +206,6 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
             feature_names = []
             vocab = {}
         else:
-            check_is_fitted(self, ["feature_names_", "vocabulary_"])
             feature_names = self.feature_names_
             vocab = self.vocabulary_
 
@@ -376,6 +375,7 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
         Xa : {array, sparse matrix}
             Feature vectors; always 2-d.
         """
+        check_is_fitted(self, ["feature_names_", "vocabulary_"])
         return self._transform(X, fitting=False)
 
     def get_feature_names_out(self, input_features=None):
