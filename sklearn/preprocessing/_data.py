@@ -156,9 +156,9 @@ def scale(X, *, axis=0, with_mean=True, with_std=True, copy=True):
 
     copy : bool, default=True
         If False, try to avoid a copy and scale in place.
-        This is not guaranteed to always work in place; e.g. if the data is
-        not a NumPy array, or is a scipy.sparse CSR matrix, or is not of dtype
-        float, a copy may still be returned.
+        This is not guaranteed to always work in place; e.g. if the data is 
+        a numpy array with an int dtype, a copy will be returned even with 
+        copy=False.
 
     Returns
     -------
@@ -616,8 +616,8 @@ def minmax_scale(X, feature_range=(0, 1), *, axis=0, copy=True):
     copy : bool, default=True
         If False, try to avoid a copy and scale in place.
         This is not guaranteed to always work in place; e.g. if the data is
-        not a NumPy array, or is a scipy.sparse CSR matrix, or is not of dtype
-        float, a copy may still be returned.
+        a numpy array with an int dtype, a copy will be returned even with
+        copy=False.
 
     Returns
     -------
@@ -1341,8 +1341,8 @@ def maxabs_scale(X, *, axis=0, copy=True):
     copy : bool, default=True
         If False, try to avoid a copy and scale in place.
         This is not guaranteed to always work in place; e.g. if the data is
-        not a NumPy array, or is a scipy.sparse CSR matrix, or is not of dtype
-        float, a copy may still be returned.
+        a numpy array with an int dtype, a copy will be returned even with
+        copy=False.
 
     Returns
     -------
@@ -1720,8 +1720,8 @@ def robust_scale(
     copy : bool, default=True
         If False, try to avoid a copy and scale in place.
         This is not guaranteed to always work in place; e.g. if the data is
-        not a NumPy array, or is a scipy.sparse CSR matrix, or is not of dtype
-        float, a copy may still be returned.
+        a numpy array with an int dtype, a copy will be returned even with
+        copy=False.
 
     unit_variance : bool, default=False
         If `True`, scale data so that normally distributed features have a
@@ -1834,8 +1834,8 @@ def normalize(X, norm="l2", *, axis=1, copy=True, return_norm=False):
     copy : bool, default=True
         If False, try to avoid a copy and normalize in place.
         This is not guaranteed to always work in place; e.g. if the data is
-        not a NumPy array, or is a scipy.sparse CSR matrix, or is not of dtype
-        float, a copy may still be returned.
+        a numpy array with an int dtype, a copy will be returned even with
+        copy=False.
 
     return_norm : bool, default=False
         Whether to return the computed norms.
@@ -2068,7 +2068,8 @@ def binarize(X, *, threshold=0.0, copy=True):
     copy : bool, default=True
         If False, try to avoid a copy and binarize in place.
         This is not guaranteed to always work in place; e.g. if the data is
-        not a NumPy array a copy may still be returned.
+        a numpy array with an object dtype, a copy will be returned even with
+        copy=False.
 
     Returns
     -------
@@ -2954,8 +2955,8 @@ def quantile_transform(
     copy : bool, default=True
         If False, try to avoid a copy and transform in place.
         This is not guaranteed to always work in place; e.g. if the data is
-        not a NumPy array, or is a scipy.sparse CSR matrix, or is not of dtype
-        float, a copy may still be returned.
+        a numpy array with an int dtype, a copy will be returned even with
+        copy=False.
 
         .. versionchanged:: 0.23
             The default value of `copy` changed from False to True in 0.23.
@@ -3491,8 +3492,8 @@ def power_transform(X, method="yeo-johnson", *, standardize=True, copy=True):
     copy : bool, default=True
         If False, try to avoid a copy and transform in place.
         This is not guaranteed to always work in place; e.g. if the data is
-        not a NumPy array, or is a scipy.sparse CSR matrix, or is not of dtype
-        float, a copy may still be returned.
+        a numpy array with an int dtype, a copy will be returned even with
+        copy=False.
 
     Returns
     -------
