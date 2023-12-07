@@ -147,7 +147,7 @@ conda_build_metadata_list = [
         },
     },
     {
-        "build_name": "py39_conda_defaults_openblas",
+        "build_name": "py_min_conda_defaults_openblas",
         "folder": "build_tools/azure",
         "platform": "linux-64",
         "channel": "defaults",
@@ -163,7 +163,7 @@ conda_build_metadata_list = [
         },
     },
     {
-        "build_name": "py39_conda_forge_openblas_ubuntu_2204",
+        "build_name": "py_min_conda_forge_openblas_ubuntu_2204",
         "folder": "build_tools/azure",
         "platform": "linux-64",
         "channel": "conda-forge",
@@ -247,7 +247,7 @@ conda_build_metadata_list = [
         },
     },
     {
-        "build_name": "py39_conda_forge_mkl",
+        "build_name": "py_min_conda_forge_mkl",
         "folder": "build_tools/azure",
         "platform": "win-64",
         "channel": "conda-forge",
@@ -321,7 +321,7 @@ conda_build_metadata_list = [
         },
     },
     {
-        "build_name": "py39_conda_forge",
+        "build_name": "py_min_conda_forge",
         "folder": "build_tools/cirrus",
         "platform": "linux-aarch64",
         "channel": "conda-forge",
