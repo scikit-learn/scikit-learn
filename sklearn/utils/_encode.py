@@ -43,7 +43,12 @@ def _unique(values, *, return_inverse=False, return_counts=False):
         if _is_pandas_series(values):
             return _unique_pandas(values, return_counts=return_counts)
         if _is_polars_series(values):
-            return _unique_polars(values, return_counts=return_counts)
+            # polars unique, value_counts, arg_sort not supported for
+            # polars.Object dtype. The PanicException is incovenient to catch
+            # as it does not derive from Exception and before it occurs it
+            # prints an error message to stderr
+            if str(values.dtype) != "Object":
+                return _unique_polars(values, return_counts=return_counts)
     values = np.asarray(values)
     if values.dtype == object:
         return _unique_python(
@@ -117,9 +122,10 @@ def _polars_merge_null_nan(values, counts=None):
 def _unique_polars(values, *, return_counts=False):
     if return_counts:
         value_counts = values.value_counts(sort=False)
-        order = _polars_arg_sort(value_counts[""])
-        values = value_counts[""].gather(order).to_numpy()
-        counts = value_counts["counts"].gather(order).to_numpy()
+        val_col, count_col = value_counts.columns
+        order = _polars_arg_sort(value_counts[val_col])
+        values = value_counts[val_col].gather(order).to_numpy()
+        counts = value_counts[count_col].gather(order).to_numpy()
         return _polars_merge_null_nan(values, counts)
     unique = values.unique()
     order = _polars_arg_sort(unique)
