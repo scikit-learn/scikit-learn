@@ -439,8 +439,9 @@ then 5- or 10- fold cross validation can overestimate the generalization error.
 As a general rule, most authors, and empirical evidence, suggest that 5- or 10-
 fold cross validation should be preferred to LOO.
 
-
+|details-start|
 .. topic:: References:
+|details-split|
 
  * `<http://www.faqs.org/faqs/ai-faq/neural-nets/part3/section-12.html>`_;
  * T. Hastie, R. Tibshirani, J. Friedman,  `The Elements of Statistical Learning
@@ -453,6 +454,8 @@ fold cross validation should be preferred to LOO.
    <https://people.csail.mit.edu/romer/papers/CrossVal_SDM08.pdf>`_, SIAM 2008;
  * G. James, D. Witten, T. Hastie, R Tibshirani, `An Introduction to
    Statistical Learning <https://www.statlearning.com>`_, Springer 2013.
+
+|details-end|
 
 .. _leave_p_out:
 
@@ -681,7 +684,9 @@ Example::
   [ 0  1  4  5  6  7  8  9 11 12 13 14] [ 2  3 10 15 16 17]
   [ 1  2  3  8  9 10 12 13 14 15 16 17] [ 0  4  5  6  7 11]
 
+|details-start|
 Implementation notes:
+|details-split|
 
 - With the current implementation full shuffle is not possible in most
   scenarios. When shuffle=True, the following happens:
@@ -708,6 +713,8 @@ Here is a visualization of cross-validation behavior for uneven groups:
    :target: ../auto_examples/model_selection/plot_cv_indices.html
    :align: center
    :scale: 75%
+
+|details-end|
 
 .. _leave_one_group_out:
 
@@ -993,8 +1000,12 @@ individual model is very fast.
 
     * :ref:`sphx_glr_auto_examples_model_selection_plot_permutation_tests_for_classification.py`
 
+|details-start|
 .. topic:: References:
+|details-split|
 
  * Ojala and Garriga. `Permutation Tests for Studying Classifier Performance
    <http://www.jmlr.org/papers/volume11/ojala10a/ojala10a.pdf>`_.
    J. Mach. Learn. Res. 2010.
+
+|details-end|
