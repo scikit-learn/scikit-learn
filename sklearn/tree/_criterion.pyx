@@ -984,8 +984,6 @@ cdef class RegressionCriterion(Criterion):
 
     cdef int update(self, intp_t new_pos) except -1 nogil:
         """Updated statistics by moving sample_indices[pos:new_pos] to the left."""
-        with gil:
-            print("RegressionCriterion update")
         cdef const float64_t[:] sample_weight = self.sample_weight
         cdef const intp_t[:] sample_indices = self.sample_indices
 
@@ -999,6 +997,10 @@ cdef class RegressionCriterion(Criterion):
         cdef intp_t p
         cdef intp_t k
         cdef float64_t w = 1.0
+
+        with gil:
+            print(f"RegressionCiteraion update entry pos: {pos} new_pos: {new_pos} end_non_missing: {end_non_missing}")
+            print(f"\t self_sum_left: {np.array(self.sum_left)} self.sum_right {np.array(self.sum_right)}")
 
         # Update statistics up to new_pos
         #
@@ -1036,6 +1038,10 @@ cdef class RegressionCriterion(Criterion):
                                  self.weighted_n_left)
         for k in range(self.n_outputs):
             self.sum_right[k] = self.sum_total[k] - self.sum_left[k]
+
+        with gil:
+            print(f"RegressionCriterion update exit new pos {new_pos}")
+            print(f"\t self_sum_left: {np.array(self.sum_left)} self.sum_right {np.array(self.sum_right)}")
 
         self.pos = new_pos
         return 0
@@ -1115,6 +1121,9 @@ cdef class MSE(RegressionCriterion):
         for k in range(self.n_outputs):
             impurity -= (self.sum_total[k] / self.weighted_n_node_samples)**2.0
 
+        with gil:
+            print("MSE node_impurity return", self.n_outputs, impurity, impurity / self.n_outputs) 
+
         return impurity / self.n_outputs
 
     cdef float64_t proxy_impurity_improvement(self) noexcept nogil:
@@ -1142,8 +1151,16 @@ cdef class MSE(RegressionCriterion):
         cdef float64_t proxy_impurity_right = 0.0
 
         for k in range(self.n_outputs):
+            with gil:
+                print("MSE proxy_impurity_improvement loop", k, self.sum_left[k], self.sum_right[k])
             proxy_impurity_left += self.sum_left[k] * self.sum_left[k]
             proxy_impurity_right += self.sum_right[k] * self.sum_right[k]
+
+        with gil:
+            print("MSE proxy_impurity_improvement return", self.n_outputs, proxy_impurity_left, proxy_impurity_right)
+            print("\t", self.weighted_n_left,   self.weighted_n_right)
+            print("\t", proxy_impurity_left / self.weighted_n_left, proxy_impurity_right / self.weighted_n_right) 
+
 
         return (proxy_impurity_left / self.weighted_n_left +
                 proxy_impurity_right / self.weighted_n_right)
@@ -1191,6 +1208,11 @@ cdef class MSE(RegressionCriterion):
 
         impurity_left[0] /= self.n_outputs
         impurity_right[0] /= self.n_outputs
+
+        with gil:
+            print("MSE children_impurity return", self.n_outputs, impurity_left[0], impurity_right[0])
+            print("\t", self.weighted_n_left,   self.weighted_n_right)
+
 
 
 cdef class MAE(RegressionCriterion):
@@ -1812,6 +1834,29 @@ cdef class HuberLossPlaceholder(RegressionCriterion):
         impurity_left[0] /= self.n_outputs
         impurity_right[0] /= self.n_outputs
 
+
+cpdef float huber_loss(float error, float delta=1.0) nogil:
+    """
+    Calculate the Huber Loss given the error (difference between y_true and y_pred)
+
+    Parameters
+    ----------
+    error : float
+        Difference between ground truth (correct) target value and estimated target value.
+
+    delta : float, default=1.0
+        The Huber loss parameter.
+
+    Returns
+    -------
+    loss : float
+        The Huber Loss given the error
+    """
+    if abs(error) <= delta:
+        return 0.5 * error**2
+    else:
+        return delta * (abs(error) - 0.5 * delta)
+
 cdef class Huber(RegressionCriterion):
     """Huber loss criterion.
 
@@ -1881,7 +1926,6 @@ cdef class Huber(RegressionCriterion):
         cdef float64_t y_ik
         cdef float64_t w_y_ik
         cdef float64_t w = 1.0
-        cdef float64_t diff
         self.sq_sum_total = 0.0
         memset(&self.sum_total[0], 0, self.n_outputs * sizeof(float64_t))
 
@@ -1893,13 +1937,9 @@ cdef class Huber(RegressionCriterion):
 
             for k in range(self.n_outputs):
                 y_ik = self.y[i, k]
-                w_y_ik = w * y_ik
+                w_y_ik = w * huber_loss(y_ik, self.delta)
                 self.sum_total[k] += w_y_ik
-                diff = y_ik - self.sum_total[k] / self.weighted_n_node_samples
-                if abs(diff) <= self.delta:
-                    self.sq_sum_total += w * 0.5 * diff * diff
-                else:
-                    self.sq_sum_total += w * (self.delta * abs(diff) - 0.5 * self.delta * self.delta)
+                self.sq_sum_total += w_y_ik
 
             self.weighted_n_node_samples += w
 
@@ -1922,6 +1962,10 @@ cdef class Huber(RegressionCriterion):
         cdef float64_t w = 1.0
         cdef float64_t diff
 
+        with gil:
+            print(f"Huber update entry pos: {pos} new_pos: {new_pos} end_non_missing: {end_non_missing}")
+            print(f"\t self_sum_left: {np.array(self.sum_left)} self.sum_right {np.array(self.sum_right)}")
+
         if (new_pos - pos) <= (end_non_missing - new_pos):
             for p in range(pos, new_pos):
                 i = sample_indices[p]
@@ -1930,11 +1974,7 @@ cdef class Huber(RegressionCriterion):
                     w = sample_weight[i]
 
                 for k in range(self.n_outputs):
-                    diff = self.y[i, k] - self.sum_left[k] / self.weighted_n_left
-                    if abs(diff) <= self.delta:
-                        self.sum_left[k] += w * 0.5 * diff * diff
-                    else:
-                        self.sum_left[k] += w * (self.delta * abs(diff) - 0.5 * self.delta * self.delta)
+                    self.sum_left[k] += huber_loss(self.y[i, k], self.delta) * w
 
                 self.weighted_n_left += w
         else:
@@ -1947,11 +1987,7 @@ cdef class Huber(RegressionCriterion):
                     w = sample_weight[i]
 
                 for k in range(self.n_outputs):
-                    diff = self.y[i, k] - self.sum_left[k] / self.weighted_n_left
-                    if abs(diff) <= self.delta:
-                        self.sum_left[k] -= w * 0.5 * diff * diff
-                    else:
-                        self.sum_left[k] -= w * (self.delta * abs(diff) - 0.5 * self.delta * self.delta)
+                     self.sum_left[k] += huber_loss(self.y[i, k], self.delta) * w
 
                 self.weighted_n_left -= w
 
@@ -1959,6 +1995,10 @@ cdef class Huber(RegressionCriterion):
                                 self.weighted_n_left)
         for k in range(self.n_outputs):
             self.sum_right[k] = self.sum_total[k] - self.sum_left[k]
+
+        with gil:
+            print(f"Huber update exit new pos {new_pos}")
+            print(f"\t self_sum_left: {np.array(self.sum_left)} self.sum_right {np.array(self.sum_right)}")
 
         self.pos = new_pos
         return 0
@@ -1971,12 +2011,12 @@ cdef class Huber(RegressionCriterion):
         cdef intp_t k
         cdef float64_t diff
 
+        impurity = self.sq_sum_total / self.weighted_n_node_samples
         for k in range(self.n_outputs):
-            diff = self.sum_total[k] / self.weighted_n_node_samples
-            if abs(diff) <= self.delta:
-                impurity += 0.5 * diff * diff
-            else:
-                impurity += self.delta * abs(diff) - 0.5 * self.delta * self.delta
+            impurity -= self.sum_total[k] / self.weighted_n_node_samples
+
+        with gil:
+            print("Huber node_impurity return", self.n_outputs, impurity, impurity / self.n_outputs) 
 
         return impurity / self.n_outputs
 
@@ -1987,21 +2027,21 @@ cdef class Huber(RegressionCriterion):
         cdef intp_t k
         cdef float64_t proxy_impurity_left = 0.0
         cdef float64_t proxy_impurity_right = 0.0
-        cdef float64_t diff_left, diff_right
 
         for k in range(self.n_outputs):
-            diff_left = self.sum_left[k] / self.weighted_n_left
-            diff_right = self.sum_right[k] / self.weighted_n_right
-            if abs(diff_left) <= self.delta:
-                proxy_impurity_left += 0.5 * diff_left * diff_left
-            else:
-                proxy_impurity_left += self.delta * abs(diff_left) - 0.5 * self.delta * self.delta
-            if abs(diff_right) <= self.delta:
-                proxy_impurity_right += 0.5 * diff_right * diff_right
-            else:
-                proxy_impurity_right += self.delta * abs(diff_right) - 0.5 * self.delta * self.delta
+            with gil:
+                print("Huber proxy_impurity_improvement loop", k, self.sum_left[k], self.sum_right[k])
+            proxy_impurity_left += self.sum_left[k]
+            proxy_impurity_right += self.sum_right[k]
 
-        return proxy_impurity_left + proxy_impurity_right
+        with gil:
+            print("Huber proxy_impurity_improvement return", self.n_outputs, proxy_impurity_left, proxy_impurity_right)
+            print("\t", self.weighted_n_left,   self.weighted_n_right)
+            print("\t", proxy_impurity_left / self.weighted_n_left, proxy_impurity_right / self.weighted_n_right) 
+
+        return (proxy_impurity_left / self.weighted_n_left +
+                proxy_impurity_right / self.weighted_n_right)
+
 
     cdef void children_impurity(self, float64_t* impurity_left,
                                 float64_t* impurity_right) noexcept nogil:
@@ -2033,11 +2073,7 @@ cdef class Huber(RegressionCriterion):
 
             for k in range(self.n_outputs):
                 y_ik = self.y[i, k]
-                diff = y_ik - self.sum_left[k] / self.weighted_n_left
-                if abs(diff) <= self.delta:
-                    huber_sum_left += w * 0.5 * diff * diff
-                else:
-                    huber_sum_left += w * (self.delta * abs(diff) - 0.5 * self.delta * self.delta)
+                huber_sum_left += huber_loss(y_ik, self.delta) * w
 
         huber_sum_right = self.sq_sum_total - huber_sum_left
 
@@ -2046,3 +2082,7 @@ cdef class Huber(RegressionCriterion):
 
         impurity_left[0] /= self.n_outputs
         impurity_right[0] /= self.n_outputs
+
+        with gil:
+            print("Huber children_impurity return", self.n_outputs, impurity_left[0], impurity_right[0])
+            print("\t", self.weighted_n_left,   self.weighted_n_right)
