@@ -155,9 +155,10 @@ def scale(X, *, axis=0, with_mean=True, with_std=True, copy=True):
         unit standard deviation).
 
     copy : bool, default=True
-        Set to False to perform inplace row normalization and avoid a
-        copy (if the input is already a numpy array or a scipy.sparse
-        CSC matrix and if axis is 1).
+        If False, try to avoid a copy and scale in place.
+        This is not guaranteed to always work in place; e.g. if the data is
+        a numpy array with an int dtype, a copy will be returned even with
+        copy=False.
 
     Returns
     -------
@@ -613,8 +614,10 @@ def minmax_scale(X, feature_range=(0, 1), *, axis=0, copy=True):
         otherwise (if 1) scale each sample.
 
     copy : bool, default=True
-        Set to False to perform inplace scaling and avoid a copy (if the input
-        is already a numpy array).
+        If False, try to avoid a copy and scale in place.
+        This is not guaranteed to always work in place; e.g. if the data is
+        a numpy array with an int dtype, a copy will be returned even with
+        copy=False.
 
     Returns
     -------
@@ -1336,8 +1339,10 @@ def maxabs_scale(X, *, axis=0, copy=True):
         otherwise (if 1) scale each sample.
 
     copy : bool, default=True
-        Set to False to perform inplace scaling and avoid a copy (if the input
-        is already a numpy array).
+        If False, try to avoid a copy and scale in place.
+        This is not guaranteed to always work in place; e.g. if the data is
+        a numpy array with an int dtype, a copy will be returned even with
+        copy=False.
 
     Returns
     -------
@@ -1713,9 +1718,10 @@ def robust_scale(
         .. versionadded:: 0.18
 
     copy : bool, default=True
-        Set to `False` to perform inplace row normalization and avoid a
-        copy (if the input is already a numpy array or a scipy.sparse
-        CSR matrix and if axis is 1).
+        If False, try to avoid a copy and scale in place.
+        This is not guaranteed to always work in place; e.g. if the data is
+        a numpy array with an int dtype, a copy will be returned even with
+        copy=False.
 
     unit_variance : bool, default=False
         If `True`, scale data so that normally distributed features have a
@@ -1826,9 +1832,10 @@ def normalize(X, norm="l2", *, axis=1, copy=True, return_norm=False):
         normalize each sample, otherwise (if 0) normalize each feature.
 
     copy : bool, default=True
-        Set to False to perform inplace row normalization and avoid a
-        copy (if the input is already a numpy array or a scipy.sparse
-        CSR matrix and if axis is 1).
+        If False, try to avoid a copy and normalize in place.
+        This is not guaranteed to always work in place; e.g. if the data is
+        a numpy array with an int dtype, a copy will be returned even with
+        copy=False.
 
     return_norm : bool, default=False
         Whether to return the computed norms.
@@ -2061,9 +2068,10 @@ def binarize(X, *, threshold=0.0, copy=True):
         Threshold may not be less than 0 for operations on sparse matrices.
 
     copy : bool, default=True
-        Set to False to perform inplace binarization and avoid a copy
-        (if the input is already a numpy array or a scipy.sparse CSR / CSC
-        matrix and if axis is 1).
+        If False, try to avoid a copy and binarize in place.
+        This is not guaranteed to always work in place; e.g. if the data is
+        a numpy array with an object dtype, a copy will be returned even with
+        copy=False.
 
     Returns
     -------
@@ -2947,9 +2955,10 @@ def quantile_transform(
         See :term:`Glossary <random_state>`.
 
     copy : bool, default=True
-        Set to False to perform inplace transformation and avoid a copy (if the
-        input is already a numpy array). If True, a copy of `X` is transformed,
-        leaving the original `X` unchanged.
+        If False, try to avoid a copy and transform in place.
+        This is not guaranteed to always work in place; e.g. if the data is
+        a numpy array with an int dtype, a copy will be returned even with
+        copy=False.
 
         .. versionchanged:: 0.23
             The default value of `copy` changed from False to True in 0.23.
@@ -3483,7 +3492,10 @@ def power_transform(X, method="yeo-johnson", *, standardize=True, copy=True):
         transformed output.
 
     copy : bool, default=True
-        Set to False to perform inplace computation during transformation.
+        If False, try to avoid a copy and transform in place.
+        This is not guaranteed to always work in place; e.g. if the data is
+        a numpy array with an int dtype, a copy will be returned even with
+        copy=False.
 
     Returns
     -------

@@ -14,6 +14,7 @@ from pytest import importorskip
 
 import sklearn
 from sklearn._config import config_context
+from sklearn._min_dependencies import dependent_packages
 from sklearn.base import BaseEstimator
 from sklearn.datasets import make_blobs
 from sklearn.ensemble import RandomForestRegressor
@@ -70,6 +71,7 @@ from sklearn.utils.validation import (
     _get_feature_names,
     _is_fitted,
     _is_pandas_df,
+    _is_polars_df,
     _num_features,
     _num_samples,
     assert_all_finite,
@@ -1753,6 +1755,38 @@ def test_is_pandas_df_pandas_not_installed(hide_available_pandas):
     assert not _is_pandas_df(1)
 
 
+@pytest.mark.parametrize(
+    "constructor_name, minversion",
+    [
+        ("pyarrow", dependent_packages["pyarrow"][0]),
+        ("dataframe", dependent_packages["pandas"][0]),
+        ("polars", dependent_packages["polars"][0]),
+    ],
+)
+def test_is_polars_df_other_libraries(constructor_name, minversion):
+    df = _convert_container(
+        [[1, 4, 2], [3, 3, 6]],
+        constructor_name,
+        minversion=minversion,
+    )
+    if constructor_name in ("pyarrow", "dataframe"):
+        assert not _is_polars_df(df)
+    else:
+        assert _is_polars_df(df)
+
+
+def test_is_polars_df_for_duck_typed_polars_dataframe():
+    """Check _is_polars_df for object that looks like a polars dataframe"""
+
+    class NotAPolarsDataFrame:
+        def __init__(self):
+            self.columns = [1, 2, 3]
+            self.schema = "my_schema"
+
+    not_a_polars_df = NotAPolarsDataFrame()
+    assert not _is_polars_df(not_a_polars_df)
+
+
 def test_get_feature_names_numpy():
     """Get feature names return None for numpy arrays."""
     X = np.array([[1, 2, 3], [4, 5, 6]])
@@ -1955,6 +1989,14 @@ def test_check_array_multiple_extensions(
     X_regular_checked = check_array(X_regular, dtype=None)
     X_extension_checked = check_array(X_extension, dtype=None)
     assert_array_equal(X_regular_checked, X_extension_checked)
+
+
+def test_num_samples_dataframe_protocol():
+    """Use the DataFrame interchange protocol to get n_samples from polars."""
+    pl = pytest.importorskip("polars")
+
+    df = pl.DataFrame({"a": [1, 2, 3], "b": [4, 5, 6]})
+    assert _num_samples(df) == 3
 
 
 @pytest.mark.parametrize(
