@@ -222,23 +222,6 @@ def test_pairwise_distances_for_sparse_data(
         pairwise_distances(X, Y_sparse, metric="minkowski")
 
 
-# TODO(1.4): Remove test when `sum_over_features` parameter is removed
-@pytest.mark.parametrize("sum_over_features", [True, False])
-def test_manhattan_distances_deprecated_sum_over_features(sum_over_features):
-    # Check that future warning is raised when user
-    # enters `sum_over_features` argument.
-    X = [[1, 2], [3, 4]]
-    Y = [[1, 2], [0, 3]]
-    with pytest.warns(
-        FutureWarning,
-        match=(
-            "`sum_over_features` is deprecated in version 1.2 and will be"
-            " removed in version 1.4."
-        ),
-    ):
-        manhattan_distances(X, Y, sum_over_features=sum_over_features)
-
-
 @pytest.mark.parametrize("metric", PAIRWISE_BOOLEAN_FUNCTIONS)
 def test_pairwise_boolean_distance(metric):
     # test that we convert to boolean arrays for boolean distances
@@ -846,6 +829,23 @@ def test_euclidean_distances_with_norms(global_dtype, y_array_constr):
     )
     with pytest.raises(AssertionError):
         assert_allclose(wrong_D, D1)
+
+
+@pytest.mark.parametrize("symmetric", [True, False])
+def test_euclidean_distances_float32_norms(global_random_seed, symmetric):
+    # Non-regression test for #27621
+    rng = np.random.RandomState(global_random_seed)
+    X = rng.random_sample((10, 10))
+    Y = X if symmetric else rng.random_sample((20, 10))
+    X_norm_sq = (X.astype(np.float32) ** 2).sum(axis=1).reshape(1, -1)
+    Y_norm_sq = (Y.astype(np.float32) ** 2).sum(axis=1).reshape(1, -1)
+    D1 = euclidean_distances(X, Y)
+    D2 = euclidean_distances(X, Y, X_norm_squared=X_norm_sq)
+    D3 = euclidean_distances(X, Y, Y_norm_squared=Y_norm_sq)
+    D4 = euclidean_distances(X, Y, X_norm_squared=X_norm_sq, Y_norm_squared=Y_norm_sq)
+    assert_allclose(D2, D1)
+    assert_allclose(D3, D1)
+    assert_allclose(D4, D1)
 
 
 def test_euclidean_distances_norm_shapes():
