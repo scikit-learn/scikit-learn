@@ -134,6 +134,8 @@ def _unique_polars(values, *, return_counts=False):
 def _unique_np(values, return_inverse=False, return_counts=False):
     """Helper function to find unique values for numpy arrays that correctly
     accounts for nans. See `_unique` documentation for details."""
+    # TODO: remove this function and replace with np.unique once oldest
+    # supported numpy is 1.24 (added the nan_equal parameter to np.unique)
     uniques = np.unique(
         values, return_inverse=return_inverse, return_counts=return_counts
     )
