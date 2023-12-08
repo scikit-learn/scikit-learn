@@ -219,8 +219,9 @@ of the data is likely to not work very well. In these cases, you can use
 :class:`RobustScaler` as a drop-in replacement instead. It uses
 more robust estimates for the center and range of your data.
 
-
+|details-start|
 .. topic:: References:
+|details-split|
 
   Further discussion on the importance of centering and scaling data is
   available on this FAQ: `Should I normalize/standardize/rescale the data?
@@ -235,6 +236,8 @@ more robust estimates for the center and range of your data.
   To address this issue you can use :class:`~sklearn.decomposition.PCA` with
   ``whiten=True`` to further remove the linear correlation across features.
 
+|details-end|
+
 .. _kernel_centering:
 
 Centering kernel matrices
@@ -248,7 +251,9 @@ followed by the removal of the mean in that space. In other words,
 :class:`KernelCenterer` computes the centered Gram matrix associated to a
 positive semidefinite kernel :math:`K`.
 
+|details-start|
 **Mathematical formulation**
+|details-split|
 
 We can have a look at the mathematical formulation now that we have the
 intuition. Let :math:`K` be a kernel matrix of shape `(n_samples, n_samples)`
@@ -294,12 +299,16 @@ centering :math:`K_{test}` is done as:
 `(n_samples_test, n_samples)` where all entries are equal to
 :math:`\frac{1}{\text{n}_{samples}}`.
 
+|details-start|
 .. topic:: References
+|details-split|
 
   .. [Scholkopf1998] B. Schölkopf, A. Smola, and K.R. Müller,
     `"Nonlinear component analysis as a kernel eigenvalue problem."
     <https://www.mlpack.org/papers/kpca.pdf>`_
     Neural computation 10.5 (1998): 1299-1319.
+
+|details-end|
 
 .. _preprocessing_transformer:
 
@@ -963,7 +972,9 @@ encoding learned in :meth:`~TargetEncoder.fit_transform`.
   * :ref:`sphx_glr_auto_examples_preprocessing_plot_target_encoder.py`
   * :ref:`sphx_glr_auto_examples_preprocessing_plot_target_encoder_cross_val.py`
 
+|details-start|
 .. topic:: References
+|details-split|
 
   .. [MIC] :doi:`Micci-Barreca, Daniele. "A preprocessing scheme for high-cardinality
      categorical attributes in classification and prediction problems"
@@ -973,6 +984,8 @@ encoding learned in :meth:`~TargetEncoder.fit_transform`.
      encoding outperforms traditional methods in supervised machine learning with
      high cardinality features" Comput Stat 37, 2671–2692 (2022)
      <10.1007/s00180-022-01207-6>`
+
+|details-end|
 
 .. _preprocessing_discretization:
 
@@ -1250,7 +1263,9 @@ Interestingly, a :class:`SplineTransformer` of ``degree=0`` is the same as
     * :ref:`sphx_glr_auto_examples_linear_model_plot_polynomial_interpolation.py`
     * :ref:`sphx_glr_auto_examples_applications_plot_cyclical_feature_engineering.py`
 
+|details-start|
 .. topic:: References:
+|details-split|
 
     * Eilers, P., & Marx, B. (1996). :doi:`Flexible Smoothing with B-splines and
       Penalties <10.1214/ss/1038425655>`. Statist. Sci. 11 (1996), no. 2, 89--121.
@@ -1258,6 +1273,8 @@ Interestingly, a :class:`SplineTransformer` of ``degree=0`` is the same as
     * Perperoglou, A., Sauerbrei, W., Abrahamowicz, M. et al. :doi:`A review of
       spline function procedures in R <10.1186/s12874-019-0666-3>`.
       BMC Med Res Methodol 19, 46 (2019).
+
+|details-end|
 
 .. _function_transformer:
 
