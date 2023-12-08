@@ -316,6 +316,9 @@ def _get_data_info_by_name(
             )
             for r in res:
                 warning_msg += f"- version {r['version']}, status: {r['status']}\n"
+                warning_msg += (
+                    f"  url: https://www.openml.org/search?type=data&id={r['did']}\n"
+                )
             warn(warning_msg)
         return res[0]
 

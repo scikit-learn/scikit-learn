@@ -1108,7 +1108,9 @@ def test_fetch_openml_iris_warn_multiple_version(monkeypatch, gzip_response):
         " iris exist. Versions may be fundamentally different, "
         "returning version 1. Available versions:\n"
         "- version 1, status: active\n"
+        "  url: https://www.openml.org/search?type=data&id=61\n"
         "- version 3, status: active\n"
+        "  url: https://www.openml.org/search?type=data&id=969\n"
     )
     with pytest.warns(UserWarning, match=msg):
         fetch_openml(
