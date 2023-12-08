@@ -801,12 +801,16 @@ cdef inline void _move_sums_regression(
         bint has_missing = criterion.n_missing != 0
 
     if has_missing and put_missing_in_1:
+        with gil:
+            print(f"\tpath 1")
         memcpy(&sum_1[0], &criterion.sum_missing[0], n_bytes)
         for i in range(criterion.n_outputs):
             sum_2[i] = criterion.sum_total[i] - criterion.sum_missing[i]
         weighted_n_1[0] = criterion.weighted_n_missing
         weighted_n_2[0] = criterion.weighted_n_node_samples - criterion.weighted_n_missing
     else:
+        with gil:
+            print(f"\tpath 2")
         memset(&sum_1[0], 0, n_bytes)
         # Assigning sum_2 = sum_total for all outputs.
         memcpy(&sum_2[0], &criterion.sum_total[0], n_bytes)
@@ -1877,7 +1881,7 @@ cdef class Huber(RegressionCriterion):
             The total number of samples to fit on
         """
         print("Huber__cinit__")
-        cdef float64_t delta = 1.0
+        cdef float64_t delta = 10000000.0
         self.delta = delta
 
         self.start = 0
@@ -1939,7 +1943,7 @@ cdef class Huber(RegressionCriterion):
                 y_ik = self.y[i, k]
                 w_y_ik = w * huber_loss(y_ik, self.delta)
                 self.sum_total[k] += w_y_ik
-                self.sq_sum_total += w_y_ik
+                self.sq_sum_total += w_y_ik * w_y_ik
 
             self.weighted_n_node_samples += w
 
@@ -2005,14 +2009,16 @@ cdef class Huber(RegressionCriterion):
 
     cdef float64_t node_impurity(self) noexcept nogil:
         """Evaluate the impurity of the current node."""
-        with gil:
-            print("Huber node_impurity")
         cdef float64_t impurity = 0.0
         cdef intp_t k
         cdef float64_t diff
 
+        with gil:
+            print("Huber node_impurity entry", self.n_outputs, self.sq_sum_total, self.weighted_n_node_samples)
         impurity = self.sq_sum_total / self.weighted_n_node_samples
         for k in range(self.n_outputs):
+            with gil:
+                print("Huber node_impurity loop", k, self.sum_total[k], impurity)
             impurity -= self.sum_total[k] / self.weighted_n_node_samples
 
         with gil:
