@@ -44,7 +44,7 @@ def _line_search_wolfe12(
     eps = 16 * np.finfo(np.asarray(old_fval).dtype).eps
     if is_verbose:
         print("  Line Search")
-        print(f"    eps=10 * finfo.eps={eps}")
+        print(f"    eps=16 * finfo.eps={eps}")
         print("    try line search wolfe1")
 
     ret = line_search_wolfe1(f, fprime, xk, pk, gfk, old_fval, old_old_fval, **kwargs)
