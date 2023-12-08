@@ -355,7 +355,11 @@ or want to do additional monitoring, using ``warm_start=True`` and
     ...     # additional monitoring / inspection
     MLPClassifier(...
 
+|details-start|
+
 .. topic:: References:
+
+|details-split|
 
     * `"Learning representations by back-propagating errors."
       <https://www.iro.umontreal.ca/~pift6266/A06/refs/backprop_old.pdf>`_
@@ -373,3 +377,5 @@ or want to do additional monitoring, using ``warm_start=True`` and
     *  :arxiv:`"Adam: A method for stochastic optimization."
        <1412.6980>`
        Kingma, Diederik, and Jimmy Ba (2014)
+
+|details-end|
