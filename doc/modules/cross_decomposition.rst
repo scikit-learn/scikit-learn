@@ -188,7 +188,9 @@ targets is greater than the number of samples.
       the two-block case
       <https://stat.uw.edu/sites/default/files/files/reports/2000/tr371.pdf>`_
       JA Wegelin
+
 |details-end|
+
 .. topic:: Examples:
 
     * :ref:`sphx_glr_auto_examples_cross_decomposition_plot_compare_cross_decomposition.py`
