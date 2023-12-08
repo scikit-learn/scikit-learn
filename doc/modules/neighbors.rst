@@ -304,13 +304,17 @@ In scikit-learn, KD tree neighbors searches are specified using the
 keyword ``algorithm = 'kd_tree'``, and are computed using the class
 :class:`KDTree`.
 
+|details-start|
 
 .. topic:: References:
+
+|details-split|
 
    * `"Multidimensional binary search trees used for associative searching"
      <https://dl.acm.org/citation.cfm?doid=361002.361007>`_,
      Bentley, J.L., Communications of the ACM (1975)
 
+|details-end|
 
 .. _ball_tree:
 
@@ -343,12 +347,18 @@ neighbors searches are specified using the keyword ``algorithm = 'ball_tree'``,
 and are computed using the class :class:`BallTree`.
 Alternatively, the user can work with the :class:`BallTree` class directly.
 
+|details-start|
+
 .. topic:: References:
+
+|details-split|
 
    * `"Five Balltree Construction Algorithms"
      <https://citeseerx.ist.psu.edu/doc_view/pid/17ac002939f8e950ffb32ec4dc8e86bdd8cb5ff1>`_,
      Omohundro, S.M., International Computer Science Institute
      Technical Report (1989)
+
+|details-end|
 
 Choice of Nearest Neighbors Algorithm
 -------------------------------------
@@ -834,8 +844,11 @@ Here the ``transform`` operation returns :math:`LX^T`, therefore its time
 complexity equals ``n_components * n_features * n_samples_test``. There is no
 added space complexity in the operation.
 
+|details-start|
 
 .. topic:: References:
+
+|details-split|
 
     .. [1] `"Neighbourhood Components Analysis"
       <http://www.cs.nyu.edu/~roweis/papers/ncanips.pdf>`_,
@@ -844,3 +857,5 @@ added space complexity in the operation.
 
     `Wikipedia entry on Neighborhood Components Analysis
     <https://en.wikipedia.org/wiki/Neighbourhood_components_analysis>`_
+
+|details-end|
