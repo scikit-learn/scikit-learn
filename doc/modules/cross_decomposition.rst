@@ -180,15 +180,14 @@ Since :class:`CCA` involves the inversion of :math:`X_k^TX_k` and
 :math:`Y_k^TY_k`, this estimator can be unstable if the number of features or
 targets is greater than the number of samples.
 
-|details-start|
+
 .. topic:: Reference:
-|details-split|
 
    .. [1] `A survey of Partial Least Squares (PLS) methods, with emphasis on
       the two-block case
       <https://stat.uw.edu/sites/default/files/files/reports/2000/tr371.pdf>`_
       JA Wegelin
-|details-end|
+
 .. topic:: Examples:
 
     * :ref:`sphx_glr_auto_examples_cross_decomposition_plot_compare_cross_decomposition.py`
