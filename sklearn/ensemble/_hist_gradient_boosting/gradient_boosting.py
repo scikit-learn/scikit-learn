@@ -2140,8 +2140,9 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
         # TODO: This could be done in parallel
         raw_predictions = self._raw_predict(X)
         if raw_predictions.shape[1] == 1:
-            # np.argmax([0, 0]) is 0, not 1, therefor "> 0" not ">= 0"
-            encoded_classes = (raw_predictions.ravel() > 0).astype(np.int64)
+            # np.argmax([0.5, 0.5]) is 0, not 1. Therefore "> 0" not ">= 0" to be
+            # consistent with the multiclass case.
+            encoded_classes = (raw_predictions.ravel() > 0).astype(int)
         else:
             encoded_classes = np.argmax(raw_predictions, axis=1)
         return self.classes_[encoded_classes]
