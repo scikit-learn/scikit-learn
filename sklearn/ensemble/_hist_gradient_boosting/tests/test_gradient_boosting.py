@@ -1580,3 +1580,42 @@ def test_categorical_features_warn():
     msg = "The categorical_features parameter will change to 'from_dtype' in v1.6"
     with pytest.warns(FutureWarning, match=msg):
         hist.fit(X, y)
+
+
+@pytest.mark.parametrize(
+    "problem", ("regression", "binary_classification", "multiclass_classification")
+)
+def test_bagging(problem):
+    """Test subsample/bagging."""
+    n_samples = 100
+    n_features = 2
+    params = dict(max_iter=10, early_stopping=False, validation_fraction=None)
+    if problem == "regression":
+        X, y = make_regression(
+            n_samples=n_samples,
+            n_features=n_features,
+            n_informative=n_features,
+            random_state=0,
+        )
+        model = HistGradientBoostingRegressor
+    else:
+        n_classes = 2 if problem == "binary_classification" else 3
+        X, y = make_classification(
+            n_samples=n_samples,
+            n_features=n_features,
+            n_informative=n_features,
+            n_redundant=0,
+            n_clusters_per_class=1,
+            n_classes=n_classes,
+            random_state=0,
+        )
+        model = HistGradientBoostingClassifier
+
+    est = model(**params).fit(X, y)
+    est_bag_75 = model(subsample=0.75, **params).fit(X, y)
+    est_bag_50 = model(subsample=0.5, **params).fit(X, y)
+    est_bag_25 = model(subsample=0.25, **params).fit(X, y)
+
+    assert np.all(est.train_score_ > est_bag_75.train_score_)
+    assert np.all(est_bag_75.train_score_ > est_bag_50.train_score_)
+    assert np.all(est_bag_50.train_score_ > est_bag_25.train_score_)
