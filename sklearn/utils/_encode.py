@@ -52,7 +52,9 @@ def _unique(values, *, return_inverse=False, return_counts=False):
             values, return_inverse=return_inverse, return_counts=return_counts
         )
     # numerical
-    return np.unique(values, return_inverse=return_inverse, return_counts=return_counts)
+    return _unique_np(
+        values, return_inverse=return_inverse, return_counts=return_counts
+    )
 
 
 def _unique_pandas(values, *, return_counts=False):
@@ -127,6 +129,47 @@ def _unique_polars(values, *, return_counts=False):
     unique = values.unique()
     order = _polars_arg_sort(unique)
     return _polars_merge_null_nan(unique.gather(order).to_numpy())
+
+
+def _unique_np(values, return_inverse=False, return_counts=False):
+    """Helper function to find unique values for numpy arrays that correctly
+    accounts for nans. See `_unique` documentation for details."""
+    uniques = np.unique(
+        values, return_inverse=return_inverse, return_counts=return_counts
+    )
+
+    inverse, counts = None, None
+
+    if return_counts:
+        *uniques, counts = uniques
+
+    if return_inverse:
+        *uniques, inverse = uniques
+
+    if return_counts or return_inverse:
+        uniques = uniques[0]
+
+    # np.unique will have duplicate missing values at the end of `uniques`
+    # here we clip the nans and remove it from uniques
+    if uniques.size and is_scalar_nan(uniques[-1]):
+        nan_idx = np.searchsorted(uniques, np.nan)
+        uniques = uniques[: nan_idx + 1]
+        if return_inverse:
+            inverse[inverse > nan_idx] = nan_idx
+
+        if return_counts:
+            counts[nan_idx] = np.sum(counts[nan_idx:])
+            counts = counts[: nan_idx + 1]
+
+    ret = (uniques,)
+
+    if return_inverse:
+        ret += (inverse,)
+
+    if return_counts:
+        ret += (counts,)
+
+    return ret[0] if len(ret) == 1 else ret
 
 
 class MissingValues(NamedTuple):
@@ -394,7 +437,7 @@ def _get_counts(values, uniques):
                 output[i] = counter[item]
         return output
 
-    unique_values, counts = np.unique(values, return_counts=True)
+    unique_values, counts = _unique_np(values, return_counts=True)
 
     # Recorder unique_values based on input: `uniques`
     uniques_in_values = np.isin(uniques, unique_values, assume_unique=True)
