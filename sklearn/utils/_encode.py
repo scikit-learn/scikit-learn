@@ -5,6 +5,7 @@ from typing import NamedTuple
 import numpy as np
 
 from ..utils import is_scalar_nan
+from ..utils.fixes import parse_version
 from ..utils.validation import _is_pandas_series, _is_polars_series
 
 
@@ -41,7 +42,14 @@ def _unique(values, *, return_inverse=False, return_counts=False):
     """
     if not return_inverse:
         if _is_pandas_series(values):
-            return _unique_pandas(values, return_counts=return_counts)
+            if not return_counts:
+                return _unique_pandas(values, return_counts=return_counts)
+            # before pandas 1.4.0 value_counts would replace None and NaT with Nan
+            # https://github.com/pandas-dev/pandas/pull/42743
+            import pandas as pd
+
+            if parse_version("1.4.0") <= parse_version(pd.__version__):
+                return _unique_pandas(values, return_counts=return_counts)
         if _is_polars_series(values):
             # polars unique, arg_sort not supported for polars.Object dtype.
             if str(values.dtype) != "Object":
