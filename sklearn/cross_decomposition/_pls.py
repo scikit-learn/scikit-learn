@@ -56,7 +56,7 @@ def _pinv2_old(a):
 
 
 def _get_first_singular_vectors_power_method(
-        X, Y, mode="A", max_iter=500, tol=1e-06, norm_y_weights=False
+    X, Y, mode="A", max_iter=500, tol=1e-06, norm_y_weights=False
 ):
     """Return the first left and right singular vectors of X'Y.
 
@@ -142,11 +142,17 @@ def _get_first_singular_vectors_ridge(X, Y, alpha_x=0.0, alpha_y=0.0):
         Ry = Uy @ np.diag(Sy)
 
         # Ensure Rx and Ry are not near-singular
-        if np.isclose(np.linalg.cond(Rx), np.inf) or np.isclose(np.linalg.cond(Ry), np.inf):
+        if np.isclose(np.linalg.cond(Rx), np.inf) or np.isclose(
+            np.linalg.cond(Ry), np.inf
+        ):
             raise ValueError("Rx or Ry is near-singular.")
 
-        Bx = np.linalg.pinv(np.linalg.cholesky(Rx.T @ Rx + alpha_x * np.eye(Rx.shape[1])))
-        By = np.linalg.pinv(np.linalg.cholesky(Ry.T @ Ry + alpha_y * np.eye(Ry.shape[1])))
+        Bx = np.linalg.pinv(
+            np.linalg.cholesky(Rx.T @ Rx + alpha_x * np.eye(Rx.shape[1]))
+        )
+        By = np.linalg.pinv(
+            np.linalg.cholesky(Ry.T @ Ry + alpha_y * np.eye(Ry.shape[1]))
+        )
 
         # Step 3: Compute the singular value decomposition of the transformed matrices
         C = np.dot(Bx @ Rx.T, Ry @ By)
@@ -158,9 +164,7 @@ def _get_first_singular_vectors_ridge(X, Y, alpha_x=0.0, alpha_y=0.0):
 
         # Step 5: Normalize the singular vectors
         x_weights /= np.sqrt(np.dot(x_weights, x_weights))
-        y_weights /= np.sqrt(
-            np.dot(y_weights, y_weights)
-        )
+        y_weights /= np.sqrt(np.dot(y_weights, y_weights))
     else:
         Cx = np.cov(X.T)
         Cy = np.cov(Y.T)
@@ -177,9 +181,7 @@ def _get_first_singular_vectors_ridge(X, Y, alpha_x=0.0, alpha_y=0.0):
 
     # Step 5: Normalize the singular vectors
     x_weights /= np.sqrt(np.dot(x_weights, x_weights))
-    y_weights /= np.sqrt(
-        np.dot(y_weights, y_weights)
-    )
+    y_weights /= np.sqrt(np.dot(y_weights, y_weights))
 
     return x_weights, y_weights
 
@@ -250,16 +252,16 @@ class _PLS(
 
     @abstractmethod
     def __init__(
-            self,
-            n_components=2,
-            *,
-            scale=True,
-            deflation_mode="regression",
-            mode="A",
-            algorithm="nipals",
-            max_iter=500,
-            tol=1e-06,
-            copy=True,
+        self,
+        n_components=2,
+        *,
+        scale=True,
+        deflation_mode="regression",
+        mode="A",
+        algorithm="nipals",
+        max_iter=500,
+        tol=1e-06,
+        copy=True,
     ):
         self.n_components = n_components
         self.deflation_mode = deflation_mode
@@ -671,7 +673,7 @@ class PLSRegression(_PLS):
     #     - "pls" with function oscorespls.fit(X, Y)
 
     def __init__(
-            self, n_components=2, *, scale=True, max_iter=500, tol=1e-06, copy=True
+        self, n_components=2, *, scale=True, max_iter=500, tol=1e-06, copy=True
     ):
         super().__init__(
             n_components=n_components,
@@ -818,14 +820,14 @@ class PLSCanonical(_PLS):
     # y_weights to one.
 
     def __init__(
-            self,
-            n_components=2,
-            *,
-            scale=True,
-            algorithm="nipals",
-            max_iter=500,
-            tol=1e-06,
-            copy=True,
+        self,
+        n_components=2,
+        *,
+        scale=True,
+        algorithm="nipals",
+        max_iter=500,
+        tol=1e-06,
+        copy=True,
     ):
         super().__init__(
             n_components=n_components,
@@ -932,7 +934,7 @@ class CCA(_PLS):
         _parameter_constraints.pop(param)
 
     def __init__(
-            self, n_components=2, *, scale=True, max_iter=500, tol=1e-06, copy=True
+        self, n_components=2, *, scale=True, max_iter=500, tol=1e-06, copy=True
     ):
         super().__init__(
             n_components=n_components,
@@ -1208,15 +1210,15 @@ class RidgeCCA(_PLS):
     }
 
     def __init__(
-            self,
-            n_components=2,
-            *,
-            scale=True,
-            max_iter=500,
-            tol=1e-06,
-            copy=True,
-            alpha_x=0.0,
-            alpha_y=0.0,
+        self,
+        n_components=2,
+        *,
+        scale=True,
+        max_iter=500,
+        tol=1e-06,
+        copy=True,
+        alpha_x=0.0,
+        alpha_y=0.0,
     ):
         super().__init__(
             n_components=n_components,

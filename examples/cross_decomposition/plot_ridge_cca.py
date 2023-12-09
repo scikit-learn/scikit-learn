@@ -10,35 +10,35 @@ import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.cross_decomposition import RidgeCCA, PLSCanonical, CCA
 
-n = 1000
+n = 100
 p = q = 50
-snr = 0.0000001
+
 # generate random data with correlation
 rng = np.random.default_rng(0)
 z = rng.normal(size=(n, 1))
 Wx = rng.normal(size=(1, p))
 Wy = rng.normal(size=(1, q))
 
-#random covariance matrix with correlated variables
+# random covariance matrix with correlated variables
 Cx = rng.uniform(low=-1, high=1, size=(p, p))
 Cx = np.dot(Cx, Cx.T)
 Cy = rng.uniform(low=-1, high=1, size=(q, q))
 Cy = np.dot(Cy, Cy.T)
 
-X = np.dot(z, Wx)*snr + rng.multivariate_normal(mean=np.zeros(p), cov=Cx, size=n)
-Y = np.dot(z, Wy)*snr + rng.multivariate_normal(mean=np.zeros(p), cov=Cy, size=n)
+X = np.dot(z, Wx) + rng.multivariate_normal(mean=np.zeros(p), cov=Cx, size=n)
+Y = np.dot(z, Wy) + rng.multivariate_normal(mean=np.zeros(p), cov=Cy, size=n)
 
 X_train = X[: n // 2]
 Y_train = Y[: n // 2]
 X_test = X[n // 2:]
 Y_test = Y[n // 2:]
 
+
 # Function to calculate covariance and correlation
 def calculate_cov_corr(X, Y):
     cov = np.cov(X.T, Y.T)[0, 1]
     corr = np.corrcoef(X.T, Y.T)[0, 1]
     return np.mean(cov), np.mean(corr)
-
 
 # Fit and evaluate CCA and PLS models
 cca_model = CCA(n_components=1)
@@ -59,7 +59,7 @@ pls_train_cov, pls_train_corr = calculate_cov_corr(X_train_pls, Y_train_pls)
 pls_test_cov, pls_test_corr = calculate_cov_corr(X_test_pls, Y_test_pls)
 
 # Analyzing effect of alpha on train and test correlation and covariance
-alphas = [0,1e-3,1e-2,1e-1,1, 10, 100, 1000, 10000, 100000]
+alphas = [1e-3, 1e-2, 1e-1, 1, 10, 100, 1000]
 train_covs = []
 test_covs = []
 train_corrs = []
@@ -111,6 +111,6 @@ plt.yticks(fontsize=12)
 
 # Move the legend outside of the plot
 plt.legend(loc='upper left', bbox_to_anchor=(1, 1))
- # Adjust the rect to make room for the legend
+# Adjust the rect to make room for the legend
 plt.show()
 print()
