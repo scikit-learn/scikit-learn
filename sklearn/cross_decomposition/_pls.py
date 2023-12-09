@@ -56,7 +56,7 @@ def _pinv2_old(a):
 
 
 def _get_first_singular_vectors_power_method(
-    X, Y, mode="A", max_iter=500, tol=1e-06, norm_y_weights=False
+        X, Y, mode="A", max_iter=500, tol=1e-06, norm_y_weights=False
 ):
     """Return the first left and right singular vectors of X'Y.
 
@@ -124,7 +124,7 @@ def _get_first_singular_vectors_svd(X, Y):
     return U[:, 0], Vt[0, :]
 
 
-def _get_first_singular_vectors_ridge(X, Y, alpha_x=0.0, alpha_y=0.0, tol=1e-06):
+def _get_first_singular_vectors_ridge(X, Y, alpha_x=0.0, alpha_y=0.0):
     """Return the first left and right singular vectors of X'Y in principal components
     space.
 
@@ -132,32 +132,56 @@ def _get_first_singular_vectors_ridge(X, Y, alpha_x=0.0, alpha_y=0.0, tol=1e-06)
     matrices of the principal components and returns the singular vectors in the data
     space.
     """
+    if X.shape[0] <= X.shape[1] or Y.shape[0] <= Y.shape[1]:
+        # do PCA implementation
+        # Step 1: Compute the principal components of X and Y
+        Ux, Sx, Vxt = svd(X, full_matrices=False)
+        Uy, Sy, Vyt = svd(Y, full_matrices=False)
 
-    # Step 1: Compute the principal components of X and Y
-    Ux, Sx, Vxt = svd(X, full_matrices=False)
-    Uy, Sy, Vyt = svd(Y, full_matrices=False)
+        Rx = Ux @ np.diag(Sx)
+        Ry = Uy @ np.diag(Sy)
 
-    Rx = Ux @ np.diag(Sx)
-    Ry = Uy @ np.diag(Sy)
+        # Ensure Rx and Ry are not near-singular
+        if np.isclose(np.linalg.cond(Rx), np.inf) or np.isclose(np.linalg.cond(Ry), np.inf):
+            raise ValueError("Rx or Ry is near-singular.")
 
-    Bx = np.linalg.inv(np.linalg.cholesky(Rx.T @ Rx + alpha_x * np.eye(Rx.shape[1])))
-    By = np.linalg.inv(np.linalg.cholesky(Ry.T @ Ry + alpha_y * np.eye(Ry.shape[1])))
+        Bx = np.linalg.pinv(np.linalg.cholesky(Rx.T @ Rx + alpha_x * np.eye(Rx.shape[1])))
+        By = np.linalg.pinv(np.linalg.cholesky(Ry.T @ Ry + alpha_y * np.eye(Ry.shape[1])))
 
-    # Step 3: Compute the singular value decomposition of the transformed matrices
-    C = np.dot(Bx @ Rx.T, Ry @ By)
-    U, _, Vt = svd(C, full_matrices=False)
+        # Step 3: Compute the singular value decomposition of the transformed matrices
+        C = np.dot(Bx @ Rx.T, Ry @ By)
+        U, _, Vt = svd(C, full_matrices=False)
 
-    # Step 4: Return the first left and right singular vectors in the data space
-    left_singular_vector = Vxt.T @ Bx.T @ U[:, 0]
-    right_singular_vector = Vyt.T @ By.T @ Vt[0, :]
+        # Step 4: Return the first left and right singular vectors in the data space
+        x_weights = Vxt.T @ Bx.T @ U[:, 0]
+        y_weights = Vyt.T @ By.T @ Vt[0, :]
+
+        # Step 5: Normalize the singular vectors
+        x_weights /= np.sqrt(np.dot(x_weights, x_weights))
+        y_weights /= np.sqrt(
+            np.dot(y_weights, y_weights)
+        )
+    else:
+        Cx = np.cov(X.T)
+        Cy = np.cov(Y.T)
+        Bx = np.linalg.inv(np.linalg.cholesky(Cx + alpha_x * np.eye(Cx.shape[1])))
+        By = np.linalg.inv(np.linalg.cholesky(Cy + alpha_y * np.eye(Cx.shape[1])))
+
+        # Step 3: Compute the singular value decomposition of the transformed matrices
+        C = Bx @ X.T @ Y @ By.T
+        U, _, Vt = svd(C, full_matrices=False)
+
+        # Step 4: Return the first left and right singular vectors in the data space
+        x_weights = Bx.T @ U[:, 0].T
+        y_weights = By.T @ Vt[0, :]
 
     # Step 5: Normalize the singular vectors
-    left_singular_vector /= np.sqrt(np.dot(left_singular_vector, left_singular_vector))
-    right_singular_vector /= np.sqrt(
-        np.dot(right_singular_vector, right_singular_vector)
+    x_weights /= np.sqrt(np.dot(x_weights, x_weights))
+    y_weights /= np.sqrt(
+        np.dot(y_weights, y_weights)
     )
 
-    return left_singular_vector, right_singular_vector
+    return x_weights, y_weights
 
 
 def _center_scale_xy(X, Y, scale=True):
@@ -226,16 +250,16 @@ class _PLS(
 
     @abstractmethod
     def __init__(
-        self,
-        n_components=2,
-        *,
-        scale=True,
-        deflation_mode="regression",
-        mode="A",
-        algorithm="nipals",
-        max_iter=500,
-        tol=1e-06,
-        copy=True,
+            self,
+            n_components=2,
+            *,
+            scale=True,
+            deflation_mode="regression",
+            mode="A",
+            algorithm="nipals",
+            max_iter=500,
+            tol=1e-06,
+            copy=True,
     ):
         self.n_components = n_components
         self.deflation_mode = deflation_mode
@@ -346,7 +370,7 @@ class _PLS(
                 x_weights, y_weights = _get_first_singular_vectors_svd(Xk, Yk)
             elif self.algorithm == "ridge":
                 x_weights, y_weights = _get_first_singular_vectors_ridge(
-                    Xk, Yk, alpha_x=self.alpha_x, alpha_y=self.alpha_x, tol=self.tol
+                    Xk, Yk, alpha_x=self.alpha_x, alpha_y=self.alpha_x
                 )
             # inplace sign flip for consistency across solvers and archs
             _svd_flip_1d(x_weights, y_weights)
@@ -647,7 +671,7 @@ class PLSRegression(_PLS):
     #     - "pls" with function oscorespls.fit(X, Y)
 
     def __init__(
-        self, n_components=2, *, scale=True, max_iter=500, tol=1e-06, copy=True
+            self, n_components=2, *, scale=True, max_iter=500, tol=1e-06, copy=True
     ):
         super().__init__(
             n_components=n_components,
@@ -794,14 +818,14 @@ class PLSCanonical(_PLS):
     # y_weights to one.
 
     def __init__(
-        self,
-        n_components=2,
-        *,
-        scale=True,
-        algorithm="nipals",
-        max_iter=500,
-        tol=1e-06,
-        copy=True,
+            self,
+            n_components=2,
+            *,
+            scale=True,
+            algorithm="nipals",
+            max_iter=500,
+            tol=1e-06,
+            copy=True,
     ):
         super().__init__(
             n_components=n_components,
@@ -908,7 +932,7 @@ class CCA(_PLS):
         _parameter_constraints.pop(param)
 
     def __init__(
-        self, n_components=2, *, scale=True, max_iter=500, tol=1e-06, copy=True
+            self, n_components=2, *, scale=True, max_iter=500, tol=1e-06, copy=True
     ):
         super().__init__(
             n_components=n_components,
@@ -1184,15 +1208,15 @@ class RidgeCCA(_PLS):
     }
 
     def __init__(
-        self,
-        n_components=2,
-        *,
-        scale=True,
-        max_iter=500,
-        tol=1e-06,
-        copy=True,
-        alpha_x=0.0,
-        alpha_y=0.0,
+            self,
+            n_components=2,
+            *,
+            scale=True,
+            max_iter=500,
+            tol=1e-06,
+            copy=True,
+            alpha_x=0.0,
+            alpha_y=0.0,
     ):
         super().__init__(
             n_components=n_components,
