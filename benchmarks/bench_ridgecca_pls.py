@@ -3,13 +3,14 @@ Benchmark of Ridge and SVD solvers for the CCA problem at different dimensions
 """
 import gc
 import sys
-import numpy as np
 from collections import defaultdict
 from time import time
-import matplotlib.pyplot as plt
 
-from sklearn.datasets import make_regression
+import matplotlib.pyplot as plt
+import numpy as np
+
 from sklearn.cross_decomposition import PLSSVD, RidgeCCA
+from sklearn.datasets import make_regression
 
 plssvd = PLSSVD(n_components=1)
 ridgecca = RidgeCCA(n_components=1, alpha_x=1.0, alpha_y=1.0)
