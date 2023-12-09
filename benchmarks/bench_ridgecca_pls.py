@@ -82,14 +82,23 @@ def compute_bench(n_samples, features_range, methods, n_repeats=5):
 
 def plot_results(results, features_range, title):
     plt.figure(figsize=(10, 6))
-    markers = ['o', 's', 'D', '^',
-               'x']  # You can add more markers if you have more methods
+    markers = [
+        "o",
+        "s",
+        "D",
+        "^",
+        "x",
+    ]  # You can add more markers if you have more methods
     for (method, times), marker in zip(results.items(), markers):
         mean_times = np.mean(times, axis=1)
         std_times = np.std(times, axis=1)
         plt.errorbar(
-            features_range, mean_times, yerr=std_times, label=method, capsize=5,
-            marker=marker
+            features_range,
+            mean_times,
+            yerr=std_times,
+            label=method,
+            capsize=5,
+            marker=marker,
         )
 
     plt.xlabel("Number of Features", fontsize=14)
@@ -97,7 +106,6 @@ def plot_results(results, features_range, title):
     plt.title(title, fontsize=16)
     plt.legend()
     plt.grid(True)
-    plt.show()
 
 
 if __name__ == "__main__":
@@ -109,8 +117,10 @@ if __name__ == "__main__":
     cca_methods = [("cca", cca), ("pca-cca", pca_cca)]
     cca_results = compute_bench(n_samples, cca_features_range, cca_methods)
     plot_results(cca_results, cca_features_range, "Benchmarking CCA Methods")
+    plt.show()
 
     # Compute benchmarks for PLS
     pls_methods = [("plssvd", plssvd), ("pca-pls", pca_pls)]
     pls_results = compute_bench(n_samples, pls_features_range, pls_methods)
     plot_results(pls_results, pls_features_range, "Benchmarking PLS Methods")
+    plt.show()
