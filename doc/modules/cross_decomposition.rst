@@ -183,10 +183,10 @@ targets is greater than the number of samples.
 Ridge Canonical Correlation Analysis
 -----------------------------------−
 
-:class:`RCCA` is a regularized version of :class:`CCA`, where the
+:class:`RidgeCCA` is a regularized version of :class:`CCA`, where the
 regularization parameter `alpha` controls the amount of regularization.
-At `alpha_x=0` and `alpha_y=0`, :class:`RCCA` is equivalent to :class:`CCA`. At `alpha_x=1`
-and `alpha_y=1`, :class:`RCCA` is equivalent to :class:`PLSCanonical`.
+At `alpha_x=0` and `alpha_y=0`, :class:`RidgeCCA` is equivalent to :class:`CCA`. At `alpha_x=1`
+and `alpha_y=1`, :class:`RidgeCCA` is equivalent to :class:`PLSCanonical`.
 
 
 .. topic:: Reference:
