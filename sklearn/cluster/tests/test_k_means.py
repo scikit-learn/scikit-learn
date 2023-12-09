@@ -32,13 +32,6 @@ from sklearn.utils._testing import (
 from sklearn.utils.extmath import row_norms
 from sklearn.utils.fixes import CSR_CONTAINERS, threadpool_limits
 
-# TODO(1.4): Remove
-msg = (
-    r"The default value of `n_init` will change from \d* to 'auto' in 1.4. Set the"
-    r" value of `n_init` explicitly to suppress the warning:FutureWarning"
-)
-pytestmark = pytest.mark.filterwarnings("ignore:" + msg)
-
 # non centered, sparse centers to check the
 centers = np.array(
     [
