@@ -2,7 +2,6 @@ import functools
 import math
 import operator
 import re
-import warnings
 from abc import ABC, abstractmethod
 from collections.abc import Iterable
 from inspect import signature
