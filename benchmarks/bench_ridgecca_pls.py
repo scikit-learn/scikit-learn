@@ -5,7 +5,7 @@ In this benchmark we show that PCA-CCA and PCA-PLS (i.e. solving the CCA and PLS
 problems in the PCA space) are faster than the standard CCA and PLS algorithms,
 respectively for high-dimensional data.
 The RidgeCCA estimator uses PCA behind the scenes and thus can be applied by setting
-the alpha_x and alpha_yparameters to 0.0 (CCA) or 1.0 (PLS).
+the alpha_x and alpha_y parameters to 0.0 (CCA) or 1.0 (PLS).
 
 PCA-CCA consistently outperforms the standard CCA algorithm in terms of computation
 time across the entire range of feature sizes. Notably, the standard CCA method is
@@ -14,17 +14,17 @@ samples (p < n), which limits the maximum feature size to 400 in our tests. This
 limitation is due to the requirement of CCA for the inversion of the covariance
 matrix, which must be full rank and thus invertible.
 
-As observed in the plot, the PLSSVD method initially performs faster than the 
-pca_pls method. However, as the number of features increases, we notice a 
-'crossover' point: the computation time for PLSSVD grows more rapidly than for 
-pca_pls. Beyond this crossover, pca_pls becomes the more efficient 
-algorithm in terms of computation time. This suggests that pca_pls may be better 
+As observed in the plot, the PLSSVD method initially performs faster than the
+pca_pls method. However, as the number of features increases, we notice a
+'crossover' point: the computation time for PLSSVD grows more rapidly than for
+pca_pls. Beyond this crossover, pca_pls becomes the more efficient
+algorithm in terms of computation time. This suggests that pca_pls may be better
 suited for high-dimensional data scenarios typically encountered in modern datasets.
 
-It's important to note that for CCA problems, which are closely related to PLS, 
-the Ridge CCA method demonstrates faster computation times across all feature sizes 
-tested. However, unlike PLS, CCA is only uniquely defined when the number of features 
-(p) is less than the number of samples (n), which constrained our tests to a maximum 
+It's important to note that for CCA problems, which are closely related to PLS,
+ the Ridge CCA method demonstrates faster computation times across all feature sizes
+tested. However, unlike PLS, CCA is only uniquely defined when the number of features
+(p) is less than the number of samples (n), which constrained our tests to a maximum
 of 400 features for the CCA benchmark.
 """
 
