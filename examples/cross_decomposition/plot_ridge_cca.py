@@ -31,8 +31,8 @@ Y = np.dot(z, Wy) + rng.multivariate_normal(mean=np.zeros(p), cov=Cy, size=n)
 
 X_train = X[: n // 2]
 Y_train = Y[: n // 2]
-X_test = X[n // 2:]
-Y_test = Y[n // 2:]
+X_test = X[n // 2 :]
+Y_test = Y[n // 2 :]
 
 
 # Function to calculate covariance and correlation
@@ -129,4 +129,3 @@ plt.yticks(fontsize=12)
 plt.legend(loc="upper left", bbox_to_anchor=(1, 1))
 # Adjust the rect to make room for the legend
 plt.show()
-print()
