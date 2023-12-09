@@ -1,6 +1,3 @@
-"""
-Benchmark of Ridge and SVD solvers for the CCA problem at different dimensions
-"""
 import gc
 import sys
 from collections import defaultdict
@@ -9,14 +6,17 @@ from time import time
 import matplotlib.pyplot as plt
 import numpy as np
 
-from sklearn.cross_decomposition import PLSSVD, RidgeCCA
+from sklearn.cross_decomposition import PLSSVD, RidgeCCA, CCA
 from sklearn.datasets import make_regression
 
+# Initialize models
+cca = CCA(n_components=1)
+ridgecca_cca = RidgeCCA(n_components=1, alpha_x=0.0, alpha_y=0.0)
 plssvd = PLSSVD(n_components=1)
-ridgecca = RidgeCCA(n_components=1, alpha_x=1.0, alpha_y=1.0)
+ridgecca_pls = RidgeCCA(n_components=1, alpha_x=1.0, alpha_y=1.0)
 
 
-def compute_bench(n_samples, features_range, n_repeats=5):
+def compute_bench(n_samples, features_range, methods, n_repeats=5):
     results = defaultdict(lambda: [])
 
     for n_features in features_range:
@@ -29,12 +29,11 @@ def compute_bench(n_samples, features_range, n_repeats=5):
                 "n_samples": n_samples,
                 "n_features": n_features,
                 "n_targets": n_features,
-                "n_informative": n_features // 10,
-                "bias": 0.0,
+                "n_informative": n_features,
             }
             X, y = make_regression(**dataset_kwargs)
 
-            for name, estimator in [("plssvd", plssvd), ("ridgecca", ridgecca)]:
+            for name, estimator in methods:
                 gc.collect()
                 print(f"benchmarking {name}:", end="")
                 sys.stdout.flush()
@@ -51,25 +50,37 @@ def compute_bench(n_samples, features_range, n_repeats=5):
     return results
 
 
-def plot_results(results, features_range):
+def plot_results(results, features_range, title):
     plt.figure(figsize=(10, 6))
-    for method, times in results.items():
+    markers = ['o', 's', 'D', '^',
+               'x']  # You can add more markers if you have more methods
+    for (method, times), marker in zip(results.items(), markers):
         mean_times = np.mean(times, axis=1)
         std_times = np.std(times, axis=1)
         plt.errorbar(
-            features_range, mean_times, yerr=std_times, label=method, capsize=5
+            features_range, mean_times, yerr=std_times, label=method, capsize=5,
+            marker=marker
         )
 
-    plt.xlabel("Number of Features")
-    plt.ylabel("Time (seconds)")
-    plt.title("Benchmarking Ridge and SVD Solvers for CCA")
+    plt.xlabel("Number of Features", fontsize=14)
+    plt.ylabel("Time (seconds)", fontsize=14)
+    plt.title(title, fontsize=16)
     plt.legend()
     plt.grid(True)
     plt.show()
 
 
 if __name__ == "__main__":
-    n_samples = 100
-    features_range = [100, 200, 1000]
-    results = compute_bench(n_samples, features_range)
-    plot_results(results, features_range)
+    n_samples=500
+    cca_features_range = [100, 200, 400]
+    pls_features_range = [100, 200, 500, 1000, 2000]
+
+    # Compute benchmarks for CCA
+    cca_methods = [("cca", cca), ("ridgecca_cca", ridgecca_cca)]
+    cca_results = compute_bench(n_samples, cca_features_range, cca_methods)
+    plot_results(cca_results, cca_features_range, "Benchmarking CCA Methods")
+
+    # Compute benchmarks for PLS
+    pls_methods = [("plssvd", plssvd), ("ridgecca_pls", ridgecca_pls)]
+    pls_results = compute_bench(n_samples, pls_features_range, pls_methods)
+    plot_results(pls_results, pls_features_range, "Benchmarking PLS Methods")
