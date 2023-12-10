@@ -1116,7 +1116,10 @@ def f1_score(
     The relative contribution of precision and recall to the F1 score are
     equal. The formula for the F1 score is::
 
-        F1 = 2 * (precision * recall) / (precision + recall)
+        F1 = 2 * TP / (2 * TP + FN + FP)
+
+    Where "TP" is the number of true positives, "FN" is the number of false
+    negatives, and "FP" is the number of false positives.
 
     Support beyond term:`binary` targets is achieved by treating :term:`multiclass`
     and :term:`multilabel` data as a collection of binary problems, one for each
