@@ -17,9 +17,6 @@ times in the new data set, while samples with lower weights are less likely to
 be selected. This ensures that subsequent iterations of the algorithm focus on
 the difficult-to-classify samples.
 
-For more example of usage, see
-:ref:`sphx_glr_auto_examples_ensemble_plot_adaboost_multiclass.py`.
-
 .. topic:: References:
 
     .. [1] :doi:`J. Zhu, H. Zou, S. Rosset, T. Hastie, "Multi-class adaboost."

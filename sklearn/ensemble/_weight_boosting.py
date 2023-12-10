@@ -351,6 +351,9 @@ class AdaBoostClassifier(
 
     Read more in the :ref:`User Guide <adaboost>`.
 
+    For more example of usage, see
+    :ref:`sphx_glr_auto_examples_ensemble_plot_adaboost_multiclass.py`.
+
     .. versionadded:: 0.14
 
     Parameters
