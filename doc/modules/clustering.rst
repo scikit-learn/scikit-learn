@@ -223,7 +223,7 @@ k-means++ initialization scheme, which has been implemented in scikit-learn
 (use the ``init='k-means++'`` parameter). This initializes the centroids to be
 (generally) distant from each other, leading to probably better results than
 random initialization, as shown in the reference. For a detailed example of
-comaparing different initialization schemes refer to
+comaparing different initialization schemes, refer to
 :ref:`sphx_glr_auto_examples_cluster_plot_kmeans_digits.py`.
 
 K-means++ can also be called independently to select seeds for other
@@ -237,17 +237,17 @@ weight of 2 to a sample is equivalent to adding a duplicate of that sample
 to the dataset :math:`X`.
 
 K-means can be used for vector quantization. This is achieved using the
-transform method of a trained model of :class:`KMeans`. For an example of
+``transform`` method of a trained model of :class:`KMeans`. For an example of
 performing vector quantization on an image refer to
 :ref:`sphx_glr_auto_examples_cluster_plot_color_quantization.py`.
 
 .. topic:: Examples:
 
- * :ref:`sphx_glr_auto_examples_cluster_plot_cluster_iris.py`: Example usage of K-Means
-   using the iris dataset
+ * :ref:`sphx_glr_auto_examples_cluster_plot_cluster_iris.py`: Example usage of
+   :class:`KMeans` using the iris dataset
 
  * :ref:`sphx_glr_auto_examples_text_plot_document_clustering.py`: Document clustering
-   using KMeans and MiniBatchKMeans based on sparse data
+   using :class:`KMeans` and :class:`MiniBatchKMeans` based on sparse data
 
 Low-level parallelism
 ---------------------
@@ -307,11 +307,11 @@ small, as shown in the example and cited reference.
 
 .. topic:: Examples:
 
- * :ref:`sphx_glr_auto_examples_cluster_plot_mini_batch_kmeans.py`: Comparison of KMeans and
-   MiniBatchKMeans
+ * :ref:`sphx_glr_auto_examples_cluster_plot_mini_batch_kmeans.py`: Comparison of
+   :class:`KMeans` and :class:`MiniBatchKMeans`
 
  * :ref:`sphx_glr_auto_examples_text_plot_document_clustering.py`: Document clustering
-   using KMeans and MiniBatchKMeans based on sparse data
+   using :class:`KMeans` and :class:`MiniBatchKMeans` based on sparse data
 
  * :ref:`sphx_glr_auto_examples_cluster_plot_dict_face_patches.py`
 
