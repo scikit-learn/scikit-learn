@@ -1588,7 +1588,8 @@ class RandomForestRegressor(ForestRegressor):
         mean squared error with Friedman's improvement score for potential
         splits, "absolute_error" for the mean absolute error, which minimizes
         the L1 loss using the median of each terminal node, and "poisson" which
-        uses reduction in Poisson deviance to find splits.
+        uses reduction in Poisson deviance to find splits. "huber" uses the Huber Loss
+        for robust regression.
         Training using "absolute_error" is significantly slower
         than when using "squared_error".
 
@@ -1597,6 +1598,9 @@ class RandomForestRegressor(ForestRegressor):
 
         .. versionadded:: 1.0
            Poisson criterion.
+
+        .. versionadded:: 1.4
+
 
     max_depth : int, default=None
         The maximum depth of the tree. If None, then nodes are expanded until
@@ -1746,6 +1750,18 @@ class RandomForestRegressor(ForestRegressor):
         Read more in the :ref:`User Guide <monotonic_cst_gbdt>`.
 
         .. versionadded:: 1.4
+
+    delta: non-negative float, default=1.0
+        The delta parameter applies to the "huber" criterion and essentially 
+        acts as a threshold to balance 
+        between "squared_error" and "absolute_error". For errors smaller 
+        than delta, the loss is quadratic and sensitive to the magnitude 
+        of the error, making it efficient for minimizing small errors. 
+        For larger errors, the loss becomes linear, which mitigates the 
+        impact of outliers that would otherwise dramatically 
+        affect the loss magnitude if MSE were used.
+    
+        .. versionadded:: 1.4    
 
     Attributes
     ----------
