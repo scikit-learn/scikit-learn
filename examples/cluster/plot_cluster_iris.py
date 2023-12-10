@@ -39,8 +39,8 @@ X = iris.data
 y = iris.target
 
 estimators = [
-    ("k_means_iris_8", KMeans(n_clusters=8, n_init="auto")),
-    ("k_means_iris_3", KMeans(n_clusters=3, n_init="auto")),
+    ("k_means_iris_8", KMeans(n_clusters=8)),
+    ("k_means_iris_3", KMeans(n_clusters=3)),
     ("k_means_iris_bad_init", KMeans(n_clusters=3, n_init=1, init="random")),
 ]
 

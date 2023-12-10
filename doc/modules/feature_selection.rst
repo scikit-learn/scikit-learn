@@ -108,6 +108,12 @@ applied to non-negative features, such as frequencies.
     Beware not to use a regression scoring function with a classification
     problem, you will get useless results.
 
+.. note::
+
+    The :class:`SelectPercentile` and :class:`SelectKBest` support unsupervised
+    feature selection as well. One needs to provide a `score_func` where `y=None`.
+    The `score_func` should use internally `X` to compute the scores.
+
 .. topic:: Examples:
 
     * :ref:`sphx_glr_auto_examples_feature_selection_plot_feature_selection.py`
