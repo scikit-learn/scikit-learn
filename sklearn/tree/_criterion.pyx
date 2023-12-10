@@ -1813,25 +1813,9 @@ cdef class Huber(RegressionCriterion):
         Returns:
         - None
         """
+        # Parent class RegresionCriterion's __cinit__ method is called automatically
+        # and initilizes all other required attributes.
         self.delta = delta
-
-        self.start = 0
-        self.pos = 0
-        self.end = 0
-
-        self.n_outputs = n_outputs
-        self.n_samples = n_samples
-        self.n_node_samples = 0
-        self.weighted_n_node_samples = 0.0
-        self.weighted_n_left = 0.0
-        self.weighted_n_right = 0.0
-        self.weighted_n_missing = 0.0
-
-        self.sq_sum_total = 0.0
-
-        self.sum_total = np.zeros(n_outputs, dtype=np.float64)
-        self.sum_left = np.zeros(n_outputs, dtype=np.float64)
-        self.sum_right = np.zeros(n_outputs, dtype=np.float64)
 
 #        print(f"Huber__cinit__ delta: {self.delta} ")
 
