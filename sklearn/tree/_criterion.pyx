@@ -1827,8 +1827,12 @@ cdef class Huber(RegressionCriterion):
 
         error = y_true - y_pred
         if abs(error) <= delta:
+#            with gil:
+#                print(f"Huber _huber_loss error <= delta return {0.5 * error**2}")
             return 0.5 * error**2
         else:
+#            with gil:
+#                print(f"Huber _huber_loss error > delta return {delta * (abs(error) - 0.5 * delta)}")
             return delta * (abs(error) - 0.5 * delta)
 
     cdef inline float64_t huber_loss(
