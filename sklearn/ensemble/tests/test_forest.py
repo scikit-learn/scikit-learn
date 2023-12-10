@@ -162,7 +162,7 @@ def test_iris_criterion(name, criterion):
 
 @pytest.mark.parametrize("name", FOREST_REGRESSORS)
 @pytest.mark.parametrize(
-    "criterion", ("squared_error", "absolute_error", "friedman_mse")
+    "criterion", ("squared_error", "absolute_error", "friedman_mse", "huber")
 )
 def test_regression_criterion(name, criterion):
     # Check consistency on regression dataset.
@@ -296,7 +296,7 @@ def test_probability(name):
     "name, criterion",
     itertools.chain(
         product(FOREST_CLASSIFIERS, ["gini", "log_loss"]),
-        product(FOREST_REGRESSORS, ["squared_error", "friedman_mse", "absolute_error"]),
+        product(FOREST_REGRESSORS, ["squared_error", "friedman_mse", "absolute_error", "huber"]),
     ),
 )
 def test_importances(dtype, name, criterion):
