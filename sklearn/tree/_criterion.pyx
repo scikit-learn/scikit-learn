@@ -1798,7 +1798,7 @@ cdef class Huber(RegressionCriterion):
         self.sum_left = np.zeros(n_outputs, dtype=np.float64)
         self.sum_right = np.zeros(n_outputs, dtype=np.float64)
 
-        print(f"Huber__cinit__ delta: {self.delta} ")
+#        print(f"Huber__cinit__ delta: {self.delta} ")
 
 
     cdef inline float64_t _huber_loss(self, float64_t y_true, float64_t y_pred, float64_t delta=1.0) nogil:
@@ -1827,8 +1827,8 @@ cdef class Huber(RegressionCriterion):
         """
         cdef float64_t error
 
-        with gil:
-            print(f"Huber _huber_loss entry delta {delta}")
+#        with gil:
+#            print(f"Huber _huber_loss entry delta {delta}")
 
         error = y_true - y_pred
         if abs(error) <= delta:
