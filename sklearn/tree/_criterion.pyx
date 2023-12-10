@@ -834,7 +834,7 @@ cdef class RegressionCriterion(Criterion):
             = (\sum_i^n y_i ** 2) - n_samples * y_bar ** 2
     """
 
-    def __cinit__(self, intp_t n_outputs, intp_t n_samples):
+    def __cinit__(self, intp_t n_outputs, intp_t n_samples, float64_t delta=1.0):
         """Initialize parameters for this criterion.
 
         Parameters
@@ -845,7 +845,12 @@ cdef class RegressionCriterion(Criterion):
         n_samples : intp_t
             The total number of samples to fit on
         """
-#        print("RegressionCriterion __cinit__")
+        # "delta" parameter is defined to work-around the order that Cython invokes __cinit__ methods
+        # for subclass and superclass.  In RgressionCriterion, which is superclass to Huber subclass,
+        # the delta parameter is ignored.  "delta" is only applicable to the Huber subclass.
+
+        # print("RegressionCriterion __cinit__")
+
         # Default values
         self.start = 0
         self.pos = 0
@@ -1757,14 +1762,12 @@ cdef class Poisson(RegressionCriterion):
 
 
 cdef class Huber(RegressionCriterion):
+    cdef float64_t delta
     """Huber loss criterion.
-
     Huber loss is less sensitive to outliers in data than mean squared error.
     """
 
-    cdef float64_t delta
-
-    def __cinit__(self, intp_t n_outputs, intp_t n_samples):
+    def __cinit__(self, intp_t n_outputs, intp_t n_samples, float64_t delta=1.0):
         """Initialize parameters for this criterion.
 
         Parameters
@@ -1775,7 +1778,6 @@ cdef class Huber(RegressionCriterion):
         n_samples : intp_t
             The total number of samples to fit on
         """
-        cdef float64_t delta = 1.0
         self.delta = delta
 
         self.start = 0
@@ -1796,7 +1798,7 @@ cdef class Huber(RegressionCriterion):
         self.sum_left = np.zeros(n_outputs, dtype=np.float64)
         self.sum_right = np.zeros(n_outputs, dtype=np.float64)
 
-#        print(f"Huber__cinit__ deta: {self.delta} ")
+        # print(f"Huber__cinit__ deta: {self.delta} ")
 
 
     cdef inline float64_t _huber_loss(self, float64_t y_true, float64_t y_pred, float64_t delta=1.0) nogil:
@@ -1824,6 +1826,9 @@ cdef class Huber(RegressionCriterion):
             The Huber Loss given the true and predicted values.
         """
         cdef float64_t error
+
+#        with gil:
+#            print(f"Huber _huber_loss entry delta {delta}")
 
         error = y_true - y_pred
         if abs(error) <= delta:
