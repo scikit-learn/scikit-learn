@@ -1873,6 +1873,7 @@ class RandomForestRegressor(ForestRegressor):
         ccp_alpha=0.0,
         max_samples=None,
         monotonic_cst=None,
+        delta=1.0,
     ):
         super().__init__(
             estimator=DecisionTreeRegressor(),
@@ -1889,6 +1890,7 @@ class RandomForestRegressor(ForestRegressor):
                 "random_state",
                 "ccp_alpha",
                 "monotonic_cst",
+                "delta",
             ),
             bootstrap=bootstrap,
             oob_score=oob_score,
@@ -1909,6 +1911,7 @@ class RandomForestRegressor(ForestRegressor):
         self.min_impurity_decrease = min_impurity_decrease
         self.ccp_alpha = ccp_alpha
         self.monotonic_cst = monotonic_cst
+        self.delta = delta
 
 
 class ExtraTreesClassifier(ForestClassifier):
