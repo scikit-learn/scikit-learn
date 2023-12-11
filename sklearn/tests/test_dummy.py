@@ -376,7 +376,7 @@ def test_quantile_invalid():
 
 def test_quantile_strategy_empty_train():
     est = DummyRegressor(strategy="quantile", quantile=0.4)
-    with pytest.raises(ValueError):
+    with pytest.raises(IndexError):
         est.fit([], [])
 
 

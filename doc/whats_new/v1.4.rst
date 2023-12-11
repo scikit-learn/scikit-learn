@@ -35,6 +35,10 @@ random sampling procedures.
       solvers (when fit on the same data again). The amount of change depends on the
       specified `tol`, for small values you will get more precise results.
 
+- |Enhancement| :class:`dummy.DummyClassifier` and :class:`dummy.DummyRegressor` now
+  have the `n_features_in_` and `feature_names_in_` attributes after `fit`.
+  :pr:`27937` by :user:`Marco vd Boom <tvdboom>`.
+
 - |Fix| fixes a memory leak seen in PyPy for estimators using the Cython loss functions.
   :pr:`27670` by :user:`Guillaume Lemaitre <glemaitre>`.
 
@@ -342,6 +346,13 @@ Changelog
   :func:`decomposition.dict_learning_online` is deprecated and will be removed in
   version 1.6. Use the default value instead.
   :pr:`27834` by :user:`Guillaume Lemaitre <glemaitre>`.
+
+:mod:`sklearn.dummy`
+.......................
+
+- |Enhancement| :class:`dummy.DummyClassifier` and :class:`dummy.DummyRegressor` now
+  have the `n_features_in_` and `feature_names_in_` attributes after `fit`.
+  :pr:`27937` by :user:`Marco vd Boom <tvdboom>`.
 
 :mod:`sklearn.ensemble`
 .......................
