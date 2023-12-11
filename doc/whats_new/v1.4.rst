@@ -548,6 +548,12 @@ Changelog
   :func:`sklearn.metrics.zero_one_loss` now support Array API compatible inputs.
   :pr:`27137` by :user:`Edoardo Abati <EdAbati>`.
 
+- |Fix| :func:`f1_score` now provides correct values when handling various
+  cases in which division by zero occurs by using a formulation that does not
+  depend on the precision and recall values.
+  :pr:`27577` by :user:`Omar Salman <OmarManzoor>` and
+  :user:`Guillaume Lemaitre <glemaitre>`.
+
 - |API| Deprecated `needs_threshold` and `needs_proba` from :func:`metrics.make_scorer`.
   These parameters will be removed in version 1.6. Instead, use `response_method` that
   accepts `"predict"`, `"predict_proba"` or `"decision_function"` or a list of such
