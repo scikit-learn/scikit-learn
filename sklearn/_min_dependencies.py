@@ -3,10 +3,6 @@ import argparse
 from collections import defaultdict
 
 # scipy and cython should by in sync with pyproject.toml
-
-# NumPy version should match oldest-supported-numpy for the minimum supported
-# Python version.
-# see: https://github.com/scipy/oldest-supported-numpy/blob/main/setup.cfg
 NUMPY_MIN_VERSION = "1.19.5"
 SCIPY_MIN_VERSION = "1.5.2"
 JOBLIB_MIN_VERSION = "1.2.0"
