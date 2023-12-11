@@ -875,7 +875,7 @@ def check_array_api_input(
     When check_values is True, it also checks that calling the estimator on the
     array_api Array gives the same results as ndarrays.
     """
-    xp, device, dtype = _array_api_for_tests(array_namespace, device, dtype)
+    xp = _array_api_for_tests(array_namespace, device)
 
     X, y = make_classification(random_state=42)
     X = X.astype(dtype, copy=False)

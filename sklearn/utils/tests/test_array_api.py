@@ -145,7 +145,7 @@ def test_asarray_with_order_ignored():
 def test_weighted_sum(
     array_namespace, device, dtype, sample_weight, normalize, expected
 ):
-    xp, device, dtype = _array_api_for_tests(array_namespace, device, dtype)
+    xp = _array_api_for_tests(array_namespace, device)
     sample_score = numpy.asarray([1, 2, 3, 4], dtype=dtype)
     sample_score = xp.asarray(sample_score, device=device)
     if sample_weight is not None:
