@@ -797,24 +797,18 @@ cdef inline void _move_sums_regression(
         sum_1 = 0
         sum_2 = sum_total
     """
-#    with gil:
-#        print("_move_sums_regression")
     cdef:
         intp_t i
         intp_t n_bytes = criterion.n_outputs * sizeof(float64_t)
         bint has_missing = criterion.n_missing != 0
 
     if has_missing and put_missing_in_1:
-#        with gil:
-#            print(f"\tpath 1")
         memcpy(&sum_1[0], &criterion.sum_missing[0], n_bytes)
         for i in range(criterion.n_outputs):
             sum_2[i] = criterion.sum_total[i] - criterion.sum_missing[i]
         weighted_n_1[0] = criterion.weighted_n_missing
         weighted_n_2[0] = criterion.weighted_n_node_samples - criterion.weighted_n_missing
     else:
-#        with gil:
-#            print(f"\tpath 2")
         memset(&sum_1[0], 0, n_bytes)
         # Assigning sum_2 = sum_total for all outputs.
         memcpy(&sum_2[0], &criterion.sum_total[0], n_bytes)
@@ -906,14 +900,6 @@ cdef class RegressionCriterion(Criterion):
         self.sq_sum_total = 0.0
         memset(&self.sum_total[0], 0, self.n_outputs * sizeof(float64_t))
 
-#        with gil:
-#            print(f"RegressionCriterion init entry n_outputs: {self.n_outputs} n_node_samples {self.n_node_samples}")
-#            print(f"\t start: {start} end: {end}")
-#            print(f"\t sample_indices: {np.array(sample_indices)[:5]}")
-#            print(f"\t sample_weight: {np.array(sample_weight)}")
-#            print(f"\t y.shape: {np.array(self.y).shape}")
-#            print(f"\t y:{np.array(self.y)[:5]}")
-
         for p in range(start, end):
             i = sample_indices[p]
 
@@ -928,10 +914,6 @@ cdef class RegressionCriterion(Criterion):
 
             self.weighted_n_node_samples += w
 
-#        with gil:
-#            print(f"RergressionCriterion init exit {self.n_outputs} {self.n_node_samples} {self.sq_sum_total} {np.array(self.sum_total)[:5]}")
-#            print(f"\t y.shape: {np.array(self.y).shape}")
-#            print(f"\t y: {np.array(self.y)[:5]}")
 
         # Reset to pos=start
         self.reset()
@@ -948,8 +930,6 @@ cdef class RegressionCriterion(Criterion):
         This method assumes that caller placed the missing samples in
         self.sample_indices[-n_missing:]
         """
-#        with gil:
-#            print("RegressionCriterion init_missing")
         cdef intp_t i, p, k
         cdef float64_t y_ik
         cdef float64_t w_y_ik
@@ -978,8 +958,6 @@ cdef class RegressionCriterion(Criterion):
 
     cdef int reset(self) except -1 nogil:
         """Reset the criterion at pos=start."""
-#        with gil:
-#            print("RegressionCriterion reset")
         self.pos = self.start
         _move_sums_regression(
             self,
@@ -993,8 +971,6 @@ cdef class RegressionCriterion(Criterion):
 
     cdef int reverse_reset(self) except -1 nogil:
         """Reset the criterion at pos=end."""
-#        with gil:
-#            print("RegressionCriterion reverse_reset")
         self.pos = self.end
         _move_sums_regression(
             self,
@@ -1021,12 +997,6 @@ cdef class RegressionCriterion(Criterion):
         cdef intp_t p
         cdef intp_t k
         cdef float64_t w = 1.0
-
-#        with gil:
-#            print(f"RegressionCiteraion update entry pos: {pos} new_pos: {new_pos} end_non_missing: {end_non_missing}")
-#            print(f"\t sample_indices: {np.array(sample_indices)[:5]}")
-#            print(f"\t sample_weight: {np.array(sample_weight)}")
-#            print(f"\t self_sum_left: {np.array(self.sum_left)} self.sum_right {np.array(self.sum_right)}")
 
         # Update statistics up to new_pos
         #
@@ -1065,10 +1035,6 @@ cdef class RegressionCriterion(Criterion):
         for k in range(self.n_outputs):
             self.sum_right[k] = self.sum_total[k] - self.sum_left[k]
 
-#        with gil:
-#            print(f"RegressionCriterion update exit new pos {new_pos}")
-#            print(f"\t self_sum_left: {np.array(self.sum_left)[:5]} self.sum_right {np.array(self.sum_right)[:5]}")
-
         self.pos = new_pos
         return 0
 
@@ -1083,18 +1049,11 @@ cdef class RegressionCriterion(Criterion):
         """Compute the node value of sample_indices[start:end] into dest."""
         cdef intp_t k
 
-#        with gil:
-#            print(f"RegressionCriterion node_value entry")
-#            print(f"\t self.sum_total: {np.array(self.sum_total)[:5]}")
-#            print(f"\t self.weighted_n_node_samples: {self.weighted_n_node_samples}")
-
         for k in range(self.n_outputs):
             dest[k] = self.sum_total[k] / self.weighted_n_node_samples
 
     cdef inline void clip_node_value(self, float64_t* dest, float64_t lower_bound, float64_t upper_bound) noexcept nogil:
         """Clip the value in dest between lower_bound and upper_bound for monotonic constraints."""
-#        with gil:
-#            print("RegressionCriterion clip_node_value")
         if dest[0] < lower_bound:
             dest[0] = lower_bound
         elif dest[0] > upper_bound:
@@ -1107,8 +1066,6 @@ cdef class RegressionCriterion(Criterion):
         Monotonicity constraints are only supported for single-output trees we can safely assume
         n_outputs == 1.
         """
-#        with gil:
-#            print("RegressionCriterion middle_value")
         return (
             (self.sum_left[0] / (2 * self.weighted_n_left)) +
             (self.sum_right[0] / (2 * self.weighted_n_right))
@@ -1121,8 +1078,6 @@ cdef class RegressionCriterion(Criterion):
         float64_t upper_bound,
     ) noexcept nogil:
         """Check monotonicity constraint is satisfied at the current regression split"""
-#        with gil:
-#            print("RegressionCriterion check_monotonicity")
         cdef:
             float64_t value_left = self.sum_left[0] / self.weighted_n_left
             float64_t value_right = self.sum_right[0] / self.weighted_n_right
@@ -1149,9 +1104,6 @@ cdef class MSE(RegressionCriterion):
         impurity = self.sq_sum_total / self.weighted_n_node_samples
         for k in range(self.n_outputs):
             impurity -= (self.sum_total[k] / self.weighted_n_node_samples)**2.0
-
-#        with gil:
-#            print("MSE node_impurity return", self.n_outputs, impurity, impurity / self.n_outputs) 
 
         return impurity / self.n_outputs
 
@@ -1180,16 +1132,8 @@ cdef class MSE(RegressionCriterion):
         cdef float64_t proxy_impurity_right = 0.0
 
         for k in range(self.n_outputs):
-#            with gil:
-#                print("MSE proxy_impurity_improvement loop", k, self.sum_left[k], self.sum_right[k])
             proxy_impurity_left += self.sum_left[k] * self.sum_left[k]
             proxy_impurity_right += self.sum_right[k] * self.sum_right[k]
-
-#        with gil:
-#            print("MSE proxy_impurity_improvement return", self.n_outputs, proxy_impurity_left, proxy_impurity_right)
-#            print("\t", self.weighted_n_left,   self.weighted_n_right)
-#            print("\t", proxy_impurity_left / self.weighted_n_left, proxy_impurity_right / self.weighted_n_right) 
-
 
         return (proxy_impurity_left / self.weighted_n_left +
                 proxy_impurity_right / self.weighted_n_right)
@@ -1237,11 +1181,6 @@ cdef class MSE(RegressionCriterion):
 
         impurity_left[0] /= self.n_outputs
         impurity_right[0] /= self.n_outputs
-
-#        with gil:
-#            print("MSE children_impurity return", self.n_outputs, impurity_left[0], impurity_right[0])
-#            print("\t", self.weighted_n_left,   self.weighted_n_right)
-
 
 
 cdef class MAE(RegressionCriterion):
@@ -1794,10 +1733,14 @@ cdef class Huber(RegressionCriterion):
         """
         This method initializes a new instance of the criterion.
 
-        Parameters:
-        - n_outputs (intp_t): The number of targets to be predicted.
-        - n_samples (intp_t): The total number of samples to fit on.
-        - delta (float64_t, optional): The Huber loss parameter. Defaults to 1.0.
+        Parameters
+        ----------
+        n_outputs : intp_t
+            The number of targets to be predicted.
+        n_samples : intp_t 
+            The total number of samples to fit on.
+        delta : float64_t, optional, default=1 
+            The Huber loss threshold parameter.
 
         The method initializes several attributes of the object, including the start, end, 
         and position indices (all set to 0), the number of outputs and samples, the 
@@ -1810,8 +1753,9 @@ cdef class Huber(RegressionCriterion):
         called when an object is created, before `__init__`. It's used to initialize C 
         attributes of the object.
 
-        Returns:
-        - None
+        Returns
+        ------
+        None
         """
         # Parent class RegresionCriterion's __cinit__ method is called automatically
         # and initilizes all other required attributes.
@@ -1829,11 +1773,16 @@ cdef class Huber(RegressionCriterion):
         """
         This method computes the Huber loss of a given node in a decision tree or random forest.
 
-        Parameters:
-        - start (int): The starting index of the samples in the node.
-        - end (int): The ending index of the samples in the node.
-        - y_sum (array-like): A 1D array containing the sum of target values for each output.
-        - weight_sum (float): The sum of the sample weights.
+        Parameters
+        ----------
+        start : int 
+            The starting index of the samples in the node.
+        end : int 
+            The ending index of the samples in the node.
+        y_sum :{array-like} of shape (n_outputs, ): 
+            A 1D array containing the sum of target values for each output.
+        weight_sum : float 
+            The sum of the sample weights.
 
         The method calculates the mean target value for each output, then iterates over 
         the samples in the node. For each sample, it calculates the error as the difference 
@@ -1850,8 +1799,9 @@ cdef class Huber(RegressionCriterion):
         for inlining (for performance), it's not expected to raise exceptions, and it 
         doesn't require the Python Global Interpreter Lock (GIL), respectively.
 
-        Returns:
-        - float: The average Huber loss of the node.
+        Returns
+        ------
+        float : The average Huber loss of the node.
         """
 
         cdef const float64_t[:, ::1] y = self.y
@@ -1866,16 +1816,8 @@ cdef class Huber(RegressionCriterion):
         cdef intp_t i, k, p
         cdef intp_t n_outputs = self.n_outputs
 
-#        with gil:
-#            print(f"Huber huber_loss entry start {start}, end {end}, y_sum {y_sum}, weight_sum {weight_sum}")
-
         for k in range(n_outputs):
-#            with gil:
-#                print(f"Huber huber_loss loop {k}, y_sum[k] {y_sum[k]}")
-
             y_mean = y_sum[k] / weight_sum
-#            with gil:
-#                print(f"\ty_mean {y_mean}")
 
             for p in range(start, end):
                 i = sample_indices[p]
@@ -1886,12 +1828,8 @@ cdef class Huber(RegressionCriterion):
                 y_ik = self.y[i, k]        
                 error = y_ik - y_mean
                 if abs(error) <= self.delta:
-        #            with gil:
-        #                print(f"Huber _huber_loss error <= delta return {0.5 * error**2}")
                     huber_loss += w * 0.5 * error**2
                 else:
-        #            with gil:
-        #                print(f"Huber _huber_loss error > delta return {delta * (abs(error) - 0.5 * delta)}")
                     huber_loss += w * self.delta * (abs(error) - 0.5 * self.delta)
     
         return huber_loss / (weight_sum * n_outputs)
@@ -1918,7 +1856,8 @@ cdef class Huber(RegressionCriterion):
         This method is defined as `noexcept` and `nogil`, meaning it's not expected to raise exceptions, 
         and it doesn't require the Python Global Interpreter Lock (GIL), respectively.
 
-        Returns:
+        Returns
+        -------
         - float: The impurity of the current node.
         """
         cdef const float64_t[:] sample_weight = self.sample_weight
@@ -1929,20 +1868,12 @@ cdef class Huber(RegressionCriterion):
         cdef int n = self.y.shape[1]
         cdef float64_t* y_pred_k = <float64_t*> calloc(n, sizeof(float64_t))
 
-#        with gil:
-#            print(f"Huber node_impurity entry n_outputs {self.n_outputs}, sum_total {np.array(self.sum_total)[:5]}")
-#            print(f"\t, start/end: {self.start} {self.end}")
-#            print(f"\tsum_total: {np.array(self.sum_total)[:5]}, weighted_n_node_samples: {self.weighted_n_node_samples}")
-  
         impurity = self.huber_loss(
             self.start, 
             self.end, 
             self.sum_total,
             self.weighted_n_node_samples
         )
-
-#        with gil:
-#            print(f"\t impurity: {impurity}")
 
         return impurity
 
@@ -1966,13 +1897,11 @@ cdef class Huber(RegressionCriterion):
         This method is defined as `noexcept` and `nogil`, meaning it's not expected to 
         raise exceptions, and it doesn't require the Python Global Interpreter Lock (GIL), respectively.
 
-        Returns:
-        - None. The calculated impurities are stored in the memory locations pointed to 
+        Returns
+        -------
+        None. The calculated impurities are stored in the memory locations pointed to 
         by `impurity_left` and `impurity_right`.
         """
-#        with gil:
-#            print("Huber children_impurity")
-
         cdef intp_t start = self.start
         cdef intp_t pos = self.pos
         cdef intp_t end = self.end
@@ -1990,6 +1919,3 @@ cdef class Huber(RegressionCriterion):
             self.sum_right,
             self.weighted_n_right
         )
-
-#        with gil:
-#            print(f"Huber children_impurity return impurity left {impurity_left[0]}, impurity right {impurity_right[0]}")
