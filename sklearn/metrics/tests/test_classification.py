@@ -633,6 +633,15 @@ def test_confusion_matrix_normalize_single_class():
         confusion_matrix(y_pred, y_test, normalize="true")
 
 
+def test_confusion_matrix_single_label():
+    """Test `confusion_matrix` warns when only one label found."""
+    y_test = [0, 0, 0, 0]
+    y_pred = [0, 0, 0, 0]
+
+    with pytest.warns(UserWarning, match="A single label was found in"):
+        confusion_matrix(y_pred, y_test)
+
+
 @pytest.mark.parametrize(
     "params, warn_msg",
     [
