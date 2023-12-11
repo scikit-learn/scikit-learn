@@ -2,7 +2,6 @@ import functools
 import math
 import operator
 import re
-import warnings
 from abc import ABC, abstractmethod
 from collections.abc import Iterable
 from inspect import signature
@@ -587,20 +586,9 @@ class _Booleans(_Constraint):
         self._constraints = [
             _InstancesOf(bool),
             _InstancesOf(np.bool_),
-            _InstancesOf(Integral),
         ]
 
     def is_satisfied_by(self, val):
-        # TODO(1.4) remove support for Integral.
-        if isinstance(val, Integral) and not isinstance(val, bool):
-            warnings.warn(
-                (
-                    "Passing an int for a boolean parameter is deprecated in version"
-                    " 1.2 and won't be supported anymore in version 1.4."
-                ),
-                FutureWarning,
-            )
-
         return any(c.is_satisfied_by(val) for c in self._constraints)
 
     def __str__(self):
