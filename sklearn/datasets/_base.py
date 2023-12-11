@@ -12,6 +12,7 @@ import hashlib
 import os
 import shutil
 from collections import namedtuple
+from importlib import resources
 from numbers import Integral
 from os import environ, listdir, makedirs
 from os.path import expanduser, isdir, join, splitext
@@ -23,7 +24,6 @@ import numpy as np
 from ..preprocessing import scale
 from ..utils import Bunch, check_pandas_support, check_random_state
 from ..utils._param_validation import Interval, StrOptions, validate_params
-from ..utils.fixes import _contents, _open_binary, _open_text, _read_text
 
 DATA_MODULE = "sklearn.datasets.data"
 DESCR_MODULE = "sklearn.datasets.descr"
@@ -340,7 +340,8 @@ def load_csv_data(
         Description of the dataset (the content of `descr_file_name`).
         Only returned if `descr_file_name` is not None.
     """
-    with _open_text(data_module, data_file_name) as csv_file:
+    data_path = resources.files(data_module) / data_file_name
+    with data_path.open("r") as csv_file:
         data_file = csv.reader(csv_file)
         temp = next(data_file)
         n_samples = int(temp[0])
@@ -413,7 +414,8 @@ def load_gzip_compressed_csv_data(
         Description of the dataset (the content of `descr_file_name`).
         Only returned if `descr_file_name` is not None.
     """
-    with _open_binary(data_module, data_file_name) as compressed_file:
+    data_path = resources.files(data_module) / data_file_name
+    with data_path.open("rb") as compressed_file:
         compressed_file = gzip.open(compressed_file, mode="rt", encoding=encoding)
         data = np.loadtxt(compressed_file, **kwargs)
 
@@ -445,9 +447,8 @@ def load_descr(descr_file_name, *, descr_module=DESCR_MODULE):
     fdescr : str
         Content of `descr_file_name`.
     """
-    fdescr = _read_text(descr_module, descr_file_name)
-
-    return fdescr
+    path = resources.files(descr_module) / descr_file_name
+    return path.read_text()
 
 
 @validate_params(
@@ -1193,13 +1194,16 @@ def load_linnerud(*, return_X_y=False, as_frame=False):
     data_filename = "linnerud_exercise.csv"
     target_filename = "linnerud_physiological.csv"
 
+    data_module_path = resources.files(DATA_MODULE)
     # Read header and data
-    with _open_text(DATA_MODULE, data_filename) as f:
+    data_path = data_module_path / data_filename
+    with data_path.open("r") as f:
         header_exercise = f.readline().split()
         f.seek(0)  # reset file obj
         data_exercise = np.loadtxt(f, skiprows=1)
 
-    with _open_text(DATA_MODULE, target_filename) as f:
+    target_path = data_module_path / target_filename
+    with target_path.open("r") as f:
         header_physiological = f.readline().split()
         f.seek(0)  # reset file obj
         data_physiological = np.loadtxt(f, skiprows=1)
@@ -1277,13 +1281,19 @@ def load_sample_images():
     descr = load_descr("README.txt", descr_module=IMAGES_MODULE)
 
     filenames, images = [], []
-    for filename in sorted(_contents(IMAGES_MODULE)):
-        if filename.endswith(".jpg"):
-            filenames.append(filename)
-            with _open_binary(IMAGES_MODULE, filename) as image_file:
-                pil_image = Image.open(image_file)
-                image = np.asarray(pil_image)
-            images.append(image)
+
+    jpg_paths = (
+        resource
+        for resource in resources.files(IMAGES_MODULE).iterdir()
+        if resource.is_file() and resource.match("*.jpg")
+    )
+
+    for path in jpg_paths:
+        filenames.append(str(path))
+        with path.open("rb") as image_file:
+            pil_image = Image.open(image_file)
+            image = np.asarray(pil_image)
+        images.append(image)
 
     return Bunch(images=images, filenames=filenames, DESCR=descr)
 
