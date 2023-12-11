@@ -1761,8 +1761,6 @@ cdef class Huber(RegressionCriterion):
         # and initilizes all other required attributes.
         self.delta = delta
 
-#        print(f"Huber__cinit__ delta: {self.delta} ")
-
     cdef inline float64_t huber_loss(
         self,
         intp_t start,
