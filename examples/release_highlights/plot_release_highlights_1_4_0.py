@@ -23,7 +23,7 @@ or with conda::
 
 # %%
 # HistGradientBoosting Natively Supports Categorical DTypes in DataFrames
-# ------------------------------------------------------------------
+# -----------------------------------------------------------------------
 # :class:`ensemble.HistGradientBoostingClassifier` and
 # :class:`ensemble.HistGradientBoostingRegressor` now directly supports dataframes with
 # categorical features.  Here we have a dataset with a mixture of
@@ -51,3 +51,53 @@ hist = HistGradientBoostingClassifier(categorical_features="from_dtype")
 hist.fit(X_train, y_train)
 y_decision = hist.decision_function(X_test)
 print(f"ROC AUC score is {roc_auc_score(y_test, y_decision)}")
+
+# %%
+# Metadata Routing Support
+# ------------------------
+# Many meta-estimators and cross-validation routines now support metadata
+# routing, which are listed in the :ref:`user guide
+# <_metadata_routing_models>`. For instance, this is how you can do a nested
+# cross-validation with sample weights and :class:`~model_selection.GroupKFold`:
+import sklearn
+from sklearn.metrics import get_scorer
+from sklearn.datasets import make_regression
+from sklearn.linear_model import Lasso
+from sklearn.model_selection import GridSearchCV, cross_validate, GroupKFold
+import numpy as np
+
+sklearn.set_config(enable_metadata_routing=True)
+
+n_samples = 100
+X, y = make_regression(n_samples=n_samples, n_features=5, noise=0.5)
+rng = np.random.RandomState(7)
+groups = rng.randint(0, 10, size=n_samples)
+sample_weights = rng.rand(n_samples)
+estimator = Lasso().set_fit_request(sample_weight=True)
+hyperparameter_grid = {"alpha": [0.1, 0.5, 1.0, 2.0]}
+scoring_inner_cv = get_scorer("neg_mean_squared_error").set_score_request(
+    sample_weight=True
+)
+inner_cv = GroupKFold(n_splits=5)
+
+grid_search = GridSearchCV(
+    estimator=estimator,
+    param_grid=hyperparameter_grid,
+    cv=inner_cv,
+    scoring=scoring_inner_cv,
+)
+
+outer_cv = GroupKFold(n_splits=5)
+scorers = {
+    "mse": get_scorer("neg_mean_squared_error").set_score_request(sample_weight=True)
+}
+results = cross_validate(
+    grid_search,
+    X,
+    y,
+    cv=outer_cv,
+    scoring=scorers,
+    return_estimator=True,
+    params={"sample_weight": sample_weights, "groups": groups},
+)
+print("cv error on test sets:", results["test_mse"])
