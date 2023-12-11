@@ -238,7 +238,7 @@ class _ArrayAPIWrapper:
         return self._namespace == other._namespace
 
     def __hash__(self):
-        return hash(self._namespace)
+        return hash((self._namespace, "_ArrayAPIWrapper"))
 
     def take(self, X, indices, *, axis=0):
         # When array_api supports `take` we can use this directly
