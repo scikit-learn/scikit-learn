@@ -617,6 +617,12 @@ Changelog
   when it is invoked with `n_samples = n_neighbors`.
   :pr:`23317` by :user:`Bharat Raghunathan <bharatr21>`.
 
+- |Enhancement| Add :meth:`neighbors.NearestCentroid.decision_function`,
+  :meth:`neighbors.NearestCentroid.predict_proba` and
+  :meth:`neighbors.NearestCentroid.predict_log_proba`
+  to the :class:`neighbors.NearestCentroid` estimator class.
+  :pr:`26689` by :user:`Matthew Ning <NoPenguinsLand>`.
+
 :mod:`sklearn.preprocessing`
 ............................
 
