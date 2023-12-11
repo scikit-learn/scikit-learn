@@ -66,6 +66,8 @@ from sklearn.linear_model import Lasso
 from sklearn.model_selection import GridSearchCV, cross_validate, GroupKFold
 import numpy as np
 
+# For now by default metadata routing is disabled, and need to be explicitly
+# enabled.
 sklearn.set_config(enable_metadata_routing=True)
 
 n_samples = 100
@@ -101,3 +103,7 @@ results = cross_validate(
     params={"sample_weight": sample_weights, "groups": groups},
 )
 print("cv error on test sets:", results["test_mse"])
+
+# Setting the flag to the default `False` to avoid interference with other
+# scripts.
+sklearn.set_config(enable_metadata_routing=False)
