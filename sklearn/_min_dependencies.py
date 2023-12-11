@@ -4,7 +4,7 @@ from collections import defaultdict
 
 # scipy and cython should by in sync with pyproject.toml
 NUMPY_MIN_VERSION = "1.19.5"
-SCIPY_MIN_VERSION = "1.5.2"
+SCIPY_MIN_VERSION = "1.6.2"
 JOBLIB_MIN_VERSION = "1.2.0"
 THREADPOOLCTL_MIN_VERSION = "2.0.0"
 PYTEST_MIN_VERSION = "7.1.2"

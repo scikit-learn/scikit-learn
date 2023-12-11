@@ -34,7 +34,7 @@
 
 .. |PythonMinVersion| replace:: 3.9
 .. |NumPyMinVersion| replace:: 1.19.5
-.. |SciPyMinVersion| replace:: 1.5.2
+.. |SciPyMinVersion| replace:: 1.6.2
 .. |JoblibMinVersion| replace:: 1.2.0
 .. |ThreadpoolctlMinVersion| replace:: 2.0.0
 .. |MatplotlibMinVersion| replace:: 3.3.4

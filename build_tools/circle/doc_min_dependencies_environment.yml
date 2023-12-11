@@ -7,7 +7,7 @@ dependencies:
   - python=3.9
   - numpy=1.19.5  # min
   - blas
-  - scipy=1.5.2  # min
+  - scipy=1.6.2  # min
   - cython=0.29.33  # min
   - joblib
   - threadpoolctl
