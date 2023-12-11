@@ -818,7 +818,7 @@ def test_variance_correctness(copy):
 
 
 def check_array_api_get_precision(name, estimator, array_namespace, device, dtype):
-    xp, device = _array_api_for_tests(array_namespace, device)
+    xp = _array_api_for_tests(array_namespace, device)
     iris_np = iris.data.astype(dtype)
     iris_xp = xp.asarray(iris_np, device=device)
 

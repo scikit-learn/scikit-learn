@@ -1079,4 +1079,4 @@ def _array_api_for_tests(array_namespace, device):
 
         if cupy.cuda.runtime.getDeviceCount() == 0:
             raise SkipTest("CuPy test requires cuda, which is not available")
-    return xp, device
+    return xp
