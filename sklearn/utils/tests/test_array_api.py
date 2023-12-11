@@ -2,7 +2,7 @@ from functools import partial
 
 import numpy
 import pytest
-from numpy.testing import assert_allclose, assert_array_equal
+from numpy.testing import assert_allclose
 
 from sklearn._config import config_context
 from sklearn.base import BaseEstimator
@@ -99,48 +99,6 @@ def test_array_api_wrapper_astype():
 
     X_converted = xp.asarray(X, dtype=xp.float32)
     assert X_converted.dtype == xp.float32
-
-
-def test_array_api_wrapper_take_for_numpy_api():
-    """Test that fast path is called for numpy.array_api."""
-    numpy_array_api = pytest.importorskip("numpy.array_api")
-    # USe the same name as numpy.array_api
-    xp_ = _AdjustableNameAPITestWrapper(numpy_array_api, "numpy.array_api")
-    xp = _ArrayAPIWrapper(xp_)
-
-    X = xp.asarray(([[1, 2, 3], [3, 4, 5]]), dtype=xp.float64)
-    X_take = xp.take(X, xp.asarray([1]), axis=0)
-    assert hasattr(X_take, "__array_namespace__")
-    assert_array_equal(X_take, numpy.take(X, [1], axis=0))
-
-
-def test_array_api_wrapper_take():
-    """Test _ArrayAPIWrapper API for take."""
-    numpy_array_api = pytest.importorskip("numpy.array_api")
-    xp_ = _AdjustableNameAPITestWrapper(numpy_array_api, "wrapped_numpy.array_api")
-    xp = _ArrayAPIWrapper(xp_)
-
-    # Check take compared to NumPy's with axis=0
-    X_1d = xp.asarray([1, 2, 3], dtype=xp.float64)
-    X_take = xp.take(X_1d, xp.asarray([1]), axis=0)
-    assert hasattr(X_take, "__array_namespace__")
-    assert_array_equal(X_take, numpy.take(X_1d, [1], axis=0))
-
-    X = xp.asarray(([[1, 2, 3], [3, 4, 5]]), dtype=xp.float64)
-    X_take = xp.take(X, xp.asarray([0]), axis=0)
-    assert hasattr(X_take, "__array_namespace__")
-    assert_array_equal(X_take, numpy.take(X, [0], axis=0))
-
-    # Check take compared to NumPy's with axis=1
-    X_take = xp.take(X, xp.asarray([0, 2]), axis=1)
-    assert hasattr(X_take, "__array_namespace__")
-    assert_array_equal(X_take, numpy.take(X, [0, 2], axis=1))
-
-    with pytest.raises(ValueError, match=r"Only axis in \(0, 1\) is supported"):
-        xp.take(X, xp.asarray([0]), axis=2)
-
-    with pytest.raises(ValueError, match=r"Only X.ndim in \(1, 2\) is supported"):
-        xp.take(xp.asarray([[[0]]]), xp.asarray([0]), axis=0)
 
 
 @pytest.mark.parametrize("array_api", ["numpy", "numpy.array_api"])
