@@ -156,7 +156,7 @@ conda_build_metadata_list = [
             "python": "3.9",
             "blas": "[build=openblas]",
             "numpy": "1.21",  # the min version is not available on the defaults channel
-            "scipy": "min",
+            "scipy": "1.7",  # the min version has some low level crashes
             "matplotlib": "min",
             "threadpoolctl": "2.2.0",
             "cython": "min",

@@ -5,7 +5,7 @@ requires = [
     "wheel",
     "Cython>=0.29.33",
     "numpy>=1.25",
-    "scipy>=1.6.2",
+    "scipy>=1.6.0",
 ]
 
 [tool.black]
