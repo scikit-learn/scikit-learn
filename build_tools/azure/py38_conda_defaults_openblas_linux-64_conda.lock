@@ -27,7 +27,7 @@ https://repo.anaconda.com/pkgs/main/linux-64/lz4-c-1.9.4-h6a678d5_0.conda#53915e
 https://repo.anaconda.com/pkgs/main/linux-64/ncurses-6.4-h6a678d5_0.conda#5558eec6e2191741a92f832ea826251c
 https://repo.anaconda.com/pkgs/main/linux-64/openssl-3.0.12-h7f8727e_0.conda#48caaebab690276acf1bc1f3b56febf4
 https://repo.anaconda.com/pkgs/main/linux-64/pcre-8.45-h295c915_0.conda#b32ccc24d1d9808618c1e898da60f68d
-https://repo.anaconda.com/pkgs/main/linux-64/xz-5.4.2-h5eee18b_0.conda#bcd31de48a0dcb44bc5b99675800c5cc
+https://repo.anaconda.com/pkgs/main/linux-64/xz-5.4.5-h5eee18b_0.conda#fb0f709ab3eb6ad3538677c327646581
 https://repo.anaconda.com/pkgs/main/linux-64/zlib-1.2.13-h5eee18b_0.conda#333e31fbfbb5057c92fa845ad6adef93
 https://repo.anaconda.com/pkgs/main/linux-64/ccache-3.7.9-hfe4627d_0.conda#bef6fc681c273bb7bd0c67d1a591365e
 https://repo.anaconda.com/pkgs/main/linux-64/glib-2.69.1-he621ea3_2.conda#51cf1899782b3f3744aedd143fbc07f3
@@ -56,7 +56,7 @@ https://repo.anaconda.com/pkgs/main/linux-64/libpq-12.15-hdbd6064_1.conda#218227
 https://repo.anaconda.com/pkgs/main/linux-64/libwebp-1.3.2-h11a3e52_0.conda#9e0d6c9abdd97b076c66d4cf488589ee
 https://repo.anaconda.com/pkgs/main/linux-64/openjpeg-2.4.0-h3ad879b_0.conda#86baecb47ecaa7f7ff2657a1f03b90c9
 https://repo.anaconda.com/pkgs/main/linux-64/python-3.8.18-h955ad1f_0.conda#fa35c1028f48db26df051ee75dd9422f
-https://repo.anaconda.com/pkgs/main/linux-64/certifi-2023.7.22-py38h06a4308_0.conda#59416ad8979a654bb8f5184b62d8a9e7
+https://repo.anaconda.com/pkgs/main/linux-64/certifi-2023.11.17-py38h06a4308_0.conda#3c4c381d8521859fcfde56ef2e3e5c40
 https://repo.anaconda.com/pkgs/main/noarch/cycler-0.11.0-pyhd3eb1b0_0.conda#f5e365d2cdb66d547eb8c3ab93843aab
 https://repo.anaconda.com/pkgs/main/linux-64/cython-0.29.33-py38h6a678d5_0.conda#eb105388ba8bcf5ce82cf4cd5deeb5f9
 https://repo.anaconda.com/pkgs/main/linux-64/exceptiongroup-1.0.4-py38h06a4308_0.conda#db954e73dca6076c64a1004d71b45784
