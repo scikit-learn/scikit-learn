@@ -1282,7 +1282,7 @@ def load_sample_images():
 
     filenames, images = [], []
 
-    jpg_paths = (
+    jpg_paths = sorted(
         resource
         for resource in resources.files(IMAGES_MODULE).iterdir()
         if resource.is_file() and resource.match("*.jpg")
