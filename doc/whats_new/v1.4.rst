@@ -358,7 +358,7 @@ Changelog
   :pr:`27137` by :user:`Edoardo Abati <EdAbati>`.
 
 - |Fix| :func:`f1_score` now provides correct values when handling various
-  cases in which zero division occurs by using a formulation that does not
+  cases in which division by zero occurs by using a formulation that does not
   depend on the precision and recall values.
   :pr:`27577` by :user:`Omar Salman <OmarManzoor>` and
   :user:`Guillaume Lemaitre <glemaitre>`.
