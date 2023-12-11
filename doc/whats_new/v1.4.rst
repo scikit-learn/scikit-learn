@@ -196,7 +196,7 @@ Support for Array API
 Several estimators and functions support the
 `Array API <https://data-apis.org/array-api/latest/>`_. Such changes allows for using
 the estimators and functions with other libraries such as JAX, CuPy, and PyTorch.
-It therefore enable for some GPU-accelerated computations.
+This therefore enables some GPU-accelerated computations.
 
 See :ref:`array_api` for more details.
 
