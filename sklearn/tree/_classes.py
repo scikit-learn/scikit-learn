@@ -1239,15 +1239,15 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
         .. versionadded:: 1.4
 
     delta: positive float > 0.0, default=1.0
-        The delta parameter applies to the "huber" criterion and essentially 
-        acts as a threshold to balance 
-        between "squared_error" and "absolute_error". For errors smaller 
-        than delta, the loss is quadratic and sensitive to the magnitude 
-        of the error, making it efficient for minimizing small errors. 
-        For larger errors, the loss becomes linear, which mitigates the 
-        impact of outliers that would otherwise dramatically 
+        The delta parameter applies to the "huber" criterion and essentially
+        acts as a threshold to balance
+        between "squared_error" and "absolute_error". For errors smaller
+        than delta, the loss is quadratic and sensitive to the magnitude
+        of the error, making it efficient for minimizing small errors.
+        For larger errors, the loss becomes linear, which mitigates the
+        impact of outliers that would otherwise dramatically
         affect the loss magnitude if "squared_error" were used.
-    
+
         .. versionadded:: 1.4
 
     Attributes
@@ -1329,7 +1329,9 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
     _parameter_constraints: dict = {
         **BaseDecisionTree._parameter_constraints,
         "criterion": [
-            StrOptions({"squared_error", "friedman_mse", "absolute_error", "poisson", "huber"}),
+            StrOptions(
+                {"squared_error", "friedman_mse", "absolute_error", "poisson", "huber"}
+            ),
             Hidden(Criterion),
         ],
     }
