@@ -1238,15 +1238,15 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
 
         .. versionadded:: 1.4
 
-    delta: non-negative float, default=1.0
+    delta: positive float > 0.0, default=1.0
         The delta parameter applies to the "huber" criterion and essentially 
         acts as a threshold to balance 
-        between MSE and Mean Absolute Error (MAE). For errors smaller 
+        between "squared_error" and "absolute_error". For errors smaller 
         than delta, the loss is quadratic and sensitive to the magnitude 
         of the error, making it efficient for minimizing small errors. 
         For larger errors, the loss becomes linear, which mitigates the 
         impact of outliers that would otherwise dramatically 
-        affect the loss magnitude if MSE were used.
+        affect the loss magnitude if "squared_error" were used.
     
         .. versionadded:: 1.4
 

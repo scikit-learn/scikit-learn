@@ -1579,7 +1579,7 @@ class RandomForestRegressor(ForestRegressor):
            The default value of ``n_estimators`` changed from 10 to 100
            in 0.22.
 
-    criterion : {"squared_error", "absolute_error", "friedman_mse", "poisson"}, \
+    criterion : {"squared_error", "absolute_error", "friedman_mse", "poisson", "huber"}, \
             default="squared_error"
         The function to measure the quality of a split. Supported criteria
         are "squared_error" for the mean squared error, which is equal to
@@ -1589,8 +1589,7 @@ class RandomForestRegressor(ForestRegressor):
         splits, "absolute_error" for the mean absolute error, which minimizes
         the L1 loss using the median of each terminal node, and "poisson" which
         uses reduction in Poisson deviance to find splits. "huber" uses the Huber Loss
-        for robust regression.
-        Training using "absolute_error" is significantly slower
+        for robust regression. Training using "absolute_error" is significantly slower
         than when using "squared_error".
 
         .. versionadded:: 0.18
@@ -1600,6 +1599,7 @@ class RandomForestRegressor(ForestRegressor):
            Poisson criterion.
 
         .. versionadded:: 1.4
+           Huber criterion.
 
 
     max_depth : int, default=None
@@ -1751,7 +1751,7 @@ class RandomForestRegressor(ForestRegressor):
 
         .. versionadded:: 1.4
 
-    delta: non-negative float, default=1.0
+    delta: positive float > 0.0, default=1.0
         The delta parameter applies to the "huber" criterion and essentially 
         acts as a threshold to balance 
         between "squared_error" and "absolute_error". For errors smaller 
@@ -1759,7 +1759,7 @@ class RandomForestRegressor(ForestRegressor):
         of the error, making it efficient for minimizing small errors. 
         For larger errors, the loss becomes linear, which mitigates the 
         impact of outliers that would otherwise dramatically 
-        affect the loss magnitude if MSE were used.
+        affect the loss magnitude if "squared_error" were used.
     
         .. versionadded:: 1.4    
 
