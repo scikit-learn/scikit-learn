@@ -1738,13 +1738,19 @@ def check_array_api_metric(
     xp = _array_api_for_tests(array_namespace, device)
     y_true_xp = xp.asarray(y_true_np, device=device)
     y_pred_xp = xp.asarray(y_pred_np, device=device)
+    dtype_ = None if dtype is None else getattr(xp, dtype)
+
+    y_true_xp = xp.asarray(y_true_np, device=device, dtype=dtype_)
+    y_pred_xp = xp.asarray(y_pred_np, device=device, dtype=dtype_)
 
     metric_np = metric(y_true_np, y_pred_np, sample_weight=sample_weight)
 
     with config_context(array_api_dispatch=True):
         if sample_weight is not None:
             sample_weight = xp.asarray(sample_weight, device=device)
-        metric_xp = metric(y_true_xp, y_pred_xp, sample_weight=sample_weight)
+        metric_xp = metric(
+            y_true_xp, y_pred_xp, sample_weight=sample_weight, dtype=dtype_
+        )
 
         assert_allclose(
             metric_xp,
