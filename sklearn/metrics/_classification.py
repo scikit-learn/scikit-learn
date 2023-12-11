@@ -1259,12 +1259,12 @@ def f1_score(
 
     Notes
     -----
-    When there are no ``true positive + false positive + false negative == 0``
-    (i.e. a class is completely absent from both ``y_true`` or ``y_pred``),
-    f-score is undefined. In such cases, by default the metric will be set to
-    0.0, and ``UndefinedMetricWarning`` will be raised. This behavior can be
-    modified by setting ``zero_division`` to ``0.0`` (to skip the warning),
-    ``1.0``, or ``np.nan``.
+    When ``true positive + false positive + false negative == 0`` (i.e. a class
+    is completely absent from both ``y_true`` or ``y_pred``), f-score is
+    undefined. In such cases, by default the metric will be set to 0.0, and
+    ``UndefinedMetricWarning`` will be raised. This behavior can be modified by
+    setting ``zero_division`` to ``0.0`` (to skip the warning), ``1.0``, or
+    ``np.nan``.
     """
     return fbeta_score(
         y_true,
