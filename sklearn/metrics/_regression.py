@@ -36,6 +36,7 @@ from scipy.special import xlogy
 from ..exceptions import UndefinedMetricWarning
 from ..utils._array_api import (
     _average,
+    _convert_to_numpy,
     _supports_dtype,
     device,
     get_namespace,
@@ -1214,12 +1215,12 @@ def r2_score(
     device_ = device(*input_arrays)
 
     if not _supports_dtype(xp, device_, "float64"):
-        y_true = np.from_dlpack(y_true)
-        y_pred = np.from_dlpack(y_pred)
+        y_true = _convert_to_numpy(y_true)
+        y_pred = _convert_to_numpy(y_pred)
         if sample_weight is not None:
-            sample_weight = np.from_dlpack(sample_weight)
+            sample_weight = _convert_to_numpy(sample_weight)
         if multioutput_is_array:
-            multioutput = np.from_dlpack(multioutput)
+            multioutput = _convert_to_numpy(multioutput)
         xp, _ = get_namespace(y_true)
 
     dtype = (

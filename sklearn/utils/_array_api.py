@@ -1,7 +1,7 @@
 """Tools to support array_api."""
 import itertools
 import math
-from functools import wraps
+from functools import lru_cache, wraps
 
 import numpy
 import scipy.special as special
@@ -180,6 +180,7 @@ def _isdtype_single(dtype, kind, *, xp):
         return dtype == kind
 
 
+@lru_cache
 def _supports_dtype(xp, device, dtype):
     if not hasattr(xp, dtype):
         return False
@@ -196,6 +197,7 @@ def _supports_dtype(xp, device, dtype):
     return True
 
 
+@lru_cache
 def supported_float_dtypes(xp, device=None):
     """Supported floating point types for the namespace
 
@@ -234,6 +236,9 @@ class _ArrayAPIWrapper:
 
     def __eq__(self, other):
         return self._namespace == other._namespace
+
+    def __hash__(self):
+        return hash(self._namespace)
 
     def take(self, X, indices, *, axis=0):
         # When array_api supports `take` we can use this directly
@@ -534,8 +539,8 @@ def _weighted_sum(sample_score, sample_weight, normalize=False, xp=None):
     cast_to_float64 = len(dtype_kinds) > 1
 
     if cast_to_float64 and not _supports_dtype(xp, device_, "float64"):
-        sample_score = numpy.from_dlpack(sample_score, copy=True)
-        sample_weight = numpy.from_dlpack(sample_weight, copy=True)
+        sample_score = _convert_to_numpy(sample_score, copy=True)
+        sample_weight = _convert_to_numpy(sample_weight, copy=True)
         return _weighted_sum(sample_score, sample_weight, normalize=normalize)
 
     if cast_to_float64:
