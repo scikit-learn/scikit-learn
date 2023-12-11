@@ -341,13 +341,6 @@ Changelog
 :mod:`sklearn.decomposition`
 ............................
 
-- |Enhancement| An "auto" option was added to the `n_components` parameter of
-  :func:`decomposition.non_negative_factorization`, :class:`decomposition.NMF` and
-  :class:`decomposition.MiniBatchNMF` to automatically infer the number of components
-  from W or H shapes when using a custom initialization. The default value of this
-  parameter will change from `None` to `auto` in version 1.6.
-  :pr:`26634` by :user:`Alexandre Landeau <AlexL>` and :user:`Alexandre Vigny <avigny>`.
-
 - |Feature| :class:`decomposition.PCA` now supports :class:`scipy.sparse.sparray`
   and :class:`scipy.sparse.spmatrix` inputs when using the `arpack` solver.
   When used on sparse data like :func:`datasets.fetch_20newsgroups_vectorized` this
@@ -356,6 +349,13 @@ Changelog
   `scanpy <https://github.com/scverse/scanpy>`_.
   :pr:`18689` by :user:`Isaac Virshup <ivirshup>` and
   :user:`Andrey Portnoy <andportnoy>`.
+
+- |Enhancement| An "auto" option was added to the `n_components` parameter of
+  :func:`decomposition.non_negative_factorization`, :class:`decomposition.NMF` and
+  :class:`decomposition.MiniBatchNMF` to automatically infer the number of components
+  from W or H shapes when using a custom initialization. The default value of this
+  parameter will change from `None` to `auto` in version 1.6.
+  :pr:`26634` by :user:`Alexandre Landeau <AlexL>` and :user:`Alexandre Vigny <avigny>`.
 
 - |Fix| :func:`decomposition.dict_learning_online` does not ignore anymore the parameter
   `max_iter`.
@@ -699,15 +699,18 @@ Changelog
   which can be used to check whether a given set of parameters would be consumed.
   :pr:`26831` by `Adrin Jalali`_.
 
+- |Enhancement| Make :func:`sklearn.utils.check_array` attempt to output
+  `int32`-indexed CSR and COO arrays when converting from DIA arrays if the number of
+  non-zero entries is small enough. This ensures that estimators implemented in Cython
+  and that do not accept `int64`-indexed sparse datastucture, now consistently
+  accept the same sparse input formats for SciPy sparse matrices and arrays.
+  :pr:`27372` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 - |Fix| :func:`sklearn.utils.check_array` should accept both matrix and array from
   the sparse SciPy module. The previous implementation would fail if `copy=True` by
   calling specific NumPy `np.may_share_memory` that does not work with SciPy sparse
   array and does not return the correct result for SciPy sparse matrix.
   :pr:`27336` by :user:`Guillaume Lemaitre <glemaitre>`.
-
-- |API| :func:`sklearn.extmath.log_logistic` is deprecated and will be removed in 1.6.
-  Use `-np.logaddexp(0, -x)` instead.
-  :pr:`27544` by :user:`Christian Lorentzen <lorentzenchr>`.
 
 - |Fix| :func:`~utils.estimator_checks.check_estimators_pickle` with
   `readonly_memmap=True` now relies on joblib's own capability to allocate
@@ -721,12 +724,9 @@ Changelog
   `X.toarray()`.
   :pr:`27757` by :user:`Lucy Liu <lucyleeow>`.
 
-- |Enhancement| Make :func:`sklearn.utils.check_array` attempt to output
-  `int32`-indexed CSR and COO arrays when converting from DIA arrays if the number of
-  non-zero entries is small enough. This ensures that estimators implemented in Cython
-  and that do not accept `int64`-indexed sparse datastucture, now consistently
-  accept the same sparse input formats for SciPy sparse matrices and arrays.
-  :pr:`27372` by :user:`Guillaume Lemaitre <glemaitre>`.
+- |API| :func:`sklearn.extmath.log_logistic` is deprecated and will be removed in 1.6.
+  Use `-np.logaddexp(0, -x)` instead.
+  :pr:`27544` by :user:`Christian Lorentzen <lorentzenchr>`.
 
 Code and Documentation Contributors
 -----------------------------------
