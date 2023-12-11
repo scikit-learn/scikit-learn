@@ -269,6 +269,10 @@ Changelog
   value instead.
   :pr:`27828` by :user:`Guillaume Lemaitre <glemaitre>`.
 
+- |Fix| Raises a proper `ValueError` when `metric="precomputed"` and requested storing
+  centers via the parameter `store_centers`.
+  :pr:`27898` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 :mod:`sklearn.compose`
 ......................
 
@@ -419,6 +423,17 @@ Changelog
   :class:`ensemble.StackingClassifier`, :class:`ensemble.StackingRegressor`,
   support missing values if all `estimators` support missing values.
   :pr:`27710` by :user:`Guillaume Lemaitre <glemaitre>`.
+
+:mod:`sklearn.feature_extraction`
+.................................
+
+- |API| Changed error type from :class:`AttributeError` to
+  :class:`exceptions.NotFittedError` in unfitted instances of
+  :class:`feature_extraction.DictVectorizer` for the following methods:
+  :func:`feature_extraction.DictVectorizer.inverse_transform`,
+  :func:`feature_extraction.DictVectorizer.restrict`,
+  :func:`feature_extraction.DictVectorizer.transform`.
+  :pr:`24838` by :user:`Lorenz Hertel <LoHertel>`.
 
 :mod:`sklearn.feature_selection`
 ................................
