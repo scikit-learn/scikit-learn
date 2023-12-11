@@ -12,7 +12,6 @@
 #
 # License: BSD 3 clause
 
-from libc.stdlib cimport calloc, free
 from libc.string cimport memcpy
 from libc.string cimport memset
 from libc.math cimport fabs, INFINITY
@@ -914,7 +913,6 @@ cdef class RegressionCriterion(Criterion):
 
             self.weighted_n_node_samples += w
 
-
         # Reset to pos=start
         self.reset()
         return 0
@@ -1705,21 +1703,21 @@ cdef class Huber(RegressionCriterion):
     """
     This class implements the Huber loss criterion for regression problems.
 
-    The Huber loss is less sensitive to outliers in data than mean squared error, making 
+    The Huber loss is less sensitive to outliers in data than mean squared error, making
     it suitable for regression problems with potential outliers.
 
-    The class inherits from the `RegressionCriterion` class and overrides several of its methods, 
+    The class inherits from the `RegressionCriterion` class and overrides several of its methods,
     including `__cinit__`, `huber_loss`, `node_impurity`, and `children_impurity`.
 
     Attributes:
     - delta (float64_t): The Huber loss parameter. Defaults to 1.0.
     - start, pos, end (intp_t): The start, position, and end indices of the samples in the current node.
-    - n_outputs, n_samples, n_node_samples (intp_t): The number of targets to be predicted, 
+    - n_outputs, n_samples, n_node_samples (intp_t): The number of targets to be predicted,
     the total number of samples to fit on, and the number of samples in the node, respectively.
-    - weighted_n_node_samples, weighted_n_left, weighted_n_right, weighted_n_missing (float64_t): 
+    - weighted_n_node_samples, weighted_n_left, weighted_n_right, weighted_n_missing (float64_t):
     The weighted number of samples in the node, left child node, right child node, and missing samples, respectively.
     - sq_sum_total (float64_t): The total sum of squares.
-    - sum_total, sum_left, sum_right (array-like): Arrays containing the sum of target values for 
+    - sum_total, sum_left, sum_right (array-like): Arrays containing the sum of target values for
     each output in the node, left child node, and right child node, respectively.
 
     Methods:
@@ -1737,20 +1735,20 @@ cdef class Huber(RegressionCriterion):
         ----------
         n_outputs : intp_t
             The number of targets to be predicted.
-        n_samples : intp_t 
+        n_samples : intp_t
             The total number of samples to fit on.
-        delta : float64_t, optional, default=1 
+        delta : float64_t, optional, default=1
             The Huber loss threshold parameter.
 
-        The method initializes several attributes of the object, including the start, end, 
-        and position indices (all set to 0), the number of outputs and samples, the 
-        number of samples in the node (set to 0), the weighted number of samples 
-        in the node, left, right, and missing (all set to 0.0), the total sum of squares (set to 0.0), 
-        and the total, left, and right sums (all set to arrays of zeros with length equal 
+        The method initializes several attributes of the object, including the start, end,
+        and position indices (all set to 0), the number of outputs and samples, the
+        number of samples in the node (set to 0), the weighted number of samples
+        in the node, left, right, and missing (all set to 0.0), the total sum of squares (set to 0.0),
+        and the total, left, and right sums (all set to arrays of zeros with length equal
         to the number of outputs).
 
-        This method is defined as `__cinit__`, which is a special method in Cython that's 
-        called when an object is created, before `__init__`. It's used to initialize C 
+        This method is defined as `__cinit__`, which is a special method in Cython that's
+        called when an object is created, before `__init__`. It's used to initialize C
         attributes of the object.
 
         Returns
@@ -1773,28 +1771,28 @@ cdef class Huber(RegressionCriterion):
 
         Parameters
         ----------
-        start : int 
+        start : int
             The starting index of the samples in the node.
-        end : int 
+        end : int
             The ending index of the samples in the node.
-        y_sum :{array-like} of shape (n_outputs, ): 
+        y_sum :{array-like} of shape (n_outputs, ):
             A 1D array containing the sum of target values for each output.
-        weight_sum : float 
+        weight_sum : float
             The sum of the sample weights.
 
-        The method calculates the mean target value for each output, then iterates over 
-        the samples in the node. For each sample, it calculates the error as the difference 
-        between the actual target value and the mean target value. If the absolute error 
-        is less than or equal to the delta threshold, it calculates the loss as 0.5 * error**2. 
-        Otherwise, it calculates the loss as delta * (abs(error) - 0.5 * delta), where delta 
-        is a predefined threshold. The calculated loss is multiplied by the sample weight and 
+        The method calculates the mean target value for each output, then iterates over
+        the samples in the node. For each sample, it calculates the error as the difference
+        between the actual target value and the mean target value. If the absolute error
+        is less than or equal to the delta threshold, it calculates the loss as 0.5 * error**2.
+        Otherwise, it calculates the loss as delta * (abs(error) - 0.5 * delta), where delta
+        is a predefined threshold. The calculated loss is multiplied by the sample weight and
         added to the total Huber loss.
 
-        The method returns the average Huber loss, which is the total Huber loss divided 
+        The method returns the average Huber loss, which is the total Huber loss divided
         by the product of weight_sum and the number of outputs.
 
-        This method is defined as inline, noexcept, and nogil, meaning it's a candidate 
-        for inlining (for performance), it's not expected to raise exceptions, and it 
+        This method is defined as inline, noexcept, and nogil, meaning it's a candidate
+        for inlining (for performance), it's not expected to raise exceptions, and it
         doesn't require the Python Global Interpreter Lock (GIL), respectively.
 
         Returns
@@ -1802,7 +1800,6 @@ cdef class Huber(RegressionCriterion):
         float : The average Huber loss of the node.
         """
 
-        cdef const float64_t[:, ::1] y = self.y
         cdef const float64_t[:] sample_weight = self.sample_weight
         cdef const intp_t[:] sample_indices = self.sample_indices
 
@@ -1823,52 +1820,45 @@ cdef class Huber(RegressionCriterion):
                 if sample_weight is not None:
                     w = sample_weight[i]
 
-                y_ik = self.y[i, k]        
+                y_ik = self.y[i, k]
                 error = y_ik - y_mean
                 if abs(error) <= self.delta:
                     huber_loss += w * 0.5 * error**2
                 else:
                     huber_loss += w * self.delta * (abs(error) - 0.5 * self.delta)
-    
-        return huber_loss / (weight_sum * n_outputs)
 
+        return huber_loss / (weight_sum * n_outputs)
 
     cdef float64_t node_impurity(self) noexcept nogil:
         """
-        This method evaluates the impurity of the current node in a decision tree 
+        This method evaluates the impurity of the current node in a decision tree
         or random forest.
 
-        The method uses the Huber loss as the impurity criterion. The Huber loss 
-        is less sensitive to outliers than the squared error loss, making it suitable for 
+        The method uses the Huber loss as the impurity criterion. The Huber loss
+        is less sensitive to outliers than the squared error loss, making it suitable for
         regression problems with potential outliers.
 
-        The method calculates the impurity of the samples in the range from `start` 
+        The method calculates the impurity of the samples in the range from `start`
         to `end` (both indices are attributes of the object). The smaller the impurity, the better.
 
-        The method takes no parameters, as it uses the attributes of the object to perform its calculations. 
+        The method takes no parameters, as it uses the attributes of the object to perform its calculations.
         These attributes include the sample weights, the sample indices, the target values (`y`),
          and the total sum of target values (`sum_total`).
 
         The method returns the calculated impurity as a float.
 
-        This method is defined as `noexcept` and `nogil`, meaning it's not expected to raise exceptions, 
+        This method is defined as `noexcept` and `nogil`, meaning it's not expected to raise exceptions,
         and it doesn't require the Python Global Interpreter Lock (GIL), respectively.
 
         Returns
         -------
         - float: The impurity of the current node.
         """
-        cdef const float64_t[:] sample_weight = self.sample_weight
-        cdef const intp_t[:] sample_indices = self.sample_indices
-        cdef intp_t i, p, k
-        cdef float64_t w = 1.0
         cdef float64_t impurity = 0.0
-        cdef int n = self.y.shape[1]
-        cdef float64_t* y_pred_k = <float64_t*> calloc(n, sizeof(float64_t))
 
         impurity = self.huber_loss(
-            self.start, 
-            self.end, 
+            self.start,
+            self.end,
             self.sum_total,
             self.weighted_n_node_samples
         )
@@ -1878,26 +1868,26 @@ cdef class Huber(RegressionCriterion):
     cdef void children_impurity(self, float64_t* impurity_left,
                                 float64_t* impurity_right) noexcept nogil:
         """
-        This method evaluates the impurity of the children nodes in a decision 
+        This method evaluates the impurity of the children nodes in a decision
         tree or random forest.
 
-        The method uses the Huber loss as the impurity criterion. The Huber loss is 
-        less sensitive to outliers than the squared error loss, making it suitable 
+        The method uses the Huber loss as the impurity criterion. The Huber loss is
+        less sensitive to outliers than the squared error loss, making it suitable
         for regression problems with potential outliers.
 
-        The method calculates the impurity of the samples in the left child node 
-        (from `start` to `pos`) and the right child node (from `pos` to `end`). 
+        The method calculates the impurity of the samples in the left child node
+        (from `start` to `pos`) and the right child node (from `pos` to `end`).
         The smaller the impurity, the better.
 
-        The method takes two parameters, `impurity_left` and `impurity_right`, which 
+        The method takes two parameters, `impurity_left` and `impurity_right`, which
         are pointers to floats where the calculated impurities will be stored.
 
-        This method is defined as `noexcept` and `nogil`, meaning it's not expected to 
+        This method is defined as `noexcept` and `nogil`, meaning it's not expected to
         raise exceptions, and it doesn't require the Python Global Interpreter Lock (GIL), respectively.
 
         Returns
         -------
-        None. The calculated impurities are stored in the memory locations pointed to 
+        None. The calculated impurities are stored in the memory locations pointed to
         by `impurity_left` and `impurity_right`.
         """
         cdef intp_t start = self.start
@@ -1905,15 +1895,15 @@ cdef class Huber(RegressionCriterion):
         cdef intp_t end = self.end
 
         impurity_left[0] = self.huber_loss(
-            start, 
-            pos, 
+            start,
+            pos,
             self.sum_left,
             self.weighted_n_left
         )
 
         impurity_right[0] = self.huber_loss(
-            pos, 
-            end, 
+            pos,
+            end,
             self.sum_right,
             self.weighted_n_right
         )
