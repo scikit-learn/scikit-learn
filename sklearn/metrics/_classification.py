@@ -1121,6 +1121,14 @@ def f1_score(
     Where "TP" is the number of true positives, "FN" is the number of false
     negatives, and "FP" is the number of false positives.
 
+    This is equivalent to::
+
+        F1 = 2 * precision * recall / (precision + recall)
+
+    except in the case where precision and recall are both 0. It is recommended
+    to refer to the previous definition of F1, especially for understanding the
+    behavior of the ``zero_division`` parameter.
+
     Support beyond term:`binary` targets is achieved by treating :term:`multiclass`
     and :term:`multilabel` data as a collection of binary problems, one for each
     label. For the :term:`binary` case, setting `average='binary'` will return
