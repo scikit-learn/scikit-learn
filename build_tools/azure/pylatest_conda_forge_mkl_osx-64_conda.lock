@@ -33,7 +33,7 @@ https://conda.anaconda.org/conda-forge/osx-64/libgfortran5-13.2.0-h2873a65_1.con
 https://conda.anaconda.org/conda-forge/osx-64/libpng-1.6.39-ha978bb4_0.conda#35e4928794c5391aec14ffdf1deaaee5
 https://conda.anaconda.org/conda-forge/osx-64/libsqlite-3.44.2-h92b6c6a_0.conda#d4419f90019e6a2b152cd4d32f73a82f
 https://conda.anaconda.org/conda-forge/osx-64/libxcb-1.15-hb7f2c08_0.conda#5513f57e0238c87c12dffedbcc9c1a4a
-https://conda.anaconda.org/conda-forge/osx-64/libxml2-2.12.1-hc0ae0f7_0.conda#79db8a83a64946db9422f220472898e9
+https://conda.anaconda.org/conda-forge/osx-64/libxml2-2.12.2-hc0ae0f7_0.conda#1e003cb7bfa0ebe3418b22f5a8a23024
 https://conda.anaconda.org/conda-forge/osx-64/mkl-2023.2.0-h54c2260_50500.conda#0a342ccdc79e4fcd359245ac51941e7b
 https://conda.anaconda.org/conda-forge/osx-64/ncurses-6.4-h93d8f39_2.conda#e58f366bd4d767e9ab97ab8b272e7670
 https://conda.anaconda.org/conda-forge/osx-64/openssl-3.2.0-hd75f5a5_1.conda#06cb561619487c88891839b9beb5244c
@@ -104,7 +104,7 @@ https://conda.anaconda.org/conda-forge/osx-64/scipy-1.11.4-py312heccc6a5_0.conda
 https://conda.anaconda.org/conda-forge/osx-64/blas-2.120-mkl.conda#b041a7677a412f3d925d8208936cb1e2
 https://conda.anaconda.org/conda-forge/osx-64/clangxx-16.0.6-default_h6b1ee41_3.conda#0cd1aaa751aa374141fa4c802b88674a
 https://conda.anaconda.org/conda-forge/osx-64/matplotlib-base-3.8.2-py312h302682c_0.conda#6a3b7c29d663a9cda13afb8f2638cc46
-https://conda.anaconda.org/conda-forge/osx-64/pandas-2.1.3-py312haf8ecfc_0.conda#d96a4b2b3dc4ae11f7fc8b736a12c3fb
+https://conda.anaconda.org/conda-forge/osx-64/pandas-2.1.4-py312haf8ecfc_0.conda#cb889a75192ef98a17c3f431f6518dd2
 https://conda.anaconda.org/conda-forge/osx-64/pyamg-5.0.1-py312h674694f_1.conda#e5b9c0f8b5c367467425ff34353ef761
 https://conda.anaconda.org/conda-forge/noarch/pytest-cov-4.1.0-pyhd8ed1ab_0.conda#06eb685a3a0b146347a58dda979485da
 https://conda.anaconda.org/conda-forge/noarch/pytest-forked-1.6.0-pyhd8ed1ab_0.conda#a46947638b6e005b63d2d6271da529b0
