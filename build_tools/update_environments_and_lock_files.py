@@ -295,6 +295,7 @@ conda_build_metadata_list = [
             "sphinx-prompt": "min",
             "sphinxext-opengraph": "min",
             "plotly": "min",
+            "polars": "min",
         },
     },
     {
