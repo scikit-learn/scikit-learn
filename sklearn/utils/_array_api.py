@@ -469,6 +469,9 @@ def _weighted_sum(sample_score, sample_weight, normalize=False, xp=None):
 
     if sample_weight is not None:
         sample_weight = xp.asarray(
+            # TODO: remove the successive xp.asarray calls once
+            # https://github.com/data-apis/array-api/issues/647 is widely
+            # implemented by all supported Array API libraries.
             xp.asarray(sample_weight, device="cpu"), dtype=sample_score.dtype
         )
         if not xp.isdtype(sample_weight.dtype, "real floating"):
