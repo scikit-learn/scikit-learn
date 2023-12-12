@@ -300,6 +300,7 @@ def load_csv_data(
     data_module=DATA_MODULE,
     descr_file_name=None,
     descr_module=DESCR_MODULE,
+    encoding="utf-8",
 ):
     """Loads `data_file_name` from `data_module with `importlib.resources`.
 
@@ -346,7 +347,7 @@ def load_csv_data(
         .. versionadded:: 1.4
     """
     data_path = resources.files(data_module) / data_file_name
-    with data_path.open("r") as csv_file:
+    with data_path.open("r", encoding="utf-8") as csv_file:
         data_file = csv.reader(csv_file)
         temp = next(data_file)
         n_samples = int(temp[0])
@@ -432,7 +433,7 @@ def load_gzip_compressed_csv_data(
         return data, descr
 
 
-def load_descr(descr_file_name, *, descr_module=DESCR_MODULE):
+def load_descr(descr_file_name, *, descr_module=DESCR_MODULE, encoding="utf-8"):
     """Load `descr_file_name` from `descr_module` with `importlib.resources`.
 
     Parameters
@@ -446,6 +447,12 @@ def load_descr(descr_file_name, *, descr_module=DESCR_MODULE):
     descr_module : str or module, default='sklearn.datasets.descr'
         Module where `descr_file_name` lives. See also :func:`load_descr`.
         The default  is `'sklearn.datasets.descr'`.
+
+    encoding : str, default="utf-8"
+        Name of the encoding that `descr_file_name` will be decoded with.
+        The default is 'utf-8'.
+
+        .. versionadded:: 1.4
 
     Returns
     -------
