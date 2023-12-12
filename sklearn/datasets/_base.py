@@ -448,7 +448,7 @@ def load_descr(descr_file_name, *, descr_module=DESCR_MODULE):
         Content of `descr_file_name`.
     """
     path = resources.files(descr_module) / descr_file_name
-    return path.read_text()
+    return path.read_text(encoding=encoding)
 
 
 @validate_params(
@@ -1197,13 +1197,13 @@ def load_linnerud(*, return_X_y=False, as_frame=False):
     data_module_path = resources.files(DATA_MODULE)
     # Read header and data
     data_path = data_module_path / data_filename
-    with data_path.open("r") as f:
+    with data_path.open("r", encoding="utf-8") as f:
         header_exercise = f.readline().split()
         f.seek(0)  # reset file obj
         data_exercise = np.loadtxt(f, skiprows=1)
 
     target_path = data_module_path / target_filename
-    with target_path.open("r") as f:
+    with target_path.open("r", encoding="utf-8") as f:
         header_physiological = f.readline().split()
         f.seek(0)  # reset file obj
         data_physiological = np.loadtxt(f, skiprows=1)
