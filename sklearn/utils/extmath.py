@@ -320,7 +320,7 @@ def randomized_range_finder(
 
 @validate_params(
     {
-        "M": [np.ndarray, "sparse matrix"],
+        "M": [np.ndarray, "sparse container"],
         "n_components": [Interval(Integral, 1, None, closed="left")],
         "n_oversamples": [Interval(Integral, 0, None, closed="left")],
         "n_iter": [Interval(Integral, 0, None, closed="left"), StrOptions({"auto"})],
@@ -351,7 +351,7 @@ def randomized_svd(
 
     Parameters
     ----------
-    M : {ndarray, sparse matrix}
+    M : {ndarray, sparse container}
         Matrix to decompose.
 
     n_components : int

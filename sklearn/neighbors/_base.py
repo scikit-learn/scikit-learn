@@ -192,7 +192,7 @@ def _check_precomputed(X):
 
 @validate_params(
     {
-        "graph": ["sparse matrix"],
+        "graph": ["sparse container"],
         "copy": ["boolean"],
         "warn_when_not_sorted": ["boolean"],
     },
@@ -205,7 +205,7 @@ def sort_graph_by_row_values(graph, copy=False, warn_when_not_sorted=True):
 
     Parameters
     ----------
-    graph : sparse matrix of shape (n_samples, n_samples)
+    graph : sparse container of shape (n_samples, n_samples)
         Distance matrix to other samples, where only non-zero elements are
         considered neighbors. Matrix is converted to CSR format if not already.
 

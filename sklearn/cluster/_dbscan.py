@@ -24,7 +24,7 @@ from ._dbscan_inner import dbscan_inner
 
 @validate_params(
     {
-        "X": ["array-like", "sparse matrix"],
+        "X": ["array-like", "sparse container"],
         "sample_weight": ["array-like", None],
     },
     prefer_skip_nested_validation=False,
@@ -48,7 +48,7 @@ def dbscan(
 
     Parameters
     ----------
-    X : {array-like, sparse (CSR) matrix} of shape (n_samples, n_features) or \
+    X : {array-like, sparse (CSR) container} of shape (n_samples, n_features) or \
             (n_samples, n_samples)
         A feature array, or array of distances between samples if
         ``metric='precomputed'``.
