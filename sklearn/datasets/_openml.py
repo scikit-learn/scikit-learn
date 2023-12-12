@@ -307,12 +307,19 @@ def _get_data_info_by_name(
         )
         res = json_data["data"]["dataset"]
         if len(res) > 1:
-            warn(
+            first_version = version = res[0]["version"]
+            warning_msg = (
                 "Multiple active versions of the dataset matching the name"
-                " {name} exist. Versions may be fundamentally different, "
-                "returning version"
-                " {version}.".format(name=name, version=res[0]["version"])
+                f" {name} exist. Versions may be fundamentally different, "
+                f"returning version {first_version}. "
+                "Available versions:\n"
             )
+            for r in res:
+                warning_msg += f"- version {r['version']}, status: {r['status']}\n"
+                warning_msg += (
+                    f"  url: https://www.openml.org/search?type=data&id={r['did']}\n"
+                )
+            warn(warning_msg)
         return res[0]
 
     # an integer version has been provided
@@ -1018,7 +1025,7 @@ def fetch_openml(
     else:
         parser_ = parser
 
-    if as_frame or parser_ == "pandas":
+    if parser_ == "pandas":
         try:
             check_pandas_support("`fetch_openml`")
         except ImportError as exc:
@@ -1028,26 +1035,12 @@ def fetch_openml(
                     "Alternatively, explicitly set `as_frame=False` and "
                     "`parser='liac-arff'`."
                 )
-                raise ImportError(err_msg) from exc
             else:
                 err_msg = (
-                    f"Using `parser={parser_!r}` requires pandas to be installed. "
-                    "Alternatively, explicitly set `parser='liac-arff'`."
+                    f"Using `parser={parser!r}` wit dense data requires pandas to be "
+                    "installed. Alternatively, explicitly set `parser='liac-arff'`."
                 )
-                if parser == "auto":
-                    # TODO(1.4): In version 1.4, we will raise an error instead of
-                    # a warning.
-                    warn(
-                        (
-                            "From version 1.4, `parser='auto'` with `as_frame=False` "
-                            "will use pandas. Either install pandas or set explicitly "
-                            "`parser='liac-arff'` to preserve the current behavior."
-                        ),
-                        FutureWarning,
-                    )
-                    parser_ = "liac-arff"
-                else:
-                    raise ImportError(err_msg) from exc
+            raise ImportError(err_msg) from exc
 
     if return_sparse:
         if as_frame:

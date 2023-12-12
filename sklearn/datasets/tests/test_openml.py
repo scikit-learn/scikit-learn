@@ -974,8 +974,6 @@ def test_fetch_openml_types_inference(
 # Test some more specific behaviour
 
 
-# TODO(1.4): remove this filterwarning decorator
-@pytest.mark.filterwarnings("ignore:The default value of `parser` will change")
 @pytest.mark.parametrize(
     "params, err_msg",
     [
@@ -1002,6 +1000,7 @@ def test_fetch_openml_validation_parameter(monkeypatch, params, err_msg):
         {"as_frame": True, "parser": "auto"},
         {"as_frame": "auto", "parser": "auto"},
         {"as_frame": False, "parser": "pandas"},
+        {"as_frame": False, "parser": "auto"},
     ],
 )
 def test_fetch_openml_requires_pandas_error(monkeypatch, params):
@@ -1018,27 +1017,7 @@ def test_fetch_openml_requires_pandas_error(monkeypatch, params):
         raise SkipTest("This test requires pandas to not be installed.")
 
 
-# TODO(1.4): move this parameter option in`test_fetch_openml_requires_pandas_error`
-def test_fetch_openml_requires_pandas_in_future(monkeypatch):
-    """Check that we raise a warning that pandas will be required in the future."""
-    params = {"as_frame": False, "parser": "auto"}
-    data_id = 1119
-    try:
-        check_pandas_support("test_fetch_openml_requires_pandas")
-    except ImportError:
-        _monkey_patch_webbased_functions(monkeypatch, data_id, True)
-        warn_msg = (
-            "From version 1.4, `parser='auto'` with `as_frame=False` will use pandas"
-        )
-        with pytest.warns(FutureWarning, match=warn_msg):
-            fetch_openml(data_id=data_id, **params)
-    else:
-        raise SkipTest("This test requires pandas to not be installed.")
-
-
 @pytest.mark.filterwarnings("ignore:Version 1 of dataset Australian is inactive")
-# TODO(1.4): remove this filterwarning decorator for `parser`
-@pytest.mark.filterwarnings("ignore:The default value of `parser` will change")
 @pytest.mark.parametrize(
     "params, err_msg",
     [
@@ -1124,10 +1103,14 @@ def test_fetch_openml_iris_warn_multiple_version(monkeypatch, gzip_response):
 
     _monkey_patch_webbased_functions(monkeypatch, data_id, gzip_response)
 
-    msg = (
+    msg = re.escape(
         "Multiple active versions of the dataset matching the name"
         " iris exist. Versions may be fundamentally different, "
-        "returning version 1."
+        "returning version 1. Available versions:\n"
+        "- version 1, status: active\n"
+        "  url: https://www.openml.org/search?type=data&id=61\n"
+        "- version 3, status: active\n"
+        "  url: https://www.openml.org/search?type=data&id=969\n"
     )
     with pytest.warns(UserWarning, match=msg):
         fetch_openml(
