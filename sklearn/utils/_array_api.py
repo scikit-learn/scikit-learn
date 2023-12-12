@@ -24,7 +24,7 @@ def yield_namespace_device_dtype_combinations():
         The name of the device on which to allocate the arrays. Can be None to
         indicate that the default value should be used.
 
-    dtype : str
+    dtype_name : str
         The name of the data type to use for arrays. Can be None to indicate
         that the default value should be used.
     """

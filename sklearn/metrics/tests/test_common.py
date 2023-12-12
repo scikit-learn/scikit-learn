@@ -1733,70 +1733,64 @@ def test_metrics_pos_label_error_str(metric, y_pred_threshold, dtype_y_str):
 
 
 def check_array_api_metric(
-    metric, array_namespace, device, dtype, y_true_np, y_pred_np, sample_weight=None
+    metric, array_namespace, device, y_true_np, y_pred_np, sample_weight
 ):
     xp = _array_api_for_tests(array_namespace, device)
     y_true_xp = xp.asarray(y_true_np, device=device)
     y_pred_xp = xp.asarray(y_pred_np, device=device)
-    dtype_ = None if dtype is None else getattr(xp, dtype)
-
-    y_true_xp = xp.asarray(y_true_np, device=device, dtype=dtype_)
-    y_pred_xp = xp.asarray(y_pred_np, device=device, dtype=dtype_)
 
     metric_np = metric(y_true_np, y_pred_np, sample_weight=sample_weight)
 
     with config_context(array_api_dispatch=True):
         if sample_weight is not None:
             sample_weight = xp.asarray(sample_weight, device=device)
-        metric_xp = metric(
-            y_true_xp, y_pred_xp, sample_weight=sample_weight, dtype=dtype_
-        )
+        metric_xp = metric(y_true_xp, y_pred_xp, sample_weight=sample_weight)
 
         assert_allclose(
             metric_xp,
             metric_np,
-            atol=_atol_for_type(dtype),
+            atol=_atol_for_type(y_true_np.dtype),
         )
 
 
 def check_array_api_binary_classification_metric(
-    metric, array_namespace, device, dtype
+    metric, array_namespace, device, dtype_name
 ):
-    y_true_np = np.array([0, 0, 1, 1])
-    y_pred_np = np.array([0, 1, 0, 1])
-    check_array_api_metric(
-        metric, array_namespace, device, dtype, y_true_np=y_true_np, y_pred_np=y_pred_np
-    )
+    y_true_np = np.array([0, 0, 1, 1], dtype=dtype_name)
+    y_pred_np = np.array([0, 1, 0, 1], dtype=dtype_name)
     if "sample_weight" in signature(metric).parameters:
-        check_array_api_metric(
-            metric,
-            array_namespace,
-            device,
-            dtype,
-            y_true_np=y_true_np,
-            y_pred_np=y_pred_np,
-            sample_weight=np.array([0.0, 0.1, 2.0, 1.0]),
-        )
+        sample_weight = None
+    else:
+        sample_weight = np.array([0.0, 0.1, 2.0, 1.0], dtype=dtype_name)
+
+    check_array_api_metric(
+        metric,
+        array_namespace,
+        device,
+        y_true_np=y_true_np,
+        y_pred_np=y_pred_np,
+        sample_weight=sample_weight,
+    )
 
 
 def check_array_api_multiclass_classification_metric(
-    metric, array_namespace, device, dtype
+    metric, array_namespace, device, dtype_name
 ):
-    y_true_np = np.array([0, 1, 2, 3])
-    y_pred_np = np.array([0, 1, 0, 2])
-    check_array_api_metric(
-        metric, array_namespace, device, dtype, y_true_np=y_true_np, y_pred_np=y_pred_np
-    )
+    y_true_np = np.array([0, 1, 2, 3], dtype=dtype_name)
+    y_pred_np = np.array([0, 1, 0, 2], dtype=dtype_name)
     if "sample_weight" in signature(metric).parameters:
-        check_array_api_metric(
-            metric,
-            array_namespace,
-            device,
-            dtype,
-            y_true_np=y_true_np,
-            y_pred_np=y_pred_np,
-            sample_weight=np.array([0.0, 0.1, 2.0, 1.0]),
-        )
+        sample_weight = np.array([0.0, 0.1, 2.0, 1.0], dtype=dtype_name)
+    else:
+        sample_weight = None
+
+    check_array_api_metric(
+        metric,
+        array_namespace,
+        device,
+        y_true_np=y_true_np,
+        y_pred_np=y_pred_np,
+        sample_weight=sample_weight,
+    )
 
 
 metric_checkers = {
@@ -1821,5 +1815,5 @@ def yield_metric_checker_combinations(metric_checkers=metric_checkers):
     "array_namespace, device, dtype", yield_namespace_device_dtype_combinations()
 )
 @pytest.mark.parametrize("metric, check_func", yield_metric_checker_combinations())
-def test_array_api_compliance(metric, array_namespace, device, dtype, check_func):
-    check_func(metric, array_namespace, device, dtype)
+def test_array_api_compliance(metric, array_namespace, device, dtype_name, check_func):
+    check_func(metric, array_namespace, device, dtype_name)

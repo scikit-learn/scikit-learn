@@ -864,7 +864,7 @@ def check_array_api_input(
     estimator_orig,
     array_namespace,
     device=None,
-    dtype="float64",
+    dtype_name="float64",
     check_values=False,
 ):
     """Check that the estimator can work consistently with the Array API
@@ -878,7 +878,7 @@ def check_array_api_input(
     xp = _array_api_for_tests(array_namespace, device)
 
     X, y = make_classification(random_state=42)
-    X = X.astype(dtype, copy=False)
+    X = X.astype(dtype_name, copy=False)
 
     X = _enforce_estimator_tags_X(estimator_orig, X)
     y = _enforce_estimator_tags_y(estimator_orig, y)
@@ -1007,14 +1007,14 @@ def check_array_api_input_and_values(
     estimator_orig,
     array_namespace,
     device=None,
-    dtype="float64",
+    dtype_name="float64",
 ):
     return check_array_api_input(
         name,
         estimator_orig,
         array_namespace=array_namespace,
         device=device,
-        dtype=dtype,
+        dtype_name=dtype_name,
         check_values=True,
     )
 
