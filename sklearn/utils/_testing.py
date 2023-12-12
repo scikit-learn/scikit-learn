@@ -1030,7 +1030,7 @@ class MinimalTransformer:
         return self.fit(X, y).transform(X, y)
 
 
-def _array_api_for_tests(array_namespace, device, dtype):
+def _array_api_for_tests(array_namespace, device):
     try:
         if array_namespace == "numpy.array_api":
             # FIXME: once it is not experimental anymore
@@ -1079,4 +1079,4 @@ def _array_api_for_tests(array_namespace, device, dtype):
 
         if cupy.cuda.runtime.getDeviceCount() == 0:
             raise SkipTest("CuPy test requires cuda, which is not available")
-    return xp, device, dtype
+    return xp
