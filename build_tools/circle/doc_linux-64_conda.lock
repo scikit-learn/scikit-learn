@@ -44,7 +44,7 @@ https://conda.anaconda.org/conda-forge/linux-64/libdeflate-1.19-hd590300_0.conda
 https://conda.anaconda.org/conda-forge/linux-64/libexpat-2.5.0-hcb278e6_1.conda#6305a3dd2752c76335295da4e581f2fd
 https://conda.anaconda.org/conda-forge/linux-64/libffi-3.4.2-h7f98852_5.tar.bz2#d645c6d2ac96843a2bfaccd2d62b3ac3
 https://conda.anaconda.org/conda-forge/linux-64/libgfortran5-13.2.0-ha4646dd_3.conda#c714d905cdfa0e70200f68b80cc04764
-https://conda.anaconda.org/conda-forge/linux-64/libiconv-1.17-h166bdaf_0.tar.bz2#b62b52da46c39ee2bc3c162ac7f1804d
+https://conda.anaconda.org/conda-forge/linux-64/libiconv-1.17-hd590300_1.conda#4b06b43d0eca61db2899e4d7a289c302
 https://conda.anaconda.org/conda-forge/linux-64/libjpeg-turbo-3.0.0-hd590300_1.conda#ea25936bb4080d843790b586850f82b8
 https://conda.anaconda.org/conda-forge/linux-64/libnsl-2.0.1-hd590300_0.conda#30fd6e37fe21f86f4bd26d6ee73eeec7
 https://conda.anaconda.org/conda-forge/linux-64/libogg-1.3.4-h7f98852_1.tar.bz2#6e8cc2173440d77708196c5b93771680
@@ -293,7 +293,7 @@ https://conda.anaconda.org/conda-forge/noarch/sphinxext-opengraph-0.9.0-pyhd8ed1
 # pip argon2-cffi-bindings @ https://files.pythonhosted.org/packages/ec/f7/378254e6dd7ae6f31fe40c8649eea7d4832a42243acaf0f1fff9083b2bed/argon2_cffi_bindings-21.2.0-cp36-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl#sha256=b746dba803a79238e925d9046a63aa26bf86ab2a2fe74ce6b009a1c3f5c8f2ae
 # pip isoduration @ https://files.pythonhosted.org/packages/7b/55/e5326141505c5d5e34c5e0935d2908a74e4561eca44108fbfb9c13d2911a/isoduration-20.11.0-py3-none-any.whl#sha256=b2904c2a4228c3d44f409c8ae8e2370eb21a26f7ac2ec5446df141dde3452042
 # pip jsonschema-specifications @ https://files.pythonhosted.org/packages/d7/48/b62ccba8f4ac91817d6a11b340e63806175dafb10234a8cf7140bd389da5/jsonschema_specifications-2023.11.2-py3-none-any.whl#sha256=e74ba7c0a65e8cb49dc26837d6cfe576557084a8b423ed16a420984228104f93
-# pip jupyter-server-terminals @ https://files.pythonhosted.org/packages/ea/7f/36db12bdb90f5237766dcbf59892198daab7260acbcf03fc75e2a2a82672/jupyter_server_terminals-0.4.4-py3-none-any.whl#sha256=75779164661cec02a8758a5311e18bb8eb70c4e86c6b699403100f1585a12a36
+# pip jupyter-server-terminals @ https://files.pythonhosted.org/packages/63/9a/98d252b7977ac3aa0aa4152b87b356e2048d4b193f38840c0e00dd85fadc/jupyter_server_terminals-0.5.0-py3-none-any.whl#sha256=2fc0692c883bfd891f4fba0c4b4a684a37234b0ba472f2e97ed0a3888f46e1e4
 # pip jupyterlite-core @ https://files.pythonhosted.org/packages/2f/0b/58eb568cbce3bbaa8702c6ce297870402828b222598a1db10e23e7190f52/jupyterlite_core-0.2.1-py3-none-any.whl#sha256=3f6161c4ad609bca913a42598005ff577611daae8dce448292fbb2c15db6b393
 # pip pyzmq @ https://files.pythonhosted.org/packages/76/8b/6fca99e22c6316917de32b17be299dea431544209d619da16b6d9ec85c83/pyzmq-25.1.2-cp39-cp39-manylinux_2_12_x86_64.manylinux2010_x86_64.whl#sha256=c0b5ca88a8928147b7b1e2dfa09f3b6c256bc1135a1338536cbc9ea13d3b7add
 # pip argon2-cffi @ https://files.pythonhosted.org/packages/a4/6a/e8a041599e78b6b3752da48000b14c8d1e8a04ded09c88c714ba047f34f5/argon2_cffi-23.1.0-py3-none-any.whl#sha256=c670642b78ba29641818ab2e68bd4e6a78ba53b7eff7b4c3815ae16abf91c7ea

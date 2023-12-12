@@ -63,9 +63,6 @@ linux_arm64_wheel_task:
   matrix:
     # Only the latest Python version is tested
     - env:
-        CIBW_BUILD: cp38-manylinux_aarch64
-        CIBW_TEST_SKIP: "*_aarch64"
-    - env:
         CIBW_BUILD: cp39-manylinux_aarch64
         CIBW_TEST_SKIP: "*_aarch64"
     - env:

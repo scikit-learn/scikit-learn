@@ -3,7 +3,7 @@ version: 2.1
 jobs:
   lint:
     docker:
-      - image: cimg/python:3.8.12
+      - image: cimg/python:3.9.18
     steps:
       - checkout
       - run:
@@ -18,7 +18,7 @@ jobs:
 
   doc-min-dependencies:
     docker:
-      - image: cimg/python:3.8.12
+      - image: cimg/python:3.9.18
     environment:
       - MKL_NUM_THREADS: 2
       - OPENBLAS_NUM_THREADS: 2
@@ -52,7 +52,7 @@ jobs:
 
   doc:
     docker:
-      - image: cimg/python:3.8.12
+      - image: cimg/python:3.9.18
     environment:
       - MKL_NUM_THREADS: 2
       - OPENBLAS_NUM_THREADS: 2
@@ -91,7 +91,7 @@ jobs:
 
   deploy:
     docker:
-      - image: cimg/python:3.8.12
+      - image: cimg/python:3.9.18
     steps:
       - checkout
       - run: ./build_tools/circle/checkout_merge_commit.sh

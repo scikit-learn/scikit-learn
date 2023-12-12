@@ -147,23 +147,23 @@ conda_build_metadata_list = [
         },
     },
     {
-        "build_name": "py38_conda_defaults_openblas",
+        "build_name": "pymin_conda_defaults_openblas",
         "folder": "build_tools/azure",
         "platform": "linux-64",
         "channel": "defaults",
         "conda_dependencies": common_dependencies + ["ccache"],
         "package_constraints": {
-            "python": "3.8",
+            "python": "3.9",
             "blas": "[build=openblas]",
-            "numpy": "min",
-            "scipy": "min",
+            "numpy": "1.21",  # the min version is not available on the defaults channel
+            "scipy": "1.7",  # the min version has some low level crashes
             "matplotlib": "min",
             "threadpoolctl": "2.2.0",
             "cython": "min",
         },
     },
     {
-        "build_name": "py38_conda_forge_openblas_ubuntu_2204",
+        "build_name": "pymin_conda_forge_openblas_ubuntu_2204",
         "folder": "build_tools/azure",
         "platform": "linux-64",
         "channel": "conda-forge",
@@ -173,7 +173,7 @@ conda_build_metadata_list = [
             + ["ccache"]
         ),
         "package_constraints": {
-            "python": "3.8",
+            "python": "3.9",
             "blas": "[build=openblas]",
         },
     },
@@ -247,7 +247,7 @@ conda_build_metadata_list = [
         },
     },
     {
-        "build_name": "py38_conda_forge_mkl",
+        "build_name": "pymin_conda_forge_mkl",
         "folder": "build_tools/azure",
         "platform": "win-64",
         "channel": "conda-forge",
@@ -256,7 +256,7 @@ conda_build_metadata_list = [
             "pip",
         ],
         "package_constraints": {
-            "python": "3.8",
+            "python": "3.9",
             "blas": "[build=mkl]",
         },
     },
@@ -280,7 +280,7 @@ conda_build_metadata_list = [
         ],
         "pip_dependencies": ["sphinxext-opengraph"],
         "package_constraints": {
-            "python": "3.8",
+            "python": "3.9",
             "numpy": "min",
             "scipy": "min",
             "matplotlib": "min",
@@ -321,7 +321,7 @@ conda_build_metadata_list = [
         },
     },
     {
-        "build_name": "py39_conda_forge",
+        "build_name": "pymin_conda_forge",
         "folder": "build_tools/cirrus",
         "platform": "linux-aarch64",
         "channel": "conda-forge",
