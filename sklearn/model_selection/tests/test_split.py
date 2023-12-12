@@ -1267,7 +1267,7 @@ def test_train_test_split_default_test_size(train_size, exp_train, exp_test):
 
 
 @pytest.mark.parametrize(
-    "array_namespace, device, dtype", yield_namespace_device_dtype_combinations()
+    "array_namespace, device, dtype_name", yield_namespace_device_dtype_combinations()
 )
 @pytest.mark.parametrize(
     "shuffle,stratify",

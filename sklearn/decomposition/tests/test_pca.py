@@ -849,7 +849,7 @@ def check_array_api_get_precision(name, estimator, array_namespace, device, dtyp
 
 
 @pytest.mark.parametrize(
-    "array_namespace, device, dtype", yield_namespace_device_dtype_combinations()
+    "array_namespace, device, dtype_name", yield_namespace_device_dtype_combinations()
 )
 @pytest.mark.parametrize(
     "check",
@@ -878,7 +878,7 @@ def test_pca_array_api_compliance(
 
 
 @pytest.mark.parametrize(
-    "array_namespace, device, dtype", yield_namespace_device_dtype_combinations()
+    "array_namespace, device, dtype_name", yield_namespace_device_dtype_combinations()
 )
 @pytest.mark.parametrize(
     "check",

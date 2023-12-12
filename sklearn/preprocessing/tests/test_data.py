@@ -682,7 +682,7 @@ def test_standard_check_array_of_inverse_transform():
 
 
 @pytest.mark.parametrize(
-    "array_namespace, device, dtype", yield_namespace_device_dtype_combinations()
+    "array_namespace, device, dtype_name", yield_namespace_device_dtype_combinations()
 )
 @pytest.mark.parametrize(
     "check",
