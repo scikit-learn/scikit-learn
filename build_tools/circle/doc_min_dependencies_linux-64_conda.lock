@@ -75,7 +75,7 @@ https://conda.anaconda.org/conda-forge/linux-64/libpng-1.6.39-h753d276_0.conda#e
 https://conda.anaconda.org/conda-forge/linux-64/libsqlite-3.44.2-h2797004_0.conda#3b6a9f225c3dbe0d24f4fedd4625c5bf
 https://conda.anaconda.org/conda-forge/linux-64/libvorbis-1.3.7-h9c3ff4c_0.tar.bz2#309dec04b70a3cc0f1e84a4013683bc0
 https://conda.anaconda.org/conda-forge/linux-64/libxcb-1.15-h0b41bf4_0.conda#33277193f5b92bad9fdd230eb700929c
-https://conda.anaconda.org/conda-forge/linux-64/libxml2-2.11.6-h232c23b_0.conda#427a3e59d66cb5d145020bd9c6493334
+https://conda.anaconda.org/conda-forge/linux-64/libxml2-2.12.2-h232c23b_0.conda#1917ed337979482731e8ac8c1bedf9dd
 https://conda.anaconda.org/conda-forge/linux-64/mysql-common-8.0.33-hf1915f5_6.conda#80bf3b277c120dd294b51d404b931a75
 https://conda.anaconda.org/conda-forge/linux-64/pcre2-10.42-hcad00b1_0.conda#679c8961826aa4b50653bce17ee52abe
 https://conda.anaconda.org/conda-forge/linux-64/readline-8.2-h8228510_1.conda#47d31b792659ce70f470b5c82fdfb7a4
@@ -91,7 +91,7 @@ https://conda.anaconda.org/conda-forge/linux-64/gxx_impl_linux-64-12.3.0-he2b93b
 https://conda.anaconda.org/conda-forge/linux-64/krb5-1.21.2-h659d440_0.conda#cd95826dbd331ed1be26bdf401432844
 https://conda.anaconda.org/conda-forge/linux-64/libgcrypt-1.10.3-hd590300_0.conda#32d16ad533c59bb0a3c5ffaf16110829
 https://conda.anaconda.org/conda-forge/linux-64/libglib-2.78.3-h783c2da_0.conda#9bd06b12bbfa6fd1740fd23af4b0f0c7
-https://conda.anaconda.org/conda-forge/linux-64/libllvm15-15.0.7-h5cf9203_3.conda#9efe82d44b76a7529a1d702e5a37752e
+https://conda.anaconda.org/conda-forge/linux-64/libllvm15-15.0.7-hb3ce162_4.conda#8a35df3cbc0c8b12cc8af9473ae75eef
 https://conda.anaconda.org/conda-forge/linux-64/libopenblas-0.3.25-pthreads_h413a1c8_0.conda#d172b34a443b95f86089e8229ddc9a17
 https://conda.anaconda.org/conda-forge/linux-64/libsndfile-1.2.2-hc60ed4a_1.conda#ef1910918dd895516a769ed36b5b3a4e
 https://conda.anaconda.org/conda-forge/linux-64/libtiff-4.6.0-ha9c0a0a_2.conda#55ed21669b2015f77c180feb1dd41930
@@ -119,7 +119,7 @@ https://conda.anaconda.org/conda-forge/linux-64/docutils-0.19-py39hf3d152e_1.tar
 https://conda.anaconda.org/conda-forge/noarch/exceptiongroup-1.2.0-pyhd8ed1ab_0.conda#f6c211fee3c98229652b60a9a42ef363
 https://conda.anaconda.org/conda-forge/noarch/execnet-2.0.2-pyhd8ed1ab_0.conda#67de0d8241e1060a479e3c37793e26f9
 https://conda.anaconda.org/conda-forge/linux-64/fontconfig-2.14.2-h14ed4e7_0.conda#0f69b688f52ff6da70bccb7ff7001d1d
-https://conda.anaconda.org/conda-forge/noarch/fsspec-2023.12.1-pyhca7485f_0.conda#b38946846cdf39f9bce93f75f571d913
+https://conda.anaconda.org/conda-forge/noarch/fsspec-2023.12.2-pyhca7485f_0.conda#bf40f2a8835b78b1f91083d306b493d2
 https://conda.anaconda.org/conda-forge/linux-64/gfortran-12.3.0-h499e0f7_2.conda#0558a8c44eb7a18e6682bd3a8ae6dcab
 https://conda.anaconda.org/conda-forge/linux-64/gfortran_linux-64-12.3.0-h7fe76b4_2.conda#3a749210487c0358b6f135a648cbbf60
 https://conda.anaconda.org/conda-forge/linux-64/glib-tools-2.78.3-hfc55251_0.conda#41d2f46e0ac8372eeb959860713d9b21
@@ -180,7 +180,7 @@ https://conda.anaconda.org/conda-forge/noarch/joblib-1.3.2-pyhd8ed1ab_0.conda#4d
 https://conda.anaconda.org/conda-forge/linux-64/libcblas-3.9.0-20_linux64_openblas.conda#36d486d72ab64ffea932329a1d3729a3
 https://conda.anaconda.org/conda-forge/linux-64/libclang-15.0.7-default_hb11cfb5_4.conda#c90f4cbb57839c98fef8f830e4b9972f
 https://conda.anaconda.org/conda-forge/linux-64/liblapack-3.9.0-20_linux64_openblas.conda#6fabc51f5e647d09cc010c40061557e0
-https://conda.anaconda.org/conda-forge/linux-64/libxkbcommon-1.6.0-h5d7e998_0.conda#d8edd0e29db6fb6b6988e1a28d35d994
+https://conda.anaconda.org/conda-forge/linux-64/libxkbcommon-1.6.0-hd429924_1.conda#1dbcc04604fdf1e526e6d1b0b6938396
 https://conda.anaconda.org/conda-forge/noarch/memory_profiler-0.61.0-pyhd8ed1ab_0.tar.bz2#8b45f9f2b2f7a98b0ec179c8991a4a9b
 https://conda.anaconda.org/conda-forge/noarch/partd-1.4.1-pyhd8ed1ab_0.conda#acf4b7c0bcd5fa3b0e05801c4d2accd6
 https://conda.anaconda.org/conda-forge/linux-64/pillow-10.1.0-py39had0adad_0.conda#eeaa413fddccecb2ab7f747bdb55b07f
@@ -214,7 +214,7 @@ https://conda.anaconda.org/conda-forge/linux-64/pywavelets-1.3.0-py39hd257fcd_1.
 https://conda.anaconda.org/conda-forge/linux-64/scipy-1.6.0-py39hee8e79c_0.tar.bz2#3afcb78281836e61351a2924f3230060
 https://conda.anaconda.org/conda-forge/linux-64/blas-2.120-openblas.conda#c8f6916a81a340650078171b1d852574
 https://conda.anaconda.org/conda-forge/linux-64/pyamg-4.2.3-py39hac2352c_1.tar.bz2#6fb0628d6195d8b6caa2422d09296399
-https://conda.anaconda.org/conda-forge/linux-64/qt-main-5.15.8-h82b777d_17.conda#4f01e33dbb406085a16a2813ab067e95
+https://conda.anaconda.org/conda-forge/linux-64/qt-main-5.15.8-h450f30e_18.conda#ef0430f8df5dcdedcaaab340b228f30c
 https://conda.anaconda.org/conda-forge/noarch/seaborn-base-0.12.2-pyhd8ed1ab_0.conda#cf88f3a1c11536bc3c10c14ad00ccc42
 https://conda.anaconda.org/conda-forge/linux-64/statsmodels-0.13.2-py39hd257fcd_0.tar.bz2#bd7cdadf70e34a19333c3aacc40206e8
 https://conda.anaconda.org/conda-forge/noarch/tifffile-2020.6.3-py_0.tar.bz2#1fb771bb25b2eecbc73abf5143fa35bd
