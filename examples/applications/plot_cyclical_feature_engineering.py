@@ -20,9 +20,7 @@ the :class:`sklearn.preprocessing.SplineTransformer` class and its
 # We start by loading the data from the OpenML repository.
 from sklearn.datasets import fetch_openml
 
-bike_sharing = fetch_openml(
-    "Bike_Sharing_Demand", version=2, as_frame=True, parser="pandas"
-)
+bike_sharing = fetch_openml("Bike_Sharing_Demand", version=2, as_frame=True)
 df = bike_sharing.frame
 
 # %%
@@ -167,7 +165,7 @@ X.iloc[train_4]
 # -----------------
 #
 # Gradient Boosting Regression with decision trees is often flexible enough to
-# efficiently handle heterogenous tabular data with a mix of categorical and
+# efficiently handle heterogeneous tabular data with a mix of categorical and
 # numerical features as long as the number of samples is large enough.
 #
 # Here, we use the modern
