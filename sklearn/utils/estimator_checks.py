@@ -311,11 +311,15 @@ def _yield_outliers_checks(estimator):
 
 
 def _yield_array_api_checks(estimator):
-    for array_namespace, device, dtype in yield_namespace_device_dtype_combinations():
+    for (
+        array_namespace,
+        device,
+        dtype_name,
+    ) in yield_namespace_device_dtype_combinations():
         yield partial(
             check_array_api_input,
             array_namespace=array_namespace,
-            dtype=dtype,
+            dtype_name=dtype_name,
             device=device,
         )
 
