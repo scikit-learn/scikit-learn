@@ -705,7 +705,7 @@ def test_scaler_array_api_compliance(
     estimator, check, array_namespace, device, dtype_name
 ):
     name = estimator.__class__.__name__
-    check(name, estimator, array_namespace, device=device, dtype=dtype_name)
+    check(name, estimator, array_namespace, device=device, dtype_name=dtype_name)
 
 
 def test_min_max_scaler_iris():

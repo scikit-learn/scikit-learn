@@ -444,7 +444,9 @@ def _weighted_sum(sample_score, sample_weight, normalize=False, xp=None):
         sample_score = xp.astype(xp.asarray(sample_score, device="cpu"), xp.float64)
 
     if sample_weight is not None:
-        sample_weight = xp.asarray(sample_weight, dtype=sample_score.dtype)
+        sample_weight = xp.asarray(
+            sample_weight, dtype=sample_score.dtype, device=sample_score.device
+        )
         if not xp.isdtype(sample_weight.dtype, "real floating"):
             sample_weight = xp.astype(sample_weight, xp.float64)
 

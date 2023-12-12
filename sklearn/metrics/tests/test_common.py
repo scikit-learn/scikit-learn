@@ -1733,7 +1733,7 @@ def test_metrics_pos_label_error_str(metric, y_pred_threshold, dtype_y_str):
 
 
 def check_array_api_metric(
-    metric, array_namespace, device, y_true_np, y_pred_np, sample_weight
+    metric, array_namespace, device, dtype_name, y_true_np, y_pred_np, sample_weight
 ):
     xp = _array_api_for_tests(array_namespace, device)
     y_true_xp = xp.asarray(y_true_np, device=device)
@@ -1749,15 +1749,15 @@ def check_array_api_metric(
         assert_allclose(
             metric_xp,
             metric_np,
-            atol=_atol_for_type(y_true_np.dtype),
+            atol=_atol_for_type(dtype_name),
         )
 
 
 def check_array_api_binary_classification_metric(
     metric, array_namespace, device, dtype_name
 ):
-    y_true_np = np.array([0, 0, 1, 1], dtype=dtype_name)
-    y_pred_np = np.array([0, 1, 0, 1], dtype=dtype_name)
+    y_true_np = np.array([0, 0, 1, 1])
+    y_pred_np = np.array([0, 1, 0, 1])
     if "sample_weight" in signature(metric).parameters:
         sample_weight = None
     else:
@@ -1767,6 +1767,7 @@ def check_array_api_binary_classification_metric(
         metric,
         array_namespace,
         device,
+        dtype_name,
         y_true_np=y_true_np,
         y_pred_np=y_pred_np,
         sample_weight=sample_weight,
@@ -1776,8 +1777,8 @@ def check_array_api_binary_classification_metric(
 def check_array_api_multiclass_classification_metric(
     metric, array_namespace, device, dtype_name
 ):
-    y_true_np = np.array([0, 1, 2, 3], dtype=dtype_name)
-    y_pred_np = np.array([0, 1, 0, 2], dtype=dtype_name)
+    y_true_np = np.array([0, 1, 2, 3])
+    y_pred_np = np.array([0, 1, 0, 2])
     if "sample_weight" in signature(metric).parameters:
         sample_weight = np.array([0.0, 0.1, 2.0, 1.0], dtype=dtype_name)
     else:
@@ -1787,6 +1788,7 @@ def check_array_api_multiclass_classification_metric(
         metric,
         array_namespace,
         device,
+        dtype_name,
         y_true_np=y_true_np,
         y_pred_np=y_pred_np,
         sample_weight=sample_weight,
