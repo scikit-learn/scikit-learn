@@ -64,7 +64,7 @@ for dat in datasets:
         y = dataset.target
 
     if dat == "shuttle":
-        dataset = fetch_openml("shuttle", as_frame=False, parser="pandas")
+        dataset = fetch_openml("shuttle", as_frame=False)
         X = dataset.data
         y = dataset.target.astype(np.int64)
         X, y = sh(X, y, random_state=random_state)

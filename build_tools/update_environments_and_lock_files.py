@@ -167,7 +167,11 @@ conda_build_metadata_list = [
         "folder": "build_tools/azure",
         "platform": "linux-64",
         "channel": "conda-forge",
-        "conda_dependencies": common_dependencies_without_coverage + ["ccache"],
+        "conda_dependencies": (
+            common_dependencies_without_coverage
+            + docstring_test_dependencies
+            + ["ccache"]
+        ),
         "package_constraints": {
             "python": "3.8",
             "blas": "[build=openblas]",

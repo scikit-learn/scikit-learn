@@ -309,7 +309,7 @@ for old_link in redirects:
     html_additional_pages[old_link] = "redirects.html"
 
 # Not showing the search summary makes the search page load faster.
-html_show_search_summary = False
+html_show_search_summary = True
 
 
 # The "summary-anchor" IDs will be overwritten via JavaScript to be unique.
@@ -442,7 +442,7 @@ class SKExampleTitleSortKey(ExampleTitleSortKey):
         prefix = "plot_release_highlights_"
 
         # Use title to sort if not a release highlight
-        if not filename.startswith(prefix):
+        if not str(filename).startswith(prefix):
             return title
 
         major_minor = filename[len(prefix) :].split("_")[:2]
@@ -539,6 +539,7 @@ sphinx_gallery_conf = {
     "inspect_global_variables": False,
     "remove_config_comments": True,
     "plot_gallery": "True",
+    "recommender": {"enable": True, "n_examples": 5, "min_df": 12},
     "reset_modules": ("matplotlib", "seaborn", reset_sklearn_config),
 }
 if with_jupyterlite:
@@ -695,6 +696,8 @@ linkcode_resolve = make_linkcode_resolve(
     ),
 )
 
+from sklearn.utils.fixes import VisibleDeprecationWarning
+
 warnings.filterwarnings(
     "ignore",
     category=UserWarning,
@@ -702,6 +705,18 @@ warnings.filterwarnings(
         "Matplotlib is currently using agg, which is a"
         " non-GUI backend, so cannot show the figure."
     ),
+)
+# Raise warning as error in example to catch warnings when building the documentation
+# Since we are using lock files to build the documentation, we should not have any
+# warnings. Before updating the lock files, we need to fix them.
+for warning_type in (FutureWarning, DeprecationWarning, VisibleDeprecationWarning):
+    warnings.filterwarnings("error", category=warning_type)
+# TODO: remove when pyamg > 5.0.1
+# Avoid a deprecation warning due pkg_resources deprecation in pyamg.
+warnings.filterwarnings(
+    "ignore",
+    message="pkg_resources is deprecated as an API",
+    category=DeprecationWarning,
 )
 
 # maps functions with a class name that is indistinguishable when case is

@@ -35,13 +35,65 @@ is advisable to compare results against exact kernel methods when possible.
 
 Nystroem Method for Kernel Approximation
 ----------------------------------------
-The Nystroem method, as implemented in :class:`Nystroem` is a general method
-for low-rank approximations of kernels. It achieves this by essentially subsampling
-the data on which the kernel is evaluated.
-By default :class:`Nystroem` uses the ``rbf`` kernel, but it can use any
-kernel function or a precomputed kernel matrix.
-The number of samples used - which is also the dimensionality of the features computed -
-is given by the parameter ``n_components``.
+The Nystroem method, as implemented in :class:`Nystroem` is a general method for
+reduced rank approximations of kernels. It achieves this by subsampling without
+replacement rows/columns of the data on which the kernel is evaluated. While the
+computational complexity of the exact method is
+:math:`\mathcal{O}(n^3_{\text{samples}})`, the complexity of the approximation
+is :math:`\mathcal{O}(n^2_{\text{components}} \cdot n_{\text{samples}})`, where
+one can set :math:`n_{\text{components}} \ll n_{\text{samples}}` without a
+significative decrease in performance [WS2001]_.
+
+We can construct the eigendecomposition of the kernel matrix :math:`K`, based
+on the features of the data, and then split it into sampled and unsampled data
+points.
+
+.. math::
+
+        K = U \Lambda U^T
+        = \begin{bmatrix} U_1 \\ U_2\end{bmatrix} \Lambda \begin{bmatrix} U_1 \\ U_2 \end{bmatrix}^T
+        = \begin{bmatrix} U_1 \Lambda U_1^T & U_1 \Lambda U_2^T \\ U_2 \Lambda U_1^T & U_2 \Lambda U_2^T \end{bmatrix}
+        \equiv \begin{bmatrix} K_{11} & K_{12} \\ K_{21} & K_{22} \end{bmatrix}
+
+where:
+
+    * :math:`U` is orthonormal
+    * :math:`Ʌ` is diagonal matrix of eigenvalues
+    * :math:`U_1` is orthonormal matrix of samples that were chosen
+    * :math:`U_2` is orthonormal matrix of samples that were not chosen
+
+Given that :math:`U_1 \Lambda U_1^T` can be obtained by orthonormalization of
+the matrix :math:`K_{11}`, and :math:`U_2 \Lambda U_1^T` can be evaluated (as
+well as its transpose), the only remaining term to elucidate is
+:math:`U_2 \Lambda U_2^T`. To do this we can express it in terms of the already
+evaluated matrices:
+
+.. math::
+
+         \begin{align} U_2 \Lambda U_2^T &= \left(K_{21} U_1 \Lambda^{-1}\right) \Lambda \left(K_{21} U_1 \Lambda^{-1}\right)^T
+         \\&= K_{21} U_1 (\Lambda^{-1} \Lambda) \Lambda^{-1} U_1^T K_{21}^T
+         \\&= K_{21} U_1 \Lambda^{-1} U_1^T K_{21}^T
+         \\&= K_{21} K_{11}^{-1} K_{21}^T
+         \\&= \left( K_{21} K_{11}^{-\frac12} \right) \left( K_{21} K_{11}^{-\frac12} \right)^T
+         .\end{align}
+
+During ``fit``, the class :class:`Nystroem` evaluates the basis :math:`U_1`, and
+computes the normalization constant, :math:`K_{11}^{-\frac12}`. Later, during
+``transform``, the kernel matrix is determined between the basis (given by the
+`components_` attribute) and the new data points, ``X``. This matrix is then
+multiplied by the ``normalization_`` matrix for the final result.
+
+By default :class:`Nystroem` uses the ``rbf`` kernel, but it can use any kernel
+function or a precomputed kernel matrix. The number of samples used - which is
+also the dimensionality of the features computed - is given by the parameter
+``n_components``.
+
+.. topic:: Examples:
+
+    * See the example entitled
+      :ref:`sphx_glr_auto_examples_applications_plot_cyclical_feature_engineering.py`,
+      that shows an efficient machine learning pipeline that uses a
+      :class:`Nystroem` kernel.
 
 .. _rbf_kernel_approx:
 
@@ -233,6 +285,9 @@ or store training examples.
 
 .. topic:: References:
 
+    .. [WS2001] `"Using the Nyström method to speed up kernel machines"
+      <https://papers.nips.cc/paper_files/paper/2000/hash/19de10adbaa1b2ee13f77f679fa1483a-Abstract.html>`_
+      Williams, C.K.I.; Seeger, M. - 2001.
     .. [RR2007] `"Random features for large-scale kernel machines"
       <https://papers.nips.cc/paper/2007/hash/013a006f03dbc5392effeb8f18fda755-Abstract.html>`_
       Rahimi, A. and Recht, B. - Advances in neural information processing 2007,
