@@ -236,9 +236,10 @@ def test_load_large_qid():
 
 def test_load_invalid_file2():
     with pytest.raises(ValueError):
-        with _path(TEST_DATA_MODULE, datafile) as data_path, _path(
-            TEST_DATA_MODULE, invalidfile
-        ) as invalid_path:
+        with (
+            _path(TEST_DATA_MODULE, datafile) as data_path,
+            _path(TEST_DATA_MODULE, invalidfile) as invalid_path,
+        ):
             load_svmlight_files([str(data_path), str(invalid_path), str(data_path)])
 
 
