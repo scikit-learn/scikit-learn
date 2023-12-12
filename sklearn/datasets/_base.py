@@ -339,6 +339,11 @@ def load_csv_data(
     descr : str, optional
         Description of the dataset (the content of `descr_file_name`).
         Only returned if `descr_file_name` is not None.
+
+    encoding : str, optional
+        Text encoding of the CSV file.
+
+        .. versionadded:: 1.4
     """
     data_path = resources.files(data_module) / data_file_name
     with data_path.open("r") as csv_file:
