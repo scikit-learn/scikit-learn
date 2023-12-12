@@ -107,3 +107,19 @@ print("cv error on test sets:", results["test_mse"])
 # Setting the flag to the default `False` to avoid interference with other
 # scripts.
 sklearn.set_config(enable_metadata_routing=False)
+
+# %%
+# Missing value support for Random Forest
+# ---------------------------------------
+# The classes :class:`ensemble.RandomForestClassifier` and
+# :class:`ensemble.RandomForestRegressor` now support missing values. When training
+# every individual tree, the splitter evaluates each potential threshold with the
+# missing values going to the left and right nodes. More details in the
+# :ref:`User Guide <tree_missing_value_support>`.
+from sklearn.ensemble import RandomForestClassifier
+
+X = np.array([0, 1, 6, np.nan]).reshape(-1, 1)
+y = [0, 0, 1, 1]
+
+tree = RandomForestClassifier(random_state=0).fit(X, y)
+tree.predict(X)
