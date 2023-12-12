@@ -109,6 +109,30 @@ print("cv error on test sets:", results["test_mse"])
 sklearn.set_config(enable_metadata_routing=False)
 
 # %%
+# Polars output in `set_output`
+# -----------------------------
+# scikit-learn's transformers now support polars output with the `set_output` API.
+import polars as pl
+from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import OneHotEncoder
+from sklearn.compose import ColumnTransformer
+
+df = pl.DataFrame(
+    {"height": [120, 140, 150, 110, 100], "pet": ["dog", "cat", "dog", "cat", "cat"]}
+)
+preprocessor = ColumnTransformer(
+    [
+        ("numerical", StandardScaler(), ["height"]),
+        ("categorical", OneHotEncoder(sparse_output=False), ["pet"]),
+    ],
+    verbose_feature_names_out=False,
+)
+preprocessor.set_output(transform="polars")
+
+df_out = preprocessor.fit_transform(df)
+print(f"Output type: {type(df_out)}")
+
+# %%
 # Missing value support for Random Forest
 # ---------------------------------------
 # The classes :class:`ensemble.RandomForestClassifier` and
