@@ -41,7 +41,8 @@ def _unique(values, *, return_inverse=False, return_counts=False):
         array. Only provided if `return_counts` is True.
     """
     if not return_inverse:
-        if _is_pandas_series(values):
+        # _unique_python is faster for object dtype
+        if _is_pandas_series(values) and values.dtype != object:
             if not return_counts:
                 return _unique_pandas(values, return_counts=return_counts)
             # before pandas 1.4.0 value_counts would replace None and NaT with Nan
