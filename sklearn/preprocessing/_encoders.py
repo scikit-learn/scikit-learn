@@ -102,10 +102,8 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
             Xi = X_list[i]
 
             if self.categories == "auto":
-                if is_pandas:
-                    values = X.iloc[:, i]
-                elif is_polars:
-                    values = X[X.columns[i]]
+                if is_pandas or is_polars:
+                    values = _safe_indexing(X, i, axis=1)
                 else:
                     values = Xi
                 result = _unique(values, return_counts=compute_counts)
