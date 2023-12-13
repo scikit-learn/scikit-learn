@@ -320,6 +320,13 @@ Changelog
   with `np.int64` indices are not supported.
   :pr:`27240` by :user:`Yao Xiao <Charlie-XIAO>`.
 
+:mod:`sklearn.covariance`
+.........................
+
+- |Enhancement| Allow :func:`covariance.shrunk_covariance` to process
+  multiple covariance matrices at once by handling nd-arrays.
+  :pr:`25275` by :user:`Quentin Barthélemy <qbarthelemy>`.
+
 - |API| |FIX| :class:`~compose.ColumnTransformer` now replaces `"passthrough"`
   with a corresponding :class:`~preprocessing.FunctionTransformer` in the
   fitted ``transformers_`` attribute.
