@@ -1817,6 +1817,7 @@ Utilities to operate on arrays
    :toctree: generated/
    :template: function.rst
 
+   utils.arrayfuncs.any_zero_row
    utils.arrayfuncs.min_pos
 
 Metadata routing
