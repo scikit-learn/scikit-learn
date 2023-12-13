@@ -36,7 +36,6 @@ X_adult, y_adult = fetch_openml("adult", version=2, return_X_y=True)
 X_adult = X_adult.drop(["education-num", "fnlwgt"], axis="columns")
 X_adult.dtypes
 
-
 # %%
 # By setting `categorical_features="from_dtype"`, the gradient boosting classifier
 # treats the columns with categorical dtypes as categorical features in the
@@ -53,14 +52,62 @@ y_decision = hist.decision_function(X_test)
 print(f"ROC AUC score is {roc_auc_score(y_test, y_decision)}")
 
 # %%
-# Enriched estimator displays
-# --------------------------------------
-# Estimators displays have been enriched: if we look at `hist`, defined above:
-hist
+# Polars output in `set_output`
+# -----------------------------
+# scikit-learn's transformers now support polars output with the `set_output` API.
+import polars as pl
+from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import OneHotEncoder
+from sklearn.compose import ColumnTransformer
+
+df = pl.DataFrame(
+    {"height": [120, 140, 150, 110, 100], "pet": ["dog", "cat", "dog", "cat", "cat"]}
+)
+preprocessor = ColumnTransformer(
+    [
+        ("numerical", StandardScaler(), ["height"]),
+        ("categorical", OneHotEncoder(sparse_output=False), ["pet"]),
+    ],
+    verbose_feature_names_out=False,
+)
+preprocessor.set_output(transform="polars")
+
+df_out = preprocessor.fit_transform(df)
+print(f"Output type: {type(df_out)}")
 
 # %%
-# There is a link to the document in the upper right of the estimator.
-# In addition, the display changes color, from orange to blue, when the estimator is fitted.
+# Missing value support for Random Forest
+# ---------------------------------------
+# The classes :class:`ensemble.RandomForestClassifier` and
+# :class:`ensemble.RandomForestRegressor` now support missing values. When training
+# every individual tree, the splitter evaluates each potential threshold with the
+# missing values going to the left and right nodes. More details in the
+# :ref:`User Guide <tree_missing_value_support>`.
+import numpy as np
+from sklearn.ensemble import RandomForestClassifier
+
+X = np.array([0, 1, 6, np.nan]).reshape(-1, 1)
+y = [0, 0, 1, 1]
+
+forest = RandomForestClassifier(random_state=0).fit(X, y)
+forest.predict(X)
+
+# %%
+# Enriched estimator displays
+# ---------------------------
+# Estimators displays have been enriched: if we look at `hist`, defined above:
+forest
+
+# %%
+# One can access the documentation of the estimator by clicking on the icon "?" on
+# the top right corner of the diagram.
+#
+# In addition, the display changes color, from orange to blue, when the estimator is
+# fitted. You can also get this information by hovering on the icon "i".
+from sklearn.base import clone
+
+clone(forest)  # the clone is not fitted
+
 # %%
 # Metadata Routing Support
 # ------------------------
@@ -73,7 +120,6 @@ from sklearn.metrics import get_scorer
 from sklearn.datasets import make_regression
 from sklearn.linear_model import Lasso
 from sklearn.model_selection import GridSearchCV, cross_validate, GroupKFold
-import numpy as np
 
 # For now by default metadata routing is disabled, and need to be explicitly
 # enabled.
@@ -116,43 +162,3 @@ print("cv error on test sets:", results["test_mse"])
 # Setting the flag to the default `False` to avoid interference with other
 # scripts.
 sklearn.set_config(enable_metadata_routing=False)
-
-# %%
-# Polars output in `set_output`
-# -----------------------------
-# scikit-learn's transformers now support polars output with the `set_output` API.
-import polars as pl
-from sklearn.preprocessing import StandardScaler
-from sklearn.preprocessing import OneHotEncoder
-from sklearn.compose import ColumnTransformer
-
-df = pl.DataFrame(
-    {"height": [120, 140, 150, 110, 100], "pet": ["dog", "cat", "dog", "cat", "cat"]}
-)
-preprocessor = ColumnTransformer(
-    [
-        ("numerical", StandardScaler(), ["height"]),
-        ("categorical", OneHotEncoder(sparse_output=False), ["pet"]),
-    ],
-    verbose_feature_names_out=False,
-)
-preprocessor.set_output(transform="polars")
-
-df_out = preprocessor.fit_transform(df)
-print(f"Output type: {type(df_out)}")
-
-# %%
-# Missing value support for Random Forest
-# ---------------------------------------
-# The classes :class:`ensemble.RandomForestClassifier` and
-# :class:`ensemble.RandomForestRegressor` now support missing values. When training
-# every individual tree, the splitter evaluates each potential threshold with the
-# missing values going to the left and right nodes. More details in the
-# :ref:`User Guide <tree_missing_value_support>`.
-from sklearn.ensemble import RandomForestClassifier
-
-X = np.array([0, 1, 6, np.nan]).reshape(-1, 1)
-y = [0, 0, 1, 1]
-
-tree = RandomForestClassifier(random_state=0).fit(X, y)
-tree.predict(X)
