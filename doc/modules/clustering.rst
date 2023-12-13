@@ -1971,7 +1971,7 @@ cluster analysis:
   >>> kmeans_model = KMeans(n_clusters=3, random_state=1).fit(X)
   >>> labels = kmeans_model.labels_
   >>> metrics.calinski_harabasz_score(X, labels)
-  561.62...
+  561.59...
 
 Advantages
 ~~~~~~~~~~
@@ -2047,7 +2047,7 @@ cluster analysis as follows:
   >>> kmeans = KMeans(n_clusters=3, random_state=1).fit(X)
   >>> labels = kmeans.labels_
   >>> davies_bouldin_score(X, labels)
-  0.6619...
+  0.666...
 
 
 Advantages

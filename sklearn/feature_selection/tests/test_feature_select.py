@@ -831,9 +831,10 @@ def test_invalid_k():
     X = [[0, 1, 0], [0, -1, -1], [0, 0.5, 0.5]]
     y = [1, 0, 1]
 
-    with pytest.raises(ValueError):
+    msg = "k=4 is greater than n_features=3. All the features will be returned."
+    with pytest.warns(UserWarning, match=msg):
         SelectKBest(k=4).fit(X, y)
-    with pytest.raises(ValueError):
+    with pytest.warns(UserWarning, match=msg):
         GenericUnivariateSelect(mode="k_best", param=4).fit(X, y)
 
 
@@ -987,3 +988,30 @@ def test_dataframe_output_dtypes():
     )
     for name, dtype in output.dtypes.items():
         assert dtype == X.dtypes[name]
+
+
+@pytest.mark.parametrize(
+    "selector",
+    [
+        SelectKBest(k=4),
+        SelectPercentile(percentile=80),
+        GenericUnivariateSelect(mode="k_best", param=4),
+        GenericUnivariateSelect(mode="percentile", param=80),
+    ],
+)
+def test_unsupervised_filter(selector):
+    """Check support for unsupervised feature selection for the filter that could
+    require only `X`.
+    """
+    rng = np.random.RandomState(0)
+    X = rng.randn(10, 5)
+
+    def score_func(X, y=None):
+        return np.array([1, 1, 1, 1, 0])
+
+    selector.set_params(score_func=score_func)
+    selector.fit(X)
+    X_trans = selector.transform(X)
+    assert_allclose(X_trans, X[:, :4])
+    X_trans = selector.fit_transform(X)
+    assert_allclose(X_trans, X[:, :4])
