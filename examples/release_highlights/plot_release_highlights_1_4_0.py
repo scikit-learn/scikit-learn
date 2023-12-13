@@ -53,6 +53,15 @@ y_decision = hist.decision_function(X_test)
 print(f"ROC AUC score is {roc_auc_score(y_test, y_decision)}")
 
 # %%
+# Enriched estimator displays
+# --------------------------------------
+# Estimators displays have been enriched: if we look at `hist`, defined above:
+hist
+
+# %%
+# There is a link to the document in the upper right of the estimator.
+# In addition, the display changes color, from orange to blue, when the estimator is fitted.
+# %%
 # Metadata Routing Support
 # ------------------------
 # Many meta-estimators and cross-validation routines now support metadata
