@@ -11,7 +11,7 @@ from ._cython_blas cimport _copy, _rotg, _rot
 
 
 def min_pos(const floating[:] X):
-    """Find the minimum value of an array over positive values
+    """Find the minimum value of an array over positive values.
 
     Returns the maximum representable value of the input dtype if none of the
     values are positive.
@@ -22,6 +22,25 @@ def min_pos(const floating[:] X):
         if 0. < X[i] < min_val:
             min_val = X[i]
     return min_val
+
+
+def any_zero_row(floating[:, :] X):
+    """Check if any row of a 2D array is all zeros.
+
+    Returns True if any row of `X` is all zeros, and False otherwise.
+    """
+    cdef:
+        Py_ssize_t i, j
+        floating val
+
+    for i in range(X.shape[0]):
+        for j in range(X.shape[1]):
+            val = X[i, j]
+            if val != 0.:
+                break
+        else:
+            return True
+    return False
 
 
 # General Cholesky Delete.

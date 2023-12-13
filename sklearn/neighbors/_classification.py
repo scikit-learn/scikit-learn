@@ -20,9 +20,10 @@ from ..metrics._pairwise_distances_reduction import (
     RadiusNeighborsClassMode,
 )
 from ..utils._param_validation import StrOptions
+from ..utils.arrayfuncs import any_zero_row
 from ..utils.extmath import weighted_mode
 from ..utils.fixes import _mode
-from ..utils.validation import _is_arraylike, _num_samples, check_is_fitted
+from ..utils.validation import _is_arraylike, _num_samples, check_array, check_is_fitted
 from ._base import KNeighborsMixin, NeighborsBase, RadiusNeighborsMixin, _get_weights
 
 
@@ -281,12 +282,14 @@ class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
         n_outputs = len(classes_)
         n_queries = _num_samples(X)
         weights = _get_weights(neigh_dist, self.weights)
-        if weights is not None and np.all(weights == 0, axis=1).any():
-            raise ValueError(
-                "All neighbors of some sample is getting zero weights. "
-                "Please modify 'weights' to avoid this case if you are "
-                "using a user-defined function."
-            )
+        if weights is not None:
+            weights = check_array(weights, dtype=[np.float32, np.float64])
+            if any_zero_row(weights):
+                raise ValueError(
+                    "All neighbors of some sample is getting zero weights. "
+                    "Please modify 'weights' to avoid this case if you are "
+                    "using a user-defined function."
+                )
 
         y_pred = np.empty((n_queries, n_outputs), dtype=classes_[0].dtype)
         for k, classes_k in enumerate(classes_):
@@ -378,12 +381,14 @@ class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
         weights = _get_weights(neigh_dist, self.weights)
         if weights is None:
             weights = np.ones_like(neigh_ind)
-        elif np.all(weights == 0, axis=1).any():
-            raise ValueError(
-                "All neighbors of some sample is getting zero weights. "
-                "Please modify 'weights' to avoid this case if you are "
-                "using a user-defined function."
-            )
+        else:
+            weights = check_array(weights, dtype=[np.float32, np.float64])
+            if any_zero_row(weights):
+                raise ValueError(
+                    "All neighbors of some sample is getting zero weights. "
+                    "Please modify 'weights' to avoid this case if you are "
+                    "using a user-defined function."
+                )
 
         all_rows = np.arange(n_queries)
         probabilities = []
