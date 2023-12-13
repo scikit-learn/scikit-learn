@@ -99,6 +99,7 @@ forest.predict(X)
 # in scikit-learn 0.23, we now support this feature for all other tree-based models as
 # trees, random forests, extra-trees, and exact gradient boosting. Here, we show this
 # feature for random forest on a regression problem.
+import matplotlib.pyplot as plt
 from sklearn.inspection import PartialDependenceDisplay
 from sklearn.ensemble import RandomForestRegressor
 
@@ -131,6 +132,7 @@ disp.axes_[0, 0].plot(
 disp.axes_[0, 0].set_ylim(-3, 3)
 disp.axes_[0, 0].set_xlim(-1, 1)
 disp.axes_[0, 0].legend()
+plt.show()
 
 # %%
 # Enriched estimator displays
