@@ -1742,8 +1742,7 @@ def check_array_api_metric(
     metric_np = metric(y_true_np, y_pred_np, sample_weight=sample_weight)
 
     with config_context(array_api_dispatch=True):
-        if sample_weight is not None:
-            sample_weight = xp.asarray(sample_weight, device=device)
+        sample_weight = xp.asarray(sample_weight, device=device)
         metric_xp = metric(y_true_xp, y_pred_xp, sample_weight=sample_weight)
 
         assert_allclose(
@@ -1758,10 +1757,7 @@ def check_array_api_binary_classification_metric(
 ):
     y_true_np = np.array([0, 0, 1, 1])
     y_pred_np = np.array([0, 1, 0, 1])
-    if "sample_weight" in signature(metric).parameters:
-        sample_weight = None
-    else:
-        sample_weight = np.array([0.0, 0.1, 2.0, 1.0], dtype=dtype_name)
+    sample_weight = np.array([0.0, 0.1, 2.0, 1.0], dtype=dtype_name)
 
     check_array_api_metric(
         metric,
@@ -1779,10 +1775,7 @@ def check_array_api_multiclass_classification_metric(
 ):
     y_true_np = np.array([0, 1, 2, 3])
     y_pred_np = np.array([0, 1, 0, 2])
-    if "sample_weight" in signature(metric).parameters:
-        sample_weight = np.array([0.0, 0.1, 2.0, 1.0], dtype=dtype_name)
-    else:
-        sample_weight = None
+    sample_weight = np.array([0.0, 0.1, 2.0, 1.0], dtype=dtype_name)
 
     check_array_api_metric(
         metric,
