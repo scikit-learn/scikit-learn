@@ -112,12 +112,12 @@ feature, code or documentation improvement).
 
     You will have to run the ``pip install -v -e .`` command every time the source code
     of a Cython file is updated (ending in `.pyx` or `.pxd`). This can happen when you
-    edit them or when you use certain git commands such as `git pull`. In order to only
-    compile the files you have modified rather than the whole project each time, you
-    can add the ``--no-build-isolation`` flag. Then also include the ``--no-use-pep517``
-    flag because the ``-no-build-isolation`` option might not work otherwise (this is
-    due to a bug which will be fixed in the future). Thus the full recommended command
-    in this case will be:
+    edit them or when you use certain git commands such as `git pull`. In order to save
+    time, you can compile the files you have modified only rather than the whole project
+    using` the ``--no-build-isolation`` flag. Then also include the
+    ``--no-use-pep517`` flag because the ``-no-build-isolation`` option might not work
+    otherwise (this is due to a bug which will be fixed in the future). Thus the full
+    recommended command in this case will be:
 
     .. prompt:: bash $
 

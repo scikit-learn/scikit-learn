@@ -338,10 +338,17 @@ The next steps now describe the process of modifying code and submitting a PR:
 
     .. prompt:: bash $
 
-        pip install -v --no-use-pep517 --no-build-isolation -e .
+        pip install -v -e .
 
-    Use the ``--no-build-isolation`` flag to avoid compiling the whole project
-    each time, only the files you have modified.
+    In order to save time, you can compile the files you have modified only rather than
+    the whole project, using the ``--no-build-isolation`` flag.Then also include the
+    ``--no-use-pep517`` flag because the ``-no-build-isolation`` option might not work
+    otherwise (this is due to a bug which will be fixed in the future). The full
+    recommended command in this case will be:
+
+    .. prompt:: bash $
+
+      pip install -v -e . --no-build-isolation --no-use-pep517
 
 It is often helpful to keep your local feature branch synchronized with the
 latest changes of the main scikit-learn repository:
