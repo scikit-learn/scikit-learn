@@ -299,11 +299,6 @@ class LeavePOut(BaseCrossValidator):
 
         groups : object
             Always ignored, exists for compatibility.
-
-        Returns
-        -------
-        n_splits : int
-            Returns the number of splitting iterations in the cross-validator.
         """
         if X is None:
             raise ValueError("The 'X' parameter should not be None.")
@@ -817,7 +812,7 @@ class StratifiedKFold(_BaseKFold):
 class StratifiedGroupKFold(GroupsConsumerMixin, _BaseKFold):
     """Stratified K-Fold iterator variant with non-overlapping groups.
 
-    This cross-validation object is a variation of StratifiedKFold attempting to
+    This cross-validation object is a variation of StratifiedKFold attempts to
     return stratified folds with non-overlapping groups. The folds are made by
     preserving the percentage of samples for each class.
 
@@ -904,7 +899,7 @@ class StratifiedGroupKFold(GroupsConsumerMixin, _BaseKFold):
       the stratification will not be possible and the behavior will be close
       to GroupKFold.
 
-    See Also
+    See also
     --------
     StratifiedKFold: Takes class information into account to build folds which
         retain class distributions (for binary or multiclass classification
@@ -1466,7 +1461,7 @@ class LeaveOneGroupOut(GroupsConsumerMixin, BaseCrossValidator):
       Train: index=[0 1], group=[1 1]
       Test:  index=[2 3], group=[2 2]
 
-    See Also
+    See also
     --------
     GroupKFold: K-fold iterator variant with non-overlapping groups.
     """
@@ -1816,6 +1811,7 @@ class RepeatedKFold(_RepeatedSplits):
     ...     print(f"Fold {i}:")
     ...     print(f"  Train: index={train_index}")
     ...     print(f"  Test:  index={test_index}")
+    ...
     Fold 0:
       Train: index=[0 1]
       Test:  index=[2 3]
@@ -1883,6 +1879,7 @@ class RepeatedStratifiedKFold(_RepeatedSplits):
     ...     print(f"Fold {i}:")
     ...     print(f"  Train: index={train_index}")
     ...     print(f"  Test:  index={test_index}")
+    ...
     Fold 0:
       Train: index=[1 2]
       Test:  index=[0 3]
@@ -2975,7 +2972,7 @@ setattr(train_test_split, "__test__", False)
 
 
 def _pprint(params, offset=0, printer=repr):
-    """Pretty print the dictionary 'params'.
+    """Pretty print the dictionary 'params'
 
     Parameters
     ----------
