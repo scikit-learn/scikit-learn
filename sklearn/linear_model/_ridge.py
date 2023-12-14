@@ -1535,7 +1535,7 @@ def _find_smallest_angle(query, vectors):
     vectors : ndarray of shape (n_samples, n_features)
         Vectors to which we compare query, as columns. Must be normalized.
     """
-    abs_cosine = np.abs(query.dot(vectors))
+    abs_cosine = xp.abs(query.dot(vectors))
     index = np.argmax(abs_cosine)
     return index
 
@@ -1737,11 +1737,12 @@ class _RidgeGCV(LinearModel):
         The centered X is never actually computed because centering would break
         the sparsity of X.
         """
+        xp, _ = get_namespace(X)
         center = self.fit_intercept and sparse.issparse(X)
         if not center:
             # in this case centering has been done in preprocessing
             # or we are not fitting an intercept.
-            X_mean = np.zeros(X.shape[1], dtype=X.dtype)
+            X_mean = xp.zeros(X.shape[1], dtype=X.dtype)
             return safe_sparse_dot(X, X.T, dense_output=True), X_mean
         # X is sparse
         n_samples = X.shape[0]
@@ -2021,15 +2022,19 @@ class _RidgeGCV(LinearModel):
         -------
         self : object
         """
+        if sample_weight is None:
+            input_arrays = (X, y)
+        else:
+            input_arrays = (X, y, sample_weight)
+        xp, _ = get_namespace(*input_arrays)
         X, y = self._validate_data(
             X,
             y,
             accept_sparse=["csr", "csc", "coo"],
-            dtype=[np.float64],
+            dtype=[xp.float64, xp.float32],
             multi_output=True,
             y_numeric=True,
         )
-
         # alpha_per_target cannot be used in classifier mode. All subclasses
         # of _RidgeGCV that are classifiers keep alpha_per_target at its
         # default value: False, so the condition below should never happen.
@@ -2037,8 +2042,6 @@ class _RidgeGCV(LinearModel):
 
         if sample_weight is not None:
             sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
-
-        self.alphas = np.asarray(self.alphas)
 
         X, y, X_offset, y_offset, X_scale = _preprocess_data(
             X,
@@ -2066,7 +2069,7 @@ class _RidgeGCV(LinearModel):
         if sample_weight is not None:
             X, y, sqrt_sw = _rescale_data(X, y, sample_weight)
         else:
-            sqrt_sw = np.ones(n_samples, dtype=X.dtype)
+            sqrt_sw = xp.ones(n_samples, dtype=X.dtype)
 
         X_mean, *decomposition = decompose(X, y, sqrt_sw)
 
@@ -2074,14 +2077,16 @@ class _RidgeGCV(LinearModel):
         error = scorer is None
 
         n_y = 1 if len(y.shape) == 1 else y.shape[1]
-        n_alphas = 1 if np.ndim(self.alphas) == 0 else len(self.alphas)
+        alphas = xp.asarray(self.alphas, dtype=X.dtype)
+        alphas = xp.reshape(alphas, shape=(-1,))
+        n_alphas = alphas.shape[0]
 
         if self.store_cv_values:
-            self.cv_values_ = np.empty((n_samples * n_y, n_alphas), dtype=X.dtype)
+            self.cv_values_ = xp.empty((n_samples * n_y, n_alphas), dtype=X.dtype)
 
         best_coef, best_score, best_alpha = None, None, None
 
-        for i, alpha in enumerate(np.atleast_1d(self.alphas)):
+        for i, alpha in enumerate(alphas):
             G_inverse_diag, c = solve(float(alpha), y, sqrt_sw, X_mean, *decomposition)
             if error:
                 squared_errors = (c / G_inverse_diag) ** 2
