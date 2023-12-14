@@ -283,7 +283,7 @@ def _solve_svd(X, y, alpha, xp=None):
         xp, _ = get_namespace(X)
     U, s, Vt = xp.linalg.svd(X, full_matrices=False)
     idx = s > 1e-15  # same default value as scipy.linalg.pinv
-    s_nnz = s[idx][:, xp.newaxis]
+    s_nnz = s[idx][:, None]
     UTy = (U.T) @ y
     d = xp.zeros((s.size, alpha.size), dtype=X.dtype)
     d[idx] = s_nnz / (s_nnz**2 + alpha)
@@ -1535,8 +1535,9 @@ def _find_smallest_angle(query, vectors):
     vectors : ndarray of shape (n_samples, n_features)
         Vectors to which we compare query, as columns. Must be normalized.
     """
-    abs_cosine = xp.abs(query.dot(vectors))
-    index = np.argmax(abs_cosine)
+    xp, _ = get_namespace(query)
+    abs_cosine = xp.abs(query @ vectors)
+    index = xp.argmax(abs_cosine)
     return index
 
 
@@ -1700,10 +1701,11 @@ class _RidgeGCV(LinearModel):
 
     @staticmethod
     def _diag_dot(D, B):
+        xp, _ = get_namespace(B)
         # compute dot(diag(D), B)
         if len(B.shape) > 1:
             # handle case where B is > 1-d
-            D = D[(slice(None),) + (np.newaxis,) * (len(B.shape) - 1)]
+            D = D[(slice(None),) + (None,) * (len(B.shape) - 1)]
         return D * B
 
     def _compute_gram(self, X, sqrt_sw):
@@ -1847,15 +1849,16 @@ class _RidgeGCV(LinearModel):
     def _eigen_decompose_gram(self, X, y, sqrt_sw):
         """Eigendecomposition of X.X^T, used when n_samples <= n_features."""
         # if X is dense it has already been centered in preprocessing
+        xp, _ = get_namespace(X)
         K, X_mean = self._compute_gram(X, sqrt_sw)
         if self.fit_intercept:
             # to emulate centering X with sample weights,
             # ie removing the weighted average, we add a column
             # containing the square roots of the sample weights.
             # by centering, it is orthogonal to the other columns
-            K += np.outer(sqrt_sw, sqrt_sw)
-        eigvals, Q = linalg.eigh(K)
-        QT_y = np.dot(Q.T, y)
+            K += xp.outer(sqrt_sw, sqrt_sw)
+        eigvals, Q = xp.linalg.eigh(K)
+        QT_y = Q.T @ y
         return X_mean, eigvals, Q, QT_y
 
     def _solve_eigen_gram(self, alpha, y, sqrt_sw, X_mean, eigvals, Q, QT_y):
@@ -1863,6 +1866,7 @@ class _RidgeGCV(LinearModel):
 
         Used when we have a decomposition of X.X^T (n_samples <= n_features).
         """
+        xp, _ = get_namespace(eigvals)
         w = 1.0 / (eigvals + alpha)
         if self.fit_intercept:
             # the vector containing the square roots of the sample weights (1
@@ -1870,15 +1874,15 @@ class _RidgeGCV(LinearModel):
             # corresponds to the intercept; we cancel the regularization on
             # this dimension. the corresponding eigenvalue is
             # sum(sample_weight).
-            normalized_sw = sqrt_sw / np.linalg.norm(sqrt_sw)
+            normalized_sw = sqrt_sw / xp.linalg.norm(sqrt_sw)
             intercept_dim = _find_smallest_angle(normalized_sw, Q)
             w[intercept_dim] = 0  # cancel regularization for the intercept
 
-        c = np.dot(Q, self._diag_dot(w, QT_y))
+        c = Q @ self._diag_dot(w, QT_y)
         G_inverse_diag = self._decomp_diag(w, Q)
         # handle case where y is 2-d
         if len(y.shape) != 1:
-            G_inverse_diag = G_inverse_diag[:, np.newaxis]
+            G_inverse_diag = G_inverse_diag[:, None]
         return G_inverse_diag, c
 
     def _eigen_decompose_covariance(self, X, y, sqrt_sw):
@@ -2144,7 +2148,12 @@ class _RidgeGCV(LinearModel):
         self.alpha_ = best_alpha
         self.best_score_ = best_score
         self.dual_coef_ = best_coef
-        self.coef_ = safe_sparse_dot(self.dual_coef_.T, X)
+        # avoid torch warning about x.T for x with ndim != 2
+        if self.dual_coef_.ndim > 1:
+            dual_T = self.dual_coef_.T
+        else:
+            dual_T = self.dual_coef_
+        self.coef_ = safe_sparse_dot(dual_T, X)
 
         if sparse.issparse(X):
             X_offset = X_mean * X_scale

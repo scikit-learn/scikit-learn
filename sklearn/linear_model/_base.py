@@ -456,7 +456,10 @@ class LinearModel(BaseEstimator, metaclass=ABCMeta):
                 intercept_ = _asarray_with_order(
                     intercept_, dtype=intercept_.dtype, order="C", copy=None, xp=xp
                 )
-                intercept_ = xp.reshape(intercept_, shape=(-1,), copy=False)
+                try:
+                    intercept_ = xp.reshape(intercept_, shape=(-1,), copy=False)
+                except NotImplementedError:
+                    intercept_ = xp.reshape(intercept_, shape=(-1,))
 
             if y_offset.ndim < 1:
                 intercept_ = intercept_[0]
