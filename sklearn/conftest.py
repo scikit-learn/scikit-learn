@@ -252,9 +252,19 @@ def is_xdist_controller(config):
 def pytest_generate_tests(metafunc):
     """Parametrization of global_random_seed fixture
 
-    based on the SKLEARN_TESTS_GLOBAL_RANDOM_SEED environment variable"""
-    # metafunc.config["random_seeds"] has been set in
-    # the handle_global_random_seeds based function based on
+    based on the SKLEARN_TESTS_GLOBAL_RANDOM_SEED environment variable.
+
+    The goal of this fixture is to prevent tests that use it to be sensitive
+    to a specific seed value while still being deterministic by default.
+
+    See the documentation for the SKLEARN_TESTS_GLOBAL_RANDOM_SEED
+    variable for instructions on how to use this fixture.
+
+    https://scikit-learn.org/dev/computing/parallelism.html#sklearn-tests-global-random-seed
+
+    """
+    # metafunc.config["random_seeds"] has been set in the
+    # handle_global_random_seed function based on
     # SKLEARN_TESTS_GLOBAL_RANDOM_SEED
     random_seeds = metafunc.config.getoption("random_seeds")
 
@@ -262,27 +272,34 @@ def pytest_generate_tests(metafunc):
         metafunc.parametrize("global_random_seed", random_seeds)
 
 
-def handle_global_random_seeds(config):
+def handle_global_random_seed(config):
+    """Part of pytest_configure that deals with the global_random_seed fixture."""
     RANDOM_SEED_RANGE = list(range(100))  # All seeds in [0, 99] should be valid.
     random_seed_var = environ.get("SKLEARN_TESTS_GLOBAL_RANDOM_SEED")
 
     default_random_seeds = [42]
 
+    # When using pytest-xdist this function is called both in the xdist
+    # controller and xdist workers. Care is needed in the
+    # SKLEARN_TESTS_GLOBAL_RANDOM_SEED == 'any' case to generate a random seed
+    # in the xdist controller and reuse it in the xdist workers.
     if random_seed_var == "any":
-        # xdist controller node: Pick-up one seed at random in the range of
-        # admissible random seeds.
+        # inside the xdist controller: pick-up one seed at random in the range
+        # of admissible random seeds.
         if is_xdist_controller(config):
             random_seeds = [Random().choice(RANDOM_SEED_RANGE)]
         else:
-            # xdist worker: Reuse the random_seeds that have been set in the
-            # controller process in pytest_configure_node.
-            # For some reason pytest_configure_node is not executed in some cases e.g.
+            # inside a xdist worker: reuse random_seeds that have been
+            # generated in the xdist controller and passed to the xdist workers
+            # by pytest_configure_node. For some unkown reason, pytest_configure_node
+            # is not executed in some edge cases, for example:
             # SKLEARN_TESTS_GLOBAL_RANDOM_SEED=any pytest -n2 --pyargs sklearn.tests.test_dummy  # noqa: E501
-            # In these cases, the random_seed is set to a fixed value
+            # In these edge cases, random_seeds is set to a fixed value
             random_seeds = getattr(
                 config.workerinput, "random_seeds", default_random_seeds
             )
-
+    # When SKLEARN_TESTS_GLOBAL_RANDOM_SEED != 'any', we rely on the
+    # SKLEARN_TESTS_GLOBAL_RANDOM_SEED environment variable
     elif random_seed_var is None:
         random_seeds = default_random_seeds
     elif random_seed_var == "all":
@@ -346,7 +363,7 @@ def pytest_configure(config):
         allowed_parallelism = max(allowed_parallelism // int(xdist_worker_count), 1)
     threadpool_limits(allowed_parallelism)
 
-    handle_global_random_seeds(config)
+    handle_global_random_seed(config)
 
 
 @pytest.fixture
