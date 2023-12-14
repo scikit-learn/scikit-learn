@@ -1257,7 +1257,7 @@ def check_array_api_attributes(name, estimator, array_namepsace, device, dtype):
 )
 @pytest.mark.parametrize(
     "estimator",
-    [Ridge(solver="svd")],
+    [Ridge(solver="svd"), RidgeCV()],
     ids=_get_check_estimator_ids,
 )
 # TODO: does this test the following cases:

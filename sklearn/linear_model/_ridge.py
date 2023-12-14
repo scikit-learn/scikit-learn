@@ -1697,7 +1697,8 @@ class _RidgeGCV(LinearModel):
     @staticmethod
     def _decomp_diag(v_prime, Q):
         # compute diagonal of the matrix: dot(Q, dot(diag(v_prime), Q^T))
-        return (v_prime * Q**2).sum(axis=-1)
+        xp, _ = get_namespace(Q)
+        return xp.sum(v_prime * Q**2, axis=1)
 
     @staticmethod
     def _diag_dot(D, B):
@@ -1866,7 +1867,7 @@ class _RidgeGCV(LinearModel):
 
         Used when we have a decomposition of X.X^T (n_samples <= n_features).
         """
-        xp, _ = get_namespace(eigvals)
+        xp, is_array_api = get_namespace(eigvals)
         w = 1.0 / (eigvals + alpha)
         if self.fit_intercept:
             # the vector containing the square roots of the sample weights (1
@@ -1874,7 +1875,8 @@ class _RidgeGCV(LinearModel):
             # corresponds to the intercept; we cancel the regularization on
             # this dimension. the corresponding eigenvalue is
             # sum(sample_weight).
-            normalized_sw = sqrt_sw / xp.linalg.norm(sqrt_sw)
+            norm = xp.linalg.vector_norm if is_array_api else np.linalg.norm
+            normalized_sw = sqrt_sw / norm(sqrt_sw)
             intercept_dim = _find_smallest_angle(normalized_sw, Q)
             w[intercept_dim] = 0  # cancel regularization for the intercept
 
@@ -1994,11 +1996,12 @@ class _RidgeGCV(LinearModel):
         Used when we have an SVD decomposition of X
         (n_samples > n_features and X is dense).
         """
-        xp, _ = get_namespace(U)
+        xp, is_array_api = get_namespace(U)
         w = ((singvals_sq + alpha) ** -1) - (alpha**-1)
         if self.fit_intercept:
             # detect intercept column
-            normalized_sw = sqrt_sw / xp.linalg.norm(sqrt_sw)
+            norm = xp.linalg.vector_norm if is_array_api else np.linalg.norm
+            normalized_sw = sqrt_sw / norm(sqrt_sw)
             intercept_dim = _find_smallest_angle(normalized_sw, U)
             # cancel the regularization for the intercept
             w[intercept_dim] = -(alpha**-1)
@@ -2101,9 +2104,9 @@ class _RidgeGCV(LinearModel):
             if error:
                 squared_errors = (c / G_inverse_diag) ** 2
                 if self.alpha_per_target:
-                    alpha_score = -squared_errors.mean(axis=0)
+                    alpha_score = xp.mean(-squared_errors, axis=0)
                 else:
-                    alpha_score = -squared_errors.mean()
+                    alpha_score = xp.mean(-squared_errors)
                 if self.store_cv_values:
                     self.cv_values_[:, i] = squared_errors.ravel()
             else:
@@ -2206,6 +2209,9 @@ class _BaseRidgeCV(LinearModel):
         self.gcv_mode = gcv_mode
         self.store_cv_values = store_cv_values
         self.alpha_per_target = alpha_per_target
+
+    def _more_tags(self):
+        return {"array_api_support": True}
 
     def fit(self, X, y, sample_weight=None):
         """Fit Ridge regression model with cv.
