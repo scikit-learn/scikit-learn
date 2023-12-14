@@ -314,10 +314,7 @@ class LeavePOut(BaseCrossValidator):
 
 
 class _BaseKFold(BaseCrossValidator, metaclass=ABCMeta):
-    """Base class for KFold, *KFold, and TimeSeriesSplit.
-
-    * = {Group, Stratified, StratifiedGroup, MultilabelStratified}.
-    """
+    """Base class for K-Fold cross-validators and TimeSeriesSplit."""
 
     @abstractmethod
     def __init__(self, n_splits, *, shuffle, random_state):
@@ -635,7 +632,7 @@ class GroupKFold(GroupsConsumerMixin, _BaseKFold):
 
 
 class StratifiedKFold(_BaseKFold):
-    """Stratified K-Folds cross-validator.
+    """Stratified K-Fold cross-validator.
 
     Provides train/test indices to split data in train/test sets.
 
@@ -821,7 +818,7 @@ class StratifiedKFold(_BaseKFold):
 
 
 class StratifiedGroupKFold(GroupsConsumerMixin, _BaseKFold):
-    """Stratified K-Folds iterator variant with non-overlapping groups.
+    """Stratified K-Fold iterator variant with non-overlapping groups.
 
     This cross-validation object is a variation of StratifiedKFold attempting to
     return stratified folds with non-overlapping groups. The folds are made by
@@ -1349,6 +1346,9 @@ class TimeSeriesSplit(_BaseKFold):
     Fold 2:
       Train: index=[0 1 2 3 4 5 6 7]
       Test:  index=[10 11]
+
+    For a more extended example see
+    :ref:`sphx_glr_auto_examples_applications_plot_cyclical_feature_engineering.py`.
 
     Notes
     -----
