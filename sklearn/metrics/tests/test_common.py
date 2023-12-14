@@ -1736,13 +1736,26 @@ def check_array_api_metric(
     metric, array_namespace, device, dtype_name, y_true_np, y_pred_np, sample_weight
 ):
     xp = _array_api_for_tests(array_namespace, device)
+
+    # always test `sample_weight=None` case
+    if sample_weight is not None:
+        check_array_api_metric(
+            metric,
+            array_namespace,
+            device,
+            dtype_name,
+            y_true_np,
+            y_pred_np,
+            sample_weight=None,
+        )
+        sample_weight = xp.asarray(sample_weight, device=device)
+
     y_true_xp = xp.asarray(y_true_np, device=device)
     y_pred_xp = xp.asarray(y_pred_np, device=device)
 
     metric_np = metric(y_true_np, y_pred_np, sample_weight=sample_weight)
 
     with config_context(array_api_dispatch=True):
-        sample_weight = xp.asarray(sample_weight, device=device)
         metric_xp = metric(y_true_xp, y_pred_xp, sample_weight=sample_weight)
 
         assert_allclose(
@@ -1788,7 +1801,7 @@ def check_array_api_multiclass_classification_metric(
     )
 
 
-metric_checkers = {
+array_api_metric_checkers = {
     accuracy_score: [
         check_array_api_binary_classification_metric,
         check_array_api_multiclass_classification_metric,
@@ -1800,7 +1813,7 @@ metric_checkers = {
 }
 
 
-def yield_metric_checker_combinations(metric_checkers=metric_checkers):
+def yield_metric_checker_combinations(metric_checkers=array_api_metric_checkers):
     for metric, checkers in metric_checkers.items():
         for checker in checkers:
             yield metric, checker
