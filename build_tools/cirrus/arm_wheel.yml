@@ -2,8 +2,6 @@ macos_arm64_wheel_task:
   macos_instance:
     image: ghcr.io/cirruslabs/macos-monterey-xcode
   env:
-    CONFTEST_PATH: ${CIRRUS_WORKING_DIR}/conftest.py
-    CONFTEST_NAME: conftest.py
     CIBW_ENVIRONMENT: SKLEARN_SKIP_NETWORK_TESTS=1
                       SKLEARN_BUILD_PARALLEL=5
     CIBW_TEST_COMMAND: bash {project}/build_tools/wheels/test_wheels.sh
@@ -49,8 +47,6 @@ linux_arm64_wheel_task:
     cpu: 4
     memory: 4G
   env:
-    CONFTEST_PATH: ${CIRRUS_WORKING_DIR}/conftest.py
-    CONFTEST_NAME: conftest.py
     CIBW_ENVIRONMENT: SKLEARN_SKIP_NETWORK_TESTS=1
                       SKLEARN_BUILD_PARALLEL=5
     CIBW_TEST_COMMAND: bash {project}/build_tools/wheels/test_wheels.sh
