@@ -129,8 +129,6 @@ jobs:
 
       - name: Build and test wheels
         env:
-          CONFTEST_PATH: ${{ github.workspace }}/conftest.py
-          CONFTEST_NAME: conftest.py
           CIBW_PRERELEASE_PYTHONS: ${{ matrix.prerelease }}
           CIBW_ENVIRONMENT: SKLEARN_SKIP_NETWORK_TESTS=1
                             SKLEARN_BUILD_PARALLEL=3
