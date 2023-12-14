@@ -191,6 +191,7 @@ pd.DataFrame(results).set_index("model").style.apply(highlight_min)
 # outliers and overfits less.
 #
 # .. _calibration-section:
+#
 # Calibration of the confidence interval
 # --------------------------------------
 #
