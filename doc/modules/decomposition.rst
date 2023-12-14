@@ -383,6 +383,12 @@ Truncated singular value decomposition and latent semantic analysis
 (SVD) that only computes the :math:`k` largest singular values,
 where :math:`k` is a user-specified parameter.
 
+:class:`TruncatedSVD` is very similar to :class:`PCA`, but differs
+in that the matrix :math:`X` does not need to be centered.
+When the columnwise (per-feature) means of :math:`X`
+are subtracted from the feature values,
+truncated SVD on the resulting matrix is equivalent to PCA.
+
 |details-start|
 **About truncated SVD and latent semantic analysis (LSA)**
 |details-split|
@@ -428,12 +434,6 @@ To also transform a test set :math:`X`, we multiply it with :math:`V_k`:
     but the singular values found are the same.
 
 
-:class:`TruncatedSVD` is very similar to :class:`PCA`, but differs
-in that the matrix :math:`X` does not need to be centered.
-When the columnwise (per-feature) means of :math:`X`
-are subtracted from the feature values,
-truncated SVD on the resulting matrix is equivalent to PCA.
-
 While the :class:`TruncatedSVD` transformer
 works with any feature matrix,
 using it on tf–idf matrices is recommended over raw frequency counts
@@ -442,6 +442,8 @@ In particular, sublinear scaling and inverse document frequency
 should be turned on (``sublinear_tf=True, use_idf=True``)
 to bring the feature values closer to a Gaussian distribution,
 compensating for LSA's erroneous assumptions about textual data.
+
+|details-end|
 
 .. topic:: Examples:
 
@@ -454,8 +456,6 @@ compensating for LSA's erroneous assumptions about textual data.
     chapter 18: `Matrix decompositions & latent semantic indexing
     <https://nlp.stanford.edu/IR-book/pdf/18lsi.pdf>`_
 
-
-|details-end|
 
 
 .. _DictionaryLearning:
