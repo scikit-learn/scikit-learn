@@ -51,8 +51,6 @@ __all__ = [
     "StratifiedGroupKFold",
     "StratifiedShuffleSplit",
     "PredefinedSplit",
-    "MultilabelStratifiedKFold",
-    "RepeatedMultilabelStratifiedKFold",
     "train_test_split",
     "check_cv",
 ]
@@ -179,7 +177,6 @@ class LeaveOneOut(BaseCrossValidator):
     --------
     LeaveOneGroupOut : For splitting the data according to explicit,
         domain-specific stratification of the dataset.
-
     GroupKFold : K-fold iterator variant with non-overlapping groups.
     """
 
@@ -209,7 +206,7 @@ class LeaveOneOut(BaseCrossValidator):
         Returns
         -------
         n_splits : int
-            The number of splitting iterations in the cross-validator.
+            Returns the number of splitting iterations in the cross-validator.
         """
         if X is None:
             raise ValueError("The 'X' parameter should not be None.")
@@ -306,7 +303,7 @@ class LeavePOut(BaseCrossValidator):
         Returns
         -------
         n_splits : int
-            The number of splitting iterations in the cross-validator.
+            Returns the number of splitting iterations in the cross-validator.
         """
         if X is None:
             raise ValueError("The 'X' parameter should not be None.")
@@ -402,7 +399,7 @@ class _BaseKFold(BaseCrossValidator, metaclass=ABCMeta):
         Returns
         -------
         n_splits : int
-            The number of splitting iterations in the cross-validator.
+            Returns the number of splitting iterations in the cross-validator.
         """
         return self.n_splits
 
@@ -1510,7 +1507,7 @@ class LeaveOneGroupOut(GroupsConsumerMixin, BaseCrossValidator):
         Returns
         -------
         n_splits : int
-            The number of splitting iterations in the cross-validator.
+            Returns the number of splitting iterations in the cross-validator.
         """
         if groups is None:
             raise ValueError("The 'groups' parameter should not be None.")
@@ -1643,7 +1640,7 @@ class LeavePGroupsOut(GroupsConsumerMixin, BaseCrossValidator):
         Returns
         -------
         n_splits : int
-            The number of splitting iterations in the cross-validator.
+            Returns the number of splitting iterations in the cross-validator.
         """
         if groups is None:
             raise ValueError("The 'groups' parameter should not be None.")
@@ -1774,7 +1771,7 @@ class _RepeatedSplits(_MetadataRequester, metaclass=ABCMeta):
         Returns
         -------
         n_splits : int
-            The number of splitting iterations in the cross-validator.
+            Returns the number of splitting iterations in the cross-validator.
         """
         rng = check_random_state(self.random_state)
         cv = self.cv(random_state=rng, shuffle=True, **self.cvargs)
@@ -2062,7 +2059,7 @@ class BaseShuffleSplit(_MetadataRequester, metaclass=ABCMeta):
         Returns
         -------
         n_splits : int
-            The number of splitting iterations in the cross-validator.
+            Returns the number of splitting iterations in the cross-validator.
         """
         return self.n_splits
 
@@ -2707,7 +2704,7 @@ class PredefinedSplit(BaseCrossValidator):
         Returns
         -------
         n_splits : int
-            The number of splitting iterations in the cross-validator.
+            Returns the number of splitting iterations in the cross-validator.
         """
         return len(self.unique_folds)
 
@@ -2735,7 +2732,7 @@ class _CVIterableWrapper(BaseCrossValidator):
         Returns
         -------
         n_splits : int
-            The number of splitting iterations in the cross-validator.
+            Returns the number of splitting iterations in the cross-validator.
         """
         return len(self.cv)
 
