@@ -4,6 +4,7 @@ import sys
 from contextlib import suppress
 from functools import wraps
 from os import environ
+from random import Random
 from unittest import SkipTest
 
 import joblib
@@ -23,7 +24,6 @@ from sklearn.datasets import (
     fetch_olivetti_faces,
     fetch_rcv1,
 )
-from sklearn.tests import random_seed
 from sklearn.utils import _IS_32BIT
 from sklearn.utils.fixes import np_base_version, parse_version, sp_version
 
@@ -245,6 +245,90 @@ def pyplot():
     pyplot.close("all")
 
 
+def is_xdist_controller(config):
+    return not hasattr(config, "workerinput")
+
+
+def pytest_generate_tests(metafunc):
+    """Parametrization of global_random_seed fixture
+
+    based on the SKLEARN_TESTS_GLOBAL_RANDOM_SEED environment variable"""
+    # metafunc.config["random_seeds"] has been set in
+    # the handle_global_random_seeds based function based on
+    # SKLEARN_TESTS_GLOBAL_RANDOM_SEED
+    random_seeds = metafunc.config.getoption("random_seeds")
+
+    if "global_random_seed" in metafunc.fixturenames:
+        metafunc.parametrize("global_random_seed", random_seeds)
+
+
+def handle_global_random_seeds(config):
+    RANDOM_SEED_RANGE = list(range(100))  # All seeds in [0, 99] should be valid.
+    random_seed_var = environ.get("SKLEARN_TESTS_GLOBAL_RANDOM_SEED")
+
+    default_random_seeds = [42]
+
+    if random_seed_var == "any":
+        # xdist controller node: Pick-up one seed at random in the range of
+        # admissible random seeds.
+        if is_xdist_controller(config):
+            random_seeds = [Random().choice(RANDOM_SEED_RANGE)]
+        else:
+            # xdist worker: Reuse the random_seeds that have been set in the
+            # controller process in pytest_configure_node.
+            # For some reason pytest_configure_node is not executed in some cases e.g.
+            # SKLEARN_TESTS_GLOBAL_RANDOM_SEED=any pytest -n2 --pyargs sklearn.tests.test_dummy  # noqa: E501
+            # In these cases, the random_seed is set to a fixed value
+            random_seeds = getattr(
+                config.workerinput, "random_seeds", default_random_seeds
+            )
+
+    elif random_seed_var is None:
+        random_seeds = default_random_seeds
+    elif random_seed_var == "all":
+        random_seeds = RANDOM_SEED_RANGE
+    else:
+        if "-" in random_seed_var:
+            start, stop = random_seed_var.split("-")
+            random_seeds = list(range(int(start), int(stop) + 1))
+        else:
+            random_seeds = [int(random_seed_var)]
+
+        if min(random_seeds) < 0 or max(random_seeds) > 99:
+            raise ValueError(
+                "The value(s) of the environment variable "
+                "SKLEARN_TESTS_GLOBAL_RANDOM_SEED must be in the range [0, 99] "
+                f"(or 'any' or 'all'), got: {random_seed_var}"
+            )
+
+    # Set the random_seeds to that it can be accessed in other places e.g.
+    # pytest_generate_tests
+    config.option.random_seeds = random_seeds
+
+    class XDistHooks:
+        def pytest_configure_node(self, node) -> None:
+            # This passes the random seeds generated in the xdist controller to
+            # xdist workers
+            random_seeds = node.config.getoption("random_seeds")
+            node.workerinput["random_seeds"] = random_seeds
+
+    if config.pluginmanager.hasplugin("xdist"):
+        config.pluginmanager.register(XDistHooks())
+
+
+def pytest_report_header(config):
+    random_seed_var = environ.get("SKLEARN_TESTS_GLOBAL_RANDOM_SEED")
+    if random_seed_var == "any":
+        return [
+            "To reproduce this test run, set the following environment variable:",
+            f'    SKLEARN_TESTS_GLOBAL_RANDOM_SEED="{config.option.random_seeds[0]}"',
+            (
+                "See: https://scikit-learn.org/dev/computing/parallelism.html"
+                "#sklearn-tests-global-random-seed"
+            ),
+        ]
+
+
 def pytest_configure(config):
     # Use matplotlib agg backend during the tests including doctests
     try:
@@ -262,9 +346,7 @@ def pytest_configure(config):
         allowed_parallelism = max(allowed_parallelism // int(xdist_worker_count), 1)
     threadpool_limits(allowed_parallelism)
 
-    # Register global_random_seed plugin if it is not already registered
-    if not config.pluginmanager.hasplugin("sklearn.tests.random_seed"):
-        config.pluginmanager.register(random_seed)
+    handle_global_random_seeds(config)
 
 
 @pytest.fixture
