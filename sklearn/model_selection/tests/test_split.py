@@ -322,7 +322,8 @@ def test_kfold_valueerrors():
     # Error when number of folds is <= 1
     msg = "k-fold cross-validation requires at least one train/test split"
     for validator, n_splits in product(
-        [KFold, StratifiedKFold, StratifiedGroupKFold], [0, 1],
+        [KFold, StratifiedKFold, StratifiedGroupKFold],
+        [0, 1],
     ):
         with pytest.raises(ValueError, match=msg):
             validator(n_splits=n_splits)
@@ -330,7 +331,8 @@ def test_kfold_valueerrors():
     # When n_splits is not integer
     msg = "The number of folds must be of Integral type"
     for validator, n_splits in product(
-        [KFold, StratifiedKFold, StratifiedGroupKFold], [1.5, 2.0],
+        [KFold, StratifiedKFold, StratifiedGroupKFold],
+        [1.5, 2.0],
     ):
         with pytest.raises(ValueError):
             validator(n_splits=n_splits)
@@ -421,14 +423,16 @@ def test_stratified_kfold_no_shuffle():
     for y in (y_7, y_multilabel_7):
         assert 5 == StratifiedKFold(5).get_n_splits(X_7, y)
 
-
-    # Make sure string labels are also supported, single-label only
+    # Make sure string labels are also supported
+    # This is single-label only because turning multilabel-indicator into string would
+    # become multiclass-multioutput
     np.testing.assert_equal(
-        list(StratifiedKFold(2).split(X_7, y_7)), 
+        list(StratifiedKFold(2).split(X_7, y_7)),
         list(StratifiedKFold(2).split(X_7, [str(label) for label in y_7])),
     )
 
-    # Check equivalence to KFold, single-label only
+    # Check equivalence to KFold
+    # This is single-label only because KFold does not support multilabel-indicator
     y = [0, 1, 0, 1, 0, 1, 0, 1]
     X = np.ones_like(y)
     np.testing.assert_equal(
@@ -1237,7 +1241,8 @@ def test_repeated_cv_value_errors():
 
 
 @pytest.mark.parametrize(
-    "RepeatedCV", [RepeatedKFold, RepeatedStratifiedKFold],
+    "RepeatedCV",
+    [RepeatedKFold, RepeatedStratifiedKFold],
 )
 def test_repeated_cv_repr(RepeatedCV):
     n_splits, n_repeats = 2, 6
@@ -1249,7 +1254,8 @@ def test_repeated_cv_repr(RepeatedCV):
 
 
 @pytest.mark.parametrize(
-    "RepeatedCV", [RepeatedKFold, RepeatedStratifiedKFold],
+    "RepeatedCV",
+    [RepeatedKFold, RepeatedStratifiedKFold],
 )
 def test_get_n_splits_for_repeated_kfold(RepeatedCV):
     n_splits = 3
