@@ -1850,14 +1850,15 @@ class _RidgeGCV(LinearModel):
     def _eigen_decompose_gram(self, X, y, sqrt_sw):
         """Eigendecomposition of X.X^T, used when n_samples <= n_features."""
         # if X is dense it has already been centered in preprocessing
-        xp, _ = get_namespace(X)
+        xp, is_array_api = get_namespace(X)
         K, X_mean = self._compute_gram(X, sqrt_sw)
         if self.fit_intercept:
             # to emulate centering X with sample weights,
             # ie removing the weighted average, we add a column
             # containing the square roots of the sample weights.
             # by centering, it is orthogonal to the other columns
-            K += xp.outer(sqrt_sw, sqrt_sw)
+            outer = xp.linalg.outer if is_array_api else np.outer
+            K += outer(sqrt_sw, sqrt_sw)
         eigvals, Q = xp.linalg.eigh(K)
         QT_y = Q.T @ y
         return X_mean, eigvals, Q, QT_y
@@ -2108,11 +2109,11 @@ class _RidgeGCV(LinearModel):
                 else:
                     alpha_score = xp.mean(-squared_errors)
                 if self.store_cv_values:
-                    self.cv_values_[:, i] = squared_errors.ravel()
+                    self.cv_values_[:, i] = xp.reshape(squared_errors, shape=(-1,))
             else:
                 predictions = y - (c / G_inverse_diag)
                 if self.store_cv_values:
-                    self.cv_values_[:, i] = predictions.ravel()
+                    self.cv_values_[:, i] = xp.reshape(predictions, shape=(-1,))
 
                 if self.is_clf:
                     identity_estimator = _IdentityClassifier(classes=np.arange(n_y))
@@ -2175,7 +2176,7 @@ class _RidgeGCV(LinearModel):
                 cv_values_shape = n_samples, n_alphas
             else:
                 cv_values_shape = n_samples, n_y, n_alphas
-            self.cv_values_ = self.cv_values_.reshape(cv_values_shape)
+            self.cv_values_ = xp.reshape(self.cv_values_, shape=cv_values_shape)
 
         return self
 
