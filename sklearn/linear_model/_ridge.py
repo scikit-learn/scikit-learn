@@ -2033,11 +2033,15 @@ class _RidgeGCV(LinearModel):
         else:
             input_arrays = (X, y, sample_weight)
         xp, _ = get_namespace(*input_arrays)
+        if sparse.issparse(X):
+            dtype = np.float64
+        else:
+            dtype = [xp.float64, xp.float32]
         X, y = self._validate_data(
             X,
             y,
             accept_sparse=["csr", "csc", "coo"],
-            dtype=[xp.float64, xp.float32],
+            dtype=dtype,
             multi_output=True,
             y_numeric=True,
         )
