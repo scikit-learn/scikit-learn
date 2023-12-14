@@ -1746,7 +1746,7 @@ class _RidgeGCV(LinearModel):
             # or we are not fitting an intercept.
             X_mean = xp.zeros(X.shape[1], dtype=X.dtype)
             return safe_sparse_dot(X, X.T, dense_output=True), X_mean
-        # X is sparse
+        # X is sparse, xp is _NumPyAPIWrapper
         n_samples = X.shape[0]
         sample_weight_matrix = sparse.dia_matrix(
             (sqrt_sw, 0), shape=(n_samples, n_samples)
@@ -1974,17 +1974,18 @@ class _RidgeGCV(LinearModel):
         )
 
     def _svd_decompose_design_matrix(self, X, y, sqrt_sw):
+        xp, _ = get_namespace(X)
         # X already centered
-        X_mean = np.zeros(X.shape[1], dtype=X.dtype)
+        X_mean = xp.zeros(X.shape[1], dtype=X.dtype)
         if self.fit_intercept:
             # to emulate fit_intercept=True situation, add a column
             # containing the square roots of the sample weights
             # by centering, the other columns are orthogonal to that one
             intercept_column = sqrt_sw[:, None]
-            X = np.hstack((X, intercept_column))
-        U, singvals, _ = linalg.svd(X, full_matrices=0)
+            X = xp.concat((X, intercept_column), axis=1)
+        U, singvals, _ = xp.linalg.svd(X, full_matrices=False)
         singvals_sq = singvals**2
-        UT_y = np.dot(U.T, y)
+        UT_y = U.T @ y
         return X_mean, singvals_sq, U, UT_y
 
     def _solve_svd_design_matrix(self, alpha, y, sqrt_sw, X_mean, singvals_sq, U, UT_y):
@@ -1993,18 +1994,19 @@ class _RidgeGCV(LinearModel):
         Used when we have an SVD decomposition of X
         (n_samples > n_features and X is dense).
         """
+        xp, _ = get_namespace(U)
         w = ((singvals_sq + alpha) ** -1) - (alpha**-1)
         if self.fit_intercept:
             # detect intercept column
-            normalized_sw = sqrt_sw / np.linalg.norm(sqrt_sw)
+            normalized_sw = sqrt_sw / xp.linalg.norm(sqrt_sw)
             intercept_dim = _find_smallest_angle(normalized_sw, U)
             # cancel the regularization for the intercept
             w[intercept_dim] = -(alpha**-1)
-        c = np.dot(U, self._diag_dot(w, UT_y)) + (alpha**-1) * y
+        c = U @ self._diag_dot(w, UT_y) + (alpha**-1) * y
         G_inverse_diag = self._decomp_diag(w, U) + (alpha**-1)
         if len(y.shape) != 1:
             # handle case where y is 2-d
-            G_inverse_diag = G_inverse_diag[:, np.newaxis]
+            G_inverse_diag = G_inverse_diag[:, None]
         return G_inverse_diag, c
 
     def fit(self, X, y, sample_weight=None):
