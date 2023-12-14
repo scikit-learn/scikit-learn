@@ -717,7 +717,7 @@ class StratifiedKFold(_BaseKFold):
     The implementation for multilabel classification is designed to:
 
     * Produce the smallest number of folds and fold-label pairs with zero positive
-      examples..
+      examples.
     * Maintain the ratio of positive to negative examples on each label in each
       subset. [1]_ Note that the train and test sizes may be slightly different in
       each fold.
