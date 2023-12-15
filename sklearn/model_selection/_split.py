@@ -2656,8 +2656,8 @@ def check_cv(cv=5, y=None, *, classifier=False):
         - :term:`CV splitter`,
         - An iterable that generates (train, test) splits as arrays of indices.
 
-        For integer/None inputs, if classifier is True and ``y`` is binary, multiclass,
-        or multilabel-indicator, :class:`StratifiedKFold` is used. In all other
+        For integer/None inputs, if classifier is True and ``y`` is either
+        binary or multiclass, :class:`StratifiedKFold` is used. In all other
         cases, :class:`KFold` is used.
 
         Refer :ref:`User Guide <cross_validation>` for the various
@@ -2684,10 +2684,7 @@ def check_cv(cv=5, y=None, *, classifier=False):
         if (
             classifier
             and (y is not None)
-            and (
-                type_of_target(y, input_name="y")
-                in ("binary", "multiclass", "multilabel-indicator")
-            )
+            and (type_of_target(y, input_name="y") in ("binary", "multiclass"))
         ):
             return StratifiedKFold(cv)
         else:

@@ -617,10 +617,6 @@ Changelog
 
 - |Feature| :class:`model_selection.StratifiedKFold` and
   :class:`model_selection.RepeatedStratifiedKFold` now supports multi-label target.
-  Moreover, :func:`model_selection.check_cv` now returns a
-  :class:`model_selection.StratifiedKFold` cross-validator instead of a
-  :class:`model_selection.KFold` cross-validator, when ``cv`` is an integer or ``None``,
-  ``classifier`` is ``True``, and ``y`` is a multi-label target.
   :pr:`26423` by :user:`Yao Xiao <Charlie-XIAO>`
 
 :mod:`sklearn.multioutput`
