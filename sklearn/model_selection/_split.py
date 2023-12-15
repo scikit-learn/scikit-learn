@@ -628,9 +628,10 @@ class StratifiedKFold(_BaseKFold):
 
     Provides train/test indices to split data in train/test sets.
 
-    This cross-validation object is a variation of KFold that returns
-    stratified folds. The folds are made by preserving the percentage of
-    samples for each class.
+    This cross-validation object is a variation of KFold that returns stratified folds.
+    If single-label target, the folds are made by preserving the percentage of samples
+    for each class. If multi-label target, the folds are made by maintaining the
+    distribution of positive and negative examples of each label.
 
     Read more in the :ref:`User Guide <stratified_k_fold>`.
 
@@ -667,7 +668,7 @@ class StratifiedKFold(_BaseKFold):
     >>> print(skf)
     StratifiedKFold(n_splits=2, random_state=None, shuffle=False)
 
-    It can handle binary or multiclass classification:
+    With single-label target:
 
     >>> X = np.array([[1, 2], [3, 4], [1, 2], [3, 4]])
     >>> y = np.array([0, 0, 1, 1])
@@ -682,7 +683,7 @@ class StratifiedKFold(_BaseKFold):
       Train: index=[0 2]
       Test:  index=[1 3]
 
-    It can also handle multilabel classification:
+    With multi-label target:
 
     >>> X = np.ones((8, 2))
     >>> y = np.hstack(([[0]] * 4 + [[1]] * 4, [[1]] * 4 + [[0]] * 4))
@@ -699,14 +700,16 @@ class StratifiedKFold(_BaseKFold):
 
     Notes
     -----
-    The implementation for binary and multiclass classification is designed to:
+    The implementation is designed to:
 
-    * Generate test sets such that all contain the same distribution of
-      classes, or as close as possible.
-    * Be invariant to class label: relabelling ``y = ["Happy", "Sad"]`` to
-      ``y = [1, 0]`` should not change the indices generated.
-    * Preserve order dependencies in the dataset ordering, when
-      ``shuffle=False``: all samples from class k in some test set were
+    * If single-label target, generate test sets such that all contain the same
+      distribution of classes, or as close as possible. If multi-label target, generate
+      test sets such that all contain the same distribution of positive and negative
+      examples of each label, or as close as possible.
+    * Be invariant to class labels: relabelling `y = [0, 1, 1, 0]` to `y = [2, 0, 0, 2]`
+      should not change the indices generated.
+    * Preserve order dependencies in the dataset ordering when `shuffle=False`: all
+      samples from class k in some test set were
       contiguous in y, or separated in y by samples from classes other than k.
     * Generate test sets where the smallest and largest differ by at most one
       sample.
@@ -714,15 +717,8 @@ class StratifiedKFold(_BaseKFold):
     .. versionchanged:: 0.22
         The previous implementation did not follow the last constraint.
 
-    The implementation for multilabel classification is designed to:
-
-    * Produce the smallest number of folds and fold-label pairs with zero positive
-      examples.
-    * Maintain the ratio of positive to negative examples on each label in each
-      subset. [1]_ Note that the train and test sizes may be slightly different in
-      each fold.
-
-    .. versionadded:: 1.3
+    .. versionchanged:: 1.4
+        This class now handles multi-label targets with iterative stratification [1]_.
 
     See Also
     --------
@@ -740,7 +736,7 @@ class StratifiedKFold(_BaseKFold):
         super().__init__(n_splits=n_splits, shuffle=shuffle, random_state=random_state)
 
     def _make_test_folds_single_label(self, X, y):
-        """Make test folds for single-label (binary, multiclass) classification.
+        """Make test folds for single-label `y`.
 
         Supported `y` types: binary, multiclass.
         """
@@ -796,36 +792,39 @@ class StratifiedKFold(_BaseKFold):
         return test_folds
 
     def _make_test_folds_multi_label(self, X, y):
-        """Make test folds for multilabel classification.
+        """Make test folds for multi-label `y`.
 
         Supported `y` types: multilabel-indicator.
 
-        Implementation based on: https://github.com/trent-b/iterative-stratification,
-        subject to BSD 3 clause License.
+        References:
+        - Sechidis, Konstantinos; Tsoumakas, Grigorios; Vlahavas, Ioannis.
+          "On the stratification of multi-label data." Machine Learning and
+          Knowledge Discovery in Databases (2011), 145--158.
+          http://lpis.csd.auth.gr/publications/sechidis-ecmlpkdd-2011.pdf
+        - https://github.com/trent-b/iterative-stratification (BSD 3 clause)
         """
         rng = check_random_state(self.random_state)
+        n_samples = _num_samples(X)
 
-        # Multilabel-indicator has at most two classes, so we convert to 0 and 1,
-        # i.e., False and True. The more prevalent class should be 0, since we
-        # take shortcut when only all-zero labels are left; when there is a
-        # relatively large number of zero labels, this reduces execution time.
-        # There are at most two unique elements so this step won't take too long.
-        unique, indices, counts = np.unique(y, return_index=True, return_counts=True)
-        prevalent = unique[np.argsort(indices)][np.argmax(counts)]
-        y = np.where(y == prevalent, False, True)
+        # Multilabel-indicator has at most two classes, so we encode the first
+        # occurrence as the negative example and the other as the positive example
+        first_occurrence = y[0, 0]
+        y = np.where(y == first_occurrence, 0, 1)
 
-        do_raise, min_groups = True, np.inf
-        for col in y.T:
-            _, y_counts_per_label = np.unique(col, return_counts=True)
-            min_group_per_label = np.min(y_counts_per_label)
-            do_raise = do_raise and np.all(y_counts_per_label < self.n_splits)
-            min_groups = min(min_groups, min_group_per_label)
+        # Number of positive examples per label (will be used to keep track of the
+        # number of remaining positive examples in iterative stratification later)
+        remaining_per_label = y.sum(axis=0)
 
-        if do_raise:
-            raise ValueError(
-                "n_splits=%d cannot be greater than the number of members in "
-                "each class for each label." % (self.n_splits)
-            )
+        min_groups = np.inf
+        for n_pos in remaining_per_label:
+            n_neg = n_samples - n_pos
+            if n_pos < self.n_splits and n_neg < self.n_splits:
+                raise ValueError(
+                    "n_splits=%d cannot be greater than the number of members in each "
+                    "class for each label." % (self.n_splits)
+                )
+            min_groups = min(min_groups, n_pos, n_neg)
+
         if self.n_splits > min_groups:
             warnings.warn(
                 "The least populated class in y among all labels has only %d "
@@ -834,55 +833,60 @@ class StratifiedKFold(_BaseKFold):
                 UserWarning,
             )
 
-        n_samples = _num_samples(X)
         indices = np.arange(n_samples)
         if self.shuffle:
             rng.shuffle(indices)
             y = y[indices]
-        test_folds = np.zeros(n_samples)
+        test_folds = np.empty(n_samples, dtype="i")
 
-        # Sechidis, Konstantinos; Tsoumakas, Grigorios; Vlahavas, Ioannis.
-        # "On the stratification of multi-label data." Machine Learning and
-        # Knowledge Discovery in Databases (2011), 145--158.
-        # http://lpis.csd.auth.gr/publications/sechidis-ecmlpkdd-2011.pdf
+        # Desired number of examples per-fold (n_splits,) and desired number of
+        # examples per-fold per-label (n_splits, n_labels)
         props = np.asarray([1 / self.n_splits] * self.n_splits)
-        c_folds = n_samples * props
-        c_folds_per_label = np.outer(props, y.sum(axis=0))
+        desired = n_samples * props
+        desired_per_label = np.outer(props, y.sum(axis=0))
 
-        n_unprocessed = n_samples
-        unprocessed_mask = np.ones(n_unprocessed, dtype=bool)
+        # Keep track of unassigned examples
+        n_unassigned = n_samples
+        unassigned_mask = np.ones(n_samples, dtype=bool)
 
-        while n_unprocessed > 0:
-            # Find the label with the fewest (at least one) remaining examples
-            n_remaining = y[unprocessed_mask].sum(axis=0)
+        while n_unassigned > 0:
+            # Find the label with the fewest (but >=1) remaining positive examples;
+            # get the unassigned examples that are positive for the selected label
+            selected_label = np.argmin(
+                np.where(remaining_per_label != 0, remaining_per_label, np.inf)
+            )
+            selected_indices = np.where(y[:, selected_label] & unassigned_mask)[0]
 
-            # Shortcut when only all-zero labels are left, try to distribute
-            # evenly; may introduce some overhead
-            if n_remaining.sum() == 0:
-                for i in np.where(unprocessed_mask)[0]:
-                    max_fold = np.argmax(c_folds)
+            if len(selected_indices) == 0:
+                # If there are no unassigned examples positive for the selected label,
+                # it means that there are no remaining positive examples for any label;
+                # in this case we try to distribute the rest of examples evenly
+                for i in np.where(unassigned_mask)[0]:
+                    max_fold = np.argmax(desired)
                     test_folds[i] = max_fold
-                    c_folds[max_fold] -= 1
+                    desired[max_fold] -= 1
                 break
 
-            min_label = np.argmin(np.where(n_remaining != 0, n_remaining, np.inf))
-            for i in np.where(y[:, min_label] & unprocessed_mask)[0]:
-                # Find the subset with the largest number of desired examples for
-                # this label, breaking ties by considering the largest number of
-                # desired examples
-                label_folds = c_folds_per_label[:, min_label]
-                max_fold = np.where(label_folds == label_folds.max())[0]
-
-                if len(max_fold) > 1:
-                    max_fold = max_fold[np.argmax(c_folds[max_fold])]
+            for i in selected_indices:
+                # Find the fold with the largest number of desired positive examples
+                # for this label, breaking ties by proporitizing the fold with the
+                # largest number of total desired examples; note that folds with
+                # non-positive number of total desired examples are excluded from
+                # consideration, otherwise we cannot satisfy that smallest and largest
+                # test sizes differ by at most one
+                label_desired = desired_per_label[:, selected_label]
+                max_fold = max(
+                    np.where(desired > 0)[0],
+                    key=lambda fold_idx: (label_desired[fold_idx], desired[fold_idx]),
+                )
 
                 test_folds[i] = max_fold
-                unprocessed_mask[i] = False
-                n_unprocessed -= 1
+                unassigned_mask[i] = False
+                n_unassigned -= 1
 
-                # Update desired number of examples
-                c_folds_per_label[max_fold, y[i]] -= 1
-                c_folds[max_fold] -= 1
+                desired_per_label[max_fold] -= y[i]
+                remaining_per_label -= y[i]
+                desired[max_fold] -= 1
 
         if self.shuffle:
             return test_folds[np.argsort(indices)]
@@ -923,9 +927,9 @@ class StratifiedKFold(_BaseKFold):
             hence ``np.zeros(n_samples)`` may be used as a placeholder for
             ``X`` instead of actual training data.
 
-        y : array-like of shape (n_samples,)
+        y : array-like of shape (n_samples,) or (n_samples, n_labels)
             The target variable for supervised learning problems.
-            Stratification is done based on the y labels.
+            Stratification is done based on the ``y`` labels.
 
         groups : object
             Always ignored, exists for compatibility.
@@ -951,9 +955,10 @@ class StratifiedKFold(_BaseKFold):
 class StratifiedGroupKFold(GroupsConsumerMixin, _BaseKFold):
     """Stratified K-Fold iterator variant with non-overlapping groups.
 
-    This cross-validation object is a variation of StratifiedKFold attempts to
+    This cross-validation object is a variation of StratifiedKFold attempting to
     return stratified folds with non-overlapping groups. The folds are made by
-    preserving the percentage of samples for each class.
+    preserving the percentage of samples for each class. It currently supports only
+    single-label target.
 
     Each group will appear exactly once in the test set across all folds (the
     number of distinct groups has to be at least equal to the number of folds).
@@ -1796,7 +1801,7 @@ class RepeatedStratifiedKFold(_RepeatedSplits):
     >>> print(rskf)
     RepeatedStratifiedKFold(n_repeats=2, n_splits=2, random_state=36851234)
 
-    It can handle binary or multiclass classification:
+    With single-label target:
 
     >>> X = np.array([[1, 2], [3, 4], [1, 2], [3, 4]])
     >>> y = np.array([0, 0, 1, 1])
@@ -1818,7 +1823,7 @@ class RepeatedStratifiedKFold(_RepeatedSplits):
       Train: index=[0 2]
       Test:  index=[1 3]
 
-    It can also handle multilabel classification:
+    With multi-label target:
 
     >>> X = np.ones((8, 2))
     >>> y = np.hstack(([[0]] * 4 + [[1]] * 4, [[1]] * 4 + [[0]] * 4))
@@ -2676,7 +2681,10 @@ def check_cv(cv=5, y=None, *, classifier=False):
         if (
             classifier
             and (y is not None)
-            and (type_of_target(y, input_name="y") in ("binary", "multiclass"))
+            and (
+                type_of_target(y, input_name="y")
+                in ("binary", "multiclass", "multilabel-indicator")
+            )
         ):
             return StratifiedKFold(cv)
         else:
