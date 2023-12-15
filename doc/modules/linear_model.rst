@@ -993,7 +993,7 @@ logistic regression, see also `log-linear model
    symmetrical inductive bias regarding ordering of classes, see [16]_. This effect becomes
    especially important when using regularization. The choice of overparameterization can be
    detrimental for unpenalized models since then the solution may not be unique, as shown in [16]_.
-  
+
 |details-start|
 **Mathematical details**
 |details-split|
@@ -1381,6 +1381,11 @@ large scale learning. By default:
 The last characteristic implies that the Perceptron is slightly faster to
 train than SGD with the hinge loss and that the resulting models are
 sparser.
+
+In fact, the :class:`Perceptron` is a wrapper around the :class:`SGDClassifier`
+class using a perceptron loss and a constant learning rate. Refer to
+:ref:`mathematical section <sgd_mathematical_formulation>` of the SGD procedure
+for more details.
 
 .. _passive_aggressive:
 

@@ -696,6 +696,26 @@ def test_convert_container(
         assert container_converted.dtypes[0] == dtype
 
 
+def test_convert_container_categories_pandas():
+    pytest.importorskip("pandas")
+    df = _convert_container(
+        [["x"]], "dataframe", ["A"], categorical_feature_names=["A"]
+    )
+    assert df.dtypes.iloc[0] == "category"
+
+
+def test_convert_container_categories_polars():
+    pl = pytest.importorskip("polars")
+    df = _convert_container([["x"]], "polars", ["A"], categorical_feature_names=["A"])
+    assert df.schema["A"] == pl.Categorical()
+
+
+def test_convert_container_categories_pyarrow():
+    pa = pytest.importorskip("pyarrow")
+    df = _convert_container([["x"]], "pyarrow", ["A"], categorical_feature_names=["A"])
+    assert type(df.schema[0].type) is pa.DictionaryType
+
+
 @pytest.mark.skipif(
     sp_version >= parse_version("1.8"),
     reason="sparse arrays are available as of scipy 1.8.0",

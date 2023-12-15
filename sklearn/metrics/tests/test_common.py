@@ -1735,7 +1735,7 @@ def test_metrics_pos_label_error_str(metric, y_pred_threshold, dtype_y_str):
 def check_array_api_metric(
     metric, array_namespace, device, dtype, y_true_np, y_pred_np, sample_weight=None
 ):
-    xp, device, dtype = _array_api_for_tests(array_namespace, device, dtype)
+    xp = _array_api_for_tests(array_namespace, device)
     y_true_xp = xp.asarray(y_true_np, device=device)
     y_pred_xp = xp.asarray(y_pred_np, device=device)
 

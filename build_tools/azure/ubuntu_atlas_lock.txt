@@ -6,7 +6,7 @@
 #
 cython==0.29.33
     # via -r build_tools/azure/ubuntu_atlas_requirements.txt
-exceptiongroup==1.1.3
+exceptiongroup==1.2.0
     # via pytest
 execnet==2.0.2
     # via pytest-xdist

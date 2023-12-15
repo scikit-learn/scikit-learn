@@ -32,7 +32,6 @@ from ..base import (
     RegressorMixin,
     _fit_context,
 )
-from ..preprocessing._data import _is_constant_feature
 from ..utils import check_array, check_random_state
 from ..utils._array_api import (
     _asarray_with_order,
@@ -47,12 +46,11 @@ from ..utils._seq_dataset import (
     CSRDataset64,
 )
 from ..utils.extmath import (
-    _incremental_mean_and_var,
     _safe_average_axis0,
     safe_sparse_dot,
 )
 from ..utils.parallel import Parallel, delayed
-from ..utils.sparsefuncs import inplace_column_scale, mean_variance_axis
+from ..utils.sparsefuncs import mean_variance_axis
 from ..utils.validation import _check_sample_weight, check_is_fitted
 
 # TODO: bayesian_ridge_regression and bayesian_regression_ard
@@ -61,85 +59,6 @@ from ..utils.validation import _check_sample_weight, check_is_fitted
 SPARSE_INTERCEPT_DECAY = 0.01
 # For sparse data intercept updates are scaled by this decay factor to avoid
 # intercept oscillation.
-
-
-# TODO(1.4): remove
-# parameter 'normalize' should be removed from linear models
-def _deprecate_normalize(normalize, estimator_name):
-    """Normalize is to be deprecated from linear models and a use of
-    a pipeline with a StandardScaler is to be recommended instead.
-    Here the appropriate message is selected to be displayed to the user
-    depending on the default normalize value (as it varies between the linear
-    models and normalize value selected by the user).
-
-    Parameters
-    ----------
-    normalize : bool,
-        normalize value passed by the user
-
-    estimator_name : str
-        name of the linear estimator which calls this function.
-        The name will be used for writing the deprecation warnings
-
-    Returns
-    -------
-    normalize : bool,
-        normalize value which should further be used by the estimator at this
-        stage of the depreciation process
-
-    Notes
-    -----
-    This function should be completely removed in 1.4.
-    """
-
-    if normalize not in [True, False, "deprecated"]:
-        raise ValueError(
-            "Leave 'normalize' to its default value or set it to True or False"
-        )
-
-    if normalize == "deprecated":
-        _normalize = False
-    else:
-        _normalize = normalize
-
-    pipeline_msg = (
-        "If you wish to scale the data, use Pipeline with a StandardScaler "
-        "in a preprocessing stage. To reproduce the previous behavior:\n\n"
-        "from sklearn.pipeline import make_pipeline\n\n"
-        "model = make_pipeline(StandardScaler(with_mean=False), "
-        f"{estimator_name}())\n\n"
-        "If you wish to pass a sample_weight parameter, you need to pass it "
-        "as a fit parameter to each step of the pipeline as follows:\n\n"
-        "kwargs = {s[0] + '__sample_weight': sample_weight for s "
-        "in model.steps}\n"
-        "model.fit(X, y, **kwargs)\n\n"
-    )
-
-    alpha_msg = ""
-    if "LassoLars" in estimator_name:
-        alpha_msg = "Set parameter alpha to: original_alpha * np.sqrt(n_samples). "
-
-    if normalize != "deprecated" and normalize:
-        warnings.warn(
-            "'normalize' was deprecated in version 1.2 and will be removed in 1.4.\n"
-            + pipeline_msg
-            + alpha_msg,
-            FutureWarning,
-        )
-    elif not normalize:
-        warnings.warn(
-            (
-                "'normalize' was deprecated in version 1.2 and will be "
-                "removed in 1.4. "
-                "Please leave the normalize parameter to its default value to "
-                "silence this warning. The default behavior of this estimator "
-                "is to not do any normalization. If normalization is needed "
-                "please use sklearn.preprocessing.StandardScaler instead."
-            ),
-            FutureWarning,
-        )
-
-    return _normalize
 
 
 def make_dataset(X, y, sample_weight, random_state=None):
@@ -198,30 +117,35 @@ def make_dataset(X, y, sample_weight, random_state=None):
 def _preprocess_data(
     X,
     y,
+    *,
     fit_intercept,
-    normalize=False,
     copy=True,
     copy_y=True,
     sample_weight=None,
     check_input=True,
 ):
-    """Center and scale data.
+    """Common data preprocessing for fitting linear models.
 
-    Centers data to have mean zero along axis 0. If fit_intercept=False or if
-    the X is a sparse matrix, no centering is done, but normalization can still
-    be applied. The function returns the statistics necessary to reconstruct
-    the input data, which are X_offset, y_offset, X_scale, such that the output
+    This helper is in charge of the following steps:
 
-        X = (X - X_offset) / X_scale
+    - Ensure that `sample_weight` is an array or `None`.
+    - If `check_input=True`, perform standard input validation of `X`, `y`.
+    - Perform copies if requested to avoid side-effects in case of inplace
+      modifications of the input.
 
-    X_scale is the L2 norm of X - X_offset. If sample_weight is not None,
-    then the weighted mean of X and y is zero, and not the mean itself. If
-    fit_intercept=True, the mean, eventually weighted, is returned, independently
-    of whether X was centered (option used for optimization with sparse data in
-    coordinate_descend).
+    Then, if `fit_intercept=True` this preprocessing centers both `X` and `y` as
+    follows:
+        - if `X` is dense, center the data and
+        store the mean vector in `X_offset`.
+        - if `X` is sparse, store the mean in `X_offset`
+        without centering `X`. The centering is expected to be handled by the
+        linear solver where appropriate.
+        - in either case, always center `y` and store the mean in `y_offset`.
+        - both `X_offset` and `y_offset` are always weighted by `sample_weight`
+          if not set to `None`.
 
-    This is here because nearly all linear models will want their data to be
-    centered. This function also systematically makes y consistent with X.dtype
+    If `fit_intercept=False`, no centering is performed and `X_offset`, `y_offset`
+    are set to zero.
 
     Returns
     -------
@@ -229,14 +153,15 @@ def _preprocess_data(
         If copy=True a copy of the input X is triggered, otherwise operations are
         inplace.
         If input X is dense, then X_out is centered.
-        If normalize is True, then X_out is rescaled (dense and sparse case)
     y_out : {ndarray, sparse matrix} of shape (n_samples,) or (n_samples, n_targets)
-        Centered version of y. Likely performed inplace on input y.
+        Centered version of y. Possibly performed inplace on input y depending
+        on the copy_y parameter.
     X_offset : ndarray of shape (n_features,)
         The mean per column of input X.
     y_offset : float or ndarray of shape (n_features,)
     X_scale : ndarray of shape (n_features,)
-        The standard deviation per column of input X.
+        Always an array of ones. TODO: refactor the code base to make it
+        possible to remove this unused variable.
     """
     if sample_weight is None:
         input_arrays = (X, y)
@@ -273,65 +198,35 @@ def _preprocess_data(
     if fit_intercept:
         if _X_is_sparse:
             X_offset, X_var = mean_variance_axis(X, axis=0, weights=sample_weight)
+            X_scale = np.ones(n_features, dtype=dtype_)
         else:
-            if normalize:
-                X_offset, X_var, _ = _incremental_mean_and_var(
-                    X,
-                    last_mean=0.0,
-                    last_variance=0.0,
-                    last_sample_count=0.0,
-                    sample_weight=sample_weight,
-                )
-            else:
-                # NB: linear models will filter out inputs with missing values
-                # earlier in the pipeline so it can be assumed here that X does not
-                # contain any. Hence we don't have to worry that missing values would
-                # be handled differently when `normalize` is `True` or `False`.
-                X_offset = _safe_average_axis0(X, sample_weight, xp=xp)
+            X_offset = _safe_average_axis0(X, sample_weight, xp=xp)
 
             # XXX: this would not work with an array of int input
             X_offset = xp.astype(X_offset, X.dtype, copy=False)
             X -= X_offset
-
-        if normalize:
-            X_var = xp.astype(X_var, X.dtype, copy=False)
-            # Detect constant features on the computed variance, before taking
-            # the np.sqrt. Otherwise constant features cannot be detected with
-            # sample weights.
-            constant_mask = _is_constant_feature(X_var, X_offset, X.shape[0])
-            if sample_weight is None:
-                X_var *= n_samples
-            else:
-                X_var *= sample_weight.sum()
-            X_scale = np.sqrt(X_var, out=X_var)
-            X_scale[constant_mask] = 1.0
-            if _X_is_sparse:
-                inplace_column_scale(X, 1.0 / X_scale)
-            else:
-                X /= X_scale
-        elif _X_is_sparse:
-            X_scale = np.ones(n_features, dtype=dtype_)
-        else:
             X_scale = xp.ones(n_features, dtype=dtype_, device=device_)
-
         y_offset = _safe_average_axis0(y, sample_weight)
         y_offset = xp.astype(y_offset, y.dtype, copy=False)
         y -= y_offset
-    elif _X_is_sparse:
-        X_offset = np.zeros(n_features, dtype=dtype_)
-        X_scale = np.ones(n_features, dtype=dtype_)
-        if y.ndim == 1:
-            y_offset = np.zeros((1,), dtype=dtype_)[0]
-        else:
-            y_offset = np.zeros(y.shape[1], dtype=dtype_)
     else:
-        X_offset = xp.zeros(n_features, dtype=dtype_, device=device_)
-        X_scale = xp.ones(n_features, dtype=dtype_, device=device_)
-        if y.ndim == 1:
-            y_offset = xp.zeros((1,), dtype=dtype_, device=device_)[0]
+        if _X_is_sparse:
+            X_offset = np.zeros(n_features, dtype=dtype_)
+            X_scale = np.ones(n_features, dtype=dtype_)
+            if y.ndim == 1:
+                y_offset = np.zeros((1,), dtype=dtype_)[0]
+            else:
+                y_offset = np.zeros(y.shape[1], dtype=dtype_)
         else:
-            y_offset = xp.zeros(y.shape[1], dtype=dtype_, device=device_)
+            X_offset = xp.zeros(n_features, dtype=dtype_, device=device_)
+            X_scale = xp.ones(n_features, dtype=dtype_, device=device_)
+            if y.ndim == 1:
+                y_offset = xp.zeros((1,), dtype=dtype_, device=device_)[0]
+            else:
+                y_offset = xp.zeros(y.shape[1], dtype=dtype_, device=device_)
 
+    # XXX: X_scale is no longer needed. It is an historic artifact from the
+    # time where linear model exposed the normalize parameter.
     return X, y, X_offset, y_offset, X_scale
 
 
@@ -900,7 +795,6 @@ def _pre_fit(
     y,
     Xy,
     precompute,
-    normalize,
     fit_intercept,
     copy,
     check_input=True,
@@ -920,7 +814,6 @@ def _pre_fit(
             X,
             y,
             fit_intercept=fit_intercept,
-            normalize=normalize,
             copy=False,
             check_input=check_input,
             sample_weight=sample_weight,
@@ -931,7 +824,6 @@ def _pre_fit(
             X,
             y,
             fit_intercept=fit_intercept,
-            normalize=normalize,
             copy=copy,
             check_input=check_input,
             sample_weight=sample_weight,
@@ -942,21 +834,18 @@ def _pre_fit(
             # This triggers copies anyway.
             X, y, _ = _rescale_data(X, y, sample_weight=sample_weight)
 
-    # FIXME: 'normalize' to be removed in 1.4
     if hasattr(precompute, "__array__"):
-        if (
-            fit_intercept
-            and not np.allclose(X_offset, np.zeros(n_features))
-            or normalize
-            and not np.allclose(X_scale, np.ones(n_features))
-        ):
+        if fit_intercept and not np.allclose(X_offset, np.zeros(n_features)):
             warnings.warn(
                 (
                     "Gram matrix was provided but X was centered to fit "
-                    "intercept, or X was normalized : recomputing Gram matrix."
+                    "intercept: recomputing Gram matrix."
                 ),
                 UserWarning,
             )
+            # TODO: instead of warning and recomputing, we could just center
+            # the user provided Gram matrix a-posteriori (after making a copy
+            # when `copy=True`).
             # recompute Gram
             precompute = "auto"
             Xy = None

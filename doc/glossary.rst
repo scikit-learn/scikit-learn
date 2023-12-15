@@ -1078,7 +1078,7 @@ Metadata Routing
         meta-estimator uses the given :term:`groups`, and it also passes it
         along to some of its sub-objects, such as a :term:`CV splitter`.
 
-Please refer to :ref:`Metadta Routing User Guide <metadata_routing>` for more
+Please refer to :ref:`Metadata Routing User Guide <metadata_routing>` for more
 information.
 
 .. _glossary_target_types:

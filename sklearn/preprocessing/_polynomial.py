@@ -584,6 +584,9 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
     `extrapolation="periodic"`) spline basis functions
     (B-splines) of polynomial order=`degree` for each feature.
 
+    In order to learn more about the SplineTransformer class go to:
+    :ref:`sphx_glr_auto_examples_applications_plot_cyclical_feature_engineering.py`
+
     Read more in the :ref:`User Guide <spline_transformer>`.
 
     .. versionadded:: 1.0

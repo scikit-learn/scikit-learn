@@ -107,7 +107,7 @@ def laplacian(
     Sparse input is reformatted into ``coo`` if ``form="array"``,
     which is the default.
 
-    If the input adjacency matrix is not symmetic, the Laplacian is
+    If the input adjacency matrix is not symmetric, the Laplacian is
     also non-symmetric unless ``symmetrized=True`` is used.
 
     Diagonal entries of the input adjacency matrix are ignored and

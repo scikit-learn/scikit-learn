@@ -64,7 +64,7 @@ def test_polars_adapter():
     pl = pytest.importorskip("polars")
     X_np = np.array([[1, 0, 3], [0, 0, 1]])
     columns = ["f1", "f2", "f3"]
-    X_df_orig = pl.DataFrame(X_np, schema=columns)
+    X_df_orig = pl.DataFrame(X_np, schema=columns, orient="row")
 
     adapter = ADAPTERS_MANAGER.adapters["polars"]
     X_container = adapter.create_container(X_np, X_df_orig, columns=lambda: columns)
@@ -86,12 +86,12 @@ def test_polars_adapter():
     assert_array_equal(new_df.columns, new_columns)
 
     # adapter.hstack stacks the dataframes horizontally.
-    X_df_1 = pl.DataFrame([[1, 2, 5], [3, 4, 6]], schema=["a", "b", "e"])
-    X_df_2 = pl.DataFrame([[4], [5]], schema=["c"])
+    X_df_1 = pl.DataFrame([[1, 2, 5], [3, 4, 6]], schema=["a", "b", "e"], orient="row")
+    X_df_2 = pl.DataFrame([[4], [5]], schema=["c"], orient="row")
     X_stacked = adapter.hstack([X_df_1, X_df_2])
 
     expected_df = pl.DataFrame(
-        [[1, 2, 5, 4], [3, 4, 6, 5]], schema=["a", "b", "e", "c"]
+        [[1, 2, 5, 4], [3, 4, 6, 5]], schema=["a", "b", "e", "c"], orient="row"
     )
     from polars.testing import assert_frame_equal
 

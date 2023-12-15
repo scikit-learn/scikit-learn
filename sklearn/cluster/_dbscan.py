@@ -391,9 +391,10 @@ class DBSCAN(ClusterMixin, BaseEstimator):
         if self.metric == "precomputed" and sparse.issparse(X):
             # set the diagonal to explicit values, as a point is its own
             # neighbor
+            X = X.copy()  # copy to avoid in-place modification
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore", sparse.SparseEfficiencyWarning)
-                X.setdiag(X.diagonal())  # XXX: modifies X's internals in-place
+                X.setdiag(X.diagonal())
 
         neighbors_model = NearestNeighbors(
             radius=self.eps,

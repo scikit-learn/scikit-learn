@@ -201,9 +201,7 @@ import matplotlib.pyplot as plt
 
 from sklearn.datasets import fetch_openml
 
-X, y = fetch_openml(
-    name="ames_housing", version=1, return_X_y=True, as_frame=True, parser="pandas"
-)
+X, y = fetch_openml(name="ames_housing", version=1, return_X_y=True, as_frame=True)
 y = y.div(X["Lot_Area"])
 
 # None values in pandas 1.5.1 were mapped to np.nan in pandas 2.0.1
@@ -256,9 +254,7 @@ for model_name in model_names:
 # which are binary encoded and some are continuous.
 
 # %%
-X, y = fetch_openml(
-    name="cardiotocography", version=1, return_X_y=True, as_frame=False, parser="pandas"
-)
+X, y = fetch_openml(name="cardiotocography", version=1, return_X_y=True, as_frame=False)
 X_cardiotocography = X  # save X for later use
 s = y == "3"
 y = s.astype(np.int32)

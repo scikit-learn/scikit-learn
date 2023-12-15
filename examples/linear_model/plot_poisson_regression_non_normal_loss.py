@@ -53,7 +53,7 @@ import pandas as pd
 # https://www.openml.org/d/41214
 from sklearn.datasets import fetch_openml
 
-df = fetch_openml(data_id=41214, as_frame=True, parser="pandas").frame
+df = fetch_openml(data_id=41214, as_frame=True).frame
 df
 
 # %%

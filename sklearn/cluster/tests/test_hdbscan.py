@@ -401,6 +401,23 @@ def test_hdbscan_sparse_distances_too_few_nonzero(csr_container):
         HDBSCAN(metric="precomputed").fit(X)
 
 
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_hdbscan_sparse_distances_disconnected_graph(csr_container):
+    """
+    Tests that HDBSCAN raises the correct error when the distance matrix
+    has multiple connected components.
+    """
+    # Create symmetric sparse matrix with 2 connected components
+    X = np.zeros((20, 20))
+    X[:5, :5] = 1
+    X[5:, 15:] = 1
+    X = X + X.T
+    X = csr_container(X)
+    msg = "HDBSCAN cannot be perfomed on a disconnected graph"
+    with pytest.raises(ValueError, match=msg):
+        HDBSCAN(metric="precomputed").fit(X)
+
+
 def test_hdbscan_tree_invalid_metric():
     """
     Tests that HDBSCAN correctly raises an error for invalid metric choices.
@@ -546,3 +563,19 @@ def test_hdbscan_warning_on_deprecated_algorithm_name():
     )
     with pytest.warns(FutureWarning, match=msg):
         HDBSCAN(algorithm="balltree").fit(X)
+
+
+@pytest.mark.parametrize("store_centers", ["centroid", "medoid"])
+def test_hdbscan_error_precomputed_and_store_centers(store_centers):
+    """Check that we raise an error if the centers are requested together with
+    a precomputed input matrix.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/27893
+    """
+    rng = np.random.RandomState(0)
+    X = rng.random((100, 2))
+    X_dist = euclidean_distances(X)
+    err_msg = "Cannot store centers when using a precomputed distance matrix."
+    with pytest.raises(ValueError, match=err_msg):
+        HDBSCAN(metric="precomputed", store_centers=store_centers).fit(X_dist)

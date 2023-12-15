@@ -144,7 +144,7 @@ class PolarsAdapter:
                 return self.rename_columns(X_output, columns)
             return X_output
 
-        return pl.DataFrame(X_output, schema=columns)
+        return pl.DataFrame(X_output, schema=columns, orient="row")
 
     def is_supported_container(self, X):
         pl = check_library_installed("polars")

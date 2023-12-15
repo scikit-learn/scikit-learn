@@ -627,12 +627,6 @@ def test_boolean_constraint_deprecated_int():
     f(True)
     f(np.bool_(False))
 
-    # an int is also valid but deprecated
-    with pytest.warns(
-        FutureWarning, match="Passing an int for a boolean parameter is deprecated"
-    ):
-        f(1)
-
 
 def test_no_validation():
     """Check that validation can be skipped for a parameter."""

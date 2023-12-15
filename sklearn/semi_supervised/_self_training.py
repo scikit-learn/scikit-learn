@@ -196,7 +196,7 @@ class SelfTrainingClassifier(
         self : object
             Fitted estimator.
         """
-        # we need row slicing support for sparce matrices, but costly finiteness check
+        # we need row slicing support for sparse matrices, but costly finiteness check
         # can be delegated to the base estimator.
         X, y = self._validate_data(
             X, y, accept_sparse=["csr", "csc", "lil", "dok"], force_all_finite=False

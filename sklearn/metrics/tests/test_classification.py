@@ -1809,7 +1809,7 @@ def test_precision_recall_f1_score_with_an_empty_prediction(
 
     assert_array_almost_equal(p, [zero_division_expected, 1.0, 1.0, 0.0], 2)
     assert_array_almost_equal(r, [0.0, 0.5, 1.0, zero_division_expected], 2)
-    expected_f = 0 if not np.isnan(zero_division_expected) else np.nan
+    expected_f = 0
     assert_array_almost_equal(f, [expected_f, 1 / 1.5, 1, expected_f], 2)
     assert_array_almost_equal(s, [1, 2, 1, 0], 2)
 
@@ -1826,7 +1826,7 @@ def test_precision_recall_f1_score_with_an_empty_prediction(
 
     assert_almost_equal(p, (2 + value_to_sum) / values_to_average)
     assert_almost_equal(r, (1.5 + value_to_sum) / values_to_average)
-    expected_f = (2 / 3 + 1) / (4 if not np.isnan(zero_division_expected) else 2)
+    expected_f = (2 / 3 + 1) / 4
     assert_almost_equal(f, expected_f)
     assert s is None
     assert_almost_equal(
@@ -1859,7 +1859,7 @@ def test_precision_recall_f1_score_with_an_empty_prediction(
     )
     assert_almost_equal(p, 3 / 4 if zero_division_expected == 0 else 1.0)
     assert_almost_equal(r, 0.5)
-    values_to_average = 4 if not np.isnan(zero_division_expected) else 3
+    values_to_average = 4
     assert_almost_equal(f, (2 * 2 / 3 + 1) / values_to_average)
     assert s is None
     assert_almost_equal(
@@ -1877,12 +1877,12 @@ def test_precision_recall_f1_score_with_an_empty_prediction(
     assert_almost_equal(r, 1 / 3)
     assert_almost_equal(f, 1 / 3)
     assert s is None
-    expected_result = {1: 0.666, np.nan: 1.0}
+    expected_result = 0.333
     assert_almost_equal(
         fbeta_score(
             y_true, y_pred, beta=2, average="samples", zero_division=zero_division
         ),
-        expected_result.get(zero_division, 0.333),
+        expected_result,
         2,
     )
 
@@ -2012,7 +2012,7 @@ def test_prf_warnings():
     f, w = precision_recall_fscore_support, UndefinedMetricWarning
     for average in [None, "weighted", "macro"]:
         msg = (
-            "Precision and F-score are ill-defined and "
+            "Precision is ill-defined and "
             "being set to 0.0 in labels with no predicted samples."
             " Use `zero_division` parameter to control"
             " this behavior."
@@ -2021,7 +2021,7 @@ def test_prf_warnings():
             f([0, 1, 2], [1, 1, 2], average=average)
 
         msg = (
-            "Recall and F-score are ill-defined and "
+            "Recall is ill-defined and "
             "being set to 0.0 in labels with no true samples."
             " Use `zero_division` parameter to control"
             " this behavior."
@@ -2031,7 +2031,7 @@ def test_prf_warnings():
 
     # average of per-sample scores
     msg = (
-        "Precision and F-score are ill-defined and "
+        "Precision is ill-defined and "
         "being set to 0.0 in samples with no predicted labels."
         " Use `zero_division` parameter to control"
         " this behavior."
@@ -2040,7 +2040,7 @@ def test_prf_warnings():
         f(np.array([[1, 0], [1, 0]]), np.array([[1, 0], [0, 0]]), average="samples")
 
     msg = (
-        "Recall and F-score are ill-defined and "
+        "Recall is ill-defined and "
         "being set to 0.0 in samples with no true labels."
         " Use `zero_division` parameter to control"
         " this behavior."
@@ -2050,7 +2050,7 @@ def test_prf_warnings():
 
     # single score: micro-average
     msg = (
-        "Precision and F-score are ill-defined and "
+        "Precision is ill-defined and "
         "being set to 0.0 due to no predicted samples."
         " Use `zero_division` parameter to control"
         " this behavior."
@@ -2059,7 +2059,7 @@ def test_prf_warnings():
         f(np.array([[1, 1], [1, 1]]), np.array([[0, 0], [0, 0]]), average="micro")
 
     msg = (
-        "Recall and F-score are ill-defined and "
+        "Recall is ill-defined and "
         "being set to 0.0 due to no true samples."
         " Use `zero_division` parameter to control"
         " this behavior."
@@ -2069,7 +2069,7 @@ def test_prf_warnings():
 
     # single positive label
     msg = (
-        "Precision and F-score are ill-defined and "
+        "Precision is ill-defined and "
         "being set to 0.0 due to no predicted samples."
         " Use `zero_division` parameter to control"
         " this behavior."
@@ -2078,7 +2078,7 @@ def test_prf_warnings():
         f([1, 1], [-1, -1], average="binary")
 
     msg = (
-        "Recall and F-score are ill-defined and "
+        "Recall is ill-defined and "
         "being set to 0.0 due to no true samples."
         " Use `zero_division` parameter to control"
         " this behavior."
@@ -2090,14 +2090,20 @@ def test_prf_warnings():
         warnings.simplefilter("always")
         precision_recall_fscore_support([0, 0], [0, 0], average="binary")
         msg = (
-            "Recall and F-score are ill-defined and "
+            "F-score is ill-defined and being set to 0.0 due to no true nor "
+            "predicted samples. Use `zero_division` parameter to control this"
+            " behavior."
+        )
+        assert str(record.pop().message) == msg
+        msg = (
+            "Recall is ill-defined and "
             "being set to 0.0 due to no true samples."
             " Use `zero_division` parameter to control"
             " this behavior."
         )
         assert str(record.pop().message) == msg
         msg = (
-            "Precision and F-score are ill-defined and "
+            "Precision is ill-defined and "
             "being set to 0.0 due to no predicted samples."
             " Use `zero_division` parameter to control"
             " this behavior."
@@ -2816,6 +2822,24 @@ def test_classification_metric_pos_label_types(metric, classes):
         y_pred = y_true.copy()
     result = metric(y_true, y_pred, pos_label=pos_label)
     assert not np.any(np.isnan(result))
+
+
+@pytest.mark.parametrize(
+    "y_true, y_pred, expected_score",
+    [
+        (np.array([0, 1]), np.array([1, 0]), 0.0),
+        (np.array([0, 1]), np.array([0, 1]), 1.0),
+        (np.array([0, 1]), np.array([0, 0]), 0.0),
+        (np.array([0, 0]), np.array([0, 0]), 1.0),
+    ],
+)
+def test_f1_for_small_binary_inputs_with_zero_division(y_true, y_pred, expected_score):
+    """Check the behaviour of `zero_division` for f1-score.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/26965
+    """
+    assert f1_score(y_true, y_pred, zero_division=1.0) == pytest.approx(expected_score)
 
 
 @pytest.mark.parametrize(

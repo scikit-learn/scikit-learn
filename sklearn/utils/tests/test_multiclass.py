@@ -383,7 +383,7 @@ def test_is_multilabel():
     yield_namespace_device_dtype_combinations(),
 )
 def test_is_multilabel_array_api_compliance(array_namespace, device, dtype):
-    xp, device, dtype = _array_api_for_tests(array_namespace, device, dtype)
+    xp = _array_api_for_tests(array_namespace, device)
 
     for group, group_examples in ARRAY_API_EXAMPLES.items():
         dense_exp = group == "multilabel-indicator"

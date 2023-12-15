@@ -24,7 +24,6 @@ from ..utils import check_random_state
 from ..utils._arpack import _init_arpack_v0
 from ..utils._array_api import _convert_to_numpy, get_namespace
 from ..utils._param_validation import Interval, RealNotInt, StrOptions
-from ..utils.deprecation import deprecated
 from ..utils.extmath import fast_logdet, randomized_svd, stable_cumsum, svd_flip
 from ..utils.sparsefuncs import _implicit_column_offset, mean_variance_axis
 from ..utils.validation import check_is_fitted
@@ -274,9 +273,6 @@ class PCA(_BasePCA):
         n_components, or the lesser value of n_features and n_samples
         if n_components is None.
 
-    n_features_ : int
-        Number of features in the training data.
-
     n_samples_ : int
         Number of samples in the training data.
 
@@ -407,16 +403,6 @@ class PCA(_BasePCA):
         self.n_oversamples = n_oversamples
         self.power_iteration_normalizer = power_iteration_normalizer
         self.random_state = random_state
-
-    # TODO(1.4): remove in 1.4
-    # mypy error: Decorated property not supported
-    @deprecated(  # type: ignore
-        "Attribute `n_features_` was deprecated in version 1.2 and will be "
-        "removed in 1.4. Use `n_features_in_` instead."
-    )
-    @property
-    def n_features_(self):
-        return self.n_features_in_
 
     @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y=None):

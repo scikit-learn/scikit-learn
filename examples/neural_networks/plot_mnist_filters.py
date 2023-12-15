@@ -34,9 +34,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.neural_network import MLPClassifier
 
 # Load data from https://www.openml.org/d/554
-X, y = fetch_openml(
-    "mnist_784", version=1, return_X_y=True, as_frame=False, parser="pandas"
-)
+X, y = fetch_openml("mnist_784", version=1, return_X_y=True, as_frame=False)
 X = X / 255.0
 
 # Split data into train partition and test partition

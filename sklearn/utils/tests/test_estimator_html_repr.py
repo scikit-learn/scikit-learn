@@ -481,7 +481,7 @@ def set_non_utf8_locale():
 
     yield
 
-    # Resets the locale to the original one. Python calles setlocale(LC_TYPE, "")
+    # Resets the locale to the original one. Python calls setlocale(LC_TYPE, "")
     # at startup according to
     # https://docs.python.org/3/library/locale.html#background-details-hints-tips-and-caveats.
     # This assumes that no other locale changes have been made. For some reason,

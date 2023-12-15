@@ -36,7 +36,7 @@ memory = Memory(os.path.join(LOG_DIR, "mnist_tsne_benchmark_data"), mmap_mode="r
 def load_data(dtype=np.float32, order="C", shuffle=True, seed=0):
     """Load the data, then cache and memmap the train/test split"""
     print("Loading dataset...")
-    data = fetch_openml("mnist_784", as_frame=True, parser="pandas")
+    data = fetch_openml("mnist_784", as_frame=True)
 
     X = check_array(data["data"], dtype=dtype, order=order)
     y = data["target"]

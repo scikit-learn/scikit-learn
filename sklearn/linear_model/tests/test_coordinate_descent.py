@@ -16,18 +16,15 @@ from sklearn.exceptions import ConvergenceWarning
 from sklearn.linear_model import (
     ElasticNet,
     ElasticNetCV,
-    Lars,
     Lasso,
     LassoCV,
     LassoLars,
     LassoLarsCV,
-    LassoLarsIC,
     LinearRegression,
     MultiTaskElasticNet,
     MultiTaskElasticNetCV,
     MultiTaskLasso,
     MultiTaskLassoCV,
-    OrthogonalMatchingPursuit,
     Ridge,
     RidgeClassifier,
     RidgeClassifierCV,
@@ -41,7 +38,6 @@ from sklearn.model_selection import (
     BaseCrossValidator,
     GridSearchCV,
     LeaveOneGroupOut,
-    train_test_split,
 )
 from sklearn.model_selection._split import GroupsConsumerMixin
 from sklearn.pipeline import make_pipeline
@@ -360,64 +356,6 @@ def _scale_alpha_inplace(estimator, n_samples):
             raise NotImplementedError
 
     estimator.set_params(alpha=alpha)
-
-
-# TODO(1.4): remove 'normalize'
-@pytest.mark.filterwarnings("ignore:'normalize' was deprecated")
-@pytest.mark.parametrize(
-    "LinearModel, params",
-    [
-        (LassoLars, {"alpha": 0.1}),
-        (OrthogonalMatchingPursuit, {}),
-        (Lars, {}),
-        (LassoLarsIC, {}),
-    ],
-)
-def test_model_pipeline_same_as_normalize_true(LinearModel, params):
-    # Test that linear models (LinearModel) set with normalize set to True are
-    # doing the same as the same linear model preceded by StandardScaler
-    # in the pipeline and with normalize set to False
-
-    # normalize is True
-    model_normalize = LinearModel(normalize=True, fit_intercept=True, **params)
-
-    pipeline = make_pipeline(
-        StandardScaler(), LinearModel(normalize=False, fit_intercept=True, **params)
-    )
-
-    is_multitask = model_normalize._get_tags()["multioutput_only"]
-
-    # prepare the data
-    n_samples, n_features = 100, 2
-    rng = np.random.RandomState(0)
-    w = rng.randn(n_features)
-    X = rng.randn(n_samples, n_features)
-    X += 20  # make features non-zero mean
-    y = X.dot(w)
-
-    # make classes out of regression
-    if is_classifier(model_normalize):
-        y[y > np.mean(y)] = -1
-        y[y > 0] = 1
-    if is_multitask:
-        y = np.stack((y, y), axis=1)
-
-    X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=42)
-
-    _scale_alpha_inplace(pipeline[1], X_train.shape[0])
-
-    model_normalize.fit(X_train, y_train)
-    y_pred_normalize = model_normalize.predict(X_test)
-
-    pipeline.fit(X_train, y_train)
-    y_pred_standardize = pipeline.predict(X_test)
-
-    assert_allclose(model_normalize.coef_ * pipeline[0].scale_, pipeline[1].coef_)
-    assert pipeline[1].intercept_ == pytest.approx(y_train.mean())
-    assert model_normalize.intercept_ == pytest.approx(
-        y_train.mean() - model_normalize.coef_.dot(X_train.mean(0))
-    )
-    assert_allclose(y_pred_normalize, y_pred_standardize)
 
 
 @pytest.mark.parametrize(
@@ -1045,8 +983,7 @@ def test_overrided_gram_matrix():
     clf = ElasticNet(selection="cyclic", tol=1e-8, precompute=Gram)
     warning_message = (
         "Gram matrix was provided but X was centered"
-        " to fit intercept, "
-        "or X was normalized : recomputing Gram matrix."
+        " to fit intercept: recomputing Gram matrix."
     )
     with pytest.warns(UserWarning, match=warning_message):
         clf.fit(X, y)
