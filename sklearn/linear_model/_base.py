@@ -383,9 +383,9 @@ def _rescale_data(X, y, sample_weight, inplace=False):
         X = safe_sparse_dot(sw_matrix, X)
     else:
         if inplace:
-            X *= sample_weight_sqrt[:, xp.newaxis]
+            X *= sample_weight_sqrt[:, None]
         else:
-            X = X * sample_weight_sqrt[:, xp.newaxis]
+            X = X * sample_weight_sqrt[:, None]
 
     if sp.issparse(y):
         y = safe_sparse_dot(sw_matrix, y)
@@ -394,12 +394,12 @@ def _rescale_data(X, y, sample_weight, inplace=False):
             if y.ndim == 1:
                 y *= sample_weight_sqrt
             else:
-                y *= sample_weight_sqrt[:, xp.newaxis]
+                y *= sample_weight_sqrt[:, None]
         else:
             if y.ndim == 1:
                 y = y * sample_weight_sqrt
             else:
-                y = y * sample_weight_sqrt[:, xp.newaxis]
+                y = y * sample_weight_sqrt[:, None]
     return X, y, sample_weight_sqrt
 
 
