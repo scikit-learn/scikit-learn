@@ -2477,7 +2477,6 @@ def test_missing_values_missing_both_classes_has_nan(criterion):
 @pytest.mark.parametrize(
     "tree",
     [
-        DecisionTreeClassifier(splitter="random"),
         DecisionTreeRegressor(criterion="absolute_error"),
     ],
 )
