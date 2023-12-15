@@ -291,9 +291,9 @@ def handle_global_random_seed(config):
         else:
             # inside a xdist worker: reuse random_seeds that have been
             # generated in the xdist controller and passed to the xdist workers
-            # by pytest_configure_node. For some unkown reason, pytest_configure_node
+            # by pytest_configure_node. For some unknown reason, pytest_configure_node
             # is not executed in some edge cases, for example:
-            # SKLEARN_TESTS_GLOBAL_RANDOM_SEED=any pytest -n2 --pyargs sklearn.tests.test_dummy  # noqa: E501
+            # pytest -n2 --pyargs sklearn.tests.test_dummy
             # In these edge cases, random_seeds is set to a fixed value
             random_seeds = getattr(
                 config.workerinput, "random_seeds", default_random_seeds
