@@ -1279,7 +1279,7 @@ def test_train_test_split_default_test_size(train_size, exp_train, exp_test):
     ),
 )
 def test_array_api_train_test_split(shuffle, stratify, array_namespace, device, dtype):
-    xp, device, dtype = _array_api_for_tests(array_namespace, device, dtype)
+    xp = _array_api_for_tests(array_namespace, device)
 
     X = np.arange(100).reshape((10, 10))
     y = np.arange(10)
