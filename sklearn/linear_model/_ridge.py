@@ -1977,9 +1977,10 @@ class _RidgeGCV(LinearModel):
         )
 
     def _svd_decompose_design_matrix(self, X, y, sqrt_sw):
-        xp, _ = get_namespace(X)
+        xp, is_array_api = get_namespace(X)
+        device_kwargs = {"device": device(X)} if is_array_api else {}
         # X already centered
-        X_mean = xp.zeros(X.shape[1], dtype=X.dtype)
+        X_mean = xp.zeros(X.shape[1], dtype=X.dtype, **device_kwargs)
         if self.fit_intercept:
             # to emulate fit_intercept=True situation, add a column
             # containing the square roots of the sample weights
@@ -2036,7 +2037,8 @@ class _RidgeGCV(LinearModel):
             input_arrays = (X, y)
         else:
             input_arrays = (X, y, sample_weight)
-        xp, _ = get_namespace(*input_arrays)
+        xp, is_array_api = get_namespace(*input_arrays)
+        device_kwargs = {"device": device(X)} if is_array_api else {}
         if sparse.issparse(X):
             dtype = np.float64
         else:
@@ -2083,7 +2085,7 @@ class _RidgeGCV(LinearModel):
         if sample_weight is not None:
             X, y, sqrt_sw = _rescale_data(X, y, sample_weight)
         else:
-            sqrt_sw = xp.ones(n_samples, dtype=X.dtype)
+            sqrt_sw = xp.ones(n_samples, dtype=X.dtype, **device_kwargs)
 
         X_mean, *decomposition = decompose(X, y, sqrt_sw)
 
@@ -2091,12 +2093,14 @@ class _RidgeGCV(LinearModel):
         error = scorer is None
 
         n_y = 1 if len(y.shape) == 1 else y.shape[1]
-        alphas = xp.asarray(self.alphas, dtype=X.dtype)
+        alphas = xp.asarray(self.alphas, dtype=X.dtype, **device_kwargs)
         alphas = xp.reshape(alphas, shape=(-1,))
         n_alphas = alphas.shape[0]
 
         if self.store_cv_values:
-            self.cv_values_ = xp.empty((n_samples * n_y, n_alphas), dtype=X.dtype)
+            self.cv_values_ = xp.empty(
+                (n_samples * n_y, n_alphas), dtype=X.dtype, **device_kwargs
+            )
 
         best_coef, best_score, best_alpha = None, None, None
 
