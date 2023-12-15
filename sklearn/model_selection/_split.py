@@ -706,11 +706,11 @@ class StratifiedKFold(_BaseKFold):
       distribution of classes, or as close as possible. If multi-label target, generate
       test sets such that all contain the same distribution of positive and negative
       examples of each label, or as close as possible.
-    * Be invariant to class labels: relabelling `y = [0, 1, 1, 0]` to `y = [2, 0, 0, 2]`
+    * Be invariant to class labels: relabeling `y = [0, 1, 1, 0]` to `y = [2, 0, 0, 2]`
       should not change the indices generated.
     * Preserve order dependencies in the dataset ordering when `shuffle=False`: all
-      samples from class k in some test set were
-      contiguous in y, or separated in y by samples from classes other than k.
+      samples from class k in some test set were contiguous in `y`, or separated in
+      `y` by samples from classes other than k.
     * Generate test sets where the smallest and largest differ by at most one
       sample.
 
@@ -1850,6 +1850,9 @@ class RepeatedStratifiedKFold(_RepeatedSplits):
     split. You can make the results identical by setting `random_state`
     to an integer.
 
+    .. versionchanged:: 1.4
+        This class now handles multi-label targets with iterative stratification [1]_.
+
     See Also
     --------
     RepeatedKFold : Repeats K-Fold n times.
@@ -2653,8 +2656,8 @@ def check_cv(cv=5, y=None, *, classifier=False):
         - :term:`CV splitter`,
         - An iterable that generates (train, test) splits as arrays of indices.
 
-        For integer/None inputs, if classifier is True and ``y`` is either
-        binary or multiclass, :class:`StratifiedKFold` is used. In all other
+        For integer/None inputs, if classifier is True and ``y`` is binary, multiclass,
+        or multilabel-indicator, :class:`StratifiedKFold` is used. In all other
         cases, :class:`KFold` is used.
 
         Refer :ref:`User Guide <cross_validation>` for the various
