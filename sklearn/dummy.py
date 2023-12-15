@@ -111,11 +111,11 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
         problems, this is computed independently for each output.
 
     n_features_in_ : int
-        Number of features seen during fit.
+        Number of features seen during :term:`fit`.
 
-    feature_names_in_ : ndarray of shape (`n_features_in_,`)
-        Names of features seen during fit. Defined only when `X` has feature
-        names that are all strings.
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X` has
+        feature names that are all strings.
 
     n_outputs_ : int
         Number of outputs.
@@ -498,11 +498,11 @@ class DummyRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
         given by the user.
 
     n_features_in_ : int
-        Number of features seen during fit.
+        Number of features seen during :term:`fit`.
 
-    feature_names_in_ : ndarray of shape (`n_features_in_,`)
-        Names of features seen during fit. Defined only when `X` has feature
-        names that are all strings.
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X` has
+        feature names that are all strings.
 
     n_outputs_ : int
         Number of outputs.
