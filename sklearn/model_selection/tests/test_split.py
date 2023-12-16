@@ -433,22 +433,26 @@ def test_stratified_kfold_no_shuffle():
 @pytest.mark.parametrize("shuffle", [False, True])
 @pytest.mark.parametrize("k", [4, 5, 6, 7, 8, 9, 10])
 @pytest.mark.parametrize("kfold", [StratifiedKFold, StratifiedGroupKFold])
-def test_stratified_kfold_single_label_class_ratios(k, shuffle, kfold):
+def test_stratified_kfold_class_ratios(k, shuffle, kfold):
     # Check that stratified kfold preserves class ratios in individual splits for
-    # single-label target; also check that split sizes differ by at most one
+    # single-label target and preserves class ratios (positive/negative examples) of
+    # each label in individual splits for multi-label target; also check that split
+    # sizes differ by at most one
     n_samples = 1000
     X = np.ones(n_samples)
+    # Ensure perfect stratification with StratifiedGroupKFold
+    groups = np.arange(n_samples)
+    random_state = None if not shuffle else 0
+
+    # Single-label target
     y = np.array(
         [4] * int(0.10 * n_samples)
         + [0] * int(0.89 * n_samples)
         + [1] * int(0.01 * n_samples)
     )
-    # ensure perfect stratification with StratifiedGroupKFold
-    groups = np.arange(len(y))
     distr = np.bincount(y) / len(y)
 
     test_sizes = []
-    random_state = None if not shuffle else 0
     skf = kfold(k, random_state=random_state, shuffle=shuffle)
     for train, test in skf.split(X, y, groups=groups):
         assert_allclose(np.bincount(y[train]) / len(train), distr, atol=0.02)
@@ -456,15 +460,9 @@ def test_stratified_kfold_single_label_class_ratios(k, shuffle, kfold):
         test_sizes.append(len(test))
     assert np.ptp(test_sizes) <= 1
 
-
-@pytest.mark.parametrize("shuffle", [False, True])
-@pytest.mark.parametrize("k", [4, 5, 6, 7, 8, 9, 10])
-def test_stratified_kfold_multi_label_class_ratios(k, shuffle):
-    # Check that stratified kfold preserves class ratios (positive/negative examples)
-    # of each label in individual splits for multi-label target; also check that split
-    # sizes differ by at most one
-    n_samples = 1000
-    X = np.ones(n_samples)
+    # Multi-label target
+    if kfold is StratifiedGroupKFold:
+        return  # StratifiedGroupKFold does not support multi-label target
     y = np.vstack(
         [
             [ii] * int(n_samples * perc)
@@ -494,21 +492,15 @@ def test_stratified_kfold_multi_label_class_ratios(k, shuffle):
 @pytest.mark.parametrize("shuffle", [False, True])
 @pytest.mark.parametrize("k", [4, 6, 7])
 @pytest.mark.parametrize("kfold", [StratifiedKFold, StratifiedGroupKFold])
-def test_stratified_kfold_single_label_label_invariance(k, shuffle, kfold):
-    # Check that stratified kfold gives the same indices regardless of labels, for
-    # single-label target
+def test_stratified_kfold_label_invariance(k, shuffle, kfold):
+    # Check that stratified kfold gives the same indices regardless of labels
     n_samples = 100
     X = np.ones(n_samples)
-    y = np.array(
-        [2] * int(0.10 * n_samples)
-        + [0] * int(0.89 * n_samples)
-        + [1] * int(0.01 * n_samples)
-    )
-    # ensure perfect stratification with StratifiedGroupKFold
-    groups = np.arange(len(y))
+    # Ensure perfect stratification with StratifiedGroupKFold
+    groups = np.arange(n_samples)
+    random_state = None if not shuffle else 0
 
     def get_splits(y):
-        random_state = None if not shuffle else 0
         return [
             (list(train), list(test))
             for train, test in kfold(
@@ -516,20 +508,21 @@ def test_stratified_kfold_single_label_label_invariance(k, shuffle, kfold):
             ).split(X, y, groups=groups)
         ]
 
+    # Single-label target
+    y = np.array(
+        [2] * int(0.10 * n_samples)
+        + [0] * int(0.89 * n_samples)
+        + [1] * int(0.01 * n_samples)
+    )
     splits_base = get_splits(y)
     for perm in permutations([0, 1, 2]):
         y_perm = np.take(perm, y)
         splits_perm = get_splits(y_perm)
         assert splits_perm == splits_base
 
-
-@pytest.mark.parametrize("shuffle", [False, True])
-@pytest.mark.parametrize("k", [4, 6, 7])
-def test_stratified_kfold_multi_label_label_invariance(k, shuffle):
-    # Check that stratified kfold gives the same indices regardless of labels, for
-    # multi-label target
-    n_samples = 100
-    X = np.ones(n_samples)
+    # Multi-label target
+    if kfold is StratifiedGroupKFold:
+        return  # StratifiedGroupKFold does not support multi-label target
     y = np.vstack(
         [
             [ii] * int(n_samples * perc)
@@ -538,16 +531,6 @@ def test_stratified_kfold_multi_label_label_invariance(k, shuffle):
             )
         ]
     )
-
-    def get_splits(y):
-        random_state = None if not shuffle else 0
-        return [
-            (list(train), list(test))
-            for train, test in StratifiedKFold(
-                k, random_state=random_state, shuffle=shuffle
-            ).split(X, y)
-        ]
-
     splits_base = get_splits(y)
     for alt0, alt1 in [(1, 0), (2, 5)]:
         # Change 0's to alt0's and 1's to alt1's
@@ -566,18 +549,25 @@ def test_kfold_balance():
         assert np.sum(sizes) == i
 
 
+@pytest.mark.parametrize("shuffle", [False, True])
 @pytest.mark.parametrize("kfold", [StratifiedKFold, StratifiedGroupKFold])
-def test_stratifiedkfold_balance(kfold):
-    # Check that KFold returns folds with balanced sizes (only when
-    # stratification is possible)
-    # Repeat with shuffling turned off and on
+def test_stratified_kfold_balance(shuffle, kfold):
+    # Check that stratified kfold returns folds with balanced sizes (only when
+    # stratification is possible); repeat with shuffling turned off and on
     X = np.ones(17)
-    y = [0] * 3 + [1] * 14
-    # ensure perfect stratification with StratifiedGroupKFold
-    groups = np.arange(len(y))
+    y_singlabel = [0] * 3 + [1] * 14
+    y_multilabel = [[0, 0]] * 3 + [[0, 1]] * 3 + [[1, 0]] * 3 + [[1, 1]] * 8
+    # Ensure perfect stratification with StratifiedGroupKFold
+    groups = np.arange(17)
+    random_state = None if not shuffle else 0
 
-    for shuffle in (True, False):
-        cv = kfold(3, shuffle=shuffle)
+    # StratifiedGroupKFold does not support multi-label target
+    ys = [y_singlabel]
+    if kfold is not StratifiedGroupKFold:
+        ys.append(y_multilabel)
+
+    cv = kfold(3, shuffle=shuffle, random_state=random_state)
+    for y in ys:
         for i in range(11, 17):
             skf = cv.split(X[:i], y[:i], groups[:i])
             sizes = [len(test) for _, test in skf]
