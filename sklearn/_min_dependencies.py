@@ -1,19 +1,10 @@
 """All minimum dependencies for scikit-learn."""
 import argparse
-import platform
 from collections import defaultdict
 
 # scipy and cython should by in sync with pyproject.toml
-
-# NumPy version should match oldest-supported-numpy for the minimum supported
-# Python version.
-# see: https://github.com/scipy/oldest-supported-numpy/blob/main/setup.cfg
-if platform.python_implementation() == "PyPy":
-    NUMPY_MIN_VERSION = "1.19.2"
-else:
-    NUMPY_MIN_VERSION = "1.17.3"
-
-SCIPY_MIN_VERSION = "1.5.0"
+NUMPY_MIN_VERSION = "1.19.5"
+SCIPY_MIN_VERSION = "1.6.0"
 JOBLIB_MIN_VERSION = "1.2.0"
 THREADPOOLCTL_MIN_VERSION = "2.0.0"
 PYTEST_MIN_VERSION = "7.1.2"
@@ -30,8 +21,8 @@ dependent_packages = {
     "threadpoolctl": (THREADPOOLCTL_MIN_VERSION, "install"),
     "cython": (CYTHON_MIN_VERSION, "build"),
     "matplotlib": ("3.3.4", "benchmark, docs, examples, tests"),
-    "scikit-image": ("0.16.2", "docs, examples, tests"),
-    "pandas": ("1.0.5", "benchmark, docs, examples, tests"),
+    "scikit-image": ("0.17.2", "docs, examples, tests"),
+    "pandas": ("1.1.5", "benchmark, docs, examples, tests"),
     "seaborn": ("0.9.0", "docs, examples"),
     "memory_profiler": ("0.57.0", "benchmark, docs"),
     "pytest": (PYTEST_MIN_VERSION, "tests"),
