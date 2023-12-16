@@ -202,7 +202,9 @@ def test_2d_y():
         LeaveOneOut(),
         LeavePOut(p=2),
         KFold(),
+        StratifiedKFold(),
         RepeatedKFold(),
+        RepeatedStratifiedKFold(),
         StratifiedGroupKFold(),
         ShuffleSplit(),
         StratifiedShuffleSplit(test_size=0.5),
@@ -212,8 +214,6 @@ def test_2d_y():
         GroupKFold(n_splits=3),
         TimeSeriesSplit(),
         PredefinedSplit(test_fold=groups),
-        StratifiedKFold(),
-        RepeatedStratifiedKFold(),
     ]
 
     for splitter in splitters:
@@ -599,6 +599,41 @@ def test_shuffle_kfold():
     assert sum(all_folds) == 300
 
 
+def test_shuffle_stratifiedkfold():
+    # Check that shuffling is happening when requested, and for proper
+    # sample coverage
+    X_40 = np.ones(40)
+    y = [0] * 20 + [1] * 20
+    kf0 = StratifiedKFold(5, shuffle=True, random_state=0)
+    kf1 = StratifiedKFold(5, shuffle=True, random_state=1)
+    for (_, test0), (_, test1) in zip(kf0.split(X_40, y), kf1.split(X_40, y)):
+        assert set(test0) != set(test1)
+    check_cv_coverage(kf0, X_40, y, groups=None, expected_n_splits=5)
+
+    # Ensure that we shuffle each class's samples with different
+    # random_state in StratifiedKFold
+    # See https://github.com/scikit-learn/scikit-learn/pull/13124
+    X = np.arange(10)
+    y = [0] * 5 + [1] * 5
+    kf1 = StratifiedKFold(5, shuffle=True, random_state=0)
+    kf2 = StratifiedKFold(5, shuffle=True, random_state=1)
+    test_set1 = sorted([tuple(s[1]) for s in kf1.split(X, y)])
+    test_set2 = sorted([tuple(s[1]) for s in kf2.split(X, y)])
+    assert test_set1 != test_set2
+
+
+# def test_shuffle_multilabel_stratified_kfold():
+#     # Check that shuffling is happening when requested, and for proper sample
+#     # coverage
+#     X_40 = np.ones(40)
+#     y = np.hstack(([[0]] * 10 + [[1]] * 30, [[0]] * 30 + [[0]] * 10))
+#     mskf0 = MultilabelStratifiedKFold(5, shuffle=True, random_state=0)
+#     mskf1 = MultilabelStratifiedKFold(5, shuffle=True, random_state=1)
+#     for (_, test0), (_, test1) in zip(mskf0.split(X_40, y), mskf1.split(X_40, y)):
+#         assert set(test0) != set(test1)
+#     check_cv_coverage(mskf0, X_40, y, groups=None, expected_n_splits=5)
+
+
 @pytest.mark.parametrize("kfold", [KFold, StratifiedKFold, StratifiedGroupKFold])
 def test_shuffle_kfold_stratifiedkfold_reproducibility(kfold):
     X = np.ones(15)  # Divisible by 3
@@ -631,27 +666,29 @@ def test_shuffle_kfold_stratifiedkfold_reproducibility(kfold):
                 np.testing.assert_array_equal(test_a, test_b)
 
 
-def test_shuffle_stratifiedkfold():
-    # Check that shuffling is happening when requested, and for proper
-    # sample coverage
-    X_40 = np.ones(40)
-    y = [0] * 20 + [1] * 20
-    kf0 = StratifiedKFold(5, shuffle=True, random_state=0)
-    kf1 = StratifiedKFold(5, shuffle=True, random_state=1)
-    for (_, test0), (_, test1) in zip(kf0.split(X_40, y), kf1.split(X_40, y)):
-        assert set(test0) != set(test1)
-    check_cv_coverage(kf0, X_40, y, groups=None, expected_n_splits=5)
+# def test_shuffle_multilabel_stratified_kfold_reproducibility():
+#     X = np.ones(15)  # Divisible by 3
+#     y = np.hstack(([[0]] * 6 + [[1]] * 9, [[0]] * 9 + [[0]] * 6))
+#     X2 = np.ones(16)  # Not divisible by 3
+#     y2 = np.hstack(([[0]] * 6 + [[1]] * 10, [[0]] * 10 + [[0]] * 6))
 
-    # Ensure that we shuffle each class's samples with different
-    # random_state in StratifiedKFold
-    # See https://github.com/scikit-learn/scikit-learn/pull/13124
-    X = np.arange(10)
-    y = [0] * 5 + [1] * 5
-    kf1 = StratifiedKFold(5, shuffle=True, random_state=0)
-    kf2 = StratifiedKFold(5, shuffle=True, random_state=1)
-    test_set1 = sorted([tuple(s[1]) for s in kf1.split(X, y)])
-    test_set2 = sorted([tuple(s[1]) for s in kf2.split(X, y)])
-    assert test_set1 != test_set2
+#     # Check that when shuffling is enabled, multiple split calls produce
+#     # the same split when random_state is int
+#     mskf = MultilabelStratifiedKFold(3, shuffle=True, random_state=0)
+#     np.testing.assert_equal(list(mskf.split(X, y)), list(mskf.split(X, y)))
+
+#     # Check that when shuffling is enabled, multiple split calls often
+#     # (not always) produce different splits when random_state is RandomState
+#     # instance or None
+#     rng = np.random.RandomState(0)
+#     mskf = MultilabelStratifiedKFold(3, shuffle=True, random_state=rng)
+#     for data in zip((X, X2), (y, y2)):
+#         for (_, test_a), (_, test_b) in zip(mskf.split(*data), mskf.split(*data)):
+#             # mskf.split(...) returns an array of tuples, each consisting of an
+#             # array with train indices and test indices; ensure that the splits
+#             # for data are not the same when random_state is not set
+#             with pytest.raises(AssertionError):
+#                 np.testing.assert_array_equal(test_a, test_b)
 
 
 def test_kfold_can_detect_dependent_samples_on_digits():  # see #2372
@@ -786,69 +823,6 @@ def test_stratified_group_kfold_against_group_kfold(cls_distr, n_groups):
     sgkf_entr /= n_splits
     gkf_entr /= n_splits
     assert sgkf_entr <= gkf_entr
-
-
-# def test_multilabel_stratified_kfold_support_any_multilabel_indicator():
-#     # Check that any multilabel indicator can work, not only 0/1
-#     X = np.ones(10)
-#     y0 = np.hstack(([[0]] * 3 + [[1]] * 7, [[0]] * 3 + [[1]] * 7))
-#     y1 = np.hstack(([[-1]] * 7 + [[-3]] * 3, [[-1]] * 7 + [[-3]] * 3))
-
-#     mskf = MultilabelStratifiedKFold(3)
-#     for (_, test_a), (_, test_b) in zip(mskf.split(X, y0), mskf.split(X, y1)):
-#         np.testing.assert_array_equal(test_a, test_b)
-
-
-# def test_multilabel_stratified_kfold_balance():
-#     # Check that MultilabelStratifiedKFold returns folds with balanced sizes
-#     # Repeat with shuffling turned on and off
-#     X = np.ones(17)
-#     y = [[0, 0]] * 3 + [[0, 1]] * 3 + [[1, 0]] * 3 + [[1, 1]] * 8
-
-#     for shuffle in (True, False):
-#         cv = MultilabelStratifiedKFold(3, shuffle=shuffle)
-#         for i in range(11, 17):
-#             sizes = [len(test) for _, test in cv.split(X[:i], y[:i])]
-
-#             assert (np.max(sizes) - np.min(sizes)) <= 1
-#             assert np.sum(sizes) == i
-
-
-# def test_shuffle_multilabel_stratified_kfold_reproducibility():
-#     X = np.ones(15)  # Divisible by 3
-#     y = np.hstack(([[0]] * 6 + [[1]] * 9, [[0]] * 9 + [[0]] * 6))
-#     X2 = np.ones(16)  # Not divisible by 3
-#     y2 = np.hstack(([[0]] * 6 + [[1]] * 10, [[0]] * 10 + [[0]] * 6))
-
-#     # Check that when shuffling is enabled, multiple split calls produce
-#     # the same split when random_state is int
-#     mskf = MultilabelStratifiedKFold(3, shuffle=True, random_state=0)
-#     np.testing.assert_equal(list(mskf.split(X, y)), list(mskf.split(X, y)))
-
-#     # Check that when shuffling is enabled, multiple split calls often
-#     # (not always) produce different splits when random_state is RandomState
-#     # instance or None
-#     rng = np.random.RandomState(0)
-#     mskf = MultilabelStratifiedKFold(3, shuffle=True, random_state=rng)
-#     for data in zip((X, X2), (y, y2)):
-#         for (_, test_a), (_, test_b) in zip(mskf.split(*data), mskf.split(*data)):
-#             # mskf.split(...) returns an array of tuples, each consisting of an
-#             # array with train indices and test indices; ensure that the splits
-#             # for data are not the same when random_state is not set
-#             with pytest.raises(AssertionError):
-#                 np.testing.assert_array_equal(test_a, test_b)
-
-
-# def test_shuffle_multilabel_stratified_kfold():
-#     # Check that shuffling is happening when requested, and for proper sample
-#     # coverage
-#     X_40 = np.ones(40)
-#     y = np.hstack(([[0]] * 10 + [[1]] * 30, [[0]] * 30 + [[0]] * 10))
-#     mskf0 = MultilabelStratifiedKFold(5, shuffle=True, random_state=0)
-#     mskf1 = MultilabelStratifiedKFold(5, shuffle=True, random_state=1)
-#     for (_, test0), (_, test1) in zip(mskf0.split(X_40, y), mskf1.split(X_40, y)):
-#         assert set(test0) != set(test1)
-#     check_cv_coverage(mskf0, X_40, y, groups=None, expected_n_splits=5)
 
 
 def test_shuffle_split():
