@@ -2425,6 +2425,21 @@ def test_missing_values_best_splitter_three_classes(criterion):
 
 
 @pytest.mark.parametrize("criterion", ["entropy", "gini"])
+def test_missing_values_random_splitter_three_classes(criterion):
+    """Test if missing-values help improve prediction in a 3 class problem."""
+    missing_values_class = 0
+    X = np.array([[np.nan] * 4 + [0, 1, 2, 3, 8, 9, 11, 12]]).T
+    y = np.array([missing_values_class] * 4 + [1] * 4 + [2] * 4)
+    dtc = ExtraTreeClassifier(random_state=42, max_depth=2, criterion=criterion)
+    dtc.fit(X, y)
+
+    X_test = np.array([[np.nan, 3, 12]]).T
+    y_nan_pred = dtc.predict(X_test)
+    # Missing values necessarily are associated to the observed class.
+    assert_array_equal(y_nan_pred, [missing_values_class, 1, 2])
+
+
+@pytest.mark.parametrize("criterion", ["entropy", "gini"])
 def test_missing_values_best_splitter_to_left(criterion):
     """Missing values spanning only one class at fit-time must make missing
     values at predict-time be classified has belonging to this class."""
