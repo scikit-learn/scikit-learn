@@ -7,6 +7,7 @@ import itertools
 from numbers import Integral, Real
 
 import numpy as np
+from scipy.linalg import cholesky, solve_triangular
 from scipy.special import gammainc
 
 from ..base import BaseEstimator, _fit_context
@@ -213,6 +214,11 @@ class KernelDensity(BaseEstimator):
         """
         algorithm = self._choose_algorithm(self.algorithm, self.metric)
 
+        if sample_weight is not None:
+            sample_weight = _check_sample_weight(
+                sample_weight, X, dtype=np.float64, only_non_negative=True
+            )
+
         if isinstance(self.bandwidth, str):
             if self.bandwidth == "scott":
                 self.bandwidth_ = X.shape[0] ** (-1 / (X.shape[1] + 4))
@@ -224,17 +230,16 @@ class KernelDensity(BaseEstimator):
             self.bandwidth_ = self.bandwidth
 
         X = self._validate_data(X, order="C", dtype=np.float64)
-
-        if sample_weight is not None:
-            sample_weight = _check_sample_weight(
-                sample_weight, X, dtype=np.float64, only_non_negative=True
-            )
+        self._cov = np.atleast_2d(np.cov(X.T))
+        self._cho_cov = cholesky(self._cov, lower=True)
 
         kwargs = self.metric_params
         if kwargs is None:
             kwargs = {}
+
+        # Data need to be scaled
         self.tree_ = TREE_DICT[algorithm](
-            X,
+            solve_triangular(self._cho_cov, X.T, lower=True).T,
             metric=self.metric,
             leaf_size=self.leaf_size,
             sample_weight=sample_weight,
@@ -268,8 +273,10 @@ class KernelDensity(BaseEstimator):
         else:
             N = self.tree_.sum_weight
         atol_N = self.atol * N
+
+        # Points need to be scaled in the same way as tree data
         log_density = self.tree_.kernel_density(
-            X,
+            solve_triangular(self._cho_cov, X.T, lower=True).T,
             h=self.bandwidth_,
             kernel=self.kernel,
             atol=atol_N,
@@ -277,7 +284,11 @@ class KernelDensity(BaseEstimator):
             breadth_first=self.breadth_first,
             return_log=True,
         )
-        log_density -= np.log(N)
+
+        # The result of self.tree_.kernel_density is only normalized by
+        # the kernel norm and bandwidth. We need to further normalize by
+        # the determinant of the square root of the covariance matrix and N
+        log_density -= np.log(N) + np.sum(np.log(np.diag(self._cho_cov)))
         return log_density
 
     def score(self, X, y=None):
@@ -328,7 +339,8 @@ class KernelDensity(BaseEstimator):
         if self.kernel not in ["gaussian", "tophat"]:
             raise NotImplementedError()
 
-        data = np.asarray(self.tree_.data)
+        # Tree data is already scaled at creation, need to convert back
+        data = np.dot(np.asarray(self.tree_.data), self._cho_cov.T)
 
         rng = check_random_state(random_state)
         u = rng.uniform(0, 1, size=n_samples)
@@ -338,8 +350,14 @@ class KernelDensity(BaseEstimator):
             cumsum_weight = np.cumsum(np.asarray(self.tree_.sample_weight))
             sum_weight = cumsum_weight[-1]
             i = np.searchsorted(cumsum_weight, u * sum_weight)
+
         if self.kernel == "gaussian":
-            return np.atleast_2d(rng.normal(data[i], self.bandwidth_))
+            norm = rng.multivariate_normal(
+                np.zeros(data.shape[1]),
+                self._cov * self.bandwidth_**2,
+                size=n_samples,
+            )
+            return np.atleast_2d(data[i] + norm)
 
         elif self.kernel == "tophat":
             # we first draw points from a d-dimensional normal distribution,
