@@ -108,6 +108,12 @@ applied to non-negative features, such as frequencies.
     Beware not to use a regression scoring function with a classification
     problem, you will get useless results.
 
+.. note::
+
+    The :class:`SelectPercentile` and :class:`SelectKBest` support unsupervised
+    feature selection as well. One needs to provide a `score_func` where `y=None`.
+    The `score_func` should use internally `X` to compute the scores.
+
 .. topic:: Examples:
 
     * :ref:`sphx_glr_auto_examples_feature_selection_plot_feature_selection.py`
@@ -130,7 +136,13 @@ repeated on the pruned set until the desired number of features to select is
 eventually reached.
 
 :class:`RFECV` performs RFE in a cross-validation loop to find the optimal
-number of features.
+number of features. In more details, the number of features selected is tuned
+automatically by fitting an :class:`RFE` selector on the different
+cross-validation splits (provided by the `cv` parameter). The performance
+of the :class:`RFE` selector are evaluated using `scorer` for different number
+of selected features and aggregated together. Finally, the scores are averaged
+across folds and the number of features selected is set to the number of
+features that maximize the cross-validation score.
 
 .. topic:: Examples:
 

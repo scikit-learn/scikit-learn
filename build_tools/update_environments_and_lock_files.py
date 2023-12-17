@@ -147,29 +147,33 @@ conda_build_metadata_list = [
         },
     },
     {
-        "build_name": "py38_conda_defaults_openblas",
+        "build_name": "pymin_conda_defaults_openblas",
         "folder": "build_tools/azure",
         "platform": "linux-64",
         "channel": "defaults",
         "conda_dependencies": common_dependencies + ["ccache"],
         "package_constraints": {
-            "python": "3.8",
+            "python": "3.9",
             "blas": "[build=openblas]",
-            "numpy": "min",
-            "scipy": "min",
+            "numpy": "1.21",  # the min version is not available on the defaults channel
+            "scipy": "1.7",  # the min version has some low level crashes
             "matplotlib": "min",
             "threadpoolctl": "2.2.0",
             "cython": "min",
         },
     },
     {
-        "build_name": "py38_conda_forge_openblas_ubuntu_2204",
+        "build_name": "pymin_conda_forge_openblas_ubuntu_2204",
         "folder": "build_tools/azure",
         "platform": "linux-64",
         "channel": "conda-forge",
-        "conda_dependencies": common_dependencies_without_coverage + ["ccache"],
+        "conda_dependencies": (
+            common_dependencies_without_coverage
+            + docstring_test_dependencies
+            + ["ccache"]
+        ),
         "package_constraints": {
-            "python": "3.8",
+            "python": "3.9",
             "blas": "[build=openblas]",
         },
     },
@@ -243,7 +247,7 @@ conda_build_metadata_list = [
         },
     },
     {
-        "build_name": "py38_conda_forge_mkl",
+        "build_name": "pymin_conda_forge_mkl",
         "folder": "build_tools/azure",
         "platform": "win-64",
         "channel": "conda-forge",
@@ -252,7 +256,7 @@ conda_build_metadata_list = [
             "pip",
         ],
         "package_constraints": {
-            "python": "3.8",
+            "python": "3.9",
             "blas": "[build=mkl]",
         },
     },
@@ -276,7 +280,7 @@ conda_build_metadata_list = [
         ],
         "pip_dependencies": ["sphinxext-opengraph"],
         "package_constraints": {
-            "python": "3.8",
+            "python": "3.9",
             "numpy": "min",
             "scipy": "min",
             "matplotlib": "min",
@@ -317,7 +321,7 @@ conda_build_metadata_list = [
         },
     },
     {
-        "build_name": "py39_conda_forge",
+        "build_name": "pymin_conda_forge",
         "folder": "build_tools/cirrus",
         "platform": "linux-aarch64",
         "channel": "conda-forge",
@@ -586,7 +590,15 @@ def check_conda_version():
 @click.option(
     "--select-build",
     default="",
-    help="Regex to restrict the builds we want to update environment and lock files",
+    help=(
+        "Regex to restrict the builds we want to update environment and lock files. By"
+        " default all the builds are selected."
+    ),
+)
+@click.option(
+    "--skip-build",
+    default=None,
+    help="Regex to skip some builds from the builds selected by --select-build",
 )
 @click.option(
     "-v",
@@ -600,7 +612,7 @@ def check_conda_version():
     is_flag=True,
     help="Print output of commands executed by the script",
 )
-def main(verbose, very_verbose, select_build):
+def main(verbose, very_verbose, select_build, skip_build):
     if verbose:
         logger.setLevel(logging.DEBUG)
     if very_verbose:
@@ -608,11 +620,19 @@ def main(verbose, very_verbose, select_build):
         handler.setLevel(TRACE)
     check_conda_lock_version()
     check_conda_version()
+
     filtered_conda_build_metadata_list = [
         each
         for each in conda_build_metadata_list
         if re.search(select_build, each["build_name"])
     ]
+    if skip_build is not None:
+        filtered_conda_build_metadata_list = [
+            each
+            for each in filtered_conda_build_metadata_list
+            if not re.search(skip_build, each["build_name"])
+        ]
+
     if filtered_conda_build_metadata_list:
         logger.info("# Writing conda environments")
         write_all_conda_environments(filtered_conda_build_metadata_list)
@@ -624,6 +644,13 @@ def main(verbose, very_verbose, select_build):
         for each in pip_build_metadata_list
         if re.search(select_build, each["build_name"])
     ]
+    if skip_build is not None:
+        filtered_pip_build_metadata_list = [
+            each
+            for each in filtered_pip_build_metadata_list
+            if not re.search(skip_build, each["build_name"])
+        ]
+
     if filtered_pip_build_metadata_list:
         logger.info("# Writing pip requirements")
         write_all_pip_requirements(filtered_pip_build_metadata_list)
