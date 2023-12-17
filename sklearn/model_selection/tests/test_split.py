@@ -1224,20 +1224,14 @@ def test_leave_one_p_group_out_error_on_fewer_number_of_groups():
 @ignore_warnings
 def test_repeated_cv_value_errors():
     # n_repeats is not integer or <= 0
-    for cv in (
-        RepeatedKFold,
-        RepeatedStratifiedKFold,
-    ):
+    for cv in (RepeatedKFold, RepeatedStratifiedKFold):
         with pytest.raises(ValueError):
             cv(n_repeats=0)
         with pytest.raises(ValueError):
             cv(n_repeats=1.5)
 
 
-@pytest.mark.parametrize(
-    "RepeatedCV",
-    [RepeatedKFold, RepeatedStratifiedKFold],
-)
+@pytest.mark.parametrize("RepeatedCV", [RepeatedKFold, RepeatedStratifiedKFold])
 def test_repeated_cv_repr(RepeatedCV):
     n_splits, n_repeats = 2, 6
     repeated_cv = RepeatedCV(n_splits=n_splits, n_repeats=n_repeats)
@@ -1247,16 +1241,20 @@ def test_repeated_cv_repr(RepeatedCV):
     assert repeated_cv_repr == repr(repeated_cv)
 
 
-@pytest.mark.parametrize(
-    "RepeatedCV",
-    [RepeatedKFold, RepeatedStratifiedKFold],
-)
-def test_get_n_splits_for_repeated_kfold(RepeatedCV):
+def test_get_n_splits_for_repeated_kfold():
     n_splits = 3
     n_repeats = 4
-    repeated_cv = RepeatedCV(n_splits=n_splits, n_repeats=n_repeats)
+    rkf = RepeatedKFold(n_splits=n_splits, n_repeats=n_repeats)
     expected_n_splits = n_splits * n_repeats
-    assert expected_n_splits == repeated_cv.get_n_splits()
+    assert expected_n_splits == rkf.get_n_splits()
+
+
+def test_get_n_splits_for_repeated_stratified_kfold():
+    n_splits = 3
+    n_repeats = 4
+    rskf = RepeatedStratifiedKFold(n_splits=n_splits, n_repeats=n_repeats)
+    expected_n_splits = n_splits * n_repeats
+    assert expected_n_splits == rskf.get_n_splits()
 
 
 def test_repeated_kfold_determinstic_split():
@@ -1289,10 +1287,12 @@ def test_repeated_kfold_determinstic_split():
 
 
 def test_repeated_stratified_kfold_determinstic_split():
-    X = [[1, 2], [3, 4], [5, 6], [7, 8], [9, 10]]
-    y = [1, 1, 1, 0, 0]
     random_state = 1944695409
     rskf = RepeatedStratifiedKFold(n_splits=2, n_repeats=2, random_state=random_state)
+
+    # Single-label target
+    X = [[1, 2], [3, 4], [5, 6], [7, 8], [9, 10]]
+    y = [1, 1, 1, 0, 0]
 
     # split should produce same and deterministic splits on
     # each call
@@ -1317,36 +1317,32 @@ def test_repeated_stratified_kfold_determinstic_split():
         with pytest.raises(StopIteration):
             next(splits)
 
+    # Multi-label target
+    X = np.ones(7)
+    y = np.array([[0, 0], [1, 0], [1, 1], [1, 1], [0, 1], [0, 1], [0, 0]])
 
-# def test_repeated_multilabel_stratified_kfold_deterministic_split():
-#     X = np.ones(7)
-#     y = np.array([[0, 0], [1, 0], [1, 1], [1, 1], [0, 1], [0, 1], [0, 0]])
-#     random_state = 20230525
-#     rmskf = RepeatedMultilabelStratifiedKFold(
-#         n_splits=2, n_repeats=2, random_state=random_state
-#     )
+    # split should produce same and deterministic splits on
+    # each call
+    for _ in range(3):
+        splits = rskf.split(X, y)
+        train, test = next(splits)
+        assert_array_equal(train, [3, 4, 6])
+        assert_array_equal(test, [0, 1, 2, 5])
 
-#     # Split should produce the same and deterministic splits on each call
-#     for _ in range(3):
-#         splits = rmskf.split(X, y)
-#         train, test = next(splits)
-#         assert_array_equal(train, [2, 5, 6])
-#         assert_array_equal(test, [0, 1, 3, 4])
+        train, test = next(splits)
+        assert_array_equal(train, [0, 1, 2, 5])
+        assert_array_equal(test, [3, 4, 6])
 
-#         train, test = next(splits)
-#         assert_array_equal(train, [0, 1, 3, 4])
-#         assert_array_equal(test, [2, 5, 6])
+        train, test = next(splits)
+        assert_array_equal(train, [1, 4, 5])
+        assert_array_equal(test, [0, 2, 3, 6])
 
-#         train, test = next(splits)
-#         assert_array_equal(train, [1, 4, 5])
-#         assert_array_equal(test, [0, 2, 3, 6])
+        train, test = next(splits)
+        assert_array_equal(train, [0, 2, 3, 6])
+        assert_array_equal(test, [1, 4, 5])
 
-#         train, test = next(splits)
-#         assert_array_equal(train, [0, 2, 3, 6])
-#         assert_array_equal(test, [1, 4, 5])
-
-#         with pytest.raises(StopIteration):
-#             next(splits)
+        with pytest.raises(StopIteration):
+            next(splits)
 
 
 def test_train_test_split_errors():
