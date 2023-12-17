@@ -735,15 +735,15 @@ class StratifiedKFold(_BaseKFold):
     def __init__(self, n_splits=5, *, shuffle=False, random_state=None):
         super().__init__(n_splits=n_splits, shuffle=shuffle, random_state=random_state)
 
-    def _make_test_folds_single_label(self, X, y):
+    def _make_test_folds_single_label(self, y):
         """Make test folds for single-label `y`.
 
         Supported `y` types: binary, multiclass.
         """
         rng = check_random_state(self.random_state)
         y = column_or_1d(y)
-        _, y_idx, y_inv = np.unique(y, return_index=True, return_inverse=True)
 
+        _, y_idx, y_inv = np.unique(y, return_index=True, return_inverse=True)
         # y_inv encodes y according to lexicographic order. We invert y_idx to
         # map the classes so that they are encoded by order of appearance:
         # 0 represents the first label appearing in y, 1 the second, etc.
@@ -791,7 +791,7 @@ class StratifiedKFold(_BaseKFold):
             test_folds[y_encoded == k] = folds_for_class
         return test_folds
 
-    def _make_test_folds_multi_label(self, X, y):
+    def _make_test_folds_multi_label(self, y):
         """Make test folds for multi-label `y`.
 
         Supported `y` types: multilabel-indicator.
@@ -804,7 +804,7 @@ class StratifiedKFold(_BaseKFold):
         - https://github.com/trent-b/iterative-stratification (BSD 3 clause)
         """
         rng = check_random_state(self.random_state)
-        n_samples = _num_samples(X)
+        n_samples = y.shape[0]
 
         # Multilabel-indicator has at most two classes, so we encode the first
         # occurrence as the negative example and the other as the positive example
@@ -901,9 +901,9 @@ class StratifiedKFold(_BaseKFold):
         allowed_multi_target_types = ("multilabel-indicator",)
 
         if type_of_target_y in allowed_single_target_types:
-            test_folds = self._make_test_folds_single_label(X, y)
+            test_folds = self._make_test_folds_single_label(y)
         elif type_of_target_y in allowed_multi_target_types:
-            test_folds = self._make_test_folds_multi_label(X, y)
+            test_folds = self._make_test_folds_multi_label(y)
         else:
             raise ValueError(
                 "Supported target types are: "
