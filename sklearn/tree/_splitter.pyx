@@ -1004,8 +1004,8 @@ cdef class DensePartitioner:
             float32_t current_feature_value
             const float32_t[:, :] X = self.X
             intp_t[::1] samples = self.samples
-            float32_t min_feature_value = -INFINITY
-            float32_t max_feature_value = min_feature_value
+            float32_t min_feature_value = INFINITY_32t
+            float32_t max_feature_value = -INFINITY_32t
             float32_t[::1] feature_values = self.feature_values
             intp_t n_missing = 0
             const unsigned char[::1] missing_values_in_feature_mask = self.missing_values_in_feature_mask

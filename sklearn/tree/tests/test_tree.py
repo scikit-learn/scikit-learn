@@ -2409,6 +2409,44 @@ def test_missing_values_on_equal_nodes_no_missing(criterion):
     assert_allclose(y_pred, [np.mean(y_equal[-4:])])
 
 
+@pytest.mark.parametrize("criterion", ["squared_error", "friedman_mse"])
+def test_extratree_missing_values_on_equal_nodes_no_missing(criterion):
+    """Check missing values goes to correct node during predictions.
+    
+    When there are no missing values during training, missing-values during
+    prediction 
+    """
+    X = np.array([[0, 1, 2, 3, 8, 9, 11, 12, 15]]).T
+    y = np.array([0.1, 0.2, 0.3, 0.2, 1.4, 1.4, 1.5, 1.6, 2.6])
+
+    dtc = ExtraTreeRegressor(random_state=42, max_depth=2, criterion=criterion)
+    dtc.fit(X, y)
+
+    # Goes to right node because it has the most data points
+    decision_path = dtc.decision_path([[np.nan]])
+    n_nodes = dtc.tree_.node_count
+    assert n_nodes == 5
+
+    # Note: when max_leaf_nodes is not defined, the implementation will build
+    # the tree using DFS
+    # For a 5-node binary tree with DFS traversal, this results in the following
+    # decision-path of the nodes, which is the right-side view of the binary tree
+    expected_decision_path = [[1, 0, 0, 0, 1]]
+    assert_array_equal(decision_path.toarray(), expected_decision_path)
+
+    # BFS building of the binary tree
+    dtc = ExtraTreeRegressor(random_state=42, max_depth=2, criterion=criterion,
+                             max_leaf_nodes=5)
+    dtc.fit(X, y)
+    decision_path = dtc.decision_path([[np.nan]])
+    # Note: when max_leaf_nodes is defined, the implementation will build
+    # the tree using BFS
+    # For a 5-node binary tree with BFS traversal, this results in the following
+    # decision-path of the nodes, which is the right-side view of the binary tree
+    expected_decision_path = [[1, 0, 1, 0, 0]]
+    assert_array_equal(decision_path.toarray(), expected_decision_path)
+
+
 @pytest.mark.parametrize("criterion", ["entropy", "gini"])
 def test_missing_values_best_splitter_three_classes(criterion):
     """Test when missing values are uniquely present in a class among 3 classes."""
@@ -2416,21 +2454,6 @@ def test_missing_values_best_splitter_three_classes(criterion):
     X = np.array([[np.nan] * 4 + [0, 1, 2, 3, 8, 9, 11, 12]]).T
     y = np.array([missing_values_class] * 4 + [1] * 4 + [2] * 4)
     dtc = DecisionTreeClassifier(random_state=42, max_depth=2, criterion=criterion)
-    dtc.fit(X, y)
-
-    X_test = np.array([[np.nan, 3, 12]]).T
-    y_nan_pred = dtc.predict(X_test)
-    # Missing values necessarily are associated to the observed class.
-    assert_array_equal(y_nan_pred, [missing_values_class, 1, 2])
-
-
-@pytest.mark.parametrize("criterion", ["entropy", "gini"])
-def test_missing_values_random_splitter_three_classes(criterion):
-    """Test if missing-values help improve prediction in a 3 class problem."""
-    missing_values_class = 0
-    X = np.array([[np.nan] * 4 + [0, 1, 2, 3, 8, 9, 11, 12]]).T
-    y = np.array([missing_values_class] * 4 + [1] * 4 + [2] * 4)
-    dtc = ExtraTreeClassifier(random_state=42, max_depth=2, criterion=criterion)
     dtc.fit(X, y)
 
     X_test = np.array([[np.nan, 3, 12]]).T
@@ -2528,6 +2551,8 @@ def test_missing_values_poisson():
     [
         (datasets.make_regression, DecisionTreeRegressor),
         (datasets.make_classification, DecisionTreeClassifier),
+        (datasets.make_regression, ExtraTreeRegressor),
+        (datasets.make_classification, ExtraTreeClassifier),
     ],
 )
 @pytest.mark.parametrize("sample_weight_train", [None, "ones"])
@@ -2563,7 +2588,8 @@ def test_missing_values_is_resilience(make_data, Tree, sample_weight_train):
     assert score_with_missing >= 0.9 * score_without_missing
 
 
-def test_missing_value_is_predictive():
+@pytest.mark.parametrize('Tree, expected_score', zip(CLF_TREES.values(), [0.85, 0.82]))
+def test_missing_value_is_predictive(Tree, expected_score):
     """Check the tree learns when only the missing value is predictive."""
     rng = np.random.RandomState(0)
     n_samples = 1000
@@ -2582,10 +2608,10 @@ def test_missing_value_is_predictive():
     X[:, 5] = X_predictive
 
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=rng)
-    tree = DecisionTreeClassifier(random_state=rng).fit(X_train, y_train)
+    tree = Tree(random_state=rng).fit(X_train, y_train)
 
-    assert tree.score(X_train, y_train) >= 0.85
-    assert tree.score(X_test, y_test) >= 0.85
+    assert tree.score(X_train, y_train) >= expected_score
+    assert tree.score(X_test, y_test) >= expected_score
 
 
 @pytest.mark.parametrize(
