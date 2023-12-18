@@ -2167,7 +2167,7 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
         for raw_predictions in self._staged_raw_predict(X):
             if raw_predictions.shape[1] == 1:
                 # np.argmax([0, 0]) is 0, not 1, therefor "> 0" not ">= 0"
-                encoded_classes = (raw_predictions.ravel() > 0).astype(np.int64)
+                encoded_classes = (raw_predictions.ravel() > 0).astype(int)
             else:
                 encoded_classes = np.argmax(raw_predictions, axis=1)
             yield self.classes_.take(encoded_classes, axis=0)
