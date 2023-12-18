@@ -342,7 +342,7 @@ class MiniBatchSparsePCA(_BaseSparsePCA):
     the data.  The amount of sparseness is controllable by the coefficient
     of the L1 penalty, given by the parameter alpha.
 
-    For an example of usage see:
+    For an example comparing sparse PCA to PCA see:
     - :ref:`sphx_glr_auto_examples_decomposition_plot_faces_decomposition.py`
 
     Read more in the :ref:`User Guide <SparsePCA>`.
