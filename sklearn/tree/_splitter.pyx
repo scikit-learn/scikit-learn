@@ -695,6 +695,8 @@ cdef inline int node_split_random(
     cdef bint has_missing = 0
     cdef intp_t n_left, n_right
     cdef bint missing_go_to_left
+    cdef bint separate_nan_and_non_nans = 0
+    cdef intp_t p
 
     cdef intp_t[::1] samples = splitter.samples
     cdef intp_t[::1] features = splitter.features
@@ -798,70 +800,105 @@ cdef inline int node_split_random(
         if has_missing:
             criterion.init_missing(n_missing)
 
-        # Draw a random threshold
-        current_split.threshold = rand_uniform(
-            min_feature_value,
-            max_feature_value,
-            random_state,
-        )
+        # In addition, we either randomly split the non-missing values
+        # or we split entirely by separating the non-missing
+        # and missing-values
+        separate_nan_and_non_nans = has_missing and (rand_int(0, 2, random_state) == 1)
 
-        # If there are missing values, then we randomly make all missing
-        # values go to the right, or left
-        missing_go_to_left = rand_int(0, 2, random_state)
-        criterion.missing_go_to_left = missing_go_to_left
+        if separate_nan_and_non_nans:
+            missing_go_to_left = 0
+            p = end - n_missing
+            n_left, n_right = end - start - n_missing, n_missing
 
-        if current_split.threshold == max_feature_value:
-            current_split.threshold = min_feature_value
+            if (n_left < min_samples_leaf or n_right < min_samples_leaf):
+                continue
 
-        # Partition
-        current_split.pos = partitioner.partition_samples(
-            current_split.threshold
-        )
+            criterion.reset()
+            criterion.missing_go_to_left = missing_go_to_left
+            criterion.update(p)
 
-        if missing_go_to_left:
-            n_left = current_split.pos - start + n_missing
-            n_right = end_non_missing - current_split.pos
-        else:
-            n_left = current_split.pos - start
-            n_right = end_non_missing - current_split.pos + n_missing
+            if ((criterion.weighted_n_left < min_weight_leaf) or
+                    (criterion.weighted_n_right < min_weight_leaf)):
+                continue
 
-        # Reject if min_samples_leaf is not guaranteed
-        if n_left < min_samples_leaf or n_right < min_samples_leaf:
-            continue
-
-        # Evaluate split
-        # At this point, the criterion has a view into the samples that was partitioned
-        # by the partitioner. The criterion will use the partition to evaluating the split.
-        criterion.reset()
-        criterion.update(current_split.pos)
-
-        # Reject if min_weight_leaf is not satisfied
-        if ((criterion.weighted_n_left < min_weight_leaf) or
-                (criterion.weighted_n_right < min_weight_leaf)):
-            continue
-
-        # Reject if monotonicity constraints are not satisfied
-        if (
-                with_monotonic_cst and
-                monotonic_cst[current_split.feature] != 0 and
-                not criterion.check_monotonicity(
-                    monotonic_cst[current_split.feature],
-                    lower_bound,
-                    upper_bound,
-                )
-        ):
-            continue
-
-        current_proxy_improvement = criterion.proxy_impurity_improvement()
-
-        if current_proxy_improvement > best_proxy_improvement:
-            if n_missing == 0:
-                current_split.missing_go_to_left = n_left > n_right
-            else:
+            current_proxy_improvement = criterion.proxy_impurity_improvement()
+            if current_proxy_improvement > best_proxy_improvement:
+                best_proxy_improvement = current_proxy_improvement
+                current_split.threshold = INFINITY
                 current_split.missing_go_to_left = missing_go_to_left
+                current_split.n_missing = n_missing
+                current_split.pos = p
+                best_split = current_split
+        else:
+            # Draw a random threshold
+            current_split.threshold = rand_uniform(
+                min_feature_value,
+                max_feature_value,
+                random_state,
+            )
 
-            best_proxy_improvement = current_proxy_improvement
-            best_split = current_split  # copy
+            if has_missing:
+                # If there are missing values, then we randomly make all missing
+                # values go to the right, or left
+                missing_go_to_left = rand_int(0, 2, random_state)
+            else:
+                missing_go_to_left = 0
+            criterion.missing_go_to_left = missing_go_to_left
+
+            if current_split.threshold == max_feature_value:
+                current_split.threshold = min_feature_value
+
+            # Partition
+            current_split.pos = partitioner.partition_samples(
+                current_split.threshold
+            )
+
+            if missing_go_to_left:
+                n_left = current_split.pos - start + n_missing
+                n_right = end_non_missing - current_split.pos
+            else:
+                n_left = current_split.pos - start
+                n_right = end_non_missing - current_split.pos + n_missing
+
+            # Reject if min_samples_leaf is not guaranteed
+            if n_left < min_samples_leaf or n_right < min_samples_leaf:
+                continue
+
+            # Evaluate split
+            # At this point, the criterion has a view into the samples that was partitioned
+            # by the partitioner. The criterion will use the partition to evaluating the split.
+            criterion.reset()
+            criterion.update(current_split.pos)
+
+            # Reject if min_weight_leaf is not satisfied
+            if ((criterion.weighted_n_left < min_weight_leaf) or
+                    (criterion.weighted_n_right < min_weight_leaf)):
+                continue
+
+            # Reject if monotonicity constraints are not satisfied
+            if (
+                    with_monotonic_cst and
+                    monotonic_cst[current_split.feature] != 0 and
+                    not criterion.check_monotonicity(
+                        monotonic_cst[current_split.feature],
+                        lower_bound,
+                        upper_bound,
+                    )
+            ):
+                continue
+
+            current_proxy_improvement = criterion.proxy_impurity_improvement()
+
+            if current_proxy_improvement > best_proxy_improvement:
+                current_split.n_missing = n_missing
+
+                if n_missing == 0:
+                    current_split.missing_go_to_left = n_left > n_right
+                else:
+                    current_split.missing_go_to_left = missing_go_to_left
+
+                best_proxy_improvement = current_proxy_improvement
+                best_split = current_split  # copy
 
     # Reorganize into samples[start:best.pos] + samples[best.pos:end]
     if best_split.pos < end:
@@ -1015,7 +1052,7 @@ cdef class DensePartitioner:
         # effectively. We need to also count the number of missing-values there are
         if missing_values_in_feature_mask is not None and missing_values_in_feature_mask[current_feature]:
             p, current_end = self.start, self.end - 1
-            # Missing values are placed at the end and do not participate in the sorting.
+            # Missing values are placed at the end and do not participate in the min/max
             while p <= current_end:
                 # Finds the right-most value that is not missing so that
                 # it can be swapped with missing values at its left.
@@ -1038,6 +1075,9 @@ cdef class DensePartitioner:
                     max_feature_value = current_feature_value
                 p += 1
         else:
+            min_feature_value = X[samples[self.start], current_feature]
+            max_feature_value = min_feature_value
+
             feature_values[self.start] = min_feature_value
             for p in range(self.start + 1, self.end):
                 current_feature_value = X[samples[p], current_feature]
