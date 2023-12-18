@@ -591,3 +591,18 @@ def test_class_of_interest_multiclass(pyplot, response_method):
             response_method=response_method,
             class_of_interest=None,
         )
+
+
+def test_subclass_named_constructors_return_type_is_subclass(pyplot):
+    """Check that named constructors return the correct type when subclassed.
+
+    Non-regression test for #27675
+    """
+    clf = LogisticRegression().fit(X, y)
+
+    class SubclassOfDisplay(DecisionBoundaryDisplay):
+        pass
+
+    curve = SubclassOfDisplay.from_estimator(estimator=clf, X=X)
+
+    assert isinstance(curve, SubclassOfDisplay)

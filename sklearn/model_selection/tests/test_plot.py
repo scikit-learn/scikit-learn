@@ -570,3 +570,38 @@ def test_validation_curve_xscale_from_param_range_provided_as_a_list(
     )
 
     assert display.ax_.get_xscale() == xscale
+
+
+def test_learning_curve_display_named_constructor_return_type(pyplot, data):
+    """Check that named constructors return the correct type when subclassed
+
+    Non-regression test for #27675
+    """
+    X, y = data
+    estimator = DecisionTreeClassifier(random_state=0)
+
+    class SubclassOfDisplay(LearningCurveDisplay):
+        pass
+
+    display = SubclassOfDisplay.from_estimator(estimator, X, y)
+
+    assert isinstance(display, SubclassOfDisplay)
+
+
+def test_validation_curve_display_named_constructor_return_type(pyplot, data):
+    """Check that named constructors return the correct type when subclassed
+
+    Non-regression test for #27675
+    """
+    X, y = data
+    estimator = DecisionTreeClassifier(random_state=0)
+    param_name, param_range = "max_depth", [1, 3, 5]
+
+    class SubclassOfDisplay(ValidationCurveDisplay):
+        pass
+
+    display = SubclassOfDisplay.from_estimator(
+        estimator, X, y, param_name=param_name, param_range=param_range
+    )
+
+    assert isinstance(display, SubclassOfDisplay)

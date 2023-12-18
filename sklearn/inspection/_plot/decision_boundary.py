@@ -396,7 +396,7 @@ class DecisionBoundaryDisplay:
         if ylabel is None:
             ylabel = X.columns[1] if hasattr(X, "columns") else ""
 
-        display = DecisionBoundaryDisplay(
+        display = cls(
             xx0=xx0,
             xx1=xx1,
             response=response.reshape(xx0.shape),
