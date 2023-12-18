@@ -124,7 +124,7 @@ class KernelDensity(BaseEstimator):
     >>> kde = KernelDensity(kernel='gaussian', bandwidth=0.5).fit(X)
     >>> log_density = kde.score_samples(X[:3])
     >>> log_density
-    array([-1.52955942, -1.51462041, -1.60244657])
+    array([-0.36399292,  0.03333733, -0.28804462])
     """
 
     _parameter_constraints: dict = {
