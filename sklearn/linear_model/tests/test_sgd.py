@@ -2196,3 +2196,16 @@ def test_sgd_numerical_consistency(SGDEstimator):
     sgd_32.fit(X_32, Y_32)
 
     assert_allclose(sgd_64.coef_, sgd_32.coef_)
+
+
+# TODO(1.6): remove
+@pytest.mark.parametrize("Estimator", [SGDClassifier, SGDOneClassSVM])
+def test_loss_attribute_deprecation(Estimator):
+    # Check that we raise the proper deprecation warning if accessing
+    # `loss_function_`.
+    X = np.array([[1, 2], [3, 4]])
+    y = np.array([1, 0])
+    est = Estimator().fit(X, y)
+
+    with pytest.warns(FutureWarning, match="`loss_function_` was deprecated"):
+        est.loss_function_
