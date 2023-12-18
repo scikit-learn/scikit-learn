@@ -355,7 +355,9 @@ class PolynomialChaosRegressor(BaseEstimator, RegressorMixin):
         .. math::
             y = \sum_u c_u \Psi_u(\xi)
 
-        the Polynomial Chaos-based Sobol indices can be computed as
+        where :math:`c_u` are the coefficients and :math:`\Psi_u` are the
+        orthogonal polynomials in the expansion, the Polynomial Chaos-based
+        Sobol indices can be computed as
 
         .. math::
             S_{\{i_0, i_1, \ldots, i_s\}} = \sum_{u \in \mathcal{I}} c_u^2
@@ -431,7 +433,9 @@ class PolynomialChaosRegressor(BaseEstimator, RegressorMixin):
         .. math::
             y = \sum_u c_u \Psi_u(\xi)
 
-        the main Polynomial Chaos-based Sobol indices can be computed as
+        where :math:`c_u` are the coefficients and :math:`\Psi_u` are the
+        orthogonal polynomials in the expansion, the main Polynomial
+        Chaos-based Sobol indices can be computed as
 
         .. math::
             S_{j} = \sum_{u \in \mathcal{I}_j} c_u^2
@@ -458,7 +462,9 @@ class PolynomialChaosRegressor(BaseEstimator, RegressorMixin):
         .. math::
             y = \sum_u c_u \Psi_u(\xi)
 
-        the main Polynomial Chaos-based Sobol indices can be computed as
+        where :math:`c_u` are the coefficients and :math:`\Psi_u` are the
+        orthogonal polynomials in the expansion, the main Polynomial
+        Chaos-based Sobol indices can be computed as
 
         .. math::
             S_{j}^T = \sum_{u \in \mathcal{I}_j^T} c_u^2
@@ -491,7 +497,9 @@ class PolynomialChaosRegressor(BaseEstimator, RegressorMixin):
         .. math::
             y = \sum_u c_u \Psi_u(\xi)
 
-        the mean of the response :math:`y` is
+        where :math:`c_u` are the coefficients and :math:`\Psi_u` are the
+        orthogonal polynomials in the expansion, the mean of the response
+        :math:`y` is
 
         .. math::
             \mathbb{E}[y] = c_0
@@ -515,7 +523,9 @@ class PolynomialChaosRegressor(BaseEstimator, RegressorMixin):
         .. math::
             y = \sum_u c_u \Psi_u(\xi)
 
-        the variance of the response :math:`y` is
+        where :math:`c_u` are the coefficients and :math:`\Psi_u` are the
+        orthogonal polynomials in the expansion, the variance of the response
+        :math:`y` is
 
         .. math::
             \mathbb{V}[y] = \sum_{u > 0} c_u^2 \mathbb{E}[\Psi_u^2]
