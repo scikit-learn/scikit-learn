@@ -756,10 +756,13 @@ def test_sgd_proba(klass):
         p = clf.predict_proba([[-1, -1]])
         assert p[0, 1] < 0.5
 
-        p = clf.predict_log_proba([[3, 2]])
-        assert p[0, 1] > p[0, 0]
-        p = clf.predict_log_proba([[-1, -1]])
-        assert p[0, 1] < p[0, 0]
+        # If predict_proba is 0, we get "RuntimeWarning: divide by zero encountered
+        # in log". We avoid it here.
+        with np.errstate(divide="ignore"):
+            p = clf.predict_log_proba([[3, 2]])
+            assert p[0, 1] > p[0, 0]
+            p = clf.predict_log_proba([[-1, -1]])
+            assert p[0, 1] < p[0, 0]
 
     # log loss multiclass probability estimates
     clf = klass(loss="log_loss", alpha=0.01, max_iter=10).fit(X2, Y2)
