@@ -157,6 +157,9 @@ conda_build_metadata_list = [
             "scipy": "min",
             "matplotlib": "min",
             "threadpoolctl": "2.2.0",
+            # Regression have been observed with Cython>=3.0.0.
+            # See: https://github.com/scikit-learn/scikit-learn/issues/27086
+            "cython": "<3.0.0",
         },
     },
     {
@@ -165,7 +168,13 @@ conda_build_metadata_list = [
         "platform": "linux-64",
         "channel": "conda-forge",
         "conda_dependencies": common_dependencies_without_coverage + ["ccache"],
-        "package_constraints": {"python": "3.8", "blas": "[build=openblas]"},
+        "package_constraints": {
+            "python": "3.8",
+            "blas": "[build=openblas]",
+            # Regression have been observed with Cython>=3.0.0.
+            # See: https://github.com/scikit-learn/scikit-learn/issues/27086
+            "cython": "<3.0.0",
+        },
     },
     {
         "build_name": "pylatest_pip_openblas_pandas",
@@ -229,6 +238,9 @@ conda_build_metadata_list = [
         "package_constraints": {
             "blas": "[build=openblas]",
             "python": "3.9",
+            # Regression have been observed with Cython>=3.0.0.
+            # See: https://github.com/scikit-learn/scikit-learn/issues/27086
+            "cython": "<3.0.0",
         },
     },
     {
@@ -243,6 +255,9 @@ conda_build_metadata_list = [
         "package_constraints": {
             "python": "3.8",
             "blas": "[build=mkl]",
+            # Regression have been observed with Cython>=3.0.0.
+            # See: https://github.com/scikit-learn/scikit-learn/issues/27086
+            "cython": "<3.0.0",
         },
     },
     {
@@ -305,6 +320,12 @@ conda_build_metadata_list = [
             "python": "3.9",
             # XXX: sphinx > 6.0 does not correctly generate searchindex.js
             "sphinx": "6.0.0",
+            # Regression have been observed with Cython>=3.0.0.
+            # See: https://github.com/scikit-learn/scikit-learn/issues/27086
+            "cython": "<3.0.0",
+            # seaborn 0.12.2 raises deprecation warnings appearing in the documentation
+            # We should remove this constraint when seaborn 0.13 is released
+            "pandas": "<2.1",
         },
     },
     {
@@ -317,6 +338,9 @@ conda_build_metadata_list = [
         ) + ["pip", "ccache"],
         "package_constraints": {
             "python": "3.9",
+            # Regression have been observed with Cython>=3.0.0.
+            # See: https://github.com/scikit-learn/scikit-learn/issues/27086
+            "cython": "<3.0.0",
         },
     },
 ]
@@ -339,6 +363,9 @@ pip_build_metadata_list = [
             "pytest": "min",
             "pytest-cov": "min",
             # no pytest-xdist because it causes issue on 32bit
+            # Regression have been observed with Cython>=3.0.0.
+            # See: https://github.com/scikit-learn/scikit-learn/issues/27086
+            "cython": "<3.0.0",
         },
         # same Python version as in debian-32 build
         "python_version": "3.9.2",
@@ -353,7 +380,13 @@ pip_build_metadata_list = [
             "pytest",
             "pytest-xdist",
         ],
-        "package_constraints": {"joblib": "min", "threadpoolctl": "min"},
+        "package_constraints": {
+            "joblib": "min",
+            "threadpoolctl": "min",
+            # Regression have been observed with Cython>=3.0.0.
+            # See: https://github.com/scikit-learn/scikit-learn/issues/27086
+            "cython": "<3.0.0",
+        },
         "python_version": "3.10.4",
     },
 ]
@@ -556,15 +589,15 @@ def check_conda_version():
     # Avoid issues with glibc (https://github.com/conda/conda-lock/issues/292)
     # or osx (https://github.com/conda/conda-lock/issues/408) virtual package.
     # The glibc one has been fixed in conda 23.1.0 and the osx has been fixed
-    # in main and will be fixed when conda >= 23.6 is released.
+    # in conda 23.7.0.
     conda_info_output = execute_command(["conda", "info", "--json"])
 
     conda_info = json.loads(conda_info_output)
     conda_version = Version(conda_info["conda_version"])
 
-    if Version("22.9.0") < conda_version < Version("23.6"):
+    if Version("22.9.0") < conda_version < Version("23.7"):
         raise RuntimeError(
-            f"conda version should be <= 22.9.0 or >= 23.6 got: {conda_version}"
+            f"conda version should be <= 22.9.0 or >= 23.7 got: {conda_version}"
         )
 
 

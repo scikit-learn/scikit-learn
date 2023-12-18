@@ -24,6 +24,7 @@ from ..model_selection import check_cv
 # mypy error: Module 'sklearn.utils' has no attribute 'arrayfuncs'
 from ..utils import arrayfuncs, as_float_array, check_random_state  # type: ignore
 from ..utils._param_validation import Hidden, Interval, StrOptions, validate_params
+from ..utils.metadata_routing import _RoutingNotSupportedMixin
 from ..utils.parallel import Parallel, delayed
 from ._base import LinearModel, LinearRegression, _deprecate_normalize, _preprocess_data
 
@@ -673,12 +674,6 @@ def _lars_path_solver(
                 # The system is becoming too ill-conditioned.
                 # We have degenerate vectors in our active set.
                 # We'll 'drop for good' the last regressor added.
-
-                # Note: this case is very rare. It is no longer triggered by
-                # the test suite. The `equality_tolerance` margin added in 0.16
-                # to get early stopping to work consistently on all versions of
-                # Python including 32 bit Python under Windows seems to make it
-                # very difficult to trigger the 'drop for good' strategy.
                 warnings.warn(
                     "Regressors in active set degenerate. "
                     "Dropping a regressor, after %i iterations, "
@@ -686,7 +681,7 @@ def _lars_path_solver(
                     "with an active set of %i regressors, and "
                     "the smallest cholesky pivot element being %.3e."
                     " Reduce max_iter or increase eps parameters."
-                    % (n_iter, alpha, n_active, diag),
+                    % (n_iter, alpha.item(), n_active, diag),
                     ConvergenceWarning,
                 )
 
@@ -714,7 +709,7 @@ def _lars_path_solver(
                 "are small and the current value of alpha is no "
                 "longer well controlled. %i iterations, alpha=%.3e, "
                 "previous alpha=%.3e, with an active set of %i "
-                "regressors." % (n_iter, alpha, prev_alpha, n_active),
+                "regressors." % (n_iter, alpha.item(), prev_alpha.item(), n_active),
                 ConvergenceWarning,
             )
             break
@@ -1529,7 +1524,7 @@ def _lars_path_residues(
     return alphas, active, coefs, residues.T
 
 
-class LarsCV(Lars):
+class LarsCV(_RoutingNotSupportedMixin, Lars):
     """Cross-validated Least Angle Regression model.
 
     See glossary entry for :term:`cross-validation estimator`.
