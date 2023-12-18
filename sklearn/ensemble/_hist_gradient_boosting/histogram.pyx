@@ -242,9 +242,10 @@ cdef class HistogramBuilder:
         cdef:
             unsigned int bin_idx = 0
             unsigned char in_left_binset
-            BITSET_INNER_DTYPE_C* p_left_cat_bitset = &left_cat_bitset[0]
+            BITSET_INNER_DTYPE_C* p_left_cat_bitset
 
         if is_categorical:
+            p_left_cat_bitset = &left_cat_bitset[0]
             for bin_idx in range(self.n_bins):
                 in_left_binset = in_bitset(p_left_cat_bitset, bin_idx)
                 if (is_left_child and in_left_binset) or (not is_left_child and not in_left_binset):
