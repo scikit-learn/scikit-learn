@@ -24,7 +24,7 @@ def yield_namespace_device_dtype_combinations():
         The name of the device on which to allocate the arrays. Can be None to
         indicate that the default value should be used.
 
-    dtype : str
+    dtype_name : str
         The name of the data type to use for arrays. Can be None to indicate
         that the default value should be used.
     """
@@ -204,30 +204,6 @@ class _ArrayAPIWrapper:
 
     def __eq__(self, other):
         return self._namespace == other._namespace
-
-    def take(self, X, indices, *, axis=0):
-        # When array_api supports `take` we can use this directly
-        # https://github.com/data-apis/array-api/issues/177
-        if self._namespace.__name__ == "numpy.array_api":
-            X_np = numpy.take(X, indices, axis=axis)
-            return self._namespace.asarray(X_np)
-
-        # We only support axis in (0, 1) and ndim in (1, 2) because that is all we need
-        # in scikit-learn
-        if axis not in {0, 1}:
-            raise ValueError(f"Only axis in (0, 1) is supported. Got {axis}")
-
-        if X.ndim not in {1, 2}:
-            raise ValueError(f"Only X.ndim in (1, 2) is supported. Got {X.ndim}")
-
-        if axis == 0:
-            if X.ndim == 1:
-                selected = [X[i] for i in indices]
-            else:  # X.ndim == 2
-                selected = [X[i, :] for i in indices]
-        else:  # axis == 1
-            selected = [X[:, i] for i in indices]
-        return self._namespace.stack(selected, axis=axis)
 
     def isdtype(self, dtype, kind):
         return isdtype(dtype, kind, xp=self._namespace)
@@ -468,7 +444,9 @@ def _weighted_sum(sample_score, sample_weight, normalize=False, xp=None):
         sample_score = xp.astype(xp.asarray(sample_score, device="cpu"), xp.float64)
 
     if sample_weight is not None:
-        sample_weight = xp.asarray(sample_weight, dtype=sample_score.dtype)
+        sample_weight = xp.asarray(
+            sample_weight, dtype=sample_score.dtype, device=device(sample_score)
+        )
         if not xp.isdtype(sample_weight.dtype, "real floating"):
             sample_weight = xp.astype(sample_weight, xp.float64)
 
