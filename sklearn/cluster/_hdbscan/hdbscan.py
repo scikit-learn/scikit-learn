@@ -41,7 +41,7 @@ from warnings import warn
 import numpy as np
 from scipy.sparse import csgraph, issparse
 
-from ...base import BaseEstimator, ClusterMixin
+from ...base import BaseEstimator, ClusterMixin, _fit_context
 from ...metrics import pairwise_distances
 from ...metrics._dist_metrics import DistanceMetric
 from ...neighbors import BallTree, KDTree, NearestNeighbors
@@ -104,21 +104,29 @@ def _brute_mst(mutual_reachability, min_samples):
     if not issparse(mutual_reachability):
         return mst_from_mutual_reachability(mutual_reachability)
 
-    # Check connected component on mutual reachability
-    # If more than one component, it means that even if the distance matrix X
-    # has one component, there exists with less than `min_samples` neighbors
-    if (
-        csgraph.connected_components(
-            mutual_reachability, directed=False, return_labels=False
-        )
-        > 1
-    ):
+    # Check if the mutual reachability matrix has any rows which have
+    # less than `min_samples` non-zero elements.
+    indptr = mutual_reachability.indptr
+    num_points = mutual_reachability.shape[0]
+    if any((indptr[i + 1] - indptr[i]) < min_samples for i in range(num_points)):
         raise ValueError(
             f"There exists points with fewer than {min_samples} neighbors. Ensure"
             " your distance matrix has non-zero values for at least"
             f" `min_sample`={min_samples} neighbors for each points (i.e. K-nn"
             " graph), or specify a `max_distance` in `metric_params` to use when"
             " distances are missing."
+        )
+    # Check connected component on mutual reachability.
+    # If more than one connected component is present,
+    # it means that the graph is disconnected.
+    n_components = csgraph.connected_components(
+        mutual_reachability, directed=False, return_labels=False
+    )
+    if n_components > 1:
+        raise ValueError(
+            f"Sparse mutual reachability matrix has {n_components} connected"
+            " components. HDBSCAN cannot be perfomed on a disconnected graph. Ensure"
+            " that the sparse distance matrix has only one connected component."
         )
 
     # Compute the minimum spanning tree for the sparse graph
@@ -680,6 +688,10 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
         self.store_centers = store_centers
         self.copy = copy
 
+    @_fit_context(
+        # HDBSCAN.metric is not validated yet
+        prefer_skip_nested_validation=False
+    )
     def fit(self, X, y=None):
         """Find clusters based on hierarchical density-based clustering.
 
@@ -698,7 +710,11 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
         self : object
             Returns self.
         """
-        self._validate_params()
+        if self.metric == "precomputed" and self.store_centers is not None:
+            raise ValueError(
+                "Cannot store centers when using a precomputed distance matrix."
+            )
+
         self._metric_params = self.metric_params or {}
         if self.metric != "precomputed":
             # Non-precomputed matrices may contain non-finite values.

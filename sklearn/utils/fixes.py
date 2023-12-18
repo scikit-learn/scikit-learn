@@ -10,8 +10,6 @@ at which the fix is no longer needed.
 #
 # License: BSD 3 clause
 
-import sys
-from importlib import resources
 
 import numpy as np
 import scipy
@@ -241,57 +239,6 @@ else:
             _sparse_min_or_max(X, axis, np.fmin),
             _sparse_min_or_max(X, axis, np.fmax),
         )
-
-
-###############################################################################
-# Backport of Python 3.9's importlib.resources
-# TODO: Remove when Python 3.9 is the minimum supported version
-
-
-def _open_text(data_module, data_file_name):
-    if sys.version_info >= (3, 9):
-        return resources.files(data_module).joinpath(data_file_name).open("r")
-    else:
-        return resources.open_text(data_module, data_file_name)
-
-
-def _open_binary(data_module, data_file_name):
-    if sys.version_info >= (3, 9):
-        return resources.files(data_module).joinpath(data_file_name).open("rb")
-    else:
-        return resources.open_binary(data_module, data_file_name)
-
-
-def _read_text(descr_module, descr_file_name):
-    if sys.version_info >= (3, 9):
-        return resources.files(descr_module).joinpath(descr_file_name).read_text()
-    else:
-        return resources.read_text(descr_module, descr_file_name)
-
-
-def _path(data_module, data_file_name):
-    if sys.version_info >= (3, 9):
-        return resources.as_file(resources.files(data_module).joinpath(data_file_name))
-    else:
-        return resources.path(data_module, data_file_name)
-
-
-def _is_resource(data_module, data_file_name):
-    if sys.version_info >= (3, 9):
-        return resources.files(data_module).joinpath(data_file_name).is_file()
-    else:
-        return resources.is_resource(data_module, data_file_name)
-
-
-def _contents(data_module):
-    if sys.version_info >= (3, 9):
-        return (
-            resource.name
-            for resource in resources.files(data_module).iterdir()
-            if resource.is_file()
-        )
-    else:
-        return resources.contents(data_module)
 
 
 # For +1.25 NumPy versions exceptions and warnings are being moved
