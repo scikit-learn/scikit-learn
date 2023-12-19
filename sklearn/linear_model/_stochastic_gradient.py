@@ -1142,9 +1142,9 @@ class SGDClassifier(BaseSGDClassifier):
 
     loss_function_ : concrete ``LossFunction``
 
-        .. deprecated:: 1.4.0
-            Attribute `loss_function_` was deprecated in version 1.4.0 and will be
-            removed in 1.6.0.
+        .. deprecated:: 1.4
+            Attribute `loss_function_` was deprecated in version 1.4 and will be
+            removed in 1.6.
 
     classes_ : array of shape (n_classes,)
 
@@ -2136,9 +2136,9 @@ class SGDOneClassSVM(BaseSGD, OutlierMixin):
 
     loss_function_ : concrete ``LossFunction``
 
-        .. deprecated:: 1.4.0
-            ``loss_function_`` was deprecated in version 1.4.0 and will be removed in
-            1.6.0.
+        .. deprecated:: 1.4
+            ``loss_function_`` was deprecated in version 1.4 and will be removed in
+            1.6.
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
