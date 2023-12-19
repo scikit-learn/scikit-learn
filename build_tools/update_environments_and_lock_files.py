@@ -276,6 +276,7 @@ conda_build_metadata_list = [
             "numpydoc",
             "sphinx-prompt",
             "plotly",
+            "polars",
             "pooch",
         ],
         "pip_dependencies": ["sphinxext-opengraph"],
@@ -294,6 +295,7 @@ conda_build_metadata_list = [
             "sphinx-prompt": "min",
             "sphinxext-opengraph": "min",
             "plotly": "min",
+            "polars": "min",
         },
     },
     {
@@ -312,6 +314,7 @@ conda_build_metadata_list = [
             "numpydoc",
             "sphinx-prompt",
             "plotly",
+            "polars",
             "pooch",
             "sphinxext-opengraph",
         ],
