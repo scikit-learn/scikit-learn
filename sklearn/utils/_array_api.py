@@ -456,104 +456,77 @@ def _add_to_diagonal(array, value, xp):
             array[i, i] += value
 
 
-def _weighted_sum(sample_score, sample_weight, normalize=False, xp=None):
-    # XXX: this function accepts Array API input but returns a Python scalar
-    # float. The call to float() is convenient because it removes the need to
-    # move back results from device to host memory (e.g. calling `.cpu()` on a
-    # torch tensor). However, this might interact in unexpected ways (break?)
-    # with lazy Array API implementations. See:
-    # https://github.com/data-apis/array-api/issues/642
-    input_arrays = [sample_score]
-    if sample_weight is not None:
-        input_arrays = [sample_score, sample_weight]
+def _average(a, axis=None, weights=None, normalize=True, returned=False, xp=None):
+    """Port of np.average to support the Array API."""
+    if returned:
+        raise NotImplementedError
+
+    input_arrays = [a]
+    if weights is not None:
+        input_arrays.append(weights)
 
     if xp is None:
         xp, _ = get_namespace(*input_arrays)
 
     device_ = device(*input_arrays)
 
-    if normalize and _is_numpy_namespace(xp):
-        sample_score_np = numpy.asarray(sample_score)
-        if sample_weight is not None:
-            sample_weight_np = numpy.asarray(sample_weight)
-        else:
-            sample_weight_np = None
-        return float(numpy.average(sample_score_np, weights=sample_weight_np))
+    if _is_numpy_namespace(xp) and normalize:
+        return xp.asarray(numpy.average(a, axis=axis, weights=weights))
 
-    if sample_weight is None:
-        sum_ = float(xp.sum(sample_score))
-        n_sample = sample_score.shape[0]
-        if normalize and n_sample != 0:
-            return sum_ / n_sample
-        return sum_
+    output_dtype = None
+    output_dtype_name = None
 
-    sample_weight = xp.asarray(sample_weight)
-    dtype_kinds = set()
+    if xp.isdtype(a, "bool"):
+        a = xp.astype(a, xp.int32)
+    if weights is not None and xp.isdtype(weights, "bool"):
+        weights = xp.astype(weights, xp.int32)
 
-    if normalize:
-        scale = float(xp.sum(sample_weight))
-        if scale != 0:
-            dtype_kinds.add("real floating")
-        else:
-            normalize = False
+    if any(
+        (not xp.isdtype(input_array, "numeric"))
+        or xp.isdtype(input_array, "complex floating")
+        for input_array in input_arrays
+    ):
+        raise ValueError("Expecting only integral or real floating values.")
 
-    for array in [sample_score, sample_weight]:
-        known_kind = False
-        for kind in ["real_floating", "integral"]:
-            if xp.isdtype(array.dtype, kind):
-                dtype_kinds.add(kind)
-                known_kind = True
-                break
-        if not known_kind:
-            dtype_kinds.add("other")
+    if weights is None and xp.isdtype(a.dtype, "integral"):
+        output_dtype_name = "float64"
+    elif weights is None:
+        output_dtype = a.dtype
+    elif xp.isdtype(a.dtype, "real floating") and xp.isdtype(weights, "real floating"):
+        output_dtype = (
+            a.dtype
+            if (xp.finfo(a.dtype).bits >= xp.finfo(a.dtype).bits)
+            else weights.dtype
+        )
+    else:
+        output_dtype_name = "float64"
 
-    cast_to_float64 = len(dtype_kinds) > 1
+    cast_to_float64 = (output_dtype_name == "float64") or (
+        xp.finfo(output_dtype).bits == 64
+    )
 
     if cast_to_float64 and not _supports_dtype(xp, device_, "float64"):
-        sample_score = _convert_to_numpy(sample_score, copy=True)
-        sample_weight = _convert_to_numpy(sample_weight, copy=True)
-        return _weighted_sum(sample_score, sample_weight, normalize=normalize)
-
-    if cast_to_float64:
-        sample_score = xp.asarray(sample_score, dtype=xp.float64, device=device_)
-        sample_weight = xp.asarray(sample_weight, dtype=xp.float64, device=device_)
-
-    if normalize:
-        sample_score = sample_score / scale
-
-    return float(sample_score @ sample_weight)
-
-
-def _flatten_if_single(array, xp):
-    if array.size == 1:
-        return xp.reshape(array, (-1,))[0]
-
-    return array
-
-
-def _average(array, axis=None, weights=None, xp=None):
-    """Port of np.average to support the Array API."""
-    if xp is None:
-        xp, _ = get_namespace(array)
-    if _is_numpy_namespace(xp):
-        return _flatten_if_single(
-            xp.asarray(numpy.average(array, axis=axis, weights=weights)), xp
+        a = _convert_to_numpy(a, copy=True)
+        weights = _convert_to_numpy(weights, copy=True)
+        return xp.asarray(
+            _average(
+                a, axis=axis, normalize=normalize, returned=returned, weights=weights
+            ),
+            dtype=xp.float32,
+            device=device_,
         )
 
-    if (
-        not xp.isdtype(array.dtype, "real floating")
-        or weights is not None
-        and not xp.isdtype(weights.dtype, "real floating")
-    ):
-        raise ValueError(
-            "If not numpy arrays, inputs are expected to have real floating dtype."
-        )
+    if output_dtype is None:
+        output_dtype = getattr(xp, output_dtype_name)
+
+    a = xp.astype(a, output_dtype)
 
     if weights is None:
-        return _flatten_if_single(xp.mean(array, axis=axis), xp)
+        return xp.mean(a, axis=axis)
 
-    # Sanity checks
-    if array.shape != weights.shape:
+    weights = xp.astype(weights, output_dtype)
+
+    if a.shape != weights.shape:
         if axis is None:
             raise TypeError(
                 "Axis must be specified when shapes of a and weights differ."
@@ -562,19 +535,22 @@ def _average(array, axis=None, weights=None, xp=None):
             raise TypeError("1D weights expected when shapes of a and weights differ.")
         else:
             # If weights are 1D, add singleton dimensions for broadcasting
-            shape = [1] * array.ndim
-            shape[axis] = array.shape[axis]
+            shape = [1] * a.ndim
+            shape[axis] = a.shape[axis]
             weights = xp.reshape(weights, shape)
-        if weights.shape[axis] != array.shape[axis]:
+        if weights.shape[axis] != a.shape[axis]:
             raise ValueError("Length of weights not compatible with specified axis.")
+
+    sum_ = xp.sum(xp.multiply(a, weights), axis=axis)
+
+    if not normalize:
+        return sum_
 
     scale = xp.sum(weights, axis=axis)
     if xp.any(scale == 0.0):
         raise ZeroDivisionError("Weights sum to zero, can't be normalized")
 
-    return _flatten_if_single(
-        xp.sum(xp.multiply(array, weights), axis=axis) / scale, xp
-    )
+    return sum_ / scale
 
 
 def _nanmin(X, axis=None):

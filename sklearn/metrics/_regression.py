@@ -920,7 +920,7 @@ def _assemble_r2_explained_variance(
     else:
         avg_weights = multioutput
 
-    return _average(output_scores, weights=avg_weights)
+    return xp.reshape(_average(output_scores, weights=avg_weights), (-1,))[0]
 
 
 @validate_params(
