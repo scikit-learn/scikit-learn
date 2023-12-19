@@ -811,7 +811,7 @@ def cluster_optics_xi(
     --------
 
     >>> from sklearn.cluster import cluster_optics_xi
-    >>> from numpy import np
+    >>> import numpy as np
     >>> reachability = np.array([np.inf, 3.16227766, 1.41421356, 4.12310563, 1., 5.])
     >>> predecessor = np.array([-1, 0, 1, 5, 3, 2])
     >>> ordering = np.array([0, 1, 2, 5, 3, 4])
