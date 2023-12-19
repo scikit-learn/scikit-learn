@@ -137,7 +137,7 @@ plt.show()
 # %%
 # Enriched estimator displays
 # ---------------------------
-# Estimators displays have been enriched: if we look at `hist`, defined above:
+# Estimators displays have been enriched: if we look at `forest`, defined above:
 forest
 
 # %%
