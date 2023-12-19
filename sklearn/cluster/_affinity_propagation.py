@@ -278,6 +278,21 @@ def affinity_propagation(
     ----------
     Brendan J. Frey and Delbert Dueck, "Clustering by Passing Messages
     Between Data Points", Science Feb. 2007
+
+    Examples
+    --------
+
+    >>> from sklearn.cluster import affinity_propagation
+    >>> import numpy as np
+    >>> S = np.array([[-0.  , -1.41, -4.47, -5.83],
+    ...               [-1.41, -0.  , -4.24, -5.66],
+    ...               [-4.47, -4.24, -0.  , -1.41],
+    ...               [-5.83, -5.66, -1.41, -0.  ]])
+    >>> cluster_centers_indices, labels = affinity_propagation(S, random_state=0)
+    >>> cluster_centers_indices
+    array([1, 2])
+    >>> labels
+    array([0, 0, 1, 1])
     """
     estimator = AffinityPropagation(
         damping=damping,
