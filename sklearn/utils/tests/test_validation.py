@@ -1775,7 +1775,7 @@ def test_is_polars_df_other_libraries(constructor_name, minversion):
         assert _is_polars_df(df)
 
 
-def test_is_polars_df_pandas_not_installed():
+def test_is_polars_df_for_duck_typed_polars_dataframe():
     """Check _is_polars_df for object that looks like a polars dataframe"""
 
     class NotAPolarsDataFrame:
@@ -1992,7 +1992,7 @@ def test_check_array_multiple_extensions(
 
 
 def test_num_samples_dataframe_protocol():
-    """Use DataFrame protocol to get n_samples from polars dataframe."""
+    """Use the DataFrame interchange protocol to get n_samples from polars."""
     pl = pytest.importorskip("polars")
 
     df = pl.DataFrame({"a": [1, 2, 3], "b": [4, 5, 6]})

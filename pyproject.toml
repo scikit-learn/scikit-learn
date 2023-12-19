@@ -4,19 +4,13 @@ requires = [
     "setuptools",
     "wheel",
     "Cython>=0.29.33",
-
-    # Starting with NumPy 1.25, NumPy is (by default) as far back compatible
-    # as oldest-support-numpy was (customizable with a NPY_TARGET_VERSION
-    # define).  For older Python versions continue using oldest-support-numpy.
-    "numpy>=1.25; python_version>='3.9'",
-    "oldest-supported-numpy; python_version<'3.9'",
-
-    "scipy>=1.5.0",
+    "numpy>=1.25",
+    "scipy>=1.6.0",
 ]
 
 [tool.black]
 line-length = 88
-target_version = ['py38', 'py39', 'py310']
+target_version = ['py39', 'py310', 'py311']
 preview = true
 exclude = '''
 /(

@@ -49,6 +49,7 @@ from ..model_selection._validation import _safe_split
 from ..pipeline import make_pipeline
 from ..preprocessing import StandardScaler, scale
 from ..random_projection import BaseRandomProjection
+from ..tree import DecisionTreeClassifier, DecisionTreeRegressor
 from ..utils._array_api import (
     _convert_to_numpy,
     get_namespace,
@@ -310,11 +311,15 @@ def _yield_outliers_checks(estimator):
 
 
 def _yield_array_api_checks(estimator):
-    for array_namespace, device, dtype in yield_namespace_device_dtype_combinations():
+    for (
+        array_namespace,
+        device,
+        dtype_name,
+    ) in yield_namespace_device_dtype_combinations():
         yield partial(
             check_array_api_input,
             array_namespace=array_namespace,
-            dtype=dtype,
+            dtype_name=dtype_name,
             device=device,
         )
 
@@ -436,13 +441,16 @@ def _construct_instance(Estimator):
             # Heterogeneous ensemble classes (i.e. stacking, voting)
             if issubclass(Estimator, RegressorMixin):
                 estimator = Estimator(
-                    estimators=[("est1", Ridge(alpha=0.1)), ("est2", Ridge(alpha=1))]
+                    estimators=[
+                        ("est1", DecisionTreeRegressor(max_depth=3, random_state=0)),
+                        ("est2", DecisionTreeRegressor(max_depth=3, random_state=1)),
+                    ]
                 )
             else:
                 estimator = Estimator(
                     estimators=[
-                        ("est1", LogisticRegression(C=0.1)),
-                        ("est2", LogisticRegression(C=1)),
+                        ("est1", DecisionTreeClassifier(max_depth=3, random_state=0)),
+                        ("est2", DecisionTreeClassifier(max_depth=3, random_state=1)),
                     ]
                 )
         else:
@@ -860,7 +868,7 @@ def check_array_api_input(
     estimator_orig,
     array_namespace,
     device=None,
-    dtype="float64",
+    dtype_name="float64",
     check_values=False,
 ):
     """Check that the estimator can work consistently with the Array API
@@ -871,10 +879,10 @@ def check_array_api_input(
     When check_values is True, it also checks that calling the estimator on the
     array_api Array gives the same results as ndarrays.
     """
-    xp, device, dtype = _array_api_for_tests(array_namespace, device, dtype)
+    xp = _array_api_for_tests(array_namespace, device)
 
     X, y = make_classification(random_state=42)
-    X = X.astype(dtype, copy=False)
+    X = X.astype(dtype_name, copy=False)
 
     X = _enforce_estimator_tags_X(estimator_orig, X)
     y = _enforce_estimator_tags_y(estimator_orig, y)
@@ -1003,14 +1011,14 @@ def check_array_api_input_and_values(
     estimator_orig,
     array_namespace,
     device=None,
-    dtype="float64",
+    dtype_name="float64",
 ):
     return check_array_api_input(
         name,
         estimator_orig,
         array_namespace=array_namespace,
         device=device,
-        dtype=dtype,
+        dtype_name=dtype_name,
         check_values=True,
     )
 
