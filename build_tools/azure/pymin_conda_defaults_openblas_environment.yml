@@ -12,7 +12,6 @@ dependencies:
   - joblib
   - threadpoolctl=2.2.0
   - matplotlib=3.3.4  # min
-  - pandas
   - pyamg
   - pytest
   - pytest-xdist=2.5.0
