@@ -720,6 +720,23 @@ def cluster_optics_dbscan(*, reachability, core_distances, ordering, eps):
     -------
     labels_ : array of shape (n_samples,)
         The estimated labels.
+
+    Examples
+    --------
+
+    >>> from sklearn.cluster import cluster_optics_dbscan
+    >>> import numpy as np
+    >>> reachability = np.array([np.inf, 3.16227766, 1.41421356, 4.12310563, 1., 5.])
+    >>> core_distances = np.array([3.16227766, 1.41421356, 1.41421356, 1., 1., 4.12310563])
+    >>> ordering = np.array([0, 1, 2, 5, 3, 4])
+    >>> eps = 4.5
+    >>> labels_ = cluster_optics_dbscan(
+    ...   reachability=reachability,
+    ...   core_distances=core_distances,
+    ...   ordering=ordering,
+    ...   eps=eps)
+    >>> labels_
+    array([0, 0, 0, 1, 1, 1])
     """
     n_samples = len(core_distances)
     labels = np.zeros(n_samples, dtype=int)
