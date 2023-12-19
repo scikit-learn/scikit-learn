@@ -562,6 +562,34 @@ def compute_optics_graph(
     .. [1] Ankerst, Mihael, Markus M. Breunig, Hans-Peter Kriegel,
        and Jörg Sander. "OPTICS: ordering points to identify the clustering
        structure." ACM SIGMOD Record 28, no. 2 (1999): 49-60.
+
+    Examples
+    --------
+
+    >>> from sklearn.cluster import OPTICS, compute_optics_graph
+    >>> import numpy as np
+    >>> X = np.array([[1, 2], [2, 5], [3, 6],
+    ...              [8, 7], [8, 8], [7, 3]])
+    >>> ordering_, core_distances_, reachability_, predecessor_ = compute_optics_graph(
+    ...   X, 
+    ...   min_samples=2,
+    ...   max_eps=np.inf, 
+    ...   metric="minkowski", 
+    ...   p=2, 
+    ...   metric_params=None, 
+    ...   algorithm="auto", 
+    ...   leaf_size=30, 
+    ...   n_jobs=None)
+    >>> ordering_
+    array([0, 1, 2, 5, 3, 4])
+    >>> core_distances_
+    array([3.16227766, 1.41421356, 1.41421356, 1.        , 1.        ,
+    ...   4.12310563])
+    >>> reachability_
+    array([       inf, 3.16227766, 1.41421356, 4.12310563, 1.        ,
+    ...   5.        ])
+    >>> predecessor_
+    array([-1,  0,  1,  5,  3,  2])
     """
     n_samples = X.shape[0]
     _validate_size(min_samples, n_samples, "min_samples")
