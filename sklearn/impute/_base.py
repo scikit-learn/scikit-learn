@@ -175,6 +175,10 @@ class SimpleImputer(_BaseImputer):
           If there is more than one such value, only the smallest is returned.
         - If "constant", then replace missing values with fill_value. Can be
           used with strings or numeric data.
+        - If "maximum", then replace missing values with the maximum along
+          each column.
+        - If "minimum", then replace missing values with the minimum along
+          each column.
 
         .. versionadded:: 0.20
            strategy="constant" for fixed value imputation.
@@ -270,7 +274,11 @@ class SimpleImputer(_BaseImputer):
 
     _parameter_constraints: dict = {
         **_BaseImputer._parameter_constraints,
-        "strategy": [StrOptions({"mean", "median", "most_frequent", "constant"})],
+        "strategy": [
+            StrOptions(
+                {"mean", "median", "most_frequent", "constant", "maximum", "minimum"}
+            )
+        ],
         "fill_value": "no_validation",  # any object is valid
         "copy": ["boolean"],
     }
@@ -456,6 +464,12 @@ class SimpleImputer(_BaseImputer):
                     elif strategy == "most_frequent":
                         statistics[i] = _most_frequent(column, 0, n_zeros)
 
+                    elif strategy == "maximum":
+                        statistics[i] = np.max(column)
+
+                    elif strategy == "minimum":
+                        statistics[i] = np.min(column)
+
         super()._fit_indicator(missing_mask)
 
         return statistics
@@ -517,6 +531,20 @@ class SimpleImputer(_BaseImputer):
             # for constant strategy, self.statistcs_ is used to store
             # fill_value in each column
             return np.full(X.shape[1], fill_value, dtype=X.dtype)
+
+        # Maximum
+        elif strategy == "maximum":
+            maximum_masked = np.ma.max(masked_X, axis=0)
+            maximum = np.ma.getdata(maximum_masked)
+            maximum[np.ma.getmaskarray(maximum_masked)] = np.nan
+            return maximum
+
+        # Minimum
+        elif strategy == "minimum":
+            minimum_masked = np.ma.min(masked_X, axis=0)
+            minimum = np.ma.getdata(minimum_masked)
+            minimum[np.ma.getmaskarray(minimum_masked)] = np.nan
+            return minimum
 
     def transform(self, X):
         """Impute all missing values in `X`.
