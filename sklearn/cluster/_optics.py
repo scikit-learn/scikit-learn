@@ -806,6 +806,27 @@ def cluster_optics_xi(
         clusters come after such nested smaller clusters. Since ``labels`` does
         not reflect the hierarchy, usually ``len(clusters) >
         np.unique(labels)``.
+
+    Examples
+    --------
+
+    >>> from sklearn.cluster import cluster_optics_xi
+    >>> from numpy import np
+    >>> reachability = np.array([np.inf, 3.16227766, 1.41421356, 4.12310563, 1., 5.])
+    >>> predecessor = np.array([-1, 0, 1, 5, 3, 2])
+    >>> ordering = np.array([0, 1, 2, 5, 3, 4])
+    >>> min_samples = 2
+    >>> labels, clusters = cluster_optics_xi(
+    ...    reachability=reachability, 
+    ...    predecessor=predecessor, 
+    ...    ordering=ordering, 
+    ...    min_samples=min_samples)
+    >>> labels
+    array([0, 0, 0, 1, 1, 1])
+    >>> clusters
+    array([[0, 2],
+    ...    [3, 5],
+    ...    [0, 5]])
     """
     n_samples = len(reachability)
     _validate_size(min_samples, n_samples, "min_samples")
