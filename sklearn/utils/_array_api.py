@@ -1,4 +1,5 @@
 """Tools to support array_api."""
+
 import itertools
 import math
 from functools import lru_cache, wraps
@@ -473,18 +474,27 @@ def _average(a, axis=None, weights=None, normalize=True, returned=False, xp=None
     if _is_numpy_namespace(xp) and normalize:
         return xp.asarray(numpy.average(a, axis=axis, weights=weights))
 
+    a = xp.asarray(a, device=device_)
+    if weights is not None:
+        weights = xp.asarray(weights, device=device_)
+
     output_dtype = None
     output_dtype_name = None
 
-    if xp.isdtype(a, "bool"):
+    if xp.isdtype(a.dtype, "bool"):
         a = xp.astype(a, xp.int32)
-    if weights is not None and xp.isdtype(weights, "bool"):
+    if weights is not None and xp.isdtype(weights.dtype, "bool"):
         weights = xp.astype(weights, xp.int32)
 
     if any(
-        (not xp.isdtype(input_array, "numeric"))
-        or xp.isdtype(input_array, "complex floating")
-        for input_array in input_arrays
+        (
+            (input_array is not None)
+            and (
+                (not xp.isdtype(input_array.dtype, "numeric"))
+                or xp.isdtype(input_array.dtype, "complex floating")
+            )
+        )
+        for input_array in [a, weights]
     ):
         raise ValueError("Expecting only integral or real floating values.")
 
@@ -492,7 +502,9 @@ def _average(a, axis=None, weights=None, normalize=True, returned=False, xp=None
         output_dtype_name = "float64"
     elif weights is None:
         output_dtype = a.dtype
-    elif xp.isdtype(a.dtype, "real floating") and xp.isdtype(weights, "real floating"):
+    elif xp.isdtype(a.dtype, "real floating") and xp.isdtype(
+        weights.dtype, "real floating"
+    ):
         output_dtype = (
             a.dtype
             if (xp.finfo(a.dtype).bits >= xp.finfo(a.dtype).bits)
@@ -522,7 +534,7 @@ def _average(a, axis=None, weights=None, normalize=True, returned=False, xp=None
     a = xp.astype(a, output_dtype)
 
     if weights is None:
-        return xp.mean(a, axis=axis)
+        return (xp.mean if normalize else xp.sum)(a, axis=axis)
 
     weights = xp.astype(weights, output_dtype)
 

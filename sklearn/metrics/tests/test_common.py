@@ -1827,7 +1827,7 @@ def check_array_api_regression_metric(metric, array_namespace, device, dtype_nam
         sample_weight=None,
     )
 
-    sample_weight = np.array([0.0, 0.1, 2.0, 1.0], dtype=dtype_name)
+    sample_weight = np.array([0.1, 2.0], dtype=dtype_name)
 
     check_array_api_metric(
         metric,
