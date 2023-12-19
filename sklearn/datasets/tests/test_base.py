@@ -3,6 +3,7 @@ import shutil
 import tempfile
 import warnings
 from functools import partial
+from importlib import resources
 from pathlib import Path
 from pickle import dumps, loads
 
@@ -29,7 +30,6 @@ from sklearn.datasets._base import (
 from sklearn.datasets.tests.test_common import check_as_frame
 from sklearn.preprocessing import scale
 from sklearn.utils import Bunch
-from sklearn.utils.fixes import _is_resource
 
 
 class _DummyPath:
@@ -291,7 +291,8 @@ def test_loader(loader_func, data_shape, target_shape, n_target, has_descr, file
         assert "data_module" in bunch
         assert all(
             [
-                f in bunch and _is_resource(bunch["data_module"], bunch[f])
+                f in bunch
+                and (resources.files(bunch["data_module"]) / bunch[f]).is_file()
                 for f in filenames
             ]
         )
