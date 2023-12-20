@@ -151,7 +151,7 @@ conda_build_metadata_list = [
         "folder": "build_tools/azure",
         "platform": "linux-64",
         "channel": "defaults",
-        "conda_dependencies": common_dependencies + ["ccache"],
+        "conda_dependencies": remove_from(common_dependencies, ["pandas"]) + ["ccache"],
         "package_constraints": {
             "python": "3.9",
             "blas": "[build=openblas]",
@@ -276,6 +276,7 @@ conda_build_metadata_list = [
             "numpydoc",
             "sphinx-prompt",
             "plotly",
+            "polars",
             "pooch",
         ],
         "pip_dependencies": ["sphinxext-opengraph"],
@@ -294,6 +295,7 @@ conda_build_metadata_list = [
             "sphinx-prompt": "min",
             "sphinxext-opengraph": "min",
             "plotly": "min",
+            "polars": "min",
         },
     },
     {
@@ -312,6 +314,7 @@ conda_build_metadata_list = [
             "numpydoc",
             "sphinx-prompt",
             "plotly",
+            "polars",
             "pooch",
             "sphinxext-opengraph",
         ],
