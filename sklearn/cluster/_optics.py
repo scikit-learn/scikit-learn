@@ -571,14 +571,14 @@ def compute_optics_graph(
     >>> X = np.array([[1, 2], [2, 5], [3, 6],
     ...              [8, 7], [8, 8], [7, 3]])
     >>> ordering_, core_distances_, reachability_, predecessor_ = compute_optics_graph(
-    ...   X, 
+    ...   X,
     ...   min_samples=2,
-    ...   max_eps=np.inf, 
-    ...   metric="minkowski", 
-    ...   p=2, 
-    ...   metric_params=None, 
-    ...   algorithm="auto", 
-    ...   leaf_size=30, 
+    ...   max_eps=np.inf,
+    ...   metric="minkowski",
+    ...   p=2,
+    ...   metric_params=None,
+    ...   algorithm="auto",
+    ...   leaf_size=30,
     ...   n_jobs=None)
     >>> ordering_
     array([0, 1, 2, 5, 3, 4])
@@ -755,7 +755,8 @@ def cluster_optics_dbscan(*, reachability, core_distances, ordering, eps):
     >>> from sklearn.cluster import cluster_optics_dbscan
     >>> import numpy as np
     >>> reachability = np.array([np.inf, 3.16227766, 1.41421356, 4.12310563, 1., 5.])
-    >>> core_distances = np.array([3.16227766, 1.41421356, 1.41421356, 1., 1., 4.12310563])
+    >>> core_distances = np.array([3.16227766, 1.41421356, 1.41421356,
+    ...                            1.,         1.,         4.12310563])
     >>> ordering = np.array([0, 1, 2, 5, 3, 4])
     >>> eps = 4.5
     >>> labels_ = cluster_optics_dbscan(
