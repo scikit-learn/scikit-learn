@@ -1282,6 +1282,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         is_binned = getattr(self, "_in_fit", False)
         if not is_binned:
             X = self._preprocess_X(X, reset=False)
+
         n_samples = X.shape[0]
         raw_predictions = np.zeros(
             shape=(n_samples, self.n_trees_per_iteration_),
@@ -1528,7 +1529,11 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
           exposing a ``__dataframe__`` method such as pandas or polars
           DataFrames to use this feature.
 
-        Negative values for categorical features are treated as missing values.
+        For each categorical feature, there must be at most `max_bins` unique
+        categories. Negative values for categorical features encoded as numeric
+        dtypes are treated as missing values. All categorical values are
+        converted to floating point numbers. This means that categorical values
+        of 1.0 and 1 are treated as the same category.
 
         Read more in the :ref:`User Guide <categorical_support_gbdt>`.
 
