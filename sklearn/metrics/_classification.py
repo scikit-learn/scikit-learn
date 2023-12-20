@@ -1222,12 +1222,12 @@ def f1_score(
 
     Notes
     -----
-    When ``true positive + false positive == 0``, precision is undefined.
-    When ``true positive + false negative == 0``, recall is undefined.
-    In such cases, by default the metric will be set to 0, as will f-score,
-    and ``UndefinedMetricWarning`` will be raised. This behavior can be
-    modified with ``zero_division``. Note that if `zero_division` is np.nan,
-    scores being `np.nan` will be ignored for averaging.
+    When ``true positive + false positive + false negative == 0`` (i.e. a class
+    is completely absent from both ``y_true`` or ``y_pred``), f-score is
+    undefined. In such cases, by default the metric will be set to 0.0, and
+    ``UndefinedMetricWarning`` will be raised. This behavior can be modified by
+    setting ``zero_division`` to ``0.0`` (to skip the warning), ``1.0``, or
+    ``np.nan``.
 
     References
     ----------
