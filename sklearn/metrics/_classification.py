@@ -1264,15 +1264,6 @@ def f1_score(
     >>> y_pred = [[0, 0, 0], [1, 1, 1], [1, 1, 0]]
     >>> f1_score(y_true, y_pred, average=None)
     array([0.66666667, 1.        , 0.66666667])
-
-    Notes
-    -----
-    When ``true positive + false positive + false negative == 0`` (i.e. a class
-    is completely absent from both ``y_true`` or ``y_pred``), f-score is
-    undefined. In such cases, by default the metric will be set to 0.0, and
-    ``UndefinedMetricWarning`` will be raised. This behavior can be modified by
-    setting ``zero_division`` to ``0.0`` (to skip the warning), ``1.0``, or
-    ``np.nan``.
     """
     return fbeta_score(
         y_true,
