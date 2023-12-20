@@ -275,6 +275,7 @@ def ward_tree(X, *, connectivity=None, n_clusters=None, return_distance=False):
     --------
 
     >>> from sklearn.cluster import ward_tree
+    >>> import numpy as np
     >>> X = np.array([[1, 2], [1, 4], [1, 0],
     ...               [4, 2], [4, 4], [4, 0]])
     >>> children, n_connected_components, n_leaves, parents = ward_tree(X)

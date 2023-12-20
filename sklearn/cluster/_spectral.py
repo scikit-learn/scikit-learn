@@ -351,6 +351,7 @@ def spectral_clustering(
     --------
 
     >>> from sklearn.cluster import spectral_clustering
+    >>> import numpy as np
     >>> affinity_matrix = np.array([[1.   , 0.368, 0.   , 0.   ],
     ...                             [0.368, 1.   , 0.   , 0.   ],
     ...                             [0.   , 0.   , 1.   , 0.135],
