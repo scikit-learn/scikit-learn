@@ -5,21 +5,19 @@
 import numbers
 import warnings
 from collections import Counter
+from functools import partial
 
 import numpy as np
 import numpy.ma as ma
 from scipy import sparse as sp
 
-from ..base import BaseEstimator, TransformerMixin
-from ..utils._param_validation import StrOptions, Hidden, MissingValues
+from ..base import BaseEstimator, TransformerMixin, _fit_context
+from ..utils import _is_pandas_na, is_scalar_nan
+from ..utils._mask import _get_mask
+from ..utils._param_validation import MissingValues, StrOptions
 from ..utils.fixes import _mode
 from ..utils.sparsefuncs import _get_median
-from ..utils.validation import check_is_fitted
-from ..utils.validation import FLOAT_DTYPES
-from ..utils.validation import _check_feature_names_in
-from ..utils._mask import _get_mask
-from ..utils import _is_pandas_na
-from ..utils import is_scalar_nan
+from ..utils.validation import FLOAT_DTYPES, _check_feature_names_in, check_is_fitted
 
 
 def _check_inputs_dtype(X, missing_values):
@@ -118,7 +116,13 @@ class _BaseImputer(TransformerMixin, BaseEstimator):
         if not self.add_indicator:
             return X_imputed
 
-        hstack = sp.hstack if sp.issparse(X_imputed) else np.hstack
+        if sp.issparse(X_imputed):
+            # sp.hstack may result in different formats between sparse arrays and
+            # matrices; specify the format to keep consistent behavior
+            hstack = partial(sp.hstack, format=X_imputed.format)
+        else:
+            hstack = np.hstack
+
         if X_indicator is None:
             raise ValueError(
                 "Data from the missing indicator are not provided. Call "
@@ -181,14 +185,6 @@ class SimpleImputer(_BaseImputer):
         `fill_value` must be a string.
         If `None`, `fill_value` will be 0 when imputing numerical
         data and "missing_value" for strings or object data types.
-
-    verbose : int, default=0
-        Controls the verbosity of the imputer.
-
-        .. deprecated:: 1.1
-           The 'verbose' parameter was deprecated in version 1.1 and will be
-           removed in 1.3. A warning will always be raised upon the removal of
-           empty columns in the future version.
 
     copy : bool, default=True
         If True, a copy of X will be created. If False, imputation will
@@ -267,13 +263,15 @@ class SimpleImputer(_BaseImputer):
     [[ 7.   2.   3. ]
      [ 4.   3.5  6. ]
      [10.   3.5  9. ]]
+
+    For a more detailed example see
+    :ref:`sphx_glr_auto_examples_impute_plot_missing_values.py`.
     """
 
     _parameter_constraints: dict = {
         **_BaseImputer._parameter_constraints,
         "strategy": [StrOptions({"mean", "median", "most_frequent", "constant"})],
         "fill_value": "no_validation",  # any object is valid
-        "verbose": ["verbose", Hidden(StrOptions({"deprecated"}))],
         "copy": ["boolean"],
     }
 
@@ -283,7 +281,6 @@ class SimpleImputer(_BaseImputer):
         missing_values=np.nan,
         strategy="mean",
         fill_value=None,
-        verbose="deprecated",
         copy=True,
         add_indicator=False,
         keep_empty_features=False,
@@ -295,7 +292,6 @@ class SimpleImputer(_BaseImputer):
         )
         self.strategy = strategy
         self.fill_value = fill_value
-        self.verbose = verbose
         self.copy = copy
 
     def _validate_input(self, X, in_fit):
@@ -359,6 +355,7 @@ class SimpleImputer(_BaseImputer):
 
         return X
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y=None):
         """Fit the imputer on `X`.
 
@@ -376,18 +373,6 @@ class SimpleImputer(_BaseImputer):
         self : object
             Fitted estimator.
         """
-        self._validate_params()
-        if self.verbose != "deprecated":
-            warnings.warn(
-                (
-                    "The 'verbose' parameter was deprecated in version "
-                    "1.1 and will be removed in 1.3. A warning will "
-                    "always be raised upon the removal of empty columns "
-                    "in the future version."
-                ),
-                FutureWarning,
-            )
-
         X = self._validate_input(X, in_fit=True)
 
         # default fill_value is 0 for numerical input and "missing_value"
@@ -574,15 +559,14 @@ class SimpleImputer(_BaseImputer):
 
             if invalid_mask.any():
                 invalid_features = np.arange(X.shape[1])[invalid_mask]
-                if self.verbose != "deprecated" and self.verbose:
-                    # use feature names warning if features are provided
-                    if hasattr(self, "feature_names_in_"):
-                        invalid_features = self.feature_names_in_[invalid_features]
-                    warnings.warn(
-                        "Skipping features without any observed values:"
-                        f" {invalid_features}. At least one non-missing value is needed"
-                        f" for imputation with strategy='{self.strategy}'."
-                    )
+                # use feature names warning if features are provided
+                if hasattr(self, "feature_names_in_"):
+                    invalid_features = self.feature_names_in_[invalid_features]
+                warnings.warn(
+                    "Skipping features without any observed values:"
+                    f" {invalid_features}. At least one non-missing value is needed"
+                    f" for imputation with strategy='{self.strategy}'."
+                )
                 X = X[:, valid_statistics_indexes]
 
         # Do actual imputation
@@ -721,8 +705,10 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
     """Binary indicators for missing values.
 
     Note that this component typically should not be used in a vanilla
-    :class:`Pipeline` consisting of transformers and a classifier, but rather
-    could be added using a :class:`FeatureUnion` or :class:`ColumnTransformer`.
+    :class:`~sklearn.pipeline.Pipeline` consisting of transformers and a
+    classifier, but rather could be added using a
+    :class:`~sklearn.pipeline.FeatureUnion` or
+    :class:`~sklearn.compose.ColumnTransformer`.
 
     Read more in the :ref:`User Guide <impute>`.
 
@@ -949,6 +935,7 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
 
         return missing_features_info[0]
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y=None):
         """Fit the transformer on `X`.
 
@@ -966,7 +953,6 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
         self : object
             Fitted estimator.
         """
-        self._validate_params()
         self._fit(X, y)
 
         return self
@@ -1012,6 +998,7 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
 
         return imputer_mask
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit_transform(self, X, y=None):
         """Generate missing values indicator for `X`.
 
@@ -1030,7 +1017,6 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
             The missing indicator for input data. The data type of `Xt`
             will be boolean.
         """
-        self._validate_params()
         imputer_mask = self._fit(X, y)
 
         if self.features_.size < self._n_features:

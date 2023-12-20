@@ -114,7 +114,7 @@ using environment variables, namely:
 Note that BLAS & LAPACK implementations can also be impacted by
 `OMP_NUM_THREADS`. To check whether this is the case in your environment,
 you can inspect how the number of threads effectively used by those libraries
-is affected when running the the following command in a bash or zsh terminal
+is affected when running the following command in a bash or zsh terminal
 for different values of `OMP_NUM_THREADS`::
 
 .. prompt:: bash $
@@ -316,3 +316,12 @@ most machines.
 Users looking for the best performance might want to tune this variable using
 powers of 2 so as to get the best parallelism behavior for their hardware,
 especially with respect to their caches' sizes.
+
+`SKLEARN_DOC_BUILD_WARNINGS_AS_ERRORS`
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+This environment variable issue errors instead of warnings when building the
+documentation. It ensures that we don't introduce new warnings in the example
+gallery. By default, the warnings are treated as errors (e.g. `"true"`). This
+is different from `SPHINXOPTS="-W"` that catch syntax warnings from the rst
+generation.

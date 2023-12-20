@@ -1,6 +1,6 @@
-import pytest
-
 import pickle
+
+import pytest
 
 from sklearn.utils.metaestimators import available_if
 

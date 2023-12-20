@@ -6,20 +6,20 @@ Generate samples of synthetic data sets.
 #          G. Louppe, J. Nothman
 # License: BSD 3 clause
 
-from numbers import Integral, Real
-import numbers
 import array
+import numbers
 import warnings
 from collections.abc import Iterable
+from numbers import Integral, Real
 
 import numpy as np
-from scipy import linalg
 import scipy.sparse as sp
+from scipy import linalg
 
 from ..preprocessing import MultiLabelBinarizer
 from ..utils import check_array, check_random_state
-from ..utils._param_validation import Interval, validate_params, Hidden, StrOptions
 from ..utils import shuffle as util_shuffle
+from ..utils._param_validation import Hidden, Interval, StrOptions, validate_params
 from ..utils.random import sample_without_replacement
 
 
@@ -56,7 +56,8 @@ def _generate_hypercube(samples, dimensions, rng):
         "scale": [Interval(Real, 0, None, closed="neither"), "array-like", None],
         "shuffle": ["boolean"],
         "random_state": ["random_state"],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def make_classification(
     n_samples=100,
@@ -91,6 +92,9 @@ def make_classification(
     redundant features. The remaining features are filled with random noise.
     Thus, without shuffling, all useful features are contained in the columns
     ``X[:, :n_informative + n_redundant + n_repeated]``.
+
+    For an example of usage, see
+    :ref:`sphx_glr_auto_examples_datasets_plot_random_dataset.py`.
 
     Read more in the :ref:`User Guide <sample_generators>`.
 
@@ -321,7 +325,8 @@ def make_classification(
         "return_indicator": [StrOptions({"dense", "sparse"}), "boolean"],
         "return_distributions": ["boolean"],
         "random_state": ["random_state"],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def make_multilabel_classification(
     n_samples=100,
@@ -347,6 +352,9 @@ def make_multilabel_classification(
     In the above process, rejection sampling is used to make sure that
     n is never zero or more than `n_classes`, and that the document length
     is never zero. Likewise, we reject classes which have already been chosen.
+
+    For an example of usage, see
+    :ref:`sphx_glr_auto_examples_datasets_plot_random_multilabel_dataset.py`.
 
     Read more in the :ref:`User Guide <sample_generators>`.
 
@@ -480,7 +488,8 @@ def make_multilabel_classification(
     {
         "n_samples": [Interval(Integral, 1, None, closed="left")],
         "random_state": ["random_state"],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def make_hastie_10_2(n_samples=12000, *, random_state=None):
     """Generate data for binary classification used in Hastie et al. 2009, Example 10.2.
@@ -542,7 +551,8 @@ def make_hastie_10_2(n_samples=12000, *, random_state=None):
         "shuffle": ["boolean"],
         "coef": ["boolean"],
         "random_state": ["random_state"],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def make_regression(
     n_samples=100,
@@ -700,7 +710,8 @@ def make_regression(
         "noise": [Interval(Real, 0, None, closed="left"), None],
         "random_state": ["random_state"],
         "factor": [Interval(Real, 0, 1, closed="left")],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def make_circles(
     n_samples=100, *, shuffle=True, noise=None, random_state=None, factor=0.8
@@ -784,7 +795,8 @@ def make_circles(
         "shuffle": ["boolean"],
         "noise": [Interval(Real, 0, None, closed="left"), None],
         "random_state": ["random_state"],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def make_moons(n_samples=100, *, shuffle=True, noise=None, random_state=None):
     """Make two interleaving half circles.
@@ -865,7 +877,8 @@ def make_moons(n_samples=100, *, shuffle=True, noise=None, random_state=None):
         "shuffle": ["boolean"],
         "random_state": ["random_state"],
         "return_centers": ["boolean"],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def make_blobs(
     n_samples=100,
@@ -879,6 +892,9 @@ def make_blobs(
     return_centers=False,
 ):
     """Generate isotropic Gaussian blobs for clustering.
+
+    For an example of usage, see
+    :ref:`sphx_glr_auto_examples_datasets_plot_random_dataset.py`.
 
     Read more in the :ref:`User Guide <sample_generators>`.
 
@@ -1040,7 +1056,8 @@ def make_blobs(
         "n_features": [Interval(Integral, 5, None, closed="left")],
         "noise": [Interval(Real, 0.0, None, closed="left")],
         "random_state": ["random_state"],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def make_friedman1(n_samples=100, n_features=10, *, noise=0.0, random_state=None):
     """Generate the "Friedman #1" regression problem.
@@ -1111,7 +1128,8 @@ def make_friedman1(n_samples=100, n_features=10, *, noise=0.0, random_state=None
         "n_samples": [Interval(Integral, 1, None, closed="left")],
         "noise": [Interval(Real, 0, None, closed="left")],
         "random_state": ["random_state"],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def make_friedman2(n_samples=100, *, noise=0.0, random_state=None):
     """Generate the "Friedman #2" regression problem.
@@ -1183,7 +1201,8 @@ def make_friedman2(n_samples=100, *, noise=0.0, random_state=None):
         "n_samples": [Interval(Integral, 1, None, closed="left")],
         "noise": [Interval(Real, 0, None, closed="left")],
         "random_state": ["random_state"],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def make_friedman3(n_samples=100, *, noise=0.0, random_state=None):
     """Generate the "Friedman #3" regression problem.
@@ -1257,7 +1276,8 @@ def make_friedman3(n_samples=100, *, noise=0.0, random_state=None):
         "effective_rank": [Interval(Integral, 1, None, closed="left")],
         "tail_strength": [Interval(Real, 0, 1, closed="both")],
         "random_state": ["random_state"],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def make_low_rank_matrix(
     n_samples=100,
@@ -1349,7 +1369,8 @@ def make_low_rank_matrix(
         "n_nonzero_coefs": [Interval(Integral, 1, None, closed="left")],
         "random_state": ["random_state"],
         "data_transposed": ["boolean", Hidden(StrOptions({"deprecated"}))],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def make_sparse_coded_signal(
     n_samples,
@@ -1454,7 +1475,8 @@ def make_sparse_coded_signal(
         "n_samples": [Interval(Integral, 1, None, closed="left")],
         "n_features": [Interval(Integral, 1, None, closed="left")],
         "random_state": ["random_state"],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def make_sparse_uncorrelated(n_samples=100, n_features=10, *, random_state=None):
     """Generate a random regression problem with sparse uncorrelated design.
@@ -1511,7 +1533,8 @@ def make_sparse_uncorrelated(n_samples=100, n_features=10, *, random_state=None)
     {
         "n_dim": [Interval(Integral, 1, None, closed="left")],
         "random_state": ["random_state"],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def make_spd_matrix(n_dim, *, random_state=None):
     """Generate a random symmetric, positive-definite matrix.
@@ -1548,22 +1571,33 @@ def make_spd_matrix(n_dim, *, random_state=None):
 
 @validate_params(
     {
-        "dim": [Interval(Integral, 1, None, closed="left")],
+        "n_dim": [Hidden(None), Interval(Integral, 1, None, closed="left")],
         "alpha": [Interval(Real, 0, 1, closed="both")],
         "norm_diag": ["boolean"],
         "smallest_coef": [Interval(Real, 0, 1, closed="both")],
         "largest_coef": [Interval(Real, 0, 1, closed="both")],
+        "sparse_format": [
+            StrOptions({"bsr", "coo", "csc", "csr", "dia", "dok", "lil"}),
+            None,
+        ],
         "random_state": ["random_state"],
-    }
+        "dim": [
+            Interval(Integral, 1, None, closed="left"),
+            Hidden(StrOptions({"deprecated"})),
+        ],
+    },
+    prefer_skip_nested_validation=True,
 )
 def make_sparse_spd_matrix(
-    dim=1,
+    n_dim=None,
     *,
     alpha=0.95,
     norm_diag=False,
     smallest_coef=0.1,
     largest_coef=0.9,
+    sparse_format=None,
     random_state=None,
+    dim="deprecated",
 ):
     """Generate a sparse symmetric definite positive matrix.
 
@@ -1571,8 +1605,11 @@ def make_sparse_spd_matrix(
 
     Parameters
     ----------
-    dim : int, default=1
+    n_dim : int, default=1
         The size of the random matrix to generate.
+
+        .. versionchanged:: 1.4
+            Renamed from ``dim`` to ``n_dim``.
 
     alpha : float, default=0.95
         The probability that a coefficient is zero (see notes). Larger values
@@ -1588,15 +1625,28 @@ def make_sparse_spd_matrix(
     largest_coef : float, default=0.9
         The value of the largest coefficient between 0 and 1.
 
+    sparse_format : str, default=None
+        String representing the output sparse format, such as 'csc', 'csr', etc.
+        If ``None``, return a dense numpy ndarray.
+
+        .. versionadded:: 1.4
+
     random_state : int, RandomState instance or None, default=None
         Determines random number generation for dataset creation. Pass an int
         for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
 
+    dim : int, default=1
+        The size of the random matrix to generate.
+
+        .. deprecated:: 1.4
+            `dim` is deprecated and will be removed in 1.6.
+
     Returns
     -------
-    prec : sparse matrix of shape (dim, dim)
-        The generated matrix.
+    prec : ndarray or sparse matrix of shape (dim, dim)
+        The generated matrix. If ``sparse_format=None``, this would be an ndarray.
+        Otherwise, this will be a sparse matrix of the specified format.
 
     See Also
     --------
@@ -1610,30 +1660,57 @@ def make_sparse_spd_matrix(
     """
     random_state = check_random_state(random_state)
 
-    chol = -np.eye(dim)
-    aux = random_state.uniform(size=(dim, dim))
-    aux[aux < alpha] = 0
-    aux[aux > alpha] = smallest_coef + (
-        largest_coef - smallest_coef
-    ) * random_state.uniform(size=np.sum(aux > alpha))
-    aux = np.tril(aux, k=-1)
+    # TODO(1.6): remove in 1.6
+    # Also make sure to change `n_dim` default back to 1 and deprecate None
+    if n_dim is not None and dim != "deprecated":
+        raise ValueError(
+            "`dim` and `n_dim` cannot be both specified. Please use `n_dim` only "
+            "as `dim` is deprecated in v1.4 and will be removed in v1.6."
+        )
+
+    if dim != "deprecated":
+        warnings.warn(
+            (
+                "dim was deprecated in version 1.4 and will be removed in 1.6."
+                "Please use ``n_dim`` instead."
+            ),
+            FutureWarning,
+        )
+        _n_dim = dim
+    elif n_dim is None:
+        _n_dim = 1
+    else:
+        _n_dim = n_dim
+
+    chol = -sp.eye(_n_dim)
+    aux = sp.random(
+        m=_n_dim,
+        n=_n_dim,
+        density=1 - alpha,
+        data_rvs=lambda x: random_state.uniform(
+            low=smallest_coef, high=largest_coef, size=x
+        ),
+        random_state=random_state,
+    )
+    # We need to avoid "coo" format because it does not support slicing
+    aux = sp.tril(aux, k=-1, format="csc")
 
     # Permute the lines: we don't want to have asymmetries in the final
     # SPD matrix
-    permutation = random_state.permutation(dim)
+    permutation = random_state.permutation(_n_dim)
     aux = aux[permutation].T[permutation]
     chol += aux
-    prec = np.dot(chol.T, chol)
+    prec = chol.T @ chol
 
     if norm_diag:
         # Form the diagonal vector into a row matrix
-        d = np.diag(prec).reshape(1, prec.shape[0])
-        d = 1.0 / np.sqrt(d)
+        d = sp.diags(1.0 / np.sqrt(prec.diagonal()))
+        prec = d @ prec @ d
 
-        prec *= d
-        prec *= d.T
-
-    return prec
+    if sparse_format is None:
+        return prec.toarray()
+    else:
+        return prec.asformat(sparse_format)
 
 
 @validate_params(
@@ -1642,7 +1719,8 @@ def make_sparse_spd_matrix(
         "noise": [Interval(Real, 0, None, closed="left")],
         "random_state": ["random_state"],
         "hole": ["boolean"],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def make_swiss_roll(n_samples=100, *, noise=0.0, random_state=None, hole=False):
     """Generate a swiss roll dataset.
@@ -1714,7 +1792,8 @@ def make_swiss_roll(n_samples=100, *, noise=0.0, random_state=None, hole=False):
         "n_samples": [Interval(Integral, 1, None, closed="left")],
         "noise": [Interval(Real, 0, None, closed="left")],
         "random_state": ["random_state"],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def make_s_curve(n_samples=100, *, noise=0.0, random_state=None):
     """Generate an S curve dataset.
@@ -1765,7 +1844,8 @@ def make_s_curve(n_samples=100, *, noise=0.0, random_state=None):
         "n_classes": [Interval(Integral, 1, None, closed="left")],
         "shuffle": ["boolean"],
         "random_state": ["random_state"],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def make_gaussian_quantiles(
     *,
@@ -1783,6 +1863,9 @@ def make_gaussian_quantiles(
     standard normal distribution and defining classes separated by nested
     concentric multi-dimensional spheres such that roughly equal numbers of
     samples are in each class (quantiles of the :math:`\chi^2` distribution).
+
+    For an example of usage, see
+    :ref:`sphx_glr_auto_examples_datasets_plot_random_dataset.py`.
 
     Read more in the :ref:`User Guide <sample_generators>`.
 
@@ -1880,7 +1963,8 @@ def _shuffle(data, random_state=None):
         "maxval": [Interval(Real, None, None, closed="neither")],
         "shuffle": ["boolean"],
         "random_state": ["random_state"],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def make_biclusters(
     shape,
@@ -1988,7 +2072,8 @@ def make_biclusters(
         "maxval": [Interval(Real, None, None, closed="neither")],
         "shuffle": ["boolean"],
         "random_state": ["random_state"],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def make_checkerboard(
     shape,

@@ -61,5 +61,4 @@ doc-noplot: inplace
 	$(MAKE) -C doc html-noplot
 
 code-analysis:
-	flake8 sklearn | grep -v __init__ | grep -v external
-	pylint -E -i y sklearn/ -d E1103,E0611,E1101
+	build_tools/linting.sh
