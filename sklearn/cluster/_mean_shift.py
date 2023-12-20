@@ -222,6 +222,20 @@ def mean_shift(
     -----
     For an example, see :ref:`examples/cluster/plot_mean_shift.py
     <sphx_glr_auto_examples_cluster_plot_mean_shift.py>`.
+
+    Examples
+    --------
+
+    >>> from sklearn.cluster import mean_shift, estimate_bandwidth
+    >>> X = np.array([[1, 1], [2, 1], [1, 0],
+    ...               [4, 7], [3, 5], [3, 6]])
+    >>> bandwidth = estimate_bandwidth(X, quantile=0.5, random_state=0)
+    >>> cluster_centers, labels = mean_shift(X, bandwidth=bandwidth)
+    >>> cluster_centers
+    array([[3.33333333, 6.        ],
+    ...    [1.33333333, 0.66666667]])
+    >>> labels
+    array([1, 1, 1, 0, 0, 0])
     """
     model = MeanShift(
         bandwidth=bandwidth,
