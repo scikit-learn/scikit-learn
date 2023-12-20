@@ -1481,9 +1481,9 @@ class OrdinalEncoder(OneToOneFeatureMixin, _BaseEncoder):
     with `Medium` to the last category, in this case,`1`
 
     >>> X = [['Large'], ['Large'], ['Small']]
-    >>> enc = OrdinalEncoder(handle_unknown = 'infrequent_if_exist', min_frequency = 2)
+    >>> enc = OrdinalEncoder(handle_unknown='infrequent_if_exist', min_frequency=2)
     >>> enc.fit(X)
-    OrdinalEncoder(handle_unknown = 'infrequent_if_exist', min_frequency = 2)
+    OrdinalEncoder(handle_unknown='infrequent_if_exist', min_frequency=2)
     >>> enc.transform([['Small'], ['Large'], ['Medium']])
     array([[1.],
            [0.],
