@@ -346,6 +346,21 @@ def spectral_clustering(
            streaming graph challenge (Preliminary version at arXiv.)
            David Zhuzhunashvili, Andrew Knyazev
            <10.1109/HPEC.2017.8091045>`
+
+    Examples
+    --------
+
+    >>> from sklearn.cluster import spectral_clustering
+    >>> affinity_matrix = np.array([[1.   , 0.368, 0.   , 0.   ],
+    ...                             [0.368, 1.   , 0.   , 0.   ],
+    ...                             [0.   , 0.   , 1.   , 0.135],
+    ...                             [0.   , 0.   , 0.135, 1.   ]])
+    >>> labels = spectral_clustering(
+    ...   affinity=affinity_matrix,
+    ...   n_clusters=2,
+    ...   random_state=0)
+    >>> labels
+    array([0, 0, 1, 1], dtype=int32)
     """
 
     clusterer = SpectralClustering(
