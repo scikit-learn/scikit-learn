@@ -2,17 +2,20 @@
 This file contains preprocessing tools based on polynomials.
 """
 import collections
+from functools import partial
 from itertools import chain, combinations
 from itertools import combinations_with_replacement as combinations_w_r
 from numbers import Integral
 
 import numpy as np
 from scipy import sparse
+from scipy import sparse as sp
 from scipy.interpolate import BSpline
 from scipy.special import comb
 
 from ..base import BaseEstimator, TransformerMixin, _fit_context
 from ..utils import check_array
+from ..utils._mask import _get_mask
 from ..utils._param_validation import Interval, StrOptions
 from ..utils.fixes import parse_version, sp_version
 from ..utils.stats import _weighted_percentile
@@ -641,6 +644,14 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
         Order of output array in the dense case. `'F'` order is faster to compute, but
         may slow down subsequent estimators.
 
+    handle_missing : {'error', 'indicator'}, default='error'
+        Specifies the way missing values are handled during :meth:`fit`.
+
+        - 'error' : Raise an error if missing values are present.
+        - 'indicator' :  Encode missing values as 0 and stack :class:`MissingIndicator`
+          class onto the output of :meth:`transform`, which allows a predictive
+          estimator to account for missingness despite sustitution.
+
     sparse_output : bool, default=False
         Will return sparse CSR matrix if set True else will return an array. This
         option is only available with `scipy>=1.8`.
@@ -708,6 +719,7 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
         ],
         "include_bias": ["boolean"],
         "order": [StrOptions({"C", "F"})],
+        "handle_missing": [StrOptions({"error", "indicator"})],
         "sparse_output": ["boolean"],
     }
 
@@ -720,6 +732,7 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
         extrapolation="constant",
         include_bias=True,
         order="C",
+        handle_missing="error",
         sparse_output=False,
     ):
         self.n_knots = n_knots
@@ -728,6 +741,7 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
         self.extrapolation = extrapolation
         self.include_bias = include_bias
         self.order = order
+        self.handle_missing = handle_missing
         self.sparse_output = sparse_output
 
     @staticmethod
@@ -776,6 +790,30 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
             )
 
         return knots
+
+    def _fit_indicator(self, X):
+        """Fit a MissingIndicator."""
+        from sklearn.impute._base import (
+            MissingIndicator,
+        )
+
+        self.indicator_ = MissingIndicator(missing_values=np.nan, error_on_new=False)
+        self.indicator_._fit(X, precomputed=True)
+
+    def _concatenate_indicator(self, X_imputed):
+        """Concatenate indicator mask with the transformed data."""
+        if not self.handle_missing == "indicator":
+            return X_imputed
+
+        X_indicator = self.indicator_.transform(self.missing_mask)
+        if sp.issparse(X_imputed):
+            # sp.hstack may result in different formats between sparse arrays and
+            # matrices; specify the format to keep consistent behavior
+            hstack = partial(sp.hstack, format=X_imputed.format)
+        else:
+            hstack = np.hstack
+
+        return hstack((X_imputed, X_indicator))
 
     def get_feature_names_out(self, input_features=None):
         """Get output feature names for transformation.
@@ -835,11 +873,22 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
             accept_sparse=False,
             ensure_min_samples=2,
             ensure_2d=True,
+            force_all_finite=False,
         )
         if sample_weight is not None:
             sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
 
         _, n_features = X.shape
+
+        if self.handle_missing == "error":
+            if np.isnan(X).any():
+                raise ValueError(
+                    "'X' contains Nan values, which is conflicting with"
+                    " handle_missing='error'."
+                )
+        else:
+            missing_mask = _get_mask(X, np.nan)
+            self._fit_indicator(missing_mask)
 
         if isinstance(self.knots, str):
             base_knots = self._get_base_knot_positions(
@@ -957,7 +1006,24 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
         """
         check_is_fitted(self)
 
-        X = self._validate_data(X, reset=False, accept_sparse=False, ensure_2d=True)
+        X = self._validate_data(
+            X,
+            reset=False,
+            accept_sparse=False,
+            ensure_2d=True,
+            force_all_finite=False,
+        )
+
+        if self.handle_missing == "indicator":
+            # compute mask before eliminating invalid features
+            self.missing_mask = _get_mask(X, np.nan)
+
+            # substitute missing values with 0
+            n_missing = np.sum(self.missing_mask, axis=0)
+            values = np.repeat(0, n_missing)
+            coordinates = np.where(self.missing_mask.transpose())[::-1]
+
+            X[coordinates] = values
 
         n_samples, n_features = X.shape
         n_splines = self.bsplines_[0].c.shape[1]
@@ -1020,7 +1086,10 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
                 else:
                     XBS[:, (i * n_splines) : ((i + 1) * n_splines)] = spl(x)
             else:  # extrapolation in ("constant", "linear")
-                xmin, xmax = spl.t[degree], spl.t[-degree - 1]
+                xmin, xmax = (
+                    spl.t[degree],
+                    spl.t[-degree - 1],
+                )  # <------------ DEBUG: here, values are both nan
                 # spline values at boundaries
                 f_min, f_max = spl(xmin), spl(xmax)
                 mask = (xmin <= X[:, i]) & (X[:, i] <= xmax)
@@ -1154,12 +1223,12 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
             XBS = sparse.csr_matrix(XBS)
 
         if self.include_bias:
-            return XBS
+            return self._concatenate_indicator(XBS)
         else:
             # We throw away one spline basis per feature.
             # We chose the last one.
             indices = [j for j in range(XBS.shape[1]) if (j + 1) % n_splines != 0]
-            return XBS[:, indices]
+            return self._concatenate_indicator(XBS[:, indices])
 
     def _more_tags(self):
         return {

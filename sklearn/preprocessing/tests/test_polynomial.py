@@ -19,7 +19,7 @@ from sklearn.preprocessing._csr_polynomial_expansion import (
     _calc_total_nnz,
     _get_sizeof_LARGEST_INT_t,
 )
-from sklearn.utils._testing import assert_array_almost_equal
+from sklearn.utils._testing import assert_array_almost_equal, raises
 from sklearn.utils.fixes import (
     CSC_CONTAINERS,
     CSR_CONTAINERS,
@@ -488,6 +488,33 @@ def test_spline_transformer_n_features_out(
     splt.fit(X)
 
     assert splt.transform(X).shape[1] == splt.n_features_out_
+
+
+def test_spline_transformer_handles_missing_values():
+    """Test that SplineTransformer handles missing values correctly."""
+    X = [[1], [2], [3], [np.nan]]
+
+    msg = "'X' contains Nan values, which is conflicting with handle_missing='error'."
+    with raises(ValueError, match=msg):
+        spline = SplineTransformer(degree=2, n_knots=3, handle_missing="error")
+        spline.fit_transform(X)
+
+    # X = [[1], [2], [3], [0]]
+    spline = SplineTransformer(
+        degree=2, n_knots=3, handle_missing="indicator", extrapolation="continue"
+    )
+    res = spline.fit_transform(X)
+    print(res)
+
+    spline = SplineTransformer(
+        degree=2, n_knots=3, include_bias=False, handle_missing="indicator"
+    )
+    res = spline.fit_transform(X)
+    print(res)
+    # check if MissingIndicator is appended to data
+
+    # check with sparse_output=True, because in SimpleImputer missing_values =
+    # 0 not allowed with sparse data as it would force densification
 
 
 @pytest.mark.parametrize(
