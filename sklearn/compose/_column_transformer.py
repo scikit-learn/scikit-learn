@@ -1082,6 +1082,12 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
             "parallel", transformers, names=names, name_details=name_details
         )
 
+    def __getitem__(self, key):
+        try:
+            return self.named_transformers_[key]
+        except AttributeError:
+            raise TypeError("ColumnTransformer is subscriptable after it is fitted")
+
     def _get_empty_routing(self):
         """Return empty routing.
 

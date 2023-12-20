@@ -315,6 +315,9 @@ Changelog
   The minimum supported version for polars is `0.19.12`.
   :pr:`26683` by `Thomas Fan`_.
 
+- |Feature| A fitted :class:`compose.ColumnTransformer` now implements `__getitem__`
+  which returns the fitted transformers by name. :pr:`xxxxx` by `Thomas Fan`_.
+
 - |Fix| :func:`cluster.spectral_clustering` and :class:`cluster.SpectralClustering`
   now raise an explicit error message indicating that sparse matrices and arrays
   with `np.int64` indices are not supported.
