@@ -280,12 +280,18 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             X = self._validate_data(X, **check_X_kwargs)
             return X, None
 
+        if self.on_high_cardinality_categories == "bin_least_frequent":
+            max_categories = self.max_bins
+        else:
+            max_categories = None
+
         n_features = X.shape[1]
         ordinal_encoder = OrdinalEncoder(
             categories="auto",
             handle_unknown="use_encoded_value",
             unknown_value=np.nan,
             encoded_missing_value=np.nan,
+            max_categories=max_categories,
             dtype=X_DTYPE,
         )
 
@@ -336,15 +342,23 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         categorical_column_indices = np.arange(self._preprocessor.n_features_in_)[
             self._preprocessor.output_indices_["encoder"]
         ]
-        for feature_idx, categories in zip(
-            categorical_column_indices, encoder.categories_
+        bin_least_frequent = self.on_high_cardinality_categories == "bin_least_frequent"
+        try:
+            n_infrequent_categories = [
+                0 if cat is None else len(cat) for cat in encoder.infrequent_categories_
+            ]
+        except AttributeError:
+            n_infrequent_categories = [0] * len(encoder.categories_)
+
+        for feature_idx, categories, n_infrequent in zip(
+            categorical_column_indices, encoder.categories_, n_infrequent_categories
         ):
             # OrdinalEncoder always puts np.nan as the last category if the
             # training data has missing values. Here we remove it because it is
             # already added by the _BinMapper.
             if len(categories) and is_scalar_nan(categories[-1]):
                 categories = categories[:-1]
-            if categories.size > self.max_bins:
+            if not bin_least_frequent and categories.size > self.max_bins:
                 try:
                     feature_name = repr(encoder.feature_names_in_[feature_idx])
                 except AttributeError:
@@ -354,7 +368,10 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                     f"have a cardinality <= {self.max_bins} but actually "
                     f"has a cardinality of {categories.size}."
                 )
-            known_categories[feature_idx] = np.arange(len(categories), dtype=X_DTYPE)
+
+            # infrequent categories are grouped into one category
+            total_categories = len(categories) - n_infrequent + 1
+            known_categories[feature_idx] = np.arange(total_categories, dtype=X_DTYPE)
         return known_categories
 
     def _check_categorical_features(self, X):

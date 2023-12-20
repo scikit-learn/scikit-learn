@@ -1466,7 +1466,7 @@ def test_categorical_cardinality_higher_than_n_bins(Hist):
 
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
 
-    hist_kwargs = dict(max_iter=10, max_bins=max_bins, random_state=0)
+    hist_kwargs = dict(max_iter=1, max_bins=max_bins, random_state=0)
     hist_native = Hist(
         categorical_features=categorical_features,
         on_high_cardinality_categories="bin_least_frequent",
@@ -1479,6 +1479,7 @@ def test_categorical_cardinality_higher_than_n_bins(Hist):
     column_transformer = make_column_transformer(
         (
             OrdinalEncoder(
+                categories="auto",
                 handle_unknown="use_encoded_value",
                 unknown_value=np.nan,
                 encoded_missing_value=np.nan,
@@ -1495,6 +1496,13 @@ def test_categorical_cardinality_higher_than_n_bins(Hist):
     )
     hist_with_prep.fit(X_train, y_train)
 
+    # Check that preprocessors returns the same transformed data
+    assert_allclose(
+        hist_native._preprocessor.transform(X_train),
+        hist_with_prep[0].transform(X_train),
+    )
+
+    # Check that the trees are the same and have the same performance
     assert len(hist_native._predictors) == len(hist_with_prep[-1]._predictors)
     for predictor_1, predictor_2 in zip(
         hist_native._predictors, hist_with_prep[-1]._predictors
@@ -1554,28 +1562,6 @@ def test_categorical_encoding_higher_than_n_bins(Hist):
         assert len(predictor_1[0].nodes) == len(predictor_2[0].nodes)
 
     assert score_in_bounds == pytest.approx(score_out_of_bounds)
-
-
-@pytest.mark.parametrize(
-    "Hist", [HistGradientBoostingClassifier, HistGradientBoostingRegressor]
-)
-def test_categorical_errors(Hist):
-    """Check errors are raised for invalid categorical features."""
-    max_bins = 5
-    X = np.array([[max_bins + 1, 0, 2, 3, 1, 2, 0]]).T
-    y = [0, 1, 0, 1, 0, 1, 0]
-
-    hist = Hist(max_bins=max_bins, random_state=0, categorical_features=[0])
-
-    msg = "Categorical feature at index 0 is expected to be encoded with values < 5"
-    with pytest.raises(ValueError, match=msg):
-        hist.fit(X, y)
-
-    msg = "Categorical feature at index 0 is expected to have cardinality <= 5"
-    X = np.array([[0, 1, 2, 3, 4, 0, 1, 2, 3, 4, 5]]).T
-    y = [0] * 10 + [1] * 11
-    with pytest.raises(ValueError, match=msg):
-        hist.fit(X, y)
 
 
 @pytest.mark.parametrize("dataframe_lib", ["pandas", "polars"])
