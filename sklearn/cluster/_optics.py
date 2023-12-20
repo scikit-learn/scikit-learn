@@ -863,9 +863,9 @@ def cluster_optics_xi(
     >>> ordering = np.array([0, 1, 2, 5, 3, 4])
     >>> min_samples = 2
     >>> labels, clusters = cluster_optics_xi(
-    ...    reachability=reachability, 
-    ...    predecessor=predecessor, 
-    ...    ordering=ordering, 
+    ...    reachability=reachability,
+    ...    predecessor=predecessor,
+    ...    ordering=ordering,
     ...    min_samples=min_samples)
     >>> labels
     array([0, 0, 0, 1, 1, 1])
