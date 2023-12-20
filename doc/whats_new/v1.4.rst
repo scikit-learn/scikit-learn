@@ -547,6 +547,11 @@ Changelog
   type promotion rules of NumPy 2.
   :pr:`27899` by :user:`Olivier Grisel <ogrisel>`.
 
+- |API| The attribute `loss_function_` of :class:`linear_model.SGDClassifier` and
+  :class:`linear_model.SGDOneClassSVM` has been deprecated and will be removed in
+  version 1.6.
+  :pr:`27979` by :user:`Christian Lorentzen <lorentzenchr>`.
+
 :mod:`sklearn.metrics`
 ......................
 
