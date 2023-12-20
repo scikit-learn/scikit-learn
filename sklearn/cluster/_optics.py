@@ -584,10 +584,10 @@ def compute_optics_graph(
     array([0, 1, 2, 5, 3, 4])
     >>> core_distances_
     array([3.16227766, 1.41421356, 1.41421356, 1.        , 1.        ,
-    ...   4.12310563])
+           4.12310563])
     >>> reachability_
     array([       inf, 3.16227766, 1.41421356, 4.12310563, 1.        ,
-    ...   5.        ])
+           5.        ])
     >>> predecessor_
     array([-1,  0,  1,  5,  3,  2])
     """
@@ -871,8 +871,8 @@ def cluster_optics_xi(
     array([0, 0, 0, 1, 1, 1])
     >>> clusters
     array([[0, 2],
-    ...    [3, 5],
-    ...    [0, 5]])
+           [3, 5],
+           [0, 5]])
     """
     n_samples = len(reachability)
     _validate_size(min_samples, n_samples, "min_samples")

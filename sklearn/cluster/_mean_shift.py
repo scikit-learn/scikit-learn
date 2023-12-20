@@ -234,7 +234,7 @@ def mean_shift(
     >>> cluster_centers, labels = mean_shift(X, bandwidth=bandwidth)
     >>> cluster_centers
     array([[3.33333333, 6.        ],
-    ...    [1.33333333, 0.66666667]])
+           [1.33333333, 0.66666667]])
     >>> labels
     array([1, 1, 1, 0, 0, 0])
     """
