@@ -76,6 +76,17 @@ def estimate_bandwidth(X, *, quantile=0.3, n_samples=None, random_state=0, n_job
     -------
     bandwidth : float
         The bandwidth parameter.
+
+    Examples
+    --------
+
+    >>> from sklearn.cluster import estimate_bandwidth
+    >>> import numpy as np
+    >>> X = np.array([[1, 1], [2, 1], [1, 0],
+    ...               [4, 7], [3, 5], [3, 6]])
+    >>> bandwidth = estimate_bandwidth(X, quantile=0.5, random_state=0)
+    >>> bandwidth
+    1.6191294403531442
     """
     X = check_array(X)
 
