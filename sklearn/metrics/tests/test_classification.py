@@ -2782,7 +2782,7 @@ def test_ecce_losses():
     assert_almost_equal(ecce_mad_loss(y_true, y_pred), true_score_mad)
     assert_almost_equal(ecce_r_loss(y_true, y_pred), true_score_r)
     # assert_almost_equal(ecce_r_loss(1.0 + y_true, y_pred), true_score_r)
-    #check if pos_label can be inferred
+    # check if pos_label can be inferred
 
     # Check ValueErrors - ecce_mad
     with pytest.raises(ValueError):
