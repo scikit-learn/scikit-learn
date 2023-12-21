@@ -3240,22 +3240,23 @@ def brier_score_loss(y_true, y_prob, *, sample_weight=None, pos_label=None):
 def ecce_mad_loss(y_true, y_prob, *, pos_label=None):
     """Compute the ECCE-MAD loss according to [1].
 
-    The smaller the ECCE-MAD, the better, hence the naming with "loss". They are based 
-    on the cumulative differences between the actual outcomes and the estimated probabilities.
-    It has been shown that the empirical cumulative calibration errors (ECCE) are fully
-    non-parametric and uniquely, fully specified, statistically powerful and reliable. 
-    And not only that, but also without any specific trade-off concerning binning.
-    As indicated, they are a calibration metric that does not depend on binning or graphical methods
-    such as reliability diagrams, making them ideal for process automation when a calibrated model 
-    is needed. They are more appropiate to assess calibration than the previous state-of-art ECE. 
+    The smaller the ECCE-MAD, the better, hence the naming with "loss".
+    They are based on the cumulative differences between the actual outcomes
+    and the estimated probabilities. It has been shown that the empirical cumulative
+    calibration errors (ECCE) are fully, non-parametric and uniquely, fully specified,
+    statistically powerful and reliable. And not only that, but also without any
+    specific trade-off concerning binning. As indicated, they are a calibration metric
+    that does not depend on binning or graphical methods such as reliability diagrams,
+    making them ideal for process automation when a calibrated model is needed.
+    They are more appropiate to assess calibration than the previous state-of-art ECE.
 
-    The ECCE-MAD metric is appropriate for assessing the probability calibration 
+    The ECCE-MAD metric is appropriate for assessing the probability calibration
     of classifiers with binary outcomes (that can be structured as true or false)
-    Which label is considered to be the positive label is controlled via the parameter 
-    `pos_label`, which defaults to the greater label unless `y_true` is all 0 or all -1, 
+    Which label is considered to be the positive label is controlled via the parameter
+    `pos_label`, which defaults to the greater label unless `y_true` is all 0 or all -1,
     in which case `pos_label` defaults to 1.
 
-    Read more in the :ref:`User Guide <ecce_loss>`. 
+    Read more in the :ref:`User Guide <ecce_loss>`.
 
     Parameters
     ----------
@@ -3282,8 +3283,9 @@ def ecce_mad_loss(y_true, y_prob, *, pos_label=None):
 
     References
     ----------
-    .. [1] Imanol Arrieta-Ibarra, Paman Gujral, Jonathan Tannen, Mark Tygert, and Cherie Xu. "Metrics 
-    of calibration for probabilistic predictions". J. Mach. Learn. Res., 23(1), jan 2022. ISSN 1532-4435.
+    .. [1] Imanol Arrieta-Ibarra, Paman Gujral, Jonathan Tannen, Mark Tygert,
+    and Cherie Xu. "Metrics of calibration for probabilistic predictions". J. Mach.
+    Learn. Res., 23(1), jan 2022. ISSN 1532-4435.
 
     Examples
     --------
@@ -3293,13 +3295,13 @@ def ecce_mad_loss(y_true, y_prob, *, pos_label=None):
     >>> y_true_categorical = np.array(["spam", "ham", "ham", "spam"])
     >>> y_prob = np.array([0.1, 0.9, 0.8, 0.3])
     >>> ecce_mad_loss(y_true, y_prob)
-    0.1... 
+    0.1...
     >>> ecce_mad_loss(y_true, 1-y_prob, pos_label=0)
-    0.1... 
+    0.1...
     >>> ecce_mad_loss(y_true_categorical, y_prob, pos_label="ham")
-    0.1... 
+    0.1...
     >>> ecce_mad_loss(y_true, np.array(y_prob) > 0.5)
-    0.0 
+    0.0
     """
     y_true = column_or_1d(y_true)
     y_prob = column_or_1d(y_prob)
@@ -3330,15 +3332,15 @@ def ecce_mad_loss(y_true, y_prob, *, pos_label=None):
         else:
             raise
     y_true = np.array(y_true == pos_label, int)
-    
+
     #new:
     sort_idxs = np.argsort(y_prob)
     y_prob_sorted = y_prob[sort_idxs]
     y_true_sorted = y_true[sort_idxs]
-    
+
     diffs = 1/len(y_prob) * (y_true_sorted - y_prob_sorted)
     cum_diffs = np.cumsum(diffs)
-    
+
     return max(np.abs(cum_diffs))
 
 @validate_params(
@@ -3350,26 +3352,27 @@ def ecce_mad_loss(y_true, y_prob, *, pos_label=None):
     prefer_skip_nested_validation=True,
 )
 def ecce_r_loss(y_true, y_prob, *, pos_label=None):
-    """Compute the ECCE-R loss according to [Imanol Arrieta-Ibarra, Paman Gujral, 
+    """Compute the ECCE-R loss according to [Imanol Arrieta-Ibarra, Paman Gujral,
     Jonathan Tannen, Mark Tygert, and Cherie Xu. Metrics of calibration for
     probabilistic predictions. J. Mach. Learn. Res., 23(1), jan 2022. ISSN 1532-4435].
 
-    The smaller the ECCE-R, the better, hence the naming with "loss". They are based 
-    on the cumulative differences between the actual outcomes and the estimated probabilities.
-    It has been shown that the empirical cumulative calibration errors (ECCE) are fully
-    non-parametric and uniquely, fully specified, statistically powerful and reliable. 
-    And not only that, but also without any specific trade-off concerning binning.
-    As indicated, they are a calibration metric that does not depend on binning or graphical methods
-    such as reliability diagrams, making them ideal for process automation when a calibrated model 
-    is needed. They are more appropiate to assess calibration than the previous state-of-art ECE. 
+    The smaller the ECCE-R, the better, hence the naming with "loss".
+    They are based on the cumulative differences between the actual outcomes
+    and the estimated probabilities. It has been shown that the empirical cumulative
+    calibration errors (ECCE) are fully, non-parametric and uniquely, fully specified,
+    statistically powerful and reliable. And not only that, but also without any
+    specific trade-off concerning binning. As indicated, they are a calibration metric
+    that does not depend on binning or graphical methods such as reliability diagrams,
+    making them ideal for process automation when a calibrated model is needed.
+    They are more appropiate to assess calibration than the previous state-of-art ECE.
 
-    The ECCE-R metric is appropriate for assessing the probability calibration 
+    The ECCE-R metric is appropriate for assessing the probability calibration
     of classifiers with binary outcomes (that can be structured as true or false)
-    Which label is considered to be the positive label is controlled via the parameter 
-    `pos_label`, which defaults to the greater label unless `y_true` is all 0 or all -1, 
+    Which label is considered to be the positive label is controlled via the parameter
+    `pos_label`, which defaults to the greater label unless `y_true` is all 0 or all -1,
     in which case `pos_label` defaults to 1.
 
-    Read more in the :ref:`User Guide <ecce_loss>`. 
+    Read more in the :ref:`User Guide <ecce_loss>`.
 
     Parameters
     ----------
@@ -3396,8 +3399,9 @@ def ecce_r_loss(y_true, y_prob, *, pos_label=None):
 
     References
     ----------
-    .. [1] Imanol Arrieta-Ibarra, Paman Gujral, Jonathan Tannen, Mark Tygert, and Cherie Xu. "Metrics 
-    of calibration for probabilistic predictions". J. Mach. Learn. Res., 23(1), jan 2022. ISSN 1532-4435.
+    .. [1] Imanol Arrieta-Ibarra, Paman Gujral, Jonathan Tannen, Mark Tygert,
+    and Cherie Xu. "Metrics of calibration for probabilistic predictions". J. Mach.
+    Learn. Res., 23(1), jan 2022. ISSN 1532-4435.
 
     Examples
     --------
@@ -3407,13 +3411,13 @@ def ecce_r_loss(y_true, y_prob, *, pos_label=None):
     >>> y_true_categorical = np.array(["spam", "ham", "ham", "spam"])
     >>> y_prob = np.array([0.1, 0.9, 0.8, 0.3])
     >>> ecce_r_loss(y_true, y_prob)
-    0.075... 
+    0.075...
     >>> ecce_r_loss(y_true, 1-y_prob, pos_label=0)
-    0.075... 
+    0.075...
     >>> ecce_r_loss(y_true_categorical, y_prob, pos_label="ham")
-    0.075... 
+    0.075...
     >>> ecce_r_loss(y_true, np.array(y_prob) > 0.5)
-    0.0 
+    0.0
     """
     y_true = column_or_1d(y_true)
     y_prob = column_or_1d(y_prob)
@@ -3444,13 +3448,13 @@ def ecce_r_loss(y_true, y_prob, *, pos_label=None):
         else:
             raise
     y_true = np.array(y_true == pos_label, int)
-    
+
     #new:
     sort_idxs = np.argsort(y_prob)
     y_prob_sorted = y_prob[sort_idxs]
     y_true_sorted = y_true[sort_idxs]
-    
+
     diffs = 1/len(y_prob) * (y_true_sorted - y_prob_sorted)
     cum_diffs = np.cumsum(diffs)
-    
+
     return max(cum_diffs) - min(cum_diffs)
