@@ -2767,7 +2767,7 @@ def test_brier_score_loss():
 
 
 def test_ecce_losses():
-    # Check brier_score_loss function
+    # Check ecce_r and ecce_mad functions
     y_pred = np.array(
         [
             0.10529251,
@@ -2918,6 +2918,8 @@ def test_balanced_accuracy_score(y_true, y_pred):
         precision_score,
         recall_score,
         brier_score_loss,
+        ecce_mad_loss,
+        ecce_r_loss,
     ],
 )
 @pytest.mark.parametrize(
