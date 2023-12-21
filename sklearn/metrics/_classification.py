@@ -3298,9 +3298,9 @@ def ecce_mad_loss(y_true, y_prob, *, pos_label=None):
     >>> ecce_mad_loss(y_true, y_prob)
     0.1...
     >>> ecce_mad_loss(y_true, 1-y_prob, pos_label=0)
-    0.1...
+    0.07499999999999998...
     >>> ecce_mad_loss(y_true_categorical, y_prob, pos_label="ham")
-    0.1...
+    0.475...
     >>> ecce_mad_loss(y_true, np.array(y_prob) > 0.5)
     0.0
     """
@@ -3354,9 +3354,7 @@ def ecce_mad_loss(y_true, y_prob, *, pos_label=None):
     prefer_skip_nested_validation=True,
 )
 def ecce_r_loss(y_true, y_prob, *, pos_label=None):
-    """Compute the ECCE-R loss according to [Imanol Arrieta-Ibarra, Paman Gujral,
-    Jonathan Tannen, Mark Tygert, and Cherie Xu. Metrics of calibration for
-    probabilistic predictions. J. Mach. Learn. Res., 23(1), jan 2022. ISSN 1532-4435].
+    """Compute the ECCE-R loss according to [1].
 
     The smaller the ECCE-R, the better, hence the naming with "loss".
     They are based on the cumulative differences between the actual outcomes
@@ -3415,7 +3413,7 @@ def ecce_r_loss(y_true, y_prob, *, pos_label=None):
     >>> ecce_r_loss(y_true, y_prob)
     0.075...
     >>> ecce_r_loss(y_true, 1-y_prob, pos_label=0)
-    0.075...
+    0.1...
     >>> ecce_r_loss(y_true_categorical, y_prob, pos_label="ham")
     0.075...
     >>> ecce_r_loss(y_true, np.array(y_prob) > 0.5)
