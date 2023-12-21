@@ -28,6 +28,7 @@ dependencies:
   - numpydoc
   - sphinx-prompt
   - plotly
+  - polars
   - pooch
   - sphinxext-opengraph
   - pip
