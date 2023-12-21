@@ -1996,8 +1996,8 @@ seen in the reliability diagrams.
     Dagstuhl Seminar Proceedings. Schloss Dagstuhl-Leibniz-Zentrum fr Informatik (2008).
 
   .. [Sancarlos2023] Abel Sancarlos, Edgar Bahilo, Pablo Mozo, Lukas Norman, Obaid Ur Rehma and Mihails Anufrijevs, 
-  `"Towards a data-driven debt collection strategy based on an advanced machine learning framework." <https://arxiv.org/pdf/2311.06292.pdf>`_,
-  (2023)
+    `"Towards a data-driven debt collection strategy based on an advanced machine learning framework." <https://arxiv.org/pdf/2311.06292.pdf>`_,
+    (2023)
 
 .. _multilabel_ranking_metrics:
 
