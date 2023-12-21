@@ -7,20 +7,20 @@ cdef class LossFunction:
 
 
 cdef class Regression(LossFunction):
-    cdef double loss(self, double p, double y) noexcept nogil
-    cdef double dloss(self, double p, double y) noexcept nogil
+    cdef double loss(self, double y, double p) noexcept nogil
+    cdef double dloss(self, double y, double p) noexcept nogil
 
 
 cdef class Classification(LossFunction):
-    cdef double loss(self, double p, double y) noexcept nogil
-    cdef double dloss(self, double p, double y) noexcept nogil
+    cdef double loss(self, double y, double p) noexcept nogil
+    cdef double dloss(self, double y, double p) noexcept nogil
 
 
 cdef class Log(Classification):
-    cdef double loss(self, double p, double y) noexcept nogil
-    cdef double dloss(self, double p, double y) noexcept nogil
+    cdef double loss(self, double y, double p) noexcept nogil
+    cdef double dloss(self, double y, double p) noexcept nogil
 
 
 cdef class SquaredLoss(Regression):
-    cdef double loss(self, double p, double y) noexcept nogil
-    cdef double dloss(self, double p, double y) noexcept nogil
+    cdef double loss(self, double y, double p) noexcept nogil
+    cdef double dloss(self, double y, double p) noexcept nogil
