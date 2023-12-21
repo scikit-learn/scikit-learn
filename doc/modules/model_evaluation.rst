@@ -63,6 +63,8 @@ Scoring                                Function                                 
 'top_k_accuracy'                       :func:`metrics.top_k_accuracy_score`
 'average_precision'                    :func:`metrics.average_precision_score`
 'neg_brier_score'                      :func:`metrics.brier_score_loss`
+'neg_ecce_r_score'                     :func:`metrics.ecce_r_loss`
+'neg_ecce_mad_score'                   :func:`metrics.ecce_mad_loss`
 'f1'                                   :func:`metrics.f1_score`                           for binary targets
 'f1_micro'                             :func:`metrics.f1_score`                           micro-averaged
 'f1_macro'                             :func:`metrics.f1_score`                           macro-averaged
@@ -1932,7 +1934,7 @@ Reliability diagrams are an extremely useful visual tool. However, reliable metr
 calibration are also highly demanded, for instance,  for an automatic model selection based 
 on this assessment.
 
-Scikit-learn provides the ECCE metrics to assess calibraiton :func:`~sklearn.metrics.ecce_mad_loss`
+Scikit-learn provides the ECCE metrics to assess calibration :func:`~sklearn.metrics.ecce_r_loss`
 and the :func:`~sklearn.metrics.ecce_mad_loss`.
 
 Consider the following general setting. Suppose we have :math:`n` observations 
