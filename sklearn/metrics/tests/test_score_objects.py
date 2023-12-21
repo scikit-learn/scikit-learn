@@ -29,8 +29,6 @@ from sklearn.metrics import (
     balanced_accuracy_score,
     brier_score_loss,
     check_scoring,
-    ecce_mad_loss,
-    ecce_r_loss,
     f1_score,
     fbeta_score,
     get_scorer,
