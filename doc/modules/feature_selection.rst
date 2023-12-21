@@ -62,6 +62,9 @@ as objects that implement the ``transform`` method:
  * :class:`SelectPercentile` removes all but a user-specified highest scoring
    percentage of features
 
+* :class:`SelectThreshold` removes all features for which the scores are below
+  a user-specified threshold.
+
  * using common univariate statistical tests for each feature:
    false positive rate :class:`SelectFpr`, false discovery rate
    :class:`SelectFdr`, or family wise error :class:`SelectFwe`.
@@ -110,9 +113,9 @@ applied to non-negative features, such as frequencies.
 
 .. note::
 
-    The :class:`SelectPercentile` and :class:`SelectKBest` support unsupervised
-    feature selection as well. One needs to provide a `score_func` where `y=None`.
-    The `score_func` should use internally `X` to compute the scores.
+    The :class:`SelectPercentile`, :class:`SelectKBest`, and :class:`SelectThreshold`
+    support unsupervised feature selection as well. One needs to provide a `score_func`
+    where `y=None`. The `score_func` should use internally `X` to compute the scores.
 
 .. topic:: Examples:
 
