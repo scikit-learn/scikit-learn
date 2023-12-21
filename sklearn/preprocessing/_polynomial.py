@@ -745,8 +745,10 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
         self.sparse_output = sparse_output
 
     @staticmethod
-    def _get_base_knot_positions(X, n_knots=10, knots="uniform", sample_weight=None):
-        """Calculate base knot positions.
+    def _get_base_knot_positions(
+        X, n_knots=10, knots="uniform", missing_mask=None, sample_weight=None
+    ):
+        """Calculate base knot positions for `knots` either "uniform" or "quantile".
 
         Base knots such that first knot <= feature <= last knot. For the
         B-spline construction with scipy.interpolate.BSpline, 2*degree knots
@@ -757,6 +759,11 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
         knots : ndarray of shape (n_knots, n_features), dtype=np.float64
             Knot positions (points) of base interval.
         """
+        # if there are missing values in X, only consider the other values to calculate
+        # the base knots, preserving the shape
+        if missing_mask is not None:
+            X = X[~np.any(missing_mask, axis=1)]
+
         if knots == "quantile":
             percentiles = 100 * np.linspace(
                 start=0, stop=1, num=n_knots, dtype=np.float64
@@ -881,18 +888,26 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
         _, n_features = X.shape
 
         if self.handle_missing == "error":
+            self.missing_mask = None
+
             if np.isnan(X).any():
                 raise ValueError(
-                    "'X' contains Nan values, which is conflicting with"
+                    "'X' contains np.nan values, which is conflicting with"
                     " handle_missing='error'."
                 )
-        else:
-            missing_mask = _get_mask(X, np.nan)
-            self._fit_indicator(missing_mask)
+        else:  # handle_missing == "indicator"
+            self.missing_mask = _get_mask(X, np.nan)
+            self._fit_indicator(
+                self.missing_mask
+            )  ########### <-- not sure if here or in transform
 
         if isinstance(self.knots, str):
             base_knots = self._get_base_knot_positions(
-                X, n_knots=self.n_knots, knots=self.knots, sample_weight=sample_weight
+                X,
+                n_knots=self.n_knots,
+                knots=self.knots,
+                missing_mask=self.missing_mask,
+                sample_weight=sample_weight,
             )
         else:
             base_knots = check_array(self.knots, dtype=np.float64)
@@ -1014,17 +1029,6 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
             force_all_finite=False,
         )
 
-        if self.handle_missing == "indicator":
-            # compute mask before eliminating invalid features
-            self.missing_mask = _get_mask(X, np.nan)
-
-            # substitute missing values with 0
-            n_missing = np.sum(self.missing_mask, axis=0)
-            values = np.repeat(0, n_missing)
-            coordinates = np.where(self.missing_mask.transpose())[::-1]
-
-            X[coordinates] = values
-
         n_samples, n_features = X.shape
         n_splines = self.bsplines_[0].c.shape[1]
         degree = self.degree
@@ -1085,11 +1089,13 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
                         XBS_sparse = XBS_sparse[:, :-degree]
                 else:
                     XBS[:, (i * n_splines) : ((i + 1) * n_splines)] = spl(x)
+                    # replace any np.nan values with 0
+                    XBS = np.nan_to_num(XBS, nan=0)
             else:  # extrapolation in ("constant", "linear")
                 xmin, xmax = (
                     spl.t[degree],
                     spl.t[-degree - 1],
-                )  # <------------ DEBUG: here, values are both nan
+                )
                 # spline values at boundaries
                 f_min, f_max = spl(xmin), spl(xmax)
                 mask = (xmin <= X[:, i]) & (X[:, i] <= xmax)
@@ -1109,6 +1115,8 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
                         XBS_sparse[mask_inv, :] = 0
                 else:
                     XBS[mask, (i * n_splines) : ((i + 1) * n_splines)] = spl(X[mask, i])
+                    # replace any np.nan values with 0
+                    XBS = np.nan_to_num(XBS, nan=0)
 
             # Note for extrapolation:
             # 'continue' is already returned as is by scipy BSplines
