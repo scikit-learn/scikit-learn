@@ -45,6 +45,8 @@ from . import (
     balanced_accuracy_score,
     brier_score_loss,
     class_likelihood_ratios,
+    ecce_mad_loss,
+    ecce_r_loss,
     explained_variance_score,
     f1_score,
     jaccard_score,
@@ -776,6 +778,14 @@ brier_score_loss_scorer = make_scorer(
     brier_score_loss, greater_is_better=False, response_method="predict_proba"
 )
 
+neg_ecce_r_score_scorer = make_scorer(
+    ecce_r_loss, greater_is_better=False, response_method="predict_proba"
+)
+
+neg_ecce_mad_score_scorer = make_scorer(
+    ecce_mad_loss, greater_is_better=False, response_method="predict_proba"
+)
+
 
 # Clustering scores
 adjusted_rand_scorer = make_scorer(adjusted_rand_score)
@@ -814,6 +824,8 @@ _SCORERS = dict(
     average_precision=average_precision_scorer,
     neg_log_loss=neg_log_loss_scorer,
     neg_brier_score=neg_brier_score_scorer,
+    neg_ecce_r_loss=neg_ecce_r_score_scorer,
+    neg_ecce_mad_loss=neg_ecce_mad_score_scorer,
     positive_likelihood_ratio=positive_likelihood_ratio_scorer,
     neg_negative_likelihood_ratio=neg_negative_likelihood_ratio_scorer,
     # Cluster metrics that use supervised evaluation
