@@ -9,6 +9,8 @@ from ._classification import (
     accuracy_score,
     balanced_accuracy_score,
     brier_score_loss,
+    ecce_mad_loss,
+    ecce_r_loss,
     class_likelihood_ratios,
     classification_report,
     cohen_kappa_score,
