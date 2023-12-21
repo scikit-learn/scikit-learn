@@ -3229,6 +3229,7 @@ def brier_score_loss(y_true, y_prob, *, sample_weight=None, pos_label=None):
     y_true = np.array(y_true == pos_label, int)
     return np.average((y_true - y_prob) ** 2, weights=sample_weight)
 
+
 @validate_params(
     {
         "y_true": ["array-like"],
@@ -3333,15 +3334,16 @@ def ecce_mad_loss(y_true, y_prob, *, pos_label=None):
             raise
     y_true = np.array(y_true == pos_label, int)
 
-    #new:
+    # new:
     sort_idxs = np.argsort(y_prob)
     y_prob_sorted = y_prob[sort_idxs]
     y_true_sorted = y_true[sort_idxs]
 
-    diffs = 1/len(y_prob) * (y_true_sorted - y_prob_sorted)
+    diffs = 1 / len(y_prob) * (y_true_sorted - y_prob_sorted)
     cum_diffs = np.cumsum(diffs)
 
     return max(np.abs(cum_diffs))
+
 
 @validate_params(
     {
@@ -3449,12 +3451,12 @@ def ecce_r_loss(y_true, y_prob, *, pos_label=None):
             raise
     y_true = np.array(y_true == pos_label, int)
 
-    #new:
+    # new:
     sort_idxs = np.argsort(y_prob)
     y_prob_sorted = y_prob[sort_idxs]
     y_true_sorted = y_true[sort_idxs]
 
-    diffs = 1/len(y_prob) * (y_true_sorted - y_prob_sorted)
+    diffs = 1 / len(y_prob) * (y_true_sorted - y_prob_sorted)
     cum_diffs = np.cumsum(diffs)
 
     return max(cum_diffs) - min(cum_diffs)
