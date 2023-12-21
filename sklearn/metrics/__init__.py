@@ -9,12 +9,12 @@ from ._classification import (
     accuracy_score,
     balanced_accuracy_score,
     brier_score_loss,
-    ecce_mad_loss,
-    ecce_r_loss,
     class_likelihood_ratios,
     classification_report,
     cohen_kappa_score,
     confusion_matrix,
+    ecce_mad_loss,
+    ecce_r_loss,
     f1_score,
     fbeta_score,
     hamming_loss,
@@ -179,4 +179,6 @@ __all__ = [
     "v_measure_score",
     "zero_one_loss",
     "brier_score_loss",
+    "ecce_mad_loss",
+    "ecce_r_loss"
 ]
