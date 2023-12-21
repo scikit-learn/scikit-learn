@@ -3283,9 +3283,9 @@ def ecce_mad_loss(y_true, y_prob, *, pos_label=None):
 
     References
     ----------
-    .. [1] Imanol Arrieta-Ibarra, Paman Gujral, Jonathan Tannen, Mark Tygert,
-    and Cherie Xu. "Metrics of calibration for probabilistic predictions". J. Mach.
-    Learn. Res., 23(1), jan 2022. ISSN 1532-4435.
+    .. [1] Imanol Arrieta-Ibarra, Paman Gujral, Jonathan Tannen, Mark Tygert, and
+           Cherie Xu. "Metrics of calibration for probabilistic predictions". J. Mach.
+           Learn. Res., 23(1), jan 2022. ISSN 1532-4435.
 
     Examples
     --------
@@ -3400,8 +3400,8 @@ def ecce_r_loss(y_true, y_prob, *, pos_label=None):
     References
     ----------
     .. [1] Imanol Arrieta-Ibarra, Paman Gujral, Jonathan Tannen, Mark Tygert,
-    and Cherie Xu. "Metrics of calibration for probabilistic predictions". J. Mach.
-    Learn. Res., 23(1), jan 2022. ISSN 1532-4435.
+           and Cherie Xu. "Metrics of calibration for probabilistic predictions".
+           J. Mach. Learn. Res., 23(1), jan 2022. ISSN 1532-4435.
 
     Examples
     --------
