@@ -1415,7 +1415,7 @@ def fbeta_score(
     Notes
     -----
     When ``true positive + false positive + false negative == 0``, f-score
-    returns 0 and raises ``UndefinedMetricWarning``. This behavior can be
+    returns 0.0 and raises ``UndefinedMetricWarning``. This behavior can be
     modified by setting ``zero_division``.
 
     References
