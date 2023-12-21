@@ -824,8 +824,8 @@ _SCORERS = dict(
     average_precision=average_precision_scorer,
     neg_log_loss=neg_log_loss_scorer,
     neg_brier_score=neg_brier_score_scorer,
-    neg_ecce_r_loss=neg_ecce_r_score_scorer,
-    neg_ecce_mad_loss=neg_ecce_mad_score_scorer,
+    neg_ecce_r_score=neg_ecce_r_score_scorer,
+    neg_ecce_mad_score=neg_ecce_mad_score_scorer,
     positive_likelihood_ratio=positive_likelihood_ratio_scorer,
     neg_negative_likelihood_ratio=neg_negative_likelihood_ratio_scorer,
     # Cluster metrics that use supervised evaluation
