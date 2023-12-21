@@ -890,15 +890,15 @@ In this context, we can define the notions of precision, recall and F-measure:
 
 .. math::
 
-   \text{precision} = \frac{tp}{tp + fp},
+   \text{precision} = \frac{\text{tp}}{\text{tp} + \text{fp}},
 
 .. math::
 
-   \text{recall} = \frac{tp}{tp + fn},
+   \text{recall} = \frac{tp}{\text{tp} + \text{fn}},
 
 .. math::
 
-   F_\beta = (1 + \beta^2) \frac{\text{precision} \times \text{recall}}{\beta^2 \text{precision} + \text{recall}}.
+   F_\beta = \frac{(1 + \beta^2) \text{tp}}{(1 + \beta^2) \text{tp} + \text{fp} + \beta^2 \text{fn}}.
 
 Sometimes recall is also called ''sensitivity''.
 
