@@ -470,6 +470,9 @@ class SimpleImputer(_BaseImputer):
                     elif strategy == "minimum":
                         statistics[i] = np.min(column)
 
+                    else:
+                        raise RuntimeError(f"Unknown strategy {strategy}")
+
         super()._fit_indicator(missing_mask)
 
         return statistics
@@ -545,6 +548,9 @@ class SimpleImputer(_BaseImputer):
             minimum = np.ma.getdata(minimum_masked)
             minimum[np.ma.getmaskarray(minimum_masked)] = np.nan
             return minimum
+
+        else:
+            raise RuntimeError(f"Unknown strategy {strategy}")
 
     def transform(self, X):
         """Impute all missing values in `X`.

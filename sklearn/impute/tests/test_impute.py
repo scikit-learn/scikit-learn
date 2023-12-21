@@ -1778,3 +1778,15 @@ def test_imputation_minimum(csc_container):
     imputer = SimpleImputer(missing_values=np.nan, strategy="minimum")
     X_trans = imputer.fit_transform(csc_container(X))
     assert_array_equal(X_trans.toarray(), X_true)
+
+
+@pytest.mark.parametrize("csc_container", CSC_CONTAINERS)
+def test_imputation_errors_on_unknown_strategy(csc_container):
+    imputer = SimpleImputer(missing_values=np.nan, strategy="minimum")
+    X = np.array([[0, 0, 0]])
+
+    with pytest.raises(RuntimeError):
+        imputer._dense_fit(X, "unknown", np.nan, 0)
+
+    with pytest.raises(RuntimeError):
+        imputer._sparse_fit(csc_container(X), "unknown", np.nan, 0)
