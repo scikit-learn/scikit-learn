@@ -182,6 +182,7 @@ class Pipeline(_BaseComposition):
             Configure output of `transform` and `fit_transform`.
 
             - `"default"`: Default output format of a transformer
+            - `"pandas"`: DataFrame output
             - `"polars"`: Polars output
             - `None`: Transform configuration is unchanged
 
