@@ -2934,7 +2934,7 @@ def test_classification_metric_pos_label_types(metric, classes):
     rng = np.random.RandomState(42)
     n_samples, pos_label = 10, classes[-1]
     y_true = rng.choice(classes, size=n_samples, replace=True)
-    if metric is brier_score_loss:
+    if metric in [brier_score_loss, ecce_mad_loss, ecce_r_loss]:
         # brier score loss requires probabilities
         y_pred = rng.uniform(size=n_samples)
     else:
