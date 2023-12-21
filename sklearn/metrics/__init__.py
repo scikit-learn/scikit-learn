@@ -180,5 +180,5 @@ __all__ = [
     "zero_one_loss",
     "brier_score_loss",
     "ecce_mad_loss",
-    "ecce_r_loss"
+    "ecce_r_loss",
 ]
