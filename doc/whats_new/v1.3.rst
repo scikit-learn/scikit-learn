@@ -529,7 +529,7 @@ Changelog
 
 - |Feature| :class:`ensemble.HistGradientBoostingClassifier` and
   :class:`ensemble.HistGradientBoostingRegressor` now has a
-  `on_high_cardinality_categories="bin_least_frequent"`. option to automatically
+  `on_high_cardinality_categories="bin_infrequent"`. option to automatically
   encode high cardinality categories. For categories with cardinality higher
   than `max_bins`, the infrequent categories are grouped together such there are
   only `max_bins` categories. :pr:`26268` by `Thomas Fan`_.

@@ -1469,7 +1469,7 @@ def test_categorical_cardinality_higher_than_n_bins(Hist):
     hist_kwargs = dict(max_iter=1, max_bins=max_bins, random_state=0)
     hist_native = Hist(
         categorical_features=categorical_features,
-        on_high_cardinality_categories="bin_least_frequent",
+        on_high_cardinality_categories="bin_infrequent",
         **hist_kwargs,
     )
     hist_native.fit(X_train, y_train)
@@ -1549,7 +1549,7 @@ def test_categorical_encoding_higher_than_n_bins(Hist):
 
     hist_out_of_bounds = Hist(
         categorical_features=categorical_features,
-        on_high_cardinality_categories="bin_least_frequent",
+        on_high_cardinality_categories="bin_infrequent",
         **hist_kwargs,
     )
     hist_out_of_bounds.fit(X2_train, y_train)

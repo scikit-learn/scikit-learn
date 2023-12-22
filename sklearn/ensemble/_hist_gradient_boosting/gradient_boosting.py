@@ -169,7 +169,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             Hidden(StrOptions({"warn"})),
             None,
         ],
-        "on_high_cardinality_categories": [StrOptions({"error", "bin_least_frequent"})],
+        "on_high_cardinality_categories": [StrOptions({"error", "bin_infrequent"})],
         "warm_start": ["boolean"],
         "early_stopping": [StrOptions({"auto"}), "boolean"],
         "scoring": [str, callable, None],
@@ -280,7 +280,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             X = self._validate_data(X, **check_X_kwargs)
             return X, None
 
-        if self.on_high_cardinality_categories == "bin_least_frequent":
+        if self.on_high_cardinality_categories == "bin_infrequent":
             max_categories = self.max_bins
         else:
             max_categories = None
@@ -342,7 +342,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         categorical_column_indices = np.arange(self._preprocessor.n_features_in_)[
             self._preprocessor.output_indices_["encoder"]
         ]
-        bin_least_frequent = self.on_high_cardinality_categories == "bin_least_frequent"
+        bin_infrequent = self.on_high_cardinality_categories == "bin_infrequent"
         try:
             n_infrequent_categories = [
                 0 if cat is None else len(cat) for cat in encoder.infrequent_categories_
@@ -358,7 +358,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             # already added by the _BinMapper.
             if len(categories) and is_scalar_nan(categories[-1]):
                 categories = categories[:-1]
-            if not bin_least_frequent and categories.size > self.max_bins:
+            if not bin_infrequent and categories.size > self.max_bins:
                 try:
                     feature_name = repr(encoder.feature_names_in_[feature_idx])
                 except AttributeError:
@@ -1546,13 +1546,13 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
            Added `"from_dtype"` option. The default will change to `"from_dtype"` in
            v1.6.
 
-    on_high_cardinality_categories : {"error", "bin_least_frequent"}, default="error"
+    on_high_cardinality_categories : {"error", "bin_infrequent"}, default="error"
         Whether to raise an error or to bin together the least frequent categorical
         features.
 
         - `"error"`: Raises an error when the cardinality of a categorical feature
           is higher than `max_bins` or is encoded with a value greater than `max_bins`.
-        - `"bin_least_frequent"`: Bins the least frequent categorical features
+        - `"bin_infrequent"`: Bins the least frequent categorical features
           such that there is no more than `max_bins` categories.
 
         .. versionadded:: 1.5
@@ -1935,13 +1935,13 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
            Added `"from_dtype"` option. The default will change to `"from_dtype"` in
            v1.6.
 
-    on_high_cardinality_categories : {"error", "bin_least_frequent"}, default="error"
+    on_high_cardinality_categories : {"error", "bin_infrequent"}, default="error"
         Whether to raise an error or to bin together the least frequent categorical
         features.
 
         - `"error"`: Raises an error when the cardinality of a categorical feature
           is higher than `max_bins` or is encoded with a value greater than `max_bins`.
-        - `"bin_least_frequent"`: Bins the least frequent categorical features
+        - `"bin_infrequent"`: Bins the least frequent categorical features
           such that there is no more than `max_bins` categories.
 
         .. versionadded:: 1.5
