@@ -2290,9 +2290,9 @@ def pairwise_distances(
     >>> X = [[1, 2, 3], [4, 5, 6]]
     >>> Y = [[7, 8, 9], [10, 11, 12]]
     >>> D = pairwise_distances(X, Y, metric='euclidean')
-    >>> D   
+    >>> D
     array([[10.39230485, 15.58845727],
-       [ 5.19615242, 10.39230485]]) 
+       [ 5.19615242, 10.39230485]])
 
     See Also
     --------
@@ -2503,7 +2503,7 @@ def pairwise_kernels(
         ith and jth vectors of the given matrix X, if Y is None.
         If Y is not None, then K_{i, j} is the kernel between the ith array
         from X and the jth array from Y.
-    
+
     Examples
     --------
     >>> from sklearn.metrics.pairwise import pairwise_kernels
