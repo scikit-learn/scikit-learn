@@ -30,7 +30,7 @@ import numpy as np
 from libc.math cimport fabs, exp, log
 from libc.time cimport time, time_t
 
-from ._sgd_fast cimport LossFunction
+from sklearn._loss._loss cimport CyLossFunction
 from ._sgd_fast cimport Log, SquaredLoss
 
 from ..utils._seq_dataset cimport SequentialDataset32, SequentialDataset64
@@ -85,7 +85,7 @@ cdef {{c_type}} _logsumexp{{name_suffix}}({{c_type}}* arr, int n_classes) noexce
 {{for name_suffix, c_type, np_type in dtypes}}
 
 cdef class MultinomialLogLoss{{name_suffix}}:
-    cdef {{c_type}} _loss(self, {{c_type}} y, {{c_type}}* prediction, int n_classes,
+    cdef {{c_type}} cy_loss(self, {{c_type}} y, {{c_type}}* prediction, int n_classes,
                       {{c_type}} sample_weight) noexcept nogil:
         r"""Multinomial Logistic regression loss.
 
@@ -129,7 +129,7 @@ cdef class MultinomialLogLoss{{name_suffix}}:
         loss = (logsumexp_prediction - prediction[int(y)]) * sample_weight
         return loss
 
-    cdef void dloss(self, {{c_type}} y, {{c_type}}* prediction, int n_classes,
+    cdef void cy_gradient(self, {{c_type}} y, {{c_type}}* prediction, int n_classes,
                      {{c_type}} sample_weight, {{c_type}}* gradient_ptr) noexcept nogil:
         r"""Multinomial Logistic regression gradient of the loss.
 
@@ -339,7 +339,7 @@ def sag{{name_suffix}}(
     cdef bint prox = beta > 0 and saga
 
     # Loss function to optimize
-    cdef LossFunction loss
+    cdef CyLossFunction loss
     # Whether the loss function is multinomial
     cdef bint multinomial = False
     # Multinomial loss function
@@ -414,9 +414,9 @@ def sag{{name_suffix}}(
 
                 # compute the gradient for this sample, given the prediction
                 if multinomial:
-                    multiloss.dloss(y, &prediction[0], n_classes, sample_weight, &gradient[0])
+                    multiloss.cy_gradient(y, &prediction[0], n_classes, sample_weight, &gradient[0])
                 else:
-                    gradient[0] = loss.dloss(y, prediction[0]) * sample_weight
+                    gradient[0] = loss.cy_gradient(y, prediction[0]) * sample_weight
 
                 # L2 regularization by simply rescaling the weights
                 wscale *= wscale_update
@@ -835,10 +835,10 @@ def _multinomial_grad_loss_all_samples(
             )
 
             # compute the gradient for this sample, given the prediction
-            multiloss.dloss(y, &prediction[0], n_classes, sample_weight, &gradient[0])
+            multiloss.cy_gradient(y, &prediction[0], n_classes, sample_weight, &gradient[0])
 
             # compute the loss for this sample, given the prediction
-            sum_loss += multiloss._loss(y, &prediction[0], n_classes, sample_weight)
+            sum_loss += multiloss.cy_loss(y, &prediction[0], n_classes, sample_weight)
 
             # update the sum of the gradient
             for j in range(xnnz):
