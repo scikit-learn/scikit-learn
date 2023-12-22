@@ -3330,6 +3330,7 @@ def ecce_mad_loss(y_true, y_prob, *, pos_label=None):
             # for backward compatibility, if classes are not string then
             # `pos_label` will correspond to the greater label
             pos_label = classes[-1]
+        # else dropped because we are not fully aware how it can be executed
 
     y_true = np.array(y_true == pos_label, int)
 
@@ -3444,8 +3445,8 @@ def ecce_r_loss(y_true, y_prob, *, pos_label=None):
             # for backward compatibility, if classes are not string then
             # `pos_label` will correspond to the greater label
             pos_label = classes[-1]
-        else:
-            raise
+            # else dropped because we are not fully aware how it can be executed
+
     y_true = np.array(y_true == pos_label, int)
 
     # new:
