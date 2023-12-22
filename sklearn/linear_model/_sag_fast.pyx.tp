@@ -29,13 +29,10 @@ dtypes = [('64', 'double', 'np.float64'),
 import numpy as np
 from libc.math cimport fabs, exp, log
 from libc.time cimport time, time_t
-
-from sklearn._loss._loss cimport CyLossFunction
-from ._sgd_fast cimport Log, SquaredLoss
-
-from ..utils._seq_dataset cimport SequentialDataset32, SequentialDataset64
-
 from libc.stdio cimport printf
+
+from .._loss._loss cimport CyLossFunction, CyHalfSquaredError, CyHalfBinomialLoss
+from ..utils._seq_dataset cimport SequentialDataset32, SequentialDataset64
 
 
 {{for name_suffix, c_type, np_type in dtypes}}
@@ -349,9 +346,9 @@ def sag{{name_suffix}}(
         multinomial = True
         multiloss = MultinomialLogLoss{{name_suffix}}()
     elif loss_function == "log":
-        loss = Log()
+        loss = CyHalfBinomialLoss()
     elif loss_function == "squared":
-        loss = SquaredLoss()
+        loss = CyHalfSquaredError()
     else:
         raise ValueError("Invalid loss parameter: got %s instead of "
                          "one of ('log', 'squared', 'multinomial')"
@@ -547,7 +544,7 @@ def sag{{name_suffix}}(
                               (n_iter + 1, end_time - start_time))
                 break
             elif verbose:
-                printf('Epoch %d, change: %.8f\n', n_iter + 1,
+                printf('Epoch %d, change: %.8g\n', n_iter + 1,
                                                   max_change / max_weight)
     n_iter += 1
     # We do the error treatment here based on error code in status to avoid

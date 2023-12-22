@@ -12,6 +12,7 @@ from numbers import Integral, Real
 
 import numpy as np
 
+from .._loss._loss import CyHalfBinomialLoss, CyHalfSquaredError, CyHuberLoss
 from ..base import (
     BaseEstimator,
     OutlierMixin,
@@ -33,12 +34,9 @@ from ._base import LinearClassifierMixin, SparseCoefMixin, make_dataset
 from ._sgd_fast import (
     EpsilonInsensitive,
     Hinge,
-    Huber,
-    Log,
     ModifiedHuber,
     SquaredEpsilonInsensitive,
     SquaredHinge,
-    SquaredLoss,
     _plain_sgd32,
     _plain_sgd64,
 )
@@ -334,13 +332,18 @@ class BaseSGD(SparseCoefMixin, BaseEstimator, metaclass=ABCMeta):
         return self._loss_function_
 
 
-def _prepare_fit_binary(est, y, i, input_dtye):
+def _prepare_fit_binary(est, y, i, input_dtye, label_encode=True):
     """Initialization for fit_binary.
 
     Returns y, coef, intercept, average_coef, average_intercept.
     """
     y_i = np.ones(y.shape, dtype=input_dtye, order="C")
-    y_i[y != est.classes_[i]] = -1.0
+    if label_encode:
+        # y in {0, 1}
+        y_i[y != est.classes_[i]] = 0.0
+    else:
+        # y in {-1, +1}
+        y_i[y != est.classes_[i]] = -1.0
     average_intercept = 0
     average_coef = None
 
@@ -433,8 +436,9 @@ def fit_binary(
     """
     # if average is not true, average_coef, and average_intercept will be
     # unused
+    label_encode = isinstance(est._loss_function_, CyHalfBinomialLoss)
     y_i, coef, intercept, average_coef, average_intercept = _prepare_fit_binary(
-        est, y, i, input_dtye=X.dtype
+        est, y, i, input_dtye=X.dtype, label_encode=label_encode
     )
     assert y_i.shape[0] == y.shape[0] == sample_weight.shape[0]
 
@@ -510,10 +514,10 @@ class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
         "hinge": (Hinge, 1.0),
         "squared_hinge": (SquaredHinge, 1.0),
         "perceptron": (Hinge, 0.0),
-        "log_loss": (Log,),
+        "log_loss": (CyHalfBinomialLoss,),
         "modified_huber": (ModifiedHuber,),
-        "squared_error": (SquaredLoss,),
-        "huber": (Huber, DEFAULT_EPSILON),
+        "squared_error": (CyHalfSquaredError,),
+        "huber": (CyHuberLoss, DEFAULT_EPSILON),
         "epsilon_insensitive": (EpsilonInsensitive, DEFAULT_EPSILON),
         "squared_epsilon_insensitive": (SquaredEpsilonInsensitive, DEFAULT_EPSILON),
     }
@@ -1379,8 +1383,8 @@ class SGDClassifier(BaseSGDClassifier):
 
 class BaseSGDRegressor(RegressorMixin, BaseSGD):
     loss_functions = {
-        "squared_error": (SquaredLoss,),
-        "huber": (Huber, DEFAULT_EPSILON),
+        "squared_error": (CyHalfSquaredError,),
+        "huber": (CyHuberLoss, DEFAULT_EPSILON),
         "epsilon_insensitive": (EpsilonInsensitive, DEFAULT_EPSILON),
         "squared_epsilon_insensitive": (SquaredEpsilonInsensitive, DEFAULT_EPSILON),
     }
