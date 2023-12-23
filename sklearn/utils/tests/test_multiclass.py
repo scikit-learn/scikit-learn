@@ -4,10 +4,12 @@ import numpy as np
 import pytest
 from scipy.sparse import issparse
 
-from sklearn import datasets
+from sklearn import config_context, datasets
 from sklearn.model_selection import ShuffleSplit
 from sklearn.svm import SVC
+from sklearn.utils._array_api import yield_namespace_device_dtype_combinations
 from sklearn.utils._testing import (
+    _array_api_for_tests,
     assert_allclose,
     assert_array_almost_equal,
     assert_array_equal,
@@ -172,6 +174,75 @@ EXAMPLES = {
     ],
 }
 
+ARRAY_API_EXAMPLES = {
+    "multilabel-indicator": [
+        np.random.RandomState(42).randint(2, size=(10, 10)),
+        [[0, 1], [1, 0]],
+        [[0, 1]],
+        multilabel_explicit_zero,
+        [[0, 0], [0, 0]],
+        [[-1, 1], [1, -1]],
+        np.array([[-1, 1], [1, -1]]),
+        np.array([[-3, 3], [3, -3]]),
+        _NotAnArray(np.array([[-3, 3], [3, -3]])),
+    ],
+    "multiclass": [
+        [1, 0, 2, 2, 1, 4, 2, 4, 4, 4],
+        np.array([1, 0, 2]),
+        np.array([1, 0, 2], dtype=np.int8),
+        np.array([1, 0, 2], dtype=np.uint8),
+        np.array([1, 0, 2], dtype=float),
+        np.array([1, 0, 2], dtype=np.float32),
+        np.array([[1], [0], [2]]),
+        _NotAnArray(np.array([1, 0, 2])),
+        [0, 1, 2],
+    ],
+    "multiclass-multioutput": [
+        [[1, 0, 2, 2], [1, 4, 2, 4]],
+        np.array([[1, 0, 2, 2], [1, 4, 2, 4]]),
+        np.array([[1, 0, 2, 2], [1, 4, 2, 4]], dtype=np.int8),
+        np.array([[1, 0, 2, 2], [1, 4, 2, 4]], dtype=np.uint8),
+        np.array([[1, 0, 2, 2], [1, 4, 2, 4]], dtype=float),
+        np.array([[1, 0, 2, 2], [1, 4, 2, 4]], dtype=np.float32),
+        np.array([[1, 0, 2]]),
+        _NotAnArray(np.array([[1, 0, 2]])),
+    ],
+    "binary": [
+        [0, 1],
+        [1, 1],
+        [],
+        [0],
+        np.array([0, 1, 1, 1, 0, 0, 0, 1, 1, 1]),
+        np.array([0, 1, 1, 1, 0, 0, 0, 1, 1, 1], dtype=bool),
+        np.array([0, 1, 1, 1, 0, 0, 0, 1, 1, 1], dtype=np.int8),
+        np.array([0, 1, 1, 1, 0, 0, 0, 1, 1, 1], dtype=np.uint8),
+        np.array([0, 1, 1, 1, 0, 0, 0, 1, 1, 1], dtype=float),
+        np.array([0, 1, 1, 1, 0, 0, 0, 1, 1, 1], dtype=np.float32),
+        np.array([[0], [1]]),
+        _NotAnArray(np.array([[0], [1]])),
+        [1, -1],
+        [3, 5],
+    ],
+    "continuous": [
+        [1e-5],
+        [0, 0.5],
+        np.array([[0], [0.5]]),
+        np.array([[0], [0.5]], dtype=np.float32),
+    ],
+    "continuous-multioutput": [
+        np.array([[0, 0.5], [0.5, 0]]),
+        np.array([[0, 0.5], [0.5, 0]], dtype=np.float32),
+        np.array([[0, 0.5]]),
+    ],
+    "unknown": [
+        [[]],
+        [()],
+        np.array(0),
+        np.array([[[0, 1], [2, 3]], [[4, 5], [6, 7]]]),
+    ],
+}
+
+
 NON_ARRAY_LIKE_EXAMPLES = [
     {1, 2, 3},
     {0: "a", 1: "b"},
@@ -270,12 +341,12 @@ def test_unique_labels_mixed_types():
 
 def test_is_multilabel():
     for group, group_examples in EXAMPLES.items():
-        dense_exp = group in ["multilabel-indicator"]
+        dense_exp = group == "multilabel-indicator"
 
         for example in group_examples:
             # Only mark explicitly defined sparse examples as valid sparse
             # multilabel-indicators
-            sparse_exp = group == "multilabel-indicator" and issparse(example)
+            sparse_exp = dense_exp and issparse(example)
 
             if issparse(example) or (
                 hasattr(example, "__array__")
@@ -296,7 +367,7 @@ def test_is_multilabel():
                 for exmpl_sparse in examples_sparse:
                     assert sparse_exp == is_multilabel(
                         exmpl_sparse
-                    ), "is_multilabel(%r) should be %s" % (exmpl_sparse, sparse_exp)
+                    ), f"is_multilabel({exmpl_sparse!r}) should be {sparse_exp}"
 
             # Densify sparse examples before testing
             if issparse(example):
@@ -304,7 +375,29 @@ def test_is_multilabel():
 
             assert dense_exp == is_multilabel(
                 example
-            ), "is_multilabel(%r) should be %s" % (example, dense_exp)
+            ), f"is_multilabel({example!r}) should be {dense_exp}"
+
+
+@pytest.mark.parametrize(
+    "array_namespace, device, dtype_name",
+    yield_namespace_device_dtype_combinations(),
+)
+def test_is_multilabel_array_api_compliance(array_namespace, device, dtype_name):
+    xp = _array_api_for_tests(array_namespace, device)
+
+    for group, group_examples in ARRAY_API_EXAMPLES.items():
+        dense_exp = group == "multilabel-indicator"
+        for example in group_examples:
+            if np.asarray(example).dtype.kind == "f":
+                example = np.asarray(example, dtype=dtype_name)
+            else:
+                example = np.asarray(example)
+            example = xp.asarray(example, device=device)
+
+            with config_context(array_api_dispatch=True):
+                assert dense_exp == is_multilabel(
+                    example
+                ), f"is_multilabel({example!r}) should be {dense_exp}"
 
 
 def test_check_classification_targets():
