@@ -77,7 +77,7 @@ def check_pairwise_arrays(
     dtype=None,
     accept_sparse="csr",
     force_all_finite=True,
-    only_check_num_samples=False,
+    ensure_2d=True,
     copy=False,
 ):
     """Set X and Y appropriately and checks inputs.
@@ -104,14 +104,10 @@ def check_pairwise_arrays(
         Y.
 
     dtype : str, type, list of type, default=None
-        Data type required for `X` and `Y`. If `None` and
-        `only_check_num_samples=False`, the `dtype` will be set to an appropriate
-        floating type, preserving the bitness. If `only_check_num_samples=True`, `dtype`
-        will be ignored.
+        Data type required for X and Y. If None, the dtype will be an
+        appropriate float type selected by _return_float_dtype.
 
         .. versionadded:: 0.18
-        .. versionchanged:: 1.4
-           The parameter is ignored when `only_check_num_samples` is `True`.
 
     accept_sparse : str, bool or list/tuple of str, default='csr'
         String[s] representing allowed sparse matrix formats, such as 'csc',
@@ -135,11 +131,10 @@ def check_pairwise_arrays(
         .. versionchanged:: 0.23
            Accepts `pd.NA` and converts it into `np.nan`.
 
-    only_check_num_samples : bool, default=False
-        Whether to only check for array length consistency.
-        When `True`, `dtype` is ignored and the check for 2D array is not performed.
-        This is particularly useful when passing non-numerical inputs and a custom
-        metric.
+    ensure_2d : bool, default=True
+        Whether to raise an error when the input arrays are not 2-dimensional. Setting
+        this to `False` is necessary when using a custom metric with certain
+        non-numerical inputs (e.g. a list of strings).
 
         .. versionadded:: 1.4
 
@@ -158,13 +153,11 @@ def check_pairwise_arrays(
         An array equal to Y if Y was not None, guaranteed to be a numpy array.
         If Y was None, safe_Y will be a pointer to X.
     """
-
     X, Y, dtype_float = _return_float_dtype(X, Y)
+
     estimator = "check_pairwise_arrays"
-    if dtype is None and not only_check_num_samples:
+    if dtype is None:
         dtype = dtype_float
-    elif only_check_num_samples:
-        dtype = None
 
     if Y is X or Y is None:
         X = Y = check_array(
@@ -174,7 +167,7 @@ def check_pairwise_arrays(
             copy=copy,
             force_all_finite=force_all_finite,
             estimator=estimator,
-            ensure_2d=not only_check_num_samples,
+            ensure_2d=ensure_2d,
         )
     else:
         X = check_array(
@@ -184,7 +177,7 @@ def check_pairwise_arrays(
             copy=copy,
             force_all_finite=force_all_finite,
             estimator=estimator,
-            ensure_2d=not only_check_num_samples,
+            ensure_2d=ensure_2d,
         )
         Y = check_array(
             Y,
@@ -193,7 +186,7 @@ def check_pairwise_arrays(
             copy=copy,
             force_all_finite=force_all_finite,
             estimator=estimator,
-            ensure_2d=not only_check_num_samples,
+            ensure_2d=ensure_2d,
         )
 
     if precomputed:
@@ -203,16 +196,20 @@ def check_pairwise_arrays(
                 "(n_queries, n_indexed). Got (%d, %d) "
                 "for %d indexed." % (X.shape[0], X.shape[1], Y.shape[0])
             )
-    elif not only_check_num_samples and X.shape[1] != Y.shape[1]:
-        raise ValueError(
-            "Incompatible dimension for X and Y matrices: "
-            "X.shape[1] == %d while Y.shape[1] == %d" % (X.shape[1], Y.shape[1])
-        )
-    elif only_check_num_samples and len(X) != len(Y):
-        raise ValueError(
-            f"Incompatible length for X and Y matrices: len(X) == {len(X)} while len(Y)"
-            f" == {len(Y)}"
-        )
+    elif ensure_2d:
+        if X.shape[1] != Y.shape[1]:
+            raise ValueError(
+                "Incompatible dimension for X and Y matrices: "
+                "X.shape[1] == %d while Y.shape[1] == %d" % (X.shape[1], Y.shape[1])
+            )
+    else:
+        # the distances are neither pre-computed nor is the input expected to be 2D; we
+        # thus only check if the number of samples is the same in both arrays
+        if len(X) != len(Y):
+            raise ValueError(
+                f"Incompatible length for X and Y matrices: len(X) == {len(X)} while "
+                f" len(Y) == {len(Y)}"
+            )
     return X, Y
 
 
@@ -1833,15 +1830,13 @@ def _parallel_pairwise(X, Y, func, n_jobs, **kwds):
     return ret
 
 
-def _pairwise_callable(
-    X, Y, metric, force_all_finite=True, only_check_num_samples=False, **kwds
-):
+def _pairwise_callable(X, Y, metric, force_all_finite=True, ensure_2d=True, **kwds):
     """Handle the callable case for pairwise_{distances,kernels}."""
     X, Y = check_pairwise_arrays(
         X,
         Y,
         force_all_finite=force_all_finite,
-        only_check_num_samples=only_check_num_samples,
+        ensure_2d=ensure_2d,
     )
 
     if X is Y:
@@ -2116,7 +2111,7 @@ def pairwise_distances_chunked(
         "metric": [StrOptions(set(_VALID_METRICS) | {"precomputed"}), callable],
         "n_jobs": [Integral, None],
         "force_all_finite": ["boolean", StrOptions({"allow-nan"})],
-        "only_check_num_samples": ["boolean"],
+        "ensure_2d": ["boolean"],
     },
     prefer_skip_nested_validation=True,
 )
@@ -2127,7 +2122,7 @@ def pairwise_distances(
     *,
     n_jobs=None,
     force_all_finite=True,
-    only_check_num_samples=False,
+    ensure_2d=True,
     **kwds,
 ):
     """Compute the distance matrix from a vector array X and optional Y.
@@ -2137,8 +2132,8 @@ def pairwise_distances(
     If the input is a vector array, the distances are computed.
     If the input is a distances matrix, it is returned instead.
     If the input is a collection of non-numeric data (e.g. a list of strings or a
-    boolean array), a custom metric must be passed and `only_check_num_samples` should
-    be set to `True` for distances to be computed.
+    boolean array), a custom metric must be passed and `ensure_2d` should
+    be set to `False` if required.
 
     This method provides a safe way to take a distance matrix as input, while
     preserving compatibility with many other algorithms that take a vector
@@ -2224,11 +2219,10 @@ def pairwise_distances(
         .. versionchanged:: 0.23
            Accepts `pd.NA` and converts it into `np.nan`.
 
-    only_check_num_samples : bool, default=False
-        Whether to only check the length of the array.
-        When `True`, check for 2D array is not performed.
-        This is particularly useful when passing non-numerical inputs and a custom
-        metric.
+    ensure_2d : bool, default=True
+        Raise an error when the input arrays are not 2-dimensional. Setting
+        this to `False` is necessary when using a custom metric with certain
+        non-numerical inputs (e.g. a list of strings).
 
         .. versionadded:: 1.4
 
@@ -2272,7 +2266,7 @@ def pairwise_distances(
             _pairwise_callable,
             metric=metric,
             force_all_finite=force_all_finite,
-            only_check_num_samples=only_check_num_samples,
+            ensure_2d=ensure_2d,
             **kwds,
         )
     else:
