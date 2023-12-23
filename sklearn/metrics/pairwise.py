@@ -136,7 +136,7 @@ def check_pairwise_arrays(
            Accepts `pd.NA` and converts it into `np.nan`.
 
     only_check_num_samples : bool, default=False
-        Whether to only check the length of the array.
+        Whether to only check for array length consistency.
         When `True`, `dtype` is ignored and the check for 2D array is not performed.
         This is particularly useful when passing non-numerical inputs and a custom
         metric.
