@@ -75,28 +75,30 @@ cdef extern from *:
 # Extension Types for Loss Functions
 # ----------------------------------------
 
-cdef class LossFunction:
-    """Base class for convex loss functions"""
+cdef class Regression(CyLossFunction):
+    """Base class for loss functions for regression"""
 
-    cdef double loss(self, double y, double p) noexcept nogil:
-        """Evaluate the loss function.
+    def py_loss(self, double p, double y):
+        """Python version of `loss` for testing only.
+
+        Pytest needs a python function and can't use cdef functions.
 
         Parameters
         ----------
-        y : double
-            The true value (aka target).
         p : double
             The prediction, `p = w^T x + intercept`.
+        y : double
+            The true value (aka target).
 
         Returns
         -------
         double
             The loss evaluated at `p` and `y`.
         """
-        return 0.
+        return self.cy_loss(y, p)
 
     def py_dloss(self, double p, double y):
-        """Python version of `dloss` for testing.
+        """Python version of `dloss` for testing only.
 
         Pytest needs a python function and can't use cdef functions.
 
@@ -114,62 +116,17 @@ cdef class LossFunction:
         """
         return self.cy_gradient(y, p)
 
-    def py_loss(self, double p, double y):
-        """Python version of `loss` for testing.
-
-        Pytest needs a python function and can't use cdef functions.
-
-        Parameters
-        ----------
-        p : double
-            The prediction, `p = w^T x + intercept`.
-        y : double
-            The true value (aka target).
-
-        Returns
-        -------
-        double
-            The loss evaluated at `p` and `y`.
-        """
-        return self.loss(y, p)
-
-    cdef double cy_gradient(self, double y, double p) noexcept nogil:
-        """Evaluate the derivative of the loss function with respect to
-        the prediction `p`.
-
-        Parameters
-        ----------
-        y : double
-            The true value (aka target).
-        p : double
-            The prediction, `p = w^T x`.
-
-        Returns
-        -------
-        double
-            The derivative of the loss function with regards to `p`.
-        """
-        return 0.
-
-
-cdef class Regression(CyLossFunction):
-    """Base class for loss functions for regression"""
-
-    cdef double cy_loss(self, double y_true, double raw_prediction) noexcept nogil:
-        return 0.
-
-    cdef double cy_gradient(self, double y_true, double raw_prediction) noexcept nogil:
-        return 0.
-
 
 cdef class Classification(CyLossFunction):
     """Base class for loss functions for classification"""
 
-    cdef double cy_loss(self, double y_true, double raw_prediction) noexcept nogil:
-        return 0.
+    def py_loss(self, double p, double y):
+        """Python version of `loss` for testing only."""
+        return self.cy_loss(y, p)
 
-    cdef double cy_gradient(self, double y_true, double raw_prediction) noexcept nogil:
-        return 0.
+    def py_dloss(self, double p, double y):
+        """Python version of `dloss` for testing only."""
+        return self.cy_gradient(y, p)
 
 
 cdef class ModifiedHuber(Classification):

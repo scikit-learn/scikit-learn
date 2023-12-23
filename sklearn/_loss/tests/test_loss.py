@@ -224,48 +224,69 @@ def test_loss_boundary_y_pred(loss, y_pred_success, y_pred_fail):
 
 
 @pytest.mark.parametrize(
-    "loss, y_true, raw_prediction, loss_true",
+    "loss, y_true, raw_prediction, loss_true, gradient_true",
     [
-        (HalfSquaredError(), 1.0, 5.0, 8),
-        (AbsoluteError(), 1.0, 5.0, 4),
-        (PinballLoss(quantile=0.5), 1.0, 5.0, 2),
-        (PinballLoss(quantile=0.25), 1.0, 5.0, 4 * (1 - 0.25)),
-        (PinballLoss(quantile=0.25), 5.0, 1.0, 4 * 0.25),
-        (HuberLoss(quantile=0.5, delta=3), 1.0, 5.0, 3 * (4 - 3 / 2)),
-        (HuberLoss(quantile=0.5, delta=3), 1.0, 3.0, 0.5 * 2**2),
-        (HalfPoissonLoss(), 2.0, np.log(4), 4 - 2 * np.log(4)),
-        (HalfGammaLoss(), 2.0, np.log(4), np.log(4) + 2 / 4),
-        (HalfTweedieLoss(power=3), 2.0, np.log(4), -1 / 4 + 1 / 4**2),
-        (HalfTweedieLossIdentity(power=1), 2.0, 4.0, 2 - 2 * np.log(2)),
-        (HalfTweedieLossIdentity(power=2), 2.0, 4.0, np.log(2) - 1 / 2),
-        (HalfTweedieLossIdentity(power=3), 2.0, 4.0, -1 / 4 + 1 / 4**2 + 1 / 2 / 2),
-        (HalfBinomialLoss(), 0.25, np.log(4), np.log(5) - 0.25 * np.log(4)),
+        (HalfSquaredError(), 1.0, 5.0, 8, 4.0),
+        (AbsoluteError(), 1.0, 5.0, 4, 1.0),
+        (PinballLoss(quantile=0.5), 1.0, 5.0, 2, None),
+        (PinballLoss(quantile=0.25), 1.0, 5.0, 4 * (1 - 0.25), None),
+        (PinballLoss(quantile=0.25), 5.0, 1.0, 4 * 0.25, None),
+        (HuberLoss(quantile=0.5, delta=0.1), 0.0, 0.0, 0.0, 0.0),
+        (HuberLoss(quantile=0.5, delta=0.1), 0.0, 0.1, 0.005, 0.1),
+        (HuberLoss(quantile=0.5, delta=0.1), 0.1, 0.0, 0.005, -0.1),
+        (HuberLoss(quantile=0.5, delta=0.1), 4.0, 3.95, 0.00125, -0.05),
+        (HuberLoss(quantile=0.5, delta=0.1), 2.0, 5.0, 0.295, 0.1),
+        (HuberLoss(quantile=0.5, delta=0.1), 5.0, -1.0, 0.595, -0.1),
+        (HuberLoss(quantile=0.5, delta=3), 1.0, 5.0, 3 * (4 - 3 / 2), None),
+        (HuberLoss(quantile=0.5, delta=3), 1.0, 3.0, 0.5 * 2**2, None),
+        (HalfPoissonLoss(), 2.0, np.log(4), 4 - 2 * np.log(4), None),
+        (HalfGammaLoss(), 2.0, np.log(4), np.log(4) + 2 / 4, None),
+        (HalfTweedieLoss(power=3), 2.0, np.log(4), -1 / 4 + 1 / 4**2, None),
+        (HalfTweedieLossIdentity(power=1), 2.0, 4.0, 2 - 2 * np.log(2), None),
+        (HalfTweedieLossIdentity(power=2), 2.0, 4.0, np.log(2) - 1 / 2, None),
+        (
+            HalfTweedieLossIdentity(power=3),
+            2.0,
+            4.0,
+            -1 / 4 + 1 / 4**2 + 1 / 2 / 2,
+            None,
+        ),
+        (HalfBinomialLoss(), 0.25, np.log(4), np.log(5) - 0.25 * np.log(4), None),
         (
             HalfMultinomialLoss(n_classes=3),
             0.0,
             [0.2, 0.5, 0.3],
             logsumexp([0.2, 0.5, 0.3]) - 0.2,
+            None,
         ),
         (
             HalfMultinomialLoss(n_classes=3),
             1.0,
             [0.2, 0.5, 0.3],
             logsumexp([0.2, 0.5, 0.3]) - 0.5,
+            None,
         ),
         (
             HalfMultinomialLoss(n_classes=3),
             2.0,
             [0.2, 0.5, 0.3],
             logsumexp([0.2, 0.5, 0.3]) - 0.3,
+            None,
         ),
     ],
     ids=loss_instance_name,
 )
-def test_loss_on_specific_values(loss, y_true, raw_prediction, loss_true):
+def test_loss_on_specific_values(
+    loss, y_true, raw_prediction, loss_true, gradient_true
+):
     """Test losses at specific values."""
     assert loss(
         y_true=np.array([y_true]), raw_prediction=np.array([raw_prediction])
     ) == approx(loss_true, rel=1e-11, abs=1e-12)
+    if gradient_true is not None:
+        assert loss.gradient(
+            y_true=np.array([y_true]), raw_prediction=np.array([raw_prediction])
+        ) == approx(gradient_true, rel=1e-11, abs=1e-12)
 
 
 @pytest.mark.parametrize("loss", ALL_LOSSES)
