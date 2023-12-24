@@ -49,6 +49,15 @@ def compute_class_weight(class_weight, *, classes, y):
     ----------
     The "balanced" heuristic is inspired by
     Logistic Regression in Rare Events Data, King, Zen, 2001.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.utils.class_weight import compute_class_weight
+    >>> y = np.array([0, 1, 0, 1, 1, 1, 1, 1, 0, 1])
+    >>> classes = np.unique(y)
+    >>> compute_class_weight("balanced", classes=classes, y=y)
+    array([1.66666667, 0.71428571])
     """
     # Import error caused by circular imports.
     from ..preprocessing import LabelEncoder
