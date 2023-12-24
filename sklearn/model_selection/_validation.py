@@ -1627,6 +1627,26 @@ def permutation_test_score(
         Performance
         <http://www.jmlr.org/papers/volume11/ojala10a/ojala10a.pdf>`_. The
         Journal of Machine Learning Research (2010) vol. 11
+    
+    Example
+    -------
+    >>> from sklearn.model_selection import permutation_test_score
+    >>> from sklearn.svm import SVC
+    >>> from sklearn.datasets import load_iris
+    >>> iris = load_iris()
+    >>> X, y = iris.data, iris.target
+    >>> clf = SVC()
+    >>> score, permutation_scores, pvalue = permutation_test_score(
+    ...     clf, X, y, scoring="accuracy", cv=5, n_permutations=20)
+    >>> print(f"Original Score: {score}")
+    Original Score: 0.9666666666666666
+    >>> print(f"Permutation Scores: {permutation_scores}")
+    Permutation Scores: [0.34666667 0.36666667 0.32       0.29333333 0.31333333 0.32666667
+     0.30666667 0.35333333 0.32666667 0.34       0.29333333 0.30666667
+     0.36       0.32666667 0.33333333 0.36666667 0.34666667 0.34
+     0.33333333 0.3       ]
+    >>> print(f"P-value: {pvalue}")
+    P-value: 0.047619047619047616
     """
     X, y, groups = indexable(X, y, groups)
 
@@ -2245,6 +2265,23 @@ def validation_curve(
     Notes
     -----
     See :ref:`sphx_glr_auto_examples_model_selection_plot_validation_curve.py`
+
+    Example
+    -------
+    >>> import numpy as np
+    >>> from sklearn.model_selection import validation_curve
+    >>> from sklearn.datasets import load_iris
+    >>> from sklearn.svm import SVC
+    >>> iris = load_iris()
+    >>> X, y = iris.data, iris.target
+    >>> param_range = np.logspace(-6, -1, 5)
+    >>> train_scores, test_scores = validation_curve(
+    ...     SVC(), X, y, param_name="gamma", param_range=param_range,
+    ...     cv=10, scoring="accuracy")
+    >>> print(f"The average train accuracy is {train_scores.mean():.2f}")
+    The average train accuracy is 0.93
+    >>> print(f"The average test accuracy is {test_scores.mean():.2f}")
+    The average test accuracy is 0.92
     """
     X, y, groups = indexable(X, y, groups)
 
