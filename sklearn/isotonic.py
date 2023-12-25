@@ -148,7 +148,7 @@ def isotonic_regression(
 
     Example
     -------
-    >>> from sklearn.isotonic import check_increasing
+    >>> from sklearn.isotonic import isotonic_regression
     >>> import numpy as np
     >>> y = np.array([5, 3, 1, 2, 8, 10, 7, 9, 6, 4])
     >>> y_ = isotonic_regression(y)
