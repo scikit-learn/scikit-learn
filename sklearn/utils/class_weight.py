@@ -52,8 +52,9 @@ def compute_class_weight(class_weight, *, classes, y):
 
     Examples
     --------
+    >>> import numpy as np
     >>> from sklearn.utils.class_weight import compute_class_weight
-    >>> y = [0, 1, 0, 1, 1, 1, 1, 1, 0, 1]
+    >>> y = np.array([0, 1, 0, 1, 1, 1, 1, 1, 0, 1])
     >>> classes = np.unique(y)
     >>> compute_class_weight("balanced", classes=classes, y=y)
     array([1.66666667, 0.71428571])
