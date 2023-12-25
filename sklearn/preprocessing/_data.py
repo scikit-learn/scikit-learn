@@ -1374,6 +1374,23 @@ def maxabs_scale(X, *, axis=0, copy=True):
 
     For a comparison of the different scalers, transformers, and normalizers,
     see: :ref:`sphx_glr_auto_examples_preprocessing_plot_all_scaling.py`.
+
+    Examples
+    --------
+    >>> from sklearn.preprocessing import maxabs_scale
+    >>> features = [
+    ...     [ 1, -10,  2],
+    ...     [-2,   0,  3],
+    ...     [ 5,  10, -1]
+    ... ]
+    >>> maxabs_scale(features)
+    array([[ 0.2       , -1.        ,  0.66666667],
+           [-0.4       ,  0.        ,  1.        ],
+           [ 1.        ,  1.        , -0.33333333]])
+    >>> maxabs_scale(features, axis=1)
+    array([[ 0.1       , -1.        ,  0.2       ],
+           [-0.66666667,  0.        ,  1.        ],
+           [ 0.5       ,  1.        , -0.1       ]])
     """
     # Unlike the scaler object, this function allows 1d input.
 
