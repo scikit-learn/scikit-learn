@@ -219,6 +219,17 @@ def scale(X, *, axis=0, with_mean=True, with_std=True, copy=True):
     >>> scale(features, axis=1)
     array([[-1.37281295,  0.39223227,  0.98058068],
            [-1.22474487,  0.        ,  1.22474487]])
+
+    Use `robust_scale` to handle outliers:
+
+    >>> from sklearn.preprocessing import scale, robust_scale
+    >>> features = [-0.5, 2, 1, 0.5, 0.25, -0.3, 50]
+    >>> scale(features)
+    array([-0.46502482, -0.320863  , -0.37852773, -0.40736009, -0.42177627,
+           -0.45349187,  2.44704378])
+    >>> robust_scale(features)
+    array([-0.6557377 ,  0.98360656,  0.32786885,  0.        , -0.16393443,
+           -0.52459016, 32.45901639])
     """  # noqa
     X = check_array(
         X,
@@ -1817,6 +1828,17 @@ def robust_scale(
         :class:`~sklearn.preprocessing.RobustScaler` within a
         :ref:`Pipeline <pipeline>` in order to prevent most risks of data
         leaking: `pipe = make_pipeline(RobustScaler(), LogisticRegression())`.
+
+    Examples
+    --------
+    >>> from sklearn.preprocessing import scale, robust_scale
+    >>> features = [-0.5, 2, 1, 0.5, 0.25, -0.3, 50]
+    >>> scale(features)
+    array([-0.46502482, -0.320863  , -0.37852773, -0.40736009, -0.42177627,
+           -0.45349187,  2.44704378])
+    >>> robust_scale(features)
+    array([-0.6557377 ,  0.98360656,  0.32786885,  0.        , -0.16393443,
+           -0.52459016, 32.45901639])
     """
     X = check_array(
         X,
