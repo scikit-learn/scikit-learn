@@ -205,6 +205,20 @@ def scale(X, *, axis=0, with_mean=True, with_std=True, copy=True):
         :class:`~sklearn.preprocessing.StandardScaler` within a
         :ref:`Pipeline <pipeline>` in order to prevent most risks of data
         leaking: `pipe = make_pipeline(StandardScaler(), LogisticRegression())`.
+
+    Examples
+    --------
+    >>> from sklearn.preprocessing import scale
+    >>> features = [
+    ...   [-2, 1, 2],
+    ...   [-1, 0, 1]
+    ... ]
+    >>> scale(features)
+    array([[-1.,  1.,  1.],
+           [ 1., -1., -1.]])
+    >>> scale(features, axis=1)
+    array([[-1.37281295,  0.39223227,  0.98058068],
+           [-1.22474487,  0.        ,  1.22474487]])
     """  # noqa
     X = check_array(
         X,
@@ -1902,7 +1916,7 @@ def normalize(X, norm="l2", *, axis=1, copy=True, return_norm=False):
     ...    [-1, 0, 1]
     ... ]
     >>> features_unit, norms = normalize(features, return_norm=True)
-    >>> feature_unit
+    >>> features_unit
     array([[-0.66666667,  0.33333333,  0.66666667],
            [-0.70710678,  0.        ,  0.70710678]])
     >>> norms
