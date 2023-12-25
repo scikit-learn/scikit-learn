@@ -58,6 +58,18 @@ def check_increasing(x, y):
     ----------
     Fisher transformation. Wikipedia.
     https://en.wikipedia.org/wiki/Fisher_transformation
+
+    Example
+    -------
+    >>> from sklearn.isotonic import check_increasing
+    >>> import numpy as np
+    >>> x = np.array([1, 2, 3, 4, 5])
+    >>> y = np.array([2, 4, 6, 8, 10])
+    >>> check_increasing(x, y)
+    True
+    >>> y = np.array([10, 8, 6, 4, 2])
+    >>> check_increasing(x, y)
+    False
     """
 
     # Calculate Spearman rho estimate and set return accordingly.
@@ -133,6 +145,16 @@ def isotonic_regression(
     ----------
     "Active set algorithms for isotonic regression; A unifying framework"
     by Michael J. Best and Nilotpal Chakravarti, section 3.
+
+    Example
+    -------
+    >>> from sklearn.isotonic import check_increasing
+    >>> import numpy as np
+    >>> y = np.array([5, 3, 1, 2, 8, 10, 7, 9, 6, 4])
+    >>> y_ = isotonic_regression(y)
+    >>> y_
+    array([2.75      , 2.75      , 2.75      , 2.75      , 7.33333333,
+        7.33333333, 7.33333333, 7.33333333, 7.33333333, 7.33333333])
     """
     order = np.s_[:] if increasing else np.s_[::-1]
     y = check_array(y, ensure_2d=False, input_name="y", dtype=[np.float64, np.float32])
