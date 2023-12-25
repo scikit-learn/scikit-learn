@@ -646,6 +646,23 @@ def minmax_scale(X, feature_range=(0, 1), *, axis=0, copy=True):
     -----
     For a comparison of the different scalers, transformers, and normalizers,
     see: :ref:`sphx_glr_auto_examples_preprocessing_plot_all_scaling.py`.
+
+    Examples
+    --------
+    >>> from sklearn.preprocessing import minmax_scale
+    >>> features = [
+    ...     [ 1, -10,  2],
+    ...     [-2,   0,  3],
+    ...     [ 5,  10, -1]
+    ... ]
+    >>> minmax_scale(features)
+    array([[0.42857143, 0.        , 0.75      ],
+           [0.        , 0.5       , 1.        ],
+           [1.        , 1.        , 0.        ]])
+    >>> minmax_scale(features, axis=1)
+    array([[0.91666667, 0.        , 1.        ],
+           [0.        , 0.4       , 1.        ],
+           [0.54545455, 1.        , 0.        ]])
     """
     # Unlike the scaler object, this function allows 1d input.
     # If copy is required, it will be done inside the scaler object.
