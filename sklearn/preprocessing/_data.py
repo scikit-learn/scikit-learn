@@ -2082,6 +2082,13 @@ def binarize(X, *, threshold=0.0, copy=True):
     --------
     Binarizer : Performs binarization using the Transformer API
         (e.g. as part of a preprocessing :class:`~sklearn.pipeline.Pipeline`).
+
+    Examples
+    --------
+    >>> from sklearn.preprocessing import binarize
+    >>> probs = [[0.4, 0.6, 0.5]]
+    >>> binarize(probs, threshold=0.5)
+    array([[0., 1., 0.]])
     """
     X = check_array(X, accept_sparse=["csr", "csc"], copy=copy)
     if sparse.issparse(X):
