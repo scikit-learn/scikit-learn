@@ -1084,7 +1084,7 @@ def cosine_distances(X, Y=None):
     if X is Y or Y is None:
         # Ensure that distances between vectors and themselves are set to 0.0.
         # This may not be the case due to floating point rounding errors.
-        S[np.diag_indices_from(S)] = 0.0
+        np.fill_diagonal(S, 0.0)
     return S
 
 
