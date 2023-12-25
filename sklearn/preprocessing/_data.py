@@ -1893,6 +1893,20 @@ def normalize(X, norm="l2", *, axis=1, copy=True, return_norm=False):
     -----
     For a comparison of the different scalers, transformers, and normalizers,
     see: :ref:`sphx_glr_auto_examples_preprocessing_plot_all_scaling.py`.
+
+    Examples
+    --------
+    >>> from sklearn.preprocessing import normalize
+    >>> features = [
+    ...    [-2, 1, 2],
+    ...    [-1, 0, 1]
+    ... ]
+    >>> features_unit, norms = normalize(features, return_norm=True)
+    >>> feature_unit
+    array([[-0.66666667,  0.33333333,  0.66666667],
+           [-0.70710678,  0.        ,  0.70710678]])
+    >>> norms
+    array([3.        , 1.41421356])
     """
     if axis == 0:
         sparse_format = "csc"
