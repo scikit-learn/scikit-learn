@@ -59,8 +59,8 @@ def check_increasing(x, y):
     Fisher transformation. Wikipedia.
     https://en.wikipedia.org/wiki/Fisher_transformation
 
-    Example
-    -------
+    Examples
+    --------
     >>> from sklearn.isotonic import check_increasing
     >>> import numpy as np
     >>> x = np.array([1, 2, 3, 4, 5])
@@ -146,8 +146,8 @@ def isotonic_regression(
     "Active set algorithms for isotonic regression; A unifying framework"
     by Michael J. Best and Nilotpal Chakravarti, section 3.
 
-    Example
-    -------
+    Examples
+    --------
     >>> from sklearn.isotonic import isotonic_regression
     >>> import numpy as np
     >>> y = np.array([5, 3, 1, 2, 8, 10, 7, 9, 6, 4])
