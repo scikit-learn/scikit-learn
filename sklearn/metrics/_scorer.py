@@ -839,6 +839,15 @@ def get_scorer_names():
     -------
     list of str
         Names of all available scorers.
+
+    Examples
+    --------
+    >>> from sklearn.metrics import get_scorer_names
+    >>> all_scorers = get_scorer_names()
+    >>> print(len(all_scorers)})
+    54
+    >>> "roc_auc" in all_scorers
+    True
     """
     return sorted(_SCORERS.keys())
 
