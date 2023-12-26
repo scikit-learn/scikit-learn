@@ -379,6 +379,19 @@ def get_scorer(scoring):
     When passed a string, this function always returns a copy of the scorer
     object. Calling `get_scorer` twice for the same scorer results in two
     separate scorer objects.
+
+    Examples
+    --------
+    >>> from sklearn.dummy import DummyClassifier
+    >>> from sklearn.metrics import get_scorer
+    >>> X = [0, 1, -1, -0.5, 2]
+    >>> y = [0, 1, 1, 0, 1]
+    >>> clf = DummyClassifier(strategy="constant", constant=0)
+    >>> clf.fit(X, y)
+    DummyClassifier(constant=0, strategy='constant')
+    >>> accuracy = get_scorer("accuracy")
+    >>> accuracy(clf, X, y)
+    0.4
     """
     if isinstance(scoring, str):
         try:
