@@ -43,7 +43,6 @@ from ._perceptron import Perceptron
 from ._quantile import QuantileRegressor
 from ._ransac import RANSACRegressor
 from ._ridge import Ridge, RidgeClassifier, RidgeClassifierCV, RidgeCV, ridge_regression
-from ._sgd_fast import Hinge, ModifiedHuber
 from ._stochastic_gradient import SGDClassifier, SGDOneClassSVM, SGDRegressor
 from ._theil_sen import TheilSenRegressor
 
@@ -52,7 +51,6 @@ __all__ = [
     "BayesianRidge",
     "ElasticNet",
     "ElasticNetCV",
-    "Hinge",
     "HuberRegressor",
     "Lars",
     "LarsCV",
@@ -64,7 +62,6 @@ __all__ = [
     "LinearRegression",
     "LogisticRegression",
     "LogisticRegressionCV",
-    "ModifiedHuber",
     "MultiTaskElasticNet",
     "MultiTaskElasticNetCV",
     "MultiTaskLasso",
