@@ -669,6 +669,21 @@ def cohen_kappa_score(y1, y2, *, labels=None, weights=None, sample_weight=None):
         The kappa statistic, which is a number between -1 and 1. The maximum
         value means complete agreement; zero or lower means chance agreement.
 
+    Examples
+    --------
+    >>> from sklearn.metrics import cohen_kappa_score
+    >>> a1 = [0, 1, 0, 1, 1, 0, 1, 0]
+    >>> a2 = [0, 1, 1, 0, 1, 0, 1, 0]
+    >>> cohen_kappa_score(a1, a2)
+    0.5
+
+    Note that labels do not have to be numerically encoded:
+
+    >>> a1 = ["negative", "positive", "negative", "neutral", "positive"]
+    >>> a2 = ["negative", "positive", "negative", "neutral", "negative"]
+    >>> cohen_kappa_score(a1, a2)
+    0.6875
+
     References
     ----------
     .. [1] :doi:`J. Cohen (1960). "A coefficient of agreement for nominal scales".
