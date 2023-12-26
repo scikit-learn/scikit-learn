@@ -24,7 +24,7 @@ def yield_namespace_device_dtype_combinations():
         The name of the device on which to allocate the arrays. Can be None to
         indicate that the default value should be used.
 
-    dtype : str
+    dtype_name : str
         The name of the data type to use for arrays. Can be None to indicate
         that the default value should be used.
     """
@@ -444,7 +444,9 @@ def _weighted_sum(sample_score, sample_weight, normalize=False, xp=None):
         sample_score = xp.astype(xp.asarray(sample_score, device="cpu"), xp.float64)
 
     if sample_weight is not None:
-        sample_weight = xp.asarray(sample_weight, dtype=sample_score.dtype)
+        sample_weight = xp.asarray(
+            sample_weight, dtype=sample_score.dtype, device=device(sample_score)
+        )
         if not xp.isdtype(sample_weight.dtype, "real floating"):
             sample_weight = xp.astype(sample_weight, xp.float64)
 
