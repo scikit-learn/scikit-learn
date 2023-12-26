@@ -494,12 +494,6 @@ Changelog
   not check for nans during input validation.
   :pr:`21807` by `Thomas Fan`_.
 
-:mod:`sklearn.impute`
-.....................
-- |Enhancement| :class:`impute.SimpleImputer` now supports `minimum` and `maximum`
-  as imputation strategies.
-  :pr:`27986` by :user:`Mark Elliot <mark-thm>`.
-
 :mod:`sklearn.inspection`
 .........................
 
