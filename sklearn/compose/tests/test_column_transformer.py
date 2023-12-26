@@ -2314,6 +2314,10 @@ def test_column_transformer__getitem__():
     assert ct["t1"] is ct.named_transformers_["t1"]
     assert ct["t2"] is ct.named_transformers_["t2"]
 
+    msg = "'does_not_exist' is not a valid transformer name"
+    with pytest.raises(KeyError, match=msg):
+        ct["does_not_exist"]
+
 
 # Metadata Routing Tests
 # ======================

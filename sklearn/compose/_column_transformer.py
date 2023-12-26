@@ -1085,8 +1085,12 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
     def __getitem__(self, key):
         try:
             return self.named_transformers_[key]
-        except AttributeError:
-            raise TypeError("ColumnTransformer is subscriptable after it is fitted")
+        except AttributeError as e:
+            raise TypeError(
+                "ColumnTransformer is subscriptable after it is fitted"
+            ) from e
+        except KeyError as e:
+            raise KeyError(f"'{key}' is not a valid transformer name") from e
 
     def _get_empty_routing(self):
         """Return empty routing.
