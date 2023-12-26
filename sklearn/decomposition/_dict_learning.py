@@ -1,5 +1,6 @@
 """ Dictionary learning.
 """
+
 # Author: Vlad Niculae, Gael Varoquaux, Alexandre Gramfort
 # License: BSD 3 clause
 
@@ -671,17 +672,21 @@ def dict_learning_online(
     """Solve a dictionary learning matrix factorization problem online.
 
     Finds the best dictionary and the corresponding sparse code for
-    approximating the data matrix X by solving::
+    approximating the data matrix X by solving:
 
-        (U^*, V^*) = argmin 0.5 || X - U V ||_Fro^2 + alpha * || U ||_1,1
-                     (U,V)
-                     with || V_k ||_2 = 1 for all  0 <= k < n_components
+        .. math::
 
-    where V is the dictionary and U is the sparse code. ||.||_Fro stands for
-    the Frobenius norm and ||.||_1,1 stands for the entry-wise matrix norm
-    which is the sum of the absolute values of all the entries in the matrix.
-    This is accomplished by repeatedly iterating over mini-batches by slicing
-    the input data.
+            (U^*, V^*) = {\\arg\\,\\min}_{(U,V)} \\frac{1}{2}|| X - UV ||_{Fro}^2
+            + \\alpha || U ||_{1,1}
+
+            \\text{subject to } || V_k ||_2 \\leq 1 \\text{ for all } 0 \\leq
+            k < n\\_components.
+
+    where :math:`V` is the dictionary and :math:`U` is the sparse code.
+    :math:`||\\cdot||_{Fro}` stands for the Frobenius norm and :math:`||\\cdot||_{1,1}`
+    stands for the entry-wise matrix norm, which is the sum of the absolute
+    values of all the entries in the matrix. This is accomplished by repeatedly
+    iterating over mini-batches by slicing the input data.
 
     Read more in the :ref:`User Guide <DictionaryLearning>`.
 
@@ -877,15 +882,20 @@ def dict_learning(
     """Solve a dictionary learning matrix factorization problem.
 
     Finds the best dictionary and the corresponding sparse code for
-    approximating the data matrix X by solving::
+    approximating the data matrix X by solving:
 
-        (U^*, V^*) = argmin 0.5 || X - U V ||_Fro^2 + alpha * || U ||_1,1
-                     (U,V)
-                    with || V_k ||_2 = 1 for all  0 <= k < n_components
+        .. math::
 
-    where V is the dictionary and U is the sparse code. ||.||_Fro stands for
-    the Frobenius norm and ||.||_1,1 stands for the entry-wise matrix norm
-    which is the sum of the absolute values of all the entries in the matrix.
+            (U^*, V^*) = {\\arg\\,\\min}_{(U,V)} \\frac{1}{2}|| X - UV ||_{Fro}^2
+            + \\alpha || U ||_{1,1}
+
+            \\text{subject to } || V_k ||_2 \\leq 1 \\text{ for all } 0 \\leq
+            k < n\\_components.
+
+    where :math:`V` is the dictionary and :math:`U` is the sparse code.
+    :math:`||\\cdot||_{Fro}` stands for the Frobenius norm and :math:`||\\cdot||_{1,1}`
+    stands for the entry-wise matrix norm, which is the sum of the absolute
+    values of all the entries in the matrix.
 
     Read more in the :ref:`User Guide <DictionaryLearning>`.
 
@@ -1299,15 +1309,19 @@ class DictionaryLearning(_BaseSparseCoding, BaseEstimator):
     Finds a dictionary (a set of atoms) that performs well at sparsely
     encoding the fitted data.
 
-    Solves the optimization problem::
+    Solves the optimization problem:
 
-        (U^*,V^*) = argmin 0.5 || X - U V ||_Fro^2 + alpha * || U ||_1,1
-                    (U,V)
-                    with || V_k ||_2 <= 1 for all  0 <= k < n_components
+        .. math::
 
-    ||.||_Fro stands for the Frobenius norm and ||.||_1,1 stands for
-    the entry-wise matrix norm which is the sum of the absolute values
-    of all the entries in the matrix.
+             (U^*, V^*) = {\\arg\\,\\min}_{(U,V)} \\frac{1}{2}|| X - UV ||_{Fro}^2
+             + \\alpha || U ||_{1,1}
+
+            \\text{subject to } || V_k ||_2 \\leq 1 \\text{ for all } 0 \\leq
+            k < n\\_components.
+
+    Here, :math:`||\\cdot||_{Fro}` stands for the Frobenius norm and
+    :math:`||\\cdot||_{1,1}` stands for the entry-wise matrix norm, which is
+    the sum of the absolute values of all the entries in the matrix.
 
     Read more in the :ref:`User Guide <DictionaryLearning>`.
 
@@ -1642,15 +1656,19 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
     Finds a dictionary (a set of atoms) that performs well at sparsely
     encoding the fitted data.
 
-    Solves the optimization problem::
+    Solves the optimization problem:
 
-       (U^*,V^*) = argmin 0.5 || X - U V ||_Fro^2 + alpha * || U ||_1,1
-                    (U,V)
-                    with || V_k ||_2 <= 1 for all  0 <= k < n_components
+        .. math::
 
-    ||.||_Fro stands for the Frobenius norm and ||.||_1,1 stands for
-    the entry-wise matrix norm which is the sum of the absolute values
-    of all the entries in the matrix.
+             (U^*, V^*) = {\\arg\\,\\min}_{(U,V)} \\frac{1}{2}|| X - UV ||_{Fro}^2
+             + \\alpha || U ||_{1,1}
+
+            \\text{subject to } || V_k ||_2 \\leq 1 \\text{ for all } 0 \\leq
+            k < n\\_components.
+
+    Here, :math:`||\\cdot||_{Fro}` stands for the Frobenius norm and
+    :math:`||\\cdot||_{1,1}` stands for the entry-wise matrix norm, which is
+    the sum of the absolute values of all the entries in the matrix.
 
     Read more in the :ref:`User Guide <DictionaryLearning>`.
 
