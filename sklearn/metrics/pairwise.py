@@ -2225,9 +2225,9 @@ def pairwise_distances(
         func = PAIRWISE_DISTANCE_FUNCTIONS[metric]
     elif callable(metric):
         # we got a custom metric and should accept non-float dtypes
-        dtype = X.dtype if isinstance(X, np.ndarray) else type(X[0])
+        dtype = X.dtype if hasattr(X, "dtype") else type(X[0])
         if Y is not None:
-            y_dtype = Y.dtype if isinstance(Y, np.ndarray) else type(Y[0])
+            y_dtype = Y.dtype if hasattr(Y, "dtype") else type(Y[0])
             if dtype != y_dtype:
                 raise TypeError("X and Y have different dtypes.")
 
