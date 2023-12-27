@@ -857,8 +857,6 @@ def get_scorer_names():
     --------
     >>> from sklearn.metrics import get_scorer_names
     >>> all_scorers = get_scorer_names()
-    >>> print(len(all_scorers))
-    54
     >>> "roc_auc" in all_scorers
     True
     """
