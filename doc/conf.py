@@ -271,9 +271,9 @@ latest_highlights = sorted(release_highlights_dir.glob("plot_release_highlights_
     -1
 ]
 latest_highlights = latest_highlights.with_suffix("").name
-html_context["release_highlights"] = (
-    f"auto_examples/release_highlights/{latest_highlights}"
-)
+html_context[
+    "release_highlights"
+] = f"auto_examples/release_highlights/{latest_highlights}"
 
 # get version from highlight name assuming highlights have the form
 # plot_release_highlights_0_22_0

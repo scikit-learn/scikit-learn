@@ -1082,8 +1082,12 @@ class MetadataRouter:
 
     def __iter__(self):
         if self._self_request:
-            yield "$self_request", RouterMappingPair(
-                mapping=MethodMapping.from_str("one-to-one"), router=self._self_request
+            yield (
+                "$self_request",
+                RouterMappingPair(
+                    mapping=MethodMapping.from_str("one-to-one"),
+                    router=self._self_request,
+                ),
             )
         for name, route_mapping in self._route_mappings.items():
             yield (name, route_mapping)

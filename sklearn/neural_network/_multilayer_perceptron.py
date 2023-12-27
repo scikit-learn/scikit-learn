@@ -755,8 +755,7 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
         if self.solver not in _STOCHASTIC_SOLVERS:
             raise AttributeError(
                 "partial_fit is only available for stochastic"
-                " optimizers. %s is not stochastic."
-                % self.solver
+                " optimizers. %s is not stochastic." % self.solver
             )
         return True
 

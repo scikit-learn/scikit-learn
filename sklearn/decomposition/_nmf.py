@@ -1769,8 +1769,7 @@ class NMF(_BaseNMF):
         if n_iter == self.max_iter and self.tol > 0:
             warnings.warn(
                 "Maximum number of iterations %d reached. Increase "
-                "it to improve convergence."
-                % self.max_iter,
+                "it to improve convergence." % self.max_iter,
                 ConvergenceWarning,
             )
 

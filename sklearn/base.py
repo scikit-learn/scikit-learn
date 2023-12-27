@@ -1095,9 +1095,8 @@ class _UnstableArchMixin:
 
     def _more_tags(self):
         return {
-            "non_deterministic": _IS_32BIT or platform.machine().startswith(
-                ("ppc", "powerpc")
-            )
+            "non_deterministic": _IS_32BIT
+            or platform.machine().startswith(("ppc", "powerpc"))
         }
 
 

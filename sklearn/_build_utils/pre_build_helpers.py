@@ -64,10 +64,12 @@ def basic_check_build():
         # The following check won't work in pyodide
         return
 
-    code = textwrap.dedent("""\
+    code = textwrap.dedent(
+        """\
         #include <stdio.h>
         int main(void) {
         return 0;
         }
-        """)
+        """
+    )
     compile_test_program(code)

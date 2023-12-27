@@ -1701,8 +1701,7 @@ class LarsCV(Lars):
         if hasattr(Gram, "__array__"):
             warnings.warn(
                 'Parameter "precompute" cannot be an array in '
-                '%s. Automatically switch to "auto" instead.'
-                % self.__class__.__name__
+                '%s. Automatically switch to "auto" instead.' % self.__class__.__name__
             )
             Gram = "auto"
 

@@ -456,9 +456,7 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
                 y_cov = self.kernel_(X) - V.T @ V
 
                 # undo normalisation
-                y_cov = np.outer(y_cov, self._y_train_std**2).reshape(
-                    *y_cov.shape, -1
-                )
+                y_cov = np.outer(y_cov, self._y_train_std**2).reshape(*y_cov.shape, -1)
                 # if y_cov has shape (n_samples, n_samples, 1), reshape to
                 # (n_samples, n_samples)
                 if y_cov.shape[2] == 1:
@@ -483,9 +481,7 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
                     y_var[y_var_negative] = 0.0
 
                 # undo normalisation
-                y_var = np.outer(y_var, self._y_train_std**2).reshape(
-                    *y_var.shape, -1
-                )
+                y_var = np.outer(y_var, self._y_train_std**2).reshape(*y_var.shape, -1)
 
                 # if y_var has shape (n_samples, 1), reshape to (n_samples,)
                 if y_var.shape[1] == 1:
