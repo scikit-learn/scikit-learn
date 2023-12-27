@@ -2301,6 +2301,24 @@ def test_dataframe_different_dataframe_libraries():
     assert_array_equal(out_pd_in, X_test_np)
 
 
+def test_column_transformer__getitem__():
+    """Check __getitem__ for ColumnTransformer."""
+    X = np.array([[0, 1, 2], [3, 4, 5]])
+    ct = ColumnTransformer([("t1", Trans(), [0, 1]), ("t2", Trans(), [1, 2])])
+
+    msg = "ColumnTransformer is subscriptable after it is fitted"
+    with pytest.raises(TypeError, match=msg):
+        ct["t1"]
+
+    ct.fit(X)
+    assert ct["t1"] is ct.named_transformers_["t1"]
+    assert ct["t2"] is ct.named_transformers_["t2"]
+
+    msg = "'does_not_exist' is not a valid transformer name"
+    with pytest.raises(KeyError, match=msg):
+        ct["does_not_exist"]
+
+
 # Metadata Routing Tests
 # ======================
 
