@@ -142,6 +142,30 @@ class BaseEstimator(_HTMLDocumentationLinkMixin, _MetadataRequester):
     All estimators should specify all the parameters that can be set
     at the class level in their ``__init__`` as explicit keyword
     arguments (no ``*args`` or ``**kwargs``).
+
+    Examples
+    ----------
+    >>> from sklearn.base import BaseEstimator, ClassifierMixin
+    >>> import numpy as np
+
+    >>> class SimpleClassifier(BaseEstimator, ClassifierMixin): 
+            def __init__(self, predicted_class=1):
+                self.predicted_class = predicted_class
+            def fit(self, X, y=None):
+                return self
+            def predict(self, X):
+                return np.full(X.shape[0], fill_value=self.predicted_class)
+    >>> classifier = SimpleClassifier(predicted_class=0)
+
+    >>> X_train = np.array([[1, 2], [2, 3], [3, 4]])
+    >>> y_train = np.array([1, 0, 1])
+
+    >>> classifier.fit(X_train, y_train)
+
+    >>> X_test = np.array([[4, 5], [5, 6]])
+    >>> predictions = classifier.predict(X_test)
+
+    >>> print("Predictions:", predictions)
     """
 
     @classmethod
@@ -652,7 +676,32 @@ class BaseEstimator(_HTMLDocumentationLinkMixin, _MetadataRequester):
 
 
 class ClassifierMixin:
-    """Mixin class for all classifiers in scikit-learn."""
+    """Mixin class for all classifiers in scikit-learn.
+
+    Examples
+    ----------
+    >>> from sklearn.base import BaseEstimator, ClassifierMixin
+    >>> import numpy as np
+
+    >>> class SimpleClassifier(BaseEstimator, ClassifierMixin): 
+            def __init__(self, predicted_class=1):
+                self.predicted_class = predicted_class
+            def fit(self, X, y=None):
+                return self
+            def predict(self, X):
+                return np.full(X.shape[0], fill_value=self.predicted_class)
+    >>> classifier = SimpleClassifier(predicted_class=0)
+
+    >>> X_train = np.array([[1, 2], [2, 3], [3, 4]])
+    >>> y_train = np.array([1, 0, 1])
+
+    >>> classifier.fit(X_train, y_train)
+
+    >>> X_test = np.array([[4, 5], [5, 6]])
+    >>> predictions = classifier.predict(X_test)
+
+    >>> print("Predictions:", predictions)
+    """
 
     _estimator_type = "classifier"
 
