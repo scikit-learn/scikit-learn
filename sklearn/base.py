@@ -149,12 +149,12 @@ class BaseEstimator(_HTMLDocumentationLinkMixin, _MetadataRequester):
     >>> import numpy as np
 
     >>> class SimpleClassifier(BaseEstimator, ClassifierMixin):
-            def __init__(self, predicted_class=1):
-                self.predicted_class = predicted_class
-            def fit(self, X, y=None):
-                return self
+    ...     def __init__(self, predicted_class=1):
+    ...         self.predicted_class = predicted_class
+    ...     def fit(self, X, y=None):
+    ...         return self
             def predict(self, X):
-                return np.full(X.shape[0], fill_value=self.predicted_class)
+    ...         return np.full(X.shape[0], fill_value=self.predicted_class)
     >>> classifier = SimpleClassifier(predicted_class=0)
 
     >>> X_train = np.array([[1, 2], [2, 3], [3, 4]])
@@ -684,12 +684,12 @@ class ClassifierMixin:
     >>> import numpy as np
 
     >>> class SimpleClassifier(BaseEstimator, ClassifierMixin):
-            def __init__(self, predicted_class=1):
-                self.predicted_class = predicted_class
-            def fit(self, X, y=None):
-                return self
-            def predict(self, X):
-                return np.full(X.shape[0], fill_value=self.predicted_class)
+    ...     def __init__(self, predicted_class=1):
+    ...         self.predicted_class = predicted_class
+    ...     def fit(self, X, y=None):
+    ...         return self
+    ...     def predict(self, X):
+    ...         return np.full(X.shape[0], fill_value=self.predicted_class)
     >>> classifier = SimpleClassifier(predicted_class=0)
 
     >>> X_train = np.array([[1, 2], [2, 3], [3, 4]])
