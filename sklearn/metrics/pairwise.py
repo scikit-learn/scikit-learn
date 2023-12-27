@@ -1789,11 +1789,14 @@ def _parallel_pairwise(X, Y, func, n_jobs, **kwds):
     return ret
 
 
-def _pairwise_callable(X, Y, metric, force_all_finite=True, ensure_2d=True, **kwds):
+def _pairwise_callable(
+    X, Y, metric, dtype=None, force_all_finite=True, ensure_2d=True, **kwds
+):
     """Handle the callable case for pairwise_{distances,kernels}."""
     X, Y = check_pairwise_arrays(
         X,
         Y,
+        dtype=dtype,
         force_all_finite=force_all_finite,
         ensure_2d=ensure_2d,
     )
@@ -2221,9 +2224,17 @@ def pairwise_distances(
     elif metric in PAIRWISE_DISTANCE_FUNCTIONS:
         func = PAIRWISE_DISTANCE_FUNCTIONS[metric]
     elif callable(metric):
+        # we got a custom metric and should accept non-float dtypes
+        dtype = X.dtype if isinstance(X, np.ndarray) else type(X[0])
+        if Y is not None:
+            y_dtype = Y.dtype if isinstance(Y, np.ndarray) else type(Y[0])
+            if dtype != y_dtype:
+                raise TypeError("X and Y have different dtypes.")
+
         func = partial(
             _pairwise_callable,
             metric=metric,
+            dtype=dtype,
             force_all_finite=force_all_finite,
             ensure_2d=ensure_2d,
             **kwds,
