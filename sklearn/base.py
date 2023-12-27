@@ -148,7 +148,7 @@ class BaseEstimator(_HTMLDocumentationLinkMixin, _MetadataRequester):
     >>> from sklearn.base import BaseEstimator, ClassifierMixin
     >>> import numpy as np
 
-    >>> class SimpleClassifier(BaseEstimator, ClassifierMixin): 
+    >>> class SimpleClassifier(BaseEstimator, ClassifierMixin):
             def __init__(self, predicted_class=1):
                 self.predicted_class = predicted_class
             def fit(self, X, y=None):
@@ -683,7 +683,7 @@ class ClassifierMixin:
     >>> from sklearn.base import BaseEstimator, ClassifierMixin
     >>> import numpy as np
 
-    >>> class SimpleClassifier(BaseEstimator, ClassifierMixin): 
+    >>> class SimpleClassifier(BaseEstimator, ClassifierMixin):
             def __init__(self, predicted_class=1):
                 self.predicted_class = predicted_class
             def fit(self, X, y=None):
