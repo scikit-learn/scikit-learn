@@ -669,6 +669,17 @@ def cohen_kappa_score(y1, y2, *, labels=None, weights=None, sample_weight=None):
         The kappa statistic, which is a number between -1 and 1. The maximum
         value means complete agreement; zero or lower means chance agreement.
 
+    References
+    ----------
+    .. [1] :doi:`J. Cohen (1960). "A coefficient of agreement for nominal scales".
+           Educational and Psychological Measurement 20(1):37-46.
+           <10.1177/001316446002000104>`
+    .. [2] `R. Artstein and M. Poesio (2008). "Inter-coder agreement for
+           computational linguistics". Computational Linguistics 34(4):555-596
+           <https://www.mitpressjournals.org/doi/pdf/10.1162/coli.07-034-R2>`_.
+    .. [3] `Wikipedia entry for the Cohen's kappa
+            <https://en.wikipedia.org/wiki/Cohen%27s_kappa>`_.
+
     Examples
     --------
     >>> from sklearn.metrics import cohen_kappa_score
@@ -683,17 +694,6 @@ def cohen_kappa_score(y1, y2, *, labels=None, weights=None, sample_weight=None):
     >>> a2 = ["negative", "positive", "negative", "neutral", "negative"]
     >>> cohen_kappa_score(a1, a2)
     0.6875
-
-    References
-    ----------
-    .. [1] :doi:`J. Cohen (1960). "A coefficient of agreement for nominal scales".
-           Educational and Psychological Measurement 20(1):37-46.
-           <10.1177/001316446002000104>`
-    .. [2] `R. Artstein and M. Poesio (2008). "Inter-coder agreement for
-           computational linguistics". Computational Linguistics 34(4):555-596
-           <https://www.mitpressjournals.org/doi/pdf/10.1162/coli.07-034-R2>`_.
-    .. [3] `Wikipedia entry for the Cohen's kappa
-            <https://en.wikipedia.org/wiki/Cohen%27s_kappa>`_.
     """
     confusion = confusion_matrix(y1, y2, labels=labels, sample_weight=sample_weight)
     n_classes = confusion.shape[0]
