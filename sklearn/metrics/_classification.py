@@ -143,7 +143,7 @@ def _weighted_sum(sample_score, sample_weight, normalize=False, xp=None):
         xp, _ = get_namespace(*input_arrays)
 
     if not _is_numpy_namespace(xp):
-        return _average(sample_score, weights=sample_weight, normalize=normalize)
+        return float(_average(sample_score, weights=sample_weight, normalize=normalize))
 
     # faster, simpler track for numpy namespace, compared to _average.
     elif normalize:
