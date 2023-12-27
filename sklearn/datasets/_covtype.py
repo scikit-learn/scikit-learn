@@ -158,7 +158,7 @@ def fetch_covtype(
         .. versionadded:: 0.20
 
     Examples
-    -------
+    --------
     >>> from sklearn.datasets import fetch_covtype
     >>>
     >>> # Default return sklearn.utils.Bunch
