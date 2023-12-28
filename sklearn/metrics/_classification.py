@@ -153,7 +153,7 @@ def _weighted_sum(sample_score, sample_weight, normalize=False, xp=None):
     else:
         res = np.sum(sample_score)
 
-    return xp.asarray(res)
+    return float(res)
 
 
 @validate_params(
