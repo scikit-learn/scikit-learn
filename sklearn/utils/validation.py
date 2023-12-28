@@ -1241,28 +1241,16 @@ def column_or_1d(y, *, dtype=None, warn=False):
     ------
     ValueError
         If `y` is not a 1D array or a 2D array with a single row or column.
-    
     Examples
     --------
     >>> import numpy as np
     >>> from sklearn.utils.validation import column_or_1d
-    >>> x = np.array([1,1])
-    >>> column_or_1d(x)
+    >>> column_or_1d(np.array([1,1]))
     array([1, 1])
-    >>> y = np.array([[1,1], [1, 1]])
-    >>> column_or_1d(y)
+    >>> column_or_1d(np.array([[1,1], [1, 1]]))
     Traceback (most recent call last):
-    File "<stdin>", line 1, in <module>
-    File "/Users/scikit-learn/scikit-learn/sklearn/utils/validation.py", line 1271, in column_or_1d
-        raise ValueError(
+    ...
     ValueError: y should be a 1d array, got an array of shape (2, 2) instead.
-    >>> z = np.array([[1,1]])
-    >>> column_or_1d(z)
-    Traceback (most recent call last):
-    File "<stdin>", line 1, in <module>
-    File "/Users/scikit-learn/scikit-learn/sklearn/utils/validation.py", line 1271, in column_or_1d
-        raise ValueError(
-    ValueError: y should be a 1d array, got an array of shape (1, 2) instead.
     """
     xp, _ = get_namespace(y)
     y = check_array(
@@ -1377,25 +1365,21 @@ def check_symmetric(array, *, tol=1e-10, raise_warning=True, raise_exception=Fal
         Symmetrized version of the input array, i.e. the average of array
         and array.transpose(). If sparse, then duplicate entries are first
         summed and zeros are eliminated.
-    
-    Example
+
+    Examples
     -------
     >>> import numpy as np
     >>> from sklearn.utils.validation import check_symmetric
-    >>> x = np.array([[1, 2, 2,1], [1, 2, 2,1]])
-    >>> check_symmetric(x)
+    >>> check_symmetric(np.array([[1, 2, 2,1], [1, 2, 2,1]]))
     Traceback (most recent call last):
-    File "<stdin>", line 1, in <module>
-    File "/Users/scikit-learn/scikit-learn/sklearn/utils/validation.py", line 1360, in check_symmetric
-        raise ValueError(
+    ...
     ValueError: array must be 2-dimensional and square. shape = (2, 4)
-    >>> y = np.array([[1,1], [1, 1]])
-    >>> check_symmetric(y)
+    >>> check_symmetric(np.array([[1,1], [1, 1]]))
     array([[1, 1],
        [    1, 1]])
-    >>> z = np.array([[0,1], [0, 1]])
-    >>> check_symmetric(z)
-    <stdin>:1: UserWarning: Array is not symmetric, and will be converted to symmetric by average with its transpose.
+    >>> check_symmetric(np.array([[0,1], [0, 1]]))
+    <stdin>:1: UserWarning: Array is not symmetric, and will be converted to 
+    symmetric by average with its transpose.
     array([[0. , 0.5],
         [0.5, 1. ]])
     """
