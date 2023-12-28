@@ -215,6 +215,13 @@ def supported_float_dtypes(xp, device=None):
     )
 
 
+@lru_cache
+def _filter_supported_dtypes(xp, dtypes, device=None):
+    return [
+        getattr(xp, dtype) for dtype in dtypes if _supports_dtype(xp, device, dtype)
+    ]
+
+
 class _ArrayAPIWrapper:
     """sklearn specific Array API compatibility wrapper
 
@@ -240,6 +247,10 @@ class _ArrayAPIWrapper:
 
     def __hash__(self):
         return hash((self._namespace, "_ArrayAPIWrapper"))
+
+    @property
+    def newaxis(self):
+        return getattr(self._namespace, "newaxis", None)
 
     def isdtype(self, dtype, kind):
         return isdtype(dtype, kind, xp=self._namespace)

@@ -5,7 +5,8 @@ import numpy as np
 import pytest
 from scipy import linalg
 
-from sklearn import datasets
+from sklearn import config_context, datasets
+from sklearn.base import clone
 from sklearn.datasets import (
     make_classification,
     make_low_rank_matrix,
@@ -40,12 +41,21 @@ from sklearn.model_selection import (
 )
 from sklearn.preprocessing import minmax_scale
 from sklearn.utils import _IS_32BIT, check_random_state
+from sklearn.utils._array_api import (
+    _convert_to_numpy,
+    yield_namespace_device_dtype_combinations,
+)
 from sklearn.utils._testing import (
     assert_allclose,
     assert_almost_equal,
     assert_array_almost_equal,
     assert_array_equal,
     ignore_warnings,
+)
+from sklearn.utils.estimator_checks import (
+    _array_api_for_tests,
+    _get_check_estimator_ids,
+    check_array_api_input_and_values,
 )
 from sklearn.utils.fixes import (
     COO_CONTAINERS,
@@ -1198,6 +1208,85 @@ def _test_tolerance(sparse_container):
     score2 = ridge2.score(X, y_diabetes)
 
     assert score >= score2
+
+
+def check_array_api_attributes(name, estimator, array_namepsace, device, dtype_name):
+    xp = _array_api_for_tests(array_namepsace, dtype_name)
+
+    X_iris_np = X_iris.astype(dtype_name)
+    y_iris_np = y_iris.astype(dtype_name)
+
+    X_iris_xp = xp.asarray(X_iris_np, device=device)
+    y_iris_xp = xp.asarray(y_iris_np, device=device)
+
+    estimator.fit(X_iris_np, y_iris_np)
+    coef_np = estimator.coef_
+    intercept_np = estimator.intercept_
+
+    with config_context(array_api_dispatch=True):
+        estimator_xp = clone(estimator).fit(X_iris_xp, y_iris_xp)
+        coef_xp = estimator_xp.coef_
+        assert coef_xp.shape == (4,)
+        assert coef_xp.dtype == X_iris_xp.dtype
+
+        assert_allclose(
+            _convert_to_numpy(coef_xp, xp=xp),
+            coef_np,
+            atol=np.finfo(dtype_name).eps * 100,
+        )
+        intercept_xp = estimator_xp.intercept_
+        assert intercept_xp.shape == ()
+        assert intercept_xp.dtype == X_iris_xp.dtype
+
+        assert_allclose(
+            _convert_to_numpy(intercept_xp, xp=xp),
+            intercept_np,
+            atol=np.finfo(dtype_name).eps * 100,
+        )
+
+
+@pytest.mark.parametrize(
+    "array_namepsace, device, dtype_name", yield_namespace_device_dtype_combinations()
+)
+@pytest.mark.parametrize(
+    "check",
+    [check_array_api_input_and_values, check_array_api_attributes],
+    ids=_get_check_estimator_ids,
+)
+@pytest.mark.parametrize(
+    "estimator",
+    [Ridge(solver="svd")],
+    ids=_get_check_estimator_ids,
+)
+# TODO: does this test the following cases:
+# - non null sample_weight
+# - multi dimensional y
+# ?
+def test_ridge_array_api_compliance(
+    estimator, check, array_namepsace, device, dtype_name
+):
+    name = estimator.__class__.__name__
+    check(name, estimator, array_namepsace, device=device, dtype_name=dtype_name)
+
+
+def test_array_api_error_and_warnings_on_unsupported_params():
+    pytest.importorskip("array_api_compat")
+    xp = pytest.importorskip("numpy.array_api")
+
+    X_iris_xp = xp.asarray(X_iris)
+    y_iris_xp = xp.asarray(y_iris)
+
+    available_solvers = Ridge._parameter_constraints["solver"][0].options
+    for solver in available_solvers - {"auto", "svd"}:
+        ridge = Ridge(solver=solver)
+        expected_msg = (
+            "Array API dispatch is only supported with solver='svd' or 'auto' "
+            f"but not with solver='{solver}'."
+        )
+
+        with pytest.raises(ValueError, match=expected_msg):
+            with config_context(array_api_dispatch=True):
+                ridge.fit(X_iris_xp, y_iris_xp)
 
 
 @pytest.mark.parametrize(

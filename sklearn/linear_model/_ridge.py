@@ -31,6 +31,12 @@ from ..utils import (
     column_or_1d,
     compute_sample_weight,
 )
+from ..utils._array_api import (
+    _asarray_with_order,
+    _filter_supported_dtypes,
+    device,
+    get_namespace,
+)
 from ..utils._param_validation import Interval, StrOptions, validate_params
 from ..utils.extmath import row_norms, safe_sparse_dot
 from ..utils.fixes import _sparse_linalg_cg
@@ -273,15 +279,17 @@ def _solve_cholesky_kernel(K, y, alpha, sample_weight=None, copy=False):
         return dual_coefs.T
 
 
-def _solve_svd(X, y, alpha):
-    U, s, Vt = linalg.svd(X, full_matrices=False)
+def _solve_svd(X, y, alpha, xp=None):
+    if xp is None:
+        xp, _ = get_namespace(X)
+    U, s, Vt = xp.linalg.svd(X, full_matrices=False)
     idx = s > 1e-15  # same default value as scipy.linalg.pinv
-    s_nnz = s[idx][:, np.newaxis]
-    UTy = np.dot(U.T, y)
-    d = np.zeros((s.size, alpha.size), dtype=X.dtype)
+    s_nnz = s[idx][:, xp.newaxis]
+    UTy = (U.T) @ y
+    d = xp.zeros((s.size, alpha.size), dtype=X.dtype)
     d[idx] = s_nnz / (s_nnz**2 + alpha)
     d_UT_y = d * UTy
-    return np.dot(Vt.T, d_UT_y).T
+    return (Vt.T @ d_UT_y).T
 
 
 def _solve_lbfgs(
@@ -587,6 +595,15 @@ def _ridge_regression(
     check_input=True,
     fit_intercept=False,
 ):
+    input_arrays = [X, y]
+    for input_array in (sample_weight, X_scale, X_offset):
+        if input_array is not None:
+            input_arrays.append(input_arrays)
+    xp, is_array_api_compliant = get_namespace(*input_arrays)
+
+    X_is_sparse = sparse.issparse(X)
+    device_ = "cpu" if X_is_sparse else device(*input_arrays)
+
     has_sw = sample_weight is not None
 
     if solver == "auto":
@@ -595,6 +612,8 @@ def _ridge_regression(
         elif return_intercept:
             # sag supports fitting intercept directly
             solver = "sag"
+        elif is_array_api_compliant:
+            solver = "svd"
         elif not sparse.issparse(X):
             solver = "cholesky"
         else:
@@ -604,6 +623,13 @@ def _ridge_regression(
         raise ValueError(
             "Known solvers are 'sparse_cg', 'cholesky', 'svd'"
             " 'lsqr', 'sag', 'saga' or 'lbfgs'. Got %s." % solver
+        )
+
+    if is_array_api_compliant and solver != "svd":
+        reason = "positive=True" if positive else "return_intercept=True"
+        raise ValueError(
+            "Array API dispatch is only supported by the 'svd' solver, which "
+            f"does not support {reason}"
         )
 
     if positive and solver != "lbfgs":
@@ -627,8 +653,8 @@ def _ridge_regression(
         )
 
     if check_input:
-        _dtype = [np.float64, np.float32]
         _accept_sparse = _get_valid_accept_sparse(sparse.issparse(X), solver)
+        _dtype = _filter_supported_dtypes(xp, ("float64", "float32"), device=device_)
         X = check_array(X, accept_sparse=_accept_sparse, dtype=_dtype, order="C")
         y = check_array(y, dtype=X.dtype, ensure_2d=False, order=None)
     check_consistent_length(X, y)
@@ -640,7 +666,7 @@ def _ridge_regression(
 
     ravel = False
     if y.ndim == 1:
-        y = y.reshape(-1, 1)
+        y = xp.reshape(y, (-1, 1))
         ravel = True
 
     n_samples_, n_targets = y.shape
@@ -661,7 +687,7 @@ def _ridge_regression(
 
     # Some callers of this method might pass alpha as single
     # element array which already has been validated.
-    if alpha is not None and not isinstance(alpha, np.ndarray):
+    if alpha is not None and not isinstance(alpha, type(xp.asarray([0.0]))):
         alpha = check_scalar(
             alpha,
             "alpha",
@@ -671,7 +697,8 @@ def _ridge_regression(
         )
 
     # There should be either 1 or n_targets penalties
-    alpha = np.asarray(alpha, dtype=X.dtype).ravel()
+    alpha = _asarray_with_order(alpha, dtype=X.dtype, order="C", copy=None, xp=xp)
+    alpha = xp.reshape(alpha, shape=(-1,))
     if alpha.size not in [1, n_targets]:
         raise ValueError(
             "Number of targets and number of penalties do not correspond: %d != %d"
@@ -679,7 +706,9 @@ def _ridge_regression(
         )
 
     if alpha.size == 1 and n_targets > 1:
-        alpha = np.repeat(alpha, n_targets)
+        alpha = xp.full(
+            shape=(n_targets,), fill_value=alpha, dtype=alpha.dtype, device=device_
+        )
 
     n_iter = None
     if solver == "sparse_cg":
@@ -779,11 +808,12 @@ def _ridge_regression(
     if solver == "svd":
         if sparse.issparse(X):
             raise TypeError("SVD solver does not support sparse inputs currently")
-        coef = _solve_svd(X, y, alpha)
+        coef = _solve_svd(X, y, alpha, xp)
 
     if ravel:
         # When y was passed as a 1d-array, we flatten the coefficients.
-        coef = coef.ravel()
+        coef = _asarray_with_order(coef, dtype=coef.dtype, order="C", copy=None, xp=xp)
+        coef = xp.reshape(coef, shape=(-1,))
 
     if return_n_iter and return_intercept:
         return coef, n_iter, intercept
@@ -834,6 +864,16 @@ class _BaseRidge(LinearModel, metaclass=ABCMeta):
         self.random_state = random_state
 
     def fit(self, X, y, sample_weight=None):
+        input_arrays = (X, y) if sample_weight is None else (X, y, sample_weight)
+
+        xp, is_array_api_compliant = get_namespace(*input_arrays)
+
+        if is_array_api_compliant and self.solver not in ["auto", "svd"]:
+            raise ValueError(
+                "Array API dispatch is only supported with solver='svd' or 'auto' "
+                f"but not with solver='{self.solver}' "
+            )
+
         if self.solver == "lbfgs" and not self.positive:
             raise ValueError(
                 "'lbfgs' solver can be used only when positive=True. "
@@ -1150,15 +1190,23 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
             Fitted estimator.
         """
         _accept_sparse = _get_valid_accept_sparse(sparse.issparse(X), self.solver)
+        input_arrays = (X, y) if sample_weight is None else (X, y, sample_weight)
+        device_ = device(*input_arrays)
+
+        xp, _ = get_namespace(*input_arrays)
+
         X, y = self._validate_data(
             X,
             y,
             accept_sparse=_accept_sparse,
-            dtype=[np.float64, np.float32],
+            dtype=_filter_supported_dtypes(xp, ("float64", "float32"), device=device_),
             multi_output=True,
             y_numeric=True,
         )
         return super().fit(X, y, sample_weight=sample_weight)
+
+    def _more_tags(self):
+        return {"array_api_support": True}
 
 
 class _RidgeClassifierMixin(LinearClassifierMixin):

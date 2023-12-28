@@ -25,6 +25,15 @@ Changelog
     :pr:`123456` by :user:`Joe Bloggs <joeongithub>`.
     where 123455 is the *pull request* number, not the issue number.
 
+
+:mod:`sklearn.linear_model`
+...........................
+
+- |Enhancement| :class:`linear_model.Ridge` now supports the Array API for the
+  `svd` solver. See :ref:`array_api` for more details.
+  :pr:`27800` by :user:`Franck Charras <fcharras>`, :user:`TODO <TODO>` and
+  :user:`TODO <TODO>`.
+
 Code and Documentation Contributors
 -----------------------------------
 
