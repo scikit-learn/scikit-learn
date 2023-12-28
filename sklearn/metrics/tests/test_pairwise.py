@@ -1681,6 +1681,19 @@ def test_pairwise_distances_raises_error_for_incompatible_length():
         pairwise_distances(X, Y, metric=dummy_string_similarity, ensure_2d=False)
 
 
+def test_pairwise_distances_raises_error_for_incompatible_dtypes():
+    """Check that we raise an error if `X` and `Y` have different dtypes."""
+
+    def dummy_string_similarity(x, y):
+        return np.abs(len(x) - len(y))  # pragma: no cover
+
+    X = np.array([1, 2])
+    Y = ["a", "a"]
+    msg = "X and Y have different dtypes."
+    with pytest.raises(TypeError, match=msg):
+        pairwise_distances(X, Y, metric=dummy_string_similarity, ensure_2d=False)
+
+
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
 def test_sparse_manhattan_readonly_dataset(csr_container):
     # Non-regression test for: https://github.com/scikit-learn/scikit-learn/issues/7981
