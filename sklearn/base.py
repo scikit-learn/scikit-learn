@@ -144,7 +144,7 @@ class BaseEstimator(_HTMLDocumentationLinkMixin, _MetadataRequester):
     arguments (no ``*args`` or ``**kwargs``).
 
     Examples
-    ----------
+    --------
     >>> from sklearn.base import BaseEstimator, ClassifierMixin
     >>> import numpy as np
     >>> class SimpleClassifier(BaseEstimator, ClassifierMixin):
@@ -676,7 +676,7 @@ class ClassifierMixin:
     """Mixin class for all classifiers in scikit-learn.
 
     Examples
-    ----------
+    --------
     >>> from sklearn.base import BaseEstimator, ClassifierMixin
     >>> import numpy as np
     >>> class SimpleClassifier(BaseEstimator, ClassifierMixin):
