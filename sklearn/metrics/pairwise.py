@@ -900,9 +900,6 @@ def pairwise_distances_argmin(X, Y, *, axis=1, metric="euclidean", metric_kwargs
     if axis == 0:
         X, Y = Y, X
 
-    if metric_kwargs is None:
-        metric_kwargs = {}
-
     if ArgKmin.is_usable_for(X, Y, metric):
         # This is an adaptor for one "sqeuclidean" specification.
         # For this backend, we can directly use "sqeuclidean".
