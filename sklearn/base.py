@@ -147,25 +147,22 @@ class BaseEstimator(_HTMLDocumentationLinkMixin, _MetadataRequester):
     ----------
     >>> from sklearn.base import BaseEstimator, ClassifierMixin
     >>> import numpy as np
-
     >>> class SimpleClassifier(BaseEstimator, ClassifierMixin):
     ...     def __init__(self, predicted_class=1):
     ...         self.predicted_class = predicted_class
     ...     def fit(self, X, y=None):
     ...         return self
-            def predict(self, X):
+    ...     def predict(self, X):
     ...         return np.full(X.shape[0], fill_value=self.predicted_class)
     >>> classifier = SimpleClassifier(predicted_class=0)
-
     >>> X_train = np.array([[1, 2], [2, 3], [3, 4]])
     >>> y_train = np.array([1, 0, 1])
-
     >>> classifier.fit(X_train, y_train)
-
+    SimpleClassifier(predicted_class=0)
     >>> X_test = np.array([[4, 5], [5, 6]])
     >>> predictions = classifier.predict(X_test)
-
     >>> print("Predictions:", predictions)
+    Predictions: [0 0]
     """
 
     @classmethod
@@ -682,7 +679,6 @@ class ClassifierMixin:
     ----------
     >>> from sklearn.base import BaseEstimator, ClassifierMixin
     >>> import numpy as np
-
     >>> class SimpleClassifier(BaseEstimator, ClassifierMixin):
     ...     def __init__(self, predicted_class=1):
     ...         self.predicted_class = predicted_class
@@ -691,16 +687,14 @@ class ClassifierMixin:
     ...     def predict(self, X):
     ...         return np.full(X.shape[0], fill_value=self.predicted_class)
     >>> classifier = SimpleClassifier(predicted_class=0)
-
     >>> X_train = np.array([[1, 2], [2, 3], [3, 4]])
     >>> y_train = np.array([1, 0, 1])
-
     >>> classifier.fit(X_train, y_train)
-
+    SimpleClassifier(predicted_class=0)
     >>> X_test = np.array([[4, 5], [5, 6]])
     >>> predictions = classifier.predict(X_test)
-
     >>> print("Predictions:", predictions)
+    Predictions: [0 0]
     """
 
     _estimator_type = "classifier"
