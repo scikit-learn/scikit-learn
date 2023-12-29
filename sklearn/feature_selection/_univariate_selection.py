@@ -152,7 +152,6 @@ def f_classif(X, y):
 
     Examples
     --------
-
     >>> from sklearn.feature_selection import f_classif
     >>> import numpy as np
     >>> X = np.array([[1, 1],
@@ -348,7 +347,6 @@ def r_regression(X, y, *, center=True, force_finite=True):
 
     Examples
     --------
-
     >>> from sklearn.feature_selection import r_regression
     >>> import numpy as np
     >>> X = np.array([[1.5, 1],
@@ -484,7 +482,6 @@ def f_regression(X, y, *, center=True, force_finite=True):
 
     Examples
     --------
-
     >>> from sklearn.feature_selection import f_regression
     >>> import numpy as np
     >>> X = np.array([[1.5, 1.2],
