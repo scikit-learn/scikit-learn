@@ -241,6 +241,10 @@ class _ArrayAPIWrapper:
     def __hash__(self):
         return hash((self._namespace, "_ArrayAPIWrapper"))
 
+    @property
+    def newaxis(self):
+        return getattr(self._namespace, "newaxis", None)
+
     def isdtype(self, dtype, kind):
         return isdtype(dtype, kind, xp=self._namespace)
 
@@ -426,7 +430,11 @@ def get_namespace(*arrays):
 
     # These namespaces need additional wrapping to smooth out small differences
     # between implementations
-    if namespace.__name__ in {"numpy.array_api", "cupy.array_api"}:
+    if namespace.__name__ in {
+        "numpy.array_api",
+        "cupy.array_api",
+        "array_api_compat.torch",
+    }:
         namespace = _ArrayAPIWrapper(namespace)
 
     return namespace, is_array_api_compliant

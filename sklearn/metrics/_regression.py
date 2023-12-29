@@ -1239,9 +1239,9 @@ def r2_score(
 
     if sample_weight is not None:
         sample_weight = column_or_1d(sample_weight, dtype=dtype)
-        weight = sample_weight[:, None]
+        weight = sample_weight[:, xp.newaxis]
     else:
-        weight = xp.asarray([1.0], dtype=y_true.dtype)
+        weight = xp.asarray([1.0], dtype=y_true.dtype, device=device_)
 
     numerator = xp.sum(weight * (y_true - y_pred) ** 2, axis=0, dtype=xp.float64)
     denominator = xp.sum(

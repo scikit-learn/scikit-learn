@@ -55,6 +55,7 @@ from sklearn.preprocessing import LabelBinarizer
 from sklearn.utils import shuffle
 from sklearn.utils._array_api import (
     _atol_for_type,
+    _convert_to_numpy,
     yield_namespace_device_dtype_combinations,
 )
 from sklearn.utils._testing import (
@@ -1749,7 +1750,7 @@ def check_array_api_metric(
         metric_xp = metric(y_true_xp, y_pred_xp, sample_weight=sample_weight)
 
         assert_allclose(
-            metric_xp,
+            _convert_to_numpy(xp.asarray(metric_xp), xp),
             metric_np,
             atol=_atol_for_type(dtype_name),
         )
