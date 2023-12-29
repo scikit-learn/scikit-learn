@@ -648,7 +648,7 @@ def _asarray_with_order(
 
         # At this point array is a NumPy ndarray. We convert it to an array
         # container that is consistent with the input's namespace.
-        return xp.asarray(array, device=device)
+        return xp.asarray(array)
     else:
         return xp.asarray(array, dtype=dtype, copy=copy, device=device)
 
