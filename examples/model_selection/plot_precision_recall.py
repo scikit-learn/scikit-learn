@@ -43,7 +43,7 @@ defined as the harmonic mean of precision and recall.
 :math:`F1 = 2\\frac{P \\times R}{P+R}`
 
 However, for practical purposes, Scikit-Learn uses a definition of :math:`F_1`
-that is equivalent except that it is defined (as 0) when precision and recall
+that is equivalent except that it is defined as 0 when precision and recall
 are both 0.
 
 :math:`F1 = \\frac{2T_p}{2T_p + F_p + F_n}`
