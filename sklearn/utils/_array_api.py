@@ -151,9 +151,15 @@ def _isdtype_single(dtype, kind, *, xp):
         if kind == "bool":
             return dtype == xp.bool
         elif kind == "signed integer":
-            return dtype in {xp.int8, xp.int16, xp.int32, xp.int64}
+            return any(
+                hasattr(xp, dtype_name) and (dtype == getattr(xp, dtype_name))
+                for dtype_name in ["int8", "int16", "int32", "int64"]
+            )
         elif kind == "unsigned integer":
-            return dtype in {xp.uint8, xp.uint16, xp.uint32, xp.uint64}
+            return any(
+                hasattr(xp, dtype_name) and (dtype == getattr(xp, dtype_name))
+                for dtype_name in ["uint8", "uint16", "uint32", "uint64"]
+            )
         elif kind == "integral":
             return any(
                 _isdtype_single(dtype, k, xp=xp)
