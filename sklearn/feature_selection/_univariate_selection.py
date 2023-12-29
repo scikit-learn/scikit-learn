@@ -212,6 +212,21 @@ def chi2(X, y):
     p_values : ndarray of shape (n_features,)
         P-values for each feature.
 
+    Examples
+    --------
+    >>> from sklearn.feature_selection import chi2
+    >>> import numpy as np
+    >>> X = np.array([[1, 1],
+    ...               [0, 1],
+    ...               [5, 4],
+    ...               [6, 6]])
+    >>> y = np.array([1, 1, 0, 0])
+    >>> chi2_stats, p_values = chi2(X, y)
+    >>> chi2_stats
+    array([8.33333333, 5.33333333])
+    >>> p_values
+    array([0.00389242, 0.02092134])
+
     See Also
     --------
     f_classif : ANOVA F-value between label/feature for classification tasks.
