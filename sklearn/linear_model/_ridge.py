@@ -36,6 +36,7 @@ from ..utils._array_api import (
     _filter_supported_dtypes,
     device,
     get_namespace,
+    size,
 )
 from ..utils._param_validation import Interval, StrOptions, validate_params
 from ..utils.extmath import row_norms, safe_sparse_dot
@@ -286,7 +287,7 @@ def _solve_svd(X, y, alpha, xp=None):
     idx = s > 1e-15  # same default value as scipy.linalg.pinv
     s_nnz = s[idx][:, xp.newaxis]
     UTy = (U.T) @ y
-    d = xp.zeros((s.size, alpha.size), dtype=X.dtype)
+    d = xp.zeros((size(s), size(alpha)), dtype=X.dtype, device=device(X))
     d[idx] = s_nnz / (s_nnz**2 + alpha)
     d_UT_y = d * UTy
     return (Vt.T @ d_UT_y).T
@@ -697,15 +698,17 @@ def _ridge_regression(
         )
 
     # There should be either 1 or n_targets penalties
-    alpha = _asarray_with_order(alpha, dtype=X.dtype, order="C", copy=None, xp=xp)
+    alpha = _asarray_with_order(
+        alpha, dtype=X.dtype, order="C", copy=None, xp=xp, device=device_
+    )
     alpha = xp.reshape(alpha, shape=(-1,))
-    if alpha.size not in [1, n_targets]:
+    if size(alpha) not in [1, n_targets]:
         raise ValueError(
             "Number of targets and number of penalties do not correspond: %d != %d"
-            % (alpha.size, n_targets)
+            % (size(alpha), n_targets)
         )
 
-    if alpha.size == 1 and n_targets > 1:
+    if size(alpha) == 1 and n_targets > 1:
         alpha = xp.full(
             shape=(n_targets,), fill_value=alpha, dtype=alpha.dtype, device=device_
         )

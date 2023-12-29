@@ -107,6 +107,8 @@ def device(*array_list):
 
 
 def size(x):
+    # TODO: x.size is a part of the Array API standard, but not yet implemented
+    # by all libraries. Once it is common enough just use x.size.
     """Return the total number of elements of x.
 
     Parameters
@@ -151,9 +153,15 @@ def _isdtype_single(dtype, kind, *, xp):
         if kind == "bool":
             return dtype == xp.bool
         elif kind == "signed integer":
-            return dtype in {xp.int8, xp.int16, xp.int32, xp.int64}
+            return any(
+                hasattr(xp, dtype_name) and (dtype == getattr(xp, dtype_name))
+                for dtype_name in ["int8", "int16", "int32", "int64"]
+            )
         elif kind == "unsigned integer":
-            return dtype in {xp.uint8, xp.uint16, xp.uint32, xp.uint64}
+            return any(
+                hasattr(xp, dtype_name) and (dtype == getattr(xp, dtype_name))
+                for dtype_name in ["uint8", "uint16", "uint32", "uint64"]
+            )
         elif kind == "integral":
             return any(
                 _isdtype_single(dtype, k, xp=xp)
@@ -437,7 +445,11 @@ def get_namespace(*arrays):
 
     # These namespaces need additional wrapping to smooth out small differences
     # between implementations
-    if namespace.__name__ in {"numpy.array_api", "cupy.array_api"}:
+    if namespace.__name__ in {
+        "numpy.array_api",
+        "cupy.array_api",
+        "array_api_compat.torch",
+    }:
         namespace = _ArrayAPIWrapper(namespace)
 
     return namespace, is_array_api_compliant
@@ -610,7 +622,9 @@ def _nanmax(X, axis=None):
         return X
 
 
-def _asarray_with_order(array, dtype=None, order=None, copy=None, *, xp=None):
+def _asarray_with_order(
+    array, dtype=None, order=None, copy=None, *, xp=None, device=None
+):
     """Helper to support the order kwarg only for NumPy-backed arrays
 
     Memory layout parameter `order` is not exposed in the Array API standard,
@@ -634,9 +648,9 @@ def _asarray_with_order(array, dtype=None, order=None, copy=None, *, xp=None):
 
         # At this point array is a NumPy ndarray. We convert it to an array
         # container that is consistent with the input's namespace.
-        return xp.asarray(array)
+        return xp.asarray(array, device=device)
     else:
-        return xp.asarray(array, dtype=dtype, copy=copy)
+        return xp.asarray(array, dtype=dtype, copy=copy, device=device)
 
 
 def _convert_to_numpy(array, xp):

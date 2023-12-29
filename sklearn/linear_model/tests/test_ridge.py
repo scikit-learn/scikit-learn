@@ -1211,7 +1211,7 @@ def _test_tolerance(sparse_container):
 
 
 def check_array_api_attributes(name, estimator, array_namepsace, device, dtype_name):
-    xp = _array_api_for_tests(array_namepsace, dtype_name)
+    xp = _array_api_for_tests(array_namepsace, device)
 
     X_iris_np = X_iris.astype(dtype_name)
     y_iris_np = y_iris.astype(dtype_name)
