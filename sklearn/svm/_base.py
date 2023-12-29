@@ -1,30 +1,31 @@
 import warnings
-import numbers
 from abc import ABCMeta, abstractmethod
+from numbers import Integral, Real
 
 import numpy as np
 import scipy.sparse as sp
 
+from ..base import BaseEstimator, ClassifierMixin, _fit_context
+from ..exceptions import ConvergenceWarning, NotFittedError
+from ..preprocessing import LabelEncoder
+from ..utils import check_array, check_random_state, column_or_1d, compute_class_weight
+from ..utils._param_validation import Interval, StrOptions
+from ..utils.extmath import safe_sparse_dot
+from ..utils.metaestimators import available_if
+from ..utils.multiclass import _ovr_decision_function, check_classification_targets
+from ..utils.validation import (
+    _check_large_sparse,
+    _check_sample_weight,
+    _num_samples,
+    check_consistent_length,
+    check_is_fitted,
+)
+from . import _liblinear as liblinear  # type: ignore
+
 # mypy error: error: Module 'sklearn.svm' has no attribute '_libsvm'
 # (and same for other imports)
 from . import _libsvm as libsvm  # type: ignore
-from . import _liblinear as liblinear  # type: ignore
 from . import _libsvm_sparse as libsvm_sparse  # type: ignore
-from ..base import BaseEstimator, ClassifierMixin
-from ..preprocessing import LabelEncoder
-from ..utils.multiclass import _ovr_decision_function
-from ..utils import check_array, check_random_state
-from ..utils import column_or_1d
-from ..utils import compute_class_weight
-from ..utils.metaestimators import available_if
-from ..utils.extmath import safe_sparse_dot
-from ..utils.validation import check_is_fitted, _check_large_sparse
-from ..utils.validation import _num_samples
-from ..utils.validation import _check_sample_weight, check_consistent_length
-from ..utils.multiclass import check_classification_targets
-from ..exceptions import ConvergenceWarning
-from ..exceptions import NotFittedError
-
 
 LIBSVM_IMPL = ["c_svc", "nu_svc", "one_class", "epsilon_svr", "nu_svr"]
 
@@ -69,6 +70,30 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
     Parameter documentation is in the derived `SVC` class.
     """
 
+    _parameter_constraints: dict = {
+        "kernel": [
+            StrOptions({"linear", "poly", "rbf", "sigmoid", "precomputed"}),
+            callable,
+        ],
+        "degree": [Interval(Integral, 0, None, closed="left")],
+        "gamma": [
+            StrOptions({"scale", "auto"}),
+            Interval(Real, 0.0, None, closed="left"),
+        ],
+        "coef0": [Interval(Real, None, None, closed="neither")],
+        "tol": [Interval(Real, 0.0, None, closed="neither")],
+        "C": [Interval(Real, 0.0, None, closed="neither")],
+        "nu": [Interval(Real, 0.0, 1.0, closed="right")],
+        "epsilon": [Interval(Real, 0.0, None, closed="left")],
+        "shrinking": ["boolean"],
+        "probability": ["boolean"],
+        "cache_size": [Interval(Real, 0, None, closed="neither")],
+        "class_weight": [StrOptions({"balanced"}), dict, None],
+        "verbose": ["verbose"],
+        "max_iter": [Interval(Integral, -1, None, closed="left")],
+        "random_state": ["random_state"],
+    }
+
     # The order of these must match the integer values in LibSVM.
     # XXX These are actually the same in the dense case. Need to factor
     # this out.
@@ -93,7 +118,6 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
         max_iter,
         random_state,
     ):
-
         if self._impl not in LIBSVM_IMPL:
             raise ValueError(
                 "impl should be one of %s, %s was given" % (LIBSVM_IMPL, self._impl)
@@ -119,6 +143,7 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
         # Used by cross_val_score.
         return {"pairwise": self.kernel == "precomputed"}
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y, sample_weight=None):
         """Fit the SVM model according to the given training data.
 
@@ -152,20 +177,12 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
         If X is a dense array, then the other methods will not support sparse
         matrices as input.
         """
-
         rnd = check_random_state(self.random_state)
 
-        sparse = sp.isspmatrix(X)
+        sparse = sp.issparse(X)
         if sparse and self.kernel == "precomputed":
             raise TypeError("Sparse precomputed kernels are not supported.")
         self._sparse = sparse and not callable(self.kernel)
-
-        if hasattr(self, "decision_function_shape"):
-            if self.decision_function_shape not in ("ovr", "ovo"):
-                raise ValueError(
-                    "decision_function_shape must be either 'ovr' or 'ovo', "
-                    f"got {self.decision_function_shape}."
-                )
 
         if callable(self.kernel):
             check_consistent_length(X, y)
@@ -222,26 +239,8 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
                 self._gamma = 1.0 / (X.shape[1] * X_var) if X_var != 0 else 1.0
             elif self.gamma == "auto":
                 self._gamma = 1.0 / X.shape[1]
-            else:
-                raise ValueError(
-                    "When 'gamma' is a string, it should be either 'scale' or "
-                    f"'auto'. Got '{self.gamma!r}' instead."
-                )
-        elif isinstance(self.gamma, numbers.Real):
-            if self.gamma <= 0:
-                msg = (
-                    f"gamma value must be > 0; {self.gamma!r} is invalid. Use"
-                    " a positive number or use 'auto' to set gamma to a"
-                    " value of 1 / n_features."
-                )
-                raise ValueError(msg)
+        elif isinstance(self.gamma, Real):
             self._gamma = self.gamma
-        else:
-            msg = (
-                "The gamma value should be set to 'scale', 'auto' or a"
-                f" positive float value. {self.gamma!r} is not a valid option"
-            )
-            raise ValueError(msg)
 
         fit = self._sparse_fit if self._sparse else self._dense_fit
         if self.verbose:
@@ -267,9 +266,9 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
         dual_coef_finiteness = np.isfinite(dual_coef).all()
         if not (intercept_finiteness and dual_coef_finiteness):
             raise ValueError(
-                "The dual coefficients or intercepts are not finite. "
-                "The input data may contain large values and need to be"
-                "preprocessed."
+                "The dual coefficients or intercepts are not finite."
+                " The input data may contain large values and need to be"
+                " preprocessed."
             )
 
         # Since, in the case of SVC and NuSVC, the number of models optimized by
@@ -290,9 +289,6 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
 
         Default implementation for SVR and one-class; overridden in BaseSVC.
         """
-        # XXX this is ugly.
-        # Regression models should not have a class_weight_ attribute.
-        self.class_weight_ = np.empty(0)
         return column_or_1d(y, warn=True).astype(np.float64, copy=False)
 
     def _warn_from_fit_status(self):
@@ -335,7 +331,7 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
             y,
             svm_type=solver_type,
             sample_weight=sample_weight,
-            class_weight=self.class_weight_,
+            class_weight=getattr(self, "class_weight_", np.empty(0)),
             kernel=kernel,
             C=self.C,
             nu=self.nu,
@@ -384,7 +380,7 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
             self.coef0,
             self.tol,
             self.C,
-            self.class_weight_,
+            getattr(self, "class_weight_", np.empty(0)),
             sample_weight,
             self.nu,
             self.cache_size,
@@ -494,7 +490,7 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
             self.coef0,
             self.tol,
             C,
-            self.class_weight_,
+            getattr(self, "class_weight_", np.empty(0)),
             self.nu,
             self.epsilon,
             self.shrinking,
@@ -594,7 +590,7 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
             self.coef0,
             self.tol,
             self.C,
-            self.class_weight_,
+            getattr(self, "class_weight_", np.empty(0)),
             self.nu,
             self.epsilon,
             self.shrinking,
@@ -617,7 +613,7 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
                 reset=False,
             )
 
-        if self._sparse and not sp.isspmatrix(X):
+        if self._sparse and not sp.issparse(X):
             X = sp.csr_matrix(X)
         if self._sparse:
             X.sort_indices()
@@ -689,6 +685,14 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
 
 class BaseSVC(ClassifierMixin, BaseLibSVM, metaclass=ABCMeta):
     """ABC for LibSVM-based classifiers."""
+
+    _parameter_constraints: dict = {
+        **BaseLibSVM._parameter_constraints,
+        "decision_function_shape": [StrOptions({"ovr", "ovo"})],
+        "break_ties": ["boolean"],
+    }
+    for unused_param in ["epsilon", "nu"]:
+        _parameter_constraints.pop(unused_param)
 
     @abstractmethod
     def __init__(
@@ -817,7 +821,7 @@ class BaseSVC(ClassifierMixin, BaseLibSVM, metaclass=ABCMeta):
     def _check_proba(self):
         if not self.probability:
             raise AttributeError(
-                "predict_proba is not available when  probability=False"
+                "predict_proba is not available when probability=False"
             )
         if self._impl not in ("c_svc", "nu_svc"):
             raise AttributeError("predict_proba only implemented for SVC and NuSVC")
@@ -827,7 +831,7 @@ class BaseSVC(ClassifierMixin, BaseLibSVM, metaclass=ABCMeta):
     def predict_proba(self, X):
         """Compute probabilities of possible outcomes for samples in X.
 
-        The model need to have probability information computed at training
+        The model needs to have probability information computed at training
         time: fit with attribute `probability` set to True.
 
         Parameters
@@ -942,7 +946,7 @@ class BaseSVC(ClassifierMixin, BaseLibSVM, metaclass=ABCMeta):
             self.coef0,
             self.tol,
             self.C,
-            self.class_weight_,
+            getattr(self, "class_weight_", np.empty(0)),
             self.nu,
             self.epsilon,
             self.shrinking,
@@ -1078,18 +1082,26 @@ def _fit_liblinear(
         Target vector relative to X
 
     C : float
-        Inverse of cross-validation parameter. Lower the C, the more
+        Inverse of cross-validation parameter. The lower the C, the higher
         the penalization.
 
     fit_intercept : bool
-        Whether or not to fit the intercept, that is to add a intercept
-        term to the decision function.
+        Whether or not to fit an intercept. If set to True, the feature vector
+        is extended to include an intercept term: ``[x_1, ..., x_n, 1]``, where
+        1 corresponds to the intercept. If set to False, no intercept will be
+        used in calculations (i.e. data is expected to be already centered).
 
     intercept_scaling : float
-        LibLinear internally penalizes the intercept and this term is subject
-        to regularization just like the other terms of the feature vector.
-        In order to avoid this, one should increase the intercept_scaling.
-        such that the feature vector becomes [x, intercept_scaling].
+        Liblinear internally penalizes the intercept, treating it like any
+        other term in the feature vector. To reduce the impact of the
+        regularization on the intercept, the `intercept_scaling` parameter can
+        be set to a value greater than 1; the higher the value of
+        `intercept_scaling`, the lower the impact of regularization on it.
+        Then, the weights become `[w_x_1, ..., w_x_n,
+        w_intercept*intercept_scaling]`, where `w_x_1, ..., w_x_n` represent
+        the feature weights and the intercept weight is scaled by
+        `intercept_scaling`. This scaling allows the intercept term to have a
+        different regularization behavior compared to the other features.
 
     class_weight : dict or 'balanced', default=None
         Weights associated with classes in the form ``{class_label: weight}``.
@@ -1205,7 +1217,7 @@ def _fit_liblinear(
     raw_coef_, n_iter_ = liblinear.train_wrap(
         X,
         y_ind,
-        sp.isspmatrix(X),
+        sp.issparse(X),
         solver_type,
         tol,
         bias,

@@ -19,6 +19,7 @@ Developer's Guide
    tips
    utilities
    performance
+   cython
    advanced_installation
    bug_triaging
    maintainer

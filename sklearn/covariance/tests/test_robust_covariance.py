@@ -9,35 +9,33 @@ import itertools
 import numpy as np
 import pytest
 
-from sklearn.utils._testing import assert_array_almost_equal
-
 from sklearn import datasets
-from sklearn.covariance import empirical_covariance, MinCovDet
-from sklearn.covariance import fast_mcd
+from sklearn.covariance import MinCovDet, empirical_covariance, fast_mcd
+from sklearn.utils._testing import assert_array_almost_equal
 
 X = datasets.load_iris().data
 X_1d = X[:, 0]
 n_samples, n_features = X.shape
 
 
-def test_mcd():
+def test_mcd(global_random_seed):
     # Tests the FastMCD algorithm implementation
     # Small data set
     # test without outliers (random independent normal data)
-    launch_mcd_on_dataset(100, 5, 0, 0.01, 0.1, 80)
+    launch_mcd_on_dataset(100, 5, 0, 0.02, 0.1, 75, global_random_seed)
     # test with a contaminated data set (medium contamination)
-    launch_mcd_on_dataset(100, 5, 20, 0.01, 0.01, 70)
+    launch_mcd_on_dataset(100, 5, 20, 0.3, 0.3, 65, global_random_seed)
     # test with a contaminated data set (strong contamination)
-    launch_mcd_on_dataset(100, 5, 40, 0.1, 0.1, 50)
+    launch_mcd_on_dataset(100, 5, 40, 0.1, 0.1, 50, global_random_seed)
 
     # Medium data set
-    launch_mcd_on_dataset(1000, 5, 450, 0.1, 0.1, 540)
+    launch_mcd_on_dataset(1000, 5, 450, 0.1, 0.1, 540, global_random_seed)
 
     # Large data set
-    launch_mcd_on_dataset(1700, 5, 800, 0.1, 0.1, 870)
+    launch_mcd_on_dataset(1700, 5, 800, 0.1, 0.1, 870, global_random_seed)
 
     # 1D data set
-    launch_mcd_on_dataset(500, 1, 100, 0.001, 0.001, 350)
+    launch_mcd_on_dataset(500, 1, 100, 0.02, 0.02, 350, global_random_seed)
 
 
 def test_fast_mcd_on_invalid_input():
@@ -56,10 +54,9 @@ def test_mcd_class_on_invalid_input():
 
 
 def launch_mcd_on_dataset(
-    n_samples, n_features, n_outliers, tol_loc, tol_cov, tol_support
+    n_samples, n_features, n_outliers, tol_loc, tol_cov, tol_support, seed
 ):
-
-    rand_gen = np.random.RandomState(0)
+    rand_gen = np.random.RandomState(seed)
     data = rand_gen.randn(n_samples, n_features)
     # add some outliers
     outliers_index = rand_gen.permutation(n_samples)[:n_outliers]
@@ -70,7 +67,7 @@ def launch_mcd_on_dataset(
 
     pure_data = data[inliers_mask]
     # compute MCD by fitting an object
-    mcd_fit = MinCovDet(random_state=rand_gen).fit(data)
+    mcd_fit = MinCovDet(random_state=seed).fit(data)
     T = mcd_fit.location_
     S = mcd_fit.covariance_
     H = mcd_fit.support_
@@ -92,10 +89,10 @@ def test_mcd_issue1127():
     mcd.fit(X)
 
 
-def test_mcd_issue3367():
+def test_mcd_issue3367(global_random_seed):
     # Check that MCD completes when the covariance matrix is singular
     # i.e. one of the rows and columns are all zeros
-    rand_gen = np.random.RandomState(0)
+    rand_gen = np.random.RandomState(global_random_seed)
 
     # Think of these as the values for X and Y -> 10 values between -5 and 5
     data_values = np.linspace(-5, 5, 10).tolist()
@@ -140,7 +137,7 @@ def test_mcd_support_covariance_is_zero():
             MinCovDet().fit(X)
 
 
-def test_mcd_increasing_det_warning():
+def test_mcd_increasing_det_warning(global_random_seed):
     # Check that a warning is raised if we observe increasing determinants
     # during the c_step. In theory the sequence of determinants should be
     # decreasing. Increasing determinants are likely due to ill-conditioned
@@ -168,7 +165,7 @@ def test_mcd_increasing_det_warning():
         [5.2, 3.5, 1.5, 0.2],
     ]
 
-    mcd = MinCovDet(random_state=1)
+    mcd = MinCovDet(support_fraction=0.5, random_state=global_random_seed)
     warn_msg = "Determinant has increased"
     with pytest.warns(RuntimeWarning, match=warn_msg):
         mcd.fit(X)

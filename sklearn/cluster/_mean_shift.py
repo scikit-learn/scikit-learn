@@ -14,25 +14,39 @@ Seeding is performed using a binning technique for scalability.
 #          Gael Varoquaux <gael.varoquaux@normalesup.org>
 #          Martino Sorbaro <martino.sorbaro@ed.ac.uk>
 
-import numpy as np
 import warnings
-from joblib import Parallel
-
 from collections import defaultdict
-from ..utils.validation import check_is_fitted
-from ..utils.fixes import delayed
-from ..utils import check_random_state, gen_batches, check_array
-from ..base import BaseEstimator, ClusterMixin
-from ..neighbors import NearestNeighbors
-from ..metrics.pairwise import pairwise_distances_argmin
+from numbers import Integral, Real
+
+import numpy as np
+
 from .._config import config_context
+from ..base import BaseEstimator, ClusterMixin, _fit_context
+from ..metrics.pairwise import pairwise_distances_argmin
+from ..neighbors import NearestNeighbors
+from ..utils import check_array, check_random_state, gen_batches
+from ..utils._param_validation import Interval, validate_params
+from ..utils.parallel import Parallel, delayed
+from ..utils.validation import check_is_fitted
 
 
+@validate_params(
+    {
+        "X": ["array-like"],
+        "quantile": [Interval(Real, 0, 1, closed="both")],
+        "n_samples": [Interval(Integral, 1, None, closed="left"), None],
+        "random_state": ["random_state"],
+        "n_jobs": [Integral, None],
+    },
+    prefer_skip_nested_validation=True,
+)
 def estimate_bandwidth(X, *, quantile=0.3, n_samples=None, random_state=0, n_jobs=None):
     """Estimate the bandwidth to use with the mean-shift algorithm.
 
-    That this function takes time at least quadratic in n_samples. For large
-    datasets, it's wise to set that parameter to a small value.
+    This function takes time at least quadratic in `n_samples`. For large
+    datasets, it is wise to subsample by setting `n_samples`. Alternatively,
+    the parameter `bandwidth` can be set to a small value without estimating
+    it.
 
     Parameters
     ----------
@@ -107,6 +121,10 @@ def _mean_shift_single_seed(my_mean, X, nbrs, max_iter):
     return tuple(my_mean), len(points_within), completed_iterations
 
 
+@validate_params(
+    {"X": ["array-like"]},
+    prefer_skip_nested_validation=False,
+)
 def mean_shift(
     X,
     *,
@@ -129,9 +147,9 @@ def mean_shift(
         Input data.
 
     bandwidth : float, default=None
-        Kernel bandwidth.
+        Kernel bandwidth. If not None, must be in the range [0, +inf).
 
-        If bandwidth is not given, it is determined using a heuristic based on
+        If None, the bandwidth is determined using a heuristic based on
         the median of all pairwise distances. This will take quadratic time in
         the number of samples. The sklearn.cluster.estimate_bandwidth function
         can be used to do this more efficiently.
@@ -163,8 +181,15 @@ def mean_shift(
         operation terminates (for that seed point), if has not converged yet.
 
     n_jobs : int, default=None
-        The number of jobs to use for the computation. This works by computing
-        each of the n_init runs in parallel.
+        The number of jobs to use for the computation. The following tasks benefit
+        from the parallelization:
+
+        - The search of nearest neighbors for bandwidth estimation and label
+          assignments. See the details in the docstring of the
+          ``NearestNeighbors`` class.
+        - Hill-climbing optimization for all seeds.
+
+        See :term:`Glossary <n_jobs>` for more details.
 
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
@@ -268,7 +293,7 @@ class MeanShift(ClusterMixin, BaseEstimator):
     Parameters
     ----------
     bandwidth : float, default=None
-        Bandwidth used in the RBF kernel.
+        Bandwidth used in the flat kernel.
 
         If not given, the bandwidth is estimated using
         sklearn.cluster.estimate_bandwidth; see the documentation for that
@@ -299,8 +324,15 @@ class MeanShift(ClusterMixin, BaseEstimator):
         If false, then orphans are given cluster label -1.
 
     n_jobs : int, default=None
-        The number of jobs to use for the computation. This works by computing
-        each of the n_init runs in parallel.
+        The number of jobs to use for the computation. The following tasks benefit
+        from the parallelization:
+
+        - The search of nearest neighbors for bandwidth estimation and label
+          assignments. See the details in the docstring of the
+          ``NearestNeighbors`` class.
+        - Hill-climbing optimization for all seeds.
+
+        See :term:`Glossary <n_jobs>` for more details.
 
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
@@ -379,6 +411,16 @@ class MeanShift(ClusterMixin, BaseEstimator):
     MeanShift(bandwidth=2)
     """
 
+    _parameter_constraints: dict = {
+        "bandwidth": [Interval(Real, 0, None, closed="neither"), None],
+        "seeds": ["array-like", None],
+        "bin_seeding": ["boolean"],
+        "min_bin_freq": [Interval(Integral, 1, None, closed="left")],
+        "cluster_all": ["boolean"],
+        "n_jobs": [Integral, None],
+        "max_iter": [Interval(Integral, 0, None, closed="left")],
+    }
+
     def __init__(
         self,
         *,
@@ -398,6 +440,7 @@ class MeanShift(ClusterMixin, BaseEstimator):
         self.n_jobs = n_jobs
         self.max_iter = max_iter
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y=None):
         """Perform clustering.
 
@@ -418,10 +461,6 @@ class MeanShift(ClusterMixin, BaseEstimator):
         bandwidth = self.bandwidth
         if bandwidth is None:
             bandwidth = estimate_bandwidth(X, n_jobs=self.n_jobs)
-        elif bandwidth <= 0:
-            raise ValueError(
-                "bandwidth needs to be greater than zero or None, got %f" % bandwidth
-            )
 
         seeds = self.seeds
         if seeds is None:

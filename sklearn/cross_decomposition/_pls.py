@@ -5,22 +5,27 @@ The :mod:`sklearn.pls` module implements Partial Least Squares (PLS).
 # Author: Edouard Duchesnay <edouard.duchesnay@cea.fr>
 # License: BSD 3 clause
 
-import numbers
 import warnings
 from abc import ABCMeta, abstractmethod
+from numbers import Integral, Real
 
 import numpy as np
 from scipy.linalg import svd
 
-from ..base import BaseEstimator, RegressorMixin, TransformerMixin
-from ..base import MultiOutputMixin
-from ..base import _ClassNamePrefixFeaturesOutMixin
-from ..utils import check_array, check_scalar, check_consistent_length
-from ..utils.fixes import sp_version
-from ..utils.fixes import parse_version
-from ..utils.extmath import svd_flip
-from ..utils.validation import check_is_fitted, FLOAT_DTYPES
+from ..base import (
+    BaseEstimator,
+    ClassNamePrefixFeaturesOutMixin,
+    MultiOutputMixin,
+    RegressorMixin,
+    TransformerMixin,
+    _fit_context,
+)
 from ..exceptions import ConvergenceWarning
+from ..utils import check_array, check_consistent_length
+from ..utils._param_validation import Interval, StrOptions
+from ..utils.extmath import svd_flip
+from ..utils.fixes import parse_version, sp_version
+from ..utils.validation import FLOAT_DTYPES, check_is_fitted
 
 __all__ = ["PLSCanonical", "PLSRegression", "PLSSVD"]
 
@@ -157,7 +162,7 @@ def _svd_flip_1d(u, v):
 
 
 class _PLS(
-    _ClassNamePrefixFeaturesOutMixin,
+    ClassNamePrefixFeaturesOutMixin,
     TransformerMixin,
     RegressorMixin,
     MultiOutputMixin,
@@ -170,8 +175,19 @@ class _PLS(
 
     Main ref: Wegelin, a survey of Partial Least Squares (PLS) methods,
     with emphasis on the two-block case
-    https://www.stat.washington.edu/research/reports/2000/tr371.pdf
+    https://stat.uw.edu/sites/default/files/files/reports/2000/tr371.pdf
     """
+
+    _parameter_constraints: dict = {
+        "n_components": [Interval(Integral, 1, None, closed="left")],
+        "scale": ["boolean"],
+        "deflation_mode": [StrOptions({"regression", "canonical"})],
+        "mode": [StrOptions({"A", "B"})],
+        "algorithm": [StrOptions({"svd", "nipals"})],
+        "max_iter": [Interval(Integral, 1, None, closed="left")],
+        "tol": [Interval(Real, 0, None, closed="left")],
+        "copy": ["boolean"],
+    }
 
     @abstractmethod
     def __init__(
@@ -195,6 +211,7 @@ class _PLS(
         self.tol = tol
         self.copy = copy
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, Y):
         """Fit model to data.
 
@@ -213,7 +230,6 @@ class _PLS(
         self : object
             Fitted model.
         """
-
         check_consistent_length(X, Y)
         X = self._validate_data(
             X, dtype=np.float64, copy=self.copy, ensure_min_samples=2
@@ -222,39 +238,24 @@ class _PLS(
             Y, input_name="Y", dtype=np.float64, copy=self.copy, ensure_2d=False
         )
         if Y.ndim == 1:
+            self._predict_1d = True
             Y = Y.reshape(-1, 1)
+        else:
+            self._predict_1d = False
 
         n = X.shape[0]
         p = X.shape[1]
         q = Y.shape[1]
 
         n_components = self.n_components
-        if self.deflation_mode == "regression":
-            # With PLSRegression n_components is bounded by the rank of (X.T X)
-            # see Wegelin page 25
-            rank_upper_bound = p
-            check_scalar(
-                n_components,
-                "n_components",
-                numbers.Integral,
-                min_val=1,
-                max_val=rank_upper_bound,
-            )
-        else:
-            # With CCA and PLSCanonical, n_components is bounded by the rank of
-            # X and the rank of Y: see Wegelin page 12
-            rank_upper_bound = min(n, p, q)
-            check_scalar(
-                n_components,
-                "n_components",
-                numbers.Integral,
-                min_val=1,
-                max_val=rank_upper_bound,
-            )
-
-        if self.algorithm not in ("svd", "nipals"):
+        # With PLSRegression n_components is bounded by the rank of (X.T X) see
+        # Wegelin page 25. With CCA and PLSCanonical, n_components is bounded
+        # by the rank of X and the rank of Y: see Wegelin page 12
+        rank_upper_bound = p if self.deflation_mode == "regression" else min(n, p, q)
+        if n_components > rank_upper_bound:
             raise ValueError(
-                f"algorithm should be 'svd' or 'nipals', got {self.algorithm}."
+                f"`n_components` upper bound is {rank_upper_bound}. "
+                f"Got {n_components} instead. Reduce `n_components`."
             )
 
         self._norm_y_weights = self.deflation_mode == "canonical"  # 1.1
@@ -355,9 +356,9 @@ class _PLS(
             self.y_weights_,
             pinv2(np.dot(self.y_loadings_.T, self.y_weights_), check_finite=False),
         )
-        # TODO(1.3): change `self._coef_` to `self.coef_`
-        self._coef_ = np.dot(self.x_rotations_, self.y_loadings_.T)
-        self._coef_ = (self._coef_ * self._y_std).T
+        self.coef_ = np.dot(self.x_rotations_, self.y_loadings_.T)
+        self.coef_ = (self.coef_ * self._y_std).T
+        self.intercept_ = self._y_mean
         self._n_features_out = self.x_rotations_.shape[1]
         return self
 
@@ -471,9 +472,8 @@ class _PLS(
         # Normalize
         X -= self._x_mean
         X /= self._x_std
-        # TODO(1.3): change `self._coef_` to `self.coef_`
-        Ypred = X @ self._coef_.T
-        return Ypred + self._y_mean
+        Ypred = X @ self.coef_.T + self.intercept_
+        return Ypred.ravel() if self._predict_1d else Ypred
 
     def fit_transform(self, X, y=None):
         """Learn and apply the dimension reduction on the train data.
@@ -494,25 +494,6 @@ class _PLS(
             Return `x_scores` if `Y` is not given, `(x_scores, y_scores)` otherwise.
         """
         return self.fit(X, y).transform(X, y)
-
-    @property
-    def coef_(self):
-        """The coefficients of the linear model."""
-        # TODO(1.3): remove and change `self._coef_` to `self.coef_`
-        #            remove catch warnings from `_get_feature_importances`
-        #            delete self._coef_no_warning
-        if hasattr(self, "_coef_") and getattr(self, "_coef_warning", True):
-            warnings.warn(
-                "The attribute `coef_` will be transposed in version 1.3 to be "
-                "consistent with other linear models in scikit-learn. Currently, "
-                "`coef_` has a shape of (n_features, n_targets) and in the future it "
-                "will have a shape of (n_targets, n_features).",
-                FutureWarning,
-            )
-            # Only warn the first time
-            self._coef_warning = False
-
-        return self._coef_.T
 
     def _more_tags(self):
         return {"poor_score": True, "requires_y": False}
@@ -576,12 +557,18 @@ class PLSRegression(_PLS):
     x_rotations_ : ndarray of shape (n_features, n_components)
         The projection matrix used to transform `X`.
 
-    y_rotations_ : ndarray of shape (n_features, n_components)
+    y_rotations_ : ndarray of shape (n_targets, n_components)
         The projection matrix used to transform `Y`.
 
-    coef_ : ndarray of shape (n_features, n_targets)
+    coef_ : ndarray of shape (n_target, n_features)
         The coefficients of the linear model such that `Y` is approximated as
-        `Y = X @ coef_`.
+        `Y = X @ coef_.T + intercept_`.
+
+    intercept_ : ndarray of shape (n_targets,)
+        The intercepts of the linear model such that `Y` is approximated as
+        `Y = X @ coef_.T + intercept_`.
+
+        .. versionadded:: 1.1
 
     n_iter_ : list of shape (n_components,)
         Number of iterations of the power method, for each
@@ -610,6 +597,10 @@ class PLSRegression(_PLS):
     PLSRegression()
     >>> Y_pred = pls2.predict(X)
     """
+
+    _parameter_constraints: dict = {**_PLS._parameter_constraints}
+    for param in ("deflation_mode", "mode", "algorithm"):
+        _parameter_constraints.pop(param)
 
     # This implementation provides the same results that 3 PLS packages
     # provided in the R language (R-project):
@@ -710,12 +701,18 @@ class PLSCanonical(_PLS):
     x_rotations_ : ndarray of shape (n_features, n_components)
         The projection matrix used to transform `X`.
 
-    y_rotations_ : ndarray of shape (n_features, n_components)
+    y_rotations_ : ndarray of shape (n_targets, n_components)
         The projection matrix used to transform `Y`.
 
-    coef_ : ndarray of shape (n_features, n_targets)
+    coef_ : ndarray of shape (n_targets, n_features)
         The coefficients of the linear model such that `Y` is approximated as
-        `Y = X @ coef_`.
+        `Y = X @ coef_.T + intercept_`.
+
+    intercept_ : ndarray of shape (n_targets,)
+        The intercepts of the linear model such that `Y` is approximated as
+        `Y = X @ coef_.T + intercept_`.
+
+        .. versionadded:: 1.1
 
     n_iter_ : list of shape (n_components,)
         Number of iterations of the power method, for each
@@ -745,6 +742,10 @@ class PLSCanonical(_PLS):
     PLSCanonical()
     >>> X_c, Y_c = plsca.transform(X, Y)
     """
+
+    _parameter_constraints: dict = {**_PLS._parameter_constraints}
+    for param in ("deflation_mode", "mode"):
+        _parameter_constraints.pop(param)
 
     # This implementation provides the same results that the "plspm" package
     # provided in the R language (R-project), using the function plsca(X, Y).
@@ -822,12 +823,18 @@ class CCA(_PLS):
     x_rotations_ : ndarray of shape (n_features, n_components)
         The projection matrix used to transform `X`.
 
-    y_rotations_ : ndarray of shape (n_features, n_components)
+    y_rotations_ : ndarray of shape (n_targets, n_components)
         The projection matrix used to transform `Y`.
 
-    coef_ : ndarray of shape (n_features, n_targets)
+    coef_ : ndarray of shape (n_targets, n_features)
         The coefficients of the linear model such that `Y` is approximated as
-        `Y = X @ coef_`.
+        `Y = X @ coef_.T + intercept_`.
+
+    intercept_ : ndarray of shape (n_targets,)
+        The intercepts of the linear model such that `Y` is approximated as
+        `Y = X @ coef_.T + intercept_`.
+
+        .. versionadded:: 1.1
 
     n_iter_ : list of shape (n_components,)
         Number of iterations of the power method, for each
@@ -858,6 +865,10 @@ class CCA(_PLS):
     >>> X_c, Y_c = cca.transform(X, Y)
     """
 
+    _parameter_constraints: dict = {**_PLS._parameter_constraints}
+    for param in ("deflation_mode", "mode", "algorithm"):
+        _parameter_constraints.pop(param)
+
     def __init__(
         self, n_components=2, *, scale=True, max_iter=500, tol=1e-06, copy=True
     ):
@@ -873,7 +884,7 @@ class CCA(_PLS):
         )
 
 
-class PLSSVD(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
+class PLSSVD(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
     """Partial Least Square SVD.
 
     This transformer simply performs a SVD on the cross-covariance matrix
@@ -941,11 +952,18 @@ class PLSSVD(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
     ((4, 2), (4, 2))
     """
 
+    _parameter_constraints: dict = {
+        "n_components": [Interval(Integral, 1, None, closed="left")],
+        "scale": ["boolean"],
+        "copy": ["boolean"],
+    }
+
     def __init__(self, n_components=2, *, scale=True, copy=True):
         self.n_components = n_components
         self.scale = scale
         self.copy = copy
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, Y):
         """Fit model to data.
 
@@ -977,13 +995,11 @@ class PLSSVD(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
         # n_components cannot be bigger than that.
         n_components = self.n_components
         rank_upper_bound = min(X.shape[0], X.shape[1], Y.shape[1])
-        check_scalar(
-            n_components,
-            "n_components",
-            numbers.Integral,
-            min_val=1,
-            max_val=rank_upper_bound,
-        )
+        if n_components > rank_upper_bound:
+            raise ValueError(
+                f"`n_components` upper bound is {rank_upper_bound}. "
+                f"Got {n_components} instead. Reduce `n_components`."
+            )
 
         X, Y, self._x_mean, self._y_mean, self._x_std, self._y_std = _center_scale_xy(
             X, Y, self.scale
@@ -1018,7 +1034,7 @@ class PLSSVD(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
         Returns
         -------
         x_scores : array-like or tuple of array-like
-            The transformed data `X_tranformed` if `Y is not None`,
+            The transformed data `X_transformed` if `Y is not None`,
             `(X_transformed, Y_transformed)` otherwise.
         """
         check_is_fitted(self)
@@ -1049,7 +1065,7 @@ class PLSSVD(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
         Returns
         -------
         out : array-like or tuple of array-like
-            The transformed data `X_tranformed` if `Y is not None`,
+            The transformed data `X_transformed` if `Y is not None`,
             `(X_transformed, Y_transformed)` otherwise.
         """
         return self.fit(X, y).transform(X, y)

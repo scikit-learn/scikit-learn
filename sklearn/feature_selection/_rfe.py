@@ -6,26 +6,24 @@
 
 """Recursive feature elimination for feature ranking"""
 
+from numbers import Integral
+
 import numpy as np
-import numbers
-from joblib import Parallel, effective_n_jobs
+from joblib import effective_n_jobs
 
-
-from ..utils.metaestimators import available_if
-from ..utils.metaestimators import _safe_split
-from ..utils._tags import _safe_tags
-from ..utils.validation import check_is_fitted
-from ..utils.fixes import delayed
-from ..utils.deprecation import deprecated
-from ..base import BaseEstimator
-from ..base import MetaEstimatorMixin
-from ..base import clone
-from ..base import is_classifier
+from ..base import BaseEstimator, MetaEstimatorMixin, _fit_context, clone, is_classifier
+from ..metrics import check_scoring
 from ..model_selection import check_cv
 from ..model_selection._validation import _score
-from ..metrics import check_scoring
-from ._base import SelectorMixin
-from ._base import _get_feature_importances
+from ..utils._param_validation import HasMethods, Interval, RealNotInt
+from ..utils.metadata_routing import (
+    _raise_for_unsupported_routing,
+    _RoutingNotSupportedMixin,
+)
+from ..utils.metaestimators import _safe_split, available_if
+from ..utils.parallel import Parallel, delayed
+from ..utils.validation import check_is_fitted
+from ._base import SelectorMixin, _get_feature_importances
 
 
 def _rfe_single_fit(rfe, estimator, X, y, train, test, scorer):
@@ -38,7 +36,12 @@ def _rfe_single_fit(rfe, estimator, X, y, train, test, scorer):
         X_train,
         y_train,
         lambda estimator, features: _score(
-            estimator, X_test[:, features], y_test, scorer
+            # TODO(SLEP6): pass score_params here
+            estimator,
+            X_test[:, features],
+            y_test,
+            scorer,
+            score_params=None,
         ),
     ).scores_
 
@@ -56,7 +59,7 @@ def _estimator_has(attr):
     )
 
 
-class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
+class RFE(_RoutingNotSupportedMixin, SelectorMixin, MetaEstimatorMixin, BaseEstimator):
     """Feature ranking with recursive feature elimination.
 
     Given an external estimator that assigns weights to features (e.g., the
@@ -183,6 +186,21 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
     array([1, 1, 1, 1, 1, 6, 4, 3, 2, 5])
     """
 
+    _parameter_constraints: dict = {
+        "estimator": [HasMethods(["fit"])],
+        "n_features_to_select": [
+            None,
+            Interval(RealNotInt, 0, 1, closed="right"),
+            Interval(Integral, 0, None, closed="neither"),
+        ],
+        "step": [
+            Interval(Integral, 0, None, closed="neither"),
+            Interval(RealNotInt, 0, 1, closed="neither"),
+        ],
+        "verbose": ["verbose"],
+        "importance_getter": [str, callable],
+    }
+
     def __init__(
         self,
         estimator,
@@ -212,6 +230,10 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
         """
         return self.estimator_.classes_
 
+    @_fit_context(
+        # RFE.estimator is not validated yet
+        prefer_skip_nested_validation=False
+    )
     def fit(self, X, y, **fit_params):
         """Fit the RFE model and then the underlying estimator on the selected features.
 
@@ -232,6 +254,7 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
         self : object
             Fitted estimator.
         """
+        _raise_for_unsupported_routing(self, "fit", **fit_params)
         return self._fit(X, y, **fit_params)
 
     def _fit(self, X, y, step_score=None, **fit_params):
@@ -240,33 +263,21 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
         # and is used when implementing RFECV
         # self.scores_ will not be calculated when calling _fit through fit
 
-        tags = self._get_tags()
         X, y = self._validate_data(
             X,
             y,
             accept_sparse="csc",
             ensure_min_features=2,
-            force_all_finite=not tags.get("allow_nan", True),
+            force_all_finite=False,
             multi_output=True,
-        )
-        error_msg = (
-            "n_features_to_select must be either None, a "
-            "positive integer representing the absolute "
-            "number of features or a float in (0.0, 1.0] "
-            "representing a percentage of features to "
-            f"select. Got {self.n_features_to_select}"
         )
 
         # Initialization
         n_features = X.shape[1]
         if self.n_features_to_select is None:
             n_features_to_select = n_features // 2
-        elif self.n_features_to_select < 0:
-            raise ValueError(error_msg)
-        elif isinstance(self.n_features_to_select, numbers.Integral):  # int
+        elif isinstance(self.n_features_to_select, Integral):  # int
             n_features_to_select = self.n_features_to_select
-        elif self.n_features_to_select > 1.0:  # float > 1
-            raise ValueError(error_msg)
         else:  # float
             n_features_to_select = int(n_features * self.n_features_to_select)
 
@@ -274,8 +285,6 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
             step = int(max(1, self.step * n_features))
         else:
             step = int(self.step)
-        if step <= 0:
-            raise ValueError("Step must be >0")
 
         support_ = np.ones(n_features, dtype=bool)
         ranking_ = np.ones(n_features, dtype=int)
@@ -333,7 +342,7 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
 
     @available_if(_estimator_has("predict"))
     def predict(self, X):
-        """Reduce X to the selected features and then predict using the underlying estimator.
+        """Reduce X to the selected features and predict using the estimator.
 
         Parameters
         ----------
@@ -350,7 +359,7 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
 
     @available_if(_estimator_has("score"))
     def score(self, X, y, **fit_params):
-        """Reduce X to the selected features and return the score of the underlying estimator.
+        """Reduce X to the selected features and return the score of the estimator.
 
         Parameters
         ----------
@@ -440,16 +449,28 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
         return self.estimator_.predict_log_proba(self.transform(X))
 
     def _more_tags(self):
-        return {
+        tags = {
             "poor_score": True,
-            "allow_nan": _safe_tags(self.estimator, key="allow_nan"),
             "requires_y": True,
+            "allow_nan": True,
         }
+
+        # Adjust allow_nan if estimator explicitly defines `allow_nan`.
+        if hasattr(self.estimator, "_get_tags"):
+            tags["allow_nan"] = self.estimator._get_tags()["allow_nan"]
+
+        return tags
 
 
 class RFECV(RFE):
-    """Recursive feature elimination with cross-validation to select the number of features.
+    """Recursive feature elimination with cross-validation to select features.
 
+    The number of features selected is tuned automatically by fitting an :class:`RFE`
+    selector on the different cross-validation splits (provided by the `cv` parameter).
+    The performance of the :class:`RFE` selector are evaluated using `scorer` for
+    different number of selected features and aggregated together. Finally, the scores
+    are averaged across folds and the number of features selected is set to the number
+    of features that maximize the cross-validation score.
     See glossary entry for :term:`cross-validation estimator`.
 
     Read more in the :ref:`User Guide <rfe>`.
@@ -538,25 +559,16 @@ class RFECV(RFE):
     estimator_ : ``Estimator`` instance
         The fitted estimator used to select features.
 
-    grid_scores_ : ndarray of shape (n_subsets_of_features,)
-        The cross-validation scores such that
-        ``grid_scores_[i]`` corresponds to
-        the CV score of the i-th subset of features.
-
-        .. deprecated:: 1.0
-            The `grid_scores_` attribute is deprecated in version 1.0 in favor
-            of `cv_results_` and will be removed in version 1.2.
-
     cv_results_ : dict of ndarrays
         A dict with keys:
 
-        split(k)_test_score : ndarray of shape (n_features,)
+        split(k)_test_score : ndarray of shape (n_subsets_of_features,)
             The cross-validation scores across (k)th fold.
 
-        mean_test_score : ndarray of shape (n_features,)
+        mean_test_score : ndarray of shape (n_subsets_of_features,)
             Mean of scores over the folds.
 
-        std_test_score : ndarray of shape (n_features,)
+        std_test_score : ndarray of shape (n_subsets_of_features,)
             Standard deviation of scores over the folds.
 
         .. versionadded:: 1.0
@@ -592,7 +604,7 @@ class RFECV(RFE):
 
     Notes
     -----
-    The size of ``grid_scores_`` is equal to
+    The size of all values in ``cv_results_`` is equal to
     ``ceil((n_features - min_features_to_select) / step) + 1``,
     where step is the number of features removed at each iteration.
 
@@ -624,6 +636,15 @@ class RFECV(RFE):
     array([1, 1, 1, 1, 1, 6, 4, 3, 2, 5])
     """
 
+    _parameter_constraints: dict = {
+        **RFE._parameter_constraints,
+        "min_features_to_select": [Interval(Integral, 0, None, closed="neither")],
+        "cv": ["cv_object"],
+        "scoring": [None, str, callable],
+        "n_jobs": [None, Integral],
+    }
+    _parameter_constraints.pop("n_features_to_select")
+
     def __init__(
         self,
         estimator,
@@ -645,6 +666,10 @@ class RFECV(RFE):
         self.n_jobs = n_jobs
         self.min_features_to_select = min_features_to_select
 
+    @_fit_context(
+        # RFECV.estimator is not validated yet
+        prefer_skip_nested_validation=False
+    )
     def fit(self, X, y, groups=None):
         """Fit the RFE model and automatically tune the number of selected features.
 
@@ -670,13 +695,13 @@ class RFECV(RFE):
         self : object
             Fitted estimator.
         """
-        tags = self._get_tags()
+        _raise_for_unsupported_routing(self, "fit", groups=groups)
         X, y = self._validate_data(
             X,
             y,
             accept_sparse="csr",
             ensure_min_features=2,
-            force_all_finite=not tags.get("allow_nan", True),
+            force_all_finite=False,
             multi_output=True,
         )
 
@@ -689,8 +714,6 @@ class RFECV(RFE):
             step = int(max(1, self.step * n_features))
         else:
             step = int(self.step)
-        if step <= 0:
-            raise ValueError("Step must be >0")
 
         # Build an RFE object, which will evaluate and score each possible
         # feature count, down to self.min_features_to_select
@@ -761,17 +784,3 @@ class RFECV(RFE):
             self.cv_results_[f"split{i}_test_score"] = scores_rev[i]
 
         return self
-
-    # TODO: Remove in v1.2 when grid_scores_ is removed
-    # mypy error: Decorated property not supported
-    @deprecated(  # type: ignore
-        "The `grid_scores_` attribute is deprecated in version 1.0 in favor "
-        "of `cv_results_` and will be removed in version 1.2."
-    )
-    @property
-    def grid_scores_(self):
-        # remove 2 for mean_test_score, std_test_score
-        grid_size = len(self.cv_results_) - 2
-        return np.asarray(
-            [self.cv_results_[f"split{i}_test_score"] for i in range(grid_size)]
-        ).T

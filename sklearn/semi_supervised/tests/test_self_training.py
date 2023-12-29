@@ -1,18 +1,17 @@
 from math import ceil
 
 import numpy as np
-from numpy.testing import assert_array_equal
 import pytest
+from numpy.testing import assert_array_equal
 
+from sklearn.datasets import load_iris, make_blobs
 from sklearn.ensemble import StackingClassifier
 from sklearn.exceptions import NotFittedError
-from sklearn.neighbors import KNeighborsClassifier
-from sklearn.svm import SVC
-from sklearn.model_selection import train_test_split
-from sklearn.datasets import load_iris, make_blobs
 from sklearn.metrics import accuracy_score
-
+from sklearn.model_selection import train_test_split
+from sklearn.neighbors import KNeighborsClassifier
 from sklearn.semi_supervised import SelfTrainingClassifier
+from sklearn.svm import SVC
 
 # Author: Oliver Rausch <rauscho@ethz.ch>
 # License: BSD 3 clause
@@ -32,33 +31,6 @@ y_train_missing_strings = np.vectorize(mapping.get)(y_train_missing_labels).asty
     object
 )
 y_train_missing_strings[y_train_missing_labels == -1] = -1
-
-
-def test_none_classifier():
-    st = SelfTrainingClassifier(None)
-    with pytest.raises(ValueError, match="base_estimator cannot be None"):
-        st.fit(X_train, y_train_missing_labels)
-
-
-@pytest.mark.parametrize("max_iter, threshold", [(-1, 1.0), (-100, -2), (-10, 10)])
-def test_invalid_params(max_iter, threshold):
-    # Test negative iterations
-    base_estimator = SVC(gamma="scale", probability=True)
-    st = SelfTrainingClassifier(base_estimator, max_iter=max_iter)
-    with pytest.raises(ValueError, match="max_iter must be >= 0 or None"):
-        st.fit(X_train, y_train)
-
-    base_estimator = SVC(gamma="scale", probability=True)
-    st = SelfTrainingClassifier(base_estimator, threshold=threshold)
-    with pytest.raises(ValueError, match="threshold must be in"):
-        st.fit(X_train, y_train)
-
-
-def test_invalid_params_selection_crit():
-    st = SelfTrainingClassifier(KNeighborsClassifier(), criterion="foo")
-
-    with pytest.raises(ValueError, match="criterion must be either"):
-        st.fit(X_train, y_train)
 
 
 def test_warns_k_best():
@@ -309,7 +281,7 @@ def test_k_best_selects_best():
 
 def test_base_estimator_meta_estimator():
     # Check that a meta-estimator relying on an estimator implementing
-    # `predict_proba` will work even if it does expose this method before being
+    # `predict_proba` will work even if it does not expose this method before being
     # fitted.
     # Non-regression test for:
     # https://github.com/scikit-learn/scikit-learn/issues/19119

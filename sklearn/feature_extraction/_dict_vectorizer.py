@@ -3,24 +3,16 @@
 # License: BSD 3 clause
 
 from array import array
-from collections.abc import Mapping, Iterable
-from operator import itemgetter
+from collections.abc import Iterable, Mapping
 from numbers import Number
+from operator import itemgetter
 
 import numpy as np
 import scipy.sparse as sp
 
-from ..base import BaseEstimator, TransformerMixin
-from ..utils import check_array, tosequence
-from ..utils.deprecation import deprecated
-
-
-def _tosequence(X):
-    """Turn X into a sequence or ndarray, avoiding a copy if possible."""
-    if isinstance(X, Mapping):  # single sample
-        return [X]
-    else:
-        return tosequence(X)
+from ..base import BaseEstimator, TransformerMixin, _fit_context
+from ..utils import check_array
+from ..utils.validation import check_is_fitted
 
 
 class DictVectorizer(TransformerMixin, BaseEstimator):
@@ -49,6 +41,9 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
 
     Features that do not occur in a sample (mapping) will have a zero value
     in the resulting array/matrix.
+
+    For an efficiency comparison of the different feature extractors, see
+    :ref:`sphx_glr_auto_examples_text_plot_hashing_vs_dict_vectorizer.py`.
 
     Read more in the :ref:`User Guide <dict_feature_extraction>`.
 
@@ -97,6 +92,13 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
     array([[0., 0., 4.]])
     """
 
+    _parameter_constraints: dict = {
+        "dtype": "no_validation",  # validation delegated to numpy,
+        "separator": [str],
+        "sparse": ["boolean"],
+        "sort": ["boolean"],
+    }
+
     def __init__(self, *, dtype=np.float64, separator="=", sparse=True, sort=True):
         self.dtype = dtype
         self.separator = separator
@@ -134,6 +136,7 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
                 indices.append(vocab[feature_name])
                 values.append(self.dtype(vv))
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y=None):
         """Learn a list of feature name -> indices mappings.
 
@@ -161,7 +164,6 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
             for f, v in x.items():
                 if isinstance(v, str):
                     feature_name = "%s%s%s" % (f, self.separator, v)
-                    v = 1
                 elif isinstance(v, Number) or (v is None):
                     feature_name = f
                 elif isinstance(v, Mapping):
@@ -287,6 +289,7 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
 
         return result_matrix
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit_transform(self, X, y=None):
         """Learn a list of feature name -> indices mappings and transform X.
 
@@ -335,6 +338,8 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
         D : list of dict_type objects of shape (n_samples,)
             Feature mappings for the samples in X.
         """
+        check_is_fitted(self, "feature_names_")
+
         # COO matrix is not subscriptable
         X = check_array(X, accept_sparse=["csr", "csc"])
         n_samples = X.shape[0]
@@ -370,24 +375,8 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
         Xa : {array, sparse matrix}
             Feature vectors; always 2-d.
         """
+        check_is_fitted(self, ["feature_names_", "vocabulary_"])
         return self._transform(X, fitting=False)
-
-    @deprecated(
-        "get_feature_names is deprecated in 1.0 and will be removed "
-        "in 1.2. Please use get_feature_names_out instead."
-    )
-    def get_feature_names(self):
-        """Return a list of feature names, ordered by their indices.
-
-        If one-of-K coding is applied to categorical features, this will
-        include the constructed feature names but not the original ones.
-
-        Returns
-        -------
-        feature_names_ : list of length (n_features,)
-           List containing the feature names (e.g., "f=ham" and "f=spam").
-        """
-        return self.feature_names_
 
     def get_feature_names_out(self, input_features=None):
         """Get output feature names for transformation.
@@ -402,6 +391,7 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
         feature_names_out : ndarray of str objects
             Transformed feature names.
         """
+        check_is_fitted(self, "feature_names_")
         if any(not isinstance(name, str) for name in self.feature_names_):
             feature_names = [str(name) for name in self.feature_names_]
         else:
@@ -441,6 +431,8 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
         >>> v.get_feature_names_out()
         array(['bar', 'foo'], ...)
         """
+        check_is_fitted(self, "feature_names_")
+
         if not indices:
             support = np.where(support)[0]
 

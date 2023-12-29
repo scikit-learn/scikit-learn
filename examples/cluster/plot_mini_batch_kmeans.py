@@ -21,6 +21,7 @@ algorithms.
 # We start by generating the blobs of data to be clustered.
 
 import numpy as np
+
 from sklearn.datasets import make_blobs
 
 np.random.seed(0)
@@ -35,6 +36,7 @@ X, labels_true = make_blobs(n_samples=3000, centers=centers, cluster_std=0.7)
 # ------------------------------
 
 import time
+
 from sklearn.cluster import KMeans
 
 k_means = KMeans(init="k-means++", n_clusters=3, n_init=10)
@@ -132,8 +134,8 @@ ax = fig.add_subplot(1, 3, 3)
 for k in range(n_clusters):
     different += (k_means_labels == k) != (mbk_means_labels == k)
 
-identic = np.logical_not(different)
-ax.plot(X[identic, 0], X[identic, 1], "w", markerfacecolor="#bbbbbb", marker=".")
+identical = np.logical_not(different)
+ax.plot(X[identical, 0], X[identical, 1], "w", markerfacecolor="#bbbbbb", marker=".")
 ax.plot(X[different, 0], X[different, 1], "w", markerfacecolor="m", marker=".")
 ax.set_title("Difference")
 ax.set_xticks(())

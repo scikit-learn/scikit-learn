@@ -8,19 +8,18 @@ more than a couple of minutes) but as the dataset loader is leveraging
 joblib, successive runs will be fast (less than 200ms).
 """
 
-import random
 import os
+import random
 import shutil
 import tempfile
+from functools import partial
+
 import numpy as np
 import pytest
-from functools import partial
-from sklearn.datasets import fetch_lfw_pairs
-from sklearn.datasets import fetch_lfw_people
 
-from sklearn.utils._testing import assert_array_equal
+from sklearn.datasets import fetch_lfw_pairs, fetch_lfw_people
 from sklearn.datasets.tests.test_common import check_return_X_y
-
+from sklearn.utils._testing import assert_array_equal
 
 SCIKIT_LEARN_DATA = None
 SCIKIT_LEARN_EMPTY_DATA = None
@@ -84,8 +83,8 @@ def setup_module():
 
         for i in range(5):
             first_name, second_name = random_state.sample(FAKE_NAMES, 2)
-            first_index = random_state.choice(np.arange(counts[first_name]))
-            second_index = random_state.choice(np.arange(counts[second_name]))
+            first_index = np_rng.choice(np.arange(counts[first_name]))
+            second_index = np_rng.choice(np.arange(counts[second_name]))
             f.write(
                 (
                     "%s\t%d\t%s\t%d\n"
@@ -109,7 +108,7 @@ def teardown_module():
 
 
 def test_load_empty_lfw_people():
-    with pytest.raises(IOError):
+    with pytest.raises(OSError):
         fetch_lfw_people(data_home=SCIKIT_LEARN_EMPTY_DATA, download_if_missing=False)
 
 
@@ -181,7 +180,7 @@ def test_load_fake_lfw_people_too_restrictive():
 
 
 def test_load_empty_lfw_pairs():
-    with pytest.raises(IOError):
+    with pytest.raises(OSError):
         fetch_lfw_pairs(data_home=SCIKIT_LEARN_EMPTY_DATA, download_if_missing=False)
 
 
@@ -217,3 +216,26 @@ def test_load_fake_lfw_pairs():
     assert_array_equal(lfw_pairs_train.target_names, expected_classes)
 
     assert lfw_pairs_train.DESCR.startswith(".. _labeled_faces_in_the_wild_dataset:")
+
+
+def test_fetch_lfw_people_internal_cropping():
+    """Check that we properly crop the images.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/24942
+    """
+    # If cropping was not done properly and we don't resize the images, the images would
+    # have their original size (250x250) and the image would not fit in the NumPy array
+    # pre-allocated based on `slice_` parameter.
+    slice_ = (slice(70, 195), slice(78, 172))
+    lfw = fetch_lfw_people(
+        data_home=SCIKIT_LEARN_DATA,
+        min_faces_per_person=3,
+        download_if_missing=False,
+        resize=None,
+        slice_=slice_,
+    )
+    assert lfw.images[0].shape == (
+        slice_[0].stop - slice_[0].start,
+        slice_[1].stop - slice_[1].start,
+    )

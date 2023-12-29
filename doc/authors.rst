@@ -34,6 +34,10 @@
     <p>Yaroslav Halchenko</p>
     </div>
     <div>
+    <a href='https://github.com/betatim'><img src='https://avatars.githubusercontent.com/u/1448859?v=4' class='avatar' /></a> <br />
+    <p>Tim Head</p>
+    </div>
+    <div>
     <a href='https://github.com/NicolasHug'><img src='https://avatars.githubusercontent.com/u/1190450?v=4' class='avatar' /></a> <br />
     <p>Nicolas Hug</p>
     </div>
@@ -74,6 +78,10 @@
     <p>Hanmin Qin</p>
     </div>
     <div>
+    <a href='https://github.com/OmarManzoor'><img src='https://avatars.githubusercontent.com/u/17495884?v=4' class='avatar' /></a> <br />
+    <p>Omar Salman</p>
+    </div>
+    <div>
     <a href='https://github.com/bthirion'><img src='https://avatars.githubusercontent.com/u/234454?v=4' class='avatar' /></a> <br />
     <p>Bertrand Thirion</p>
     </div>
@@ -92,5 +100,9 @@
     <div>
     <a href='https://github.com/rth'><img src='https://avatars.githubusercontent.com/u/630936?v=4' class='avatar' /></a> <br />
     <p>Roman Yurchak</p>
+    </div>
+    <div>
+    <a href='https://github.com/Micky774'><img src='https://avatars.githubusercontent.com/u/34613774?v=4' class='avatar' /></a> <br />
+    <p>Meekail Zain</p>
     </div>
     </div>

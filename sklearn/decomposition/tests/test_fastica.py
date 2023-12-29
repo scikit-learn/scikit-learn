@@ -2,18 +2,17 @@
 Test the fastica algorithm.
 """
 import itertools
-import pytest
+import os
 import warnings
 
 import numpy as np
+import pytest
 from scipy import stats
 
-from sklearn.utils._testing import assert_array_equal
-from sklearn.utils._testing import assert_allclose
-
-from sklearn.decomposition import FastICA, fastica, PCA
+from sklearn.decomposition import PCA, FastICA, fastica
 from sklearn.decomposition._fastica import _gs_decorrelation
 from sklearn.exceptions import ConvergenceWarning
+from sklearn.utils._testing import assert_allclose
 
 
 def center_and_norm(x, axis=-1):
@@ -69,12 +68,20 @@ def test_fastica_return_dtypes(global_dtype):
     assert s_.dtype == global_dtype
 
 
-# FIXME remove filter in 1.3
-@pytest.mark.filterwarnings(
-    "ignore:From version 1.3 whiten='unit-variance' will be used by default."
-)
 @pytest.mark.parametrize("add_noise", [True, False])
 def test_fastica_simple(add_noise, global_random_seed, global_dtype):
+    if (
+        global_random_seed == 20
+        and global_dtype == np.float32
+        and not add_noise
+        and os.getenv("DISTRIB") == "ubuntu"
+    ):
+        pytest.xfail(
+            "FastICA instability with Ubuntu Atlas build with float32 "
+            "global_dtype. For more details, see "
+            "https://github.com/scikit-learn/scikit-learn/issues/24131#issuecomment-1208091119"  # noqa
+        )
+
     # Test the FastICA algorithm on very simple data.
     rng = np.random.RandomState(global_random_seed)
     n_samples = 1000
@@ -157,17 +164,16 @@ def test_fastica_simple(add_noise, global_random_seed, global_dtype):
     assert sources.shape == (1000, 2)
 
     assert_allclose(sources_fun, sources)
-    assert_allclose(sources, ica.transform(m.T))
+    # Set atol to account for the different magnitudes of the elements in sources
+    # (from 1e-4 to 1e1).
+    atol = np.max(np.abs(sources)) * (1e-5 if global_dtype == np.float32 else 1e-7)
+    assert_allclose(sources, ica.transform(m.T), atol=atol)
 
     assert ica.mixing_.shape == (2, 2)
 
-    for fn in [np.tanh, "exp(-.5(x^2))"]:
-        ica = FastICA(fun=fn, algorithm=algo)
-        with pytest.raises(ValueError):
-            ica.fit(m.T)
-
-    with pytest.raises(TypeError):
-        FastICA(fun=range(10)).fit(m.T)
+    ica = FastICA(fun=np.tanh, algorithm=algo)
+    with pytest.raises(ValueError):
+        ica.fit(m.T)
 
 
 def test_fastica_nowhiten():
@@ -351,29 +357,18 @@ def test_inverse_transform(
         assert_allclose(X, X2, atol=atol)
 
 
-# FIXME remove filter in 1.3
-@pytest.mark.filterwarnings(
-    "ignore:From version 1.3 whiten='unit-variance' will be used by default."
-)
 def test_fastica_errors():
     n_features = 3
     n_samples = 10
     rng = np.random.RandomState(0)
     X = rng.random_sample((n_samples, n_features))
     w_init = rng.randn(n_features + 1, n_features + 1)
-    fastica_estimator = FastICA(max_iter=0)
-    with pytest.raises(ValueError, match="max_iter should be greater than 1"):
-        fastica_estimator.fit(X)
     with pytest.raises(ValueError, match=r"alpha must be in \[1,2\]"):
         fastica(X, fun_args={"alpha": 0})
     with pytest.raises(
         ValueError, match="w_init has invalid shape.+" r"should be \(3L?, 3L?\)"
     ):
         fastica(X, w_init=w_init)
-    with pytest.raises(
-        ValueError, match="Invalid algorithm.+must be.+parallel.+or.+deflation"
-    ):
-        fastica(X, algorithm="pizza")
 
 
 def test_fastica_whiten_unit_variance():
@@ -388,55 +383,6 @@ def test_fastica_whiten_unit_variance():
     Xt = ica.fit_transform(X)
 
     assert np.var(Xt) == pytest.approx(1.0)
-
-
-@pytest.mark.parametrize("ica", [FastICA(), FastICA(whiten=True)])
-def test_fastica_whiten_default_value_deprecation(ica):
-    """Test FastICA whiten default value deprecation.
-
-    Regression test for #19490
-    """
-    rng = np.random.RandomState(0)
-    X = rng.random_sample((100, 10))
-    with pytest.warns(FutureWarning, match=r"From version 1.3 whiten="):
-        ica.fit(X)
-        assert ica._whiten == "arbitrary-variance"
-
-
-def test_fastica_whiten_backwards_compatibility():
-    """Test previous behavior for FastICA whitening (whiten=True)
-
-    Regression test for #19490
-    """
-    rng = np.random.RandomState(0)
-    X = rng.random_sample((100, 10))
-    n_components = X.shape[1]
-
-    default_ica = FastICA(n_components=n_components, random_state=0)
-    with pytest.warns(FutureWarning):
-        Xt_on_default = default_ica.fit_transform(X)
-
-    ica = FastICA(n_components=n_components, whiten=True, random_state=0)
-    with pytest.warns(FutureWarning):
-        Xt = ica.fit_transform(X)
-
-    # No warning must be raised in this case.
-    av_ica = FastICA(
-        n_components=n_components, whiten="arbitrary-variance", random_state=0
-    )
-    with warnings.catch_warnings():
-        warnings.simplefilter("error", FutureWarning)
-        Xt_av = av_ica.fit_transform(X)
-
-    # The whitening strategy must be "arbitrary-variance" in all the cases.
-    assert default_ica._whiten == "arbitrary-variance"
-    assert ica._whiten == "arbitrary-variance"
-    assert av_ica._whiten == "arbitrary-variance"
-
-    assert_array_equal(Xt, Xt_on_default)
-    assert_array_equal(Xt, Xt_av)
-
-    assert np.var(Xt) == pytest.approx(1.0 / 100)
 
 
 @pytest.mark.parametrize("whiten", ["arbitrary-variance", "unit-variance", False])
@@ -457,3 +403,49 @@ def test_fastica_output_shape(whiten, return_X_mean, return_n_iter):
     assert len(out) == expected_len
     if not whiten:
         assert out[0] is None
+
+
+@pytest.mark.parametrize("add_noise", [True, False])
+def test_fastica_simple_different_solvers(add_noise, global_random_seed):
+    """Test FastICA is consistent between whiten_solvers."""
+    rng = np.random.RandomState(global_random_seed)
+    n_samples = 1000
+    # Generate two sources:
+    s1 = (2 * np.sin(np.linspace(0, 100, n_samples)) > 0) - 1
+    s2 = stats.t.rvs(1, size=n_samples, random_state=rng)
+    s = np.c_[s1, s2].T
+    center_and_norm(s)
+    s1, s2 = s
+
+    # Mixing angle
+    phi = rng.rand() * 2 * np.pi
+    mixing = np.array([[np.cos(phi), np.sin(phi)], [np.sin(phi), -np.cos(phi)]])
+    m = np.dot(mixing, s)
+
+    if add_noise:
+        m += 0.1 * rng.randn(2, 1000)
+
+    center_and_norm(m)
+
+    outs = {}
+    for solver in ("svd", "eigh"):
+        ica = FastICA(random_state=0, whiten="unit-variance", whiten_solver=solver)
+        sources = ica.fit_transform(m.T)
+        outs[solver] = sources
+        assert ica.components_.shape == (2, 2)
+        assert sources.shape == (1000, 2)
+
+    # compared numbers are not all on the same magnitude. Using a small atol to
+    # make the test less brittle
+    assert_allclose(outs["eigh"], outs["svd"], atol=1e-12)
+
+
+def test_fastica_eigh_low_rank_warning(global_random_seed):
+    """Test FastICA eigh solver raises warning for low-rank data."""
+    rng = np.random.RandomState(global_random_seed)
+    A = rng.randn(10, 2)
+    X = A @ A.T
+    ica = FastICA(random_state=0, whiten="unit-variance", whiten_solver="eigh")
+    msg = "There are some small singular values"
+    with pytest.warns(UserWarning, match=msg):
+        ica.fit(X)

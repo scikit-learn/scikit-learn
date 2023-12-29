@@ -20,11 +20,11 @@ and without ``use_warm_start='n_estimators'``.  """
 #          Joel Nothman <joel.nothman@gmail.com>
 # License: BSD 3 clause
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 
-from sklearn.ensemble import GradientBoostingClassifier
 from sklearn import datasets
+from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.model_selection import GridSearchCV
 
 print(__doc__)
@@ -55,9 +55,9 @@ for use_warm_start in [None, "n_estimators"]:
 
 plt.figure(figsize=(9, 5))
 bar_width = 0.2
-n = len(data_list)
-index = np.arange(0, n * bar_width, bar_width) * 2.5
-index = index[0:n]
+n_datasets = len(data_list)
+index = np.arange(0, n_datasets * bar_width, bar_width) * 2.5
+index = index[0:n_datasets]
 
 true_times = times[len(times) // 2 :]
 false_times = times[: len(times) // 2]

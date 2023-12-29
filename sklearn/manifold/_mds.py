@@ -5,16 +5,18 @@ Multi-dimensional Scaling (MDS).
 # author: Nelle Varoquaux <nelle.varoquaux@gmail.com>
 # License: BSD
 
-import numpy as np
-from joblib import Parallel, effective_n_jobs
-
 import warnings
+from numbers import Integral, Real
 
-from ..base import BaseEstimator
-from ..metrics import euclidean_distances
-from ..utils import check_random_state, check_array, check_symmetric
+import numpy as np
+from joblib import effective_n_jobs
+
+from ..base import BaseEstimator, _fit_context
 from ..isotonic import IsotonicRegression
-from ..utils.fixes import delayed
+from ..metrics import euclidean_distances
+from ..utils import check_array, check_random_state, check_symmetric
+from ..utils._param_validation import Interval, StrOptions, validate_params
+from ..utils.parallel import Parallel, delayed
 
 
 def _smacof_single(
@@ -26,6 +28,7 @@ def _smacof_single(
     verbose=0,
     eps=1e-3,
     random_state=None,
+    normalized_stress=False,
 ):
     """Computes multidimensional scaling using SMACOF algorithm.
 
@@ -36,6 +39,8 @@ def _smacof_single(
 
     metric : bool, default=True
         Compute metric or nonmetric SMACOF algorithm.
+        When ``False`` (i.e. non-metric MDS), dissimilarities with 0 are considered as
+        missing values.
 
     n_components : int, default=2
         Number of dimensions in which to immerse the dissimilarities. If an
@@ -55,12 +60,20 @@ def _smacof_single(
 
     eps : float, default=1e-3
         Relative tolerance with respect to stress at which to declare
-        convergence.
+        convergence. The value of `eps` should be tuned separately depending
+        on whether or not `normalized_stress` is being used.
 
     random_state : int, RandomState instance or None, default=None
         Determines the random number generator used to initialize the centers.
         Pass an int for reproducible results across multiple function calls.
         See :term:`Glossary <random_state>`.
+
+    normalized_stress : bool, default=False
+        Whether use and return normed stress value (Stress-1) instead of raw
+        stress calculated by default. Only supported in non-metric MDS. The
+        caller must ensure that if `normalized_stress=True` then `metric=False`
+
+        .. versionadded:: 1.2
 
     Returns
     -------
@@ -70,9 +83,23 @@ def _smacof_single(
     stress : float
         The final value of the stress (sum of squared distance of the
         disparities and the distances for all constrained points).
+        If `normalized_stress=True`, and `metric=False` returns Stress-1.
+        A value of 0 indicates "perfect" fit, 0.025 excellent, 0.05 good,
+        0.1 fair, and 0.2 poor [1]_.
 
     n_iter : int
         The number of iterations corresponding to the best stress.
+
+    References
+    ----------
+    .. [1] "Nonmetric multidimensional scaling: a numerical method" Kruskal, J.
+           Psychometrika, 29 (1964)
+
+    .. [2] "Multidimensional scaling by optimizing goodness of fit to a nonmetric
+           hypothesis" Kruskal, J. Psychometrika, 29, (1964)
+
+    .. [3] "Modern Multidimensional Scaling - Theory and Applications" Borg, I.;
+           Groenen P. Springer Series in Statistics (1997)
     """
     dissimilarities = check_symmetric(dissimilarities, raise_exception=True)
 
@@ -118,7 +145,8 @@ def _smacof_single(
 
         # Compute stress
         stress = ((dis.ravel() - disparities.ravel()) ** 2).sum() / 2
-
+        if normalized_stress:
+            stress = np.sqrt(stress / ((disparities.ravel() ** 2).sum() / 2))
         # Update X using the Guttman transform
         dis[dis == 0] = 1e-5
         ratio = disparities / dis
@@ -139,6 +167,23 @@ def _smacof_single(
     return X, stress, it + 1
 
 
+@validate_params(
+    {
+        "dissimilarities": ["array-like"],
+        "metric": ["boolean"],
+        "n_components": [Interval(Integral, 1, None, closed="left")],
+        "init": ["array-like", None],
+        "n_init": [Interval(Integral, 1, None, closed="left")],
+        "n_jobs": [Integral, None],
+        "max_iter": [Interval(Integral, 1, None, closed="left")],
+        "verbose": ["verbose"],
+        "eps": [Interval(Real, 0, None, closed="left")],
+        "random_state": ["random_state"],
+        "return_n_iter": ["boolean"],
+        "normalized_stress": ["boolean", StrOptions({"auto"})],
+    },
+    prefer_skip_nested_validation=True,
+)
 def smacof(
     dissimilarities,
     *,
@@ -152,6 +197,7 @@ def smacof(
     eps=1e-3,
     random_state=None,
     return_n_iter=False,
+    normalized_stress="auto",
 ):
     """Compute multidimensional scaling using the SMACOF algorithm.
 
@@ -175,11 +221,13 @@ def smacof(
 
     Parameters
     ----------
-    dissimilarities : ndarray of shape (n_samples, n_samples)
+    dissimilarities : array-like of shape (n_samples, n_samples)
         Pairwise dissimilarities between the points. Must be symmetric.
 
     metric : bool, default=True
         Compute metric or nonmetric SMACOF algorithm.
+        When ``False`` (i.e. non-metric MDS), dissimilarities with 0 are considered as
+        missing values.
 
     n_components : int, default=2
         Number of dimensions in which to immerse the dissimilarities. If an
@@ -187,7 +235,7 @@ def smacof(
         ``init`` is used to determine the dimensionality of the embedding
         space.
 
-    init : ndarray of shape (n_samples, n_components), default=None
+    init : array-like of shape (n_samples, n_components), default=None
         Starting configuration of the embedding to initialize the algorithm. By
         default, the algorithm is initialized with a randomly chosen array.
 
@@ -214,7 +262,8 @@ def smacof(
 
     eps : float, default=1e-3
         Relative tolerance with respect to stress at which to declare
-        convergence.
+        convergence. The value of `eps` should be tuned separately depending
+        on whether or not `normalized_stress` is being used.
 
     random_state : int, RandomState instance or None, default=None
         Determines the random number generator used to initialize the centers.
@@ -224,6 +273,15 @@ def smacof(
     return_n_iter : bool, default=False
         Whether or not to return the number of iterations.
 
+    normalized_stress : bool or "auto" default="auto"
+        Whether use and return normed stress value (Stress-1) instead of raw
+        stress calculated by default. Only supported in non-metric MDS.
+
+        .. versionadded:: 1.2
+
+        .. versionchanged:: 1.4
+           The default value changed from `False` to `"auto"` in version 1.4.
+
     Returns
     -------
     X : ndarray of shape (n_samples, n_components)
@@ -232,26 +290,37 @@ def smacof(
     stress : float
         The final value of the stress (sum of squared distance of the
         disparities and the distances for all constrained points).
+        If `normalized_stress=True`, and `metric=False` returns Stress-1.
+        A value of 0 indicates "perfect" fit, 0.025 excellent, 0.05 good,
+        0.1 fair, and 0.2 poor [1]_.
 
     n_iter : int
         The number of iterations corresponding to the best stress. Returned
         only if ``return_n_iter`` is set to ``True``.
 
-    Notes
-    -----
-    "Modern Multidimensional Scaling - Theory and Applications" Borg, I.;
-    Groenen P. Springer Series in Statistics (1997)
+    References
+    ----------
+    .. [1] "Nonmetric multidimensional scaling: a numerical method" Kruskal, J.
+           Psychometrika, 29 (1964)
 
-    "Nonmetric multidimensional scaling: a numerical method" Kruskal, J.
-    Psychometrika, 29 (1964)
+    .. [2] "Multidimensional scaling by optimizing goodness of fit to a nonmetric
+           hypothesis" Kruskal, J. Psychometrika, 29, (1964)
 
-    "Multidimensional scaling by optimizing goodness of fit to a nonmetric
-    hypothesis" Kruskal, J. Psychometrika, 29, (1964)
+    .. [3] "Modern Multidimensional Scaling - Theory and Applications" Borg, I.;
+           Groenen P. Springer Series in Statistics (1997)
     """
 
     dissimilarities = check_array(dissimilarities)
     random_state = check_random_state(random_state)
 
+    if normalized_stress == "auto":
+        normalized_stress = not metric
+
+    if normalized_stress and metric:
+        raise ValueError(
+            "Normalized stress is not supported for metric MDS. Either set"
+            " `normalized_stress=False` or use `metric=False`."
+        )
     if hasattr(init, "__array__"):
         init = np.asarray(init).copy()
         if not n_init == 1:
@@ -274,6 +343,7 @@ def smacof(
                 verbose=verbose,
                 eps=eps,
                 random_state=random_state,
+                normalized_stress=normalized_stress,
             )
             if best_stress is None or stress < best_stress:
                 best_stress = stress
@@ -291,6 +361,7 @@ def smacof(
                 verbose=verbose,
                 eps=eps,
                 random_state=seed,
+                normalized_stress=normalized_stress,
             )
             for seed in seeds
         )
@@ -318,6 +389,8 @@ class MDS(BaseEstimator):
 
     metric : bool, default=True
         If ``True``, perform metric MDS; otherwise, perform nonmetric MDS.
+        When ``False`` (i.e. non-metric MDS), dissimilarities with 0 are considered as
+        missing values.
 
     n_init : int, default=4
         Number of times the SMACOF algorithm will be run with different
@@ -332,7 +405,8 @@ class MDS(BaseEstimator):
 
     eps : float, default=1e-3
         Relative tolerance with respect to stress at which to declare
-        convergence.
+        convergence. The value of `eps` should be tuned separately depending
+        on whether or not `normalized_stress` is being used.
 
     n_jobs : int, default=None
         The number of jobs to use for the computation. If multiple
@@ -358,6 +432,15 @@ class MDS(BaseEstimator):
             Pre-computed dissimilarities are passed directly to ``fit`` and
             ``fit_transform``.
 
+    normalized_stress : bool or "auto" default="auto"
+        Whether use and return normed stress value (Stress-1) instead of raw
+        stress calculated by default. Only supported in non-metric MDS.
+
+        .. versionadded:: 1.2
+
+        .. versionchanged:: 1.4
+           The default value changed from `False` to `"auto"` in version 1.4.
+
     Attributes
     ----------
     embedding_ : ndarray of shape (n_samples, n_components)
@@ -366,6 +449,9 @@ class MDS(BaseEstimator):
     stress_ : float
         The final value of the stress (sum of squared distance of the
         disparities and the distances for all constrained points).
+        If `normalized_stress=True`, and `metric=False` returns Stress-1.
+        A value of 0 indicates "perfect" fit, 0.025 excellent, 0.05 good,
+        0.1 fair, and 0.2 poor [1]_.
 
     dissimilarity_matrix_ : ndarray of shape (n_samples, n_samples)
         Pairwise dissimilarities between the points. Symmetric matrix that:
@@ -402,14 +488,14 @@ class MDS(BaseEstimator):
 
     References
     ----------
-    "Modern Multidimensional Scaling - Theory and Applications" Borg, I.;
-    Groenen P. Springer Series in Statistics (1997)
+    .. [1] "Nonmetric multidimensional scaling: a numerical method" Kruskal, J.
+       Psychometrika, 29 (1964)
 
-    "Nonmetric multidimensional scaling: a numerical method" Kruskal, J.
-    Psychometrika, 29 (1964)
+    .. [2] "Multidimensional scaling by optimizing goodness of fit to a nonmetric
+       hypothesis" Kruskal, J. Psychometrika, 29, (1964)
 
-    "Multidimensional scaling by optimizing goodness of fit to a nonmetric
-    hypothesis" Kruskal, J. Psychometrika, 29, (1964)
+    .. [3] "Modern Multidimensional Scaling - Theory and Applications" Borg, I.;
+       Groenen P. Springer Series in Statistics (1997)
 
     Examples
     --------
@@ -418,11 +504,27 @@ class MDS(BaseEstimator):
     >>> X, _ = load_digits(return_X_y=True)
     >>> X.shape
     (1797, 64)
-    >>> embedding = MDS(n_components=2)
+    >>> embedding = MDS(n_components=2, normalized_stress='auto')
     >>> X_transformed = embedding.fit_transform(X[:100])
     >>> X_transformed.shape
     (100, 2)
+
+    For a more detailed example of usage, see:
+    :ref:`sphx_glr_auto_examples_manifold_plot_mds.py`
     """
+
+    _parameter_constraints: dict = {
+        "n_components": [Interval(Integral, 1, None, closed="left")],
+        "metric": ["boolean"],
+        "n_init": [Interval(Integral, 1, None, closed="left")],
+        "max_iter": [Interval(Integral, 1, None, closed="left")],
+        "verbose": ["verbose"],
+        "eps": [Interval(Real, 0.0, None, closed="left")],
+        "n_jobs": [None, Integral],
+        "random_state": ["random_state"],
+        "dissimilarity": [StrOptions({"euclidean", "precomputed"})],
+        "normalized_stress": ["boolean", StrOptions({"auto"})],
+    }
 
     def __init__(
         self,
@@ -436,6 +538,7 @@ class MDS(BaseEstimator):
         n_jobs=None,
         random_state=None,
         dissimilarity="euclidean",
+        normalized_stress="auto",
     ):
         self.n_components = n_components
         self.dissimilarity = dissimilarity
@@ -446,6 +549,7 @@ class MDS(BaseEstimator):
         self.verbose = verbose
         self.n_jobs = n_jobs
         self.random_state = random_state
+        self.normalized_stress = normalized_stress
 
     def _more_tags(self):
         return {"pairwise": self.dissimilarity == "precomputed"}
@@ -464,7 +568,7 @@ class MDS(BaseEstimator):
         y : Ignored
             Not used, present for API consistency by convention.
 
-        init : ndarray of shape (n_samples,), default=None
+        init : ndarray of shape (n_samples, n_components), default=None
             Starting configuration of the embedding to initialize the SMACOF
             algorithm. By default, the algorithm is initialized with a randomly
             chosen array.
@@ -477,6 +581,7 @@ class MDS(BaseEstimator):
         self.fit_transform(X, init=init)
         return self
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit_transform(self, X, y=None, init=None):
         """
         Fit the data from `X`, and returns the embedded coordinates.
@@ -491,7 +596,7 @@ class MDS(BaseEstimator):
         y : Ignored
             Not used, present for API consistency by convention.
 
-        init : ndarray of shape (n_samples,), default=None
+        init : ndarray of shape (n_samples, n_components), default=None
             Starting configuration of the embedding to initialize the SMACOF
             algorithm. By default, the algorithm is initialized with a randomly
             chosen array.
@@ -514,11 +619,6 @@ class MDS(BaseEstimator):
             self.dissimilarity_matrix_ = X
         elif self.dissimilarity == "euclidean":
             self.dissimilarity_matrix_ = euclidean_distances(X)
-        else:
-            raise ValueError(
-                "Proximity must be 'precomputed' or 'euclidean'. Got %s instead"
-                % str(self.dissimilarity)
-            )
 
         self.embedding_, self.stress_, self.n_iter_ = smacof(
             self.dissimilarity_matrix_,
@@ -532,6 +632,7 @@ class MDS(BaseEstimator):
             eps=self.eps,
             random_state=self.random_state,
             return_n_iter=True,
+            normalized_stress=self.normalized_stress,
         )
 
         return self.embedding_

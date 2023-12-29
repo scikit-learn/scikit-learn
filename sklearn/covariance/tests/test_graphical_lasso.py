@@ -1,29 +1,35 @@
 """ Test the graphical_lasso module.
 """
 import sys
-import pytest
+from io import StringIO
 
 import numpy as np
+import pytest
+from numpy.testing import assert_allclose
 from scipy import linalg
 
-from numpy.testing import assert_allclose
-from sklearn.utils._testing import assert_array_almost_equal
-from sklearn.utils._testing import assert_array_less
-from sklearn.utils._testing import _convert_container
-
+from sklearn import datasets
 from sklearn.covariance import (
-    graphical_lasso,
     GraphicalLasso,
     GraphicalLassoCV,
     empirical_covariance,
+    graphical_lasso,
 )
 from sklearn.datasets import make_sparse_spd_matrix
-from io import StringIO
 from sklearn.utils import check_random_state
-from sklearn import datasets
+from sklearn.utils._testing import (
+    _convert_container,
+    assert_array_almost_equal,
+    assert_array_less,
+)
 
 
-def test_graphical_lasso(random_state=0):
+def test_graphical_lassos(random_state=1):
+    """Test the graphical lasso solvers.
+
+    This checks is unstable for some random seeds where the covariance found with "cd"
+    and "lars" solvers are different (4 cases / 100 tries).
+    """
     # Sample data from a sparse multivariate normal
     dim = 20
     n_samples = 100
@@ -45,10 +51,11 @@ def test_graphical_lasso(random_state=0):
             costs, dual_gap = np.array(costs).T
             # Check that the costs always decrease (doesn't hold if alpha == 0)
             if not alpha == 0:
-                assert_array_less(np.diff(costs), 0)
+                # use 1e-12 since the cost can be exactly 0
+                assert_array_less(np.diff(costs), 1e-12)
         # Check that the 2 approaches give similar results
-        assert_array_almost_equal(covs["cd"], covs["lars"], decimal=4)
-        assert_array_almost_equal(icovs["cd"], icovs["lars"], decimal=4)
+        assert_allclose(covs["cd"], covs["lars"], atol=1e-4)
+        assert_allclose(icovs["cd"], icovs["lars"], atol=1e-4)
 
     # Smoke test the estimator
     model = GraphicalLasso(alpha=0.25).fit(X)
@@ -64,6 +71,29 @@ def test_graphical_lasso(random_state=0):
         prec_ = GraphicalLasso(assume_centered=assume_centered).fit(Z).precision_
         precs.append(prec_)
     assert_array_almost_equal(precs[0], precs[1])
+
+
+def test_graphical_lasso_when_alpha_equals_0():
+    """Test graphical_lasso's early return condition when alpha=0."""
+    X = np.random.randn(100, 10)
+    emp_cov = empirical_covariance(X, assume_centered=True)
+
+    model = GraphicalLasso(alpha=0, covariance="precomputed").fit(emp_cov)
+    assert_allclose(model.precision_, np.linalg.inv(emp_cov))
+
+    _, precision = graphical_lasso(emp_cov, alpha=0)
+    assert_allclose(precision, np.linalg.inv(emp_cov))
+
+
+@pytest.mark.parametrize("mode", ["cd", "lars"])
+def test_graphical_lasso_n_iter(mode):
+    X, _ = datasets.make_classification(n_samples=5_000, n_features=20, random_state=0)
+    emp_cov = empirical_covariance(X)
+
+    _, _, n_iter = graphical_lasso(
+        emp_cov, 0.2, mode=mode, max_iter=2, return_n_iter=True
+    )
+    assert n_iter == 2
 
 
 def test_graphical_lasso_iris():
@@ -178,10 +208,35 @@ def test_graphical_lasso_cv_alphas_iterable(alphas_container_type):
     GraphicalLassoCV(alphas=alphas, tol=1e-1, n_jobs=1).fit(X)
 
 
-# TODO: Remove `score` and `test_score` suffix in 1.2
-@pytest.mark.parametrize("suffix", ["score", "test_score"])
-@pytest.mark.filterwarnings("ignore:Key*:FutureWarning:sklearn")
-def test_graphical_lasso_cv_scores(suffix):
+@pytest.mark.parametrize(
+    "alphas,err_type,err_msg",
+    [
+        ([-0.02, 0.03], ValueError, "must be > 0"),
+        ([0, 0.03], ValueError, "must be > 0"),
+        (["not_number", 0.03], TypeError, "must be an instance of float"),
+    ],
+)
+def test_graphical_lasso_cv_alphas_invalid_array(alphas, err_type, err_msg):
+    """Check that if an array-like containing a value
+    outside of (0, inf] is passed to `alphas`, a ValueError is raised.
+    Check if a string is passed, a TypeError is raised.
+    """
+    true_cov = np.array(
+        [
+            [0.8, 0.0, 0.2, 0.0],
+            [0.0, 0.4, 0.0, 0.0],
+            [0.2, 0.0, 0.3, 0.1],
+            [0.0, 0.0, 0.1, 0.7],
+        ]
+    )
+    rng = np.random.RandomState(0)
+    X = rng.multivariate_normal(mean=[0, 0, 0, 0], cov=true_cov, size=200)
+
+    with pytest.raises(err_type, match=err_msg):
+        GraphicalLassoCV(alphas=alphas, tol=1e-1, n_jobs=1).fit(X)
+
+
+def test_graphical_lasso_cv_scores():
     splits = 4
     n_alphas = 5
     n_refinements = 3
@@ -204,7 +259,7 @@ def test_graphical_lasso_cv_scores(suffix):
 
     total_alphas = n_refinements * n_alphas + 1
     keys = ["alphas"]
-    split_keys = [f"split{i}_{suffix}" for i in range(splits)]
+    split_keys = [f"split{i}_test_score" for i in range(splits)]
     for key in keys + split_keys:
         assert key in cv_results
         assert len(cv_results[key]) == total_alphas
@@ -213,41 +268,19 @@ def test_graphical_lasso_cv_scores(suffix):
     expected_mean = cv_scores.mean(axis=0)
     expected_std = cv_scores.std(axis=0)
 
-    assert_allclose(cov.cv_results_[f"mean_{suffix}"], expected_mean)
-    assert_allclose(cov.cv_results_[f"std_{suffix}"], expected_std)
+    assert_allclose(cov.cv_results_["mean_test_score"], expected_mean)
+    assert_allclose(cov.cv_results_["std_test_score"], expected_std)
 
 
-# TODO: Remove in 1.2 when mean_score, std_score, and split(k)_score is removed.
-def test_graphical_lasso_cv_scores_deprecated():
-    """Check that the following keys in cv_results_ are deprecated: `mean_score`,
-    `std_score`, and `split(k)_score`."""
-    splits = 4
-    n_alphas = 5
-    n_refinements = 3
-    true_cov = np.array(
-        [
-            [0.8, 0.0, 0.2, 0.0],
-            [0.0, 0.4, 0.0, 0.0],
-            [0.2, 0.0, 0.3, 0.1],
-            [0.0, 0.0, 0.1, 0.7],
-        ]
-    )
-    rng = np.random.RandomState(0)
-    X = rng.multivariate_normal(mean=[0, 0, 0, 0], cov=true_cov, size=200)
-    cov = GraphicalLassoCV(cv=splits, alphas=n_alphas, n_refinements=n_refinements).fit(
-        X
-    )
-    cv_results = cov.cv_results_
+# TODO(1.5): remove in 1.5
+def test_graphical_lasso_cov_init_deprecation():
+    """Check that we raise a deprecation warning if providing `cov_init` in
+    `graphical_lasso`."""
+    rng, dim, n_samples = np.random.RandomState(0), 20, 100
+    prec = make_sparse_spd_matrix(dim, alpha=0.95, random_state=0)
+    cov = linalg.inv(prec)
+    X = rng.multivariate_normal(np.zeros(dim), cov, size=n_samples)
 
-    deprecated_keys = ["mean_score", "std_score"] + [
-        f"split{k}_score" for k in range(splits)
-    ]
-
-    for deprecated_key in deprecated_keys:
-        new_key = deprecated_key.replace("_score", "_test_score")
-        msg = (
-            f"Key: '{deprecated_key}', is deprecated in 1.0 and will be removed in 1.2."
-            f" Use '{new_key}' instead"
-        )
-        with pytest.warns(FutureWarning, match=msg):
-            cv_results[deprecated_key]
+    emp_cov = empirical_covariance(X)
+    with pytest.warns(FutureWarning, match="cov_init parameter is deprecated"):
+        graphical_lasso(emp_cov, alpha=0.1, cov_init=emp_cov)

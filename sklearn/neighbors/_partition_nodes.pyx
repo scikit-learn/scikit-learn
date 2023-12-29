@@ -1,5 +1,3 @@
-# distutils : language = c++
-
 # BinaryTrees rely on partial sorts to partition their nodes during their
 # initialisation.
 #
@@ -18,6 +16,8 @@
 #  - https://en.cppreference.com/w/cpp/algorithm/nth_element.
 #  - https://github.com/scikit-learn/scikit-learn/pull/11103
 #  - https://github.com/scikit-learn/scikit-learn/pull/19473
+from cython cimport floating
+
 
 cdef extern from *:
     """
@@ -56,7 +56,7 @@ cdef extern from *:
     }
     """
     void partition_node_indices_inner[D, I](
-                D *data,
+                const D *data,
                 I *node_indices,
                 I split_dim,
                 I split_index,
@@ -65,12 +65,12 @@ cdef extern from *:
 
 
 cdef int partition_node_indices(
-        DTYPE_t *data,
-        ITYPE_t *node_indices,
-        ITYPE_t split_dim,
-        ITYPE_t split_index,
-        ITYPE_t n_features,
-        ITYPE_t n_points) except -1:
+        const floating *data,
+        intp_t *node_indices,
+        intp_t split_dim,
+        intp_t split_index,
+        intp_t n_features,
+        intp_t n_points) except -1:
     """Partition points in the node into two equal-sized groups.
 
     Upon return, the values in node_indices will be rearranged such that

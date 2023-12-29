@@ -1,25 +1,31 @@
 version: 2.1
 
 jobs:
+  lint:
+    docker:
+      - image: cimg/python:3.9.18
+    steps:
+      - checkout
+      - run:
+          name: dependencies
+          command: |
+            source build_tools/shared.sh
+            # Include pytest compatibility with mypy
+            pip install pytest ruff $(get_dep mypy min) $(get_dep black min) cython-lint
+      - run:
+          name: linting
+          command: ./build_tools/linting.sh
+
   doc-min-dependencies:
     docker:
-      - image: cimg/python:3.8.12
+      - image: cimg/python:3.9.18
     environment:
-      - OMP_NUM_THREADS: 2
       - MKL_NUM_THREADS: 2
+      - OPENBLAS_NUM_THREADS: 2
       - CONDA_ENV_NAME: testenv
-      - PYTHON_VERSION: 3.8
-      - NUMPY_VERSION: 'min'
-      - SCIPY_VERSION: 'min'
-      - MATPLOTLIB_VERSION: 'min'
-      - CYTHON_VERSION: 'min'
-      - SCIKIT_IMAGE_VERSION: 'min'
-      - SPHINX_VERSION: 'min'
-      - PANDAS_VERSION: 'min'
-      - SPHINX_GALLERY_VERSION: 'min'
-      - NUMPYDOC_VERSION: 'min'
-      - SPHINX_PROMPT_VERSION: 'min'
-      - SPHINXEXT_OPENGRAPH_VERSION: 'min'
+      - LOCK_FILE: build_tools/circle/doc_min_dependencies_linux-64_conda.lock
+      # Do not fail if the documentation build generates warnings
+      - SKLEARN_DOC_BUILD_WARNINGS_AS_ERRORS: 'false'
     steps:
       - checkout
       - run: ./build_tools/circle/checkout_merge_commit.sh
@@ -48,25 +54,14 @@ jobs:
 
   doc:
     docker:
-      - image: cimg/python:3.8.12
+      - image: cimg/python:3.9.18
     environment:
-      - OMP_NUM_THREADS: 2
       - MKL_NUM_THREADS: 2
+      - OPENBLAS_NUM_THREADS: 2
       - CONDA_ENV_NAME: testenv
-      - PYTHON_VERSION: '3.9'
-      - NUMPY_VERSION: 'latest'
-      - SCIPY_VERSION: 'latest'
-      - MATPLOTLIB_VERSION: 'latest'
-      - CYTHON_VERSION: 'latest'
-      - SCIKIT_IMAGE_VERSION: 'latest'
-      # Bump the sphinx version from time to time. Avoid latest sphinx version
-      # that tends to break things slightly too often
-      - SPHINX_VERSION: 4.2.0
-      - PANDAS_VERSION: 'latest'
-      - SPHINX_GALLERY_VERSION: 'latest'
-      - NUMPYDOC_VERSION: 'latest'
-      - SPHINX_PROMPT_VERSION: 'latest'
-      - SPHINXEXT_OPENGRAPH_VERSION: 'latest'
+      - LOCK_FILE: build_tools/circle/doc_linux-64_conda.lock
+      # Make sure that we fail if the documentation build generates warnings
+      - SKLEARN_DOC_BUILD_WARNINGS_AS_ERRORS: 'true'
     steps:
       - checkout
       - run: ./build_tools/circle/checkout_merge_commit.sh
@@ -98,51 +93,9 @@ jobs:
           root: doc/_build/html
           paths: .
 
-  lint:
-    docker:
-      - image: cimg/python:3.8.12
-    steps:
-      - checkout
-      - run: ./build_tools/circle/checkout_merge_commit.sh
-      - run:
-          name: dependencies
-          command: pip install flake8
-      - run:
-          name: linting
-          command: ./build_tools/circle/linting.sh
-
-  linux-arm64:
-    machine:
-      image: ubuntu-2004:202101-01
-    resource_class: arm.medium
-    environment:
-      # Use the latest supported version of python
-      - PYTHON_VERSION: '3.9'
-      - OMP_NUM_THREADS: 2
-      - OPENBLAS_NUM_THREADS: 2
-      - NUMPY_VERSION: 'latest'
-      - SCIPY_VERSION: 'latest'
-      - CYTHON_VERSION: 'latest'
-      - JOBLIB_VERSION: 'latest'
-      - THREADPOOLCTL_VERSION: 'latest'
-      - PYTEST_VERSION: 'latest'
-      - PYTEST_XDIST_VERSION: 'latest'
-      - TEST_DOCSTRINGS: 'true'
-    steps:
-      - checkout
-      - run: ./build_tools/circle/checkout_merge_commit.sh
-      - restore_cache:
-          key: linux-arm64-{{ .Branch }}
-      - run: ./build_tools/circle/build_test_arm.sh
-      - save_cache:
-          key: linux-arm64-{{ .Branch }}
-          paths:
-            - ~/.cache/ccache
-            - ~/.cache/pip
-            - ~/scikit_learn_data
   deploy:
     docker:
-      - image: cimg/python:3.8.12
+      - image: cimg/python:3.9.18
     steps:
       - checkout
       - run: ./build_tools/circle/checkout_merge_commit.sh
@@ -171,6 +124,3 @@ workflows:
       - deploy:
           requires:
             - doc
-  linux-arm64:
-    jobs:
-      - linux-arm64
