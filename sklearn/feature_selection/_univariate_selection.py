@@ -345,6 +345,20 @@ def r_regression(X, y, *, center=True, force_finite=True):
     mutual_info_regression: Mutual information for a continuous target.
     f_classif: ANOVA F-value between label/feature for classification tasks.
     chi2: Chi-squared stats of non-negative features for classification tasks.
+
+    Examples
+    --------
+
+    >>> from sklearn.feature_selection import r_regression
+    >>> import numpy as np
+    >>> X = np.array([[1.5, 1],
+    ...               [2.1, 1],
+    ...               [3.4, 1],
+    ...               [3.9, 1]])
+    >>> y = np.array([4, 5, 6, 7])
+    >>> correlation_coef = r_regression(X, y)
+    >>> correlation_coef
+    array([0.98445326, 0.        ])
     """
     X, y = check_X_y(X, y, accept_sparse=["csr", "csc", "coo"], dtype=np.float64)
     n_samples = X.shape[0]
