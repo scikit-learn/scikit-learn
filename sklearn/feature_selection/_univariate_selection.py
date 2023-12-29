@@ -149,6 +149,22 @@ def f_classif(X, y):
     --------
     chi2 : Chi-squared stats of non-negative features for classification tasks.
     f_regression : F-value between label/feature for regression tasks.
+
+    Examples
+    --------
+
+    >>> from sklearn.feature_selection import f_classif
+    >>> import numpy as np
+    >>> X = np.array([[1, 1],
+    ...               [0, 1],
+    ...               [5, 4],
+    ...               [6, 6]])
+    >>> y = np.array([1, 1, 0, 0])
+    >>> f_statistic, p_values = f_classif(X, y)
+    >>> f_statistic
+    array([50., 16.])
+    >>> p_values
+    array([0.01941932, 0.05719096])
     """
     X, y = check_X_y(X, y, accept_sparse=["csr", "csc", "coo"])
     args = [X[safe_mask(X, y == k)] for k in np.unique(y)]
@@ -212,6 +228,15 @@ def chi2(X, y):
     p_values : ndarray of shape (n_features,)
         P-values for each feature.
 
+    See Also
+    --------
+    f_classif : ANOVA F-value between label/feature for classification tasks.
+    f_regression : F-value between label/feature for regression tasks.
+
+    Notes
+    -----
+    Complexity of this algorithm is O(n_classes * n_features).
+
     Examples
     --------
     >>> from sklearn.feature_selection import chi2
@@ -226,15 +251,6 @@ def chi2(X, y):
     array([8.33333333, 5.33333333])
     >>> p_values
     array([0.00389242, 0.02092134])
-
-    See Also
-    --------
-    f_classif : ANOVA F-value between label/feature for classification tasks.
-    f_regression : F-value between label/feature for regression tasks.
-
-    Notes
-    -----
-    Complexity of this algorithm is O(n_classes * n_features).
     """
 
     # XXX: we might want to do some of the following in logspace instead for
