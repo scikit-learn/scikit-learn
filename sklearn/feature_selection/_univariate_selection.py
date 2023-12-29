@@ -149,6 +149,21 @@ def f_classif(X, y):
     --------
     chi2 : Chi-squared stats of non-negative features for classification tasks.
     f_regression : F-value between label/feature for regression tasks.
+
+    Examples
+    --------
+    >>> from sklearn.feature_selection import f_classif
+    >>> import numpy as np
+    >>> X = np.array([[1, 1],
+    ...               [0, 1],
+    ...               [5, 4],
+    ...               [6, 6]])
+    >>> y = np.array([1, 1, 0, 0])
+    >>> f_statistic, p_values = f_classif(X, y)
+    >>> f_statistic
+    array([50., 16.])
+    >>> p_values
+    array([0.01941932, 0.05719096])
     """
     X, y = check_X_y(X, y, accept_sparse=["csr", "csc", "coo"])
     args = [X[safe_mask(X, y == k)] for k in np.unique(y)]
@@ -220,6 +235,21 @@ def chi2(X, y):
     Notes
     -----
     Complexity of this algorithm is O(n_classes * n_features).
+
+    Examples
+    --------
+    >>> from sklearn.feature_selection import chi2
+    >>> import numpy as np
+    >>> X = np.array([[1, 1],
+    ...               [0, 1],
+    ...               [5, 4],
+    ...               [6, 6]])
+    >>> y = np.array([1, 1, 0, 0])
+    >>> chi2_stats, p_values = chi2(X, y)
+    >>> chi2_stats
+    array([8.33333333, 5.33333333])
+    >>> p_values
+    array([0.00389242, 0.02092134])
     """
 
     # XXX: we might want to do some of the following in logspace instead for
@@ -314,6 +344,19 @@ def r_regression(X, y, *, center=True, force_finite=True):
     mutual_info_regression: Mutual information for a continuous target.
     f_classif: ANOVA F-value between label/feature for classification tasks.
     chi2: Chi-squared stats of non-negative features for classification tasks.
+
+    Examples
+    --------
+    >>> from sklearn.feature_selection import r_regression
+    >>> import numpy as np
+    >>> X = np.array([[1.5, 1],
+    ...               [2.1, 1],
+    ...               [3.4, 1],
+    ...               [3.9, 1]])
+    >>> y = np.array([4, 5, 6, 7])
+    >>> correlation_coef = r_regression(X, y)
+    >>> correlation_coef
+    array([0.98445326, 0.        ])
     """
     X, y = check_X_y(X, y, accept_sparse=["csr", "csc", "coo"], dtype=np.float64)
     n_samples = X.shape[0]
@@ -436,6 +479,21 @@ def f_regression(X, y, *, center=True, force_finite=True):
     SelectFwe: Select features based on family-wise error rate.
     SelectPercentile: Select features based on percentile of the highest
         scores.
+
+    Examples
+    --------
+    >>> from sklearn.feature_selection import f_regression
+    >>> import numpy as np
+    >>> X = np.array([[1.5, 1.2],
+    ...               [2.1, 2.3],
+    ...               [3.4, 3.6],
+    ...               [3.9, 4.1]])
+    >>> y = np.array([4, 5, 6, 7])
+    >>> f_statistic, p_values = f_regression(X, y)
+    >>> f_statistic
+    array([62.82608696, 71.42857143])
+    >>> p_values
+    array([0.01554674, 0.0137127 ])
     """
     correlation_coefficient = r_regression(
         X, y, center=center, force_finite=force_finite

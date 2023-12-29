@@ -396,6 +396,21 @@ def mutual_info_regression(
            Data Sets". PLoS ONE 9(2), 2014.
     .. [4] L. F. Kozachenko, N. N. Leonenko, "Sample Estimate of the Entropy
            of a Random Vector", Probl. Peredachi Inf., 23:2 (1987), 9-16
+
+    Examples
+    --------
+
+    >>> from sklearn.feature_selection import mutual_info_regression
+    >>> import numpy as np
+    >>> X = np.array([[1.5, 1],
+    ...               [2.1, 1],
+    ...               [3.4, 1],
+    ...               [3.9, 1]])
+    >>> y = np.array([4, 5, 6, 7])
+    >>> mi = mutual_info_regression(X, y)
+    >>> mi
+    array([0.00000000e+00, 1.11022302e-16])
+
     """
     return _estimate_mi(X, y, discrete_features, False, n_neighbors, copy, random_state)
 
@@ -487,6 +502,20 @@ def mutual_info_classif(
            Data Sets". PLoS ONE 9(2), 2014.
     .. [4] L. F. Kozachenko, N. N. Leonenko, "Sample Estimate of the Entropy
            of a Random Vector:, Probl. Peredachi Inf., 23:2 (1987), 9-16
+
+    Examples
+    --------
+
+    >>> from sklearn.feature_selection import mutual_info_classif
+    >>> import numpy as np
+    >>> X = np.array([[1, 1],
+    ...               [0, 1],
+    ...               [5, 4],
+    ...               [6, 6]])
+    >>> y = np.array([1, 1, 0, 0])
+    >>> mi = mutual_info_classif(X, y)
+    >>> mi
+    array([0.83333333, 0.20833333])
     """
     check_classification_targets(y)
     return _estimate_mi(X, y, discrete_features, True, n_neighbors, copy, random_state)
