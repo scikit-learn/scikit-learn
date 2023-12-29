@@ -1261,7 +1261,7 @@ def r2_score(
 
     result = input_xp.asarray(result, device=device_)
     if result.size == 1:
-        return float(xp.reshape(result, (-1,))[0])
+        return xp.reshape(result, (-1,))[0]
 
     return result
 

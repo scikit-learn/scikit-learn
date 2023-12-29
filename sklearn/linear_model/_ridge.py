@@ -871,7 +871,7 @@ class _BaseRidge(LinearModel, metaclass=ABCMeta):
         if is_array_api_compliant and self.solver not in ["auto", "svd"]:
             raise ValueError(
                 "Array API dispatch is only supported with solver='svd' or 'auto' "
-                f"but not with solver='{self.solver}' "
+                f"but not with solver='{self.solver}'."
             )
 
         if self.solver == "lbfgs" and not self.positive:
