@@ -28,7 +28,6 @@ Changelog
 :mod:`sklearn.model_selection`
 ..............................
 
-
 - |Feature| The new ``use_warm_start`` parameter in :class:`~model_selection.GridSearchCV`
   allows for more efficient grid search over some parameter spaces, utilizing estimators'
   :term:`warm_start` capabilities. :pr:`8230` by :user:`Joel Nothman <jnothman>`.

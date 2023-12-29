@@ -1096,10 +1096,6 @@ Changelog
 :mod:`sklearn.model_selection`
 ..............................
 
-- |Enhancement| raise an error during cross-validation when the fits for all the
-  splits failed. Similarly raise an error during grid-search when the fits for
-  all the models and all the splits failed. :pr:`21026` by :user:`Loïc Estève <lesteve>`.
-
 - |Enhancement| it is now possible to pass `scoring="matthews_corrcoef"` to all
   model selection tools with a `scoring` argument to use the Matthews
   correlation coefficient (MCC).
