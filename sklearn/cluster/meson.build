@@ -31,3 +31,5 @@ foreach ext_name, ext_dict : libs_sources
         install: true
     )
 endforeach
+
+subdir('_hdbscan')
