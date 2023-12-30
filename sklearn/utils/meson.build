@@ -1,6 +1,8 @@
+fs.copyfile('__init__.py')
+
 pxd_to_copy = [
   '_openmp_helpers.pxd', '_heap.pxd', '_sorting.pxd', '_vector_sentinel.pxd',
-  '_cython_blas.pxd', '_typedefs.pxd', '_seq_dataset.pxd', '_weight_vector.pxd']
+  '_cython_blas.pxd', '_typedefs.pxd', '_random.pxd']
 foreach pxd: pxd_to_copy
   fs.copyfile(pxd)
 endforeach
@@ -34,4 +36,31 @@ foreach ext_name, ext_dict : libs_sources
         subdir: 'sklearn/utils',
         install: true
     )
+endforeach
+
+
+names = ['_seq_dataset', '_weight_vector']
+
+foreach name: names
+  pxd = custom_target(
+    name + '_pxd',
+    output: name + '.pxd',
+    input: name + '.pxd.tp',
+    command: [py, tempita, '@INPUT@', '-o', '@OUTDIR@'],
+    install: true,
+    install_dir: sklearn_dir / 'utils'
+  )
+  pyx = custom_target(
+    name + '_pyx',
+    output: name + '.pyx',
+    input: name + '.pyx.tp',
+    command: [py, tempita, '@INPUT@', '-o', '@OUTDIR@']
+  )
+  py.extension_module(
+    name,
+    [pxd, pyx],
+    dependencies: [np_dep],
+    subdir: 'sklearn/utils',
+    install: true
+   )
 endforeach
