@@ -1,0 +1,20 @@
+libs_sources = {
+  '_gradient_boosting': {'sources': ['_gradient_boosting.pyx']},
+  'histogram': {'sources': ['histogram.pyx']},
+  'splitting': {'sources': ['splitting.pyx']},
+  '_binning': {'sources': ['_binning.pyx']},
+  '_predictor': {'sources': ['_predictor.pyx']},
+  '_bitset': {'sources': ['_bitset.pyx']},
+  'common': {'sources': ['common.pyx']},
+  'utils': {'sources': ['utils.pyx']},
+}
+
+foreach ext_name, ext_dict : libs_sources
+    py.extension_module(
+        ext_name,
+        ext_dict.get('sources'),
+        dependencies: [np_dep],
+        subdir: 'sklearn/ensemble/_hist_gradient_boosting',
+        install: true
+    )
+endforeach
