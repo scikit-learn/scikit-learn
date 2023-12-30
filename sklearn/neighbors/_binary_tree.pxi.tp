@@ -1052,7 +1052,7 @@ cdef class BinaryTree{{name_suffix}}:
         cdef intp_t imax
         cdef intp_t n_features = self.data.shape[1]
         cdef intp_t n_points = idx_end - idx_start
-        cdef intp_t n_mid = n_points // 2
+        cdef intp_t n_mid = n_points / 2
         cdef intp_t* idx_array = &self.idx_array[idx_start]
         cdef const {{INPUT_DTYPE_t}}* data = &self.data[0, 0]
 
