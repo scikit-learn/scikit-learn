@@ -63,3 +63,5 @@ py = import('python').find_installation(pure: false)
 py_dep = py.dependency()
 
 subdir('sklearn')
+
+install_subdir('sklearn', install_dir: py.get_install_dir())

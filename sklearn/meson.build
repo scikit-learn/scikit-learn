@@ -129,7 +129,8 @@ py.extension_module(
   #     '-DNPY_TARGET_VERSION=NPY_2_0_API_VERSION',
   #   ],
   #   include_directories: [npy_include_path],
-
+  install: true,
+  subdir: 'sklearn',
 )
 
 # TODO Needed for Cython?
@@ -153,5 +154,5 @@ subdir('linear_model')
 subdir('manifold')
 subdir('preprocessing')
 subdir('neighbors')
-# subdir('svm')
+subdir('svm')
 subdir('tree')
