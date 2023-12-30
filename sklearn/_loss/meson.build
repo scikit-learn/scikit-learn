@@ -1,3 +1,5 @@
+fs.copyfile('_loss.pxd')
+
 _loss_pyx = custom_target(
   '_loss_pyx',
   output: '_loss.pyx',
