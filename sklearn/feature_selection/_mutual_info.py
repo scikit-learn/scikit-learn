@@ -410,7 +410,6 @@ def mutual_info_regression(
     >>> mi = mutual_info_regression(X, y)
     >>> mi
     array([0.00000000e+00, 1.11022302e-16])
-
     """
     return _estimate_mi(X, y, discrete_features, False, n_neighbors, copy, random_state)
 
