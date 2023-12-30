@@ -1,6 +1,6 @@
 pxd_to_copy = [
   '_openmp_helpers.pxd', '_heap.pxd', '_sorting.pxd', '_vector_sentinel.pxd',
-  '_cython_blas.pxd', '_typedefs.pxd']
+  '_cython_blas.pxd', '_typedefs.pxd', '_seq_dataset.pxd', '_weight_vector.pxd']
 foreach pxd: pxd_to_copy
   fs.copyfile(pxd)
 endforeach
