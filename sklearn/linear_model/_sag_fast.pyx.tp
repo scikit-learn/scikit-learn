@@ -31,7 +31,12 @@ from libc.math cimport fabs, exp, log
 from libc.time cimport time, time_t
 from libc.stdio cimport printf
 
-from .._loss._loss cimport CyLossFunction, CyHalfSquaredError, CyHalfBinomialLoss
+from .._loss._loss cimport (
+    CyLossFunction,
+    CyHalfBinomialLoss,
+    CyHalfMultinomialLoss,
+    CyHalfSquaredError,
+)
 from ..utils._seq_dataset cimport SequentialDataset32, SequentialDataset64
 
 
@@ -340,11 +345,11 @@ def sag{{name_suffix}}(
     # Whether the loss function is multinomial
     cdef bint multinomial = False
     # Multinomial loss function
-    cdef MultinomialLogLoss{{name_suffix}} multiloss
+    cdef CyHalfMultinomialLoss multiloss
 
     if loss_function == "multinomial":
         multinomial = True
-        multiloss = MultinomialLogLoss{{name_suffix}}()
+        multiloss = CyHalfMultinomialLoss()
     elif loss_function == "log":
         loss = CyHalfBinomialLoss()
     elif loss_function == "squared":
@@ -411,7 +416,12 @@ def sag{{name_suffix}}(
 
                 # compute the gradient for this sample, given the prediction
                 if multinomial:
-                    multiloss.cy_gradient(y, &prediction[0], n_classes, sample_weight, &gradient[0])
+                    multiloss.cy_gradient(
+                        y_true=y,
+                        raw_prediction=prediction,
+                        sample_weight=sample_weight,
+                        gradient_out=gradient,
+                    )
                 else:
                     gradient[0] = loss.cy_gradient(y, prediction[0]) * sample_weight
 
