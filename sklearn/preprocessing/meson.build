@@ -1,10 +1,9 @@
-# TODO Why does this not compile? Can not assign double to int64
-# py.extension_module(
-#   '_csr_polynomial_expansion',
-#   '_csr_polynomial_expansion.pyx',
-#   subdir: 'sklearn/preprocessing',
-#   install: true
-# )
+py.extension_module(
+  '_csr_polynomial_expansion',
+  '_csr_polynomial_expansion.pyx',
+  subdir: 'sklearn/preprocessing',
+  install: true
+)
 
 py.extension_module(
     '_target_encoder_fast',
