@@ -78,5 +78,6 @@ cython_args = [
 
 subdir('sklearn')
 
-# This copies all the .py files to the install dir without having to list them explicitely
+# TODO This copies all the .py files to the install dir without having to list
+# them explicitely. Do we want to be explicit instead?
 install_subdir('sklearn', install_dir: py.get_install_dir())
