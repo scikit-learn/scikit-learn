@@ -1,29 +1,37 @@
-pxd_to_copy = ['_openmp_helpers.pxd', '_heap.pxd', '_sorting.pxd', '_vector_sentinel.pxd']
+pxd_to_copy = [
+  '_openmp_helpers.pxd', '_heap.pxd', '_sorting.pxd', '_vector_sentinel.pxd',
+  '_cython_blas.pxd', '_typedefs.pxd']
 foreach pxd: pxd_to_copy
   fs.copyfile(pxd)
 endforeach
 
-py.extension_module(
-  'sparsefuncs_fast',
-  'sparsefuncs_fast.pyx',
-  dependencies: [np_dep],
-  subdir: 'sklearn/utils',
-  install: true
-)
+libs_sources = {
+  'sparsefuncs_fast': {'sources': ['sparsefuncs_fast.pyx'], 'dependencies': [np_dep]},
+  '_cython_blas': {'sources': ['_cython_blas.pyx']},
+  'arrayfuncs': {'sources': ['arrayfuncs.pyx']},
+  'murmurhash': {
+      'sources': ['murmurhash.pyx', 'src' / 'MurmurHash3.cpp'],
+      'dependencies': [np_dep]
+  },
+  '_fast_dict': {'sources': ['_fast_dict.pyx'], 'override_options': ['cython_language=cpp']},
+  '_openmp_helpers': {'sources': ['_openmp_helpers.pyx']},
+  '_random': {'sources': ['_random.pyx'], 'dependencies': [np_dep]},
+  '_typedefs': {'sources': ['_typedefs.pyx']},
+  '_heap': {'sources': ['_heap.pyx']},
+  '_sorting': {'sources': ['_sorting.pyx']},
+  '_vector_sentinel':
+    {'sources': ['_vector_sentinel.pyx'], 'override_options': ['cython_language=cpp'], 'dependencies': [np_dep]},
+  '_isfinite': {'sources': ['_isfinite.pyx']},
+}
 
-fs.copyfile('_cython_blas.pxd')
-py.extension_module(
-  '_cython_blas',
-  '_cython_blas.pyx',
-  dependencies: [np_dep],
-  subdir: 'sklearn/utils',
-  install: true
-)
-
-fs.copyfile('_typedefs.pxd')
-py.extension_module(
-  '_typedefs',
-  '_typedefs.pyx',
-  subdir: 'sklearn/utils',
-  install: true
-)
+foreach ext_name, ext_dict : libs_sources
+    py.extension_module(
+        ext_name,
+        ext_dict.get('sources'),
+        # cython_args: cython_args,
+        dependencies: [np_dep],
+        override_options : ext_dict.get('override_options', []),
+        subdir: 'sklearn/utils',
+        install: true
+    )
+endforeach
