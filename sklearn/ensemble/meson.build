@@ -5,3 +5,5 @@ py.extension_module(
     subdir: 'sklearn/ensemble',
     install: true
 )
+
+subdir('_hist_gradient_boosting')
