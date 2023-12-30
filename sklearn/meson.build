@@ -129,6 +129,7 @@ py.extension_module(
   #     '-DNPY_TARGET_VERSION=NPY_2_0_API_VERSION',
   #   ],
   #   include_directories: [npy_include_path],
+  cython_args: cython_args,
   install: true,
   subdir: 'sklearn',
 )

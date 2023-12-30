@@ -14,6 +14,7 @@ foreach ext_name, ext_dict : libs_sources
         ext_name,
         ext_dict.get('sources'),
         dependencies: [np_dep],
+        cython_args: cython_args,
         subdir: 'sklearn/ensemble/_hist_gradient_boosting',
         install: true
     )

@@ -1,6 +1,8 @@
 [build-system]
 # Minimum requirements for the build system to execute.
+build-backend = 'mesonpy'
 requires = [
+    "meson-python>=0.15.0",
     "setuptools",
     "wheel",
     "Cython>=0.29.33",

@@ -4,6 +4,7 @@ py.extension_module(
     '_cd_fast',
     '_cd_fast.pyx',
     dependencies: [np_dep],
+    cython_args: cython_args,
     subdir: 'sklearn/linear_model',
     install: true
 )
@@ -23,6 +24,7 @@ foreach name: name_list
     name,
     pyx,
     dependencies: [np_dep],
+    cython_args: cython_args,
     subdir: 'sklearn/linear_model',
     install: true
 )

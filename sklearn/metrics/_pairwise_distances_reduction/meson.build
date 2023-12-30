@@ -1,51 +1,5 @@
-# libs_sources = {
-#   '_dataset_pair': [
-#         {
-#             'sources': ['_datasets_pair.pyx.tp', '_datasets_pair.pxd.tp'],
-#             'language': 'c++',
-#             'include_np': True,
-#             'extra_compile_args': ['-std=c++11'],
-#         },
-#         {
-#             'sources': ['_middle_term_computer.pyx.tp', '_middle_term_computer.pxd.tp'],
-#             'language': 'c++',
-#             'extra_compile_args': ['-std=c++11'],
-#         },
-#         {
-#             'sources': ['_base.pyx.tp', '_base.pxd.tp'],
-#             'language': 'c++',
-#             'include_np': True,
-#             'extra_compile_args': ['-std=c++11'],
-#         },
-#         {
-#             'sources': ['_argkmin.pyx.tp', '_argkmin.pxd.tp'],
-#             'language': 'c++',
-#             'include_np': True,
-#             'extra_compile_args': ['-std=c++11'],
-#         },
-#         {
-#             'sources': ['_argkmin_classmode.pyx.tp'],
-#             'language': 'c++',
-#             'include_np': True,
-#             'extra_compile_args': ['-std=c++11'],
-#         },
-#         {
-#             'sources': ['_radius_neighbors.pyx.tp', '_radius_neighbors.pxd.tp'],
-#             'language': 'c++',
-#             'include_np': True,
-#             'extra_compile_args': ['-std=c++11'],
-#         },
-#         {
-#             'sources': ['_radius_neighbors_classmode.pyx.tp'],
-#             'language': 'c++',
-#             'include_np': True,
-#             'extra_compile_args': ['-std=c++11'],
-#         }
-# }
-
 # TODO Needed for relative imports in Cython?
 fs.copyfile('__init__.py')
-
 fs.copyfile('_classmode.pxd')
 
 name_list_with_pxd = ['_datasets_pair', '_middle_term_computer', '_base', '_argkmin', '_radius_neighbors']
@@ -67,8 +21,8 @@ foreach name: name_list_with_pxd
     name,
     [pxd, pyx],
     dependencies: [np_dep],
-    # TODO add std=c++11 to cython_args I have c++14 by default in root meson.build so maybe not?
     override_options: ['cython_language=cpp'],
+    cython_args: cython_args,
     subdir: 'sklearn/metrics/_pairwise_distances_reduction',
     install: true
 
@@ -88,8 +42,8 @@ foreach name: name_list_without_pxd
     name,
     pyx,
     dependencies: [np_dep],
-    # TODO add std=c++11 to cython_args I have c++14 by default in root meson.build so maybe not?
     override_options: ['cython_language=cpp'],
+    cython_args: cython_args,
     subdir: 'sklearn/metrics/_pairwise_distances_reduction',
     install: true
 

@@ -33,6 +33,7 @@ foreach ext_name, ext_dict : libs_sources
         # cython_args: cython_args,
         dependencies: [np_dep],
         override_options : ext_dict.get('override_options', []),
+        cython_args: cython_args,
         subdir: 'sklearn/utils',
         install: true
     )
@@ -60,6 +61,7 @@ foreach name: names
     name,
     [pxd, pyx],
     dependencies: [np_dep],
+    cython_args: cython_args,
     subdir: 'sklearn/utils',
     install: true
    )

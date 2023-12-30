@@ -12,6 +12,7 @@ foreach ext_name, ext_dict : libs_sources
         ext_dict.get('sources'),
         dependencies: [np_dep],
         override_options : ext_dict.get('override_options', []),
+        cython_args: cython_args,
         subdir: 'sklearn/tree',
         install: true
     )

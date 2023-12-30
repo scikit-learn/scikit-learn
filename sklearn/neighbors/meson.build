@@ -24,6 +24,7 @@ foreach name: name_list
     name,
     pyx,
     dependencies: [np_dep],
+    cython_args: cython_args,
     subdir: 'sklearn/neighbors',
     install: true
 
@@ -42,6 +43,7 @@ foreach ext_name, ext_dict : libs_sources
         ext_dict.get('sources'),
         dependencies: [np_dep],
         override_options : ext_dict.get('override_options', []),
+        cython_args: cython_args,
         subdir: 'sklearn/neighbors',
         install: true
     )

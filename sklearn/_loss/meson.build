@@ -7,6 +7,7 @@ _loss = custom_target('_loss',
 loss = py.extension_module(
   '_loss',
   '_loss.pyx',
+  cython_args: cython_args,
   install: true,
   subdir: 'sklearn/_loss',
 )

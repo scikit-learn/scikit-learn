@@ -13,13 +13,6 @@ libs_sources = {
     {'sources': ['_k_means_minibatch.pyx']},
 }
 
-# TODO needed to use relative imports from sklearn/metrics otherwise error is:
-# /home/lesteve/dev/scikit-learn/sklearn/cluster/_hierarchical_fast.pyx:6:0: 'sklearn/metrics/_dist_metrics.pxd' not found
-cython_args = [
-    '--include-dir',
-    meson.global_build_root(),
-]
-
 foreach ext_name, ext_dict : libs_sources
     py.extension_module(
         ext_name,
@@ -27,6 +20,7 @@ foreach ext_name, ext_dict : libs_sources
         cython_args: cython_args,
         dependencies: [np_dep],
         override_options : ext_dict.get('override_options', []),
+        cython_args: cython_args,
         subdir: 'sklearn/cluster',
         install: true
     )

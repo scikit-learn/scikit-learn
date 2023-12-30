@@ -62,6 +62,21 @@ tempita = files('sklearn/_build_utils/tempita.py')
 py = import('python').find_installation(pure: false)
 py_dep = py.dependency()
 
+# TODO boundscheck should depend on SKLEARN_ENABLE_DEBUG_CYTHON_DIRECTIVES
+# # Additional checks for Cython
+#     cython_enable_debug_directives = (
+#         os.environ.get("SKLEARN_ENABLE_DEBUG_CYTHON_DIRECTIVES", "0") != "0"
+#     )
+
+cython_args = [
+  '-X language_level=3', '-X boundscheck=False', '-X wraparound=False', '-X initializedcheck=False',
+  '-X nonecheck=False', '-X cdivision=True', '-X profile=False',
+  # TODO needed to use relative imports from sklearn/metrics otherwise error is:
+  # /home/lesteve/dev/scikit-learn/sklearn/cluster/_hierarchical_fast.pyx:6:0: 'sklearn/metrics/_dist_metrics.pxd' not found
+  '--include-dir', meson.global_build_root(),
+]
+
 subdir('sklearn')
 
+# This copies all the .py files to the install dir without having to list them explicitely
 install_subdir('sklearn', install_dir: py.get_install_dir())
