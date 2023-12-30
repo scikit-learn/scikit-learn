@@ -145,3 +145,4 @@ subdir('utils')
 # way to do this in meson?
 subdir('metrics')
 subdir('cluster')
+subdir('datasets')
