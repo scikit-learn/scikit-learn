@@ -17,8 +17,7 @@ foreach ext_name, ext_dict : libs_sources
     py.extension_module(
         ext_name,
         ext_dict.get('sources'),
-        cython_args: cython_args,
-        dependencies: [np_dep],
+        dependencies: [np_dep, openmp_dep],
         override_options : ext_dict.get('override_options', []),
         cython_args: cython_args,
         subdir: 'sklearn/cluster',

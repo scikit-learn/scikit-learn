@@ -62,6 +62,8 @@ endif
 inc_np = include_directories(incdir_numpy)
 np_dep = declare_dependency(include_directories: inc_np)
 
+openmp_dep = dependency('OpenMP', language: 'c')
+
 cc = meson.get_compiler('c')
 
 # Deal with M_PI & friends; add `use_math_defines` to c_args

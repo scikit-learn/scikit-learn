@@ -20,7 +20,7 @@ foreach name: name_list_with_pxd
   py.extension_module(
     name,
     [pxd, pyx],
-    dependencies: [np_dep],
+    dependencies: [np_dep, openmp_dep],
     override_options: ['cython_language=cpp'],
     cython_args: cython_args,
     subdir: 'sklearn/metrics/_pairwise_distances_reduction',
