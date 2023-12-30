@@ -25,6 +25,7 @@ from ._supervised import (
 from ._unsupervised import (
     calinski_harabasz_score,
     davies_bouldin_score,
+    dbcv_score,
     silhouette_samples,
     silhouette_score,
 )
@@ -49,4 +50,5 @@ __all__ = [
     "calinski_harabasz_score",
     "davies_bouldin_score",
     "consensus_score",
+    "dbcv_score",
 ]

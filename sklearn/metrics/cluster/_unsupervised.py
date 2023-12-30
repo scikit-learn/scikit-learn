@@ -7,19 +7,25 @@
 
 
 import functools
+import itertools
+import multiprocessing
 from numbers import Integral
 
 import numpy as np
+import scipy.stats
 from scipy.sparse import issparse
 
 from ...preprocessing import LabelEncoder
 from ...utils import _safe_indexing, check_random_state, check_X_y
-from ...utils._param_validation import (
-    Interval,
-    StrOptions,
-    validate_params,
-)
+from ...utils._param_validation import Interval, StrOptions, validate_params
 from ..pairwise import _VALID_METRICS, pairwise_distances, pairwise_distances_chunked
+from ._dbcv_helper import (
+    _check_duplicated_samples,
+    compute_pair_to_pair_dists,
+    fn_density_separation,
+    fn_density_sparseness,
+    get_subarray,
+)
 
 
 def check_number_of_labels(n_labels, n_samples):
@@ -423,3 +429,125 @@ def davies_bouldin_score(X, labels):
     combined_intra_dists = intra_dists[:, None] + intra_dists
     scores = np.max(combined_intra_dists / centroid_distances, axis=1)
     return np.mean(scores)
+
+
+@validate_params(
+    {
+        "X": ["array-like"],
+        "labels": ["array-like"],
+    },
+    prefer_skip_nested_validation=True,
+)
+def dbcv_score(
+    X, y, metric="sqeuclidean", noise_id=-1, check_duplicates=True, n_processes=1
+):
+    """
+    Compute Density-Based Clustering Validation (DBCV) metric.
+
+    DBCV is an intrinsic (unsupervised/unlabeled) relative metric that evaluates
+      the quality of clusters in a dataset.
+
+    Parameters:
+    - X (numpy.ndarray): Sample embeddings of shape (N, D).
+    - y (numpy.ndarray): Cluster IDs assigned to each sample in X, shape (N,).
+    - metric (str, optional): Metric function to compute dissimilarity between
+    observations. Defaults to "sqeuclidean".
+    - noise_id (int, optional): Noise "cluster" ID. Defaults to -1.
+    - check_duplicates (bool, optional): If True, check for duplicated samples.
+    Defaults to True.
+    - n_processes (int or "auto", optional): Maximum number of parallel processes
+      for processing clusters and cluster pairs.
+      If "auto", the number of parallel processes will be set to 1 for datasets
+        with 200 or fewer instances, and 4 for datasets with more than 200 instances.
+      Defaults to -1, which means using the maximum available CPUs.
+
+    Returns:
+    - float: DBCV metric estimation.
+
+    Source:
+    - "Density-Based Clustering Validation". Davoud Moulavi, Pablo A. Jaskowiak,
+    Ricardo J. G. B. Campello, Arthur Zimek, Jörg Sander.
+      https://www.dbs.ifi.lmu.de/~zimek/publications/SDM2014/DBCV.pdf
+    """
+
+    X = np.asfarray(X)
+
+    if X.ndim == 1:
+        X = X.reshape(-1, 1)
+
+    y = np.asarray(y, dtype=int)
+
+    n, d = X.shape  # NOTE: 'n' must be calculated before removing noise.
+
+    if n != y.size:
+        raise ValueError(f"Mismatch in {X.shape[0]=} and {y.size=} dimensions.")
+
+    non_noise_inds = y != noise_id
+    X = X[non_noise_inds, :]
+    y = y[non_noise_inds]
+
+    if y.size == 0:
+        return 0.0
+
+    y = scipy.stats.rankdata(y, method="dense") - 1
+    cluster_ids, cluster_sizes = np.unique(y, return_counts=True)
+
+    if check_duplicates:
+        _check_duplicated_samples(X)
+
+    dists = compute_pair_to_pair_dists(X=X, metric=metric)
+
+    # DSC: 'Density Sparseness of a Cluster'
+    dscs = np.empty(cluster_ids.size, dtype=float)
+
+    # DSPC: 'Density Separation of a Pair of Clusters'
+    min_dspcs = np.full(cluster_ids.size, fill_value=np.inf)
+
+    # Internal objects = Internal nodes = nodes such that degree(node) > 1 in MST.
+    internal_objects_per_cls = {}
+
+    cls_inds = [np.flatnonzero(y == cls_id) for cls_id in cluster_ids]
+
+    if n_processes == "auto":
+        n_processes = 4 if y.size > 200 else 1
+
+    with multiprocessing.Pool(processes=min(n_processes, cluster_ids.size)) as ppool:
+        fn_density_sparseness_ = functools.partial(fn_density_sparseness, d=d)
+
+        args = [(cls_ind, get_subarray(dists, inds_a=cls_ind)) for cls_ind in cls_inds]
+
+        for cls_id, (dsc, internal_node_inds) in enumerate(
+            ppool.starmap(fn_density_sparseness_, args)
+        ):
+            internal_objects_per_cls[cls_id] = internal_node_inds
+            dscs[cls_id] = dsc
+
+    n_cls_pairs = (cluster_ids.size * (cluster_ids.size - 1)) // 2
+
+    if n_cls_pairs > 0:
+        with multiprocessing.Pool(processes=min(n_processes, n_cls_pairs)) as ppool:
+            fn_density_separation_ = functools.partial(fn_density_separation, d=d)
+
+            args = [
+                (
+                    cls_i,
+                    cls_j,
+                    get_subarray(
+                        dists,
+                        internal_objects_per_cls[cls_i],
+                        internal_objects_per_cls[cls_j],
+                    ),
+                )
+                for cls_i, cls_j in itertools.combinations(cluster_ids, 2)
+            ]
+
+            for cls_i, cls_j, dspc_ij in ppool.starmap(fn_density_separation_, args):
+                min_dspcs[cls_i] = min(min_dspcs[cls_i], dspc_ij)
+                min_dspcs[cls_j] = min(min_dspcs[cls_j], dspc_ij)
+
+    np.nan_to_num(min_dspcs, copy=False, posinf=1e12)
+    vcs = (min_dspcs - dscs) / (1e-12 + np.maximum(min_dspcs, dscs))
+    np.nan_to_num(vcs, copy=False, nan=0.0)
+    dbcv = float(np.sum(vcs * cluster_sizes)) / n
+
+    return dbcv

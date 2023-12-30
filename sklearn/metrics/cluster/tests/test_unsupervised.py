@@ -10,6 +10,7 @@ from sklearn.metrics import pairwise_distances
 from sklearn.metrics.cluster import (
     calinski_harabasz_score,
     davies_bouldin_score,
+    dbcv_score,
     silhouette_samples,
     silhouette_score,
 )
@@ -411,3 +412,26 @@ def test_silhouette_score_integer_precomputed():
         silhouette_score(
             [[1, 1, 2], [1, 0, 1], [2, 1, 0]], [0, 0, 1], metric="precomputed"
         )
+
+
+def test_dbcv_kmeans_dbscan():
+    X, _ = datasets.make_moons(n_samples=100, noise=0.05, random_state=1782)
+
+    from sklearn.cluster import KMeans
+
+    kmeans = KMeans(n_clusters=2, algorithm="lloyd", n_init=10)
+    kmeans_labels = kmeans.fit_predict(X)
+
+    from sklearn.cluster import DBSCAN
+
+    dbscanner = DBSCAN(algorithm="ball_tree")
+    dbscan_labels = dbscanner.fit_predict(X)
+
+    actual_kmeans_score = dbcv_score(X, kmeans_labels)
+    actual_dbscan_score = dbcv_score(X, dbscan_labels)
+
+    expected_dbscan_score = 0.9999999999997616
+
+    # Kmeans_score is randomly between -0.2 and -0.5 so we can't give a unique value
+    assert -0.5 <= actual_kmeans_score <= 0.2
+    assert actual_dbscan_score == pytest.approx(expected_dbscan_score, rel=1e-6)
