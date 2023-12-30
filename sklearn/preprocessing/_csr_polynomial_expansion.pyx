@@ -63,9 +63,9 @@ cdef inline int64_t _deg2_column(
     for the columns involved in the expansion.
     """
     if interaction_only:
-        return n_features * i - i * (i + 3) // 2 - 1 + j
+        return n_features * i - i * (i + 3) / 2 - 1 + j
     else:
-        return n_features * i - i* (i + 1) // 2 + j
+        return n_features * i - i* (i + 1) / 2 + j
 
 
 cdef inline int64_t _deg3_column(
@@ -85,14 +85,14 @@ cdef inline int64_t _deg3_column(
             (
                 (3 * n_features) * (n_features * i - i**2)
                 + i * (i**2 + 11) - (3 * j) * (j + 3)
-            ) // 6 + i**2 + n_features * (j - 1 - 2 * i) + k
+            ) / 6 + i**2 + n_features * (j - 1 - 2 * i) + k
         )
     else:
         return (
             (
                 (3 * n_features) * (n_features * i - i**2)
                 + i ** 3 - i - (3 * j) * (j + 1)
-            ) // 6 + n_features * j + k
+            ) / 6 + n_features * j + k
         )
 
 
@@ -128,12 +128,12 @@ cpdef int64_t _calc_expanded_nnz(
     if degree == 2:
         # Only need to check when not using 128-bit integers
         if sizeof(LARGEST_INT_t) < 16 and n <= MAX_SAFE_INDEX_CALC_DEG2:
-            return n * (n + 1) // 2 - interaction_only * n
+            return n * (n + 1) / 2 - interaction_only * n
         return <int64_t> py_calc_expanded_nnz_deg2(n, interaction_only)
     else:
         # Only need to check when not using 128-bit integers
         if sizeof(LARGEST_INT_t) < 16 and n <= MAX_SAFE_INDEX_CALC_DEG3:
-            return n * (n**2 + 3 * n + 2) // 6 - interaction_only * n**2
+            return n * (n**2 + 3 * n + 2) / 6 - interaction_only * n**2
         return <int64_t> py_calc_expanded_nnz_deg3(n, interaction_only)
 
 cpdef int64_t _calc_total_nnz(

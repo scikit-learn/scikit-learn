@@ -42,7 +42,7 @@ def _realloc_test():
     # Helper for tests. Tries to allocate <size_t>(-1) / 2 * sizeof(size_t)
     # bytes, which will always overflow.
     cdef intp_t* p = NULL
-    safe_realloc(&p, <size_t>(-1) // 2)
+    safe_realloc(&p, <size_t>(-1) / 2)
     if p != NULL:
         free(p)
         assert False

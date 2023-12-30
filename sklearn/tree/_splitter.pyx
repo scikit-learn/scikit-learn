@@ -573,7 +573,7 @@ cdef inline void swap(float32_t* feature_values, intp_t* samples,
 cdef inline float32_t median3(float32_t* feature_values, intp_t n) noexcept nogil:
     # Median of three pivot selection, after Bentley and McIlroy (1993).
     # Engineering a sort function. SP&E. Requires 8/3 comparisons on average.
-    cdef float32_t a = feature_values[0], b = feature_values[n // 2], c = feature_values[n - 1]
+    cdef float32_t a = feature_values[0], b = feature_values[n / 2], c = feature_values[n - 1]
     if a < b:
         if b < c:
             return b
@@ -652,7 +652,7 @@ cdef void heapsort(float32_t* feature_values, intp_t* samples, intp_t n) noexcep
     cdef intp_t start, end
 
     # heapify
-    start = (n - 2) // 2
+    start = (n - 2) / 2
     end = n
     while True:
         sift_down(feature_values, samples, start, end)
@@ -1355,7 +1355,7 @@ cdef inline void binary_search(const int32_t[::1] sorted_array,
     cdef int32_t pivot
     index[0] = -1
     while start < end:
-        pivot = start + (end - start) // 2
+        pivot = start + (end - start) / 2
 
         if sorted_array[pivot] == value:
             index[0] = pivot
