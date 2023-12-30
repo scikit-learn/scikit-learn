@@ -36,5 +36,5 @@ py.extension_module(
         install: true
 )
 
-subdir('_pairwise_distances_reduction')
 subdir('cluster')
+subdir('_pairwise_distances_reduction')

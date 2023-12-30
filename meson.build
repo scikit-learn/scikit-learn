@@ -1,7 +1,6 @@
 project(
   'scikit-learn',
-  'c', 'cpp',
-  'cython',
+  'c', 'cpp', 'cython',
   # TODO should the version be dynamically generated, scikit-image does it but
   # not scipy for some reason
   version: '1.5.0.dev0',

@@ -67,7 +67,7 @@ foreach name: name_list_with_pxd
     name,
     [pxd, pyx],
     dependencies: [np_dep],
-    # TODO add std=c++11 to cython_args
+    # TODO add std=c++11 to cython_args I have c++14 by default in root meson.build so maybe not?
     override_options: ['cython_language=cpp'],
     subdir: 'sklearn/metrics/_pairwise_distances_reduction',
     install: true
@@ -88,7 +88,7 @@ foreach name: name_list_without_pxd
     name,
     pyx,
     dependencies: [np_dep],
-    # TODO add std=c++11 to cython_args
+    # TODO add std=c++11 to cython_args I have c++14 by default in root meson.build so maybe not?
     override_options: ['cython_language=cpp'],
     subdir: 'sklearn/metrics/_pairwise_distances_reduction',
     install: true
