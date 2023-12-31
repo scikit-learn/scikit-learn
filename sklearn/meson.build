@@ -1,3 +1,5 @@
+# TODO This whole file was initially probably taken from scikit-image have a
+# look at scipy to see how different this is ...
 fs = import('fs')
 
 # Platform detection
@@ -5,6 +7,7 @@ is_windows = host_machine.system() == 'windows'
 is_mingw = is_windows and cc.get_id() == 'gcc'
 
 cython_c_args = []
+# TODO look at this closer, taken from scikit-image, some files don't exist e.g. gcc_build_bitness.py
 if is_windows
   # For mingw-w64, link statically against the UCRT.
   gcc_link_args = ['-lucrt', '-static']
@@ -31,7 +34,7 @@ if is_windows
   endif
 endif
 
-# TODO Taken from scipy, seems like each project has its own tweak on this
+# TODO Taken from scikit-image, seems like each project has its own tweak on this
 # NumPy include directory - needed in all submodules
 # The chdir is needed because within numpy there's an `import signal`
 # statement, and we don't want that to pick up scipy's signal module rather
@@ -62,7 +65,12 @@ endif
 inc_np = include_directories(incdir_numpy)
 np_dep = declare_dependency(include_directories: inc_np)
 
-openmp_dep = dependency('OpenMP', language: 'c')
+
+openmp_dep = dependency('OpenMP', language: 'c', required: false)
+
+if not openmp_dep.found()
+    warning('Looks like OpenMP has not been found, TODO improve error message')
+endif
 
 cc = meson.get_compiler('c')
 
@@ -118,6 +126,8 @@ _cpp_Wno_cpp = cpp.get_supported_arguments('-Wno-cpp')
 cython_c_args += [_cpp_Wno_cpp, use_math_defines]
 cython_cpp_args = cython_c_args
 
+# TODO I should reuse cython_c_args and merge my own tweaks
+
 extensions = ['_isotonic']
 
 py.extension_module(
@@ -130,7 +140,6 @@ py.extension_module(
   #     # Require 1.25+ to test datetime additions
   #     '-DNPY_TARGET_VERSION=NPY_2_0_API_VERSION',
   #   ],
-  #   include_directories: [npy_include_path],
   cython_args: cython_args,
   install: true,
   subdir: 'sklearn',
@@ -143,10 +152,10 @@ sklearn_dir = py.get_install_dir() / 'sklearn'
 
 subdir('__check_build')
 subdir('_loss')
-# utils needs to be quite early since used by other modules
+# utils needs to be quite early since its .pxd are used by plenty of other modules Cython
 subdir('utils')
-# TODO metrics needs to be to be before cluster since it depends on it. Is there a better
-# way to do this in meson?
+# TODO metrics needs to be to be before cluster since cluster Cython imports
+# depends on metrics Cython. Better way to do this in meson?
 subdir('metrics')
 subdir('cluster')
 subdir('datasets')

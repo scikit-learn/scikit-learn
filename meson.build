@@ -80,4 +80,6 @@ subdir('sklearn')
 
 # TODO This copies all the .py files to the install dir without having to list
 # them explicitely. Do we want to be explicit instead?
+# See https://mesonbuild.com/FAQ.html#why-cant-i-specify-target-files-with-a-wildcard
+# and https://mesonbuild.com/FAQ.html#but-i-really-want-to-use-wildcards
 install_subdir('sklearn', install_dir: py.get_install_dir())
