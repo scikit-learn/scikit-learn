@@ -434,7 +434,11 @@ def davies_bouldin_score(X, labels):
 @validate_params(
     {
         "X": ["array-like"],
-        "labels": ["array-like"],
+        "y": ["array-like"],
+        "metric": [StrOptions(set(_VALID_METRICS))],
+        "noise_id": [int],
+        "check_duplicates": [bool],
+        "n_processes": [int],
     },
     prefer_skip_nested_validation=True,
 )
@@ -447,27 +451,45 @@ def dbcv_score(
     DBCV is an intrinsic (unsupervised/unlabeled) relative metric that evaluates
       the quality of clusters in a dataset.
 
-    Parameters:
-    - X (numpy.ndarray): Sample embeddings of shape (N, D).
-    - y (numpy.ndarray): Cluster IDs assigned to each sample in X, shape (N,).
-    - metric (str, optional): Metric function to compute dissimilarity between
-    observations. Defaults to "sqeuclidean".
-    - noise_id (int, optional): Noise "cluster" ID. Defaults to -1.
-    - check_duplicates (bool, optional): If True, check for duplicated samples.
-    Defaults to True.
-    - n_processes (int or "auto", optional): Maximum number of parallel processes
-      for processing clusters and cluster pairs.
-      If "auto", the number of parallel processes will be set to 1 for datasets
-        with 200 or fewer instances, and 4 for datasets with more than 200 instances.
-      Defaults to -1, which means using the maximum available CPUs.
+    Parameters
+    ----------
+    X : array-like of shape (n_samples, n_features)
+        A list of ``n_features``-dimensional data points. Each row corresponds
+        to a single data point.
 
-    Returns:
-    - float: DBCV metric estimation.
+    X : array-like of shape (n_sampled, n_features)
+        A list of ``n_features``-dimensional data points. Each row corresponds
+        to a single data point.
+    y : array-like of shape
+        Cluster IDs assigned to each sample in X, shape (N,).
+    metric : (str, optional)
+        Metric function to compute dissimilarity between
+        observations. Defaults to "sqeuclidean".
+    noise_id : (int, optional)
+        Noise "cluster" ID. Defaults to -1.
+    check_duplicates : (bool, optional)
+        If True, check for duplicated samples.
+        Defaults to True.
+    n_processes : (int or "auto", optional)
+        Maximum number of parallel processes
+        for processing clusters and cluster pairs.
+        If "auto", the number of parallel processes will
+        be set to 1 for datasets
+        with 200 or fewer instances, and 4 for datasets with more than
+        200 instances.
+        Defaults to 1.
 
-    Source:
-    - "Density-Based Clustering Validation". Davoud Moulavi, Pablo A. Jaskowiak,
-    Ricardo J. G. B. Campello, Arthur Zimek, Jörg Sander.
-      https://www.dbs.ifi.lmu.de/~zimek/publications/SDM2014/DBCV.pdf
+    Returns
+    -------
+    score: float
+        The resulting DBCV metric estimation.
+
+    References
+    ----------
+        "Density-Based Clustering Validation". Davoud Moulavi,
+        Pablo A. Jaskowiak, Ricardo J. G. B. Campello, Arthur Zimek,
+        Jörg Sander.
+        https://www.dbs.ifi.lmu.de/~zimek/publications/SDM2014/DBCV.pdf
     """
 
     X = np.asfarray(X)
