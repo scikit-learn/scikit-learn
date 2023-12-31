@@ -2355,7 +2355,7 @@ def recall_score(
         "y_pred": ["array-like"],
         "sample_weight": ["array-like", None],
         "adjusted": ["boolean"],
-        "zero_division": ["str"],
+        "zero_division": ["warn", 0, 1],
     },
     prefer_skip_nested_validation=True,
 )
