@@ -2358,7 +2358,9 @@ def recall_score(
     },
     prefer_skip_nested_validation=True,
 )
-def balanced_accuracy_score(y_true, y_pred, *, sample_weight=None, adjusted=False, zero_division="warn"):
+def balanced_accuracy_score(
+    y_true, y_pred, *, sample_weight=None, adjusted=False, zero_division="warn"
+):
     """Compute the balanced accuracy.
 
     The balanced accuracy in binary and multiclass classification problems to
@@ -2437,9 +2439,10 @@ def balanced_accuracy_score(y_true, y_pred, *, sample_weight=None, adjusted=Fals
         per_class = np.diag(C) / C.sum(axis=1)
     if np.any(np.isnan(per_class)) or np.any(C.sum(axis=1) == 0):
         if zero_division == "warn":
-            warnings.warn("y_pred contains classes not in y_true or some classes have no true samples.")
+            warnings.warn("y_pred contains classes not in y_true or "
+                          "some classes have no true samples.")
             per_class = np.nan_to_num(per_class, nan=0.0)
-        else: 
+        else:
             per_class = np.nan_to_num(per_class, nan=zero_division)
     
     score = np.mean(per_class)

@@ -607,6 +607,10 @@ Changelog
   :func:`metrics.root_mean_squared_log_error` instead.
   :pr:`26734` by :user:`Alejandro Martin Gil <101AlexMartin>`.
 
+- |Fix| :func:`metrics.balanced_accuracy_score` Added zero division handling to make 
+  balanced accuracy consistent with macro-average recall.
+  :pr:`28038` by :user:`Tenga Cortal <TengaCortal>`.
+
 :mod:`sklearn.model_selection`
 ..............................
 
