@@ -2355,6 +2355,7 @@ def recall_score(
         "y_pred": ["array-like"],
         "sample_weight": ["array-like", None],
         "adjusted": ["boolean"],
+        "zero_division": ["str"],
     },
     prefer_skip_nested_validation=True,
 )
@@ -2439,12 +2440,14 @@ def balanced_accuracy_score(
         per_class = np.diag(C) / C.sum(axis=1)
     if np.any(np.isnan(per_class)) or np.any(C.sum(axis=1) == 0):
         if zero_division == "warn":
-            warnings.warn("y_pred contains classes not in y_true or "
-                          "some classes have no true samples.")
+            warnings.warn(
+                "y_pred contains classes not in y_true or "
+                "some classes have no true samples."
+            )
             per_class = np.nan_to_num(per_class, nan=0.0)
         else:
             per_class = np.nan_to_num(per_class, nan=zero_division)
- 
+
     score = np.mean(per_class)
     if adjusted:
         n_classes = len(per_class)
