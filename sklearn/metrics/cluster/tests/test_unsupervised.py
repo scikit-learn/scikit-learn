@@ -429,6 +429,11 @@ def sample_data():
     return np.array([[0, 1], [2, 3], [4, 5]])
 
 
+@pytest.fixture
+def sample_data_large():
+    return np.arange(1000000).reshape(1000, 1000)
+
+
 def test_compute_pair_to_pair_dists(sample_data):
     dists = compute_pair_to_pair_dists(sample_data, metric="euclidean")
     assert dists.shape == (3, 3)
@@ -459,17 +464,50 @@ def test_compute_cluster_core_distance(sample_data):
     assert core_dists.shape == (3, 1)
 
 
+def test_compute_cluster_core_distance_large(sample_data_large):
+    dists = compute_pair_to_pair_dists(sample_data_large, metric="euclidean")
+    core_dists = compute_cluster_core_distance(dists, d=2)
+    assert core_dists.shape == (1000, 1)
+
+
 def test_compute_mutual_reach_dists(sample_data):
     dists = compute_pair_to_pair_dists(sample_data, metric="euclidean")
     mutual_reach_dists = compute_mutual_reach_dists(dists, d=2, is_symmetric=True)
     assert mutual_reach_dists.shape == (3, 3)
 
 
-def test_fn_density_sparseness(sample_data):
-    dists = compute_pair_to_pair_dists(sample_data, metric="euclidean")
-    dsc, internal_node_inds = fn_density_sparseness(np.arange(3), dists, d=2)
+def test_fn_density_sparseness():
+    cls_inds = np.array([1, 2, 3])
+    dists = np.array([[np.inf, 1.0, 2.0], [1.0, np.inf, 1.0], [2.0, 1.0, np.inf]])
+    dsc, internal_node_inds = fn_density_sparseness(cls_inds, dists, d=2)
+    assert np.isclose(dsc, 0, rtol=1e-8)
+    np.testing.assert_array_equal(internal_node_inds, np.array([]))
+
+    assert cls_inds.size == 3
     assert isinstance(dsc, float)
     assert isinstance(internal_node_inds, np.ndarray)
+
+
+def test_fn_density_sparseness_larger():
+    cls_inds = np.array([1, 2, 3, 4, 5])
+    dists = np.array(
+        [
+            [np.inf, 1.0, 2.0, 3.0, 4.0],
+            [1.0, np.inf, 1.0, 2.0, 3.0],
+            [2.0, 1.0, np.inf, 1.0, 2.0],
+            [3.0, 2.0, 1.0, np.inf, 1.0],
+            [4.0, 3.0, 2.0, 1.0, np.inf],
+        ]
+    )
+
+    dsc, internal_node_inds = fn_density_sparseness(cls_inds, dists, d=2)
+    assert np.isclose(dsc, 1.2649110640675099, rtol=1e-8)
+    np.testing.assert_array_equal(internal_node_inds, np.array([2, 3, 4]))
+
+    assert cls_inds.size > 3
+    assert isinstance(dsc, float)
+    assert isinstance(internal_node_inds, np.ndarray)
+    assert internal_node_inds.size > 0
 
 
 def test_fn_density_separation(sample_data):
@@ -480,10 +518,44 @@ def test_fn_density_separation(sample_data):
     assert isinstance(dspc_ij, float)
 
 
+def test_check_duplicated_samples_unique_value():
+    X = np.array([1])
+    with pytest.raises(ValueError, match="Duplicated samples have been found in X."):
+        _check_duplicated_samples(X)
+
+
 def test_check_duplicated_samples():
     X = np.array([[1, 2], [3, 4], [1, 2]])
     with pytest.raises(ValueError, match="Duplicated samples have been found in X."):
         _check_duplicated_samples(X)
+
+
+def test_dbcv_one_dimension():
+    X, _ = datasets.make_moons(n_samples=30, noise=0.05, random_state=1782)
+    X = X.flatten()
+    y = np.zeros((60,))
+
+    actual_dbcv_score = dbcv_score(X, y)
+    expected_dbcv_score = 0.9999999999998341
+
+    assert actual_dbcv_score == pytest.approx(expected_dbcv_score, rel=1e-6)
+
+
+def test_dbcv_value_error_on_dimension_mismatch():
+    X = np.random.rand(10, 3)
+    y = np.random.randint(0, 2, size=(15,))
+
+    with pytest.raises(ValueError, match=r"Mismatch in .* and .* dimensions."):
+        dbcv_score(X, y)
+
+
+def test_dbcv_noise_id_equals_all_y_values():
+    X = np.random.rand(10, 3)
+    y = np.zeros(10, dtype=int)
+
+    result = dbcv_score(X, y, noise_id=0)
+
+    assert result == 0.0
 
 
 def test_dbcv_kmeans_dbscan():

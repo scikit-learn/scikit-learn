@@ -470,13 +470,9 @@ def dbcv_score(
     check_duplicates : (bool, optional)
         If True, check for duplicated samples.
         Defaults to True.
-    n_processes : (int or "auto", optional)
+    n_processes : (int, optional)
         Maximum number of parallel processes
         for processing clusters and cluster pairs.
-        If "auto", the number of parallel processes will
-        be set to 1 for datasets
-        with 200 or fewer instances, and 4 for datasets with more than
-        200 instances.
         Defaults to 1.
 
     Returns
@@ -529,9 +525,6 @@ def dbcv_score(
     internal_objects_per_cls = {}
 
     cls_inds = [np.flatnonzero(y == cls_id) for cls_id in cluster_ids]
-
-    if n_processes == "auto":
-        n_processes = 4 if y.size > 200 else 1
 
     with multiprocessing.Pool(processes=min(n_processes, cluster_ids.size)) as ppool:
         fn_density_sparseness_ = functools.partial(fn_density_sparseness, d=d)
