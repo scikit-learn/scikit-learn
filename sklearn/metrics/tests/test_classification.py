@@ -2779,16 +2779,14 @@ def test_balanced_accuracy_score_unseen():
     ],
 )
 def test_balanced_accuracy_score(y_true, y_pred):
-    macro_recall = recall_score(
-        y_true, y_pred, average="macro"
-    )
+    macro_recall = recall_score(y_true, y_pred, average="macro")
     with ignore_warnings():
         # Warnings are tested in test_balanced_accuracy_score_unseen
         balanced = balanced_accuracy_score(y_true, y_pred)
     assert balanced == pytest.approx(macro_recall)
     adjusted = balanced_accuracy_score(y_true, y_pred, adjusted=True)
     max_unique_classes = max(len(np.unique(y_true)), len(np.unique(y_pred)))
-    chance = 1/max_unique_classes
+    chance = 1 / max_unique_classes
     assert adjusted == (balanced - chance) / (1 - chance)
 
 
