@@ -2765,7 +2765,7 @@ def test_brier_score_loss():
 
 
 def test_balanced_accuracy_score_unseen():
-    msg = "y_pred contains classes not in y_true"
+    msg = "y_pred contains classes not in y_true or some classes have no true samples."
     with pytest.warns(UserWarning, match=msg):
         balanced_accuracy_score([0, 0, 0], [0, 0, 1])
 
@@ -2780,14 +2780,15 @@ def test_balanced_accuracy_score_unseen():
 )
 def test_balanced_accuracy_score(y_true, y_pred):
     macro_recall = recall_score(
-        y_true, y_pred, average="macro", labels=np.unique(y_true)
+        y_true, y_pred, average="macro"
     )
     with ignore_warnings():
         # Warnings are tested in test_balanced_accuracy_score_unseen
         balanced = balanced_accuracy_score(y_true, y_pred)
     assert balanced == pytest.approx(macro_recall)
     adjusted = balanced_accuracy_score(y_true, y_pred, adjusted=True)
-    chance = balanced_accuracy_score(y_true, np.full_like(y_true, y_true[0]))
+    max_unique_classes = max(len(np.unique(y_true)), len(np.unique(y_pred)))
+    chance = 1/max_unique_classes
     assert adjusted == (balanced - chance) / (1 - chance)
 
 

@@ -2358,7 +2358,7 @@ def recall_score(
     },
     prefer_skip_nested_validation=True,
 )
-def balanced_accuracy_score(y_true, y_pred, *, sample_weight=None, adjusted=False):
+def balanced_accuracy_score(y_true, y_pred, *, sample_weight=None, adjusted=False, zero_division="warn"):
     """Compute the balanced accuracy.
 
     The balanced accuracy in binary and multiclass classification problems to
@@ -2386,6 +2386,11 @@ def balanced_accuracy_score(y_true, y_pred, *, sample_weight=None, adjusted=Fals
         When true, the result is adjusted for chance, so that random
         performance would score 0, while keeping perfect performance at a score
         of 1.
+
+    zero_division : {"warn", 0, 1}, default="warn"
+        Sets the value to return when there is a zero division. If set to "warn",
+        a warning will be raised and 0 will be returned. If set to 0, the metric
+        will be 0, and if set to 1, the metric will be 1.
 
     Returns
     -------
@@ -2430,9 +2435,13 @@ def balanced_accuracy_score(y_true, y_pred, *, sample_weight=None, adjusted=Fals
     C = confusion_matrix(y_true, y_pred, sample_weight=sample_weight)
     with np.errstate(divide="ignore", invalid="ignore"):
         per_class = np.diag(C) / C.sum(axis=1)
-    if np.any(np.isnan(per_class)):
-        warnings.warn("y_pred contains classes not in y_true")
-        per_class = per_class[~np.isnan(per_class)]
+    if np.any(np.isnan(per_class)) or np.any(C.sum(axis=1) == 0):
+        if zero_division == "warn":
+            warnings.warn("y_pred contains classes not in y_true or some classes have no true samples.")
+            per_class = np.nan_to_num(per_class, nan=0.0)
+        else: 
+            per_class = np.nan_to_num(per_class, nan=zero_division)
+    
     score = np.mean(per_class)
     if adjusted:
         n_classes = len(per_class)
