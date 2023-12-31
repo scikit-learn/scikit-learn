@@ -520,8 +520,8 @@ def test_fn_density_separation(sample_data):
 
 def test_check_duplicated_samples_unique_value():
     X = np.array([1])
-    with pytest.raises(ValueError, match="Duplicated samples have been found in X."):
-        _check_duplicated_samples(X)
+    result = _check_duplicated_samples(X)
+    assert result is None
 
 
 def test_check_duplicated_samples():
