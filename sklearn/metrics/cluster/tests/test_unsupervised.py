@@ -14,6 +14,16 @@ from sklearn.metrics.cluster import (
     silhouette_samples,
     silhouette_score,
 )
+from sklearn.metrics.cluster._dbcv_helper import (
+    _check_duplicated_samples,
+    compute_cluster_core_distance,
+    compute_mutual_reach_dists,
+    compute_pair_to_pair_dists,
+    fn_density_separation,
+    fn_density_sparseness,
+    get_internal_objects,
+    get_subarray,
+)
 from sklearn.metrics.cluster._unsupervised import _silhouette_reduce
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils.fixes import (
@@ -412,6 +422,68 @@ def test_silhouette_score_integer_precomputed():
         silhouette_score(
             [[1, 1, 2], [1, 0, 1], [2, 1, 0]], [0, 0, 1], metric="precomputed"
         )
+
+
+@pytest.fixture
+def sample_data():
+    return np.array([[0, 1], [2, 3], [4, 5]])
+
+
+def test_compute_pair_to_pair_dists(sample_data):
+    dists = compute_pair_to_pair_dists(sample_data, metric="euclidean")
+    assert dists.shape == (3, 3)
+
+
+def test_get_subarray(sample_data):
+    subarray = get_subarray(sample_data, inds_a=[0, 2], inds_b=[1])
+    expected_subarray = np.array([[1, 5]])
+
+    assert subarray.shape == (1, 2)
+    assert np.array_equal(subarray, expected_subarray)
+
+
+def test_get_internal_objects(sample_data):
+    mutual_reach_dists = compute_pair_to_pair_dists(sample_data, metric="euclidean")
+    internal_node_inds, internal_edge_weights = get_internal_objects(mutual_reach_dists)
+
+    expected_internal_node_inds = np.array([1])
+    expected_internal_edge_weights = np.array([[0.0]])
+
+    assert np.array_equal(internal_node_inds, expected_internal_node_inds)
+    assert np.array_equal(internal_edge_weights, expected_internal_edge_weights)
+
+
+def test_compute_cluster_core_distance(sample_data):
+    dists = compute_pair_to_pair_dists(sample_data, metric="euclidean")
+    core_dists = compute_cluster_core_distance(dists, d=2)
+    assert core_dists.shape == (3, 1)
+
+
+def test_compute_mutual_reach_dists(sample_data):
+    dists = compute_pair_to_pair_dists(sample_data, metric="euclidean")
+    mutual_reach_dists = compute_mutual_reach_dists(dists, d=2, is_symmetric=True)
+    assert mutual_reach_dists.shape == (3, 3)
+
+
+def test_fn_density_sparseness(sample_data):
+    dists = compute_pair_to_pair_dists(sample_data, metric="euclidean")
+    dsc, internal_node_inds = fn_density_sparseness(np.arange(3), dists, d=2)
+    assert isinstance(dsc, float)
+    assert isinstance(internal_node_inds, np.ndarray)
+
+
+def test_fn_density_separation(sample_data):
+    dists = compute_pair_to_pair_dists(sample_data, metric="euclidean")
+    cls_i, cls_j, dspc_ij = fn_density_separation(0, 1, dists, d=2)
+    assert isinstance(cls_i, int)
+    assert isinstance(cls_j, int)
+    assert isinstance(dspc_ij, float)
+
+
+def test_check_duplicated_samples():
+    X = np.array([[1, 2], [3, 4], [1, 2]])
+    with pytest.raises(ValueError, match="Duplicated samples have been found in X."):
+        _check_duplicated_samples(X)
 
 
 def test_dbcv_kmeans_dbscan():
