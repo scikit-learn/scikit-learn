@@ -2444,7 +2444,7 @@ def balanced_accuracy_score(
             per_class = np.nan_to_num(per_class, nan=0.0)
         else:
             per_class = np.nan_to_num(per_class, nan=zero_division)
-    
+ 
     score = np.mean(per_class)
     if adjusted:
         n_classes = len(per_class)
