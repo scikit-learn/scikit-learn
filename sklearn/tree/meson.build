@@ -1,11 +1,10 @@
 libs_sources = {
-  '_tree': {'sources': ['_tree.pyx'], 'override_options': ['cython_language=cpp'], 'optimization_level': 'O3'},
-  '_splitter': {'sources': ['_splitter.pyx'], 'optimization_level': 'O3'},
-  '_criterion': {'sources': ['_criterion.pyx'], 'optimization_level': 'O3'},
-  '_utils': {'sources': ['_utils.pyx'], 'optimization_level': 'O3'},
+  '_tree': {'sources': ['_tree.pyx'], 'override_options': ['cython_language=cpp']},
+  '_splitter': {'sources': ['_splitter.pyx']},
+  '_criterion': {'sources': ['_criterion.pyx']},
+  '_utils': {'sources': ['_utils.pyx']},
 }
 
-# TODO how to pass optimization_level 03?
 foreach ext_name, ext_dict : libs_sources
     py.extension_module(
         ext_name,
@@ -13,6 +12,8 @@ foreach ext_name, ext_dict : libs_sources
         dependencies: [np_dep],
         override_options : ext_dict.get('override_options', []),
         cython_args: cython_args,
+        c_args: ['-O3'],
+        cpp_args: ['-O3'],
         subdir: 'sklearn/tree',
         install: true
     )
