@@ -2458,7 +2458,7 @@ def balanced_accuracy_score(
         chance = 1 / n_classes
         score -= chance
         score /= 1 - chance
-    return score, per_class
+    return score
 
 
 @validate_params(
