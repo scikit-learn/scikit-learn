@@ -2793,16 +2793,24 @@ def test_balanced_accuracy_score(y_true, y_pred):
 @pytest.mark.parametrize(
     "y_true, y_pred, zero_division_value",
     [
-        (np.array([1, 2, 3, 4]), np.array([1, 2, 2, 4]), 1),
+        (np.array([1, 1, 1, 1]), np.array([2, 2, 2, 2]), 1),
     ],
 )
 def test_balanced_accuracy_score_zero_division(y_true, y_pred, zero_division_value):
+    C = confusion_matrix(y_true, y_pred, sample_weight=None)
+    with np.errstate(divide="ignore", invalid="ignore"):
+        per_class = np.diag(C) / C.sum(axis=1)
+
+    nan_mask = np.isnan(per_class)
+    expected_per_class = per_class
+    expected_per_class[nan_mask] = zero_division_value
+
     with ignore_warnings():
         # Warnings are tested in test_balanced_accuracy_score_unseen
-        balanced = balanced_accuracy_score(
+        balanced, per_class = balanced_accuracy_score(
             y_true, y_pred, zero_division=zero_division_value
         )
-    assert balanced == zero_division_value
+    assert np.array_equal(per_class, expected_per_class)
 
 
 @pytest.mark.parametrize(
