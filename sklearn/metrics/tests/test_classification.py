@@ -2791,6 +2791,21 @@ def test_balanced_accuracy_score(y_true, y_pred):
 
 
 @pytest.mark.parametrize(
+    "y_true, y_pred, zero_division_value",
+    [
+        (np.array([1, 2, 3, 4]), np.array([1, 2, 2, 4]), 1),
+    ],
+)
+def test_balanced_accuracy_score_zero_division(y_true, y_pred, zero_division_value):
+    with ignore_warnings():
+        # Warnings are tested in test_balanced_accuracy_score_unseen
+        balanced = balanced_accuracy_score(
+            y_true, y_pred, zero_division=zero_division_value
+        )
+    assert balanced == zero_division_value
+
+
+@pytest.mark.parametrize(
     "metric",
     [
         jaccard_score,
