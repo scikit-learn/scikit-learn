@@ -1,8 +1,31 @@
-# TODO Needed for relative imports in Cython?
-fs.copyfile('__init__.py')
-fs.copyfile('_classmode.pxd')
+_pairwise_distances_reduction_cython_tree = [
+  fs.copyfile('__init__.py'),
+  fs.copyfile('_classmode.pxd')
+]
 
-name_list_with_pxd = ['_datasets_pair', '_middle_term_computer', '_base', '_argkmin', '_radius_neighbors']
+_datasets_pair_pxd = custom_target(
+    '_datasets_pair_pxd',
+    output: '_datasets_pair.pxd',
+    input: '_datasets_pair.pxd.tp',
+    command: [py, tempita, '@INPUT@', '-o', '@OUTDIR@']
+  )
+_datasets_pair_pyx = custom_target(
+    '_datasets_pair_pyx',
+    output: '_datasets_pair.pyx',
+    input: '_datasets_pair.pyx.tp',
+    command: [py, tempita, '@INPUT@', '-o', '@OUTDIR@'],
+  )
+py.extension_module(
+    name,
+    [pxd, pyx, _pairwise_distances_reduction_cython_tree],
+    dependencies: [np_dep, openmp_dep],
+    override_options: ['cython_language=cpp'],
+    cython_args: cython_args,
+    subdir: 'sklearn/metrics/_pairwise_distances_reduction',
+    install: true
+)
+
+name_list_with_pxd = ['_middle_term_computer', '_base', '_argkmin', '_radius_neighbors']
 
 foreach name: name_list_with_pxd
   pxd = custom_target(
@@ -15,17 +38,16 @@ foreach name: name_list_with_pxd
     name + '_pyx',
     output: name + '.pyx',
     input: name + '.pyx.tp',
-    command: [py, tempita, '@INPUT@', '-o', '@OUTDIR@']
+    command: [py, tempita, '@INPUT@', '-o', '@OUTDIR@'],
   )
   py.extension_module(
     name,
-    [pxd, pyx],
+    [pxd, pyx, _datasets_pair_pxd, _pairwise_distances_reduction_cython_tree],
     dependencies: [np_dep, openmp_dep],
     override_options: ['cython_language=cpp'],
     cython_args: cython_args,
     subdir: 'sklearn/metrics/_pairwise_distances_reduction',
     install: true
-
 )
 endforeach
 
@@ -36,16 +58,15 @@ foreach name: name_list_without_pxd
     name + '_pyx',
     output: name + '.pyx',
     input: name + '.pyx.tp',
-    command: [py, tempita, '@INPUT@', '-o', '@OUTDIR@']
+    command: [py, tempita, '@INPUT@', '-o', '@OUTDIR@'],
   )
   py.extension_module(
     name,
-    pyx,
+    [pyx, _pairwise_distances_reduction_cython_tree, _datasets_pair_pxd],
     dependencies: [np_dep],
     override_options: ['cython_language=cpp'],
     cython_args: cython_args,
     subdir: 'sklearn/metrics/_pairwise_distances_reduction',
     install: true
-
 )
 endforeach

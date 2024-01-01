@@ -3,7 +3,6 @@ ctypedef fused floating_in:
     double
     float
 
-
 # Fused types for output like gradient and hessian
 # We use a different fused types for input (floating_in) and output (floating_out), such
 # that input and output can have different dtypes in the same function call. A single

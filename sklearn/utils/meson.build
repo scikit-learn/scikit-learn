@@ -1,11 +1,13 @@
-fs.copyfile('__init__.py')
-
-pxd_to_copy = [
-  '_openmp_helpers.pxd', '_heap.pxd', '_sorting.pxd', '_vector_sentinel.pxd',
-  '_cython_blas.pxd', '_typedefs.pxd', '_random.pxd']
-foreach pxd: pxd_to_copy
-  fs.copyfile(pxd)
-endforeach
+utils_cython_tree = [
+  fs.copyfile('__init__.py'),
+  fs.copyfile('_cython_blas.pxd'),
+  fs.copyfile('_heap.pxd'),
+  fs.copyfile('_openmp_helpers.pxd'),
+  fs.copyfile('_random.pxd'),
+  fs.copyfile('_sorting.pxd'),
+  fs.copyfile('_typedefs.pxd'),
+  fs.copyfile('_vector_sentinel.pxd'),
+]
 
 libs_sources = {
   'sparsefuncs_fast': {'sources': ['sparsefuncs_fast.pyx'], 'dependencies': [np_dep]},
@@ -29,7 +31,7 @@ libs_sources = {
 foreach ext_name, ext_dict : libs_sources
     py.extension_module(
         ext_name,
-        ext_dict.get('sources'),
+        ext_dict.get('sources') + utils_cython_tree,
         dependencies: [np_dep, openmp_dep],
         override_options : ext_dict.get('override_options', []),
         cython_args: cython_args,
@@ -58,7 +60,7 @@ foreach name: names
   )
   py.extension_module(
     name,
-    [pxd, pyx],
+    [pxd, pyx] + utils_cython_tree,
     dependencies: [np_dep],
     cython_args: cython_args,
     subdir: 'sklearn/utils',
