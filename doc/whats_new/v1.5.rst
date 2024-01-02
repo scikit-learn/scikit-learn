@@ -38,3 +38,9 @@ TODO: update at the time of the release.
 
 - |Feature| A fitted :class:`compose.ColumnTransformer` now implements `__getitem__`
   which returns the fitted transformers by name. :pr:`27990` by `Thomas Fan`_.
+
+:mod:`sklearn.metrics`
+......................
+
+- |Feature| :func:`metrics.cluster.dbcv_score`
+  :pr:`28036` by :user:`Nils Cercariolo <Nylio-prog>`.

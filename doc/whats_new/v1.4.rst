@@ -607,9 +607,6 @@ Changelog
   :func:`metrics.root_mean_squared_log_error` instead.
   :pr:`26734` by :user:`Alejandro Martin Gil <101AlexMartin>`.
 
-- |Feature| :func:`metrics.cluster.dbcv_score`
-  :pr:`28036` by :user:`Nils Cercariolo <Nylio-prog>`.
-
 :mod:`sklearn.model_selection`
 ..............................
 
