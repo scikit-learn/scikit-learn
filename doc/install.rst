@@ -216,8 +216,8 @@ Debian/Ubuntu
 The Debian/Ubuntu package is split in three different packages called
 ``python3-sklearn`` (python modules), ``python3-sklearn-lib`` (low-level
 implementations and bindings), ``python3-sklearn-doc`` (documentation).
-Only the Python 3 version is available in the Debian Buster (the more recent
-Debian distribution).
+Note that scikit-learn requires Python 3, hence the need to use the `python3-`
+suffixed package names.
 Packages can be installed using ``apt-get``:
 
 .. prompt:: bash $
@@ -229,7 +229,7 @@ Fedora
 ------
 
 The Fedora package is called ``python3-scikit-learn`` for the python 3 version,
-the only one available in Fedora30.
+the only one available in Fedora.
 It can be installed using ``dnf``:
 
 .. prompt:: bash $

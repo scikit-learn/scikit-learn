@@ -1952,6 +1952,7 @@ def learning_curve(
             )
             for train, test in train_test_proportions
         )
+        _warn_or_raise_about_fit_failures(results, error_score)
         results = _aggregate_score_dicts(results)
         train_scores = results["train_scores"].reshape(-1, n_unique_ticks).T
         test_scores = results["test_scores"].reshape(-1, n_unique_ticks).T
