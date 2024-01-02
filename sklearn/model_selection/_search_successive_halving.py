@@ -517,6 +517,17 @@ class HalvingGridSearchCV(BaseSuccessiveHalving):
         expensive and is not strictly required to select the parameters that
         yield the best generalization performance.
 
+    use_warm_start : str or list of str, optional
+        The parameters named here will be searched over without clearing the
+        estimator state in between.  This allows efficient searches over
+        parameters where ``warm_start`` can be used. The user should also set
+        the estimator's ``warm_start`` parameter to True.
+
+        Candidate parameter settings will be reordered to maximise use of this
+        efficiency feature.
+
+        .. versionadded:: TBC
+
     random_state : int, RandomState instance or None, default=None
         Pseudo random number generator state used for subsampling the dataset
         when `resources != 'n_samples'`. Ignored otherwise.
@@ -688,6 +699,7 @@ class HalvingGridSearchCV(BaseSuccessiveHalving):
         refit=True,
         error_score=np.nan,
         return_train_score=True,
+        use_warm_start=None,
         random_state=None,
         n_jobs=None,
         verbose=0,
@@ -709,9 +721,10 @@ class HalvingGridSearchCV(BaseSuccessiveHalving):
             aggressive_elimination=aggressive_elimination,
         )
         self.param_grid = param_grid
+        self.use_warm_start = use_warm_start
 
     def _generate_candidate_params(self):
-        return ParameterGrid(self.param_grid)
+        return ParameterGrid(self.param_grid, least_significant=self.use_warm_start)
 
 
 class HalvingRandomSearchCV(BaseSuccessiveHalving):

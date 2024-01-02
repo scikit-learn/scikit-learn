@@ -54,7 +54,7 @@ from sklearn.model_selection import (
     StratifiedShuffleSplit,
     train_test_split,
 )
-from sklearn.model_selection._search import BaseSearchCV
+from sklearn.model_selection._search import BaseSearchCV, _generate_warm_start_groups
 from sklearn.model_selection.tests.common import OneTimeSplitter
 from sklearn.neighbors import KernelDensity, KNeighborsClassifier, LocalOutlierFactor
 from sklearn.pipeline import Pipeline
@@ -190,6 +190,48 @@ def test_parameter_grid():
     assert len(has_empty) == 4
     assert list(has_empty) == [{"C": 1}, {"C": 10}, {}, {"C": 0.5}]
     assert_grid_iter_equals_getitem(has_empty)
+
+
+def test_parameter_grid_sort():
+    param_grid = {"a": [1, 2], "b": [3, 4], "c": [5, 6]}
+    assert list(ParameterGrid(param_grid)) == [
+        {"a": 1, "b": 3, "c": 5},
+        {"a": 1, "b": 3, "c": 6},
+        {"a": 1, "b": 4, "c": 5},
+        {"a": 1, "b": 4, "c": 6},
+        {"a": 2, "b": 3, "c": 5},
+        {"a": 2, "b": 3, "c": 6},
+        {"a": 2, "b": 4, "c": 5},
+        {"a": 2, "b": 4, "c": 6},
+    ]
+    assert list(ParameterGrid(param_grid, least_significant="a")) == [
+        {"a": 1, "b": 3, "c": 5},
+        {"a": 2, "b": 3, "c": 5},
+        {"a": 1, "b": 3, "c": 6},
+        {"a": 2, "b": 3, "c": 6},
+        {"a": 1, "b": 4, "c": 5},
+        {"a": 2, "b": 4, "c": 5},
+        {"a": 1, "b": 4, "c": 6},
+        {"a": 2, "b": 4, "c": 6},
+    ]
+
+    assert list(ParameterGrid(param_grid, least_significant="a")) == list(
+        ParameterGrid(param_grid, least_significant=["a"])
+    )
+    assert list(ParameterGrid(param_grid, least_significant="a")) == list(
+        ParameterGrid(param_grid, least_significant=["c", "a"])
+    )
+
+    assert list(ParameterGrid(param_grid, least_significant=["b", "a"])) == [
+        {"a": 1, "b": 3, "c": 5},
+        {"a": 2, "b": 3, "c": 5},
+        {"a": 1, "b": 4, "c": 5},
+        {"a": 2, "b": 4, "c": 5},
+        {"a": 1, "b": 3, "c": 6},
+        {"a": 2, "b": 3, "c": 6},
+        {"a": 1, "b": 4, "c": 6},
+        {"a": 2, "b": 4, "c": 6},
+    ]
 
 
 def test_grid_search():
@@ -1856,6 +1898,178 @@ def test_grid_search_cv_splits_consistency():
 
         assert_array_almost_equal(per_param_scores[0], per_param_scores[1])
         assert_array_almost_equal(per_param_scores[2], per_param_scores[3])
+
+
+class CountingSGDClassifier(SGDClassifier):
+    """An SGDClassifier which counts the number of calls to `fit`"""
+
+    def fit(self, X, y):
+        if not hasattr(self, "n_fit_calls_"):
+            self.n_fit_calls_ = 0
+        self.n_fit_calls_ += 1
+        return super(CountingSGDClassifier, self).fit(X, y)
+
+
+def test_grid_search_cv_use_warm_start():
+    X = np.array([[-1, -1], [-2, -1], [1, 1], [2, 1]])
+    y = np.array([1, 1, 2, 2])
+
+    # Check number of calls to fit is correct with respect to use_warm_start
+    clf = GridSearchCV(
+        CountingSGDClassifier(penalty="elasticnet", warm_start=True, random_state=0),
+        param_grid={
+            "alpha": [1e-3, 1e-2],
+            "l1_ratio": [0.15, 0.85],
+            "loss": ["hinge", "log_loss"],
+        },
+        cv=2,
+        refit=False,
+        scoring=lambda estimator, X, y: estimator.n_fit_calls_,
+    )
+
+    # Expected score: 1 everywhere
+    clf.set_params(use_warm_start=None).fit(X, y)
+    assert_array_equal(clf.cv_results_["std_test_score"], 0)
+    assert_array_equal(clf.cv_results_["mean_test_score"], 1)
+
+    # Expected score: 2 when alpha == 1e-2, 1 otherwise
+    clf.set_params(use_warm_start="alpha").fit(X, y)
+    assert_array_equal(clf.cv_results_["std_test_score"], 0)
+    mask = clf.cv_results_["param_alpha"] == 1e-2
+    assert_array_equal(clf.cv_results_["mean_test_score"][mask], 2)
+    assert_array_equal(clf.cv_results_["mean_test_score"][~mask], 1)
+
+    # Expected score: 2 when l1_ratio == 0.85, 1 otherwise
+    clf.set_params(use_warm_start=["l1_ratio"]).fit(X, y)
+    assert_array_equal(clf.cv_results_["std_test_score"], 0)
+    mask = clf.cv_results_["param_l1_ratio"] == 0.85
+    assert_array_equal(clf.cv_results_["mean_test_score"][mask], 2)
+    assert_array_equal(clf.cv_results_["mean_test_score"][~mask], 1)
+
+    # Expected score: 1, 2, 3 or 4 depending on alpha and l1_ratio
+    clf.set_params(use_warm_start=["l1_ratio", "alpha"]).fit(X, y)
+    assert_array_equal(clf.cv_results_["std_test_score"], 0)
+    alpha_mask = clf.cv_results_["param_alpha"] == 1e-2
+    l1r_mask = clf.cv_results_["param_l1_ratio"] == 0.85
+    assert_array_equal(
+        clf.cv_results_["mean_test_score"], l1r_mask * 2 + alpha_mask + 1
+    )
+
+    # Check use_warm_start gets same solution as without
+    # use mean coef_ as approximation for "found same solution"
+
+    clf = GridSearchCV(
+        SGDClassifier(penalty="elasticnet", warm_start=True, random_state=0),
+        param_grid={"alpha": [1e-3, 1e-2], "l1_ratio": [0.15, 0.85]},
+        cv=2,
+        refit=False,
+        scoring=lambda estimator, X, y: estimator.coef_.mean(),
+    )
+    X, y = make_classification(n_samples=100, n_classes=2, flip_y=0.2, random_state=0)
+
+    def _get_scores(results):
+        # consistent result ordering
+        order = np.lexsort(
+            (results["param_alpha"].astype("f"), results["param_l1_ratio"].astype("f"))
+        )
+        return np.concatenate(
+            [results["split%d_test_score" % i][order] for i in range(clf.n_splits_)]
+        )
+
+    base_scores = _get_scores(clf.fit(X, y).cv_results_)
+    for use_warm_start in ["alpha", ["l1_ratio"], ["alpha", "l1_ratio"]]:
+        assert_array_almost_equal(base_scores, _get_scores(clf.fit(X, y).cv_results_))
+
+
+@pytest.mark.parametrize(
+    "candidate_params,use_warm_start,expected",
+    [
+        ([{"a": 1}, {"a": 2}], None, [[{"a": 1}], [{"a": 2}]]),
+        ([{"a": 1}, {"a": 2}], "a", [[{"a": 1}, {"a": 2}]]),
+        ([{"a": 1}, {"a": 2}], "b", [[{"a": 1}], [{"a": 2}]]),
+        ([{"a": 1}, {"a": 2}], ["a"], [[{"a": 1}, {"a": 2}]]),
+        # input order should be preserved
+        ([{"a": 2}, {"a": 1}], "a", [[{"a": 2}, {"a": 1}]]),
+        ([{"a": 2}, {"a": 1}], "b", [[{"a": 2}], [{"a": 1}]]),
+        # additional warm start keys are ignored
+        ([{"a": 1}, {"a": 2}], ["a", "b"], [[{"a": 1}, {"a": 2}]]),
+        # non-warm start parameters are grouped by value
+        (
+            [{"a": 1, "b": 1}, {"a": 2, "b": 1}],
+            ["a"],
+            [[{"a": 1, "b": 1}, {"a": 2, "b": 1}]],
+        ),
+        (
+            [{"a": 1, "b": 1}, {"a": 2, "b": 2}],
+            ["a"],
+            [[{"a": 1, "b": 1}], [{"a": 2, "b": 2}]],
+        ),
+        (
+            [{"a": 1, "b": 1}, {"a": 2, "b": 2}],
+            ["a", "b"],
+            [[{"a": 1, "b": 1}, {"a": 2, "b": 2}]],
+        ),
+        # warm start params may not appear in every candidate
+        (
+            [{"a": 1, "b": 1}, {"a": 2, "b": 1}, {"b": 2}],
+            ["a"],
+            [[{"a": 1, "b": 1}, {"a": 2, "b": 1}], [{"b": 2}]],
+        ),
+        (
+            [{"b": 2}, {"a": 1, "b": 1}, {"a": 2, "b": 1}],
+            ["a"],
+            [[{"b": 2}], [{"a": 1, "b": 1}, {"a": 2, "b": 1}]],
+        ),
+        # additional parameters should behave like "b"
+        (
+            [{"a": 1, "b": 1, "c": 2, "d": 3}, {"a": 2, "b": 1, "c": 2, "d": 3}],
+            ["a"],
+            [[{"a": 1, "b": 1, "c": 2, "d": 3}, {"a": 2, "b": 1, "c": 2, "d": 3}]],
+        ),
+        (
+            [{"a": 1, "b": 1, "c": 2, "d": 3}, {"a": 2, "b": 1, "c": 2, "d": 30}],
+            ["a"],
+            [[{"a": 1, "b": 1, "c": 2, "d": 3}], [{"a": 2, "b": 1, "c": 2, "d": 30}]],
+        ),
+    ],
+)
+def test_generate_warm_start_groups(candidate_params, use_warm_start, expected):
+    actual = list(
+        _generate_warm_start_groups(
+            candidate_params=candidate_params, use_warm_start=use_warm_start
+        )
+    )
+    assert expected == actual
+
+
+@pytest.mark.parametrize(
+    "candidate_values",
+    [
+        [6, "string"],
+        [6, {"a": 6}],
+        ["string", None],
+        [np.arange(3), np.arange(1, 4)],
+        [np.arange(3), np.arange(4)],
+        [6, np.arange(4)],
+        ["string", np.arange(4)],
+    ],
+)
+def test_generate_warm_start_groups_value_types(candidate_values):
+    # Check that different types of value are supported in _generate_wamr_start_groups
+    candidate_params = []
+    for val in candidate_values:
+        candidate_params.append({"const": "foo", "param": val, "other": 1})
+        candidate_params.append({"const": "foo", "param": val, "other": 2})
+
+    actual = list(_generate_warm_start_groups(candidate_params, "other"))
+    for warm_start_group, val in zip(actual, candidate_values):
+        assert len(warm_start_group) == 2
+        assert warm_start_group[0]["const"] == "foo"
+        assert warm_start_group[1]["const"] == "foo"
+        assert warm_start_group[0]["other"] == 1
+        assert warm_start_group[1]["other"] == 2
+        assert val is warm_start_group[0]["param"]
+        assert val is warm_start_group[1]["param"]
 
 
 def test_transform_inverse_transform_round_trip():

@@ -7,6 +7,7 @@ parameters of an estimator.
 #         Gael Varoquaux <gael.varoquaux@normalesup.org>
 #         Andreas Mueller <amueller@ais.uni-bonn.de>
 #         Olivier Grisel <olivier.grisel@ensta.org>
+#         Joel Nothman <joel.nothman@gmail.com>
 #         Raghav RV <rvraghav93@gmail.com>
 # License: BSD 3 clause
 
@@ -58,6 +59,66 @@ from ._validation import (
 __all__ = ["GridSearchCV", "ParameterGrid", "ParameterSampler", "RandomizedSearchCV"]
 
 
+def _are_candidates_equal(dict1, dict2):
+    """Test equality between candidate dicts
+
+    Falls back to testing identity where equality is unsupported, as it is
+    for arrays.
+    """
+    try:
+        return bool(dict1 == dict2)
+    except ValueError:
+        pass
+    if dict1.keys() != dict2.keys():
+        return False
+    for k, v1 in dict1.items():
+        v2 = dict2[k]
+        if v1 is v2:
+            continue
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            try:
+                if v1 != v2:
+                    return False
+            except ValueError:
+                return False
+    return True
+
+
+def _generate_warm_start_groups(candidate_params, use_warm_start):
+    """Yield lists of parameter settings to perform warm start within
+
+    Groups by keys not specified in use_warm_start
+    """
+    use_warm_start = use_warm_start or ()
+    if not use_warm_start:
+        for parameters in candidate_params:
+            yield [parameters]
+        return
+
+    # we hide use_warm_start parameters' values so that they share a group
+    # if all other parameters match
+    if isinstance(use_warm_start, str):
+        use_warm_start = {use_warm_start: None}
+    else:
+        use_warm_start = {k: None for k in use_warm_start}
+
+    prev_key = None
+    group = []
+    for parameters in candidate_params:
+        param_key = parameters.copy()
+        param_key.update(use_warm_start)
+        if _are_candidates_equal(param_key, prev_key):
+            group.append(parameters)
+        else:
+            prev_key = param_key
+            if group:
+                yield group
+            group = [parameters]
+    if group:
+        yield group
+
+
 class ParameterGrid:
     """Grid of parameters with a discrete number of values for each.
 
@@ -78,6 +139,9 @@ class ParameterGrid:
         A sequence of dicts signifies a sequence of grids to search, and is
         useful to avoid exploring parameter combinations that make no sense
         or have no effect. See the examples below.
+
+    least_significant : str or list of str, optional
+        These parameters should be iterated last.
 
     Examples
     --------
@@ -102,7 +166,7 @@ class ParameterGrid:
         parameter search.
     """
 
-    def __init__(self, param_grid):
+    def __init__(self, param_grid, least_significant=None):
         if not isinstance(param_grid, (Mapping, Iterable)):
             raise TypeError(
                 f"Parameter grid should be a dict or a list, got: {param_grid!r} of"
@@ -141,6 +205,15 @@ class ParameterGrid:
 
         self.param_grid = param_grid
 
+        if isinstance(least_significant, str):
+            least_significant = (least_significant,)
+        self.least_significant = least_significant or ()
+
+    def _sort_key(self, item):
+        if item[0] in self.least_significant:
+            return self.least_significant.index(item[0]), item
+        return -1, item
+
     def __iter__(self):
         """Iterate over the points in the grid.
 
@@ -152,7 +225,7 @@ class ParameterGrid:
         """
         for p in self.param_grid:
             # Always sort the keys of a dictionary, for reproducibility
-            items = sorted(p.items())
+            items = sorted(p.items(), key=self._sort_key)
             if not items:
                 yield {}
             else:
@@ -379,6 +452,47 @@ def _estimator_has(attr):
         return True
 
     return check
+
+
+def _warm_fit_and_score(estimator, warm_candidates, cand_idx, n_candidates, **kwargs):
+    return [
+        _fit_and_score(
+            estimator,
+            parameters=parameters,
+            candidate_progress=(cand_idx + i, n_candidates),
+            **kwargs,
+        )
+        for i, parameters in enumerate(warm_candidates)
+    ]
+
+
+def _generate_jobs(
+    *,
+    splits,
+    base_estimator,
+    use_warm_start,
+    candidate_params,
+    n_candidates,
+    fit_and_score_kwargs,
+):
+    cand_idx = 0
+    n_splits = len(splits)
+    warm_start_groups = _generate_warm_start_groups(candidate_params, use_warm_start)
+
+    for warm_candidates in warm_start_groups:
+        for split_idx, (train, test) in enumerate(splits):
+            yield delayed(_warm_fit_and_score)(
+                clone(base_estimator),
+                warm_candidates,
+                train=train,
+                test=test,
+                split_progress=(split_idx, n_splits),
+                cand_idx=cand_idx,
+                n_candidates=n_candidates,
+                **fit_and_score_kwargs,
+            )
+
+        cand_idx += len(warm_candidates)
 
 
 class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
@@ -884,6 +998,8 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         parallel = Parallel(n_jobs=self.n_jobs, pre_dispatch=self.pre_dispatch)
 
         fit_and_score_kwargs = dict(
+            X=X,
+            y=y,
             scorer=scorers,
             fit_params=routed_params.estimator.fit,
             score_params=routed_params.scorer.score,
@@ -914,20 +1030,13 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
                     )
 
                 out = parallel(
-                    delayed(_fit_and_score)(
-                        clone(base_estimator),
-                        X,
-                        y,
-                        train=train,
-                        test=test,
-                        parameters=parameters,
-                        split_progress=(split_idx, n_splits),
-                        candidate_progress=(cand_idx, n_candidates),
-                        **fit_and_score_kwargs,
-                    )
-                    for (cand_idx, parameters), (split_idx, (train, test)) in product(
-                        enumerate(candidate_params),
-                        enumerate(cv.split(X, y, **routed_params.splitter.split)),
+                    _generate_jobs(
+                        splits=list(cv.split(X, y, **routed_params.splitter.split)),
+                        base_estimator=base_estimator,
+                        use_warm_start=getattr(self, "use_warm_start", None),
+                        candidate_params=candidate_params,
+                        n_candidates=n_candidates,
+                        fit_and_score_kwargs=fit_and_score_kwargs,
                     )
                 )
 
@@ -937,7 +1046,16 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
                         "Was the CV iterator empty? "
                         "Were there no candidates?"
                     )
-                elif len(out) != n_candidates * n_splits:
+
+                # out is one list of warm candidate results for each
+                # (warm_group, cv_split) pair.
+                # We want it to be ordered by (candidate, cv split).
+                rolled = []
+                for i in range(0, len(out), n_splits):
+                    rolled.extend(zip(*out[i : i + n_splits]))
+                out = sum(rolled, ())
+
+                if len(out) != n_candidates * n_splits:
                     raise ValueError(
                         "cv.split and cv.get_n_splits returned "
                         "inconsistent results. Expected {} "
@@ -1317,6 +1435,17 @@ class GridSearchCV(BaseSearchCV):
         .. versionchanged:: 0.21
             Default value was changed from ``True`` to ``False``
 
+    use_warm_start : str or list of str, optional
+        The parameters named here will be searched over without clearing the
+        estimator state in between.  This allows efficient searches over
+        parameters where ``warm_start`` can be used. The user should also set
+        the estimator's ``warm_start`` parameter to True.
+
+        Candidate parameter settings will be reordered to maximise use of this
+        efficiency feature.
+
+        .. versionadded:: 1.1
+
     Attributes
     ----------
     cv_results_ : dict of numpy (masked) ndarrays
@@ -1508,6 +1637,7 @@ class GridSearchCV(BaseSearchCV):
         pre_dispatch="2*n_jobs",
         error_score=np.nan,
         return_train_score=False,
+        use_warm_start=False,
     ):
         super().__init__(
             estimator=estimator,
@@ -1521,10 +1651,14 @@ class GridSearchCV(BaseSearchCV):
             return_train_score=return_train_score,
         )
         self.param_grid = param_grid
+        self.use_warm_start = use_warm_start
 
     def _run_search(self, evaluate_candidates):
         """Search all candidates in param_grid"""
-        evaluate_candidates(ParameterGrid(self.param_grid))
+        candidates = ParameterGrid(
+            self.param_grid, least_significant=self.use_warm_start
+        )
+        evaluate_candidates(candidates)
 
 
 class RandomizedSearchCV(BaseSearchCV):

@@ -25,6 +25,13 @@ Changelog
     :pr:`123456` by :user:`Joe Bloggs <joeongithub>`.
     where 123455 is the *pull request* number, not the issue number.
 
+:mod:`sklearn.model_selection`
+..............................
+
+- |Feature| The new ``use_warm_start`` parameter in :class:`~model_selection.GridSearchCV`
+  allows for more efficient grid search over some parameter spaces, utilizing estimators'
+  :term:`warm_start` capabilities. :pr:`8230` by :user:`Joel Nothman <jnothman>`.
+
 Code and Documentation Contributors
 -----------------------------------
 
