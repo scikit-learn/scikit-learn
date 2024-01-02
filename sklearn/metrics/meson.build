@@ -22,7 +22,7 @@ _dist_metrics_pyx = custom_target(
 
 _dist_metrics = py.extension_module(
         '_dist_metrics',
-        [_dist_metrics_pyx, _dist_metrics_pxd, metrics_cython_tree, utils_cython_tree],
+        [_dist_metrics_pyx, _dist_metrics_pxd, utils_cython_tree, metrics_cython_tree],
         dependencies: [np_dep],
         cython_args: cython_args,
         subdir: 'sklearn/metrics',
@@ -31,7 +31,7 @@ _dist_metrics = py.extension_module(
 
 py.extension_module(
         '_pairwise_fast',
-        ['_pairwise_fast.pyx', utils_cython_tree],
+        ['_pairwise_fast.pyx', utils_cython_tree, metrics_cython_tree],
         dependencies: [np_dep],
         cython_args: cython_args,
         subdir: 'sklearn/metrics',
