@@ -184,6 +184,15 @@ class Kernel(metaclass=ABCMeta):
     requires_vector_input:Returns whether the kernel is defined on fixed-length feature vectors or generic objects.
 
     theta:Returns the (flattened, log-transformed) non-fixed hyperparameters.  
+
+    Examples
+    --------
+    >>> from sklearn.gaussian_process.kernels import Kernel
+    >>> kernel = Kernel()
+    >>> X = [[1], [2]]
+    >>> kernel(X, X)
+    array([[1., 1.],
+    [1., 1.]])
     """
 
     def get_params(self, deep=True):
