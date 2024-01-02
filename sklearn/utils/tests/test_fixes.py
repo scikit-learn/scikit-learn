@@ -118,7 +118,7 @@ def test_smallest_admissible_index_dtype_without_checking_contents(
             np.int32,
         ),
         # otherwise, it should be converted to int64. We need to create a uint32
-        # arrays to accomodate a value > np.iinfo(np.int32).max
+        # arrays to accommodate a value > np.iinfo(np.int32).max
         (
             {
                 "arrays": np.array([np.iinfo(np.int32).max + 1], dtype=np.uint32),
