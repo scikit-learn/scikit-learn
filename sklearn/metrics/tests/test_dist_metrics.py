@@ -14,7 +14,12 @@ from sklearn.metrics._dist_metrics import (
 )
 from sklearn.utils import check_random_state
 from sklearn.utils._testing import assert_allclose, create_memmap_backed_data
-from sklearn.utils.fixes import CSR_CONTAINERS, parse_version, sp_version
+from sklearn.utils.fixes import (
+    COO_CONTAINERS,
+    CSR_CONTAINERS,
+    parse_version,
+    sp_version,
+)
 
 
 def dist_func(x1, x2, p):
@@ -370,7 +375,7 @@ def test_readonly_kwargs():
                 TypeError,
                 "Sparse data was passed for w, but dense data is required",
             )
-            for csr_container in CSR_CONTAINERS
+            for csr_container in COO_CONTAINERS
         ],
         (np.array(["a", "b", "c"]), ValueError, "could not convert string to float"),
         (np.array([]), ValueError, "a minimum of 1 is required"),
