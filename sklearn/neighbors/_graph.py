@@ -368,7 +368,6 @@ class KNeighborsTransformer(
     :class:`~sklearn.manifold.TSNE` see
     :ref:`sphx_glr_auto_examples_neighbors_approximate_nearest_neighbors.py`.
 
-
     Examples
     --------
     >>> from sklearn.datasets import load_wine
