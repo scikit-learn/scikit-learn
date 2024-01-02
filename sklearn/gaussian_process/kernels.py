@@ -183,8 +183,7 @@ class Kernel(metaclass=ABCMeta):
     >>> kernel = Kernel()
     >>> X = [[1], [2]]
     >>> kernel(X, X)
-    array([[1., 1.],
-                [1., 1.]])
+    array([[1., 1.],[1., 1.]])
     """
 
     def get_params(self, deep=True):
