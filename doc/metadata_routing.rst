@@ -121,7 +121,7 @@ that :func:`~model_selection.cross_validate` does not pass the weights along::
   >>> weighted_acc = make_scorer(accuracy_score).set_score_request(sample_weight=True)
   >>> lr = LogisticRegressionCV(
   ...     cv=GroupKFold(), scoring=weighted_acc
-  ...).set_fit_request(sample_weight=False)
+  ... ).set_fit_request(sample_weight=False)
   >>> cv_results = cross_validate(
   ...     lr,
   ...     X,
