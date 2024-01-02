@@ -1,4 +1,7 @@
-fs.copyfile('__init__.py')
+linear_model_cython_tree = [
+    fs.copyfile('__init__.py'),
+    fs.copyfile('_sgd_fast.pxd'),
+]
 
 py.extension_module(
     '_cd_fast',
@@ -11,8 +14,6 @@ py.extension_module(
 
 name_list = ['_sgd_fast', '_sag_fast']
 
-fs.copyfile('_sgd_fast.pxd')
-
 foreach name: name_list
   pyx = custom_target(
     name + '_pyx',
@@ -22,7 +23,7 @@ foreach name: name_list
   )
   py.extension_module(
     name,
-    pyx,
+    [pyx, linear_model_cython_tree],
     dependencies: [np_dep],
     cython_args: cython_args,
     subdir: 'sklearn/linear_model',

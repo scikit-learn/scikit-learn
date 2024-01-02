@@ -52,6 +52,8 @@ foreach name: names
     install: true,
     install_dir: sklearn_dir / 'utils'
   )
+  utils_cython_tree += [pxd]
+
   pyx = custom_target(
     name + '_pyx',
     output: name + '.pyx',
