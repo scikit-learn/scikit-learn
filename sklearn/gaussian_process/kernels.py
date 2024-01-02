@@ -15,8 +15,8 @@ can be combined by operators and used in Gaussian processes.
 # The space of hyperparameters can be specified by giving lower und upper
 # boundaries for the value of each hyperparameter (the search space is thus
 # rectangular). Instead of specifying bounds, hyperparameters can also be
-# declared to be "fixed", which causes these hyperparameters to be excluded from
-# optimization.
+# declared to be "fixed", which causes these hyperparameters to 
+#be excluded from optimization.
 
 
 # Author: Jan Hendrik Metzen <jhm@informatik.uni-bremen.de>
@@ -55,7 +55,8 @@ def _check_length_scale(X, length_scale):
 
 class Hyperparameter(
     namedtuple(
-        "Hyperparameter", ("name", "value_type", "bounds", "n_elements", "fixed")
+        "Hyperparameter", ("name", "value_type", "bounds",
+                            "n_elements", "fixed")
     )
 ):
     """A kernel hyperparameter's specification in form of a namedtuple.
@@ -164,28 +165,20 @@ class Kernel(metaclass=ABCMeta):
     -------
     __call__(X[, Y, eval_gradient]): Evaluate the kernel.
 
-    clone_with_theta(theta): Returns a clone of self with given hyperparameters theta.
-
+    clone_with_theta(theta): 
+    Returns a clone of self with given hyperparameters theta.
     diag(X):Returns the diagonal of the kernel k(X, X).
-   
     get_params([deep]): Get parameters of this kernel.
-  
     is_stationary():Returns whether the kernel is stationary.
- 
     set_params(**params):Set the parameters of this kernel.
 
     Attributes
     ----------
     bounds: Returns the log-transformed bounds on the theta.
-
     hyperparameters: Returns a list of all hyperparameter specifications.
-
     n_dims:Returns the number of non-fixed hyperparameters of the kernel.
-
     requires_vector_input:Returns whether the kernel is defined on fixed-length feature vectors or generic objects.
-
     theta:Returns the (flattened, log-transformed) non-fixed hyperparameters.  
-
     Examples
     --------
     >>> from sklearn.gaussian_process.kernels import Kernel
