@@ -38,3 +38,10 @@ TODO: update at the time of the release.
 
 - |Feature| A fitted :class:`compose.ColumnTransformer` now implements `__getitem__`
   which returns the fitted transformers by name. :pr:`27990` by `Thomas Fan`_.
+
+:mod:`sklearn.metrics`
+......................
+
+- |Fix| :func:`metrics.balanced_accuracy_score` Added zero division handling to make
+balanced accuracy consistent with macro-average recall.
+:pr:`28038` by :user:`Tenga Cortal <TengaCortal>`.
