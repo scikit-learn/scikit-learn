@@ -176,8 +176,7 @@ class Kernel(metaclass=ABCMeta):
     hyperparameters: Returns a list of all hyperparameter specifications.
     n_dims:Returns the number of non-fixed hyperparameters of the kernel.
     requires_vector_input:Returns whether the kernel is defined on fixed-length feature vectors or generic objects.
-    theta:Returns the (flattened,log-transformed)non-fixed hyperparameters. 
-
+    theta:Returns the (flattened,log-transformed)non-fixed hyperparameters.
     Examples
     --------
     >>> from sklearn.gaussian_process.kernels import Kernel
