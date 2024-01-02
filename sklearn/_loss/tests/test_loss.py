@@ -120,7 +120,8 @@ def test_loss_boundary(loss):
     """Test interval ranges of y_true and y_pred in losses."""
     # make sure low and high are always within the interval, used for linspace
     if loss.is_multiclass:
-        y_true = np.linspace(0, 9, num=10)
+        n_classes = 3  # default value
+        y_true = np.tile(np.linspace(0, n_classes - 1, num=n_classes), 3)
     else:
         low, high = _inclusive_low_high(loss.interval_y_true)
         y_true = np.linspace(low, high, num=10)
@@ -136,7 +137,7 @@ def test_loss_boundary(loss):
     n = y_true.shape[0]
     low, high = _inclusive_low_high(loss.interval_y_pred)
     if loss.is_multiclass:
-        y_pred = np.empty((n, 3))
+        y_pred = np.empty((n, n_classes))
         y_pred[:, 0] = np.linspace(low, high, num=n)
         y_pred[:, 1] = 0.5 * (1 - y_pred[:, 0])
         y_pred[:, 2] = 0.5 * (1 - y_pred[:, 0])
