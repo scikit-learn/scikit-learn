@@ -158,6 +158,33 @@ class Kernel(metaclass=ABCMeta):
 
     .. versionadded:: 0.18
     """
+    """
+    Methods
+    -------
+    __call__(X[, Y, eval_gradient]): Evaluate the kernel.
+
+    clone_with_theta(theta): Returns a clone of self with given hyperparameters theta.
+
+    diag(X):Returns the diagonal of the kernel k(X, X).
+   
+    get_params([deep]): Get parameters of this kernel.
+  
+    is_stationary():Returns whether the kernel is stationary.
+ 
+    set_params(**params):Set the parameters of this kernel.
+
+    Attributes
+    ----------
+    bounds: Returns the log-transformed bounds on the theta.
+
+    hyperparameters: Returns a list of all hyperparameter specifications.
+
+    n_dims:Returns the number of non-fixed hyperparameters of the kernel.
+
+    requires_vector_input:Returns whether the kernel is defined on fixed-length feature vectors or generic objects.
+
+    theta:Returns the (flattened, log-transformed) non-fixed hyperparameters.  
+    """
 
     def get_params(self, deep=True):
         """Get parameters of this kernel.
