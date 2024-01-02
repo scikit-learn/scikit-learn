@@ -19,3 +19,5 @@ jobs:
         run: |
           echo "Marking issue ${{ github.event.issue.number }} as help wanted"
           gh issue edit ${{ github.event.issue.number }} --add-label "help wanted"
+        env:
+          GH_TOKEN: ${{ github.token }}
