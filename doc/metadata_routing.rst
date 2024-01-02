@@ -90,8 +90,9 @@ method and in :func:`~metrics.make_scorer`s `set_score_request()` method. Both
 :func:`~model_selection.cross_validate` that will route it to any active consumers.::
 
   >>> weighted_acc = make_scorer(accuracy_score).set_score_request(sample_weight=True)
-  >>> lr = LogisticRegressionCV(cv=GroupKFold(), scoring=weighted_acc)
-  .set_fit_request(sample_weight=True)
+  >>> lr = LogisticRegressionCV(cv=GroupKFold(), scoring=weighted_acc).set_fit_request(
+    sample_weight=True
+  )
   >>> cv_results = cross_validate(
   ...     lr,
   ...     X,
