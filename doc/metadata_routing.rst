@@ -89,18 +89,19 @@ method and in :func:`~metrics.make_scorer`s `set_score_request()` method. Both
 `score()` methods. We can then pass the metadata in
 :func:`~model_selection.cross_validate` that will route it to any active consumers.::
 
-  >>> weighted_acc = make_scorer(accuracy_score).set_score_request(sample_weight=True)
-  >>> lr = LogisticRegressionCV(cv=GroupKFold(), scoring=weighted_acc).set_fit_request(
-    sample_weight=True
-  )
-  >>> cv_results = cross_validate(
-  ...     lr,
-  ...     X,
-  ...     y,
-  ...     params={"sample_weight": my_weights, "groups": my_groups},
-  ...     cv=GroupKFold(),
-  ...     scoring=weighted_acc,
-  ... )
+>>> weighted_acc = make_scorer(accuracy_score).set_score_request(sample_weight=True)
+>>> lr = LogisticRegressionCV(
+...     cv=GroupKFold(),
+...     scoring=weighted_acc
+... ).set_fit_request(sample_weight=True)
+>>> cv_results = cross_validate(
+...     lr,
+...     X,
+...     y,
+...     params={"sample_weight": my_weights, "groups": my_groups},
+...     cv=GroupKFold(),
+...     scoring=weighted_acc,
+... )
 
 Note that in this example, :func:`~model_selection.cross_validate` routes ``my_weights``
 to both the scorer and :class:`~linear_model.LogisticRegressionCV`.
