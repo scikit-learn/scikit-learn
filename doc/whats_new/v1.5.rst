@@ -43,5 +43,5 @@ TODO: update at the time of the release.
 ......................
 
 - |Fix| :func:`metrics.balanced_accuracy_score` Added zero division handling to make
-balanced accuracy consistent with macro-average recall.
-:pr:`28038` by :user:`Tenga Cortal <TengaCortal>`.
+  balanced accuracy consistent with macro-average recall.
+  :pr:`28038` by :user:`Tenga Cortal <TengaCortal>`.
