@@ -69,10 +69,11 @@ py_dep = py.dependency()
 #     )
 
 cython_args = [
-  '-X language_level=3', '-X boundscheck=False', '-X wraparound=False', '-X initializedcheck=False',
-  '-X nonecheck=False', '-X cdivision=True', '-X profile=False',
-  # TODO needed to use relative imports from sklearn/metrics otherwise error is:
-  # /home/lesteve/dev/scikit-learn/sklearn/cluster/_hierarchical_fast.pyx:6:0: 'sklearn/metrics/_dist_metrics.pxd' not found
+  '-X language_level=3', '-X boundscheck=False', '-X wraparound=False',
+  '-X initializedcheck=False', '-X nonecheck=False', '-X cdivision=True',
+  '-X profile=False',
+  # Needed for cython imports across subpackages, e.g. cluster pyx that
+  # cimports metrics pxd
   '--include-dir', meson.global_build_root(),
 ]
 
