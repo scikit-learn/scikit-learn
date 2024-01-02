@@ -16,7 +16,7 @@ can be combined by operators and used in Gaussian processes.
 # boundaries for the value of each hyperparameter (the search space is thus
 # rectangular). Instead of specifying bounds, hyperparameters can also be
 # declared to be "fixed", which causes these hyperparameters to 
-#be excluded from optimization.
+# be excluded from optimization.
 
 
 # Author: Jan Hendrik Metzen <jhm@informatik.uni-bremen.de>
