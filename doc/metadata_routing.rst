@@ -19,39 +19,38 @@ Metadata Routing
     >>> import sklearn
     >>> sklearn.set_config(enable_metadata_routing=True)
 
-This guide demonstrates how :term:`metadata` can be routed and passed between objects in
-scikit-learn.
-
-Metadata is data that an estimator, scorer, or CV splitter takes into account if the
-user explicitly passes it as a parameter. For instance, some methods in objects have
-been implemented to use `sample_weight`, `classes`  or `groups` for computation if the
-user deviates from the default `None`. If these objects are used in conjunction with
-other objects, in the past there was no single API for passing the metadata around.
-
-With the Metadata Routing API, we can transfer metadata to estimators, scorers, and CV
-splitters using :term:`meta-estimators` (such as :class:`~pipeline.Pipeline` or
-:class:`~model_selection.GridSearchCV`) or routing functions such as
-:func:`~model_selection.cross_validate`. In order to pass metadata to a method such as
-``fit`` or ``score``, the object consuming the metadata, must *request* it. This is done
-via `set_{method}_request()` methods, where `{method}` is substituted by the name of the
-method that request the metadata. For instance, estimators and splitters, that use the
-metadata in their `fit()` method would use `set_fit_request()`, and scorers would use
-the `set_score_request()`.
-
-For grouped splitters such as :class:`~model_selection.GroupKFold`, a
-``groups`` parameter is requested by default. This is best demonstrated by the
-following examples.
-
-If you are developing a scikit-learn compatible estimator or meta-estimator,
-you can check our related developer guide:
-:ref:`sphx_glr_auto_examples_miscellaneous_plot_metadata_routing.py`.
-
-.. note::
   Note that the methods and requirements introduced in this document are only
   relevant if you want to pass :term:`metadata` (e.g. ``sample_weight``) to a method.
   If you're only passing ``X`` and ``y`` and no other parameter / metadata to
   methods such as :term:`fit`, :term:`transform`, etc., then you don't need to set
   anything.
+
+This guide demonstrates how :term:`metadata` can be routed and passed between objects in
+scikit-learn. If you are developing a scikit-learn compatible estimator or
+meta-estimator, you can check our related developer guide:
+:ref:`sphx_glr_auto_examples_miscellaneous_plot_metadata_routing.py`.
+
+Metadata is data that an estimator, scorer, or CV splitter takes into account if the
+user explicitly passes it as a parameter. For instance, some methods in certain objects
+can take into account `sample_weight`, `classes`  or `groups` if provided by the user.
+Prior to scikit-learn version 1.3, there was no single API for passing metadata like
+that if these objects were used in conjunction with other objects, e.g. a scorer
+accepting `sample_weight` inside a :class:`~model_selection.GridSearchCV`.
+
+With the Metadata Routing API, we can transfer metadata to estimators, scorers, and CV
+splitters using :term:`meta-estimators` (such as :class:`~pipeline.Pipeline` or
+:class:`~model_selection.GridSearchCV`) or routing functions such as
+:func:`~model_selection.cross_validate`. In order to pass metadata to a method like
+``fit`` or ``score``, the object consuming the metadata, must *request* it. This is done
+via `set_{method}_request()` methods, where `{method}` is substituted by the name of the
+method that request the metadata. For instance, estimators and splitters, that use the
+metadata in their `fit()` method would use `set_fit_request()`, and scorers would use
+the `set_score_request()`. These methods allow us to specify which metadata to request,
+for instance `set_fit_request(sample_weight=True)`.
+
+For grouped splitters such as :class:`~model_selection.GroupKFold`, a
+``groups`` parameter is requested by default. This is best demonstrated by the
+following examples.
 
 Usage Examples
 **************
@@ -81,15 +80,18 @@ The examples in this section require the following imports and data::
 Weighted scoring and fitting
 ----------------------------
 
-:class:`~model_selection.GroupKFold` requests ``groups`` by default. However, we need to
-explicitly request weights for our scorer and the internal cross validation of
-:class:`~linear_model.LogisticRegressionCV` by specifying `sample_weight=True`. Both
-:term:`consumers <consumer>` know how to use metadata called ``sample_weight``::
+The splitter used internally in :class:`~linear_model.LogisticRegressionCV`,
+:class:`~model_selection.GroupKFold`, requests ``groups`` by default. However, we need
+to explicitly request `sample_weight` for it and for our custom scorer by specifying
+`sample_weight=True` in :class:`~linear_model.LogisticRegressionCV`s `set_fit_request()`
+method and in :func:`~metrics.make_scorer`s `set_score_request()` method. Both
+:term:`consumers <consumer>` know how to use ``sample_weight`` in their `fit()` or
+`score()` methods. We can then pass the metadata in
+:func:`~model_selection.cross_validate` that will route it to any active consumers.::
 
   >>> weighted_acc = make_scorer(accuracy_score).set_score_request(sample_weight=True)
-  >>> lr = LogisticRegressionCV(
-  ...     cv=GroupKFold(), scoring=weighted_acc
-  ... ).set_fit_request(sample_weight=True)
+  >>> lr = LogisticRegressionCV(cv=GroupKFold(), scoring=weighted_acc)
+  .set_fit_request(sample_weight=True)
   >>> cv_results = cross_validate(
   ...     lr,
   ...     X,
@@ -99,9 +101,8 @@ explicitly request weights for our scorer and the internal cross validation of
   ...     scoring=weighted_acc,
   ... )
 
-Note that in this example, ``my_weights`` is passed to both the scorer and
-:class:`~linear_model.LogisticRegressionCV` via the routing function
-:func:`~model_selection.cross_validate`.
+Note that in this example, :func:`~model_selection.cross_validate` routes ``my_weights``
+to both the scorer and :class:`~linear_model.LogisticRegressionCV`.
 
 Error handling: if ``params={"sample_weigh": my_weights, ...}`` were passed
 (note the typo), :func:`~model_selection.cross_validate` would raise an error,
@@ -110,8 +111,9 @@ since ``sample_weigh`` was not requested by any of its underlying objects.
 Weighted scoring and unweighted fitting
 ---------------------------------------
 
-When passing metadata such as ``sample_weight`` around, all ``sample_weight``
-:term:`consumers <consumer>` require weights to be either explicitly requested or not
+When passing metadata such as ``sample_weight`` into a :term:`router`
+(:term:`meta-estimators` or routing function), all ``sample_weight`` :term:`consumers
+<consumer>` require weights to be either explicitly requested or explicitly not
 requested (i.e. ``True`` or ``False``). Thus, to perform an unweighted fit, we need to
 configure :class:`~linear_model.LogisticRegressionCV` to not request sample weights, so
 that :func:`~model_selection.cross_validate` does not pass the weights along::
@@ -119,7 +121,7 @@ that :func:`~model_selection.cross_validate` does not pass the weights along::
   >>> weighted_acc = make_scorer(accuracy_score).set_score_request(sample_weight=True)
   >>> lr = LogisticRegressionCV(
   ...     cv=GroupKFold(), scoring=weighted_acc
-  ... ).set_fit_request(sample_weight=False)
+  ...).set_fit_request(sample_weight=False)
   >>> cv_results = cross_validate(
   ...     lr,
   ...     X,
@@ -193,41 +195,39 @@ consumers. In this example, we pass ``scoring_weight`` to the scorer, and
 API Interface
 *************
 
-A :term:`consumer` is an object (estimator, meta-estimator, scorer, splitter)
-which accepts and uses some :term:`metadata` in at least one of its methods
-(``fit``, ``predict``, ``inverse_transform``, ``transform``, ``score``,
-``split``). Meta-estimators which only forward the metadata to other objects
-(the child estimator, scorers, or splitters) and don't use the metadata
-themselves are not consumers. (Meta-)Estimators which route metadata to other
-objects are :term:`routers <router>`. A(n) (meta-)estimator can be a
-:term:`consumer` and a :term:`router` at the same time. (Meta-)Estimators and
-splitters expose a `set_{method}_request` method for each method which accepts at
-least one metadata. For instance, if an estimator supports ``sample_weight`` in
-``fit`` and ``score``, it exposes
+A :term:`consumer` is an object (estimator, meta-estimator, scorer, splitter) which
+accepts and uses some :term:`metadata` in at least one of its methods (for instance
+``fit``, ``predict``, ``inverse_transform``, ``transform``, ``score``, ``split``).
+Meta-estimators which only forward the metadata to other objects (child estimators,
+scorers, or splitters) and don't use the metadata themselves are not consumers.
+(Meta-)Estimators which route metadata to other objects are :term:`routers <router>`.
+A(n) (meta-)estimator can be a :term:`consumer` and a :term:`router` at the same time.
+(Meta-)Estimators and splitters expose a `set_{method}_request` method for each method
+which accepts at least one metadata. For instance, if an estimator supports
+``sample_weight`` in ``fit`` and ``score``, it exposes
 ``estimator.set_fit_request(sample_weight=value)`` and
 ``estimator.set_score_request(sample_weight=value)``. Here ``value`` can be:
 
-- ``True``: method requests a ``sample_weight``. This means if the metadata is
-  provided, it will be used, otherwise no error is raised.
+- ``True``: method requests a ``sample_weight``. This means if the metadata is provided,
+  it will be used, otherwise no error is raised.
 - ``False``: method does not request a ``sample_weight``.
-- ``None``: router will raise an error if ``sample_weight`` is passed. This is
-  in almost all cases the default value when an object is instantiated and
-  ensures the user sets the metadata requests explicitly when a metadata is
-  passed. The only exception are ``Group*Fold`` splitters.
+- ``None``: router will raise an error if ``sample_weight`` is passed. This is in almost
+  all cases the default value when an object is instantiated and ensures the user sets
+  the metadata requests explicitly when a metadata is passed. The only exception are
+  ``Group*Fold`` splitters.
 - ``"param_name"``: alias for ``sample_weight`` if we want to pass different weights to
-  different consumers via `fit` and `score`. If aliasing is used in a meta-estimator,
-  the meta-estimator should forward ``"param_name"`` as ``sample_weight`` to the
-  consumer, because the consumer will expect a param called ``sample_weight``. This
-  means the mapping between the metadata required by the object, e.g. ``sample_weight``
-  and the variable name provided by the user, e.g. ``my_weights`` is done at the router
-  level, and not by the object, e.g. estimator, itself.
+  different consumers. If aliasing is used the meta-estimator should not forward
+  ``"param_name"`` to the consumer, but ``sample_weight`` instead, because the consumer
+  will expect a param called ``sample_weight``. This means the mapping between the
+  metadata required by the object, e.g. ``sample_weight`` and the variable name provided
+  by the user, e.g. ``my_weights`` is done at the router level, and not by the consuming
+  object itself.
 
-If a metadata, e.g. ``sample_weight``, is passed by the user, the metadata
-request for all objects which potentially can consume ``sample_weight`` should
-be set by the user, otherwise an error is raised by the router object. For
-example, the following code raises an error, since it hasn't been explicitly
-specified whether ``sample_weight`` should be passed to the estimator's scorer
-or not::
+If a metadata, e.g. ``sample_weight``, is passed by the user, the metadata request for
+all objects which potentially can consume ``sample_weight`` should be set by the user,
+otherwise an error is raised by the router object. For example, the following code
+raises an error, since it hasn't been explicitly specified whether ``sample_weight``
+should be passed to the estimator's scorer or not::
 
     >>> param_grid = {"C": [0.1, 1]}
     >>> lr = LogisticRegression().set_fit_request(sample_weight=True)
@@ -246,7 +246,8 @@ The issue can be fixed by explicitly setting the request value::
     ...     sample_weight=True
     ... ).set_score_request(sample_weight=False)
 
-At the end we disable the configuration flag for metadata routing::
+At the end of the **Usage Examples** section, we disable the configuration flag for
+metadata routing::
 
     >>> sklearn.set_config(enable_metadata_routing=False)
 
