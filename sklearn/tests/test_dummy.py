@@ -72,7 +72,7 @@ def _check_equality_regressor(statistic, y_learn, y_pred_learn, y_test, y_pred_t
     assert_array_almost_equal(np.tile(statistic, (y_test.shape[0], 1)), y_pred_test)
 
 
-def test_feature_names_in_and_n_features_in_attributes(global_random_seed, n_samples=10):
+def test_feature_names_in_and_n_features_in_(global_random_seed, n_samples=10):
     pd = pytest.importorskip("pandas")
 
     random_state = np.random.RandomState(seed=global_random_seed)
