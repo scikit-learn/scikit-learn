@@ -39,6 +39,14 @@ class Parallel(joblib.Parallel):
     documentation for more details.
 
     .. versionadded:: 1.3
+
+    Example
+    -------
+
+    >> def square(n):
+    ...    return n ** 2
+    >> numbers = np.arange(10)
+    >> results = Parallel(n_jobs=2)(delayed(square)(n) for n in numbers)
     """
 
     def __call__(self, iterable):
@@ -92,6 +100,18 @@ def delayed(function):
     output: tuple
         Tuple containing the delayed function, the positional arguments, and the
         keyword arguments.
+
+    Examples
+    --------
+    >>> from sklearn.utils.parallel import Parallel, delayed
+    >>> import numpy as np
+    >>> def square(n):
+    ...     return n ** 2
+    >>> numbers = np.arange(10)
+    >>> parallel = Parallel(n_jobs=-1, verbose=50)
+    >>> results = parallel(delayed(square)(n) for n in numbers)
+    >>> print(results)
+    [0, 1, 4, 9, 16, 25, 36, 49, 64, 81]
     """
 
     @functools.wraps(function)
