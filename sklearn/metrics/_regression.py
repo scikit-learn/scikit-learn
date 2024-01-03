@@ -1215,12 +1215,12 @@ def r2_score(
     device_ = device(*input_arrays)
 
     if not _supports_dtype(xp, device_, "float64"):
-        y_true = _convert_to_numpy(y_true)
-        y_pred = _convert_to_numpy(y_pred)
+        y_true = _convert_to_numpy(y_true, xp)
+        y_pred = _convert_to_numpy(y_pred, xp)
         if sample_weight is not None:
-            sample_weight = _convert_to_numpy(sample_weight)
+            sample_weight = _convert_to_numpy(sample_weight, xp)
         if multioutput_is_array:
-            multioutput = _convert_to_numpy(multioutput)
+            multioutput = _convert_to_numpy(multioutput, xp)
         xp, _ = get_namespace(y_true)
 
     dtype = (
