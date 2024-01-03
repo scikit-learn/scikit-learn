@@ -43,8 +43,8 @@ TODO: update at the time of the release.
 :mod:`sklearn.metrics`
 ......................
 
-- |Efficiency| Improve efficiency of `brier_score_loss`, `calibration_curve`,
-  `det_curve`, `precision_recall_curve`, `roc_curve` when `pos_label` is specified.
-  Also improve efficiency of :method: `from_estimator` and `from_predictions` in :class:
-  `RocCurveDisplay`, `PrecisionRecallDisplay`, `DetCurveDisplay`, `CalibrationDisplay`.
+- |Efficiency| Improve efficiency of :function:`brier_score_loss`, :function:`calibration_curve`,
+  :function:`det_curve`, :function:`precision_recall_curve`, :function:`roc_curve` when `pos_label` is specified.
+  Also improve efficiency of :method: :method:`from_estimator` and :method:`from_predictions` in :class:
+  :class:`RocCurveDisplay`, :class:`PrecisionRecallDisplay`, :class:`DetCurveDisplay`, :class:`CalibrationDisplay`.
   :pr:`28051` by :user:`Pierre de Fréminville <pidefrem>`
