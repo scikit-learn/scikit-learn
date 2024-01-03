@@ -1,6 +1,5 @@
 import argparse
 import os
-import sys
 
 from Cython import Tempita as tempita
 
@@ -16,11 +15,11 @@ def process_tempita(fromfile, outfile=None):
 
     """
     from_filename = tempita.Template.from_filename
-    template = from_filename(fromfile, encoding=sys.getdefaultencoding())
+    template = from_filename(fromfile, encoding="utf-8")
 
     content = template.substitute()
 
-    with open(outfile, "w") as f:
+    with open(outfile, "w", encoding="utf-8") as f:
         f.write(content)
 
 
