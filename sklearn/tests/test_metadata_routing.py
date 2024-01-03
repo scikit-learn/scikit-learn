@@ -293,20 +293,18 @@ def test_simple_metadata_routing():
 
 def test_nested_routing():
     # check if metadata is routed in a nested routing situation.
-    pipeline = SimplePipeline(
-        [
-            MetaTransformer(
-                transformer=ConsumingTransformer()
-                .set_fit_request(metadata=True, sample_weight=False)
-                .set_transform_request(sample_weight=True, metadata=False)
-            ),
-            WeightedMetaRegressor(
-                estimator=ConsumingRegressor()
-                .set_fit_request(sample_weight="inner_weights", metadata=False)
-                .set_predict_request(sample_weight=False)
-            ).set_fit_request(sample_weight="outer_weights"),
-        ]
-    )
+    pipeline = SimplePipeline([
+        MetaTransformer(
+            transformer=ConsumingTransformer()
+            .set_fit_request(metadata=True, sample_weight=False)
+            .set_transform_request(sample_weight=True, metadata=False)
+        ),
+        WeightedMetaRegressor(
+            estimator=ConsumingRegressor()
+            .set_fit_request(sample_weight="inner_weights", metadata=False)
+            .set_predict_request(sample_weight=False)
+        ).set_fit_request(sample_weight="outer_weights"),
+    ])
     w1, w2, w3 = [1], [2], [3]
     pipeline.fit(
         X, y, metadata=my_groups, sample_weight=w1, outer_weights=w2, inner_weights=w3
@@ -328,18 +326,16 @@ def test_nested_routing():
 
 def test_nested_routing_conflict():
     # check if an error is raised if there's a conflict between keys
-    pipeline = SimplePipeline(
-        [
-            MetaTransformer(
-                transformer=ConsumingTransformer()
-                .set_fit_request(metadata=True, sample_weight=False)
-                .set_transform_request(sample_weight=True)
-            ),
-            WeightedMetaRegressor(
-                estimator=ConsumingRegressor().set_fit_request(sample_weight=True)
-            ).set_fit_request(sample_weight="outer_weights"),
-        ]
-    )
+    pipeline = SimplePipeline([
+        MetaTransformer(
+            transformer=ConsumingTransformer()
+            .set_fit_request(metadata=True, sample_weight=False)
+            .set_transform_request(sample_weight=True)
+        ),
+        WeightedMetaRegressor(
+            estimator=ConsumingRegressor().set_fit_request(sample_weight=True)
+        ).set_fit_request(sample_weight="outer_weights"),
+    ])
     w1, w2 = [1], [2]
     with pytest.raises(
         ValueError,

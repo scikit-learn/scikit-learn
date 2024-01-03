@@ -388,12 +388,10 @@ def _compute_precision_cholesky_from_precisions(precisions, covariance_type):
         components. The shape depends on the covariance_type.
     """
     if covariance_type == "full":
-        precisions_cholesky = np.array(
-            [
-                _flipudlr(linalg.cholesky(_flipudlr(precision), lower=True))
-                for precision in precisions
-            ]
-        )
+        precisions_cholesky = np.array([
+            _flipudlr(linalg.cholesky(_flipudlr(precision), lower=True))
+            for precision in precisions
+        ])
     elif covariance_type == "tied":
         precisions_cholesky = _flipudlr(
             linalg.cholesky(_flipudlr(precisions), lower=True)

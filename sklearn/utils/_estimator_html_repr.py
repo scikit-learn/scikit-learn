@@ -443,10 +443,8 @@ class _HTMLDocumentationLinkMixin:
         return getattr(
             self,
             "__doc_link_template",
-            (
-                f"https://scikit-learn.org/{version_url}/modules/generated/"
-                "{estimator_module}.{estimator_name}.html"
-            ),
+            f"https://scikit-learn.org/{version_url}/modules/generated/"
+            "{estimator_module}.{estimator_name}.html",
         )
 
     @_doc_link_template.setter
@@ -471,13 +469,9 @@ class _HTMLDocumentationLinkMixin:
 
         if self._doc_link_url_param_generator is None:
             estimator_name = self.__class__.__name__
-            estimator_module = ".".join(
-                [
-                    _
-                    for _ in self.__class__.__module__.split(".")
-                    if not _.startswith("_")
-                ]
-            )
+            estimator_module = ".".join([
+                _ for _ in self.__class__.__module__.split(".") if not _.startswith("_")
+            ])
             return self._doc_link_template.format(
                 estimator_module=estimator_module, estimator_name=estimator_name
             )

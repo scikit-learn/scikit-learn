@@ -241,31 +241,27 @@ def test_imputation_mean_median(csc_container):
 @pytest.mark.parametrize("csc_container", CSC_CONTAINERS)
 def test_imputation_median_special_cases(csc_container):
     # Test median imputation with sparse boundary cases
-    X = np.array(
-        [
-            [0, np.nan, np.nan],  # odd: implicit zero
-            [5, np.nan, np.nan],  # odd: explicit nonzero
-            [0, 0, np.nan],  # even: average two zeros
-            [-5, 0, np.nan],  # even: avg zero and neg
-            [0, 5, np.nan],  # even: avg zero and pos
-            [4, 5, np.nan],  # even: avg nonzeros
-            [-4, -5, np.nan],  # even: avg negatives
-            [-1, 2, np.nan],  # even: crossing neg and pos
-        ]
-    ).transpose()
+    X = np.array([
+        [0, np.nan, np.nan],  # odd: implicit zero
+        [5, np.nan, np.nan],  # odd: explicit nonzero
+        [0, 0, np.nan],  # even: average two zeros
+        [-5, 0, np.nan],  # even: avg zero and neg
+        [0, 5, np.nan],  # even: avg zero and pos
+        [4, 5, np.nan],  # even: avg nonzeros
+        [-4, -5, np.nan],  # even: avg negatives
+        [-1, 2, np.nan],  # even: crossing neg and pos
+    ]).transpose()
 
-    X_imputed_median = np.array(
-        [
-            [0, 0, 0],
-            [5, 5, 5],
-            [0, 0, 0],
-            [-5, 0, -2.5],
-            [0, 5, 2.5],
-            [4, 5, 4.5],
-            [-4, -5, -4.5],
-            [-1, 2, 0.5],
-        ]
-    ).transpose()
+    X_imputed_median = np.array([
+        [0, 0, 0],
+        [5, 5, 5],
+        [0, 0, 0],
+        [-5, 0, -2.5],
+        [0, 5, 2.5],
+        [4, 5, 4.5],
+        [-4, -5, -4.5],
+        [-1, 2, 0.5],
+    ]).transpose()
     statistics_median = [0, 5, 0, -2.5, 2.5, 4.5, -4.5, 0.5]
 
     _check_statistics(
@@ -320,23 +316,19 @@ def test_imputation_const_mostf_error_invalid_types(strategy, dtype):
 @pytest.mark.parametrize("csc_container", CSC_CONTAINERS)
 def test_imputation_most_frequent(csc_container):
     # Test imputation using the most-frequent strategy.
-    X = np.array(
-        [
-            [-1, -1, 0, 5],
-            [-1, 2, -1, 3],
-            [-1, 1, 3, -1],
-            [-1, 2, 3, 7],
-        ]
-    )
+    X = np.array([
+        [-1, -1, 0, 5],
+        [-1, 2, -1, 3],
+        [-1, 1, 3, -1],
+        [-1, 2, 3, 7],
+    ])
 
-    X_true = np.array(
-        [
-            [2, 0, 5],
-            [2, 3, 3],
-            [1, 3, 3],
-            [2, 3, 7],
-        ]
-    )
+    X_true = np.array([
+        [2, 0, 5],
+        [2, 3, 3],
+        [1, 3, 3],
+        [2, 3, 7],
+    ])
 
     # scipy.stats.mode, used in SimpleImputer, doesn't return the first most
     # frequent as promised in the doc but the lowest most frequent. When this
@@ -422,14 +414,12 @@ def test_imputation_constant_integer():
 @pytest.mark.parametrize("array_constructor", CSR_CONTAINERS + [np.asarray])
 def test_imputation_constant_float(array_constructor):
     # Test imputation using the constant strategy on floats
-    X = np.array(
-        [
-            [np.nan, 1.1, 0, np.nan],
-            [1.2, np.nan, 1.3, np.nan],
-            [0, 0, np.nan, np.nan],
-            [1.4, 1.5, 0, np.nan],
-        ]
-    )
+    X = np.array([
+        [np.nan, 1.1, 0, np.nan],
+        [1.2, np.nan, 1.3, np.nan],
+        [0, 0, np.nan, np.nan],
+        [1.4, 1.5, 0, np.nan],
+    ])
 
     X_true = np.array(
         [[-1, 1.1, 0, -1], [1.2, -1, 1.3, -1], [0, 0, -1, -1], [1.4, 1.5, 0, -1]]
@@ -518,12 +508,10 @@ def test_imputation_pipeline_grid_search():
     X = _sparse_random_matrix(100, 100, density=0.10)
     missing_values = X.data[0]
 
-    pipeline = Pipeline(
-        [
-            ("imputer", SimpleImputer(missing_values=missing_values)),
-            ("tree", tree.DecisionTreeRegressor(random_state=0)),
-        ]
-    )
+    pipeline = Pipeline([
+        ("imputer", SimpleImputer(missing_values=missing_values)),
+        ("tree", tree.DecisionTreeRegressor(random_state=0)),
+    ])
 
     parameters = {"imputer__strategy": ["mean", "median", "most_frequent"]}
 
@@ -1028,14 +1016,12 @@ def test_iterative_imputer_catch_min_max_error(min_value, max_value, err_msg):
 )
 def test_iterative_imputer_min_max_array_like_imputation(min_max_1, min_max_2):
     # Test that None/inf and scalar/vector give the same imputation
-    X_train = np.array(
-        [
-            [np.nan, 2, 2, 1],
-            [10, np.nan, np.nan, 7],
-            [3, 1, np.nan, 1],
-            [np.nan, 4, 2, np.nan],
-        ]
-    )
+    X_train = np.array([
+        [np.nan, 2, 2, 1],
+        [10, np.nan, np.nan, 7],
+        [3, 1, np.nan, 1],
+        [np.nan, 4, 2, np.nan],
+    ])
     X_test = np.array(
         [[np.nan, 2, np.nan, 5], [2, 4, np.nan, np.nan], [np.nan, 1, 10, 1]]
     )
@@ -1354,14 +1340,12 @@ def test_imputer_without_indicator(imputer_constructor):
 )
 def test_simple_imputation_add_indicator_sparse_matrix(arr_type):
     X_sparse = arr_type([[np.nan, 1, 5], [2, np.nan, 1], [6, 3, np.nan], [1, 2, 9]])
-    X_true = np.array(
-        [
-            [3.0, 1.0, 5.0, 1.0, 0.0, 0.0],
-            [2.0, 2.0, 1.0, 0.0, 1.0, 0.0],
-            [6.0, 3.0, 5.0, 0.0, 0.0, 1.0],
-            [1.0, 2.0, 9.0, 0.0, 0.0, 0.0],
-        ]
-    )
+    X_true = np.array([
+        [3.0, 1.0, 5.0, 1.0, 0.0, 0.0],
+        [2.0, 2.0, 1.0, 0.0, 1.0, 0.0],
+        [6.0, 3.0, 5.0, 0.0, 0.0, 1.0],
+        [1.0, 2.0, 9.0, 0.0, 0.0, 0.0],
+    ])
 
     imputer = SimpleImputer(missing_values=np.nan, add_indicator=True)
     X_trans = imputer.fit_transform(X_sparse)
@@ -1409,41 +1393,33 @@ def test_imputation_order(order, idx_order):
 @pytest.mark.parametrize("missing_value", [-1, np.nan])
 def test_simple_imputation_inverse_transform(missing_value):
     # Test inverse_transform feature for np.nan
-    X_1 = np.array(
-        [
-            [9, missing_value, 3, -1],
-            [4, -1, 5, 4],
-            [6, 7, missing_value, -1],
-            [8, 9, 0, missing_value],
-        ]
-    )
+    X_1 = np.array([
+        [9, missing_value, 3, -1],
+        [4, -1, 5, 4],
+        [6, 7, missing_value, -1],
+        [8, 9, 0, missing_value],
+    ])
 
-    X_2 = np.array(
-        [
-            [5, 4, 2, 1],
-            [2, 1, missing_value, 3],
-            [9, missing_value, 7, 1],
-            [6, 4, 2, missing_value],
-        ]
-    )
+    X_2 = np.array([
+        [5, 4, 2, 1],
+        [2, 1, missing_value, 3],
+        [9, missing_value, 7, 1],
+        [6, 4, 2, missing_value],
+    ])
 
-    X_3 = np.array(
-        [
-            [1, missing_value, 5, 9],
-            [missing_value, 4, missing_value, missing_value],
-            [2, missing_value, 7, missing_value],
-            [missing_value, 3, missing_value, 8],
-        ]
-    )
+    X_3 = np.array([
+        [1, missing_value, 5, 9],
+        [missing_value, 4, missing_value, missing_value],
+        [2, missing_value, 7, missing_value],
+        [missing_value, 3, missing_value, 8],
+    ])
 
-    X_4 = np.array(
-        [
-            [1, 1, 1, 3],
-            [missing_value, 2, missing_value, 1],
-            [2, 3, 3, 4],
-            [missing_value, 4, missing_value, 2],
-        ]
-    )
+    X_4 = np.array([
+        [1, 1, 1, 3],
+        [missing_value, 2, missing_value, 1],
+        [2, 3, 3, 4],
+        [missing_value, 4, missing_value, 2],
+    ])
 
     imputer = SimpleImputer(
         missing_values=missing_value, strategy="mean", add_indicator=True
@@ -1466,14 +1442,12 @@ def test_simple_imputation_inverse_transform(missing_value):
 
 @pytest.mark.parametrize("missing_value", [-1, np.nan])
 def test_simple_imputation_inverse_transform_exceptions(missing_value):
-    X_1 = np.array(
-        [
-            [9, missing_value, 3, -1],
-            [4, -1, 5, 4],
-            [6, 7, missing_value, -1],
-            [8, 9, 0, missing_value],
-        ]
-    )
+    X_1 = np.array([
+        [9, missing_value, 3, -1],
+        [4, -1, 5, 4],
+        [6, 7, missing_value, -1],
+        [8, 9, 0, missing_value],
+    ])
 
     imputer = SimpleImputer(missing_values=missing_value, strategy="mean")
     X_1_trans = imputer.fit_transform(X_1)

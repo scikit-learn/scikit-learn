@@ -184,11 +184,9 @@ class BaseWeightBoosting(BaseEnsemble, metaclass=ABCMeta):
 
             if not np.isfinite(sample_weight_sum):
                 warnings.warn(
-                    (
-                        "Sample weights have reached infinite values,"
-                        f" at iteration {iboost}, causing overflow. "
-                        "Iterations stopped. Try lowering the learning rate."
-                    ),
+                    "Sample weights have reached infinite values,"
+                    f" at iteration {iboost}, causing overflow. "
+                    "Iterations stopped. Try lowering the learning rate.",
                     stacklevel=2,
                 )
                 break
@@ -517,11 +515,9 @@ class AdaBoostClassifier(
         # SAMME-R requires predict_proba-enabled base estimators
         if self.algorithm != "SAMME":
             warnings.warn(
-                (
-                    "The SAMME.R algorithm (the default) is deprecated and will be"
-                    " removed in 1.6. Use the SAMME algorithm to circumvent this"
-                    " warning."
-                ),
+                "The SAMME.R algorithm (the default) is deprecated and will be"
+                " removed in 1.6. Use the SAMME algorithm to circumvent this"
+                " warning.",
                 FutureWarning,
             )
             if not hasattr(self.estimator_, "predict_proba"):

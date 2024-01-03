@@ -1271,17 +1271,15 @@ class RequestMethod:
                 annotation=owner,
             )
         ]
-        params.extend(
-            [
-                inspect.Parameter(
-                    k,
-                    inspect.Parameter.KEYWORD_ONLY,
-                    default=UNCHANGED,
-                    annotation=Optional[Union[bool, None, str]],
-                )
-                for k in self.keys
-            ]
-        )
+        params.extend([
+            inspect.Parameter(
+                k,
+                inspect.Parameter.KEYWORD_ONLY,
+                default=UNCHANGED,
+                annotation=Optional[Union[bool, None, str]],
+            )
+            for k in self.keys
+        ])
         func.__signature__ = inspect.Signature(
             params,
             return_annotation=owner,

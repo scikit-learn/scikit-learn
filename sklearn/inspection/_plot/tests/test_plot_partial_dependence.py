@@ -19,10 +19,8 @@ from sklearn.utils._testing import _convert_container
 
 # TODO: Remove when https://github.com/numpy/numpy/issues/14397 is resolved
 pytestmark = pytest.mark.filterwarnings(
-    (
-        "ignore:In future, it will be an error for 'np.bool_':DeprecationWarning:"
-        "matplotlib.*"
-    ),
+    "ignore:In future, it will be an error for 'np.bool_':DeprecationWarning:"
+    "matplotlib.*",
 )
 
 
@@ -722,13 +720,11 @@ def test_plot_partial_dependence_with_categorical(
 
 def test_plot_partial_dependence_legend(pyplot):
     pd = pytest.importorskip("pandas")
-    X = pd.DataFrame(
-        {
-            "col_A": ["A", "B", "C"],
-            "col_B": [1, 0, 2],
-            "col_C": ["C", "B", "A"],
-        }
-    )
+    X = pd.DataFrame({
+        "col_A": ["A", "B", "C"],
+        "col_B": [1, 0, 2],
+        "col_C": ["C", "B", "A"],
+    })
     y = np.array([1.2, 0.5, 0.45]).T
 
     categorical_features = ["col_A", "col_C"]
@@ -936,12 +932,10 @@ def test_partial_dependence_kind_list(
     )
 
     for idx in [0, 1]:
-        assert all(
-            [
-                isinstance(line, matplotlib.lines.Line2D)
-                for line in disp.lines_[0, idx].ravel()
-            ]
-        )
+        assert all([
+            isinstance(line, matplotlib.lines.Line2D)
+            for line in disp.lines_[0, idx].ravel()
+        ])
         assert disp.contours_[0, idx] is None
 
     assert disp.contours_[0, 2] is not None

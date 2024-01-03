@@ -1,4 +1,5 @@
 """Testing for Spectral Clustering methods"""
+
 import pickle
 import re
 
@@ -39,17 +40,15 @@ X, _ = make_blobs(
 @pytest.mark.parametrize("eigen_solver", ("arpack", "lobpcg"))
 @pytest.mark.parametrize("assign_labels", ("kmeans", "discretize", "cluster_qr"))
 def test_spectral_clustering(eigen_solver, assign_labels, csr_container):
-    S = np.array(
-        [
-            [1.0, 1.0, 1.0, 0.2, 0.0, 0.0, 0.0],
-            [1.0, 1.0, 1.0, 0.2, 0.0, 0.0, 0.0],
-            [1.0, 1.0, 1.0, 0.2, 0.0, 0.0, 0.0],
-            [0.2, 0.2, 0.2, 1.0, 1.0, 1.0, 1.0],
-            [0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0],
-            [0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0],
-            [0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0],
-        ]
-    )
+    S = np.array([
+        [1.0, 1.0, 1.0, 0.2, 0.0, 0.0, 0.0],
+        [1.0, 1.0, 1.0, 0.2, 0.0, 0.0, 0.0],
+        [1.0, 1.0, 1.0, 0.2, 0.0, 0.0, 0.0],
+        [0.2, 0.2, 0.2, 1.0, 1.0, 1.0, 1.0],
+        [0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0],
+        [0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0],
+        [0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0],
+    ])
 
     for mat in (S, csr_container(S)):
         model = SpectralClustering(

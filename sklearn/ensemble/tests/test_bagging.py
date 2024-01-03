@@ -55,14 +55,12 @@ def test_classification():
     X_train, X_test, y_train, y_test = train_test_split(
         iris.data, iris.target, random_state=rng
     )
-    grid = ParameterGrid(
-        {
-            "max_samples": [0.5, 1.0],
-            "max_features": [1, 4],
-            "bootstrap": [True, False],
-            "bootstrap_features": [True, False],
-        }
-    )
+    grid = ParameterGrid({
+        "max_samples": [0.5, 1.0],
+        "max_features": [1, 4],
+        "bootstrap": [True, False],
+        "bootstrap_features": [True, False],
+    })
     estimators = [
         None,
         DummyClassifier(),
@@ -152,14 +150,12 @@ def test_regression():
     X_train, X_test, y_train, y_test = train_test_split(
         diabetes.data[:50], diabetes.target[:50], random_state=rng
     )
-    grid = ParameterGrid(
-        {
-            "max_samples": [0.5, 1.0],
-            "max_features": [0.5, 1.0],
-            "bootstrap": [True, False],
-            "bootstrap_features": [True, False],
-        }
-    )
+    grid = ParameterGrid({
+        "max_samples": [0.5, 1.0],
+        "max_features": [0.5, 1.0],
+        "bootstrap": [True, False],
+        "bootstrap_features": [True, False],
+    })
 
     for estimator in [
         None,
@@ -822,26 +818,22 @@ def replace(X):
 
 def test_bagging_regressor_with_missing_inputs():
     # Check that BaggingRegressor can accept X with missing/infinite data
-    X = np.array(
-        [
-            [1, 3, 5],
-            [2, None, 6],
-            [2, np.nan, 6],
-            [2, np.inf, 6],
-            [2, -np.inf, 6],
-        ]
-    )
+    X = np.array([
+        [1, 3, 5],
+        [2, None, 6],
+        [2, np.nan, 6],
+        [2, np.inf, 6],
+        [2, -np.inf, 6],
+    ])
     y_values = [
         np.array([2, 3, 3, 3, 3]),
-        np.array(
-            [
-                [2, 1, 9],
-                [3, 6, 8],
-                [3, 6, 8],
-                [3, 6, 8],
-                [3, 6, 8],
-            ]
-        ),
+        np.array([
+            [2, 1, 9],
+            [3, 6, 8],
+            [3, 6, 8],
+            [3, 6, 8],
+            [3, 6, 8],
+        ]),
     ]
     for y in y_values:
         regressor = DecisionTreeRegressor()
@@ -863,15 +855,13 @@ def test_bagging_regressor_with_missing_inputs():
 
 def test_bagging_classifier_with_missing_inputs():
     # Check that BaggingClassifier can accept X with missing/infinite data
-    X = np.array(
-        [
-            [1, 3, 5],
-            [2, None, 6],
-            [2, np.nan, 6],
-            [2, np.inf, 6],
-            [2, -np.inf, 6],
-        ]
-    )
+    X = np.array([
+        [1, 3, 5],
+        [2, None, 6],
+        [2, np.nan, 6],
+        [2, np.inf, 6],
+        [2, -np.inf, 6],
+    ])
     y = np.array([3, 6, 6, 6, 6])
     classifier = DecisionTreeClassifier()
     pipeline = make_pipeline(FunctionTransformer(replace), classifier)

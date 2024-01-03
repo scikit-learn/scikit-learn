@@ -650,12 +650,10 @@ class StackingClassifier(_RoutingNotSupportedMixin, ClassifierMixin, _BaseStacki
         if type_of_target(y) == "multilabel-indicator":
             self._label_encoder = [LabelEncoder().fit(yk) for yk in y.T]
             self.classes_ = [le.classes_ for le in self._label_encoder]
-            y_encoded = np.array(
-                [
-                    self._label_encoder[target_idx].transform(target)
-                    for target_idx, target in enumerate(y.T)
-                ]
-            ).T
+            y_encoded = np.array([
+                self._label_encoder[target_idx].transform(target)
+                for target_idx, target in enumerate(y.T)
+            ]).T
         else:
             self._label_encoder = LabelEncoder().fit(y)
             self.classes_ = self._label_encoder.classes_
@@ -686,12 +684,10 @@ class StackingClassifier(_RoutingNotSupportedMixin, ClassifierMixin, _BaseStacki
         y_pred = super().predict(X, **predict_params)
         if isinstance(self._label_encoder, list):
             # Handle the multilabel-indicator case
-            y_pred = np.array(
-                [
-                    self._label_encoder[target_idx].inverse_transform(target)
-                    for target_idx, target in enumerate(y_pred.T)
-                ]
-            ).T
+            y_pred = np.array([
+                self._label_encoder[target_idx].inverse_transform(target)
+                for target_idx, target in enumerate(y_pred.T)
+            ]).T
         else:
             y_pred = self._label_encoder.inverse_transform(y_pred)
         return y_pred

@@ -429,32 +429,25 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
         n_samples_comp = rng.multinomial(n_samples, self.weights_)
 
         if self.covariance_type == "full":
-            X = np.vstack(
-                [
-                    rng.multivariate_normal(mean, covariance, int(sample))
-                    for (mean, covariance, sample) in zip(
-                        self.means_, self.covariances_, n_samples_comp
-                    )
-                ]
-            )
+            X = np.vstack([
+                rng.multivariate_normal(mean, covariance, int(sample))
+                for (mean, covariance, sample) in zip(
+                    self.means_, self.covariances_, n_samples_comp
+                )
+            ])
         elif self.covariance_type == "tied":
-            X = np.vstack(
-                [
-                    rng.multivariate_normal(mean, self.covariances_, int(sample))
-                    for (mean, sample) in zip(self.means_, n_samples_comp)
-                ]
-            )
+            X = np.vstack([
+                rng.multivariate_normal(mean, self.covariances_, int(sample))
+                for (mean, sample) in zip(self.means_, n_samples_comp)
+            ])
         else:
-            X = np.vstack(
-                [
-                    mean
-                    + rng.standard_normal(size=(sample, n_features))
-                    * np.sqrt(covariance)
-                    for (mean, covariance, sample) in zip(
-                        self.means_, self.covariances_, n_samples_comp
-                    )
-                ]
-            )
+            X = np.vstack([
+                mean
+                + rng.standard_normal(size=(sample, n_features)) * np.sqrt(covariance)
+                for (mean, covariance, sample) in zip(
+                    self.means_, self.covariances_, n_samples_comp
+                )
+            ])
 
         y = np.concatenate(
             [np.full(sample, j, dtype=int) for j, sample in enumerate(n_samples_comp)]

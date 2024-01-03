@@ -1,6 +1,7 @@
 """
 Test the ColumnTransformer.
 """
+
 import pickle
 import re
 
@@ -135,12 +136,10 @@ def test_column_transformer():
         [("trans1", Trans(), [0]), ("trans2", Trans(), [1])],
         transformer_weights=transformer_weights,
     )
-    res = np.vstack(
-        [
-            transformer_weights["trans1"] * X_res_first1D,
-            transformer_weights["trans2"] * X_res_second1D,
-        ]
-    ).T
+    res = np.vstack([
+        transformer_weights["trans1"] * X_res_first1D,
+        transformer_weights["trans2"] * X_res_second1D,
+    ]).T
     assert_array_equal(both.fit_transform(X_array), res)
     assert_array_equal(both.fit(X_array).transform(X_array), res)
     assert len(both.transformers_) == 2
@@ -206,17 +205,15 @@ def test_column_transformer_dataframe(constructor_name):
     ]
     if constructor_name == "dataframe":
         # Scalars are only supported for pandas dataframes.
-        cases.extend(
-            [
-                # scalar
-                (0, X_res_first),
-                ("first", X_res_first),
-                (
-                    dataframe_lib.Series([True, False], index=["first", "second"]),
-                    X_res_first,
-                ),
-            ]
-        )
+        cases.extend([
+            # scalar
+            (0, X_res_first),
+            ("first", X_res_first),
+            (
+                dataframe_lib.Series([True, False], index=["first", "second"]),
+                X_res_first,
+            ),
+        ])
 
     for selection, res in cases:
         ct = ColumnTransformer([("trans", Trans(), selection)], remainder="drop")
@@ -250,12 +247,10 @@ def test_column_transformer_dataframe(constructor_name):
         [("trans1", Trans(), ["first"]), ("trans2", Trans(), ["second"])],
         transformer_weights=transformer_weights,
     )
-    res = np.vstack(
-        [
-            transformer_weights["trans1"] * X_df["first"],
-            transformer_weights["trans2"] * X_df["second"],
-        ]
-    ).T
+    res = np.vstack([
+        transformer_weights["trans1"] * X_df["first"],
+        transformer_weights["trans2"] * X_df["second"],
+    ]).T
     assert_array_equal(both.fit_transform(X_df), res)
     assert_array_equal(both.fit(X_df).transform(X_df), res)
     assert len(both.transformers_) == 2
@@ -293,28 +288,22 @@ def test_column_transformer_dataframe(constructor_name):
                 X = X.to_frame()
             return X
 
-    ct = ColumnTransformer(
-        [
-            (
-                "trans",
-                TransAssert(expected_type_transform=dataframe_lib.DataFrame),
-                ["first", "second"],
-            )
-        ]
-    )
+    ct = ColumnTransformer([(
+        "trans",
+        TransAssert(expected_type_transform=dataframe_lib.DataFrame),
+        ["first", "second"],
+    )])
     ct.fit_transform(X_df)
 
     if constructor_name == "dataframe":
         # DataFrame protocol does not have 1d columns, so we only test on Pandas
         # dataframes.
         ct = ColumnTransformer(
-            [
-                (
-                    "trans",
-                    TransAssert(expected_type_transform=dataframe_lib.Series),
-                    "first",
-                )
-            ],
+            [(
+                "trans",
+                TransAssert(expected_type_transform=dataframe_lib.Series),
+                "first",
+            )],
             remainder="drop",
         )
         ct.fit_transform(X_df)
@@ -488,19 +477,15 @@ def test_column_transformer_sparse_array(csr_container):
 
 def test_column_transformer_list():
     X_list = [[1, float("nan"), "a"], [0, 0, "b"]]
-    expected_result = np.array(
-        [
-            [1, float("nan"), 1, 0],
-            [-1, 0, 0, 1],
-        ]
-    )
+    expected_result = np.array([
+        [1, float("nan"), 1, 0],
+        [-1, 0, 0, 1],
+    ])
 
-    ct = ColumnTransformer(
-        [
-            ("numerical", StandardScaler(), [0, 1]),
-            ("categorical", OneHotEncoder(), [2]),
-        ]
-    )
+    ct = ColumnTransformer([
+        ("numerical", StandardScaler(), [0, 1]),
+        ("categorical", OneHotEncoder(), [2]),
+    ])
 
     assert_array_equal(ct.fit_transform(X_list), expected_result)
     assert_array_equal(ct.fit(X_list).transform(X_list), expected_result)
@@ -677,11 +662,9 @@ def test_column_transformer_invalid_columns(remainder):
     msg = "X has 3 features, but ColumnTransformer is expecting 2 features as input."
     with pytest.raises(ValueError, match=msg):
         ct.transform(X_array_more)
-    X_array_fewer = np.array(
-        [
-            [0, 1, 2],
-        ]
-    ).T
+    X_array_fewer = np.array([
+        [0, 1, 2],
+    ]).T
     err_msg = (
         "X has 1 features, but ColumnTransformer is expecting 2 features as input."
     )
@@ -813,12 +796,10 @@ def test_column_transformer_get_set_params():
 
 def test_column_transformer_named_estimators():
     X_array = np.array([[0.0, 1.0, 2.0], [2.0, 4.0, 6.0]]).T
-    ct = ColumnTransformer(
-        [
-            ("trans1", StandardScaler(), [0]),
-            ("trans2", StandardScaler(with_std=False), [1]),
-        ]
-    )
+    ct = ColumnTransformer([
+        ("trans1", StandardScaler(), [0]),
+        ("trans2", StandardScaler(with_std=False), [1]),
+    ])
     assert not hasattr(ct, "transformers_")
     ct.fit(X_array)
     assert hasattr(ct, "transformers_")
@@ -1475,14 +1456,12 @@ def test_sk_visual_block_remainder_fitted_pandas(remainder):
     ct = ColumnTransformer(
         transformers=[("ohe", ohe, ["col1", "col2"])], remainder=remainder
     )
-    df = pd.DataFrame(
-        {
-            "col1": ["a", "b", "c"],
-            "col2": ["z", "z", "z"],
-            "col3": [1, 2, 3],
-            "col4": [3, 4, 5],
-        }
-    )
+    df = pd.DataFrame({
+        "col1": ["a", "b", "c"],
+        "col2": ["z", "z", "z"],
+        "col3": [1, 2, 3],
+        "col4": [3, 4, 5],
+    })
     ct.fit(df)
     visual_block = ct._sk_visual_block_()
     assert visual_block.names == ("ohe", "remainder")
@@ -2034,15 +2013,13 @@ def test_column_transformer_set_output(verbose_feature_names_out, remainder):
 def test_column_transform_set_output_mixed(remainder, fit_transform):
     """Check ColumnTransformer outputs mixed types correctly."""
     pd = pytest.importorskip("pandas")
-    df = pd.DataFrame(
-        {
-            "pet": pd.Series(["dog", "cat", "snake"], dtype="category"),
-            "color": pd.Series(["green", "blue", "red"], dtype="object"),
-            "age": [1.4, 2.1, 4.4],
-            "height": [20, 40, 10],
-            "distance": pd.Series([20, pd.NA, 100], dtype="Int32"),
-        }
-    )
+    df = pd.DataFrame({
+        "pet": pd.Series(["dog", "cat", "snake"], dtype="category"),
+        "color": pd.Series(["green", "blue", "red"], dtype="object"),
+        "age": [1.4, 2.1, 4.4],
+        "height": [20, 40, 10],
+        "distance": pd.Series([20, pd.NA, 100], dtype="Int32"),
+    })
     ct = ColumnTransformer(
         [
             (
@@ -2079,13 +2056,11 @@ def test_column_transform_set_output_mixed(remainder, fit_transform):
 @pytest.mark.parametrize("remainder", ["drop", "passthrough"])
 def test_column_transform_set_output_after_fitting(remainder):
     pd = pytest.importorskip("pandas")
-    df = pd.DataFrame(
-        {
-            "pet": pd.Series(["dog", "cat", "snake"], dtype="category"),
-            "age": [1.4, 2.1, 4.4],
-            "height": [20, 40, 10],
-        }
-    )
+    df = pd.DataFrame({
+        "pet": pd.Series(["dog", "cat", "snake"], dtype="category"),
+        "age": [1.4, 2.1, 4.4],
+        "height": [20, 40, 10],
+    })
     ct = ColumnTransformer(
         [
             (
@@ -2170,12 +2145,10 @@ def test_transformers_with_pandas_out_but_not_feature_names_out(
     pd = pytest.importorskip("pandas")
 
     X_df = pd.DataFrame({"feat0": [1.0, 2.0, 3.0], "feat1": [2.0, 3.0, 4.0]})
-    ct = ColumnTransformer(
-        [
-            ("trans_0", PandasOutTransformer(offset=3.0), ["feat1"]),
-            ("trans_1", trans_1, ["feat0"]),
-        ]
-    )
+    ct = ColumnTransformer([
+        ("trans_0", PandasOutTransformer(offset=3.0), ["feat1"]),
+        ("trans_1", trans_1, ["feat0"]),
+    ])
     X_trans_np = ct.fit_transform(X_df)
     assert isinstance(X_trans_np, np.ndarray)
 
@@ -2346,17 +2319,13 @@ def test_metadata_routing_for_column_transformer(method):
     y = [1, 2, 3]
     registry = _Registry()
     sample_weight, metadata = [1], "a"
-    trs = ColumnTransformer(
-        [
-            (
-                "trans",
-                ConsumingTransformer(registry=registry)
-                .set_fit_request(sample_weight=True, metadata=True)
-                .set_transform_request(sample_weight=True, metadata=True),
-                [0],
-            )
-        ]
-    )
+    trs = ColumnTransformer([(
+        "trans",
+        ConsumingTransformer(registry=registry)
+        .set_fit_request(sample_weight=True, metadata=True)
+        .set_transform_request(sample_weight=True, metadata=True),
+        [0],
+    )])
 
     if method == "transform":
         trs.fit(X, y)
@@ -2391,17 +2360,13 @@ def test_metadata_routing_no_fit_transform():
     y = [1, 2, 3]
     _Registry()
     sample_weight, metadata = [1], "a"
-    trs = ColumnTransformer(
-        [
-            (
-                "trans",
-                NoFitTransform()
-                .set_fit_request(sample_weight=True, metadata=True)
-                .set_transform_request(sample_weight=True, metadata=True),
-                [0],
-            )
-        ]
-    )
+    trs = ColumnTransformer([(
+        "trans",
+        NoFitTransform()
+        .set_fit_request(sample_weight=True, metadata=True)
+        .set_transform_request(sample_weight=True, metadata=True),
+        [0],
+    )])
 
     trs.fit(X, y, sample_weight=sample_weight, metadata=metadata)
     trs.fit_transform(X, y, sample_weight=sample_weight, metadata=metadata)

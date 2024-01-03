@@ -1691,16 +1691,14 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
     for param in ["C", "warm_start", "l1_ratio"]:
         _parameter_constraints.pop(param)
 
-    _parameter_constraints.update(
-        {
-            "Cs": [Interval(Integral, 1, None, closed="left"), "array-like"],
-            "cv": ["cv_object"],
-            "scoring": [StrOptions(set(get_scorer_names())), callable, None],
-            "l1_ratios": ["array-like", None],
-            "refit": ["boolean"],
-            "penalty": [StrOptions({"l1", "l2", "elasticnet"})],
-        }
-    )
+    _parameter_constraints.update({
+        "Cs": [Interval(Integral, 1, None, closed="left"), "array-like"],
+        "cv": ["cv_object"],
+        "scoring": [StrOptions(set(get_scorer_names())), callable, None],
+        "l1_ratios": ["array-like", None],
+        "refit": ["boolean"],
+        "penalty": [StrOptions({"l1", "l2", "elasticnet"})],
+    })
 
     def __init__(
         self,

@@ -1,6 +1,7 @@
 """ Module to give helpful messages to the user that did not
 compile scikit-learn properly.
 """
+
 import os
 
 INPLACE_MSG = """

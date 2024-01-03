@@ -194,18 +194,16 @@ def precision_recall_curve_padded_thresholds(*args, **kwargs):
 
     pad_threshholds = len(precision) - len(thresholds)
 
-    return np.array(
-        [
-            precision,
-            recall,
-            np.pad(
-                thresholds.astype(np.float64),
-                pad_width=(0, pad_threshholds),
-                mode="constant",
-                constant_values=[np.nan],
-            ),
-        ]
-    )
+    return np.array([
+        precision,
+        recall,
+        np.pad(
+            thresholds.astype(np.float64),
+            pad_width=(0, pad_threshholds),
+            mode="constant",
+            constant_values=[np.nan],
+        ),
+    ])
 
 
 CURVE_METRICS = {
@@ -1275,12 +1273,9 @@ def _check_averaging(
         sample_measure = metric(y_true, y_pred, average="samples")
         assert_allclose(
             sample_measure,
-            np.mean(
-                [
-                    metric(y_true_binarize[i], y_pred_binarize[i])
-                    for i in range(n_samples)
-                ]
-            ),
+            np.mean([
+                metric(y_true_binarize[i], y_pred_binarize[i]) for i in range(n_samples)
+            ]),
         )
 
     with pytest.raises(ValueError):

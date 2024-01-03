@@ -7,6 +7,7 @@ Authors : Vincent Michel, Bertrand Thirion, Alexandre Gramfort,
           Gael Varoquaux
 License: BSD 3 clause
 """
+
 import warnings
 from heapq import heapify, heappop, heappush, heappushpop
 from numbers import Integral, Real
@@ -281,14 +282,12 @@ def ward_tree(X, *, connectivity=None, n_clusters=None, return_distance=False):
 
         if n_clusters is not None:
             warnings.warn(
-                (
-                    "Partial build of the tree is implemented "
-                    "only for structured clustering (i.e. with "
-                    "explicit connectivity). The algorithm "
-                    "will build the full tree and only "
-                    "retain the lower branches required "
-                    "for the specified number of clusters"
-                ),
+                "Partial build of the tree is implemented "
+                "only for structured clustering (i.e. with "
+                "explicit connectivity). The algorithm "
+                "will build the full tree and only "
+                "retain the lower branches required "
+                "for the specified number of clusters",
                 stacklevel=2,
             )
         X = np.require(X, requirements="W")
@@ -515,14 +514,12 @@ def linkage_tree(
 
         if n_clusters is not None:
             warnings.warn(
-                (
-                    "Partial build of the tree is implemented "
-                    "only for structured clustering (i.e. with "
-                    "explicit connectivity). The algorithm "
-                    "will build the full tree and only "
-                    "retain the lower branches required "
-                    "for the specified number of clusters"
-                ),
+                "Partial build of the tree is implemented "
+                "only for structured clustering (i.e. with "
+                "explicit connectivity). The algorithm "
+                "will build the full tree and only "
+                "retain the lower branches required "
+                "for the specified number of clusters",
                 stacklevel=2,
             )
 
@@ -980,11 +977,9 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
         # TODO(1.6): remove in 1.6
         if self.metric is None:
             warnings.warn(
-                (
-                    "`metric=None` is deprecated in version 1.4 and will be removed in "
-                    "version 1.6. Let `metric` be the default value "
-                    "(i.e. `'euclidean'`) instead."
-                ),
+                "`metric=None` is deprecated in version 1.4 and will be removed in "
+                "version 1.6. Let `metric` be the default value "
+                "(i.e. `'euclidean'`) instead.",
                 FutureWarning,
             )
             self._metric = "euclidean"

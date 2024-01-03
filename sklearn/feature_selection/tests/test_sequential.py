@@ -108,12 +108,10 @@ def test_n_features_to_select_stopping_criterion(direction):
     rng = np.random.RandomState(0)
 
     added_candidates = list(set(range(X.shape[1])) - set(sfs.get_support(indices=True)))
-    added_X = np.hstack(
-        [
-            selected_X,
-            (X[:, rng.choice(added_candidates)])[:, np.newaxis],
-        ]
-    )
+    added_X = np.hstack([
+        selected_X,
+        (X[:, rng.choice(added_candidates)])[:, np.newaxis],
+    ])
 
     removed_candidate = rng.choice(list(range(sfs.n_features_to_select_)))
     removed_X = np.delete(selected_X, removed_candidate, axis=1)

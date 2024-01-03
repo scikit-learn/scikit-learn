@@ -801,22 +801,20 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
             )
         n_classes = self.classes_.shape[0]
         estimators_indices = list(
-            zip(
-                *(
-                    Parallel(n_jobs=self.n_jobs)(
-                        delayed(_fit_ovo_binary)(
-                            self.estimator,
-                            X,
-                            y,
-                            self.classes_[i],
-                            self.classes_[j],
-                            fit_params=routed_params.estimator.fit,
-                        )
-                        for i in range(n_classes)
-                        for j in range(i + 1, n_classes)
+            zip(*(
+                Parallel(n_jobs=self.n_jobs)(
+                    delayed(_fit_ovo_binary)(
+                        self.estimator,
+                        X,
+                        y,
+                        self.classes_[i],
+                        self.classes_[j],
+                        fit_params=routed_params.estimator.fit,
                     )
+                    for i in range(n_classes)
+                    for j in range(i + 1, n_classes)
                 )
-            )
+            ))
         )
 
         self.estimators_ = estimators_indices[0]

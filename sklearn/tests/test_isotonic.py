@@ -396,30 +396,28 @@ def test_isotonic_duplicate_min_entry():
 def test_isotonic_ymin_ymax():
     # Test from @NelleV's issue:
     # https://github.com/scikit-learn/scikit-learn/issues/6921
-    x = np.array(
-        [
-            1.263,
-            1.318,
-            -0.572,
-            0.307,
-            -0.707,
-            -0.176,
-            -1.599,
-            1.059,
-            1.396,
-            1.906,
-            0.210,
-            0.028,
-            -0.081,
-            0.444,
-            0.018,
-            -0.377,
-            -0.896,
-            -0.377,
-            -1.327,
-            0.180,
-        ]
-    )
+    x = np.array([
+        1.263,
+        1.318,
+        -0.572,
+        0.307,
+        -0.707,
+        -0.176,
+        -1.599,
+        1.059,
+        1.396,
+        1.906,
+        0.210,
+        0.028,
+        -0.081,
+        0.444,
+        0.018,
+        -0.377,
+        -0.896,
+        -0.377,
+        -1.327,
+        0.180,
+    ])
     y = isotonic_regression(x, y_min=0.0, y_max=0.1)
 
     assert np.all(y >= 0)

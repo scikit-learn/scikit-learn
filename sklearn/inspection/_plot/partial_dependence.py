@@ -640,21 +640,17 @@ class PartialDependenceDisplay:
 
             # collect the indices of the categorical features targeted by the partial
             # dependence computation
-            categorical_features_targeted = set(
-                [
-                    fx
-                    for fxs, cats in zip(features, is_categorical)
-                    for fx in fxs
-                    if any(cats)
-                ]
-            )
+            categorical_features_targeted = set([
+                fx
+                for fxs, cats in zip(features, is_categorical)
+                for fx in fxs
+                if any(cats)
+            ])
             if categorical_features_targeted:
-                min_n_cats = min(
-                    [
-                        len(_unique(_safe_indexing(X, idx, axis=1)))
-                        for idx in categorical_features_targeted
-                    ]
-                )
+                min_n_cats = min([
+                    len(_unique(_safe_indexing(X, idx, axis=1)))
+                    for idx in categorical_features_targeted
+                ])
                 if grid_resolution < min_n_cats:
                     raise ValueError(
                         "The resolution of the computed grid is less than the "

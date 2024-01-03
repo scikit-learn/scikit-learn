@@ -1100,17 +1100,15 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         TODO: Remove when ``set_config(enable_metadata_routing=False)`` is no
         more an option.
         """
-        return Bunch(
-            **{
-                name: Bunch(**{method: {} for method in METHODS})
-                for name, step, _, _ in self._iter(
-                    fitted=False,
-                    column_as_labels=False,
-                    skip_drop=True,
-                    skip_empty_columns=True,
-                )
-            }
-        )
+        return Bunch(**{
+            name: Bunch(**{method: {} for method in METHODS})
+            for name, step, _, _ in self._iter(
+                fitted=False,
+                column_as_labels=False,
+                skip_drop=True,
+                skip_empty_columns=True,
+            )
+        })
 
     def get_metadata_routing(self):
         """Get metadata routing of this object.

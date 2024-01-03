@@ -329,11 +329,9 @@ class _BaseKFold(BaseCrossValidator, metaclass=ABCMeta):
 
         if not shuffle and random_state is not None:  # None is the default
             raise ValueError(
-                (
-                    "Setting a random_state has no effect since shuffle is "
-                    "False. You should leave "
-                    "random_state to its default (None), or set shuffle=True."
-                ),
+                "Setting a random_state has no effect since shuffle is "
+                "False. You should leave "
+                "random_state to its default (None), or set shuffle=True.",
             )
 
         self.n_splits = n_splits
@@ -745,12 +743,10 @@ class StratifiedKFold(_BaseKFold):
         # using round robin over the sorted y. (This can be done direct from
         # counts, but that code is unreadable.)
         y_order = np.sort(y_encoded)
-        allocation = np.asarray(
-            [
-                np.bincount(y_order[i :: self.n_splits], minlength=n_classes)
-                for i in range(self.n_splits)
-            ]
-        )
+        allocation = np.asarray([
+            np.bincount(y_order[i :: self.n_splits], minlength=n_classes)
+            for i in range(self.n_splits)
+        ])
 
         # To maintain the data order dependencies as best as possible within
         # the stratification constraint, we assign samples from each class in
@@ -2745,13 +2741,11 @@ def _build_repr(self):
     if init is object.__init__:
         args = []
     else:
-        args = sorted(
-            [
-                p.name
-                for p in init_signature.parameters.values()
-                if p.name != "self" and p.kind != p.VAR_KEYWORD
-            ]
-        )
+        args = sorted([
+            p.name
+            for p in init_signature.parameters.values()
+            if p.name != "self" and p.kind != p.VAR_KEYWORD
+        ])
     class_name = self.__class__.__name__
     params = dict()
     for key in args:

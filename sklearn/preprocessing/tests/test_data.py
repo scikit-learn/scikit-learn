@@ -1176,21 +1176,17 @@ def test_quantile_transform_iris(csc_container):
 
 @pytest.mark.parametrize("csc_container", CSC_CONTAINERS)
 def test_quantile_transform_check_error(csc_container):
-    X = np.transpose(
-        [
-            [0, 25, 50, 0, 0, 0, 75, 0, 0, 100],
-            [2, 4, 0, 0, 6, 8, 0, 10, 0, 0],
-            [0, 0, 2.6, 4.1, 0, 0, 2.3, 0, 9.5, 0.1],
-        ]
-    )
+    X = np.transpose([
+        [0, 25, 50, 0, 0, 0, 75, 0, 0, 100],
+        [2, 4, 0, 0, 6, 8, 0, 10, 0, 0],
+        [0, 0, 2.6, 4.1, 0, 0, 2.3, 0, 9.5, 0.1],
+    ])
     X = csc_container(X)
-    X_neg = np.transpose(
-        [
-            [0, 25, 50, 0, 0, 0, 75, 0, 0, 100],
-            [-2, 4, 0, 0, 6, 8, 0, 10, 0, 0],
-            [0, 0, 2.6, 4.1, 0, 0, 2.3, 0, 9.5, 0.1],
-        ]
-    )
+    X_neg = np.transpose([
+        [0, 25, 50, 0, 0, 0, 75, 0, 0, 100],
+        [-2, 4, 0, 0, 6, 8, 0, 10, 0, 0],
+        [0, 0, 2.6, 4.1, 0, 0, 2.3, 0, 9.5, 0.1],
+    ])
     X_neg = csc_container(X_neg)
 
     err_msg = (
@@ -1258,19 +1254,17 @@ def test_quantile_transform_sparse_ignore_zeros(csc_container):
     X_row = np.array([0, 4, 0, 1, 2, 3, 4, 5, 6, 7, 8])
     X_sparse = csc_container((X_data, (X_row, X_col)))
     X_trans = transformer.fit_transform(X_sparse)
-    X_expected = np.array(
-        [
-            [0.0, 0.5],
-            [0.0, 0.0],
-            [0.0, 1.0],
-            [0.0, 1.0],
-            [0.0, 0.5],
-            [0.0, 0.0],
-            [0.0, 0.5],
-            [0.0, 1.0],
-            [0.0, 0.0],
-        ]
-    )
+    X_expected = np.array([
+        [0.0, 0.5],
+        [0.0, 0.0],
+        [0.0, 1.0],
+        [0.0, 1.0],
+        [0.0, 0.5],
+        [0.0, 0.0],
+        [0.0, 0.5],
+        [0.0, 1.0],
+        [0.0, 0.0],
+    ])
     assert_almost_equal(X_expected, X_trans.toarray())
 
     transformer = QuantileTransformer(ignore_implicit_zeros=True, n_quantiles=5)
@@ -1312,18 +1306,14 @@ def test_quantile_transform_dense_toy():
     X_expected = np.tile(np.linspace(0, 1, num=5), (3, 1)).T
     assert_almost_equal(np.sort(X_trans, axis=0), X_expected)
 
-    X_test = np.array(
-        [
-            [-1, 1, 0],
-            [101, 11, 10],
-        ]
-    )
-    X_expected = np.array(
-        [
-            [0, 0, 0],
-            [1, 1, 1],
-        ]
-    )
+    X_test = np.array([
+        [-1, 1, 0],
+        [101, 11, 10],
+    ])
+    X_expected = np.array([
+        [0, 0, 0],
+        [1, 1, 1],
+    ])
     assert_array_almost_equal(transformer.transform(X_test), X_expected)
 
     X_trans_inv = transformer.inverse_transform(X_trans)
@@ -1379,20 +1369,18 @@ def test_quantile_transform_subsampling():
 
 @pytest.mark.parametrize("csc_container", CSC_CONTAINERS)
 def test_quantile_transform_sparse_toy(csc_container):
-    X = np.array(
-        [
-            [0.0, 2.0, 0.0],
-            [25.0, 4.0, 0.0],
-            [50.0, 0.0, 2.6],
-            [0.0, 0.0, 4.1],
-            [0.0, 6.0, 0.0],
-            [0.0, 8.0, 0.0],
-            [75.0, 0.0, 2.3],
-            [0.0, 10.0, 0.0],
-            [0.0, 0.0, 9.5],
-            [100.0, 0.0, 0.1],
-        ]
-    )
+    X = np.array([
+        [0.0, 2.0, 0.0],
+        [25.0, 4.0, 0.0],
+        [50.0, 0.0, 2.6],
+        [0.0, 0.0, 4.1],
+        [0.0, 6.0, 0.0],
+        [0.0, 8.0, 0.0],
+        [75.0, 0.0, 2.3],
+        [0.0, 10.0, 0.0],
+        [0.0, 0.0, 9.5],
+        [100.0, 0.0, 0.1],
+    ])
 
     X = csc_container(X)
 
@@ -2031,12 +2019,10 @@ def test_kernelcenterer_non_linear_kernel():
 
     def phi(X):
         """Our mapping function phi."""
-        return np.vstack(
-            [
-                np.clip(X, a_min=0, a_max=None),
-                -np.clip(X, a_min=None, a_max=0),
-            ]
-        )
+        return np.vstack([
+            np.clip(X, a_min=0, a_max=None),
+            -np.clip(X, a_min=None, a_max=0),
+        ])
 
     phi_X = phi(X)
     phi_X_test = phi(X_test)

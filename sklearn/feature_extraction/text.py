@@ -1973,14 +1973,12 @@ class TfidfVectorizer(CountVectorizer):
     """
 
     _parameter_constraints: dict = {**CountVectorizer._parameter_constraints}
-    _parameter_constraints.update(
-        {
-            "norm": [StrOptions({"l1", "l2"}), None],
-            "use_idf": ["boolean"],
-            "smooth_idf": ["boolean"],
-            "sublinear_tf": ["boolean"],
-        }
-    )
+    _parameter_constraints.update({
+        "norm": [StrOptions({"l1", "l2"}), None],
+        "use_idf": ["boolean"],
+        "smooth_idf": ["boolean"],
+        "sublinear_tf": ["boolean"],
+    })
 
     def __init__(
         self,

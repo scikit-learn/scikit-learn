@@ -1083,21 +1083,17 @@ def test_nan_euclidean_distances_complete_nan(missing_value):
 
 @pytest.mark.parametrize("missing_value", [np.nan, -1])
 def test_nan_euclidean_distances_not_trival(missing_value):
-    X = np.array(
-        [
-            [1.0, missing_value, 3.0, 4.0, 2.0],
-            [missing_value, 4.0, 6.0, 1.0, missing_value],
-            [3.0, missing_value, missing_value, missing_value, 1.0],
-        ]
-    )
+    X = np.array([
+        [1.0, missing_value, 3.0, 4.0, 2.0],
+        [missing_value, 4.0, 6.0, 1.0, missing_value],
+        [3.0, missing_value, missing_value, missing_value, 1.0],
+    ])
 
-    Y = np.array(
-        [
-            [missing_value, 7.0, 7.0, missing_value, 2.0],
-            [missing_value, missing_value, 5.0, 4.0, 7.0],
-            [missing_value, missing_value, missing_value, 4.0, 5.0],
-        ]
-    )
+    Y = np.array([
+        [missing_value, 7.0, 7.0, missing_value, 2.0],
+        [missing_value, missing_value, 5.0, 4.0, 7.0],
+        [missing_value, missing_value, missing_value, 4.0, 5.0],
+    ])
 
     # Check for symmetry
     D1 = nan_euclidean_distances(X, Y, missing_values=missing_value)
@@ -1139,12 +1135,10 @@ def test_nan_euclidean_distances_one_feature_match_positive(missing_value):
     # First feature is the only feature that is non-nan and in both
     # samples. The result of `nan_euclidean_distances` with squared=True
     # should be non-negative. The non-squared version should all be close to 0.
-    X = np.array(
-        [
-            [-122.27, 648.0, missing_value, 37.85],
-            [-122.27, missing_value, 2.34701493, missing_value],
-        ]
-    )
+    X = np.array([
+        [-122.27, 648.0, missing_value, 37.85],
+        [-122.27, missing_value, 2.34701493, missing_value],
+    ])
 
     dist_squared = nan_euclidean_distances(
         X, missing_values=missing_value, squared=True

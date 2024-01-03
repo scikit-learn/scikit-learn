@@ -370,14 +370,12 @@ class BaseSuccessiveHalving(BaseSearchCV):
 
     def _more_tags(self):
         tags = deepcopy(super()._more_tags())
-        tags["_xfail_checks"].update(
-            {
-                "check_fit2d_1sample": (
-                    "Fail during parameter check since min/max resources requires"
-                    " more samples"
-                ),
-            }
-        )
+        tags["_xfail_checks"].update({
+            "check_fit2d_1sample": (
+                "Fail during parameter check since min/max resources requires"
+                " more samples"
+            ),
+        })
         return tags
 
 

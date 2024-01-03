@@ -111,11 +111,9 @@ class _BaseCurveDisplay:
         # TODO(1.5): to be removed
         if log_scale != "deprecated":
             warnings.warn(
-                (
-                    "The `log_scale` parameter is deprecated as of version 1.3 "
-                    "and will be removed in 1.5. You can use display.ax_.set_xscale "
-                    "and display.ax_.set_yscale instead."
-                ),
+                "The `log_scale` parameter is deprecated as of version 1.3 "
+                "and will be removed in 1.5. You can use display.ax_.set_xscale "
+                "and display.ax_.set_yscale instead.",
                 FutureWarning,
             )
             xscale = "log" if log_scale else "linear"

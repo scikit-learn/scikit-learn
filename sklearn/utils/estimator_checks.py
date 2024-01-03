@@ -1085,22 +1085,20 @@ def check_sample_weights_pandas_series(name, estimator_orig):
     try:
         import pandas as pd
 
-        X = np.array(
-            [
-                [1, 1],
-                [1, 2],
-                [1, 3],
-                [1, 4],
-                [2, 1],
-                [2, 2],
-                [2, 3],
-                [2, 4],
-                [3, 1],
-                [3, 2],
-                [3, 3],
-                [3, 4],
-            ]
-        )
+        X = np.array([
+            [1, 1],
+            [1, 2],
+            [1, 3],
+            [1, 4],
+            [2, 1],
+            [2, 2],
+            [2, 3],
+            [2, 4],
+            [3, 1],
+            [3, 2],
+            [3, 3],
+            [3, 4],
+        ])
         X = pd.DataFrame(_enforce_estimator_tags_X(estimator_orig, X), copy=False)
         y = pd.Series([1, 1, 1, 1, 2, 2, 2, 2, 1, 1, 2, 2])
         weights = pd.Series([1] * 12)
@@ -1126,22 +1124,20 @@ def check_sample_weights_not_an_array(name, estimator_orig):
     # check that estimators will accept a 'sample_weight' parameter of
     # type _NotAnArray in the 'fit' function.
     estimator = clone(estimator_orig)
-    X = np.array(
-        [
-            [1, 1],
-            [1, 2],
-            [1, 3],
-            [1, 4],
-            [2, 1],
-            [2, 2],
-            [2, 3],
-            [2, 4],
-            [3, 1],
-            [3, 2],
-            [3, 3],
-            [3, 4],
-        ]
-    )
+    X = np.array([
+        [1, 1],
+        [1, 2],
+        [1, 3],
+        [1, 4],
+        [2, 1],
+        [2, 2],
+        [2, 3],
+        [2, 4],
+        [3, 1],
+        [3, 2],
+        [3, 3],
+        [3, 4],
+    ])
     X = _NotAnArray(_enforce_estimator_tags_X(estimator_orig, X))
     y = _NotAnArray([1, 1, 1, 1, 2, 2, 2, 2, 1, 1, 2, 2])
     weights = _NotAnArray([1] * 12)
@@ -1170,26 +1166,24 @@ def check_sample_weights_shape(name, estimator_orig):
     # check that estimators raise an error if sample_weight
     # shape mismatches the input
     estimator = clone(estimator_orig)
-    X = np.array(
-        [
-            [1, 3],
-            [1, 3],
-            [1, 3],
-            [1, 3],
-            [2, 1],
-            [2, 1],
-            [2, 1],
-            [2, 1],
-            [3, 3],
-            [3, 3],
-            [3, 3],
-            [3, 3],
-            [4, 1],
-            [4, 1],
-            [4, 1],
-            [4, 1],
-        ]
-    )
+    X = np.array([
+        [1, 3],
+        [1, 3],
+        [1, 3],
+        [1, 3],
+        [2, 1],
+        [2, 1],
+        [2, 1],
+        [2, 1],
+        [3, 3],
+        [3, 3],
+        [3, 3],
+        [3, 3],
+        [4, 1],
+        [4, 1],
+        [4, 1],
+        [4, 1],
+    ])
     y = np.array([1, 1, 1, 1, 2, 2, 2, 2, 1, 1, 1, 1, 2, 2, 2, 2])
     y = _enforce_estimator_tags_y(estimator, y)
 
@@ -3303,19 +3297,17 @@ def check_no_attributes_set_in_init(name, estimator_orig):
 
 @ignore_warnings(category=FutureWarning)
 def check_sparsify_coefficients(name, estimator_orig):
-    X = np.array(
-        [
-            [-2, -1],
-            [-1, -1],
-            [-1, -2],
-            [1, 1],
-            [1, 2],
-            [2, 1],
-            [-1, -2],
-            [2, 2],
-            [-2, -2],
-        ]
-    )
+    X = np.array([
+        [-2, -1],
+        [-1, -1],
+        [-1, -2],
+        [1, 1],
+        [1, 2],
+        [2, 1],
+        [-1, -2],
+        [2, 2],
+        [-2, -2],
+    ])
     y = np.array([1, 1, 1, 2, 2, 2, 3, 3, 3])
     y = _enforce_estimator_tags_y(estimator_orig, y)
     est = clone(estimator_orig)
@@ -3338,22 +3330,20 @@ def check_sparsify_coefficients(name, estimator_orig):
 
 @ignore_warnings(category=FutureWarning)
 def check_classifier_data_not_an_array(name, estimator_orig):
-    X = np.array(
-        [
-            [3, 0],
-            [0, 1],
-            [0, 2],
-            [1, 1],
-            [1, 2],
-            [2, 1],
-            [0, 3],
-            [1, 0],
-            [2, 0],
-            [4, 4],
-            [2, 3],
-            [3, 2],
-        ]
-    )
+    X = np.array([
+        [3, 0],
+        [0, 1],
+        [0, 2],
+        [1, 1],
+        [1, 2],
+        [2, 1],
+        [0, 3],
+        [1, 0],
+        [2, 0],
+        [4, 4],
+        [2, 3],
+        [3, 2],
+    ])
     X = _enforce_estimator_tags_X(estimator_orig, X)
     y = np.array([1, 1, 1, 2, 2, 2, 1, 1, 1, 2, 2, 2])
     y = _enforce_estimator_tags_y(estimator_orig, y)

@@ -1,5 +1,6 @@
 """ Test the graphical_lasso module.
 """
+
 import sys
 from io import StringIO
 
@@ -99,22 +100,18 @@ def test_graphical_lasso_n_iter(mode):
 def test_graphical_lasso_iris():
     # Hard-coded solution from R glasso package for alpha=1.0
     # (need to set penalize.diagonal to FALSE)
-    cov_R = np.array(
-        [
-            [0.68112222, 0.0000000, 0.265820, 0.02464314],
-            [0.00000000, 0.1887129, 0.000000, 0.00000000],
-            [0.26582000, 0.0000000, 3.095503, 0.28697200],
-            [0.02464314, 0.0000000, 0.286972, 0.57713289],
-        ]
-    )
-    icov_R = np.array(
-        [
-            [1.5190747, 0.000000, -0.1304475, 0.0000000],
-            [0.0000000, 5.299055, 0.0000000, 0.0000000],
-            [-0.1304475, 0.000000, 0.3498624, -0.1683946],
-            [0.0000000, 0.000000, -0.1683946, 1.8164353],
-        ]
-    )
+    cov_R = np.array([
+        [0.68112222, 0.0000000, 0.265820, 0.02464314],
+        [0.00000000, 0.1887129, 0.000000, 0.00000000],
+        [0.26582000, 0.0000000, 3.095503, 0.28697200],
+        [0.02464314, 0.0000000, 0.286972, 0.57713289],
+    ])
+    icov_R = np.array([
+        [1.5190747, 0.000000, -0.1304475, 0.0000000],
+        [0.0000000, 5.299055, 0.0000000, 0.0000000],
+        [-0.1304475, 0.000000, 0.3498624, -0.1683946],
+        [0.0000000, 0.000000, -0.1683946, 1.8164353],
+    ])
     X = datasets.load_iris().data
     emp_cov = empirical_covariance(X)
     for method in ("cd", "lars"):
@@ -143,22 +140,18 @@ def test_graphical_lasso_iris_singular():
     indices = np.arange(10, 13)
 
     # Hard-coded solution from R glasso package for alpha=0.01
-    cov_R = np.array(
-        [
-            [0.08, 0.056666662595, 0.00229729713223, 0.00153153142149],
-            [0.056666662595, 0.082222222222, 0.00333333333333, 0.00222222222222],
-            [0.002297297132, 0.003333333333, 0.00666666666667, 0.00009009009009],
-            [0.001531531421, 0.002222222222, 0.00009009009009, 0.00222222222222],
-        ]
-    )
-    icov_R = np.array(
-        [
-            [24.42244057, -16.831679593, 0.0, 0.0],
-            [-16.83168201, 24.351841681, -6.206896552, -12.5],
-            [0.0, -6.206896171, 153.103448276, 0.0],
-            [0.0, -12.499999143, 0.0, 462.5],
-        ]
-    )
+    cov_R = np.array([
+        [0.08, 0.056666662595, 0.00229729713223, 0.00153153142149],
+        [0.056666662595, 0.082222222222, 0.00333333333333, 0.00222222222222],
+        [0.002297297132, 0.003333333333, 0.00666666666667, 0.00009009009009],
+        [0.001531531421, 0.002222222222, 0.00009009009009, 0.00222222222222],
+    ])
+    icov_R = np.array([
+        [24.42244057, -16.831679593, 0.0, 0.0],
+        [-16.83168201, 24.351841681, -6.206896552, -12.5],
+        [0.0, -6.206896171, 153.103448276, 0.0],
+        [0.0, -12.499999143, 0.0, 462.5],
+    ])
     X = datasets.load_iris().data[indices, :]
     emp_cov = empirical_covariance(X)
     for method in ("cd", "lars"):
@@ -194,14 +187,12 @@ def test_graphical_lasso_cv_alphas_iterable(alphas_container_type):
     Non-regression test for:
     https://github.com/scikit-learn/scikit-learn/issues/22489
     """
-    true_cov = np.array(
-        [
-            [0.8, 0.0, 0.2, 0.0],
-            [0.0, 0.4, 0.0, 0.0],
-            [0.2, 0.0, 0.3, 0.1],
-            [0.0, 0.0, 0.1, 0.7],
-        ]
-    )
+    true_cov = np.array([
+        [0.8, 0.0, 0.2, 0.0],
+        [0.0, 0.4, 0.0, 0.0],
+        [0.2, 0.0, 0.3, 0.1],
+        [0.0, 0.0, 0.1, 0.7],
+    ])
     rng = np.random.RandomState(0)
     X = rng.multivariate_normal(mean=[0, 0, 0, 0], cov=true_cov, size=200)
     alphas = _convert_container([0.02, 0.03], alphas_container_type)
@@ -221,14 +212,12 @@ def test_graphical_lasso_cv_alphas_invalid_array(alphas, err_type, err_msg):
     outside of (0, inf] is passed to `alphas`, a ValueError is raised.
     Check if a string is passed, a TypeError is raised.
     """
-    true_cov = np.array(
-        [
-            [0.8, 0.0, 0.2, 0.0],
-            [0.0, 0.4, 0.0, 0.0],
-            [0.2, 0.0, 0.3, 0.1],
-            [0.0, 0.0, 0.1, 0.7],
-        ]
-    )
+    true_cov = np.array([
+        [0.8, 0.0, 0.2, 0.0],
+        [0.0, 0.4, 0.0, 0.0],
+        [0.2, 0.0, 0.3, 0.1],
+        [0.0, 0.0, 0.1, 0.7],
+    ])
     rng = np.random.RandomState(0)
     X = rng.multivariate_normal(mean=[0, 0, 0, 0], cov=true_cov, size=200)
 
@@ -240,14 +229,12 @@ def test_graphical_lasso_cv_scores():
     splits = 4
     n_alphas = 5
     n_refinements = 3
-    true_cov = np.array(
-        [
-            [0.8, 0.0, 0.2, 0.0],
-            [0.0, 0.4, 0.0, 0.0],
-            [0.2, 0.0, 0.3, 0.1],
-            [0.0, 0.0, 0.1, 0.7],
-        ]
-    )
+    true_cov = np.array([
+        [0.8, 0.0, 0.2, 0.0],
+        [0.0, 0.4, 0.0, 0.0],
+        [0.2, 0.0, 0.3, 0.1],
+        [0.0, 0.0, 0.1, 0.7],
+    ])
     rng = np.random.RandomState(0)
     X = rng.multivariate_normal(mean=[0, 0, 0, 0], cov=true_cov, size=200)
     cov = GraphicalLassoCV(cv=splits, alphas=n_alphas, n_refinements=n_refinements).fit(

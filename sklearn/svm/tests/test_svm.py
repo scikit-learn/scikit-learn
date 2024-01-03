@@ -3,6 +3,7 @@ Testing for Support Vector Machine module (sklearn.svm)
 
 TODO: remove hard coded numerical results when possible
 """
+
 import re
 
 import numpy as np
@@ -1155,14 +1156,12 @@ def test_ovr_decision_function():
     base_points = np.array([[5, 5], [10, 10]])
 
     # For all the quadrants (classes)
-    X_test = np.vstack(
-        (
-            base_points * [1, 1],  # Q1
-            base_points * [-1, 1],  # Q2
-            base_points * [-1, -1],  # Q3
-            base_points * [1, -1],  # Q4
-        )
-    )
+    X_test = np.vstack((
+        base_points * [1, 1],  # Q1
+        base_points * [-1, 1],  # Q2
+        base_points * [-1, -1],  # Q3
+        base_points * [1, -1],  # Q4
+    ))
 
     y_test = [0] * 2 + [1] * 2 + [2] * 2 + [3] * 2
 

@@ -411,12 +411,10 @@ def test_multiple_features_quick(to_pandas, smooth, target_type):
     if to_pandas:
         pd = pytest.importorskip("pandas")
         # convert second feature to an object
-        X_train = pd.DataFrame(
-            {
-                "feat0": X_ordinal[:, 0],
-                "feat1": np.array(["cat", "dog"], dtype=object)[X_ordinal[:, 1]],
-            }
-        )
+        X_train = pd.DataFrame({
+            "feat0": X_ordinal[:, 0],
+            "feat1": np.array(["cat", "dog"], dtype=object)[X_ordinal[:, 1]],
+        })
         # "snake" is unknown
         X_test = pd.DataFrame({"feat0": X_test[:, 0], "feat1": ["dog", "cat", "snake"]})
     else:

@@ -337,13 +337,11 @@ class IncrementalPCA(_BasePCA):
             mean_correction = np.sqrt(
                 (self.n_samples_seen_ / n_total_samples) * n_samples
             ) * (self.mean_ - col_batch_mean)
-            X = np.vstack(
-                (
-                    self.singular_values_.reshape((-1, 1)) * self.components_,
-                    X,
-                    mean_correction,
-                )
-            )
+            X = np.vstack((
+                self.singular_values_.reshape((-1, 1)) * self.components_,
+                X,
+                mean_correction,
+            ))
 
         U, S, Vt = linalg.svd(X, full_matrices=False, check_finite=False)
         U, Vt = svd_flip(U, Vt, u_based_decision=False)

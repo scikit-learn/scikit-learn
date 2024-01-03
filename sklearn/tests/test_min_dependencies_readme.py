@@ -1,6 +1,5 @@
 """Tests for the minimum dependencies in README.rst and pyproject.toml"""
 
-
 import os
 import platform
 import re

@@ -122,12 +122,10 @@ def test_pipeline():
     from sklearn import datasets, pipeline
 
     X, y = datasets.make_blobs(random_state=0)
-    clf = pipeline.Pipeline(
-        [
-            ("filter", manifold.LocallyLinearEmbedding(random_state=0)),
-            ("clf", neighbors.KNeighborsClassifier()),
-        ]
-    )
+    clf = pipeline.Pipeline([
+        ("filter", manifold.LocallyLinearEmbedding(random_state=0)),
+        ("clf", neighbors.KNeighborsClassifier()),
+    ])
     clf.fit(X, y)
     assert 0.9 < clf.score(X, y)
 

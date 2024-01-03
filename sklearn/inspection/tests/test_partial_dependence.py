@@ -1,6 +1,7 @@
 """
 Testing for the partial dependence module.
 """
+
 import warnings
 
 import numpy as np
@@ -200,12 +201,10 @@ def test_grid_from_X_heterogeneous_type(grid_resolution):
     pd = pytest.importorskip("pandas")
     percentiles = (0.05, 0.95)
     is_categorical = [True, False]
-    X = pd.DataFrame(
-        {
-            "cat": ["A", "B", "C", "A", "B", "D", "E", "A", "B", "D"],
-            "num": [1, 1, 1, 2, 5, 6, 6, 6, 6, 8],
-        }
-    )
+    X = pd.DataFrame({
+        "cat": ["A", "B", "C", "A", "B", "D", "E", "A", "B", "D"],
+        "num": [1, 1, 1, 2, 5, 6, 6, 6, 6, 8],
+    })
     nunique = X.nunique()
 
     grid, axes = _grid_from_X(

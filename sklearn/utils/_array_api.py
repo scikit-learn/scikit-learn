@@ -1,4 +1,5 @@
 """Tools to support array_api."""
+
 import itertools
 import math
 from functools import wraps

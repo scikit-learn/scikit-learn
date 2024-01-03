@@ -1,6 +1,7 @@
 """
 This file contains preprocessing tools based on polynomials.
 """
+
 import collections
 from itertools import chain, combinations
 from itertools import combinations_with_replacement as combinations_w_r
@@ -229,12 +230,10 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
         """
 
         if interaction_only:
-            combinations = sum(
-                [
-                    comb(n_features, i, exact=True)
-                    for i in range(max(1, min_degree), min(max_degree, n_features) + 1)
-                ]
-            )
+            combinations = sum([
+                comb(n_features, i, exact=True)
+                for i in range(max(1, min_degree), min(max_degree, n_features) + 1)
+            ])
         else:
             combinations = comb(n_features + max_degree, max_degree, exact=True) - 1
             if min_degree > 0:
@@ -751,12 +750,10 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
             if sample_weight is None:
                 knots = np.percentile(X, percentiles, axis=0)
             else:
-                knots = np.array(
-                    [
-                        _weighted_percentile(X, sample_weight, percentile)
-                        for percentile in percentiles
-                    ]
-                )
+                knots = np.array([
+                    _weighted_percentile(X, sample_weight, percentile)
+                    for percentile in percentiles
+                ])
 
         else:
             # knots == 'uniform':

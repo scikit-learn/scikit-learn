@@ -347,24 +347,20 @@ def inplace_swap_row_csr(X, m, n):
         X.indptr[m + 1] = m_start + nz_n
         X.indptr[n] = n_stop - nz_m
 
-    X.indices = np.concatenate(
-        [
-            X.indices[:m_start],
-            X.indices[n_start:n_stop],
-            X.indices[m_stop:n_start],
-            X.indices[m_start:m_stop],
-            X.indices[n_stop:],
-        ]
-    )
-    X.data = np.concatenate(
-        [
-            X.data[:m_start],
-            X.data[n_start:n_stop],
-            X.data[m_stop:n_start],
-            X.data[m_start:m_stop],
-            X.data[n_stop:],
-        ]
-    )
+    X.indices = np.concatenate([
+        X.indices[:m_start],
+        X.indices[n_start:n_stop],
+        X.indices[m_stop:n_start],
+        X.indices[m_start:m_stop],
+        X.indices[n_stop:],
+    ])
+    X.data = np.concatenate([
+        X.data[:m_start],
+        X.data[n_start:n_stop],
+        X.data[m_stop:n_start],
+        X.data[m_start:m_stop],
+        X.data[n_stop:],
+    ])
 
 
 def inplace_swap_row(X, m, n):

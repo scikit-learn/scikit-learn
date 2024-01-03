@@ -1093,21 +1093,16 @@ def test_search_default_iid(SearchCV, specialized_params):
     search = SearchCV(**common_params, **specialized_params)
     search.fit(X, y)
 
-    test_cv_scores = np.array(
-        [
-            search.cv_results_["split%d_test_score" % s][0]
-            for s in range(search.n_splits_)
-        ]
-    )
+    test_cv_scores = np.array([
+        search.cv_results_["split%d_test_score" % s][0] for s in range(search.n_splits_)
+    ])
     test_mean = search.cv_results_["mean_test_score"][0]
     test_std = search.cv_results_["std_test_score"][0]
 
-    train_cv_scores = np.array(
-        [
-            search.cv_results_["split%d_train_score" % s][0]
-            for s in range(search.n_splits_)
-        ]
-    )
+    train_cv_scores = np.array([
+        search.cv_results_["split%d_train_score" % s][0]
+        for s in range(search.n_splits_)
+    ])
     train_mean = search.cv_results_["mean_train_score"][0]
     train_std = search.cv_results_["std_train_score"][0]
 
@@ -1213,17 +1208,15 @@ def compare_cv_results_multimetric_with_single(search_multi, search_acc, search_
 
     # Check if score and timing are reasonable, also checks if the keys
     # are present
-    assert all(
-        (
-            np.all(cv_results_multi[k] <= 1)
-            for k in (
-                "mean_score_time",
-                "std_score_time",
-                "mean_fit_time",
-                "std_fit_time",
-            )
+    assert all((
+        np.all(cv_results_multi[k] <= 1)
+        for k in (
+            "mean_score_time",
+            "std_score_time",
+            "mean_fit_time",
+            "std_fit_time",
         )
-    )
+    ))
 
     # Compare the keys, other than time keys, among multi-metric and
     # single metric grid search results. np.testing.assert_equal performs a
@@ -1436,12 +1429,10 @@ def test_grid_search_correct_score_results():
         n_splits = grid_search.n_splits_
         for candidate_i, C in enumerate(Cs):
             clf.set_params(C=C)
-            cv_scores = np.array(
-                [
-                    grid_search.cv_results_["split%d_test_score" % s][candidate_i]
-                    for s in range(n_splits)
-                ]
-            )
+            cv_scores = np.array([
+                grid_search.cv_results_["split%d_test_score" % s][candidate_i]
+                for s in range(n_splits)
+            ])
             for i, (train, test) in enumerate(cv.split(X, y)):
                 clf.fit(X[train], y[train])
                 if score == "f1":
@@ -1530,12 +1521,10 @@ def test_grid_search_allows_nans():
     X = np.arange(20, dtype=np.float64).reshape(5, -1)
     X[2, :] = np.nan
     y = [0, 0, 1, 1, 1]
-    p = Pipeline(
-        [
-            ("imputer", SimpleImputer(strategy="mean", missing_values=np.nan)),
-            ("classifier", MockClassifier()),
-        ]
-    )
+    p = Pipeline([
+        ("imputer", SimpleImputer(strategy="mean", missing_values=np.nan)),
+        ("classifier", MockClassifier()),
+    ])
     GridSearchCV(p, {"classifier__foo_param": [1, 2, 3]}, cv=2).fit(X, y)
 
 
@@ -1597,14 +1586,12 @@ def test_grid_search_failing_classifier():
             [gs.cv_results_["split%d_test_score" % s][i] for s in range(gs.n_splits_)]
         )
 
-    assert all(
-        (
-            np.all(get_cand_scores(cand_i) == 0.0)
-            for cand_i in range(n_candidates)
-            if gs.cv_results_["param_parameter"][cand_i]
-            == FailingClassifier.FAILING_PARAMETER
-        )
-    )
+    assert all((
+        np.all(get_cand_scores(cand_i) == 0.0)
+        for cand_i in range(n_candidates)
+        if gs.cv_results_["param_parameter"][cand_i]
+        == FailingClassifier.FAILING_PARAMETER
+    ))
 
     gs = GridSearchCV(
         clf,
@@ -1651,10 +1638,8 @@ def test_grid_search_classifier_all_fits_fail():
     )
 
     warning_message = re.compile(
-        (
-            "All the 15 fits failed.+15 fits failed with the following"
-            " error.+ValueError.+Failing classifier failed as required"
-        ),
+        "All the 15 fits failed.+15 fits failed with the following"
+        " error.+ValueError.+Failing classifier failed as required",
         flags=re.DOTALL,
     )
     with pytest.raises(ValueError, match=warning_message):
@@ -2195,10 +2180,8 @@ def test_callable_multimetric_clf_all_fits_fail():
 
     individual_fit_error_message = "ValueError: Failing classifier failed as required"
     error_message = re.compile(
-        (
-            "All the 15 fits failed.+your model is misconfigured.+"
-            f"{individual_fit_error_message}"
-        ),
+        "All the 15 fits failed.+your model is misconfigured.+"
+        f"{individual_fit_error_message}",
         flags=re.DOTALL,
     )
 

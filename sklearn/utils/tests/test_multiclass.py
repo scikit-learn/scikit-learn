@@ -486,16 +486,14 @@ def test_unique_labels_pandas_nullable(dtype):
 
 @pytest.mark.parametrize("csc_container", CSC_CONTAINERS)
 def test_class_distribution(csc_container):
-    y = np.array(
-        [
-            [1, 0, 0, 1],
-            [2, 2, 0, 1],
-            [1, 3, 0, 1],
-            [4, 2, 0, 1],
-            [2, 0, 0, 1],
-            [1, 3, 0, 1],
-        ]
-    )
+    y = np.array([
+        [1, 0, 0, 1],
+        [2, 2, 0, 1],
+        [1, 3, 0, 1],
+        [4, 2, 0, 1],
+        [2, 0, 0, 1],
+        [1, 3, 0, 1],
+    ])
     # Define the sparse matrix with a mix of implicit and explicit zeros
     data = np.array([1, 2, 1, 4, 2, 1, 0, 2, 3, 2, 3, 1, 1, 1, 1, 1, 1])
     indices = np.array([0, 1, 2, 3, 4, 5, 0, 1, 2, 3, 5, 0, 1, 2, 3, 4, 5])

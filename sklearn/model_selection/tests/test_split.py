@@ -1,4 +1,5 @@
 """Test the split module"""
+
 import re
 import warnings
 from itertools import combinations, combinations_with_replacement, permutations
@@ -1621,48 +1622,46 @@ def test_group_kfold(kfold):
         assert len(np.intersect1d(groups[train], groups[test])) == 0
 
     # Construct the test data
-    groups = np.array(
-        [
-            "Albert",
-            "Jean",
-            "Bertrand",
-            "Michel",
-            "Jean",
-            "Francis",
-            "Robert",
-            "Michel",
-            "Rachel",
-            "Lois",
-            "Michelle",
-            "Bernard",
-            "Marion",
-            "Laura",
-            "Jean",
-            "Rachel",
-            "Franck",
-            "John",
-            "Gael",
-            "Anna",
-            "Alix",
-            "Robert",
-            "Marion",
-            "David",
-            "Tony",
-            "Abel",
-            "Becky",
-            "Madmood",
-            "Cary",
-            "Mary",
-            "Alexandre",
-            "David",
-            "Francis",
-            "Barack",
-            "Abdoul",
-            "Rasha",
-            "Xi",
-            "Silvia",
-        ]
-    )
+    groups = np.array([
+        "Albert",
+        "Jean",
+        "Bertrand",
+        "Michel",
+        "Jean",
+        "Francis",
+        "Robert",
+        "Michel",
+        "Rachel",
+        "Lois",
+        "Michelle",
+        "Bernard",
+        "Marion",
+        "Laura",
+        "Jean",
+        "Rachel",
+        "Franck",
+        "John",
+        "Gael",
+        "Anna",
+        "Alix",
+        "Robert",
+        "Marion",
+        "David",
+        "Tony",
+        "Abel",
+        "Becky",
+        "Madmood",
+        "Cary",
+        "Mary",
+        "Alexandre",
+        "David",
+        "Francis",
+        "Barack",
+        "Abdoul",
+        "Rasha",
+        "Xi",
+        "Silvia",
+    ])
 
     n_groups = len(np.unique(groups))
     n_samples = len(groups)

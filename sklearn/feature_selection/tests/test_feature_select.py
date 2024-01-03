@@ -1,6 +1,7 @@
 """
 Todo: cross-check the F-value with stats model
 """
+
 import itertools
 import warnings
 
@@ -960,12 +961,10 @@ def test_dataframe_output_dtypes():
     pd = pytest.importorskip("pandas")
 
     X, y = load_iris(return_X_y=True, as_frame=True)
-    X = X.astype(
-        {
-            "petal length (cm)": np.float32,
-            "petal width (cm)": np.float64,
-        }
-    )
+    X = X.astype({
+        "petal length (cm)": np.float32,
+        "petal width (cm)": np.float64,
+    })
     X["petal_width_binned"] = pd.cut(X["petal width (cm)"], bins=10)
 
     column_order = X.columns

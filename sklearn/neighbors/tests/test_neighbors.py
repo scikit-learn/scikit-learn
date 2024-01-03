@@ -721,16 +721,14 @@ def test_kneighbors_classifier_predict_proba(global_dtype):
     cls.fit(X, y)
     y_prob = cls.predict_proba(X)
     real_prob = (
-        np.array(
-            [
-                [0, 2, 1],
-                [1, 2, 0],
-                [1, 0, 2],
-                [0, 1, 2],
-                [2, 1, 0],
-                [2, 1, 0],
-            ]
-        )
+        np.array([
+            [0, 2, 1],
+            [1, 2, 0],
+            [1, 0, 2],
+            [0, 1, 2],
+            [2, 1, 0],
+            [2, 1, 0],
+        ])
         / 3.0
     )
     assert_array_equal(real_prob, y_prob)

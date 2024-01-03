@@ -206,14 +206,12 @@ def test_predict_proba_on_toy_problem():
     X = np.array([[-1.1, -1.5], [-1.2, -1.4], [-3.4, -2.2], [1.1, 1.2]])
     y = np.array([1, 1, 2, 2])
 
-    clf1_res = np.array(
-        [
-            [0.59790391, 0.40209609],
-            [0.57622162, 0.42377838],
-            [0.50728456, 0.49271544],
-            [0.40241774, 0.59758226],
-        ]
-    )
+    clf1_res = np.array([
+        [0.59790391, 0.40209609],
+        [0.57622162, 0.42377838],
+        [0.50728456, 0.49271544],
+        [0.40241774, 0.59758226],
+    ])
 
     clf2_res = np.array([[0.8, 0.2], [0.8, 0.2], [0.2, 0.8], [0.3, 0.7]])
 
@@ -504,22 +502,18 @@ def test_transform(global_random_seed):
         (
             X,
             y,
-            VotingClassifier(
-                [
-                    ("lr", LogisticRegression()),
-                    ("rf", RandomForestClassifier(n_estimators=5)),
-                ]
-            ),
+            VotingClassifier([
+                ("lr", LogisticRegression()),
+                ("rf", RandomForestClassifier(n_estimators=5)),
+            ]),
         ),
         (
             X_r,
             y_r,
-            VotingRegressor(
-                [
-                    ("lr", LinearRegression()),
-                    ("rf", RandomForestRegressor(n_estimators=5)),
-                ]
-            ),
+            VotingRegressor([
+                ("lr", LinearRegression()),
+                ("rf", RandomForestRegressor(n_estimators=5)),
+            ]),
         ),
     ],
 )

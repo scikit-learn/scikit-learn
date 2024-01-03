@@ -52,13 +52,11 @@ from .common import G_H_DTYPE, X_DTYPE, Y_DTYPE
 from .grower import TreeGrower
 
 _LOSSES = _LOSSES.copy()
-_LOSSES.update(
-    {
-        "poisson": HalfPoissonLoss,
-        "gamma": HalfGammaLoss,
-        "quantile": PinballLoss,
-    }
-)
+_LOSSES.update({
+    "poisson": HalfPoissonLoss,
+    "gamma": HalfGammaLoss,
+    "quantile": PinballLoss,
+})
 
 
 def _update_leaves_values(loss, grower, y_true, raw_prediction, sample_weight):
@@ -288,12 +286,10 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
 
         check_X = partial(check_array, **check_X_kwargs)
         numerical_preprocessor = FunctionTransformer(check_X)
-        self._preprocessor = ColumnTransformer(
-            [
-                ("encoder", ordinal_encoder, self.is_categorical_),
-                ("numerical", numerical_preprocessor, ~self.is_categorical_),
-            ]
-        )
+        self._preprocessor = ColumnTransformer([
+            ("encoder", ordinal_encoder, self.is_categorical_),
+            ("numerical", numerical_preprocessor, ~self.is_categorical_),
+        ])
         self._preprocessor.set_output(transform="default")
         X = self._preprocessor.fit_transform(X)
         # check categories found by the OrdinalEncoder and get their encoded values
@@ -370,12 +366,10 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         """
         if hasattr(X, "__dataframe__"):
             X_is_dataframe = True
-            categorical_columns_mask = np.asarray(
-                [
-                    c.dtype[0].name == "CATEGORICAL"
-                    for c in X.__dataframe__().get_columns()
-                ]
-            )
+            categorical_columns_mask = np.asarray([
+                c.dtype[0].name == "CATEGORICAL"
+                for c in X.__dataframe__().get_columns()
+            ])
             X_has_categorical_columns = categorical_columns_mask.any()
         # pandas versions < 1.5.1 do not support the dataframe interchange
         # protocol so we inspect X.dtypes directly
@@ -395,11 +389,9 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         ):
             if X_has_categorical_columns:
                 warnings.warn(
-                    (
-                        "The categorical_features parameter will change to 'from_dtype'"
-                        " in v1.6. The 'from_dtype' option automatically treats"
-                        " categorical dtypes in a DataFrame as categorical features."
-                    ),
+                    "The categorical_features parameter will change to 'from_dtype'"
+                    " in v1.6. The 'from_dtype' option automatically treats"
+                    " categorical dtypes in a DataFrame as categorical features.",
                     FutureWarning,
                 )
             categorical_features = None
@@ -1669,15 +1661,13 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
     _parameter_constraints: dict = {
         **BaseHistGradientBoosting._parameter_constraints,
         "loss": [
-            StrOptions(
-                {
-                    "squared_error",
-                    "absolute_error",
-                    "poisson",
-                    "gamma",
-                    "quantile",
-                }
-            ),
+            StrOptions({
+                "squared_error",
+                "absolute_error",
+                "poisson",
+                "gamma",
+                "quantile",
+            }),
             BaseLoss,
         ],
         "quantile": [Interval(Real, 0, 1, closed="both"), None],

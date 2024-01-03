@@ -1,4 +1,5 @@
 """Bayesian Gaussian Mixture Model."""
+
 # Author: Wei Xue <xuewei4d@gmail.com>
 #         Thierry Guillemot <thierry.guillemot.work@gmail.com>
 # License: BSD 3 clause
@@ -873,12 +874,10 @@ class BayesianGaussianMixture(BaseMixture):
 
         # Precisions matrices computation
         if self.covariance_type == "full":
-            self.precisions_ = np.array(
-                [
-                    np.dot(prec_chol, prec_chol.T)
-                    for prec_chol in self.precisions_cholesky_
-                ]
-            )
+            self.precisions_ = np.array([
+                np.dot(prec_chol, prec_chol.T)
+                for prec_chol in self.precisions_cholesky_
+            ])
 
         elif self.covariance_type == "tied":
             self.precisions_ = np.dot(

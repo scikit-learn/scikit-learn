@@ -177,14 +177,12 @@ class Perceptron(BaseSGDClassifier):
     _parameter_constraints: dict = {**BaseSGDClassifier._parameter_constraints}
     _parameter_constraints.pop("loss")
     _parameter_constraints.pop("average")
-    _parameter_constraints.update(
-        {
-            "penalty": [StrOptions({"l2", "l1", "elasticnet"}), None],
-            "alpha": [Interval(Real, 0, None, closed="left")],
-            "l1_ratio": [Interval(Real, 0, 1, closed="both")],
-            "eta0": [Interval(Real, 0, None, closed="left")],
-        }
-    )
+    _parameter_constraints.update({
+        "penalty": [StrOptions({"l2", "l1", "elasticnet"}), None],
+        "alpha": [Interval(Real, 0, None, closed="left")],
+        "l1_ratio": [Interval(Real, 0, 1, closed="both")],
+        "eta0": [Interval(Real, 0, None, closed="left")],
+    })
 
     def __init__(
         self,

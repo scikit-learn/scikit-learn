@@ -148,12 +148,10 @@ def test_pipeline(n_neighbors, radius, global_dtype):
     # TODO check that it actually does something useful
     X, y = datasets.make_blobs(random_state=0)
     X = X.astype(global_dtype, copy=False)
-    clf = pipeline.Pipeline(
-        [
-            ("isomap", manifold.Isomap(n_neighbors=n_neighbors, radius=radius)),
-            ("clf", neighbors.KNeighborsClassifier()),
-        ]
-    )
+    clf = pipeline.Pipeline([
+        ("isomap", manifold.Isomap(n_neighbors=n_neighbors, radius=radius)),
+        ("clf", neighbors.KNeighborsClassifier()),
+    ])
     clf.fit(X, y)
     assert 0.9 < clf.score(X, y)
 

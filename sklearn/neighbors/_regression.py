@@ -478,24 +478,20 @@ class RadiusNeighborsRegressor(RadiusNeighborsMixin, RegressorMixin, NeighborsBa
         empty_obs = np.full_like(_y[0], np.nan)
 
         if weights is None:
-            y_pred = np.array(
-                [
-                    np.mean(_y[ind, :], axis=0) if len(ind) else empty_obs
-                    for (i, ind) in enumerate(neigh_ind)
-                ]
-            )
+            y_pred = np.array([
+                np.mean(_y[ind, :], axis=0) if len(ind) else empty_obs
+                for (i, ind) in enumerate(neigh_ind)
+            ])
 
         else:
-            y_pred = np.array(
-                [
-                    (
-                        np.average(_y[ind, :], axis=0, weights=weights[i])
-                        if len(ind)
-                        else empty_obs
-                    )
-                    for (i, ind) in enumerate(neigh_ind)
-                ]
-            )
+            y_pred = np.array([
+                (
+                    np.average(_y[ind, :], axis=0, weights=weights[i])
+                    if len(ind)
+                    else empty_obs
+                )
+                for (i, ind) in enumerate(neigh_ind)
+            ])
 
         if np.any(np.isnan(y_pred)):
             empty_warning_msg = (

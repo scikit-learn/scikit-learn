@@ -227,12 +227,10 @@ def test_load_large_qid():
     """
     load large libsvm / svmlight file with qid attribute. Tests 64-bit query ID
     """
-    data = b"\n".join(
-        (
-            "3 qid:{0} 1:0.53 2:0.12\n2 qid:{0} 1:0.13 2:0.1".format(i).encode()
-            for i in range(1, 40 * 1000 * 1000)
-        )
-    )
+    data = b"\n".join((
+        "3 qid:{0} 1:0.53 2:0.12\n2 qid:{0} 1:0.13 2:0.1".format(i).encode()
+        for i in range(1, 40 * 1000 * 1000)
+    ))
     X, y, qid = load_svmlight_file(BytesIO(data), query_id=True)
     assert_array_equal(y[-4:], [3, 2, 3, 2])
     assert_array_equal(np.unique(qid), np.arange(1, 40 * 1000 * 1000))
@@ -527,17 +525,15 @@ def test_load_with_offsets(sparsity, n_samples, n_features, csr_container):
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
 def test_load_offset_exhaustive_splits(csr_container):
     rng = np.random.RandomState(0)
-    X = np.array(
-        [
-            [0, 0, 0, 0, 0, 0],
-            [1, 2, 3, 4, 0, 6],
-            [1, 2, 3, 4, 0, 6],
-            [0, 0, 0, 0, 0, 0],
-            [1, 0, 3, 0, 0, 0],
-            [0, 0, 0, 0, 0, 1],
-            [1, 0, 0, 0, 0, 0],
-        ]
-    )
+    X = np.array([
+        [0, 0, 0, 0, 0, 0],
+        [1, 2, 3, 4, 0, 6],
+        [1, 2, 3, 4, 0, 6],
+        [0, 0, 0, 0, 0, 0],
+        [1, 0, 3, 0, 0, 0],
+        [0, 0, 0, 0, 0, 1],
+        [1, 0, 0, 0, 0, 0],
+    ])
     X = csr_container(X)
     n_samples, n_features = X.shape
     y = rng.randint(low=0, high=2, size=n_samples)

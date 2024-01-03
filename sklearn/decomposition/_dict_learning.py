@@ -1,5 +1,6 @@
 """ Dictionary learning.
 """
+
 # Author: Vlad Niculae, Gael Varoquaux, Alexandre Gramfort
 # License: BSD 3 clause
 
@@ -808,10 +809,8 @@ def dict_learning_online(
     # TODO(1.6): remove in 1.6
     if max_iter is None:
         warn(
-            (
-                "`max_iter=None` is deprecated in version 1.4 and will be removed in "
-                "version 1.6. Use the default value (i.e. `100`) instead."
-            ),
+            "`max_iter=None` is deprecated in version 1.4 and will be removed in "
+            "version 1.6. Use the default value (i.e. `100`) instead.",
             FutureWarning,
         )
         max_iter = 100
@@ -1949,15 +1948,13 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
         if self._n_components <= len(dictionary):
             dictionary = dictionary[: self._n_components, :]
         else:
-            dictionary = np.concatenate(
-                (
-                    dictionary,
-                    np.zeros(
-                        (self._n_components - len(dictionary), dictionary.shape[1]),
-                        dtype=dictionary.dtype,
-                    ),
-                )
-            )
+            dictionary = np.concatenate((
+                dictionary,
+                np.zeros(
+                    (self._n_components - len(dictionary), dictionary.shape[1]),
+                    dtype=dictionary.dtype,
+                ),
+            ))
 
         dictionary = check_array(dictionary, order="F", dtype=X.dtype, copy=False)
         dictionary = np.require(dictionary, requirements="W")
@@ -2131,10 +2128,8 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
         # TODO(1.6): remove in 1.6
         if self.max_iter is None:
             warn(
-                (
-                    "`max_iter=None` is deprecated in version 1.4 and will be removed"
-                    " in version 1.6. Use the default value (i.e. `1_000`) instead."
-                ),
+                "`max_iter=None` is deprecated in version 1.4 and will be removed"
+                " in version 1.6. Use the default value (i.e. `1_000`) instead.",
                 FutureWarning,
             )
             max_iter = 1_000

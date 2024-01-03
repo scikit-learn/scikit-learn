@@ -517,14 +517,12 @@ def test_incr_mean_variance_axis_ignore_nan(axis, sparse_constructor):
     )
 
     X_nan = sparse_constructor(
-        np.array(
-            [
-                [170, np.nan, 170, 170],
-                [np.nan, 170, 430, 430],
-                [430, 430, np.nan, 300],
-                [300, 300, 300, np.nan],
-            ]
-        )
+        np.array([
+            [170, np.nan, 170, 170],
+            [np.nan, 170, 430, 430],
+            [430, 430, np.nan, 300],
+            [300, 300, 300, np.nan],
+        ])
     )
 
     # we avoid creating specific data for axis 0 and 1: translating the data is

@@ -86,12 +86,10 @@ class RandomData:
             "spherical": 0.5 + rng.rand(n_components),
             "diag": (0.5 + rng.rand(n_components, n_features)) ** 2,
             "tied": make_spd_matrix(n_features, random_state=rng),
-            "full": np.array(
-                [
-                    make_spd_matrix(n_features, random_state=rng) * 0.5
-                    for _ in range(n_components)
-                ]
-            ),
+            "full": np.array([
+                make_spd_matrix(n_features, random_state=rng) * 0.5
+                for _ in range(n_components)
+            ]),
         }
         self.precisions = {
             "spherical": 1.0 / self.covariances["spherical"],
@@ -118,12 +116,10 @@ class RandomData:
                 ],
             )
         )
-        self.Y = np.hstack(
-            [
-                np.full(int(np.round(w * n_samples)), k, dtype=int)
-                for k, w in enumerate(self.weights)
-            ]
-        )
+        self.Y = np.hstack([
+            np.full(int(np.round(w * n_samples)), k, dtype=int)
+            for k, w in enumerate(self.weights)
+        ])
 
 
 def test_gaussian_mixture_attributes():
@@ -1149,26 +1145,22 @@ def test_gaussian_mixture_setting_best_params():
     X = rnd.uniform(size=(n_samples, 3))
 
     # following initialization parameters were found to lead to divergence
-    means_init = np.array(
-        [
-            [0.670637869618158, 0.21038256107384043, 0.12892629765485303],
-            [0.09394051075844147, 0.5759464955561779, 0.929296197576212],
-            [0.5033230372781258, 0.9569852381759425, 0.08654043447295741],
-            [0.18578301420435747, 0.5531158970919143, 0.19388943970532435],
-            [0.4548589928173794, 0.35182513658825276, 0.568146063202464],
-            [0.609279894978321, 0.7929063819678847, 0.9620097270828052],
-        ]
-    )
-    precisions_init = np.array(
-        [
-            999999.999604483,
-            999999.9990869573,
-            553.7603944542167,
-            204.78596008931834,
-            15.867423501783637,
-            85.4595728389735,
-        ]
-    )
+    means_init = np.array([
+        [0.670637869618158, 0.21038256107384043, 0.12892629765485303],
+        [0.09394051075844147, 0.5759464955561779, 0.929296197576212],
+        [0.5033230372781258, 0.9569852381759425, 0.08654043447295741],
+        [0.18578301420435747, 0.5531158970919143, 0.19388943970532435],
+        [0.4548589928173794, 0.35182513658825276, 0.568146063202464],
+        [0.609279894978321, 0.7929063819678847, 0.9620097270828052],
+    ])
+    precisions_init = np.array([
+        999999.999604483,
+        999999.9990869573,
+        553.7603944542167,
+        204.78596008931834,
+        15.867423501783637,
+        85.4595728389735,
+    ])
     weights_init = [
         0.03333333333333341,
         0.03333333333333341,

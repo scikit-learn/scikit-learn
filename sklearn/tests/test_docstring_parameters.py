@@ -41,13 +41,11 @@ with warnings.catch_warnings():
     warnings.simplefilter("ignore", FutureWarning)
     # mypy error: Module has no attribute "__path__"
     sklearn_path = sklearn.__path__  # type: ignore  # mypy issue #1422
-    PUBLIC_MODULES = set(
-        [
-            pckg[1]
-            for pckg in walk_packages(prefix="sklearn.", path=sklearn_path)
-            if not ("._" in pckg[1] or ".tests." in pckg[1])
-        ]
-    )
+    PUBLIC_MODULES = set([
+        pckg[1]
+        for pckg in walk_packages(prefix="sklearn.", path=sklearn_path)
+        if not ("._" in pckg[1] or ".tests." in pckg[1])
+    ])
 
 # functions to ignore args / docstring of
 _DOCSTRING_IGNORES = [

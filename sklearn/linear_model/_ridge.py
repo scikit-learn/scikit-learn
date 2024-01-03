@@ -344,10 +344,8 @@ def _solve_lbfgs(
         result = optimize.minimize(func, x0, **config)
         if not result["success"]:
             warnings.warn(
-                (
-                    "The lbfgs solver did not converge. Try increasing max_iter "
-                    f"or tol. Currently: max_iter={max_iter} and tol={tol}"
-                ),
+                "The lbfgs solver did not converge. Try increasing max_iter "
+                f"or tol. Currently: max_iter={max_iter} and tol={tol}",
                 ConvergenceWarning,
             )
         coefs[i] = result["x"]
@@ -2058,12 +2056,10 @@ class _RidgeGCV(LinearModel):
                 else:
                     identity_estimator = _IdentityRegressor()
                     if self.alpha_per_target:
-                        alpha_score = np.array(
-                            [
-                                scorer(identity_estimator, predictions[:, j], y[:, j])
-                                for j in range(n_y)
-                            ]
-                        )
+                        alpha_score = np.array([
+                            scorer(identity_estimator, predictions[:, j], y[:, j])
+                            for j in range(n_y)
+                        ])
                     else:
                         alpha_score = scorer(
                             identity_estimator, predictions.ravel(), y.ravel()

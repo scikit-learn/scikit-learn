@@ -124,14 +124,12 @@ def test_output_dataframe():
     """Check output dtypes for dataframes is consistent with the input dtypes."""
     pd = pytest.importorskip("pandas")
 
-    X = pd.DataFrame(
-        {
-            "a": pd.Series([1.0, 2.4, 4.5], dtype=np.float32),
-            "b": pd.Series(["a", "b", "a"], dtype="category"),
-            "c": pd.Series(["j", "b", "b"], dtype="category"),
-            "d": pd.Series([3.0, 2.4, 1.2], dtype=np.float64),
-        }
-    )
+    X = pd.DataFrame({
+        "a": pd.Series([1.0, 2.4, 4.5], dtype=np.float32),
+        "b": pd.Series(["a", "b", "a"], dtype="category"),
+        "c": pd.Series(["j", "b", "b"], dtype="category"),
+        "d": pd.Series([3.0, 2.4, 1.2], dtype=np.float64),
+    })
 
     for step in [2, 3]:
         sel = StepSelector(step=step).set_output(transform="pandas")

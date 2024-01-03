@@ -1,5 +1,6 @@
 """ Non-negative matrix factorization.
 """
+
 # Author: Vlad Niculae
 #         Lars Buitinck
 #         Mathieu Blondel <mathieu@mblondel.org>
@@ -1197,11 +1198,9 @@ class _BaseNMF(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator,
         self._n_components = self.n_components
         if self.n_components == "warn":
             warnings.warn(
-                (
-                    "The default value of `n_components` will change from `None` to"
-                    " `'auto'` in 1.6. Set the value of `n_components` to `None`"
-                    " explicitly to suppress the warning."
-                ),
+                "The default value of `n_components` will change from `None` to"
+                " `'auto'` in 1.6. Set the value of `n_components` to `None`"
+                " explicitly to suppress the warning.",
                 FutureWarning,
             )
             self._n_components = None  # Keeping the old default value
@@ -1255,10 +1254,8 @@ class _BaseNMF(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator,
         else:
             if W is not None or H is not None:
                 warnings.warn(
-                    (
-                        "When init!='custom', provided W or H are ignored. Set "
-                        " init='custom' to use them as initialization."
-                    ),
+                    "When init!='custom', provided W or H are ignored. Set "
+                    " init='custom' to use them as initialization.",
                     RuntimeWarning,
                 )
 
@@ -1338,10 +1335,8 @@ class _BaseNMF(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator,
 
         if W is not None:
             warnings.warn(
-                (
-                    "Input argument `W` was renamed to `Xt` in v1.3 and will be removed"
-                    " in v1.5."
-                ),
+                "Input argument `W` was renamed to `Xt` in v1.3 and will be removed"
+                " in v1.5.",
                 FutureWarning,
             )
             Xt = W
@@ -1619,12 +1614,10 @@ class NMF(_BaseNMF):
             )
         if self.solver == "mu" and self.init == "nndsvd":
             warnings.warn(
-                (
-                    "The multiplicative update ('mu') solver cannot update "
-                    "zeros present in the initialization, and so leads to "
-                    "poorer results when used jointly with init='nndsvd'. "
-                    "You may try init='nndsvda' or init='nndsvdar' instead."
-                ),
+                "The multiplicative update ('mu') solver cannot update "
+                "zeros present in the initialization, and so leads to "
+                "poorer results when used jointly with init='nndsvd'. "
+                "You may try init='nndsvda' or init='nndsvdar' instead.",
                 UserWarning,
             )
 
@@ -2351,10 +2344,8 @@ class MiniBatchNMF(_BaseNMF):
 
         if n_iter == self.max_iter and self.tol > 0:
             warnings.warn(
-                (
-                    f"Maximum number of iterations {self.max_iter} reached. "
-                    "Increase it to improve convergence."
-                ),
+                f"Maximum number of iterations {self.max_iter} reached. "
+                "Increase it to improve convergence.",
                 ConvergenceWarning,
             )
 

@@ -1,6 +1,7 @@
 """
 Test the pipeline module.
 """
+
 import itertools
 import re
 import shutil
@@ -876,12 +877,10 @@ def test_feature_union_parallel():
     # test that n_jobs work for FeatureUnion
     X = JUNK_FOOD_DOCS
 
-    fs = FeatureUnion(
-        [
-            ("words", CountVectorizer(analyzer="word")),
-            ("chars", CountVectorizer(analyzer="char")),
-        ]
-    )
+    fs = FeatureUnion([
+        ("words", CountVectorizer(analyzer="word")),
+        ("chars", CountVectorizer(analyzer="char")),
+    ])
 
     fs_parallel = FeatureUnion(
         [
@@ -1349,13 +1348,11 @@ parameter_grid_test_verbose = (
                 r"\[Pipeline\].*\(step 3 of 3\) Processing clf.* total=.*\n$",
             ),
             (
-                Pipeline(
-                    [
-                        ("transf", Transf()),
-                        ("noop", "passthrough"),
-                        ("clf", FitParamT()),
-                    ]
-                ),
+                Pipeline([
+                    ("transf", Transf()),
+                    ("noop", "passthrough"),
+                    ("clf", FitParamT()),
+                ]),
                 r"\[Pipeline\].*\(step 1 of 3\) Processing transf.* total=.*\n"
                 r"\[Pipeline\].*\(step 2 of 3\) Processing noop.* total=.*\n"
                 r"\[Pipeline\].*\(step 3 of 3\) Processing clf.* total=.*\n$",
@@ -1634,14 +1631,12 @@ def test_feature_union_getitem():
     """Check FeatureUnion.__getitem__ returns expected results."""
     scalar = StandardScaler()
     pca = PCA()
-    union = FeatureUnion(
-        [
-            ("scalar", scalar),
-            ("pca", pca),
-            ("pass", "passthrough"),
-            ("drop_me", "drop"),
-        ]
-    )
+    union = FeatureUnion([
+        ("scalar", scalar),
+        ("pca", pca),
+        ("pass", "passthrough"),
+        ("drop_me", "drop"),
+    ])
     assert union["scalar"] is scalar
     assert union["pca"] is pca
     assert union["pass"] == "passthrough"

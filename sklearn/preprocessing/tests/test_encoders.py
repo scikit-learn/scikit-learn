@@ -1422,14 +1422,12 @@ def test_ohe_missing_value_support_pandas():
         },
         columns=["col1", "col2"],
     )
-    expected_df_trans = np.array(
-        [
-            [0, 1, 0, 0, 1, 0, 0],
-            [1, 0, 0, 1, 0, 0, 0],
-            [0, 0, 1, 0, 0, 1, 0],
-            [1, 0, 0, 0, 0, 0, 1],
-        ]
-    )
+    expected_df_trans = np.array([
+        [0, 1, 0, 0, 1, 0, 0],
+        [1, 0, 0, 1, 0, 0, 0],
+        [0, 0, 1, 0, 0, 1, 0],
+        [1, 0, 0, 0, 0, 0, 1],
+    ])
 
     Xtr = check_categorical_onehot(df)
     assert_allclose(Xtr, expected_df_trans)
@@ -1443,20 +1441,16 @@ def test_ohe_missing_value_support_pandas_categorical(pd_nan_type, handle_unknow
 
     pd_missing_value = pd.NA if pd_nan_type == "pd.NA" else np.nan
 
-    df = pd.DataFrame(
-        {
-            "col1": pd.Series(["c", "a", pd_missing_value, "b", "a"], dtype="category"),
-        }
-    )
-    expected_df_trans = np.array(
-        [
-            [0, 0, 1, 0],
-            [1, 0, 0, 0],
-            [0, 0, 0, 1],
-            [0, 1, 0, 0],
-            [1, 0, 0, 0],
-        ]
-    )
+    df = pd.DataFrame({
+        "col1": pd.Series(["c", "a", pd_missing_value, "b", "a"], dtype="category"),
+    })
+    expected_df_trans = np.array([
+        [0, 0, 1, 0],
+        [1, 0, 0, 0],
+        [0, 0, 0, 1],
+        [0, 1, 0, 0],
+        [1, 0, 0, 0],
+    ])
 
     ohe = OneHotEncoder(sparse_output=False, handle_unknown=handle_unknown)
     df_trans = ohe.fit_transform(df)
@@ -1478,13 +1472,11 @@ def test_ohe_drop_first_handle_unknown_ignore_warns(handle_unknown):
     )
     X_trans = ohe.fit_transform(X)
 
-    X_expected = np.array(
-        [
-            [0, 0, 0],
-            [1, 0, 1],
-            [1, 1, 0],
-        ]
-    )
+    X_expected = np.array([
+        [0, 0, 0],
+        [1, 0, 1],
+        [1, 1, 0],
+    ])
     assert_allclose(X_trans, X_expected)
 
     # Both categories are unknown
@@ -1515,13 +1507,11 @@ def test_ohe_drop_if_binary_handle_unknown_ignore_warns(handle_unknown):
     )
     X_trans = ohe.fit_transform(X)
 
-    X_expected = np.array(
-        [
-            [0, 1, 0, 0],
-            [1, 0, 0, 1],
-            [1, 0, 1, 0],
-        ]
-    )
+    X_expected = np.array([
+        [0, 1, 0, 0],
+        [1, 0, 0, 1],
+        [1, 0, 1, 0],
+    ])
     assert_allclose(X_trans, X_expected)
 
     # Both categories are unknown
@@ -1632,11 +1622,9 @@ def test_ordinal_encoder_missing_value_support_pandas_categorical(
 
     pd_missing_value = pd.NA if pd_nan_type == "pd.NA" else np.nan
 
-    df = pd.DataFrame(
-        {
-            "col1": pd.Series(["c", "a", pd_missing_value, "b", "a"], dtype="category"),
-        }
-    )
+    df = pd.DataFrame({
+        "col1": pd.Series(["c", "a", pd_missing_value, "b", "a"], dtype="category"),
+    })
 
     oe = OrdinalEncoder(encoded_missing_value=encoded_missing_value).fit(df)
     assert len(oe.categories_) == 1
@@ -1657,30 +1645,24 @@ def test_ordinal_encoder_missing_value_support_pandas_categorical(
 @pytest.mark.parametrize(
     "X, X2, cats, cat_dtype",
     [
-        (
-            (
-                np.array([["a", np.nan]], dtype=object).T,
-                np.array([["a", "b"]], dtype=object).T,
-                [np.array(["a", "d", np.nan], dtype=object)],
-                np.object_,
-            )
-        ),
-        (
-            (
-                np.array([["a", np.nan]], dtype=object).T,
-                np.array([["a", "b"]], dtype=object).T,
-                [np.array(["a", "d", np.nan], dtype=object)],
-                np.object_,
-            )
-        ),
-        (
-            (
-                np.array([[2.0, np.nan]], dtype=np.float64).T,
-                np.array([[3.0]], dtype=np.float64).T,
-                [np.array([2.0, 4.0, np.nan])],
-                np.float64,
-            )
-        ),
+        ((
+            np.array([["a", np.nan]], dtype=object).T,
+            np.array([["a", "b"]], dtype=object).T,
+            [np.array(["a", "d", np.nan], dtype=object)],
+            np.object_,
+        )),
+        ((
+            np.array([["a", np.nan]], dtype=object).T,
+            np.array([["a", "b"]], dtype=object).T,
+            [np.array(["a", "d", np.nan], dtype=object)],
+            np.object_,
+        )),
+        ((
+            np.array([[2.0, np.nan]], dtype=np.float64).T,
+            np.array([[3.0]], dtype=np.float64).T,
+            [np.array([2.0, 4.0, np.nan])],
+            np.float64,
+        )),
     ],
     ids=[
         "object-None-missing-value",
@@ -1832,14 +1814,12 @@ def test_ordinal_encoder_python_integer():
     Non-regression test for:
     https://github.com/scikit-learn/scikit-learn/issues/20721
     """
-    X = np.array(
-        [
-            44253463435747313673,
-            9867966753463435747313673,
-            44253462342215747313673,
-            442534634357764313673,
-        ]
-    ).reshape(-1, 1)
+    X = np.array([
+        44253463435747313673,
+        9867966753463435747313673,
+        44253462342215747313673,
+        442534634357764313673,
+    ]).reshape(-1, 1)
     encoder = OrdinalEncoder().fit(X)
     assert_array_equal(encoder.categories_, np.sort(X, axis=0).T)
     X_trans = encoder.transform(X)

@@ -1,4 +1,5 @@
 """Implementation of ARFF parsers: via LIAC-ARFF and pandas."""
+
 import itertools
 import re
 from collections import OrderedDict
@@ -281,15 +282,13 @@ def _liac_arff_parser(
             # No target
             pass
         elif all(is_classification):
-            y = np.hstack(
-                [
-                    np.take(
-                        np.asarray(categories.pop(col_name), dtype="O"),
-                        y[:, i : i + 1].astype(int, copy=False),
-                    )
-                    for i, col_name in enumerate(target_names_to_select)
-                ]
-            )
+            y = np.hstack([
+                np.take(
+                    np.asarray(categories.pop(col_name), dtype="O"),
+                    y[:, i : i + 1].astype(int, copy=False),
+                )
+                for i, col_name in enumerate(target_names_to_select)
+            ])
         elif any(is_classification):
             raise ValueError(
                 "Mix of nominal and non-nominal targets is not currently supported"

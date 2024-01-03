@@ -35,12 +35,10 @@ def test_compute_mi_cc(global_dtype):
     sigma_1 = 1
     sigma_2 = 10
     corr = 0.5
-    cov = np.array(
-        [
-            [sigma_1**2, corr * sigma_1 * sigma_2],
-            [corr * sigma_1 * sigma_2, sigma_2**2],
-        ]
-    )
+    cov = np.array([
+        [sigma_1**2, corr * sigma_1 * sigma_2],
+        [corr * sigma_1 * sigma_2, sigma_2**2],
+    ])
 
     # True theoretical mutual information.
     I_theory = np.log(sigma_1) + np.log(sigma_2) - 0.5 * np.log(np.linalg.det(cov))

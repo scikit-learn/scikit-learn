@@ -36,20 +36,16 @@ def test_consensus_score():
 
 def test_consensus_score_issue2445():
     """Different number of biclusters in A and B"""
-    a_rows = np.array(
-        [
-            [True, True, False, False],
-            [False, False, True, True],
-            [False, False, False, True],
-        ]
-    )
-    a_cols = np.array(
-        [
-            [True, True, False, False],
-            [False, False, True, True],
-            [False, False, False, True],
-        ]
-    )
+    a_rows = np.array([
+        [True, True, False, False],
+        [False, False, True, True],
+        [False, False, False, True],
+    ])
+    a_cols = np.array([
+        [True, True, False, False],
+        [False, False, True, True],
+        [False, False, False, True],
+    ])
     idx = [0, 2]
     s = consensus_score((a_rows, a_cols), (a_rows[idx], a_cols[idx]))
     # B contains 2 of the 3 biclusters in A, so score should be 2/3

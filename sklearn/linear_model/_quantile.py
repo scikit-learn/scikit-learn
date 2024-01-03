@@ -112,15 +112,13 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
         "alpha": [Interval(Real, 0, None, closed="left")],
         "fit_intercept": ["boolean"],
         "solver": [
-            StrOptions(
-                {
-                    "highs-ds",
-                    "highs-ipm",
-                    "highs",
-                    "interior-point",
-                    "revised simplex",
-                }
-            ),
+            StrOptions({
+                "highs-ds",
+                "highs-ipm",
+                "highs",
+                "interior-point",
+                "revised simplex",
+            }),
         ],
         "solver_options": [dict, None],
     }
@@ -235,13 +233,11 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
             sample_weight = sample_weight[indices]
             X = _safe_indexing(X, indices)
             y = _safe_indexing(y, indices)
-        c = np.concatenate(
-            [
-                np.full(2 * n_params, fill_value=alpha),
-                sample_weight * self.quantile,
-                sample_weight * (1 - self.quantile),
-            ]
-        )
+        c = np.concatenate([
+            np.full(2 * n_params, fill_value=alpha),
+            sample_weight * self.quantile,
+            sample_weight * (1 - self.quantile),
+        ])
         if self.fit_intercept:
             # do not penalize the intercept
             c[0] = 0

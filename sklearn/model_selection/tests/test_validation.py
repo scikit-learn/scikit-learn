@@ -1,4 +1,5 @@
 """Test the validation module"""
+
 import os
 import re
 import sys
@@ -386,12 +387,10 @@ def test_cross_validate_nested_estimator():
     # estimators are properly returned in a list
     # https://github.com/scikit-learn/scikit-learn/pull/17745
     (X, y) = load_iris(return_X_y=True)
-    pipeline = Pipeline(
-        [
-            ("imputer", SimpleImputer()),
-            ("classifier", MockClassifier()),
-        ]
-    )
+    pipeline = Pipeline([
+        ("imputer", SimpleImputer()),
+        ("classifier", MockClassifier()),
+    ])
 
     results = cross_validate(pipeline, X, y, return_estimator=True)
     estimators = results["estimator"]
@@ -851,12 +850,10 @@ def test_permutation_test_score_allow_nans():
     X = np.arange(200, dtype=np.float64).reshape(10, -1)
     X[2, :] = np.nan
     y = np.repeat([0, 1], X.shape[0] / 2)
-    p = Pipeline(
-        [
-            ("imputer", SimpleImputer(strategy="mean", missing_values=np.nan)),
-            ("classifier", MockClassifier()),
-        ]
-    )
+    p = Pipeline([
+        ("imputer", SimpleImputer(strategy="mean", missing_values=np.nan)),
+        ("classifier", MockClassifier()),
+    ])
     permutation_test_score(p, X, y)
 
 
@@ -880,30 +877,26 @@ def test_cross_val_score_allow_nans():
     X = np.arange(200, dtype=np.float64).reshape(10, -1)
     X[2, :] = np.nan
     y = np.repeat([0, 1], X.shape[0] / 2)
-    p = Pipeline(
-        [
-            ("imputer", SimpleImputer(strategy="mean", missing_values=np.nan)),
-            ("classifier", MockClassifier()),
-        ]
-    )
+    p = Pipeline([
+        ("imputer", SimpleImputer(strategy="mean", missing_values=np.nan)),
+        ("classifier", MockClassifier()),
+    ])
     cross_val_score(p, X, y)
 
 
 def test_cross_val_score_multilabel():
-    X = np.array(
-        [
-            [-3, 4],
-            [2, 4],
-            [3, 3],
-            [0, 2],
-            [-3, 1],
-            [-2, 1],
-            [0, 0],
-            [-2, -1],
-            [-1, -2],
-            [1, -2],
-        ]
-    )
+    X = np.array([
+        [-3, 4],
+        [2, 4],
+        [3, 3],
+        [0, 2],
+        [-3, 1],
+        [-2, 1],
+        [0, 0],
+        [-2, -1],
+        [-1, -2],
+        [1, -2],
+    ])
     y = np.array(
         [[1, 1], [0, 1], [0, 1], [0, 1], [1, 1], [0, 1], [1, 0], [1, 1], [1, 0], [0, 0]]
     )
@@ -1458,25 +1451,23 @@ def test_learning_curve_with_boolean_indices():
 def test_learning_curve_with_shuffle():
     # Following test case was designed this way to verify the code
     # changes made in pull request: #7506.
-    X = np.array(
-        [
-            [1, 2],
-            [3, 4],
-            [5, 6],
-            [7, 8],
-            [11, 12],
-            [13, 14],
-            [15, 16],
-            [17, 18],
-            [19, 20],
-            [7, 8],
-            [9, 10],
-            [11, 12],
-            [13, 14],
-            [15, 16],
-            [17, 18],
-        ]
-    )
+    X = np.array([
+        [1, 2],
+        [3, 4],
+        [5, 6],
+        [7, 8],
+        [11, 12],
+        [13, 14],
+        [15, 16],
+        [17, 18],
+        [19, 20],
+        [7, 8],
+        [9, 10],
+        [11, 12],
+        [13, 14],
+        [15, 16],
+        [17, 18],
+    ])
     y = np.array([1, 1, 1, 2, 3, 4, 1, 1, 2, 3, 4, 1, 2, 3, 4])
     groups = np.array([1, 1, 1, 1, 1, 1, 3, 3, 3, 3, 3, 4, 4, 4, 4])
     # Splits on these groups fail without shuffle as the first iteration
@@ -2172,11 +2163,9 @@ def test_cross_validate_some_failing_fits_warning(error_score):
         "ValueError: Classifier fit failed with 1 values too high"
     )
     warning_message = re.compile(
-        (
-            "2 fits failed.+total of 3.+The score on these"
-            " train-test partitions for these parameters will be set to"
-            f" {cross_validate_kwargs['error_score']}.+{individual_fit_error_message}"
-        ),
+        "2 fits failed.+total of 3.+The score on these"
+        " train-test partitions for these parameters will be set to"
+        f" {cross_validate_kwargs['error_score']}.+{individual_fit_error_message}",
         flags=re.DOTALL,
     )
 
@@ -2197,10 +2186,8 @@ def test_cross_validate_all_failing_fits_error(error_score):
 
     individual_fit_error_message = "ValueError: Failing classifier failed as required"
     error_message = re.compile(
-        (
-            "All the 7 fits failed.+your model is misconfigured.+"
-            f"{individual_fit_error_message}"
-        ),
+        "All the 7 fits failed.+your model is misconfigured.+"
+        f"{individual_fit_error_message}",
         flags=re.DOTALL,
     )
 

@@ -289,13 +289,10 @@ def test_loader(loader_func, data_shape, target_shape, n_target, has_descr, file
         assert bunch.DESCR
     if filenames:
         assert "data_module" in bunch
-        assert all(
-            [
-                f in bunch
-                and (resources.files(bunch["data_module"]) / bunch[f]).is_file()
-                for f in filenames
-            ]
-        )
+        assert all([
+            f in bunch and (resources.files(bunch["data_module"]) / bunch[f]).is_file()
+            for f in filenames
+        ])
 
 
 @pytest.mark.parametrize(

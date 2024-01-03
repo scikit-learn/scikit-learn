@@ -1,4 +1,5 @@
 """Testing for K-means"""
+
 import re
 import sys
 from io import StringIO
@@ -33,13 +34,11 @@ from sklearn.utils.extmath import row_norms
 from sklearn.utils.fixes import CSR_CONTAINERS, threadpool_limits
 
 # non centered, sparse centers to check the
-centers = np.array(
-    [
-        [0.0, 5.0, 0.0, 0.0, 0.0],
-        [1.0, 1.0, 4.0, 0.0, 0.0],
-        [1.0, 0.0, 0.0, 5.0, 1.0],
-    ]
-)
+centers = np.array([
+    [0.0, 5.0, 0.0, 0.0, 0.0],
+    [1.0, 1.0, 4.0, 0.0, 0.0],
+    [1.0, 0.0, 0.0, 5.0, 1.0],
+])
 n_samples = 100
 n_clusters, n_features = centers.shape
 X, true_labels = make_blobs(
@@ -685,9 +684,9 @@ def test_kmeans_predict(
 @pytest.mark.parametrize("Estimator", [KMeans, MiniBatchKMeans])
 def test_dense_sparse(Estimator, X_csr, global_random_seed):
     # Check that the results are the same for dense and sparse input.
-    sample_weight = np.random.RandomState(global_random_seed).random_sample(
-        (n_samples,)
-    )
+    sample_weight = np.random.RandomState(global_random_seed).random_sample((
+        n_samples,
+    ))
     km_dense = Estimator(
         n_clusters=n_clusters, random_state=global_random_seed, n_init=1
     )

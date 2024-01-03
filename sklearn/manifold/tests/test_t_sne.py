@@ -44,12 +44,10 @@ from sklearn.utils.fixes import CSR_CONTAINERS, LIL_CONTAINERS
 
 x = np.linspace(0, 1, 10)
 xx, yy = np.meshgrid(x, x)
-X_2d_grid = np.hstack(
-    [
-        xx.ravel().reshape(-1, 1),
-        yy.ravel().reshape(-1, 1),
-    ]
-)
+X_2d_grid = np.hstack([
+    xx.ravel().reshape(-1, 1),
+    yy.ravel().reshape(-1, 1),
+])
 
 
 def test_gradient_descent_stops():
@@ -184,12 +182,10 @@ def test_binary_search_neighbors():
     P2 = _binary_search_perplexity(distances_nn, desired_perplexity, verbose=0)
 
     indptr = distance_graph.indptr
-    P1_nn = np.array(
-        [
-            P1[k, distance_graph.indices[indptr[k] : indptr[k + 1]]]
-            for k in range(n_samples)
-        ]
-    )
+    P1_nn = np.array([
+        P1[k, distance_graph.indices[indptr[k] : indptr[k + 1]]]
+        for k in range(n_samples)
+    ])
     assert_array_almost_equal(P1_nn, P2, decimal=4)
 
     # Test that the highest P_ij are the same when fewer neighbors are used
@@ -598,23 +594,19 @@ def test_answer_gradient_four_points(csr_container):
     # These tests & answers have been checked against the reference
     # implementation by LvdM.
     pos_input = np.array([[1.0, 0.0], [0.0, 1.0], [5.0, 2.0], [7.3, 2.2]])
-    pos_output = np.array(
-        [
-            [6.080564e-05, -7.120823e-05],
-            [-1.718945e-04, -4.000536e-05],
-            [-2.271720e-04, 8.663310e-05],
-            [-1.032577e-04, -3.582033e-05],
-        ]
-    )
+    pos_output = np.array([
+        [6.080564e-05, -7.120823e-05],
+        [-1.718945e-04, -4.000536e-05],
+        [-2.271720e-04, 8.663310e-05],
+        [-1.032577e-04, -3.582033e-05],
+    ])
     neighbors = np.array([[1, 2, 3], [0, 2, 3], [1, 0, 3], [1, 2, 0]])
-    grad_output = np.array(
-        [
-            [5.81128448e-05, -7.78033454e-06],
-            [-5.81526851e-05, 7.80976444e-06],
-            [4.24275173e-08, -3.69569698e-08],
-            [-2.58720939e-09, 7.52706374e-09],
-        ]
-    )
+    grad_output = np.array([
+        [5.81128448e-05, -7.78033454e-06],
+        [-5.81526851e-05, 7.80976444e-06],
+        [4.24275173e-08, -3.69569698e-08],
+        [-2.58720939e-09, 7.52706374e-09],
+    ])
     _run_answer_test(pos_input, pos_output, neighbors, grad_output, csr_container)
 
 
@@ -628,23 +620,19 @@ def test_skip_num_points_gradient(csr_container):
     # being set to zero, these data points are the same as in
     # test_answer_gradient_four_points()
     pos_input = np.array([[1.0, 0.0], [0.0, 1.0], [5.0, 2.0], [7.3, 2.2]])
-    pos_output = np.array(
-        [
-            [6.080564e-05, -7.120823e-05],
-            [-1.718945e-04, -4.000536e-05],
-            [-2.271720e-04, 8.663310e-05],
-            [-1.032577e-04, -3.582033e-05],
-        ]
-    )
+    pos_output = np.array([
+        [6.080564e-05, -7.120823e-05],
+        [-1.718945e-04, -4.000536e-05],
+        [-2.271720e-04, 8.663310e-05],
+        [-1.032577e-04, -3.582033e-05],
+    ])
     neighbors = np.array([[1, 2, 3], [0, 2, 3], [1, 0, 3], [1, 2, 0]])
-    grad_output = np.array(
-        [
-            [0.0, 0.0],
-            [0.0, 0.0],
-            [4.24275173e-08, -3.69569698e-08],
-            [-2.58720939e-09, 7.52706374e-09],
-        ]
-    )
+    grad_output = np.array([
+        [0.0, 0.0],
+        [0.0, 0.0],
+        [4.24275173e-08, -3.69569698e-08],
+        [-2.58720939e-09, 7.52706374e-09],
+    ])
     _run_answer_test(
         pos_input, pos_output, neighbors, grad_output, csr_container, False, 0.1, 2
     )

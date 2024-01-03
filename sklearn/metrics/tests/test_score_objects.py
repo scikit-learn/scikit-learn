@@ -723,10 +723,8 @@ def test_scoring_is_not_metric():
 
 
 @pytest.mark.parametrize(
-    (
-        "scorers,expected_predict_count,"
-        "expected_predict_proba_count,expected_decision_func_count"
-    ),
+    "scorers,expected_predict_count,"
+    "expected_predict_proba_count,expected_decision_func_count",
     [
         (
             {
@@ -789,15 +787,13 @@ def test_multimetric_scorer_calls_method_once(
     "scorers",
     [
         (["roc_auc", "neg_log_loss"]),
-        (
-            {
-                "roc_auc": make_scorer(
-                    roc_auc_score,
-                    response_method=["predict_proba", "decision_function"],
-                ),
-                "neg_log_loss": make_scorer(log_loss, response_method="predict_proba"),
-            }
-        ),
+        ({
+            "roc_auc": make_scorer(
+                roc_auc_score,
+                response_method=["predict_proba", "decision_function"],
+            ),
+            "neg_log_loss": make_scorer(log_loss, response_method="predict_proba"),
+        }),
     ],
 )
 def test_multimetric_scorer_calls_method_once_classifier_no_decision(scorers):

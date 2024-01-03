@@ -136,12 +136,10 @@ def test_lda_predict_proba(solver, n_classes):
         """Generate a multivariate normal data given some centers and
         covariances"""
         rng = check_random_state(random_state)
-        X = np.vstack(
-            [
-                rng.multivariate_normal(mean, cov, size=n_samples // len(centers))
-                for mean, cov in zip(centers, covariances)
-            ]
-        )
+        X = np.vstack([
+            rng.multivariate_normal(mean, cov, size=n_samples // len(centers))
+            for mean, cov in zip(centers, covariances)
+        ])
         y = np.hstack(
             [[clazz] * (n_samples // len(centers)) for clazz in range(len(centers))]
         )
@@ -182,23 +180,19 @@ def test_lda_predict_proba(solver, n_classes):
     def discriminant_func(sample, coef, intercept, clazz):
         return np.exp(intercept[clazz] + np.dot(sample, coef[clazz])).item()
 
-    prob = np.array(
-        [
-            float(
-                discriminant_func(sample, alpha_k, alpha_k_0, clazz)
-                / (
-                    1
-                    + sum(
-                        [
-                            discriminant_func(sample, alpha_k, alpha_k_0, clazz)
-                            for clazz in range(n_classes - 1)
-                        ]
-                    )
-                )
+    prob = np.array([
+        float(
+            discriminant_func(sample, alpha_k, alpha_k_0, clazz)
+            / (
+                1
+                + sum([
+                    discriminant_func(sample, alpha_k, alpha_k_0, clazz)
+                    for clazz in range(n_classes - 1)
+                ])
             )
-            for clazz in range(n_classes - 1)
-        ]
-    )
+        )
+        for clazz in range(n_classes - 1)
+    ])
 
     prob_ref = 1 - np.sum(prob)
 
@@ -208,12 +202,10 @@ def test_lda_predict_proba(solver, n_classes):
         1
         / (
             1
-            + sum(
-                [
-                    discriminant_func(sample, alpha_k, alpha_k_0, clazz)
-                    for clazz in range(n_classes - 1)
-                ]
-            )
+            + sum([
+                discriminant_func(sample, alpha_k, alpha_k_0, clazz)
+                for clazz in range(n_classes - 1)
+            ])
         )
     )
 
@@ -326,16 +318,14 @@ def test_lda_orthogonality():
 
     # We construct perfectly symmetric distributions, so the LDA can estimate
     # precise means.
-    scatter = np.array(
-        [
-            [0.1, 0, 0],
-            [-0.1, 0, 0],
-            [0, 0.1, 0],
-            [0, -0.1, 0],
-            [0, 0, 0.1],
-            [0, 0, -0.1],
-        ]
-    )
+    scatter = np.array([
+        [0.1, 0, 0],
+        [-0.1, 0, 0],
+        [0, 0.1, 0],
+        [0, -0.1, 0],
+        [0, 0, 0.1],
+        [0, 0, -0.1],
+    ])
 
     X = (means[:, np.newaxis, :] + scatter[np.newaxis, :, :]).reshape((-1, 3))
     y = np.repeat(np.arange(means.shape[0]), scatter.shape[0])

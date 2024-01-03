@@ -239,11 +239,9 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
             X_int[:, i] = _encode(Xi, uniques=self.categories_[i], check_unknown=False)
         if columns_with_unknown:
             warnings.warn(
-                (
-                    "Found unknown categories in columns "
-                    f"{columns_with_unknown} during transform. These "
-                    "unknown categories will be encoded as all zeros"
-                ),
+                "Found unknown categories in columns "
+                f"{columns_with_unknown} during transform. These "
+                "unknown categories will be encoded as all zeros",
                 UserWarning,
             )
 
@@ -867,12 +865,10 @@ class OneHotEncoder(_BaseEncoder):
                     "The following categories were supposed to be "
                     "dropped, but were not found in the training "
                     "data.\n{}".format(
-                        "\n".join(
-                            [
-                                "Category: {}, Feature: {}".format(c, v)
-                                for c, v in missing_drops
-                            ]
-                        )
+                        "\n".join([
+                            "Category: {}, Feature: {}".format(c, v)
+                            for c, v in missing_drops
+                        ])
                     )
                 )
                 raise ValueError(msg)

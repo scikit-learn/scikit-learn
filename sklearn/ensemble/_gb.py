@@ -55,12 +55,10 @@ from ._base import BaseEnsemble
 from ._gradient_boosting import _random_sample_mask, predict_stage, predict_stages
 
 _LOSSES = _LOSSES.copy()
-_LOSSES.update(
-    {
-        "quantile": PinballLoss,
-        "huber": HuberLoss,
-    }
-)
+_LOSSES.update({
+    "quantile": PinballLoss,
+    "huber": HuberLoss,
+})
 
 
 def _safe_divide(numerator, denominator):

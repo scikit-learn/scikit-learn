@@ -624,22 +624,20 @@ def test_cartesian():
 
     axes = (np.array([1, 2, 3]), np.array([4, 5]), np.array([6, 7]))
 
-    true_out = np.array(
-        [
-            [1, 4, 6],
-            [1, 4, 7],
-            [1, 5, 6],
-            [1, 5, 7],
-            [2, 4, 6],
-            [2, 4, 7],
-            [2, 5, 6],
-            [2, 5, 7],
-            [3, 4, 6],
-            [3, 4, 7],
-            [3, 5, 6],
-            [3, 5, 7],
-        ]
-    )
+    true_out = np.array([
+        [1, 4, 6],
+        [1, 4, 7],
+        [1, 5, 6],
+        [1, 5, 7],
+        [2, 4, 6],
+        [2, 4, 7],
+        [2, 5, 6],
+        [2, 5, 7],
+        [3, 4, 6],
+        [3, 4, 7],
+        [3, 5, 6],
+        [3, 5, 7],
+    ])
 
     out = cartesian(axes)
     assert_array_equal(true_out, out)
@@ -702,9 +700,7 @@ def test_incremental_weighted_mean_and_variance_simple(rng, dtype):
     mean, var, _ = _incremental_mean_and_var(X, 0, 0, 0, sample_weight=sample_weight)
 
     expected_mean = np.average(X, weights=sample_weight, axis=0)
-    expected_var = (
-        np.average(X**2, weights=sample_weight, axis=0) - expected_mean**2
-    )
+    expected_var = np.average(X**2, weights=sample_weight, axis=0) - expected_mean**2
     assert_almost_equal(mean, expected_mean)
     assert_almost_equal(var, expected_var)
 
@@ -764,14 +760,12 @@ def test_incremental_weighted_mean_and_variance_ignore_nan(dtype):
         [[170, 170, 170, 170], [430, 430, 430, 430], [300, 300, 300, 300]]
     ).astype(dtype)
 
-    X_nan = np.array(
-        [
-            [170, np.nan, 170, 170],
-            [np.nan, 170, 430, 430],
-            [430, 430, np.nan, 300],
-            [300, 300, 300, np.nan],
-        ]
-    ).astype(dtype)
+    X_nan = np.array([
+        [170, np.nan, 170, 170],
+        [np.nan, 170, 430, 430],
+        [430, 430, np.nan, 300],
+        [300, 300, 300, np.nan],
+    ]).astype(dtype)
 
     X_means, X_variances, X_count = _incremental_mean_and_var(
         X, old_means, old_variances, old_weight_sum, sample_weight=sample_weights_X
@@ -792,14 +786,12 @@ def test_incremental_weighted_mean_and_variance_ignore_nan(dtype):
 def test_incremental_variance_update_formulas():
     # Test Youngs and Cramer incremental variance formulas.
     # Doggie data from https://www.mathsisfun.com/data/standard-deviation.html
-    A = np.array(
-        [
-            [600, 470, 170, 430, 300],
-            [600, 470, 170, 430, 300],
-            [600, 470, 170, 430, 300],
-            [600, 470, 170, 430, 300],
-        ]
-    ).T
+    A = np.array([
+        [600, 470, 170, 430, 300],
+        [600, 470, 170, 430, 300],
+        [600, 470, 170, 430, 300],
+        [600, 470, 170, 430, 300],
+    ]).T
     idx = 2
     X1 = A[:idx, :]
     X2 = A[idx:, :]
@@ -822,14 +814,12 @@ def test_incremental_mean_and_variance_ignore_nan():
 
     X = np.array([[170, 170, 170, 170], [430, 430, 430, 430], [300, 300, 300, 300]])
 
-    X_nan = np.array(
-        [
-            [170, np.nan, 170, 170],
-            [np.nan, 170, 430, 430],
-            [430, 430, np.nan, 300],
-            [300, 300, 300, np.nan],
-        ]
-    )
+    X_nan = np.array([
+        [170, np.nan, 170, 170],
+        [np.nan, 170, 430, 430],
+        [430, 430, np.nan, 300],
+        [300, 300, 300, np.nan],
+    ])
 
     X_means, X_variances, X_count = _incremental_mean_and_var(
         X, old_means, old_variances, old_sample_count

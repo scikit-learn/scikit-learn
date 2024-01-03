@@ -360,18 +360,14 @@ def test_assert_compatible_argkmin_results():
     _6_1m = 6.1 - eps
     _6_1p = 6.1 + eps
 
-    ref_dist = np.array(
-        [
-            [1.2, 2.5, _6_1m, 6.1, _6_1p],
-            [_1m, _1m, 1, _1p, _1p],
-        ]
-    )
-    ref_indices = np.array(
-        [
-            [1, 2, 3, 4, 5],
-            [6, 7, 8, 9, 10],
-        ]
-    )
+    ref_dist = np.array([
+        [1.2, 2.5, _6_1m, 6.1, _6_1p],
+        [_1m, _1m, 1, _1p, _1p],
+    ])
+    ref_indices = np.array([
+        [1, 2, 3, 4, 5],
+        [6, 7, 8, 9, 10],
+    ])
 
     # Sanity check: compare the reference results to themselves.
     assert_compatible_argkmin_results(

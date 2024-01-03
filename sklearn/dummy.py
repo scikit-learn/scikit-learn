@@ -175,12 +175,10 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
         if self._strategy == "uniform" and sp.issparse(y):
             y = y.toarray()
             warnings.warn(
-                (
-                    "A local copy of the target data has been converted "
-                    "to a numpy array. Predicting on sparse target data "
-                    "with the uniform strategy would not save memory "
-                    "and would be slower."
-                ),
+                "A local copy of the target data has been converted "
+                "to a numpy array. Predicting on sparse target data "
+                "with the uniform strategy would not save memory "
+                "and would be slower.",
                 UserWarning,
             )
 
@@ -304,12 +302,9 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
                 )
 
             elif self._strategy == "stratified":
-                y = np.vstack(
-                    [
-                        classes_[k][proba[k].argmax(axis=1)]
-                        for k in range(self.n_outputs_)
-                    ]
-                ).T
+                y = np.vstack([
+                    classes_[k][proba[k].argmax(axis=1)] for k in range(self.n_outputs_)
+                ]).T
 
             elif self._strategy == "uniform":
                 ret = [

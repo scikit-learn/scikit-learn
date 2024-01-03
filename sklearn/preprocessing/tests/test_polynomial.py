@@ -327,38 +327,34 @@ def test_spline_transformer_extrapolation(bias, intercept, degree):
     y = X.squeeze()
 
     # 'constant'
-    pipe = Pipeline(
+    pipe = Pipeline([
         [
-            [
-                "spline",
-                SplineTransformer(
-                    n_knots=4,
-                    degree=degree,
-                    include_bias=bias,
-                    extrapolation="constant",
-                ),
-            ],
-            ["ols", LinearRegression(fit_intercept=intercept)],
-        ]
-    )
+            "spline",
+            SplineTransformer(
+                n_knots=4,
+                degree=degree,
+                include_bias=bias,
+                extrapolation="constant",
+            ),
+        ],
+        ["ols", LinearRegression(fit_intercept=intercept)],
+    ])
     pipe.fit(X, y)
     assert_allclose(pipe.predict([[-10], [5]]), [-1, 1])
 
     # 'linear'
-    pipe = Pipeline(
+    pipe = Pipeline([
         [
-            [
-                "spline",
-                SplineTransformer(
-                    n_knots=4,
-                    degree=degree,
-                    include_bias=bias,
-                    extrapolation="linear",
-                ),
-            ],
-            ["ols", LinearRegression(fit_intercept=intercept)],
-        ]
-    )
+            "spline",
+            SplineTransformer(
+                n_knots=4,
+                degree=degree,
+                include_bias=bias,
+                extrapolation="linear",
+            ),
+        ],
+        ["ols", LinearRegression(fit_intercept=intercept)],
+    ])
     pipe.fit(X, y)
     assert_allclose(pipe.predict([[-10], [5]]), [-10, 5])
 
@@ -556,20 +552,18 @@ def two_features_degree3():
     X = np.arange(6).reshape((3, 2))
     x1 = X[:, :1]
     x2 = X[:, 1:]
-    P = np.hstack(
-        [
-            x1**0 * x2**0,  # 0
-            x1**1 * x2**0,  # 1
-            x1**0 * x2**1,  # 2
-            x1**2 * x2**0,  # 3
-            x1**1 * x2**1,  # 4
-            x1**0 * x2**2,  # 5
-            x1**3 * x2**0,  # 6
-            x1**2 * x2**1,  # 7
-            x1**1 * x2**2,  # 8
-            x1**0 * x2**3,  # 9
-        ]
-    )
+    P = np.hstack([
+        x1**0 * x2**0,  # 0
+        x1**1 * x2**0,  # 1
+        x1**0 * x2**1,  # 2
+        x1**2 * x2**0,  # 3
+        x1**1 * x2**1,  # 4
+        x1**0 * x2**2,  # 5
+        x1**3 * x2**0,  # 6
+        x1**2 * x2**1,  # 7
+        x1**1 * x2**2,  # 8
+        x1**0 * x2**3,  # 9
+    ])
     return X, P
 
 
@@ -991,13 +985,11 @@ def test_csr_polynomial_expansion_index_overflow_non_regression(
         )
         if not interaction_only:
             data_target.extend([x * x, x * y, y * y])
-            col_nonzero_target.extend(
-                [
-                    degree_2_calc(n_features, x_idx, x_idx) + n_degree_1_features_out,
-                    degree_2_calc(n_features, x_idx, y_idx) + n_degree_1_features_out,
-                    degree_2_calc(n_features, y_idx, y_idx) + n_degree_1_features_out,
-                ]
-            )
+            col_nonzero_target.extend([
+                degree_2_calc(n_features, x_idx, x_idx) + n_degree_1_features_out,
+                degree_2_calc(n_features, x_idx, y_idx) + n_degree_1_features_out,
+                degree_2_calc(n_features, y_idx, y_idx) + n_degree_1_features_out,
+            ])
         else:
             data_target.extend([x * y])
             col_nonzero_target.append(

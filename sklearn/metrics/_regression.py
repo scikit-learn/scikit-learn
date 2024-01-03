@@ -481,12 +481,10 @@ def mean_squared_error(
     # TODO(1.6): remove
     if squared != "deprecated":
         warnings.warn(
-            (
-                "'squared' is deprecated in version 1.4 and "
-                "will be removed in 1.6. To calculate the "
-                "root mean squared error, use the function"
-                "'root_mean_squared_error'."
-            ),
+            "'squared' is deprecated in version 1.4 and "
+            "will be removed in 1.6. To calculate the "
+            "root mean squared error, use the function"
+            "'root_mean_squared_error'.",
             FutureWarning,
         )
         if not squared:
@@ -664,12 +662,10 @@ def mean_squared_log_error(
     # TODO(1.6): remove
     if squared != "deprecated":
         warnings.warn(
-            (
-                "'squared' is deprecated in version 1.4 and "
-                "will be removed in 1.6. To calculate the "
-                "root mean squared logarithmic error, use the function"
-                "'root_mean_squared_log_error'."
-            ),
+            "'squared' is deprecated in version 1.4 and "
+            "will be removed in 1.6. To calculate the "
+            "root mean squared logarithmic error, use the function"
+            "'root_mean_squared_log_error'.",
             FutureWarning,
         )
         if not squared:

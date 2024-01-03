@@ -665,12 +665,10 @@ def test_micro_averaged_ovr_roc_auc(global_random_seed):
     # we use an imbalanced class distribution (by using different parameters
     # in the Dirichlet prior (conjugate prior of the multinomial distribution).
     y_pred = stats.dirichlet.rvs([2.0, 1.0, 0.5], size=1000, random_state=seed)
-    y_true = np.asarray(
-        [
-            stats.multinomial.rvs(n=1, p=y_pred_i, random_state=seed).argmax()
-            for y_pred_i in y_pred
-        ]
-    )
+    y_true = np.asarray([
+        stats.multinomial.rvs(n=1, p=y_pred_i, random_state=seed).argmax()
+        for y_pred_i in y_pred
+    ])
     y_onehot = label_binarize(y_true, classes=[0, 1, 2])
     fpr, tpr, _ = roc_curve(y_onehot.ravel(), y_pred.ravel())
     roc_auc_by_hand = auc(fpr, tpr)
@@ -1188,16 +1186,14 @@ def test_average_precision_score_multilabel_pos_label_errors():
 def test_average_precision_score_multiclass_pos_label_errors():
     # Raise an error for multiclass y_true with pos_label other than 1
     y_true = np.array([0, 1, 2, 0, 1, 2])
-    y_pred = np.array(
-        [
-            [0.5, 0.2, 0.1],
-            [0.4, 0.5, 0.3],
-            [0.1, 0.2, 0.6],
-            [0.2, 0.3, 0.5],
-            [0.2, 0.3, 0.5],
-            [0.2, 0.3, 0.5],
-        ]
-    )
+    y_pred = np.array([
+        [0.5, 0.2, 0.1],
+        [0.4, 0.5, 0.3],
+        [0.1, 0.2, 0.6],
+        [0.2, 0.3, 0.5],
+        [0.2, 0.3, 0.5],
+        [0.2, 0.3, 0.5],
+    ])
     err_msg = (
         "Parameter pos_label is fixed to 1 for multiclass y_true. "
         "Do not set pos_label or set pos_label to 1."
@@ -1832,12 +1828,10 @@ def test_dcg_ties():
     dcg = _dcg_sample_scores(y_true, y_score)
     dcg_ignore_ties = _dcg_sample_scores(y_true, y_score, ignore_ties=True)
     assert dcg_ignore_ties == pytest.approx([(discounts * y_true[:, ::-1]).sum()])
-    assert dcg == pytest.approx(
-        [
-            discounts[:2].sum() * y_true[0, 3:].mean()
-            + discounts[2:].sum() * y_true[0, :3].mean()
-        ]
-    )
+    assert dcg == pytest.approx([
+        discounts[:2].sum() * y_true[0, 3:].mean()
+        + discounts[2:].sum() * y_true[0, :3].mean()
+    ])
 
 
 def test_ndcg_ignore_ties_with_k():
@@ -1976,14 +1970,12 @@ def test_partial_roc_auc_score():
     ],
 )
 def test_top_k_accuracy_score(y_true, k, true_score):
-    y_score = np.array(
-        [
-            [0.4, 0.3, 0.2, 0.1],
-            [0.1, 0.3, 0.4, 0.2],
-            [0.4, 0.1, 0.2, 0.3],
-            [0.3, 0.2, 0.4, 0.1],
-        ]
-    )
+    y_score = np.array([
+        [0.4, 0.3, 0.2, 0.1],
+        [0.1, 0.3, 0.4, 0.2],
+        [0.4, 0.1, 0.2, 0.3],
+        [0.3, 0.2, 0.4, 0.1],
+    ])
     score = top_k_accuracy_score(y_true, y_score, k=k)
     assert score == pytest.approx(true_score)
 
@@ -2027,14 +2019,12 @@ def test_top_k_accuracy_score_multiclass_with_labels(
     """Test when labels and y_score are multiclass."""
     if labels_as_ndarray:
         labels = np.asarray(labels)
-    y_score = np.array(
-        [
-            [0.4, 0.3, 0.2, 0.1],
-            [0.1, 0.3, 0.4, 0.2],
-            [0.4, 0.1, 0.2, 0.3],
-            [0.3, 0.2, 0.4, 0.1],
-        ]
-    )
+    y_score = np.array([
+        [0.4, 0.3, 0.2, 0.1],
+        [0.1, 0.3, 0.4, 0.2],
+        [0.4, 0.1, 0.2, 0.3],
+        [0.3, 0.2, 0.4, 0.1],
+    ])
 
     score = top_k_accuracy_score(y_true, y_score, k=2, labels=labels)
     assert score == pytest.approx(true_score)
@@ -2069,14 +2059,12 @@ def test_top_k_accuracy_score_increasing():
 )
 def test_top_k_accuracy_score_ties(y_true, k, true_score):
     # Make sure highest indices labels are chosen first in case of ties
-    y_score = np.array(
-        [
-            [5, 5, 7, 0],
-            [1, 5, 5, 5],
-            [0, 0, 3, 3],
-            [1, 1, 1, 1],
-        ]
-    )
+    y_score = np.array([
+        [5, 5, 7, 0],
+        [1, 5, 5, 5],
+        [0, 0, 3, 3],
+        [1, 1, 1, 1],
+    ])
     assert top_k_accuracy_score(y_true, y_score, k=k) == pytest.approx(true_score)
 
 
@@ -2088,14 +2076,12 @@ def test_top_k_accuracy_score_ties(y_true, k, true_score):
     ],
 )
 def test_top_k_accuracy_score_warning(y_true, k):
-    y_score = np.array(
-        [
-            [0.4, 0.3, 0.2, 0.1],
-            [0.1, 0.4, 0.3, 0.2],
-            [0.2, 0.1, 0.4, 0.3],
-            [0.3, 0.2, 0.1, 0.4],
-        ]
-    )
+    y_score = np.array([
+        [0.4, 0.3, 0.2, 0.1],
+        [0.1, 0.4, 0.3, 0.2],
+        [0.2, 0.1, 0.4, 0.3],
+        [0.3, 0.2, 0.1, 0.4],
+    ])
     expected_message = (
         r"'k' \(\d+\) greater than or equal to 'n_classes' \(\d+\) will result in a "
         "perfect score and is therefore meaningless."

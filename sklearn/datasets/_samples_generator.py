@@ -26,12 +26,10 @@ from ..utils.random import sample_without_replacement
 def _generate_hypercube(samples, dimensions, rng):
     """Returns distinct binary samples of length dimensions."""
     if dimensions > 30:
-        return np.hstack(
-            [
-                rng.randint(2, size=(samples, dimensions - 30)),
-                _generate_hypercube(samples, 30, rng),
-            ]
-        )
+        return np.hstack([
+            rng.randint(2, size=(samples, dimensions - 30)),
+            _generate_hypercube(samples, 30, rng),
+        ])
     out = sample_without_replacement(2**dimensions, samples, random_state=rng).astype(
         dtype=">u4", copy=False
     )
@@ -210,9 +208,7 @@ def make_classification(
         msg = "n_classes({}) * n_clusters_per_class({}) must be"
         msg += " smaller or equal 2**n_informative({})={}"
         raise ValueError(
-            msg.format(
-                n_classes, n_clusters_per_class, n_informative, 2**n_informative
-            )
+            msg.format(n_classes, n_clusters_per_class, n_informative, 2**n_informative)
         )
 
     if weights is not None:
@@ -1670,10 +1666,8 @@ def make_sparse_spd_matrix(
 
     if dim != "deprecated":
         warnings.warn(
-            (
-                "dim was deprecated in version 1.4 and will be removed in 1.6."
-                "Please use ``n_dim`` instead."
-            ),
+            "dim was deprecated in version 1.4 and will be removed in 1.6."
+            "Please use ``n_dim`` instead.",
             FutureWarning,
         )
         _n_dim = dim
@@ -1932,12 +1926,10 @@ def make_gaussian_quantiles(
     # Label by quantile
     step = n_samples // n_classes
 
-    y = np.hstack(
-        [
-            np.repeat(np.arange(n_classes), step),
-            np.repeat(n_classes - 1, n_samples - step * n_classes),
-        ]
-    )
+    y = np.hstack([
+        np.repeat(np.arange(n_classes), step),
+        np.repeat(n_classes - 1, n_samples - step * n_classes),
+    ])
 
     if shuffle:
         X, y = util_shuffle(X, y, random_state=generator)
@@ -2173,19 +2165,15 @@ def make_checkerboard(
         row_labels = row_labels[row_idx]
         col_labels = col_labels[col_idx]
 
-    rows = np.vstack(
-        [
-            row_labels == label
-            for label in range(n_row_clusters)
-            for _ in range(n_col_clusters)
-        ]
-    )
-    cols = np.vstack(
-        [
-            col_labels == label
-            for _ in range(n_row_clusters)
-            for label in range(n_col_clusters)
-        ]
-    )
+    rows = np.vstack([
+        row_labels == label
+        for label in range(n_row_clusters)
+        for _ in range(n_col_clusters)
+    ])
+    cols = np.vstack([
+        col_labels == label
+        for _ in range(n_row_clusters)
+        for label in range(n_col_clusters)
+    ])
 
     return result, rows, cols

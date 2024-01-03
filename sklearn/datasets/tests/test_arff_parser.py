@@ -47,16 +47,14 @@ def test_post_process_frame(feature_names, target_names):
     """Check the behaviour of the post-processing function for splitting a dataframe."""
     pd = pytest.importorskip("pandas")
 
-    X_original = pd.DataFrame(
-        {
-            "col_int_as_integer": [1, 2, 3],
-            "col_int_as_numeric": [1, 2, 3],
-            "col_float_as_real": [1.0, 2.0, 3.0],
-            "col_float_as_numeric": [1.0, 2.0, 3.0],
-            "col_categorical": ["a", "b", "c"],
-            "col_string": ["a", "b", "c"],
-        }
-    )
+    X_original = pd.DataFrame({
+        "col_int_as_integer": [1, 2, 3],
+        "col_int_as_numeric": [1, 2, 3],
+        "col_float_as_real": [1.0, 2.0, 3.0],
+        "col_float_as_numeric": [1.0, 2.0, 3.0],
+        "col_categorical": ["a", "b", "c"],
+        "col_string": ["a", "b", "c"],
+    })
 
     X, y = _post_process_frame(X_original, feature_names, target_names)
     assert isinstance(X, pd.DataFrame)

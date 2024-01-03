@@ -28,77 +28,65 @@ def test_knn_imputer_default_with_invalid_input(na):
     # Test imputation with default values and invalid input
 
     # Test with inf present
-    X = np.array(
-        [
-            [np.inf, 1, 1, 2, na],
-            [2, 1, 2, 2, 3],
-            [3, 2, 3, 3, 8],
-            [na, 6, 0, 5, 13],
-            [na, 7, 0, 7, 8],
-            [6, 6, 2, 5, 7],
-        ]
-    )
+    X = np.array([
+        [np.inf, 1, 1, 2, na],
+        [2, 1, 2, 2, 3],
+        [3, 2, 3, 3, 8],
+        [na, 6, 0, 5, 13],
+        [na, 7, 0, 7, 8],
+        [6, 6, 2, 5, 7],
+    ])
     with pytest.raises(ValueError, match="Input X contains (infinity|NaN)"):
         KNNImputer(missing_values=na).fit(X)
 
     # Test with inf present in matrix passed in transform()
-    X = np.array(
-        [
-            [np.inf, 1, 1, 2, na],
-            [2, 1, 2, 2, 3],
-            [3, 2, 3, 3, 8],
-            [na, 6, 0, 5, 13],
-            [na, 7, 0, 7, 8],
-            [6, 6, 2, 5, 7],
-        ]
-    )
+    X = np.array([
+        [np.inf, 1, 1, 2, na],
+        [2, 1, 2, 2, 3],
+        [3, 2, 3, 3, 8],
+        [na, 6, 0, 5, 13],
+        [na, 7, 0, 7, 8],
+        [6, 6, 2, 5, 7],
+    ])
 
-    X_fit = np.array(
-        [
-            [0, 1, 1, 2, na],
-            [2, 1, 2, 2, 3],
-            [3, 2, 3, 3, 8],
-            [na, 6, 0, 5, 13],
-            [na, 7, 0, 7, 8],
-            [6, 6, 2, 5, 7],
-        ]
-    )
+    X_fit = np.array([
+        [0, 1, 1, 2, na],
+        [2, 1, 2, 2, 3],
+        [3, 2, 3, 3, 8],
+        [na, 6, 0, 5, 13],
+        [na, 7, 0, 7, 8],
+        [6, 6, 2, 5, 7],
+    ])
     imputer = KNNImputer(missing_values=na).fit(X_fit)
     with pytest.raises(ValueError, match="Input X contains (infinity|NaN)"):
         imputer.transform(X)
 
     # Test with missing_values=0 when NaN present
     imputer = KNNImputer(missing_values=0, n_neighbors=2, weights="uniform")
-    X = np.array(
-        [
-            [np.nan, 0, 0, 0, 5],
-            [np.nan, 1, 0, np.nan, 3],
-            [np.nan, 2, 0, 0, 0],
-            [np.nan, 6, 0, 5, 13],
-        ]
-    )
+    X = np.array([
+        [np.nan, 0, 0, 0, 5],
+        [np.nan, 1, 0, np.nan, 3],
+        [np.nan, 2, 0, 0, 0],
+        [np.nan, 6, 0, 5, 13],
+    ])
     msg = "Input X contains NaN"
     with pytest.raises(ValueError, match=msg):
         imputer.fit(X)
 
-    X = np.array(
-        [
-            [0, 0],
-            [np.nan, 2],
-        ]
-    )
+    X = np.array([
+        [0, 0],
+        [np.nan, 2],
+    ])
 
 
 @pytest.mark.parametrize("na", [np.nan, -1])
 def test_knn_imputer_removes_all_na_features(na):
-    X = np.array(
-        [
-            [1, 1, na, 1, 1, 1.0],
-            [2, 3, na, 2, 2, 2],
-            [3, 4, na, 3, 3, na],
-            [6, 4, na, na, 6, 6],
-        ]
-    )
+    X = np.array([
+        [1, 1, na, 1, 1, 1.0],
+        [2, 3, na, 2, 2, 2],
+        [3, 4, na, 3, 3, na],
+        [6, 4, na, na, 6, 6],
+    ])
     knn = KNNImputer(missing_values=na, n_neighbors=2).fit(X)
 
     X_transform = knn.transform(X)
@@ -113,32 +101,26 @@ def test_knn_imputer_removes_all_na_features(na):
 @pytest.mark.parametrize("na", [np.nan, -1])
 def test_knn_imputer_zero_nan_imputes_the_same(na):
     # Test with an imputable matrix and compare with different missing_values
-    X_zero = np.array(
-        [
-            [1, 0, 1, 1, 1.0],
-            [2, 2, 2, 2, 2],
-            [3, 3, 3, 3, 0],
-            [6, 6, 0, 6, 6],
-        ]
-    )
+    X_zero = np.array([
+        [1, 0, 1, 1, 1.0],
+        [2, 2, 2, 2, 2],
+        [3, 3, 3, 3, 0],
+        [6, 6, 0, 6, 6],
+    ])
 
-    X_nan = np.array(
-        [
-            [1, na, 1, 1, 1.0],
-            [2, 2, 2, 2, 2],
-            [3, 3, 3, 3, na],
-            [6, 6, na, 6, 6],
-        ]
-    )
+    X_nan = np.array([
+        [1, na, 1, 1, 1.0],
+        [2, 2, 2, 2, 2],
+        [3, 3, 3, 3, na],
+        [6, 6, na, 6, 6],
+    ])
 
-    X_imputed = np.array(
-        [
-            [1, 2.5, 1, 1, 1.0],
-            [2, 2, 2, 2, 2],
-            [3, 3, 3, 3, 1.5],
-            [6, 6, 2.5, 6, 6],
-        ]
-    )
+    X_imputed = np.array([
+        [1, 2.5, 1, 1, 1.0],
+        [2, 2, 2, 2, 2],
+        [3, 3, 3, 3, 1.5],
+        [6, 6, 2.5, 6, 6],
+    ])
 
     imputer_zero = KNNImputer(missing_values=0, n_neighbors=2, weights="uniform")
 
@@ -153,61 +135,53 @@ def test_knn_imputer_zero_nan_imputes_the_same(na):
 @pytest.mark.parametrize("na", [np.nan, -1])
 def test_knn_imputer_verify(na):
     # Test with an imputable matrix
-    X = np.array(
-        [
-            [1, 0, 0, 1],
-            [2, 1, 2, na],
-            [3, 2, 3, na],
-            [na, 4, 5, 5],
-            [6, na, 6, 7],
-            [8, 8, 8, 8],
-            [16, 15, 18, 19],
-        ]
-    )
+    X = np.array([
+        [1, 0, 0, 1],
+        [2, 1, 2, na],
+        [3, 2, 3, na],
+        [na, 4, 5, 5],
+        [6, na, 6, 7],
+        [8, 8, 8, 8],
+        [16, 15, 18, 19],
+    ])
 
-    X_imputed = np.array(
-        [
-            [1, 0, 0, 1],
-            [2, 1, 2, 8],
-            [3, 2, 3, 8],
-            [4, 4, 5, 5],
-            [6, 3, 6, 7],
-            [8, 8, 8, 8],
-            [16, 15, 18, 19],
-        ]
-    )
+    X_imputed = np.array([
+        [1, 0, 0, 1],
+        [2, 1, 2, 8],
+        [3, 2, 3, 8],
+        [4, 4, 5, 5],
+        [6, 3, 6, 7],
+        [8, 8, 8, 8],
+        [16, 15, 18, 19],
+    ])
 
     imputer = KNNImputer(missing_values=na)
     assert_allclose(imputer.fit_transform(X), X_imputed)
 
     # Test when there is not enough neighbors
-    X = np.array(
-        [
-            [1, 0, 0, na],
-            [2, 1, 2, na],
-            [3, 2, 3, na],
-            [4, 4, 5, na],
-            [6, 7, 6, na],
-            [8, 8, 8, na],
-            [20, 20, 20, 20],
-            [22, 22, 22, 22],
-        ]
-    )
+    X = np.array([
+        [1, 0, 0, na],
+        [2, 1, 2, na],
+        [3, 2, 3, na],
+        [4, 4, 5, na],
+        [6, 7, 6, na],
+        [8, 8, 8, na],
+        [20, 20, 20, 20],
+        [22, 22, 22, 22],
+    ])
 
     # Not enough neighbors, use column mean from training
     X_impute_value = (20 + 22) / 2
-    X_imputed = np.array(
-        [
-            [1, 0, 0, X_impute_value],
-            [2, 1, 2, X_impute_value],
-            [3, 2, 3, X_impute_value],
-            [4, 4, 5, X_impute_value],
-            [6, 7, 6, X_impute_value],
-            [8, 8, 8, X_impute_value],
-            [20, 20, 20, 20],
-            [22, 22, 22, 22],
-        ]
-    )
+    X_imputed = np.array([
+        [1, 0, 0, X_impute_value],
+        [2, 1, 2, X_impute_value],
+        [3, 2, 3, X_impute_value],
+        [4, 4, 5, X_impute_value],
+        [6, 7, 6, X_impute_value],
+        [8, 8, 8, X_impute_value],
+        [20, 20, 20, 20],
+        [22, 22, 22, 22],
+    ])
 
     imputer = KNNImputer(missing_values=na)
     assert_allclose(imputer.fit_transform(X), X_imputed)
@@ -308,44 +282,38 @@ def test_knn_imputer_weight_distance(na):
     assert_allclose(imputer.fit_transform(X), X_imputed_distance2)
 
     # Test with weights = "distance" and n_neighbors=2
-    X = np.array(
-        [
-            [na, 0, 0],
-            [2, 1, 2],
-            [3, 2, 3],
-            [4, 5, 5],
-        ]
-    )
+    X = np.array([
+        [na, 0, 0],
+        [2, 1, 2],
+        [3, 2, 3],
+        [4, 5, 5],
+    ])
 
     # neighbors are rows 1, 2, the nan_euclidean_distances are:
     dist_0_1 = np.sqrt((3 / 2) * ((1 - 0) ** 2 + (2 - 0) ** 2))
     dist_0_2 = np.sqrt((3 / 2) * ((2 - 0) ** 2 + (3 - 0) ** 2))
     imputed_value = np.average([2, 3], weights=[1 / dist_0_1, 1 / dist_0_2])
 
-    X_imputed = np.array(
-        [
-            [imputed_value, 0, 0],
-            [2, 1, 2],
-            [3, 2, 3],
-            [4, 5, 5],
-        ]
-    )
+    X_imputed = np.array([
+        [imputed_value, 0, 0],
+        [2, 1, 2],
+        [3, 2, 3],
+        [4, 5, 5],
+    ])
 
     imputer = KNNImputer(n_neighbors=2, weights="distance", missing_values=na)
     assert_allclose(imputer.fit_transform(X), X_imputed)
 
     # Test with varying missingness patterns
-    X = np.array(
-        [
-            [1, 0, 0, 1],
-            [0, na, 1, na],
-            [1, 1, 1, na],
-            [0, 1, 0, 0],
-            [0, 0, 0, 0],
-            [1, 0, 1, 1],
-            [10, 10, 10, 10],
-        ]
-    )
+    X = np.array([
+        [1, 0, 0, 1],
+        [0, na, 1, na],
+        [1, 1, 1, na],
+        [0, 1, 0, 0],
+        [0, 0, 0, 0],
+        [1, 0, 1, 1],
+        [10, 10, 10, 10],
+    ])
 
     # Get weights of donor neighbors
     dist = nan_euclidean_distances(X, missing_values=na)
@@ -366,33 +334,29 @@ def test_knn_imputer_weight_distance(na):
     r1c3_imp = np.ma.average(col3_donor_values, weights=r1c3_nbor_wt)
     r2c3_imp = np.ma.average(col3_donor_values, weights=r2c3_nbor_wt)
 
-    X_imputed = np.array(
-        [
-            [1, 0, 0, 1],
-            [0, r1c1_imp, 1, r1c3_imp],
-            [1, 1, 1, r2c3_imp],
-            [0, 1, 0, 0],
-            [0, 0, 0, 0],
-            [1, 0, 1, 1],
-            [10, 10, 10, 10],
-        ]
-    )
+    X_imputed = np.array([
+        [1, 0, 0, 1],
+        [0, r1c1_imp, 1, r1c3_imp],
+        [1, 1, 1, r2c3_imp],
+        [0, 1, 0, 0],
+        [0, 0, 0, 0],
+        [1, 0, 1, 1],
+        [10, 10, 10, 10],
+    ])
 
     imputer = KNNImputer(weights="distance", missing_values=na)
     assert_allclose(imputer.fit_transform(X), X_imputed)
 
-    X = np.array(
-        [
-            [0, 0, 0, na],
-            [1, 1, 1, na],
-            [2, 2, na, 2],
-            [3, 3, 3, 3],
-            [4, 4, 4, 4],
-            [5, 5, 5, 5],
-            [6, 6, 6, 6],
-            [na, 7, 7, 7],
-        ]
-    )
+    X = np.array([
+        [0, 0, 0, na],
+        [1, 1, 1, na],
+        [2, 2, na, 2],
+        [3, 3, 3, 3],
+        [4, 4, 4, 4],
+        [5, 5, 5, 5],
+        [6, 6, 6, 6],
+        [na, 7, 7, 7],
+    ])
 
     dist = pairwise_distances(
         X, metric="nan_euclidean", squared=False, missing_values=na
@@ -410,18 +374,16 @@ def test_knn_imputer_weight_distance(na):
     r2c2 = np.average(X[(0, 1, 3, 4, 5), 2], weights=r2c2_w)
     r7c0 = np.average(X[2:7, 0], weights=r7c0_w)
 
-    X_imputed = np.array(
-        [
-            [0, 0, 0, r0c3],
-            [1, 1, 1, r1c3],
-            [2, 2, r2c2, 2],
-            [3, 3, 3, 3],
-            [4, 4, 4, 4],
-            [5, 5, 5, 5],
-            [6, 6, 6, 6],
-            [r7c0, 7, 7, 7],
-        ]
-    )
+    X_imputed = np.array([
+        [0, 0, 0, r0c3],
+        [1, 1, 1, r1c3],
+        [2, 2, r2c2, 2],
+        [3, 3, 3, 3],
+        [4, 4, 4, 4],
+        [5, 5, 5, 5],
+        [6, 6, 6, 6],
+        [r7c0, 7, 7, 7],
+    ])
 
     imputer_comp_wt = KNNImputer(missing_values=na, weights="distance")
     assert_allclose(imputer_comp_wt.fit_transform(X), X_imputed)
@@ -453,18 +415,16 @@ def test_knn_imputer_callable_metric():
 # for a small dataset. However, it should raise a UserWarning that we ignore.
 @pytest.mark.filterwarnings("ignore:adhere to working_memory")
 def test_knn_imputer_with_simple_example(na, working_memory):
-    X = np.array(
-        [
-            [0, na, 0, na],
-            [1, 1, 1, na],
-            [2, 2, na, 2],
-            [3, 3, 3, 3],
-            [4, 4, 4, 4],
-            [5, 5, 5, 5],
-            [6, 6, 6, 6],
-            [na, 7, 7, 7],
-        ]
-    )
+    X = np.array([
+        [0, na, 0, na],
+        [1, 1, 1, na],
+        [2, 2, na, 2],
+        [3, 3, 3, 3],
+        [4, 4, 4, 4],
+        [5, 5, 5, 5],
+        [6, 6, 6, 6],
+        [na, 7, 7, 7],
+    ])
 
     r0c1 = np.mean(X[1:6, 1])
     r0c3 = np.mean(X[2:-1, -1])
@@ -472,18 +432,16 @@ def test_knn_imputer_with_simple_example(na, working_memory):
     r2c2 = np.mean(X[[0, 1, 3, 4, 5], 2])
     r7c0 = np.mean(X[2:-1, 0])
 
-    X_imputed = np.array(
-        [
-            [0, r0c1, 0, r0c3],
-            [1, 1, 1, r1c3],
-            [2, 2, r2c2, 2],
-            [3, 3, 3, 3],
-            [4, 4, 4, 4],
-            [5, 5, 5, 5],
-            [6, 6, 6, 6],
-            [r7c0, 7, 7, 7],
-        ]
-    )
+    X_imputed = np.array([
+        [0, r0c1, 0, r0c3],
+        [1, 1, 1, r1c3],
+        [2, 2, r2c2, 2],
+        [3, 3, 3, 3],
+        [4, 4, 4, 4],
+        [5, 5, 5, 5],
+        [6, 6, 6, 6],
+        [r7c0, 7, 7, 7],
+    ])
 
     with config_context(working_memory=working_memory):
         imputer_comp = KNNImputer(missing_values=na)

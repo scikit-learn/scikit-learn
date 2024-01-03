@@ -50,12 +50,10 @@ def _weighted_percentile(array, sample_weight, percentile=50):
         adjusted_percentile[mask], adjusted_percentile[mask] + 1
     )
 
-    percentile_idx = np.array(
-        [
-            np.searchsorted(weight_cdf[:, i], adjusted_percentile[i])
-            for i in range(weight_cdf.shape[1])
-        ]
-    )
+    percentile_idx = np.array([
+        np.searchsorted(weight_cdf[:, i], adjusted_percentile[i])
+        for i in range(weight_cdf.shape[1])
+    ])
     percentile_idx = np.array(percentile_idx)
     # In rare cases, percentile_idx equals to sorted_idx.shape[0]
     max_idx = sorted_idx.shape[0] - 1

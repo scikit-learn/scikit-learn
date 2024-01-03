@@ -154,13 +154,11 @@ class _MultimetricScorer:
         if len(self._scorers) == 1:  # Only one scorer
             return False
 
-        counter = Counter(
-            [
-                _check_response_method(estimator, scorer._response_method).__name__
-                for scorer in self._scorers.values()
-                if isinstance(scorer, _BaseScorer)
-            ]
-        )
+        counter = Counter([
+            _check_response_method(estimator, scorer._response_method).__name__
+            for scorer in self._scorers.values()
+            if isinstance(scorer, _BaseScorer)
+        ])
         if any(val > 1 for val in counter.values()):
             # The exact same response method or iterable of response methods
             # will be called more than once.
@@ -534,12 +532,10 @@ def _get_response_method(response_method, needs_threshold, needs_proba):
 
     if needs_proba_provided or needs_threshold_provided:
         warnings.warn(
-            (
-                "The `needs_threshold` and `needs_proba` parameter are deprecated in "
-                "version 1.4 and will be removed in 1.6. You can either let "
-                "`response_method` be `None` or set it to `predict` to preserve the "
-                "same behaviour."
-            ),
+            "The `needs_threshold` and `needs_proba` parameter are deprecated in "
+            "version 1.4 and will be removed in 1.6. You can either let "
+            "`response_method` be `None` or set it to `predict` to preserve the "
+            "same behaviour.",
             FutureWarning,
         )
 

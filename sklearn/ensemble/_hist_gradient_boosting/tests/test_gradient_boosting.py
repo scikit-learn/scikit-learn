@@ -415,10 +415,8 @@ def test_missing_values_trivial():
 
 @pytest.mark.parametrize("problem", ("classification", "regression"))
 @pytest.mark.parametrize(
-    (
-        "missing_proportion, expected_min_score_classification, "
-        "expected_min_score_regression"
-    ),
+    "missing_proportion, expected_min_score_classification, "
+    "expected_min_score_regression",
     [(0.1, 0.97, 0.89), (0.2, 0.93, 0.81), (0.5, 0.79, 0.52)],
 )
 def test_missing_values_resilience(
@@ -1183,13 +1181,11 @@ def test_categorical_spec_errors(
 def test_categorical_spec_errors_with_feature_names(Est):
     pd = pytest.importorskip("pandas")
     n_samples = 10
-    X = pd.DataFrame(
-        {
-            "f0": range(n_samples),
-            "f1": range(n_samples),
-            "f2": [1.0] * n_samples,
-        }
-    )
+    X = pd.DataFrame({
+        "f0": range(n_samples),
+        "f1": range(n_samples),
+        "f2": [1.0] * n_samples,
+    })
     y = [0, 1] * (n_samples // 2)
 
     est = Est(categorical_features=["f0", "f1", "f3"])

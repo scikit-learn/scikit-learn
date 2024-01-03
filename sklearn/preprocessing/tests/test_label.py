@@ -100,15 +100,13 @@ def test_label_binarizer_set_label_encoding():
 
     # multi-class case
     inp = np.array([3, 2, 1, 2, 0])
-    expected = np.array(
-        [
-            [-2, -2, -2, +2],
-            [-2, -2, +2, -2],
-            [-2, +2, -2, -2],
-            [-2, -2, +2, -2],
-            [+2, -2, -2, -2],
-        ]
-    )
+    expected = np.array([
+        [-2, -2, -2, +2],
+        [-2, -2, +2, -2],
+        [-2, +2, -2, -2],
+        [-2, -2, +2, -2],
+        [+2, -2, -2, -2],
+    ])
     got = lb.fit_transform(inp)
     assert_array_equal(expected, got)
     assert_array_equal(lb.inverse_transform(got), inp)

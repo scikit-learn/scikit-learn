@@ -38,13 +38,11 @@ skip_if_no_pyamg = pytest.mark.skipif(
 )
 
 # non centered, sparse centers to check the
-centers = np.array(
-    [
-        [0.0, 5.0, 0.0, 0.0, 0.0],
-        [0.0, 0.0, 4.0, 0.0, 0.0],
-        [1.0, 0.0, 0.0, 5.0, 1.0],
-    ]
-)
+centers = np.array([
+    [0.0, 5.0, 0.0, 0.0, 0.0],
+    [0.0, 0.0, 4.0, 0.0, 0.0],
+    [1.0, 0.0, 0.0, 5.0, 1.0],
+])
 n_samples = 1000
 n_clusters, n_features = centers.shape
 S, true_labels = make_blobs(
@@ -383,30 +381,26 @@ def test_pipeline_spectral_clustering(seed=36):
 
 def test_connectivity(seed=36):
     # Test that graph connectivity test works as expected
-    graph = np.array(
-        [
-            [1, 0, 0, 0, 0],
-            [0, 1, 1, 0, 0],
-            [0, 1, 1, 1, 0],
-            [0, 0, 1, 1, 1],
-            [0, 0, 0, 1, 1],
-        ]
-    )
+    graph = np.array([
+        [1, 0, 0, 0, 0],
+        [0, 1, 1, 0, 0],
+        [0, 1, 1, 1, 0],
+        [0, 0, 1, 1, 1],
+        [0, 0, 0, 1, 1],
+    ])
     assert not _graph_is_connected(graph)
     for csr_container in CSR_CONTAINERS:
         assert not _graph_is_connected(csr_container(graph))
     for csc_container in CSC_CONTAINERS:
         assert not _graph_is_connected(csc_container(graph))
 
-    graph = np.array(
-        [
-            [1, 1, 0, 0, 0],
-            [1, 1, 1, 0, 0],
-            [0, 1, 1, 1, 0],
-            [0, 0, 1, 1, 1],
-            [0, 0, 0, 1, 1],
-        ]
-    )
+    graph = np.array([
+        [1, 1, 0, 0, 0],
+        [1, 1, 1, 0, 0],
+        [0, 1, 1, 1, 0],
+        [0, 0, 1, 1, 1],
+        [0, 0, 0, 1, 1],
+    ])
     assert _graph_is_connected(graph)
     for csr_container in CSR_CONTAINERS:
         assert _graph_is_connected(csr_container(graph))

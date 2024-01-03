@@ -884,11 +884,9 @@ class _BaseKMeans(
 
         if _is_arraylike_not_scalar(self.init) and self._n_init != 1:
             warnings.warn(
-                (
-                    "Explicit initial center position passed: performing only"
-                    f" one init in {self.__class__.__name__} instead of "
-                    f"n_init={self._n_init}."
-                ),
+                "Explicit initial center position passed: performing only"
+                f" one init in {self.__class__.__name__} instead of "
+                f"n_init={self._n_init}.",
                 RuntimeWarning,
                 stacklevel=2,
             )
@@ -1086,10 +1084,8 @@ class _BaseKMeans(
         X = self._check_test_data(X)
         if not (isinstance(sample_weight, str) and sample_weight == "deprecated"):
             warnings.warn(
-                (
-                    "'sample_weight' was deprecated in version 1.3 and "
-                    "will be removed in 1.5."
-                ),
+                "'sample_weight' was deprecated in version 1.3 and "
+                "will be removed in 1.5.",
                 FutureWarning,
             )
             sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
@@ -1406,19 +1402,15 @@ class KMeans(_BaseKMeans):
         self._algorithm = self.algorithm
         if self._algorithm in ("auto", "full"):
             warnings.warn(
-                (
-                    f"algorithm='{self._algorithm}' is deprecated, it will be "
-                    "removed in 1.3. Using 'lloyd' instead."
-                ),
+                f"algorithm='{self._algorithm}' is deprecated, it will be "
+                "removed in 1.3. Using 'lloyd' instead.",
                 FutureWarning,
             )
             self._algorithm = "lloyd"
         if self._algorithm == "elkan" and self.n_clusters == 1:
             warnings.warn(
-                (
-                    "algorithm='elkan' doesn't make sense for a single "
-                    "cluster. Using 'lloyd' instead."
-                ),
+                "algorithm='elkan' doesn't make sense for a single "
+                "cluster. Using 'lloyd' instead.",
                 RuntimeWarning,
             )
             self._algorithm = "lloyd"
@@ -1931,11 +1923,9 @@ class MiniBatchKMeans(_BaseKMeans):
                 self._init_size = 3 * self.n_clusters
         elif self._init_size < self.n_clusters:
             warnings.warn(
-                (
-                    f"init_size={self._init_size} should be larger than "
-                    f"n_clusters={self.n_clusters}. Setting it to "
-                    "min(3*n_clusters, n_samples)"
-                ),
+                f"init_size={self._init_size} should be larger than "
+                f"n_clusters={self.n_clusters}. Setting it to "
+                "min(3*n_clusters, n_samples)",
                 RuntimeWarning,
                 stacklevel=2,
             )

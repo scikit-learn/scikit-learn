@@ -17,14 +17,12 @@ def generate_clustered_data(
     # the data is voluntary shifted away from zero to check clustering
     # algorithm robustness with regards to non centered data
     means = (
-        np.array(
-            [
-                [1, 1, 1, 0],
-                [-1, -1, 0, 1],
-                [1, -1, 1, 1],
-                [-1, 1, 1, 0],
-            ]
-        )
+        np.array([
+            [1, 1, 1, 0],
+            [-1, -1, 0, 1],
+            [1, -1, 1, 1],
+            [-1, 1, 1, 0],
+        ])
         + 10
     )
 

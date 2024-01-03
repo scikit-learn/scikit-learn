@@ -910,15 +910,13 @@ class TransformerMixin(_SetOutputMixin):
             )
             if transform_params:
                 warnings.warn(
-                    (
-                        f"This object ({self.__class__.__name__}) has a `transform`"
-                        " method which consumes metadata, but `fit_transform` does not"
-                        " forward metadata to `transform`. Please implement a custom"
-                        " `fit_transform` method to forward metadata to `transform` as"
-                        " well. Alternatively, you can explicitly do"
-                        " `set_transform_request`and set all values to `False` to"
-                        " disable metadata routed to `transform`, if that's an option."
-                    ),
+                    f"This object ({self.__class__.__name__}) has a `transform`"
+                    " method which consumes metadata, but `fit_transform` does not"
+                    " forward metadata to `transform`. Please implement a custom"
+                    " `fit_transform` method to forward metadata to `transform` as"
+                    " well. Alternatively, you can explicitly do"
+                    " `set_transform_request`and set all values to `False` to"
+                    " disable metadata routed to `transform`, if that's an option.",
                     UserWarning,
                 )
 
@@ -1062,15 +1060,13 @@ class OutlierMixin:
             )
             if transform_params:
                 warnings.warn(
-                    (
-                        f"This object ({self.__class__.__name__}) has a `predict` "
-                        "method which consumes metadata, but `fit_predict` does not "
-                        "forward metadata to `predict`. Please implement a custom "
-                        "`fit_predict` method to forward metadata to `predict` as well."
-                        "Alternatively, you can explicitly do `set_predict_request`"
-                        "and set all values to `False` to disable metadata routed to "
-                        "`predict`, if that's an option."
-                    ),
+                    f"This object ({self.__class__.__name__}) has a `predict` "
+                    "method which consumes metadata, but `fit_predict` does not "
+                    "forward metadata to `predict`. Please implement a custom "
+                    "`fit_predict` method to forward metadata to `predict` as well."
+                    "Alternatively, you can explicitly do `set_predict_request`"
+                    "and set all values to `False` to disable metadata routed to "
+                    "`predict`, if that's an option.",
                     UserWarning,
                 )
 

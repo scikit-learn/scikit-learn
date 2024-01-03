@@ -595,12 +595,10 @@ def test_ridge_individual_penalties():
 
     penalties = np.arange(n_targets)
 
-    coef_cholesky = np.array(
-        [
-            Ridge(alpha=alpha, solver="cholesky").fit(X, target).coef_
-            for alpha, target in zip(penalties, y.T)
-        ]
-    )
+    coef_cholesky = np.array([
+        Ridge(alpha=alpha, solver="cholesky").fit(X, target).coef_
+        for alpha, target in zip(penalties, y.T)
+    ])
 
     coefs_indiv_pen = [
         Ridge(alpha=penalties, solver=solver, tol=1e-12).fit(X, y).coef_

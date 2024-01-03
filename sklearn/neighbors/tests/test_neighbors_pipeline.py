@@ -48,13 +48,11 @@ def test_spectral_embedding():
     n_neighbors = 5
 
     n_samples = 1000
-    centers = np.array(
-        [
-            [0.0, 5.0, 0.0, 0.0, 0.0],
-            [0.0, 0.0, 4.0, 0.0, 0.0],
-            [1.0, 0.0, 0.0, 5.0, 1.0],
-        ]
-    )
+    centers = np.array([
+        [0.0, 5.0, 0.0, 0.0, 0.0],
+        [0.0, 0.0, 4.0, 0.0, 0.0],
+        [1.0, 0.0, 0.0, 5.0, 1.0],
+    ])
     S, true_labels = make_blobs(
         n_samples=n_samples, centers=centers, cluster_std=1.0, random_state=42
     )

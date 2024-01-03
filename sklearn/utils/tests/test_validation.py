@@ -368,15 +368,13 @@ def test_check_array():
 
     # try different type of sparse format
     Xs = []
-    Xs.extend(
-        [
-            sparse_container(X_C)
-            for sparse_container in CSR_CONTAINERS
-            + CSC_CONTAINERS
-            + COO_CONTAINERS
-            + DOK_CONTAINERS
-        ]
-    )
+    Xs.extend([
+        sparse_container(X_C)
+        for sparse_container in CSR_CONTAINERS
+        + CSC_CONTAINERS
+        + COO_CONTAINERS
+        + DOK_CONTAINERS
+    ])
     Xs.extend([Xs[0].astype(np.int64), Xs[0].astype(np.float64)])
 
     accept_sparses = [["csr", "coo"], ["coo", "dok"]]
@@ -1582,12 +1580,10 @@ def test_check_pandas_sparse_invalid(ntype1, ntype2):
     and pandas version below 1.1. pandas versions 1.1 and
     above fixed this issue so no error will be raised."""
     pd = pytest.importorskip("pandas")
-    df = pd.DataFrame(
-        {
-            "col1": pd.arrays.SparseArray([0, 1, 0], dtype=ntype1, fill_value=0),
-            "col2": pd.arrays.SparseArray([1, 0, 1], dtype=ntype2, fill_value=0),
-        }
-    )
+    df = pd.DataFrame({
+        "col1": pd.arrays.SparseArray([0, 1, 0], dtype=ntype1, fill_value=0),
+        "col2": pd.arrays.SparseArray([1, 0, 1], dtype=ntype2, fill_value=0),
+    })
 
     if parse_version(pd.__version__) < parse_version("1.1"):
         err_msg = "Pandas DataFrame with mixed sparse extension arrays"
@@ -1624,12 +1620,10 @@ def test_check_pandas_sparse_valid(ntype1, ntype2, expected_subtype):
     # check that we support the conversion of sparse dataframe with mixed
     # type which can be converted safely.
     pd = pytest.importorskip("pandas")
-    df = pd.DataFrame(
-        {
-            "col1": pd.arrays.SparseArray([0, 1, 0], dtype=ntype1, fill_value=0),
-            "col2": pd.arrays.SparseArray([1, 0, 1], dtype=ntype2, fill_value=0),
-        }
-    )
+    df = pd.DataFrame({
+        "col1": pd.arrays.SparseArray([0, 1, 0], dtype=ntype1, fill_value=0),
+        "col2": pd.arrays.SparseArray([1, 0, 1], dtype=ntype2, fill_value=0),
+    })
     arr = check_array(df, accept_sparse=["csr", "csc"])
     assert np.issubdtype(arr.dtype, expected_subtype)
 
@@ -1975,12 +1969,10 @@ def test_check_array_multiple_extensions(
 ):
     """Check pandas extension arrays give the same result as non-extension arrays."""
     pd = pytest.importorskip("pandas")
-    X_regular = pd.DataFrame(
-        {
-            "a": pd.Series([1, 0, 1, 0], dtype=regular_dtype),
-            "c": pd.Series([9, 8, 7, 6], dtype="int64"),
-        }
-    )
+    X_regular = pd.DataFrame({
+        "a": pd.Series([1, 0, 1, 0], dtype=regular_dtype),
+        "c": pd.Series([9, 8, 7, 6], dtype="int64"),
+    })
     if include_object:
         X_regular["b"] = pd.Series(["a", "b", "c", "d"], dtype="object")
 

@@ -5,6 +5,7 @@ over the internet, all details are available on the official website:
 
     http://vis-www.cs.umass.edu/lfw/
 """
+
 # Copyright (c) 2011 Olivier Grisel <olivier.grisel@ensta.org>
 # License: BSD 3 clause
 

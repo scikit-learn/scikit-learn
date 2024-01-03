@@ -2,6 +2,7 @@
 The :mod:`sklearn.pipeline` module implements utilities to build a composite
 estimator, as a chain of transforms and estimators.
 """
+
 # Author: Edouard Duchesnay
 #         Gael Varoquaux
 #         Virgile Fritsch
@@ -356,13 +357,11 @@ class Pipeline(_BaseComposition):
             routed_params = process_routing(self, method, **props, **kwargs)
             return routed_params
         else:
-            fit_params_steps = Bunch(
-                **{
-                    name: Bunch(**{method: {} for method in METHODS})
-                    for name, step in self.steps
-                    if step is not None
-                }
-            )
+            fit_params_steps = Bunch(**{
+                name: Bunch(**{method: {} for method in METHODS})
+                for name, step in self.steps
+                if step is not None
+            })
             for pname, pval in props.items():
                 if "__" not in pname:
                     raise ValueError(

@@ -36,22 +36,18 @@ def test_imputation_missing_value_in_test_array(imputer):
 @pytest.mark.parametrize("marker", [np.nan, -1, 0])
 @pytest.mark.parametrize("imputer", imputers(), ids=lambda x: x.__class__.__name__)
 def test_imputers_add_indicator(marker, imputer):
-    X = np.array(
-        [
-            [marker, 1, 5, marker, 1],
-            [2, marker, 1, marker, 2],
-            [6, 3, marker, marker, 3],
-            [1, 2, 9, marker, 4],
-        ]
-    )
-    X_true_indicator = np.array(
-        [
-            [1.0, 0.0, 0.0, 1.0],
-            [0.0, 1.0, 0.0, 1.0],
-            [0.0, 0.0, 1.0, 1.0],
-            [0.0, 0.0, 0.0, 1.0],
-        ]
-    )
+    X = np.array([
+        [marker, 1, 5, marker, 1],
+        [2, marker, 1, marker, 2],
+        [6, 3, marker, marker, 3],
+        [1, 2, 9, marker, 4],
+    ])
+    X_true_indicator = np.array([
+        [1.0, 0.0, 0.0, 1.0],
+        [0.0, 1.0, 0.0, 1.0],
+        [0.0, 0.0, 1.0, 1.0],
+        [0.0, 0.0, 0.0, 1.0],
+    ])
     imputer.set_params(missing_values=marker, add_indicator=True)
 
     X_trans = imputer.fit_transform(X)
@@ -71,22 +67,18 @@ def test_imputers_add_indicator(marker, imputer):
 )
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
 def test_imputers_add_indicator_sparse(imputer, marker, csr_container):
-    X = csr_container(
-        [
-            [marker, 1, 5, marker, 1],
-            [2, marker, 1, marker, 2],
-            [6, 3, marker, marker, 3],
-            [1, 2, 9, marker, 4],
-        ]
-    )
-    X_true_indicator = csr_container(
-        [
-            [1.0, 0.0, 0.0, 1.0],
-            [0.0, 1.0, 0.0, 1.0],
-            [0.0, 0.0, 1.0, 1.0],
-            [0.0, 0.0, 0.0, 1.0],
-        ]
-    )
+    X = csr_container([
+        [marker, 1, 5, marker, 1],
+        [2, marker, 1, marker, 2],
+        [6, 3, marker, marker, 3],
+        [1, 2, 9, marker, 4],
+    ])
+    X_true_indicator = csr_container([
+        [1.0, 0.0, 0.0, 1.0],
+        [0.0, 1.0, 0.0, 1.0],
+        [0.0, 0.0, 1.0, 1.0],
+        [0.0, 0.0, 0.0, 1.0],
+    ])
     imputer.set_params(missing_values=marker, add_indicator=True)
 
     X_trans = imputer.fit_transform(X)
@@ -108,14 +100,12 @@ def test_imputers_pandas_na_integer_array_support(imputer, add_indicator):
     marker = np.nan
     imputer = imputer.set_params(add_indicator=add_indicator, missing_values=marker)
 
-    X = np.array(
-        [
-            [marker, 1, 5, marker, 1],
-            [2, marker, 1, marker, 2],
-            [6, 3, marker, marker, 3],
-            [1, 2, 9, marker, 4],
-        ]
-    )
+    X = np.array([
+        [marker, 1, 5, marker, 1],
+        [2, marker, 1, marker, 2],
+        [6, 3, marker, marker, 3],
+        [1, 2, 9, marker, 4],
+    ])
     # fit on numpy array
     X_trans_expected = imputer.fit_transform(X)
 
@@ -136,14 +126,12 @@ def test_imputers_feature_names_out_pandas(imputer, add_indicator):
     marker = np.nan
     imputer = imputer.set_params(add_indicator=add_indicator, missing_values=marker)
 
-    X = np.array(
-        [
-            [marker, 1, 5, 3, marker, 1],
-            [2, marker, 1, 4, marker, 2],
-            [6, 3, 7, marker, marker, 3],
-            [1, 2, 9, 8, marker, 4],
-        ]
-    )
+    X = np.array([
+        [marker, 1, 5, 3, marker, 1],
+        [2, marker, 1, 4, marker, 2],
+        [6, 3, 7, marker, marker, 3],
+        [1, 2, 9, 8, marker, 4],
+    ])
     X_df = pd.DataFrame(X, columns=["a", "b", "c", "d", "e", "f"])
     imputer.fit(X_df)
 

@@ -331,12 +331,10 @@ def test_countvectorizer_custom_vocabulary():
 
 def test_countvectorizer_custom_vocabulary_pipeline():
     what_we_like = ["pizza", "beer"]
-    pipe = Pipeline(
-        [
-            ("count", CountVectorizer(vocabulary=what_we_like)),
-            ("tfidf", TfidfTransformer()),
-        ]
-    )
+    pipe = Pipeline([
+        ("count", CountVectorizer(vocabulary=what_we_like)),
+        ("tfidf", TfidfTransformer()),
+    ])
     X = pipe.fit_transform(ALL_FOOD_DOCS)
     assert set(pipe.named_steps["count"].vocabulary_) == set(what_we_like)
     assert X.shape[1] == len(what_we_like)
@@ -1103,19 +1101,17 @@ def test_countvectorizer_vocab_sets_when_pickling():
     # ensure that vocabulary of type set is coerced to a list to
     # preserve iteration ordering after deserialization
     rng = np.random.RandomState(0)
-    vocab_words = np.array(
-        [
-            "beer",
-            "burger",
-            "celeri",
-            "coke",
-            "pizza",
-            "salad",
-            "sparkling",
-            "tomato",
-            "water",
-        ]
-    )
+    vocab_words = np.array([
+        "beer",
+        "burger",
+        "celeri",
+        "coke",
+        "pizza",
+        "salad",
+        "sparkling",
+        "tomato",
+        "water",
+    ])
     for x in range(0, 100):
         vocab_set = set(rng.choice(vocab_words, size=5, replace=False))
         cv = CountVectorizer(vocabulary=vocab_set)
@@ -1129,19 +1125,17 @@ def test_countvectorizer_vocab_sets_when_pickling():
 
 def test_countvectorizer_vocab_dicts_when_pickling():
     rng = np.random.RandomState(0)
-    vocab_words = np.array(
-        [
-            "beer",
-            "burger",
-            "celeri",
-            "coke",
-            "pizza",
-            "salad",
-            "sparkling",
-            "tomato",
-            "water",
-        ]
-    )
+    vocab_words = np.array([
+        "beer",
+        "burger",
+        "celeri",
+        "coke",
+        "pizza",
+        "salad",
+        "sparkling",
+        "tomato",
+        "water",
+    ])
     for x in range(0, 100):
         vocab_dict = dict()
         words = rng.choice(vocab_words, size=5, replace=False)
@@ -1509,10 +1503,8 @@ def test_callable_analyzer_reraise_error(tmpdir, Estimator):
     "Vectorizer", [CountVectorizer, HashingVectorizer, TfidfVectorizer]
 )
 @pytest.mark.parametrize(
-    (
-        "stop_words, tokenizer, preprocessor, ngram_range, token_pattern,"
-        "analyzer, unused_name, ovrd_name, ovrd_msg"
-    ),
+    "stop_words, tokenizer, preprocessor, ngram_range, token_pattern,"
+    "analyzer, unused_name, ovrd_name, ovrd_msg",
     [
         (
             ["you've", "you'll"],

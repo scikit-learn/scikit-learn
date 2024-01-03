@@ -71,10 +71,8 @@ def _check_params_groups_deprecation(fit_params, params, groups):
         )
     elif fit_params is not None:
         warnings.warn(
-            (
-                "`fit_params` is deprecated and will be removed in version 1.6. "
-                "Pass parameters via `params` instead."
-            ),
+            "`fit_params` is deprecated and will be removed in version 1.6. "
+            "Pass parameters via `params` instead.",
             FutureWarning,
         )
         params = fit_params
@@ -986,11 +984,9 @@ def _score(estimator, X_test, y_test, scorer, score_params, error_score="raise")
             else:
                 scores = error_score
                 warnings.warn(
-                    (
-                        "Scoring failed. The score on this train-test partition for "
-                        f"these parameters will be set to {error_score}. Details: \n"
-                        f"{format_exc()}"
-                    ),
+                    "Scoring failed. The score on this train-test partition for "
+                    f"these parameters will be set to {error_score}. Details: \n"
+                    f"{format_exc()}",
                     UserWarning,
                 )
 
@@ -1004,11 +1000,9 @@ def _score(estimator, X_test, y_test, scorer, score_params, error_score="raise")
             for name, str_e in exception_messages:
                 scores[name] = error_score
                 warnings.warn(
-                    (
-                        "Scoring failed. The score on this train-test partition for "
-                        f"these parameters will be set to {error_score}. Details: \n"
-                        f"{str_e}"
-                    ),
+                    "Scoring failed. The score on this train-test partition for "
+                    f"these parameters will be set to {error_score}. Details: \n"
+                    f"{str_e}",
                     UserWarning,
                 )
 
@@ -1045,14 +1039,12 @@ def _score(estimator, X_test, y_test, scorer, score_params, error_score="raise")
         "params": [dict, None],
         "pre_dispatch": [Integral, str, None],
         "method": [
-            StrOptions(
-                {
-                    "predict",
-                    "predict_proba",
-                    "predict_log_proba",
-                    "decision_function",
-                }
-            )
+            StrOptions({
+                "predict",
+                "predict_proba",
+                "predict_log_proba",
+                "decision_function",
+            })
         ],
     },
     prefer_skip_nested_validation=False,  # estimator is not validated yet

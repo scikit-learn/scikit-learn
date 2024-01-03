@@ -80,14 +80,12 @@ def test_get_visual_block_single_estimator():
 
 
 def test_get_visual_block_pipeline():
-    pipe = Pipeline(
-        [
-            ("imputer", SimpleImputer()),
-            ("do_nothing", "passthrough"),
-            ("do_nothing_more", None),
-            ("classifier", LogisticRegression()),
-        ]
-    )
+    pipe = Pipeline([
+        ("imputer", SimpleImputer()),
+        ("do_nothing", "passthrough"),
+        ("do_nothing_more", None),
+        ("classifier", LogisticRegression()),
+    ])
     est_html_info = _get_visual_block(pipe)
     assert est_html_info.kind == "serial"
     assert est_html_info.estimators == tuple(step[1] for step in pipe.steps)
@@ -145,34 +143,26 @@ def test_estimator_html_repr_pipeline():
         ]
     )
 
-    preprocess = ColumnTransformer(
-        [
-            ("num", num_trans, ["a", "b", "c", "d", "e"]),
-            ("cat", cat_trans, [0, 1, 2, 3]),
-        ]
-    )
+    preprocess = ColumnTransformer([
+        ("num", num_trans, ["a", "b", "c", "d", "e"]),
+        ("cat", cat_trans, [0, 1, 2, 3]),
+    ])
 
-    feat_u = FeatureUnion(
-        [
-            ("pca", PCA(n_components=1)),
-            (
-                "tsvd",
-                Pipeline(
-                    [
-                        ("first", TruncatedSVD(n_components=3)),
-                        ("select", SelectPercentile()),
-                    ]
-                ),
-            ),
-        ]
-    )
+    feat_u = FeatureUnion([
+        ("pca", PCA(n_components=1)),
+        (
+            "tsvd",
+            Pipeline([
+                ("first", TruncatedSVD(n_components=3)),
+                ("select", SelectPercentile()),
+            ]),
+        ),
+    ])
 
-    clf = VotingClassifier(
-        [
-            ("lr", LogisticRegression(solver="lbfgs", random_state=1)),
-            ("mlp", MLPClassifier(alpha=0.001)),
-        ]
-    )
+    clf = VotingClassifier([
+        ("lr", LogisticRegression(solver="lbfgs", random_state=1)),
+        ("mlp", MLPClassifier(alpha=0.001)),
+    ])
 
     pipe = Pipeline(
         [("preprocessor", preprocess), ("feat_u", feat_u), ("classifier", clf)]

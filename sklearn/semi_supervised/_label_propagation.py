@@ -217,12 +217,10 @@ class BaseLabelPropagation(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
         )
         weight_matrices = self._get_kernel(self.X_, X_2d)
         if self.kernel == "knn":
-            probabilities = np.array(
-                [
-                    np.sum(self.label_distributions_[weight_matrix], axis=0)
-                    for weight_matrix in weight_matrices
-                ]
-            )
+            probabilities = np.array([
+                np.sum(self.label_distributions_[weight_matrix], axis=0)
+                for weight_matrix in weight_matrices
+            ])
         else:
             weight_matrices = weight_matrices.T
             probabilities = safe_sparse_dot(weight_matrices, self.label_distributions_)

@@ -768,10 +768,8 @@ def _pre_fit(
     if hasattr(precompute, "__array__"):
         if fit_intercept and not np.allclose(X_offset, np.zeros(n_features)):
             warnings.warn(
-                (
-                    "Gram matrix was provided but X was centered to fit "
-                    "intercept: recomputing Gram matrix."
-                ),
+                "Gram matrix was provided but X was centered to fit "
+                "intercept: recomputing Gram matrix.",
                 UserWarning,
             )
             # TODO: instead of warning and recomputing, we could just center

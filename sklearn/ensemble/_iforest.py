@@ -322,15 +322,13 @@ class IsolationForest(OutlierMixin, BaseBagging):
             check_input=False,
         )
 
-        self._average_path_length_per_tree, self._decision_path_lengths = zip(
-            *[
-                (
-                    _average_path_length(tree.tree_.n_node_samples),
-                    tree.tree_.compute_node_depths(),
-                )
-                for tree in self.estimators_
-            ]
-        )
+        self._average_path_length_per_tree, self._decision_path_lengths = zip(*[
+            (
+                _average_path_length(tree.tree_.n_node_samples),
+                tree.tree_.compute_node_depths(),
+            )
+            for tree in self.estimators_
+        ])
 
         if self.contamination == "auto":
             # 0.5 plays a special role as described in the original paper.

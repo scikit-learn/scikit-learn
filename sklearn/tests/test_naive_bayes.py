@@ -143,20 +143,18 @@ def test_gnb_priors():
 
 def test_gnb_priors_sum_isclose():
     # test whether the class prior sum is properly tested"""
-    X = np.array(
-        [
-            [-1, -1],
-            [-2, -1],
-            [-3, -2],
-            [-4, -5],
-            [-5, -4],
-            [1, 1],
-            [2, 1],
-            [3, 2],
-            [4, 4],
-            [5, 5],
-        ]
-    )
+    X = np.array([
+        [-1, -1],
+        [-2, -1],
+        [-3, -2],
+        [-4, -5],
+        [-5, -4],
+        [1, 1],
+        [2, 1],
+        [3, 2],
+        [4, 4],
+        [5, 5],
+    ])
     priors = np.array([0.08, 0.14, 0.03, 0.16, 0.11, 0.16, 0.07, 0.14, 0.11, 0.0])
     Y = np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
     clf = GaussianNB(priors=priors)
@@ -580,12 +578,10 @@ def test_bnb():
     assert_array_almost_equal(np.exp(clf.class_log_prior_), class_prior)
 
     # Check the feature probabilities are correct
-    feature_prob = np.array(
-        [
-            [0.4, 0.8, 0.2, 0.4, 0.4, 0.2],
-            [1 / 3.0, 2 / 3.0, 2 / 3.0, 1 / 3.0, 1 / 3.0, 2 / 3.0],
-        ]
-    )
+    feature_prob = np.array([
+        [0.4, 0.8, 0.2, 0.4, 0.4, 0.2],
+        [1 / 3.0, 2 / 3.0, 2 / 3.0, 1 / 3.0, 1 / 3.0, 2 / 3.0],
+    ])
     assert_array_almost_equal(np.exp(clf.feature_log_prob_), feature_prob)
 
     # Testing data point is:
@@ -642,26 +638,24 @@ def test_cnb():
 
     # Check that weights are correct. See steps 4-6 in Table 4 of
     # Rennie et al. (2003).
-    theta = np.array(
+    theta = np.array([
         [
-            [
-                (0 + 1) / (3 + 6),
-                (1 + 1) / (3 + 6),
-                (1 + 1) / (3 + 6),
-                (0 + 1) / (3 + 6),
-                (0 + 1) / (3 + 6),
-                (1 + 1) / (3 + 6),
-            ],
-            [
-                (1 + 1) / (6 + 6),
-                (3 + 1) / (6 + 6),
-                (0 + 1) / (6 + 6),
-                (1 + 1) / (6 + 6),
-                (1 + 1) / (6 + 6),
-                (0 + 1) / (6 + 6),
-            ],
-        ]
-    )
+            (0 + 1) / (3 + 6),
+            (1 + 1) / (3 + 6),
+            (1 + 1) / (3 + 6),
+            (0 + 1) / (3 + 6),
+            (0 + 1) / (3 + 6),
+            (1 + 1) / (3 + 6),
+        ],
+        [
+            (1 + 1) / (6 + 6),
+            (3 + 1) / (6 + 6),
+            (0 + 1) / (6 + 6),
+            (1 + 1) / (6 + 6),
+            (1 + 1) / (6 + 6),
+            (0 + 1) / (6 + 6),
+        ],
+    ])
 
     weights = np.zeros(theta.shape)
     normed_weights = np.zeros(theta.shape)
@@ -767,15 +761,13 @@ def test_categoricalnb(global_random_seed):
             np.array([3, 4]),
         ),
         # check min_categories with min less than actual
-        (
-            [
-                1,
-                np.array([[2, 0], [1, 1]]),
-                np.array([[1, 1], [1, 1]]),
-                np.array([[0, 1]]),
-                np.array([2, 2]),
-            ]
-        ),
+        ([
+            1,
+            np.array([[2, 0], [1, 1]]),
+            np.array([[1, 1], [1, 1]]),
+            np.array([[0, 1]]),
+            np.array([2, 2]),
+        ]),
     ],
 )
 def test_categoricalnb_with_min_categories(

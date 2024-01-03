@@ -169,13 +169,11 @@ def test_missing_value_pandas_na_support(est, func):
     # Test pandas IntegerArray with pd.NA
     pd = pytest.importorskip("pandas")
 
-    X = np.array(
-        [
-            [1, 2, 3, np.nan, np.nan, 4, 5, 1],
-            [np.nan, np.nan, 8, 4, 6, np.nan, np.nan, 8],
-            [1, 2, 3, 4, 5, 6, 7, 8],
-        ]
-    ).T
+    X = np.array([
+        [1, 2, 3, np.nan, np.nan, 4, 5, 1],
+        [np.nan, np.nan, 8, 4, 6, np.nan, np.nan, 8],
+        [1, 2, 3, 4, 5, 6, 7, 8],
+    ]).T
 
     # Creates dataframe with IntegerArrays with pd.NA
     X_df = pd.DataFrame(X, dtype="Int16", columns=["a", "b", "c"])

@@ -2,6 +2,7 @@
 Several basic tests for hierarchical clustering procedures
 
 """
+
 # Authors: Vincent Michel, 2010, Gael Varoquaux 2012,
 #          Matteo Visconti di Oleggio Castello 2014
 # License: BSD 3 clause
@@ -438,25 +439,23 @@ def test_identical_points():
 def test_connectivity_propagation():
     # Check that connectivity in the ward tree is propagated correctly during
     # merging.
-    X = np.array(
-        [
-            (0.014, 0.120),
-            (0.014, 0.099),
-            (0.014, 0.097),
-            (0.017, 0.153),
-            (0.017, 0.153),
-            (0.018, 0.153),
-            (0.018, 0.153),
-            (0.018, 0.153),
-            (0.018, 0.153),
-            (0.018, 0.153),
-            (0.018, 0.153),
-            (0.018, 0.153),
-            (0.018, 0.152),
-            (0.018, 0.149),
-            (0.018, 0.144),
-        ]
-    )
+    X = np.array([
+        (0.014, 0.120),
+        (0.014, 0.099),
+        (0.014, 0.097),
+        (0.017, 0.153),
+        (0.017, 0.153),
+        (0.018, 0.153),
+        (0.018, 0.153),
+        (0.018, 0.153),
+        (0.018, 0.153),
+        (0.018, 0.153),
+        (0.018, 0.153),
+        (0.018, 0.153),
+        (0.018, 0.152),
+        (0.018, 0.149),
+        (0.018, 0.144),
+    ])
     connectivity = kneighbors_graph(X, 10, include_self=False)
     ward = AgglomerativeClustering(
         n_clusters=4, connectivity=connectivity, linkage="ward"
@@ -532,46 +531,38 @@ def test_ward_linkage_tree_return_distance(global_random_seed):
 
     # test on the following dataset where we know the truth
     # taken from scipy/cluster/tests/hierarchy_test_data.py
-    X = np.array(
-        [
-            [1.43054825, -7.5693489],
-            [6.95887839, 6.82293382],
-            [2.87137846, -9.68248579],
-            [7.87974764, -6.05485803],
-            [8.24018364, -6.09495602],
-            [7.39020262, 8.54004355],
-        ]
-    )
+    X = np.array([
+        [1.43054825, -7.5693489],
+        [6.95887839, 6.82293382],
+        [2.87137846, -9.68248579],
+        [7.87974764, -6.05485803],
+        [8.24018364, -6.09495602],
+        [7.39020262, 8.54004355],
+    ])
     # truth
-    linkage_X_ward = np.array(
-        [
-            [3.0, 4.0, 0.36265956, 2.0],
-            [1.0, 5.0, 1.77045373, 2.0],
-            [0.0, 2.0, 2.55760419, 2.0],
-            [6.0, 8.0, 9.10208346, 4.0],
-            [7.0, 9.0, 24.7784379, 6.0],
-        ]
-    )
+    linkage_X_ward = np.array([
+        [3.0, 4.0, 0.36265956, 2.0],
+        [1.0, 5.0, 1.77045373, 2.0],
+        [0.0, 2.0, 2.55760419, 2.0],
+        [6.0, 8.0, 9.10208346, 4.0],
+        [7.0, 9.0, 24.7784379, 6.0],
+    ])
 
-    linkage_X_complete = np.array(
-        [
-            [3.0, 4.0, 0.36265956, 2.0],
-            [1.0, 5.0, 1.77045373, 2.0],
-            [0.0, 2.0, 2.55760419, 2.0],
-            [6.0, 8.0, 6.96742194, 4.0],
-            [7.0, 9.0, 18.77445997, 6.0],
-        ]
-    )
+    linkage_X_complete = np.array([
+        [3.0, 4.0, 0.36265956, 2.0],
+        [1.0, 5.0, 1.77045373, 2.0],
+        [0.0, 2.0, 2.55760419, 2.0],
+        [6.0, 8.0, 6.96742194, 4.0],
+        [7.0, 9.0, 18.77445997, 6.0],
+    ])
 
-    linkage_X_average = np.array(
-        [
-            [3.0, 4.0, 0.36265956, 2.0],
-            [1.0, 5.0, 1.77045373, 2.0],
-            [0.0, 2.0, 2.55760419, 2.0],
-            [6.0, 8.0, 6.55832839, 4.0],
-            [7.0, 9.0, 15.44089605, 6.0],
-        ]
-    )
+    linkage_X_average = np.array([
+        [3.0, 4.0, 0.36265956, 2.0],
+        [1.0, 5.0, 1.77045373, 2.0],
+        [0.0, 2.0, 2.55760419, 2.0],
+        [6.0, 8.0, 6.55832839, 4.0],
+        [7.0, 9.0, 15.44089605, 6.0],
+    ])
 
     n_samples, n_features = np.shape(X)
     connectivity_X = np.ones((n_samples, n_samples))
@@ -855,15 +846,13 @@ def test_precomputed_connectivity_metric_with_2_connected_components():
     greater than 1. Non-regression test for #16151.
     """
 
-    connectivity_matrix = np.array(
-        [
-            [0, 1, 1, 0, 0],
-            [0, 0, 1, 0, 0],
-            [0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 1],
-            [0, 0, 0, 0, 0],
-        ]
-    )
+    connectivity_matrix = np.array([
+        [0, 1, 1, 0, 0],
+        [0, 0, 1, 0, 0],
+        [0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 1],
+        [0, 0, 0, 0, 0],
+    ])
     # ensure that connectivity_matrix has two connected components
     assert connected_components(connectivity_matrix)[0] == 2
 

@@ -2,6 +2,7 @@
 HDBSCAN: Hierarchical Density-Based Spatial Clustering
          of Applications with Noise
 """
+
 # Authors: Leland McInnes <leland.mcinnes@gmail.com>
 #          Steve Astels <sastels@gmail.com>
 #          John Healy <jchealy@gmail.com>
@@ -262,12 +263,10 @@ def _hdbscan_brute(
     # Warn if the MST couldn't be constructed around the missing distances
     if np.isinf(min_spanning_tree["distance"]).any():
         warn(
-            (
-                "The minimum spanning tree contains edge weights with value "
-                "infinity. Potentially, you are missing too many distances "
-                "in the initial distance matrix for the given neighborhood "
-                "size."
-            ),
+            "The minimum spanning tree contains edge weights with value "
+            "infinity. Potentially, you are missing too many distances "
+            "in the initial distance matrix for the given neighborhood "
+            "size.",
             UserWarning,
         )
     return _process_mst(min_spanning_tree)
@@ -784,11 +783,9 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
         # TODO(1.6): Remove
         if self.algorithm == "kdtree":
             warn(
-                (
-                    "`algorithm='kdtree'`has been deprecated in 1.4 and will be renamed"
-                    " to'kd_tree'`in 1.6. To keep the past behaviour, set"
-                    " `algorithm='kd_tree'`."
-                ),
+                "`algorithm='kdtree'`has been deprecated in 1.4 and will be renamed"
+                " to'kd_tree'`in 1.6. To keep the past behaviour, set"
+                " `algorithm='kd_tree'`.",
                 FutureWarning,
             )
             self.algorithm = "kd_tree"
@@ -796,11 +793,9 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
         # TODO(1.6): Remove
         if self.algorithm == "balltree":
             warn(
-                (
-                    "`algorithm='balltree'`has been deprecated in 1.4 and will be"
-                    " renamed to'ball_tree'`in 1.6. To keep the past behaviour, set"
-                    " `algorithm='ball_tree'`."
-                ),
+                "`algorithm='balltree'`has been deprecated in 1.4 and will be"
+                " renamed to'ball_tree'`in 1.6. To keep the past behaviour, set"
+                " `algorithm='ball_tree'`.",
                 FutureWarning,
             )
             self.algorithm = "ball_tree"

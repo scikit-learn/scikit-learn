@@ -867,10 +867,8 @@ class TSNE(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
 
             check_non_negative(
                 X,
-                (
-                    "TSNE.fit(). With metric='precomputed', X "
-                    "should contain positive distances."
-                ),
+                "TSNE.fit(). With metric='precomputed', X "
+                "should contain positive distances.",
             )
 
             if self.method == "exact" and issparse(X):

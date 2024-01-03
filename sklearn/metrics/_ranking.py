@@ -1957,10 +1957,8 @@ def top_k_accuracy_score(
 
     if k >= n_classes:
         warnings.warn(
-            (
-                f"'k' ({k}) greater than or equal to 'n_classes' ({n_classes}) "
-                "will result in a perfect score and is therefore meaningless."
-            ),
+            f"'k' ({k}) greater than or equal to 'n_classes' ({n_classes}) "
+            "will result in a perfect score and is therefore meaningless.",
             UndefinedMetricWarning,
         )
 

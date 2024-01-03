@@ -353,26 +353,22 @@ def test_precision_recall_f_ignored_labels():
 
 def test_average_precision_score_non_binary_class():
     """Test multiclass-multiouptut for `average_precision_score`."""
-    y_true = np.array(
-        [
-            [2, 2, 1],
-            [1, 2, 0],
-            [0, 1, 2],
-            [1, 2, 1],
-            [2, 0, 1],
-            [1, 2, 1],
-        ]
-    )
-    y_score = np.array(
-        [
-            [0.7, 0.2, 0.1],
-            [0.4, 0.3, 0.3],
-            [0.1, 0.8, 0.1],
-            [0.2, 0.3, 0.5],
-            [0.4, 0.4, 0.2],
-            [0.1, 0.2, 0.7],
-        ]
-    )
+    y_true = np.array([
+        [2, 2, 1],
+        [1, 2, 0],
+        [0, 1, 2],
+        [1, 2, 1],
+        [2, 0, 1],
+        [1, 2, 1],
+    ])
+    y_score = np.array([
+        [0.7, 0.2, 0.1],
+        [0.4, 0.3, 0.3],
+        [0.1, 0.8, 0.1],
+        [0.2, 0.3, 0.5],
+        [0.4, 0.4, 0.2],
+        [0.1, 0.2, 0.7],
+    ])
     err_msg = "multiclass-multioutput format is not supported"
     with pytest.raises(ValueError, match=err_msg):
         average_precision_score(y_true, y_score, pos_label=2)
@@ -383,14 +379,12 @@ def test_average_precision_score_non_binary_class():
     [
         (
             [0, 0, 1, 2],
-            np.array(
-                [
-                    [0.7, 0.2, 0.1],
-                    [0.4, 0.3, 0.3],
-                    [0.1, 0.8, 0.1],
-                    [0.2, 0.3, 0.5],
-                ]
-            ),
+            np.array([
+                [0.7, 0.2, 0.1],
+                [0.4, 0.3, 0.3],
+                [0.1, 0.8, 0.1],
+                [0.2, 0.3, 0.5],
+            ]),
         ),
         (
             [0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1],
@@ -414,15 +408,13 @@ def test_average_precision_score_duplicate_values(y_true, y_score):
     [
         (
             [2, 2, 1, 1, 0],
-            np.array(
-                [
-                    [0.2, 0.3, 0.5],
-                    [0.2, 0.3, 0.5],
-                    [0.4, 0.5, 0.3],
-                    [0.4, 0.5, 0.3],
-                    [0.8, 0.5, 0.3],
-                ]
-            ),
+            np.array([
+                [0.2, 0.3, 0.5],
+                [0.2, 0.3, 0.5],
+                [0.4, 0.5, 0.3],
+                [0.4, 0.5, 0.3],
+                [0.8, 0.5, 0.3],
+            ]),
         ),
         (
             [0, 1, 1],
@@ -843,28 +835,20 @@ def test_matthews_corrcoef_against_jurman():
 
     C = confusion_matrix(y_true, y_pred, sample_weight=sample_weight)
     N = len(C)
-    cov_ytyp = sum(
-        [
-            C[k, k] * C[m, l] - C[l, k] * C[k, m]
-            for k in range(N)
-            for m in range(N)
-            for l in range(N)
-        ]
-    )
-    cov_ytyt = sum(
-        [
-            C[:, k].sum()
-            * np.sum([C[g, f] for f in range(N) for g in range(N) if f != k])
-            for k in range(N)
-        ]
-    )
-    cov_ypyp = np.sum(
-        [
-            C[k, :].sum()
-            * np.sum([C[f, g] for f in range(N) for g in range(N) if f != k])
-            for k in range(N)
-        ]
-    )
+    cov_ytyp = sum([
+        C[k, k] * C[m, l] - C[l, k] * C[k, m]
+        for k in range(N)
+        for m in range(N)
+        for l in range(N)
+    ])
+    cov_ytyt = sum([
+        C[:, k].sum() * np.sum([C[g, f] for f in range(N) for g in range(N) if f != k])
+        for k in range(N)
+    ])
+    cov_ypyp = np.sum([
+        C[k, :].sum() * np.sum([C[f, g] for f in range(N) for g in range(N) if f != k])
+        for k in range(N)
+    ])
     mcc_jurman = cov_ytyp / np.sqrt(cov_ytyt * cov_ypyp)
     mcc_ours = matthews_corrcoef(y_true, y_pred, sample_weight=sample_weight)
 
@@ -2441,27 +2425,23 @@ def test_hinge_loss_binary():
 
 
 def test_hinge_loss_multiclass():
-    pred_decision = np.array(
-        [
-            [+0.36, -0.17, -0.58, -0.99],
-            [-0.54, -0.37, -0.48, -0.58],
-            [-1.45, -0.58, -0.38, -0.17],
-            [-0.54, -0.38, -0.48, -0.58],
-            [-2.36, -0.79, -0.27, +0.24],
-            [-1.45, -0.58, -0.38, -0.17],
-        ]
-    )
+    pred_decision = np.array([
+        [+0.36, -0.17, -0.58, -0.99],
+        [-0.54, -0.37, -0.48, -0.58],
+        [-1.45, -0.58, -0.38, -0.17],
+        [-0.54, -0.38, -0.48, -0.58],
+        [-2.36, -0.79, -0.27, +0.24],
+        [-1.45, -0.58, -0.38, -0.17],
+    ])
     y_true = np.array([0, 1, 2, 1, 3, 2])
-    dummy_losses = np.array(
-        [
-            1 - pred_decision[0][0] + pred_decision[0][1],
-            1 - pred_decision[1][1] + pred_decision[1][2],
-            1 - pred_decision[2][2] + pred_decision[2][3],
-            1 - pred_decision[3][1] + pred_decision[3][2],
-            1 - pred_decision[4][3] + pred_decision[4][2],
-            1 - pred_decision[5][2] + pred_decision[5][3],
-        ]
-    )
+    dummy_losses = np.array([
+        1 - pred_decision[0][0] + pred_decision[0][1],
+        1 - pred_decision[1][1] + pred_decision[1][2],
+        1 - pred_decision[2][2] + pred_decision[2][3],
+        1 - pred_decision[3][1] + pred_decision[3][2],
+        1 - pred_decision[4][3] + pred_decision[4][2],
+        1 - pred_decision[5][2] + pred_decision[5][3],
+    ])
     np.clip(dummy_losses, 0, None, out=dummy_losses)
     dummy_hinge_loss = np.mean(dummy_losses)
     assert hinge_loss(y_true, pred_decision) == dummy_hinge_loss
@@ -2469,14 +2449,12 @@ def test_hinge_loss_multiclass():
 
 def test_hinge_loss_multiclass_missing_labels_with_labels_none():
     y_true = np.array([0, 1, 2, 2])
-    pred_decision = np.array(
-        [
-            [+1.27, 0.034, -0.68, -1.40],
-            [-1.45, -0.58, -0.38, -0.17],
-            [-2.36, -0.79, -0.27, +0.24],
-            [-2.36, -0.79, -0.27, +0.24],
-        ]
-    )
+    pred_decision = np.array([
+        [+1.27, 0.034, -0.68, -1.40],
+        [-1.45, -0.58, -0.38, -0.17],
+        [-2.36, -0.79, -0.27, +0.24],
+        [-2.36, -0.79, -0.27, +0.24],
+    ])
     error_message = (
         "Please include all labels in y_true or pass labels as third argument"
     )
@@ -2513,26 +2491,22 @@ def test_hinge_loss_multiclass_no_consistent_pred_decision_shape():
 
 
 def test_hinge_loss_multiclass_with_missing_labels():
-    pred_decision = np.array(
-        [
-            [+0.36, -0.17, -0.58, -0.99],
-            [-0.55, -0.38, -0.48, -0.58],
-            [-1.45, -0.58, -0.38, -0.17],
-            [-0.55, -0.38, -0.48, -0.58],
-            [-1.45, -0.58, -0.38, -0.17],
-        ]
-    )
+    pred_decision = np.array([
+        [+0.36, -0.17, -0.58, -0.99],
+        [-0.55, -0.38, -0.48, -0.58],
+        [-1.45, -0.58, -0.38, -0.17],
+        [-0.55, -0.38, -0.48, -0.58],
+        [-1.45, -0.58, -0.38, -0.17],
+    ])
     y_true = np.array([0, 1, 2, 1, 2])
     labels = np.array([0, 1, 2, 3])
-    dummy_losses = np.array(
-        [
-            1 - pred_decision[0][0] + pred_decision[0][1],
-            1 - pred_decision[1][1] + pred_decision[1][2],
-            1 - pred_decision[2][2] + pred_decision[2][3],
-            1 - pred_decision[3][1] + pred_decision[3][2],
-            1 - pred_decision[4][2] + pred_decision[4][3],
-        ]
-    )
+    dummy_losses = np.array([
+        1 - pred_decision[0][0] + pred_decision[0][1],
+        1 - pred_decision[1][1] + pred_decision[1][2],
+        1 - pred_decision[2][2] + pred_decision[2][3],
+        1 - pred_decision[3][1] + pred_decision[3][2],
+        1 - pred_decision[4][2] + pred_decision[4][3],
+    ])
     np.clip(dummy_losses, 0, None, out=dummy_losses)
     dummy_hinge_loss = np.mean(dummy_losses)
     assert hinge_loss(y_true, pred_decision, labels=labels) == dummy_hinge_loss
@@ -2543,26 +2517,22 @@ def test_hinge_loss_multiclass_missing_labels_only_two_unq_in_y_true():
     # https://github.com/scikit-learn/scikit-learn/issues/17630
     # check that we can compute the hinge loss when providing an array
     # with labels allowing to not have all labels in y_true
-    pred_decision = np.array(
-        [
-            [+0.36, -0.17, -0.58],
-            [-0.15, -0.58, -0.48],
-            [-1.45, -0.58, -0.38],
-            [-0.55, -0.78, -0.42],
-            [-1.45, -0.58, -0.38],
-        ]
-    )
+    pred_decision = np.array([
+        [+0.36, -0.17, -0.58],
+        [-0.15, -0.58, -0.48],
+        [-1.45, -0.58, -0.38],
+        [-0.55, -0.78, -0.42],
+        [-1.45, -0.58, -0.38],
+    ])
     y_true = np.array([0, 2, 2, 0, 2])
     labels = np.array([0, 1, 2])
-    dummy_losses = np.array(
-        [
-            1 - pred_decision[0][0] + pred_decision[0][1],
-            1 - pred_decision[1][2] + pred_decision[1][0],
-            1 - pred_decision[2][2] + pred_decision[2][1],
-            1 - pred_decision[3][0] + pred_decision[3][2],
-            1 - pred_decision[4][2] + pred_decision[4][1],
-        ]
-    )
+    dummy_losses = np.array([
+        1 - pred_decision[0][0] + pred_decision[0][1],
+        1 - pred_decision[1][2] + pred_decision[1][0],
+        1 - pred_decision[2][2] + pred_decision[2][1],
+        1 - pred_decision[3][0] + pred_decision[3][2],
+        1 - pred_decision[4][2] + pred_decision[4][1],
+    ])
     np.clip(dummy_losses, 0, None, out=dummy_losses)
     dummy_hinge_loss = np.mean(dummy_losses)
     assert_almost_equal(
@@ -2583,16 +2553,14 @@ def test_hinge_loss_multiclass_invariance_lists():
         [-2.36, -0.79, -0.27, +0.24],
         [-1.45, -0.58, -0.38, -0.17],
     ]
-    dummy_losses = np.array(
-        [
-            1 - pred_decision[0][0] + pred_decision[0][1],
-            1 - pred_decision[1][1] + pred_decision[1][2],
-            1 - pred_decision[2][2] + pred_decision[2][3],
-            1 - pred_decision[3][1] + pred_decision[3][2],
-            1 - pred_decision[4][3] + pred_decision[4][2],
-            1 - pred_decision[5][2] + pred_decision[5][3],
-        ]
-    )
+    dummy_losses = np.array([
+        1 - pred_decision[0][0] + pred_decision[0][1],
+        1 - pred_decision[1][1] + pred_decision[1][2],
+        1 - pred_decision[2][2] + pred_decision[2][3],
+        1 - pred_decision[3][1] + pred_decision[3][2],
+        1 - pred_decision[4][3] + pred_decision[4][2],
+        1 - pred_decision[5][2] + pred_decision[5][3],
+    ])
     np.clip(dummy_losses, 0, None, out=dummy_losses)
     dummy_hinge_loss = np.mean(dummy_losses)
     assert hinge_loss(y_true, pred_decision) == dummy_hinge_loss

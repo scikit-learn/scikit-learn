@@ -4,6 +4,7 @@ Tests for LinearModelLoss
 Note that correctness of losses (which compose LinearModelLoss) is already well
 covered in the _loss module.
 """
+
 import numpy as np
 import pytest
 from numpy.testing import assert_allclose
@@ -305,18 +306,16 @@ def test_gradients_hessians_numerically(
     # of the vector and then use a least-square regression to estimate the slope
     eps = 1e-3
     d_x = np.linspace(-eps, eps, 30)
-    d_grad = np.array(
-        [
-            loss.gradient(
-                coef + t * vector,
-                X,
-                y,
-                sample_weight=sample_weight,
-                l2_reg_strength=l2_reg_strength,
-            )
-            for t in d_x
-        ]
-    )
+    d_grad = np.array([
+        loss.gradient(
+            coef + t * vector,
+            X,
+            y,
+            sample_weight=sample_weight,
+            l2_reg_strength=l2_reg_strength,
+        )
+        for t in d_x
+    ])
     d_grad -= d_grad.mean(axis=0)
     approx_hess_col = linalg.lstsq(d_x[:, np.newaxis], d_grad)[0].ravel()
     assert_allclose(approx_hess_col, hess_col, rtol=1e-3)

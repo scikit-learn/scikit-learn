@@ -2,6 +2,7 @@
 The :mod:`sklearn.utils.extmath` module includes utilities to perform
 optimal mathematical operations in scikit-learn that are not available in SciPy.
 """
+
 # Authors: Gael Varoquaux
 #          Alexandre Gramfort
 #          Alexandre T. Passos
@@ -46,10 +47,8 @@ def squared_norm(x):
     x = np.ravel(x, order="K")
     if np.issubdtype(x.dtype, np.integer):
         warnings.warn(
-            (
-                "Array type is integer, np.dot may overflow. "
-                "Data should be float type to avoid this issue"
-            ),
+            "Array type is integer, np.dot may overflow. "
+            "Data should be float type to avoid this issue",
             UserWarning,
         )
     return np.dot(x, x)
@@ -1202,10 +1201,8 @@ def stable_cumsum(arr, axis=None, rtol=1e-05, atol=1e-08):
         out.take(-1, axis=axis), expected, rtol=rtol, atol=atol, equal_nan=True
     ):
         warnings.warn(
-            (
-                "cumsum was found to be unstable: "
-                "its last element does not correspond to sum"
-            ),
+            "cumsum was found to be unstable: "
+            "its last element does not correspond to sum",
             RuntimeWarning,
         )
     return out

@@ -1,4 +1,5 @@
 """Permutation importance for estimators."""
+
 import numbers
 
 import numpy as np
