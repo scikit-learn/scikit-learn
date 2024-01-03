@@ -45,7 +45,7 @@ TODO: update at the time of the release.
 
 - |Efficiency| Improve efficiency of functions :func:`brier_score_loss`,
   :func:`calibration_curve`, :func:`det_curve`, :func:`precision_recall_curve`,
-  :func:`roc_curve` when `pos_label` is specified.
+  :func:`roc_curve` when `pos_label` argument is specified.
   Also improve efficiency of methods :meth:`from_estimator`
   and :meth:`from_predictions` in :class:`RocCurveDisplay`,
   :class:`PrecisionRecallDisplay`, :class:`DetCurveDisplay`,
