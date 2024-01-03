@@ -27,8 +27,8 @@ Changelog
 
 :mod:`sklearn.impute`
 .....................
-- |Enhancement| :class:`impute.SimpleImputer` now supports `custom` imputation strategies 
-  using `sparse_fn` and `dense_fn` for sparse and dense input matrices, respectively.
+- |Enhancement| :class:`impute.SimpleImputer` now supports custom strategies
+  by passing a function in place of a strategy name.
   :pr:`28053` by :user:`Mark Elliot <mark-thm>`.
 
 Code and Documentation Contributors
