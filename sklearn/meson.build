@@ -8,31 +8,27 @@ is_mingw = is_windows and cc.get_id() == 'gcc'
 
 cython_c_args = []
 # TODO look at this closer, taken from scikit-image, some files don't exist e.g. gcc_build_bitness.py
-if is_windows
-  # For mingw-w64, link statically against the UCRT.
-  gcc_link_args = ['-lucrt', '-static']
-  if is_mingw
-    add_project_link_arguments(gcc_link_args, language: ['c', 'cpp'])
-    # Force gcc to float64 long doubles for compatibility with MSVC
-    # builds, for C only.
-    add_project_arguments('-mlong-double-64', language: 'c')
-    # Make fprintf("%zd") work (see https://github.com/rgommers/scipy/issues/118)
-    add_project_arguments('-D__USE_MINGW_ANSI_STDIO=1', language: ['c', 'cpp'])
-    # Manual add of MS_WIN64 macro when not using MSVC.
-    # https://bugs.python.org/issue28267
-    bitness = run_command(
-      '_build_utils/gcc_build_bitness.py',
-      check: true
-    ).stdout().strip()
-    if bitness == '64'
-      add_project_arguments('-DMS_WIN64', language: ['c', 'cpp'])
-    endif
-    # Silence warnings emitted by PyOS_snprintf for (%zd), see
-    # https://github.com/rgommers/scipy/issues/118.
-    # Use as c_args for extensions containing Cython code
-    cython_c_args += ['-Wno-format-extra-args', '-Wno-format']
-  endif
-endif
+# if is_windows
+#   # For mingw-w64, link statically against the UCRT.
+#   gcc_link_args = ['-lucrt', '-static']
+#   if is_mingw
+#     add_project_link_arguments(gcc_link_args, language: ['c', 'cpp'])
+#     # Force gcc to float64 long doubles for compatibility with MSVC
+#     # builds, for C only.
+#     add_project_arguments('-mlong-double-64', language: 'c')
+#     # Make fprintf("%zd") work (see https://github.com/rgommers/scipy/issues/118)
+#     add_project_arguments('-D__USE_MINGW_ANSI_STDIO=1', language: ['c', 'cpp'])
+#     # Manual add of MS_WIN64 macro when not using MSVC.
+#     # https://bugs.python.org/issue28267
+#     bitness = run_command(
+#       '_build_utils/gcc_build_bitness.py',
+#       check: true
+#     ).stdout().strip()
+#     if bitness == '64'
+#       add_project_arguments('-DMS_WIN64', language: ['c', 'cpp'])
+#     endif
+#   endif
+# endif
 
 # TODO Taken from scikit-image, seems like each project has its own tweak on this
 # NumPy include directory - needed in all submodules
