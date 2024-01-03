@@ -83,7 +83,7 @@ def test_min_dependencies_pyproject_toml():
 
     # Only scipy and cython are listed in pyproject.toml
     # NumPy is more complex using oldest-supported-numpy or >=1.25.
-    assert set(["scipy", "cython"]) == set(pyproject_build_min_versions)
+    assert set(["scipy", "cython", "meson-python"]) == set(pyproject_build_min_versions)
 
     for package, version in pyproject_build_min_versions.items():
         version = parse_version(version)
