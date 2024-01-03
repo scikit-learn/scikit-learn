@@ -14,9 +14,10 @@ def process_tempita(fromfile, outfile=None):
     E.g. processing `template.c.in` generates `template.c`.
 
     """
-    from_filename = tempita.Template.from_filename
-    template = from_filename(fromfile, encoding="utf-8")
+    with open(fromfile, "r", encoding="utf-8") as f:
+        template_content = f.read()
 
+    template = tempita.Template(template_content)
     content = template.substitute()
 
     with open(outfile, "w", encoding="utf-8") as f:
