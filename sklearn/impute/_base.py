@@ -164,7 +164,7 @@ class SimpleImputer(_BaseImputer):
         nullable integer dtypes with missing values, `missing_values`
         can be set to either `np.nan` or `pd.NA`.
 
-    strategy : str, default='mean'
+    strategy : str or Callable, default='mean'
         The imputation strategy.
 
         - If "mean", then replace missing values using the mean along
@@ -214,7 +214,6 @@ class SimpleImputer(_BaseImputer):
         in which case `fill_value` will be used instead.
 
         .. versionadded:: 1.2
-
 
     Attributes
     ----------
