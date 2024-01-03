@@ -1736,22 +1736,12 @@ def test_imputation_custom(csc_container):
         ]
     )
 
-    imputer = SimpleImputer(
-        missing_values=np.nan,
-        strategy="custom",
-        sparse_fn=np.min,
-        dense_fn=np.ma.min,
-    )
+    imputer = SimpleImputer(missing_values=np.nan, strategy=np.min)
     X_trans = imputer.fit_transform(X)
     assert_array_equal(X_trans, X_true)
 
     # Sparse matrix
-    imputer = SimpleImputer(
-        missing_values=np.nan,
-        strategy="custom",
-        sparse_fn=np.min,
-        dense_fn=np.ma.min,
-    )
+    imputer = SimpleImputer(missing_values=np.nan, strategy=np.min)
     X_trans = imputer.fit_transform(csc_container(X))
     assert_array_equal(X_trans.toarray(), X_true)
 
