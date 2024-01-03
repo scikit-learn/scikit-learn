@@ -399,9 +399,14 @@ def cross_validate(
             # to make it more suitable for this case.
             raise UnsetMetadataPassedError(
                 message=(
-                    f"{sorted(e.unrequested_params.keys())} are passed to cross"
-                    " validation but are not explicitly requested or unrequested. See"
-                    " the Metadata Routing User guide"
+                    f"{sorted(e.unrequested_params.keys())} are passed to"
+                    " `cross_validate` but are not explicitly set as requested or not"
+                    " requested for cross_validate's estimator:"
+                    f" {estimator.__class__.__name__}. Call"
+                    " `.set_fit_request(metadata=True)` on the estimator for each"
+                    f" metadata in {sorted(e.unrequested_params.keys())} that you want"
+                    " to use and `metadata=False` for not using it. See the Metadata"
+                    " Routing User guide"
                     " <https://scikit-learn.org/stable/metadata_routing.html> for more"
                     " information."
                 ),
@@ -1240,9 +1245,14 @@ def cross_val_predict(
             # to make it more suitable for this case.
             raise UnsetMetadataPassedError(
                 message=(
-                    f"{sorted(e.unrequested_params.keys())} are passed to cross"
-                    " validation but are not explicitly requested or unrequested. See"
-                    " the Metadata Routing User guide"
+                    f"{sorted(e.unrequested_params.keys())} are passed to"
+                    " `cross_val_predict` but are not explicitly set as requested or"
+                    " not requested for cross_validate's estimator:"
+                    f" {estimator.__class__.__name__}. Call"
+                    " `.set_fit_request(metadata=True)` on the estimator for each"
+                    f" metadata in {sorted(e.unrequested_params.keys())} that you want"
+                    " to use and `metadata=False` for not using it. See the Metadata"
+                    " Routing User guide"
                     " <https://scikit-learn.org/stable/metadata_routing.html> for more"
                     " information."
                 ),
