@@ -336,6 +336,8 @@ def handle_global_random_seed(config):
 def pytest_report_header(config):
     random_seed_var = environ.get("SKLEARN_TESTS_GLOBAL_RANDOM_SEED")
     if random_seed_var == "any":
+        # Actual random seed has been set in pytest_configure, this is the one
+        # we should show in the header
         random_seeds = config.option.random_seeds[0]
     else:
         random_seeds = random_seed_var
