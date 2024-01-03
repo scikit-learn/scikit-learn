@@ -175,6 +175,10 @@ class SimpleImputer(_BaseImputer):
           If there is more than one such value, only the smallest is returned.
         - If "constant", then replace missing values with fill_value. Can be
           used with strings or numeric data.
+        - If "custom", then replace missing values using sparse_fn and dense_fn
+          based on whether the input array is sparse or dense. Note that callers
+          may supply only one of these implementations if it's known that only
+          exclusively sparse or dense data will be passed.
 
         .. versionadded:: 0.20
            strategy="constant" for fixed value imputation.
@@ -210,6 +214,25 @@ class SimpleImputer(_BaseImputer):
         in which case `fill_value` will be used instead.
 
         .. versionadded:: 1.2
+
+    dense_fn : Callable[[dense matrix, *, axis], numerical value], default=None
+        Optional function to use in producing a custom imputation value when
+        the input to fit is a dense matrix and `strategy="custom"`.
+
+        If callers know that only sparse matrices will be supplied to fit,
+        callers may omit this argument even when `strategy="custom"`.
+
+        .. versionadded:: 1.5
+
+    sparse_fn : Callable[[sparse matrix], numerical value], default=None
+        Optional function to use in producing a custom imputation value when
+        the input to fit is a sparse matrix and `strategy="custom"`.
+
+        If callers know that only dense matrices will be supplied to fit,
+        callers may omit this argument even when `strategy="custom"`.
+
+        .. versionadded:: 1.5
+
 
     Attributes
     ----------
@@ -270,7 +293,9 @@ class SimpleImputer(_BaseImputer):
 
     _parameter_constraints: dict = {
         **_BaseImputer._parameter_constraints,
-        "strategy": [StrOptions({"mean", "median", "most_frequent", "constant"})],
+        "strategy": [
+            StrOptions({"mean", "median", "most_frequent", "constant", "custom"})
+        ],
         "fill_value": "no_validation",  # any object is valid
         "copy": ["boolean"],
     }
@@ -284,6 +309,8 @@ class SimpleImputer(_BaseImputer):
         copy=True,
         add_indicator=False,
         keep_empty_features=False,
+        dense_fn=None,
+        sparse_fn=None,
     ):
         super().__init__(
             missing_values=missing_values,
@@ -293,6 +320,8 @@ class SimpleImputer(_BaseImputer):
         self.strategy = strategy
         self.fill_value = fill_value
         self.copy = copy
+        self.dense_fn = dense_fn
+        self.sparse_fn = sparse_fn
 
     def _validate_input(self, X, in_fit):
         if self.strategy in ("most_frequent", "constant"):
@@ -456,6 +485,12 @@ class SimpleImputer(_BaseImputer):
                     elif strategy == "most_frequent":
                         statistics[i] = _most_frequent(column, 0, n_zeros)
 
+                    elif strategy == "custom":
+                        statistics[i] = self.sparse_fn(column)
+
+                    else:
+                        raise RuntimeError(f"Unknown strategy {strategy}")
+
         super()._fit_indicator(missing_mask)
 
         return statistics
@@ -517,6 +552,16 @@ class SimpleImputer(_BaseImputer):
             # for constant strategy, self.statistcs_ is used to store
             # fill_value in each column
             return np.full(X.shape[1], fill_value, dtype=X.dtype)
+
+        # Custom
+        elif strategy == "custom":
+            custom_masked = self.dense_fn(masked_X, axis=0)
+            custom = np.ma.getdata(custom_masked)
+            custom[np.ma.getmaskarray(custom_masked)] = np.nan
+            return custom
+
+        else:
+            raise RuntimeError(f"Unknown strategy {strategy}")
 
     def transform(self, X):
         """Impute all missing values in `X`.
