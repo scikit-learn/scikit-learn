@@ -11,6 +11,13 @@ Version 1.5.0
 
 .. include:: changelog_legend.inc
 
+Changed models
+--------------
+
+- |Enhancement| :class:`dummy.DummyClassifier` and :class:`dummy.DummyRegressor` now
+  have the `n_features_in_` and `feature_names_in_` attributes after `fit`.
+  :pr:`27937` by :user:`Marco vd Boom <tvdboom>`.
+
 Changelog
 ---------
 
@@ -24,6 +31,13 @@ Changelog
     Entries should end with:
     :pr:`123456` by :user:`Joe Bloggs <joeongithub>`.
     where 123455 is the *pull request* number, not the issue number.
+
+:mod:`sklearn.dummy`
+.......................
+
+- |Enhancement| :class:`dummy.DummyClassifier` and :class:`dummy.DummyRegressor` now
+  have the `n_features_in_` and `feature_names_in_` attributes after `fit`.
+  :pr:`27937` by :user:`Marco vd Boom <tvdboom>`.
 
 Code and Documentation Contributors
 -----------------------------------
