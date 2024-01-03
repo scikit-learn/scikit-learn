@@ -419,7 +419,7 @@ class MethodMetadataRequest:
         Returns
         -------
         params : Bunch
-            A :class:`~utils.Bunch` of {prop: value} which can be given to the
+            A :class:`~sklearn.utils.Bunch` of {prop: value} which can be given to the
             corresponding method.
         """
         self._check_warnings(params=params)
@@ -612,7 +612,7 @@ class MetadataRequest:
         Returns
         -------
         params : Bunch
-            A :class:`~utils.Bunch` of {prop: value} which can be given to the
+            A :class:`~sklearn.utils.Bunch` of {prop: value} which can be given to the
             corresponding method.
         """
         return getattr(self, method)._route_params(params=params)
@@ -775,8 +775,8 @@ class MetadataRouter:
     RouteMappingPair(method_mapping, routing_info)}``, where ``method_mapping``
     is an instance of :class:`~sklearn.utils.metadata_routing.MethodMapping` and
     ``routing_info`` is either a
-    :class:`~utils.metadata_routing.MetadataRequest` or a
-    :class:`~utils.metadata_routing.MetadataRouter` instance.
+    :class:`~sklearn.utils.metadata_routing.MetadataRequest` or a
+    :class:`~sklearn.utils.metadata_routing.MetadataRouter` instance.
 
     .. versionadded:: 1.3
 
@@ -806,7 +806,7 @@ class MetadataRouter:
         This method is used if the router is also a consumer, and hence the
         router itself needs to be included in the routing. The passed object
         can be an estimator or a
-        :class:`~utils.metadata_routing.MetadataRequest`.
+        :class:`~sklearn.utils.metadata_routing.MetadataRequest`.
 
         A router should add itself using this method instead of `add` since it
         should be treated differently than the other objects to which metadata
@@ -1012,7 +1012,7 @@ class MetadataRouter:
         Returns
         -------
         params : Bunch
-            A :class:`~utils.Bunch` of the form
+            A :class:`~sklearn.utils.Bunch` of the form
             ``{"object_name": {"method_name": {params: value}}}`` which can be
             used to pass the required metadata to corresponding methods or
             corresponding child objects.
@@ -1525,6 +1525,8 @@ def process_routing(_obj, _method, /, **kwargs):
     -------
     routed_params : Bunch
         A :class:`~utils.Bunch` of the form ``{"object_name": {"method_name":
+        {params: value}}}`` which can be used to pass the required metadata to
+        A :class:`~sklearn.utils.Bunch` of the form ``{"object_name": {"method_name":
         {params: value}}}`` which can be used to pass the required metadata to
         corresponding methods or corresponding child objects. The object names
         are those defined in `obj.get_metadata_routing()`.

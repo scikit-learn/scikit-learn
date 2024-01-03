@@ -159,7 +159,6 @@ for i_dataset, (dataset, algo_params) in enumerate(datasets):
     ms = cluster.MeanShift(bandwidth=bandwidth, bin_seeding=True)
     two_means = cluster.MiniBatchKMeans(
         n_clusters=params["n_clusters"],
-        n_init="auto",
         random_state=params["random_state"],
     )
     ward = cluster.AgglomerativeClustering(

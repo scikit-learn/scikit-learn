@@ -41,6 +41,8 @@ from ...cluster._hdbscan._tree cimport HIERARCHY_t
 from ...cluster._hdbscan._tree import HIERARCHY_dtype
 from ...utils._typedefs cimport intp_t, float64_t, int64_t, uint8_t
 
+cnp.import_array()
+
 cdef extern from "numpy/arrayobject.h":
     intp_t * PyArray_SHAPE(cnp.PyArrayObject *)
 

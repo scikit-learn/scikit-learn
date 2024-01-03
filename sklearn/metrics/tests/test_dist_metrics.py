@@ -368,7 +368,7 @@ def test_readonly_kwargs():
             (
                 csr_container([1, 1.5, 1]),
                 TypeError,
-                "A sparse matrix was passed, but dense data is required",
+                "Sparse data was passed for w, but dense data is required",
             )
             for csr_container in CSR_CONTAINERS
         ],

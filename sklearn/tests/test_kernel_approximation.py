@@ -141,7 +141,7 @@ def test_additive_chi2_sampler_sample_steps(method, sample_steps):
         sample_interval=sample_interval,
     )
     getattr(transformer, method)(X)
-    transformer.sample_interval == sample_interval
+    assert transformer.sample_interval == sample_interval
 
 
 # TODO(1.5): remove

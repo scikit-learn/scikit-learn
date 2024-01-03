@@ -40,7 +40,7 @@ jobs:
         name: Check build trigger
         run: bash build_tools/github/check_build_trigger.sh
 
-  # Build the wheels for Linux, Windows and macOS for Python 3.8 and newer
+  # Build the wheels for Linux, Windows and macOS for Python 3.9 and newer
   build_wheels:
     name: Build wheel for cp${{ matrix.python }}-${{ matrix.platform_id }}-${{ matrix.manylinux_image }}
     runs-on: ${{ matrix.os }}
@@ -55,9 +55,6 @@ jobs:
           # Window 64 bit
           # Note: windows-2019 is needed for older Python versions:
           # https://github.com/scikit-learn/scikit-learn/issues/22530
-          - os: windows-2019
-            python: 38
-            platform_id: win_amd64
           - os: windows-latest
             python: 39
             platform_id: win_amd64
@@ -67,12 +64,11 @@ jobs:
           - os: windows-latest
             python: 311
             platform_id: win_amd64
+          - os: windows-latest
+            python: 312
+            platform_id: win_amd64
 
           # Linux 64 bit manylinux2014
-          - os: ubuntu-latest
-            python: 38
-            platform_id: manylinux_x86_64
-            manylinux_image: manylinux2014
           - os: ubuntu-latest
             python: 39
             platform_id: manylinux_x86_64
@@ -88,11 +84,12 @@ jobs:
             python: 311
             platform_id: manylinux_x86_64
             manylinux_image: manylinux2014
+          - os: ubuntu-latest
+            python: 312
+            platform_id: manylinux_x86_64
+            manylinux_image: manylinux2014
 
           # MacOS x86_64
-          - os: macos-latest
-            python: 38
-            platform_id: macosx_x86_64
           - os: macos-latest
             python: 39
             platform_id: macosx_x86_64
@@ -102,17 +99,23 @@ jobs:
           - os: macos-latest
             python: 311
             platform_id: macosx_x86_64
+          - os: macos-latest
+            python: 312
+            platform_id: macosx_x86_64
 
           # MacOS arm64
-          # The latest Python version is built and tested on CirrusCI
-          - os: macos-latest
-            python: 38
-            platform_id: macosx_arm64
+          # The wheel for the latest Python version is built and tested on
+          # Cirrus CI but due to limited build time for free accounts on Cirrus
+          # CI, we build the macOS arm64 wheels for the other Python versions on
+          # Github Actions via cross-compilation (without running the tests).
           - os: macos-latest
             python: 39
             platform_id: macosx_arm64
           - os: macos-latest
             python: 310
+            platform_id: macosx_arm64
+          - os: macos-latest
+            python: 311
             platform_id: macosx_arm64
 
     steps:
@@ -126,8 +129,7 @@ jobs:
 
       - name: Build and test wheels
         env:
-          CONFTEST_PATH: ${{ github.workspace }}/conftest.py
-          CONFTEST_NAME: conftest.py
+          CIBW_PRERELEASE_PYTHONS: ${{ matrix.prerelease }}
           CIBW_ENVIRONMENT: SKLEARN_SKIP_NETWORK_TESTS=1
                             SKLEARN_BUILD_PARALLEL=3
           CIBW_BUILD: cp${{ matrix.python }}-${{ matrix.platform_id }}

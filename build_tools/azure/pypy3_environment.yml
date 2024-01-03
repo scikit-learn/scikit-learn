@@ -9,7 +9,7 @@ dependencies:
   - numpy
   - blas[build=openblas]
   - scipy
-  - cython<3.0.0
+  - cython
   - joblib
   - threadpoolctl
   - matplotlib

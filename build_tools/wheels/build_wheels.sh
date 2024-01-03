@@ -35,14 +35,16 @@ if [[ $(uname) == "Darwin" ]]; then
     export CFLAGS="$CFLAGS -I$PREFIX/include"
     export CXXFLAGS="$CXXFLAGS -I$PREFIX/include"
     export LDFLAGS="$LDFLAGS -Wl,-rpath,$PREFIX/lib -L$PREFIX/lib -lomp"
+fi
 
-    if [[ $(uname -m) == "arm64" && "$CIBW_BUILD" == "cp38-macosx_arm64" ]]; then
-        # Enables native building and testing for macosx arm on Python 3.8. For details see:
-        # https://cibuildwheel.readthedocs.io/en/stable/faq/#macos-building-cpython-38-wheels-on-arm64
-        curl -o /tmp/Python38.pkg https://www.python.org/ftp/python/3.8.10/python-3.8.10-macos11.pkg
-        sudo installer -pkg /tmp/Python38.pkg -target /
-        sh "/Applications/Python 3.8/Install Certificates.command"
-    fi
+
+if [[ "$GITHUB_EVENT_NAME" == "schedule" || "$CIRRUS_CRON" == "nightly" ]]; then
+    # Nightly build:  See also `../github/upload_anaconda.sh` (same branching).
+    # To help with NumPy 2.0 transition, ensure that we use the NumPy 2.0
+    # nightlies.  This lives on the edge and opts-in to all pre-releases.
+    # That could be an issue, in which case no-build-isolation and a targeted
+    # NumPy install may be necessary, instead.
+    export CIBW_BUILD_FRONTEND='pip; args: --pre --extra-index-url "https://pypi.anaconda.org/scientific-python-nightly-wheels/simple"'
 fi
 
 # The version of the built dependencies are specified

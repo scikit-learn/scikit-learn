@@ -2,19 +2,21 @@
 # following script to centralize the configuration for CI builds:
 # build_tools/update_environments_and_lock_files.py
 channels:
-  - conda-forge
+  - defaults
 dependencies:
   - python=3.9
-  - numpy
-  - blas
-  - scipy
-  - cython<3.0.0
+  - numpy=1.21
+  - blas[build=openblas]
+  - scipy=1.7
+  - cython=0.29.33  # min
   - joblib
-  - threadpoolctl
-  - matplotlib
+  - threadpoolctl=2.2.0
+  - matplotlib=3.3.4  # min
+  - pyamg
   - pytest
   - pytest-xdist=2.5.0
   - pillow
   - setuptools
-  - pip
+  - pytest-cov
+  - coverage
   - ccache

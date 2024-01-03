@@ -1,0 +1,40 @@
+.. include:: _contributors.rst
+
+.. currentmodule:: sklearn
+
+.. _changes_1_5:
+
+Version 1.5.0
+=============
+
+**In Development**
+
+.. include:: changelog_legend.inc
+
+Changelog
+---------
+
+..
+    Entries should be grouped by module (in alphabetic order) and prefixed with
+    one of the labels: |MajorFeature|, |Feature|, |Efficiency|, |Enhancement|,
+    |Fix| or |API| (see whats_new.rst for descriptions).
+    Entries should be ordered by those labels (e.g. |Fix| after |Efficiency|).
+    Changes not specific to a module should be listed under *Multiple Modules*
+    or *Miscellaneous*.
+    Entries should end with:
+    :pr:`123456` by :user:`Joe Bloggs <joeongithub>`.
+    where 123455 is the *pull request* number, not the issue number.
+
+Code and Documentation Contributors
+-----------------------------------
+
+Thanks to everyone who has contributed to the maintenance and improvement of
+the project since version 1.4, including:
+
+TODO: update at the time of the release.
+
+:mod:`sklearn.compose`
+......................
+
+- |Feature| A fitted :class:`compose.ColumnTransformer` now implements `__getitem__`
+  which returns the fitted transformers by name. :pr:`27990` by `Thomas Fan`_.

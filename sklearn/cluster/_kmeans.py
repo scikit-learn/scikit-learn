@@ -29,7 +29,7 @@ from ..exceptions import ConvergenceWarning
 from ..metrics.pairwise import _euclidean_distances, euclidean_distances
 from ..utils import check_array, check_random_state
 from ..utils._openmp_helpers import _openmp_effective_n_threads
-from ..utils._param_validation import Hidden, Interval, StrOptions, validate_params
+from ..utils._param_validation import Interval, StrOptions, validate_params
 from ..utils.extmath import row_norms, stable_cumsum
 from ..utils.fixes import threadpool_info, threadpool_limits
 from ..utils.sparsefuncs import mean_variance_axis
@@ -229,7 +229,7 @@ def _kmeans_plusplus(
     center_id = random_state.choice(n_samples, p=sample_weight / sample_weight.sum())
     indices = np.full(n_clusters, -1, dtype=int)
     if sp.issparse(X):
-        centers[0] = X[center_id].toarray()
+        centers[0] = X[[center_id]].toarray()
     else:
         centers[0] = X[center_id]
     indices[0] = center_id
@@ -268,7 +268,7 @@ def _kmeans_plusplus(
 
         # Permanently add best center candidate found in local tries
         if sp.issparse(X):
-            centers[c] = X[best_candidate].toarray()
+            centers[c] = X[[best_candidate]].toarray()
         else:
             centers[c] = X[best_candidate]
         indices[c] = best_candidate
@@ -305,7 +305,7 @@ def k_means(
     *,
     sample_weight=None,
     init="k-means++",
-    n_init="warn",
+    n_init="auto",
     max_iter=300,
     verbose=False,
     tol=1e-4,
@@ -348,7 +348,7 @@ def k_means(
         - If a callable is passed, it should take arguments `X`, `n_clusters` and a
           random state and return an initialization.
 
-    n_init : 'auto' or int, default=10
+    n_init : 'auto' or int, default="auto"
         Number of time the k-means algorithm will be run with different
         centroid seeds. The final results will be the best output of
         n_init consecutive runs in terms of inertia.
@@ -361,7 +361,7 @@ def k_means(
            Added 'auto' option for `n_init`.
 
         .. versionchanged:: 1.4
-           Default value for `n_init` will change from 10 to `'auto'` in version 1.4.
+           Default value for `n_init` changed to `'auto'`.
 
     max_iter : int, default=300
         Maximum number of iterations of the k-means algorithm to run.
@@ -832,7 +832,6 @@ class _BaseKMeans(
         "init": [StrOptions({"k-means++", "random"}), callable, "array-like"],
         "n_init": [
             StrOptions({"auto"}),
-            Hidden(StrOptions({"warn"})),
             Interval(Integral, 1, None, closed="left"),
         ],
         "max_iter": [Interval(Integral, 1, None, closed="left")],
@@ -871,20 +870,7 @@ class _BaseKMeans(
         self._tol = _tolerance(X, self.tol)
 
         # n-init
-        # TODO(1.4): Remove
-        self._n_init = self.n_init
-        if self._n_init == "warn":
-            warnings.warn(
-                (
-                    "The default value of `n_init` will change from "
-                    f"{default_n_init} to 'auto' in 1.4. Set the value of `n_init`"
-                    " explicitly to suppress the warning"
-                ),
-                FutureWarning,
-                stacklevel=2,
-            )
-            self._n_init = default_n_init
-        if self._n_init == "auto":
+        if self.n_init == "auto":
             if isinstance(self.init, str) and self.init == "k-means++":
                 self._n_init = 1
             elif isinstance(self.init, str) and self.init == "random":
@@ -893,6 +879,8 @@ class _BaseKMeans(
                 self._n_init = default_n_init
             else:  # array-like
                 self._n_init = 1
+        else:
+            self._n_init = self.n_init
 
         if _is_arraylike_not_scalar(self.init) and self._n_init != 1:
             warnings.warn(
@@ -1243,7 +1231,7 @@ class KMeans(_BaseKMeans):
         For an example of how to use the different `init` strategy, see the example
         entitled :ref:`sphx_glr_auto_examples_cluster_plot_kmeans_digits.py`.
 
-    n_init : 'auto' or int, default=10
+    n_init : 'auto' or int, default='auto'
         Number of times the k-means algorithm is run with different centroid
         seeds. The final results is the best output of `n_init` consecutive runs
         in terms of inertia. Several runs are recommended for sparse
@@ -1257,7 +1245,7 @@ class KMeans(_BaseKMeans):
            Added 'auto' option for `n_init`.
 
         .. versionchanged:: 1.4
-           Default value for `n_init` will change from 10 to `'auto'` in version 1.4.
+           Default value for `n_init` changed to `'auto'`.
 
     max_iter : int, default=300
         Maximum number of iterations of the k-means algorithm for a
@@ -1391,7 +1379,7 @@ class KMeans(_BaseKMeans):
         n_clusters=8,
         *,
         init="k-means++",
-        n_init="warn",
+        n_init="auto",
         max_iter=300,
         tol=1e-4,
         verbose=0,
@@ -1779,7 +1767,7 @@ class MiniBatchKMeans(_BaseKMeans):
         If `None`, the heuristic is `init_size = 3 * batch_size` if
         `3 * batch_size < n_clusters`, else `init_size = 3 * n_clusters`.
 
-    n_init : 'auto' or int, default=3
+    n_init : 'auto' or int, default="auto"
         Number of random initializations that are tried.
         In contrast to KMeans, the algorithm is only run once, using the best of
         the `n_init` initializations as measured by inertia. Several runs are
@@ -1794,7 +1782,7 @@ class MiniBatchKMeans(_BaseKMeans):
            Added 'auto' option for `n_init`.
 
         .. versionchanged:: 1.4
-           Default value for `n_init` will change from 3 to `'auto'` in version 1.4.
+           Default value for `n_init` changed to `'auto'` in version.
 
     reassignment_ratio : float, default=0.01
         Control the fraction of the maximum number of counts for a center to
@@ -1911,7 +1899,7 @@ class MiniBatchKMeans(_BaseKMeans):
         tol=0.0,
         max_no_improvement=10,
         init_size=None,
-        n_init="warn",
+        n_init="auto",
         reassignment_ratio=0.01,
     ):
         super().__init__(

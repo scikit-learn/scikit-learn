@@ -72,11 +72,6 @@ class BaseWeightBoosting(BaseEnsemble, metaclass=ABCMeta):
         "n_estimators": [Interval(Integral, 1, None, closed="left")],
         "learning_rate": [Interval(Real, 0, None, closed="neither")],
         "random_state": ["random_state"],
-        "base_estimator": [
-            HasMethods(["fit", "predict"]),
-            StrOptions({"deprecated"}),
-            None,
-        ],
     }
 
     @abstractmethod
@@ -88,13 +83,11 @@ class BaseWeightBoosting(BaseEnsemble, metaclass=ABCMeta):
         estimator_params=tuple(),
         learning_rate=1.0,
         random_state=None,
-        base_estimator="deprecated",
     ):
         super().__init__(
             estimator=estimator,
             n_estimators=n_estimators,
             estimator_params=estimator_params,
-            base_estimator=base_estimator,
         )
 
         self.learning_rate = learning_rate
@@ -401,17 +394,6 @@ class AdaBoostClassifier(
         Pass an int for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
 
-    base_estimator : object, default=None
-        The base estimator from which the boosted ensemble is built.
-        Support for sample weighting is required, as well as proper
-        ``classes_`` and ``n_classes_`` attributes. If ``None``, then
-        the base estimator is :class:`~sklearn.tree.DecisionTreeClassifier`
-        initialized with `max_depth=1`.
-
-        .. deprecated:: 1.2
-            `base_estimator` is deprecated and will be removed in 1.4.
-            Use `estimator` instead.
-
     Attributes
     ----------
     estimator_ : estimator
@@ -419,13 +401,6 @@ class AdaBoostClassifier(
 
         .. versionadded:: 1.2
            `base_estimator_` was renamed to `estimator_`.
-
-    base_estimator_ : estimator
-        The base estimator from which the ensemble is grown.
-
-        .. deprecated:: 1.2
-            `base_estimator_` is deprecated and will be removed in 1.4.
-            Use `estimator_` instead.
 
     estimators_ : list of classifiers
         The collection of fitted sub-estimators.
@@ -523,14 +498,12 @@ class AdaBoostClassifier(
         learning_rate=1.0,
         algorithm="SAMME.R",
         random_state=None,
-        base_estimator="deprecated",
     ):
         super().__init__(
             estimator=estimator,
             n_estimators=n_estimators,
             learning_rate=learning_rate,
             random_state=random_state,
-            base_estimator=base_estimator,
         )
 
         self.algorithm = algorithm
@@ -892,7 +865,7 @@ class AdaBoostClassifier(
     def _compute_proba_from_decision(decision, n_classes):
         """Compute probabilities from the decision function.
 
-        This is based eq. (4) of [1] where:
+        This is based eq. (15) of [1] where:
             p(y=c|X) = exp((1 / K-1) f_c(X)) / sum_k(exp((1 / K-1) f_k(X)))
                      = softmax((1 / K-1) * f(X))
 
@@ -1037,16 +1010,6 @@ class AdaBoostRegressor(_RoutingNotSupportedMixin, RegressorMixin, BaseWeightBoo
         Pass an int for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
 
-    base_estimator : object, default=None
-        The base estimator from which the boosted ensemble is built.
-        If ``None``, then the base estimator is
-        :class:`~sklearn.tree.DecisionTreeRegressor` initialized with
-        `max_depth=3`.
-
-        .. deprecated:: 1.2
-            `base_estimator` is deprecated and will be removed in 1.4.
-            Use `estimator` instead.
-
     Attributes
     ----------
     estimator_ : estimator
@@ -1054,13 +1017,6 @@ class AdaBoostRegressor(_RoutingNotSupportedMixin, RegressorMixin, BaseWeightBoo
 
         .. versionadded:: 1.2
            `base_estimator_` was renamed to `estimator_`.
-
-    base_estimator_ : estimator
-        The base estimator from which the ensemble is grown.
-
-        .. deprecated:: 1.2
-            `base_estimator_` is deprecated and will be removed in 1.4.
-            Use `estimator_` instead.
 
     estimators_ : list of regressors
         The collection of fitted sub-estimators.
@@ -1131,14 +1087,12 @@ class AdaBoostRegressor(_RoutingNotSupportedMixin, RegressorMixin, BaseWeightBoo
         learning_rate=1.0,
         loss="linear",
         random_state=None,
-        base_estimator="deprecated",
     ):
         super().__init__(
             estimator=estimator,
             n_estimators=n_estimators,
             learning_rate=learning_rate,
             random_state=random_state,
-            base_estimator=base_estimator,
         )
 
         self.loss = loss
