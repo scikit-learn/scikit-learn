@@ -9,7 +9,6 @@ JOBLIB_MIN_VERSION = "1.2.0"
 THREADPOOLCTL_MIN_VERSION = "2.0.0"
 PYTEST_MIN_VERSION = "7.1.2"
 CYTHON_MIN_VERSION = "0.29.33"
-MESON_PYTHON_MIN_VERSION = "0.15.0"
 
 
 # 'build' and 'install' is included to have structured metadata for CI.
@@ -21,7 +20,6 @@ dependent_packages = {
     "joblib": (JOBLIB_MIN_VERSION, "install"),
     "threadpoolctl": (THREADPOOLCTL_MIN_VERSION, "install"),
     "cython": (CYTHON_MIN_VERSION, "build"),
-    "meson-python": (MESON_PYTHON_MIN_VERSION, "build"),
     "matplotlib": ("3.3.4", "benchmark, docs, examples, tests"),
     "scikit-image": ("0.17.2", "docs, examples, tests"),
     "pandas": ("1.1.5", "benchmark, docs, examples, tests"),
