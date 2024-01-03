@@ -23,8 +23,7 @@ fi
 show_installed_libraries
 
 # TODO temporary change to test meson build on Windows
-pip install --verbose --no-build-isolation --editable .
-
+pip install --verbose --no-build-isolation -Csetup-args="--vsenv" --editable .
 # Build scikit-learn
 # python setup.py bdist_wheel
 
