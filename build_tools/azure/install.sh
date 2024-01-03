@@ -130,7 +130,7 @@ scikit_learn_install() {
     #     python setup.py develop
     # fi
     # TODO Temporary hack to test meson build on all CI builds
-    pip install --verbose --editable --no-build-isolation .
+    pip install --verbose --no-build-isolation --editable .
 
     ccache -s
 }
