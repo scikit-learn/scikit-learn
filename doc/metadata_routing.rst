@@ -43,10 +43,10 @@ splitters using :term:`meta-estimators` (such as :class:`~pipeline.Pipeline` or
 :func:`~model_selection.cross_validate`. In order to pass metadata to a method like
 ``fit`` or ``score``, the object consuming the metadata, must *request* it. This is done
 via `set_{method}_request()` methods, where `{method}` is substituted by the name of the
-method that request the metadata. For instance, estimators and splitters, that use the
-metadata in their `fit()` method would use `set_fit_request()`, and scorers would use
-the `set_score_request()`. These methods allow us to specify which metadata to request,
-for instance `set_fit_request(sample_weight=True)`.
+method that request the metadata. For instance, estimators that use the metadata in
+their `fit()` method would use `set_fit_request()`, and scorers would use the
+`set_score_request()`. These methods allow us to specify which metadata to request, for
+instance `set_fit_request(sample_weight=True)`.
 
 For grouped splitters such as :class:`~model_selection.GroupKFold`, a
 ``groups`` parameter is requested by default. This is best demonstrated by the
@@ -87,7 +87,7 @@ to explicitly request `sample_weight` for it and for our custom scorer by specif
 method and in :func:`~metrics.make_scorer`s `set_score_request()` method. Both
 :term:`consumers <consumer>` know how to use ``sample_weight`` in their `fit()` or
 `score()` methods. We can then pass the metadata in
-:func:`~model_selection.cross_validate` that will route it to any active consumers.::
+:func:`~model_selection.cross_validate` that will route it to any active consumers::
 
 >>> weighted_acc = make_scorer(accuracy_score).set_score_request(sample_weight=True)
 >>> lr = LogisticRegressionCV(
@@ -122,7 +122,7 @@ that :func:`~model_selection.cross_validate` does not pass the weights along::
 
   >>> weighted_acc = make_scorer(accuracy_score).set_score_request(sample_weight=True)
   >>> lr = LogisticRegressionCV(
-  ...     cv=GroupKFold(), scoring=weighted_acc
+  ...     cv=GroupKFold(), scoring=weighted_acc,
   ... ).set_fit_request(sample_weight=False)
   >>> cv_results = cross_validate(
   ...     lr,
@@ -142,9 +142,9 @@ Unweighted feature selection
 ----------------------------
 
 Routing metadata is only possible if the object's method knows how to use the metadata,
-meaning they have to have it as a parameter. Only then we can set request values for
-metadata using `set_fit_request(sample_weight=True)`, for instance. This makes the
-object a :term:`consumer <consumer>`.
+which in most cases means they have it as an explicit parameter. Only then we can set
+request values for metadata using `set_fit_request(sample_weight=True)`, for instance.
+This makes the object a :term:`consumer <consumer>`.
 
 Unlike :class:`~linear_model.LogisticRegressionCV`,
 :class:`~feature_selection.SelectKBest` can't consume weights and therefore no request
@@ -153,7 +153,7 @@ to it::
 
   >>> weighted_acc = make_scorer(accuracy_score).set_score_request(sample_weight=True)
   >>> lr = LogisticRegressionCV(
-  ...     cv=GroupKFold(), scoring=weighted_acc
+  ...     cv=GroupKFold(), scoring=weighted_acc,
   ... ).set_fit_request(sample_weight=True)
   >>> sel = SelectKBest(k=2)
   >>> pipe = make_pipeline(sel, lr)
@@ -179,7 +179,7 @@ consumers. In this example, we pass ``scoring_weight`` to the scorer, and
   ...    sample_weight="scoring_weight"
   ... )
   >>> lr = LogisticRegressionCV(
-  ...     cv=GroupKFold(), scoring=weighted_acc
+  ...     cv=GroupKFold(), scoring=weighted_acc,
   ... ).set_fit_request(sample_weight="fitting_weight")
   >>> cv_results = cross_validate(
   ...     lr,
