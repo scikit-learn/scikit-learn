@@ -1222,6 +1222,7 @@ def r2_score(
         if multioutput_is_array:
             multioutput = _convert_to_numpy(multioutput, xp)
         xp, _ = get_namespace(y_true)
+        device_ = device(y_true)
 
     dtype = (
         "numeric" if not is_array_api_compliant else supported_float_dtypes(xp, device_)
