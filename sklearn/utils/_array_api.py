@@ -532,8 +532,9 @@ def _average(a, axis=None, weights=None, normalize=True, returned=False, xp=None
     )
 
     if cast_to_float64 and not _supports_dtype(xp, device_, "float64"):
-        a = _convert_to_numpy(a, copy=True)
-        weights = _convert_to_numpy(weights, copy=True)
+        a = _convert_to_numpy(a, xp)
+        if weights is not None:
+            weights = _convert_to_numpy(weights, xp)
         return xp.asarray(
             _average(
                 a, axis=axis, normalize=normalize, returned=returned, weights=weights
