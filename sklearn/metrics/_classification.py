@@ -134,7 +134,7 @@ def _check_targets(y_true, y_pred):
     return y_type, y_true, y_pred
 
 
-def _weighted_sum(sample_score, sample_weight, normalize=False, xp=None):
+def _weighted_sum_1d(sample_score, sample_weight, normalize=False, xp=None):
     if xp is None:
         input_arrays = [sample_score]
         if sample_weight is not None:
@@ -240,7 +240,7 @@ def accuracy_score(y_true, y_pred, *, normalize=True, sample_weight=None):
     else:
         score = y_true == y_pred
 
-    return _weighted_sum(score, sample_weight, normalize)
+    return _weighted_sum_1d(score, sample_weight, normalize)
 
 
 @validate_params(
@@ -2801,7 +2801,7 @@ def hamming_loss(y_true, y_pred, *, sample_weight=None):
         return n_differences / (y_true.shape[0] * y_true.shape[1] * weight_average)
 
     elif y_type in ["binary", "multiclass"]:
-        return _weighted_sum(y_true != y_pred, sample_weight, normalize=True)
+        return _weighted_sum_1d(y_true != y_pred, sample_weight, normalize=True)
     else:
         raise ValueError("{0} is not supported".format(y_type))
 
@@ -2986,7 +2986,7 @@ def log_loss(
     y_pred = y_pred / y_pred_sum[:, np.newaxis]
     loss = -xlogy(transformed_labels, y_pred).sum(axis=1)
 
-    return _weighted_sum(loss, sample_weight, normalize)
+    return _weighted_sum_1d(loss, sample_weight, normalize)
 
 
 @validate_params(
