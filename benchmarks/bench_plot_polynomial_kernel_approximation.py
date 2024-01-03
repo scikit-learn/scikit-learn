@@ -38,6 +38,7 @@ Programming (pp. 693-703). Springer, Berlin, Heidelberg.
 (https://people.cs.rutgers.edu/~farach/pubs/FrequentStream.pdf)
 
 """
+
 # Author: Daniel Lopez-Sanchez <lope@usal.es>
 # License: BSD 3 clause
 
@@ -80,12 +81,10 @@ n_runs = 5
 for k in out_dims:
     score_avg = 0
     for _ in range(n_runs):
-        ps_svm = Pipeline(
-            [
-                ("PS", PolynomialCountSketch(degree=2, n_components=k)),
-                ("SVM", LinearSVC()),
-            ]
-        )
+        ps_svm = Pipeline([
+            ("PS", PolynomialCountSketch(degree=2, n_components=k)),
+            ("SVM", LinearSVC()),
+        ])
         score_avg += ps_svm.fit(X_train, y_train).score(X_test, y_test)
     ps_svm_scores.append(100 * score_avg / n_runs)
 
@@ -96,17 +95,13 @@ n_runs = 5
 for k in out_dims:
     score_avg = 0
     for _ in range(n_runs):
-        ny_svm = Pipeline(
-            [
-                (
-                    "NY",
-                    Nystroem(
-                        kernel="poly", gamma=1.0, degree=2, coef0=0, n_components=k
-                    ),
-                ),
-                ("SVM", LinearSVC()),
-            ]
-        )
+        ny_svm = Pipeline([
+            (
+                "NY",
+                Nystroem(kernel="poly", gamma=1.0, degree=2, coef0=0, n_components=k),
+            ),
+            ("SVM", LinearSVC()),
+        ])
         score_avg += ny_svm.fit(X_train, y_train).score(X_test, y_test)
     ny_svm_scores.append(100 * score_avg / n_runs)
 

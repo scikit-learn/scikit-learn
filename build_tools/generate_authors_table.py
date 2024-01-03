@@ -6,6 +6,7 @@ of hard-coded contributors.
 The table should be updated for each new inclusion in the teams.
 Generating the table requires admin rights.
 """
+
 import getpass
 import sys
 import time

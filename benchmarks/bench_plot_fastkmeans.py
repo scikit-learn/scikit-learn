@@ -56,18 +56,16 @@ def compute_bench(samples_range, features_range):
 def compute_bench_2(chunks):
     results = defaultdict(lambda: [])
     n_features = 50000
-    means = np.array(
-        [
-            [1, 1],
-            [-1, -1],
-            [1, -1],
-            [-1, 1],
-            [0.5, 0.5],
-            [0.75, -0.5],
-            [-1, 0.75],
-            [1, 0],
-        ]
-    )
+    means = np.array([
+        [1, 1],
+        [-1, -1],
+        [1, -1],
+        [-1, 1],
+        [0.5, 0.5],
+        [0.75, -0.5],
+        [-1, 0.75],
+        [1, 0],
+    ])
     X = np.empty((0, 2))
     for i in range(8):
         X = np.r_[X, means[i] + 0.8 * np.random.randn(n_features, 2)]

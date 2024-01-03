@@ -260,32 +260,24 @@ if lightning_clf is not None and not fit_intercept:
     max_squared_sum = get_max_squared_sum(X)
     step_size = get_auto_step_size(max_squared_sum, alpha, "log", fit_intercept)
 
-    clfs.append(
-        (
-            "Lightning-SVRG",
-            lightning_clf.SVRGClassifier(
-                alpha=alpha, eta=step_size, tol=tol, loss="log"
-            ),
-            sag_iter_range,
-            [],
-            [],
-            [],
-            [],
-        )
-    )
-    clfs.append(
-        (
-            "Lightning-SAG",
-            lightning_clf.SAGClassifier(
-                alpha=alpha, eta=step_size, tol=tol, loss="log"
-            ),
-            sag_iter_range,
-            [],
-            [],
-            [],
-            [],
-        )
-    )
+    clfs.append((
+        "Lightning-SVRG",
+        lightning_clf.SVRGClassifier(alpha=alpha, eta=step_size, tol=tol, loss="log"),
+        sag_iter_range,
+        [],
+        [],
+        [],
+        [],
+    ))
+    clfs.append((
+        "Lightning-SAG",
+        lightning_clf.SAGClassifier(alpha=alpha, eta=step_size, tol=tol, loss="log"),
+        sag_iter_range,
+        [],
+        [],
+        [],
+        [],
+    ))
 
     # We keep only 200 features, to have a dense dataset,
     # and compare to lightning SAG, which seems incorrect in the sparse case.

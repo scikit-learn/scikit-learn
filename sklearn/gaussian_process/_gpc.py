@@ -741,12 +741,10 @@ class GaussianProcessClassifier(ClassifierMixin, BaseEstimator):
         self.base_estimator_.fit(X, y)
 
         if self.n_classes_ > 2:
-            self.log_marginal_likelihood_value_ = np.mean(
-                [
-                    estimator.log_marginal_likelihood()
-                    for estimator in self.base_estimator_.estimators_
-                ]
-            )
+            self.log_marginal_likelihood_value_ = np.mean([
+                estimator.log_marginal_likelihood()
+                for estimator in self.base_estimator_.estimators_
+            ])
         else:
             self.log_marginal_likelihood_value_ = (
                 self.base_estimator_.log_marginal_likelihood()
@@ -875,25 +873,19 @@ class GaussianProcessClassifier(ClassifierMixin, BaseEstimator):
             estimators = self.base_estimator_.estimators_
             n_dims = estimators[0].kernel_.n_dims
             if theta.shape[0] == n_dims:  # use same theta for all sub-kernels
-                return np.mean(
-                    [
-                        estimator.log_marginal_likelihood(
-                            theta, clone_kernel=clone_kernel
-                        )
-                        for i, estimator in enumerate(estimators)
-                    ]
-                )
+                return np.mean([
+                    estimator.log_marginal_likelihood(theta, clone_kernel=clone_kernel)
+                    for i, estimator in enumerate(estimators)
+                ])
             elif theta.shape[0] == n_dims * self.classes_.shape[0]:
                 # theta for compound kernel
-                return np.mean(
-                    [
-                        estimator.log_marginal_likelihood(
-                            theta[n_dims * i : n_dims * (i + 1)],
-                            clone_kernel=clone_kernel,
-                        )
-                        for i, estimator in enumerate(estimators)
-                    ]
-                )
+                return np.mean([
+                    estimator.log_marginal_likelihood(
+                        theta[n_dims * i : n_dims * (i + 1)],
+                        clone_kernel=clone_kernel,
+                    )
+                    for i, estimator in enumerate(estimators)
+                ])
             else:
                 raise ValueError(
                     "Shape of theta must be either %d or %d. "

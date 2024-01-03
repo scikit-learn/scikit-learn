@@ -273,13 +273,11 @@ def test_warning_bounds():
 
 @pytest.mark.parametrize(
     "params, error_type, err_msg",
-    [
-        (
-            {"kernel": CompoundKernel(0)},
-            ValueError,
-            "kernel cannot be a CompoundKernel",
-        )
-    ],
+    [(
+        {"kernel": CompoundKernel(0)},
+        ValueError,
+        "kernel cannot be a CompoundKernel",
+    )],
 )
 def test_gpc_fit_error(params, error_type, err_msg):
     """Check that expected error are raised during fit."""

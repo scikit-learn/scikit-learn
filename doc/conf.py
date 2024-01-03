@@ -454,16 +454,14 @@ class SKExampleTitleSortKey(ExampleTitleSortKey):
 
 def notebook_modification_function(notebook_content, notebook_filename):
     notebook_content_str = str(notebook_content)
-    warning_template = "\n".join(
-        [
-            "<div class='alert alert-{message_class}'>",
-            "",
-            "# JupyterLite warning",
-            "",
-            "{message}",
-            "</div>",
-        ]
-    )
+    warning_template = "\n".join([
+        "<div class='alert alert-{message_class}'>",
+        "",
+        "# JupyterLite warning",
+        "",
+        "{message}",
+        "</div>",
+    ])
 
     message_class = "warning"
     message = (
@@ -489,13 +487,11 @@ def notebook_modification_function(notebook_content, notebook_filename):
     if "skimage" in notebook_content_str:
         code_lines.append("%pip install scikit-image")
     if "fetch_" in notebook_content_str:
-        code_lines.extend(
-            [
-                "%pip install pyodide-http",
-                "import pyodide_http",
-                "pyodide_http.patch_all()",
-            ]
-        )
+        code_lines.extend([
+            "%pip install pyodide-http",
+            "import pyodide_http",
+            "pyodide_http.patch_all()",
+        ])
     # always import matplotlib and pandas to avoid Pyodide limitation with
     # imports inside functions
     code_lines.extend(["import matplotlib", "import pandas"])
@@ -689,11 +685,9 @@ def setup(app):
 # The following is used by sphinx.ext.linkcode to provide links to github
 linkcode_resolve = make_linkcode_resolve(
     "sklearn",
-    (
-        "https://github.com/scikit-learn/"
-        "scikit-learn/blob/{revision}/"
-        "{package}/{path}#L{lineno}"
-    ),
+    "https://github.com/scikit-learn/"
+    "scikit-learn/blob/{revision}/"
+    "{package}/{path}#L{lineno}",
 )
 
 from sklearn.utils.fixes import VisibleDeprecationWarning
