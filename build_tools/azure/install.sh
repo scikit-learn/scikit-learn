@@ -118,19 +118,17 @@ scikit_learn_install() {
         export LDFLAGS="$LDFLAGS -Wl,--sysroot=/"
     fi
 
-    # # TODO use a specific variable for this rather than using a particular build ...
-    # if [[ "$DISTRIB" == "conda-pip-latest" ]]; then
-    #     # Check that pip can automatically build scikit-learn with the build
-    #     # dependencies specified in pyproject.toml using an isolated build
-    #     # environment:
-    #     pip install --verbose --editable .
-    # else
-    #     # Use the pre-installed build dependencies and build directly in the
-    #     # current environment.
-    #     python setup.py develop
-    # fi
-    # TODO Temporary hack to test meson build on all CI builds
-    pip install --verbose --no-build-isolation --editable .
+    # TODO use a specific variable for this rather than using a particular build ...
+    if [[ "$DISTRIB" == "conda-pip-latest" ]]; then
+        # Check that pip can automatically build scikit-learn with the build
+        # dependencies specified in pyproject.toml using an isolated build
+        # environment:
+        pip install --verbose --editable .
+    else
+        # Use the pre-installed build dependencies and build directly in the
+        # current environment.
+        python setup.py develop
+    fi
 
     ccache -s
 }

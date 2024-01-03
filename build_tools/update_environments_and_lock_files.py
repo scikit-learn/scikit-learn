@@ -68,8 +68,7 @@ common_dependencies_without_coverage = [
     "pytest",
     "pytest-xdist",
     "pillow",
-    "meson-python",
-    "pip",
+    "setuptools",
 ]
 
 common_dependencies = common_dependencies_without_coverage + [

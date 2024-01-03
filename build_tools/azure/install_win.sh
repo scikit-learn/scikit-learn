@@ -22,10 +22,8 @@ fi
 
 show_installed_libraries
 
-# TODO temporary change to test meson build on Windows
-pip install --verbose --no-build-isolation -Csetup-args="--vsenv" --editable .
 # Build scikit-learn
-# python setup.py bdist_wheel
+python setup.py bdist_wheel
 
 # Install the generated wheel package to test it
-# pip install --pre --no-index --find-links dist scikit-learn
+pip install --pre --no-index --find-links dist scikit-learn
