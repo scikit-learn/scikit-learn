@@ -3,7 +3,6 @@
 # License: BSD 3 clause
 
 import numbers
-import types
 import warnings
 from collections import Counter
 from functools import partial
