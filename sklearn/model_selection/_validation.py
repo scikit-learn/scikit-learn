@@ -400,7 +400,7 @@ def cross_validate(
             raise UnsetMetadataPassedError(
                 message=(
                     f"{sorted(e.unrequested_params.keys())} are passed to"
-                    " `cross_validate` but are not explicitly set as requested or not"
+                    " cross validation but are not explicitly set as requested or not"
                     " requested for cross_validate's estimator:"
                     f" {estimator.__class__.__name__}. Call"
                     " `.set_fit_request(metadata=True)` on the estimator for each"
