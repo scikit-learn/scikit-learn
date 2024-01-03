@@ -49,5 +49,5 @@ TODO: update at the time of the release.
   Also improve efficiency of methods :meth:`from_estimator`
   and :meth:`from_predictions` in :class:`RocCurveDisplay`,
   :class:`~metrics.PrecisionRecallDisplay`, :class:`~metrics.DetCurveDisplay`,
-  :class:`CalibrationDisplay`.
+  :class:`~calibration.CalibrationDisplay`.
   :pr:`28051` by :user:`Pierre de Fréminville <pidefrem>`
