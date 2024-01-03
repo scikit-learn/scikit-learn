@@ -144,10 +144,6 @@ class _BaseImputer(TransformerMixin, BaseEstimator):
         return {"allow_nan": is_scalar_nan(self.missing_values)}
 
 
-def _is_callable(maybe):
-    return isinstance(maybe, Callable)
-
-
 class SimpleImputer(_BaseImputer):
     """Univariate imputer for completing missing values with simple strategies.
 
