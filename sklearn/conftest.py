@@ -336,14 +336,18 @@ def handle_global_random_seed(config):
 def pytest_report_header(config):
     random_seed_var = environ.get("SKLEARN_TESTS_GLOBAL_RANDOM_SEED")
     if random_seed_var == "any":
-        return [
-            "To reproduce this test run, set the following environment variable:",
-            f'    SKLEARN_TESTS_GLOBAL_RANDOM_SEED="{config.option.random_seeds[0]}"',
-            (
-                "See: https://scikit-learn.org/dev/computing/parallelism.html"
-                "#sklearn-tests-global-random-seed"
-            ),
-        ]
+        random_seeds = config.option.random_seeds[0]
+    else:
+        random_seeds = random_seed_var
+
+    return [
+        "To reproduce this test run, set the following environment variable:",
+        f'    SKLEARN_TESTS_GLOBAL_RANDOM_SEED="{random_seeds}"',
+        (
+            "See: https://scikit-learn.org/dev/computing/parallelism.html"
+            "#sklearn-tests-global-random-seed"
+        ),
+    ]
 
 
 def pytest_configure(config):
