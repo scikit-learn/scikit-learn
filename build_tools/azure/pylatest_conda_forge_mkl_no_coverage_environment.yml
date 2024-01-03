@@ -18,4 +18,5 @@ dependencies:
   - pytest-xdist=2.5.0
   - pillow
   - meson-python
+  - pip
   - ccache

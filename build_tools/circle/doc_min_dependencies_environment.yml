@@ -18,6 +18,7 @@ dependencies:
   - pytest-xdist=2.5.0
   - pillow
   - meson-python
+  - pip
   - scikit-image=0.17.2  # min
   - seaborn
   - memory_profiler

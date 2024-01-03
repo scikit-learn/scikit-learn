@@ -12,6 +12,7 @@ dependencies:
     - pytest
     - pytest-xdist==2.5.0
     - meson-python
+    - pip
     - pytest-cov
     - coverage
     - pooch
