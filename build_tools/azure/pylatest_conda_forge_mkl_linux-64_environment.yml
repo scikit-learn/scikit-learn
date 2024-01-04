@@ -21,6 +21,7 @@ dependencies:
   - pytest-cov
   - coverage
   - ccache
+  - meson-python
   - pytorch=1.13
   - pytorch-cpu
   - polars
