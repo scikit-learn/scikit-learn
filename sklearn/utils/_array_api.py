@@ -576,13 +576,14 @@ def _average(a, axis=None, weights=None, normalize=True, xp=None):
             )
         if weights.ndim != 1:
             raise TypeError("1D weights expected when shapes of a and weights differ.")
-        else:
-            # If weights are 1D, add singleton dimensions for broadcasting
-            shape = [1] * a.ndim
-            shape[axis] = a.shape[axis]
-            weights = xp.reshape(weights, shape)
-        if weights.shape[axis] != a.shape[axis]:
+
+        if size(weights) != a.shape[axis]:
             raise ValueError("Length of weights not compatible with specified axis.")
+
+        # If weights are 1D, add singleton dimensions for broadcasting
+        shape = [1] * a.ndim
+        shape[axis] = a.shape[axis]
+        weights = xp.reshape(weights, shape)
 
     sum_ = xp.sum(xp.multiply(a, weights), axis=axis)
 
