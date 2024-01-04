@@ -476,8 +476,8 @@ def test_is_sorted_by_data(csr_container):
     # _is_sorted_by_data should return True when entries are sorted by data,
     # and False in all other cases.
 
-    # Test with sorted 1D array
-    X = csr_container(np.arange(10))
+    # Test with sorted single row sparse array
+    X = csr_container(np.arange(10).reshape(1, 10))
     assert _is_sorted_by_data(X)
     # Test with unsorted 1D array
     X[0, 2] = 5
