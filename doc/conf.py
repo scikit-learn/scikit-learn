@@ -68,6 +68,7 @@ extensions = [
 # Specify how to identify the prompt when copying code snippets
 copybutton_prompt_text = r">>> |\.\.\. "
 copybutton_prompt_is_regexp = True
+copybutton_exclude = "style"
 
 try:
     import jupyterlite_sphinx  # noqa: F401
@@ -299,24 +300,30 @@ redirects = {
     "auto_examples/decomposition/plot_beta_divergence": (
         "auto_examples/applications/plot_topics_extraction_with_nmf_lda"
     ),
+    "auto_examples/ensemble/plot_adaboost_hastie_10_2": (
+        "auto_examples/ensemble/plot_adaboost_multiclass"
+    ),
 }
 html_context["redirects"] = redirects
 for old_link in redirects:
     html_additional_pages[old_link] = "redirects.html"
 
 # Not showing the search summary makes the search page load faster.
-html_show_search_summary = False
+html_show_search_summary = True
 
 
+# The "summary-anchor" IDs will be overwritten via JavaScript to be unique.
+# See `doc/theme/scikit-learn-modern/static/js/details-permalink.js`.
 rst_prolog = """
 .. |details-start| raw:: html
 
-    <details>
+    <details id="summary-anchor">
     <summary class="btn btn-light">
 
 .. |details-split| raw:: html
 
     <span class="tooltiptext">Click for more details</span>
+    <a class="headerlink" href="#summary-anchor" title="Permalink to this heading">¶</a>
     </summary>
     <div class="card">
 
@@ -435,7 +442,7 @@ class SKExampleTitleSortKey(ExampleTitleSortKey):
         prefix = "plot_release_highlights_"
 
         # Use title to sort if not a release highlight
-        if not filename.startswith(prefix):
+        if not str(filename).startswith(prefix):
             return title
 
         major_minor = filename[len(prefix) :].split("_")[:2]
@@ -532,6 +539,7 @@ sphinx_gallery_conf = {
     "inspect_global_variables": False,
     "remove_config_comments": True,
     "plot_gallery": "True",
+    "recommender": {"enable": True, "n_examples": 5, "min_df": 12},
     "reset_modules": ("matplotlib", "seaborn", reset_sklearn_config),
 }
 if with_jupyterlite:
@@ -688,6 +696,8 @@ linkcode_resolve = make_linkcode_resolve(
     ),
 )
 
+from sklearn.utils.fixes import VisibleDeprecationWarning
+
 warnings.filterwarnings(
     "ignore",
     category=UserWarning,
@@ -696,7 +706,19 @@ warnings.filterwarnings(
         " non-GUI backend, so cannot show the figure."
     ),
 )
-
+if os.environ.get("SKLEARN_DOC_BUILD_WARNINGS_AS_ERRORS", "true").lower() == "true":
+    # Raise warning as error in example to catch warnings when building the
+    # documentation Since we are using lock files to build the documentation, we should
+    # not have any warnings. Before updating the lock files, we need to fix them.
+    for warning_type in (FutureWarning, DeprecationWarning, VisibleDeprecationWarning):
+        warnings.filterwarnings("error", category=warning_type)
+    # TODO: remove when pyamg > 5.0.1
+    # Avoid a deprecation warning due pkg_resources deprecation in pyamg.
+    warnings.filterwarnings(
+        "ignore",
+        message="pkg_resources is deprecated as an API",
+        category=DeprecationWarning,
+    )
 
 # maps functions with a class name that is indistinguishable when case is
 # ignore to another filename

@@ -49,7 +49,10 @@ pre_python_environment_install() {
 
 python_environment_install_and_activate() {
     if [[ "$DISTRIB" == "conda"* ]]; then
-        conda update -n base conda -y
+        # Install/update conda with the libmamba solver because the legacy
+        # solver can be slow at installing a specific version of conda-lock.
+        conda install -n base conda conda-libmamba-solver -y
+        conda config --set solver libmamba
         conda install -c conda-forge "$(get_dep conda-lock min)" -y
         conda-lock install --name $VIRTUALENV $LOCK_FILE
         source activate $VIRTUALENV
@@ -69,6 +72,12 @@ python_environment_install_and_activate() {
         echo "Installing development dependency wheels"
         dev_anaconda_url=https://pypi.anaconda.org/scientific-python-nightly-wheels/simple
         pip install --pre --upgrade --timeout=60 --extra-index $dev_anaconda_url numpy pandas scipy
+
+        # XXX: at the time of writing, installing scipy or pandas from the dev
+        # wheels forces the numpy dependency to be < 2.0.0. Let's force the
+        # installation of numpy dev wheels instead.
+        pip install --pre --upgrade --timeout=60 --extra-index $dev_anaconda_url numpy
+
         echo "Installing Cython from latest sources"
         pip install https://github.com/cython/cython/archive/master.zip
         echo "Installing joblib from latest sources"

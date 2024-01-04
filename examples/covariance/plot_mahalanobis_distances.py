@@ -122,6 +122,7 @@ print(
 # MCD based Mahalanobis distances fit the inlier black points much better,
 # whereas the MLE based distances are more influenced by the outlier
 # red points.
+import matplotlib.lines as mlines
 
 fig, ax = plt.subplots(figsize=(10, 5))
 # Plot data set
@@ -154,8 +155,8 @@ robust_contour = ax.contour(
 # Add legend
 ax.legend(
     [
-        emp_cov_contour.collections[1],
-        robust_contour.collections[1],
+        mlines.Line2D([], [], color="tab:blue", linestyle="dashed"),
+        mlines.Line2D([], [], color="tab:orange", linestyle="dotted"),
         inlier_plot,
         outlier_plot,
     ],

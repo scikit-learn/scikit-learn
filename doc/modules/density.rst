@@ -113,6 +113,10 @@ forms, which are shown in the following figure:
 
 .. centered:: |kde_kernels|
 
+|details-start|
+**kernels' mathematical expressions**
+|details-split|
+
 The form of these kernels is as follows:
 
 * Gaussian kernel (``kernel = 'gaussian'``)
@@ -138,6 +142,8 @@ The form of these kernels is as follows:
 * Cosine kernel (``kernel = 'cosine'``)
 
   :math:`K(x; h) \propto \cos(\frac{\pi x}{2h})` if :math:`x < h`
+
+|details-end|
 
 The kernel density estimator can be used with any of the valid distance
 metrics (see :class:`~sklearn.metrics.DistanceMetric` for a list of

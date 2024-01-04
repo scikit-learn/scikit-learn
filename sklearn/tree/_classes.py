@@ -16,7 +16,6 @@ randomized trees. Single and multi-output problems are both handled.
 
 import copy
 import numbers
-import warnings
 from abc import ABCMeta, abstractmethod
 from math import ceil
 from numbers import Integral, Real
@@ -189,7 +188,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             and self.monotonic_cst is None
         )
 
-    def _compute_missing_values_in_feature_mask(self, X):
+    def _compute_missing_values_in_feature_mask(self, X, estimator_name=None):
         """Return boolean mask denoting if there are missing values for each feature.
 
         This method also ensures that X is finite.
@@ -199,13 +198,17 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         X : array-like of shape (n_samples, n_features), dtype=DOUBLE
             Input data.
 
+        estimator_name : str or None, default=None
+            Name to use when raising an error. Defaults to the class name.
+
         Returns
         -------
         missing_values_in_feature_mask : ndarray of shape (n_features,), or None
             Missing value mask. If missing values are not supported or there
             are no missing values, return None.
         """
-        common_kwargs = dict(estimator_name=self.__class__.__name__, input_name="X")
+        estimator_name = estimator_name or self.__class__.__name__
+        common_kwargs = dict(estimator_name=estimator_name, input_name="X")
 
         if not self._support_missing_values(X):
             assert_all_finite(X, **common_kwargs)
@@ -330,28 +333,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         min_samples_split = max(min_samples_split, 2 * min_samples_leaf)
 
         if isinstance(self.max_features, str):
-            if self.max_features == "auto":
-                if is_classification:
-                    max_features = max(1, int(np.sqrt(self.n_features_in_)))
-                    warnings.warn(
-                        (
-                            "`max_features='auto'` has been deprecated in 1.1 "
-                            "and will be removed in 1.3. To keep the past behaviour, "
-                            "explicitly set `max_features='sqrt'`."
-                        ),
-                        FutureWarning,
-                    )
-                else:
-                    max_features = self.n_features_in_
-                    warnings.warn(
-                        (
-                            "`max_features='auto'` has been deprecated in 1.1 "
-                            "and will be removed in 1.3. To keep the past behaviour, "
-                            "explicitly set `max_features=1.0'`."
-                        ),
-                        FutureWarning,
-                    )
-            elif self.max_features == "sqrt":
+            if self.max_features == "sqrt":
                 max_features = max(1, int(np.sqrt(self.n_features_in_)))
             elif self.max_features == "log2":
                 max_features = max(1, int(np.log2(self.n_features_in_)))
@@ -766,7 +748,7 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
         the input samples) required to be at a leaf node. Samples have
         equal weight when sample_weight is not provided.
 
-    max_features : int, float or {"auto", "sqrt", "log2"}, default=None
+    max_features : int, float or {"sqrt", "log2"}, default=None
         The number of features to consider when looking for the best split:
 
             - If int, then consider `max_features` features at each split.
@@ -1061,23 +1043,12 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
         proba = self.tree_.predict(X)
 
         if self.n_outputs_ == 1:
-            proba = proba[:, : self.n_classes_]
-            normalizer = proba.sum(axis=1)[:, np.newaxis]
-            normalizer[normalizer == 0.0] = 1.0
-            proba /= normalizer
-
-            return proba
-
+            return proba[:, : self.n_classes_]
         else:
             all_proba = []
-
             for k in range(self.n_outputs_):
                 proba_k = proba[:, k, : self.n_classes_[k]]
-                normalizer = proba_k.sum(axis=1)[:, np.newaxis]
-                normalizer[normalizer == 0.0] = 1.0
-                proba_k /= normalizer
                 all_proba.append(proba_k)
-
             return all_proba
 
     def predict_log_proba(self, X):
@@ -1184,7 +1155,7 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
         the input samples) required to be at a leaf node. Samples have
         equal weight when sample_weight is not provided.
 
-    max_features : int, float or {"auto", "sqrt", "log2"}, default=None
+    max_features : int, float or {"sqrt", "log2"}, default=None
         The number of features to consider when looking for the best split:
 
         - If int, then consider `max_features` features at each split.
@@ -1511,19 +1482,19 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
         the input samples) required to be at a leaf node. Samples have
         equal weight when sample_weight is not provided.
 
-    max_features : int, float, {"auto", "sqrt", "log2"} or None, default="sqrt"
+    max_features : int, float, {"sqrt", "log2"} or None, default="sqrt"
         The number of features to consider when looking for the best split:
 
-            - If int, then consider `max_features` features at each split.
-            - If float, then `max_features` is a fraction and
-              `max(1, int(max_features * n_features_in_))` features are considered at
-              each split.
-            - If "sqrt", then `max_features=sqrt(n_features)`.
-            - If "log2", then `max_features=log2(n_features)`.
-            - If None, then `max_features=n_features`.
+        - If int, then consider `max_features` features at each split.
+        - If float, then `max_features` is a fraction and
+          `max(1, int(max_features * n_features_in_))` features are considered at
+          each split.
+        - If "sqrt", then `max_features=sqrt(n_features)`.
+        - If "log2", then `max_features=log2(n_features)`.
+        - If None, then `max_features=n_features`.
 
-            .. versionchanged:: 1.1
-                The default of `max_features` changed from `"auto"` to `"sqrt"`.
+        .. versionchanged:: 1.1
+            The default of `max_features` changed from `"auto"` to `"sqrt"`.
 
         Note: the search for a split does not stop until at least one
         valid partition of the node samples is found, even if it requires to
@@ -1797,7 +1768,7 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
         the input samples) required to be at a leaf node. Samples have
         equal weight when sample_weight is not provided.
 
-    max_features : int, float, {"auto", "sqrt", "log2"} or None, default=1.0
+    max_features : int, float, {"sqrt", "log2"} or None, default=1.0
         The number of features to consider when looking for the best split:
 
         - If int, then consider `max_features` features at each split.

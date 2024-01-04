@@ -12,7 +12,7 @@ import pytest
 from _pytest.doctest import DoctestItem
 from threadpoolctl import threadpool_limits
 
-from sklearn import config_context
+from sklearn import config_context, set_config
 from sklearn._min_dependencies import PYTEST_MIN_VERSION
 from sklearn.datasets import (
     fetch_20newsgroups,
@@ -25,7 +25,7 @@ from sklearn.datasets import (
 )
 from sklearn.tests import random_seed
 from sklearn.utils import _IS_32BIT
-from sklearn.utils.fixes import parse_version, sp_version
+from sklearn.utils.fixes import np_base_version, parse_version, sp_version
 
 if parse_version(pytest.__version__) < parse_version(PYTEST_MIN_VERSION):
     raise ImportError(
@@ -187,6 +187,10 @@ def pytest_collection_modifyitems(config, items):
         )
         skip_doctests = True
 
+    if np_base_version >= parse_version("2"):
+        reason = "Due to NEP 51 numpy scalar repr has changed in numpy 2"
+        skip_doctests = True
+
     # Normally doctest has the entire module's scope. Here we set globs to an empty dict
     # to remove the module's scope:
     # https://docs.python.org/3/library/doctest.html#what-s-the-execution-context
@@ -274,3 +278,11 @@ def hide_available_pandas(monkeypatch):
         return import_orig(name, *args, **kwargs)
 
     monkeypatch.setattr(builtins, "__import__", mocked_import)
+
+
+@pytest.fixture
+def print_changed_only_false():
+    """Set `print_changed_only` to False for the duration of the test."""
+    set_config(print_changed_only=False)
+    yield
+    set_config(print_changed_only=True)  # reset to default

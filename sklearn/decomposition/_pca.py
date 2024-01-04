@@ -22,10 +22,10 @@ from scipy.special import gammaln
 from ..base import _fit_context
 from ..utils import check_random_state
 from ..utils._arpack import _init_arpack_v0
-from ..utils._array_api import get_namespace
+from ..utils._array_api import _convert_to_numpy, get_namespace
 from ..utils._param_validation import Interval, RealNotInt, StrOptions
-from ..utils.deprecation import deprecated
 from ..utils.extmath import fast_logdet, randomized_svd, stable_cumsum, svd_flip
+from ..utils.sparsefuncs import _implicit_column_offset, mean_variance_axis
 from ..utils.validation import check_is_fitted
 from ._base import _BasePCA
 
@@ -59,6 +59,7 @@ def _assess_dimension(spectrum, rank, n_samples):
     Automatic Choice of Dimensionality for PCA. NIPS 2000: 598-604
     <https://proceedings.neurips.cc/paper/2000/file/7503cfacd12053d309b6bed5c89de212-Paper.pdf>`_
     """
+    xp, _ = get_namespace(spectrum)
 
     n_features = spectrum.shape[0]
     if not 1 <= rank < n_features:
@@ -72,29 +73,29 @@ def _assess_dimension(spectrum, rank, n_samples):
         # small and won't be the max anyway. Also, it can lead to numerical
         # issues below when computing pa, in particular in log((spectrum[i] -
         # spectrum[j]) because this will take the log of something very small.
-        return -np.inf
+        return -xp.inf
 
     pu = -rank * log(2.0)
     for i in range(1, rank + 1):
         pu += (
             gammaln((n_features - i + 1) / 2.0)
-            - log(np.pi) * (n_features - i + 1) / 2.0
+            - log(xp.pi) * (n_features - i + 1) / 2.0
         )
 
-    pl = np.sum(np.log(spectrum[:rank]))
+    pl = xp.sum(xp.log(spectrum[:rank]))
     pl = -pl * n_samples / 2.0
 
-    v = max(eps, np.sum(spectrum[rank:]) / (n_features - rank))
-    pv = -np.log(v) * n_samples * (n_features - rank) / 2.0
+    v = max(eps, xp.sum(spectrum[rank:]) / (n_features - rank))
+    pv = -log(v) * n_samples * (n_features - rank) / 2.0
 
     m = n_features * rank - rank * (rank + 1.0) / 2.0
-    pp = log(2.0 * np.pi) * (m + rank) / 2.0
+    pp = log(2.0 * xp.pi) * (m + rank) / 2.0
 
     pa = 0.0
-    spectrum_ = spectrum.copy()
+    spectrum_ = xp.asarray(spectrum, copy=True)
     spectrum_[rank:n_features] = v
     for i in range(rank):
-        for j in range(i + 1, len(spectrum)):
+        for j in range(i + 1, spectrum.shape[0]):
             pa += log(
                 (spectrum[i] - spectrum[j]) * (1.0 / spectrum_[j] - 1.0 / spectrum_[i])
             ) + log(n_samples)
@@ -115,7 +116,7 @@ def _infer_dimension(spectrum, n_samples):
     ll[0] = -xp.inf  # we don't want to return n_components = 0
     for rank in range(1, spectrum.shape[0]):
         ll[rank] = _assess_dimension(spectrum, rank, n_samples)
-    return ll.argmax()
+    return xp.argmax(ll)
 
 
 class PCA(_BasePCA):
@@ -272,9 +273,6 @@ class PCA(_BasePCA):
         n_components, or the lesser value of n_features and n_samples
         if n_components is None.
 
-    n_features_ : int
-        Number of features in the training data.
-
     n_samples_ : int
         Number of samples in the training data.
 
@@ -406,23 +404,13 @@ class PCA(_BasePCA):
         self.power_iteration_normalizer = power_iteration_normalizer
         self.random_state = random_state
 
-    # TODO(1.4): remove in 1.4
-    # mypy error: Decorated property not supported
-    @deprecated(  # type: ignore
-        "Attribute `n_features_` was deprecated in version 1.2 and will be "
-        "removed in 1.4. Use `n_features_in_` instead."
-    )
-    @property
-    def n_features_(self):
-        return self.n_features_in_
-
     @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y=None):
         """Fit the model with X.
 
         Parameters
         ----------
-        X : array-like of shape (n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Training data, where `n_samples` is the number of samples
             and `n_features` is the number of features.
 
@@ -443,7 +431,7 @@ class PCA(_BasePCA):
 
         Parameters
         ----------
-        X : array-like of shape (n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Training data, where `n_samples` is the number of samples
             and `n_features` is the number of features.
 
@@ -476,12 +464,12 @@ class PCA(_BasePCA):
         """Dispatch to the right submethod depending on the chosen solver."""
         xp, is_array_api_compliant = get_namespace(X)
 
-        # Raise an error for sparse input.
-        # This is more informative than the generic one raised by check_array.
-        if issparse(X):
+        # Raise an error for sparse input and unsupported svd_solver
+        if issparse(X) and self.svd_solver != "arpack":
             raise TypeError(
-                "PCA does not support sparse input. See "
-                "TruncatedSVD for a possible alternative."
+                'PCA only support sparse inputs with the "arpack" solver, while '
+                f'"{self.svd_solver}" was passed. See TruncatedSVD for a possible'
+                " alternative."
             )
         # Raise an error for non-Numpy input and arpack solver.
         if self.svd_solver == "arpack" and is_array_api_compliant:
@@ -490,7 +478,11 @@ class PCA(_BasePCA):
             )
 
         X = self._validate_data(
-            X, dtype=[xp.float64, xp.float32], ensure_2d=True, copy=self.copy
+            X,
+            dtype=[xp.float64, xp.float32],
+            accept_sparse=("csr", "csc"),
+            ensure_2d=True,
+            copy=self.copy,
         )
 
         # Handle n_components==None
@@ -573,8 +565,24 @@ class PCA(_BasePCA):
             # side='right' ensures that number of features selected
             # their variance is always greater than n_components float
             # passed. More discussion in issue: #15669
-            ratio_cumsum = stable_cumsum(explained_variance_ratio_)
-            n_components = xp.searchsorted(ratio_cumsum, n_components, side="right") + 1
+            if is_array_api_compliant:
+                # Convert to numpy as xp.cumsum and xp.searchsorted are not
+                # part of the Array API standard yet:
+                #
+                # https://github.com/data-apis/array-api/issues/597
+                # https://github.com/data-apis/array-api/issues/688
+                #
+                # Furthermore, it's not always safe to call them for namespaces
+                # that already implement them: for instance as
+                # cupy.searchsorted does not accept a float as second argument.
+                explained_variance_ratio_np = _convert_to_numpy(
+                    explained_variance_ratio_, xp=xp
+                )
+            else:
+                explained_variance_ratio_np = explained_variance_ratio_
+            ratio_cumsum = stable_cumsum(explained_variance_ratio_np)
+            n_components = np.searchsorted(ratio_cumsum, n_components, side="right") + 1
+
         # Compute noise covariance using Probabilistic PCA model
         # The sigma2 maximum likelihood (cf. eq. 12.46)
         if n_components < min(n_features, n_samples):
@@ -622,8 +630,14 @@ class PCA(_BasePCA):
         random_state = check_random_state(self.random_state)
 
         # Center data
-        self.mean_ = xp.mean(X, axis=0)
-        X -= self.mean_
+        total_var = None
+        if issparse(X):
+            self.mean_, var = mean_variance_axis(X, axis=0)
+            total_var = var.sum() * n_samples / (n_samples - 1)  # ddof=1
+            X = _implicit_column_offset(X, self.mean_)
+        else:
+            self.mean_ = xp.mean(X, axis=0)
+            X -= self.mean_
 
         if svd_solver == "arpack":
             v0 = _init_arpack_v0(min(X.shape), random_state)
@@ -655,9 +669,15 @@ class PCA(_BasePCA):
 
         # Workaround in-place variance calculation since at the time numpy
         # did not have a way to calculate variance in-place.
-        N = X.shape[0] - 1
-        X **= 2
-        total_var = xp.sum(xp.sum(X, axis=0) / N)
+        #
+        # TODO: update this code to either:
+        # * Use the array-api variance calculation, unless memory usage suffers
+        # * Update sklearn.utils.extmath._incremental_mean_and_var to support array-api
+        # See: https://github.com/scikit-learn/scikit-learn/pull/18689#discussion_r1335540991
+        if total_var is None:
+            N = X.shape[0] - 1
+            X **= 2
+            total_var = xp.sum(X) / N
 
         self.explained_variance_ratio_ = self.explained_variance_ / total_var
         self.singular_values_ = xp.asarray(S, copy=True)  # Store the singular values.

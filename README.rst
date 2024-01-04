@@ -17,7 +17,7 @@
 .. |Nightly wheels| image:: https://github.com/scikit-learn/scikit-learn/workflows/Wheel%20builder/badge.svg?event=schedule
 .. _`Nightly wheels`: https://github.com/scikit-learn/scikit-learn/actions?query=workflow%3A%22Wheel+builder%22+event%3Aschedule
 
-.. |PythonVersion| image:: https://img.shields.io/badge/python-3.8%20%7C%203.9%20%7C%203.10-blue
+.. |PythonVersion| image:: https://img.shields.io/pypi/pyversions/scikit-learn.svg
 .. _PythonVersion: https://pypi.org/project/scikit-learn/
 
 .. |PyPi| image:: https://img.shields.io/pypi/v/scikit-learn
@@ -32,14 +32,14 @@
 .. |Benchmark| image:: https://img.shields.io/badge/Benchmarked%20by-asv-blue
 .. _`Benchmark`: https://scikit-learn.org/scikit-learn-benchmarks/
 
-.. |PythonMinVersion| replace:: 3.8
-.. |NumPyMinVersion| replace:: 1.17.3
-.. |SciPyMinVersion| replace:: 1.5.0
-.. |JoblibMinVersion| replace:: 1.1.1
+.. |PythonMinVersion| replace:: 3.9
+.. |NumPyMinVersion| replace:: 1.19.5
+.. |SciPyMinVersion| replace:: 1.6.0
+.. |JoblibMinVersion| replace:: 1.2.0
 .. |ThreadpoolctlMinVersion| replace:: 2.0.0
-.. |MatplotlibMinVersion| replace:: 3.1.3
-.. |Scikit-ImageMinVersion| replace:: 0.16.2
-.. |PandasMinVersion| replace:: 1.0.5
+.. |MatplotlibMinVersion| replace:: 3.3.4
+.. |Scikit-ImageMinVersion| replace:: 0.17.2
+.. |PandasMinVersion| replace:: 1.1.5
 .. |SeabornMinVersion| replace:: 0.9.0
 .. |PytestMinVersion| replace:: 7.1.2
 .. |PlotlyMinVersion| replace:: 5.14.0
@@ -80,7 +80,7 @@ scikit-learn 1.0 and later require Python 3.7 or newer.
 scikit-learn 1.1 and later require Python 3.8 or newer.
 
 Scikit-learn plotting capabilities (i.e., functions start with ``plot_`` and
-classes end with "Display") require Matplotlib (>= |MatplotlibMinVersion|).
+classes end with ``Display``) require Matplotlib (>= |MatplotlibMinVersion|).
 For running the examples Matplotlib >= |MatplotlibMinVersion| is required.
 A few examples require scikit-image >= |Scikit-ImageMinVersion|, a few examples
 require pandas >= |PandasMinVersion|, some examples require seaborn >=
@@ -89,7 +89,7 @@ require pandas >= |PandasMinVersion|, some examples require seaborn >=
 User installation
 ~~~~~~~~~~~~~~~~~
 
-If you already have a working installation of numpy and scipy,
+If you already have a working installation of NumPy and SciPy,
 the easiest way to install scikit-learn is using ``pip``::
 
     pip install -U scikit-learn

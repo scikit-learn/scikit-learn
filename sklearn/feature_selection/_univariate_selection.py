@@ -323,10 +323,13 @@ def r_regression(X, y, *, center=True, force_finite=True):
     # need not center X
     if center:
         y = y - np.mean(y)
-        if issparse(X):
-            X_means = X.mean(axis=0).getA1()
-        else:
-            X_means = X.mean(axis=0)
+        # TODO: for Scipy <= 1.10, `isspmatrix(X)` returns `True` for sparse arrays.
+        # Here, we check the output of the `.mean` operation that returns a `np.matrix`
+        # for sparse matrices while a `np.array` for dense and sparse arrays.
+        # We can reconsider using `isspmatrix` when the minimum version is
+        # SciPy >= 1.11
+        X_means = X.mean(axis=0)
+        X_means = X_means.getA1() if isinstance(X_means, np.matrix) else X_means
         # Compute the scaled standard deviations via moments
         X_norms = np.sqrt(row_norms(X.T, squared=True) - n_samples * X_means**2)
     else:
@@ -478,7 +481,7 @@ class _BaseFilter(SelectorMixin, BaseEstimator):
         self.score_func = score_func
 
     @_fit_context(prefer_skip_nested_validation=True)
-    def fit(self, X, y):
+    def fit(self, X, y=None):
         """Run score function on (X, y) and get the appropriate features.
 
         Parameters
@@ -486,18 +489,21 @@ class _BaseFilter(SelectorMixin, BaseEstimator):
         X : array-like of shape (n_samples, n_features)
             The training input samples.
 
-        y : array-like of shape (n_samples,)
+        y : array-like of shape (n_samples,) or None
             The target values (class labels in classification, real numbers in
-            regression).
+            regression). If the selector is unsupervised then `y` can be set to `None`.
 
         Returns
         -------
         self : object
             Returns the instance itself.
         """
-        X, y = self._validate_data(
-            X, y, accept_sparse=["csr", "csc"], multi_output=True
-        )
+        if y is None:
+            X = self._validate_data(X, accept_sparse=["csr", "csc"])
+        else:
+            X, y = self._validate_data(
+                X, y, accept_sparse=["csr", "csc"], multi_output=True
+            )
 
         self._check_params(X, y)
         score_func_ret = self.score_func(X, y)
@@ -578,6 +584,9 @@ class SelectPercentile(_BaseFilter):
     Ties between features with equal scores will be broken in an unspecified
     way.
 
+    This filter supports unsupervised feature selection that only requests `X` for
+    computing the scores.
+
     Examples
     --------
     >>> from sklearn.datasets import load_digits
@@ -617,6 +626,9 @@ class SelectPercentile(_BaseFilter):
             kept_ties = ties[: max_feats - mask.sum()]
             mask[kept_ties] = True
         return mask
+
+    def _more_tags(self):
+        return {"requires_y": False}
 
 
 class SelectKBest(_BaseFilter):
@@ -677,6 +689,9 @@ class SelectKBest(_BaseFilter):
     Ties between features with equal scores will be broken in an unspecified
     way.
 
+    This filter supports unsupervised feature selection that only requests `X` for
+    computing the scores.
+
     Examples
     --------
     >>> from sklearn.datasets import load_digits
@@ -700,9 +715,9 @@ class SelectKBest(_BaseFilter):
 
     def _check_params(self, X, y):
         if not isinstance(self.k, str) and self.k > X.shape[1]:
-            raise ValueError(
-                f"k should be <= n_features = {X.shape[1]}; "
-                f"got {self.k}. Use k='all' to return all features."
+            warnings.warn(
+                f"k={self.k} is greater than n_features={X.shape[1]}. "
+                "All the features will be returned."
             )
 
     def _get_support_mask(self):
@@ -720,6 +735,9 @@ class SelectKBest(_BaseFilter):
             # megafeature on x86-64).
             mask[np.argsort(scores, kind="mergesort")[-self.k :]] = 1
             return mask
+
+    def _more_tags(self):
+        return {"requires_y": False}
 
 
 class SelectFpr(_BaseFilter):
@@ -988,7 +1006,8 @@ class GenericUnivariateSelect(_BaseFilter):
         a single array scores.
 
     mode : {'percentile', 'k_best', 'fpr', 'fdr', 'fwe'}, default='percentile'
-        Feature selection mode.
+        Feature selection mode. Note that the `'percentile'` and `'kbest'`
+        modes are supporting unsupervised feature selection (when `y` is `None`).
 
     param : "all", float or int, default=1e-5
         Parameter of the corresponding mode.

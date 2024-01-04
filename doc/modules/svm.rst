@@ -60,14 +60,19 @@ capable of performing binary and multi-class classification on a dataset.
    :align: center
 
 
-:class:`SVC` and :class:`NuSVC` are similar methods, but accept
-slightly different sets of parameters and have different mathematical
-formulations (see section :ref:`svm_mathematical_formulation`). On the
-other hand, :class:`LinearSVC` is another (faster) implementation of Support
-Vector Classification for the case of a linear kernel. Note that
-:class:`LinearSVC` does not accept parameter ``kernel``, as this is
-assumed to be linear. It also lacks some of the attributes of
-:class:`SVC` and :class:`NuSVC`, like ``support_``.
+:class:`SVC` and :class:`NuSVC` are similar methods, but accept slightly
+different sets of parameters and have different mathematical formulations (see
+section :ref:`svm_mathematical_formulation`). On the other hand,
+:class:`LinearSVC` is another (faster) implementation of Support Vector
+Classification for the case of a linear kernel. It also
+lacks some of the attributes of :class:`SVC` and :class:`NuSVC`, like
+`support_`. :class:`LinearSVC` uses `squared_hinge` loss and due to its
+implementation in `liblinear` it also regularizes the intercept, if considered.
+This effect can however be reduced by carefully fine tuning its
+`intercept_scaling` parameter, which allows the intercept term to have a
+different regularization behavior compared to the other features. The
+classification results and score can therefore differ from the other two
+classifiers.
 
 As other classifiers, :class:`SVC`, :class:`NuSVC` and
 :class:`LinearSVC` take as input two arrays: an array `X` of shape
@@ -314,10 +319,15 @@ target.
 
 There are three different implementations of Support Vector Regression:
 :class:`SVR`, :class:`NuSVR` and :class:`LinearSVR`. :class:`LinearSVR`
-provides a faster implementation than :class:`SVR` but only considers
-the linear kernel, while :class:`NuSVR` implements a slightly different
-formulation than :class:`SVR` and :class:`LinearSVR`. See
-:ref:`svm_implementation_details` for further details.
+provides a faster implementation than :class:`SVR` but only considers the
+linear kernel, while :class:`NuSVR` implements a slightly different formulation
+than :class:`SVR` and :class:`LinearSVR`. Due to its implementation in
+`liblinear` :class:`LinearSVR` also regularizes the intercept, if considered.
+This effect can however be reduced by carefully fine tuning its
+`intercept_scaling` parameter, which allows the intercept term to have a
+different regularization behavior compared to the other features. The
+classification results and score can therefore differ from the other two
+classifiers. See :ref:`svm_implementation_details` for further details.
 
 As with classification classes, the fit method will take as
 argument vectors X, y, only that in this case y is expected to have
@@ -447,7 +457,7 @@ Tips on Practical Use
 
     The underlying :class:`LinearSVC` implementation uses a random number
     generator to select features when fitting the model with a dual coordinate
-    descent (i.e when ``dual`` is set to ``True``). It is thus not uncommon
+    descent (i.e. when ``dual`` is set to ``True``). It is thus not uncommon
     to have slightly different results for the same input data. If that
     happens, try with a smaller `tol` parameter. This randomness can also be
     controlled with the ``random_state`` parameter. When ``dual`` is
@@ -511,9 +521,8 @@ is advised to use :class:`~sklearn.model_selection.GridSearchCV` with
  * :ref:`sphx_glr_auto_examples_svm_plot_rbf_parameters.py`
  * :ref:`sphx_glr_auto_examples_svm_plot_svm_nonlinear.py`
 
-|details-start|
-**Custom Kernels**
-|details-split|
+Custom Kernels
+--------------
 
 You can define your own kernels by either giving the kernel as a
 python function or by precomputing the Gram matrix.
@@ -529,8 +538,9 @@ classifiers, except that:
       use of ``fit()`` and ``predict()`` you will have unexpected results.
 
 
-Using Python functions as kernels
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+|details-start|
+**Using Python functions as kernels**
+|details-split|
 
 You can use your own defined kernels by passing a function to the
 ``kernel`` parameter.
@@ -549,12 +559,12 @@ instance that will use that kernel::
     ...
     >>> clf = svm.SVC(kernel=my_kernel)
 
-.. topic:: Examples:
+|details-end|
 
- * :ref:`sphx_glr_auto_examples_svm_plot_custom_kernel.py`.
 
-Using the Gram matrix
-~~~~~~~~~~~~~~~~~~~~~
+|details-start|
+**Using the Gram matrix**
+|details-split|
 
 You can pass pre-computed kernels by using the ``kernel='precomputed'``
 option. You should then pass Gram matrix instead of X to the `fit` and
@@ -578,6 +588,10 @@ test vectors must be provided:
     array([0, 1, 0])
 
 |details-end|
+
+.. topic:: Examples:
+
+ * :ref:`sphx_glr_auto_examples_svm_plot_custom_kernel.py`.
 
 .. _svm_mathematical_formulation:
 

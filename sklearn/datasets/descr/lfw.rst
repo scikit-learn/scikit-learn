@@ -32,8 +32,9 @@ face detector from various online websites.
     Features            real, between 0 and 255
     =================   =======================
 
-Usage
-~~~~~
+|details-start|
+**Usage**
+|details-split|
 
 ``scikit-learn`` provides two loaders that will automatically download,
 cache, parse the metadata files, decode the jpeg and convert the
@@ -111,6 +112,8 @@ The :func:`sklearn.datasets.fetch_lfw_pairs` datasets is subdivided into
 an evaluation ``10_folds`` set meant to compute performance metrics using a
 10-folds cross validation scheme.
 
+|details-end|
+
 .. topic:: References:
 
  * `Labeled Faces in the Wild: A Database for Studying Face Recognition
@@ -120,7 +123,6 @@ an evaluation ``10_folds`` set meant to compute performance metrics using a
    University of Massachusetts, Amherst, Technical Report 07-49, October, 2007.
 
 
-Examples
-~~~~~~~~
+.. topic:: Examples:
 
-:ref:`sphx_glr_auto_examples_applications_plot_face_recognition.py`
+   * :ref:`sphx_glr_auto_examples_applications_plot_face_recognition.py`
