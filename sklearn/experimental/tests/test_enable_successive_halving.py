@@ -23,7 +23,7 @@ def test_imports_strategies():
     from sklearn.model_selection import HalvingRandomSearchCV
     """
     assert_run_python_script(
-        textwrap.dedent(good_import), output_does_not_match=pattern
+        textwrap.dedent(good_import), output_should_not_match=pattern
     )
 
     good_import_with_model_selection_first = """
@@ -34,7 +34,7 @@ def test_imports_strategies():
     """
     assert_run_python_script(
         textwrap.dedent(good_import_with_model_selection_first),
-        output_does_not_match=pattern,
+        output_should_not_match=pattern,
     )
 
     bad_imports = f"""

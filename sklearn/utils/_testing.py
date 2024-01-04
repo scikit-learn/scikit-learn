@@ -669,11 +669,11 @@ def check_docstring_parameters(func, doc=None, ignore=None):
     return incorrect
 
 
-def assert_run_python_script(source_code, output_does_not_match="", timeout=60):
+def assert_run_python_script(source_code, output_should_not_match=".+", timeout=60):
     """Utility to check assertions in an independent Python subprocess.
 
     The script provided in the source code should return 0 and the stdtout +
-    stderr should not match the pattern `output_does_not_match`.
+    stderr should not match the pattern `output_should_not_match`.
 
     This is a port from cloudpickle https://github.com/cloudpipe/cloudpickle
 
@@ -681,9 +681,9 @@ def assert_run_python_script(source_code, output_does_not_match="", timeout=60):
     ----------
     source_code : str
         The Python source code to execute.
-    output_does_not_match : str
+    output_should_not_match : str
         Pattern that the the stdout + stderr should not match. By default if
-        stdout + stderr are not both empty an error will be raised.
+        stdout + stderr are not both empty, an error will be raised.
     timeout : int, default=60
         Time in seconds before timeout.
     """
@@ -714,13 +714,13 @@ def assert_run_python_script(source_code, output_does_not_match="", timeout=60):
                     "script errored with output:\n%s" % e.output.decode("utf-8")
                 )
             out = out.decode("utf-8")
-            if re.search(out, output_does_not_match):
+            if re.search(out, output_should_not_match):
                 if out == "":
                     expectation = "Expected empty output"
                 else:
                     expectation = (
                         "The output was not supposed to match"
-                        f" {output_does_not_match!r}"
+                        f" {output_should_not_match!r}"
                     )
 
                 message = f"{expectation}, got the following output instead: {out}"

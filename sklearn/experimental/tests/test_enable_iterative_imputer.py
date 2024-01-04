@@ -22,7 +22,7 @@ def test_imports_strategies():
     from sklearn.impute import IterativeImputer
     """
     assert_run_python_script(
-        textwrap.dedent(good_import), output_does_not_match=pattern
+        textwrap.dedent(good_import), output_should_not_match=pattern
     )
 
     good_import_with_ensemble_first = """
@@ -31,7 +31,8 @@ def test_imports_strategies():
     from sklearn.impute import IterativeImputer
     """
     assert_run_python_script(
-        textwrap.dedent(good_import_with_ensemble_first), output_does_not_match=pattern
+        textwrap.dedent(good_import_with_ensemble_first),
+        output_should_not_match=pattern,
     )
 
     bad_imports = f"""
