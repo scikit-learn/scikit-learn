@@ -714,7 +714,7 @@ def assert_run_python_script(source_code, output_should_not_match=".+", timeout=
                     "script errored with output:\n%s" % e.output.decode("utf-8")
                 )
             out = out.decode("utf-8")
-            if re.search(out, output_should_not_match):
+            if re.search(output_should_not_match, out):
                 if out == "":
                     expectation = "Expected empty output"
                 else:
@@ -723,7 +723,7 @@ def assert_run_python_script(source_code, output_should_not_match=".+", timeout=
                         f" {output_should_not_match!r}"
                     )
 
-                message = f"{expectation}, got the following output instead: {out}"
+                message = f"{expectation}, got the following output instead: {out!r}"
                 raise AssertionError(message)
         except TimeoutExpired as e:
             raise RuntimeError(
