@@ -31,13 +31,6 @@ random sampling procedures.
   specified `tol`, for small values you will get more precise results.
   :pr:`26721` by :user:`Christian Lorentzen <lorentzenchr>`.
 
-- |Enhancement| :class:`decomposition.PCA`, :class:`decomposition.SparsePCA` and
-  :class:`decomposition.TruncatedSVD` now set the sign of the `components_`
-  attribute based on the components values instead of using the transformed
-  data as reference. This change is needed to be able to offer consistent
-  component signs across all `PCA` solvers, including the new
-  `svd_solver="covariance_eigh"` option introduced in this release.
-
 - |Fix| fixes a memory leak seen in PyPy for estimators using the Cython loss functions.
   :pr:`27670` by :user:`Guillaume Lemaitre <glemaitre>`.
 
