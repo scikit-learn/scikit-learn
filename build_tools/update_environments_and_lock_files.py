@@ -98,6 +98,7 @@ conda_build_metadata_list = [
         "conda_dependencies": common_dependencies + [
             "ccache",
             "meson-python",
+            "pip",
             "pytorch",
             "pytorch-cpu",
             "polars",

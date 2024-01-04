@@ -22,6 +22,7 @@ dependencies:
   - coverage
   - ccache
   - meson-python
+  - pip
   - pytorch=1.13
   - pytorch-cpu
   - polars
