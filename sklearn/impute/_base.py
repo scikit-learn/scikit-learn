@@ -469,9 +469,6 @@ class SimpleImputer(_BaseImputer):
                     elif isinstance(strategy, Callable):
                         statistics[i] = self.strategy(column)
 
-                    else:
-                        raise RuntimeError(f"Unknown strategy {strategy}")
-
         super()._fit_indicator(missing_mask)
 
         return statistics
@@ -540,9 +537,6 @@ class SimpleImputer(_BaseImputer):
             for i in range(masked_X.shape[1]):
                 statistics[i] = self.strategy(masked_X[:, i].compressed())
             return statistics
-
-        else:
-            raise RuntimeError(f"Unknown strategy {strategy}")
 
     def transform(self, X):
         """Impute all missing values in `X`.
