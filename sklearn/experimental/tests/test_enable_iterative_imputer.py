@@ -16,28 +16,32 @@ def test_imports_strategies():
     # for every test case. Else, the tests would not be independent
     # (manually removing the imports from the cache (sys.modules) is not
     # recommended and can lead to many complications).
-
+    pattern = "IterativeImputer is experimental"
     good_import = """
     from sklearn.experimental import enable_iterative_imputer
     from sklearn.impute import IterativeImputer
     """
-    assert_run_python_script(textwrap.dedent(good_import))
+    assert_run_python_script(
+        textwrap.dedent(good_import), output_does_not_match=pattern
+    )
 
     good_import_with_ensemble_first = """
     import sklearn.ensemble
     from sklearn.experimental import enable_iterative_imputer
     from sklearn.impute import IterativeImputer
     """
-    assert_run_python_script(textwrap.dedent(good_import_with_ensemble_first))
+    assert_run_python_script(
+        textwrap.dedent(good_import_with_ensemble_first), output_does_not_match=pattern
+    )
 
-    bad_imports = """
+    bad_imports = f"""
     import pytest
 
-    with pytest.raises(ImportError, match='IterativeImputer is experimental'):
+    with pytest.raises(ImportError, match={pattern!r}):
         from sklearn.impute import IterativeImputer
 
     import sklearn.experimental
-    with pytest.raises(ImportError, match='IterativeImputer is experimental'):
+    with pytest.raises(ImportError, match={pattern!r}):
         from sklearn.impute import IterativeImputer
     """
     assert_run_python_script(textwrap.dedent(bad_imports))
