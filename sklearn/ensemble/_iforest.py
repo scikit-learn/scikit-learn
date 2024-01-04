@@ -340,7 +340,10 @@ class IsolationForest(OutlierMixin, BaseBagging):
 
         # Else, define offset_ wrt contamination parameter
         # To avoid performing input validation a second time we call
-        # _score_samples rather than score_samples
+        # _score_samples rather than score_samples.
+        # _score_samples expects a CSR matrix, so we convert if necessary.
+        if issparse(X):
+            X = X.tocsr()
         self.offset_ = np.percentile(self._score_samples(X), 100.0 * self.contamination)
 
         return self
@@ -425,7 +428,7 @@ class IsolationForest(OutlierMixin, BaseBagging):
             The lower, the more abnormal.
         """
         # Check data
-        X = self._validate_data(X, accept_sparse="csr", dtype=np.float32, reset=False)
+        X = self._validate_data(X, accept_sparse="csr", dtype=tree_dtype, reset=False)
 
         return self._score_samples(X)
 

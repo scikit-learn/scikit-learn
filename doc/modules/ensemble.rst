@@ -231,10 +231,18 @@ categorical features::
 
   >>> gbdt = HistGradientBoostingClassifier(categorical_features=[0])
 
+When the input is a DataFrame, it is also possible to pass a list of column
+names::
+
+  >>> gbdt = HistGradientBoostingClassifier(categorical_features=["site", "manufacturer"])
+
+Finally, when the input is a DataFrame we can use
+`categorical_features="from_dtype"` in which case all columns with a categorical
+`dtype` will be treated as categorical features.
+
 The cardinality of each categorical feature must be less than the `max_bins`
-parameter, and each categorical feature is expected to be encoded in
-`[0, max_bins - 1]`. To that end, it might be useful to pre-process the data
-with an :class:`~sklearn.preprocessing.OrdinalEncoder` as done in
+parameter. For an example using histogram-based gradient boosting on categorical
+features, see
 :ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_categorical.py`.
 
 If there are missing values during training, the missing values will be
@@ -885,8 +893,8 @@ from a sample drawn with replacement (i.e., a bootstrap sample) from the
 training set.
 
 Furthermore, when splitting each node during the construction of a tree, the
-best split is found through an exhaustive search of the features values of 
-either all input features or a random subset of size ``max_features``. 
+best split is found through an exhaustive search of the features values of
+either all input features or a random subset of size ``max_features``.
 (See the :ref:`parameter tuning guidelines <random_forest_parameters>` for more details.)
 
 The purpose of these two sources of randomness is to decrease the variance of

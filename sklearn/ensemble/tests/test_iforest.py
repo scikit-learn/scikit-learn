@@ -341,3 +341,23 @@ def test_iforest_preserve_feature_names():
     with warnings.catch_warnings():
         warnings.simplefilter("error", UserWarning)
         model.fit(X)
+
+
+@pytest.mark.parametrize("sparse_container", CSC_CONTAINERS + CSR_CONTAINERS)
+def test_iforest_sparse_input_float_contamination(sparse_container):
+    """Check that `IsolationForest` accepts sparse matrix input and float value for
+    contamination.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/27626
+    """
+    X, _ = make_classification(n_samples=50, n_features=4, random_state=0)
+    X = sparse_container(X)
+    X.sort_indices()
+    contamination = 0.1
+    iforest = IsolationForest(
+        n_estimators=5, contamination=contamination, random_state=0
+    ).fit(X)
+
+    X_decision = iforest.decision_function(X)
+    assert (X_decision < 0).sum() / X.shape[0] == pytest.approx(contamination)

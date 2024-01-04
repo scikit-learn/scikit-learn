@@ -956,6 +956,21 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
 
         return Y_prob
 
+    def predict_log_proba(self, X):
+        """Predict logarithm of probability estimates.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+            The input data.
+
+        Returns
+        -------
+        Y_log_prob : array-like of shape (n_samples, n_classes)
+            The predicted logarithm of the probabilities.
+        """
+        return np.log(self.predict_proba(X))
+
     @_available_if_base_estimator_has("decision_function")
     def decision_function(self, X):
         """Evaluate the decision_function of the models in the chain.
