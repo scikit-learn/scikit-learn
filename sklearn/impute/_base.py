@@ -276,7 +276,7 @@ class SimpleImputer(_BaseImputer):
         **_BaseImputer._parameter_constraints,
         "strategy": [
             StrOptions({"mean", "median", "most_frequent", "constant"}),
-            type(np.min),
+            callable,
         ],
         "fill_value": "no_validation",  # any object is valid
         "copy": ["boolean"],
