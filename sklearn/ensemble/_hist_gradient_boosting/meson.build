@@ -1,4 +1,4 @@
-libs_sources = {
+hist_gradient_boosting_extension_metadata = {
   '_gradient_boosting': {'sources': ['_gradient_boosting.pyx']},
   'histogram': {'sources': ['histogram.pyx']},
   'splitting': {'sources': ['splitting.pyx']},
@@ -9,7 +9,7 @@ libs_sources = {
   'utils': {'sources': ['utils.pyx']},
 }
 
-foreach ext_name, ext_dict : libs_sources
+foreach ext_name, ext_dict : hist_gradient_boosting_extension_metadata
   py.extension_module(
     ext_name,
     ext_dict.get('sources'),

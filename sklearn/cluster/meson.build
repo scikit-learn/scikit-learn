@@ -1,4 +1,4 @@
-libs_sources = {
+cluster_extension_metadata = {
   '_dbscan_inner':
     {'sources': ['_dbscan_inner.pyx'],'override_options': ['cython_language=cpp']},
   '_hierarchical_fast':
@@ -13,7 +13,7 @@ libs_sources = {
     {'sources': ['_k_means_minibatch.pyx']},
 }
 
-foreach ext_name, ext_dict : libs_sources
+foreach ext_name, ext_dict : cluster_extension_metadata
   py.extension_module(
     ext_name,
     ext_dict.get('sources') + [utils_cython_tree],

@@ -1,10 +1,10 @@
-libs_sources = {
+cluster_hdbscan_extension_metadata = {
   '_linkage': {'sources': ['_linkage.pyx']},
   '_reachability': {'sources': ['_reachability.pyx']},
   '_tree': {'sources': ['_tree.pyx']}
 }
 
-foreach ext_name, ext_dict : libs_sources
+foreach ext_name, ext_dict : cluster_hdbscan_extension_metadata
   py.extension_module(
     ext_name,
     ext_dict.get('sources'),

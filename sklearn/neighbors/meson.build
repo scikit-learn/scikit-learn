@@ -32,14 +32,14 @@ foreach name: name_list
 )
 endforeach
 
-libs_sources = {
+neighbors_extension_metadata = {
   '_partition_nodes':
       {'sources': ['_partition_nodes.pyx'],
        'override_options': ['cython_language=cpp'], 'dependencies': [np_dep]},
   '_quad_tree': {'sources': ['_quad_tree.pyx'], 'dependencies': [np_dep]},
 }
 
-foreach ext_name, ext_dict : libs_sources
+foreach ext_name, ext_dict : neighbors_extension_metadata
   py.extension_module(
     ext_name,
     ext_dict.get('sources'),

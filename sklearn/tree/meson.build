@@ -1,4 +1,4 @@
-libs_sources = {
+tree_extension_metadata = {
   '_tree':
     {'sources': ['_tree.pyx'],
      'override_options': ['cython_language=cpp', 'optimization=3']},
@@ -13,7 +13,7 @@ libs_sources = {
      'override_options': ['optimization=3']},
 }
 
-foreach ext_name, ext_dict : libs_sources
+foreach ext_name, ext_dict : tree_extension_metadata
   py.extension_module(
     ext_name,
     ext_dict.get('sources'),
