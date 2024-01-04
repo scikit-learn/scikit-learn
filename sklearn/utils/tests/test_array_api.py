@@ -16,6 +16,8 @@ from sklearn.utils._array_api import (
     _nanmax,
     _nanmin,
     _NumPyAPIWrapper,
+    _supports_dtype,
+    device,
     get_namespace,
     supported_float_dtypes,
     yield_namespace_device_dtype_combinations,
@@ -129,35 +131,148 @@ def test_asarray_with_order_ignored():
 
 
 @pytest.mark.parametrize(
-    "array_namespace, device, dtype", yield_namespace_device_dtype_combinations()
+    "array_namespace, device, dtype_name", yield_namespace_device_dtype_combinations()
 )
 @pytest.mark.parametrize(
-    "weights, axis, expected",
+    "weights, axis, normalize, expected",
     [
-        (None, None, 3.5),
-        (None, 0, [2.5, 3.5, 4.5]),
-        (None, 1, [2, 5]),
-        ([0.4, 0.1], 0, [1.6, 2.6, 3.6]),
-        ([0.4, 0.2, 0.2], 1, [1.75, 4.75]),
-        ([1, 2], 0, [3, 4, 5]),
-        ([1, 1, 2], 1, [2.25, 5.25]),
-        ([[1, 2, 3], [1, 2, 3]], 0, [2.5, 3.5, 4.5]),
-        ([[1, 2, 1], [2, 2, 2]], 1, [2, 5]),
+        # normalize = True
+        (None, None, True, 3.5),
+        (None, 0, True, [2.5, 3.5, 4.5]),
+        (None, 1, True, [2, 5]),
+        ([True, False], 0, True, [1, 2, 3]),  # boolean weights
+        ([True, True, False], 1, True, [1.5, 4.5]),  # boolean weights
+        ([0.4, 0.1], 0, True, [1.6, 2.6, 3.6]),
+        ([0.4, 0.2, 0.2], 1, True, [1.75, 4.75]),
+        ([1, 2], 0, True, [3, 4, 5]),
+        ([1, 1, 2], 1, True, [2.25, 5.25]),
+        ([[1, 2, 3], [1, 2, 3]], 0, True, [2.5, 3.5, 4.5]),
+        ([[1, 2, 1], [2, 2, 2]], 1, True, [2, 5]),
+        # normalize = False
+        (None, None, False, 21),
+        (None, 0, False, [5, 7, 9]),
+        (None, 1, False, [6, 15]),
+        ([True, False], 0, False, [1, 2, 3]),  # boolean weights
+        ([True, True, False], 1, False, [3, 9]),  # boolean weights
+        ([0.4, 0.1], 0, False, [0.8, 1.3, 1.8]),
+        ([0.4, 0.2, 0.2], 1, False, [1.4, 3.8]),
+        ([1, 2], 0, False, [9, 12, 15]),
+        ([1, 1, 2], 1, False, [9, 21]),
+        ([[1, 2, 3], [1, 2, 3]], 0, False, [5, 14, 27]),
+        ([[1, 2, 1], [2, 2, 2]], 1, False, [8, 30]),
     ],
 )
-def test_average(array_namespace, device, dtype, weights, axis, expected):
+def test_average(
+    array_namespace, device, dtype_name, weights, axis, normalize, expected
+):
     xp = _array_api_for_tests(array_namespace, device)
-    sample_score = numpy.asarray([[1, 2, 3], [4, 5, 6]], dtype=dtype)
-    sample_score = xp.asarray(sample_score, device=device)
+    array_in = numpy.asarray([[1, 2, 3], [4, 5, 6]], dtype=dtype_name)
+    array_in = xp.asarray(array_in, device=device)
     if weights is not None:
-        weights = numpy.asarray(weights, dtype=dtype)
+        weights = numpy.asarray(weights, dtype=dtype_name)
         weights = xp.asarray(weights, device=device)
 
     with config_context(array_api_dispatch=True):
-        result = _average(sample_score, axis=axis, weights=weights)
+        result = _average(array_in, axis=axis, weights=weights, normalize=normalize)
 
     result = _convert_to_numpy(result, xp)
-    assert_allclose(result, expected, atol=_atol_for_type(dtype))
+    assert_allclose(result, expected, atol=_atol_for_type(dtype_name))
+
+
+@pytest.mark.parametrize(
+    "array_namespace, device, dtype_name",
+    yield_namespace_device_dtype_combinations(include_numpy_namespaces=False),
+)
+def test_average_raises_with_wrong_dtype(array_namespace, device, dtype_name):
+    xp = _array_api_for_tests(array_namespace, device)
+
+    array_in = numpy.asarray([2, 0], dtype=dtype_name) + 1j * numpy.asarray(
+        [4, 3], dtype=dtype_name
+    )
+    array_in = xp.asarray(array_in, device=device)
+    print(array_in.dtype)
+
+    with (
+        config_context(array_api_dispatch=True),
+        pytest.raises(
+            ValueError,
+            match="Expecting only boolean, integral or real floating values.",
+        ),
+    ):
+        _average(array_in)
+
+
+@pytest.mark.parametrize(
+    "array_namespace, device, dtype_name",
+    yield_namespace_device_dtype_combinations(include_numpy_namespaces=True),
+)
+@pytest.mark.parametrize(
+    "axis, weights, error,  error_msg",
+    (
+        (
+            None,
+            [1, 2],
+            TypeError,
+            "Axis must be specified when shapes of a and weights differ.",
+        ),
+        (
+            0,
+            [[1, 2]],
+            TypeError,
+            "1D weights expected when shapes of a and weights differ.",
+        ),
+        (
+            0,
+            [1, 2, 3, 4],
+            ValueError,
+            "Length of weights not compatible with specified axis.",
+        ),
+        (0, [-1, 1], ZeroDivisionError, "Weights sum to zero, can't be normalized"),
+    ),
+)
+def test_average_raises_with_invalid_parameters(
+    array_namespace, device, dtype_name, axis, weights, error, error_msg
+):
+    xp = _array_api_for_tests(array_namespace, device)
+
+    array_in = numpy.asarray([[1, 2, 3], [4, 5, 6]], dtype=dtype_name)
+    array_in = xp.asarray(array_in, device=device)
+
+    weights = numpy.asarray(weights, dtype=dtype_name)
+    weights = xp.asarray(weights, device=device)
+
+    with config_context(array_api_dispatch=True), pytest.raises(error, match=error_msg):
+        _average(array_in, axis=axis, weights=weights)
+
+
+class _NumPyAPIWrapperNoFloat64(_NumPyAPIWrapper):
+    def ones(self, shape, dtype, device):
+        if dtype == "float64":
+            raise ValueError
+        return numpy.ones(shape, dtype)
+
+
+def test_supports_dtype_return_value():
+    assert _supports_dtype(_NumPyAPIWrapperNoFloat64(), "device", "float64") is False
+    assert _supports_dtype(_NumPyAPIWrapperNoFloat64(), "device", "float32") is True
+
+
+def test_device_raises_if_no_input():
+    with pytest.raises(
+        ValueError, match="At least one input array expected, got none."
+    ):
+        device()
+
+
+def test_raises_if_different_devices():
+    class Array:
+        def __init__(self, device):
+            self.device = device
+
+    with pytest.raises(
+        ValueError, match="Input arrays use different devices: cpu, mygpu"
+    ):
+        device(Array("cpu"), Array("mygpu"))
 
 
 @skip_if_array_api_compat_not_configured

@@ -593,11 +593,6 @@ Changelog
   `predict_proba`). Such scorer are specific to classification.
   :pr:`26840` by :user:`Guillaume Lemaitre <glemaitre>`.
 
-- |Enhancement| :func:`sklearn.metrics.r2_score` now supports Array API compatible
-  inputs.
-  :pr:`27904` by :user:`Eric Lindgren <elindgren>`, `Franck Charras <fcharras>`,
-  `Olivier Grisel <ogrisel>` and `Tim Head <betatim>`
-
 - |API| Deprecated `needs_threshold` and `needs_proba` from :func:`metrics.make_scorer`.
   These parameters will be removed in version 1.6. Instead, use `response_method` that
   accepts `"predict"`, `"predict_proba"` or `"decision_function"` or a list of such

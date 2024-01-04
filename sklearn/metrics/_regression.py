@@ -1240,7 +1240,7 @@ def r2_score(
 
     if sample_weight is not None:
         sample_weight = column_or_1d(sample_weight, dtype=dtype)
-        weight = sample_weight[:, xp.newaxis]
+        weight = sample_weight[:, None]
     else:
         weight = xp.asarray([1.0], dtype=y_true.dtype, device=device_)
 

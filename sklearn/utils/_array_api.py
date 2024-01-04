@@ -10,11 +10,22 @@ import scipy.special as special
 from .._config import get_config
 from .fixes import parse_version
 
+_NUMPY_NAMESPACE_NAMES = {"numpy", "array_api_compat.numpy", "numpy.array_api"}
 
-def yield_namespace_device_dtype_combinations():
+
+def yield_namespace_device_dtype_combinations(include_numpy_namespaces=True):
     """Yield supported namespace, device, dtype tuples for testing.
 
     Use this to test that an estimator works with all combinations.
+
+    Parameters
+    ----------
+    include_numpy_namespaces : True
+        If True, also yield numpy namespaces.
+
+    devices : list
+        If not None, returns only combinations for which the device is in
+        the list.
 
     Returns
     -------
@@ -41,6 +52,8 @@ def yield_namespace_device_dtype_combinations():
         "cupy.array_api",
         "torch",
     ]:
+        if not include_numpy_namespaces and array_namespace in _NUMPY_NAMESPACE_NAMES:
+            continue
         if array_namespace == "torch":
             for device, dtype in itertools.product(
                 ("cpu", "cuda"), ("float64", "float32")
@@ -101,7 +114,9 @@ def device(*array_list):
             devices.add(array.device)
 
     if len(devices) > 1:
-        raise ValueError("Input arrays use different devices.")
+        raise ValueError(
+            f"Input arrays use different devices: {', '.join(sorted(devices))}"
+        )
 
     return devices.pop()
 
@@ -124,7 +139,7 @@ def size(x):
 
 def _is_numpy_namespace(xp):
     """Return True if xp is backed by NumPy."""
-    return xp.__name__ in {"numpy", "array_api_compat.numpy", "numpy.array_api"}
+    return xp.__name__ in _NUMPY_NAMESPACE_NAMES
 
 
 def _union1d(a, b, xp):
@@ -189,6 +204,17 @@ def _isdtype_single(dtype, kind, *, xp):
 
 @lru_cache
 def _supports_dtype(xp, device, dtype):
+    """Check if a given namespace/device/dtype combination is supported.
+    Note that some namespaces expose dtypes that can cause a failure at runtime
+    when trying to allocate an array with a specific device/dtype combination.
+    This is the case for the  Pytorch / mps / float64 combination:
+    at the time of writing, only float16/float32 arrays can be allocated on this
+    type of device.  Otherwise a `TypeError` would be raised.
+    This helper function can be refactored once an expressive enough inspection
+    API has been specified as part of the standard and implemented in the main
+    libraries:
+    https://github.com/data-apis/array-api/issues/640
+    """
     if not hasattr(xp, dtype):
         return False
 
@@ -246,10 +272,6 @@ class _ArrayAPIWrapper:
 
     def __hash__(self):
         return hash((self._namespace, "_ArrayAPIWrapper"))
-
-    @property
-    def newaxis(self):
-        return getattr(self._namespace, "newaxis", None)
 
     def isdtype(self, dtype, kind):
         return isdtype(dtype, kind, xp=self._namespace)
@@ -439,7 +461,6 @@ def get_namespace(*arrays):
     if namespace.__name__ in {
         "numpy.array_api",
         "cupy.array_api",
-        "array_api_compat.torch",
     }:
         namespace = _ArrayAPIWrapper(namespace)
 
@@ -471,11 +492,8 @@ def _add_to_diagonal(array, value, xp):
             array[i, i] += value
 
 
-def _average(a, axis=None, weights=None, normalize=True, returned=False, xp=None):
-    """Port of np.average to support the Array API."""
-    if returned:
-        raise NotImplementedError
-
+def _average(a, axis=None, weights=None, normalize=True, xp=None):
+    """Partial port of np.average to support the Array API."""
     input_arrays = [a]
     if weights is not None:
         input_arrays.append(weights)
@@ -510,7 +528,7 @@ def _average(a, axis=None, weights=None, normalize=True, returned=False, xp=None
         )
         for input_array in [a, weights]
     ):
-        raise ValueError("Expecting only integral or real floating values.")
+        raise ValueError("Expecting only boolean, integral or real floating values.")
 
     if weights is None and xp.isdtype(a.dtype, "integral"):
         output_dtype_name = "float64"
@@ -536,9 +554,7 @@ def _average(a, axis=None, weights=None, normalize=True, returned=False, xp=None
         if weights is not None:
             weights = _convert_to_numpy(weights, xp)
         return xp.asarray(
-            _average(
-                a, axis=axis, normalize=normalize, returned=returned, weights=weights
-            ),
+            _average(a, axis=axis, normalize=normalize, weights=weights),
             dtype=xp.float32,
             device=device_,
         )
