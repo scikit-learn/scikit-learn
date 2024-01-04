@@ -10,12 +10,12 @@ libs_sources = {
 }
 
 foreach ext_name, ext_dict : libs_sources
-    py.extension_module(
-        ext_name,
-        ext_dict.get('sources'),
-        dependencies: [np_dep, openmp_dep],
-        cython_args: cython_args,
-        subdir: 'sklearn/ensemble/_hist_gradient_boosting',
-        install: true
-    )
+  py.extension_module(
+    ext_name,
+    ext_dict.get('sources'),
+    dependencies: [np_dep, openmp_dep],
+    cython_args: cython_args,
+    subdir: 'sklearn/ensemble/_hist_gradient_boosting',
+    install: true
+  )
 endforeach

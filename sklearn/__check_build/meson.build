@@ -1,4 +1,4 @@
-__check_build = py.extension_module(
+py.extension_module(
   '_check_build',
   '_check_build.pyx',
   cython_args: cython_args,

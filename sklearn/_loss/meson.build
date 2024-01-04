@@ -1,4 +1,4 @@
-_loss_pxd = fs.copyfile('_loss.pxd')
+_loss_cython_tree = [fs.copyfile('_loss.pxd')]
 
 _loss_pyx = custom_target(
   '_loss_pyx',
@@ -9,7 +9,7 @@ _loss_pyx = custom_target(
 
 py.extension_module(
   '_loss',
-  [_loss_pyx, _loss_pxd],
+  [_loss_pyx, _loss_cython_tree],
   cython_args: cython_args,
   install: true,
   subdir: 'sklearn/_loss',

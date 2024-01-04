@@ -1,18 +1,17 @@
 _binary_tree_pxi = custom_target(
-    '_binary_tree_pxi',
-    output: '_binary_tree.pxi',
-    input: '_binary_tree.pxi.tp',
-    command: [py, tempita, '@INPUT@', '-o', '@OUTDIR@'],
-    install: true,
-    install_dir: sklearn_dir / 'neighbors'
+  '_binary_tree_pxi',
+  output: '_binary_tree.pxi',
+  input: '_binary_tree.pxi.tp',
+  command: [py, tempita, '@INPUT@', '-o', '@OUTDIR@'],
+  install: true,
+  install_dir: sklearn_dir / 'neighbors'
 )
 
 neighbors_cython_tree = [
-    fs.copyfile('__init__.py'),
-    fs.copyfile('_partition_nodes.pxd'),
-    _binary_tree_pxi,
+  fs.copyfile('__init__.py'),
+  fs.copyfile('_partition_nodes.pxd'),
+  _binary_tree_pxi,
 ]
-
 
 name_list = ['_ball_tree', '_kd_tree']
 
@@ -30,24 +29,24 @@ foreach name: name_list
     cython_args: cython_args,
     subdir: 'sklearn/neighbors',
     install: true
-
 )
 endforeach
 
 libs_sources = {
-    '_partition_nodes':
-        {'sources': ['_partition_nodes.pyx'], 'override_options': ['cython_language=cpp'], 'dependencies': [np_dep]},
-    '_quad_tree': {'sources': ['_quad_tree.pyx'], 'dependencies': [np_dep]},
+  '_partition_nodes':
+      {'sources': ['_partition_nodes.pyx'],
+       'override_options': ['cython_language=cpp'], 'dependencies': [np_dep]},
+  '_quad_tree': {'sources': ['_quad_tree.pyx'], 'dependencies': [np_dep]},
 }
 
 foreach ext_name, ext_dict : libs_sources
-    py.extension_module(
-        ext_name,
-        ext_dict.get('sources'),
-        dependencies: ext_dict.get('dependencies'),
-        override_options : ext_dict.get('override_options', []),
-        cython_args: cython_args,
-        subdir: 'sklearn/neighbors',
-        install: true
-    )
+  py.extension_module(
+    ext_name,
+    ext_dict.get('sources'),
+    dependencies: ext_dict.get('dependencies'),
+    override_options : ext_dict.get('override_options', []),
+    cython_args: cython_args,
+    subdir: 'sklearn/neighbors',
+    install: true
+  )
 endforeach

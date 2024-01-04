@@ -5,12 +5,12 @@ libs_sources = {
 }
 
 foreach ext_name, ext_dict : libs_sources
-    py.extension_module(
-        ext_name,
-        ext_dict.get('sources'),
-        dependencies: [np_dep],
-        cython_args: cython_args,
-        subdir: 'sklearn/cluster/_hdbscan',
-        install: true
-    )
+  py.extension_module(
+    ext_name,
+    ext_dict.get('sources'),
+    dependencies: [np_dep],
+    cython_args: cython_args,
+    subdir: 'sklearn/cluster/_hdbscan',
+    install: true
+  )
 endforeach

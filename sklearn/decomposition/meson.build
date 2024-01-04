@@ -1,10 +1,10 @@
 py.extension_module(
-    '_online_lda_fast',
-    '_online_lda_fast.pyx',
-    dependencies: [np_dep],
-    cython_args: cython_args,
-    subdir: 'sklearn/decomposition',
-    install: true
+  '_online_lda_fast',
+  '_online_lda_fast.pyx',
+  dependencies: [np_dep],
+  cython_args: cython_args,
+  subdir: 'sklearn/decomposition',
+  install: true
 )
 
 py.extension_module(

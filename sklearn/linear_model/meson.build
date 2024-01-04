@@ -1,15 +1,15 @@
 linear_model_cython_tree = [
-    fs.copyfile('__init__.py'),
-    fs.copyfile('_sgd_fast.pxd'),
+  fs.copyfile('__init__.py'),
+  fs.copyfile('_sgd_fast.pxd'),
 ]
 
 py.extension_module(
-    '_cd_fast',
-    '_cd_fast.pyx',
-    dependencies: [np_dep],
-    cython_args: cython_args,
-    subdir: 'sklearn/linear_model',
-    install: true
+  '_cd_fast',
+  '_cd_fast.pyx',
+  dependencies: [np_dep],
+  cython_args: cython_args,
+  subdir: 'sklearn/linear_model',
+  install: true
 )
 
 name_list = ['_sgd_fast', '_sag_fast']

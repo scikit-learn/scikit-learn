@@ -27,9 +27,12 @@ elif cc.get_id() == 'msvc'
 endif
 
 _global_c_args = cc.get_supported_arguments(
+  '-Wno-unused-but-set-variable',
   '-Wno-unused-function',
+  '-Wno-conversion',
+  '-Wno-misleading-indentation',
 )
-add_project_arguments(_global_c_args, language: ['c', 'cpp'])
+add_project_arguments(_global_c_args, language : 'c')
 
 # We need -lm for all C code (assuming it uses math functions, which is safe to
 # assume for scikit-learn). For C++ it isn't needed, because libstdc++/libc++ is
@@ -39,11 +42,9 @@ if m_dep.found()
   add_project_link_arguments('-lm', language : 'c')
 endif
 
-cython = find_program('cython')
 tempita = files('sklearn/_build_utils/tempita.py')
 
 py = import('python').find_installation(pure: false)
-py_dep = py.dependency()
 
 # Copy all the .py files to the install dir, rather than using
 # py.install_sources and needing to list them explicitely one by one

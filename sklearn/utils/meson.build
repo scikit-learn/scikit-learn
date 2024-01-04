@@ -29,17 +29,16 @@ libs_sources = {
 }
 
 foreach ext_name, ext_dict : libs_sources
-    py.extension_module(
-        ext_name,
-        ext_dict.get('sources') + utils_cython_tree,
-        dependencies: [np_dep, openmp_dep],
-        override_options : ext_dict.get('override_options', []),
-        cython_args: cython_args,
-        subdir: 'sklearn/utils',
-        install: true
-    )
+  py.extension_module(
+    ext_name,
+    ext_dict.get('sources') + utils_cython_tree,
+    dependencies: [np_dep, openmp_dep],
+    override_options : ext_dict.get('override_options', []),
+    cython_args: cython_args,
+    subdir: 'sklearn/utils',
+    install: true
+  )
 endforeach
-
 
 names = ['_seq_dataset', '_weight_vector']
 
