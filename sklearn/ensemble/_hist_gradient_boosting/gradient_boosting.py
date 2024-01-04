@@ -1697,7 +1697,7 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         stopping. The higher the tolerance, the more likely we are to early
         stop: higher tolerance means that it will be harder for subsequent
         iterations to be considered an improvement upon the reference score.
-    post_fit_calibration: bool, default=False
+    post_fit_calibration : bool, default=False
         If True, then, after the fit is more or less finished, a constant is added to
         the raw_predictions in link space such that on the effective training data,
         i.e. without the `validation_fraction`, the balance property of is fulfilled:
@@ -2086,7 +2086,7 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
         tolerance, the more likely we are to early stop: higher tolerance
         means that it will be harder for subsequent iterations to be
         considered an improvement upon the reference score.
-    post_fit_calibration: bool, default=False
+    post_fit_calibration : bool, default=False
         If True, then, after the fit is more or less finished, a constant is added to
         the raw_predictions in link space such that on the effective training data,
         i.e. without the `validation_fraction`, the balance property of is fulfilled:
