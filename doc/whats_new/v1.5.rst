@@ -38,3 +38,13 @@ TODO: update at the time of the release.
 
 - |Feature| A fitted :class:`compose.ColumnTransformer` now implements `__getitem__`
   which returns the fitted transformers by name. :pr:`27990` by `Thomas Fan`_.
+
+:mod:`sklearn.ensemble`
+.......................
+
+- |Feature| :class:`ensemble.HistGradientBoostingClassifier` and
+  :class:`ensemble.HistGradientBoostingRegressor` got the new parameter
+  `post_fit_calibration` to recalibrate the model: In link space, a constant is added
+  such that on the training set (without the validation set), the balance property of
+  equal observed average and predicted average holds.
+  :pr:`26311` by :user:`Christian Lorentzen <lorentzenchr>`.
