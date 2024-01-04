@@ -1446,7 +1446,6 @@ def test_unknown_category_that_are_negative():
     assert_allclose(hist.predict(X_test_neg), hist.predict(X_test_nan))
 
 
-@pytest.mark.parametrize("dataframe_lib", ["pandas", "polars"])
 @pytest.mark.parametrize(
     ["model", "data"],
     [
@@ -1503,6 +1502,7 @@ def test_post_fit_calibration(model, data, sample_weight):
     )
 
 
+@pytest.mark.parametrize("dataframe_lib", ["pandas", "polars"])
 @pytest.mark.parametrize(
     "HistGradientBoosting",
     [HistGradientBoostingClassifier, HistGradientBoostingRegressor],

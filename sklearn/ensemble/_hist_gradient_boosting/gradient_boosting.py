@@ -986,7 +986,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             if should_early_stop:
                 break
 
-        # We compare "x is False" instead of "not x" to exclude  canonical_link = None.
+        # We compare "x is False" instead of "not x" to exclude canonical_link = None.
         if self.loss not in ("absolute_error", "quantile") and (
             self.post_fit_calibration
             or (
@@ -1012,11 +1012,11 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                 correction = self._loss.link.link(mean_y / mean_pred)
             else:
                 if isinstance(self._loss.link, LogitLink):
-                    # First order approx: expit(x+c) = expit(x) (1 + c/(1+exp(x)))
+                    # First order approx: expit(x+c) = expit(x) (1 + c (1 - expit(x)))
                     # mean(y) = term_0 + c * term_1
                     term_0 = mean_pred
                     term_1 = np.average(
-                        y_pred / (1 + np.exp(raw_predictions)),
+                        y_pred * (1 - y_pred),
                         weights=sample_weight_train,
                         axis=0,
                     )
