@@ -183,6 +183,9 @@ class SimpleImputer(_BaseImputer):
         .. versionadded:: 0.20
            strategy="constant" for fixed value imputation.
 
+        .. versionadded:: 1.5
+           strategy=callable for custom value imputation.
+
     fill_value : str or numerical value, default=None
         When strategy == "constant", `fill_value` is used to replace all
         occurrences of missing_values. For string or object data types,
