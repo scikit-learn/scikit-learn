@@ -507,14 +507,14 @@ def mutual_info_classif(
 
     >>> from sklearn.feature_selection import mutual_info_classif
     >>> import numpy as np
-    >>> X = np.array([[1, 1],
-    ...               [0, 1],
+    >>> X = np.array([[2, 1],
+    ...               [3, 1],
     ...               [5, 4],
     ...               [6, 6]])
     >>> y = np.array([1, 1, 0, 0])
-    >>> mi = mutual_info_classif(X, y, random_state=0)
+    >>> mi = mutual_info_classif(X, y, random_state=1)
     >>> mi
-    array([0.58333333, 0.45833333])
+    array([0.33333333, 0.83333333])
     """
     check_classification_targets(y)
     return _estimate_mi(X, y, discrete_features, True, n_neighbors, copy, random_state)
