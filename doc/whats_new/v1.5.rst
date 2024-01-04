@@ -25,6 +25,12 @@ Changelog
     :pr:`123456` by :user:`Joe Bloggs <joeongithub>`.
     where 123455 is the *pull request* number, not the issue number.
 
+:mod:`sklearn.impute`
+.....................
+- |Enhancement| :class:`impute.SimpleImputer` now supports custom strategies
+  by passing a function in place of a strategy name.
+  :pr:`28053` by :user:`Mark Elliot <mark-thm>`.
+
 Code and Documentation Contributors
 -----------------------------------
 
