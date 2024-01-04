@@ -37,16 +37,11 @@ over the number of true positives plus the number of false negatives
 
 :math:`R = \\frac{T_p}{T_p + F_n}`
 
-These quantities are also related to the :math:`F_1` score, which is usually
-defined as the harmonic mean of precision and recall.
+These quantities are also related to the :math:`F_1` score, which is the
+harmonic mean of precision and recall. Scikit-Learn calculates :math:`F_1`
+using the following formula:
 
-:math:`F1 = 2\\frac{P \\times R}{P+R}`
-
-However, for practical purposes, Scikit-Learn uses a definition of :math:`F_1`
-that is equivalent except that it is defined as 0 when precision and recall
-are both 0.
-
-:math:`F1 = \\frac{2T_p}{2T_p + F_p + F_n}`
+:math:`F_1 = \\frac{2T_p}{2T_p + F_p + F_n}`
 
 Note that the precision may not decrease with recall. The
 definition of precision (:math:`\\frac{T_p}{T_p + F_p}`) shows that lowering
