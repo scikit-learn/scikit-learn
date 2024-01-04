@@ -205,11 +205,14 @@ def _isdtype_single(dtype, kind, *, xp):
 @lru_cache
 def _supports_dtype(xp, device, dtype):
     """Check if a given namespace/device/dtype combination is supported.
+
     Note that some namespaces expose dtypes that can cause a failure at runtime
     when trying to allocate an array with a specific device/dtype combination.
+
     This is the case for the  Pytorch / mps / float64 combination:
     at the time of writing, only float16/float32 arrays can be allocated on this
     type of device.  Otherwise a `TypeError` would be raised.
+
     This helper function can be refactored once an expressive enough inspection
     API has been specified as part of the standard and implemented in the main
     libraries:
