@@ -407,7 +407,7 @@ def mutual_info_regression(
     ...               [3.4, 1],
     ...               [3.9, 1]])
     >>> y = np.array([4, 5, 6, 7])
-    >>> mi = mutual_info_regression(X, y)
+    >>> mi = mutual_info_regression(X, y, random_state=0)
     >>> mi
     array([0.00000000e+00, 1.11022302e-16])
     """
@@ -512,9 +512,9 @@ def mutual_info_classif(
     ...               [5, 4],
     ...               [6, 6]])
     >>> y = np.array([1, 1, 0, 0])
-    >>> mi = mutual_info_classif(X, y)
+    >>> mi = mutual_info_classif(X, y, random_state=0)
     >>> mi
-    array([0.83333333, 0.20833333])
+    array([0.58333333, 0.45833333])
     """
     check_classification_targets(y)
     return _estimate_mi(X, y, discrete_features, True, n_neighbors, copy, random_state)
