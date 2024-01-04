@@ -53,7 +53,7 @@ TODO: update at the time of the release.
   :func:`~metrics.calibration_curve`, :func:`~metrics.det_curve`, :func:`~metrics.precision_recall_curve`,
   :func:`~metrics.roc_curve` when `pos_label` argument is specified.
   Also improve efficiency of methods `from_estimator`
-  and `from_predictions` in :class:`RocCurveDisplay`,
+  and `from_predictions` in :class:`~metrics.RocCurveDisplay`,
   :class:`~metrics.PrecisionRecallDisplay`, :class:`~metrics.DetCurveDisplay`,
   :class:`~calibration.CalibrationDisplay`.
   :pr:`28051` by :user:`Pierre de Fréminville <pidefrem>`
