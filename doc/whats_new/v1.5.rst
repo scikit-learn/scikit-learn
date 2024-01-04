@@ -11,6 +11,11 @@ Version 1.5.0
 
 .. include:: changelog_legend.inc
 
+Support for building with Meson
+-------------------------------
+
+TODO
+
 Changelog
 ---------
 
