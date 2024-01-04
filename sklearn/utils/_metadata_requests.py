@@ -399,7 +399,7 @@ class MethodMetadataRequest:
             warn(
                 f"Support for {param} has recently been added to this class. "
                 "To maintain backward compatibility, it is ignored now. "
-                f"Using `set_{{method}}_request({param}={{boolean}})` "
+                f"Using `set_{self.method}_request({param}={{True, False}})` "
                 "on this method of the class, you can set the request value "
                 "to False to silence this warning, or to True to consume and "
                 "use the metadata."
@@ -439,9 +439,11 @@ class MethodMetadataRequest:
             raise UnsetMetadataPassedError(
                 message=(
                     f"[{', '.join([key for key in unrequested])}] are passed but are"
-                    " not explicitly set as requested or not for"
+                    " not explicitly set as requested or not requested for"
                     f" {self.owner}.{self.method}. To set them, use"
-                    f" `set_{self.method}_request({{metadata}}={{boolean}})` on it."
+                    f" `set_{self.method}_request({{metadata}}={{True, False}})` for"
+                    f" each metadata in [{', '.join([key for key in unrequested])}]"
+                    " on the instantiated object."
                 ),
                 unrequested_params=unrequested,
                 routed_params=res,
@@ -1074,9 +1076,7 @@ class MetadataRouter:
         """
         res = dict()
         if self._self_request:
-            res["$self_request"] = (
-                self._self_request._serialize()
-            )  # <-- why is `$` part of the key name?
+            res["$self_request"] = self._self_request._serialize()
         for name, route_mapping in self._route_mappings.items():
             res[name] = dict()
             res[name]["mapping"] = route_mapping.mapping._serialize()
