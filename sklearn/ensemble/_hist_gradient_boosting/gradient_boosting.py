@@ -581,17 +581,27 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             self._random_seed = rng.randint(np.iinfo(np.uint32).max, dtype="u8")
             feature_subsample_seed = rng.randint(np.iinfo(np.uint32).max, dtype="u8")
             self._feature_subsample_rng = np.random.default_rng(feature_subsample_seed)
+            # TODO: Remove this condition, once numpy 1.25 is the minimum version.
             if parse_version(np.__version__) >= parse_version("1.25"):
                 self._bagging_subsample_rng = self._feature_subsample_rng.spawn(1)[0]
             else:
-                # See numpy Generator.spawn(self, int n_children).
-                n_children = 1
-                self._bagging_subsample_rng = [
-                    type(self._feature_subsample_rng)(g)
-                    for g in self._feature_subsample_rng._bit_generator.spawn(
-                        n_children
-                    )
-                ][0]
+                # See numpy Generator.spawn(self, int n_children) and
+                # numpy BitGenerator.spawn
+
+                def spawnGenerator(self, n_children):
+                    return [
+                        type(self)(g)
+                        for g in spawnBitGenerator(self._bit_generator, n_children)
+                    ]
+
+                def spawnBitGenerator(self, n_children):
+                    return [
+                        type(self)(seed=s) for s in self._seed_seq.spawn(n_children)
+                    ]
+
+                self._bagging_subsample_rng = spawnGenerator(
+                    self._feature_subsample_rng, 1
+                )[0]
 
         self._validate_parameters()
         monotonic_cst = _check_monotonic_cst(self, self.monotonic_cst)
