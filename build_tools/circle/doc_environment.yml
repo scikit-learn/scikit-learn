@@ -20,6 +20,7 @@ dependencies:
   - setuptools
   - scikit-image
   - seaborn
+  - patsy=0.5.4
   - memory_profiler
   - compilers
   - sphinx
