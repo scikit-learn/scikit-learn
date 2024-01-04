@@ -1,8 +1,6 @@
 project(
   'scikit-learn',
   'c', 'cpp', 'cython',
-  # TODO should the version be dynamically generated, scikit-image does it but
-  # not scipy for some reason
   version: '1.5.0.dev0',
   license: 'BSD-3',
   meson_version: '>= 1.1.0',
@@ -41,46 +39,14 @@ if m_dep.found()
   add_project_link_arguments('-lm', language : 'c')
 endif
 
-# Hide symbols when building on Linux with GCC. For Python extension modules,
-# we only need `PyInit_*` to be public, anything else may cause problems. So we
-# use a linker script to avoid exporting those symbols (this is in addition to
-# Meson using `-fvisibility=hidden` for C and `-fvisibility-inlines-hidden` for
-# C++ code. See gh-15996 for details.
-# TODO: Should I do the same here (need simple link-version-pyinit.map)
-# _linker_script = meson.project_source_root() / 'sklearn/_build_utils/link-version-pyinit.map'
-# version_link_args = ['-Wl,--version-script=' + _linker_script]
-# Note that FreeBSD only accepts version scripts when -shared is passed,
-# hence we need to pass that to `cc.links` explicitly (flag is already
-# present for `extension_module` invocations).
-# if not cc.links('', name: '-Wl,--version-script', args: ['-shared', version_link_args])
-#   version_link_args = []
-# endif
-
 cython = find_program('cython')
 tempita = files('sklearn/_build_utils/tempita.py')
 
 py = import('python').find_installation(pure: false)
 py_dep = py.dependency()
 
-# TODO boundscheck should depend on SKLEARN_ENABLE_DEBUG_CYTHON_DIRECTIVES
-# # Additional checks for Cython
-#     cython_enable_debug_directives = (
-#         os.environ.get("SKLEARN_ENABLE_DEBUG_CYTHON_DIRECTIVES", "0") != "0"
-#     )
-
-cython_args = [
-  '-X language_level=3', '-X boundscheck=False', '-X wraparound=False',
-  '-X initializedcheck=False', '-X nonecheck=False', '-X cdivision=True',
-  '-X profile=False',
-  # Needed for cython imports across subpackages, e.g. cluster pyx that
-  # cimports metrics pxd
-  '--include-dir', meson.global_build_root(),
-]
+# Copy all the .py files to the install dir, rather than using
+# py.install_sources and needing to list them explicitely one by one
+install_subdir('sklearn', install_dir: py.get_install_dir())
 
 subdir('sklearn')
-
-# TODO This copies all the .py files to the install dir without having to list
-# them explicitely. Do we want to be explicit instead?
-# See https://mesonbuild.com/FAQ.html#why-cant-i-specify-target-files-with-a-wildcard
-# and https://mesonbuild.com/FAQ.html#but-i-really-want-to-use-wildcards
-install_subdir('sklearn', install_dir: py.get_install_dir())

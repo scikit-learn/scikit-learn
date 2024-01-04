@@ -1,13 +1,31 @@
-# TODO This whole file was initially probably taken from scikit-image have a
-# look at scipy to see how different this is ...
 fs = import('fs')
+
+cython_args = []
 
 # Platform detection
 is_windows = host_machine.system() == 'windows'
 is_mingw = is_windows and cc.get_id() == 'gcc'
 
-cython_c_args = []
-# TODO look at this closer, taken from scikit-image, some files don't exist e.g. gcc_build_bitness.py
+if is_mingw
+  # For mingw-w64, link statically against the UCRT.
+  gcc_link_args = ['-lucrt', '-static']
+  add_project_link_arguments(gcc_link_args, language: ['c', 'cpp', 'fortran'])
+  # Force gcc to float64 long doubles for compatibility with MSVC
+  # builds, for C only.
+  add_project_arguments('-mlong-double-64', language: 'c')
+  # Make fprintf("%zd") work (see https://github.com/rgommers/scipy/issues/118)
+  add_project_arguments('-D__USE_MINGW_ANSI_STDIO=1', language: ['c', 'cpp'])
+  # Silence warnings emitted by PyOS_snprintf for (%zd), see
+  # https://github.com/rgommers/scipy/issues/118.
+  # Use as c_args for extensions containing Cython code
+  cython_args += ['-Wno-format-extra-args', '-Wno-format']
+  # Flag needed to work around BLAS and LAPACK Gfortran dependence on
+  # undocumented C feature when passing single character string arguments. See:
+  #   https://gcc.gnu.org/bugzilla/show_bug.cgi?id=90329
+  #   https://github.com/wch/r-source/blob/838f9d5a7be08f2a8c08e47bcd28756f5d0aac90/src/gnuwin32/MkRules.rules#L121
+  add_project_arguments('-fno-optimize-sibling-calls', language: ['fortran'])
+endif
+
 # if is_windows
 #   # For mingw-w64, link statically against the UCRT.
 #   gcc_link_args = ['-lucrt', '-static']
@@ -30,16 +48,16 @@ cython_c_args = []
 #   endif
 # endif
 
-# TODO Taken from scikit-image, seems like each project has its own tweak on this
+# Adapted from scipy, each project seems to have its own tweaks for this. One
+# day using dependency('numpy') will be a thing, see
+# https://github.com/mesonbuild/meson/issues/9598.
 # NumPy include directory - needed in all submodules
-# The chdir is needed because within numpy there's an `import signal`
-# statement, and we don't want that to pick up scipy's signal module rather
-# than the stdlib module. The try-except is needed because when things are
-# split across drives on Windows, there is no relative path and an exception
-# gets raised. There may be other such cases, so add a catch-all and switch to
-# an absolute path. Relative paths are needed when for example a virtualenv is
+# Relative paths are needed when for example a virtualenv is
 # placed inside the source tree; Meson rejects absolute paths to places inside
-# the source tree.
+# the source tree. The try-except is needed because when things are split
+# across drives on Windows, there is no relative path and an exception gets
+# raised. There may be other such cases, so add a catch-all and switch to
+# an absolute path.
 # For cross-compilation it is often not possible to run the Python interpreter
 # in order to retrieve numpy's include directory. It can be specified in the
 # cross file instead:
@@ -52,7 +70,15 @@ if incdir_numpy == 'not-given'
   incdir_numpy = run_command(py,
     [
       '-c',
-      'import os; os.chdir(".."); import numpy; print(numpy.get_include())'
+      '''
+import os
+import numpy as np
+try:
+  incdir = os.path.relpath(np.get_include())
+except Exception:
+  incdir = np.get_include()
+print(incdir)
+'''
     ],
     check: true
   ).stdout().strip()
@@ -60,7 +86,6 @@ endif
 
 inc_np = include_directories(incdir_numpy)
 np_dep = declare_dependency(include_directories: inc_np)
-
 
 openmp_dep = dependency('OpenMP', language: 'c', required: false)
 
@@ -93,88 +118,46 @@ endif
 
 cc = meson.get_compiler('c')
 
-# Deal with M_PI & friends; add `use_math_defines` to c_args
-# Cython doesn't always get this correctly itself
-# explicitly add the define as a compiler flag for Cython-generated code.
-if is_windows
-  use_math_defines = ['-D_USE_MATH_DEFINES']
-else
-  use_math_defines = []
-endif
+# Allow supporting older numpys than the version compiled against.
+# Set the define to the minimum numpy supported version, see
+# sklearn/_min_dependencies.py.
+add_project_arguments('-DNPY_TARGET_VERSION=NPY_1_19_API_VERSION', language : ['c', 'cpp'])
 
-# Don't use the deprecated NumPy C API. Define this to a fixed version instead of
-# NPY_API_VERSION in order not to break compilation for released SciPy versions
-# when NumPy introduces a new deprecation. Use in a meson.build file::
-#
-#   py3.extension_module('_name',
-#     'source_fname',
-#     numpy_nodepr_api)
-#
-numpy_nodepr_api = '-DNPY_NO_DEPRECATED_API=NPY_1_9_API_VERSION'
-
-# python_sources = [
-#   '__init__.py',
-#   '__init__.pyi',
-#   'conftest.py',
-# ]
-
-# py.install_sources(
-#   python_sources,
-#   pure: false,
-#   subdir: 'skimage'
-# )
-
-# TODO what is the sklearn equivalent
-# cython_cli = find_program('_build_utils/cythoner.py')
-
-# cython_gen = generator(cython_cli,
-#   arguments : ['@INPUT@', '@OUTPUT@'],
-#   output : '@BASENAME@.c')
-
-# cython_gen_cpp = generator(cython_cli,
-#   arguments : ['@INPUT@', '@OUTPUT@', '--cplus'],
-#   output : '@BASENAME@.cpp')
-
-c_undefined_ok = ['-Wno-maybe-uninitialized']
-
-# Suppress warning for deprecated Numpy API.
-# (Suppress warning messages emitted by #warning directives).
-# Replace with numpy_nodepr_api after Cython 3.0 is out
-# TODO What to do about this?
-_cpp_Wno_cpp = cpp.get_supported_arguments('-Wno-cpp')
-cython_c_args += [_cpp_Wno_cpp, use_math_defines]
-cython_cpp_args = cython_c_args
-
-# TODO I should reuse cython_c_args and merge my own tweaks
+# TODO do the equivalent of sklearn/_build_utils/__init__.py that sets
+# boundchecks=True if SKLEARN_ENABLE_DEBUG_CYTHON_DIRECTIVES is set to 1.
+# There is no access to environment variables inside meson.build files so this
+# needs to be a meson option or meson buildtype
+scikit_learn_cython_args = [
+  '-X language_level=3', '-X boundscheck=False', '-X wraparound=False',
+  '-X initializedcheck=False', '-X nonecheck=False', '-X cdivision=True',
+  '-X profile=False',
+  # Needed for cython imports across subpackages, e.g. cluster pyx that
+  # cimports metrics pxd
+  '--include-dir', meson.global_build_root(),
+]
+cython_args += scikit_learn_cython_args
 
 extensions = ['_isotonic']
 
 py.extension_module(
   '_isotonic',
   '_isotonic.pyx',
-  # TODO what about additional arguments like below
-  # install: false,
-  #   c_args: [
-  #     '-DNPY_NO_DEPRECATED_API=0',  # Cython still uses old NumPy C API
-  #     # Require 1.25+ to test datetime additions
-  #     '-DNPY_TARGET_VERSION=NPY_2_0_API_VERSION',
-  #   ],
   cython_args: cython_args,
   install: true,
   subdir: 'sklearn',
 )
 
-# TODO Needed for Cython?
-__init__py = fs.copyfile('__init__.py')
+# Need for Cython cimports across sub-packages to work and avoid errors like
+# relative cimport from non-package directory is not allowed
+fs.copyfile('__init__.py')
 
 sklearn_dir = py.get_install_dir() / 'sklearn'
 
 subdir('__check_build')
 subdir('_loss')
-# utils needs to be quite early since its .pxd are used by plenty of other modules Cython
+# utils needs to be quite early since plenty of other modules cimports utils .pxd
 subdir('utils')
-# TODO metrics needs to be to be before cluster since cluster Cython imports
-# depends on metrics Cython. Better way to do this in meson?
+# metrics needs to be to be before cluster since cluster cimports metrics .pxd
 subdir('metrics')
 subdir('cluster')
 subdir('datasets')
@@ -183,7 +166,7 @@ subdir('ensemble')
 subdir('feature_extraction')
 subdir('linear_model')
 subdir('manifold')
-subdir('preprocessing')
 subdir('neighbors')
+subdir('preprocessing')
 subdir('svm')
 subdir('tree')
