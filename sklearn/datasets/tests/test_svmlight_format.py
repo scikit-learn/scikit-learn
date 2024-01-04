@@ -261,7 +261,7 @@ def test_invalid_filename():
 def test_dump(csr_container):
     X_sparse, y_dense = _load_svmlight_local_test_file(datafile)
     X_dense = X_sparse.toarray()
-    y_sparse = csr_container(y_dense)
+    y_sparse = csr_container(np.atleast_2d(y_dense))
 
     # slicing a csr_matrix can unsort its .indices, so test that we sort
     # those correctly
