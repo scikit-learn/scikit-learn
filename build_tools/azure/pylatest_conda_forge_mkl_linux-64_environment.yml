@@ -25,6 +25,6 @@ dependencies:
   - pip
   - pytorch=1.13
   - pytorch-cpu
-  - polars
+  - polars=0.20.2
   - pyarrow
   - array-api-compat

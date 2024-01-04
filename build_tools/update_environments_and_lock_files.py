@@ -108,6 +108,9 @@ conda_build_metadata_list = [
         "package_constraints": {
             "blas": "[build=mkl]",
             "pytorch": "1.13",
+            # TODO temporary pin to avoid
+            # https://github.com/conda-forge/polars-feedstock/issues/205
+            "polars": "0.20.2",
         },
     },
     {
