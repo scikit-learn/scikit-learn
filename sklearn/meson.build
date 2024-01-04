@@ -9,44 +9,11 @@ is_mingw = is_windows and cc.get_id() == 'gcc'
 if is_mingw
   # For mingw-w64, link statically against the UCRT.
   gcc_link_args = ['-lucrt', '-static']
-  add_project_link_arguments(gcc_link_args, language: ['c', 'cpp', 'fortran'])
+  add_project_link_arguments(gcc_link_args, language: ['c', 'cpp'])
   # Force gcc to float64 long doubles for compatibility with MSVC
   # builds, for C only.
   add_project_arguments('-mlong-double-64', language: 'c')
-  # Make fprintf("%zd") work (see https://github.com/rgommers/scipy/issues/118)
-  add_project_arguments('-D__USE_MINGW_ANSI_STDIO=1', language: ['c', 'cpp'])
-  # Silence warnings emitted by PyOS_snprintf for (%zd), see
-  # https://github.com/rgommers/scipy/issues/118.
-  # Use as c_args for extensions containing Cython code
-  cython_args += ['-Wno-format-extra-args', '-Wno-format']
-  # Flag needed to work around BLAS and LAPACK Gfortran dependence on
-  # undocumented C feature when passing single character string arguments. See:
-  #   https://gcc.gnu.org/bugzilla/show_bug.cgi?id=90329
-  #   https://github.com/wch/r-source/blob/838f9d5a7be08f2a8c08e47bcd28756f5d0aac90/src/gnuwin32/MkRules.rules#L121
-  add_project_arguments('-fno-optimize-sibling-calls', language: ['fortran'])
 endif
-
-# if is_windows
-#   # For mingw-w64, link statically against the UCRT.
-#   gcc_link_args = ['-lucrt', '-static']
-#   if is_mingw
-#     add_project_link_arguments(gcc_link_args, language: ['c', 'cpp'])
-#     # Force gcc to float64 long doubles for compatibility with MSVC
-#     # builds, for C only.
-#     add_project_arguments('-mlong-double-64', language: 'c')
-#     # Make fprintf("%zd") work (see https://github.com/rgommers/scipy/issues/118)
-#     add_project_arguments('-D__USE_MINGW_ANSI_STDIO=1', language: ['c', 'cpp'])
-#     # Manual add of MS_WIN64 macro when not using MSVC.
-#     # https://bugs.python.org/issue28267
-#     bitness = run_command(
-#       '_build_utils/gcc_build_bitness.py',
-#       check: true
-#     ).stdout().strip()
-#     if bitness == '64'
-#       add_project_arguments('-DMS_WIN64', language: ['c', 'cpp'])
-#     endif
-#   endif
-# endif
 
 # Adapted from scipy, each project seems to have its own tweaks for this. One
 # day using dependency('numpy') will be a thing, see
