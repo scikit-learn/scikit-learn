@@ -905,7 +905,7 @@ some parameter :math:`\beta`:
 
    F_\beta = (1 + \beta^2) \frac{\text{precision} \times \text{recall}}{\beta^2 \text{precision} + \text{recall}}
 
-To avoid zero division when precision and recall are zero, Scikit-Learn calculates F-measure with this
+To avoid division by zero when precision and recall are zero, Scikit-Learn calculates F-measure with this
 otherwise-equivalent formula:
 
 .. math::
