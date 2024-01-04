@@ -114,15 +114,17 @@ py.extension_module(
   subdir: 'sklearn',
 )
 
-# Need for Cython cimports across sub-packages to work and avoid errors like
+# Need for Cython cimports across subpackages to work, i.e. avoid errors like
 # relative cimport from non-package directory is not allowed
 fs.copyfile('__init__.py')
 
 sklearn_dir = py.get_install_dir() / 'sklearn'
 
+# Subpackages are mostly in alphabetical order except to handle Cython
+# dependencies across subpackage
 subdir('__check_build')
 subdir('_loss')
-# utils needs to be quite early since plenty of other modules cimports utils .pxd
+# utils needs to be early since plenty of other modules cimports utils .pxd
 subdir('utils')
 # metrics needs to be to be before cluster since cluster cimports metrics .pxd
 subdir('metrics')
