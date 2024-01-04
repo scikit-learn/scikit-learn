@@ -355,14 +355,6 @@ Changelog
 :mod:`sklearn.decomposition`
 ............................
 
-- |Efficiency| :class:`decomposition.PCA` with `svd_solver="full"` now assigns
-  a contiguous `components_` attribute instead of an non-contiguous slice of
-  the singular vectors. When `n_components << n_features`, this can save some
-  memory and more importantly help speed-up subsequent calls to the `transform`
-  method by more than an order of magnitude by leveraging cache locality of
-  BLAS GEMM on contiguous arrays.
-  :pr:`27491` by :user:`Olivier Grisel <ogrisel>`.
-
 - |Feature| :class:`decomposition.PCA` now supports :class:`scipy.sparse.sparray`
   and :class:`scipy.sparse.spmatrix` inputs when using the `arpack` solver.
   When used on sparse data like :func:`datasets.fetch_20newsgroups_vectorized` this
@@ -378,28 +370,6 @@ Changelog
   from W or H shapes when using a custom initialization. The default value of this
   parameter will change from `None` to `auto` in version 1.6.
   :pr:`26634` by :user:`Alexandre Landeau <AlexL>` and :user:`Alexandre Vigny <avigny>`.
-
-- |Enhancement| :class:`decomposition.PCA` now supports a new solver option
-  named `svd_solver="covariance_eigh"` which offers an order of magnitude
-  speed-up and reduced memory usage for datasets with a large number of data
-  points and a small number of features (say, less than 1000). The
-  `svd_solver="auto"` option has been updated to use the new solver
-  automatically for such datasets. This solver also accepts sparse input
-  data.
-  :pr:`27491` by :user:`Olivier Grisel <ogrisel>`.
-
-- |Enhancement| :class:`decomposition.PCA` now supports the Array API for the
-  `full`, `covariance_eigh` and `randomized` solvers (with QR power iterations).
-  See :ref:`array_api` for more details.
-  :pr:`26315`, :pr:`27098`, :pr:`27431` and :pr:`27491`
-  by :user:`Mateusz Sokół <mtsokol>`, :user:`Olivier Grisel <ogrisel>`
-  and :user:`Edoardo Abati <EdAbati>`.
-
-- |Fix| :class:`decomposition.PCA` fit with `svd_solver="arpack"`,
-  `whiten=True` and a value for `n_components` that is larger than the rank of
-  the training set, no longer returns infinite values when transforming
-  held-out data.
-  :pr:`27491` by :user:`Olivier Grisel <ogrisel>`.
 
 - |Fix| :func:`decomposition.dict_learning_online` does not ignore anymore the parameter
   `max_iter`.
