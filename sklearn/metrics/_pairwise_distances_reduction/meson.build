@@ -1,7 +1,8 @@
 _pairwise_distances_reduction_cython_tree = [
   fs.copyfile('__init__.py'),
-  fs.copyfile('_classmode.pxd')
 ]
+
+_classmode_pxd = fs.copyfile('_classmode.pxd')
 
 _datasets_pair_pxd = custom_target(
   '_datasets_pair_pxd',
@@ -41,7 +42,8 @@ _base_pyx = custom_target(
 _base = py.extension_module(
   '_base',
   [_base_pxd, _base_pyx,
-   _pairwise_distances_reduction_cython_tree, utils_cython_tree],
+   _pairwise_distances_reduction_cython_tree,
+   _datasets_pair_pxd, utils_cython_tree],
   dependencies: [np_dep, openmp_dep],
   override_options: ['cython_language=cpp'],
   cython_args: cython_args,
@@ -87,7 +89,9 @@ _argkmin_pyx = custom_target(
 _argkmin = py.extension_module(
     '_argkmin',
     [_argkmin_pxd, _argkmin_pyx,
-     _pairwise_distances_reduction_cython_tree, utils_cython_tree],
+     _pairwise_distances_reduction_cython_tree,
+     _datasets_pair_pxd, _base_pxd, _middle_term_computer_pxd,
+     utils_cython_tree],
     dependencies: [np_dep, openmp_dep],
     override_options: ['cython_language=cpp'],
     cython_args: cython_args,
@@ -110,6 +114,7 @@ _radius_neighbors_pyx = custom_target(
 _radius_neighbors = py.extension_module(
     '_radius_neighbors',
     [_radius_neighbors_pxd, _radius_neighbors_pyx,
+     _datasets_pair_pxd, _base_pxd, _middle_term_computer_pxd,
      _pairwise_distances_reduction_cython_tree, utils_cython_tree],
     dependencies: [np_dep, openmp_dep],
     override_options: ['cython_language=cpp'],
@@ -126,7 +131,8 @@ _argkmin_classmode_pyx = custom_target(
 )
 _argkmin_classmode = py.extension_module(
   '_argkmin_classmode',
-  [_argkmin_classmode_pyx, _pairwise_distances_reduction_cython_tree,
+  [_argkmin_classmode_pyx, _classmode_pxd,
+   _argkmin_pxd, _pairwise_distances_reduction_cython_tree,
    _datasets_pair_pxd, _base_pxd, _middle_term_computer_pxd, utils_cython_tree],
   dependencies: [np_dep],
   override_options: ['cython_language=cpp'],
@@ -143,8 +149,10 @@ _radius_neighbors_classmode_pyx = custom_target(
 )
 _radius_neighbors_classmode = py.extension_module(
   '_radius_neighbors_classmode',
-  [_radius_neighbors_classmode_pyx, _pairwise_distances_reduction_cython_tree,
-   _datasets_pair_pxd, _base_pxd, utils_cython_tree],
+  [_radius_neighbors_classmode_pyx, _classmode_pxd,
+  _middle_term_computer_pxd, _radius_neighbors_pxd,
+  _pairwise_distances_reduction_cython_tree,
+  _datasets_pair_pxd, _base_pxd, utils_cython_tree],
   dependencies: [np_dep],
   override_options: ['cython_language=cpp'],
   cython_args: cython_args,
