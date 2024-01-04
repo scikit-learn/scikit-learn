@@ -5,7 +5,7 @@ import textwrap
 import pytest
 
 from sklearn.utils import _IS_WASM
-from sklearn.utils._testing import assert_run_python_script
+from sklearn.utils._testing import assert_run_python_script_without_output
 
 
 @pytest.mark.xfail(_IS_WASM, reason="cannot start subprocess")
@@ -21,8 +21,8 @@ def test_imports_strategies():
     from sklearn.experimental import enable_iterative_imputer
     from sklearn.impute import IterativeImputer
     """
-    assert_run_python_script(
-        textwrap.dedent(good_import), output_should_not_match=pattern
+    assert_run_python_script_without_output(
+        textwrap.dedent(good_import), pattern=pattern
     )
 
     good_import_with_ensemble_first = """
@@ -30,9 +30,9 @@ def test_imports_strategies():
     from sklearn.experimental import enable_iterative_imputer
     from sklearn.impute import IterativeImputer
     """
-    assert_run_python_script(
+    assert_run_python_script_without_output(
         textwrap.dedent(good_import_with_ensemble_first),
-        output_should_not_match=pattern,
+        pattern=pattern,
     )
 
     bad_imports = f"""
@@ -45,4 +45,4 @@ def test_imports_strategies():
     with pytest.raises(ImportError, match={pattern!r}):
         from sklearn.impute import IterativeImputer
     """
-    assert_run_python_script(textwrap.dedent(bad_imports))
+    assert_run_python_script_without_output(textwrap.dedent(bad_imports))

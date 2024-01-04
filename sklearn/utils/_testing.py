@@ -66,7 +66,7 @@ __all__ = [
     "assert_array_less",
     "assert_approx_equal",
     "assert_allclose",
-    "assert_run_python_script",
+    "assert_run_python_script_without_output",
     "assert_no_warnings",
     "SkipTest",
 ]
@@ -669,11 +669,11 @@ def check_docstring_parameters(func, doc=None, ignore=None):
     return incorrect
 
 
-def assert_run_python_script(source_code, output_should_not_match=".+", timeout=60):
+def assert_run_python_script_without_output(source_code, pattern=".+", timeout=60):
     """Utility to check assertions in an independent Python subprocess.
 
     The script provided in the source code should return 0 and the stdtout +
-    stderr should not match the pattern `output_should_not_match`.
+    stderr should not match the pattern `pattern`.
 
     This is a port from cloudpickle https://github.com/cloudpipe/cloudpickle
 
@@ -681,9 +681,9 @@ def assert_run_python_script(source_code, output_should_not_match=".+", timeout=
     ----------
     source_code : str
         The Python source code to execute.
-    output_should_not_match : str
-        Pattern that the the stdout + stderr should not match. By default if
-        stdout + stderr are not both empty, an error will be raised.
+    pattern : str
+        Pattern that the the stdout + stderr should not match. By default, unless
+        stdout + stderr are both empty, an error will be raised.
     timeout : int, default=60
         Time in seconds before timeout.
     """
@@ -713,15 +713,13 @@ def assert_run_python_script(source_code, output_should_not_match=".+", timeout=
                 raise RuntimeError(
                     "script errored with output:\n%s" % e.output.decode("utf-8")
                 )
+
             out = out.decode("utf-8")
-            if re.search(output_should_not_match, out):
-                if out == "":
+            if re.search(pattern, out):
+                if pattern == ".+":
                     expectation = "Expected empty output"
                 else:
-                    expectation = (
-                        "The output was not supposed to match"
-                        f" {output_should_not_match!r}"
-                    )
+                    expectation = f"The output was not supposed to match {pattern!r}"
 
                 message = f"{expectation}, got the following output instead: {out!r}"
                 raise AssertionError(message)
