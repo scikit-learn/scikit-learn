@@ -97,6 +97,7 @@ conda_build_metadata_list = [
         "channel": "conda-forge",
         "conda_dependencies": common_dependencies + [
             "ccache",
+            "meson-python",
             "pytorch",
             "pytorch-cpu",
             "polars",
@@ -141,7 +142,10 @@ conda_build_metadata_list = [
         "folder": "build_tools/azure",
         "platform": "linux-64",
         "channel": "conda-forge",
-        "conda_dependencies": common_dependencies_without_coverage + ["ccache"],
+        "conda_dependencies": common_dependencies_without_coverage + [
+            "ccache",
+            "meson-python",
+        ],
         "package_constraints": {
             "blas": "[build=mkl]",
         },
