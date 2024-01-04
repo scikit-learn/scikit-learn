@@ -11,13 +11,6 @@ Version 1.5.0
 
 .. include:: changelog_legend.inc
 
-Changed models
---------------
-
-- |Enhancement| :class:`dummy.DummyClassifier` and :class:`dummy.DummyRegressor` now
-  have the `n_features_in_` and `feature_names_in_` attributes after `fit`.
-  :pr:`27937` by :user:`Marco vd Boom <tvdboom>`.
-
 Changelog
 ---------
 
