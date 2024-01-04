@@ -327,6 +327,13 @@ Changelog
   with `np.int64` indices are not supported.
   :pr:`27240` by :user:`Yao Xiao <Charlie-XIAO>`.
 
+:mod:`sklearn.covariance`
+.........................
+
+- |Enhancement| Allow :func:`covariance.shrunk_covariance` to process
+  multiple covariance matrices at once by handling nd-arrays.
+  :pr:`25275` by :user:`Quentin Barthélemy <qbarthelemy>`.
+
 - |API| |FIX| :class:`~compose.ColumnTransformer` now replaces `"passthrough"`
   with a corresponding :class:`~preprocessing.FunctionTransformer` in the
   fitted ``transformers_`` attribute.
@@ -576,6 +583,11 @@ Changelog
   always has a `float32` dtype when fitted on `float32` data, even with the
   type promotion rules of NumPy 2.
   :pr:`27899` by :user:`Olivier Grisel <ogrisel>`.
+
+- |API| The attribute `loss_function_` of :class:`linear_model.SGDClassifier` and
+  :class:`linear_model.SGDOneClassSVM` has been deprecated and will be removed in
+  version 1.6.
+  :pr:`27979` by :user:`Christian Lorentzen <lorentzenchr>`.
 
 :mod:`sklearn.metrics`
 ......................

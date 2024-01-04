@@ -151,7 +151,7 @@ conda_build_metadata_list = [
         "folder": "build_tools/azure",
         "platform": "linux-64",
         "channel": "defaults",
-        "conda_dependencies": common_dependencies + ["ccache"],
+        "conda_dependencies": remove_from(common_dependencies, ["pandas"]) + ["ccache"],
         "package_constraints": {
             "python": "3.9",
             "blas": "[build=openblas]",
@@ -276,6 +276,7 @@ conda_build_metadata_list = [
             "numpydoc",
             "sphinx-prompt",
             "plotly",
+            "polars",
             "pooch",
         ],
         "pip_dependencies": ["sphinxext-opengraph"],
@@ -294,6 +295,7 @@ conda_build_metadata_list = [
             "sphinx-prompt": "min",
             "sphinxext-opengraph": "min",
             "plotly": "min",
+            "polars": "min",
         },
     },
     {
@@ -304,6 +306,8 @@ conda_build_metadata_list = [
         "conda_dependencies": common_dependencies_without_coverage + [
             "scikit-image",
             "seaborn",
+            # TODO Remove when patsy pin is not needed anymore, see below
+            "patsy",
             "memory_profiler",
             "compilers",
             "sphinx",
@@ -312,12 +316,17 @@ conda_build_metadata_list = [
             "numpydoc",
             "sphinx-prompt",
             "plotly",
+            "polars",
             "pooch",
             "sphinxext-opengraph",
         ],
         "pip_dependencies": ["jupyterlite-sphinx", "jupyterlite-pyodide-kernel"],
         "package_constraints": {
             "python": "3.9",
+            # TODO: Remove pin when issue is fixed in patsy, see
+            # https://github.com/pydata/patsy/issues/198. patsy 0.5.5
+            # introduced a DeprecationWarning at import-time.
+            "patsy": "0.5.4",
         },
     },
     {
