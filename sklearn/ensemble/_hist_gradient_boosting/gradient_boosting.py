@@ -36,6 +36,7 @@ from ...preprocessing import FunctionTransformer, LabelEncoder, OrdinalEncoder
 from ...utils import check_random_state, compute_sample_weight, is_scalar_nan, resample
 from ...utils._openmp_helpers import _openmp_effective_n_threads
 from ...utils._param_validation import Hidden, Interval, RealNotInt, StrOptions
+from ...utils.fixes import parse_version
 from ...utils.multiclass import check_classification_targets
 from ...utils.validation import (
     _check_monotonic_cst,
@@ -580,7 +581,17 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             self._random_seed = rng.randint(np.iinfo(np.uint32).max, dtype="u8")
             feature_subsample_seed = rng.randint(np.iinfo(np.uint32).max, dtype="u8")
             self._feature_subsample_rng = np.random.default_rng(feature_subsample_seed)
-            self._bagging_subsample_rng = self._feature_subsample_rng.spawn(1)[0]
+            if parse_version(np.__version__) >= parse_version("1.25"):
+                self._bagging_subsample_rng = self._feature_subsample_rng.spawn(1)[0]
+            else:
+                # See numpy Generator.spawn(self, int n_children).
+                n_children = 1
+                self._bagging_subsample_rng = [
+                    type(self._feature_subsample_rng)(g)
+                    for g in self._feature_subsample_rng._bit_generator.spawn(
+                        n_children
+                    )
+                ][0]
 
         self._validate_parameters()
         monotonic_cst = _check_monotonic_cst(self, self.monotonic_cst)
