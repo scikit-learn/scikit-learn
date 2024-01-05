@@ -686,8 +686,11 @@ def test_get_features_names_out_classifier_error():
 # ======================
 
 
-@pytest.mark.parametrize("Estimator", [VotingClassifier, VotingRegressor])
-def test_routing_passed_metadata_not_supported(Estimator):
+@pytest.mark.parametrize(
+    "Estimator, Child",
+    [(VotingClassifier, ConsumingClsasifier), (VotingRegressor, ConsumingRegressor)],
+)
+def test_routing_passed_metadata_not_supported(Estimator, Child):
     """Test that the right error message is raised when metadata is passed while
     not supported when `enable_metadata_routing=False`."""
 
