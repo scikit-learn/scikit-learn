@@ -64,7 +64,7 @@ def generate_fit_params(grid_search_simulated):
     }
 
 
-def test_ScoreCutModelSelector_methods(grid_search_simulated):
+def test_scorecutmodelselector_methods(grid_search_simulated):
     cv_results = grid_search_simulated["cv_results"]
     n_splits = grid_search_simulated["n_splits"]
 
@@ -100,7 +100,7 @@ def test_ScoreCutModelSelector_methods(grid_search_simulated):
     assert ss.fit_transform(by_standard_error(sigma=1)) == 1
 
 
-def test_ScoreCutModelSelector_errors(grid_search_simulated):
+def test_scorecutmodelselector_errors(grid_search_simulated):
     cv_results = grid_search_simulated["cv_results"]
     n_splits = grid_search_simulated["n_splits"]
 
