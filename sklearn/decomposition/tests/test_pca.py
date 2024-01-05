@@ -974,7 +974,7 @@ def check_array_api_get_precision(name, estimator, array_namespace, device, dtyp
 
         assert_allclose(
             _convert_to_numpy(covariance_xp, xp=xp),
-            covariance_np
+            covariance_np,
             rtol=rtol,
             atol=_atol_for_type(dtype_name),
         )
