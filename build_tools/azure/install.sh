@@ -121,11 +121,10 @@ scikit_learn_install() {
     if [[ "$BUILD_WITH_MESON" == "true" ]]; then
         # Hack to change build-backend pyproject.toml. There does not seem to
         # be an easier way than this
-        perl -pi -e \
-             's@\[build-system\]@[build-system]\nbuild-backend = "mesonpy"\n@' \
-             pyproject.toml
-        # Temporary debug
-        grep -A5 build-system pyproject.toml
+        sed -i \
+            's@\[build-system\]@[build-system]\nbuild-backend = "mesonpy"\n@' \
+            pyproject.toml
+
         # Test meson editable install which is likely the way that most people
         # are going to use meson for local development
         pip install --verbose --no-build-isolation --editable .
