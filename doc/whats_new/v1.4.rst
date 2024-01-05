@@ -541,11 +541,6 @@ Changelog
   proportional to the number of coefficients (`n_features * n_classes`).
   :pr:`27417` by :user:`Christian Lorentzen <lorentzenchr>`.
 
-- |Fix| :class:`linear_model.ElasticNet`, :class:`linear_model.ElasticNetCV`,
-  :class:`linear_model.Lasso` and :class:`linear_model.LassoCV` now explicitly don't
-  accept large sparse data formats. :pr:`27576` by :user:`Stefanie Senger
-  <StefanieSenger>`.
-
 - |Fix| Ensure that the `sigma_` attribute of
   :class:`linear_model.ARDRegression` and :class:`linear_model.BayesianRidge`
   always has a `float32` dtype when fitted on `float32` data, even with the

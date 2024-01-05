@@ -38,3 +38,11 @@ TODO: update at the time of the release.
 
 - |Feature| A fitted :class:`compose.ColumnTransformer` now implements `__getitem__`
   which returns the fitted transformers by name. :pr:`27990` by `Thomas Fan`_.
+
+:mod:`sklearn.linear_model`
+...........................
+
+- |Fix| :class:`linear_model.ElasticNet`, :class:`linear_model.ElasticNetCV`,
+  :class:`linear_model.Lasso` and :class:`linear_model.LassoCV` now explicitly don't
+  accept large sparse data formats. :pr:`27576` by :user:`Stefanie Senger
+  <StefanieSenger>`.
