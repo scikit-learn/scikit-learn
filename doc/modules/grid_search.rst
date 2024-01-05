@@ -592,7 +592,7 @@ complexity. This can be useful to avoid overfitting, as models with the highest
 performance may also be more prone to overfitting (Breiman et al., 1984).
 
 Scikit-Learn provides two ways of performing model refitting. The first is *post hoc*
--- by fitting a :class:`model_selection.Refitter` instance to the ``cv_results_``
+-- by fitting a :class:`model_selection.ScoreCutModelSelector` instance to the ``cv_results_``
 attribute of a fitted ``GridSearchCV`` or ``RandomizedSearchCV``. The second is *a
 priori* -- by setting the ``refit`` parameter in a ``GridSearchCV`` or
 ``RandomizedSearchCV`` instance, to a callable function :func:`model_selection.
@@ -606,7 +606,8 @@ performance is not more than 1 standard error worse than the best CV performance
 (Chen & Yang, 2021). Although it is easy to demonstrate the value of 1-SE (e.g. see
 :ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_refit_callable.py`),
 the criteria may be too rigid or lenient in some contexts. In these cases,
-:class:`model_selection.Refitter` also supports other default subselection strategies,
+:class:`model_selection.ScoreCutModelSelector` also supports other default
+subselection strategies,
 including:
 
     :class:`model_selection.by_percentile_rank`

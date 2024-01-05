@@ -2,15 +2,15 @@
 The :mod:``sklearn.model_selection.subselect`` includes refit callable factories for
 subselecting models from ``GridSearchCV`` or ``RandomizedSearchCV``
 """
+
 import warnings
 from functools import partial
-from typing import Callable, Tuple, Dict, Optional, Union, List
+from typing import Callable, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 
-
 __all__ = [
-    "Refitter",
+    "ScoreCutModelSelector",
     "by_standard_error",
     "by_percentile_rank",
     "by_signed_rank",
@@ -236,6 +236,7 @@ class by_signed_rank:
             If the number of folds is less than 3.
         """
         import itertools
+
         from scipy.stats import wilcoxon
 
         if n_folds < 3:
@@ -267,8 +268,10 @@ class by_signed_rank:
         if len(surviving_ranks) == 1:
             surviving_ranks = [best_score_idx]
             warnings.warn(
-                "The average performance of all cross-validated models is "
-                "significantly different from that of the best-performing model.",
+                (
+                    "The average performance of all cross-validated models is "
+                    "significantly different from that of the best-performing model."
+                ),
                 UserWarning,
             )
 
@@ -348,7 +351,7 @@ class by_fixed_window:
         )
 
 
-class Refitter:
+class ScoreCutModelSelector:
     """A refit factory for model subselection in GridSearchCV or RandomizedSearchCV.
 
     Model subselection can be useful for instance in the case that the user wishes to
@@ -356,6 +359,13 @@ class Refitter:
     be useful for selecting alternative models whose performance is not meaningfully
     different from the best-performing model, but whose simplicity may be more
     preferable (e.g. to prevent overfitting).
+
+    The selection process implicitly uses the rank order of the hyperparameter input
+    values provided by the user. It assumes these values are sorted from least to most
+    complex, with the index of the highest rank within the threshold equating to the
+    index of the simplest viable model. Users are responsible for ensuring their
+    hyperparameters are ordered from least to most complex as per their definition of
+    model complexity.
 
     Parameters
     ----------
@@ -376,7 +386,7 @@ class Refitter:
     >>> from sklearn.decomposition import PCA
     >>> from sklearn.svm import LinearSVC
     >>> from sklearn.pipeline import Pipeline
-    >>> from sklearn.model_selection import Refitter, by_standard_error
+    >>> from sklearn.model_selection import ScoreCutModelSelector, by_standard_error
     >>> X, y = load_digits(return_X_y=True)
     >>> pipe = Pipeline([
     ...      ("reduce_dim", PCA(random_state=42)),
@@ -394,10 +404,8 @@ class Refitter:
                                             LinearSVC(C=0.01, random_state=42))]),
                  param_grid={'reduce_dim__n_components': [6, 8, 10, 12, 14]},
                  scoring='accuracy')
-    >>> ss = Refitter(search.cv_results_)
-    >>> ss.fit(by_standard_error(sigma=1))
-    (0.884825465639171, 0.9148526525904792)
-    >>> refitted_index = ss.transform()
+    >>> ss = ScoreCutModelSelector(search.cv_results_)
+    >>> ss.fit_transform(by_standard_error(sigma=1))
     Original best index: 4
     Refitted best index: 3
     Refitted best params: {'reduce_dim__n_components': 12}
@@ -532,8 +540,9 @@ class Refitter:
             )
         )
 
-    def fit(self, selector: Callable) -> Tuple[Union[float, None], Union[float, None]]:
-        """Fit the refitter using the specified selector callable.
+    def fit_transform(self, selector: Callable) -> int:
+        """Generates a ScoreCutModelSelector instance with specified selector callable
+        and subselects the best-performing model under the fitted constraints.
 
         Parameters
         ----------
@@ -557,7 +566,7 @@ class Refitter:
         Notes
         -----
         The following keyword arguments will be automatically exposed to the selector
-        by ``Refitter``:
+        by ``ScoreCutModelSelector``:
 
         - best_score_idx : int
             The index of the highest performing model.
@@ -589,8 +598,8 @@ class Refitter:
             raise TypeError(
                 f"``selector`` {selector} must be a callable but is {type(selector)}."
                 " See ``Notes`` section of the"
-                " :class:``~sklearn.model_selection.Refitter:fit`` API documentation"
-                " for more details."
+                " :class:``~sklearn.model_selection.ScoreCutModelSelector:fit`` API"
+                " documentation for more details."
             )
 
         fit_params = {
@@ -601,28 +610,9 @@ class Refitter:
             "n_folds": self._n_folds,
         }
 
-        self.min_cut, self.max_cut = selector(**fit_params)
-        return self.min_cut, self.max_cut
-
-    def transform(self) -> int:
-        """Subselects the best-performing model under the fitted constraints.
-
-        Returns
-        -------
-        int
-            The index of the best-performing model under the fitted constraints.
-
-        Raises
-        ------
-        ValueError
-            If the refitter has not been fitted before calling the ``transform`` method.
-        """
-        if not hasattr(self, "min_cut") or not hasattr(self, "max_cut"):
-            raise ValueError(
-                "Refitter must be fitted before calling ``transform`` method."
-            )
-
-        best_index_ = self._apply_thresh(self.min_cut, self.max_cut)
+        min_cut, max_cut = selector(**fit_params)
+        print(f"Min: {min_cut}\nMax: {max_cut}")
+        best_index_ = self._apply_thresh(min_cut, max_cut)
         print(f"Original best index: {self._best_score_idx}")
         print(f"Refitted best index: {best_index_}")
         print(
@@ -633,14 +623,14 @@ class Refitter:
             "Refitted best score:"
             f" {self.cv_results_constrained_['mean_test_score'][best_index_]}"
         )
-        return self._apply_thresh(self.min_cut, self.max_cut)
+        return self._apply_thresh(min_cut, max_cut)
 
 
 def _wrap_refit(cv_results_: Dict, selector: Callable) -> int:
-    """A wrapper function for the ``Refitter`` class.
+    """A wrapper function for the ``ScoreCutModelSelector`` class.
 
-    Should not be called directly. See the :class:``~sklearn.model_selection.Refitter``
-    API documentation for more details.
+    Should not be called directly. See the :class:``~sklearn.model_selection
+    ScoreCutModelSelector`` API documentation for more details.
 
     Parameters
     ----------
@@ -657,10 +647,9 @@ def _wrap_refit(cv_results_: Dict, selector: Callable) -> int:
         The index of the best model under the performance constraints conferred by a
         ``selector``.
     """
-    ss = Refitter(cv_results_)
-    [min_cut, max_cut] = ss.fit(selector)
-    print(f"Min: {min_cut}\nMax: {max_cut}")
-    return ss.transform()
+    ss = ScoreCutModelSelector(cv_results_)
+
+    return ss.fit_transform(selector)
 
 
 def constrain(selector: Callable) -> Callable:

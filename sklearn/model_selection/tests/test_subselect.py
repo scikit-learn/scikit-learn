@@ -1,23 +1,21 @@
 import numpy as np
 import pytest
 
-from sklearn.utils._testing import ignore_warnings
-
 from sklearn.datasets import make_classification
-from sklearn.model_selection import GridSearchCV
-from sklearn.model_selection import RandomizedSearchCV
+from sklearn.decomposition import PCA
 from sklearn.model_selection import (
-    Refitter,
-    by_standard_error,
+    GridSearchCV,
+    RandomizedSearchCV,
+    ScoreCutModelSelector,
+    by_fixed_window,
     by_percentile_rank,
     by_signed_rank,
-    by_fixed_window,
+    by_standard_error,
     constrain,
 )
-
-from sklearn.svm import LinearSVC, SVC
-from sklearn.decomposition import PCA
 from sklearn.pipeline import Pipeline
+from sklearn.svm import SVC, LinearSVC
+from sklearn.utils._testing import ignore_warnings
 
 
 @pytest.fixture(scope="function")
@@ -55,7 +53,7 @@ def grid_search_simulated():
 def generate_fit_params(grid_search_simulated):
     cv_results = grid_search_simulated["cv_results"]
     n_splits = grid_search_simulated["n_splits"]
-    ss = Refitter(cv_results)
+    ss = ScoreCutModelSelector(cv_results)
 
     yield {
         "score_grid": ss._score_grid,
@@ -66,11 +64,11 @@ def generate_fit_params(grid_search_simulated):
     }
 
 
-def test_refitter_methods(grid_search_simulated):
+def test_ScoreCutModelSelector_methods(grid_search_simulated):
     cv_results = grid_search_simulated["cv_results"]
     n_splits = grid_search_simulated["n_splits"]
 
-    ss = Refitter(cv_results)
+    ss = ScoreCutModelSelector(cv_results)
 
     # Test that the _get_splits method extracts the correct subgrid
     assert len(ss._get_splits()) == n_splits
@@ -98,34 +96,24 @@ def test_refitter_methods(grid_search_simulated):
     # Omit max_thresh
     assert ss._apply_thresh(0.80, None) == 1
 
-    # Test that the fit method returns the correct scores
-    assert ss.fit(by_standard_error(sigma=1)) == (
-        0.9243126424613448,
-        0.9923540242053219,
-    )
-
-    # Test that the transform method returns the correct model
-    assert ss.transform() == 1
+    # Test that the fit method returns the correct model
+    assert ss.fit_transform(by_standard_error(sigma=1)) == 1
 
 
-def test_refitter_errors(grid_search_simulated):
+def test_ScoreCutModelSelector_errors(grid_search_simulated):
     cv_results = grid_search_simulated["cv_results"]
     n_splits = grid_search_simulated["n_splits"]
 
     with pytest.raises(ValueError):
-        ss = Refitter(cv_results)
+        ss = ScoreCutModelSelector(cv_results)
         assert ss._apply_thresh(0.98, 0.99) == 1
 
     with pytest.raises(TypeError):
-        ss = Refitter(cv_results)
-        assert ss.fit("Not_a_rule") == (0.9243126424613448, 0.9923540242053219)
-
-    with pytest.raises(ValueError):
-        ss = Refitter(cv_results)
-        assert ss.transform() == 1
+        ss = ScoreCutModelSelector(cv_results)
+        assert ss.fit_transform("Not_a_rule") == 1
 
     del cv_results["params"]
-    ss = Refitter(cv_results)
+    ss = ScoreCutModelSelector(cv_results)
     with pytest.raises(TypeError):
         assert len(ss._get_splits()) == n_splits
 
@@ -163,9 +151,9 @@ def test_refitter_errors(grid_search_simulated):
 )
 def test_constrain(param, scoring, rule, search_cv):
     """
-    A function tests `refit=callable` interface where the callable is the `simplify`
-    method of the `Refitter` refit class that returnsthe most parsimonious,
-    highest-performing model.
+    A function that tests the constrain function by comparing the results of a
+    refitted grid and random search object to those of a non-refitted grid and random
+    search object, respectively.
     """
 
     X, y = make_classification(n_samples=350, n_features=16, random_state=42)

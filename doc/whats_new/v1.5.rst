@@ -31,6 +31,12 @@ Changelog
   by passing a function in place of a strategy name.
   :pr:`28053` by :user:`Mark Elliot <mark-thm>`.
 
+:mod:`sklearn.model_selection`
+..............................
+- |MajorFeature| :class:`model_selection.ScoreCutModelSelector` is a new refit callable factory for
+  subselecting models from `GridSearchCV` or `RandomSearchCV`.
+  :pr:`22573` by :user:`Derek Pisner <dPys>` and :user:`Joel Nothman <jnothman>`.
+
 Code and Documentation Contributors
 -----------------------------------
 
