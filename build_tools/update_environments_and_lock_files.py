@@ -137,16 +137,6 @@ conda_build_metadata_list = [
         },
     },
     {
-        "build_name": "pylatest_conda_forge_mkl_no_coverage",
-        "folder": "build_tools/azure",
-        "platform": "linux-64",
-        "channel": "conda-forge",
-        "conda_dependencies": common_dependencies_without_coverage + ["ccache"],
-        "package_constraints": {
-            "blas": "[build=mkl]",
-        },
-    },
-    {
         "build_name": "pymin_conda_defaults_openblas",
         "folder": "build_tools/azure",
         "platform": "linux-64",
