@@ -114,9 +114,8 @@ def device(*array_list):
             devices.add(array.device)
 
     if len(devices) > 1:
-        raise ValueError(
-            f"Input arrays use different devices: {', '.join(sorted(devices))}"
-        )
+        device_names = ", ".join(sorted(str(d) for d in devices))
+        raise ValueError(f"Input arrays use different devices: {device_names}")
 
     return devices.pop()
 
