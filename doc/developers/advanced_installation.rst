@@ -244,9 +244,8 @@ recompile when doing `import sklearn`.
 Other places that may be worth looking at:
 - `pandas setup doc <https://pandas.pydata.org/docs/development/contributing_environment.html#step-3-build-and-install-pandas>`__,
   they have a similar setup as ours (no spin or dev.py)
-- `Understanding Meson
-  <https://scipy.github.io/devdocs/building/understanding_meson.html>`__ in the
-  Scipy documentation. More background about Meson works behind the scenes.
+- `Understanding Meson <https://scipy.github.io/devdocs/building/understanding_meson.html>`__
+  in the Scipy documentation. More background about Meson works behind the scenes.
 
 .. _platform_specific_instructions:
 
