@@ -72,8 +72,6 @@ class RFE(_RoutingNotSupportedMixin, SelectorMixin, MetaEstimatorMixin, BaseEsti
     That procedure is recursively repeated on the pruned set until the desired
     number of features to select is eventually reached.
 
-    For an example on usage, see
-    :ref:`sphx_glr_auto_examples_feature_selection_plot_rfe_digits.py`.
     Read more in the :ref:`User Guide <rfe>`.
 
     Parameters
