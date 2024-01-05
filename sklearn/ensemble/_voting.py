@@ -354,7 +354,9 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
         # estimators in VotingClassifier.estimators are not validated yet
         prefer_skip_nested_validation=False
     )
-    def fit(self, X, y, sample_weight=None, **fit_params):
+    # remove sample_weight from the signature after deprecation.
+    @_deprecate_positional_args(version="1.6")
+    def fit(self, X, y, *, sample_weight=None, **fit_params):
         """Fit the estimators.
 
         Parameters
