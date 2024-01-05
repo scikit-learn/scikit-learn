@@ -88,6 +88,15 @@ def _check_array_api_dispatch(array_api_dispatch):
             )
 
 
+def _single_array_device(array):
+    if isinstance(array, (numpy.ndarray, numpy.generic)) or not hasattr(
+        array, "device"
+    ):
+        return "cpu"
+    else:
+        return array.device
+
+
 def device(*array_list):
     """Hardware device the array data resides on.
 
@@ -104,20 +113,17 @@ def device(*array_list):
     if not array_list:
         raise ValueError("At least one input array expected, got none.")
 
-    devices = set()
-    for array in array_list:
-        if isinstance(array, (numpy.ndarray, numpy.generic)) or not hasattr(
-            array, "device"
-        ):
-            devices.add("cpu")
-        else:
-            devices.add(array.device)
+    device_ = _single_array_device(array_list[0])
 
-    if len(devices) > 1:
-        device_names = ", ".join(sorted(str(d) for d in devices))
-        raise ValueError(f"Input arrays use different devices: {device_names}")
+    for array in array_list[1:]:
+        device_other = _single_array_device(array)
+        if device != device_other:
+            raise ValueError(
+                f"Input arrays use different devices: {str(device_)}, "
+                f"{str(device_other)}"
+            )
 
-    return devices.pop()
+    return device_
 
 
 def size(x):
