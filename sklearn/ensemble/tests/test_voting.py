@@ -34,6 +34,7 @@ from sklearn.utils._testing import (
     assert_almost_equal,
     assert_array_almost_equal,
     assert_array_equal,
+    ignore_warnings,
 )
 
 # Load datasets
@@ -306,6 +307,7 @@ def test_parallel_fit(global_random_seed):
     assert_array_almost_equal(eclf1.predict_proba(X), eclf2.predict_proba(X))
 
 
+@ignore_warnings(category=FutureWarning)
 def test_sample_weight(global_random_seed):
     """Tests sample_weight parameter of VotingClassifier"""
     clf1 = LogisticRegression(random_state=global_random_seed)
