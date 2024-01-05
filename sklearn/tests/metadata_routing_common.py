@@ -148,11 +148,12 @@ class ConsumingRegressor(RegressorMixin, BaseEstimator):
         return self
 
     def fit(self, X, y, sample_weight="default", metadata="default"):
+        if self.registry is not None:
+            self.registry.append(self)
+
         record_metadata_not_default(
             self, "fit", sample_weight=sample_weight, metadata=metadata
         )
-        if self.registry is not None and self._records.get("fit", {}):
-            self.registry.append(self)
         return self
 
     def predict(self, X, sample_weight="default", metadata="default"):
@@ -215,11 +216,12 @@ class ConsumingClassifier(ClassifierMixin, BaseEstimator):
         return self
 
     def fit(self, X, y, sample_weight="default", metadata="default"):
+        if self.registry is not None:
+            self.registry.append(self)
+
         record_metadata_not_default(
             self, "fit", sample_weight=sample_weight, metadata=metadata
         )
-        if self.registry is not None and self._records.get("fit", {}):
-            self.registry.append(self)
 
         self.classes_ = np.unique(y)
         return self

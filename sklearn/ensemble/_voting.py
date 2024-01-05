@@ -40,7 +40,12 @@ from ..utils.metadata_routing import (
 from ..utils.metaestimators import available_if
 from ..utils.multiclass import check_classification_targets
 from ..utils.parallel import Parallel, delayed
-from ..utils.validation import _check_feature_names_in, check_is_fitted, column_or_1d
+from ..utils.validation import (
+    _check_feature_names_in,
+    _deprecate_positional_args,
+    check_is_fitted,
+    column_or_1d,
+)
 from ._base import _BaseHeterogeneousEnsemble, _fit_single_estimator
 
 
@@ -192,7 +197,7 @@ class _BaseVoting(TransformerMixin, _BaseHeterogeneousEnsemble):
                 method_mapping=MethodMapping().add(callee="fit", caller="fit"),
             )
         return router
-      
+
 
 class VotingClassifier(ClassifierMixin, _BaseVoting):
     """Soft Voting/Majority Rule classifier for unfitted estimators.
@@ -354,8 +359,8 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
         # estimators in VotingClassifier.estimators are not validated yet
         prefer_skip_nested_validation=False
     )
-    # remove sample_weight from the signature after deprecation.
-    @_deprecate_positional_args(version="1.6")
+    # TODO(1.7): remove sample_weight from the signature after deprecation.
+    @_deprecate_positional_args(version="1.7")
     def fit(self, X, y, *, sample_weight=None, **fit_params):
         """Fit the estimators.
 
@@ -638,7 +643,9 @@ class VotingRegressor(RegressorMixin, _BaseVoting):
         # estimators in VotingRegressor.estimators are not validated yet
         prefer_skip_nested_validation=False
     )
-    def fit(self, X, y, sample_weight=None, **fit_params):
+    # TODO(1.7): remove sample_weight from the signature after deprecation.
+    @_deprecate_positional_args(version="1.7")
+    def fit(self, X, y, *, sample_weight=None, **fit_params):
         """Fit the estimators.
 
         Parameters
@@ -658,7 +665,7 @@ class VotingRegressor(RegressorMixin, _BaseVoting):
         **fit_params : dict
             Parameters to pass to the underlying estimators.
 
-            .. versionadded:: 1.4
+            .. versionadded:: 1.5
 
                 Only available if `enable_metadata_routing=True`,
                 which can be set by using
