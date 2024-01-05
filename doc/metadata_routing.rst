@@ -225,6 +225,8 @@ which accepts at least one metadata. For instance, if an estimator supports
   by the user, e.g. ``my_weights`` is done at the router level, and not by the consuming
   object itself.
 
+Metadata are requested in the same way for scorers using ``set_score_request``.
+
 If a metadata, e.g. ``sample_weight``, is passed by the user, the metadata request for
 all objects which potentially can consume ``sample_weight`` should be set by the user,
 otherwise an error is raised by the router object. For example, the following code
