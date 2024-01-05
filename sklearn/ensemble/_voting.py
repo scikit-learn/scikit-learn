@@ -376,7 +376,7 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
         **fit_params : dict
             Parameters to pass to the underlying estimators.
 
-            .. versionadded:: 1.4
+            .. versionadded:: 1.5
 
                 Only available if `enable_metadata_routing=True`,
                 which can be set by using
