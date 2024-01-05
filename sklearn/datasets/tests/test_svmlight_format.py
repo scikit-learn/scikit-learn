@@ -2,6 +2,7 @@ import gzip
 import os
 import shutil
 from bz2 import BZ2File
+from importlib import resources
 from io import BytesIO
 from tempfile import NamedTemporaryFile
 
@@ -17,7 +18,7 @@ from sklearn.utils._testing import (
     assert_array_equal,
     fails_if_pypy,
 )
-from sklearn.utils.fixes import CSR_CONTAINERS, _open_binary, _path
+from sklearn.utils.fixes import CSR_CONTAINERS
 
 TEST_DATA_MODULE = "sklearn.datasets.tests.data"
 datafile = "svmlight_classification.txt"
@@ -28,11 +29,16 @@ invalidfile2 = "svmlight_invalid_order.txt"
 pytestmark = fails_if_pypy
 
 
+def _svmlight_local_test_file_path(filename):
+    return resources.files(TEST_DATA_MODULE) / filename
+
+
 def _load_svmlight_local_test_file(filename, **kwargs):
     """
     Helper to load resource `filename` with `importlib.resources`
     """
-    with _open_binary(TEST_DATA_MODULE, filename) as f:
+    data_path = _svmlight_local_test_file_path(filename)
+    with data_path.open("rb") as f:
         return load_svmlight_file(f, **kwargs)
 
 
@@ -76,24 +82,25 @@ def test_load_svmlight_file_fd():
 
     # GH20081: testing equality between path-based and
     # fd-based load_svmlight_file
-    with _path(TEST_DATA_MODULE, datafile) as data_path:
-        data_path = str(data_path)
-        X1, y1 = load_svmlight_file(data_path)
 
-        fd = os.open(data_path, os.O_RDONLY)
-        try:
-            X2, y2 = load_svmlight_file(fd)
-            assert_array_almost_equal(X1.data, X2.data)
-            assert_array_almost_equal(y1, y2)
-        finally:
-            os.close(fd)
+    data_path = resources.files(TEST_DATA_MODULE) / datafile
+    data_path = str(data_path)
+    X1, y1 = load_svmlight_file(data_path)
+
+    fd = os.open(data_path, os.O_RDONLY)
+    try:
+        X2, y2 = load_svmlight_file(fd)
+        assert_array_almost_equal(X1.data, X2.data)
+        assert_array_almost_equal(y1, y2)
+    finally:
+        os.close(fd)
 
 
 def test_load_svmlight_pathlib():
     # test loading from file descriptor
-    with _path(TEST_DATA_MODULE, datafile) as data_path:
-        X1, y1 = load_svmlight_file(str(data_path))
-        X2, y2 = load_svmlight_file(data_path)
+    data_path = _svmlight_local_test_file_path(datafile)
+    X1, y1 = load_svmlight_file(str(data_path))
+    X2, y2 = load_svmlight_file(data_path)
 
     assert_allclose(X1.data, X2.data)
     assert_allclose(y1, y2)
@@ -105,19 +112,16 @@ def test_load_svmlight_file_multilabel():
 
 
 def test_load_svmlight_files():
-    with _path(TEST_DATA_MODULE, datafile) as data_path:
-        X_train, y_train, X_test, y_test = load_svmlight_files(
-            [str(data_path)] * 2, dtype=np.float32
-        )
+    data_path = _svmlight_local_test_file_path(datafile)
+    X_train, y_train, X_test, y_test = load_svmlight_files(
+        [str(data_path)] * 2, dtype=np.float32
+    )
     assert_array_equal(X_train.toarray(), X_test.toarray())
     assert_array_almost_equal(y_train, y_test)
     assert X_train.dtype == np.float32
     assert X_test.dtype == np.float32
 
-    with _path(TEST_DATA_MODULE, datafile) as data_path:
-        X1, y1, X2, y2, X3, y3 = load_svmlight_files(
-            [str(data_path)] * 3, dtype=np.float64
-        )
+    X1, y1, X2, y2, X3, y3 = load_svmlight_files([str(data_path)] * 3, dtype=np.float64)
     assert X1.dtype == X2.dtype
     assert X2.dtype == X3.dtype
     assert X3.dtype == np.float64
@@ -145,7 +149,7 @@ def test_load_compressed():
 
     with NamedTemporaryFile(prefix="sklearn-test", suffix=".gz") as tmp:
         tmp.close()  # necessary under windows
-        with _open_binary(TEST_DATA_MODULE, datafile) as f:
+        with _svmlight_local_test_file_path(datafile).open("rb") as f:
             with gzip.open(tmp.name, "wb") as fh_out:
                 shutil.copyfileobj(f, fh_out)
         Xgz, ygz = load_svmlight_file(tmp.name)
@@ -157,7 +161,7 @@ def test_load_compressed():
 
     with NamedTemporaryFile(prefix="sklearn-test", suffix=".bz2") as tmp:
         tmp.close()  # necessary under windows
-        with _open_binary(TEST_DATA_MODULE, datafile) as f:
+        with _svmlight_local_test_file_path(datafile).open("rb") as f:
             with BZ2File(tmp.name, "wb") as fh_out:
                 shutil.copyfileobj(f, fh_out)
         Xbz, ybz = load_svmlight_file(tmp.name)
@@ -236,10 +240,9 @@ def test_load_large_qid():
 
 def test_load_invalid_file2():
     with pytest.raises(ValueError):
-        with _path(TEST_DATA_MODULE, datafile) as data_path, _path(
-            TEST_DATA_MODULE, invalidfile
-        ) as invalid_path:
-            load_svmlight_files([str(data_path), str(invalid_path), str(data_path)])
+        data_path = _svmlight_local_test_file_path(datafile)
+        invalid_path = _svmlight_local_test_file_path(invalidfile)
+        load_svmlight_files([str(data_path), str(invalid_path), str(data_path)])
 
 
 def test_not_a_filename():
@@ -258,7 +261,7 @@ def test_invalid_filename():
 def test_dump(csr_container):
     X_sparse, y_dense = _load_svmlight_local_test_file(datafile)
     X_dense = X_sparse.toarray()
-    y_sparse = csr_container(y_dense)
+    y_sparse = csr_container(np.atleast_2d(y_dense))
 
     # slicing a csr_matrix can unsort its .indices, so test that we sort
     # those correctly

@@ -278,6 +278,16 @@ def _is_arraylike_not_scalar(array):
     return _is_arraylike(array) and not np.isscalar(array)
 
 
+def _use_interchange_protocol(X):
+    """Use interchange protocol for non-pandas dataframes that follow the protocol.
+
+    Note: at this point we chose not to use the interchange API on pandas dataframe
+    to ensure strict behavioral backward compatibility with older versions of
+    scikit-learn.
+    """
+    return not _is_pandas_df(X) and hasattr(X, "__dataframe__")
+
+
 def _num_features(X):
     """Return the number of features in an array-like X.
 
@@ -337,6 +347,9 @@ def _num_samples(x):
     if hasattr(x, "fit") and callable(x.fit):
         # Don't get num_samples from an ensembles length!
         raise TypeError(message)
+
+    if _use_interchange_protocol(x):
+        return x.__dataframe__().num_rows()
 
     if not hasattr(x, "__len__") and not hasattr(x, "shape"):
         if hasattr(x, "__array__"):
@@ -534,9 +547,10 @@ def _ensure_sparse_format(
     _check_large_sparse(sparse_container, accept_large_sparse)
 
     if accept_sparse is False:
+        padded_input = " for " + input_name if input_name else ""
         raise TypeError(
-            "A sparse matrix was passed, but dense data is required. Use X.toarray() "
-            "to convert to a dense numpy array."
+            f"Sparse data was passed{padded_input}, but dense data is required. "
+            "Use '.toarray()' to convert to a dense numpy array."
         )
     elif isinstance(accept_sparse, (list, tuple)):
         if len(accept_sparse) == 0:
@@ -1923,11 +1937,11 @@ def _check_response_method(estimator, response_method):
     estimator : estimator instance
         Classifier or regressor to check.
 
-    response_method : {"predict_proba", "decision_function", "predict"} or \
-            list of such str
+    response_method : {"predict_proba", "predict_log_proba", "decision_function",
+            "predict"} or list of such str
         Specifies the response method to use get prediction from an estimator
-        (i.e. :term:`predict_proba`, :term:`decision_function` or
-        :term:`predict`). Possible choices are:
+        (i.e. :term:`predict_proba`, :term:`predict_log_proba`,
+        :term:`decision_function` or :term:`predict`). Possible choices are:
         - if `str`, it corresponds to the name to the method to return;
         - if a list of `str`, it provides the method names in order of
           preference. The method returned corresponds to the first method in
@@ -2009,6 +2023,18 @@ def _is_pandas_df(X):
         except KeyError:
             return False
         return isinstance(X, pd.DataFrame)
+    return False
+
+
+def _is_polars_df(X):
+    """Return True if the X is a polars dataframe."""
+    if hasattr(X, "columns") and hasattr(X, "schema"):
+        # Likely a polars DataFrame, we explicitly check the type to confirm.
+        try:
+            pl = sys.modules["polars"]
+        except KeyError:
+            return False
+        return isinstance(X, pl.DataFrame)
     return False
 
 
