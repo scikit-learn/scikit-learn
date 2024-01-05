@@ -1143,8 +1143,8 @@ class TSNE(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
 
         Returns
         -------
-        X_new : array of shape (n_samples, n_components)
-            Embedding of the training data in low-dimensional space.
+        self : object
+            Fitted estimator.
         """
         self.fit_transform(X)
         return self

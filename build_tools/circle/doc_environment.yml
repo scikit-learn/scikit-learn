@@ -20,14 +20,16 @@ dependencies:
   - setuptools
   - scikit-image
   - seaborn
+  - patsy=0.5.4
   - memory_profiler
   - compilers
-  - sphinx=6.0.0
+  - sphinx
   - sphinx-gallery
   - sphinx-copybutton
   - numpydoc
   - sphinx-prompt
   - plotly
+  - polars
   - pooch
   - sphinxext-opengraph
   - pip

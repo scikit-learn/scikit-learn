@@ -356,30 +356,24 @@ def _euclidean_distances(X, Y, X_norm_squared=None, Y_norm_squared=None, squared
     float32, norms needs to be recomputed on upcast chunks.
     TODO: use a float64 accumulator in row_norms to avoid the latter.
     """
-    if X_norm_squared is not None:
-        if X_norm_squared.dtype == np.float32:
-            XX = None
-        else:
-            XX = X_norm_squared.reshape(-1, 1)
-    elif X.dtype == np.float32:
-        XX = None
-    else:
+    if X_norm_squared is not None and X_norm_squared.dtype != np.float32:
+        XX = X_norm_squared.reshape(-1, 1)
+    elif X.dtype != np.float32:
         XX = row_norms(X, squared=True)[:, np.newaxis]
+    else:
+        XX = None
 
     if Y is X:
         YY = None if XX is None else XX.T
     else:
-        if Y_norm_squared is not None:
-            if Y_norm_squared.dtype == np.float32:
-                YY = None
-            else:
-                YY = Y_norm_squared.reshape(1, -1)
-        elif Y.dtype == np.float32:
-            YY = None
-        else:
+        if Y_norm_squared is not None and Y_norm_squared.dtype != np.float32:
+            YY = Y_norm_squared.reshape(1, -1)
+        elif Y.dtype != np.float32:
             YY = row_norms(Y, squared=True)[np.newaxis, :]
+        else:
+            YY = None
 
-    if X.dtype == np.float32:
+    if X.dtype == np.float32 or Y.dtype == np.float32:
         # To minimize precision issues with float32, we compute the distance
         # matrix on chunks of X and Y upcast to float64
         distances = _euclidean_distances_upcast(X, XX, Y, YY)
@@ -993,15 +987,11 @@ def haversine_distances(X, Y=None):
     {
         "X": ["array-like", "sparse matrix"],
         "Y": ["array-like", "sparse matrix", None],
-        "sum_over_features": ["boolean", Hidden(StrOptions({"deprecated"}))],
     },
     prefer_skip_nested_validation=True,
 )
-def manhattan_distances(X, Y=None, *, sum_over_features="deprecated"):
+def manhattan_distances(X, Y=None):
     """Compute the L1 distances between the vectors in X and Y.
-
-    With sum_over_features equal to False it returns the componentwise
-    distances.
 
     Read more in the :ref:`User Guide <metrics>`.
 
@@ -1014,24 +1004,10 @@ def manhattan_distances(X, Y=None, *, sum_over_features="deprecated"):
         An array where each row is a sample and each column is a feature.
         If `None`, method uses `Y=X`.
 
-    sum_over_features : bool, default=True
-        If True the function returns the pairwise distance matrix
-        else it returns the componentwise L1 pairwise-distances.
-        Not supported for sparse matrix inputs.
-
-        .. deprecated:: 1.2
-            ``sum_over_features`` was deprecated in version 1.2 and will be removed in
-            1.4.
-
     Returns
     -------
-    D : ndarray of shape (n_samples_X * n_samples_Y, n_features) or \
-            (n_samples_X, n_samples_Y)
-        If sum_over_features is False shape is
-        (n_samples_X * n_samples_Y, n_features) and D contains the
-        componentwise L1 pairwise-distances (ie. absolute difference),
-        else shape is (n_samples_X, n_samples_Y) and D contains
-        the pairwise L1 distances.
+    D : ndarray of shape (n_samples_X, n_samples_Y)
+        Pairwise L1 distances.
 
     Notes
     -----
@@ -1053,27 +1029,9 @@ def manhattan_distances(X, Y=None, *, sum_over_features="deprecated"):
     array([[0., 2.],
            [4., 4.]])
     """
-    # TODO(1.4): remove sum_over_features
-    if sum_over_features != "deprecated":
-        warnings.warn(
-            (
-                "`sum_over_features` is deprecated in version 1.2 and will be"
-                " removed in version 1.4."
-            ),
-            FutureWarning,
-        )
-    else:
-        sum_over_features = True
-
     X, Y = check_pairwise_arrays(X, Y)
 
     if issparse(X) or issparse(Y):
-        if not sum_over_features:
-            raise TypeError(
-                "sum_over_features=%r not supported for sparse matrices"
-                % sum_over_features
-            )
-
         X = csr_matrix(X, copy=False)
         Y = csr_matrix(Y, copy=False)
         X.sum_duplicates()  # this also sorts indices in-place
@@ -1082,12 +1040,7 @@ def manhattan_distances(X, Y=None, *, sum_over_features="deprecated"):
         _sparse_manhattan(X.data, X.indices, X.indptr, Y.data, Y.indices, Y.indptr, D)
         return D
 
-    if sum_over_features:
-        return distance.cdist(X, Y, "cityblock")
-
-    D = X[:, np.newaxis, :] - Y[np.newaxis, :, :]
-    D = np.abs(D, D)
-    return D.reshape((-1, X.shape[1]))
+    return distance.cdist(X, Y, "cityblock")
 
 
 @validate_params(
@@ -1131,7 +1084,7 @@ def cosine_distances(X, Y=None):
     if X is Y or Y is None:
         # Ensure that distances between vectors and themselves are set to 0.0.
         # This may not be the case due to floating point rounding errors.
-        S[np.diag_indices_from(S)] = 0.0
+        np.fill_diagonal(S, 0.0)
     return S
 
 
@@ -1826,7 +1779,11 @@ def _pairwise_callable(X, Y, metric, force_all_finite=True, **kwds):
         out = np.zeros((X.shape[0], Y.shape[0]), dtype="float")
         iterator = itertools.combinations(range(X.shape[0]), 2)
         for i, j in iterator:
-            out[i, j] = metric(X[i], Y[j], **kwds)
+            # scipy has not yet implemented 1D sparse slices; once implemented this can
+            # be removed and `arr[ind]` can be simply used.
+            x = X[[i], :] if issparse(X) else X[i]
+            y = Y[[j], :] if issparse(Y) else Y[j]
+            out[i, j] = metric(x, y, **kwds)
 
         # Make symmetric
         # NB: out += out.T will produce incorrect results
@@ -1835,7 +1792,9 @@ def _pairwise_callable(X, Y, metric, force_all_finite=True, **kwds):
         # Calculate diagonal
         # NB: nonzero diagonals are allowed for both metrics and kernels
         for i in range(X.shape[0]):
-            x = X[i]
+            # scipy has not yet implemented 1D sparse slices; once implemented this can
+            # be removed and `arr[ind]` can be simply used.
+            x = X[[i], :] if issparse(X) else X[i]
             out[i, i] = metric(x, x, **kwds)
 
     else:
@@ -1843,7 +1802,11 @@ def _pairwise_callable(X, Y, metric, force_all_finite=True, **kwds):
         out = np.empty((X.shape[0], Y.shape[0]), dtype="float")
         iterator = itertools.product(range(X.shape[0]), range(Y.shape[0]))
         for i, j in iterator:
-            out[i, j] = metric(X[i], Y[j], **kwds)
+            # scipy has not yet implemented 1D sparse slices; once implemented this can
+            # be removed and `arr[ind]` can be simply used.
+            x = X[[i], :] if issparse(X) else X[i]
+            y = Y[[j], :] if issparse(Y) else Y[j]
+            out[i, j] = metric(x, y, **kwds)
 
     return out
 

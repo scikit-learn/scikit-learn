@@ -49,7 +49,7 @@ if [[ "$COVERAGE" == "true" ]]; then
 fi
 
 if [[ -n "$CHECK_WARNINGS" ]]; then
-    TEST_CMD="$TEST_CMD -Werror::DeprecationWarning -Werror::FutureWarning -Werror::numpy.VisibleDeprecationWarning"
+    TEST_CMD="$TEST_CMD -Werror::DeprecationWarning -Werror::FutureWarning -Werror::sklearn.utils.fixes.VisibleDeprecationWarning"
 
     # numpy's 1.19.0's tostring() deprecation is ignored until scipy and joblib
     # removes its usage
@@ -75,10 +75,6 @@ if [[ "$PYTEST_XDIST_VERSION" != "none" ]]; then
     TEST_CMD="$TEST_CMD -n$XDIST_WORKERS"
 fi
 
-if [[ "$SHOW_SHORT_SUMMARY" == "true" ]]; then
-    TEST_CMD="$TEST_CMD -ra"
-fi
-
 if [[ -n "$SELECTED_TESTS" ]]; then
     TEST_CMD="$TEST_CMD -k $SELECTED_TESTS"
 
@@ -87,5 +83,5 @@ if [[ -n "$SELECTED_TESTS" ]]; then
 fi
 
 set -x
-eval "$TEST_CMD --pyargs sklearn"
+eval "$TEST_CMD --maxfail=10 --pyargs sklearn"
 set +x

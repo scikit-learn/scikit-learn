@@ -1,4 +1,4 @@
-# flake8: noqa
+# ruff: noqa
 """
 ========================================
 Release Highlights for scikit-learn 0.24

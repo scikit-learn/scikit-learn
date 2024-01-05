@@ -17,8 +17,8 @@ from . import __version__
 from ._config import config_context, get_config
 from .exceptions import InconsistentVersionWarning
 from .utils import _IS_32BIT
-from .utils._estimator_html_repr import estimator_html_repr
-from .utils._metadata_requests import _MetadataRequester
+from .utils._estimator_html_repr import _HTMLDocumentationLinkMixin, estimator_html_repr
+from .utils._metadata_requests import _MetadataRequester, _routing_enabled
 from .utils._param_validation import validate_parameter_constraints
 from .utils._set_output import _SetOutputMixin
 from .utils._tags import (
@@ -80,8 +80,9 @@ def _clone_parametrized(estimator, *, safe=True):
     """Default implementation of clone. See :func:`sklearn.base.clone` for details."""
 
     estimator_type = type(estimator)
-    # XXX: not handling dictionaries
-    if estimator_type in (list, tuple, set, frozenset):
+    if estimator_type is dict:
+        return {k: clone(v, safe=safe) for k, v in estimator.items()}
+    elif estimator_type in (list, tuple, set, frozenset):
         return estimator_type([clone(e, safe=safe) for e in estimator])
     elif not hasattr(estimator, "get_params") or isinstance(estimator, type):
         if not safe:
@@ -133,7 +134,7 @@ def _clone_parametrized(estimator, *, safe=True):
     return new_object
 
 
-class BaseEstimator(_MetadataRequester):
+class BaseEstimator(_HTMLDocumentationLinkMixin, _MetadataRequester):
     """Base class for all estimators in scikit-learn.
 
     Notes
@@ -238,27 +239,6 @@ class BaseEstimator(_MetadataRequester):
                 valid_params[key] = value
 
         for key, sub_params in nested_params.items():
-            # TODO(1.4): remove specific handling of "base_estimator".
-            # The "base_estimator" key is special. It was deprecated and
-            # renamed to "estimator" for several estimators. This means we
-            # need to translate it here and set sub-parameters on "estimator",
-            # but only if the user did not explicitly set a value for
-            # "base_estimator".
-            if (
-                key == "base_estimator"
-                and valid_params[key] == "deprecated"
-                and self.__module__.startswith("sklearn.")
-            ):
-                warnings.warn(
-                    (
-                        f"Parameter 'base_estimator' of {self.__class__.__name__} is"
-                        " deprecated in favor of 'estimator'. See"
-                        f" {self.__class__.__name__}'s docstring for more details."
-                    ),
-                    FutureWarning,
-                    stacklevel=2,
-                )
-                key = "estimator"
             valid_params[key].set_params(**sub_params)
 
         return self
@@ -915,6 +895,33 @@ class TransformerMixin(_SetOutputMixin):
         """
         # non-optimized default implementation; override when a better
         # method is possible for a given clustering algorithm
+
+        # we do not route parameters here, since consumers don't route. But
+        # since it's possible for a `transform` method to also consume
+        # metadata, we check if that's the case, and we raise a warning telling
+        # users that they should implement a custom `fit_transform` method
+        # to forward metadata to `transform` as well.
+        #
+        # For that, we calculate routing and check if anything would be routed
+        # to `transform` if we were to route them.
+        if _routing_enabled():
+            transform_params = self.get_metadata_routing().consumes(
+                method="transform", params=fit_params.keys()
+            )
+            if transform_params:
+                warnings.warn(
+                    (
+                        f"This object ({self.__class__.__name__}) has a `transform`"
+                        " method which consumes metadata, but `fit_transform` does not"
+                        " forward metadata to `transform`. Please implement a custom"
+                        " `fit_transform` method to forward metadata to `transform` as"
+                        " well. Alternatively, you can explicitly do"
+                        " `set_transform_request`and set all values to `False` to"
+                        " disable metadata routed to `transform`, if that's an option."
+                    ),
+                    UserWarning,
+                )
+
         if y is None:
             # fit method of arity 1 (unsupervised transformation)
             return self.fit(X, **fit_params).transform(X)
@@ -1041,6 +1048,32 @@ class OutlierMixin:
         y : ndarray of shape (n_samples,)
             1 for inliers, -1 for outliers.
         """
+        # we do not route parameters here, since consumers don't route. But
+        # since it's possible for a `predict` method to also consume
+        # metadata, we check if that's the case, and we raise a warning telling
+        # users that they should implement a custom `fit_predict` method
+        # to forward metadata to `predict` as well.
+        #
+        # For that, we calculate routing and check if anything would be routed
+        # to `predict` if we were to route them.
+        if _routing_enabled():
+            transform_params = self.get_metadata_routing().consumes(
+                method="predict", params=kwargs.keys()
+            )
+            if transform_params:
+                warnings.warn(
+                    (
+                        f"This object ({self.__class__.__name__}) has a `predict` "
+                        "method which consumes metadata, but `fit_predict` does not "
+                        "forward metadata to `predict`. Please implement a custom "
+                        "`fit_predict` method to forward metadata to `predict` as well."
+                        "Alternatively, you can explicitly do `set_predict_request`"
+                        "and set all values to `False` to disable metadata routed to "
+                        "`predict`, if that's an option."
+                    ),
+                    UserWarning,
+                )
+
         # override for transductive outlier detectors like LocalOulierFactor
         return self.fit(X, **kwargs).predict(X)
 

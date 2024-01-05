@@ -74,7 +74,7 @@ out-of-core Principal Component Analysis either by:
  * Using its ``partial_fit`` method on chunks of data fetched sequentially
    from the local hard drive or a network database.
 
- * Calling its fit method on a sparse matrix or a memory mapped file using
+ * Calling its fit method on a memory mapped file using
    ``numpy.memmap``.
 
 :class:`IncrementalPCA` only stores estimates of component and noise variances,
@@ -319,6 +319,11 @@ is eigendecomposed in the Kernel PCA fitting process has an effective rank that
 is much smaller than its size. This is a situation where approximate
 eigensolvers can provide speedup with very low precision loss.
 
+
+|details-start|
+**Eigensolvers**
+|details-split|
+
 The optional parameter ``eigen_solver='randomized'`` can be used to
 *significantly* reduce the computation time when the number of requested
 ``n_components`` is small compared with the number of samples. It relies on
@@ -343,6 +348,7 @@ is extremely small. It is enabled by default when the desired number of
 components is less than 10 (strict) and the number of samples is more than 200
 (strict). See :class:`KernelPCA` for details.
 
+
 .. topic:: References:
 
     * *dense* solver:
@@ -365,6 +371,8 @@ components is less than 10 (strict) and the number of samples is more than 200
       <https://docs.scipy.org/doc/scipy/reference/generated/scipy.sparse.linalg.eigsh.html>`_
       R. B. Lehoucq, D. C. Sorensen, and C. Yang, (1998)
 
+|details-end|
+
 
 .. _LSA:
 
@@ -374,6 +382,16 @@ Truncated singular value decomposition and latent semantic analysis
 :class:`TruncatedSVD` implements a variant of singular value decomposition
 (SVD) that only computes the :math:`k` largest singular values,
 where :math:`k` is a user-specified parameter.
+
+:class:`TruncatedSVD` is very similar to :class:`PCA`, but differs
+in that the matrix :math:`X` does not need to be centered.
+When the columnwise (per-feature) means of :math:`X`
+are subtracted from the feature values,
+truncated SVD on the resulting matrix is equivalent to PCA.
+
+|details-start|
+**About truncated SVD and latent semantic analysis (LSA)**
+|details-split|
 
 When truncated SVD is applied to term-document matrices
 (as returned by :class:`~sklearn.feature_extraction.text.CountVectorizer` or
@@ -415,15 +433,6 @@ To also transform a test set :math:`X`, we multiply it with :math:`V_k`:
     We present LSA in a different way that matches the scikit-learn API better,
     but the singular values found are the same.
 
-:class:`TruncatedSVD` is very similar to :class:`PCA`, but differs
-in that the matrix :math:`X` does not need to be centered.
-When the columnwise (per-feature) means of :math:`X`
-are subtracted from the feature values,
-truncated SVD on the resulting matrix is equivalent to PCA.
-In practical terms, this means
-that the :class:`TruncatedSVD` transformer accepts ``scipy.sparse``
-matrices without the need to densify them,
-as densifying may fill up memory even for medium-sized document collections.
 
 While the :class:`TruncatedSVD` transformer
 works with any feature matrix,
@@ -433,6 +442,8 @@ In particular, sublinear scaling and inverse document frequency
 should be turned on (``sublinear_tf=True, use_idf=True``)
 to bring the feature values closer to a Gaussian distribution,
 compensating for LSA's erroneous assumptions about textual data.
+
+|details-end|
 
 .. topic:: Examples:
 
@@ -444,6 +455,7 @@ compensating for LSA's erroneous assumptions about textual data.
     *Introduction to Information Retrieval*, Cambridge University Press,
     chapter 18: `Matrix decompositions & latent semantic indexing
     <https://nlp.stanford.edu/IR-book/pdf/18lsi.pdf>`_
+
 
 
 .. _DictionaryLearning:
@@ -887,6 +899,10 @@ Note that this definition is not valid if :math:`\beta \in (0; 1)`, yet it can
 be continuously extended to the definitions of :math:`d_{KL}` and :math:`d_{IS}`
 respectively.
 
+|details-start|
+**NMF implemented solvers**
+|details-split|
+
 :class:`NMF` implements two solvers, using Coordinate Descent ('cd') [5]_, and
 Multiplicative Update ('mu') [6]_. The 'mu' solver can optimize every
 beta-divergence, including of course the Frobenius norm (:math:`\beta=2`), the
@@ -899,6 +915,8 @@ values of :math:`\beta`. Note also that with a negative (or 0, i.e.
 The 'cd' solver can only optimize the Frobenius norm. Due to the
 underlying non-convexity of NMF, the different solvers may converge to
 different minima, even when optimizing the same distance function.
+
+|details-end|
 
 NMF is best used with the ``fit_transform`` method, which returns the matrix W.
 The matrix H is stored into the fitted model in the ``components_`` attribute;
@@ -913,6 +931,8 @@ stored components::
     >>> H = model.components_
     >>> X_new = np.array([[1, 0], [1, 6.1], [1, 0], [1, 4], [3.2, 1], [0, 4]])
     >>> W_new = model.transform(X_new)
+
+
 
 .. topic:: Examples:
 
@@ -1000,6 +1020,10 @@ of topics in the corpus and the distribution of words in the documents.
 The goal of LDA is to use the observed words to infer the hidden topic
 structure.
 
+|details-start|
+**Details on modeling text corpora**
+|details-split|
+
 When modeling text corpora, the model assumes the following generative process
 for a corpus with :math:`D` documents and :math:`K` topics, with :math:`K`
 corresponding to `n_components` in the API:
@@ -1039,6 +1063,8 @@ Lower Bound (ELBO):
 Maximizing ELBO is equivalent to minimizing the Kullback-Leibler(KL) divergence
 between :math:`q(z,\theta,\beta)` and the true posterior
 :math:`p(z, \theta, \beta |w, \alpha, \eta)`.
+
+|details-end|
 
 :class:`LatentDirichletAllocation` implements the online variational Bayes
 algorithm and supports both online and batch update methods.

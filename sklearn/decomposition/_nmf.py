@@ -126,7 +126,7 @@ def _beta_divergence(X, W, H, beta, square_root=False):
         if sp.issparse(X):
             norm_X = np.dot(X.data, X.data)
             norm_WH = trace_dot(np.linalg.multi_dot([W.T, W, H]), H)
-            cross_prod = trace_dot((X * H.T), W)
+            cross_prod = trace_dot((X @ H.T), W)
             res = (norm_X + norm_WH - 2.0 * cross_prod) / 2.0
         else:
             res = squared_norm(X - np.dot(W, H)) / 2.0
@@ -1200,7 +1200,7 @@ class _BaseNMF(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator,
                 (
                     "The default value of `n_components` will change from `None` to"
                     " `'auto'` in 1.6. Set the value of `n_components` to `None`"
-                    " explicitly to supress the warning."
+                    " explicitly to suppress the warning."
                 ),
                 FutureWarning,
             )
@@ -1327,7 +1327,7 @@ class _BaseNMF(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator,
 
         Returns
         -------
-        X : {ndarray, sparse matrix} of shape (n_samples, n_features)
+        X : ndarray of shape (n_samples, n_features)
             Returns a data matrix of the original shape.
         """
         if Xt is None and W is None:

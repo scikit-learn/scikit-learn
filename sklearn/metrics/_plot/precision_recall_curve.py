@@ -192,7 +192,13 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
 
         xlabel = "Recall" + info_pos_label
         ylabel = "Precision" + info_pos_label
-        self.ax_.set(xlabel=xlabel, ylabel=ylabel)
+        self.ax_.set(
+            xlabel=xlabel,
+            xlim=(-0.01, 1.01),
+            ylabel=ylabel,
+            ylim=(-0.01, 1.01),
+            aspect="equal",
+        )
 
         if plot_chance_level:
             if self.prevalence_pos_label is None:

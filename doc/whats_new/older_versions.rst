@@ -344,9 +344,9 @@ API changes summary
   Please use :class:`~covariance.EllipticEnvelope` instead.
 
 - ``NeighborsClassifier`` and ``NeighborsRegressor`` are gone in the module
-  :ref:`neighbors`. Use the classes :class:`~neighors.KNeighborsClassifier`,
-  :class:`~neighors.RadiusNeighborsClassifier`, :class:`~neighors.KNeighborsRegressor`
-  and/or :class:`~neighors.RadiusNeighborsRegressor` instead.
+  :ref:`neighbors`. Use the classes :class:`~neighbors.KNeighborsClassifier`,
+  :class:`~neighbors.RadiusNeighborsClassifier`, :class:`~neighbors.KNeighborsRegressor`
+  and/or :class:`~neighbors.RadiusNeighborsRegressor` instead.
 
 - Sparse classes in the :ref:`sgd` module are now deprecated.
 

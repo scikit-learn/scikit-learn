@@ -368,7 +368,7 @@ class RouterConsumerClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimato
 # In ``get_metadata_routing``, we add ``self`` to the routing using
 # ``add_self_request`` to indicate this estimator is consuming
 # ``sample_weight`` as well as being a router; which also adds a
-# ``$self_request`` key to the routing info as illustrated bellow. Now let's
+# ``$self_request`` key to the routing info as illustrated below. Now let's
 # look at some examples:
 
 # %%
@@ -447,7 +447,7 @@ class SimplePipeline(ClassifierMixin, BaseEstimator):
         return router
 
     def fit(self, X, y, **fit_params):
-        params = process_routing(self, "fit", fit_params)
+        params = process_routing(self, "fit", **fit_params)
 
         self.transformer_ = clone(self.transformer).fit(X, y, **params.transformer.fit)
         X_transformed = self.transformer_.transform(X, **params.transformer.transform)
@@ -458,7 +458,7 @@ class SimplePipeline(ClassifierMixin, BaseEstimator):
         return self
 
     def predict(self, X, **predict_params):
-        params = process_routing(self, "predict", predict_params)
+        params = process_routing(self, "predict", **predict_params)
 
         X_transformed = self.transformer_.transform(X, **params.transformer.transform)
         return self.classifier_.predict(X_transformed, **params.classifier.predict)
@@ -492,8 +492,17 @@ class ExampleTransformer(TransformerMixin, BaseEstimator):
         check_metadata(self, groups=groups)
         return X
 
+    def fit_transform(self, X, y, sample_weight=None, groups=None):
+        return self.fit(X, y, sample_weight).transform(X, groups)
+
 
 # %%
+# Note that in the above example, we have implemented ``fit_transform`` which
+# calls ``fit`` and ``transform`` with the appropriate metadata. This is only
+# required if ``transform`` accepts metadata, since the default ``fit_transform``
+# implementation in :class:`~base.TransformerMixin` doesn't pass metadata to
+# ``transform``.
+#
 # Now we can test our pipeline, and see if metadata is correctly passed around.
 # This example uses our simple pipeline, and our transformer, and our
 # consumer+router estimator which uses our simple classifier.
@@ -534,7 +543,7 @@ class MetaRegressor(MetaEstimatorMixin, RegressorMixin, BaseEstimator):
         self.estimator = estimator
 
     def fit(self, X, y, **fit_params):
-        params = process_routing(self, "fit", fit_params)
+        params = process_routing(self, "fit", **fit_params)
         self.estimator_ = clone(self.estimator).fit(X, y, **params.estimator.fit)
 
     def get_metadata_routing(self):
@@ -563,7 +572,7 @@ class WeightedMetaRegressor(MetaEstimatorMixin, RegressorMixin, BaseEstimator):
         self.estimator = estimator
 
     def fit(self, X, y, sample_weight=None, **fit_params):
-        params = process_routing(self, "fit", fit_params, sample_weight=sample_weight)
+        params = process_routing(self, "fit", sample_weight=sample_weight, **fit_params)
         check_metadata(self, sample_weight=sample_weight)
         self.estimator_ = clone(self.estimator).fit(X, y, **params.estimator.fit)
 

@@ -5,9 +5,7 @@ from io import StringIO
 
 import numpy as np
 import pytest
-import scipy.sparse as sp
 from scipy import linalg
-from scipy.sparse import csc_matrix
 
 from sklearn.base import clone
 from sklearn.decomposition import NMF, MiniBatchNMF, non_negative_factorization
@@ -21,6 +19,7 @@ from sklearn.utils._testing import (
     ignore_warnings,
 )
 from sklearn.utils.extmath import squared_norm
+from sklearn.utils.fixes import CSC_CONTAINERS, CSR_CONTAINERS
 
 
 @pytest.mark.parametrize(
@@ -299,16 +298,15 @@ def test_n_components_greater_n_features(Estimator):
     ["Estimator", "solver"],
     [[NMF, {"solver": "cd"}], [NMF, {"solver": "mu"}], [MiniBatchNMF, {}]],
 )
+@pytest.mark.parametrize("sparse_container", CSC_CONTAINERS + CSR_CONTAINERS)
 @pytest.mark.parametrize("alpha_W", (0.0, 1.0))
 @pytest.mark.parametrize("alpha_H", (0.0, 1.0, "same"))
-def test_nmf_sparse_input(Estimator, solver, alpha_W, alpha_H):
+def test_nmf_sparse_input(Estimator, solver, sparse_container, alpha_W, alpha_H):
     # Test that sparse matrices are accepted as input
-    from scipy.sparse import csc_matrix
-
     rng = np.random.mtrand.RandomState(42)
     A = np.abs(rng.randn(10, 10))
     A[:, 2 * np.arange(5)] = 0
-    A_sparse = csc_matrix(A)
+    A_sparse = sparse_container(A)
 
     est1 = Estimator(
         n_components=5,
@@ -335,12 +333,13 @@ def test_nmf_sparse_input(Estimator, solver, alpha_W, alpha_H):
     ["Estimator", "solver"],
     [[NMF, {"solver": "cd"}], [NMF, {"solver": "mu"}], [MiniBatchNMF, {}]],
 )
-def test_nmf_sparse_transform(Estimator, solver):
+@pytest.mark.parametrize("csc_container", CSC_CONTAINERS)
+def test_nmf_sparse_transform(Estimator, solver, csc_container):
     # Test that transform works on sparse data.  Issue #2124
     rng = np.random.mtrand.RandomState(42)
     A = np.abs(rng.randn(3, 2))
     A[1, 1] = 0
-    A = csc_matrix(A)
+    A = csc_container(A)
 
     model = Estimator(random_state=0, n_components=2, max_iter=400, **solver)
     A_fit_tr = model.fit_transform(A)
@@ -451,7 +450,8 @@ def _beta_divergence_dense(X, W, H, beta):
     return res
 
 
-def test_beta_divergence():
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_beta_divergence(csr_container):
     # Compare _beta_divergence with the reference _beta_divergence_dense
     n_samples = 20
     n_features = 10
@@ -462,7 +462,7 @@ def test_beta_divergence():
     rng = np.random.mtrand.RandomState(42)
     X = rng.randn(n_samples, n_features)
     np.clip(X, 0, None, out=X)
-    X_csr = sp.csr_matrix(X)
+    X_csr = csr_container(X)
     W, H = nmf._initialize_nmf(X, n_components, init="random", random_state=42)
 
     for beta in beta_losses:
@@ -474,7 +474,8 @@ def test_beta_divergence():
         assert_almost_equal(ref, loss_csr, decimal=7)
 
 
-def test_special_sparse_dot():
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_special_sparse_dot(csr_container):
     # Test the function that computes np.dot(W, H), only where X is non zero.
     n_samples = 10
     n_features = 5
@@ -482,7 +483,7 @@ def test_special_sparse_dot():
     rng = np.random.mtrand.RandomState(42)
     X = rng.randn(n_samples, n_features)
     np.clip(X, 0, None, out=X)
-    X_csr = sp.csr_matrix(X)
+    X_csr = csr_container(X)
 
     W = np.abs(rng.randn(n_samples, n_components))
     H = np.abs(rng.randn(n_components, n_features))
@@ -502,7 +503,8 @@ def test_special_sparse_dot():
 
 
 @ignore_warnings(category=ConvergenceWarning)
-def test_nmf_multiplicative_update_sparse():
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_nmf_multiplicative_update_sparse(csr_container):
     # Compare sparse and dense input in multiplicative update NMF
     # Also test continuity of the results with respect to beta_loss parameter
     n_samples = 20
@@ -516,7 +518,7 @@ def test_nmf_multiplicative_update_sparse():
     rng = np.random.mtrand.RandomState(1337)
     X = rng.randn(n_samples, n_features)
     X = np.abs(X)
-    X_csr = sp.csr_matrix(X)
+    X_csr = csr_container(X)
     W0, H0 = nmf._initialize_nmf(X, n_components, init="random", random_state=42)
 
     for beta_loss in (-1.2, 0, 0.2, 1.0, 2.0, 2.5):
@@ -580,7 +582,8 @@ def test_nmf_multiplicative_update_sparse():
         assert_allclose(H1, H3, atol=1e-4)
 
 
-def test_nmf_negative_beta_loss():
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_nmf_negative_beta_loss(csr_container):
     # Test that an error is raised if beta_loss < 0 and X contains zeros.
     # Test that the output has not NaN values when the input contains zeros.
     n_samples = 6
@@ -590,7 +593,7 @@ def test_nmf_negative_beta_loss():
     rng = np.random.mtrand.RandomState(42)
     X = rng.randn(n_samples, n_features)
     np.clip(X, 0, None, out=X)
-    X_csr = sp.csr_matrix(X)
+    X_csr = csr_container(X)
 
     def _assert_nmf_no_nan(X, beta_loss):
         W, H, _ = non_negative_factorization(
