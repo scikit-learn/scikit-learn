@@ -161,12 +161,16 @@ The project would like to thank the following funders.
 
 The `Members <https://scikit-learn.fondation-inria.fr/en/home/#sponsors>`_ of
 the `Scikit-Learn Consortium at Inria Foundation
-<https://scikit-learn.fondation-inria.fr/en/home/>`_  fund Olivier
-Grisel, Guillaume Lemaitre, and Jérémie du Boisberranger.
+<https://scikit-learn.fondation-inria.fr/en/home/>`_  fund Arturo Amor,
+François Goupil, Guillaume Lemaitre, Jérémie du Boisberranger, and Olivier Grisel.
 
 .. raw:: html
 
    </div>
+
+.. |chanel| image:: images/chanel.png
+   :width: 70pt
+   :target: https://www.chanel.com
 
 .. |axa| image:: images/axa.png
    :width: 50pt
@@ -200,6 +204,10 @@ Grisel, Guillaume Lemaitre, and Jérémie du Boisberranger.
 .. table::
    :class: sk-sponsor-table align-default
 
+   +----------+-----------+
+   |       |chanel|       |
+   +----------+-----------+
+   |                      |
    +----------+-----------+
    |  |axa|   |    |bnp|  |
    +----------+-----------+

@@ -136,7 +136,7 @@ def test_checking_classifier_with_params(iris, csr_container):
         check_X=check_array, check_X_params={"accept_sparse": False}
     )
     clf.fit(X, y)
-    with pytest.raises(TypeError, match="A sparse matrix was passed"):
+    with pytest.raises(TypeError, match="Sparse data was passed"):
         clf.fit(X_sparse, y)
 
 

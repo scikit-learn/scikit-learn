@@ -2417,6 +2417,39 @@ def test_learning_curve_partial_fit_regressors():
     learning_curve(MLPRegressor(), X, y, exploit_incremental_learning=True, cv=2)
 
 
+def test_learning_curve_some_failing_fits_warning(global_random_seed):
+    """Checks for fit failures in `learning_curve` and raises the required warning"""
+
+    X, y = make_classification(
+        n_samples=30,
+        n_classes=3,
+        n_informative=6,
+        shuffle=False,
+        random_state=global_random_seed,
+    )
+    # sorting the target to trigger SVC error on the 2 first splits because a single
+    # class is present
+    sorted_idx = np.argsort(y)
+    X, y = X[sorted_idx], y[sorted_idx]
+
+    svc = SVC()
+    warning_message = "10 fits failed out of a total of 25"
+
+    with pytest.warns(FitFailedWarning, match=warning_message):
+        _, train_score, test_score, *_ = learning_curve(
+            svc, X, y, cv=5, error_score=np.nan
+        )
+
+    # the first 2 splits should lead to warnings and thus np.nan scores
+    for idx in range(2):
+        assert np.isnan(train_score[idx]).all()
+        assert np.isnan(test_score[idx]).all()
+
+    for idx in range(2, train_score.shape[0]):
+        assert not np.isnan(train_score[idx]).any()
+        assert not np.isnan(test_score[idx]).any()
+
+
 def test_cross_validate_return_indices(global_random_seed):
     """Check the behaviour of `return_indices` in `cross_validate`."""
     X, y = load_iris(return_X_y=True)
