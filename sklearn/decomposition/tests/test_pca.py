@@ -901,7 +901,6 @@ def test_pca_mle_array_api_compliance(
     estimator, check, array_namespace, device, dtype_name
 ):
     name = estimator.__class__.__name__
-    atol = _atol_for_type(dtype_name)
     check(name, estimator, array_namespace, device=device, dtype_name=dtype_name)
 
     # Simpler variant of the generic check_array_api_input checker tailored for
@@ -910,6 +909,7 @@ def test_pca_mle_array_api_compliance(
 
     X, y = make_classification(random_state=42)
     X = X.astype(dtype_name, copy=False)
+    atol = _atol_for_type(X.dtype)
 
     est = clone(estimator)
 
