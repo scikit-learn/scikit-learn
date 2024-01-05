@@ -548,7 +548,8 @@ def test_classifier_chain_vs_independent_models():
     )
 
 
-def test_base_chain_fit_and_predict():
+@pytest.mark.parametrize("response_method", ["predict_proba", "predict_log_proba"])
+def test_base_chain_fit_and_predict(response_method):
     # Fit base chain and verify predict performance
     X, Y = generate_multilabel_dataset_with_correlations()
     chains = [RegressorChain(Ridge()), ClassifierChain(LogisticRegression())]
@@ -560,7 +561,9 @@ def test_base_chain_fit_and_predict():
             range(X.shape[1], X.shape[1] + Y.shape[1])
         )
 
-    Y_prob = chains[1].predict_proba(X)
+    Y_prob = getattr(chains[1], response_method)(X)
+    if response_method == "predict_log_proba":
+        Y_prob = np.exp(Y_prob)
     Y_binary = Y_prob >= 0.5
     assert_array_equal(Y_binary, Y_pred)
 

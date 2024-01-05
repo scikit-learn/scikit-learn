@@ -192,7 +192,7 @@ class _BaseVoting(TransformerMixin, _BaseHeterogeneousEnsemble):
                 method_mapping=MethodMapping().add(callee="fit", caller="fit"),
             )
         return router
-
+      
 
 class VotingClassifier(ClassifierMixin, _BaseVoting):
     """Soft Voting/Majority Rule classifier for unfitted estimators.
