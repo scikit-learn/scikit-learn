@@ -201,6 +201,53 @@ It is however preferred to use pip.
 On Unix-like systems, you can equivalently type ``make in`` from the top-level
 folder. Have a look at the ``Makefile`` for additional utilities.
 
+Building with Meson
+-------------------
+
+Supported for Meson is experimental, in scikit-learn 1.5.0.dev0.
+`Open an issue <https://github.com/scikit-learn/scikit-learn/issues/new>`__ if
+you encounter any problems!
+
+Make sure you have `meson-python` installed::
+
+.. code-block:: bash
+
+   conda install meson-python -y
+
+.. warning ::
+   Use conda for this, if you install meson-python with pip, this does not not
+   include ninja, and you need another way to install ninja (e.g. package
+   manager)
+
+Edit `pyproject.toml` and set build-backend to mesonpy::
+
+.. code-block:: toml
+
+   [build-system]
+   build-backend = 'mesonpy'
+
+Build with the following `pip` command::
+
+.. code-block:: bash
+
+   pip install --editable . \
+       --verbose --no-build-isolation \
+       --config-settings editable-verbose=true
+
+`--config-settings editable-verbose=true` is advised to avoid surprises.
+meson-python implements editable install by recompiling when doing `import
+sklearn`. You will see the meson output when that happens, rather than
+potentially waiting a while and wondering what is taking so long. Bonus: that
+means you only have to do the `pip install` once, after that your code will
+recompile when doing `import sklearn`.
+
+Other places that may be worth looking at:
+- `pandas setup doc <https://pandas.pydata.org/docs/development/contributing_environment.html#step-3-build-and-install-pandas>`__,
+  they have a similar setup as ours (no spin or dev.py)
+- `Understanding Meson
+  <https://scipy.github.io/devdocs/building/understanding_meson.html>`__ in the
+  Scipy documentation. More background about Meson works behind the scenes.
+
 .. _platform_specific_instructions:
 
 Platform-specific instructions
