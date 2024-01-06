@@ -1,27 +1,27 @@
 """
-=============================================================
-Usecase of advanced features in Histogram Boosting Regression
-=============================================================
+===================================================================
+Use cases of advanced features in Histogram Gradient Boosting Trees
+===================================================================
 
-:ref:`histogram_based_gradient_boosting` (HGBT) models may be the most useful
+:ref:`histogram_based_gradient_boosting` (HGBT) models may be one of the most useful
 supervised learning models in scikit-learn. They are based on a modern gradient
 boosting implementation comparable to LightGBM and XGBoost. As such, HGBT models
-are more feature rich than -and often outperforms- alternative models like
-random forests, especially when the number of samples is larger than tens of
-thousands of samples (see
+are more feature rich than and often outperform alternative models like
+random forests, especially when the number of samples is larger than some ten
+thousands (see
 :ref:`sphx_glr_auto_examples_ensemble_plot_forest_hist_grad_boosting_comparison.py`).
 
 The top usability features of HGBT models are:
 
-- :ref:`categorical_support_gbdt` (see
+1. Several available loss function for mean and quantile regression tasks, see :ref:`Quantile loss <quantile_support_hgbdt>`.
+2. :ref:`categorical_support_gbdt` (see
   :ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_categorical.py`).
-- Early stopping.
-- :ref:`nan_support_hgbt`, which avoids the need for an imputer.
-- Support for several losses such as the :ref:`Quantile loss <quantile_support_hgbdt>`.
-- :ref:`monotonic_cst_gbdt`.
-- :ref:`interaction_cst_hgbt`.
+3. Early stopping.
+4. :ref:`nan_support_hgbt`, which avoids the need for an imputer.
+5. :ref:`monotonic_cst_gbdt`.
+6. :ref:`interaction_cst_hgbt`.
 
-This example aims at showcasing points 2-5 in a real life setting.
+This example aims at showcasing all points except 2 and 6 in a real life setting.
 """
 
 # Author: Arturo Amor <david-arturo.amor-quiroz@inria.fr>
@@ -41,8 +41,8 @@ This example aims at showcasing points 2-5 in a real life setting.
 # 30 minutes, i.e. there are 48 instances for each time period of one day. Each
 # sample on the dataset has 5 fields: the day of week, the time stamp, the New
 # South Wales electricity demand, the Victoria electricity demand. It is
-# originally a classification task, but here we use it as a regression where the
-# target is the scheduled electricity transfer between states.
+# originally a classification task, but here we use it for the regression task
+# to predict the scheduled electricity transfer between states.
 
 from sklearn.datasets import fetch_openml
 
@@ -104,7 +104,7 @@ average_week_demand = (
 
 colors = sns.color_palette("colorblind")
 fig, ax = plt.subplots(figsize=(10, 5))
-average_week_demand.plot(color=colors[0], label="ground truth", linewidth=2, ax=ax)
+average_week_demand.plot(color=colors[0], label="recorded average", linewidth=2, ax=ax)
 
 for idx, max_iter in enumerate(max_iter_list):
     hgbt = HistGradientBoostingRegressor(max_iter=max_iter)
@@ -131,19 +131,19 @@ _ = ax.legend()
 
 # %%
 # With just a few iterations, HGBT models can achieve convergence (see
-# :ref:`sphx_glr_auto_examples_ensemble_plot_forest_hist_grad_boosting_comparison.py`).
+# :ref:`sphx_glr_auto_examples_ensemble_plot_forest_hist_grad_boosting_comparison.py`),
+# meaning that adding more trees does not improve the model anymore.
 #
-# Instead of relying solely on `max_iter` to determine when to stop, the HGBT
-# implementations in scikit-learn support early stopping. With it, the model
-# uses a fraction of the training data as a validation set
+# Instead of relying on `max_iter` alone to determine when to stop, the HGBT
+# implementation in scikit-learn supports early stopping. With it, the model
+# uses a fraction of the training data as internal validation set
 # (`validation_fraction`) and stops training if the validation score does not
 # improve (or degrades) after `n_iter_no_change` iterations up to a certain
 # `tol`.
 #
 # Notice that there is a trade-off between `learning_rate` and `max_iter`:
-# Generally, smaller learning rates require more iterations to converge to the
-# minimum loss, while larger learning rates might converge faster but are at
-# risk of overfitting.
+# Generally, smaller learning rates are preferable but require more iterations to converge to the
+# minimum loss, while larger learning rates converge faster (less iterations/trees needed) but at the cost of a larger minimum loss.
 #
 # Indeed, a good practice is to tune the learning rate along with any other
 # hyperparameters, fit the HBGT on the training set with a large enough value
@@ -181,7 +181,7 @@ hgbt = HistGradientBoostingRegressor(**common_params)
 
 # %%
 # .. note:: The inner validation done during early stopping is not optimal for
-#    time series with the implementation as of scikit-learn v1.3.
+#    time series.
 #
 # Support for missing values
 # ==========================
@@ -227,7 +227,7 @@ for missing_fraction in missing_fraction_list:
     rmse = root_mean_squared_error(y_test[first_week], y_pred)
     ax.plot(
         y_pred[first_week],
-        label=f"missing_fraction={missing_fraction}, RMSE={rmse:.2f}",
+        label=f"missing_fraction={missing_fraction}, RMSE={rmse:.3f}",
         alpha=0.5,
     )
 ax.set(
@@ -248,7 +248,7 @@ _ = ax.legend(loc="lower right")
 # The quantile loss in regression enables a view of the variability or
 # uncertainty of the target variable. For instance, predicting the 5th and 95th
 # percentiles can provide a 90% prediction interval, i.e. the range within which
-# we expect the true value to fall with 90% probability.
+# we expect a new observed value to fall with 90% probability.
 
 from sklearn.metrics import mean_pinball_loss
 
@@ -389,7 +389,7 @@ cv_results = cross_validate(
     scoring="neg_root_mean_squared_error",
 )
 rmse = -cv_results["test_score"]
-print(f"RMSE without constraints = {rmse.mean():.2f} +/- {rmse.std():.2f}")
+print(f"RMSE without constraints = {rmse.mean():.3f} +/- {rmse.std():.3f}")
 
 cv_results = cross_validate(
     hgbt_cst,
@@ -399,7 +399,7 @@ cv_results = cross_validate(
     scoring="neg_root_mean_squared_error",
 )
 rmse = -cv_results["test_score"]
-print(f"RMSE with constraints    = {rmse.mean():.2f} +/- {rmse.std():.2f}")
+print(f"RMSE with constraints    = {rmse.mean():.3f} +/- {rmse.std():.3f}")
 
 # %%
 # That being said, notice the comparison is between two different models that may
