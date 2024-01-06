@@ -349,7 +349,7 @@ class TreeGrower:
         self.total_compute_hist_time = 0.0  # time spent computing histograms
         self.total_apply_split_time = 0.0  # time spent splitting nodes
         self.n_categorical_splits = 0
-        self._intilialize_root(gradients, hessians, hessians_are_constant)
+        self._intilialize_root(gradients, hessians)
         self.n_nodes = 1
 
     def _validate_parameters(
@@ -397,7 +397,7 @@ class TreeGrower:
         for leaf in self.finalized_leaves:
             leaf.value *= self.shrinkage
 
-    def _intilialize_root(self, gradients, hessians, hessians_are_constant):
+    def _intilialize_root(self, gradients, hessians):
         """Initialize root node and finalize it if needed."""
         n_samples = self.X_binned.shape[0]
         depth = 0
