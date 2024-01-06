@@ -801,7 +801,7 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
           by Kingma, Diederik, and Jimmy Ba
 
         For a comparison between Adam optimizer and SGD, see
-        :ref:`sphx_glr_auto_examples_neural_networks_plot_mlp_training_curves.py`
+        :ref:`sphx_glr_auto_examples_neural_networks_plot_mlp_training_curves.py`.
 
         Note: The default solver 'adam' works pretty well on relatively
         large datasets (with thousands of training samples or more) in terms of
@@ -814,7 +814,7 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
         is divided by the sample size when added to the loss.
 
         For an example usage and visualization of varying regularization, see
-        :ref:`sphx_glr_auto_examples_neural_networks_plot_mlp_alpha.py`
+        :ref:`sphx_glr_auto_examples_neural_networks_plot_mlp_alpha.py`.
 
     batch_size : int, default='auto'
         Size of minibatches for stochastic optimizers.
@@ -1300,7 +1300,7 @@ class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
           Kingma, Diederik, and Jimmy Ba
 
         For a comparison between Adam optimizer and SGD, see
-        :ref:`sphx_glr_auto_examples_neural_networks_plot_mlp_training_curves.py`
+        :ref:`sphx_glr_auto_examples_neural_networks_plot_mlp_training_curves.py`.
 
         Note: The default solver 'adam' works pretty well on relatively
         large datasets (with thousands of training samples or more) in terms of
