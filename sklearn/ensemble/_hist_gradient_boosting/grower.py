@@ -18,15 +18,12 @@ from ._bitset import set_raw_bitset_from_binned_bitset
 from .common import (
     PREDICTOR_RECORD_DTYPE,
     X_BITSET_INNER_DTYPE,
-    Y_DTYPE,
     MonotonicConstraint,
 )
 from .histogram import HistogramBuilder
 from .predictor import TreePredictor
 from .splitting import Splitter
 from .utils import sum_parallel
-
-EPS = np.finfo(Y_DTYPE).eps  # to avoid zero division errors
 
 
 class TreeNode:
