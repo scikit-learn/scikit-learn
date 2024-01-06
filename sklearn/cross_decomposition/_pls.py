@@ -590,9 +590,6 @@ class PLSRegression(_PLS):
     --------
     PLSCanonical : Partial Least Squares transformer and regressor.
 
-    For a comparison between PLS Regression and :class:`~sklearn.decomposition.PCA`, see
-    :ref:`sphx_glr_auto_examples_cross_decomposition_plot_pcr_vs_pls.py`.
-
     Examples
     --------
     >>> from sklearn.cross_decomposition import PLSRegression
@@ -602,6 +599,9 @@ class PLSRegression(_PLS):
     >>> pls2.fit(X, Y)
     PLSRegression()
     >>> Y_pred = pls2.predict(X)
+
+    For a comparison between PLS Regression and :class:`~sklearn.decomposition.PCA`, see
+    :ref:`sphx_glr_auto_examples_cross_decomposition_plot_pcr_vs_pls.py`.
     """
 
     _parameter_constraints: dict = {**_PLS._parameter_constraints}
