@@ -41,6 +41,10 @@ class TreeNode:
         The depth of the node, i.e. its distance from the root.
     sample_indices : ndarray of shape (n_samples_at_node,), dtype=np.uint32
         The indices of the samples at the node.
+    partition_start : int
+        start position of the node's sample_indices in splitter.partition.
+    partition_stop : int
+        stop position of the node's sample_indices in splitter.partition.
     sum_gradients : float
         The sum of the gradients of the samples at the node.
     sum_hessians : float
@@ -81,23 +85,16 @@ class TreeNode:
     children_upper_bound : float
     """
 
-    split_info = None
-    left_child = None
-    right_child = None
-    histograms = None
-
-    # start and stop indices of the node in the splitter.partition
-    # array. Concretely,
-    # self.sample_indices = view(self.splitter.partition[start:stop])
-    # Please see the comments about splitter.partition and
-    # splitter.split_indices for more info about this design.
-    # These 2 attributes are only used in _update_raw_prediction, because we
-    # need to iterate over the leaves and I don't know how to efficiently
-    # store the sample_indices views because they're all of different sizes.
-    partition_start = 0
-    partition_stop = 0
-
-    def __init__(self, depth, sample_indices, sum_gradients, sum_hessians, value=None):
+    def __init__(
+        self,
+        depth,
+        sample_indices,
+        partition_start,
+        partition_stop,
+        sum_gradients,
+        sum_hessians,
+        value=None,
+    ):
         self.depth = depth
         self.sample_indices = sample_indices
         self.n_samples = sample_indices.shape[0]
@@ -108,6 +105,20 @@ class TreeNode:
         self.allowed_features = None
         self.interaction_cst_indices = None
         self.set_children_bounds(float("-inf"), float("+inf"))
+        self.split_info = None
+        self.left_child = None
+        self.right_child = None
+        self.histograms = None
+        # start and stop indices of the node in the splitter.partition
+        # array. Concretely,
+        # self.sample_indices = view(self.splitter.partition[start:stop])
+        # Please see the comments about splitter.partition and
+        # splitter.split_indices for more info about this design.
+        # These 2 attributes are only used in _update_raw_prediction, because we
+        # need to iterate over the leaves and I don't know how to efficiently
+        # store the sample_indices views because they're all of different sizes.
+        self.partition_start = partition_start
+        self.partition_stop = partition_stop
 
     def set_children_bounds(self, lower, upper):
         """Set children values bounds to respect monotonic constraints."""
@@ -401,13 +412,12 @@ class TreeGrower:
         self.root = TreeNode(
             depth=depth,
             sample_indices=self.splitter.partition,
+            partition_start=0,
+            partition_stop=n_samples,
             sum_gradients=sum_gradients,
             sum_hessians=sum_hessians,
             value=0,
         )
-
-        self.root.partition_start = 0
-        self.root.partition_stop = n_samples
 
         if self.root.n_samples < 2 * self.min_samples_leaf:
             # Do not even bother computing any splitting statistics.
@@ -485,28 +495,26 @@ class TreeGrower:
         n_leaf_nodes += 2
 
         left_child_node = TreeNode(
-            depth,
-            sample_indices_left,
-            node.split_info.sum_gradient_left,
-            node.split_info.sum_hessian_left,
+            depth=depth,
+            sample_indices=sample_indices_left,
+            partition_start=node.partition_start,
+            partition_stop=node.partition_start + right_child_pos,
+            sum_gradients=node.split_info.sum_gradient_left,
+            sum_hessians=node.split_info.sum_hessian_left,
             value=node.split_info.value_left,
         )
         right_child_node = TreeNode(
-            depth,
-            sample_indices_right,
-            node.split_info.sum_gradient_right,
-            node.split_info.sum_hessian_right,
+            depth=depth,
+            sample_indices=sample_indices_right,
+            partition_start=left_child_node.partition_stop,
+            partition_stop=node.partition_stop,
+            sum_gradients=node.split_info.sum_gradient_right,
+            sum_hessians=node.split_info.sum_hessian_right,
             value=node.split_info.value_right,
         )
 
         node.right_child = right_child_node
         node.left_child = left_child_node
-
-        # set start and stop indices
-        left_child_node.partition_start = node.partition_start
-        left_child_node.partition_stop = node.partition_start + right_child_pos
-        right_child_node.partition_start = left_child_node.partition_stop
-        right_child_node.partition_stop = node.partition_stop
 
         # set interaction constraints (the indices of the constraints sets)
         if self.interaction_cst is not None:
