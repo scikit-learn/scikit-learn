@@ -31,6 +31,12 @@ Changelog
   by passing a function in place of a strategy name.
   :pr:`28053` by :user:`Mark Elliot <mark-thm>`.
 
+:mod:`sklearn.neighbors`
+........................
+- |Feature| :class:`neighbors.NearestCentroid` now has predict_proba and
+  predict_log_proba methods.
+  :pr:`28071` by :user:`Filip Karlo Došilović <fkdosilovic>`.
+
 Code and Documentation Contributors
 -----------------------------------
 
