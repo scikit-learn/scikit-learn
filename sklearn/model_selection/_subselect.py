@@ -1,6 +1,7 @@
 """
 The :mod:``sklearn.model_selection.subselect`` includes refit callable factories for
-subselecting models from ``GridSearchCV`` or ``RandomizedSearchCV``
+subselecting models from ``GridSearchCV``, ``RandomizedSearchCV``, or
+``HalvingRandomSearchCV``
 """
 
 import warnings
@@ -15,7 +16,7 @@ __all__ = [
     "by_percentile_rank",
     "by_signed_rank",
     "by_fixed_window",
-    "constrain",
+    "subselect",
     "_wrap_refit",
 ]
 
@@ -355,17 +356,14 @@ class ScoreCutModelSelector:
     """A refit factory for model subselection in GridSearchCV or RandomizedSearchCV.
 
     Model subselection can be useful for instance in the case that the user wishes to
-    identify best-performing models above or below a particular threshold. It can also
-    be useful for selecting alternative models whose performance is not meaningfully
-    different from the best-performing model, but whose simplicity may be more
+    select an alternative model whose performance is not meaningfully
+    different from the globally best-performing model, but whose simplicity may be more
     preferable (e.g. to prevent overfitting).
 
-    The selection process implicitly uses the rank order of the hyperparameter input
-    values provided by the user. It assumes these values are sorted from least to most
-    complex, with the index of the highest rank within the threshold equating to the
-    index of the simplest viable model. Users are responsible for ensuring their
-    hyperparameters are ordered from least to most complex as per their definition of
-    model complexity.
+    The subselection process expects that the hyperparameter input values provided by
+    the user are ranked-ordered with respect to model complexity. Specifically, it
+    assumes these values are sorted from least to most complex, wherein the definition
+    of model complexity is based on user discretion.
 
     Parameters
     ----------
@@ -444,14 +442,10 @@ class ScoreCutModelSelector:
         # the ``n_splits_`` attribute of the ``cv`` object because it is not exposed to
         # the refit callable.
         return len(
-            list(
-                set(
-                    [
-                        i.split("_")[0]
-                        for i in list(self.cv_results_constrained_.keys())
-                        if i.startswith("split")
-                    ]
-                )
+            set(
+                key.split("_")[0]
+                for key in self.cv_results_constrained_
+                if key.startswith("split")
             )
         )
 
@@ -542,7 +536,7 @@ class ScoreCutModelSelector:
 
     def fit_transform(self, selector: Callable) -> int:
         """Generates a ScoreCutModelSelector instance with specified selector callable
-        and subselects the best-performing model under the fitted constraints.
+        and subselects the simplest model under the fitted constraints.
 
         Parameters
         ----------
@@ -652,8 +646,9 @@ def _wrap_refit(cv_results_: Dict, selector: Callable) -> int:
     return ss.fit_transform(selector)
 
 
-def constrain(selector: Callable) -> Callable:
-    """Callable returning the best index with constraints conferred by a ``selector``.
+def subselect(selector: Callable) -> Callable:
+    """Callable returning the simplest model index with constraints conferred by a
+    ``selector``.
 
     Intended to be used as the ``refit`` parameter in ``GridSearchCV`` or
     ``RandomSearchCV``.
@@ -667,8 +662,8 @@ def constrain(selector: Callable) -> Callable:
     Returns
     -------
     Callable
-        A callable that returns the index of the best model under the performance
-        constraints imposed by the selector strategy.
+        A callable that returns the index of the simplest model whose performance falls
+        within the acceptable bounds imposed by the selector strategy.
 
     Examples
     --------
@@ -677,7 +672,7 @@ def constrain(selector: Callable) -> Callable:
     >>> from sklearn.decomposition import PCA
     >>> from sklearn.svm import LinearSVC
     >>> from sklearn.pipeline import Pipeline
-    >>> from sklearn.model_selection import constrain, by_standard_error
+    >>> from sklearn.model_selection import subselect, by_standard_error
     >>> X, y = load_digits(return_X_y=True)
     >>> pipe = Pipeline([
     ...      ("reduce_dim", PCA(random_state=42)),
@@ -688,7 +683,7 @@ def constrain(selector: Callable) -> Callable:
     ...     pipe,
     ...     param_grid=param_grid,
     ...     scoring="accuracy",
-    ...     refit=constrain(by_standard_error(sigma=1)),
+    ...     refit=subselect(by_standard_error(sigma=1)),
     ... )
     >>> search.fit(X, y)
     Min: 0.8898918397688278

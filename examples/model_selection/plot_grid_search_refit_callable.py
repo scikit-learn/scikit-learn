@@ -38,17 +38,16 @@ import numpy as np
 
 from sklearn import datasets
 from sklearn.decomposition import PCA
-from sklearn.model_selection import GridSearchCV, RandomizedSearchCV
+from sklearn.ensemble import GradientBoostingRegressor
+from sklearn.metrics import mean_squared_error
+from sklearn.model_selection import GridSearchCV, RandomizedSearchCV, train_test_split
 from sklearn.model_selection._subselect import (
-    by_standard_error,
     by_signed_rank,
-    constrain,
+    by_standard_error,
+    subselect,
 )
 from sklearn.pipeline import Pipeline
 from sklearn.svm import LinearSVC
-from sklearn.ensemble import GradientBoostingRegressor
-from sklearn.metrics import mean_squared_error
-from sklearn.model_selection import train_test_split
 
 # 1-SE rule - Digits dataset - GridSearchCV - PCA - LinearSVC - Classification
 X, y = datasets.load_digits(return_X_y=True)
@@ -67,7 +66,7 @@ grid = GridSearchCV(
     n_jobs=-1,
     param_grid=param_grid,
     scoring="accuracy",
-    refit=constrain(by_standard_error(sigma=1)),
+    refit=subselect(by_standard_error(sigma=1)),
 )
 
 grid.fit(X, y)
@@ -129,7 +128,7 @@ grid = RandomizedSearchCV(
     cv=10,
     n_jobs=-1,
     scoring="r2",
-    refit=constrain(by_signed_rank(alpha=0.05)),
+    refit=subselect(by_signed_rank(alpha=0.05)),
 )
 grid.fit(X_train, y_train)
 

@@ -583,27 +583,32 @@ multimetric scoring.
 
 .. _refit_constraints:
 
-Model Refitting
----------------
+Model Subselection
+------------------
 
-Model refitting is the process of contraining (i.e. subselecting) the best model from
-among a group of top-performing candidates based on additional criteria, such as model
-complexity. This can be useful to avoid overfitting, as models with the highest
-performance may also be more prone to overfitting (Breiman et al., 1984).
+Model subselection methods expand the user's level of control over the hyper-parameter
+tuning process through a family of model selection heuristics. Such control can be
+especially useful, for instance, when the user wishes to select the best model from
+among a group of comparably top-performing candidates based on additional criteria,
+usually model complexity.
 
-Scikit-Learn provides two ways of performing model refitting. The first is *post hoc*
--- by fitting a :class:`model_selection.ScoreCutModelSelector` instance to the ``cv_results_``
-attribute of a fitted ``GridSearchCV`` or ``RandomizedSearchCV``. The second is *a
-priori* -- by setting the ``refit`` parameter in a ``GridSearchCV`` or
-``RandomizedSearchCV`` instance, to a callable function :func:`model_selection.
-constrain` before running the search.
+Scikit-Learn provides two mechanisms for model refitting. The first is *post hoc*
+-- by fitting a :class:`model_selection.ScoreCutModelSelector` instance to the
+``cv_results_`` attribute of a fitted instance of ``GridSearchCV``,
+``RandomizedSearchCV``,  or ``HalvingRandomSearchCV``. The second is *a priori* -- by
+setting the ``refit`` parameter in a ``GridSearchCV``, ``RandomizedSearchCV``, or
+``RandomizedSearchCV`` instance to a callable function :func:`model_selection.
+subselect` before running the search.
 
-In the case of refitting a ``GridSearchCV`` or ``RandomizedSearchCV`` with the simplest
-best-performing model, for example, one common constraint to use is the "One Standard
-Error Rule" (1-SE) (see :class:`model_selection.by_standard_error`). 1-SE is a
-heuristic for subselecting the most parsimonious model whose cross-validated
-performance is not more than 1 standard error worse than the best CV performance
-(Chen & Yang, 2021). Although it is easy to demonstrate the value of 1-SE (e.g. see
+In the case of refitting a ``GridSearchCV``, ``RandomizedSearchCV``,  or
+``HalvingRandomSearchCV`` object with the simplest best-performing model, for example,
+one common constraint to use is the "One Standard Error Rule" (1-SE)
+(see :class:`model_selection.by_standard_error`). 1-SE is a heuristic for subselecting
+the most parsimonious model whose cross-validated performance is not more than 1
+standard error worse than the best CV performance. In effect, this technique helps to
+identify simpler, more generalizeable models, as those with the highest rote performance
+can be more prone to overfitting (Breiman et al., 1984).Although it is easy to
+demonstrate the value of 1-SE (e.g. see
 :ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_refit_callable.py`),
 the criteria may be too rigid or lenient in some contexts. In these cases,
 :class:`model_selection.ScoreCutModelSelector` also supports other default

@@ -29,7 +29,7 @@ from ._subselect import (
     by_percentile_rank,
     by_signed_rank,
     by_standard_error,
-    constrain,
+    subselect,
 )
 from ._validation import (
     cross_val_predict,
@@ -85,7 +85,7 @@ __all__ = [
     "by_percentile_rank",
     "by_signed_rank",
     "by_fixed_window",
-    "constrain",
+    "subselect",
 ]
 
 

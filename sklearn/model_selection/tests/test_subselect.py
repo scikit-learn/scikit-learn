@@ -3,15 +3,17 @@ import pytest
 
 from sklearn.datasets import make_classification
 from sklearn.decomposition import PCA
+from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import (
     GridSearchCV,
+    HalvingRandomSearchCV,
     RandomizedSearchCV,
     ScoreCutModelSelector,
     by_fixed_window,
     by_percentile_rank,
     by_signed_rank,
     by_standard_error,
-    constrain,
+    subselect,
 )
 from sklearn.pipeline import Pipeline
 from sklearn.svm import SVC, LinearSVC
@@ -149,9 +151,9 @@ def test_scorecutmodelselector_errors(grid_search_simulated):
     "search_cv",
     [GridSearchCV, RandomizedSearchCV],
 )
-def test_constrain(param, scoring, rule, search_cv):
+def test_subselect(param, scoring, rule, search_cv):
     """
-    A function that tests the constrain function by comparing the results of a
+    A function that tests the subselect function by comparing the results of a
     refitted grid and random search object to those of a non-refitted grid and random
     search object, respectively.
     """
@@ -179,7 +181,7 @@ def test_constrain(param, scoring, rule, search_cv):
         pipe,
         param_grid,
         scoring=scoring,
-        refit=constrain(rule),
+        refit=subselect(rule),
     )
 
     # If the cv results were not all NaN, then we can test the refit callable
@@ -213,6 +215,104 @@ def test_constrain(param, scoring, rule, search_cv):
                     grid.best_params_ != grid_simplified.best_params_
                 )  # pragma: no cover
                 assert grid.best_score_ > simplified_best_score_  # pragma: no cover
+
+
+@ignore_warnings
+@pytest.mark.parametrize(
+    "param",
+    [
+        "max_depth",
+        None,
+    ],
+)
+@pytest.mark.parametrize(
+    "scoring,rule",
+    [
+        ("roc_auc", by_standard_error(sigma=1)),
+        ("roc_auc", by_signed_rank(alpha=0.01)),
+        ("roc_auc", by_percentile_rank(eta=0.68)),
+        ("roc_auc", by_fixed_window(min_cut=0.96, max_cut=0.97)),
+        ("roc_auc", "Not_a_rule"),
+        ("neg_log_loss", by_standard_error(sigma=1)),
+        ("neg_log_loss", by_signed_rank(alpha=0.01)),
+        ("neg_log_loss", by_percentile_rank(eta=0.68)),
+        (
+            "neg_log_loss",
+            pytest.param(
+                by_fixed_window(min_cut=0.96, max_cut=0.97), marks=pytest.mark.xfail
+            ),
+        ),
+    ],
+)
+def test_subselect_successive_halving(param, scoring, rule):
+    """
+    A function that tests the subselect function using HalvingRandomSearchCV by
+    comparing the results of a refitted search object to those of a non-refitted
+    search object.
+    """
+
+    X, y = make_classification(n_samples=350, n_features=16, random_state=42)
+
+    # Instantiate the classifier
+    clf = RandomForestClassifier(random_state=0)
+
+    # Define parameter distributions
+    if param == "max_depth":
+        param_distributions = {
+            "max_depth": [3, None],
+            "min_samples_split": [2, 4, 6, 8],
+        }
+    else:
+        param_distributions = {"min_samples_split": [2, 4, 6, 8]}
+
+    # Instantiate a non-refitted HalvingRandomSearchCV object for comparison
+    search = HalvingRandomSearchCV(
+        clf,
+        param_distributions,
+        resource="n_estimators",
+        max_resources=10,
+        scoring=scoring,
+        random_state=0,
+    )
+    search.fit(X, y)
+
+    # Instantiate a refitted HalvingRandomSearchCV object
+    search_simplified = HalvingRandomSearchCV(
+        clf,
+        param_distributions,
+        resource="n_estimators",
+        max_resources=10,
+        scoring=scoring,
+        refit=subselect(rule),
+        random_state=0,
+    )
+
+    # If the cv results were not all NaN, then we can test the refit callable
+    if not np.isnan(search.fit(X, y).cv_results_["mean_test_score"]).all():
+        if rule == "Not_a_rule":
+            with pytest.raises(TypeError):
+                search_simplified.fit(X, y)
+        else:
+            search_simplified.fit(X, y)
+            simplified_best_score_ = search_simplified.cv_results_["mean_test_score"][
+                search_simplified.best_index_
+            ]
+            # Ensure that if the refit callable subselected a lower scoring model,
+            # it was only because it was a simpler model.
+            if abs(search.best_score_) > abs(simplified_best_score_):
+                assert search.best_index_ != search_simplified.best_index_
+                if param:
+                    assert (
+                        search.best_params_[param]
+                        > search_simplified.best_params_[param]
+                    )
+            elif search.best_score_ == simplified_best_score_:
+                assert search.best_index_ == search_simplified.best_index_
+                assert search.best_params_ == search_simplified.best_params_
+            else:
+                assert search.best_index_ != search_simplified.best_index_
+                assert search.best_params_ != search_simplified.best_params_
+                assert search.best_score_ > simplified_best_score_
 
 
 def test_by_standard_error(generate_fit_params):
