@@ -817,9 +817,9 @@ def test_variance_correctness(copy):
     np.testing.assert_allclose(pca_var, true_var)
 
 
-def check_array_api_get_precision(name, estimator, array_namespace, device, dtype):
-    xp, device, dtype = _array_api_for_tests(array_namespace, device, dtype)
-    iris_np = iris.data.astype(dtype)
+def check_array_api_get_precision(name, estimator, array_namespace, device, dtype_name):
+    xp = _array_api_for_tests(array_namespace, device)
+    iris_np = iris.data.astype(dtype_name)
     iris_xp = xp.asarray(iris_np, device=device)
 
     estimator.fit(iris_np)
@@ -835,7 +835,7 @@ def check_array_api_get_precision(name, estimator, array_namespace, device, dtyp
         assert_allclose(
             _convert_to_numpy(precision_xp, xp=xp),
             precision_np,
-            atol=_atol_for_type(dtype),
+            atol=_atol_for_type(dtype_name),
         )
         covariance_xp = estimator_xp.get_covariance()
         assert covariance_xp.shape == (4, 4)
@@ -844,12 +844,12 @@ def check_array_api_get_precision(name, estimator, array_namespace, device, dtyp
         assert_allclose(
             _convert_to_numpy(covariance_xp, xp=xp),
             covariance_np,
-            atol=_atol_for_type(dtype),
+            atol=_atol_for_type(dtype_name),
         )
 
 
 @pytest.mark.parametrize(
-    "array_namespace, device, dtype", yield_namespace_device_dtype_combinations()
+    "array_namespace, device, dtype_name", yield_namespace_device_dtype_combinations()
 )
 @pytest.mark.parametrize(
     "check",
@@ -870,13 +870,15 @@ def check_array_api_get_precision(name, estimator, array_namespace, device, dtyp
     ],
     ids=_get_check_estimator_ids,
 )
-def test_pca_array_api_compliance(estimator, check, array_namespace, device, dtype):
+def test_pca_array_api_compliance(
+    estimator, check, array_namespace, device, dtype_name
+):
     name = estimator.__class__.__name__
-    check(name, estimator, array_namespace, device=device, dtype=dtype)
+    check(name, estimator, array_namespace, device=device, dtype_name=dtype_name)
 
 
 @pytest.mark.parametrize(
-    "array_namespace, device, dtype", yield_namespace_device_dtype_combinations()
+    "array_namespace, device, dtype_name", yield_namespace_device_dtype_combinations()
 )
 @pytest.mark.parametrize(
     "check",
@@ -892,9 +894,11 @@ def test_pca_array_api_compliance(estimator, check, array_namespace, device, dty
     ],
     ids=_get_check_estimator_ids,
 )
-def test_pca_mle_array_api_compliance(estimator, check, array_namespace, device, dtype):
+def test_pca_mle_array_api_compliance(
+    estimator, check, array_namespace, device, dtype_name
+):
     name = estimator.__class__.__name__
-    check(name, estimator, array_namespace, device=device, dtype=dtype)
+    check(name, estimator, array_namespace, device=device, dtype_name=dtype_name)
 
 
 def test_array_api_error_and_warnings_on_unsupported_params():
