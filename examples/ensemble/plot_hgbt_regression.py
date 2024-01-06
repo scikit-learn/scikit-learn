@@ -3,17 +3,18 @@
 Use cases of advanced features in Histogram Gradient Boosting Trees
 ===================================================================
 
-:ref:`histogram_based_gradient_boosting` (HGBT) models may be one of the most useful
-supervised learning models in scikit-learn. They are based on a modern gradient
-boosting implementation comparable to LightGBM and XGBoost. As such, HGBT models
-are more feature rich than and often outperform alternative models like
-random forests, especially when the number of samples is larger than some ten
-thousands (see
+:ref:`histogram_based_gradient_boosting` (HGBT) models may be one of the most
+useful supervised learning models in scikit-learn. They are based on a modern
+gradient boosting implementation comparable to LightGBM and XGBoost. As such,
+HGBT models are more feature rich than and often outperform alternative models
+like random forests, especially when the number of samples is larger than some
+ten thousands (see
 :ref:`sphx_glr_auto_examples_ensemble_plot_forest_hist_grad_boosting_comparison.py`).
 
 The top usability features of HGBT models are:
 
-1. Several available loss function for mean and quantile regression tasks, see :ref:`Quantile loss <quantile_support_hgbdt>`.
+1. Several available loss function for mean and quantile regression tasks, see
+   :ref:`Quantile loss <quantile_support_hgbdt>`.
 2. :ref:`categorical_support_gbdt` (see
   :ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_categorical.py`).
 3. Early stopping.
@@ -21,7 +22,8 @@ The top usability features of HGBT models are:
 5. :ref:`monotonic_cst_gbdt`.
 6. :ref:`interaction_cst_hgbt`.
 
-This example aims at showcasing all points except 2 and 6 in a real life setting.
+This example aims at showcasing all points except 2 and 6 in a real life
+setting.
 """
 
 # Author: Arturo Amor <david-arturo.amor-quiroz@inria.fr>
@@ -142,8 +144,9 @@ _ = ax.legend()
 # `tol`.
 #
 # Notice that there is a trade-off between `learning_rate` and `max_iter`:
-# Generally, smaller learning rates are preferable but require more iterations to converge to the
-# minimum loss, while larger learning rates converge faster (less iterations/trees needed) but at the cost of a larger minimum loss.
+# Generally, smaller learning rates are preferable but require more iterations
+# to converge to the minimum loss, while larger learning rates converge faster
+# (less iterations/trees needed) but at the cost of a larger minimum loss.
 #
 # Indeed, a good practice is to tune the learning rate along with any other
 # hyperparameters, fit the HBGT on the training set with a large enough value
@@ -402,6 +405,6 @@ rmse = -cv_results["test_score"]
 print(f"RMSE with constraints    = {rmse.mean():.3f} +/- {rmse.std():.3f}")
 
 # %%
-# That being said, notice the comparison is between two different models that may
-# be optimized by a different combination of hyperparameters. That is the reason
-# why we do no use the `common_params` in this section as done before.
+# That being said, notice the comparison is between two different models that
+# may be optimized by a different combination of hyperparameters. That is the
+# reason why we do no use the `common_params` in this section as done before.
