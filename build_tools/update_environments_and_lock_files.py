@@ -78,11 +78,7 @@ common_dependencies = common_dependencies_without_coverage + [
 
 docstring_test_dependencies = ["sphinx", "numpydoc"]
 
-default_package_constraints = {
-    # XXX: pin pytest-xdist to workaround:
-    # https://github.com/pytest-dev/pytest-xdist/issues/840
-    "pytest-xdist": "2.5.0",
-}
+default_package_constraints = {}
 
 
 def remove_from(alist, to_remove):
@@ -296,8 +292,6 @@ conda_build_metadata_list = [
         "conda_dependencies": common_dependencies_without_coverage + [
             "scikit-image",
             "seaborn",
-            # TODO Remove when patsy pin is not needed anymore, see below
-            "patsy",
             "memory_profiler",
             "compilers",
             "sphinx",
@@ -313,10 +307,6 @@ conda_build_metadata_list = [
         "pip_dependencies": ["jupyterlite-sphinx", "jupyterlite-pyodide-kernel"],
         "package_constraints": {
             "python": "3.9",
-            # TODO: Remove pin when issue is fixed in patsy, see
-            # https://github.com/pydata/patsy/issues/198. patsy 0.5.5
-            # introduced a DeprecationWarning at import-time.
-            "patsy": "0.5.4",
         },
     },
     {
