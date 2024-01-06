@@ -1,9 +1,10 @@
 """
 Testing for the nearest centroid module.
 """
+
 import numpy as np
 import pytest
-from numpy.testing import assert_array_equal
+from numpy.testing import assert_allclose, assert_array_equal
 
 from sklearn import datasets
 from sklearn.neighbors import NearestCentroid
@@ -176,3 +177,39 @@ def test_features_zero_var():
     clf = NearestCentroid(shrink_threshold=0.1)
     with pytest.raises(ValueError):
         clf.fit(X, y)
+
+
+def test_predict_proba_no_shrinkage():
+    # Test that predict_proba throws RuntimeError when shrink_threshold is not set.
+    clf = NearestCentroid()
+    clf.fit(X, y)
+    with pytest.raises(RuntimeError) as excinfo:
+        clf.predict_proba(T)
+    assert excinfo.type is RuntimeError
+
+
+def test_predict_proba():
+    X = np.array(
+        [
+            # Equidistant points from (0, 0)
+            [1.0, 0.0],
+            [-0.5, 0.8660254],
+            [-0.5, -0.8660254],
+            # Equidistant points from (2, 2)
+            [3.0, 2.0],
+            [1.5, 2.8660254],
+            [1.5, 1.1339746],
+        ]
+    )
+    y = np.array([0, 0, 0, 1, 1, 1])
+
+    clf = NearestCentroid(shrink_threshold=0.1)
+    clf.fit(X, y)
+
+    T = np.array([[0.0, 0.0], [1.0, 1.0], [2.0, 2.0]])
+    # Note that the probabilities are dependent on shrink_threshold parameter!
+    T_probs = np.array([[0.99301, 0.00699], [0.5, 0.5], [0.00699, 0.99301]])
+
+    probs = clf.predict_proba(T)
+
+    assert_allclose(probs, T_probs, rtol=1e-6, atol=1e-6)
