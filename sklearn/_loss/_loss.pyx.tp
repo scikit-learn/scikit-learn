@@ -759,6 +759,7 @@ cdef inline double_pair cgrad_hess_half_binomial(
     # hessian = y_pred * (1 - y_pred) = exp( raw) / (1 + exp( raw))**2
     #                                 = exp(-raw) / (1 + exp(-raw))**2
     cdef double_pair gh
+    # See comment in cgradient_half_binomial.
     if raw_prediction > -37:
         gh.val2 = exp(-raw_prediction)  # used as temporary
         gh.val1 = ((1 - y_true) - y_true * gh.val2) / (1 + gh.val2)  # gradient
