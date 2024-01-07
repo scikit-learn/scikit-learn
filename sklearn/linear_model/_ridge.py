@@ -534,7 +534,7 @@ def ridge_regression(
         The actual number of iteration performed by the solver.
         Only returned if `return_n_iter` is True.
 
-    intercept : float or ndarray of shape (n_targets,)
+    intercept : float or ndarray of shape (n_targets,), optional
         The intercept of the model. Only returned if `return_intercept`
         is True and if X is a scipy sparse array.
 
@@ -549,6 +549,19 @@ def ridge_regression(
     :class:`~sklearn.svm.LinearSVC`. If an array is passed, penalties are
     assumed to be specific to the targets. Hence they must correspond in
     number.
+    
+    Examples
+    --------
+    >>> from sklearn.linear_model import ridge_regression
+    >>> ridgeReg = ridge_regression([[0, 0], [0, 0], [1, 1]], [0, .1, 1], alpha=.5)
+    >>> ridgeReg
+    array([0.4, 0.4])
+    >>> from sklearn.datasets import load_diabetes
+    >>> X,y = load_diabetes(return_X_y=True)
+    >>> ridge_regression(X, y, 0.5, return_n_iter=True, return_intercept=True)
+    (array([  20.06298919, -131.23912333,  383.4864144 ,  244.81422679,
+            -15.17216526,  -58.3500604 , -174.8239257 ,  121.98597298,
+            328.53798429,  110.93102769]), array([28], dtype=int32), 152.20373477376728)
     """
     return _ridge_regression(
         X,
