@@ -10,7 +10,7 @@ from ._predictor import (
     _predict_from_binned_data,
     _predict_from_raw_data,
 )
-from .common import Y_DTYPE
+from .common import PREDICTOR_RECORD_DTYPE, Y_DTYPE
 
 
 class TreePredictor:
@@ -20,21 +20,25 @@ class TreePredictor:
     ----------
     nodes : ndarray of PREDICTOR_RECORD_DTYPE
         The nodes of the tree.
-    binned_left_cat_bitsets : ndarray of shape (n_categorical_splits, 8), \
-            dtype=uint32
+    binned_left_cat_bitsets : ndarray of shape (n_categorical_splits, 8), dtype=uint32
         Array of bitsets for binned categories used in predict_binned when a
         split is categorical.
-    raw_left_cat_bitsets : ndarray of shape (n_categorical_splits, 8), \
-            dtype=uint32
+    raw_left_cat_bitsets : ndarray of shape (n_categorical_splits, 8), dtype=uint32
         Array of bitsets for raw categories used in predict when a split is
         categorical.
-
     """
 
     def __init__(self, nodes, binned_left_cat_bitsets, raw_left_cat_bitsets):
         self.nodes = nodes
         self.binned_left_cat_bitsets = binned_left_cat_bitsets
         self.raw_left_cat_bitsets = raw_left_cat_bitsets
+
+        # The dtype of feature_idx is np.intp which is platform dependent. Here, we
+        # make sure that saving and loading on different bitness systems works without
+        # errors. For instance, on 64 bit np.intp = np.int64, while on 32 bit
+        # np.intp = np.int32.
+        if nodes.dtype != PREDICTOR_RECORD_DTYPE:
+            self.nodes = self.nodes.astype(PREDICTOR_RECORD_DTYPE)
 
     def get_n_leaf_nodes(self):
         """Return number of leaves."""
