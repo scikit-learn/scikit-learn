@@ -137,16 +137,6 @@ conda_build_metadata_list = [
         },
     },
     {
-        "build_name": "pylatest_conda_forge_mkl_no_coverage",
-        "folder": "build_tools/azure",
-        "platform": "linux-64",
-        "channel": "conda-forge",
-        "conda_dependencies": common_dependencies_without_coverage + ["ccache"],
-        "package_constraints": {
-            "blas": "[build=mkl]",
-        },
-    },
-    {
         "build_name": "pymin_conda_defaults_openblas",
         "folder": "build_tools/azure",
         "platform": "linux-64",
@@ -306,6 +296,8 @@ conda_build_metadata_list = [
         "conda_dependencies": common_dependencies_without_coverage + [
             "scikit-image",
             "seaborn",
+            # TODO Remove when patsy pin is not needed anymore, see below
+            "patsy",
             "memory_profiler",
             "compilers",
             "sphinx",
@@ -321,6 +313,10 @@ conda_build_metadata_list = [
         "pip_dependencies": ["jupyterlite-sphinx", "jupyterlite-pyodide-kernel"],
         "package_constraints": {
             "python": "3.9",
+            # TODO: Remove pin when issue is fixed in patsy, see
+            # https://github.com/pydata/patsy/issues/198. patsy 0.5.5
+            # introduced a DeprecationWarning at import-time.
+            "patsy": "0.5.4",
         },
     },
     {
