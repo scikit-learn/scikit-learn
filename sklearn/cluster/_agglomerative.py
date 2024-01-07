@@ -44,7 +44,7 @@ from ._feature_agglomeration import AgglomerationTransform
 # For non fully-connected graphs
 
 
-def _fix_connectivity(X, connectivity, affinity):
+def _fix_connectivity(X, connectivity, metric='euclidean'):
     """
     Fixes the connectivity matrix.
 
@@ -66,10 +66,12 @@ def _fix_connectivity(X, connectivity, affinity):
         be symmetric and only the upper triangular half is used.
         Default is `None`, i.e, the Ward algorithm is unstructured.
 
-    affinity : {"euclidean", "precomputed"}, default="euclidean"
-        Which affinity to use. At the moment `precomputed` and
-        ``euclidean`` are supported. `euclidean` uses the
-        negative squared Euclidean distance between points.
+    metric : str or callable, default='euclidean'
+        Metric used to compute the linkage. Can be "euclidean", "l1", "l2",
+        "manhattan", "cosine", or "precomputed". If set to `None` then
+        "euclidean" is used. If linkage is "ward", only "euclidean" is
+        accepted. If "precomputed", a distance matrix is needed as input for
+        the fit method.
 
     Returns
     -------
@@ -113,7 +115,7 @@ def _fix_connectivity(X, connectivity, affinity):
             graph=connectivity,
             n_connected_components=n_connected_components,
             component_labels=labels,
-            metric=affinity,
+            metric=metric,
             mode="connectivity",
         )
 
@@ -302,7 +304,7 @@ def ward_tree(X, *, connectivity=None, n_clusters=None, return_distance=False):
             return children_, 1, n_samples, None
 
     connectivity, n_connected_components = _fix_connectivity(
-        X, connectivity, affinity="euclidean"
+        X, connectivity, metric="euclidean"
     )
     if n_clusters is None:
         n_nodes = 2 * n_samples - 1
@@ -411,8 +413,10 @@ def linkage_tree(
     connectivity=None,
     n_clusters=None,
     linkage="complete",
-    affinity="euclidean",
+    metric="euclidean",
     return_distance=False,
+    V=None,
+    VI=None
 ):
     """Linkage agglomerative clustering based on a Feature matrix.
 
@@ -452,13 +456,28 @@ def linkage_tree(
             - "single" uses the minimum of the distances between all
               observations of the two sets.
 
-    affinity : str or callable, default='euclidean'
-        Which metric to use. Can be 'euclidean', 'manhattan', or any
-        distance known to paired distance (see metric.pairwise).
+    metric : str or callable, default='euclidean'
+        Metric used to compute the linkage. Can be "euclidean", "l1", "l2",
+        "manhattan", "cosine", or "precomputed". If set to `None` then
+        "euclidean" is used. If linkage is "ward", only "euclidean" is
+        accepted. If "precomputed", a distance matrix is needed as input for
+        the fit method.
+
+        .. versionadded:: 1.4
 
     return_distance : bool, default=False
         Whether or not to return the distances between the clusters.
 
+    V : array-like, default="None"
+        Variance matrix for Euclidean distance or symmetric positive-definite covariance matrix of the data for Mahalanobis distance.
+
+        .. versionadded:: 1.4
+
+    VI : array-like, default="None"
+        Inverse of the symmetric positive-definite covariance matrix of the data for Mahalanobis distance.
+
+        .. versionadded:: 1.4
+        
     Returns
     -------
     children : ndarray of shape (n_nodes-1, 2)
@@ -507,8 +526,8 @@ def linkage_tree(
             % (linkage_choices.keys(), linkage)
         ) from e
 
-    if affinity == "cosine" and np.any(~np.any(X, axis=1)):
-        raise ValueError("Cosine affinity cannot be used when X contains zero vectors")
+    if metric == "cosine" and np.any(~np.any(X, axis=1)):
+        raise ValueError("Cosine metric cannot be used when X contains zero vectors")
 
     if connectivity is None:
         from scipy.cluster import hierarchy  # imports PIL
@@ -526,7 +545,7 @@ def linkage_tree(
                 stacklevel=2,
             )
 
-        if affinity == "precomputed":
+        if metric == "precomputed":
             # for the linkage function of hierarchy to work on precomputed
             # data, provide as first argument an ndarray of the shape returned
             # by sklearn.metrics.pairwise_distances.
@@ -536,23 +555,37 @@ def linkage_tree(
                 )
             i, j = np.triu_indices(X.shape[0], k=1)
             X = X[i, j]
-        elif affinity == "l2":
+        elif metric == "l2":
             # Translate to something understood by scipy
-            affinity = "euclidean"
-        elif affinity in ("l1", "manhattan"):
-            affinity = "cityblock"
-        elif callable(affinity):
-            X = affinity(X)
+            metric = "euclidean"
+        elif metric in ("l1", "manhattan"):
+            metric = "cityblock"
+        elif callable(metric):
+            X = metric(X)
             i, j = np.triu_indices(X.shape[0], k=1)
             X = X[i, j]
         if (
             linkage == "single"
-            and affinity != "precomputed"
-            and not callable(affinity)
-            and affinity in METRIC_MAPPING64
+            and metric != "precomputed"
+            and not callable(metric)
+            and metric in METRIC_MAPPING64
         ):
+            if metric == "seuclidean":
+                if type(V)!='numpy.ndarray':
+                    V = np.var(X,axis=0)
+                dist_metric = DistanceMetric.get_metric(metric,V=V)
+            elif metric == "mahalanobis":
+                if type(V)=='numpy.ndarray':
+                    dist_metric = DistanceMetric.get_metric(metric,V=V)
+                elif type(VI)=='numpy.ndarray':
+                    dist_metric = DistanceMetric.get_metric(metric,VI=VI)
+                else:
+                    V = np.cov(X)
+                    dist_metric = DistanceMetric.get_metric(metric,V=V)
+                
+            else:
             # We need the fast cythonized metric from neighbors
-            dist_metric = DistanceMetric.get_metric(affinity)
+                dist_metric = DistanceMetric.get_metric(metric)
 
             # The Cython routines used require contiguous arrays
             X = np.ascontiguousarray(X, dtype=np.double)
@@ -564,7 +597,7 @@ def linkage_tree(
             # Convert edge list into standard hierarchical clustering format
             out = _hierarchical.single_linkage_label(mst)
         else:
-            out = hierarchy.linkage(X, method=linkage, metric=affinity)
+            out = hierarchy.linkage(X, method=linkage, metric=metric)
         children_ = out[:, :2].astype(int, copy=False)
 
         if return_distance:
@@ -573,7 +606,7 @@ def linkage_tree(
         return children_, 1, n_samples, None
 
     connectivity, n_connected_components = _fix_connectivity(
-        X, connectivity, affinity=affinity
+        X, connectivity, metric=metric
     )
     connectivity = connectivity.tocoo()
     # Put the diagonal to zero
@@ -583,13 +616,13 @@ def linkage_tree(
     connectivity.data = connectivity.data[diag_mask]
     del diag_mask
 
-    if affinity == "precomputed":
+    if metric == "precomputed":
         distances = X[connectivity.row, connectivity.col].astype(np.float64, copy=False)
     else:
         # FIXME We compute all the distances, while we could have only computed
         # the "interesting" distances
         distances = paired_distances(
-            X[connectivity.row], X[connectivity.col], metric=affinity
+            X[connectivity.row], X[connectivity.col], metric=metric
         )
     connectivity.data = distances
 
@@ -774,17 +807,22 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
         The number of clusters to find. It must be ``None`` if
         ``distance_threshold`` is not ``None``.
 
-    metric : str or callable, default="euclidean"
+    V : array-like, default="None"
+        Variance matrix for Euclidean distance or symmetric positive-definite covariance matrix of the data for Mahalanobis distance.
+        .. versionadded:: 1.4
+
+    VI : array-like, default="None"
+        Inverse of the symmetric positive-definite covariance matrix of the data for Mahalanobis distance.
+        .. versionadded:: 1.4
+
+    metric : str or callable, default='euclidean'
         Metric used to compute the linkage. Can be "euclidean", "l1", "l2",
         "manhattan", "cosine", or "precomputed". If linkage is "ward", only
         "euclidean" is accepted. If "precomputed", a distance matrix is needed
-        as input for the fit method.
+        as input for the fit method. When connectivity=None and linkage="single"
+        and affinity!="precomputed", any valid pairwise distance metric works.
 
-        .. versionadded:: 1.2
-
-        .. deprecated:: 1.4
-           `metric=None` is deprecated in 1.4 and will be removed in 1.6.
-           Let `metric` be the default value (i.e. `"euclidean"`) instead.
+        .. versionadded:: 1.4
 
     memory : str or object with the joblib.Memory interface, default=None
         Used to cache the output of the computation of the tree.
@@ -916,11 +954,15 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
         "linkage": [StrOptions(set(_TREE_BUILDERS.keys()))],
         "distance_threshold": [Interval(Real, 0, None, closed="left"), None],
         "compute_distances": ["boolean"],
+        "V":["array-like",None],
+        "VI":["array-like",None],
     }
 
     def __init__(
         self,
         n_clusters=2,
+        V=None,
+        VI=None,
         *,
         metric="euclidean",
         memory=None,
@@ -929,6 +971,8 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
         linkage="ward",
         distance_threshold=None,
         compute_distances=False,
+        
+
     ):
         self.n_clusters = n_clusters
         self.distance_threshold = distance_threshold
@@ -938,6 +982,8 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
         self.linkage = linkage
         self.metric = metric
         self.compute_distances = compute_distances
+        self.V = V
+        self.VI = VI
 
     @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y=None):
@@ -968,7 +1014,7 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
         ----------
         X : ndarray of shape (n_samples, n_features) or (n_samples, n_samples)
             Training instances to cluster, or distances between instances if
-            ``affinity='precomputed'``.
+            ``metric='precomputed'``.
 
         Returns
         -------
@@ -1039,7 +1085,15 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
         kwargs = {}
         if self.linkage != "ward":
             kwargs["linkage"] = self.linkage
-            kwargs["affinity"] = self._metric
+            kwargs["metric"] = self._metric
+
+        if self.metric == "mahalanobis":
+            kwargs["V"] = self.V
+            kwargs["VI"] = self.VI
+            
+        if self.metric == "seuclidean":
+            kwargs["V"] = self.V
+            
 
         distance_threshold = self.distance_threshold
 
@@ -1088,7 +1142,7 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
         X : array-like of shape (n_samples, n_features) or \
                 (n_samples, n_samples)
             Training instances to cluster, or distances between instances if
-            ``affinity='precomputed'``.
+            ``metric='precomputed'``.
 
         y : Ignored
             Not used, present here for API consistency by convention.
@@ -1116,17 +1170,13 @@ class FeatureAgglomeration(
         The number of clusters to find. It must be ``None`` if
         ``distance_threshold`` is not ``None``.
 
-    metric : str or callable, default="euclidean"
+    metric : str or callable, default='euclidean'
         Metric used to compute the linkage. Can be "euclidean", "l1", "l2",
         "manhattan", "cosine", or "precomputed". If linkage is "ward", only
         "euclidean" is accepted. If "precomputed", a distance matrix is needed
         as input for the fit method.
 
-        .. versionadded:: 1.2
-
-        .. deprecated:: 1.4
-           `metric=None` is deprecated in 1.4 and will be removed in 1.6.
-           Let `metric` be the default value (i.e. `"euclidean"`) instead.
+        .. versionadded:: 1.4
 
     memory : str or object with the joblib.Memory interface, default=None
         Used to cache the output of the computation of the tree.
@@ -1228,6 +1278,14 @@ class FeatureAgglomeration(
         Only computed if `distance_threshold` is used or `compute_distances`
         is set to `True`.
 
+    V : array-like, default="None"
+        Variance matrix for Euclidean distance or symmetric positive-definite covariance matrix of the data for Mahalanobis distance.
+        .. versionadded:: 1.4
+
+    VI : array-like, default="None" 
+        Inverse of the symmetric positive-definite covariance matrix of the data for Mahalanobis distance.
+        .. versionadded:: 1.4
+
     See Also
     --------
     AgglomerativeClustering : Agglomerative clustering samples instead of
@@ -1263,11 +1321,15 @@ class FeatureAgglomeration(
         "pooling_func": [callable],
         "distance_threshold": [Interval(Real, 0, None, closed="left"), None],
         "compute_distances": ["boolean"],
+        "V":["array-like",None],
+        "VI":["array-like",None],
     }
 
     def __init__(
         self,
         n_clusters=2,
+        V=None,
+        VI=None,
         *,
         metric="euclidean",
         memory=None,
@@ -1287,6 +1349,8 @@ class FeatureAgglomeration(
             metric=metric,
             distance_threshold=distance_threshold,
             compute_distances=compute_distances,
+            V=V,
+            VI=VI,
         )
         self.pooling_func = pooling_func
 
