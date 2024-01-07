@@ -254,7 +254,34 @@ def test_loss_boundary_y_pred(loss, y_pred_success, y_pred_fail):
             None,
             None,
         ),
-        # Extreme log loss cases, checked with mpmath.
+        # Extreme log loss cases, checked with mpmath:
+        # import mpmath as mp
+        #
+        # # Stolen from scipy
+        # def mpf2float(x):
+        #     return float(mp.nstr(x, 17, min_fixed=0, max_fixed=0))
+        #
+        # def mp_logloss(y_true, raw):
+        #     with mp.workdps(100):
+        #         y_true, raw = mp.mpf(float(y_true)), mp.mpf(float(raw))
+        #         out = mp.log1p(mp.exp(raw)) - y_true * raw
+        #     return mpf2float(out)
+        #
+        # def mp_gradient(y_true, raw):
+        #     with mp.workdps(100):
+        #         y_true, raw = mp.mpf(float(y_true)), mp.mpf(float(raw))
+        #         out = mp.mpf(1) / (mp.mpf(1) + mp.exp(-raw)) - y_true
+        #     return mpf2float(out)
+        #
+        # def mp_hessian(y_true, raw):
+        #     with mp.workdps(100):
+        #         y_true, raw = mp.mpf(float(y_true)), mp.mpf(float(raw))
+        #         p = mp.mpf(1) / (mp.mpf(1) + mp.exp(-raw))
+        #         out = p * (mp.mpf(1) - p)
+        #     return mpf2float(out)
+        #
+        # y, raw = 0.0, 37.
+        # mp_logloss(y, raw), mp_gradient(y, raw), mp_hessian(y, raw)
         (HalfBinomialLoss(), 0.0, -1e3, 0, 0, 0),
         (HalfBinomialLoss(), 1.0, -1e3, 1e3, -1, 0),
         (HalfBinomialLoss(), 1.0, -37.5, 37.5, -1, 0),
