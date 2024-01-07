@@ -11,6 +11,17 @@ Version 1.5.0
 
 .. include:: changelog_legend.inc
 
+Private Loss Function Module
+----------------------------
+
+- |Enhancement| The gradient computation of the binomial log loss is now numerically
+  more stable for very large, in absolute value, input (raw predictions). Before, it
+  could result in `np.nan`. Among the models that profit from this change are
+  :class:`ensemble.GradientBoostingClassifier`,
+  :class:`ensemble.HistGradientBoostingClassifier` and
+  :class:`linear_model.LogisticRegression`.
+  :pr:`28048` by :user:`Christian Lorentzen <lorentzenchr>`.
+
 Changelog
 ---------
 
