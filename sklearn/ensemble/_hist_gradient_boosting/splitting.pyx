@@ -17,10 +17,10 @@ from libc.string cimport memcpy
 
 from .common cimport X_BINNED_DTYPE_C
 from .common cimport Y_DTYPE_C
-from .common cimport hist_struct
 from .common cimport BITSET_INNER_DTYPE_C
 from .common cimport BITSET_DTYPE_C
 from .common cimport MonotonicConstraint
+from .common cimport Histograms
 from ._bitset cimport init_bitset
 from ._bitset cimport set_bitset
 from ._bitset cimport in_bitset
@@ -429,7 +429,7 @@ cdef class Splitter:
     def find_node_split(
             Splitter self,
             unsigned int n_samples,
-            hist_struct [:, ::1] histograms,  # IN
+            Histograms histograms,  # IN
             const Y_DTYPE_C sum_gradients,
             const Y_DTYPE_C sum_hessians,
             const Y_DTYPE_C value,
@@ -625,7 +625,7 @@ cdef class Splitter:
             Splitter self,
             unsigned int feature_idx,
             unsigned char has_missing_values,
-            const hist_struct [:, ::1] histograms,  # IN
+            Histograms histograms,  # IN
             unsigned int n_samples,
             Y_DTYPE_C sum_gradients,
             Y_DTYPE_C sum_hessians,
@@ -674,17 +674,17 @@ cdef class Splitter:
         loss_current_node = _loss_from_value(value, sum_gradients)
 
         for bin_idx in range(end):
-            n_samples_left += histograms[feature_idx, bin_idx].count
+            n_samples_left += histograms.at(feature_idx, bin_idx).count
             n_samples_right = n_samples_ - n_samples_left
 
             if self.hessians_are_constant:
-                sum_hessian_left += histograms[feature_idx, bin_idx].count
+                sum_hessian_left += histograms.at(feature_idx, bin_idx).count
             else:
                 sum_hessian_left += \
-                    histograms[feature_idx, bin_idx].sum_hessians
+                    histograms.at(feature_idx, bin_idx).sum_hessians
             sum_hessian_right = sum_hessians - sum_hessian_left
 
-            sum_gradient_left += histograms[feature_idx, bin_idx].sum_gradients
+            sum_gradient_left += histograms.at(feature_idx, bin_idx).sum_gradients
             sum_gradient_right = sum_gradients - sum_gradient_left
 
             if n_samples_left < self.min_samples_leaf:
@@ -739,7 +739,7 @@ cdef class Splitter:
     cdef void _find_best_bin_to_split_right_to_left(
             self,
             unsigned int feature_idx,
-            const hist_struct [:, ::1] histograms,  # IN
+            Histograms histograms,  # IN
             unsigned int n_samples,
             Y_DTYPE_C sum_gradients,
             Y_DTYPE_C sum_hessians,
@@ -787,18 +787,18 @@ cdef class Splitter:
         loss_current_node = _loss_from_value(value, sum_gradients)
 
         for bin_idx in range(start, -1, -1):
-            n_samples_right += histograms[feature_idx, bin_idx + 1].count
+            n_samples_right += histograms.at(feature_idx, bin_idx + 1).count
             n_samples_left = n_samples_ - n_samples_right
 
             if self.hessians_are_constant:
-                sum_hessian_right += histograms[feature_idx, bin_idx + 1].count
+                sum_hessian_right += histograms.at(feature_idx, bin_idx + 1).count
             else:
                 sum_hessian_right += \
-                    histograms[feature_idx, bin_idx + 1].sum_hessians
+                    histograms.at(feature_idx, bin_idx + 1).sum_hessians
             sum_hessian_left = sum_hessians - sum_hessian_right
 
             sum_gradient_right += \
-                histograms[feature_idx, bin_idx + 1].sum_gradients
+                histograms.at(feature_idx, bin_idx + 1).sum_gradients
             sum_gradient_left = sum_gradients - sum_gradient_right
 
             if n_samples_right < self.min_samples_leaf:
@@ -854,7 +854,7 @@ cdef class Splitter:
             self,
             unsigned int feature_idx,
             unsigned char has_missing_values,
-            const hist_struct [:, ::1] histograms,  # IN
+            Histograms histograms,  # IN
             unsigned int n_samples,
             Y_DTYPE_C sum_gradients,
             Y_DTYPE_C sum_hessians,
@@ -883,7 +883,7 @@ cdef class Splitter:
             int best_direction = 0
             unsigned int middle
             unsigned int i
-            const hist_struct[::1] feature_hist = histograms[feature_idx, :]
+            # const hist_struct[::1] feature_hist = histograms[feature_idx, :]
             Y_DTYPE_C sum_gradients_bin
             Y_DTYPE_C sum_hessians_bin
             Y_DTYPE_C loss_current_node
@@ -946,12 +946,15 @@ cdef class Splitter:
         # fill cat_infos while filtering out categories based on MIN_CAT_SUPPORT
         for bin_idx in range(n_bins_non_missing):
             if self.hessians_are_constant:
-                sum_hessians_bin = feature_hist[bin_idx].count
+                # sum_hessians_bin = feature_hist[bin_idx].count
+                sum_hessians_bin = histograms.at(feature_idx, bin_idx).count
             else:
-                sum_hessians_bin = feature_hist[bin_idx].sum_hessians
+                # sum_hessians_bin = feature_hist[bin_idx].sum_hessians
+                sum_hessians_bin = histograms.at(feature_idx, bin_idx).sum_hessians
             if sum_hessians_bin * support_factor >= MIN_CAT_SUPPORT:
                 cat_infos[n_used_bins].bin_idx = bin_idx
-                sum_gradients_bin = feature_hist[bin_idx].sum_gradients
+                # sum_gradients_bin = feature_hist[bin_idx].sum_gradients
+                sum_gradients_bin = histograms.at(feature_idx, bin_idx).sum_gradients
 
                 cat_infos[n_used_bins].value = (
                     sum_gradients_bin / (sum_hessians_bin + MIN_CAT_SUPPORT)
@@ -961,13 +964,18 @@ cdef class Splitter:
         # Also add missing values bin so that nans are considered as a category
         if has_missing_values:
             if self.hessians_are_constant:
-                sum_hessians_bin = feature_hist[missing_values_bin_idx].count
+                # sum_hessians_bin = feature_hist[missing_values_bin_idx].count
+                sum_hessians_bin = histograms.at(feature_idx, missing_values_bin_idx).count
             else:
-                sum_hessians_bin = feature_hist[missing_values_bin_idx].sum_hessians
+                # sum_hessians_bin = feature_hist[missing_values_bin_idx].sum_hessians
+                sum_hessians_bin = histograms.at(feature_idx, missing_values_bin_idx).sum_hessians
             if sum_hessians_bin * support_factor >= MIN_CAT_SUPPORT:
                 cat_infos[n_used_bins].bin_idx = missing_values_bin_idx
+                # sum_gradients_bin = (
+                #     feature_hist[missing_values_bin_idx].sum_gradients
+                # )
                 sum_gradients_bin = (
-                    feature_hist[missing_values_bin_idx].sum_gradients
+                    histograms.at(feature_idx, missing_values_bin_idx).sum_gradients
                 )
 
                 cat_infos[n_used_bins].value = (
@@ -1000,16 +1008,20 @@ cdef class Splitter:
                 sorted_cat_idx = i if direction == 1 else n_used_bins - 1 - i
                 bin_idx = cat_infos[sorted_cat_idx].bin_idx
 
-                n_samples_left += feature_hist[bin_idx].count
+                # n_samples_left += feature_hist[bin_idx].count
+                n_samples_left += histograms.at(feature_idx, bin_idx).count
                 n_samples_right = n_samples - n_samples_left
 
                 if self.hessians_are_constant:
-                    sum_hessian_left += feature_hist[bin_idx].count
+                    # sum_hessian_left += feature_hist[bin_idx].count
+                    sum_hessian_left += histograms.at(feature_idx, bin_idx).count
                 else:
-                    sum_hessian_left += feature_hist[bin_idx].sum_hessians
+                    # sum_hessian_left += feature_hist[bin_idx].sum_hessians
+                    sum_hessian_left += histograms.at(feature_idx, bin_idx).sum_hessians
                 sum_hessian_right = sum_hessians - sum_hessian_left
 
-                sum_gradient_left += feature_hist[bin_idx].sum_gradients
+                # sum_gradient_left += feature_hist[bin_idx].sum_gradients
+                sum_gradient_left += histograms.at(feature_idx, bin_idx).sum_gradients
                 sum_gradient_right = sum_gradients - sum_gradient_left
 
                 if (

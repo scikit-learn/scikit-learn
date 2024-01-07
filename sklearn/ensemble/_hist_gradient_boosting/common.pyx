@@ -1,5 +1,8 @@
 import numpy as np
 
+cimport cython
+from ...utils._typedefs cimport uint32_t
+
 # Y_DYTPE is the dtype to which the targets y are converted to. This is also
 # dtype for leaf values, gains, and sums of gradients / hessians. The gradients
 # and hessians arrays are stored as floats to avoid using too much memory.
@@ -42,3 +45,52 @@ PREDICTOR_RECORD_DTYPE = np.dtype([
 ])
 
 ALMOST_INF = 1e300  # see LightGBM AvoidInf()
+
+
+@cython.final
+cdef class Histograms:
+    """An extension type (class) for histograms with variable bins.
+
+    This class only allocates the smallest possible 1d ndarray and provides access
+    to it like a 2d jagged array. It is comparable to a jagged/ragged array.
+
+    Attributes
+    ----------
+    Public, i.e. accessible from Python:
+
+        bin_offsets : ndarray of shape (n_features + 1), dtype=np.uint32
+            The bin offsets specify which partition of the histograms ndarray belongs
+            to which features: feature j goes from `histograms[bin_offsets[j]]` until
+            `histograms[bin_offsets[j + 1] - 1]`. `bin_offsets[n_features + 1]` gives
+            the total number of bins over all features.
+        histograms : ndarray of shape (bin_offsets[n_features + 1],), \
+                dtype=HISTOGRAM_DTYPE
+            The 1-dimensional array of all histograms for all features.
+
+    Private, i.e. only accessible from Cython:
+
+        bin_offsets_view : memoryview of `bin_offsets`, dtype=uint32_t
+        histograms_view : memoryview of `histograms`, dtype=hist_stucts
+        n_features : int
+    """
+
+    def __init__(self, n_features, bin_offsets):
+        self.n_features = n_features
+        if isinstance(bin_offsets, int):
+            self.bin_offsets = np.zeros(shape=self.n_features + 1, dtype=np.uint32)
+            self.bin_offsets[1:] = np.cumsum(np.full(shape=n_features, fill_value=bin_offsets))
+        else:
+            self.bin_offsets = bin_offsets
+        self.bin_offsets_view = self.bin_offsets
+
+        self.histograms = np.empty(
+            shape=self.bin_offsets[-1],
+            dtype=HISTOGRAM_DTYPE,
+        )
+        self.histograms_view = self.histograms
+
+    cdef inline uint32_t n_bins(self, int feature_idx) noexcept nogil:
+        return self.bin_offsets_view[feature_idx + 1] - self.bin_offsets_view[feature_idx]
+
+    cdef inline hist_struct* at(self, int feature_idx, uint32_t bin_idx) noexcept nogil:
+        return &self.histograms_view[self.bin_offsets_view[feature_idx] + bin_idx]
