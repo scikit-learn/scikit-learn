@@ -41,3 +41,18 @@ cpdef enum MonotonicConstraint:
     NO_CST = 0
     POS = 1
     NEG = -1
+
+
+cdef class Histograms:
+    cdef:
+        int n_features
+        uint32_t [::1] bin_offsets_view
+        hist_struct [::1] histograms_view
+    cdef readonly:
+        object bin_offsets
+        # Only the attribute histograms will be used in the splitter.
+        object histograms
+
+    cdef inline uint32_t n_bins(self, int feature_idx) noexcept nogil
+
+    cdef inline hist_struct* at(self, int feature_idx, uint32_t bin_idx) noexcept nogil
