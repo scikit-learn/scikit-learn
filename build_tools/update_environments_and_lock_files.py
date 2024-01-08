@@ -5,8 +5,11 @@ python build_tools/update_environments_and_lock_files.py
 
 Two scenarios where this script can be useful:
 - make sure that the latest versions of all the dependencies are used in the CI.
-  We can run this script regularly and open a PR with the changes to the lock
-  files. This workflow will eventually be automated with a bot in the future.
+  There is a scheduled workflow that does this, see
+  .github/workflows/update-lock-files.yml. This is still useful to run this
+  script when when the automated PR fails and for example some packages need to
+  be pinned. You can add the pins to this script, run it, and open a PR with
+  the changes.
 - bump minimum dependencies in sklearn/_min_dependencies.py. Running this
   script will update both the CI environment files and associated lock files.
   You can then open a PR with the changes.
