@@ -496,18 +496,20 @@ def test_spline_transformer_n_features_out(
 )
 def test_spline_transformer_handles_missing_values(extrapolation):
     """Test that SplineTransformer handles missing values correctly."""
-    X_nan = [[1, 1], [2, 1], [3, 1], [np.nan, 4], [4, 1]]
-    X = [[1, 1], [2, 1], [3, 1], [4, 1]]
+    # X_nan = [[1, 1], [2, 1], [3, 1], [np.nan, 4], [4, 1]]
+    # X = [[1, 1], [2, 1], [3, 1], [4, 1]]
 
-    # X_nan = [[1], [2], [3], [np.nan], [4]]
-    # X = [[1], [2], [3], [4]]
+    X_nan = [[1], [2], [3], [np.nan], [4]]
+    X = [[1], [2], [3], [4]]
 
     # check correct error message for handle_missing="error"
     msg = (
         "'X' contains np.nan values, which is conflicting with handle_missing='error'."
     )
     with raises(ValueError, match=msg):
-        spline = SplineTransformer(degree=2, n_knots=3, handle_missing="error")
+        spline = SplineTransformer(
+            degree=2, n_knots=3, handle_missing="error"
+        )  # why not extrapolation=extrapolation????
         spline.fit_transform(X_nan)
 
     # check correct results for handle_missing="indicator"

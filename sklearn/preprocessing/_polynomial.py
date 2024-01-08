@@ -648,9 +648,9 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
         Specifies the way missing values are handled during :meth:`fit`.
 
         - 'error' : Raise an error if missing values are present.
-        - 'indicator' :  Encode missing values as 0 and stack :class:`MissingIndicator`
-          class onto the output of :meth:`transform`, which allows a predictive
-          estimator to account for missingness despite sustitution.
+        - 'indicator' :  Encode the splines from missing values as 0 and add a
+          :class:`MissingIndicator` (binary matrix indicating the presence of
+          missing values).
 
     sparse_output : bool, default=False
         Will return sparse CSR matrix if set True else will return an array. This
@@ -800,9 +800,8 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
 
     def _fit_indicator(self, X):
         """Fit a MissingIndicator."""
-        from sklearn.impute._base import (
-            MissingIndicator,
-        )
+        # import here because of CircularImportError
+        from sklearn.impute._base import MissingIndicator
 
         self.indicator_ = MissingIndicator(missing_values=np.nan, error_on_new=False)
         self.indicator_._fit(X, precomputed=True)
@@ -897,9 +896,7 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
                 )
         else:  # handle_missing == "indicator"
             self.missing_mask = _get_mask(X, np.nan)
-            self._fit_indicator(
-                self.missing_mask
-            )  ########### <-- not sure if here or in transform
+            self._fit_indicator(self.missing_mask)
 
         if isinstance(self.knots, str):
             base_knots = self._get_base_knot_positions(
@@ -1089,8 +1086,6 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
                         XBS_sparse = XBS_sparse[:, :-degree]
                 else:
                     XBS[:, (i * n_splines) : ((i + 1) * n_splines)] = spl(x)
-                    # replace any np.nan values with 0
-                    XBS = np.nan_to_num(XBS, nan=0)
             else:  # extrapolation in ("constant", "linear")
                 xmin, xmax = (
                     spl.t[degree],
@@ -1115,8 +1110,6 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
                         XBS_sparse[mask_inv, :] = 0
                 else:
                     XBS[mask, (i * n_splines) : ((i + 1) * n_splines)] = spl(X[mask, i])
-                    # replace any np.nan values with 0
-                    XBS = np.nan_to_num(XBS, nan=0)
 
             # Note for extrapolation:
             # 'continue' is already returned as is by scipy BSplines
@@ -1128,6 +1121,10 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
                     and np.any(
                         np.isnan(XBS[:, (i * n_splines) : ((i + 1) * n_splines)])
                     )
+                    # to distinguish original np.nan values from the ones created
+                    # by any element in X being < xmin (=spl.t[degree]) or >
+                    # xmax (=spl.t[-degree - 1])
+                    and np.any((X < spl.t[degree]) | (X > spl.t[-degree - 1]))
                 ):
                     raise ValueError(
                         "X contains values beyond the limits of the knots."
@@ -1227,8 +1224,11 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
                 )
             XBS = sparse.hstack(output_list, format="csr")
         elif self.sparse_output:
-            # TODO: Remove ones scipy 1.10 is the minimum version. See comments above.
+            # TODO: Remove once scipy 1.10 is the minimum version. See comments above.
             XBS = sparse.csr_matrix(XBS)
+
+        # replace any np.nan values with 0
+        XBS = np.nan_to_num(XBS, nan=0)
 
         if self.include_bias:
             return self._concatenate_indicator(XBS)
