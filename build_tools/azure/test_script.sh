@@ -62,6 +62,11 @@ if [[ -n "$CHECK_WARNINGS" ]]; then
     TEST_CMD="$TEST_CMD -W 'ignore:pkg_resources is deprecated as an API:DeprecationWarning'"
     TEST_CMD="$TEST_CMD -W 'ignore:Deprecated call to \`pkg_resources:DeprecationWarning'"
 
+    # pytest-cov issue https://github.com/pytest-dev/pytest-cov/issues/557 not
+    # fixed although it has been closed. https://github.com/pytest-dev/pytest-cov/pull/623
+    # would probably fix it.
+    TEST_CMD="$TEST_CMD -W 'ignore:The --rsyncdir command line argument and rsyncdirs config variable are deprecated.:DeprecationWarning'"
+
     # In some case, exceptions are raised (by bug) in tests, and captured by pytest,
     # but not raised again. This is for instance the case when Cython directives are
     # activated: IndexErrors (which aren't fatal) are raised on out-of-bound accesses.
