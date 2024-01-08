@@ -588,18 +588,21 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                 # See numpy Generator.spawn(self, int n_children) and
                 # numpy BitGenerator.spawn
 
-                def spawnGenerator(self, n_children):
+                def spawn_generator(generator, n_children):
                     return [
-                        type(self)(g)
-                        for g in spawnBitGenerator(self._bit_generator, n_children)
+                        type(generator)(g)
+                        for g in spawn_bit_generator(
+                            generator._bit_generator, n_children
+                        )
                     ]
 
-                def spawnBitGenerator(self, n_children):
+                def spawn_bit_generator(_bit_generator, n_children):
                     return [
-                        type(self)(seed=s) for s in self._seed_seq.spawn(n_children)
+                        type(_bit_generator)(seed=s)
+                        for s in _bit_generator._seed_seq.spawn(n_children)
                     ]
 
-                self._bagging_subsample_rng = spawnGenerator(
+                self._bagging_subsample_rng = spawn_generator(
                     self._feature_subsample_rng, 1
                 )[0]
 
