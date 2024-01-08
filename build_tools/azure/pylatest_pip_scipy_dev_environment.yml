@@ -4,7 +4,7 @@
 channels:
   - defaults
 dependencies:
-  - python
+  - python=3.11
   - ccache
   - pip
   - pip:
