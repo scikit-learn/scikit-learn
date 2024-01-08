@@ -366,7 +366,7 @@ def test_readonly_kwargs():
         (np.array([1, 1.5, np.nan]), ValueError, "w contains NaN"),
         *[
             (
-                csr_container([1, 1.5, 1]),
+                csr_container([[1, 1.5, 1]]),
                 TypeError,
                 "Sparse data was passed for w, but dense data is required",
             )
