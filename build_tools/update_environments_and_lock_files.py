@@ -209,11 +209,6 @@ conda_build_metadata_list = [
             # the environment.yml. Adding python-dateutil so it is pinned
             + ["python-dateutil"]
         ),
-        "package_constraints": {
-            # Temporary pin for other dependencies to be able with deprecation
-            # warnings introduced by Python 3.12.
-            "python": "3.11",
-        },
     },
     {
         "build_name": "pypy3",
