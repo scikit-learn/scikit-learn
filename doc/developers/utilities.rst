@@ -104,6 +104,7 @@ Efficient Linear Algebra & Array Operations
 - :func:`arrayfuncs.min_pos`: (used in ``sklearn.linear_model.least_angle``)
   Find the minimum of the positive values within an array.
 
+
 - :func:`extmath.fast_logdet`: efficiently compute the log of the determinant
   of a matrix.
 
