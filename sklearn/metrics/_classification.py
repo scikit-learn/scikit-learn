@@ -1434,7 +1434,7 @@ def fbeta_score(
     >>> y_pred_empty = [0, 0, 0, 0, 0, 0]
     >>> fbeta_score(y_true, y_pred_empty,
     ...             average="macro", zero_division=np.nan, beta=0.5)
-    0.38...
+    0.12...
     """
 
     _, _, f, _ = precision_recall_fscore_support(
@@ -1482,20 +1482,8 @@ def _prf_divide(
         return result
 
     # build appropriate warning
-    # E.g. "Precision and F-score are ill-defined and being set to 0.0 in
-    # labels with no predicted samples. Use ``zero_division`` parameter to
-    # control this behavior."
-
-    if metric in warn_for and "f-score" in warn_for:
-        msg_start = "{0} and F-score are".format(metric.title())
-    elif metric in warn_for:
-        msg_start = "{0} is".format(metric.title())
-    elif "f-score" in warn_for:
-        msg_start = "F-score is"
-    else:
-        return result
-
-    _warn_prf(average, modifier, msg_start, len(result))
+    if metric in warn_for:
+        _warn_prf(average, modifier, f"{metric.capitalize()} is", len(result))
 
     return result
 
@@ -1751,7 +1739,7 @@ def precision_recall_fscore_support(
      array([0., 0., 1.]), array([0. , 0. , 0.8]),
      array([2, 2, 2]))
     """
-    zero_division_value = _check_zero_division(zero_division)
+    _check_zero_division(zero_division)
     labels = _check_set_wise_labels(y_true, y_pred, average, labels, pos_label)
 
     # Calculate tp_sum, pred_sum, true_sum ###
@@ -1784,12 +1772,6 @@ def precision_recall_fscore_support(
         tp_sum, true_sum, "recall", "true", average, warn_for, zero_division
     )
 
-    # warn for f-score only if zero_division is warn, it is in warn_for
-    # and BOTH prec and rec are ill-defined
-    if zero_division == "warn" and ("f-score",) == warn_for:
-        if (pred_sum[true_sum == 0] == 0).any():
-            _warn_prf(average, "true nor predicted", "F-score is", len(true_sum))
-
     if np.isposinf(beta):
         f_score = recall
     elif beta == 0:
@@ -1797,13 +1779,18 @@ def precision_recall_fscore_support(
     else:
         # The score is defined as:
         # score = (1 + beta**2) * precision * recall / (beta**2 * precision + recall)
-        # We set to `zero_division_value` if the denominator is 0 **or** if **both**
-        # precision and recall are ill-defined.
-        denom = beta2 * precision + recall
-        mask = np.isclose(denom, 0) | np.isclose(pred_sum + true_sum, 0)
-        denom[mask] = 1  # avoid division by 0
-        f_score = (1 + beta2) * precision * recall / denom
-        f_score[mask] = zero_division_value
+        # Therefore, we can express the score in terms of confusion matrix entries as:
+        # score = (1 + beta**2) * tp / ((1 + beta**2) * tp + beta**2 * fn + fp)
+        denom = beta2 * true_sum + pred_sum
+        f_score = _prf_divide(
+            (1 + beta2) * tp_sum,
+            denom,
+            "f-score",
+            "true nor predicted",
+            average,
+            warn_for,
+            zero_division,
+        )
 
     # Average the results
     if average == "weighted":

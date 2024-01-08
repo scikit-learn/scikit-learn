@@ -765,7 +765,7 @@ def _convert_container(
     elif constructor_name == "array":
         return np.asarray(container, dtype=dtype)
     elif constructor_name == "sparse":
-        return sp.sparse.csr_matrix(container, dtype=dtype)
+        return sp.sparse.csr_matrix(np.atleast_2d(container), dtype=dtype)
     elif constructor_name in ("pandas", "dataframe"):
         pd = pytest.importorskip("pandas", minversion=minversion)
         result = pd.DataFrame(container, columns=columns_name, dtype=dtype, copy=False)
@@ -803,18 +803,18 @@ def _convert_container(
     elif constructor_name == "slice":
         return slice(container[0], container[1])
     elif constructor_name == "sparse_csr":
-        return sp.sparse.csr_matrix(container, dtype=dtype)
+        return sp.sparse.csr_matrix(np.atleast_2d(container), dtype=dtype)
     elif constructor_name == "sparse_csr_array":
         if sp_version >= parse_version("1.8"):
-            return sp.sparse.csr_array(container, dtype=dtype)
+            return sp.sparse.csr_array(np.atleast_2d(container), dtype=dtype)
         raise ValueError(
             f"sparse_csr_array is only available with scipy>=1.8.0, got {sp_version}"
         )
     elif constructor_name == "sparse_csc":
-        return sp.sparse.csc_matrix(container, dtype=dtype)
+        return sp.sparse.csc_matrix(np.atleast_2d(container), dtype=dtype)
     elif constructor_name == "sparse_csc_array":
         if sp_version >= parse_version("1.8"):
-            return sp.sparse.csc_array(container, dtype=dtype)
+            return sp.sparse.csc_array(np.atleast_2d(container), dtype=dtype)
         raise ValueError(
             f"sparse_csc_array is only available with scipy>=1.8.0, got {sp_version}"
         )
@@ -1030,7 +1030,7 @@ class MinimalTransformer:
         return self.fit(X, y).transform(X, y)
 
 
-def _array_api_for_tests(array_namespace, device, dtype):
+def _array_api_for_tests(array_namespace, device):
     try:
         if array_namespace == "numpy.array_api":
             # FIXME: once it is not experimental anymore
@@ -1079,4 +1079,4 @@ def _array_api_for_tests(array_namespace, device, dtype):
 
         if cupy.cuda.runtime.getDeviceCount() == 0:
             raise SkipTest("CuPy test requires cuda, which is not available")
-    return xp, device, dtype
+    return xp

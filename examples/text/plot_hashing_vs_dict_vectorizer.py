@@ -299,7 +299,7 @@ print(f"Found {len(vectorizer.get_feature_names_out())} unique terms")
 #
 # Now we make a similar experiment with the
 # :func:`~sklearn.feature_extraction.text.HashingVectorizer`, which is
-# equivalent to combining the “hashing trick” implemented by the
+# equivalent to combining the "hashing trick" implemented by the
 # :func:`~sklearn.feature_extraction.FeatureHasher` class and the text
 # preprocessing and tokenization of the
 # :func:`~sklearn.feature_extraction.text.CountVectorizer`.
@@ -322,15 +322,15 @@ print(f"done in {duration:.3f} s at {data_size_mb / duration:.1f} MB/s")
 # TfidfVectorizer
 # ---------------
 #
-# In a large text corpus, some words appear with higher frequency (e.g. “the”,
-# “a”, “is” in English) and do not carry meaningful information about the actual
+# In a large text corpus, some words appear with higher frequency (e.g. "the",
+# "a", "is" in English) and do not carry meaningful information about the actual
 # contents of a document. If we were to feed the word count data directly to a
 # classifier, those very common terms would shadow the frequencies of rarer yet
 # more informative terms. In order to re-weight the count features into floating
 # point values suitable for usage by a classifier it is very common to use the
-# tf–idf transform as implemented by the
+# tf-idf transform as implemented by the
 # :func:`~sklearn.feature_extraction.text.TfidfTransformer`. TF stands for
-# "term-frequency" while "tf–idf" means term-frequency times inverse
+# "term-frequency" while "tf-idf" means term-frequency times inverse
 # document-frequency.
 #
 # We now benchmark the :func:`~sklearn.feature_extraction.text.TfidfVectorizer`,

@@ -397,11 +397,16 @@ def cross_validate(
             # `process_routing` code, we pass `fit` as the caller. However,
             # the user is not calling `fit` directly, so we change the message
             # to make it more suitable for this case.
+            unrequested_params = sorted(e.unrequested_params)
             raise UnsetMetadataPassedError(
                 message=(
-                    f"{sorted(e.unrequested_params.keys())} are passed to cross"
-                    " validation but are not explicitly requested or unrequested. See"
-                    " the Metadata Routing User guide"
+                    f"{unrequested_params} are passed to cross validation but are not"
+                    " explicitly set as requested or not requested for cross_validate's"
+                    f" estimator: {estimator.__class__.__name__}. Call"
+                    " `.set_fit_request({{metadata}}=True)` on the estimator for"
+                    f" each metadata in {unrequested_params} that you"
+                    " want to use and `metadata=False` for not using it. See the"
+                    " Metadata Routing User guide"
                     " <https://scikit-learn.org/stable/metadata_routing.html> for more"
                     " information."
                 ),
@@ -1238,13 +1243,17 @@ def cross_val_predict(
             # `process_routing` code, we pass `fit` as the caller. However,
             # the user is not calling `fit` directly, so we change the message
             # to make it more suitable for this case.
+            unrequested_params = sorted(e.unrequested_params)
             raise UnsetMetadataPassedError(
                 message=(
-                    f"{sorted(e.unrequested_params.keys())} are passed to cross"
-                    " validation but are not explicitly requested or unrequested. See"
-                    " the Metadata Routing User guide"
-                    " <https://scikit-learn.org/stable/metadata_routing.html> for more"
-                    " information."
+                    f"{unrequested_params} are passed to `cross_val_predict` but are"
+                    " not explicitly set as requested or not requested for"
+                    f" cross_validate's estimator: {estimator.__class__.__name__} Call"
+                    " `.set_fit_request({{metadata}}=True)` on the estimator for"
+                    f" each metadata in {unrequested_params} that you want to use and"
+                    " `metadata=False` for not using it. See the Metadata Routing User"
+                    " guide <https://scikit-learn.org/stable/metadata_routing.html>"
+                    " for more information."
                 ),
                 unrequested_params=e.unrequested_params,
                 routed_params=e.routed_params,
