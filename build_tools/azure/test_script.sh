@@ -51,13 +51,6 @@ fi
 if [[ -n "$CHECK_WARNINGS" ]]; then
     TEST_CMD="$TEST_CMD -Werror::DeprecationWarning -Werror::FutureWarning -Werror::sklearn.utils.fixes.VisibleDeprecationWarning"
 
-    # numpy's 1.19.0's tostring() deprecation is ignored until scipy and joblib
-    # removes its usage
-    TEST_CMD="$TEST_CMD -Wignore:tostring:DeprecationWarning"
-
-    # Ignore distutils deprecation warning, used by joblib internally
-    TEST_CMD="$TEST_CMD -Wignore:distutils\ Version\ classes\ are\ deprecated:DeprecationWarning"
-
     # Ignore pkg_resources deprecation warnings triggered by pyamg
     TEST_CMD="$TEST_CMD -W 'ignore:pkg_resources is deprecated as an API:DeprecationWarning'"
     TEST_CMD="$TEST_CMD -W 'ignore:Deprecated call to \`pkg_resources:DeprecationWarning'"
