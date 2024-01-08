@@ -10,6 +10,14 @@ from libc.float cimport DBL_MAX, FLT_MAX
 from ._cython_blas cimport _copy, _rotg, _rot
 
 
+ctypedef fused real_numeric:
+    short
+    int
+    long
+    float
+    double
+
+
 def min_pos(const floating[:] X):
     """Find the minimum value of an array over positive values.
 
@@ -24,23 +32,46 @@ def min_pos(const floating[:] X):
     return min_val
 
 
-def any_zero_row(floating[:, :] X):
-    """Check if any row of a 2D array is all zeros.
+def _all_with_any_reduction(real_numeric[:, :] array, real_numeric value=0, int axis=0):
+    """Check that all values are equal to `value` along a specific axis.
 
-    Returns True if any row of `X` is all zeros, and False otherwise.
+    It is equivalent to `np.any(np.all(X == value, axis=axis))`, but it avoids to
+    materialize the temporary boolean matrices in memory.
+
+    Parameters
+    ----------
+    array: array-like
+        The array to be checked.
+    value: short, int, long, float, or double, default=0
+        The value to use for the comparison.
+    axis: int, default=0
+        The axis along which to perform the `all` operation.
+
+    Returns
+    -------
+    any_all_equal: bool
+        Whether or not any rows (i.e., `axis=1`) or any columns (i.e., `axis=0`)
+        contains all values equal to `value`.
     """
     cdef:
         Py_ssize_t i, j
-        floating val
 
-    for i in range(X.shape[0]):
-        for j in range(X.shape[1]):
-            val = X[i, j]
-            if val != 0.:
-                break
-        else:
-            return True
-    return False
+    if axis == 0:
+        for j in range(array.shape[1]):
+            for i in range(array.shape[0]):
+                if array[i, j] != value:
+                    break
+            else:
+                return True
+        return False
+    else:  # axis == 1
+        for i in range(array.shape[0]):
+            for j in range(array.shape[1]):
+                if array[i, j] != value:
+                    break
+            else:
+                return True
+        return False
 
 
 # General Cholesky Delete.

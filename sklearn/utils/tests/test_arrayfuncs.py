@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 
 from sklearn.utils._testing import assert_allclose
-from sklearn.utils.arrayfuncs import any_zero_row, min_pos
+from sklearn.utils.arrayfuncs import _all_with_any_reduction, min_pos
 
 
 def test_min_pos():
@@ -26,14 +26,18 @@ def test_min_pos_no_positive(dtype):
     assert min_pos(X) == np.finfo(dtype).max
 
 
-@pytest.mark.parametrize("dtype", [np.float32, np.float64])
-def test_any_zero_row(dtype):
-    # Check that any_zero_row returns True when a row contains a zero
-    # and False otherwise
+@pytest.mark.parametrize("dtype", [np.int16, np.int32, np.float32, np.float64])
+@pytest.mark.parametrize("value", [0, 1.5, -1])
+def test_all_with_any_reduction(dtype, value):
+    # Check that return value is False when there is no row/column equal to `value`
+    X = np.arange(12, dtype=dtype).reshape(3, 4)
+    assert not _all_with_any_reduction(X, value=value, axis=0)
+    assert not _all_with_any_reduction(X, value=value, axis=1)
 
-    X = np.array([[1, 2, 3], [0, 1, 2]], dtype=dtype)
-    assert not any_zero_row(X)
+    # Make a row equal to `value`
+    X[1, :] = value
+    assert _all_with_any_reduction(X, value=value, axis=1)
 
-    # Make a zero row and check return True
-    X[0, :] = 0
-    assert any_zero_row(X)
+    # Make a column equal to `value`
+    X[:, 2] = value
+    assert _all_with_any_reduction(X, value=value, axis=0)

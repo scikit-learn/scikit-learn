@@ -104,10 +104,6 @@ Efficient Linear Algebra & Array Operations
 - :func:`arrayfuncs.min_pos`: (used in ``sklearn.linear_model.least_angle``)
   Find the minimum of the positive values within an array.
 
-- :func:`arrayfuncs.any_zero_row`:
-  (used in :class:`~sklearn.neighbors.KNeighborsClassifier`) Check if any row
-  of a two-dimensional array-like is all zeros.
-
 - :func:`extmath.fast_logdet`: efficiently compute the log of the determinant
   of a matrix.
 
