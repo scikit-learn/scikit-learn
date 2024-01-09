@@ -2732,7 +2732,6 @@ def train_test_split(
             test_size,
             train_size,
             validation_size=validation_size,
-            default_test_size=0.25,
         )
     else:
         n_train, n_test = _validate_shuffle_split(
