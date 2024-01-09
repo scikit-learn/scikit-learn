@@ -264,15 +264,41 @@ def test_device_raises_if_no_input():
         device()
 
 
-def test_raises_if_different_devices():
-    class Array:
-        def __init__(self, device):
-            self.device = device
+def test_device_inspection():
+    class Device:
+        def __init__(self, name):
+            self.name = name
 
+        def __eq__(self, device):
+            return self.name == device.name
+
+        def __hash__(self):
+            raise TypeError("Device object is not hashable")
+
+    class Array:
+        def __init__(self, device_name):
+            self.device = Device(device_name)
+
+    # Sanity check: ensure our Device mock class is non hashable, to
+    # accurately account for non-hashable device objects in some array
+    # libraries, because of which the `device` inspection function should'nt
+    # make use of hash lookup tables (in particular, not use `set`)
+    with pytest.raises(TypeError):
+        hash(Array("device").device)
+
+    # Test raise if on different devices
     with pytest.raises(
         ValueError, match="Input arrays use different devices: cpu, mygpu"
     ):
         device(Array("cpu"), Array("mygpu"))
+
+    # Test expected value is returned otherwise
+    array1 = Array("device")
+    array2 = Array("device")
+
+    assert array1.device == device(array1)
+    assert array1.device == device(array1, array2)
+    assert array1.device == device(array1, array1, array2)
 
 
 @skip_if_array_api_compat_not_configured

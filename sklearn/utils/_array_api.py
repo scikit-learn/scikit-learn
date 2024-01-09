@@ -117,7 +117,7 @@ def device(*array_list):
 
     for array in array_list[1:]:
         device_other = _single_array_device(array)
-        if device != device_other:
+        if device_ != device_other:
             raise ValueError(
                 f"Input arrays use different devices: {str(device_)}, "
                 f"{str(device_other)}"
