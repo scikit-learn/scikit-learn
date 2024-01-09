@@ -115,6 +115,10 @@ def device(*array_list):
 
     device_ = _single_array_device(array_list[0])
 
+    # Note: here we cannot simply use a Python `set` as it requires
+    # hashable members which is not guaranteed for Array API device
+    # objects. In particular, CuPy devices are not hashable at the
+    # time of writing.
     for array in array_list[1:]:
         device_other = _single_array_device(array)
         if device_ != device_other:
