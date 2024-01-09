@@ -135,9 +135,7 @@ embeddings = {
     "LTSA LLE embedding": LocallyLinearEmbedding(
         n_neighbors=n_neighbors, n_components=2, method="ltsa"
     ),
-    "MDS embedding": MDS(
-        n_components=2, n_init=1, max_iter=120, n_jobs=2, normalized_stress="auto"
-    ),
+    "MDS embedding": MDS(n_components=2, n_init=1, max_iter=120, n_jobs=2),
     "Random Trees embedding": make_pipeline(
         RandomTreesEmbedding(n_estimators=200, max_depth=5, random_state=0),
         TruncatedSVD(n_components=2),
