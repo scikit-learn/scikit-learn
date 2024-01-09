@@ -28,7 +28,12 @@ from sklearn.exceptions import NotFittedError
 from sklearn.metrics import get_scorer, mean_gamma_deviance, mean_poisson_deviance
 from sklearn.model_selection import cross_val_score, train_test_split
 from sklearn.pipeline import make_pipeline
-from sklearn.preprocessing import KBinsDiscretizer, MinMaxScaler, OneHotEncoder
+from sklearn.preprocessing import (
+    KBinsDiscretizer,
+    LabelBinarizer,
+    MinMaxScaler,
+    OneHotEncoder,
+)
 from sklearn.utils import shuffle
 from sklearn.utils._openmp_helpers import _openmp_effective_n_threads
 from sklearn.utils._testing import _convert_container
@@ -1439,6 +1444,62 @@ def test_unknown_category_that_are_negative():
     X_test_nan = np.asarray([[1, np.nan], [3, np.nan]])
 
     assert_allclose(hist.predict(X_test_neg), hist.predict(X_test_nan))
+
+
+@pytest.mark.parametrize(
+    ["model", "data"],
+    [
+        (
+            HistGradientBoostingClassifier(),
+            make_classification(
+                n_samples=100, n_classes=2, weights=[0.7], random_state=7
+            ),
+        ),
+        (
+            HistGradientBoostingClassifier(),
+            make_classification(
+                n_samples=100,
+                n_classes=4,
+                weights=[0.45, 0.15, 0.3, 0.1],
+                n_informative=4,
+                random_state=7,
+            ),
+        ),
+        (
+            HistGradientBoostingRegressor(loss="gamma"),
+            make_regression(n_samples=100, random_state=11),
+        ),
+    ],
+)
+@pytest.mark.parametrize("sample_weight", [False, True])
+def test_post_fit_calibration(model, data, sample_weight):
+    """Test that post_fit_calibration guarantees balance property."""
+    X, y = data
+    if sample_weight:
+        rng = np.random.RandomState(42)
+        sample_weight = np.abs(rng.normal(size=y.shape[0]))
+    else:
+        sample_weight = None
+
+    if isinstance(model, HistGradientBoostingClassifier):
+        lb = LabelBinarizer()
+        y_encoded = lb.fit_transform(y)
+        if lb.classes_.shape[0] == 2:
+            y_encoded = np.concatenate((1 - y_encoded, y_encoded), axis=1)
+    else:
+        y += np.abs(np.min(y)) + 0.1  # make it positive
+        y_encoded = y
+    model.set_params(max_iter=2, post_fit_calibration=True, early_stopping=False)
+    model.fit(X, y, sample_weight=sample_weight)
+    if isinstance(model, HistGradientBoostingClassifier):
+        y_pred = model.predict_proba(X)
+    else:
+        y_pred = model.predict(X)
+
+    assert_allclose(
+        np.average(y_pred, weights=sample_weight, axis=0),
+        np.average(y_encoded, weights=sample_weight, axis=0),
+    )
 
 
 @pytest.mark.parametrize("dataframe_lib", ["pandas", "polars"])
