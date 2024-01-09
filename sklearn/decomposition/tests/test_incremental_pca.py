@@ -383,20 +383,33 @@ def test_singular_values():
     assert_array_almost_equal(ipca.singular_values_, [3.142, 2.718, 1.0], 14)
 
 
-def test_whitening():
+def test_whitening(global_random_seed):
     # Test that PCA and IncrementalPCA transforms match to sign flip.
     X = datasets.make_low_rank_matrix(
-        1000, 10, tail_strength=0.0, effective_rank=2, random_state=1999
+        1000, 10, tail_strength=0.0, effective_rank=2, random_state=global_random_seed
     )
     prec = 3
-    n_samples, n_features = X.shape
     for nc in [None, 9]:
         pca = PCA(whiten=True, n_components=nc).fit(X)
         ipca = IncrementalPCA(whiten=True, n_components=nc, batch_size=250).fit(X)
 
+        # Since the data is rank deficient, some components are pure noise. We
+        # should not expect those dimensions to carry any signal and their
+        # values might be arbitrarily changed by implementation details of the
+        # internal SVD solver. We therefore mask them out before comparison.
+        stable_mask = pca.explained_variance_ratio_ > 1e-12
+
         Xt_pca = pca.transform(X)
         Xt_ipca = ipca.transform(X)
-        assert_almost_equal(np.abs(Xt_pca), np.abs(Xt_ipca), decimal=prec)
+        assert_almost_equal(
+            np.abs(Xt_pca)[:, stable_mask],
+            np.abs(Xt_ipca)[:, stable_mask],
+            decimal=prec,
+        )
+
+        # The noisy dimensions are in the null space of the inverse transform,
+        # so they are not influencing the reconstruction. We therefore don't
+        # need to apply the mask here.
         Xinv_ipca = ipca.inverse_transform(Xt_ipca)
         Xinv_pca = pca.inverse_transform(Xt_pca)
         assert_almost_equal(X, Xinv_ipca, decimal=prec)

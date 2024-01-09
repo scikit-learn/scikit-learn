@@ -53,6 +53,7 @@ nips2010_pdf/
 examples/cluster/joblib
 reuters/
 benchmarks/bench_covertype_data/
+bench_pca_solvers.csv
 
 *.prefs
 .pydevproject
