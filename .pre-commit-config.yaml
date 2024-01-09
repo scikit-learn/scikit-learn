@@ -1,0 +1,29 @@
+repos:
+-   repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.3.0
+    hooks:
+    -   id: check-yaml
+    -   id: end-of-file-fixer
+    -   id: trailing-whitespace
+-   repo: https://github.com/psf/black
+    rev: 23.3.0
+    hooks:
+    -   id: black
+-   repo: https://github.com/astral-sh/ruff-pre-commit
+    # Ruff version.
+    rev: v0.0.272
+    hooks:
+    -   id: ruff
+        args: ["--fix", "--show-source"]
+-   repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.3.0
+    hooks:
+     -  id: mypy
+        files: sklearn/
+        additional_dependencies: [pytest==6.2.4]
+-   repo: https://github.com/MarcoGorelli/cython-lint
+    rev: v0.15.0
+    hooks:
+    # TODO: add the double-quote-cython-strings hook when it's usability has improved:
+    # possibility to pass a directory and use it as a check instead of auto-formatter.
+    -   id: cython-lint

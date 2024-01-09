@@ -1,0 +1,34 @@
+comment: false
+
+coverage:
+  status:
+    project:
+      default:
+        # Commits pushed to main should not make the overall
+        # project coverage decrease by more than 1%:
+        target: auto
+        threshold: 1%
+    patch:
+      default:
+        # Be tolerant on slight code coverage diff on PRs to limit
+        # noisy red coverage status on github PRs.
+        # Note: The coverage stats are still uploaded
+        # to codecov so that PR reviewers can see uncovered lines
+        target: auto
+        threshold: 1%
+
+codecov:
+  notify:
+    # Prevent coverage status to upload multiple times for parallel and long
+    # running CI pipelines. This configuration is particularly useful on PRs
+    # to avoid confusion. Note that this value is set to the number of Azure
+    # Pipeline jobs uploading coverage reports.
+    after_n_builds: 6
+
+ignore:
+- "sklearn/externals"
+- "sklearn/_build_utils"
+- "sklearn/__check_build"
+- "sklearn/_min_dependencies.py"
+- "**/setup.py"
+- "**/conftest.py"

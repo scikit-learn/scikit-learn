@@ -1,0 +1,998 @@
+.. include:: _contributors.rst
+
+.. currentmodule:: sklearn
+
+.. _changes_1_3_2:
+
+Version 1.3.2
+=============
+
+**October 2023**
+
+Changelog
+---------
+
+:mod:`sklearn.datasets`
+.......................
+
+- |Fix| All dataset fetchers now accept `data_home` as any object that implements
+  the :class:`os.PathLike` interface, for instance, :class:`pathlib.Path`.
+  :pr:`27468` by :user:`Yao Xiao <Charlie-XIAO>`.
+
+:mod:`sklearn.decomposition`
+............................
+
+- |Fix| Fixes a bug in :class:`decomposition.KernelPCA` by forcing the output of
+  the internal :class:`preprocessing.KernelCenterer` to be a default array. When the
+  arpack solver is used, it expects an array with a `dtype` attribute.
+  :pr:`27583` by :user:`Guillaume Lemaitre <glemaitre>`.
+
+:mod:`sklearn.metrics`
+......................
+
+- |Fix| Fixes a bug for metrics using `zero_division=np.nan`
+  (e.g. :func:`~metrics.precision_score`) within a paralell loop
+  (e.g. :func:`~model_selection.cross_val_score`) where the singleton for `np.nan`
+  will be different in the sub-processes.
+  :pr:`27573` by :user:`Guillaume Lemaitre <glemaitre>`.
+
+:mod:`sklearn.tree`
+...................
+
+- |Fix| Do not leak data via non-initialized memory in decision tree pickle files and make
+  the generation of those files deterministic. :pr:`27580` by :user:`Loïc Estève <lesteve>`.
+
+
+.. _changes_1_3_1:
+
+Version 1.3.1
+=============
+
+**September 2023**
+
+Changed models
+--------------
+
+The following estimators and functions, when fit with the same data and
+parameters, may produce different models from the previous version. This often
+occurs due to changes in the modelling logic (bug fixes or enhancements), or in
+random sampling procedures.
+
+- |Fix| Ridge models with `solver='sparse_cg'` may have slightly different
+  results with scipy>=1.12, because of an underlying change in the scipy solver
+  (see `scipy#18488 <https://github.com/scipy/scipy/pull/18488>`_ for more
+  details)
+  :pr:`26814` by :user:`Loïc Estève <lesteve>`
+
+Changes impacting all modules
+-----------------------------
+
+- |Fix| The `set_output` API correctly works with list input. :pr:`27044` by
+  `Thomas Fan`_.
+
+Changelog
+---------
+
+:mod:`sklearn.calibration`
+..........................
+
+- |Fix| :class:`calibration.CalibratedClassifierCV` can now handle models that
+  produce large prediction scores. Before it was numerically unstable.
+  :pr:`26913` by :user:`Omar Salman <OmarManzoor>`.
+
+:mod:`sklearn.cluster`
+......................
+
+- |Fix| :class:`cluster.BisectingKMeans` could crash when predicting on data
+  with a different scale than the data used to fit the model.
+  :pr:`27167` by `Olivier Grisel`_.
+
+- |Fix| :class:`cluster.BisectingKMeans` now works with data that has a single feature.
+  :pr:`27243` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
+
+:mod:`sklearn.cross_decomposition`
+..................................
+
+- |Fix| :class:`cross_decomposition.PLSRegression` now automatically ravels the output
+  of `predict` if fitted with one dimensional `y`.
+  :pr:`26602` by :user:`Yao Xiao <Charlie-XIAO>`.
+
+:mod:`sklearn.ensemble`
+.......................
+
+- |Fix| Fix a bug in :class:`ensemble.AdaBoostClassifier` with `algorithm="SAMME"`
+  where the decision function of each weak learner should be symmetric (i.e.
+  the sum of the scores should sum to zero for a sample).
+  :pr:`26521` by :user:`Guillaume Lemaitre <glemaitre>`.
+
+:mod:`sklearn.feature_selection`
+................................
+
+- |Fix| :func:`feature_selection.mutual_info_regression` now correctly computes the
+  result when `X` is of integer dtype. :pr:`26748` by :user:`Yao Xiao <Charlie-XIAO>`.
+
+:mod:`sklearn.impute`
+.....................
+
+- |Fix| :class:`impute.KNNImputer` now correctly adds a missing indicator column in
+  ``transform`` when ``add_indicator`` is set to ``True`` and missing values are observed
+  during ``fit``. :pr:`26600` by :user:`Shreesha Kumar Bhat <Shreesha3112>`.
+
+:mod:`sklearn.metrics`
+......................
+
+- |Fix| Scorers used with :func:`metrics.get_scorer` handle properly
+  multilabel-indicator matrix.
+  :pr:`27002` by :user:`Guillaume Lemaitre <glemaitre>`.
+
+:mod:`sklearn.mixture`
+......................
+
+- |Fix| The initialization of :class:`mixture.GaussianMixture` from user-provided
+  `precisions_init` for `covariance_type` of `full` or `tied` was not correct,
+  and has been fixed.
+  :pr:`26416` by :user:`Yang Tao <mchikyt3>`.
+
+:mod:`sklearn.neighbors`
+........................
+
+- |Fix| :meth:`neighbors.KNeighborsClassifier.predict` no longer raises an
+  exception for `pandas.DataFrames` input.
+  :pr:`26772` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
+
+- |Fix| Reintroduce `sklearn.neighbors.BallTree.valid_metrics` and
+  `sklearn.neighbors.KDTree.valid_metrics` as public class attributes.
+  :pr:`26754` by :user:`Julien Jerphanion <jjerphan>`.
+
+- |Fix| :class:`sklearn.model_selection.HalvingRandomSearchCV` no longer raises
+  when the input to the `param_distributions` parameter is a list of dicts.
+  :pr:`26893` by :user:`Stefanie Senger <StefanieSenger>`.
+
+- |Fix| Neighbors based estimators now correctly work when `metric="minkowski"` and the
+  metric parameter `p` is in the range `0 < p < 1`, regardless of the `dtype` of `X`.
+  :pr:`26760` by :user:`Shreesha Kumar Bhat <Shreesha3112>`.
+
+:mod:`sklearn.preprocessing`
+............................
+
+- |Fix| :class:`preprocessing.LabelEncoder` correctly accepts `y` as a keyword
+  argument. :pr:`26940` by `Thomas Fan`_.
+
+- |Fix| :class:`preprocessing.OneHotEncoder` shows a more informative error message
+  when `sparse_output=True` and the output is configured to be pandas.
+  :pr:`26931` by `Thomas Fan`_.
+
+:mod:`sklearn.tree`
+...................
+
+- |Fix| :func:`tree.plot_tree` now accepts `class_names=True` as documented.
+  :pr:`26903` by :user:`Thomas Roehr <2maz>`
+
+- |Fix| The `feature_names` parameter of :func:`tree.plot_tree` now accepts any kind of
+  array-like instead of just a list. :pr:`27292` by :user:`Rahil Parikh <rprkh>`.
+
+.. _changes_1_3:
+
+Version 1.3.0
+=============
+
+**June 2023**
+
+For a short description of the main highlights of the release, please refer to
+:ref:`sphx_glr_auto_examples_release_highlights_plot_release_highlights_1_3_0.py`.
+
+.. include:: changelog_legend.inc
+
+Changed models
+--------------
+
+The following estimators and functions, when fit with the same data and
+parameters, may produce different models from the previous version. This often
+occurs due to changes in the modelling logic (bug fixes or enhancements), or in
+random sampling procedures.
+
+- |Enhancement| :meth:`multiclass.OutputCodeClassifier.predict` now uses a more
+  efficient pairwise distance reduction. As a consequence, the tie-breaking
+  strategy is different and thus the predicted labels may be different.
+  :pr:`25196` by :user:`Guillaume Lemaitre <glemaitre>`.
+
+- |Enhancement| The `fit_transform` method of :class:`decomposition.DictionaryLearning`
+  is more efficient but may produce different results as in previous versions when
+  `transform_algorithm` is not the same as `fit_algorithm` and the number of iterations
+  is small. :pr:`24871` by :user:`Omar Salman <OmarManzoor>`.
+
+- |Enhancement| The `sample_weight` parameter now will be used in centroids
+  initialization for :class:`cluster.KMeans`, :class:`cluster.BisectingKMeans`
+  and :class:`cluster.MiniBatchKMeans`.
+  This change will break backward compatibility, since numbers generated
+  from same random seeds will be different.
+  :pr:`25752` by :user:`Gleb Levitski <glevv>`,
+  :user:`Jérémie du Boisberranger <jeremiedbb>`,
+  :user:`Guillaume Lemaitre <glemaitre>`.
+
+- |Fix| Treat more consistently small values in the `W` and `H` matrices during the
+  `fit` and `transform` steps of :class:`decomposition.NMF` and
+  :class:`decomposition.MiniBatchNMF` which can produce different results than previous
+  versions. :pr:`25438` by :user:`Yotam Avidar-Constantini <yotamcons>`.
+
+- |Fix| :class:`decomposition.KernelPCA` may produce different results through
+  `inverse_transform` if `gamma` is `None`. Now it will be chosen correctly as
+  `1/n_features` of the data that it is fitted on, while previously it might be
+  incorrectly chosen as `1/n_features` of the data passed to `inverse_transform`.
+  A new attribute `gamma_` is provided for revealing the actual value of `gamma`
+  used each time the kernel is called.
+  :pr:`26337` by :user:`Yao Xiao <Charlie-XIAO>`.
+
+Changed displays
+----------------
+
+- |Enhancement| :class:`model_selection.LearningCurveDisplay` displays both the
+  train and test curves by default. You can set `score_type="test"` to keep the
+  past behaviour.
+  :pr:`25120` by :user:`Guillaume Lemaitre <glemaitre>`.
+
+- |Fix| :class:`model_selection.ValidationCurveDisplay` now accepts passing a
+  list to the `param_range` parameter.
+  :pr:`27311` by :user:`Arturo Amor <ArturoAmorQ>`.
+
+Changes impacting all modules
+-----------------------------
+
+- |Enhancement| The `get_feature_names_out` method of the following classes now
+  raises a `NotFittedError` if the instance is not fitted. This ensures the error is
+  consistent in all estimators with the `get_feature_names_out` method.
+
+  - :class:`impute.MissingIndicator`
+  - :class:`feature_extraction.DictVectorizer`
+  - :class:`feature_extraction.text.TfidfTransformer`
+  - :class:`feature_selection.GenericUnivariateSelect`
+  - :class:`feature_selection.RFE`
+  - :class:`feature_selection.RFECV`
+  - :class:`feature_selection.SelectFdr`
+  - :class:`feature_selection.SelectFpr`
+  - :class:`feature_selection.SelectFromModel`
+  - :class:`feature_selection.SelectFwe`
+  - :class:`feature_selection.SelectKBest`
+  - :class:`feature_selection.SelectPercentile`
+  - :class:`feature_selection.SequentialFeatureSelector`
+  - :class:`feature_selection.VarianceThreshold`
+  - :class:`kernel_approximation.AdditiveChi2Sampler`
+  - :class:`impute.IterativeImputer`
+  - :class:`impute.KNNImputer`
+  - :class:`impute.SimpleImputer`
+  - :class:`isotonic.IsotonicRegression`
+  - :class:`preprocessing.Binarizer`
+  - :class:`preprocessing.KBinsDiscretizer`
+  - :class:`preprocessing.MaxAbsScaler`
+  - :class:`preprocessing.MinMaxScaler`
+  - :class:`preprocessing.Normalizer`
+  - :class:`preprocessing.OrdinalEncoder`
+  - :class:`preprocessing.PowerTransformer`
+  - :class:`preprocessing.QuantileTransformer`
+  - :class:`preprocessing.RobustScaler`
+  - :class:`preprocessing.SplineTransformer`
+  - :class:`preprocessing.StandardScaler`
+  - :class:`random_projection.GaussianRandomProjection`
+  - :class:`random_projection.SparseRandomProjection`
+
+  The `NotFittedError` displays an informative message asking to fit the instance
+  with the appropriate arguments.
+
+  :pr:`25294`, :pr:`25308`, :pr:`25291`, :pr:`25367`, :pr:`25402`,
+  by :user:`John Pangas <jpangas>`, :user:`Rahil Parikh <rprkh>` ,
+  and :user:`Alex Buzenet <albuzenet>`.
+
+- |Enhancement| Added a multi-threaded Cython routine to the compute squared
+  Euclidean distances (sometimes followed by a fused reduction operation) for a
+  pair of datasets consisting of a sparse CSR matrix and a dense NumPy.
+
+  This can improve the performance of following functions and estimators:
+
+  - :func:`sklearn.metrics.pairwise_distances_argmin`
+  - :func:`sklearn.metrics.pairwise_distances_argmin_min`
+  - :class:`sklearn.cluster.AffinityPropagation`
+  - :class:`sklearn.cluster.Birch`
+  - :class:`sklearn.cluster.MeanShift`
+  - :class:`sklearn.cluster.OPTICS`
+  - :class:`sklearn.cluster.SpectralClustering`
+  - :func:`sklearn.feature_selection.mutual_info_regression`
+  - :class:`sklearn.neighbors.KNeighborsClassifier`
+  - :class:`sklearn.neighbors.KNeighborsRegressor`
+  - :class:`sklearn.neighbors.RadiusNeighborsClassifier`
+  - :class:`sklearn.neighbors.RadiusNeighborsRegressor`
+  - :class:`sklearn.neighbors.LocalOutlierFactor`
+  - :class:`sklearn.neighbors.NearestNeighbors`
+  - :class:`sklearn.manifold.Isomap`
+  - :class:`sklearn.manifold.LocallyLinearEmbedding`
+  - :class:`sklearn.manifold.TSNE`
+  - :func:`sklearn.manifold.trustworthiness`
+  - :class:`sklearn.semi_supervised.LabelPropagation`
+  - :class:`sklearn.semi_supervised.LabelSpreading`
+
+  A typical example of this performance improvement happens when passing a sparse
+  CSR matrix to the `predict` or `transform` method of estimators that rely on
+  a dense NumPy representation to store their fitted parameters (or the reverse).
+
+  For instance, :meth:`sklearn.neighbors.NearestNeighbors.kneighbors` is now up
+  to 2 times faster for this case on commonly available laptops.
+
+  :pr:`25044` by :user:`Julien Jerphanion <jjerphan>`.
+
+- |Enhancement| All estimators that internally rely on OpenMP multi-threading
+  (via Cython) now use a number of threads equal to the number of physical
+  (instead of logical) cores by default. In the past, we observed that using as
+  many threads as logical cores on SMT hosts could sometimes cause severe
+  performance problems depending on the algorithms and the shape of the data.
+  Note that it is still possible to manually adjust the number of threads used
+  by OpenMP as documented in :ref:`parallelism`.
+
+  :pr:`26082` by :user:`Jérémie du Boisberranger <jeremiedbb>` and
+  :user:`Olivier Grisel <ogrisel>`.
+
+Experimental / Under Development
+--------------------------------
+
+- |MajorFeature| :ref:`Metadata routing <metadata_routing>`'s related base
+  methods are included in this release. This feature is only available via the
+  `enable_metadata_routing` feature flag which can be enabled using
+  :func:`sklearn.set_config` and :func:`sklearn.config_context`. For now this
+  feature is mostly useful for third party developers to prepare their code
+  base for metadata routing, and we strongly recommend that they also hide it
+  behind the same feature flag, rather than having it enabled by default.
+  :pr:`24027` by `Adrin Jalali`_, :user:`Benjamin Bossan <BenjaminBossan>`, and
+  :user:`Omar Salman <OmarManzoor>`.
+
+Changelog
+---------
+
+..
+    Entries should be grouped by module (in alphabetic order) and prefixed with
+    one of the labels: |MajorFeature|, |Feature|, |Efficiency|, |Enhancement|,
+    |Fix| or |API| (see whats_new.rst for descriptions).
+    Entries should be ordered by those labels (e.g. |Fix| after |Efficiency|).
+    Changes not specific to a module should be listed under *Multiple Modules*
+    or *Miscellaneous*.
+    Entries should end with:
+    :pr:`123456` by :user:`Joe Bloggs <joeongithub>`.
+    where 123456 is the *pull request* number, not the issue number.
+
+`sklearn`
+.........
+
+- |Feature| Added a new option `skip_parameter_validation`, to the function
+  :func:`sklearn.set_config` and context manager :func:`sklearn.config_context`, that
+  allows to skip the validation of the parameters passed to the estimators and public
+  functions. This can be useful to speed up the code but should be used with care
+  because it can lead to unexpected behaviors or raise obscure error messages when
+  setting invalid parameters.
+  :pr:`25815` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
+
+:mod:`sklearn.base`
+...................
+
+- |Feature| A `__sklearn_clone__` protocol is now available to override the
+  default behavior of :func:`base.clone`. :pr:`24568` by `Thomas Fan`_.
+
+- |Fix| :class:`base.TransformerMixin` now currently keeps a namedtuple's class
+  if `transform` returns a namedtuple. :pr:`26121` by `Thomas Fan`_.
+
+:mod:`sklearn.calibration`
+..........................
+
+- |Fix| :class:`calibration.CalibratedClassifierCV` now does not enforce sample
+  alignment on `fit_params`. :pr:`25805` by `Adrin Jalali`_.
+
+:mod:`sklearn.cluster`
+......................
+
+- |MajorFeature| Added :class:`cluster.HDBSCAN`, a modern hierarchical density-based
+  clustering algorithm. Similarly to :class:`cluster.OPTICS`, it can be seen as a
+  generalization of :class:`cluster.DBSCAN` by allowing for hierarchical instead of flat
+  clustering, however it varies in its approach from :class:`cluster.OPTICS`. This
+  algorithm is very robust with respect to its hyperparameters' values and can
+  be used on a wide variety of data without much, if any, tuning.
+
+  This implementation is an adaptation from the original implementation of HDBSCAN in
+  `scikit-learn-contrib/hdbscan <https://github.com/scikit-learn-contrib/hdbscan>`_,
+  by :user:`Leland McInnes <lmcinnes>` et al.
+
+  :pr:`26385` by :user:`Meekail Zain <micky774>`
+
+- |Enhancement| The `sample_weight` parameter now will be used in centroids
+  initialization for :class:`cluster.KMeans`, :class:`cluster.BisectingKMeans`
+  and :class:`cluster.MiniBatchKMeans`.
+  This change will break backward compatibility, since numbers generated
+  from same random seeds will be different.
+  :pr:`25752` by :user:`Gleb Levitski <glevv>`,
+  :user:`Jérémie du Boisberranger <jeremiedbb>`,
+  :user:`Guillaume Lemaitre <glemaitre>`.
+
+- |Fix| :class:`cluster.KMeans`, :class:`cluster.MiniBatchKMeans` and
+  :func:`cluster.k_means` now correctly handle the combination of `n_init="auto"`
+  and `init` being an array-like, running one initialization in that case.
+  :pr:`26657` by :user:`Binesh Bannerjee <bnsh>`.
+
+- |API| The `sample_weight` parameter in `predict` for
+  :meth:`cluster.KMeans.predict` and :meth:`cluster.MiniBatchKMeans.predict`
+  is now deprecated and will be removed in v1.5.
+  :pr:`25251` by :user:`Gleb Levitski <glevv>`.
+
+- |API| The `Xred` argument in :func:`cluster.FeatureAgglomeration.inverse_transform`
+  is renamed to `Xt` and will be removed in v1.5. :pr:`26503` by `Adrin Jalali`_.
+
+:mod:`sklearn.compose`
+......................
+
+- |Fix| :class:`compose.ColumnTransformer` raises an informative error when the individual
+  transformers of `ColumnTransformer` output pandas dataframes with indexes that are
+  not consistent with each other and the output is configured to be pandas.
+  :pr:`26286` by `Thomas Fan`_.
+
+- |Fix| :class:`compose.ColumnTransformer` correctly sets the output of the
+  remainder when `set_output` is called. :pr:`26323` by `Thomas Fan`_.
+
+:mod:`sklearn.covariance`
+.........................
+
+- |Fix| Allows `alpha=0` in :class:`covariance.GraphicalLasso` to be
+  consistent with :func:`covariance.graphical_lasso`.
+  :pr:`26033` by :user:`Genesis Valencia <genvalen>`.
+
+- |Fix| :func:`covariance.empirical_covariance` now gives an informative
+  error message when input is not appropriate.
+  :pr:`26108` by :user:`Quentin Barthélemy <qbarthelemy>`.
+
+- |API| Deprecates `cov_init` in :func:`covariance.graphical_lasso` in 1.3 since
+  the parameter has no effect. It will be removed in 1.5.
+  :pr:`26033` by :user:`Genesis Valencia <genvalen>`.
+
+- |API| Adds `costs_` fitted attribute in :class:`covariance.GraphicalLasso` and
+  :class:`covariance.GraphicalLassoCV`.
+  :pr:`26033` by :user:`Genesis Valencia <genvalen>`.
+
+- |API| Adds `covariance` parameter in :class:`covariance.GraphicalLasso`.
+  :pr:`26033` by :user:`Genesis Valencia <genvalen>`.
+
+- |API| Adds `eps` parameter in :class:`covariance.GraphicalLasso`,
+  :func:`covariance.graphical_lasso`, and :class:`covariance.GraphicalLassoCV`.
+  :pr:`26033` by :user:`Genesis Valencia <genvalen>`.
+
+:mod:`sklearn.datasets`
+.......................
+
+- |Enhancement| Allows to overwrite the parameters used to open the ARFF file using
+  the parameter `read_csv_kwargs` in :func:`datasets.fetch_openml` when using the
+  pandas parser.
+  :pr:`26433` by :user:`Guillaume Lemaitre <glemaitre>`.
+
+- |Fix| :func:`datasets.fetch_openml` returns improved data types when
+  `as_frame=True` and `parser="liac-arff"`. :pr:`26386` by `Thomas Fan`_.
+
+- |Fix| Following the ARFF specs, only the marker `"?"` is now considered as a missing
+  values when opening ARFF files fetched using :func:`datasets.fetch_openml` when using
+  the pandas parser. The parameter `read_csv_kwargs` allows to overwrite this behaviour.
+  :pr:`26551` by :user:`Guillaume Lemaitre <glemaitre>`.
+
+- |Fix| :func:`datasets.fetch_openml` will consistently use `np.nan` as missing marker
+  with both parsers `"pandas"` and `"liac-arff"`.
+  :pr:`26579` by :user:`Guillaume Lemaitre <glemaitre>`.
+
+- |API| The `data_transposed` argument of :func:`datasets.make_sparse_coded_signal`
+  is deprecated and will be removed in v1.5.
+  :pr:`25784` by :user:`Jérémie du Boisberranger`.
+
+:mod:`sklearn.decomposition`
+............................
+
+- |Efficiency| :class:`decomposition.MiniBatchDictionaryLearning` and
+  :class:`decomposition.MiniBatchSparsePCA` are now faster for small batch sizes by
+  avoiding duplicate validations.
+  :pr:`25490` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
+
+- |Enhancement| :class:`decomposition.DictionaryLearning` now accepts the parameter
+  `callback` for consistency with the function :func:`decomposition.dict_learning`.
+  :pr:`24871` by :user:`Omar Salman <OmarManzoor>`.
+
+- |Fix| Treat more consistently small values in the `W` and `H` matrices during the
+  `fit` and `transform` steps of :class:`decomposition.NMF` and
+  :class:`decomposition.MiniBatchNMF` which can produce different results than previous
+  versions. :pr:`25438` by :user:`Yotam Avidar-Constantini <yotamcons>`.
+
+- |API| The `W` argument in :func:`decomposition.NMF.inverse_transform` and
+  :class:`decomposition.MiniBatchNMF.inverse_transform` is renamed to `Xt` and
+  will be removed in v1.5. :pr:`26503` by `Adrin Jalali`_.
+
+:mod:`sklearn.discriminant_analysis`
+....................................
+
+- |Enhancement| :class:`discriminant_analysis.LinearDiscriminantAnalysis` now
+  supports the `PyTorch <https://pytorch.org/>`__. See
+  :ref:`array_api` for more details. :pr:`25956` by `Thomas Fan`_.
+
+:mod:`sklearn.ensemble`
+.......................
+
+- |Feature| :class:`ensemble.HistGradientBoostingRegressor` now supports
+  the Gamma deviance loss via `loss="gamma"`.
+  Using the Gamma deviance as loss function comes in handy for modelling skewed
+  distributed, strictly positive valued targets.
+  :pr:`22409` by :user:`Christian Lorentzen <lorentzenchr>`.
+
+- |Feature| Compute a custom out-of-bag score by passing a callable to
+  :class:`ensemble.RandomForestClassifier`, :class:`ensemble.RandomForestRegressor`,
+  :class:`ensemble.ExtraTreesClassifier` and :class:`ensemble.ExtraTreesRegressor`.
+  :pr:`25177` by `Tim Head`_.
+
+- |Feature| :class:`ensemble.GradientBoostingClassifier` now exposes
+  out-of-bag scores via the `oob_scores_` or `oob_score_` attributes.
+  :pr:`24882` by :user:`Ashwin Mathur <awinml>`.
+
+- |Efficiency| :class:`ensemble.IsolationForest` predict time is now faster
+  (typically by a factor of 8 or more). Internally, the estimator now precomputes
+  decision path lengths per tree at `fit` time. It is therefore not possible
+  to load an estimator trained with scikit-learn 1.2 to make it predict with
+  scikit-learn 1.3: retraining with scikit-learn 1.3 is required.
+  :pr:`25186` by :user:`Felipe Breve Siola <fsiola>`.
+
+- |Efficiency| :class:`ensemble.RandomForestClassifier` and
+  :class:`ensemble.RandomForestRegressor` with `warm_start=True` now only
+  recomputes out-of-bag scores when there are actually more `n_estimators`
+  in subsequent `fit` calls.
+  :pr:`26318` by :user:`Joshua Choo Yun Keat <choo8>`.
+
+- |Enhancement| :class:`ensemble.BaggingClassifier` and
+  :class:`ensemble.BaggingRegressor` expose the `allow_nan` tag from the
+  underlying estimator. :pr:`25506` by `Thomas Fan`_.
+
+- |Fix| :meth:`ensemble.RandomForestClassifier.fit` sets `max_samples = 1`
+  when `max_samples` is a float and `round(n_samples * max_samples) < 1`.
+  :pr:`25601` by :user:`Jan Fidor <JanFidor>`.
+
+- |Fix| :meth:`ensemble.IsolationForest.fit` no longer warns about missing
+  feature names when called with `contamination` not `"auto"` on a pandas
+  dataframe.
+  :pr:`25931` by :user:`Yao Xiao <Charlie-XIAO>`.
+
+- |Fix| :class:`ensemble.HistGradientBoostingRegressor` and
+  :class:`ensemble.HistGradientBoostingClassifier` treats negative values for
+  categorical features consistently as missing values, following LightGBM's and
+  pandas' conventions.
+  :pr:`25629` by `Thomas Fan`_.
+
+- |Fix| Fix deprecation of `base_estimator` in :class:`ensemble.AdaBoostClassifier`
+  and :class:`ensemble.AdaBoostRegressor` that was introduced in :pr:`23819`.
+  :pr:`26242` by :user:`Marko Toplak <markotoplak>`.
+
+:mod:`sklearn.exceptions`
+.........................
+
+- |Feature| Added :class:`exceptions.InconsistentVersionWarning` which is raised
+  when a scikit-learn estimator is unpickled with a scikit-learn version that is
+  inconsistent with the sckit-learn version the estimator was pickled with.
+  :pr:`25297` by `Thomas Fan`_.
+
+:mod:`sklearn.feature_extraction`
+.................................
+
+- |API| :class:`feature_extraction.image.PatchExtractor` now follows the
+  transformer API of scikit-learn. This class is defined as a stateless transformer
+  meaning that it is note required to call `fit` before calling `transform`.
+  Parameter validation only happens at `fit` time.
+  :pr:`24230` by :user:`Guillaume Lemaitre <glemaitre>`.
+
+:mod:`sklearn.feature_selection`
+................................
+
+- |Enhancement| All selectors in :mod:`sklearn.feature_selection` will preserve
+  a DataFrame's dtype when transformed. :pr:`25102` by `Thomas Fan`_.
+
+- |Fix| :class:`feature_selection.SequentialFeatureSelector`'s `cv` parameter
+  now supports generators. :pr:`25973` by `Yao Xiao <Charlie-XIAO>`.
+
+:mod:`sklearn.impute`
+.....................
+
+- |Enhancement| Added the parameter `fill_value` to :class:`impute.IterativeImputer`.
+  :pr:`25232` by :user:`Thijs van Weezel <ValueInvestorThijs>`.
+
+- |Fix| :class:`impute.IterativeImputer` now correctly preserves the Pandas
+  Index when the `set_config(transform_output="pandas")`. :pr:`26454` by `Thomas Fan`_.
+
+:mod:`sklearn.inspection`
+.........................
+
+- |Enhancement| Added support for `sample_weight` in
+  :func:`inspection.partial_dependence` and
+  :meth:`inspection.PartialDependenceDisplay.from_estimator`. This allows for
+  weighted averaging when aggregating for each value of the grid we are making the
+  inspection on. The option is only available when `method` is set to `brute`.
+  :pr:`25209` and :pr:`26644` by :user:`Carlo Lemos <vitaliset>`.
+
+- |API| :func:`inspection.partial_dependence` returns a :class:`utils.Bunch` with
+  new key: `grid_values`. The `values` key is deprecated in favor of `grid_values`
+  and the `values` key will be removed in 1.5.
+  :pr:`21809` and :pr:`25732` by `Thomas Fan`_.
+
+:mod:`sklearn.kernel_approximation`
+...................................
+
+- |Fix| :class:`kernel_approximation.AdditiveChi2Sampler` is now stateless.
+  The `sample_interval_` attribute is deprecated and will be removed in 1.5.
+  :pr:`25190` by :user:`Vincent Maladière <Vincent-Maladiere>`.
+
+:mod:`sklearn.linear_model`
+...........................
+
+- |Efficiency| Avoid data scaling when `sample_weight=None` and other
+  unnecessary data copies and unexpected dense to sparse data conversion in
+  :class:`linear_model.LinearRegression`.
+  :pr:`26207` by :user:`Olivier Grisel <ogrisel>`.
+
+- |Enhancement| :class:`linear_model.SGDClassifier`,
+  :class:`linear_model.SGDRegressor` and :class:`linear_model.SGDOneClassSVM`
+  now preserve dtype for `numpy.float32`.
+  :pr:`25587` by :user:`Omar Salman <OmarManzoor>`.
+
+- |Enhancement| The `n_iter_` attribute has been included in
+  :class:`linear_model.ARDRegression` to expose the actual number of iterations
+  required to reach the stopping criterion.
+  :pr:`25697` by :user:`John Pangas <jpangas>`.
+
+- |Fix| Use a more robust criterion to detect convergence of
+  :class:`linear_model.LogisticRegression` with `penalty="l1"` and `solver="liblinear"`
+  on linearly separable problems.
+  :pr:`25214` by `Tom Dupre la Tour`_.
+
+- |Fix| Fix a crash when calling `fit` on
+  :class:`linear_model.LogisticRegression` with `solver="newton-cholesky"` and
+  `max_iter=0` which failed to inspect the state of the model prior to the
+  first parameter update.
+  :pr:`26653` by :user:`Olivier Grisel <ogrisel>`.
+
+- |API| Deprecates `n_iter` in favor of `max_iter` in
+  :class:`linear_model.BayesianRidge` and :class:`linear_model.ARDRegression`.
+  `n_iter` will be removed in scikit-learn 1.5. This change makes those
+  estimators consistent with the rest of estimators.
+  :pr:`25697` by :user:`John Pangas <jpangas>`.
+
+:mod:`sklearn.manifold`
+.......................
+
+- |Fix| :class:`manifold.Isomap` now correctly preserves the Pandas
+  Index when the `set_config(transform_output="pandas")`. :pr:`26454` by `Thomas Fan`_.
+
+:mod:`sklearn.metrics`
+......................
+
+- |Feature| Adds `zero_division=np.nan` to multiple classification metrics:
+  :func:`metrics.precision_score`, :func:`metrics.recall_score`,
+  :func:`metrics.f1_score`, :func:`metrics.fbeta_score`,
+  :func:`metrics.precision_recall_fscore_support`,
+  :func:`metrics.classification_report`. When `zero_division=np.nan` and there is a
+  zero division, the metric is undefined and is excluded from averaging. When not used
+  for averages, the value returned is `np.nan`.
+  :pr:`25531` by :user:`Marc Torrellas Socastro <marctorsoc>`.
+
+- |Feature| :func:`metrics.average_precision_score` now supports the
+  multiclass case.
+  :pr:`17388` by :user:`Geoffrey Bolmier <gbolmier>` and
+  :pr:`24769` by :user:`Ashwin Mathur <awinml>`.
+
+- |Efficiency| The computation of the expected mutual information in
+  :func:`metrics.adjusted_mutual_info_score` is now faster when the number of
+  unique labels is large and its memory usage is reduced in general.
+  :pr:`25713` by :user:`Kshitij Mathur <Kshitij68>`,
+  :user:`Guillaume Lemaitre <glemaitre>`, :user:`Omar Salman <OmarManzoor>` and
+  :user:`Jérémie du Boisberranger <jeremiedbb>`.
+
+- |Enhancement| :class:`metrics.silhouette_samples` nows accepts a sparse
+  matrix of pairwise distances between samples, or a feature array.
+  :pr:`18723` by :user:`Sahil Gupta <sahilgupta2105>` and
+  :pr:`24677` by :user:`Ashwin Mathur <awinml>`.
+
+- |Enhancement| A new parameter `drop_intermediate` was added to
+  :func:`metrics.precision_recall_curve`,
+  :func:`metrics.PrecisionRecallDisplay.from_estimator`,
+  :func:`metrics.PrecisionRecallDisplay.from_predictions`,
+  which drops some suboptimal thresholds to create lighter precision-recall
+  curves.
+  :pr:`24668` by :user:`dberenbaum`.
+
+- |Enhancement| :meth:`metrics.RocCurveDisplay.from_estimator` and
+  :meth:`metrics.RocCurveDisplay.from_predictions` now accept two new keywords,
+  `plot_chance_level` and `chance_level_kw` to plot the baseline chance
+  level. This line is exposed in the `chance_level_` attribute.
+  :pr:`25987` by :user:`Yao Xiao <Charlie-XIAO>`.
+
+- |Enhancement| :meth:`metrics.PrecisionRecallDisplay.from_estimator` and
+  :meth:`metrics.PrecisionRecallDisplay.from_predictions` now accept two new
+  keywords, `plot_chance_level` and `chance_level_kw` to plot the baseline
+  chance level. This line is exposed in the `chance_level_` attribute.
+  :pr:`26019` by :user:`Yao Xiao <Charlie-XIAO>`.
+
+- |Fix| :func:`metrics.pairwise.manhattan_distances` now supports readonly sparse datasets.
+  :pr:`25432` by :user:`Julien Jerphanion <jjerphan>`.
+
+- |Fix| Fixed :func:`metrics.classification_report` so that empty input will return
+  `np.nan`. Previously, "macro avg" and `weighted avg` would return
+  e.g. `f1-score=np.nan` and `f1-score=0.0`, being inconsistent. Now, they
+  both return `np.nan`.
+  :pr:`25531` by :user:`Marc Torrellas Socastro <marctorsoc>`.
+
+- |Fix| :func:`metrics.ndcg_score` now gives a meaningful error message for input of
+  length 1.
+  :pr:`25672` by :user:`Lene Preuss <lene>` and :user:`Wei-Chun Chu <wcchu>`.
+
+- |Fix| :func:`metrics.log_loss` raises a warning if the values of the parameter
+  `y_pred` are not normalized, instead of actually normalizing them in the metric.
+  Starting from 1.5 this will raise an error.
+  :pr:`25299` by :user:`Omar Salman <OmarManzoor`.
+
+- |Fix| In :func:`metrics.roc_curve`, use the threshold value `np.inf` instead of
+  arbitrary `max(y_score) + 1`. This threshold is associated with the ROC curve point
+  `tpr=0` and `fpr=0`.
+  :pr:`26194` by :user:`Guillaume Lemaitre <glemaitre>`.
+
+- |Fix| The `'matching'` metric has been removed when using SciPy>=1.9
+  to be consistent with `scipy.spatial.distance` which does not support
+  `'matching'` anymore.
+  :pr:`26264` by :user:`Barata T. Onggo <magnusbarata>`
+
+- |API| The `eps` parameter of the :func:`metrics.log_loss` has been deprecated and
+  will be removed in 1.5. :pr:`25299` by :user:`Omar Salman <OmarManzoor>`.
+
+:mod:`sklearn.gaussian_process`
+...............................
+
+- |Fix| :class:`gaussian_process.GaussianProcessRegressor` has a new argument
+  `n_targets`, which is used to decide the number of outputs when sampling
+  from the prior distributions. :pr:`23099` by :user:`Zhehao Liu <MaxwellLZH>`.
+
+:mod:`sklearn.mixture`
+......................
+
+- |Efficiency| :class:`mixture.GaussianMixture` is more efficient now and will bypass
+  unnecessary initialization if the weights, means, and precisions are
+  given by users.
+  :pr:`26021` by :user:`Jiawei Zhang <jiawei-zhang-a>`.
+
+:mod:`sklearn.model_selection`
+..............................
+
+- |MajorFeature| Added the class :class:`model_selection.ValidationCurveDisplay`
+  that allows easy plotting of validation curves obtained by the function
+  :func:`model_selection.validation_curve`.
+  :pr:`25120` by :user:`Guillaume Lemaitre <glemaitre>`.
+
+- |API| The parameter `log_scale` in the class
+  :class:`model_selection.LearningCurveDisplay` has been deprecated in 1.3 and
+  will be removed in 1.5. The default scale can be overridden by setting it
+  directly on the `ax` object and will be set automatically from the spacing
+  of the data points otherwise.
+  :pr:`25120` by :user:`Guillaume Lemaitre <glemaitre>`.
+
+- |Enhancement| :func:`model_selection.cross_validate` accepts a new parameter
+  `return_indices` to return the train-test indices of each cv split.
+  :pr:`25659` by :user:`Guillaume Lemaitre <glemaitre>`.
+
+:mod:`sklearn.multioutput`
+..........................
+
+- |Fix| :func:`getattr` on :meth:`multioutput.MultiOutputRegressor.partial_fit`
+  and :meth:`multioutput.MultiOutputClassifier.partial_fit` now correctly raise
+  an `AttributeError` if done before calling `fit`. :pr:`26333` by `Adrin
+  Jalali`_.
+
+:mod:`sklearn.naive_bayes`
+..........................
+
+- |Fix| :class:`naive_bayes.GaussianNB` does not raise anymore a `ZeroDivisionError`
+  when the provided `sample_weight` reduces the problem to a single class in `fit`.
+  :pr:`24140` by :user:`Jonathan Ohayon <Johayon>` and :user:`Chiara Marmo <cmarmo>`.
+
+:mod:`sklearn.neighbors`
+........................
+
+- |Enhancement| The performance of :meth:`neighbors.KNeighborsClassifier.predict`
+  and of :meth:`neighbors.KNeighborsClassifier.predict_proba` has been improved
+  when `n_neighbors` is large and `algorithm="brute"` with non Euclidean metrics.
+  :pr:`24076` by :user:`Meekail Zain <micky774>`, :user:`Julien Jerphanion <jjerphan>`.
+
+- |Fix| Remove support for `KulsinskiDistance` in :class:`neighbors.BallTree`. This
+  dissimilarity is not a metric and cannot be supported by the BallTree.
+  :pr:`25417` by :user:`Guillaume Lemaitre <glemaitre>`.
+
+- |API| The support for metrics other than `euclidean` and `manhattan` and for
+  callables in :class:`neighbors.NearestNeighbors` is deprecated and will be removed in
+  version 1.5. :pr:`24083` by :user:`Valentin Laurent <Valentin-Laurent>`.
+
+:mod:`sklearn.neural_network`
+.............................
+
+- |Fix| :class:`neural_network.MLPRegressor` and :class:`neural_network.MLPClassifier`
+  reports the right `n_iter_` when `warm_start=True`. It corresponds to the number
+  of iterations performed on the current call to `fit` instead of the total number
+  of iterations performed since the initialization of the estimator.
+  :pr:`25443` by :user:`Marvin Krawutschke <Marvvxi>`.
+
+:mod:`sklearn.pipeline`
+.......................
+
+- |Feature| :class:`pipeline.FeatureUnion` can now use indexing notation (e.g.
+  `feature_union["scalar"]`) to access transformers by name. :pr:`25093` by
+  `Thomas Fan`_.
+
+- |Feature| :class:`pipeline.FeatureUnion` can now access the
+  `feature_names_in_` attribute if the `X` value seen during `.fit` has a
+  `columns` attribute and all columns are strings. e.g. when `X` is a
+  `pandas.DataFrame`
+  :pr:`25220` by :user:`Ian Thompson <it176131>`.
+
+- |Fix| :meth:`pipeline.Pipeline.fit_transform` now raises an `AttributeError`
+  if the last step of the pipeline does not support `fit_transform`.
+  :pr:`26325` by `Adrin Jalali`_.
+
+:mod:`sklearn.preprocessing`
+............................
+
+- |MajorFeature| Introduces :class:`preprocessing.TargetEncoder` which is a
+  categorical encoding based on target mean conditioned on the value of the
+  category. :pr:`25334` by `Thomas Fan`_.
+
+- |Feature| :class:`preprocessing.OrdinalEncoder` now supports grouping
+  infrequent categories into a single feature. Grouping infrequent categories
+  is enabled by specifying how to select infrequent categories with
+  `min_frequency` or `max_categories`. :pr:`25677` by `Thomas Fan`_.
+
+- |Enhancement| :class:`preprocessing.PolynomialFeatures` now calculates the
+  number of expanded terms a-priori when dealing with sparse `csr` matrices
+  in order to optimize the choice of `dtype` for `indices` and `indptr`. It
+  can now output `csr` matrices with `np.int32` `indices/indptr` components
+  when there are few enough elements, and will automatically use `np.int64`
+  for sufficiently large matrices.
+  :pr:`20524` by :user:`niuk-a <niuk-a>` and
+  :pr:`23731` by :user:`Meekail Zain <micky774>`
+
+- |Enhancement| A new parameter `sparse_output` was added to
+  :class:`preprocessing.SplineTransformer`, available as of SciPy 1.8. If
+  `sparse_output=True`, :class:`preprocessing.SplineTransformer` returns a sparse
+  CSR matrix. :pr:`24145` by :user:`Christian Lorentzen <lorentzenchr>`.
+
+- |Enhancement| Adds a `feature_name_combiner` parameter to
+  :class:`preprocessing.OneHotEncoder`. This specifies a custom callable to
+  create feature names to be returned by
+  :meth:`preprocessing.OneHotEncoder.get_feature_names_out`. The callable
+  combines input arguments `(input_feature, category)` to a string.
+  :pr:`22506` by :user:`Mario Kostelac <mariokostelac>`.
+
+- |Enhancement| Added support for `sample_weight` in
+  :class:`preprocessing.KBinsDiscretizer`. This allows specifying the parameter
+  `sample_weight` for each sample to be used while fitting. The option is only
+  available when `strategy` is set to `quantile` and `kmeans`.
+  :pr:`24935` by :user:`Seladus <seladus>`, :user:`Guillaume Lemaitre <glemaitre>`, and
+  :user:`Dea María Léon <deamarialeon>`, :pr:`25257` by :user:`Gleb Levitski <glevv>`.
+
+- |Enhancement| Subsampling through the `subsample` parameter can now be used in
+  :class:`preprocessing.KBinsDiscretizer` regardless of the strategy used.
+  :pr:`26424` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
+
+- |Fix| :class:`preprocessing.PowerTransformer` now correctly preserves the Pandas
+  Index when the `set_config(transform_output="pandas")`. :pr:`26454` by `Thomas Fan`_.
+
+- |Fix| :class:`preprocessing.PowerTransformer` now correctly raises error when
+  using `method="box-cox"` on data with a constant `np.nan` column.
+  :pr:`26400` by :user:`Yao Xiao <Charlie-XIAO>`.
+
+- |Fix| :class:`preprocessing.PowerTransformer` with `method="yeo-johnson"` now leaves
+  constant features unchanged instead of transforming with an arbitrary value for
+  the `lambdas_` fitted parameter.
+  :pr:`26566` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
+
+- |API| The default value of the `subsample` parameter of
+  :class:`preprocessing.KBinsDiscretizer` will change from `None` to `200_000` in
+  version 1.5 when `strategy="kmeans"` or `strategy="uniform"`.
+  :pr:`26424` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
+
+:mod:`sklearn.svm`
+..................
+
+- |API| `dual` parameter now accepts `auto` option for
+  :class:`svm.LinearSVC` and :class:`svm.LinearSVR`.
+  :pr:`26093` by :user:`Gleb Levitski <glevv>`.
+
+:mod:`sklearn.tree`
+...................
+
+- |MajorFeature| :class:`tree.DecisionTreeRegressor` and
+  :class:`tree.DecisionTreeClassifier` support missing values when
+  `splitter='best'` and criterion is `gini`, `entropy`, or `log_loss`,
+  for classification or `squared_error`, `friedman_mse`, or `poisson`
+  for regression. :pr:`23595`, :pr:`26376` by `Thomas Fan`_.
+
+- |Enhancement| Adds a `class_names` parameter to
+  :func:`tree.export_text`. This allows specifying the parameter `class_names`
+  for each target class in ascending numerical order.
+  :pr:`25387` by :user:`William M <Akbeeh>` and :user:`crispinlogan <crispinlogan>`.
+
+- |Fix| :func:`tree.export_graphviz` and :func:`tree.export_text` now accepts
+  `feature_names` and `class_names` as array-like rather than lists.
+  :pr:`26289` by :user:`Yao Xiao <Charlie-XIAO>`
+
+:mod:`sklearn.utils`
+....................
+
+- |FIX| Fixes :func:`utils.check_array` to properly convert pandas
+  extension arrays. :pr:`25813` and :pr:`26106` by `Thomas Fan`_.
+
+- |Fix| :func:`utils.check_array` now supports pandas DataFrames with
+  extension arrays and object dtypes by return an ndarray with object dtype.
+  :pr:`25814` by `Thomas Fan`_.
+
+- |API| `utils.estimator_checks.check_transformers_unfitted_stateless` has been
+  introduced to ensure stateless transformers don't raise `NotFittedError`
+  during `transform` with no prior call to `fit` or `fit_transform`.
+  :pr:`25190` by :user:`Vincent Maladière <Vincent-Maladiere>`.
+
+- |API| A `FutureWarning` is now raised when instantiating a class which inherits from
+  a deprecated base class (i.e. decorated by :class:`utils.deprecated`) and which
+  overrides the `__init__` method.
+  :pr:`25733` by :user:`Brigitta Sipőcz <bsipocz>` and
+  :user:`Jérémie du Boisberranger <jeremiedbb>`.
+
+:mod:`sklearn.semi_supervised`
+..............................
+
+- |Enhancement| :meth:`semi_supervised.LabelSpreading.fit` and
+  :meth:`semi_supervised.LabelPropagation.fit` now accepts sparse metrics.
+  :pr:`19664` by :user:`Kaushik Amar Das <cozek>`.
+
+Miscellaneous
+.............
+
+- |Enhancement| Replace obsolete exceptions `EnvironmentError`, `IOError` and
+  `WindowsError`.
+  :pr:`26466` by :user:`Dimitri Papadopoulos ORfanos <DimitriPapadopoulos>`.
+
+Code and Documentation Contributors
+-----------------------------------
+
+Thanks to everyone who has contributed to the maintenance and improvement of
+the project since version 1.2, including:
+
+2357juan, Abhishek Singh Kushwah, Adam Handke, Adam Kania, Adam Li, adienes,
+Admir Demiraj, adoublet, Adrin Jalali, A.H.Mansouri, Ahmedbgh, Ala-Na, Alex
+Buzenet, AlexL, Ali H. El-Kassas, amay, András Simon, André Pedersen, Andrew
+Wang, Ankur Singh, annegnx, Ansam Zedan, Anthony22-dev, Artur Hermano, Arturo
+Amor, as-90, ashah002, Ashish Dutt, Ashwin Mathur, AymericBasset, Azaria
+Gebremichael, Barata Tripramudya Onggo, Benedek Harsanyi, Benjamin Bossan,
+Bharat Raghunathan, Binesh Bannerjee, Boris Feld, Brendan Lu, Brevin Kunde,
+cache-missing, Camille Troillard, Carla J, carlo, Carlo Lemos, c-git, Changyao
+Chen, Chiara Marmo, Christian Lorentzen, Christian Veenhuis, Christine P. Chai,
+crispinlogan, Da-Lan, DanGonite57, Dave Berenbaum, davidblnc, david-cortes,
+Dayne, Dea María Léon, Denis, Dimitri Papadopoulos Orfanos, Dimitris
+Litsidis, Dmitry Nesterov, Dominic Fox, Dominik Prodinger, Edern, Ekaterina
+Butyugina, Elabonga Atuo, Emir, farhan khan, Felipe Siola, futurewarning, Gael
+Varoquaux, genvalen, Gleb Levitski, Guillaume Lemaitre, gunesbayir, Haesun
+Park, hujiahong726, i-aki-y, Ian Thompson, Ido M, Ily, Irene, Jack McIvor,
+jakirkham, James Dean, JanFidor, Jarrod Millman, JB Mountford, Jérémie du
+Boisberranger, Jessicakk0711, Jiawei Zhang, Joey Ortiz, JohnathanPi, John
+Pangas, Joshua Choo Yun Keat, Joshua Hedlund, JuliaSchoepp, Julien Jerphanion,
+jygerardy, ka00ri, Kaushik Amar Das, Kento Nozawa, Kian Eliasi, Kilian Kluge,
+Lene Preuss, Linus, Logan Thomas, Loic Esteve, Louis Fouquet, Lucy Liu, Madhura
+Jayaratne, Marc Torrellas Socastro, Maren Westermann, Mario Kostelac, Mark
+Harfouche, Marko Toplak, Marvin Krawutschke, Masanori Kanazu, mathurinm, Matt
+Haberland, Max Halford, maximeSaur, Maxwell Liu, m. bou, mdarii, Meekail Zain,
+Mikhail Iljin, murezzda, Nawazish Alam, Nicola Fanelli, Nightwalkx, Nikolay
+Petrov, Nishu Choudhary, NNLNR, npache, Olivier Grisel, Omar Salman, ouss1508,
+PAB, Pandata, partev, Peter Piontek, Phil, pnucci, Pooja M, Pooja Subramaniam,
+precondition, Quentin Barthélemy, Rafal Wojdyla, Raghuveer Bhat, Rahil Parikh,
+Ralf Gommers, ram vikram singh, Rushil Desai, Sadra Barikbin, SANJAI_3, Sashka
+Warner, Scott Gigante, Scott Gustafson, searchforpassion, Seoeun
+Hong, Shady el Gewily, Shiva chauhan, Shogo Hida, Shreesha Kumar Bhat, sonnivs,
+Sortofamudkip, Stanislav (Stanley) Modrak, Stefanie Senger, Steven Van
+Vaerenbergh, Tabea Kossen, Théophile Baranger, Thijs van Weezel, Thomas A
+Caswell, Thomas Germer, Thomas J. Fan, Tim Head, Tim P, Tom Dupré la Tour,
+tomiock, tspeng, Valentin Laurent, Veghit, VIGNESH D, Vijeth Moudgalya, Vinayak
+Mehta, Vincent M, Vincent-violet, Vyom Pathak, William M, windiana42, Xiao
+Yuan, Yao Xiao, Yaroslav Halchenko, Yotam Avidar-Constantini, Yuchen Zhou,
+Yusuf Raji, zeeshan lone

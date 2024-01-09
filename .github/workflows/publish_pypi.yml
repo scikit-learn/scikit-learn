@@ -1,0 +1,47 @@
+name: Publish to Pypi
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version upload to pypi'
+        required: true
+      pypi_repo:
+        description: 'Repo to upload to (testpypi or pypi)'
+        default: 'testpypi'
+        required: true
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      # IMPORTANT: this permission is mandatory for trusted publishing
+      id-token: write
+    steps:
+    - uses: actions/checkout@v3
+    - uses: actions/setup-python@v4
+      with:
+        python-version: '3.8'
+    - name: Install dependencies
+      run: |
+        pip install -U wheelhouse_uploader pyyaml
+    - name: Downloading wheels and sdist from staging
+      env:
+        SKLEARN_VERSION: ${{ github.event.inputs.version }}
+      run: |
+        echo "Download $SKLEARN_VERSION wheels and sdist"
+        python -m wheelhouse_uploader fetch \
+          --version $SKLEARN_VERSION \
+          --local-folder dist/ \
+          scikit-learn \
+          https://pypi.anaconda.org/scikit-learn-wheels-staging/simple/scikit-learn/
+    - name: Check dist has the correct number of artifacts
+      run: |
+        python build_tools/github/check_wheels.py
+    - name: Publish package to TestPyPI
+      uses: pypa/gh-action-pypi-publish@v1.8.5
+      with:
+        repository_url: https://test.pypi.org/legacy/
+      if: ${{ github.event.inputs.pypi_repo == 'testpypi' }}
+    - name: Publish package to PyPI
+      uses: pypa/gh-action-pypi-publish@v1.8.5
+      if: ${{ github.event.inputs.pypi_repo == 'pypi' }}
