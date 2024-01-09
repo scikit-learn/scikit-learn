@@ -1248,6 +1248,14 @@ def test_train_test_split_errors():
     pytest.raises(
         ValueError,
         train_test_split,
+        range(10),
+        test_size=4,
+        train_size=4,
+        validation_size=4,
+    )
+    pytest.raises(
+        ValueError,
+        train_test_split,
         range(3),
         test_size=np.float32(0.6),
         train_size=np.float32(0.6),
@@ -1269,6 +1277,9 @@ def test_train_test_split_errors():
         validation_size="wrong_type",
     )
     pytest.raises(ValueError, train_test_split, range(3), validation_size=2)
+    pytest.raises(
+        ValueError, train_test_split, range(3), train_size=1, validation_size=10
+    )
     pytest.raises(ValueError, train_test_split, range(3), test_size=2, train_size=4)
     pytest.raises(
         ValueError,
