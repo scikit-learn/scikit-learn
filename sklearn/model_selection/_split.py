@@ -2347,7 +2347,7 @@ def _validate_shuffle_split(
         raise ValueError(
             "The sum of train_size, validation_size and test_size = %d, "
             "should be smaller than the number of "
-            "samples %d. Reduce test_size and/or "
+            "samples %d. Reduce test_size and/or validation_size and/or "
             "train_size." % (n_train + n_test + n_validation, n_samples)
         )
 
