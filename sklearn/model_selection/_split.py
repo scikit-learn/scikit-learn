@@ -1123,6 +1123,9 @@ class TimeSeriesSplit(_BaseKFold):
       Train: index=[0 1 2 3 4 5 6 7]
       Test:  index=[10 11]
 
+    For a more extended example see
+    :ref:`sphx_glr_auto_examples_applications_plot_cyclical_feature_engineering.py`.
+
     Notes
     -----
     The training set has size ``i * n_samples // (n_splits + 1)
