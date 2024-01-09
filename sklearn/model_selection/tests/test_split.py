@@ -1232,6 +1232,15 @@ def test_train_test_split_errors():
     pytest.raises(ValueError, train_test_split, range(3), train_size=1.1)
 
     pytest.raises(ValueError, train_test_split, range(3), test_size=0.6, train_size=0.6)
+
+    pytest.raises(
+        ValueError,
+        train_test_split,
+        range(3),
+        test_size=0.4,
+        train_size=0.4,
+        validation_size=0.4,
+    )
     pytest.raises(
         ValueError,
         train_test_split,
@@ -1239,8 +1248,24 @@ def test_train_test_split_errors():
         test_size=np.float32(0.6),
         train_size=np.float32(0.6),
     )
+    pytest.raises(
+        ValueError,
+        train_test_split,
+        range(3),
+        test_size=np.float32(0.4),
+        train_size=np.float32(0.4),
+        validation_size=np.float32(0.4),
+    )
     pytest.raises(ValueError, train_test_split, range(3), test_size="wrong_type")
     pytest.raises(ValueError, train_test_split, range(3), test_size=2, train_size=4)
+    pytest.raises(
+        ValueError,
+        train_test_split,
+        range(3),
+        test_size=2,
+        train_size=2,
+        validation_size=2,
+    )
     pytest.raises(TypeError, train_test_split, range(3), some_argument=1.1)
     pytest.raises(ValueError, train_test_split, range(3), range(42))
     pytest.raises(ValueError, train_test_split, range(10), shuffle=False, stratify=True)
@@ -1346,6 +1371,15 @@ def test_train_test_split(coo_container):
     assert_array_equal(X_train[:, 0], y_train * 10)
     assert_array_equal(X_test[:, 0], y_test * 10)
 
+    # validation test
+    split = train_test_split(X, y, test_size=None, train_size=0.5, validation_size=0.25)
+    X_train, X_validation, X_test, y_train, y_validation, y_test = split
+    assert len(y_test) + len(y_validation) == len(y_train)
+    # test correspondence of X and y
+    assert_array_equal(X_train[:, 0], y_train * 10)
+    assert_array_equal(X_validation[:, 0], y_validation * 10)
+    assert_array_equal(X_test[:, 0], y_test * 10)
+
     # don't convert lists to anything else by default
     split = train_test_split(X, X_s, y.tolist())
     X_train, X_test, X_s_train, X_s_test, y_train, y_test = split
@@ -1372,12 +1406,39 @@ def test_train_test_split(coo_container):
         # check the 1:1 ratio of ones and twos in the data is preserved
         assert np.sum(train == 1) == np.sum(train == 2)
 
+    # test stratification option with validation
+    y = np.array([1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2])
+    for validation_size, exp_valid_size in zip([2, 4, 0.125, 0.25], [2, 4, 2, 4]):
+        train, validation, test = train_test_split(
+            y,
+            test_size=0.5,
+            validation_size=validation_size,
+            stratify=y,
+            random_state=0,
+        )
+        assert len(validation) == exp_valid_size
+        assert len(test) + len(validation) + len(train) == len(y)
+        # check the 1:1 ratio of ones and twos in the data is preserved
+        assert np.sum(train == 1) == np.sum(train == 2)
+        assert np.sum(validation == 1) == np.sum(validation == 2)
+        assert np.sum(test == 1) == np.sum(test == 2)
+
     # test unshuffled split
     y = np.arange(10)
     for test_size in [2, 0.2]:
         train, test = train_test_split(y, shuffle=False, test_size=test_size)
         assert_array_equal(test, [8, 9])
         assert_array_equal(train, [0, 1, 2, 3, 4, 5, 6, 7])
+
+    # test unshuffled split with validation
+    y = np.arange(10)
+    for validation_size in [2, 0.2]:
+        train, validation, test = train_test_split(
+            y, shuffle=False, test_size=0.2, validation_size=validation_size
+        )
+        assert_array_equal(test, [8, 9])
+        assert_array_equal(validation, [6, 7])
+        assert_array_equal(train, [0, 1, 2, 3, 4, 5])
 
 
 def test_train_test_split_32bit_overflow():
@@ -1463,6 +1524,46 @@ def test_train_test_split_list_input():
 
         np.testing.assert_equal(X_train1, X_train2)
         np.testing.assert_equal(y_train2, y_train3)
+        np.testing.assert_equal(X_test1, X_test3)
+        np.testing.assert_equal(y_test3, y_test2)
+
+    # Check with validation activated
+    for stratify in (True, False):
+        X_train1, X_validation1, X_test1, y_train1, y_validation1, y_test1 = (
+            train_test_split(
+                X,
+                y1,
+                stratify=y1 if stratify else None,
+                random_state=0,
+                test_size=2,
+                validation_size=3,
+            )
+        )
+        X_train2, X_validation2, X_test2, y_train2, y_validation2, y_test2 = (
+            train_test_split(
+                X,
+                y2,
+                stratify=y2 if stratify else None,
+                random_state=0,
+                test_size=2,
+                validation_size=3,
+            )
+        )
+        X_train3, X_validation3, X_test3, y_train3, y_validation3, y_test3 = (
+            train_test_split(
+                X,
+                y3,
+                stratify=y3 if stratify else None,
+                random_state=0,
+                test_size=2,
+                validation_size=3,
+            )
+        )
+
+        np.testing.assert_equal(X_train1, X_train2)
+        np.testing.assert_equal(y_train2, y_train3)
+        np.testing.assert_equal(X_validation1, X_validation2)
+        np.testing.assert_equal(y_validation2, y_validation3)
         np.testing.assert_equal(X_test1, X_test3)
         np.testing.assert_equal(y_test3, y_test2)
 
