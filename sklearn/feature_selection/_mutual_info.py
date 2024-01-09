@@ -13,6 +13,7 @@ from ..preprocessing import scale
 from ..utils import check_random_state
 from ..utils._param_validation import Interval, StrOptions, validate_params
 from ..utils.multiclass import check_classification_targets
+from ..utils.parallel import Parallel, delayed
 from ..utils.validation import check_array, check_X_y
 
 
@@ -206,6 +207,7 @@ def _estimate_mi(
     n_neighbors=3,
     copy=True,
     random_state=None,
+    n_jobs=1,
 ):
     """Estimate mutual information between the features and the target.
 
@@ -306,6 +308,14 @@ def _estimate_mi(
         for x, discrete_feature in zip(_iterate_columns(X), discrete_mask)
     ]
 
+    def _compute_mi_single_var(x, discrete_feature):
+        return _compute_mi(x, y, discrete_feature, discrete_target, n_neighbors)
+
+    mi = Parallel(n_jobs=n_jobs)(
+        delayed(_compute_mi_single_var)(x, discrete_feature)
+        for x, discrete_feature in zip(_iterate_columns(X), discrete_mask)
+    )
+
     return np.array(mi)
 
 
@@ -321,7 +331,14 @@ def _estimate_mi(
     prefer_skip_nested_validation=True,
 )
 def mutual_info_regression(
-    X, y, *, discrete_features="auto", n_neighbors=3, copy=True, random_state=None
+    X,
+    y,
+    *,
+    discrete_features="auto",
+    n_neighbors=3,
+    copy=True,
+    random_state=None,
+    n_jobs=1,
 ):
     """Estimate mutual information for a continuous target variable.
 
@@ -396,7 +413,9 @@ def mutual_info_regression(
     .. [4] L. F. Kozachenko, N. N. Leonenko, "Sample Estimate of the Entropy
            of a Random Vector", Probl. Peredachi Inf., 23:2 (1987), 9-16
     """
-    return _estimate_mi(X, y, discrete_features, False, n_neighbors, copy, random_state)
+    return _estimate_mi(
+        X, y, discrete_features, False, n_neighbors, copy, random_state, n_jobs
+    )
 
 
 @validate_params(
@@ -411,7 +430,14 @@ def mutual_info_regression(
     prefer_skip_nested_validation=True,
 )
 def mutual_info_classif(
-    X, y, *, discrete_features="auto", n_neighbors=3, copy=True, random_state=None
+    X,
+    y,
+    *,
+    discrete_features="auto",
+    n_neighbors=3,
+    copy=True,
+    random_state=None,
+    n_jobs=1,
 ):
     """Estimate mutual information for a discrete target variable.
 
@@ -487,4 +513,6 @@ def mutual_info_classif(
            of a Random Vector:, Probl. Peredachi Inf., 23:2 (1987), 9-16
     """
     check_classification_targets(y)
-    return _estimate_mi(X, y, discrete_features, True, n_neighbors, copy, random_state)
+    return _estimate_mi(
+        X, y, discrete_features, True, n_neighbors, copy, random_state, n_jobs
+    )
