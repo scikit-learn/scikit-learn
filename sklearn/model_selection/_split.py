@@ -2303,12 +2303,12 @@ def _validate_shuffle_split(
         and train_size_type == "f"
         and test_size_type == "f"
         and validation_size_type == "f"
-        and train_size + validation_size_type + test_size > 1
+        and train_size + validation_size + test_size > 1
     ):
         raise ValueError(
             "The sum of test_size and validation_size and train_size = {}, should be in"
             " the (0, 1) range. Reduce test_size and/or validation_size and/or"
-            " train_size.".format(train_size + validation_size_type + test_size)
+            " train_size.".format(train_size + validation_size + test_size)
         )
 
     if test_size_type == "f":
@@ -2605,6 +2605,11 @@ def check_cv(cv=5, y=None, *, classifier=False):
             Interval(numbers.Integral, 1, None, closed="left"),
             None,
         ],
+        "validation_size": [
+            Interval(RealNotInt, 0, 1, closed="neither"),
+            Interval(numbers.Integral, 1, None, closed="left"),
+            None,
+        ],
         "random_state": ["random_state"],
         "shuffle": ["boolean"],
         "stratify": ["array-like", None],
@@ -2670,8 +2675,7 @@ def train_test_split(
 
     Returns
     -------
-    splitting : list, length=2 * len(arrays)
-        or length=3 * len(arrays) if validation_size is set
+    splitting : list, length=2 * len(arrays) or length=3 * len(arrays)
         List containing train-test or train-validation-test split of inputs.
 
         .. versionadded:: 0.16
