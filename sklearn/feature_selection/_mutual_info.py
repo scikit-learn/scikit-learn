@@ -327,6 +327,7 @@ def _estimate_mi(
         "n_neighbors": [Interval(Integral, 1, None, closed="left")],
         "copy": ["boolean"],
         "random_state": ["random_state"],
+        "n_jobs": [int],
     },
     prefer_skip_nested_validation=True,
 )
@@ -384,6 +385,9 @@ def mutual_info_regression(
         Pass an int for reproducible results across multiple function calls.
         See :term:`Glossary <random_state>`.
 
+    n_jobs : int, default=1
+        The number of jobs to run in parallel.
+
     Returns
     -------
     mi : ndarray, shape (n_features,)
@@ -426,6 +430,7 @@ def mutual_info_regression(
         "n_neighbors": [Interval(Integral, 1, None, closed="left")],
         "copy": ["boolean"],
         "random_state": ["random_state"],
+        "n_jobs": [int],
     },
     prefer_skip_nested_validation=True,
 )
@@ -437,7 +442,7 @@ def mutual_info_classif(
     n_neighbors=3,
     copy=True,
     random_state=None,
-    n_jobs=1,
+    n_jobs: int = 1,
 ):
     """Estimate mutual information for a discrete target variable.
 
@@ -482,6 +487,9 @@ def mutual_info_classif(
         continuous variables in order to remove repeated values.
         Pass an int for reproducible results across multiple function calls.
         See :term:`Glossary <random_state>`.
+
+    n_jobs : int, default=1
+        The number of jobs to run in parallel.
 
     Returns
     -------
