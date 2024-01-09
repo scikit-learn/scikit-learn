@@ -17,7 +17,7 @@ Changelog
 
 - |Fix| Fix the function :func:`~utils.check_array` to output the right error message
   when the input is Series instead of a DataFrame.
-  :pr:`27744` by :user:`Stan Furrer <stanFurrer>` and :user:`Yao Xiao <Charlie-XIAO>`.
+  :pr:`28090` by :user:`Stan Furrer <stanFurrer>` and :user:`Yao Xiao <Charlie-XIAO>`.
 
 
 .. _changes_1_4:
