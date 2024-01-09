@@ -282,6 +282,8 @@ def test_loss_boundary_y_pred(loss, y_pred_success, y_pred_fail):
         #
         # y, raw = 0.0, 37.
         # mp_logloss(y, raw), mp_gradient(y, raw), mp_hessian(y, raw)
+        (HalfBinomialLoss(), 0.0, -1e20, 0, 0, 0),
+        (HalfBinomialLoss(), 1.0, -1e20, 1e20, -1, 0),
         (HalfBinomialLoss(), 0.0, -1e3, 0, 0, 0),
         (HalfBinomialLoss(), 1.0, -1e3, 1e3, -1, 0),
         (HalfBinomialLoss(), 1.0, -37.5, 37.5, -1, 0),
@@ -293,6 +295,8 @@ def test_loss_boundary_y_pred(loss, y_pred_success, y_pred_fail):
         (HalfBinomialLoss(), 1.0, 37.0, *[8.533047625744066e-17] * 3),
         (HalfBinomialLoss(), 0.0, 37.5, 37.5, 1, 5.175555005801868e-17),
         (HalfBinomialLoss(), 0.0, 232.8, 232.8, 1, 1.4287342391028437e-101),
+        (HalfBinomialLoss(), 1.0, 1e20, 0, 0, 0),
+        (HalfBinomialLoss(), 0.0, 1e20, 1e20, 1, 0),
         (
             HalfBinomialLoss(),
             1.0,
