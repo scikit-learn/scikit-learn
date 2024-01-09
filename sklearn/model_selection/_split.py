@@ -2233,7 +2233,9 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
         return super().split(X, y, groups)
 
 
-def _validate_shuffle_split(n_samples, test_size, train_size, default_test_size=None):
+def _validate_shuffle_split(
+    n_samples, test_size, train_size, default_test_size=None, validation_size=None
+):
     """
     Validation helper to check if the test/test sizes are meaningful w.r.t. the
     size of the data (n_samples).
@@ -2243,6 +2245,7 @@ def _validate_shuffle_split(n_samples, test_size, train_size, default_test_size=
 
     test_size_type = np.asarray(test_size).dtype.kind
     train_size_type = np.asarray(train_size).dtype.kind
+    validation_size_type = np.asarray(validation_size).dtype.kind
 
     if (
         test_size_type == "i"
@@ -2268,15 +2271,44 @@ def _validate_shuffle_split(n_samples, test_size, train_size, default_test_size=
             "(0, 1) range".format(train_size, n_samples)
         )
 
+    if validation_size is not None:
+        if (
+            validation_size_type == "i"
+            and (validation_size >= n_samples or validation_size <= 0)
+            or validation_size_type == "f"
+            and (validation_size <= 0 or validation_size >= 1)
+        ):
+            raise ValueError(
+                "validation_size={0} should be either positive and smaller"
+                " than the number of samples {1} or a float in the "
+                "(0, 1) range".format(validation_size, n_samples)
+            )
+
     if train_size is not None and train_size_type not in ("i", "f"):
         raise ValueError("Invalid value for train_size: {}".format(train_size))
     if test_size is not None and test_size_type not in ("i", "f"):
         raise ValueError("Invalid value for test_size: {}".format(test_size))
+    if validation_size is not None and validation_size_type not in ("i", "f"):
+        raise ValueError(
+            "Invalid value for validation_size: {}".format(validation_size)
+        )
 
     if train_size_type == "f" and test_size_type == "f" and train_size + test_size > 1:
         raise ValueError(
             "The sum of test_size and train_size = {}, should be in the (0, 1)"
             " range. Reduce test_size and/or train_size.".format(train_size + test_size)
+        )
+    if (
+        validation_size is not None
+        and train_size_type == "f"
+        and test_size_type == "f"
+        and validation_size_type == "f"
+        and train_size + validation_size_type + test_size > 1
+    ):
+        raise ValueError(
+            "The sum of test_size and validation_size and train_size = {}, should be in"
+            " the (0, 1) range. Reduce test_size and/or validation_size and/or"
+            " train_size.".format(train_size + validation_size_type + test_size)
         )
 
     if test_size_type == "f":
@@ -2289,10 +2321,26 @@ def _validate_shuffle_split(n_samples, test_size, train_size, default_test_size=
     elif train_size_type == "i":
         n_train = float(train_size)
 
-    if train_size is None:
-        n_train = n_samples - n_test
-    elif test_size is None:
-        n_test = n_samples - n_train
+    if validation_size_type == "f":
+        n_validation = floor(validation_size * n_samples)
+    elif validation_size_type == "i":
+        n_validation = float(validation_size)
+
+    if validation_size is not None:
+        if train_size is None and test_size is None:
+            raise ValueError(
+                "At least one of test_size or train_size should be defined"
+                " if validation_size={0} is defined.".format(validation_size_type)
+            )
+        elif train_size is None:
+            n_train = n_samples - n_test - n_validation
+        elif test_size is None:
+            n_test = n_samples - n_train - n_validation
+    else:
+        if train_size is None:
+            n_train = n_samples - n_test
+        elif test_size is None:
+            n_test = n_samples - n_train
 
     if n_train + n_test > n_samples:
         raise ValueError(
@@ -2301,8 +2349,18 @@ def _validate_shuffle_split(n_samples, test_size, train_size, default_test_size=
             "samples %d. Reduce test_size and/or "
             "train_size." % (n_train + n_test, n_samples)
         )
+    if validation_size is not None and n_train + n_test + n_validation > n_samples:
+        raise ValueError(
+            "The sum of train_size, validation_size and test_size = %d, "
+            "should be smaller than the number of "
+            "samples %d. Reduce test_size and/or "
+            "train_size." % (n_train + n_test + n_validation, n_samples)
+        )
 
     n_train, n_test = int(n_train), int(n_test)
+
+    if validation_size is not None:
+        n_validation = int(n_validation)
 
     if n_train == 0:
         raise ValueError(
@@ -2311,7 +2369,10 @@ def _validate_shuffle_split(n_samples, test_size, train_size, default_test_size=
             "aforementioned parameters.".format(n_samples, test_size, train_size)
         )
 
-    return n_train, n_test
+    if validation_size is not None:
+        return n_train, n_validation, n_test
+    else:
+        return n_train, n_test
 
 
 class PredefinedSplit(BaseCrossValidator):
@@ -2554,6 +2615,7 @@ def train_test_split(
     *arrays,
     test_size=None,
     train_size=None,
+    validation_size=None,
     random_state=None,
     shuffle=True,
     stratify=None,
@@ -2586,6 +2648,12 @@ def train_test_split(
         int, represents the absolute number of train samples. If None,
         the value is automatically set to the complement of the test size.
 
+    validation_size : float or int, default=None
+        If float, should be between 0.0 and 1.0 and represent the
+        proportion of the dataset to include in the validation split. If
+        int, represents the absolute number of validation samples. If None,
+        no validation set is created.
+
     random_state : int, RandomState instance or None, default=None
         Controls the shuffling applied to the data before applying the split.
         Pass an int for reproducible output across multiple function calls.
@@ -2603,7 +2671,8 @@ def train_test_split(
     Returns
     -------
     splitting : list, length=2 * len(arrays)
-        List containing train-test split of inputs.
+        or length=3 * len(arrays) if validation_size is set
+        List containing train-test or train-validation-test split of inputs.
 
         .. versionadded:: 0.16
             If the input is sparse, the output will be a
@@ -2641,6 +2710,9 @@ def train_test_split(
 
     >>> train_test_split(y, shuffle=False)
     [[0, 1, 2], [3, 4]]
+
+    >>> train_test_split(y, test_size=0.2, validation_size=0.2, random_state=42)
+    [[2, 3, 4], [0], [1]]
     """
     n_arrays = len(arrays)
     if n_arrays == 0:
@@ -2649,9 +2721,20 @@ def train_test_split(
     arrays = indexable(*arrays)
 
     n_samples = _num_samples(arrays[0])
-    n_train, n_test = _validate_shuffle_split(
-        n_samples, test_size, train_size, default_test_size=0.25
-    )
+
+    if validation_size is not None:
+        n_train, n_validation, n_test = _validate_shuffle_split(
+            n_samples,
+            test_size,
+            train_size,
+            validation_size=validation_size,
+            default_test_size=0.25,
+        )
+    else:
+        n_train, n_test = _validate_shuffle_split(
+            n_samples, test_size, train_size, default_test_size=0.25
+        )
+        n_validation = 0
 
     if shuffle is False:
         if stratify is not None:
@@ -2660,7 +2743,8 @@ def train_test_split(
             )
 
         train = np.arange(n_train)
-        test = np.arange(n_train, n_train + n_test)
+        validation = np.arange(n_train, n_train + n_validation)
+        test = np.arange(n_train + n_validation, n_train + n_validation + n_test)
 
     else:
         if stratify is not None:
@@ -2668,15 +2752,47 @@ def train_test_split(
         else:
             CVClass = ShuffleSplit
 
-        cv = CVClass(test_size=n_test, train_size=n_train, random_state=random_state)
-
-        train, test = next(cv.split(X=arrays[0], y=stratify))
-
-    return list(
-        chain.from_iterable(
-            (_safe_indexing(a, train), _safe_indexing(a, test)) for a in arrays
+        cv = CVClass(
+            test_size=n_test,
+            train_size=n_train + n_validation,
+            random_state=random_state,
         )
-    )
+
+        train_validation, test = next(cv.split(X=arrays[0], y=stratify))
+
+        if n_validation == 0:
+            train = train_validation
+        else:
+            cv = CVClass(
+                test_size=n_train, train_size=n_validation, random_state=random_state
+            )
+            if stratify is not None:
+                sub_stratify = _safe_indexing(stratify, train_validation)
+            else:
+                sub_stratify = None
+            sub_validation, sub_train = next(
+                cv.split(X=_safe_indexing(arrays[0], train_validation), y=sub_stratify)
+            )
+            validation = _safe_indexing(train_validation, sub_validation)
+            train = _safe_indexing(train_validation, sub_train)
+
+    if validation_size is None:
+        return list(
+            chain.from_iterable(
+                (_safe_indexing(a, train), _safe_indexing(a, test)) for a in arrays
+            )
+        )
+    else:
+        return list(
+            chain.from_iterable(
+                (
+                    _safe_indexing(a, train),
+                    _safe_indexing(a, validation),
+                    _safe_indexing(a, test),
+                )
+                for a in arrays
+            )
+        )
 
 
 # Tell nose that train_test_split is not a test.
