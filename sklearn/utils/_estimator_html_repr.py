@@ -473,6 +473,9 @@ class _HTMLDocumentationLinkMixin:
         if self._doc_link_url_param_generator is None:
             estimator_name = self.__class__.__name__
             estimator_module = ".".join(
+                # Construct the estimator's module name, up to the first private submodule.
+                # This works because in scikit-learn all public estimators are exposed at
+                # that level, even if they actually live in a private sub-module.
                 itertools.takewhile(
                     lambda part: not part.startswith("_"),
                     self.__class__.__module__.split("."),
