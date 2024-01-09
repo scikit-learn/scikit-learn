@@ -610,6 +610,10 @@ Changelog
 :mod:`sklearn.model_selection`
 ..............................
 
+- |Feature| :func:`model_selection.train_test_split` now allows to do a threefold
+  train/validation/test splitting, with the `validation_size` option
+  :pr:`28086` by :user:`Joseph Benzakoun <jbenzakoun>`.
+
 - |Enhancement| :func:`model_selection.learning_curve` raises a warning when
   every cross validation fold fails.
   :pr:`26299` by :user:`Rahil Parikh <rprkh>`.
