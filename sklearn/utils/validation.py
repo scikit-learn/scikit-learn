@@ -788,6 +788,7 @@ def check_array(
     # DataFrame), and store them. If not, store None.
     dtypes_orig = None
     pandas_requires_conversion = False
+    # track if we have a Series-like object to raise a better error message
     is_series = False
     if hasattr(array, "dtypes") and hasattr(array.dtypes, "__array__"):
         # throw warning if columns are sparse. If all columns are sparse, then
@@ -818,7 +819,7 @@ def check_array(
         array, "dtype"
     ):
         # array is a pandas series
-        is_series = _is_series(array)
+        is_series = True
         pandas_requires_conversion = _pandas_dtype_needs_early_conversion(array.dtype)
         if isinstance(array.dtype, np.dtype):
             dtype_orig = array.dtype
@@ -938,6 +939,7 @@ def check_array(
         # result is that np.array(..) produces an array of complex dtype
         # and we need to catch and raise exception for such cases.
         _ensure_no_complex_data(array)
+
         if ensure_2d:
             # If input is scalar raise error
             if array.ndim == 0:
@@ -949,16 +951,21 @@ def check_array(
                 )
             # If input is 1D raise error
             if array.ndim == 1:
-                # If input is a Serie (eg. Pandas series or Polar series)
-                if is_series: 
-                    msg = ("Expected 1D array, got series instead:\n{}\n"
-                       "Pass a dataframe instead of a series with df[[column_name]] "
-                       "instead of df[column_name].").format(array)
-                else: 
-                    msg = ("Expected 2D array, got 1D array instead:\narray={}.\n"
-                    "Reshape your data either using array.reshape(-1, 1) if "
-                    "your data has a single feature or array.reshape(1, -1) "
-                    "if it contains a single sample.").format(array)
+                # If input is a Series-like object (eg. pandas Series or polars Series)
+                if is_series:
+                    msg = (
+                        f"Expected a 2-dimensional container but got {type(array)} "
+                        "instead. Pass a DataFrame containing a single row (i.e. "
+                        "single sample) or a single column (i.e. single feature) "
+                        "instead."
+                    )
+                else:
+                    msg = (
+                        f"Expected 2D array, got 1D array instead:\narray={array}.\n"
+                        "Reshape your data either using array.reshape(-1, 1) if "
+                        "your data has a single feature or array.reshape(1, -1) "
+                        "if it contains a single sample."
+                    )
                 raise ValueError(msg)
 
         if dtype_numeric and hasattr(array.dtype, "kind") and array.dtype.kind in "USV":
@@ -2015,18 +2022,6 @@ def _is_pandas_df(X):
         except KeyError:
             return False
         return isinstance(X, pd.DataFrame)
-    return False
-
-
-def _is_series(X):
-    """"Return true if X is a serie (eg.Pandas serie or Polars series)."""
-    if hasattr(X, "columns") and hasattr(X, "iloc"):
-        # Likely a pandas DataFrame, we explicitly check the type to confirm.
-        try:
-            pd = sys.modules["pandas"]
-        except KeyError:
-            return False
-        return isinstance(X, pd.Series)
     return False
 
 

@@ -2,6 +2,24 @@
 
 .. currentmodule:: sklearn
 
+.. _changes_1_4_1:
+
+Version 1.4.1
+=============
+
+**In Development**
+
+Changelog
+---------
+
+:mod:`sklearn.utils`
+....................
+
+- |Fix| Fix the function :func:`~utils.check_array` to output the right error message
+  when the input is Series instead of a DataFrame.
+  :pr:`27744` by :user:`Stan Furrer <stanFurrer>` and :user:`Yao Xiao <Charlie-XIAO>`.
+
+
 .. _changes_1_4:
 
 Version 1.4.0
@@ -529,10 +547,6 @@ Changelog
   calling a dedicated private function that would crash when OpenBLAS
   misdetects the CPU architecture.
   :pr:`27614` by :user:`Olivier Grisel <ogrisel>`.
-
-- |Fix| Fix the function :func:`~utils.check_array` to output the right error message when
-  the input is Series instead of a DataFrame. 
-  :pr:`xxxxx` by :user:`Stan Furrer <stanFurrer>`.
 
 Code and Documentation Contributors
 -----------------------------------
