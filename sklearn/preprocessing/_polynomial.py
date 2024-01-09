@@ -767,7 +767,7 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
             else:
                 # in _weighted_percentile, nan values should be excluded
                 # similarily as in np.nanpercentile, also a test needs to be
-                # written for sample_weight=some_value
+                # written for sample_weight=[some_values]
                 knots = np.array(
                     [
                         _weighted_percentile(X, sample_weight, percentile)
@@ -883,7 +883,9 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
         _, n_features = X.shape
 
         if self.handle_missing == "error":
-            self.missing_mask = None
+            self.missing_mask = (
+                None  # do or don't we need that for verification purpose?
+            )
 
             if np.isnan(X).any():
                 raise ValueError(

@@ -500,6 +500,7 @@ def test_spline_transformer_handles_missing_values(knots, extrapolation):
     X_nan = [[1, 1], [2, 2], [3, 3], [np.nan, 4], [4, 4]]
     X = [[1, 1], [2, 2], [3, 3], [4, 4]]
 
+    # only for development, will later be removed
     # X_nan = [[1], [2], [3], [np.nan], [4]]
     # X = [[1], [2], [3], [4]]
 
@@ -517,11 +518,13 @@ def test_spline_transformer_handles_missing_values(knots, extrapolation):
         )
         spline.fit_transform(X_nan)
 
-    # check correct results for handle_missing="indicator"
+    # check correct results for handle_missing="indicator", remark: check only
+    # for knots="uniform", since for "quantile" the metrics will be calculated
+    # differently with nan present and a different result is thus expected
     spline = SplineTransformer(
         degree=2,
         n_knots=3,
-        knots=knots,
+        knots="uniform",
         handle_missing="indicator",
         extrapolation=extrapolation,
     )
