@@ -491,16 +491,17 @@ def test_spline_transformer_n_features_out(
     assert splt.transform(X).shape[1] == splt.n_features_out_
 
 
+@pytest.mark.parametrize("knots", ["uniform", "quantile"])
 @pytest.mark.parametrize(
     "extrapolation", ["error", "constant", "linear", "continue", "periodic"]
 )
-def test_spline_transformer_handles_missing_values(extrapolation):
+def test_spline_transformer_handles_missing_values(knots, extrapolation):
     """Test that SplineTransformer handles missing values correctly."""
-    # X_nan = [[1, 1], [2, 1], [3, 1], [np.nan, 4], [4, 1]]
-    # X = [[1, 1], [2, 1], [3, 1], [4, 1]]
+    X_nan = [[1, 1], [2, 2], [3, 3], [np.nan, 4], [4, 4]]
+    X = [[1, 1], [2, 2], [3, 3], [4, 4]]
 
-    X_nan = [[1], [2], [3], [np.nan], [4]]
-    X = [[1], [2], [3], [4]]
+    # X_nan = [[1], [2], [3], [np.nan], [4]]
+    # X = [[1], [2], [3], [4]]
 
     # check correct error message for handle_missing="error"
     msg = (
@@ -508,13 +509,21 @@ def test_spline_transformer_handles_missing_values(extrapolation):
     )
     with raises(ValueError, match=msg):
         spline = SplineTransformer(
-            degree=2, n_knots=3, handle_missing="error"
-        )  # why not extrapolation=extrapolation????
+            degree=2,
+            n_knots=3,
+            knots=knots,
+            handle_missing="error",
+            extrapolation=extrapolation,
+        )
         spline.fit_transform(X_nan)
 
     # check correct results for handle_missing="indicator"
     spline = SplineTransformer(
-        degree=2, n_knots=3, handle_missing="indicator", extrapolation=extrapolation
+        degree=2,
+        n_knots=3,
+        knots=knots,
+        handle_missing="indicator",
+        extrapolation=extrapolation,
     )
 
     X_nan = np.array(X_nan)

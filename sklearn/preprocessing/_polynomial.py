@@ -745,9 +745,7 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
         self.sparse_output = sparse_output
 
     @staticmethod
-    def _get_base_knot_positions(
-        X, n_knots=10, knots="uniform", missing_mask=None, sample_weight=None
-    ):
+    def _get_base_knot_positions(X, n_knots=10, knots="uniform", sample_weight=None):
         """Calculate base knot positions for `knots` either "uniform" or "quantile".
 
         Base knots such that first knot <= feature <= last knot. For the
@@ -759,19 +757,17 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
         knots : ndarray of shape (n_knots, n_features), dtype=np.float64
             Knot positions (points) of base interval.
         """
-        # if there are missing values in X, only consider the other values to calculate
-        # the base knots, preserving the shape
-        if missing_mask is not None:
-            X = X[~np.any(missing_mask, axis=1)]
-
         if knots == "quantile":
             percentiles = 100 * np.linspace(
                 start=0, stop=1, num=n_knots, dtype=np.float64
             )
 
             if sample_weight is None:
-                knots = np.percentile(X, percentiles, axis=0)
+                knots = np.nanpercentile(X, percentiles, axis=0)
             else:
+                # in _weighted_percentile, nan values should be excluded
+                # similarily as in np.nanpercentile, also a test needs to be
+                # written for sample_weight=some_value
                 knots = np.array(
                     [
                         _weighted_percentile(X, sample_weight, percentile)
@@ -785,8 +781,8 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
             # `else` is therefore safe.
             # Disregard observations with zero weight.
             mask = slice(None, None, 1) if sample_weight is None else sample_weight > 0
-            x_min = np.amin(X[mask], axis=0)
-            x_max = np.amax(X[mask], axis=0)
+            x_min = np.nanmin(X[mask], axis=0)
+            x_max = np.nanmax(X[mask], axis=0)
 
             knots = np.linspace(
                 start=x_min,
@@ -903,7 +899,6 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
                 X,
                 n_knots=self.n_knots,
                 knots=self.knots,
-                missing_mask=self.missing_mask,
                 sample_weight=sample_weight,
             )
         else:
@@ -1121,8 +1116,8 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
                     and np.any(
                         np.isnan(XBS[:, (i * n_splines) : ((i + 1) * n_splines)])
                     )
-                    # to distinguish original np.nan values from the ones created
-                    # by any element in X being < xmin (=spl.t[degree]) or >
+                    # to distinguish original np.nan values from the ones
+                    # created by any element in X < xmin (=spl.t[degree]) or >
                     # xmax (=spl.t[-degree - 1])
                     and np.any((X < spl.t[degree]) | (X > spl.t[-degree - 1]))
                 ):
