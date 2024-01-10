@@ -645,12 +645,14 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
         may slow down subsequent estimators.
 
     handle_missing : {'error', 'indicator'}, default='error'
-        Specifies the way missing values are handled during :meth:`fit`.
+        Specifies the way missing values are handled.
 
-        - 'error' : Raise an error if missing values are present.
+        - 'error' : Raise an error if missing values are present in :meth:`fit`
         - 'indicator' :  Encode the splines from missing values as 0 and add a
           :class:`MissingIndicator` (binary matrix indicating the presence of
           missing values).
+
+        .. versionadded:: 1.5
 
     sparse_output : bool, default=False
         Will return sparse CSR matrix if set True else will return an array. This
@@ -765,9 +767,8 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
             if sample_weight is None:
                 knots = np.nanpercentile(X, percentiles, axis=0)
             else:
-                # in _weighted_percentile, nan values should be excluded
-                # similarily as in np.nanpercentile, also a test needs to be
-                # written for sample_weight=[some_values]
+                # if we use np.nanpercentile above, then nan values also should
+                # be excluded from _weighted_percentile
                 knots = np.array(
                     [
                         _weighted_percentile(X, sample_weight, percentile)
@@ -883,10 +884,6 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
         _, n_features = X.shape
 
         if self.handle_missing == "error":
-            self._missing_mask = (
-                None  # do we or don't we need that for verification purpose?
-            )
-
             if np.isnan(X).any():
                 raise ValueError(
                     "'X' contains np.nan values, which is conflicting with"
