@@ -1452,9 +1452,9 @@ def test_huber_vs_mean_and_median():
 
 def test_safe_divide():
     """Test that _safe_divide handles division by zero."""
-    with pytest.warns(RuntimeWarning, match="divide"):
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
         assert _safe_divide(np.float64(1e300), 0) == 0
-    with pytest.warns(RuntimeWarning, match="divide"):
         assert _safe_divide(np.float64(0.0), np.float64(0.0)) == 0
     with pytest.warns(RuntimeWarning, match="overflow"):
         # np.finfo(float).max = 1.7976931348623157e+308
