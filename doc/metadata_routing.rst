@@ -31,22 +31,24 @@ meta-estimator, you can check our related developer guide:
 :ref:`sphx_glr_auto_examples_miscellaneous_plot_metadata_routing.py`.
 
 Metadata is data that an estimator, scorer, or CV splitter takes into account if the
-user explicitly passes it as a parameter. For instance, some methods in certain objects
-can take into account `sample_weight`, `classes`  or `groups` if provided by the user.
-Prior to scikit-learn version 1.3, there was no single API for passing metadata like
-that if these objects were used in conjunction with other objects, e.g. a scorer
-accepting `sample_weight` inside a :class:`~model_selection.GridSearchCV`.
+user explicitly passes it as a parameter. For instance, :class:`~cluster.KMeans` accepts
+`sample_weight` in its `fit()` method and considers it to calculate its centroids.
+`classes` are consumed by some classifiers and `groups` are used in some splitters, but
+any data that is passed into an object's methods apart from X and y can be considered as
+metadata. Prior to scikit-learn version 1.3, there was no single API for passing
+metadata like that if these objects were used in conjunction with other objects, e.g. a
+scorer accepting `sample_weight` inside a :class:`~model_selection.GridSearchCV`.
 
 With the Metadata Routing API, we can transfer metadata to estimators, scorers, and CV
 splitters using :term:`meta-estimators` (such as :class:`~pipeline.Pipeline` or
-:class:`~model_selection.GridSearchCV`) or routing functions such as
-:func:`~model_selection.cross_validate`. In order to pass metadata to a method like
-``fit`` or ``score``, the object consuming the metadata, must *request* it. This is done
-via `set_{method}_request()` methods, where `{method}` is substituted by the name of the
-method that requests the metadata. For instance, estimators that use the metadata in
-their `fit()` method would use `set_fit_request()`, and scorers would use
-`set_score_request()`. These methods allow us to specify which metadata to request, for
-instance `set_fit_request(sample_weight=True)`.
+:class:`~model_selection.GridSearchCV`) or functions such as
+:func:`~model_selection.cross_validate` which route data to other objects. In order to
+pass metadata to a method like ``fit`` or ``score``, the object consuming the metadata,
+must *request* it. This is done via `set_{method}_request()` methods, where `{method}`
+is substituted by the name of the method that requests the metadata. For instance,
+estimators that use the metadata in their `fit()` method would use `set_fit_request()`,
+and scorers would use `set_score_request()`. These methods allow us to specify which
+metadata to request, for instance `set_fit_request(sample_weight=True)`.
 
 For grouped splitters such as :class:`~model_selection.GroupKFold`, a
 ``groups`` parameter is requested by default. This is best demonstrated by the
@@ -89,26 +91,29 @@ method and in :func:`~metrics.make_scorer`s `set_score_request()` method. Both
 `score()` methods. We can then pass the metadata in
 :func:`~model_selection.cross_validate` which will route it to any active consumers::
 
->>> weighted_acc = make_scorer(accuracy_score).set_score_request(sample_weight=True)
->>> lr = LogisticRegressionCV(
-...     cv=GroupKFold(),
-...     scoring=weighted_acc
-... ).set_fit_request(sample_weight=True)
->>> cv_results = cross_validate(
-...     lr,
-...     X,
-...     y,
-...     params={"sample_weight": my_weights, "groups": my_groups},
-...     cv=GroupKFold(),
-...     scoring=weighted_acc,
-... )
+  >>> weighted_acc = make_scorer(accuracy_score).set_score_request(sample_weight=True)
+  >>> lr = LogisticRegressionCV(
+  ...     cv=GroupKFold(),
+  ...     scoring=weighted_acc
+  ... ).set_fit_request(sample_weight=True)
+  >>> cv_results = cross_validate(
+  ...     lr,
+  ...     X,
+  ...     y,
+  ...     params={"sample_weight": my_weights, "groups": my_groups},
+  ...     cv=GroupKFold(),
+  ...     scoring=weighted_acc,
+  ... )
 
 Note that in this example, :func:`~model_selection.cross_validate` routes ``my_weights``
 to both the scorer and :class:`~linear_model.LogisticRegressionCV`.
 
-Error handling: if ``params={"sample_weigh": my_weights, ...}`` were passed
-(note the typo), :func:`~model_selection.cross_validate` would raise an error,
-since ``sample_weigh`` was not requested by any of its underlying objects.
+If we would pass `sample_weight` in the params of
+:func:`~model_selection.cross_validate`, but not set any object to request it,
+`UnsetMetadataPassedError` would be raised, hinting to us that we need to explicitly set
+where to route it. The same applies if ``params={"sample_weigh": my_weights, ...}`` were
+passed (note the typo), since ``sample_weigh`` was not requested by any of its
+underlying objects.
 
 Weighted scoring and unweighted fitting
 ---------------------------------------
