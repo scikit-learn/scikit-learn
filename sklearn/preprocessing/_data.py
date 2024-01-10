@@ -483,8 +483,8 @@ class MinMaxScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
             force_all_finite="allow-nan",
         )
 
-        data_min = _array_api._nanmin(X, axis=0)
-        data_max = _array_api._nanmax(X, axis=0)
+        data_min = _array_api._nanmin(X, axis=0, xp=xp)
+        data_max = _array_api._nanmax(X, axis=0, xp=xp)
 
         if first_pass:
             self.n_samples_seen_ = X.shape[0]
@@ -1234,7 +1234,7 @@ class MaxAbsScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
             mins, maxs = min_max_axis(X, axis=0, ignore_nan=True)
             max_abs = np.maximum(np.abs(mins), np.abs(maxs))
         else:
-            max_abs = _array_api._nanmax(xp.abs(X), axis=0)
+            max_abs = _array_api._nanmax(xp.abs(X), axis=0, xp=xp)
 
         if first_pass:
             self.n_samples_seen_ = X.shape[0]
