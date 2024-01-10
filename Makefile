@@ -23,6 +23,19 @@ in: inplace # just a shortcut
 inplace:
 	$(PYTHON) setup.py build_ext -i
 
+meson:
+	perl -i -pe \
+		's@\[build-system\]@[build-system]\nbuild-backend = "mesonpy"\n@' \
+		pyproject.toml
+	pip install --editable .  --verbose --no-build-isolation \
+		--config-settings editable-verbose=true
+	perl -0777 -i -pe \
+		's@\[build-system\]\nbuild-backend = "mesonpy"\n@[build-system]@' \
+		pyproject.toml
+
+meson-clean:
+	pip uninstall -y scikit-learn
+
 test-code: in
 	$(PYTEST) --showlocals -v sklearn --durations=20
 test-sphinxext:

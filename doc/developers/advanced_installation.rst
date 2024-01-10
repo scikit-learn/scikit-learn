@@ -220,12 +220,35 @@ Make sure you have `meson-python` installed:
     include ninja, and you need another way to install ninja (e.g. package
     manager)
 
-Edit `pyproject.toml` and set build-backend to mesonpy:
+Simplest way to build with Meson
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+To build scikit-learn, the simplest way is to run:
+
+.. code-block:: bash
+
+    make meson
+
+You need to do it once after this you can run your code that imports `sklearn`
+and it will recompile as needed.
+
+In case you want to go back to using setuptools:
+
+.. code-block:: bash
+
+    make meson-clean
+
+More advanced way to build with Meson
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+If you can not use `make`, want to do it yourself or understand what goes in
+behind the scenes, you can edit `pyproject.toml` and make sure `build-backend`
+is set to `"mesonpy"`
 
 .. code-block:: toml
 
     [build-system]
-    build-backend = 'mesonpy'
+    build-backend = "mesonpy"
 
 Build with the following `pip` command:
 
@@ -235,13 +258,19 @@ Build with the following `pip` command:
         --verbose --no-build-isolation \
         --config-settings editable-verbose=true
 
+If you want to go back to using `setuptools`:
+
+.. code-block:: bash
+
+    pip uninstall -y scikit-learn
+
 `--config-settings editable-verbose=true` is advised to avoid surprises.
 meson-python implements editable install by recompiling when doing `import
-sklearn`. You will see the meson output when that happens, rather than
+sklearn`. Even changing python files involves copying files to the Meson build
+directory. You will see the meson output when that happens, rather than
 potentially waiting a while and wondering what is taking so long. Bonus: that
 means you only have to do the `pip install` once, after that your code will
 recompile when doing `import sklearn`.
-
 
 Other places that may be worth looking at:
 
@@ -281,7 +310,7 @@ console:
 
 .. prompt:: bash $
 
-    python -c "import struct; print(struct.calcsize('P') * 8)"
+    python -c "import struct; print(struct.calcsize("P') * 8)"
 
 For 64-bit Python, configure the build environment by running the following
 commands in ``cmd`` or an Anaconda Prompt (if you use Anaconda):
