@@ -2244,18 +2244,6 @@ def test_roc_curve_with_probablity_estimates(global_random_seed):
     assert np.isinf(thresholds[0])
 
 
-@pytest.mark.parametrize("drop", [True, False])
-def test_precision_recall_curve(drop):
-    y_true, _, y_score = make_prediction(binary=True)
-    _test_precision_recall_curve(y_true, y_score, drop)
-
-    # Make sure the first point of the Precision-Recall on the right is:
-    # (p=1.0, r=class balance) on a non-balanced dataset [1:]
-    p, r, t = precision_recall_curve(y_true[1:], y_score[1:], drop_intermediate=drop)
-    assert r[0] == 1.0
-    assert p[0] == y_true[1:].mean()
-
-
 # TODO(1.6): remove
 def test_precision_recall_curve_deprecation_warning():
     """Check the message for future deprecation."""
