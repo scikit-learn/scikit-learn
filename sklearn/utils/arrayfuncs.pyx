@@ -30,7 +30,7 @@ def min_pos(const floating[:] X):
 # n = rows
 #
 # TODO: put transpose as an option
-def cholesky_delete(const floating[:, :] L, int go_out):
+def cholesky_delete(floating[:, :] L, int go_out):
     cdef:
         int n = L.shape[0]
         int m = L.strides[0]

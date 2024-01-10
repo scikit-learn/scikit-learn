@@ -4,7 +4,7 @@
 channels:
   - conda-forge
 dependencies:
-  - python
+  - python=3.9
   - numpy
   - blas[build=mkl]
   - scipy
@@ -12,10 +12,11 @@ dependencies:
   - joblib
   - threadpoolctl
   - matplotlib
-  - pandas
-  - pyamg
   - pytest
   - pytest-xdist=2.5.0
   - pillow
   - setuptools
-  - ccache
+  - pytest-cov
+  - coverage
+  - wheel
+  - pip
