@@ -697,12 +697,6 @@ Changelog
   `transform` without calling `fit` since `categories` always requires to be checked.
   :pr:`27821` by :user:`Guillaume Lemaitre <glemaitre>`.
 
-- |Efficiency| :class:`preprocessing.OrdinalEncoder`,
-  :class:`preprocessing.OneHotEncoder` and :class:`preprocessing.TargetEncoder`
-  can be faster on pandas DataFrames by using a more efficient way of finding
-  unique values in the categorical columns. :pr:`27911` by :user:`Jérôme Dockès
-  <jeromedockes>`.
-
 :mod:`sklearn.tree`
 ...................
 
