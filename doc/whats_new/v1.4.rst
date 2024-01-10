@@ -19,7 +19,7 @@ Changelog
   :meth:`neighbors.KNeighborsClassifier.predict_proba` now raises an error when the
   weights of all neighbors of some sample are zero. This can happen when `weights`
   is a user-defined function.
-  :pr:`26410` by :user:`Yao Xiao <Charlie-XIAO>`
+  :pr:`26410` by :user:`Yao Xiao <Charlie-XIAO>`.
 
 
 .. _changes_1_4:
@@ -679,12 +679,6 @@ Changelog
   argument allowing for the use of accelerated third-party
   :class:`metrics.DistanceMetric` objects.
   :pr:`26267` by :user:`Meekail Zain <micky774>`.
-
-- |Fix| :meth:`neighbors.KNeighborsClassifier.predict` and
-  :meth:`neighbors.KNeighborsClassifier.predict_proba` now raises an error when the
-  weights of all neighbors of some sample are zero. This can happen when `weights`
-  is a user-defined function.
-  :pr:`26410` by :user:`Yao Xiao <Charlie-XIAO>`
 
 :mod:`sklearn.preprocessing`
 ............................
