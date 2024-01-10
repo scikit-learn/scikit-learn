@@ -39,8 +39,8 @@ class IncrementalPCA(_BasePCA):
     computations to get the principal components, versus 1 large SVD of
     complexity ``O(n_samples * n_features ** 2)`` for PCA.
 
-    For an examples of usage see:
-    - :ref:`sphx_glr_auto_examples_decomposition_plot_incremental_pca.py`
+    For a usage example, see
+    :ref:`sphx_glr_auto_examples_decomposition_plot_incremental_pca.py`.
 
     Read more in the :ref:`User Guide <IncrementalPCA>`.
 
