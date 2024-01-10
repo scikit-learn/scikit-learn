@@ -9,7 +9,7 @@ Metadata Routing
 ================
 
 .. note::
-  The Metadata Routing API is experimental, and is not implemented yet for some
+  The Metadata Routing API is experimental, and is not yet implemented for all
   estimators. Please refer to the :ref:`list of supported and unsupported
   models <metadata_routing_models>` for more information. It may change without
   the usual deprecation cycle. By default this feature is not enabled. You can
@@ -43,8 +43,8 @@ splitters using :term:`meta-estimators` (such as :class:`~pipeline.Pipeline` or
 :func:`~model_selection.cross_validate`. In order to pass metadata to a method like
 ``fit`` or ``score``, the object consuming the metadata, must *request* it. This is done
 via `set_{method}_request()` methods, where `{method}` is substituted by the name of the
-method that request the metadata. For instance, estimators that use the metadata in
-their `fit()` method would use `set_fit_request()`, and scorers would use the
+method that requests the metadata. For instance, estimators that use the metadata in
+their `fit()` method would use `set_fit_request()`, and scorers would use
 `set_score_request()`. These methods allow us to specify which metadata to request, for
 instance `set_fit_request(sample_weight=True)`.
 
@@ -54,10 +54,10 @@ following examples.
 
 Usage Examples
 **************
-Here we present a few examples to show different common use-cases. Our goal is to pass
+Here we present a few examples to show some common use-cases. Our goal is to pass
 `sample_weight` and `groups` through :func:`~model_selection.cross_validate`, which
 routes the metadata to :class:`~linear_model.LogisticRegressionCV` and to a custom scorer
-made with :func:`~metrics.make_scorer` that both *can* use the metadata in their
+made with :func:`~metrics.make_scorer`, both of which *can* use the metadata in their
 methods. In these examples we want to individually set whether to use the metadata
 within the different :term:`consumers <consumer>`.
 
@@ -87,7 +87,7 @@ to explicitly request `sample_weight` for it and for our custom scorer by specif
 method and in :func:`~metrics.make_scorer`s `set_score_request()` method. Both
 :term:`consumers <consumer>` know how to use ``sample_weight`` in their `fit()` or
 `score()` methods. We can then pass the metadata in
-:func:`~model_selection.cross_validate` that will route it to any active consumers::
+:func:`~model_selection.cross_validate` which will route it to any active consumers::
 
 >>> weighted_acc = make_scorer(accuracy_score).set_score_request(sample_weight=True)
 >>> lr = LogisticRegressionCV(
