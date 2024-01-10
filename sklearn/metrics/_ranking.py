@@ -852,15 +852,25 @@ def _binary_clf_curve(y_true, y_score, pos_label=None, sample_weight=None):
 @validate_params(
     {
         "y_true": ["array-like"],
-        "probas_pred": ["array-like"],
+        "y_score": ["array-like", None],
         "pos_label": [Real, str, "boolean", None],
         "sample_weight": ["array-like", None],
         "drop_intermediate": ["boolean"],
+        "probas_pred": [
+            "array-like",
+            StrOptions({"deprecated"}),
+        ],
     },
     prefer_skip_nested_validation=True,
 )
 def precision_recall_curve(
-    y_true, probas_pred, *, pos_label=None, sample_weight=None, drop_intermediate=False
+    y_true,
+    y_score=None,
+    *,
+    pos_label=None,
+    sample_weight=None,
+    drop_intermediate=False,
+    probas_pred="deprecated",
 ):
     """Compute precision-recall pairs for different probability thresholds.
 
@@ -890,7 +900,7 @@ def precision_recall_curve(
         True binary labels. If labels are not either {-1, 1} or {0, 1}, then
         pos_label should be explicitly given.
 
-    probas_pred : array-like of shape (n_samples,)
+    y_score : array-like of shape (n_samples,)
         Target scores, can either be probability estimates of the positive
         class, or non-thresholded measure of decisions (as returned by
         `decision_function` on some classifiers).
@@ -909,6 +919,15 @@ def precision_recall_curve(
         lighter precision-recall curves.
 
         .. versionadded:: 1.3
+
+    probas_pred : array-like of shape (n_samples,)
+        Target scores, can either be probability estimates of the positive
+        class, or non-thresholded measure of decisions (as returned by
+        `decision_function` on some classifiers). By default None.
+
+        .. deprecated:: 1.4
+            `probas_pred` is deprecated and will be removed in 1.6. Use
+            `y_score` instead.
 
     Returns
     -------
@@ -949,8 +968,24 @@ def precision_recall_curve(
     >>> thresholds
     array([0.1 , 0.35, 0.4 , 0.8 ])
     """
+    # TODO(1.6): remove in 1.6 and reset y_score to be required
+    if probas_pred != "deprecated" and y_score is not None:
+        raise ValueError(
+            "`probas_pred` and `y_score` cannot be both specified. Please use `y_score`"
+            " only as `probas_pred` is deprecated in v1.4 and will be removed in v1.6."
+        )
+    if probas_pred != "deprecated":
+        warnings.warn(
+            (
+                "probas_pred was deprecated in version 1.4 and will be removed in 1.6."
+                "Please use ``y_score`` instead."
+            ),
+            FutureWarning,
+        )
+        y_score = probas_pred
+
     fps, tps, thresholds = _binary_clf_curve(
-        y_true, probas_pred, pos_label=pos_label, sample_weight=sample_weight
+        y_true, y_score, pos_label=pos_label, sample_weight=sample_weight
     )
 
     if drop_intermediate and len(fps) > 2:

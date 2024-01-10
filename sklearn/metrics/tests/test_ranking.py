@@ -2242,3 +2242,37 @@ def test_roc_curve_with_probablity_estimates(global_random_seed):
     y_score = rng.rand(10)
     _, _, thresholds = roc_curve(y_true, y_score)
     assert np.isinf(thresholds[0])
+
+
+@pytest.mark.parametrize("drop", [True, False])
+def test_precision_recall_curve(drop):
+    y_true, _, y_score = make_prediction(binary=True)
+    _test_precision_recall_curve(y_true, y_score, drop)
+
+    # Make sure the first point of the Precision-Recall on the right is:
+    # (p=1.0, r=class balance) on a non-balanced dataset [1:]
+    p, r, t = precision_recall_curve(y_true[1:], y_score[1:], drop_intermediate=drop)
+    assert r[0] == 1.0
+    assert p[0] == y_true[1:].mean()
+
+
+# TODO(1.6): remove
+def test_precision_recall_curve_deprecation_warning():
+    """Check the message for future deprecation."""
+    # Check precision_recall_curve function
+    y_true, _, y_score = make_prediction(binary=True)
+
+    warn_msg = "probas_pred was deprecated in version 1.4"
+    with pytest.warns(FutureWarning, match=warn_msg):
+        precision_recall_curve(
+            y_true,
+            probas_pred=y_score,
+        )
+
+    error_msg = "`probas_pred` and `y_score` cannot be both specified"
+    with pytest.raises(ValueError, match=error_msg):
+        precision_recall_curve(
+            y_true,
+            probas_pred=y_score,
+            y_score=y_score,
+        )
