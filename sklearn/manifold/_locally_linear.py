@@ -8,7 +8,7 @@ from numbers import Integral, Real
 
 import numpy as np
 from scipy.linalg import eigh, qr, solve, svd
-from scipy.sparse import csr_matrix, lil_matrix, eye
+from scipy.sparse import csr_matrix, eye, lil_matrix
 from scipy.sparse.linalg import eigsh
 
 from ..base import (
@@ -512,7 +512,7 @@ def locally_linear_embedding(
                     M[neighbors[i][idx], i] -= Wi_sum1[idx]
             else:
                 M[neighbors[i], i] -= Wi_sum1
-                
+
             M[i, i] += s_i
 
         if M_sparse:
