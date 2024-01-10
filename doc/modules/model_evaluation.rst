@@ -900,7 +900,8 @@ In this context, we can define the notions of precision and recall:
 
 F-measure is the weighted harmonic mean of precision and recall, with precision's contribution to the mean weighted by
 some parameter :math:`\beta`:
-
+F-measure is the weighted harmonic mean of precision and recall, with precision's
+contribution to the mean weighted by some parameter :math:`\beta`:
 .. math::
 
    F_\beta = (1 + \beta^2) \frac{\text{precision} \times \text{recall}}{\beta^2 \text{precision} + \text{recall}}
