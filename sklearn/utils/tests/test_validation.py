@@ -310,7 +310,8 @@ def test_check_array_series_err_msg():
     Check that we raise a proper error message when passing a Series and we expect a
     2-dimensional container.
 
-    Non-regression test for #27498.
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/27498
     """
     pd = pytest.importorskip("pandas")
     ser = pd.Series([1, 2, 3])
