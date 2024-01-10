@@ -917,7 +917,10 @@ F-measure with this otherwise-equivalent formula:
 Note that this formula is still undefined when there are no true positives, false positives, nor false negatives. By
 default, F-1 for a set of exclusively true negatives is calculated as 0, however this behavior can be changed using the
 `zero_division` parameter.
-
+Note that this formula is still undefined when there are no true positives, false
+positives, nor false negatives. By default, F-1 for a set of exclusively true negatives
+is calculated as 0, however this behavior can be changed using the `zero_division`
+parameter.
 Here are some small examples in binary classification::
 
   >>> from sklearn import metrics
