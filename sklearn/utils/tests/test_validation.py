@@ -314,7 +314,7 @@ def test_check_array_series_err_msg():
     """
     pd = pytest.importorskip("pandas")
     ser = pd.Series([1, 2, 3])
-    msg = "Expected a 2-dimensional container but got"
+    msg = f"Expected a 2-dimensional container but got {type(ser)} instead."
     with pytest.raises(ValueError, match=msg):
         check_array(ser, ensure_2d=True)
 

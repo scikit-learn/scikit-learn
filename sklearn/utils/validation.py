@@ -803,7 +803,7 @@ def check_array(
     dtypes_orig = None
     pandas_requires_conversion = False
     # track if we have a Series-like object to raise a better error message
-    is_series = False
+    type_if_series = None
     if hasattr(array, "dtypes") and hasattr(array.dtypes, "__array__"):
         # throw warning if columns are sparse. If all columns are sparse, then
         # array.sparse exists and sparsity will be preserved (later).
@@ -833,7 +833,7 @@ def check_array(
         array, "dtype"
     ):
         # array is a pandas series
-        is_series = True
+        type_if_series = type(array)
         pandas_requires_conversion = _pandas_dtype_needs_early_conversion(array.dtype)
         if isinstance(array.dtype, np.dtype):
             dtype_orig = array.dtype
@@ -966,9 +966,9 @@ def check_array(
             # If input is 1D raise error
             if array.ndim == 1:
                 # If input is a Series-like object (eg. pandas Series or polars Series)
-                if is_series:
+                if type_if_series is not None:
                     msg = (
-                        f"Expected a 2-dimensional container but got {type(array)} "
+                        f"Expected a 2-dimensional container but got {type_if_series} "
                         "instead. Pass a DataFrame containing a single row (i.e. "
                         "single sample) or a single column (i.e. single feature) "
                         "instead."
