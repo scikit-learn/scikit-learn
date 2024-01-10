@@ -228,53 +228,8 @@ cdef _sample_without_replacement(default_int n_population,
                                  random_state=None):
     """Sample integers without replacement.
 
-    Select n_samples integers from the set [0, n_population) without
-    replacement.
-
-
-    Parameters
-    ----------
-    n_population : int
-        The size of the set to sample from.
-
-    n_samples : int
-        The number of integer to sample.
-
-    random_state : int, RandomState instance or None, default=None
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
-
-    method : {"auto", "tracking_selection", "reservoir_sampling", "pool"}, \
-            default='auto'
-        If method == "auto", the ratio of n_samples / n_population is used
-        to determine which algorithm to use:
-        If ratio is between 0 and 0.01, tracking selection is used.
-        If ratio is between 0.01 and 0.99, numpy.random.permutation is used.
-        If ratio is greater than 0.99, reservoir sampling is used.
-        The order of the selected integers is undefined. If a random order is
-        desired, the selected subset should be shuffled.
-
-        If method =="tracking_selection", a set based implementation is used
-        which is suitable for `n_samples` <<< `n_population`.
-
-        If method == "reservoir_sampling", a reservoir sampling algorithm is
-        used which is suitable for high memory constraint or when
-        O(`n_samples`) ~ O(`n_population`).
-        The order of the selected integers is undefined. If a random order is
-        desired, the selected subset should be shuffled.
-
-        If method == "pool", a pool based algorithm is particularly fast, even
-        faster than the tracking selection method. However, a vector containing
-        the entire population has to be initialized.
-        If n_samples ~ n_population, the reservoir sampling method is faster.
-
-    Returns
-    -------
-    out : ndarray of shape (n_samples,)
-        The sampled subsets of integer. The subset of selected integer might
-        not be randomized, see the method argument.
+    Private function for the implementation, see sample_without_replacement
+    documentation for more details.
     """
     _sample_without_replacement_check_input(n_population, n_samples)
 
