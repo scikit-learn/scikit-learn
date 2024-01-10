@@ -275,6 +275,9 @@ def test_device_inspection():
         def __hash__(self):
             raise TypeError("Device object is not hashable")
 
+        def __str__(self):
+            return self.name
+
     class Array:
         def __init__(self, device_name):
             self.device = Device(device_name)
