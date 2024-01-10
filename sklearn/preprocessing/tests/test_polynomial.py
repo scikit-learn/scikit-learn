@@ -495,7 +495,8 @@ def test_spline_transformer_n_features_out(
 @pytest.mark.parametrize(
     "extrapolation", ["error", "constant", "linear", "continue", "periodic"]
 )
-def test_spline_transformer_handles_missing_values(knots, extrapolation):
+@pytest.mark.parametrize("sparse_output", [False, True])
+def test_spline_transformer_handles_missing_values(knots, extrapolation, sparse_output):
     """Test that SplineTransformer handles missing values correctly."""
     X_nan = [[1, 1], [2, 2], [3, 3], [np.nan, 4], [4, 4]]
     X = [[1, 1], [2, 2], [3, 3], [4, 4]]
@@ -527,6 +528,7 @@ def test_spline_transformer_handles_missing_values(knots, extrapolation):
         knots="uniform",
         handle_missing="indicator",
         extrapolation=extrapolation,
+        sparse_output=sparse_output,
     )
 
     X_nan = np.array(X_nan)

@@ -807,7 +807,7 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
         if not self.handle_missing == "indicator":
             return X_imputed
 
-        X_indicator = self.indicator_.transform(self.missing_mask)
+        X_indicator = self.indicator_.transform(self._missing_mask)
         if sp.issparse(X_imputed):
             # sp.hstack may result in different formats between sparse arrays and
             # matrices; specify the format to keep consistent behavior
@@ -883,8 +883,8 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
         _, n_features = X.shape
 
         if self.handle_missing == "error":
-            self.missing_mask = (
-                None  # do or don't we need that for verification purpose?
+            self._missing_mask = (
+                None  # do we or don't we need that for verification purpose?
             )
 
             if np.isnan(X).any():
@@ -893,8 +893,8 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
                     " handle_missing='error'."
                 )
         else:  # handle_missing == "indicator"
-            self.missing_mask = _get_mask(X, np.nan)
-            self._fit_indicator(self.missing_mask)
+            self._missing_mask = _get_mask(X, np.nan)
+            self._fit_indicator(self._missing_mask)
 
         if isinstance(self.knots, str):
             base_knots = self._get_base_knot_positions(
@@ -904,6 +904,8 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
                 sample_weight=sample_weight,
             )
         else:
+            # do we have to handle the case, where nan are given as knots by
+            # the user?
             base_knots = check_array(self.knots, dtype=np.float64)
             if base_knots.shape[0] < 2:
                 raise ValueError("Number of knots, knots.shape[0], must be >= 2.")
@@ -1242,5 +1244,6 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
                     "Current Scipy implementation of _bsplines does not"
                     "support const memory views."
                 ),
-            }
+            },
+            "allow_nan": True,
         }
