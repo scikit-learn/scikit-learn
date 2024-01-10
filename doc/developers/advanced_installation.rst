@@ -201,6 +201,8 @@ It is however preferred to use pip.
 On Unix-like systems, you can equivalently type ``make in`` from the top-level
 folder. Have a look at the ``Makefile`` for additional utilities.
 
+.. _building_with_meson:
+
 Building with Meson
 -------------------
 
@@ -264,7 +266,7 @@ If you want to go back to using `setuptools`:
 
     pip uninstall -y scikit-learn
 
-`--config-settings editable-verbose=true` is advised to avoid surprises.
+Note `--config-settings editable-verbose=true` is advised to avoid surprises.
 meson-python implements editable install by recompiling when doing `import
 sklearn`. Even changing python files involves copying files to the Meson build
 directory. You will see the meson output when that happens, rather than
