@@ -229,7 +229,7 @@ To build scikit-learn, the simplest way is to run:
 
 .. code-block:: bash
 
-    make meson
+    make dev-meson
 
 You need to do it once after this you can run your code that imports `sklearn`
 and it will recompile as needed.
@@ -238,7 +238,7 @@ In case you want to go back to using setuptools:
 
 .. code-block:: bash
 
-    make meson-clean
+    make clean-meson
 
 More advanced way to build with Meson
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

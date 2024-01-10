@@ -23,7 +23,7 @@ in: inplace # just a shortcut
 inplace:
 	$(PYTHON) setup.py build_ext -i
 
-meson:
+dev-meson:
 	perl -i -pe \
 		's@\[build-system\]@[build-system]\nbuild-backend = "mesonpy"\n@' \
 		pyproject.toml
@@ -33,7 +33,7 @@ meson:
 		's@\[build-system\]\nbuild-backend = "mesonpy"\n@[build-system]@' \
 		pyproject.toml
 
-meson-clean:
+clean-meson:
 	pip uninstall -y scikit-learn
 
 test-code: in

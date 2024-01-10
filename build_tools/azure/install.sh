@@ -119,15 +119,7 @@ scikit_learn_install() {
     fi
 
     if [[ "$BUILD_WITH_MESON" == "true" ]]; then
-        # Hack to change build-backend pyproject.toml. There does not seem to
-        # be an easier way than this
-        sed -i \
-            's@\[build-system\]@[build-system]\nbuild-backend = "mesonpy"\n@' \
-            pyproject.toml
-
-        # Test meson editable install which is likely the way that most people
-        # are going to use meson for local development
-        pip install --verbose --no-build-isolation --editable .
+        make dev-meson
     # TODO use a specific variable for this rather than using a particular build ...
     elif [[ "$DISTRIB" == "conda-pip-latest" ]]; then
         # Check that pip can automatically build scikit-learn with the build
