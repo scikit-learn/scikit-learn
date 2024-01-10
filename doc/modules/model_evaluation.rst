@@ -908,7 +908,8 @@ contribution to the mean weighted by some parameter :math:`\beta`:
 
 To avoid division by zero when precision and recall are zero, Scikit-Learn calculates F-measure with this
 otherwise-equivalent formula:
-
+To avoid division by zero when precision and recall are zero, we can define the
+F-measure with this otherwise-equivalent formula:
 .. math::
 
    F_\beta = \frac{(1 + \beta^2) \text{tp}}{(1 + \beta^2) \text{tp} + \text{fp} + \beta^2 \text{fn}}.
