@@ -1680,3 +1680,31 @@ def test_multinomial_error_exact_backward_compat():
         ]
     )
     assert_allclose(gbt.train_score_[-10:], train_score, rtol=1e-8)
+
+
+def test_gb_denominator_zero(global_random_seed):
+    """Test _update_terminal_regions denominator is not zero.
+
+    For instance for log loss based binary classification, the line search step might
+    become nan/inf as denominator = hessian = prob * (1 - prob) and prob = 0 or 1 can
+    happen.
+    Here, we create a situation were this happens (at least with roughly 80%) based
+    on the random seed.
+    """
+    X, y = datasets.make_hastie_10_2(n_samples=100, random_state=20)
+
+    params = {
+        "learning_rate": 1.0,
+        "subsample": 0.5,
+        "n_estimators": 100,
+        "max_leaf_nodes": 4,
+        "max_depth": None,
+        "random_state": global_random_seed,
+        "min_samples_leaf": 2,
+    }
+
+    clf = GradientBoostingClassifier(**params)
+    # _safe_devide would raise a RuntimeWarning
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        clf.fit(X, y)
