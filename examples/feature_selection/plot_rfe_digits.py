@@ -3,9 +3,11 @@
 Recursive feature elimination
 =============================
 
-A Recursive Feature Elimination (RFE) example to find the most discriminative features
-in a breast cancer dataset. An optimized verson of cross-validation for RFE is also
-demonstrated.
+This example demonstrates how :class:`~sklearn.feature_selection.RFE` and
+:class:`~sklearn.feature_selection.RFECV` and can be used to determine the
+importance of individual pixels when classifying handwritten digits.
+RFE is a method that recursively removes the least significant features and retrains
+the model, allowing us to rank features by their importance.
 
 """  # noqa: E501
 
@@ -13,12 +15,18 @@ demonstrated.
 # Dataset
 # -------
 #
-# We start by loading the breast cancer dataset, which has 30 features.
-
+# We start by loading the handwritten digits dataset. This dataset consists of 8x8
+# pixel images of handwritten digits. Each pixel is treated as a feature and we
+# aim to determine which pixels are most relevant for the digit classification task.
 # %%
-from sklearn.datasets import load_breast_cancer
+import matplotlib.pyplot as plt
 
-X, y = load_breast_cancer(return_X_y=True)
+from sklearn.datasets import load_digits
+
+# Load the digits dataset
+digits = load_digits()
+X = digits.images.reshape((len(digits.images), -1))
+y = digits.target
 
 # %%
 # Splitting the dataset for evaluation
@@ -102,9 +110,7 @@ print(
 # ----------------------------
 #
 # To search over all possible numbers of features, we'll employ
-# :class:`~sklearn.feature_selection.RFECV`. Through feature selection and cross
-# validation, we can confidently determine the number of features for optimal
-# model performance.
+# :class:`~sklearn.feature_selection.RFECV`.
 
 # %%
 from sklearn.feature_selection import RFECV
@@ -133,29 +139,17 @@ optimal_num_features = rfecv.n_features_
 print(f"Optimal number of features: {optimal_num_features}")
 
 # %%
-# Plot number of features VS. cross-validation scores
-# ---------------------------------------------------
+# Visualizing Feature Importance after RFE
+# ----------------------------------------
+#
+# RFECV and RFE provide a ranking of the features based on their importance.
+# We can visualize this ranking to gain insights into which pixels
+# (or features) are deemed most significant by RFECV in the digit
+# classification task.
 
 # %%
-import matplotlib.pyplot as plt
-
-n_scores = len(rfecv.cv_results_["mean_test_score"])
-plt.figure()
-plt.xlabel("Number of features selected")
-plt.ylabel("Mean test accuracy")
-plt.errorbar(
-    range(min_features_to_select, n_scores + min_features_to_select),
-    rfecv.cv_results_["mean_test_score"],
-    yerr=rfecv.cv_results_["std_test_score"],
-)
-plt.title("Recursive Feature Elimination \nwith correlated features")
+ranking = rfecv.ranking_.reshape(digits.images[0].shape)
+plt.matshow(ranking, cmap=plt.cm.Blues)
+plt.colorbar()
+plt.title("Ranking of pixels with RFECV")
 plt.show()
-
-# %%
-# From the plot above one can further notice a plateau of equivalent scores
-# (similar mean value and overlapping errorbars) for 8 to 12 selected
-# features. This is the result of introducing correlated features. The optimal
-# model selected by the RFE is trained on 14 selected features, less than half
-# of the original dataset. The test accuracy decreases above 14 selected
-# features, that is, keeping non-informative features leads to over-fitting
-# and is therefore detrimental for the statistical performance of the models.
