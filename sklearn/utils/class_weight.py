@@ -10,8 +10,6 @@ weights based on class labels.
 import numpy as np
 from scipy import sparse
 
-from sklearn.utils.tests.test_multiclass import EXAMPLES
-
 from ._param_validation import StrOptions, validate_params
 
 
@@ -53,10 +51,9 @@ def compute_class_weight(class_weight, *, classes, y):
     Logistic Regression in Rare Events Data, King, Zen, 2001.
     
     Examples
-    -------- 
-    
+    --------
     Using dictionary of pre-defined class weights
-    --------------------------------------------------------
+    --------------------------------------------
     >>> rom sklearn.utils import class_weight
     >>> import numpy as np
     >>> class_weights = {0: 2.0, 1: 1.0}
@@ -64,15 +61,15 @@ def compute_class_weight(class_weight, *, classes, y):
     >>> Output:  array([2.0 1.0 ])
 
     Computing balanced class weights
-    -------------------------------------------
+    --------------------------------
     >>> from sklearn.utils import class_weight
     >>> import numpy as np
     >>> y = [0, 1, 1, 0, 1, 1, 0, 0, 1]
     >>> class_weights = class_weight.compute_class_weight(class_weight='balanced', classes=np.unique(y), y=y)
-    >>> Output: [1.125 0.9  ]
+    >>> Output: [1.125 0.9]
 
     No given class weight
-    --------------------------------
+    ---------------------
     >>> from sklearn.utils import class_weight
     >>> import numpy as np
     >>> class_weights = {0: 2.0, 1: 1.0}
@@ -167,7 +164,7 @@ def compute_sample_weight(class_weight, y, *, indices=None):
     --------
     
     Using dictionary custom weights
-    -----------------------------------------
+    -------------------------------
     >>> from sklearn.utils import class_weight
     >>> import numpy as np
     >>> class_weights = {0: 2, 1: 1} 
@@ -175,7 +172,7 @@ def compute_sample_weight(class_weight, y, *, indices=None):
     >>> Output: [2.0  1.0  2.0  1.0  1.0  1.0  2.0]
 
     Using List of dictionary
-    ---------------------------------------------------
+    ------------------------
     >>> from sklearn.utils import class_weight 
     >>> y = np.array([[0, 1], [1, 0], [0, 1], [1, 1], [1, 1], [1, 0], [0, 1]])
     >>> class_weights = [{0: 1, 1: 2}, {0: 2, 1: 1}] 
@@ -183,7 +180,7 @@ def compute_sample_weight(class_weight, y, *, indices=None):
     >>> Output: [1.0  4.0  1.0  2.0  2.0  4.0  1.0]
 
     Using balanced class weights
-    --------------------------------------
+    ----------------------------
     >>> from sklearn.utils import class_weight
     >>> import numpy as np
     >>> y = np.array([0, 1, 0, 1, 1, 1, 0]) 
@@ -192,7 +189,7 @@ def compute_sample_weight(class_weight, y, *, indices=None):
                 1.16666667]
 
     Using a bootstrap subsample
-    -------------------------------------
+    ---------------------------
     >>> import numpy as np
     >>> from sklearn.utils import class_weight
     >>> indices = np.random.choice(len(y), len(y), replace=True)  
