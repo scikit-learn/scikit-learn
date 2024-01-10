@@ -5,8 +5,11 @@ python build_tools/update_environments_and_lock_files.py
 
 Two scenarios where this script can be useful:
 - make sure that the latest versions of all the dependencies are used in the CI.
-  We can run this script regularly and open a PR with the changes to the lock
-  files. This workflow will eventually be automated with a bot in the future.
+  There is a scheduled workflow that does this, see
+  .github/workflows/update-lock-files.yml. This is still useful to run this
+  script when when the automated PR fails and for example some packages need to
+  be pinned. You can add the pins to this script, run it, and open a PR with
+  the changes.
 - bump minimum dependencies in sklearn/_min_dependencies.py. Running this
   script will update both the CI environment files and associated lock files.
   You can then open a PR with the changes.
@@ -78,11 +81,7 @@ common_dependencies = common_dependencies_without_coverage + [
 
 docstring_test_dependencies = ["sphinx", "numpydoc"]
 
-default_package_constraints = {
-    # XXX: pin pytest-xdist to workaround:
-    # https://github.com/pytest-dev/pytest-xdist/issues/840
-    "pytest-xdist": "2.5.0",
-}
+default_package_constraints = {}
 
 
 def remove_from(alist, to_remove):
@@ -137,33 +136,23 @@ conda_build_metadata_list = [
         },
     },
     {
-        "build_name": "pylatest_conda_forge_mkl_no_coverage",
-        "folder": "build_tools/azure",
-        "platform": "linux-64",
-        "channel": "conda-forge",
-        "conda_dependencies": common_dependencies_without_coverage + ["ccache"],
-        "package_constraints": {
-            "blas": "[build=mkl]",
-        },
-    },
-    {
-        "build_name": "py38_conda_defaults_openblas",
+        "build_name": "pymin_conda_defaults_openblas",
         "folder": "build_tools/azure",
         "platform": "linux-64",
         "channel": "defaults",
-        "conda_dependencies": common_dependencies + ["ccache"],
+        "conda_dependencies": remove_from(common_dependencies, ["pandas"]) + ["ccache"],
         "package_constraints": {
-            "python": "3.8",
+            "python": "3.9",
             "blas": "[build=openblas]",
-            "numpy": "min",
-            "scipy": "min",
+            "numpy": "1.21",  # the min version is not available on the defaults channel
+            "scipy": "1.7",  # the min version has some low level crashes
             "matplotlib": "min",
             "threadpoolctl": "2.2.0",
             "cython": "min",
         },
     },
     {
-        "build_name": "py38_conda_forge_openblas_ubuntu_2204",
+        "build_name": "pymin_conda_forge_openblas_ubuntu_2204",
         "folder": "build_tools/azure",
         "platform": "linux-64",
         "channel": "conda-forge",
@@ -173,7 +162,7 @@ conda_build_metadata_list = [
             + ["ccache"]
         ),
         "package_constraints": {
-            "python": "3.8",
+            "python": "3.9",
             "blas": "[build=openblas]",
         },
     },
@@ -247,7 +236,7 @@ conda_build_metadata_list = [
         },
     },
     {
-        "build_name": "py38_conda_forge_mkl",
+        "build_name": "pymin_conda_forge_mkl",
         "folder": "build_tools/azure",
         "platform": "win-64",
         "channel": "conda-forge",
@@ -256,7 +245,7 @@ conda_build_metadata_list = [
             "pip",
         ],
         "package_constraints": {
-            "python": "3.8",
+            "python": "3.9",
             "blas": "[build=mkl]",
         },
     },
@@ -276,11 +265,12 @@ conda_build_metadata_list = [
             "numpydoc",
             "sphinx-prompt",
             "plotly",
+            "polars",
             "pooch",
         ],
         "pip_dependencies": ["sphinxext-opengraph"],
         "package_constraints": {
-            "python": "3.8",
+            "python": "3.9",
             "numpy": "min",
             "scipy": "min",
             "matplotlib": "min",
@@ -294,6 +284,7 @@ conda_build_metadata_list = [
             "sphinx-prompt": "min",
             "sphinxext-opengraph": "min",
             "plotly": "min",
+            "polars": "min",
         },
     },
     {
@@ -312,6 +303,7 @@ conda_build_metadata_list = [
             "numpydoc",
             "sphinx-prompt",
             "plotly",
+            "polars",
             "pooch",
             "sphinxext-opengraph",
         ],
@@ -321,7 +313,7 @@ conda_build_metadata_list = [
         },
     },
     {
-        "build_name": "py39_conda_forge",
+        "build_name": "pymin_conda_forge",
         "folder": "build_tools/cirrus",
         "platform": "linux-aarch64",
         "channel": "conda-forge",
