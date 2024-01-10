@@ -6,7 +6,7 @@
 
 Computation times
 =================
-**00:13.768** total execution time for 291 files **from all galleries**:
+**00:13.705** total execution time for 291 files **from all galleries**:
 
 .. container::
 
@@ -32,14 +32,14 @@ Computation times
    * - Example
      - Time
      - Mem (MB)
-   * - :ref:`sphx_glr_auto_examples_feature_selection_plot_rfe_breast_cancer.py` (``..\examples\feature_selection\plot_rfe_breast_cancer.py``)
-     - 00:08.236
+   * - :ref:`sphx_glr_auto_examples_feature_selection_plot_rfe_digits.py` (``..\examples\feature_selection\plot_rfe_digits.py``)
+     - 00:06.703
      - 0.0
    * - :ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_regularization.py` (``..\examples\ensemble\plot_gradient_boosting_regularization.py``)
-     - 00:03.452
+     - 00:04.142
      - 0.0
    * - :ref:`sphx_glr_auto_examples_release_highlights_plot_release_highlights_0_22_0.py` (``..\examples\release_highlights\plot_release_highlights_0_22_0.py``)
-     - 00:02.080
+     - 00:02.860
      - 0.0
    * - :ref:`sphx_glr_auto_examples_applications_plot_cyclical_feature_engineering.py` (``..\examples\applications\plot_cyclical_feature_engineering.py``)
      - 00:00.000
