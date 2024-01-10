@@ -120,7 +120,7 @@ fs.copyfile('__init__.py')
 sklearn_dir = py.get_install_dir() / 'sklearn'
 
 # Subpackages are mostly in alphabetical order except to handle Cython
-# dependencies across subpackage
+# dependencies across subpackages
 subdir('__check_build')
 subdir('_loss')
 # utils needs to be early since plenty of other modules cimports utils .pxd
