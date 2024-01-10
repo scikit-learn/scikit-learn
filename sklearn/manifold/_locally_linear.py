@@ -8,7 +8,7 @@ from numbers import Integral, Real
 
 import numpy as np
 from scipy.linalg import eigh, qr, solve, svd
-from scipy.sparse import csr_matrix, eye
+from scipy.sparse import csr_matrix, lil_matrix, eye
 from scipy.sparse.linalg import eigsh
 
 from ..base import (
@@ -466,7 +466,11 @@ def locally_linear_embedding(
 
         # Now calculate M.
         # This is the [N x N] matrix whose null space is the desired embedding
-        M = np.zeros((N, N), dtype=np.float64)
+        if M_sparse:
+            M = lil_matrix((N, N), dtype=np.float64)
+        else:
+            M = np.zeros((N, N), dtype=np.float64)
+
         for i in range(N):
             s_i = s_range[i]
 
@@ -502,11 +506,17 @@ def locally_linear_embedding(
             M[nbrs_x, nbrs_y] += np.dot(Wi, Wi.T)
             Wi_sum1 = Wi.sum(1)
             M[i, neighbors[i]] -= Wi_sum1
-            M[neighbors[i], i] -= Wi_sum1
+
+            if M_sparse:
+                for idx in range(len(neighbors[i])):
+                    M[neighbors[i][idx], i] -= Wi_sum1[idx]
+            else:
+                M[neighbors[i], i] -= Wi_sum1
+                
             M[i, i] += s_i
 
         if M_sparse:
-            M = csr_matrix(M)
+            M = M.tocsr()
 
     elif method == "ltsa":
         neighbors = nbrs.kneighbors(
