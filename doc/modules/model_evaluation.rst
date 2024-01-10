@@ -894,7 +894,7 @@ In this context, we can define the notions of precision and recall:
 
 .. math::
 
-   \text{recall} = \frac{tp}{\text{tp} + \text{fn}},
+   \text{recall} = \frac{\text{tp}}{\text{tp} + \text{fn}},
 
 (Sometimes recall is also called ''sensitivity'')
 
