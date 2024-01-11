@@ -5,8 +5,10 @@ import pytest
 from numpy.testing import assert_array_equal
 
 from sklearn.utils._encode import _check_unknown, _encode, _get_counts, _unique
+from sklearn.utils._testing import _convert_container
 
 
+@pytest.mark.parametrize("container_lib", ["numpy", "pandas", "polars"])
 @pytest.mark.parametrize(
     "values, expected",
     [
@@ -27,7 +29,10 @@ from sklearn.utils._encode import _check_unknown, _encode, _get_counts, _unique
     ],
     ids=["int64", "float32-nan", "object", "object-None", "str"],
 )
-def test_encode_util(values, expected):
+def test_encode_util(container_lib, values, expected):
+    pytest.importorskip(container_lib)
+    if container_lib != "numpy":
+        values = _convert_container(values, container_lib, columns_name=["A"])["A"]
     uniques = _unique(values)
     assert_array_equal(uniques, expected)
 
@@ -35,7 +40,7 @@ def test_encode_util(values, expected):
     assert_array_equal(result, expected)
     assert_array_equal(encoded, np.array([1, 0, 2, 0, 2]))
 
-    encoded = _encode(values, uniques=uniques)
+    encoded = _encode(np.asarray(values), uniques=uniques)
     assert_array_equal(encoded, np.array([1, 0, 2, 0, 2]))
 
     result, counts = _unique(values, return_counts=True)
@@ -163,11 +168,17 @@ def test_check_unknown_missing_values(missing_value, pickle_uniques):
     _assert_check_unknown(values, uniques, expected_diff, expected_mask)
 
 
+@pytest.mark.parametrize("container_lib", ["numpy", "pandas", "polars"])
 @pytest.mark.parametrize("missing_value", [np.nan, None, float("nan")])
 @pytest.mark.parametrize("pickle_uniques", [True, False])
-def test_unique_util_missing_values_objects(missing_value, pickle_uniques):
+def test_unique_util_missing_values_objects(
+    container_lib, missing_value, pickle_uniques
+):
     # check for _unique and _encode with missing values with object dtypes
+    pytest.importorskip(container_lib)
     values = np.array(["a", "c", "c", missing_value, "b"], dtype=object)
+    if container_lib != "numpy":
+        values = _convert_container(values, container_lib, columns_name=["A"])["A"]
     expected_uniques = np.array(["a", "b", "c", missing_value], dtype=object)
 
     uniques = _unique(values)
@@ -181,13 +192,17 @@ def test_unique_util_missing_values_objects(missing_value, pickle_uniques):
     if pickle_uniques:
         uniques = pickle.loads(pickle.dumps(uniques))
 
-    encoded = _encode(values, uniques=uniques)
+    encoded = _encode(np.asarray(values), uniques=uniques)
     assert_array_equal(encoded, np.array([0, 2, 2, 3, 1]))
 
 
-def test_unique_util_missing_values_numeric():
+@pytest.mark.parametrize("container_lib", ["numpy", "pandas", "polars"])
+def test_unique_util_missing_values_numeric(container_lib):
     # Check missing values in numerical values
+    pytest.importorskip(container_lib)
     values = np.array([3, 1, np.nan, 5, 3, np.nan], dtype=float)
+    if container_lib != "numpy":
+        values = _convert_container(values, container_lib, columns_name=["A"])["A"]
     expected_uniques = np.array([1, 3, 5, np.nan], dtype=float)
     expected_inverse = np.array([1, 0, 3, 2, 1, 3])
 
@@ -198,13 +213,17 @@ def test_unique_util_missing_values_numeric():
     assert_array_equal(uniques, expected_uniques)
     assert_array_equal(inverse, expected_inverse)
 
-    encoded = _encode(values, uniques=uniques)
+    encoded = _encode(np.asarray(values), uniques=uniques)
     assert_array_equal(encoded, expected_inverse)
 
 
-def test_unique_util_with_all_missing_values():
+@pytest.mark.parametrize("container_lib", ["numpy", "pandas", "polars"])
+def test_unique_util_with_all_missing_values(container_lib):
     # test for all types of missing values for object dtype
+    pytest.importorskip(container_lib)
     values = np.array([np.nan, "a", "c", "c", None, float("nan"), None], dtype=object)
+    if container_lib != "numpy":
+        values = _convert_container(values, container_lib, columns_name=["A"])["A"]
 
     uniques = _unique(values)
     assert_array_equal(uniques[:-1], ["a", "c", None])

@@ -15,7 +15,12 @@ from ..utils._encode import _check_unknown, _encode, _get_counts, _unique
 from ..utils._mask import _get_mask
 from ..utils._param_validation import Interval, RealNotInt, StrOptions
 from ..utils._set_output import _get_output_config
-from ..utils.validation import _check_feature_names_in, check_is_fitted
+from ..utils.validation import (
+    _check_feature_names_in,
+    _is_pandas_df,
+    _is_polars_df,
+    check_is_fitted,
+)
 
 __all__ = ["OneHotEncoder", "OrdinalEncoder"]
 
@@ -91,11 +96,17 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
         category_counts = []
         compute_counts = return_counts or self._infrequent_enabled
 
+        is_pandas = _is_pandas_df(X)
+        is_polars = _is_polars_df(X)
         for i in range(n_features):
             Xi = X_list[i]
 
             if self.categories == "auto":
-                result = _unique(Xi, return_counts=compute_counts)
+                if is_pandas or is_polars:
+                    values = _safe_indexing(X, i, axis=1)
+                else:
+                    values = Xi
+                result = _unique(values, return_counts=compute_counts)
                 if compute_counts:
                     cats, counts = result
                     category_counts.append(counts)

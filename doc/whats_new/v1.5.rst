@@ -44,3 +44,12 @@ TODO: update at the time of the release.
 
 - |Feature| A fitted :class:`compose.ColumnTransformer` now implements `__getitem__`
   which returns the fitted transformers by name. :pr:`27990` by `Thomas Fan`_.
+
+:mod:`sklearn.preprocessing`
+............................
+
+- |Efficiency| :class:`preprocessing.OrdinalEncoder`,
+  :class:`preprocessing.OneHotEncoder` and :class:`preprocessing.TargetEncoder`
+  can be faster on pandas or polars DataFrames by using a more efficient way of
+  finding unique values in the categorical columns. :pr:`27911` by :user:`Jérôme
+  Dockès <jeromedockes>`.
