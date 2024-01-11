@@ -1733,7 +1733,7 @@ class TfidfTransformer(
         -------
         ndarray of shape (n_features,)
         """
-        # if _idf_diag is not set, this will raise an attribute error,
+        # if _idf is not set, this will raise an attribute error,
         # which means hasattr(self, "idf_") is False
         return self._idf
 
