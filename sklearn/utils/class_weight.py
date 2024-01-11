@@ -159,7 +159,7 @@ def compute_sample_weight(class_weight, y, *, indices=None):
     -------
     sample_weight_vect : ndarray of shape (n_samples,)
         Array with sample weights as applied to the original `y`.
-    
+
     Examples
     --------
     >>> Using dictionary custom weights
