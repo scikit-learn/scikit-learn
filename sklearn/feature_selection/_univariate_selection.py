@@ -438,15 +438,16 @@ def f_regression(X, y, *, center=True, force_finite=True):
         scores.
     Examples
     --------
-    >>> import numpy as np
+    >>> from sklearn.datasets import make_regression
     >>> from sklearn.feature_selection import f_regression
-    >>> X = np.array([[1, 2 ],[3,  4], [5, 6], [7,  8]])
-    >>> y = np.array([  7,  99,  14,  88])
-    >>> f_values, p_values = f_regression(X, y)
-    >>> f_values
-    array([0.43599148, 0.43599148])
+    >>> X, y = make_regression(
+    ...     n_samples=50, n_features=3, n_informative=1, noise=1e-4, random_state=42
+    ... )
+    >>> f_statistic, p_values = f_regression(X, y)
+    >>> f_statistic
+    array([1.2...+00, 2.6...+13, 2.6...+00])
     >>> p_values
-    array([0.57694083, 0.57694083])
+    array([2.7..., 1.5..., 1.0...])
     """
     correlation_coefficient = r_regression(
         X, y, center=center, force_finite=force_finite
