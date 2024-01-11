@@ -436,6 +436,7 @@ def f_regression(X, y, *, center=True, force_finite=True):
     SelectFwe: Select features based on family-wise error rate.
     SelectPercentile: Select features based on percentile of the highest
         scores.
+
     Examples
     --------
     >>> from sklearn.datasets import make_regression
