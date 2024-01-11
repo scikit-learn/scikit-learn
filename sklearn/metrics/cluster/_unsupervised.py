@@ -14,6 +14,7 @@ from scipy.sparse import issparse
 
 from ...preprocessing import LabelEncoder
 from ...utils import _safe_indexing, check_random_state, check_X_y
+from ...utils._array_api import _atol_for_type
 from ...utils._param_validation import (
     Interval,
     StrOptions,
@@ -263,7 +264,8 @@ def silhouette_samples(X, labels, *, metric="euclidean", **kwds):
             "elements on the diagonal. Use np.fill_diagonal(X, 0)."
         )
         if X.dtype.kind == "f":
-            atol = np.finfo(X.dtype).eps * 100
+            atol = _atol_for_type(X.dtype)
+
             if np.any(np.abs(X.diagonal()) > atol):
                 raise error_msg
         elif np.any(X.diagonal() != 0):  # integral dtype
