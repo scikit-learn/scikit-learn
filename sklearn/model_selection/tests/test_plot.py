@@ -573,10 +573,11 @@ def test_validation_curve_xscale_from_param_range_provided_as_a_list(
 
 
 @pytest.mark.parametrize(
-    "Display, params", [
+    "Display, params",
+    [
         (LearningCurveDisplay, {}),
         (ValidationCurveDisplay, {"param_name": "max_depth", "param_range": [1, 3, 5]}),
-    ]
+    ],
 )
 def test_subclassing_displays(pyplot, data, Display, params):
     """Check that named constructors return the correct type when subclassed.
