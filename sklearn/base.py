@@ -1079,8 +1079,9 @@ class OutlierMixin:
 
 
 class MetaEstimatorMixin:
-    _required_parameters = ["estimator"]
     """Mixin class for all meta estimators in scikit-learn."""
+
+    _required_parameters = ["estimator"]
 
 
 class MultiOutputMixin:
