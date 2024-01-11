@@ -529,7 +529,7 @@ def _get_column_indices_interchange(X_interchange, key, key_dtype):
         "replace": ["boolean"],
         "n_samples": [Interval(numbers.Integral, 1, None, closed="left"), None],
         "random_state": ["random_state"],
-        "stratify": ["array-like", None],
+        "stratify": ["array-like", "sparse matrix", None],
     },
     prefer_skip_nested_validation=True,
 )
@@ -562,8 +562,8 @@ def resample(*arrays, replace=True, n_samples=None, random_state=None, stratify=
         Pass an int for reproducible results across multiple function calls.
         See :term:`Glossary <random_state>`.
 
-    stratify : array-like of shape (n_samples,) or (n_samples, n_outputs), \
-            default=None
+    stratify : {array-like, sparse matrix} of shape (n_samples,) or \
+            (n_samples, n_outputs), default=None
         If not None, data is split in a stratified fashion, using this as
         the class labels.
 
