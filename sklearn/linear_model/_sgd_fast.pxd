@@ -2,8 +2,8 @@
 """Helper to load LossFunction from sgd_fast.pyx to sag_fast.pyx"""
 
 cdef class LossFunction:
-    cdef double loss(self, double p, double y) noexcept nogil
-    cdef double dloss(self, double p, double y) noexcept nogil
+    cdef double loss(self, double y, double p) noexcept nogil
+    cdef double dloss(self, double y, double p) noexcept nogil
 
 
 cdef class Regression(LossFunction):
