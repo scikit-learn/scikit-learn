@@ -436,6 +436,18 @@ def f_regression(X, y, *, center=True, force_finite=True):
     SelectFwe: Select features based on family-wise error rate.
     SelectPercentile: Select features based on percentile of the highest
         scores.
+        
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.feature_selection import f_regression
+    >>> X = np.array([[1, 2 ],[3,  4], [5, 6], [7,  8]])
+    >>> y = np.array([  7,  99,  14,  88])
+    >>> f_values, p_values = f_regression(X, y)
+    >>> f_values
+    array([0.43599148, 0.43599148])
+    >>> p_values
+    array([0.57694083, 0.57694083])
     """
     correlation_coefficient = r_regression(
         X, y, center=center, force_finite=force_finite
