@@ -303,6 +303,9 @@ redirects = {
     "auto_examples/ensemble/plot_adaboost_hastie_10_2": (
         "auto_examples/ensemble/plot_adaboost_multiclass"
     ),
+    "auto_examples/feature_selection/plot_rfe_with_cross_validation": (
+        "auto_examples/feature_selection/plot_rfe_digits"
+    ),
 }
 html_context["redirects"] = redirects
 for old_link in redirects:
