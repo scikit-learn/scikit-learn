@@ -263,7 +263,7 @@ def test_classifier_display_curve_named_constructor_return_type(
 
     if constructor == "from_predictions":
         curve = SubclassOfDisplay.from_predictions(y, y_pred)
-    elif constructor == "from_estimator":
+    else:  # constructor == "from_estimator"
         curve = SubclassOfDisplay.from_estimator(classifier, X, y)
 
     assert isinstance(curve, SubclassOfDisplay)
