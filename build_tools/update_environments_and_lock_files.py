@@ -5,8 +5,11 @@ python build_tools/update_environments_and_lock_files.py
 
 Two scenarios where this script can be useful:
 - make sure that the latest versions of all the dependencies are used in the CI.
-  We can run this script regularly and open a PR with the changes to the lock
-  files. This workflow will eventually be automated with a bot in the future.
+  There is a scheduled workflow that does this, see
+  .github/workflows/update-lock-files.yml. This is still useful to run this
+  script when when the automated PR fails and for example some packages need to
+  be pinned. You can add the pins to this script, run it, and open a PR with
+  the changes.
 - bump minimum dependencies in sklearn/_min_dependencies.py. Running this
   script will update both the CI environment files and associated lock files.
   You can then open a PR with the changes.
@@ -78,11 +81,7 @@ common_dependencies = common_dependencies_without_coverage + [
 
 docstring_test_dependencies = ["sphinx", "numpydoc"]
 
-default_package_constraints = {
-    # XXX: pin pytest-xdist to workaround:
-    # https://github.com/pytest-dev/pytest-xdist/issues/840
-    "pytest-xdist": "2.5.0",
-}
+default_package_constraints = {}
 
 
 def remove_from(alist, to_remove):
@@ -134,16 +133,6 @@ conda_build_metadata_list = [
             # for more details see
             # https://github.com/scikit-learn/scikit-learn/pull/26845#issuecomment-1639917135
             "numpy": "<1.25",
-        },
-    },
-    {
-        "build_name": "pylatest_conda_forge_mkl_no_coverage",
-        "folder": "build_tools/azure",
-        "platform": "linux-64",
-        "channel": "conda-forge",
-        "conda_dependencies": common_dependencies_without_coverage + ["ccache"],
-        "package_constraints": {
-            "blas": "[build=mkl]",
         },
     },
     {
@@ -306,8 +295,6 @@ conda_build_metadata_list = [
         "conda_dependencies": common_dependencies_without_coverage + [
             "scikit-image",
             "seaborn",
-            # TODO Remove when patsy pin is not needed anymore, see below
-            "patsy",
             "memory_profiler",
             "compilers",
             "sphinx",
@@ -323,10 +310,6 @@ conda_build_metadata_list = [
         "pip_dependencies": ["jupyterlite-sphinx", "jupyterlite-pyodide-kernel"],
         "package_constraints": {
             "python": "3.9",
-            # TODO: Remove pin when issue is fixed in patsy, see
-            # https://github.com/pydata/patsy/issues/198. patsy 0.5.5
-            # introduced a DeprecationWarning at import-time.
-            "patsy": "0.5.4",
         },
     },
     {
