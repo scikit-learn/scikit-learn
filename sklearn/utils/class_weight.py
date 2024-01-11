@@ -166,7 +166,7 @@ def compute_sample_weight(class_weight, y, *, indices=None):
 
     Examples
     --------
-    
+
     Using dictionary custom weights
     -------------------------------
     >>> from sklearn.utils import class_weight
@@ -203,7 +203,7 @@ def compute_sample_weight(class_weight, y, *, indices=None):
     >>> indices = np.random.choice(len(y), len(y), replace=True)
     >>> sample_weights = class_weight.compute_sample_weight
                         (class_weight='balanced', y=y, indices=indices)
-    >>> Output:  [1.16666667 0.875      1.16666667 0.875 
+    >>> Output:  [1.16666667 0.875      1.16666667 0.875
                  0.875      0.875 1.16666667]
     """
 
