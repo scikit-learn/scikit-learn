@@ -665,10 +665,10 @@ def _set_reach_dist(
 
     # Only compute distances to unprocessed neighbors:
     if metric == "precomputed":
-        dists = X[point_index, unproc]
-        if issparse(dists):
-            dists.sort_indices()
-            dists = dists.data
+        dists = X[[point_index], unproc]
+        if isinstance(dists, np.matrix):
+            dists = np.asarray(dists)
+        dists = dists.ravel()
     else:
         _params = dict() if metric_params is None else metric_params.copy()
         if metric == "minkowski" and "p" not in _params:
@@ -921,7 +921,7 @@ def _correct_predecessor(reachability_plot, predecessor_plot, ordering, s, e):
     while s < e:
         if reachability_plot[s] > reachability_plot[e]:
             return s, e
-        p_e = ordering[predecessor_plot[e]]
+        p_e = predecessor_plot[e]
         for i in range(s, e):
             if p_e == ordering[i]:
                 return s, e

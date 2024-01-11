@@ -10,7 +10,7 @@ from sklearn.base import (
     TransformerMixin,
     clone,
 )
-from sklearn.metrics._scorer import _PredictScorer, mean_squared_error
+from sklearn.metrics._scorer import _Scorer, mean_squared_error
 from sklearn.model_selection import BaseCrossValidator
 from sklearn.model_selection._split import GroupsConsumerMixin
 from sklearn.utils._metadata_requests import (
@@ -20,6 +20,7 @@ from sklearn.utils.metadata_routing import (
     MetadataRouter,
     process_routing,
 )
+from sklearn.utils.multiclass import _check_partial_fit_first_call
 
 
 def record_metadata(obj, method, record_default=True, **kwargs):
@@ -46,6 +47,10 @@ def check_recorded_metadata(obj, method, split_params=tuple(), **kwargs):
 
     Parameters
     ----------
+    obj : estimator object
+        sub-estimator to check routed params for
+    method : str
+        sub-estimator's method where metadata is routed to
     split_params : tuple, default=empty
         specifies any parameters which are to be checked as being a subset
         of the original values.
@@ -170,7 +175,7 @@ class NonConsumingClassifier(ClassifierMixin, BaseEstimator):
         if self.registry is not None:
             self.registry.append(self)
 
-        self.classes_ = [0, 1]
+        self.classes_ = np.unique(y)
         return self
 
     def predict(self, X):
@@ -197,14 +202,16 @@ class ConsumingClassifier(ClassifierMixin, BaseEstimator):
         self.alpha = alpha
         self.registry = registry
 
-    def partial_fit(self, X, y, sample_weight="default", metadata="default"):
+    def partial_fit(
+        self, X, y, classes=None, sample_weight="default", metadata="default"
+    ):
         if self.registry is not None:
             self.registry.append(self)
 
         record_metadata_not_default(
             self, "partial_fit", sample_weight=sample_weight, metadata=metadata
         )
-        self.classes_ = [0, 1]
+        _check_partial_fit_first_call(self, classes)
         return self
 
     def fit(self, X, y, sample_weight="default", metadata="default"):
@@ -214,7 +221,7 @@ class ConsumingClassifier(ClassifierMixin, BaseEstimator):
         record_metadata_not_default(
             self, "fit", sample_weight=sample_weight, metadata=metadata
         )
-        self.classes_ = [0, 1]
+        self.classes_ = np.unique(y)
         return self
 
     def predict(self, X, sample_weight="default", metadata="default"):
@@ -297,9 +304,11 @@ class ConsumingTransformer(TransformerMixin, BaseEstimator):
         return X
 
 
-class ConsumingScorer(_PredictScorer):
+class ConsumingScorer(_Scorer):
     def __init__(self, registry=None):
-        super().__init__(score_func=mean_squared_error, sign=1, kwargs={})
+        super().__init__(
+            score_func=mean_squared_error, sign=1, kwargs={}, response_method="predict"
+        )
         self.registry = registry
 
     def _score(self, method_caller, clf, X, y, **kwargs):

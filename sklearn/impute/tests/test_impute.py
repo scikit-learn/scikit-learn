@@ -1710,3 +1710,37 @@ def test_simple_imputer_keep_empty_features(strategy, array_type, keep_empty_fea
             assert_array_equal(constant_feature, 0)
         else:
             assert X_imputed.shape == (X.shape[0], X.shape[1] - 1)
+
+
+@pytest.mark.parametrize("csc_container", CSC_CONTAINERS)
+def test_imputation_custom(csc_container):
+    X = np.array(
+        [
+            [1.1, 1.1, 1.1],
+            [3.9, 1.2, np.nan],
+            [np.nan, 1.3, np.nan],
+            [0.1, 1.4, 1.4],
+            [4.9, 1.5, 1.5],
+            [np.nan, 1.6, 1.6],
+        ]
+    )
+
+    X_true = np.array(
+        [
+            [1.1, 1.1, 1.1],
+            [3.9, 1.2, 1.1],
+            [0.1, 1.3, 1.1],
+            [0.1, 1.4, 1.4],
+            [4.9, 1.5, 1.5],
+            [0.1, 1.6, 1.6],
+        ]
+    )
+
+    imputer = SimpleImputer(missing_values=np.nan, strategy=np.min)
+    X_trans = imputer.fit_transform(X)
+    assert_array_equal(X_trans, X_true)
+
+    # Sparse matrix
+    imputer = SimpleImputer(missing_values=np.nan, strategy=np.min)
+    X_trans = imputer.fit_transform(csc_container(X))
+    assert_array_equal(X_trans.toarray(), X_true)

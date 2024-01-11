@@ -23,7 +23,7 @@ import sys
 import tempfile
 import unittest
 import warnings
-from collections.abc import Iterable, Sequence
+from collections.abc import Iterable
 from functools import wraps
 from inspect import signature
 from subprocess import STDOUT, CalledProcessError, TimeoutExpired, check_output
@@ -49,7 +49,7 @@ from sklearn.utils import (
     _in_unstable_openblas_configuration,
 )
 from sklearn.utils._array_api import _check_array_api_dispatch
-from sklearn.utils.fixes import parse_version, sp_version, threadpool_info
+from sklearn.utils.fixes import parse_version, sp_version
 from sklearn.utils.multiclass import check_classification_targets
 from sklearn.utils.validation import (
     check_array,
@@ -448,73 +448,19 @@ class TempMemmap:
         _delete_folder(self.temp_folder)
 
 
-def _create_memmap_backed_array(array, filename, mmap_mode):
-    # https://numpy.org/doc/stable/reference/generated/numpy.memmap.html
-    fp = np.memmap(filename, dtype=array.dtype, mode="w+", shape=array.shape)
-    fp[:] = array[:]  # write array to memmap array
-    fp.flush()
-    memmap_backed_array = np.memmap(
-        filename, dtype=array.dtype, mode=mmap_mode, shape=array.shape
-    )
-    return memmap_backed_array
-
-
-def _create_aligned_memmap_backed_arrays(data, mmap_mode, folder):
-    if isinstance(data, np.ndarray):
-        filename = op.join(folder, "data.dat")
-        return _create_memmap_backed_array(data, filename, mmap_mode)
-
-    if isinstance(data, Sequence) and all(
-        isinstance(each, np.ndarray) for each in data
-    ):
-        return [
-            _create_memmap_backed_array(
-                array, op.join(folder, f"data{index}.dat"), mmap_mode
-            )
-            for index, array in enumerate(data)
-        ]
-
-    raise ValueError(
-        "When creating aligned memmap-backed arrays, input must be a single array or a"
-        " sequence of arrays"
-    )
-
-
-def create_memmap_backed_data(data, mmap_mode="r", return_folder=False, aligned=False):
+def create_memmap_backed_data(data, mmap_mode="r", return_folder=False):
     """
     Parameters
     ----------
     data
     mmap_mode : str, default='r'
     return_folder :  bool, default=False
-    aligned : bool, default=False
-        If True, if input is a single numpy array and if the input array is aligned,
-        the memory mapped array will also be aligned. This is a workaround for
-        https://github.com/joblib/joblib/issues/563.
     """
     temp_folder = tempfile.mkdtemp(prefix="sklearn_testing_")
     atexit.register(functools.partial(_delete_folder, temp_folder, warn=True))
-    # OpenBLAS is known to segfault with unaligned data on the Prescott
-    # architecture so force aligned=True on Prescott. For more details, see:
-    # https://github.com/scipy/scipy/issues/14886
-    has_prescott_openblas = any(
-        True
-        for info in threadpool_info()
-        if info["internal_api"] == "openblas"
-        # Prudently assume Prescott might be the architecture if it is unknown.
-        and info.get("architecture", "prescott").lower() == "prescott"
-    )
-    if has_prescott_openblas:
-        aligned = True
-
-    if aligned:
-        memmap_backed_data = _create_aligned_memmap_backed_arrays(
-            data, mmap_mode, temp_folder
-        )
-    else:
-        filename = op.join(temp_folder, "data.pkl")
-        joblib.dump(data, filename)
-        memmap_backed_data = joblib.load(filename, mmap_mode=mmap_mode)
+    filename = op.join(temp_folder, "data.pkl")
+    joblib.dump(data, filename)
+    memmap_backed_data = joblib.load(filename, mmap_mode=mmap_mode)
     result = (
         memmap_backed_data if not return_folder else (memmap_backed_data, temp_folder)
     )
@@ -775,7 +721,12 @@ def assert_run_python_script(source_code, timeout=60):
 
 
 def _convert_container(
-    container, constructor_name, columns_name=None, dtype=None, minversion=None
+    container,
+    constructor_name,
+    columns_name=None,
+    dtype=None,
+    minversion=None,
+    categorical_feature_names=None,
 ):
     """Convert a given container to a specific array-like with a dtype.
 
@@ -794,6 +745,8 @@ def _convert_container(
         container.
     minversion : str, default=None
         Minimum version for package to install.
+    categorical_feature_names : list of str, default=None
+        List of column names to cast to categorical dtype.
 
     Returns
     -------
@@ -812,20 +765,35 @@ def _convert_container(
     elif constructor_name == "array":
         return np.asarray(container, dtype=dtype)
     elif constructor_name == "sparse":
-        return sp.sparse.csr_matrix(container, dtype=dtype)
-    elif constructor_name == "dataframe":
+        return sp.sparse.csr_matrix(np.atleast_2d(container), dtype=dtype)
+    elif constructor_name in ("pandas", "dataframe"):
         pd = pytest.importorskip("pandas", minversion=minversion)
-        return pd.DataFrame(container, columns=columns_name, dtype=dtype, copy=False)
+        result = pd.DataFrame(container, columns=columns_name, dtype=dtype, copy=False)
+        if categorical_feature_names is not None:
+            for col_name in categorical_feature_names:
+                result[col_name] = result[col_name].astype("category")
+        return result
     elif constructor_name == "pyarrow":
         pa = pytest.importorskip("pyarrow", minversion=minversion)
         array = np.asarray(container)
         if columns_name is None:
             columns_name = [f"col{i}" for i in range(array.shape[1])]
         data = {name: array[:, i] for i, name in enumerate(columns_name)}
-        return pa.Table.from_pydict(data)
+        result = pa.Table.from_pydict(data)
+        if categorical_feature_names is not None:
+            for col_idx, col_name in enumerate(result.column_names):
+                if col_name in categorical_feature_names:
+                    result = result.set_column(
+                        col_idx, col_name, result.column(col_name).dictionary_encode()
+                    )
+        return result
     elif constructor_name == "polars":
         pl = pytest.importorskip("polars", minversion=minversion)
-        return pl.DataFrame(container, schema=columns_name)
+        result = pl.DataFrame(container, schema=columns_name, orient="row")
+        if categorical_feature_names is not None:
+            for col_name in categorical_feature_names:
+                result = result.with_columns(pl.col(col_name).cast(pl.Categorical))
+        return result
     elif constructor_name == "series":
         pd = pytest.importorskip("pandas", minversion=minversion)
         return pd.Series(container, dtype=dtype)
@@ -835,18 +803,18 @@ def _convert_container(
     elif constructor_name == "slice":
         return slice(container[0], container[1])
     elif constructor_name == "sparse_csr":
-        return sp.sparse.csr_matrix(container, dtype=dtype)
+        return sp.sparse.csr_matrix(np.atleast_2d(container), dtype=dtype)
     elif constructor_name == "sparse_csr_array":
         if sp_version >= parse_version("1.8"):
-            return sp.sparse.csr_array(container, dtype=dtype)
+            return sp.sparse.csr_array(np.atleast_2d(container), dtype=dtype)
         raise ValueError(
             f"sparse_csr_array is only available with scipy>=1.8.0, got {sp_version}"
         )
     elif constructor_name == "sparse_csc":
-        return sp.sparse.csc_matrix(container, dtype=dtype)
+        return sp.sparse.csc_matrix(np.atleast_2d(container), dtype=dtype)
     elif constructor_name == "sparse_csc_array":
         if sp_version >= parse_version("1.8"):
-            return sp.sparse.csc_array(container, dtype=dtype)
+            return sp.sparse.csc_array(np.atleast_2d(container), dtype=dtype)
         raise ValueError(
             f"sparse_csc_array is only available with scipy>=1.8.0, got {sp_version}"
         )
@@ -1062,7 +1030,7 @@ class MinimalTransformer:
         return self.fit(X, y).transform(X, y)
 
 
-def _array_api_for_tests(array_namespace, device, dtype):
+def _array_api_for_tests(array_namespace, device):
     try:
         if array_namespace == "numpy.array_api":
             # FIXME: once it is not experimental anymore
@@ -1087,7 +1055,11 @@ def _array_api_for_tests(array_namespace, device, dtype):
     # This is because `cupy` is not the same as the compatibility wrapped
     # namespace of a CuPy array.
     xp = array_api_compat.get_namespace(array_mod.asarray(1))
-    if array_namespace == "torch" and device == "cuda" and not xp.has_cuda:
+    if (
+        array_namespace == "torch"
+        and device == "cuda"
+        and not xp.backends.cuda.is_built()
+    ):
         raise SkipTest("PyTorch test requires cuda, which is not available")
     elif array_namespace == "torch" and device == "mps":
         if os.getenv("PYTORCH_ENABLE_MPS_FALLBACK") != "1":
@@ -1097,21 +1069,14 @@ def _array_api_for_tests(array_namespace, device, dtype):
                 "Skipping MPS device test because PYTORCH_ENABLE_MPS_FALLBACK is not "
                 "set."
             )
-        if not xp.has_mps:
-            if not xp.backends.mps.is_built():
-                raise SkipTest(
-                    "MPS is not available because the current PyTorch install was not "
-                    "built with MPS enabled."
-                )
-            else:
-                raise SkipTest(
-                    "MPS is not available because the current MacOS version is not"
-                    " 12.3+ and/or you do not have an MPS-enabled device on this"
-                    " machine."
-                )
+        if not xp.backends.mps.is_built():
+            raise SkipTest(
+                "MPS is not available because the current PyTorch install was not "
+                "built with MPS enabled."
+            )
     elif array_namespace in {"cupy", "cupy.array_api"}:  # pragma: nocover
         import cupy
 
         if cupy.cuda.runtime.getDeviceCount() == 0:
             raise SkipTest("CuPy test requires cuda, which is not available")
-    return xp, device, dtype
+    return xp

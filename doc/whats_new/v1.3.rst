@@ -2,6 +2,47 @@
 
 .. currentmodule:: sklearn
 
+.. _changes_1_3_2:
+
+Version 1.3.2
+=============
+
+**October 2023**
+
+Changelog
+---------
+
+:mod:`sklearn.datasets`
+.......................
+
+- |Fix| All dataset fetchers now accept `data_home` as any object that implements
+  the :class:`os.PathLike` interface, for instance, :class:`pathlib.Path`.
+  :pr:`27468` by :user:`Yao Xiao <Charlie-XIAO>`.
+
+:mod:`sklearn.decomposition`
+............................
+
+- |Fix| Fixes a bug in :class:`decomposition.KernelPCA` by forcing the output of
+  the internal :class:`preprocessing.KernelCenterer` to be a default array. When the
+  arpack solver is used, it expects an array with a `dtype` attribute.
+  :pr:`27583` by :user:`Guillaume Lemaitre <glemaitre>`.
+
+:mod:`sklearn.metrics`
+......................
+
+- |Fix| Fixes a bug for metrics using `zero_division=np.nan`
+  (e.g. :func:`~metrics.precision_score`) within a paralell loop
+  (e.g. :func:`~model_selection.cross_val_score`) where the singleton for `np.nan`
+  will be different in the sub-processes.
+  :pr:`27573` by :user:`Guillaume Lemaitre <glemaitre>`.
+
+:mod:`sklearn.tree`
+...................
+
+- |Fix| Do not leak data via non-initialized memory in decision tree pickle files and make
+  the generation of those files deterministic. :pr:`27580` by :user:`Loïc Estève <lesteve>`.
+
+
 .. _changes_1_3_1:
 
 Version 1.3.1
@@ -99,8 +140,8 @@ Changelog
   exception for `pandas.DataFrames` input.
   :pr:`26772` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
-- |Fix| Reintroduce :attr:`sklearn.neighbors.BallTree.valid_metrics` and
-  :attr:`sklearn.neighbors.KDTree.valid_metrics` as public class attributes.
+- |Fix| Reintroduce `sklearn.neighbors.BallTree.valid_metrics` and
+  `sklearn.neighbors.KDTree.valid_metrics` as public class attributes.
   :pr:`26754` by :user:`Julien Jerphanion <jjerphan>`.
 
 - |Fix| :class:`sklearn.model_selection.HalvingRandomSearchCV` no longer raises
@@ -272,8 +313,8 @@ Changes impacting all modules
   CSR matrix to the `predict` or `transform` method of estimators that rely on
   a dense NumPy representation to store their fitted parameters (or the reverse).
 
-  For instance, :meth:`sklearn.NearestNeighbors.kneighbors` is now up to 2 times faster
-  for this case on commonly available laptops.
+  For instance, :meth:`sklearn.neighbors.NearestNeighbors.kneighbors` is now up
+  to 2 times faster for this case on commonly available laptops.
 
   :pr:`25044` by :user:`Julien Jerphanion <jjerphan>`.
 
@@ -710,8 +751,9 @@ Changelog
 :mod:`sklearn.mixture`
 ......................
 
-- |Efficiency| :class:`GaussianMixture` is more efficient now and will bypass unnecessary
-  initialization if the weights, means, and precisions are given by users.
+- |Efficiency| :class:`mixture.GaussianMixture` is more efficient now and will bypass
+  unnecessary initialization if the weights, means, and precisions are
+  given by users.
   :pr:`26021` by :user:`Jiawei Zhang <jiawei-zhang-a>`.
 
 :mod:`sklearn.model_selection`

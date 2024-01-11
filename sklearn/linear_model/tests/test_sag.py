@@ -935,8 +935,7 @@ def test_multinomial_loss():
     rng = check_random_state(42)
     weights = rng.randn(n_features, n_classes)
     intercept = rng.randn(n_classes)
-    sample_weights = rng.randn(n_samples)
-    np.abs(sample_weights, sample_weights)
+    sample_weights = np.abs(rng.randn(n_samples))
 
     # compute loss and gradient like in multinomial SAG
     dataset, _ = make_dataset(X, y, sample_weights, random_state=42)
@@ -953,6 +952,9 @@ def test_multinomial_loss():
         weights_intercept, X, y, l2_reg_strength=0.0, sample_weight=sample_weights
     )
     grad_2 = grad_2[:, :-1].T
+    # convert to same convention, i.e. LinearModelLoss uses average(loss, weight=sw)
+    loss_2 *= np.sum(sample_weights)
+    grad_2 *= np.sum(sample_weights)
 
     # comparison
     assert_array_almost_equal(grad_1, grad_2)
@@ -987,6 +989,9 @@ def test_multinomial_loss_ground_truth():
         weights_intercept, X, y, l2_reg_strength=0.0, sample_weight=sample_weights
     )
     grad_2 = grad_2[:, :-1].T
+    # convert to same convention, i.e. LinearModelLoss uses average(loss, weight=sw)
+    loss_2 *= np.sum(sample_weights)
+    grad_2 *= np.sum(sample_weights)
 
     assert_almost_equal(loss_1, loss_2)
     assert_array_almost_equal(grad_1, grad_2)

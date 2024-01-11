@@ -1457,7 +1457,7 @@ Support for Python 3.3 has been officially dropped.
   :user:`Gilberto Olimpio <gilbertoolimpio>`.
 
 - |API| The NaN marker for the missing values has been changed
-  between the :class:`preprocessing.Imputer` and the
+  between the `preprocessing.Imputer` and the
   `impute.SimpleImputer`.
   ``missing_values='NaN'`` should now be
   ``missing_values=np.nan``. :issue:`11211` by
