@@ -247,7 +247,8 @@ def test_classifier_display_curve_named_constructor_return_type(
 ):
     """Check that named constructors return the correct type when subclassed
 
-    Non-regression test for #27675
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/pull/27675
     """
     X, y = data_binary
 
