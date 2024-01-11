@@ -364,8 +364,8 @@ class KNeighborsTransformer(
 
     Notes
     -----
-    For an example of using `KNeighborsTransformer` in combination with
-    :class:`~sklearn.manifold.TSNE` see
+    For an example of using :class:`~sklearn.neighbors.KNeighborsTransformer`
+    in combination with :class:`~sklearn.manifold.TSNE` see
     :ref:`sphx_glr_auto_examples_neighbors_approximate_nearest_neighbors.py`.
 
     Examples

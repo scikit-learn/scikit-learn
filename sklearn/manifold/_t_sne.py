@@ -730,7 +730,7 @@ class TSNE(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
 
     Notes
     -----
-    For an example of using `TSNE` in combination with
+    For an example of using :class:`~sklearn.manifold.TSNE` in combination with
     :class:`~sklearn.neighbors.KNeighborsTransformer` see
     :ref:`sphx_glr_auto_examples_neighbors_approximate_nearest_neighbors.py`.
 
