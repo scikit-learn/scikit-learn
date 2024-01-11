@@ -596,7 +596,8 @@ def test_class_of_interest_multiclass(pyplot, response_method):
 def test_subclass_named_constructors_return_type_is_subclass(pyplot):
     """Check that named constructors return the correct type when subclassed.
 
-    Non-regression test for #27675
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/pull/27675
     """
     clf = LogisticRegression().fit(X, y)
 
