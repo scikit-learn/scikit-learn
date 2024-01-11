@@ -969,12 +969,12 @@ def precision_recall_curve(
     array([0.1 , 0.35, 0.4 , 0.8 ])
     """
     # TODO(1.6): remove in 1.6 and reset y_score to be required
-    if probas_pred != "deprecated" and y_score is not None:
+    if y_score is not None and not isinstance(probas_pred, str):
         raise ValueError(
             "`probas_pred` and `y_score` cannot be both specified. Please use `y_score`"
             " only as `probas_pred` is deprecated in v1.4 and will be removed in v1.6."
         )
-    if probas_pred != "deprecated":
+    if y_score is None:
         warnings.warn(
             (
                 "probas_pred was deprecated in version 1.4 and will be removed in 1.6."
