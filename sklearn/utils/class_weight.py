@@ -29,8 +29,8 @@ def compute_class_weight(class_weight, *, classes, y):
     class_weight : dict, "balanced" or None
         If "balanced", class weights will be given by
         `n_samples / (n_classes * np.bincount(y))`.
-        If a dictionary is given, keys are classes and values are corresponding class
-        weights.
+        If a dictionary is given, keys are classes and values are
+        corresponding class weights.
         If `None` is given, the class weights will be uniform.
 
     classes : ndarray
@@ -49,7 +49,7 @@ def compute_class_weight(class_weight, *, classes, y):
     ----------
     The "balanced" heuristic is inspired by
     Logistic Regression in Rare Events Data, King, Zen, 2001.
-    
+
     Examples
     --------
     Using dictionary of pre-defined class weights
@@ -57,7 +57,8 @@ def compute_class_weight(class_weight, *, classes, y):
     >>> rom sklearn.utils import class_weight
     >>> import numpy as np
     >>> class_weights = {0: 2.0, 1: 1.0}
-    >>> class_weights = class_weight.compute_class_weight(class_weight=class_weights, classes=np.unique(y), y=y)
+    >>> class_weights = class_weight.compute_class_weight
+                        (class_weight=class_weights, classes=np.unique(y), y=y)
     >>> Output:  array([2.0 1.0 ])
 
     Computing balanced class weights
@@ -65,7 +66,8 @@ def compute_class_weight(class_weight, *, classes, y):
     >>> from sklearn.utils import class_weight
     >>> import numpy as np
     >>> y = [0, 1, 1, 0, 1, 1, 0, 0, 1]
-    >>> class_weights = class_weight.compute_class_weight(class_weight='balanced', classes=np.unique(y), y=y)
+    >>> class_weights = class_weight.compute_class_weight
+                        (class_weight='balanced', classes=np.unique(y), y=y)
     >>> Output: [1.125 0.9]
 
     No given class weight
@@ -73,7 +75,8 @@ def compute_class_weight(class_weight, *, classes, y):
     >>> from sklearn.utils import class_weight
     >>> import numpy as np
     >>> class_weights = {0: 2.0, 1: 1.0}
-    >>> class_weights = class_weight.compute_class_weight(class_weight=None, classes=classes, y=y)
+    >>> class_weights = class_weight.compute_class_weight
+                        (class_weight=None, classes=classes, y=y)
     >>> Output:  [1.0 1.0 ]
     """
 
@@ -113,6 +116,7 @@ def compute_class_weight(class_weight, *, classes, y):
             )
 
     return weight
+
 
 @validate_params(
     {
@@ -159,43 +163,48 @@ def compute_sample_weight(class_weight, y, *, indices=None):
     -------
     sample_weight_vect : ndarray of shape (n_samples,)
         Array with sample weights as applied to the original `y`.
-       
-    Examples 
+
+    Examples
     --------
     
     Using dictionary custom weights
     -------------------------------
     >>> from sklearn.utils import class_weight
     >>> import numpy as np
-    >>> class_weights = {0: 2, 1: 1} 
-    >>> sample_weights = class_weight.compute_sample_weight(class_weight=class_weights, y=y)
+    >>> class_weights = {0: 2, 1: 1}
+    >>> sample_weights = class_weight.compute_sample_weight
+                        (class_weight=class_weights, y=y)
     >>> Output: [2.0  1.0  2.0  1.0  1.0  1.0  2.0]
 
     Using List of dictionary
     ------------------------
-    >>> from sklearn.utils import class_weight 
-    >>> y = np.array([[0, 1], [1, 0], [0, 1], [1, 1], [1, 1], [1, 0], [0, 1]])
-    >>> class_weights = [{0: 1, 1: 2}, {0: 2, 1: 1}] 
-    >>> sample_weights = class_weight.compute_sample_weight(class_weight=class_weights, y=y)
+    >>> from sklearn.utils import class_weight
+    >>> y = np.array([[0, 1], [1, 0], [0, 1], [1, 1],
+                        [1, 1], [1, 0], [0, 1]])
+    >>> class_weights = [{0: 1, 1: 2}, {0: 2, 1: 1}]
+    >>> sample_weights = class_weight.compute_sample_weight
+                        (class_weight=class_weights, y=y)
     >>> Output: [1.0  4.0  1.0  2.0  2.0  4.0  1.0]
 
     Using balanced class weights
     ----------------------------
     >>> from sklearn.utils import class_weight
     >>> import numpy as np
-    >>> y = np.array([0, 1, 0, 1, 1, 1, 0]) 
-    >>> sample_weights = class_weight.compute_sample_weight(class_weight='balanced', y=y)
-    >>> Output: [1.16666667 0.875      1.16666667 0.875      0.875      0.875
-                1.16666667]
+    >>> y = np.array([0, 1, 0, 1, 1, 1, 0])
+    >>> sample_weights = class_weight.compute_sample_weight
+                        (class_weight='balanced', y=y)
+    >>> Output: [1.16666667 0.875   1.16666667 0.875
+                   0.875   0.875 1.16666667]
 
     Using a bootstrap subsample
     ---------------------------
     >>> import numpy as np
     >>> from sklearn.utils import class_weight
-    >>> indices = np.random.choice(len(y), len(y), replace=True)  
-    >>> sample_weights = class_weight.compute_sample_weight(class_weight='balanced', y=y, indices=indices)
-    >>> Output:  [1.16666667 0.875      1.16666667 0.875      0.875      0.875
-                 1.16666667]
+    >>> indices = np.random.choice(len(y), len(y), replace=True)
+    >>> sample_weights = class_weight.compute_sample_weight
+                        (class_weight='balanced', y=y, indices=indices)
+    >>> Output:  [1.16666667 0.875      1.16666667 0.875 
+                 0.875      0.875 1.16666667]
     """
 
     # Ensure y is 2D. Sparse matrices are already 2D.
