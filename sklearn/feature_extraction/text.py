@@ -1693,7 +1693,7 @@ class TfidfTransformer(
 
         copy : bool, default=True
             Whether to copy X and operate on the copy or perform in-place
-            operations.
+            operations. `copy=False` will only be effective with CSR sparse matrix.
 
         Returns
         -------
@@ -1718,8 +1718,6 @@ class TfidfTransformer(
 
             # sparse matrix does not support broadcasting but with CSR matrix we can
             # safely pick-up the indices
-            if copy:
-                X = X.copy()
             X.data *= self._idf[X.indices]
 
         if self.norm is not None:
