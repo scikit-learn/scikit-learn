@@ -1,0 +1,18 @@
+# To generate python_nogil_lock.txt, use the following command:
+# docker run -v $PWD:/scikit-learn -it nogil/python bash -c 'pip install pip-tools; pip-compile --upgrade /scikit-learn/build_tools/azure/python_nogil_requirements.txt -o /scikit-learn/build_tools/azure/python_nogil_lock.txt'
+#
+# The reason behind it is that you need python-nogil to generate the pip lock
+# file. Using pip-compile --index and --extra-index will not work, for example
+# the latest cython will be picked up from PyPI, rather than the one from the
+# python-nogil index
+matplotlib
+# 2023-07-15 contourpy 1.1 needs meson which needs a recent pybind version
+# which is not available for python/nogil ...
+contourpy<1.1
+numpy
+scipy
+cython
+joblib
+threadpoolctl
+pytest
+pytest-xdist

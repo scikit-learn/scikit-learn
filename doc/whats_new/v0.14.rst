@@ -13,7 +13,7 @@ Changelog
 ---------
 
 - Missing values with sparse and dense matrices can be imputed with the
-  transformer :class:`preprocessing.Imputer` by `Nicolas Trésegnie`_.
+  transformer `preprocessing.Imputer` by `Nicolas Trésegnie`_.
 
 - The core implementation of decisions trees has been rewritten from
   scratch, allowing for faster tree induction and lower memory
@@ -24,13 +24,13 @@ Changelog
   `Gilles Louppe`_. See the :ref:`AdaBoost <adaboost>` section of the user
   guide for details and examples.
 
-- Added :class:`grid_search.RandomizedSearchCV` and
-  :class:`grid_search.ParameterSampler` for randomized hyperparameter
+- Added `grid_search.RandomizedSearchCV` and
+  `grid_search.ParameterSampler` for randomized hyperparameter
   optimization. By `Andreas Müller`_.
 
 - Added :ref:`biclustering <biclustering>` algorithms
-  (:class:`sklearn.cluster.bicluster.SpectralCoclustering` and
-  :class:`sklearn.cluster.bicluster.SpectralBiclustering`), data
+  (`sklearn.cluster.bicluster.SpectralCoclustering` and
+  `sklearn.cluster.bicluster.SpectralBiclustering`), data
   generation methods (:func:`sklearn.datasets.make_biclusters` and
   :func:`sklearn.datasets.make_checkerboard`), and scoring metrics
   (:func:`sklearn.metrics.consensus_score`). By `Kemal Eren`_.
@@ -45,7 +45,7 @@ Changelog
 - Ability to pass one penalty (alpha value) per target in
   :class:`linear_model.Ridge`, by @eickenberg and `Mathieu Blondel`_.
 
-- Fixed :mod:`sklearn.linear_model.stochastic_gradient.py` L2 regularization
+- Fixed `sklearn.linear_model.stochastic_gradient.py` L2 regularization
   issue (minor practical significance).
   By :user:`Norbert Crombach <norbert>` and `Mathieu Blondel`_ .
 
@@ -55,8 +55,8 @@ Changelog
   to the documentation. See :ref:`Choosing the right estimator <ml_map>`.
   By `Jaques Grobler`_.
 
-- :class:`grid_search.GridSearchCV` and
-  :func:`cross_validation.cross_val_score` now support the use of advanced
+- `grid_search.GridSearchCV` and
+  `cross_validation.cross_val_score` now support the use of advanced
   scoring function such as area under the ROC curve and f-beta scores.
   See :ref:`scoring_parameter` for details. By `Andreas Müller`_
   and `Lars Buitinck`_.
@@ -71,7 +71,7 @@ Changelog
   by `Arnaud Joly`_.
 
 - Two new metrics :func:`metrics.hamming_loss` and
-  :func:`metrics.jaccard_similarity_score`
+  `metrics.jaccard_similarity_score`
   are added with multi-label support by `Arnaud Joly`_.
 
 - Speed and memory usage improvements in
@@ -121,8 +121,8 @@ Changelog
 - Feature selectors now share a mixin providing consistent ``transform``,
   ``inverse_transform`` and ``get_support`` methods. By `Joel Nothman`_.
 
-- A fitted :class:`grid_search.GridSearchCV` or
-  :class:`grid_search.RandomizedSearchCV` can now generally be pickled.
+- A fitted `grid_search.GridSearchCV` or
+  `grid_search.RandomizedSearchCV` can now generally be pickled.
   By `Joel Nothman`_.
 
 - Refactored and vectorized implementation of :func:`metrics.roc_curve`
@@ -138,7 +138,7 @@ Changelog
   By :user:`Eustache Diemert <oddskool>`.
 
 - The default number of components for
-  :class:`sklearn.decomposition.RandomizedPCA` is now correctly documented
+  `sklearn.decomposition.RandomizedPCA` is now correctly documented
   to be ``n_features``. This was the default behavior, so programs using it
   will continue to work as they did.
 
@@ -149,12 +149,12 @@ Changelog
 - Reduce memory footprint of FastICA by `Denis Engemann`_ and
   `Alexandre Gramfort`_.
 
-- Verbose output in :mod:`sklearn.ensemble.gradient_boosting` now uses
+- Verbose output in `sklearn.ensemble.gradient_boosting` now uses
   a column format and prints progress in decreasing frequency.
   It also shows the remaining time. By `Peter Prettenhofer`_.
 
-- :mod:`sklearn.ensemble.gradient_boosting` provides out-of-bag improvement
-  :attr:`~sklearn.ensemble.GradientBoostingRegressor.oob_improvement_`
+- `sklearn.ensemble.gradient_boosting` provides out-of-bag improvement
+  `oob_improvement_`
   rather than the OOB score for model selection. An example that shows
   how to use OOB estimates to select the number of trees was added.
   By `Peter Prettenhofer`_.
@@ -165,17 +165,17 @@ Changelog
 - New OrthogonalMatchingPursuitCV class by `Alexandre Gramfort`_
   and `Vlad Niculae`_.
 
-- Fixed a bug in :class:`sklearn.covariance.GraphLassoCV`: the
+- Fixed a bug in `sklearn.covariance.GraphLassoCV`: the
   'alphas' parameter now works as expected when given a list of
   values. By Philippe Gervais.
 
-- Fixed an important bug in :class:`sklearn.covariance.GraphLassoCV`
+- Fixed an important bug in `sklearn.covariance.GraphLassoCV`
   that prevented all folds provided by a CV object to be used (only
   the first 3 were used). When providing a CV object, execution
   time may thus increase significantly compared to the previous
   version (bug results are correct now). By Philippe Gervais.
 
-- :class:`cross_validation.cross_val_score` and the :mod:`grid_search`
+- `cross_validation.cross_val_score` and the `grid_search`
   module is now tested with multi-output data by `Arnaud Joly`_.
 
 - :func:`datasets.make_multilabel_classification` can now return
@@ -187,8 +187,8 @@ Changelog
   :class:`neighbors.RadiusNeighborsClassifier` support multioutput data
   by `Arnaud Joly`_.
 
-- Random state in LibSVM-based estimators (:class:`svm.SVC`, :class:`NuSVC`,
-  :class:`OneClassSVM`, :class:`svm.SVR`, :class:`svm.NuSVR`) can now be
+- Random state in LibSVM-based estimators (:class:`svm.SVC`, :class:`svm.NuSVC`,
+  :class:`svm.OneClassSVM`, :class:`svm.SVR`, :class:`svm.NuSVR`) can now be
   controlled.  This is useful to ensure consistency in the probability
   estimates for the classifiers trained with ``probability=True``. By
   `Vlad Niculae`_.
@@ -204,10 +204,10 @@ Changelog
 - Improved documentation on :ref:`multi-class, multi-label and multi-output
   classification <multiclass>` by `Yannick Schwartz`_ and `Arnaud Joly`_.
 
-- Better input and error handling in the :mod:`metrics` module by
+- Better input and error handling in the :mod:`sklearn.metrics` module by
   `Arnaud Joly`_ and `Joel Nothman`_.
 
-- Speed optimization of the :mod:`hmm` module by :user:`Mikhail Korobov <kmike>`
+- Speed optimization of the `hmm` module by :user:`Mikhail Korobov <kmike>`
 
 - Significant speed improvements for :class:`sklearn.cluster.DBSCAN`
   by `cleverless <https://github.com/cleverless>`_
@@ -216,7 +216,7 @@ Changelog
 API changes summary
 -------------------
 
-- The :func:`auc_score` was renamed :func:`roc_auc_score`.
+- The `auc_score` was renamed :func:`metrics.roc_auc_score`.
 
 - Testing scikit-learn with ``sklearn.test()`` is deprecated. Use
   ``nosetests sklearn`` from the command line.
@@ -233,10 +233,9 @@ API changes summary
   setting the ``return_models`` parameter to ``False``. By
   `Jaques Grobler`_ and `Alexandre Gramfort`_
 
-- :class:`grid_search.IterGrid` was renamed to
-  :class:`grid_search.ParameterGrid`.
+- `grid_search.IterGrid` was renamed to `grid_search.ParameterGrid`.
 
-- Fixed bug in :class:`KFold` causing imperfect class balance in some
+- Fixed bug in `KFold` causing imperfect class balance in some
   cases. By `Alexandre Gramfort`_ and Tadej Janež.
 
 - :class:`sklearn.neighbors.BallTree` has been refactored, and a
@@ -249,8 +248,8 @@ API changes summary
   By `Jake Vanderplas`_
 
 - Support for scipy.spatial.cKDTree within neighbors queries has been
-  removed, and the functionality replaced with the new :class:`KDTree`
-  class.
+  removed, and the functionality replaced with the new
+  :class:`sklearn.neighbors.KDTree` class.
 
 - :class:`sklearn.neighbors.KernelDensity` has been added, which performs
   efficient kernel density estimation with a variety of kernels.
@@ -264,11 +263,11 @@ API changes summary
 - ``gcv_mode="auto"`` no longer tries to perform SVD on a densified
   sparse matrix in :class:`sklearn.linear_model.RidgeCV`.
 
-- Sparse matrix support in :class:`sklearn.decomposition.RandomizedPCA`
+- Sparse matrix support in `sklearn.decomposition.RandomizedPCA`
   is now deprecated in favor of the new ``TruncatedSVD``.
 
-- :class:`cross_validation.KFold` and
-  :class:`cross_validation.StratifiedKFold` now enforce `n_folds >= 2`
+- `cross_validation.KFold` and
+  `cross_validation.StratifiedKFold` now enforce `n_folds >= 2`
   otherwise a ``ValueError`` is raised. By `Olivier Grisel`_.
 
 - :func:`datasets.load_files`'s ``charset`` and ``charset_errors``
@@ -386,4 +385,3 @@ List of contributors for release 0.14 by number of commits.
  *   1  Sturla Molden
  *   1  Thomas Jarosch
  *   1  Yaroslav Halchenko
- 
