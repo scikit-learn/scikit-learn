@@ -245,7 +245,7 @@ def test_display_curve_error_pos_label(pyplot, data_binary, Display):
 def test_classifier_display_curve_named_constructor_return_type(
     pyplot, data_binary, Display, constructor
 ):
-    """Check that named constructors return the correct type when subclassed
+    """Check that named constructors return the correct type when subclassed.
 
     Non-regression test for:
     https://github.com/scikit-learn/scikit-learn/pull/27675
