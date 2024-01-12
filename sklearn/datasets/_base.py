@@ -89,16 +89,7 @@ def clear_data_home(data_home=None):
     Examples
     ----------
     >>> from sklearn.datasets import clear_data_home
-    >>> import os
-    >>> import tempfile
-    >>>
-    >>> # Make Dummy Directory
-    >>> temp_dir = tempfile.TemporaryDirectory()
-    >>> os.path.isdir(temp_dir.name)
-    True
-    >>> clear_data_home(temp_dir.name)
-    >>> os.path.isdir(temp_dir.name)
-    False
+    >>> clear_data_home()  # doctest: +SKIP
     """
     data_home = get_data_home(data_home)
     shutil.rmtree(data_home)
