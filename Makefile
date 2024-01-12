@@ -24,6 +24,8 @@ inplace:
 	$(PYTHON) setup.py build_ext -i
 
 dev-meson:
+    # Temporary hack to try the experimental meson build. Once meson is accepted
+    # as the default build tool, this will go away.
 	perl -i -pe \
 		's@\[build-system\]@[build-system]\nbuild-backend = "mesonpy"\n@' \
 		pyproject.toml
