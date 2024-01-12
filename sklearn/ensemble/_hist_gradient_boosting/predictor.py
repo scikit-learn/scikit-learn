@@ -33,13 +33,6 @@ class TreePredictor:
         self.binned_left_cat_bitsets = binned_left_cat_bitsets
         self.raw_left_cat_bitsets = raw_left_cat_bitsets
 
-        # The dtype of feature_idx is np.intp which is platform dependent. Here, we
-        # make sure that saving and loading on different bitness systems works without
-        # errors. For instance, on 64 bit np.intp = np.int64, while on 32 bit
-        # np.intp = np.int32.
-        if nodes.dtype != PREDICTOR_RECORD_DTYPE:
-            self.nodes = self.nodes.astype(PREDICTOR_RECORD_DTYPE, casting="same_kind")
-
     def get_n_leaf_nodes(self):
         """Return number of leaves."""
         return int(self.nodes["is_leaf"].sum())
@@ -72,8 +65,16 @@ class TreePredictor:
             The raw predicted values.
         """
         out = np.empty(X.shape[0], dtype=Y_DTYPE)
+        nodes = self.nodes
+        # The dtype of feature_idx is np.intp which is platform dependent. Here, we
+        # make sure that saving and loading on different bitness systems works without
+        # errors. For instance, on 64 bit np.intp = np.int64, while on 32 bit
+        # np.intp = np.int32.
+        if nodes.dtype != PREDICTOR_RECORD_DTYPE:
+            nodes = self.nodes.astype(PREDICTOR_RECORD_DTYPE, casting="same_kind")
+
         _predict_from_raw_data(
-            self.nodes,
+            nodes,
             X,
             self.raw_left_cat_bitsets,
             known_cat_bitsets,
