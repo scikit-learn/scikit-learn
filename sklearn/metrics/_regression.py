@@ -1276,12 +1276,9 @@ def _mean_tweedie_deviance(y_true, y_pred, sample_weight, power):
             - y_true * pow_f(y_pred, 1 - p) / (1 - p)
             + pow_f(y_pred, 2 - p) / (2 - p)
         )
-    print(dev.shape)
-    print(dev)
     if sample_weight is None:
         return xp.mean(dev)
     return xp.sum(dev * sample_weight) / xp.sum(sample_weight)
-    # return np.average(dev, weights=sample_weight)
 
 
 @validate_params(
@@ -1346,7 +1343,7 @@ def mean_tweedie_deviance(y_true, y_pred, *, sample_weight=None, power=0):
     """
     xp, _ = get_namespace(y_true, y_pred)
     y_type, y_true, y_pred, _ = _check_reg_targets(
-        y_true, y_pred, None, dtype=[np.float64, np.float32]
+        y_true, y_pred, None, dtype=[xp.float64, xp.float32]
     )
     if y_type == "continuous-multioutput":
         raise ValueError("Multioutput not supported in mean_tweedie_deviance")
