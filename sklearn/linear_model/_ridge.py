@@ -56,8 +56,7 @@ def _get_rescaled_operator(X, X_offset, sample_weight_sqrt):
     def rmatvec(b):
         return X.T.dot(b) - X_offset * b.dot(sample_weight_sqrt)
 
-    X1 = sparse.linalg.LinearOperator(
-        shape=X.shape, matvec=matvec, rmatvec=rmatvec)
+    X1 = sparse.linalg.LinearOperator(shape=X.shape, matvec=matvec, rmatvec=rmatvec)
     return X1
 
 
@@ -120,8 +119,7 @@ def _solve_sparse_cg(
             C = sp_linalg.LinearOperator(
                 (n_features, n_features), matvec=mv, dtype=X.dtype
             )
-            coefs[i], info = _sparse_linalg_cg(
-                C, y_column, maxiter=max_iter, rtol=tol)
+            coefs[i], info = _sparse_linalg_cg(C, y_column, maxiter=max_iter, rtol=tol)
 
         if info < 0:
             raise ValueError("Failed with error code %d" % info)
@@ -208,8 +206,7 @@ def _solve_cholesky(X, y, alpha):
         coefs = np.empty([n_targets, n_features], dtype=X.dtype)
         for coef, target, current_alpha in zip(coefs, Xy.T, alpha):
             A.flat[:: n_features + 1] += current_alpha
-            coef[:] = linalg.solve(
-                A, target, assume_a="pos", overwrite_a=False).ravel()
+            coef[:] = linalg.solve(A, target, assume_a="pos", overwrite_a=False).ravel()
             A.flat[:: n_features + 1] -= current_alpha
         return coefs
 
@@ -224,8 +221,7 @@ def _solve_cholesky_kernel(K, y, alpha, sample_weight=None, copy=False):
 
     alpha = np.atleast_1d(alpha)
     one_alpha = (alpha == alpha[0]).all()
-    has_sw = isinstance(sample_weight, np.ndarray) or sample_weight not in [
-        1.0, None]
+    has_sw = isinstance(sample_weight, np.ndarray) or sample_weight not in [1.0, None]
 
     if has_sw:
         # Unlike other solvers, we need to support sample_weight directly
@@ -348,10 +344,8 @@ def _solve_lbfgs(
         result = optimize.minimize(func, x0, **config)
         if not result["success"]:
             warnings.warn(
-                (
-                    "The lbfgs solver did not converge. Try increasing max_iter "
-                    f"or tol. Currently: max_iter={max_iter} and tol={tol}"
-                ),
+                "The lbfgs solver did not converge. Try increasing max_iter "
+                f"or tol. Currently: max_iter={max_iter} and tol={tol}",
                 ConvergenceWarning,
             )
         coefs[i] = result["x"]
@@ -378,8 +372,7 @@ def _get_valid_accept_sparse(is_X_sparse, solver):
         ],
         "solver": [
             StrOptions(
-                {"auto", "svd", "cholesky", "lsqr",
-                    "sparse_cg", "sag", "saga", "lbfgs"}
+                {"auto", "svd", "cholesky", "lsqr", "sparse_cg", "sag", "saga", "lbfgs"}
             )
         ],
         "max_iter": [Interval(Integral, 0, None, closed="left"), None],
@@ -634,8 +627,7 @@ def _ridge_regression(
     if check_input:
         _dtype = [np.float64, np.float32]
         _accept_sparse = _get_valid_accept_sparse(sparse.issparse(X), solver)
-        X = check_array(X, accept_sparse=_accept_sparse,
-                        dtype=_dtype, order="C")
+        X = check_array(X, accept_sparse=_accept_sparse, dtype=_dtype, order="C")
         y = check_array(y, dtype=X.dtype, ensure_2d=False, order=None)
     check_consistent_length(X, y)
 
@@ -784,8 +776,7 @@ def _ridge_regression(
 
     if solver == "svd":
         if sparse.issparse(X):
-            raise TypeError(
-                "SVD solver does not support sparse inputs currently")
+            raise TypeError("SVD solver does not support sparse inputs currently")
         coef = _solve_svd(X, y, alpha)
 
     if ravel:
@@ -811,8 +802,7 @@ class _BaseRidge(LinearModel, metaclass=ABCMeta):
         "tol": [Interval(Real, 0, None, closed="left")],
         "solver": [
             StrOptions(
-                {"auto", "svd", "cholesky", "lsqr",
-                    "sparse_cg", "sag", "saga", "lbfgs"}
+                {"auto", "svd", "cholesky", "lsqr", "sparse_cg", "sag", "saga", "lbfgs"}
             )
         ],
         "positive": ["boolean"],
@@ -881,8 +871,7 @@ class _BaseRidge(LinearModel, metaclass=ABCMeta):
             solver = self.solver
 
         if sample_weight is not None:
-            sample_weight = _check_sample_weight(
-                sample_weight, X, dtype=X.dtype)
+            sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
 
         # when X is sparse we only remove offset from y
         X, y, X_offset, y_offset, X_scale = _preprocess_data(
@@ -1159,8 +1148,7 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
         self : object
             Fitted estimator.
         """
-        _accept_sparse = _get_valid_accept_sparse(
-            sparse.issparse(X), self.solver)
+        _accept_sparse = _get_valid_accept_sparse(sparse.issparse(X), self.solver)
         X, y = self._validate_data(
             X,
             y,
@@ -1221,8 +1209,7 @@ class _RidgeClassifierMixin(LinearClassifierMixin):
 
         sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
         if self.class_weight:
-            sample_weight = sample_weight * \
-                compute_sample_weight(self.class_weight, y)
+            sample_weight = sample_weight * compute_sample_weight(self.class_weight, y)
         return X, y, sample_weight, Y
 
     def predict(self, X):
@@ -1472,8 +1459,7 @@ class RidgeClassifier(_RidgeClassifierMixin, _BaseRidge):
         self : object
             Instance of the estimator.
         """
-        X, y, sample_weight, Y = self._prepare_data(
-            X, y, sample_weight, self.solver)
+        X, y, sample_weight, Y = self._prepare_data(X, y, sample_weight, self.solver)
 
         super().fit(X, Y, sample_weight=sample_weight)
         return self
@@ -1718,12 +1704,10 @@ class _RidgeGCV(LinearModel):
         X_weighted = sample_weight_matrix.dot(X)
         X_mean, _ = mean_variance_axis(X_weighted, axis=0)
         X_mean *= n_samples / sqrt_sw.dot(sqrt_sw)
-        X_mX = sqrt_sw[:, None] * \
-            safe_sparse_dot(X_mean, X.T, dense_output=True)
+        X_mX = sqrt_sw[:, None] * safe_sparse_dot(X_mean, X.T, dense_output=True)
         X_mX_m = np.outer(sqrt_sw, sqrt_sw) * np.dot(X_mean, X_mean)
         return (
-            safe_sparse_dot(X, X.T, dense_output=True) +
-            X_mX_m - X_mX - X_mX.T,
+            safe_sparse_dot(X, X.T, dense_output=True) + X_mX_m - X_mX - X_mX.T,
             X_mean,
         )
 
@@ -1805,8 +1789,7 @@ class _RidgeGCV(LinearModel):
                 (X[batch].shape[0], X.shape[1] + self.fit_intercept), dtype=X.dtype
             )
             if self.fit_intercept:
-                X_batch[:, :-1] = X[batch].toarray() - X_mean * \
-                    scale[batch][:, None]
+                X_batch[:, :-1] = X[batch].toarray() - X_mean * scale[batch][:, None]
                 X_batch[:, -1] = intercept_col[batch]
             else:
                 X_batch = X[batch].toarray()
@@ -2006,8 +1989,7 @@ class _RidgeGCV(LinearModel):
         assert not (self.is_clf and self.alpha_per_target)
 
         if sample_weight is not None:
-            sample_weight = _check_sample_weight(
-                sample_weight, X, dtype=X.dtype)
+            sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
 
         self.alphas = np.asarray(self.alphas)
 
@@ -2048,14 +2030,12 @@ class _RidgeGCV(LinearModel):
         n_alphas = 1 if np.ndim(self.alphas) == 0 else len(self.alphas)
 
         if self.store_cv_values:
-            self.cv_values_ = np.empty(
-                (n_samples * n_y, n_alphas), dtype=X.dtype)
+            self.cv_values_ = np.empty((n_samples * n_y, n_alphas), dtype=X.dtype)
 
         best_coef, best_score, best_alpha = None, None, None
 
         for i, alpha in enumerate(np.atleast_1d(self.alphas)):
-            G_inverse_diag, c = solve(
-                float(alpha), y, sqrt_sw, X_mean, *decomposition)
+            G_inverse_diag, c = solve(float(alpha), y, sqrt_sw, X_mean, *decomposition)
             if error:
                 squared_errors = (c / G_inverse_diag) ** 2
                 if self.alpha_per_target:
@@ -2070,8 +2050,7 @@ class _RidgeGCV(LinearModel):
                     self.cv_values_[:, i] = predictions.ravel()
 
                 if self.is_clf:
-                    identity_estimator = _IdentityClassifier(
-                        classes=np.arange(n_y))
+                    identity_estimator = _IdentityClassifier(classes=np.arange(n_y))
                     alpha_score = scorer(
                         identity_estimator, predictions, y.argmax(axis=1)
                     )
@@ -2080,8 +2059,7 @@ class _RidgeGCV(LinearModel):
                     if self.alpha_per_target:
                         alpha_score = np.array(
                             [
-                                scorer(identity_estimator,
-                                       predictions[:, j], y[:, j])
+                                scorer(identity_estimator, predictions[:, j], y[:, j])
                                 for j in range(n_y)
                             ]
                         )
@@ -2226,11 +2204,9 @@ class _BaseRidgeCV(LinearModel):
                 self.cv_values_ = estimator.cv_values_
         else:
             if self.store_cv_values:
-                raise ValueError(
-                    "cv!=None and store_cv_values=True are incompatible")
+                raise ValueError("cv!=None and store_cv_values=True are incompatible")
             if self.alpha_per_target:
-                raise ValueError(
-                    "cv!=None and alpha_per_target=True are incompatible")
+                raise ValueError("cv!=None and alpha_per_target=True are incompatible")
 
             parameters = {"alpha": alphas}
             solver = "sparse_cg" if sparse.issparse(X) else "auto"
@@ -2421,8 +2397,7 @@ class RidgeCV(
         cross-validation takes the sample weights into account when computing
         the validation score.
         """
-        _raise_for_unsupported_routing(
-            self, "fit", sample_weight=sample_weight)
+        _raise_for_unsupported_routing(self, "fit", sample_weight=sample_weight)
         super().fit(X, y, sample_weight=sample_weight)
         return self
 
@@ -2594,13 +2569,11 @@ class RidgeClassifierCV(_RoutingNotSupportedMixin, _RidgeClassifierMixin, _BaseR
         self : object
             Fitted estimator.
         """
-        _raise_for_unsupported_routing(
-            self, "fit", sample_weight=sample_weight)
+        _raise_for_unsupported_routing(self, "fit", sample_weight=sample_weight)
         # `RidgeClassifier` does not accept "sag" or "saga" solver and thus support
         # csr, csc, and coo sparse matrices. By using solver="eigen" we force to accept
         # all sparse format.
-        X, y, sample_weight, Y = self._prepare_data(
-            X, y, sample_weight, solver="eigen")
+        X, y, sample_weight, Y = self._prepare_data(X, y, sample_weight, solver="eigen")
 
         # If cv is None, gcv mode will be used and we used the binarized Y
         # since y will not be binarized in _RidgeGCV estimator.
