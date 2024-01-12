@@ -14,7 +14,7 @@ dependencies:
   - matplotlib=3.3.4  # min
   - pyamg
   - pytest
-  - pytest-xdist=2.5.0
+  - pytest-xdist
   - pillow
   - setuptools
   - pytest-cov

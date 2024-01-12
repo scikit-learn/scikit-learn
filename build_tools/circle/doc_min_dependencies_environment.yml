@@ -15,7 +15,7 @@ dependencies:
   - pandas=1.1.5  # min
   - pyamg
   - pytest
-  - pytest-xdist=2.5.0
+  - pytest-xdist
   - pillow
   - setuptools
   - scikit-image=0.17.2  # min

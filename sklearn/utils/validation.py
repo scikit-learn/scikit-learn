@@ -2298,24 +2298,22 @@ def _check_pos_label_consistency(pos_label, y_true):
     # classes.dtype.kind in ('O', 'U', 'S') is required to avoid
     # triggering a FutureWarning by calling np.array_equal(a, b)
     # when elements in the two arrays are not comparable.
-    classes = np.unique(y_true)
-    if pos_label is None and (
-        classes.dtype.kind in "OUS"
-        or not (
+    if pos_label is None:
+        # Compute classes only if pos_label is not specified:
+        classes = np.unique(y_true)
+        if classes.dtype.kind in "OUS" or not (
             np.array_equal(classes, [0, 1])
             or np.array_equal(classes, [-1, 1])
             or np.array_equal(classes, [0])
             or np.array_equal(classes, [-1])
             or np.array_equal(classes, [1])
-        )
-    ):
-        classes_repr = ", ".join([repr(c) for c in classes.tolist()])
-        raise ValueError(
-            f"y_true takes value in {{{classes_repr}}} and pos_label is not "
-            "specified: either make y_true take value in {0, 1} or "
-            "{-1, 1} or pass pos_label explicitly."
-        )
-    elif pos_label is None:
+        ):
+            classes_repr = ", ".join([repr(c) for c in classes.tolist()])
+            raise ValueError(
+                f"y_true takes value in {{{classes_repr}}} and pos_label is not "
+                "specified: either make y_true take value in {0, 1} or "
+                "{-1, 1} or pass pos_label explicitly."
+            )
         pos_label = 1
 
     return pos_label
