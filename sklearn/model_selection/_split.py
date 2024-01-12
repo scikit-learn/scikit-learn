@@ -2508,18 +2508,14 @@ def check_cv(cv=5, y=None, *, classifier=False):
     checked_cv : a cross-validator instance.
         The return value is a cross-validator which generates the train/test
         splits via the ``split`` method.
-    
-    Example
-    -------
+
+    Examples
+    --------
     >>> from sklearn.model_selection import check_cv
-    >>> from sklearn.datasets import load_iris
-    >>> from sklearn.svm import SVC
-    >>> iris = load_iris()
-    >>> X, y = iris.data, iris.target
-    >>> clf = SVC()
-    >>> cv = check_cv(5, y, classifier=True)
-    >>> print(cv)
-    StratifiedKFold(n_splits=5, random_state=None, shuffle=False)
+    >>> check_cv(cv=5, y=None, classifier=False)
+    KFold(...)
+    >>> check_cv(cv=5, y=[1, 1, 0, 0, 0, 0], classifier=True)
+    StratifiedKFold(...)
     """
     cv = 5 if cv is None else cv
     if isinstance(cv, numbers.Integral):

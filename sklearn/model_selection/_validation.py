@@ -1627,26 +1627,26 @@ def permutation_test_score(
         Performance
         <http://www.jmlr.org/papers/volume11/ojala10a/ojala10a.pdf>`_. The
         Journal of Machine Learning Research (2010) vol. 11
-    
-    Example
-    -------
+
+    Examples
+    --------
+    >>> from sklearn.datasets import make_classification
+    >>> from sklearn.linear_model import LogisticRegression
     >>> from sklearn.model_selection import permutation_test_score
-    >>> from sklearn.svm import SVC
-    >>> from sklearn.datasets import load_iris
-    >>> iris = load_iris()
-    >>> X, y = iris.data, iris.target
-    >>> clf = SVC()
+    >>> X, y = make_classification(random_state=0)
+    >>> estimator = LogisticRegression()
     >>> score, permutation_scores, pvalue = permutation_test_score(
-    ...     clf, X, y, scoring="accuracy", cv=5, n_permutations=20)
-    >>> print(f"Original Score: {score}")
-    Original Score: 0.9666666666666666
-    >>> print(f"Permutation Scores: {permutation_scores}")
-    Permutation Scores: [0.34666667 0.36666667 0.32       0.29333333 0.31333333 0.32666667
-     0.30666667 0.35333333 0.32666667 0.34       0.29333333 0.30666667
-     0.36       0.32666667 0.33333333 0.36666667 0.34666667 0.34
-     0.33333333 0.3       ]
-    >>> print(f"P-value: {pvalue}")
-    P-value: 0.047619047619047616
+    ...     estimator, X, y, random_state=0
+    ... )
+    >>> print(f"Original Score: {score:.3f}")
+    Original Score: 0.810
+    >>> print(
+    ...     f"Permutation Scores: {permutation_scores.mean():.3f} +/- "
+    ...     f"{permutation_scores.std():.3f}"
+    ... )
+    Permutation Scores: 0.505 +/- 0.057
+    >>> print(f"P-value: {pvalue:.3f}")
+    P-value: 0.010
     """
     X, y, groups = indexable(X, y, groups)
 
@@ -2266,22 +2266,22 @@ def validation_curve(
     -----
     See :ref:`sphx_glr_auto_examples_model_selection_plot_validation_curve.py`
 
-    Example
-    -------
+    Examples
+    --------
     >>> import numpy as np
+    >>> from sklearn.datasets import make_classification
     >>> from sklearn.model_selection import validation_curve
-    >>> from sklearn.datasets import load_iris
-    >>> from sklearn.svm import SVC
-    >>> iris = load_iris()
-    >>> X, y = iris.data, iris.target
-    >>> param_range = np.logspace(-6, -1, 5)
+    >>> from sklearn.linear_model import LogisticRegression
+    >>> X, y = make_classification(n_samples=1_000, random_state=0)
+    >>> logistic_regression = LogisticRegression()
+    >>> param_name, param_range = "C", np.logspace(-8, 3, 10)
     >>> train_scores, test_scores = validation_curve(
-    ...     SVC(), X, y, param_name="gamma", param_range=param_range,
-    ...     cv=10, scoring="accuracy")
+    ...     logistic_regression, X, y, param_name=param_name, param_range=param_range
+    ... )
     >>> print(f"The average train accuracy is {train_scores.mean():.2f}")
-    The average train accuracy is 0.93
+    The average train accuracy is 0.81
     >>> print(f"The average test accuracy is {test_scores.mean():.2f}")
-    The average test accuracy is 0.92
+    The average test accuracy is 0.81
     """
     X, y, groups = indexable(X, y, groups)
 
