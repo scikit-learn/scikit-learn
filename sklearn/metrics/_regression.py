@@ -109,7 +109,7 @@ def _check_reg_targets(y_true, y_pred, multioutput, dtype="numeric"):
         y_true = xp.reshape(y_true, (-1, 1))
 
     if y_pred.ndim == 1:
-        y_pred = xp.reshape(y_true, (-1, 1))
+        y_pred = xp.reshape(y_pred, (-1, 1))
 
     if y_true.shape[1] != y_pred.shape[1]:
         raise ValueError(
@@ -1276,9 +1276,12 @@ def _mean_tweedie_deviance(y_true, y_pred, sample_weight, power):
             - y_true * pow_f(y_pred, 1 - p) / (1 - p)
             + pow_f(y_pred, 2 - p) / (2 - p)
         )
+    print(dev.shape)
+    print(dev)
     if sample_weight is None:
         return xp.mean(dev)
     return xp.sum(dev * sample_weight) / xp.sum(sample_weight)
+    # return np.average(dev, weights=sample_weight)
 
 
 @validate_params(
@@ -1343,7 +1346,7 @@ def mean_tweedie_deviance(y_true, y_pred, *, sample_weight=None, power=0):
     """
     xp, _ = get_namespace(y_true, y_pred)
     y_type, y_true, y_pred, _ = _check_reg_targets(
-        y_true, y_pred, None, dtype=[xp.float64, xp.float32]
+        y_true, y_pred, None, dtype=[np.float64, np.float32]
     )
     if y_type == "continuous-multioutput":
         raise ValueError("Multioutput not supported in mean_tweedie_deviance")
@@ -1351,7 +1354,7 @@ def mean_tweedie_deviance(y_true, y_pred, *, sample_weight=None, power=0):
 
     if sample_weight is not None:
         sample_weight = column_or_1d(sample_weight)
-        sample_weight = sample_weight[:, xp.newaxis]
+        sample_weight = sample_weight[:, np.newaxis]
 
     message = f"Mean Tweedie deviance error with power={power} can only be used on "
     if power < 0:
