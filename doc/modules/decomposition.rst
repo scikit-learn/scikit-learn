@@ -1030,19 +1030,19 @@ for a corpus with :math:`D` documents and :math:`K` topics, with :math:`K`
 corresponding to `n_components` in the API:
 
 1. For each topic :math:`k \in K`, draw :math:`\beta_k \sim
-    \mathrm{Dirichlet}(\eta)`. This provides a distribution over the words,
-    i.e. the probability of a word appearing in topic :math:`k`.
-    :math:`\eta` corresponds to `topic_word_prior`.
+   \mathrm{Dirichlet}(\eta)`. This provides a distribution over the words,
+   i.e. the probability of a word appearing in topic :math:`k`.
+   :math:`\eta` corresponds to `topic_word_prior`.
 
 2. For each document :math:`d \in D`, draw the topic proportions
-    :math:`\theta_d \sim \mathrm{Dirichlet}(\alpha)`. :math:`\alpha`
-    corresponds to `doc_topic_prior`.
+   :math:`\theta_d \sim \mathrm{Dirichlet}(\alpha)`. :math:`\alpha`
+   corresponds to `doc_topic_prior`.
 
 3. For each word :math:`i` in document :math:`d`:
 
-  a. Draw the topic assignment :math:`z_{di} \sim \mathrm{Multinomial}
+   a. Draw the topic assignment :math:`z_{di} \sim \mathrm{Multinomial}
       (\theta_d)`
-  b. Draw the observed word :math:`w_{ij} \sim \mathrm{Multinomial}
+   b. Draw the observed word :math:`w_{ij} \sim \mathrm{Multinomial}
       (\beta_{z_{di}})`
 
 For parameter estimation, the posterior distribution is:

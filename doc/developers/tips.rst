@@ -86,14 +86,12 @@ When a unit test fails, the following tricks can make debugging easier:
 
 Other `pytest` options that may become useful include:
 
-- ``-x`` which exits on the first failed test
-- ``--lf`` to rerun the tests that failed on the previous run
-- ``--ff`` to rerun all previous tests, running the ones that failed first
-- ``-s`` so that pytest does not capture the output of ``print()``
-statements
-- ``--tb=short`` or ``--tb=line`` to control the length of the logs
-- ``--runxfail`` also run tests marked as a known failure (XFAIL) and report
-errors.
+- ``-x`` which exits on the first failed test,
+- ``--lf`` to rerun the tests that failed on the previous run,
+- ``--ff`` to rerun all previous tests, running the ones that failed first,
+- ``-s`` so that pytest does not capture the output of ``print()`` statements,
+- ``--tb=short`` or ``--tb=line`` to control the length of the logs,
+- ``--runxfail`` also run tests marked as a known failure (XFAIL) and report errors.
 
 Since our continuous integration tests will error if
 ``FutureWarning`` isn't properly caught,
