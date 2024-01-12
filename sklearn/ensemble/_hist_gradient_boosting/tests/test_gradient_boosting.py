@@ -1646,6 +1646,10 @@ def test_different_bitness_joblib_pickle():
     # with Cython code that works with the host's native integer precision
     # to index nodes in the tree data structure when the host is a 32 bit
     # platform (and vice versa).
+    #
+    # This is in particular useful to be able to train a model on a 64 bit Linux
+    # server and deploy the model as part of a (32 bit) WASM in-browser
+    # application using pyodide.
     X, y = make_classification(random_state=0)
 
     clf = HistGradientBoostingClassifier(random_state=0, max_depth=3)
