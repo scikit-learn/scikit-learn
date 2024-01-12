@@ -209,28 +209,14 @@ def scale(X, *, axis=0, with_mean=True, with_std=True, copy=True):
     Examples
     --------
     >>> from sklearn.preprocessing import scale
-    >>> features = [
-    ...   [-2, 1, 2],
-    ...   [-1, 0, 1]
-    ... ]
-    >>> scale(features)
+    >>> X = [[-2, 1, 2], [-1, 0, 1]]
+    >>> scale(X, axis=0)  # scaling each column independently
     array([[-1.,  1.,  1.],
            [ 1., -1., -1.]])
-    >>> scale(features, axis=1)
-    array([[-1.37281295,  0.39223227,  0.98058068],
-           [-1.22474487,  0.        ,  1.22474487]])
-
-    Use `robust_scale` to handle outliers:
-
-    >>> from sklearn.preprocessing import scale, robust_scale
-    >>> features = [-0.5, 2, 1, 0.5, 0.25, -0.3, 50]
-    >>> scale(features)
-    array([-0.46502482, -0.320863  , -0.37852773, -0.40736009, -0.42177627,
-           -0.45349187,  2.44704378])
-    >>> robust_scale(features)
-    array([-0.6557377 ,  0.98360656,  0.32786885,  0.        , -0.16393443,
-           -0.52459016, 32.45901639])
-    """  # noqa
+    >>> scale(X, axis=1)  # scaling each row independently
+    array([[-1.37...,  0.39...,  0.98...],
+           [-1.22...,  0.     ,  1.22...]])
+    """
     X = check_array(
         X,
         accept_sparse="csc",
@@ -675,19 +661,13 @@ def minmax_scale(X, feature_range=(0, 1), *, axis=0, copy=True):
     Examples
     --------
     >>> from sklearn.preprocessing import minmax_scale
-    >>> features = [
-    ...     [ 1, -10,  2],
-    ...     [-2,   0,  3],
-    ...     [ 5,  10, -1]
-    ... ]
-    >>> minmax_scale(features)
-    array([[0.42857143, 0.        , 0.75      ],
-           [0.        , 0.5       , 1.        ],
-           [1.        , 1.        , 0.        ]])
-    >>> minmax_scale(features, axis=1)
-    array([[0.91666667, 0.        , 1.        ],
-           [0.        , 0.4       , 1.        ],
-           [0.54545455, 1.        , 0.        ]])
+    >>> X = [[-2, 1, 2], [-1, 0, 1]]
+    >>> minmax_scale(X, axis=0)  # scale each column independently
+    array([[0., 1., 1.],
+           [1., 0., 0.]])
+    >>> minmax_scale(X, axis=1)  # scale each row independently
+    array([[0.  , 0.75, 1.  ],
+           [0.  , 0.5 , 1.  ]])
     """
     # Unlike the scaler object, this function allows 1d input.
     # If copy is required, it will be done inside the scaler object.
@@ -1420,19 +1400,13 @@ def maxabs_scale(X, *, axis=0, copy=True):
     Examples
     --------
     >>> from sklearn.preprocessing import maxabs_scale
-    >>> features = [
-    ...     [ 1, -10,  2],
-    ...     [-2,   0,  3],
-    ...     [ 5,  10, -1]
-    ... ]
-    >>> maxabs_scale(features)
-    array([[ 0.2       , -1.        ,  0.66666667],
-           [-0.4       ,  0.        ,  1.        ],
-           [ 1.        ,  1.        , -0.33333333]])
-    >>> maxabs_scale(features, axis=1)
-    array([[ 0.1       , -1.        ,  0.2       ],
-           [-0.66666667,  0.        ,  1.        ],
-           [ 0.5       ,  1.        , -0.1       ]])
+    >>> X = [[-2, 1, 2], [-1, 0, 1]]
+    >>> maxabs_scale(X, axis=0)  # scale each column independently
+    array([[-1. ,  1. ,  1. ],
+           [-0.5,  0. ,  0.5]])
+    >>> maxabs_scale(X, axis=1)  # scale each row independently
+    array([[-1. ,  0.5,  1. ],
+           [-1. ,  0. ,  1. ]])
     """
     # Unlike the scaler object, this function allows 1d input.
 
@@ -1831,14 +1805,14 @@ def robust_scale(
 
     Examples
     --------
-    >>> from sklearn.preprocessing import scale, robust_scale
-    >>> features = [-0.5, 2, 1, 0.5, 0.25, -0.3, 50]
-    >>> scale(features)
-    array([-0.46502482, -0.320863  , -0.37852773, -0.40736009, -0.42177627,
-           -0.45349187,  2.44704378])
-    >>> robust_scale(features)
-    array([-0.6557377 ,  0.98360656,  0.32786885,  0.        , -0.16393443,
-           -0.52459016, 32.45901639])
+    >>> from sklearn.preprocessing import robust_scale
+    >>> X = [[-2, 1, 2], [-1, 0, 1]]
+    >>> robust_scale(X, axis=0)  # scale each column independently
+    array([[-1.,  1.,  1.],
+           [ 1., -1., -1.]])
+    >>> robust_scale(X, axis=1)  # scale each row independently
+    array([[-1.5,  0. ,  0.5],
+           [-1. ,  0. ,  1. ]])
     """
     X = check_array(
         X,
@@ -1933,16 +1907,13 @@ def normalize(X, norm="l2", *, axis=1, copy=True, return_norm=False):
     Examples
     --------
     >>> from sklearn.preprocessing import normalize
-    >>> features = [
-    ...    [-2, 1, 2],
-    ...    [-1, 0, 1]
-    ... ]
-    >>> features_unit, norms = normalize(features, return_norm=True)
-    >>> features_unit
-    array([[-0.66666667,  0.33333333,  0.66666667],
-           [-0.70710678,  0.        ,  0.70710678]])
-    >>> norms
-    array([3.        , 1.41421356])
+    >>> X = [[-2, 1, 2], [-1, 0, 1]]
+    >>> normalize(X, norm="l1")  # L1 normalization each row independently
+    array([[-0.4,  0.2,  0.4],
+           [-0.5,  0. ,  0.5]])
+    >>> normalize(X, norm="l2")  # L2 normalization each row independently
+    array([[-0.66...,  0.33...,  0.66...],
+           [-0.70...,  0.     ,  0.70...]])
     """
     if axis == 0:
         sparse_format = "csc"
@@ -2170,9 +2141,10 @@ def binarize(X, *, threshold=0.0, copy=True):
     Examples
     --------
     >>> from sklearn.preprocessing import binarize
-    >>> probs = [[0.4, 0.6, 0.5]]
-    >>> binarize(probs, threshold=0.5)
-    array([[0., 1., 0.]])
+    >>> X = [[0.4, 0.6, 0.5], [0.6, 0.1, 0.2]]
+    >>> binarize(X, threshold=0.5)
+    array([[0., 1., 0.],
+           [1., 0., 0.]])
     """
     X = check_array(X, accept_sparse=["csr", "csc"], copy=copy)
     if sparse.issparse(X):
