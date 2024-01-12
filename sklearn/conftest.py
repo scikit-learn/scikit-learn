@@ -217,7 +217,6 @@ def pytest_collection_modifyitems(config, items):
                 # details.
                 if item.name != "sklearn._config.config_context":
                     item.add_marker(skip_marker)
-
     try:
         import PIL  # noqa
 
