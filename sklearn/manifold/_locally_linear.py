@@ -367,7 +367,10 @@ def locally_linear_embedding(
         Yi = np.empty((n_neighbors, 1 + n_components + dp), dtype=np.float64)
         Yi[:, 0] = 1
 
-        M = np.zeros((N, N), dtype=np.float64)
+        if M_sparse:
+            M = lil_matrix((N, N), dtype=np.float64)
+        else:
+            M = np.zeros((N, N), dtype=np.float64)
 
         use_svd = n_neighbors > d_in
 
@@ -401,7 +404,7 @@ def locally_linear_embedding(
             M[nbrs_x, nbrs_y] += np.dot(w, w.T)
 
         if M_sparse:
-            M = csr_matrix(M)
+            M = M.tocsr()
 
     elif method == "modified":
         if n_neighbors < n_components:
@@ -524,7 +527,10 @@ def locally_linear_embedding(
         )
         neighbors = neighbors[:, 1:]
 
-        M = np.zeros((N, N))
+        if M_sparse:
+            M = lil_matrix((N, N), dtype=np.float64)
+        else:
+            M = np.zeros((N, N), dtype=np.float64)
 
         use_svd = n_neighbors > d_in
 
@@ -547,7 +553,13 @@ def locally_linear_embedding(
 
             nbrs_x, nbrs_y = np.meshgrid(neighbors[i], neighbors[i])
             M[nbrs_x, nbrs_y] -= GiGiT
-            M[neighbors[i], neighbors[i]] += 1
+
+            for idx1 in range(len(neighbors[i])):
+                for idx2 in range(len(neighbors[i])):
+                    M[neighbors[i][idx1], neighbors[i][idx2]] += 1
+
+        if M_sparse:
+            M = M.tocsr()
 
     return null_space(
         M,
