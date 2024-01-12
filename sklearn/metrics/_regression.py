@@ -34,6 +34,7 @@ import numpy as np
 from scipy.special import xlogy
 
 from ..exceptions import UndefinedMetricWarning
+from ..utils._array_api import get_namespace, _is_numpy_namespace
 from ..utils._param_validation import Hidden, Interval, StrOptions, validate_params
 from ..utils.stats import _weighted_percentile
 from ..utils.validation import (
@@ -99,15 +100,16 @@ def _check_reg_targets(y_true, y_pred, multioutput, dtype="numeric"):
         just the corresponding argument if ``multioutput`` is a
         correct keyword.
     """
+    xp, _ = get_namespace(y_true, y_pred)
     check_consistent_length(y_true, y_pred)
     y_true = check_array(y_true, ensure_2d=False, dtype=dtype)
     y_pred = check_array(y_pred, ensure_2d=False, dtype=dtype)
 
     if y_true.ndim == 1:
-        y_true = y_true.reshape((-1, 1))
+        y_true = xp.reshape(y_true, (-1, 1))
 
     if y_pred.ndim == 1:
-        y_pred = y_pred.reshape((-1, 1))
+        y_pred = xp.reshape(y_true, (-1, 1))
 
     if y_true.shape[1] != y_pred.shape[1]:
         raise ValueError(
@@ -1249,13 +1251,15 @@ def max_error(y_true, y_pred):
 
 def _mean_tweedie_deviance(y_true, y_pred, sample_weight, power):
     """Mean Tweedie deviance regression loss."""
+    xp, _ = get_namespace(y_true, y_pred)
     p = power
+    pow_f = np.power if _is_numpy_namespace(xp) else xp.pow
     if p < 0:
         # 'Extreme stable', y any real number, y_pred > 0
         dev = 2 * (
-            np.power(np.maximum(y_true, 0), 2 - p) / ((1 - p) * (2 - p))
-            - y_true * np.power(y_pred, 1 - p) / (1 - p)
-            + np.power(y_pred, 2 - p) / (2 - p)
+            pow_f(xp.where(y_true > 0, y_true, 0), 2 - p) / ((1 - p) * (2 - p))
+            - y_true * pow_f(y_pred, 1 - p) / (1 - p)
+            + pow_f(y_pred, 2 - p) / (2 - p)
         )
     elif p == 0:
         # Normal distribution, y and y_pred any real number
@@ -1265,15 +1269,16 @@ def _mean_tweedie_deviance(y_true, y_pred, sample_weight, power):
         dev = 2 * (xlogy(y_true, y_true / y_pred) - y_true + y_pred)
     elif p == 2:
         # Gamma distribution
-        dev = 2 * (np.log(y_pred / y_true) + y_true / y_pred - 1)
+        dev = 2 * (xp.log(y_pred / y_true) + y_true / y_pred - 1)
     else:
         dev = 2 * (
-            np.power(y_true, 2 - p) / ((1 - p) * (2 - p))
-            - y_true * np.power(y_pred, 1 - p) / (1 - p)
-            + np.power(y_pred, 2 - p) / (2 - p)
+            pow_f(y_true, 2 - p) / ((1 - p) * (2 - p))
+            - y_true * pow_f(y_pred, 1 - p) / (1 - p)
+            + pow_f(y_pred, 2 - p) / (2 - p)
         )
-
-    return np.average(dev, weights=sample_weight)
+    if sample_weight is None:
+        return xp.mean(dev)
+    return xp.sum(dev * sample_weight) / xp.sum(sample_weight)
 
 
 @validate_params(
@@ -1336,8 +1341,9 @@ def mean_tweedie_deviance(y_true, y_pred, *, sample_weight=None, power=0):
     >>> mean_tweedie_deviance(y_true, y_pred, power=1)
     1.4260...
     """
+    xp, _ = get_namespace(y_true, y_pred)
     y_type, y_true, y_pred, _ = _check_reg_targets(
-        y_true, y_pred, None, dtype=[np.float64, np.float32]
+        y_true, y_pred, None, dtype=[xp.float64, xp.float32]
     )
     if y_type == "continuous-multioutput":
         raise ValueError("Multioutput not supported in mean_tweedie_deviance")
@@ -1345,7 +1351,7 @@ def mean_tweedie_deviance(y_true, y_pred, *, sample_weight=None, power=0):
 
     if sample_weight is not None:
         sample_weight = column_or_1d(sample_weight)
-        sample_weight = sample_weight[:, np.newaxis]
+        sample_weight = sample_weight[:, xp.newaxis]
 
     message = f"Mean Tweedie deviance error with power={power} can only be used on "
     if power < 0:

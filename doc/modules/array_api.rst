@@ -106,6 +106,7 @@ Metrics
 
 - :func:`sklearn.metrics.accuracy_score`
 - :func:`sklearn.metrics.zero_one_loss`
+- :func:`sklearn.metrics.mean_tweedie_deviance`
 
 Tools
 -----
