@@ -349,19 +349,16 @@ def spectral_clustering(
 
     Examples
     --------
-
-    >>> from sklearn.cluster import spectral_clustering
     >>> import numpy as np
-    >>> affinity_matrix = np.array([[1.   , 0.368, 0.   , 0.   ],
-    ...                             [0.368, 1.   , 0.   , 0.   ],
-    ...                             [0.   , 0.   , 1.   , 0.135],
-    ...                             [0.   , 0.   , 0.135, 1.   ]])
-    >>> labels = spectral_clustering(
-    ...   affinity=affinity_matrix,
-    ...   n_clusters=2,
-    ...   random_state=0)
-    >>> labels
-    array([0, 0, 1, 1], dtype=int32)
+    >>> from sklearn.metrics.pairwise import pairwise_kernels
+    >>> from sklearn.cluster import spectral_clustering
+    >>> X = np.array([[1, 1], [2, 1], [1, 0],
+    ...               [4, 7], [3, 5], [3, 6]])
+    >>> affinity = pairwise_kernels(X, metric='rbf')
+    >>> spectral_clustering(
+    ...     affinity=affinity, n_clusters=2, assign_labels="discretize", random_state=0
+    ... )
+    array([1, 1, 1, 0, 0, 0])
     """
 
     clusterer = SpectralClustering(

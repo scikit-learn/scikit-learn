@@ -281,18 +281,17 @@ def affinity_propagation(
 
     Examples
     --------
-
-    >>> from sklearn.cluster import affinity_propagation
     >>> import numpy as np
-    >>> S = np.array([[-0.  , -1.41, -4.47, -5.83],
-    ...               [-1.41, -0.  , -4.24, -5.66],
-    ...               [-4.47, -4.24, -0.  , -1.41],
-    ...               [-5.83, -5.66, -1.41, -0.  ]])
+    >>> from sklearn.cluster import affinity_propagation
+    >>> from sklearn.metrics.pairwise import euclidean_distances
+    >>> X = np.array([[1, 2], [1, 4], [1, 0],
+    ...               [4, 2], [4, 4], [4, 0]])
+    >>> S = -euclidean_distances(X, squared=True)
     >>> cluster_centers_indices, labels = affinity_propagation(S, random_state=0)
     >>> cluster_centers_indices
-    array([1, 2])
+    array([0, 3])
     >>> labels
-    array([0, 0, 1, 1])
+    array([0, 0, 0, 1, 1, 1])
     """
     estimator = AffinityPropagation(
         damping=damping,

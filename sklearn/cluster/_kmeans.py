@@ -428,13 +428,13 @@ def k_means(
 
     Examples
     --------
-
-    >>> from sklearn.cluster import k_means
     >>> import numpy as np
+    >>> from sklearn.cluster import k_means
     >>> X = np.array([[1, 2], [1, 4], [1, 0],
     ...               [10, 2], [10, 4], [10, 0]])
-    >>> centroid, label, inertia = k_means(X, n_clusters=2, n_init="auto",
-    ...    random_state=0)
+    >>> centroid, label, inertia = k_means(
+    ...     X, n_clusters=2, n_init="auto", random_state=0
+    ... )
     >>> centroid
     array([[10.,  2.],
            [ 1.,  2.]])

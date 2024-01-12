@@ -79,14 +79,12 @@ def estimate_bandwidth(X, *, quantile=0.3, n_samples=None, random_state=0, n_job
 
     Examples
     --------
-
-    >>> from sklearn.cluster import estimate_bandwidth
     >>> import numpy as np
+    >>> from sklearn.cluster import estimate_bandwidth
     >>> X = np.array([[1, 1], [2, 1], [1, 0],
     ...               [4, 7], [3, 5], [3, 6]])
-    >>> bandwidth = estimate_bandwidth(X, quantile=0.5, random_state=0)
-    >>> bandwidth
-    1.6191294403531442
+    >>> estimate_bandwidth(X, quantile=0.5)
+    1.61...
     """
     X = check_array(X)
 
@@ -225,16 +223,14 @@ def mean_shift(
 
     Examples
     --------
-
-    >>> from sklearn.cluster import mean_shift, estimate_bandwidth
     >>> import numpy as np
+    >>> from sklearn.cluster import mean_shift
     >>> X = np.array([[1, 1], [2, 1], [1, 0],
     ...               [4, 7], [3, 5], [3, 6]])
-    >>> bandwidth = estimate_bandwidth(X, quantile=0.5, random_state=0)
-    >>> cluster_centers, labels = mean_shift(X, bandwidth=bandwidth)
+    >>> cluster_centers, labels = mean_shift(X, bandwidth=2)
     >>> cluster_centers
-    array([[3.33333333, 6.        ],
-           [1.33333333, 0.66666667]])
+    array([[3.33..., 6.     ],
+           [1.33..., 0.66...]])
     >>> labels
     array([1, 1, 1, 0, 0, 0])
     """

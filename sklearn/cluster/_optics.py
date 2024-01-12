@@ -565,30 +565,30 @@ def compute_optics_graph(
 
     Examples
     --------
-
-    >>> from sklearn.cluster import OPTICS, compute_optics_graph
     >>> import numpy as np
+    >>> from sklearn.cluster import compute_optics_graph
     >>> X = np.array([[1, 2], [2, 5], [3, 6],
-    ...              [8, 7], [8, 8], [7, 3]])
-    >>> ordering_, core_distances_, reachability_, predecessor_ = compute_optics_graph(
-    ...   X,
-    ...   min_samples=2,
-    ...   max_eps=np.inf,
-    ...   metric="minkowski",
-    ...   p=2,
-    ...   metric_params=None,
-    ...   algorithm="auto",
-    ...   leaf_size=30,
-    ...   n_jobs=None)
-    >>> ordering_
+    ...               [8, 7], [8, 8], [7, 3]])
+    >>> ordering, core_distances, reachability, predecessor = compute_optics_graph(
+    ...     X,
+    ...     min_samples=2,
+    ...     max_eps=np.inf,
+    ...     metric="minkowski",
+    ...     p=2,
+    ...     metric_params=None,
+    ...     algorithm="auto",
+    ...     leaf_size=30,
+    ...     n_jobs=None,
+    ... )
+    >>> ordering
     array([0, 1, 2, 5, 3, 4])
-    >>> core_distances_
-    array([3.16227766, 1.41421356, 1.41421356, 1.        , 1.        ,
-           4.12310563])
-    >>> reachability_
-    array([       inf, 3.16227766, 1.41421356, 4.12310563, 1.        ,
+    >>> core_distances
+    array([3.16..., 1.41..., 1.41..., 1.        , 1.        ,
+           4.12...])
+    >>> reachability
+    array([       inf, 3.16..., 1.41..., 4.12..., 1.        ,
            5.        ])
-    >>> predecessor_
+    >>> predecessor
     array([-1,  0,  1,  5,  3,  2])
     """
     n_samples = X.shape[0]
@@ -751,20 +751,29 @@ def cluster_optics_dbscan(*, reachability, core_distances, ordering, eps):
 
     Examples
     --------
-
-    >>> from sklearn.cluster import cluster_optics_dbscan
     >>> import numpy as np
-    >>> reachability = np.array([np.inf, 3.16227766, 1.41421356, 4.12310563, 1., 5.])
-    >>> core_distances = np.array([3.16227766, 1.41421356, 1.41421356,
-    ...                            1.,         1.,         4.12310563])
-    >>> ordering = np.array([0, 1, 2, 5, 3, 4])
+    >>> from sklearn.cluster import cluster_optics_dbscan, compute_optics_graph
+    >>> X = np.array([[1, 2], [2, 5], [3, 6],
+    ...               [8, 7], [8, 8], [7, 3]])
+    >>> ordering, core_distances, reachability, predecessor = compute_optics_graph(
+    ...     X,
+    ...     min_samples=2,
+    ...     max_eps=np.inf,
+    ...     metric="minkowski",
+    ...     p=2,
+    ...     metric_params=None,
+    ...     algorithm="auto",
+    ...     leaf_size=30,
+    ...     n_jobs=None,
+    ... )
     >>> eps = 4.5
-    >>> labels_ = cluster_optics_dbscan(
-    ...   reachability=reachability,
-    ...   core_distances=core_distances,
-    ...   ordering=ordering,
-    ...   eps=eps)
-    >>> labels_
+    >>> labels = cluster_optics_dbscan(
+    ...     reachability=reachability,
+    ...     core_distances=core_distances,
+    ...     ordering=ordering,
+    ...     eps=eps,
+    ... )
+    >>> labels
     array([0, 0, 0, 1, 1, 1])
     """
     n_samples = len(core_distances)
@@ -855,18 +864,28 @@ def cluster_optics_xi(
 
     Examples
     --------
-
-    >>> from sklearn.cluster import cluster_optics_xi
     >>> import numpy as np
-    >>> reachability = np.array([np.inf, 3.16227766, 1.41421356, 4.12310563, 1., 5.])
-    >>> predecessor = np.array([-1, 0, 1, 5, 3, 2])
-    >>> ordering = np.array([0, 1, 2, 5, 3, 4])
+    >>> from sklearn.cluster import cluster_optics_xi, compute_optics_graph
+    >>> X = np.array([[1, 2], [2, 5], [3, 6],
+    ...               [8, 7], [8, 8], [7, 3]])
+    >>> ordering, core_distances, reachability, predecessor = compute_optics_graph(
+    ...     X,
+    ...     min_samples=2,
+    ...     max_eps=np.inf,
+    ...     metric="minkowski",
+    ...     p=2,
+    ...     metric_params=None,
+    ...     algorithm="auto",
+    ...     leaf_size=30,
+    ...     n_jobs=None
+    ... )
     >>> min_samples = 2
     >>> labels, clusters = cluster_optics_xi(
-    ...    reachability=reachability,
-    ...    predecessor=predecessor,
-    ...    ordering=ordering,
-    ...    min_samples=min_samples)
+    ...     reachability=reachability,
+    ...     predecessor=predecessor,
+    ...     ordering=ordering,
+    ...     min_samples=min_samples,
+    ... )
     >>> labels
     array([0, 0, 0, 1, 1, 1])
     >>> clusters
