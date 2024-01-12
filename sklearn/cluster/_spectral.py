@@ -346,6 +346,19 @@ def spectral_clustering(
            streaming graph challenge (Preliminary version at arXiv.)
            David Zhuzhunashvili, Andrew Knyazev
            <10.1109/HPEC.2017.8091045>`
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.metrics.pairwise import pairwise_kernels
+    >>> from sklearn.cluster import spectral_clustering
+    >>> X = np.array([[1, 1], [2, 1], [1, 0],
+    ...               [4, 7], [3, 5], [3, 6]])
+    >>> affinity = pairwise_kernels(X, metric='rbf')
+    >>> spectral_clustering(
+    ...     affinity=affinity, n_clusters=2, assign_labels="discretize", random_state=0
+    ... )
+    array([1, 1, 1, 0, 0, 0])
     """
 
     clusterer = SpectralClustering(
