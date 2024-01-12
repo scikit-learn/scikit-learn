@@ -134,15 +134,13 @@ def pytest_collection_modifyitems(config, items):
     datasets_to_download = set()
 
     for item in items:
-        if isinstance(item, DoctestItem):
-            # The dataset fetchers require network access but we cannot use pytest
-            # fixture. Since our fixture use the name of the fetcher with the suffix
-            # "_fxt", we can try to match this name to trigger the download.
-            name = set([item.name.rsplit(".", 1)[-1] + "_fxt"])
-            dataset_to_fetch = name & dataset_features_set
+        if isinstance(item, DoctestItem) and "fetch_" in item.name:
+            fetcher_function_name = item.name.split(".")[-1]
+            dataset_fetchers_key = f"{fetcher_function_name}_fxt"
+            dataset_to_fetch = set([dataset_fetchers_key]) & dataset_features_set
+        elif not hasattr(item, "fixturenames"):
+            continue
         else:
-            if not hasattr(item, "fixturenames"):
-                continue
             item_fixtures = set(item.fixturenames)
             dataset_to_fetch = item_fixtures & dataset_features_set
 
