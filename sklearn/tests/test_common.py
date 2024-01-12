@@ -14,6 +14,7 @@ import warnings
 from functools import partial
 from inspect import isgenerator, signature
 from itertools import chain, product
+from pathlib import Path
 
 import numpy as np
 import pytest
@@ -76,10 +77,12 @@ from sklearn.utils.estimator_checks import (
     check_estimator,
     check_get_feature_names_out_error,
     check_global_output_transform_pandas,
+    check_global_set_output_transform_polars,
     check_n_features_in_after_fitting,
     check_param_validation,
     check_set_output_transform,
     check_set_output_transform_pandas,
+    check_set_output_transform_polars,
     check_transformer_get_feature_names_out,
     check_transformer_get_feature_names_out_pandas,
     parametrize_with_checks,
@@ -165,7 +168,7 @@ def test_configure():
     # is installed in editable mode by pip build isolation enabled.
     pytest.importorskip("Cython")
     cwd = os.getcwd()
-    setup_path = os.path.abspath(os.path.join(sklearn.__path__[0], ".."))
+    setup_path = Path(sklearn.__file__).parent.parent
     setup_filename = os.path.join(setup_path, "setup.py")
     if not os.path.exists(setup_filename):
         pytest.skip("setup.py not available")
@@ -209,10 +212,11 @@ def test_class_weight_balanced_linear_classifiers(name, Classifier):
 @pytest.mark.xfail(_IS_WASM, reason="importlib not supported for Pyodide packages")
 @ignore_warnings
 def test_import_all_consistency():
+    sklearn_path = [os.path.dirname(sklearn.__file__)]
     # Smoke test to check that any name in a __all__ list is actually defined
     # in the namespace of the module or package.
     pkgs = pkgutil.walk_packages(
-        path=sklearn.__path__, prefix="sklearn.", onerror=lambda _: None
+        path=sklearn_path, prefix="sklearn.", onerror=lambda _: None
     )
     submods = [modname for _, modname, _ in pkgs]
     for modname in submods + ["sklearn"]:
@@ -234,9 +238,10 @@ def test_import_all_consistency():
 
 
 def test_root_import_all_completeness():
+    sklearn_path = [os.path.dirname(sklearn.__file__)]
     EXCEPTIONS = ("utils", "tests", "base", "setup", "conftest")
     for _, modname, _ in pkgutil.walk_packages(
-        path=sklearn.__path__, onerror=lambda _: None
+        path=sklearn_path, onerror=lambda _: None
     ):
         if "." in modname or modname.startswith("_") or modname in EXCEPTIONS:
             continue
@@ -581,28 +586,22 @@ def test_set_output_transform(estimator):
 @pytest.mark.parametrize(
     "estimator", SET_OUTPUT_ESTIMATORS, ids=_get_check_estimator_ids
 )
-def test_set_output_transform_pandas(estimator):
+@pytest.mark.parametrize(
+    "check_func",
+    [
+        check_set_output_transform_pandas,
+        check_global_output_transform_pandas,
+        check_set_output_transform_polars,
+        check_global_set_output_transform_polars,
+    ],
+)
+def test_set_output_transform_configured(estimator, check_func):
     name = estimator.__class__.__name__
     if not hasattr(estimator, "set_output"):
         pytest.skip(
-            f"Skipping check_set_output_transform_pandas for {name}: Does not support"
+            f"Skipping {check_func.__name__} for {name}: Does not support"
             " set_output API yet"
         )
     _set_checking_parameters(estimator)
     with ignore_warnings(category=(FutureWarning)):
-        check_set_output_transform_pandas(estimator.__class__.__name__, estimator)
-
-
-@pytest.mark.parametrize(
-    "estimator", SET_OUTPUT_ESTIMATORS, ids=_get_check_estimator_ids
-)
-def test_global_output_transform_pandas(estimator):
-    name = estimator.__class__.__name__
-    if not hasattr(estimator, "set_output"):
-        pytest.skip(
-            f"Skipping check_global_output_transform_pandas for {name}: Does not"
-            " support set_output API yet"
-        )
-    _set_checking_parameters(estimator)
-    with ignore_warnings(category=(FutureWarning)):
-        check_global_output_transform_pandas(estimator.__class__.__name__, estimator)
+        check_func(estimator.__class__.__name__, estimator)

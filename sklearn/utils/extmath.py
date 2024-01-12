@@ -133,34 +133,19 @@ def fast_logdet(A):
     return ld
 
 
-def density(w, **kwargs):
+def density(w):
     """Compute density of a sparse vector.
 
     Parameters
     ----------
     w : array-like
         The sparse vector.
-    **kwargs : keyword arguments
-        Ignored.
-
-        .. deprecated:: 1.2
-            ``**kwargs`` were deprecated in version 1.2 and will be removed in
-            1.4.
 
     Returns
     -------
     float
         The density of w, between 0 and 1.
     """
-    if kwargs:
-        warnings.warn(
-            (
-                "Additional keyword arguments are deprecated in version 1.2 and will be"
-                " removed in version 1.4."
-            ),
-            FutureWarning,
-        )
-
     if hasattr(w, "toarray"):
         d = float(w.nnz) / (w.shape[0] * w.shape[1])
     else:
@@ -1211,14 +1196,10 @@ def stable_cumsum(arr, axis=None, rtol=1e-05, atol=1e-08):
     out : ndarray
         Array with the cumulative sums along the chosen axis.
     """
-    xp, _ = get_namespace(arr)
-
-    out = xp.cumsum(arr, axis=axis, dtype=np.float64)
-    expected = xp.sum(arr, axis=axis, dtype=np.float64)
-    if not xp.all(
-        xp.isclose(
-            out.take(-1, axis=axis), expected, rtol=rtol, atol=atol, equal_nan=True
-        )
+    out = np.cumsum(arr, axis=axis, dtype=np.float64)
+    expected = np.sum(arr, axis=axis, dtype=np.float64)
+    if not np.allclose(
+        out.take(-1, axis=axis), expected, rtol=rtol, atol=atol, equal_nan=True
     ):
         warnings.warn(
             (
