@@ -137,11 +137,45 @@ def _clone_parametrized(estimator, *, safe=True):
 class BaseEstimator(_HTMLDocumentationLinkMixin, _MetadataRequester):
     """Base class for all estimators in scikit-learn.
 
+    Inheriting from this class provides default implementations of:
+
+    - setting and getting parameters used by `GridSearchCV` and friends;
+    - textual and HTML representation displayed in terminals and IDEs;
+    - estimator serialization;
+    - parameters validation;
+    - data validation;
+    - feature names validation.
+
+    Read more in the :ref:`User Guide <rolling_your_own_estimator>`.
+
+
     Notes
     -----
     All estimators should specify all the parameters that can be set
     at the class level in their ``__init__`` as explicit keyword
     arguments (no ``*args`` or ``**kwargs``).
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.base import BaseEstimator
+    >>> class MyEstimator(BaseEstimator):
+    ...     def __init__(self, *, param=1):
+    ...         self.param = param
+    ...     def fit(self, X, y=None):
+    ...         self.is_fitted_ = True
+    ...         return self
+    ...     def predict(self, X):
+    ...         return np.full(shape=X.shape[0], fill_value=self.param)
+    >>> estimator = MyEstimator(param=2)
+    >>> estimator.get_params()
+    {'param': 2}
+    >>> X = np.array([[1, 2], [2, 3], [3, 4]])
+    >>> y = np.array([1, 0, 1])
+    >>> estimator.fit(X, y).predict(X)
+    array([2, 2, 2])
+    >>> estimator.set_params(param=3).fit(X, y).predict(X)
+    array([3, 3, 3])
     """
 
     @classmethod
@@ -652,7 +686,37 @@ class BaseEstimator(_HTMLDocumentationLinkMixin, _MetadataRequester):
 
 
 class ClassifierMixin:
-    """Mixin class for all classifiers in scikit-learn."""
+    """Mixin class for all classifiers in scikit-learn.
+
+    This mixin defines the following functionality:
+
+    - `_estimator_type` class attribute defaulting to `"classifier"`;
+    - `score` method that default to :func:`~sklearn.metrics.accuracy_score`.
+    - enforce that `fit` requires `y` to be passed through the `requires_y` tag.
+
+    Read more in the :ref:`User Guide <rolling_your_own_estimator>`.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.base import BaseEstimator, ClassifierMixin
+    >>> # Mixin classes should always be on the left-hand side for a correct MRO
+    >>> class MyEstimator(ClassifierMixin, BaseEstimator):
+    ...     def __init__(self, *, param=1):
+    ...         self.param = param
+    ...     def fit(self, X, y=None):
+    ...         self.is_fitted_ = True
+    ...         return self
+    ...     def predict(self, X):
+    ...         return np.full(shape=X.shape[0], fill_value=self.param)
+    >>> estimator = MyEstimator(param=1)
+    >>> X = np.array([[1, 2], [2, 3], [3, 4]])
+    >>> y = np.array([1, 0, 1])
+    >>> estimator.fit(X, y).predict(X)
+    array([1, 1, 1])
+    >>> estimator.score(X, y)
+    0.66...
+    """
 
     _estimator_type = "classifier"
 
@@ -689,7 +753,37 @@ class ClassifierMixin:
 
 
 class RegressorMixin:
-    """Mixin class for all regression estimators in scikit-learn."""
+    """Mixin class for all regression estimators in scikit-learn.
+
+    This mixin defines the following functionality:
+
+    - `_estimator_type` class attribute defaulting to `"regressor"`;
+    - `score` method that default to :func:`~sklearn.metrics.r2_score`.
+    - enforce that `fit` requires `y` to be passed through the `requires_y` tag.
+
+    Read more in the :ref:`User Guide <rolling_your_own_estimator>`.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.base import BaseEstimator, RegressorMixin
+    >>> # Mixin classes should always be on the left-hand side for a correct MRO
+    >>> class MyEstimator(RegressorMixin, BaseEstimator):
+    ...     def __init__(self, *, param=1):
+    ...         self.param = param
+    ...     def fit(self, X, y=None):
+    ...         self.is_fitted_ = True
+    ...         return self
+    ...     def predict(self, X):
+    ...         return np.full(shape=X.shape[0], fill_value=self.param)
+    >>> estimator = MyEstimator(param=0)
+    >>> X = np.array([[1, 2], [2, 3], [3, 4]])
+    >>> y = np.array([-1, 0, 1])
+    >>> estimator.fit(X, y).predict(X)
+    array([0, 0, 0])
+    >>> estimator.score(X, y)
+    0.0
+    """
 
     _estimator_type = "regressor"
 
@@ -1079,8 +1173,9 @@ class OutlierMixin:
 
 
 class MetaEstimatorMixin:
-    _required_parameters = ["estimator"]
     """Mixin class for all meta estimators in scikit-learn."""
+
+    _required_parameters = ["estimator"]
 
 
 class MultiOutputMixin:
