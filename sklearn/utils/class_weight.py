@@ -145,8 +145,9 @@ def compute_sample_weight(class_weight, y, *, indices=None):
 
     Examples
     --------
+    >>> import numpy as np
     >>> from sklearn.utils.class_weight import compute_sample_weight
-    >>> y = [0, 1, 0, 1, 1, 1, 1, 1, 0, 1]
+    >>> y = np.array([0, 1, 0, 1, 1, 1, 1, 1, 0, 1])
     >>> compute_sample_weight("balanced", y)
     array([1.66666667, 0.71428571, 1.66666667, 0.71428571, 0.71428571,
            0.71428571, 0.71428571, 0.71428571, 1.66666667, 0.71428571])
