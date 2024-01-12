@@ -382,15 +382,14 @@ def get_scorer(scoring):
 
     Examples
     --------
+    >>> import numpy as np
     >>> from sklearn.dummy import DummyClassifier
     >>> from sklearn.metrics import get_scorer
-    >>> X = [0, 1, -1, -0.5, 2]
-    >>> y = [0, 1, 1, 0, 1]
-    >>> clf = DummyClassifier(strategy="constant", constant=0)
-    >>> clf.fit(X, y)
-    DummyClassifier(constant=0, strategy='constant')
+    >>> X = np.reshape([0, 1, -1, -0.5, 2], (-1, 1))
+    >>> y = np.array([0, 1, 1, 0, 1])
+    >>> classifier = DummyClassifier(strategy="constant", constant=0).fit(X, y)
     >>> accuracy = get_scorer("accuracy")
-    >>> accuracy(clf, X, y)
+    >>> accuracy(classifier, X, y)
     0.4
     """
     if isinstance(scoring, str):
@@ -857,6 +856,10 @@ def get_scorer_names():
     --------
     >>> from sklearn.metrics import get_scorer_names
     >>> all_scorers = get_scorer_names()
+    >>> type(all_scorers)
+    <class 'list'>
+    >>> all_scorers[:3]
+    ['accuracy', 'adjusted_mutual_info_score', 'adjusted_rand_score']
     >>> "roc_auc" in all_scorers
     True
     """

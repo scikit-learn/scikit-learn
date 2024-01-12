@@ -871,10 +871,10 @@ def mutual_info_score(labels_true, labels_pred, *, contingency=None):
     Examples
     --------
     >>> from sklearn.metrics import mutual_info_score
-    >>> y_true = [0, 1, 1, 0, 1, 0]
-    >>> y_pred = [0, 1, 0, 0, 1, 1]
-    >>> mutual_info_score(y_true, y_pred)
-    0.0566...
+    >>> labels_true = [0, 1, 1, 0, 1, 0]
+    >>> labels_pred = [0, 1, 0, 0, 1, 1]
+    >>> mutual_info_score(labels_true, labels_pred)
+    0.056...
     """
     if contingency is None:
         labels_true, labels_pred = check_clusterings(labels_true, labels_pred)
