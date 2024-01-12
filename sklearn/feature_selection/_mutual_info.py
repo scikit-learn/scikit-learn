@@ -399,17 +399,13 @@ def mutual_info_regression(
 
     Examples
     --------
-
+    >>> from sklearn.datasets import make_regression
     >>> from sklearn.feature_selection import mutual_info_regression
-    >>> import numpy as np
-    >>> X = np.array([[1.5, 1],
-    ...               [2.1, 1],
-    ...               [3.4, 1],
-    ...               [3.9, 1]])
-    >>> y = np.array([4, 5, 6, 7])
-    >>> mi = mutual_info_regression(X, y, random_state=0)
-    >>> mi
-    array([0.00000000e+00, 1.11022302e-16])
+    >>> X, y = make_regression(
+    ...     n_samples=50, n_features=3, n_informative=1, noise=1e-4, random_state=42
+    ... )
+    >>> mutual_info_regression(X, y)
+    array([0.1..., 2.6...  , 0.0...])
     """
     return _estimate_mi(X, y, discrete_features, False, n_neighbors, copy, random_state)
 
@@ -504,17 +500,15 @@ def mutual_info_classif(
 
     Examples
     --------
-
+    >>> from sklearn.datasets import make_classification
     >>> from sklearn.feature_selection import mutual_info_classif
-    >>> import numpy as np
-    >>> X = np.array([[2, 1],
-    ...               [3, 1],
-    ...               [5, 4],
-    ...               [6, 6]])
-    >>> y = np.array([1, 1, 0, 0])
-    >>> mi = mutual_info_classif(X, y, random_state=1)
-    >>> mi
-    array([0.33333333, 0.83333333])
+    >>> X, y = make_classification(
+    ...     n_samples=100, n_features=10, n_informative=2, n_clusters_per_class=1,
+    ...     shuffle=False, random_state=42
+    ... )
+    >>> mutual_info_classif(X, y)
+    array([0.58..., 0.10..., 0.19..., 0.09... , 0.        ,
+           0.     , 0.     , 0.     , 0.      , 0.        ])
     """
     check_classification_targets(y)
     return _estimate_mi(X, y, discrete_features, True, n_neighbors, copy, random_state)

@@ -152,18 +152,21 @@ def f_classif(X, y):
 
     Examples
     --------
+    >>> from sklearn.datasets import make_classification
     >>> from sklearn.feature_selection import f_classif
-    >>> import numpy as np
-    >>> X = np.array([[1, 1],
-    ...               [0, 1],
-    ...               [5, 4],
-    ...               [6, 6]])
-    >>> y = np.array([1, 1, 0, 0])
+    >>> X, y = make_classification(
+    ...     n_samples=100, n_features=10, n_informative=2, n_clusters_per_class=1,
+    ...     shuffle=False, random_state=42
+    ... )
     >>> f_statistic, p_values = f_classif(X, y)
     >>> f_statistic
-    array([50., 16.])
+    array([2.2...e+02, 7.0...e-01, 1.6...e+00, 9.3...e-01,
+           5.4...e+00, 3.2...e-01, 4.7...e-02, 5.7...e-01,
+           7.5...e-01, 8.9...e-02])
     >>> p_values
-    array([0.01941932, 0.05719096])
+    array([7.1...e-27, 4.0...e-01, 1.9...e-01, 3.3...e-01,
+           2.2...e-02, 5.7...e-01, 8.2...e-01, 4.5...e-01,
+           3.8...e-01, 7.6...e-01])
     """
     X, y = check_X_y(X, y, accept_sparse=["csr", "csc", "coo"])
     args = [X[safe_mask(X, y == k)] for k in np.unique(y)]
@@ -238,18 +241,20 @@ def chi2(X, y):
 
     Examples
     --------
-    >>> from sklearn.feature_selection import chi2
     >>> import numpy as np
-    >>> X = np.array([[1, 1],
-    ...               [0, 1],
-    ...               [5, 4],
-    ...               [6, 6]])
-    >>> y = np.array([1, 1, 0, 0])
+    >>> from sklearn.feature_selection import chi2
+    >>> X = np.array([[1, 1, 3],
+    ...               [0, 1, 5],
+    ...               [5, 4, 1],
+    ...               [6, 6, 2],
+    ...               [1, 4, 0],
+    ...               [0, 0, 0]])
+    >>> y = np.array([1, 1, 0, 0, 2, 2])
     >>> chi2_stats, p_values = chi2(X, y)
     >>> chi2_stats
-    array([8.33333333, 5.33333333])
+    array([15.3...,  6.5       ,  8.9...])
     >>> p_values
-    array([0.00389242, 0.02092134])
+    array([0.0004..., 0.0387..., 0.0116... ])
     """
 
     # XXX: we might want to do some of the following in logspace instead for
@@ -347,16 +352,13 @@ def r_regression(X, y, *, center=True, force_finite=True):
 
     Examples
     --------
+    >>> from sklearn.datasets import make_regression
     >>> from sklearn.feature_selection import r_regression
-    >>> import numpy as np
-    >>> X = np.array([[1.5, 1],
-    ...               [2.1, 1],
-    ...               [3.4, 1],
-    ...               [3.9, 1]])
-    >>> y = np.array([4, 5, 6, 7])
-    >>> correlation_coef = r_regression(X, y)
-    >>> correlation_coef
-    array([0.98445326, 0.        ])
+    >>> X, y = make_regression(
+    ...     n_samples=50, n_features=3, n_informative=1, noise=1e-4, random_state=42
+    ... )
+    >>> r_regression(X, y)
+    array([-0.15...,  1.        , -0.22...])
     """
     X, y = check_X_y(X, y, accept_sparse=["csr", "csc", "coo"], dtype=np.float64)
     n_samples = X.shape[0]
@@ -482,18 +484,16 @@ def f_regression(X, y, *, center=True, force_finite=True):
 
     Examples
     --------
+    >>> from sklearn.datasets import make_regression
     >>> from sklearn.feature_selection import f_regression
-    >>> import numpy as np
-    >>> X = np.array([[1.5, 1.2],
-    ...               [2.1, 2.3],
-    ...               [3.4, 3.6],
-    ...               [3.9, 4.1]])
-    >>> y = np.array([4, 5, 6, 7])
+    >>> X, y = make_regression(
+    ...     n_samples=50, n_features=3, n_informative=1, noise=1e-4, random_state=42
+    ... )
     >>> f_statistic, p_values = f_regression(X, y)
     >>> f_statistic
-    array([62.82608696, 71.42857143])
+    array([1.2...+00, 2.6...+13, 2.6...+00])
     >>> p_values
-    array([0.01554674, 0.0137127 ])
+    array([2.7..., 1.5..., 1.0...])
     """
     correlation_coefficient = r_regression(
         X, y, center=center, force_finite=force_finite
