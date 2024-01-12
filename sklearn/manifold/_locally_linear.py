@@ -554,9 +554,12 @@ def locally_linear_embedding(
             nbrs_x, nbrs_y = np.meshgrid(neighbors[i], neighbors[i])
             M[nbrs_x, nbrs_y] -= GiGiT
 
-            for idx1 in range(len(neighbors[i])):
-                for idx2 in range(len(neighbors[i])):
-                    M[neighbors[i][idx1], neighbors[i][idx2]] += 1
+            if M_sparse:
+                for idx1 in range(len(neighbors[i])):
+                    for idx2 in range(len(neighbors[i])):
+                        M[neighbors[i][idx1], neighbors[i][idx2]] += 1
+            else:
+                M[neighbors[i], neighbors[i]] += 1
 
         if M_sparse:
             M = M.tocsr()
