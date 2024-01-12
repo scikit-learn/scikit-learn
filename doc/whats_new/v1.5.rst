@@ -60,4 +60,4 @@ TODO: update at the time of the release.
 
 - |Enhancement| :func:`sklearn.metrics.mean_tweedie_deviance` now supports Array API compatible
   inputs.
-  :pr:`27904` by :user:`Thomas Li <lithomas1>`
+  :pr:`28106` by :user:`Thomas Li <lithomas1>`
