@@ -30,7 +30,7 @@ dev-meson:
 		's@\[build-system\]@[build-system]\nbuild-backend = "mesonpy"\n@' \
 		pyproject.toml
 	pip install --editable .  --verbose --no-build-isolation \
-		--config-settings editable-verbose=true
+		--config-settings editable-verbose=true || \
 	perl -0777 -i -pe \
 		's@\[build-system\]\nbuild-backend = "mesonpy"\n@[build-system]@' \
 		pyproject.toml
