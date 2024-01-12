@@ -828,7 +828,7 @@ def test_assert_run_python_script_without_output():
     assert_run_python_script_without_output(code)
 
     code = "print('something to stdout')"
-    with pytest.raises(AssertionError, match="Expected empty output"):
+    with pytest.raises(AssertionError, match="Expected no output"):
         assert_run_python_script_without_output(code)
 
     code = "print('something to stdout')"

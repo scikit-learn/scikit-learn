@@ -717,7 +717,7 @@ def assert_run_python_script_without_output(source_code, pattern=".+", timeout=6
             out = out.decode("utf-8")
             if re.search(pattern, out):
                 if pattern == ".+":
-                    expectation = "Expected empty output"
+                    expectation = "Expected no output"
                 else:
                     expectation = f"The output was not supposed to match {pattern!r}"
 
