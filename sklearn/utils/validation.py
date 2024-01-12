@@ -1241,16 +1241,12 @@ def column_or_1d(y, *, dtype=None, warn=False):
     ------
     ValueError
         If `y` is not a 1D array or a 2D array with a single row or column.
+
     Examples
     --------
-    >>> import numpy as np
     >>> from sklearn.utils.validation import column_or_1d
-    >>> column_or_1d(np.array([1,1]))
+    >>> column_or_1d([1, 1])
     array([1, 1])
-    >>> column_or_1d(np.array([[1,1], [1, 1]]))
-    Traceback (most recent call last):
-    ...
-    ValueError: y should be a 1d array, got an array of shape (2, 2) instead.
     """
     xp, _ = get_namespace(y)
     y = check_array(
@@ -1367,21 +1363,19 @@ def check_symmetric(array, *, tol=1e-10, raise_warning=True, raise_exception=Fal
         summed and zeros are eliminated.
 
     Examples
-    -------
+    --------
     >>> import numpy as np
     >>> from sklearn.utils.validation import check_symmetric
-    >>> check_symmetric(np.array([[1, 2, 2,1], [1, 2, 2,1]]))
-    Traceback (most recent call last):
-    ...
-    ValueError: array must be 2-dimensional and square. shape = (2, 4)
-    >>> check_symmetric(np.array([[1,1], [1, 1]]))
-    array([[1, 1],
-       [    1, 1]])
-    >>> check_symmetric(np.array([[0,1], [0, 1]]))
-    <stdin>:1: UserWarning: Array is not symmetric, and will be converted to 
-    symmetric by average with its transpose.
-    array([[0. , 0.5],
-        [0.5, 1. ]])
+    >>> symmetric_array = np.array([[0, 1, 2], [1, 0, 1], [2, 1, 0]])
+    >>> check_symmetric(symmetric_array)
+    array([[0, 1, 2],
+           [1, 0, 1],
+           [2, 1, 0]])
+    >>> from scipy.sparse import csr_matrix
+    >>> sparse_symmetric_array = csr_matrix(symmetric_array)
+    >>> check_symmetric(sparse_symmetric_array)
+    <3x3 sparse matrix of type '<class 'numpy.int64'>'
+        with 6 stored elements in Compressed Sparse Row format>
     """
     if (array.ndim != 2) or (array.shape[0] != array.shape[1]):
         raise ValueError(
