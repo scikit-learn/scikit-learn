@@ -682,7 +682,7 @@ def assert_run_python_script_without_output(source_code, pattern=".+", timeout=6
     source_code : str
         The Python source code to execute.
     pattern : str
-        Pattern that the the stdout + stderr should not match. By default, unless
+        Pattern that the stdout + stderr should not match. By default, unless
         stdout + stderr are both empty, an error will be raised.
     timeout : int, default=60
         Time in seconds before timeout.
