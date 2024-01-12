@@ -38,7 +38,7 @@ class TreePredictor:
         # errors. For instance, on 64 bit np.intp = np.int64, while on 32 bit
         # np.intp = np.int32.
         if nodes.dtype != PREDICTOR_RECORD_DTYPE:
-            self.nodes = self.nodes.astype(PREDICTOR_RECORD_DTYPE)
+            self.nodes = self.nodes.astype(PREDICTOR_RECORD_DTYPE, casting="same_kind")
 
     def get_n_leaf_nodes(self):
         """Return number of leaves."""
