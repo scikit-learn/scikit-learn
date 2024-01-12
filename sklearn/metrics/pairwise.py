@@ -735,22 +735,22 @@ def pairwise_distances_argmin_min(
         The array of minimum distances. `distances[i]` is the distance between
         the i-th row in X and the argmin[i]-th row in Y.
 
-    Examples
-    --------
-    >>> from sklearn.metrics.pairwise import pairwise_distances_argmin_min
-    >>> X = [[1, 2, 3], [4, 5, 6]]
-    >>> Y = [[7, 8, 9], [10, 11, 12]]
-    >>> argmin, distances = pairwise_distances_argmin_min(X, Y)
-    >>> argmin
-    array([0, 0], dtype=int64)
-    >>> distances
-    array([10.39230485,  5.19615242])
-
     See Also
     --------
     pairwise_distances : Distances between every pair of samples of X and Y.
     pairwise_distances_argmin : Same as `pairwise_distances_argmin_min` but only
         returns the argmins.
+
+    Examples
+    --------
+    >>> from sklearn.metrics.pairwise import pairwise_distances_argmin_min
+    >>> X = [[0, 0, 0], [1, 1, 1]]
+    >>> Y = [[1, 0, 0], [1, 1, 0]]
+    >>> argmin, distances = pairwise_distances_argmin_min(X, Y)
+    >>> argmin
+    array([0, 1])
+    >>> distances
+    array([1., 1.])
     """
     X, Y = check_pairwise_arrays(X, Y)
 
@@ -878,20 +878,19 @@ def pairwise_distances_argmin(X, Y, *, axis=1, metric="euclidean", metric_kwargs
     argmin : numpy.ndarray
         Y[argmin[i], :] is the row in Y that is closest to X[i, :].
 
-    Examples
-    --------
-    >>> from sklearn.metrics.pairwise import pairwise_distances_argmin
-    >>> X = [[1, 2, 3], [4, 5, 6]]
-    >>> Y = [[7, 8, 9], [10, 11, 12]]
-    >>> argmin = pairwise_distances_argmin(X, Y)
-    >>> argmin
-    array([0, 0], dtype=int64)
-
     See Also
     --------
     pairwise_distances : Distances between every pair of samples of X and Y.
     pairwise_distances_argmin_min : Same as `pairwise_distances_argmin` but also
         returns the distances.
+
+    Examples
+    --------
+    >>> from sklearn.metrics.pairwise import pairwise_distances_argmin
+    >>> X = [[0, 0, 0], [1, 1, 1]]
+    >>> Y = [[1, 0, 0], [1, 1, 0]]
+    >>> pairwise_distances_argmin(X, Y)
+    array([0, 1])
     """
     if metric_kwargs is None:
         metric_kwargs = {}
@@ -972,7 +971,7 @@ def haversine_distances(X, Y=None):
 
     Returns
     -------
-    distance : ndarray of shape (n_samples_X, n_samples_Y)
+    distances : ndarray of shape (n_samples_X, n_samples_Y)
         The distance matrix.
 
     Notes
@@ -1026,7 +1025,7 @@ def manhattan_distances(X, Y=None):
 
     Returns
     -------
-    D : ndarray of shape (n_samples_X, n_samples_Y)
+    distances : ndarray of shape (n_samples_X, n_samples_Y)
         Pairwise L1 distances.
 
     Notes
@@ -1088,23 +1087,22 @@ def cosine_distances(X, Y=None):
 
     Returns
     -------
-    distance matrix : ndarray of shape (n_samples_X, n_samples_Y)
+    distances : ndarray of shape (n_samples_X, n_samples_Y)
         Returns the cosine distance between samples in X and Y.
-
-    Examples
-    -------
-    >>> from sklearn.metrics.pairwise import cosine_distances
-    >>> X = [[1, 2, 3], [4, 5, 6]]
-    >>> Y = [[7, 8, 9], [10, 11, 12]]
-    >>> distance_matrix = cosine_distances(X, Y)
-    >>> distance_matrix
-    array([[0.04058805, 0.04874169],
-       [0.00180911, 0.00385014]])
 
     See Also
     --------
     cosine_similarity : Compute cosine similarity between samples in X and Y.
     scipy.spatial.distance.cosine : Dense matrices only.
+
+    Examples
+    --------
+    >>> from sklearn.metrics.pairwise import cosine_distances
+    >>> X = [[0, 0, 0], [1, 1, 1]]
+    >>> Y = [[1, 0, 0], [1, 1, 0]]
+    >>> cosine_distances(X, Y)
+    array([[1.     , 1.     ],
+           [0.42..., 0.18...]])
     """
     # 1.0 - cosine_similarity(X, Y) without copy
     S = cosine_similarity(X, Y)
@@ -1145,11 +1143,10 @@ def paired_euclidean_distances(X, Y):
     Examples
     --------
     >>> from sklearn.metrics.pairwise import paired_euclidean_distances
-    >>> X = [[1, 2, 3], [4, 5, 6]]
-    >>> Y = [[7, 8, 9], [10, 11, 12]]
-    >>> distances = paired_euclidean_distances(X, Y)
-    >>> distances
-    array([10.39230485, 10.39230485])
+    >>> X = [[0, 0, 0], [1, 1, 1]]
+    >>> Y = [[1, 0, 0], [1, 1, 0]]
+    >>> paired_euclidean_distances(X, Y)
+    array([1., 1.])
     """
     X, Y = check_paired_arrays(X, Y)
     return row_norms(X - Y)
@@ -1224,19 +1221,18 @@ def paired_cosine_distances(X, Y):
         and the row vectors of `Y`, where `distances[i]` is the
         distance between `X[i]` and `Y[i]`.
 
-    Examples
-    --------
-    >>> from sklearn.metrics.pairwise import paired_cosine_distances
-    >>> X = [[1, 2, 3], [4, 5, 6]]
-    >>> Y = [[7, 8, 9], [10, 11, 12]]
-    >>> distances = paired_cosine_distances(X, Y)
-    >>> distances
-    array([0.04058805, 0.00385014])
-
     Notes
     -----
     The cosine distance is equivalent to the half the squared
     euclidean distance if each sample is normalized to unit norm.
+
+    Examples
+    --------
+    >>> from sklearn.metrics.pairwise import paired_cosine_distances
+    >>> X = [[0, 0, 0], [1, 1, 1]]
+    >>> Y = [[1, 0, 0], [1, 1, 0]]
+    >>> paired_cosine_distances(X, Y)
+    array([0.5       , 0.18...])
     """
     X, Y = check_paired_arrays(X, Y)
     return 0.5 * row_norms(normalize(X) - normalize(Y), squared=True)
@@ -1352,18 +1348,17 @@ def linear_kernel(X, Y=None, dense_output=True):
 
     Returns
     -------
-    Gram matrix : ndarray of shape (n_samples_X, n_samples_Y)
+    kernel : ndarray of shape (n_samples_X, n_samples_Y)
         The Gram matrix of the linear kernel, i.e. `X @ Y.T`.
 
     Examples
     --------
     >>> from sklearn.metrics.pairwise import linear_kernel
-    >>> X = [[1, 2, 3], [4, 5, 6]]
-    >>> Y = [[7, 8, 9], [10, 11, 12]]
-    >>> kernel_matrix = linear_kernel(X, Y)
-    >>> kernel_matrix
-    array([[ 50.,  68.],
-       [122., 167.]])
+    >>> X = [[0, 0, 0], [1, 1, 1]]
+    >>> Y = [[1, 0, 0], [1, 1, 0]]
+    >>> linear_kernel(X, Y)
+    array([[0., 0.],
+           [1., 2.]])
     """
     X, Y = check_pairwise_arrays(X, Y)
     return safe_sparse_dot(X, Y.T, dense_output=dense_output)
@@ -1410,18 +1405,17 @@ def polynomial_kernel(X, Y=None, degree=3, gamma=None, coef0=1):
 
     Returns
     -------
-    Gram matrix : ndarray of shape (n_samples_X, n_samples_Y)
+    kernel : ndarray of shape (n_samples_X, n_samples_Y)
         The polynomial kernel.
 
     Examples
     --------
     >>> from sklearn.metrics.pairwise import polynomial_kernel
-    >>> X = [[1, 2, 3], [4, 5, 6]]
-    >>> Y = [[7, 8, 9], [10, 11, 12]]
-    >>> gram_matrix = polynomial_kernel(X, Y, degree=3)
-    >>> gram_matrix
-    array([[  5513.96296296,  13255.96296296],
-       [ 72337.96296296, 181962.96296296]])
+    >>> X = [[0, 0, 0], [1, 1, 1]]
+    >>> Y = [[1, 0, 0], [1, 1, 0]]
+    >>> polynomial_kernel(X, Y, degree=2)
+    array([[1.     , 1.     ],
+           [1.77..., 2.77...]])
     """
     X, Y = check_pairwise_arrays(X, Y)
     if gamma is None:
@@ -1470,18 +1464,17 @@ def sigmoid_kernel(X, Y=None, gamma=None, coef0=1):
 
     Returns
     -------
-    gram_matrix : ndarray of shape (n_samples_X, n_samples_Y)
+    kernel : ndarray of shape (n_samples_X, n_samples_Y)
         Sigmoid kernel between two arrays.
 
     Examples
     --------
     >>> from sklearn.metrics.pairwise import sigmoid_kernel
-    >>> X = [[1, 2, 3], [4, 5, 6]]
-    >>> Y = [[7, 8, 9], [10, 11, 12]]
-    >>> gram_matrix = sigmoid_kernel(X, Y, gamma=None, coef0=1)
-    >>> gram_matrix
-    array([[1., 1.],
-       [1., 1.]])
+    >>> X = [[0, 0, 0], [1, 1, 1]]
+    >>> Y = [[1, 0, 0], [1, 1, 0]]
+    >>> sigmoid_kernel(X, Y)
+    array([[0.76..., 0.76...],
+           [0.87..., 0.93...]])
     """
     X, Y = check_pairwise_arrays(X, Y)
     if gamma is None:
@@ -1528,18 +1521,17 @@ def rbf_kernel(X, Y=None, gamma=None):
 
     Returns
     -------
-    kernel_matrix : ndarray of shape (n_samples_X, n_samples_Y)
+    kernel : ndarray of shape (n_samples_X, n_samples_Y)
         The RBF kernel.
 
     Examples
     --------
     >>> from sklearn.metrics.pairwise import rbf_kernel
-    >>> X = [[1, 2, 3], [4, 5, 6]]
-    >>> Y = [[7, 8, 9], [10, 11, 12]]
-    >>> kernel_matrix = rbf_kernel(X, Y, gamma=None)
-    >>> kernel_matrix
-    array([[2.31952283e-16, 6.63967720e-36],
-       [1.23409804e-04, 2.31952283e-16]])
+    >>> X = [[0, 0, 0], [1, 1, 1]]
+    >>> Y = [[1, 0, 0], [1, 1, 0]]
+    >>> rbf_kernel(X, Y)
+    array([[0.71..., 0.51...],
+           [0.51..., 0.71...]])
     """
     X, Y = check_pairwise_arrays(X, Y)
     if gamma is None:
@@ -1588,18 +1580,17 @@ def laplacian_kernel(X, Y=None, gamma=None):
 
     Returns
     -------
-    kernel_matrix : ndarray of shape (n_samples_X, n_samples_Y)
+    kernel : ndarray of shape (n_samples_X, n_samples_Y)
         The kernel matrix.
 
     Examples
-    -------
+    --------
     >>> from sklearn.metrics.pairwise import laplacian_kernel
-    >>> X = [[1, 2, 3], [4, 5, 6]]
-    >>> Y = [[7, 8, 9], [10, 11, 12]]
-    >>> kernel_matrix = laplacian_kernel(X, Y)
-    >>> kernel_matrix
-    array([[0.00247875, 0.00012341],
-       [0.04978707, 0.00247875]])
+    >>> X = [[0, 0, 0], [1, 1, 1]]
+    >>> Y = [[1, 0, 0], [1, 1, 0]]
+    >>> laplacian_kernel(X, Y)
+    array([[0.71..., 0.51...],
+           [0.51..., 0.71...]])
     """
     X, Y = check_pairwise_arrays(X, Y)
     if gamma is None:
@@ -1649,18 +1640,17 @@ def cosine_similarity(X, Y=None, dense_output=True):
 
     Returns
     -------
-    kernel matrix : ndarray of shape (n_samples_X, n_samples_Y)
+    similarities : ndarray of shape (n_samples_X, n_samples_Y)
         Returns the cosine similarity between samples in X and Y.
 
     Examples
-    -------
+    --------
     >>> from sklearn.metrics.pairwise import cosine_similarity
-    >>> X = [[1, 2, 3], [4, 5, 6]]
-    >>> Y = [[7, 8, 9], [10, 11, 12]]
-    >>> kernel_matrix = cosine_similarity(X, Y)
-    >>> kernel_matrix
-    array([[0.95941195, 0.95125831],
-       [0.99819089, 0.99614986]])
+    >>> X = [[0, 0, 0], [1, 1, 1]]
+    >>> Y = [[1, 0, 0], [1, 1, 0]]
+    >>> cosine_similarity(X, Y)
+    array([[0.     , 0.     ],
+           [0.57..., 0.81...]])
     """
     # to avoid recursive import
 
@@ -1706,18 +1696,8 @@ def additive_chi2_kernel(X, Y=None):
 
     Returns
     -------
-    kernel_matrix : ndarray of shape (n_samples_X, n_samples_Y)
+    kernel : ndarray of shape (n_samples_X, n_samples_Y)
         The kernel matrix.
-
-    Examples
-    -------
-    >>> from sklearn.metrics.pairwise import additive_chi2_kernel
-    >>> X = [[1, 2, 3], [4, 5, 6]]
-    >>> Y = [[7, 8, 9], [10, 11, 12]]
-    >>> kernel_matrix = additive_chi2_kernel(X, Y)
-    >>> kernel_matrix
-    array([[-11.1       , -18.99440559],
-       [ -2.11048951,  -6.82142857]])
 
     See Also
     --------
@@ -1738,6 +1718,15 @@ def additive_chi2_kernel(X, Y=None):
       categories: A comprehensive study
       International Journal of Computer Vision 2007
       https://hal.archives-ouvertes.fr/hal-00171412/document
+
+    Examples
+    --------
+    >>> from sklearn.metrics.pairwise import additive_chi2_kernel
+    >>> X = [[0, 0, 0], [1, 1, 1]]
+    >>> Y = [[1, 0, 0], [1, 1, 0]]
+    >>> additive_chi2_kernel(X, Y)
+    array([[-1., -2.],
+           [-2., -1.]])
     """
     X, Y = check_pairwise_arrays(X, Y, accept_sparse=False)
     if (X < 0).any():
@@ -1786,18 +1775,8 @@ def chi2_kernel(X, Y=None, gamma=1.0):
 
     Returns
     -------
-    kernel_matrix : ndarray of shape (n_samples_X, n_samples_Y)
+    kernel : ndarray of shape (n_samples_X, n_samples_Y)
         The kernel matrix.
-
-    Examples
-    --------
-    >>> from sklearn.metrics.pairwise import chi2_kernel
-    >>> X = [[1, 2, 3], [4, 5, 6]]
-    >>> Y = [[7, 8, 9], [10, 11, 12]]
-    >>> kernel_matrix = chi2_kernel(X, Y)
-    >>> kernel_matrix
-    array([[1.51123238e-05, 5.63422859e-09],
-       [1.21178634e-01, 1.09016243e-03]])
 
     See Also
     --------
@@ -1812,6 +1791,15 @@ def chi2_kernel(X, Y=None, gamma=1.0):
       categories: A comprehensive study
       International Journal of Computer Vision 2007
       https://hal.archives-ouvertes.fr/hal-00171412/document
+
+    Examples
+    --------
+    >>> from sklearn.metrics.pairwise import chi2_kernel
+    >>> X = [[0, 0, 0], [1, 1, 1]]
+    >>> Y = [[1, 0, 0], [1, 1, 0]]
+    >>> chi2_kernel(X, Y)
+    array([[0.36..., 0.13...],
+           [0.13..., 0.36...]])
     """
     K = additive_chi2_kernel(X, Y)
     K *= gamma
@@ -2284,16 +2272,6 @@ def pairwise_distances(
         If Y is not None, then D_{i, j} is the distance between the ith array
         from X and the jth array from Y.
 
-    Examples
-    --------
-    >>> from sklearn.metrics.pairwise import pairwise_distances
-    >>> X = [[1, 2, 3], [4, 5, 6]]
-    >>> Y = [[7, 8, 9], [10, 11, 12]]
-    >>> D = pairwise_distances(X, Y, metric='euclidean')
-    >>> D
-    array([[10.39230485, 15.58845727],
-       [ 5.19615242, 10.39230485]])
-
     See Also
     --------
     pairwise_distances_chunked : Performs the same calculation as this
@@ -2301,6 +2279,15 @@ def pairwise_distances(
         order to limit memory usage.
     sklearn.metrics.pairwise.paired_distances : Computes the distances between
         corresponding elements of two arrays.
+
+    Examples
+    --------
+    >>> from sklearn.metrics.pairwise import pairwise_distances
+    >>> X = [[0, 0, 0], [1, 1, 1]]
+    >>> Y = [[1, 0, 0], [1, 1, 0]]
+    >>> pairwise_distances(X, Y, metric='sqeuclidean')
+    array([[1., 2.],
+           [2., 1.]])
     """
     if metric == "precomputed":
         X, _ = check_pairwise_arrays(
@@ -2504,25 +2491,18 @@ def pairwise_kernels(
         If Y is not None, then K_{i, j} is the kernel between the ith array
         from X and the jth array from Y.
 
-    Examples
-    --------
-    >>> from sklearn.metrics.pairwise import pairwise_kernels
-    >>> X = [[1, 2, 3], [4, 5, 6]]
-    >>> Y = [[7, 8, 9], [10, 11, 12]]
-    >>> # Linear metric
-    >>> K_linear = pairwise_kernels(X, Y, metric='linear')
-    >>> K_linear
-    array([[ 50.,  68.],
-       [122., 167.]])
-    >>> # RBF metric
-    >>> K_rbf = pairwise_kernels(X, Y, metric='rbf', gamma=0.1)
-    >>> K_rbf
-    array([[2.03995034e-05, 2.79668846e-11],
-       [6.72055127e-02, 2.03995034e-05]])
-
     Notes
     -----
     If metric is 'precomputed', Y is ignored and X is returned.
+
+    Examples
+    --------
+    >>> from sklearn.metrics.pairwise import pairwise_kernels
+    >>> X = [[0, 0, 0], [1, 1, 1]]
+    >>> Y = [[1, 0, 0], [1, 1, 0]]
+    >>> pairwise_kernels(X, Y, metric='linear')
+    array([[0., 0.],
+           [1., 2.]])
     """
     # import GPKernel locally to prevent circular imports
     from ..gaussian_process.kernels import Kernel as GPKernel
