@@ -32,8 +32,8 @@ Changelog
   :pr:`28053` by :user:`Mark Elliot <mark-thm>`.
 
 :mod:`sklearn.manifold`
-.....................
-- |Efficiency| :class:`LocallyLinearEmbedding` now allocates more efficiently
+.......................
+- |Efficiency| :func:`locally_linear_embedding` now allocates more efficiently
   the memory of sparse matrices in the Hessian, Modified and LTSA methods.
   :pr:`28096` by :user:`Giorgio Angelotti <giorgioangel>`.
 
