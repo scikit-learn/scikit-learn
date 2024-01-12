@@ -12,7 +12,8 @@ Clustering: grouping observations together
     **clustering task**: split the observations into well-separated group
     called *clusters*.
 
-..
+::
+
    >>> # Set the PRNG
    >>> import numpy as np
    >>> np.random.seed(1)
@@ -100,18 +101,18 @@ A :ref:`hierarchical_clustering` method is a type of cluster analysis
 that aims to build a hierarchy of clusters. In general, the various approaches
 of this technique are either:
 
-  * **Agglomerative** - bottom-up approaches: each observation starts in its
-    own cluster, and clusters are iteratively merged in such a way to
-    minimize a *linkage* criterion. This approach is particularly interesting
-    when the clusters of interest are made of only a few observations. When
-    the number of clusters is large, it is much more computationally efficient
-    than k-means.
+* **Agglomerative** - bottom-up approaches: each observation starts in its
+   own cluster, and clusters are iteratively merged in such a way to
+   minimize a *linkage* criterion. This approach is particularly interesting
+   when the clusters of interest are made of only a few observations. When
+   the number of clusters is large, it is much more computationally efficient
+   than k-means.
 
-  * **Divisive** - top-down approaches: all observations start in one
-    cluster, which is iteratively split as one moves down the hierarchy.
-    For estimating large numbers of clusters, this approach is both slow (due
-    to all observations starting as one cluster, which it splits recursively)
-    and statistically ill-posed.
+* **Divisive** - top-down approaches: all observations start in one
+   cluster, which is iteratively split as one moves down the hierarchy.
+   For estimating large numbers of clusters, this approach is both slow (due
+   to all observations starting as one cluster, which it splits recursively)
+   and statistically ill-posed.
 
 Connectivity-constrained clustering
 .....................................
