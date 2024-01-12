@@ -1633,6 +1633,8 @@ def test_different_bitness_pickle():
         f.seek(0)
         return f
 
+    # Simulate loading a pickle of the same model trained on a platform with different
+    # bitness that than the platform it will be used to make predictions on:
     new_clf = pickle.load(pickle_dump_with_different_bitness())
     new_score = new_clf.score(X, y)
     assert score == pytest.approx(new_score)
