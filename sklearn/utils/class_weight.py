@@ -54,10 +54,9 @@ def compute_class_weight(class_weight, *, classes, y):
     --------
     >>> import numpy as np
     >>> from sklearn.utils.class_weight import compute_class_weight
-    >>> y = np.array([0, 1, 0, 1, 1, 1, 1, 1, 0, 1])
-    >>> classes = np.unique(y)
-    >>> compute_class_weight("balanced", classes=classes, y=y)
-    array([1.66666667, 0.71428571])
+    >>> y = [1, 1, 1, 1, 0, 0]
+    >>> compute_class_weight(class_weight="balanced", classes=np.unique(y), y=y)
+    array([1.5 , 0.75])
     """
     # Import error caused by circular imports.
     from ..preprocessing import LabelEncoder
@@ -145,12 +144,10 @@ def compute_sample_weight(class_weight, y, *, indices=None):
 
     Examples
     --------
-    >>> import numpy as np
     >>> from sklearn.utils.class_weight import compute_sample_weight
-    >>> y = np.array([0, 1, 0, 1, 1, 1, 1, 1, 0, 1])
-    >>> compute_sample_weight("balanced", y)
-    array([1.66666667, 0.71428571, 1.66666667, 0.71428571, 0.71428571,
-           0.71428571, 0.71428571, 0.71428571, 1.66666667, 0.71428571])
+    >>> y = [1, 1, 1, 1, 0, 0]
+    >>> compute_sample_weight(class_weight="balanced", y=y)
+    array([0.75, 0.75, 0.75, 0.75, 1.5 , 1.5 ])
     """
 
     # Ensure y is 2D. Sparse matrices are already 2D.
