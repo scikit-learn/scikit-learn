@@ -62,12 +62,10 @@ def check_increasing(x, y):
     Examples
     --------
     >>> from sklearn.isotonic import check_increasing
-    >>> import numpy as np
-    >>> x = np.array([1, 2, 3, 4, 5])
-    >>> y = np.array([2, 4, 6, 8, 10])
+    >>> x, y = [1, 2, 3, 4, 5], [2, 4, 6, 8, 10]
     >>> check_increasing(x, y)
     True
-    >>> y = np.array([10, 8, 6, 4, 2])
+    >>> y = [10, 8, 6, 4, 2]
     >>> check_increasing(x, y)
     False
     """
@@ -149,12 +147,9 @@ def isotonic_regression(
     Examples
     --------
     >>> from sklearn.isotonic import isotonic_regression
-    >>> import numpy as np
-    >>> y = np.array([5, 3, 1, 2, 8, 10, 7, 9, 6, 4])
-    >>> y_ = isotonic_regression(y)
-    >>> y_
-    array([2.75      , 2.75      , 2.75      , 2.75      , 7.33333333,
-        7.33333333, 7.33333333, 7.33333333, 7.33333333, 7.33333333])
+    >>> isotonic_regression([5, 3, 1, 2, 8, 10, 7, 9, 6, 4])
+    array([2.75   , 2.75   , 2.75   , 2.75   , 7.33...,
+           7.33..., 7.33..., 7.33..., 7.33..., 7.33...])
     """
     order = np.s_[:] if increasing else np.s_[::-1]
     y = check_array(y, ensure_2d=False, input_name="y", dtype=[np.float64, np.float32])
