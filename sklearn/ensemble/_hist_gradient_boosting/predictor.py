@@ -65,16 +65,9 @@ class TreePredictor:
             The raw predicted values.
         """
         out = np.empty(X.shape[0], dtype=Y_DTYPE)
-        nodes = self.nodes
-        # The dtype of feature_idx is np.intp which is platform dependent. Here, we
-        # make sure that saving and loading on different bitness systems works without
-        # errors. For instance, on 64 bit np.intp = np.int64, while on 32 bit
-        # np.intp = np.int32.
-        if nodes.dtype != PREDICTOR_RECORD_DTYPE:
-            nodes = self.nodes.astype(PREDICTOR_RECORD_DTYPE, casting="same_kind")
 
         _predict_from_raw_data(
-            nodes,
+            self.nodes,
             X,
             self.raw_left_cat_bitsets,
             known_cat_bitsets,
@@ -130,3 +123,16 @@ class TreePredictor:
             point.
         """
         _compute_partial_dependence(self.nodes, grid, target_features, out)
+
+    def __setstate__(self, state):
+        try:
+            super().__setstate__(state)
+        except AttributeError:
+            self.__dict__.update(state)
+
+        # The dtype of feature_idx is np.intp which is platform dependent. Here, we
+        # make sure that saving and loading on different bitness systems works without
+        # errors. For instance, on 64 bit np.intp = np.int64, while on 32 bit
+        # np.intp = np.int32.
+        if self.nodes.dtype != PREDICTOR_RECORD_DTYPE:
+            self.nodes = self.nodes.astype(PREDICTOR_RECORD_DTYPE, casting="same_kind")

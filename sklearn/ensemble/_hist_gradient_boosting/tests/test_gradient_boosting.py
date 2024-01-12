@@ -29,6 +29,7 @@ from sklearn.ensemble import (
 from sklearn.ensemble._hist_gradient_boosting.binning import _BinMapper
 from sklearn.ensemble._hist_gradient_boosting.common import G_H_DTYPE
 from sklearn.ensemble._hist_gradient_boosting.grower import TreeGrower
+from sklearn.ensemble._hist_gradient_boosting.predictor import TreePredictor
 from sklearn.exceptions import NotFittedError
 from sklearn.metrics import get_scorer, mean_gamma_deviance, mean_poisson_deviance
 from sklearn.model_selection import cross_val_score, train_test_split
@@ -1587,9 +1588,6 @@ def test_categorical_features_warn():
         hist.fit(X, y)
 
 
-from sklearn.ensemble._hist_gradient_boosting.predictor import TreePredictor
-
-
 def get_different_bitness_node_ndarray(node_ndarray):
     new_dtype_for_indexing_fields = np.int64 if _IS_32BIT else np.int32
 
@@ -1605,23 +1603,6 @@ def get_different_bitness_node_ndarray(node_ndarray):
 
     new_dtype = np.dtype(
         {"names": list(new_dtype_dict.keys()), "formats": list(new_dtype_dict.values())}
-    )
-    return node_ndarray.astype(new_dtype, casting="same_kind")
-
-
-def get_different_alignment_node_ndarray(node_ndarray):
-    new_dtype_dict = {
-        name: dtype for name, (dtype, _) in node_ndarray.dtype.fields.items()
-    }
-    offsets = [offset for dtype, offset in node_ndarray.dtype.fields.values()]
-    shifted_offsets = [8 + offset for offset in offsets]
-
-    new_dtype = np.dtype(
-        {
-            "names": list(new_dtype_dict.keys()),
-            "formats": list(new_dtype_dict.values()),
-            "offsets": shifted_offsets,
-        }
     )
     return node_ndarray.astype(new_dtype, casting="same_kind")
 
