@@ -134,10 +134,18 @@ def pytest_collection_modifyitems(config, items):
     datasets_to_download = set()
 
     for item in items:
-        if not hasattr(item, "fixturenames"):
-            continue
-        item_fixtures = set(item.fixturenames)
-        dataset_to_fetch = item_fixtures & dataset_features_set
+        if isinstance(item, DoctestItem):
+            # The dataset fetchers require network access but we cannot use pytest
+            # fixture. Since our fixture use the name of the fetcher with the suffix
+            # "_fxt", we can try to match this name to trigger the download.
+            name = set([item.name.rsplit(".", 1)[-1] + "_fxt"])
+            dataset_to_fetch = name & dataset_features_set
+        else:
+            if not hasattr(item, "fixturenames"):
+                continue
+            item_fixtures = set(item.fixturenames)
+            dataset_to_fetch = item_fixtures & dataset_features_set
+
         if not dataset_to_fetch:
             continue
 
@@ -209,6 +217,7 @@ def pytest_collection_modifyitems(config, items):
                 # details.
                 if item.name != "sklearn._config.config_context":
                     item.add_marker(skip_marker)
+
     try:
         import PIL  # noqa
 

@@ -160,24 +160,14 @@ def fetch_covtype(
     Examples
     --------
     >>> from sklearn.datasets import fetch_covtype
-    >>>
-    >>> # Default return sklearn.utils.Bunch
-    >>> cov_bunch = fetch_covtype()
-    >>> cov_bunch.data.shape
+    >>> cov_type = fetch_covtype()
+    >>> cov_type.data.shape
     (581012, 54)
-    >>> cov_bunch.target.shape
+    >>> cov_type.target.shape
     (581012,)
-    >>>
-    >>> # Return Numpy Array
-    >>> X, y = fetch_covtype(
-    ...     random_state=42,
-    ...     shuffle=True,
-    ...     return_X_y=True,
-    ... )
-    >>> type(X), X.shape
-    (<class 'numpy.ndarray'>, (581012, 54))
-    >>> type(y), y.shape
-    (<class 'numpy.ndarray'>, (581012,))
+    >>> # Let's check the 4 first feature names
+    >>> cov_type.feature_names[:4]
+    ['Elevation', 'Aspect', 'Slope', 'Horizontal_Distance_To_Hydrology']
     """
     data_home = get_data_home(data_home=data_home)
     covtype_dir = join(data_home, "covertype")
