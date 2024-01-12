@@ -1151,7 +1151,7 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
 
         sample_weight : float or ndarray of shape (n_samples,), default=None
             Individual weights for each sample. If given a float, every sample
-            will have the same weight. The sample_weight vector should sum to 
+            will have the same weight. The sample_weight vector should sum to
             one.
 
         Returns
