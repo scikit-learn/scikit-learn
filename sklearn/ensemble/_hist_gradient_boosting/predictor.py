@@ -132,7 +132,13 @@ class TreePredictor:
 
         # The dtype of feature_idx is np.intp which is platform dependent. Here, we
         # make sure that saving and loading on different bitness systems works without
-        # errors. For instance, on 64 bit np.intp = np.int64, while on 32 bit
-        # np.intp = np.int32.
+        # errors. For instance, on a 64 bit Python runtime, np.intp = np.int64,
+        # while on 32 bit np.intp = np.int32.
+        #
+        # TODO: consider always using platform agnostic dtypes for fitted 
+        # estimator attributes. For this particular estimator, this would
+        # mean replacing the intp field of PREDICTOR_RECORD_DTYPE by an int32
+        # field. Ideally this should be done consistently throughout 
+        # scikit-learn along with a common test.
         if self.nodes.dtype != PREDICTOR_RECORD_DTYPE:
             self.nodes = self.nodes.astype(PREDICTOR_RECORD_DTYPE, casting="same_kind")
