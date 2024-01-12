@@ -34,7 +34,7 @@ import numpy as np
 from scipy.special import xlogy
 
 from ..exceptions import UndefinedMetricWarning
-from ..utils._array_api import get_namespace, _is_numpy_namespace
+from ..utils._array_api import _is_numpy_namespace, get_namespace
 from ..utils._param_validation import Hidden, Interval, StrOptions, validate_params
 from ..utils.stats import _weighted_percentile
 from ..utils.validation import (
