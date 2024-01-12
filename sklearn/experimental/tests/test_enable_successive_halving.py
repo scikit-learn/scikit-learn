@@ -47,4 +47,7 @@ def test_imports_strategies():
     with pytest.raises(ImportError, match={pattern!r}):
         from sklearn.model_selection import HalvingRandomSearchCV
     """
-    assert_run_python_script_without_output(textwrap.dedent(bad_imports))
+    assert_run_python_script_without_output(
+        textwrap.dedent(bad_imports),
+        pattern=pattern,
+    )
