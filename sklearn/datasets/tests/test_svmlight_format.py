@@ -600,9 +600,9 @@ def test_multilabel_y_explicit_zeros(tmp_path, csr_container):
 
 
 def test_dump_read_only(tmp_path):
-    """
-    Ensure that there is no ValueError when dumping a read-only `X`.
+    """Ensure that there is no ValueError when dumping a read-only `X`.
 
+    Non-regression test for:
     https://github.com/scikit-learn/scikit-learn/issues/28026
     """
     rng = np.random.RandomState(42)
