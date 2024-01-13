@@ -509,13 +509,7 @@ def locally_linear_embedding(
             M[nbrs_x, nbrs_y] += np.dot(Wi, Wi.T)
             Wi_sum1 = Wi.sum(1)
             M[i, neighbors[i]] -= Wi_sum1
-
-            if M_sparse:
-                for idx in range(len(neighbors[i])):
-                    M[neighbors[i][idx], i] -= Wi_sum1[idx]
-            else:
-                M[neighbors[i], i] -= Wi_sum1
-
+            M[neighbors[i], [i]] -= Wi_sum1
             M[i, i] += s_i
 
         if M_sparse:
