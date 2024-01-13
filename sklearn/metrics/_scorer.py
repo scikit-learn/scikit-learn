@@ -23,10 +23,7 @@ import warnings
 from collections import Counter
 from functools import partial
 from inspect import signature
-from numbers import Integral
 from traceback import format_exc
-
-import numpy as np
 
 from ..base import is_regressor
 from ..utils import Bunch
@@ -351,111 +348,6 @@ class _Scorer(_BaseScorer):
 
         scoring_kwargs = {**self._kwargs, **kwargs}
         return self._sign * self._score_func(y_true, y_pred, **scoring_kwargs)
-
-
-def _threshold_scores_to_class_labels(y_score, threshold, classes, pos_label):
-    """Threshold `y_score` and return the associated class labels."""
-    if pos_label is None:
-        map_thresholded_score_to_label = np.array([0, 1])
-    else:
-        pos_label_idx = np.flatnonzero(classes == pos_label)[0]
-        neg_label_idx = np.flatnonzero(classes != pos_label)[0]
-        map_thresholded_score_to_label = np.array([neg_label_idx, pos_label_idx])
-
-    return classes[map_thresholded_score_to_label[(y_score >= threshold).astype(int)]]
-
-
-class _ContinuousScorer(_BaseScorer):
-    """Scorer taking a continuous response and output a score for each threshold."""
-
-    def __init__(self, score_func, sign, kwargs, n_thresholds, response_method):
-        super().__init__(
-            score_func=score_func,
-            sign=sign,
-            kwargs=kwargs,
-            response_method=response_method,
-        )
-        self._n_thresholds = n_thresholds
-
-    @classmethod
-    def from_scorer(cls, scorer, response_method, n_thresholds, pos_label):
-        """Create a continuous scorer from a normal scorer."""
-        # add `pos_label` if requested by the scorer function
-        scorer_kwargs = {**scorer._kwargs}
-        signature_scoring_func = signature(scorer._score_func)
-        if (
-            "pos_label" in signature_scoring_func.parameters
-            and "pos_label" not in scorer_kwargs
-        ):
-            if pos_label is None:
-                # Since the provided `pos_label` is the default, we need to
-                # use the default value of the scoring function that can be either
-                # `None` or `1`.
-                scorer_kwargs["pos_label"] = signature_scoring_func.parameters[
-                    "pos_label"
-                ].default
-            else:
-                scorer_kwargs["pos_label"] = pos_label
-        # transform a binary metric into a curve metric for all possible decision
-        # thresholds
-        instance = cls(
-            score_func=scorer._score_func,
-            sign=scorer._sign,
-            response_method=response_method,
-            n_thresholds=n_thresholds,
-            kwargs=scorer_kwargs,
-        )
-        # transfer the metadata request
-        instance._metadata_request = scorer._get_metadata_request()
-        return instance
-
-    def _score(self, method_caller, estimator, X, y_true, **kwargs):
-        """Evaluate predicted target values for X relative to y_true.
-
-        Parameters
-        ----------
-        estimator : object
-            Trained estimator to use for scoring.
-
-        X : {array-like, sparse matrix} of shape (n_samples, n_features)
-            Test data that will be fed to estimator.predict.
-
-        y_true : array-like of shape (n_samples,)
-            Gold standard target values for X.
-
-        **kwargs : dict
-            Other parameters passed to the scorer. Refer to
-            :func:`set_score_request` for more details.
-
-        Returns
-        -------
-        score : float
-            Score function applied to prediction of estimator on X.
-        """
-        pos_label = self._get_pos_label()
-        y_score = method_caller(
-            estimator, self._response_method, X, pos_label=pos_label
-        )
-
-        scoring_kwargs = {**self._kwargs, **kwargs}
-        if isinstance(self._n_thresholds, Integral):
-            potential_thresholds = np.linspace(
-                np.min(y_score), np.max(y_score), self._n_thresholds
-            )
-        else:
-            potential_thresholds = np.array(self._n_thresholds, copy=False)
-        score_thresholds = [
-            self._sign
-            * self._score_func(
-                y_true,
-                _threshold_scores_to_class_labels(
-                    y_score, th, estimator.classes_, self._get_pos_label()
-                ),
-                **scoring_kwargs,
-            )
-            for th in potential_thresholds
-        ]
-        return potential_thresholds, np.array(score_thresholds)
 
 
 @validate_params(

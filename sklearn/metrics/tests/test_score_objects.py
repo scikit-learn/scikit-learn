@@ -46,7 +46,6 @@ from sklearn.metrics import (
 from sklearn.metrics import cluster as cluster_module
 from sklearn.metrics._scorer import (
     _check_multimetric_scoring,
-    _ContinuousScorer,
     _MultimetricScorer,
     _PassthroughScorer,
     _Scorer,
@@ -1205,93 +1204,6 @@ def test_scorer_no_op_multiclass_select_proba():
         labels=lr.classes_,
     )
     scorer(lr, X_test, y_test)
-
-
-def test_continuous_scorer():
-    """Check the behaviour of the `_ContinuousScorer` class."""
-    X, y = make_classification(random_state=0)
-    estimator = LogisticRegression().fit(X, y)
-    scorer = _ContinuousScorer(
-        balanced_accuracy_score,
-        sign=1,
-        response_method="predict_proba",
-        n_thresholds=10,
-        kwargs={},
-    )
-    thresholds, scores = scorer(estimator, X, y)
-
-    assert thresholds.shape == scores.shape
-    # check that the thresholds are probability with extreme values close to 0 and 1
-    assert 0 <= thresholds.min() <= 0.01
-    assert 0.99 <= thresholds.max() <= 1
-    # balanced accuracy should be between 0.5 and 1 when it is not adjusted
-    assert 0.5 <= scores.min() <= 1
-
-    # check that passing kwargs to the scorer works
-    scorer = _ContinuousScorer(
-        balanced_accuracy_score,
-        sign=1,
-        response_method="predict_proba",
-        n_thresholds=10,
-        kwargs={"adjusted": True},
-    )
-    thresholds, scores = scorer(estimator, X, y)
-
-    # balanced accuracy should be between 0.5 and 1 when it is not adjusted
-    assert 0 <= scores.min() <= 0.5
-
-    # check that we can inverse the sign of the score when dealing with `neg_*` scorer
-    scorer = _ContinuousScorer(
-        balanced_accuracy_score,
-        sign=-1,
-        response_method="predict_proba",
-        n_thresholds=10,
-        kwargs={"adjusted": True},
-    )
-    thresholds, scores = scorer(estimator, X, y)
-
-    assert all(scores <= 0)
-
-
-def test_continuous_scorer_pos_label(global_random_seed):
-    """Check that we propagate properly the `pos_label` parameter to the scorer."""
-    n_samples = 30
-    X, y = make_classification(
-        n_samples=n_samples, weights=[0.9, 0.1], random_state=global_random_seed
-    )
-    estimator = LogisticRegression().fit(X, y)
-
-    scorer = _ContinuousScorer(
-        recall_score,
-        sign=1,
-        response_method="predict_proba",
-        n_thresholds=1000,
-        kwargs={"pos_label": 1},
-    )
-    thresholds_pos_label_1, scores_pos_label_1 = scorer(estimator, X, y)
-
-    scorer = _ContinuousScorer(
-        recall_score,
-        sign=1,
-        response_method="predict_proba",
-        n_thresholds=1000,
-        kwargs={"pos_label": 0},
-    )
-    thresholds_pos_label_0, scores_pos_label_0 = scorer(estimator, X, y)
-
-    # If `pos_label` is not forwarded to the scorer, the thresholds will be equal.
-    # Make sure that this is not the case.
-    # assert not (thresholds_pos_label_1 == thresholds_pos_label_0).all()
-    # Since we have an imbalanced problem, the thresholds should represent higher
-    # probabilities level when `pos_label=0` than with `pos_label=1`.
-    assert np.sum(thresholds_pos_label_1 < 0.15) > 2 / 3 * n_samples
-    assert np.sum(thresholds_pos_label_0 > 0.85) > 2 / 3 * n_samples
-
-    # The recall cannot be negative and `pos_label=1` should have a higher recall
-    # since there is less samples to be considered.
-    assert 0.0 < scores_pos_label_0.min() < scores_pos_label_1.min()
-    assert scores_pos_label_0.max() == pytest.approx(1.0)
-    assert scores_pos_label_1.max() == pytest.approx(1.0)
 
 
 @pytest.mark.parametrize("name", get_scorer_names())

@@ -2,9 +2,9 @@
 
 .. _tunedthresholdclassifier:
 
-========================================================
-Tuning cut-off decision threshold for classes prediction
-========================================================
+======================================================
+Tuning cut-off decision threshold for class prediction
+======================================================
 
 Classifiers are predictive models: they use statistical learning to predict outcomes.
 The outcomes of a classifier are scores for each sample in relation to each class and
@@ -12,9 +12,9 @@ categorical prediction (class label). Scores are obtained from :term:`predict_pr
 :term:`decision_function`. The former returns posterior probability estimates for each
 class, while the latter returns a decision score for each class. The decision score is a
 measure of how strongly the sample is predicted to belong to the positive class (e.g.,
-the distance to the decision boundary). A decision rule is then defined by thresholding
-the scores, leading to a class label for each sample. Those labels are obtained with
-:term:`predict`.
+the distance to the decision boundary). In binary classification, a decision rule is
+then defined by thresholding the scores, leading to a single class label for each
+sample. Those labels are obtained with :term:`predict`.
 
 For binary classification in scikit-learn, class labels are obtained by associating the
 positive class with posterior probability estimates greater than 0.5 (obtained with
@@ -29,17 +29,15 @@ probability estimates and class labels::
     >>> X, y = make_classification(random_state=0)
     >>> classifier = DecisionTreeClassifier(max_depth=2, random_state=0).fit(X, y)
     >>> classifier.predict_proba(X[:4])
-    array([[0.94   , 0.06   ],
-           [0.94   , 0.06   ],
-           [0.04..., 0.95...],
-           [0.04..., 0.95...]])
+    array([[0.94     , 0.06     ],
+           [0.94     , 0.06     ],
+           [0.0416..., 0.9583...],
+           [0.0416..., 0.9583...]])
     >>> classifier.predict(X[:4])
     array([0, 0, 1, 1])
 
 While these approaches are reasonable as default behaviors, they are not ideal for
-all cases. The context and nature of the use case defines the expected behavior of the
-classifier and thus, the strategy to convert soft predictions into hard predictions. We
-illustrate this point with an example.
+all cases. Let's illustrate with an example.
 
 Let's consider a scenario where a predictive model is being deployed to assist medical
 doctors in detecting tumors. In this setting, doctors will be most likely interested in
@@ -115,8 +113,8 @@ In this example, we maximize the balanced accuracy.
         0.86...
 
 A second strategy aims to maximize one metric while imposing constraints on another
-metric. There are four pre-defined options, 2 use the Receiver Operating
-Characteristic (ROC) statistics and 2 use the Precision-Recall statistics.
+metric. There are four pre-defined options, two use the Receiver Operating
+Characteristic (ROC) statistics and two use the Precision-Recall statistics.
 
 - `"max_tpr_at_tnr_constraint"`: maximizes the True Positive Rate (TPR) such that the
   True Negative Rate (TNR) is the closest to a given value.
@@ -140,8 +138,8 @@ setting `cv="prefit"` and providing a fitted classifier. In this case, the cut-o
 is tuned on the data provided to the `fit` method.
 
 However, you should be extremely careful when using this option. You should never use
-the same data for training the classifier and tuning the cut-off point at the risk of
-overfitting. Refer to the following example section for more details (cf.
+the same data for training the classifier and tuning the cut-off point due to the risk
+of overfitting. Refer to the following example section for more details (cf.
 :ref:`tunedthresholdclassifier_no_cv`). If you have limited resources, consider using a
 float number to limit to an internal single train-test split.
 
