@@ -1241,6 +1241,12 @@ def column_or_1d(y, *, dtype=None, warn=False):
     ------
     ValueError
         If `y` is not a 1D array or a 2D array with a single row or column.
+
+    Examples
+    --------
+    >>> from sklearn.utils.validation import column_or_1d
+    >>> column_or_1d([1, 1])
+    array([1, 1])
     """
     xp, _ = get_namespace(y)
     y = check_array(
@@ -1355,6 +1361,21 @@ def check_symmetric(array, *, tol=1e-10, raise_warning=True, raise_exception=Fal
         Symmetrized version of the input array, i.e. the average of array
         and array.transpose(). If sparse, then duplicate entries are first
         summed and zeros are eliminated.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.utils.validation import check_symmetric
+    >>> symmetric_array = np.array([[0, 1, 2], [1, 0, 1], [2, 1, 0]])
+    >>> check_symmetric(symmetric_array)
+    array([[0, 1, 2],
+           [1, 0, 1],
+           [2, 1, 0]])
+    >>> from scipy.sparse import csr_matrix
+    >>> sparse_symmetric_array = csr_matrix(symmetric_array)
+    >>> check_symmetric(sparse_symmetric_array)
+    <3x3 sparse matrix of type '<class 'numpy.int64'>'
+        with 6 stored elements in Compressed Sparse Row format>
     """
     if (array.ndim != 2) or (array.shape[0] != array.shape[1]):
         raise ValueError(
@@ -2298,24 +2319,22 @@ def _check_pos_label_consistency(pos_label, y_true):
     # classes.dtype.kind in ('O', 'U', 'S') is required to avoid
     # triggering a FutureWarning by calling np.array_equal(a, b)
     # when elements in the two arrays are not comparable.
-    classes = np.unique(y_true)
-    if pos_label is None and (
-        classes.dtype.kind in "OUS"
-        or not (
+    if pos_label is None:
+        # Compute classes only if pos_label is not specified:
+        classes = np.unique(y_true)
+        if classes.dtype.kind in "OUS" or not (
             np.array_equal(classes, [0, 1])
             or np.array_equal(classes, [-1, 1])
             or np.array_equal(classes, [0])
             or np.array_equal(classes, [-1])
             or np.array_equal(classes, [1])
-        )
-    ):
-        classes_repr = ", ".join([repr(c) for c in classes.tolist()])
-        raise ValueError(
-            f"y_true takes value in {{{classes_repr}}} and pos_label is not "
-            "specified: either make y_true take value in {0, 1} or "
-            "{-1, 1} or pass pos_label explicitly."
-        )
-    elif pos_label is None:
+        ):
+            classes_repr = ", ".join([repr(c) for c in classes.tolist()])
+            raise ValueError(
+                f"y_true takes value in {{{classes_repr}}} and pos_label is not "
+                "specified: either make y_true take value in {0, 1} or "
+                "{-1, 1} or pass pos_label explicitly."
+            )
         pos_label = 1
 
     return pos_label

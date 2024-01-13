@@ -425,6 +425,23 @@ def k_means(
     best_n_iter : int
         Number of iterations corresponding to the best results.
         Returned only if `return_n_iter` is set to True.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.cluster import k_means
+    >>> X = np.array([[1, 2], [1, 4], [1, 0],
+    ...               [10, 2], [10, 4], [10, 0]])
+    >>> centroid, label, inertia = k_means(
+    ...     X, n_clusters=2, n_init="auto", random_state=0
+    ... )
+    >>> centroid
+    array([[10.,  2.],
+           [ 1.,  2.]])
+    >>> label
+    array([1, 1, 1, 0, 0, 0], dtype=int32)
+    >>> inertia
+    16.0
     """
     est = KMeans(
         n_clusters=n_clusters,
@@ -1208,6 +1225,9 @@ class KMeans(_BaseKMeans):
         The number of clusters to form as well as the number of
         centroids to generate.
 
+        For an example of how to choose an optimal value for `n_clusters` refer to
+        :ref:`sphx_glr_auto_examples_cluster_plot_kmeans_silhouette_analysis.py`.
+
     init : {'k-means++', 'random'}, callable or array-like of shape \
             (n_clusters, n_features), default='k-means++'
         Method for initialization:
@@ -1364,6 +1384,21 @@ class KMeans(_BaseKMeans):
     >>> kmeans.cluster_centers_
     array([[10.,  2.],
            [ 1.,  2.]])
+
+    For a more detailed example of K-Means using the iris dataset see
+    :ref:`sphx_glr_auto_examples_cluster_plot_cluster_iris.py`.
+
+    For examples of common problems with K-Means and how to address them see
+    :ref:`sphx_glr_auto_examples_cluster_plot_kmeans_assumptions.py`.
+
+    For an example of how to use K-Means to perform color quantization see
+    :ref:`sphx_glr_auto_examples_cluster_plot_color_quantization.py`.
+
+    For a demonstration of how K-Means can be used to cluster text documents see
+    :ref:`sphx_glr_auto_examples_text_plot_document_clustering.py`.
+
+    For a comparison between K-Means and MiniBatchKMeans refer to example
+    :ref:`sphx_glr_auto_examples_cluster_plot_mini_batch_kmeans.py`.
     """
 
     _parameter_constraints: dict = {

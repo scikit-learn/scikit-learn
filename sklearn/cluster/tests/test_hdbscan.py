@@ -563,3 +563,19 @@ def test_hdbscan_warning_on_deprecated_algorithm_name():
     )
     with pytest.warns(FutureWarning, match=msg):
         HDBSCAN(algorithm="balltree").fit(X)
+
+
+@pytest.mark.parametrize("store_centers", ["centroid", "medoid"])
+def test_hdbscan_error_precomputed_and_store_centers(store_centers):
+    """Check that we raise an error if the centers are requested together with
+    a precomputed input matrix.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/27893
+    """
+    rng = np.random.RandomState(0)
+    X = rng.random((100, 2))
+    X_dist = euclidean_distances(X)
+    err_msg = "Cannot store centers when using a precomputed distance matrix."
+    with pytest.raises(ValueError, match=err_msg):
+        HDBSCAN(metric="precomputed", store_centers=store_centers).fit(X_dist)
