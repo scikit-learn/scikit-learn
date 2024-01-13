@@ -334,6 +334,7 @@ def locally_linear_embedding(
         raise ValueError("n_neighbors must be positive")
 
     M_sparse = eigen_solver != "dense"
+    M_container_constructor = lil_matrix if M_sparse else np.zeros
 
     if method == "standard":
         W = barycenter_kneighbors_graph(
@@ -367,10 +368,7 @@ def locally_linear_embedding(
         Yi = np.empty((n_neighbors, 1 + n_components + dp), dtype=np.float64)
         Yi[:, 0] = 1
 
-        if M_sparse:
-            M = lil_matrix((N, N), dtype=np.float64)
-        else:
-            M = np.zeros((N, N), dtype=np.float64)
+        M = M_container_constructor((N, N), dtype=np.float64)
 
         use_svd = n_neighbors > d_in
 
@@ -402,9 +400,6 @@ def locally_linear_embedding(
 
             nbrs_x, nbrs_y = np.meshgrid(neighbors[i], neighbors[i])
             M[nbrs_x, nbrs_y] += np.dot(w, w.T)
-
-        if M_sparse:
-            M = M.tocsr()
 
     elif method == "modified":
         if n_neighbors < n_components:
@@ -469,10 +464,7 @@ def locally_linear_embedding(
 
         # Now calculate M.
         # This is the [N x N] matrix whose null space is the desired embedding
-        if M_sparse:
-            M = lil_matrix((N, N), dtype=np.float64)
-        else:
-            M = np.zeros((N, N), dtype=np.float64)
+        M = M_container_constructor((N, N), dtype=np.float64)
 
         for i in range(N):
             s_i = s_range[i]
@@ -512,19 +504,13 @@ def locally_linear_embedding(
             M[neighbors[i], [i]] -= Wi_sum1
             M[i, i] += s_i
 
-        if M_sparse:
-            M = M.tocsr()
-
     elif method == "ltsa":
         neighbors = nbrs.kneighbors(
             X, n_neighbors=n_neighbors + 1, return_distance=False
         )
         neighbors = neighbors[:, 1:]
 
-        if M_sparse:
-            M = lil_matrix((N, N), dtype=np.float64)
-        else:
-            M = np.zeros((N, N), dtype=np.float64)
+        M = M_container_constructor((N, N), dtype=np.float64)
 
         use_svd = n_neighbors > d_in
 
@@ -550,8 +536,8 @@ def locally_linear_embedding(
 
             M[neighbors[i], neighbors[i]] += np.ones(shape=n_neighbors)
 
-        if M_sparse:
-            M = M.tocsr()
+    if method != "standard" and M_sparse:
+        M = M.tocsr()
 
     return null_space(
         M,
