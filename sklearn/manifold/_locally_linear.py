@@ -345,7 +345,7 @@ def locally_linear_embedding(
         # depending on the solver, we'll do this differently
         if M_sparse:
             M = eye(*W.shape, format=W.format) - W
-            M = (M.T * M).tocsr()
+            M = M.T * M
         else:
             M = (W.T * W - W.T - W).toarray()
             M.flat[:: M.shape[0] + 1] += 1  # W = W - I = W - I
@@ -536,7 +536,7 @@ def locally_linear_embedding(
 
             M[neighbors[i], neighbors[i]] += np.ones(shape=n_neighbors)
 
-    if method != "standard" and M_sparse:
+    if M_sparse:
         M = M.tocsr()
 
     return null_space(
