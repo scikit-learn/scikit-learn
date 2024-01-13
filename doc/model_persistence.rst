@@ -58,7 +58,7 @@ with::
 When an estimator is unpickled with a scikit-learn version that is inconsistent
 with the version the estimator was pickled with, a
 :class:`~sklearn.exceptions.InconsistentVersionWarning` is raised. This warning
-can be caught to obtain the original version the estimator was pickled with:
+can be caught to obtain the original version the estimator was pickled with::
 
   from sklearn.exceptions import InconsistentVersionWarning
   warnings.simplefilter("error", InconsistentVersionWarning)

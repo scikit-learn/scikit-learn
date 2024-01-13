@@ -98,7 +98,7 @@ scoring method.
     ...                 scoring='precision_macro')
     array([0.96578289, 0.92708922, 0.96681476, 0.96362897, 0.93192644])
 
-   **Cross-validation generators**
+**Cross-validation generators**
 
 
 .. list-table::
@@ -185,8 +185,8 @@ scoring method.
     estimator with a linear kernel as a function of parameter ``C`` (use a
     logarithmic grid of points, from 1 to 10).
 
-        .. literalinclude:: ../../auto_examples/exercises/plot_cv_digits.py
-            :lines: 13-23
+    .. literalinclude:: ../../auto_examples/exercises/plot_cv_digits.py
+        :lines: 13-23
 
     .. image:: /auto_examples/exercises/images/sphx_glr_plot_cv_digits_001.png
         :target: ../../auto_examples/exercises/plot_cv_digits.html
