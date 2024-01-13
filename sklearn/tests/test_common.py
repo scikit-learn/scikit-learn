@@ -262,9 +262,10 @@ def test_all_tests_are_importable():
         "sklearn.datasets.descr",
         "sklearn.datasets.images",
     }
+    sklearn_path = [os.path.dirname(sklearn.__file__)]
     lookup = {
         name: ispkg
-        for _, name, ispkg in pkgutil.walk_packages(sklearn.__path__, prefix="sklearn.")
+        for _, name, ispkg in pkgutil.walk_packages(sklearn_path, prefix="sklearn.")
     }
     missing_tests = [
         name
