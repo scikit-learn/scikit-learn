@@ -74,15 +74,15 @@ will run all :term:`common tests` for the ``LogisticRegression`` estimator.
 When a unit test fails, the following tricks can make debugging easier:
 
 1. The command line argument ``pytest -l`` instructs pytest to print the local
-    variables when a failure occurs.
+   variables when a failure occurs.
 
 2. The argument ``pytest --pdb`` drops into the Python debugger on failure. To
-    instead drop into the rich IPython debugger ``ipdb``, you may set up a
-    shell alias to:
+   instead drop into the rich IPython debugger ``ipdb``, you may set up a
+   shell alias to:
 
-.. prompt:: bash $
+   .. prompt:: bash $
 
-    pytest --pdbcls=IPython.terminal.debugger:TerminalPdb --capture no
+      pytest --pdbcls=IPython.terminal.debugger:TerminalPdb --capture no
 
 Other `pytest` options that may become useful include:
 

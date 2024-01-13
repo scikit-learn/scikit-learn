@@ -90,7 +90,7 @@ one step. In particular:
 
 - it contains **all necessary imports statements**;
 - it can fetch the public dataset without having to manually download a
-    file and put it in the expected location on the disk.
+  file and put it in the expected location on the disk.
 
 **Improved example**
 
@@ -200,7 +200,7 @@ and good formatting can really be a plus. Notice that in the previous snippet
 we:
 
 - try to limit all lines to a maximum of 79 characters to avoid horizontal
-    scrollbars in the code snippets blocks rendered on the GitHub issue;
+  scrollbars in the code snippets blocks rendered on the GitHub issue;
 - use blank lines to separate groups of related functions;
 - place all the imports in their own group at the beginning.
 
@@ -209,11 +209,11 @@ different order than the progression we have shown here. The important points
 are:
 
 - a minimal reproducer should be runnable by a simple copy-and-paste in a
-    python terminal;
+  python terminal;
 - it should be simplified as much as possible by removing any code steps
-    that are not strictly needed to reproducing the original problem;
+  that are not strictly needed to reproducing the original problem;
 - it should ideally only rely on a minimal dataset generated on-the-fly by
-    running the code instead of relying on external data, if possible.
+  running the code instead of relying on external data, if possible.
 
 
 Use markdown formatting

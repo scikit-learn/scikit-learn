@@ -1044,13 +1044,13 @@ weight. An outline of the HDBSCAN algorithm is as follows:
 
 1. Extract the MST of :math:`G_{ms}`.
 2. Extend the MST by adding a "self edge" for each vertex, with weight equal
-    to the core distance of the underlying sample.
+   to the core distance of the underlying sample.
 3. Initialize a single cluster and label for the MST.
 4. Remove the edge with the greatest weight from the MST (ties are
-    removed simultaneously).
+   removed simultaneously).
 5. Assign cluster labels to the connected components which contain the
-    end points of the now-removed edge. If the component does not have at least
-    one edge it is instead assigned a "null" label marking it as noise.
+   end points of the now-removed edge. If the component does not have at least
+   one edge it is instead assigned a "null" label marking it as noise.
 6. Repeat 4-5 until there are no more connected components.
 
 HDBSCAN is therefore able to obtain all possible partitions achievable by
