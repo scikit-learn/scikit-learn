@@ -344,10 +344,8 @@ def _solve_lbfgs(
         result = optimize.minimize(func, x0, **config)
         if not result["success"]:
             warnings.warn(
-                (
-                    "The lbfgs solver did not converge. Try increasing max_iter "
-                    f"or tol. Currently: max_iter={max_iter} and tol={tol}"
-                ),
+                "The lbfgs solver did not converge. Try increasing max_iter "
+                f"or tol. Currently: max_iter={max_iter} and tol={tol}",
                 ConvergenceWarning,
             )
         coefs[i] = result["x"]
@@ -1969,7 +1967,7 @@ class _RidgeGCV(LinearModel):
 
         sample_weight : float or ndarray of shape (n_samples,), default=None
             Individual weights for each sample. If given a float, every sample
-            will have the same weight. The sample_weight vector should sum to 
+            will have the same weight. The sample_weight vector should sum to
             one.
 
         Returns
