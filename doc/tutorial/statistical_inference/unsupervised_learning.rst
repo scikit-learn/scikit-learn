@@ -102,17 +102,17 @@ that aims to build a hierarchy of clusters. In general, the various approaches
 of this technique are either:
 
 * **Agglomerative** - bottom-up approaches: each observation starts in its
-   own cluster, and clusters are iteratively merged in such a way to
-   minimize a *linkage* criterion. This approach is particularly interesting
-   when the clusters of interest are made of only a few observations. When
-   the number of clusters is large, it is much more computationally efficient
-   than k-means.
+  own cluster, and clusters are iteratively merged in such a way to
+  minimize a *linkage* criterion. This approach is particularly interesting
+  when the clusters of interest are made of only a few observations. When
+  the number of clusters is large, it is much more computationally efficient
+  than k-means.
 
 * **Divisive** - top-down approaches: all observations start in one
-   cluster, which is iteratively split as one moves down the hierarchy.
-   For estimating large numbers of clusters, this approach is both slow (due
-   to all observations starting as one cluster, which it splits recursively)
-   and statistically ill-posed.
+  cluster, which is iteratively split as one moves down the hierarchy.
+  For estimating large numbers of clusters, this approach is both slow (due
+  to all observations starting as one cluster, which it splits recursively)
+  and statistically ill-posed.
 
 Connectivity-constrained clustering
 .....................................

@@ -181,12 +181,12 @@ Bags of words
 The most intuitive way to do so is to use a bags of words representation:
 
 1. Assign a fixed integer id to each word occurring in any document
-    of the training set (for instance by building a dictionary
-    from words to integer indices).
+   of the training set (for instance by building a dictionary
+   from words to integer indices).
 
 2. For each document ``#i``, count the number of occurrences of each
-    word ``w`` and store it in ``X[i, j]`` as the value of feature
-    ``#j`` where ``j`` is the index of word ``w`` in the dictionary.
+   word ``w`` and store it in ``X[i, j]`` as the value of feature
+   ``#j`` where ``j`` is the index of word ``w`` in the dictionary.
 
 The bags of words representation implies that ``n_features`` is
 the number of distinct words in the corpus: this number is typically
