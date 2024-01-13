@@ -823,6 +823,7 @@ def test_float32_aware_assert_allclose():
     assert_allclose(np.array([1e-5], dtype=np.float32), 0.0, atol=2e-5)
 
 
+@pytest.mark.xfail(_IS_WASM, reason="cannot start subprocess")
 def test_assert_run_python_script_without_output():
     code = "x = 1"
     assert_run_python_script_without_output(code)
