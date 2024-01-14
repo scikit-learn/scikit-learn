@@ -32,7 +32,7 @@ Changelog
   :pr:`28053` by :user:`Mark Elliot <mark-thm>`.
 
 - |Enhancement| :function:`sklearn.feature_selection.mutual_info_regression` and function:`sklearn.feature_selection.mutual_info_classif` now supports `n_jobs`.
-  :pr:`28085` by `Neto Menoci <https://github.com/netomenoci>`_.
+  :pr:`28085` by `Neto Menoci <https://github.com/netomenoci>`_ and `Florin Andrei <https://github.com/FlorinAndrei>`_ .
 
 Code and Documentation Contributors
 -----------------------------------
