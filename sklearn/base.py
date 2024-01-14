@@ -77,8 +77,7 @@ def clone(estimator, *, safe=True):
     >>> from sklearn.linear_model import LogisticRegression
     >>> X = [[-1, 0], [0, 1], [0, -1], [1, 0]]
     >>> y = [0, 0, 1, 1]
-    >>> classifier = LogisticRegression()
-    >>> classifier.fit(X, y)
+    >>> classifier = LogisticRegression().fit(X, y)
     >>> cloned_classifier = clone(classifier)
     >>> hasattr(classifier, "classes_")
     True
