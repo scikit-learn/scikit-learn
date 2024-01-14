@@ -114,13 +114,10 @@ def silhouette_score(
     >>> from sklearn.datasets import make_blobs
     >>> from sklearn.cluster import KMeans
     >>> from sklearn.metrics import silhouette_score
-    >>>  X, y = make_blobs(n_samples=300, centers=3, cluster_std=0.75,
-    ... random_state=42)
+    >>> X, y = make_blobs(random_state=42)
     >>> kmeans = KMeans(n_clusters=2, random_state=42)
-    >>> cluster_labels = kmeans.fit_predict(X)
-    >>> silhouette_avg = silhouette_score(X, cluster_labels)
-    >>> silhouette_avg
-    0.72...
+    >>> silhouette_score(X, kmeans.fit_predict(X))
+    0.49...
 
     References
     ----------
