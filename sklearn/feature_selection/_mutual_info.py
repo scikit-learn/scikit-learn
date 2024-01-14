@@ -207,7 +207,7 @@ def _estimate_mi(
     n_neighbors=3,
     copy=True,
     random_state=None,
-    n_jobs=1,
+    n_jobs=None,
 ):
     """Estimate mutual information between the features and the target.
 
@@ -308,11 +308,11 @@ def _estimate_mi(
         for x, discrete_feature in zip(_iterate_columns(X), discrete_mask)
     ]
 
-    def _compute_mi_single_var(x, discrete_feature):
-        return _compute_mi(x, y, discrete_feature, discrete_target, n_neighbors)
 
     mi = Parallel(n_jobs=n_jobs)(
-        delayed(_compute_mi_single_var)(x, discrete_feature)
+        delayed(_compute_mi)(
+            x, discrete_feature, discrete_target, n_neighbors
+        )
         for x, discrete_feature in zip(_iterate_columns(X), discrete_mask)
     )
 
@@ -327,7 +327,7 @@ def _estimate_mi(
         "n_neighbors": [Interval(Integral, 1, None, closed="left")],
         "copy": ["boolean"],
         "random_state": ["random_state"],
-        "n_jobs": [int],
+        "n_jobs": [Integral, None],
     },
     prefer_skip_nested_validation=True,
 )
@@ -339,7 +339,7 @@ def mutual_info_regression(
     n_neighbors=3,
     copy=True,
     random_state=None,
-    n_jobs=1,
+    n_jobs=None,
 ):
     """Estimate mutual information for a continuous target variable.
 
@@ -385,8 +385,15 @@ def mutual_info_regression(
         Pass an int for reproducible results across multiple function calls.
         See :term:`Glossary <random_state>`.
 
-    n_jobs : int, default=1
-        The number of jobs to run in parallel.
+    n_jobs : int, default=None
+        The number of jobs to use for computing the mutual information.
+        The parallelization is done on the columns of `X`.
+
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
+        
+        .. versionadded:: 1.5
 
     Returns
     -------
@@ -431,7 +438,7 @@ def mutual_info_regression(
         "n_neighbors": [Interval(Integral, 1, None, closed="left")],
         "copy": ["boolean"],
         "random_state": ["random_state"],
-        "n_jobs": [int],
+        "n_jobs": [Integral, None],
     },
     prefer_skip_nested_validation=True,
 )
@@ -443,7 +450,7 @@ def mutual_info_classif(
     n_neighbors=3,
     copy=True,
     random_state=None,
-    n_jobs: int = 1,
+    n_jobs=None,
 ):
     """Estimate mutual information for a discrete target variable.
 
@@ -489,8 +496,14 @@ def mutual_info_classif(
         Pass an int for reproducible results across multiple function calls.
         See :term:`Glossary <random_state>`.
 
-    n_jobs : int, default=1
-        The number of jobs to run in parallel.
+    n_jobs : int, default=None
+        The number of jobs to use for computing the mutual information.
+        The parallelization is done on the columns of `X`.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
+        
+        .. versionadded:: 1.5
 
     Returns
     -------
