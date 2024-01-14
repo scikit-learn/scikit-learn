@@ -114,29 +114,14 @@ def silhouette_score(
     >>> from sklearn.datasets import make_blobs
     >>> from sklearn.cluster import KMeans
     >>> from sklearn.metrics import silhouette_score
-    
-    Generate synthetic data with three clusters
-    
-    >>> X, y = make_blobs(n_samples=300, centers=3, cluster_std=0.75, random_state=42)
+    >>>  X, y = make_blobs(n_samples=300, centers=3, cluster_std=0.75,
+    ... random_state=42)
+    >>> kmeans = KMeans(n_clusters=2, random_state=42)
+    >>> cluster_labels = kmeans.fit_predict(X)
+    >>> silhouette_avg = silhouette_score(X, cluster_labels)
+    >>> silhouette_avg
+    0.72...
 
-    Fit KMeans with different numbers of clusters
-    
-    >>> cluster_range = range(2, 6)
-    >>> silhouette_scores = []
-    >>> for n_clusters in cluster_range:
-    ...     kmeans = KMeans(
-    ...    n_clusters=n_clusters, random_state=42
-    ... )
-    ...     cluster_labels = kmeans.fit_predict(X)
-    ...     silhouette_avg = silhouette_score(X, cluster_labels)
-    ...     silhouette_scores.append(silhouette_avg)
-    ...     print(f"For n_clusters = {n_clusters}, the silhouette score is {silhouette_avg}")
-    
-    For n_clusters = 2, the silhouette score is 0.72...
-    For n_clusters = 3, the silhouette score is 0.88...
-    For n_clusters = 4, the silhouette score is 0.69...
-    For n_clusters = 5, the silhouette score is 0.51...
-    
     References
     ----------
 
