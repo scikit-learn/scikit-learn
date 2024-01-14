@@ -2,6 +2,24 @@
 
 .. currentmodule:: sklearn
 
+.. _changes_1_4_1:
+
+Version 1.4.1
+=============
+
+**In Development**
+
+Changelog
+---------
+
+:mod:`sklearn.datasets`
+.......................
+
+- |Fix| :func:`datasets.dump_svmlight_file` now does not raise `ValueError` when `X`
+  is read-only, e.g., a `numpy.memmap` instance.
+  :pr:`28111` by :user:`Yao Xiao <Charlie-XIAO>`.
+
+
 .. _changes_1_4:
 
 Version 1.4.0
@@ -219,6 +237,17 @@ See :ref:`array_api` for more details.
 - :class:`preprocessing.MaxAbsScaler` in :pr:`27110` by :user:`Edoardo Abati <EdAbati>`;
 - :class:`preprocessing.MinMaxScaler` in :pr:`26243` by `Tim Head`_;
 - :class:`preprocessing.Normalizer` in :pr:`27558` by :user:`Edoardo Abati <EdAbati>`.
+
+Private Loss Function Module
+----------------------------
+
+- |FIX| The gradient computation of the binomial log loss is now numerically
+  more stable for very large, in absolute value, input (raw predictions). Before, it
+  could result in `np.nan`. Among the models that profit from this change are
+  :class:`ensemble.GradientBoostingClassifier`,
+  :class:`ensemble.HistGradientBoostingClassifier` and
+  :class:`linear_model.LogisticRegression`.
+  :pr:`28048` by :user:`Christian Lorentzen <lorentzenchr>`.
 
 Changelog
 ---------

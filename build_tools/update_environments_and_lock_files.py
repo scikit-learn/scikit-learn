@@ -5,8 +5,11 @@ python build_tools/update_environments_and_lock_files.py
 
 Two scenarios where this script can be useful:
 - make sure that the latest versions of all the dependencies are used in the CI.
-  We can run this script regularly and open a PR with the changes to the lock
-  files. This workflow will eventually be automated with a bot in the future.
+  There is a scheduled workflow that does this, see
+  .github/workflows/update-lock-files.yml. This is still useful to run this
+  script when when the automated PR fails and for example some packages need to
+  be pinned. You can add the pins to this script, run it, and open a PR with
+  the changes.
 - bump minimum dependencies in sklearn/_min_dependencies.py. Running this
   script will update both the CI environment files and associated lock files.
   You can then open a PR with the changes.
@@ -78,20 +81,18 @@ common_dependencies = common_dependencies_without_coverage + [
 
 docstring_test_dependencies = ["sphinx", "numpydoc"]
 
-default_package_constraints = {
-    # XXX: pin pytest-xdist to workaround:
-    # https://github.com/pytest-dev/pytest-xdist/issues/840
-    "pytest-xdist": "2.5.0",
-}
+default_package_constraints = {}
 
 
 def remove_from(alist, to_remove):
     return [each for each in alist if each not in to_remove]
 
 
-conda_build_metadata_list = [
+build_metadata_list = [
     {
-        "build_name": "pylatest_conda_forge_mkl_linux-64",
+        "name": "pylatest_conda_forge_mkl_linux-64",
+        "type": "conda",
+        "tag": "main-ci",
         "folder": "build_tools/azure",
         "platform": "linux-64",
         "channel": "conda-forge",
@@ -109,7 +110,9 @@ conda_build_metadata_list = [
         },
     },
     {
-        "build_name": "pylatest_conda_forge_mkl_osx-64",
+        "name": "pylatest_conda_forge_mkl_osx-64",
+        "type": "conda",
+        "tag": "main-ci",
         "folder": "build_tools/azure",
         "platform": "osx-64",
         "channel": "conda-forge",
@@ -123,7 +126,9 @@ conda_build_metadata_list = [
         },
     },
     {
-        "build_name": "pylatest_conda_mkl_no_openmp",
+        "name": "pylatest_conda_mkl_no_openmp",
+        "type": "conda",
+        "tag": "main-ci",
         "folder": "build_tools/azure",
         "platform": "osx-64",
         "channel": "defaults",
@@ -137,7 +142,9 @@ conda_build_metadata_list = [
         },
     },
     {
-        "build_name": "pymin_conda_defaults_openblas",
+        "name": "pymin_conda_defaults_openblas",
+        "type": "conda",
+        "tag": "main-ci",
         "folder": "build_tools/azure",
         "platform": "linux-64",
         "channel": "defaults",
@@ -153,7 +160,9 @@ conda_build_metadata_list = [
         },
     },
     {
-        "build_name": "pymin_conda_forge_openblas_ubuntu_2204",
+        "name": "pymin_conda_forge_openblas_ubuntu_2204",
+        "type": "conda",
+        "tag": "main-ci",
         "folder": "build_tools/azure",
         "platform": "linux-64",
         "channel": "conda-forge",
@@ -168,7 +177,9 @@ conda_build_metadata_list = [
         },
     },
     {
-        "build_name": "pylatest_pip_openblas_pandas",
+        "name": "pylatest_pip_openblas_pandas",
+        "type": "conda",
+        "tag": "main-ci",
         "folder": "build_tools/azure",
         "platform": "linux-64",
         "channel": "defaults",
@@ -183,7 +194,9 @@ conda_build_metadata_list = [
         },
     },
     {
-        "build_name": "pylatest_pip_scipy_dev",
+        "name": "pylatest_pip_scipy_dev",
+        "type": "conda",
+        "tag": "scipy-dev",
         "folder": "build_tools/azure",
         "platform": "linux-64",
         "channel": "defaults",
@@ -220,7 +233,9 @@ conda_build_metadata_list = [
         },
     },
     {
-        "build_name": "pypy3",
+        "name": "pypy3",
+        "type": "conda",
+        "tag": "pypy",
         "folder": "build_tools/azure",
         "platform": "linux-64",
         "channel": "conda-forge",
@@ -237,7 +252,9 @@ conda_build_metadata_list = [
         },
     },
     {
-        "build_name": "pymin_conda_forge_mkl",
+        "name": "pymin_conda_forge_mkl",
+        "type": "conda",
+        "tag": "main-ci",
         "folder": "build_tools/azure",
         "platform": "win-64",
         "channel": "conda-forge",
@@ -251,7 +268,9 @@ conda_build_metadata_list = [
         },
     },
     {
-        "build_name": "doc_min_dependencies",
+        "name": "doc_min_dependencies",
+        "type": "conda",
+        "tag": "main-ci",
         "folder": "build_tools/circle",
         "platform": "linux-64",
         "channel": "conda-forge",
@@ -289,15 +308,15 @@ conda_build_metadata_list = [
         },
     },
     {
-        "build_name": "doc",
+        "name": "doc",
+        "type": "conda",
+        "tag": "main-ci",
         "folder": "build_tools/circle",
         "platform": "linux-64",
         "channel": "conda-forge",
         "conda_dependencies": common_dependencies_without_coverage + [
             "scikit-image",
             "seaborn",
-            # TODO Remove when patsy pin is not needed anymore, see below
-            "patsy",
             "memory_profiler",
             "compilers",
             "sphinx",
@@ -313,14 +332,12 @@ conda_build_metadata_list = [
         "pip_dependencies": ["jupyterlite-sphinx", "jupyterlite-pyodide-kernel"],
         "package_constraints": {
             "python": "3.9",
-            # TODO: Remove pin when issue is fixed in patsy, see
-            # https://github.com/pydata/patsy/issues/198. patsy 0.5.5
-            # introduced a DeprecationWarning at import-time.
-            "patsy": "0.5.4",
         },
     },
     {
-        "build_name": "pymin_conda_forge",
+        "name": "pymin_conda_forge",
+        "type": "conda",
+        "tag": "arm",
         "folder": "build_tools/cirrus",
         "platform": "linux-aarch64",
         "channel": "conda-forge",
@@ -331,12 +348,10 @@ conda_build_metadata_list = [
             "python": "3.9",
         },
     },
-]
-
-
-pip_build_metadata_list = [
     {
-        "build_name": "debian_atlas_32bit",
+        "name": "debian_atlas_32bit",
+        "type": "pip",
+        "tag": "main-ci",
         "folder": "build_tools/azure",
         "pip_dependencies": [
             "cython",
@@ -357,7 +372,9 @@ pip_build_metadata_list = [
         "python_version": "3.9.2",
     },
     {
-        "build_name": "ubuntu_atlas",
+        "name": "ubuntu_atlas",
+        "type": "pip",
+        "tag": "main-ci",
         "folder": "build_tools/azure",
         "pip_dependencies": [
             "cython",
@@ -451,7 +468,7 @@ dependencies:
 
 def write_conda_environment(build_metadata):
     content = get_conda_environment_content(build_metadata)
-    build_name = build_metadata["build_name"]
+    build_name = build_metadata["name"]
     folder_path = Path(build_metadata["folder"])
     output_path = folder_path / f"{build_name}_environment.yml"
     logger.debug(output_path)
@@ -472,7 +489,7 @@ def conda_lock(environment_path, lock_file_path, platform):
 
 
 def create_conda_lock_file(build_metadata):
-    build_name = build_metadata["build_name"]
+    build_name = build_metadata["name"]
     folder_path = Path(build_metadata["folder"])
     environment_path = folder_path / f"{build_name}_environment.yml"
     platform = build_metadata["platform"]
@@ -486,7 +503,7 @@ def create_conda_lock_file(build_metadata):
 
 def write_all_conda_lock_files(build_metadata_list):
     for build_metadata in build_metadata_list:
-        logger.info(f"# Locking dependencies for {build_metadata['build_name']}")
+        logger.info(f"# Locking dependencies for {build_metadata['name']}")
         create_conda_lock_file(build_metadata)
 
 
@@ -502,7 +519,7 @@ def get_pip_requirements_content(build_metadata):
 
 
 def write_pip_requirements(build_metadata):
-    build_name = build_metadata["build_name"]
+    build_name = build_metadata["name"]
     content = get_pip_requirements_content(build_metadata)
     folder_path = Path(build_metadata["folder"])
     output_path = folder_path / f"{build_name}_requirements.txt"
@@ -521,7 +538,7 @@ def pip_compile(pip_compile_path, requirements_path, lock_file_path):
 
 
 def write_pip_lock_file(build_metadata):
-    build_name = build_metadata["build_name"]
+    build_name = build_metadata["name"]
     python_version = build_metadata["python_version"]
     environment_name = f"pip-tools-python{python_version}"
     # To make sure that the Python used to create the pip lock file is the same
@@ -551,7 +568,7 @@ def write_pip_lock_file(build_metadata):
 
 def write_all_pip_lock_files(build_metadata_list):
     for build_metadata in build_metadata_list:
-        logger.info(f"# Locking dependencies for {build_metadata['build_name']}")
+        logger.info(f"# Locking dependencies for {build_metadata['name']}")
         write_pip_lock_file(build_metadata)
 
 
@@ -590,7 +607,7 @@ def check_conda_version():
     "--select-build",
     default="",
     help=(
-        "Regex to restrict the builds we want to update environment and lock files. By"
+        "Regex to filter the builds we want to update environment and lock files. By"
         " default all the builds are selected."
     ),
 )
@@ -598,6 +615,14 @@ def check_conda_version():
     "--skip-build",
     default=None,
     help="Regex to skip some builds from the builds selected by --select-build",
+)
+@click.option(
+    "--select-tag",
+    default=None,
+    help=(
+        "Tag to filter the builds, e.g. 'main-ci' or 'scipy-dev'. "
+        "This is an additional filtering on top of --select-build."
+    ),
 )
 @click.option(
     "-v",
@@ -611,7 +636,7 @@ def check_conda_version():
     is_flag=True,
     help="Print output of commands executed by the script",
 )
-def main(verbose, very_verbose, select_build, skip_build):
+def main(select_build, skip_build, select_tag, verbose, very_verbose):
     if verbose:
         logger.setLevel(logging.DEBUG)
     if very_verbose:
@@ -620,18 +645,32 @@ def main(verbose, very_verbose, select_build, skip_build):
     check_conda_lock_version()
     check_conda_version()
 
-    filtered_conda_build_metadata_list = [
-        each
-        for each in conda_build_metadata_list
-        if re.search(select_build, each["build_name"])
+    filtered_build_metadata_list = [
+        each for each in build_metadata_list if re.search(select_build, each["name"])
     ]
+    if select_tag is not None:
+        filtered_build_metadata_list = [
+            each for each in build_metadata_list if each["tag"] == select_tag
+        ]
     if skip_build is not None:
-        filtered_conda_build_metadata_list = [
+        filtered_build_metadata_list = [
             each
-            for each in filtered_conda_build_metadata_list
-            if not re.search(skip_build, each["build_name"])
+            for each in filtered_build_metadata_list
+            if not re.search(skip_build, each["name"])
         ]
 
+    selected_build_info = "\n".join(
+        f"  - {each['name']}, type: {each['type']}, tag: {each['tag']}"
+        for each in filtered_build_metadata_list
+    )
+    selected_build_message = (
+        f"# {len(filtered_build_metadata_list)} selected builds\n{selected_build_info}"
+    )
+    logger.info(selected_build_message)
+
+    filtered_conda_build_metadata_list = [
+        each for each in filtered_build_metadata_list if each["type"] == "conda"
+    ]
     if filtered_conda_build_metadata_list:
         logger.info("# Writing conda environments")
         write_all_conda_environments(filtered_conda_build_metadata_list)
@@ -639,17 +678,8 @@ def main(verbose, very_verbose, select_build, skip_build):
         write_all_conda_lock_files(filtered_conda_build_metadata_list)
 
     filtered_pip_build_metadata_list = [
-        each
-        for each in pip_build_metadata_list
-        if re.search(select_build, each["build_name"])
+        each for each in filtered_build_metadata_list if each["type"] == "pip"
     ]
-    if skip_build is not None:
-        filtered_pip_build_metadata_list = [
-            each
-            for each in filtered_pip_build_metadata_list
-            if not re.search(skip_build, each["build_name"])
-        ]
-
     if filtered_pip_build_metadata_list:
         logger.info("# Writing pip requirements")
         write_all_pip_requirements(filtered_pip_build_metadata_list)
