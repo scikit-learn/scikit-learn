@@ -2,6 +2,31 @@
 
 .. currentmodule:: sklearn
 
+.. _changes_1_4_1:
+
+Version 1.4.1
+=============
+
+**In Development**
+
+Changelog
+---------
+
+:mod:`sklearn.datasets`
+.......................
+
+- |Fix| :func:`datasets.dump_svmlight_file` now does not raise `ValueError` when `X`
+  is read-only, e.g., a `numpy.memmap` instance.
+  :pr:`28111` by :user:`Yao Xiao <Charlie-XIAO>`.
+
+:mod:`sklearn.utils`
+....................
+
+- |Fix| Fix the function :func:`~utils.check_array` to output the right error message
+  when the input is Series instead of a DataFrame.
+  :pr:`28090` by :user:`Stan Furrer <stanFurrer>` and :user:`Yao Xiao <Charlie-XIAO>`.
+
+
 .. _changes_1_4:
 
 Version 1.4.0
