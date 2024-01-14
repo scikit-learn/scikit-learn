@@ -74,10 +74,17 @@ def clone(estimator, *, safe=True):
     Examples
     --------
     >>> from sklearn.base import clone
-    >>> from sklearn.svm import SVC
-    >>> classifier = SVC()
-    >>> classifier_copy = clone(classifier)
-    >>> classifier is classifier_copy # Check if classifier_copy is a deep copy.
+    >>> from sklearn.linear_model import LogisticRegression
+    >>> X = [[-1, 0], [0, 1], [0, -1], [1, 0]]
+    >>> y = [0, 0, 1, 1]
+    >>> classifier = LogisticRegression()
+    >>> classifier.fit(X, y)
+    >>> cloned_classifier = clone(classifier)
+    >>> hasattr(classifier, "classes_")
+    True
+    >>> hasattr(cloned_classifier, "classes_")
+    False
+    >>> classifier is cloned_classifier
     False
     """
     if hasattr(estimator, "__sklearn_clone__") and not inspect.isclass(estimator):
