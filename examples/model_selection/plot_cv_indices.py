@@ -149,6 +149,7 @@ def plot_cv_indices(cv, X, y, group, ax, n_splits, lw=10):
 fig, ax = plt.subplots()
 cv = KFold(n_splits)
 plot_cv_indices(cv, X, y, groups, ax, n_splits)
+plt.show()
 
 # %%
 # As you can see, by default the KFold cross-validation iterator does not

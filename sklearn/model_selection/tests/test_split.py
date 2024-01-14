@@ -1,7 +1,12 @@
 """Test the split module"""
 import re
 import warnings
-from itertools import combinations, combinations_with_replacement, permutations
+from itertools import (
+    combinations,
+    combinations_with_replacement,
+    permutations,
+    product,
+)
 
 import numpy as np
 import pytest
@@ -188,38 +193,47 @@ def test_2d_y():
     n_samples = 30
     rng = np.random.RandomState(1)
     X = rng.randint(0, 3, size=(n_samples, 2))
-    y = rng.randint(0, 3, size=(n_samples,))
-    y_2d = y.reshape(-1, 1)
-    y_multilabel = rng.randint(0, 2, size=(n_samples, 3))
     groups = rng.randint(0, 3, size=(n_samples,))
+
+    # Maps type of target to the target
+    ys = {}
+    ys["binary"] = rng.randint(0, 3, size=(n_samples,))
+    ys["multiclass"] = ys["binary"].reshape(-1, 1)
+    ys["multilabel-indicator"] = rng.randint(0, 2, size=(n_samples, 3))
+    ys["multiclass-multioutput"] = np.array([0, 1, 2] * n_samples).reshape(n_samples, 3)
+
+    # (splitter, supported_types)
+    # supported_types is None if all target types (i.e., keys of ys) are supported,
+    # otherwise it is a tuple of supported target types
     splitters = [
-        LeaveOneOut(),
-        LeavePOut(p=2),
-        KFold(),
-        StratifiedKFold(),
-        RepeatedKFold(),
-        RepeatedStratifiedKFold(),
-        StratifiedGroupKFold(),
-        ShuffleSplit(),
-        StratifiedShuffleSplit(test_size=0.5),
-        GroupShuffleSplit(),
-        LeaveOneGroupOut(),
-        LeavePGroupsOut(n_groups=2),
-        GroupKFold(n_splits=3),
-        TimeSeriesSplit(),
-        PredefinedSplit(test_fold=groups),
+        (LeaveOneOut(), None),
+        (LeavePOut(p=2), None),
+        (KFold(), None),
+        (StratifiedKFold(), ("binary", "multiclass", "multilabel-indicator")),
+        (RepeatedKFold(), None),
+        (RepeatedStratifiedKFold(), ("binary", "multiclass", "multilabel-indicator")),
+        (StratifiedGroupKFold(), ("binary", "multiclass")),
+        (ShuffleSplit(), None),
+        (StratifiedShuffleSplit(test_size=0.5), None),
+        (GroupShuffleSplit(), None),
+        (LeaveOneGroupOut(), None),
+        (LeavePGroupsOut(n_groups=2), None),
+        (GroupKFold(n_splits=3), None),
+        (TimeSeriesSplit(), None),
+        (PredefinedSplit(test_fold=groups), None),
     ]
-    for splitter in splitters:
-        list(splitter.split(X, y, groups))
-        list(splitter.split(X, y_2d, groups))
-        try:
-            list(splitter.split(X, y_multilabel, groups))
-        except ValueError as e:
-            allowed_target_types = ("binary", "multiclass")
-            msg = "Supported target types are: {}. Got 'multilabel".format(
-                allowed_target_types
-            )
-            assert msg in str(e)
+
+    msg = "Supported target types are: {}. Got '{}' instead."
+    for splitter, supported_types in splitters:
+        for target_type, y in ys.items():
+            if supported_types is not None and target_type not in supported_types:
+                with pytest.raises(
+                    ValueError,
+                    match=re.escape(msg.format(supported_types, target_type)),
+                ):
+                    list(splitter.split(X, y, groups))
+            else:
+                list(splitter.split(X, y, groups))
 
 
 def check_valid_split(train, test, n_samples=None):
@@ -260,15 +274,19 @@ def test_kfold_valueerrors():
 
     # Check that a warning is raised if the least populated class has too few
     # members.
+    msg = "The least populated class"
     y = np.array([3, 3, -1, -1, 3])
+    y_multilabel = np.array([[0, 1], [0, 1], [1, 1], [1, 1], [0, 1]])
 
     skf_3 = StratifiedKFold(3)
-    with pytest.warns(Warning, match="The least populated class"):
+    with pytest.warns(UserWarning, match=msg):
         next(skf_3.split(X2, y))
+    with pytest.warns(UserWarning, match=msg):
+        next(skf_3.split(X2, y_multilabel))
 
     sgkf_3 = StratifiedGroupKFold(3)
     naive_groups = np.arange(len(y))
-    with pytest.warns(Warning, match="The least populated class"):
+    with pytest.warns(UserWarning, match=msg):
         next(sgkf_3.split(X2, y, naive_groups))
 
     # Check that despite the warning the folds are still computed even
@@ -277,6 +295,7 @@ def test_kfold_valueerrors():
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
         check_cv_coverage(skf_3, X2, y, groups=None, expected_n_splits=3)
+        check_cv_coverage(skf_3, X2, y_multilabel, groups=None, expected_n_splits=3)
 
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
@@ -285,42 +304,36 @@ def test_kfold_valueerrors():
     # Check that errors are raised if all n_groups for individual
     # classes are less than n_splits.
     y = np.array([3, 3, -1, -1, 2])
+    y_multilabel = np.array([[0, 1], [0, 1], [1, 0], [1, 0], [0, 1]])
+    msg = "cannot be greater than"
 
-    with pytest.raises(ValueError):
+    skf_4 = StratifiedKFold(4)
+    with pytest.raises(ValueError, match=msg):
         next(skf_3.split(X2, y))
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match=msg):
+        next(skf_4.split(X2, y_multilabel))
+    with pytest.raises(ValueError, match=msg):
         next(sgkf_3.split(X2, y))
 
     # Error when number of folds is <= 1
-    with pytest.raises(ValueError):
-        KFold(0)
-    with pytest.raises(ValueError):
-        KFold(1)
-    error_string = "k-fold cross-validation requires at least one train/test split"
-    with pytest.raises(ValueError, match=error_string):
-        StratifiedKFold(0)
-    with pytest.raises(ValueError, match=error_string):
-        StratifiedKFold(1)
-    with pytest.raises(ValueError, match=error_string):
-        StratifiedGroupKFold(0)
-    with pytest.raises(ValueError, match=error_string):
-        StratifiedGroupKFold(1)
+    msg = "k-fold cross-validation requires at least one train/test split"
+    for validator, n_splits in product(
+        [KFold, StratifiedKFold, StratifiedGroupKFold],
+        [0, 1],
+    ):
+        with pytest.raises(ValueError, match=msg):
+            validator(n_splits=n_splits)
 
-    # When n_splits is not integer:
-    with pytest.raises(ValueError):
-        KFold(1.5)
-    with pytest.raises(ValueError):
-        KFold(2.0)
-    with pytest.raises(ValueError):
-        StratifiedKFold(1.5)
-    with pytest.raises(ValueError):
-        StratifiedKFold(2.0)
-    with pytest.raises(ValueError):
-        StratifiedGroupKFold(1.5)
-    with pytest.raises(ValueError):
-        StratifiedGroupKFold(2.0)
+    # When n_splits is not integer
+    msg = "The number of folds must be of Integral type"
+    for validator, n_splits in product(
+        [KFold, StratifiedKFold, StratifiedGroupKFold],
+        [1.5, 2.0],
+    ):
+        with pytest.raises(ValueError):
+            validator(n_splits=n_splits)
 
-    # When shuffle is not  a bool:
+    # When shuffle is not a bool
     with pytest.raises(TypeError):
         KFold(n_splits=4, shuffle=None)
 
@@ -368,38 +381,54 @@ def test_stratified_kfold_no_shuffle():
     # Manually check that StratifiedKFold preserves the data ordering as much
     # as possible on toy datasets in order to avoid hiding sample dependencies
     # when possible
-    X, y = np.ones(4), [1, 1, 0, 0]
-    splits = StratifiedKFold(2).split(X, y)
-    train, test = next(splits)
-    assert_array_equal(test, [0, 2])
-    assert_array_equal(train, [1, 3])
 
-    train, test = next(splits)
-    assert_array_equal(test, [1, 3])
-    assert_array_equal(train, [0, 2])
+    # 4 samples, single-label and multi-label
+    X_4 = np.ones(4)
+    y_4 = [1, 1, 0, 0]
+    y_multilabel_4 = [[0, 0], [0, 1], [1, 1], [1, 0]]
+    for y, first_fold in zip(
+        (y_4, y_multilabel_4), (([0, 2], [1, 3]), ([0, 2], [1, 3]))
+    ):
+        splits = StratifiedKFold(2).split(X_4, y)
+        train, test = next(splits)
+        assert_array_equal(test, first_fold[0])
+        assert_array_equal(train, first_fold[1])
 
-    X, y = np.ones(7), [1, 1, 1, 0, 0, 0, 0]
-    splits = StratifiedKFold(2).split(X, y)
-    train, test = next(splits)
-    assert_array_equal(test, [0, 1, 3, 4])
-    assert_array_equal(train, [2, 5, 6])
+        train, test = next(splits)
+        assert_array_equal(test, first_fold[1])
+        assert_array_equal(train, first_fold[0])
 
-    train, test = next(splits)
-    assert_array_equal(test, [2, 5, 6])
-    assert_array_equal(train, [0, 1, 3, 4])
+    # 7 samples, single-label and multi-label
+    X_7 = np.ones(7)
+    y_7 = [1, 1, 1, 0, 0, 0, 0]
+    y_multilabel_7 = [[0, 0], [1, 0], [1, 1], [1, 1], [0, 1], [0, 1], [0, 0]]
+    for y, first_fold in zip(
+        (y_7, y_multilabel_7),
+        (([0, 1, 3, 4], [2, 5, 6]), ([1, 3, 5, 6], [0, 2, 4])),
+    ):
+        splits = StratifiedKFold(2).split(X_7, y)
+        train, test = next(splits)
+        assert_array_equal(test, first_fold[0])
+        assert_array_equal(train, first_fold[1])
 
-    # Check if get_n_splits returns the number of folds
-    assert 5 == StratifiedKFold(5).get_n_splits(X, y)
+        train, test = next(splits)
+        assert_array_equal(test, first_fold[1])
+        assert_array_equal(train, first_fold[0])
+
+    # Check if get_n_splits returns the number of folds, single-label and multi-label
+    for y in (y_7, y_multilabel_7):
+        assert 5 == StratifiedKFold(5).get_n_splits(X_7, y)
 
     # Make sure string labels are also supported
-    X = np.ones(7)
-    y1 = ["1", "1", "1", "0", "0", "0", "0"]
-    y2 = [1, 1, 1, 0, 0, 0, 0]
+    # This is single-label only because turning multilabel-indicator into string would
+    # become multiclass-multioutput
     np.testing.assert_equal(
-        list(StratifiedKFold(2).split(X, y1)), list(StratifiedKFold(2).split(X, y2))
+        list(StratifiedKFold(2).split(X_7, y_7)),
+        list(StratifiedKFold(2).split(X_7, [str(label) for label in y_7])),
     )
 
     # Check equivalence to KFold
+    # This is single-label only because KFold does not support multilabel-indicator
     y = [0, 1, 0, 1, 0, 1, 0, 1]
     X = np.ones_like(y)
     np.testing.assert_equal(
@@ -410,26 +439,58 @@ def test_stratified_kfold_no_shuffle():
 @pytest.mark.parametrize("shuffle", [False, True])
 @pytest.mark.parametrize("k", [4, 5, 6, 7, 8, 9, 10])
 @pytest.mark.parametrize("kfold", [StratifiedKFold, StratifiedGroupKFold])
-def test_stratified_kfold_ratios(k, shuffle, kfold):
-    # Check that stratified kfold preserves class ratios in individual splits
-    # Repeat with shuffling turned off and on
+def test_stratified_kfold_class_ratios(k, shuffle, kfold):
+    # Check that stratified kfold preserves class ratios in individual splits for
+    # single-label target and preserves class ratios (positive/negative examples) of
+    # each label in individual splits for multi-label target; also check that split
+    # sizes differ by at most one
     n_samples = 1000
     X = np.ones(n_samples)
+    # Ensure perfect stratification with StratifiedGroupKFold
+    groups = np.arange(n_samples)
+    random_state = None if not shuffle else 0
+
+    # Single-label target
     y = np.array(
         [4] * int(0.10 * n_samples)
         + [0] * int(0.89 * n_samples)
         + [1] * int(0.01 * n_samples)
     )
-    # ensure perfect stratification with StratifiedGroupKFold
-    groups = np.arange(len(y))
     distr = np.bincount(y) / len(y)
 
     test_sizes = []
-    random_state = None if not shuffle else 0
     skf = kfold(k, random_state=random_state, shuffle=shuffle)
     for train, test in skf.split(X, y, groups=groups):
         assert_allclose(np.bincount(y[train]) / len(train), distr, atol=0.02)
         assert_allclose(np.bincount(y[test]) / len(test), distr, atol=0.02)
+        test_sizes.append(len(test))
+    assert np.ptp(test_sizes) <= 1
+
+    # Multi-label target
+    if kfold is StratifiedGroupKFold:
+        return  # StratifiedGroupKFold does not support multi-label target
+    y = np.vstack(
+        [
+            [ii] * int(n_samples * perc)
+            for ii, perc in zip(
+                [[0, 0], [0, 1], [1, 0], [1, 1]], [0.01, 0.01, 0.30, 0.68]
+            )
+        ]
+    )
+    distr1, distr2 = np.bincount(y[:, 0]) / len(y), np.bincount(y[:, 1]) / len(y)
+
+    test_sizes = []
+    random_state = None if not shuffle else 0
+    skf = StratifiedKFold(k, random_state=random_state, shuffle=shuffle)
+    for train, test in skf.split(X, y):
+        distr_train1 = np.bincount(y[train][:, 0]) / len(train)
+        distr_train2 = np.bincount(y[train][:, 1]) / len(train)
+        distr_test1 = np.bincount(y[test][:, 0]) / len(test)
+        distr_test2 = np.bincount(y[test][:, 1]) / len(test)
+        assert_allclose(distr_train1, distr1, atol=0.02)
+        assert_allclose(distr_train2, distr2, atol=0.02)
+        assert_allclose(distr_test1, distr1, atol=0.02)
+        assert_allclose(distr_test2, distr2, atol=0.02)
         test_sizes.append(len(test))
     assert np.ptp(test_sizes) <= 1
 
@@ -440,17 +501,12 @@ def test_stratified_kfold_ratios(k, shuffle, kfold):
 def test_stratified_kfold_label_invariance(k, shuffle, kfold):
     # Check that stratified kfold gives the same indices regardless of labels
     n_samples = 100
-    y = np.array(
-        [2] * int(0.10 * n_samples)
-        + [0] * int(0.89 * n_samples)
-        + [1] * int(0.01 * n_samples)
-    )
-    X = np.ones(len(y))
-    # ensure perfect stratification with StratifiedGroupKFold
-    groups = np.arange(len(y))
+    X = np.ones(n_samples)
+    # Ensure perfect stratification with StratifiedGroupKFold
+    groups = np.arange(n_samples)
+    random_state = None if not shuffle else 0
 
     def get_splits(y):
-        random_state = None if not shuffle else 0
         return [
             (list(train), list(test))
             for train, test in kfold(
@@ -458,10 +514,34 @@ def test_stratified_kfold_label_invariance(k, shuffle, kfold):
             ).split(X, y, groups=groups)
         ]
 
+    # Single-label target
+    y = np.array(
+        [2] * int(0.10 * n_samples)
+        + [0] * int(0.89 * n_samples)
+        + [1] * int(0.01 * n_samples)
+    )
     splits_base = get_splits(y)
     for perm in permutations([0, 1, 2]):
         y_perm = np.take(perm, y)
         splits_perm = get_splits(y_perm)
+        assert splits_perm == splits_base
+
+    # Multi-label target
+    if kfold is StratifiedGroupKFold:
+        return  # StratifiedGroupKFold does not support multi-label target
+    y = np.vstack(
+        [
+            [ii] * int(n_samples * perc)
+            for ii, perc in zip(
+                [[0, 0], [0, 1], [1, 0], [1, 1]], [0.01, 0.01, 0.30, 0.68]
+            )
+        ]
+    )
+    splits_base = get_splits(y)
+    for alt0, alt1 in [(1, 0), (2, 5)]:
+        # Change 0's to alt0's and 1's to alt1's
+        y_alt = np.where(y == 0, alt0, alt1)
+        splits_perm = get_splits(y_alt)
         assert splits_perm == splits_base
 
 
@@ -475,18 +555,22 @@ def test_kfold_balance():
         assert np.sum(sizes) == i
 
 
+@pytest.mark.parametrize("shuffle", [False, True])
 @pytest.mark.parametrize("kfold", [StratifiedKFold, StratifiedGroupKFold])
-def test_stratifiedkfold_balance(kfold):
-    # Check that KFold returns folds with balanced sizes (only when
-    # stratification is possible)
-    # Repeat with shuffling turned off and on
+def test_stratified_kfold_balance(shuffle, kfold):
+    # Check that stratified kfold returns folds with balanced sizes (only when
+    # stratification is possible); repeat with shuffling turned off and on
     X = np.ones(17)
-    y = [0] * 3 + [1] * 14
-    # ensure perfect stratification with StratifiedGroupKFold
-    groups = np.arange(len(y))
+    ys = [[0] * 3 + [1] * 14]
+    if kfold is not StratifiedGroupKFold:
+        # StratifiedGroupKFold does not support multi-label target
+        ys.append([[0, 0]] * 3 + [[0, 1]] * 3 + [[1, 0]] * 3 + [[1, 1]] * 8)
+    # Ensure perfect stratification with StratifiedGroupKFold
+    groups = np.arange(17)
+    random_state = None if not shuffle else 0
 
-    for shuffle in (True, False):
-        cv = kfold(3, shuffle=shuffle)
+    cv = kfold(3, shuffle=shuffle, random_state=random_state)
+    for y in ys:
         for i in range(11, 17):
             skf = cv.split(X[:i], y[:i], groups[:i])
             sizes = [len(test) for _, test in skf]
@@ -518,59 +602,71 @@ def test_shuffle_kfold():
     assert sum(all_folds) == 300
 
 
-@pytest.mark.parametrize("kfold", [KFold, StratifiedKFold, StratifiedGroupKFold])
-def test_shuffle_kfold_stratifiedkfold_reproducibility(kfold):
-    X = np.ones(15)  # Divisible by 3
-    y = [0] * 7 + [1] * 8
-    groups_1 = np.arange(len(y))
-    X2 = np.ones(16)  # Not divisible by 3
-    y2 = [0] * 8 + [1] * 8
-    groups_2 = np.arange(len(y2))
-
-    # Check that when the shuffle is True, multiple split calls produce the
-    # same split when random_state is int
-    kf = kfold(3, shuffle=True, random_state=0)
-
-    np.testing.assert_equal(
-        list(kf.split(X, y, groups_1)), list(kf.split(X, y, groups_1))
-    )
-
-    # Check that when the shuffle is True, multiple split calls often
-    # (not always) produce different splits when random_state is
-    # RandomState instance or None
-    kf = kfold(3, shuffle=True, random_state=np.random.RandomState(0))
-    for data in zip((X, X2), (y, y2), (groups_1, groups_2)):
-        # Test if the two splits are different cv
-        for (_, test_a), (_, test_b) in zip(kf.split(*data), kf.split(*data)):
-            # cv.split(...) returns an array of tuples, each tuple
-            # consisting of an array with train indices and test indices
-            # Ensure that the splits for data are not same
-            # when random state is not set
-            with pytest.raises(AssertionError):
-                np.testing.assert_array_equal(test_a, test_b)
-
-
-def test_shuffle_stratifiedkfold():
+def test_shuffle_stratified_kfold():
     # Check that shuffling is happening when requested, and for proper
     # sample coverage
-    X_40 = np.ones(40)
-    y = [0] * 20 + [1] * 20
+    X = np.ones(40)
+    y_singlabel = [0] * 20 + [1] * 20
+    y_multilabel = np.hstack(([[0]] * 10 + [[1]] * 30, [[0]] * 30 + [[0]] * 10))
     kf0 = StratifiedKFold(5, shuffle=True, random_state=0)
     kf1 = StratifiedKFold(5, shuffle=True, random_state=1)
-    for (_, test0), (_, test1) in zip(kf0.split(X_40, y), kf1.split(X_40, y)):
-        assert set(test0) != set(test1)
-    check_cv_coverage(kf0, X_40, y, groups=None, expected_n_splits=5)
+
+    for y in (y_singlabel, y_multilabel):
+        for (_, test0), (_, test1) in zip(kf0.split(X, y), kf1.split(X, y)):
+            assert set(test0) != set(test1)
+        check_cv_coverage(kf0, X, y, groups=None, expected_n_splits=5)
 
     # Ensure that we shuffle each class's samples with different
     # random_state in StratifiedKFold
     # See https://github.com/scikit-learn/scikit-learn/pull/13124
     X = np.arange(10)
     y = [0] * 5 + [1] * 5
-    kf1 = StratifiedKFold(5, shuffle=True, random_state=0)
-    kf2 = StratifiedKFold(5, shuffle=True, random_state=1)
-    test_set1 = sorted([tuple(s[1]) for s in kf1.split(X, y)])
-    test_set2 = sorted([tuple(s[1]) for s in kf2.split(X, y)])
+    test_set1 = set(tuple(s[1]) for s in kf0.split(X, y))
+    test_set2 = set(tuple(s[1]) for s in kf1.split(X, y))
     assert test_set1 != test_set2
+
+
+@pytest.mark.parametrize("kfold", [KFold, StratifiedKFold, StratifiedGroupKFold])
+def test_shuffle_kfold_stratified_kfold_reproducibility(kfold):
+    X_15 = np.ones(15)  # Divisible by 3
+    ys_15 = [np.array([0] * 7 + [1] * 8)]
+    if kfold is not StratifiedGroupKFold:
+        # StratifiedGroupKFold does not support multi-label target
+        ys_15.append(np.hstack(([[0]] * 6 + [[1]] * 9, [[0]] * 9 + [[0]] * 6)))
+    groups_15 = np.arange(15)
+
+    X_16 = np.ones(16)  # Not divisible by 3
+    ys_16 = [np.array([0] * 8 + [1] * 8)]
+    if kfold is not StratifiedGroupKFold:
+        # StratifiedGroupKFold does not support multi-label target
+        ys_16.append(np.hstack(([[0]] * 6 + [[1]] * 10, [[0]] * 10 + [[0]] * 6)))
+    groups_16 = np.arange(16)
+
+    # Check that when the shuffle is True, multiple split calls produce the
+    # same split when random_state is int
+    kf = kfold(3, shuffle=True, random_state=0)
+    for X, ys, groups in zip((X_15, X_16), (ys_15, ys_16), (groups_15, groups_16)):
+        for y in ys:
+            np.testing.assert_equal(
+                list(kf.split(X, y, groups)), list(kf.split(X, y, groups))
+            )
+
+    # Check that when the shuffle is True, multiple split calls often
+    # (not always) produce different splits when random_state is
+    # RandomState instance or None
+    kf = kfold(3, shuffle=True, random_state=np.random.RandomState(0))
+    for X, ys, groups in zip((X_15, X_16), (ys_15, ys_16), (groups_15, groups_16)):
+        for y in ys:
+            # Test if the two splits are different cv
+            for (_, test_a), (_, test_b) in zip(
+                kf.split(X, y, groups), kf.split(X, y, groups)
+            ):
+                # cv.split(...) returns an array of tuples, each tuple
+                # consisting of an array with train indices and test indices
+                # Ensure that the splits for data are not same
+                # when random state is not set
+                with pytest.raises(AssertionError):
+                    np.testing.assert_array_equal(test_a, test_b)
 
 
 def test_kfold_can_detect_dependent_samples_on_digits():  # see #2372
@@ -1197,10 +1293,12 @@ def test_get_n_splits_for_repeated_stratified_kfold():
 
 
 def test_repeated_stratified_kfold_determinstic_split():
-    X = [[1, 2], [3, 4], [5, 6], [7, 8], [9, 10]]
-    y = [1, 1, 1, 0, 0]
     random_state = 1944695409
     rskf = RepeatedStratifiedKFold(n_splits=2, n_repeats=2, random_state=random_state)
+
+    # Single-label target
+    X = [[1, 2], [3, 4], [5, 6], [7, 8], [9, 10]]
+    y = [1, 1, 1, 0, 0]
 
     # split should produce same and deterministic splits on
     # each call
@@ -1221,6 +1319,33 @@ def test_repeated_stratified_kfold_determinstic_split():
         train, test = next(splits)
         assert_array_equal(train, [0, 1, 4])
         assert_array_equal(test, [2, 3])
+
+        with pytest.raises(StopIteration):
+            next(splits)
+
+    # Multi-label target
+    X = np.ones(7)
+    y = np.array([[0, 0], [1, 0], [1, 1], [1, 1], [0, 1], [0, 1], [0, 0]])
+
+    # split should produce same and deterministic splits on
+    # each call
+    for _ in range(3):
+        splits = rskf.split(X, y)
+        train, test = next(splits)
+        assert_array_equal(train, [3, 4, 6])
+        assert_array_equal(test, [0, 1, 2, 5])
+
+        train, test = next(splits)
+        assert_array_equal(train, [0, 1, 2, 5])
+        assert_array_equal(test, [3, 4, 6])
+
+        train, test = next(splits)
+        assert_array_equal(train, [1, 4, 5])
+        assert_array_equal(test, [0, 2, 3, 6])
+
+        train, test = next(splits)
+        assert_array_equal(train, [0, 2, 3, 6])
+        assert_array_equal(test, [1, 4, 5])
 
         with pytest.raises(StopIteration):
             next(splits)

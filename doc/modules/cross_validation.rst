@@ -391,7 +391,6 @@ Example of 2-fold K-Fold repeated 2 times::
   [0 2] [1 3]
   [1 3] [0 2]
 
-
 Similarly, :class:`RepeatedStratifiedKFold` repeats Stratified K-Fold n times
 with different randomization in each repetition.
 
@@ -537,12 +536,15 @@ Stratified k-fold
 ^^^^^^^^^^^^^^^^^
 
 :class:`StratifiedKFold` is a variation of *k-fold* which returns *stratified*
-folds: each set contains approximately the same percentage of samples of each
-target class as the complete set.
+folds: if single-label target, each set contains approximately the same percentage of
+samples of each target class as the complete set; if multi-label target, each set
+contains approximately the same percentage of positive and negative samples for each
+label as the complete set. The implementation for multi-label target is based on the
+iterative stratification algorithm.
 
-Here is an example of stratified 3-fold cross-validation on a dataset with 50 samples from
-two unbalanced classes.  We show the number of samples in each class and compare with
-:class:`KFold`.
+Here is an example of stratified 3-fold cross-validation on a dataset with 50 samples
+from two unbalanced classes. We show the number of samples in each class and compare
+with :class:`KFold`.
 
   >>> from sklearn.model_selection import StratifiedKFold, KFold
   >>> import numpy as np
@@ -572,8 +574,62 @@ Here is a visualization of the cross-validation behavior.
    :align: center
    :scale: 75%
 
+Here is another example of stratified 4-fold cross-validation on a dataset with 50
+samples and 2 labels, where each label has unbalanced positive and negative samples.
+Again we show the number of samples in each class per-label and compare with
+:class:`KFold`.
+
+  >>> from sklearn.model_selection import StratifiedKFold, KFold
+  >>> import numpy as np
+  >>> def print_multilabel_split(cv, X, y):
+  ...     for train, test in cv.split(X, y):
+  ...         n_train, n_test = np.sum(y[train], axis=0), np.sum(y[test], axis=0)
+  ...         print("0:  train - {:2d} / {:2d}  test -  {:2d} / {:2d}".format(
+  ...             len(train) - n_train[0], n_train[0],
+  ...             len(test) - n_test[0], n_test[0],
+  ...         ))
+  ...         print("1:        - {:2d} / {:2d}       -  {:2d} / {:2d}".format(
+  ...             len(train) - n_train[1], n_train[1],
+  ...             len(test) - n_test[1], n_test[1],
+  ...         ))
+  ...
+  >>> X = np.ones((50, 2))
+  >>> y = np.hstack(([[0]] * 40 + [[1]] * 10, [[0]] * 10 + [[1]] * 40))
+  >>> skf = StratifiedKFold(n_splits=4)
+  >>> print_multilabel_split(skf, X, y)
+  0:  train - 30 /  7  test -  10 /  3
+  1:        -  7 / 30       -   3 / 10
+  0:  train - 30 /  7  test -  10 /  3
+  1:        -  7 / 30       -   3 / 10
+  0:  train - 30 /  8  test -  10 /  2
+  1:        -  8 / 30       -   2 / 10
+  0:  train - 30 /  8  test -  10 /  2
+  1:        -  8 / 30       -   2 / 10
+  >>> kf = KFold(n_splits=4)
+  >>> print_multilabel_split(kf, X, y)
+  0:  train - 27 / 10  test -  13 /  0
+  1:        -  0 / 37       -  10 /  3
+  0:  train - 27 / 10  test -  13 /  0
+  1:        - 10 / 27       -   0 / 13
+  0:  train - 28 / 10  test -  12 /  0
+  1:        - 10 / 28       -   0 / 12
+  0:  train - 38 /  0  test -   2 / 10
+  1:        - 10 / 28       -   0 / 12
+
+We can see that :class:`StratifiedKFold` preserves the ratio of negative to positive
+samples per-label (approximately 4 / 1 for the label #0 and 1 / 4 for the label #1) in
+both train and test dataset. :class:`KFold`, on the other hand, does not preserve the
+ratio and may even produce folds with zero positive or negative samples for some label,
+which may raise issues in the calculation of some multi-label evaluation measures.
+
 :class:`RepeatedStratifiedKFold` can be used to repeat Stratified K-Fold n times
 with different randomization in each repetition.
+
+.. topic:: References:
+
+ * Sechidis, Tsoumakas, and Vlahavas. `On the Stratification of Multi-label Data
+   <http://lpis.csd.auth.gr/publications/sechidis-ecmlpkdd-2011.pdf>`_.
+   Machine Learning and Knowledge Discovery in Databases. 2011.
 
 .. _stratified_shuffle_split:
 

@@ -31,6 +31,13 @@ Changelog
   by passing a function in place of a strategy name.
   :pr:`28053` by :user:`Mark Elliot <mark-thm>`.
 
+:mod:`sklearn.model_selection`
+..............................
+
+- |Feature| :class:`model_selection.StratifiedKFold` and
+  :class:`model_selection.RepeatedStratifiedKFold` now supports multi-label target.
+  :pr:`26423` by :user:`Yao Xiao <Charlie-XIAO>`.
+
 Code and Documentation Contributors
 -----------------------------------
 

@@ -628,9 +628,10 @@ class StratifiedKFold(_BaseKFold):
 
     Provides train/test indices to split data in train/test sets.
 
-    This cross-validation object is a variation of KFold that returns
-    stratified folds. The folds are made by preserving the percentage of
-    samples for each class.
+    This cross-validation object is a variation of KFold that returns stratified folds.
+    If single-label target, the folds are made by preserving the percentage of samples
+    for each class. If multi-label target, the folds are made by maintaining the
+    distribution of positive and negative examples of each label.
 
     Read more in the :ref:`User Guide <stratified_k_fold>`.
 
@@ -661,13 +662,16 @@ class StratifiedKFold(_BaseKFold):
     --------
     >>> import numpy as np
     >>> from sklearn.model_selection import StratifiedKFold
-    >>> X = np.array([[1, 2], [3, 4], [1, 2], [3, 4]])
-    >>> y = np.array([0, 0, 1, 1])
     >>> skf = StratifiedKFold(n_splits=2)
-    >>> skf.get_n_splits(X, y)
+    >>> skf.get_n_splits()
     2
     >>> print(skf)
     StratifiedKFold(n_splits=2, random_state=None, shuffle=False)
+
+    With single-label target:
+
+    >>> X = np.array([[1, 2], [3, 4], [1, 2], [3, 4]])
+    >>> y = np.array([0, 0, 1, 1])
     >>> for i, (train_index, test_index) in enumerate(skf.split(X, y)):
     ...     print(f"Fold {i}:")
     ...     print(f"  Train: index={train_index}")
@@ -679,43 +683,64 @@ class StratifiedKFold(_BaseKFold):
       Train: index=[0 2]
       Test:  index=[1 3]
 
+    With multi-label target:
+
+    >>> X = np.ones((8, 2))
+    >>> y = np.hstack(([[0]] * 4 + [[1]] * 4, [[1]] * 4 + [[0]] * 4))
+    >>> for i, (train_index, test_index) in enumerate(skf.split(X, y)):
+    ...     print(f"Fold {i}:")
+    ...     print(f"  Train: index={train_index}")
+    ...     print(f"  Test:  index={test_index}")
+    Fold 0:
+      Train: index=[1 3 5 7]
+      Test:  index=[0 2 4 6]
+    Fold 1:
+      Train: index=[0 2 4 6]
+      Test:  index=[1 3 5 7]
+
     Notes
     -----
     The implementation is designed to:
 
-    * Generate test sets such that all contain the same distribution of
-      classes, or as close as possible.
-    * Be invariant to class label: relabelling ``y = ["Happy", "Sad"]`` to
-      ``y = [1, 0]`` should not change the indices generated.
-    * Preserve order dependencies in the dataset ordering, when
-      ``shuffle=False``: all samples from class k in some test set were
-      contiguous in y, or separated in y by samples from classes other than k.
+    * If single-label target, generate test sets such that all contain the same
+      distribution of classes, or as close as possible. If multi-label target, generate
+      test sets such that all contain the same distribution of positive and negative
+      examples of each label, or as close as possible.
+    * Be invariant to class labels: relabeling `y = [0, 1, 1, 0]` to `y = [2, 0, 0, 2]`
+      should not change the indices generated.
+    * Preserve order dependencies in the dataset ordering when `shuffle=False`: all
+      samples from class k in some test set were contiguous in `y`, or separated in
+      `y` by samples from classes other than k.
     * Generate test sets where the smallest and largest differ by at most one
       sample.
 
     .. versionchanged:: 0.22
         The previous implementation did not follow the last constraint.
 
+    .. versionchanged:: 1.4
+        This class now handles multi-label targets with iterative stratification [1]_.
+
     See Also
     --------
     RepeatedStratifiedKFold : Repeats Stratified K-Fold n times.
+
+    References
+    ----------
+    .. [1] Sechidis, Konstantinos; Tsoumakas, Grigorios; Vlahavas, Ioannis.
+        "On the stratification of multi-label data." Machine Learning and
+        Knowledge Discovery in Databases (2011), 145--158.
+        http://lpis.csd.auth.gr/publications/sechidis-ecmlpkdd-2011.pdf
     """
 
     def __init__(self, n_splits=5, *, shuffle=False, random_state=None):
         super().__init__(n_splits=n_splits, shuffle=shuffle, random_state=random_state)
 
-    def _make_test_folds(self, X, y=None):
-        rng = check_random_state(self.random_state)
-        y = np.asarray(y)
-        type_of_target_y = type_of_target(y)
-        allowed_target_types = ("binary", "multiclass")
-        if type_of_target_y not in allowed_target_types:
-            raise ValueError(
-                "Supported target types are: {}. Got {!r} instead.".format(
-                    allowed_target_types, type_of_target_y
-                )
-            )
+    def _make_test_folds_single_label(self, y):
+        """Make test folds for single-label `y`.
 
+        Supported `y` types: binary, multiclass.
+        """
+        rng = check_random_state(self.random_state)
         y = column_or_1d(y)
 
         _, y_idx, y_inv = np.unique(y, return_index=True, return_inverse=True)
@@ -766,8 +791,126 @@ class StratifiedKFold(_BaseKFold):
             test_folds[y_encoded == k] = folds_for_class
         return test_folds
 
+    def _make_test_folds_multi_label(self, y):
+        """Make test folds for multi-label `y`.
+
+        Supported `y` types: multilabel-indicator.
+
+        References:
+        - Sechidis, Konstantinos; Tsoumakas, Grigorios; Vlahavas, Ioannis.
+          "On the stratification of multi-label data." Machine Learning and
+          Knowledge Discovery in Databases (2011), 145--158.
+          http://lpis.csd.auth.gr/publications/sechidis-ecmlpkdd-2011.pdf
+        - https://github.com/trent-b/iterative-stratification (BSD 3 clause)
+        """
+        rng = check_random_state(self.random_state)
+        n_samples = y.shape[0]
+
+        # Multilabel-indicator has at most two classes, so we encode the first
+        # occurrence as the negative example and the other as the positive example
+        first_occurrence = y[0, 0]
+        y = np.where(y == first_occurrence, 0, 1)
+
+        # Number of positive examples per label (will be used to keep track of the
+        # number of remaining positive examples in iterative stratification later)
+        remaining_per_label = y.sum(axis=0)
+
+        min_groups = np.inf
+        for n_pos in remaining_per_label:
+            n_neg = n_samples - n_pos
+            if n_pos < self.n_splits and n_neg < self.n_splits:
+                raise ValueError(
+                    "n_splits=%d cannot be greater than the number of members in each "
+                    "class for each label." % (self.n_splits)
+                )
+            min_groups = min(min_groups, n_pos, n_neg)
+
+        if self.n_splits > min_groups:
+            warnings.warn(
+                "The least populated class in y among all labels has only %d "
+                "members, which is less than n_splits=%d."
+                % (min_groups, self.n_splits),
+                UserWarning,
+            )
+
+        indices = np.arange(n_samples)
+        if self.shuffle:
+            rng.shuffle(indices)
+            y = y[indices]
+        test_folds = np.empty(n_samples, dtype="i")
+
+        # Desired number of examples per-fold (n_splits,) and desired number of
+        # examples per-fold per-label (n_splits, n_labels)
+        props = np.asarray([1 / self.n_splits] * self.n_splits)
+        desired = n_samples * props
+        desired_per_label = np.outer(props, y.sum(axis=0))
+
+        # Keep track of unassigned examples
+        n_unassigned = n_samples
+        unassigned_mask = np.ones(n_samples, dtype=bool)
+
+        while n_unassigned > 0:
+            # Find the label with the fewest (but >=1) remaining positive examples;
+            # get the unassigned examples that are positive for the selected label
+            selected_label = np.argmin(
+                np.where(remaining_per_label != 0, remaining_per_label, np.inf)
+            )
+            selected_indices = np.where(y[:, selected_label] & unassigned_mask)[0]
+
+            if len(selected_indices) == 0:
+                # If there are no unassigned examples positive for the selected label,
+                # it means that there are no remaining positive examples for any label;
+                # in this case we try to distribute the rest of examples evenly
+                for i in np.where(unassigned_mask)[0]:
+                    max_fold = np.argmax(desired)
+                    test_folds[i] = max_fold
+                    desired[max_fold] -= 1
+                break
+
+            for i in selected_indices:
+                # Find the fold with the largest number of desired positive examples
+                # for this label, breaking ties by proporitizing the fold with the
+                # largest number of total desired examples; note that folds with
+                # non-positive number of total desired examples are excluded from
+                # consideration, otherwise we cannot satisfy that smallest and largest
+                # test sizes differ by at most one
+                label_desired = desired_per_label[:, selected_label]
+                max_fold = max(
+                    np.where(desired > 0)[0],
+                    key=lambda fold_idx: (label_desired[fold_idx], desired[fold_idx]),
+                )
+
+                test_folds[i] = max_fold
+                unassigned_mask[i] = False
+                n_unassigned -= 1
+
+                desired_per_label[max_fold] -= y[i]
+                remaining_per_label -= y[i]
+                desired[max_fold] -= 1
+
+        if self.shuffle:
+            return test_folds[np.argsort(indices)]
+        else:
+            return test_folds
+
     def _iter_test_masks(self, X, y=None, groups=None):
-        test_folds = self._make_test_folds(X, y)
+        y = np.asarray(y)
+        type_of_target_y = type_of_target(y)
+
+        allowed_single_target_types = ("binary", "multiclass")
+        allowed_multi_target_types = ("multilabel-indicator",)
+
+        if type_of_target_y in allowed_single_target_types:
+            test_folds = self._make_test_folds_single_label(y)
+        elif type_of_target_y in allowed_multi_target_types:
+            test_folds = self._make_test_folds_multi_label(y)
+        else:
+            raise ValueError(
+                "Supported target types are: "
+                f"{allowed_single_target_types + allowed_multi_target_types}. "
+                f"Got {type_of_target_y!r} instead."
+            )
+
         for i in range(self.n_splits):
             yield test_folds == i
 
@@ -784,9 +927,9 @@ class StratifiedKFold(_BaseKFold):
             hence ``np.zeros(n_samples)`` may be used as a placeholder for
             ``X`` instead of actual training data.
 
-        y : array-like of shape (n_samples,)
+        y : array-like of shape (n_samples,) or (n_samples, n_labels)
             The target variable for supervised learning problems.
-            Stratification is done based on the y labels.
+            Stratification is done based on the ``y`` labels.
 
         groups : object
             Always ignored, exists for compatibility.
@@ -812,9 +955,10 @@ class StratifiedKFold(_BaseKFold):
 class StratifiedGroupKFold(GroupsConsumerMixin, _BaseKFold):
     """Stratified K-Fold iterator variant with non-overlapping groups.
 
-    This cross-validation object is a variation of StratifiedKFold attempts to
+    This cross-validation object is a variation of StratifiedKFold attempting to
     return stratified folds with non-overlapping groups. The folds are made by
-    preserving the percentage of samples for each class.
+    preserving the percentage of samples for each class. It currently supports only
+    single-label target.
 
     Each group will appear exactly once in the test set across all folds (the
     number of distinct groups has to be at least equal to the number of folds).
@@ -1651,14 +1795,16 @@ class RepeatedStratifiedKFold(_RepeatedSplits):
     --------
     >>> import numpy as np
     >>> from sklearn.model_selection import RepeatedStratifiedKFold
-    >>> X = np.array([[1, 2], [3, 4], [1, 2], [3, 4]])
-    >>> y = np.array([0, 0, 1, 1])
-    >>> rskf = RepeatedStratifiedKFold(n_splits=2, n_repeats=2,
-    ...     random_state=36851234)
-    >>> rskf.get_n_splits(X, y)
+    >>> rskf = RepeatedStratifiedKFold(n_splits=2, n_repeats=2, random_state=36851234)
+    >>> rskf.get_n_splits()
     4
     >>> print(rskf)
     RepeatedStratifiedKFold(n_repeats=2, n_splits=2, random_state=36851234)
+
+    With single-label target:
+
+    >>> X = np.array([[1, 2], [3, 4], [1, 2], [3, 4]])
+    >>> y = np.array([0, 0, 1, 1])
     >>> for i, (train_index, test_index) in enumerate(rskf.split(X, y)):
     ...     print(f"Fold {i}:")
     ...     print(f"  Train: index={train_index}")
@@ -1677,11 +1823,35 @@ class RepeatedStratifiedKFold(_RepeatedSplits):
       Train: index=[0 2]
       Test:  index=[1 3]
 
+    With multi-label target:
+
+    >>> X = np.ones((8, 2))
+    >>> y = np.hstack(([[0]] * 4 + [[1]] * 4, [[1]] * 4 + [[0]] * 4))
+    >>> for i, (train_index, test_index) in enumerate(rskf.split(X, y)):
+    ...     print(f"Fold {i}:")
+    ...     print(f"  Train: index={train_index}")
+    ...     print(f"  Test:  index={test_index}")
+    Fold 0:
+      Train: index=[2 3 4 6]
+      Test:  index=[0 1 5 7]
+    Fold 1:
+      Train: index=[0 1 5 7]
+      Test:  index=[2 3 4 6]
+    Fold 2:
+      Train: index=[0 2 5 6]
+      Test:  index=[1 3 4 7]
+    Fold 3:
+      Train: index=[1 3 4 7]
+      Test:  index=[0 2 5 6]
+
     Notes
     -----
     Randomized CV splitters may return different results for each call of
     split. You can make the results identical by setting `random_state`
     to an integer.
+
+    .. versionchanged:: 1.4
+        This class now handles multi-label targets with iterative stratification [1]_.
 
     See Also
     --------
