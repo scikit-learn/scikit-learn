@@ -75,9 +75,9 @@ def clone(estimator, *, safe=True):
     --------
     >>> from sklearn.base import clone
     >>> from sklearn.svm import SVC
-    >>> clf = SVC()
-    >>> clf_deep_copy = clone(clf)
-    >>> clf is clf_deep_copy
+    >>> classifier = SVC()
+    >>> classifier_copy = clone(classifier)
+    >>> classifier is classifier_copy # Check if classifier_copy is a deep copy.
     False
     """
     if hasattr(estimator, "__sklearn_clone__") and not inspect.isclass(estimator):
