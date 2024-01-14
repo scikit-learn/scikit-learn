@@ -29,10 +29,8 @@ def _validate_dual_parameter(dual, loss, penalty, multi_class, X):
     # TODO 1.5
     elif dual == "warn":
         warnings.warn(
-            (
-                "The default value of `dual` will change from `True` to `'auto'` in"
-                " 1.5. Set the value of `dual` explicitly to suppress the warning."
-            ),
+            "The default value of `dual` will change from `True` to `'auto'` in"
+            " 1.5. Set the value of `dual` explicitly to suppress the warning.",
             FutureWarning,
         )
         return True
@@ -639,7 +637,7 @@ class SVC(BaseSVC):
     kernel functions and how `gamma`, `coef0` and `degree` affect each
     other, see the corresponding section in the narrative documentation:
     :ref:`svm_kernels`.
-    
+
     To learn how use SVC in a real example see the following example:
     :ref:`sphx_glr_auto_examples_exercises_plot_cv_digits.py`
 
