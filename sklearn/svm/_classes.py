@@ -639,7 +639,7 @@ class SVC(BaseSVC):
     :ref:`svm_kernels`.
 
     To learn how use SVC in a real example see the following example:
-    :ref:`sphx_glr_auto_examples_exercises_plot_cv_digits.py`
+    :ref:`sphx_glr_auto_svm__classes.py`
 
     Read more in the :ref:`User Guide <svm_classification>`.
 
