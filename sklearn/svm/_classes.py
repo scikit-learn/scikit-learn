@@ -641,7 +641,7 @@ class SVC(BaseSVC):
     :ref:`svm_kernels`.
 
     To learn how use SVC in a real example see the following example:
-    :ref:`sphx_glr_auto_svm__classes.py`
+    :ref:`sphx_glr_auto_examples_model_selection_plot_nested_cross_validation_iris.py`
 
     Read more in the :ref:`User Guide <svm_classification>`.
 
