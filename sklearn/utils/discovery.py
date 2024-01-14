@@ -45,12 +45,22 @@ def all_estimators(type_filter=None):
     Examples
     --------
     >>> from sklearn.utils.discovery import all_estimators
-    >>> estimators = all_estimators()
+    >>> estimators = all_estimators() # get all estimators
     >>> type(estimators)
     <class 'list'>
     >>> type(estimators[0])
     <class 'tuple'>
     >>> list(dict(estimators))[:3]
+    ['ARDRegression', 'AdaBoostClassifier', 'AdaBoostRegressor']
+    >>> # Choose a specific estimator type:
+    >>> classifiers = all_estimators(type_filter="classifier")
+    >>> list(dict(classifiers))[:3]
+    ['AdaBoostClassifier', 'BaggingClassifier', 'BernoulliNB']
+    >>> regressors = all_estimators(type_filter="regressor")
+    >>> list(dict(regressors))[:3]
+    ['ARDRegression', 'AdaBoostRegressor', 'BaggingRegressor']
+    >>> # Choose a subset of estimators by passing a list:
+    >>> both = all_estimators(type_filter=["classifier", "regressor"])
     ['ARDRegression', 'AdaBoostClassifier', 'AdaBoostRegressor']
     """
     # lazy import to avoid circular imports from sklearn.base
