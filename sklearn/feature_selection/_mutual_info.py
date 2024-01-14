@@ -303,13 +303,10 @@ def _estimate_mi(
             * rng.standard_normal(size=n_samples)
         )
 
-    mi = [
-        _compute_mi(x, y, discrete_feature, discrete_target, n_neighbors)
-        for x, discrete_feature in zip(_iterate_columns(X), discrete_mask)
-    ]
-
     mi = Parallel(n_jobs=n_jobs)(
-        delayed(_compute_mi)(x, discrete_feature, discrete_target, n_neighbors)
+        delayed(lambda x, df: _compute_mi(x, y, df, discrete_target, n_neighbors))(
+            x, discrete_feature
+        )
         for x, discrete_feature in zip(_iterate_columns(X), discrete_mask)
     )
 
