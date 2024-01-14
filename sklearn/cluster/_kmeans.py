@@ -425,6 +425,23 @@ def k_means(
     best_n_iter : int
         Number of iterations corresponding to the best results.
         Returned only if `return_n_iter` is set to True.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.cluster import k_means
+    >>> X = np.array([[1, 2], [1, 4], [1, 0],
+    ...               [10, 2], [10, 4], [10, 0]])
+    >>> centroid, label, inertia = k_means(
+    ...     X, n_clusters=2, n_init="auto", random_state=0
+    ... )
+    >>> centroid
+    array([[10.,  2.],
+           [ 1.,  2.]])
+    >>> label
+    array([1, 1, 1, 0, 0, 0], dtype=int32)
+    >>> inertia
+    16.0
     """
     est = KMeans(
         n_clusters=n_clusters,
