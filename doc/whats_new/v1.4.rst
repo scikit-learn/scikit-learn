@@ -649,10 +649,6 @@ Changelog
   object in the parameter grid if it's an estimator.
   :pr:`26786` by `Adrin Jalali`_.
 
-- |Feature| :class:`model_selection.StratifiedKFold` and
-  :class:`model_selection.RepeatedStratifiedKFold` now supports multi-label target.
-  :pr:`26423` by :user:`Yao Xiao <Charlie-XIAO>`
-
 :mod:`sklearn.multioutput`
 ..........................
 
