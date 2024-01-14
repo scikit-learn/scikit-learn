@@ -45,24 +45,30 @@ def all_estimators(type_filter=None):
     Examples
     --------
     >>> from sklearn.utils.discovery import all_estimators
-    >>> estimators = all_estimators() # get all estimators
+    >>> estimators = all_estimators()
     >>> type(estimators)
     <class 'list'>
     >>> type(estimators[0])
     <class 'tuple'>
-    >>> list(dict(estimators))[:3]
-    ['ARDRegression', 'AdaBoostClassifier', 'AdaBoostRegressor']
-    >>> # Choose a specific estimator type:
+    >>> estimators[:2]
+    [('ARDRegression', <class 'sklearn.linear_model._bayes.ARDRegression'>),
+     ('AdaBoostClassifier',
+      <class 'sklearn.ensemble._weight_boosting.AdaBoostClassifier'>)]
     >>> classifiers = all_estimators(type_filter="classifier")
-    >>> list(dict(classifiers))[:3]
-    ['AdaBoostClassifier', 'BaggingClassifier', 'BernoulliNB']
+    >>> classifiers[:2]
+    [('AdaBoostClassifier',
+      <class 'sklearn.ensemble._weight_boosting.AdaBoostClassifier'>),
+     ('BaggingClassifier', <class 'sklearn.ensemble._bagging.BaggingClassifier'>)]
     >>> regressors = all_estimators(type_filter="regressor")
-    >>> list(dict(regressors))[:3]
-    ['ARDRegression', 'AdaBoostRegressor', 'BaggingRegressor']
-    >>> # Choose a subset of estimators by passing a list:
+    >>> regressors[:2]
+    [('ARDRegression', <class 'sklearn.linear_model._bayes.ARDRegression'>),
+     ('AdaBoostRegressor',
+      <class 'sklearn.ensemble._weight_boosting.AdaBoostRegressor'>)]
     >>> both = all_estimators(type_filter=["classifier", "regressor"])
-    >>> list(dict(both))[:3]
-    ['ARDRegression', 'AdaBoostClassifier', 'AdaBoostRegressor']
+    >>> both[:2]
+    [('ARDRegression', <class 'sklearn.linear_model._bayes.ARDRegression'>),
+     ('AdaBoostClassifier',
+      <class 'sklearn.ensemble._weight_boosting.AdaBoostClassifier'>)]
     """
     # lazy import to avoid circular imports from sklearn.base
     from ..base import (
@@ -167,12 +173,8 @@ def all_displays():
     --------
     >>> from sklearn.utils.discovery import all_displays
     >>> displays = all_displays()
-    >>> type(displays)
-    <class 'list'>
-    >>> type(displays[0])
-    <class 'tuple'>
-    >>> list(dict(displays))[:3]
-    ['CalibrationDisplay', 'ConfusionMatrixDisplay', 'DecisionBoundaryDisplay']
+    >>> displays[0]
+    ('CalibrationDisplay', sklearn.calibration.CalibrationDisplay)
     """
     # lazy import to avoid circular imports from sklearn.base
     from ._testing import ignore_warnings
@@ -228,12 +230,9 @@ def all_functions():
     --------
     >>> from sklearn.utils.discovery import all_functions
     >>> functions = all_functions()
-    >>> type(functions)
-    <class 'list'>
-    >>> type(functions[0])
-    <class 'tuple'>
-    >>> list(dict(functions))[:3]
-    ['accuracy_score', 'add_dummy_feature', 'additive_chi2_kernel']
+    >>> name, function = functions[0]
+    >>> name
+    'accuracy_score'
     """
     # lazy import to avoid circular imports from sklearn.base
     from ._testing import ignore_warnings
