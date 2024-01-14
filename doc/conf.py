@@ -306,6 +306,9 @@ redirects = {
     "auto_examples/decomposition/plot_pca_3d": (
         "auto_examples/decomposition/plot_pca_iris"
     ),
+    "examples/exercises/plot_cv_digits.py": (
+        "examples/model_selection/plot_nested_cross_validation_iris.py"
+    ),
 }
 html_context["redirects"] = redirects
 for old_link in redirects:
@@ -692,11 +695,9 @@ def setup(app):
 # The following is used by sphinx.ext.linkcode to provide links to github
 linkcode_resolve = make_linkcode_resolve(
     "sklearn",
-    (
-        "https://github.com/scikit-learn/"
-        "scikit-learn/blob/{revision}/"
-        "{package}/{path}#L{lineno}"
-    ),
+    "https://github.com/scikit-learn/"
+    "scikit-learn/blob/{revision}/"
+    "{package}/{path}#L{lineno}",
 )
 
 from sklearn.utils.fixes import VisibleDeprecationWarning
