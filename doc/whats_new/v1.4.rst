@@ -12,6 +12,14 @@ Version 1.4.1
 Changelog
 ---------
 
+:mod:`sklearn.cluster`
+......................
+
+- |Fix| :class:`cluster.AffinityPropagation` now avoids assigning multiple different
+  clusters for equal points.
+  :pr:`` by :user:`Pietro Peterlongo <pietroppeter>` and
+  :user:`Yao Xiao <Charlie-XIAO>`.
+
 :mod:`sklearn.datasets`
 .......................
 
