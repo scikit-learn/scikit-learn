@@ -12,7 +12,8 @@ Clustering: grouping observations together
     **clustering task**: split the observations into well-separated group
     called *clusters*.
 
-..
+::
+
    >>> # Set the PRNG
    >>> import numpy as np
    >>> np.random.seed(1)
@@ -100,18 +101,18 @@ A :ref:`hierarchical_clustering` method is a type of cluster analysis
 that aims to build a hierarchy of clusters. In general, the various approaches
 of this technique are either:
 
-  * **Agglomerative** - bottom-up approaches: each observation starts in its
-    own cluster, and clusters are iteratively merged in such a way to
-    minimize a *linkage* criterion. This approach is particularly interesting
-    when the clusters of interest are made of only a few observations. When
-    the number of clusters is large, it is much more computationally efficient
-    than k-means.
+* **Agglomerative** - bottom-up approaches: each observation starts in its
+  own cluster, and clusters are iteratively merged in such a way to
+  minimize a *linkage* criterion. This approach is particularly interesting
+  when the clusters of interest are made of only a few observations. When
+  the number of clusters is large, it is much more computationally efficient
+  than k-means.
 
-  * **Divisive** - top-down approaches: all observations start in one
-    cluster, which is iteratively split as one moves down the hierarchy.
-    For estimating large numbers of clusters, this approach is both slow (due
-    to all observations starting as one cluster, which it splits recursively)
-    and statistically ill-posed.
+* **Divisive** - top-down approaches: all observations start in one
+  cluster, which is iteratively split as one moves down the hierarchy.
+  For estimating large numbers of clusters, this approach is both slow (due
+  to all observations starting as one cluster, which it splits recursively)
+  and statistically ill-posed.
 
 Connectivity-constrained clustering
 .....................................
@@ -204,51 +205,57 @@ Decompositions: from a signal to components and loadings
 Principal component analysis: PCA
 -----------------------------------
 
-:ref:`PCA` selects the successive components that
-explain the maximum variance in the signal.
-
-.. |pca_3d_axis| image:: /auto_examples/decomposition/images/sphx_glr_plot_pca_3d_001.png
-   :target: ../../auto_examples/decomposition/plot_pca_3d.html
-   :scale: 70
-
-.. |pca_3d_aligned| image:: /auto_examples/decomposition/images/sphx_glr_plot_pca_3d_002.png
-   :target: ../../auto_examples/decomposition/plot_pca_3d.html
-   :scale: 70
-
-.. rst-class:: centered
-
-   |pca_3d_axis| |pca_3d_aligned|
-
-The point cloud spanned by the observations above is very flat in one
-direction: one of the three univariate features can almost be exactly
-computed using the other two. PCA finds the directions in which the data is
-not *flat*
-
-When used to *transform* data, PCA can reduce the dimensionality of the
-data by projecting on a principal subspace.
+:ref:`PCA` selects the successive components that explain the maximum variance in the
+signal. Let's create a synthetic 3-dimensional dataset.
 
 .. np.random.seed(0)
 
 ::
 
     >>> # Create a signal with only 2 useful dimensions
-    >>> x1 = np.random.normal(size=100)
-    >>> x2 = np.random.normal(size=100)
+    >>> x1 = np.random.normal(size=(100, 1))
+    >>> x2 = np.random.normal(size=(100, 1))
     >>> x3 = x1 + x2
-    >>> X = np.c_[x1, x2, x3]
+    >>> X = np.concatenate([x1, x2, x3], axis=1)
 
-    >>> from sklearn import decomposition
-    >>> pca = decomposition.PCA()
-    >>> pca.fit(X)
-    PCA()
-    >>> print(pca.explained_variance_)  # doctest: +SKIP
-    [  2.18565811e+00   1.19346747e+00   8.43026679e-32]
+The point cloud spanned by the observations above is very flat in one
+direction: one of the three univariate features (i.e. z-axis) can almost be exactly
+computed using the other two.
 
-    >>> # As we can see, only the 2 first components are useful
-    >>> pca.n_components = 2
-    >>> X_reduced = pca.fit_transform(X)
-    >>> X_reduced.shape
-    (100, 2)
+.. plot::
+   :context: close-figs
+   :align: center
+
+   >>> import matplotlib.pyplot as plt
+   >>> fig = plt.figure()
+   >>> ax = fig.add_subplot(111, projection='3d')
+   >>> ax.scatter(X[:, 0], X[:, 1], X[:, 2])
+   <...>
+   >>> _ = ax.set(xlabel="x", ylabel="y", zlabel="z")
+
+
+PCA finds the directions in which the data is not *flat*.
+
+::
+
+   >>> from sklearn import decomposition
+   >>> pca = decomposition.PCA()
+   >>> pca.fit(X)
+   PCA()
+   >>> print(pca.explained_variance_)  # doctest: +SKIP
+   [  2.18565811e+00   1.19346747e+00   8.43026679e-32]
+
+Looking at the explained variance, we see that only the first two components
+are useful. PCA can be used to reduce dimensionality while preserving
+most of the information. It will project the data on the principal subspace.
+
+::
+
+   >>> pca.set_params(n_components=2)
+   PCA(n_components=2)
+   >>> X_reduced = pca.fit_transform(X)
+   >>> X_reduced.shape
+   (100, 2)
 
 .. Eigenfaces here?
 

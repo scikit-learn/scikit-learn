@@ -53,6 +53,7 @@ data based on the amount of variance it explains. As such it implements a
 
 .. topic:: Examples:
 
+    * :ref:`sphx_glr_auto_examples_decomposition_plot_pca_iris.py`
     * :ref:`sphx_glr_auto_examples_decomposition_plot_pca_vs_lda.py`
     * :ref:`sphx_glr_auto_examples_decomposition_plot_pca_vs_fa_model_selection.py`
 
@@ -71,11 +72,11 @@ exactly match the results of :class:`PCA` while processing the data in a
 minibatch fashion. :class:`IncrementalPCA` makes it possible to implement
 out-of-core Principal Component Analysis either by:
 
- * Using its ``partial_fit`` method on chunks of data fetched sequentially
-   from the local hard drive or a network database.
+* Using its ``partial_fit`` method on chunks of data fetched sequentially
+  from the local hard drive or a network database.
 
- * Calling its fit method on a memory mapped file using
-   ``numpy.memmap``.
+* Calling its fit method on a memory mapped file using
+  ``numpy.memmap``.
 
 :class:`IncrementalPCA` only stores estimates of component and noise variances,
 in order update ``explained_variance_ratio_`` incrementally. This is why
@@ -357,14 +358,14 @@ components is less than 10 (strict) and the number of samples is more than 200
 
     * *randomized* solver:
 
-        * Algorithm 4.3 in
-          :arxiv:`"Finding structure with randomness: Stochastic
-          algorithms for constructing approximate matrix decompositions" <0909.4061>`
-          Halko, et al. (2009)
+      * Algorithm 4.3 in
+        :arxiv:`"Finding structure with randomness: Stochastic
+        algorithms for constructing approximate matrix decompositions" <0909.4061>`
+        Halko, et al. (2009)
 
-        * :arxiv:`"An implementation of a randomized algorithm
-          for principal component analysis" <1412.3510>`
-          A. Szlam et al. (2014)
+      * :arxiv:`"An implementation of a randomized algorithm
+        for principal component analysis" <1412.3510>`
+        A. Szlam et al. (2014)
 
     * *arpack* solver:
       `scipy.sparse.linalg.eigsh documentation
@@ -635,7 +636,7 @@ does not fit into the memory.
    computationally efficient and implements on-line learning with a
    ``partial_fit`` method.
 
-    Example: :ref:`sphx_glr_auto_examples_cluster_plot_dict_face_patches.py`
+   Example: :ref:`sphx_glr_auto_examples_cluster_plot_dict_face_patches.py`
 
 .. currentmodule:: sklearn.decomposition
 
@@ -1007,10 +1008,10 @@ The graphical model of LDA is a three-level generative model:
 Note on notations presented in the graphical model above, which can be found in
 Hoffman et al. (2013):
 
-  * The corpus is a collection of :math:`D` documents.
-  * A document is a sequence of :math:`N` words.
-  * There are :math:`K` topics in the corpus.
-  * The boxes represent repeated sampling.
+* The corpus is a collection of :math:`D` documents.
+* A document is a sequence of :math:`N` words.
+* There are :math:`K` topics in the corpus.
+* The boxes represent repeated sampling.
 
 In the graphical model, each node is a random variable and has a role in the
 generative process. A shaded node indicates an observed variable and an unshaded
@@ -1028,21 +1029,21 @@ When modeling text corpora, the model assumes the following generative process
 for a corpus with :math:`D` documents and :math:`K` topics, with :math:`K`
 corresponding to `n_components` in the API:
 
-  1. For each topic :math:`k \in K`, draw :math:`\beta_k \sim
-     \mathrm{Dirichlet}(\eta)`. This provides a distribution over the words,
-     i.e. the probability of a word appearing in topic :math:`k`.
-     :math:`\eta` corresponds to `topic_word_prior`.
+1. For each topic :math:`k \in K`, draw :math:`\beta_k \sim
+   \mathrm{Dirichlet}(\eta)`. This provides a distribution over the words,
+   i.e. the probability of a word appearing in topic :math:`k`.
+   :math:`\eta` corresponds to `topic_word_prior`.
 
-  2. For each document :math:`d \in D`, draw the topic proportions
-     :math:`\theta_d \sim \mathrm{Dirichlet}(\alpha)`. :math:`\alpha`
-     corresponds to `doc_topic_prior`.
+2. For each document :math:`d \in D`, draw the topic proportions
+   :math:`\theta_d \sim \mathrm{Dirichlet}(\alpha)`. :math:`\alpha`
+   corresponds to `doc_topic_prior`.
 
-  3. For each word :math:`i` in document :math:`d`:
+3. For each word :math:`i` in document :math:`d`:
 
-    a. Draw the topic assignment :math:`z_{di} \sim \mathrm{Multinomial}
-       (\theta_d)`
-    b. Draw the observed word :math:`w_{ij} \sim \mathrm{Multinomial}
-       (\beta_{z_{di}})`
+   a. Draw the topic assignment :math:`z_{di} \sim \mathrm{Multinomial}
+      (\theta_d)`
+   b. Draw the observed word :math:`w_{ij} \sim \mathrm{Multinomial}
+      (\beta_{z_{di}})`
 
 For parameter estimation, the posterior distribution is:
 

@@ -51,16 +51,14 @@ fi
 if [[ -n "$CHECK_WARNINGS" ]]; then
     TEST_CMD="$TEST_CMD -Werror::DeprecationWarning -Werror::FutureWarning -Werror::sklearn.utils.fixes.VisibleDeprecationWarning"
 
-    # numpy's 1.19.0's tostring() deprecation is ignored until scipy and joblib
-    # removes its usage
-    TEST_CMD="$TEST_CMD -Wignore:tostring:DeprecationWarning"
-
-    # Ignore distutils deprecation warning, used by joblib internally
-    TEST_CMD="$TEST_CMD -Wignore:distutils\ Version\ classes\ are\ deprecated:DeprecationWarning"
-
     # Ignore pkg_resources deprecation warnings triggered by pyamg
     TEST_CMD="$TEST_CMD -W 'ignore:pkg_resources is deprecated as an API:DeprecationWarning'"
     TEST_CMD="$TEST_CMD -W 'ignore:Deprecated call to \`pkg_resources:DeprecationWarning'"
+
+    # pytest-cov issue https://github.com/pytest-dev/pytest-cov/issues/557 not
+    # fixed although it has been closed. https://github.com/pytest-dev/pytest-cov/pull/623
+    # would probably fix it.
+    TEST_CMD="$TEST_CMD -W 'ignore:The --rsyncdir command line argument and rsyncdirs config variable are deprecated.:DeprecationWarning'"
 
     # In some case, exceptions are raised (by bug) in tests, and captured by pytest,
     # but not raised again. This is for instance the case when Cython directives are
