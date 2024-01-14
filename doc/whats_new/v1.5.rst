@@ -31,6 +31,9 @@ Changelog
   by passing a function in place of a strategy name.
   :pr:`28053` by :user:`Mark Elliot <mark-thm>`.
 
+- |Enhancement| :function:`sklearn.feature_selection.mutual_info_regression` and function:`sklearn.feature_selection.mutual_info_classif` now supports `n_jobs`.
+  :pr:`27795` by `Neto Menoci <https://github.com/netomenoci>`_.
+
 Code and Documentation Contributors
 -----------------------------------
 
@@ -40,7 +43,4 @@ the project since version 1.4, including:
 TODO: update at the time of the release.
 
 :mod:`sklearn.compose`
-......................
-
-- |Feature| A fitted :class:`compose.ColumnTransformer` now implements `__getitem__`
-  which returns the fitted transformers by name. :pr:`27990` by `Thomas Fan`_.
+note

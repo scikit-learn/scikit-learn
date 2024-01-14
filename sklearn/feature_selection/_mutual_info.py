@@ -308,11 +308,8 @@ def _estimate_mi(
         for x, discrete_feature in zip(_iterate_columns(X), discrete_mask)
     ]
 
-
     mi = Parallel(n_jobs=n_jobs)(
-        delayed(_compute_mi)(
-            x, discrete_feature, discrete_target, n_neighbors
-        )
+        delayed(_compute_mi)(x, discrete_feature, discrete_target, n_neighbors)
         for x, discrete_feature in zip(_iterate_columns(X), discrete_mask)
     )
 
@@ -392,7 +389,6 @@ def mutual_info_regression(
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
-        
         .. versionadded:: 1.5
 
     Returns
@@ -502,7 +498,6 @@ def mutual_info_classif(
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
-        
         .. versionadded:: 1.5
 
     Returns
