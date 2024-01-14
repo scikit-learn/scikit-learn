@@ -28,6 +28,13 @@ Changelog
   is a user-defined function.
   :pr:`26410` by :user:`Yao Xiao <Charlie-XIAO>`.
 
+:mod:`sklearn.utils`
+....................
+
+- |Fix| Fix the function :func:`~utils.check_array` to output the right error message
+  when the input is Series instead of a DataFrame.
+  :pr:`28090` by :user:`Stan Furrer <stanFurrer>` and :user:`Yao Xiao <Charlie-XIAO>`.
+
 
 .. _changes_1_4:
 
