@@ -43,4 +43,6 @@ the project since version 1.4, including:
 TODO: update at the time of the release.
 
 :mod:`sklearn.compose`
-note
+......................
+- |Feature| A fitted :class:`compose.ColumnTransformer` now implements `__getitem__`
+  which returns the fitted transformers by name. :pr:`27990` by `Thomas Fan`_.
