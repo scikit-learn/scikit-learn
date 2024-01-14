@@ -20,7 +20,7 @@ from ..metrics._pairwise_distances_reduction import (
     RadiusNeighborsClassMode,
 )
 from ..utils._param_validation import StrOptions
-from ..utils.arrayfuncs import _all_with_any_reduction
+from ..utils.arrayfuncs import _all_with_any_reduction_axis_1
 from ..utils.extmath import weighted_mode
 from ..utils.fixes import _mode
 from ..utils.validation import _is_arraylike, _num_samples, check_is_fitted
@@ -282,7 +282,7 @@ class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
         n_outputs = len(classes_)
         n_queries = _num_samples(X)
         weights = _get_weights(neigh_dist, self.weights)
-        if weights is not None and _all_with_any_reduction(weights, axis=1):
+        if weights is not None and _all_with_any_reduction_axis_1(weights, value=0):
             raise ValueError(
                 "All neighbors of some sample is getting zero weights. "
                 "Please modify 'weights' to avoid this case if you are "
@@ -379,7 +379,7 @@ class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
         weights = _get_weights(neigh_dist, self.weights)
         if weights is None:
             weights = np.ones_like(neigh_ind)
-        elif _all_with_any_reduction(weights, axis=1):
+        elif _all_with_any_reduction_axis_1(weights, value=0):
             raise ValueError(
                 "All neighbors of some sample is getting zero weights. "
                 "Please modify 'weights' to avoid this case if you are "

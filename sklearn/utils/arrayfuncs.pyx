@@ -32,46 +32,33 @@ def min_pos(const floating[:] X):
     return min_val
 
 
-def _all_with_any_reduction(real_numeric[:, :] array, real_numeric value=0, int axis=0):
+def _all_with_any_reduction_axis_1(real_numeric[:, :] array, real_numeric value):
     """Check that all values are equal to `value` along a specific axis.
 
-    It is equivalent to `np.any(np.all(X == value, axis=axis))`, but it avoids to
+    It is equivalent to `np.any(np.all(X == value, axis=1))`, but it avoids to
     materialize the temporary boolean matrices in memory.
 
     Parameters
     ----------
     array: array-like
         The array to be checked.
-    value: short, int, long, float, or double, default=0
+    value: short, int, long, float, or double
         The value to use for the comparison.
-    axis: int, default=0
-        The axis along which to perform the `all` operation.
 
     Returns
     -------
     any_all_equal: bool
-        Whether or not any rows (i.e., `axis=1`) or any columns (i.e., `axis=0`)
-        contains all values equal to `value`.
+        Whether or not any rows contains all values equal to `value`.
     """
-    cdef:
-        Py_ssize_t i, j
+    cdef Py_ssize_t i, j
 
-    if axis == 0:
+    for i in range(array.shape[0]):
         for j in range(array.shape[1]):
-            for i in range(array.shape[0]):
-                if array[i, j] != value:
-                    break
-            else:
-                return True
-        return False
-    else:  # axis == 1
-        for i in range(array.shape[0]):
-            for j in range(array.shape[1]):
-                if array[i, j] != value:
-                    break
-            else:
-                return True
-        return False
+            if array[i, j] != value:
+                break
+        else:  # no break
+            return True
+    return False
 
 
 # General Cholesky Delete.
