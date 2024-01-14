@@ -70,6 +70,15 @@ def clone(estimator, *, safe=True):
     results. Otherwise, *statistical clone* is returned: the clone might
     return different results from the original estimator. More details can be
     found in :ref:`randomness`.
+
+    Examples
+    --------
+    >>> from sklearn.base import clone
+    >>> from sklearn.svm import SVC
+    >>> clf = SVC()
+    >>> clf_deep_copy = clone(clf)
+    >>> clf is clf_deep_copy
+    False
     """
     if hasattr(estimator, "__sklearn_clone__") and not inspect.isclass(estimator):
         return estimator.__sklearn_clone__()
@@ -1208,6 +1217,17 @@ def is_classifier(estimator):
     -------
     out : bool
         True if estimator is a classifier and False otherwise.
+
+    Examples
+    --------
+    >>> from sklearn.base import is_classifier
+    >>> from sklearn.svm import SVC, SVR
+    >>> classifier = SVC()
+    >>> regressor = SVR()
+    >>> is_classifier(classifier)
+    True
+    >>> is_classifier(regressor)
+    False
     """
     return getattr(estimator, "_estimator_type", None) == "classifier"
 
@@ -1224,6 +1244,17 @@ def is_regressor(estimator):
     -------
     out : bool
         True if estimator is a regressor and False otherwise.
+
+    Examples
+    --------
+    >>> from sklearn.base import is_regressor
+    >>> from sklearn.svm import SVC, SVR
+    >>> classifier = SVC()
+    >>> regressor = SVR()
+    >>> is_regressor(classifier)
+    False
+    >>> is_regressor(regressor)
+    True
     """
     return getattr(estimator, "_estimator_type", None) == "regressor"
 
