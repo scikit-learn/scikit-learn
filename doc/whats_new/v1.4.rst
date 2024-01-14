@@ -17,7 +17,7 @@ Changelog
 
 - |Fix| :class:`cluster.AffinityPropagation` now avoids assigning multiple different
   clusters for equal points.
-  :pr:`` by :user:`Pietro Peterlongo <pietroppeter>` and
+  :pr:`28121` by :user:`Pietro Peterlongo <pietroppeter>` and
   :user:`Yao Xiao <Charlie-XIAO>`.
 
 :mod:`sklearn.datasets`
