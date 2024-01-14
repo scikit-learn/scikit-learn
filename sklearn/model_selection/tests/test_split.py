@@ -193,41 +193,47 @@ def test_2d_y():
     n_samples = 30
     rng = np.random.RandomState(1)
     X = rng.randint(0, 3, size=(n_samples, 2))
-    y = rng.randint(0, 3, size=(n_samples,))
-    y_2d = y.reshape(-1, 1)
-    y_multilabel = rng.randint(0, 2, size=(n_samples, 3))
     groups = rng.randint(0, 3, size=(n_samples,))
 
+    # Maps type of target to the target
+    ys = {}
+    ys["binary"] = rng.randint(0, 3, size=(n_samples,))
+    ys["multiclass"] = ys["binary"].reshape(-1, 1)
+    ys["multilabel-indicator"] = rng.randint(0, 2, size=(n_samples, 3))
+    ys["multiclass-multioutput"] = np.array([0, 1, 2] * n_samples).reshape(n_samples, 3)
+
+    # (splitter, supported_types)
+    # supported_types is None if all target types (i.e., keys of ys) are supported,
+    # otherwise it is a tuple of supported target types
     splitters = [
-        LeaveOneOut(),
-        LeavePOut(p=2),
-        KFold(),
-        StratifiedKFold(),
-        RepeatedKFold(),
-        RepeatedStratifiedKFold(),
-        StratifiedGroupKFold(),
-        ShuffleSplit(),
-        StratifiedShuffleSplit(test_size=0.5),
-        GroupShuffleSplit(),
-        LeaveOneGroupOut(),
-        LeavePGroupsOut(n_groups=2),
-        GroupKFold(n_splits=3),
-        TimeSeriesSplit(),
-        PredefinedSplit(test_fold=groups),
+        (LeaveOneOut(), None),
+        (LeavePOut(p=2), None),
+        (KFold(), None),
+        (StratifiedKFold(), ("binary", "multiclass", "multilabel-indicator")),
+        (RepeatedKFold(), None),
+        (RepeatedStratifiedKFold(), ("binary", "multiclass", "multilabel-indicator")),
+        (StratifiedGroupKFold(), ("binary", "multiclass")),
+        (ShuffleSplit(), None),
+        (StratifiedShuffleSplit(test_size=0.5), None),
+        (GroupShuffleSplit(), None),
+        (LeaveOneGroupOut(), None),
+        (LeavePGroupsOut(n_groups=2), None),
+        (GroupKFold(n_splits=3), None),
+        (TimeSeriesSplit(), None),
+        (PredefinedSplit(test_fold=groups), None),
     ]
 
-    for splitter in splitters:
-        list(splitter.split(X, y, groups))
-        list(splitter.split(X, y_2d, groups))
-        if isinstance(splitter, StratifiedGroupKFold):
-            msg = re.escape(
-                "Supported target types are: ('binary', 'multiclass'). Got "
-                "'multilabel-indicator' instead."
-            )
-            with pytest.raises(ValueError, match=msg):
-                list(splitter.split(X, y_multilabel, groups))
-        else:
-            list(splitter.split(X, y_multilabel, groups))
+    msg = "Supported target types are: {}. Got '{}' instead."
+    for splitter, supported_types in splitters:
+        for target_type, y in ys.items():
+            if supported_types is not None and target_type not in supported_types:
+                with pytest.raises(
+                    ValueError,
+                    match=re.escape(msg.format(supported_types, target_type)),
+                ):
+                    list(splitter.split(X, y, groups))
+            else:
+                list(splitter.split(X, y, groups))
 
 
 def check_valid_split(train, test, n_samples=None):
