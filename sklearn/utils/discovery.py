@@ -61,6 +61,7 @@ def all_estimators(type_filter=None):
     ['ARDRegression', 'AdaBoostRegressor', 'BaggingRegressor']
     >>> # Choose a subset of estimators by passing a list:
     >>> both = all_estimators(type_filter=["classifier", "regressor"])
+    >>> list(dict(both))[:3]
     ['ARDRegression', 'AdaBoostClassifier', 'AdaBoostRegressor']
     """
     # lazy import to avoid circular imports from sklearn.base
