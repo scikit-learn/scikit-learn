@@ -86,10 +86,10 @@ the training set is split into *k* smaller sets
 but generally follow the same principles).
 The following procedure is followed for each of the *k* "folds":
 
- * A model is trained using :math:`k-1` of the folds as training data;
- * the resulting model is validated on the remaining part of the data
-   (i.e., it is used as a test set to compute a performance measure
-   such as accuracy).
+* A model is trained using :math:`k-1` of the folds as training data;
+* the resulting model is validated on the remaining part of the data
+  (i.e., it is used as a test set to compute a performance measure
+  such as accuracy).
 
 The performance measure reported by *k*-fold cross-validation
 is then the average of the values computed in the loop.

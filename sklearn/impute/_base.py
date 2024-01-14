@@ -6,6 +6,7 @@ import numbers
 import warnings
 from collections import Counter
 from functools import partial
+from typing import Callable
 
 import numpy as np
 import numpy.ma as ma
@@ -163,7 +164,7 @@ class SimpleImputer(_BaseImputer):
         nullable integer dtypes with missing values, `missing_values`
         can be set to either `np.nan` or `pd.NA`.
 
-    strategy : str, default='mean'
+    strategy : str or Callable, default='mean'
         The imputation strategy.
 
         - If "mean", then replace missing values using the mean along
@@ -175,9 +176,15 @@ class SimpleImputer(_BaseImputer):
           If there is more than one such value, only the smallest is returned.
         - If "constant", then replace missing values with fill_value. Can be
           used with strings or numeric data.
+        - If an instance of Callable, then replace missing values using the
+          scalar statistic returned by running the callable over a dense 1d
+          array containing non-missing values of each column.
 
         .. versionadded:: 0.20
            strategy="constant" for fixed value imputation.
+
+        .. versionadded:: 1.5
+           strategy=callable for custom value imputation.
 
     fill_value : str or numerical value, default=None
         When strategy == "constant", `fill_value` is used to replace all
@@ -270,7 +277,10 @@ class SimpleImputer(_BaseImputer):
 
     _parameter_constraints: dict = {
         **_BaseImputer._parameter_constraints,
-        "strategy": [StrOptions({"mean", "median", "most_frequent", "constant"})],
+        "strategy": [
+            StrOptions({"mean", "median", "most_frequent", "constant"}),
+            callable,
+        ],
         "fill_value": "no_validation",  # any object is valid
         "copy": ["boolean"],
     }
@@ -456,6 +466,9 @@ class SimpleImputer(_BaseImputer):
                     elif strategy == "most_frequent":
                         statistics[i] = _most_frequent(column, 0, n_zeros)
 
+                    elif isinstance(strategy, Callable):
+                        statistics[i] = self.strategy(column)
+
         super()._fit_indicator(missing_mask)
 
         return statistics
@@ -517,6 +530,13 @@ class SimpleImputer(_BaseImputer):
             # for constant strategy, self.statistcs_ is used to store
             # fill_value in each column
             return np.full(X.shape[1], fill_value, dtype=X.dtype)
+
+        # Custom
+        elif isinstance(strategy, Callable):
+            statistics = np.empty(masked_X.shape[1])
+            for i in range(masked_X.shape[1]):
+                statistics[i] = self.strategy(masked_X[:, i].compressed())
+            return statistics
 
     def transform(self, X):
         """Impute all missing values in `X`.
