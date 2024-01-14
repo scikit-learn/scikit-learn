@@ -41,6 +41,17 @@ def all_estimators(type_filter=None):
     estimators : list of tuples
         List of (name, class), where ``name`` is the class name as string
         and ``class`` is the actual type of the class.
+
+    Examples
+    --------
+    >>> from sklearn.utils.discovery import all_estimators
+    >>> estimators = all_estimators()
+    >>> type(estimators)
+    <class 'list'>
+    >>> type(estimators[0])
+    <class 'tuple'>
+    >>> list(dict(estimators))[:3]
+    ['ARDRegression', 'AdaBoostClassifier', 'AdaBoostRegressor']
     """
     # lazy import to avoid circular imports from sklearn.base
     from ..base import (
@@ -140,6 +151,17 @@ def all_displays():
     displays : list of tuples
         List of (name, class), where ``name`` is the display class name as
         string and ``class`` is the actual type of the class.
+
+    Examples
+    --------
+    >>> from sklearn.utils.discovery import all_displays
+    >>> displays = all_displays()
+    >>> type(displays)
+    <class 'list'>
+    >>> type(displays[0])
+    <class 'tuple'>
+    >>> list(dict(displays))[:3]
+    ['CalibrationDisplay', 'ConfusionMatrixDisplay', 'DecisionBoundaryDisplay']
     """
     # lazy import to avoid circular imports from sklearn.base
     from ._testing import ignore_warnings
@@ -190,6 +212,17 @@ def all_functions():
     functions : list of tuples
         List of (name, function), where ``name`` is the function name as
         string and ``function`` is the actual function.
+
+    Examples
+    --------
+    >>> from sklearn.utils.discovery import all_functions
+    >>> functions = all_functions()
+    >>> type(functions)
+    <class 'list'>
+    >>> type(functions[0])
+    <class 'tuple'>
+    >>> list(dict(functions))[:3]
+    ['accuracy_score', 'add_dummy_feature', 'additive_chi2_kernel']
     """
     # lazy import to avoid circular imports from sklearn.base
     from ._testing import ignore_warnings
