@@ -899,7 +899,8 @@ class BiclusterMixin:
     ...     \"\"\"A simple bicluster estimator for demonstration purposes.\"\"\"
     ...     def fit(self, X, y=None):
     ...         \"\"\"Fit the bicluster estimator.
-    ...         For simplicity, this just sets `rows_` and `columns_` to be all rows and columns.
+    ...         For simplicity, this just sets `rows_` and `columns_` to be all rows 
+    ...         and columns.
     ...         \"\"\"
     ...         self.rows_ = np.ones(X.shape[0], dtype=bool)
     ...         self.columns_ = np.ones(X.shape[1], dtype=bool)
