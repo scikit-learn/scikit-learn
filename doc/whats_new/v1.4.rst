@@ -19,6 +19,15 @@ Changelog
   is read-only, e.g., a `numpy.memmap` instance.
   :pr:`28111` by :user:`Yao Xiao <Charlie-XIAO>`.
 
+:mod:`sklearn.neighbors`
+........................
+
+- |Fix| :meth:`neighbors.KNeighborsClassifier.predict` and
+  :meth:`neighbors.KNeighborsClassifier.predict_proba` now raises an error when the
+  weights of all neighbors of some sample are zero. This can happen when `weights`
+  is a user-defined function.
+  :pr:`26410` by :user:`Yao Xiao <Charlie-XIAO>`.
+
 :mod:`sklearn.utils`
 ....................
 
