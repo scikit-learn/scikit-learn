@@ -155,7 +155,7 @@ clone(forest)  # the clone is not fitted
 # ------------------------
 # Many meta-estimators and cross-validation routines now support metadata
 # routing, which are listed in the :ref:`user guide
-# <_metadata_routing_models>`. For instance, this is how you can do a nested
+# <metadata_routing_models>`. For instance, this is how you can do a nested
 # cross-validation with sample weights and :class:`~model_selection.GroupKFold`:
 import sklearn
 from sklearn.metrics import get_scorer
