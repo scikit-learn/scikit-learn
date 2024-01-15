@@ -31,6 +31,14 @@ Changelog
 - |Feature| A fitted :class:`compose.ColumnTransformer` now implements `__getitem__`
   which returns the fitted transformers by name. :pr:`27990` by `Thomas Fan`_.
 
+:mod:`sklearn.feature_extraction`
+.................................
+
+- |Efficiency| :class:`feature_extraction.text.TfidfTransformer` is now faster
+  and more memory-efficient by using a NumPy vector instead of a sparse matrix
+  for storing the inverse document frequency.
+  :pr:`18843` by :user:`Paolo Montesel <thebabush>`.
+
 :mod:`sklearn.impute`
 .....................
 

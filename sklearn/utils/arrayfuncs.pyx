@@ -33,7 +33,7 @@ def min_pos(const floating[:] X):
 
 
 def _all_with_any_reduction_axis_1(real_numeric[:, :] array, real_numeric value):
-    """Check that all values are equal to `value` along a specific axis.
+    """Check whether any row contains all values equal to `value`.
 
     It is equivalent to `np.any(np.all(X == value, axis=1))`, but it avoids to
     materialize the temporary boolean matrices in memory.
