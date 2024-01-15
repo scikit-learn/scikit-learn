@@ -891,34 +891,29 @@ class ClusterMixin:
 class BiclusterMixin:
     """Mixin class for all bicluster estimators in scikit-learn.
 
+    This mixin defines the following functionality:
+
+    - `biclusters_` property that returns the row and column indicators;
+    - `get_indices` method that returns the row and column indices of a bicluster;
+    - `get_shape` method that returns the shape of a bicluster;
+    - `get_submatrix` method that returns the submatrix corresponding to a bicluster.
+
     Examples
     --------
     >>> import numpy as np
     >>> from sklearn.base import BaseEstimator, BiclusterMixin
-    >>> class SimpleBicluster(BaseEstimator, BiclusterMixin):
-    ...     \"\"\"A simple bicluster estimator for demonstration purposes.\"\"\"
+    >>> class DummyBiClustering(BiclusterMixin, BaseEstimator):
     ...     def fit(self, X, y=None):
-    ...         \"\"\"Fit the bicluster estimator.
-    ...         For simplicity, this just sets `rows_` and `columns_` to be all rows
-    ...         and columns.
-    ...         \"\"\"
-    ...         self.rows_ = np.ones(X.shape[0], dtype=bool)
-    ...         self.columns_ = np.ones(X.shape[1], dtype=bool)
+    ...         self.rows_ = np.ones(shape=(1, X.shape[0]), dtype=bool)
+    ...         self.columns_ = np.ones(shape=(1, X.shape[1]), dtype=bool)
     ...         return self
-    >>> # Create some data
-    >>> X = np.random.rand(10, 5)
-    >>> # Create and fit the bicluster estimator
-    >>> bicluster = SimpleBicluster().fit(X)
-    >>> # Use the biclusters_ property
-    >>> rows, columns = bicluster.biclusters_
-    >>> print("Rows:", rows)
-    Rows: [ True  True  True  True  True  True  True  True  True  True]
-    >>> print("Columns:", columns)
-    Columns: [ True  True  True  True  True]
-    >>> # Use the get_indices method
-    >>> indices = bicluster.get_indices(0)
-    >>> print("Indices:", indices)
-    Indice: (array([0]), array([0]))
+    >>> X = np.array([[1, 1], [2, 1], [1, 0],
+    ...               [4, 7], [3, 5], [3, 6]])
+    >>> bicluster = DummyBiClustering().fit(X)
+    >>> hasattr(bicluster, "biclusters_")
+    True
+    >>> bicluster.get_indices(0)
+    (array([0, 1, 2, 3, 4, 5]), array([0, 1]))
     """
 
     @property
