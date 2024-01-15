@@ -96,44 +96,44 @@ Citing scikit-learn
 If you use scikit-learn in a scientific publication, we would appreciate
 citations to the following paper:
 
-  `Scikit-learn: Machine Learning in Python
-  <https://jmlr.csail.mit.edu/papers/v12/pedregosa11a.html>`_, Pedregosa
-  *et al.*, JMLR 12, pp. 2825-2830, 2011.
+`Scikit-learn: Machine Learning in Python
+<https://jmlr.csail.mit.edu/papers/v12/pedregosa11a.html>`_, Pedregosa
+*et al.*, JMLR 12, pp. 2825-2830, 2011.
 
-  Bibtex entry::
+Bibtex entry::
 
-    @article{scikit-learn,
-     title={Scikit-learn: Machine Learning in {P}ython},
-     author={Pedregosa, F. and Varoquaux, G. and Gramfort, A. and Michel, V.
-             and Thirion, B. and Grisel, O. and Blondel, M. and Prettenhofer, P.
-             and Weiss, R. and Dubourg, V. and Vanderplas, J. and Passos, A. and
-             Cournapeau, D. and Brucher, M. and Perrot, M. and Duchesnay, E.},
-     journal={Journal of Machine Learning Research},
-     volume={12},
-     pages={2825--2830},
-     year={2011}
-    }
+  @article{scikit-learn,
+    title={Scikit-learn: Machine Learning in {P}ython},
+    author={Pedregosa, F. and Varoquaux, G. and Gramfort, A. and Michel, V.
+            and Thirion, B. and Grisel, O. and Blondel, M. and Prettenhofer, P.
+            and Weiss, R. and Dubourg, V. and Vanderplas, J. and Passos, A. and
+            Cournapeau, D. and Brucher, M. and Perrot, M. and Duchesnay, E.},
+    journal={Journal of Machine Learning Research},
+    volume={12},
+    pages={2825--2830},
+    year={2011}
+  }
 
 If you want to cite scikit-learn for its API or design, you may also want to consider the
 following paper:
 
-  :arxiv:`API design for machine learning software: experiences from the scikit-learn
-  project <1309.0238>`, Buitinck *et al.*, 2013.
+:arxiv:`API design for machine learning software: experiences from the scikit-learn
+project <1309.0238>`, Buitinck *et al.*, 2013.
 
-  Bibtex entry::
+Bibtex entry::
 
-    @inproceedings{sklearn_api,
-      author    = {Lars Buitinck and Gilles Louppe and Mathieu Blondel and
-                   Fabian Pedregosa and Andreas Mueller and Olivier Grisel and
-                   Vlad Niculae and Peter Prettenhofer and Alexandre Gramfort
-                   and Jaques Grobler and Robert Layton and Jake VanderPlas and
-                   Arnaud Joly and Brian Holt and Ga{\"{e}}l Varoquaux},
-      title     = {{API} design for machine learning software: experiences from the scikit-learn
-                   project},
-      booktitle = {ECML PKDD Workshop: Languages for Data Mining and Machine Learning},
-      year      = {2013},
-      pages = {108--122},
-    }
+  @inproceedings{sklearn_api,
+    author    = {Lars Buitinck and Gilles Louppe and Mathieu Blondel and
+                  Fabian Pedregosa and Andreas Mueller and Olivier Grisel and
+                  Vlad Niculae and Peter Prettenhofer and Alexandre Gramfort
+                  and Jaques Grobler and Robert Layton and Jake VanderPlas and
+                  Arnaud Joly and Brian Holt and Ga{\"{e}}l Varoquaux},
+    title     = {{API} design for machine learning software: experiences from the scikit-learn
+                  project},
+    booktitle = {ECML PKDD Workshop: Languages for Data Mining and Machine Learning},
+    year      = {2013},
+    pages = {108--122},
+  }
 
 Artwork
 -------
