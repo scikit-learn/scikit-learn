@@ -41,7 +41,7 @@ Changelog
 
 - |Enhancement| :class:`feature_extraction.text.TfidfTransformer` now preserves
   the data type of the input matrix if it is `np.float64` or `np.float32`.
-  :pr:`xxx` by :user:`Guillaume Lemaitre <glemaitre>`.
+  :pr:`28136` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 :mod:`sklearn.impute`
 .....................
