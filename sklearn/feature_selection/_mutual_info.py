@@ -386,6 +386,7 @@ def mutual_info_regression(
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
+
         .. versionadded:: 1.5
 
     Returns
@@ -505,6 +506,7 @@ def mutual_info_classif(
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
+
         .. versionadded:: 1.5
 
     Returns

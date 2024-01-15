@@ -255,7 +255,7 @@ def test_mutual_info_regression_X_int_dtype(global_random_seed):
 
 
 def test_mutual_info_regression_n_jobs(global_random_seed):
-    """Check that results agree when n_jobs = None and n_jobs = 2."""
+    """Check that results agree when `n_jobs=None` and `n_jobs=2`."""
     X = np.random.uniform(100, size=(100, 10))
     y = np.random.uniform(100, size=100)
 
