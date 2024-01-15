@@ -291,7 +291,7 @@ The next steps now describe the process of modifying code and submitting a PR:
 
 9. Create a feature branch to hold your development changes:
 
-    .. prompt:: bash $
+   .. prompt:: bash $
 
         git checkout -b my_feature
 
@@ -529,25 +529,25 @@ Continuous Integration (CI)
 Please note that if one of the following markers appear in the latest commit
 message, the following actions are taken.
 
-    ====================== ===================
-    Commit Message Marker  Action Taken by CI
-    ---------------------- -------------------
-    [ci skip]              CI is skipped completely
-    [cd build]             CD is run (wheels and source distribution are built)
-    [cd build gh]          CD is run only for GitHub Actions
-    [cd build cirrus]      CD is run only for Cirrus CI
-    [lint skip]            Azure pipeline skips linting
-    [scipy-dev]            Build & test with our dependencies (numpy, scipy, etc.) development builds
-    [nogil]                Build & test with the nogil experimental branches of CPython, Cython, NumPy, SciPy, ...
-    [pypy]                 Build & test with PyPy
-    [pyodide]              Build & test with Pyodide
-    [azure parallel]       Run Azure CI jobs in parallel
-    [cirrus arm]           Run Cirrus CI ARM test
-    [float32]              Run float32 tests by setting `SKLEARN_RUN_FLOAT32_TESTS=1`. See :ref:`environment_variable` for more details
-    [doc skip]             Docs are not built
-    [doc quick]            Docs built, but excludes example gallery plots
-    [doc build]            Docs built including example gallery plots (very long)
-    ====================== ===================
+====================== ===================
+Commit Message Marker  Action Taken by CI
+---------------------- -------------------
+[ci skip]              CI is skipped completely
+[cd build]             CD is run (wheels and source distribution are built)
+[cd build gh]          CD is run only for GitHub Actions
+[cd build cirrus]      CD is run only for Cirrus CI
+[lint skip]            Azure pipeline skips linting
+[scipy-dev]            Build & test with our dependencies (numpy, scipy, etc.) development builds
+[nogil]                Build & test with the nogil experimental branches of CPython, Cython, NumPy, SciPy, ...
+[pypy]                 Build & test with PyPy
+[pyodide]              Build & test with Pyodide
+[azure parallel]       Run Azure CI jobs in parallel
+[cirrus arm]           Run Cirrus CI ARM test
+[float32]              Run float32 tests by setting `SKLEARN_RUN_FLOAT32_TESTS=1`. See :ref:`environment_variable` for more details
+[doc skip]             Docs are not built
+[doc quick]            Docs built, but excludes example gallery plots
+[doc build]            Docs built including example gallery plots (very long)
+====================== ===================
 
 Note that, by default, the documentation is built but only the examples
 that are directly modified by the pull request are executed.
@@ -713,30 +713,30 @@ We are glad to accept any sort of documentation:
 
   In general have the following in mind:
 
-    * Use Python basic types. (``bool`` instead of ``boolean``)
-    * Use parenthesis for defining shapes: ``array-like of shape (n_samples,)``
-      or ``array-like of shape (n_samples, n_features)``
-    * For strings with multiple options, use brackets: ``input: {'log',
-      'squared', 'multinomial'}``
-    * 1D or 2D data can be a subset of ``{array-like, ndarray, sparse matrix,
-      dataframe}``. Note that ``array-like`` can also be a ``list``, while
-      ``ndarray`` is explicitly only a ``numpy.ndarray``.
-    * Specify ``dataframe`` when "frame-like" features are being used, such as
-      the column names.
-    * When specifying the data type of a list, use ``of`` as a delimiter: ``list
-      of int``. When the parameter supports arrays giving details about the
-      shape and/or data type and a list of such arrays, you can use one of
-      ``array-like of shape (n_samples,) or list of such arrays``.
-    * When specifying the dtype of an ndarray, use e.g. ``dtype=np.int32`` after
-      defining the shape: ``ndarray of shape (n_samples,), dtype=np.int32``. You
-      can specify multiple dtype as a set: ``array-like of shape (n_samples,),
-      dtype={np.float64, np.float32}``. If one wants to mention arbitrary
-      precision, use `integral` and `floating` rather than the Python dtype
-      `int` and `float`. When both `int` and `floating` are supported, there is
-      no need to specify the dtype.
-    * When the default is ``None``, ``None`` only needs to be specified at the
-      end with ``default=None``. Be sure to include in the docstring, what it
-      means for the parameter or attribute to be ``None``.
+  * Use Python basic types. (``bool`` instead of ``boolean``)
+  * Use parenthesis for defining shapes: ``array-like of shape (n_samples,)``
+    or ``array-like of shape (n_samples, n_features)``
+  * For strings with multiple options, use brackets: ``input: {'log',
+    'squared', 'multinomial'}``
+  * 1D or 2D data can be a subset of ``{array-like, ndarray, sparse matrix,
+    dataframe}``. Note that ``array-like`` can also be a ``list``, while
+    ``ndarray`` is explicitly only a ``numpy.ndarray``.
+  * Specify ``dataframe`` when "frame-like" features are being used, such as
+    the column names.
+  * When specifying the data type of a list, use ``of`` as a delimiter: ``list
+    of int``. When the parameter supports arrays giving details about the
+    shape and/or data type and a list of such arrays, you can use one of
+    ``array-like of shape (n_samples,) or list of such arrays``.
+  * When specifying the dtype of an ndarray, use e.g. ``dtype=np.int32`` after
+    defining the shape: ``ndarray of shape (n_samples,), dtype=np.int32``. You
+    can specify multiple dtype as a set: ``array-like of shape (n_samples,),
+    dtype={np.float64, np.float32}``. If one wants to mention arbitrary
+    precision, use `integral` and `floating` rather than the Python dtype
+    `int` and `float`. When both `int` and `floating` are supported, there is
+    no need to specify the dtype.
+  * When the default is ``None``, ``None`` only needs to be specified at the
+    end with ``default=None``. Be sure to include in the docstring, what it
+    means for the parameter or attribute to be ``None``.
 
 * Add "See Also" in docstrings for related classes/functions.
 
@@ -809,15 +809,15 @@ details, and give intuition to the reader on what the algorithm does.
 
 * Information that can be hidden by default using dropdowns is:
 
-    * low hierarchy sections such as `References`, `Properties`, etc. (see for
-      instance the subsections in :ref:`det_curve`);
+  * low hierarchy sections such as `References`, `Properties`, etc. (see for
+    instance the subsections in :ref:`det_curve`);
 
-    * in-depth mathematical details;
+  * in-depth mathematical details;
 
-    * narrative that is use-case specific;
+  * narrative that is use-case specific;
 
-    * in general, narrative that may only interest users that want to go beyond
-      the pragmatics of a given tool.
+  * in general, narrative that may only interest users that want to go beyond
+    the pragmatics of a given tool.
 
 * Do not use dropdowns for the low level section `Examples`, as it should stay
   visible to all users. Make sure that the `Examples` section comes right after
