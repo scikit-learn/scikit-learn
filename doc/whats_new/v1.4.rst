@@ -19,6 +19,15 @@ Changelog
   is read-only, e.g., a `numpy.memmap` instance.
   :pr:`28111` by :user:`Yao Xiao <Charlie-XIAO>`.
 
+:mod:`sklearn.neighbors`
+........................
+
+- |Fix| :meth:`neighbors.KNeighborsClassifier.predict` and
+  :meth:`neighbors.KNeighborsClassifier.predict_proba` now raises an error when the
+  weights of all neighbors of some sample are zero. This can happen when `weights`
+  is a user-defined function.
+  :pr:`26410` by :user:`Yao Xiao <Charlie-XIAO>`.
+
 :mod:`sklearn.utils`
 ....................
 
@@ -77,8 +86,8 @@ Changes impacting all modules
   documentation and is color-coded to denote whether the estimator is fitted or
   not (unfitted estimators are orange, fitted estimators are blue).
   :pr:`26616` by :user:`Riccardo Cappuzzo <rcap107>`,
-  :user:`Ines Ibnukhsein <Ines1999>`, :user:`Gael Varoquaux <GaelVaroquaux>`, and
-  :user:`Lilian Boulard <LilianBoulard>`.
+  :user:`Ines Ibnukhsein <Ines1999>`, :user:`Gael Varoquaux <GaelVaroquaux>`,
+  `Joel Nothman`_ and :user:`Lilian Boulard <LilianBoulard>`.
 
 - |Fix| Fixed a bug in most estimators and functions where setting a parameter to
   a large integer would cause a `TypeError`.
@@ -461,7 +470,7 @@ Changelog
 - |Efficiency| :class:`ensemble.GradientBoostingClassifier` is faster,
   for binary and in particular for multiclass problems thanks to the private loss
   function module.
-  :pr:`26278` by :user:`Christian Lorentzen <lorentzenchr>`.
+  :pr:`26278` and :pr:`28095` by :user:`Christian Lorentzen <lorentzenchr>`.
 
 - |Efficiency| Improves runtime and memory usage for
   :class:`ensemble.GradientBoostingClassifier` and
@@ -496,6 +505,14 @@ Changelog
   :class:`ensemble.StackingClassifier`, :class:`ensemble.StackingRegressor`,
   support missing values if all `estimators` support missing values.
   :pr:`27710` by :user:`Guillaume Lemaitre <glemaitre>`.
+
+- |Fix| Support loading pickles of :class:`ensemble.HistGradientBoostingClassifier` and
+  :class:`ensemble.HistGradientBoostingRegressor` when the pickle has
+  been generated on a platform with a different bitness. A typical example is
+  to train and pickle the model on 64 bit machine and load the model on a 32
+  bit machine for prediction.
+  :pr:`28074` by :user:`Christian Lorentzen <lorentzenchr>` and
+  :user:`Loïc Estève <lesteve>`.
 
 - |API| In :class:`ensemble.AdaBoostClassifier`, the `algorithm` argument `SAMME.R` was
   deprecated and will be removed in 1.6.
@@ -539,6 +556,11 @@ Changelog
   `response_method="decision_function"`. It allows to plot the decision boundary for
   both binary and multiclass classifiers.
   :pr:`27291` by :user:`Guillaume Lemaitre <glemaitre>`.
+
+- |Fix| :meth:`inspection.DecisionBoundaryDisplay.from_estimator` and
+  :class:`inspection.PartialDependenceDisplay.from_estimator` now return the correct
+  type for subclasses.
+  :pr:`27675` by :user:`John Cant <johncant>`.
 
 - |API| :class:`inspection.DecisionBoundaryDisplay` raise an `AttributeError` instead
   of a `ValueError` when an estimator does not implement the requested response method.
@@ -628,6 +650,13 @@ Changelog
   scorer requesting a non-thresholded decision function (from `decision_function` or
   `predict_proba`). Such scorer are specific to classification.
   :pr:`26840` by :user:`Guillaume Lemaitre <glemaitre>`.
+
+- |Fix| :meth:`metrics.DetCurveDisplay.from_predictions`,
+  :class:`metrics.PrecisionRecallDisplay.from_predictions`,
+  :class:`metrics.PredictionErrorDisplay.from_predictions`, and
+  :class:`metrics.RocCurveDisplay.from_predictions` now return the correct type
+  for subclasses.
+  :pr:`27675` by :user:`John Cant <johncant>`.
 
 - |API| Deprecated `needs_threshold` and `needs_proba` from :func:`metrics.make_scorer`.
   These parameters will be removed in version 1.6. Instead, use `response_method` that

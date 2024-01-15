@@ -87,7 +87,7 @@ def clear_data_home(data_home=None):
         is `~/scikit_learn_data`.
 
     Examples
-    ----------
+    --------
     >>> from sklearn.datasets import clear_data_home
     >>> clear_data_home()  # doctest: +SKIP
     """

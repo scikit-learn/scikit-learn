@@ -286,10 +286,12 @@ model.
 For a predictor :math:`F` with two features:
 
 - a **monotonic increase constraint** is a constraint of the form:
+
   .. math::
       x_1 \leq x_1' \implies F(x_1, x_2) \leq F(x_1', x_2)
 
 - a **monotonic decrease constraint** is a constraint of the form:
+
   .. math::
       x_1 \leq x_1' \implies F(x_1, x_2) \geq F(x_1', x_2)
 
