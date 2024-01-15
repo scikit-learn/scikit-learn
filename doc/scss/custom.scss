@@ -1,0 +1,54 @@
+/** This is a general styling sheet.
+  * It is mainly used to override the default styling of pydata-sphinx-theme.
+  */
+
+/** The search button in pydata-sphinx-theme, when used as "search-button" instead of
+  * "search-button-field", has a strange bottom padding that cause it to not align with
+  * other buttons in the navbar.
+  */
+
+button.search-button {
+  padding: 0;
+}
+
+/** Fix the width of the primary sidebar.
+  */
+
+.bd-sidebar-primary{
+  width: 20em;
+}
+
+/** Disable the border and background of ..topic::; meanwhile revert the text coloring
+  * to normal and retain the normal padding of lists.
+  */
+
+div.topic
+aside.topic {
+  background-color: transparent;
+  border: none;
+  padding: 0;
+  box-shadow: none !important;
+
+  p {
+    color: var(--pst-color-text-base) !important;
+  }
+
+  ul.simple {
+    padding-left: 2rem;
+  }
+}
+
+/** pydata-sphinx-theme unsets margin-bottom for the version switcher button only when
+  * screen width >= 960px, causing the button to not align with other icons when screen
+  * width is small */
+
+button.btn.version-switcher__button {
+  margin-bottom: unset;
+}
+
+/** Ensure that aspect ratio of images in the body part is not changed.
+  */
+
+article.bd-article img {
+  height: unset !important;
+}

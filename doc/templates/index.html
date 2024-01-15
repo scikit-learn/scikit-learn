@@ -1,16 +1,19 @@
 {% extends "layout.html" %}
 {% set title = 'scikit-learn: machine learning in Python' %}
 
-{% if theme_link_to_live_contributing_page|tobool %}
+{% if is_devrelease|tobool %}
+  {%- set contributing_link = pathto("developers/contributing") %}
+  {%- set contributing_attrs = "" %}
+{%- else %}
   {%- set contributing_link = "https://scikit-learn.org/dev/developers/contributing.html" %}
   {%- set contributing_attrs = 'target="_blank" rel="noopener noreferrer"' %}
-{%- else %}
-  {%- set contributing_link = pathto('developers/contributing') %}
-  {%- set contributing_attrs = '' %}
 {%- endif %}
 
+{%- import "static/webpack-macros.html" as _webpack with context %}
 
-{% block content %}
+{% block docs_navbar %}
+{{ super() }}
+
 <div class="container-fluid sk-landing-bg py-3">
   <div class="container sk-landing-container">
     <div class="row">
@@ -32,6 +35,10 @@
     </div>
   </div>
 </div>
+
+{% endblock docs_navbar %}
+
+{% block docs_main %}
 
 <div class="container sk-landing-container pt-3 body" role="main">
   <div class="row no-gutters">
@@ -160,6 +167,10 @@
   </div>
 </div>
 
+{% endblock docs_main %}
+
+{% block footer %}
+
 <div class="container-fluid sk-landing-bg-more-info py-3">
   <div class="container sk-landing-container">
     <div class="row">
@@ -263,4 +274,11 @@
         </a>
   </div>
 </div>
-{% endblock %}
+
+{% endblock footer %}
+
+<!-- Scripts placed at the end of the page to cut down on time to first content -->
+
+{%- block scripts_end %}
+{{ _webpack.body_post() }}
+{%- endblock scripts_end %}
