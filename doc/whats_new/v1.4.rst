@@ -86,8 +86,8 @@ Changes impacting all modules
   documentation and is color-coded to denote whether the estimator is fitted or
   not (unfitted estimators are orange, fitted estimators are blue).
   :pr:`26616` by :user:`Riccardo Cappuzzo <rcap107>`,
-  :user:`Ines Ibnukhsein <Ines1999>`, :user:`Gael Varoquaux <GaelVaroquaux>`, and
-  :user:`Lilian Boulard <LilianBoulard>`.
+  :user:`Ines Ibnukhsein <Ines1999>`, :user:`Gael Varoquaux <GaelVaroquaux>`,
+  `Joel Nothman`_ and :user:`Lilian Boulard <LilianBoulard>`.
 
 - |Fix| Fixed a bug in most estimators and functions where setting a parameter to
   a large integer would cause a `TypeError`.
