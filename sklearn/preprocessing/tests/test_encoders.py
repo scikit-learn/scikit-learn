@@ -387,7 +387,7 @@ def test_X_is_not_1D_pandas(method):
     X = pd.Series([6, 3, 4, 6])
     oh = OneHotEncoder()
 
-    msg = "Expected 2D array, got 1D array instead"
+    msg = f"Expected a 2-dimensional container but got {type(X)} instead."
     with pytest.raises(ValueError, match=msg):
         getattr(oh, method)(X)
 
