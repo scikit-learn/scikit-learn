@@ -832,8 +832,7 @@ def dict_learning_online(
     ...     random_state=42,
     ... )
     >>> U, V = dict_learning_online(
-    ...     X, 15, alpha=0.2, max_iter=20, batch_size=3,
-    ...     random_state=42,
+    ...     X, n_components=15, alpha=0.2, max_iter=20, batch_size=3, random_state=42
     ... )
 
     We can check the level of sparsity of `U`:
@@ -1036,12 +1035,12 @@ def dict_learning(
     ...     n_samples=30, n_components=15, n_features=20, n_nonzero_coefs=10,
     ...     random_state=42,
     ... )
-    >>> U, V, errors = dict_learning(X, 15, alpha=0.1, random_state=42)
+    >>> U, V, errors = dict_learning(X, n_components=15, alpha=0.1, random_state=42)
 
     We can check the level of sparsity of `U`:
 
     >>> np.mean(U == 0)
-    0.62...
+    0.6...
 
     We can compare the average squared euclidean norm of the reconstruction
     error of the sparse coded signal relative to the squared euclidean norm of
