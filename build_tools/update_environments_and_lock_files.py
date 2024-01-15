@@ -346,6 +346,8 @@ build_metadata_list = [
         ],
         "package_constraints": {
             "python": "3.9",
+            # TODO: temporary pin because pydata-sphinx-theme 0.15.0 breaks the navbar
+            "pydata-sphinx-theme": "<0.15.0",
         },
     },
     {
