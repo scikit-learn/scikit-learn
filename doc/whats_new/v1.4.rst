@@ -506,6 +506,14 @@ Changelog
   support missing values if all `estimators` support missing values.
   :pr:`27710` by :user:`Guillaume Lemaitre <glemaitre>`.
 
+- |Fix| Support loading pickles of :class:`ensemble.HistGradientBoostingClassifier` and
+  :class:`ensemble.HistGradientBoostingRegressor` when the pickle has
+  been generated on a platform with a different bitness. A typical example is
+  to train and pickle the model on 64 bit machine and load the model on a 32
+  bit machine for prediction.
+  :pr:`28074` by :user:`Christian Lorentzen <lorentzenchr>` and
+  :user:`Loïc Estève <lesteve>`.
+
 - |API| In :class:`ensemble.AdaBoostClassifier`, the `algorithm` argument `SAMME.R` was
   deprecated and will be removed in 1.6.
   :pr:`26830` by :user:`Stefanie Senger <StefanieSenger>`.
