@@ -834,7 +834,7 @@ def test_estimator_getstate_using_slots_error_message():
     [
         ("dataframe", "1.5.0"),
         ("pyarrow", "12.0.0"),
-        ("polars", "0.18.2"),
+        ("polars", "0.19.12"),
     ],
 )
 def test_dataframe_protocol(constructor_name, minversion):

@@ -99,6 +99,7 @@ Estimators
 - :class:`preprocessing.KernelCenterer`
 - :class:`preprocessing.MaxAbsScaler`
 - :class:`preprocessing.MinMaxScaler`
+- :class:`preprocessing.Normalizer`
 
 Metrics
 -------

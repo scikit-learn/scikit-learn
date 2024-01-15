@@ -20,9 +20,7 @@ the :class:`sklearn.preprocessing.SplineTransformer` class and its
 # We start by loading the data from the OpenML repository.
 from sklearn.datasets import fetch_openml
 
-bike_sharing = fetch_openml(
-    "Bike_Sharing_Demand", version=2, as_frame=True, parser="pandas"
-)
+bike_sharing = fetch_openml("Bike_Sharing_Demand", version=2, as_frame=True)
 df = bike_sharing.frame
 
 # %%
@@ -167,19 +165,16 @@ X.iloc[train_4]
 # -----------------
 #
 # Gradient Boosting Regression with decision trees is often flexible enough to
-# efficiently handle heterogenous tabular data with a mix of categorical and
+# efficiently handle heterogeneous tabular data with a mix of categorical and
 # numerical features as long as the number of samples is large enough.
 #
 # Here, we use the modern
 # :class:`~sklearn.ensemble.HistGradientBoostingRegressor` with native support
-# for categorical features. Therefore, we only do minimal ordinal encoding for
-# the categorical variables and then
-# let the model know that it should treat those as categorical variables by
-# using a dedicated tree splitting rule. Since we use an ordinal encoder, we
-# pass the list of categorical values explicitly to use a logical order when
-# encoding the categories as integers instead of the lexicographical order.
-# This also has the added benefit of preventing any issue with unknown
-# categories when using cross-validation.
+# for categorical features. Therefore, we only need to set
+# `categorical_features="from_dtype"` such that features with categorical dtype
+# are considered categorical features. For reference, we extract the categorical
+# features from the dataframe based on the dtype. The internal trees use a dedicated
+# tree splitting rule for these features.
 #
 # The numerical variables need no preprocessing and, for the sake of simplicity,
 # we only try the default hyper-parameters for this model:
@@ -187,42 +182,10 @@ from sklearn.compose import ColumnTransformer
 from sklearn.ensemble import HistGradientBoostingRegressor
 from sklearn.model_selection import cross_validate
 from sklearn.pipeline import make_pipeline
-from sklearn.preprocessing import OrdinalEncoder
 
-categorical_columns = [
-    "weather",
-    "season",
-    "holiday",
-    "workingday",
-]
-categories = [
-    ["clear", "misty", "rain"],
-    ["spring", "summer", "fall", "winter"],
-    ["False", "True"],
-    ["False", "True"],
-]
-ordinal_encoder = OrdinalEncoder(categories=categories)
-
-
-gbrt_pipeline = make_pipeline(
-    ColumnTransformer(
-        transformers=[
-            ("categorical", ordinal_encoder, categorical_columns),
-        ],
-        remainder="passthrough",
-        # Use short feature names to make it easier to specify the categorical
-        # variables in the HistGradientBoostingRegressor in the next
-        # step of the pipeline.
-        verbose_feature_names_out=False,
-    ),
-    HistGradientBoostingRegressor(
-        max_iter=300,
-        early_stopping=True,
-        validation_fraction=0.1,
-        categorical_features=categorical_columns,
-        random_state=42,
-    ),
-).set_output(transform="pandas")
+gbrt = HistGradientBoostingRegressor(categorical_features="from_dtype", random_state=42)
+categorical_columns = X.columns[X.dtypes == "category"]
+print("Categorical features:", categorical_columns.tolist())
 
 # %%
 #
@@ -256,14 +219,7 @@ def evaluate(model, X, y, cv, model_prop=None, model_step=None):
     )
 
 
-evaluate(
-    gbrt_pipeline,
-    X,
-    y,
-    cv=ts_cv,
-    model_prop="n_iter_",
-    model_step="histgradientboostingregressor",
-)
+evaluate(gbrt, X, y, cv=ts_cv, model_prop="n_iter_")
 
 # %%
 # We see that we set `max_iter` large enough such that early stopping took place.
@@ -735,8 +691,8 @@ evaluate(one_hot_poly_pipeline, X, y, cv=ts_cv)
 # Let us now have a qualitative look at the predictions of the kernel models
 # and of the gradient boosted trees that should be able to better model
 # non-linear interactions between features:
-gbrt_pipeline.fit(X.iloc[train_0], y.iloc[train_0])
-gbrt_predictions = gbrt_pipeline.predict(X.iloc[test_0])
+gbrt.fit(X.iloc[train_0], y.iloc[train_0])
+gbrt_predictions = gbrt.predict(X.iloc[test_0])
 
 one_hot_poly_pipeline.fit(X.iloc[train_0], y.iloc[train_0])
 one_hot_poly_predictions = one_hot_poly_pipeline.predict(X.iloc[test_0])

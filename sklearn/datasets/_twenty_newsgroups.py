@@ -31,6 +31,7 @@ import pickle
 import re
 import shutil
 import tarfile
+from contextlib import suppress
 
 import joblib
 import numpy as np
@@ -69,15 +70,16 @@ def _download_20newsgroups(target_dir, cache_path):
     train_path = os.path.join(target_dir, TRAIN_FOLDER)
     test_path = os.path.join(target_dir, TEST_FOLDER)
 
-    if not os.path.exists(target_dir):
-        os.makedirs(target_dir)
+    os.makedirs(target_dir, exist_ok=True)
 
     logger.info("Downloading dataset from %s (14 MB)", ARCHIVE.url)
     archive_path = _fetch_remote(ARCHIVE, dirname=target_dir)
 
     logger.debug("Decompressing %s", archive_path)
     tarfile.open(archive_path, "r:gz").extractall(path=target_dir)
-    os.remove(archive_path)
+
+    with suppress(FileNotFoundError):
+        os.remove(archive_path)
 
     # Store a zipped pickle
     cache = dict(
