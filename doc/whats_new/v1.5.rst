@@ -39,6 +39,10 @@ Changelog
   for storing the inverse document frequency.
   :pr:`18843` by :user:`Paolo Montesel <thebabush>`.
 
+- |Enhancement| :class:`feature_extraction.text.TfidfTransformer` now preserves
+  the data type of the input matrix if it is `np.float64` or `np.float32`.
+  :pr:`xxx` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 :mod:`sklearn.impute`
 .....................
 
