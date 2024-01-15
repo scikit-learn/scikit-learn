@@ -889,7 +889,36 @@ class ClusterMixin:
 
 
 class BiclusterMixin:
-    """Mixin class for all bicluster estimators in scikit-learn."""
+    """Mixin class for all bicluster estimators in scikit-learn.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.base import BaseEstimator, BiclusterMixin
+    >>> class SimpleBicluster(BaseEstimator, BiclusterMixin):
+    ...     \"\"\"A simple bicluster estimator for demonstration purposes.\"\"\"
+    ...     def fit(self, X, y=None):
+    ...         \"\"\"Fit the bicluster estimator.
+    ...         For simplicity, this just sets `rows_` and `columns_` to be all rows and columns.
+    ...         \"\"\"
+    ...         self.rows_ = np.ones(X.shape[0], dtype=bool)
+    ...         self.columns_ = np.ones(X.shape[1], dtype=bool)
+    ...         return self
+    >>> # Create some data
+    >>> X = np.random.rand(10, 5)
+    >>> # Create and fit the bicluster estimator
+    >>> bicluster = SimpleBicluster().fit(X)
+    >>> # Use the biclusters_ property
+    >>> rows, columns = bicluster.biclusters_
+    >>> print("Rows:", rows)
+    Rows: [ True  True  True  True  True  True  True  True  True  True]
+    >>> print("Columns:", columns)
+    Columns: [ True  True  True  True  True]
+    >>> # Use the get_indices method
+    >>> indices = bicluster.get_indices(0)
+    >>> print("Indices:", indices)
+    Indice: (array([0]), array([0])s)
+    """
 
     @property
     def biclusters_(self):
