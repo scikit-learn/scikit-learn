@@ -232,8 +232,9 @@ def average_precision_score(
         )
         # Return the step function integral
         # The following works because the last entry of precision is
-        # guaranteed to be 1, as returned by precision_recall_curve
-        return -np.sum(np.diff(recall) * np.array(precision)[:-1])
+        # guaranteed to be 1, as returned by precision_recall_curve.
+        # Due to numerical error, we can get `-0.0` and we therefore clip it.
+        return max(0.0, -np.sum(np.diff(recall) * np.array(precision)[:-1]))
 
     y_type = type_of_target(y_true, input_name="y_true")
 
