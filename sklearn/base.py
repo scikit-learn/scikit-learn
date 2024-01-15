@@ -918,7 +918,7 @@ class BiclusterMixin:
     >>> # Use the get_indices method
     >>> indices = bicluster.get_indices(0)
     >>> print("Indices:", indices)
-    Indice: (array([0]), array([0])s)
+    Indice: (array([0]), array([0]))
     """
 
     @property
