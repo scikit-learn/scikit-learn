@@ -557,6 +557,11 @@ Changelog
   both binary and multiclass classifiers.
   :pr:`27291` by :user:`Guillaume Lemaitre <glemaitre>`.
 
+- |Fix| :meth:`inspection.DecisionBoundaryDisplay.from_estimator` and
+  :class:`inspection.PartialDependenceDisplay.from_estimator` now return the correct
+  type for subclasses.
+  :pr:`27675` by :user:`John Cant <johncant>`.
+
 - |API| :class:`inspection.DecisionBoundaryDisplay` raise an `AttributeError` instead
   of a `ValueError` when an estimator does not implement the requested response method.
   :pr:`27291` by :user:`Guillaume Lemaitre <glemaitre>`.
@@ -645,6 +650,13 @@ Changelog
   scorer requesting a non-thresholded decision function (from `decision_function` or
   `predict_proba`). Such scorer are specific to classification.
   :pr:`26840` by :user:`Guillaume Lemaitre <glemaitre>`.
+
+- |Fix| :meth:`metrics.DetCurveDisplay.from_predictions`,
+  :class:`metrics.PrecisionRecallDisplay.from_predictions`,
+  :class:`metrics.PredictionErrorDisplay.from_predictions`, and
+  :class:`metrics.RocCurveDisplay.from_predictions` now return the correct type
+  for subclasses.
+  :pr:`27675` by :user:`John Cant <johncant>`.
 
 - |API| Deprecated `needs_threshold` and `needs_proba` from :func:`metrics.make_scorer`.
   These parameters will be removed in version 1.6. Instead, use `response_method` that
