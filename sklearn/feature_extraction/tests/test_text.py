@@ -1661,7 +1661,7 @@ def test_tfidf_transformer_copy(csr_container):
     X = sparse.rand(10, 20000, dtype=np.float64, random_state=42)
     X_csr = csr_container(X)
 
-    # keep a copy of the original matrix
+    # keep a copy of the original matrix for later comparison
     X_csr_original = X_csr.copy()
 
     transformer = TfidfTransformer().fit(X_csr)

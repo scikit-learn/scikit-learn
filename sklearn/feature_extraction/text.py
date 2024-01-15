@@ -1679,7 +1679,10 @@ class TfidfTransformer(
 
             # log+1 instead of log makes sure terms with zero idf don't get
             # suppressed entirely.
-            self._idf = np.log(n_samples / df) + 1
+            self.idf_ = np.log(n_samples / df) + 1.0
+            # FIXME: for backward compatibility, we force idf_ to be np.float64
+            # In the future, we should preserve the `dtype` of `X`.
+            self.idf_ = self.idf_.astype(np.float64, copy=False)
 
         return self
 
@@ -1700,6 +1703,7 @@ class TfidfTransformer(
         vectors : sparse matrix of shape (n_samples, n_features)
             Tf-idf-weighted document-term matrix.
         """
+        check_is_fitted(self)
         X = self._validate_data(
             X, accept_sparse="csr", dtype=FLOAT_DTYPES, copy=copy, reset=False
         )
@@ -1710,36 +1714,15 @@ class TfidfTransformer(
             np.log(X.data, X.data)
             X.data += 1
 
-        if self.use_idf:
-            # idf_ being a property, the automatic attributes detection
-            # does not work as usual and we need to specify the attribute
-            # name:
-            check_is_fitted(self, attributes=["idf_"], msg="idf vector is not fitted")
-
-            # sparse matrix does not support broadcasting but with CSR matrix we can
-            # safely pick-up the indices
-            X.data *= self._idf[X.indices]
+        if hasattr(self, "idf_"):
+            # the columns of X (CSR matrix) can be accessed with `X.indices `and
+            # multiplied with the corresponding `idf` value
+            X.data *= self.idf_[X.indices]
 
         if self.norm is not None:
             X = normalize(X, norm=self.norm, copy=False)
 
         return X
-
-    @property
-    def idf_(self):
-        """Inverse document frequency vector, only defined if `use_idf=True`.
-
-        Returns
-        -------
-        ndarray of shape (n_features,)
-        """
-        # if _idf is not set, this will raise an attribute error,
-        # which means hasattr(self, "idf_") is False
-        return self._idf
-
-    @idf_.setter
-    def idf_(self, value):
-        self._idf = np.asarray(value, dtype=np.float64)
 
     def _more_tags(self):
         return {"X_types": ["2darray", "sparse"]}
