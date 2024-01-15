@@ -260,7 +260,17 @@ def test_mutual_info_regression_n_jobs(global_random_seed):
     y = np.random.uniform(100, size=100)
 
     expected = mutual_info_regression(
-        X, y.ravel(), random_state=global_random_seed, n_jobs=None
+        X, y, random_state=global_random_seed, n_jobs=None
     )
     result = mutual_info_regression(X, y, random_state=global_random_seed, n_jobs=2)
+    assert_allclose(result, expected)
+
+
+def test_mutual_info_classif_n_jobs(global_random_seed):
+    """Check that results agree when `n_jobs=None` and `n_jobs=2`."""
+    X = np.random.uniform(100, size=(100, 10))
+    y = np.random.choice([0, 1, 2], size=100)
+
+    expected = mutual_info_classif(X, y, random_state=global_random_seed, n_jobs=None)
+    result = mutual_info_classif(X, y, random_state=global_random_seed, n_jobs=2)
     assert_allclose(result, expected)

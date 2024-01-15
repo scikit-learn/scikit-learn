@@ -244,6 +244,15 @@ def _estimate_mi(
         Pass an int for reproducible results across multiple function calls.
         See :term:`Glossary <random_state>`.
 
+    n_jobs : int, default=None
+        The number of jobs to use for computing the mutual information.
+        The parallelization is done on the columns of `X`.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
+        .. versionadded:: 1.5
+
+
     Returns
     -------
     mi : ndarray, shape (n_features,)
@@ -304,9 +313,7 @@ def _estimate_mi(
         )
 
     mi = Parallel(n_jobs=n_jobs)(
-        delayed(lambda x, df: _compute_mi(x, y, df, discrete_target, n_neighbors))(
-            x, discrete_feature
-        )
+        delayed(_compute_mi)(x, y, discrete_feature, discrete_target, n_neighbors)
         for x, discrete_feature in zip(_iterate_columns(X), discrete_mask)
     )
 
