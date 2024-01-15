@@ -373,9 +373,9 @@ class LocalOutlierFactor(KNeighborsMixin, OutlierMixin, NeighborsBase):
         check_is_fitted(self)
 
         if X is not None:
-            anomalies = self.decision_function(X)
-            is_inlier = np.ones(anomalies.shape[0], dtype=int)
-            is_inlier[anomalies < 0] = -1
+            shifted_opposite = self.decision_function(X)
+            is_inlier = np.ones(shifted_opposite.shape[0], dtype=int)
+            is_inlier[shifted_opposite < 0] = -1
         else:
             is_inlier = np.ones(self.n_samples_fit_, dtype=int)
             is_inlier[self.negative_outlier_factor_ < self.offset_] = -1
