@@ -853,7 +853,32 @@ class RegressorMixin:
 
 
 class ClusterMixin:
-    """Mixin class for all cluster estimators in scikit-learn."""
+    """Mixin class for all cluster estimators in scikit-learn.
+    - `_estimator_type` class attribute defaulting to `"clusterer"`;
+    - `fit_predict` method that default to
+    :func:`~sklearn.cluster.estimate_clusters`.
+    - `_more_tags` method that adds the `preserves_dtype` tag to the estimator.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.base import BaseEstimator, ClusterMixin
+
+    >>> class MyClusterer(ClusterMixin, BaseEstimator):
+    ...    def __init__(self, *, n_clusters=2):
+    ...        self.n_clusters = n_clusters
+    ...    def fit_predict(self, X, y=None, **kwargs):
+    ...        labels = np.random.randint(low=0, high=self.n_clusters,
+    ...                                   size=X.shape[0])
+    ...        return labels
+
+    >>> clusterer = MyClusterer(n_clusters=3)
+    >>> X = np.array([[1, 2], [2, 3], [3, 4]])
+    >>> y = np.array([0, 1, 0])
+    >>> labels = clusterer.fit_predict(X, y)
+    >>> print(labels)
+    [1 1 1]
+    """
 
     _estimator_type = "clusterer"
 
