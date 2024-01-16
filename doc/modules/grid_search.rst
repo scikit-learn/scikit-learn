@@ -663,28 +663,30 @@ the search.
 
 .. _refit_constraints:
 
-Model promotion
----------------
+Model refinement
+----------------
 
-Model promotion methods expand the user's level of control over the hyper-parameter
+Model refinement methods expand the user's level of control over the hyper-parameter
 tuning process by leveraging various model selection heuristics to promote
 more optimal models with balanced performance. Such control can be especially
 useful, for instance, when the user wishes to select the simplest model from
 among a group of similarly top-performing candidates with varying degrees of
-complexity. Other scenarios where model promotion might include those where the user
-wishes to select the most interpretable or computationally efficient model from among
-a group of top-performing candidates.
+complexity. Model refinement might also be useful when the user aims to select the most
+interpretable or computationally efficient model from among a group of top-performing
+candidates.
 
-Scikit-Learn provides two mechanisms for model promotion. The first is *post hoc*
--- by fitting a :class:`model_selection.ScoreCutModelSelector` instance to the
-``cv_results_`` attribute of a fitted instance of ``GridSearchCV``,
-``RandomizedSearchCV``,  or ``HalvingRandomSearchCV``. The second is *a priori* -- by
-setting the ``refit`` parameter in a ``GridSearchCV``, ``RandomizedSearchCV``, or
-``RandomizedSearchCV`` instance to a callable function :func:`model_selection.
-promote` before running the search. In either case, the user can specify a
-:class:`model_selection.ScoreCutModelSelector` instance, comprising both a score
-slicing rule instance and a model ranking rule instance, to control the promotion
-strategy. Model promotion based on composite estimators and parameter spaces, as well as both numeric and categorical hyperparameter data types are also supported.
+Scikit-Learn provides two mechanisms for model refinement that can be easily extended
+to each of these scenarios using a common set of semantics. The first is after
+conducting a SearchCV -- by fitting a :class:`model_selection.ScoreCutModelSelector`
+instance to the ``cv_results_`` attribute of a fitted instance of ``GridSearchCV``,
+``RandomizedSearchCV``,  or ``HalvingRandomSearchCV``. The second is while initializing
+a SearchCV -- by setting the ``refit`` parameter in a ``GridSearchCV``,
+``RandomizedSearchCV``, or ``RandomizedSearchCV`` instance to a callable function
+:func:`model_selection.promote` before running the search. In either case, the user can
+specify a :class:`model_selection.ScoreCutModelSelector` instance, comprising both a
+score slicing rule instance and a model ranking rule instance, to control the refinement
+strategy. Finally, model refinement supports composite estimators and parameter spaces,
+as well as both numeric and categorical hyperparameter data types.
 
 In the case of refitting a ``GridSearchCV``, ``RandomizedSearchCV``, or
 ``HalvingRandomSearchCV`` object with the simplest best-performing model, for example,
@@ -700,8 +702,8 @@ the 1-SE criteria may be too rigid or lenient in some contexts. In these cases,
 :class:`model_selection.ScoreCutModelSelector` also supports other score slicing rules,
 including:
 
-    :class:`model_selection.PercentileRankSlicer`
-    :class:`model_selection.SignedRankSlicer`
+    :class:`model_selection.PercentileSlicer`
+    :class:`model_selection.WilcoxonSlicer`
     :class:`model_selection.FixedWindowSlicer`
 
 These callable classes follow a common structure that subclasses
@@ -718,6 +720,9 @@ custom slicing rules as well.
  * Hastie, Trevor, Robert Tibshirani, and Jerome Friedman. 2009. The Elements of
     Statistical Learning: Data Mining, Inference, and Prediction. New York:
     Springer Series in Statistics. :doi:`10.1007/978-0-387-84858-7`
+  * Zacharias, J., von Zahn, M., Chen, J. et al. 2022. Designing a feature selection
+    method based on explainable artificial intelligence. Electron Markets 32, 2159-2184
+    (2022). :doi:`https://doi.org/10.1007/s12525-022-00608-1`
 
 .. _alternative_cv:
 

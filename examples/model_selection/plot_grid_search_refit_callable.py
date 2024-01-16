@@ -41,9 +41,9 @@ from sklearn.decomposition import PCA
 from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.metrics import mean_squared_error
 from sklearn.model_selection import GridSearchCV, RandomizedSearchCV, train_test_split
-from sklearn.model_selection._promote import (
-    by_signed_rank,
-    by_standard_error,
+from sklearn.model_selection._refine import (
+    StandardErrorSlicer,
+    WilcoxonSlicer,
     promote,
 )
 from sklearn.pipeline import Pipeline
@@ -59,14 +59,16 @@ pipe = Pipeline(
         ("classify", LinearSVC(random_state=42, C=0.01, dual="auto")),
     ]
 )
-
+favorability_rules = {
+    "reduce_dim__n_components": True,  # Lower is simpler
+}
 grid = GridSearchCV(
     pipe,
     cv=10,
     n_jobs=-1,
     param_grid=param_grid,
     scoring="accuracy",
-    refit=promote(by_standard_error(sigma=1)),
+    refit=promote(WilcoxonSlicer(sigma=1)),
 )
 
 grid.fit(X, y)
@@ -128,7 +130,7 @@ grid = RandomizedSearchCV(
     cv=10,
     n_jobs=-1,
     scoring="r2",
-    refit=promote(by_signed_rank(alpha=0.05)),
+    refit=promote(StandardErrorSlicer(alpha=0.05)),
 )
 grid.fit(X_train, y_train)
 
@@ -169,7 +171,7 @@ plt.legend(loc="upper left")
 
 best_index_ = np.where(grid.cv_results_["mean_test_score"] == lower)[0][0]
 
-# Show the effect on train-test deviance of using model promotion.
+# Show the effect on train-test deviance of using model refinement.
 best_estimator_refitted = grid.estimator
 best_estimator_refitted.n_estimators = params["n_estimators"][best_index_]
 best_estimator_refitted.fit(X_train, y_train)

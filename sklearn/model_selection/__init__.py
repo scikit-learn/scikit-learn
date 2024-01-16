@@ -1,12 +1,13 @@
 import typing
 
 from ._plot import LearningCurveDisplay, ValidationCurveDisplay
-from ._promotion import (
+from ._refine import (
+    FavorabilityRanker,
     FixedWindowSlicer,
-    PercentileRankSlicer,
+    PercentileSlicer,
     ScoreCutModelSelector,
-    SignedRankSlicer,
     StandardErrorSlicer,
+    WilcoxonSlicer,
     promote,
 )
 from ._search import GridSearchCV, ParameterGrid, ParameterSampler, RandomizedSearchCV
@@ -82,8 +83,8 @@ __all__ = [
     "validation_curve",
     "ScoreCutModelSelector",
     "FixedWindowSlicer",
-    "PercentileRankSlicer",
-    "SignedRankSlicer",
+    "PercentileSlicer",
+    "WilcoxonSlicer",
     "StandardErrorSlicer",
     "FavorabilityRanker",
     "promote",

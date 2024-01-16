@@ -33,9 +33,12 @@ Changelog
 
 :mod:`sklearn.model_selection`
 ..............................
-- |MajorFeature| :class:`model_selection.ScoreCutModelSelector` is a new refit callable factory for
-  promoteing models from `GridSearchCV` or `RandomSearchCV`.
-  :pr:`22573` by :user:`Derek Pisner <dPys>` and :user:`Joel Nothman <jnothman>`.
+- |MajorFeature| :class:`model_selection.ScoreCutModelSelector` is a new refit callable
+  factory for use with `SearchCV` objects like `GridSearchCV`, `RandomSearchCV`, or
+  `HalvingRandomSearchCV` that can be used to refine model selection based on
+  favorability criteria within various windows of permissible performance relative to
+  the best-performing model.
+  :pr:`22573` by :user:`Derek Alexander <dPys>` and :user:`Joel Nothman <jnothman>`.
 
 Code and Documentation Contributors
 -----------------------------------
