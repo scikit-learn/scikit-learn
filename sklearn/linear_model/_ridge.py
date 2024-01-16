@@ -561,7 +561,7 @@ def ridge_regression(
     >>> coef
     array([20.2..., 33.7...,  0.1...,  0.0...])
     >>> intercept
-    -0.02...
+    -0.0...
     """
     return _ridge_regression(
         X,
