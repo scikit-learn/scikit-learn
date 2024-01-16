@@ -6,6 +6,9 @@ cython_args = []
 is_windows = host_machine.system() == 'windows'
 is_mingw = is_windows and cc.get_id() == 'gcc'
 
+# Adapted from Scipy. mingw is untested and not officially supported. If you
+# ever bump into issues when trying to compile for mingw, please open an issue
+# in the scikit-learn issue tracker
 if is_mingw
   # For mingw-w64, link statically against the UCRT.
   gcc_link_args = ['-lucrt', '-static']
