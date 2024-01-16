@@ -31,8 +31,8 @@ def _compute_mi_cc(x, y, n_neighbors):
     Returns
     -------
     mi : float
-        Estimated mutual information. If it turned out to be negative it is
-        replace by 0.
+        Estimated mutual information in nat units. If it turned out to be
+        negative it is replaced by 0.
 
     Notes
     -----
@@ -96,8 +96,8 @@ def _compute_mi_cd(c, d, n_neighbors):
     Returns
     -------
     mi : float
-        Estimated mutual information. If it turned out to be negative it is
-        replace by 0.
+        Estimated mutual information in nat units. If it turned out to be
+        negative it is replaced by 0.
 
     Notes
     -----
@@ -245,8 +245,8 @@ def _estimate_mi(
     Returns
     -------
     mi : ndarray, shape (n_features,)
-        Estimated mutual information between each feature and the target.
-        A negative value will be replaced by 0.
+        Estimated mutual information between each feature and the target in
+        nat units. A negative value will be replaced by 0.
 
     References
     ----------
@@ -370,7 +370,8 @@ def mutual_info_regression(
     Returns
     -------
     mi : ndarray, shape (n_features,)
-        Estimated mutual information between each feature and the target.
+        Estimated mutual information between each feature and the target in
+        nat units.
 
     Notes
     -----
@@ -395,6 +396,16 @@ def mutual_info_regression(
            Data Sets". PLoS ONE 9(2), 2014.
     .. [4] L. F. Kozachenko, N. N. Leonenko, "Sample Estimate of the Entropy
            of a Random Vector", Probl. Peredachi Inf., 23:2 (1987), 9-16
+
+    Examples
+    --------
+    >>> from sklearn.datasets import make_regression
+    >>> from sklearn.feature_selection import mutual_info_regression
+    >>> X, y = make_regression(
+    ...     n_samples=50, n_features=3, n_informative=1, noise=1e-4, random_state=42
+    ... )
+    >>> mutual_info_regression(X, y)
+    array([0.1..., 2.6...  , 0.0...])
     """
     return _estimate_mi(X, y, discrete_features, False, n_neighbors, copy, random_state)
 
@@ -460,7 +471,8 @@ def mutual_info_classif(
     Returns
     -------
     mi : ndarray, shape (n_features,)
-        Estimated mutual information between each feature and the target.
+        Estimated mutual information between each feature and the target in
+        nat units.
 
     Notes
     -----
@@ -485,6 +497,18 @@ def mutual_info_classif(
            Data Sets". PLoS ONE 9(2), 2014.
     .. [4] L. F. Kozachenko, N. N. Leonenko, "Sample Estimate of the Entropy
            of a Random Vector:, Probl. Peredachi Inf., 23:2 (1987), 9-16
+
+    Examples
+    --------
+    >>> from sklearn.datasets import make_classification
+    >>> from sklearn.feature_selection import mutual_info_classif
+    >>> X, y = make_classification(
+    ...     n_samples=100, n_features=10, n_informative=2, n_clusters_per_class=1,
+    ...     shuffle=False, random_state=42
+    ... )
+    >>> mutual_info_classif(X, y)
+    array([0.58..., 0.10..., 0.19..., 0.09... , 0.        ,
+           0.     , 0.     , 0.     , 0.      , 0.        ])
     """
     check_classification_targets(y)
     return _estimate_mi(X, y, discrete_features, True, n_neighbors, copy, random_state)

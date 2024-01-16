@@ -87,15 +87,15 @@ will use as many threads as possible, i.e. as many threads as logical cores.
 
 You can control the exact number of threads that are used either:
 
- - via the ``OMP_NUM_THREADS`` environment variable, for instance when:
-   running a python script:
+- via the ``OMP_NUM_THREADS`` environment variable, for instance when:
+  running a python script:
 
-   .. prompt:: bash $
+  .. prompt:: bash $
 
-        OMP_NUM_THREADS=4 python my_script.py
+      OMP_NUM_THREADS=4 python my_script.py
 
- - or via `threadpoolctl` as explained by `this piece of documentation
-   <https://github.com/joblib/threadpoolctl/#setting-the-maximum-size-of-thread-pools>`_.
+- or via `threadpoolctl` as explained by `this piece of documentation
+  <https://github.com/joblib/threadpoolctl/#setting-the-maximum-size-of-thread-pools>`_.
 
 Parallel NumPy and SciPy routines from numerical libraries
 ..........................................................
@@ -107,15 +107,15 @@ such as MKL, OpenBLAS or BLIS.
 You can control the exact number of threads used by BLAS for each library
 using environment variables, namely:
 
-  - ``MKL_NUM_THREADS`` sets the number of thread MKL uses,
-  - ``OPENBLAS_NUM_THREADS`` sets the number of threads OpenBLAS uses
-  - ``BLIS_NUM_THREADS`` sets the number of threads BLIS uses
+- ``MKL_NUM_THREADS`` sets the number of thread MKL uses,
+- ``OPENBLAS_NUM_THREADS`` sets the number of threads OpenBLAS uses
+- ``BLIS_NUM_THREADS`` sets the number of threads BLIS uses
 
 Note that BLAS & LAPACK implementations can also be impacted by
 `OMP_NUM_THREADS`. To check whether this is the case in your environment,
 you can inspect how the number of threads effectively used by those libraries
 is affected when running the following command in a bash or zsh terminal
-for different values of `OMP_NUM_THREADS`::
+for different values of `OMP_NUM_THREADS`:
 
 .. prompt:: bash $
 
@@ -316,3 +316,12 @@ most machines.
 Users looking for the best performance might want to tune this variable using
 powers of 2 so as to get the best parallelism behavior for their hardware,
 especially with respect to their caches' sizes.
+
+`SKLEARN_DOC_BUILD_WARNINGS_AS_ERRORS`
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+This environment variable issue errors instead of warnings when building the
+documentation. It ensures that we don't introduce new warnings in the example
+gallery. By default, the warnings are treated as errors (e.g. `"true"`). This
+is different from `SPHINXOPTS="-W"` that catch syntax warnings from the rst
+generation.

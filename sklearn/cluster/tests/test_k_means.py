@@ -1,7 +1,6 @@
 """Testing for K-means"""
 import re
 import sys
-import warnings
 from io import StringIO
 
 import numpy as np
@@ -32,13 +31,6 @@ from sklearn.utils._testing import (
 )
 from sklearn.utils.extmath import row_norms
 from sklearn.utils.fixes import CSR_CONTAINERS, threadpool_limits
-
-# TODO(1.4): Remove
-msg = (
-    r"The default value of `n_init` will change from \d* to 'auto' in 1.4. Set the"
-    r" value of `n_init` explicitly to suppress the warning:FutureWarning"
-)
-pytestmark = pytest.mark.filterwarnings("ignore:" + msg)
 
 # non centered, sparse centers to check the
 centers = np.array(
@@ -206,21 +198,6 @@ def test_kmeans_convergence(algorithm, global_random_seed):
     ).fit(X)
 
     assert km.n_iter_ < max_iter
-
-
-@pytest.mark.parametrize("algorithm", ["auto", "full"])
-def test_algorithm_auto_full_deprecation_warning(algorithm):
-    X = np.random.rand(100, 2)
-    kmeans = KMeans(algorithm=algorithm)
-    with pytest.warns(
-        FutureWarning,
-        match=(
-            f"algorithm='{algorithm}' is deprecated, it will "
-            "be removed in 1.3. Using 'lloyd' instead."
-        ),
-    ):
-        kmeans.fit(X)
-        assert kmeans._algorithm == "lloyd"
 
 
 @pytest.mark.parametrize("Estimator", [KMeans, MiniBatchKMeans])
@@ -1123,24 +1100,6 @@ def test_inertia(dtype, global_random_seed):
     assert_allclose(inertia_dense, inertia_sparse, rtol=rtol)
     assert_allclose(inertia_dense, expected, rtol=rtol)
     assert_allclose(inertia_sparse, expected, rtol=rtol)
-
-
-# TODO(1.4): Remove
-@pytest.mark.parametrize("Klass, default_n_init", [(KMeans, 10), (MiniBatchKMeans, 3)])
-def test_change_n_init_future_warning(Klass, default_n_init):
-    est = Klass(n_init=1)
-    with warnings.catch_warnings():
-        warnings.simplefilter("error", FutureWarning)
-        est.fit(X)
-
-    default_n_init = 10 if Klass.__name__ == "KMeans" else 3
-    msg = (
-        f"The default value of `n_init` will change from {default_n_init} to 'auto'"
-        " in 1.4"
-    )
-    est = Klass()
-    with pytest.warns(FutureWarning, match=msg):
-        est.fit(X)
 
 
 @pytest.mark.parametrize("Klass, default_n_init", [(KMeans, 10), (MiniBatchKMeans, 3)])

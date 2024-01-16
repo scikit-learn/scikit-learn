@@ -14,16 +14,16 @@
   --sklearn-color-fitted-level-3: cornflowerblue;
 
   /* Specific color for light theme */
-  --sklearn-color-text-on-default-background: var(--theme-code-foreground, var(--jp-content-font-color1, black));
-  --sklearn-color-background: var(--theme-background, var(--jp-layout-color0, white));
-  --sklearn-color-border-box: var(--theme-code-foreground, var(--jp-content-font-color1, black));
+  --sklearn-color-text-on-default-background: var(--sg-text-color, var(--theme-code-foreground, var(--jp-content-font-color1, black)));
+  --sklearn-color-background: var(--sg-background-color, var(--theme-background, var(--jp-layout-color0, white)));
+  --sklearn-color-border-box: var(--sg-text-color, var(--theme-code-foreground, var(--jp-content-font-color1, black)));
   --sklearn-color-icon: #696969;
 
   @media (prefers-color-scheme: dark) {
     /* Redefinition of color scheme for dark theme */
-    --sklearn-color-text-on-default-background: var(--theme-code-foreground, var(--jp-content-font-color1, white));
-    --sklearn-color-background: var(--theme-background, var(--jp-layout-color0, #111));
-    --sklearn-color-border-box: var(--theme-code-foreground, var(--jp-content-font-color1, white));
+    --sklearn-color-text-on-default-background: var(--sg-text-color, var(--theme-code-foreground, var(--jp-content-font-color1, white)));
+    --sklearn-color-background: var(--sg-background-color, var(--theme-background, var(--jp-layout-color0, #111)));
+    --sklearn-color-border-box: var(--sg-text-color, var(--theme-code-foreground, var(--jp-content-font-color1, white)));
     --sklearn-color-icon: #878787;
   }
 }
