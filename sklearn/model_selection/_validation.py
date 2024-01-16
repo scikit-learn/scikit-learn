@@ -397,11 +397,16 @@ def cross_validate(
             # `process_routing` code, we pass `fit` as the caller. However,
             # the user is not calling `fit` directly, so we change the message
             # to make it more suitable for this case.
+            unrequested_params = sorted(e.unrequested_params)
             raise UnsetMetadataPassedError(
                 message=(
-                    f"{sorted(e.unrequested_params.keys())} are passed to cross"
-                    " validation but are not explicitly requested or unrequested. See"
-                    " the Metadata Routing User guide"
+                    f"{unrequested_params} are passed to cross validation but are not"
+                    " explicitly set as requested or not requested for cross_validate's"
+                    f" estimator: {estimator.__class__.__name__}. Call"
+                    " `.set_fit_request({{metadata}}=True)` on the estimator for"
+                    f" each metadata in {unrequested_params} that you"
+                    " want to use and `metadata=False` for not using it. See the"
+                    " Metadata Routing User guide"
                     " <https://scikit-learn.org/stable/metadata_routing.html> for more"
                     " information."
                 ),
@@ -1238,13 +1243,17 @@ def cross_val_predict(
             # `process_routing` code, we pass `fit` as the caller. However,
             # the user is not calling `fit` directly, so we change the message
             # to make it more suitable for this case.
+            unrequested_params = sorted(e.unrequested_params)
             raise UnsetMetadataPassedError(
                 message=(
-                    f"{sorted(e.unrequested_params.keys())} are passed to cross"
-                    " validation but are not explicitly requested or unrequested. See"
-                    " the Metadata Routing User guide"
-                    " <https://scikit-learn.org/stable/metadata_routing.html> for more"
-                    " information."
+                    f"{unrequested_params} are passed to `cross_val_predict` but are"
+                    " not explicitly set as requested or not requested for"
+                    f" cross_validate's estimator: {estimator.__class__.__name__} Call"
+                    " `.set_fit_request({{metadata}}=True)` on the estimator for"
+                    f" each metadata in {unrequested_params} that you want to use and"
+                    " `metadata=False` for not using it. See the Metadata Routing User"
+                    " guide <https://scikit-learn.org/stable/metadata_routing.html>"
+                    " for more information."
                 ),
                 unrequested_params=e.unrequested_params,
                 routed_params=e.routed_params,
@@ -1627,6 +1636,26 @@ def permutation_test_score(
         Performance
         <http://www.jmlr.org/papers/volume11/ojala10a/ojala10a.pdf>`_. The
         Journal of Machine Learning Research (2010) vol. 11
+
+    Examples
+    --------
+    >>> from sklearn.datasets import make_classification
+    >>> from sklearn.linear_model import LogisticRegression
+    >>> from sklearn.model_selection import permutation_test_score
+    >>> X, y = make_classification(random_state=0)
+    >>> estimator = LogisticRegression()
+    >>> score, permutation_scores, pvalue = permutation_test_score(
+    ...     estimator, X, y, random_state=0
+    ... )
+    >>> print(f"Original Score: {score:.3f}")
+    Original Score: 0.810
+    >>> print(
+    ...     f"Permutation Scores: {permutation_scores.mean():.3f} +/- "
+    ...     f"{permutation_scores.std():.3f}"
+    ... )
+    Permutation Scores: 0.505 +/- 0.057
+    >>> print(f"P-value: {pvalue:.3f}")
+    P-value: 0.010
     """
     X, y, groups = indexable(X, y, groups)
 
@@ -2245,6 +2274,23 @@ def validation_curve(
     Notes
     -----
     See :ref:`sphx_glr_auto_examples_model_selection_plot_validation_curve.py`
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.datasets import make_classification
+    >>> from sklearn.model_selection import validation_curve
+    >>> from sklearn.linear_model import LogisticRegression
+    >>> X, y = make_classification(n_samples=1_000, random_state=0)
+    >>> logistic_regression = LogisticRegression()
+    >>> param_name, param_range = "C", np.logspace(-8, 3, 10)
+    >>> train_scores, test_scores = validation_curve(
+    ...     logistic_regression, X, y, param_name=param_name, param_range=param_range
+    ... )
+    >>> print(f"The average train accuracy is {train_scores.mean():.2f}")
+    The average train accuracy is 0.81
+    >>> print(f"The average test accuracy is {test_scores.mean():.2f}")
+    The average test accuracy is 0.81
     """
     X, y, groups = indexable(X, y, groups)
 

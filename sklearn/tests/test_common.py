@@ -14,6 +14,7 @@ import warnings
 from functools import partial
 from inspect import isgenerator, signature
 from itertools import chain, product
+from pathlib import Path
 
 import numpy as np
 import pytest
@@ -167,7 +168,7 @@ def test_configure():
     # is installed in editable mode by pip build isolation enabled.
     pytest.importorskip("Cython")
     cwd = os.getcwd()
-    setup_path = os.path.abspath(os.path.join(sklearn.__path__[0], ".."))
+    setup_path = Path(sklearn.__file__).parent.parent
     setup_filename = os.path.join(setup_path, "setup.py")
     if not os.path.exists(setup_filename):
         pytest.skip("setup.py not available")
@@ -211,10 +212,11 @@ def test_class_weight_balanced_linear_classifiers(name, Classifier):
 @pytest.mark.xfail(_IS_WASM, reason="importlib not supported for Pyodide packages")
 @ignore_warnings
 def test_import_all_consistency():
+    sklearn_path = [os.path.dirname(sklearn.__file__)]
     # Smoke test to check that any name in a __all__ list is actually defined
     # in the namespace of the module or package.
     pkgs = pkgutil.walk_packages(
-        path=sklearn.__path__, prefix="sklearn.", onerror=lambda _: None
+        path=sklearn_path, prefix="sklearn.", onerror=lambda _: None
     )
     submods = [modname for _, modname, _ in pkgs]
     for modname in submods + ["sklearn"]:
@@ -236,9 +238,10 @@ def test_import_all_consistency():
 
 
 def test_root_import_all_completeness():
+    sklearn_path = [os.path.dirname(sklearn.__file__)]
     EXCEPTIONS = ("utils", "tests", "base", "setup", "conftest")
     for _, modname, _ in pkgutil.walk_packages(
-        path=sklearn.__path__, onerror=lambda _: None
+        path=sklearn_path, onerror=lambda _: None
     ):
         if "." in modname or modname.startswith("_") or modname in EXCEPTIONS:
             continue
@@ -259,9 +262,10 @@ def test_all_tests_are_importable():
         "sklearn.datasets.descr",
         "sklearn.datasets.images",
     }
+    sklearn_path = [os.path.dirname(sklearn.__file__)]
     lookup = {
         name: ispkg
-        for _, name, ispkg in pkgutil.walk_packages(sklearn.__path__, prefix="sklearn.")
+        for _, name, ispkg in pkgutil.walk_packages(sklearn_path, prefix="sklearn.")
     }
     missing_tests = [
         name

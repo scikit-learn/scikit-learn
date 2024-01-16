@@ -20,6 +20,7 @@ from sklearn.utils._testing import (
     assert_raise_message,
     assert_raises,
     assert_raises_regex,
+    assert_run_python_script_without_output,
     check_docstring_parameters,
     create_memmap_backed_data,
     ignore_warnings,
@@ -820,3 +821,27 @@ def test_float32_aware_assert_allclose():
     with pytest.raises(AssertionError):
         assert_allclose(np.array([1e-5], dtype=np.float32), 0.0)
     assert_allclose(np.array([1e-5], dtype=np.float32), 0.0, atol=2e-5)
+
+
+@pytest.mark.xfail(_IS_WASM, reason="cannot start subprocess")
+def test_assert_run_python_script_without_output():
+    code = "x = 1"
+    assert_run_python_script_without_output(code)
+
+    code = "print('something to stdout')"
+    with pytest.raises(AssertionError, match="Expected no output"):
+        assert_run_python_script_without_output(code)
+
+    code = "print('something to stdout')"
+    with pytest.raises(
+        AssertionError,
+        match="output was not supposed to match.+got.+something to stdout",
+    ):
+        assert_run_python_script_without_output(code, pattern="to.+stdout")
+
+    code = "\n".join(["import sys", "print('something to stderr', file=sys.stderr)"])
+    with pytest.raises(
+        AssertionError,
+        match="output was not supposed to match.+got.+something to stderr",
+    ):
+        assert_run_python_script_without_output(code, pattern="to.+stderr")
