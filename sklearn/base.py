@@ -1224,7 +1224,7 @@ class ClassNamePrefixFeaturesOutMixin:
 
 class DensityMixin:
     """Mixin class for all density estimators in scikit-learn.
-    
+
     This mixin defines the following functionality:
 
     - `_estimator_type` class attribute defaulting to `"density_estimator"`;
@@ -1273,7 +1273,7 @@ class DensityMixin:
 
 class OutlierMixin:
     """Mixin class for all outlier detection estimators in scikit-learn.
-    
+
     This mixin defines the following functionality:
 
     - `_estimator_type` class attribute defaulting to `outlier_detector`;
@@ -1355,12 +1355,12 @@ class OutlierMixin:
 
 class MetaEstimatorMixin:
     """Mixin class for all meta estimators in scikit-learn.
-    
+
     This mixin defines the following functionality:
 
     - `_required_parameters` class attribute that lists the required parameters
         of the estimator.
-           
+     
     Examples
     --------
     >>> import numpy as np
