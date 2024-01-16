@@ -53,7 +53,7 @@ The bundled version of joblib was upgraded from 0.13.0 to 0.13.2.
   restored from a pickle if ``sample_weight`` had been used.
   :issue:`13772` by :user:`Aditya Vyas <aditya1702>`.
 
- .. _changes_0_20_3:
+.. _changes_0_20_3:
 
 Version 0.20.3
 ==============

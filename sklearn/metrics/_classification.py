@@ -679,6 +679,14 @@ def cohen_kappa_score(y1, y2, *, labels=None, weights=None, sample_weight=None):
            <https://www.mitpressjournals.org/doi/pdf/10.1162/coli.07-034-R2>`_.
     .. [3] `Wikipedia entry for the Cohen's kappa
             <https://en.wikipedia.org/wiki/Cohen%27s_kappa>`_.
+
+    Examples
+    --------
+    >>> from sklearn.metrics import cohen_kappa_score
+    >>> y1 = ["negative", "positive", "negative", "neutral", "positive"]
+    >>> y2 = ["negative", "positive", "negative", "neutral", "negative"]
+    >>> cohen_kappa_score(y1, y2)
+    0.6875
     """
     confusion = confusion_matrix(y1, y2, labels=labels, sample_weight=sample_weight)
     n_classes = confusion.shape[0]
@@ -1116,7 +1124,12 @@ def f1_score(
     The relative contribution of precision and recall to the F1 score are
     equal. The formula for the F1 score is::
 
-        F1 = 2 * (precision * recall) / (precision + recall)
+        F1 = 2 * TP / (2 * TP + FN + FP)
+
+    Where "TP" is the number of true positives, "FN" is the number of false
+    negatives, and "FP" is the number of false positives. F1 is by default
+    calculated as 0.0 when there are no true positives, false negatives, nor
+    false positives.
 
     Support beyond term:`binary` targets is achieved by treating :term:`multiclass`
     and :term:`multilabel` data as a collection of binary problems, one for each
@@ -1211,12 +1224,11 @@ def f1_score(
 
     Notes
     -----
-    When ``true positive + false positive == 0``, precision is undefined.
-    When ``true positive + false negative == 0``, recall is undefined.
-    In such cases, by default the metric will be set to 0, as will f-score,
-    and ``UndefinedMetricWarning`` will be raised. This behavior can be
-    modified with ``zero_division``. Note that if `zero_division` is np.nan,
-    scores being `np.nan` will be ignored for averaging.
+    When ``true positive + false positive + false negative == 0`` (i.e. a class
+    is completely absent from both ``y_true`` or ``y_pred``), f-score is
+    undefined. In such cases, by default f-score will be set to 0.0, and
+    ``UndefinedMetricWarning`` will be raised. This behavior can be modified by
+    setting the ``zero_division`` parameter.
 
     References
     ----------
@@ -1404,10 +1416,9 @@ def fbeta_score(
 
     Notes
     -----
-    When ``true positive + false positive == 0`` or
-    ``true positive + false negative == 0``, f-score returns 0 and raises
-    ``UndefinedMetricWarning``. This behavior can be
-    modified with ``zero_division``.
+    When ``true positive + false positive + false negative == 0``, f-score
+    returns 0.0 and raises ``UndefinedMetricWarning``. This behavior can be
+    modified by setting ``zero_division``.
 
     References
     ----------
@@ -1699,10 +1710,11 @@ def precision_recall_fscore_support(
     Notes
     -----
     When ``true positive + false positive == 0``, precision is undefined.
-    When ``true positive + false negative == 0``, recall is undefined.
-    In such cases, by default the metric will be set to 0, as will f-score,
-    and ``UndefinedMetricWarning`` will be raised. This behavior can be
-    modified with ``zero_division``.
+    When ``true positive + false negative == 0``, recall is undefined. When
+    ``true positive + false negative + false positive == 0``, f-score is
+    undefined. In such cases, by default the metric will be set to 0, and
+    ``UndefinedMetricWarning`` will be raised. This behavior can be modified
+    with ``zero_division``.
 
     References
     ----------
