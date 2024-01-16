@@ -552,14 +552,16 @@ def ridge_regression(
 
     Examples
     --------
+    >>> from sklearn.datasets import make_regression
     >>> from sklearn.linear_model import ridge_regression
-    >>> X = [[1, 0], [0, 1]]
-    >>> y = [1, 1]
-    >>> coef, intercept = ridge_regression(X, y, alpha=1.0, solver='svd', max_iter=2)
+    >>> X, y = make_regression(
+    ...     n_features=4, n_informative=2, shuffle=False, random_state=0
+    ... )
+    >>> coef, intercept = ridge_regression(X, y, alpha=1.0, return_intercept=True)
     >>> coef
-    0.5
+    array([20.27..., 33.77...,  0.12...,  0.03...])
     >>> intercept
-    0.5
+    -0.02...
     """
     return _ridge_regression(
         X,
