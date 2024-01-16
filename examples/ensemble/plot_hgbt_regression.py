@@ -41,10 +41,15 @@ setting.
 # The dataset (originally named ELEC2) contains 45,312 instances dated from 7
 # May 1996 to 5 December 1998. Each sample of the dataset refers to a period of
 # 30 minutes, i.e. there are 48 instances for each time period of one day. Each
-# sample on the dataset has 5 fields: the day of week, the time stamp, the New
-# South Wales electricity demand, the Victoria electricity demand. It is
-# originally a classification task, but here we use it for the regression task
-# to predict the scheduled electricity transfer between states.
+# sample on the dataset has 7 columns:
+#   - date: between 7 May 1996 to 5 December 1998. Normalized between 0 and 1;
+#   - day: day of week (1-7);
+#   - period: half hour intervals over 24 hours. Normalized between 0 and 1;
+#   - nswprice/nswdemand: electricity price/demand of New South Wales;
+#   - vicprice/vicdemand: electricity price/demand of Victoria.
+#
+# It is originally a classification task, but here we use it for the regression
+# task to predict the scheduled electricity transfer between states.
 
 from sklearn.datasets import fetch_openml
 
