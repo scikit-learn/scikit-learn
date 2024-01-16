@@ -204,3 +204,12 @@ print("cv error on test sets:", results["test_mse"])
 # Setting the flag to the default `False` to avoid interference with other
 # scripts.
 sklearn.set_config(enable_metadata_routing=False)
+
+# %%
+# Improved memory and runtime efficiency for PCA on sparse data
+# -------------------------------------------------------------
+# PCA now uses `scipy.sparse.linalg.LinearOperator` to avoid
+# materializing large sparse matrices when performing the
+# eigenvalue decomposition of the data set covariance matrix
+# before using `arpack` as a solver.
+#
