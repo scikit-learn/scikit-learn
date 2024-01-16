@@ -142,7 +142,7 @@ possible, as documented in :ref:`multimetric_scoring`.
 
 The ranking of the features is approximately the same for different metrics even
 if the scales of the importance values are very different. However, this is not
-guaranteed and different metrics might lead to significantl*y different feature
+guaranteed and different metrics might lead to significantly different feature
 importances, in particular for models trained for imbalanced classification problems,
 for which **the choice of the classification metric can be critical**.
 
