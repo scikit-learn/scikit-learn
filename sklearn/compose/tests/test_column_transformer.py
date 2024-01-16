@@ -30,7 +30,6 @@ from sklearn.tests.metadata_routing_common import (
     check_recorded_metadata,
 )
 from sklearn.utils._testing import (
-    SkipTest,
     _convert_container,
     assert_allclose_dense_sparse,
     assert_almost_equal,
@@ -2277,15 +2276,15 @@ def test_remainder_set_output():
     assert isinstance(out, np.ndarray)
 
 
+# TODO(1.6): replace the warning by a ValueError exception
 def test_transform_pd_na():
     """Check behavior when a tranformer's output contains pandas.NA
 
-    it should emit a warning unless the output config is set to 'pandas'.
+    It should emit a warning unless the output config is set to 'pandas'.
     """
-    # TODO in version 1.6: warning should be replaced with an exception
     pd = pytest.importorskip("pandas")
     if not hasattr(pd, "Float64Dtype"):
-        raise SkipTest(
+        pytest.skip(
             "The issue with pd.NA tested here does not happen in old versions that do"
             " not have the extension dtypes"
         )

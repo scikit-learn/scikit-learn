@@ -309,14 +309,6 @@ Changelog
 :mod:`sklearn.compose`
 ......................
 
-- |API| outputs that use pandas extension dtypes and contain `pd.NA` in
-  :class:`~compose.ColumnTransformer` now result in a `FutureWarning` and will
-  cause a `ValueError` in version 1.6, unless the output container has been
-  configured as "pandas" with `set_output(transform="pandas")`. Before, such
-  outputs resulted in numpy arrays of dtype `object` containing `pd.NA` which
-  could not be converted to numpy floats and caused errors when passed to other
-  scikit-learn estimators. :pr:`27734` by :user:`Jérôme Dockès <jeromedockes>`.
-
 - |MajorFeature| Adds `polars <https://www.pola.rs>`__ input support to
   :class:`compose.ColumnTransformer` through the `DataFrame Interchange Protocol
   <https://data-apis.org/dataframe-protocol/latest/purpose_and_scope.html>`__.
@@ -327,6 +319,15 @@ Changelog
   now raise an explicit error message indicating that sparse matrices and arrays
   with `np.int64` indices are not supported.
   :pr:`27240` by :user:`Yao Xiao <Charlie-XIAO>`.
+
+- |API| outputs that use pandas extension dtypes and contain `pd.NA` in
+  :class:`~compose.ColumnTransformer` now result in a `FutureWarning` and will
+  cause a `ValueError` in version 1.6, unless the output container has been
+  configured as "pandas" with `set_output(transform="pandas")`. Before, such
+  outputs resulted in numpy arrays of dtype `object` containing `pd.NA` which
+  could not be converted to numpy floats and caused errors when passed to other
+  scikit-learn estimators.
+  :pr:`27734` by :user:`Jérôme Dockès <jeromedockes>`.
 
 :mod:`sklearn.covariance`
 .........................

@@ -698,7 +698,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
                 if pd.NA not in Xs[col_name].values:
                     continue
                 class_name = self.__class__.__name__
-                # TODO in v 1.6: replace warning with ValueError
+                # TODO(1.6): replace warning with ValueError
                 warnings.warn(
                     (
                         f"The output of the '{name}' transformer for column"
