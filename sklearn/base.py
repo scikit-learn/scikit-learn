@@ -1106,6 +1106,29 @@ class ClassNamePrefixFeaturesOutMixin:
     This mixin assumes that a `_n_features_out` attribute is defined when the
     transformer is fitted. `_n_features_out` is the number of output features
     that the transformer will return in `transform` of `fit_transform`.
+
+    This mixin defines the following functionality:
+
+    - `get_feature_names_out` method that returns the generated feature names out.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.base import BaseEstimator, ClassNamePrefixFeaturesOutMixin
+    >>> class MyEstimator(ClassNamePrefixFeaturesOutMixin, BaseEstimator):
+    ...     def __init__(self, *, param=1):
+    ...         self.param = param
+    ...     def fit(self, X, y=None):
+    ...         self._n_features_out = 3
+    ...         return self
+    ...     def transform(self, X):
+    ...         return np.full(shape=(X.shape[0], self._n_features_out),
+    ...                        fill_value=self.param)
+    >>> estimator = MyEstimator(param=1)
+    >>> X = np.array([[1, 2], [2, 3], [3, 4]])
+    >>> estimator.fit(X).transform(X)
+    >>> print(estimator.get_feature_names_out())
+    ['myestimator0', 'myestimator1', 'myestimator2']
     """
 
     def get_feature_names_out(self, input_features=None):
