@@ -710,7 +710,7 @@ def _ridge_regression(
 
     if size(alpha) == 1 and n_targets > 1:
         alpha = xp.full(
-            shape=(n_targets,), fill_value=alpha, dtype=alpha.dtype, device=device_
+            shape=(n_targets,), fill_value=alpha[0], dtype=alpha.dtype, device=device_
         )
 
     n_iter = None
