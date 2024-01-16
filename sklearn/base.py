@@ -1094,6 +1094,27 @@ class OneToOneFeatureMixin:
 
     This mixin assumes there's a 1-to-1 correspondence between input features
     and output features, such as :class:`~sklearn.preprocessing.StandardScaler`.
+
+    This mixin defines the following functionality:
+
+    - `get_feature_names_out` method that returns the same feature names as
+        input features.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.base import BaseEstimator, OneToOneFeatureMixin
+    >>> class MyEstimator(OneToOneFeatureMixin, BaseEstimator):
+    ...     def __init__(self, *, param=1):
+    ...         self.param = param
+    ...     def fit(self, X, y=None):
+    ...         return self
+    ...     def transform(self, X):
+    ...         return np.full(shape=X.shape, fill_value=self.param)
+    >>> estimator = MyEstimator(param=1)
+    >>> X = np.array([[1, 2], [2, 3], [3, 4]])
+    >>> print(estimator.fit(X).transform(X))
+    array([[1, 1], [1, 1], [1, 1]])
     """
 
     def get_feature_names_out(self, input_features=None):
