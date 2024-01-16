@@ -1119,6 +1119,17 @@ def make_friedman1(n_samples=100, n_features=10, *, noise=0.0, random_state=None
 
     .. [2] L. Breiman, "Bagging predictors", Machine Learning 24,
            pages 123-140, 1996.
+
+    Examples
+    --------
+    >>> from sklearn.datasets import make_friedman1
+    >>> X, y = make_friedman1(random_state=42)
+    >>> X.shape
+    (100, 10)
+    >>> y.shape
+    (100,)
+    >>> list(y[:3])
+    [16.8..., 5.8..., 9.4...]
     """
     generator = check_random_state(random_state)
 
@@ -1190,6 +1201,17 @@ def make_friedman2(n_samples=100, *, noise=0.0, random_state=None):
 
     .. [2] L. Breiman, "Bagging predictors", Machine Learning 24,
            pages 123-140, 1996.
+
+    Examples
+    --------
+    >>> from sklearn.datasets import make_friedman2
+    >>> X, y = make_friedman2(random_state=42)
+    >>> X.shape
+    (100, 4)
+    >>> y.shape
+    (100,)
+    >>> list(y[:3])
+    [1229.4..., 27.0..., 65.6...]
     """
     generator = check_random_state(random_state)
 
@@ -1263,6 +1285,17 @@ def make_friedman3(n_samples=100, *, noise=0.0, random_state=None):
 
     .. [2] L. Breiman, "Bagging predictors", Machine Learning 24,
            pages 123-140, 1996.
+
+    Examples
+    --------
+    >>> from sklearn.datasets import make_friedman3
+    >>> X, y = make_friedman3(random_state=42)
+    >>> X.shape
+    (100, 4)
+    >>> y.shape
+    (100,)
+    >>> list(y[:3])
+    [1.5..., 0.9..., 0.4...]
     """
     generator = check_random_state(random_state)
 
