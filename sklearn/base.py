@@ -1026,6 +1026,28 @@ class TransformerMixin(_SetOutputMixin):
     :class:`OneToOneFeatureMixin` and
     :class:`ClassNamePrefixFeaturesOutMixin` are helpful mixins for
     defining :term:`get_feature_names_out`.
+
+    This mixin defines the following functionality:
+
+    - `fit_transform` method that default to the identity transform.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.base import BaseEstimator, TransformerMixin
+    >>> class MyTransformer(TransformerMixin, BaseEstimator):
+    ...     def __init__(self, *, param=1):
+    ...         self.param = param
+    ...     def fit(self, X, y=None):
+    ...         return self
+    ...     def transform(self, X):
+    ...         return np.full(shape=X.shape, fill_value=self.param)
+    >>> transformer = MyTransformer(param=1)
+    >>> X = np.array([[1, 2], [2, 3], [3, 4]])
+    >>> print(transformer.fit(X).transform(X))
+    [[1 1]
+     [1 1]
+     [1 1]]
     """
 
     def fit_transform(self, X, y=None, **fit_params):
