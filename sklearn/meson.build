@@ -83,12 +83,6 @@ It seems that scikit-learn cannot be built with OpenMP.
 ''')
 endif
 
-# Allow supporting older numpy versions than the version compiled against.
-# Set the define to the minimum numpy supported version, see
-# sklearn/_min_dependencies.py.
-add_project_arguments(
-  '-DNPY_TARGET_VERSION=NPY_1_19_API_VERSION', language : ['c', 'cpp'])
-
 # TODO do the equivalent of sklearn/_build_utils/__init__.py that sets
 # boundchecks=True if SKLEARN_ENABLE_DEBUG_CYTHON_DIRECTIVES is set to 1.
 # There is no access to environment variables inside meson.build files so this
