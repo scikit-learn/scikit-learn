@@ -1195,6 +1195,9 @@ class ClassNamePrefixFeaturesOutMixin:
     >>> estimator = MyEstimator(param=1)
     >>> X = np.array([[1, 2], [2, 3], [3, 4]])
     >>> estimator.fit(X).transform(X)
+    array([[1, 1, 1],
+              [1, 1, 1],
+              [1, 1, 1]])   
     >>> print(estimator.get_feature_names_out())
     ['myestimator0', 'myestimator1', 'myestimator2']
     """
@@ -1248,7 +1251,7 @@ class DensityMixin:
     >>> X = np.array([[1, 2], [2, 3], [3, 4]])
     >>> y = np.array([1, 0, 1])
     >>> print(estimator.fit(X, y).predict(X))
-    [1, 1, 1]
+    [1 1 1]
     """
 
     _estimator_type = "DensityEstimator"
@@ -1360,7 +1363,7 @@ class MetaEstimatorMixin:
 
     - `_required_parameters` class attribute that lists the required parameters
         of the estimator.
-     
+
     Examples
     --------
     >>> import numpy as np
@@ -1377,7 +1380,7 @@ class MetaEstimatorMixin:
     >>> X = np.array([[1, 2], [2, 3], [3, 4]])
     >>> y = np.array([1, 0, 1])
     >>> print(estimator.fit(X, y).predict(X))
-    [1, 1, 1]
+    [1 1 1]
     """
 
     _required_parameters = ["estimator"]
