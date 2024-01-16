@@ -856,7 +856,7 @@ class ClusterMixin:
     """Mixin class for all cluster estimators in scikit-learn.
     - `_estimator_type` class attribute defaulting to `"clusterer"`;
     - `fit_predict` method that default to
-    :func:`~sklearn.cluster.estimate_clusters`.
+    :func:`~sklearn.cluster.estimate_clusters`;
     - `_more_tags` method that adds the `preserves_dtype` tag to the estimator.
 
     Examples
