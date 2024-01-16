@@ -14,6 +14,16 @@ single feature and observing the resulting degradation of the model's score
 [1]_. By breaking the relationship between the feature and the target, we
 determine how much the model relies on such particular feature.
 
+In the following figures we show how permutation of a predictive feature breaks
+the correlation, whereas permutation of a non-predictive feature does not
+considerably degrade the learned model.
+
+.. image:: ../images/permuted_predictive_feature.png
+   :align: center
+
+.. image:: ../images/permuted_non_predictive_feature.png
+   :align: center
+
 One key advantage of permutation feature importance is that it is
 model-agnostic, i.e. it can be applied to any fitted estimator. Moreover, it can
 be calculated multiple times with different permutations of the feature, further
