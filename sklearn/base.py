@@ -1250,7 +1250,31 @@ class DensityMixin:
 
 
 class OutlierMixin:
-    """Mixin class for all outlier detection estimators in scikit-learn."""
+    """Mixin class for all outlier detection estimators in scikit-learn.
+    
+    This mixin defines the following functionality:
+
+    - `_estimator_type` class attribute defaulting to `outlier_detector`;
+    - `fit_predict` method that default to `fit` and `predict`.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.base import BaseEstimator, OutlierMixin
+    >>> class MyEstimator(OutlierMixin, BaseEstimator):
+    ...     def __init__(self, *, param=1):
+    ...         self.param = param
+    ...     def fit(self, X, y=None):
+    ...         self.is_fitted_ = True
+    ...         return self
+    ...     def predict(self, X):
+    ...         return np.full(shape=X.shape[0], fill_value=self.param)
+    >>> estimator = MyEstimator(param=1)
+    >>> X = np.array([[1, 2], [2, 3], [3, 4]])
+    >>> y = np.array([1, 0, 1])
+    >>> print(estimator.fit(X, y).predict(X))
+    [1, 1, 1]
+    """
 
     _estimator_type = "outlier_detector"
 
