@@ -24,16 +24,9 @@ inplace:
 	$(PYTHON) setup.py build_ext -i
 
 dev-meson:
-    # Temporary hack to try the experimental meson build. Once meson is accepted
-    # as the default build tool, this will go away.
-	perl -i -pe \
-		's@\[build-system\]@[build-system]\nbuild-backend = "mesonpy"\n@' \
-		pyproject.toml
-	pip install --editable .  --verbose --no-build-isolation \
-		--config-settings editable-verbose=true || \
-	perl -0777 -i -pe \
-		's@\[build-system\]\nbuild-backend = "mesonpy"\n@[build-system]@' \
-		pyproject.toml
+	# Temporary script to try the experimental meson build. Once meson is
+	# accepted as the default build tool, this will go away.
+	python build_tools/build-meson-editable-install.py
 
 clean-meson:
 	pip uninstall -y scikit-learn
