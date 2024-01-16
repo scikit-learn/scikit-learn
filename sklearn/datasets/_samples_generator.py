@@ -195,6 +195,17 @@ def make_classification(
     ----------
     .. [1] I. Guyon, "Design of experiments for the NIPS 2003 variable
            selection benchmark", 2003.
+
+    Examples
+    --------
+    >>> from sklearn.datasets import make_classification
+    >>> X, y = make_classification(random_state=42)
+    >>> X.shape
+    (100, 20)
+    >>> y.shape
+    (100,)
+    >>> list(y[:5])
+    [0, 0, 1, 1, 0]
     """
     generator = check_random_state(random_state)
 
