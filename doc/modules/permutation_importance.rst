@@ -105,8 +105,12 @@ which is more computationally efficient than sequentially calling
 :func:`permutation_importance` several times with a different scorer, as it
 reuses model predictions.
 
-An example of using multiple scorers is shown below, employing a list of metrics,
-but more input formats are possible, as documented in :ref:`multimetric_scoring`.
+|details-start|
+**Example of permutation feature importance using multiple scorers**
+|details-split|
+
+In the example below we use a list of metrics, but more input formats are
+possible, as documented in :ref:`multimetric_scoring`.
 
   >>> scoring = ['r2', 'neg_mean_absolute_percentage_error', 'neg_mean_squared_error']
   >>> r_multi = permutation_importance(
@@ -138,9 +142,11 @@ but more input formats are possible, as documented in :ref:`multimetric_scoring`
 
 The ranking of the features is approximately the same for different metrics even
 if the scales of the importance values are very different. However, this is not
-guaranteed and different metrics might lead to significantly different feature
+guaranteed and different metrics might lead to significantl*y different feature
 importances, in particular for models trained for imbalanced classification problems,
-for which the choice of the classification metric can be critical.
+for which **the choice of the classification metric can be critical**.
+
+|details-end|
 
 Outline of the permutation importance algorithm
 -----------------------------------------------
