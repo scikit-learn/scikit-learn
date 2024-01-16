@@ -1292,7 +1292,7 @@ class MetaEstimatorMixin:
     This mixin defines the following functionality:
 
     - `_required_parameters` class attribute that lists the required parameters
-        of the estimator;
+        of the estimator.
            
     Examples
     --------
