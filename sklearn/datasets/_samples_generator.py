@@ -1112,13 +1112,13 @@ def make_friedman1(n_samples=100, n_features=10, *, noise=0.0, random_state=None
     Examples
     --------
     >>> from sklearn.datasets import make_friedman1
-    >>> X, y = make_friedman1(n_samples=10, n_features=5, random_state=42)
+    >>> X, y = make_friedman1(random_state=42)
     >>> X.shape
-    (10, 5)
+    (100, 10)
     >>> y.shape
-    (10,)
+    (100,)
     >>> list(y[:3])
-    [16.838261560255855, 12.51782504017898, 5.869689190226745]
+    [16.8..., 5.8..., 9.4...]
     """
     generator = check_random_state(random_state)
 
@@ -1194,13 +1194,13 @@ def make_friedman2(n_samples=100, *, noise=0.0, random_state=None):
     Examples
     --------
     >>> from sklearn.datasets import make_friedman2
-    >>> X, y = make_friedman2(n_samples=10, random_state=42)
+    >>> X, y = make_friedman2(random_state=42)
     >>> X.shape
-    (10, 4)
+    (100, 4)
     >>> y.shape
-    (10,)
+    (100,)
     >>> list(y[:3])
-    [1229.4254365360975, 27.052801399271477, 65.652188881223]
+    [1229.4..., 27.0..., 65.6...]
     """
     generator = check_random_state(random_state)
 
@@ -1278,13 +1278,13 @@ def make_friedman3(n_samples=100, *, noise=0.0, random_state=None):
     Examples
     --------
     >>> from sklearn.datasets import make_friedman3
-    >>> X, y = make_friedman3(n_samples=10, random_state=42)
+    >>> X, y = make_friedman3(random_state=42)
     >>> X.shape
-    (10, 4)
+    (100, 4)
     >>> y.shape
-    (10,)
+    (100,)
     >>> list(y[:3])
-    [1.5403269655218537, 0.9560895744800866, 0.4137852049492915]
+    [1.5..., 0.9..., 0.4...]
     """
     generator = check_random_state(random_state)
 
