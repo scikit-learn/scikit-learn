@@ -181,19 +181,6 @@ def make_classification(
     y : ndarray of shape (n_samples,)
         The integer labels for class membership of each sample.
 
-    Examples
-    --------
-    >>> from sklearn.datasets import make_classification
-    >>> X, y = make_classification(n_samples=100, n_features=4,
-    ...                            n_informative=2, n_redundant=0,
-    ...                            random_state=42)
-    >>> X.shape
-    (100, 4)
-    >>> y.shape
-    (100,)
-    >>> list(y[:5])
-    [0, 1, 1, 1, 0]
-
     See Also
     --------
     make_blobs : Simplified variant.
@@ -208,6 +195,19 @@ def make_classification(
     ----------
     .. [1] I. Guyon, "Design of experiments for the NIPS 2003 variable
            selection benchmark", 2003.
+
+    Examples
+    --------
+    >>> from sklearn.datasets import make_classification
+    >>> X, y = make_classification(n_samples=100, n_features=4,
+    ...                            n_informative=2, n_redundant=0,
+    ...                            random_state=42)
+    >>> X.shape
+    (100, 4)
+    >>> y.shape
+    (100,)
+    >>> list(y[:5])
+    [0, 1, 1, 1, 0]
     """
     generator = check_random_state(random_state)
 
