@@ -1,7 +1,7 @@
 project(
   'scikit-learn',
   'c', 'cpp', 'cython',
-  version: '1.5.0.dev0',
+  version: run_command('sklearn/_build_utils/version.py', check: true).stdout().strip(),
   license: 'BSD-3',
   meson_version: '>= 1.1.0',
   default_options: [
