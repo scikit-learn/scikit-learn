@@ -109,7 +109,7 @@ fig, ax = plt.subplots(figsize=(10, 5))
 average_week_demand.plot(color=colors[0], label="recorded average", linewidth=2, ax=ax)
 
 for idx, max_iter in enumerate(max_iter_list):
-    hgbt = HistGradientBoostingRegressor(max_iter=max_iter)
+    hgbt = HistGradientBoostingRegressor(max_iter=max_iter, categorical_features=None)
     hgbt.fit(X_train, y_train)
 
     y_pred = hgbt.predict(X_test)
@@ -158,6 +158,7 @@ common_params = {
     "learning_rate": 0.3,
     "validation_fraction": 0.2,
     "random_state": 42,
+    "categorical_features": None,
     "scoring": "neg_root_mean_squared_error",
 }
 
@@ -342,8 +343,10 @@ monotonic_cst = {
     "vicdemand": -1,
     "vicprice": -1,
 }
-hgbt_no_cst = HistGradientBoostingRegressor().fit(X, y)
-hgbt_cst = HistGradientBoostingRegressor(monotonic_cst=monotonic_cst).fit(X, y)
+hgbt_no_cst = HistGradientBoostingRegressor(categorical_features=None).fit(X, y)
+hgbt_cst = HistGradientBoostingRegressor(
+    monotonic_cst=monotonic_cst, categorical_features=None
+).fit(X, y)
 
 fig, ax = plt.subplots(nrows=2, figsize=(15, 10))
 disp = PartialDependenceDisplay.from_estimator(
