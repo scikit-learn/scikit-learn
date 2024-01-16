@@ -581,58 +581,6 @@ for an example usage.
 :class:`HalvingRandomSearchCV` and :class:`HalvingGridSearchCV` do not support
 multimetric scoring.
 
-.. _refit_constraints:
-
-Model Subselection
-------------------
-
-Model subselection methods expand the user's level of control over the hyper-parameter
-tuning process through a family of model selection heuristics. Such control can be
-especially useful, for instance, when the user wishes to select the best model from
-among a group of comparably top-performing candidates based on additional criteria,
-usually model complexity.
-
-Scikit-Learn provides two mechanisms for model refitting. The first is *post hoc*
--- by fitting a :class:`model_selection.ScoreCutModelSelector` instance to the
-``cv_results_`` attribute of a fitted instance of ``GridSearchCV``,
-``RandomizedSearchCV``,  or ``HalvingRandomSearchCV``. The second is *a priori* -- by
-setting the ``refit`` parameter in a ``GridSearchCV``, ``RandomizedSearchCV``, or
-``RandomizedSearchCV`` instance to a callable function :func:`model_selection.
-subselect` before running the search.
-
-In the case of refitting a ``GridSearchCV``, ``RandomizedSearchCV``,  or
-``HalvingRandomSearchCV`` object with the simplest best-performing model, for example,
-one common constraint to use is the "One Standard Error Rule" (1-SE)
-(see :class:`model_selection.by_standard_error`). 1-SE is a heuristic for subselecting
-the most parsimonious model whose cross-validated performance is not more than 1
-standard error worse than the best CV performance. In effect, this technique helps to
-identify simpler, more generalizeable models, as those with the highest rote performance
-can be more prone to overfitting (Breiman et al., 1984).Although it is easy to
-demonstrate the value of 1-SE (e.g. see
-:ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_refit_callable.py`),
-the criteria may be too rigid or lenient in some contexts. In these cases,
-:class:`model_selection.ScoreCutModelSelector` also supports other default
-subselection strategies,
-including:
-
-    :class:`model_selection.by_percentile_rank`
-    :class:`model_selection.by_signed_rank`
-    :class:`model_selection.by_fixed_window`
-
-These callable constraints follow a common class structure, enabling users to easily
-customize their own subselection strategies as well.
-
-.. topic:: References:
-
- * Breiman, Leo, Jerome Friedman, Richard Olshen, and Charles Stone. 1984.
-    "Classification and Regression Trees." :doi:`10.1080/01621459.1984.10477025`
- * Chen, Yuchen, and Yuhong Yang. 2021. "The One Standard Error Rule for Model
-    Selection: Does It Work?" Stats 4, no. 4: 868-892.
-    :doi:`https://doi.org/10.3390/stats404005`
- * Hastie, Trevor, Robert Tibshirani, and Jerome Friedman. 2009. The Elements of
-    Statistical Learning: Data Mining, Inference, and Prediction. New York:
-    Springer Series in Statistics. :doi:`10.1007/978-0-387-84858-7`
-
 .. _composite_grid_search:
 
 Composite estimators and parameter spaces
@@ -712,6 +660,64 @@ some parameter settings could be fully evaluated. Setting ``error_score=0``
 (or `=np.nan`) will make the procedure robust to such failure, issuing a
 warning and setting the score for that fold to 0 (or `nan`), but completing
 the search.
+
+.. _refit_constraints:
+
+Model promotion
+---------------
+
+Model promotion methods expand the user's level of control over the hyper-parameter
+tuning process by leveraging various model selection heuristics to promote
+more optimal models with balanced performance. Such control can be especially
+useful, for instance, when the user wishes to select the simplest model from
+among a group of similarly top-performing candidates with varying degrees of
+complexity. Other scenarios where model promotion might include those where the user
+wishes to select the most interpretable or computationally efficient model from among
+a group of top-performing candidates.
+
+Scikit-Learn provides two mechanisms for model promotion. The first is *post hoc*
+-- by fitting a :class:`model_selection.ScoreCutModelSelector` instance to the
+``cv_results_`` attribute of a fitted instance of ``GridSearchCV``,
+``RandomizedSearchCV``,  or ``HalvingRandomSearchCV``. The second is *a priori* -- by
+setting the ``refit`` parameter in a ``GridSearchCV``, ``RandomizedSearchCV``, or
+``RandomizedSearchCV`` instance to a callable function :func:`model_selection.
+promote` before running the search. In either case, the user can specify a
+:class:`model_selection.ScoreCutModelSelector` instance, comprising both a score
+slicing rule instance and a model ranking rule instance, to control the promotion
+strategy. Model promotion based on composite estimators and parameter spaces, as well as both numeric and categorical hyperparameter data types are also supported.
+
+In the case of refitting a ``GridSearchCV``, ``RandomizedSearchCV``, or
+``HalvingRandomSearchCV`` object with the simplest best-performing model, for example,
+one common constraint to use is the "One Standard Error Rule" (1-SE)
+(see :class:`model_selection.StandardErrorSlicer`). 1-SE is a heuristic for promoting
+the most parsimonious model whose cross-validated performance is not more than 1
+standard error worse than the best CV performance. In effect, this technique helps to
+identify simpler, more generalizeable models, as those with the highest rote performance
+can be more prone to overfitting (Breiman et al., 1984).Although it is easy to
+demonstrate the value of 1-SE (e.g. see
+:ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_refit_callable.py`),
+the 1-SE criteria may be too rigid or lenient in some contexts. In these cases,
+:class:`model_selection.ScoreCutModelSelector` also supports other score slicing rules,
+including:
+
+    :class:`model_selection.PercentileRankSlicer`
+    :class:`model_selection.SignedRankSlicer`
+    :class:`model_selection.FixedWindowSlicer`
+
+These callable classes follow a common structure that subclasses
+:class:`model_selection.BaseScoreSlicer`, enabling users to easily define their own
+custom slicing rules as well.
+
+.. topic:: References:
+
+ * Breiman, Leo, Jerome Friedman, Richard Olshen, and Charles Stone. 1984.
+    "Classification and Regression Trees." :doi:`10.1080/01621459.1984.10477025`
+ * Chen, Yuchen, and Yuhong Yang. 2021. "The One Standard Error Rule for Model
+    Selection: Does It Work?" Stats 4, no. 4: 868-892.
+    :doi:`https://doi.org/10.3390/stats404005`
+ * Hastie, Trevor, Robert Tibshirani, and Jerome Friedman. 2009. The Elements of
+    Statistical Learning: Data Mining, Inference, and Prediction. New York:
+    Springer Series in Statistics. :doi:`10.1007/978-0-387-84858-7`
 
 .. _alternative_cv:
 

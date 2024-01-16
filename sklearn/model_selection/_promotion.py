@@ -1,6 +1,6 @@
 """
-The :mod:``sklearn.model_selection.subselect`` includes refit callable factories for
-subselecting models from ``GridSearchCV``, ``RandomizedSearchCV``, or
+The :mod:``sklearn.model_selection.promote`` includes refit callable factories for
+promoteing models from ``GridSearchCV``, ``RandomizedSearchCV``, or
 ``HalvingRandomSearchCV``
 """
 
@@ -11,17 +11,80 @@ from typing import Callable, Dict, List, Optional, Tuple, Union
 import numpy as np
 
 __all__ = [
+    "BaseScoreSlicer",
+    "StandardErrorSlicer",
+    "PercentileRankSlicer",
+    "SignedRankSlicer",
+    "FixedWindowSlicer",
+    "FavorabilityRanker",
     "ScoreCutModelSelector",
-    "by_standard_error",
-    "by_percentile_rank",
-    "by_signed_rank",
-    "by_fixed_window",
-    "subselect",
+    "promote",
     "_wrap_refit",
 ]
 
 
-class by_standard_error:
+class BaseScoreSlicer:
+    """A base class for classes used to define a window of proximal model performance
+    based on various criteria. Should not be called directly.
+    """
+
+    def __init__(self):
+        pass
+
+    def __call__(
+        self,
+        score_grid: np.ndarray,
+        cv_means: np.ndarray,
+        best_score_idx: int,
+        lowest_score_idx: int,
+        n_folds: int,
+    ):
+        """Returns a window of model performance based on a user-defined criterion.
+
+        Parameters
+        ----------
+        score_grid : np.ndarray
+            A 2D array of model performance scores across folds and hyperparameter
+            settings.
+        cv_means : np.ndarray
+            A 1D array of the average model performance across folds for each
+            hyperparameter setting.
+        best_score_idx : int
+            The index of the highest performing hyperparameter setting.
+        lowest_score_idx : int
+            The index of the lowest performing hyperparameter setting.
+        n_folds : int
+            The number of folds used in the cross-validation.
+
+        Returns
+        -------
+        min_cut : float
+            The lower bound of the window of model performance.
+        max_cut : float
+            The upper bound of the window of model performance.
+        """
+        raise NotImplementedError("Subclasses must implement this method.")
+
+    def __repr__(self) -> str:
+        slice_params = ", ".join(
+            [
+                f"{key}={val}"
+                for key, val in self.__dict__.items()
+                if key
+                not in [
+                    "score_grid",
+                    "cv_means",
+                    "best_score_idx",
+                    "lowest_score_idx",
+                    "n_folds",
+                ]
+                and not key.startswith("_")
+            ]
+        )
+        return f"{self.__class__.__name__}({slice_params})"
+
+
+class StandardErrorSlicer(BaseScoreSlicer):
     """Slices a window of model performance based on standard error.
 
     Standard error is estimated based on a user-supplied number of standard errors,
@@ -85,11 +148,8 @@ class by_standard_error:
         min_cut = cv_means[best_score_idx] - self.sigma * cv_se[best_score_idx]
         return min_cut, max_cut
 
-    def __repr__(self) -> str:
-        return f"{self.__class__.__name__}(sigma={self.sigma})"
 
-
-class by_percentile_rank:
+class PercentileRankSlicer(BaseScoreSlicer):
     """Slices a window of model performance based on percentile rank.
 
     Percentile rank is estimated based on a user-supplied percentile threshold, eta.
@@ -156,11 +216,8 @@ class by_percentile_rank:
         min_cut = perc_cutoff[1, best_score_idx]
         return min_cut, max_cut
 
-    def __repr__(self) -> str:
-        return f"{self.__class__.__name__}(eta={self.eta})"
 
-
-class by_signed_rank:
+class SignedRankSlicer(BaseScoreSlicer):
     """Slices a window of model performance based on signed rank sum.
 
     Signed rank sum is estimated based on a Wilcoxon rank sum test at a user-supplied
@@ -280,14 +337,8 @@ class by_signed_rank:
         min_cut = np.nanmin(cv_means[surviving_ranks])
         return min_cut, max_cut
 
-    def __repr__(self) -> str:
-        return (
-            f"{self.__class__.__name__}(alpha={self.alpha},"
-            f" alternative={self.alternative}, zero_method={self.zero_method})"
-        )
 
-
-class by_fixed_window:
+class FixedWindowSlicer(BaseScoreSlicer):
     """Slices a window of model performance based on arbitrary min/max cuts.
 
     Parameters
@@ -319,7 +370,7 @@ class by_fixed_window:
         best_score_idx: int,
         lowest_score_idx: int,
         n_folds: int,
-    ) -> Tuple[Union[float, None], Union[float, None]]:
+    ) -> Tuple[Optional[float], Optional[float]]:
         """Returns a window of performance based on min_cut and max_cut values.
 
         Parameters
@@ -346,36 +397,86 @@ class by_fixed_window:
         """
         return self.min_cut, self.max_cut
 
-    def __repr__(self) -> str:
-        return (
-            f"{self.__class__.__name__}(min_cut={self.min_cut}, max_cut={self.max_cut})"
-        )
+
+class FavorabilityRanker:
+    def __init__(
+        self, favorability_rules: Dict[str, Union[Tuple[bool, float], List[str]]]
+    ):
+        """
+        Initializes the FavorabilityRanker class with optional favorability rules.
+
+        Parameters
+        ----------
+        favorability_rules: Dict[str, Union[Tuple[bool, float], List[str]]]
+            A dictionary mapping hyperparameters to either a tuple or a list.
+            For numeric hyperparameters, the tuple contains a boolean (indicating
+            whether lower values imply higher favorability) and a float (weight).
+            For string hyperparameters, the list defines the order of favorability
+            from most favorable to least favorable.
+        """
+        self.favorability_rules = favorability_rules
+
+    def __call__(self, params: List[Dict]) -> List[int]:
+        """
+        Ranks the given hyperparameter sets based on the defined favorability rules.
+
+        Parameters
+        ----------
+        params: List[Dict]
+            A list of dictionaries representing sets of hyperparameters.
+
+        Returns
+        -------
+        List[int]
+            A list of ranks corresponding to the favorability of each set of
+            hyperparameters.
+        """
+
+        def calculate_favorability_score(param_set):
+            favorability_score = 0
+            for hyperparam, rule in self.favorability_rules.items():
+                if hyperparam in param_set:
+                    # Numeric hyperparameter
+                    if isinstance(rule, tuple):
+                        lower_is_more_complex, weight = rule
+                        score_component = (
+                            1 / param_set[hyperparam]
+                            if lower_is_more_complex
+                            else param_set[hyperparam]
+                        )
+                        favorability_score += weight * score_component
+                    # Categorical hyperparameter
+                    elif isinstance(rule, list):
+                        favorability_score += rule.index(param_set[hyperparam])
+            return favorability_score
+
+        favorability_scores = [calculate_favorability_score(p) for p in params]
+        ranks = [x + 1 for x in np.argsort(favorability_scores)]
+
+        return ranks
 
 
 class ScoreCutModelSelector:
-    """A refit factory for model subselection in GridSearchCV or RandomizedSearchCV.
+    """A refit factory for promoting models in GridSearchCV, RandomizedSearchCV, or
+    HalvingRandomSearchCV.
 
-    Model subselection can be useful for instance in the case that the user wishes to
-    select an alternative model whose performance is not meaningfully
-    different from the globally best-performing model, but whose simplicity may be more
-    preferable (e.g. to prevent overfitting).
-
-    The subselection process expects that the hyperparameter input values provided by
-    the user are ranked-ordered with respect to model complexity. Specifically, it
-    assumes these values are sorted from least to most complex, wherein the definition
-    of model complexity is based on user discretion.
+    Model promotion can be useful for instance in the case that the user wishes to
+    select the most favorable alternative model whose performance is not meaningfully
+    different from the globally best-performing model, but whose favorability along
+    other dimensions makes it more preferable. One example of this is the case of
+    selecting a simpler model that is not meaningfully different from the
+    best-performing model -- the so-called "one-standard-error" rule. Other definitions
+    of model favorability such as interpretability, explainability, computational
+    efficiency, or other domain-specific crieria are also supported, and can be defined
+    in the same way by the user using the ``FavorabilityRanker`` interface.
 
     Parameters
     ----------
     cv_results_ : dict of numpy (masked) ndarrays
         A dict with keys as column headers and values as columns, as generated from
-        fitting a GridSearchCV or RandomSearchCV object. See ``GridSearchCV`` or
-        ``RandomSearchCV``, respectively, for more details.
-
-    References
-    ----------
-    Breiman, Friedman, Olshen, and Stone. (1984) Classification and Regression
-    Trees. Wadsworth.
+        fitting a ``GridSearchCV``, ``RandomSearchCV``, or ``HalvingRandomSearchCV``
+        object. For more details, see ``GridSearchCV``, ``RandomSearchCV``, or
+        ``HalvingRandomSearchCV``, respectively.
 
     Examples
     --------
@@ -384,7 +485,8 @@ class ScoreCutModelSelector:
     >>> from sklearn.decomposition import PCA
     >>> from sklearn.svm import LinearSVC
     >>> from sklearn.pipeline import Pipeline
-    >>> from sklearn.model_selection import ScoreCutModelSelector, by_standard_error
+    >>> from sklearn.model_selection import ScoreCutModelSelector,
+    ... StandardErrorSlicer, FavorabilityRanker
     >>> X, y = load_digits(return_X_y=True)
     >>> pipe = Pipeline([
     ...      ("reduce_dim", PCA(random_state=42)),
@@ -403,12 +505,17 @@ class ScoreCutModelSelector:
                  param_grid={'reduce_dim__n_components': [6, 8, 10, 12, 14]},
                  scoring='accuracy')
     >>> ss = ScoreCutModelSelector(search.cv_results_)
-    >>> ss.fit_transform(by_standard_error(sigma=1))
+    >>> ss.fit(StandardErrorSlicer(sigma=1))
+    >>> favorability_rules = {
+    ...     'reduce_dim__n_components': (False, 2.0)  # Lower is simpler
+    ...     'classify__C': (True, 1.0) # Lower is more complex
+    ... }
+    >>> promoted_index = ss.transform(FavorabilityRanker(favorability_rules))
     Original best index: 4
-    Refitted best index: 3
-    Refitted best params: {'reduce_dim__n_components': 12}
-    Refitted best score: 0.8926121943670691
-    >>> refitted_index
+    Promoted best index: 3
+    Promoted best params: {'reduce_dim__n_components': 12}
+    Promoted best score: 0.8926121943670691
+    >>> promoted_index
     3
     """
 
@@ -437,7 +544,7 @@ class ScoreCutModelSelector:
             return _splits
 
     @property
-    def _n_folds(self):
+    def _n_folds(self) -> int:
         # Extract number of folds from cv_results_. Note that we cannot get this from
         # the ``n_splits_`` attribute of the ``cv`` object because it is not exposed to
         # the refit callable.
@@ -450,24 +557,24 @@ class ScoreCutModelSelector:
         )
 
     @property
-    def _score_grid(self):
+    def _score_grid(self) -> np.ndarray:
         # Extract subgrid corresponding to the scoring metric of interest
         return np.vstack(
             [self.cv_results_constrained_[cv] for cv in self._get_splits()]
         ).T
 
     @property
-    def _cv_means(self):
+    def _cv_means(self) -> np.ndarray:
         # Calculate means of subgrid corresponding to the scoring metric of interest
         return np.array(np.nanmean(self._score_grid, axis=1))
 
     @property
-    def _lowest_score_idx(self):
+    def _lowest_score_idx(self) -> int:
         # Return index of the lowest performing model
         return np.nanargmin(self._cv_means)
 
     @property
-    def _best_score_idx(self):
+    def _best_score_idx(self) -> int:
         # Return index of the highest performing model
         return np.nanargmax(self._cv_means)
 
@@ -475,7 +582,7 @@ class ScoreCutModelSelector:
         self,
         min_cut: Optional[float],
         max_cut: Optional[float],
-    ) -> int:
+    ) -> Tuple[Optional[float], Optional[float]]:
         """Apply a performance threshold to the `_score_grid`.
 
         Parameters
@@ -487,7 +594,7 @@ class ScoreCutModelSelector:
         """
 
         # Initialize a mask for the overall performance
-        performance_mask = np.zeros(len(self._score_grid), dtype=bool)
+        np.zeros(len(self._score_grid), dtype=bool)
 
         # Extract the overall performance
         if not min_cut:
@@ -496,13 +603,13 @@ class ScoreCutModelSelector:
             max_cut = float(np.nanmax(self._cv_means))
 
         # Mask all grid columns that are outside the performance window
-        performance_mask = np.where(
+        self.performance_mask = np.where(
             (self._cv_means >= float(min_cut)) & (self._cv_means <= float(max_cut)),
             True,
             False,
         )
 
-        if np.sum(performance_mask) == 0:
+        if np.sum(self.performance_mask) == 0:
             print(
                 f"\nMin: {min_cut}\nMax: {max_cut}\nMeans across folds:"
                 f" {self._cv_means}\n"
@@ -515,35 +622,95 @@ class ScoreCutModelSelector:
         # For each hyperparameter in the grid, mask all grid columns that are outside
         # of the performance window
         for hyperparam in self.cv_results_constrained_["params"][0].keys():
-            self.cv_results_constrained_[f"param_{hyperparam}"].mask = ~performance_mask
-
-        # Among those models remaining within the performance window, find the highest
-        # surviving rank (i.e. the lowest-performing model overall).
-        highest_surviving_rank = np.nanmax(
-            self.cv_results_constrained_["rank_test_score"][performance_mask]
-        )
-
-        # Return the index of the highest surviving rank. If the hyperparameter grid is
-        # sorted sequentially from least to most complexity, the index of the
-        # highest surving rank will equate to the index of the simplest model that
-        # is not meaningfully different from the best-performing model.
-        return int(
-            np.nanargmax(
-                self.cv_results_constrained_["rank_test_score"]
-                == highest_surviving_rank
+            self.cv_results_constrained_[f"param_{hyperparam}"].mask = (
+                ~self.performance_mask
             )
-        )
+        return min_cut, max_cut
 
-    def fit_transform(self, selector: Callable) -> int:
-        """Generates a ScoreCutModelSelector instance with specified selector callable
-        and subselects the simplest model under the fitted constraints.
+    def _select_best_favorable(self, favorability_rank_fn: Callable) -> int:
+        """Selects the most favorably ranked model within the trimmed performance
+        window. If multiple models are tied for highest rank, the model with the
+        highest overall performance is selected.
 
         Parameters
         ----------
-        selector : callable
-            A callable that consumes GridSearchCV or RandomSearchCV results and
-            returns a tuple of floats representing the lower and upper bounds of a
-            target model performance window.
+        favorability_rank_fn : callable
+            A callable that consumes a hyperparameter grid in the form of a list of
+            hyperparameter dictionaries and returns an list of ranked integers
+            corresponding to model favorability of each hyperparameter setting, from
+            least to most favorable. For example a valid ``favorability_rank_fn`` might
+            consume [{"reduce_dim__n_components": [6, 8, 10, 12, 14, 16, 18]}]
+            and return [0, 1, 2, 3, 4, 5, 6].
+        """
+
+        # Apply the favorability function to the hyperparameter grid and add the ensuing
+        # favorability ranks to the constrained cv_results dict
+        self.cv_results_constrained_["favorability_rank"] = np.array(
+            favorability_rank_fn(self.cv_results_constrained_["params"])
+        )
+
+        most_favorable_surviving_rank = np.nanmin(
+            self.cv_results_constrained_["favorability_rank"][self.performance_mask]
+        )
+
+        # Check if multiple models are tied for most favorable within the trimmed
+        # performance
+        tied_mostfavorable = (
+            np.sum(
+                self.cv_results_constrained_["favorability_rank"][self.performance_mask]
+                == most_favorable_surviving_rank
+            )
+            > 1
+        )
+
+        # If only one model is definitively most favorable, return its index
+        if not tied_mostfavorable:
+            # Return the index of the most favorable model within the performance window
+            return int(
+                np.where(
+                    self.cv_results_constrained_["favorability_rank"]
+                    == most_favorable_surviving_rank
+                )[0][0]
+            )
+
+        # Mask performance mask to only include the multiple models tied for the
+        # most favorable favorability
+        performance_mask_mostfavorable = np.where(
+            self.cv_results_constrained_["favorability_rank"]
+            == most_favorable_surviving_rank,
+            True,
+            False,
+        )
+        # Among multiple equally simple models within the trimmed performance
+        # window, find the lowest surviving test performamce rank (i.e. the
+        # highest-performing model overall).
+        lowest_surviving_rank = np.nanmin(
+            self.cv_results_constrained_["rank_test_score"][
+                performance_mask_mostfavorable
+            ]
+        )
+
+        # Return the index of the lowest surviving rank among equally simple models,
+        # which will equate to the index of the best-performing most favorable model
+        # that is not meaningfully different from the globally best-performing model.
+        return int(
+            np.where(
+                self.cv_results_constrained_["rank_test_score"] == lowest_surviving_rank
+            )[0][0]
+        )
+
+    def fit(
+        self, score_slice_fn: Callable
+    ) -> Tuple[Union[float, None], Union[float, None]]:
+        """Fits a ScoreCutModelSelector instance with specified
+        ``score_slice_fn`` callable to define a cut window of model performance.
+
+        Parameters
+        ----------
+        score_slice_fn : callable
+            A callable that consumes GridSearchCV, RandomSearchCV, or
+            HalvingRandomSearchCV results and returns a tuple of floats representing
+            the lower and upper bounds of a target model performance window.
 
         Returns
         -------
@@ -555,11 +722,12 @@ class ScoreCutModelSelector:
         Raises
         ------
         ``TypeError``
-            If the selector is not a callable.
+            If the ``score_slice_fn`` is not a callable.
 
         Notes
         -----
-        The following keyword arguments will be automatically exposed to the selector
+        The following keyword arguments will be automatically exposed to the
+        score_slice_fn
         by ``ScoreCutModelSelector``:
 
         - best_score_idx : int
@@ -588,11 +756,12 @@ class ScoreCutModelSelector:
                 [0.31666667, 0.33333333, 0.37047354, 0.40668524, 0.46239554]])
             ````
         """
-        if not callable(selector):
+        if not callable(score_slice_fn):
             raise TypeError(
-                f"``selector`` {selector} must be a callable but is {type(selector)}."
+                f"``score_slice_fn`` {score_slice_fn} must be a callable but is"
+                " {type(score_slice_fn)}."
                 " See ``Notes`` section of the"
-                " :class:``~sklearn.model_selection.ScoreCutModelSelector:fit`` API"
+                " :class:``~sklearn.model_selection.ScoreCutModelSelector:fit`` API "
                 " documentation for more details."
             )
 
@@ -604,23 +773,62 @@ class ScoreCutModelSelector:
             "n_folds": self._n_folds,
         }
 
-        min_cut, max_cut = selector(**fit_params)
-        print(f"Min: {min_cut}\nMax: {max_cut}")
-        best_index_ = self._apply_thresh(min_cut, max_cut)
+        self.min_cut, self.max_cut = score_slice_fn(**fit_params)
+        min_cut, max_cut = self._apply_thresh(self.min_cut, self.max_cut)
+
+        # Check that the stateful attributes have been correctly set
+        assert min_cut == self.min_cut
+        assert max_cut == self.max_cut
+
+        return self.min_cut, self.max_cut
+
+    def transform(self, favorability_rank_fn: Callable) -> int:
+        """promotes the most favorable model within the constrained cut-window of
+        best-performance.
+
+        Returns
+        -------
+        favorability_rank_fn : callable
+            A callable initialized with a dictionary of hyperparameter favorability
+            ranking rules. At call, the callable consumes a hyperparameter grid in the
+            form of a dictionary {"reduce_dim__n_components": [6, 8, 10, 12, 14, 16,
+            18]} and returns an list of ranked integers corresponding to the
+            favorability of each hyperparameter setting, from least to most complex.
+            For example: [0, 1, 2, 3, 4, 5, 6].
+        int
+            The index of the most favorable model.
+
+        Raises
+        ------
+        ValueError
+            If the ScoreCutModelSelector has not been fitted before calling the
+            ``transform`` method.
+
+        """
+        if not hasattr(self, "min_cut") or not hasattr(self, "max_cut"):
+            raise ValueError(
+                "ScoreCutModelSelector must be fitted before calling "
+                "``transform`` method."
+            )
+
+        best_index_ = self._select_best_favorable(favorability_rank_fn)
+
         print(f"Original best index: {self._best_score_idx}")
-        print(f"Refitted best index: {best_index_}")
+        print(f"Promoted best index: {best_index_}")
         print(
-            "Refitted best params:"
+            "Promoted best params:"
             f" {self.cv_results_constrained_['params'][best_index_]}"
         )
         print(
-            "Refitted best score:"
+            "Promoted best score:"
             f" {self.cv_results_constrained_['mean_test_score'][best_index_]}"
         )
-        return self._apply_thresh(min_cut, max_cut)
+        return best_index_
 
 
-def _wrap_refit(cv_results_: Dict, selector: Callable) -> int:
+def _wrap_refit(
+    cv_results_: Dict, score_slice_fn: Callable, favorability_rank_fn: Callable
+) -> int:
     """A wrapper function for the ``ScoreCutModelSelector`` class.
 
     Should not be called directly. See the :class:``~sklearn.model_selection
@@ -629,41 +837,51 @@ def _wrap_refit(cv_results_: Dict, selector: Callable) -> int:
     Parameters
     ----------
     cv_results_ : Dict
-        The ``cv_results_`` attribute of a ``GridSearchCV`` or ``RandomSearchCV``
-        object.
-    selector : Callable
+        The ``cv_results_`` attribute of a GridSearchCV, RandomSearchCV, or
+            HalvingRandomSearchCV object.
+    score_slice_fn : Callable
         Function that returns the lower and upper bounds of an acceptable performance
         window.
+    favorability_rank_fn : Callable
+        A callable that consumes a hyperparameter grid in the form of a dictionary
+        {"reduce_dim__n_components": [6, 8, 10, 12, 14, 16, 18]} and returns an
+        list of ranked integers corresponding to the favorability of each
+        hyperparameter setting, from least to most complex. For example: [0, 1, 2,
+        3, 4, 5, 6].
 
     Returns
     -------
     int
         The index of the best model under the performance constraints conferred by a
-        ``selector``.
+        ``score_slice_fn``.
     """
     ss = ScoreCutModelSelector(cv_results_)
 
-    return ss.fit_transform(selector)
+    [min_cut, max_cut] = ss.fit(score_slice_fn)
+    print(f"Min: {min_cut}\nMax: {max_cut}")
+    return ss.transform(favorability_rank_fn)
 
 
-def subselect(selector: Callable) -> Callable:
-    """Callable returning the simplest model index with constraints conferred by a
-    ``selector``.
+def promote(score_slice_fn: Callable, favorability_rank_fn: Callable) -> Callable:
+    """Callable returning the most favorable model index based on
+    ``favorability_rank_fn`` with score constraints determined by a ``score_slice_fn``.
 
-    Intended to be used as the ``refit`` parameter in ``GridSearchCV`` or
-    ``RandomSearchCV``.
+    Intended to be used as the ``refit`` parameter in ``GridSearchCV``,
+    ``RandomSearchCV``, or ``HalvingRandomSearchCV``.
 
     Parameters
     ----------
-    selector : callable
+    score_slice_fn : callable
         Function that returns the lower and upper bounds of an acceptable performance
         window.
+    favorability_rank_fn : Callable
+        Function that returns the favorability rank of each hyperparameter setting.
 
     Returns
     -------
     Callable
-        A callable that returns the index of the simplest model whose performance falls
-        within the acceptable bounds imposed by the selector strategy.
+        A callable that returns the index of the most favorable model whose performance
+        falls within the acceptable bounds imposed by the score_slice_fn rule.
 
     Examples
     --------
@@ -672,30 +890,40 @@ def subselect(selector: Callable) -> Callable:
     >>> from sklearn.decomposition import PCA
     >>> from sklearn.svm import LinearSVC
     >>> from sklearn.pipeline import Pipeline
-    >>> from sklearn.model_selection import subselect, by_standard_error
+    >>> from sklearn.model_selection import promote, StandardErrorSlicer,
+    ... FavorabilityRanker
     >>> X, y = load_digits(return_X_y=True)
     >>> pipe = Pipeline([
     ...      ("reduce_dim", PCA(random_state=42)),
     ...      ("classify", LinearSVC(random_state=42, C=0.01)),
     ... ])
     >>> param_grid = {"reduce_dim__n_components": [6, 8, 10, 12, 14, 16, 18]}
+    >>> favorability_rules = {
+    ...     'reduce_dim__n_components': False,  # Lower is simpler
+    ...     'classify__C': True # Lower is more complex
+    ... }
     >>> search = GridSearchCV(
     ...     pipe,
     ...     param_grid=param_grid,
     ...     scoring="accuracy",
-    ...     refit=subselect(by_standard_error(sigma=1)),
+    ...     refit=promote(score_slice_fn=StandardErrorSlicer(sigma=1),
+    ...     favorability_rank_fn=FavorabilityRanker(favorability_rules)),
     ... )
     >>> search.fit(X, y)
     Min: 0.8898918397688278
     Max: 0.9186844524007791
     Original best index: 6
-    Refitted best index: 3
-    Refitted best params: {'reduce_dim__n_components': 12}
-    Refitted best score: 0.8926121943670691
+    Promoted best index: 3
+    Promoted best params: {'reduce_dim__n_components': 12}
+    Promoted best score: 0.8926121943670691
     ...
     >>> search.best_params_
     {'reduce_dim__n_components': 12}
     """
     # avoid returning a closure in a return statement to avoid pickling issues
-    best_index_callable = partial(_wrap_refit, selector=selector)
+    best_index_callable = partial(
+        _wrap_refit,
+        score_slice_fn=score_slice_fn,
+        favorability_rank_fn=favorability_rank_fn,
+    )
     return best_index_callable

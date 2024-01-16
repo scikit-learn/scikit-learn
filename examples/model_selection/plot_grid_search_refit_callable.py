@@ -41,10 +41,10 @@ from sklearn.decomposition import PCA
 from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.metrics import mean_squared_error
 from sklearn.model_selection import GridSearchCV, RandomizedSearchCV, train_test_split
-from sklearn.model_selection._subselect import (
+from sklearn.model_selection._promote import (
     by_signed_rank,
     by_standard_error,
-    subselect,
+    promote,
 )
 from sklearn.pipeline import Pipeline
 from sklearn.svm import LinearSVC
@@ -66,7 +66,7 @@ grid = GridSearchCV(
     n_jobs=-1,
     param_grid=param_grid,
     scoring="accuracy",
-    refit=subselect(by_standard_error(sigma=1)),
+    refit=promote(by_standard_error(sigma=1)),
 )
 
 grid.fit(X, y)
@@ -128,7 +128,7 @@ grid = RandomizedSearchCV(
     cv=10,
     n_jobs=-1,
     scoring="r2",
-    refit=subselect(by_signed_rank(alpha=0.05)),
+    refit=promote(by_signed_rank(alpha=0.05)),
 )
 grid.fit(X_train, y_train)
 
@@ -169,13 +169,13 @@ plt.legend(loc="upper left")
 
 best_index_ = np.where(grid.cv_results_["mean_test_score"] == lower)[0][0]
 
-# Show the effect on train-test deviance of using model subselection.
+# Show the effect on train-test deviance of using model promotion.
 best_estimator_refitted = grid.estimator
 best_estimator_refitted.n_estimators = params["n_estimators"][best_index_]
 best_estimator_refitted.fit(X_train, y_train)
 
-# Compute test set deviance for subselected and non-subselected models
-# subselected model
+# Compute test set deviance for promoteed and non-promoteed models
+# promoteed model
 test_score = np.zeros((params["n_estimators"][best_index_],), dtype=np.float64)
 for i, y_pred in enumerate(best_estimator_refitted.staged_predict(X_test)):
     test_score[i] = mean_squared_error(y_test, y_pred)
@@ -203,7 +203,7 @@ fig.tight_layout()
 best_estimator = grid.best_estimator_
 best_estimator.fit(X_train, y_train)
 
-# non-subselected model
+# non-promoteed model
 test_score = np.zeros((best_estimator.n_estimators,), dtype=np.float64)
 for i, y_pred in enumerate(best_estimator.staged_predict(X_test)):
     test_score[i] = mean_squared_error(y_test, y_pred)

@@ -1,6 +1,14 @@
 import typing
 
 from ._plot import LearningCurveDisplay, ValidationCurveDisplay
+from ._promotion import (
+    FixedWindowSlicer,
+    PercentileRankSlicer,
+    ScoreCutModelSelector,
+    SignedRankSlicer,
+    StandardErrorSlicer,
+    promote,
+)
 from ._search import GridSearchCV, ParameterGrid, ParameterSampler, RandomizedSearchCV
 from ._split import (
     BaseCrossValidator,
@@ -22,14 +30,6 @@ from ._split import (
     TimeSeriesSplit,
     check_cv,
     train_test_split,
-)
-from ._subselect import (
-    ScoreCutModelSelector,
-    by_fixed_window,
-    by_percentile_rank,
-    by_signed_rank,
-    by_standard_error,
-    subselect,
 )
 from ._validation import (
     cross_val_predict,
@@ -81,11 +81,12 @@ __all__ = [
     "train_test_split",
     "validation_curve",
     "ScoreCutModelSelector",
-    "by_standard_error",
-    "by_percentile_rank",
-    "by_signed_rank",
-    "by_fixed_window",
-    "subselect",
+    "FixedWindowSlicer",
+    "PercentileRankSlicer",
+    "SignedRankSlicer",
+    "StandardErrorSlicer",
+    "FavorabilityRanker",
+    "promote",
 ]
 
 

@@ -79,7 +79,7 @@ cpdef cnp.ndarray[MST_edge_t, ndim=1, mode='c'] mst_from_mutual_reachability(
     """
     cdef:
         # Note: we utilize ndarray's over memory-views to make use of numpy
-        # binary indexing and sub-selection below.
+        # binary indexing and promotion below.
         cnp.ndarray[int64_t, ndim=1, mode='c'] current_labels
         cnp.ndarray[float64_t, ndim=1, mode='c'] min_reachability, left, right
         cnp.ndarray[MST_edge_t, ndim=1, mode='c'] mst

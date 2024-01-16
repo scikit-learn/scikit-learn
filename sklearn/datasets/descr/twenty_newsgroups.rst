@@ -27,9 +27,8 @@ extractor.
     Features                  text
     =================   ==========
 
-|details-start|
-**Usage**
-|details-split|
+Usage
+~~~~~
 
 The :func:`sklearn.datasets.fetch_20newsgroups` function is a data
 fetching / caching functions that downloads the data archive from
@@ -90,11 +89,8 @@ list of the categories to load to the
   >>> newsgroups_train.target[:10]
   array([0, 1, 1, 1, 0, 1, 1, 0, 0, 0])
 
-|details-end|
-
-|details-start|
-**Converting text to vectors**
-|details-split|
+Converting text to vectors
+~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 In order to feed predictive or clustering models with the text data,
 one first need to turn the text into vectors of numerical values suitable
@@ -126,11 +122,9 @@ returns ready-to-use token counts features instead of file names.
 .. _`20 newsgroups website`: http://people.csail.mit.edu/jrennie/20Newsgroups/
 .. _`TF-IDF`: https://en.wikipedia.org/wiki/Tf-idf
 
-|details-end|
 
-|details-start|
-**Filtering text for more realistic training**
-|details-split|
+Filtering text for more realistic training
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 It is easy for a classifier to overfit on particular things that appear in the
 20 Newsgroups data, such as newsgroup headers. Many classifiers achieve very
@@ -224,7 +218,6 @@ It loses even more if we also strip this metadata from the training data:
 Some other classifiers cope better with this harder version of the task. Try the
 :ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_text_feature_extraction.py`
 example with and without the `remove` option to compare the results.
-|details-end|
 
 .. topic:: Data Considerations
 

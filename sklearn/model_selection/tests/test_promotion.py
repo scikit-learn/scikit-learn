@@ -5,15 +5,16 @@ from sklearn.datasets import make_classification
 from sklearn.decomposition import PCA
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import (
+    FavorabilityRanker,
+    FixedWindowSlicer,
     GridSearchCV,
     HalvingRandomSearchCV,
+    PercentileRankSlicer,
     RandomizedSearchCV,
     ScoreCutModelSelector,
-    by_fixed_window,
-    by_percentile_rank,
-    by_signed_rank,
-    by_standard_error,
-    subselect,
+    SignedRankSlicer,
+    StandardErrorSlicer,
+    promote,
 )
 from sklearn.pipeline import Pipeline
 from sklearn.svm import SVC, LinearSVC
@@ -66,7 +67,7 @@ def generate_fit_params(grid_search_simulated):
     }
 
 
-def test_scorecutmodelselector_methods(grid_search_simulated):
+def test_ScoreCutModelSelector_methods(grid_search_simulated):
     cv_results = grid_search_simulated["cv_results"]
     n_splits = grid_search_simulated["n_splits"]
 
@@ -98,11 +99,17 @@ def test_scorecutmodelselector_methods(grid_search_simulated):
     # Omit max_thresh
     assert ss._apply_thresh(0.80, None) == 1
 
-    # Test that the fit method returns the correct model
-    assert ss.fit_transform(by_standard_error(sigma=1)) == 1
+    # Test that the fit method returns the correct score cuts
+    assert ss.fit(StandardErrorSlicer(sigma=1)) == (
+        0.9243126424613448,
+        0.9923540242053219,
+    )
+
+    # Test that the transform method returns the correct model
+    assert ss.transform(lambda x: x) == 1
 
 
-def test_scorecutmodelselector_errors(grid_search_simulated):
+def test_ScoreCutModelSelector_errors(grid_search_simulated):
     cv_results = grid_search_simulated["cv_results"]
     n_splits = grid_search_simulated["n_splits"]
 
@@ -112,7 +119,12 @@ def test_scorecutmodelselector_errors(grid_search_simulated):
 
     with pytest.raises(TypeError):
         ss = ScoreCutModelSelector(cv_results)
-        assert ss.fit_transform("Not_a_rule") == 1
+        assert ss.fit("Not_a_rule") == (0.9243126424613448, 0.9923540242053219)
+
+    with pytest.raises(TypeError):
+        ss = ScoreCutModelSelector(cv_results)
+        ss.fit(StandardErrorSlicer(sigma=1))
+        assert ss.transform("Not_a_rule") == 1
 
     del cv_results["params"]
     ss = ScoreCutModelSelector(cv_results)
@@ -129,21 +141,38 @@ def test_scorecutmodelselector_errors(grid_search_simulated):
     ],
 )
 @pytest.mark.parametrize(
-    "scoring,rule",
+    "scoring,score_slice_rule",
     [
-        ("roc_auc", by_standard_error(sigma=1)),
-        ("roc_auc", by_signed_rank(alpha=0.01)),
-        ("roc_auc", by_percentile_rank(eta=0.68)),
-        ("roc_auc", by_fixed_window(min_cut=0.96, max_cut=0.97)),
+        ("roc_auc", StandardErrorSlicer(sigma=1)),
+        ("roc_auc", SignedRankSlicer(alpha=0.01)),
+        ("roc_auc", PercentileRankSlicer(eta=0.68)),
+        ("roc_auc", FixedWindowSlicer(min_cut=0.96, max_cut=0.97)),
         ("roc_auc", "Not_a_rule"),
-        ("neg_log_loss", by_standard_error(sigma=1)),
-        ("neg_log_loss", by_signed_rank(alpha=0.01)),
-        ("neg_log_loss", by_percentile_rank(eta=0.68)),
+        ("neg_log_loss", StandardErrorSlicer(sigma=1)),
+        ("neg_log_loss", SignedRankSlicer(alpha=0.01)),
+        ("neg_log_loss", PercentileRankSlicer(eta=0.68)),
         (
             "neg_log_loss",
             pytest.param(
-                by_fixed_window(min_cut=0.96, max_cut=0.97), marks=pytest.mark.xfail
+                FixedWindowSlicer(min_cut=0.96, max_cut=0.97), marks=pytest.mark.xfail
             ),
+        ),
+    ],
+)
+@pytest.mark.parametrize(
+    "favorability_rank_rule",
+    [
+        FavorabilityRanker(
+            {
+                "reduce_dim__n_components": (False, 1.0),  # Lower is more favorable
+                "classify__C": (True, 1.0),  # Lower is less favorable
+            }
+        ),
+        FavorabilityRanker(
+            {
+                "reduce_dim__n_components": ["auto", 6, 8, 10, 12],  # String-based rule
+                "classify__C": (True, 1.0),  # Lower is less favorable
+            }
         ),
     ],
 )
@@ -151,9 +180,9 @@ def test_scorecutmodelselector_errors(grid_search_simulated):
     "search_cv",
     [GridSearchCV, RandomizedSearchCV],
 )
-def test_subselect(param, scoring, rule, search_cv):
+def test_promote(param, scoring, score_slice_rule, favorability_rank_rule, search_cv):
     """
-    A function that tests the subselect function by comparing the results of a
+    A function that tests the promote function by comparing the results of a
     refitted grid and random search object to those of a non-refitted grid and random
     search object, respectively.
     """
@@ -161,7 +190,7 @@ def test_subselect(param, scoring, rule, search_cv):
     X, y = make_classification(n_samples=350, n_features=16, random_state=42)
 
     # Instantiate a pipeline with parameter grid representing different levels of
-    # complexity
+    # favorability
     clf = LinearSVC(random_state=42)
     if param == "reduce_dim__n_components":
         param_grid = {"reduce_dim__n_components": [4, 8, 12]}
@@ -177,42 +206,38 @@ def test_subselect(param, scoring, rule, search_cv):
     grid.fit(X, y)
 
     # Instantiate a refitted grid search object
-    grid_simplified = search_cv(
+    grid_refitted = search_cv(
         pipe,
         param_grid,
         scoring=scoring,
-        refit=subselect(rule),
+        refit=promote(score_slice_rule, favorability_rank_rule),
     )
 
     # If the cv results were not all NaN, then we can test the refit callable
     if not np.isnan(grid.fit(X, y).cv_results_["mean_test_score"]).all():
-        if rule == "Not_a_rule":
+        if score_slice_rule == "Not_a_rule":
             with pytest.raises(TypeError):
-                grid_simplified.fit(X, y)  # pragma: no cover
+                grid_refitted.fit(X, y)  # pragma: no cover
         else:
-            grid_simplified.fit(X, y)  # pragma: no cover
-            simplified_best_score_ = grid_simplified.cv_results_["mean_test_score"][
-                grid_simplified.best_index_
+            grid_refitted.fit(X, y)  # pragma: no cover
+            simplified_best_score_ = grid_refitted.cv_results_["mean_test_score"][
+                grid_refitted.best_index_
             ]  # pragma: no cover
-            # Ensure that if the refit callable subselected a lower scoring model,
-            # it was because it was only because it was a simpler model.
+            # Ensure that if the refit callable promoteed a lower scoring model,
+            # it was because it was only because it was a more favorable model.
             if abs(grid.best_score_) > abs(simplified_best_score_):  # pragma: no cover
-                assert (
-                    grid.best_index_ != grid_simplified.best_index_
-                )  # pragma: no cover
+                assert grid.best_index_ != grid_refitted.best_index_  # pragma: no cover
                 if param:
                     assert (
-                        grid.best_params_[param] > grid_simplified.best_params_[param]
+                        grid.best_params_[param] > grid_refitted.best_params_[param]
                     )  # pragma: no cover
             elif grid.best_score_ == simplified_best_score_:  # pragma: no cover
-                assert grid.best_index_ == grid_simplified.best_index_
-                assert grid.best_params_ == grid_simplified.best_params_
+                assert grid.best_index_ == grid_refitted.best_index_
+                assert grid.best_params_ == grid_refitted.best_params_
             else:  # pragma: no cover
+                assert grid.best_index_ != grid_refitted.best_index_  # pragma: no cover
                 assert (
-                    grid.best_index_ != grid_simplified.best_index_
-                )  # pragma: no cover
-                assert (
-                    grid.best_params_ != grid_simplified.best_params_
+                    grid.best_params_ != grid_refitted.best_params_
                 )  # pragma: no cover
                 assert grid.best_score_ > simplified_best_score_  # pragma: no cover
 
@@ -226,27 +251,46 @@ def test_subselect(param, scoring, rule, search_cv):
     ],
 )
 @pytest.mark.parametrize(
-    "scoring,rule",
+    "favorability_rank_rule",
     [
-        ("roc_auc", by_standard_error(sigma=1)),
-        ("roc_auc", by_signed_rank(alpha=0.01)),
-        ("roc_auc", by_percentile_rank(eta=0.68)),
-        ("roc_auc", by_fixed_window(min_cut=0.96, max_cut=0.97)),
+        FavorabilityRanker(
+            {
+                "reduce_dim__n_components": (False, 1.0),  # Lower is more favorable
+                "classify__C": (True, 1.0),  # Lower is less favorable
+            }
+        ),
+        FavorabilityRanker(
+            {
+                "reduce_dim__n_components": ["auto", 6, 8, 10, 12],  # String-based rule
+                "classify__C": (True, 1.0),  # Lower is less favorable
+            }
+        ),
+    ],
+)
+@pytest.mark.parametrize(
+    "scoring,score_slice_rule",
+    [
+        ("roc_auc", StandardErrorSlicer(sigma=1)),
+        ("roc_auc", SignedRankSlicer(alpha=0.01)),
+        ("roc_auc", PercentileRankSlicer(eta=0.68)),
+        ("roc_auc", FixedWindowSlicer(min_cut=0.96, max_cut=0.97)),
         ("roc_auc", "Not_a_rule"),
-        ("neg_log_loss", by_standard_error(sigma=1)),
-        ("neg_log_loss", by_signed_rank(alpha=0.01)),
-        ("neg_log_loss", by_percentile_rank(eta=0.68)),
+        ("neg_log_loss", StandardErrorSlicer(sigma=1)),
+        ("neg_log_loss", SignedRankSlicer(alpha=0.01)),
+        ("neg_log_loss", PercentileRankSlicer(eta=0.68)),
         (
             "neg_log_loss",
             pytest.param(
-                by_fixed_window(min_cut=0.96, max_cut=0.97), marks=pytest.mark.xfail
+                FixedWindowSlicer(min_cut=0.96, max_cut=0.97), marks=pytest.mark.xfail
             ),
         ),
     ],
 )
-def test_subselect_successive_halving(param, scoring, rule):
+def test_promote_successive_halving(
+    param, scoring, score_slice_rule, favorability_rank_rule
+):
     """
-    A function that tests the subselect function using HalvingRandomSearchCV by
+    A function that tests the promote function using HalvingRandomSearchCV by
     comparing the results of a refitted search object to those of a non-refitted
     search object.
     """
@@ -283,13 +327,13 @@ def test_subselect_successive_halving(param, scoring, rule):
         resource="n_estimators",
         max_resources=10,
         scoring=scoring,
-        refit=subselect(rule),
+        refit=promote(score_slice_rule, favorability_rank_rule),
         random_state=0,
     )
 
     # If the cv results were not all NaN, then we can test the refit callable
     if not np.isnan(search.fit(X, y).cv_results_["mean_test_score"]).all():
-        if rule == "Not_a_rule":
+        if score_slice_rule == "Not_a_rule":
             with pytest.raises(TypeError):
                 search_simplified.fit(X, y)
         else:
@@ -297,8 +341,8 @@ def test_subselect_successive_halving(param, scoring, rule):
             simplified_best_score_ = search_simplified.cv_results_["mean_test_score"][
                 search_simplified.best_index_
             ]
-            # Ensure that if the refit callable subselected a lower scoring model,
-            # it was only because it was a simpler model.
+            # Ensure that if the refit callable promoteed a lower scoring model,
+            # it was only because it was a more favorable model.
             if abs(search.best_score_) > abs(simplified_best_score_):
                 assert search.best_index_ != search_simplified.best_index_
                 if param:
@@ -315,50 +359,47 @@ def test_subselect_successive_halving(param, scoring, rule):
                 assert search.best_score_ > simplified_best_score_
 
 
-def test_by_standard_error(generate_fit_params):
-    # Test that the by_standard_error function returns the correct rule
+def test_standard_error_slicer(generate_fit_params):
+    # Test that the StandardErrorSlicer function returns the correct score_slice_rule
     assert pytest.approx(
-        by_standard_error(sigma=1).__call__(**generate_fit_params), rel=1e-2
+        StandardErrorSlicer(sigma=1).__call__(**generate_fit_params), rel=1e-2
     ) == (
         0.9243126424613448,
         0.9923540242053219,
     )
 
-    assert by_standard_error(sigma=1).__repr__() == "by_standard_error(sigma=1)"
+    assert StandardErrorSlicer(sigma=1).__repr__() == "StandardErrorSlicer(sigma=1)"
 
-    # Test that the by_standard_error function raises a ValueError
+    # Test that the StandardErrorSlicer function raises a ValueError
     with pytest.raises(ValueError):
-        by_standard_error(sigma=-1)
+        StandardErrorSlicer(sigma=-1)
 
 
-def test_by_signed_rank(generate_fit_params):
-    # Test that the by_signed_rank function returns the correct rule
+def test_signed_rank_slicer(generate_fit_params):
+    # Test that the SignedRankSlicer function returns the correct score_slice_rule
     assert pytest.approx(
-        by_signed_rank(alpha=0.01).__call__(**generate_fit_params), rel=1e-2
+        SignedRankSlicer(alpha=0.01).__call__(**generate_fit_params), rel=1e-2
     ) == (
         0.9583333333333334,
         0.9583333333333334,
     )
 
     assert (
-        by_signed_rank(alpha=0.01).__repr__()
-        == "by_signed_rank(alpha=0.01, alternative=two-sided, zero_method=zsplit)"
+        SignedRankSlicer(alpha=0.01).__repr__()
+        == "SignedRankSlicer(alpha=0.01, alternative=two-sided, zero_method=zsplit)"
     )
 
-    # Test that the by_signed_rank function raises a ValueError if alpha is not
+    # Test that the SignedRankSlicer function raises a ValueError if alpha is not
     # between 0 and 1
     with pytest.raises(ValueError):
-        by_signed_rank(alpha=-1)
+        SignedRankSlicer(alpha=-1)
 
-    # Test that the by_signed_rank function raises a ValueError if the number of
+    # Test that the SignedRankSlicer function raises a ValueError if the number of
     # folds is less than 3
     with pytest.raises(ValueError):
         generate_mod_fit_params = generate_fit_params.copy()
         generate_mod_fit_params.update({"n_folds": 2})
-        by_signed_rank(alpha=0.01)(**generate_mod_fit_params)
-
-    # The average performance of all cross-validated models is significantly different
-    # from that of the best-performing model
+        SignedRankSlicer(alpha=0.01)(**generate_mod_fit_params)
 
     # Select rows 0, 1, and 5 from the score grid
     score_grid = generate_fit_params["score_grid"][[0, 1, 5]]
@@ -368,7 +409,7 @@ def test_by_signed_rank(generate_fit_params):
     n_folds = 3
 
     with pytest.warns(UserWarning):
-        assert by_signed_rank(alpha=0.5)(
+        assert SignedRankSlicer(alpha=0.5)(
             score_grid=score_grid,
             cv_means=cv_means,
             best_score_idx=best_score_idx,
@@ -377,22 +418,22 @@ def test_by_signed_rank(generate_fit_params):
         )
 
 
-def test_by_percentile_rank(generate_fit_params):
-    # Test that the by_percentile_rank function returns the correct rule
+def test_percentile_rank_slicer(generate_fit_params):
+    # Test that the PercentileRankSlicer function returns the correct score_slice_rule
     assert pytest.approx(
-        by_percentile_rank(eta=0.68).__call__(**generate_fit_params), rel=1e-2
+        PercentileRankSlicer(eta=0.68).__call__(**generate_fit_params), rel=1e-2
     ) == (0.955, 1.0)
 
-    assert by_percentile_rank(eta=0.68).__repr__() == "by_percentile_rank(eta=0.68)"
+    assert PercentileRankSlicer(eta=0.68).__repr__() == "PercentileRankSlicer(eta=0.68)"
 
-    # Test that the by_percentile_rank function raises a ValueError
+    # Test that the PercentileRankSlicer function raises a ValueError
     with pytest.raises(ValueError):
-        by_percentile_rank(eta=-1)
+        PercentileRankSlicer(eta=-1)
 
 
-def test_by_fixed_window(generate_fit_params):
-    # Test that the by_fixed_window function returns the correct rule
-    assert by_fixed_window(min_cut=0.80, max_cut=0.91).__call__(
+def test_fixed_window_slicer(generate_fit_params):
+    # Test that the FixedWindowSlicer function returns the correct score_slice_rule
+    assert FixedWindowSlicer(min_cut=0.80, max_cut=0.91).__call__(
         **generate_fit_params
     ) == (
         0.8,
@@ -400,16 +441,47 @@ def test_by_fixed_window(generate_fit_params):
     )
 
     # No min_cut
-    assert by_fixed_window(max_cut=0.91).__call__(**generate_fit_params) == (None, 0.91)
-
-    # No max_cut
-    assert by_fixed_window(min_cut=0.80).__call__(**generate_fit_params) == (0.8, None)
-
-    assert (
-        by_fixed_window(min_cut=0.80, max_cut=0.91).__repr__()
-        == "by_fixed_window(min_cut=0.8, max_cut=0.91)"
+    assert FixedWindowSlicer(max_cut=0.91).__call__(**generate_fit_params) == (
+        None,
+        0.91,
     )
 
-    # Test that the by_fixed_window function raises a ValueError
+    # No max_cut
+    assert FixedWindowSlicer(min_cut=0.80).__call__(**generate_fit_params) == (
+        0.8,
+        None,
+    )
+
+    assert (
+        FixedWindowSlicer(min_cut=0.80, max_cut=0.91).__repr__()
+        == "FixedWindowSlicer(min_cut=0.8, max_cut=0.91)"
+    )
+
+    # Test that the FixedWindowSlicer function raises a ValueError
     with pytest.raises(ValueError):
-        by_fixed_window(min_cut=0.99, max_cut=0.92)
+        FixedWindowSlicer(min_cut=0.99, max_cut=0.92)
+
+
+def test_favorability_ranker():
+    ranker = FavorabilityRanker(
+        {
+            "param1": (True, 1.0),  # Lower is less favorable
+            "param2": ["low", "medium", "high"],  # Order of favorability
+        }
+    )
+
+    params = [
+        {"param1": 10, "param2": "low"},
+        {"param1": 5, "param2": "medium"},
+        {"param1": 1, "param2": "high"},
+    ]
+
+    expected_ranks = [3, 2, 1]  # Lower score or earlier in list is less favorable
+    assert ranker(params) == expected_ranks
+
+    # Test the representation of FavorabilityRanker
+    assert (
+        repr(ranker)
+        == "FavorabilityRanker(favorability_rules={"
+        "'param1': (True, 1.0), 'param2': ['low', 'medium', 'high']})"
+    )
