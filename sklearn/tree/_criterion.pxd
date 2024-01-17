@@ -42,7 +42,7 @@ cdef class Criterion:
     # statistics correspond to samples[start:pos] and samples[pos:end].
 
     # Methods
-    cdef intp_t init(
+    cdef int init(
         self,
         const float64_t[:, ::1] y,
         const float64_t[:] sample_weight,
@@ -53,9 +53,9 @@ cdef class Criterion:
     ) except -1 nogil
     cdef void init_sum_missing(self)
     cdef void init_missing(self, intp_t n_missing) noexcept nogil
-    cdef intp_t reset(self) except -1 nogil
-    cdef intp_t reverse_reset(self) except -1 nogil
-    cdef intp_t update(self, intp_t new_pos) except -1 nogil
+    cdef int reset(self) except -1 nogil
+    cdef int reverse_reset(self) except -1 nogil
+    cdef int update(self, intp_t new_pos) except -1 nogil
     cdef float64_t node_impurity(self) noexcept nogil
     cdef void children_impurity(
         self,

@@ -83,7 +83,7 @@ cdef class Splitter:
     # This allows optimization with depth-based tree building.
 
     # Methods
-    cdef intp_t init(
+    cdef int init(
         self,
         object X,
         const float64_t[:, ::1] y,
@@ -91,14 +91,14 @@ cdef class Splitter:
         const unsigned char[::1] missing_values_in_feature_mask,
     ) except -1
 
-    cdef intp_t node_reset(
+    cdef int node_reset(
         self,
         intp_t start,
         intp_t end,
         float64_t* weighted_n_node_samples
     ) except -1 nogil
 
-    cdef intp_t node_split(
+    cdef int node_split(
         self,
         float64_t impurity,   # Impurity of the node
         SplitRecord* split,

@@ -40,7 +40,7 @@ cdef class Criterion:
     def __setstate__(self, d):
         pass
 
-    cdef intp_t init(
+    cdef int init(
         self,
         const float64_t[:, ::1] y,
         const float64_t[:] sample_weight,
@@ -87,21 +87,21 @@ cdef class Criterion:
         """
         pass
 
-    cdef intp_t reset(self) except -1 nogil:
+    cdef int reset(self) except -1 nogil:
         """Reset the criterion at pos=start.
 
         This method must be implemented by the subclass.
         """
         pass
 
-    cdef intp_t reverse_reset(self) except -1 nogil:
+    cdef int reverse_reset(self) except -1 nogil:
         """Reset the criterion at pos=end.
 
         This method must be implemented by the subclass.
         """
         pass
 
-    cdef intp_t update(self, intp_t new_pos) except -1 nogil:
+    cdef int update(self, intp_t new_pos) except -1 nogil:
         """Updated statistics by moving sample_indices[pos:new_pos] to the left child.
 
         This updates the collected statistics by moving sample_indices[pos:new_pos]
@@ -347,7 +347,7 @@ cdef class ClassificationCriterion(Criterion):
         return (type(self),
                 (self.n_outputs, np.asarray(self.n_classes)), self.__getstate__())
 
-    cdef intp_t init(
+    cdef int init(
         self,
         const float64_t[:, ::1] y,
         const float64_t[:] sample_weight,
@@ -450,7 +450,7 @@ cdef class ClassificationCriterion(Criterion):
 
             self.weighted_n_missing += w
 
-    cdef intp_t reset(self) except -1 nogil:
+    cdef int reset(self) except -1 nogil:
         """Reset the criterion at pos=start.
 
         Returns -1 in case of failure to allocate memory (and raise MemoryError)
@@ -467,7 +467,7 @@ cdef class ClassificationCriterion(Criterion):
         )
         return 0
 
-    cdef intp_t reverse_reset(self) except -1 nogil:
+    cdef int reverse_reset(self) except -1 nogil:
         """Reset the criterion at pos=end.
 
         Returns -1 in case of failure to allocate memory (and raise MemoryError)
@@ -484,7 +484,7 @@ cdef class ClassificationCriterion(Criterion):
         )
         return 0
 
-    cdef intp_t update(self, intp_t new_pos) except -1 nogil:
+    cdef int update(self, intp_t new_pos) except -1 nogil:
         """Updated statistics by moving sample_indices[pos:new_pos] to the left child.
 
         Returns -1 in case of failure to allocate memory (and raise MemoryError)
@@ -860,7 +860,7 @@ cdef class RegressionCriterion(Criterion):
     def __reduce__(self):
         return (type(self), (self.n_outputs, self.n_samples), self.__getstate__())
 
-    cdef intp_t init(
+    cdef int init(
         self,
         const float64_t[:, ::1] y,
         const float64_t[:] sample_weight,
@@ -947,7 +947,7 @@ cdef class RegressionCriterion(Criterion):
 
             self.weighted_n_missing += w
 
-    cdef intp_t reset(self) except -1 nogil:
+    cdef int reset(self) except -1 nogil:
         """Reset the criterion at pos=start."""
         self.pos = self.start
         _move_sums_regression(
@@ -960,7 +960,7 @@ cdef class RegressionCriterion(Criterion):
         )
         return 0
 
-    cdef intp_t reverse_reset(self) except -1 nogil:
+    cdef int reverse_reset(self) except -1 nogil:
         """Reset the criterion at pos=end."""
         self.pos = self.end
         _move_sums_regression(
@@ -973,7 +973,7 @@ cdef class RegressionCriterion(Criterion):
         )
         return 0
 
-    cdef intp_t update(self, intp_t new_pos) except -1 nogil:
+    cdef int update(self, intp_t new_pos) except -1 nogil:
         """Updated statistics by moving sample_indices[pos:new_pos] to the left."""
         cdef const float64_t[:] sample_weight = self.sample_weight
         cdef const intp_t[:] sample_indices = self.sample_indices
@@ -1220,7 +1220,7 @@ cdef class MAE(RegressionCriterion):
         self.left_child_ptr = <void**> cnp.PyArray_DATA(self.left_child)
         self.right_child_ptr = <void**> cnp.PyArray_DATA(self.right_child)
 
-    cdef intp_t init(
+    cdef int init(
         self,
         const float64_t[:, ::1] y,
         const float64_t[:] sample_weight,
@@ -1282,7 +1282,7 @@ cdef class MAE(RegressionCriterion):
         with gil:
             raise ValueError("missing values is not supported for MAE.")
 
-    cdef intp_t reset(self) except -1 nogil:
+    cdef int reset(self) except -1 nogil:
         """Reset the criterion at pos=start.
 
         Returns -1 in case of failure to allocate memory (and raise MemoryError)
@@ -1313,7 +1313,7 @@ cdef class MAE(RegressionCriterion):
                                                                  weight)
         return 0
 
-    cdef intp_t reverse_reset(self) except -1 nogil:
+    cdef int reverse_reset(self) except -1 nogil:
         """Reset the criterion at pos=end.
 
         Returns -1 in case of failure to allocate memory (and raise MemoryError)
@@ -1341,7 +1341,7 @@ cdef class MAE(RegressionCriterion):
                                                                 weight)
         return 0
 
-    cdef intp_t update(self, intp_t new_pos) except -1 nogil:
+    cdef int update(self, intp_t new_pos) except -1 nogil:
         """Updated statistics by moving sample_indices[pos:new_pos] to the left.
 
         Returns -1 in case of failure to allocate memory (and raise MemoryError)

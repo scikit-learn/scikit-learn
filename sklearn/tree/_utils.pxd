@@ -70,12 +70,12 @@ cdef class WeightedPQueue:
     cdef WeightedPQueueRecord* array_
 
     cdef bint is_empty(self) noexcept nogil
-    cdef intp_t reset(self) except -1 nogil
+    cdef int reset(self) except -1 nogil
     cdef intp_t size(self) noexcept nogil
-    cdef intp_t push(self, float64_t data, float64_t weight) except -1 nogil
-    cdef intp_t remove(self, float64_t data, float64_t weight) noexcept nogil
-    cdef intp_t pop(self, float64_t* data, float64_t* weight) noexcept nogil
-    cdef intp_t peek(self, float64_t* data, float64_t* weight) noexcept nogil
+    cdef int push(self, float64_t data, float64_t weight) except -1 nogil
+    cdef int remove(self, float64_t data, float64_t weight) noexcept nogil
+    cdef int pop(self, float64_t* data, float64_t* weight) noexcept nogil
+    cdef int peek(self, float64_t* data, float64_t* weight) noexcept nogil
     cdef float64_t get_weight_from_index(self, intp_t index) noexcept nogil
     cdef float64_t get_value_from_index(self, intp_t index) noexcept nogil
 
@@ -91,14 +91,14 @@ cdef class WeightedMedianCalculator:
     cdef intp_t k
     cdef float64_t sum_w_0_k  # represents sum(weights[0:k]) = w[0] + w[1] + ... + w[k-1]
     cdef intp_t size(self) noexcept nogil
-    cdef intp_t push(self, float64_t data, float64_t weight) except -1 nogil
-    cdef intp_t reset(self) except -1 nogil
-    cdef intp_t update_median_parameters_post_push(
+    cdef int push(self, float64_t data, float64_t weight) except -1 nogil
+    cdef int reset(self) except -1 nogil
+    cdef int update_median_parameters_post_push(
         self, float64_t data, float64_t weight,
         float64_t original_median) noexcept nogil
-    cdef intp_t remove(self, float64_t data, float64_t weight) noexcept nogil
-    cdef intp_t pop(self, float64_t* data, float64_t* weight) noexcept nogil
-    cdef intp_t update_median_parameters_post_remove(
+    cdef int remove(self, float64_t data, float64_t weight) noexcept nogil
+    cdef int pop(self, float64_t* data, float64_t* weight) noexcept nogil
+    cdef int update_median_parameters_post_remove(
         self, float64_t data, float64_t weight,
         float64_t original_median) noexcept nogil
     cdef float64_t get_median(self) noexcept nogil

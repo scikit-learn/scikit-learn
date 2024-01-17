@@ -38,10 +38,10 @@ from ._utils cimport sizet_ptr_to_ndarray
 
 cdef extern from "numpy/arrayobject.h":
     object PyArray_NewFromDescr(PyTypeObject* subtype, cnp.dtype descr,
-                                intp_t nd, cnp.npy_intp* dims,
+                                int nd, cnp.npy_intp* dims,
                                 cnp.npy_intp* strides,
-                                void* data, intp_t flags, object obj)
-    intp_t PyArray_SetBaseObject(cnp.ndarray arr, PyObject* obj)
+                                void* data, int flags, object obj)
+    int PyArray_SetBaseObject(cnp.ndarray arr, PyObject* obj)
 
 cdef extern from "<stack>" namespace "std" nogil:
     cdef cppclass stack[T]:
@@ -219,7 +219,7 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
         cdef bint is_leaf
         cdef bint first = 1
         cdef intp_t max_depth_seen = -1
-        cdef intp_t rc = 0
+        cdef int rc = 0
 
         cdef stack[StackRecord] builder_stack
         cdef StackRecord stack_record
@@ -455,7 +455,7 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
         cdef intp_t max_split_nodes = max_leaf_nodes - 1
         cdef bint is_leaf
         cdef intp_t max_depth_seen = -1
-        cdef intp_t rc = 0
+        cdef int rc = 0
         cdef Node* node
 
         # Initial capacity
@@ -587,7 +587,7 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
         if rc == -1:
             raise MemoryError()
 
-    cdef inline intp_t _add_split_node(
+    cdef inline int _add_split_node(
         self,
         Splitter splitter,
         Tree tree,
@@ -878,7 +878,7 @@ cdef class Tree:
         memcpy(self.value, cnp.PyArray_DATA(value_ndarray),
                self.capacity * self.value_stride * sizeof(float64_t))
 
-    cdef intp_t _resize(self, intp_t capacity) except -1 nogil:
+    cdef int _resize(self, intp_t capacity) except -1 nogil:
         """Resize all inner arrays to `capacity`, if `capacity` == -1, then
            double the size of the inner arrays.
 
@@ -890,7 +890,7 @@ cdef class Tree:
             with gil:
                 raise MemoryError()
 
-    cdef intp_t _resize_c(self, intp_t capacity=INTPTR_MAX) except -1 nogil:
+    cdef int _resize_c(self, intp_t capacity=INTPTR_MAX) except -1 nogil:
         """Guts of _resize
 
         Returns -1 in case of failure to allocate memory (and raise MemoryError)
@@ -1925,7 +1925,7 @@ cdef _build_pruned_tree(
         # value_stride for original tree and new tree are the same
         intp_t value_stride = orig_tree.value_stride
         intp_t max_depth_seen = -1
-        intp_t rc = 0
+        int rc = 0
         Node* node
         float64_t* orig_value_ptr
         float64_t* new_value_ptr
