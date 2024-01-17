@@ -31,6 +31,23 @@ Changelog
 - |Feature| A fitted :class:`compose.ColumnTransformer` now implements `__getitem__`
   which returns the fitted transformers by name. :pr:`27990` by `Thomas Fan`_.
 
+:mod:`sklearn.datasets`
+.......................
+
+- |Enhancement| Adds optional arguments `n_retries` and `delay` to functions
+  :func:`datasets.fetch_20newsgroups`,
+  :func:`datasets.fetch_20newsgroups_vectorized`,
+  :func:`datasets.fetch_california_housing`,
+  :func:`datasets.fetch_covtype`,
+  :func:`datasets.fetch_kddcup99`,
+  :func:`datasets.fetch_lfw_pairs`,
+  :func:`datasets.fetch_lfw_people`,
+  :func:`datasets.fetch_olivetti_faces`,
+  :func:`datasets.fetch_rcv1`,
+  and :func:`datasets.fetch_species_distributions`.
+  By default, the functions will retry up to 3 times in case of network failures.
+  :pr:`ADD` by :user:`Zhehao Liu <MaxwellLZH>` and :user:`Filip Karlo Došilović <fkdosilovic>`.
+
 :mod:`sklearn.feature_extraction`
 .................................
 
