@@ -46,7 +46,7 @@ Changelog
   :func:`datasets.fetch_rcv1`,
   and :func:`datasets.fetch_species_distributions`.
   By default, the functions will retry up to 3 times in case of network failures.
-  :pr:`ADD` by :user:`Zhehao Liu <MaxwellLZH>` and :user:`Filip Karlo Došilović <fkdosilovic>`.
+  :pr:`28160` by :user:`Zhehao Liu <MaxwellLZH>` and :user:`Filip Karlo Došilović <fkdosilovic>`.
 
 :mod:`sklearn.feature_extraction`
 .................................
