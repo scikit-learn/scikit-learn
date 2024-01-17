@@ -399,11 +399,8 @@ def check_memory(memory):
     Examples
     --------
     >>> from sklearn.utils.validation import check_memory
-    >>> from joblib import Memory
-    >>> memory_str,memory_none = check_memory('cache'),check_memory(None)
-    >>> is_memory = check_memory(Memory('cache'))
-    >>> print(memory_str,memory_none,is_memory)
-    Memory(location=cache/joblib) Memory(location=None) Memory(location=cache/joblib)
+    >>> check_memory("caching_dir")
+    Memory(location=caching_dir/joblib)
     """
     if memory is None or isinstance(memory, str):
         memory = joblib.Memory(location=memory, verbose=0)
@@ -1525,9 +1522,12 @@ def check_is_fitted(estimator, attributes=None, *, msg=None, all_or_any=all):
     >>> lr = LogisticRegression()
     >>> try:
     ...     check_is_fitted(lr)
-    ... except ValueError as e:
+    ... except NotFittedError as exc:
     ...     print(f"Model is not fitted yet.")
     Model is not fitted yet.
+    >>> lr.fit([[1, 2], [1, 3]], [1, 0])
+    LogisticRegression()
+    >>> check_is_fitted(lr)
     """
     if isclass(estimator):
         raise TypeError("{} is a class, not an instance.".format(estimator))
