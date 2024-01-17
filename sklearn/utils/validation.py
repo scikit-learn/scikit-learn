@@ -1525,9 +1525,9 @@ def check_is_fitted(estimator, attributes=None, *, msg=None, all_or_any=all):
     >>> lr = LogisticRegression()
     >>> try:
     ...     check_is_fitted(lr)
-    >>> except NotFittedError as e:
-    ...     print("Model not fit")
-    Model not fit
+    ... except ValueError as e:
+    ...     print(f"Model is not fitted yet.")
+    Model is not fitted yet.
     """
     if isclass(estimator):
         raise TypeError("{} is a class, not an instance.".format(estimator))
