@@ -365,6 +365,15 @@ Changelog
   with `np.int64` indices are not supported.
   :pr:`27240` by :user:`Yao Xiao <Charlie-XIAO>`.
 
+- |API| outputs that use pandas extension dtypes and contain `pd.NA` in
+  :class:`~compose.ColumnTransformer` now result in a `FutureWarning` and will
+  cause a `ValueError` in version 1.6, unless the output container has been
+  configured as "pandas" with `set_output(transform="pandas")`. Before, such
+  outputs resulted in numpy arrays of dtype `object` containing `pd.NA` which
+  could not be converted to numpy floats and caused errors when passed to other
+  scikit-learn estimators.
+  :pr:`27734` by :user:`Jérôme Dockès <jeromedockes>`.
+
 :mod:`sklearn.covariance`
 .........................
 
@@ -470,7 +479,7 @@ Changelog
 - |Efficiency| :class:`ensemble.GradientBoostingClassifier` is faster,
   for binary and in particular for multiclass problems thanks to the private loss
   function module.
-  :pr:`26278` by :user:`Christian Lorentzen <lorentzenchr>`.
+  :pr:`26278` and :pr:`28095` by :user:`Christian Lorentzen <lorentzenchr>`.
 
 - |Efficiency| Improves runtime and memory usage for
   :class:`ensemble.GradientBoostingClassifier` and
@@ -556,6 +565,11 @@ Changelog
   `response_method="decision_function"`. It allows to plot the decision boundary for
   both binary and multiclass classifiers.
   :pr:`27291` by :user:`Guillaume Lemaitre <glemaitre>`.
+
+- |Fix| :meth:`inspection.DecisionBoundaryDisplay.from_estimator` and
+  :class:`inspection.PartialDependenceDisplay.from_estimator` now return the correct
+  type for subclasses.
+  :pr:`27675` by :user:`John Cant <johncant>`.
 
 - |API| :class:`inspection.DecisionBoundaryDisplay` raise an `AttributeError` instead
   of a `ValueError` when an estimator does not implement the requested response method.
@@ -645,6 +659,13 @@ Changelog
   scorer requesting a non-thresholded decision function (from `decision_function` or
   `predict_proba`). Such scorer are specific to classification.
   :pr:`26840` by :user:`Guillaume Lemaitre <glemaitre>`.
+
+- |Fix| :meth:`metrics.DetCurveDisplay.from_predictions`,
+  :class:`metrics.PrecisionRecallDisplay.from_predictions`,
+  :class:`metrics.PredictionErrorDisplay.from_predictions`, and
+  :class:`metrics.RocCurveDisplay.from_predictions` now return the correct type
+  for subclasses.
+  :pr:`27675` by :user:`John Cant <johncant>`.
 
 - |API| Deprecated `needs_threshold` and `needs_proba` from :func:`metrics.make_scorer`.
   These parameters will be removed in version 1.6. Instead, use `response_method` that
