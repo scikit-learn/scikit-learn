@@ -1,3 +1,14 @@
+# Note: the dependencies between different Cython files in
+# _pairwise_distances_reduction is probably one of the most involved in
+# scikit-learn. If you change this file make sure you build from scratch:
+# rm -rf build; make dev-meson
+# run a command like this:
+# ninja -C build/cp312 -t missingdeps
+# and that the output is something like:
+# No missing dependencies on generated files found.
+
+# _pairwise_distances_reduction is cimported from other subpackages so this is
+# needed for the cimport to work
 _pairwise_distances_reduction_cython_tree = [
   fs.copyfile('__init__.py'),
 ]

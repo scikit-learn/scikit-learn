@@ -1,3 +1,4 @@
+# .pyx is generated, so this is needed to make Cython compilation work
 linear_model_cython_tree = [
   fs.copyfile('__init__.py'),
   fs.copyfile('_sgd_fast.pxd'),

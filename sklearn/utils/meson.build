@@ -1,3 +1,5 @@
+# utils is cimported from other subpackages so this is needed for the cimport
+# to work
 utils_cython_tree = [
   fs.copyfile('__init__.py'),
   fs.copyfile('_cython_blas.pxd'),

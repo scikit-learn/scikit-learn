@@ -7,6 +7,8 @@ _binary_tree_pxi = custom_target(
   install_dir: sklearn_dir / 'neighbors'
 )
 
+# .pyx is generated so this is needed to make Cython compilation work. The pxi
+# file is included avoid "missing dependency paths" with ninja -t missindeps
 neighbors_cython_tree = [
   fs.copyfile('__init__.py'),
   fs.copyfile('_partition_nodes.pxd'),

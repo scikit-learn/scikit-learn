@@ -1,3 +1,5 @@
+# Metrics is cimported from other subpackages so this is needed for the cimport
+# to work
 metrics_cython_tree = [
   fs.copyfile('__init__.py')
 ]

@@ -1,4 +1,7 @@
-_loss_cython_tree = [fs.copyfile('_loss.pxd')]
+# .pyx is generated, so this is needed to make Cython compilation work
+_loss_cython_tree = [
+  fs.copyfile('_loss.pxd')
+]
 
 _loss_pyx = custom_target(
   '_loss_pyx',
