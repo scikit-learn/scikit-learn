@@ -20,7 +20,7 @@ utils_extension_metadata = {
   },
   '_fast_dict':
     {'sources': ['_fast_dict.pyx'], 'override_options': ['cython_language=cpp']},
-  '_openmp_helpers': {'sources': ['_openmp_helpers.pyx']},
+  '_openmp_helpers': {'sources': ['_openmp_helpers.pyx'], 'dependencies': [openmp_dep]},
   '_random': {'sources': ['_random.pyx'], 'dependencies': [np_dep]},
   '_typedefs': {'sources': ['_typedefs.pyx']},
   '_heap': {'sources': ['_heap.pyx']},
@@ -35,7 +35,7 @@ foreach ext_name, ext_dict : utils_extension_metadata
   py.extension_module(
     ext_name,
     ext_dict.get('sources') + utils_cython_tree,
-    dependencies: [np_dep, openmp_dep],
+    dependencies: ext_dict.get('dependencies', []),
     override_options : ext_dict.get('override_options', []),
     cython_args: cython_args,
     subdir: 'sklearn/utils',
