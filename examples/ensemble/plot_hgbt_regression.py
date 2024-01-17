@@ -62,7 +62,7 @@ df = electricity.frame
 # This particular dataset has a stepwise constant target for the first 17,760
 # samples:
 
-df["transfer"][:17_760,].unique()
+df["transfer"][:17_760].unique()
 
 # %%
 # Let us drop those entries and explore the hourly electricity transfer over
@@ -100,12 +100,17 @@ _ = ax.legend(handles, ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"])
 from sklearn.ensemble import HistGradientBoostingRegressor
 from sklearn.model_selection import train_test_split
 
-max_iter_list = [5, 50]
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.4, shuffle=False)
+
+print(f"Training sample size: {X_train.shape[0]}")
+print(f"Test sample size: {X_test.shape[0]}")
+print(f"Number of features: {X_train.shape[1]}")
+
+# %%
+max_iter_list = [5, 50]
 average_week_demand = (
     df.loc[X_test.index].groupby(["day", "period"], observed=False)["transfer"].mean()
 )
-
 colors = sns.color_palette("colorblind")
 fig, ax = plt.subplots(figsize=(10, 5))
 average_week_demand.plot(color=colors[0], label="recorded average", linewidth=2, ax=ax)
