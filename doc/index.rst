@@ -1,17 +1,9 @@
-.. include:: includes/big_toc_css.rst
-.. include:: tune_toc.rst
-
-.. Places global toc into the sidebar
-
-:globalsidebartoc: True
-
-=================
-Table Of Contents
-=================
+.. title:: Index
 
 .. Define an order for the Table of Contents:
 
 .. toctree::
+    :hidden:
     :maxdepth: 2
 
     Install <install>

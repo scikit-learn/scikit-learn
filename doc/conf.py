@@ -128,7 +128,7 @@ source_suffix = ".rst"
 source_encoding = "utf-8"
 
 # The main toctree document.
-root_doc = "contents"
+root_doc = master_doc = "index"
 
 # General information about the project.
 project = "scikit-learn"
@@ -373,6 +373,8 @@ html_context["release_highlights_version"] = highlight_version
 # redirects dictionary maps from old links to new links
 redirects = {
     "documentation": "index",
+    "contents": "index",
+    "preface": "index",
     "auto_examples/feature_selection/plot_permutation_test_for_classification": (
         "auto_examples/model_selection/plot_permutation_tests_for_classification"
     ),
