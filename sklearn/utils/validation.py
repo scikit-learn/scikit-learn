@@ -403,7 +403,7 @@ def check_memory(memory):
     >>> memory_str,memory_none = check_memory('cache'),check_memory(None)
     >>> is_memory = check_memory(Memory('cache'))
     >>> print(memory_str,memory_none,is_memory)
-    Memory(location=cache) None Memory(location=cache)
+    Memory(location=cache/joblib) Memory(location=None) Memory(location=cache/joblib)
     """
     if memory is None or isinstance(memory, str):
         memory = joblib.Memory(location=memory, verbose=0)
@@ -1525,8 +1525,9 @@ def check_is_fitted(estimator, attributes=None, *, msg=None, all_or_any=all):
     >>> lr = LogisticRegression()
     >>> try:
     ...     check_is_fitted(lr)
-    ... except NotFittedError as e:
+    >>> except NotFittedError as e:
     ...     print("Model not fit")
+    Model not fit
     """
     if isclass(estimator):
         raise TypeError("{} is a class, not an instance.".format(estimator))
