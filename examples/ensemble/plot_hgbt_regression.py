@@ -182,11 +182,12 @@ _ = ax.set(
 
 # %%
 # We can then overwrite the value for `max_iter` to a reasonable value and avoid
-# the extra computational cost of the inner validation. In this case, rounding
-# up the number of iterations to 400 may account for variability of the training
-# set:
+# the extra computational cost of the inner validation. Rounding up the number
+# of iterations may account for variability of the training set:
 
-common_params["max_iter"] = 400
+import math
+
+common_params["max_iter"] = math.ceil(hgbt.n_iter_ / 100) * 100
 common_params["early_stopping"] = False
 hgbt = HistGradientBoostingRegressor(**common_params)
 
