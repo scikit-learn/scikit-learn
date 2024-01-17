@@ -57,15 +57,12 @@ electricity = fetch_openml(
     name="electricity", version=1, as_frame=True, parser="pandas"
 )
 df = electricity.frame
-X = df.drop(columns=["transfer", "class"])
-y = df["transfer"]
-X
 
 # %%
 # This particular dataset has a stepwise constant target for the first 17,760
 # samples:
 
-y[:17_760].unique()
+df["transfer"][:17_760,].unique()
 
 # %%
 # Let us drop those entries and explore the hourly electricity transfer over
