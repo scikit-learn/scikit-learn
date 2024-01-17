@@ -4,7 +4,7 @@
 # rm -rf build; make dev-meson
 # run a command like this:
 # ninja -C build/cp312 -t missingdeps
-# and that the output is something like:
+# and make sure that the output is something like:
 # No missing dependencies on generated files found.
 
 # _pairwise_distances_reduction is cimported from other subpackages so this is
