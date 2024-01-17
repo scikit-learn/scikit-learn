@@ -419,6 +419,20 @@ def ledoit_wolf(X, *, assume_centered=False, block_size=1000):
     (1 - shrinkage) * cov + shrinkage * mu * np.identity(n_features)
 
     where mu = trace(cov) / n_features
+
+    Examples
+    --------
+    >>> from sklearn.covariance import ledoit_wolf
+    >>> import numpy as np
+    >>> np.random.seed(0)
+    >>> n_samples,n_features = 100,2
+    >>> X = np.random.randn(n_samples,n_features)
+    >>> cov,shrinkage=ledoit_wolf(X)
+    >>> print(cov)
+    [[ 1.03813944 -0.        ]
+    [-0.          1.03813944]]
+    >>> print(shrinkage)
+    1.0
     """
     estimator = LedoitWolf(
         assume_centered=assume_centered,

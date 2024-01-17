@@ -324,6 +324,21 @@ def graphical_lasso(
 
     One possible difference with the `glasso` R package is that the
     diagonal coefficients are not penalized.
+
+    Examples
+    --------
+    >>> from sklearn.covariance import graphical_lasso
+    >>> from sklearn.datasets import make_sparse_spd_matrix
+    >>> import numpy as np
+    >>> true_cov = make_sparse_spd_matrix(n_dim=3,random_state=42)
+    >>> np.random.seed(42)
+    >>> X = np.random.multivariate_normal(mean=np.zeros(3), cov=true_cov, size=3)
+    >>> emp_cov=np.cov(X.T)
+    >>> emp_cov, _ = graphical_lasso(emp_cov, alpha=.05)
+    >>> print(emp_cov)
+    [[ 0.37138063  0.12630962 -0.30459686]
+    [ 0.12630962  0.30544403 -0.14382785]
+    [-0.30459686 -0.14382785  0.34684215]]
     """
 
     if cov_init is not None:
