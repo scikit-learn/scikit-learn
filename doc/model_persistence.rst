@@ -121,7 +121,8 @@ loads files which have types and references to functions which are trusted
 either by default or by the user. 
 
 |details-start|
-**Using `skops`**
+**Using skops**
+
 |details-split|
 
 The API is very similar to ``pickle``, and
