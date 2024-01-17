@@ -790,7 +790,7 @@ Changelog
   :pr:`27757` by :user:`Lucy Liu <lucyleeow>`.
 
 - |Fix| Fix the function :func:`~utils.check_array` to output the right error message
-  when the input is Series instead of a DataFrame.
+  when the input is a Series instead of a DataFrame.
   :pr:`28090` by :user:`Stan Furrer <stanFurrer>` and :user:`Yao Xiao <Charlie-XIAO>`.
 
 - |API| :func:`sklearn.extmath.log_logistic` is deprecated and will be removed in 1.6.
