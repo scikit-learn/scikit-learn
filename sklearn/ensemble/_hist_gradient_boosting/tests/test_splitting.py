@@ -4,7 +4,6 @@ from numpy.testing import assert_array_equal
 
 from sklearn.ensemble._hist_gradient_boosting.common import (
     G_H_DTYPE,
-    HISTOGRAM_DTYPE,
     X_BINNED_DTYPE,
     MonotonicConstraint,
 )
@@ -215,9 +214,6 @@ def test_gradient_and_hessian_sanity(constant_hessian):
 
     # make sure sum of gradients in histograms are the same for all features,
     # and make sure they're equal to their expected value
-    hists_parent = np.asarray(hists_parent, dtype=HISTOGRAM_DTYPE)
-    hists_left = np.asarray(hists_left, dtype=HISTOGRAM_DTYPE)
-    hists_right = np.asarray(hists_right, dtype=HISTOGRAM_DTYPE)
     for hists, indices in (
         (hists_parent, sample_indices),
         (hists_left, sample_indices_left),
@@ -226,9 +222,11 @@ def test_gradient_and_hessian_sanity(constant_hessian):
         # note: gradients and hessians have shape (n_features,),
         # we're comparing them to *scalars*. This has the benefit of also
         # making sure that all the entries are equal across features.
-        gradients = hists["sum_gradients"].sum(axis=1)  # shape = (n_features,)
+        # gradients = hists["sum_gradients"].sum(axis=1)  # shape = (n_features,)
+        gradients = hists.feature_sum("sum_gradients")
         expected_gradient = all_gradients[indices].sum()  # scalar
-        hessians = hists["sum_hessians"].sum(axis=1)
+        # hessians = hists["sum_hessians"].sum(axis=1)
+        hessians = hists.feature_sum("sum_hessians")
         if constant_hessian:
             # 0 is not the actual hessian, but it's not computed in this case
             expected_hessian = 0.0

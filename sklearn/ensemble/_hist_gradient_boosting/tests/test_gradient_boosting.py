@@ -818,7 +818,7 @@ def test_sum_hessians_are_sample_weight(Loss):
 
     for feature_idx in range(n_features):
         for bin_idx in range(bin_mapper.n_bins):
-            assert histograms[feature_idx, bin_idx]["sum_hessians"] == (
+            assert histograms.value_at(feature_idx, bin_idx)["sum_hessians"] == (
                 pytest.approx(sum_sw[feature_idx, bin_idx], rel=1e-5)
             )
 

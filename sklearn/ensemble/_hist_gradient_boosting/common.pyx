@@ -94,3 +94,36 @@ cdef class Histograms:
 
     cdef inline hist_struct* at(self, int feature_idx, uint32_t bin_idx) noexcept nogil:
         return &self.histograms_view[self.bin_offsets_view[feature_idx] + bin_idx]
+
+    # From here on, only for better testing.
+    def fill_zeros(self):
+        cdef:
+            uint32_t i
+            n = self.histograms_view.shape[0]
+        for i in range(n):
+            self.histograms_view[i].sum_gradients = 0.
+            self.histograms_view[i].sum_hessians = 0.
+            self.histograms_view[i].count = 0
+        return self
+
+    def copy(self):
+        """Return a copy of self."""
+        h = Histograms(
+            n_features=self.n_features,
+            bin_offsets=self.bin_offsets.copy(),
+        )
+        np.copyto(h.histograms, self.histograms)
+        return h
+
+    def feature_histo(self, feature_idx):
+        start = self.bin_offsets[feature_idx]
+        end = self.bin_offsets[feature_idx + 1]
+        return self.histograms[start:end]
+
+    def feature_sum(self, key):
+        return np.asarray(
+            [np.sum(self.feature_histo(f)[key]) for f in range(self.n_features)]
+        )
+
+    def value_at(self, feature_idx, bin_idx):
+        return self.histograms[self.bin_offsets[feature_idx] + bin_idx]
