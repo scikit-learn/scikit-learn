@@ -208,8 +208,24 @@ sklearn.set_config(enable_metadata_routing=False)
 # %%
 # Improved memory and runtime efficiency for PCA on sparse data
 # -------------------------------------------------------------
-# PCA now uses `scipy.sparse.linalg.LinearOperator` to avoid
+# PCA is now able to handle sparse matrices natively for the `arpack`
+# solver by levaraging `scipy.sparse.linalg.LinearOperator` to avoid
 # materializing large sparse matrices when performing the
-# eigenvalue decomposition of the data set covariance matrix
-# before using `arpack` as a solver.
+# eigenvalue decomposition of the data set covariance matrix.
 #
+from sklearn.decomposition import PCA
+import scipy.sparse as sp
+from time import time
+
+X_sparse = sp.random(m=1000, n=1000, random_state=0)
+X_dense = X_sparse.toarray()
+
+t0 = time()
+PCA(n_components=10, svd_solver="arpack").fit(X_sparse)
+time_sparse = time() - t0
+
+t0 = time()
+PCA(n_components=10, svd_solver="arpack").fit(X_dense)
+time_dense = time() - t0
+
+print(f"Speedup: {time_dense / time_sparse:.1f}x")
