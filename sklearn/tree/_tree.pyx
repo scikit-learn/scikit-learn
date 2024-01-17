@@ -63,10 +63,10 @@ cdef float64_t INFINITY = np.inf
 cdef float64_t EPSILON = np.finfo('double').eps
 
 # Some handy constants (BestFirstTreeBuilder)
-cdef intp_t IS_FIRST = 1
-cdef intp_t IS_NOT_FIRST = 0
-cdef intp_t IS_LEFT = 1
-cdef intp_t IS_NOT_LEFT = 0
+cdef bint IS_FIRST = 1
+cdef bint IS_NOT_FIRST = 0
+cdef bint IS_LEFT = 1
+cdef bint IS_NOT_LEFT = 0
 
 TREE_LEAF = -1
 TREE_UNDEFINED = -2
