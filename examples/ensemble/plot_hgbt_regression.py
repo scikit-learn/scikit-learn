@@ -390,7 +390,10 @@ PartialDependenceDisplay.from_estimator(
 _ = plt.legend()
 
 # %%
-# Indeed, we can verify that the predictive quality of the model is not
+# Observe that `nswdemand` seems already monotonic without constraint. This is a
+# good example to show that the model is "overconstraining".
+#
+# Additionally, we can verify that the predictive quality of the model is not
 # significantly degraded by introducing the monotonic constraints. For such
 # purpose we use :class:`~sklearn.model_selection.TimeSeriesSplit`
 # cross-validation to estimate the variance of the test score. By doing so we
