@@ -515,7 +515,7 @@ class ScoreCutModelSelector:
     >>> from sklearn.decomposition import PCA
     >>> from sklearn.svm import LinearSVC
     >>> from sklearn.pipeline import Pipeline
-    >>> from sklearn.model_selection import ScoreCutModelSelector,
+    >>> from sklearn.model_selection import ScoreCutModelSelector, \
     ... StandardErrorSlicer, FavorabilityRanker
     >>> X, y = load_digits(return_X_y=True)
     >>> pipe = Pipeline([
@@ -542,12 +542,16 @@ class ScoreCutModelSelector:
     ...     'classify__C': (False, 1.0) # Lower is more complex and
     ...                                 # less favorable
     ... }
-    >>> promoted_index = ss.transform(FavorabilityRanker(favorability_rules))
+    >>> favorable_index = ss.transform(FavorabilityRanker(favorability_rules))
+    Min: 0.884825465639171
+    Max: 0.9148526525904792
     Original best index: 4
+    Original best params: {'reduce_dim__n_components': 14}
+    Original best score: 0.8998390591148251
     Promoted best index: 3
     Promoted best params: {'reduce_dim__n_components': 12}
     Promoted best score: 0.8926121943670691
-    >>> promoted_index
+    >>> favorable_index
     3
     """
 
@@ -575,28 +579,14 @@ class ScoreCutModelSelector:
         else:
             return _splits
 
-    @staticmethod
-    def _error_msg_unfitted():
-        """Returns an error message indicating that the ``ScoreCutModelSelector`` has
-        not been fitted.
-        """
-        raise AttributeError(
-            "The ``ScoreCutModelSelector`` instance has not been fitted. Please"
-            " call the ``ScoreCutModelSelector:fit`` method first."
-        )
-
-    @staticmethod
-    def _error_msg_untransformed():
-        raise AttributeError(
-            "The ``ScoreCutModelSelector`` instance has not been transformed."
-            " Please call the ``ScoreCutModelSelector:transform`` method first."
-        )
-
     def _check_fitted(self, retval: Optional[Any] = None) -> Any:
         if hasattr(self, "min_cut_") or hasattr(self, "max_cut_"):
             return retval
         else:
-            return self._error_msg_unfitted()
+            raise AttributeError(
+                "The ``ScoreCutModelSelector`` instance has not been fitted. Please"
+                " call the ``ScoreCutModelSelector:fit`` method first."
+            )
 
     def _check_transformed(self, retval: Optional[Any] = None) -> Any:
         if (hasattr(self, "min_cut_") or hasattr(self, "max_cut_")) and hasattr(
@@ -605,9 +595,15 @@ class ScoreCutModelSelector:
             return retval
         else:
             if not (hasattr(self, "min_cut_") or hasattr(self, "max_cut_")):
-                return self._error_msg_unfitted()
+                raise AttributeError(
+                    "The ``ScoreCutModelSelector`` instance has not been fitted. Please"
+                    " call the ``ScoreCutModelSelector:fit`` method first."
+                )
             else:
-                return self._error_msg_untransformed()
+                raise AttributeError(
+                    "The ``ScoreCutModelSelector`` instance has not been transformed."
+                    " Please call the ``ScoreCutModelSelector:transform`` method first."
+                )
 
     @property
     def _n_folds(self) -> int:
@@ -971,7 +967,7 @@ def promote(score_slice_fn: Callable, favorability_rank_fn: Callable) -> Callabl
     >>> from sklearn.decomposition import PCA
     >>> from sklearn.svm import LinearSVC
     >>> from sklearn.pipeline import Pipeline
-    >>> from sklearn.model_selection import promote, StandardErrorSlicer,
+    >>> from sklearn.model_selection import promote, StandardErrorSlicer, \
     ... FavorabilityRanker
     >>> X, y = load_digits(return_X_y=True)
     >>> pipe = Pipeline([
@@ -980,9 +976,9 @@ def promote(score_slice_fn: Callable, favorability_rank_fn: Callable) -> Callabl
     ... ])
     >>> param_grid = {"reduce_dim__n_components": [6, 8, 10, 12, 14, 16, 18]}
     >>> favorability_rules = {
-    ...     'reduce_dim__n_components': True,  # Lower is simpler and
+    ...     'reduce_dim__n_components': (True, 1.0),  # Lower is simpler and
     ...                                        # more favorable
-    ...     'classify__C': False # Lower is more complex and
+    ...     'classify__C': (False, 1.0) # Lower is more complex and
     ...                          # less favorable
     ... }
     >>> search = GridSearchCV(
@@ -996,6 +992,8 @@ def promote(score_slice_fn: Callable, favorability_rank_fn: Callable) -> Callabl
     Min: 0.8898918397688278
     Max: 0.9186844524007791
     Original best index: 6
+    Original best params: {'reduce_dim__n_components': 18}
+    Original best score: 0.9042881460848035
     Promoted best index: 3
     Promoted best params: {'reduce_dim__n_components': 12}
     Promoted best score: 0.8926121943670691
