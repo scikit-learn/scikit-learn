@@ -19,7 +19,7 @@ exceptiongroup==1.1.2
     # via pytest
 execnet==2.0.2
     # via pytest-xdist
-fonttools==4.41.0
+fonttools==4.42.0
     # via matplotlib
 iniconfig==2.0.0
     # via pytest
@@ -43,7 +43,7 @@ pillow==9.5.0
     # via matplotlib
 pluggy==1.2.0
     # via pytest
-pyparsing==3.1.0
+pyparsing==3.1.1
     # via matplotlib
 pytest==7.4.0
     # via

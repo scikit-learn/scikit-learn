@@ -728,6 +728,12 @@ class TSNE(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
     LocallyLinearEmbedding : Manifold learning using Locally Linear Embedding.
     SpectralEmbedding : Spectral embedding for non-linear dimensionality.
 
+    Notes
+    -----
+    For an example of using :class:`~sklearn.manifold.TSNE` in combination with
+    :class:`~sklearn.neighbors.KNeighborsTransformer` see
+    :ref:`sphx_glr_auto_examples_neighbors_approximate_nearest_neighbors.py`.
+
     References
     ----------
 
@@ -1143,8 +1149,8 @@ class TSNE(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
 
         Returns
         -------
-        X_new : array of shape (n_samples, n_components)
-            Embedding of the training data in low-dimensional space.
+        self : object
+            Fitted estimator.
         """
         self.fit_transform(X)
         return self

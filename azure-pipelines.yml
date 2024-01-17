@@ -127,11 +127,11 @@ jobs:
     vmImage: ubuntu-22.04
   variables:
     # Need to match Python version and Emscripten version for the correct
-    # Pyodide version. For example, for Pyodide version 0.23.4, see
-    # https://github.com/pyodide/pyodide/blob/0.23.4/Makefile.envs
-    PYODIDE_VERSION: '0.23.4'
-    EMSCRIPTEN_VERSION: '3.1.32'
-    PYTHON_VERSION: '3.11.2'
+    # Pyodide version. For example, for Pyodide version 0.24.1, see
+    # https://github.com/pyodide/pyodide/blob/0.24.1/Makefile.envs
+    PYODIDE_VERSION: '0.24.1'
+    EMSCRIPTEN_VERSION: '3.1.45'
+    PYTHON_VERSION: '3.11.3'
 
   dependsOn: [git_commit, linting]
   condition: |
@@ -150,7 +150,7 @@ jobs:
         addToPath: true
 
     - bash: bash build_tools/azure/install_pyodide.sh
-      displayName: Build Pyodide wheel and install it in a Pyodide venv
+      displayName: Build Pyodide wheel
 
     - bash: bash build_tools/azure/test_script_pyodide.sh
       displayName: Test Pyodide wheel
@@ -191,9 +191,10 @@ jobs:
       )
     commitMessage: dependencies['git_commit']['outputs']['commit.message']
     matrix:
-      py38_conda_forge_openblas_ubuntu_2204:
+      pymin_conda_forge_openblas_ubuntu_2204:
         DISTRIB: 'conda'
-        LOCK_FILE: './build_tools/azure/py38_conda_forge_openblas_ubuntu_2204_linux-64_conda.lock'
+        LOCK_FILE: './build_tools/azure/pymin_conda_forge_openblas_ubuntu_2204_linux-64_conda.lock'
+        CHECK_WARNINGS: 'true'
         COVERAGE: 'false'
         SKLEARN_TESTS_GLOBAL_RANDOM_SEED: '0'  # non-default seed
 
@@ -230,10 +231,14 @@ jobs:
         not(contains(dependencies['git_commit']['outputs']['commit.message'], '[ci skip]'))
       )
     matrix:
-      # Linux + Python 3.8 build with OpenBLAS
-      py38_conda_defaults_openblas:
+      # Linux + Python 3.9 build with OpenBLAS and without pandas
+      pymin_conda_defaults_openblas:
         DISTRIB: 'conda'
-        LOCK_FILE: './build_tools/azure/py38_conda_defaults_openblas_linux-64_conda.lock'
+        LOCK_FILE: './build_tools/azure/pymin_conda_defaults_openblas_linux-64_conda.lock'
+        # Enable debug Cython directives to capture IndexError exceptions in
+        # combination with the -Werror::pytest.PytestUnraisableExceptionWarning
+        # flag for pytest.
+        # https://github.com/scikit-learn/scikit-learn/pull/24438
         SKLEARN_ENABLE_DEBUG_CYTHON_DIRECTIVES: '1'
         SKLEARN_RUN_FLOAT32_TESTS: '1'
         SKLEARN_TESTS_GLOBAL_RANDOM_SEED: '2'  # non-default seed
@@ -306,9 +311,9 @@ jobs:
         not(contains(dependencies['git_commit']['outputs']['commit.message'], '[ci skip]'))
       )
     matrix:
-      py38_conda_forge_mkl:
+      pymin_conda_forge_mkl:
         DISTRIB: 'conda'
-        LOCK_FILE: ./build_tools/azure/py38_conda_forge_mkl_win-64_conda.lock
+        LOCK_FILE: ./build_tools/azure/pymin_conda_forge_mkl_win-64_conda.lock
         CHECK_WARNINGS: 'true'
         # The Azure Windows runner is typically much slower than other CI
         # runners due to the lack of compiler cache. Running the tests with
@@ -316,5 +321,9 @@ jobs:
         # code should have windows-specific code branches, it should be enable
         # to restrict the code coverage collection to the non-windows runners.
         COVERAGE: 'false'
+        # Enable debug Cython directives to capture IndexError exceptions in
+        # combination with the -Werror::pytest.PytestUnraisableExceptionWarning
+        # flag for pytest.
+        # https://github.com/scikit-learn/scikit-learn/pull/24438
         SKLEARN_ENABLE_DEBUG_CYTHON_DIRECTIVES: '1'
         SKLEARN_TESTS_GLOBAL_RANDOM_SEED: '7'  # non-default seed

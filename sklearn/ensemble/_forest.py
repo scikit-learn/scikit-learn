@@ -130,7 +130,9 @@ def _generate_sample_indices(random_state, n_samples, n_samples_bootstrap):
     Private function used to _parallel_build_trees function."""
 
     random_instance = check_random_state(random_state)
-    sample_indices = random_instance.randint(0, n_samples, n_samples_bootstrap)
+    sample_indices = random_instance.randint(
+        0, n_samples, n_samples_bootstrap, dtype=np.int32
+    )
 
     return sample_indices
 
@@ -244,13 +246,11 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
         warm_start=False,
         class_weight=None,
         max_samples=None,
-        base_estimator="deprecated",
     ):
         super().__init__(
             estimator=estimator,
             n_estimators=n_estimators,
             estimator_params=estimator_params,
-            base_estimator=base_estimator,
         )
 
         self.bootstrap = bootstrap
@@ -416,7 +416,7 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
                     "is necessary for Poisson regression."
                 )
 
-        self.n_outputs_ = y.shape[1]
+        self._n_samples, self.n_outputs_ = y.shape
 
         y, expanded_class_weight = self._validate_y_class_weight(y)
 
@@ -441,6 +441,8 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
             )
         else:
             n_samples_bootstrap = None
+
+        self._n_samples_bootstrap = n_samples_bootstrap
 
         self._validate_estimator()
 
@@ -512,7 +514,10 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
             n_more_estimators > 0 or not hasattr(self, "oob_score_")
         ):
             y_type = type_of_target(y)
-            if y_type in ("multiclass-multioutput", "unknown"):
+            if y_type == "unknown" or (
+                self._estimator_type == "classifier"
+                and y_type == "multiclass-multioutput"
+            ):
                 # FIXME: we could consider to support multiclass-multioutput if
                 # we introduce or reuse a constructor parameter (e.g.
                 # oob_score) allowing our user to pass a callable defining the
@@ -679,6 +684,36 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
         all_importances = np.mean(all_importances, axis=0, dtype=np.float64)
         return all_importances / np.sum(all_importances)
 
+    def _get_estimators_indices(self):
+        # Get drawn indices along both sample and feature axes
+        for tree in self.estimators_:
+            if not self.bootstrap:
+                yield np.arange(self._n_samples, dtype=np.int32)
+            else:
+                # tree.random_state is actually an immutable integer seed rather
+                # than a mutable RandomState instance, so it's safe to use it
+                # repeatedly when calling this property.
+                seed = tree.random_state
+                # Operations accessing random_state must be performed identically
+                # to those in `_parallel_build_trees()`
+                yield _generate_sample_indices(
+                    seed, self._n_samples, self._n_samples_bootstrap
+                )
+
+    @property
+    def estimators_samples_(self):
+        """The subset of drawn samples for each base estimator.
+
+        Returns a dynamically generated list of indices identifying
+        the samples used for fitting each member of the ensemble, i.e.,
+        the in-bag samples.
+
+        Note: the list is re-created at each call to the property in order
+        to reduce the object memory footprint by not storing the sampling
+        data. Thus fetching the property may be slower than expected.
+        """
+        return [sample_indices for sample_indices in self._get_estimators_indices()]
+
     def _more_tags(self):
         # Only the criterion is required to determine if the tree supports
         # missing values
@@ -725,7 +760,6 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
         warm_start=False,
         class_weight=None,
         max_samples=None,
-        base_estimator="deprecated",
     ):
         super().__init__(
             estimator=estimator,
@@ -739,7 +773,6 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
             warm_start=warm_start,
             class_weight=class_weight,
             max_samples=max_samples,
-            base_estimator=base_estimator,
         )
 
     @staticmethod
@@ -993,7 +1026,6 @@ class ForestRegressor(RegressorMixin, BaseForest, metaclass=ABCMeta):
         verbose=0,
         warm_start=False,
         max_samples=None,
-        base_estimator="deprecated",
     ):
         super().__init__(
             estimator,
@@ -1006,7 +1038,6 @@ class ForestRegressor(RegressorMixin, BaseForest, metaclass=ABCMeta):
             verbose=verbose,
             warm_start=warm_start,
             max_samples=max_samples,
-            base_estimator=base_estimator,
         )
 
     def predict(self, X):
@@ -1143,6 +1174,8 @@ class RandomForestClassifier(ForestClassifier):
     A random forest is a meta estimator that fits a number of decision tree
     classifiers on various sub-samples of the dataset and uses averaging to
     improve the predictive accuracy and control over-fitting.
+    Trees in the forest use the best split strategy, i.e. equivalent to passing
+    `splitter="best"` to the underlying :class:`~sklearn.tree.DecisionTreeRegressor`.
     The sub-sample size is controlled with the `max_samples` parameter if
     `bootstrap=True` (default), otherwise the whole dataset is used to build
     each tree.
@@ -1350,14 +1383,6 @@ class RandomForestClassifier(ForestClassifier):
         .. versionadded:: 1.2
            `base_estimator_` was renamed to `estimator_`.
 
-    base_estimator_ : DecisionTreeClassifier
-        The child estimator template used to create the collection of fitted
-        sub-estimators.
-
-        .. deprecated:: 1.2
-            `base_estimator_` is deprecated and will be removed in 1.4.
-            Use `estimator_` instead.
-
     estimators_ : list of DecisionTreeClassifier
         The collection of fitted sub-estimators.
 
@@ -1405,6 +1430,12 @@ class RandomForestClassifier(ForestClassifier):
         was never left out during the bootstrap. In this case,
         `oob_decision_function_` might contain NaN. This attribute exists
         only when ``oob_score`` is True.
+
+    estimators_samples_ : list of arrays
+        The subset of drawn samples (i.e., the in-bag samples) for each base
+        estimator. Each subset is defined by an array of the indices selected.
+
+        .. versionadded:: 1.4
 
     See Also
     --------
@@ -1525,9 +1556,11 @@ class RandomForestRegressor(ForestRegressor):
     """
     A random forest regressor.
 
-    A random forest is a meta estimator that fits a number of classifying
-    decision trees on various sub-samples of the dataset and uses averaging
-    to improve the predictive accuracy and control over-fitting.
+    A random forest is a meta estimator that fits a number of decision tree
+    regressors on various sub-samples of the dataset and uses averaging to
+    improve the predictive accuracy and control over-fitting.
+    Trees in the forest use the best split strategy, i.e. equivalent to passing
+    `splitter="best"` to the underlying :class:`~sklearn.tree.DecisionTreeRegressor`.
     The sub-sample size is controlled with the `max_samples` parameter if
     `bootstrap=True` (default), otherwise the whole dataset is used to build
     each tree.
@@ -1723,14 +1756,6 @@ class RandomForestRegressor(ForestRegressor):
         .. versionadded:: 1.2
            `base_estimator_` was renamed to `estimator_`.
 
-    base_estimator_ : DecisionTreeRegressor
-        The child estimator template used to create the collection of fitted
-        sub-estimators.
-
-        .. deprecated:: 1.2
-            `base_estimator_` is deprecated and will be removed in 1.4.
-            Use `estimator_` instead.
-
     estimators_ : list of DecisionTreeRegressor
         The collection of fitted sub-estimators.
 
@@ -1766,6 +1791,12 @@ class RandomForestRegressor(ForestRegressor):
     oob_prediction_ : ndarray of shape (n_samples,) or (n_samples, n_outputs)
         Prediction computed with out-of-bag estimate on the training set.
         This attribute exists only when ``oob_score`` is True.
+
+    estimators_samples_ : list of arrays
+        The subset of drawn samples (i.e., the in-bag samples) for each base
+        estimator. Each subset is defined by an array of the indices selected.
+
+        .. versionadded:: 1.4
 
     See Also
     --------
@@ -2093,14 +2124,6 @@ class ExtraTreesClassifier(ForestClassifier):
         .. versionadded:: 1.2
            `base_estimator_` was renamed to `estimator_`.
 
-    base_estimator_ : ExtraTreesClassifier
-        The child estimator template used to create the collection of fitted
-        sub-estimators.
-
-        .. deprecated:: 1.2
-            `base_estimator_` is deprecated and will be removed in 1.4.
-            Use `estimator_` instead.
-
     estimators_ : list of DecisionTreeClassifier
         The collection of fitted sub-estimators.
 
@@ -2148,6 +2171,12 @@ class ExtraTreesClassifier(ForestClassifier):
         was never left out during the bootstrap. In this case,
         `oob_decision_function_` might contain NaN. This attribute exists
         only when ``oob_score`` is True.
+
+    estimators_samples_ : list of arrays
+        The subset of drawn samples (i.e., the in-bag samples) for each base
+        estimator. Each subset is defined by an array of the indices selected.
+
+        .. versionadded:: 1.4
 
     See Also
     --------
@@ -2451,14 +2480,6 @@ class ExtraTreesRegressor(ForestRegressor):
         .. versionadded:: 1.2
            `base_estimator_` was renamed to `estimator_`.
 
-    base_estimator_ : ExtraTreeRegressor
-        The child estimator template used to create the collection of fitted
-        sub-estimators.
-
-        .. deprecated:: 1.2
-            `base_estimator_` is deprecated and will be removed in 1.4.
-            Use `estimator_` instead.
-
     estimators_ : list of DecisionTreeRegressor
         The collection of fitted sub-estimators.
 
@@ -2494,6 +2515,12 @@ class ExtraTreesRegressor(ForestRegressor):
     oob_prediction_ : ndarray of shape (n_samples,) or (n_samples, n_outputs)
         Prediction computed with out-of-bag estimate on the training set.
         This attribute exists only when ``oob_score`` is True.
+
+    estimators_samples_ : list of arrays
+        The subset of drawn samples (i.e., the in-bag samples) for each base
+        estimator. Each subset is defined by an array of the indices selected.
+
+        .. versionadded:: 1.4
 
     See Also
     --------
@@ -2711,14 +2738,6 @@ class RandomTreesEmbedding(TransformerMixin, BaseForest):
         .. versionadded:: 1.2
            `base_estimator_` was renamed to `estimator_`.
 
-    base_estimator_ : :class:`~sklearn.tree.ExtraTreeRegressor` instance
-        The child estimator template used to create the collection of fitted
-        sub-estimators.
-
-        .. deprecated:: 1.2
-            `base_estimator_` is deprecated and will be removed in 1.4.
-            Use `estimator_` instead.
-
     estimators_ : list of :class:`~sklearn.tree.ExtraTreeRegressor` instances
         The collection of fitted sub-estimators.
 
@@ -2741,6 +2760,12 @@ class RandomTreesEmbedding(TransformerMixin, BaseForest):
 
     one_hot_encoder_ : OneHotEncoder instance
         One-hot encoder used to create the sparse embedding.
+
+    estimators_samples_ : list of arrays
+        The subset of drawn samples (i.e., the in-bag samples) for each base
+        estimator. Each subset is defined by an array of the indices selected.
+
+        .. versionadded:: 1.4
 
     See Also
     --------

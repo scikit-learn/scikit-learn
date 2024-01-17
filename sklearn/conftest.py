@@ -12,7 +12,7 @@ import pytest
 from _pytest.doctest import DoctestItem
 from threadpoolctl import threadpool_limits
 
-from sklearn import config_context
+from sklearn import config_context, set_config
 from sklearn._min_dependencies import PYTEST_MIN_VERSION
 from sklearn.datasets import (
     fetch_20newsgroups,
@@ -25,7 +25,7 @@ from sklearn.datasets import (
 )
 from sklearn.tests import random_seed
 from sklearn.utils import _IS_32BIT
-from sklearn.utils.fixes import parse_version, sp_version
+from sklearn.utils.fixes import np_base_version, parse_version, sp_version
 
 if parse_version(pytest.__version__) < parse_version(PYTEST_MIN_VERSION):
     raise ImportError(
@@ -134,10 +134,16 @@ def pytest_collection_modifyitems(config, items):
     datasets_to_download = set()
 
     for item in items:
-        if not hasattr(item, "fixturenames"):
+        if isinstance(item, DoctestItem) and "fetch_" in item.name:
+            fetcher_function_name = item.name.split(".")[-1]
+            dataset_fetchers_key = f"{fetcher_function_name}_fxt"
+            dataset_to_fetch = set([dataset_fetchers_key]) & dataset_features_set
+        elif not hasattr(item, "fixturenames"):
             continue
-        item_fixtures = set(item.fixturenames)
-        dataset_to_fetch = item_fixtures & dataset_features_set
+        else:
+            item_fixtures = set(item.fixturenames)
+            dataset_to_fetch = item_fixtures & dataset_features_set
+
         if not dataset_to_fetch:
             continue
 
@@ -185,6 +191,10 @@ def pytest_collection_modifyitems(config, items):
             "doctests are not run for Windows because numpy arrays "
             "repr is inconsistent across platforms."
         )
+        skip_doctests = True
+
+    if np_base_version >= parse_version("2"):
+        reason = "Due to NEP 51 numpy scalar repr has changed in numpy 2"
         skip_doctests = True
 
     # Normally doctest has the entire module's scope. Here we set globs to an empty dict
@@ -274,3 +284,11 @@ def hide_available_pandas(monkeypatch):
         return import_orig(name, *args, **kwargs)
 
     monkeypatch.setattr(builtins, "__import__", mocked_import)
+
+
+@pytest.fixture
+def print_changed_only_false():
+    """Set `print_changed_only` to False for the duration of the test."""
+    set_config(print_changed_only=False)
+    yield
+    set_config(print_changed_only=True)  # reset to default

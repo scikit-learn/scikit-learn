@@ -602,6 +602,9 @@ class HashingVectorizer(
 
     The hash function employed is the signed 32-bit version of Murmurhash3.
 
+    For an efficiency comparison of the different feature extractors, see
+    :ref:`sphx_glr_auto_examples_text_plot_hashing_vs_dict_vectorizer.py`.
+
     Read more in the :ref:`User Guide <text_feature_extraction>`.
 
     Parameters
@@ -932,6 +935,9 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
     If you do not provide an a-priori dictionary and you do not use an analyzer
     that does some kind of feature selection then the number of features will
     be equal to the vocabulary size found by analyzing the data.
+
+    For an efficiency comparison of the different feature extractors, see
+    :ref:`sphx_glr_auto_examples_text_plot_hashing_vs_dict_vectorizer.py`.
 
     Read more in the :ref:`User Guide <text_feature_extraction>`.
 
@@ -1641,7 +1647,7 @@ class TfidfTransformer(
 
         Parameters
         ----------
-        X : sparse matrix of shape n_samples, n_features)
+        X : sparse matrix of shape (n_samples, n_features)
             A matrix of term/token counts.
 
         y : None
@@ -1673,14 +1679,10 @@ class TfidfTransformer(
 
             # log+1 instead of log makes sure terms with zero idf don't get
             # suppressed entirely.
-            idf = np.log(n_samples / df) + 1
-            self._idf_diag = sp.diags(
-                idf,
-                offsets=0,
-                shape=(n_features, n_features),
-                format="csr",
-                dtype=dtype,
-            )
+            self.idf_ = np.log(n_samples / df) + 1.0
+            # FIXME: for backward compatibility, we force idf_ to be np.float64
+            # In the future, we should preserve the `dtype` of `X`.
+            self.idf_ = self.idf_.astype(np.float64, copy=False)
 
         return self
 
@@ -1694,13 +1696,14 @@ class TfidfTransformer(
 
         copy : bool, default=True
             Whether to copy X and operate on the copy or perform in-place
-            operations.
+            operations. `copy=False` will only be effective with CSR sparse matrix.
 
         Returns
         -------
         vectors : sparse matrix of shape (n_samples, n_features)
             Tf-idf-weighted document-term matrix.
         """
+        check_is_fitted(self)
         X = self._validate_data(
             X, accept_sparse="csr", dtype=FLOAT_DTYPES, copy=copy, reset=False
         )
@@ -1711,39 +1714,15 @@ class TfidfTransformer(
             np.log(X.data, X.data)
             X.data += 1
 
-        if self.use_idf:
-            # idf_ being a property, the automatic attributes detection
-            # does not work as usual and we need to specify the attribute
-            # name:
-            check_is_fitted(self, attributes=["idf_"], msg="idf vector is not fitted")
-
-            # *= doesn't work
-            X = X * self._idf_diag
+        if hasattr(self, "idf_"):
+            # the columns of X (CSR matrix) can be accessed with `X.indices `and
+            # multiplied with the corresponding `idf` value
+            X.data *= self.idf_[X.indices]
 
         if self.norm is not None:
             X = normalize(X, norm=self.norm, copy=False)
 
         return X
-
-    @property
-    def idf_(self):
-        """Inverse document frequency vector, only defined if `use_idf=True`.
-
-        Returns
-        -------
-        ndarray of shape (n_features,)
-        """
-        # if _idf_diag is not set, this will raise an attribute error,
-        # which means hasattr(self, "idf_") is False
-        return np.ravel(self._idf_diag.sum(axis=0))
-
-    @idf_.setter
-    def idf_(self, value):
-        value = np.asarray(value, dtype=np.float64)
-        n_features = value.shape[0]
-        self._idf_diag = sp.spdiags(
-            value, diags=0, m=n_features, n=n_features, format="csr"
-        )
 
     def _more_tags(self):
         return {"X_types": ["2darray", "sparse"]}
@@ -1754,6 +1733,12 @@ class TfidfVectorizer(CountVectorizer):
 
     Equivalent to :class:`CountVectorizer` followed by
     :class:`TfidfTransformer`.
+
+    For an example of usage, see
+    :ref:`sphx_glr_auto_examples_text_plot_document_classification_20newsgroups.py`.
+
+    For an efficiency comparison of the different feature extractors, see
+    :ref:`sphx_glr_auto_examples_text_plot_hashing_vs_dict_vectorizer.py`.
 
     Read more in the :ref:`User Guide <text_feature_extraction>`.
 
