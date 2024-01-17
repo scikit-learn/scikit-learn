@@ -2,46 +2,15 @@
 
 .. currentmodule:: sklearn
 
-.. _changes_1_4_1:
-
-Version 1.4.1
-=============
-
-**In Development**
-
-Changelog
----------
-
-:mod:`sklearn.datasets`
-.......................
-
-- |Fix| :func:`datasets.dump_svmlight_file` now does not raise `ValueError` when `X`
-  is read-only, e.g., a `numpy.memmap` instance.
-  :pr:`28111` by :user:`Yao Xiao <Charlie-XIAO>`.
-
-:mod:`sklearn.neighbors`
-........................
-
-- |Fix| :meth:`neighbors.KNeighborsClassifier.predict` and
-  :meth:`neighbors.KNeighborsClassifier.predict_proba` now raises an error when the
-  weights of all neighbors of some sample are zero. This can happen when `weights`
-  is a user-defined function.
-  :pr:`26410` by :user:`Yao Xiao <Charlie-XIAO>`.
-
-:mod:`sklearn.utils`
-....................
-
-- |Fix| Fix the function :func:`~utils.check_array` to output the right error message
-  when the input is Series instead of a DataFrame.
-  :pr:`28090` by :user:`Stan Furrer <stanFurrer>` and :user:`Yao Xiao <Charlie-XIAO>`.
-
-
 .. _changes_1_4:
 
 Version 1.4.0
 =============
 
-**In Development**
+**January 2024**
+
+For a short description of the main highlights of the release, please refer to
+:ref:`sphx_glr_auto_examples_release_highlights_plot_release_highlights_1_4_0.py`.
 
 .. include:: changelog_legend.inc
 
@@ -395,6 +364,10 @@ Changelog
   which returns a dense numpy ndarray as before.
   :pr:`27438` by :user:`Yao Xiao <Charlie-XIAO>`.
 
+- |Fix| :func:`datasets.dump_svmlight_file` now does not raise `ValueError` when `X`
+  is read-only, e.g., a `numpy.memmap` instance.
+  :pr:`28111` by :user:`Yao Xiao <Charlie-XIAO>`.
+
 - |API| :func:`datasets.make_sparse_spd_matrix` deprecated the keyword argument ``dim``
   in favor of ``n_dim``. ``dim`` will be removed in version 1.6.
   :pr:`27718` by :user:`Adam Li <adam2392>`.
@@ -717,6 +690,12 @@ Changelog
   when it is invoked with `n_samples=n_neighbors`.
   :pr:`23317` by :user:`Bharat Raghunathan <bharatr21>`.
 
+- |Fix| :meth:`neighbors.KNeighborsClassifier.predict` and
+  :meth:`neighbors.KNeighborsClassifier.predict_proba` now raises an error when the
+  weights of all neighbors of some sample are zero. This can happen when `weights`
+  is a user-defined function.
+  :pr:`26410` by :user:`Yao Xiao <Charlie-XIAO>`.
+
 - |API| :class:`neighbors.KNeighborsRegressor` now accepts
   :class:`metrics.DistanceMetric` objects directly via the `metric` keyword
   argument allowing for the use of accelerated third-party
@@ -810,6 +789,10 @@ Changelog
   `X.toarray()`.
   :pr:`27757` by :user:`Lucy Liu <lucyleeow>`.
 
+- |Fix| Fix the function :func:`~utils.check_array` to output the right error message
+  when the input is a Series instead of a DataFrame.
+  :pr:`28090` by :user:`Stan Furrer <stanFurrer>` and :user:`Yao Xiao <Charlie-XIAO>`.
+
 - |API| :func:`sklearn.extmath.log_logistic` is deprecated and will be removed in 1.6.
   Use `-np.logaddexp(0, -x)` instead.
   :pr:`27544` by :user:`Christian Lorentzen <lorentzenchr>`.
@@ -820,4 +803,37 @@ Code and Documentation Contributors
 Thanks to everyone who has contributed to the maintenance and improvement of
 the project since version 1.3, including:
 
-TODO: update at the time of the release.
+101AlexMartin, Abhishek Singh Kushwah, Adam Li, Adarsh Wase, Adrin Jalali,
+Advik Sinha, Alex, Alexander Al-Feghali, Alexis IMBERT, AlexL, Alex Molas, Anam
+Fatima, Andrew Goh, andyscanzio, Aniket Patil, Artem Kislovskiy, Arturo Amor,
+ashah002, avm19, Ben Holmes, Ben Mares, Benoit Chevallier-Mames, Bharat
+Raghunathan, Binesh Bannerjee, Brendan Lu, Brevin Kunde, Camille Troillard,
+Carlo Lemos, Chad Parmet, Christian Clauss, Christian Lorentzen, Christian
+Veenhuis, Christos Aridas, Cindy Liang, Claudio Salvatore Arcidiacono, Connor
+Boyle, cynthias13w, DaminK, Daniele Ongari, Daniel Schmitz, Daniel Tinoco,
+David Brochart, Deborah L. Haar, DevanshKyada27, Dimitri Papadopoulos Orfanos,
+Dmitry Nesterov, DUONG, Edoardo Abati, Eitan Hemed, Elabonga Atuo, Elisabeth
+Günther, Emma Carballal, Emmanuel Ferdman, epimorphic, Erwan Le Floch, Fabian
+Egli, Filip Karlo Došilović, Florian Idelberger, Franck Charras, Gael
+Varoquaux, Ganesh Tata, Gleb Levitski, Guillaume Lemaitre, Haoying Zhang,
+Harmanan Kohli, Ily, ioangatop, IsaacTrost, Isaac Virshup, Iwona Zdzieblo,
+Jakub Kaczmarzyk, James McDermott, Jarrod Millman, JB Mountford, Jérémie du
+Boisberranger, Jérôme Dockès, Jiawei Zhang, Joel Nothman, John Cant, John
+Hopfensperger, Jona Sassenhagen, Jon Nordby, Julien Jerphanion, Kennedy Waweru,
+kevin moore, Kian Eliasi, Kishan Ved, Konstantinos Pitas, Koustav Ghosh, Kushan
+Sharma, ldwy4, Linus, Lohit SundaramahaLingam, Loic Esteve, Lorenz, Louis
+Fouquet, Lucy Liu, Luis Silvestrin, Lukáš Folwarczný, Lukas Geiger, Malte
+Londschien, Marcus Fraaß, Marek Hanuš, Maren Westermann, Mark Elliot, Martin
+Larralde, Mateusz Sokół, mathurinm, mecopur, Meekail Zain, Michael Higgins,
+Miki Watanabe, Milton Gomez, MN193, Mohammed Hamdy, Mohit Joshi, mrastgoo,
+Naman Dhingra, Naoise Holohan, Narendra Singh dangi, Noa Malem-Shinitski,
+Nolan, Nurseit Kamchyev, Oleksii Kachaiev, Olivier Grisel, Omar Salman, partev,
+Peter Hull, Peter Steinbach, Pierre de Fréminville, Pooja Subramaniam, Puneeth
+K, qmarcou, Quentin Barthélemy, Rahil Parikh, Rahul Mahajan, Raj Pulapakura,
+Raphael, Ricardo Peres, Riccardo Cappuzzo, Roman Lutz, Salim Dohri, Samuel O.
+Ronsin, Sandip Dutta, Sayed Qaiser Ali, scaja, scikit-learn-bot, Sebastian
+Berg, Shreesha Kumar Bhat, Shubhal Gupta, Søren Fuglede Jørgensen, Stefanie
+Senger, Tamara, Tanjina Afroj, THARAK HEGDE, thebabush, Thomas J. Fan, Thomas
+Roehr, Tialo, Tim Head, tongyu, Venkatachalam N, Vijeth Moudgalya, Vincent M,
+Vivek Reddy P, Vladimir Fokow, Xiao Yuan, Xuefeng Xu, Yang Tao, Yao Xiao,
+Yuchen Zhou, Yuusuke Hiramatsu
