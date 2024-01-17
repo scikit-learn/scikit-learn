@@ -391,11 +391,15 @@ _ = plt.legend()
 
 # %%
 # Indeed, we can verify that the predictive quality of the model is not
-# significantly degraded by introducing the monotonic constraints:
+# significantly degraded by introducing the monotonic constraints. For such
+# purpose we use :class:`~sklearn.model_selection.TimeSeriesSplit`
+# cross-validation to estimate the variance of the test score. By doing so we
+# guarantee that the training data does not succeed the testing data, which is
+# crucial when dealing with data that have a temporal relationship.
 
 from sklearn.model_selection import TimeSeriesSplit, cross_validate
 
-ts_cv = TimeSeriesSplit(n_splits=5, gap=48, test_size=336)
+ts_cv = TimeSeriesSplit(n_splits=5, gap=48, test_size=336)  # a week has 336 samples
 
 cv_results = cross_validate(
     hgbt_no_cst,
