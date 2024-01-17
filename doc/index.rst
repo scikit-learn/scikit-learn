@@ -1,6 +1,7 @@
 .. title:: Index
 
-.. Define an order for the Table of Contents:
+.. Define the overall structure, that affects the prev-next buttons and the order
+   of the sections in the top navbar.
 
 .. toctree::
     :hidden:
