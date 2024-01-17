@@ -1,7 +1,12 @@
-import importlib
+"""
+The :mod:`sklearn.utils.estimator_checks` module includes various utilities to
+check the compatibility of estimators with the scikit-learn API.
+"""
+
 import pickle
 import re
 import warnings
+from contextlib import nullcontext
 from copy import deepcopy
 from functools import partial, wraps
 from inspect import signature
@@ -44,14 +49,14 @@ from ..model_selection._validation import _safe_split
 from ..pipeline import make_pipeline
 from ..preprocessing import StandardScaler, scale
 from ..random_projection import BaseRandomProjection
+from ..tree import DecisionTreeClassifier, DecisionTreeRegressor
 from ..utils._array_api import (
+    _atol_for_type,
     _convert_to_numpy,
     get_namespace,
     yield_namespace_device_dtype_combinations,
 )
-from ..utils._array_api import (
-    device as array_device,
-)
+from ..utils._array_api import device as array_device
 from ..utils._param_validation import (
     InvalidParameterError,
     generate_invalid_param_val,
@@ -67,6 +72,7 @@ from ._tags import (
 )
 from ._testing import (
     SkipTest,
+    _array_api_for_tests,
     _get_args,
     assert_allclose,
     assert_allclose_dense_sparse,
@@ -304,11 +310,15 @@ def _yield_outliers_checks(estimator):
 
 
 def _yield_array_api_checks(estimator):
-    for array_namespace, device, dtype in yield_namespace_device_dtype_combinations():
+    for (
+        array_namespace,
+        device,
+        dtype_name,
+    ) in yield_namespace_device_dtype_combinations():
         yield partial(
             check_array_api_input,
             array_namespace=array_namespace,
-            dtype=dtype,
+            dtype_name=dtype_name,
             device=device,
         )
 
@@ -430,13 +440,16 @@ def _construct_instance(Estimator):
             # Heterogeneous ensemble classes (i.e. stacking, voting)
             if issubclass(Estimator, RegressorMixin):
                 estimator = Estimator(
-                    estimators=[("est1", Ridge(alpha=0.1)), ("est2", Ridge(alpha=1))]
+                    estimators=[
+                        ("est1", DecisionTreeRegressor(max_depth=3, random_state=0)),
+                        ("est2", DecisionTreeRegressor(max_depth=3, random_state=1)),
+                    ]
                 )
             else:
                 estimator = Estimator(
                     estimators=[
-                        ("est1", LogisticRegression(C=0.1)),
-                        ("est2", LogisticRegression(C=1)),
+                        ("est1", DecisionTreeClassifier(max_depth=3, random_state=0)),
+                        ("est2", DecisionTreeClassifier(max_depth=3, random_state=1)),
                     ]
                 )
         else:
@@ -849,52 +862,12 @@ def _generate_sparse_matrix(X_csr):
         yield sparse_format + "_64", X
 
 
-def _array_api_for_tests(array_namespace, device, dtype):
-    try:
-        array_mod = importlib.import_module(array_namespace)
-    except ModuleNotFoundError:
-        raise SkipTest(
-            f"{array_namespace} is not installed: not checking array_api input"
-        )
-    try:
-        import array_api_compat  # noqa
-    except ImportError:
-        raise SkipTest(
-            "array_api_compat is not installed: not checking array_api input"
-        )
-
-    # First create an array using the chosen array module and then get the
-    # corresponding (compatibility wrapped) array namespace based on it.
-    # This is because `cupy` is not the same as the compatibility wrapped
-    # namespace of a CuPy array.
-    xp = array_api_compat.get_namespace(array_mod.asarray(1))
-    if array_namespace == "torch" and device == "cuda" and not xp.has_cuda:
-        raise SkipTest("PyTorch test requires cuda, which is not available")
-    elif array_namespace == "torch" and device == "mps" and not xp.has_mps:
-        if not xp.backends.mps.is_built():
-            raise SkipTest(
-                "MPS is not available because the current PyTorch install was not "
-                "built with MPS enabled."
-            )
-        else:
-            raise SkipTest(
-                "MPS is not available because the current MacOS version is not 12.3+ "
-                "and/or you do not have an MPS-enabled device on this machine."
-            )
-    elif array_namespace in {"cupy", "cupy.array_api"}:  # pragma: nocover
-        import cupy
-
-        if cupy.cuda.runtime.getDeviceCount() == 0:
-            raise SkipTest("CuPy test requires cuda, which is not available")
-    return xp, device, dtype
-
-
 def check_array_api_input(
     name,
     estimator_orig,
     array_namespace,
     device=None,
-    dtype="float64",
+    dtype_name="float64",
     check_values=False,
 ):
     """Check that the estimator can work consistently with the Array API
@@ -905,10 +878,10 @@ def check_array_api_input(
     When check_values is True, it also checks that calling the estimator on the
     array_api Array gives the same results as ndarrays.
     """
-    xp, device, dtype = _array_api_for_tests(array_namespace, device, dtype)
+    xp = _array_api_for_tests(array_namespace, device)
 
     X, y = make_classification(random_state=42)
-    X = X.astype(dtype, copy=False)
+    X = X.astype(dtype_name, copy=False)
 
     X = _enforce_estimator_tags_X(estimator_orig, X)
     y = _enforce_estimator_tags_y(estimator_orig, y)
@@ -948,7 +921,7 @@ def check_array_api_input(
                 attribute,
                 est_xp_param_np,
                 err_msg=f"{key} not the same",
-                atol=np.finfo(X.dtype).eps * 100,
+                atol=_atol_for_type(X.dtype),
             )
         else:
             assert attribute.shape == est_xp_param_np.shape
@@ -978,7 +951,7 @@ def check_array_api_input(
             assert isinstance(result, float)
             assert isinstance(result_xp, float)
             if check_values:
-                assert abs(result - result_xp) < np.finfo(X.dtype).eps * 100
+                assert abs(result - result_xp) < _atol_for_type(X.dtype)
             continue
         else:
             result = method(X)
@@ -1000,7 +973,7 @@ def check_array_api_input(
                 result,
                 result_xp_np,
                 err_msg=f"{method} did not the return the same result",
-                atol=np.finfo(X.dtype).eps * 100,
+                atol=_atol_for_type(X.dtype),
             )
         else:
             if hasattr(result, "shape"):
@@ -1025,7 +998,7 @@ def check_array_api_input(
                     inverse_result,
                     invese_result_xp_np,
                     err_msg="inverse_transform did not the return the same result",
-                    atol=np.finfo(X.dtype).eps * 100,
+                    atol=_atol_for_type(X.dtype),
                 )
             else:
                 assert inverse_result.shape == invese_result_xp_np.shape
@@ -1037,14 +1010,14 @@ def check_array_api_input_and_values(
     estimator_orig,
     array_namespace,
     device=None,
-    dtype="float64",
+    dtype_name="float64",
 ):
     return check_array_api_input(
         name,
         estimator_orig,
         array_namespace=array_namespace,
         device=device,
-        dtype=dtype,
+        dtype_name=dtype_name,
         check_values=True,
     )
 
@@ -1528,8 +1501,8 @@ def _apply_on_subsets(func, X):
         result_by_batch = list(map(lambda x: x[0], result_by_batch))
 
     if sparse.issparse(result_full):
-        result_full = result_full.A
-        result_by_batch = [x.A for x in result_by_batch]
+        result_full = result_full.toarray()
+        result_by_batch = [x.toarray() for x in result_by_batch]
 
     return np.ravel(result_full), np.ravel(result_by_batch)
 
@@ -2105,7 +2078,7 @@ def check_estimators_pickle(name, estimator_orig, readonly_memmap=False):
     if readonly_memmap:
         unpickled_estimator = create_memmap_backed_data(estimator)
     else:
-        # pickle and unpickle!
+        # No need to touch the file system in that case.
         pickled_estimator = pickle.dumps(estimator)
         module_name = estimator.__module__
         if module_name.startswith("sklearn.") and not (
@@ -2113,7 +2086,7 @@ def check_estimators_pickle(name, estimator_orig, readonly_memmap=False):
         ):
             # strict check for sklearn estimators that are not implemented in test
             # modules.
-            assert b"version" in pickled_estimator
+            assert b"_sklearn_version" in pickled_estimator
         unpickled_estimator = pickle.loads(pickled_estimator)
 
     result = dict()
@@ -3505,7 +3478,7 @@ def check_parameters_default_constructible(name, Estimator):
                 type,
             }
             # Any numpy numeric such as np.int32.
-            allowed_types.update(np.core.numerictypes.allTypes.values())
+            allowed_types.update(np.sctypeDict.values())
 
             allowed_value = (
                 type(init_param.default) in allowed_types
@@ -4537,25 +4510,59 @@ def _output_from_fit_transform(transformer, name, X, df, y):
     return outputs
 
 
-def _check_generated_dataframe(name, case, index, outputs_default, outputs_pandas):
-    import pandas as pd
+def _check_generated_dataframe(
+    name,
+    case,
+    index,
+    outputs_default,
+    outputs_dataframe_lib,
+    is_supported_dataframe,
+    create_dataframe,
+    assert_frame_equal,
+):
+    """Check if the generated DataFrame by the transformer is valid.
 
+    The DataFrame implementation is specified through the parameters of this function.
+
+    Parameters
+    ----------
+    name : str
+        The name of the transformer.
+    case : str
+        A single case from the cases generated by `_output_from_fit_transform`.
+    index : index or None
+        The index of the DataFrame. `None` if the library does not implement a DataFrame
+        with an index.
+    outputs_default : tuple
+        A tuple containing the output data and feature names for the default output.
+    outputs_dataframe_lib : tuple
+        A tuple containing the output data and feature names for the pandas case.
+    is_supported_dataframe : callable
+        A callable that takes a DataFrame instance as input and return whether or
+        E.g. `lambda X: isintance(X, pd.DataFrame)`.
+    create_dataframe : callable
+        A callable taking as parameters `data`, `columns`, and `index` and returns
+        a callable. Be aware that `index` can be ignored. For example, polars dataframes
+        would ignore the idnex.
+    assert_frame_equal : callable
+        A callable taking 2 dataframes to compare if they are equal.
+    """
     X_trans, feature_names_default = outputs_default
-    df_trans, feature_names_pandas = outputs_pandas
+    df_trans, feature_names_dataframe_lib = outputs_dataframe_lib
 
-    assert isinstance(df_trans, pd.DataFrame)
+    assert is_supported_dataframe(df_trans)
     # We always rely on the output of `get_feature_names_out` of the
     # transformer used to generate the dataframe as a ground-truth of the
     # columns.
     # If a dataframe is passed into transform, then the output should have the same
     # index
     expected_index = index if case.endswith("df") else None
-    expected_dataframe = pd.DataFrame(
-        X_trans, columns=feature_names_pandas, copy=False, index=expected_index
+    expected_dataframe = create_dataframe(
+        X_trans, columns=feature_names_dataframe_lib, index=expected_index
     )
 
     try:
-        pd.testing.assert_frame_equal(df_trans, expected_dataframe)
+        assert_frame_equal(df_trans, expected_dataframe)
     except AssertionError as e:
         raise AssertionError(
             f"{name} does not generate a valid dataframe in the {case} "
@@ -4564,15 +4571,43 @@ def _check_generated_dataframe(name, case, index, outputs_default, outputs_panda
         ) from e
 
 
-def check_set_output_transform_pandas(name, transformer_orig):
-    # Check transformer.set_output configures the output of transform="pandas".
-    try:
-        import pandas as pd
-    except ImportError:
-        raise SkipTest(
-            "pandas is not installed: not checking column name consistency for pandas"
-        )
+def _check_set_output_transform_dataframe(
+    name,
+    transformer_orig,
+    *,
+    dataframe_lib,
+    is_supported_dataframe,
+    create_dataframe,
+    assert_frame_equal,
+    context,
+):
+    """Check that a transformer can output a DataFrame when requested.
 
+    The DataFrame implementation is specified through the parameters of this function.
+
+    Parameters
+    ----------
+    name : str
+        The name of the transformer.
+    transformer_orig : estimator
+        The original transformer instance.
+    dataframe_lib : str
+        The name of the library implementing the DataFrame.
+    is_supported_dataframe : callable
+        A callable that takes a DataFrame instance as input and returns whether or
+        not it is supported by the dataframe library.
+        E.g. `lambda X: isintance(X, pd.DataFrame)`.
+    create_dataframe : callable
+        A callable taking as parameters `data`, `columns`, and `index` and returns
+        a callable. Be aware that `index` can be ignored. For example, polars dataframes
+        will ignore the index.
+    assert_frame_equal : callable
+        A callable taking 2 dataframes to compare if they are equal.
+    context : {"local", "global"}
+        Whether to use a local context by setting `set_output(...)` on the transformer
+        or a global context by using the `with config_context(...)`
+    """
+    # Check transformer.set_output configures the output of transform="pandas".
     tags = transformer_orig._get_tags()
     if "2darray" not in tags["X_types"] or tags["no_validation"]:
         return
@@ -4588,65 +4623,98 @@ def check_set_output_transform_pandas(name, transformer_orig):
 
     feature_names_in = [f"col{i}" for i in range(X.shape[1])]
     index = [f"index{i}" for i in range(X.shape[0])]
-    df = pd.DataFrame(X, columns=feature_names_in, copy=False, index=index)
+    df = create_dataframe(X, columns=feature_names_in, index=index)
 
     transformer_default = clone(transformer).set_output(transform="default")
     outputs_default = _output_from_fit_transform(transformer_default, name, X, df, y)
-    transformer_pandas = clone(transformer).set_output(transform="pandas")
+
+    if context == "local":
+        transformer_df = clone(transformer).set_output(transform=dataframe_lib)
+        context_to_use = nullcontext()
+    else:  # global
+        transformer_df = clone(transformer)
+        context_to_use = config_context(transform_output=dataframe_lib)
+
     try:
-        outputs_pandas = _output_from_fit_transform(transformer_pandas, name, X, df, y)
+        with context_to_use:
+            outputs_df = _output_from_fit_transform(transformer_df, name, X, df, y)
     except ValueError as e:
         # transformer does not support sparse data
-        assert "Pandas output does not support sparse data." in str(e), e
+        capitalized_lib = dataframe_lib.capitalize()
+        error_message = str(e)
+        assert (
+            f"{capitalized_lib} output does not support sparse data." in error_message
+            or "The transformer outputs a scipy sparse matrix." in error_message
+        ), e
         return
 
     for case in outputs_default:
         _check_generated_dataframe(
-            name, case, index, outputs_default[case], outputs_pandas[case]
+            name,
+            case,
+            index,
+            outputs_default[case],
+            outputs_df[case],
+            is_supported_dataframe,
+            create_dataframe,
+            assert_frame_equal,
         )
+
+
+def _check_set_output_transform_pandas_context(name, transformer_orig, context):
+    try:
+        import pandas as pd
+    except ImportError:  # pragma: no cover
+        raise SkipTest("pandas is not installed: not checking set output")
+
+    _check_set_output_transform_dataframe(
+        name,
+        transformer_orig,
+        dataframe_lib="pandas",
+        is_supported_dataframe=lambda X: isinstance(X, pd.DataFrame),
+        create_dataframe=lambda X, columns, index: pd.DataFrame(
+            X, columns=columns, copy=False, index=index
+        ),
+        assert_frame_equal=pd.testing.assert_frame_equal,
+        context=context,
+    )
+
+
+def check_set_output_transform_pandas(name, transformer_orig):
+    _check_set_output_transform_pandas_context(name, transformer_orig, "local")
 
 
 def check_global_output_transform_pandas(name, transformer_orig):
-    """Check that setting globally the output of a transformer to pandas lead to the
-    right results."""
+    _check_set_output_transform_pandas_context(name, transformer_orig, "global")
+
+
+def _check_set_output_transform_polars_context(name, transformer_orig, context):
     try:
-        import pandas as pd
-    except ImportError:
-        raise SkipTest(
-            "pandas is not installed: not checking column name consistency for pandas"
-        )
+        import polars as pl
+        from polars.testing import assert_frame_equal
+    except ImportError:  # pragma: no cover
+        raise SkipTest("polars is not installed: not checking set output")
 
-    tags = transformer_orig._get_tags()
-    if "2darray" not in tags["X_types"] or tags["no_validation"]:
-        return
+    def create_dataframe(X, columns, index):
+        if isinstance(columns, np.ndarray):
+            columns = columns.tolist()
 
-    rng = np.random.RandomState(0)
-    transformer = clone(transformer_orig)
+        return pl.DataFrame(X, schema=columns, orient="row")
 
-    X = rng.uniform(size=(20, 5))
-    X = _enforce_estimator_tags_X(transformer_orig, X)
-    y = rng.randint(0, 2, size=20)
-    y = _enforce_estimator_tags_y(transformer_orig, y)
-    set_random_state(transformer)
+    _check_set_output_transform_dataframe(
+        name,
+        transformer_orig,
+        dataframe_lib="polars",
+        is_supported_dataframe=lambda X: isinstance(X, pl.DataFrame),
+        create_dataframe=create_dataframe,
+        assert_frame_equal=assert_frame_equal,
+        context=context,
+    )
 
-    feature_names_in = [f"col{i}" for i in range(X.shape[1])]
-    index = [f"index{i}" for i in range(X.shape[0])]
-    df = pd.DataFrame(X, columns=feature_names_in, copy=False, index=index)
 
-    transformer_default = clone(transformer).set_output(transform="default")
-    outputs_default = _output_from_fit_transform(transformer_default, name, X, df, y)
-    transformer_pandas = clone(transformer)
-    try:
-        with config_context(transform_output="pandas"):
-            outputs_pandas = _output_from_fit_transform(
-                transformer_pandas, name, X, df, y
-            )
-    except ValueError as e:
-        # transformer does not support sparse data
-        assert "Pandas output does not support sparse data." in str(e), e
-        return
+def check_set_output_transform_polars(name, transformer_orig):
+    _check_set_output_transform_polars_context(name, transformer_orig, "local")
 
-    for case in outputs_default:
-        _check_generated_dataframe(
-            name, case, index, outputs_default[case], outputs_pandas[case]
-        )
+
+def check_global_set_output_transform_polars(name, transformer_orig):
+    _check_set_output_transform_polars_context(name, transformer_orig, "global")

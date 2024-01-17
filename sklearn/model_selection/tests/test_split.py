@@ -6,12 +6,7 @@ from itertools import combinations, combinations_with_replacement, permutations
 import numpy as np
 import pytest
 from scipy import stats
-from scipy.sparse import (
-    coo_matrix,
-    csc_matrix,
-    csr_matrix,
-    issparse,
-)
+from scipy.sparse import issparse
 from scipy.special import comb
 
 from sklearn import config_context
@@ -63,6 +58,7 @@ from sklearn.utils._testing import (
 from sklearn.utils.estimator_checks import (
     _array_api_for_tests,
 )
+from sklearn.utils.fixes import COO_CONTAINERS, CSC_CONTAINERS, CSR_CONTAINERS
 from sklearn.utils.validation import _num_samples
 
 NO_GROUP_SPLITTERS = [
@@ -90,7 +86,6 @@ ALL_SPLITTERS = NO_GROUP_SPLITTERS + GROUP_SPLITTERS  # type: ignore
 
 X = np.ones(10)
 y = np.arange(10) // 2
-P_sparse = coo_matrix(np.eye(5))
 test_groups = (
     np.array([1, 1, 1, 1, 2, 2, 2, 3, 3, 3, 3, 3]),
     np.array([0, 0, 0, 1, 1, 1, 2, 2, 2, 3, 3, 3]),
@@ -830,7 +825,7 @@ def test_stratified_shuffle_split_iter():
             assert len(train) + len(test) == y.size
             assert len(train) == train_size
             assert len(test) == test_size
-            assert_array_equal(np.lib.arraysetops.intersect1d(train, test), [])
+            assert_array_equal(np.intersect1d(train, test), [])
 
 
 def test_stratified_shuffle_split_even():
@@ -987,8 +982,8 @@ def test_group_shuffle_split():
             # First test: no train group is in the test set and vice versa
             l_train_unique = np.unique(l[train])
             l_test_unique = np.unique(l[test])
-            assert not np.any(np.in1d(l[train], l_test_unique))
-            assert not np.any(np.in1d(l[test], l_train_unique))
+            assert not np.any(np.isin(l[train], l_test_unique))
+            assert not np.any(np.isin(l[test], l_train_unique))
 
             # Second test: train and test add up to all the data
             assert l[train].size + l[test].size == l.size
@@ -1272,7 +1267,7 @@ def test_train_test_split_default_test_size(train_size, exp_train, exp_test):
 
 
 @pytest.mark.parametrize(
-    "array_namepsace, device, dtype", yield_namespace_device_dtype_combinations()
+    "array_namespace, device, dtype_name", yield_namespace_device_dtype_combinations()
 )
 @pytest.mark.parametrize(
     "shuffle,stratify",
@@ -1283,16 +1278,18 @@ def test_train_test_split_default_test_size(train_size, exp_train, exp_test):
         (False, None),
     ),
 )
-def test_array_api_train_test_split(shuffle, stratify, array_namepsace, device, dtype):
-    xp, device, dtype = _array_api_for_tests(array_namepsace, device, dtype)
+def test_array_api_train_test_split(
+    shuffle, stratify, array_namespace, device, dtype_name
+):
+    xp = _array_api_for_tests(array_namespace, device)
 
     X = np.arange(100).reshape((10, 10))
     y = np.arange(10)
 
-    X_np = X.astype(dtype)
+    X_np = X.astype(dtype_name)
     X_xp = xp.asarray(X_np, device=device)
 
-    y_np = y.astype(dtype)
+    y_np = y.astype(dtype_name)
     y_xp = xp.asarray(y_np, device=device)
 
     X_train_np, X_test_np, y_train_np, y_test_np = train_test_split(
@@ -1335,9 +1332,10 @@ def test_array_api_train_test_split(shuffle, stratify, array_namepsace, device, 
     )
 
 
-def test_train_test_split():
+@pytest.mark.parametrize("coo_container", COO_CONTAINERS)
+def test_train_test_split(coo_container):
     X = np.arange(100).reshape((10, 10))
-    X_s = coo_matrix(X)
+    X_s = coo_container(X)
     y = np.arange(10)
 
     # simple test
@@ -1423,16 +1421,17 @@ def test_train_test_split_pandas():
         assert isinstance(X_test, InputFeatureType)
 
 
-def test_train_test_split_sparse():
+@pytest.mark.parametrize(
+    "sparse_container", COO_CONTAINERS + CSC_CONTAINERS + CSR_CONTAINERS
+)
+def test_train_test_split_sparse(sparse_container):
     # check that train_test_split converts scipy sparse matrices
     # to csr, as stated in the documentation
     X = np.arange(100).reshape((10, 10))
-    sparse_types = [csr_matrix, csc_matrix, coo_matrix]
-    for InputFeatureType in sparse_types:
-        X_s = InputFeatureType(X)
-        X_train, X_test = train_test_split(X_s)
-        assert issparse(X_train) and X_train.format == "csr"
-        assert issparse(X_test) and X_test.format == "csr"
+    X_s = sparse_container(X)
+    X_train, X_test = train_test_split(X_s)
+    assert issparse(X_train) and X_train.format == "csr"
+    assert issparse(X_test) and X_test.format == "csr"
 
 
 def test_train_test_split_mock_pandas():

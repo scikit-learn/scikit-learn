@@ -149,6 +149,15 @@ div.clearer {
 
 /* details / summary */
 
+/* Enables section links to be visible when anchor-linked */
+div.sk-page-content details::before {
+  display: block;
+  height: 52px;
+  margin-top: -52px;
+  visibility: hidden;
+  content: "";
+}
+
 div.sk-page-content details {
     margin: 4ex 0pt;
 }
@@ -199,6 +208,10 @@ div.sk-page-content summary .tooltiptext::after {
 }
 
 div.sk-page-content summary:hover .tooltiptext {
+  visibility: visible;
+}
+
+div.sk-page-content summary:hover .headerlink {
   visibility: visible;
 }
 
@@ -1206,6 +1219,10 @@ div.install > input:checked + label {
 }
 .sk-expandable + .copybtn {
   display: none;
+}
+
+pre.sk-expandable > span:before {
+  content: "$ ";
 }
 
 /* Show hidden content when the checkbox is checked */

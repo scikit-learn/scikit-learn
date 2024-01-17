@@ -53,7 +53,7 @@ The bundled version of joblib was upgraded from 0.13.0 to 0.13.2.
   restored from a pickle if ``sample_weight`` had been used.
   :issue:`13772` by :user:`Aditya Vyas <aditya1702>`.
 
- .. _changes_0_20_3:
+.. _changes_0_20_3:
 
 Version 0.20.3
 ==============
@@ -1457,7 +1457,7 @@ Support for Python 3.3 has been officially dropped.
   :user:`Gilberto Olimpio <gilbertoolimpio>`.
 
 - |API| The NaN marker for the missing values has been changed
-  between the :class:`preprocessing.Imputer` and the
+  between the `preprocessing.Imputer` and the
   `impute.SimpleImputer`.
   ``missing_values='NaN'`` should now be
   ``missing_values=np.nan``. :issue:`11211` by

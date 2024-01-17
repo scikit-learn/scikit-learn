@@ -18,17 +18,22 @@ from scipy import sparse
 from .base import TransformerMixin, _fit_context, clone
 from .exceptions import NotFittedError
 from .preprocessing import FunctionTransformer
-from .utils import Bunch, _print_elapsed_time, check_pandas_support
+from .utils import Bunch, _print_elapsed_time
 from .utils._estimator_html_repr import _VisualBlock
 from .utils._metadata_requests import METHODS
 from .utils._param_validation import HasMethods, Hidden
-from .utils._set_output import _get_output_config, _safe_set_output
+from .utils._set_output import (
+    _get_container_adapter,
+    _safe_set_output,
+)
 from .utils._tags import _safe_tags
 from .utils.metadata_routing import (
     MetadataRouter,
     MethodMapping,
     _raise_for_params,
+    _raise_for_unsupported_routing,
     _routing_enabled,
+    _RoutingNotSupportedMixin,
     process_routing,
 )
 from .utils.metaestimators import _BaseComposition, available_if
@@ -53,12 +58,15 @@ def _final_estimator_has(attr):
 
 class Pipeline(_BaseComposition):
     """
-    Pipeline of transforms with a final estimator.
+    A sequence of data transformers with an optional final predictor.
 
-    Sequentially apply a list of transforms and a final estimator.
+    `Pipeline` allows you to sequentially apply a list of transformers to
+    preprocess the data and, if desired, conclude the sequence with a final
+    :term:`predictor` for predictive modeling.
+
     Intermediate steps of the pipeline must be 'transforms', that is, they
     must implement `fit` and `transform` methods.
-    The final estimator only needs to implement `fit`.
+    The final :term:`estimator` only needs to implement `fit`.
     The transformers in the pipeline can be cached using ``memory`` argument.
 
     The purpose of the pipeline is to assemble several steps that can be
@@ -81,10 +89,11 @@ class Pipeline(_BaseComposition):
 
     Parameters
     ----------
-    steps : list of tuple
-        List of (name, transform) tuples (implementing `fit`/`transform`) that
-        are chained in sequential order. The last transform must be an
-        estimator.
+    steps : list of tuples
+        List of (name of step, estimator) tuples that are to be chained in
+        sequential order. To be compatible with the scikit-learn API, all steps
+        must define `fit`. All non-last steps must also define `transform`. See
+        :ref:`Combining Estimators <combining_estimators>` for more details.
 
     memory : str or object with the joblib.Memory interface, default=None
         Used to cache the fitted transformers of the pipeline. The last step
@@ -174,7 +183,11 @@ class Pipeline(_BaseComposition):
 
             - `"default"`: Default output format of a transformer
             - `"pandas"`: DataFrame output
+            - `"polars"`: Polars output
             - `None`: Transform configuration is unchanged
+
+            .. versionadded:: 1.4
+                `"polars"` option was added.
 
         Returns
         -------
@@ -414,7 +427,7 @@ class Pipeline(_BaseComposition):
     def fit(self, X, y=None, **params):
         """Fit the model.
 
-        Fit all the transformers one after the other and transform the
+        Fit all the transformers one after the other and sequentially transform the
         data. Finally, fit the transformed data using the final estimator.
 
         Parameters
@@ -478,9 +491,9 @@ class Pipeline(_BaseComposition):
     def fit_transform(self, X, y=None, **params):
         """Fit the model and transform with the final estimator.
 
-        Fits all the transformers one after the other and transform the
-        data. Then uses `fit_transform` on transformed data with the final
-        estimator.
+        Fit all the transformers one after the other and sequentially transform
+        the data. Only valid if the final estimator either implements
+        `fit_transform` or `fit` and `transform`.
 
         Parameters
         ----------
@@ -1106,7 +1119,7 @@ class Pipeline(_BaseComposition):
         Returns
         -------
         routing : MetadataRouter
-            A :class:`~utils.metadata_routing.MetadataRouter` encapsulating
+            A :class:`~sklearn.utils.metadata_routing.MetadataRouter` encapsulating
             routing information.
         """
         router = MetadataRouter(owner=self.__class__.__name__)
@@ -1306,7 +1319,7 @@ def _fit_one(transformer, X, y, weight, message_clsname="", message=None, params
         return transformer.fit(X, y, **params["fit"])
 
 
-class FeatureUnion(TransformerMixin, _BaseComposition):
+class FeatureUnion(_RoutingNotSupportedMixin, TransformerMixin, _BaseComposition):
     """Concatenates results of multiple transformer objects.
 
     This estimator applies a list of transformer objects in parallel to the
@@ -1394,7 +1407,7 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
     array([[ 1.5       ,  3.0...,  0.8...],
            [-1.5       ,  5.7..., -0.4...]])
     >>> # An estimator's parameter can be set using '__' syntax
-    >>> union.set_params(pca__n_components=1).fit_transform(X)
+    >>> union.set_params(svd__n_components=1).fit_transform(X)
     array([[ 1.5       ,  3.0...],
            [-1.5       ,  5.7...]])
 
@@ -1572,6 +1585,7 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
         self : object
             FeatureUnion class instance.
         """
+        _raise_for_unsupported_routing(self, "fit", **fit_params)
         transformers = self._parallel_func(X, y, fit_params, _fit_one)
         if not transformers:
             # All transformers are None
@@ -1667,10 +1681,9 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
         return self._hstack(Xs)
 
     def _hstack(self, Xs):
-        config = _get_output_config("transform", self)
-        if config["dense"] == "pandas" and all(hasattr(X, "iloc") for X in Xs):
-            pd = check_pandas_support("transform")
-            return pd.concat(Xs, axis=1)
+        adapter = _get_container_adapter("transform", self)
+        if adapter and all(adapter.is_supported_container(X) for X in Xs):
+            return adapter.hstack(Xs)
 
         if any(sparse.issparse(f) for f in Xs):
             Xs = sparse.hstack(Xs).tocsr()

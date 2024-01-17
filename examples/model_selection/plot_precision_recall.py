@@ -37,10 +37,11 @@ over the number of true positives plus the number of false negatives
 
 :math:`R = \\frac{T_p}{T_p + F_n}`
 
-These quantities are also related to the (:math:`F_1`) score, which is defined
-as the harmonic mean of precision and recall.
+These quantities are also related to the :math:`F_1` score, which is the
+harmonic mean of precision and recall. Thus, we can compute the :math:`F_1`
+using the following formula:
 
-:math:`F1 = 2\\frac{P \\times R}{P+R}`
+:math:`F_1 = \\frac{2T_p}{2T_p + F_p + F_n}`
 
 Note that the precision may not decrease with recall. The
 definition of precision (:math:`\\frac{T_p}{T_p + F_p}`) shows that lowering

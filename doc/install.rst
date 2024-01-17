@@ -71,32 +71,32 @@ Then run:
 
   <div class="highlight">
     <pre class="sk-expandable" data-packager="pip" data-os="linux" data-venv="no"
-    ><span class="prompt1">pip3 install -U scikit-learn</span></pre>
-    
+    ><span>pip3 install -U scikit-learn</span></pre>
+
     <pre class="sk-expandable" data-packager="pip" data-os="windows" data-venv="no"
-    ><span class="prompt1">pip install -U scikit-learn</span></pre>
-    
+    ><span>pip install -U scikit-learn</span></pre>
+
     <pre class="sk-expandable" data-packager="pip" data-os="mac" data-venv="no"
-    ><span class="prompt1">pip install -U scikit-learn</span></pre>
-    
+    ><span>pip install -U scikit-learn</span></pre>
+
     <pre class="sk-expandable" data-packager="pip" data-os="linux" data-venv=""
-    ><span class="prompt1">python3 -m venv sklearn-venv</span>
-  <span class="prompt1">source sklearn-venv/bin/activate</span>
-  <span class="prompt1">pip3 install -U scikit-learn</span></pre>
-    
+    ><span>python3 -m venv sklearn-venv</span>
+  <span>source sklearn-venv/bin/activate</span>
+  <span>pip3 install -U scikit-learn</span></pre>
+
     <pre class="sk-expandable" data-packager="pip" data-os="windows" data-venv=""
-    ><span class="prompt1">python -m venv sklearn-venv</span>
-  <span class="prompt1">sklearn-venv\Scripts\activate</span>
-  <span class="prompt1">pip install -U scikit-learn</span></pre>
-    
+    ><span>python -m venv sklearn-venv</span>
+  <span>sklearn-venv\Scripts\activate</span>
+  <span>pip install -U scikit-learn</span></pre>
+
     <pre class="sk-expandable" data-packager="pip" data-os="mac" data-venv=""
-    ><span class="prompt1">python -m venv sklearn-venv</span>
-  <span class="prompt1">source sklearn-venv/bin/activate</span>
-  <span class="prompt1">pip install -U scikit-learn</span></pre>
+    ><span>python -m venv sklearn-venv</span>
+  <span>source sklearn-venv/bin/activate</span>
+  <span>pip install -U scikit-learn</span></pre>
 
     <pre class="sk-expandable" data-packager="conda"
-    ><span class="prompt1">conda create -n sklearn-env -c conda-forge scikit-learn</span>
-  <span class="prompt1">conda activate sklearn-env</span></pre>
+    ><span>conda create -n sklearn-env -c conda-forge scikit-learn</span>
+  <span>conda activate sklearn-env</span></pre>
   </div>
 
 In order to check your installation you can use
@@ -105,29 +105,29 @@ In order to check your installation you can use
 
   <div class="highlight">
     <pre class="sk-expandable" data-packager="pip" data-os="linux" data-venv="no"
-    ><span class="prompt1">python3 -m pip show scikit-learn  # to see which version and where scikit-learn is installed</span>
-  <span class="prompt1">python3 -m pip freeze  # to see all packages installed in the active virtualenv</span>
-  <span class="prompt1">python3 -c "import sklearn; sklearn.show_versions()"</span></pre>
+    ><span>python3 -m pip show scikit-learn  # to see which version and where scikit-learn is installed</span>
+  <span>python3 -m pip freeze  # to see all packages installed in the active virtualenv</span>
+  <span>python3 -c "import sklearn; sklearn.show_versions()"</span></pre>
 
     <pre class="sk-expandable" data-packager="pip" data-os="windows" data-venv="no"
-    ><span class="prompt1">python -m pip show scikit-learn  # to see which version and where scikit-learn is installed</span>
-  <span class="prompt1">python -m pip freeze  # to see all packages installed in the active virtualenv</span>
-  <span class="prompt1">python -c "import sklearn; sklearn.show_versions()"</span></pre>
+    ><span>python -m pip show scikit-learn  # to see which version and where scikit-learn is installed</span>
+  <span>python -m pip freeze  # to see all packages installed in the active virtualenv</span>
+  <span>python -c "import sklearn; sklearn.show_versions()"</span></pre>
 
     <pre class="sk-expandable" data-packager="pip" data-os="mac" data-venv="no"
-    ><span class="prompt1">python -m pip show scikit-learn  # to see which version and where scikit-learn is installed</span>
-  <span class="prompt1">python -m pip freeze  # to see all packages installed in the active virtualenv</span>
-  <span class="prompt1">python -c "import sklearn; sklearn.show_versions()"</span></pre>
+    ><span>python -m pip show scikit-learn  # to see which version and where scikit-learn is installed</span>
+  <span>python -m pip freeze  # to see all packages installed in the active virtualenv</span>
+  <span>python -c "import sklearn; sklearn.show_versions()"</span></pre>
 
     <pre class="sk-expandable" data-packager="pip" data-venv=""
-    ><span class="prompt1">python -m pip show scikit-learn  # to see which version and where scikit-learn is installed</span>
-  <span class="prompt1">python -m pip freeze  # to see all packages installed in the active virtualenv</span>
-  <span class="prompt1">python -c "import sklearn; sklearn.show_versions()"</span></pre>
+    ><span>python -m pip show scikit-learn  # to see which version and where scikit-learn is installed</span>
+  <span>python -m pip freeze  # to see all packages installed in the active virtualenv</span>
+  <span>python -c "import sklearn; sklearn.show_versions()"</span></pre>
 
     <pre class="sk-expandable" data-packager="conda"
-    ><span class="prompt1">conda list scikit-learn  # to see which scikit-learn version is installed</span>
-  <span class="prompt1">conda list  # to see all packages installed in the active conda environment</span>
-  <span class="prompt1">python -c "import sklearn; sklearn.show_versions()"</span></pre>
+    ><span>conda list scikit-learn  # to see which scikit-learn version is installed</span>
+  <span>conda list  # to see all packages installed in the active conda environment</span>
+  <span>python -c "import sklearn; sklearn.show_versions()"</span></pre>
   </div>
 
 Note that in order to avoid potential conflicts with other packages it is
@@ -216,8 +216,8 @@ Debian/Ubuntu
 The Debian/Ubuntu package is split in three different packages called
 ``python3-sklearn`` (python modules), ``python3-sklearn-lib`` (low-level
 implementations and bindings), ``python3-sklearn-doc`` (documentation).
-Only the Python 3 version is available in the Debian Buster (the more recent
-Debian distribution).
+Note that scikit-learn requires Python 3, hence the need to use the `python3-`
+suffixed package names.
 Packages can be installed using ``apt-get``:
 
 .. prompt:: bash $
@@ -229,7 +229,7 @@ Fedora
 ------
 
 The Fedora package is called ``python3-scikit-learn`` for the python 3 version,
-the only one available in Fedora30.
+the only one available in Fedora.
 It can be installed using ``dnf``:
 
 .. prompt:: bash $
@@ -287,10 +287,10 @@ C++ library and are optimized for the x86_64 architecture, and are
 optimized for multi-core Intel CPUs.
 
 Note that those solvers are not enabled by default, please refer to the
-`scikit-learn-intelex <https://intel.github.io/scikit-learn-intelex/what-is-patching.html>`_
+`scikit-learn-intelex <https://intel.github.io/scikit-learn-intelex/latest/what-is-patching.html>`_
 documentation for more details on usage scenarios. Direct export example:
 
-.. prompt:: bash $
+.. prompt:: python >>>
 
   from sklearnex.neighbors import NearestNeighbors
 
@@ -340,6 +340,6 @@ using the ``regedit`` tool:
 
 #. Reinstall scikit-learn (ignoring the previous broken installation):
 
-.. prompt:: python $
+.. prompt:: bash $
 
     pip install --exists-action=i scikit-learn

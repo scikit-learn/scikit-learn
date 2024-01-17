@@ -2,12 +2,67 @@
 
 .. currentmodule:: sklearn
 
+.. _changes_1_3_2:
+
+Version 1.3.2
+=============
+
+**October 2023**
+
+Changelog
+---------
+
+:mod:`sklearn.datasets`
+.......................
+
+- |Fix| All dataset fetchers now accept `data_home` as any object that implements
+  the :class:`os.PathLike` interface, for instance, :class:`pathlib.Path`.
+  :pr:`27468` by :user:`Yao Xiao <Charlie-XIAO>`.
+
+:mod:`sklearn.decomposition`
+............................
+
+- |Fix| Fixes a bug in :class:`decomposition.KernelPCA` by forcing the output of
+  the internal :class:`preprocessing.KernelCenterer` to be a default array. When the
+  arpack solver is used, it expects an array with a `dtype` attribute.
+  :pr:`27583` by :user:`Guillaume Lemaitre <glemaitre>`.
+
+:mod:`sklearn.metrics`
+......................
+
+- |Fix| Fixes a bug for metrics using `zero_division=np.nan`
+  (e.g. :func:`~metrics.precision_score`) within a paralell loop
+  (e.g. :func:`~model_selection.cross_val_score`) where the singleton for `np.nan`
+  will be different in the sub-processes.
+  :pr:`27573` by :user:`Guillaume Lemaitre <glemaitre>`.
+
+:mod:`sklearn.tree`
+...................
+
+- |Fix| Do not leak data via non-initialized memory in decision tree pickle files and make
+  the generation of those files deterministic. :pr:`27580` by :user:`Loïc Estève <lesteve>`.
+
+
 .. _changes_1_3_1:
 
 Version 1.3.1
 =============
 
-**In development**
+**September 2023**
+
+Changed models
+--------------
+
+The following estimators and functions, when fit with the same data and
+parameters, may produce different models from the previous version. This often
+occurs due to changes in the modelling logic (bug fixes or enhancements), or in
+random sampling procedures.
+
+- |Fix| Ridge models with `solver='sparse_cg'` may have slightly different
+  results with scipy>=1.12, because of an underlying change in the scipy solver
+  (see `scipy#18488 <https://github.com/scipy/scipy/pull/18488>`_ for more
+  details)
+  :pr:`26814` by :user:`Loïc Estève <lesteve>`
 
 Changes impacting all modules
 -----------------------------
@@ -18,12 +73,65 @@ Changes impacting all modules
 Changelog
 ---------
 
+:mod:`sklearn.calibration`
+..........................
+
+- |Fix| :class:`calibration.CalibratedClassifierCV` can now handle models that
+  produce large prediction scores. Before it was numerically unstable.
+  :pr:`26913` by :user:`Omar Salman <OmarManzoor>`.
+
+:mod:`sklearn.cluster`
+......................
+
+- |Fix| :class:`cluster.BisectingKMeans` could crash when predicting on data
+  with a different scale than the data used to fit the model.
+  :pr:`27167` by `Olivier Grisel`_.
+
+- |Fix| :class:`cluster.BisectingKMeans` now works with data that has a single feature.
+  :pr:`27243` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
+
+:mod:`sklearn.cross_decomposition`
+..................................
+
+- |Fix| :class:`cross_decomposition.PLSRegression` now automatically ravels the output
+  of `predict` if fitted with one dimensional `y`.
+  :pr:`26602` by :user:`Yao Xiao <Charlie-XIAO>`.
+
+:mod:`sklearn.ensemble`
+.......................
+
+- |Fix| Fix a bug in :class:`ensemble.AdaBoostClassifier` with `algorithm="SAMME"`
+  where the decision function of each weak learner should be symmetric (i.e.
+  the sum of the scores should sum to zero for a sample).
+  :pr:`26521` by :user:`Guillaume Lemaitre <glemaitre>`.
+
+:mod:`sklearn.feature_selection`
+................................
+
+- |Fix| :func:`feature_selection.mutual_info_regression` now correctly computes the
+  result when `X` is of integer dtype. :pr:`26748` by :user:`Yao Xiao <Charlie-XIAO>`.
+
 :mod:`sklearn.impute`
 .....................
 
 - |Fix| :class:`impute.KNNImputer` now correctly adds a missing indicator column in
   ``transform`` when ``add_indicator`` is set to ``True`` and missing values are observed
   during ``fit``. :pr:`26600` by :user:`Shreesha Kumar Bhat <Shreesha3112>`.
+
+:mod:`sklearn.metrics`
+......................
+
+- |Fix| Scorers used with :func:`metrics.get_scorer` handle properly
+  multilabel-indicator matrix.
+  :pr:`27002` by :user:`Guillaume Lemaitre <glemaitre>`.
+
+:mod:`sklearn.mixture`
+......................
+
+- |Fix| The initialization of :class:`mixture.GaussianMixture` from user-provided
+  `precisions_init` for `covariance_type` of `full` or `tied` was not correct,
+  and has been fixed.
+  :pr:`26416` by :user:`Yang Tao <mchikyt3>`.
 
 :mod:`sklearn.neighbors`
 ........................
@@ -32,13 +140,17 @@ Changelog
   exception for `pandas.DataFrames` input.
   :pr:`26772` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
-- |Fix| Reintroduce :attr:`sklearn.neighbors.BallTree.valid_metrics` and
-  :attr:`sklearn.neighbors.KDTree.valid_metrics` as public class attributes.
+- |Fix| Reintroduce `sklearn.neighbors.BallTree.valid_metrics` and
+  `sklearn.neighbors.KDTree.valid_metrics` as public class attributes.
   :pr:`26754` by :user:`Julien Jerphanion <jjerphan>`.
 
 - |Fix| :class:`sklearn.model_selection.HalvingRandomSearchCV` no longer raises
   when the input to the `param_distributions` parameter is a list of dicts.
   :pr:`26893` by :user:`Stefanie Senger <StefanieSenger>`.
+
+- |Fix| Neighbors based estimators now correctly work when `metric="minkowski"` and the
+  metric parameter `p` is in the range `0 < p < 1`, regardless of the `dtype` of `X`.
+  :pr:`26760` by :user:`Shreesha Kumar Bhat <Shreesha3112>`.
 
 :mod:`sklearn.preprocessing`
 ............................
@@ -46,11 +158,18 @@ Changelog
 - |Fix| :class:`preprocessing.LabelEncoder` correctly accepts `y` as a keyword
   argument. :pr:`26940` by `Thomas Fan`_.
 
+- |Fix| :class:`preprocessing.OneHotEncoder` shows a more informative error message
+  when `sparse_output=True` and the output is configured to be pandas.
+  :pr:`26931` by `Thomas Fan`_.
+
 :mod:`sklearn.tree`
 ...................
 
 - |Fix| :func:`tree.plot_tree` now accepts `class_names=True` as documented.
   :pr:`26903` by :user:`Thomas Roehr <2maz>`
+
+- |Fix| The `feature_names` parameter of :func:`tree.plot_tree` now accepts any kind of
+  array-like instead of just a list. :pr:`27292` by :user:`Rahil Parikh <rprkh>`.
 
 .. _changes_1_3:
 
@@ -111,6 +230,10 @@ Changed displays
   train and test curves by default. You can set `score_type="test"` to keep the
   past behaviour.
   :pr:`25120` by :user:`Guillaume Lemaitre <glemaitre>`.
+
+- |Fix| :class:`model_selection.ValidationCurveDisplay` now accepts passing a
+  list to the `param_range` parameter.
+  :pr:`27311` by :user:`Arturo Amor <ArturoAmorQ>`.
 
 Changes impacting all modules
 -----------------------------
@@ -190,8 +313,8 @@ Changes impacting all modules
   CSR matrix to the `predict` or `transform` method of estimators that rely on
   a dense NumPy representation to store their fitted parameters (or the reverse).
 
-  For instance, :meth:`sklearn.NearestNeighbors.kneighbors` is now up to 2 times faster
-  for this case on commonly available laptops.
+  For instance, :meth:`sklearn.neighbors.NearestNeighbors.kneighbors` is now up
+  to 2 times faster for this case on commonly available laptops.
 
   :pr:`25044` by :user:`Julien Jerphanion <jjerphan>`.
 
@@ -350,7 +473,7 @@ Changelog
   the pandas parser. The parameter `read_csv_kwargs` allows to overwrite this behaviour.
   :pr:`26551` by :user:`Guillaume Lemaitre <glemaitre>`.
 
-- |Fix| :func:`datasets.fetch_openml` will consistenly use `np.nan` as missing marker
+- |Fix| :func:`datasets.fetch_openml` will consistently use `np.nan` as missing marker
   with both parsers `"pandas"` and `"liac-arff"`.
   :pr:`26579` by :user:`Guillaume Lemaitre <glemaitre>`.
 
@@ -628,8 +751,9 @@ Changelog
 :mod:`sklearn.mixture`
 ......................
 
-- |Efficiency| :class:`GaussianMixture` is more efficient now and will bypass unnecessary
-  initialization if the weights, means, and precisions are given by users.
+- |Efficiency| :class:`mixture.GaussianMixture` is more efficient now and will bypass
+  unnecessary initialization if the weights, means, and precisions are
+  given by users.
   :pr:`26021` by :user:`Jiawei Zhang <jiawei-zhang-a>`.
 
 :mod:`sklearn.model_selection`
@@ -642,7 +766,7 @@ Changelog
 
 - |API| The parameter `log_scale` in the class
   :class:`model_selection.LearningCurveDisplay` has been deprecated in 1.3 and
-  will be removed in 1.5. The default scale can be overriden by setting it
+  will be removed in 1.5. The default scale can be overridden by setting it
   directly on the `ax` object and will be set automatically from the spacing
   of the data points otherwise.
   :pr:`25120` by :user:`Guillaume Lemaitre <glemaitre>`.
@@ -755,7 +879,7 @@ Changelog
 - |Fix| :class:`preprocessing.PowerTransformer` now correctly preserves the Pandas
   Index when the `set_config(transform_output="pandas")`. :pr:`26454` by `Thomas Fan`_.
 
-- |Fix| :class:`preprocessing.PowerTransformer` now correcly raises error when
+- |Fix| :class:`preprocessing.PowerTransformer` now correctly raises error when
   using `method="box-cox"` on data with a constant `np.nan` column.
   :pr:`26400` by :user:`Yao Xiao <Charlie-XIAO>`.
 

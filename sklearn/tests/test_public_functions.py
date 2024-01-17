@@ -295,6 +295,8 @@ PARAM_VALIDATION_FUNCTION_LIST = [
     "sklearn.metrics.recall_score",
     "sklearn.metrics.roc_auc_score",
     "sklearn.metrics.roc_curve",
+    "sklearn.metrics.root_mean_squared_error",
+    "sklearn.metrics.root_mean_squared_log_error",
     "sklearn.metrics.top_k_accuracy_score",
     "sklearn.metrics.v_measure_score",
     "sklearn.metrics.zero_one_loss",
@@ -305,6 +307,8 @@ PARAM_VALIDATION_FUNCTION_LIST = [
     "sklearn.model_selection.permutation_test_score",
     "sklearn.model_selection.train_test_split",
     "sklearn.model_selection.validation_curve",
+    "sklearn.neighbors.kneighbors_graph",
+    "sklearn.neighbors.radius_neighbors_graph",
     "sklearn.neighbors.sort_graph_by_row_values",
     "sklearn.preprocessing.add_dummy_feature",
     "sklearn.preprocessing.binarize",
@@ -343,6 +347,7 @@ def test_function_param_validation(func_module):
 
 PARAM_VALIDATION_CLASS_WRAPPER_LIST = [
     ("sklearn.cluster.affinity_propagation", "sklearn.cluster.AffinityPropagation"),
+    ("sklearn.cluster.dbscan", "sklearn.cluster.DBSCAN"),
     ("sklearn.cluster.k_means", "sklearn.cluster.KMeans"),
     ("sklearn.cluster.mean_shift", "sklearn.cluster.MeanShift"),
     ("sklearn.cluster.spectral_clustering", "sklearn.cluster.SpectralClustering"),

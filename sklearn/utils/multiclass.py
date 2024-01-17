@@ -1,11 +1,11 @@
+"""
+The :mod:`sklearn.utils.multiclass` module includes utilities to handle
+multiclass/multioutput target in classifiers.
+"""
+
 # Author: Arnaud Joly, Joel Nothman, Hamzeh Alsalhi
 #
 # License: BSD 3 clause
-"""
-Multi-class / multi-label utility function
-==========================================
-
-"""
 import warnings
 from collections.abc import Sequence
 from itertools import chain
@@ -27,7 +27,8 @@ def _unique_multiclass(y):
 
 
 def _unique_indicator(y):
-    return np.arange(
+    xp, _ = get_namespace(y)
+    return xp.arange(
         check_array(y, input_name="y", accept_sparse=["csr", "csc", "coo"]).shape[1]
     )
 
@@ -118,7 +119,10 @@ def unique_labels(*ys):
 
 
 def _is_integral_float(y):
-    return y.dtype.kind == "f" and np.all(y.astype(int) == y)
+    xp, is_array_api_compliant = get_namespace(y)
+    return xp.isdtype(y.dtype, "real floating") and bool(
+        xp.all(xp.astype((xp.astype(y, xp.int64)), y.dtype) == y)
+    )
 
 
 def is_multilabel(y):
@@ -188,8 +192,9 @@ def is_multilabel(y):
     else:
         labels = xp.unique_values(y)
 
-        return len(labels) < 3 and (
-            y.dtype.kind in "biu" or _is_integral_float(labels)  # bool, int, uint
+        return labels.shape[0] < 3 and (
+            xp.isdtype(y.dtype, ("bool", "signed integer", "unsigned integer"))
+            or _is_integral_float(labels)
         )
 
 
@@ -339,10 +344,11 @@ def type_of_target(y, input_name=""):
 
     # The old sequence of sequences format
     try:
+        first_row = y[[0], :] if issparse(y) else y[0]
         if (
-            not hasattr(y[0], "__array__")
-            and isinstance(y[0], Sequence)
-            and not isinstance(y[0], str)
+            not hasattr(first_row, "__array__")
+            and isinstance(first_row, Sequence)
+            and not isinstance(first_row, str)
         ):
             raise ValueError(
                 "You appear to be using a legacy multi-label data"
@@ -384,7 +390,8 @@ def type_of_target(y, input_name=""):
             return "continuous" + suffix
 
     # Check multiclass
-    first_row = y[0] if not issparse(y) else y.getrow(0).data
+    if issparse(first_row):
+        first_row = first_row.data
     if xp.unique_values(y).shape[0] > 2 or (y.ndim == 2 and len(first_row) > 1):
         # [1, 2, 3] or [[1., 2., 3]] or [[1, 2]]
         return "multiclass" + suffix
