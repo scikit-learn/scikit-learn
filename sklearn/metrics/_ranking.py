@@ -548,8 +548,6 @@ def roc_auc_score(
 
     Where :math:`G` is the Gini Coefficient and :math:`AUC` is the ROC-AUC score.
 
-    
-
     References
     ----------
     .. [1] `Wikipedia entry for the Receiver operating characteristic
