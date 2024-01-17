@@ -245,13 +245,6 @@ html_theme_options = {
     "pygment_light_style": "tango",
     "pygment_dark_style": "monokai",
     "logo": {
-        # TODO: we should put "link": "index" here, but it is not currently working
-        # because the navbar-logo component is using hasdoc() to determine if the link
-        # is an internal link or an external url, while html_additional_pages do not
-        # seem to pass hasdoc(). See
-        # https://github.com/pydata/pydata-sphinx-theme/issues/1647
-        # If this cannot be fixed we can consider vendoring the navbar-logo component
-        # and fixing it ourselves.
         "alt_text": "scikit-learn homepage",
         "image_relative": "logos/scikit-learn-logo-small.png",
         "image_light": "logos/scikit-learn-logo-small.png",
