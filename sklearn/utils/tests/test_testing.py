@@ -20,6 +20,7 @@ from sklearn.utils._testing import (
     assert_raise_message,
     assert_raises,
     assert_raises_regex,
+    assert_run_python_script_without_output,
     check_docstring_parameters,
     create_memmap_backed_data,
     ignore_warnings,
@@ -696,6 +697,26 @@ def test_convert_container(
         assert container_converted.dtypes[0] == dtype
 
 
+def test_convert_container_categories_pandas():
+    pytest.importorskip("pandas")
+    df = _convert_container(
+        [["x"]], "dataframe", ["A"], categorical_feature_names=["A"]
+    )
+    assert df.dtypes.iloc[0] == "category"
+
+
+def test_convert_container_categories_polars():
+    pl = pytest.importorskip("polars")
+    df = _convert_container([["x"]], "polars", ["A"], categorical_feature_names=["A"])
+    assert df.schema["A"] == pl.Categorical()
+
+
+def test_convert_container_categories_pyarrow():
+    pa = pytest.importorskip("pyarrow")
+    df = _convert_container([["x"]], "pyarrow", ["A"], categorical_feature_names=["A"])
+    assert type(df.schema[0].type) is pa.DictionaryType
+
+
 @pytest.mark.skipif(
     sp_version >= parse_version("1.8"),
     reason="sparse arrays are available as of scipy 1.8.0",
@@ -800,3 +821,27 @@ def test_float32_aware_assert_allclose():
     with pytest.raises(AssertionError):
         assert_allclose(np.array([1e-5], dtype=np.float32), 0.0)
     assert_allclose(np.array([1e-5], dtype=np.float32), 0.0, atol=2e-5)
+
+
+@pytest.mark.xfail(_IS_WASM, reason="cannot start subprocess")
+def test_assert_run_python_script_without_output():
+    code = "x = 1"
+    assert_run_python_script_without_output(code)
+
+    code = "print('something to stdout')"
+    with pytest.raises(AssertionError, match="Expected no output"):
+        assert_run_python_script_without_output(code)
+
+    code = "print('something to stdout')"
+    with pytest.raises(
+        AssertionError,
+        match="output was not supposed to match.+got.+something to stdout",
+    ):
+        assert_run_python_script_without_output(code, pattern="to.+stdout")
+
+    code = "\n".join(["import sys", "print('something to stderr', file=sys.stderr)"])
+    with pytest.raises(
+        AssertionError,
+        match="output was not supposed to match.+got.+something to stderr",
+    ):
+        assert_run_python_script_without_output(code, pattern="to.+stderr")
