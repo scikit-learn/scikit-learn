@@ -73,6 +73,9 @@ preprocessor = ColumnTransformer(
 preprocessor.set_output(transform="polars")
 
 df_out = preprocessor.fit_transform(df)
+df_out
+
+# %%
 print(f"Output type: {type(df_out)}")
 
 # %%
