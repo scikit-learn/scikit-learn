@@ -48,7 +48,7 @@ cdef class Histograms:
         int n_features
         uint32_t [::1] bin_offsets_view
         hist_struct [::1] histograms_view
-    cdef readonly:
+    cdef public:
         object bin_offsets
         # Only the attribute histograms will be used in the splitter.
         object histograms
