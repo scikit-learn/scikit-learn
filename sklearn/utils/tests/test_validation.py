@@ -305,6 +305,21 @@ def test_check_array_force_all_finite_object_unsafe_casting(
         check_array(X, dtype=int, force_all_finite=force_all_finite)
 
 
+def test_check_array_series_err_msg():
+    """
+    Check that we raise a proper error message when passing a Series and we expect a
+    2-dimensional container.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/27498
+    """
+    pd = pytest.importorskip("pandas")
+    ser = pd.Series([1, 2, 3])
+    msg = f"Expected a 2-dimensional container but got {type(ser)} instead."
+    with pytest.raises(ValueError, match=msg):
+        check_array(ser, ensure_2d=True)
+
+
 @ignore_warnings
 def test_check_array():
     # accept_sparse == False
