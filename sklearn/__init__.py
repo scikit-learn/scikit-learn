@@ -135,8 +135,10 @@ else:
 
     _BUILT_WITH_MESON = False
     try:
+        import sklearn._built_with_meson  # noqa: F401
+
         _BUILT_WITH_MESON = True
-    except FileNotFoundError:
+    except ModuleNotFoundError:
         pass
 
 
