@@ -351,9 +351,11 @@ monotonic_cst = {
     "vicdemand": -1,
     "vicprice": -1,
 }
-hgbt_no_cst = HistGradientBoostingRegressor(categorical_features=None).fit(X, y)
+hgbt_no_cst = HistGradientBoostingRegressor(
+    categorical_features=None, random_state=42
+).fit(X, y)
 hgbt_cst = HistGradientBoostingRegressor(
-    monotonic_cst=monotonic_cst, categorical_features=None
+    monotonic_cst=monotonic_cst, categorical_features=None, random_state=42
 ).fit(X, y)
 
 fig, ax = plt.subplots(nrows=2, figsize=(15, 10))
