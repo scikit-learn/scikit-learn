@@ -133,6 +133,12 @@ else:
         "show_versions",
     ]
 
+    _BUILT_WITH_MESON = False
+    try:
+        _BUILT_WITH_MESON = True
+    except FileNotFoundError:
+        pass
+
 
 def setup_module(module):
     """Fixture for the tests to assure globally controllable seeding of RNGs"""

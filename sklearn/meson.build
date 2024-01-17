@@ -100,6 +100,21 @@ scikit_learn_cython_args = [
 ]
 cython_args += scikit_learn_cython_args
 
+# Write file in Meson build dir to be able to figure out from Python code
+# whether scikit-learn was built with Meson. Adapted from pandas
+# _version_meson.py.
+custom_target('write_built_with_meson_file',
+    output: '_built_with_meson.py',
+    command: [
+        py, '-c', 'with open("sklearn/_built_with_meson.py", "w") as f: f.write("")'
+    ],
+    build_by_default: true,
+    build_always_stale: true,
+    install: true,
+    install_dir: py.get_install_dir() / 'sklearn'
+)
+# endif
+
 extensions = ['_isotonic']
 
 py.extension_module(
