@@ -509,6 +509,17 @@ def dump_svmlight_file(
 
         .. versionadded:: 0.17
            parameter `multilabel` to support multilabel datasets.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.datasets import dump_svmlight_file
+    >>> X = np.array([[1.0, 2.0, 3.0],[4.0, 5.0, 6.0],[7.0, 8.0, 9.0]])
+    >>> y = np.array([0, 1, 0])
+    >>> output_file = "sample_dataset.svmlight"
+    >>> dump_svmlight_file(X, y, output_file)
+    >>> print(f"Data has been dumped into {output_file}")
+    Data has been dumped into sample_dataset.svmlight
     """
     if comment is not None:
         # Convert comment string to list of lines in UTF-8.
