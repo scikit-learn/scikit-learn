@@ -537,11 +537,11 @@ def roc_auc_score(
         (ROC) curve given an estimator and some data.
     RocCurveDisplay.from_predictions : Plot Receiver Operating Characteristic
         (ROC) curve given the true and predicted values.
-        
+
     Notes
     -----
-    The summary measure of the diagnostic ability of a binary classifier that is called the Gini Coefficient. 
-    It can be expressed using the area the Receiver Operating Characteristic curve as follows:
+    The Gini Coefficient is a summary measure of the diagnostic ability of binary classifiers.
+    It can be expressed using the area under (ROC) curve as follows:
 
     .. math:: G = 2*AUC - 1
 
@@ -567,7 +567,7 @@ def roc_auc_score(
             Under the ROC Curve for Multiple Class Classification Problems.
             Machine Learning, 45(2), 171-186.
             <http://link.springer.com/article/10.1023/A:1010920819831>`_
-    .. [6] `Wikipedia entry for the Gini coefficient 
+    .. [6] `Wikipedia entry for the Gini coefficient
             <https://en.wikipedia.org/wiki/Gini_coefficient>`_
 
     Examples
