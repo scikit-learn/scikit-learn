@@ -51,22 +51,22 @@ at index :math:`i` represents the bias values added to layer :math:`i+1`.
 
 The advantages of Multi-layer Perceptron are:
 
-    + Capability to learn non-linear models.
++ Capability to learn non-linear models.
 
-    + Capability to learn models in real-time (on-line learning)
-      using ``partial_fit``.
++ Capability to learn models in real-time (on-line learning)
+  using ``partial_fit``.
 
 
 The disadvantages of Multi-layer Perceptron (MLP) include:
 
-    + MLP with hidden layers have a non-convex loss function where there exists
-      more than one local minimum. Therefore different random weight
-      initializations can lead to different validation accuracy.
++ MLP with hidden layers have a non-convex loss function where there exists
+  more than one local minimum. Therefore different random weight
+  initializations can lead to different validation accuracy.
 
-    + MLP requires tuning a number of hyperparameters such as the number of
-      hidden neurons, layers, and iterations.
++ MLP requires tuning a number of hyperparameters such as the number of
+  hidden neurons, layers, and iterations.
 
-    + MLP is sensitive to feature scaling.
++ MLP is sensitive to feature scaling.
 
 Please see :ref:`Tips on Practical Use <mlp_tips>` section that addresses
 some of these disadvantages.
@@ -311,35 +311,35 @@ when the improvement in loss is below a certain, small number.
 Tips on Practical Use
 =====================
 
-  * Multi-layer Perceptron is sensitive to feature scaling, so it
-    is highly recommended to scale your data. For example, scale each
-    attribute on the input vector X to [0, 1] or [-1, +1], or standardize
-    it to have mean 0 and variance 1. Note that you must apply the *same*
-    scaling to the test set for meaningful results.
-    You can use :class:`~sklearn.preprocessing.StandardScaler` for standardization.
+* Multi-layer Perceptron is sensitive to feature scaling, so it
+  is highly recommended to scale your data. For example, scale each
+  attribute on the input vector X to [0, 1] or [-1, +1], or standardize
+  it to have mean 0 and variance 1. Note that you must apply the *same*
+  scaling to the test set for meaningful results.
+  You can use :class:`~sklearn.preprocessing.StandardScaler` for standardization.
 
-      >>> from sklearn.preprocessing import StandardScaler  # doctest: +SKIP
-      >>> scaler = StandardScaler()  # doctest: +SKIP
-      >>> # Don't cheat - fit only on training data
-      >>> scaler.fit(X_train)  # doctest: +SKIP
-      >>> X_train = scaler.transform(X_train)  # doctest: +SKIP
-      >>> # apply same transformation to test data
-      >>> X_test = scaler.transform(X_test)  # doctest: +SKIP
+    >>> from sklearn.preprocessing import StandardScaler  # doctest: +SKIP
+    >>> scaler = StandardScaler()  # doctest: +SKIP
+    >>> # Don't cheat - fit only on training data
+    >>> scaler.fit(X_train)  # doctest: +SKIP
+    >>> X_train = scaler.transform(X_train)  # doctest: +SKIP
+    >>> # apply same transformation to test data
+    >>> X_test = scaler.transform(X_test)  # doctest: +SKIP
 
-    An alternative and recommended approach is to use
-    :class:`~sklearn.preprocessing.StandardScaler` in a
-    :class:`~sklearn.pipeline.Pipeline`
+  An alternative and recommended approach is to use
+  :class:`~sklearn.preprocessing.StandardScaler` in a
+  :class:`~sklearn.pipeline.Pipeline`
 
-  * Finding a reasonable regularization parameter :math:`\alpha` is best done
-    using :class:`~sklearn.model_selection.GridSearchCV`, usually in the range
-    ``10.0 ** -np.arange(1, 7)``.
+* Finding a reasonable regularization parameter :math:`\alpha` is best done
+  using :class:`~sklearn.model_selection.GridSearchCV`, usually in the range
+  ``10.0 ** -np.arange(1, 7)``.
 
-  * Empirically, we observed that `L-BFGS` converges faster and
-    with better solutions on small datasets. For relatively large
-    datasets, however, `Adam` is very robust. It usually converges
-    quickly and gives pretty good performance. `SGD` with momentum or
-    nesterov's momentum, on the other hand, can perform better than
-    those two algorithms if learning rate is correctly tuned.
+* Empirically, we observed that `L-BFGS` converges faster and
+  with better solutions on small datasets. For relatively large
+  datasets, however, `Adam` is very robust. It usually converges
+  quickly and gives pretty good performance. `SGD` with momentum or
+  nesterov's momentum, on the other hand, can perform better than
+  those two algorithms if learning rate is correctly tuned.
 
 More control with warm_start
 ============================
