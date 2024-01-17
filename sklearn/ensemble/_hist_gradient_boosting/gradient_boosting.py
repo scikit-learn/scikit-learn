@@ -272,7 +272,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
 
         if self.is_categorical_ is None:
             self._preprocessor = None
-            self._is_categorical_remapped = self.is_categorical_
+            self._is_categorical_remapped = None
 
             X = self._validate_data(X, **check_X_kwargs)
             return X, None
