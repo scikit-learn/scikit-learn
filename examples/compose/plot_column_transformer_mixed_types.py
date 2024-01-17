@@ -45,9 +45,7 @@ np.random.seed(0)
 
 # %%
 # Load data from https://www.openml.org/d/40945
-X, y = fetch_openml(
-    "titanic", version=1, as_frame=True, return_X_y=True, parser="pandas"
-)
+X, y = fetch_openml("titanic", version=1, as_frame=True, return_X_y=True)
 
 # Alternatively X and y can be obtained directly from the frame attribute:
 # X = titanic.frame.drop('survived', axis=1)

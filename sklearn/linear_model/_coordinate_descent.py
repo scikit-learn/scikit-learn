@@ -155,13 +155,17 @@ def _alpha_grid(
         )
         if not X_sparse:
             # X can be touched inplace thanks to the above line
-            X, y, _, _, _ = _preprocess_data(X, y, fit_intercept, copy=False)
+            X, y, _, _, _ = _preprocess_data(
+                X, y, fit_intercept=fit_intercept, copy=False
+            )
         Xy = safe_sparse_dot(X.T, y, dense_output=True)
 
         if sparse_center:
             # Workaround to find alpha_max for sparse matrices.
             # since we should not destroy the sparsity of such matrices.
-            _, _, X_offset, _, X_scale = _preprocess_data(X, y, fit_intercept)
+            _, _, X_offset, _, X_scale = _preprocess_data(
+                X, y, fit_intercept=fit_intercept
+            )
             mean_dot = X_offset * np.sum(y)
 
     if Xy.ndim == 1:
@@ -588,7 +592,6 @@ def enet_path(
             y,
             Xy,
             precompute,
-            normalize=False,
             fit_intercept=False,
             copy=False,
             check_input=check_input,
@@ -1013,7 +1016,6 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
             y,
             None,
             self.precompute,
-            normalize=False,
             fit_intercept=self.fit_intercept,
             copy=should_copy,
             check_input=check_input,
@@ -1411,7 +1413,6 @@ def _path_residuals(
         y_train,
         None,
         precompute,
-        normalize=False,
         fit_intercept=fit_intercept,
         copy=False,
         sample_weight=sw_train,
@@ -2399,7 +2400,8 @@ class MultiTaskElasticNet(Lasso):
     MultiTaskElasticNetCV : Multi-task L1/L2 ElasticNet with built-in
         cross-validation.
     ElasticNet : Linear regression with combined L1 and L2 priors as regularizer.
-    MultiTaskLasso : Multi-task L1/L2 Lasso with built-in cross-validation.
+    MultiTaskLasso : Multi-task Lasso model trained with L1/L2
+        mixed-norm as regularizer.
 
     Notes
     -----
@@ -2500,7 +2502,7 @@ class MultiTaskElasticNet(Lasso):
         n_targets = y.shape[1]
 
         X, y, X_offset, y_offset, X_scale = _preprocess_data(
-            X, y, self.fit_intercept, copy=False
+            X, y, fit_intercept=self.fit_intercept, copy=False
         )
 
         if not self.warm_start or not hasattr(self, "coef_"):
@@ -2635,8 +2637,9 @@ class MultiTaskLasso(MultiTaskElasticNet):
     See Also
     --------
     Lasso: Linear Model trained with L1 prior as regularizer (aka the Lasso).
-    MultiTaskLasso: Multi-task L1/L2 Lasso with built-in cross-validation.
-    MultiTaskElasticNet: Multi-task L1/L2 ElasticNet with built-in cross-validation.
+    MultiTaskLassoCV: Multi-task L1 regularized linear model with built-in
+        cross-validation.
+    MultiTaskElasticNetCV: Multi-task L1/L2 ElasticNet with built-in cross-validation.
 
     Notes
     -----
@@ -2833,8 +2836,8 @@ class MultiTaskElasticNetCV(RegressorMixin, LinearModelCV):
     MultiTaskElasticNet : Multi-task L1/L2 ElasticNet with built-in cross-validation.
     ElasticNetCV : Elastic net model with best model selection by
         cross-validation.
-    MultiTaskLassoCV : Multi-task Lasso model trained with L1/L2
-        mixed-norm as regularizer.
+    MultiTaskLassoCV : Multi-task Lasso model trained with L1 norm
+        as regularizer and built-in cross-validation.
 
     Notes
     -----

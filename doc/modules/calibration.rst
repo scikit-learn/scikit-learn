@@ -241,7 +241,7 @@ there is enough data (greater than ~ 1000 samples) to avoid overfitting [3]_.
     `method="isotonic"` since isotonic regression introduces ties in the predicted
     probabilities. This can be seen as within the uncertainty of the model predictions.
     In case, you strictly want to keep the ranking and thus AUC scores, use
-    `method="logistic"` which is a strictly monotonic transformation and thus keeps
+    `method="sigmoid"` which is a strictly monotonic transformation and thus keeps
     the ranking.
 
 Multiclass support

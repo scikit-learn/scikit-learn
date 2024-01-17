@@ -28,7 +28,7 @@ def test_min_dependencies_readme():
         + r"( [0-9]+\.[0-9]+(\.[0-9]+)?)"
     )
 
-    readme_path = Path(sklearn.__path__[0]).parents[0]
+    readme_path = Path(sklearn.__file__).parent.parent
     readme_file = readme_path / "README.rst"
 
     if not os.path.exists(readme_file):
@@ -58,7 +58,7 @@ def test_min_dependencies_pyproject_toml():
     # tomllib is available in Python 3.11
     tomllib = pytest.importorskip("tomllib")
 
-    root_directory = Path(sklearn.__path__[0]).parent
+    root_directory = Path(sklearn.__file__).parent.parent
     pyproject_toml_path = root_directory / "pyproject.toml"
 
     if not pyproject_toml_path.exists():
@@ -74,12 +74,15 @@ def test_min_dependencies_pyproject_toml():
     pyproject_build_min_versions = {}
     for requirement in build_requirements:
         if ">=" in requirement:
+            # Don't check NumPy: this requirement is only build time.
+            if "numpy>=1.25" in requirement:
+                continue
             package, version = requirement.split(">=")
             package = package.lower()
             pyproject_build_min_versions[package] = version
 
     # Only scipy and cython are listed in pyproject.toml
-    # NumPy is more complex using oldest-supported-numpy.
+    # NumPy is more complex using oldest-supported-numpy or >=1.25.
     assert set(["scipy", "cython"]) == set(pyproject_build_min_versions)
 
     for package, version in pyproject_build_min_versions.items():

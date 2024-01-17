@@ -644,7 +644,7 @@ Barnes-Hut method improves on the exact method where t-SNE complexity is
   or less. The 2D case is typical when building visualizations.
 * Barnes-Hut only works with dense input data. Sparse data matrices can only be
   embedded with the exact method or can be approximated by a dense low rank
-  projection for instance using :class:`~sklearn.decomposition.TruncatedSVD`
+  projection for instance using :class:`~sklearn.decomposition.PCA`
 * Barnes-Hut is an approximation of the exact method. The approximation is
   parameterized with the angle parameter, therefore the angle parameter is
   unused when method="exact"

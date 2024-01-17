@@ -566,8 +566,8 @@ def configure_extension_modules():
 
 
 def setup_package():
-    python_requires = ">=3.8"
-    required_python_version = (3, 8)
+    python_requires = ">=3.9"
+    required_python_version = (3, 9)
 
     metadata = dict(
         name=DISTNAME,
@@ -594,7 +594,6 @@ def setup_package():
             "Operating System :: Unix",
             "Operating System :: MacOS",
             "Programming Language :: Python :: 3",
-            "Programming Language :: Python :: 3.8",
             "Programming Language :: Python :: 3.9",
             "Programming Language :: Python :: 3.10",
             "Programming Language :: Python :: 3.11",
@@ -605,7 +604,9 @@ def setup_package():
         cmdclass=cmdclass,
         python_requires=python_requires,
         install_requires=min_deps.tag_to_packages["install"],
-        package_data={"": ["*.csv", "*.gz", "*.txt", "*.pxd", "*.rst", "*.jpg"]},
+        package_data={
+            "": ["*.csv", "*.gz", "*.txt", "*.pxd", "*.rst", "*.jpg", "*.css"]
+        },
         zip_safe=False,  # the package can run out of an .egg file
         extras_require={
             key: min_deps.tag_to_packages[key]

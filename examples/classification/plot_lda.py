@@ -3,8 +3,8 @@
 Normal, Ledoit-Wolf and OAS Linear Discriminant Analysis for classification
 ===========================================================================
 
-This example illustrates how the Ledoit-Wolf and Oracle Shrinkage
-Approximating (OAS) estimators of covariance can improve classification.
+This example illustrates how the Ledoit-Wolf and Oracle Approximating
+Shrinkage (OAS) estimators of covariance can improve classification.
 
 """
 

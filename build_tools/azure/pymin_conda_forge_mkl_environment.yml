@@ -6,15 +6,17 @@ channels:
 dependencies:
   - python=3.9
   - numpy
-  - blas
+  - blas[build=mkl]
   - scipy
-  - cython<3.0.0
+  - cython
   - joblib
   - threadpoolctl
   - matplotlib
   - pytest
-  - pytest-xdist=2.5.0
+  - pytest-xdist
   - pillow
   - setuptools
+  - pytest-cov
+  - coverage
+  - wheel
   - pip
-  - ccache
