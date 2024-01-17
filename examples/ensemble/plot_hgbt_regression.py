@@ -16,7 +16,7 @@ The top usability features of HGBT models are:
 1. Several available loss function for mean and quantile regression tasks, see
    :ref:`Quantile loss <quantile_support_hgbdt>`.
 2. :ref:`categorical_support_gbdt` (see
-  :ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_categorical.py`).
+   :ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_categorical.py`).
 3. Early stopping.
 4. :ref:`nan_support_hgbt`, which avoids the need for an imputer.
 5. :ref:`monotonic_cst_gbdt`.
