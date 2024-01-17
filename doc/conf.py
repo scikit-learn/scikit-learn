@@ -303,7 +303,7 @@ html_static_path = ["images", "css", "js"]
 
 # Additional templates that should be rendered to pages, maps page names to
 # template names.
-html_additional_pages = {"index": "index.html"}
+html_additional_pages = {}
 
 # Additional JS files
 html_js_files = ["scripts/details-permalink.js"]
