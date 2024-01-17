@@ -294,7 +294,9 @@ centering :math:`K_{test}` is done as:
 :math:`1'_{\text{n}_{samples}}` is a matrix of shape
 `(n_samples_test, n_samples)` where all entries are equal to
 :math:`\frac{1}{\text{n}_{samples}}`.
+
 |details-end|
+
 .. topic:: References
 
   .. [Scholkopf1998] B. Schölkopf, A. Smola, and K.R. Müller,
