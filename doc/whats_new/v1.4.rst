@@ -2,6 +2,23 @@
 
 .. currentmodule:: sklearn
 
+.. _changes_1_4_1:
+
+Version 1.4.1
+=============
+
+**In development**
+
+Changelog
+---------
+
+:mod:`sklearn.cluster`
+.......................
+
+- |Fix| Avoid inifinte loop in :class:`cluster.KMeans` when the number of clusters is
+  larger than the number of non-duplicate samples.
+  :pr:`28165` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
+
 .. _changes_1_4:
 
 Version 1.4.0
