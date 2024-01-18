@@ -210,7 +210,7 @@ Making a release
    - Edit the ``doc/templates/index.html`` to change the 'News' entry of the
      front page (with the release month as well). Do not forget to remove
      the old entries (two years or three releases are typically good
-     enough)
+     enough) and to update the on-going development entry.
 
 2. On the branch for releasing, update the version number in
    ``sklearn/__init__.py``, the ``__version__``.
