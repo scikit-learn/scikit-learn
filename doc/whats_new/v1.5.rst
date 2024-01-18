@@ -54,6 +54,14 @@ Changelog
   by passing a function in place of a strategy name.
   :pr:`28053` by :user:`Mark Elliot <mark-thm>`.
 
+:mod:`sklearn.feature_selection`
+................................
+
+- |Enhancement| :func:`feature_selection.mutual_info_regression` and
+  :func:`feature_selection.mutual_info_classif` now support `n_jobs` parameter.
+  :pr:`28085` by :user:`Neto Menoci <netomenoci>` and
+  :user:`Florin Andrei <FlorinAndrei>`.
+
 :mod:`sklearn.metrics`
 ......................
 
