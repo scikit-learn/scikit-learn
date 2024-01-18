@@ -4,6 +4,7 @@
 
 import importlib
 import inspect
+import os
 import warnings
 from inspect import signature
 from pkgutil import walk_packages
@@ -40,7 +41,7 @@ from sklearn.utils.fixes import parse_version, sp_version
 with warnings.catch_warnings():
     warnings.simplefilter("ignore", FutureWarning)
     # mypy error: Module has no attribute "__path__"
-    sklearn_path = sklearn.__path__  # type: ignore  # mypy issue #1422
+    sklearn_path = [os.path.dirname(sklearn.__file__)]
     PUBLIC_MODULES = set(
         [
             pckg[1]
