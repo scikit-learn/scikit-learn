@@ -475,7 +475,7 @@ class RadiusNeighborsRegressor(RadiusNeighborsMixin, RegressorMixin, NeighborsBa
         if _y.ndim == 1:
             _y = _y.reshape((-1, 1))
 
-        empty_obs = np.full_like(_y[0], np.nan)
+        empty_obs = np.full_like(_y[0], np.nan, dtype=np.double)
 
         if weights is None:
             y_pred = np.array(
