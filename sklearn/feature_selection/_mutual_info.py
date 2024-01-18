@@ -202,6 +202,7 @@ def _iterate_columns(X, columns=None):
 def _estimate_mi(
     X,
     y,
+    *,
     discrete_features="auto",
     discrete_target=False,
     n_neighbors=3,
@@ -438,7 +439,14 @@ def mutual_info_regression(
     array([0.1..., 2.6...  , 0.0...])
     """
     return _estimate_mi(
-        X, y, discrete_features, False, n_neighbors, copy, random_state, n_jobs
+        X,
+        y,
+        discrete_features=discrete_features,
+        discrete_target=False,
+        n_neighbors=n_neighbors,
+        copy=copy,
+        random_state=random_state,
+        n_jobs=n_jobs,
     )
 
 
@@ -561,5 +569,12 @@ def mutual_info_classif(
     """
     check_classification_targets(y)
     return _estimate_mi(
-        X, y, discrete_features, True, n_neighbors, copy, random_state, n_jobs
+        X,
+        y,
+        discrete_features=discrete_features,
+        discrete_target=True,
+        n_neighbors=n_neighbors,
+        copy=copy,
+        random_state=random_state,
+        n_jobs=n_jobs,
     )
