@@ -110,7 +110,6 @@ Similarly, :math:`Y` can be transformed using the rotation matrix
 
 |details-start|
 Predicting the targets Y
-^^^^^^^^^^^^^^^^^^^^^^^^
 |details-split|
 
 To predict the targets of some data :math:`X`, we are looking for a
