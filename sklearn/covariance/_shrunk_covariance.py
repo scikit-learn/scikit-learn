@@ -138,13 +138,11 @@ def shrunk_covariance(emp_cov, shrinkage=0.1):
     Example:
     --------
     >>> import numpy as np
-    >>> from _shrunk_covariance import shrunk_covariance
+    >>> from sklearn.covariance._shrunk_covariance import shrunk_covariance
     >>> emp_cov = np.array([[1, 0.5, 0.3], [0.5, 1, 0.2], [0.3, 0.2, 1]])
     >>> shrinkage = 0.1
     >>> shrunk_cov = shrunk_covariance(emp_cov, shrinkage)
-    >>> print("Shrunk covariance matrix:")
     >>> print(shrunk_cov)
-    Shrunk covariance matrix:
     [[1.   0.45 0.27]
      [0.45 1.   0.18]
      [0.27 0.18 1.  ]]
@@ -337,9 +335,7 @@ def ledoit_wolf_shrinkage(X, assume_centered=False, block_size=1000):
     >>> from _shrunk_covariance import ledoit_wolf_shrinkage
     >>> X = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
     >>> shrinkage = ledoit_wolf_shrinkage(X)
-    >>> print("Shrinkage:")
     >>> print(shrinkage)
-    Shrinkage:
     0.25
     """
     X = check_array(X)
@@ -451,15 +447,11 @@ def ledoit_wolf(X, *, assume_centered=False, block_size=1000):
     >>> from sklearn.covariance._shrunk_covariance import ledoit_wolf
     >>> X = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
     >>> shrunk_cov, shrinkage = ledoit_wolf(X)
-    >>> print("Shrunk covariance matrix:")
     >>> print(shrunk_cov)
-    Shrunk covariance matrix:
     [[6.  4.5 4.5]
      [4.5 6.  4.5]
      [4.5 4.5 6. ]]
-    >>> print("Shrinkage:")
     >>> print(shrinkage)
-    Shrinkage:
     0.25
     """
     estimator = LedoitWolf(
