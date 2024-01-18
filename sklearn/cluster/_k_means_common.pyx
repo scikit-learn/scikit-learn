@@ -293,7 +293,7 @@ cdef void _average_centers(
                 centers[j, k] *= alpha
         else:
             # For convenience, we avoid setting empty clusters at the origin but place
-            #them at the location of the biggest cluster.
+            # them at the location of the biggest cluster.
             for k in range(n_features):
                 centers[j, k] = centers[argmax_weight, k]
 
