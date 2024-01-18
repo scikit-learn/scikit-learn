@@ -271,7 +271,7 @@ cdef inline void sum_exp_minus_max(
     const floating_in[:, :] raw_prediction,  # IN
     floating_in *p                           # OUT
 ) noexcept nogil:
-    # Thread local buffers are used to stores results of this function via p.
+    # Thread local buffers are used to store results of this function via p.
     # The results are stored as follows:
     #     p[k] = exp(raw_prediction_i_k - max_value) for k = 0 to n_classes-1
     #     p[-2] = max(raw_prediction_i_k, k = 0 to n_classes-1)
@@ -1185,10 +1185,9 @@ cdef class CyHalfMultinomialLoss(CyLossFunction):
                     sum_exps = p[n_classes + 1]  # p[-1]
                     loss_out[i] = log(sum_exps) + max_value
 
-                    for k in range(n_classes):
-                        # label decode y_true
-                        if y_true[i] == k:
-                            loss_out[i] -= raw_prediction[i, k]
+                    # label encoded y_true
+                    k = int(y_true[i])
+                    loss_out[i] -= raw_prediction[i, k]
 
                 free(p)
         else:
@@ -1201,10 +1200,9 @@ cdef class CyHalfMultinomialLoss(CyLossFunction):
                     sum_exps = p[n_classes + 1]  # p[-1]
                     loss_out[i] = log(sum_exps) + max_value
 
-                    for k in range(n_classes):
-                        # label decode y_true
-                        if y_true[i] == k:
-                            loss_out[i] -= raw_prediction[i, k]
+                    # label encoded y_true
+                    k = int(y_true[i])
+                    loss_out[i] -= raw_prediction[i, k]
 
                     loss_out[i] *= sample_weight[i]
 
@@ -1241,7 +1239,7 @@ cdef class CyHalfMultinomialLoss(CyLossFunction):
 
                     for k in range(n_classes):
                         # label decode y_true
-                        if y_true [i] == k:
+                        if y_true[i] == k:
                             loss_out[i] -= raw_prediction[i, k]
                         p[k] /= sum_exps  # p_k = y_pred_k = prob of class k
                         # gradient_k = p_k - (y_true == k)
@@ -1260,7 +1258,7 @@ cdef class CyHalfMultinomialLoss(CyLossFunction):
 
                     for k in range(n_classes):
                         # label decode y_true
-                        if y_true [i] == k:
+                        if y_true[i] == k:
                             loss_out[i] -= raw_prediction[i, k]
                         p[k] /= sum_exps  # p_k = y_pred_k = prob of class k
                         # gradient_k = (p_k - (y_true == k)) * sw
