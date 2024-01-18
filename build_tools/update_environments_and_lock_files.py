@@ -490,9 +490,9 @@ def conda_lock(environment_path, lock_file_path, platform):
             "--platform",
             platform,
             "--file",
-            environment_path.as_posix(),
+            str(environment_path),
             "--filename-template",
-            lock_file_path.as_posix(),
+            str(lock_file_path),
         ]
     )
 
@@ -544,11 +544,11 @@ def write_all_pip_requirements(build_metadata_list):
 def pip_compile(pip_compile_path, requirements_path, lock_file_path):
     execute_command(
         [
-            pip_compile_path.as_posix(),
+            str(pip_compile_path),
             "--upgrade",
-            requirements_path.as_posix(),
+            str(requirements_path),
             "-o",
-            lock_file_path.as_posix(),
+            str(lock_file_path),
         ]
     )
 
