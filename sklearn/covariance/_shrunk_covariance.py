@@ -135,7 +135,7 @@ def shrunk_covariance(emp_cov, shrinkage=0.1):
 
     where `mu = trace(cov) / n_features`.
 
-    Example:
+    Examples
     --------
     >>> import numpy as np
     >>> from sklearn.covariance._shrunk_covariance import shrunk_covariance
@@ -329,10 +329,10 @@ def ledoit_wolf_shrinkage(X, assume_centered=False, block_size=1000):
 
     where mu = trace(cov) / n_features
 
-    Example:
+    Examples
     --------
     >>> import numpy as np
-    >>> from _shrunk_covariance import ledoit_wolf_shrinkage
+    >>> from sklearn.covariance._shrunk_covariance import ledoit_wolf_shrinkage
     >>> X = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
     >>> shrinkage = ledoit_wolf_shrinkage(X)
     >>> print(shrinkage)
@@ -441,7 +441,7 @@ def ledoit_wolf(X, *, assume_centered=False, block_size=1000):
 
     where mu = trace(cov) / n_features
 
-    Example:
+    Examples
     --------
     >>> import numpy as np
     >>> from sklearn.covariance._shrunk_covariance import ledoit_wolf

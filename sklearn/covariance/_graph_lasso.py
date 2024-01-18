@@ -325,7 +325,7 @@ def graphical_lasso(
     One possible difference with the `glasso` R package is that the
     diagonal coefficients are not penalized.
 
-    Example:
+    Examples
     --------
     >>> import numpy as np
     >>> from sklearn.covariance._graph_lasso import graphical_lasso
