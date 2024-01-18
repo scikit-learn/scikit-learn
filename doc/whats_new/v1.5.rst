@@ -25,11 +25,19 @@ Changelog
     :pr:`123456` by :user:`Joe Bloggs <joeongithub>`.
     where 123455 is the *pull request* number, not the issue number.
 
+
 :mod:`sklearn.compose`
 ......................
 
 - |Feature| A fitted :class:`compose.ColumnTransformer` now implements `__getitem__`
   which returns the fitted transformers by name. :pr:`27990` by `Thomas Fan`_.
+
+:mod:`sklearn.dummy`
+.......................
+
+- |Enhancement| :class:`dummy.DummyClassifier` and :class:`dummy.DummyRegressor` now
+  have the `n_features_in_` and `feature_names_in_` attributes after `fit`.
+  :pr:`27937` by :user:`Marco vd Boom <tvdboom>`.
 
 :mod:`sklearn.feature_extraction`
 .................................
@@ -39,12 +47,24 @@ Changelog
   for storing the inverse document frequency.
   :pr:`18843` by :user:`Paolo Montesel <thebabush>`.
 
+- |Enhancement| :class:`feature_extraction.text.TfidfTransformer` now preserves
+  the data type of the input matrix if it is `np.float64` or `np.float32`.
+  :pr:`28136` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 :mod:`sklearn.impute`
 .....................
 
 - |Enhancement| :class:`impute.SimpleImputer` now supports custom strategies
   by passing a function in place of a strategy name.
   :pr:`28053` by :user:`Mark Elliot <mark-thm>`.
+
+:mod:`sklearn.feature_selection`
+................................
+
+- |Enhancement| :func:`feature_selection.mutual_info_regression` and
+  :func:`feature_selection.mutual_info_classif` now support `n_jobs` parameter.
+  :pr:`28085` by :user:`Neto Menoci <netomenoci>` and
+  :user:`Florin Andrei <FlorinAndrei>`.
 
 :mod:`sklearn.metrics`
 ......................
