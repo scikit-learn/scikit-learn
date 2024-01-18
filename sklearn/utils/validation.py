@@ -263,7 +263,7 @@ def as_float_array(X, *, copy=True, force_all_finite=True):
     >>> import numpy as np
     >>> array = np.array([0, 0, 1, 2, 2])
     >>> as_float_array(array)
-    array([0., 0., 1., 2., 2.], dtype=float32)
+    array([0., 0., 1., 2., 2.])
     """
     if isinstance(X, np.matrix) or (
         not isinstance(X, np.ndarray) and not sp.issparse(X)
