@@ -9,7 +9,7 @@ set -x
 #
 # In particular we set SOURCE_DATE_EPOCH to the commit date of the last commit.
 #
-# XXX: setting those environment variable is not enough. See the following
+# XXX: setting those environment variables is not enough. See the following
 # issue for more details on what remains to do:
 # https://github.com/scikit-learn/scikit-learn/issues/28151
 export SOURCE_DATE_EPOCH=$(git log -1 --pretty=%ct)
