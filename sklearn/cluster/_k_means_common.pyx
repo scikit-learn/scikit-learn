@@ -192,6 +192,11 @@ cpdef void _relocate_empty_clusters_dense(
         int new_cluster_id, old_cluster_id, far_idx, idx, k
         floating weight
 
+    if np.max(distances) == 0:
+        # Happens when there are more clusters than non-duplicate samples. Relocating
+        # is pointless in this case.
+        return
+
     for idx in range(n_empty):
 
         new_cluster_id = empty_clusters[idx]
@@ -240,6 +245,11 @@ cpdef void _relocate_empty_clusters_sparse(
             X_data[X_indptr[i]: X_indptr[i + 1]],
             X_indices[X_indptr[i]: X_indptr[i + 1]],
             centers_old[j], centers_squared_norms[j], True)
+
+    if np.max(distances) == 0:
+        # Happens when there are more clusters than non-duplicate samples. Relocating
+        # is pointless in this case.
+        return
 
     cdef:
         int[::1] far_from_centers = np.argpartition(distances, -n_empty)[:-n_empty-1:-1].astype(np.int32)
