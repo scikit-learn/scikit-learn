@@ -39,7 +39,6 @@ to only update the documentation builds you can use:
 import json
 import logging
 import re
-import shlex
 import subprocess
 import sys
 from importlib.metadata import version
@@ -481,11 +480,21 @@ def write_all_conda_environments(build_metadata_list):
 
 
 def conda_lock(environment_path, lock_file_path, platform):
-    command = (
-        f"conda-lock lock --mamba --kind explicit --platform {platform} "
-        f"--file {environment_path} --filename-template {lock_file_path}"
+    execute_command(
+        [
+            "conda-lock",
+            "lock",
+            "--mamba",
+            "--kind",
+            "explicit",
+            "--platform",
+            platform,
+            "--file",
+            str(environment_path),
+            "--filename-template",
+            str(lock_file_path),
+        ]
     )
-    execute_command(shlex.split(command))
 
 
 def create_conda_lock_file(build_metadata):
@@ -533,8 +542,15 @@ def write_all_pip_requirements(build_metadata_list):
 
 
 def pip_compile(pip_compile_path, requirements_path, lock_file_path):
-    command = f"{pip_compile_path} --upgrade {requirements_path} -o {lock_file_path}"
-    execute_command(shlex.split(command))
+    execute_command(
+        [
+            str(pip_compile_path),
+            "--upgrade",
+            str(requirements_path),
+            "-o",
+            str(lock_file_path),
+        ]
+    )
 
 
 def write_pip_lock_file(build_metadata):
@@ -546,13 +562,21 @@ def write_pip_lock_file(build_metadata):
     # create a conda environment with the correct Python version and
     # pip-compile and run pip-compile in this environment
 
-    command = (
-        "conda create -c conda-forge -n"
-        f" pip-tools-python{python_version} python={python_version} pip-tools -y"
+    execute_command(
+        [
+            "conda",
+            "create",
+            "-c",
+            "conda-forge",
+            "-n",
+            f"pip-tools-python{python_version}",
+            f"python={python_version}",
+            "pip-tools",
+            "-y",
+        ]
     )
-    execute_command(shlex.split(command))
 
-    json_output = execute_command(shlex.split("conda info --json"))
+    json_output = execute_command(["conda", "info", "--json"])
     conda_info = json.loads(json_output)
     environment_folder = [
         each for each in conda_info["envs"] if each.endswith(environment_name)
