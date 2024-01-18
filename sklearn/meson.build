@@ -108,8 +108,6 @@ custom_target('write_built_with_meson_file',
     command: [
         py, '-c', 'with open("sklearn/_built_with_meson.py", "w") as f: f.write("")'
     ],
-    build_by_default: true,
-    build_always_stale: true,
     install: true,
     install_dir: py.get_install_dir() / 'sklearn'
 )
