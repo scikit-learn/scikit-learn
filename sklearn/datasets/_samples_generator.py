@@ -1612,7 +1612,7 @@ def make_spd_matrix(n_dim, *, random_state=None):
     (2, 2)
     >>> X
     array([[2.09417602, 0.34617642],
-          [0.34617642, 0.21783715]])
+           [0.34617642, 0.21783715]])
     """
     generator = check_random_state(random_state)
 
