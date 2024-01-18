@@ -331,7 +331,8 @@ def graphical_lasso(
     >>> from sklearn.covariance._graph_lasso import graphical_lasso
     >>> emp_cov = np.array([[1, 0.5], [0.5, 1]])
     >>> alpha = 0.1
-    >>> covariance, precision, costs, n_iter = graphical_lasso(emp_cov, alpha, return_costs=True, return_n_iter=True)
+    >>> result = graphical_lasso(emp_cov, alpha, return_costs=True, return_n_iter=True)
+    >>> covariance, precision, costs, n_iter = result
     >>> print("Covariance matrix:")
     >>> print(covariance)
     Covariance matrix:
@@ -345,7 +346,8 @@ def graphical_lasso(
     >>> print("Costs:")
     >>> print(costs)
     Costs:
-    [(9.178099258094727, 0.04409171075837724), (9.177154878492603, -1.249000902703301e-16)]
+    [(9.178099258094727, 0.04409171075837724),
+     (9.177154878492603, -1.249000902703301e-16)]
     >>> print("Number of iterations:")
     >>> print(n_iter)
     Number of iterations:
