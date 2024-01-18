@@ -1991,7 +1991,7 @@ class _RidgeGCV(LinearModel):
         score_params : dict, default=None
             Parameters to be passed to the underlying scorer.
 
-            .. versionadded:: 1.4
+            .. versionadded:: 1.5
                 See :ref:`Metadata Routing User Guide <metadata_routing>` for
                 more details.
 
@@ -2048,8 +2048,7 @@ class _RidgeGCV(LinearModel):
 
         X_mean, *decomposition = decompose(X, y, sqrt_sw)
 
-        scorer = check_scoring(self, scoring=self.scoring, allow_none=True)
-        error = scorer is None
+        scorer = self._get_scorer()
 
         n_y = 1 if len(y.shape) == 1 else y.shape[1]
         n_alphas = 1 if np.ndim(self.alphas) == 0 else len(self.alphas)
@@ -2061,12 +2060,9 @@ class _RidgeGCV(LinearModel):
 
         for i, alpha in enumerate(np.atleast_1d(self.alphas)):
             G_inverse_diag, c = solve(float(alpha), y, sqrt_sw, X_mean, *decomposition)
-            if error:
+            if scorer is None:
                 squared_errors = (c / G_inverse_diag) ** 2
-                if self.alpha_per_target:
-                    alpha_score = -squared_errors.mean(axis=0)
-                else:
-                    alpha_score = -squared_errors.mean()
+                alpha_score = self._score_without_scorer(squared_errors=squared_errors)
                 if self.store_cv_values:
                     self.cv_values_[:, i] = squared_errors.ravel()
             else:
@@ -2075,35 +2071,13 @@ class _RidgeGCV(LinearModel):
                     self.cv_values_[:, i] = predictions.ravel()
 
                 score_params = score_params or {}
-                if self.is_clf:
-                    identity_estimator = _IdentityClassifier(classes=np.arange(n_y))
-                    alpha_score = scorer(
-                        identity_estimator,
-                        predictions,
-                        y.argmax(axis=1),
-                        **score_params,
-                    )
-                else:
-                    identity_estimator = _IdentityRegressor()
-                    if self.alpha_per_target:
-                        alpha_score = np.array(
-                            [
-                                scorer(
-                                    identity_estimator,
-                                    predictions[:, j],
-                                    y[:, j],
-                                    **score_params,
-                                )
-                                for j in range(n_y)
-                            ]
-                        )
-                    else:
-                        alpha_score = scorer(
-                            identity_estimator,
-                            predictions.ravel(),
-                            y.ravel(),
-                            **score_params,
-                        )
+                alpha_score = self._score(
+                    predictions=predictions,
+                    y=y,
+                    n_y=n_y,
+                    scorer=scorer,
+                    score_params=score_params,
+                )
 
             # Keep track of the best model
             if best_score is None:
@@ -2145,6 +2119,50 @@ class _RidgeGCV(LinearModel):
             self.cv_values_ = self.cv_values_.reshape(cv_values_shape)
 
         return self
+
+    def _get_scorer(self):
+        return check_scoring(self, scoring=self.scoring, allow_none=True)
+
+    def _score_without_scorer(self, squared_errors):
+        if self.alpha_per_target:
+            _score = -squared_errors.mean(axis=0)
+        else:
+            _score = -squared_errors.mean()
+
+        return _score
+
+    def _score(self, predictions, y, n_y, scorer, score_params):
+        if self.is_clf:
+            identity_estimator = _IdentityClassifier(classes=np.arange(n_y))
+            _score = scorer(
+                identity_estimator,
+                predictions,
+                y.argmax(axis=1),
+                **score_params,
+            )
+        else:
+            identity_estimator = _IdentityRegressor()
+            if self.alpha_per_target:
+                _score = np.array(
+                    [
+                        scorer(
+                            identity_estimator,
+                            predictions[:, j],
+                            y[:, j],
+                            **score_params,
+                        )
+                        for j in range(n_y)
+                    ]
+                )
+            else:
+                _score = scorer(
+                    identity_estimator,
+                    predictions.ravel(),
+                    y.ravel(),
+                    **score_params,
+                )
+
+        return _score
 
 
 class _BaseRidgeCV(LinearModel):
@@ -2196,7 +2214,7 @@ class _BaseRidgeCV(LinearModel):
         **params : dict, default=None
             Extra parameters for the underlying scorer.
 
-            .. versionadded:: 1.4
+            .. versionadded:: 1.5
                 Only available if `enable_metadata_routing=True`,
                 which can be set by using
                 ``sklearn.set_config(enable_metadata_routing=True)``.
@@ -2311,7 +2329,7 @@ class _BaseRidgeCV(LinearModel):
         Please check :ref:`User Guide <metadata_routing>` on how the routing
         mechanism works.
 
-        .. versionadded:: 1.4
+        .. versionadded:: 1.5
 
         Returns
         -------
@@ -2323,11 +2341,14 @@ class _BaseRidgeCV(LinearModel):
             MetadataRouter(owner=self.__class__.__name__)
             .add_self_request(self)
             .add(
-                scorer=check_scoring(self, scoring=self.scoring, allow_none=True),
+                scorer=self._get_scorer(),
                 method_mapping=MethodMapping().add(callee="score", caller="fit"),
             )
         )
         return router
+
+    def _get_scorer(self):
+        return check_scoring(self, scoring=self.scoring, allow_none=True)
 
 
 class RidgeCV(MultiOutputMixin, RegressorMixin, _BaseRidgeCV):
@@ -2481,7 +2502,7 @@ class RidgeCV(MultiOutputMixin, RegressorMixin, _BaseRidgeCV):
         **params : dict, default=None
             Parameters to be passed to the underlying scorer.
 
-            .. versionadded:: 1.4
+            .. versionadded:: 1.5
                 Only available if `enable_metadata_routing=True`,
                 which can be set by using
                 ``sklearn.set_config(enable_metadata_routing=True)``.
@@ -2670,7 +2691,7 @@ class RidgeClassifierCV(_RidgeClassifierMixin, _BaseRidgeCV):
         **params : dict, default=None
             Parameters to be passed to the underlying scorer.
 
-            .. versionadded:: 1.4
+            .. versionadded:: 1.5
                 Only available if `enable_metadata_routing=True`,
                 which can be set by using
                 ``sklearn.set_config(enable_metadata_routing=True)``.
