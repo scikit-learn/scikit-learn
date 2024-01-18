@@ -1438,6 +1438,7 @@ def _fetch_remote(remote, dirname=None, n_retries=3, delay=1):
                 time.sleep(delay)
                 n_retries -= 1
             else:
+                # If no more retries are left, re-raise the caught exception.
                 raise
 
     checksum = _sha256(file_path)
