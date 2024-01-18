@@ -25,6 +25,7 @@ Changelog
     :pr:`123456` by :user:`Joe Bloggs <joeongithub>`.
     where 123455 is the *pull request* number, not the issue number.
 
+
 :mod:`sklearn.compose`
 ......................
 
@@ -47,6 +48,13 @@ Changelog
   and :func:`datasets.fetch_species_distributions`.
   By default, the functions will retry up to 3 times in case of network failures.
   :pr:`28160` by :user:`Zhehao Liu <MaxwellLZH>` and :user:`Filip Karlo Došilović <fkdosilovic>`.
+
+:mod:`sklearn.dummy`
+.......................
+
+- |Enhancement| :class:`dummy.DummyClassifier` and :class:`dummy.DummyRegressor` now
+  have the `n_features_in_` and `feature_names_in_` attributes after `fit`.
+  :pr:`27937` by :user:`Marco vd Boom <tvdboom>`.
 
 :mod:`sklearn.feature_extraction`
 .................................
