@@ -76,7 +76,7 @@ by showing the number of samples in each predicted probability bin.
 
 :class:`LogisticRegression` is more likely to return well calibrated predictions by default as it has a
 canonical link function for its loss, i.e. the logit-link for the :ref:`log_loss`.
-This leads to the so-called **balance property**, see [8]_ and :ref:`Logistic_regression`.
+In the unpenalized case, this leads to the so-called **balance property**, see [8]_ and :ref:`Logistic_regression`.
 In the plot above, data is generated according to a linear mechanism, which is
 consistent with the :class:`LogisticRegression` model (the model is 'well specified'),
 which then returns accurate predictions from its `predict_proba` method.
