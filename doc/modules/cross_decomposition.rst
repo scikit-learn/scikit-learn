@@ -126,6 +126,7 @@ P \Delta^T`, and as a result the coefficient matrix :math:`\beta = \alpha P
 \Delta^T`.
 
 :math:`\beta` can be accessed through the `coef_` attribute.
+
 |details-end|
 
 PLSSVD
