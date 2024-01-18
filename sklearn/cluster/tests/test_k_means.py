@@ -1368,4 +1368,4 @@ def test_relocating_with_duplicates(algorithm, array_constr):
     with pytest.warns(ConvergenceWarning, match=msg):
         km.fit(array_constr(X))
 
-    assert km.n_iter_ == 2
+    assert km.n_iter_ == 1

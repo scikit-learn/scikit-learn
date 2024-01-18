@@ -284,12 +284,18 @@ cdef void _average_centers(
         int n_features = centers.shape[1]
         int j, k
         floating alpha
+        int argmax_weight = np.argmax(weight_in_clusters)
 
     for j in range(n_clusters):
         if weight_in_clusters[j] > 0:
             alpha = 1.0 / weight_in_clusters[j]
             for k in range(n_features):
                 centers[j, k] *= alpha
+        else:
+            # For convenience, we avoid setting empty clusters at the origin but place
+            #them at the location of the biggest cluster.
+            for k in range(n_features):
+                centers[j, k] = centers[argmax_weight, k]
 
 
 cdef void _center_shift(
