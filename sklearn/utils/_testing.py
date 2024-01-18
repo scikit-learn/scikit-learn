@@ -66,7 +66,7 @@ __all__ = [
     "assert_array_less",
     "assert_approx_equal",
     "assert_allclose",
-    "assert_run_python_script",
+    "assert_run_python_script_without_output",
     "assert_no_warnings",
     "SkipTest",
 ]
@@ -669,11 +669,11 @@ def check_docstring_parameters(func, doc=None, ignore=None):
     return incorrect
 
 
-def assert_run_python_script(source_code, timeout=60):
+def assert_run_python_script_without_output(source_code, pattern=".+", timeout=60):
     """Utility to check assertions in an independent Python subprocess.
 
-    The script provided in the source code should return 0 and not print
-    anything on stderr or stdout.
+    The script provided in the source code should return 0 and the stdtout +
+    stderr should not match the pattern `pattern`.
 
     This is a port from cloudpickle https://github.com/cloudpipe/cloudpickle
 
@@ -681,6 +681,9 @@ def assert_run_python_script(source_code, timeout=60):
     ----------
     source_code : str
         The Python source code to execute.
+    pattern : str
+        Pattern that the stdout + stderr should not match. By default, unless
+        stdout + stderr are both empty, an error will be raised.
     timeout : int, default=60
         Time in seconds before timeout.
     """
@@ -710,8 +713,16 @@ def assert_run_python_script(source_code, timeout=60):
                 raise RuntimeError(
                     "script errored with output:\n%s" % e.output.decode("utf-8")
                 )
-            if out != b"":
-                raise AssertionError(out.decode("utf-8"))
+
+            out = out.decode("utf-8")
+            if re.search(pattern, out):
+                if pattern == ".+":
+                    expectation = "Expected no output"
+                else:
+                    expectation = f"The output was not supposed to match {pattern!r}"
+
+                message = f"{expectation}, got the following output instead: {out!r}"
+                raise AssertionError(message)
         except TimeoutExpired as e:
             raise RuntimeError(
                 "script timeout, output so far:\n%s" % e.output.decode("utf-8")
@@ -765,7 +776,7 @@ def _convert_container(
     elif constructor_name == "array":
         return np.asarray(container, dtype=dtype)
     elif constructor_name == "sparse":
-        return sp.sparse.csr_matrix(container, dtype=dtype)
+        return sp.sparse.csr_matrix(np.atleast_2d(container), dtype=dtype)
     elif constructor_name in ("pandas", "dataframe"):
         pd = pytest.importorskip("pandas", minversion=minversion)
         result = pd.DataFrame(container, columns=columns_name, dtype=dtype, copy=False)
@@ -803,18 +814,18 @@ def _convert_container(
     elif constructor_name == "slice":
         return slice(container[0], container[1])
     elif constructor_name == "sparse_csr":
-        return sp.sparse.csr_matrix(container, dtype=dtype)
+        return sp.sparse.csr_matrix(np.atleast_2d(container), dtype=dtype)
     elif constructor_name == "sparse_csr_array":
         if sp_version >= parse_version("1.8"):
-            return sp.sparse.csr_array(container, dtype=dtype)
+            return sp.sparse.csr_array(np.atleast_2d(container), dtype=dtype)
         raise ValueError(
             f"sparse_csr_array is only available with scipy>=1.8.0, got {sp_version}"
         )
     elif constructor_name == "sparse_csc":
-        return sp.sparse.csc_matrix(container, dtype=dtype)
+        return sp.sparse.csc_matrix(np.atleast_2d(container), dtype=dtype)
     elif constructor_name == "sparse_csc_array":
         if sp_version >= parse_version("1.8"):
-            return sp.sparse.csc_array(container, dtype=dtype)
+            return sp.sparse.csc_array(np.atleast_2d(container), dtype=dtype)
         raise ValueError(
             f"sparse_csc_array is only available with scipy>=1.8.0, got {sp_version}"
         )

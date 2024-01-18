@@ -87,15 +87,15 @@ will use as many threads as possible, i.e. as many threads as logical cores.
 
 You can control the exact number of threads that are used either:
 
- - via the ``OMP_NUM_THREADS`` environment variable, for instance when:
-   running a python script:
+- via the ``OMP_NUM_THREADS`` environment variable, for instance when:
+  running a python script:
 
-   .. prompt:: bash $
+  .. prompt:: bash $
 
-        OMP_NUM_THREADS=4 python my_script.py
+      OMP_NUM_THREADS=4 python my_script.py
 
- - or via `threadpoolctl` as explained by `this piece of documentation
-   <https://github.com/joblib/threadpoolctl/#setting-the-maximum-size-of-thread-pools>`_.
+- or via `threadpoolctl` as explained by `this piece of documentation
+  <https://github.com/joblib/threadpoolctl/#setting-the-maximum-size-of-thread-pools>`_.
 
 Parallel NumPy and SciPy routines from numerical libraries
 ..........................................................
@@ -107,15 +107,15 @@ such as MKL, OpenBLAS or BLIS.
 You can control the exact number of threads used by BLAS for each library
 using environment variables, namely:
 
-  - ``MKL_NUM_THREADS`` sets the number of thread MKL uses,
-  - ``OPENBLAS_NUM_THREADS`` sets the number of threads OpenBLAS uses
-  - ``BLIS_NUM_THREADS`` sets the number of threads BLIS uses
+- ``MKL_NUM_THREADS`` sets the number of thread MKL uses,
+- ``OPENBLAS_NUM_THREADS`` sets the number of threads OpenBLAS uses
+- ``BLIS_NUM_THREADS`` sets the number of threads BLIS uses
 
 Note that BLAS & LAPACK implementations can also be impacted by
 `OMP_NUM_THREADS`. To check whether this is the case in your environment,
 you can inspect how the number of threads effectively used by those libraries
 is affected when running the following command in a bash or zsh terminal
-for different values of `OMP_NUM_THREADS`::
+for different values of `OMP_NUM_THREADS`:
 
 .. prompt:: bash $
 
