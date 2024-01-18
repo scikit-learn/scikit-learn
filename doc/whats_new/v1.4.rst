@@ -7,13 +7,17 @@
 Version 1.4.1
 =============
 
-**In development**
+**In Development**
 
 Changelog
 ---------
 
 :mod:`sklearn.cluster`
-.......................
+
+- |Fix| :class:`cluster.AffinityPropagation` now avoids assigning multiple different
+  clusters for equal points.
+  :pr:`28121` by :user:`Pietro Peterlongo <pietroppeter>` and
+  :user:`Yao Xiao <Charlie-XIAO>`.
 
 - |Fix| Avoid inifinte loop in :class:`cluster.KMeans` when the number of clusters is
   larger than the number of non-duplicate samples.
