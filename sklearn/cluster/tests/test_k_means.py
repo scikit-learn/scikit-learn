@@ -200,21 +200,6 @@ def test_kmeans_convergence(algorithm, global_random_seed):
     assert km.n_iter_ < max_iter
 
 
-@pytest.mark.parametrize("algorithm", ["auto", "full"])
-def test_algorithm_auto_full_deprecation_warning(algorithm):
-    X = np.random.rand(100, 2)
-    kmeans = KMeans(algorithm=algorithm)
-    with pytest.warns(
-        FutureWarning,
-        match=(
-            f"algorithm='{algorithm}' is deprecated, it will "
-            "be removed in 1.3. Using 'lloyd' instead."
-        ),
-    ):
-        kmeans.fit(X)
-        assert kmeans._algorithm == "lloyd"
-
-
 @pytest.mark.parametrize("Estimator", [KMeans, MiniBatchKMeans])
 def test_predict_sample_weight_deprecation_warning(Estimator):
     X = np.random.rand(100, 2)
