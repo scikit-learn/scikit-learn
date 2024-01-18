@@ -1359,7 +1359,8 @@ def test_sample_weight_zero(init, global_random_seed):
 def test_relocating_with_duplicates(algorithm, array_constr):
     """Check that kmeans stops when there are more centers than non-duplicate samples
 
-    non-regression test for issue #28055
+    Non-regression test for issue:
+    https://github.com/scikit-learn/scikit-learn/issues/28055
     """
     X = np.array([[0, 0], [1, 1], [1, 1], [1, 0], [0, 1]])
     km = KMeans(n_clusters=5, init=X, algorithm=algorithm)
