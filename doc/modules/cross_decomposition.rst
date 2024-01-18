@@ -94,7 +94,6 @@ which corresponds to the `'nipals'` option of the `algorithm` parameter.
 
 |details-start|
 Transforming data
-^^^^^^^^^^^^^^^^^
 |details-split|
 
 To transform :math:`X` into :math:`\bar{X}`, we need to find a projection
