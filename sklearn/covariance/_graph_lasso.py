@@ -324,6 +324,32 @@ def graphical_lasso(
 
     One possible difference with the `glasso` R package is that the
     diagonal coefficients are not penalized.
+
+    Example:
+    --------
+    >>> import numpy as np
+    >>> from sklearn.covariance._graph_lasso import graphical_lasso
+    >>> emp_cov = np.array([[1, 0.5], [0.5, 1]])
+    >>> alpha = 0.1
+    >>> covariance, precision, costs, n_iter = graphical_lasso(emp_cov, alpha, return_costs=True, return_n_iter=True)
+    >>> print("Covariance matrix:")
+    >>> print(covariance)
+    Covariance matrix:
+    [[1.  0.4]
+     [0.4 1. ]]
+    >>> print("Precision matrix:")
+    >>> print(precision)
+    Precision matrix:
+    [[ 1.19047619 -0.47619048]
+     [-0.47619048  1.19047619]]
+    >>> print("Costs:")
+    >>> print(costs)
+    Costs:
+    [(9.178099258094727, 0.04409171075837724), (9.177154878492603, -1.249000902703301e-16)]
+    >>> print("Number of iterations:")
+    >>> print(n_iter)
+    Number of iterations:
+    2
     """
 
     if cov_init is not None:
