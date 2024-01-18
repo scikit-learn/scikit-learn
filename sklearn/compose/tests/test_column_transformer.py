@@ -3,6 +3,7 @@ Test the ColumnTransformer.
 """
 import pickle
 import re
+import warnings
 
 import numpy as np
 import pytest
@@ -2275,6 +2276,40 @@ def test_remainder_set_output():
     assert isinstance(out, np.ndarray)
 
 
+# TODO(1.6): replace the warning by a ValueError exception
+def test_transform_pd_na():
+    """Check behavior when a tranformer's output contains pandas.NA
+
+    It should emit a warning unless the output config is set to 'pandas'.
+    """
+    pd = pytest.importorskip("pandas")
+    if not hasattr(pd, "Float64Dtype"):
+        pytest.skip(
+            "The issue with pd.NA tested here does not happen in old versions that do"
+            " not have the extension dtypes"
+        )
+    df = pd.DataFrame({"a": [1.5, None]})
+    ct = make_column_transformer(("passthrough", ["a"]))
+    # No warning with non-extension dtypes and np.nan
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        ct.fit_transform(df)
+    df = df.convert_dtypes()
+    # Error with extension dtype and pd.NA
+    with pytest.warns(FutureWarning, match=r"set_output\(transform='pandas'\)"):
+        ct.fit_transform(df)
+    # No warning when output is set to pandas
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        ct.set_output(transform="pandas")
+        ct.fit_transform(df)
+    ct.set_output(transform="default")
+    # No warning when there are no pd.NA
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        ct.fit_transform(df.fillna(-1.0))
+
+
 def test_dataframe_different_dataframe_libraries():
     """Check fitting and transforming on pandas and polars dataframes."""
     pd = pytest.importorskip("pandas")
@@ -2299,6 +2334,24 @@ def test_dataframe_different_dataframe_libraries():
 
     out_pd_in = ct.transform(X_test_pd)
     assert_array_equal(out_pd_in, X_test_np)
+
+
+def test_column_transformer__getitem__():
+    """Check __getitem__ for ColumnTransformer."""
+    X = np.array([[0, 1, 2], [3, 4, 5]])
+    ct = ColumnTransformer([("t1", Trans(), [0, 1]), ("t2", Trans(), [1, 2])])
+
+    msg = "ColumnTransformer is subscriptable after it is fitted"
+    with pytest.raises(TypeError, match=msg):
+        ct["t1"]
+
+    ct.fit(X)
+    assert ct["t1"] is ct.named_transformers_["t1"]
+    assert ct["t2"] is ct.named_transformers_["t2"]
+
+    msg = "'does_not_exist' is not a valid transformer name"
+    with pytest.raises(KeyError, match=msg):
+        ct["does_not_exist"]
 
 
 # Metadata Routing Tests
