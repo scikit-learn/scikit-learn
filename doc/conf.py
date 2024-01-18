@@ -320,7 +320,7 @@ html_show_search_summary = True
 
 # The "summary-anchor" IDs will be overwritten via JavaScript to be unique.
 # See `doc/theme/scikit-learn-modern/static/js/details-permalink.js`.
-rst_prolog = """
+rst_epilog = """
 .. |details-start| raw:: html
 
     <details id="summary-anchor">

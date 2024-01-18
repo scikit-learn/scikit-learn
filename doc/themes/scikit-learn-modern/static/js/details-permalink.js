@@ -12,7 +12,7 @@
 //     </details>
 // We seek to replace `#summary-anchor` with a unique identifier based on the
 // summary text.
-// This syntax is defined in `doc/conf.py` in the `rst_prolog` variable.
+// This syntax is defined in `doc/conf.py` in the `rst_epilog` variable.
 function updateIdAndHrefBasedOnSummaryText() {
     var allDetailsElements = document.querySelectorAll('details');
     // Counter to store the duplicated summary text to add it as a suffix in the
