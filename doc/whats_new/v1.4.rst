@@ -20,13 +20,6 @@ Changelog
   :pr:`28121` by :user:`Pietro Peterlongo <pietroppeter>` and
   :user:`Yao Xiao <Charlie-XIAO>`.
 
-:mod:`sklearn.datasets`
-.......................
-
-- |Fix| :func:`datasets.dump_svmlight_file` now does not raise `ValueError` when `X`
-  is read-only, e.g., a `numpy.memmap` instance.
-  :pr:`28111` by :user:`Yao Xiao <Charlie-XIAO>`.
-
 
 .. _changes_1_4:
 
