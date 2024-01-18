@@ -156,6 +156,18 @@ def fetch_covtype(
         ndarray of shape (n_samples,) containing the target samples.
 
         .. versionadded:: 0.20
+
+    Examples
+    --------
+    >>> from sklearn.datasets import fetch_covtype
+    >>> cov_type = fetch_covtype()
+    >>> cov_type.data.shape
+    (581012, 54)
+    >>> cov_type.target.shape
+    (581012,)
+    >>> # Let's check the 4 first feature names
+    >>> cov_type.feature_names[:4]
+    ['Elevation', 'Aspect', 'Slope', 'Horizontal_Distance_To_Hydrology']
     """
     data_home = get_data_home(data_home=data_home)
     covtype_dir = join(data_home, "covertype")

@@ -85,7 +85,7 @@ cdef {{c_type}} _logsumexp{{name_suffix}}({{c_type}}* arr, int n_classes) noexce
 {{for name_suffix, c_type, np_type in dtypes}}
 
 cdef class MultinomialLogLoss{{name_suffix}}:
-    cdef {{c_type}} _loss(self, {{c_type}}* prediction, {{c_type}} y, int n_classes,
+    cdef {{c_type}} _loss(self, {{c_type}} y, {{c_type}}* prediction, int n_classes,
                       {{c_type}} sample_weight) noexcept nogil:
         r"""Multinomial Logistic regression loss.
 
@@ -100,11 +100,11 @@ cdef class MultinomialLogLoss{{name_suffix}}:
 
         Parameters
         ----------
-        prediction : pointer to a np.ndarray[{{c_type}}] of shape (n_classes,)
-            Prediction of the multinomial classifier, for current sample.
-
         y : {{c_type}}, between 0 and n_classes - 1
             Indice of the correct class for current sample (i.e. label encoded).
+
+        prediction : pointer to a np.ndarray[{{c_type}}] of shape (n_classes,)
+            Prediction of the multinomial classifier, for current sample.
 
         n_classes : integer
             Total number of classes.
@@ -129,7 +129,7 @@ cdef class MultinomialLogLoss{{name_suffix}}:
         loss = (logsumexp_prediction - prediction[int(y)]) * sample_weight
         return loss
 
-    cdef void dloss(self, {{c_type}}* prediction, {{c_type}} y, int n_classes,
+    cdef void dloss(self, {{c_type}} y, {{c_type}}* prediction, int n_classes,
                      {{c_type}} sample_weight, {{c_type}}* gradient_ptr) noexcept nogil:
         r"""Multinomial Logistic regression gradient of the loss.
 
@@ -414,9 +414,9 @@ def sag{{name_suffix}}(
 
                 # compute the gradient for this sample, given the prediction
                 if multinomial:
-                    multiloss.dloss(&prediction[0], y, n_classes, sample_weight, &gradient[0])
+                    multiloss.dloss(y, &prediction[0], n_classes, sample_weight, &gradient[0])
                 else:
-                    gradient[0] = loss.dloss(prediction[0], y) * sample_weight
+                    gradient[0] = loss.dloss(y, prediction[0]) * sample_weight
 
                 # L2 regularization by simply rescaling the weights
                 wscale *= wscale_update
@@ -835,10 +835,10 @@ def _multinomial_grad_loss_all_samples(
             )
 
             # compute the gradient for this sample, given the prediction
-            multiloss.dloss(&prediction[0], y, n_classes, sample_weight, &gradient[0])
+            multiloss.dloss(y, &prediction[0], n_classes, sample_weight, &gradient[0])
 
             # compute the loss for this sample, given the prediction
-            sum_loss += multiloss._loss(&prediction[0], y, n_classes, sample_weight)
+            sum_loss += multiloss._loss(y, &prediction[0], n_classes, sample_weight)
 
             # update the sum of the gradient
             for j in range(xnnz):

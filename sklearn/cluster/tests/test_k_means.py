@@ -32,13 +32,6 @@ from sklearn.utils._testing import (
 from sklearn.utils.extmath import row_norms
 from sklearn.utils.fixes import CSR_CONTAINERS, threadpool_limits
 
-# TODO(1.4): Remove
-msg = (
-    r"The default value of `n_init` will change from \d* to 'auto' in 1.4. Set the"
-    r" value of `n_init` explicitly to suppress the warning:FutureWarning"
-)
-pytestmark = pytest.mark.filterwarnings("ignore:" + msg)
-
 # non centered, sparse centers to check the
 centers = np.array(
     [
@@ -205,21 +198,6 @@ def test_kmeans_convergence(algorithm, global_random_seed):
     ).fit(X)
 
     assert km.n_iter_ < max_iter
-
-
-@pytest.mark.parametrize("algorithm", ["auto", "full"])
-def test_algorithm_auto_full_deprecation_warning(algorithm):
-    X = np.random.rand(100, 2)
-    kmeans = KMeans(algorithm=algorithm)
-    with pytest.warns(
-        FutureWarning,
-        match=(
-            f"algorithm='{algorithm}' is deprecated, it will "
-            "be removed in 1.3. Using 'lloyd' instead."
-        ),
-    ):
-        kmeans.fit(X)
-        assert kmeans._algorithm == "lloyd"
 
 
 @pytest.mark.parametrize("Estimator", [KMeans, MiniBatchKMeans])
