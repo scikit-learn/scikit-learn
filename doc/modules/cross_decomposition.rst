@@ -93,7 +93,7 @@ values, or by directly computing the singular vectors using the power method (cf
 which corresponds to the `'nipals'` option of the `algorithm` parameter.
 
 |details-start|
-Transforming data
+**Transforming data**
 |details-split|
 
 To transform :math:`X` into :math:`\bar{X}`, we need to find a projection
@@ -109,7 +109,7 @@ Similarly, :math:`Y` can be transformed using the rotation matrix
 |details-end|
 
 |details-start|
-Predicting the targets Y
+**Predicting the targets Y**
 |details-split|
 
 To predict the targets of some data :math:`X`, we are looking for a
@@ -185,7 +185,7 @@ Since :class:`CCA` involves the inversion of :math:`X_k^TX_k` and
 targets is greater than the number of samples.
 
 |details-start|
-.. topic:: Reference:
+**Reference**
 |details-split|
 
    .. [1] `A survey of Partial Least Squares (PLS) methods, with emphasis on
