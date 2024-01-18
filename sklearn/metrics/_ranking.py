@@ -540,13 +540,18 @@ def roc_auc_score(
 
     Notes
     -----
-    The Gini Coefficient is a summary measure of the diagnostic ability
-    of binary classifiers. It can be expressed using the area under
-    (ROC) as follows:
+    The Gini Coefficient is a summary measure of the ranking ability of binary
+    classifiers. It is expressed using the area under of the ROC as follows:
 
-    .. math:: G = 2*AUC - 1
+    G = 2 * AUC - 1
 
-    Where :math:`G` is the Gini Coefficient and :math:`AUC` is the ROC-AUC score.
+    Where G is the Gini coefficient and AUC is the ROC-AUC score. This normalisation
+    will ensure that random guessing will yield a score of 0 in expectation, and it is
+    upper bounded by 1.
+
+    Note that there is another version of the Gini coefficient for regressors of a
+    continuous positive target variable. In this case, AUC is taken over the Lorenz
+    curve instead of the ROC [6]_.
 
     References
     ----------
