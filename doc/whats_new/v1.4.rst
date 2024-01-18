@@ -13,6 +13,7 @@ Changelog
 ---------
 
 :mod:`sklearn.cluster`
+......................
 
 - |Fix| :class:`cluster.AffinityPropagation` now avoids assigning multiple different
   clusters for equal points.
