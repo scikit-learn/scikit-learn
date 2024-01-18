@@ -2,6 +2,25 @@
 
 .. currentmodule:: sklearn
 
+.. _changes_1_4_1:
+
+Version 1.4.1
+=============
+
+**In Development**
+
+Changelog
+---------
+
+:mod:`sklearn.cluster`
+......................
+
+- |Fix| :class:`cluster.AffinityPropagation` now avoids assigning multiple different
+  clusters for equal points.
+  :pr:`28121` by :user:`Pietro Peterlongo <pietroppeter>` and
+  :user:`Yao Xiao <Charlie-XIAO>`.
+
+
 .. _changes_1_4:
 
 Version 1.4.0
