@@ -1363,7 +1363,7 @@ def test_relocating_with_duplicates(algorithm, array_constr):
     """
     X = np.array([[0, 0], [1, 1], [1, 1], [1, 0], [0, 1]])
     km = KMeans(n_clusters=5, init=X, algorithm=algorithm)
-    
+
     msg = r"Number of distinct clusters \(4\) found smaller than n_clusters \(5\)"
     with pytest.warns(ConvergenceWarning, match=msg):
         km.fit(array_constr(X))
