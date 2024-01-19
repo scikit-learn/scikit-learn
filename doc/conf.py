@@ -318,6 +318,17 @@ sass_targets = {
 # Additional CSS files, should be subset of the values of `sass_targets`
 html_css_files = ["styles/colors.css", "styles/custom.css"]
 
+
+def add_js_css_files(app, pagename, templatename, context, doctree):
+    """Load additional JS and CSS files only for certain pages.
+
+    Note that `html_js_files` and `html_css_files` are included in all pages and
+    should be used for the ones that are used by multiple pages. All page-specific
+    JS and CSS files should be added here instead.
+    """
+    return
+
+
 # If false, no module index is generated.
 html_domain_indices = False
 
@@ -771,6 +782,9 @@ def setup(app):
     app.connect("builder-inited", disable_plot_gallery_for_linkcheck, priority=50)
     app.connect("builder-inited", generate_min_dependency_table)
     app.connect("builder-inited", generate_min_dependency_substitutions)
+
+    # triggered just before the HTML for an individual page is created
+    app.connect("html-page-context", add_js_css_files)
 
     # to hide/show the prompt in code examples:
     app.connect("build-finished", make_carousel_thumbs)
