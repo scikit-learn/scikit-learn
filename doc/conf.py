@@ -308,12 +308,14 @@ html_additional_pages = {"index": "index.html"}
 # Additional JS files
 html_js_files = ["scripts/details-permalink.js"]
 
-# Additional CSS files, which are compiled from scss files using sphinxcontrib-sass
+# Compile scss files into css files using sphinxcontrib-sass
 sass_src_dir, sass_out_dir = "scss", "css/styles"
-scss_targets = {
+sass_targets = {
     f"{file.stem}.scss": f"{file.stem}.css"
     for file in Path(sass_src_dir).glob("*.scss")
 }
+
+# Additional CSS files, should be subset of the values of `sass_targets`
 html_css_files = ["styles/colors.css", "styles/custom.css"]
 
 # If false, no module index is generated.
