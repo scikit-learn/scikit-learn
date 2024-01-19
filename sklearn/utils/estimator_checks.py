@@ -633,7 +633,7 @@ def check_estimator(estimator=None, generate_only=False):
 
     >>> checks = check_estimator(estimator1, generate_only=True)
 
-    >>> for estimator, check in checks:
+    >>> for estimator1, check in checks:
     ...     check(estimator1)
     """
     if isinstance(estimator, type):
