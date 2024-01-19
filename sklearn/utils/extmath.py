@@ -145,6 +145,24 @@ def density(w):
     -------
     float
         The density of w, between 0 and 1.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.utils.extmath import density
+
+    >>> w = np.array([1, 0, 0, 2, 0])
+
+    >>> d = density(w)
+    >>> print(d)
+    0.4
+
+    >>> from scipy.sparse import csr_matrix
+    >>> w_sparse = csr_matrix(([1, 2], ([0, 2], [0, 1])), shape=(3, 3))
+
+    >>> d_sparse = density(w_sparse)
+    >>> print(d_sparse)
+    0.2222222222222222
     """
     if hasattr(w, "toarray"):
         d = float(w.nnz) / (w.shape[0] * w.shape[1])
@@ -168,6 +186,20 @@ def safe_sparse_dot(a, b, *, dense_output=False):
     -------
     dot_product : {ndarray, sparse matrix}
         Sparse if ``a`` and ``b`` are sparse and ``dense_output=False``.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from scipy.sparse import csr_matrix
+    >>> from sklearn.utils.extmath import safe_sparse_dot
+
+    >>> a = np.array([[1, 2], [3, 4]])
+    >>> b = csr_matrix([[1, 2], [3, 4]])
+
+    >>> result = safe_sparse_dot(a, b, dense_output=True)
+    >>> print(result)
+    [[ 7 10]
+     [15 22]]
     """
     if a.ndim > 2 or b.ndim > 2:
         if sparse.issparse(a):
@@ -248,6 +280,20 @@ def randomized_range_finder(
     An implementation of a randomized algorithm for principal component
     analysis
     A. Szlam et al. 2014
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.utils.extmath import randomized_range_finder
+
+    >>> A = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
+
+    >>> Q = randomized_range_finder(A, size=2, n_iter=2, random_state=42)
+    >>> Q_rounded = np.round(Q, 2)
+    >>> print(Q_rounded)
+    [[-0.21  0.89]
+     [-0.52  0.25]
+     [-0.83 -0.39]]
     """
     xp, is_array_api_compliant = get_namespace(A)
     random_state = check_random_state(random_state)
