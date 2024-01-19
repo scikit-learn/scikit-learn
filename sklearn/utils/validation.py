@@ -395,6 +395,12 @@ def check_memory(memory):
     ------
     ValueError
         If ``memory`` is not joblib.Memory-like.
+
+    Examples
+    --------
+    >>> from sklearn.utils.validation import check_memory
+    >>> check_memory("caching_dir")
+    Memory(location=caching_dir/joblib)
     """
     if memory is None or isinstance(memory, str):
         memory = joblib.Memory(location=memory, verbose=0)
@@ -802,6 +808,8 @@ def check_array(
     # DataFrame), and store them. If not, store None.
     dtypes_orig = None
     pandas_requires_conversion = False
+    # track if we have a Series-like object to raise a better error message
+    type_if_series = None
     if hasattr(array, "dtypes") and hasattr(array.dtypes, "__array__"):
         # throw warning if columns are sparse. If all columns are sparse, then
         # array.sparse exists and sparsity will be preserved (later).
@@ -831,6 +839,7 @@ def check_array(
         array, "dtype"
     ):
         # array is a pandas series
+        type_if_series = type(array)
         pandas_requires_conversion = _pandas_dtype_needs_early_conversion(array.dtype)
         if isinstance(array.dtype, np.dtype):
             dtype_orig = array.dtype
@@ -962,12 +971,22 @@ def check_array(
                 )
             # If input is 1D raise error
             if array.ndim == 1:
-                raise ValueError(
-                    "Expected 2D array, got 1D array instead:\narray={}.\n"
-                    "Reshape your data either using array.reshape(-1, 1) if "
-                    "your data has a single feature or array.reshape(1, -1) "
-                    "if it contains a single sample.".format(array)
-                )
+                # If input is a Series-like object (eg. pandas Series or polars Series)
+                if type_if_series is not None:
+                    msg = (
+                        f"Expected a 2-dimensional container but got {type_if_series} "
+                        "instead. Pass a DataFrame containing a single row (i.e. "
+                        "single sample) or a single column (i.e. single feature) "
+                        "instead."
+                    )
+                else:
+                    msg = (
+                        f"Expected 2D array, got 1D array instead:\narray={array}.\n"
+                        "Reshape your data either using array.reshape(-1, 1) if "
+                        "your data has a single feature or array.reshape(1, -1) "
+                        "if it contains a single sample."
+                    )
+                raise ValueError(msg)
 
         if dtype_numeric and hasattr(array.dtype, "kind") and array.dtype.kind in "USV":
             raise ValueError(
@@ -1495,6 +1514,20 @@ def check_is_fitted(estimator, attributes=None, *, msg=None, all_or_any=all):
 
     NotFittedError
         If the attributes are not found.
+    Examples
+    --------
+    >>> from sklearn.linear_model import LogisticRegression
+    >>> from sklearn.utils.validation import check_is_fitted
+    >>> from sklearn.exceptions import NotFittedError
+    >>> lr = LogisticRegression()
+    >>> try:
+    ...     check_is_fitted(lr)
+    ... except NotFittedError as exc:
+    ...     print(f"Model is not fitted yet.")
+    Model is not fitted yet.
+    >>> lr.fit([[1, 2], [1, 3]], [1, 0])
+    LogisticRegression()
+    >>> check_is_fitted(lr)
     """
     if isclass(estimator):
         raise TypeError("{} is a class, not an instance.".format(estimator))
