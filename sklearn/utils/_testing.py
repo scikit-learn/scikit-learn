@@ -775,8 +775,6 @@ def _convert_container(
             return tuple(np.asarray(container, dtype=dtype).tolist())
     elif constructor_name == "array":
         return np.asarray(container, dtype=dtype)
-    elif constructor_name == "sparse":
-        return sp.sparse.csr_matrix(np.atleast_2d(container), dtype=dtype)
     elif constructor_name in ("pandas", "dataframe"):
         pd = pytest.importorskip("pandas", minversion=minversion)
         result = pd.DataFrame(container, columns=columns_name, dtype=dtype, copy=False)
@@ -825,7 +823,8 @@ def _convert_container(
                 f"{constructor_name} is only available with scipy>=1.8.0, got "
                 f"{sp_version}"
             )
-        if constructor_name == "sparse_csr":
+        if constructor_name in ("sparse", "sparse_csr"):
+            # sparse and sparse_csr are equivalent for legacy reasons
             return sp.sparse.csr_matrix(container, dtype=dtype)
         elif constructor_name == "sparse_csr_array":
             return sp.sparse.csr_array(container, dtype=dtype)
