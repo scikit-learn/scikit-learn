@@ -309,13 +309,12 @@ html_additional_pages = {"index": "index.html"}
 html_js_files = ["scripts/details-permalink.js"]
 
 # Additional CSS files, which are compiled from scss files using sphinxcontrib-sass
-html_css_file_names = [
-    "colors",
-    "custom",
-]
 sass_src_dir, sass_out_dir = "scss", "css/styles"
-sass_targets = {f"{name}.scss": f"{name}.css" for name in html_css_file_names}
-html_css_files = [f"styles/{name}.css" for name in html_css_file_names]
+scss_targets = {
+    f"{file.stem}.scss": f"{file.stem}.css"
+    for file in Path(sass_src_dir).glob("*.scss")
+}
+html_css_files = ["styles/colors.css", "styles/custom.css"]
 
 # If false, no module index is generated.
 html_domain_indices = False
