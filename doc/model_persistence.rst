@@ -258,7 +258,7 @@ not work.
 `ONNX` can be used to represent any machine learning or deep learning model.
 It provides a uniform format and allows for framework interoperability. Due to
 this trained models can be easily deployed on different platforms.
-`skops` only makes it easier to persist scikit-learn models, whereas `ONNX`
+`skops` only helps with persisting scikit-learn models, whereas `ONNX`
 can be used to save any machine learning or deep learning model. `ONNX` is
 optimized for performance efficiency, however, `ONNX` models might not be
 compatible with all versions of different frameworks.
