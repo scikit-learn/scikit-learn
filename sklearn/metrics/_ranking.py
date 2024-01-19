@@ -538,6 +538,21 @@ def roc_auc_score(
     RocCurveDisplay.from_predictions : Plot Receiver Operating Characteristic
         (ROC) curve given the true and predicted values.
 
+    Notes
+    -----
+    The Gini Coefficient is a summary measure of the ranking ability of binary
+    classifiers. It is expressed using the area under of the ROC as follows:
+
+    G = 2 * AUC - 1
+
+    Where G is the Gini coefficient and AUC is the ROC-AUC score. This normalisation
+    will ensure that random guessing will yield a score of 0 in expectation, and it is
+    upper bounded by 1.
+
+    Note that there is another version of the Gini coefficient for regressors of a
+    continuous positive target variable. In this case, AUC is taken over the Lorenz
+    curve instead of the ROC [6]_.
+
     References
     ----------
     .. [1] `Wikipedia entry for the Receiver operating characteristic
@@ -558,6 +573,8 @@ def roc_auc_score(
             Under the ROC Curve for Multiple Class Classification Problems.
             Machine Learning, 45(2), 171-186.
             <http://link.springer.com/article/10.1023/A:1010920819831>`_
+    .. [6] `Wikipedia entry for the Gini coefficient
+            <https://en.wikipedia.org/wiki/Gini_coefficient>`_
 
     Examples
     --------
