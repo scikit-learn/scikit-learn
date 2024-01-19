@@ -1160,12 +1160,12 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
             routing information.
         """
         router = MetadataRouter(owner=self.__class__.__name__)
-        for name, step, _, _ in self._iter(
-            fitted=False,
-            column_as_labels=False,
-            skip_drop=True,
-            skip_empty_columns=True,
-        ):
+        # Here we don't care about which columns are used for which
+        # transformers, and whether or not a transformer is used at all, which
+        # might happen if no columns are selected for that transformer. We
+        # request all metadata requested by all transformers.
+        transformers = chain(self.transformers, [("remainder", self.remainder, None)])
+        for name, step, _ in transformers:
             method_mapping = MethodMapping()
             if hasattr(step, "fit_transform"):
                 (
