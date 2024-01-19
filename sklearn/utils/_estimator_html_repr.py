@@ -329,6 +329,17 @@ def estimator_html_repr(estimator):
     -------
     html: str
         HTML representation of estimator.
+
+    Examples
+    --------
+    >>> from sklearn.linear_model import LogisticRegression
+    >>> from sklearn.utils._estimator_html_repr import estimator_html_repr
+
+    >>> estimator = LogisticRegression()
+
+    >>> html_repr = estimator_html_repr(estimator)
+
+    >>> # print(html_repr) -> This will return HTML representation.
     """
     from sklearn.exceptions import NotFittedError
     from sklearn.utils.validation import check_is_fitted
