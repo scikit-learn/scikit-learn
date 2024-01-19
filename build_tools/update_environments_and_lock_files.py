@@ -497,7 +497,7 @@ def write_all_conda_environments(build_metadata_list):
 def conda_lock(environment_path, lock_file_path, platform):
     command = (
         f"conda-lock lock --mamba --kind explicit --platform {platform} "
-        f"--file '{environment_path}' --filename-template '{lock_file_path}'"
+        f"--file {environment_path} --filename-template {lock_file_path}"
     )
     execute_command(shlex.split(command))
 
