@@ -20,6 +20,9 @@ Changelog
   :pr:`28121` by :user:`Pietro Peterlongo <pietroppeter>` and
   :user:`Yao Xiao <Charlie-XIAO>`.
 
+- |Fix| Avoid infinite loop in :class:`cluster.KMeans` when the number of clusters is
+  larger than the number of non-duplicate samples.
+  :pr:`28165` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
 .. _changes_1_4:
 
