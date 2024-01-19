@@ -11,6 +11,17 @@ Version 1.5.0
 
 .. include:: changelog_legend.inc
 
+Metadata Routing
+----------------
+
+The following models now support metadata routing in one or more or their
+methods. Refer to the :ref:`Metadata Routing User Guide <metadata_routing>` for
+more details.
+
+- |Feature| :class:`impute.IterativeImputer` now supports metadata routing in
+  its `fit` method. :pr:`28187` by :user:`Stefanie Senger <StefanieSenger>`.
+
+
 Changelog
 ---------
 
