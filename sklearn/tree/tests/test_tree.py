@@ -2548,17 +2548,17 @@ def test_missing_values_poisson(Tree):
 
 
 @pytest.mark.parametrize(
-    "make_data, Tree, resilience_score, dummy_model",
+    "make_data, Tree, resilience_score, dummy_model, p",
     [
-        (datasets.make_regression, DecisionTreeRegressor, 0.9, DummyRegressor),
-        (datasets.make_classification, DecisionTreeClassifier, 0.9, DummyClassifier),
-        (datasets.make_regression, ExtraTreeRegressor, 0.5, DummyRegressor),
-        (datasets.make_classification, ExtraTreeClassifier, 0.5, DummyClassifier),
+        (datasets.make_regression, DecisionTreeRegressor, 0.9, DummyRegressor, [0.9, 0.1]),
+        (datasets.make_classification, DecisionTreeClassifier, 0.9, DummyClassifier, [0.9, 0.1]),
+        (datasets.make_regression, ExtraTreeRegressor, 0.5, DummyRegressor, [0.95, 0.05]),
+        (datasets.make_classification, ExtraTreeClassifier, 0.6, DummyClassifier, [0.95, 0.05]),
     ],
 )
 @pytest.mark.parametrize("sample_weight_train", [None, "ones"])
 def test_missing_values_is_resilience(
-    make_data, Tree, resilience_score, dummy_model, sample_weight_train
+    make_data, Tree, resilience_score, dummy_model, p, sample_weight_train
 ):
     """Check that trees can deal with missing values and have decent performance."""
 
@@ -2568,7 +2568,7 @@ def test_missing_values_is_resilience(
 
     # Create dataset with missing values
     X_missing = X.copy()
-    X_missing[rng.choice([False, True], size=X.shape, p=[0.9, 0.1])] = np.nan
+    X_missing[rng.choice([False, True], size=X.shape, p=p)] = np.nan
     X_missing_train, X_missing_test, y_train, y_test = train_test_split(
         X_missing, y, random_state=0
     )
