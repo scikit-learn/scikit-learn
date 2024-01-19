@@ -549,10 +549,6 @@ def roc_auc_score(
     will ensure that random guessing will yield a score of 0 in expectation, and it is
     upper bounded by 1.
 
-    Note that there is another version of the Gini coefficient for regressors of a
-    continuous positive target variable. In this case, AUC is taken over the Lorenz
-    curve instead of the ROC [6]_.
-
     References
     ----------
     .. [1] `Wikipedia entry for the Receiver operating characteristic
