@@ -813,22 +813,26 @@ def _convert_container(
         return pd.Index(container, dtype=dtype)
     elif constructor_name == "slice":
         return slice(container[0], container[1])
-    elif constructor_name == "sparse_csr":
-        return sp.sparse.csr_matrix(np.atleast_2d(container), dtype=dtype)
-    elif constructor_name == "sparse_csr_array":
-        if sp_version >= parse_version("1.8"):
-            return sp.sparse.csr_array(np.atleast_2d(container), dtype=dtype)
-        raise ValueError(
-            f"sparse_csr_array is only available with scipy>=1.8.0, got {sp_version}"
+    elif "sparse" in constructor_name:
+        container = (
+            # sparse constructor only works with 2D array-like
+            np.atleast_2d(container)
+            if not sp.sparse.issparse(container)
+            else container
         )
-    elif constructor_name == "sparse_csc":
-        return sp.sparse.csc_matrix(np.atleast_2d(container), dtype=dtype)
-    elif constructor_name == "sparse_csc_array":
-        if sp_version >= parse_version("1.8"):
-            return sp.sparse.csc_array(np.atleast_2d(container), dtype=dtype)
-        raise ValueError(
-            f"sparse_csc_array is only available with scipy>=1.8.0, got {sp_version}"
-        )
+        if "array" in constructor_name and sp_version < parse_version("1.8"):
+            raise ValueError(
+                f"{constructor_name} is only available with scipy>=1.8.0, got "
+                f"{sp_version}"
+            )
+        if constructor_name == "sparse_csr":
+            return sp.sparse.csr_matrix(container, dtype=dtype)
+        elif constructor_name == "sparse_csr_array":
+            return sp.sparse.csr_array(container, dtype=dtype)
+        elif constructor_name == "sparse_csc":
+            return sp.sparse.csc_matrix(container, dtype=dtype)
+        elif constructor_name == "sparse_csc_array":
+            return sp.sparse.csc_array(container, dtype=dtype)
 
 
 def raises(expected_exc_type, match=None, may_pass=False, err_msg=None):
