@@ -9,8 +9,15 @@ Model persistence
 =================
 
 After training a scikit-learn model, it is desirable to have a way to persist
-the model for future use without having to retrain. The following sections give
-you some hints on how to persist a scikit-learn model.
+the model for future use without having to retrain. This can be accomplished
+using `pickle <https://docs.python.org/3/library/pickle.html>`, `joblib
+<https://joblib.readthedocs.io/en/stable/>`, `skops
+<https://skops.readthedocs.io/en/stable/>`, `ONNX <https://onnx.ai/>`, or `PMML
+<https://dmg.org/pmml/v4-4-1/GeneralStructure.html>`. In most cases
+:mod:`pickle` can be used to persist a trained scikit-learn model. Once all
+transitive scikit-learn dependencies have been pinned, the trained model can
+then be safely and securely loaded for further use. The following sections
+give you some hints on how to persist a scikit-learn model.
 
 Python specific serialization
 -----------------------------
@@ -22,7 +29,7 @@ persistence model, namely `pickle
   >>> from sklearn import svm
   >>> from sklearn import datasets
   >>> clf = svm.SVC()
-  >>> X, y= datasets.load_iris(return_X_y=True)
+  >>> X, y = datasets.load_iris(return_X_y=True)
   >>> clf.fit(X, y)
   SVC()
 
@@ -33,6 +40,38 @@ persistence model, namely `pickle
   array([0])
   >>> y[0]
   0
+
+Instead of using `dumps` and `loads`, `dump` and `load` can also be used in the
+following way::
+
+  >>> from sklearn.tree import DecisionTreeClassifier
+  >>> from sklearn import datasets
+  >>> clf = DecisionTreeClassifier()
+  >>> X, y = datasets.load_iris(return_X_y=True)
+  >>> clf.fit(X, y)
+  DecisionTreeClassifier()
+
+  >>> from pickle import dump, load
+  >>> with open('filename.pkl', 'wb') as f: dump(clf, f) # doctest: +SKIP
+  >>> with open('filename.pkl', 'rb') as f: clf2 = load(f) # doctest: +SKIP
+  >>> clf2.predict(X[0:1]) # doctest: +SKIP
+  array([0])
+  >>> y[0]
+  0
+
+The pickled representation of the object is returned as a bytes object with the
+help of the `dumps` function. The reconstituted object hierarchy of the pickled
+data is then returned using the `loads` function. For applications that involve
+writing and loading the serialized object to or from a file, `dump` and `load`
+can be used instead of `dumps` and `loads`.
+
+.. note::
+
+    To safely load a pickled scikit-learn model it is advisable to pin all
+    transitive scikit-learn dependencies using `pip freeze > requirements.txt`.
+    The environment can then be recreated using `pip install -r
+    requirements.txt`. This prevents any incompatability issues that may
+    arise while trying to load the pickled model.
 
 In the specific case of scikit-learn, it may be better to use joblib's
 replacement of pickle (``dump`` & ``load``), which is more efficient on
@@ -46,7 +85,7 @@ string::
 Later you can load back the pickled model (possibly in another Python process)
 with::
 
-  >>> clf = load('filename.joblib') # doctest:+SKIP
+  >>> clf = load('filename.joblib') # doctest: +SKIP
 
 .. note::
 
@@ -182,3 +221,50 @@ not help in production when performance is critical.
 To convert scikit-learn model to PMML you can use for example `sklearn2pmml
 <https://github.com/jpmml/sklearn2pmml>`_ distributed under the Affero GPLv3
 license.
+
+Choosing the right approach for model persistance
+-------------------------------------------------
+
+Different approaches to persist scikit-learn models have been explored through
+this guide. Let us examine the key considerations of each approach so that it
+is easier to make an informed decision on how to persist a scikit-learn model.
+
+Any Python object can be serialized and deserialized using `pickle`, including
+custom Python classes and objects. It can be used for general purpose
+serialization tasks and is part of the standard Python library. It is advisable
+to pin all transitive dependencies while using `pickle` to prevent any
+compatability issues. While `pickle` can be used to easily save and load
+scikit-learn models, unpickling of untrusted data might lead to security
+issues.
+
+Efficient storage and memory mapping techniques make `joblib` faster than
+`pickle` for serializing and deserializing large NumPy arrays. For smaller
+models the difference in performance may not be very significant, however
+`joblib` is more efficient when it comes to working with large machine
+learning models. For tasks in which performance is a priority `joblib` proves
+to be highly effective. Similar to `pickle`, care must be taken when loading
+untrusted data as it can lead to the execution of arbitrary Python code, which
+may be malicious.
+
+Trained scikit-learn models can be easily shared and put into production using
+`skops`. The use of `skops` provides a more secure approach for loading models
+when compared to `pickle` as it prevents users from executing unknown arbitrary
+code. It also allows user to specify whether the data is trusted or not, making
+it more secure compared to other approaches. A disadvantage of using `skops` is
+that it does not offer support to persist arbitrary Python code. Custom
+functions created to be used with transformer classes for preprocessing will
+not work.
+
+`ONNX` can be used to represent any machine learning or deep learning model.
+It provides a uniform format and allows for framework interoperability. Due to
+this trained models can be easily deployed on different platforms.
+`skops` only makes it easier to persist scikit-learn models, whereas `ONNX`
+can be used to save any machine learning or deep learning model. `ONNX` is
+optimized for performance efficiency, however, `ONNX` models might not be
+compatible with all versions of different frameworks.
+
+`PMML` is a platform independent format that can be used to persist models. It
+helps reduce the risk of vendor lock-ins and can be easily deployed in
+production. `PMML` is based on XML and the format used to persist models can be
+highly verbose. The verbosity and complexity might make it harder to use `PMML`
+for complex models. 
