@@ -1123,6 +1123,9 @@ class TimeSeriesSplit(_BaseKFold):
       Train: index=[0 1 2 3 4 5 6 7]
       Test:  index=[10 11]
 
+    For a more extended example see
+    :ref:`sphx_glr_auto_examples_applications_plot_cyclical_feature_engineering.py`.
+
     Notes
     -----
     The training set has size ``i * n_samples // (n_splits + 1)
@@ -2505,6 +2508,14 @@ def check_cv(cv=5, y=None, *, classifier=False):
     checked_cv : a cross-validator instance.
         The return value is a cross-validator which generates the train/test
         splits via the ``split`` method.
+
+    Examples
+    --------
+    >>> from sklearn.model_selection import check_cv
+    >>> check_cv(cv=5, y=None, classifier=False)
+    KFold(...)
+    >>> check_cv(cv=5, y=[1, 1, 0, 0, 0, 0], classifier=True)
+    StratifiedKFold(...)
     """
     cv = 5 if cv is None else cv
     if isinstance(cv, numbers.Integral):

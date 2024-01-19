@@ -47,6 +47,16 @@ pre_python_environment_install() {
 
 }
 
+check_packages_dev_version() {
+    for package in $@; do
+        package_version=$(python -c "import $package; print($package.__version__)")
+        if ! [[ $package_version =~ "dev" ]]; then
+            echo "$package is not a development version: $package_version"
+            exit 1
+        fi
+    done
+}
+
 python_environment_install_and_activate() {
     if [[ "$DISTRIB" == "conda"* ]]; then
         # Install/update conda with the libmamba solver because the legacy
@@ -71,7 +81,11 @@ python_environment_install_and_activate() {
     if [[ "$DISTRIB" == "conda-pip-scipy-dev" ]]; then
         echo "Installing development dependency wheels"
         dev_anaconda_url=https://pypi.anaconda.org/scientific-python-nightly-wheels/simple
-        pip install --pre --upgrade --timeout=60 --extra-index $dev_anaconda_url numpy pandas scipy
+        dev_packages="numpy scipy pandas"
+        pip install --pre --upgrade --timeout=60 --extra-index $dev_anaconda_url $dev_packages
+
+        check_packages_dev_version $dev_packages
+
         echo "Installing Cython from latest sources"
         pip install https://github.com/cython/cython/archive/master.zip
         echo "Installing joblib from latest sources"

@@ -379,17 +379,17 @@ def test_is_multilabel():
 
 
 @pytest.mark.parametrize(
-    "array_namespace, device, dtype",
+    "array_namespace, device, dtype_name",
     yield_namespace_device_dtype_combinations(),
 )
-def test_is_multilabel_array_api_compliance(array_namespace, device, dtype):
-    xp, device, dtype = _array_api_for_tests(array_namespace, device, dtype)
+def test_is_multilabel_array_api_compliance(array_namespace, device, dtype_name):
+    xp = _array_api_for_tests(array_namespace, device)
 
     for group, group_examples in ARRAY_API_EXAMPLES.items():
         dense_exp = group == "multilabel-indicator"
         for example in group_examples:
             if np.asarray(example).dtype.kind == "f":
-                example = np.asarray(example, dtype=dtype)
+                example = np.asarray(example, dtype=dtype_name)
             else:
                 example = np.asarray(example)
             example = xp.asarray(example, device=device)

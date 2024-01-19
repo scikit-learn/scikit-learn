@@ -18,7 +18,7 @@ particular, we will evaluate:
   category support <categorical_support_gbdt>` of the
   :class:`~ensemble.HistGradientBoostingRegressor` estimator.
 
-We will work with the Ames Lowa Housing dataset which consists of numerical
+We will work with the Ames Iowa Housing dataset which consists of numerical
 and categorical features, where the houses' sales prices is the target.
 
 """
@@ -143,8 +143,8 @@ hist_ordinal = make_pipeline(
 # are considered categorical features.
 #
 # The main difference between this estimator and the previous one is that in
-# this one, we let the :class:`~ensemble.HistGradientBoostingRegressor` know
-# which features are categorical.
+# this one, we let the :class:`~ensemble.HistGradientBoostingRegressor` detect
+# which features are categorical from the DataFrame columns' dtypes.
 
 hist_native = HistGradientBoostingRegressor(
     random_state=42, categorical_features="from_dtype"
