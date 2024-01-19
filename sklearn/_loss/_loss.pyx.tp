@@ -1262,10 +1262,9 @@ cdef class CyHalfMultinomialLoss():
                     sum_exps = max_value_and_sum_exps.val2
                     loss_out[i] = log(sum_exps) + max_value
 
-                    for k in range(n_classes):
-                        # label decode y_true
-                        if y_true[i] == k:
-                            loss_out[i] -= raw_prediction[i, k]
+                    # label encoded y_true
+                    k = int(y_true[i])
+                    loss_out[i] -= raw_prediction[i, k]
 
                 free(p)
         else:
@@ -1278,10 +1277,9 @@ cdef class CyHalfMultinomialLoss():
                     sum_exps = max_value_and_sum_exps.val2
                     loss_out[i] = log(sum_exps) + max_value
 
-                    for k in range(n_classes):
-                        # label decode y_true
-                        if y_true[i] == k:
-                            loss_out[i] -= raw_prediction[i, k]
+                    # label encoded y_true
+                    k = int(y_true[i])
+                    loss_out[i] -= raw_prediction[i, k]
 
                     loss_out[i] *= sample_weight[i]
 
@@ -1319,7 +1317,7 @@ cdef class CyHalfMultinomialLoss():
 
                     for k in range(n_classes):
                         # label decode y_true
-                        if y_true [i] == k:
+                        if y_true[i] == k:
                             loss_out[i] -= raw_prediction[i, k]
                         p[k] /= sum_exps  # p_k = y_pred_k = prob of class k
                         # gradient_k = p_k - (y_true == k)
@@ -1338,7 +1336,7 @@ cdef class CyHalfMultinomialLoss():
 
                     for k in range(n_classes):
                         # label decode y_true
-                        if y_true [i] == k:
+                        if y_true[i] == k:
                             loss_out[i] -= raw_prediction[i, k]
                         p[k] /= sum_exps  # p_k = y_pred_k = prob of class k
                         # gradient_k = (p_k - (y_true == k)) * sw
