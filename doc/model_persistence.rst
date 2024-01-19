@@ -10,11 +10,11 @@ Model persistence
 
 After training a scikit-learn model, it is desirable to have a way to persist
 the model for future use without having to retrain. This can be accomplished
-using `pickle <https://docs.python.org/3/library/pickle.html>`, `joblib
-<https://joblib.readthedocs.io/en/stable/>`, `skops
-<https://skops.readthedocs.io/en/stable/>`, `ONNX <https://onnx.ai/>`, or `PMML
-<https://dmg.org/pmml/v4-4-1/GeneralStructure.html>`. In most cases
-:mod:`pickle` can be used to persist a trained scikit-learn model. Once all
+using `pickle <https://docs.python.org/3/library/pickle.html>`_, `joblib
+<https://joblib.readthedocs.io/en/stable/>`_, `skops
+<https://skops.readthedocs.io/en/stable/>`_, `ONNX <https://onnx.ai/>`_,
+or `PMML <https://dmg.org/pmml/v4-4-1/GeneralStructure.html>`_. In most cases
+`pickle` can be used to persist a trained scikit-learn model. Once all
 transitive scikit-learn dependencies have been pinned, the trained model can
 then be safely and securely loaded for further use. The following sections
 give you some hints on how to persist a scikit-learn model.
