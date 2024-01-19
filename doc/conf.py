@@ -211,7 +211,7 @@ html_theme_options = {
         "plausible_analytics_url": "https://views.scientific-python.org/js/script.js",
     },
     # If "prev-next" is included in article_footer_items, then setting show_prev_next
-    # to True would repeat prev and next links, as of pydata-sphinx-theme 0.14.0. See
+    # to True would repeat prev and next links. See
     # https://github.com/pydata/pydata-sphinx-theme/blob/b731dc230bc26a3d1d1bb039c56c977a9b3d25d8/src/pydata_sphinx_theme/theme/pydata_sphinx_theme/layout.html#L118-L129
     "show_prev_next": False,
     "search_bar_text": "Search the docs ...",

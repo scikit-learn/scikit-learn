@@ -44,7 +44,7 @@ dependent_packages = {
     "plotly": ("5.14.0", "docs, examples"),
     "sphinxcontrib-sass": ("0.3.4", "docs"),
     "sphinx-remove-toctrees": ("0.0.3", "docs"),
-    "pydata-sphinx-theme": ("0.14.3", "docs"),
+    "pydata-sphinx-theme": ("0.15.2", "docs"),
     # XXX: Pin conda-lock to the latest released version (needs manual update
     # from time to time)
     "conda-lock": ("2.4.2", "maintenance"),

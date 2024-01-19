@@ -32,7 +32,7 @@ dependencies:
   - pooch
   - sphinxext-opengraph
   - sphinx-remove-toctrees
-  - pydata-sphinx-theme<0.15.0
+  - pydata-sphinx-theme
   - pip
   - pip:
     - jupyterlite-sphinx
