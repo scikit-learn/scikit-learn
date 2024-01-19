@@ -562,6 +562,34 @@ def compute_optics_graph(
     .. [1] Ankerst, Mihael, Markus M. Breunig, Hans-Peter Kriegel,
        and Jörg Sander. "OPTICS: ordering points to identify the clustering
        structure." ACM SIGMOD Record 28, no. 2 (1999): 49-60.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.cluster import compute_optics_graph
+    >>> X = np.array([[1, 2], [2, 5], [3, 6],
+    ...               [8, 7], [8, 8], [7, 3]])
+    >>> ordering, core_distances, reachability, predecessor = compute_optics_graph(
+    ...     X,
+    ...     min_samples=2,
+    ...     max_eps=np.inf,
+    ...     metric="minkowski",
+    ...     p=2,
+    ...     metric_params=None,
+    ...     algorithm="auto",
+    ...     leaf_size=30,
+    ...     n_jobs=None,
+    ... )
+    >>> ordering
+    array([0, 1, 2, 5, 3, 4])
+    >>> core_distances
+    array([3.16..., 1.41..., 1.41..., 1.        , 1.        ,
+           4.12...])
+    >>> reachability
+    array([       inf, 3.16..., 1.41..., 4.12..., 1.        ,
+           5.        ])
+    >>> predecessor
+    array([-1,  0,  1,  5,  3,  2])
     """
     n_samples = X.shape[0]
     _validate_size(min_samples, n_samples, "min_samples")
@@ -720,6 +748,33 @@ def cluster_optics_dbscan(*, reachability, core_distances, ordering, eps):
     -------
     labels_ : array of shape (n_samples,)
         The estimated labels.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.cluster import cluster_optics_dbscan, compute_optics_graph
+    >>> X = np.array([[1, 2], [2, 5], [3, 6],
+    ...               [8, 7], [8, 8], [7, 3]])
+    >>> ordering, core_distances, reachability, predecessor = compute_optics_graph(
+    ...     X,
+    ...     min_samples=2,
+    ...     max_eps=np.inf,
+    ...     metric="minkowski",
+    ...     p=2,
+    ...     metric_params=None,
+    ...     algorithm="auto",
+    ...     leaf_size=30,
+    ...     n_jobs=None,
+    ... )
+    >>> eps = 4.5
+    >>> labels = cluster_optics_dbscan(
+    ...     reachability=reachability,
+    ...     core_distances=core_distances,
+    ...     ordering=ordering,
+    ...     eps=eps,
+    ... )
+    >>> labels
+    array([0, 0, 0, 1, 1, 1])
     """
     n_samples = len(core_distances)
     labels = np.zeros(n_samples, dtype=int)
@@ -806,6 +861,37 @@ def cluster_optics_xi(
         clusters come after such nested smaller clusters. Since ``labels`` does
         not reflect the hierarchy, usually ``len(clusters) >
         np.unique(labels)``.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.cluster import cluster_optics_xi, compute_optics_graph
+    >>> X = np.array([[1, 2], [2, 5], [3, 6],
+    ...               [8, 7], [8, 8], [7, 3]])
+    >>> ordering, core_distances, reachability, predecessor = compute_optics_graph(
+    ...     X,
+    ...     min_samples=2,
+    ...     max_eps=np.inf,
+    ...     metric="minkowski",
+    ...     p=2,
+    ...     metric_params=None,
+    ...     algorithm="auto",
+    ...     leaf_size=30,
+    ...     n_jobs=None
+    ... )
+    >>> min_samples = 2
+    >>> labels, clusters = cluster_optics_xi(
+    ...     reachability=reachability,
+    ...     predecessor=predecessor,
+    ...     ordering=ordering,
+    ...     min_samples=min_samples,
+    ... )
+    >>> labels
+    array([0, 0, 0, 1, 1, 1])
+    >>> clusters
+    array([[0, 2],
+           [3, 5],
+           [0, 5]])
     """
     n_samples = len(reachability)
     _validate_size(min_samples, n_samples, "min_samples")

@@ -308,3 +308,14 @@ def test_sparse_input_for_fit_predict(csr_container):
     X = csr_container(rng.randint(0, 2, size=(5, 5)))
     labels = af.fit_predict(X)
     assert_array_equal(labels, (0, 1, 1, 2, 3))
+
+
+def test_affinity_propagation_equal_points():
+    """Make sure we do not assign multiple clusters to equal points.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/pull/20043
+    """
+    X = np.zeros((8, 1))
+    af = AffinityPropagation(affinity="euclidean", damping=0.5, random_state=42).fit(X)
+    assert np.all(af.labels_ == 0)
