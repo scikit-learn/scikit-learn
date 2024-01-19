@@ -78,6 +78,9 @@ Changelog
   :class:`~calibration.CalibrationDisplay`.
   :pr:`28051` by :user:`Pierre de Fréminville <pidefrem>`.
 
+- |Enhancement| Added zero division handling in :func:`metrics.balanced_accuracy_score`
+  to make balanced accuracy consistent with macro-average recall.
+  :pr:`28038` by :user:`Tenga Cortal <TengaCortal>`.
 
 Code and Documentation Contributors
 -----------------------------------

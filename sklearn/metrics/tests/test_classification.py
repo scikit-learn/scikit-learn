@@ -2765,7 +2765,7 @@ def test_brier_score_loss():
 
 
 def test_balanced_accuracy_score_unseen():
-    msg = "y_pred contains classes not in y_true"
+    msg = "y_pred contains classes not in y_true or some classes have no true samples."
     with pytest.warns(UserWarning, match=msg):
         balanced_accuracy_score([0, 0, 0], [0, 0, 1])
 
@@ -2779,16 +2779,38 @@ def test_balanced_accuracy_score_unseen():
     ],
 )
 def test_balanced_accuracy_score(y_true, y_pred):
-    macro_recall = recall_score(
-        y_true, y_pred, average="macro", labels=np.unique(y_true)
-    )
+    macro_recall = recall_score(y_true, y_pred, average="macro")
     with ignore_warnings():
         # Warnings are tested in test_balanced_accuracy_score_unseen
         balanced = balanced_accuracy_score(y_true, y_pred)
     assert balanced == pytest.approx(macro_recall)
     adjusted = balanced_accuracy_score(y_true, y_pred, adjusted=True)
-    chance = balanced_accuracy_score(y_true, np.full_like(y_true, y_true[0]))
+    max_unique_classes = max(len(np.unique(y_true)), len(np.unique(y_pred)))
+    chance = 1 / max_unique_classes
     assert adjusted == (balanced - chance) / (1 - chance)
+
+
+@pytest.mark.parametrize(
+    "y_true, y_pred, zero_division_value",
+    [
+        (np.array([1, 1, 1, 1]), np.array([2, 2, 2, 2]), 1),
+    ],
+)
+def test_balanced_accuracy_score_zero_division(y_true, y_pred, zero_division_value):
+    C = confusion_matrix(y_true, y_pred, sample_weight=None)
+    with np.errstate(divide="ignore", invalid="ignore"):
+        per_class = np.diag(C) / C.sum(axis=1)
+
+    nan_mask = np.isnan(per_class)
+    expected_per_class = per_class
+    expected_per_class[nan_mask] = zero_division_value
+    expected_score = np.mean(expected_per_class)
+    with ignore_warnings():
+        # Warnings are tested in test_balanced_accuracy_score_unseen
+        balanced = balanced_accuracy_score(
+            y_true, y_pred, zero_division=zero_division_value
+        )
+    assert balanced == expected_score
 
 
 @pytest.mark.parametrize(
