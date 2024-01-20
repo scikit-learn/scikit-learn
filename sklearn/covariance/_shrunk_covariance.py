@@ -140,6 +140,7 @@ def shrunk_covariance(emp_cov, shrinkage=0.1):
     import numpy as np
     from sklearn.covariance import shrunk_covariance
 
+    # Generating synthetic data
     np.random.seed(42)
     n_samples = 50
     n_features = 3
@@ -152,7 +153,7 @@ def shrunk_covariance(emp_cov, shrinkage=0.1):
     shrunk_cov = shrunk_covariance(empirical_covariance, shrinkage)
 
     # Displaying the shrunk covariance matrix
-    print(shrunk_cov)
+    print("Shrunk covariance matrix: :\n", shrunk_cov)
     """
     emp_cov = check_array(emp_cov, allow_nd=True)
     n_features = emp_cov.shape[-1]
@@ -342,6 +343,7 @@ def ledoit_wolf_shrinkage(X, assume_centered=False, block_size=1000):
     import numpy as np
     from sklearn.covariance import LedoitWolf
 
+    # Generating synthetic data
     np.random.seed(42)
     n_samples = 50
     n_features = 3
@@ -355,7 +357,7 @@ def ledoit_wolf_shrinkage(X, assume_centered=False, block_size=1000):
     print(lw.covariance_)
 
     # Display the shrinkage coefficient
-    print(lw.shrinkage_float_)
+    print("shrinkage coefficient :\n", lw.shrinkage_float_)
 
     """
     X = check_array(X)
@@ -460,6 +462,26 @@ def ledoit_wolf(X, *, assume_centered=False, block_size=1000):
     (1 - shrinkage) * cov + shrinkage * mu * np.identity(n_features)
 
     where mu = trace(cov) / n_features
+
+    Examples
+    -----
+    import numpy as np
+    from sklearn.covariance import LedoitWolf
+
+    # Generating synthetic data
+    np.random.seed(42)
+    n_samples, n_features = 50, 3
+    data = np.random.randn(n_samples, n_features)
+
+    # Applying Ledoit-Wolf shrinkage
+    lw = LedoitWolf()
+    lw.fit(data)
+    covariance_matrix = lw.covariance_
+    shrinkage_coefficient = lw.shrinkage_
+
+    print("Estimated covariance matrix:\n", covariance_matrix)
+    print("Shrinkage coefficient:", shrinkage_coefficient)
+
     """
     estimator = LedoitWolf(
         assume_centered=assume_centered,
