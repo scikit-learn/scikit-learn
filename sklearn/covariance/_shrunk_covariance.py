@@ -448,7 +448,7 @@ def ledoit_wolf(X, *, assume_centered=False, block_size=1000):
     where mu = trace(cov) / n_features
 
     Examples
-    -----
+    --------
     >>> import numpy as np
     >>> from sklearn.covariance import LedoitWolf
     >>> np.random.seed(42)
