@@ -339,25 +339,20 @@ def ledoit_wolf_shrinkage(X, assume_centered=False, block_size=1000):
 
     Examples
     --------
-
-    import numpy as np
-    from sklearn.covariance import LedoitWolf
-
+    
+    from sklearn.covariance import ledoit_wolf_shrinkage
+    
     # Generating synthetic data
     np.random.seed(42)
-    n_samples = 50
-    n_features = 3
-
+    n_samples, n_features = 50, 3
     data = np.random.randn(n_samples, n_features)
-
-    lw = LedoitWolf()
-    lw.fit(data)
-
-    # Displaying the estimated covariance matrix
-    print(lw.covariance_)
-
-    # Display the shrinkage coefficient
-    print("shrinkage coefficient :\n", lw.shrinkage_float_)
+    
+    # Computing the empirical covariance matrix
+    emp_cov = np.cov(data, rowvar=False)
+    
+    # Estimating the optimal shrinkage coefficient
+    shrinkage_coefficient = ledoit_wolf_shrinkage(emp_cov)
+    print("Optimal shrinkage coefficient:", shrinkage_coefficient)
 
     """
     X = check_array(X)
