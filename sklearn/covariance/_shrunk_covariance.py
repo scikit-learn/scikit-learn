@@ -155,7 +155,6 @@ def shrunk_covariance(emp_cov, shrinkage=0.1):
     [[ 0.63143791 -0.09554794 -0.14506296]
     [-0.09554794  0.99784283 -0.03580536]
     [-0.14506296 -0.03580536  1.06877687]]
-
     """
     emp_cov = check_array(emp_cov, allow_nd=True)
     n_features = emp_cov.shape[-1]
@@ -353,7 +352,6 @@ def ledoit_wolf_shrinkage(X, assume_centered=False, block_size=1000):
     >>> shrinkage_coefficient = ledoit_wolf_shrinkage(emp_cov)
     >>> print("Optimal shrinkage coefficient:", shrinkage_coefficient)
     Optimal shrinkage coefficient: 0.9060740426875209
-
     """
     X = check_array(X)
     # for only one feature, the result is the same whatever the shrinkage
@@ -482,7 +480,6 @@ def ledoit_wolf(X, *, assume_centered=False, block_size=1000):
 
     >>> print("Shrinkage coefficient:", shrinkage_coefficient)
     Shrinkage coefficient: 0.6110553217490645
-
     """
     estimator = LedoitWolf(
         assume_centered=assume_centered,
