@@ -1656,6 +1656,12 @@ class RandomForestRegressor(ForestRegressor):
         valid partition of the node samples is found, even if it requires to
         effectively inspect more than ``max_features`` features.
 
+    max_outputs: int or float, default=None
+        Used to tune how many outputs are considered when selecting the optimal split.
+        When default is 0, all outputs are considered as normally.
+        When the value is 1, a random output feature is selected for use of split.
+        1 < max_outputs < number_of_outputs
+
     max_leaf_nodes : int, default=None
         Grow trees with ``max_leaf_nodes`` in best-first fashion.
         Best nodes are defined as relative reduction in impurity.
@@ -1849,13 +1855,16 @@ class RandomForestRegressor(ForestRegressor):
     _parameter_constraints: dict = {
         **ForestRegressor._parameter_constraints,
         **DecisionTreeRegressor._parameter_constraints,
+        "max_outputs": [float, int, None],
     }
+
     _parameter_constraints.pop("splitter")
 
     def __init__(
         self,
         n_estimators=100,
         *,
+        max_outputs=None,
         criterion="squared_error",
         max_depth=None,
         min_samples_split=2,
@@ -1900,6 +1909,7 @@ class RandomForestRegressor(ForestRegressor):
         )
 
         self.criterion = criterion
+        self.max_outputs = max_outputs
         self.max_depth = max_depth
         self.min_samples_split = min_samples_split
         self.min_samples_leaf = min_samples_leaf
