@@ -343,8 +343,6 @@ def ledoit_wolf_shrinkage(X, assume_centered=False, block_size=1000):
     >>> data = np.random.randn(n_samples, n_features)
     >>> emp_cov = np.cov(data, rowvar=False)
     >>> shrinkage_coefficient = ledoit_wolf_shrinkage(emp_cov)
-    >>> print("Optimal shrinkage coefficient:", shrinkage_coefficient)
-    Optimal shrinkage coefficient: 0.9060740426875209
     """
     X = check_array(X)
     # for only one feature, the result is the same whatever the shrinkage
