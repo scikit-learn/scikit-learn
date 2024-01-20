@@ -222,7 +222,7 @@ To convert scikit-learn model to PMML you can use for example `sklearn2pmml
 <https://github.com/jpmml/sklearn2pmml>`_ distributed under the Affero GPLv3
 license.
 
-Choosing the right approach for model persistance
+Choosing the right approach for model persistence
 -------------------------------------------------
 
 Different approaches to persist scikit-learn models have been explored through
