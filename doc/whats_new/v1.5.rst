@@ -64,12 +64,24 @@ Changelog
   for storing the inverse document frequency.
   :pr:`18843` by :user:`Paolo Montesel <thebabush>`.
 
+- |Enhancement| :class:`feature_extraction.text.TfidfTransformer` now preserves
+  the data type of the input matrix if it is `np.float64` or `np.float32`.
+  :pr:`28136` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 :mod:`sklearn.impute`
 .....................
 
 - |Enhancement| :class:`impute.SimpleImputer` now supports custom strategies
   by passing a function in place of a strategy name.
   :pr:`28053` by :user:`Mark Elliot <mark-thm>`.
+
+:mod:`sklearn.feature_selection`
+................................
+
+- |Enhancement| :func:`feature_selection.mutual_info_regression` and
+  :func:`feature_selection.mutual_info_classif` now support `n_jobs` parameter.
+  :pr:`28085` by :user:`Neto Menoci <netomenoci>` and
+  :user:`Florin Andrei <FlorinAndrei>`.
 
 :mod:`sklearn.metrics`
 ......................

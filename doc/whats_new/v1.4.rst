@@ -2,6 +2,28 @@
 
 .. currentmodule:: sklearn
 
+.. _changes_1_4_1:
+
+Version 1.4.1
+=============
+
+**In Development**
+
+Changelog
+---------
+
+:mod:`sklearn.cluster`
+......................
+
+- |Fix| :class:`cluster.AffinityPropagation` now avoids assigning multiple different
+  clusters for equal points.
+  :pr:`28121` by :user:`Pietro Peterlongo <pietroppeter>` and
+  :user:`Yao Xiao <Charlie-XIAO>`.
+
+- |Fix| Avoid infinite loop in :class:`cluster.KMeans` when the number of clusters is
+  larger than the number of non-duplicate samples.
+  :pr:`28165` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
+
 .. _changes_1_4:
 
 Version 1.4.0
@@ -471,6 +493,10 @@ Changelog
   :class:`ensemble.ExtraTreesClassifier` and :class:`ensemble.ExtraTreesRegressor`,
   which allows to retrieve the training sample indices used for each tree estimator.
   :pr:`26736` by :user:`Adam Li <adam2392>`.
+
+- |Efficiency| Improves runtime of `predict` of
+  :class:`ensemble.HistGradientBoostingClassifier` by avoiding to call `predict_proba`.
+  :pr:`27844` by :user:`Christian Lorentzen <lorentzenchr>`.
 
 - |Fix| Fixes :class:`ensemble.IsolationForest` when the input is a sparse matrix and
   `contamination` is set to a float value.
