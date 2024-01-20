@@ -1303,10 +1303,9 @@ def coverage_error(y_true, y_score, *, sample_weight=None):
 
     Examples
     --------
-    >>> import numpy as np
     >>> from sklearn.metrics import coverage_error
-    >>> y_true = np.array([[1, 0, 0], [0, 1, 1]])
-    >>> y_score = np.array([[1, 0, 0], [0, 1, 1]])
+    >>> y_true = [[1, 0, 0], [0, 1, 1]]
+    >>> y_score = [[1, 0, 0], [0, 1, 1]]
     >>> coverage_error(y_true, y_score)
     1.5
     """
