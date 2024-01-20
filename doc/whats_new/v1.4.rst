@@ -25,7 +25,7 @@ Changelog
   :pr:`28165` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
 - |Fix| Pandas and Polars dataframe are validated directly without ducktyping checks.
-  :pr:`xxxxx` by `Thomas Fan`_.
+  :pr:`28195` by `Thomas Fan`_.
 
 .. _changes_1_4:
 
