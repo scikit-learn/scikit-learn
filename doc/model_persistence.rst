@@ -249,22 +249,22 @@ may be malicious.
 Trained scikit-learn models can be easily shared and put into production using
 `skops`. The use of `skops` provides a more secure approach for loading models
 when compared to `pickle` as it prevents users from executing unknown arbitrary
-code. It also allows user to specify whether the data is trusted or not, making
-it more secure compared to other approaches. A disadvantage of using `skops` is
-that it does not offer support to persist arbitrary Python code. Custom
-functions created to be used with transformer classes for preprocessing will
-not work.
+code. It also allows users to specify whether the data is trusted or not,
+making it more secure compared to other approaches. A disadvantage of using
+`skops` is that it does not offer support to persist arbitrary Python code.
+Custom functions created to be used with transformer classes for preprocessing
+will not work.
 
 `ONNX` can be used to represent any machine learning or deep learning model.
 It provides a uniform format and allows for framework interoperability. Due to
 this trained models can be easily deployed on different platforms.
-`skops` only helps with persisting scikit-learn models, whereas `ONNX`
-can be used to save any machine learning or deep learning model. `ONNX` is
+`ONNX` can be used to persist any machine learning or deep learning model,
+whereas `skops` only helps with persisting scikit-learn models. `ONNX` is
 optimized for performance efficiency, however, `ONNX` models might not be
 compatible with all versions of different frameworks.
 
 `PMML` is a platform independent format that can be used to persist models. It
 helps reduce the risk of vendor lock-ins and can be easily deployed in
 production. `PMML` is based on XML and the format used to persist models can be
-highly verbose. The verbosity and complexity might make it harder to use `PMML`
-for complex models. 
+highly verbose. The complexity and verbosity of `PMML` might make it harder to
+use for larger models.
