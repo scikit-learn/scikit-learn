@@ -445,22 +445,16 @@ def ledoit_wolf(X, *, assume_centered=False, block_size=1000):
     Examples
     --------
     >>> import numpy as np
-    >>> from sklearn.covariance import LedoitWolf
-    >>> np.random.seed(42)
-    >>> n_samples, n_features = 50, 3
-    >>> data = np.random.randn(n_samples, n_features)
-    >>> lw = LedoitWolf()
-    >>> lw.fit(data)
-    LedoitWolf()
-    >>> covariance_matrix = lw.covariance_
-    >>> shrinkage_coefficient = lw.shrinkage_
-    >>> print("Estimated covariance matrix:\n", covariance_matrix)
-    Estimated covariance matrix:
-    [[ 0.75371563 -0.04552451 -0.0691163 ]
-    [-0.04552451  0.9282919  -0.01705972]
-    [-0.0691163  -0.01705972  0.96208893]]
-    >>> print("Shrinkage coefficient:", shrinkage_coefficient)
-    Shrinkage coefficient: 0.6110553217490645
+    >>> from sklearn.covariance import empirical_covariance, ledoit_wolf
+    >>> real_cov = np.array([[.4, .2], [.2, .8]])
+    >>> rng = np.random.RandomState(0)
+    >>> X = rng.multivariate_normal(mean=[0, 0], cov=real_cov, size=50)
+    >>> covariance, shrinkage = ledoit_wolf(X)
+    >>> covariance
+    array([[0.44..., 0.16...],
+           [0.16..., 0.80...]])
+    >>> shrinkage
+    0.23...
     """
     estimator = LedoitWolf(
         assume_centered=assume_centered,
