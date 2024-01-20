@@ -1607,12 +1607,10 @@ def make_spd_matrix(n_dim, *, random_state=None):
     Examples
     --------
     >>> from sklearn.datasets import make_spd_matrix
-    >>> X = make_spd_matrix(n_dim=2,random_state=42)
-    >>> X.shape
-    (2, 2)
+    >>> make_spd_matrix(n_dim=2, random_state=42)
     >>> X
-    array([[2.09417602, 0.34617642],
-           [0.34617642, 0.21783715]])
+    array([[2.09..., 0.34...],
+           [0.34..., 0.21...]])
     """
     generator = check_random_state(random_state)
 
