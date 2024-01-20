@@ -545,9 +545,7 @@ def roc_auc_score(
 
     G = 2 * AUC - 1
 
-    Where G is the Gini coefficient and AUC is the ROC-AUC score. This normalisation
-    will ensure that random guessing will yield a score of 0 in expectation, and it is
-    upper bounded by 1.
+    Where G is the Gini coefficient and AUC is the ROC-AUC score.
 
     References
     ----------
