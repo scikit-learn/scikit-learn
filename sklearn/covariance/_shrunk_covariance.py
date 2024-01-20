@@ -307,52 +307,57 @@ class ShrunkCovariance(EmpiricalCovariance):
 def ledoit_wolf_shrinkage(X, assume_centered=False, block_size=1000):
     """Estimate the shrunk Ledoit-Wolf covariance matrix.
 
-        Read more in the :ref:`User Guide <shrunk_covariance>`.
+    Read more in the :ref:`User Guide <shrunk_covariance>`.
 
-        Parameters
-        ----------
-        X : array-like of shape (n_samples, n_features)
-            Data from which to compute the Ledoit-Wolf shrunk covariance shrinkage.
+    Parameters
+    ----------
+    X : array-like of shape (n_samples, n_features)
+        Data from which to compute the Ledoit-Wolf shrunk covariance shrinkage.
 
-        assume_centered : bool, default=False
-            If True, data will not be centered before computation.
-            Useful to work with data whose mean is significantly equal to
-            zero but is not exactly zero.
-            If False, data will be centered before computation.
+    assume_centered : bool, default=False
+        If True, data will not be centered before computation.
+        Useful to work with data whose mean is significantly equal to
+        zero but is not exactly zero.
+        If False, data will be centered before computation.
 
-        block_size : int, default=1000
-            Size of blocks into which the covariance matrix will be split.
+    block_size : int, default=1000
+        Size of blocks into which the covariance matrix will be split.
 
-        Returns
-        -------
-        shrinkage : float
-            Coefficient in the convex combination used for the computation
-            of the shrunk estimate.
+    Returns
+    -------
+    shrinkage : float
+        Coefficient in the convex combination used for the computation
+        of the shrunk estimate.
 
-        Notes
-        -----
-        The regularized (shrunk) covariance is:
+    Notes
+    -----
+    The regularized (shrunk) covariance is:
 
-        (1 - shrinkage) * cov + shrinkage * mu * np.identity(n_features)
+    (1 - shrinkage) * cov + shrinkage * mu * np.identity(n_features)
 
-        where mu = trace(cov) / n_features
+    where mu = trace(cov) / n_features
 
-        Examples
-        --------
+    Examples
+    --------
 
-        from sklearn.covariance import ledoit_wolf_shrinkage
+    import numpy as np
+    from sklearn.covariance import LedoitWolf
 
-        # Generating synthetic data
-        np.random.seed(42)
-        n_samples, n_features = 50, 3
-        data = np.random.randn(n_samples, n_features)
+    # Generating synthetic data
+    np.random.seed(42)
+    n_samples = 50
+    n_features = 3
 
-        # Computing the empirical covariance matrix
-        emp_cov = np.cov(data, rowvar=False)
+    data = np.random.randn(n_samples, n_features)
 
-        # Estimating the optimal shrinkage coefficient
-        shrinkage_coefficient = ledoit_wolf_shrinkage(emp_cov)
-        print("Optimal shrinkage coefficient:", shrinkage_coefficient)
+    lw = LedoitWolf()
+    lw.fit(data)
+
+    # Displaying the estimated covariance matrix
+    print(lw.covariance_)
+
+    # Display the shrinkage coefficient
+    print("shrinkage coefficient :\n", lw.shrinkage_float_)
 
     """
     X = check_array(X)
