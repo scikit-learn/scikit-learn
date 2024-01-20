@@ -136,7 +136,7 @@ def shrunk_covariance(emp_cov, shrinkage=0.1):
     where `mu = trace(cov) / n_features`.
 
     Examples
-    -----
+    --------
     >>> import numpy as np
     >>> from sklearn.covariance import shrunk_covariance
     >>> np.random.seed(42)
