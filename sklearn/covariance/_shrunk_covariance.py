@@ -138,19 +138,14 @@ def shrunk_covariance(emp_cov, shrinkage=0.1):
     Examples
     --------
     >>> import numpy as np
-    >>> from sklearn.covariance import shrunk_covariance
-    >>> np.random.seed(42)
-    >>> n_samples = 50
-    >>> n_features = 3
-    >>> data = np.random.randn(n_samples, n_features)
-    >>> empirical_covariance = np.cov(data, rowvar=False)
-    >>> shrinkage = 0.2
-    >>> shrunk_cov = shrunk_covariance(empirical_covariance, shrinkage)
-    >>> print("Shrunk covariance matrix:\n", shrunk_cov)
-    Shrunk covariance matrix:
-    [[ 0.63143791 -0.09554794 -0.14506296]
-    [-0.09554794  0.99784283 -0.03580536]
-    [-0.14506296 -0.03580536  1.06877687]]
+    >>> from sklearn.datasets import make_gaussian_quantiles
+    >>> from sklearn.covariance import empirical_covariance, shrunk_covariance
+    >>> real_cov = np.array([[.8, .3], [.3, .4]])
+    >>> rng = np.random.RandomState(0)
+    >>> X = rng.multivariate_normal(mean=[0, 0], cov=real_cov, size=500)
+    >>> shrunk_covariance(empirical_covariance(X))
+    array([[0.73..., 0.25...],
+           [0.25..., 0.41...]])
     """
     emp_cov = check_array(emp_cov, allow_nd=True)
     n_features = emp_cov.shape[-1]
