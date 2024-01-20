@@ -1608,7 +1608,6 @@ def make_spd_matrix(n_dim, *, random_state=None):
     --------
     >>> from sklearn.datasets import make_spd_matrix
     >>> make_spd_matrix(n_dim=2, random_state=42)
-    >>> X
     array([[2.09..., 0.34...],
            [0.34..., 0.21...]])
     """
