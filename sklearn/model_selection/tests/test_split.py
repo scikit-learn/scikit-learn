@@ -96,6 +96,10 @@ test_groups = (
 )
 digits = load_digits()
 
+pytestmark = pytest.mark.filterwarnings(
+    "ignore:The groups parameter:UserWarning:sklearn.*"
+)
+
 
 @ignore_warnings
 def test_cross_validator_with_default_params():
@@ -2023,3 +2027,17 @@ def test_splitter_set_split_request(cv):
         assert hasattr(cv, "set_split_request")
     elif cv in NO_GROUP_SPLITTERS:
         assert not hasattr(cv, "set_split_request")
+
+
+@pytest.mark.parametrize("cv", NO_GROUP_SPLITTERS, ids=str)
+def test_no_group_splitters_warns_with_groups(cv):
+    msg = f"The groups parameter is ignored by {cv.__class__.__name__}"
+
+    n_samples = 30
+    rng = np.random.RandomState(1)
+    X = rng.randint(0, 3, size=(n_samples, 2))
+    y = rng.randint(0, 3, size=(n_samples,))
+    groups = rng.randint(0, 3, size=(n_samples,))
+
+    with pytest.warns(UserWarning, match=msg):
+        cv.split(X, y, groups=groups)

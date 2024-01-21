@@ -78,6 +78,12 @@ Changelog
   :class:`~calibration.CalibrationDisplay`.
   :pr:`28051` by :user:`Pierre de Fréminville <pidefrem>`.
 
+:mod:`sklearn.model_selection`
+..............................
+
+- |Enhancement| :term:`CV splitters <CV splitter>` that ignores the group parameter now
+  raises a warning when groups are passed in to :term:`split`. :pr:`xxxxx` by
+  `Thomas Fan`_.
 
 Code and Documentation Contributors
 -----------------------------------
