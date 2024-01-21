@@ -1179,6 +1179,18 @@ def check_X_y(
 
     y_converted : object
         The converted and validated y.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.utils.validation import check_X_y
+    >>> X = np.array([[1, 2], [3, 4], [5, 6]])
+    >>> y = np.array([1, 2, 3])
+    >>> X, y = check_X_y(X, y)
+    >>> X
+    array([[1, 2],[3, 4],[5, 6]])
+    >>> y
+    array([1, 2, 3])
     """
     if y is None:
         if estimator is None:
