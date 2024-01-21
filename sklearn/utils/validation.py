@@ -1678,6 +1678,14 @@ def check_scalar(
     ValueError
         If the parameter's value violates the given bounds.
         If `min_val`, `max_val` and `include_boundaries` are inconsistent.
+
+    Examples
+    --------
+    >>> x = check_scalar(10, 'x', int, min_val=1, max_val=20)
+    >>> x
+    10
+    >>> x = check_scalar(10, 'x', float)
+    Raises TypeError: x must be an instance of float, not int.
     """
 
     def type_name(t):
