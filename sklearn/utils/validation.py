@@ -1681,6 +1681,7 @@ def check_scalar(
 
     Examples
     --------
+    >>> from sklearn.utils.validation import check_scalar
     >>> x = check_scalar(10, 'x', int, min_val=1, max_val=20)
     >>> x
     10
