@@ -148,21 +148,11 @@ def density(w):
 
     Examples
     --------
-    >>> import numpy as np
+    >>> from scipy import sparse
     >>> from sklearn.utils.extmath import density
-
-    >>> w = np.array([1, 0, 0, 2, 0])
-
-    >>> d = density(w)
-    >>> print(d)
-    0.4
-
-    >>> from scipy.sparse import csr_matrix
-    >>> w_sparse = csr_matrix(([1, 2], ([0, 2], [0, 1])), shape=(3, 3))
-
-    >>> d_sparse = density(w_sparse)
-    >>> print(d_sparse)
-    0.2222222222222222
+    >>> X = sparse.random(10, 10, density=0.25, random_state=0)
+    >>> density(X)
+    0.25
     """
     if hasattr(w, "toarray"):
         d = float(w.nnz) / (w.shape[0] * w.shape[1])
