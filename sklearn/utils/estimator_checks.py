@@ -628,13 +628,8 @@ def check_estimator(estimator=None, generate_only=False):
     --------
     >>> from sklearn.utils.estimator_checks import check_estimator
     >>> from sklearn.linear_model import LogisticRegression
-    >>> estimator1 = LogisticRegression()
-    >>> check_estimator(estimator1)
-
-    >>> checks = check_estimator(estimator1, generate_only=True)
-
-    >>> for estimator1, check in checks:
-    ...     check(estimator1)
+    >>> check_estimator(LogisticRegression(), generate_only=True)
+    <generator object ...>
     """
     if isinstance(estimator, type):
         msg = (
