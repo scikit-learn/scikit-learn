@@ -333,11 +333,12 @@ def ledoit_wolf_shrinkage(X, assume_centered=False, block_size=1000):
     --------
     >>> import numpy as np
     >>> from sklearn.covariance import ledoit_wolf_shrinkage
-    >>> np.random.seed(42)
-    >>> n_samples, n_features = 50, 3
-    >>> data = np.random.randn(n_samples, n_features)
-    >>> emp_cov = np.cov(data, rowvar=False)
-    >>> shrinkage_coefficient = ledoit_wolf_shrinkage(emp_cov)
+    >>> real_cov = np.array([[.4, .2], [.2, .8]])
+    >>> rng = np.random.RandomState(0)
+    >>> X = rng.multivariate_normal(mean=[0, 0], cov=real_cov, size=50)
+    >>> shrinkage_coefficient = ledoit_wolf_shrinkage(X)
+    >>> shrinkage_coefficient
+    0.23...
     """
     X = check_array(X)
     # for only one feature, the result is the same whatever the shrinkage
