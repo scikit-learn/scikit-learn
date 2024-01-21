@@ -422,6 +422,19 @@ def check_consistent_length(*arrays):
     ----------
     *arrays : list or tuple of input objects.
         Objects that will be checked for consistent length.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.utils.validation import check_consistent_length
+    >>> a = np.array([1, 2, 3])
+    >>> b = np.array([2, 3, 4])
+    >>> check_consistent_length(a, b)
+    # No error is raised
+    >>> c = np.array([1, 2])
+    >>> check_consistent_length(a, c)
+    Raises ValueError:
+    Found input variables with inconsistent numbers of samples: [3, 2]
     """
 
     lengths = [_num_samples(X) for X in arrays if X is not None]
