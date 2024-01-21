@@ -1096,6 +1096,22 @@ def load_diabetes(*, return_X_y=False, as_frame=False, scaled=True):
         representing the features and/or target of a given sample.
 
         .. versionadded:: 0.18
+
+    Examples
+    --------
+    If you want to access the data as a pandas DataFrame ::
+
+        >>> from sklearn.datasets import load_diabetes
+        >>> diabetes = load_diabetes(as_frame=True)
+        >>> data, target = diabetes.data, diabetes.target
+        >>> print(f"Number of samples: {data.shape[0]}")
+        Number of samples: 442
+        >>> print(f"Number of features: {data.shape[1]}")
+        Number of features: 10
+        >>> print(f"Feature names: {diabetes.feature_names}")
+        Feature names: ['age', 'sex', 'bmi', 'bp', 's1', 's2', 's3', 's4', 's5', 's6']
+        >>> print(f"Target shape: {target.shape}")
+        Target shape: (442,)
     """
     data_filename = "diabetes_data_raw.csv.gz"
     target_filename = "diabetes_target.csv.gz"
