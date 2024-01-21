@@ -272,15 +272,11 @@ def randomized_range_finder(
     --------
     >>> import numpy as np
     >>> from sklearn.utils.extmath import randomized_range_finder
-
     >>> A = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
-
-    >>> Q = randomized_range_finder(A, size=2, n_iter=2, random_state=42)
-    >>> Q_rounded = np.round(Q, 2)
-    >>> print(Q_rounded)
-    [[-0.21  0.89]
-     [-0.52  0.25]
-     [-0.83 -0.39]]
+    >>> randomized_range_finder(A, size=2, n_iter=2, random_state=42)
+    array([[-0.21...,  0.88...],
+           [-0.52...,  0.24...],
+           [-0.82..., -0.38...]])
     """
     xp, is_array_api_compliant = get_namespace(A)
     random_state = check_random_state(random_state)
