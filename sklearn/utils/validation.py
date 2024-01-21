@@ -1348,6 +1348,21 @@ def check_random_state(seed):
     -------
     :class:`numpy:numpy.random.RandomState`
         The random state object based on `seed` parameter.
+    Examples
+    --------
+    >>> from sklearn.utils.validation import check_random_state
+    >>> rnd = check_random_state(None)
+    >>> type(rnd)
+    <class 'numpy.random.mtrand.RandomState'>
+    >>> rnd = check_random_state(123)
+    >>> type(rnd)
+    <class 'numpy.random.mtrand.RandomState'>
+    >>> rnd = check_random_state(rnd)
+    >>> type(rnd)
+    <class 'numpy.random.mtrand.RandomState'>
+    >>> check_random_state('invalid')
+    Raises ValueError:
+    'invalid' cannot be used to seed a numpy.random.RandomState instance
     """
     if seed is None or seed is np.random:
         return np.random.mtrand._rand
