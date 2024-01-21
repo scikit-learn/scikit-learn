@@ -2,7 +2,6 @@
 # Minimum requirements for the build system to execute.
 requires = [
     "setuptools",
-    "wheel",
     "Cython>=0.29.33",
     "numpy>=1.25",
     "scipy>=1.6.0",
