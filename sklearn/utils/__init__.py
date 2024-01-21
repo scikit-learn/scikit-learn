@@ -769,6 +769,13 @@ def safe_sqr(X, *, copy=True):
     -------
     X ** 2 : element wise square
          Return the element-wise square of the input.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.utils import safe_sqr
+    >>> safe_sqr([1, 2, 3])
+    array([1, 4, 9])
     """
     X = check_array(X, accept_sparse=["csr", "csc", "coo"], ensure_2d=False)
     if issparse(X):
