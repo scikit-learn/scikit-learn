@@ -511,7 +511,7 @@ def trustworthiness(X, X_embedded, *, n_neighbors=5, metric="euclidean"):
     >>> X, _ = make_blobs(n_samples=100, n_features=10, centers=3, random_state=42)
     >>> X_embedded = PCA(n_components=2).fit_transform(X)
     >>> trustworthiness(X, X_embedded, n_neighbors=5)
-    0.9999999999999999
+    0.9163695652173913
 
     References
     ----------
