@@ -41,6 +41,13 @@ def get_config():
     --------
     config_context : Context manager for global scikit-learn configuration.
     set_config : Set global scikit-learn configuration.
+
+    Examples
+    --------
+    >>> import sklearn
+    >>> sklearn.set_config(assume_finite=True)
+    >>> sklearn.get_config()['assume_finite']
+    True
     """
     # Return a copy of the threadlocal configuration so that users will
     # not be able to modify the configuration with the returned dict.
