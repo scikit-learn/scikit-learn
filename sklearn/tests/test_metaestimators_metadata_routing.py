@@ -61,7 +61,6 @@ from sklearn.multioutput import (
     MultiOutputRegressor,
     RegressorChain,
 )
-from sklearn.pipeline import FeatureUnion
 from sklearn.semi_supervised import SelfTrainingClassifier
 from sklearn.tests.metadata_routing_common import (
     ConsumingClassifier,
@@ -327,7 +326,6 @@ UNSUPPORTED_ESTIMATORS = [
     AdaBoostRegressor(),
     BaggingClassifier(),
     BaggingRegressor(),
-    FeatureUnion([]),
     GraphicalLassoCV(),
     IterativeImputer(),
     RANSACRegressor(),

@@ -11,6 +11,19 @@ Version 1.5.0
 
 .. include:: changelog_legend.inc
 
+Metadata Routing
+----------------
+
+The following models now support metadata routing in one or more or their
+methods. Refer to the :ref:`Metadata Routing User Guide <metadata_routing>` for
+more details.
+
+- |Feature| :class:`pipeline.FeatureUnion` now supports metadata routing in its
+  ``fit`` and ``fit_transform`` methods and route metadata to the underlying
+  transformers' ``fit`` and ``fit_transform``. :pr:`xxxxx` by :user:`Stefanie
+  Senger <StefanieSenger>`.
+
+
 Changelog
 ---------
 
