@@ -82,7 +82,7 @@ Changelog
 ....................
 
 - |Enhancement| :func:`utils.metaestimators.available_if` now reraises the error from
-  the `check` function as the cause of the `AttributeError`. :pr:`xxxxx` by
+  the `check` function as the cause of the `AttributeError`. :pr:`28198` by
   `Thomas Fan`_.
 
 Code and Documentation Contributors
