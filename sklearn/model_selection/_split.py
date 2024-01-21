@@ -1761,7 +1761,31 @@ class RepeatedStratifiedKFold(_UnsupportedGroupCVMixin, _RepeatedSplits):
 
 
 class BaseShuffleSplit(_MetadataRequester, metaclass=ABCMeta):
-    """Base class for ShuffleSplit and StratifiedShuffleSplit."""
+    """Base class for ShuffleSplit and StratifiedShuffleSplit.
+
+    Parameters
+    ----------
+    n_splits : int, default=10
+        Number of re-shuffling & splitting iterations.
+
+    test_size : float or int, default=None
+        If float, should be between 0.0 and 1.0 and represent the proportion
+        of the dataset to include in the test split. If int, represents the
+        absolute number of test samples. If None, the value is set to the
+        complement of the train size. If ``train_size`` is also None, it will
+        be set to 0.1.
+
+    train_size : float or int, default=None
+        If float, should be between 0.0 and 1.0 and represent the
+        proportion of the dataset to include in the train split. If
+        int, represents the absolute number of train samples. If None,
+        the value is automatically set to the complement of the test size.
+
+    random_state : int, RandomState instance or None, default=None
+        Controls the randomness of the training and testing indices produced.
+        Pass an int for reproducible output across multiple function calls.
+        See :term:`Glossary <random_state>`.
+    """
 
     # This indicates that by default CV splitters don't have a "groups" kwarg,
     # unless indicated by inheriting from ``GroupsConsumerMixin``.
