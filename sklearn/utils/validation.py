@@ -430,11 +430,6 @@ def check_consistent_length(*arrays):
     >>> a = np.array([1, 2, 3])
     >>> b = np.array([2, 3, 4])
     >>> check_consistent_length(a, b)
-    No error is raised
-    >>> c = np.array([1, 2])
-    >>> check_consistent_length(a, c)
-    Raises ValueError:
-    Found input variables with inconsistent numbers of samples: [3, 2]
     """
 
     lengths = [_num_samples(X) for X in arrays if X is not None]
@@ -800,11 +795,10 @@ def check_array(
     --------
     >>> import numpy as np
     >>> from sklearn.utils.validation import check_array
-
-    >>> X = [[1, 2, 3], [4, 5, 6]]
+    >>> X = ([[1, 2, 3], [4, 5, 6]])
     >>> X_checked = check_array(X)
     >>> X_checked
-    array([[1 2 3], [4 5 6]])
+    array([[1, 2, 3], [4, 5, 6]])
     """
     if isinstance(array, np.matrix):
         raise TypeError(
@@ -1211,7 +1205,9 @@ def check_X_y(
     >>> y = np.array([1, 2, 3])
     >>> X, y = check_X_y(X, y)
     >>> X
-    array([[1, 2],[3, 4],[5, 6]])
+    array([[1, 2],
+          [3, 4],
+          [5, 6]])
     >>> y
     array([1, 2, 3])
     """
@@ -1348,6 +1344,7 @@ def check_random_state(seed):
     -------
     :class:`numpy:numpy.random.RandomState`
         The random state object based on `seed` parameter.
+
     Examples
     --------
     >>> from sklearn.utils.validation import check_random_state
@@ -1360,9 +1357,6 @@ def check_random_state(seed):
     >>> rnd = check_random_state(rnd)
     >>> type(rnd)
     <class 'numpy.random.mtrand.RandomState'>
-    >>> check_random_state('invalid')
-    Raises ValueError:
-    'invalid' cannot be used to seed a numpy.random.RandomState instance
     """
     if seed is None or seed is np.random:
         return np.random.mtrand._rand
@@ -1685,8 +1679,6 @@ def check_scalar(
     >>> x = check_scalar(10, 'x', int, min_val=1, max_val=20)
     >>> x
     10
-    >>> x = check_scalar(10, 'x', float)
-    Raises TypeError: x must be an instance of float, not int.
     """
 
     def type_name(t):
