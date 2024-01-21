@@ -430,7 +430,7 @@ def check_consistent_length(*arrays):
     >>> a = np.array([1, 2, 3])
     >>> b = np.array([2, 3, 4])
     >>> check_consistent_length(a, b)
-    # No error is raised
+    No error is raised
     >>> c = np.array([1, 2])
     >>> check_consistent_length(a, c)
     Raises ValueError:
