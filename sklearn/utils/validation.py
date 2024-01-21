@@ -782,6 +782,16 @@ def check_array(
     -------
     array_converted : object
         The converted and validated array.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.utils.validation import check_array
+
+    >>> X = [[1, 2, 3], [4, 5, 6]]
+    >>> X_checked = check_array(X)
+    >>> X_checked
+    array([[1 2 3], [4 5 6]])
     """
     if isinstance(array, np.matrix):
         raise TypeError(
