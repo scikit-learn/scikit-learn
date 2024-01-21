@@ -82,7 +82,7 @@ Changelog
 ..............................
 
 - |Enhancement| :term:`CV splitters <CV splitter>` that ignores the group parameter now
-  raises a warning when groups are passed in to :term:`split`. :pr:`xxxxx` by
+  raises a warning when groups are passed in to :term:`split`. :pr:`28210` by
   `Thomas Fan`_.
 
 Code and Documentation Contributors
