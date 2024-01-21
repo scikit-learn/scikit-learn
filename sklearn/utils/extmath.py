@@ -138,8 +138,8 @@ def density(w):
 
     Parameters
     ----------
-    w : array-like
-        The sparse vector.
+    w : {ndarray, sparse matrix}
+        The input data can be numpy ndarray or a sparse matrix.
 
     Returns
     -------
