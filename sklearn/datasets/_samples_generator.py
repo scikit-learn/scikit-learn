@@ -767,6 +767,17 @@ def make_circles(
 
     y : ndarray of shape (n_samples,)
         The integer labels (0 or 1) for class membership of each sample.
+
+    Examples:
+    --------
+    >>> from sklearn.datasets import make_circles
+    >>> X, y = make_circles(n_samples=100, factor=0.5, noise=0.01, random_state=42)
+    >>> X.shape
+    (100, 2)
+    >>> y.shape
+    (100,)
+    >>> list(y[:5])
+    [1, 1, 1, 0, 0]
     """
     if isinstance(n_samples, numbers.Integral):
         n_samples_out = n_samples // 2
