@@ -7,6 +7,7 @@ requires = [
     "numpy>=1.25",
     "scipy>=1.6.0",
 ]
+build-backend = "setuptools.build_meta"
 
 [tool.black]
 line-length = 88
