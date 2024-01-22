@@ -497,10 +497,6 @@ Changelog
   which allows to retrieve the training sample indices used for each tree estimator.
   :pr:`26736` by :user:`Adam Li <adam2392>`.
 
-- |Efficiency| Improves runtime of `predict` of
-  :class:`ensemble.HistGradientBoostingClassifier` by avoiding to call `predict_proba`.
-  :pr:`27844` by :user:`Christian Lorentzen <lorentzenchr>`.
-
 - |Fix| Fixes :class:`ensemble.IsolationForest` when the input is a sparse matrix and
   `contamination` is set to a float value.
   :pr:`27645` by :user:`Guillaume Lemaitre <glemaitre>`.
