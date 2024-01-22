@@ -812,12 +812,12 @@ def _convert_container(
     elif constructor_name == "slice":
         return slice(container[0], container[1])
     elif "sparse" in constructor_name:
-        container = (
-            # sparse constructor only works with 2D array-like
-            np.atleast_2d(container)
-            if not sp.sparse.issparse(container)
-            else container
-        )
+        if not sp.sparse.issparse(container):
+            # For scipy >= 1.13, sparse array constructed from 1d array may be
+            # 1d or raise an exception. For more details, see
+            # https://github.com/scipy/scipy/pull/18530#issuecomment-1878005149
+            container = np.atleast_2d(container)
+
         if "array" in constructor_name and sp_version < parse_version("1.8"):
             raise ValueError(
                 f"{constructor_name} is only available with scipy>=1.8.0, got "
