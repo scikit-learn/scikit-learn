@@ -348,15 +348,13 @@ def _safe_indexing(X, indices, *, axis=0):
 
     Examples
     --------
+    >>> import numpy as np
     >>> from sklearn.utils import _safe_indexing
-    >>> import numpy as np
-    >>> import numpy as np
-    >>> index = 0
-    >>> axis = 1
-    >>> data=np.array([[1,2],[3,4],[5,6]])
-    >>> value = _safe_indexing(data, index,axis=axis)
-    >>> print(f"Value at index {index}: {value}")
-    Value at index 0: [1 3 5]
+    >>> data = np.array([[1, 2], [3, 4], [5, 6]])
+    >>> _safe_indexing(data, 0, axis=0)  # select the first row
+    array([1, 2])
+    >>> _safe_indexing(data, 0, axis=1)  # select the first column
+    array([1, 3, 5])
     """
     if indices is None:
         return X
