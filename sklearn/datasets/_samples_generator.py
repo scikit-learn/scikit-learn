@@ -1603,6 +1603,13 @@ def make_spd_matrix(n_dim, *, random_state=None):
     See Also
     --------
     make_sparse_spd_matrix: Generate a sparse symmetric definite positive matrix.
+
+    Examples
+    --------
+    >>> from sklearn.datasets import make_spd_matrix
+    >>> make_spd_matrix(n_dim=2, random_state=42)
+    array([[2.09..., 0.34...],
+           [0.34..., 0.21...]])
     """
     generator = check_random_state(random_state)
 
