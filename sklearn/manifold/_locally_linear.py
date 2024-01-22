@@ -311,12 +311,13 @@ def locally_linear_embedding(
     Examples
     --------
     >>> from sklearn.datasets import load_digits
-    >>> from sklearn.manifold import LocallyLinearEmbedding
-    >>> X, _ = load_digits(return_X_y=True)[:100]
+    >>> from sklearn.manifold import locally_linear_embedding
+    >>> X, _ = load_digits(return_X_y=True)
     >>> X.shape
     (1797, 64)
-    >>> embedding,error = locally_linear_embedding(X=X,n_neighbors=5,n_components=2)
-    >>> X_transformed.shape
+    >>> embedding,error = locally_linear_embedding(X=X,n_neighbors=5,
+    ... n_components=2)
+    >>> embedding.shape
     (100, 2)
     """
     if eigen_solver not in ("auto", "arpack", "dense"):
