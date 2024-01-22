@@ -214,7 +214,7 @@ Make sure you have `meson-python` installed:
 
 .. code-block:: bash
 
-    conda install meson-python -y
+    conda install -c conda-forge meson-python -y
 
 .. warning::
 
