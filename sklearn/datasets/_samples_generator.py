@@ -771,7 +771,7 @@ def make_circles(
     Examples
     --------
     >>> from sklearn.datasets import make_circles
-    >>> X, y = make_circles(n_samples=100, factor=0.5, noise=0.01, random_state=42)
+    >>> X, y = make_circles(random_state=42)
     >>> X.shape
     (100, 2)
     >>> y.shape
