@@ -136,7 +136,7 @@ def fetch_california_housing(
     --------
     >>> from sklearn.datasets import fetch_california_housing
     >>> housing = fetch_california_housing()
-    >>> print(housing.data.shape,housing.target.shape)
+    >>> print(housing.data.shape, housing.target.shape)
     (20640, 8) (20640,)
     >>> print(housing.feature_names[0:6])
     ['MedInc', 'HouseAge', 'AveRooms', 'AveBedrms', 'Population', 'AveOccup']
