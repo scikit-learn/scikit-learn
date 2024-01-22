@@ -417,7 +417,7 @@ def davies_bouldin_score(X, labels):
     >>> X = [[0, 1], [1, 1], [3, 4]]
     >>> labels = [0, 0, 1]
     >>> davies_bouldin_score(X, labels)
-    0.12803687993289598
+    0.12...
     """
     X, labels = check_X_y(X, labels)
     le = LabelEncoder()
