@@ -2137,7 +2137,13 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
             The predicted classes.
         """
         # TODO: This could be done in parallel
-        encoded_classes = np.argmax(self.predict_proba(X), axis=1)
+        raw_predictions = self._raw_predict(X)
+        if raw_predictions.shape[1] == 1:
+            # np.argmax([0.5, 0.5]) is 0, not 1. Therefore "> 0" not ">= 0" to be
+            # consistent with the multiclass case.
+            encoded_classes = (raw_predictions.ravel() > 0).astype(int)
+        else:
+            encoded_classes = np.argmax(raw_predictions, axis=1)
         return self.classes_[encoded_classes]
 
     def staged_predict(self, X):
@@ -2158,8 +2164,12 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
         y : generator of ndarray of shape (n_samples,)
             The predicted classes of the input samples, for each iteration.
         """
-        for proba in self.staged_predict_proba(X):
-            encoded_classes = np.argmax(proba, axis=1)
+        for raw_predictions in self._staged_raw_predict(X):
+            if raw_predictions.shape[1] == 1:
+                # np.argmax([0, 0]) is 0, not 1, therefor "> 0" not ">= 0"
+                encoded_classes = (raw_predictions.ravel() > 0).astype(int)
+            else:
+                encoded_classes = np.argmax(raw_predictions, axis=1)
             yield self.classes_.take(encoded_classes, axis=0)
 
     def predict_proba(self, X):
