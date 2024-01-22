@@ -3,8 +3,6 @@ _binary_tree_pxi = custom_target(
   output: '_binary_tree.pxi',
   input: '_binary_tree.pxi.tp',
   command: [py, tempita, '@INPUT@', '-o', '@OUTDIR@'],
-  install: true,
-  install_dir: sklearn_dir / 'neighbors'
 )
 
 # .pyx is generated so this is needed to make Cython compilation work. The pxi
