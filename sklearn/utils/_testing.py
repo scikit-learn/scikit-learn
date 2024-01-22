@@ -814,7 +814,8 @@ def _convert_container(
     elif "sparse" in constructor_name:
         if not sp.sparse.issparse(container):
             # For scipy >= 1.13, sparse array constructed from 1d array may be
-            # 1d or raise an exception. For more details, see
+            # 1d or raise an exception. To avoid this, we make sure that the
+            # input container is 2d. For more details, see
             # https://github.com/scipy/scipy/pull/18530#issuecomment-1878005149
             container = np.atleast_2d(container)
 
