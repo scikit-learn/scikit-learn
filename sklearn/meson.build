@@ -86,12 +86,28 @@ It seems that scikit-learn cannot be built with OpenMP.
 ''')
 endif
 
-# TODO do the equivalent of sklearn/_build_utils/__init__.py that sets
-# boundchecks=True if SKLEARN_ENABLE_DEBUG_CYTHON_DIRECTIVES is set to 1.
-# There is no access to environment variables inside meson.build files so this
-# needs to be a meson option or meson buildtype
+# For now, we keep supporting SKLEARN_ENABLE_DEBUG_CYTHON_DIRECTIVES variable
+# (see how it is done in sklearn/_build_utils/__init__.py when building with
+# setuptools). Accessing environment variables in meson.build is discouraged,
+# so once we drop setuptools this functionality should be behind a meson option
+# or buildtype
+boundscheck = run_command(py,
+    [
+      '-c',
+      '''
+import os
+
+if os.environ.get("SKLEARN_ENABLE_DEBUG_CYTHON_DIRECTIVES", "0") != "0":
+    print(True)
+else:
+    print(False)
+      '''
+    ],
+    check: true
+    ).stdout().strip()
+
 scikit_learn_cython_args = [
-  '-X language_level=3', '-X boundscheck=False', '-X wraparound=False',
+  '-X language_level=3', '-X boundscheck=' + boundscheck, '-X wraparound=False',
   '-X initializedcheck=False', '-X nonecheck=False', '-X cdivision=True',
   '-X profile=False',
   # Needed for cython imports across subpackages, e.g. cluster pyx that
