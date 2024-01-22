@@ -285,6 +285,16 @@ General Concepts
         Note that in this case, the precision can be platform dependent.
         The `numeric` dtype refers to accepting both `integer` and `floating`.
 
+        In regards to the efficiency and precision of the NumPy array, the data type
+        (`dtype`) can make a significant impact. If one chooses a data type with
+        a higher precision like `np.float64` or `np.int64` it will result in slow
+        operations, and increase memory usage, but it will result in accurate results.
+        However, if one opts for lower precision types like `np.float32` or `np.int32`
+        it would result in faster operations, and lower memory usage, but less accurate
+        results. The analysis of the choice will be dependent on the size of the 
+        dataset needed in machine learning tasks. For example, if a dataset is large,
+        it would be worth considering a lower-precision data type for a larger dataset
+        since speed and accuracy would be a priority.
         TODO: Mention efficiency and precision issues; casting policy.
 
     duck typing
