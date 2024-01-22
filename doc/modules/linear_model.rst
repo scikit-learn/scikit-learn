@@ -215,10 +215,10 @@ Cross-Validation.
 **References**
 |details-split|
 
-    * "Notes on Regularized Least Squares", Rifkin & Lippert (`technical report
-      <http://cbcl.mit.edu/publications/ps/MIT-CSAIL-TR-2007-025.pdf>`_,
-      `course slides
-      <https://www.mit.edu/~9.520/spring07/Classes/rlsslides.pdf>`_).
+* "Notes on Regularized Least Squares", Rifkin & Lippert (`technical report
+  <http://cbcl.mit.edu/publications/ps/MIT-CSAIL-TR-2007-025.pdf>`_,
+  `course slides
+  <https://www.mit.edu/~9.520/spring07/Classes/rlsslides.pdf>`_).
 
 |details-end|
 
@@ -587,30 +587,30 @@ between the features.
 
 The advantages of LARS are:
 
-  - It is numerically efficient in contexts where the number of features
-    is significantly greater than the number of samples.
+- It is numerically efficient in contexts where the number of features
+  is significantly greater than the number of samples.
 
-  - It is computationally just as fast as forward selection and has
-    the same order of complexity as ordinary least squares.
+- It is computationally just as fast as forward selection and has
+  the same order of complexity as ordinary least squares.
 
-  - It produces a full piecewise linear solution path, which is
-    useful in cross-validation or similar attempts to tune the model.
+- It produces a full piecewise linear solution path, which is
+  useful in cross-validation or similar attempts to tune the model.
 
-  - If two features are almost equally correlated with the target,
-    then their coefficients should increase at approximately the same
-    rate. The algorithm thus behaves as intuition would expect, and
-    also is more stable.
+- If two features are almost equally correlated with the target,
+  then their coefficients should increase at approximately the same
+  rate. The algorithm thus behaves as intuition would expect, and
+  also is more stable.
 
-  - It is easily modified to produce solutions for other estimators,
-    like the Lasso.
+- It is easily modified to produce solutions for other estimators,
+  like the Lasso.
 
 The disadvantages of the LARS method include:
 
-  - Because LARS is based upon an iterative refitting of the
-    residuals, it would appear to be especially sensitive to the
-    effects of noise. This problem is discussed in detail by Weisberg
-    in the discussion section of the Efron et al. (2004) Annals of
-    Statistics article.
+- Because LARS is based upon an iterative refitting of the
+  residuals, it would appear to be especially sensitive to the
+  effects of noise. This problem is discussed in detail by Weisberg
+  in the discussion section of the Efron et al. (2004) Annals of
+  Statistics article.
 
 The LARS model can be used via the estimator :class:`Lars`, or its
 low-level implementation :func:`lars_path` or :func:`lars_path_gram`.
@@ -707,11 +707,11 @@ previously chosen dictionary elements.
 **References**
 |details-split|
 
-  * https://www.cs.technion.ac.il/~ronrubin/Publications/KSVD-OMP-v2.pdf
+* https://www.cs.technion.ac.il/~ronrubin/Publications/KSVD-OMP-v2.pdf
 
-  * `Matching pursuits with time-frequency dictionaries
-    <https://www.di.ens.fr/~mallat/papiers/MallatPursuit93.pdf>`_,
-    S. G. Mallat, Z. Zhang,
+* `Matching pursuits with time-frequency dictionaries
+  <https://www.di.ens.fr/~mallat/papiers/MallatPursuit93.pdf>`_,
+  S. G. Mallat, Z. Zhang,
 
 |details-end|
 
@@ -743,24 +743,24 @@ estimated from the data.
 
 The advantages of Bayesian Regression are:
 
-    - It adapts to the data at hand.
+- It adapts to the data at hand.
 
-    - It can be used to include regularization parameters in the
-      estimation procedure.
+- It can be used to include regularization parameters in the
+  estimation procedure.
 
 The disadvantages of Bayesian regression include:
 
-    - Inference of the model can be time consuming.
+- Inference of the model can be time consuming.
 
 |details-start|
 **References**
 |details-split|
 
-  * A good introduction to Bayesian methods is given in C. Bishop: Pattern
-    Recognition and Machine learning
+* A good introduction to Bayesian methods is given in C. Bishop: Pattern
+  Recognition and Machine learning
 
-  * Original Algorithm is detailed in the  book `Bayesian learning for neural
-    networks` by Radford M. Neal
+* Original Algorithm is detailed in the  book `Bayesian learning for neural
+  networks` by Radford M. Neal
 
 |details-end|
 
@@ -827,11 +827,11 @@ is more robust to ill-posed problems.
 **References**
 |details-split|
 
-  * Section 3.3 in Christopher M. Bishop: Pattern Recognition and Machine Learning, 2006
+* Section 3.3 in Christopher M. Bishop: Pattern Recognition and Machine Learning, 2006
 
-  * David J. C. MacKay, `Bayesian Interpolation <https://citeseerx.ist.psu.edu/doc_view/pid/b14c7cc3686e82ba40653c6dff178356a33e5e2c>`_, 1992.
+* David J. C. MacKay, `Bayesian Interpolation <https://citeseerx.ist.psu.edu/doc_view/pid/b14c7cc3686e82ba40653c6dff178356a33e5e2c>`_, 1992.
 
-  * Michael E. Tipping, `Sparse Bayesian Learning and the Relevance Vector Machine <https://www.jmlr.org/papers/volume1/tipping01a/tipping01a.pdf>`_, 2001.
+* Michael E. Tipping, `Sparse Bayesian Learning and the Relevance Vector Machine <https://www.jmlr.org/papers/volume1/tipping01a/tipping01a.pdf>`_, 2001.
 
 |details-end|
 
@@ -1372,11 +1372,11 @@ Perceptron
 The :class:`Perceptron` is another simple classification algorithm suitable for
 large scale learning. By default:
 
-    - It does not require a learning rate.
+- It does not require a learning rate.
 
-    - It is not regularized (penalized).
+- It is not regularized (penalized).
 
-    - It updates its model only on mistakes.
+- It updates its model only on mistakes.
 
 The last characteristic implies that the Perceptron is slightly faster to
 train than SGD with the hinge loss and that the resulting models are
@@ -1407,9 +1407,9 @@ For classification, :class:`PassiveAggressiveClassifier` can be used with
 **References**
 |details-split|
 
- * `"Online Passive-Aggressive Algorithms"
-   <http://jmlr.csail.mit.edu/papers/volume7/crammer06a/crammer06a.pdf>`_
-   K. Crammer, O. Dekel, J. Keshat, S. Shalev-Shwartz, Y. Singer - JMLR 7 (2006)
+* `"Online Passive-Aggressive Algorithms"
+  <http://jmlr.csail.mit.edu/papers/volume7/crammer06a/crammer06a.pdf>`_
+  K. Crammer, O. Dekel, J. Keshat, S. Shalev-Shwartz, Y. Singer - JMLR 7 (2006)
 
 |details-end|
 

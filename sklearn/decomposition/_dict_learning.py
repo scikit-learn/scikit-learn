@@ -338,6 +338,23 @@ def sparse_encode(
     sklearn.linear_model.Lasso : Train Linear Model with L1 prior as regularizer.
     SparseCoder : Find a sparse representation of data from a fixed precomputed
         dictionary.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.decomposition import sparse_encode
+    >>> X = np.array([[-1, -1, -1], [0, 0, 3]])
+    >>> dictionary = np.array(
+    ...     [[0, 1, 0],
+    ...      [-1, -1, 2],
+    ...      [1, 1, 1],
+    ...      [0, 1, 1],
+    ...      [0, 2, 1]],
+    ...    dtype=np.float64
+    ... )
+    >>> sparse_encode(X, dictionary, alpha=1e-10)
+    array([[ 0.,  0., -1.,  0.,  0.],
+           [ 0.,  1.,  1.,  0.,  0.]])
     """
     if check_input:
         if algorithm == "lasso_cd":
@@ -804,6 +821,32 @@ def dict_learning_online(
         learning algorithm.
     SparsePCA : Sparse Principal Components Analysis.
     MiniBatchSparsePCA : Mini-batch Sparse Principal Components Analysis.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.datasets import make_sparse_coded_signal
+    >>> from sklearn.decomposition import dict_learning_online
+    >>> X, _, _ = make_sparse_coded_signal(
+    ...     n_samples=30, n_components=15, n_features=20, n_nonzero_coefs=10,
+    ...     random_state=42,
+    ... )
+    >>> U, V = dict_learning_online(
+    ...     X, n_components=15, alpha=0.2, max_iter=20, batch_size=3, random_state=42
+    ... )
+
+    We can check the level of sparsity of `U`:
+
+    >>> np.mean(U == 0)
+    0.53...
+
+    We can compare the average squared euclidean norm of the reconstruction
+    error of the sparse coded signal relative to the squared euclidean norm of
+    the original signal:
+
+    >>> X_hat = U @ V
+    >>> np.mean(np.sum((X_hat - X) ** 2, axis=1) / np.sum(X ** 2, axis=1))
+    0.05...
     """
     # TODO(1.6): remove in 1.6
     if max_iter is None:
@@ -982,6 +1025,30 @@ def dict_learning(
         of the dictionary learning algorithm.
     SparsePCA : Sparse Principal Components Analysis.
     MiniBatchSparsePCA : Mini-batch Sparse Principal Components Analysis.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.datasets import make_sparse_coded_signal
+    >>> from sklearn.decomposition import dict_learning
+    >>> X, _, _ = make_sparse_coded_signal(
+    ...     n_samples=30, n_components=15, n_features=20, n_nonzero_coefs=10,
+    ...     random_state=42,
+    ... )
+    >>> U, V, errors = dict_learning(X, n_components=15, alpha=0.1, random_state=42)
+
+    We can check the level of sparsity of `U`:
+
+    >>> np.mean(U == 0)
+    0.6...
+
+    We can compare the average squared euclidean norm of the reconstruction
+    error of the sparse coded signal relative to the squared euclidean norm of
+    the original signal:
+
+    >>> X_hat = U @ V
+    >>> np.mean(np.sum((X_hat - X) ** 2, axis=1) / np.sum(X ** 2, axis=1))
+    0.01...
     """
     estimator = DictionaryLearning(
         n_components=n_components,
