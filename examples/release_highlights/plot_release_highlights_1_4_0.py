@@ -73,6 +73,9 @@ preprocessor = ColumnTransformer(
 preprocessor.set_output(transform="polars")
 
 df_out = preprocessor.fit_transform(df)
+df_out
+
+# %%
 print(f"Output type: {type(df_out)}")
 
 # %%
@@ -155,7 +158,7 @@ clone(forest)  # the clone is not fitted
 # ------------------------
 # Many meta-estimators and cross-validation routines now support metadata
 # routing, which are listed in the :ref:`user guide
-# <_metadata_routing_models>`. For instance, this is how you can do a nested
+# <metadata_routing_models>`. For instance, this is how you can do a nested
 # cross-validation with sample weights and :class:`~model_selection.GroupKFold`:
 import sklearn
 from sklearn.metrics import get_scorer
@@ -204,3 +207,28 @@ print("cv error on test sets:", results["test_mse"])
 # Setting the flag to the default `False` to avoid interference with other
 # scripts.
 sklearn.set_config(enable_metadata_routing=False)
+
+# %%
+# Improved memory and runtime efficiency for PCA on sparse data
+# -------------------------------------------------------------
+# PCA is now able to handle sparse matrices natively for the `arpack`
+# solver by levaraging `scipy.sparse.linalg.LinearOperator` to avoid
+# materializing large sparse matrices when performing the
+# eigenvalue decomposition of the data set covariance matrix.
+#
+from sklearn.decomposition import PCA
+import scipy.sparse as sp
+from time import time
+
+X_sparse = sp.random(m=1000, n=1000, random_state=0)
+X_dense = X_sparse.toarray()
+
+t0 = time()
+PCA(n_components=10, svd_solver="arpack").fit(X_sparse)
+time_sparse = time() - t0
+
+t0 = time()
+PCA(n_components=10, svd_solver="arpack").fit(X_dense)
+time_dense = time() - t0
+
+print(f"Speedup: {time_dense / time_sparse:.1f}x")

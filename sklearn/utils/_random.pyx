@@ -228,6 +228,49 @@ cdef _sample_without_replacement(default_int n_population,
                                  random_state=None):
     """Sample integers without replacement.
 
+    Private function for the implementation, see sample_without_replacement
+    documentation for more details.
+    """
+    _sample_without_replacement_check_input(n_population, n_samples)
+
+    all_methods = ("auto", "tracking_selection", "reservoir_sampling", "pool")
+
+    ratio = <double> n_samples / n_population if n_population != 0.0 else 1.0
+
+    # Check ratio and use permutation unless ratio < 0.01 or ratio > 0.99
+    if method == "auto" and ratio > 0.01 and ratio < 0.99:
+        rng = check_random_state(random_state)
+        return rng.permutation(n_population)[:n_samples]
+
+    if method == "auto" or method == "tracking_selection":
+        # TODO the pool based method can also be used.
+        #      however, it requires special benchmark to take into account
+        #      the memory requirement of the array vs the set.
+
+        # The value 0.2 has been determined through benchmarking.
+        if ratio < 0.2:
+            return _sample_without_replacement_with_tracking_selection(
+                n_population, n_samples, random_state)
+        else:
+            return _sample_without_replacement_with_reservoir_sampling(
+                n_population, n_samples, random_state)
+
+    elif method == "reservoir_sampling":
+        return _sample_without_replacement_with_reservoir_sampling(
+            n_population, n_samples, random_state)
+
+    elif method == "pool":
+        return _sample_without_replacement_with_pool(n_population, n_samples,
+                                                     random_state)
+    else:
+        raise ValueError('Expected a method name in %s, got %s. '
+                         % (all_methods, method))
+
+
+def sample_without_replacement(
+        object n_population, object n_samples, method="auto", random_state=None):
+    """Sample integers without replacement.
+
     Select n_samples integers from the set [0, n_population) without
     replacement.
 
@@ -276,44 +319,6 @@ cdef _sample_without_replacement(default_int n_population,
         The sampled subsets of integer. The subset of selected integer might
         not be randomized, see the method argument.
     """
-    _sample_without_replacement_check_input(n_population, n_samples)
-
-    all_methods = ("auto", "tracking_selection", "reservoir_sampling", "pool")
-
-    ratio = <double> n_samples / n_population if n_population != 0.0 else 1.0
-
-    # Check ratio and use permutation unless ratio < 0.01 or ratio > 0.99
-    if method == "auto" and ratio > 0.01 and ratio < 0.99:
-        rng = check_random_state(random_state)
-        return rng.permutation(n_population)[:n_samples]
-
-    if method == "auto" or method == "tracking_selection":
-        # TODO the pool based method can also be used.
-        #      however, it requires special benchmark to take into account
-        #      the memory requirement of the array vs the set.
-
-        # The value 0.2 has been determined through benchmarking.
-        if ratio < 0.2:
-            return _sample_without_replacement_with_tracking_selection(
-                n_population, n_samples, random_state)
-        else:
-            return _sample_without_replacement_with_reservoir_sampling(
-                n_population, n_samples, random_state)
-
-    elif method == "reservoir_sampling":
-        return _sample_without_replacement_with_reservoir_sampling(
-            n_population, n_samples, random_state)
-
-    elif method == "pool":
-        return _sample_without_replacement_with_pool(n_population, n_samples,
-                                                     random_state)
-    else:
-        raise ValueError('Expected a method name in %s, got %s. '
-                         % (all_methods, method))
-
-
-def sample_without_replacement(
-        object n_population, object n_samples, method="auto", random_state=None):
     cdef:
         cnp.intp_t n_pop_intp, n_samples_intp
         long n_pop_long, n_samples_long

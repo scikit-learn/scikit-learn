@@ -51,13 +51,12 @@ from ..preprocessing import StandardScaler, scale
 from ..random_projection import BaseRandomProjection
 from ..tree import DecisionTreeClassifier, DecisionTreeRegressor
 from ..utils._array_api import (
+    _atol_for_type,
     _convert_to_numpy,
     get_namespace,
     yield_namespace_device_dtype_combinations,
 )
-from ..utils._array_api import (
-    device as array_device,
-)
+from ..utils._array_api import device as array_device
 from ..utils._param_validation import (
     InvalidParameterError,
     generate_invalid_param_val,
@@ -624,6 +623,13 @@ def check_estimator(estimator=None, generate_only=False):
     --------
     parametrize_with_checks : Pytest specific decorator for parametrizing estimator
         checks.
+
+    Examples
+    --------
+    >>> from sklearn.utils.estimator_checks import check_estimator
+    >>> from sklearn.linear_model import LogisticRegression
+    >>> check_estimator(LogisticRegression(), generate_only=True)
+    <generator object ...>
     """
     if isinstance(estimator, type):
         msg = (
@@ -922,7 +928,7 @@ def check_array_api_input(
                 attribute,
                 est_xp_param_np,
                 err_msg=f"{key} not the same",
-                atol=np.finfo(X.dtype).eps * 100,
+                atol=_atol_for_type(X.dtype),
             )
         else:
             assert attribute.shape == est_xp_param_np.shape
@@ -952,7 +958,7 @@ def check_array_api_input(
             assert isinstance(result, float)
             assert isinstance(result_xp, float)
             if check_values:
-                assert abs(result - result_xp) < np.finfo(X.dtype).eps * 100
+                assert abs(result - result_xp) < _atol_for_type(X.dtype)
             continue
         else:
             result = method(X)
@@ -974,7 +980,7 @@ def check_array_api_input(
                 result,
                 result_xp_np,
                 err_msg=f"{method} did not the return the same result",
-                atol=np.finfo(X.dtype).eps * 100,
+                atol=_atol_for_type(X.dtype),
             )
         else:
             if hasattr(result, "shape"):
@@ -999,7 +1005,7 @@ def check_array_api_input(
                     inverse_result,
                     invese_result_xp_np,
                     err_msg="inverse_transform did not the return the same result",
-                    atol=np.finfo(X.dtype).eps * 100,
+                    atol=_atol_for_type(X.dtype),
                 )
             else:
                 assert inverse_result.shape == invese_result_xp_np.shape

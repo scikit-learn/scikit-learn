@@ -25,6 +25,60 @@ Changelog
     :pr:`123456` by :user:`Joe Bloggs <joeongithub>`.
     where 123455 is the *pull request* number, not the issue number.
 
+
+:mod:`sklearn.compose`
+......................
+
+- |Feature| A fitted :class:`compose.ColumnTransformer` now implements `__getitem__`
+  which returns the fitted transformers by name. :pr:`27990` by `Thomas Fan`_.
+
+:mod:`sklearn.dummy`
+.......................
+
+- |Enhancement| :class:`dummy.DummyClassifier` and :class:`dummy.DummyRegressor` now
+  have the `n_features_in_` and `feature_names_in_` attributes after `fit`.
+  :pr:`27937` by :user:`Marco vd Boom <tvdboom>`.
+
+:mod:`sklearn.feature_extraction`
+.................................
+
+- |Efficiency| :class:`feature_extraction.text.TfidfTransformer` is now faster
+  and more memory-efficient by using a NumPy vector instead of a sparse matrix
+  for storing the inverse document frequency.
+  :pr:`18843` by :user:`Paolo Montesel <thebabush>`.
+
+- |Enhancement| :class:`feature_extraction.text.TfidfTransformer` now preserves
+  the data type of the input matrix if it is `np.float64` or `np.float32`.
+  :pr:`28136` by :user:`Guillaume Lemaitre <glemaitre>`.
+
+:mod:`sklearn.impute`
+.....................
+
+- |Enhancement| :class:`impute.SimpleImputer` now supports custom strategies
+  by passing a function in place of a strategy name.
+  :pr:`28053` by :user:`Mark Elliot <mark-thm>`.
+
+:mod:`sklearn.feature_selection`
+................................
+
+- |Enhancement| :func:`feature_selection.mutual_info_regression` and
+  :func:`feature_selection.mutual_info_classif` now support `n_jobs` parameter.
+  :pr:`28085` by :user:`Neto Menoci <netomenoci>` and
+  :user:`Florin Andrei <FlorinAndrei>`.
+
+:mod:`sklearn.metrics`
+......................
+
+- |Efficiency| Improve efficiency of functions :func:`~metrics.brier_score_loss`,
+  :func:`~metrics.calibration_curve`, :func:`~metrics.det_curve`, :func:`~metrics.precision_recall_curve`,
+  :func:`~metrics.roc_curve` when `pos_label` argument is specified.
+  Also improve efficiency of methods `from_estimator`
+  and `from_predictions` in :class:`~metrics.RocCurveDisplay`,
+  :class:`~metrics.PrecisionRecallDisplay`, :class:`~metrics.DetCurveDisplay`,
+  :class:`~calibration.CalibrationDisplay`.
+  :pr:`28051` by :user:`Pierre de Fréminville <pidefrem>`.
+
+
 Code and Documentation Contributors
 -----------------------------------
 
@@ -32,9 +86,3 @@ Thanks to everyone who has contributed to the maintenance and improvement of
 the project since version 1.4, including:
 
 TODO: update at the time of the release.
-
-:mod:`sklearn.compose`
-......................
-
-- |Feature| A fitted :class:`compose.ColumnTransformer` now implements `__getitem__`
-  which returns the fitted transformers by name. :pr:`27990` by `Thomas Fan`_.

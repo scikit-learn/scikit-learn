@@ -3,6 +3,7 @@ Test the ColumnTransformer.
 """
 import pickle
 import re
+import warnings
 
 import numpy as np
 import pytest
@@ -2273,6 +2274,40 @@ def test_remainder_set_output():
     ct.set_output(transform="default")
     out = ct.fit_transform(df)
     assert isinstance(out, np.ndarray)
+
+
+# TODO(1.6): replace the warning by a ValueError exception
+def test_transform_pd_na():
+    """Check behavior when a tranformer's output contains pandas.NA
+
+    It should emit a warning unless the output config is set to 'pandas'.
+    """
+    pd = pytest.importorskip("pandas")
+    if not hasattr(pd, "Float64Dtype"):
+        pytest.skip(
+            "The issue with pd.NA tested here does not happen in old versions that do"
+            " not have the extension dtypes"
+        )
+    df = pd.DataFrame({"a": [1.5, None]})
+    ct = make_column_transformer(("passthrough", ["a"]))
+    # No warning with non-extension dtypes and np.nan
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        ct.fit_transform(df)
+    df = df.convert_dtypes()
+    # Error with extension dtype and pd.NA
+    with pytest.warns(FutureWarning, match=r"set_output\(transform='pandas'\)"):
+        ct.fit_transform(df)
+    # No warning when output is set to pandas
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        ct.set_output(transform="pandas")
+        ct.fit_transform(df)
+    ct.set_output(transform="default")
+    # No warning when there are no pd.NA
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        ct.fit_transform(df.fillna(-1.0))
 
 
 def test_dataframe_different_dataframe_libraries():
