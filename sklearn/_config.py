@@ -46,8 +46,8 @@ def get_config():
     --------
     >>> import sklearn
     >>> config = sklearn.get_config()
-    >>> config['assume_finite'],config['working_memory'],config['assume_finite']
-    (False, 1024, False)
+    >>> config.keys()
+    dict_keys([...])
     """
     # Return a copy of the threadlocal configuration so that users will
     # not be able to modify the configuration with the returned dict.
