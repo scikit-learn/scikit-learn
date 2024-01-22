@@ -2070,26 +2070,20 @@ def _check_method_params(X, params, indices=None):
 
 def _is_pandas_df(X):
     """Return True if the X is a pandas dataframe."""
-    if hasattr(X, "columns") and hasattr(X, "iloc"):
-        # Likely a pandas DataFrame, we explicitly check the type to confirm.
-        try:
-            pd = sys.modules["pandas"]
-        except KeyError:
-            return False
-        return isinstance(X, pd.DataFrame)
-    return False
+    try:
+        pd = sys.modules["pandas"]
+    except KeyError:
+        return False
+    return isinstance(X, pd.DataFrame)
 
 
 def _is_polars_df(X):
     """Return True if the X is a polars dataframe."""
-    if hasattr(X, "columns") and hasattr(X, "schema"):
-        # Likely a polars DataFrame, we explicitly check the type to confirm.
-        try:
-            pl = sys.modules["polars"]
-        except KeyError:
-            return False
-        return isinstance(X, pl.DataFrame)
-    return False
+    try:
+        pl = sys.modules["polars"]
+    except KeyError:
+        return False
+    return isinstance(X, pl.DataFrame)
 
 
 def _get_feature_names(X):
