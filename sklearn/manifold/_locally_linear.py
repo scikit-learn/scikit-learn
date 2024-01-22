@@ -315,7 +315,7 @@ def locally_linear_embedding(
     >>> X, _ = load_digits(return_X_y=True)
     >>> X.shape
     (1797, 64)
-    >>> embedding, err = locally_linear_embedding(X[:100],n_neighbors=5, n_components=2)
+    >>> embedding, _ = locally_linear_embedding(X[:100],n_neighbors=5, n_components=2)
     >>> embedding.shape
     (100, 2)
     """
