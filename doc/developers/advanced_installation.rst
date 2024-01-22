@@ -312,7 +312,7 @@ console:
 
 .. prompt:: bash $
 
-    python -c "import struct; print(struct.calcsize("P') * 8)"
+    python -c "import struct; print(struct.calcsize('P') * 8)"
 
 For 64-bit Python, configure the build environment by running the following
 commands in ``cmd`` or an Anaconda Prompt (if you use Anaconda):
