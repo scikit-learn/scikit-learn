@@ -32,7 +32,7 @@ Changelog
 
 - |Fix| :func:`utils._safe_indexing` now raises a `ValueError` when `X` is a Python list
   and `axis=1`, as documented in the docstring.
-  :pr:`xxx` by :user:`Guillaume Lemaitre <glemaitre>`.
+  :pr:`28222` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 .. _changes_1_4:
 
