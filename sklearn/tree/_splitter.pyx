@@ -193,8 +193,12 @@ cdef class Splitter:
             self.criterion.init_sum_missing()
         return 0
 
-    cdef int node_reset(self, intp_t start, intp_t end,
-                        float64_t* weighted_n_node_samples) except -1 nogil:
+    cdef int node_reset(
+        self,
+        intp_t start,
+        intp_t end,
+        float64_t* weighted_n_node_samples
+    ) except -1 nogil:
         """Reset splitter on node samples[start:end].
 
         Returns -1 in case of failure to allocate memory (and raise MemoryError)
@@ -559,7 +563,7 @@ cdef inline int node_split_best(
 cdef inline void sort(float32_t* feature_values, intp_t* samples, intp_t n) noexcept nogil:
     if n == 0:
         return
-    cdef int maxd = 2 * <int>log(n)
+    cdef intp_t maxd = 2 * <intp_t>log(n)
     introsort(feature_values, samples, n, maxd)
 
 
@@ -593,7 +597,7 @@ cdef inline float32_t median3(float32_t* feature_values, intp_t n) noexcept nogi
 # Introsort with median of 3 pivot selection and 3-way partition function
 # (robust to repeated elements, e.g. lots of zero features).
 cdef void introsort(float32_t* feature_values, intp_t *samples,
-                    intp_t n, int maxd) noexcept nogil:
+                    intp_t n, intp_t maxd) noexcept nogil:
     cdef float32_t pivot
     cdef intp_t i, l, r
 
@@ -1340,7 +1344,11 @@ cdef class SparsePartitioner:
 
 
 cdef int compare_SIZE_t(const void* a, const void* b) noexcept nogil:
-    """Comparison function for sort."""
+    """Comparison function for sort.
+
+    This must return an `int` as it is used by stdlib's qsort, which expects
+    an `int` return value.
+    """
     return <int>((<intp_t*>a)[0] - (<intp_t*>b)[0])
 
 
