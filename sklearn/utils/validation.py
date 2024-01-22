@@ -207,10 +207,10 @@ def assert_all_finite(
     >>> import numpy as np
     >>> array = np.array([1, np.inf, np.nan, 4])
     >>> try:
-    ...    assert_all_finite(array)
-    ...    print("Test passed: Array contains only finite values.")
+    ...     assert_all_finite(array)
+    ...     print("Test passed: Array contains only finite values.")
     ... except ValueError:
-    ...    print("Test failed: Array contains non-finite values.")
+    ...     print("Test failed: Array contains non-finite values.")
     Test failed: Array contains non-finite values.
     """
     _assert_all_finite(
