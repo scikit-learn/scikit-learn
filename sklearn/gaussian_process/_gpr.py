@@ -495,7 +495,7 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
             else:
                 return y_mean
 
-    def sample_y(self, X, n_samples=1, random_state=0, cov_method = "svd"):
+    def sample_y(self, X, n_samples=1, random_state=0, sample_method = "svd"):
         """Draw samples from Gaussian process and evaluate at X.
 
         Parameters
