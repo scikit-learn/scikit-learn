@@ -1099,10 +1099,11 @@ def load_diabetes(*, return_X_y=False, as_frame=False, scaled=True):
 
     Examples
     --------
-    If you want to access the data as a pandas DataFrame ::
+    To load the data and extract the information about the samples, features names
+    and the shape of the traget variable::
 
         >>> from sklearn.datasets import load_diabetes
-        >>> diabetes = load_diabetes(as_frame=True)
+        >>> diabetes = load_diabetes()
         >>> data, target = diabetes.data, diabetes.target
         >>> print(f"Number of samples: {data.shape[0]}")
         Number of samples: 442
