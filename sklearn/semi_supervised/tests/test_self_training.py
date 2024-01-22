@@ -320,5 +320,5 @@ def test_missing_predict_proba():
     base_estimator = SVC(probability=False, gamma="scale")
     self_training = SelfTrainingClassifier(base_estimator)
 
-    with pytest.raises(AttributeError, match="predict_proba is not available"):
+    with pytest.raises(AttributeError, match="has no attribute 'predict_proba'"):
         self_training.fit(X_train, y_train_missing_labels)
