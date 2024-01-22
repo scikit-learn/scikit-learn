@@ -261,7 +261,7 @@ def as_float_array(X, *, copy=True, force_all_finite=True):
     --------
     >>> from sklearn.utils import as_float_array
     >>> import numpy as np
-    >>> array = np.array([0, 0, 1, 2, 2])
+    >>> array = np.array([0, 0, 1, 2, 2], dtype=np.int64)
     >>> as_float_array(array)
     array([0., 0., 1., 2., 2.])
     """
