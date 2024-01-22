@@ -360,6 +360,9 @@ def _safe_indexing(X, indices, *, axis=0):
     if axis == 0 and indices_dtype == "str":
         raise ValueError("String indexing is not supported with 'axis=0'")
 
+    if axis == 1 and isinstance(X, list):
+        raise ValueError("axis=1 is not supported for lists")
+
     if axis == 1 and hasattr(X, "ndim") and X.ndim != 2:
         raise ValueError(
             "'X' should be a 2D NumPy array, 2D sparse matrix or pandas "
