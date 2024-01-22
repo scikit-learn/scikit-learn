@@ -206,7 +206,7 @@ folder. Have a look at the ``Makefile`` for additional utilities.
 Building with Meson
 -------------------
 
-Supported for Meson is experimental, in scikit-learn 1.5.0.dev0.
+Support for Meson is experimental, in scikit-learn 1.5.0.dev0.
 `Open an issue <https://github.com/scikit-learn/scikit-learn/issues/new>`__ if
 you encounter any problems!
 
