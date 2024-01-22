@@ -772,7 +772,6 @@ def safe_sqr(X, *, copy=True):
 
     Examples
     --------
-    >>> import numpy as np
     >>> from sklearn.utils import safe_sqr
     >>> safe_sqr([1, 2, 3])
     array([1, 4, 9])
