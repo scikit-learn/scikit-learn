@@ -10,7 +10,7 @@ from Cython import Tempita as tempita
 def process_tempita(fromfile, outfile=None):
     """Process tempita templated file and write out the result.
 
-    The template file is expected to end in `.c.in` or `.pyx.in`:
+    The template file is expected to end in `.c.tp` or `.pyx.tp`:
     E.g. processing `template.c.in` generates `template.c`.
 
     """
