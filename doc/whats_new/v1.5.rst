@@ -86,6 +86,12 @@ Changelog
   :class:`~calibration.CalibrationDisplay`.
   :pr:`28051` by :user:`Pierre de Fréminville <pidefrem>`.
 
+:mod:`sklearn.utils`
+....................
+
+- |Enhancement| :func:`utils.metaestimators.available_if` now reraises the error from
+  the `check` function as the cause of the `AttributeError`. :pr:`28198` by
+  `Thomas Fan`_.
 
 Code and Documentation Contributors
 -----------------------------------
