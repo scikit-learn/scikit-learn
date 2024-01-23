@@ -400,28 +400,18 @@ _ = plt.legend()
 # guarantee that the training data does not succeed the testing data, which is
 # crucial when dealing with data that have a temporal relationship.
 
+from sklearn.metrics import make_scorer, root_mean_squared_error
 from sklearn.model_selection import TimeSeriesSplit, cross_validate
 
 ts_cv = TimeSeriesSplit(n_splits=5, gap=48, test_size=336)  # a week has 336 samples
+scorer = make_scorer(root_mean_squared_error)
 
-cv_results = cross_validate(
-    hgbt_no_cst,
-    X,
-    y,
-    cv=ts_cv,
-    scoring="neg_root_mean_squared_error",
-)
-rmse = -cv_results["test_score"]
+cv_results = cross_validate(hgbt_no_cst, X, y, cv=ts_cv, scoring=scorer)
+rmse = cv_results["test_score"]
 print(f"RMSE without constraints = {rmse.mean():.3f} +/- {rmse.std():.3f}")
 
-cv_results = cross_validate(
-    hgbt_cst,
-    X,
-    y,
-    cv=ts_cv,
-    scoring="neg_root_mean_squared_error",
-)
-rmse = -cv_results["test_score"]
+cv_results = cross_validate(hgbt_cst, X, y, cv=ts_cv, scoring=scorer)
+rmse = cv_results["test_score"]
 print(f"RMSE with constraints    = {rmse.mean():.3f} +/- {rmse.std():.3f}")
 
 # %%
