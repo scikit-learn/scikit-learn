@@ -97,6 +97,8 @@ build_metadata_list = [
         "channel": "conda-forge",
         "conda_dependencies": common_dependencies + [
             "ccache",
+            "meson-python",
+            "pip",
             "pytorch",
             "pytorch-cpu",
             "polars",
