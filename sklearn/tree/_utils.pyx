@@ -450,9 +450,9 @@ cdef class WeightedMedianCalculator:
 def _any_isnan_axis0(const float32_t[:, :] X):
     """Same as np.any(np.isnan(X), axis=0)"""
     cdef:
-        int i, j
-        int n_samples = X.shape[0]
-        int n_features = X.shape[1]
+        intp_t i, j
+        intp_t n_samples = X.shape[0]
+        intp_t n_features = X.shape[1]
         unsigned char[::1] isnan_out = np.zeros(X.shape[1], dtype=np.bool_)
 
     with nogil:
