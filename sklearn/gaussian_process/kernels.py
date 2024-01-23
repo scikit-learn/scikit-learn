@@ -190,8 +190,8 @@ class Kernel(metaclass=ABCMeta):
         >>> kernel = CustomKernel(length_scale=2.0)
         >>> X = np.array([[1, 2], [3, 4]])
         >>> print(kernel(X))
-        [[1.         0.36787944]
-        [0.36787944 1.        ]]
+        [[ 25 121]
+        [121 625]]
         """
         params = dict()
 
