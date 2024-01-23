@@ -425,10 +425,9 @@ def check_consistent_length(*arrays):
 
     Examples
     --------
-    >>> import numpy as np
     >>> from sklearn.utils.validation import check_consistent_length
-    >>> a = np.array([1, 2, 3])
-    >>> b = np.array([2, 3, 4])
+    >>> a = [1, 2, 3]
+    >>> b = [2, 3, 4]
     >>> check_consistent_length(a, b)
     """
 
