@@ -1117,8 +1117,8 @@ def fetch_openml(
         'processing_date': '2020-11-20 19:44:53',
         'md5_checksum': '9a475053fed0c26ee95cd4525e50074c'},
         'url': 'https://www.openml.org/d/31'}
-
     """
+
     if cache is False:
         # no caching will be applied
         data_home = None
