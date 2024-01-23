@@ -241,56 +241,56 @@ def load_files(
 
     Examples
     --------
-    >> from sklearn.datasets import load_files
-    >> load_files_path = ''
-    >> load_files(load_files_path)
-    {'data':[b'test 1', b'test 2', b'test 3', b'test 4', b'test 5',
-            b'test 6', b'test 7', b'test 8', b'test 9', b'test 10',
-            b'test 11', b'test 12', b'test 13', b'test 14', b'test 15'],
+    >> from sklearn.datasets import load_files\n
+    >> load_files_path = ''\n
+    >> load_files(load_files_path)<\n
+    {'data':[b'test 1', b'test 2', b'test 3', b'test 4', b'test 5',\n
+    \t        b'test 6', b'test 7', b'test 8', b'test 9', b'test 10',\n
+    \t        b'test 11', b'test 12', b'test 13', b'test 14', b'test 15'],\n
     'filenames': array([
-        '/LoadFiles/cat_1/ent1.txt',
-        '/LoadFiles/cat_1/ent2.txt',
-        '/LoadFiles/cat_1/ent3.txt',
-        '/LoadFiles/cat_1/ent4.txt',
-        '/LoadFiles/cat_1/ent5.txt',
-        '/LoadFiles/cat_2/ent6.txt',
-        '/LoadFiles/cat_2/ent7.txt',
-        '/LoadFiles/cat_2/ent8.txt',
-        '/LoadFiles/cat_2/ent9.txt',
-        '/LoadFiles/cat_2/ent10.txt',
-        '/LoadFiles/cat_3/ent11.txt',
-        '/LoadFiles/cat_3/ent12.txt',
-        '/LoadFiles/cat_3/ent13.txt',
-        '/LoadFiles/cat_3/ent14.txt',
-        '/LoadFiles/cat_3/ent15.txt'],
-        dtype='<U54'),
-    'target_names': ['cat_1', 'cat_2', 'cat_3'],
-    'target': array([0, 1, 1, 1, 2, 0, 0, 2, 2, 1, 2, 0, 0, 1, 2]),
-    'DESCR': None}
-    >> load_files(load_files_path, categories=['cat_2'])
-    {'data': [b'test 6', b'test 7', b'test 8', b'test 9', b'test 10'],
-    'filenames': array([
-        '/LoadFiles/cat_2/ent6.txt',
-        '/LoadFiles/cat_2/ent7.txt',
-        '/LoadFiles/cat_2/ent8.txt',
-        '/LoadFiles/cat_2/ent9.txt',
-        '/LoadFiles/cat_2/ent10.txt',
-        dtype='<U54'),
-    'target_names': ['cat_2'],
-    'target': array([0, 0, 0, 0, 0]),
-    'DESCR': None}
+    \t    '/LoadFiles/cat_1/ent1.txt',\n
+    \t    '/LoadFiles/cat_1/ent2.txt',\n
+    \t    '/LoadFiles/cat_1/ent3.txt',\n
+    \t    '/LoadFiles/cat_1/ent4.txt',\n
+    \t    '/LoadFiles/cat_1/ent5.txt',\n
+    \t    '/LoadFiles/cat_2/ent6.txt',\n
+    \t    '/LoadFiles/cat_2/ent7.txt',\n
+    \t    '/LoadFiles/cat_2/ent8.txt',\n
+    \t    '/LoadFiles/cat_2/ent9.txt',\n
+    \t    '/LoadFiles/cat_2/ent10.txt',\n
+    \t    '/LoadFiles/cat_3/ent11.txt',\n
+    \t    '/LoadFiles/cat_3/ent12.txt',\n
+    \t    '/LoadFiles/cat_3/ent13.txt',\n
+    \t    '/LoadFiles/cat_3/ent14.txt',\n
+    \t    '/LoadFiles/cat_3/ent15.txt'],\n
+    \t    dtype='<U54')\n
+    'target_names': ['cat_1', 'cat_2', 'cat_3'],\n
+    'target': array([0, 1, 1, 1, 2, 0, 0, 2, 2, 1, 2, 0, 0, 1, 2]),\n
+    'DESCR': None}\n
+    >> load_files(load_files_path, categories=['cat_2'])\n
+    {'data': [b'test 6', b'test 7', b'test 8', b'test 9', b'test 10'],\n
+    'filenames': array([\n
+    \t    '/LoadFiles/cat_2/ent6.txt',\n
+    \t    '/LoadFiles/cat_2/ent7.txt',\n
+    \t    '/LoadFiles/cat_2/ent8.txt',\n
+    \t    '/LoadFiles/cat_2/ent9.txt',\n
+    \t    '/LoadFiles/cat_2/ent10.txt',\n
+    \t    dtype='<U54'),\n
+    \t'target_names': ['cat_2'],\n
+    \t'target': array([0, 0, 0, 0, 0]),\n
+    \t'DESCR': None}\n
 
-    >> load_files(load_files_path, categories=['cat_2'], load_content=False)
-    {'filenames': array([
-        '/LoadFiles/cat_2/ent6.txt',
-        '/LoadFiles/cat_2/ent7.txt',
-        '/LoadFiles/cat_2/ent8.txt',
-        '/LoadFiles/cat_2/ent9.txt',
-        '/LoadFiles/cat_2/ent10.txt',
-        dtype='<U54'),
-    'target_names': ['cat_2'],
-    'target': array([0, 0, 0, 0, 0]),
-    'DESCR': None}
+    >> load_files(load_files_path, categories=['cat_2'], load_content=False)\n
+    {'filenames': array([\n
+        \t'/LoadFiles/cat_2/ent6.txt',\n
+        \t'/LoadFiles/cat_2/ent7.txt',\n
+        \t'/LoadFiles/cat_2/ent8.txt',\n
+        \t'/LoadFiles/cat_2/ent9.txt',\n
+        \t'/LoadFiles/cat_2/ent10.txt',\n
+        \tdtype='<U54'),\n
+    'target_names': ['cat_2'],\n
+    'target': array([0, 0, 0, 0, 0]),\n
+    'DESCR': None}\n
     """
 
     target = []
