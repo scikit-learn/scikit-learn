@@ -210,17 +210,17 @@ Support for Meson is experimental, in scikit-learn 1.5.0.dev0.
 `Open an issue <https://github.com/scikit-learn/scikit-learn/issues/new>`__ if
 you encounter any problems!
 
-Make sure you have `meson-python` installed:
+Make sure you have `meson-python` and `ninja` installed, either with `conda`:
 
 .. code-block:: bash
 
-    conda install -c conda-forge meson-python -y
+    conda install -c conda-forge meson-python ninja -y
 
-.. warning::
+or with pip:
 
-    Use conda for this, if you install meson-python with pip, this does not not
-    include ninja, and you need another way to install ninja (e.g. package
-    manager)
+.. code-block:: bash
+
+    pip install meson-python ninja
 
 Simplest way to build with Meson
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
