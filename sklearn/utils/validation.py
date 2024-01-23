@@ -793,7 +793,6 @@ def check_array(
 
     Examples
     --------
-    >>> import numpy as np
     >>> from sklearn.utils.validation import check_array
     >>> X = [[1, 2, 3], [4, 5, 6]]
     >>> X_checked = check_array(X)
