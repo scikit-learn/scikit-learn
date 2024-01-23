@@ -701,3 +701,14 @@ def test_target_encoding_for_linear_regression(smooth, global_random_seed):
     # cardinality yet non-informative feature instead of the lower
     # cardinality yet informative feature:
     assert abs(coef[0]) < abs(coef[2])
+
+
+def test_27879():
+    import pandas as pd
+
+    pd.options.mode.copy_on_write = True
+
+    df = pd.DataFrame({"x": ["a", "b", "c", "c"], "y": [4.0, 5.0, 6.0, 7.0]})
+    t = TargetEncoder(target_type="continuous")
+    output = t.fit_transform(df[["x"]], df["y"])
+    assert output.tolist() == df["y"].tolist()
