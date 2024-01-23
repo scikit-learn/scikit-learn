@@ -724,15 +724,25 @@ def test_sgd_predict_proba_method_access(klass):
             assert hasattr(clf, "predict_proba")
             assert hasattr(clf, "predict_log_proba")
         else:
-            message = "probability estimates are not available for loss={!r}".format(
+            inner_msg = "probability estimates are not available for loss={!r}".format(
                 loss
             )
             assert not hasattr(clf, "predict_proba")
             assert not hasattr(clf, "predict_log_proba")
-            with pytest.raises(AttributeError, match=message):
+            with pytest.raises(
+                AttributeError, match="has no attribute 'predict_proba'"
+            ) as exec_info:
                 clf.predict_proba
-            with pytest.raises(AttributeError, match=message):
+
+            assert isinstance(exec_info.value.__cause__, AttributeError)
+            assert inner_msg in str(exec_info.value.__cause__)
+
+            with pytest.raises(
+                AttributeError, match="has no attribute 'predict_log_proba'"
+            ) as exec_info:
                 clf.predict_log_proba
+            assert isinstance(exec_info.value.__cause__, AttributeError)
+            assert inner_msg in str(exec_info.value.__cause__)
 
 
 @pytest.mark.parametrize("klass", [SGDClassifier, SparseSGDClassifier])

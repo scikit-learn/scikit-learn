@@ -549,6 +549,20 @@ def ridge_regression(
     :class:`~sklearn.svm.LinearSVC`. If an array is passed, penalties are
     assumed to be specific to the targets. Hence they must correspond in
     number.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.datasets import make_regression
+    >>> from sklearn.linear_model import ridge_regression
+    >>> rng = np.random.RandomState(0)
+    >>> X = rng.randn(100, 4)
+    >>> y = 2.0 * X[:, 0] - 1.0 * X[:, 1] + 0.1 * rng.standard_normal(100)
+    >>> coef, intercept = ridge_regression(X, y, alpha=1.0, return_intercept=True)
+    >>> list(coef)
+    [1.97..., -1.00..., -0.0..., -0.0...]
+    >>> intercept
+    -0.0...
     """
     return _ridge_regression(
         X,
