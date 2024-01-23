@@ -25,6 +25,7 @@ from .common cimport hist_struct
 from ._bitset cimport init_bitset
 from ._bitset cimport set_bitset
 from ._bitset cimport in_bitset
+from ...utils._typedefs cimport uint16_t
 
 cnp.import_array()
 
@@ -127,13 +128,9 @@ cdef class Splitter:
     ----------
     X_binned : ndarray of int, shape (n_samples, n_features)
         The binned input samples. Must be Fortran-aligned.
-    n_bins_non_missing : ndarray, shape (n_features,)
+    n_bins_non_missing : ndarray of shape (n_features,), dtype=np.uint16
         For each feature, gives the number of bins actually used for
         non-missing values.
-    missing_values_bin_idx : uint8
-        Index of the bin that is used for missing values. This is the index of
-        the last bin and is always equal to max_bins (as passed to the GBDT
-        classes), or equivalently to n_bins - 1.
     has_missing_values : ndarray, shape (n_features,)
         Whether missing values were observed in the training data, for each
         feature.
@@ -170,8 +167,7 @@ cdef class Splitter:
     cdef public:
         const X_BINNED_DTYPE_C [::1, :] X_binned
         unsigned int n_features
-        const unsigned int [::1] n_bins_non_missing
-        unsigned char missing_values_bin_idx
+        const uint16_t [::1] n_bins_non_missing
         const unsigned char [::1] has_missing_values
         const unsigned char [::1] is_categorical
         const signed char [::1] monotonic_cst
@@ -190,8 +186,7 @@ cdef class Splitter:
 
     def __init__(self,
                  const X_BINNED_DTYPE_C [::1, :] X_binned,
-                 const unsigned int [::1] n_bins_non_missing,
-                 const unsigned char missing_values_bin_idx,
+                 const uint16_t [::1] n_bins_non_missing,
                  const unsigned char [::1] has_missing_values,
                  const unsigned char [::1] is_categorical,
                  const signed char [::1] monotonic_cst,
@@ -207,7 +202,6 @@ cdef class Splitter:
         self.X_binned = X_binned
         self.n_features = X_binned.shape[1]
         self.n_bins_non_missing = n_bins_non_missing
-        self.missing_values_bin_idx = missing_values_bin_idx
         self.has_missing_values = has_missing_values
         self.is_categorical = is_categorical
         self.monotonic_cst = monotonic_cst
@@ -309,10 +303,10 @@ cdef class Splitter:
 
         cdef:
             int n_samples = sample_indices.shape[0]
+            int feature_idx = split_info.feature_idx
             X_BINNED_DTYPE_C bin_idx = split_info.bin_idx
             unsigned char missing_go_to_left = split_info.missing_go_to_left
-            unsigned char missing_values_bin_idx = self.missing_values_bin_idx
-            int feature_idx = split_info.feature_idx
+            uint16_t missing_values_bin_idx = self.n_bins_non_missing[feature_idx]
             const X_BINNED_DTYPE_C [::1] X_binned = \
                 self.X_binned[:, feature_idx]
             unsigned int [::1] left_indices_buffer = self.left_indices_buffer
@@ -653,8 +647,9 @@ cdef class Splitter:
             # bin never goes to the left child (which would result in and
             # empty right child), unless there are missing values, since these
             # would go to the right child.
-            unsigned int end = \
+            uint16_t end = (
                 self.n_bins_non_missing[feature_idx] - 1 + has_missing_values
+            )
             Y_DTYPE_C sum_hessian_left
             Y_DTYPE_C sum_hessian_right
             Y_DTYPE_C sum_gradient_left
@@ -774,7 +769,7 @@ cdef class Splitter:
             Y_DTYPE_C sum_gradient_right
             Y_DTYPE_C loss_current_node
             Y_DTYPE_C gain
-            unsigned int start = self.n_bins_non_missing[feature_idx] - 2
+            uint16_t start = self.n_bins_non_missing[feature_idx] - 2
             unsigned char found_better_split = False
 
             Y_DTYPE_C best_sum_hessian_left
@@ -875,8 +870,8 @@ cdef class Splitter:
 
         cdef:
             unsigned int bin_idx
-            unsigned int n_bins_non_missing = self.n_bins_non_missing[feature_idx]
-            unsigned int missing_values_bin_idx = self.missing_values_bin_idx
+            uint16_t n_bins_non_missing = self.n_bins_non_missing[feature_idx]
+            uint16_t missing_values_bin_idx = n_bins_non_missing
             categorical_info * cat_infos
             unsigned int sorted_cat_idx
             unsigned int n_used_bins = 0
@@ -1143,7 +1138,7 @@ cdef inline Y_DTYPE_C _loss_from_value(
 
 cdef inline unsigned char sample_goes_left(
         unsigned char missing_go_to_left,
-        unsigned char missing_values_bin_idx,
+        uint16_t missing_values_bin_idx,
         X_BINNED_DTYPE_C split_bin_idx,
         X_BINNED_DTYPE_C bin_value,
         unsigned char is_categorical,

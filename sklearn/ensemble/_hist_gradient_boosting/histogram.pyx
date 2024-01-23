@@ -6,13 +6,16 @@ cimport cython
 from cython.parallel import prange
 from libc.string cimport memset
 cimport numpy as cnp
-cnp.import_array()
+
+import numpy as np
 
 from ...utils._typedefs cimport uint32_t
 from .common cimport hist_struct
 from .common cimport Histograms
 from .common cimport X_BINNED_DTYPE_C
 from .common cimport G_H_DTYPE_C
+
+cnp.import_array()
 
 
 # Notes:
@@ -60,9 +63,10 @@ cdef class HistogramBuilder:
     ----------
     X_binned : ndarray of int, shape (n_samples, n_features)
         The binned input samples. Must be Fortran-aligned.
-    n_bins : int
-        The total number of bins, including the bin for missing values. Used
-        to define the shape of the histograms.
+    n_bins : int or ndarray of shape (n_features,), dtype=np.uint32
+        The total number of bins for each feature, always including the bin for missing
+        values as the last bin. Used to define the shape of the histograms.
+        If an integer is passed, it is considered as `np.array([n_bins] * n_features)`.
     gradients : ndarray, shape (n_samples,)
         The gradients of each training sample. Those are the gradients of the
         loss w.r.t the predictions, evaluated at iteration i - 1.
@@ -71,11 +75,20 @@ cdef class HistogramBuilder:
         loss w.r.t the predictions, evaluated at iteration i - 1.
     hessians_are_constant : bool
         Whether hessians are constant.
+
+    Attributes
+    ----------
+    bin_offsets : ndarray of shape (n_features + 1), dtype=np.uint32
+        The bin offsets specify which partition of the histograms ndarray belongs
+        to which features: feature j goes from `histograms[bin_offsets[j]]` until
+        `histograms[bin_offsets[j + 1] - 1]`. `bin_offsets[n_features + 1]` gives
+        the total number of bins over all features.
     """
     cdef public:
         const X_BINNED_DTYPE_C [::1, :] X_binned
         unsigned int n_features
-        unsigned int n_bins
+        uint32_t [::1] n_bins
+        uint32_t [::1] bin_offsets
         G_H_DTYPE_C [::1] gradients
         G_H_DTYPE_C [::1] hessians
         G_H_DTYPE_C [::1] ordered_gradients
@@ -84,17 +97,24 @@ cdef class HistogramBuilder:
         int n_threads
 
     def __init__(
-        self, const X_BINNED_DTYPE_C [::1, :] X_binned,
-        unsigned int n_bins, G_H_DTYPE_C [::1] gradients,
+        self,
+        const X_BINNED_DTYPE_C [::1, :] X_binned,
+        object n_bins,
+        G_H_DTYPE_C [::1] gradients,
         G_H_DTYPE_C [::1] hessians,
         unsigned char hessians_are_constant,
-        int n_threads
+        int n_threads,
     ):
         self.X_binned = X_binned
         self.n_features = X_binned.shape[1]
-        # Note: all histograms will have <n_bins> bins, but some of the
-        # bins may be unused if a feature has a small number of unique values.
-        self.n_bins = n_bins
+        if isinstance(n_bins, int):
+            # Note: all histograms will have <n_bins> bins, but some of the
+            # bins may be unused if a feature has a small number of unique values.
+            self.n_bins = np.full(
+                shape=self.n_features, fill_value=n_bins, dtype=np.uint32,
+            )
+        else:
+            self.n_bins = n_bins
         self.gradients = gradients
         self.hessians = hessians
         # for root node, gradients and hessians are already ordered
@@ -102,6 +122,11 @@ cdef class HistogramBuilder:
         self.ordered_hessians = hessians.copy()
         self.hessians_are_constant = hessians_are_constant
         self.n_threads = n_threads
+        # bin_offsets[j] is the start of the bins of feature j,
+        # bin_offsets[n_features + 1] gives the total number of bins
+        bin_offsets = np.zeros(shape=self.n_features + 1, dtype=np.uint32)
+        bin_offsets[1:] = np.cumsum(self.n_bins)
+        self.bin_offsets = bin_offsets
 
     def compute_histograms_brute(
         HistogramBuilder self,
@@ -142,7 +167,7 @@ cdef class HistogramBuilder:
             # Here we just allocate the array, i.e. __init__ calls:
             # np.empty(shape=self.bin_offsets[-1], dtype=HISTOGRAM_DTYPE)
             Histograms histograms = Histograms(
-                n_features=self.n_features, bin_offsets=256
+                n_features=self.n_features, bin_offsets=self.bin_offsets
             )
             bint has_interaction_cst = allowed_features is not None
             int n_threads = self.n_threads

@@ -11,7 +11,7 @@ from .common cimport X_BINNED_DTYPE_C
 from .common cimport BITSET_INNER_DTYPE_C
 from .common cimport node_struct
 from ._bitset cimport in_bitset_2d_memoryview
-from sklearn.utils._typedefs cimport intp_t
+from sklearn.utils._typedefs cimport intp_t, uint16_t
 
 
 def _predict_from_raw_data(  # raw data = non-binned data
@@ -89,7 +89,7 @@ def _predict_from_binned_data(
         node_struct [:] nodes,
         const X_BINNED_DTYPE_C [:, :] binned_data,
         BITSET_INNER_DTYPE_C [:, :] binned_left_cat_bitsets,
-        const unsigned char missing_values_bin_idx,
+        const uint16_t [::1] n_bins_non_missing,
         int n_threads,
         Y_DTYPE_C [:] out):
 
@@ -100,8 +100,9 @@ def _predict_from_binned_data(
                     num_threads=n_threads):
         out[i] = _predict_one_from_binned_data(nodes,
                                                binned_data,
-                                               binned_left_cat_bitsets, i,
-                                               missing_values_bin_idx)
+                                               binned_left_cat_bitsets,
+                                               i,
+                                               n_bins_non_missing)
 
 
 cdef inline Y_DTYPE_C _predict_one_from_binned_data(
@@ -109,7 +110,7 @@ cdef inline Y_DTYPE_C _predict_one_from_binned_data(
         const X_BINNED_DTYPE_C [:, :] binned_data,
         const BITSET_INNER_DTYPE_C [:, :] binned_left_cat_bitsets,
         const int row,
-        const unsigned char missing_values_bin_idx) noexcept nogil:
+        const uint16_t [::1] n_bins_non_missing) noexcept nogil:
     # Need to pass the whole array and the row index, else prange won't work.
     # See issue Cython #2798
 
@@ -117,12 +118,14 @@ cdef inline Y_DTYPE_C _predict_one_from_binned_data(
         node_struct node = nodes[0]
         unsigned int node_idx = 0
         X_BINNED_DTYPE_C data_val
+        uint16_t missing_values_bin_idx
 
     while True:
         if node.is_leaf:
             return node.value
 
         data_val = binned_data[row, node.feature_idx]
+        missing_values_bin_idx = n_bins_non_missing[node.feature_idx]
 
         if data_val == missing_values_bin_idx:
             if node.missing_go_to_left:

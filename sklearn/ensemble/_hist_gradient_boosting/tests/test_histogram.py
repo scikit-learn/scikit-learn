@@ -8,6 +8,7 @@ from sklearn.ensemble._hist_gradient_boosting.common import (
     Histograms,
 )
 from sklearn.ensemble._hist_gradient_boosting.histogram import (
+    HistogramBuilder,
     _build_histogram,
     _build_histogram_naive,
     _build_histogram_no_hessian,
@@ -15,6 +16,42 @@ from sklearn.ensemble._hist_gradient_boosting.histogram import (
     _build_histogram_root_no_hessian,
     _subtract_histograms,
 )
+
+
+@pytest.mark.parametrize("n_bins", (12, np.array([4, 8, 12], dtype=np.uint32)))
+def test_histogram_init_via_histogram_builder(n_bins):
+    """Test that histograms are initialized correctly."""
+    n_samples, n_features = 4, 3
+    # X_binned = [[ 0,  4,  8],
+    #             [ 1,  5,  9],
+    #             [ 2,  6, 10],
+    #             [ 3,  7, 11]]
+    X_binned = np.asfortranarray(
+        np.arange(n_samples * n_features).reshape((n_features, n_samples)).T,
+        dtype=X_BINNED_DTYPE,
+    )
+    gradients = np.array(np.arange(n_samples) ** 2, dtype=G_H_DTYPE)
+    hessians = np.ones_like(gradients)
+    sample_indices = np.arange(n_samples, dtype=np.uint32)
+    builder = HistogramBuilder(
+        X_binned=X_binned,
+        n_bins=n_bins,
+        gradients=gradients,
+        hessians=hessians,
+        hessians_are_constant=False,
+        n_threads=1,
+    )
+    histograms = histograms = builder.compute_histograms_brute(sample_indices)
+    assert histograms.histograms.ndim == 1
+    if isinstance(n_bins, int):
+        assert histograms.histograms.shape[0] == n_bins * n_features
+        assert_array_equal(histograms.bin_offsets, [0, n_bins, 2 * n_bins, 3 * n_bins])
+    else:
+        assert histograms.histograms.shape[0] == np.sum(n_bins)
+        assert_array_equal(
+            histograms.bin_offsets,
+            [0, n_bins[0], n_bins[0] + n_bins[1], n_bins[0] + n_bins[1] + n_bins[2]],
+        )
 
 
 @pytest.mark.parametrize("build_func", [_build_histogram_naive, _build_histogram])

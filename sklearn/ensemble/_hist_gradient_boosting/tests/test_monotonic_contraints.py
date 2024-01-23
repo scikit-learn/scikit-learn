@@ -359,20 +359,18 @@ def test_bounded_value_min_gain_to_split():
     builder = HistogramBuilder(
         X_binned, n_bins, all_gradients, all_hessians, hessians_are_constant, n_threads
     )
-    n_bins_non_missing = np.array([n_bins - 1] * X_binned.shape[1], dtype=np.uint32)
+    n_bins_non_missing = np.array([n_bins - 1] * X_binned.shape[1], dtype=np.uint16)
     has_missing_values = np.array([False] * X_binned.shape[1], dtype=np.uint8)
     monotonic_cst = np.array(
         [MonotonicConstraint.NO_CST] * X_binned.shape[1], dtype=np.int8
     )
     is_categorical = np.zeros_like(monotonic_cst, dtype=np.uint8)
-    missing_values_bin_idx = n_bins - 1
     children_lower_bound, children_upper_bound = -np.inf, np.inf
 
     min_gain_to_split = 2000
     splitter = Splitter(
         X_binned,
         n_bins_non_missing,
-        missing_values_bin_idx,
         has_missing_values,
         is_categorical,
         monotonic_cst,
