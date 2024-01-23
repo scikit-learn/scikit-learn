@@ -3,13 +3,14 @@
 from cython.parallel import prange
 from libc.math cimport isnan
 
+from sklearn.utils._typedefs cimport uint16_t
 from .common cimport X_DTYPE_C, X_BINNED_DTYPE_C
 
 
-def _map_to_bins(const X_DTYPE_C [:, :] data,
+def _map_to_bins(const X_DTYPE_C[:, :] data,
+                 const uint16_t[::1] n_bins_non_missing,
                  list binning_thresholds,
                  const unsigned char[::1] is_categorical,
-                 const unsigned char missing_values_bin_idx,
                  int n_threads,
                  X_BINNED_DTYPE_C [::1, :] binned):
     """Bin continuous and categorical values to discrete integer-coded levels.
@@ -21,6 +22,10 @@ def _map_to_bins(const X_DTYPE_C [:, :] data,
     ----------
     data : ndarray, shape (n_samples, n_features)
         The data to bin.
+    n_bins_non_missing : ndarray of shape (n_features,) dtype=np.uint16
+        For each feature, gives the number of bins actually used for non-missing
+        values. The index of the bin where missing values are mapped is always
+        given by the last bin, i.e. bin index ``n_bins_non_missing_``.
     binning_thresholds : list of arrays
         For each feature, stores the increasing numeric values that are
         used to separate the bins.
@@ -36,20 +41,20 @@ def _map_to_bins(const X_DTYPE_C [:, :] data,
 
     for feature_idx in range(data.shape[1]):
         _map_col_to_bins(
-            data[:, feature_idx],
-            binning_thresholds[feature_idx],
-            is_categorical[feature_idx],
-            missing_values_bin_idx,
-            n_threads,
-            binned[:, feature_idx]
+            data=data[:, feature_idx],
+            binning_thresholds=binning_thresholds[feature_idx],
+            is_categorical=is_categorical[feature_idx],
+            missing_values_bin_idx=n_bins_non_missing[feature_idx],
+            n_threads=n_threads,
+            binned=binned[:, feature_idx]
         )
 
 
 cdef void _map_col_to_bins(
-    const X_DTYPE_C [:] data,
-    const X_DTYPE_C [:] binning_thresholds,
+    const X_DTYPE_C[:] data,
+    const X_DTYPE_C[:] binning_thresholds,
     const unsigned char is_categorical,
-    const unsigned char missing_values_bin_idx,
+    const uint16_t missing_values_bin_idx,
     int n_threads,
     X_BINNED_DTYPE_C [:] binned
 ):

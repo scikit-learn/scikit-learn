@@ -77,17 +77,17 @@ class TreePredictor:
         )
         return out
 
-    def predict_binned(self, X, missing_values_bin_idx, n_threads):
+    def predict_binned(self, X, n_bins_non_missing, n_threads):
         """Predict raw values for binned data.
 
         Parameters
         ----------
         X : ndarray, shape (n_samples, n_features)
             The input samples.
-        missing_values_bin_idx : uint8
-            Index of the bin that is used for missing values. This is the
-            index of the last bin and is always equal to max_bins (as passed
-            to the GBDT classes), or equivalently to n_bins - 1.
+        n_bins_non_missing : ndarray of shape (n_features,), dtype=np.uint16
+            For each feature, gives the number of bins actually used for non-missing
+            values. The index of the bin where missing values are mapped is always
+            given by the last bin, i.e. bin index ``n_bins_non_missing``.
         n_threads : int
             Number of OpenMP threads to use.
 
@@ -101,7 +101,7 @@ class TreePredictor:
             self.nodes,
             X,
             self.binned_left_cat_bitsets,
-            missing_values_bin_idx,
+            n_bins_non_missing,
             n_threads,
             out,
         )

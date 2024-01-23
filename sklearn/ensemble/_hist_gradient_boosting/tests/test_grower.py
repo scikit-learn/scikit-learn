@@ -198,15 +198,13 @@ def test_predictor_from_grower():
         ],
         dtype=np.uint8,
     )
-    missing_values_bin_idx = n_bins - 1
-    predictions = predictor.predict_binned(
-        input_data, missing_values_bin_idx, n_threads
-    )
+    n_bins_non_missing = np.array([n_bins - 1] * 2, dtype=np.uint16)
+    predictions = predictor.predict_binned(input_data, n_bins_non_missing, n_threads)
     expected_targets = [1, 1, 1, 1, 1, 1, -1, -1, -1]
     assert np.allclose(predictions, expected_targets)
 
     # Check that training set can be recovered exactly:
-    predictions = predictor.predict_binned(X_binned, missing_values_bin_idx, n_threads)
+    predictions = predictor.predict_binned(X_binned, n_bins_non_missing, n_threads)
     assert np.allclose(predictions, -all_gradients)
 
 
@@ -432,7 +430,7 @@ def test_split_on_nan_with_infinite_values():
     predictions = predictor.predict(X, known_cat_bitsets, f_idx_map, n_threads)
     predictions_binned = predictor.predict_binned(
         X_binned,
-        missing_values_bin_idx=bin_mapper.missing_values_bin_idx_,
+        n_bins_non_missing=bin_mapper.n_bins_non_missing_,
         n_threads=n_threads,
     )
     np.testing.assert_allclose(predictions, -gradients)
@@ -494,7 +492,7 @@ def test_grow_tree_categories():
     # prediction
     prediction_binned = predictor.predict_binned(
         np.asarray([[6]]).astype(X_BINNED_DTYPE),
-        missing_values_bin_idx=6,
+        n_bins_non_missing=np.array([6], dtype=np.uint16),
         n_threads=n_threads,
     )
     assert_allclose(prediction_binned, [-1])  # negative gradient
@@ -547,8 +545,9 @@ def test_ohe_equivalence(min_samples_leaf, n_unique_categories, target):
     predictor = grower.make_predictor(
         binning_thresholds=np.zeros((1, n_unique_categories))
     )
+    n_bins_non_missing = np.array([255], dtype=np.uint16)
     preds = predictor.predict_binned(
-        X_binned, missing_values_bin_idx=255, n_threads=n_threads
+        X_binned, n_bins_non_missing=n_bins_non_missing, n_threads=n_threads
     )
 
     grower_ohe = TreeGrower(X_ohe, gradients, hessians, **grower_params)
@@ -556,8 +555,10 @@ def test_ohe_equivalence(min_samples_leaf, n_unique_categories, target):
     predictor_ohe = grower_ohe.make_predictor(
         binning_thresholds=np.zeros((X_ohe.shape[1], n_unique_categories))
     )
+    # OHE has 2 values, => n_bins_non_missing = 2 = idex of + missing bin
+    n_bins_non_missing = np.array([2] * X_ohe.shape[1], dtype=np.uint16)
     preds_ohe = predictor_ohe.predict_binned(
-        X_ohe, missing_values_bin_idx=255, n_threads=n_threads
+        X_ohe, n_bins_non_missing=n_bins_non_missing, n_threads=n_threads
     )
 
     assert predictor.get_max_depth() <= predictor_ohe.get_max_depth()

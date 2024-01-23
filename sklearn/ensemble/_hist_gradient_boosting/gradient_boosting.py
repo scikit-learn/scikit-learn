@@ -679,8 +679,10 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             X_binned_val = None
 
         # Uses binned data to check for missing values
+        # Note that the missing bin index is always the last bin, i.e. the value of
+        # n_bins_non_missing.
         has_missing_values = (
-            (X_binned_train == self._bin_mapper.missing_values_bin_idx_)
+            (X_binned_train == self._bin_mapper.n_bins_non_missing_)
             .any(axis=0)
             .astype(np.uint8)
         )
@@ -940,7 +942,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                     for k, pred in enumerate(self._predictors[-1]):
                         raw_predictions_val[:, k] += pred.predict_binned(
                             X_binned_val,
-                            self._bin_mapper.missing_values_bin_idx_,
+                            self._bin_mapper.n_bins_non_missing_,
                             n_threads,
                         )
 
@@ -1296,7 +1298,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                 if is_binned:
                     predict = partial(
                         predictor.predict_binned,
-                        missing_values_bin_idx=self._bin_mapper.missing_values_bin_idx_,
+                        n_bins_non_missing=self._bin_mapper.n_bins_non_missing_,
                         n_threads=n_threads,
                     )
                 else:

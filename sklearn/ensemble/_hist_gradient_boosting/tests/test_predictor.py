@@ -154,8 +154,9 @@ def test_categorical_predictor(bins_go_left, expected_predictions):
     predictor = TreePredictor(nodes, binned_cat_bitsets, raw_categorical_bitsets)
 
     # Check binned data gives correct predictions
+    n_bins_non_missing = np.array([6], dtype=np.uint16)
     prediction_binned = predictor.predict_binned(
-        X_binned, missing_values_bin_idx=6, n_threads=n_threads
+        X_binned, n_bins_non_missing=n_bins_non_missing, n_threads=n_threads
     )
     assert_allclose(prediction_binned, expected_predictions)
 
@@ -173,7 +174,7 @@ def test_categorical_predictor(bins_go_left, expected_predictions):
     # Check missing goes left because missing_values_bin_idx=6
     X_binned_missing = np.array([[6]], dtype=X_BINNED_DTYPE).T
     predictions = predictor.predict_binned(
-        X_binned_missing, missing_values_bin_idx=6, n_threads=n_threads
+        X_binned_missing, n_bins_non_missing=n_bins_non_missing, n_threads=n_threads
     )
     assert_allclose(predictions, [1])
 

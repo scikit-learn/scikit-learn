@@ -15,6 +15,7 @@
 # use these consistently throughout the codebase.
 # NOTE: Extend this list as needed when converting more cython extensions.
 ctypedef unsigned char uint8_t
+ctypedef unsigned short uint16_t
 ctypedef unsigned int uint32_t
 ctypedef unsigned long long uint64_t
 ctypedef Py_ssize_t intp_t
