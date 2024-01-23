@@ -1346,15 +1346,8 @@ def check_random_state(seed):
     Examples
     --------
     >>> from sklearn.utils.validation import check_random_state
-    >>> rnd = check_random_state(None)
-    >>> type(rnd)
-    <class 'numpy.random.mtrand.RandomState'>
-    >>> rnd = check_random_state(123)
-    >>> type(rnd)
-    <class 'numpy.random.mtrand.RandomState'>
-    >>> rnd = check_random_state(rnd)
-    >>> type(rnd)
-    <class 'numpy.random.mtrand.RandomState'>
+    >>> check_random_state(42)
+    RandomState(MT19937) at 0x...
     """
     if seed is None or seed is np.random:
         return np.random.mtrand._rand
