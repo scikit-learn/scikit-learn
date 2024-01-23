@@ -1197,7 +1197,6 @@ def check_X_y(
 
     Examples
     --------
-    >>> import numpy as np
     >>> from sklearn.utils.validation import check_X_y
     >>> X = [[1, 2], [3, 4], [5, 6]]
     >>> y = [1, 2, 3]
