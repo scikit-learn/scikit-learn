@@ -48,7 +48,7 @@ cdef class BaseTree:
     cdef intp_t value_stride             # = n_outputs * max_n_classes
 
     # Methods
-    cdef intp_t _add_node(
+    cdef int _add_node(
         self,
         intp_t parent,
         bint is_left,
@@ -59,10 +59,10 @@ cdef class BaseTree:
         float64_t weighted_n_node_samples,
         unsigned char missing_go_to_left
     ) except -1 nogil
-    cdef intp_t _resize(self, intp_t capacity) except -1 nogil
-    cdef intp_t _resize_c(self, intp_t capacity=*) except -1 nogil
+    cdef int _resize(self, intp_t capacity) except -1 nogil
+    cdef int _resize_c(self, intp_t capacity=*) except -1 nogil
 
-    cdef intp_t _update_node(
+    cdef int _update_node(
         self,
         intp_t parent,
         bint is_left,
@@ -87,13 +87,13 @@ cdef class BaseTree:
     cpdef compute_feature_importances(self, normalize=*)
 
     # Abstract methods: these functions must be implemented by any decision tree
-    cdef intp_t _set_split_node(
+    cdef int _set_split_node(
         self,
         SplitRecord* split_node,
         Node* node,
         intp_t node_id,
     ) except -1 nogil
-    cdef intp_t _set_leaf_node(
+    cdef int _set_leaf_node(
         self,
         SplitRecord* split_node,
         Node* node,

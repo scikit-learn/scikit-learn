@@ -80,13 +80,13 @@ cdef class BaseSplitter:
     # This allows optimization with depth-based tree building.
 
     # Methods
-    cdef intp_t node_reset(
+    cdef int node_reset(
         self,
         intp_t start,
         intp_t end,
         float64_t* weighted_n_node_samples
     ) except -1 nogil
-    cdef intp_t node_split(
+    cdef int node_split(
         self,
         float64_t impurity,   # Impurity of the node
         SplitRecord* split,
@@ -112,7 +112,7 @@ cdef class Splitter(BaseSplitter):
     cdef const cnp.int8_t[:] monotonic_cst
     cdef bint with_monotonic_cst
 
-    cdef intp_t init(
+    cdef int init(
         self,
         object X,
         const float64_t[:, ::1] y,

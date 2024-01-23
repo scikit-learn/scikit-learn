@@ -68,10 +68,10 @@ cdef float64_t INFINITY = np.inf
 cdef float64_t EPSILON = np.finfo('double').eps
 
 # Some handy constants (BestFirstTreeBuilder)
-cdef intp_t IS_FIRST = 1
-cdef intp_t IS_NOT_FIRST = 0
-cdef intp_t IS_LEFT = 1
-cdef intp_t IS_NOT_LEFT = 0
+cdef bint IS_FIRST = 1
+cdef bint IS_NOT_FIRST = 0
+cdef bint IS_LEFT = 1
+cdef bint IS_NOT_LEFT = 0
 
 TREE_LEAF = -1
 TREE_UNDEFINED = -2
@@ -987,7 +987,7 @@ cdef class BaseTree:
 
     Downstream classes must implement methods to actually traverse the tree.
     """
-    cdef intp_t _resize(
+    cdef int _resize(
         self,
         intp_t capacity
     ) except -1 nogil:
@@ -1002,7 +1002,7 @@ cdef class BaseTree:
             with gil:
                 raise MemoryError()
 
-    cdef intp_t _resize_c(self, intp_t capacity=INTPTR_MAX) except -1 nogil:
+    cdef int _resize_c(self, intp_t capacity=INTPTR_MAX) except -1 nogil:
         """Guts of _resize
 
         Returns -1 in case of failure to allocate memory (and raise MemoryError)
@@ -1035,7 +1035,7 @@ cdef class BaseTree:
         self.capacity = capacity
         return 0
 
-    cdef intp_t _set_split_node(
+    cdef int _set_split_node(
         self,
         SplitRecord* split_node,
         Node* node,
@@ -1057,7 +1057,7 @@ cdef class BaseTree:
         node.threshold = split_node.threshold
         return 1
 
-    cdef intp_t _set_leaf_node(
+    cdef int _set_leaf_node(
         self,
         SplitRecord* split_node,
         Node* node,
@@ -1095,7 +1095,7 @@ cdef class BaseTree:
         cdef float32_t feature = X_ndarray[sample_index, node.feature]
         return feature
 
-    cdef intp_t _add_node(
+    cdef int _add_node(
         self,
         intp_t parent,
         bint is_left,
@@ -1161,7 +1161,7 @@ cdef class BaseTree:
 
         return node_id
 
-    cdef inline intp_t _update_node(
+    cdef inline int _update_node(
         self,
         intp_t parent,
         bint is_left,
@@ -1555,7 +1555,7 @@ cdef class BaseTree:
                         right.weighted_n_node_samples * right.impurity)
 
     def compute_partial_dependence(self, float32_t[:, ::1] X,
-                                   int[::1] target_features,
+                                   const intp_t[::1] target_features,
                                    float64_t[::1] out):
         """Partial dependence of the response on the ``target_feature`` set.
 

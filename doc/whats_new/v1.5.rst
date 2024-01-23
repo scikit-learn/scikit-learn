@@ -11,6 +11,16 @@ Version 1.5.0
 
 .. include:: changelog_legend.inc
 
+Support for building with Meson
+-------------------------------
+
+Meson is now supported as a build backend, see :ref:`Building with Meson
+<building_with_meson>` for more details.
+
+:pr:`28040` by :user:`Loïc Estève <lesteve>`
+
+TODO Fill more details before the 1.5 release, when the Meson story has settled down.
+
 Changelog
 ---------
 
@@ -33,11 +43,18 @@ Changelog
   which returns the fitted transformers by name. :pr:`27990` by `Thomas Fan`_.
 
 :mod:`sklearn.dummy`
-.......................
+....................
 
 - |Enhancement| :class:`dummy.DummyClassifier` and :class:`dummy.DummyRegressor` now
   have the `n_features_in_` and `feature_names_in_` attributes after `fit`.
   :pr:`27937` by :user:`Marco vd Boom <tvdboom>`.
+
+:mod:`sklearn.ensemble`
+.......................
+
+- |Efficiency| Improves runtime of `predict` of
+  :class:`ensemble.HistGradientBoostingClassifier` by avoiding to call `predict_proba`.
+  :pr:`27844` by :user:`Christian Lorentzen <lorentzenchr>`.
 
 :mod:`sklearn.feature_extraction`
 .................................
@@ -51,13 +68,6 @@ Changelog
   the data type of the input matrix if it is `np.float64` or `np.float32`.
   :pr:`28136` by :user:`Guillaume Lemaitre <glemaitre>`.
 
-:mod:`sklearn.impute`
-.....................
-
-- |Enhancement| :class:`impute.SimpleImputer` now supports custom strategies
-  by passing a function in place of a strategy name.
-  :pr:`28053` by :user:`Mark Elliot <mark-thm>`.
-
 :mod:`sklearn.feature_selection`
 ................................
 
@@ -66,11 +76,19 @@ Changelog
   :pr:`28085` by :user:`Neto Menoci <netomenoci>` and
   :user:`Florin Andrei <FlorinAndrei>`.
 
+:mod:`sklearn.impute`
+.....................
+
+- |Enhancement| :class:`impute.SimpleImputer` now supports custom strategies
+  by passing a function in place of a strategy name.
+  :pr:`28053` by :user:`Mark Elliot <mark-thm>`.
+
 :mod:`sklearn.metrics`
 ......................
 
 - |Efficiency| Improve efficiency of functions :func:`~metrics.brier_score_loss`,
-  :func:`~metrics.calibration_curve`, :func:`~metrics.det_curve`, :func:`~metrics.precision_recall_curve`,
+  :func:`~metrics.calibration_curve`, :func:`~metrics.det_curve`,
+  :func:`~metrics.precision_recall_curve`,
   :func:`~metrics.roc_curve` when `pos_label` argument is specified.
   Also improve efficiency of methods `from_estimator`
   and `from_predictions` in :class:`~metrics.RocCurveDisplay`,
@@ -78,6 +96,12 @@ Changelog
   :class:`~calibration.CalibrationDisplay`.
   :pr:`28051` by :user:`Pierre de Fréminville <pidefrem>`.
 
+:mod:`sklearn.utils`
+....................
+
+- |Enhancement| :func:`utils.metaestimators.available_if` now reraises the error from
+  the `check` function as the cause of the `AttributeError`. :pr:`28198` by
+  `Thomas Fan`_.
 
 Code and Documentation Contributors
 -----------------------------------
