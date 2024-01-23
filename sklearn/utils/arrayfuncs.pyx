@@ -26,7 +26,7 @@ def min_pos(const floating[:] X):
 
     Parameters
     ----------
-    X : array-like of shape (n,)
+    X : ndarray of shape (n,)
         Input array.
 
     Returns
