@@ -1201,8 +1201,8 @@ def check_X_y(
     --------
     >>> import numpy as np
     >>> from sklearn.utils.validation import check_X_y
-    >>> X = np.array([[1, 2], [3, 4], [5, 6]])
-    >>> y = np.array([1, 2, 3])
+    >>> X = [[1, 2], [3, 4], [5, 6]]
+    >>> y = [1, 2, 3]
     >>> X, y = check_X_y(X, y)
     >>> X
     array([[1, 2],
