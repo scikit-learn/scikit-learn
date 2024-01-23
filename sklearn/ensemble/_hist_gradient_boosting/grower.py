@@ -180,7 +180,7 @@ class TreeGrower:
     n_bins : int, default=256
         The total number of bins, including the bin for missing values. Used
         to define the shape of the histograms.
-    n_bins_non_missing : ndarray, dtype=np.uint32, default=None
+    n_bins_non_missing : ndarray of shape (n_features,), dtype=np.uint16, default=None
         For each feature, gives the number of bins actually used for
         non-missing values. For features with a lot of unique values, this
         is equal to ``n_bins - 1``. If it's an int, all features are
@@ -189,7 +189,7 @@ class TreeGrower:
     has_missing_values : bool or ndarray, dtype=bool, default=False
         Whether each feature contains missing values (in the training data).
         If it's a bool, the same value is used for all features.
-    is_categorical : ndarray of bool of shape (n_features,), default=None
+    is_categorical : ndarray of shape (n_features,), dtype=bool, default=None
         Indicates categorical features.
     monotonic_cst : array-like of int of shape (n_features,), dtype=int, default=None
         Indicates the monotonic constraint to enforce on each feature.
@@ -224,8 +224,6 @@ class TreeGrower:
     root : TreeNode
     finalized_leaves : list of TreeNode
     splittable_nodes : list of TreeNode
-    missing_values_bin_idx : int
-        Equals n_bins - 1
     n_categorical_splits : int
     n_features : int
     n_nodes : int
@@ -274,10 +272,10 @@ class TreeGrower:
 
         if isinstance(n_bins_non_missing, numbers.Integral):
             n_bins_non_missing = np.array(
-                [n_bins_non_missing] * X_binned.shape[1], dtype=np.uint32
+                [n_bins_non_missing] * X_binned.shape[1], dtype=np.uint16
             )
         else:
-            n_bins_non_missing = np.asarray(n_bins_non_missing, dtype=np.uint32)
+            n_bins_non_missing = np.asarray(n_bins_non_missing, dtype=np.uint16)
 
         if isinstance(has_missing_values, bool):
             has_missing_values = [has_missing_values] * X_binned.shape[1]
@@ -310,13 +308,17 @@ class TreeGrower:
 
         hessians_are_constant = hessians.shape[0] == 1
         self.histogram_builder = HistogramBuilder(
-            X_binned, n_bins, gradients, hessians, hessians_are_constant, n_threads
+            X_binned=X_binned,
+            n_bins=n_bins_non_missing.astype(np.uint32)
+            + 1,  # need total number of bins
+            gradients=gradients,
+            hessians=hessians,
+            hessians_are_constant=hessians_are_constant,
+            n_threads=n_threads,
         )
-        missing_values_bin_idx = n_bins - 1
         self.splitter = Splitter(
             X_binned=X_binned,
             n_bins_non_missing=n_bins_non_missing,
-            missing_values_bin_idx=missing_values_bin_idx,
             has_missing_values=has_missing_values,
             is_categorical=is_categorical,
             monotonic_cst=monotonic_cst,
@@ -335,7 +337,6 @@ class TreeGrower:
         self.min_samples_leaf = min_samples_leaf
         self.min_gain_to_split = min_gain_to_split
         self.n_bins_non_missing = n_bins_non_missing
-        self.missing_values_bin_idx = missing_values_bin_idx
         self.has_missing_values = has_missing_values
         self.is_categorical = is_categorical
         self.monotonic_cst = monotonic_cst
