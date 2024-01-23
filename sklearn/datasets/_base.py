@@ -245,49 +245,49 @@ def load_files(
     >> load_files_path = ''\n
     >> load_files(load_files_path)<\n
     {'data':[b'test 1', b'test 2', b'test 3', b'test 4', b'test 5',\n
-    \t        b'test 6', b'test 7', b'test 8', b'test 9', b'test 10',\n
-    \t        b'test 11', b'test 12', b'test 13', b'test 14', b'test 15'],\n
+            b'test 6', b'test 7', b'test 8', b'test 9', b'test 10',\n
+            b'test 11', b'test 12', b'test 13', b'test 14', b'test 15'],\n
     'filenames': array([
-    \t    '/LoadFiles/cat_1/ent1.txt',\n
-    \t    '/LoadFiles/cat_1/ent2.txt',\n
-    \t    '/LoadFiles/cat_1/ent3.txt',\n
-    \t    '/LoadFiles/cat_1/ent4.txt',\n
-    \t    '/LoadFiles/cat_1/ent5.txt',\n
-    \t    '/LoadFiles/cat_2/ent6.txt',\n
-    \t    '/LoadFiles/cat_2/ent7.txt',\n
-    \t    '/LoadFiles/cat_2/ent8.txt',\n
-    \t    '/LoadFiles/cat_2/ent9.txt',\n
-    \t    '/LoadFiles/cat_2/ent10.txt',\n
-    \t    '/LoadFiles/cat_3/ent11.txt',\n
-    \t    '/LoadFiles/cat_3/ent12.txt',\n
-    \t    '/LoadFiles/cat_3/ent13.txt',\n
-    \t    '/LoadFiles/cat_3/ent14.txt',\n
-    \t    '/LoadFiles/cat_3/ent15.txt'],\n
-    \t    dtype='<U54')\n
+        '/LoadFiles/cat_1/ent1.txt',\n
+        '/LoadFiles/cat_1/ent2.txt',\n
+        '/LoadFiles/cat_1/ent3.txt',\n
+        '/LoadFiles/cat_1/ent4.txt',\n
+        '/LoadFiles/cat_1/ent5.txt',\n
+        '/LoadFiles/cat_2/ent6.txt',\n
+        '/LoadFiles/cat_2/ent7.txt',\n
+        '/LoadFiles/cat_2/ent8.txt',\n
+        '/LoadFiles/cat_2/ent9.txt',\n
+        '/LoadFiles/cat_2/ent10.txt',\n
+        '/LoadFiles/cat_3/ent11.txt',\n
+        '/LoadFiles/cat_3/ent12.txt',\n
+        '/LoadFiles/cat_3/ent13.txt',\n
+        '/LoadFiles/cat_3/ent14.txt',\n
+        '/LoadFiles/cat_3/ent15.txt'],\n
+        dtype='<U54')\n
     'target_names': ['cat_1', 'cat_2', 'cat_3'],\n
     'target': array([0, 1, 1, 1, 2, 0, 0, 2, 2, 1, 2, 0, 0, 1, 2]),\n
     'DESCR': None}\n
     >> load_files(load_files_path, categories=['cat_2'])\n
     {'data': [b'test 6', b'test 7', b'test 8', b'test 9', b'test 10'],\n
     'filenames': array([\n
-    \t    '/LoadFiles/cat_2/ent6.txt',\n
-    \t    '/LoadFiles/cat_2/ent7.txt',\n
-    \t    '/LoadFiles/cat_2/ent8.txt',\n
-    \t    '/LoadFiles/cat_2/ent9.txt',\n
-    \t    '/LoadFiles/cat_2/ent10.txt',\n
-    \t    dtype='<U54'),\n
-    \t'target_names': ['cat_2'],\n
-    \t'target': array([0, 0, 0, 0, 0]),\n
-    \t'DESCR': None}\n
+        '/LoadFiles/cat_2/ent6.txt',\n
+        '/LoadFiles/cat_2/ent7.txt',\n
+        '/LoadFiles/cat_2/ent8.txt',\n
+        '/LoadFiles/cat_2/ent9.txt',\n
+        '/LoadFiles/cat_2/ent10.txt',\n
+        dtype='<U54'),\n
+    'target_names': ['cat_2'],\n
+    'target': array([0, 0, 0, 0, 0]),\n
+    'DESCR': None}\n
 
     >> load_files(load_files_path, categories=['cat_2'], load_content=False)\n
     {'filenames': array([\n
-        \t'/LoadFiles/cat_2/ent6.txt',\n
-        \t'/LoadFiles/cat_2/ent7.txt',\n
-        \t'/LoadFiles/cat_2/ent8.txt',\n
-        \t'/LoadFiles/cat_2/ent9.txt',\n
-        \t'/LoadFiles/cat_2/ent10.txt',\n
-        \tdtype='<U54'),\n
+        '/LoadFiles/cat_2/ent6.txt',\n
+        '/LoadFiles/cat_2/ent7.txt',\n
+        '/LoadFiles/cat_2/ent8.txt',\n
+        '/LoadFiles/cat_2/ent9.txt',\n
+        '/LoadFiles/cat_2/ent10.txt',\n
+        dtype='<U54'),\n
     'target_names': ['cat_2'],\n
     'target': array([0, 0, 0, 0, 0]),\n
     'DESCR': None}\n
