@@ -180,13 +180,13 @@ class Kernel(metaclass=ABCMeta):
         ...     def __init__(self, length_scale=1.0):
         ...         self.length_scale = length_scale
         ...     def __call__(self, X, Y=None):
-        ...            if Y is None:
-        ...                Y = X
-        ...            return np.inner(X, X if Y is None else Y) ** 2
-        ...        def diag(self, X):
-        ...            return np.ones(X.shape[0])
-        ...        def is_stationary(self):
-        ...            return True
+        ...         if Y is None:
+        ...             Y = X
+        ...         return np.inner(X, X if Y is None else Y) ** 2
+        ...     def diag(self, X):
+        ...         return np.ones(X.shape[0])
+        ...     def is_stationary(self):
+        ...         return True
         >>> kernel = CustomKernel(length_scale=2.0)
         >>> X = np.array([[1, 2], [3, 4]])
         >>> print(kernel(X))
