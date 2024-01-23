@@ -345,6 +345,16 @@ def _safe_indexing(X, indices, *, axis=0):
     -----
     CSR, CSC, and LIL sparse matrices are supported. COO sparse matrices are
     not supported.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.utils import _safe_indexing
+    >>> data = np.array([[1, 2], [3, 4], [5, 6]])
+    >>> _safe_indexing(data, 0, axis=0)  # select the first row
+    array([1, 2])
+    >>> _safe_indexing(data, 0, axis=1)  # select the first column
+    array([1, 3, 5])
     """
     if indices is None:
         return X
