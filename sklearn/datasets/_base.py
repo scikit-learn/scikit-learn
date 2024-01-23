@@ -238,6 +238,58 @@ def load_files(
             The full description of the dataset.
         filenames: ndarray
             The filenames holding the dataset.
+
+    Examples
+    --------
+    >>> from sklearn.datasets import load_files
+    >>> load_files(file_path)
+    {'data':[b'test 1', b'test 2', b'test 3', b'test 4', b'test 5',
+            b'test 6', b'test 7', b'test 8', b'test 9', b'test 10',
+            b'test 11', b'test 12', b'test 13', b'test 14', b'test 15'],
+    'filenames': array([
+        '/LoadFiles/cat_1/ent1.txt',
+        '/LoadFiles/cat_1/ent2.txt',
+        '/LoadFiles/cat_1/ent3.txt',
+        '/LoadFiles/cat_1/ent4.txt',
+        '/LoadFiles/cat_1/ent5.txt',
+        '/LoadFiles/cat_2/ent6.txt',
+        '/LoadFiles/cat_2/ent7.txt',
+        '/LoadFiles/cat_2/ent8.txt',
+        '/LoadFiles/cat_2/ent9.txt',
+        '/LoadFiles/cat_2/ent10.txt',
+        '/LoadFiles/cat_3/ent11.txt',
+        '/LoadFiles/cat_3/ent12.txt',
+        '/LoadFiles/cat_3/ent13.txt',
+        '/LoadFiles/cat_3/ent14.txt',
+        '/LoadFiles/cat_3/ent15.txt'],
+        dtype='<U54'),
+    'target_names': ['cat_1', 'cat_2', 'cat_3'],
+    'target': array([0, 1, 1, 1, 2, 0, 0, 2, 2, 1, 2, 0, 0, 1, 2]),
+    'DESCR': None}
+    >>> load_files(file_path, categories=['cat_2'])
+    {'data': [b'test 6', b'test 7', b'test 8', b'test 9', b'test 10'],
+    'filenames': array([
+        '/LoadFiles/cat_2/ent6.txt',
+        '/LoadFiles/cat_2/ent7.txt',
+        '/LoadFiles/cat_2/ent8.txt',
+        '/LoadFiles/cat_2/ent9.txt',
+        '/LoadFiles/cat_2/ent10.txt',
+        dtype='<U54'),
+    'target_names': ['cat_2'],
+    'target': array([0, 0, 0, 0, 0]),
+    'DESCR': None}
+
+    >>> load_files(file_path, categories=['cat_2'], load_content=False)
+    {'filenames': array([
+        '/LoadFiles/cat_2/ent6.txt',
+        '/LoadFiles/cat_2/ent7.txt',
+        '/LoadFiles/cat_2/ent8.txt',
+        '/LoadFiles/cat_2/ent9.txt',
+        '/LoadFiles/cat_2/ent10.txt',
+        dtype='<U54'),
+    'target_names': ['cat_2'],
+    'target': array([0, 0, 0, 0, 0]),
+    'DESCR': None}
     """
 
     target = []
