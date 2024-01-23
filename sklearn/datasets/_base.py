@@ -241,9 +241,9 @@ def load_files(
 
     Examples
     --------
-    >>> from sklearn.datasets import load_files
-    >>> load_files_path = ''
-    >>> load_files(load_files_path)
+    >> from sklearn.datasets import load_files
+    >> load_files_path = ''
+    >> load_files(load_files_path)
     {'data':[b'test 1', b'test 2', b'test 3', b'test 4', b'test 5',
             b'test 6', b'test 7', b'test 8', b'test 9', b'test 10',
             b'test 11', b'test 12', b'test 13', b'test 14', b'test 15'],
@@ -267,7 +267,7 @@ def load_files(
     'target_names': ['cat_1', 'cat_2', 'cat_3'],
     'target': array([0, 1, 1, 1, 2, 0, 0, 2, 2, 1, 2, 0, 0, 1, 2]),
     'DESCR': None}
-    >>> load_files(load_files_path, categories=['cat_2'])
+    >> load_files(load_files_path, categories=['cat_2'])
     {'data': [b'test 6', b'test 7', b'test 8', b'test 9', b'test 10'],
     'filenames': array([
         '/LoadFiles/cat_2/ent6.txt',
@@ -280,7 +280,7 @@ def load_files(
     'target': array([0, 0, 0, 0, 0]),
     'DESCR': None}
 
-    >>> load_files(load_files_path, categories=['cat_2'], load_content=False)
+    >> load_files(load_files_path, categories=['cat_2'], load_content=False)
     {'filenames': array([
         '/LoadFiles/cat_2/ent6.txt',
         '/LoadFiles/cat_2/ent7.txt',
