@@ -53,8 +53,6 @@ foreach name: util_extension_names
     output: name + '.pxd',
     input: name + '.pxd.tp',
     command: [py, tempita, '@INPUT@', '-o', '@OUTDIR@'],
-    install: true,
-    install_dir: sklearn_dir / 'utils'
   )
   utils_cython_tree += [pxd]
 
