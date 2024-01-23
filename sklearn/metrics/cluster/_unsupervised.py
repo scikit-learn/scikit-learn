@@ -410,6 +410,14 @@ def davies_bouldin_score(X, labels):
        <https://ieeexplore.ieee.org/document/4766909>`__.
        IEEE Transactions on Pattern Analysis and Machine Intelligence.
        PAMI-1 (2): 224-227
+
+    Examples
+    --------
+    >>> from sklearn.metrics import davies_bouldin_score
+    >>> X = [[0, 1], [1, 1], [3, 4]]
+    >>> labels = [0, 0, 1]
+    >>> davies_bouldin_score(X, labels)
+    0.12...
     """
     X, labels = check_X_y(X, labels)
     le = LabelEncoder()

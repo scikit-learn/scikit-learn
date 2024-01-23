@@ -1135,10 +1135,10 @@ class ForestRegressor(RegressorMixin, BaseForest, metaclass=ABCMeta):
 
         Parameters
         ----------
-        grid : ndarray of shape (n_samples, n_target_features)
+        grid : ndarray of shape (n_samples, n_target_features), dtype=DTYPE
             The grid points on which the partial dependence should be
             evaluated.
-        target_features : ndarray of shape (n_target_features)
+        target_features : ndarray of shape (n_target_features), dtype=np.intp
             The set of target features for which the partial dependence
             should be evaluated.
 
@@ -1148,6 +1148,7 @@ class ForestRegressor(RegressorMixin, BaseForest, metaclass=ABCMeta):
             The value of the partial dependence function on each grid point.
         """
         grid = np.asarray(grid, dtype=DTYPE, order="C")
+        target_features = np.asarray(target_features, dtype=np.intp, order="C")
         averaged_predictions = np.zeros(
             shape=grid.shape[0], dtype=np.float64, order="C"
         )
