@@ -775,8 +775,6 @@ def _convert_container(
             return tuple(np.asarray(container, dtype=dtype).tolist())
     elif constructor_name == "array":
         return np.asarray(container, dtype=dtype)
-    elif constructor_name == "sparse":
-        return sp.sparse.csr_matrix(np.atleast_2d(container), dtype=dtype)
     elif constructor_name in ("pandas", "dataframe"):
         pd = pytest.importorskip("pandas", minversion=minversion)
         result = pd.DataFrame(container, columns=columns_name, dtype=dtype, copy=False)
@@ -813,22 +811,28 @@ def _convert_container(
         return pd.Index(container, dtype=dtype)
     elif constructor_name == "slice":
         return slice(container[0], container[1])
-    elif constructor_name == "sparse_csr":
-        return sp.sparse.csr_matrix(np.atleast_2d(container), dtype=dtype)
-    elif constructor_name == "sparse_csr_array":
-        if sp_version >= parse_version("1.8"):
-            return sp.sparse.csr_array(np.atleast_2d(container), dtype=dtype)
-        raise ValueError(
-            f"sparse_csr_array is only available with scipy>=1.8.0, got {sp_version}"
-        )
-    elif constructor_name == "sparse_csc":
-        return sp.sparse.csc_matrix(np.atleast_2d(container), dtype=dtype)
-    elif constructor_name == "sparse_csc_array":
-        if sp_version >= parse_version("1.8"):
-            return sp.sparse.csc_array(np.atleast_2d(container), dtype=dtype)
-        raise ValueError(
-            f"sparse_csc_array is only available with scipy>=1.8.0, got {sp_version}"
-        )
+    elif "sparse" in constructor_name:
+        if not sp.sparse.issparse(container):
+            # For scipy >= 1.13, sparse array constructed from 1d array may be
+            # 1d or raise an exception. To avoid this, we make sure that the
+            # input container is 2d. For more details, see
+            # https://github.com/scipy/scipy/pull/18530#issuecomment-1878005149
+            container = np.atleast_2d(container)
+
+        if "array" in constructor_name and sp_version < parse_version("1.8"):
+            raise ValueError(
+                f"{constructor_name} is only available with scipy>=1.8.0, got "
+                f"{sp_version}"
+            )
+        if constructor_name in ("sparse", "sparse_csr"):
+            # sparse and sparse_csr are equivalent for legacy reasons
+            return sp.sparse.csr_matrix(container, dtype=dtype)
+        elif constructor_name == "sparse_csr_array":
+            return sp.sparse.csr_array(container, dtype=dtype)
+        elif constructor_name == "sparse_csc":
+            return sp.sparse.csc_matrix(container, dtype=dtype)
+        elif constructor_name == "sparse_csc_array":
+            return sp.sparse.csc_array(container, dtype=dtype)
 
 
 def raises(expected_exc_type, match=None, may_pass=False, err_msg=None):
