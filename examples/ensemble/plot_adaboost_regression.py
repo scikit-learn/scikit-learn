@@ -10,7 +10,7 @@ regressor. As the number of boosts is increased the regressor can fit more
 detail.
 
 See :ref:`sphx_glr_auto_examples_ensemble_plot_hgbt_regression.py` for an
-example showcasing the benefits of using more robust regressions such as
+example showcasing the benefits of using more efficient regression models such as
 :class:`~ensemble.HistGradientBoostingRegressor`.
 
 .. [1] `H. Drucker, "Improving Regressors using Boosting Techniques", 1997.
