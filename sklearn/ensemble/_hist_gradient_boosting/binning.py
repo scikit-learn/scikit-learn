@@ -136,18 +136,14 @@ class _BinMapper(TransformerMixin, BaseEstimator):
           value to the raw category value. The size of the array is equal to
           ``min(max_bins, category_cardinality)`` where we ignore missing
           values in the cardinality.
-    n_bins_non_missing_ : ndarray, dtype=np.uint32
+    n_bins_non_missing_ : ndarray of shape (n_features,), dtype=np.uint16
         For each feature, gives the number of bins actually used for
         non-missing values. For features with a lot of unique values, this is
         equal to ``n_bins - 1``.
+        The index of the bin where missing values are mapped is always given by the
+        last bin, i.e. bin index ``n_bins_non_missing_`` (no unsused bins).
     is_categorical_ : ndarray of shape (n_features,), dtype=np.uint8
         Indicator for categorical features.
-    missing_values_bin_idx_ : np.uint8
-        The index of the bin where missing values are mapped. This is a
-        constant across all features. This corresponds to the last bin, and
-        it is always equal to ``n_bins - 1``. Note that if ``n_bins_non_missing_``
-        is less than ``n_bins - 1`` for a given feature, then there are
-        empty (and unused) bins.
     """
 
     def __init__(
@@ -223,8 +219,6 @@ class _BinMapper(TransformerMixin, BaseEstimator):
                     "but categories were passed."
                 )
 
-        self.missing_values_bin_idx_ = self.n_bins - 1
-
         self.bin_thresholds_ = []
         n_bins_non_missing = []
 
@@ -242,7 +236,7 @@ class _BinMapper(TransformerMixin, BaseEstimator):
 
             self.bin_thresholds_.append(thresholds)
 
-        self.n_bins_non_missing_ = np.array(n_bins_non_missing, dtype=np.uint32)
+        self.n_bins_non_missing_ = np.array(n_bins_non_missing, dtype=np.uint16)
         return self
 
     def transform(self, X):
@@ -277,9 +271,9 @@ class _BinMapper(TransformerMixin, BaseEstimator):
         binned = np.zeros_like(X, dtype=X_BINNED_DTYPE, order="F")
         _map_to_bins(
             X,
+            self.n_bins_non_missing_,
             self.bin_thresholds_,
             self.is_categorical_,
-            self.missing_values_bin_idx_,
             n_threads,
             binned,
         )
