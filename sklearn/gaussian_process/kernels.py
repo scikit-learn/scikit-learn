@@ -172,6 +172,26 @@ class Kernel(metaclass=ABCMeta):
         -------
         params : dict
             Parameter names mapped to their values.
+        Examples
+        --------
+        >>> from sklearn.gaussian_process.kernels import Kernel, RBF
+        >>> import numpy as np
+        >>> class CustomKernel(Kernel):
+        ...     def __init__(self, length_scale=1.0):
+        ...         self.length_scale = length_scale
+        ...     def __call__(self, X, Y=None):
+        ...            if Y is None:
+        ...                Y = X
+        ...            return np.inner(X, X if Y is None else Y) ** 2
+        ...        def diag(self, X):
+        ...            return np.ones(X.shape[0])
+        ...        def is_stationary(self):
+        ...            return True
+        >>> kernel = CustomKernel(length_scale=2.0)
+        >>> X = np.array([[1, 2], [3, 4]])
+        >>> print(kernel(X))
+        [[1.         0.36787944]
+        [0.36787944 1.        ]]
         """
         params = dict()
 
