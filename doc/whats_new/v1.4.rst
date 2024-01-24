@@ -16,7 +16,7 @@ Changelog
 ..........................
 
 - |Fix| `calibration.CalibratedClassifierCV` supports :term:`predict_proba` with
-  float32 output from the inner estimator. :pr:`xxxxx` by `Thomas Fan`_.
+  float32 output from the inner estimator. :pr:`28247` by `Thomas Fan`_.
 
 :mod:`sklearn.cluster`
 ......................
