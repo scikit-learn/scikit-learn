@@ -12,6 +12,12 @@ Version 1.4.1
 Changelog
 ---------
 
+:mod:`sklearn.calibration`
+..........................
+
+- |Fix| `calibration.CalibratedClassifierCV` supports :term:`predict_proba` with
+  float32 output from the inner estimator. :pr:`xxxxx` by `Thomas Fan`_.
+
 :mod:`sklearn.cluster`
 ......................
 

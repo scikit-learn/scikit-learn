@@ -814,7 +814,7 @@ def _sigmoid_calibration(
     else:
         prior0 = float(np.sum(mask_negative_samples))
         prior1 = y.shape[0] - prior0
-    T = np.zeros_like(y, dtype=np.float64)
+    T = np.zeros_like(y, dtype=predictions.dtype)
     T[y > 0] = (prior1 + 1.0) / (prior1 + 2.0)
     T[y <= 0] = 1.0 / (prior0 + 2.0)
 
