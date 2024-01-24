@@ -449,7 +449,7 @@ def davies_bouldin_score(X, labels):
     return np.mean(scores)
 
 
-def validity_index(X, labels, metric='euclidean',
+def dbcv(X, labels, metric='euclidean',
                     d=None, per_cluster_scores=False, mst_raw_dist=False, verbose=False,  **kwd_args):
     """
     Compute the density based cluster validity index for the
