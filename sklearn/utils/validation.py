@@ -442,6 +442,13 @@ def check_consistent_length(*arrays):
     ----------
     *arrays : list or tuple of input objects.
         Objects that will be checked for consistent length.
+
+    Examples
+    --------
+    >>> from sklearn.utils.validation import check_consistent_length
+    >>> a = [1, 2, 3]
+    >>> b = [2, 3, 4]
+    >>> check_consistent_length(a, b)
     """
 
     lengths = [_num_samples(X) for X in arrays if X is not None]
@@ -802,6 +809,14 @@ def check_array(
     -------
     array_converted : object
         The converted and validated array.
+
+    Examples
+    --------
+    >>> from sklearn.utils.validation import check_array
+    >>> X = [[1, 2, 3], [4, 5, 6]]
+    >>> X_checked = check_array(X)
+    >>> X_checked
+    array([[1, 2, 3], [4, 5, 6]])
     """
     if isinstance(array, np.matrix):
         raise TypeError(
@@ -1199,6 +1214,19 @@ def check_X_y(
 
     y_converted : object
         The converted and validated y.
+
+    Examples
+    --------
+    >>> from sklearn.utils.validation import check_X_y
+    >>> X = [[1, 2], [3, 4], [5, 6]]
+    >>> y = [1, 2, 3]
+    >>> X, y = check_X_y(X, y)
+    >>> X
+    array([[1, 2],
+          [3, 4],
+          [5, 6]])
+    >>> y
+    array([1, 2, 3])
     """
     if y is None:
         if estimator is None:
@@ -1333,6 +1361,12 @@ def check_random_state(seed):
     -------
     :class:`numpy:numpy.random.RandomState`
         The random state object based on `seed` parameter.
+
+    Examples
+    --------
+    >>> from sklearn.utils.validation import check_random_state
+    >>> check_random_state(42)
+    RandomState(MT19937) at 0x...
     """
     if seed is None or seed is np.random:
         return np.random.mtrand._rand
@@ -1648,6 +1682,12 @@ def check_scalar(
     ValueError
         If the parameter's value violates the given bounds.
         If `min_val`, `max_val` and `include_boundaries` are inconsistent.
+
+    Examples
+    --------
+    >>> from sklearn.utils.validation import check_scalar
+    >>> check_scalar(10, "x", int, min_val=1, max_val=20)
+    10
     """
 
     def type_name(t):

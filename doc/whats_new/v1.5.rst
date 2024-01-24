@@ -11,6 +11,16 @@ Version 1.5.0
 
 .. include:: changelog_legend.inc
 
+Support for building with Meson
+-------------------------------
+
+Meson is now supported as a build backend, see :ref:`Building with Meson
+<building_with_meson>` for more details.
+
+:pr:`28040` by :user:`Loïc Estève <lesteve>`
+
+TODO Fill more details before the 1.5 release, when the Meson story has settled down.
+
 Changelog
 ---------
 
