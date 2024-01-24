@@ -11,6 +11,24 @@ Version 1.5.0
 
 .. include:: changelog_legend.inc
 
+Support for Array API
+---------------------
+
+Several estimators and functions support the
+`Array API <https://data-apis.org/array-api/latest/>`_. Such changes allows for using
+the estimators and functions with other libraries such as JAX, CuPy, and PyTorch.
+This therefore enables some GPU-accelerated computations.
+
+See :ref:`array_api` for more details.
+
+**Functions:**
+
+- :func:`sklearn.metrics.r2_score` now supports Array API compatible inputs.
+  :pr:`27904` by :user:`Eric Lindgren <elindgren>`, `Franck Charras <fcharras>`,
+  `Olivier Grisel <ogrisel>` and `Tim Head <betatim>`.
+
+**Classes:**
+
 Changelog
 ---------
 
@@ -85,11 +103,6 @@ Changelog
   :class:`~metrics.PrecisionRecallDisplay`, :class:`~metrics.DetCurveDisplay`,
   :class:`~calibration.CalibrationDisplay`.
   :pr:`28051` by :user:`Pierre de Fréminville <pidefrem>`.
-
-- |Enhancement| :func:`sklearn.metrics.r2_score` now supports Array API compatible
-  inputs.
-  :pr:`27904` by :user:`Eric Lindgren <elindgren>`, `Franck Charras <fcharras>`,
-  `Olivier Grisel <ogrisel>` and `Tim Head <betatim>`
 
 :mod:`sklearn.utils`
 ....................
