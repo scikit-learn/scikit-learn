@@ -29,7 +29,8 @@ When posting questions:
 Bug Tracker
 ===========
 
-Encountered a bug? Report it on our issue tracker:
+Encountered a bug? Report it on our `issue tracker
+<https://github.com/scikit-learn/scikit-learn/issues>`_
 
 `Scikit-learn Issues <https://github.com/scikit-learn/scikit-learn/issues>`
 
