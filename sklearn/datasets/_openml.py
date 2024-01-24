@@ -988,7 +988,6 @@ def fetch_openml(
     dtypes: category(9), int64(6)
     memory usage: 2.7 MB
     """
-
     if cache is False:
         # no caching will be applied
         data_home = None
