@@ -33,7 +33,7 @@ Changelog
 - |Fix| make :class:`preprocessing.FunctionTransformer` more lenient and overwrite
   output column names with the `get_feature_names_out` method if they are not
   consistent.
-  :pr:`xxx` by :user:`Guillaume Lemaitre <glemaitre>`.
+  :pr:`28241` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 .. _changes_1_4:
 
