@@ -168,9 +168,14 @@ plt.show()
 # The negative loglikelihood is a proper scoring rule for probabilistic
 # classification models. It means, that in the limit of infinite training data,
 # it is minimized by a model that predicts the true conditional probabilities
-# and would therefore be perfectly calibrated. However, in finite samples, the
-# calibration can still be suboptimal: in this example the calibration curve of
-# the logistic regression model is closest but not perfectly on the diagonal.
+# and would therefore be perfectly calibrated. However, with a finite training
+# set, the calibration can still be suboptimal. Even a large training set,
+# logistic regression models can still be poorly calibrated if they are too
+# regularized or if they are mis-specified (e.g. the true decision boundary is
+# a highly non-linear function of the input features). In this example with a
+# very small training set size the calibration curve of the logistic regression
+# model is closest but not perfectly on the diagonal: this model is slightly
+# under-confident.
 #
 # The other methods all output worse-calibrated probabilities:
 #
