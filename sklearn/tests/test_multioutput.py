@@ -253,9 +253,18 @@ def test_multi_output_predict_proba():
     sgd_linear_clf = SGDClassifier(random_state=1, max_iter=5)
     multi_target_linear = MultiOutputClassifier(sgd_linear_clf)
     multi_target_linear.fit(X, y)
-    err_msg = "probability estimates are not available for loss='hinge'"
-    with pytest.raises(AttributeError, match=err_msg):
+
+    inner2_msg = "probability estimates are not available for loss='hinge'"
+    inner1_msg = "'SGDClassifier' has no attribute 'predict_proba'"
+    outer_msg = "'MultiOutputClassifier' has no attribute 'predict_proba'"
+    with pytest.raises(AttributeError, match=outer_msg) as exec_info:
         multi_target_linear.predict_proba(X)
+
+    assert isinstance(exec_info.value.__cause__, AttributeError)
+    assert inner1_msg in str(exec_info.value.__cause__)
+
+    assert isinstance(exec_info.value.__cause__.__cause__, AttributeError)
+    assert inner2_msg in str(exec_info.value.__cause__.__cause__)
 
 
 def test_multi_output_classification_partial_fit():
@@ -471,13 +480,20 @@ def test_multi_output_delegate_predict_proba():
     # A base estimator without `predict_proba` should raise an AttributeError
     moc = MultiOutputClassifier(LinearSVC(dual="auto"))
     assert not hasattr(moc, "predict_proba")
-    msg = "'LinearSVC' object has no attribute 'predict_proba'"
-    with pytest.raises(AttributeError, match=msg):
+
+    outer_msg = "'MultiOutputClassifier' has no attribute 'predict_proba'"
+    inner_msg = "'LinearSVC' object has no attribute 'predict_proba'"
+    with pytest.raises(AttributeError, match=outer_msg) as exec_info:
         moc.predict_proba(X)
+    assert isinstance(exec_info.value.__cause__, AttributeError)
+    assert inner_msg == str(exec_info.value.__cause__)
+
     moc.fit(X, y)
     assert not hasattr(moc, "predict_proba")
-    with pytest.raises(AttributeError, match=msg):
+    with pytest.raises(AttributeError, match=outer_msg) as exec_info:
         moc.predict_proba(X)
+    assert isinstance(exec_info.value.__cause__, AttributeError)
+    assert inner_msg == str(exec_info.value.__cause__)
 
 
 def generate_multilabel_dataset_with_correlations():
