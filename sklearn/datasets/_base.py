@@ -1096,6 +1096,30 @@ def load_diabetes(*, return_X_y=False, as_frame=False, scaled=True):
         representing the features and/or target of a given sample.
 
         .. versionadded:: 0.18
+
+    Examples
+    --------
+    >>> from sklearn.datasets import load_diabetes
+    >>> diabetes = load_diabetes(as_frame=True)
+    >>> diabetes.frame.info()
+    <class 'pandas.core.frame.DataFrame'>
+    RangeIndex: 442 entries, 0 to 441
+    Data columns (total 11 columns):
+    #   Column  Non-Null Count  Dtype
+    ---  ------  --------------  -----
+    0   age     442 non-null    float64
+    1   sex     442 non-null    float64
+    2   bmi     442 non-null    float64
+    3   bp      442 non-null    float64
+    4   s1      442 non-null    float64
+    5   s2      442 non-null    float64
+    6   s3      442 non-null    float64
+    7   s4      442 non-null    float64
+    8   s5      442 non-null    float64
+    9   s6      442 non-null    float64
+    10  target  442 non-null    float64
+    dtypes: float64(11)
+    memory usage: 38.1 KB
     """
     data_filename = "diabetes_data_raw.csv.gz"
     target_filename = "diabetes_target.csv.gz"
