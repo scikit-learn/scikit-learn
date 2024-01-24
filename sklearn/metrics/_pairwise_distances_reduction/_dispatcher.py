@@ -103,7 +103,8 @@ class BaseDistancesReductionDispatcher:
         True if the dispatcher can be used, else False.
         """
 
-        # TODO: Study and fix regression.
+        # FIXME: the current Cython implementation is too slow for a large number of
+        # features. We temporarily disable it to fallback on SciPy's implementation.
         # See: https://github.com/scikit-learn/scikit-learn/issues/28191
         if (
             issparse(X)
