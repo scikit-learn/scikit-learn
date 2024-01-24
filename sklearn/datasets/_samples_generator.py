@@ -1933,7 +1933,7 @@ def make_gaussian_quantiles(
 
     Parameters
     ----------
-    mean : ndarray of shape (n_features,), default=None
+    mean : array-like of shape (n_features,), default=None
         The mean of the multi-dimensional normal distribution.
         If None then use the origin (0, 0, ...).
 
@@ -1973,6 +1973,17 @@ def make_gaussian_quantiles(
     References
     ----------
     .. [1] J. Zhu, H. Zou, S. Rosset, T. Hastie, "Multi-class AdaBoost", 2009.
+
+    Examples
+    --------
+    >>> from sklearn.datasets import make_gaussian_quantiles
+    >>> X, y = make_gaussian_quantiles(random_state=42)
+    >>> X.shape
+    (100, 2)
+    >>> y.shape
+    (100,)
+    >>> list(y[:5])
+    [2, 0, 1, 0, 2]
     """
     if n_samples < n_classes:
         raise ValueError("n_samples must be at least n_classes")
