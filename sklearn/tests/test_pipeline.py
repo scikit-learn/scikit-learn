@@ -388,11 +388,14 @@ def test_score_samples_on_pipeline_without_score_samples():
     # step of the pipeline does not have score_samples defined.
     pipe = make_pipeline(LogisticRegression())
     pipe.fit(X, y)
-    with pytest.raises(
-        AttributeError,
-        match="'LogisticRegression' object has no attribute 'score_samples'",
-    ):
+
+    inner_msg = "'LogisticRegression' object has no attribute 'score_samples'"
+    outer_msg = "'Pipeline' has no attribute 'score_samples'"
+    with pytest.raises(AttributeError, match=outer_msg) as exec_info:
         pipe.score_samples(X)
+
+    assert isinstance(exec_info.value.__cause__, AttributeError)
+    assert inner_msg in str(exec_info.value.__cause__)
 
 
 def test_pipeline_methods_preprocessing_svm():
@@ -454,9 +457,12 @@ def test_fit_predict_on_pipeline_without_fit_predict():
     pca = PCA(svd_solver="full")
     pipe = Pipeline([("scaler", scaler), ("pca", pca)])
 
-    msg = "'PCA' object has no attribute 'fit_predict'"
-    with pytest.raises(AttributeError, match=msg):
+    outer_msg = "'Pipeline' has no attribute 'fit_predict'"
+    inner_msg = "'PCA' object has no attribute 'fit_predict'"
+    with pytest.raises(AttributeError, match=outer_msg) as exec_info:
         getattr(pipe, "fit_predict")
+    assert isinstance(exec_info.value.__cause__, AttributeError)
+    assert inner_msg in str(exec_info.value.__cause__)
 
 
 def test_fit_predict_with_intermediate_fit_params():
@@ -784,9 +790,12 @@ def test_set_pipeline_step_passthrough(passthrough):
     assert_array_equal([[exp]], pipeline.fit_transform(X, y))
     assert_array_equal(X, pipeline.inverse_transform([[exp]]))
 
-    msg = "'str' object has no attribute 'predict'"
-    with pytest.raises(AttributeError, match=msg):
+    inner_msg = "'str' object has no attribute 'predict'"
+    outer_msg = "This 'Pipeline' has no attribute 'predict'"
+    with pytest.raises(AttributeError, match=outer_msg) as exec_info:
         getattr(pipeline, "predict")
+    assert isinstance(exec_info.value.__cause__, AttributeError)
+    assert inner_msg in str(exec_info.value.__cause__)
 
     # Check 'passthrough' step at construction time
     exp = 2 * 5
