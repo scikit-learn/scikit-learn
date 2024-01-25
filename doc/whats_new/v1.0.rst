@@ -2,6 +2,8 @@
 
 .. currentmodule:: sklearn
 
+.. _release_notes_1_0:
+
 ===========
 Version 1.0
 ===========
@@ -1212,8 +1214,7 @@ Changelog
   now deprecated. Use `scipy.sparse.csgraph.shortest_path` instead. :pr:`20531`
   by `Tom Dupre la Tour`_.
 
-Code and Documentation Contributors
-===================================
+.. rubric:: Code and documentation contributors
 
 Thanks to everyone who has contributed to the maintenance and improvement of
 the project since version 0.24, including:

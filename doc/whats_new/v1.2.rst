@@ -2,6 +2,8 @@
 
 .. currentmodule:: sklearn
 
+.. _release_notes_1_2:
+
 ===========
 Version 1.2
 ===========
@@ -996,8 +998,7 @@ Changelog
   and will be removed in 1.4.
   :pr:`24523` by :user:`Mia Bajic <clytaemnestra>`.
 
-Code and Documentation Contributors
-===================================
+.. rubric:: Code and documentation contributors
 
 Thanks to everyone who has contributed to the maintenance and improvement of
 the project since version 1.1, including:
