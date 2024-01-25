@@ -11,6 +11,16 @@ Version 1.5.0
 
 .. include:: changelog_legend.inc
 
+Support for building with Meson
+-------------------------------
+
+Meson is now supported as a build backend, see :ref:`Building with Meson
+<building_with_meson>` for more details.
+
+:pr:`28040` by :user:`Loïc Estève <lesteve>`
+
+TODO Fill more details before the 1.5 release, when the Meson story has settled down.
+
 Changelog
 ---------
 
@@ -25,11 +35,73 @@ Changelog
     :pr:`123456` by :user:`Joe Bloggs <joeongithub>`.
     where 123455 is the *pull request* number, not the issue number.
 
+
+:mod:`sklearn.compose`
+......................
+
+- |Feature| A fitted :class:`compose.ColumnTransformer` now implements `__getitem__`
+  which returns the fitted transformers by name. :pr:`27990` by `Thomas Fan`_.
+
+:mod:`sklearn.dummy`
+....................
+
+- |Enhancement| :class:`dummy.DummyClassifier` and :class:`dummy.DummyRegressor` now
+  have the `n_features_in_` and `feature_names_in_` attributes after `fit`.
+  :pr:`27937` by :user:`Marco vd Boom <tvdboom>`.
+
+:mod:`sklearn.ensemble`
+.......................
+
+- |Efficiency| Improves runtime of `predict` of
+  :class:`ensemble.HistGradientBoostingClassifier` by avoiding to call `predict_proba`.
+  :pr:`27844` by :user:`Christian Lorentzen <lorentzenchr>`.
+
+:mod:`sklearn.feature_extraction`
+.................................
+
+- |Efficiency| :class:`feature_extraction.text.TfidfTransformer` is now faster
+  and more memory-efficient by using a NumPy vector instead of a sparse matrix
+  for storing the inverse document frequency.
+  :pr:`18843` by :user:`Paolo Montesel <thebabush>`.
+
+- |Enhancement| :class:`feature_extraction.text.TfidfTransformer` now preserves
+  the data type of the input matrix if it is `np.float64` or `np.float32`.
+  :pr:`28136` by :user:`Guillaume Lemaitre <glemaitre>`.
+
+:mod:`sklearn.feature_selection`
+................................
+
+- |Enhancement| :func:`feature_selection.mutual_info_regression` and
+  :func:`feature_selection.mutual_info_classif` now support `n_jobs` parameter.
+  :pr:`28085` by :user:`Neto Menoci <netomenoci>` and
+  :user:`Florin Andrei <FlorinAndrei>`.
+
 :mod:`sklearn.impute`
 .....................
+
 - |Enhancement| :class:`impute.SimpleImputer` now supports custom strategies
   by passing a function in place of a strategy name.
   :pr:`28053` by :user:`Mark Elliot <mark-thm>`.
+
+:mod:`sklearn.metrics`
+......................
+
+- |Efficiency| Improve efficiency of functions :func:`~metrics.brier_score_loss`,
+  :func:`~metrics.calibration_curve`, :func:`~metrics.det_curve`,
+  :func:`~metrics.precision_recall_curve`,
+  :func:`~metrics.roc_curve` when `pos_label` argument is specified.
+  Also improve efficiency of methods `from_estimator`
+  and `from_predictions` in :class:`~metrics.RocCurveDisplay`,
+  :class:`~metrics.PrecisionRecallDisplay`, :class:`~metrics.DetCurveDisplay`,
+  :class:`~calibration.CalibrationDisplay`.
+  :pr:`28051` by :user:`Pierre de Fréminville <pidefrem>`.
+
+:mod:`sklearn.utils`
+....................
+
+- |Enhancement| :func:`utils.metaestimators.available_if` now reraises the error from
+  the `check` function as the cause of the `AttributeError`. :pr:`28198` by
+  `Thomas Fan`_.
 
 Code and Documentation Contributors
 -----------------------------------
@@ -38,9 +110,3 @@ Thanks to everyone who has contributed to the maintenance and improvement of
 the project since version 1.4, including:
 
 TODO: update at the time of the release.
-
-:mod:`sklearn.compose`
-......................
-
-- |Feature| A fitted :class:`compose.ColumnTransformer` now implements `__getitem__`
-  which returns the fitted transformers by name. :pr:`27990` by `Thomas Fan`_.

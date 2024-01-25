@@ -1653,3 +1653,24 @@ def test_vectorizers_do_not_have_set_output(Estimator):
     """Check that vectorizers do not define set_output."""
     est = Estimator()
     assert not hasattr(est, "set_output")
+
+
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_tfidf_transformer_copy(csr_container):
+    """Check the behaviour of TfidfTransformer.transform with the copy parameter."""
+    X = sparse.rand(10, 20000, dtype=np.float64, random_state=42)
+    X_csr = csr_container(X)
+
+    # keep a copy of the original matrix for later comparison
+    X_csr_original = X_csr.copy()
+
+    transformer = TfidfTransformer().fit(X_csr)
+
+    X_transform = transformer.transform(X_csr, copy=True)
+    assert_allclose_dense_sparse(X_csr, X_csr_original)
+    assert X_transform is not X_csr
+
+    X_transform = transformer.transform(X_csr, copy=False)
+    assert X_transform is X_csr
+    with pytest.raises(AssertionError):
+        assert_allclose_dense_sparse(X_csr, X_csr_original)

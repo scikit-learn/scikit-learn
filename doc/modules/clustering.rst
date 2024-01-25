@@ -1042,16 +1042,16 @@ efficiently, HDBSCAN first extracts a minimum spanning tree (MST) from the fully
 -connected mutual reachability graph, then greedily cuts the edges with highest
 weight. An outline of the HDBSCAN algorithm is as follows:
 
-  1. Extract the MST of :math:`G_{ms}`
-  2. Extend the MST by adding a "self edge" for each vertex, with weight equal
-     to the core distance of the underlying sample.
-  3. Initialize a single cluster and label for the MST.
-  4. Remove the edge with the greatest weight from the MST (ties are
-     removed simultaneously).
-  5. Assign cluster labels to the connected components which contain the
-     end points of the now-removed edge. If the component does not have at least
-     one edge it is instead assigned a "null" label marking it as noise.
-  6. Repeat 4-5 until there are no more connected components.
+1. Extract the MST of :math:`G_{ms}`.
+2. Extend the MST by adding a "self edge" for each vertex, with weight equal
+   to the core distance of the underlying sample.
+3. Initialize a single cluster and label for the MST.
+4. Remove the edge with the greatest weight from the MST (ties are
+   removed simultaneously).
+5. Assign cluster labels to the connected components which contain the
+   end points of the now-removed edge. If the component does not have at least
+   one edge it is instead assigned a "null" label marking it as noise.
+6. Repeat 4-5 until there are no more connected components.
 
 HDBSCAN is therefore able to obtain all possible partitions achievable by
 DBSCAN* for a fixed choice of `min_samples` in a hierarchical fashion.
@@ -1233,11 +1233,11 @@ clusters (labels) and the samples are mapped to the global label of the nearest 
 
 **BIRCH or MiniBatchKMeans?**
 
- - BIRCH does not scale very well to high dimensional data. As a rule of thumb if
-   ``n_features`` is greater than twenty, it is generally better to use MiniBatchKMeans.
- - If the number of instances of data needs to be reduced, or if one wants a
-   large number of subclusters either as a preprocessing step or otherwise,
-   BIRCH is more useful than MiniBatchKMeans.
+- BIRCH does not scale very well to high dimensional data. As a rule of thumb if
+  ``n_features`` is greater than twenty, it is generally better to use MiniBatchKMeans.
+- If the number of instances of data needs to be reduced, or if one wants a
+  large number of subclusters either as a preprocessing step or otherwise,
+  BIRCH is more useful than MiniBatchKMeans.
 
 
 **How to use partial_fit?**
@@ -1245,12 +1245,12 @@ clusters (labels) and the samples are mapped to the global label of the nearest 
 To avoid the computation of global clustering, for every call of ``partial_fit``
 the user is advised
 
- 1. To set ``n_clusters=None`` initially
- 2. Train all data by multiple calls to partial_fit.
- 3. Set ``n_clusters`` to a required value using
-    ``brc.set_params(n_clusters=n_clusters)``.
- 4. Call ``partial_fit`` finally with no arguments, i.e. ``brc.partial_fit()``
-    which performs the global clustering.
+1. To set ``n_clusters=None`` initially
+2. Train all data by multiple calls to partial_fit.
+3. Set ``n_clusters`` to a required value using
+   ``brc.set_params(n_clusters=n_clusters)``.
+4. Call ``partial_fit`` finally with no arguments, i.e. ``brc.partial_fit()``
+   which performs the global clustering.
 
 .. image:: ../auto_examples/cluster/images/sphx_glr_plot_birch_vs_minibatchkmeans_001.png
     :target: ../auto_examples/cluster/plot_birch_vs_minibatchkmeans.html
@@ -2196,19 +2196,19 @@ under the true and predicted clusterings.
 
 It has the following entries:
 
-  :math:`C_{00}` : number of pairs with both clusterings having the samples
-  not clustered together
+:math:`C_{00}` : number of pairs with both clusterings having the samples
+not clustered together
 
-  :math:`C_{10}` : number of pairs with the true label clustering having the
-  samples clustered together but the other clustering not having the samples
-  clustered together
+:math:`C_{10}` : number of pairs with the true label clustering having the
+samples clustered together but the other clustering not having the samples
+clustered together
 
-  :math:`C_{01}` : number of pairs with the true label clustering not having
-  the samples clustered together but the other clustering having the samples
-  clustered together
+:math:`C_{01}` : number of pairs with the true label clustering not having
+the samples clustered together but the other clustering having the samples
+clustered together
 
-  :math:`C_{11}` : number of pairs with both clusterings having the samples
-  clustered together
+:math:`C_{11}` : number of pairs with both clusterings having the samples
+clustered together
 
 Considering a pair of samples that is clustered together a positive pair,
 then as in binary classification the count of true negatives is

@@ -20,12 +20,12 @@ extractor.
 
 **Data Set Characteristics:**
 
-    =================   ==========
-    Classes                     20
-    Samples total            18846
-    Dimensionality               1
-    Features                  text
-    =================   ==========
+=================   ==========
+Classes                     20
+Samples total            18846
+Dimensionality               1
+Features                  text
+=================   ==========
 
 |details-start|
 **Usage**

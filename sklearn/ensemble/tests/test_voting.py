@@ -63,9 +63,13 @@ def test_predictproba_hardvoting():
         estimators=[("lr1", LogisticRegression()), ("lr2", LogisticRegression())],
         voting="hard",
     )
-    msg = "predict_proba is not available when voting='hard'"
-    with pytest.raises(AttributeError, match=msg):
+
+    inner_msg = "predict_proba is not available when voting='hard'"
+    outer_msg = "'VotingClassifier' has no attribute 'predict_proba'"
+    with pytest.raises(AttributeError, match=outer_msg) as exec_info:
         eclf.predict_proba
+    assert isinstance(exec_info.value.__cause__, AttributeError)
+    assert inner_msg in str(exec_info.value.__cause__)
 
     assert not hasattr(eclf, "predict_proba")
     eclf.fit(X_scaled, y)
@@ -238,13 +242,16 @@ def test_predict_proba_on_toy_problem():
     assert_almost_equal(t21, eclf_res[2][1], decimal=1)
     assert_almost_equal(t31, eclf_res[3][1], decimal=1)
 
-    with pytest.raises(
-        AttributeError, match="predict_proba is not available when voting='hard'"
-    ):
+    inner_msg = "predict_proba is not available when voting='hard'"
+    outer_msg = "'VotingClassifier' has no attribute 'predict_proba'"
+    with pytest.raises(AttributeError, match=outer_msg) as exec_info:
         eclf = VotingClassifier(
             estimators=[("lr", clf1), ("rf", clf2), ("gnb", clf3)], voting="hard"
         )
         eclf.fit(X, y).predict_proba(X)
+
+    assert isinstance(exec_info.value.__cause__, AttributeError)
+    assert inner_msg in str(exec_info.value.__cause__)
 
 
 def test_multilabel():
