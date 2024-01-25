@@ -11,6 +11,19 @@ Version 1.5.0
 
 .. include:: changelog_legend.inc
 
+Metadata Routing
+----------------
+
+The following models now support metadata routing in one or more or their
+methods. Refer to the :ref:`Metadata Routing User Guide <metadata_routing>` for
+more details.
+
+- |Feature| :class:`linear_model.RANSACRegressor` now supports metadata routing
+  in its ``fit``, ``score`` and ``predict`` methods and route metadata to its
+  underlying estimator's' ``fit``, ``score`` and ``predict`` methods.
+  :pr:`28261` by :user:`Stefanie Senger <StefanieSenger>`.
+
+
 Changelog
 ---------
 

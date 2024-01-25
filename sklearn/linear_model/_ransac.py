@@ -433,7 +433,7 @@ class RANSACRegressor(
             routed_params = Bunch()
             # following line makes pytest sklearn/linear_model/tests/test_ransac.py fail
             # on collection
-            routed_params[estimator] = Bunch(fit={})
+            routed_params.estimator = Bunch(fit={})
             if sample_weight is not None:
                 sample_weight = _check_sample_weight(sample_weight, X)
                 routed_params.estimator.fit = sample_weight
@@ -483,8 +483,10 @@ class RANSACRegressor(
             fit_params_cut_to_min_samples = {}
             for key in routed_params.estimator.fit:
                 # only apply on sample_wise metadata
-                if len(fit_params[key]) == len(X):
-                    fit_params_cut_to_min_samples[key] = fit_params[key][subset_idxs]
+                if len(routed_params.estimator.fit[key]) == len(X):
+                    fit_params_cut_to_min_samples[key] = routed_params.estimator.fit[
+                        key
+                    ][subset_idxs]
 
             # fit model for current random sample set
             estimator.fit(X_subset, y_subset, **fit_params_cut_to_min_samples)
@@ -518,10 +520,10 @@ class RANSACRegressor(
             score_params_cut_to_inlier_idxs_subset = {}
             for key in routed_params.estimator.score:
                 # only apply on sample_wise metadata
-                if len(fit_params[key]) == len(X):
-                    score_params_cut_to_inlier_idxs_subset[key] = fit_params[key][
-                        inlier_idxs_subset
-                    ]
+                if len(routed_params.estimator.score[key]) == len(X):
+                    score_params_cut_to_inlier_idxs_subset[key] = (
+                        routed_params.estimator.score[key][inlier_idxs_subset]
+                    )
 
             # score of inlier data set
             score_subset = estimator.score(
