@@ -131,6 +131,15 @@ def fetch_california_housing(
     -----
 
     This dataset consists of 20,640 samples and 9 features.
+
+    Examples
+    --------
+    >>> from sklearn.datasets import fetch_california_housing
+    >>> housing = fetch_california_housing()
+    >>> print(housing.data.shape, housing.target.shape)
+    (20640, 8) (20640,)
+    >>> print(housing.feature_names[0:6])
+    ['MedInc', 'HouseAge', 'AveRooms', 'AveBedrms', 'Population', 'AveOccup']
     """
     data_home = get_data_home(data_home=data_home)
     if not exists(data_home):
