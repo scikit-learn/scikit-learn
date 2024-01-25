@@ -16,6 +16,30 @@ Metadata Routing
   includes a sub-estimator which doesn't support metadata routing.
   :pr:`28256` by `Adrin Jalali`_.
 
+Changes impacting all modules
+-----------------------------
+
+- Partial revert of :pr:`28191` to avoid a performance regression for estimators
+  relying on euclidean pairwise computation with sparse matrices. The impacted
+  estimators are:
+
+  - :func:`sklearn.metrics.pairwise_distances_argmin`
+  - :func:`sklearn.metrics.pairwise_distances_argmin_min`
+  - :class:`sklearn.cluster.AffinityPropagation`
+  - :class:`sklearn.cluster.Birch`
+  - :class:`sklearn.cluster.SpectralClustering`
+  - :class:`sklearn.neighbors.KNeighborsClassifier`
+  - :class:`sklearn.neighbors.KNeighborsRegressor`
+  - :class:`sklearn.neighbors.RadiusNeighborsClassifier`
+  - :class:`sklearn.neighbors.RadiusNeighborsRegressor`
+  - :class:`sklearn.neighbors.LocalOutlierFactor`
+  - :class:`sklearn.neighbors.NearestNeighbors`
+  - :class:`sklearn.manifold.Isomap`
+  - :class:`sklearn.manifold.TSNE`
+  - :func:`sklearn.manifold.trustworthiness`
+
+  :pr:`28235` by :user:`Julien Jerphanion <jjerphan>`.
+
 Changelog
 ---------
 
