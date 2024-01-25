@@ -308,6 +308,20 @@ def smacof(
 
     .. [3] "Modern Multidimensional Scaling - Theory and Applications" Borg, I.;
            Groenen P. Springer Series in Statistics (1997)
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.manifold import smacof
+    >>> from sklearn.metrics import euclidean_distances
+    >>> distance_matrix = euclidean_distances(np.array([[0, 1, 2],[1, 0, 3],[2, 3, 0]]))
+    >>> mds_result, stress = smacof(distance_matrix, n_components=2,random_state=42)
+    >>> print("MDS Result (2D representation):\n", mds_result)
+    MDS Result (2D representation):
+    [[ 0.05307013 -1.0798782 ]
+    [ 1.74055301 -0.75125619]
+    [-1.79362315  1.83113438]]
+    >>> print("Stress: ", stress)
+    Stress: 0.001284
     """
 
     dissimilarities = check_array(dissimilarities)

@@ -255,6 +255,17 @@ def spectral_embedding(
       Block Preconditioned Conjugate Gradient Method",
       Andrew V. Knyazev
       <10.1137/S1064827500366124>`
+
+    Examples
+    --------
+    >>> from sklearn.manifold import spectral_embedding
+    >>> from sklearn.datasets import make_swiss_roll
+    >>> from sklearn.neighbors import kneighbors_graph
+    >>> X, _ = make_swiss_roll(n_samples=100,random_state=42)
+    >>> connectivity = kneighbors_graph(X, n_neighbors=10, include_self=True)
+    >>> connectivity = 0.5 * (connectivity + connectivity.T)
+    >>> spectral_embedding(connectivity, n_components=10, random_state=42).shape
+    (100, 10)
     """
     adjacency = check_symmetric(adjacency)
 
