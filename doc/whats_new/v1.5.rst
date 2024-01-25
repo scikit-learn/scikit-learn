@@ -2,14 +2,23 @@
 
 .. currentmodule:: sklearn
 
+===========
+Version 1.5
+===========
+
+..
+  UNCOMMENT WHEN 1.5.0 IS RELEASED
+  For a short description of the main highlights of the release, please refer to
+  :ref:`sphx_glr_auto_examples_release_highlights_plot_release_highlights_1_5_0.py`.
+
+.. include:: changelog_legend.inc
+
 .. _changes_1_5:
 
 Version 1.5.0
 =============
 
 **In Development**
-
-.. include:: changelog_legend.inc
 
 Support for building with Meson
 -------------------------------
@@ -104,7 +113,7 @@ Changelog
   `Thomas Fan`_.
 
 Code and Documentation Contributors
------------------------------------
+===================================
 
 Thanks to everyone who has contributed to the maintenance and improvement of
 the project since version 1.4, including:

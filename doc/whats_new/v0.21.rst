@@ -2,12 +2,16 @@
 
 .. currentmodule:: sklearn
 
+============
+Version 0.21
+============
+
+.. include:: changelog_legend.inc
+
 .. _changes_0_21_3:
 
 Version 0.21.3
 ==============
-
-.. include:: changelog_legend.inc
 
 **July 30, 2019**
 
@@ -47,10 +51,10 @@ Changelog
 ......................
 
 - |Fix| Fixed an issue in :class:`compose.ColumnTransformer` where using
-  DataFrames whose column order differs between :func:``fit`` and
-  :func:``transform`` could lead to silently passing incorrect columns to the
+  DataFrames whose column order differs between :func:`fit` and
+  :func:`transform` could lead to silently passing incorrect columns to the
   ``remainder`` transformer.
-  :pr:`14237` by `Andreas Schuderer <schuderer>`.
+  :pr:`14237` by :user:`Andreas Schuderer <schuderer>`.
 
 :mod:`sklearn.datasets`
 .......................
@@ -69,14 +73,14 @@ Changelog
 
 - |Fix| Fix zero division error in :class:`ensemble.HistGradientBoostingClassifier` and
   :class:`ensemble.HistGradientBoostingRegressor`.
-  :pr:`14024` by `Nicolas Hug <NicolasHug>`.
+  :pr:`14024` by :user:`Nicolas Hug <NicolasHug>`.
 
 :mod:`sklearn.impute`
 .....................
 
 - |Fix| Fixed a bug in :class:`impute.SimpleImputer` and
   :class:`impute.IterativeImputer` so that no errors are thrown when there are
-  missing values in training data. :pr:`13974` by `Frank Hoang <fhoang7>`.
+  missing values in training data. :pr:`13974` by :user:`Frank Hoang <fhoang7>`.
 
 :mod:`sklearn.inspection`
 .........................
@@ -1068,7 +1072,7 @@ These changes mostly affect library developers.
   :pr:`8022` by :user:`Andreas Müller <amueller>`.
 
 Code and Documentation Contributors
------------------------------------
+===================================
 
 Thanks to everyone who has contributed to the maintenance and improvement of the
 project since version 0.20, including:

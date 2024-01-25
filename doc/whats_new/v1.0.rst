@@ -2,12 +2,21 @@
 
 .. currentmodule:: sklearn
 
+===========
+Version 1.0
+===========
+
+For a short description of the main highlights of the release, please refer to
+:ref:`sphx_glr_auto_examples_release_highlights_plot_release_highlights_1_0_0.py`.
+
+.. include:: changelog_legend.inc
+
 .. _changes_1_0_2:
 
 Version 1.0.2
 =============
 
-**In Development**
+**December 2021**
 
 - |Fix| :class:`cluster.Birch`,
   :class:`feature_selection.RFECV`, :class:`ensemble.RandomForestRegressor`,
@@ -147,9 +156,6 @@ Version 1.0.1
 
 **October 2021**
 
-Changelog
----------
-
 Fixed models
 ------------
 
@@ -280,12 +286,6 @@ Version 1.0.0
 =============
 
 **September 2021**
-
-For a short description of the main highlights of the release, please
-refer to
-:ref:`sphx_glr_auto_examples_release_highlights_plot_release_highlights_1_0_0.py`.
-
-.. include:: changelog_legend.inc
 
 Minimal dependencies
 --------------------
@@ -1213,7 +1213,7 @@ Changelog
   by `Tom Dupre la Tour`_.
 
 Code and Documentation Contributors
------------------------------------
+===================================
 
 Thanks to everyone who has contributed to the maintenance and improvement of
 the project since version 0.24, including:
