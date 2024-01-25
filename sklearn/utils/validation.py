@@ -503,7 +503,7 @@ def indexable(*iterables):
     >>> from sklearn.utils import indexable
     >>> a,b = [1, 2, 3],[2, 3, 4]
     >>> indexable(a, b)
-    [array([1, 2, 3]), array([2, 3, 4])]
+    [[1, 2, 3], [2, 3, 4]]
     """
 
     result = [_make_indexable(X) for X in iterables]
