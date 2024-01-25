@@ -318,9 +318,7 @@ def smacof(
     >>> mds_result, stress = smacof(distance_matrix, n_components=2,random_state=42)
     >>> print("MDS Result (2D representation):\n", mds_result)
     MDS Result (2D representation):
-    [[ 0.05307013 -1.0798782 ]
-    [ 1.74055301 -0.75125619]
-    [-1.79362315  1.83113438]]
+    [[ 0.05307013 -1.0798782 ] [ 1.74055301 -0.75125619] [-1.79362315  1.83113438]]
     >>> print("Stress: ", stress)
     Stress: 0.001284
     """
