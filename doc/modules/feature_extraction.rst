@@ -615,7 +615,7 @@ As usual the best way to adjust the feature extraction parameters
 is to use a cross-validated grid search, for instance by pipelining the
 feature extractor with a classifier:
 
- * :ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_text_feature_extraction.py`
+* :ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_text_feature_extraction.py`
 
 |details-end|
 
@@ -715,18 +715,18 @@ In particular in a **supervised setting** it can be successfully combined
 with fast and scalable linear models to train **document classifiers**,
 for instance:
 
- * :ref:`sphx_glr_auto_examples_text_plot_document_classification_20newsgroups.py`
+* :ref:`sphx_glr_auto_examples_text_plot_document_classification_20newsgroups.py`
 
 In an **unsupervised setting** it can be used to group similar documents
 together by applying clustering algorithms such as :ref:`k_means`:
 
-  * :ref:`sphx_glr_auto_examples_text_plot_document_clustering.py`
+* :ref:`sphx_glr_auto_examples_text_plot_document_clustering.py`
 
 Finally it is possible to discover the main topics of a corpus by
 relaxing the hard assignment constraint of clustering, for instance by
 using :ref:`NMF`:
 
-  * :ref:`sphx_glr_auto_examples_applications_plot_topics_extraction_with_nmf_lda.py`
+* :ref:`sphx_glr_auto_examples_applications_plot_topics_extraction_with_nmf_lda.py`
 
 
 Limitations of the Bag of Words representation
@@ -923,19 +923,19 @@ to the vectorizer constructor::
 
 In particular we name:
 
-  * ``preprocessor``: a callable that takes an entire document as input (as a
-    single string), and returns a possibly transformed version of the document,
-    still as an entire string. This can be used to remove HTML tags, lowercase
-    the entire document, etc.
+* ``preprocessor``: a callable that takes an entire document as input (as a
+  single string), and returns a possibly transformed version of the document,
+  still as an entire string. This can be used to remove HTML tags, lowercase
+  the entire document, etc.
 
-  * ``tokenizer``: a callable that takes the output from the preprocessor
-    and splits it into tokens, then returns a list of these.
+* ``tokenizer``: a callable that takes the output from the preprocessor
+  and splits it into tokens, then returns a list of these.
 
-  * ``analyzer``: a callable that replaces the preprocessor and tokenizer.
-    The default analyzers all call the preprocessor and tokenizer, but custom
-    analyzers will skip this. N-gram extraction and stop word filtering take
-    place at the analyzer level, so a custom analyzer may have to reproduce
-    these steps.
+* ``analyzer``: a callable that replaces the preprocessor and tokenizer.
+  The default analyzers all call the preprocessor and tokenizer, but custom
+  analyzers will skip this. N-gram extraction and stop word filtering take
+  place at the analyzer level, so a custom analyzer may have to reproduce
+  these steps.
 
 (Lucene users might recognize these names, but be aware that scikit-learn
 concepts may not map one-to-one onto Lucene concepts.)
@@ -951,53 +951,53 @@ factory methods instead of passing custom functions.
 
 Some tips and tricks:
 
-  * If documents are pre-tokenized by an external package, then store them in
-    files (or strings) with the tokens separated by whitespace and pass
-    ``analyzer=str.split``
-  * Fancy token-level analysis such as stemming, lemmatizing, compound
-    splitting, filtering based on part-of-speech, etc. are not included in the
-    scikit-learn codebase, but can be added by customizing either the
-    tokenizer or the analyzer.
-    Here's a ``CountVectorizer`` with a tokenizer and lemmatizer using
-    `NLTK <https://www.nltk.org/>`_::
+* If documents are pre-tokenized by an external package, then store them in
+  files (or strings) with the tokens separated by whitespace and pass
+  ``analyzer=str.split``
+* Fancy token-level analysis such as stemming, lemmatizing, compound
+  splitting, filtering based on part-of-speech, etc. are not included in the
+  scikit-learn codebase, but can be added by customizing either the
+  tokenizer or the analyzer.
+  Here's a ``CountVectorizer`` with a tokenizer and lemmatizer using
+  `NLTK <https://www.nltk.org/>`_::
 
-        >>> from nltk import word_tokenize          # doctest: +SKIP
-        >>> from nltk.stem import WordNetLemmatizer # doctest: +SKIP
-        >>> class LemmaTokenizer:
-        ...     def __init__(self):
-        ...         self.wnl = WordNetLemmatizer()
-        ...     def __call__(self, doc):
-        ...         return [self.wnl.lemmatize(t) for t in word_tokenize(doc)]
-        ...
-        >>> vect = CountVectorizer(tokenizer=LemmaTokenizer())  # doctest: +SKIP
+      >>> from nltk import word_tokenize          # doctest: +SKIP
+      >>> from nltk.stem import WordNetLemmatizer # doctest: +SKIP
+      >>> class LemmaTokenizer:
+      ...     def __init__(self):
+      ...         self.wnl = WordNetLemmatizer()
+      ...     def __call__(self, doc):
+      ...         return [self.wnl.lemmatize(t) for t in word_tokenize(doc)]
+      ...
+      >>> vect = CountVectorizer(tokenizer=LemmaTokenizer())  # doctest: +SKIP
 
-    (Note that this will not filter out punctuation.)
+  (Note that this will not filter out punctuation.)
 
 
-    The following example will, for instance, transform some British spelling
-    to American spelling::
+  The following example will, for instance, transform some British spelling
+  to American spelling::
 
-        >>> import re
-        >>> def to_british(tokens):
-        ...     for t in tokens:
-        ...         t = re.sub(r"(...)our$", r"\1or", t)
-        ...         t = re.sub(r"([bt])re$", r"\1er", t)
-        ...         t = re.sub(r"([iy])s(e$|ing|ation)", r"\1z\2", t)
-        ...         t = re.sub(r"ogue$", "og", t)
-        ...         yield t
-        ...
-        >>> class CustomVectorizer(CountVectorizer):
-        ...     def build_tokenizer(self):
-        ...         tokenize = super().build_tokenizer()
-        ...         return lambda doc: list(to_british(tokenize(doc)))
-        ...
-        >>> print(CustomVectorizer().build_analyzer()(u"color colour"))
-        [...'color', ...'color']
+      >>> import re
+      >>> def to_british(tokens):
+      ...     for t in tokens:
+      ...         t = re.sub(r"(...)our$", r"\1or", t)
+      ...         t = re.sub(r"([bt])re$", r"\1er", t)
+      ...         t = re.sub(r"([iy])s(e$|ing|ation)", r"\1z\2", t)
+      ...         t = re.sub(r"ogue$", "og", t)
+      ...         yield t
+      ...
+      >>> class CustomVectorizer(CountVectorizer):
+      ...     def build_tokenizer(self):
+      ...         tokenize = super().build_tokenizer()
+      ...         return lambda doc: list(to_british(tokenize(doc)))
+      ...
+      >>> print(CustomVectorizer().build_analyzer()(u"color colour"))
+      [...'color', ...'color']
 
-    for other styles of preprocessing; examples include stemming, lemmatization,
-    or normalizing numerical tokens, with the latter illustrated in:
+  for other styles of preprocessing; examples include stemming, lemmatization,
+  or normalizing numerical tokens, with the latter illustrated in:
 
-     * :ref:`sphx_glr_auto_examples_bicluster_plot_bicluster_newsgroups.py`
+  * :ref:`sphx_glr_auto_examples_bicluster_plot_bicluster_newsgroups.py`
 
 
 Customizing the vectorizer can also be useful when handling Asian languages

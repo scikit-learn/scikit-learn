@@ -88,9 +88,9 @@ The following code, while **still not minimal**, is already **much better**
 because it can be copy-pasted in a Python terminal to reproduce the problem in
 one step. In particular:
 
-    - it contains **all necessary imports statements**;
-    - it can fetch the public dataset without having to manually download a
-      file and put it in the expected location on the disk.
+- it contains **all necessary imports statements**;
+- it can fetch the public dataset without having to manually download a
+  file and put it in the expected location on the disk.
 
 **Improved example**
 
@@ -199,21 +199,21 @@ As already mentioned, the key to communication is the readability of the code
 and good formatting can really be a plus. Notice that in the previous snippet
 we:
 
-    - try to limit all lines to a maximum of 79 characters to avoid horizontal
-      scrollbars in the code snippets blocks rendered on the GitHub issue;
-    - use blank lines to separate groups of related functions;
-    - place all the imports in their own group at the beginning.
+- try to limit all lines to a maximum of 79 characters to avoid horizontal
+  scrollbars in the code snippets blocks rendered on the GitHub issue;
+- use blank lines to separate groups of related functions;
+- place all the imports in their own group at the beginning.
 
 The simplification steps presented in this guide can be implemented in a
 different order than the progression we have shown here. The important points
 are:
 
-    - a minimal reproducer should be runnable by a simple copy-and-paste in a
-      python terminal;
-    - it should be simplified as much as possible by removing any code steps
-      that are not strictly needed to reproducing the original problem;
-    - it should ideally only rely on a minimal dataset generated on-the-fly by
-      running the code instead of relying on external data, if possible.
+- a minimal reproducer should be runnable by a simple copy-and-paste in a
+  python terminal;
+- it should be simplified as much as possible by removing any code steps
+  that are not strictly needed to reproducing the original problem;
+- it should ideally only rely on a minimal dataset generated on-the-fly by
+  running the code instead of relying on external data, if possible.
 
 
 Use markdown formatting
@@ -305,50 +305,50 @@ can be used to create dummy numeric data.
 
 - regression
 
-    Regressions take continuous numeric data as features and target.
+  Regressions take continuous numeric data as features and target.
 
-    .. code-block:: python
+  .. code-block:: python
 
-        import numpy as np
+      import numpy as np
 
-        rng = np.random.RandomState(0)
-        n_samples, n_features = 5, 5
-        X = rng.randn(n_samples, n_features)
-        y = rng.randn(n_samples)
+      rng = np.random.RandomState(0)
+      n_samples, n_features = 5, 5
+      X = rng.randn(n_samples, n_features)
+      y = rng.randn(n_samples)
 
 A similar snippet can be used as synthetic data when testing scaling tools such
 as :class:`sklearn.preprocessing.StandardScaler`.
 
 - classification
 
-    If the bug is not raised during when encoding a categorical variable, you can
-    feed numeric data to a classifier. Just remember to ensure that the target
-    is indeed an integer.
+  If the bug is not raised during when encoding a categorical variable, you can
+  feed numeric data to a classifier. Just remember to ensure that the target
+  is indeed an integer.
 
-    .. code-block:: python
+  .. code-block:: python
 
-        import numpy as np
+      import numpy as np
 
-        rng = np.random.RandomState(0)
-        n_samples, n_features = 5, 5
-        X = rng.randn(n_samples, n_features)
-        y = rng.randint(0, 2, n_samples)  # binary target with values in {0, 1}
+      rng = np.random.RandomState(0)
+      n_samples, n_features = 5, 5
+      X = rng.randn(n_samples, n_features)
+      y = rng.randint(0, 2, n_samples)  # binary target with values in {0, 1}
 
 
-    If the bug only happens with non-numeric class labels, you might want to
-    generate a random target with `numpy.random.choice
-    <https://numpy.org/doc/stable/reference/random/generated/numpy.random.choice.html>`_.
+  If the bug only happens with non-numeric class labels, you might want to
+  generate a random target with `numpy.random.choice
+  <https://numpy.org/doc/stable/reference/random/generated/numpy.random.choice.html>`_.
 
-    .. code-block:: python
+  .. code-block:: python
 
-        import numpy as np
+      import numpy as np
 
-        rng = np.random.RandomState(0)
-        n_samples, n_features = 50, 5
-        X = rng.randn(n_samples, n_features)
-        y = np.random.choice(
-            ["male", "female", "other"], size=n_samples, p=[0.49, 0.49, 0.02]
-        )
+      rng = np.random.RandomState(0)
+      n_samples, n_features = 50, 5
+      X = rng.randn(n_samples, n_features)
+      y = np.random.choice(
+          ["male", "female", "other"], size=n_samples, p=[0.49, 0.49, 0.02]
+      )
 
 Pandas
 ------
