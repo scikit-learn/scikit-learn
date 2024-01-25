@@ -963,8 +963,8 @@ def fetch_openml(
     Examples
     --------
     >>> from sklearn.datasets import fetch_openml
-    >>> adult = fetch_openml("adult", version=2)
-    >>> adult.frame.info()
+    >>> adult = fetch_openml("adult", version=2)  # doctest: +SKIP
+    >>> adult.frame.info()  # doctest: +SKIP
     <class 'pandas.core.frame.DataFrame'>
     RangeIndex: 48842 entries, 0 to 48841
     Data columns (total 15 columns):
