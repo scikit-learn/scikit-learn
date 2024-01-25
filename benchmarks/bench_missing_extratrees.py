@@ -2,7 +2,7 @@
 1. Build this PR and run:
 
 ```bash
-python bench_missing_extratrees.py bench ~/bench_results pr
+python bench_missing_extratrees.py bench ~/bench_results pr_no_pythoncheck
 ```
 
 2. On main run:
