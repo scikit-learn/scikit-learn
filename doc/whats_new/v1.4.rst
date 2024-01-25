@@ -8,6 +8,12 @@ Version 1.4.1
 =============
 
 **In Development**
+Metadata Routing
+----------------
+
+- |Fix| No error is raised when no metadata is passed to a metaestimator that
+  includes a sub-estimator which doesn't support metadata routing.
+  :pr:`28256` by `Adrin Jalali`_.
 
 Changelog
 ---------
