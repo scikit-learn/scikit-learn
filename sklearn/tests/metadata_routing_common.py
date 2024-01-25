@@ -155,14 +155,18 @@ class ConsumingRegressor(RegressorMixin, BaseEstimator):
         )
         return self
 
-    def predict(self, X, sample_weight="default", metadata="default"):
-        pass  # pragma: no cover
+    def predict(self, X, y=None, sample_weight="default", metadata="default"):
+        record_metadata_not_default(
+            self, "predict", sample_weight=sample_weight, metadata=metadata
+        )
+        return np.zeros(shape=(len(X),))
 
-        # when needed, uncomment the implementation
-        # record_metadata_not_default(
-        #     self, "predict", sample_weight=sample_weight, metadata=metadata
-        # )
-        # return np.zeros(shape=(len(X),))
+    def score(self, X, y, sample_weight="default", metadata="default"):
+        self.predict(X)
+        record_metadata_not_default(
+            self, "score", sample_weight=sample_weight, metadata=metadata
+        )
+        return 1
 
 
 class NonConsumingClassifier(ClassifierMixin, BaseEstimator):

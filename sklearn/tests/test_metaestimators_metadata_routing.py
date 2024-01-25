@@ -118,7 +118,7 @@ METAESTIMATORS: list = [
         "X": X,
         "y": y,
         "estimator_routing_methods": ["fit"],
-        "preserves_metadata": False,
+        "preserves_metadata": "subset",
     },
     {
         "metaestimator": ClassifierChain,
@@ -287,6 +287,16 @@ METAESTIMATORS: list = [
         "cv_name": "cv",
         "cv_routing_methods": ["fit"],
     },
+    {
+        "metaestimator": RANSACRegressor,
+        "estimator_name": "estimator",
+        "estimator": ConsumingRegressor,
+        "init_args": {"min_samples": 0.5},
+        "X": X,
+        "y": y,
+        "preserves_metadata": False,
+        "estimator_routing_methods": ["fit", "predict", "score"],
+    },
 ]
 """List containing all metaestimators to be tested and their settings
 
@@ -330,7 +340,6 @@ UNSUPPORTED_ESTIMATORS = [
     FeatureUnion([]),
     GraphicalLassoCV(),
     IterativeImputer(),
-    RANSACRegressor(),
     RFE(ConsumingClassifier()),
     RFECV(ConsumingClassifier()),
     RidgeCV(),
@@ -392,6 +401,14 @@ def get_init_args(metaestimator_info):
         (scorer, scorer_registry),
         (cv, cv_registry),
     )
+
+
+def set_request(estimator, method_name):
+    # e.g. call set_fit_request on estimator
+    set_request_for_method = getattr(estimator, f"set_{method_name}_request")
+    set_request_for_method(sample_weight=True, metadata=True)
+    if is_classifier(estimator) and method_name == "partial_fit":
+        set_request_for_method(classes=True)
 
 
 @pytest.mark.parametrize("estimator", UNSUPPORTED_ESTIMATORS)
@@ -470,7 +487,18 @@ def test_error_on_missing_requests_for_sub_estimator(metaestimator):
             instance = cls(**kwargs)
             with pytest.raises(UnsetMetadataPassedError, match=re.escape(msg)):
                 method = getattr(instance, method_name)
-                method(X, y, **method_kwargs)
+                if method_name in ["predict", "score"]:
+                    # fit before calling method
+                    set_request(estimator, "fit")
+                    fit_method = getattr(instance, "fit")
+                    fit_method(X, y, **method_kwargs)
+                    # then call method
+                    if method_name == "predict":
+                        method(X, **method_kwargs)
+                    else:  # method_name == "score"
+                        method(X, y, **method_kwargs)
+                else:
+                    method(X, y, **method_kwargs)
 
 
 @pytest.mark.parametrize("metaestimator", METAESTIMATORS, ids=METAESTIMATOR_IDS)
@@ -481,13 +509,6 @@ def test_setting_request_on_sub_estimator_removes_error(metaestimator):
         # This test only makes sense for metaestimators which have a
         # sub-estimator, e.g. MyMetaEstimator(estimator=MySubEstimator())
         return
-
-    def set_request(estimator, method_name):
-        # e.g. call set_fit_request on estimator
-        set_request_for_method = getattr(estimator, f"set_{method_name}_request")
-        set_request_for_method(sample_weight=True, metadata=True)
-        if is_classifier(estimator) and method_name == "partial_fit":
-            set_request_for_method(classes=True)
 
     cls = metaestimator["metaestimator"]
     X = metaestimator["X"]
@@ -507,13 +528,28 @@ def test_setting_request_on_sub_estimator_removes_error(metaestimator):
                 set_request(scorer, "score")
             if cv:
                 cv.set_split_request(groups=True, metadata=True)
+
             set_request(estimator, method_name)
+
             instance = cls(**kwargs)
             method = getattr(instance, method_name)
             extra_method_args = metaestimator.get("method_args", {}).get(
                 method_name, {}
             )
-            method(X, y, **method_kwargs, **extra_method_args)
+
+            if method_name in ["predict", "score"]:
+                # fit before calling method
+                set_request(estimator, "fit")
+                fit_method = getattr(instance, "fit")
+                fit_method(X, y, **method_kwargs, **extra_method_args)
+                # then call method
+                if method_name == "predict":
+                    method(X, **method_kwargs, **extra_method_args)
+                else:  # method_name == "score"
+                    method(X, y, **method_kwargs, **extra_method_args)
+            else:
+                method(X, y, **method_kwargs, **extra_method_args)
+
             # sanity check that registry is not empty, or else the test passes
             # trivially
             assert registry
