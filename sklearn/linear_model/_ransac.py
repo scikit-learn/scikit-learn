@@ -431,12 +431,15 @@ class RANSACRegressor(
             routed_params = process_routing(self, "fit", **fit_params)
         else:
             routed_params = Bunch()
-            # following line makes pytest sklearn/linear_model/tests/test_ransac.py fail
-            # on collection
-            routed_params.estimator = Bunch(fit={})
+            # routed_params.estimator = {Bunch(fit={}), Bunch(predict={}),
+            # Bunch(score={})}
+            routed_params.estimator = {"fit": {}, "score": {}, "predict": {}}
+            # results in {'estimator': {'fit': {}, 'score': {}, 'predict': {}}}
             if sample_weight is not None:
                 sample_weight = _check_sample_weight(sample_weight, X)
                 routed_params.estimator.fit = sample_weight
+                routed_params.estimator.predict = sample_weight
+                routed_params.estimator.score = sample_weight
 
         n_inliers_best = 1
         score_best = -np.inf
