@@ -962,7 +962,6 @@ def fetch_openml(
 
     Examples
     --------
-    >>> import pandas
     >>> from sklearn.datasets import fetch_openml
     >>> adult = fetch_openml("adult", version=2)
     >>> adult.frame.info()
