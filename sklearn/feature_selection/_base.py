@@ -45,8 +45,7 @@ class SelectorMixin(TransformerMixin, metaclass=ABCMeta):
     ...        mask[:2] = True  # select the first two features
     ...        return mask
     >>> X, y = load_iris(return_X_y=True)
-    >>> X_new = FeatureSelector().fit_transform(X, y)
-    >>> X_new.shape
+    >>> FeatureSelector().fit_transform(X, y).shape
     (150, 2)
     """
 
