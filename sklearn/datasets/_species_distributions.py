@@ -207,6 +207,31 @@ def fetch_species_distributions(*, data_home=None, download_if_missing=True):
       <http://rob.schapire.net/papers/ecolmod.pdf>`_
       S. J. Phillips, R. P. Anderson, R. E. Schapire - Ecological Modelling,
       190:231-259, 2006.
+
+    Examples
+    --------
+    >>> from sklearn.datasets import fetch_species_distributions
+    >>> species = fetch_species_distributions()
+    >>> species.train
+    array([(b'microryzomys_minutus', -64.7   , -17.85   ),
+        (b'microryzomys_minutus', -67.8333, -16.3333 ),
+        (b'microryzomys_minutus', -67.8833, -16.3    ), ...,
+        (b'microryzomys_minutus_9', -78.4667,  -0.3    ),
+        (b'microryzomys_minutus_9', -77.8167,   0.6    ),
+        (b'microryzomys_minutus_9', -75.3833,   4.96667)],
+        dtype=[('species', 'S22'), ('dd long', '<f4'), ('dd lat', '<f4')])
+    >>> species.test[:10]
+    array([(b'bradypus_variegatus_0', -65.3833, -10.3833),
+        (b'bradypus_variegatus_0', -63.6667, -17.45  ),
+        (b'bradypus_variegatus_0', -64.4167, -16.    ),
+        (b'bradypus_variegatus_0', -52.6667,  -3.8333),
+        (b'bradypus_variegatus_0', -55.55  ,  -1.9167),
+        (b'bradypus_variegatus_0', -55.2833,  -3.45  ),
+        (b'bradypus_variegatus_0', -49.5   ,  -2.25  ),
+        (b'bradypus_variegatus_0', -46.7333, -23.45  ),
+        (b'bradypus_variegatus_0', -76.2667,   7.0167),
+        (b'bradypus_variegatus_0', -76.7167,   8.1   )],
+        dtype=[('species', 'S22'), ('dd long', '<f4'), ('dd lat', '<f4')])
     """
     data_home = get_data_home(data_home)
     if not exists(data_home):
