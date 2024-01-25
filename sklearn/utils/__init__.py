@@ -148,7 +148,9 @@ def safe_mask(X, mask):
     >>> condition = [False, True, True, False, True]
     >>> mask = safe_mask(data, condition)
     >>> data[mask].toarray()
-    array([[2],[3],[5]], dtype=int32)
+    array([[2],
+           [3],
+           [5]])
     """
     mask = np.asarray(mask)
     if np.issubdtype(mask.dtype, np.signedinteger):
