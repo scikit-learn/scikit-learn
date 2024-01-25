@@ -501,9 +501,11 @@ def indexable(*iterables):
     Examples
     --------
     >>> from sklearn.utils import indexable
-    >>> a,b = [1, 2, 3],[2, 3, 4]
+    >>> from scipy.sparse import csr_matrix
+    >>> import numpy as np
+    >>> a, b, c, d  = [1, 2, 3], np.array([2, 3, 4]), None, csr_matrix([[5], [6], [7]])
     >>> indexable(a, b)
-    [[1, 2, 3], [2, 3, 4]]
+    [[1, 2, 3], array([2, 3, 4])]
     """
 
     result = [_make_indexable(X) for X in iterables]
