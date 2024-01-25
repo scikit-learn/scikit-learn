@@ -44,6 +44,11 @@ Changes impacting all modules
 
   :pr:`28235` by :user:`Julien Jerphanion <jjerphan>`.
 
+- |Fix| The adapters handling the creation of DataFrame now rename properly the
+  column names by handling duplicates. It notably happens when using the
+  :class:`~compose.ColumnTransformer`.
+  :pr:`xxx` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 Changelog
 ---------
 
