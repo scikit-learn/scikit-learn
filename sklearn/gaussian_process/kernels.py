@@ -157,6 +157,7 @@ class Kernel(metaclass=ABCMeta):
     """Base class for all kernels.
 
     .. versionadded:: 0.18
+
     Examples
     --------
     >>> from sklearn.gaussian_process.kernels import Kernel, RBF
