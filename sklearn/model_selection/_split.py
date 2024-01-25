@@ -1761,7 +1761,7 @@ class RepeatedStratifiedKFold(_UnsupportedGroupCVMixin, _RepeatedSplits):
 
 
 class BaseShuffleSplit(_MetadataRequester, metaclass=ABCMeta):
-    """Base class for ShuffleSplit and StratifiedShuffleSplit.
+    """Base class for *ShuffleSplit.
 
     Parameters
     ----------
