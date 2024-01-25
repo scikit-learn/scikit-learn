@@ -2866,14 +2866,14 @@ def test_classification_metric_division_by_zero_nan_validaton(scoring):
     cross_val_score(classifier, X, y, scoring=scoring, n_jobs=2, error_score="raise")
 
 
-# TODO(1.6): remove
+# TODO(1.7): remove
 def test_brier_score_loss_deprecation_warning():
     """Check the message for future deprecation."""
     # Check brier_score_loss function
     y_true = np.array([0, 1, 1, 0, 1, 1])
     y_pred = np.array([0.1, 0.8, 0.9, 0.3, 1.0, 0.95])
 
-    warn_msg = "y_prob was deprecated in version 1.4"
+    warn_msg = "y_prob was deprecated in version 1.5"
     with pytest.warns(FutureWarning, match=warn_msg):
         brier_score_loss(
             y_true,

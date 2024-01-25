@@ -39,7 +39,13 @@ from ..utils import (
     column_or_1d,
 )
 from ..utils._array_api import _union1d, _weighted_sum, get_namespace
-from ..utils._param_validation import Interval, Options, StrOptions, validate_params
+from ..utils._param_validation import (
+    Hidden,
+    Interval,
+    Options,
+    StrOptions,
+    validate_params,
+)
 from ..utils.extmath import _nanaverage
 from ..utils.multiclass import type_of_target, unique_labels
 from ..utils.sparsefuncs import count_nonzero
@@ -3134,10 +3140,10 @@ def hinge_loss(y_true, pred_decision, *, labels=None, sample_weight=None):
 @validate_params(
     {
         "y_true": ["array-like"],
-        "y_proba": ["array-like", None],
+        "y_proba": ["array-like", Hidden(None)],
         "sample_weight": ["array-like", None],
         "pos_label": [Real, str, "boolean", None],
-        "y_prob": ["array-like", StrOptions({"deprecated"})],
+        "y_prob": ["array-like", Hidden(StrOptions({"deprecated"}))],
     },
     prefer_skip_nested_validation=True,
 )
@@ -3190,8 +3196,8 @@ def brier_score_loss(
     y_prob : array-like of shape (n_samples,)
         Probabilities of the positive class.
 
-        .. deprecated:: 1.4
-            `y_prob` is deprecated and will be removed in 1.6. Use
+        .. deprecated:: 1.5
+            `y_prob` is deprecated and will be removed in 1.7. Use
             `y_proba` instead.
 
     Returns
@@ -3220,16 +3226,16 @@ def brier_score_loss(
     >>> brier_score_loss(y_true, np.array(y_prob) > 0.5)
     0.0
     """
-    # TODO(1.6): remove in 1.6 and reset y_proba to be required
+    # TODO(1.7): remove in 1.7 and reset y_proba to be required
     if y_proba is not None and y_prob != "deprecated":
         raise ValueError(
             "`y_prob` and `y_proba` cannot be both specified. Please use `y_proba` only"
-            " as `y_prob` is deprecated in v1.4 and will be removed in v1.6."
+            " as `y_prob` is deprecated in v1.5 and will be removed in v1.7."
         )
     if y_proba is None:
         warnings.warn(
             (
-                "y_prob was deprecated in version 1.4 and will be removed in 1.6."
+                "y_prob was deprecated in version 1.5 and will be removed in 1.7."
                 "Please use ``y_proba`` instead."
             ),
             FutureWarning,

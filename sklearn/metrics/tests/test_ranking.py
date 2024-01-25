@@ -2244,13 +2244,13 @@ def test_roc_curve_with_probablity_estimates(global_random_seed):
     assert np.isinf(thresholds[0])
 
 
-# TODO(1.6): remove
+# TODO(1.7): remove
 def test_precision_recall_curve_deprecation_warning():
     """Check the message for future deprecation."""
     # Check precision_recall_curve function
     y_true, _, y_score = make_prediction(binary=True)
 
-    warn_msg = "probas_pred was deprecated in version 1.4"
+    warn_msg = "probas_pred was deprecated in version 1.5"
     with pytest.warns(FutureWarning, match=warn_msg):
         precision_recall_curve(
             y_true,

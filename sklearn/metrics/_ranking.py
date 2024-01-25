@@ -36,7 +36,7 @@ from ..utils import (
     column_or_1d,
 )
 from ..utils._encode import _encode, _unique
-from ..utils._param_validation import Interval, StrOptions, validate_params
+from ..utils._param_validation import Hidden, Interval, StrOptions, validate_params
 from ..utils.extmath import stable_cumsum
 from ..utils.fixes import trapezoid
 from ..utils.multiclass import type_of_target
@@ -865,13 +865,13 @@ def _binary_clf_curve(y_true, y_score, pos_label=None, sample_weight=None):
 @validate_params(
     {
         "y_true": ["array-like"],
-        "y_score": ["array-like", None],
+        "y_score": ["array-like", Hidden(None)],
         "pos_label": [Real, str, "boolean", None],
         "sample_weight": ["array-like", None],
         "drop_intermediate": ["boolean"],
         "probas_pred": [
             "array-like",
-            StrOptions({"deprecated"}),
+            Hidden(StrOptions({"deprecated"})),
         ],
     },
     prefer_skip_nested_validation=True,
@@ -938,8 +938,8 @@ def precision_recall_curve(
         class, or non-thresholded measure of decisions (as returned by
         `decision_function` on some classifiers). By default None.
 
-        .. deprecated:: 1.4
-            `probas_pred` is deprecated and will be removed in 1.6. Use
+        .. deprecated:: 1.5
+            `probas_pred` is deprecated and will be removed in 1.7. Use
             `y_score` instead.
 
     Returns
@@ -985,12 +985,12 @@ def precision_recall_curve(
     if y_score is not None and probas_pred != "deprecated":
         raise ValueError(
             "`probas_pred` and `y_score` cannot be both specified. Please use `y_score`"
-            " only as `probas_pred` is deprecated in v1.4 and will be removed in v1.6."
+            " only as `probas_pred` is deprecated in v1.5 and will be removed in v1.7."
         )
     if y_score is None:
         warnings.warn(
             (
-                "probas_pred was deprecated in version 1.4 and will be removed in 1.6."
+                "probas_pred was deprecated in version 1.5 and will be removed in 1.7."
                 "Please use ``y_score`` instead."
             ),
             FutureWarning,
