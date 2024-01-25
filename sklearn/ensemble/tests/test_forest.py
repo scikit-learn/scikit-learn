@@ -1766,13 +1766,15 @@ def test_estimators_samples(ForestClass, bootstrap, seed):
 
 
 @pytest.mark.parametrize(
-    "make_data, Forest",
+    "make_data, Forest, resilience_score",
     [
-        (datasets.make_regression, RandomForestRegressor),
-        (datasets.make_classification, RandomForestClassifier),
+        (datasets.make_regression, RandomForestRegressor, 0.8),
+        (datasets.make_classification, RandomForestClassifier, 0.8),
+        (datasets.make_regression, ExtraTreesRegressor, 0.6),
+        (datasets.make_classification, ExtraTreesClassifier, 0.8),
     ],
 )
-def test_missing_values_is_resilient(make_data, Forest):
+def test_missing_values_is_resilient(make_data, Forest, resilience_score):
     """Check that forest can deal with missing values and has decent performance."""
 
     rng = np.random.RandomState(0)
@@ -1799,12 +1801,20 @@ def test_missing_values_is_resilient(make_data, Forest):
     forest.fit(X_train, y_train)
     score_without_missing = forest.score(X_test, y_test)
 
-    # Score is still 80 percent of the forest's score that had no missing values
-    assert score_with_missing >= 0.80 * score_without_missing
+    # Score is still a high percent of the forest's score that had no missing values
+    assert score_with_missing >= resilience_score * score_without_missing
 
 
-@pytest.mark.parametrize("Forest", [RandomForestClassifier, RandomForestRegressor])
-def test_missing_value_is_predictive(Forest):
+@pytest.mark.parametrize(
+    "Forest, expected_score",
+    [
+        (RandomForestClassifier, 0.75),
+        (RandomForestRegressor, 0.75),
+        (ExtraTreesRegressor, 0.49),
+        (ExtraTreesClassifier, 0.75),
+    ],
+)
+def test_missing_value_is_predictive(Forest, expected_score):
     """Check that the forest learns when missing values are only present for
     a predictive feature."""
     rng = np.random.RandomState(0)
@@ -1838,7 +1848,7 @@ def test_missing_value_is_predictive(Forest):
 
     predictive_test_score = forest_predictive.score(X_predictive_test, y_test)
 
-    assert predictive_test_score >= 0.75
+    assert predictive_test_score >= expected_score
     assert predictive_test_score >= forest_non_predictive.score(
         X_non_predictive_test, y_test
     )

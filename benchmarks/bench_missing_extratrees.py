@@ -2,19 +2,19 @@
 1. Build this PR and run:
 
 ```bash
-python bench_missing.py bench ~/bench_results pr
+python bench_missing_extratrees.py bench ~/bench_results pr
 ```
 
 2. On main run:
 
 ```bash
-python bench_missing.py bench ~/bench_results main
+python bench_missing_extratrees.py bench ~/bench_results main
 ```
 
 3. Plotting
 
 ```bash
-python bench_missing.py plot ~/bench_results pr main results_image.png
+python bench_missing_extratrees.py plot ~/bench_results pr main results_image.png
 ```
 """
 
@@ -91,7 +91,7 @@ benchmark_config = [
                 ],
                 [40_000],
                 ["dense"],
-                ["best"],
+                ["random"],
                 [False],
             )
         ),
@@ -104,7 +104,7 @@ benchmark_config = [
                 [make_poisson_data],
                 [40_000],
                 ["dense"],
-                ["best"],
+                ["random"],
                 [False],
             )
         ),
@@ -120,7 +120,7 @@ benchmark_config = [
                 ],
                 [40_000],
                 ["dense"],
-                ["best"],
+                ["random"],
                 [False],
             )
         ),

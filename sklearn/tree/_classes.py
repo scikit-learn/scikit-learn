@@ -1082,7 +1082,7 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
     def _more_tags(self):
         # XXX: nan is only support for dense arrays, but we set this for common test to
         # pass, specifically: check_estimators_nan_inf
-        allow_nan = self.splitter in ("best", "random") and self.criterion in {
+        allow_nan = self.splitter == "best" and self.criterion in {
             "gini",
             "log_loss",
             "entropy",
@@ -1413,7 +1413,7 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
     def _more_tags(self):
         # XXX: nan is only support for dense arrays, but we set this for common test to
         # pass, specifically: check_estimators_nan_inf
-        allow_nan = self.splitter in ("best", "random") and self.criterion in {
+        allow_nan = self.splitter == "best" and self.criterion in {
             "squared_error",
             "friedman_mse",
             "poisson",
@@ -1694,6 +1694,16 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
             monotonic_cst=monotonic_cst,
         )
 
+    def _more_tags(self):
+        # XXX: nan is only support for dense arrays, but we set this for common test to
+        # pass, specifically: check_estimators_nan_inf
+        allow_nan = self.splitter == "random" and self.criterion in {
+            "gini",
+            "log_loss",
+            "entropy",
+        }
+        return {"multilabel": True, "allow_nan": allow_nan}
+
 
 class ExtraTreeRegressor(DecisionTreeRegressor):
     """An extremely randomized tree regressor.
@@ -1937,3 +1947,13 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
             ccp_alpha=ccp_alpha,
             monotonic_cst=monotonic_cst,
         )
+
+    def _more_tags(self):
+        # XXX: nan is only support for dense arrays, but we set this for common test to
+        # pass, specifically: check_estimators_nan_inf
+        allow_nan = self.splitter == "random" and self.criterion in {
+            "squared_error",
+            "friedman_mse",
+            "poisson",
+        }
+        return {"allow_nan": allow_nan}
