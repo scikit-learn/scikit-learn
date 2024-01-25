@@ -3221,7 +3221,7 @@ def brier_score_loss(
     0.0
     """
     # TODO(1.6): remove in 1.6 and reset y_proba to be required
-    if y_proba is not None and not isinstance(y_prob, str):
+    if y_proba is not None and y_prob != "deprecated":
         raise ValueError(
             "`y_prob` and `y_proba` cannot be both specified. Please use `y_proba` only"
             " as `y_prob` is deprecated in v1.4 and will be removed in v1.6."
