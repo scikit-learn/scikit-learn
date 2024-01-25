@@ -267,7 +267,7 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
                 # following cases:
                 # * `func` preserved the column names between the input and the output
                 # * the input column names are all numbers
-                # * the output is requested to be a DataFrame
+                # * the output is requested to be a DataFrame (pandas or polars)
                 feature_names_in = getattr(
                     X, "feature_names_in_", _get_feature_names(X)
                 )

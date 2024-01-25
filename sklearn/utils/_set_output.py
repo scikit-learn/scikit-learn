@@ -124,7 +124,10 @@ class PandasAdapter:
                 index = X_original.index
             else:
                 index = None
-            return pd.DataFrame(X_output, index=index, columns=columns, copy=copy)
+
+            # We don't pass columns here because it would intend columns selection
+            # instead of renaming.
+            X_output = pd.DataFrame(X_output, index=index, copy=copy)
 
         if columns is not None:
             return self.rename_columns(X_output, columns)
