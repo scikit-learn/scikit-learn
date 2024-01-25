@@ -2552,7 +2552,7 @@ def test_missing_values_poisson(Tree):
     [
         (datasets.make_regression, DecisionTreeRegressor, 0.9, DummyRegressor, [0.9, 0.1]),
         (datasets.make_classification, DecisionTreeClassifier, 0.9, DummyClassifier, [0.9, 0.1]),
-        (datasets.make_regression, ExtraTreeRegressor, 0.5, DummyRegressor, [0.95, 0.05]),
+        (datasets.make_regression, ExtraTreeRegressor, 0.2, DummyRegressor, [0.95, 0.05]),
         (datasets.make_classification, ExtraTreeClassifier, 0.6, DummyClassifier, [0.95, 0.05]),
     ],
 )

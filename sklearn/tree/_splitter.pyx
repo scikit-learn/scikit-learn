@@ -816,7 +816,7 @@ cdef inline int node_split_random(
         # missing-to-right
 
         if separate_nan_and_non_nans:
-            missing_go_to_left = 0
+            missing_go_to_left = rand_int(0, 2, random_state)
             p = end - n_missing
             n_left, n_right = end - start - n_missing, n_missing
 
