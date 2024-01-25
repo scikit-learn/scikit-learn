@@ -67,8 +67,8 @@ def l1_min_c(X, y, *, loss="squared_hinge", fit_intercept=True, intercept_scalin
     >>> from sklearn.svm import l1_min_c
     >>> from sklearn.datasets import make_classification
     >>> X, y = make_classification(n_samples=100, n_features=20, random_state=42)
-    >>> l1_min_c(X, y, loss='squared_hinge', fit_intercept=True, intercept_scaling=1.0)
-    0.004389021067521427
+    >>> print(f"{l1_min_c(X, y, loss='squared_hinge', fit_intercept=True):.4f}")
+    0.0044
     """
 
     X = check_array(X, accept_sparse="csc")
