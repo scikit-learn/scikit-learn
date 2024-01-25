@@ -10,6 +10,7 @@ from functools import partial
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 import numpy as np
+import scipy
 
 __all__ = [
     "BaseScoreSlicer",
@@ -141,10 +142,10 @@ class StandardErrorSlicer(BaseScoreSlicer):
         max_cut : float
             The upper bound of the window of model performance.
         """
-        # Estimate the standard error across folds for each column of the grid
+        # estimate the SE across folds for each column of the grid
         cv_se = np.array(np.nanstd(score_grid, axis=1) / np.sqrt(n_folds))
 
-        # Determine confidence interval
+        # compute the confidence interval
         max_cut = cv_means[best_score_idx] + self.sigma * cv_se[best_score_idx]
         min_cut = cv_means[best_score_idx] - self.sigma * cv_se[best_score_idx]
         return min_cut, max_cut
@@ -301,7 +302,7 @@ class WilcoxonSlicer(BaseScoreSlicer):
         if n_folds < 3:
             raise ValueError("Number of folds must be greater than 2.")
 
-        # Perform signed Wilcoxon rank sum test for each pair combination of
+        # perform signed Wilcoxon rank sum test for each pair combination of
         # columns against the best average score column
         tests = [
             pair
@@ -318,8 +319,8 @@ class WilcoxonSlicer(BaseScoreSlicer):
                 zero_method=self.zero_method,
             )[1]
 
-        # Return the models that are insignificantly different from the best average
-        # performing, else just return the best-performing model.
+        # return the ranks of the models that are insignificantly different from the
+        # best average performing, else just return the best-performing
         surviving_ranks = [pair[0] for pair in tests if pvals[pair] > self.alpha] + [
             best_score_idx
         ]
@@ -400,7 +401,11 @@ class FixedWindowSlicer(BaseScoreSlicer):
 
 
 class FavorabilityRanker:
-    def __init__(self, favorability_rules: Dict[str, Tuple[Union[bool, List], float]]):
+    def __init__(
+        self,
+        favorability_rules: Dict[str, Tuple[Union[bool, List], float]],
+        seed: Optional[int] = None,
+    ):
         """
         Initializes the FavorabilityRanker class with a user-supplied dictionary of
         favorability rules.
@@ -414,32 +419,91 @@ class FavorabilityRanker:
             favorability from most favorable to least favorable (categorical case), and
             the second element is a float (weight), indicating the relative importance
             of the hyperparameter in the overall favorability ranking.
+        seed: Optional[int]
+            An optional seed for consistent random sampling from probability
+            distributions.
 
         Examples
         --------
         >>> from sklearn.model_selection import FavorabilityRanker
         >>> favorability_rules = {
-        ...    'reduce_dim__n_components': (True, 2.0),  # Lower is simpler and
-        ...                                             # more favorable
-        ...     'classify__C': (False, 1.0) # Lower is more complex and
-        ...                                 # less favorable
+        ...    'reduce_dim__n_components': (True, 1.0),  # Lower is more favorable
+        ...    'classify__degree': (True, 1.0), # Lower more favorable
+        ...    'classify__kernel': (['linear', 'rbf'], 1.0), # Linear is more favorable
+        ...    'classify__C': ('median', 0.25), # Closer to median is more favorable
         ... }
         >>> fr = FavorabilityRanker(favorability_rules)
-        >>> fr([{'reduce_dim__n_components': 2, 'classify__C': 0.01},
-        ... {'reduce_dim__n_components': 8, 'classify__C': 10.0}]) # Params from a
-        ...                                                        # SearchCV object
-        >>> [1, 2]
+        >>> fr({'reduce_dim__n_components': [6, 2, 8], 'classify__degree': [2,
+        ... 3, 1], 'classify__kernel': ['rbf', 'linear'], 'classify__C':
+        ... scipy.stats.norm(loc=0.0, scale=1.0)}) # Params from a SearchCV object
+        >>> [12, 11, 8, 7, 10, 9, 6, 2, 5, 1, 4, 18, 3, 14, 17, 13, 16, 15]
         """
         self.favorability_rules = favorability_rules
+        self.seed = seed
+        self._validate_favorability_rules()
 
-    def __call__(self, params: List[Dict]) -> List[int]:
+    def _validate_favorability_rules(self):
+        for hyperparam, rule in self.favorability_rules.items():
+            if not isinstance(hyperparam, str):
+                raise TypeError(
+                    f"Hyperparameter {hyperparam} must be a string, and correspond "
+                    "to a hyperparameter in the hyperparameter grid."
+                )
+            if not isinstance(rule, tuple):
+                raise TypeError(
+                    f"Favorability rule for hyperparameter {hyperparam} must be a"
+                    " tuple."
+                )
+            if (
+                not isinstance(rule[0], bool)
+                and not isinstance(rule[0], list)
+                and not isinstance(rule[0], str)
+            ):
+                raise TypeError(
+                    "First element of favorability rule for hyperparameter"
+                    f" {hyperparam} must be a boolean, list, or string."
+                )
+            if not isinstance(rule[1], float):
+                raise TypeError(
+                    "Second element of favorability rule for hyperparameter"
+                    f" {hyperparam} must be a float."
+                )
+
+    def _process_parameter_values(self, value: Any, rule: Tuple[Any, float]) -> Any:
+        """Process a single hyperparameter value, handling distribution objects."""
+
+        if isinstance(value, scipy.stats.rv_continuous):
+            distribution_property = rule[0]
+            rng = np.random.default_rng(self.seed)
+
+            if distribution_property == "mean":
+                return value.mean()
+            elif distribution_property == "median":
+                return value.median()
+            elif distribution_property.startswith("percentile_"):
+                percentile = float(distribution_property.split("_")[1])
+                return value.ppf(percentile / 100, random_state=rng)
+            else:
+                raise ValueError(
+                    f"Unsupported distribution property: {distribution_property}"
+                )
+        elif callable(value):
+            # handle ParameterSampler or similar callable for generating parameter
+            # values
+            rng = np.random.default_rng(self.seed)
+            return value(rng)
+
+        return value
+
+    def __call__(self, params: Union[List[Dict], Dict]) -> List[int]:
         """
         Ranks the given hyperparameter sets based on the defined favorability rules.
 
         Parameters
         ----------
-        params: List[Dict]
-            A list of dictionaries representing sets of hyperparameters.
+        params: Union[List[Dict], Dict]
+            A parameter grid in the form of a list of dictionaries or a single
+            dictionary.
 
         Returns
         -------
@@ -452,34 +516,92 @@ class FavorabilityRanker:
             favorability_score = 0
             for hyperparam, rule in self.favorability_rules.items():
                 if hyperparam in param_set:
+                    hyperparam_value = self._process_parameter_values(
+                        param_set[hyperparam], rule
+                    )
+
+                    is_numeric = isinstance(hyperparam_value, (int, float, np.number))
+
                     # Numeric hyperparameter
                     if isinstance(rule[0], bool):
                         lower_is_favorable, weight = rule
-                        score_component = (
-                            param_set[hyperparam]
-                            if lower_is_favorable
-                            else 1 / param_set[hyperparam]
-                        )
+                        if not is_numeric:
+                            raise TypeError(
+                                f"Expected numeric value for {hyperparam}, "
+                                f"got {type(hyperparam_value)}"
+                            )
+                        if lower_is_favorable:
+                            score_component = hyperparam_value
+                        else:
+                            score_component = (
+                                0 if hyperparam_value == 0 else 1 / hyperparam_value
+                            )
                         favorability_score += weight * score_component
 
                     # Categorical hyperparameter
                     elif isinstance(rule[0], list):
                         rule_values, weight = rule
-                        if param_set[hyperparam] in rule_values:
-                            favorability_score += weight * rule_values.index(
-                                param_set[hyperparam]
-                            )
+                        if hyperparam_value in rule_values:
+                            score_component = rule_values.index(hyperparam_value)
+                            favorability_score += weight * score_component
                         else:
                             raise ValueError(
-                                f"Hyperparameter {hyperparam} must be one of"
-                                f" {rule_values}."
+                                f"Hyperparameter {hyperparam} "
+                                f"must be one of {rule_values}."
                             )
 
             return favorability_score
 
-        favorability_scores = [calculate_favorability_score(p) for p in params]
-        ranks = [x + 1 for x in np.argsort(favorability_scores)]
+        # check if 'params' is a list of dictionaries or a single dictionary
+        if isinstance(params, list):
+            # if it's a list, process each set of parameters separately
+            favorability_scores = [calculate_favorability_score(p) for p in params]
+        elif isinstance(params, dict):
+            from itertools import product
 
+            import scipy
+
+            # if it's a dictionary, first check if it contains distribution objects or
+            # callable parameter generators, and if so, but no seed is set, issue a
+            # warning
+            if self.seed is None and any(
+                isinstance(v, scipy.stats.rv_continuous) or callable(v)
+                for p in params.values()
+                for v in (p if isinstance(p, list) else [p])
+            ):
+                warnings.warn(
+                    (
+                        "A seed value was not set but distribution objects or callable"
+                        " parameter generators are present in params. Favorability"
+                        " ranks may not correspond to the actual parameter values"
+                        " sampled during the SearchCV fitting."
+                    ),
+                    UserWarning,
+                )
+            # generate a grid of parameter combinations and
+            # process them as though they were a list of dictionaries
+            processed_params = {}
+            for key, value in params.items():
+                rule = self.favorability_rules.get(key, (None, 0))
+                processed_params[key] = (
+                    [self._process_parameter_values(v, rule) for v in value]
+                    if isinstance(value, list)
+                    else [self._process_parameter_values(value, rule)]
+                )
+            combinations = [
+                dict(zip(processed_params.keys(), v))
+                for v in product(*processed_params.values())
+            ]
+            favorability_scores = [
+                calculate_favorability_score(p) for p in combinations
+            ]
+        else:
+            raise ValueError(
+                "params must be either a list of dictionaries or a single dictionary"
+            )
+
+        # Determine ranks based on favorability scores
+        ranks = [x + 1 for x in np.argsort(favorability_scores)]
         return ranks
 
     def __repr__(self) -> str:
@@ -561,7 +683,7 @@ class ScoreCutModelSelector:
 
     def _get_splits(self) -> List[str]:
         """Extracts CV splits corresponding to the specified ``scoring`` metric."""
-        # Extract subgrid corresponding to the scoring metric of interest
+        # extract subgrid corresponding to the scoring metric of interest
         fitted_key_strings = "\t".join(list(self.cv_results_constrained_.keys()))
         if not all(s in fitted_key_strings for s in ["split", "params", "mean_test"]):
             raise TypeError(
@@ -580,6 +702,24 @@ class ScoreCutModelSelector:
             return _splits
 
     def _check_fitted(self, retval: Optional[Any] = None) -> Any:
+        """Checks if the ``ScoreCutModelSelector`` instance has been fitted.
+
+        Parameters
+        ----------
+        retval : Optional[Any], optional
+            A return value, by default None.
+
+        Returns
+        -------
+        Any
+            The return value if the ``ScoreCutModelSelector`` instance has been
+            fitted.
+
+        Raises
+        ------
+        AttributeError
+            If the ``ScoreCutModelSelector`` instance has not been fitted.
+        """
         if hasattr(self, "min_cut_") or hasattr(self, "max_cut_"):
             return retval
         else:
@@ -589,6 +729,26 @@ class ScoreCutModelSelector:
             )
 
     def _check_transformed(self, retval: Optional[Any] = None) -> Any:
+        """Checks if the ``ScoreCutModelSelector`` instance has been transformed.
+
+        Parameters
+        ----------
+        retval : Optional[Any], optional
+            A return value, by default None.
+
+        Returns
+        -------
+        Any
+            The return value if the ``ScoreCutModelSelector`` instance has been
+            transformed.
+
+        Raises
+        ------
+        AttributeError
+            If the ``ScoreCutModelSelector`` instance has not been transformed.
+        AttributeError
+            If the ``ScoreCutModelSelector`` instance has not been fitted.
+        """
         if (hasattr(self, "min_cut_") or hasattr(self, "max_cut_")) and hasattr(
             self, "favorable_best_index_"
         ):
@@ -607,7 +767,7 @@ class ScoreCutModelSelector:
 
     @property
     def _n_folds(self) -> int:
-        # Extract number of folds from cv_results_. Note that we cannot get this from
+        # extract number of folds from cv_results_. Note that we cannot get this from
         # the ``n_splits_`` attribute of the ``cv`` object because it is not exposed to
         # the refit callable.
         return len(
@@ -620,24 +780,24 @@ class ScoreCutModelSelector:
 
     @property
     def _score_grid(self) -> np.ndarray:
-        # Extract subgrid corresponding to the scoring metric of interest
+        # extract subgrid corresponding to the scoring metric of interest
         return np.vstack(
             [self.cv_results_constrained_[cv] for cv in self._get_splits()]
         ).T
 
     @property
     def _cv_means(self) -> np.ndarray:
-        # Calculate means of subgrid corresponding to the scoring metric of interest
+        # calculate means of subgrid corresponding to the scoring metric of interest
         return np.array(np.nanmean(self._score_grid, axis=1))
 
     @property
     def _lowest_score_idx(self) -> int:
-        # Return index of the lowest performing model
+        # return index of the lowest performing model
         return np.nanargmin(self._cv_means)
 
     @property
     def _best_score_idx(self) -> int:
-        # Return index of the highest performing model
+        # return index of the highest performing model
         return np.nanargmax(self._cv_means)
 
     @property
@@ -670,21 +830,34 @@ class ScoreCutModelSelector:
         Parameters
         ----------
         min_cut : float
-            The minimum performance threshold.
+            The minimum performance threshold indicated by the ``score_slice_fn``.
         max_cut : float
-            The maximum performance threshold.
+            The maximum performance threshold indicated by the ``score_slice_fn``.
+
+        Returns
+        -------
+        min_cut : float
+            The minimum performance threshold applied to the `_score_grid`.
+        max_cut : float
+            The maximum performance threshold applied to the `_score_grid`.
+
+        Raises
+        ------
+        ValueError
+            If no valid grid columns remain within the boundaries of the specified
+            performance window.
         """
 
-        # Initialize a mask for the overall performance
+        # initialize a mask for the overall performance
         np.zeros(len(self._score_grid), dtype=bool)
 
-        # Extract the overall performance
+        # extract the overall performance
         if not min_cut:
             min_cut = float(np.nanmin(self._cv_means))
         if not max_cut:
             max_cut = float(np.nanmax(self._cv_means))
 
-        # Mask all grid columns that are outside the performance window
+        # mask all grid columns that are outside the performance window
         self.performance_mask = np.where(
             (self._cv_means >= float(min_cut)) & (self._cv_means <= float(max_cut)),
             True,
@@ -698,7 +871,7 @@ class ScoreCutModelSelector:
                 " folds: {self._cv_means}\n"
             )
 
-        # For each hyperparameter in the grid, mask all grid columns that are outside
+        # for each hyperparameter in the grid, mask all grid columns that are outside
         # of the performance window
         for hyperparam in self.cv_results_constrained_["params"][0].keys():
             self.cv_results_constrained_[f"param_{hyperparam}"].mask = (
@@ -722,7 +895,7 @@ class ScoreCutModelSelector:
             and return [0, 1, 2, 3, 4, 5, 6].
         """
 
-        # Apply the favorability function to the hyperparameter grid and add the ensuing
+        # apply the favorability function to the hyperparameter grid and add the ensuing
         # favorability ranks to the constrained cv_results dict
         self.cv_results_constrained_["favorability_rank"] = np.array(
             favorability_rank_fn(self.cv_results_constrained_["params"])
@@ -732,7 +905,7 @@ class ScoreCutModelSelector:
             self.cv_results_constrained_["favorability_rank"][self.performance_mask]
         )
 
-        # Check if multiple models are tied for most favorable within the trimmed
+        # check if multiple models are tied for most favorable within the trimmed
         # performance
         tied_mostfavorable = (
             np.sum(
@@ -742,7 +915,7 @@ class ScoreCutModelSelector:
             > 1
         )
 
-        # If only one model is definitively most favorable, return its index
+        # if only one model is definitively most favorable, return its index
         if not tied_mostfavorable:
             # Return the index of the most favorable model within the performance window
             return int(
@@ -752,7 +925,7 @@ class ScoreCutModelSelector:
                 )[0][0]
             )
 
-        # Mask performance mask to only include the multiple models tied for the
+        # mask performance mask to only include the multiple models tied for the
         # most favorable favorability
         performance_mask_mostfavorable = np.where(
             self.cv_results_constrained_["favorability_rank"]
@@ -760,7 +933,7 @@ class ScoreCutModelSelector:
             True,
             False,
         )
-        # Among multiple equally simple models within the trimmed performance
+        # among multiple equally simple models within the trimmed performance
         # window, find the lowest surviving test performamce rank (i.e. the
         # highest-performing model overall).
         lowest_surviving_rank = np.nanmin(
@@ -769,7 +942,7 @@ class ScoreCutModelSelector:
             ]
         )
 
-        # Return the index of the lowest surviving rank among equally simple models,
+        # return the index of the lowest surviving rank among equally simple models,
         # which will equate to the index of the best-performing most favorable model
         # that is not meaningfully different from the globally best-performing model.
         return int(
@@ -800,14 +973,13 @@ class ScoreCutModelSelector:
 
         Raises
         ------
-        ``TypeError``
+        TypeError
             If the ``score_slice_fn`` is not a callable.
 
         Notes
         -----
         The following keyword arguments will be automatically exposed to the
-        score_slice_fn
-        by ``ScoreCutModelSelector``:
+        ``score_slice_fn`` by ``ScoreCutModelSelector``:
 
         - best_score_idx : int
             The index of the highest performing model.
@@ -861,8 +1033,8 @@ class ScoreCutModelSelector:
         """promotes the most favorable model within the constrained cut-window of
         best-performance.
 
-        Returns
-        -------
+        Parameters
+        ----------
         favorability_rank_fn : callable
             A callable initialized with a dictionary of hyperparameter favorability
             ranking rules. At call, the callable consumes a hyperparameter grid in the
@@ -870,14 +1042,16 @@ class ScoreCutModelSelector:
             18]} and returns an list of ranked integers corresponding to the
             favorability of each hyperparameter setting, from least to most complex.
             For example: [0, 1, 2, 3, 4, 5, 6].
+
+        Returns
+        -------
         int
             The index of the most favorable model.
 
         Raises
         ------
-        ValueError
-            If the ScoreCutModelSelector has not been fitted before calling the
-            ``transform`` method.
+        TypeError
+            If the ``favorability_rank_fn`` is not a callable.
 
         """
         if not callable(favorability_rank_fn):
@@ -960,6 +1134,11 @@ def promote(score_slice_fn: Callable, favorability_rank_fn: Callable) -> Callabl
         A callable that returns the index of the most favorable model whose performance
         falls within the acceptable bounds imposed by the score_slice_fn rule.
 
+    Raises
+    ------
+    TypeError
+        If ``score_slice_fn`` or ``favorability_rank_fn`` are not callable.
+
     Examples
     --------
     >>> from sklearn.datasets import load_digits
@@ -1003,7 +1182,7 @@ def promote(score_slice_fn: Callable, favorability_rank_fn: Callable) -> Callabl
     if not callable(score_slice_fn) or not callable(favorability_rank_fn):
         raise TypeError(
             "``score_slice_fn`` and ``favorability_rank_fn`` must be callables"
-        )  # This error gets raised initially here to avoid
+        )  # this error gets raised initially here to avoid
         # delaying an equivalent error internal to
         # `ScoreCutModelSelector` until after the SearchCV
         # object has been fit.

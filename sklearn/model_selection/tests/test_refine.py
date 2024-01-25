@@ -1,10 +1,12 @@
 import numpy as np
 import pytest
+import scipy.stats
 from _pytest.mark.structures import ParameterSet
 
 from sklearn.datasets import make_classification
 from sklearn.decomposition import PCA
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.experimental import enable_halving_search_cv  # noqa: F401
 from sklearn.model_selection import (
     FavorabilityRanker,
     FixedWindowSlicer,
@@ -257,22 +259,20 @@ def test_promote(param, scoring, score_slice_rule, favorability_rank_rule, searc
             grid_refitted.fit(X, y)
         simplified_best_score_ = grid_refitted.cv_results_["mean_test_score"][
             grid_refitted.best_index_
-        ]  # pragma: no cover
+        ]
         # Ensure that if the refit callable promoted a lower scoring model,
         # it was because it was only because it was a more favorable model.
-        if abs(grid.best_score_) > abs(simplified_best_score_):  # pragma: no cover
-            assert grid.best_index_ != grid_refitted.best_index_  # pragma: no cover
+        if abs(grid.best_score_) > abs(simplified_best_score_):
+            assert grid.best_index_ != grid_refitted.best_index_
             if param:
-                assert (
-                    grid.best_params_[param] > grid_refitted.best_params_[param]
-                )  # pragma: no cover
-        elif grid.best_score_ == simplified_best_score_:  # pragma: no cover
+                assert grid.best_params_[param] > grid_refitted.best_params_[param]
+        elif grid.best_score_ == simplified_best_score_:
             assert grid.best_index_ == grid_refitted.best_index_
             assert grid.best_params_ == grid_refitted.best_params_
-        else:  # pragma: no cover
-            assert grid.best_index_ != grid_refitted.best_index_  # pragma: no cover
-            assert grid.best_params_ != grid_refitted.best_params_  # pragma: no cover
-            assert grid.best_score_ > simplified_best_score_  # pragma: no cover
+        else:
+            assert grid.best_index_ != grid_refitted.best_index_
+            assert grid.best_params_ != grid_refitted.best_params_
+            assert grid.best_score_ > simplified_best_score_
 
 
 @ignore_warnings
@@ -516,19 +516,45 @@ def test_favorability_ranker():
         {
             "param1": (True, 1.0),  # Lower is more favorable
             "param2": (["low", "medium", "high"], 1.0),  # Order of favorability
-        }
+            "param3": ("mean", 1.0),  # Mean of dist
+        },
+        seed=42,
     )
 
     params = [
-        {"param1": 10, "param2": "low"},
-        {"param1": 5, "param2": "medium"},
-        {"param1": 1, "param2": "high"},
+        {"param1": 10, "param2": "low", "param3": 0.5},
+        {"param1": 5, "param2": "medium", "param3": 1.5},
+        {"param1": 1, "param2": "high", "param3": 2.5},
     ]
 
+    # Test ranking with direct values
     assert ranker(params) == [3, 2, 1]
+
+    # Test ranking with a callable parameter generator and dist objects
+    param_generator = lambda rng: rng.choice([10, 5, 1])
+    params_with_callable = [
+        {
+            "param1": param_generator,
+            "param2": "high",
+            "param3": scipy.stats.norm(loc=0, scale=1),
+        },
+        {
+            "param1": param_generator,
+            "param2": "medium",
+            "param3": scipy.stats.norm(loc=1, scale=1),
+        },
+        {
+            "param1": param_generator,
+            "param2": "low",
+            "param3": scipy.stats.norm(loc=2, scale=1),
+        },
+    ]
+
+    expected_ranks = [3, 2, 1]
+    assert ranker(params_with_callable) == expected_ranks
 
     assert (
         repr(ranker)
-        == "FavorabilityRanker({"
-        "'param1': (True, 1.0), 'param2': (['low', 'medium', 'high'], 1.0)})"
+        == "FavorabilityRanker({'param1': (True, 1.0), 'param2': (['low', 'medium',"
+        " 'high'], 1.0), 'param3': ('mean', 1.0)})"
     )
