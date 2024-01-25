@@ -981,7 +981,7 @@ def precision_recall_curve(
     >>> thresholds
     array([0.1 , 0.35, 0.4 , 0.8 ])
     """
-    # TODO(1.6): remove in 1.6 and reset y_score to be required
+    # TODO(1.7): remove in 1.7 and reset y_score to be required
     if y_score is not None and probas_pred != "deprecated":
         raise ValueError(
             "`probas_pred` and `y_score` cannot be both specified. Please use `y_score`"
