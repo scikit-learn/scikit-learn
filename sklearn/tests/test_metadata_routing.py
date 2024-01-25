@@ -977,7 +977,7 @@ def test_no_metadata_always_works():
     """Test that when no metadata is passed, having a meta-estimator which does
     not yet support metadata routing works.
 
-    Regression test for https://github.com/scikit-learn/scikit-learn/issues/28246
+    Non-regression test for https://github.com/scikit-learn/scikit-learn/issues/28246
     """
 
     class Estimator(_RoutingNotSupportedMixin, BaseEstimator):
