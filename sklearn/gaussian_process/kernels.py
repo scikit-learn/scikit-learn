@@ -177,7 +177,7 @@ class Kernel(metaclass=ABCMeta):
     >>> X = np.array([[1, 2], [3, 4]])
     >>> print(kernel(X))
     [[ 25 121]
-    [121 625]]
+     [121 625]]
     """
 
     def get_params(self, deep=True):
