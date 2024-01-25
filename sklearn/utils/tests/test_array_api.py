@@ -190,14 +190,11 @@ def test_average_raises_with_wrong_dtype(array_namespace, device, dtype_name):
         [4, 3], dtype=dtype_name
     )
     array_in = xp.asarray(array_in, device=device)
-    print(array_in.dtype)
 
+    err_msg = "Expecting only boolean, integral or real floating values."
     with (
         config_context(array_api_dispatch=True),
-        pytest.raises(
-            ValueError,
-            match="Expecting only boolean, integral or real floating values.",
-        ),
+        pytest.raises(ValueError, match=err_msg),
     ):
         _average(array_in)
 
@@ -207,7 +204,7 @@ def test_average_raises_with_wrong_dtype(array_namespace, device, dtype_name):
     yield_namespace_device_dtype_combinations(include_numpy_namespaces=True),
 )
 @pytest.mark.parametrize(
-    "axis, weights, error,  error_msg",
+    "axis, weights, error, error_msg",
     (
         (
             None,
@@ -258,9 +255,8 @@ def test_supports_dtype_return_value():
 
 
 def test_device_raises_if_no_input():
-    with pytest.raises(
-        ValueError, match="At least one input array expected, got none."
-    ):
+    err_msg = "At least one input array expected, got none."
+    with pytest.raises(ValueError, match=err_msg):
         device()
 
 
@@ -290,9 +286,8 @@ def test_device_inspection():
         hash(Array("device").device)
 
     # Test raise if on different devices
-    with pytest.raises(
-        ValueError, match="Input arrays use different devices: cpu, mygpu"
-    ):
+    err_msg = "Input arrays use different devices: cpu, mygpu"
+    with pytest.raises(ValueError, match=err_msg):
         device(Array("cpu"), Array("mygpu"))
 
     # Test expected value is returned otherwise

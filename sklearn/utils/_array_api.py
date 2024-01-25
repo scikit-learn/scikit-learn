@@ -20,12 +20,8 @@ def yield_namespace_device_dtype_combinations(include_numpy_namespaces=True):
 
     Parameters
     ----------
-    include_numpy_namespaces : True
+    include_numpy_namespaces : bool, default=True
         If True, also yield numpy namespaces.
-
-    devices : list
-        If not None, returns only combinations for which the device is in
-        the list.
 
     Returns
     -------
@@ -89,6 +85,7 @@ def _check_array_api_dispatch(array_api_dispatch):
 
 
 def _single_array_device(array):
+    """"Hardware device the array data resides on."""
     if isinstance(array, (numpy.ndarray, numpy.generic)) or not hasattr(
         array, "device"
     ):
@@ -98,7 +95,9 @@ def _single_array_device(array):
 
 
 def device(*array_list):
-    """Hardware device the array data resides on.
+    """Hardware device where the array data resides on.
+
+    If the hardware device is not the same for all arrays, an error is raised.
 
     Parameters
     ----------
@@ -244,7 +243,7 @@ def _supports_dtype(xp, device, dtype):
 
 @lru_cache
 def supported_float_dtypes(xp, device=None):
-    """Supported floating point types for the namespace
+    """Supported floating point types for the namespace.
 
     Note: float16 is not officially part of the Array API spec at the
     time of writing but scikit-learn estimators and functions can choose

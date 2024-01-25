@@ -1228,7 +1228,7 @@ def r2_score(
         "numeric" if not is_array_api_compliant else supported_float_dtypes(xp, device_)
     )
 
-    y_type, y_true, y_pred, multioutput = _check_reg_targets(
+    _, y_true, y_pred, multioutput = _check_reg_targets(
         y_true, y_pred, multioutput, dtype=dtype, xp=xp
     )
     check_consistent_length(y_true, y_pred, sample_weight)
