@@ -126,8 +126,10 @@ scikit_learn_install() {
         export LDFLAGS="$LDFLAGS -Wl,--sysroot=/"
     fi
 
+    if [[ "$BUILD_WITH_MESON" == "true" ]]; then
+        make dev-meson
     # TODO use a specific variable for this rather than using a particular build ...
-    if [[ "$DISTRIB" == "conda-pip-latest" ]]; then
+    elif [[ "$DISTRIB" == "conda-pip-latest" ]]; then
         # Check that pip can automatically build scikit-learn with the build
         # dependencies specified in pyproject.toml using an isolated build
         # environment:
