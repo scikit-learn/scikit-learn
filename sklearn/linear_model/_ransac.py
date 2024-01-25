@@ -478,8 +478,7 @@ class RANSACRegressor(
                 self.n_skips_invalid_data_ += 1
                 continue
 
-            # cut `fit_params` down to their temporary lengthes according to
-            # `min_samples` param
+            # cut `fit_params` down to `subset_idxs`
             fit_params_cut_to_min_samples = {}
             for key in routed_params.estimator.fit:
                 # only apply on sample_wise metadata
@@ -597,10 +596,10 @@ class RANSACRegressor(
         fit_params_cut_to_best_idxs_subset = {}
         for key in routed_params.estimator.fit:
             # only apply on sample_wise metadata
-            if len(fit_params[key]) == len(X):
-                fit_params_cut_to_best_idxs_subset[key] = fit_params[key][
-                    inlier_best_idxs_subset
-                ]
+            if len(routed_params.estimator.fit[key]) == len(X):
+                fit_params_cut_to_best_idxs_subset[key] = routed_params.estimator.fit[
+                    key
+                ][inlier_best_idxs_subset]
 
         estimator.fit(
             X_inlier_best, y_inlier_best, **fit_params_cut_to_best_idxs_subset
