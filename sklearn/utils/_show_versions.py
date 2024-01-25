@@ -75,7 +75,6 @@ def show_versions():
     """Print useful debugging information"
 
     .. versionadded:: 0.20
-    
     Examples
     --------
     >>> from sklearn import show_versions
