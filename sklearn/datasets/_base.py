@@ -238,6 +238,12 @@ def load_files(
             The full description of the dataset.
         filenames: ndarray
             The filenames holding the dataset.
+
+    Examples
+    --------
+    >>> from sklearn.datasets import load_files
+    >>> container_path = "./"
+    >>> load_files(container_path)  # doctest: +SKIP
     """
 
     target = []
