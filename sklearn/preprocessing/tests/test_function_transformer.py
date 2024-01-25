@@ -483,37 +483,6 @@ def test_set_output_func():
         ft_np.fit_transform(X)
 
 
-@pytest.mark.parametrize(
-    "feature_names_out, expected_columns",
-    [
-        (None, [0, 1]),  # preserve the original column names
-        # Overwrite the columns in other cases
-        ("one-to-one", ["x0", "x1"]),
-        (lambda _, names: [name + "__log" for name in names], ["x0__log", "x1__log"]),
-    ],
-)
-@pytest.mark.parametrize("transform_output", ["default", "pandas"])
-def test_function_transformer_columns_consistency(
-    feature_names_out, expected_columns, transform_output
-):
-    """Check the consistency of the columns name of a dataframe with
-    get_feature_names_out` and the `feature_names_out` parameter.
-
-    Non-regression test for:
-    https://github.com/scikit-learn/scikit-learn/issues/28232
-    """
-    pd = pytest.importorskip("pandas")
-    rng = np.random.RandomState(42)
-    X_df = pd.DataFrame(rng.randn(100, 2))
-    transformer = FunctionTransformer(feature_names_out=feature_names_out).set_output(
-        transform=transform_output
-    )
-    X_trans = transformer.fit_transform(X_df)
-    assert X_trans.columns.tolist() == expected_columns
-    if feature_names_out is not None:
-        assert X_trans.columns.tolist() == transformer.get_feature_names_out().tolist()
-
-
 def test_consistence_column_name_between_steps():
     """Check that we have a consistence between the feature names out of
     `FunctionTransformer` and the feature names in of the next step in the pipeline.
@@ -535,3 +504,20 @@ def test_consistence_column_name_between_steps():
     assert pipeline.get_feature_names_out().tolist() == ["a__log", "b__log"]
     # StandardScaler will convert to a numpy array
     assert isinstance(X_trans, np.ndarray)
+
+
+@pytest.mark.parametrize("dataframe_lib", ["pandas", "polars"])
+def test_function_transformer_override_column_names(dataframe_lib):
+    """Check that we override the column names when passing `feature_names_out`
+    and `func` does not modify the column names."""
+    lib = pytest.importorskip(dataframe_lib)
+
+    df = lib.DataFrame({"a": [1, 2, 3], "b": [10, 20, 100]})
+
+    def with_suffix(_, names):
+        return [name + "__log" for name in names]
+
+    transformer = FunctionTransformer(feature_names_out=with_suffix)
+    transformer.fit_transform(df)
+    feature_names = transformer.get_feature_names_out()
+    assert feature_names.tolist() == with_suffix(None, df.columns)
