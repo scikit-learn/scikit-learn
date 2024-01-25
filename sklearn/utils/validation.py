@@ -497,6 +497,13 @@ def indexable(*iterables):
     result : list of {ndarray, sparse matrix, dataframe} or None
         Returns a list containing indexable arrays (i.e. NumPy array,
         sparse matrix, or dataframe) or `None`.
+
+    Examples
+    --------
+    >>> from sklearn.utils import indexable
+    >>> a,b = [1, 2, 3],[2, 3, 4]
+    >>> indexable(a, b)
+    [array([1, 2, 3]), array([2, 3, 4])]
     """
 
     result = [_make_indexable(X) for X in iterables]
