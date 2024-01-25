@@ -266,8 +266,8 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
         output_config = _get_output_config("transform", self)["dense"]
         if self.feature_names_out is None:
             warn_msg = (
-                "When `set_output` is configured to be '{}', `func` should return "
-                "a DataFrame to follow the `set_output` API  or `feature_names_out` "
+                "When `set_output` is configured to be '{0}', `func` should return "
+                f"a {0} DataFrame to follow the `set_output` API  or `feature_names_out` "
                 "should be defined."
             )
             if output_config == "pandas" and not _is_pandas_df(out):
