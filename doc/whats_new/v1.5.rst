@@ -66,6 +66,10 @@ Changelog
 - |Efficiency| Improves runtime of `predict` of
   :class:`ensemble.HistGradientBoostingClassifier` by avoiding to call `predict_proba`.
   :pr:`27844` by :user:`Christian Lorentzen <lorentzenchr>`.
+- |Feature| :class:`ensemble.ExtraTreesClassifier` and :class:`ensemble.ExtraTreesRegressor` now support
+  missing-values in the data matrix ``X``. Missing-values are handled by randomly moving all of
+  the samples to the left, or right child node as the tree is traversed. 
+  :pr:`28268` by :user:`Adam Li <adam2392>`.
 
 :mod:`sklearn.feature_extraction`
 .................................
