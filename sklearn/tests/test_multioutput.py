@@ -267,6 +267,38 @@ def test_multi_output_predict_proba():
     assert inner2_msg in str(exec_info.value.__cause__.__cause__)
 
 
+def test_hasattr_multi_output_decision_function():
+    # RandomForestClassifier does not have decision_function
+    # hence MultiOutputClassifier won't expose it
+    forest = RandomForestClassifier(n_estimators=10, random_state=1)
+    multi_target_linear = MultiOutputClassifier(forest)
+    multi_target_linear.fit(X, y)
+
+    assert not hasattr(multi_target_linear, "decision_function")
+
+    # case where decision_threshold exists
+    sgd_linear_clf = SGDClassifier(random_state=1, max_iter=5)
+    multi_target_linear = MultiOutputClassifier(sgd_linear_clf)
+
+    # ensure decision_function available before fit
+    assert hasattr(multi_target_linear, "decision_function")
+    multi_target_linear.fit(X, y)
+    # ensure  decision_function availability after fit
+    assert hasattr(multi_target_linear, "decision_function")
+
+
+def test_multi_output_missing_decision_function():
+    # RandomForestClassifier does not have decision_function
+    # hence MultiOutputClassifier won't expose it
+    forest = RandomForestClassifier(n_estimators=10, random_state=1)
+    multi_target_linear = MultiOutputClassifier(forest)
+    multi_target_linear.fit(X, y)
+    # ensure error message is returned by estimator RandomForestClassifier
+    err_msg = "'RandomForestClassifier' object has no attribute 'decision_function'"
+    with pytest.raises(AttributeError, match=err_msg):
+        multi_target_linear.decision_function(X)
+
+
 def test_multi_output_classification_partial_fit():
     # test if multi_target initializes correctly with base estimator and fit
     # assert predictions work as expected for predict
@@ -392,6 +424,46 @@ def test_multiclass_multioutput_estimator_predict_proba():
                 [0.16751315, 0.18256843, 0.64991843],
                 [0.27357372, 0.55201592, 0.17441036],
                 [0.65745193, 0.26062899, 0.08191907],
+            ]
+        ),
+    ]
+
+    for i in range(len(y_actual)):
+        assert_almost_equal(y_result[i], y_actual[i])
+
+
+def test_multiclass_multioutput_estimator_decision_function():
+    seed = 542
+
+    # make test deterministic
+    rng = np.random.RandomState(seed)
+
+    # random features
+    X = rng.normal(size=(5, 5))
+
+    # random labels
+    y1 = np.array(["b", "a", "a", "b", "a"]).reshape(5, 1)  # 2 classes
+    y2 = np.array(["d", "e", "f", "e", "d"]).reshape(5, 1)  # 3 classes
+
+    Y = np.concatenate([y1, y2], axis=1)
+
+    clf = MultiOutputClassifier(
+        LogisticRegression(solver="liblinear", random_state=seed)
+    )
+
+    clf.fit(X, Y)
+
+    y_result = clf.decision_function(X)
+
+    y_actual = [
+        np.array([1.181305, -0.71706655, -0.18780802, 0.62414541, -1.02976684]),
+        np.array(
+            [
+                [0.40278396, -0.96074739, -0.93055779],
+                [-0.9333856, 1.49696158, -1.54819887],
+                [-1.35860664, -1.24917287, 1.34488183],
+                [-0.8923613, 0.3491747, -1.4809791],
+                [1.418385, -0.75766164, -2.19373733],
             ]
         ),
     ]

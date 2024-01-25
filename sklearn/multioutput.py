@@ -551,7 +551,7 @@ class MultiOutputClassifier(ClassifierMixin, _MultiOutputEstimator):
     def predict_proba(self, X):
         """Return prediction probabilities for each class of each output.
 
-        This method will raise a ``ValueError`` if any of the
+        This method will raise a ``AttributeError`` if any of the
         estimators do not have ``predict_proba``.
 
         Parameters
@@ -573,6 +573,40 @@ class MultiOutputClassifier(ClassifierMixin, _MultiOutputEstimator):
         """
         check_is_fitted(self)
         results = [estimator.predict_proba(X) for estimator in self.estimators_]
+        return results
+
+    def _check_decision_function(self):
+        if hasattr(self, "estimators_"):
+            # raise an AttributeError if `decision_function` does not exist for
+            # each estimator
+            [getattr(est, "decision_function") for est in self.estimators_]
+            return True
+        # raise an AttributeError if `decision_function` does not exist for the
+        # unfitted estimator
+        getattr(self.estimator, "decision_function")
+        return True
+
+    @available_if(_check_decision_function)
+    def decision_function(self, X):
+        """Return confidence scores for each class of each output.
+
+        This method will raise a ``AttributeError`` if any of the
+        estimators do not have ``decision_function``.
+
+        Parameters
+        ----------
+        X : array-like or sparse matrix???? of shape (n_samples, n_features)
+            The input data.
+
+        Returns
+        -------
+        X : list of n_outputs, each output's shape corresponds to the
+                provided estimators decision function returned shape.
+            The confidence scores of the input samples. The order of the
+            classes corresponds to that in the attribute :term:`classes_`.
+        """
+        check_is_fitted(self)
+        results = [estimator.decision_function(X) for estimator in self.estimators_]
         return results
 
     def score(self, X, y):
