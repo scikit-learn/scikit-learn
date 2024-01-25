@@ -68,7 +68,7 @@ Changelog
 - |Fix| :class:`preprocessing.FunctionTransformer` now also warns when `set_output`
   is called with `transform="polars"` and `func` does not return a Polars dataframe or
   `feature_names_out` is not specified.
-  :pr:`xxx` by :user:`Guillaume Lemaitre <glemaitre>`.
+  :pr:`28263` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 :mod:`sklearn.utils`
 ....................
