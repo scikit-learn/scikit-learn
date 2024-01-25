@@ -264,6 +264,17 @@ def silhouette_samples(X, labels, *, metric="euclidean", **kwds):
 
     .. [2] `Wikipedia entry on the Silhouette Coefficient
        <https://en.wikipedia.org/wiki/Silhouette_(clustering)>`_
+
+    Examples
+    --------
+    >>> from sklearn.metrics import silhouette_samples
+    >>> from sklearn.datasets import make_blobs
+    >>> from sklearn.cluster import KMeans
+    >>> X, y = make_blobs(n_samples=5, centers=2, random_state=42)
+    >>> kmeans = KMeans(n_clusters=3, random_state=42)
+    >>> labels = kmeans.fit_predict(X)
+    >>> silhouette_samples(X, labels)
+    array([0.        , 0.60622708, 0.85783276, 0.60823965, 0.83438811])
     """
     X, labels = check_X_y(X, labels, accept_sparse=["csr"])
 
@@ -343,6 +354,17 @@ def calinski_harabasz_score(X, labels):
     .. [1] `T. Calinski and J. Harabasz, 1974. "A dendrite method for cluster
        analysis". Communications in Statistics
        <https://www.tandfonline.com/doi/abs/10.1080/03610927408827101>`_
+
+    Examples
+    --------
+    >>> from sklearn.datasets import make_blobs
+    >>> from sklearn.cluster import KMeans
+    >>> from sklearn.metrics import calinski_harabasz_score
+    >>> X, _ = make_blobs(n_samples=150, n_features=2, centers=3, random_state=0)
+    >>> kmeans = KMeans(n_clusters=3, random_state=0,).fit(X)
+    >>> score = calinski_harabasz_score(X, kmeans.labels_)
+    >>> print("Calinski-Harabasz Score:", f"{score:.2f}")
+    Calinski-Harabasz Score: 189.87
     """
     X, labels = check_X_y(X, labels)
     le = LabelEncoder()

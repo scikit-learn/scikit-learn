@@ -911,6 +911,14 @@ def check_scoring(estimator, scoring=None, *, allow_none=False):
     scoring : callable
         A scorer callable object / function with signature
         ``scorer(estimator, X, y)``.
+
+    Examples
+    --------
+    >>> from sklearn.metrics import check_scoring
+    >>> from sklearn.svm import LinearSVC
+    >>> clf = LinearSVC()
+    >>> check_scoring(clf, scoring='accuracy')
+    make_scorer(accuracy_score, response_method='predict')
     """
     if isinstance(scoring, str):
         return get_scorer(scoring)

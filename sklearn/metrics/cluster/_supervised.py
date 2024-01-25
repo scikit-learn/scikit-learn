@@ -518,6 +518,14 @@ def homogeneity_completeness_v_measure(labels_true, labels_pred, *, beta=1.0):
     homogeneity_score : Homogeneity metric of cluster labeling.
     completeness_score : Completeness metric of cluster labeling.
     v_measure_score : V-Measure (NMI with arithmetic mean option).
+
+    Examples
+    --------
+    >>> from sklearn.metrics import homogeneity_completeness_v_measure
+    >>> y_true,y_pred = [0, 0, 1, 1, 2, 2],[0, 0, 1, 2, 2, 2]
+    >>> homo, comp, v_mes = homogeneity_completeness_v_measure(y_true, y_pred)
+    >>> print(f"{homo:.2f}", f"{comp:.2f}", f"{v_mes:.2f}")
+    0.71 0.77 0.74
     """
     labels_true, labels_pred = check_clusterings(labels_true, labels_pred)
 
