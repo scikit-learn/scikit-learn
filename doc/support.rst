@@ -19,12 +19,13 @@ User Questions
 
 Engage with the scikit-learn community and seek answers to your questions:
 
-- **StackOverflow**: Ask questions tagged with `[scikit-learn] <https://stackoverflow.com/questions/tagged/scikit-learn>`_.
-- **General Machine Learning Queries**: For broader machine learning discussions, visit `Stack Exchange <https://stats.stackexchange.com/>`.
+- **StackOverflow**: Some scikit-learn developers support users using the `[scikit-learn] <https://stackoverflow.com/questions/tagged/scikit-learn>`_ tag.
+
+- **General Machine Learning Queries**: For broader machine learning discussions, visit `Stack Exchange <https://stats.stackexchange.com/>`_.
 
 When posting questions:
 
-- Use descriptive titles.
+- Please use a descriptive question in the title field (e.g. no "Please help with scikit-learn!" as this is not a question) 
 
 - Provide detailed context, expected results, and actual observations.
 
