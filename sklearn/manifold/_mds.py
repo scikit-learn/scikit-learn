@@ -308,6 +308,7 @@ def smacof(
 
     .. [3] "Modern Multidimensional Scaling - Theory and Applications" Borg, I.;
            Groenen P. Springer Series in Statistics (1997)
+
     Examples
     --------
     >>> import numpy as np
