@@ -29,26 +29,25 @@ class SelectorMixin(TransformerMixin, metaclass=ABCMeta):
     This mixin provides a feature selector implementation with `transform` and
     `inverse_transform` functionality given an implementation of
     `_get_support_mask`.
+
     Examples
     --------
-    >>> from sklearn.feature_selection import SelectorMixin
-    >>> from sklearn.base import BaseEstimator
-    >>> from sklearn.datasets import load_iris
     >>> import numpy as np
-    >>> class VarianceThresholdSelector(SelectorMixin, BaseEstimator):
-    ...    def __init__(self, threshold=0.0):
-    ...        self.threshold = threshold
+    >>> from sklearn.datasets import load_iris
+    >>> from sklearn.base import BaseEstimator
+    >>> from sklearn.feature_selection import SelectorMixin
+    >>> class FeatureSelector(SelectorMixin, BaseEstimator):
     ...    def fit(self, X, y=None):
-    ...        self.variances_ = np.var(X, axis=0)
+    ...        self.n_features_in_ = X.shape[1]
     ...        return self
     ...    def _get_support_mask(self):
-    ...        return self.variances_ > self.threshold
-    >>> iris = load_iris()
-    >>> X, y = iris.data, iris.target
-    >>> selector = VarianceThresholdSelector(threshold=.5)
-    >>> X_new = selector.fit_transform(X, y)
+    ...        mask = np.zeros(self.n_features_in_, dtype=bool)
+    ...        mask[:2] = True
+    ...        return mask
+    >>> X, y = load_iris(return_X_y=True)
+    >>> X_new = FeatureSelector().fit_transform(X, y)
     >>> X_new.shape
-    (150, 3)
+    (150, 2)
     """
 
     def get_support(self, indices=False):
