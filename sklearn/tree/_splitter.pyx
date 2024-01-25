@@ -809,12 +809,6 @@ cdef inline int node_split_random(
         # and missing-values
         separate_nan_and_non_nans = has_missing and (rand_int(0, 2, random_state) == 1)
 
-        # TODO: refactor to allow the following 4 options to occur uniformly
-        # missing-to-right with-threshold
-        # missing-to-left with-threshold
-        # missing-to-left
-        # missing-to-right
-
         if separate_nan_and_non_nans:
             missing_go_to_left = rand_int(0, 2, random_state)
             p = end - n_missing

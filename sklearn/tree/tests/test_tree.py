@@ -2550,10 +2550,34 @@ def test_missing_values_poisson(Tree):
 @pytest.mark.parametrize(
     "make_data, Tree, resilience_score, dummy_model, p",
     [
-        (datasets.make_regression, DecisionTreeRegressor, 0.9, DummyRegressor, [0.9, 0.1]),
-        (datasets.make_classification, DecisionTreeClassifier, 0.9, DummyClassifier, [0.9, 0.1]),
-        (datasets.make_regression, ExtraTreeRegressor, 0.2, DummyRegressor, [0.95, 0.05]),
-        (datasets.make_classification, ExtraTreeClassifier, 0.6, DummyClassifier, [0.95, 0.05]),
+        (
+            datasets.make_regression,
+            DecisionTreeRegressor,
+            0.9,
+            DummyRegressor,
+            [0.9, 0.1],
+        ),
+        (
+            datasets.make_classification,
+            DecisionTreeClassifier,
+            0.9,
+            DummyClassifier,
+            [0.9, 0.1],
+        ),
+        (
+            datasets.make_regression,
+            ExtraTreeRegressor,
+            0.2,
+            DummyRegressor,
+            [0.95, 0.05],
+        ),
+        (
+            datasets.make_classification,
+            ExtraTreeClassifier,
+            0.6,
+            DummyClassifier,
+            [0.95, 0.05],
+        ),
     ],
 )
 @pytest.mark.parametrize("sample_weight_train", [None, "ones"])
@@ -2592,9 +2616,15 @@ def test_missing_values_is_resilience(
 
     # Score is still a relatively large percent of the tree's score that had
     # no missing values
-    assert resilience_score * score_without_missing > dummy_score
-    assert score_with_missing > dummy_score
-    assert score_with_missing >= resilience_score * score_without_missing
+    assert (
+        resilience_score * score_without_missing > dummy_score
+    ), f"{resilience_score * score_with_missing} is not > than {dummy_score}"
+    assert (
+        score_with_missing > dummy_score
+    ), f"{score_with_missing} is not > than {dummy_score}"
+    assert (
+        score_with_missing >= resilience_score * score_without_missing
+    ), f"{score_with_missing} is not > than {resilience_score * score_without_missing}"
 
 
 @pytest.mark.parametrize("Tree, expected_score", zip(CLF_TREES.values(), [0.85, 0.82]))
