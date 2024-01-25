@@ -9,6 +9,19 @@ Version 1.4.1
 
 **In Development**
 
+Metadata Routing
+----------------
+
+- |FIX| Fix routing issue with :class:`~compose.ColumnTransformer` when used
+  inside another meta-estimator.
+  :pr:`28188` by `Adrin Jalali`_.
+
+DataFrame Support
+-----------------
+
+- |Enhancement| Pandas and Polars dataframe are validated directly without ducktyping
+  checks. :pr:`28195` by `Thomas Fan`_.
+
 Changelog
 ---------
 
@@ -23,14 +36,6 @@ Changelog
 - |Fix| Avoid infinite loop in :class:`cluster.KMeans` when the number of clusters is
   larger than the number of non-duplicate samples.
   :pr:`28165` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
-
-:mod:`sklearn.compose`
-......................
-
-- |FIX| Fix routing issue with :class:`~compose.ColumnTransformer` when used
-  inside another meta-estimator.
-  :pr:`28188` by `Adrin Jalali`_.
-
 
 .. _changes_1_4:
 

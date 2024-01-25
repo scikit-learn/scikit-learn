@@ -512,6 +512,16 @@ def trustworthiness(X, X_embedded, *, n_neighbors=5, metric="euclidean"):
     .. [2] Laurens van der Maaten. Learning a Parametric Embedding by Preserving
            Local Structure. Proceedings of the Twelfth International Conference on
            Artificial Intelligence and Statistics, PMLR 5:384-391, 2009.
+
+    Examples
+    --------
+    >>> from sklearn.datasets import make_blobs
+    >>> from sklearn.decomposition import PCA
+    >>> from sklearn.manifold import trustworthiness
+    >>> X, _ = make_blobs(n_samples=100, n_features=10, centers=3, random_state=42)
+    >>> X_embedded = PCA(n_components=2).fit_transform(X)
+    >>> print(f"{trustworthiness(X, X_embedded, n_neighbors=5):.2f}")
+    0.92
     """
     n_samples = _num_samples(X)
     if n_neighbors >= n_samples / 2:
