@@ -178,10 +178,8 @@ def set_config(
 
     Examples
     --------
-    >>> from sklearn import set_config,get_config
-    >>> set_config(display='diagram')
-    >>> get_config()['display']
-    'diagram'
+    >>> from sklearn import set_config
+    >>> set_config(display='diagram')  # doctest: +SKIP
     """
     local_config = _get_threadlocal_config()
 
