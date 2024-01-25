@@ -62,6 +62,14 @@ Changelog
 - |Enhancement| Pandas and Polars dataframe are validated directly without ducktyping
   checks. :pr:`28195` by `Thomas Fan`_.
 
+:mod:`sklearn.preprocessing`
+............................
+
+- |Fix| :class:`preprocessing.FunctionTransformer` now also warns when `set_output`
+  is called with `transform="polars"` and `func` does not return a Polars dataframe or
+  `feature_names_out` is not specified.
+  :pr:`xxx` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 :mod:`sklearn.utils`
 ....................
 
