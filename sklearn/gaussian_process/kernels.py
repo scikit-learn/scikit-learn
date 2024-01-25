@@ -172,6 +172,7 @@ class Kernel(metaclass=ABCMeta):
         -------
         params : dict
             Parameter names mapped to their values.
+
         Examples
         --------
         >>> from sklearn.gaussian_process.kernels import Kernel, RBF
