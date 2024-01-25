@@ -679,14 +679,6 @@ Changelog
   :func:`metrics.root_mean_squared_log_error` instead.
   :pr:`26734` by :user:`Alejandro Martin Gil <101AlexMartin>`.
 
-- |API| :func:`metrics.precision_recall_curve` deprecated the keyword argument ``probas_pred``
-  in favor of ``y_score``. ``probas_pred`` will be removed in version 1.6.
-  :pr:`28092` by :user:`Adam Li <adam2392>`.
-
-- |API| :func:`metrics.brier_score_loss` deprecated the keyword argument ``y_prob``
-  in favor of ``y_proba``. ``y_prob`` will be removed in version 1.6.
-  :pr:`28092` by :user:`Adam Li <adam2392>`.
-
 :mod:`sklearn.model_selection`
 ..............................
 
