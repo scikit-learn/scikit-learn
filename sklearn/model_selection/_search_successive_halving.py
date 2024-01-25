@@ -286,7 +286,7 @@ class BaseSuccessiveHalving(BaseSearchCV):
         # max_resources. Depending on max_resources and the number of
         # candidates, this may be higher or smaller than
         # n_required_iterations.
-        n_possible_iterations = 1 + floor(
+        n_possible_iterations = 1 + ceil(
             log(self.max_resources_ // self.min_resources_, self.factor)
         )
 
