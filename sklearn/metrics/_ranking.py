@@ -1372,6 +1372,14 @@ def label_ranking_loss(y_true, y_score, *, sample_weight=None):
         y_score weighted by the size of the label set and the number of labels not
         in the label set.
 
+    Example:
+    --------
+    >>> from sklearn.metrics import label_ranking_loss
+    >>> y_true = [[1, 0, 1], [0, 1, 0]]
+    >>> y_score = [[0.8, 0.2, 0.1], [0.3, 0.7, 0.4]]
+    >>> label_ranking_loss(y_true, y_score)
+    0.25
+
     References
     ----------
     .. [1] Tsoumakas, G., Katakis, I., & Vlahavas, I. (2010).
