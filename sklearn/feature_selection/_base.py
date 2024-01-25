@@ -42,7 +42,7 @@ class SelectorMixin(TransformerMixin, metaclass=ABCMeta):
     ...        return self
     ...    def _get_support_mask(self):
     ...        mask = np.zeros(self.n_features_in_, dtype=bool)
-    ...        mask[:2] = True
+    ...        mask[:2] = True  # select the first two features
     ...        return mask
     >>> X, y = load_iris(return_X_y=True)
     >>> X_new = FeatureSelector().fit_transform(X, y)
