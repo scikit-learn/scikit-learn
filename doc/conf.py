@@ -725,6 +725,12 @@ if os.environ.get("SKLEARN_DOC_BUILD_WARNINGS_AS_ERRORS", "true").lower() == "tr
         message="pkg_resources is deprecated as an API",
         category=DeprecationWarning,
     )
+    # Pandas 2.2.0 warns when pyarrow is not installed
+    warnings.filterwarnings(
+        "ignore",
+        message="(?s).*Pyarrow will become a required dependency of pandas.*",
+        category=DeprecationWarning,
+    )
 
 # maps functions with a class name that is indistinguishable when case is
 # ignore to another filename
