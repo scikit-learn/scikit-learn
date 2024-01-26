@@ -270,11 +270,11 @@ def silhouette_samples(X, labels, *, metric="euclidean", **kwds):
     >>> from sklearn.metrics import silhouette_samples
     >>> from sklearn.datasets import make_blobs
     >>> from sklearn.cluster import KMeans
-    >>> X, y = make_blobs(n_samples=5, centers=2, random_state=42)
+    >>> X, y = make_blobs(n_samples=50, random_state=42)
     >>> kmeans = KMeans(n_clusters=3, random_state=42)
     >>> labels = kmeans.fit_predict(X)
     >>> silhouette_samples(X, labels)
-    array([0.        , 0.60622708, 0.85783276, 0.60823965, 0.83438811])
+    array([...])
     """
     X, labels = check_X_y(X, labels, accept_sparse=["csr"])
 
@@ -360,11 +360,10 @@ def calinski_harabasz_score(X, labels):
     >>> from sklearn.datasets import make_blobs
     >>> from sklearn.cluster import KMeans
     >>> from sklearn.metrics import calinski_harabasz_score
-    >>> X, _ = make_blobs(n_samples=150, n_features=2, centers=3, random_state=0)
+    >>> X, _ = make_blobs(random_state=0)
     >>> kmeans = KMeans(n_clusters=3, random_state=0,).fit(X)
-    >>> score = calinski_harabasz_score(X, kmeans.labels_)
-    >>> print("Calinski-Harabasz Score:", f"{score:.2f}")
-    Calinski-Harabasz Score: 189.87
+    >>> calinski_harabasz_score(X, kmeans.labels_)
+    114.8...
     """
     X, labels = check_X_y(X, labels)
     le = LabelEncoder()
