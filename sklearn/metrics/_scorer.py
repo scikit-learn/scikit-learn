@@ -911,6 +911,17 @@ def check_scoring(estimator, scoring=None, *, allow_none=False):
     scoring : callable
         A scorer callable object / function with signature
         ``scorer(estimator, X, y)``.
+
+    Examples
+    --------
+    >>> from sklearn.datasets import load_iris
+    >>> from sklearn.metrics import check_scoring
+    >>> from sklearn.tree import DecisionTreeClassifier
+    >>> X, y = load_iris(return_X_y=True)
+    >>> classifier = DecisionTreeClassifier(max_depth=2).fit(X, y)
+    >>> scorer = check_scoring(classifier, scoring='accuracy')
+    >>> scorer(classifier, X, y)
+    0.96...
     """
     if isinstance(scoring, str):
         return get_scorer(scoring)

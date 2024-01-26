@@ -22,6 +22,7 @@ from sklearn.datasets import (
     fetch_kddcup99,
     fetch_olivetti_faces,
     fetch_rcv1,
+    fetch_species_distributions,
 )
 from sklearn.tests import random_seed
 from sklearn.utils import _IS_32BIT
@@ -70,6 +71,7 @@ dataset_fetchers = {
     "fetch_kddcup99_fxt": fetch_kddcup99,
     "fetch_olivetti_faces_fxt": fetch_olivetti_faces,
     "fetch_rcv1_fxt": fetch_rcv1,
+    "fetch_species_distributions_fxt": fetch_species_distributions,
 }
 
 if scipy_datasets_require_network:
@@ -112,6 +114,7 @@ fetch_covtype_fxt = _fetch_fixture(fetch_covtype)
 fetch_kddcup99_fxt = _fetch_fixture(fetch_kddcup99)
 fetch_olivetti_faces_fxt = _fetch_fixture(fetch_olivetti_faces)
 fetch_rcv1_fxt = _fetch_fixture(fetch_rcv1)
+fetch_species_distributions_fxt = _fetch_fixture(fetch_species_distributions)
 raccoon_face_fxt = pytest.fixture(raccoon_face_or_skip)
 
 

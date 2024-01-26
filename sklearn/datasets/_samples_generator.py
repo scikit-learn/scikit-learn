@@ -1719,6 +1719,15 @@ def make_sparse_spd_matrix(
     The sparsity is actually imposed on the cholesky factor of the matrix.
     Thus alpha does not translate directly into the filling fraction of
     the matrix itself.
+
+    Examples
+    --------
+    >>> from sklearn.datasets import make_sparse_spd_matrix
+    >>> make_sparse_spd_matrix(n_dim=4, norm_diag=False, random_state=42)
+    array([[1., 0., 0., 0.],
+           [0., 1., 0., 0.],
+           [0., 0., 1., 0.],
+           [0., 0., 0., 1.]])
     """
     random_state = check_random_state(random_state)
 
