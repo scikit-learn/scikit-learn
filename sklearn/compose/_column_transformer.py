@@ -1089,8 +1089,6 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
                             " outputs of the transformers:"
                             f" {duplicated_feature_names}.\n"
                         )
-                        # find which transformers are responsible for the duplicated
-                        # columns
                         for transformer_name, X in zip(transformer_names, Xs):
                             if X.shape[1] == 0:
                                 continue
@@ -1112,13 +1110,13 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
                             "names."
                         )
 
-                idx = 0
+                names_idx = 0
                 for X in Xs:
                     if X.shape[1] == 0:
                         continue
-                    names_out = feature_names_outs[idx : idx + X.shape[1]]
+                    names_out = feature_names_outs[names_idx : names_idx + X.shape[1]]
                     adapter.rename_columns(X, names_out)
-                    idx += X.shape[1]
+                    names_idx += X.shape[1]
 
                 output = adapter.hstack(Xs)
                 output_samples = output.shape[0]
