@@ -64,7 +64,7 @@ transitive dependencies can be pinned with the help of `pip`, `conda`,
     advisable to pin all transitive scikit-learn dependencies. This prevents
     any incompatibility issues that may arise while trying to load the pickled
     model. You can read more about persisting models with `pickle` over
-    :ref:`here <persisting_models_with_pickle>`.
+    :ref:`here <_persisting_models_with_pickle>`.
 
 Loading the model artifact
 ..........................
@@ -89,6 +89,8 @@ different prediction requests. This can involve deploying the model as a
 web service using containerization, or other model deployment strategies,
 according to the specifications. In the next sections, we will explore
 different approaches to persist a trained scikit-learn model.
+
+.. _persisting_models_with_pickle:
 
 Persisting models with pickle
 -----------------------------
