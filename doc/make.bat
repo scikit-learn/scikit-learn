@@ -31,8 +31,7 @@ if "%1" == "help" (
 if "%1" == "clean" (
 	for /d %%i in (%BUILDDIR%\*) do rmdir /q /s %%i
 	del /q /s %BUILDDIR%\*
-
-	if exists api\ (
+	if exist api\ (
 		rmdir /q /s api
 	)
 	goto end

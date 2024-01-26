@@ -3,7 +3,7 @@
     is added before the :mod: directive. Otherwise, the rendering will show as a
     paragraph instead of a header.
 
-{{objname}}
+:mod:`{{module}}`.{{objname}}
 {{ underline }}===============
 
 .. currentmodule:: {{ module }}
