@@ -493,6 +493,7 @@ def _incr_mean_variance_axis0(
 
 def inplace_csr_row_normalize_l1(X):
     """Inplace row normalize using the l1 norm
+
     Examples
     --------
     >>> from scipy.sparse import csr_matrix
@@ -542,6 +543,9 @@ def _inplace_csr_row_normalize_l1(
 
 def inplace_csr_row_normalize_l2(X):
     """Inplace row normalize using the l2 norm
+
+    Examples
+    --------
     >>> from scipy.sparse import csr_matrix
     >>> from sklearn.utils.sparsefuncs_fast import inplace_csr_row_normalize_l2
     >>> data = [1.0, 2.0, 3.0, 4.0]
