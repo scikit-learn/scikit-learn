@@ -1723,11 +1723,11 @@ def make_sparse_spd_matrix(
     Examples
     --------
     >>> from sklearn.datasets import make_sparse_spd_matrix
-    >>> make_sparse_spd_matrix(n_dim=4,random_state=42,norm_diag=False)
+    >>> make_sparse_spd_matrix(n_dim=4, norm_diag=False, random_state=42)
     array([[1., 0., 0., 0.],
-       [0., 1., 0., 0.],
-       [0., 0., 1., 0.],
-       [0., 0., 0., 1.]])
+           [0., 1., 0., 0.],
+           [0., 0., 1., 0.],
+           [0., 0., 0., 1.]])
     """
     random_state = check_random_state(random_state)
 

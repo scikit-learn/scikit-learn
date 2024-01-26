@@ -327,18 +327,18 @@ def graphical_lasso(
 
     Examples
     --------
-    >>> from sklearn.covariance import graphical_lasso
-    >>> from sklearn.datasets import make_sparse_spd_matrix
     >>> import numpy as np
+    >>> from sklearn.datasets import make_sparse_spd_matrix
+    >>> from sklearn.covariance import empirical_covariance, graphical_lasso
     >>> true_cov = make_sparse_spd_matrix(n_dim=3,random_state=42)
-    >>> np.random.seed(42)
-    >>> X = np.random.multivariate_normal(mean=np.zeros(3), cov=true_cov, size=3)
-    >>> emp_cov=np.cov(X.T)
-    >>> emp_cov, _ = graphical_lasso(emp_cov, alpha=.05)
-    >>> print(emp_cov)
-    [[ 0.37138063  0.12630962 -0.30459686]
-    [ 0.12630962  0.30544403 -0.14382785]
-    [-0.30459686 -0.14382785  0.34684215]]
+    >>> rng = np.random.RandomState(42)
+    >>> X = rng.multivariate_normal(mean=np.zeros(3), cov=true_cov, size=3)
+    >>> emp_cov = empirical_covariance(X, assume_centered=True)
+    >>> emp_cov, _ = graphical_lasso(emp_cov, alpha=0.05)
+    >>> emp_cov
+    array([[ 1.68...,  0.21..., -0.20...],
+           [ 0.21...,  0.22..., -0.08...],
+           [-0.20..., -0.08...,  0.23...]])
     """
 
     if cov_init is not None:
