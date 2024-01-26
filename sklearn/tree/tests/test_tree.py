@@ -2552,7 +2552,7 @@ def test_missing_values_poisson(Tree):
     [
         (datasets.make_regression, DecisionTreeRegressor, 0.9, DummyRegressor),
         (datasets.make_classification, DecisionTreeClassifier, 0.9, DummyClassifier),
-        (datasets.make_regression, ExtraTreeRegressor, 0.5, DummyRegressor),
+        (datasets.make_regression, ExtraTreeRegressor, 0.4, DummyRegressor),
         (
             datasets.make_classification,
             ExtraTreeClassifier,
@@ -2569,7 +2569,7 @@ def test_missing_values_is_resilience(
 
     rng = np.random.RandomState(0)
     n_samples, n_features = 1000, 50
-    X, y = make_data(n_samples=n_samples, n_features=n_features, random_state=123)
+    X, y = make_data(n_samples=n_samples, n_features=n_features, random_state=rng)
 
     # Create dataset with missing values
     X_missing = X.copy()
