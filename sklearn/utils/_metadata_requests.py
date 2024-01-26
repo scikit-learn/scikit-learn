@@ -808,7 +808,7 @@ class MetadataRouter:
     >>> obj=router.add(
     ...    estimator=RandomForestClassifier().estimator, method_mapping="one-to-one")
     >>> obj._get_param_names(method='fit',return_alias=False,ignore_self_request=True)
-    {'check_input', 'sample_weight'}
+    {'sample_weight', 'check_input'}
     """
 
     # this is here for us to use this attribute's value instead of doing
