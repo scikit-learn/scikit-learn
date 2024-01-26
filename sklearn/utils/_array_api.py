@@ -575,4 +575,6 @@ def _estimator_with_converted_arrays(estimator, converter):
 
 def _atol_for_type(dtype):
     """Return the absolute tolerance for a given numpy dtype."""
+    # From numpy 1.25 passing None to finfo is deprecated.
+    dtype = "float64" if dtype is None else dtype
     return numpy.finfo(dtype).eps * 100
