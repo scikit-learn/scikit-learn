@@ -314,12 +314,15 @@ def smacof(
     >>> import numpy as np
     >>> from sklearn.manifold import smacof
     >>> from sklearn.metrics import euclidean_distances
-    >>> distance_matrix = euclidean_distances(np.array([[0, 1, 2],[1, 0, 3],[2, 3, 0]]))
-    >>> mds_result, stress = smacof(distance_matrix, n_components=2,random_state=42)
-    >>> print(mds_result)
-    [[ 0.05307013 -1.0798782 ] [ 1.74055301 -0.75125619] [-1.79362315  1.83113438]]
-    >>> print("Stress: {:.6f}".format(stress))
-    Stress: 0.001284
+    >>> X = np.array([[0, 1, 2], [1, 0, 3],[2, 3, 0]])
+    >>> dissimilarities = euclidean_distances(X)
+    >>> mds_result, stress = smacof(dissimilarities, n_components=2, random_state=42)
+    >>> mds_result
+    array([[ 0.05... -1.07... ],
+           [ 1.74..., -0.75...],
+           [-1.79...,  1.83...]])
+    >>> stress
+    0.0012...
     """
 
     dissimilarities = check_array(dissimilarities)
