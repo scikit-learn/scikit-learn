@@ -190,6 +190,17 @@ def lars_path(
 
     .. [3] `Wikipedia entry on the Lasso
            <https://en.wikipedia.org/wiki/Lasso_(statistics)>`_
+
+    Examples
+    --------
+    >>> from sklearn.linear_model import lars_path
+    >>> from sklearn import datasets
+    >>> X,y = datasets.load_diabetes(return_X_y=True)
+    >>> alphas, active, coefs = lars_path(X, y)
+    >>> alphas
+    array([2.14804358, 2.01202214, 1.02465091, 0.71509814, 0.29441072,
+       0.20086946, 0.15602894, 0.04520626, 0.01239262, 0.01151185,
+       0.        ])
     """
     if X is None and Gram is not None:
         raise ValueError(
@@ -352,6 +363,16 @@ def lars_path_gram(
 
     .. [3] `Wikipedia entry on the Lasso
            <https://en.wikipedia.org/wiki/Lasso_(statistics)>`_
+
+    Examples
+    --------
+    >>> from sklearn.linear_model import lars_path_gram
+    >>> from sklearn import datasets
+    >>> import numpy as np
+    >>> X,y = datasets.load_diabetes(return_X_y=True)
+    >>> Xy,G = np.dot(X.T, y),np.dot(X.T, X)
+    >>> alphas, active, coefs = lars_path_gram(Xy=Xy,Gram=G,n_samples=X.shape[0])
+    [2, 8, 3, 6, 1, 9, 4, 7, 5, 0]
     """
     return _lars_path_solver(
         X=None,

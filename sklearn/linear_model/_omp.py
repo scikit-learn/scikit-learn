@@ -388,6 +388,17 @@ def orthogonal_mp(
     M., Efficient Implementation of the K-SVD Algorithm using Batch Orthogonal
     Matching Pursuit Technical Report - CS Technion, April 2008.
     https://www.cs.technion.ac.il/~ronrubin/Publications/KSVD-OMP-v2.pdf
+
+    Examples
+    --------
+    >>> from sklearn.linear_model import orthogonal_mp
+    >>> from sklearn.datasets import make_sparse_coded_signal
+    >>> n=100
+    >>> X, _, y = make_sparse_coded_signal(
+        n_samples=n, n_components=n, n_features=200, n_nonzero_coefs=10)
+    >>> coef = orthogonal_mp(X,y)
+    >>> coef.shape
+    (200, 100)
     """
     X = check_array(X, order="F", copy=copy_X)
     copy_X = False
@@ -555,6 +566,19 @@ def orthogonal_mp_gram(
     M., Efficient Implementation of the K-SVD Algorithm using Batch Orthogonal
     Matching Pursuit Technical Report - CS Technion, April 2008.
     https://www.cs.technion.ac.il/~ronrubin/Publications/KSVD-OMP-v2.pdf
+
+    Examples
+    --------
+    >>> from sklearn.linear_model import orthogonal_mp_gram
+    >>> from sklearn.datasets import make_sparse_coded_signal
+    >>> import numpy as np
+    >>> n=100
+    >>> X, _, y = make_sparse_coded_signal(
+        n_samples=n, n_components=n, n_features=200, n_nonzero_coefs=10)
+    >>> G = np.dot(X.T, X)
+    >>> coef = orthogonal_mp_gram(G, np.dot(X.T, y))
+    >>> coef.shape
+    (200, 100)
     """
     Gram = check_array(Gram, order="F", copy=copy_Gram)
     Xy = np.asarray(Xy)

@@ -528,6 +528,16 @@ def enet_path(
     For an example, see
     :ref:`examples/linear_model/plot_lasso_coordinate_descent_path.py
     <sphx_glr_auto_examples_linear_model_plot_lasso_coordinate_descent_path.py>`.
+
+    Examples
+    --------
+    >>> from sklearn.linear_model import enet_path
+    >>> from sklearn.datasets import make_regression
+    >>> X, y = make_regression(n_samples=100, n_features=2, noise=0.1,random_state=42)
+    >>> alphas, coefs, _ = enet_path(X, y, n_alphas=5,l1_ratio=0.7)
+    >>> alphas
+    array([107.58708988,  19.13199067,   3.40220251,   0.60500667,
+         0.10758709])
     """
     X_offset_param = params.pop("X_offset", None)
     X_scale_param = params.pop("X_scale", None)
