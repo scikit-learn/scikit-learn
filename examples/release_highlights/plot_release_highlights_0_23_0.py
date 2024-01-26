@@ -9,7 +9,7 @@ Release Highlights for scikit-learn 0.23
 We are pleased to announce the release of scikit-learn 0.23! Many bug fixes
 and improvements were added, as well as some new key features. We detail
 below a few of the major features of this release. **For an exhaustive list of
-all the changes**, please refer to the :ref:`release notes <changes_0_23>`.
+all the changes**, please refer to the :ref:`release notes <release_notes_0_23>`.
 
 To install the latest version (with pip)::
 
