@@ -53,7 +53,7 @@ def _affinity_propagation(
             "All samples have mutually equal similarities. "
             "Returning arbitrary cluster center(s)."
         )
-        if preference.flat[0] >= S.flat[n_samples - 1]:
+        if preference.flat[0] > S.flat[n_samples - 1]:
             return (
                 (np.arange(n_samples), np.arange(n_samples), 0)
                 if return_n_iter
@@ -278,6 +278,20 @@ def affinity_propagation(
     ----------
     Brendan J. Frey and Delbert Dueck, "Clustering by Passing Messages
     Between Data Points", Science Feb. 2007
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.cluster import affinity_propagation
+    >>> from sklearn.metrics.pairwise import euclidean_distances
+    >>> X = np.array([[1, 2], [1, 4], [1, 0],
+    ...               [4, 2], [4, 4], [4, 0]])
+    >>> S = -euclidean_distances(X, squared=True)
+    >>> cluster_centers_indices, labels = affinity_propagation(S, random_state=0)
+    >>> cluster_centers_indices
+    array([0, 3])
+    >>> labels
+    array([0, 0, 0, 1, 1, 1])
     """
     estimator = AffinityPropagation(
         damping=damping,
