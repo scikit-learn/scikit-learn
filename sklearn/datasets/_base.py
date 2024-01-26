@@ -1099,20 +1099,12 @@ def load_diabetes(*, return_X_y=False, as_frame=False, scaled=True):
 
     Examples
     --------
-    To load the data and extract the information about the samples, features names
-    and the shape of the traget variable::
-
-        >>> from sklearn.datasets import load_diabetes
-        >>> diabetes = load_diabetes()
-        >>> data, target = diabetes.data, diabetes.target
-        >>> print(f"Number of samples: {data.shape[0]}")
-        Number of samples: 442
-        >>> print(f"Number of features: {data.shape[1]}")
-        Number of features: 10
-        >>> print(f"Feature names: {diabetes.feature_names}")
-        Feature names: ['age', 'sex', 'bmi', 'bp', 's1', 's2', 's3', 's4', 's5', 's6']
-        >>> print(f"Target shape: {target.shape}")
-        Target shape: (442,)
+    >>> from sklearn.datasets import load_diabetes
+    >>> diabetes = load_diabetes()
+    >>> diabetes.target[:3]
+    array([151.,  75., 141.])
+    >>> diabetes.data.shape
+(442, 10)
     """
     data_filename = "diabetes_data_raw.csv.gz"
     target_filename = "diabetes_target.csv.gz"
