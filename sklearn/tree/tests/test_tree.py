@@ -2567,9 +2567,9 @@ def test_missing_values_is_resilience(
 ):
     """Check that trees can deal with missing values and have decent performance."""
 
-    rng = np.random.RandomState(0)
+    # rng = np.random.RandomState(0)
     n_samples, n_features = 1000, 50
-    X, y = make_data(n_samples=n_samples, n_features=n_features, random_state=rng)
+    X, y = make_data(n_samples=n_samples, n_features=n_features, random_state=0)
 
     # Create dataset with missing values
     X_missing = X.copy()
