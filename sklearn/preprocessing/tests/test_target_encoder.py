@@ -705,7 +705,6 @@ def test_target_encoding_for_linear_regression(smooth, global_random_seed):
 
 def test_27879():
     pd = pytest.importorskip("pandas")
-    pd.options.mode.copy_on_write = True
-
-    df = pd.DataFrame({"x": ["a", "b", "c", "c"], "y": [4.0, 5.0, 6.0, 7.0]})
-    TargetEncoder(target_type="continuous").fit(df[["x"]], df["y"])
+    with pd.option_context('mode.copy_on_write', True):
+        df = pd.DataFrame({"x": ["a", "b", "b"], "y": [4.0, 5.0, 6.0]})
+        TargetEncoder(target_type="continuous").fit(df[["x"]], df["y"])
