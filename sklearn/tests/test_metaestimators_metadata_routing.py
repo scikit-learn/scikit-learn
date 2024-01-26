@@ -464,7 +464,7 @@ def test_error_on_missing_requests_for_sub_estimator(metaestimator):
             method_kwargs = {key: val}
             msg = (
                 f"[{key}] are passed but are not explicitly set as requested or not"
-                f" for {estimator.__class__.__name__}.{method_name}"
+                f" requested for {estimator.__class__.__name__}.{method_name}"
             )
 
             instance = cls(**kwargs)
