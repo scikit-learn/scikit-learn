@@ -1984,7 +1984,7 @@ class _RidgeGCV(LinearModel):
         sample_weight : float or ndarray of shape (n_samples,), default=None
             Individual weights for each sample. If given a float, every sample
             will have the same weight. Note that the scale of `sample_weight`
-            has an on the loss; i.e. multiplying all weights by `k`
+            has an impact on the loss; i.e. multiplying all weights by `k`
             is equivalent to setting `alpha / k`.
 
         Returns
