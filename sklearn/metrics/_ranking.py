@@ -1372,19 +1372,19 @@ def label_ranking_loss(y_true, y_score, *, sample_weight=None):
         y_score weighted by the size of the label set and the number of labels not
         in the label set.
 
-    Examples
-    --------
-    >>> from sklearn.metrics import label_ranking_loss
-    >>> y_true = [[1, 0, 1], [0, 1, 0]]
-    >>> y_score = [[0.8, 0.2, 0.1], [0.3, 0.7, 0.4]]
-    >>> label_ranking_loss(y_true, y_score)
-    0.25
-
     References
     ----------
     .. [1] Tsoumakas, G., Katakis, I., & Vlahavas, I. (2010).
            Mining multi-label data. In Data mining and knowledge discovery
            handbook (pp. 667-685). Springer US.
+
+    Examples
+    --------
+    >>> from sklearn.metrics import label_ranking_loss
+    >>> y_true = [[1, 0, 0], [0, 0, 1]]
+    >>> y_score = [[0.75, 0.5, 1], [1, 0.2, 0.1]]
+    >>> label_ranking_loss(y_true, y_score)
+    0.75...
     """
     y_true = check_array(y_true, ensure_2d=False, accept_sparse="csr")
     y_score = check_array(y_score, ensure_2d=False)
