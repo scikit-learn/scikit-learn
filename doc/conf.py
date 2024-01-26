@@ -303,6 +303,12 @@ redirects = {
     "auto_examples/ensemble/plot_adaboost_hastie_10_2": (
         "auto_examples/ensemble/plot_adaboost_multiclass"
     ),
+    "auto_examples/decomposition/plot_pca_3d": (
+        "auto_examples/decomposition/plot_pca_iris"
+    ),
+    "auto_examples/exercises/plot_cv_digits.py": (
+        "auto_examples/model_selection/plot_nested_cross_validation_iris.py"
+    ),
 }
 html_context["redirects"] = redirects
 for old_link in redirects:
@@ -706,18 +712,19 @@ warnings.filterwarnings(
         " non-GUI backend, so cannot show the figure."
     ),
 )
-# Raise warning as error in example to catch warnings when building the documentation
-# Since we are using lock files to build the documentation, we should not have any
-# warnings. Before updating the lock files, we need to fix them.
-for warning_type in (FutureWarning, DeprecationWarning, VisibleDeprecationWarning):
-    warnings.filterwarnings("error", category=warning_type)
-# TODO: remove when pyamg > 5.0.1
-# Avoid a deprecation warning due pkg_resources deprecation in pyamg.
-warnings.filterwarnings(
-    "ignore",
-    message="pkg_resources is deprecated as an API",
-    category=DeprecationWarning,
-)
+if os.environ.get("SKLEARN_DOC_BUILD_WARNINGS_AS_ERRORS", "true").lower() == "true":
+    # Raise warning as error in example to catch warnings when building the
+    # documentation Since we are using lock files to build the documentation, we should
+    # not have any warnings. Before updating the lock files, we need to fix them.
+    for warning_type in (FutureWarning, DeprecationWarning, VisibleDeprecationWarning):
+        warnings.filterwarnings("error", category=warning_type)
+    # TODO: remove when pyamg > 5.0.1
+    # Avoid a deprecation warning due pkg_resources deprecation in pyamg.
+    warnings.filterwarnings(
+        "ignore",
+        message="pkg_resources is deprecated as an API",
+        category=DeprecationWarning,
+    )
 
 # maps functions with a class name that is indistinguishable when case is
 # ignore to another filename
