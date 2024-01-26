@@ -708,13 +708,13 @@ class IterativeImputer(_BaseImputer):
 
         **fit_params : dict
             Parameters routed to the `fit` method of the sub-estimator via the
-            metadata routing API. Only available if
-            `sklearn.set_config(enable_metadata_routing=True)` is set.
-
-            See :ref:`Metadata Routing User Guide <metadata_routing>` for more
-            details.
+            metadata routing API.
 
             .. versionadded:: 1.5
+            Only available if
+            `sklearn.set_config(enable_metadata_routing=True)` is set. See
+            :ref:`Metadata Routing User Guide <metadata_routing>` for more
+            details.
 
         Returns
         -------
@@ -902,13 +902,13 @@ class IterativeImputer(_BaseImputer):
 
         **fit_params : dict
             Parameters routed to the `fit` method of the sub-estimator via the
-            metadata routing API. Only available if
-            `sklearn.set_config(enable_metadata_routing=True)` is set.
-
-            See :ref:`Metadata Routing User Guide <metadata_routing>` for more
-            details.
+            metadata routing API.
 
             .. versionadded:: 1.5
+            Only available if
+            `sklearn.set_config(enable_metadata_routing=True)` is set. See
+            :ref:`Metadata Routing User Guide <metadata_routing>` for more
+            details.
 
         Returns
         -------
