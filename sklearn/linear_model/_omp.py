@@ -395,7 +395,7 @@ def orthogonal_mp(
     >>> from sklearn.datasets import make_sparse_coded_signal
     >>> n=100
     >>> X, _, y = make_sparse_coded_signal(
-        n_samples=n, n_components=n, n_features=200, n_nonzero_coefs=10)
+    ...   n_samples=n, n_components=n, n_features=200, n_nonzero_coefs=10)
     >>> coef = orthogonal_mp(X,y)
     >>> coef.shape
     (200, 100)
@@ -574,7 +574,7 @@ def orthogonal_mp_gram(
     >>> import numpy as np
     >>> n=100
     >>> X, _, y = make_sparse_coded_signal(
-        n_samples=n, n_components=n, n_features=200, n_nonzero_coefs=10)
+    ...    n_samples=n, n_components=n, n_features=200, n_nonzero_coefs=10)
     >>> G = np.dot(X.T, X)
     >>> coef = orthogonal_mp_gram(G, np.dot(X.T, y))
     >>> coef.shape

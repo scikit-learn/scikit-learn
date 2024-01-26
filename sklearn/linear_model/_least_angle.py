@@ -372,6 +372,7 @@ def lars_path_gram(
     >>> X,y = datasets.load_diabetes(return_X_y=True)
     >>> Xy,G = np.dot(X.T, y),np.dot(X.T, X)
     >>> alphas, active, coefs = lars_path_gram(Xy=Xy,Gram=G,n_samples=X.shape[0])
+    >>> active
     [2, 8, 3, 6, 1, 9, 4, 7, 5, 0]
     """
     return _lars_path_solver(
