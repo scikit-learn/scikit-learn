@@ -499,6 +499,17 @@ class MetadataRequest:
     ----------
     owner : str
         The name of the object to which these requests belong.
+
+    Examples
+    --------
+    >>> from sklearn.utils.metadata_routing import MetadataRequest
+    >>> requests=MetadataRequest(owner="test")
+    >>> requests
+    {}
+    >>> requests.fit.add_request(param="foo", alias=None)
+    {'foo': None}
+    >>> requests.fit.add_request(param="bar", alias="value")
+    {'foo': None, 'bar': 'value'}
     """
 
     # this is here for us to use this attribute's value instead of doing
@@ -678,6 +689,13 @@ class MethodMapping:
     ``MethodPair(callee, caller)`` tuples.
 
     .. versionadded:: 1.3
+
+    Examples
+    --------
+    >>> from sklearn.utils.metadata_routing import MethodMapping
+    >>> method_mapping = MethodMapping()
+    >>> method_mapping.add(callee="fit",caller="predict")
+    [{'callee': 'fit', 'caller': 'predict'}]
     """
 
     def __init__(self):
@@ -781,6 +799,16 @@ class MetadataRouter:
     ----------
     owner : str
         The name of the object to which these requests belong.
+
+    Examples
+    --------
+    >>> from sklearn.utils.metadata_routing import MetadataRouter
+    >>> from sklearn.ensemble import RandomForestClassifier
+    >>> router=MetadataRouter(owner='RandomForestClassifier')
+    >>> obj=router.add(
+    ...    estimator=RandomForestClassifier().estimator, method_mapping="one-to-one")
+    >>> obj._get_param_names(method='fit',return_alias=False,ignore_self_request=True)
+    {'check_input', 'sample_weight'}
     """
 
     # this is here for us to use this attribute's value instead of doing
@@ -1125,6 +1153,13 @@ def get_routing_for_object(obj=None):
     obj : MetadataRequest or MetadataRouting
         A ``MetadataRequest`` or a ``MetadataRouting`` taken or created from
         the given object.
+
+    Examples
+    --------
+    >>> from sklearn.utils.metadata_routing import get_routing_for_object
+    >>> from sklearn.ensemble import RandomForestClassifier
+    >>> get_routing_for_object(RandomForestClassifier())
+    {'fit': {'sample_weight': None}, 'score': {'sample_weight': None}}
     """
     # doing this instead of a try/except since an AttributeError could be raised
     # for other reasons.
@@ -1523,6 +1558,26 @@ def process_routing(_obj, _method, /, **kwargs):
         {prop: value}}}`` which can be used to pass the required metadata to
         corresponding methods or corresponding child objects. The object names
         are those defined in `obj.get_metadata_routing()`.
+
+    Examples
+    --------
+    >>> from sklearn.base import BaseEstimator, RegressorMixin, clone,MetaEstimatorMixin
+    >>> from sklearn.linear_model import LinearRegression
+    >>> from sklearn.utils.metadata_routing import process_routing,MetadataRouter
+    >>> from sklearn.datasets import load_iris
+    >>> class MetaRegressor(MetaEstimatorMixin, RegressorMixin, BaseEstimator):
+    ...    def __init__(self, estimator):
+    ...        self.estimator = estimator
+    ...    def fit(self, X, y, **fit_params):
+    ...        params = process_routing(self, "fit", **fit_params)
+    ...        self.estimator_ = clone(self.estimator).fit(X, y, **params.estimator.fit)
+    ...    def get_metadata_routing(self):
+    ...         router = MetadataRouter(owner=self.__class__.__name__)
+    ...         return router.add(estimator=self.estimator,
+    ...                           method_mapping="one-to-one")
+    >>> reg = MetaRegressor(estimator=LinearRegression().set_fit_request())
+    >>> X,y=load_iris(return_X_y=True)
+    >>> reg.fit(X, y)
     """
     if not _routing_enabled() and not kwargs:
         # If routing is not enabled and kwargs are empty, then we don't have to
