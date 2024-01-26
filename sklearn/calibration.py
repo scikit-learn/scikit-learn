@@ -829,8 +829,8 @@ def _sigmoid_calibration(
         loss = l.sum()
         # TODO: Remove casting to np.float64 when minimum support SciPy is 1.11.2
         # With SciPy >= 1.11.2, the LBFGS implementation will cast to float64
-        # https://github.com/scipy/scipy/pull/18825 Here we cast to float64 to support
-        # SciPy < 1.11.2
+        # https://github.com/scipy/scipy/pull/18825. 
+        # Here we cast to float64 to support SciPy < 1.11.2
         grad = np.asarray([-g @ F, -g.sum()], dtype=np.float64)
         return loss, grad
 
