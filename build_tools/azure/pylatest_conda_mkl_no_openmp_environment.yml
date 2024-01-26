@@ -21,3 +21,6 @@ dependencies:
   - pytest-cov
   - coverage
   - ccache
+  - pip
+  - pip:
+    - cython

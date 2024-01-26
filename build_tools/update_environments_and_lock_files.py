@@ -141,6 +141,7 @@ build_metadata_list = [
             # https://github.com/scikit-learn/scikit-learn/pull/26845#issuecomment-1639917135
             "numpy": "<1.25",
         },
+        "pip_dependencies": ["cython"],
     },
     {
         "name": "pymin_conda_defaults_openblas",
@@ -159,6 +160,7 @@ build_metadata_list = [
             "threadpoolctl": "2.2.0",
             "cython": "min",
         },
+        "pip_dependencies": ["cython"],
     },
     {
         "name": "pymin_conda_forge_openblas_ubuntu_2204",
