@@ -473,7 +473,10 @@ def test_set_output_func():
 
     for transform in ("pandas", "polars"):
         ft_np.set_output(transform=transform)
-        msg = f"When `set_output` is configured to be '{transform}'"
+        msg = (
+            f"When `set_output` is configured to be '{transform}'.*{transform} "
+            "DataFrame.*"
+        )
         with pytest.warns(UserWarning, match=msg):
             ft_np.fit_transform(X)
 
