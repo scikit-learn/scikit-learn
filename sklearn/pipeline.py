@@ -1297,8 +1297,6 @@ def _fit_transform_one(
     """
     params = params or {}
     with _print_elapsed_time(message_clsname, message):
-        # question for review: don't all transformers have fit_transform via
-        # TransformerMixin?
         if hasattr(transformer, "fit_transform"):
             res = transformer.fit_transform(X, y, **params.get("fit_transform", {}))
         else:
@@ -1660,8 +1658,7 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
         else:
             # TODO(SLEP6): remove when metadata routing cannot be disabled.
             routed_params = Bunch()
-            for transformer_tuple in self.transformer_list:
-                name = transformer_tuple[0]
+            for name, _ in self.transformer_list:
                 routed_params[name] = Bunch(fit={})
                 routed_params[name] = Bunch(fit_transform={})
                 routed_params[name].fit = fit_params
