@@ -1104,7 +1104,7 @@ def load_diabetes(*, return_X_y=False, as_frame=False, scaled=True):
     >>> diabetes.target[:3]
     array([151.,  75., 141.])
     >>> diabetes.data.shape
-(442, 10)
+    (442, 10)
     """
     data_filename = "diabetes_data_raw.csv.gz"
     target_filename = "diabetes_target.csv.gz"
