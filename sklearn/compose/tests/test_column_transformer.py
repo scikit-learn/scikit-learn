@@ -2403,7 +2403,7 @@ def test_column_transformer_error_with_duplicated_columns(dataframe_lib):
         verbose_feature_names_out=False,
     ).set_output(transform=dataframe_lib)
     err_msg = re.escape(
-        "Duplicated feature names found before to concatenate the outputs of the "
+        "Duplicated feature names found before concatenating the outputs of the "
         "transformers: ['x1', 'x2', 'x3'].\n"
         "Transformer A has conflicting columns names: ['x1', 'x2', 'x3'].\n"
         "Transformer B has conflicting columns names: ['x1', 'x2'].\n"

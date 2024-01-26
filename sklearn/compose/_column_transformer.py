@@ -1079,13 +1079,13 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
                     feature_names_outs = list(chain.from_iterable(feature_names_outs))
                     feature_names_count = Counter(feature_names_outs)
                     if any(count > 1 for count in feature_names_count.values()):
-                        duplicated_feature_names = [
+                        duplicated_feature_names = sorted(
                             name
                             for name, count in feature_names_count.items()
                             if count > 1
-                        ]
+                        )
                         err_msg = (
-                            "Duplicated feature names found before to concatenate the"
+                            "Duplicated feature names found before concatenating the"
                             " outputs of the transformers:"
                             f" {duplicated_feature_names}.\n"
                         )
@@ -1103,7 +1103,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
                         raise ValueError(
                             err_msg
                             + "Either make sure that the transformers named above "
-                            "do not generate any duplicated columns or set "
+                            "do not generate columns with conflicting names or set "
                             "verbose_feature_names_out=True to automatically "
                             "prefix to the output feature names with the name "
                             "of the transformer to prevent any conflicting "
