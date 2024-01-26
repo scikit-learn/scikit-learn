@@ -160,9 +160,7 @@ def dbscan(
     Examples
     --------
     >>> from sklearn.cluster import dbscan
-    >>> import numpy as np
-    >>> X = np.array([[1, 2], [2, 2], [2, 3],
-    ...               [8, 7], [8, 8], [25, 80]])
+    >>> X = [[1, 2], [2, 2], [2, 3], [8, 7], [8, 8], [25, 80]]
     >>> core_samples, labels = dbscan(X, eps=3, min_samples=2)
     >>> core_samples
     array([0, 1, 2, 3, 4])
