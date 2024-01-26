@@ -20,5 +20,5 @@ Table Of Contents
     user_guide
     glossary
     auto_examples/index
-    modules/classes
+    api/index
     developers/index

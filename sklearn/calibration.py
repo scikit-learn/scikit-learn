@@ -1,4 +1,7 @@
-"""Calibration of predicted probabilities."""
+"""
+The :mod:`sklearn.calibration` module includes methods for calibrating predicted
+probabilities.
+"""
 
 # Author: Alexandre Gramfort <alexandre.gramfort@telecom-paristech.fr>
 #         Balazs Kegl <balazs.kegl@gmail.com>

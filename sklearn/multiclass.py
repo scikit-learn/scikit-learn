@@ -1,11 +1,9 @@
 """
-Multiclass classification strategies
-====================================
+The :mod:`sklearn.multiclass` module implements multiclass learning algorithms:
 
-This module implements multiclass learning algorithms:
-    - one-vs-the-rest / one-vs-all
-    - one-vs-one
-    - error correcting output codes
+- one-vs-the-rest / one-vs-all
+- one-vs-one
+- error correcting output codes
 
 The estimators provided in this module are meta-estimators: they require a base
 estimator to be provided in their constructor. For example, it is possible to

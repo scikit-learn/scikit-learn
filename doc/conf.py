@@ -284,6 +284,7 @@ html_context["release_highlights_version"] = highlight_version
 # redirects dictionary maps from old links to new links
 redirects = {
     "documentation": "index",
+    "modules/classes": "api/index",
     "auto_examples/feature_selection/plot_permutation_test_for_classification": (
         "auto_examples/model_selection/plot_permutation_tests_for_classification"
     ),
@@ -602,7 +603,7 @@ def filter_search_index(app, exception):
         f.write(searchindex_text)
 
 
-def generate_min_dependency_table(app):
+def generate_min_dependency_table():
     """Generate min dependency table for docs."""
     from sklearn._min_dependencies import dependent_packages
 
@@ -652,7 +653,7 @@ def generate_min_dependency_table(app):
         f.write(output)
 
 
-def generate_min_dependency_substitutions(app):
+def generate_min_dependency_substitutions():
     """Generate min dependency substitutions for docs."""
     from sklearn._min_dependencies import dependent_packages
 
@@ -667,6 +668,59 @@ def generate_min_dependency_substitutions(app):
 
     with (Path(".") / "min_dependency_substitutions.rst").open("w") as f:
         f.write(output)
+
+
+def generate_api_reference():
+    from sklearn._api_reference import (
+        API_REFERENCE,
+        DEPRECATED_API_REFERENCE,
+        get_api_reference_rst,
+        get_deprecated_api_reference_rst,
+    )
+
+    # Create the directory if it does not already exist
+    api_dir = Path(".") / "api"
+    api_dir.mkdir(exist_ok=True)
+
+    # Write API reference for each module
+    for module in API_REFERENCE:
+        with (api_dir / f"{module}.rst").open("w") as f:
+            f.write(get_api_reference_rst(module))
+
+    # Write the API reference index page
+    with (api_dir / "index.rst").open("w") as f:
+        f.write(".. _api_ref:\n\n")
+        f.write("=============\n")
+        f.write("API Reference\n")
+        f.write("=============\n\n")
+        f.write(
+            "This is the class and function reference of scikit-learn. Please refer to "
+            "the :ref:`full user guide <user_guide>` for further details, as the raw "
+            "specifications of classes and functions may not be enough to give full "
+            "guidelines on their uses. For reference on concepts repeated across the"
+            "API, see :ref:`glossary`.\n\n"
+        )
+
+        # Define the toctree
+        f.write(".. toctree::\n")
+        f.write("   :maxdepth: 2\n")
+        f.write("   :hidden:\n\n")
+        sorted_module_names = sorted(API_REFERENCE)
+        for module_name in sorted_module_names:
+            f.write(f"   {module_name}\n")
+        f.write("\n")
+
+        # Write the module table
+        f.write(".. list-table::\n\n")
+        for module_name in sorted_module_names:
+            f.write(f"   * - :mod:`{module_name}`\n")
+            f.write(f"     - {API_REFERENCE[module_name]['short_summary']}\n\n")
+
+        # Write deprecated API
+        f.write("Recently deprecated\n")
+        f.write("===================\n\n")
+        for depr_version in sorted(DEPRECATED_API_REFERENCE, key=parse, reverse=True):
+            f.write(get_deprecated_api_reference_rst(depr_version))
 
 
 # Config for sphinx_issues
@@ -684,8 +738,6 @@ def setup(app):
     # do not run the examples when using linkcheck by using a small priority
     # (default priority is 500 and sphinx-gallery using builder-inited event too)
     app.connect("builder-inited", disable_plot_gallery_for_linkcheck, priority=50)
-    app.connect("builder-inited", generate_min_dependency_table)
-    app.connect("builder-inited", generate_min_dependency_substitutions)
 
     # to hide/show the prompt in code examples:
     app.connect("build-finished", make_carousel_thumbs)
@@ -822,3 +874,9 @@ else:
     linkcheck_request_headers = {
         "https://github.com/": {"Authorization": f"token {github_token}"},
     }
+
+
+# Write the files in advance to avoid any potential conflict with other extensions
+generate_min_dependency_table()
+generate_min_dependency_substitutions()
+generate_api_reference()

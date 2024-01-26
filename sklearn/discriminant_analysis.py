@@ -1,5 +1,6 @@
 """
-Linear Discriminant Analysis and Quadratic Discriminant Analysis
+The :mod:`sklearn.discriminant_analysis` module includes linear discriminant analysis
+and quadratic discriminant analysis.
 """
 
 # Authors: Clemens Brunner
