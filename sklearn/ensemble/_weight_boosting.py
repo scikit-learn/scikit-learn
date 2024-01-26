@@ -351,9 +351,6 @@ class AdaBoostClassifier(
 
     Read more in the :ref:`User Guide <adaboost>`.
 
-    For more example of usage, see
-    :ref:`sphx_glr_auto_examples_ensemble_plot_adaboost_multiclass.py`.
-
     .. versionadded:: 0.14
 
     Parameters
@@ -481,6 +478,9 @@ class AdaBoostClassifier(
     array([1])
     >>> clf.score(X, y)
     0.96...
+
+    For an example of using AdaBoost to fit a sequence of DecisionTrees as weak learners,
+    please refer to :ref:`sphx_glr_auto_examples_ensemble_plot_adaboost_multiclass.py`.
     """
 
     # TODO(1.6): Modify _parameter_constraints for "algorithm" to only check
