@@ -63,7 +63,8 @@ transitive dependencies can be pinned with the help of `pip`, `conda`,
     To execute a pickled scikit-learn model in a reproducible environment it is
     advisable to pin all transitive scikit-learn dependencies. This prevents
     any incompatibility issues that may arise while trying to load the pickled
-    model.
+    model. You can read more about persisting models with `pickle` over
+    :ref:`here <persisting_models_with_pickle>`.
 
 Loading the model artifact
 ..........................
