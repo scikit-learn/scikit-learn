@@ -15,7 +15,7 @@ from ..base import (
     _fit_context,
     clone,
 )
-from ..exceptions import ConvergenceWarning
+from ..exceptions import ConvergenceWarning, UnsetMetadataPassedError
 from ..utils import check_consistent_length, check_random_state
 from ..utils._bunch import Bunch
 from ..utils._param_validation import (
@@ -428,7 +428,18 @@ class RANSACRegressor(
             )
 
         if _routing_enabled():
-            routed_params = process_routing(self, "fit", **fit_params)
+            try:
+                routed_params = process_routing(self, "fit", **fit_params)
+            except UnsetMetadataPassedError as e:
+                raise UnsetMetadataPassedError(
+                    message=(
+                        f"{e}, which is used internally by `RANSACRegressor.fit()`."
+                        f"Call `{estimator.__class__.__name__}.set_{{method}}_request("
+                        "{metadata}=True)` for each metadata."
+                    ),
+                    unrequested_params=e.unrequested_params,
+                    routed_params=e.routed_params,
+                )
         else:
             routed_params = Bunch()
             routed_params.estimator = Bunch(fit={}, predict={}, score={})
@@ -479,16 +490,16 @@ class RANSACRegressor(
                 continue
 
             # cut `fit_params` down to `subset_idxs`
-            fit_params_cut_to_min_samples = {}
+            fit_params_cut_to_subset_idxs = {}
             for key in routed_params.estimator.fit:
                 # only apply on sample_wise metadata
                 if len(routed_params.estimator.fit[key]) == len(X):
-                    fit_params_cut_to_min_samples[key] = routed_params.estimator.fit[
+                    fit_params_cut_to_subset_idxs[key] = routed_params.estimator.fit[
                         key
                     ][subset_idxs]
 
             # fit model for current random sample set
-            estimator.fit(X_subset, y_subset, **fit_params_cut_to_min_samples)
+            estimator.fit(X_subset, y_subset, **fit_params_cut_to_subset_idxs)
 
             # check if estimated model is valid
             if self.is_model_valid is not None and not self.is_model_valid(
