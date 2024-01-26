@@ -2354,6 +2354,29 @@ def test_column_transformer__getitem__():
         ct["does_not_exist"]
 
 
+@pytest.mark.parametrize("dataframe_lib", ["pandas", "polars"])
+def test_column_transformer_column_renaming(dataframe_lib):
+    """Check that we properly rename columns when using `ColumnTransformer` and
+    selected columns are redundant between transformers.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/28260
+    """
+    lib = pytest.importorskip(dataframe_lib)
+
+    df = lib.DataFrame({"x1": [1, 2, 3], "x2": [10, 20, 30], "x3": [100, 200, 300]})
+
+    transformer = ColumnTransformer(
+        transformers=[
+            ("A", "passthrough", ["x1", "x2", "x3"]),
+            ("B", FunctionTransformer(), ["x1", "x2", "x3"]),
+            ("C", StandardScaler(), ["x1", "x2", "x3"]),
+        ]
+    ).set_output(transform=dataframe_lib)
+    df_trans = transformer.fit_transform(df)
+    print(df_trans)
+
+
 # Metadata Routing Tests
 # ======================
 
