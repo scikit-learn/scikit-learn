@@ -80,7 +80,11 @@ common_dependencies = common_dependencies_without_coverage + [
 
 docstring_test_dependencies = ["sphinx", "numpydoc"]
 
-default_package_constraints = {}
+default_package_constraints = {
+    # Easiest way to ignore Pyarrow DeprecationWarning in the short-term. See
+    # https://github.com/pandas-dev/pandas/issues/54466 for more details.
+    "pandas": "<2.2"
+}
 
 
 def remove_from(alist, to_remove):
