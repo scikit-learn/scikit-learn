@@ -1575,9 +1575,11 @@ def process_routing(_obj, _method, /, **kwargs):
     ...         router = MetadataRouter(owner=self.__class__.__name__)
     ...         return router.add(estimator=self.estimator,
     ...                           method_mapping="one-to-one")
+    >>> sklearn.set_config(enable_metadata_routing=True)
     >>> reg = MetaRegressor(estimator=LinearRegression().set_fit_request())
     >>> X,y=load_iris(return_X_y=True)
     >>> reg.fit(X, y)
+    >>> sklearn.set_config(enable_metadata_routing=False)
     """
     if not _routing_enabled() and not kwargs:
         # If routing is not enabled and kwargs are empty, then we don't have to
