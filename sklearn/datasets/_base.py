@@ -87,7 +87,7 @@ def clear_data_home(data_home=None):
         is `~/scikit_learn_data`.
 
     Examples
-    ----------
+    --------
     >>> from sklearn.datasets import clear_data_home
     >>> clear_data_home()  # doctest: +SKIP
     """
@@ -238,6 +238,12 @@ def load_files(
             The full description of the dataset.
         filenames: ndarray
             The filenames holding the dataset.
+
+    Examples
+    --------
+    >>> from sklearn.datasets import load_files
+    >>> container_path = "./"
+    >>> load_files(container_path)  # doctest: +SKIP
     """
 
     target = []

@@ -119,6 +119,16 @@ def silhouette_score(
 
     .. [2] `Wikipedia entry on the Silhouette Coefficient
            <https://en.wikipedia.org/wiki/Silhouette_(clustering)>`_
+
+    Examples
+    --------
+    >>> from sklearn.datasets import make_blobs
+    >>> from sklearn.cluster import KMeans
+    >>> from sklearn.metrics import silhouette_score
+    >>> X, y = make_blobs(random_state=42)
+    >>> kmeans = KMeans(n_clusters=2, random_state=42)
+    >>> silhouette_score(X, kmeans.fit_predict(X))
+    0.49...
     """
     if sample_size is not None:
         X, labels = check_X_y(X, labels, accept_sparse=["csc", "csr"])
@@ -400,6 +410,14 @@ def davies_bouldin_score(X, labels):
        <https://ieeexplore.ieee.org/document/4766909>`__.
        IEEE Transactions on Pattern Analysis and Machine Intelligence.
        PAMI-1 (2): 224-227
+
+    Examples
+    --------
+    >>> from sklearn.metrics import davies_bouldin_score
+    >>> X = [[0, 1], [1, 1], [3, 4]]
+    >>> labels = [0, 0, 1]
+    >>> davies_bouldin_score(X, labels)
+    0.12...
     """
     X, labels = check_X_y(X, labels)
     le = LabelEncoder()
