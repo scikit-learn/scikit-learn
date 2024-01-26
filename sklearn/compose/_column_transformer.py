@@ -1094,20 +1094,23 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
                         for transformer_name, X in zip(transformer_names, Xs):
                             if X.shape[1] == 0:
                                 continue
-                            dup_cols_in_transformer = set(X.columns).intersection(
-                                duplicated_feature_names
+                            dup_cols_in_transformer = sorted(
+                                set(X.columns)
+                                .intersection(duplicated_feature_names)
                             )
                             if len(dup_cols_in_transformer):
                                 err_msg += (
-                                    f"Transformer {transformer_name} is responsible "
-                                    f"for {dup_cols_in_transformer}.\n"
+                                    f"Transformer {transformer_name} has conflicting "
+                                    f"columns names: {dup_cols_in_transformer}.\n"
                                 )
                         raise ValueError(
                             err_msg
                             + "Either make sure that the transformers named above "
                             "do not generate any duplicated columns or set "
-                            "verbose_feature_names_out=True to automatically append "
-                            "the name of the transformers to the feature names."
+                            "verbose_feature_names_out=True to automatically  "
+                            "prefix to the output feature names with the name "
+                            "of the transformer to prevent any conflicting "
+                            "names."
                         )
 
                 idx = 0
