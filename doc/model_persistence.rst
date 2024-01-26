@@ -16,33 +16,85 @@ using `pickle <https://docs.python.org/3/library/pickle.html>`_, `joblib
 or `PMML <https://dmg.org/pmml/v4-4-1/GeneralStructure.html>`_. In most cases
 `pickle` can be used to persist a trained scikit-learn model. Once all
 transitive scikit-learn dependencies have been pinned, the trained model can
-then be safely and securely loaded for further use. The following sections
-give you some hints on how to persist a scikit-learn model.
+then be loaded and executed under conditions similar to those in which it was
+originally pinned. The following sections will give you some hints on how to
+persist a scikit-learn model and will provide details on what each alternative
+can offer.
 
-Python specific serialization
------------------------------
+Workflow Overview
+-----------------
 
-It is possible to save a model in scikit-learn by using Python's built-in
-persistence model, namely `pickle
-<https://docs.python.org/3/library/pickle.html>`_::
+In this section we will present a general workflow on how to persist a
+scikit-learn model. We will demonstrate this with a simple example using
+Python's built-in persistence module, namely `pickle
+<https://docs.python.org/3/library/pickle.html>`_.
+
+Storing the model in an artifact
+................................
+
+Once the model training process in completed, the trained model can be stored
+as an artifact with the help of `pickle`. The model can be saved using the
+process of serialization, where the Python object hierarchy is converted into
+a byte stream. We can persist a trained model in the following manner::
 
   >>> from sklearn import svm
   >>> from sklearn import datasets
+  >>> import pickle
   >>> clf = svm.SVC()
   >>> X, y = datasets.load_iris(return_X_y=True)
   >>> clf.fit(X, y)
   SVC()
-
-  >>> import pickle
   >>> s = pickle.dumps(clf)
-  >>> clf2 = pickle.loads(s)
-  >>> clf2.predict(X[0:1])
+
+Replicating the training environment in production
+..................................................
+
+The dependencies used during the training process may differ from the
+dependencies used in the production environment. The versions of the
+dependencies used may also differ from training to production. This may
+result in unexpected behaviour and errors while using the trained model.
+To prevent such situations it is recommended to use the same dependencies
+and versions in both the training and production environment. These
+transitive dependencies can be pinned with the help of `pip`, `conda`,
+`poetry`, `conda-lock`, `pixi`, etc.
+
+.. note::
+
+    To execute a pickled scikit-learn model in a reproducible environment it is
+    advisable to pin all transitive scikit-learn dependencies. This prevents
+    any incompatibility issues that may arise while trying to load the pickled
+    model.
+
+Loading the model artifact
+..........................
+
+The saved scikit-learn model can be loaded using `pickle` for future use
+without having to re-train the entire model from scratch. The saved model
+artifact can be unpickled by converting the byte stream into an object
+hierarchy. This can be done with the help of `pickle` as follows::
+
+  >>> clf2 = pickle.loads(s) # doctest:+SKIP
+  >>> clf2.predict(X[0:1]) # doctest:+SKIP
   array([0])
-  >>> y[0]
+  >>> y[0] # doctest:+SKIP
   0
 
-Instead of using `dumps` and `loads`, `dump` and `load` can also be used in the
-following way::
+Serving the model artifact
+..........................
+
+The last step after training a scikit-learn model is serving the model.
+Once the trained model is successfully loaded it can be served to manage
+different prediction requests. This can involve deploying the model as a
+web service using containerization, or other model deployment strategies,
+according to the specifications. In the next sections, we will explore
+different approaches to persist a trained scikit-learn model.
+
+Persisting models with pickle
+-----------------------------
+
+As demonstrated in the previous section, `pickle` uses serialization and
+deserialization to persist scikit-learn models. Instead of using `dumps` and
+`loads`, `dump` and `load` can also be used in the following way::
 
   >>> from sklearn.tree import DecisionTreeClassifier
   >>> from sklearn import datasets
@@ -50,28 +102,23 @@ following way::
   >>> X, y = datasets.load_iris(return_X_y=True)
   >>> clf.fit(X, y)
   DecisionTreeClassifier()
-
   >>> from pickle import dump, load
-  >>> with open('filename.pkl', 'wb') as f: dump(clf, f) # doctest: +SKIP
-  >>> with open('filename.pkl', 'rb') as f: clf2 = load(f) # doctest: +SKIP
-  >>> clf2.predict(X[0:1]) # doctest: +SKIP
+  >>> with open('filename.pkl', 'wb') as f: dump(clf, f) # doctest:+SKIP
+  >>> with open('filename.pkl', 'rb') as f: clf2 = load(f) # doctest:+SKIP
+  >>> clf2.predict(X[0:1]) # doctest:+SKIP
   array([0])
   >>> y[0]
   0
 
-The pickled representation of the object is returned as a bytes object with the
-help of the `dumps` function. The reconstituted object hierarchy of the pickled
-data is then returned using the `loads` function. For applications that involve
-writing and loading the serialized object to or from a file, `dump` and `load`
-can be used instead of `dumps` and `loads`.
+For applications that involve writing and loading the serialized object to or
+from a file, `dump` and `load` can be used instead of `dumps` and `loads`. When
+file operations are not required the pickled representation of the object can
+be returned as a bytes object with the help of the `dumps` function. The
+reconstituted object hierarchy of the pickled data can then be returned using
+the `loads` function.
 
-.. note::
-
-    To safely load a pickled scikit-learn model it is advisable to pin all
-    transitive scikit-learn dependencies using `pip freeze > requirements.txt`.
-    The environment can then be recreated using `pip install -r
-    requirements.txt`. This prevents any incompatability issues that may
-    arise while trying to load the pickled model.
+Persisting models with joblib
+-----------------------------
 
 In the specific case of scikit-learn, it may be better to use joblib's
 replacement of pickle (``dump`` & ``load``), which is more efficient on
@@ -80,12 +127,12 @@ fitted scikit-learn estimators, but can only pickle to the disk and not to a
 string::
 
   >>> from joblib import dump, load
-  >>> dump(clf, 'filename.joblib') # doctest: +SKIP
+  >>> dump(clf, 'filename.joblib') # doctest:+SKIP
 
 Later you can load back the pickled model (possibly in another Python process)
 with::
 
-  >>> clf = load('filename.joblib') # doctest: +SKIP
+  >>> clf = load('filename.joblib') # doctest:+SKIP
 
 .. note::
 
@@ -115,8 +162,8 @@ can be caught to obtain the original version the estimator was pickled with::
 
 .. _persistence_limitations:
 
-Security & maintainability limitations
-......................................
+Security & maintainability limitations for pickle and joblib
+------------------------------------------------------------
 
 pickle (and joblib by extension), has some issues regarding maintainability
 and security. Because of this,
@@ -150,9 +197,8 @@ serialization methods, please refer to this
 `talk by Alex Gaynor
 <https://pyvideo.org/video/2566/pickles-are-for-delis-not-software>`_.
 
-
-A more secure format: `skops`
-.............................
+Persisting models with a more secure format using skops
+-------------------------------------------------------
 
 `skops <https://skops.readthedocs.io/en/stable/>`__ provides a more secure
 format via the :mod:`skops.io` module. It avoids using :mod:`pickle` and only
@@ -190,8 +236,8 @@ issue tracker <https://github.com/skops-dev/skops/issues>`__.
 
 |details-end|
 
-Interoperable formats
----------------------
+Persisting models with interoperable formats
+--------------------------------------------
 
 For reproducibility and quality control needs, when different architectures
 and environments should be taken into account, exporting the model in
@@ -233,12 +279,12 @@ Any Python object can be serialized and deserialized using `pickle`, including
 custom Python classes and objects. It can be used for general purpose
 serialization tasks and is part of the standard Python library. It is advisable
 to pin all transitive dependencies while using `pickle` to prevent any
-compatability issues. While `pickle` can be used to easily save and load
+compatibility issues. While `pickle` can be used to easily save and load
 scikit-learn models, unpickling of untrusted data might lead to security
 issues.
 
 Efficient storage and memory mapping techniques make `joblib` faster than
-`pickle` for serializing and deserializing large NumPy arrays. For smaller
+`pickle` for serializing and deserializing large numpy arrays. For smaller
 models the difference in performance may not be very significant, however
 `joblib` is more efficient when it comes to working with large machine
 learning models. For tasks in which performance is a priority `joblib` proves
@@ -268,3 +314,22 @@ helps reduce the risk of vendor lock-ins and can be easily deployed in
 production. `PMML` is based on XML and the format used to persist models can be
 highly verbose. The complexity and verbosity of `PMML` might make it harder to
 use for larger models.
+
+Summarizing the keypoints
+-------------------------
+
+Based on the different approaches for model persistence, the keypoints for each
+approach can be summarized as follows:
+
+* `pickle`: It is native to Python and easy to use, however it leads to
+  security issues with untrusted data.
+* `joblib`: It is faster when working with large numpy arrays, but might
+  trigger the execution of malicious code while loading untrusted data.
+* `skops`: More secure compared to alternate approaches as it allows users to
+  load data from trusted sources. It however, does not allow for persistence
+  of arbitrary Python code.
+* `ONNX`: It provides a uniform format for persisting models and is useful
+  for model inference. It can however, result in compatibility issues with
+  different frameworks.
+* `PMML`: It reduces vendor lock-ins, but might not be suitable for use with
+  large models due to its complexity. 
