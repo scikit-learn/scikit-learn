@@ -1095,8 +1095,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
                             if X.shape[1] == 0:
                                 continue
                             dup_cols_in_transformer = sorted(
-                                set(X.columns)
-                                .intersection(duplicated_feature_names)
+                                set(X.columns).intersection(duplicated_feature_names)
                             )
                             if len(dup_cols_in_transformer):
                                 err_msg += (
@@ -1107,7 +1106,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
                             err_msg
                             + "Either make sure that the transformers named above "
                             "do not generate any duplicated columns or set "
-                            "verbose_feature_names_out=True to automatically  "
+                            "verbose_feature_names_out=True to automatically "
                             "prefix to the output feature names with the name "
                             "of the transformer to prevent any conflicting "
                             "names."
