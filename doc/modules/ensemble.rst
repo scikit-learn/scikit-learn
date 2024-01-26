@@ -285,13 +285,15 @@ model.
 
 For a predictor :math:`F` with two features:
 
- - a **monotonic increase constraint** is a constraint of the form:
-    .. math::
-        x_1 \leq x_1' \implies F(x_1, x_2) \leq F(x_1', x_2)
+- a **monotonic increase constraint** is a constraint of the form:
 
- - a **monotonic decrease constraint** is a constraint of the form:
-    .. math::
-        x_1 \leq x_1' \implies F(x_1, x_2) \geq F(x_1', x_2)
+  .. math::
+      x_1 \leq x_1' \implies F(x_1, x_2) \leq F(x_1', x_2)
+
+- a **monotonic decrease constraint** is a constraint of the form:
+
+  .. math::
+      x_1 \leq x_1' \implies F(x_1, x_2) \geq F(x_1', x_2)
 
 You can specify a monotonic constraint on each feature using the
 `monotonic_cst` parameter. For each feature, a value of 0 indicates no
@@ -311,8 +313,8 @@ Nevertheless, monotonic constraints only marginally constrain feature effects on
 For instance, monotonic increase and decrease constraints cannot be used to enforce the
 following modelling constraint:
 
-    .. math::
-        x_1 \leq x_1' \implies F(x_1, x_2) \leq F(x_1', x_2')
+.. math::
+    x_1 \leq x_1' \implies F(x_1, x_2) \leq F(x_1', x_2')
 
 Also, monotonic constraints are not supported for multiclass classification.
 
@@ -584,9 +586,9 @@ Regression
 GBRT regressors are additive models whose prediction :math:`\hat{y}_i` for a
 given input :math:`x_i` is of the following form:
 
-  .. math::
+.. math::
 
-    \hat{y}_i = F_M(x_i) = \sum_{m=1}^{M} h_m(x_i)
+  \hat{y}_i = F_M(x_i) = \sum_{m=1}^{M} h_m(x_i)
 
 where the :math:`h_m` are estimators called *weak learners* in the context
 of boosting. Gradient Tree Boosting uses :ref:`decision tree regressors
@@ -595,17 +597,17 @@ of boosting. Gradient Tree Boosting uses :ref:`decision tree regressors
 
 Similar to other boosting algorithms, a GBRT is built in a greedy fashion:
 
-  .. math::
+.. math::
 
-    F_m(x) = F_{m-1}(x) + h_m(x),
+  F_m(x) = F_{m-1}(x) + h_m(x),
 
 where the newly added tree :math:`h_m` is fitted in order to minimize a sum
 of losses :math:`L_m`, given the previous ensemble :math:`F_{m-1}`:
 
-  .. math::
+.. math::
 
-    h_m =  \arg\min_{h} L_m = \arg\min_{h} \sum_{i=1}^{n}
-    l(y_i, F_{m-1}(x_i) + h(x_i)),
+  h_m =  \arg\min_{h} L_m = \arg\min_{h} \sum_{i=1}^{n}
+  l(y_i, F_{m-1}(x_i) + h(x_i)),
 
 where :math:`l(y_i, F(x_i))` is defined by the `loss` parameter, detailed
 in the next section.
@@ -618,12 +620,12 @@ argument.
 Using a first-order Taylor approximation, the value of :math:`l` can be
 approximated as follows:
 
-  .. math::
+.. math::
 
-    l(y_i, F_{m-1}(x_i) + h_m(x_i)) \approx
-    l(y_i, F_{m-1}(x_i))
-    + h_m(x_i)
-    \left[ \frac{\partial l(y_i, F(x_i))}{\partial F(x_i)} \right]_{F=F_{m - 1}}.
+  l(y_i, F_{m-1}(x_i) + h_m(x_i)) \approx
+  l(y_i, F_{m-1}(x_i))
+  + h_m(x_i)
+  \left[ \frac{\partial l(y_i, F(x_i))}{\partial F(x_i)} \right]_{F=F_{m - 1}}.
 
 .. note::
 
@@ -640,9 +642,9 @@ differentiable. We will denote it by :math:`g_i`.
 
 Removing the constant terms, we have:
 
-  .. math::
+.. math::
 
-    h_m \approx \arg\min_{h} \sum_{i=1}^{n} h(x_i) g_i
+  h_m \approx \arg\min_{h} \sum_{i=1}^{n} h(x_i) g_i
 
 This is minimized if :math:`h(x_i)` is fitted to predict a value that is
 proportional to the negative gradient :math:`-g_i`. Therefore, at each
@@ -691,40 +693,40 @@ Loss Functions
 The following loss functions are supported and can be specified using
 the parameter ``loss``:
 
-  * Regression
+* Regression
 
-    * Squared error (``'squared_error'``): The natural choice for regression
-      due to its superior computational properties. The initial model is
-      given by the mean of the target values.
-    * Absolute error (``'absolute_error'``): A robust loss function for
-      regression. The initial model is given by the median of the
-      target values.
-    * Huber (``'huber'``): Another robust loss function that combines
-      least squares and least absolute deviation; use ``alpha`` to
-      control the sensitivity with regards to outliers (see [Friedman2001]_ for
-      more details).
-    * Quantile (``'quantile'``): A loss function for quantile regression.
-      Use ``0 < alpha < 1`` to specify the quantile. This loss function
-      can be used to create prediction intervals
-      (see :ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_quantile.py`).
+  * Squared error (``'squared_error'``): The natural choice for regression
+    due to its superior computational properties. The initial model is
+    given by the mean of the target values.
+  * Absolute error (``'absolute_error'``): A robust loss function for
+    regression. The initial model is given by the median of the
+    target values.
+  * Huber (``'huber'``): Another robust loss function that combines
+    least squares and least absolute deviation; use ``alpha`` to
+    control the sensitivity with regards to outliers (see [Friedman2001]_ for
+    more details).
+  * Quantile (``'quantile'``): A loss function for quantile regression.
+    Use ``0 < alpha < 1`` to specify the quantile. This loss function
+    can be used to create prediction intervals
+    (see :ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_quantile.py`).
 
-  * Classification
+* Classification
 
-    * Binary log-loss (``'log-loss'``): The binomial
-      negative log-likelihood loss function for binary classification. It provides
-      probability estimates.  The initial model is given by the
-      log odds-ratio.
-    * Multi-class log-loss (``'log-loss'``): The multinomial
-      negative log-likelihood loss function for multi-class classification with
-      ``n_classes`` mutually exclusive classes. It provides
-      probability estimates.  The initial model is given by the
-      prior probability of each class. At each iteration ``n_classes``
-      regression trees have to be constructed which makes GBRT rather
-      inefficient for data sets with a large number of classes.
-    * Exponential loss (``'exponential'``): The same loss function
-      as :class:`AdaBoostClassifier`. Less robust to mislabeled
-      examples than ``'log-loss'``; can only be used for binary
-      classification.
+  * Binary log-loss (``'log-loss'``): The binomial
+    negative log-likelihood loss function for binary classification. It provides
+    probability estimates.  The initial model is given by the
+    log odds-ratio.
+  * Multi-class log-loss (``'log-loss'``): The multinomial
+    negative log-likelihood loss function for multi-class classification with
+    ``n_classes`` mutually exclusive classes. It provides
+    probability estimates.  The initial model is given by the
+    prior probability of each class. At each iteration ``n_classes``
+    regression trees have to be constructed which makes GBRT rather
+    inefficient for data sets with a large number of classes.
+  * Exponential loss (``'exponential'``): The same loss function
+    as :class:`AdaBoostClassifier`. Less robust to mislabeled
+    examples than ``'log-loss'``; can only be used for binary
+    classification.
 
 .. _gradient_boosting_shrinkage:
 
@@ -1171,17 +1173,17 @@ shallow decision trees).
 Bagging methods come in many flavours but mostly differ from each other by the
 way they draw random subsets of the training set:
 
-  * When random subsets of the dataset are drawn as random subsets of the
-    samples, then this algorithm is known as Pasting [B1999]_.
+* When random subsets of the dataset are drawn as random subsets of the
+  samples, then this algorithm is known as Pasting [B1999]_.
 
-  * When samples are drawn with replacement, then the method is known as
-    Bagging [B1996]_.
+* When samples are drawn with replacement, then the method is known as
+  Bagging [B1996]_.
 
-  * When random subsets of the dataset are drawn as random subsets of
-    the features, then the method is known as Random Subspaces [H1998]_.
+* When random subsets of the dataset are drawn as random subsets of
+  the features, then the method is known as Random Subspaces [H1998]_.
 
-  * Finally, when base estimators are built on subsets of both samples and
-    features, then the method is known as Random Patches [LG2012]_.
+* Finally, when base estimators are built on subsets of both samples and
+  features, then the method is known as Random Patches [LG2012]_.
 
 In scikit-learn, bagging methods are offered as a unified
 :class:`BaggingClassifier` meta-estimator  (resp. :class:`BaggingRegressor`),
@@ -1591,10 +1593,10 @@ concentrate on the examples that are missed by the previous ones in the sequence
 
 AdaBoost can be used both for classification and regression problems:
 
-  - For multi-class classification, :class:`AdaBoostClassifier` implements
-    AdaBoost.SAMME [ZZRH2009]_.
+- For multi-class classification, :class:`AdaBoostClassifier` implements
+  AdaBoost.SAMME [ZZRH2009]_.
 
-  - For regression, :class:`AdaBoostRegressor` implements AdaBoost.R2 [D1997]_.
+- For regression, :class:`AdaBoostRegressor` implements AdaBoost.R2 [D1997]_.
 
 Usage
 -----

@@ -867,6 +867,14 @@ def mutual_info_score(labels_true, labels_pred, *, contingency=None):
     Notes
     -----
     The logarithm used is the natural logarithm (base-e).
+
+    Examples
+    --------
+    >>> from sklearn.metrics import mutual_info_score
+    >>> labels_true = [0, 1, 1, 0, 1, 0]
+    >>> labels_pred = [0, 1, 0, 0, 1, 1]
+    >>> mutual_info_score(labels_true, labels_pred)
+    0.056...
     """
     if contingency is None:
         labels_true, labels_pred = check_clusterings(labels_true, labels_pred)
