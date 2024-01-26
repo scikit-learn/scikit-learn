@@ -492,7 +492,19 @@ def _incr_mean_variance_axis0(
 
 
 def inplace_csr_row_normalize_l1(X):
-    """Inplace row normalize using the l1 norm"""
+    """Inplace row normalize using the l1 norm
+    Examples
+    --------
+    >>> from scipy.sparse import csr_matrix
+    >>> from sklearn.utils.sparsefuncs_fast import inplace_csr_row_normalize_l1
+    >>> data = [1.0, 2.0, 3.0, 4.0]
+    >>> csr_matrix_example = csr_matrix((data, [0, 1, 2, 3], [0, 2, 3, 4]), shape=(3, 4))
+    >>> inplace_csr_row_normalize_l1(csr_matrix_example)
+    >>> csr_matrix_example.toarray()
+    array([[0.33333333, 0.66666667, 0.        , 0.        ],
+       [0.        , 0.        , 1.        , 0.        ],
+       [0.        , 0.        , 0.        , 1.        ]])
+    """
     _inplace_csr_row_normalize_l1(X.data, X.shape, X.indices, X.indptr)
 
 
@@ -529,7 +541,17 @@ def _inplace_csr_row_normalize_l1(
 
 
 def inplace_csr_row_normalize_l2(X):
-    """Inplace row normalize using the l2 norm"""
+    """Inplace row normalize using the l2 norm
+    >>> from scipy.sparse import csr_matrix
+    >>> from sklearn.utils.sparsefuncs_fast import inplace_csr_row_normalize_l2
+    >>> data = [1.0, 2.0, 3.0, 4.0]
+    >>> csr_matrix_example = csr_matrix((data, [0, 1, 2, 3], [0, 2, 3, 4]), shape=(3, 4))
+    >>> inplace_csr_row_normalize_l2(csr_matrix_example)
+    >>> csr_matrix_example.toarray()
+    array([[0.4472136 , 0.89442719, 0.        , 0.        ],
+       [0.        , 0.        , 1.        , 0.        ],
+       [0.        , 0.        , 0.        , 1.        ]])
+    """
     _inplace_csr_row_normalize_l2(X.data, X.shape, X.indices, X.indptr)
 
 
