@@ -1149,34 +1149,6 @@ table.dataframe tbody tr:hover {
   font-size: 0.9rem;
 }
 
-
-/* testimonial */
-
-div.testimonial h2 {
-  background-color: transparent;
-  color: #008EB2;
-  padding: 0;
-  height: 26px;
-  line-height: 1.1em;
-  font-size: 22px;
-  font-weight: bold;
-  text-align: left;
-}
-
-div.testimonial p {
-  color: #1c1c1c;
-}
-
-div.testimonial span.testimonial-author p {
-  font-size: 0.8em;
-  font-style: italic;
-  color: #808080;
-}
-
-div.testimonial p {
-  color: #1c1c1c;
-}
-
 /* Installation quickstart */
 /* This quickstart installation is a hack of the awesome
    https://spacy.io/usage/#quickstart page.
@@ -1310,25 +1282,37 @@ div.sk-sponsor-div, div.sk-testimonial-div {
   align-items: center;
 }
 
-div.sk-sponsor-div-box, div.sk-testimonial-div-box {
+div.sk-sponsor-div-text-box, div.sk-testimonial-div-text-box,
+div.sk-sponsor-div-image-box, div.sk-testimonial-div-image-box {
   width: 100%;
 }
 
 @media screen and (min-width: 500px) {
-  div.sk-sponsor-div-box, div.sk-testimonial-div-box {
+  div.sk-sponsor-div-text-box, div.sk-testimonial-div-text-box,
+  div.sk-sponsor-div-image-box, div.sk-testimonial-div-image-box {
     width: 50%;
   }
 }
 
-table.sk-sponsor-table tr, table.sk-sponsor-table tr:nth-child(odd) {
-  border-style: none;
-  background-color: white;
-  vertical-align: middle;
+div.sk-sponsor-div-text-box .annotation,
+div.sk-testimonial-div-text-box .annotation {
+  font-size: 0.8em;
+  font-style: italic;
+  color: #808080;
+}
+
+div.sk-sponsor-div-image-box, div.sk-testimonial-div-image-box {
   text-align: center;
 }
 
-table.sk-sponsor-table td {
-  padding: 0.30rem;
+div.sk-sponsor-div-image-box img {
+  max-height: 60px;
+  max-width: 50%;
+}
+
+div.sk-testimonial-div-image-box img {
+  max-height: 100px;
+  max-width: 50%;
 }
 
 .caption {
