@@ -240,10 +240,6 @@ François Goupil, Guillaume Lemaitre, Jérémie du Boisberranger, and Olivier Gr
 .. raw:: html
 
    <style>
-     table.image-subtable {
-       overflow-x: unset;
-     }
-
      table.image-subtable tr {
        background-color: transparent !important;
        border-color: transparent !important;
