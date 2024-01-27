@@ -18,14 +18,14 @@ from libc.string cimport memcpy
 from .common cimport X_BINNED_DTYPE_C
 from .common cimport Y_DTYPE_C
 from .common cimport BITSET_INNER_DTYPE_C
-from .common cimport BITSET_DTYPE_C
+from .common cimport Bitsets
 from .common cimport MonotonicConstraint
 from .common cimport Histograms
 from .common cimport hist_struct
-from ._bitset cimport init_bitset
+from ._bitset cimport create_feature_bitset_array
 from ._bitset cimport set_bitset
 from ._bitset cimport in_bitset
-from ...utils._typedefs cimport uint16_t
+from ...utils._typedefs cimport uint16_t, uint32_t
 
 cnp.import_array()
 
@@ -46,7 +46,6 @@ cdef struct split_info_struct:
     Y_DTYPE_C value_left
     Y_DTYPE_C value_right
     unsigned char is_categorical
-    BITSET_DTYPE_C left_cat_bitset
 
 
 # used in categorical splits for sorting categories by increasing values of
@@ -163,14 +162,27 @@ cdef class Splitter:
     rng : Generator
     n_threads : int, default=1
         Number of OpenMP threads to use.
+
+    Attributes
+    ----------
+    n_features : unsigned int
+    n_categorical_features : unsigned int
+        Number of categorical features, i.e. `sum(is_categorical)`.
+    bitsets_offsets : ndarray of shape (n_features + 1), dtype=np.uint32
+        The offsets specify which partition of the bitsets ndarray belongs
+        to which features: feature j goes from `bitsets[offsets[j]]` until
+        `bitsets[offsets[j + 1] - 1]`. `offsets[n_features + 1]` gives
+        the total number of base bitsets (X_BITSET_INNER_DTYPE) over all features.
     """
     cdef public:
         const X_BINNED_DTYPE_C [::1, :] X_binned
         unsigned int n_features
+        unsigned int n_categorical_features
         const uint16_t [::1] n_bins_non_missing
         const unsigned char [::1] has_missing_values
         const unsigned char [::1] is_categorical
         const signed char [::1] monotonic_cst
+        uint32_t [::1] bitsets_offsets
         unsigned char hessians_are_constant
         Y_DTYPE_C l2_regularization
         Y_DTYPE_C min_hessian_to_split
@@ -204,6 +216,7 @@ cdef class Splitter:
         self.n_bins_non_missing = n_bins_non_missing
         self.has_missing_values = has_missing_values
         self.is_categorical = is_categorical
+        self.n_categorical_features = np.sum(is_categorical)
         self.monotonic_cst = monotonic_cst
         self.l2_regularization = l2_regularization
         self.min_hessian_to_split = min_hessian_to_split
@@ -227,6 +240,15 @@ cdef class Splitter:
         # buffers used in split_indices to support parallel splitting.
         self.left_indices_buffer = np.empty_like(self.partition)
         self.right_indices_buffer = np.empty_like(self.partition)
+
+        # bitsets_offsets[j] is the start of the bitset of feature j,
+        # bitsets_offsets[n_features + 1] gives the total number of base bitsets.
+        bitsets_offsets = np.zeros(shape=self.n_features + 1, dtype=np.uint32)
+        n_base_bitsets = np.ceil(np.divide(np.add(self.n_bins_non_missing, 1), 32))
+        bitsets_offsets[1:] = np.cumsum(
+            np.multiply(n_base_bitsets, self.is_categorical), dtype=np.uint32
+        )
+        self.bitsets_offsets = bitsets_offsets
 
     def split_indices(Splitter self, split_info, unsigned int [::1]
                       sample_indices):
@@ -312,10 +334,7 @@ cdef class Splitter:
             unsigned int [::1] left_indices_buffer = self.left_indices_buffer
             unsigned int [::1] right_indices_buffer = self.right_indices_buffer
             unsigned char is_categorical = split_info.is_categorical
-            # Cython is unhappy if we set left_cat_bitset to
-            # split_info.left_cat_bitset directly, so we need a tmp var
-            BITSET_INNER_DTYPE_C [:] cat_bitset_tmp = split_info.left_cat_bitset
-            BITSET_DTYPE_C left_cat_bitset
+            BITSET_INNER_DTYPE_C [:] left_cat_bitset
             int n_threads = self.n_threads
 
             int [:] sizes = np.full(n_threads, n_samples // n_threads,
@@ -337,7 +356,7 @@ cdef class Splitter:
 
         # only set left_cat_bitset when is_categorical is True
         if is_categorical:
-            left_cat_bitset = &cat_bitset_tmp[0]
+            left_cat_bitset = split_info.left_cat_bitset
 
         with nogil:
             for thread_idx in range(n_samples % n_threads):
@@ -507,6 +526,9 @@ cdef class Splitter:
             # https://github.com/numpy/numpy/issues/18273
             subsample_mask = subsample_mask_arr
 
+        # Allocate bitsets for categorical features before the nogil.
+        left_cat_bitsets = Bitsets(offsets=self.bitsets_offsets)
+
         with nogil:
 
             split_infos = <split_info_struct *> malloc(
@@ -543,7 +565,9 @@ cdef class Splitter:
                         feature_idx, has_missing_values[feature_idx],
                         histograms, n_samples, sum_gradients, sum_hessians,
                         value, monotonic_cst[feature_idx], lower_bound,
-                        upper_bound, &split_infos[split_info_idx])
+                        upper_bound, &split_infos[split_info_idx],
+                        left_cat_bitsets.at(feature_idx),
+                    )
                 else:
                     # We will scan bins from left to right (in all cases), and
                     # if there are any missing values, we will also scan bins
@@ -596,7 +620,10 @@ cdef class Splitter:
         )
         # Only set bitset if the split is categorical
         if split_info.is_categorical:
-            out.left_cat_bitset = np.asarray(split_info.left_cat_bitset, dtype=np.uint32)
+            # Here, we make a copy of the bitset.
+            out.left_cat_bitset = create_feature_bitset_array(
+                left_cat_bitsets, split_info.feature_idx
+            )
 
         free(split_infos)
         return out
@@ -858,18 +885,20 @@ cdef class Splitter:
                 lower_bound, upper_bound, self.l2_regularization)
 
     cdef void _find_best_bin_to_split_category(
-            self,
-            unsigned int feature_idx,
-            unsigned char has_missing_values,
-            Histograms histograms,  # IN
-            unsigned int n_samples,
-            Y_DTYPE_C sum_gradients,
-            Y_DTYPE_C sum_hessians,
-            Y_DTYPE_C value,
-            char monotonic_cst,
-            Y_DTYPE_C lower_bound,
-            Y_DTYPE_C upper_bound,
-            split_info_struct * split_info) noexcept nogil:  # OUT
+        self,
+        unsigned int feature_idx,
+        unsigned char has_missing_values,
+        Histograms histograms,  # IN
+        unsigned int n_samples,
+        Y_DTYPE_C sum_gradients,
+        Y_DTYPE_C sum_hessians,
+        Y_DTYPE_C value,
+        char monotonic_cst,
+        Y_DTYPE_C lower_bound,
+        Y_DTYPE_C upper_bound,
+        split_info_struct * split_info,  # OUT
+        BITSET_INNER_DTYPE_C* left_cat_bitset,  # OUT
+    ) noexcept nogil:
         """Find best split for categorical features.
 
         Categories are first sorted according to their variance, and then
@@ -1066,19 +1095,19 @@ cdef class Splitter:
                 lower_bound, upper_bound, self.l2_regularization)
 
             # create bitset with values from best_cat_infos_thresh
-            init_bitset(split_info.left_cat_bitset)
             if best_direction == 1:
                 for sorted_cat_idx in range(best_cat_infos_thresh + 1):
                     bin_idx = cat_infos[sorted_cat_idx].bin_idx
-                    set_bitset(split_info.left_cat_bitset, bin_idx)
+                    set_bitset(left_cat_bitset, bin_idx)
             else:
                 for sorted_cat_idx in range(n_used_bins - 1, best_cat_infos_thresh - 1, -1):
                     bin_idx = cat_infos[sorted_cat_idx].bin_idx
-                    set_bitset(split_info.left_cat_bitset, bin_idx)
+                    set_bitset(left_cat_bitset, bin_idx)
 
             if has_missing_values:
                 split_info.missing_go_to_left = in_bitset(
-                    split_info.left_cat_bitset, missing_values_bin_idx)
+                    left_cat_bitset, missing_values_bin_idx
+                )
 
         free(cat_infos)
 
@@ -1152,12 +1181,12 @@ cdef inline unsigned char sample_goes_left(
         X_BINNED_DTYPE_C split_bin_idx,
         X_BINNED_DTYPE_C bin_value,
         unsigned char is_categorical,
-        BITSET_DTYPE_C left_cat_bitset) noexcept nogil:
+        BITSET_INNER_DTYPE_C [:] left_cat_bitset) noexcept nogil:
     """Helper to decide whether sample should go to left or right child."""
 
     if is_categorical:
         # note: if any, missing values are encoded in left_cat_bitset
-        return in_bitset(left_cat_bitset, bin_value)
+        return in_bitset(&left_cat_bitset[0], bin_value)
     else:
         return (
             (

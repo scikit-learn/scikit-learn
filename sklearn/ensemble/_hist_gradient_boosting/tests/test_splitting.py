@@ -648,12 +648,13 @@ def test_splitting_categorical_cat_smooth(
     assert split_info.gain == -1
 
 
-def _assert_categories_equals_bitset(categories, bitset):
+def _assert_categories_equals_bitset(categories, bitset, n_bins_non_missing):
     # assert that the bitset exactly corresponds to the categories
-    # bitset is assumed to be an array of 8 uint32 elements
+    # bitset is assumed to be an array of ceil(n_bins / 32) uint32 elements
 
+    n_base_bitsets = np.ceil((n_bins_non_missing + 1) / 32).astype(np.uint32)
     # form bitset from threshold
-    expected_bitset = np.zeros(8, dtype=np.uint32)
+    expected_bitset = np.zeros(n_base_bitsets, dtype=np.uint32)
     for cat in categories:
         idx = cat // 32
         shift = cat % 32
@@ -676,8 +677,8 @@ def _assert_categories_equals_bitset(categories, bitset):
             [1],  # expected_categories_left
             4,  # n_bins_non_missing = index of missing value bin
             False,  # has_missing_values
-            None,
-        ),  # expected_missing_go_to_left, unchecked
+            None,  # expected_missing_go_to_left, unchecked
+        ),
         # Make sure that the categories that are on the right (second half) of
         # the sorted categories array can still go in the left child. In this
         # case, the best split was found when scanning from right to left.
@@ -687,8 +688,8 @@ def _assert_categories_equals_bitset(categories, bitset):
             [3],  # expected_categories_left
             4,  # n_bins_non_missing = index of missing value bin
             False,  # has_missing_values
-            None,
-        ),  # expected_missing_go_to_left, unchecked
+            None,  # expected_missing_go_to_left, unchecked
+        ),
         # categories that don't respect MIN_CAT_SUPPORT (cat 4) are always
         # mapped to the right child
         (
@@ -697,8 +698,8 @@ def _assert_categories_equals_bitset(categories, bitset):
             [3],  # expected_categories_left
             4,  # n_bins_non_missing = index of missing value bin
             False,  # has_missing_values
-            None,
-        ),  # expected_missing_go_to_left, unchecked
+            None,  # expected_missing_go_to_left, unchecked
+        ),
         # categories that don't respect MIN_CAT_SUPPORT are always mapped to
         # the right child: in this case a more sensible split could have been
         # 3, 4 - 0, 1, 2
@@ -711,8 +712,8 @@ def _assert_categories_equals_bitset(categories, bitset):
             [3],  # expected_categories_left
             4,  # n_bins_non_missing = index of missing value bin
             False,  # has_missing_values
-            None,
-        ),  # expected_missing_go_to_left, unchecked
+            None,  # expected_missing_go_to_left, unchecked
+        ),
         # 4 categories with missing values that go to the right
         (
             [0, 1, 2] * 11 + [3] * 11,  # X_binned
@@ -720,8 +721,8 @@ def _assert_categories_equals_bitset(categories, bitset):
             [1],  # expected_categories_left
             3,  # n_bins_non_missing
             True,  # has_missing_values
-            False,
-        ),  # expected_missing_go_to_left
+            False,  # expected_missing_go_to_left
+        ),
         # 4 categories with missing values that go to the left
         (
             [0, 1, 2] * 11 + [3] * 11,  # X_binned
@@ -729,8 +730,8 @@ def _assert_categories_equals_bitset(categories, bitset):
             [1, 3],  # expected_categories_left
             3,  # n_bins_non_missing = index of missing value bin
             True,  # has_missing_values
-            True,
-        ),  # expected_missing_go_to_left
+            True,  # expected_missing_go_to_left
+        ),
         # split is on the missing value
         (
             [0, 1, 2, 3, 4] * 11 + [255] * 12,  # X_binned
@@ -738,8 +739,8 @@ def _assert_categories_equals_bitset(categories, bitset):
             [255],  # expected_categories_left
             255,  # n_bins_non_missing = index of missing value bin
             True,  # has_missing_values
-            True,
-        ),  # expected_missing_go_to_left
+            True,  # expected_missing_go_to_left
+        ),
         # split on even categories
         (
             list(range(60)) * 12,  # X_binned
@@ -747,8 +748,8 @@ def _assert_categories_equals_bitset(categories, bitset):
             list(range(1, 60, 2)),  # expected_categories_left
             59,  # n_bins_non_missing = index of missing value bin
             True,  # has_missing_values
-            True,
-        ),  # expected_missing_go_to_left
+            True,  # expected_missing_go_to_left
+        ),
         # split on every 8 categories
         (
             list(range(256)) * 12,  # X_binned
@@ -756,8 +757,8 @@ def _assert_categories_equals_bitset(categories, bitset):
             list(range(7, 256, 8)),  # expected_categories_left
             255,  # n_bins_non_missing = index of missing value bin
             True,  # has_missing_values
-            True,
-        ),  # expected_missing_go_to_left
+            True,  # expected_missing_go_to_left
+        ),
     ],
 )
 def test_splitting_categorical_sanity(
@@ -824,7 +825,9 @@ def test_splitting_categorical_sanity(
     assert split_info.is_categorical
     assert split_info.gain > 0
     _assert_categories_equals_bitset(
-        expected_categories_left, split_info.left_cat_bitset
+        categories=expected_categories_left,
+        bitset=split_info.left_cat_bitset,
+        n_bins_non_missing=n_bins_non_missing[split_info.feature_idx],
     )
     if has_missing_values:
         assert split_info.missing_go_to_left == expected_missing_go_to_left

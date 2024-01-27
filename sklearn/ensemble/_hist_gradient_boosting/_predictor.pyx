@@ -4,22 +4,21 @@ from cython.parallel import prange
 from libc.math cimport isnan
 import numpy as np
 
+from .common cimport Bitsets
 from .common cimport X_DTYPE_C
 from .common cimport Y_DTYPE_C
 from .common import Y_DTYPE
 from .common cimport X_BINNED_DTYPE_C
-from .common cimport BITSET_INNER_DTYPE_C
 from .common cimport node_struct
-from ._bitset cimport in_bitset_2d_memoryview
+from ._bitset cimport in_bitset
 from sklearn.utils._typedefs cimport intp_t, uint16_t
 
 
 def _predict_from_raw_data(  # raw data = non-binned data
         const node_struct [:] nodes,
         const X_DTYPE_C [:, :] numeric_data,
-        const BITSET_INNER_DTYPE_C [:, ::1] raw_left_cat_bitsets,
-        const BITSET_INNER_DTYPE_C [:, ::1] known_cat_bitsets,
-        const unsigned int [::1] f_idx_map,
+        Bitsets raw_left_cat_bitsets,
+        Bitsets known_cat_bitsets,
         int n_threads,
         Y_DTYPE_C [:] out):
 
@@ -31,15 +30,14 @@ def _predict_from_raw_data(  # raw data = non-binned data
         out[i] = _predict_one_from_raw_data(
             nodes, numeric_data, raw_left_cat_bitsets,
             known_cat_bitsets,
-            f_idx_map, i)
+            i)
 
 
 cdef inline Y_DTYPE_C _predict_one_from_raw_data(
         const node_struct [:] nodes,
         const X_DTYPE_C [:, :] numeric_data,
-        const BITSET_INNER_DTYPE_C [:, ::1] raw_left_cat_bitsets,
-        const BITSET_INNER_DTYPE_C [:, ::1] known_cat_bitsets,
-        const unsigned int [::1] f_idx_map,
+        Bitsets raw_left_cat_bitsets,
+        Bitsets known_cat_bitsets,
         const int row) noexcept nogil:
     # Need to pass the whole array and the row index, else prange won't work.
     # See issue Cython #2798
@@ -64,15 +62,15 @@ cdef inline Y_DTYPE_C _predict_one_from_raw_data(
             if data_val < 0:
                 # data_val is not in the accepted range, so it is treated as missing value
                 node_idx = node.left if node.missing_go_to_left else node.right
-            elif in_bitset_2d_memoryview(
-                    raw_left_cat_bitsets,
-                    <X_BINNED_DTYPE_C>data_val,
-                    node.bitset_idx):
+            elif in_bitset(
+                raw_left_cat_bitsets.at(node.bitset_idx),
+                <X_BINNED_DTYPE_C>data_val,
+            ):
                 node_idx = node.left
-            elif in_bitset_2d_memoryview(
-                    known_cat_bitsets,
-                    <X_BINNED_DTYPE_C>data_val,
-                    f_idx_map[node.feature_idx]):
+            elif in_bitset(
+                known_cat_bitsets.at(node.feature_idx),
+                <X_BINNED_DTYPE_C>data_val,
+            ):
                 node_idx = node.right
             else:
                 # Treat unknown categories as missing.
@@ -88,7 +86,7 @@ cdef inline Y_DTYPE_C _predict_one_from_raw_data(
 def _predict_from_binned_data(
         node_struct [:] nodes,
         const X_BINNED_DTYPE_C [:, :] binned_data,
-        BITSET_INNER_DTYPE_C [:, :] binned_left_cat_bitsets,
+        Bitsets binned_left_cat_bitsets,
         const uint16_t [::1] n_bins_non_missing,
         int n_threads,
         Y_DTYPE_C [:] out):
@@ -108,7 +106,7 @@ def _predict_from_binned_data(
 cdef inline Y_DTYPE_C _predict_one_from_binned_data(
         node_struct [:] nodes,
         const X_BINNED_DTYPE_C [:, :] binned_data,
-        const BITSET_INNER_DTYPE_C [:, :] binned_left_cat_bitsets,
+        Bitsets binned_left_cat_bitsets,
         const int row,
         const uint16_t [::1] n_bins_non_missing) noexcept nogil:
     # Need to pass the whole array and the row index, else prange won't work.
@@ -133,10 +131,10 @@ cdef inline Y_DTYPE_C _predict_one_from_binned_data(
             else:
                 node_idx = node.right
         elif node.is_categorical:
-            if in_bitset_2d_memoryview(
-                    binned_left_cat_bitsets,
-                    data_val,
-                    node.bitset_idx):
+            if in_bitset(
+                binned_left_cat_bitsets.at(node.bitset_idx),
+                data_val,
+            ):
                 node_idx = node.left
             else:
                 node_idx = node.right

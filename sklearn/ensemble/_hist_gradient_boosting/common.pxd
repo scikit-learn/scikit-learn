@@ -9,7 +9,6 @@ ctypedef cnp.npy_uint8 X_BINNED_DTYPE_C
 ctypedef cnp.npy_float64 Y_DTYPE_C
 ctypedef cnp.npy_float32 G_H_DTYPE_C
 ctypedef cnp.npy_uint32 BITSET_INNER_DTYPE_C
-ctypedef BITSET_INNER_DTYPE_C[8] BITSET_DTYPE_C
 
 
 cdef packed struct hist_struct:
@@ -58,3 +57,17 @@ cdef class Histograms:
     cdef inline uint32_t n_bins(self, int feature_idx) noexcept nogil
 
     cdef inline hist_struct* at(self, int feature_idx, uint32_t bin_idx) noexcept nogil
+
+
+cdef class Bitsets:
+    cdef:
+        const uint32_t [::1] offsets_view
+        BITSET_INNER_DTYPE_C [::1] bitsets_view
+    cdef public:
+        object offsets
+        # Only the attribute histograms will be used in the splitter.
+        object bitsets
+
+    cdef inline uint32_t n_inner_bitsets(self, int feature_idx) noexcept nogil
+
+    cdef inline BITSET_INNER_DTYPE_C* at(self, int feature_idx) noexcept nogil
