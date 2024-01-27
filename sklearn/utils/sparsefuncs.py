@@ -1,5 +1,5 @@
 """
-The :mod:`sklearn.utils.sparsefuncs` module includes a collection of utilities to
+The :mod:`sklearn.utils.sparsefuncs` submodule includes a collection of utilities to
 work with sparse matrices and arrays.
 """
 

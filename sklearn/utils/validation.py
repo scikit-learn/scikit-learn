@@ -1,5 +1,5 @@
 """
-The :mod:`sklearn.utils.validation` module includes functions to validate
+The :mod:`sklearn.utils.validation` submodule includes functions to validate
 input and parameters within scikit-learn estimators.
 """
 

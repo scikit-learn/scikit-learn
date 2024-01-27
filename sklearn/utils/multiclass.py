@@ -1,5 +1,5 @@
 """
-The :mod:`sklearn.utils.multiclass` module includes utilities to handle
+The :mod:`sklearn.utils.multiclass` submodule includes utilities to handle
 multiclass/multioutput target in classifiers.
 """
 

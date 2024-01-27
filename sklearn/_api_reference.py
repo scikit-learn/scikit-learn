@@ -97,6 +97,11 @@ from io import StringIO
 
 
 def _get_guide(*refs, is_developer=False):
+    """Get the rst to refer to user/developer guide.
+
+    `refs` is several references that can be used in the :ref:`...` directive. Note
+    that the generated rst does not include any leading or trailing newlines.
+    """
     if len(refs) == 1:
         ref_desc = f":ref:`{refs[0]}` section"
     elif len(refs) == 2:
@@ -107,6 +112,26 @@ def _get_guide(*refs, is_developer=False):
 
     guide_name = "Developer" if is_developer else "User"
     return f"**{guide_name} guide.** See the {ref_desc} for further details."
+
+
+def _get_submodule(module_name, submodule_name):
+    """Get the submodule docstring and automatically add the hook.
+
+    `module_name` is e.g. `sklearn.feature_extraction`, and `submodule_name` is e.g.
+    `image`, so we get the docstring and hook for `sklearn.feature_extraction.image`
+    submodule. `module_name` is used to reset the current module because autosummary
+    automatically changes the current module.
+
+    Note that the generated string does not include any leading or trailing newlines,
+    so one must manually take care of that to ensure valid rst syntax.
+    """
+    lines = [
+        f".. automodule:: {module_name}.{submodule_name}",
+        "   :no-members:",
+        "   :no-inherited-members:\n",
+        f".. currentmodule:: {module_name}",
+    ]
+    return "\n\n" + "\n".join(lines) + "\n\n"
 
 
 API_REFERENCE = {
@@ -560,6 +585,7 @@ API_REFERENCE = {
             },
             {
                 "title": "From images",
+                "description": _get_submodule("sklearn.feature_extraction", "image"),
                 "autosummary": [
                     {
                         "template": "class",
@@ -578,6 +604,7 @@ API_REFERENCE = {
             },
             {
                 "title": "From text",
+                "description": _get_submodule("sklearn.feature_extraction", "text"),
                 "autosummary": [
                     {
                         "template": "class",
@@ -649,6 +676,7 @@ API_REFERENCE = {
             },
             {
                 "title": "Kernels",
+                "description": _get_submodule("sklearn.gaussian_process", "kernels"),
                 "autosummary": [
                     {
                         "template": "class_with_call",
@@ -1075,10 +1103,8 @@ API_REFERENCE = {
             {
                 "title": "Clustering metrics",
                 "description": (
-                    "There are two forms of evaluation for cluster analysis results:\n"
-                    "\n- supervised, which uses a ground truth class values for each "
-                    "sample,\n- unsupervised, which does not use a ground truth and "
-                    "measures the 'quality' of the model itself.\n\n"
+                    _get_submodule("sklearn.metrics", "cluster")
+                    + "\n\n"
                     + _get_guide("clustering_evaluation")
                 ),
                 "autosummary": [
@@ -1126,7 +1152,11 @@ API_REFERENCE = {
             },
             {
                 "title": "Pairwise metrics",
-                "description": _get_guide("metrics"),
+                "description": (
+                    _get_submodule("sklearn.metrics", "pairwise")
+                    + "\n\n"
+                    + _get_guide("metrics")
+                ),
                 "autosummary": [
                     {
                         "template": "function",
@@ -1616,6 +1646,7 @@ API_REFERENCE = {
             },
             {
                 "title": "Input and parameter validation",
+                "description": _get_submodule("sklearn.utils", "validation"),
                 "autosummary": [
                     {
                         "template": "function",
@@ -1636,6 +1667,7 @@ API_REFERENCE = {
             },
             {
                 "title": "Meta-estimators",
+                "description": _get_submodule("sklearn.utils", "metaestimators"),
                 "autosummary": [
                     {
                         "template": "function",
@@ -1645,6 +1677,7 @@ API_REFERENCE = {
             },
             {
                 "title": "Weight handling based on class labels",
+                "description": _get_submodule("sklearn.utils", "class_weight"),
                 "autosummary": [
                     {
                         "template": "function",
@@ -1657,6 +1690,7 @@ API_REFERENCE = {
             },
             {
                 "title": "Dealing with multiclass target in classifiers",
+                "description": _get_submodule("sklearn.utils", "multiclass"),
                 "autosummary": [
                     {
                         "template": "function",
@@ -1670,6 +1704,7 @@ API_REFERENCE = {
             },
             {
                 "title": "Optimal mathematical operations",
+                "description": _get_submodule("sklearn.utils", "extmath"),
                 "autosummary": [
                     {
                         "template": "function",
@@ -1686,6 +1721,7 @@ API_REFERENCE = {
             },
             {
                 "title": "Working with sparse matrices and arrays",
+                "description": _get_submodule("sklearn.utils", "sparsefuncs"),
                 "autosummary": [
                     {
                         "template": "function",
@@ -1697,6 +1733,17 @@ API_REFERENCE = {
                             "sparsefuncs.inplace_swap_column",
                             "sparsefuncs.mean_variance_axis",
                             "sparsefuncs.inplace_csr_column_scale",
+                        ],
+                    },
+                ],
+            },
+            {
+                "title": None,
+                "description": _get_submodule("sklearn.utils", "sparsefuncs_fast"),
+                "autosummary": [
+                    {
+                        "template": "function",
+                        "entries": [
                             "sparsefuncs_fast.inplace_csr_row_normalize_l1",
                             "sparsefuncs_fast.inplace_csr_row_normalize_l2",
                         ],
@@ -1705,6 +1752,7 @@ API_REFERENCE = {
             },
             {
                 "title": "Working with graphs",
+                "description": _get_submodule("sklearn.utils", "graph"),
                 "autosummary": [
                     {
                         "template": "function",
@@ -1714,6 +1762,7 @@ API_REFERENCE = {
             },
             {
                 "title": "Random sampling",
+                "description": _get_submodule("sklearn.utils", "random"),
                 "autosummary": [
                     {
                         "template": "function",
@@ -1723,6 +1772,7 @@ API_REFERENCE = {
             },
             {
                 "title": "Auxiliary functions that operate on arrays",
+                "description": _get_submodule("sklearn.utils", "arrayfuncs"),
                 "autosummary": [
                     {
                         "template": "function",
@@ -1732,7 +1782,11 @@ API_REFERENCE = {
             },
             {
                 "title": "Metadata routing",
-                "description": _get_guide("metadata_routing"),
+                "description": (
+                    _get_submodule("sklearn.utils", "metadata_routing")
+                    + "\n\n"
+                    + _get_guide("metadata_routing")
+                ),
                 "autosummary": [
                     {
                         "template": "class",
@@ -1753,6 +1807,7 @@ API_REFERENCE = {
             },
             {
                 "title": "Discovering scikit-learn objects",
+                "description": _get_submodule("sklearn.utils", "discovery"),
                 "autosummary": [
                     {
                         "template": "function",
@@ -1766,6 +1821,7 @@ API_REFERENCE = {
             },
             {
                 "title": "API compatibility checkers",
+                "description": _get_submodule("sklearn.utils", "estimator_checks"),
                 "autosummary": [
                     {
                         "template": "function",
@@ -1778,6 +1834,7 @@ API_REFERENCE = {
             },
             {
                 "title": "Parallel computing",
+                "description": _get_submodule("sklearn.utils", "parallel"),
                 "autosummary": [
                     {
                         "template": "class",

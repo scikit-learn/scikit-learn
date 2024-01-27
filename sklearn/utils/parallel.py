@@ -1,5 +1,6 @@
 """
-The :mod:`sklearn.utils.parallel` customizes `joblib` tools for scikit-learn usage.
+The :mod:`sklearn.utils.parallel` submodule customizes the :mod:`joblib` tools for
+scikit-learn usage.
 """
 
 import functools

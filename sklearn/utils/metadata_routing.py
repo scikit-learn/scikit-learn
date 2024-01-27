@@ -1,5 +1,5 @@
 """
-The :mod:`sklearn.utils.metadata_routing` module includes utilities to route
+The :mod:`sklearn.utils.metadata_routing` submodule includes utilities to route
 metadata within scikit-learn estimators.
 """
 

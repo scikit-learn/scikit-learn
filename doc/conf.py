@@ -717,10 +717,11 @@ def generate_api_reference():
             f.write(f"     - {API_REFERENCE[module_name]['short_summary']}\n\n")
 
         # Write deprecated API
-        f.write("Recently deprecated\n")
-        f.write("===================\n\n")
-        for depr_version in sorted(DEPRECATED_API_REFERENCE, key=parse, reverse=True):
-            f.write(get_deprecated_api_reference_rst(depr_version))
+        if DEPRECATED_API_REFERENCE:
+            f.write("Recently deprecated\n")
+            f.write("===================\n\n")
+            for ver in sorted(DEPRECATED_API_REFERENCE, key=parse, reverse=True):
+                f.write(get_deprecated_api_reference_rst(ver))
 
 
 # Config for sphinx_issues

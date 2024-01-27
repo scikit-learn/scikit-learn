@@ -1,5 +1,5 @@
 """
-The :mod:`sklearn.utils.class_weight` module includes utilities for handling
+The :mod:`sklearn.utils.class_weight` submodule includes utilities for handling
 weights based on class labels.
 """
 

@@ -1,5 +1,5 @@
 """
-The :mod:`sklearn.utils.arrayfuncs` module includes a small collection of auxiliary
+The :mod:`sklearn.utils.arrayfuncs` submodule includes a small collection of auxiliary
 functions that operate on arrays.
 """
 
