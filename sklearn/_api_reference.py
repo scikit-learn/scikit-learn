@@ -1897,8 +1897,8 @@ def get_api_reference_rst(module_name):
         output.write(f".. _{subname}_ref:\n\n")
 
     # Print the top-level heading
-    output.write(f":mod:`{module_name}`\n")
-    output.write("=" * (len(module_name) + 7) + "\n\n")
+    output.write(f"{module_name}\n")
+    output.write("=" * len(module_name) + "\n\n")
 
     # Print the module docstring
     output.write(f".. automodule:: {module_name}\n")
