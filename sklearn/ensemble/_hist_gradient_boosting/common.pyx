@@ -127,3 +127,51 @@ cdef class Histograms:
 
     def value_at(self, feature_idx, bin_idx):
         return self.histograms[self.bin_offsets[feature_idx] + bin_idx]
+
+
+@cython.final
+cdef class Bitsets:
+    """An extension type (class) for the bitsets of all features together.
+
+    This class only allocates the smallest possible 1d ndarray and provides access
+    to it like a 2d jagged array. It is comparable to a jagged/ragged array.
+
+    Attributes
+    ----------
+    Public, i.e. accessible from Python:
+
+        offsets : ndarray of shape (n_features + 1), dtype=np.uint32
+            The offsets specify which partition of the bitsets ndarray belongs
+            to which features: feature j goes from `bitsets[offsets[j]]` until
+            `bitsets[offsets[j + 1] - 1]`. `offsets[n_features + 1]` gives
+            the total number of base bitsets (X_BITSET_INNER_DTYPE) over all features.
+        bitsets : ndarray of shape (offsets[n_features + 1],), \
+                dtype=X_BITSET_INNER_DTYPE
+            The 1-dimensional array of all bitsets for all features.
+
+    Private, i.e. only accessible from Cython:
+
+        offsets_view : memoryview of `offsets`, dtype=uint32_t
+        bitsets_view : memoryview of `bitsets`, dtype=X_BITSET_INNER_DTYPE
+        n_features : int
+    """
+
+    def __init__(self, offsets):
+        self.offsets = offsets
+        self.offsets_view = self.offsets
+
+        self.bitsets = np.zeros(
+            shape=self.offsets[self.offsets.shape[0] - 1],  # offsets[-1]
+            dtype=X_BITSET_INNER_DTYPE,
+        )
+        self.bitsets_view = self.bitsets
+
+    cdef inline uint32_t n_inner_bitsets(self, int feature_idx) noexcept nogil:
+        return self.offsets_view[feature_idx + 1] - self.offsets_view[feature_idx]
+
+    cdef inline BITSET_INNER_DTYPE_C* at(self, int feature_idx) noexcept nogil:
+        return &self.bitsets_view[self.offsets_view[feature_idx]]
+
+    def __reduce__(self):
+        """Reduce method used for pickling."""
+        return (Bitsets, (self.offsets,))

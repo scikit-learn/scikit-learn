@@ -15,8 +15,8 @@ from ...utils._openmp_helpers import _openmp_effective_n_threads
 from ...utils.fixes import percentile
 from ...utils.validation import check_is_fitted
 from ._binning import _map_to_bins
-from ._bitset import set_bitset_memoryview
-from .common import ALMOST_INF, X_BINNED_DTYPE, X_BITSET_INNER_DTYPE, X_DTYPE
+from ._bitset import set_known_cat_bitset_from_known_categories
+from .common import ALMOST_INF, X_BINNED_DTYPE, X_DTYPE, Bitsets
 
 
 def _find_binning_thresholds(col_data, max_bins):
@@ -106,7 +106,7 @@ class _BinMapper(TransformerMixin, BaseEstimator):
         Indicates categorical features. By default, all features are
         considered continuous.
     known_categories : list of {ndarray, None} of shape (n_features,), \
-            default=none
+            dtype=X_DTYPE, default=none
         For each categorical feature, the array indicates the set of unique
         categorical values. These should be the possible values over all the
         data, not just the training data. For continuous features, the
@@ -218,6 +218,11 @@ class _BinMapper(TransformerMixin, BaseEstimator):
                     f"Feature {f_idx} isn't marked as a categorical feature, "
                     "but categories were passed."
                 )
+            if is_categorical and known_cats.dtype != X_DTYPE:
+                raise ValueError(
+                    f"The array of known categories of feature {f_idx} must be of "
+                    f"dtype={X_DTYPE}, got {known_cats.dtype=}."
+                )
 
         self.bin_thresholds_ = []
         n_bins_non_missing = []
@@ -284,33 +289,33 @@ class _BinMapper(TransformerMixin, BaseEstimator):
 
         Returns
         -------
-        - known_cat_bitsets : ndarray of shape (n_categorical_features, 8)
-            Array of bitsets of known categories, for each categorical feature.
-        - f_idx_map : ndarray of shape (n_features,)
-            Map from original feature index to the corresponding index in the
-            known_cat_bitsets array.
+        - known_cat_bitsets : Bitsets
+            Bitsets of known categories for each categorical feature.
+            Offsets map from feature index to position of the bitsets array.
         """
-
-        categorical_features_indices = np.flatnonzero(self.is_categorical_)
+        if not np.any(self.is_categorical_):
+            return Bitsets(offsets=np.ones(1, dtype=np.uint32))
 
         n_features = self.is_categorical_.size
-        n_categorical_features = categorical_features_indices.size
-
-        f_idx_map = np.zeros(n_features, dtype=np.uint32)
-        f_idx_map[categorical_features_indices] = np.arange(
-            n_categorical_features, dtype=np.uint32
-        )
-
         known_categories = self.bin_thresholds_
+        offsets = np.zeros(shape=n_features + 1, dtype=np.uint32)
+        # For the raw bitsets, we do not need to account for missing values, only for
+        # the maximum raw value.
+        max_cat = np.fromiter(
+            [
+                np.max(known_categories[f_idx]) if is_cat else 0
+                for f_idx, is_cat in enumerate(self.is_categorical_)
+            ],
+            dtype=np.uint32,
+        )
+        n_base_bitsets = np.ceil(max_cat / 32)
+        offsets[1:] = np.cumsum(n_base_bitsets * self.is_categorical, dtype=np.uint32)
+        known_cat_bitsets = Bitsets(offsets=offsets)
 
-        known_cat_bitsets = np.zeros(
-            (n_categorical_features, 8), dtype=X_BITSET_INNER_DTYPE
+        set_known_cat_bitset_from_known_categories(
+            known_cat_bitsets=known_cat_bitsets,
+            known_categories=known_categories,
+            is_categorical=self.is_categorical_,
         )
 
-        # TODO: complexity is O(n_categorical_features * 255). Maybe this is
-        # worth cythonizing
-        for mapped_f_idx, f_idx in enumerate(categorical_features_indices):
-            for raw_cat_val in known_categories[f_idx]:
-                set_bitset_memoryview(known_cat_bitsets[mapped_f_idx], raw_cat_val)
-
-        return known_cat_bitsets, f_idx_map
+        return known_cat_bitsets

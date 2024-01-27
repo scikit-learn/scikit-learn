@@ -442,29 +442,29 @@ def test_make_known_categories_bitsets():
     )
     bin_mapper.fit(X)
 
-    known_cat_bitsets, f_idx_map = bin_mapper.make_known_categories_bitsets()
+    known_cat_bitsets = bin_mapper.make_known_categories_bitsets()
 
-    # Note that for non-categorical features, values are left to 0
-    expected_f_idx_map = np.array([0, 0, 1], dtype=np.uint8)
-    assert_allclose(expected_f_idx_map, f_idx_map)
+    # Note that for non-categorical features, adjacent offsets have the same value.
+    # max(feature 1) = 240, with missing bit => ceil((240 + 1) / 32) = 8
+    # max(feature 2) = 180, with missing bit => ceil((180 + 1) / 32) = 6
+    expected_offset = np.array([0, 0, 8, 8 + 6])
+    assert_allclose(known_cat_bitsets.offsets, expected_offset)
 
-    expected_cat_bitset = np.zeros((2, 8), dtype=np.uint32)
+    expected_cat_bitset = np.zeros(8 + 6, dtype=np.uint32)
 
-    # first categorical feature: [2, 4, 10, 240]
-    f_idx = 1
-    mapped_f_idx = f_idx_map[f_idx]
-    expected_cat_bitset[mapped_f_idx, 0] = 2**2 + 2**4 + 2**10
-    # 240 = 32**7 + 16, therefore the 16th bit of the 7th array is 1.
-    expected_cat_bitset[mapped_f_idx, 7] = 2**16
+    # first categorical feature: [2, 4, 10, 240], f_idx = 1
+    offset = 0
+    expected_cat_bitset[offset] = 2**2 + 2**4 + 2**10
+    # 240 = 32 * 7 + 16, therefore the 16th bit of the 7th array is 1.
+    expected_cat_bitset[offset + 7] = 2**16
 
-    # second categorical feature [30, 70, 180]
-    f_idx = 2
-    mapped_f_idx = f_idx_map[f_idx]
-    expected_cat_bitset[mapped_f_idx, 0] = 2**30
-    expected_cat_bitset[mapped_f_idx, 2] = 2**6
-    expected_cat_bitset[mapped_f_idx, 5] = 2**20
+    # second categorical feature [30, 70, 180], f_idx = 2
+    offset = 8
+    expected_cat_bitset[offset + 0] = 2**30
+    expected_cat_bitset[offset + 2] = 2**6
+    expected_cat_bitset[offset + 5] = 2**20
 
-    assert_allclose(expected_cat_bitset, known_cat_bitsets)
+    assert_allclose(known_cat_bitsets.bitsets, expected_cat_bitset)
 
 
 @pytest.mark.parametrize(
