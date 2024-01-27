@@ -230,6 +230,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
     ...     "documents": ["First item", "second one here", "Is this the last?"],
     ...     "width": [3, 4, 5],
     ... })  # doctest: +SKIP
+    >>> X["documents"] = X["documents"].str.split()
     >>> # "documents" is a string which configures ColumnTransformer to
     >>> # pass the documents column as a 1d array to the FeatureHasher
     >>> ct = ColumnTransformer(
