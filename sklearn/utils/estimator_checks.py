@@ -623,6 +623,13 @@ def check_estimator(estimator=None, generate_only=False):
     --------
     parametrize_with_checks : Pytest specific decorator for parametrizing estimator
         checks.
+
+    Examples
+    --------
+    >>> from sklearn.utils.estimator_checks import check_estimator
+    >>> from sklearn.linear_model import LogisticRegression
+    >>> check_estimator(LogisticRegression(), generate_only=True)
+    <generator object ...>
     """
     if isinstance(estimator, type):
         msg = (
