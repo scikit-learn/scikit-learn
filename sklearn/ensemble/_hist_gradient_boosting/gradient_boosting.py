@@ -352,6 +352,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                     f"have a cardinality <= {self.max_bins} but actually "
                     f"has a cardinality of {categories.size}."
                 )
+            # TODO: Decide if dtype=uint16 would be a better fit.
             known_categories[feature_idx] = np.arange(len(categories), dtype=X_DTYPE)
         return known_categories
 
@@ -1288,10 +1289,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
     def _predict_iterations(self, X, predictors, raw_predictions, is_binned, n_threads):
         """Add the predictions of the predictors to raw_predictions."""
         if not is_binned:
-            (
-                known_cat_bitsets,
-                f_idx_map,
-            ) = self._bin_mapper.make_known_categories_bitsets()
+            known_cat_bitsets = self._bin_mapper.make_known_categories_bitsets()
 
         for predictors_of_ith_iteration in predictors:
             for k, predictor in enumerate(predictors_of_ith_iteration):
@@ -1305,7 +1303,6 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                     predict = partial(
                         predictor.predict,
                         known_cat_bitsets=known_cat_bitsets,
-                        f_idx_map=f_idx_map,
                         n_threads=n_threads,
                     )
                 raw_predictions[:, k] += predict(X)

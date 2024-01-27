@@ -15,10 +15,10 @@ import numpy as np
 from sklearn.utils._openmp_helpers import _openmp_effective_n_threads
 
 from ...utils.arrayfuncs import sum_parallel
-from ._bitset import set_raw_bitset_from_binned_bitset
+from ._bitset import copyto_feature_bitset_array, set_raw_bitset_from_binned_bitset
 from .common import (
     PREDICTOR_RECORD_DTYPE,
-    X_BITSET_INNER_DTYPE,
+    Bitsets,
     MonotonicConstraint,
 )
 from .histogram import HistogramBuilder
@@ -225,6 +225,7 @@ class TreeGrower:
     finalized_leaves : list of TreeNode
     splittable_nodes : list of TreeNode
     n_categorical_splits : int
+    n_base_bitsets :. int
     n_features : int
     n_nodes : int
     total_find_split_time : float
@@ -351,6 +352,7 @@ class TreeGrower:
         self.total_compute_hist_time = 0.0  # time spent computing histograms
         self.total_apply_split_time = 0.0  # time spent splitting nodes
         self.n_categorical_splits = 0
+        self.n_base_bitsets = 0
         self._initialize_root(gradients, hessians)
         self.n_nodes = 1
 
@@ -537,7 +539,9 @@ class TreeGrower:
             )
 
         self.n_nodes += 2
-        self.n_categorical_splits += node.split_info.is_categorical
+        if node.split_info.is_categorical:
+            self.n_categorical_splits += node.split_info.is_categorical
+            self.n_base_bitsets += node.split_info.left_cat_bitset.shape[0]
 
         if self.max_leaf_nodes is not None and n_leaf_nodes == self.max_leaf_nodes:
             self._finalize_leaf(left_child_node)
@@ -708,12 +712,17 @@ class TreeGrower:
         A TreePredictor object.
         """
         predictor_nodes = np.zeros(self.n_nodes, dtype=PREDICTOR_RECORD_DTYPE)
-        binned_left_cat_bitsets = np.zeros(
-            (self.n_categorical_splits, 8), dtype=X_BITSET_INNER_DTYPE
-        )
-        raw_left_cat_bitsets = np.zeros(
-            (self.n_categorical_splits, 8), dtype=X_BITSET_INNER_DTYPE
-        )
+        bitsets_offsets = np.empty(shape=self.n_categorical_splits + 1, dtype=np.uint32)
+        # For initialization of bitsets, only offsets[-1] is required, offsets[0] is
+        # also important, the rest can be filled later.
+        bitsets_offsets[0], bitsets_offsets[-1] = 0, self.n_base_bitsets
+        binned_left_cat_bitsets = Bitsets(offsets=bitsets_offsets)
+        # Same for bitsets of raw categories.
+        # TODO: Think about sharing the same offsets array.
+        bitsets_offsets = np.empty(shape=self.n_categorical_splits + 1, dtype=np.uint32)
+        bitsets_offsets[0], bitsets_offsets[-1] = 0, self.n_base_bitsets
+        raw_left_cat_bitsets = Bitsets(offsets=bitsets_offsets)
+
         _fill_predictor_arrays(
             predictor_nodes,
             binned_left_cat_bitsets,
@@ -768,11 +777,24 @@ def _fill_predictor_arrays(
     elif split_info.is_categorical:
         categories = binning_thresholds[feature_idx]
         node["bitset_idx"] = next_free_bitset_idx
-        binned_left_cat_bitsets[next_free_bitset_idx] = split_info.left_cat_bitset
+        binned_left_cat_bitsets.offsets[next_free_bitset_idx + 1] = (
+            binned_left_cat_bitsets.offsets[next_free_bitset_idx]
+            + split_info.left_cat_bitset.shape[0]
+        )
+        copyto_feature_bitset_array(
+            dst=binned_left_cat_bitsets,
+            bitset_idx=next_free_bitset_idx,
+            src=split_info.left_cat_bitset,
+        )
+        raw_left_cat_bitsets.offsets[next_free_bitset_idx + 1] = (
+            binned_left_cat_bitsets.offsets[next_free_bitset_idx + 1]
+        )
+
         set_raw_bitset_from_binned_bitset(
-            raw_left_cat_bitsets[next_free_bitset_idx],
+            raw_left_cat_bitsets,
             split_info.left_cat_bitset,
             categories,
+            next_free_bitset_idx,
         )
         next_free_bitset_idx += 1
     else:

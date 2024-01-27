@@ -1096,9 +1096,9 @@ def test_categorical_encoding_strategies():
         assert cross_val_score(clf_cat, X, y).mean() == 1
 
     # quick sanity check for the bitset: 0, 2, 4 = 2**0 + 2**2 + 2**4 = 21
-    expected_left_bitset = [21, 0, 0, 0, 0, 0, 0, 0]
-    left_bitset = clf_cat.fit(X, y)._predictors[0][0].raw_left_cat_bitsets[0]
-    assert_array_equal(left_bitset, expected_left_bitset)
+    expected_left_bitset = [21]
+    raw_left_bitsets = clf_cat.fit(X, y)._predictors[0][0].raw_left_cat_bitsets
+    assert_array_equal(raw_left_bitsets.bitsets, expected_left_bitset)
 
     # Treating categories as ordered, we need more depth / more splits to get
     # the same predictions

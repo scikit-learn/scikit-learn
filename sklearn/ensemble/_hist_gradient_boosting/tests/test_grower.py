@@ -7,9 +7,9 @@ from sklearn.ensemble._hist_gradient_boosting.binning import _BinMapper
 from sklearn.ensemble._hist_gradient_boosting.common import (
     G_H_DTYPE,
     X_BINNED_DTYPE,
-    X_BITSET_INNER_DTYPE,
     X_DTYPE,
     Y_DTYPE,
+    Bitsets,
 )
 from sklearn.ensemble._hist_gradient_boosting.grower import TreeGrower
 from sklearn.preprocessing import OneHotEncoder
@@ -380,10 +380,9 @@ def test_missing_value_predict_only():
     # now build X_test with only nans, and make sure all predictions are equal
     # to prediction_main_path
     all_nans = np.full(shape=(n_samples, 1), fill_value=np.nan)
-    known_cat_bitsets = np.zeros((0, 8), dtype=X_BITSET_INNER_DTYPE)
-    f_idx_map = np.zeros(0, dtype=np.uint32)
+    known_cat_bitsets = Bitsets(offsets=np.array([0, 8], dtype=np.uint32))  # is ignored
 
-    y_pred = predictor.predict(all_nans, known_cat_bitsets, f_idx_map, n_threads)
+    y_pred = predictor.predict(all_nans, known_cat_bitsets, n_threads)
     assert np.all(y_pred == prediction_main_path)
 
 
@@ -422,12 +421,12 @@ def test_split_on_nan_with_infinite_values():
     assert predictor.nodes[0]["num_threshold"] == np.inf
     assert predictor.nodes[0]["bin_threshold"] == n_bins_non_missing - 1
 
-    known_cat_bitsets, f_idx_map = bin_mapper.make_known_categories_bitsets()
+    known_cat_bitsets = bin_mapper.make_known_categories_bitsets()
 
     # Make sure in particular that the +inf sample is mapped to the left child
     # Note that lightgbm "fails" here and will assign the inf sample to the
     # right child, even though it's a "split on nan" situation.
-    predictions = predictor.predict(X, known_cat_bitsets, f_idx_map, n_threads)
+    predictions = predictor.predict(X, known_cat_bitsets, n_threads)
     predictions_binned = predictor.predict_binned(
         X_binned,
         n_bins_non_missing=bin_mapper.n_bins_non_missing_,
@@ -439,13 +438,14 @@ def test_split_on_nan_with_infinite_values():
 
 def test_grow_tree_categories():
     # Check that the grower produces the right predictor tree when a split is
-    # categorical
-    X_binned = np.array([[0, 1] * 11 + [1]], dtype=X_BINNED_DTYPE).T
+    # categorical.
+    # First feature is numerical but constant, second is categorical and split on.
+    X_binned = np.array([[0] * 23, [0, 1] * 11 + [1]], dtype=X_BINNED_DTYPE).T
     X_binned = np.asfortranarray(X_binned)
 
     all_gradients = np.array([10, 1] * 11 + [1], dtype=G_H_DTYPE)
     all_hessians = np.ones(1, dtype=G_H_DTYPE)
-    is_categorical = np.ones(1, dtype=np.uint8)
+    is_categorical = np.array([0, 1], dtype=np.uint8)
 
     grower = TreeGrower(
         X_binned,
@@ -460,7 +460,7 @@ def test_grow_tree_categories():
     grower.grow()
     assert grower.n_nodes == 3
 
-    categories = [np.array([4, 9], dtype=X_DTYPE)]
+    categories = [None, np.array([4, 9], dtype=X_DTYPE)]
     predictor = grower.make_predictor(binning_thresholds=categories)
     root = predictor.nodes[0]
     assert root["count"] == 23
@@ -473,14 +473,15 @@ def test_grow_tree_categories():
     assert left["count"] >= right["count"]
 
     # check binned category value (1)
-    expected_binned_cat_bitset = [2**1] + [0] * 7
-    binned_cat_bitset = predictor.binned_left_cat_bitsets
-    assert_array_equal(binned_cat_bitset[0], expected_binned_cat_bitset)
+    expected_binned_cat_bitset = [2**1]
+    binned_cat_bitsets = predictor.binned_left_cat_bitsets
+    assert_array_equal(binned_cat_bitsets.bitsets, expected_binned_cat_bitset)
 
     # check raw category value (9)
-    expected_raw_cat_bitsets = [2**9] + [0] * 7
+    expected_raw_cat_bitsets = [2**9]
     raw_cat_bitsets = predictor.raw_left_cat_bitsets
-    assert_array_equal(raw_cat_bitsets[0], expected_raw_cat_bitsets)
+    assert_array_equal(raw_cat_bitsets.bitsets, expected_raw_cat_bitsets)
+    assert_array_equal(raw_cat_bitsets.offsets, [0, 1])
 
     # Note that since there was no missing values during training, the missing
     # values aren't part of the bitsets. However, we expect the missing values
@@ -491,18 +492,19 @@ def test_grow_tree_categories():
     # make sure binned missing values are mapped to the left child during
     # prediction
     prediction_binned = predictor.predict_binned(
-        np.asarray([[6]]).astype(X_BINNED_DTYPE),
-        n_bins_non_missing=np.array([6], dtype=np.uint16),
+        np.asarray([[0, 6]]).astype(X_BINNED_DTYPE),
+        n_bins_non_missing=np.array([1, 6], dtype=np.uint16),
         n_threads=n_threads,
     )
     assert_allclose(prediction_binned, [-1])  # negative gradient
 
     # make sure raw missing values are mapped to the left child during
     # prediction
-    known_cat_bitsets = np.zeros((1, 8), dtype=np.uint32)  # ignored anyway
-    f_idx_map = np.array([0], dtype=np.uint32)
+    known_cat_bitsets = Bitsets(
+        offsets=np.array([0, 1], dtype=np.uint32),
+    )  # is ignored anyway
     prediction = predictor.predict(
-        np.array([[np.nan]]), known_cat_bitsets, f_idx_map, n_threads
+        np.array([[0, np.nan]]), known_cat_bitsets, n_threads
     )
     assert_allclose(prediction, [-1])
 
