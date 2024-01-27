@@ -415,8 +415,8 @@ cdef inline int node_split_best(
         f_i -= 1
         features[f_i], features[f_j] = features[f_j], features[f_i]
         has_missing = n_missing != 0
-        if has_missing:
-            criterion.init_missing(n_missing)
+        criterion.init_missing(n_missing)  # initialize even when n_missing == 0
+
         # Evaluate all splits
 
         # If there are missing values, then we search twice for the most optimal split.
