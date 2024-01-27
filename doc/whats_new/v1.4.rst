@@ -68,6 +68,15 @@ Changelog
 - |Enhancement| Pandas and Polars dataframe are validated directly without ducktyping
   checks. :pr:`28195` by `Thomas Fan`_.
 
+:mod:`sklearn.tree`
+...................
+
+- |Fix| :class:`tree.DecisionTreeClassifier` and
+  :class:`tree.DecisionTreeRegressor` are handling missing values properly. The internal
+  criterion was not initialize when no missing values were present in the data, leading
+  to potentially wrong criterion values.
+  :pr:`xxx` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 :mod:`sklearn.utils`
 ....................
 
