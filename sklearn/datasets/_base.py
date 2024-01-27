@@ -63,6 +63,11 @@ def get_data_home(data_home=None) -> str:
     -------
     data_home: str
         The path to scikit-learn data directory.
+
+    Examples
+    --------
+    >>> from sklearn.datasets import get_data_home
+    >>> get_data_home()  # doctest: +SKIP
     """
     if data_home is None:
         data_home = environ.get("SCIKIT_LEARN_DATA", join("~", "scikit_learn_data"))
