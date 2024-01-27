@@ -68,6 +68,15 @@ Essentially, the rendered page would look like the following:
 |     More sections...                                                            |
 |---------------------------------------------------------------------------------|
 
+Hooks will be automatically generated for each module and each section. For a module,
+e.g., `sklearn.feature_extraction`, the hook would be `feature_extraction_ref`; for a
+section, e.g., "From text" under `sklearn.feature_extraction`, the hook would be
+`feature_extraction_ref-from-text`. However, note that a better way is to refer using
+the :mod: directive, e.g., :mod:`sklearn.feature_extraction` for the module and
+:mod:`sklearn.feature_extraction.text` for the section. Only in case that a section
+is not a particular submodule does the hook become useful, e.g., the "Loaders" section
+under `sklearn.datasets`.
+
 CONFIGURING DEPRECATED_API_REFERENCE
 ====================================
 
