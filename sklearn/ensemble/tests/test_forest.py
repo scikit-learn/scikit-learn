@@ -24,6 +24,8 @@ from scipy.special import comb
 
 import sklearn
 from sklearn import clone, datasets
+from sklearn.compose import ColumnTransformer
+from sklearn.compose import make_column_selector as selector
 from sklearn.datasets import make_classification, make_hastie_10_2
 from sklearn.decomposition import TruncatedSVD
 from sklearn.dummy import DummyRegressor
@@ -39,6 +41,7 @@ from sklearn.ensemble._forest import (
     _get_n_samples_bootstrap,
 )
 from sklearn.exceptions import NotFittedError
+from sklearn.impute import SimpleImputer
 from sklearn.metrics import (
     explained_variance_score,
     f1_score,
@@ -46,6 +49,8 @@ from sklearn.metrics import (
     mean_squared_error,
 )
 from sklearn.model_selection import GridSearchCV, cross_val_score, train_test_split
+from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import OrdinalEncoder
 from sklearn.svm import LinearSVC
 from sklearn.tree._classes import SPARSE_SPLITTERS
 from sklearn.utils._testing import (
@@ -55,6 +60,7 @@ from sklearn.utils._testing import (
     assert_array_almost_equal,
     assert_array_equal,
     ignore_warnings,
+    skip_if_no_network,
     skip_if_no_parallel,
 )
 from sklearn.utils.fixes import COO_CONTAINERS, CSC_CONTAINERS, CSR_CONTAINERS
@@ -1854,3 +1860,70 @@ def test_non_supported_criterion_raises_error_with_missing_values():
     msg = "RandomForestRegressor does not accept missing values"
     with pytest.raises(ValueError, match=msg):
         forest.fit(X, y)
+
+
+@skip_if_no_network
+def test_random_forest_similar_performance_as_imputer():
+    """Check that the strategy of handling missing values by the trees lead to similar
+    performance than imputation on a given use case.
+
+    The use case is a regression problem on Ames housing. Some of the features contain
+    a lot of missing data. We check that the performance in terms of MAPE is similar.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/28254
+    """
+    _ = pytest.importorskip("pandas")
+    X, y = datasets.fetch_openml("house_prices", return_X_y=True)
+
+    # model with imputation
+    preprocessor_with_imputation = ColumnTransformer(
+        transformers=[
+            (
+                "encoder",
+                make_pipeline(
+                    SimpleImputer(strategy="most_frequent"),
+                    OrdinalEncoder(
+                        handle_unknown="use_encoded_value", unknown_value=np.nan
+                    ),
+                ),
+                selector(dtype_include=object),
+            ),
+        ],
+        remainder=SimpleImputer(strategy="mean"),
+    )
+    model_with_imputation = make_pipeline(
+        preprocessor_with_imputation,
+        RandomForestRegressor(n_estimators=10, random_state=0),
+    )
+
+    # model with native support for missing values
+    preprocessor_without_imputation = ColumnTransformer(
+        transformers=[
+            (
+                "encoder",
+                OrdinalEncoder(
+                    handle_unknown="use_encoded_value", unknown_value=np.nan
+                ),
+                selector(dtype_include=object),
+            ),
+        ],
+        remainder="passthrough",
+    )
+    model_with_native_support = make_pipeline(
+        preprocessor_without_imputation,
+        RandomForestRegressor(n_estimators=10, random_state=0),
+    )
+
+    scoring = "neg_mean_absolute_percentage_error"
+    scores_with_imputation = -cross_val_score(
+        model_with_imputation, X, y, scoring=scoring, n_jobs=2
+    )
+    mean_scores_with_imputation = scores_with_imputation.mean()
+    scores_with_native_support = -cross_val_score(
+        model_with_native_support, X, y, scoring=scoring, n_jobs=2
+    )
+    mean_scores_with_native_support = scores_with_native_support.mean()
+
+    # in the original issue, we would witness an increase from 10% to 20% MAPE
+    assert (mean_scores_with_native_support - mean_scores_with_imputation) < 0.01

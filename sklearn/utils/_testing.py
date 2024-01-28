@@ -379,6 +379,13 @@ try:
         not ARRAY_API_COMPAT_FUNCTIONAL,
         reason="requires array_api_compat installed and a new enough version of NumPy",
     )
+    skip_if_no_network = pytest.mark.skipif(
+        bool(int(os.environ.get("SKLEARN_SKIP_NETWORK_TESTS", 1))),
+        reason=(
+            "This test requires network access. Set SKLEARN_SKIP_NETWORK_TESTS=0 to run"
+            " the test."
+        ),
+    )
 
     #  Decorator for tests involving both BLAS calls and multiprocessing.
     #
