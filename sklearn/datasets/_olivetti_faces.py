@@ -112,6 +112,15 @@ def fetch_olivetti_faces(
         Tuple with the `data` and `target` objects described above.
 
         .. versionadded:: 0.22
+
+    Examples
+    --------
+    >>> from sklearn.datasets import fetch_olivetti_faces
+    >>> olivetti_faces = fetch_olivetti_faces()
+    >>> olivetti_faces.data.shape, olivetti_faces.target.shape
+    ((400, 4096), (400,))
+    >>> olivetti_faces.images.shape
+    (400, 64, 64)
     """
     data_home = get_data_home(data_home=data_home)
     if not exists(data_home):

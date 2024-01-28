@@ -338,6 +338,22 @@ def fetch_lfw_people(
         ndarray of shape (n_samples,) containing the target samples.
 
         .. versionadded:: 0.20
+
+    Examples
+    --------
+    >>> from sklearn.datasets import fetch_lfw_people
+    >>> lfw_people = fetch_lfw_people(min_faces_per_person=70, resize=0.4)
+
+    >>> for name in lfw_people.target_names:
+    ...     print(name)
+    ...
+    Ariel Sharon
+    Colin Powell
+    Donald Rumsfeld
+    George W Bush
+    Gerhard Schroeder
+    Hugo Chavez
+    Tony Blair
     """
     lfw_home, data_folder_path = _check_fetch_lfw(
         data_home=data_home, funneled=funneled, download_if_missing=download_if_missing
@@ -529,6 +545,19 @@ def fetch_lfw_pairs(
             0 corresponds to "Different person", 1 corresponds to "same person".
         DESCR : str
             Description of the Labeled Faces in the Wild (LFW) dataset.
+
+    Examples
+    --------
+    >>> from sklearn.datasets import fetch_lfw_pairs
+    >>> lfw_pairs_train = fetch_lfw_pairs(subset='train')
+    >>> list(lfw_pairs_train.target_names)
+    ['Different persons', 'Same person']
+    >>> lfw_pairs_train.pairs.shape
+    (2200, 2, 62, 47)
+    >>> lfw_pairs_train.data.shape
+    (2200, 5828)
+    >>> lfw_pairs_train.target.shape
+    (2200,)
     """
     lfw_home, data_folder_path = _check_fetch_lfw(
         data_home=data_home, funneled=funneled, download_if_missing=download_if_missing
