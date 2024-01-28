@@ -28,6 +28,7 @@ from ..utils._param_validation import (
 from ..utils.metadata_routing import (
     MetadataRouter,
     MethodMapping,
+    _raise_for_params,
     _routing_enabled,
     process_routing,
 )
@@ -427,6 +428,11 @@ class RANSACRegressor(
                 " itself." % estimator_name
             )
 
+        _raise_for_params(fit_params, self, "fit")
+
+        if sample_weight is not None:
+            fit_params["sample_weight"] = sample_weight
+
         if _routing_enabled():
             try:
                 routed_params = process_routing(self, "fit", **fit_params)
@@ -654,6 +660,8 @@ class RANSACRegressor(
             reset=False,
         )
 
+        _raise_for_params(params, self, "predict")
+
         if _routing_enabled():
             predict_params = process_routing(self, "predict", **params).estimator[
                 "predict"
@@ -700,6 +708,7 @@ class RANSACRegressor(
             reset=False,
         )
 
+        _raise_for_params(params, self, "score")
         if _routing_enabled():
             score_params = process_routing(self, "score", **params).estimator["score"]
         else:
@@ -725,8 +734,8 @@ class RANSACRegressor(
             estimator=self.estimator,
             method_mapping=MethodMapping()
             .add(caller="fit", callee="fit")
-            .add(caller="fit", callee="score")
             .add(caller="fit", callee="predict")
+            .add(caller="fit", callee="score")
             .add(caller="score", callee="score")
             .add(caller="predict", callee="predict"),
         )

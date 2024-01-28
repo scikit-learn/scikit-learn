@@ -498,15 +498,17 @@ def test_error_on_missing_requests_for_sub_estimator(metaestimator):
             with pytest.raises(UnsetMetadataPassedError, match=re.escape(msg)):
                 method = getattr(instance, method_name)
                 if method_name in ["predict", "score"]:
-                    # fit before calling method
+                    # set request on fit and on the method not tested here
                     set_request(estimator, "fit")
+                    if method_name == "predict":
+                        set_request(estimator, "score")
+                    if method_name == "score":
+                        set_request(estimator, "predict")
+                    # fit before calling method
                     fit_method = getattr(instance, "fit")
                     fit_method(X, y, **method_kwargs)
-                    # then call method
-                    if method_name == "predict":
-                        method(X, **method_kwargs)
-                    else:  # method_name == "score"
-                        method(X, y, **method_kwargs)
+                if method_name == "predict":
+                    method(X, **method_kwargs)
                 else:
                     method(X, y, **method_kwargs)
 
@@ -557,11 +559,8 @@ def test_setting_request_on_sub_estimator_removes_error(metaestimator):
                     set_multiple_requests(estimator, requests_set_together, "fit")
                 fit_method = getattr(instance, "fit")
                 fit_method(X, y, **method_kwargs, **extra_method_args)
-                # then call method
-                if method_name == "predict":
-                    method(X, **method_kwargs, **extra_method_args)
-                else:  # method_name == "score"
-                    method(X, y, **method_kwargs, **extra_method_args)
+            if method_name == "predict":
+                method(X, **method_kwargs, **extra_method_args)
             else:
                 method(X, y, **method_kwargs, **extra_method_args)
 
