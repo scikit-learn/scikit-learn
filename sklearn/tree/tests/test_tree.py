@@ -2614,3 +2614,32 @@ def test_deterministic_pickle():
     pickle2 = pickle.dumps(tree2)
 
     assert pickle1 == pickle2
+
+
+def test_regression_tree_missing_values_toy():
+    """Check that we properly handle missing values in regression trees using a toy
+    dataset.
+
+    The regression targeted by this test was that we were not reinitializing the
+    criterion when it comes to the number of missing values. Therefore, the value
+    of the critetion (i.e. MSE) was completely wrong.
+
+    This test check that the MSE is null when there is a single sample in the leaf.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/28254
+    """
+
+    # With this dataset, the missing values will always be sent to the left child
+    # at the first split. The leaf will be pure.
+    X = np.array([np.nan, np.nan, 3, 4, 5, 6]).reshape(-1, 1)
+    y = np.arange(6)
+
+    tree = DecisionTreeRegressor(random_state=0).fit(X, y)
+    assert all(tree.tree_.impurity >= 0)  # MSE should always be positive
+
+    # Find the leaves with a single sample where the MSE should be 0
+    leaves_idx = np.flatnonzero(
+        (tree.tree_.children_left == -1) & (tree.tree_.n_node_samples == 1)
+    )
+    assert_allclose(tree.tree_.impurity[leaves_idx], 0.0)
