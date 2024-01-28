@@ -1229,15 +1229,13 @@ def load_linnerud(*, return_X_y=False, as_frame=False):
     >>> linnerud_data = load_linnerud()
     >>> physiological_data = linnerud_data.data
     >>> exercise_data = linnerud_data.target
-    >>> print("Physiological Measurements:\n",physiological_data[:5])
-    Physiological Measurements:
+    >>> print(physiological_data[:5])
     [[  5. 162.  60.]
     [  2. 110.  60.]
     [ 12. 101. 101.]
     [ 12. 105.  37.]
     [ 13. 155.  58.]]
-    >>> print("Exercise Data:\n",exercise_data[:5])
-    Exercise Data:
+    >>> print(exercise_data[:5])
     [[191.  36.  50.]
     [189.  37.  52.]
     [193.  38.  58.]
