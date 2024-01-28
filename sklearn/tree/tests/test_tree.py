@@ -2664,7 +2664,7 @@ def test_classification_tree_missing_values_toy():
     rng = np.random.RandomState(42)
     X_missing = X.copy()
     mask = rng.binomial(
-        n=np.ones(shape=(1, 4), dtype=np.int64), p=X[:, [2]] / 8
+        n=np.ones(shape=(1, 4), dtype=np.int32), p=X[:, [2]] / 8
     ).astype(bool)
     X_missing[mask] = np.nan
     X_train, _, y_train, _ = train_test_split(X_missing, y, random_state=13)
