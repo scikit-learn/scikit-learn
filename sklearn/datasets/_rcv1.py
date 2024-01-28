@@ -172,7 +172,6 @@ def fetch_rcv1(
     (804414, 47236)
     >>> rcv1.target.shape
     (804414, 103)
-
     """
     N_SAMPLES = 804414
     N_FEATURES = 47236
