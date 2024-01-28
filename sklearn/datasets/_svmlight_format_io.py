@@ -173,18 +173,14 @@ def load_svmlight_file(
 
     Examples
     --------
-    To use joblib.Memory to cache the svmlight file::
-
-        from joblib import Memory
-        from .datasets import load_svmlight_file
-        mem = Memory("./mycache")
-
-        @mem.cache
-        def get_data():
-            data = load_svmlight_file("mysvmlightfile")
-            return data[0], data[1]
-
-        X, y = get_data()
+    >>> from joblib import Memory
+    >>> from .datasets import load_svmlight_file
+    >>> mem = Memory("./mycache")
+    >>> @mem.cache
+    ... def get_data():
+    ...    data = load_svmlight_file("mysvmlightfile")
+    ...    return data[0], data[1]
+    X, y = get_data() # doctest: +SKIP
     """
     return tuple(
         load_svmlight_files(
