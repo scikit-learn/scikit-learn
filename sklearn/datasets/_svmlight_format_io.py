@@ -363,7 +363,7 @@ def load_svmlight_files(
     Examples
     --------
     >>> from joblib import Memory
-    >>> from sklearn.datasets import load_svmlight_files>
+    >>> from sklearn.datasets import load_svmlight_files
     >>> mem = Memory("./mycache")
     >>> @mem.cache
     ... def get_data():
