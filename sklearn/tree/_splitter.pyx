@@ -525,8 +525,7 @@ cdef inline int node_split_best(
             best_split.feature,
             best_split.n_missing
         )
-        if best_split.n_missing != 0:
-            criterion.init_missing(best_split.n_missing)
+        criterion.init_missing(best_split.n_missing)
         criterion.missing_go_to_left = best_split.missing_go_to_left
 
         criterion.reset()
