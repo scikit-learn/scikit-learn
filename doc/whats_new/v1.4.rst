@@ -75,7 +75,7 @@ Changelog
   :class:`tree.DecisionTreeRegressor` are handling missing values properly. The internal
   criterion was not initialize when no missing values were present in the data, leading
   to potentially wrong criterion values.
-  :pr:`xxx` by :user:`Guillaume Lemaitre <glemaitre>`.
+  :pr:`28295` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 :mod:`sklearn.utils`
 ....................
