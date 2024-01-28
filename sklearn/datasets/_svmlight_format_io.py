@@ -353,6 +353,19 @@ def load_svmlight_files(
     load_svmlight_file: Similar function for loading a single file in this
         format.
 
+    Examples
+    --------
+        To use joblib.Memory to cache the svmlight files::
+
+            from joblib import Memory
+            from sklearn.datasets import load_svmlight_files
+            mem = Memory("./mycache")
+            @mem.cache
+            def get_data():
+                files = ["mysvmlightfile","mysvmlightfile"]
+                X1, Y1, X2, Y2 = load_svmlight_files(files)
+                return X1, Y1, X2, Y2
+            X1, y1, X2, y2 = get_data()
     Notes
     -----
     When fitting a model to a matrix X_train and evaluating it against a

@@ -1222,6 +1222,27 @@ def load_linnerud(*, return_X_y=False, as_frame=False):
         features in `X` and a target in `y` of a given sample.
 
         .. versionadded:: 0.18
+
+    Examples
+    --------
+    >>> from sklearn.datasets import load_linnerud
+    >>> linnerud_data = load_linnerud()
+    >>> physiological_data = linnerud_data.data
+    >>> exercise_data = linnerud_data.target
+    >>> print("Physiological Measurements:\n",physiological_data[:5])
+    Physiological Measurements:
+    [[  5. 162.  60.]
+    [  2. 110.  60.]
+    [ 12. 101. 101.]
+    [ 12. 105.  37.]
+    [ 13. 155.  58.]]
+    >>> print("Exercise Data:\n",exercise_data[:5])
+    Exercise Data:
+    [[191.  36.  50.]
+    [189.  37.  52.]
+    [193.  38.  58.]
+    [162.  35.  62.]
+    [189.  35.  46.]]
     """
     data_filename = "linnerud_exercise.csv"
     target_filename = "linnerud_physiological.csv"
