@@ -50,7 +50,11 @@ from ..utils import check_array, check_random_state, column_or_1d
 from ..utils._param_validation import HasMethods, Interval, StrOptions
 from ..utils.multiclass import check_classification_targets
 from ..utils.stats import _weighted_percentile
-from ..utils.validation import _check_sample_weight, check_is_fitted
+from ..utils.validation import (
+    _check_monotonic_cst,
+    _check_sample_weight,
+    check_is_fitted,
+)
 from ._base import BaseEnsemble
 from ._gradient_boosting import _random_sample_mask, predict_stage, predict_stages
 
@@ -468,6 +472,8 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         else:
             neg_g_view = neg_gradient
 
+        monotonic_cst = _check_monotonic_cst(self, self.monotonic_cst)
+
         for k in range(self.n_trees_per_iteration_):
             if self._loss.is_multiclass:
                 y = np.array(original_y == k, dtype=np.float64)
@@ -485,7 +491,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
                 max_leaf_nodes=self.max_leaf_nodes,
                 random_state=random_state,
                 ccp_alpha=self.ccp_alpha,
-                monotonic_cst=self.monotonic_cst,
+                monotonic_cst=monotonic_cst,
             )
 
             if self.subsample < 1.0:
@@ -1330,21 +1336,20 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
 
         .. versionadded:: 0.22
 
-    monotonic_cst : array-like of int of shape (n_features), default=None
-        Indicates the monotonicity constraint to enforce on each feature.
-          - 1: monotonic increase
-          - 0: no constraint
-          - -1: monotonic decrease
+    monotonic_cst : array-like of int of shape (n_features) or dict, default=None
+        Monotonic constraint to enforce on each feature are specified using the
+        following integer values:
 
-        If ``monotonic_cst`` is ``None``, no constraints are applied.
+        - 1: monotonic increase
+        - 0: no constraint
+        - -1: monotonic decrease
 
-        Monotonicity constraints are not supported for:
-          - multiclass classifications (i.e. when `n_classes > 2`),
-          - multioutput classifications (i.e. when `n_outputs_ > 1`),
-          - classifications trained on data with missing values.
+        If a dict with str keys, map feature to monotonic constraints by name.
+        If an array, the features are mapped to constraints by position. See
+        :ref:`monotonic_cst_features_names` for a usage example.
 
-        The constraints hold over the probability of the positive class.
-
+        The constraints are only valid for binary classifications and hold
+        over the probability of the positive class.
         Read more in the :ref:`User Guide <monotonic_cst_gbdt>`.
 
         .. versionadded:: 1.4
@@ -1969,21 +1974,20 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
 
         .. versionadded:: 0.22
 
-    monotonic_cst : array-like of int of shape (n_features), default=None
-        Indicates the monotonicity constraint to enforce on each feature.
-          - 1: monotonic increase
-          - 0: no constraint
-          - -1: monotonic decrease
+    monotonic_cst : array-like of int of shape (n_features) or dict, default=None
+        Monotonic constraint to enforce on each feature are specified using the
+        following integer values:
 
-        If ``monotonic_cst`` is ``None``, no constraints are applied.
+        - 1: monotonic increase
+        - 0: no constraint
+        - -1: monotonic decrease
 
-        Monotonicity constraints are not supported for:
-          - multiclass classifications (i.e. when `n_classes > 2`),
-          - multioutput classifications (i.e. when `n_outputs_ > 1`),
-          - classifications trained on data with missing values.
+        If a dict with str keys, map feature to monotonic constraints by name.
+        If an array, the features are mapped to constraints by position. See
+        :ref:`monotonic_cst_features_names` for a usage example.
 
-        The constraints hold over the probability of the positive class.
-
+        The constraints are only valid for binary classifications and hold
+        over the probability of the positive class.
         Read more in the :ref:`User Guide <monotonic_cst_gbdt>`.
 
         .. versionadded:: 1.4
