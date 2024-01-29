@@ -50,7 +50,7 @@ fi
 
 if [[ -n "$IGNORE_WARNINGS" ]]; then
     # override the warnings settings in setup.cfg
-    TEST_CMD="$TEST_CMD -Wwarn"
+    TEST_CMD="$TEST_CMD -Walways"
 fi
 
 if [[ "$PYTEST_XDIST_VERSION" != "none" ]]; then
