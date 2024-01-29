@@ -278,8 +278,9 @@ def pytest_configure(config):
 
 
 def pytest_collectstart(collector):
-    # XXX: Easiest way to ignore Pyarrow DeprecationWarning in the short-term.
-    # See https://github.com/pandas-dev/pandas/issues/54466 for more details.
+    # XXX: Easiest way to ignore pandas Pyarrow DeprecationWarning in the
+    # short-term. See https://github.com/pandas-dev/pandas/issues/54466 for
+    # more details.
     warnings.filterwarnings(
         "ignore", message=r"\s*Pyarrow", category=DeprecationWarning
     )
