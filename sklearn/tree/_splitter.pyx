@@ -418,8 +418,7 @@ cdef inline int node_split_best(
         f_i -= 1
         features[f_i], features[f_j] = features[f_j], features[f_i]
         has_missing = n_missing != 0
-        if has_missing:
-            criterion.init_missing(n_missing)
+        criterion.init_missing(n_missing)
         # Evaluate all splits
 
         # If there are missing values, then we search twice for the most optimal split.
@@ -528,8 +527,7 @@ cdef inline int node_split_best(
             best_split.feature,
             best_split.n_missing
         )
-        if best_split.n_missing != 0:
-            criterion.init_missing(best_split.n_missing)
+        criterion.init_missing(best_split.n_missing)
         criterion.missing_go_to_left = best_split.missing_go_to_left
 
         criterion.reset()
@@ -801,8 +799,7 @@ cdef inline int node_split_random(
         f_i -= 1
         features[f_i], features[f_j] = features[f_j], features[f_i]
         has_missing = n_missing != 0
-        if has_missing:
-            criterion.init_missing(n_missing)
+        criterion.init_missing(n_missing)
 
         # In addition, we either randomly split the non-missing values
         # or we split entirely by separating the non-missing
@@ -913,8 +910,7 @@ cdef inline int node_split_random(
                 best_split.feature,
                 best_split.n_missing
             )
-        if best_split.n_missing != 0:
-            criterion.init_missing(best_split.n_missing)
+        criterion.init_missing(best_split.n_missing)
         criterion.missing_go_to_left = best_split.missing_go_to_left
 
         criterion.reset()
