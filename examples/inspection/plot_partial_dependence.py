@@ -57,12 +57,7 @@ X["weather"].value_counts()
 
 # %%
 # Because of this rare category, we collapse it into `"rain"`.
-X["weather"] = (
-    X["weather"]
-    .astype(object)
-    .replace(to_replace="heavy_rain", value="rain")
-    .astype("category")
-)
+X["weather"] = X["weather"].cat.remove_categories("heavy_rain").fillna("rain")
 
 # %%
 # We now have a closer look at the `"year"` feature:

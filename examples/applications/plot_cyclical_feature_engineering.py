@@ -104,12 +104,7 @@ X["weather"].value_counts()
 # train machine learning models with cross validation. Instead, we simplify the
 # representation by collapsing those into the `"rain"` category.
 #
-X["weather"] = (
-    X["weather"]
-    .astype(object)
-    .replace(to_replace="heavy_rain", value="rain")
-    .astype("category")
-)
+X["weather"] = X["weather"].cat.remove_categories("heavy_rain").fillna("rain")
 
 # %%
 X["weather"].value_counts()
