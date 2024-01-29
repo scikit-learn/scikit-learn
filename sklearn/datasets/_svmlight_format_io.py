@@ -370,7 +370,7 @@ def load_svmlight_files(
     ...     files = ["mysvmlightfile","mysvmlightfile"]
     ...     X1, Y1, X2, Y2 = load_svmlight_files(files)
     ...     return X1, Y1, X2, Y2
-    >>> X1, Y1, X2, Y2 = get_data()
+    >>> X1, Y1, X2, Y2 = get_data() # doctest: +SKIP
     """
     if (offset != 0 or length > 0) and zero_based == "auto":
         # disable heuristic search to avoid getting inconsistent results on
