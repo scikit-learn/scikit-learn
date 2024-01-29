@@ -531,18 +531,19 @@ def test_parameters_valid_types(param, value):
     nca.fit(X, y)
 
 
-def test_nca_feature_names_out():
+@pytest.mark.parametrize("n_components", range(1, iris.data.shape[1]))
+def test_nca_feature_names_out(n_components):
     """Check `get_feature_names_out` for `NeighborhoodComponentsAnalysis`."""
 
     X = iris_data
     y = iris_target
 
-    est = NeighborhoodComponentsAnalysis().fit(X, y)
+    est = NeighborhoodComponentsAnalysis(n_components=n_components).fit(X, y)
     names_out = est.get_feature_names_out()
 
     class_name_lower = est.__class__.__name__.lower()
     expected_names_out = np.array(
-        [f"{class_name_lower}{i}" for i in range(est.components_.shape[1])],
+        [f"{class_name_lower}{i}" for i in range(n_components)],
         dtype=object,
     )
     assert_array_equal(names_out, expected_names_out)
