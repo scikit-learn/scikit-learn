@@ -49,7 +49,8 @@ if [[ "$COVERAGE" == "true" ]]; then
 fi
 
 if [[ -n "$IGNORE_WARNINGS" ]]; then
-    TEST_CMD="$TEST_CMD -Wignore"
+    # override the warnings settings in setup.cfg
+    TEST_CMD="$TEST_CMD -Wwarn"
 fi
 
 if [[ "$PYTEST_XDIST_VERSION" != "none" ]]; then
