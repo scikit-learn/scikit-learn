@@ -2,6 +2,10 @@
 
 .. currentmodule:: sklearn
 
+============
+Version 0.17
+============
+
 .. _changes_0_17_1:
 
 Version 0.17.1
@@ -313,8 +317,9 @@ Bug fixes
 - Fix in :class:`cluster.KMeans` cluster reassignment for sparse input by
   `Lars Buitinck`_.
 
-- Fixed a bug in :class:`decomposition.LDA` that could cause asymmetric covariance
-  matrices when using shrinkage. By `Martin Billinger`_.
+- Fixed a bug in :class:`discriminant_analysis.LinearDiscriminantAnalysis` that
+  could cause asymmetric covariance matrices when using shrinkage. By `Martin
+  Billinger`_.
 
 - Fixed `cross_validation.cross_val_predict` for estimators with
   sparse predictions. By Buddha Prakash.

@@ -392,7 +392,7 @@ class PredictionErrorDisplay:
             y_true = _safe_indexing(y_true, indices, axis=0)
             y_pred = _safe_indexing(y_pred, indices, axis=0)
 
-        viz = PredictionErrorDisplay(
+        viz = cls(
             y_true=y_true,
             y_pred=y_pred,
         )

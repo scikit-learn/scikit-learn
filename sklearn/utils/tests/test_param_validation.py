@@ -23,6 +23,7 @@ from sklearn.utils._param_validation import (
     _CVObjects,
     _InstancesOf,
     _IterablesNotString,
+    _NanConstraint,
     _NoneConstraint,
     _PandasNAConstraint,
     _RandomStates,
@@ -412,6 +413,7 @@ def test_generate_valid_param(constraint):
         (Real, 0.5),
         ("boolean", False),
         ("verbose", 1),
+        ("nan", np.nan),
         (MissingValues(), -1),
         (MissingValues(), -1.0),
         (MissingValues(), 2**1028),
@@ -446,6 +448,7 @@ def test_is_satisfied_by(constraint_declaration, value):
         (MissingValues(numeric_only=True), MissingValues),
         (HasMethods("fit"), HasMethods),
         ("cv_object", _CVObjects),
+        ("nan", _NanConstraint),
     ],
 )
 def test_make_constraint(constraint_declaration, expected_constraint_class):
@@ -623,12 +626,6 @@ def test_boolean_constraint_deprecated_int():
     # True/False and np.bool_(True/False) are valid params
     f(True)
     f(np.bool_(False))
-
-    # an int is also valid but deprecated
-    with pytest.warns(
-        FutureWarning, match="Passing an int for a boolean parameter is deprecated"
-    ):
-        f(1)
 
 
 def test_no_validation():

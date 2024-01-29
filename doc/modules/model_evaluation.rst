@@ -181,9 +181,15 @@ take several parameters:
   of the python function is negated by the scorer object, conforming to
   the cross validation convention that scorers return higher values for better models.
 
-* for classification metrics only: whether the python function you provided requires continuous decision
-  certainties (``needs_threshold=True``).  The default value is
-  False.
+* for classification metrics only: whether the python function you provided requires
+  continuous decision certainties. If the scoring function only accepts probability
+  estimates (e.g. :func:`metrics.log_loss`) then one needs to set the parameter
+  `response_method`, thus in this case `response_method="predict_proba"`. Some scoring
+  function do not necessarily require probability estimates but rather non-thresholded
+  decision values (e.g. :func:`metrics.roc_auc_score`). In this case, one provides a
+  list such as `response_method=["decision_function", "predict_proba"]`. In this case,
+  the scorer will use the first available method, in the order given in the list,
+  to compute the scores.
 
 * any additional parameters, such as ``beta`` or ``labels`` in :func:`f1_score`.
 
@@ -880,22 +886,41 @@ following table:
 |                   | Missing result      | Correct absence of result|
 +-------------------+---------------------+--------------------------+
 
-In this context, we can define the notions of precision, recall and F-measure:
+In this context, we can define the notions of precision and recall:
 
 .. math::
 
-   \text{precision} = \frac{tp}{tp + fp},
+   \text{precision} = \frac{\text{tp}}{\text{tp} + \text{fp}},
 
 .. math::
 
-   \text{recall} = \frac{tp}{tp + fn},
+   \text{recall} = \frac{\text{tp}}{\text{tp} + \text{fn}},
 
+(Sometimes recall is also called ''sensitivity'')
+
+F-measure is the weighted harmonic mean of precision and recall, with precision's contribution to the mean weighted by
+some parameter :math:`\beta`:
+F-measure is the weighted harmonic mean of precision and recall, with precision's
+contribution to the mean weighted by some parameter :math:`\beta`:
 .. math::
 
-   F_\beta = (1 + \beta^2) \frac{\text{precision} \times \text{recall}}{\beta^2 \text{precision} + \text{recall}}.
+   F_\beta = (1 + \beta^2) \frac{\text{precision} \times \text{recall}}{\beta^2 \text{precision} + \text{recall}}
 
-Sometimes recall is also called ''sensitivity''.
+To avoid division by zero when precision and recall are zero, Scikit-Learn calculates F-measure with this
+otherwise-equivalent formula:
+To avoid division by zero when precision and recall are zero, we can define the
+F-measure with this otherwise-equivalent formula:
+.. math::
 
+   F_\beta = \frac{(1 + \beta^2) \text{tp}}{(1 + \beta^2) \text{tp} + \text{fp} + \beta^2 \text{fn}}.
+
+Note that this formula is still undefined when there are no true positives, false positives, nor false negatives. By
+default, F-1 for a set of exclusively true negatives is calculated as 0, however this behavior can be changed using the
+`zero_division` parameter.
+Note that this formula is still undefined when there are no true positives, false
+positives, nor false negatives. By default, F-1 for a set of exclusively true negatives
+is calculated as 0, however this behavior can be changed using the `zero_division`
+parameter.
 Here are some small examples in binary classification::
 
   >>> from sklearn import metrics

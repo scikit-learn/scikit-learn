@@ -5,9 +5,9 @@ Linnerrud dataset
 
 **Data Set Characteristics:**
 
-    :Number of Instances: 20
-    :Number of Attributes: 3
-    :Missing Attribute Values: None
+:Number of Instances: 20
+:Number of Attributes: 3
+:Missing Attribute Values: None
 
 The Linnerud dataset is a multi-output regression dataset. It consists of three
 exercise (data) and three physiological (target) variables collected from
