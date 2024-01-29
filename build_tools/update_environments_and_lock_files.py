@@ -80,7 +80,10 @@ common_dependencies = common_dependencies_without_coverage + [
 
 docstring_test_dependencies = ["sphinx", "numpydoc"]
 
-default_package_constraints = {}
+default_package_constraints = {
+    # XXX: Temporary work-around for pytest
+    "pytest": "<8"
+}
 
 
 def remove_from(alist, to_remove):
