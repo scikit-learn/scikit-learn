@@ -151,8 +151,8 @@ def test_monotonic_constraints_regressions(
         est = TreeRegressor(
             max_depth=8,
             monotonic_cst=monotonic_cst,
-            max_leaf_nodes=n_samples_train,
             criterion=criterion,
+            max_leaf_nodes=n_samples_train,
         )
     if hasattr(est, "random_state"):
         est.set_params(random_state=global_random_seed)
@@ -197,7 +197,7 @@ def test_multiple_output_raises(TreeClassifier):
     est = TreeClassifier(
         max_depth=None, monotonic_cst=np.array([-1, 1]), random_state=0
     )
-    msg = "Monotonicity constraints are not supported with multiple outputs"
+    msg = "Monotonicity constraints are not supported with multiple output"
     with pytest.raises(ValueError, match=msg):
         est.fit(X, y)
 

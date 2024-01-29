@@ -394,7 +394,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         else:
             if self.n_outputs_ > 1:
                 raise ValueError(
-                    "Monotonicity constraints are not supported with multiple outputs"
+                    "Monotonicity constraints are not supported with multiple outputs."
                 )
             # Check to correct monotonicity constraint' specification,
             # by applying element-wise logical conjunction
