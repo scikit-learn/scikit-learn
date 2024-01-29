@@ -98,6 +98,7 @@ jobs:
         DOCKER_CONTAINER: 'nogil/python'
         DISTRIB: 'pip-nogil'
         LOCK_FILE: './build_tools/azure/python_nogil_lock.txt'
+        IGNORE_WARNINGS: 'true'
         COVERAGE: 'false'
 
 - template: build_tools/azure/posix-docker.yml
@@ -119,6 +120,7 @@ jobs:
         DOCKER_CONTAINER: 'condaforge/miniforge3:4.10.3-5'
         DISTRIB: 'conda-pypy3'
         LOCK_FILE: './build_tools/azure/pypy3_linux-64_conda.lock'
+        IGNORE_WARNINGS: 'true'
 
 
 - job: Linux_Nightly_Pyodide
@@ -169,6 +171,7 @@ jobs:
       pylatest_conda_forge_mkl:
         DISTRIB: 'conda'
         LOCK_FILE: './build_tools/azure/pylatest_conda_forge_mkl_linux-64_conda.lock'
+        IGNORE_WARNINGS: 'true'
         COVERAGE: 'true'
         BUILD_WITH_MESON: 'true'
         SKLEARN_TESTS_GLOBAL_RANDOM_SEED: '42'  # default global random seed
@@ -215,6 +218,7 @@ jobs:
       ubuntu_atlas:
         DISTRIB: 'ubuntu'
         LOCK_FILE: './build_tools/azure/ubuntu_atlas_lock.txt'
+        IGNORE_WARNINGS: 'true'
         COVERAGE: 'false'
         SKLEARN_TESTS_GLOBAL_RANDOM_SEED: '1'  # non-default seed
 
@@ -234,6 +238,7 @@ jobs:
       pymin_conda_defaults_openblas:
         DISTRIB: 'conda'
         LOCK_FILE: './build_tools/azure/pymin_conda_defaults_openblas_linux-64_conda.lock'
+        IGNORE_WARNINGS: 'true'
         # Enable debug Cython directives to capture IndexError exceptions in
         # combination with the -Werror::pytest.PytestUnraisableExceptionWarning
         # flag for pytest.
@@ -270,6 +275,7 @@ jobs:
         DISTRIB: 'debian-32'
         COVERAGE: "true"
         LOCK_FILE: './build_tools/azure/debian_atlas_32bit_lock.txt'
+        IGNORE_WARNINGS: 'true'
         # disable pytest xdist due to unknown bug with 32-bit container
         PYTEST_XDIST_VERSION: 'none'
         SKLEARN_TESTS_GLOBAL_RANDOM_SEED: '4'  # non-default seed
@@ -289,10 +295,12 @@ jobs:
       pylatest_conda_forge_mkl:
         DISTRIB: 'conda'
         LOCK_FILE: './build_tools/azure/pylatest_conda_forge_mkl_osx-64_conda.lock'
+        IGNORE_WARNINGS: 'true'
         SKLEARN_TESTS_GLOBAL_RANDOM_SEED: '5'  # non-default seed
       pylatest_conda_mkl_no_openmp:
         DISTRIB: 'conda'
         LOCK_FILE: './build_tools/azure/pylatest_conda_mkl_no_openmp_osx-64_conda.lock'
+        IGNORE_WARNINGS: 'true'
         SKLEARN_TEST_NO_OPENMP: 'true'
         SKLEARN_SKIP_OPENMP_TEST: 'true'
         SKLEARN_TESTS_GLOBAL_RANDOM_SEED: '6'  # non-default seed

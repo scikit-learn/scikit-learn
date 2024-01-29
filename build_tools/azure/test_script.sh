@@ -47,6 +47,11 @@ if [[ "$COVERAGE" == "true" ]]; then
     export COVERAGE_PROCESS_START="$BUILD_SOURCESDIRECTORY/.coveragerc"
     TEST_CMD="$TEST_CMD --cov-config='$COVERAGE_PROCESS_START' --cov sklearn --cov-report="
 fi
+
+if [[ -n "$IGNORE_WARNINGS" ]]; then
+    TEST_CMD="$TEST_CMD -Wignore"
+fi
+
 if [[ "$PYTEST_XDIST_VERSION" != "none" ]]; then
     XDIST_WORKERS=$(python -c "import joblib; print(joblib.cpu_count(only_physical_cores=True))")
     TEST_CMD="$TEST_CMD -n$XDIST_WORKERS"

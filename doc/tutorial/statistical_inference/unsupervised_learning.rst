@@ -66,7 +66,7 @@ algorithms. The simplest clustering algorithm is :ref:`k_means`.
 
         >>> import scipy as sp
         >>> try:
-        ...    face = sp.datasets.face(gray=True)
+        ...    face = sp.face(gray=True)
         ... except AttributeError:
         ...    from scipy import misc
         ...    face = misc.face(gray=True)
