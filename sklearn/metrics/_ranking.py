@@ -1886,7 +1886,7 @@ def precision_at_k_score(
     --------
     >>> import numpy as np
     >>> from sklearn.metrics import precision_at_k_score
-    >>> # we have groud-truth (binary) relevance of some answers to a query:
+    >>> # we have ground-truth (binary) relevance of some answers to a query:
     >>> true_relevance = [[0, 1, 0, 1]]
     >>> # we predict some (relevance) scores for the answers
     >>> scores = [[0.1, 0.2, 0.3, 0.4]]
