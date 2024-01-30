@@ -188,7 +188,7 @@ build_metadata_list = [
         "pip_dependencies": (
             remove_from(common_dependencies, ["python", "blas"])
             + docstring_test_dependencies
-            + ["lightgbm", "scikit-image"]
+            + ["lightgbm", "scikit-image", "pooch"]
         ),
         "package_constraints": {
             "python": "3.9",
