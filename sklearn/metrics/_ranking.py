@@ -1919,7 +1919,7 @@ def precision_at_k_score(
     check_consistent_length(y_true, y_score, sample_weight)
     if y_true.shape != y_score.shape:
         raise ValueError(
-            "Input matrices have inconsisten shapes: {} vs {}".format(
+            "Input matrices have inconsistent shapes: {} vs {}".format(
                 y_true.shape, y_score.shape
             )
         )
