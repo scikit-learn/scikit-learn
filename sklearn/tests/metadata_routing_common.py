@@ -162,7 +162,7 @@ class ConsumingRegressor(RegressorMixin, BaseEstimator):
         return np.zeros(shape=(len(X),))
 
     def score(self, X, y, sample_weight="default", metadata="default"):
-        self.predict(X)
+        self.predict(X, sample_weight="default", metadata="default")
         record_metadata_not_default(
             self, "score", sample_weight=sample_weight, metadata=metadata
         )
@@ -259,7 +259,7 @@ class ConsumingClassifier(ClassifierMixin, BaseEstimator):
         return np.zeros(shape=(len(X),))
 
     def score(self, X, y, sample_weight="default", metadata="default"):
-        self.predict(X)
+        self.predict(X, sample_weight="default", metadata="default")
         record_metadata_not_default(
             self, "score", sample_weight=sample_weight, metadata=metadata
         )
