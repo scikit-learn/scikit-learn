@@ -902,6 +902,7 @@ F-measure is the weighted harmonic mean of precision and recall, with precision'
 some parameter :math:`\beta`:
 F-measure is the weighted harmonic mean of precision and recall, with precision's
 contribution to the mean weighted by some parameter :math:`\beta`:
+
 .. math::
 
    F_\beta = (1 + \beta^2) \frac{\text{precision} \times \text{recall}}{\beta^2 \text{precision} + \text{recall}}
@@ -910,6 +911,7 @@ To avoid division by zero when precision and recall are zero, Scikit-Learn calcu
 otherwise-equivalent formula:
 To avoid division by zero when precision and recall are zero, we can define the
 F-measure with this otherwise-equivalent formula:
+
 .. math::
 
    F_\beta = \frac{(1 + \beta^2) \text{tp}}{(1 + \beta^2) \text{tp} + \text{fp} + \beta^2 \text{fn}}.
