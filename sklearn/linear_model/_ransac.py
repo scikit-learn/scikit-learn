@@ -34,6 +34,7 @@ from ..utils.metadata_routing import (
 )
 from ..utils.random import sample_without_replacement
 from ..utils.validation import (
+    _check_method_params,
     _check_sample_weight,
     _deprecate_positional_args,
     check_is_fitted,
@@ -339,10 +340,10 @@ class RANSACRegressor(
 
             .. versionadded:: 1.5
 
-            Only available if
-            `sklearn.set_config(enable_metadata_routing=True)` is set. See
-            :ref:`Metadata Routing User Guide <metadata_routing>` for more
-            details.
+                Only available if
+                `sklearn.set_config(enable_metadata_routing=True)` is set. See
+                :ref:`Metadata Routing User Guide <metadata_routing>` for more
+                details.
 
         Returns
         -------
@@ -359,6 +360,7 @@ class RANSACRegressor(
         # Need to validate separately here. We can't pass multi_output=True
         # because that would allow y to be csr. Delay expensive finiteness
         # check to the estimator's own input validation.
+        _raise_for_params(fit_params, self, "fit")
         check_X_params = dict(accept_sparse="csr", force_all_finite=False)
         check_y_params = dict(ensure_2d=False)
         X, y = self._validate_data(
@@ -428,8 +430,6 @@ class RANSACRegressor(
                 " itself." % estimator_name
             )
 
-        _raise_for_params(fit_params, self, "fit")
-
         if sample_weight is not None:
             fit_params["sample_weight"] = sample_weight
 
@@ -496,13 +496,9 @@ class RANSACRegressor(
                 continue
 
             # cut `fit_params` down to `subset_idxs`
-            fit_params_cut_to_subset_idxs = {}
-            for key in routed_params.estimator.fit:
-                # only apply on sample_wise metadata
-                if len(routed_params.estimator.fit[key]) == len(X):
-                    fit_params_cut_to_subset_idxs[key] = routed_params.estimator.fit[
-                        key
-                    ][subset_idxs]
+            fit_params_cut_to_subset_idxs = _check_method_params(
+                X, params=routed_params.estimator.fit, indices=subset_idxs
+            )
 
             # fit model for current random sample set
             estimator.fit(X_subset, y_subset, **fit_params_cut_to_subset_idxs)
@@ -533,13 +529,9 @@ class RANSACRegressor(
             y_inlier_subset = y[inlier_idxs_subset]
 
             # cut `fit_params` down to `inlier_idxs_subset`
-            score_params_cut_to_inlier_idxs_subset = {}
-            for key in routed_params.estimator.score:
-                # only apply on sample_wise metadata
-                if len(routed_params.estimator.score[key]) == len(X):
-                    score_params_cut_to_inlier_idxs_subset[key] = (
-                        routed_params.estimator.score[key][inlier_idxs_subset]
-                    )
+            score_params_cut_to_inlier_idxs_subset = _check_method_params(
+                X, params=routed_params.estimator.score, indices=inlier_idxs_subset
+            )
 
             # score of inlier data set
             score_subset = estimator.score(
@@ -610,13 +602,9 @@ class RANSACRegressor(
                 )
 
         # estimate final model using all inliers
-        fit_params_cut_to_best_idxs_subset = {}
-        for key in routed_params.estimator.fit:
-            # only apply on sample_wise metadata
-            if len(routed_params.estimator.fit[key]) == len(X):
-                fit_params_cut_to_best_idxs_subset[key] = routed_params.estimator.fit[
-                    key
-                ][inlier_best_idxs_subset]
+        fit_params_cut_to_best_idxs_subset = _check_method_params(
+            X, params=routed_params.estimator.fit, indices=inlier_best_idxs_subset
+        )
 
         estimator.fit(
             X_inlier_best, y_inlier_best, **fit_params_cut_to_best_idxs_subset
@@ -642,10 +630,10 @@ class RANSACRegressor(
 
             .. versionadded:: 1.5
 
-            Only available if
-            `sklearn.set_config(enable_metadata_routing=True)` is set. See
-            :ref:`Metadata Routing User Guide <metadata_routing>` for more
-            details.
+                Only available if
+                `sklearn.set_config(enable_metadata_routing=True)` is set. See
+                :ref:`Metadata Routing User Guide <metadata_routing>` for more
+                details.
 
         Returns
         -------
@@ -666,8 +654,6 @@ class RANSACRegressor(
             predict_params = process_routing(self, "predict", **params).estimator[
                 "predict"
             ]
-        else:
-            predict_params = dict()
 
         return self.estimator_.predict(X, **predict_params)
 
@@ -690,10 +676,10 @@ class RANSACRegressor(
 
             .. versionadded:: 1.5
 
-            Only available if
-            `sklearn.set_config(enable_metadata_routing=True)` is set. See
-            :ref:`Metadata Routing User Guide <metadata_routing>` for more
-            details.
+                Only available if
+                `sklearn.set_config(enable_metadata_routing=True)` is set. See
+                :ref:`Metadata Routing User Guide <metadata_routing>` for more
+                details.
 
         Returns
         -------
@@ -711,8 +697,6 @@ class RANSACRegressor(
         _raise_for_params(params, self, "score")
         if _routing_enabled():
             score_params = process_routing(self, "score", **params).estimator["score"]
-        else:
-            score_params = dict()
 
         return self.estimator_.score(X, y, **score_params)
 

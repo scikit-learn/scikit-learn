@@ -497,9 +497,11 @@ def test_error_on_missing_requests_for_sub_estimator(metaestimator):
             instance = cls(**kwargs)
             with pytest.raises(UnsetMetadataPassedError, match=re.escape(msg)):
                 method = getattr(instance, method_name)
-                if method_name in ["predict", "score"]:
-                    # set request on fit and on the method not tested here
+                if "fit" not in method_name:
+                    # set request on fit
                     set_request(estimator, "fit")
+                    # make sure error message corresponding to `method_name`
+                    # is used for test
                     if method_name == "predict":
                         set_request(estimator, "score")
                     if method_name == "score":
