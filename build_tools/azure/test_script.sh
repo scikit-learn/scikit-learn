@@ -50,7 +50,8 @@ fi
 
 if [[ -n "$IGNORE_WARNINGS" ]]; then
     # override the warnings settings in setup.cfg
-    TEST_CMD="$TEST_CMD -Walways"
+    TEST_CMD="$TEST_CMD -Walways -Wignore::DeprecationWarning -Wignore::FutureWarning"
+    TEST_CMD="$TEST_CMD -Wignore::sklearn.utils.fixes.VisibleDeprecationWarning"
 fi
 
 if [[ "$PYTEST_XDIST_VERSION" != "none" ]]; then
