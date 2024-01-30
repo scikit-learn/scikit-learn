@@ -258,6 +258,13 @@ class ConsumingClassifier(ClassifierMixin, BaseEstimator):
         )
         return np.zeros(shape=(len(X),))
 
+    def score(self, X, y, sample_weight="default", metadata="default"):
+        self.predict(X)
+        record_metadata_not_default(
+            self, "score", sample_weight=sample_weight, metadata=metadata
+        )
+        return 1
+
 
 class ConsumingTransformer(TransformerMixin, BaseEstimator):
     """A transformer which accepts metadata on fit and transform.

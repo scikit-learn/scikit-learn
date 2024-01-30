@@ -407,19 +407,13 @@ def get_init_args(metaestimator_info):
     )
 
 
-def set_request(estimator, method_name, metadata_names, sub_methods):
-    # e.g. call set_fit_request on estimator
-    for method in sum_methods:
+def set_requests(estimator, methods, metadata_name):
+    """Call `set_fit_request` on a list of methods from the sub-estimator."""
+    for method in methods:
         set_request_for_method = getattr(estimator, f"set_{method}_request")
-        set_request_for_method(**{metadata: True for metadata in metadata_names})
-        if is_classifier(estimator) and method_name == "partial_fit":
+        set_request_for_method(**{metadata_name: True})
+        if is_classifier(estimator) and method == "partial_fit":
             set_request_for_method(classes=True)
-
-
-def set_multiple_requests(estimator, requests_set_together, method_name):
-    if method_name in requests_set_together:
-        for additional_method in requests_set_together[method_name]:
-            set_request(estimator, additional_method)
 
 
 @pytest.mark.parametrize("estimator", UNSUPPORTED_ESTIMATORS)
@@ -500,13 +494,13 @@ def test_error_on_missing_requests_for_sub_estimator(metaestimator):
                 method = getattr(instance, method_name)
                 if "fit" not in method_name:
                     # set request on fit
-                    set_request(estimator, "fit")
+                    set_requests(estimator, methods=["fit"], metadata_name=key)
                     # make sure error message corresponding to `method_name`
                     # is used for test
                     if method_name == "predict":
-                        set_request(estimator, "score")
+                        set_requests(estimator, methods=["score"], metadata_name=key)
                     if method_name == "score":
-                        set_request(estimator, "predict")
+                        set_requests(estimator, methods=["predict"], metadata_name=key)
                     # fit before calling method
                     fit_method = getattr(instance, "fit")
                     fit_method(X, y, **method_kwargs)
@@ -541,14 +535,16 @@ def test_setting_request_on_sub_estimator_removes_error(metaestimator):
                 metaestimator
             )
             if scorer:
-                set_request(scorer, "score")
+                set_requests(scorer, methods=["score"], metadata_name=key)
             if cv:
                 cv.set_split_request(groups=True, metadata=True)
 
             # `set_{method}_request({metadata}==True)` on the underlying objects
-            set_request(estimator, method_name)
+            set_requests(estimator, methods=[method_name], metadata_name=key)
             if requests_set_together:
-                set_multiple_requests(estimator, requests_set_together, method_name)
+                set_requests(
+                    estimator, methods=requests_set_together["fit"], metadata_name=key
+                )
 
             instance = cls(**kwargs)
             method = getattr(instance, method_name)
@@ -557,9 +553,13 @@ def test_setting_request_on_sub_estimator_removes_error(metaestimator):
             )
             if method_name in ["predict", "score"]:
                 # fit before calling method
-                set_request(estimator, "fit")
+                set_requests(estimator, methods=["fit"], metadata_name=key)
                 if requests_set_together:
-                    set_multiple_requests(estimator, requests_set_together, "fit")
+                    set_requests(
+                        estimator,
+                        methods=requests_set_together["fit"],
+                        metadata_name=key,
+                    )
                 fit_method = getattr(instance, "fit")
                 fit_method(X, y, **method_kwargs, **extra_method_args)
             if method_name == "predict":
