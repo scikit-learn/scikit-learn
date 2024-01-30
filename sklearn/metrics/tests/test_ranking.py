@@ -1955,7 +1955,7 @@ def test_top_k_accuracy_score_error(y_true, labels, msg):
             [[0, 1]],
             [[0, 1, 1]],
             1,
-            r"Input matrices have inconsisten shapes: \(1, 2\) vs \(1, 3\)",
+            r"Input matrices have inconsistent shapes: \(1, 2\) vs \(1, 3\)",
         ),
         (
             [[0, 2, 2]],
