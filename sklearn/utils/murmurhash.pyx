@@ -103,6 +103,11 @@ def murmurhash3_32(key, seed=0, positive=False):
         False: the results is casted to a signed int
           from -(2 ** 31) to 2 ** 31 - 1
 
+    Examples
+    --------
+    >>> from sklearn.utils import murmurhash3_32
+    >>> murmurhash3_32(b"Hello World!", seed=42)
+    3565178
     """
     if isinstance(key, bytes):
         if positive:
