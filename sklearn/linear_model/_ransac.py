@@ -316,7 +316,7 @@ class RANSACRegressor(
         prefer_skip_nested_validation=False
     )
     @_deprecate_positional_args(version="1.7")
-    def fit(self, X, y, sample_weight=None, **fit_params):
+    def fit(self, X, y, *, sample_weight=None, **fit_params):
         """Fit estimator using RANSAC algorithm.
 
         Parameters
@@ -445,7 +445,7 @@ class RANSACRegressor(
                     ),
                     unrequested_params=e.unrequested_params,
                     routed_params=e.routed_params,
-                )
+                ) from e
         else:
             routed_params = Bunch()
             routed_params.estimator = Bunch(fit={}, predict={}, score={})

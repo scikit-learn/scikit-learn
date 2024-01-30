@@ -407,12 +407,13 @@ def get_init_args(metaestimator_info):
     )
 
 
-def set_request(estimator, method_name):
+def set_request(estimator, method_name, metadata_names, sub_methods):
     # e.g. call set_fit_request on estimator
-    set_request_for_method = getattr(estimator, f"set_{method_name}_request")
-    set_request_for_method(sample_weight=True, metadata=True)
-    if is_classifier(estimator) and method_name == "partial_fit":
-        set_request_for_method(classes=True)
+    for method in sum_methods:
+        set_request_for_method = getattr(estimator, f"set_{method}_request")
+        set_request_for_method(**{metadata: True for metadata in metadata_names})
+        if is_classifier(estimator) and method_name == "partial_fit":
+            set_request_for_method(classes=True)
 
 
 def set_multiple_requests(estimator, requests_set_together, method_name):
