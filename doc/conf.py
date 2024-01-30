@@ -303,7 +303,9 @@ html_static_path = ["images", "css", "js"]
 
 # Additional templates that should be rendered to pages, maps page names to
 # template names.
-html_additional_pages = {"index": "index.html"}
+# TODO: change to html_additional_pages = {"index": "index.html"} so that our landing
+# page template can override the one generated from index.rst
+html_additional_pages = {}
 
 # Additional JS files
 html_js_files = ["scripts/details-permalink.js"]
