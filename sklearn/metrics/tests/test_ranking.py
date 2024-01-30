@@ -2349,7 +2349,7 @@ def test_precision_at_k_score_k_ties(y_true, y_score, k, ignore_ties, expected_s
     precision = precision_at_k_score(y_true, y_score, k=k, ignore_ties=ignore_ties)
     precision_naive = _precision_at_k_score_naive(y_true, y_score, k)
     # If `ignore_ties`, `precision` might still not be equal `precision_naive`
-    # because of the undefined behaivour
+    # because of the undefined behavior
     if not ignore_ties:
         assert precision != precision_naive
     assert precision == pytest.approx(expected_score)
