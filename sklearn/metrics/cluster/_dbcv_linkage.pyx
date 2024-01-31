@@ -1,3 +1,7 @@
+import numpy as np
+cimport numpy as np
+
+
 cpdef np.ndarray[np.double_t, ndim=2] mst_linkage_core(
                                np.ndarray[np.double_t,
                                           ndim=2] distance_matrix):
