@@ -163,6 +163,7 @@ class BaseSuccessiveHalving(BaseSearchCV):
                     check_classification_targets(y)
                     n_classes = np.unique(y).shape[0]
                     self.min_resources_ *= n_classes
+                    print(f"min_resources: {self.min_resources_}")
             else:
                 self.min_resources_ = 1
             # if 'exhaust', min_resources_ might be set to a higher value later
@@ -289,6 +290,18 @@ class BaseSuccessiveHalving(BaseSearchCV):
         n_possible_iterations = 1 + ceil(
             log(self.max_resources_ // self.min_resources_, self.factor)
         )
+        print(f"max_resources_: {self.max_resources_}")
+        print(f"min_resources_: {self.min_resources_}")
+        print(f"factor: {self.factor}")
+        print(f"n_possible_iterations: {n_possible_iterations}")
+        print(
+            "int(self.factor**n_possible_iterations * self.min_resources_):"
+            f" {int(self.factor**n_possible_iterations * self.min_resources_)}"
+        )
+        print(
+            "int(self.factor**(n_possible_iterations - 1) * self.min_resources_):"
+            f" {int(self.factor**(n_possible_iterations-1) * self.min_resources_)}"
+        )
 
         if self.aggressive_elimination:
             n_iterations = n_required_iterations
@@ -317,8 +330,10 @@ class BaseSuccessiveHalving(BaseSearchCV):
                 power = max(0, itr - n_required_iterations + n_possible_iterations)
 
             n_resources = int(self.factor**power * self.min_resources_)
+            print(f"n_resources: {n_resources}")
             # guard, probably not needed
             n_resources = min(n_resources, self.max_resources_)
+            print(f"n_resources: {n_resources}")
             self.n_resources_.append(n_resources)
 
             n_candidates = len(candidate_params)
