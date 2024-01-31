@@ -1547,7 +1547,7 @@ def test_fetch_openml_verify_checksum(monkeypatch, as_frame, cache, tmpdir, pars
 def test_open_openml_url_retry_on_network_error(monkeypatch):
     def _mock_urlopen_network_error(request, *args, **kwargs):
         raise HTTPError(
-            url=None, code=404, msg="Simulated mock error", hdrs=None, fp=BytesIO()
+            url=None, code=404, msg="Simulated network error", hdrs=None, fp=BytesIO()
         )
 
     monkeypatch.setattr(
