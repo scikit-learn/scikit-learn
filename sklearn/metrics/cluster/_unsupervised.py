@@ -23,7 +23,6 @@ from ...utils._param_validation import (
 from ..pairwise import _VALID_METRICS, pairwise_distances, pairwise_distances_chunked
 
 from scipy.spatial.distance import cdist
-from ._hdbscan_linkage import mst_linkage_core
 from ._dbcv_internals import distances_between_points, internal_minimum_spanning_tree, density_separation
 
 
