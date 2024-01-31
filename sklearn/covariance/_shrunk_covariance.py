@@ -662,6 +662,20 @@ def oas(X, *, assume_centered=False):
            Chen, Y., Wiesel, A., Eldar, Y. C., & Hero, A. O.
            IEEE Transactions on Signal Processing, 58(10), 5016-5029, 2010.
            <0907.4698>`
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.covariance import oas
+    >>> rng = np.random.RandomState(0)
+    >>> real_cov = [[.8, .3], [.3, .4]]
+    >>> X = rng.multivariate_normal(mean=[0, 0], cov=real_cov, size=500)
+    >>> shrunk_cov, shrinkage = oas(X)
+    >>> shrunk_cov
+    array([[0.7533..., 0.2763...],
+           [0.2763..., 0.3964...]])
+    >>> shrinkage
+    0.0195...
     """
     estimator = OAS(
         assume_centered=assume_centered,
