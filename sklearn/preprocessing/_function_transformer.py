@@ -12,6 +12,7 @@ from ..utils.validation import (
     _check_feature_names_in,
     _get_feature_names,
     _is_pandas_df,
+    _is_polars_df,
     check_array,
 )
 
@@ -302,16 +303,17 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
                         "are set to the names provided by `get_feature_names_out`."
                     )
 
-        if (
-            output_config == "pandas"
-            and self.feature_names_out is None
-            and not _is_pandas_df(out)
-        ):
-            warnings.warn(
-                "When `set_output` is configured to be 'pandas', `func` should return "
-                "a DataFrame to follow the `set_output` API  or `feature_names_out` "
-                "should be defined."
+        if self.feature_names_out is None:
+            warn_msg = (
+                "When `set_output` is configured to be '{0}', `func` should return "
+                "a {0} DataFrame to follow the `set_output` API  or `feature_names_out`"
+                " should be defined."
             )
+            if output_config == "pandas" and not _is_pandas_df(out):
+                warnings.warn(warn_msg.format("pandas"))
+            elif output_config == "polars" and not _is_polars_df(out):
+                warnings.warn(warn_msg.format("polars"))
+
         return out
 
     def inverse_transform(self, X):
