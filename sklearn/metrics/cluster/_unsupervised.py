@@ -22,7 +22,11 @@ from ...utils._param_validation import (
 )
 from ..pairwise import _VALID_METRICS, pairwise_distances, pairwise_distances_chunked
 
-from ._dbcv_internals import distances_between_points, internal_minimum_spanning_tree, density_separation
+from ._dbcv_internals import (
+    distances_between_points,
+    internal_minimum_spanning_tree,
+    density_separation,
+)
 
 
 def check_number_of_labels(n_labels, n_samples):
@@ -447,8 +451,16 @@ def davies_bouldin_score(X, labels):
     return np.mean(scores)
 
 
-def dbcv(X, labels, metric='euclidean',
-                    d=None, per_cluster_scores=False, mst_raw_dist=False, verbose=False,  **kwd_args):
+def dbcv(
+    X,
+    labels,
+    metric="euclidean",
+    d=None,
+    per_cluster_scores=False,
+    mst_raw_dist=False,
+    verbose=False,
+    **kwd_args,
+):
     """
     Compute the density based cluster validity index for the
     clustering specified by `labels` and for each cluster in `labels`.
@@ -512,17 +524,14 @@ def dbcv(X, labels, metric='euclidean',
     mst_edges = {}
 
     max_cluster_id = labels.max() + 1
-    density_sep = np.inf * np.ones((max_cluster_id, max_cluster_id),
-                                   dtype=np.float64)
+    density_sep = np.inf * np.ones((max_cluster_id, max_cluster_id), dtype=np.float64)
     cluster_validity_indices = np.empty(max_cluster_id, dtype=np.float64)
 
     for cluster_id in range(max_cluster_id):
-
         if np.sum(labels == cluster_id) == 0:
             continue
 
-        distances_for_mst, core_distances[
-            cluster_id] = distances_between_points(
+        distances_for_mst, core_distances[cluster_id] = distances_between_points(
             X,
             labels,
             cluster_id,
@@ -530,31 +539,36 @@ def dbcv(X, labels, metric='euclidean',
             d,
             no_coredist=mst_raw_dist,
             print_max_raw_to_coredist_ratio=verbose,
-            **kwd_args
+            **kwd_args,
         )
 
-        mst_nodes[cluster_id], mst_edges[cluster_id] = \
-            internal_minimum_spanning_tree(distances_for_mst)
+        mst_nodes[cluster_id], mst_edges[cluster_id] = internal_minimum_spanning_tree(
+            distances_for_mst
+        )
         density_sparseness[cluster_id] = mst_edges[cluster_id].T[2].max()
 
     for i in range(max_cluster_id):
-
         if np.sum(labels == i) == 0:
             continue
 
         internal_nodes_i = mst_nodes[i]
         for j in range(i + 1, max_cluster_id):
-
             if np.sum(labels == j) == 0:
                 continue
 
             internal_nodes_j = mst_nodes[j]
             density_sep[i, j] = density_separation(
-                X, labels, i, j,
-                internal_nodes_i, internal_nodes_j,
-                core_distances[i], core_distances[j],
-                metric=metric, no_coredist=mst_raw_dist,
-                **kwd_args
+                X,
+                labels,
+                i,
+                j,
+                internal_nodes_i,
+                internal_nodes_j,
+                core_distances[i],
+                core_distances[j],
+                metric=metric,
+                no_coredist=mst_raw_dist,
+                **kwd_args,
             )
             density_sep[j, i] = density_sep[i, j]
 
@@ -562,14 +576,12 @@ def dbcv(X, labels, metric='euclidean',
     result = 0
 
     for i in range(max_cluster_id):
-
         if np.sum(labels == i) == 0:
             continue
 
         min_density_sep = density_sep[i].min()
-        cluster_validity_indices[i] = (
-            (min_density_sep - density_sparseness[i]) /
-            max(min_density_sep, density_sparseness[i])
+        cluster_validity_indices[i] = (min_density_sep - density_sparseness[i]) / max(
+            min_density_sep, density_sparseness[i]
         )
 
         if verbose:
