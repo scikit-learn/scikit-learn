@@ -138,7 +138,10 @@ class PandasAdapter:
         return isinstance(X, pd.DataFrame)
 
     def rename_columns(self, X, columns):
-        return X.rename(columns=dict(zip(X.columns, columns)))
+        # we cannot use `rename` since it takes a dictionary and at this stage we have
+        # potentially duplicate column names in `X`
+        X.columns = columns
+        return X
 
     def hstack(self, Xs):
         pd = check_library_installed("pandas")
@@ -166,7 +169,10 @@ class PolarsAdapter:
         return isinstance(X, pl.DataFrame)
 
     def rename_columns(self, X, columns):
-        return X.rename(dict(zip(X.columns, columns)))
+        # we cannot use `rename` since it takes a dictionary and at this stage we have
+        # potentially duplicate column names in `X`
+        X.columns = columns
+        return X
 
     def hstack(self, Xs):
         pl = check_library_installed("polars")
