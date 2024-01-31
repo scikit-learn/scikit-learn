@@ -1102,6 +1102,15 @@ def load_diabetes(*, return_X_y=False, as_frame=False, scaled=True):
         representing the features and/or target of a given sample.
 
         .. versionadded:: 0.18
+
+    Examples
+    --------
+    >>> from sklearn.datasets import load_diabetes
+    >>> diabetes = load_diabetes()
+    >>> diabetes.target[:3]
+    array([151.,  75., 141.])
+    >>> diabetes.data.shape
+    (442, 10)
     """
     data_filename = "diabetes_data_raw.csv.gz"
     target_filename = "diabetes_target.csv.gz"
