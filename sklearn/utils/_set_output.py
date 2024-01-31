@@ -33,7 +33,7 @@ def get_columns(columns):
 class ContainerAdapterProtocol(Protocol):
     container_lib: str
 
-    def create_container(self, X_output, X_original, columns, copy=False):
+    def create_container(self, X_output, X_original, columns, inplace=False):
         """Create container from `X_output` with additional metadata.
 
         Parameters
@@ -50,9 +50,10 @@ class ContainerAdapterProtocol(Protocol):
             callable is useful if the column names require some computation. If `None`,
             then no columns are passed to the container's constructor.
 
-        copy : bool, default=False
-            Whether or not we should enforce a copy of `X_output`. `copy=False` does
-            not guarantee that no copy will be performed.
+        inplace : bool, default=False
+            Whether or not we intend to modify `X_output` in-place. However, it does
+            not guarantee that we return the same object if the in-place operation
+            is not possible.
 
         Returns
         -------
@@ -109,11 +110,11 @@ class ContainerAdapterProtocol(Protocol):
 class PandasAdapter:
     container_lib = "pandas"
 
-    def create_container(self, X_output, X_original, columns, copy=False):
+    def create_container(self, X_output, X_original, columns, inplace=False):
         pd = check_library_installed("pandas")
         columns = get_columns(columns)
 
-        if copy or not isinstance(X_output, pd.DataFrame):
+        if inplace or not isinstance(X_output, pd.DataFrame):
             # In all these cases, we need to create a new DataFrame
 
             # Unfortunately, we cannot use `getattr(container, "index")`
@@ -127,7 +128,7 @@ class PandasAdapter:
 
             # We don't pass columns here because it would intend columns selection
             # instead of renaming.
-            X_output = pd.DataFrame(X_output, index=index, copy=copy)
+            X_output = pd.DataFrame(X_output, index=index, copy=inplace)
 
         if columns is not None:
             return self.rename_columns(X_output, columns)
@@ -151,12 +152,12 @@ class PandasAdapter:
 class PolarsAdapter:
     container_lib = "polars"
 
-    def create_container(self, X_output, X_original, columns, copy=False):
+    def create_container(self, X_output, X_original, columns, inplace=False):
         pl = check_library_installed("polars")
         columns = get_columns(columns)
         columns = columns.tolist() if isinstance(columns, np.ndarray) else columns
 
-        if copy or not isinstance(X_output, pl.DataFrame):
+        if inplace or not isinstance(X_output, pl.DataFrame):
             # In all these cases, we need to create a new DataFrame
             return pl.DataFrame(X_output, schema=columns, orient="row")
 

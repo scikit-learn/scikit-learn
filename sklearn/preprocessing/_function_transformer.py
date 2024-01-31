@@ -275,12 +275,12 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
                 same_feature_names_in_out = feature_names_in is not None and list(
                     feature_names_in
                 ) == list(out.columns)
-                all_number_column_names = all(
+                any_number_column_names = any(
                     isinstance(col, Number) for col in out.columns
                 )
                 if (
                     same_feature_names_in_out
-                    or all_number_column_names
+                    or any_number_column_names
                     or output_config in ("pandas", "polars")
                 ):
                     adapter = _get_adapter_from_container(out)
