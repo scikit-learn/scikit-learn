@@ -1150,6 +1150,11 @@ cdef class MSE(RegressionCriterion):
         cdef intp_t k
         cdef float64_t w = 1.0
 
+        # The missing samples are assumed to be in
+        # self.sample_indices[-self.n_missing:] that is
+        # self.sample_indices[end_non_missing:self.end].
+        cdef intp_t end_non_missing = self.end - self.n_missing
+
         for p in range(start, pos):
             i = sample_indices[p]
 
