@@ -17,9 +17,8 @@ from ..utils.validation import (
 )
 
 
-def _is_registered_adapter(*, container):
-    module_name = container.__module__.split(".")[0]
-    return module_name in ADAPTERS_MANAGER.adapters
+def _is_registered_adapter(*, adapter_name):
+    return adapter_name in ADAPTERS_MANAGER.adapters
 
 
 def _get_adapter_from_container(container):
@@ -286,7 +285,7 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
                 if (
                     same_feature_names_in_out
                     or any_number_column_names
-                    or _is_registered_adapter(container=output_config)
+                    or _is_registered_adapter(adapter_name=output_config)
                 ):
                     adapter = _get_adapter_from_container(out)
                     out = adapter.create_container(
