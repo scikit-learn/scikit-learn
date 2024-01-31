@@ -267,6 +267,7 @@ class LinearModel(BaseEstimator, metaclass=ABCMeta):
         check_is_fitted(self)
 
         X = self._validate_data(X, accept_sparse=["csr", "csc", "coo"], reset=False)
+
         return safe_sparse_dot(X, self.coef_.T, dense_output=True) + self.intercept_
 
     def predict(self, X):

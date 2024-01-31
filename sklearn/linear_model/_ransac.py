@@ -654,6 +654,8 @@ class RANSACRegressor(
             predict_params = process_routing(self, "predict", **params).estimator[
                 "predict"
             ]
+        else:
+            predict_params = {}
 
         return self.estimator_.predict(X, **predict_params)
 
@@ -697,6 +699,8 @@ class RANSACRegressor(
         _raise_for_params(params, self, "score")
         if _routing_enabled():
             score_params = process_routing(self, "score", **params).estimator["score"]
+        else:
+            score_params = {}
 
         return self.estimator_.score(X, y, **score_params)
 
