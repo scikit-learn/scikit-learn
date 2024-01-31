@@ -110,7 +110,7 @@ class ContainerAdapterProtocol(Protocol):
 class PandasAdapter:
     container_lib = "pandas"
 
-    def create_container(self, X_output, X_original, columns, inplace=False):
+    def create_container(self, X_output, X_original, columns, inplace=True):
         pd = check_library_installed("pandas")
         columns = get_columns(columns)
 
@@ -152,7 +152,7 @@ class PandasAdapter:
 class PolarsAdapter:
     container_lib = "polars"
 
-    def create_container(self, X_output, X_original, columns, inplace=False):
+    def create_container(self, X_output, X_original, columns, inplace=True):
         pl = check_library_installed("polars")
         columns = get_columns(columns)
         columns = columns.tolist() if isinstance(columns, np.ndarray) else columns

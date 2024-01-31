@@ -292,7 +292,7 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
                         X_output=out,
                         X_original=out,
                         columns=feature_names_out,
-                        inplace=True,
+                        inplace=False,
                     )
                 else:
                     raise ValueError(
