@@ -50,7 +50,11 @@ from ..utils import check_array, check_random_state, column_or_1d
 from ..utils._param_validation import HasMethods, Interval, StrOptions
 from ..utils.multiclass import check_classification_targets
 from ..utils.stats import _weighted_percentile
-from ..utils.validation import _check_sample_weight, check_is_fitted
+from ..utils.validation import (
+    _check_monotonic_cst,
+    _check_sample_weight,
+    check_is_fitted,
+)
 from ._base import BaseEnsemble
 from ._gradient_boosting import _random_sample_mask, predict_stage, predict_stages
 
@@ -137,6 +141,7 @@ def _update_terminal_regions(
     sample_mask,
     learning_rate=0.1,
     k=0,
+    line_search=True,
 ):
     """Update the leaf values to be predicted by the tree and raw_prediction.
 
@@ -179,11 +184,14 @@ def _update_terminal_regions(
          ``learning_rate``.
     k : int, default=0
         The index of the estimator being updated.
+    line_search : bool, default=True
+        Whether line search must be performed. Line search must not be
+        performed under monotonic constraints.
     """
     # compute leaf for each sample in ``X``.
     terminal_regions = tree.apply(X)
 
-    if not isinstance(loss, HalfSquaredError):
+    if line_search and not isinstance(loss, HalfSquaredError):
         # mask all which are not in sample mask.
         masked_terminal_regions = terminal_regions.copy()
         masked_terminal_regions[~sample_mask] = -1
@@ -367,7 +375,6 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         "tol": [Interval(Real, 0.0, None, closed="left")],
     }
     _parameter_constraints.pop("splitter")
-    _parameter_constraints.pop("monotonic_cst")
 
     @abstractmethod
     def __init__(
@@ -394,6 +401,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         validation_fraction=0.1,
         n_iter_no_change=None,
         tol=1e-4,
+        monotonic_cst=None,
     ):
         self.n_estimators = n_estimators
         self.learning_rate = learning_rate
@@ -416,6 +424,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         self.validation_fraction = validation_fraction
         self.n_iter_no_change = n_iter_no_change
         self.tol = tol
+        self.monotonic_cst = monotonic_cst
 
     @abstractmethod
     def _encode_y(self, y=None, sample_weight=None):
@@ -463,6 +472,8 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         else:
             neg_g_view = neg_gradient
 
+        monotonic_cst = _check_monotonic_cst(self, self.monotonic_cst)
+
         for k in range(self.n_trees_per_iteration_):
             if self._loss.is_multiclass:
                 y = np.array(original_y == k, dtype=np.float64)
@@ -480,6 +491,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
                 max_leaf_nodes=self.max_leaf_nodes,
                 random_state=random_state,
                 ccp_alpha=self.ccp_alpha,
+                monotonic_cst=monotonic_cst,
             )
 
             if self.subsample < 1.0:
@@ -504,6 +516,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
                 sample_mask,
                 learning_rate=self.learning_rate,
                 k=k,
+                line_search=self.monotonic_cst is None,
             )
 
             # add tree to ensemble
@@ -652,13 +665,23 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         if not self.warm_start:
             self._clear_state()
 
-        # Check input
         # Since check_array converts both X and y to the same dtype, but the
         # trees use different types for X and y, checking them separately.
-
         X, y = self._validate_data(
-            X, y, accept_sparse=["csr", "csc", "coo"], dtype=DTYPE, multi_output=True
+            X,
+            y,
+            accept_sparse=["csr", "csc", "coo"],
+            dtype=DTYPE,
+            multi_output=True,
         )
+
+        # Raise now instead of specifying multi_output=False because we want a more
+        # explicit error message.
+        if self.monotonic_cst is not None and len(y.shape) > 1:
+            raise ValueError(
+                "Monotonicity constraints are not supported with multiple outputs"
+            )
+
         sample_weight_is_none = sample_weight is None
         sample_weight = _check_sample_weight(sample_weight, X)
         if sample_weight_is_none:
@@ -1313,6 +1336,24 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
 
         .. versionadded:: 0.22
 
+    monotonic_cst : array-like of int of shape (n_features) or dict, default=None
+        Monotonic constraint to enforce on each feature are specified using the
+        following integer values:
+
+        - 1: monotonic increase
+        - 0: no constraint
+        - -1: monotonic decrease
+
+        If a dict with str keys, map feature to monotonic constraints by name.
+        If an array, the features are mapped to constraints by position. See
+        :ref:`monotonic_cst_features_names` for a usage example.
+
+        The constraints are only valid for binary classifications and hold
+        over the probability of the positive class.
+        Read more in the :ref:`User Guide <monotonic_cst_gbdt>`.
+
+        .. versionadded:: 1.4
+
     Attributes
     ----------
     n_estimators_ : int
@@ -1472,6 +1513,7 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
         n_iter_no_change=None,
         tol=1e-4,
         ccp_alpha=0.0,
+        monotonic_cst=None,
     ):
         super().__init__(
             loss=loss,
@@ -1494,6 +1536,7 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
             n_iter_no_change=n_iter_no_change,
             tol=tol,
             ccp_alpha=ccp_alpha,
+            monotonic_cst=monotonic_cst,
         )
 
     def _encode_y(self, y, sample_weight):
@@ -1513,6 +1556,13 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
         # From here on, it is additional to the HGBT case.
         # expose n_classes_ attribute
         self.n_classes_ = n_classes
+
+        if self.monotonic_cst is not None and self.n_classes_ > 2:
+            raise ValueError(
+                "Monotonicity constraints are not supported with multiclass "
+                "classification"
+            )
+
         if sample_weight is None:
             n_trim_classes = n_classes
         else:
@@ -1924,6 +1974,24 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
 
         .. versionadded:: 0.22
 
+    monotonic_cst : array-like of int of shape (n_features) or dict, default=None
+        Monotonic constraint to enforce on each feature are specified using the
+        following integer values:
+
+        - 1: monotonic increase
+        - 0: no constraint
+        - -1: monotonic decrease
+
+        If a dict with str keys, map feature to monotonic constraints by name.
+        If an array, the features are mapped to constraints by position. See
+        :ref:`monotonic_cst_features_names` for a usage example.
+
+        The constraints are only valid for binary classifications and hold
+        over the probability of the positive class.
+        Read more in the :ref:`User Guide <monotonic_cst_gbdt>`.
+
+        .. versionadded:: 1.4
+
     Attributes
     ----------
     n_estimators_ : int
@@ -2067,6 +2135,7 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
         n_iter_no_change=None,
         tol=1e-4,
         ccp_alpha=0.0,
+        monotonic_cst=None,
     ):
         super().__init__(
             loss=loss,
@@ -2090,6 +2159,7 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
             n_iter_no_change=n_iter_no_change,
             tol=tol,
             ccp_alpha=ccp_alpha,
+            monotonic_cst=monotonic_cst,
         )
 
     def _encode_y(self, y=None, sample_weight=None):
