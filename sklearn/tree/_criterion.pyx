@@ -1150,6 +1150,11 @@ cdef class MSE(RegressionCriterion):
         cdef intp_t k
         cdef float64_t w = 1.0
 
+        # The missing samples are assumed to be in
+        # self.sample_indices[-self.n_missing:] that is
+        # self.sample_indices[end_non_missing:self.end].
+        cdef intp_t end_non_missing = self.end - self.n_missing
+
         for p in range(start, pos):
             i = sample_indices[p]
 
@@ -1159,6 +1164,19 @@ cdef class MSE(RegressionCriterion):
             for k in range(self.n_outputs):
                 y_ik = self.y[i, k]
                 sq_sum_left += w * y_ik * y_ik
+
+        # Account for missing values that may be on the left node.
+        # If so, then these samples are still not included in the
+        # sq_sum_left because they are in samples[end_non_missing:end].
+        if self.missing_go_to_left:
+            for p in range(end_non_missing, self.end):
+                i = sample_indices[p]
+                if sample_weight is not None:
+                    w = sample_weight[i]
+
+                for k in range(self.n_outputs):
+                    y_ik = self.y[i, k]
+                    sq_sum_left += w * y_ik * y_ik
 
         sq_sum_right = self.sq_sum_total - sq_sum_left
 
