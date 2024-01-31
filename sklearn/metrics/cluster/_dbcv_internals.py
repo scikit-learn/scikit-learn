@@ -1,3 +1,6 @@
+from ._dbcv_linkage import mst_linkage_core
+
+
 def density_separation(X, labels, cluster_id1, cluster_id2,
                        internal_nodes1, internal_nodes2,
                        core_distances1, core_distances2,
