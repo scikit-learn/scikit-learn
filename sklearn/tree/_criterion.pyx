@@ -1159,7 +1159,7 @@ cdef class MSE(RegressionCriterion):
             for k in range(self.n_outputs):
                 y_ik = self.y[i, k]
                 sq_sum_left += w * y_ik * y_ik
-        
+
         # Account for missing values that may be on the left node.
         # If so, then these samples are still not included in the
         # sq_sum_left because they are in samples[end_non_missing:end].
