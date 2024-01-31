@@ -65,9 +65,9 @@ ax0.legend(prop=dict(size=12))
 # For each number of components, find the best classifier results
 results = pd.DataFrame(search.cv_results_)
 components_col = "param_pca__n_components"
-best_clfs = results.groupby(components_col).apply(
-    lambda g: g.nlargest(1, "mean_test_score")
-)
+best_clfs = results.groupby(components_col)[
+    [components_col, "mean_test_score", "std_test_score"]
+].apply(lambda g: g.nlargest(1, "mean_test_score"))
 
 best_clfs.plot(
     x=components_col, y="mean_test_score", yerr="std_test_score", legend=False, ax=ax1

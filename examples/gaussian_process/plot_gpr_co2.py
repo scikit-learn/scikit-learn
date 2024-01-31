@@ -66,7 +66,15 @@ _ = plt.title("Raw air samples measurements from the Mauna Loa Observatory")
 # We will preprocess the dataset by taking a monthly average and drop month
 # for which no measurements were collected. Such a processing will have an
 # smoothing effect on the data.
-co2_data = co2_data.resample("M").mean().dropna(axis="index", how="any")
+
+try:
+    co2_data_resampled_monthly = co2_data.resample("ME")
+except ValueError:
+    # pandas < 2.2 uses M instead of ME
+    co2_data_resampled_monthly = co2_data.resample("M")
+
+
+co2_data = co2_data_resampled_monthly.mean().dropna(axis="index", how="any")
 co2_data.plot()
 plt.ylabel("Monthly average of CO$_2$ concentration (ppm)")
 _ = plt.title(
