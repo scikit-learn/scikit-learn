@@ -497,6 +497,17 @@ def indexable(*iterables):
     result : list of {ndarray, sparse matrix, dataframe} or None
         Returns a list containing indexable arrays (i.e. NumPy array,
         sparse matrix, or dataframe) or `None`.
+
+    Examples
+    --------
+    >>> from sklearn.utils import indexable
+    >>> from scipy.sparse import csr_matrix
+    >>> import numpy as np
+    >>> iterables = [
+    ...     [1, 2, 3], np.array([2, 3, 4]), None, csr_matrix([[5], [6], [7]])
+    ... ]
+    >>> indexable(*iterables)
+    [[1, 2, 3], array([2, 3, 4]), None, <3x1 sparse matrix ...>]
     """
 
     result = [_make_indexable(X) for X in iterables]
@@ -1568,6 +1579,7 @@ def check_is_fitted(estimator, attributes=None, *, msg=None, all_or_any=all):
 
     NotFittedError
         If the attributes are not found.
+
     Examples
     --------
     >>> from sklearn.linear_model import LogisticRegression
