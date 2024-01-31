@@ -27,6 +27,7 @@ from ._unsupervised import (
     davies_bouldin_score,
     silhouette_samples,
     silhouette_score,
+    dbcv,
 )
 
 __all__ = [
