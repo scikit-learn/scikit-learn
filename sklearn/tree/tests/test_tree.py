@@ -2617,7 +2617,8 @@ def test_deterministic_pickle():
     assert pickle1 == pickle2
 
 
-def test_regression_tree_missing_values_toy():
+@pytest.mark.parametrize("criterion", ["squared_error", "friedman_mse"])
+def test_regression_tree_missing_values_toy(criterion):
     """Check that we properly handle missing values in regression trees using a toy
     dataset.
 
@@ -2636,7 +2637,7 @@ def test_regression_tree_missing_values_toy():
     X = np.array([np.nan, np.nan, 3, 4, 5, 6]).reshape(-1, 1)
     y = np.arange(6)
 
-    tree = DecisionTreeRegressor(random_state=0).fit(X, y)
+    tree = DecisionTreeRegressor(criterion=criterion, random_state=0).fit(X, y)
     assert all(tree.tree_.impurity >= 0)  # MSE should always be positive
 
     # Find the leaves with a single sample where the MSE should be 0
@@ -2644,6 +2645,14 @@ def test_regression_tree_missing_values_toy():
         (tree.tree_.children_left == -1) & (tree.tree_.n_node_samples == 1)
     )
     assert_allclose(tree.tree_.impurity[leaves_idx], 0.0)
+
+    # With this dataset, the missing values will still be sent to the left child
+    # but the leaf will not be pure.
+    X = np.array([np.nan, 2, np.nan, 4, 5, 6]).reshape(-1, 1)
+    tree = DecisionTreeRegressor(criterion=criterion, random_state=0, max_depth=1).fit(
+        X, y
+    )
+    assert all(tree.tree_.impurity >= 0)  # MSE should always be positive
 
 
 def test_classification_tree_missing_values_toy():

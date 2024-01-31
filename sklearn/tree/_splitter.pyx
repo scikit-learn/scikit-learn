@@ -539,6 +539,10 @@ cdef inline int node_split_best(
             best_split.impurity_right
         )
 
+        # Note: this should always be called at the very end because it will
+        # move samples around, thereby affecting the criterion.
+        # This affects the computation of the children impurity, which affects
+        # the computation of the next node.
         shift_missing_values_to_left_if_required(&best_split, samples, end)
 
     # Respect invariant for constant features: the original order of
