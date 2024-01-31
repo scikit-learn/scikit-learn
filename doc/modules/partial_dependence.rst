@@ -108,7 +108,7 @@ the plots, you can use the
     >>> results = partial_dependence(clf, X, [0])
     >>> results["average"]
     array([[ 2.466...,  2.466..., ...
-    >>> results["values"]
+    >>> results["grid_values"]
     [array([-1.624..., -1.592..., ...
 
 The values at which the partial dependence should be evaluated are directly

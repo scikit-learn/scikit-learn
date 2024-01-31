@@ -54,7 +54,7 @@ multiple interfaces):
 
 :Transformer:
 
-    For modifying the data in a supervised or unsupervised way (e.g. by adding, changing, 
+    For modifying the data in a supervised or unsupervised way (e.g. by adding, changing,
     or removing columns, but not by adding or removing rows). Implements::
 
       new_data = transformer.transform(data)
@@ -244,7 +244,7 @@ interactions with `pytest`)::
 
   >>> from sklearn.utils.estimator_checks import check_estimator
   >>> from sklearn.svm import LinearSVC
-  >>> check_estimator(LinearSVC())  # passes
+  >>> check_estimator(LinearSVC(dual="auto"))  # passes
 
 The main motivation to make a class compatible to the scikit-learn estimator
 interface might be that you want to use it together with model evaluation and
