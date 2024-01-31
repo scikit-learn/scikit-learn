@@ -58,6 +58,14 @@ def test_pandas_adapter():
     )
     pd.testing.assert_frame_equal(X_stacked, expected_df)
 
+    # check that we update properly the columns even with duplicate column names
+    # this use-case potentially happen when using ColumnTransformer
+    # non-regression test for gh-28260
+    X_df = pd.DataFrame([[1, 2], [1, 3]], columns=["a", "a"])
+    new_columns = np.array(["x__a", "y__a"], dtype=object)
+    new_df = adapter.rename_columns(X_df, new_columns)
+    assert_array_equal(new_df.columns, new_columns)
+
 
 def test_polars_adapter():
     """Check Polars adapter has expected behavior."""

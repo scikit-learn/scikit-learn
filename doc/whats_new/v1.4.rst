@@ -44,6 +44,11 @@ Changes impacting all modules
 
   :pr:`28235` by :user:`Julien Jerphanion <jjerphan>`.
 
+- |Fix| Fixes a bug for all scikit-learn transformers when using `set_output` with
+  `transform` set to `pandas` or `polars`. The bug could lead to wrong naming of the
+  columns of the returned dataframe.
+  :pr:`28262` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 Changelog
 ---------
 
@@ -67,6 +72,14 @@ Changelog
 
 - |Enhancement| Pandas and Polars dataframe are validated directly without ducktyping
   checks. :pr:`28195` by `Thomas Fan`_.
+
+:mod:`sklearn.compose`
+......................
+
+- |Fix| :class:`compose.ColumnTransformer` now transform into a polars dataframe when
+  `verbose_feature_names_out=True` and the transformers internally used several times
+  the same columns. Previously, it would raise a due to duplicated column names.
+  :pr:`28262` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 :mod:`sklearn.preprocessing`
 ............................
