@@ -1,3 +1,6 @@
+import numpy as np
+from scipy.spatial.distance import cdist
+from ..pairwise import pairwise_distances
 from ._dbcv_linkage import mst_linkage_core
 
 
