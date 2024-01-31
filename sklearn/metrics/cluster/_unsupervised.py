@@ -23,9 +23,9 @@ from ...utils._param_validation import (
 from ..pairwise import _VALID_METRICS, pairwise_distances, pairwise_distances_chunked
 
 from ._dbcv_internals import (
+    density_separation,
     distances_between_points,
     internal_minimum_spanning_tree,
-    density_separation,
 )
 
 
