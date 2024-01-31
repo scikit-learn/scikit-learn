@@ -451,7 +451,7 @@ def davies_bouldin_score(X, labels):
     return np.mean(scores)
 
 
-def dbcv(
+def dbcv_score(
     X,
     labels,
     metric="euclidean",
