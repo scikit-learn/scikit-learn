@@ -493,9 +493,12 @@ def dbcv(
         value for the whole clustering.
 
     mst_raw_dist : optional, boolean (default False)
-        If True, the MST's are constructed solely via 'raw' distances (depending on the given metric, e.g. euclidean distances)
-        instead of using mutual reachability distances. Thus setting this parameter to True avoids using 'all-points-core-distances' at all.
-        This is advantageous specifically in the case of elongated clusters that lie in close proximity to each other <citation needed>.
+        If True, the MST's are constructed solely via 'raw' distances
+        (depending on the given metric, e.g. euclidean distances)
+        instead of using mutual reachability distances.
+        Thus setting this parameter to True avoids using 'all-points-core-distances'.
+        This is advantageous specifically in the case of elongated clusters
+        that lie in close proximity to each other <citation needed>.
 
     **kwd_args :
         Extra arguments to pass to the distance computation for other
