@@ -2617,8 +2617,25 @@ def test_deterministic_pickle():
     assert pickle1 == pickle2
 
 
+@pytest.mark.parametrize(
+    "X",
+    [
+        np.array([np.nan, 2, np.nan, 4, 5, 6]).reshape(
+            -1, 1
+        ),  # missing values will go left for greedy splits
+        np.array([np.nan, np.nan, 3, 4, 5, 6]).reshape(
+            -1, 1
+        ),  # missing values will go left for greedy splits
+        np.array([1, 2, 3, 4, np.nan, np.nan]).reshape(
+            -1, 1
+        ),  # missing values will go right for greedy splits
+        np.array([1, 2, 3, 4, np.nan, 6]).reshape(
+            -1, 1
+        ),  # missing values will go right for greedy splits
+    ],
+)
 @pytest.mark.parametrize("criterion", ["squared_error", "friedman_mse"])
-def test_regression_tree_missing_values_toy(criterion):
+def test_regression_tree_missing_values_toy(X, criterion):
     """Check that we properly handle missing values in regression trees using a toy
     dataset.
 
@@ -2632,9 +2649,8 @@ def test_regression_tree_missing_values_toy(criterion):
     https://github.com/scikit-learn/scikit-learn/issues/28254
     """
 
-    # With this dataset, the missing values will always be sent to the left child
-    # at the first split. The leaf will be pure.
-    X = np.array([np.nan, np.nan, 3, 4, 5, 6]).reshape(-1, 1)
+    # With certain datasets, the missing values will always be sent to the left,
+    # or right child at the first split. The leaf will be pure.
     y = np.arange(6)
 
     tree = DecisionTreeRegressor(criterion=criterion, random_state=0).fit(X, y)
@@ -2645,14 +2661,6 @@ def test_regression_tree_missing_values_toy(criterion):
         (tree.tree_.children_left == -1) & (tree.tree_.n_node_samples == 1)
     )
     assert_allclose(tree.tree_.impurity[leaves_idx], 0.0)
-
-    # With this dataset, the missing values will still be sent to the left child
-    # but the leaf will not be pure.
-    X = np.array([np.nan, 2, np.nan, 4, 5, 6]).reshape(-1, 1)
-    tree = DecisionTreeRegressor(criterion=criterion, random_state=0, max_depth=1).fit(
-        X, y
-    )
-    assert all(tree.tree_.impurity >= 0)  # MSE should always be positive
 
 
 def test_classification_tree_missing_values_toy():
