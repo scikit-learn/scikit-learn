@@ -126,10 +126,18 @@ def test_ignore_warning():
     assert_no_warnings(ignore_warnings(_warning_function, category=DeprecationWarning))
     with pytest.warns(DeprecationWarning):
         ignore_warnings(_warning_function, category=UserWarning)()
-    with pytest.warns(UserWarning):
+
+    with pytest.warns() as record:
         ignore_warnings(_multiple_warning_function, category=FutureWarning)()
-    with pytest.warns(DeprecationWarning):
+    assert len(record) == 2
+    assert isinstance(record[0].message, DeprecationWarning)
+    assert isinstance(record[1].message, UserWarning)
+
+    with pytest.warns() as record:
         ignore_warnings(_multiple_warning_function, category=UserWarning)()
+    assert len(record) == 1
+    assert isinstance(record[0].message, DeprecationWarning)
+
     assert_no_warnings(
         ignore_warnings(_warning_function, category=(DeprecationWarning, UserWarning))
     )

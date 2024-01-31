@@ -44,8 +44,19 @@ Changes impacting all modules
 
   :pr:`28235` by :user:`Julien Jerphanion <jjerphan>`.
 
+- |Fix| Fixes a bug for all scikit-learn transformers when using `set_output` with
+  `transform` set to `pandas` or `polars`. The bug could lead to wrong naming of the
+  columns of the returned dataframe.
+  :pr:`28262` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 Changelog
 ---------
+
+:mod:`sklearn.calibration`
+..........................
+
+- |Fix| `calibration.CalibratedClassifierCV` supports :term:`predict_proba` with
+  float32 output from the inner estimator. :pr:`28247` by `Thomas Fan`_.
 
 :mod:`sklearn.cluster`
 ......................
@@ -61,6 +72,31 @@ Changelog
 
 - |Enhancement| Pandas and Polars dataframe are validated directly without ducktyping
   checks. :pr:`28195` by `Thomas Fan`_.
+
+:mod:`sklearn.compose`
+......................
+
+- |Fix| :class:`compose.ColumnTransformer` now transform into a polars dataframe when
+  `verbose_feature_names_out=True` and the transformers internally used several times
+  the same columns. Previously, it would raise a due to duplicated column names.
+  :pr:`28262` by :user:`Guillaume Lemaitre <glemaitre>`.
+
+:mod:`sklearn.preprocessing`
+............................
+
+- |Fix| :class:`preprocessing.FunctionTransformer` now also warns when `set_output`
+  is called with `transform="polars"` and `func` does not return a Polars dataframe or
+  `feature_names_out` is not specified.
+  :pr:`28263` by :user:`Guillaume Lemaitre <glemaitre>`.
+
+:mod:`sklearn.tree`
+...................
+
+- |Fix| :class:`tree.DecisionTreeClassifier` and
+  :class:`tree.DecisionTreeRegressor` are handling missing values properly. The internal
+  criterion was not initialize when no missing values were present in the data, leading
+  to potentially wrong criterion values.
+  :pr:`28295` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 :mod:`sklearn.utils`
 ....................

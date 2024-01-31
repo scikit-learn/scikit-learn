@@ -155,7 +155,7 @@ def _monkey_patch_webbased_functions(context, data_id, gzip_response):
             json_data = json.loads(decoded_s)
         if "error" in json_data:
             raise HTTPError(
-                url=None, code=412, msg="Simulated mock error", hdrs=None, fp=None
+                url=None, code=412, msg="Simulated mock error", hdrs=None, fp=BytesIO()
             )
 
         with data_file_path.open("rb") as f:
@@ -1442,7 +1442,7 @@ def test_retry_with_clean_cache_http_error(tmpdir):
     @_retry_with_clean_cache(openml_path, cache_directory)
     def _load_data():
         raise HTTPError(
-            url=None, code=412, msg="Simulated mock error", hdrs=None, fp=None
+            url=None, code=412, msg="Simulated mock error", hdrs=None, fp=BytesIO()
         )
 
     error_msg = "Simulated mock error"
@@ -1546,7 +1546,9 @@ def test_fetch_openml_verify_checksum(monkeypatch, as_frame, cache, tmpdir, pars
 
 def test_open_openml_url_retry_on_network_error(monkeypatch):
     def _mock_urlopen_network_error(request, *args, **kwargs):
-        raise HTTPError("", 404, "Simulated network error", None, None)
+        raise HTTPError(
+            url=None, code=404, msg="Simulated network error", hdrs=None, fp=BytesIO()
+        )
 
     monkeypatch.setattr(
         sklearn.datasets._openml, "urlopen", _mock_urlopen_network_error

@@ -108,6 +108,9 @@ build_metadata_list = [
         "package_constraints": {
             "blas": "[build=mkl]",
             "pytorch": "1.13",
+            # TODO: somehow pytest 8 does not seem to work with meson editable
+            # install. Exit code is 5, i.e. no test collected
+            "pytest": "<8",
         },
     },
     {
