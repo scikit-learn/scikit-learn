@@ -1128,7 +1128,9 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
                     raise ValueError(
                         "Concatenating DataFrames from the transformer's output lead to"
                         " an inconsistent number of samples. The output may have Pandas"
-                        " Indexes that do not match."
+                        " Indexes that do not match, or that transformers are returning"
+                        " number of samples which are not the same as the number input"
+                        " samples."
                     )
 
                 return output
