@@ -1,6 +1,7 @@
 import builtins
 import platform
 import sys
+import warnings
 from contextlib import suppress
 from functools import wraps
 from os import environ
@@ -274,6 +275,15 @@ def pytest_configure(config):
     # Register global_random_seed plugin if it is not already registered
     if not config.pluginmanager.hasplugin("sklearn.tests.random_seed"):
         config.pluginmanager.register(random_seed)
+
+
+def pytest_collectstart(collector):
+    # XXX: Easiest way to ignore pandas Pyarrow DeprecationWarning in the
+    # short-term. See https://github.com/pandas-dev/pandas/issues/54466 for
+    # more details.
+    warnings.filterwarnings(
+        "ignore", message=r"\s*Pyarrow", category=DeprecationWarning
+    )
 
 
 @pytest.fixture

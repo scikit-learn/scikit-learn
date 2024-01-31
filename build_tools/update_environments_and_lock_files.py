@@ -80,7 +80,13 @@ common_dependencies = common_dependencies_without_coverage + [
 
 docstring_test_dependencies = ["sphinx", "numpydoc"]
 
-default_package_constraints = {}
+default_package_constraints = {
+    # XXX: Temporary work-around for pytest.warns behaviour change in pytest 8,
+    # that reemits unmatched warnings. This causes failures in the CI where
+    # warnings are turned into errors. See
+    # https://github.com/pytest-dev/pytest/issues/9288 for more details
+    "pytest": "<8"
+}
 
 
 def remove_from(alist, to_remove):
