@@ -118,7 +118,7 @@ Changelog
 - |Fix| :class:`tree.DecisionTreeRegressor` fixes an issue for ``squared_error``
   and ``friedman_mse`` criterion where missing-values causes incorrect
   values shown in ``feature_importances_`` and the display of the tree.
-  :pr:`27966` by :user:`Adam Li <adam2392>`.
+  :pr:`28327` by :user:`Adam Li <adam2392>`.
 
 :mod:`sklearn.utils`
 ....................
