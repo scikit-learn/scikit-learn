@@ -821,9 +821,10 @@ def _sigmoid_calibration(
     bin_loss = HalfBinomialLoss()
 
     def loss_grad(AB):
+        raw_prediction = -(AB[0] * F + AB[1]).astype(dtype=predictions.dtype)
         l, g = bin_loss.loss_gradient(
             y_true=T,
-            raw_prediction=-(AB[0] * F + AB[1]),
+            raw_prediction=raw_prediction,
             sample_weight=sample_weight,
         )
         loss = l.sum()
