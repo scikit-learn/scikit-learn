@@ -6,3 +6,12 @@ py.extension_module(
   subdir: 'sklearn/metrics/cluster',
   install: true
 )
+
+py.extension_module(
+  '_dbcv_linkage',
+  '_dbcv_linkage.pyx',
+  dependencies: [np_dep],
+  cython_args: cython_args,
+  subdir: 'sklearn/metrics/cluster',
+  install: true
+)
