@@ -271,7 +271,7 @@ jobs:
       )
     matrix:
       debian_atlas_32bit:
-        DOCKER_CONTAINER: 'i386/debian:12.4'
+        DOCKER_CONTAINER: 'i386/debian:11.2'
         DISTRIB: 'debian-32'
         COVERAGE: "true"
         LOCK_FILE: './build_tools/azure/debian_atlas_32bit_lock.txt'
