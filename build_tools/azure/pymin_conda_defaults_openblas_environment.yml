@@ -13,7 +13,7 @@ dependencies:
   - threadpoolctl=2.2.0
   - matplotlib=3.3.4  # min
   - pyamg
-  - pytest<8
+  - pytest
   - pytest-xdist
   - pillow
   - setuptools
