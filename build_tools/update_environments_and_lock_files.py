@@ -136,7 +136,7 @@ build_metadata_list = [
         "folder": "build_tools/azure",
         "platform": "osx-64",
         "channel": "defaults",
-        "conda_dependencies": common_dependencies + ["ccache"],
+        "conda_dependencies": remove_from(common_dependencies, ["cython"]) + ["ccache"],
         "package_constraints": {
             "blas": "[build=mkl]",
             # TODO: temporary pin for numpy to avoid what seems a loky issue,
@@ -144,6 +144,9 @@ build_metadata_list = [
             # https://github.com/scikit-learn/scikit-learn/pull/26845#issuecomment-1639917135
             "numpy": "<1.25",
         },
+        # TODO: put cython back to conda dependencies when required version is
+        # available on the main channel
+        "pip_dependencies": ["cython"],
     },
     {
         "name": "pymin_conda_defaults_openblas",
@@ -152,7 +155,9 @@ build_metadata_list = [
         "folder": "build_tools/azure",
         "platform": "linux-64",
         "channel": "defaults",
-        "conda_dependencies": remove_from(common_dependencies, ["pandas"]) + ["ccache"],
+        "conda_dependencies": remove_from(common_dependencies, ["pandas", "cython"]) + [
+            "ccache"
+        ],
         "package_constraints": {
             "python": "3.9",
             "blas": "[build=openblas]",
@@ -162,6 +167,9 @@ build_metadata_list = [
             "threadpoolctl": "2.2.0",
             "cython": "min",
         },
+        # TODO: put cython back to conda dependencies when required version is
+        # available on the main channel
+        "pip_dependencies": ["cython"],
     },
     {
         "name": "pymin_conda_forge_openblas_ubuntu_2204",
