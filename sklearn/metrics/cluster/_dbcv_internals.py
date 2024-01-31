@@ -233,7 +233,7 @@ def distances_between_points(
     """
     if metric == "precomputed":
         if d is None:
-            raise ValueError('If metric is precomputed a d value must be provided!')
+            raise ValueError("If metric is precomputed a d value must be provided!")
         distance_matrix = X[labels == cluster_id, :][:, labels == cluster_id]
     else:
         subset_X = X[labels == cluster_id, :]
