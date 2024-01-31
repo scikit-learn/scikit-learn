@@ -16,7 +16,7 @@ joblib==1.2.0
     # via -r build_tools/azure/ubuntu_atlas_requirements.txt
 packaging==23.2
     # via pytest
-pluggy==1.3.0
+pluggy==1.4.0
     # via pytest
 pytest==7.4.4
     # via
