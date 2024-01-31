@@ -66,6 +66,23 @@ def test_pandas_adapter():
     new_df = adapter.rename_columns(X_df, new_columns)
     assert_array_equal(new_df.columns, new_columns)
 
+    # check the behavior of the inplace parameter in `create_container`
+    # we should trigger a copy
+    X_df = pd.DataFrame([[1, 2], [1, 3]], index=index)
+    id_original = id(X_df)
+    X_output = adapter.create_container(X_df, X_df, columns=["a", "b"], inplace=False)
+    assert id(X_output) != id_original
+    assert list(X_df.columns) == [0, 1]
+    assert list(X_output.columns) == ["a", "b"]
+
+    # the operation is inplace
+    X_df = pd.DataFrame([[1, 2], [1, 3]], index=index)
+    id_original = id(X_df)
+    X_output = adapter.create_container(X_df, X_df, columns=["a", "b"], inplace=True)
+    assert id(X_output) == id_original
+    assert list(X_df.columns) == ["a", "b"]
+    assert list(X_output.columns) == ["a", "b"]
+
 
 def test_polars_adapter():
     """Check Polars adapter has expected behavior."""
@@ -104,6 +121,23 @@ def test_polars_adapter():
     from polars.testing import assert_frame_equal
 
     assert_frame_equal(X_stacked, expected_df)
+
+    # check the behavior of the inplace parameter in `create_container`
+    # we should trigger a copy
+    X_df = pl.DataFrame([[1, 2], [1, 3]], schema=["a", "b"], orient="row")
+    id_original = id(X_df)
+    X_output = adapter.create_container(X_df, X_df, columns=["c", "d"], inplace=False)
+    assert id(X_output) != id_original
+    assert list(X_df.columns) == ["a", "b"]
+    assert list(X_output.columns) == ["c", "d"]
+
+    # the operation is inplace
+    X_df = pl.DataFrame([[1, 2], [1, 3]], schema=["a", "b"], orient="row")
+    id_original = id(X_df)
+    X_output = adapter.create_container(X_df, X_df, columns=["c", "d"], inplace=True)
+    assert id(X_output) == id_original
+    assert list(X_df.columns) == ["c", "d"]
+    assert list(X_output.columns) == ["c", "d"]
 
 
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)

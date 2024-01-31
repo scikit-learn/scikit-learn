@@ -114,7 +114,7 @@ class PandasAdapter:
         pd = check_library_installed("pandas")
         columns = get_columns(columns)
 
-        if inplace or not isinstance(X_output, pd.DataFrame):
+        if not inplace or not isinstance(X_output, pd.DataFrame):
             # In all these cases, we need to create a new DataFrame
 
             # Unfortunately, we cannot use `getattr(container, "index")`
@@ -128,7 +128,7 @@ class PandasAdapter:
 
             # We don't pass columns here because it would intend columns selection
             # instead of renaming.
-            X_output = pd.DataFrame(X_output, index=index, copy=inplace)
+            X_output = pd.DataFrame(X_output, index=index, copy=not inplace)
 
         if columns is not None:
             return self.rename_columns(X_output, columns)
@@ -157,7 +157,7 @@ class PolarsAdapter:
         columns = get_columns(columns)
         columns = columns.tolist() if isinstance(columns, np.ndarray) else columns
 
-        if inplace or not isinstance(X_output, pl.DataFrame):
+        if not inplace or not isinstance(X_output, pl.DataFrame):
             # In all these cases, we need to create a new DataFrame
             return pl.DataFrame(X_output, schema=columns, orient="row")
 

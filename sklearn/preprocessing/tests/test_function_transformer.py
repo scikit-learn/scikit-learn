@@ -515,6 +515,8 @@ def test_consistence_column_name_between_steps():
 def test_function_transformer_overwrite_column_names(dataframe_lib, transform_output):
     """Check that we overwrite the column names when we should."""
     lib = pytest.importorskip(dataframe_lib)
+    if transform_output != "numpy":
+        pytest.importorskip(transform_output)
 
     df = lib.DataFrame({"a": [1, 2, 3], "b": [10, 20, 100]})
 
