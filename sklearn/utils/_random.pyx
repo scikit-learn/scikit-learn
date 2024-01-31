@@ -318,6 +318,12 @@ def sample_without_replacement(
     out : ndarray of shape (n_samples,)
         The sampled subsets of integer. The subset of selected integer might
         not be randomized, see the method argument.
+
+    Examples
+    --------
+    >>> from sklearn.utils.random import sample_without_replacement
+    >>> sample_without_replacement(10, 5, random_state=42)
+    array([8, 1, 5, 0, 7])
     """
     cdef:
         cnp.intp_t n_pop_intp, n_samples_intp
