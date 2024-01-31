@@ -1766,19 +1766,20 @@ def test_estimators_samples(ForestClass, bootstrap, seed):
 
 
 @pytest.mark.parametrize(
-    "make_data, Forest, resilience_score",
+    "make_data, Forest",
     [
-        (datasets.make_regression, RandomForestRegressor, 0.8),
-        (datasets.make_classification, RandomForestClassifier, 0.8),
-        (datasets.make_regression, ExtraTreesRegressor, 0.6),
-        (datasets.make_classification, ExtraTreesClassifier, 0.8),
+        (datasets.make_regression, RandomForestRegressor),
+        (datasets.make_classification, RandomForestClassifier),
+        (datasets.make_regression, ExtraTreesRegressor),
+        (datasets.make_classification, ExtraTreesClassifier),
     ],
 )
-def test_missing_values_is_resilient(make_data, Forest, resilience_score):
+def test_missing_values_is_resilient(make_data, Forest):
     """Check that forest can deal with missing values and has decent performance."""
 
     rng = np.random.RandomState(0)
     n_samples, n_features = 1000, 10
+    resilience_score = 0.8
     X, y = make_data(n_samples=n_samples, n_features=n_features, random_state=rng)
 
     # Create dataset with missing values
@@ -1806,19 +1807,20 @@ def test_missing_values_is_resilient(make_data, Forest, resilience_score):
 
 
 @pytest.mark.parametrize(
-    "Forest, expected_score",
+    "Forest",
     [
-        (RandomForestClassifier, 0.75),
-        (RandomForestRegressor, 0.75),
-        (ExtraTreesRegressor, 0.49),
-        (ExtraTreesClassifier, 0.75),
+        RandomForestClassifier,
+        RandomForestRegressor,
+        ExtraTreesRegressor,
+        ExtraTreesClassifier,
     ],
 )
-def test_missing_value_is_predictive(Forest, expected_score):
+def test_missing_value_is_predictive(Forest):
     """Check that the forest learns when missing values are only present for
     a predictive feature."""
     rng = np.random.RandomState(0)
     n_samples = 300
+    expected_score = 0.75
 
     X_non_predictive = rng.standard_normal(size=(n_samples, 10))
     y = rng.randint(0, high=2, size=n_samples)
