@@ -941,7 +941,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         self._validate_output(Xs)
         self._record_output_indices(Xs)
 
-        return self._hstack(list(Xs))
+        return self._hstack(list(Xs), n_samples=n_samples)
 
     def transform(self, X, **params):
         """Transform X separately by each transformer, concatenate results.
@@ -1024,9 +1024,9 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
             # All transformers are None
             return np.zeros((n_samples, 0))
 
-        return self._hstack(list(Xs))
+        return self._hstack(list(Xs), n_samples=n_samples)
 
-    def _hstack(self, Xs):
+    def _hstack(self, Xs, *, n_samples):
         """Stacks Xs horizontally.
 
         This allows subclasses to control the stacking behavior, while reusing
@@ -1035,6 +1035,10 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         Parameters
         ----------
         Xs : list of {array-like, sparse matrix, dataframe}
+            The container to concatenate.
+        n_samples : int
+            The number of samples in the input data to checking the transformation
+            consistency.
         """
         if self.sparse_output_:
             try:
@@ -1120,7 +1124,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
 
                 output = adapter.hstack(Xs)
                 output_samples = output.shape[0]
-                if any(_num_samples(X) != output_samples for X in Xs):
+                if output_samples != n_samples:
                     raise ValueError(
                         "Concatenating DataFrames from the transformer's output lead to"
                         " an inconsistent number of samples. The output may have Pandas"

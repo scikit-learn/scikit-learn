@@ -2371,7 +2371,8 @@ def test_column_transformer_column_renaming(dataframe_lib):
             ("A", "passthrough", ["x1", "x2", "x3"]),
             ("B", FunctionTransformer(), ["x1", "x2"]),
             ("C", StandardScaler(), ["x1", "x3"]),
-            ("D", "passthrough", []),  # case of empty transformer
+            # special case of empty transformer
+            ("D", FunctionTransformer(lambda x: x[[]]), ["x1", "x2", "x3"]),
         ],
         verbose_feature_names_out=True,
     ).set_output(transform=dataframe_lib)
@@ -2400,7 +2401,8 @@ def test_column_transformer_error_with_duplicated_columns(dataframe_lib):
             ("A", "passthrough", ["x1", "x2", "x3"]),
             ("B", FunctionTransformer(), ["x1", "x2"]),
             ("C", StandardScaler(), ["x1", "x3"]),
-            ("D", "passthrough", []),  # case of empty transformer
+            # special case of empty transformer
+            ("D", FunctionTransformer(lambda x: x[[]]), ["x1", "x2", "x3"]),
         ],
         verbose_feature_names_out=False,
     ).set_output(transform=dataframe_lib)
