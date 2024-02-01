@@ -262,19 +262,6 @@ def fetch_20newsgroups(
         (n_samples,) contains the target samples.
 
         .. versionadded:: 0.22
-
-    Examples
-    --------
-    >>> cats = ['alt.atheism', 'sci.space']
-    >>> newsgroups_train = fetch_20newsgroups(subset='train', categories=cats)
-    >>> list(newsgroups_train.target_names)
-    ['alt.atheism', 'sci.space']
-    >>> newsgroups_train.filenames.shape
-    (1073,)
-    >>> newsgroups_train.target.shape
-    (1073,)
-    >>> newsgroups_train.target[:10]
-    array([0, 1, 1, 1, 0, 1, 1, 0, 0, 0])
     """
 
     data_home = get_data_home(data_home=data_home)
