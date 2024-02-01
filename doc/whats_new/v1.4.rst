@@ -78,9 +78,6 @@ Changelog
   larger than the number of non-duplicate samples.
   :pr:`28165` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
-- |Enhancement| Pandas and Polars dataframe are validated directly without ducktyping
-  checks. :pr:`28195` by `Thomas Fan`_.
-
 :mod:`sklearn.preprocessing`
 ............................
 
