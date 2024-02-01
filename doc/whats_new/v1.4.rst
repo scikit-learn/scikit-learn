@@ -20,6 +20,19 @@ Version 1.4.1
 
 **In Development**
 
+Metadata Routing
+----------------
+
+- |FIX| Fix routing issue with :class:`~compose.ColumnTransformer` when used
+  inside another meta-estimator.
+  :pr:`28188` by `Adrin Jalali`_.
+
+DataFrame Support
+-----------------
+
+- |Enhancement| Pandas and Polars dataframe are validated directly without ducktyping
+  checks. :pr:`28195` by `Thomas Fan`_.
+
 Changes impacting all modules
 -----------------------------
 
@@ -70,9 +83,6 @@ Changelog
   larger than the number of non-duplicate samples.
   :pr:`28165` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
-- |Enhancement| Pandas and Polars dataframe are validated directly without ducktyping
-  checks. :pr:`28195` by `Thomas Fan`_.
-
 :mod:`sklearn.compose`
 ......................
 
@@ -90,6 +100,15 @@ Changelog
 
 :mod:`sklearn.preprocessing`
 ............................
+
+- |Fix| make :class:`preprocessing.FunctionTransformer` more lenient and overwrite
+  output column names with the `get_feature_names_out` in the following cases:
+
+  - the input and output column names remain the same (happen when using NumPy `ufunc`);
+  - the input column names are numbers;
+  - the output will be set to Pandas or Polars dataframe.
+
+  :pr:`28241` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 - |Fix| :class:`preprocessing.FunctionTransformer` now also warns when `set_output`
   is called with `transform="polars"` and `func` does not return a Polars dataframe or
