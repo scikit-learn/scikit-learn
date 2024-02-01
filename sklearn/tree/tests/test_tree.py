@@ -16,7 +16,7 @@ from joblib.numpy_pickle import NumpyPickler
 from numpy.testing import assert_allclose
 
 from sklearn import datasets, tree
-from sklearn.dummy import DummyClassifier, DummyRegressor
+from sklearn.dummy import DummyRegressor
 from sklearn.exceptions import NotFittedError
 from sklearn.impute import SimpleImputer
 from sklearn.metrics import accuracy_score, mean_poisson_deviance, mean_squared_error
