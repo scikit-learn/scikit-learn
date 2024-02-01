@@ -105,7 +105,7 @@ A limited but growing :ref:`list of scikit-learn estimators
 as a PyTorch or CuPy array and if scikit-learn has been configured to accept
 such inputs as explained in :ref:`array_api`.
 
-Most estimators that rely on NumPy for their computational intensive operations
+Most estimators that rely on NumPy for their computationally intensive operations
 can be considered for Array API support and therefore GPU support.
 
 However, not all scikit-learn estimators are amenable to running on GPUs via
