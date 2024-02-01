@@ -95,6 +95,29 @@ Installing the latest release
   <!-- The paragraph of instructions depending on the above selection -->
   <div id="skInstallInstructions"></div>
 
+  <!-- If JS is disabled, we display minimal instructions with an error message -->
+  <noscript>
+
+.. error::
+
+  Please enable JavaScript to display detailed installation instructions.
+
+You can install scikit-learn using ``pip``:
+
+.. prompt:: bash $
+
+  pip install -U scikit-learn
+
+or using ``conda``:
+
+.. prompt:: bash $
+
+  conda install scikit-learn
+
+.. raw:: html
+
+  </noscript>
+
 
 Note that in order to avoid potential conflicts with other packages it is
 strongly recommended to use a `virtual environment (venv)
