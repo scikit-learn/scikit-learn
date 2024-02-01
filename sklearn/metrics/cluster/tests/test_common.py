@@ -10,6 +10,7 @@ from sklearn.metrics.cluster import (
     calinski_harabasz_score,
     completeness_score,
     davies_bouldin_score,
+    dbcv_score,
     fowlkes_mallows_score,
     homogeneity_score,
     mutual_info_score,
@@ -49,6 +50,7 @@ UNSUPERVISED_METRICS = {
     "silhouette_manhattan": partial(silhouette_score, metric="manhattan"),
     "calinski_harabasz_score": calinski_harabasz_score,
     "davies_bouldin_score": davies_bouldin_score,
+    "dbcv_score": dbcv_score,
 }
 
 # Lists of metrics with common properties
