@@ -10,6 +10,7 @@ from sklearn.metrics import pairwise_distances
 from sklearn.metrics.cluster import (
     calinski_harabasz_score,
     davies_bouldin_score,
+    dbcv_score,
     silhouette_samples,
     silhouette_score,
 )
@@ -394,6 +395,19 @@ def test_davies_bouldin_score():
     X = [[0, 0], [2, 2], [3, 3], [5, 5]]
     labels = [0, 0, 1, 2]
     pytest.approx(davies_bouldin_score(X, labels), (5.0 / 4) / 3)
+
+
+def test_dbcv_score():
+    assert_raises_on_only_one_label(dbcv_score)
+    assert_raises_on_all_points_same_cluster(dbcv_score)
+
+    # test with two non-spherical clusters
+    X, y = datasets.make_moons()
+    # score should at least be non-negative if labeled by ground-truth
+    assert dbcv_score(X, y) >= 0
+    # in general, the score lies between -1 and 1
+    np.random.shuffle(y)
+    assert -1 <= dbcv_score(X, y) <= 1
 
 
 def test_silhouette_score_integer_precomputed():
