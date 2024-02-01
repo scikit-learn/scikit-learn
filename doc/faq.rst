@@ -100,10 +100,13 @@ See :ref:`adding_graphical_models`.
 Will you add GPU support?
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
-A limited but growing list of scikit-learn estimators can already run on GPUs
-via the :ref:`array_api` on PyTorch of CuPy input data for instance. Most
-estimators that rely on NumPy for their computational intensive operations can
-be considered for Array API support and therefore GPU support.
+A limited but growing :ref:`list of scikit-learn estimators
+<array_api_supported>` can already run on GPUs if the input data is provided
+as a PyTorch or CuPy array and if scikit-learn has been configured to accept
+such inputs as explained in :ref:`array_api`.
+
+Most estimators that rely on NumPy for their computational intensive operations
+can be considered for Array API support and therefore GPU support.
 
 However, not all scikit-learn estimators are amenable to running on GPUs via
 the Array API for fundamental algorithmic reasons. For instance, tree-based
