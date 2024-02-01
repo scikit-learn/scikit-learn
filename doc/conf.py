@@ -328,7 +328,9 @@ def add_js_css_files(app, pagename, templatename, context, doctree):
     should be used for the ones that are used by multiple pages. All page-specific
     JS and CSS files should be added here instead.
     """
-    return
+    if pagename == "install":
+        app.add_js_file("scripts/install-instructions.js")
+        app.add_css_file("styles/install.css")
 
 
 # If false, no module index is generated.
