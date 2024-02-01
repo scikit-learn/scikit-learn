@@ -303,9 +303,7 @@ html_static_path = ["images", "css", "js"]
 
 # Additional templates that should be rendered to pages, maps page names to
 # template names.
-# TODO: change to html_additional_pages = {"index": "index.html"} so that our landing
-# page template can override the one generated from index.rst
-html_additional_pages = {}
+html_additional_pages = {"index": "index.html"}
 
 # Additional JS files
 html_js_files = ["scripts/details-permalink.js"]
@@ -328,7 +326,9 @@ def add_js_css_files(app, pagename, templatename, context, doctree):
     should be used for the ones that are used by multiple pages. All page-specific
     JS and CSS files should be added here instead.
     """
-    return
+    if pagename == "index":
+        app.add_js_file("scripts/index.js")
+        app.add_css_file("styles/index.css")
 
 
 # If false, no module index is generated.
@@ -770,6 +770,49 @@ def generate_min_dependency_substitutions(app):
         f.write(output)
 
 
+def generate_index_rst():
+    """Generate index.rst to imply the overall structure of docs."""
+
+    # See https://github.com/scikit-learn/scikit-learn/pull/22550
+    development_link = (
+        "developers/index"
+        if parsed_version.is_devrelease
+        else "https://scikit-learn.org/dev/developers/index.html"
+    )
+
+    output = f"""
+.. title:: Index
+
+.. Define the overall structure, that affects the prev-next buttons and the order
+   of the sections in the top navbar.
+
+.. toctree::
+    :hidden:
+    :maxdepth: 2
+
+    Install <install>
+    user_guide
+    API <modules/classes>
+    auto_examples/index
+    Community <https://blog.scikit-learn.org/>
+    getting_started
+    Tutorials <tutorial/index>
+    whats_new
+    Glossary <glossary>
+    Development <{development_link}>
+    FAQ <faq>
+    support
+    related_projects
+    roadmap
+    Governance <governance>
+    about
+    Other Versions and Download <https://scikit-learn.org/dev/versions.html>
+"""
+
+    with (Path(".") / "index.rst").open("w") as f:
+        f.write(output)
+
+
 # Config for sphinx_issues
 
 # we use the issues path for PRs since the issues URL will forward
@@ -930,3 +973,6 @@ else:
     linkcheck_request_headers = {
         "https://github.com/": {"Authorization": f"token {github_token}"},
     }
+
+# Write the pages prior to any sphinx event
+generate_index_rst()

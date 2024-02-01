@@ -22,6 +22,7 @@ doc/modules/generated/
 doc/datasets/generated/
 doc/min_dependency_table.rst
 doc/min_dependency_substitutions.rst
+doc/index.rst
 *.pdf
 pip-log.txt
 scikit_learn.egg-info/
