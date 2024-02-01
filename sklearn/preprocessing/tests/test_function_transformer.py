@@ -5,22 +5,13 @@ import pytest
 
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import FunctionTransformer, StandardScaler
-from sklearn.preprocessing._function_transformer import (
-    _get_adapter_from_container,
-    _is_registered_adapter,
-)
+from sklearn.preprocessing._function_transformer import _get_adapter_from_container
 from sklearn.utils._testing import (
     _convert_container,
     assert_allclose_dense_sparse,
     assert_array_equal,
 )
 from sklearn.utils.fixes import CSC_CONTAINERS, CSR_CONTAINERS
-
-
-def test_is_registered_adapter():
-    """Check the behavior of `_is_registered_adapter`."""
-    assert _is_registered_adapter(adapter_name="pandas")
-    assert not _is_registered_adapter(adapter_name="random")
 
 
 def test_get_adapter_from_container():

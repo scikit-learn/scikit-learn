@@ -16,10 +16,6 @@ from ..utils.validation import (
 )
 
 
-def _is_registered_adapter(*, adapter_name):
-    return adapter_name in ADAPTERS_MANAGER.adapters
-
-
 def _get_adapter_from_container(container):
     """Get the adapter that nows how to handle such container.
 
@@ -291,11 +287,7 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
                 not_all_str_columns = not all(
                     isinstance(col, str) for col in out.columns
                 )
-                if (
-                    same_feature_names_in_out
-                    or not_all_str_columns
-                    or _is_registered_adapter(adapter_name=output_config)
-                ):
+                if same_feature_names_in_out or not_all_str_columns:
                     adapter = _get_adapter_from_container(out)
                     out = adapter.create_container(
                         X_output=out,
