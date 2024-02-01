@@ -69,17 +69,15 @@ def test_pandas_adapter():
     # check the behavior of the inplace parameter in `create_container`
     # we should trigger a copy
     X_df = pd.DataFrame([[1, 2], [1, 3]], index=index)
-    id_original = id(X_df)
     X_output = adapter.create_container(X_df, X_df, columns=["a", "b"], inplace=False)
-    assert id(X_output) != id_original
+    assert X_output is not X_df
     assert list(X_df.columns) == [0, 1]
     assert list(X_output.columns) == ["a", "b"]
 
     # the operation is inplace
     X_df = pd.DataFrame([[1, 2], [1, 3]], index=index)
-    id_original = id(X_df)
     X_output = adapter.create_container(X_df, X_df, columns=["a", "b"], inplace=True)
-    assert id(X_output) == id_original
+    assert X_output is X_df
     assert list(X_df.columns) == ["a", "b"]
     assert list(X_output.columns) == ["a", "b"]
 
@@ -125,17 +123,15 @@ def test_polars_adapter():
     # check the behavior of the inplace parameter in `create_container`
     # we should trigger a copy
     X_df = pl.DataFrame([[1, 2], [1, 3]], schema=["a", "b"], orient="row")
-    id_original = id(X_df)
     X_output = adapter.create_container(X_df, X_df, columns=["c", "d"], inplace=False)
-    assert id(X_output) != id_original
+    assert X_output is not X_df
     assert list(X_df.columns) == ["a", "b"]
     assert list(X_output.columns) == ["c", "d"]
 
     # the operation is inplace
     X_df = pl.DataFrame([[1, 2], [1, 3]], schema=["a", "b"], orient="row")
-    id_original = id(X_df)
     X_output = adapter.create_container(X_df, X_df, columns=["c", "d"], inplace=True)
-    assert id(X_output) == id_original
+    assert X_output is X_df
     assert list(X_df.columns) == ["c", "d"]
     assert list(X_output.columns) == ["c", "d"]
 
