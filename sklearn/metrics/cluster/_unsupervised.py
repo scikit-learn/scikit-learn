@@ -538,7 +538,7 @@ def dbcv_score(
     mst_nodes = {}
     mst_edges = {}
 
-    max_cluster_id = labels.max() + 1
+    max_cluster_id = np.max(labels) + 1
     density_sep = np.inf * np.ones((max_cluster_id, max_cluster_id), dtype=np.float64)
     cluster_validity_indices = np.empty(max_cluster_id, dtype=np.float64)
 
