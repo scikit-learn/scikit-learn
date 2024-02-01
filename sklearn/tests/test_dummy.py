@@ -72,6 +72,23 @@ def _check_equality_regressor(statistic, y_learn, y_pred_learn, y_test, y_pred_t
     assert_array_almost_equal(np.tile(statistic, (y_test.shape[0], 1)), y_pred_test)
 
 
+def test_feature_names_in_and_n_features_in_(global_random_seed, n_samples=10):
+    pd = pytest.importorskip("pandas")
+
+    random_state = np.random.RandomState(seed=global_random_seed)
+
+    X = pd.DataFrame([[0]] * n_samples, columns=["feature_1"])
+    y = random_state.rand(n_samples)
+
+    est = DummyRegressor().fit(X, y)
+    assert hasattr(est, "feature_names_in_")
+    assert hasattr(est, "n_features_in_")
+
+    est = DummyClassifier().fit(X, y)
+    assert hasattr(est, "feature_names_in_")
+    assert hasattr(est, "n_features_in_")
+
+
 def test_most_frequent_and_prior_strategy():
     X = [[0], [0], [0], [0]]  # ignored
     y = [1, 2, 1, 1]
@@ -376,7 +393,7 @@ def test_quantile_invalid():
 
 def test_quantile_strategy_empty_train():
     est = DummyRegressor(strategy="quantile", quantile=0.4)
-    with pytest.raises(ValueError):
+    with pytest.raises(IndexError):
         est.fit([], [])
 
 

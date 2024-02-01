@@ -265,7 +265,7 @@ class DetCurveDisplay(_BinaryClassifierCurveDisplayMixin):
             sample_weight=sample_weight,
         )
 
-        viz = DetCurveDisplay(
+        viz = cls(
             fpr=fpr,
             fnr=fnr,
             estimator_name=name,

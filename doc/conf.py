@@ -303,6 +303,12 @@ redirects = {
     "auto_examples/ensemble/plot_adaboost_hastie_10_2": (
         "auto_examples/ensemble/plot_adaboost_multiclass"
     ),
+    "auto_examples/decomposition/plot_pca_3d": (
+        "auto_examples/decomposition/plot_pca_iris"
+    ),
+    "auto_examples/exercises/plot_cv_digits.py": (
+        "auto_examples/model_selection/plot_nested_cross_validation_iris.py"
+    ),
 }
 html_context["redirects"] = redirects
 for old_link in redirects:
@@ -717,6 +723,13 @@ if os.environ.get("SKLEARN_DOC_BUILD_WARNINGS_AS_ERRORS", "true").lower() == "tr
     warnings.filterwarnings(
         "ignore",
         message="pkg_resources is deprecated as an API",
+        category=DeprecationWarning,
+    )
+    # XXX: Easiest way to ignore Pyarrow DeprecationWarning in the short-term.
+    # See https://github.com/pandas-dev/pandas/issues/54466 for more details.
+    warnings.filterwarnings(
+        "ignore",
+        message=r"\s*Pyarrow will become a required dependency of pandas.*",
         category=DeprecationWarning,
     )
 

@@ -679,6 +679,14 @@ def cohen_kappa_score(y1, y2, *, labels=None, weights=None, sample_weight=None):
            <https://www.mitpressjournals.org/doi/pdf/10.1162/coli.07-034-R2>`_.
     .. [3] `Wikipedia entry for the Cohen's kappa
             <https://en.wikipedia.org/wiki/Cohen%27s_kappa>`_.
+
+    Examples
+    --------
+    >>> from sklearn.metrics import cohen_kappa_score
+    >>> y1 = ["negative", "positive", "negative", "neutral", "positive"]
+    >>> y2 = ["negative", "positive", "negative", "neutral", "negative"]
+    >>> cohen_kappa_score(y1, y2)
+    0.6875
     """
     confusion = confusion_matrix(y1, y2, labels=labels, sample_weight=sample_weight)
     n_classes = confusion.shape[0]
@@ -1114,16 +1122,18 @@ def f1_score(
     The F1 score can be interpreted as a harmonic mean of the precision and
     recall, where an F1 score reaches its best value at 1 and worst score at 0.
     The relative contribution of precision and recall to the F1 score are
-    equal. The formula for the F1 score is::
+    equal. The formula for the F1 score is:
 
-        F1 = 2 * TP / (2 * TP + FN + FP)
+    .. math::
+        \\text{F1} = \\frac{2 * \\text{TP}}{2 * \\text{TP} + \\text{FP} + \\text{FN}}
 
-    Where "TP" is the number of true positives, "FN" is the number of false
-    negatives, and "FP" is the number of false positives. F1 is by default
-    calculated as 0.0 when there are no true positives, false negatives, nor
+    Where :math:`\\text{TP}` is the number of true positives, :math:`\\text{FN}` is the
+    number of false negatives, and :math:`\\text{FP}` is the number of false positives.
+    F1 is by default
+    calculated as 0.0 when there are no true positives, false negatives, or
     false positives.
 
-    Support beyond term:`binary` targets is achieved by treating :term:`multiclass`
+    Support beyond :term:`binary` targets is achieved by treating :term:`multiclass`
     and :term:`multilabel` data as a collection of binary problems, one for each
     label. For the :term:`binary` case, setting `average='binary'` will return
     F1 score for `pos_label`. If `average` is not `'binary'`, `pos_label` is ignored
