@@ -126,10 +126,18 @@ def test_ignore_warning():
     assert_no_warnings(ignore_warnings(_warning_function, category=DeprecationWarning))
     with pytest.warns(DeprecationWarning):
         ignore_warnings(_warning_function, category=UserWarning)()
-    with pytest.warns(UserWarning):
+
+    with pytest.warns() as record:
         ignore_warnings(_multiple_warning_function, category=FutureWarning)()
-    with pytest.warns(DeprecationWarning):
+    assert len(record) == 2
+    assert isinstance(record[0].message, DeprecationWarning)
+    assert isinstance(record[1].message, UserWarning)
+
+    with pytest.warns() as record:
         ignore_warnings(_multiple_warning_function, category=UserWarning)()
+    assert len(record) == 1
+    assert isinstance(record[0].message, DeprecationWarning)
+
     assert_no_warnings(
         ignore_warnings(_warning_function, category=(DeprecationWarning, UserWarning))
     )
@@ -845,3 +853,32 @@ def test_assert_run_python_script_without_output():
         match="output was not supposed to match.+got.+something to stderr",
     ):
         assert_run_python_script_without_output(code, pattern="to.+stderr")
+
+
+@pytest.mark.parametrize(
+    "constructor_name",
+    [
+        "sparse_csr",
+        "sparse_csc",
+        pytest.param(
+            "sparse_csr_array",
+            marks=pytest.mark.skipif(
+                sp_version < parse_version("1.8"),
+                reason="sparse arrays are available as of scipy 1.8.0",
+            ),
+        ),
+        pytest.param(
+            "sparse_csc_array",
+            marks=pytest.mark.skipif(
+                sp_version < parse_version("1.8"),
+                reason="sparse arrays are available as of scipy 1.8.0",
+            ),
+        ),
+    ],
+)
+def test_convert_container_sparse_to_sparse(constructor_name):
+    """Non-regression test to check that we can still convert a sparse container
+    from a given format to another format.
+    """
+    X_sparse = sparse.random(10, 10, density=0.1, format="csr")
+    _convert_container(X_sparse, constructor_name)
