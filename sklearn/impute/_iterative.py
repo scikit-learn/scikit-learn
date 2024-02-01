@@ -711,10 +711,10 @@ class IterativeImputer(_BaseImputer):
             metadata routing API.
 
             .. versionadded:: 1.5
-            Only available if
-            `sklearn.set_config(enable_metadata_routing=True)` is set. See
-            :ref:`Metadata Routing User Guide <metadata_routing>` for more
-            details.
+              Only available if
+              `sklearn.set_config(enable_metadata_routing=True)` is set. See
+              :ref:`Metadata Routing User Guide <metadata_routing>` for more
+              details.
 
         Returns
         -------
@@ -905,10 +905,10 @@ class IterativeImputer(_BaseImputer):
             metadata routing API.
 
             .. versionadded:: 1.5
-            Only available if
-            `sklearn.set_config(enable_metadata_routing=True)` is set. See
-            :ref:`Metadata Routing User Guide <metadata_routing>` for more
-            details.
+              Only available if
+              `sklearn.set_config(enable_metadata_routing=True)` is set. See
+              :ref:`Metadata Routing User Guide <metadata_routing>` for more
+              details.
 
         Returns
         -------
