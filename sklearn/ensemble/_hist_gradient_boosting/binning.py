@@ -53,8 +53,7 @@ def _find_binning_thresholds(col_data, max_bins):
         midpoints = distinct_values[:-1] + distinct_values[1:]
         midpoints *= 0.5
     else:
-        # We sort again the data in this case. We could compute
-        # approximate midpoint percentiles using the output of
+        # We could compute approximate midpoint percentiles using the output of
         # np.unique(col_data, return_counts) instead but this is more
         # work and the performance benefit will be limited because we
         # work on a fixed-size subsample of the full data.
