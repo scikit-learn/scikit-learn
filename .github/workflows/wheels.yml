@@ -108,13 +108,13 @@ jobs:
           # Cirrus CI but due to limited build time for free accounts on Cirrus
           # CI, we build the macOS arm64 wheels for the other Python versions on
           # Github Actions via cross-compilation (without running the tests).
-          - os: macos-latest
+          - os: macos-14
             python: 39
             platform_id: macosx_arm64
-          - os: macos-latest
+          - os: macos-14
             python: 310
             platform_id: macosx_arm64
-          - os: macos-latest
+          - os: macos-14
             python: 311
             platform_id: macosx_arm64
 
