@@ -221,6 +221,7 @@ PARAM_VALIDATION_FUNCTION_LIST = [
     "sklearn.metrics.classification_report",
     "sklearn.metrics.cluster.adjusted_mutual_info_score",
     "sklearn.metrics.cluster.contingency_matrix",
+    "sklearn.metrics.cluster.dbcv_score",
     "sklearn.metrics.cluster.entropy",
     "sklearn.metrics.cluster.fowlkes_mallows_score",
     "sklearn.metrics.cluster.homogeneity_completeness_v_measure",
