@@ -2620,18 +2620,12 @@ def test_deterministic_pickle():
 @pytest.mark.parametrize(
     "X",
     [
-        np.array([np.nan, 2, np.nan, 4, 5, 6]).reshape(
-            -1, 1
-        ),  # missing values will go left for greedy splits
-        np.array([np.nan, np.nan, 3, 4, 5, 6]).reshape(
-            -1, 1
-        ),  # missing values will go left for greedy splits
-        np.array([1, 2, 3, 4, np.nan, np.nan]).reshape(
-            -1, 1
-        ),  # missing values will go right for greedy splits
-        np.array([1, 2, 3, 4, np.nan, 6]).reshape(
-            -1, 1
-        ),  # missing values will go right for greedy splits
+        # missing values will go left for greedy splits
+        np.array([np.nan, 2, np.nan, 4, 5, 6]),
+        np.array([np.nan, np.nan, 3, 4, 5, 6]),
+        # missing values will go right for greedy splits
+        np.array([1, 2, 3, 4, np.nan, np.nan]),
+        np.array([1, 2, 3, np.nan, 6, np.nan]),
     ],
 )
 @pytest.mark.parametrize("criterion", ["squared_error", "friedman_mse"])
