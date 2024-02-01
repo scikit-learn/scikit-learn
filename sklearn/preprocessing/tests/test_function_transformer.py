@@ -5,12 +5,33 @@ import pytest
 
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import FunctionTransformer, StandardScaler
+from sklearn.preprocessing._function_transformer import (
+    _get_adapter_from_container,
+    _is_registered_adapter,
+)
 from sklearn.utils._testing import (
     _convert_container,
     assert_allclose_dense_sparse,
     assert_array_equal,
 )
 from sklearn.utils.fixes import CSC_CONTAINERS, CSR_CONTAINERS
+
+
+def test_is_registered_adapter():
+    """Check the behavior of `_is_registered_adapter`."""
+    assert _is_registered_adapter(adapter_name="pandas")
+    assert not _is_registered_adapter(adapter_name="random")
+
+
+def test_get_adapter_from_container():
+    """Check the behavior fo `_get_adapter_from_container`."""
+    pd = pytest.importorskip("pandas")
+    X = pd.DataFrame({"a": [1, 2, 3], "b": [10, 20, 100]})
+    adapter = _get_adapter_from_container(X)
+    assert adapter.container_lib == "pandas"
+    err_msg = "The container does not have a registered adapter in scikit-learn."
+    with pytest.raises(ValueError, match=err_msg):
+        _get_adapter_from_container(X.to_numpy())
 
 
 def _make_func(args_store, kwargs_store, func=lambda X, *a, **k: X):

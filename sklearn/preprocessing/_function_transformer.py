@@ -1,5 +1,4 @@
 import warnings
-from numbers import Number
 
 import numpy as np
 
@@ -22,11 +21,21 @@ def _is_registered_adapter(*, adapter_name):
 
 
 def _get_adapter_from_container(container):
-    module_name = container.__module__.split(".")[0]
+    """Get the adapter that nows how to handle such container.
+
+    See :class:`sklearn.utils._set_output.ContainerAdapterProtocol` for more
+    details.
+    """
+    module_name = container.__class__.__module__.split(".")[0]
     try:
         return ADAPTERS_MANAGER.adapters[module_name]
-    except KeyError:
-        return None
+    except KeyError as exc:
+        available_adapters = list(ADAPTERS_MANAGER.adapters.keys())
+        raise ValueError(
+            "The container does not have a registered adapter in scikit-learn. "
+            f"Available adapters are: {available_adapters} while the container "
+            f"provided is: {container!r}."
+        ) from exc
 
 
 def _identity(X):
@@ -279,12 +288,12 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
                 same_feature_names_in_out = feature_names_in is not None and list(
                     feature_names_in
                 ) == list(out.columns)
-                any_number_column_names = any(
-                    isinstance(col, Number) for col in out.columns
+                not_all_str_columns = not all(
+                    isinstance(col, str) for col in out.columns
                 )
                 if (
                     same_feature_names_in_out
-                    or any_number_column_names
+                    or not_all_str_columns
                     or _is_registered_adapter(adapter_name=output_config)
                 ):
                     adapter = _get_adapter_from_container(out)
