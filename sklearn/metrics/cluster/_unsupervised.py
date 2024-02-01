@@ -529,8 +529,9 @@ def dbcv_score(
 
     References
     ----------
-    Moulavi, D., Jaskowiak, P.A., Campello, R.J., Zimek, A. and Sander, J.,
+    .. [1] `Moulavi, D., Jaskowiak, P.A., Campello, R.J., Zimek, A. and Sander, J.,
     2014. Density-Based Clustering Validation. In SDM (pp. 839-847).
+    <https://www.dbs.ifi.lmu.de/~zimek/publications/SDM2014/DBCV.pdf>`_
     """
     core_distances = {}
     density_sparseness = {}
