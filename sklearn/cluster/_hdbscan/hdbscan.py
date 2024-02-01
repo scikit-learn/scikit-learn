@@ -864,6 +864,9 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
 
         self._single_linkage_tree_ = mst_func(**kwargs)
 
+        from joblib import hash
+
+        print(hash(self._single_linkage_tree_))
         self.labels_, self.probabilities_ = tree_to_labels(
             self._single_linkage_tree_,
             self.min_cluster_size,
@@ -938,6 +941,7 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
         """
         # Number of non-noise clusters
         n_clusters = len(set(self.labels_) - {-1, -2})
+        print(f"{n_clusters=}")
         mask = np.empty((X.shape[0],), dtype=np.bool_)
         make_centroids = self.store_centers in ("centroid", "both")
         make_medoids = self.store_centers in ("medoid", "both")
