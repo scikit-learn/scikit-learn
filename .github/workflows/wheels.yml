@@ -117,6 +117,9 @@ jobs:
           - os: macos-14
             python: 311
             platform_id: macosx_arm64
+          - os: macos-14
+            python: 312
+            platform_id: macosx_arm64
 
     steps:
       - name: Checkout scikit-learn
@@ -139,7 +142,7 @@ jobs:
           CIBW_TEST_SKIP: "*-macosx_arm64"
           CIBW_REPAIR_WHEEL_COMMAND_WINDOWS: bash build_tools/github/repair_windows_wheels.sh {wheel} {dest_dir}
           CIBW_BEFORE_TEST_WINDOWS: bash build_tools/github/build_minimal_windows_image.sh ${{ matrix.python }}
-          CIBW_TEST_REQUIRES: pytest pandas threadpoolctl
+          CIBW_TEST_REQUIRES: pytest pandas threadpoolctl pytest-xdist
           CIBW_TEST_COMMAND: bash {project}/build_tools/wheels/test_wheels.sh
           CIBW_TEST_COMMAND_WINDOWS: bash {project}/build_tools/github/test_windows_wheels.sh ${{ matrix.python }}
           CIBW_BUILD_VERBOSITY: 1
