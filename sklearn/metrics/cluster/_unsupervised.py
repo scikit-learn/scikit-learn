@@ -459,7 +459,7 @@ def davies_bouldin_score(X, labels):
         "per_cluster_scores": ["boolean"],
         "mst_raw_dist": ["boolean"],
         "verbose": ["boolean"],
-    }
+    },
     prefer_skip_nested_validation=True,
 )
 def dbcv_score(
