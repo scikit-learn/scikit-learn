@@ -2,6 +2,17 @@
 
 .. currentmodule:: sklearn
 
+.. _release_notes_0_24:
+
+============
+Version 0.24
+============
+
+For a short description of the main highlights of the release, please refer to
+:ref:`sphx_glr_auto_examples_release_highlights_plot_release_highlights_0_24_0.py`.
+
+.. include:: changelog_legend.inc
+
 .. _changes_0_24_2:
 
 Version 0.24.2
@@ -190,14 +201,6 @@ Version 0.24.0
 ==============
 
 **December 2020**
-
-For a short description of the main highlights of the release, please
-refer to
-:ref:`sphx_glr_auto_examples_release_highlights_plot_release_highlights_0_24_0.py`.
-
-.. include:: changelog_legend.inc
-
-Put the changes in their relevant module.
 
 Changed models
 --------------
@@ -1008,8 +1011,7 @@ Miscellaneous
   when `print_changed_only=True`, especially with meta-estimators.
   :pr:`18508` by :user:`Nathan C. <Xethan>`.
 
-Code and Documentation Contributors
------------------------------------
+.. rubric:: Code and documentation contributors
 
 Thanks to everyone who has contributed to the maintenance and improvement of
 the project since version 0.23, including:

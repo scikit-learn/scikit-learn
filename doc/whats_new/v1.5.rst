@@ -2,6 +2,19 @@
 
 .. currentmodule:: sklearn
 
+.. _release_notes_1_5:
+
+===========
+Version 1.5
+===========
+
+..
+  -- UNCOMMENT WHEN 1.5.0 IS RELEASED --
+  For a short description of the main highlights of the release, please refer to
+  :ref:`sphx_glr_auto_examples_release_highlights_plot_release_highlights_1_5_0.py`.
+
+.. include:: changelog_legend.inc
+
 .. _changes_1_5:
 
 Version 1.5.0
@@ -9,7 +22,15 @@ Version 1.5.0
 
 **In Development**
 
-.. include:: changelog_legend.inc
+Support for building with Meson
+-------------------------------
+
+Meson is now supported as a build backend, see :ref:`Building with Meson
+<building_with_meson>` for more details.
+
+:pr:`28040` by :user:`Loïc Estève <lesteve>`
+
+TODO Fill more details before the 1.5 release, when the Meson story has settled down.
 
 Changelog
 ---------
@@ -86,6 +107,12 @@ Changelog
   :class:`~calibration.CalibrationDisplay`.
   :pr:`28051` by :user:`Pierre de Fréminville <pidefrem>`.
 
+:mod:`sklearn.model_selection`
+..............................
+
+- |Enhancement| :term:`CV splitters <CV splitter>` that ignores the group parameter now
+  raises a warning when groups are passed in to :term:`split`. :pr:`28210` by
+
 :mod:`sklearn.utils`
 ....................
 
@@ -93,8 +120,7 @@ Changelog
   the `check` function as the cause of the `AttributeError`. :pr:`28198` by
   `Thomas Fan`_.
 
-Code and Documentation Contributors
------------------------------------
+.. rubric:: Code and documentation contributors
 
 Thanks to everyone who has contributed to the maintenance and improvement of
 the project since version 1.4, including:
