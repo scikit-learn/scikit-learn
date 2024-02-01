@@ -2648,9 +2648,6 @@ def test_regression_tree_missing_values_toy(X, criterion):
     Non-regression test for:
     https://github.com/scikit-learn/scikit-learn/issues/28254
     """
-
-    # With certain datasets, the missing values will always be sent to the left,
-    # or right child at the first split. The leaf will be pure.
     y = np.arange(6)
 
     tree = DecisionTreeRegressor(criterion=criterion, random_state=0).fit(X, y)
