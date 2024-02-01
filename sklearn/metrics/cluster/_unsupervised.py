@@ -450,6 +450,18 @@ def davies_bouldin_score(X, labels):
     return np.mean(scores)
 
 
+@validate_params(
+    {
+        "X": ["array-like"],
+        "labels": ["array-like"],
+        "metric": [StrOptions(set(_VALID_METRICS) | {"precomputed"}), callable],
+        "d": [None, int],
+        "per_cluster_scores": ["boolean"],
+        "mst_raw_dist": ["boolean"],
+        "verbose": ["boolean"],
+    }
+    prefer_skip_nested_validation=True,
+)
 def dbcv_score(
     X,
     labels,
