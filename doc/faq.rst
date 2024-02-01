@@ -122,7 +122,7 @@ considered in the following GitHub issue (under discussion):
 
 - https://github.com/scikit-learn/scikit-learn/issues/22438
 
-In any case, the `scikit-learn` package itself will not add any mandatory
+The `scikit-learn` package itself will not add any mandatory
 GPU-specific software dependencies to keep the package lightweight and easy to
 install.
 
