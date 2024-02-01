@@ -18,8 +18,10 @@ from numpy.testing import assert_allclose
 from sklearn import datasets, tree
 from sklearn.dummy import DummyRegressor
 from sklearn.exceptions import NotFittedError
+from sklearn.impute import SimpleImputer
 from sklearn.metrics import accuracy_score, mean_poisson_deviance, mean_squared_error
 from sklearn.model_selection import train_test_split
+from sklearn.pipeline import make_pipeline
 from sklearn.random_projection import _sparse_random_matrix
 from sklearn.tree import (
     DecisionTreeClassifier,
@@ -2511,43 +2513,44 @@ def test_missing_values_poisson():
 
 
 @pytest.mark.parametrize(
-    "make_data, Tree",
+    "make_data, Tree, tolerance",
     [
-        (datasets.make_regression, DecisionTreeRegressor),
-        (datasets.make_classification, DecisionTreeClassifier),
+        (datasets.make_regression, DecisionTreeRegressor, 0.08),
+        (datasets.make_classification, DecisionTreeClassifier, 0.03),
     ],
 )
 @pytest.mark.parametrize("sample_weight_train", [None, "ones"])
-def test_missing_values_is_resilience(make_data, Tree, sample_weight_train):
+def test_missing_values_is_resilience(
+    make_data, Tree, sample_weight_train, global_random_seed, tolerance
+):
     """Check that trees can deal with missing values and have decent performance."""
-
-    rng = np.random.RandomState(0)
-    n_samples, n_features = 1000, 50
-    X, y = make_data(n_samples=n_samples, n_features=n_features, random_state=rng)
-
-    # Create dataset with missing values
-    X_missing = X.copy()
-    X_missing[rng.choice([False, True], size=X.shape, p=[0.9, 0.1])] = np.nan
-    X_missing_train, X_missing_test, y_train, y_test = train_test_split(
-        X_missing, y, random_state=0
+    n_samples, n_features = 5_000, 10
+    X, y = make_data(
+        n_samples=n_samples, n_features=n_features, random_state=global_random_seed
     )
 
+    X_missing = X.copy()
+    rng = np.random.RandomState(global_random_seed)
+    X_missing[rng.choice([False, True], size=X.shape, p=[0.9, 0.1])] = np.nan
+    X_missing_train, X_missing_test, y_train, y_test = train_test_split(
+        X_missing, y, random_state=global_random_seed
+    )
     if sample_weight_train == "ones":
-        sample_weight_train = np.ones(X_missing_train.shape[0])
+        sample_weight = np.ones(X_missing_train.shape[0])
+    else:
+        sample_weight = None
 
-    # Train tree with missing values
-    tree_with_missing = Tree(random_state=rng)
-    tree_with_missing.fit(X_missing_train, y_train, sample_weight=sample_weight_train)
-    score_with_missing = tree_with_missing.score(X_missing_test, y_test)
+    native_tree = Tree(max_depth=10, random_state=global_random_seed)
+    native_tree.fit(X_missing_train, y_train, sample_weight=sample_weight)
+    score_native_tree = native_tree.score(X_missing_test, y_test)
 
-    # Train tree without missing values
-    X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
-    tree = Tree(random_state=rng)
-    tree.fit(X_train, y_train, sample_weight=sample_weight_train)
-    score_without_missing = tree.score(X_test, y_test)
+    tree_with_imputer = make_pipeline(
+        SimpleImputer(), Tree(max_depth=10, random_state=global_random_seed)
+    )
+    tree_with_imputer.fit(X_missing_train, y_train)
+    score_tree_with_imputer = tree_with_imputer.score(X_missing_test, y_test)
 
-    # Score is still 90 percent of the tree's score that had no missing values
-    assert score_with_missing >= 0.9 * score_without_missing
+    assert abs(score_tree_with_imputer - score_native_tree) < tolerance
 
 
 def test_missing_value_is_predictive():
@@ -2641,7 +2644,9 @@ def test_regression_tree_missing_values_toy(X, criterion):
 
     Non-regression test for:
     https://github.com/scikit-learn/scikit-learn/issues/28254
+    https://github.com/scikit-learn/scikit-learn/issues/28316
     """
+    X = X.reshape(-1, 1)
     y = np.arange(6)
 
     tree = DecisionTreeRegressor(criterion=criterion, random_state=0).fit(X, y)
