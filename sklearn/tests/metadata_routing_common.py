@@ -153,6 +153,8 @@ class ConsumingRegressor(RegressorMixin, BaseEstimator):
         record_metadata_not_default(
             self, "fit", sample_weight=sample_weight, metadata=metadata
         )
+        n_features = X.shape[1]
+        self.coef_ = np.ones(n_features)
         return self
 
     def predict(self, X, y=None, sample_weight="default", metadata="default"):
