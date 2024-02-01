@@ -703,7 +703,7 @@ def filter_search_index(app, exception):
         f.write(searchindex_text)
 
 
-def generate_min_dependency_table(app):
+def generate_min_dependency_table():
     """Generate min dependency table for docs."""
     from sklearn._min_dependencies import dependent_packages
 
@@ -753,7 +753,7 @@ def generate_min_dependency_table(app):
         f.write(output)
 
 
-def generate_min_dependency_substitutions(app):
+def generate_min_dependency_substitutions():
     """Generate min dependency substitutions for docs."""
     from sklearn._min_dependencies import dependent_packages
 
@@ -828,8 +828,6 @@ def setup(app):
     # do not run the examples when using linkcheck by using a small priority
     # (default priority is 500 and sphinx-gallery using builder-inited event too)
     app.connect("builder-inited", disable_plot_gallery_for_linkcheck, priority=50)
-    app.connect("builder-inited", generate_min_dependency_table)
-    app.connect("builder-inited", generate_min_dependency_substitutions)
 
     # triggered just before the HTML for an individual page is created
     app.connect("html-page-context", add_js_css_files)
@@ -976,3 +974,5 @@ else:
 
 # Write the pages prior to any sphinx event
 generate_index_rst()
+generate_min_dependency_table()
+generate_min_dependency_substitutions()
