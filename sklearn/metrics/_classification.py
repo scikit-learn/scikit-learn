@@ -1133,7 +1133,7 @@ def f1_score(
     calculated as 0.0 when there are no true positives, false negatives, or
     false positives.
 
-    Support beyond term:`binary` targets is achieved by treating :term:`multiclass`
+    Support beyond :term:`binary` targets is achieved by treating :term:`multiclass`
     and :term:`multilabel` data as a collection of binary problems, one for each
     label. For the :term:`binary` case, setting `average='binary'` will return
     F1 score for `pos_label`. If `average` is not `'binary'`, `pos_label` is ignored
