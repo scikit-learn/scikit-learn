@@ -898,27 +898,22 @@ In this context, we can define the notions of precision and recall:
 
 (Sometimes recall is also called ''sensitivity'')
 
-F-measure is the weighted harmonic mean of precision and recall, with precision's contribution to the mean weighted by
-some parameter :math:`\beta`:
 F-measure is the weighted harmonic mean of precision and recall, with precision's
 contribution to the mean weighted by some parameter :math:`\beta`:
+
 .. math::
 
    F_\beta = (1 + \beta^2) \frac{\text{precision} \times \text{recall}}{\beta^2 \text{precision} + \text{recall}}
 
 To avoid division by zero when precision and recall are zero, Scikit-Learn calculates F-measure with this
 otherwise-equivalent formula:
-To avoid division by zero when precision and recall are zero, we can define the
-F-measure with this otherwise-equivalent formula:
+
 .. math::
 
-   F_\beta = \frac{(1 + \beta^2) \text{tp}}{(1 + \beta^2) \text{tp} + \text{fp} + \beta^2 \text{fn}}.
+   F_\beta = \frac{(1 + \beta^2) \text{tp}}{(1 + \beta^2) \text{tp} + \text{fp} + \beta^2 \text{fn}}
 
-Note that this formula is still undefined when there are no true positives, false positives, nor false negatives. By
-default, F-1 for a set of exclusively true negatives is calculated as 0, however this behavior can be changed using the
-`zero_division` parameter.
 Note that this formula is still undefined when there are no true positives, false
-positives, nor false negatives. By default, F-1 for a set of exclusively true negatives
+positives, or false negatives. By default, F-1 for a set of exclusively true negatives
 is calculated as 0, however this behavior can be changed using the `zero_division`
 parameter.
 Here are some small examples in binary classification::

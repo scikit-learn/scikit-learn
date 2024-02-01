@@ -1579,6 +1579,7 @@ def check_is_fitted(estimator, attributes=None, *, msg=None, all_or_any=all):
 
     NotFittedError
         If the attributes are not found.
+
     Examples
     --------
     >>> from sklearn.linear_model import LogisticRegression
