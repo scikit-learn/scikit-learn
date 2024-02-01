@@ -59,12 +59,12 @@ The choice of neighbors search algorithm is controlled through the keyword
 from the training data.  For a discussion of the strengths and weaknesses
 of each option, see `Nearest Neighbor Algorithms`_.
 
-    .. warning::
+.. warning::
 
-        Regarding the Nearest Neighbors algorithms, if two
-        neighbors :math:`k+1` and :math:`k` have identical distances
-        but different labels, the result will depend on the ordering of the
-        training data.
+    Regarding the Nearest Neighbors algorithms, if two
+    neighbors :math:`k+1` and :math:`k` have identical distances
+    but different labels, the result will depend on the ordering of the
+    training data.
 
 Finding the Nearest Neighbors
 -----------------------------

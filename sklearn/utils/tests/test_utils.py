@@ -168,7 +168,7 @@ def test_resample_stratify_sparse_error(csr_container):
     n_samples = 100
     X = rng.normal(size=(n_samples, 2))
     y = rng.randint(0, 2, size=n_samples)
-    stratify = csr_container(y)
+    stratify = csr_container(y.reshape(-1, 1))
     with pytest.raises(TypeError, match="Sparse data was passed"):
         X, y = resample(X, y, n_samples=50, random_state=rng, stratify=stratify)
 
@@ -473,6 +473,15 @@ def test_safe_indexing_pandas_no_settingwithcopy_warning():
         subset.iloc[0, 0] = 10
     # The original dataframe is unaffected by the assignment on the subset:
     assert X.iloc[0, 0] == 1
+
+
+@pytest.mark.parametrize("indices", [0, [0, 1], slice(0, 2), np.array([0, 1])])
+def test_safe_indexing_list_axis_1_unsupported(indices):
+    """Check that we raise a ValueError when axis=1 with input as list."""
+    X = [[1, 2], [4, 5], [7, 8]]
+    err_msg = "axis=1 is not supported for lists"
+    with pytest.raises(ValueError, match=err_msg):
+        _safe_indexing(X, indices, axis=1)
 
 
 @pytest.mark.parametrize(

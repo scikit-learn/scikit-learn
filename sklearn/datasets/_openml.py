@@ -307,12 +307,19 @@ def _get_data_info_by_name(
         )
         res = json_data["data"]["dataset"]
         if len(res) > 1:
-            warn(
+            first_version = version = res[0]["version"]
+            warning_msg = (
                 "Multiple active versions of the dataset matching the name"
-                " {name} exist. Versions may be fundamentally different, "
-                "returning version"
-                " {version}.".format(name=name, version=res[0]["version"])
+                f" {name} exist. Versions may be fundamentally different, "
+                f"returning version {first_version}. "
+                "Available versions:\n"
             )
+            for r in res:
+                warning_msg += f"- version {r['version']}, status: {r['status']}\n"
+                warning_msg += (
+                    f"  url: https://www.openml.org/search?type=data&id={r['did']}\n"
+                )
+            warn(warning_msg)
         return res[0]
 
     # an integer version has been provided
@@ -952,6 +959,34 @@ def fetch_openml(
     returns ordinally encoded data where the categories are provided in the
     attribute `categories` of the `Bunch` instance. Instead, `"pandas"` returns
     a NumPy array were the categories are not encoded.
+
+    Examples
+    --------
+    >>> from sklearn.datasets import fetch_openml
+    >>> adult = fetch_openml("adult", version=2)  # doctest: +SKIP
+    >>> adult.frame.info()  # doctest: +SKIP
+    <class 'pandas.core.frame.DataFrame'>
+    RangeIndex: 48842 entries, 0 to 48841
+    Data columns (total 15 columns):
+     #   Column          Non-Null Count  Dtype
+    ---  ------          --------------  -----
+     0   age             48842 non-null  int64
+     1   workclass       46043 non-null  category
+     2   fnlwgt          48842 non-null  int64
+     3   education       48842 non-null  category
+     4   education-num   48842 non-null  int64
+     5   marital-status  48842 non-null  category
+     6   occupation      46033 non-null  category
+     7   relationship    48842 non-null  category
+     8   race            48842 non-null  category
+     9   sex             48842 non-null  category
+     10  capital-gain    48842 non-null  int64
+     11  capital-loss    48842 non-null  int64
+     12  hours-per-week  48842 non-null  int64
+     13  native-country  47985 non-null  category
+     14  class           48842 non-null  category
+    dtypes: category(9), int64(6)
+    memory usage: 2.7 MB
     """
     if cache is False:
         # no caching will be applied

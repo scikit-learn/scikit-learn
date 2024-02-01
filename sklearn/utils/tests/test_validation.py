@@ -14,6 +14,7 @@ from pytest import importorskip
 
 import sklearn
 from sklearn._config import config_context
+from sklearn._min_dependencies import dependent_packages
 from sklearn.base import BaseEstimator
 from sklearn.datasets import make_blobs
 from sklearn.ensemble import RandomForestRegressor
@@ -70,6 +71,7 @@ from sklearn.utils.validation import (
     _get_feature_names,
     _is_fitted,
     _is_pandas_df,
+    _is_polars_df,
     _num_features,
     _num_samples,
     assert_all_finite,
@@ -301,6 +303,21 @@ def test_check_array_force_all_finite_object_unsafe_casting(
     # raise an error irrespective of the force_all_finite parameter.
     with pytest.raises(ValueError, match=err_msg):
         check_array(X, dtype=int, force_all_finite=force_all_finite)
+
+
+def test_check_array_series_err_msg():
+    """
+    Check that we raise a proper error message when passing a Series and we expect a
+    2-dimensional container.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/27498
+    """
+    pd = pytest.importorskip("pandas")
+    ser = pd.Series([1, 2, 3])
+    msg = f"Expected a 2-dimensional container but got {type(ser)} instead."
+    with pytest.raises(ValueError, match=msg):
+        check_array(ser, ensure_2d=True)
 
 
 @ignore_warnings
@@ -637,9 +654,21 @@ def test_check_array_accept_sparse_no_exception():
 @pytest.fixture(params=["csr", "csc", "coo", "bsr"])
 def X_64bit(request):
     X = sp.rand(20, 10, format=request.param)
-    for attr in ["indices", "indptr", "row", "col"]:
-        if hasattr(X, attr):
-            setattr(X, attr, getattr(X, attr).astype("int64"))
+
+    if request.param == "coo":
+        if hasattr(X, "indices"):
+            # for scipy >= 1.13 .indices is a new attribute and is a tuple. The
+            # .col and .row attributes do not seem to be able to change the
+            # dtype, for more details see https://github.com/scipy/scipy/pull/18530/
+            X.indices = tuple(v.astype("int64") for v in X.indices)
+        else:
+            # scipy < 1.13
+            X.row = X.row.astype("int64")
+            X.col = X.col.astype("int64")
+    else:
+        X.indices = X.indices.astype("int64")
+        X.indptr = X.indptr.astype("int64")
+
     yield X
 
 
@@ -1753,6 +1782,38 @@ def test_is_pandas_df_pandas_not_installed(hide_available_pandas):
     assert not _is_pandas_df(1)
 
 
+@pytest.mark.parametrize(
+    "constructor_name, minversion",
+    [
+        ("pyarrow", dependent_packages["pyarrow"][0]),
+        ("dataframe", dependent_packages["pandas"][0]),
+        ("polars", dependent_packages["polars"][0]),
+    ],
+)
+def test_is_polars_df_other_libraries(constructor_name, minversion):
+    df = _convert_container(
+        [[1, 4, 2], [3, 3, 6]],
+        constructor_name,
+        minversion=minversion,
+    )
+    if constructor_name in ("pyarrow", "dataframe"):
+        assert not _is_polars_df(df)
+    else:
+        assert _is_polars_df(df)
+
+
+def test_is_polars_df_for_duck_typed_polars_dataframe():
+    """Check _is_polars_df for object that looks like a polars dataframe"""
+
+    class NotAPolarsDataFrame:
+        def __init__(self):
+            self.columns = [1, 2, 3]
+            self.schema = "my_schema"
+
+    not_a_polars_df = NotAPolarsDataFrame()
+    assert not _is_polars_df(not_a_polars_df)
+
+
 def test_get_feature_names_numpy():
     """Get feature names return None for numpy arrays."""
     X = np.array([[1, 2, 3], [4, 5, 6]])
@@ -1955,6 +2016,14 @@ def test_check_array_multiple_extensions(
     X_regular_checked = check_array(X_regular, dtype=None)
     X_extension_checked = check_array(X_extension, dtype=None)
     assert_array_equal(X_regular_checked, X_extension_checked)
+
+
+def test_num_samples_dataframe_protocol():
+    """Use the DataFrame interchange protocol to get n_samples from polars."""
+    pl = pytest.importorskip("polars")
+
+    df = pl.DataFrame({"a": [1, 2, 3], "b": [4, 5, 6]})
+    assert _num_samples(df) == 3
 
 
 @pytest.mark.parametrize(

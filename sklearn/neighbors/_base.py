@@ -224,6 +224,20 @@ def sort_graph_by_row_values(graph, copy=False, warn_when_not_sorted=True):
     graph : sparse matrix of shape (n_samples, n_samples)
         Distance matrix to other samples, where only non-zero elements are
         considered neighbors. Matrix is in CSR format.
+
+    Examples
+    --------
+    >>> from scipy.sparse import csr_matrix
+    >>> from sklearn.neighbors import sort_graph_by_row_values
+    >>> X = csr_matrix(
+    ...     [[0., 3., 1.],
+    ...      [3., 0., 2.],
+    ...      [1., 2., 0.]])
+    >>> X.data
+    array([3., 1., 3., 2., 1., 2.])
+    >>> X_ = sort_graph_by_row_values(X)
+    >>> X_.data
+    array([1., 3., 2., 3., 1., 2.])
     """
     if graph.format == "csr" and _is_sorted_by_data(graph):
         return graph

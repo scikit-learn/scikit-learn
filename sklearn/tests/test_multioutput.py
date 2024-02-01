@@ -253,9 +253,18 @@ def test_multi_output_predict_proba():
     sgd_linear_clf = SGDClassifier(random_state=1, max_iter=5)
     multi_target_linear = MultiOutputClassifier(sgd_linear_clf)
     multi_target_linear.fit(X, y)
-    err_msg = "probability estimates are not available for loss='hinge'"
-    with pytest.raises(AttributeError, match=err_msg):
+
+    inner2_msg = "probability estimates are not available for loss='hinge'"
+    inner1_msg = "'SGDClassifier' has no attribute 'predict_proba'"
+    outer_msg = "'MultiOutputClassifier' has no attribute 'predict_proba'"
+    with pytest.raises(AttributeError, match=outer_msg) as exec_info:
         multi_target_linear.predict_proba(X)
+
+    assert isinstance(exec_info.value.__cause__, AttributeError)
+    assert inner1_msg in str(exec_info.value.__cause__)
+
+    assert isinstance(exec_info.value.__cause__.__cause__, AttributeError)
+    assert inner2_msg in str(exec_info.value.__cause__.__cause__)
 
 
 def test_multi_output_classification_partial_fit():
@@ -471,13 +480,20 @@ def test_multi_output_delegate_predict_proba():
     # A base estimator without `predict_proba` should raise an AttributeError
     moc = MultiOutputClassifier(LinearSVC(dual="auto"))
     assert not hasattr(moc, "predict_proba")
-    msg = "'LinearSVC' object has no attribute 'predict_proba'"
-    with pytest.raises(AttributeError, match=msg):
+
+    outer_msg = "'MultiOutputClassifier' has no attribute 'predict_proba'"
+    inner_msg = "'LinearSVC' object has no attribute 'predict_proba'"
+    with pytest.raises(AttributeError, match=outer_msg) as exec_info:
         moc.predict_proba(X)
+    assert isinstance(exec_info.value.__cause__, AttributeError)
+    assert inner_msg == str(exec_info.value.__cause__)
+
     moc.fit(X, y)
     assert not hasattr(moc, "predict_proba")
-    with pytest.raises(AttributeError, match=msg):
+    with pytest.raises(AttributeError, match=outer_msg) as exec_info:
         moc.predict_proba(X)
+    assert isinstance(exec_info.value.__cause__, AttributeError)
+    assert inner_msg == str(exec_info.value.__cause__)
 
 
 def generate_multilabel_dataset_with_correlations():
@@ -553,7 +569,8 @@ def test_classifier_chain_vs_independent_models():
     "chain_method",
     ["predict", "predict_proba", "predict_log_proba", "decision_function"],
 )
-def test_classifier_chain_fit_and_predict(chain_method):
+@pytest.mark.parametrize("response_method", ["predict_proba", "predict_log_proba"])
+def test_classifier_chain_fit_and_predict(chain_method, response_method):
     # Fit classifier chain and verify predict performance
     X, Y = generate_multilabel_dataset_with_correlations()
     chain = ClassifierChain(LogisticRegression(), chain_method=chain_method)
@@ -564,7 +581,9 @@ def test_classifier_chain_fit_and_predict(chain_method):
         range(X.shape[1], X.shape[1] + Y.shape[1])
     )
 
-    Y_prob = chain.predict_proba(X)
+    Y_prob = getattr(chain, response_method)(X)
+    if response_method == "predict_log_proba":
+        Y_prob = np.exp(Y_prob)
     Y_binary = Y_prob >= 0.5
     assert_array_equal(Y_binary, Y_pred)
 
