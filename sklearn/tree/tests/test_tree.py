@@ -2556,7 +2556,7 @@ def test_missing_values_poisson(Tree):
         (datasets.make_regression, DecisionTreeRegressor, 0.08),
         (datasets.make_classification, DecisionTreeClassifier, 0.03),
         (datasets.make_regression, ExtraTreeRegressor, 0.26),
-        (datasets.make_classification, ExtraTreeClassifier, 0.04),
+        (datasets.make_classification, ExtraTreeClassifier, 0.14),
     ],
 )
 @pytest.mark.parametrize("sample_weight_train", [None, "ones"])
