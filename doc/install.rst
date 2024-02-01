@@ -28,72 +28,9 @@ There are different ways to install scikit-learn:
 Installing the latest release
 =============================
 
-.. See `js/scripts/install-instructions.js` and `scss/install.scss`. It also refers to
-   the following pytorch page: https://pytorch.org/get-started/locally/
-
 .. raw:: html
 
-  <div class="sk-install-options-grid">
-    <div class="row">
-      <!-- Headings -->
-      <div class="col-md-3 headings">
-        <div class="col-md-12 title-block">
-          <div class="option-text">Operating System</div>
-        </div>
-        <div class="col-md-12 title-block">
-          <div class="option-text">Packager</div>
-        </div>
-        <div class="col-md-12 title-block">
-          <div class="option-text">Virtual Environment</div>
-        </div>
-      </div>
-      <!-- Options and headings for mobile phones -->
-      <div class="col-md-9">
-        <!-- Choose OS -->
-        <div class="row" id="osRow">
-          <div class="col-md-12 title-block mobile-heading">
-            <div class="option-text">Operating System</div>
-          </div>
-          <div class="col-md-4 option block" id="windows">
-            <div class="option-text">Windows</div>
-          </div>
-          <div class="col-md-4 option block" id="macos">
-            <div class="option-text">MacOS</div>
-          </div>
-          <div class="col-md-4 option block" id="linux">
-            <div class="option-text">Linux</div>
-          </div>
-        </div>
-        <!-- Choose Packager -->
-        <div class="row" id="packagerRow">
-          <div class="col-md-12 title-block mobile-heading">
-            <div class="option-text">Packager</div>
-          </div>
-          <div class="col-md-6 option block" id="pip">
-            <div class="option-text">Pip</div>
-          </div>
-          <div class="col-md-6 option block" id="conda">
-            <div class="option-text">Conda</div>
-          </div>
-        </div>
-        <!-- Choose virtual environment -->
-        <div class="row" id="virtualenvRow">
-          <div class="col-md-12 title-block mobile-heading">
-            <div class="option-text">Virtual Environment</div>
-          </div>
-          <div class="col-md-6 option block" id="venv">
-            <div class="option-text">Venv</div>
-          </div>
-          <div class="col-md-6 option block" id="novirtualenv">
-            <div class="option-text">None</div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- The paragraph of instructions depending on the above selection -->
-  <div id="skInstallInstructions"></div>
+  <script src="_static/scripts/install-instructions.js"></script>
 
   <!-- If JS is disabled, we display minimal instructions with an error message -->
   <noscript>

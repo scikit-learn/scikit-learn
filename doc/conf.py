@@ -329,7 +329,6 @@ def add_js_css_files(app, pagename, templatename, context, doctree):
     JS and CSS files should be added here instead.
     """
     if pagename == "install":
-        app.add_js_file("scripts/install-instructions.js")
         app.add_css_file("styles/install.css")
 
 

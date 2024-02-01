@@ -1,8 +1,73 @@
 /**
  * Script for the installation page, see `install.rst`. It refers to the following
  * pytorch page: https://pytorch.org/get-started/locally/, subject to modifications.
- * This script should be included only for the install page.
+ * This script directly writes content in so it should be directly embedded in the
+ * page instead of being added in `conf.py`.
  */
+
+document.write(`
+<div class="sk-install-options-grid">
+  <div class="row">
+    <!-- Headings -->
+    <div class="col-md-3 headings">
+      <div class="col-md-12 title-block">
+        <div class="option-text">Operating System</div>
+      </div>
+      <div class="col-md-12 title-block">
+        <div class="option-text">Packager</div>
+      </div>
+      <div class="col-md-12 title-block">
+        <div class="option-text">Virtual Environment</div>
+      </div>
+    </div>
+    <!-- Options and headings for mobile phones -->
+    <div class="col-md-9">
+      <!-- Choose OS -->
+      <div class="row" id="osRow">
+        <div class="col-md-12 title-block mobile-heading">
+          <div class="option-text">Operating System</div>
+        </div>
+        <div class="col-md-4 option block" id="windows">
+          <div class="option-text">Windows</div>
+        </div>
+        <div class="col-md-4 option block" id="macos">
+          <div class="option-text">MacOS</div>
+        </div>
+        <div class="col-md-4 option block" id="linux">
+          <div class="option-text">Linux</div>
+        </div>
+      </div>
+      <!-- Choose Packager -->
+      <div class="row" id="packagerRow">
+        <div class="col-md-12 title-block mobile-heading">
+          <div class="option-text">Packager</div>
+        </div>
+        <div class="col-md-6 option block" id="pip">
+          <div class="option-text">Pip</div>
+        </div>
+        <div class="col-md-6 option block" id="conda">
+          <div class="option-text">Conda</div>
+        </div>
+      </div>
+      <!-- Choose virtual environment -->
+      <div class="row" id="virtualenvRow">
+        <div class="col-md-12 title-block mobile-heading">
+          <div class="option-text">Virtual Environment</div>
+        </div>
+        <div class="col-md-6 option block" id="venv">
+          <div class="option-text">Venv</div>
+        </div>
+        <div class="col-md-6 option block" id="novirtualenv">
+          <div class="option-text">None</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- The paragraph of instructions depending on the above selection -->
+<div id="skInstallInstructions"></div>
+`);
 
 function setupInstallInstructions() {
   const supportedOperatingSystems = new Map([
