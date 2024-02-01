@@ -1125,10 +1125,10 @@ def f1_score(
     equal. The formula for the F1 score is:
 
     .. math::
-        \text{F1} = \frac{2 * \text{TP}}{2 * \text{TP} + \text{FP} + \text{FN}}
+        \\text{F1} = \\frac{2 * \\text{TP}}{2 * \\text{TP} + \\text{FP} + \\text{FN}}
 
-    Where :math:`\text{TP}` is the number of true positives, :math:`\text{FN}` is the
-    number of false negatives, and :math:`\text{FP}` is the number of false positives.
+    Where :math:`\\text{TP}` is the number of true positives, :math:`\\text{FN}` is the
+    number of false negatives, and :math:`\\text{FP}` is the number of false positives.
     F1 is by default
     calculated as 0.0 when there are no true positives, false negatives, or
     false positives.
