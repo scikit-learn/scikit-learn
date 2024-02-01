@@ -11,7 +11,6 @@ from sklearn.linear_model import (
     Ridge,
 )
 from sklearn.linear_model._ransac import _dynamic_max_trials
-from sklearn.tests.metadata_routing_common import ConsumingRegressor
 from sklearn.utils import check_random_state
 from sklearn.utils._testing import assert_allclose
 from sklearn.utils.fixes import COO_CONTAINERS, CSC_CONTAINERS, CSR_CONTAINERS
@@ -518,12 +517,10 @@ def test_ransac_final_model_fit_sample_weight():
     rng = check_random_state(42)
     sample_weight = rng.randint(1, 4, size=y.shape[0])
     sample_weight = sample_weight / sample_weight.sum()
-    ransac = RANSACRegressor(
-        estimator=ConsumingRegressor(), min_samples=0.5, random_state=0
-    )
+    ransac = RANSACRegressor(random_state=0)
     ransac.fit(X, y, sample_weight=sample_weight)
 
-    final_model = ConsumingRegressor()
+    final_model = LinearRegression()
     mask_samples = ransac.inlier_mask_
     final_model.fit(
         X[mask_samples], y[mask_samples], sample_weight=sample_weight[mask_samples]

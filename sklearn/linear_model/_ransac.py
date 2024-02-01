@@ -511,7 +511,7 @@ class RANSACRegressor(
                 continue
 
             # residuals of all data for current random sample model
-            y_pred = estimator.predict(X, **routed_params.estimator.predict)
+            y_pred = estimator.predict(X)
             residuals_subset = loss_function(y, y_pred)
 
             # classify data into inliers and outliers
