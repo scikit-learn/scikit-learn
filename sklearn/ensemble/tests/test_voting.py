@@ -710,6 +710,17 @@ def test_routing_passed_metadata_not_supported(Estimator, Child):
     "Estimator, Child",
     [(VotingClassifier, ConsumingClassifier), (VotingRegressor, ConsumingRegressor)],
 )
+def test_get_metadata_routing_without_fit(Estimator, Child):
+    # Test that metadata_routing() doesn't raise when called before fit.
+    est = Estimator([("sub_est", Child())])
+    est.get_metadata_routing()
+
+
+@pytest.mark.usefixtures("enable_slep006")
+@pytest.mark.parametrize(
+    "Estimator, Child",
+    [(VotingClassifier, ConsumingClassifier), (VotingRegressor, ConsumingRegressor)],
+)
 @pytest.mark.parametrize("prop", ["sample_weight", "metadata"])
 def test_metadata_routing_for_voting_estimators(Estimator, Child, prop):
     """Test that metadata is routed correctly for Voting*."""
@@ -717,35 +728,25 @@ def test_metadata_routing_for_voting_estimators(Estimator, Child, prop):
     y = [1, 2, 3]
     sample_weight, metadata = [1, 1, 1], "a"
 
-    pass_sample_weight = [True, False]
-    pass_metadata = [False, True]
-
     est = Estimator(
         [
             (
                 "sub_est1",
-                Child(registry=_Registry()).set_fit_request(
-                    sample_weight=pass_sample_weight[0], metadata=pass_metadata[0]
-                ),
+                Child(registry=_Registry()).set_fit_request(**{prop: True}),
             ),
             (
                 "sub_est2",
-                Child(registry=_Registry()).set_fit_request(
-                    sample_weight=pass_sample_weight[1], metadata=pass_metadata[1]
-                ),
+                Child(registry=_Registry()).set_fit_request(**{prop: True}),
             ),
         ]
     )
 
     est.fit(X, y, **{prop: sample_weight if prop == "sample_weight" else metadata})
 
-    for estimator, boolean_sample_weight, boolean_metadata in zip(
-        est.estimators, pass_sample_weight, pass_metadata
-    ):
-        kwargs = {}
-        if prop == "sample_weight" and boolean_sample_weight is True:
+    for estimator in est.estimators:
+        if prop == "sample_weight":
             kwargs = {prop: sample_weight}
-        if prop == "metadata" and boolean_metadata is True:
+        else:
             kwargs = {prop: metadata}
         # access sub-estimator in (name, est) with estimator[1]
         registry = estimator[1].registry

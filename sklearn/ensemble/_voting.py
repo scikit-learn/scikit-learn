@@ -171,9 +171,6 @@ class _BaseVoting(TransformerMixin, _BaseHeterogeneousEnsemble):
         names, estimators = zip(*self.estimators)
         return _VisualBlock("parallel", estimators, names=names)
 
-    def _more_tags(self):
-        return {"preserves_dtype": []}
-
     def get_metadata_routing(self):
         """Get metadata routing of this object.
 
@@ -359,7 +356,9 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
         # estimators in VotingClassifier.estimators are not validated yet
         prefer_skip_nested_validation=False
     )
-    # TODO(1.7): remove sample_weight from the signature after deprecation.
+    # TODO(1.7): remove `sample_weight` from the signature after deprecation
+    # cycle; pop it from `fit_params` before the `_raise_for_params` check and
+    # reinsert later, for backwards compatibility
     @_deprecate_positional_args(version="1.7")
     def fit(self, X, y, *, sample_weight=None, **fit_params):
         """Fit the estimators.
@@ -643,7 +642,9 @@ class VotingRegressor(RegressorMixin, _BaseVoting):
         # estimators in VotingRegressor.estimators are not validated yet
         prefer_skip_nested_validation=False
     )
-    # TODO(1.7): remove sample_weight from the signature after deprecation.
+    # TODO(1.7): remove `sample_weight` from the signature after deprecation cycle;
+    # pop it from `fit_params` before the `_raise_for_params` check and reinsert later,
+    # for backwards compatibility
     @_deprecate_positional_args(version="1.7")
     def fit(self, X, y, *, sample_weight=None, **fit_params):
         """Fit the estimators.
