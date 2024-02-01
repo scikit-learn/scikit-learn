@@ -1,6 +1,7 @@
 """
 Test the ColumnTransformer.
 """
+
 import pickle
 import re
 import warnings
@@ -2334,6 +2335,35 @@ def test_dataframe_different_dataframe_libraries():
 
     out_pd_in = ct.transform(X_test_pd)
     assert_array_equal(out_pd_in, X_test_np)
+
+
+@pytest.mark.parametrize("transform_output", ["default", "pandas"])
+def test_column_transformer_remainder_passthrough_naming_consistency(transform_output):
+    """Check that when `remainder="passthrough"`, inconsistent naming is handled
+    correctly by the underlying `FunctionTransformer`.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/28232
+    """
+    pd = pytest.importorskip("pandas")
+    X = pd.DataFrame(np.random.randn(10, 4))
+
+    preprocessor = ColumnTransformer(
+        transformers=[("scaler", StandardScaler(), [0, 1])],
+        remainder="passthrough",
+    ).set_output(transform=transform_output)
+    X_trans = preprocessor.fit_transform(X)
+    assert X_trans.shape == X.shape
+
+    expected_column_names = [
+        "scaler__x0",
+        "scaler__x1",
+        "remainder__x2",
+        "remainder__x3",
+    ]
+    if hasattr(X_trans, "columns"):
+        assert X_trans.columns.tolist() == expected_column_names
+    assert preprocessor.get_feature_names_out().tolist() == expected_column_names
 
 
 @pytest.mark.parametrize("dataframe_lib", ["pandas", "polars"])
