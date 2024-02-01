@@ -3,6 +3,7 @@ Test the ColumnTransformer.
 """
 import pickle
 import re
+import warnings
 
 import numpy as np
 import pytest
@@ -2275,6 +2276,40 @@ def test_remainder_set_output():
     assert isinstance(out, np.ndarray)
 
 
+# TODO(1.6): replace the warning by a ValueError exception
+def test_transform_pd_na():
+    """Check behavior when a tranformer's output contains pandas.NA
+
+    It should emit a warning unless the output config is set to 'pandas'.
+    """
+    pd = pytest.importorskip("pandas")
+    if not hasattr(pd, "Float64Dtype"):
+        pytest.skip(
+            "The issue with pd.NA tested here does not happen in old versions that do"
+            " not have the extension dtypes"
+        )
+    df = pd.DataFrame({"a": [1.5, None]})
+    ct = make_column_transformer(("passthrough", ["a"]))
+    # No warning with non-extension dtypes and np.nan
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        ct.fit_transform(df)
+    df = df.convert_dtypes()
+    # Error with extension dtype and pd.NA
+    with pytest.warns(FutureWarning, match=r"set_output\(transform='pandas'\)"):
+        ct.fit_transform(df)
+    # No warning when output is set to pandas
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        ct.set_output(transform="pandas")
+        ct.fit_transform(df)
+    ct.set_output(transform="default")
+    # No warning when there are no pd.NA
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        ct.fit_transform(df.fillna(-1.0))
+
+
 def test_dataframe_different_dataframe_libraries():
     """Check fitting and transforming on pandas and polars dataframes."""
     pd = pytest.importorskip("pandas")
@@ -2317,6 +2352,69 @@ def test_column_transformer__getitem__():
     msg = "'does_not_exist' is not a valid transformer name"
     with pytest.raises(KeyError, match=msg):
         ct["does_not_exist"]
+
+
+@pytest.mark.parametrize("dataframe_lib", ["pandas", "polars"])
+def test_column_transformer_column_renaming(dataframe_lib):
+    """Check that we properly rename columns when using `ColumnTransformer` and
+    selected columns are redundant between transformers.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/28260
+    """
+    lib = pytest.importorskip(dataframe_lib)
+
+    df = lib.DataFrame({"x1": [1, 2, 3], "x2": [10, 20, 30], "x3": [100, 200, 300]})
+
+    transformer = ColumnTransformer(
+        transformers=[
+            ("A", "passthrough", ["x1", "x2", "x3"]),
+            ("B", FunctionTransformer(), ["x1", "x2"]),
+            ("C", StandardScaler(), ["x1", "x3"]),
+            # special case of empty transformer
+            ("D", FunctionTransformer(lambda x: x[[]]), ["x1", "x2", "x3"]),
+        ],
+        verbose_feature_names_out=True,
+    ).set_output(transform=dataframe_lib)
+    df_trans = transformer.fit_transform(df)
+    assert list(df_trans.columns) == [
+        "A__x1",
+        "A__x2",
+        "A__x3",
+        "B__x1",
+        "B__x2",
+        "C__x1",
+        "C__x3",
+    ]
+
+
+@pytest.mark.parametrize("dataframe_lib", ["pandas", "polars"])
+def test_column_transformer_error_with_duplicated_columns(dataframe_lib):
+    """Check that we raise an error when using `ColumnTransformer` and
+    the columns names are duplicated between transformers."""
+    lib = pytest.importorskip(dataframe_lib)
+
+    df = lib.DataFrame({"x1": [1, 2, 3], "x2": [10, 20, 30], "x3": [100, 200, 300]})
+
+    transformer = ColumnTransformer(
+        transformers=[
+            ("A", "passthrough", ["x1", "x2", "x3"]),
+            ("B", FunctionTransformer(), ["x1", "x2"]),
+            ("C", StandardScaler(), ["x1", "x3"]),
+            # special case of empty transformer
+            ("D", FunctionTransformer(lambda x: x[[]]), ["x1", "x2", "x3"]),
+        ],
+        verbose_feature_names_out=False,
+    ).set_output(transform=dataframe_lib)
+    err_msg = re.escape(
+        "Duplicated feature names found before concatenating the outputs of the "
+        "transformers: ['x1', 'x2', 'x3'].\n"
+        "Transformer A has conflicting columns names: ['x1', 'x2', 'x3'].\n"
+        "Transformer B has conflicting columns names: ['x1', 'x2'].\n"
+        "Transformer C has conflicting columns names: ['x1', 'x3'].\n"
+    )
+    with pytest.raises(ValueError, match=err_msg):
+        transformer.fit_transform(df)
 
 
 # Metadata Routing Tests

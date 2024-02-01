@@ -1,9 +1,8 @@
-
-.. _metadata_routing:
-
 .. currentmodule:: sklearn
 
 .. TODO: update doc/conftest.py once document is updated and examples run.
+
+.. _metadata_routing:
 
 Metadata Routing
 ================
