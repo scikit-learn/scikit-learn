@@ -291,6 +291,7 @@ METAESTIMATORS: list = [
         "metaestimator": IterativeImputer,
         "estimator_name": "estimator",
         "estimator": ConsumingRegressor,
+        "init_args": {"skip_complete": False},
         "X": X,
         "y": y,
         "estimator_routing_methods": ["fit"],
