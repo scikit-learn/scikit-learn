@@ -2538,5 +2538,45 @@ def test_metadata_routing_error_for_column_transformer(method):
             getattr(trs, method)(X, y, sample_weight=sample_weight, metadata=metadata)
 
 
+@pytest.mark.usefixtures("enable_slep006")
+def test_get_metadata_routing_works_without_fit():
+    # Regression test for https://github.com/scikit-learn/scikit-learn/issues/28186
+    # Make sure ct.get_metadata_routing() works w/o having called fit.
+    ct = ColumnTransformer([("trans", ConsumingTransformer(), [0])])
+    ct.get_metadata_routing()
+
+
+@pytest.mark.usefixtures("enable_slep006")
+def test_remainder_request_always_present():
+    # Test that remainder request is always present.
+    ct = ColumnTransformer(
+        [("trans", StandardScaler(), [0])],
+        remainder=ConsumingTransformer()
+        .set_fit_request(metadata=True)
+        .set_transform_request(metadata=True),
+    )
+    router = ct.get_metadata_routing()
+    assert router.consumes("fit", ["metadata"]) == set(["metadata"])
+
+
+@pytest.mark.usefixtures("enable_slep006")
+def test_unused_transformer_request_present():
+    # Test that the request of a transformer is always present even when not
+    # used due to no selected columns.
+    ct = ColumnTransformer(
+        [
+            (
+                "trans",
+                ConsumingTransformer()
+                .set_fit_request(metadata=True)
+                .set_transform_request(metadata=True),
+                lambda X: [],
+            )
+        ]
+    )
+    router = ct.get_metadata_routing()
+    assert router.consumes("fit", ["metadata"]) == set(["metadata"])
+
+
 # End of Metadata Routing Tests
 # =============================
