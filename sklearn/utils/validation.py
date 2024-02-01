@@ -200,6 +200,18 @@ def assert_all_finite(
         if `input_name` is "X" and the data has NaN values and
         allow_nan is False, the error message will link to the imputer
         documentation.
+
+    Examples
+    --------
+    >>> from sklearn.utils import assert_all_finite
+    >>> import numpy as np
+    >>> array = np.array([1, np.inf, np.nan, 4])
+    >>> try:
+    ...     assert_all_finite(array)
+    ...     print("Test passed: Array contains only finite values.")
+    ... except ValueError:
+    ...     print("Test failed: Array contains non-finite values.")
+    Test failed: Array contains non-finite values.
     """
     _assert_all_finite(
         X.data if sp.issparse(X) else X,
@@ -244,6 +256,14 @@ def as_float_array(X, *, copy=True, force_all_finite=True):
     -------
     XT : {ndarray, sparse matrix}
         An array of type float.
+
+    Examples
+    --------
+    >>> from sklearn.utils import as_float_array
+    >>> import numpy as np
+    >>> array = np.array([0, 0, 1, 2, 2], dtype=np.int64)
+    >>> as_float_array(array)
+    array([0., 0., 1., 2., 2.])
     """
     if isinstance(X, np.matrix) or (
         not isinstance(X, np.ndarray) and not sp.issparse(X)
@@ -395,6 +415,12 @@ def check_memory(memory):
     ------
     ValueError
         If ``memory`` is not joblib.Memory-like.
+
+    Examples
+    --------
+    >>> from sklearn.utils.validation import check_memory
+    >>> check_memory("caching_dir")
+    Memory(location=caching_dir/joblib)
     """
     if memory is None or isinstance(memory, str):
         memory = joblib.Memory(location=memory, verbose=0)
@@ -416,6 +442,13 @@ def check_consistent_length(*arrays):
     ----------
     *arrays : list or tuple of input objects.
         Objects that will be checked for consistent length.
+
+    Examples
+    --------
+    >>> from sklearn.utils.validation import check_consistent_length
+    >>> a = [1, 2, 3]
+    >>> b = [2, 3, 4]
+    >>> check_consistent_length(a, b)
     """
 
     lengths = [_num_samples(X) for X in arrays if X is not None]
@@ -464,6 +497,17 @@ def indexable(*iterables):
     result : list of {ndarray, sparse matrix, dataframe} or None
         Returns a list containing indexable arrays (i.e. NumPy array,
         sparse matrix, or dataframe) or `None`.
+
+    Examples
+    --------
+    >>> from sklearn.utils import indexable
+    >>> from scipy.sparse import csr_matrix
+    >>> import numpy as np
+    >>> iterables = [
+    ...     [1, 2, 3], np.array([2, 3, 4]), None, csr_matrix([[5], [6], [7]])
+    ... ]
+    >>> indexable(*iterables)
+    [[1, 2, 3], array([2, 3, 4]), None, <3x1 sparse matrix ...>]
     """
 
     result = [_make_indexable(X) for X in iterables]
@@ -776,6 +820,14 @@ def check_array(
     -------
     array_converted : object
         The converted and validated array.
+
+    Examples
+    --------
+    >>> from sklearn.utils.validation import check_array
+    >>> X = [[1, 2, 3], [4, 5, 6]]
+    >>> X_checked = check_array(X)
+    >>> X_checked
+    array([[1, 2, 3], [4, 5, 6]])
     """
     if isinstance(array, np.matrix):
         raise TypeError(
@@ -1173,6 +1225,19 @@ def check_X_y(
 
     y_converted : object
         The converted and validated y.
+
+    Examples
+    --------
+    >>> from sklearn.utils.validation import check_X_y
+    >>> X = [[1, 2], [3, 4], [5, 6]]
+    >>> y = [1, 2, 3]
+    >>> X, y = check_X_y(X, y)
+    >>> X
+    array([[1, 2],
+          [3, 4],
+          [5, 6]])
+    >>> y
+    array([1, 2, 3])
     """
     if y is None:
         if estimator is None:
@@ -1307,6 +1372,12 @@ def check_random_state(seed):
     -------
     :class:`numpy:numpy.random.RandomState`
         The random state object based on `seed` parameter.
+
+    Examples
+    --------
+    >>> from sklearn.utils.validation import check_random_state
+    >>> check_random_state(42)
+    RandomState(MT19937) at 0x...
     """
     if seed is None or seed is np.random:
         return np.random.mtrand._rand
@@ -1508,6 +1579,21 @@ def check_is_fitted(estimator, attributes=None, *, msg=None, all_or_any=all):
 
     NotFittedError
         If the attributes are not found.
+
+    Examples
+    --------
+    >>> from sklearn.linear_model import LogisticRegression
+    >>> from sklearn.utils.validation import check_is_fitted
+    >>> from sklearn.exceptions import NotFittedError
+    >>> lr = LogisticRegression()
+    >>> try:
+    ...     check_is_fitted(lr)
+    ... except NotFittedError as exc:
+    ...     print(f"Model is not fitted yet.")
+    Model is not fitted yet.
+    >>> lr.fit([[1, 2], [1, 3]], [1, 0])
+    LogisticRegression()
+    >>> check_is_fitted(lr)
     """
     if isclass(estimator):
         raise TypeError("{} is a class, not an instance.".format(estimator))
@@ -1608,6 +1694,12 @@ def check_scalar(
     ValueError
         If the parameter's value violates the given bounds.
         If `min_val`, `max_val` and `include_boundaries` are inconsistent.
+
+    Examples
+    --------
+    >>> from sklearn.utils.validation import check_scalar
+    >>> check_scalar(10, "x", int, min_val=1, max_val=20)
+    10
     """
 
     def type_name(t):
@@ -2050,26 +2142,20 @@ def _check_method_params(X, params, indices=None):
 
 def _is_pandas_df(X):
     """Return True if the X is a pandas dataframe."""
-    if hasattr(X, "columns") and hasattr(X, "iloc"):
-        # Likely a pandas DataFrame, we explicitly check the type to confirm.
-        try:
-            pd = sys.modules["pandas"]
-        except KeyError:
-            return False
-        return isinstance(X, pd.DataFrame)
-    return False
+    try:
+        pd = sys.modules["pandas"]
+    except KeyError:
+        return False
+    return isinstance(X, pd.DataFrame)
 
 
 def _is_polars_df(X):
     """Return True if the X is a polars dataframe."""
-    if hasattr(X, "columns") and hasattr(X, "schema"):
-        # Likely a polars DataFrame, we explicitly check the type to confirm.
-        try:
-            pl = sys.modules["polars"]
-        except KeyError:
-            return False
-        return isinstance(X, pl.DataFrame)
-    return False
+    try:
+        pl = sys.modules["polars"]
+    except KeyError:
+        return False
+    return isinstance(X, pl.DataFrame)
 
 
 def _get_feature_names(X):

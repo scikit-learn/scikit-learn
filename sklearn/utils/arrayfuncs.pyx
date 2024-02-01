@@ -23,6 +23,25 @@ def min_pos(const floating[:] X):
 
     Returns the maximum representable value of the input dtype if none of the
     values are positive.
+
+    Parameters
+    ----------
+    X : ndarray of shape (n,)
+        Input array.
+
+    Returns
+    -------
+    min_val : float
+        The smallest positive value in the array, or the maximum representable value
+         of the input dtype if no positive values are found.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.utils.arrayfuncs import min_pos
+    >>> X = np.array([0, -1, 2, 3, -4, 5])
+    >>> min_pos(X)
+    2.0
     """
     cdef Py_ssize_t i
     cdef floating min_val = FLT_MAX if floating is float else DBL_MAX
@@ -33,7 +52,7 @@ def min_pos(const floating[:] X):
 
 
 def _all_with_any_reduction_axis_1(real_numeric[:, :] array, real_numeric value):
-    """Check that all values are equal to `value` along a specific axis.
+    """Check whether any row contains all values equal to `value`.
 
     It is equivalent to `np.any(np.all(X == value, axis=1))`, but it avoids to
     materialize the temporary boolean matrices in memory.
