@@ -271,6 +271,13 @@ cdef inline void shift_missing_values_to_left_if_required(
     intp_t[::1] samples,
     intp_t end,
 ) noexcept nogil:
+    """Shift missing value sample indices to the left of the split if required.
+
+    Note: this should always be called at the very end because it will
+    move samples around, thereby affecting the criterion.
+    This affects the computation of the children impurity, which affects
+    the computation of the next node.
+    """
     cdef intp_t i, p, current_end
     # The partitioner partitions the data such that the missing values are in
     # samples[-n_missing:] for the criterion to consume. If the missing values
@@ -542,10 +549,6 @@ cdef inline int node_split_best(
             best_split.impurity_right
         )
 
-        # Note: this should always be called at the very end because it will
-        # move samples around, thereby affecting the criterion.
-        # This affects the computation of the children impurity, which affects
-        # the computation of the next node.
         shift_missing_values_to_left_if_required(&best_split, samples, end)
 
     # Respect invariant for constant features: the original order of
@@ -806,6 +809,10 @@ cdef inline int node_split_random(
         has_missing = n_missing != 0
         criterion.init_missing(n_missing)
 
+        # TODO:
+        # 1. We can either compute the split of non-missing vs missing
+        # 2. or randomly select it.
+
         # In addition, we either randomly split the non-missing values
         # or we split entirely by separating the non-missing
         # and missing-values
@@ -835,6 +842,7 @@ cdef inline int node_split_random(
         #         current_split.pos = p
         #         best_split = current_split
         # else:
+
         # Draw a random threshold
         current_split.threshold = rand_uniform(
             min_feature_value,
@@ -916,21 +924,17 @@ cdef inline int node_split_random(
                 criterion.missing_go_to_left = missing_go_to_left
                 criterion.update(p)
 
-            criterion.reset()
-            criterion.missing_go_to_left = missing_go_to_left
-            criterion.update(p)
+                if not ((criterion.weighted_n_left < min_weight_leaf) or
+                        (criterion.weighted_n_right < min_weight_leaf)):
+                    current_proxy_improvement = criterion.proxy_impurity_improvement()
 
-            if not ((criterion.weighted_n_left < min_weight_leaf) or
-                    (criterion.weighted_n_right < min_weight_leaf)):
-                current_proxy_improvement = criterion.proxy_impurity_improvement()
-
-                if current_proxy_improvement > best_proxy_improvement:
-                    best_proxy_improvement = current_proxy_improvement
-                    current_split.threshold = INFINITY
-                    current_split.missing_go_to_left = missing_go_to_left
-                    current_split.n_missing = n_missing
-                    current_split.pos = p
-                    best_split = current_split
+                    if current_proxy_improvement > best_proxy_improvement:
+                        best_proxy_improvement = current_proxy_improvement
+                        current_split.threshold = INFINITY
+                        current_split.missing_go_to_left = missing_go_to_left
+                        current_split.n_missing = n_missing
+                        current_split.pos = p
+                        best_split = current_split
 
     # Reorganize into samples[start:best.pos] + samples[best.pos:end]
     if best_split.pos < end:
