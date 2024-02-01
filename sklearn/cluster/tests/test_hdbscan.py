@@ -307,10 +307,6 @@ def test_hdbscan_centers(algorithm):
     H, _ = make_blobs(n_samples=2000, random_state=0, centers=centers, cluster_std=0.5)
     hdb = HDBSCAN(store_centers="both").fit(H)
 
-    print(set(hdb.labels_))
-    print(f"{centers=}")
-    print(f"{hdb.centroids_=}")
-
     for center, centroid, medoid in zip(centers, hdb.centroids_, hdb.medoids_):
         assert_allclose(center, centroid, rtol=1, atol=0.05)
         assert_allclose(center, medoid, rtol=1, atol=0.05)
