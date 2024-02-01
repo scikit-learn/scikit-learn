@@ -533,12 +533,15 @@ def dbcv_score(
     2014. Density-Based Clustering Validation. In SDM (pp. 839-847).
     <https://www.dbs.ifi.lmu.de/~zimek/publications/SDM2014/DBCV.pdf>`_
     """
+
+    labels = np.asarray(labels, dtype=int)
+    
     core_distances = {}
     density_sparseness = {}
     mst_nodes = {}
     mst_edges = {}
 
-    max_cluster_id = np.max(labels) + 1
+    max_cluster_id = labels.max() + 1
     density_sep = np.inf * np.ones((max_cluster_id, max_cluster_id), dtype=np.float64)
     cluster_validity_indices = np.empty(max_cluster_id, dtype=np.float64)
 
