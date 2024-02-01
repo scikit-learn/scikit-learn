@@ -534,8 +534,8 @@ def dbcv_score(
     <https://www.dbs.ifi.lmu.de/~zimek/publications/SDM2014/DBCV.pdf>`_
     """
 
-    labels = np.asarray(labels, dtype=int)
     X, labels = check_X_y(X, labels)
+    labels = np.asarray(labels, dtype=int)
     
     core_distances = {}
     density_sparseness = {}
