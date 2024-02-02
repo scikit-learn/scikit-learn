@@ -828,7 +828,7 @@ def test_halving_random_search_list_of_dicts():
     check_cv_results_keys(cv_results, param_keys, score_keys, n_candidates, extra_keys)
     expected_dtypes = {
         "param_C": "float64",
-        "param_degree": "int64",
+        "param_degree": np.intp,
         "param_gamma": "float64",
         "param_kernel": "<U4",
     }

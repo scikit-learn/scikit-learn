@@ -976,8 +976,8 @@ def test_grid_search_cv_results():
     )
     # Check cv_results structure
     expected_dtypes = {
-        "param_C": "int64",
-        "param_degree": "int64",
+        "param_C": np.intp,
+        "param_degree": np.intp,
         "param_gamma": "float64",
         "param_kernel": "<U4",
     }
@@ -1052,7 +1052,7 @@ def test_random_search_cv_results():
     # Check results structure
     expected_dtypes = {
         "param_C": "float64",
-        "param_degree": "int64",
+        "param_degree": np.intp,
         "param_gamma": "float64",
         "param_kernel": "<U4",
     }
