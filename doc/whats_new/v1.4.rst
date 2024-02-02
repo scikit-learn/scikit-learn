@@ -2,6 +2,17 @@
 
 .. currentmodule:: sklearn
 
+.. _release_notes_1_4:
+
+===========
+Version 1.4
+===========
+
+For a short description of the main highlights of the release, please refer to
+:ref:`sphx_glr_auto_examples_release_highlights_plot_release_highlights_1_4_0.py`.
+
+.. include:: changelog_legend.inc
+
 .. _changes_1_4_1:
 
 Version 1.4.1
@@ -9,8 +20,56 @@ Version 1.4.1
 
 **In Development**
 
+Metadata Routing
+----------------
+
+- |FIX| Fix routing issue with :class:`~compose.ColumnTransformer` when used
+  inside another meta-estimator.
+  :pr:`28188` by `Adrin Jalali`_.
+
+DataFrame Support
+-----------------
+
+- |Enhancement| Pandas and Polars dataframe are validated directly without ducktyping
+  checks. :pr:`28195` by `Thomas Fan`_.
+
+Changes impacting all modules
+-----------------------------
+
+- Partial revert of :pr:`28191` to avoid a performance regression for estimators
+  relying on euclidean pairwise computation with sparse matrices. The impacted
+  estimators are:
+
+  - :func:`sklearn.metrics.pairwise_distances_argmin`
+  - :func:`sklearn.metrics.pairwise_distances_argmin_min`
+  - :class:`sklearn.cluster.AffinityPropagation`
+  - :class:`sklearn.cluster.Birch`
+  - :class:`sklearn.cluster.SpectralClustering`
+  - :class:`sklearn.neighbors.KNeighborsClassifier`
+  - :class:`sklearn.neighbors.KNeighborsRegressor`
+  - :class:`sklearn.neighbors.RadiusNeighborsClassifier`
+  - :class:`sklearn.neighbors.RadiusNeighborsRegressor`
+  - :class:`sklearn.neighbors.LocalOutlierFactor`
+  - :class:`sklearn.neighbors.NearestNeighbors`
+  - :class:`sklearn.manifold.Isomap`
+  - :class:`sklearn.manifold.TSNE`
+  - :func:`sklearn.manifold.trustworthiness`
+
+  :pr:`28235` by :user:`Julien Jerphanion <jjerphan>`.
+
+- |Fix| Fixes a bug for all scikit-learn transformers when using `set_output` with
+  `transform` set to `pandas` or `polars`. The bug could lead to wrong naming of the
+  columns of the returned dataframe.
+  :pr:`28262` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 Changelog
 ---------
+
+:mod:`sklearn.calibration`
+..........................
+
+- |Fix| `calibration.CalibratedClassifierCV` supports :term:`predict_proba` with
+  float32 output from the inner estimator. :pr:`28247` by `Thomas Fan`_.
 
 :mod:`sklearn.cluster`
 ......................
@@ -24,8 +83,62 @@ Changelog
   larger than the number of non-duplicate samples.
   :pr:`28165` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
-- |Enhancement| Pandas and Polars dataframe are validated directly without ducktyping
-  checks. :pr:`28195` by `Thomas Fan`_.
+:mod:`sklearn.compose`
+......................
+
+- |Fix| :class:`compose.ColumnTransformer` now transform into a polars dataframe when
+  `verbose_feature_names_out=True` and the transformers internally used several times
+  the same columns. Previously, it would raise a due to duplicated column names.
+  :pr:`28262` by :user:`Guillaume Lemaitre <glemaitre>`.
+
+:mod:`sklearn.inspection`
+.........................
+
+- |Fix| :func:`inspection.permutation_importance` now handles properly `sample_weight`
+  together with subsampling (i.e. `max_features` < 1.0).
+  :pr:`28184` by :user:`Michael Mayer <mayer79>`.
+
+:mod:`sklearn.preprocessing`
+............................
+
+- |Fix| make :class:`preprocessing.FunctionTransformer` more lenient and overwrite
+  output column names with the `get_feature_names_out` in the following cases:
+
+  - the input and output column names remain the same (happen when using NumPy `ufunc`);
+  - the input column names are numbers;
+  - the output will be set to Pandas or Polars dataframe.
+
+  :pr:`28241` by :user:`Guillaume Lemaitre <glemaitre>`.
+
+- |Fix| :class:`preprocessing.FunctionTransformer` now also warns when `set_output`
+  is called with `transform="polars"` and `func` does not return a Polars dataframe or
+  `feature_names_out` is not specified.
+  :pr:`28263` by :user:`Guillaume Lemaitre <glemaitre>`.
+
+:mod:`sklearn.tree`
+...................
+
+- |Fix| :class:`tree.DecisionTreeClassifier` and
+  :class:`tree.DecisionTreeRegressor` are handling missing values properly. The internal
+  criterion was not initialize when no missing values were present in the data, leading
+  to potentially wrong criterion values.
+  :pr:`28295` by :user:`Guillaume Lemaitre <glemaitre>`.
+
+:mod:`sklearn.utils`
+....................
+
+- |Fix| :func:`utils._safe_indexing` now raises a `ValueError` when `X` is a Python list
+  and `axis=1`, as documented in the docstring.
+  :pr:`28222` by :user:`Guillaume Lemaitre <glemaitre>`.
+
+
+:mod:`sklearn.preprocessing`
+............................
+
+- |Fix| :class:`preprocessing.TargetEncoder` no longer fails when
+  `target_type="continuous"` and the input is read-only. In particular, it now
+  works with pandas copy-on-write mode enabled.
+  :pr:`28233` by :user:`John Hopfensperger <s-banach>`.
 
 .. _changes_1_4:
 
@@ -33,11 +146,6 @@ Version 1.4.0
 =============
 
 **January 2024**
-
-For a short description of the main highlights of the release, please refer to
-:ref:`sphx_glr_auto_examples_release_highlights_plot_release_highlights_1_4_0.py`.
-
-.. include:: changelog_legend.inc
 
 Changed models
 --------------
@@ -822,8 +930,7 @@ Changelog
   Use `-np.logaddexp(0, -x)` instead.
   :pr:`27544` by :user:`Christian Lorentzen <lorentzenchr>`.
 
-Code and Documentation Contributors
------------------------------------
+.. rubric:: Code and documentation contributors
 
 Thanks to everyone who has contributed to the maintenance and improvement of
 the project since version 1.3, including:
