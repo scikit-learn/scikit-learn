@@ -602,7 +602,7 @@ class PartialDependenceDisplay:
         else:
             # we need to create a boolean indicator of which features are
             # categorical from the categorical_features list.
-            categorical_features = np.array(categorical_features, copy=False)
+            categorical_features = np.asarray(categorical_features)
             if categorical_features.dtype.kind == "b":
                 # categorical features provided as a list of boolean
                 if categorical_features.size != n_features:
