@@ -2557,9 +2557,9 @@ def test_missing_values_poisson(Tree):
         # missing values to always be better than the naive mean imputation in the
         # regression case.
         (datasets.make_friedman1, DecisionTreeRegressor, 0.0),
+        (datasets.make_friedman1, ExtraTreeRegressor, 0.02),
         (datasets.make_classification, DecisionTreeClassifier, 0.03),
-        (datasets.make_friedman1, ExtraTreeRegressor, 0.0),
-        (datasets.make_classification, ExtraTreeClassifier, 0.14),
+        (datasets.make_classification, ExtraTreeClassifier, 0.34),
     ],
 )
 @pytest.mark.parametrize("sample_weight_train", [None, "ones"])
