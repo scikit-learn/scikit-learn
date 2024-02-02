@@ -703,8 +703,9 @@ def test_target_encoding_for_linear_regression(smooth, global_random_seed):
     assert abs(coef[0]) < abs(coef[2])
 
 
-def test_27879():
-    pd = pytest.importorskip("pandas")
+def test_read_only_input():
+    """Copy-on-write makes "y" read-only. See issue #27879."""
+    pd = pytest.importorskip("pandas", minversion="2.0")
     with pd.option_context("mode.copy_on_write", True):
         df = pd.DataFrame({"x": ["a", "b", "b"], "y": [4.0, 5.0, 6.0]})
         TargetEncoder(target_type="continuous").fit(df[["x"]], df["y"])
