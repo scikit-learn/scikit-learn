@@ -9,6 +9,35 @@ code.literal {
   border: 0;
 }
 
+/* Version switcher */
+
+.version-switcher__menu a.list-group-item.sk-avail-docs-link {
+  display: flex;
+  align-items: center;
+
+  &:after {
+    content: var(--pst-icon-external-link);
+    font: var(--fa-font-solid);
+    font-size: 0.75rem;
+    margin-left: 0.5rem;
+  }
+}
+
+/* Version warning banner */
+
+// TODO: can be removed when pydata-sphinx-theme > 0.15.2
+.bd-header-version-warning,
+.bd-header-annoucement {
+  min-height: unset;
+  transition: height 300ms ease-in-out;
+  overflow-y: hidden;
+
+  &.init {
+    position: fixed;
+    visibility: hidden;
+  }
+}
+
 /* Primary sidebar */
 
 .bd-sidebar-primary {

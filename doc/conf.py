@@ -269,8 +269,10 @@ html_theme_options = {
     "footer_end": [],
     # Use :html_theme.sidebar_secondary.remove: for file-wide removal
     "secondary_sidebar_items": ["page-toc", "sourcelink"],
-    "show_version_warning_banner": True,
-    "announcement": [],
+    # The version warning banner is not informative enough so we inject our own
+    # See `doc/js/scripts/version-warning.js`
+    "show_version_warning_banner": False,
+    "announcement": None,
 }
 
 # Add any paths that contain custom themes here, relative to this directory.
@@ -307,8 +309,16 @@ html_static_path = ["images", "css", "js"]
 # page template can override the one generated from index.rst
 html_additional_pages = {}
 
+# Additional files to copy
+# versions.json is generated in build_tools/circle/build_doc.sh
+html_extra_path = ["versions.json"]
+
 # Additional JS files
-html_js_files = ["scripts/details-permalink.js"]
+html_js_files = [
+    "scripts/details-permalink.js",
+    "scripts/version-warning.js",
+    "scripts/version-switcher.js",
+]
 
 # Compile scss files into css files using sphinxcontrib-sass
 sass_src_dir, sass_out_dir = "scss", "css/styles"
