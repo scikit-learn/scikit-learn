@@ -580,7 +580,9 @@ or *informedness*.
     * Balanced Accuracy as described in [Urbanowicz2015]_: the average of sensitivity and specificity
       is computed for each class and then averaged over total number of classes.
 
-.. topic:: References:
+|details-start|
+**References**
+|details-split|
 
   .. [Guyon2015] I. Guyon, K. Bennett, G. Cawley, H.J. Escalante, S. Escalera, T.K. Ho, N. Macià,
      B. Ray, M. Saeed, A.R. Statnikov, E. Viegas, `Design of the 2015 ChaLearn AutoML Challenge
@@ -596,6 +598,8 @@ or *informedness*.
   .. [Urbanowicz2015] Urbanowicz R.J.,  Moore, J.H. :doi:`ExSTraCS 2.0: description
       and evaluation of a scalable learning classifier
       system <10.1007/s12065-015-0128-8>`, Evol. Intel. (2015) 8: 89.
+
+|details-end|
 
 .. _cohen_kappa:
 
@@ -849,8 +853,9 @@ precision-recall curve as follows.
     for an example of :func:`precision_recall_curve` usage to evaluate
     classifier output quality.
 
-
-.. topic:: References:
+|details-start|
+**References**
+|details-split|
 
   .. [Manning2008] C.D. Manning, P. Raghavan, H. Schütze, `Introduction to Information Retrieval
      <https://nlp.stanford.edu/IR-book/html/htmledition/evaluation-of-ranked-retrieval-results-1.html>`_,
@@ -865,6 +870,8 @@ precision-recall curve as follows.
   .. [Flach2015] P.A. Flach, M. Kull, `Precision-Recall-Gain Curves: PR Analysis Done Right
      <https://papers.nips.cc/paper/5867-precision-recall-gain-curves-pr-analysis-done-right.pdf>`_,
      NIPS 2015.
+
+|details-end|
 
 
 Binary classification
@@ -1553,7 +1560,9 @@ And the decision values do not require such processing.
     for an example of using ROC to
     model species distribution.
 
-.. topic:: References:
+|details-start|
+**References**
+|details-split|
 
     .. [HT2001] Hand, D.J. and Till, R.J., (2001). `A simple generalisation
        of the area under the ROC curve for multiple class classification problems.
@@ -1579,6 +1588,8 @@ And the decision values do not require such processing.
        ROC performance <https://ieeexplore.ieee.org/document/989510/>`_
        In Data Mining, 2001.
        Proceedings IEEE International Conference, pp. 131-138.
+
+|details-end|
 
 .. _det_curve:
 
@@ -1614,7 +1625,15 @@ same classification task:
    :scale: 75
    :align: center
 
-**Properties:**
+.. topic:: Examples:
+
+  * See :ref:`sphx_glr_auto_examples_model_selection_plot_det.py`
+    for an example comparison between receiver operating characteristic (ROC)
+    curves and Detection error tradeoff (DET) curves.
+
+|details-start|
+**Properties**
+|details-split|
 
 * DET curves form a linear curve in normal deviate scale if the detection
   scores are normally (or close-to normally) distributed.
@@ -1630,7 +1649,11 @@ same classification task:
   of perfection for DET curves is the origin (in contrast to the top left
   corner for ROC curves).
 
-**Applications and limitations:**
+|details-end|
+
+|details-start|
+**Applications and limitations**
+|details-split|
 
 DET curves are intuitive to read and hence allow quick visual assessment of a
 classifier's performance.
@@ -1643,13 +1666,11 @@ Therefore for either automated evaluation or comparison to other
 classification tasks metrics like the derived area under ROC curve might be
 better suited.
 
-.. topic:: Examples:
+|details-end|
 
-  * See :ref:`sphx_glr_auto_examples_model_selection_plot_det.py`
-    for an example comparison between receiver operating characteristic (ROC)
-    curves and Detection error tradeoff (DET) curves.
-
-.. topic:: References:
+|details-start|
+**References**
+|details-split|
 
   .. [WikipediaDET2017] Wikipedia contributors. Detection error tradeoff.
      Wikipedia, The Free Encyclopedia. September 4, 2017, 23:33 UTC.
@@ -1667,6 +1688,8 @@ better suited.
      2007 IEEE International Conference on Acoustics,
      Speech and Signal Processing - ICASSP '07, Honolulu,
      HI, 2007, pp. IV-229-IV-232.
+
+|details-end|
 
 .. _zero_one_loss:
 
@@ -1780,7 +1803,9 @@ the same does a lower Brier score loss always mean better calibration"
     for an example of Brier score loss usage to perform probability
     calibration of classifiers.
 
-.. topic:: References:
+|details-start|
+**References**
+|details-split|
 
   .. [Brier1950] G. Brier, `Verification of forecasts expressed in terms of
     probability
@@ -1796,6 +1821,8 @@ the same does a lower Brier score loss always mean better calibration"
   .. [Flach2008] Flach, Peter, and Edson Matsubara. `"On classification, ranking,
     and probability estimation." <https://drops.dagstuhl.de/opus/volltexte/2008/1382/>`_
     Dagstuhl Seminar Proceedings. Schloss Dagstuhl-Leibniz-Zentrum fr Informatik (2008).
+
+|details-end|
 
 .. _class_likelihood_ratios:
 
@@ -1913,7 +1940,9 @@ see the example below.
 
   * :ref:`sphx_glr_auto_examples_model_selection_plot_likelihood_ratios.py`
 
-.. topic:: References:
+|details-start|
+**References**
+|details-split|
 
   * `Wikipedia entry for Likelihood ratios in diagnostic testing
     <https://en.wikipedia.org/wiki/Likelihood_ratios_in_diagnostic_testing>`_
@@ -1923,6 +1952,7 @@ see the example below.
     values with disease prevalence.
     Statistics in medicine, 16(9), 981-991.
 
+|details-end|
 
 .. _multilabel_ranking_metrics:
 
