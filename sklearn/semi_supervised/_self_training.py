@@ -20,9 +20,9 @@ __all__ = ["SelfTrainingClassifier"]
 def _estimator_has(attr):
     """Check if we can delegate a method to the underlying estimator.
 
-    First, we check the fitted base_estimator if available, otherwise we check
-    the unfitted base_estimator. We raise the original `AttributeError` if
-    `attr` does not exist. This function is used together with `avaliable_if`.
+    First, we check the fitted `base_estimator_` if available, otherwise we check
+    the unfitted `base_estimator`. We raise the original `AttributeError` if
+    `attr` does not exist. This function is used together with `available_if`.
     """
 
     def check(self):
