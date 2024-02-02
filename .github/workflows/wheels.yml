@@ -131,7 +131,7 @@ jobs:
         run: |
           set -ex
           # macos arm64 runners do not have conda installed. Thus we much install conda manually
-          EXPECTED_SHA ="dd832d8a65a861b5592b2cf1d55f26031f7c1491b30321754443931e7b1e6832"
+          EXPECTED_SHA="dd832d8a65a861b5592b2cf1d55f26031f7c1491b30321754443931e7b1e6832"
           MINIFORGE_URL="https://github.com/conda-forge/miniforge/releases/download/23.11.0-0/Mambaforge-23.11.0-0-MacOSX-arm64.sh"
           curl -L --retry 10 $MINIFORGE_URL -o miniforge.sh
 
@@ -158,7 +158,7 @@ jobs:
         env:
           CIBW_PRERELEASE_PYTHONS: ${{ matrix.prerelease }}
           CIBW_ENVIRONMENT: SKLEARN_SKIP_NETWORK_TESTS=1
-                            SKLEARN_BUILD_PARALLEL=3
+            SKLEARN_BUILD_PARALLEL=3
           CIBW_BUILD: cp${{ matrix.python }}-${{ matrix.platform_id }}
           CIBW_ARCHS: all
           CIBW_MANYLINUX_X86_64_IMAGE: ${{ matrix.manylinux_image }}
@@ -200,7 +200,7 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.9'  # update once build dependencies are available
+          python-version: "3.9" # update once build dependencies are available
 
       - name: Build source distribution
         run: bash build_tools/github/build_source.sh
