@@ -796,7 +796,8 @@ class ArffDecoder:
             self._current_line += 1
             # Ignore empty lines
             row = row.strip(' \r\n')
-            if not row: continue
+            if not row:
+                continue
 
             u_row = row.upper()
 

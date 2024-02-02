@@ -9,13 +9,11 @@ try:
     from pyparsing import (
         CaselessLiteral,
         Combine,
-        Forward,
         Group,
         Literal,
         OneOrMore,
         Optional,
         ParseException,
-        ParserElement,
         Word,
         ZeroOrMore,
         nums,
@@ -108,7 +106,9 @@ coordinatePairSequence = Sequence(coordinatePair)
 coordinatePairPair = coordinatePair + maybeComma + coordinatePair
 coordinatePairPairSequence = Sequence(Group(coordinatePairPair))
 
-coordinatePairTriple = coordinatePair + maybeComma + coordinatePair + maybeComma + coordinatePair
+coordinatePairTriple = (
+    coordinatePair + maybeComma + coordinatePair + maybeComma + coordinatePair
+    )
 coordinatePairTripleSequence = Sequence(Group(coordinatePairTriple))
 
 #commands
