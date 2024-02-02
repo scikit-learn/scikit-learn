@@ -70,6 +70,12 @@ if [[ -n "$CHECK_WARNINGS" ]]; then
     # warnings has been fixed from dateutil main but not released yet, see
     # https://github.com/dateutil/dateutil/issues/1314
     TEST_CMD="$TEST_CMD -Wignore:datetime.datetime.utcfromtimestamp:DeprecationWarning"
+
+    # Python 3.12 warnings from joblib fixed in master but not released yet,
+    # see https://github.com/joblib/joblib/pull/1518
+    TEST_CMD="$TEST_CMD -W 'ignore:ast.Num is deprecated:DeprecationWarning'"
+    TEST_CMD="$TEST_CMD -W 'ignore:Attribute n is deprecated:DeprecationWarning'"
+
 fi
 
 if [[ "$PYTEST_XDIST_VERSION" != "none" ]]; then
