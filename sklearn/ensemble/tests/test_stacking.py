@@ -859,3 +859,35 @@ def test_stacking_classifier_base_regressor():
     clf.predict(X_test)
     clf.predict_proba(X_test)
     assert clf.score(X_test, y_test) > 0.8
+
+
+def test_stacking_final_estimator_attribute_error():
+    """Check that we raise the proper AttributeError when the final estimator
+    does not implement the prediction method.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/28108
+    """
+    X, y = load_breast_cancer(return_X_y=True)
+    X_train, X_test, y_train, _ = train_test_split(
+        scale(X), y, stratify=y, random_state=42
+    )
+
+    # both classifiers implement 'predict_proba' and will both drop one column
+    estimators = [
+        ("lr", LogisticRegression()),
+        ("rf", RandomForestClassifier(n_estimators=2, random_state=42)),
+    ]
+    # RandomForestClassifier does not implement 'decision_function' and should raise
+    # an error
+    final_estimator = RandomForestClassifier(n_estimators=2, random_state=42)
+    clf = StackingClassifier(
+        estimators=estimators, final_estimator=final_estimator, cv=3
+    )
+
+    outer_msg = "This 'StackingClassifier' has no attribute 'decision_function'"
+    inner_msg = "'RandomForestClassifier' object has no attribute 'decision_function'"
+    with pytest.raises(AttributeError, match=outer_msg) as exec_info:
+        clf.fit(X_train, y_train).decision_function(X_test)
+    assert isinstance(exec_info.value.__cause__, AttributeError)
+    assert inner_msg in str(exec_info.value.__cause__)

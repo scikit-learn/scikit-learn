@@ -18,6 +18,7 @@ from sklearn.linear_model import (
     ElasticNetCV,
     Lasso,
     LassoCV,
+    LinearRegression,
     LogisticRegression,
     PassiveAggressiveClassifier,
     SGDClassifier,
@@ -661,3 +662,25 @@ def test_partial_fit_validate_feature_names(as_frame):
         assert_array_equal(selector.feature_names_in_, X.columns)
     else:
         assert not hasattr(selector, "feature_names_in_")
+
+
+def test_estimator_attribute_error():
+    """Check that we raise the proper AttributeError when the estimator
+    does not implement the transform method.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/28108
+    """
+    # `LinearRegression` does not implement 'transform' and should raise an error
+    from_model = SelectFromModel(estimator=LinearRegression())
+
+    outer_msg = "This 'SelectFromModel' has no attribute 'transform'"
+    inner_msg = "'LinearRegression' object has no attribute 'transform'"
+    with pytest.raises(AttributeError, match=outer_msg) as exec_info:
+        from_model.fit(data, y).transform(data)
+    assert isinstance(exec_info.value.__cause__, AttributeError)
+    assert inner_msg in str(exec_info.value.__cause__)
+
+
+# uses SelectorMixin.transform in _wrap_method_output
+# using decision_function instead would work ...

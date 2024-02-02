@@ -7,6 +7,7 @@ from numpy.testing import assert_array_equal
 from sklearn.datasets import load_iris, make_blobs
 from sklearn.ensemble import StackingClassifier
 from sklearn.exceptions import NotFittedError
+from sklearn.linear_model import LinearRegression
 from sklearn.metrics import accuracy_score
 from sklearn.model_selection import train_test_split
 from sklearn.neighbors import KNeighborsClassifier
@@ -315,10 +316,31 @@ def test_base_estimator_meta_estimator():
         clf.fit(X_train, y_train_missing_labels)
 
 
-def test_missing_predict_proba():
-    # Check that an error is thrown if predict_proba is not implemented
+def test_estimator_attribute_error():
+    """Check that we raise the proper AttributeError when the `base_estimator`
+    does not implement the `predict_proba` method.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/28108
+    """
+    # `SVC` with `probability=False` does not implement 'predict_proba' and
+    # should raise an error
     base_estimator = SVC(probability=False, gamma="scale")
     self_training = SelfTrainingClassifier(base_estimator)
 
     with pytest.raises(AttributeError, match="has no attribute 'predict_proba'"):
         self_training.fit(X_train, y_train_missing_labels)
+
+    # `LinearRegression` does not implement 'predict_proba' and should raise an
+    # error
+    self_training = SelfTrainingClassifier(base_estimator=LinearRegression())
+
+    outer_msg = "This 'SelfTrainingClassifier' has no attribute 'predict_proba'"
+    inner_msg = "'LinearRegression' object has no attribute 'predict_proba'"
+    with pytest.raises(AttributeError, match=outer_msg) as exec_info:
+        self_training.fit(X_train, y_train_missing_labels).predict_proba(X_train)
+    assert isinstance(exec_info.value.__cause__, AttributeError)
+    assert inner_msg in str(exec_info.value.__cause__)
+
+    # predict_proba called within fit --> error raised earlier and without
+    # available_if
