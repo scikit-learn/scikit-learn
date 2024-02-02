@@ -522,8 +522,8 @@ def dbcv_score(
         is a numeric value between -1 and 1, with higher values indicating
         a 'better' clustering.
 
-    per_cluster_validity_index : array (n_clusters,)
-        The cluster validity index of each individual cluster as an array.
+    labels_to_scores : dictionary
+        The cluster validity index of each individual cluster, retrievable by label.
         The overall validity index is the weighted average of these values.
         Only returned if per_cluster_scores is set to True.
 
@@ -535,25 +535,26 @@ def dbcv_score(
     """
 
     X, labels = check_X_y(X, labels)
-    labels = np.asarray(labels, dtype=int)
-    
+
+    le = LabelEncoder()
+    labels = le.fit_transform(labels)
+    encoding_cluster_indices = [i for i in range(len(le.classes_)) if str(le.classes_[i]) != "-1"]
+    check_number_of_labels(len(encoding_cluster_indices), len(labels))
+    n_labels = len(le.classes_)
+
     core_distances = {}
     density_sparseness = {}
     mst_nodes = {}
     mst_edges = {}
 
-    max_cluster_id = labels.max() + 1
-    density_sep = np.inf * np.ones((max_cluster_id, max_cluster_id), dtype=np.float64)
-    cluster_validity_indices = np.empty(max_cluster_id, dtype=np.float64)
+    density_sep = np.inf * np.ones((n_labels, n_labels), dtype=np.float64)
+    labels_to_scores = {}
 
-    for cluster_id in range(max_cluster_id):
-        if np.sum(labels == cluster_id) == 0:
-            continue
-
-        distances_for_mst, core_distances[cluster_id] = distances_between_points(
+    for encoding_index in encoding_cluster_indices:
+        distances_for_mst, core_distances[encoding_index] = distances_between_points(
             X,
             labels,
-            cluster_id,
+            encoding_index,
             metric,
             d,
             no_coredist=mst_raw_dist,
@@ -561,56 +562,47 @@ def dbcv_score(
             **kwd_args,
         )
 
-        mst_nodes[cluster_id], mst_edges[cluster_id] = internal_minimum_spanning_tree(
+        mst_nodes[encoding_index], mst_edges[encoding_index] = internal_minimum_spanning_tree(
             distances_for_mst
         )
-        density_sparseness[cluster_id] = mst_edges[cluster_id].T[2].max()
+        density_sparseness[encoding_index] = mst_edges[encoding_index].T[2].max()
 
-    for i in range(max_cluster_id):
-        if np.sum(labels == i) == 0:
-            continue
-
-        internal_nodes_i = mst_nodes[i]
-        for j in range(i + 1, max_cluster_id):
-            if np.sum(labels == j) == 0:
-                continue
-
+    for encoding_index in encoding_cluster_indices:
+        internal_nodes_i = mst_nodes[encoding_index]
+        for j in encoding_cluster_indices[encoding_cluster_indices.index(encoding_index) + 1:]:
             internal_nodes_j = mst_nodes[j]
-            density_sep[i, j] = density_separation(
+            density_sep[encoding_index, j] = density_separation(
                 X,
                 labels,
-                i,
+                encoding_index,
                 j,
                 internal_nodes_i,
                 internal_nodes_j,
-                core_distances[i],
+                core_distances[encoding_index],
                 core_distances[j],
                 metric=metric,
                 no_coredist=mst_raw_dist,
                 **kwd_args,
             )
-            density_sep[j, i] = density_sep[i, j]
+            density_sep[j, encoding_index] = density_sep[encoding_index, j]
 
     n_samples = float(X.shape[0])
     result = 0
 
-    for i in range(max_cluster_id):
-        if np.sum(labels == i) == 0:
-            continue
-
-        min_density_sep = density_sep[i].min()
-        cluster_validity_indices[i] = (min_density_sep - density_sparseness[i]) / max(
-            min_density_sep, density_sparseness[i]
+    for encoding_index in encoding_cluster_indices:
+        min_density_sep = density_sep[encoding_index].min()
+        labels_to_scores[le.classes_[encoding_index]] = (min_density_sep - density_sparseness[encoding_index]) / max(
+            min_density_sep, density_sparseness[encoding_index]
         )
 
         if verbose:
             print("Minimum density separation: " + str(min_density_sep))
-            print("Density sparseness: " + str(density_sparseness[i]))
+            print("Density sparseness: " + str(density_sparseness[encoding_index]))
 
-        cluster_size = np.sum(labels == i)
-        result += (cluster_size / n_samples) * cluster_validity_indices[i]
+        cluster_size = np.sum(labels == encoding_index)
+        result += (cluster_size / n_samples) * labels_to_scores[le.classes_[encoding_index]]
 
     if per_cluster_scores:
-        return result, cluster_validity_indices
+        return result, labels_to_scores
     else:
         return result
