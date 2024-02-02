@@ -66,6 +66,10 @@ if [[ -n "$CHECK_WARNINGS" ]]; then
     # In those cases, pytest instead raises pytest.PytestUnraisableExceptionWarnings,
     # which we must treat as errors on the CI.
     TEST_CMD="$TEST_CMD -Werror::pytest.PytestUnraisableExceptionWarning"
+
+    # warnings has been fixed from dateutil main but not released yet, see
+    # https://github.com/dateutil/dateutil/issues/1314
+    TEST_CMD="$TEST_CMD -Wignore:datetime.datetime.utcfromtimestamp:DeprecationWarning"
 fi
 
 if [[ "$PYTEST_XDIST_VERSION" != "none" ]]; then
