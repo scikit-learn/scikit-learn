@@ -307,6 +307,10 @@ html_static_path = ["images", "css", "js"]
 # page template can override the one generated from index.rst
 html_additional_pages = {}
 
+# Additional files to copy
+# TODO: remove robots.txt and this entry before merging into main
+html_extra_path = ["robots.txt"]
+
 # Additional JS files
 html_js_files = ["scripts/details-permalink.js"]
 
