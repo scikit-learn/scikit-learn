@@ -319,11 +319,11 @@ cpdef void _subtract_histograms(
     """compute (hist_a - hist_b) in out"""
     # Note that subtraction of large sums of floating point numbers, as we have here,
     # can exhibit catastrophic cancallation. This is in particular true for gradients
-    # as they can be positive and negative, while hessians are are non-negative.
+    # as they can be positive and negative, while hessians are non-negative.
     # Remember that gradients and hessians are originally computed in
     # G_H_DTYPE_C = float32 precision. Therefore, if sum_gradients and sum_hessians are
-    # float64, we don't loose precision. But if we would again use float32 for
-    # summation, we would need to take care of floating point errors.
+    # float64, we don't loose precision. But if we also used float32 for summation, we
+    # would need to take care of floating point errors.
     cdef:
         unsigned int i = 0
     for i in range(n_bins):
