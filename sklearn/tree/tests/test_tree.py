@@ -2553,7 +2553,10 @@ def test_missing_values_poisson(Tree):
 @pytest.mark.parametrize(
     "make_data, Tree, tolerance",
     [
-        (datasets.make_regression, DecisionTreeRegressor, 0.08),
+        # Due to the sine link between X and y, we expect the native handling of
+        # missing values to always be better than the naive mean imputation in the
+        # regression case.
+        (datasets.make_friedman1, DecisionTreeRegressor, 0.0),
         (datasets.make_classification, DecisionTreeClassifier, 0.03),
         (datasets.make_regression, ExtraTreeRegressor, 0.26),
         (datasets.make_classification, ExtraTreeClassifier, 0.14),
@@ -2590,7 +2593,11 @@ def test_missing_values_is_resilience(
     tree_with_imputer.fit(X_missing_train, y_train)
     score_tree_with_imputer = tree_with_imputer.score(X_missing_test, y_test)
 
-    assert abs(score_tree_with_imputer - score_native_tree) < tolerance
+    diff = score_tree_with_imputer - score_native_tree
+    # We don't want to check when the native handling of missing values is
+    # better than the imputer. Therefore, we clip the diff to 0.
+    diff = diff if diff > 0 else 0
+    assert diff <= tolerance
 
 
 @pytest.mark.parametrize("Tree, expected_score", zip(CLF_TREES.values(), [0.85, 0.75]))
