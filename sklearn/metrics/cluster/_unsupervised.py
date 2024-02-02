@@ -566,7 +566,7 @@ def dbcv_score(
 
         mst_nodes[encoding_index], mst_edges[encoding_index] = (
             internal_minimum_spanning_tree(distances_for_mst)
-         )
+        )
         density_sparseness[encoding_index] = mst_edges[encoding_index].T[2].max()
 
     for encoding_index in encoding_cluster_indices:
