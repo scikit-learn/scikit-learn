@@ -863,7 +863,8 @@ def test_stacking_classifier_base_regressor():
 
 def test_stacking_final_estimator_attribute_error():
     """Check that we raise the proper AttributeError when the final estimator
-    does not implement the prediction method.
+    does not implement the `decision_function` method, which is decorated with
+    `available_if`.
 
     Non-regression test for:
     https://github.com/scikit-learn/scikit-learn/issues/28108

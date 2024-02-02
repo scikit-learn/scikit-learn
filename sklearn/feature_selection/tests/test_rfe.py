@@ -593,9 +593,10 @@ def test_rfe_pls(ClsRFE, PLSEstimator):
     assert selector.score(X, y) > 0.5
 
 
-def test_estimator_attribute_error():
+def test_rfe_estimator_attribute_error():
     """Check that we raise the proper AttributeError when the estimator
-    does not implement the decision_function method.
+    does not implement the `decision_function` method, which is decorated with
+    `available_if`.
 
     Non-regression test for:
     https://github.com/scikit-learn/scikit-learn/issues/28108

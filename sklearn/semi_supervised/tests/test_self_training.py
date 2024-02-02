@@ -7,12 +7,12 @@ from numpy.testing import assert_array_equal
 from sklearn.datasets import load_iris, make_blobs
 from sklearn.ensemble import StackingClassifier
 from sklearn.exceptions import NotFittedError
-from sklearn.linear_model import LinearRegression
 from sklearn.metrics import accuracy_score
 from sklearn.model_selection import train_test_split
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.semi_supervised import SelfTrainingClassifier
 from sklearn.svm import SVC
+from sklearn.tree import DecisionTreeClassifier
 
 # Author: Oliver Rausch <rauscho@ethz.ch>
 # License: BSD 3 clause
@@ -316,9 +316,10 @@ def test_base_estimator_meta_estimator():
         clf.fit(X_train, y_train_missing_labels)
 
 
-def test_estimator_attribute_error():
-    """Check that we raise the proper AttributeError when the `base_estimator`
-    does not implement the `predict_proba` method.
+def test_self_training_estimator_attribute_error():
+    """Check that we raise the proper AttributeErrors when the `base_estimator`
+    does not implement the `predict_proba` method, which is called from within
+    `fit`, or `decision_function`, which is decorated with `available_if`.
 
     Non-regression test for:
     https://github.com/scikit-learn/scikit-learn/issues/28108
@@ -331,16 +332,13 @@ def test_estimator_attribute_error():
     with pytest.raises(AttributeError, match="has no attribute 'predict_proba'"):
         self_training.fit(X_train, y_train_missing_labels)
 
-    # `LinearRegression` does not implement 'predict_proba' and should raise an
-    # error
-    self_training = SelfTrainingClassifier(base_estimator=LinearRegression())
+    # `DecisionTreeClassifier` does not implement 'decision_function' and
+    # should raise an error
+    self_training = SelfTrainingClassifier(base_estimator=DecisionTreeClassifier())
 
-    outer_msg = "This 'SelfTrainingClassifier' has no attribute 'predict_proba'"
-    inner_msg = "'LinearRegression' object has no attribute 'predict_proba'"
+    outer_msg = "This 'SelfTrainingClassifier' has no attribute 'decision_function'"
+    inner_msg = "'DecisionTreeClassifier' object has no attribute 'decision_function'"
     with pytest.raises(AttributeError, match=outer_msg) as exec_info:
-        self_training.fit(X_train, y_train_missing_labels).predict_proba(X_train)
+        self_training.fit(X_train, y_train_missing_labels).decision_function(X_train)
     assert isinstance(exec_info.value.__cause__, AttributeError)
     assert inner_msg in str(exec_info.value.__cause__)
-
-    # predict_proba called within fit --> error raised earlier and without
-    # available_if

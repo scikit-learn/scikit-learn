@@ -928,9 +928,10 @@ def test_ovo_consistent_binary_classification():
     assert_array_equal(clf.predict(X), ovo.predict(X))
 
 
-def test_estimator_attribute_error():
+def test_multiclass_estimator_attribute_error():
     """Check that we raise the proper AttributeError when the final estimator
-    does not implement the `partial_fit` method.
+    does not implement the `partial_fit` method, which is decorated with
+    `available_if`.
 
     Non-regression test for:
     https://github.com/scikit-learn/scikit-learn/issues/28108
