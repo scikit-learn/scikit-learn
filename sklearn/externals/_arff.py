@@ -147,10 +147,9 @@ __author_email__ = ('renato.ppontes@gmail.com, '
                     'joel.nothman@gmail.com')
 __version__ = '2.4.0'
 
-import re
 import csv
-from typing import TYPE_CHECKING
-from typing import Optional, List, Dict, Any, Iterator, Union, Tuple
+import re
+from typing import TYPE_CHECKING, Any, Dict, Iterator, List, Optional, Tuple, Union
 
 # CONSTANTS ===================================================================
 _SIMPLE_TYPES = ['NUMERIC', 'REAL', 'INTEGER', 'STRING']

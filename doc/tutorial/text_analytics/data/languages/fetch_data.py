@@ -2,14 +2,13 @@
 # simple python script to collect text paragraphs from various languages on the
 # same topic namely the Wikipedia encyclopedia itself
 
+import codecs
 import os
 from urllib.request import Request, build_opener
 
 import lxml.html
-from lxml.etree import ElementTree
 import numpy as np
-
-import codecs
+from lxml.etree import ElementTree
 
 pages = {
     'ar': 'http://ar.wikipedia.org/wiki/%D9%88%D9%8A%D9%83%D9%8A%D8%A8%D9%8A%D8%AF%D9%8A%D8%A7',   # noqa: E501

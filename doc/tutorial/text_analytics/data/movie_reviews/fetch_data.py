@@ -1,10 +1,9 @@
 """Script to download the movie review dataset"""
 
-from pathlib import Path
-from hashlib import sha256
 import tarfile
+from hashlib import sha256
+from pathlib import Path
 from urllib.request import urlopen
-
 
 URL = "http://www.cs.cornell.edu/people/pabo/movie-review-data/review_polarity.tar.gz"
 
