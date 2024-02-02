@@ -379,6 +379,18 @@ def get_scorer(scoring):
     When passed a string, this function always returns a copy of the scorer
     object. Calling `get_scorer` twice for the same scorer results in two
     separate scorer objects.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.dummy import DummyClassifier
+    >>> from sklearn.metrics import get_scorer
+    >>> X = np.reshape([0, 1, -1, -0.5, 2], (-1, 1))
+    >>> y = np.array([0, 1, 1, 0, 1])
+    >>> classifier = DummyClassifier(strategy="constant", constant=0).fit(X, y)
+    >>> accuracy = get_scorer("accuracy")
+    >>> accuracy(classifier, X, y)
+    0.4
     """
     if isinstance(scoring, str):
         try:
@@ -839,6 +851,17 @@ def get_scorer_names():
     -------
     list of str
         Names of all available scorers.
+
+    Examples
+    --------
+    >>> from sklearn.metrics import get_scorer_names
+    >>> all_scorers = get_scorer_names()
+    >>> type(all_scorers)
+    <class 'list'>
+    >>> all_scorers[:3]
+    ['accuracy', 'adjusted_mutual_info_score', 'adjusted_rand_score']
+    >>> "roc_auc" in all_scorers
+    True
     """
     return sorted(_SCORERS.keys())
 
@@ -888,6 +911,17 @@ def check_scoring(estimator, scoring=None, *, allow_none=False):
     scoring : callable
         A scorer callable object / function with signature
         ``scorer(estimator, X, y)``.
+
+    Examples
+    --------
+    >>> from sklearn.datasets import load_iris
+    >>> from sklearn.metrics import check_scoring
+    >>> from sklearn.tree import DecisionTreeClassifier
+    >>> X, y = load_iris(return_X_y=True)
+    >>> classifier = DecisionTreeClassifier(max_depth=2).fit(X, y)
+    >>> scorer = check_scoring(classifier, scoring='accuracy')
+    >>> scorer(classifier, X, y)
+    0.96...
     """
     if isinstance(scoring, str):
         return get_scorer(scoring)

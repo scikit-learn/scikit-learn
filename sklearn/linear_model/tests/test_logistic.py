@@ -208,7 +208,7 @@ def test_check_solver_option(LR):
 
     # all solvers except 'liblinear' and 'saga'
     for solver in ["lbfgs", "newton-cg", "newton-cholesky", "sag"]:
-        msg = "Solver %s supports only 'l2' or 'none' penalties," % solver
+        msg = "Solver %s supports only 'l2' or None penalties," % solver
         lr = LR(solver=solver, penalty="l1", multi_class="ovr")
         with pytest.raises(ValueError, match=msg):
             lr.fit(X, y)
@@ -222,9 +222,7 @@ def test_check_solver_option(LR):
     # error is raised before for the other solvers (solver %s supports only l2
     # penalties)
     for solver in ["liblinear"]:
-        msg = "Only 'saga' solver supports elasticnet penalty, got solver={}.".format(
-            solver
-        )
+        msg = f"Only 'saga' solver supports elasticnet penalty, got solver={solver}."
         lr = LR(solver=solver, penalty="elasticnet")
         with pytest.raises(ValueError, match=msg):
             lr.fit(X, y)
@@ -232,8 +230,8 @@ def test_check_solver_option(LR):
     # liblinear does not support penalty='none'
     # (LogisticRegressionCV does not supports penalty='none' at all)
     if LR is LogisticRegression:
-        msg = "penalty='none' is not supported for the liblinear solver"
-        lr = LR(penalty="none", solver="liblinear")
+        msg = "penalty=None is not supported for the liblinear solver"
+        lr = LR(penalty=None, solver="liblinear")
         with pytest.raises(ValueError, match=msg):
             lr.fit(X, y)
 
@@ -2066,19 +2064,6 @@ def test_single_feature_newton_cg():
     y = np.array([1, 1, 0, 0, 1, 1, 0, 1])
     assert X.shape[1] == 1
     LogisticRegression(solver="newton-cg", fit_intercept=True).fit(X, y)
-
-
-# TODO(1.4): Remove
-def test_warning_on_penalty_string_none():
-    # Test that warning message is shown when penalty='none'
-    target = iris.target_names[iris.target]
-    lr = LogisticRegression(penalty="none")
-    warning_message = (
-        "`penalty='none'`has been deprecated in 1.2 and will be removed in 1.4."
-        " To keep the past behaviour, set `penalty=None`."
-    )
-    with pytest.warns(FutureWarning, match=warning_message):
-        lr.fit(iris.data, target)
 
 
 def test_liblinear_not_stuck():

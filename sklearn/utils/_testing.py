@@ -66,7 +66,7 @@ __all__ = [
     "assert_array_less",
     "assert_approx_equal",
     "assert_allclose",
-    "assert_run_python_script",
+    "assert_run_python_script_without_output",
     "assert_no_warnings",
     "SkipTest",
 ]
@@ -669,11 +669,11 @@ def check_docstring_parameters(func, doc=None, ignore=None):
     return incorrect
 
 
-def assert_run_python_script(source_code, timeout=60):
+def assert_run_python_script_without_output(source_code, pattern=".+", timeout=60):
     """Utility to check assertions in an independent Python subprocess.
 
-    The script provided in the source code should return 0 and not print
-    anything on stderr or stdout.
+    The script provided in the source code should return 0 and the stdtout +
+    stderr should not match the pattern `pattern`.
 
     This is a port from cloudpickle https://github.com/cloudpipe/cloudpickle
 
@@ -681,6 +681,9 @@ def assert_run_python_script(source_code, timeout=60):
     ----------
     source_code : str
         The Python source code to execute.
+    pattern : str
+        Pattern that the stdout + stderr should not match. By default, unless
+        stdout + stderr are both empty, an error will be raised.
     timeout : int, default=60
         Time in seconds before timeout.
     """
@@ -710,8 +713,16 @@ def assert_run_python_script(source_code, timeout=60):
                 raise RuntimeError(
                     "script errored with output:\n%s" % e.output.decode("utf-8")
                 )
-            if out != b"":
-                raise AssertionError(out.decode("utf-8"))
+
+            out = out.decode("utf-8")
+            if re.search(pattern, out):
+                if pattern == ".+":
+                    expectation = "Expected no output"
+                else:
+                    expectation = f"The output was not supposed to match {pattern!r}"
+
+                message = f"{expectation}, got the following output instead: {out!r}"
+                raise AssertionError(message)
         except TimeoutExpired as e:
             raise RuntimeError(
                 "script timeout, output so far:\n%s" % e.output.decode("utf-8")
@@ -721,7 +732,12 @@ def assert_run_python_script(source_code, timeout=60):
 
 
 def _convert_container(
-    container, constructor_name, columns_name=None, dtype=None, minversion=None
+    container,
+    constructor_name,
+    columns_name=None,
+    dtype=None,
+    minversion=None,
+    categorical_feature_names=None,
 ):
     """Convert a given container to a specific array-like with a dtype.
 
@@ -740,6 +756,8 @@ def _convert_container(
         container.
     minversion : str, default=None
         Minimum version for package to install.
+    categorical_feature_names : list of str, default=None
+        List of column names to cast to categorical dtype.
 
     Returns
     -------
@@ -757,21 +775,34 @@ def _convert_container(
             return tuple(np.asarray(container, dtype=dtype).tolist())
     elif constructor_name == "array":
         return np.asarray(container, dtype=dtype)
-    elif constructor_name == "sparse":
-        return sp.sparse.csr_matrix(container, dtype=dtype)
-    elif constructor_name == "dataframe":
+    elif constructor_name in ("pandas", "dataframe"):
         pd = pytest.importorskip("pandas", minversion=minversion)
-        return pd.DataFrame(container, columns=columns_name, dtype=dtype, copy=False)
+        result = pd.DataFrame(container, columns=columns_name, dtype=dtype, copy=False)
+        if categorical_feature_names is not None:
+            for col_name in categorical_feature_names:
+                result[col_name] = result[col_name].astype("category")
+        return result
     elif constructor_name == "pyarrow":
         pa = pytest.importorskip("pyarrow", minversion=minversion)
         array = np.asarray(container)
         if columns_name is None:
             columns_name = [f"col{i}" for i in range(array.shape[1])]
         data = {name: array[:, i] for i, name in enumerate(columns_name)}
-        return pa.Table.from_pydict(data)
+        result = pa.Table.from_pydict(data)
+        if categorical_feature_names is not None:
+            for col_idx, col_name in enumerate(result.column_names):
+                if col_name in categorical_feature_names:
+                    result = result.set_column(
+                        col_idx, col_name, result.column(col_name).dictionary_encode()
+                    )
+        return result
     elif constructor_name == "polars":
         pl = pytest.importorskip("polars", minversion=minversion)
-        return pl.DataFrame(container, schema=columns_name)
+        result = pl.DataFrame(container, schema=columns_name, orient="row")
+        if categorical_feature_names is not None:
+            for col_name in categorical_feature_names:
+                result = result.with_columns(pl.col(col_name).cast(pl.Categorical))
+        return result
     elif constructor_name == "series":
         pd = pytest.importorskip("pandas", minversion=minversion)
         return pd.Series(container, dtype=dtype)
@@ -780,22 +811,28 @@ def _convert_container(
         return pd.Index(container, dtype=dtype)
     elif constructor_name == "slice":
         return slice(container[0], container[1])
-    elif constructor_name == "sparse_csr":
-        return sp.sparse.csr_matrix(container, dtype=dtype)
-    elif constructor_name == "sparse_csr_array":
-        if sp_version >= parse_version("1.8"):
+    elif "sparse" in constructor_name:
+        if not sp.sparse.issparse(container):
+            # For scipy >= 1.13, sparse array constructed from 1d array may be
+            # 1d or raise an exception. To avoid this, we make sure that the
+            # input container is 2d. For more details, see
+            # https://github.com/scipy/scipy/pull/18530#issuecomment-1878005149
+            container = np.atleast_2d(container)
+
+        if "array" in constructor_name and sp_version < parse_version("1.8"):
+            raise ValueError(
+                f"{constructor_name} is only available with scipy>=1.8.0, got "
+                f"{sp_version}"
+            )
+        if constructor_name in ("sparse", "sparse_csr"):
+            # sparse and sparse_csr are equivalent for legacy reasons
+            return sp.sparse.csr_matrix(container, dtype=dtype)
+        elif constructor_name == "sparse_csr_array":
             return sp.sparse.csr_array(container, dtype=dtype)
-        raise ValueError(
-            f"sparse_csr_array is only available with scipy>=1.8.0, got {sp_version}"
-        )
-    elif constructor_name == "sparse_csc":
-        return sp.sparse.csc_matrix(container, dtype=dtype)
-    elif constructor_name == "sparse_csc_array":
-        if sp_version >= parse_version("1.8"):
+        elif constructor_name == "sparse_csc":
+            return sp.sparse.csc_matrix(container, dtype=dtype)
+        elif constructor_name == "sparse_csc_array":
             return sp.sparse.csc_array(container, dtype=dtype)
-        raise ValueError(
-            f"sparse_csc_array is only available with scipy>=1.8.0, got {sp_version}"
-        )
 
 
 def raises(expected_exc_type, match=None, may_pass=False, err_msg=None):
@@ -1008,7 +1045,7 @@ class MinimalTransformer:
         return self.fit(X, y).transform(X, y)
 
 
-def _array_api_for_tests(array_namespace, device, dtype):
+def _array_api_for_tests(array_namespace, device):
     try:
         if array_namespace == "numpy.array_api":
             # FIXME: once it is not experimental anymore
@@ -1057,4 +1094,4 @@ def _array_api_for_tests(array_namespace, device, dtype):
 
         if cupy.cuda.runtime.getDeviceCount() == 0:
             raise SkipTest("CuPy test requires cuda, which is not available")
-    return xp, device, dtype
+    return xp

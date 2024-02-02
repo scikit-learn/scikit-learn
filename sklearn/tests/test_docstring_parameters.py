@@ -4,6 +4,7 @@
 
 import importlib
 import inspect
+import os
 import warnings
 from inspect import signature
 from pkgutil import walk_packages
@@ -40,7 +41,7 @@ from sklearn.utils.fixes import parse_version, sp_version
 with warnings.catch_warnings():
     warnings.simplefilter("ignore", FutureWarning)
     # mypy error: Module has no attribute "__path__"
-    sklearn_path = sklearn.__path__  # type: ignore  # mypy issue #1422
+    sklearn_path = [os.path.dirname(sklearn.__file__)]
     PUBLIC_MODULES = set(
         [
             pckg[1]
@@ -224,11 +225,7 @@ def test_fit_docstring_attributes(name, Estimator):
         # default raises an error, perplexity must be less than n_samples
         est.set_params(perplexity=2)
 
-    # TODO(1.4): TO BE REMOVED for 1.4 (avoid FutureWarning)
-    if Estimator.__name__ in ("KMeans", "MiniBatchKMeans"):
-        est.set_params(n_init="auto")
-
-    # TODO(1.4): TO BE REMOVED for 1.5 (avoid FutureWarning)
+    # TODO(1.5): TO BE REMOVED for 1.5 (avoid FutureWarning)
     if Estimator.__name__ in ("LinearSVC", "LinearSVR"):
         est.set_params(dual="auto")
 
@@ -239,10 +236,6 @@ def test_fit_docstring_attributes(name, Estimator):
     if Estimator.__name__ == "QuantileRegressor":
         solver = "highs" if sp_version >= parse_version("1.6.0") else "interior-point"
         est.set_params(solver=solver)
-
-    # TODO(1.4): TO BE REMOVED for 1.4 (avoid FutureWarning)
-    if Estimator.__name__ == "MDS":
-        est.set_params(normalized_stress="auto")
 
     # Low max iter to speed up tests: we are only interested in checking the existence
     # of fitted attributes. This should be invariant to whether it has converged or not.

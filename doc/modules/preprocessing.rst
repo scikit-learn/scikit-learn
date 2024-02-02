@@ -1008,9 +1008,9 @@ For each feature, the bin edges are computed during ``fit`` and together with
 the number of bins, they will define the intervals. Therefore, for the current
 example, these intervals are defined as:
 
- - feature 1: :math:`{[-\infty, -1), [-1, 2), [2, \infty)}`
- - feature 2: :math:`{[-\infty, 5), [5, \infty)}`
- - feature 3: :math:`{[-\infty, 14), [14, \infty)}`
+- feature 1: :math:`{[-\infty, -1), [-1, 2), [2, \infty)}`
+- feature 2: :math:`{[-\infty, 5), [5, \infty)}`
+- feature 3: :math:`{[-\infty, 14), [14, \infty)}`
 
 Based on these bin intervals, ``X`` is transformed as follows::
 
@@ -1199,23 +1199,23 @@ below.
 
 Some of the advantages of splines over polynomials are:
 
-    - B-splines are very flexible and robust if you keep a fixed low degree,
-      usually 3, and parsimoniously adapt the number of knots. Polynomials
-      would need a higher degree, which leads to the next point.
-    - B-splines do not have oscillatory behaviour at the boundaries as have
-      polynomials (the higher the degree, the worse). This is known as `Runge's
-      phenomenon <https://en.wikipedia.org/wiki/Runge%27s_phenomenon>`_.
-    - B-splines provide good options for extrapolation beyond the boundaries,
-      i.e. beyond the range of fitted values. Have a look at the option
-      ``extrapolation``.
-    - B-splines generate a feature matrix with a banded structure. For a single
-      feature, every row contains only ``degree + 1`` non-zero elements, which
-      occur consecutively and are even positive. This results in a matrix with
-      good numerical properties, e.g. a low condition number, in sharp contrast
-      to a matrix of polynomials, which goes under the name
-      `Vandermonde matrix <https://en.wikipedia.org/wiki/Vandermonde_matrix>`_.
-      A low condition number is important for stable algorithms of linear
-      models.
+- B-splines are very flexible and robust if you keep a fixed low degree,
+  usually 3, and parsimoniously adapt the number of knots. Polynomials
+  would need a higher degree, which leads to the next point.
+- B-splines do not have oscillatory behaviour at the boundaries as have
+  polynomials (the higher the degree, the worse). This is known as `Runge's
+  phenomenon <https://en.wikipedia.org/wiki/Runge%27s_phenomenon>`_.
+- B-splines provide good options for extrapolation beyond the boundaries,
+  i.e. beyond the range of fitted values. Have a look at the option
+  ``extrapolation``.
+- B-splines generate a feature matrix with a banded structure. For a single
+  feature, every row contains only ``degree + 1`` non-zero elements, which
+  occur consecutively and are even positive. This results in a matrix with
+  good numerical properties, e.g. a low condition number, in sharp contrast
+  to a matrix of polynomials, which goes under the name
+  `Vandermonde matrix <https://en.wikipedia.org/wiki/Vandermonde_matrix>`_.
+  A low condition number is important for stable algorithms of linear
+  models.
 
 The following code snippet shows splines in action::
 

@@ -1,10 +1,17 @@
+import copyreg
+import io
+import pickle
 import re
 import warnings
+from unittest.mock import Mock
 
+import joblib
 import numpy as np
 import pytest
+from joblib.numpy_pickle import NumpyPickler
 from numpy.testing import assert_allclose, assert_array_equal
 
+import sklearn
 from sklearn._loss.loss import (
     AbsoluteError,
     HalfBinomialLoss,
@@ -22,13 +29,15 @@ from sklearn.ensemble import (
 from sklearn.ensemble._hist_gradient_boosting.binning import _BinMapper
 from sklearn.ensemble._hist_gradient_boosting.common import G_H_DTYPE
 from sklearn.ensemble._hist_gradient_boosting.grower import TreeGrower
+from sklearn.ensemble._hist_gradient_boosting.predictor import TreePredictor
 from sklearn.exceptions import NotFittedError
-from sklearn.metrics import mean_gamma_deviance, mean_poisson_deviance
+from sklearn.metrics import get_scorer, mean_gamma_deviance, mean_poisson_deviance
 from sklearn.model_selection import cross_val_score, train_test_split
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import KBinsDiscretizer, MinMaxScaler, OneHotEncoder
-from sklearn.utils import shuffle
+from sklearn.utils import _IS_32BIT, shuffle
 from sklearn.utils._openmp_helpers import _openmp_effective_n_threads
+from sklearn.utils._testing import _convert_container
 
 n_threads = _openmp_effective_n_threads()
 
@@ -494,7 +503,7 @@ def test_small_trainset():
     gb = HistGradientBoostingClassifier()
 
     # Compute the small training set
-    X_small, y_small, _ = gb._get_small_trainset(
+    X_small, y_small, *_ = gb._get_small_trainset(
         X, y, seed=42, sample_weight_train=None
     )
 
@@ -848,6 +857,67 @@ def test_early_stopping_on_test_set_with_warm_start():
     gb.fit(X, y)
 
 
+def test_early_stopping_with_sample_weights(monkeypatch):
+    """Check that sample weights is passed in to the scorer and _raw_predict is not
+    called."""
+
+    mock_scorer = Mock(side_effect=get_scorer("neg_median_absolute_error"))
+
+    def mock_check_scoring(estimator, scoring):
+        assert scoring == "neg_median_absolute_error"
+        return mock_scorer
+
+    monkeypatch.setattr(
+        sklearn.ensemble._hist_gradient_boosting.gradient_boosting,
+        "check_scoring",
+        mock_check_scoring,
+    )
+
+    X, y = make_regression(random_state=0)
+    sample_weight = np.ones_like(y)
+    hist = HistGradientBoostingRegressor(
+        max_iter=2,
+        early_stopping=True,
+        random_state=0,
+        scoring="neg_median_absolute_error",
+    )
+    mock_raw_predict = Mock(side_effect=hist._raw_predict)
+    hist._raw_predict = mock_raw_predict
+    hist.fit(X, y, sample_weight=sample_weight)
+
+    # _raw_predict should never be called with scoring as a string
+    assert mock_raw_predict.call_count == 0
+
+    # For scorer is called twice (train and val) for the baseline score, and twice
+    # per iteration (train and val) after that. So 6 times in total for `max_iter=2`.
+    assert mock_scorer.call_count == 6
+    for arg_list in mock_scorer.call_args_list:
+        assert "sample_weight" in arg_list[1]
+
+
+def test_raw_predict_is_called_with_custom_scorer():
+    """Custom scorer will still call _raw_predict."""
+
+    mock_scorer = Mock(side_effect=get_scorer("neg_median_absolute_error"))
+
+    X, y = make_regression(random_state=0)
+    hist = HistGradientBoostingRegressor(
+        max_iter=2,
+        early_stopping=True,
+        random_state=0,
+        scoring=mock_scorer,
+    )
+    mock_raw_predict = Mock(side_effect=hist._raw_predict)
+    hist._raw_predict = mock_raw_predict
+    hist.fit(X, y)
+
+    # `_raw_predict` and scorer is called twice (train and val) for the baseline score,
+    # and twice per iteration (train and val) after that. So 6 times in total for
+    # `max_iter=2`.
+    assert mock_raw_predict.call_count == 6
+    assert mock_scorer.call_count == 6
+
+
 @pytest.mark.parametrize(
     "Est", (HistGradientBoostingClassifier, HistGradientBoostingRegressor)
 )
@@ -1186,19 +1256,6 @@ def test_categorical_bad_encoding_errors(Est, use_pandas, feature_name):
     with pytest.raises(ValueError, match=msg):
         gb.fit(X, y)
 
-    if use_pandas:
-        X = pd.DataFrame({"f0": [0, 2]})
-    else:
-        X = np.array([[0, 2]]).T
-    y = np.arange(2)
-    msg = (
-        f"Categorical feature {feature_name} is expected to be encoded "
-        "with values < 2 but the largest value for the encoded categories "
-        "is 2."
-    )
-    with pytest.raises(ValueError, match=msg):
-        gb.fit(X, y)
-
     # nans are ignored in the counts
     X = np.array([[0, 1, np.nan]]).T
     y = np.arange(3)
@@ -1390,13 +1447,16 @@ def test_unknown_category_that_are_negative():
     assert_allclose(hist.predict(X_test_neg), hist.predict(X_test_nan))
 
 
+@pytest.mark.parametrize("dataframe_lib", ["pandas", "polars"])
 @pytest.mark.parametrize(
     "HistGradientBoosting",
     [HistGradientBoostingClassifier, HistGradientBoostingRegressor],
 )
-def test_pandas_categorical_results_same_as_ndarray(HistGradientBoosting):
+def test_dataframe_categorical_results_same_as_ndarray(
+    dataframe_lib, HistGradientBoosting
+):
     """Check that pandas categorical give the same results as ndarray."""
-    pd = pytest.importorskip("pandas")
+    pytest.importorskip(dataframe_lib)
 
     rng = np.random.RandomState(42)
     n_samples = 5_000
@@ -1409,9 +1469,12 @@ def test_pandas_categorical_results_same_as_ndarray(HistGradientBoosting):
     y = (f_cat % 3 == 0) & (f_num > 0.2)
 
     X = np.c_[f_num, f_cat]
-    X_df = pd.DataFrame(
-        {"f_num": f_num, "f_cat": pd.Series(f_cat, dtype="category")},
-        columns=["f_num", "f_cat"],
+    f_cat = [f"cat{c:0>3}" for c in f_cat]
+    X_df = _convert_container(
+        np.asarray([f_num, f_cat]).T,
+        dataframe_lib,
+        ["f_num", "f_cat"],
+        categorical_feature_names=["f_cat"],
     )
 
     X_train, X_test, X_train_df, X_test_df, y_train, y_test = train_test_split(
@@ -1426,7 +1489,7 @@ def test_pandas_categorical_results_same_as_ndarray(HistGradientBoosting):
     hist_pd.fit(X_train_df, y_train)
 
     # Check categories are correct and sorted
-    categories = hist_pd._preprocessor.named_transformers_["encoder"].categories[0]
+    categories = hist_pd._preprocessor.named_transformers_["encoder"].categories_[0]
     assert_array_equal(categories, np.unique(f_cat))
 
     assert len(hist_np._predictors) == len(hist_pd._predictors)
@@ -1439,29 +1502,32 @@ def test_pandas_categorical_results_same_as_ndarray(HistGradientBoosting):
     assert_allclose(hist_np.predict(X_test), hist_pd.predict(X_test_df))
 
 
+@pytest.mark.parametrize("dataframe_lib", ["pandas", "polars"])
 @pytest.mark.parametrize(
     "HistGradientBoosting",
     [HistGradientBoostingClassifier, HistGradientBoostingRegressor],
 )
-def test_pandas_categorical_errors(HistGradientBoosting):
+def test_dataframe_categorical_errors(dataframe_lib, HistGradientBoosting):
     """Check error cases for pandas categorical feature."""
-    pd = pytest.importorskip("pandas")
-
+    pytest.importorskip(dataframe_lib)
     msg = "Categorical feature 'f_cat' is expected to have a cardinality <= 16"
     hist = HistGradientBoosting(categorical_features="from_dtype", max_bins=16)
 
     rng = np.random.RandomState(42)
-    f_cat = rng.randint(0, high=100, size=100)
-    X_df = pd.DataFrame({"f_cat": pd.Series(f_cat, dtype="category")})
+    f_cat = rng.randint(0, high=100, size=100).astype(str)
+    X_df = _convert_container(
+        f_cat[:, None], dataframe_lib, ["f_cat"], categorical_feature_names=["f_cat"]
+    )
     y = rng.randint(0, high=2, size=100)
 
     with pytest.raises(ValueError, match=msg):
         hist.fit(X_df, y)
 
 
-def test_categorical_different_order_same_model():
+@pytest.mark.parametrize("dataframe_lib", ["pandas", "polars"])
+def test_categorical_different_order_same_model(dataframe_lib):
     """Check that the order of the categorical gives same model."""
-    pd = pytest.importorskip("pandas")
+    pytest.importorskip(dataframe_lib)
     rng = np.random.RandomState(42)
     n_samples = 1_000
     f_ints = rng.randint(low=0, high=2, size=n_samples)
@@ -1472,12 +1538,20 @@ def test_categorical_different_order_same_model():
     y[flipped] = 1 - y[flipped]
 
     # Construct categorical where 0 -> A and 1 -> B and 1 -> A and 0 -> B
-    f_cat = pd.Categorical(f_ints)
-    f_cat_a_b = f_cat.rename_categories({0: "A", 1: "B"})
-    f_cat_b_a = f_cat.rename_categories({0: "B", 1: "A"})
-
-    df_a_b = pd.DataFrame({"f_cat": f_cat_a_b})
-    df_b_a = pd.DataFrame({"f_cat": f_cat_b_a})
+    f_cat_a_b = np.asarray(["A", "B"])[f_ints]
+    f_cat_b_a = np.asarray(["B", "A"])[f_ints]
+    df_a_b = _convert_container(
+        f_cat_a_b[:, None],
+        dataframe_lib,
+        ["f_cat"],
+        categorical_feature_names=["f_cat"],
+    )
+    df_b_a = _convert_container(
+        f_cat_b_a[:, None],
+        dataframe_lib,
+        ["f_cat"],
+        categorical_feature_names=["f_cat"],
+    )
 
     hist_a_b = HistGradientBoostingClassifier(
         categorical_features="from_dtype", random_state=0
@@ -1496,7 +1570,14 @@ def test_categorical_different_order_same_model():
 
 # TODO(1.6): Remove warning and change default in 1.6
 def test_categorical_features_warn():
-    """Raise warning when there are categorical features in the input DataFrame."""
+    """Raise warning when there are categorical features in the input DataFrame.
+
+    This is not tested for polars because polars categories must always be
+    strings and strings can only be handled as categories. Therefore the
+    situation in which a categorical column is currently being treated as
+    numbers and in the future will be treated as categories cannot occur with
+    polars.
+    """
     pd = pytest.importorskip("pandas")
     X = pd.DataFrame({"a": pd.Series([1, 2, 3], dtype="category"), "b": [4, 5, 6]})
     y = [0, 1, 0]
@@ -1505,3 +1586,86 @@ def test_categorical_features_warn():
     msg = "The categorical_features parameter will change to 'from_dtype' in v1.6"
     with pytest.warns(FutureWarning, match=msg):
         hist.fit(X, y)
+
+
+def get_different_bitness_node_ndarray(node_ndarray):
+    new_dtype_for_indexing_fields = np.int64 if _IS_32BIT else np.int32
+
+    # field names in Node struct with np.intp types (see
+    # sklearn/ensemble/_hist_gradient_boosting/common.pyx)
+    indexing_field_names = ["feature_idx"]
+
+    new_dtype_dict = {
+        name: dtype for name, (dtype, _) in node_ndarray.dtype.fields.items()
+    }
+    for name in indexing_field_names:
+        new_dtype_dict[name] = new_dtype_for_indexing_fields
+
+    new_dtype = np.dtype(
+        {"names": list(new_dtype_dict.keys()), "formats": list(new_dtype_dict.values())}
+    )
+    return node_ndarray.astype(new_dtype, casting="same_kind")
+
+
+def reduce_predictor_with_different_bitness(predictor):
+    cls, args, state = predictor.__reduce__()
+
+    new_state = state.copy()
+    new_state["nodes"] = get_different_bitness_node_ndarray(new_state["nodes"])
+
+    return (cls, args, new_state)
+
+
+def test_different_bitness_pickle():
+    X, y = make_classification(random_state=0)
+
+    clf = HistGradientBoostingClassifier(random_state=0, max_depth=3)
+    clf.fit(X, y)
+    score = clf.score(X, y)
+
+    def pickle_dump_with_different_bitness():
+        f = io.BytesIO()
+        p = pickle.Pickler(f)
+        p.dispatch_table = copyreg.dispatch_table.copy()
+        p.dispatch_table[TreePredictor] = reduce_predictor_with_different_bitness
+
+        p.dump(clf)
+        f.seek(0)
+        return f
+
+    # Simulate loading a pickle of the same model trained on a platform with different
+    # bitness that than the platform it will be used to make predictions on:
+    new_clf = pickle.load(pickle_dump_with_different_bitness())
+    new_score = new_clf.score(X, y)
+    assert score == pytest.approx(new_score)
+
+
+def test_different_bitness_joblib_pickle():
+    # Make sure that a platform specific pickle generated on a 64 bit
+    # platform can be converted at pickle load time into an estimator
+    # with Cython code that works with the host's native integer precision
+    # to index nodes in the tree data structure when the host is a 32 bit
+    # platform (and vice versa).
+    #
+    # This is in particular useful to be able to train a model on a 64 bit Linux
+    # server and deploy the model as part of a (32 bit) WASM in-browser
+    # application using pyodide.
+    X, y = make_classification(random_state=0)
+
+    clf = HistGradientBoostingClassifier(random_state=0, max_depth=3)
+    clf.fit(X, y)
+    score = clf.score(X, y)
+
+    def joblib_dump_with_different_bitness():
+        f = io.BytesIO()
+        p = NumpyPickler(f)
+        p.dispatch_table = copyreg.dispatch_table.copy()
+        p.dispatch_table[TreePredictor] = reduce_predictor_with_different_bitness
+
+        p.dump(clf)
+        f.seek(0)
+        return f
+
+    new_clf = joblib.load(joblib_dump_with_different_bitness())
+    new_score = new_clf.score(X, y)
+    assert score == pytest.approx(new_score)

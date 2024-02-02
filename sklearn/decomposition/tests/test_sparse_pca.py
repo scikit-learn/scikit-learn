@@ -268,7 +268,7 @@ def test_spca_feature_names_out(SPCA):
     assert_array_equal([f"{estimator_name}{i}" for i in range(4)], names)
 
 
-# TODO (1.6): remove in 1.6
+# TODO(1.6): remove in 1.6
 def test_spca_max_iter_None_deprecation():
     """Check that we raise a warning for the deprecation of `max_iter=None`."""
     rng = np.random.RandomState(0)
@@ -278,13 +278,6 @@ def test_spca_max_iter_None_deprecation():
     warn_msg = "`max_iter=None` is deprecated in version 1.4 and will be removed"
     with pytest.warns(FutureWarning, match=warn_msg):
         MiniBatchSparsePCA(max_iter=None).fit(X)
-
-
-def test_pca_n_features_deprecation():
-    X = np.array([[-1, -1], [-2, -1], [-3, -2], [1, 1], [2, 1], [3, 2]])
-    pca = PCA(n_components=2).fit(X)
-    with pytest.warns(FutureWarning, match="`n_features_` was deprecated"):
-        pca.n_features_
 
 
 def test_spca_early_stopping(global_random_seed):
