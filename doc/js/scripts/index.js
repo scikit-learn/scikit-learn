@@ -25,17 +25,17 @@ function alignLandingCards() {
     if (window.innerWidth >= 720) {
       // Get the maximum auto height as the final height to set
       group.forEach(function (item) {
-        item.style.height = "auto";
+        item.style.setProperty("height", "auto");
         maxHeight = Math.max(maxHeight, item.offsetHeight);
       });
       group.forEach(function (item) {
-        item.style.height = maxHeight + "px";
+        item.style.setProperty("height", `${maxHeight}px`);
       });
     } else {
       // We do not need to align the cards if the screen is sufficiently small
       // such that each row contains only one card; set height back to auto
       group.forEach(function (item) {
-        item.style.height = "auto";
+        item.style.setProperty("height", "auto");
       });
     }
   }

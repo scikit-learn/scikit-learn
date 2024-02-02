@@ -749,7 +749,7 @@ def generate_min_dependency_table():
     output.write("\n")
     output = output.getvalue()
 
-    with (Path(".") / "min_dependency_table.rst").open("w") as f:
+    with (Path(".") / "min_dependency_table.rst").open("w", encoding="utf-8") as f:
         f.write(output)
 
 
@@ -766,7 +766,9 @@ def generate_min_dependency_substitutions():
 
     output = output.getvalue()
 
-    with (Path(".") / "min_dependency_substitutions.rst").open("w") as f:
+    with (Path(".") / "min_dependency_substitutions.rst").open(
+        "w", encoding="utf-8"
+    ) as f:
         f.write(output)
 
 
