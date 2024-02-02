@@ -705,7 +705,7 @@ def test_target_encoding_for_linear_regression(smooth, global_random_seed):
 
 def test_pandas_copy_on_write():
     """
-    Test cython code suceeds when y is read-only.
+    Test target-encoder cython code when y is read-only.
 
     The numpy array underlying df["y"] is read-only when copy-on-write is enabled.
     Non-regression test for gh-27879.
