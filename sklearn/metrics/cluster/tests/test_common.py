@@ -164,7 +164,7 @@ def test_permute_labels(metric_name):
 # For all clustering metrics Input parameters can be both
 # in the form of arrays lists, positive, negative or string
 def test_format_invariance(metric_name):
-    y_true = [0, 0, 0, 0, 1, 1, 1, 1]
+    y_true = [0, 0, 0, 0, 1, 1, 2, 2]
     y_pred = [0, 1, 2, 3, 4, 5, 6, 7]
 
     def generate_formats(y):
