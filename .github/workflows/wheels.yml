@@ -136,7 +136,7 @@ jobs:
           curl -L --retry 10 $MINIFORGE_URL -o miniforge.sh
 
           # Check SHA
-          file_hash=$(shasum -a 256 miniforge.sh | awk '{print $1}')
+          file_sha=$(shasum -a 256 miniforge.sh | awk '{print $1}')
           if [ "$EXPECTED_SHA" != "$file_sha" ]; then
               echo "SHA values did not match!"
               exit 1
