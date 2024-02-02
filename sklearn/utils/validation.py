@@ -1087,7 +1087,7 @@ def check_array(
     # With pandas copy-on-write and if copy=True we know we can write to the
     # pandas dataframe or series, see
     # https://pandas.pydata.org/docs/dev/user_guide/copy_on_write.html#read-only-numpy-arrays
-    # for more details about copy-on-write
+    # for more details about pandas copy-on-write
     if _is_pandas_df_or_series(array_orig) and copy:
         array.flags.writeable = True
 
