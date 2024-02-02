@@ -307,12 +307,19 @@ def _get_data_info_by_name(
         )
         res = json_data["data"]["dataset"]
         if len(res) > 1:
-            warn(
+            first_version = version = res[0]["version"]
+            warning_msg = (
                 "Multiple active versions of the dataset matching the name"
-                " {name} exist. Versions may be fundamentally different, "
-                "returning version"
-                " {version}.".format(name=name, version=res[0]["version"])
+                f" {name} exist. Versions may be fundamentally different, "
+                f"returning version {first_version}. "
+                "Available versions:\n"
             )
+            for r in res:
+                warning_msg += f"- version {r['version']}, status: {r['status']}\n"
+                warning_msg += (
+                    f"  url: https://www.openml.org/search?type=data&id={r['did']}\n"
+                )
+            warn(warning_msg)
         return res[0]
 
     # an integer version has been provided
@@ -952,6 +959,34 @@ def fetch_openml(
     returns ordinally encoded data where the categories are provided in the
     attribute `categories` of the `Bunch` instance. Instead, `"pandas"` returns
     a NumPy array were the categories are not encoded.
+
+    Examples
+    --------
+    >>> from sklearn.datasets import fetch_openml
+    >>> adult = fetch_openml("adult", version=2)  # doctest: +SKIP
+    >>> adult.frame.info()  # doctest: +SKIP
+    <class 'pandas.core.frame.DataFrame'>
+    RangeIndex: 48842 entries, 0 to 48841
+    Data columns (total 15 columns):
+     #   Column          Non-Null Count  Dtype
+    ---  ------          --------------  -----
+     0   age             48842 non-null  int64
+     1   workclass       46043 non-null  category
+     2   fnlwgt          48842 non-null  int64
+     3   education       48842 non-null  category
+     4   education-num   48842 non-null  int64
+     5   marital-status  48842 non-null  category
+     6   occupation      46033 non-null  category
+     7   relationship    48842 non-null  category
+     8   race            48842 non-null  category
+     9   sex             48842 non-null  category
+     10  capital-gain    48842 non-null  int64
+     11  capital-loss    48842 non-null  int64
+     12  hours-per-week  48842 non-null  int64
+     13  native-country  47985 non-null  category
+     14  class           48842 non-null  category
+    dtypes: category(9), int64(6)
+    memory usage: 2.7 MB
     """
     if cache is False:
         # no caching will be applied
@@ -1018,7 +1053,7 @@ def fetch_openml(
     else:
         parser_ = parser
 
-    if as_frame or parser_ == "pandas":
+    if parser_ == "pandas":
         try:
             check_pandas_support("`fetch_openml`")
         except ImportError as exc:
@@ -1028,26 +1063,12 @@ def fetch_openml(
                     "Alternatively, explicitly set `as_frame=False` and "
                     "`parser='liac-arff'`."
                 )
-                raise ImportError(err_msg) from exc
             else:
                 err_msg = (
-                    f"Using `parser={parser_!r}` requires pandas to be installed. "
-                    "Alternatively, explicitly set `parser='liac-arff'`."
+                    f"Using `parser={parser!r}` wit dense data requires pandas to be "
+                    "installed. Alternatively, explicitly set `parser='liac-arff'`."
                 )
-                if parser == "auto":
-                    # TODO(1.4): In version 1.4, we will raise an error instead of
-                    # a warning.
-                    warn(
-                        (
-                            "From version 1.4, `parser='auto'` with `as_frame=False` "
-                            "will use pandas. Either install pandas or set explicitly "
-                            "`parser='liac-arff'` to preserve the current behavior."
-                        ),
-                        FutureWarning,
-                    )
-                    parser_ = "liac-arff"
-                else:
-                    raise ImportError(err_msg) from exc
+            raise ImportError(err_msg) from exc
 
     if return_sparse:
         if as_frame:

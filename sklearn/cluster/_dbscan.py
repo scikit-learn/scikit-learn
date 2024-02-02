@@ -156,6 +156,16 @@ def dbscan(
     :doi:`"DBSCAN revisited, revisited: why and how you should (still) use DBSCAN."
     <10.1145/3068335>`
     ACM Transactions on Database Systems (TODS), 42(3), 19.
+
+    Examples
+    --------
+    >>> from sklearn.cluster import dbscan
+    >>> X = [[1, 2], [2, 2], [2, 3], [8, 7], [8, 8], [25, 80]]
+    >>> core_samples, labels = dbscan(X, eps=3, min_samples=2)
+    >>> core_samples
+    array([0, 1, 2, 3, 4])
+    >>> labels
+    array([ 0,  0,  0,  1,  1, -1])
     """
 
     est = DBSCAN(
@@ -391,9 +401,10 @@ class DBSCAN(ClusterMixin, BaseEstimator):
         if self.metric == "precomputed" and sparse.issparse(X):
             # set the diagonal to explicit values, as a point is its own
             # neighbor
+            X = X.copy()  # copy to avoid in-place modification
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore", sparse.SparseEfficiencyWarning)
-                X.setdiag(X.diagonal())  # XXX: modifies X's internals in-place
+                X.setdiag(X.diagonal())
 
         neighbors_model = NearestNeighbors(
             radius=self.eps,

@@ -802,7 +802,7 @@ class PartialDependenceDisplay:
                 f" {type(marginal_dist)}."
             )
 
-        display = PartialDependenceDisplay(
+        display = cls(
             pd_results=pd_results,
             features=features,
             feature_names=feature_names,

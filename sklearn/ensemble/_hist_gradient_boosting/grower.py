@@ -603,6 +603,9 @@ class TreeGrower:
                     smallest_child.allowed_features,
                 )
             )
+            # node.histograms is reused in largest_child.histograms. To break cyclic
+            # memory references and help garbage collection, we set it to None.
+            node.histograms = None
             self.total_compute_hist_time += time() - tic
 
             tic = time()

@@ -97,7 +97,7 @@ def _in_unstable_openblas_configuration():
     if not open_blas_used:
         return False
 
-    # OpenBLAS 0.3.16 fixed unstability for arm64, see:
+    # OpenBLAS 0.3.16 fixed instability for arm64, see:
     # https://github.com/xianyi/OpenBLAS/blob/1b6db3dbba672b4f8af935bd43a1ff6cff4d20b7/Changelog.txt#L56-L58 # noqa
     openblas_arm64_stable_version = parse_version("0.3.16")
     for info in modules_info:
@@ -139,6 +139,18 @@ def safe_mask(X, mask):
     -------
     mask : ndarray
         Array that is safe to use on X.
+
+    Examples
+    --------
+    >>> from sklearn.utils import safe_mask
+    >>> from scipy.sparse import csr_matrix
+    >>> data = csr_matrix([[1], [2], [3], [4], [5]])
+    >>> condition = [False, True, True, False, True]
+    >>> mask = safe_mask(data, condition)
+    >>> data[mask].toarray()
+    array([[2],
+           [3],
+           [5]])
     """
     mask = np.asarray(mask)
     if np.issubdtype(mask.dtype, np.signedinteger):
@@ -345,6 +357,16 @@ def _safe_indexing(X, indices, *, axis=0):
     -----
     CSR, CSC, and LIL sparse matrices are supported. COO sparse matrices are
     not supported.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.utils import _safe_indexing
+    >>> data = np.array([[1, 2], [3, 4], [5, 6]])
+    >>> _safe_indexing(data, 0, axis=0)  # select the first row
+    array([1, 2])
+    >>> _safe_indexing(data, 0, axis=1)  # select the first column
+    array([1, 3, 5])
     """
     if indices is None:
         return X
@@ -359,6 +381,9 @@ def _safe_indexing(X, indices, *, axis=0):
 
     if axis == 0 and indices_dtype == "str":
         raise ValueError("String indexing is not supported with 'axis=0'")
+
+    if axis == 1 and isinstance(X, list):
+        raise ValueError("axis=1 is not supported for lists")
 
     if axis == 1 and hasattr(X, "ndim") and X.ndim != 2:
         raise ValueError(
@@ -769,6 +794,12 @@ def safe_sqr(X, *, copy=True):
     -------
     X ** 2 : element wise square
          Return the element-wise square of the input.
+
+    Examples
+    --------
+    >>> from sklearn.utils import safe_sqr
+    >>> safe_sqr([1, 2, 3])
+    array([1, 4, 9])
     """
     X = check_array(X, accept_sparse=["csr", "csc", "coo"], ensure_2d=False)
     if issparse(X):
