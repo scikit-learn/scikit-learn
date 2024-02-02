@@ -809,7 +809,7 @@ def generate_index_rst():
     Other Versions and Download <https://scikit-learn.org/dev/versions.html>
 """
 
-    with (Path(".") / "index.rst").open("w") as f:
+    with (Path(".") / "index.rst").open("w", encoding="utf-8") as f:
         f.write(output)
 
 
