@@ -131,6 +131,15 @@ Changelog
   and `axis=1`, as documented in the docstring.
   :pr:`28222` by :user:`Guillaume Lemaitre <glemaitre>`.
 
+
+:mod:`sklearn.preprocessing`
+............................
+
+- |Fix| :class:`preprocessing.TargetEncoder` no longer fails when
+  `target_type="continuous"` and the input is read-only. In particular, it now
+  works with pandas copy-on-write mode enabled.
+  :pr:`28233` by :user:`John Hopfensperger <s-banach>`.
+
 .. _changes_1_4:
 
 Version 1.4.0
