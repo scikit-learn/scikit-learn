@@ -2092,10 +2092,14 @@ Here is a small example of usage of this function::
     0.0
 
 
-.. topic:: References:
+|details-start|
+**References**
+|details-split|
 
   * Tsoumakas, G., Katakis, I., & Vlahavas, I. (2010). Mining multi-label data. In
     Data mining and knowledge discovery handbook (pp. 667-685). Springer US.
+
+|details-end|
 
 .. _ndcg:
 
@@ -2141,7 +2145,9 @@ DCG score is
 and the NDCG score is the DCG score divided by the DCG score obtained for
 :math:`y`.
 
-.. topic:: References:
+|details-start|
+**References**
+|details-split|
 
   * `Wikipedia entry for Discounted Cumulative Gain
     <https://en.wikipedia.org/wiki/Discounted_cumulative_gain>`_
@@ -2158,6 +2164,8 @@ and the NDCG score is the DCG score divided by the DCG score obtained for
     performance measures efficiently in the presence of tied scores. In
     European conference on information retrieval (pp. 414-421). Springer,
     Berlin, Heidelberg.
+
+|details-end|
 
 .. _regression_metrics:
 
