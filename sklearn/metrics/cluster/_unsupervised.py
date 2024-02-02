@@ -538,7 +538,9 @@ def dbcv_score(
 
     le = LabelEncoder()
     labels = le.fit_transform(labels)
-    encoding_cluster_indices = [i for i in range(len(le.classes_)) if str(le.classes_[i]) != "-1"]
+    encoding_cluster_indices = [
+        i for i in range(len(le.classes_)) if str(le.classes_[i]) != "-1"
+    ]
     check_number_of_labels(len(encoding_cluster_indices), len(labels))
     n_labels = len(le.classes_)
 
@@ -562,14 +564,16 @@ def dbcv_score(
             **kwd_args,
         )
 
-        mst_nodes[encoding_index], mst_edges[encoding_index] = internal_minimum_spanning_tree(
-            distances_for_mst
-        )
+        mst_nodes[encoding_index], mst_edges[encoding_index] = (
+            internal_minimum_spanning_tree(distances_for_mst)
+         )
         density_sparseness[encoding_index] = mst_edges[encoding_index].T[2].max()
 
     for encoding_index in encoding_cluster_indices:
         internal_nodes_i = mst_nodes[encoding_index]
-        for j in encoding_cluster_indices[encoding_cluster_indices.index(encoding_index) + 1:]:
+        for j in encoding_cluster_indices[
+            encoding_cluster_indices.index(encoding_index) + 1 :
+        ]:
             internal_nodes_j = mst_nodes[j]
             density_sep[encoding_index, j] = density_separation(
                 X,
@@ -591,16 +595,18 @@ def dbcv_score(
 
     for encoding_index in encoding_cluster_indices:
         min_density_sep = density_sep[encoding_index].min()
-        labels_to_scores[le.classes_[encoding_index]] = (min_density_sep - density_sparseness[encoding_index]) / max(
-            min_density_sep, density_sparseness[encoding_index]
-        )
+        labels_to_scores[le.classes_[encoding_index]] = (
+            min_density_sep - density_sparseness[encoding_index]
+        ) / max(min_density_sep, density_sparseness[encoding_index])
 
         if verbose:
             print("Minimum density separation: " + str(min_density_sep))
             print("Density sparseness: " + str(density_sparseness[encoding_index]))
 
         cluster_size = np.sum(labels == encoding_index)
-        result += (cluster_size / n_samples) * labels_to_scores[le.classes_[encoding_index]]
+        result += (cluster_size / n_samples) * labels_to_scores[
+            le.classes_[encoding_index]
+        ]
 
     if per_cluster_scores:
         return result, labels_to_scores
