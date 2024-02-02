@@ -20,6 +20,19 @@ Version 1.4.1
 
 **In Development**
 
+Metadata Routing
+----------------
+
+- |FIX| Fix routing issue with :class:`~compose.ColumnTransformer` when used
+  inside another meta-estimator.
+  :pr:`28188` by `Adrin Jalali`_.
+
+DataFrame Support
+-----------------
+
+- |Enhancement| Pandas and Polars dataframe are validated directly without ducktyping
+  checks. :pr:`28195` by `Thomas Fan`_.
+
 Changes impacting all modules
 -----------------------------
 
@@ -44,6 +57,11 @@ Changes impacting all modules
 
   :pr:`28235` by :user:`Julien Jerphanion <jjerphan>`.
 
+- |Fix| Fixes a bug for all scikit-learn transformers when using `set_output` with
+  `transform` set to `pandas` or `polars`. The bug could lead to wrong naming of the
+  columns of the returned dataframe.
+  :pr:`28262` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 Changelog
 ---------
 
@@ -65,8 +83,46 @@ Changelog
   larger than the number of non-duplicate samples.
   :pr:`28165` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
-- |Enhancement| Pandas and Polars dataframe are validated directly without ducktyping
-  checks. :pr:`28195` by `Thomas Fan`_.
+:mod:`sklearn.compose`
+......................
+
+- |Fix| :class:`compose.ColumnTransformer` now transform into a polars dataframe when
+  `verbose_feature_names_out=True` and the transformers internally used several times
+  the same columns. Previously, it would raise a due to duplicated column names.
+  :pr:`28262` by :user:`Guillaume Lemaitre <glemaitre>`.
+
+:mod:`sklearn.inspection`
+.........................
+
+- |Fix| :func:`inspection.permutation_importance` now handles properly `sample_weight`
+  together with subsampling (i.e. `max_features` < 1.0).
+  :pr:`28184` by :user:`Michael Mayer <mayer79>`.
+
+:mod:`sklearn.preprocessing`
+............................
+
+- |Fix| make :class:`preprocessing.FunctionTransformer` more lenient and overwrite
+  output column names with the `get_feature_names_out` in the following cases:
+
+  - the input and output column names remain the same (happen when using NumPy `ufunc`);
+  - the input column names are numbers;
+  - the output will be set to Pandas or Polars dataframe.
+
+  :pr:`28241` by :user:`Guillaume Lemaitre <glemaitre>`.
+
+- |Fix| :class:`preprocessing.FunctionTransformer` now also warns when `set_output`
+  is called with `transform="polars"` and `func` does not return a Polars dataframe or
+  `feature_names_out` is not specified.
+  :pr:`28263` by :user:`Guillaume Lemaitre <glemaitre>`.
+
+:mod:`sklearn.tree`
+...................
+
+- |Fix| :class:`tree.DecisionTreeClassifier` and
+  :class:`tree.DecisionTreeRegressor` are handling missing values properly. The internal
+  criterion was not initialize when no missing values were present in the data, leading
+  to potentially wrong criterion values.
+  :pr:`28295` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 :mod:`sklearn.utils`
 ....................
