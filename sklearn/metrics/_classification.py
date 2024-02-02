@@ -1328,8 +1328,8 @@ def fbeta_score(
        F_\\beta = \\frac{(1 + \\beta^2) \\text{tp}}
                         {(1 + \\beta^2) \\text{tp} + \\text{fp} + \\beta^2 \\text{fn}}
 
-    Where :math:`\\text{TP}` is the number of true positives, :math:`\\text{FN}` is the
-    number of false negatives, and :math:`\\text{FP}` is the number of false positives.
+    Where :math:`\\text{tp}` is the number of true positives, :math:`\\text{fn}` is the
+    number of false negatives, and :math:`\\text{fp}` is the number of false positives.
 
     Support beyond term:`binary` targets is achieved by treating :term:`multiclass`
     and :term:`multilabel` data as a collection of binary problems, one for each
