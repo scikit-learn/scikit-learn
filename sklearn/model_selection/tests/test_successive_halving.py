@@ -826,13 +826,15 @@ def test_halving_random_search_list_of_dicts():
     cv_results = search.cv_results_
     # Check results structure
     check_cv_results_keys(cv_results, param_keys, score_keys, n_candidates, extra_keys)
-    expected_dtypes = {
-        "param_C": "float64",
-        "param_degree": np.intp,
-        "param_gamma": "float64",
-        "param_kernel": "<U4",
+    expected_cv_results_kinds = {
+        "param_C": "f",
+        "param_degree": "i",
+        "param_gamma": "f",
+        "param_kernel": "U",
     }
-    check_cv_results_array_types(search, param_keys, score_keys, expected_dtypes)
+    check_cv_results_array_types(
+        search, param_keys, score_keys, expected_cv_results_kinds
+    )
 
     assert all(
         (
