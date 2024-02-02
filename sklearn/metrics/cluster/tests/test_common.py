@@ -164,7 +164,7 @@ def test_permute_labels(metric_name):
 # For all clustering metrics Input parameters can be both
 # in the form of arrays lists, positive, negative or string
 def test_format_invariance(metric_name):
-    y_true = [0, 0, 0, 0, 1, 1, 2, 2]
+    y_true = [0, 0, 0, 0, 1, 1, 1, 1]
     y_pred = [0, 1, 2, 3, 4, 5, 6, 7]
 
     def generate_formats(y):
@@ -176,7 +176,7 @@ def test_format_invariance(metric_name):
             np.array([str(x) + "-a" for x in y.tolist()], dtype=object),
             "array of strs",
         )
-        yield y - 1, "including negative ints"
+        yield [x - 2 for x in y if x != 1], "including negative ints"
         yield y + 1, "strictly positive ints"
 
     if metric_name in SUPERVISED_METRICS:
