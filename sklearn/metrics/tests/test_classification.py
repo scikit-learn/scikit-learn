@@ -35,7 +35,7 @@ from sklearn.metrics import (
     recall_score,
     zero_one_loss,
 )
-from sklearn.metrics._classification import _check_targets
+from sklearn.metrics._classification import _check_targets, d2_log_loss_score
 from sklearn.model_selection import cross_val_score
 from sklearn.preprocessing import LabelBinarizer, label_binarize
 from sklearn.tree import DecisionTreeClassifier
@@ -2864,3 +2864,26 @@ def test_classification_metric_division_by_zero_nan_validaton(scoring):
     X, y = datasets.make_classification(random_state=0)
     classifier = DecisionTreeClassifier(max_depth=3, random_state=0).fit(X, y)
     cross_val_score(classifier, X, y, scoring=scoring, n_jobs=2, error_score="raise")
+
+
+def test_d2_log_loss():
+    y_true = [0, 0, 0, 1, 1, 1]
+    y_pred = np.array(
+        [[0.9, 0.1], [0.8, 0.2], [0.9, 0.1], [0.1, 0.9], [0.2, 0.8], [0.1, 0.9]]
+    )
+    d2_score = d2_log_loss_score(y_true, y_pred)
+    assert 0.5 < d2_score < 1.0
+
+    y_true = [0, 0, 0, 1, 1, 1]
+    y_pred = np.array(
+        [[0.5, 0.5], [0.1, 0.9], [0.1, 0.9], [0.9, 0.1], [0.75, 0.25], [0.1, 0.9]]
+    )
+    d2_score = d2_log_loss_score(y_true, y_pred)
+    assert d2_score < 0
+
+    y_true = [0, 0, 0, 1, 1, 1]
+    y_pred = np.array(
+        [[0.5, 0.5], [0.5, 0.5], [0.5, 0.5], [0.5, 0.5], [0.5, 0.5], [0.5, 0.5]]
+    )
+    d2_score = d2_log_loss_score(y_true, y_pred)
+    assert d2_score == 0

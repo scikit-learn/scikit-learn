@@ -3242,3 +3242,50 @@ def brier_score_loss(y_true, y_prob, *, sample_weight=None, pos_label=None):
             raise
     y_true = np.array(y_true == pos_label, int)
     return np.average((y_true - y_prob) ** 2, weights=sample_weight)
+
+
+@validate_params(
+    {
+        "y_true": ["array-like"],
+        "y_pred": ["array-like"],
+        "eps": [StrOptions({"auto"}), Interval(Real, 0, 1, closed="both")],
+        "sample_weight": ["array-like", None],
+        "labels": ["array-like", None],
+    },
+    prefer_skip_nested_validation=True,
+)
+def d2_log_loss_score(y_true, y_pred, *, eps="auto", sample_weight=None, labels=None):
+    y_pred = check_array(
+        y_pred, ensure_2d=False, dtype=[np.float64, np.float32, np.float16]
+    )
+    check_consistent_length(y_pred, y_true, sample_weight)
+    if _num_samples(y_pred) < 2:
+        msg = "D^2 score is not well-defined with less than two samples."
+        warnings.warn(msg, UndefinedMetricWarning)
+        return float("nan")
+
+    # log likelihood of the fitted model
+    numerator = -log_loss(
+        y_true=y_true,
+        y_pred=y_pred,
+        eps=eps,
+        normalize=False,
+        sample_weight=sample_weight,
+        labels=labels,
+    )
+
+    # Proportion of positive class labels in the dataset
+    p_null = np.mean(y_true)
+    y_pred_null = np.full_like(y_pred, p_null)
+
+    # log likelihood of the null model
+    denominator = -log_loss(
+        y_true=y_true,
+        y_pred=y_pred_null,
+        eps=eps,
+        normalize=False,
+        sample_weight=sample_weight,
+        labels=labels,
+    )
+
+    return 1 - (numerator / denominator)
