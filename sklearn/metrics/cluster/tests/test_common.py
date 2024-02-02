@@ -176,7 +176,7 @@ def test_format_invariance(metric_name):
             np.array([str(x) + "-a" for x in y.tolist()], dtype=object),
             "array of strs",
         )
-        yield [x - 2 for x in y if x != 1], "including negative ints"
+        yield [x - 2 if x != 1 else x for x in y], "including negative ints"
         yield y + 1, "strictly positive ints"
 
     if metric_name in SUPERVISED_METRICS:
