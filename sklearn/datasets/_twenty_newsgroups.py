@@ -76,7 +76,7 @@ def _download_20newsgroups(target_dir, cache_path):
     archive_path = _fetch_remote(ARCHIVE, dirname=target_dir)
 
     logger.debug("Decompressing %s", archive_path)
-    tarfile.open(archive_path, "r:gz").extractall(path=target_dir)
+    tarfile.open(archive_path, "r:gz").extractall(path=target_dir, filter="data")
 
     with suppress(FileNotFoundError):
         os.remove(archive_path)
