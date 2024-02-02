@@ -1084,6 +1084,13 @@ def check_array(
                 % (n_features, array.shape, ensure_min_features, context)
             )
 
+    # With pandas copy-on-write and if copy=True we know we can write to the
+    # pandas dataframe or series, see
+    # https://pandas.pydata.org/docs/dev/user_guide/copy_on_write.html#read-only-numpy-arrays
+    # for more details about copy-on-write
+    if _is_pandas_df_or_series(array_orig) and copy:
+        array.flags.writeable = True
+
     return array
 
 
@@ -2138,6 +2145,15 @@ def _check_method_params(X, params, indices=None):
             )
 
     return method_params_validated
+
+
+def _is_pandas_df_or_series(X):
+    """Return True if the X is a pandas dataframe or series."""
+    try:
+        pd = sys.modules["pandas"]
+    except KeyError:
+        return False
+    return isinstance(X, (pd.DataFrame, pd.Series))
 
 
 def _is_pandas_df(X):
