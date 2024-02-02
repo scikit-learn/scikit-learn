@@ -29,7 +29,7 @@ then
 # TODO: remove this branch once new_web_theme is merged into main
 elif [ "$CIRCLE_BRANCH" = "new_web_theme" ]
 then
-    dir=new_web_theme
+    dir=_pst_preview
 else
     # Strip off .X
     dir="${CIRCLE_BRANCH::-2}"
