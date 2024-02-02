@@ -898,11 +898,11 @@ def test_param_sampler():
     assert [x for x in sampler] == [x for x in sampler]
 
 
-def check_cv_results_array_types(search, param_keys, score_keys):
+def check_cv_results_array_types(search, param_keys, score_keys, expected_dtypes):
     # Check if the search `cv_results`'s array are of correct types
     cv_results = search.cv_results_
     assert all(isinstance(cv_results[param], np.ma.MaskedArray) for param in param_keys)
-    assert all(cv_results[key].dtype == object for key in param_keys)
+    assert {key: cv_results[key].dtype for key in param_keys} == expected_dtypes
     assert not any(isinstance(cv_results[key], np.ma.MaskedArray) for key in score_keys)
     assert all(
         cv_results[key].dtype == np.float64
@@ -975,7 +975,13 @@ def test_grid_search_cv_results():
         if "time" not in k and k != "rank_test_score"
     )
     # Check cv_results structure
-    check_cv_results_array_types(search, param_keys, score_keys)
+    expected_dtypes = {
+        "param_C": "int64",
+        "param_degree": "int64",
+        "param_gamma": "float64",
+        "param_kernel": "<U4",
+    }
+    check_cv_results_array_types(search, param_keys, score_keys, expected_dtypes)
     check_cv_results_keys(cv_results, param_keys, score_keys, n_candidates)
     # Check masking
     cv_results = search.cv_results_
@@ -1044,7 +1050,13 @@ def test_random_search_cv_results():
     search.fit(X, y)
     cv_results = search.cv_results_
     # Check results structure
-    check_cv_results_array_types(search, param_keys, score_keys)
+    expected_dtypes = {
+        "param_C": "float64",
+        "param_degree": "int64",
+        "param_gamma": "float64",
+        "param_kernel": "<U4",
+    }
+    check_cv_results_array_types(search, param_keys, score_keys, expected_dtypes)
     check_cv_results_keys(cv_results, param_keys, score_keys, n_candidates)
     assert all(
         (

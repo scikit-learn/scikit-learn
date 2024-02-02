@@ -1073,25 +1073,22 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
 
         _store("fit_time", out["fit_time"])
         _store("score_time", out["score_time"])
-        # Use one MaskedArray and mask all the places where the param is not
-        # applicable for that candidate. Use defaultdict as each candidate may
-        # not contain all the params
-        param_results = defaultdict(
-            partial(
-                MaskedArray,
-                np.empty(
-                    n_candidates,
-                ),
-                mask=True,
-                dtype=object,
-            )
-        )
+        param_results = defaultdict(dict)
         for cand_idx, params in enumerate(candidate_params):
             for name, value in params.items():
-                # An all masked empty array gets created for the key
-                # `"param_%s" % name` at the first occurrence of `name`.
-                # Setting the value at an index also unmasks that index
                 param_results["param_%s" % name][cand_idx] = value
+        for key in param_results:
+            arr = np.array(list(param_results[key].values()))
+            if len(arr) == n_candidates:
+                param_results[key] = MaskedArray(arr, mask=False)
+            else:
+                # Use one MaskedArray and mask all the places where the param is not
+                # applicable for that candidate (which may not contain all the params).
+                ma = MaskedArray(np.empty(n_candidates), mask=True, dtype=arr.dtype)
+                for index, value in param_results[key].items():
+                    # Setting the value at an index unmasks that index
+                    ma[index] = value
+                param_results[key] = ma
 
         results.update(param_results)
         # Store a list of param dicts at the key 'params'

@@ -128,6 +128,9 @@ Changelog
 
 - |Enhancement| :term:`CV splitters <CV splitter>` that ignores the group parameter now
   raises a warning when groups are passed in to :term:`split`. :pr:`28210` by
+- |Fix| the ``cv_results_`` attribute (of :class:`model_selection.GridSearchCV`) now
+  returns masked arrays of the appropriate NumPy dtype, as opposed to always returning
+  dtype ``object``. :pr:`28352` by :user:`Marco Gorelli<MarcoGorelli>`.
 
 .. rubric:: Code and documentation contributors
 
