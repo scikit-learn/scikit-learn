@@ -165,9 +165,9 @@ plt.show()
 # automatically tune the `C` regularization parameter to minimize the negative
 # loglikelihood via inner cross-validation.
 #
-# The negative loglikelihood is a proper scoring rule for probabilistic
-# classification models. It means, that in the limit of infinite training data,
-# it is minimized by a model that predicts the true conditional probabilities
+# The negative log-likelihood is a proper scoring rule for probabilistic
+# classification models. In the limit of infinite training data, the
+# negative log-likelihood is minimized by a model that predicts the true conditional probabilities
 # and would therefore be perfectly calibrated. However, with a finite training
 # set, the calibration can still be suboptimal. Even a large training set,
 # logistic regression models can still be poorly calibrated if they are too
