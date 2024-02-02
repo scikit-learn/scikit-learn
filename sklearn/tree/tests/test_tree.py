@@ -2558,7 +2558,7 @@ def test_missing_values_poisson(Tree):
         # regression case.
         (datasets.make_friedman1, DecisionTreeRegressor, 0.0),
         (datasets.make_classification, DecisionTreeClassifier, 0.03),
-        (datasets.make_regression, ExtraTreeRegressor, 0.26),
+        (datasets.make_friedman1, ExtraTreeRegressor, 0.0),
         (datasets.make_classification, ExtraTreeClassifier, 0.14),
     ],
 )
