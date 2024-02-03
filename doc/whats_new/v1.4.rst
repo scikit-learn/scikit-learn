@@ -27,6 +27,10 @@ Metadata Routing
   inside another meta-estimator.
   :pr:`28188` by `Adrin Jalali`_.
 
+- |Fix| No error is raised when no metadata is passed to a metaestimator that
+  includes a sub-estimator which doesn't support metadata routing.
+  :pr:`28256` by `Adrin Jalali`_.
+
 DataFrame Support
 -----------------
 
