@@ -1448,13 +1448,12 @@ def _fetch_remote(remote, dirname=None, n_retries=3, delay=1):
             urlretrieve(remote.url, file_path)
             break
         except (URLError, TimeoutError):
-            if n_retries > 0:
-                warnings.warn(f"Retry downloading from url: {remote.url}")
-                time.sleep(delay)
-                n_retries -= 1
-            else:
+            if n_retries == 0:
                 # If no more retries are left, re-raise the caught exception.
                 raise
+            warnings.warn(f"Retry downloading from url: {remote.url}")
+            n_retries -= 1
+            time.sleep(delay)      
 
     checksum = _sha256(file_path)
     if remote.checksum != checksum:
