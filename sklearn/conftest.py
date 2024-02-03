@@ -1,6 +1,7 @@
 import builtins
 import platform
 import sys
+import warnings
 from contextlib import suppress
 from functools import wraps
 from os import environ
@@ -12,7 +13,7 @@ import pytest
 from _pytest.doctest import DoctestItem
 from threadpoolctl import threadpool_limits
 
-from sklearn import config_context
+from sklearn import config_context, set_config
 from sklearn._min_dependencies import PYTEST_MIN_VERSION
 from sklearn.datasets import (
     fetch_20newsgroups,
@@ -22,6 +23,7 @@ from sklearn.datasets import (
     fetch_kddcup99,
     fetch_olivetti_faces,
     fetch_rcv1,
+    fetch_species_distributions,
 )
 from sklearn.tests import random_seed
 from sklearn.utils import _IS_32BIT
@@ -70,6 +72,7 @@ dataset_fetchers = {
     "fetch_kddcup99_fxt": fetch_kddcup99,
     "fetch_olivetti_faces_fxt": fetch_olivetti_faces,
     "fetch_rcv1_fxt": fetch_rcv1,
+    "fetch_species_distributions_fxt": fetch_species_distributions,
 }
 
 if scipy_datasets_require_network:
@@ -112,6 +115,7 @@ fetch_covtype_fxt = _fetch_fixture(fetch_covtype)
 fetch_kddcup99_fxt = _fetch_fixture(fetch_kddcup99)
 fetch_olivetti_faces_fxt = _fetch_fixture(fetch_olivetti_faces)
 fetch_rcv1_fxt = _fetch_fixture(fetch_rcv1)
+fetch_species_distributions_fxt = _fetch_fixture(fetch_species_distributions)
 raccoon_face_fxt = pytest.fixture(raccoon_face_or_skip)
 
 
@@ -134,10 +138,16 @@ def pytest_collection_modifyitems(config, items):
     datasets_to_download = set()
 
     for item in items:
-        if not hasattr(item, "fixturenames"):
+        if isinstance(item, DoctestItem) and "fetch_" in item.name:
+            fetcher_function_name = item.name.split(".")[-1]
+            dataset_fetchers_key = f"{fetcher_function_name}_fxt"
+            dataset_to_fetch = set([dataset_fetchers_key]) & dataset_features_set
+        elif not hasattr(item, "fixturenames"):
             continue
-        item_fixtures = set(item.fixturenames)
-        dataset_to_fetch = item_fixtures & dataset_features_set
+        else:
+            item_fixtures = set(item.fixturenames)
+            dataset_to_fetch = item_fixtures & dataset_features_set
+
         if not dataset_to_fetch:
             continue
 
@@ -267,6 +277,15 @@ def pytest_configure(config):
         config.pluginmanager.register(random_seed)
 
 
+def pytest_collectstart(collector):
+    # XXX: Easiest way to ignore pandas Pyarrow DeprecationWarning in the
+    # short-term. See https://github.com/pandas-dev/pandas/issues/54466 for
+    # more details.
+    warnings.filterwarnings(
+        "ignore", message=r"\s*Pyarrow", category=DeprecationWarning
+    )
+
+
 @pytest.fixture
 def hide_available_pandas(monkeypatch):
     """Pretend pandas was not installed."""
@@ -278,3 +297,11 @@ def hide_available_pandas(monkeypatch):
         return import_orig(name, *args, **kwargs)
 
     monkeypatch.setattr(builtins, "__import__", mocked_import)
+
+
+@pytest.fixture
+def print_changed_only_false():
+    """Set `print_changed_only` to False for the duration of the test."""
+    set_config(print_changed_only=False)
+    yield
+    set_config(print_changed_only=True)  # reset to default

@@ -271,7 +271,7 @@ cdef inline void sum_exp_minus_max(
     const floating_in[:, :] raw_prediction,  # IN
     floating_in *p                           # OUT
 ) noexcept nogil:
-    # Thread local buffers are used to stores results of this function via p.
+    # Thread local buffers are used to store results of this function via p.
     # The results are stored as follows:
     #     p[k] = exp(raw_prediction_i_k - max_value) for k = 0 to n_classes-1
     #     p[-2] = max(raw_prediction_i_k, k = 0 to n_classes-1)
@@ -695,9 +695,8 @@ cdef inline double cgradient_half_binomial(
     double y_true,
     double raw_prediction
 ) noexcept nogil:
-    # y_pred - y_true = expit(raw_prediction) - y_true
-    # Numerically more stable, see
-    # http://fa.bianp.net/blog/2019/evaluate_logistic/
+    # gradient = y_pred - y_true = expit(raw_prediction) - y_true
+    # Numerically more stable, see http://fa.bianp.net/blog/2019/evaluate_logistic/
     #     if raw_prediction < 0:
     #         exp_tmp = exp(raw_prediction)
     #         return ((1 - y_true) * exp_tmp - y_true) / (1 + exp_tmp)
@@ -708,12 +707,22 @@ cdef inline double cgradient_half_binomial(
     #     return expit(raw_prediction) - y_true
     # i.e. no "if else" and an own inline implementation of expit instead of
     #     from scipy.special.cython_special cimport expit
-    # The case distinction raw_prediction < 0 in the stable implementation
-    # does not provide significant better precision. Therefore we go without
-    # it.
+    # The case distinction raw_prediction < 0 in the stable implementation does not
+    # provide significant better precision apart from protecting overflow of exp(..).
+    # The branch (if else), however, can incur runtime costs of up to 30%.
+    # Instead, we help branch prediction by almost always ending in the first if clause
+    # and making the second branch (else) a bit simpler. This has the exact same
+    # precision but is faster than the stable implementation.
+    # As branching criteria, we use the same cutoff as in log1pexp. Note that the
+    # maximal value to get gradient = -1 with y_true = 1 is -37.439198610162731
+    # (based on mpmath), and scipy.special.logit(np.finfo(float).eps) ~ -36.04365.
     cdef double exp_tmp
-    exp_tmp = exp(-raw_prediction)
-    return ((1 - y_true) - y_true * exp_tmp) / (1 + exp_tmp)
+    if raw_prediction > -37:
+        exp_tmp = exp(-raw_prediction)
+        return ((1 - y_true) - y_true * exp_tmp) / (1 + exp_tmp)
+    else:
+        # expit(raw_prediction) = exp(raw_prediction) for raw_prediction <= -37
+        return exp(raw_prediction) - y_true
 
 
 cdef inline double_pair closs_grad_half_binomial(
@@ -721,21 +730,24 @@ cdef inline double_pair closs_grad_half_binomial(
     double raw_prediction
 ) noexcept nogil:
     cdef double_pair lg
-    if raw_prediction <= 0:
+    # Same if else conditions as in log1pexp.
+    if raw_prediction <= -37:
         lg.val2 = exp(raw_prediction)  # used as temporary
-        if raw_prediction <= -37:
-            lg.val1 = lg.val2 - y_true * raw_prediction              # loss
-        else:
-            lg.val1 = log1p(lg.val2) - y_true * raw_prediction       # loss
+        lg.val1 = lg.val2 - y_true * raw_prediction                  # loss
+        lg.val2 -= y_true                                            # gradient
+    elif raw_prediction <= -2:
+        lg.val2 = exp(raw_prediction)  # used as temporary
+        lg.val1 = log1p(lg.val2) - y_true * raw_prediction           # loss
         lg.val2 = ((1 - y_true) * lg.val2 - y_true) / (1 + lg.val2)  # gradient
+    elif raw_prediction <= 18:
+        lg.val2 = exp(-raw_prediction)  # used as temporary
+        # log1p(exp(x)) = log(1 + exp(x)) = x + log1p(exp(-x))
+        lg.val1 = log1p(lg.val2) + (1 - y_true) * raw_prediction     # loss
+        lg.val2 = ((1 - y_true) - y_true * lg.val2) / (1 + lg.val2)  # gradient
     else:
         lg.val2 = exp(-raw_prediction)  # used as temporary
-        if raw_prediction <= 18:
-            # log1p(exp(x)) = log(1 + exp(x)) = x + log1p(exp(-x))
-            lg.val1 = log1p(lg.val2) + (1 - y_true) * raw_prediction  # loss
-        else:
-            lg.val1 = lg.val2 + (1 - y_true) * raw_prediction         # loss
-        lg.val2 = ((1 - y_true) - y_true * lg.val2) / (1 + lg.val2)   # gradient
+        lg.val1 = lg.val2 + (1 - y_true) * raw_prediction            # loss
+        lg.val2 = ((1 - y_true) - y_true * lg.val2) / (1 + lg.val2)  # gradient
     return lg
 
 
@@ -747,9 +759,15 @@ cdef inline double_pair cgrad_hess_half_binomial(
     # hessian = y_pred * (1 - y_pred) = exp( raw) / (1 + exp( raw))**2
     #                                 = exp(-raw) / (1 + exp(-raw))**2
     cdef double_pair gh
-    gh.val2 = exp(-raw_prediction)  # used as temporary
-    gh.val1 = ((1 - y_true) - y_true * gh.val2) / (1 + gh.val2)  # gradient
-    gh.val2 = gh.val2 / (1 + gh.val2)**2                         # hessian
+    # See comment in cgradient_half_binomial.
+    if raw_prediction > -37:
+        gh.val2 = exp(-raw_prediction)  # used as temporary
+        gh.val1 = ((1 - y_true) - y_true * gh.val2) / (1 + gh.val2)  # gradient
+        gh.val2 = gh.val2 / (1 + gh.val2)**2                         # hessian
+    else:
+        gh.val2 = exp(raw_prediction)
+        gh.val1 = gh.val2 - y_true
+        gh.val2 *= (1 - gh.val2)
     return gh
 
 
@@ -1167,10 +1185,9 @@ cdef class CyHalfMultinomialLoss(CyLossFunction):
                     sum_exps = p[n_classes + 1]  # p[-1]
                     loss_out[i] = log(sum_exps) + max_value
 
-                    for k in range(n_classes):
-                        # label decode y_true
-                        if y_true[i] == k:
-                            loss_out[i] -= raw_prediction[i, k]
+                    # label encoded y_true
+                    k = int(y_true[i])
+                    loss_out[i] -= raw_prediction[i, k]
 
                 free(p)
         else:
@@ -1183,10 +1200,9 @@ cdef class CyHalfMultinomialLoss(CyLossFunction):
                     sum_exps = p[n_classes + 1]  # p[-1]
                     loss_out[i] = log(sum_exps) + max_value
 
-                    for k in range(n_classes):
-                        # label decode y_true
-                        if y_true[i] == k:
-                            loss_out[i] -= raw_prediction[i, k]
+                    # label encoded y_true
+                    k = int(y_true[i])
+                    loss_out[i] -= raw_prediction[i, k]
 
                     loss_out[i] *= sample_weight[i]
 
@@ -1223,7 +1239,7 @@ cdef class CyHalfMultinomialLoss(CyLossFunction):
 
                     for k in range(n_classes):
                         # label decode y_true
-                        if y_true [i] == k:
+                        if y_true[i] == k:
                             loss_out[i] -= raw_prediction[i, k]
                         p[k] /= sum_exps  # p_k = y_pred_k = prob of class k
                         # gradient_k = p_k - (y_true == k)
@@ -1242,7 +1258,7 @@ cdef class CyHalfMultinomialLoss(CyLossFunction):
 
                     for k in range(n_classes):
                         # label decode y_true
-                        if y_true [i] == k:
+                        if y_true[i] == k:
                             loss_out[i] -= raw_prediction[i, k]
                         p[k] /= sum_exps  # p_k = y_pred_k = prob of class k
                         # gradient_k = (p_k - (y_true == k)) * sw

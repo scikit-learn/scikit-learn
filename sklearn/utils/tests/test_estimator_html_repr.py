@@ -1,4 +1,5 @@
 import html
+import locale
 import re
 from contextlib import closing
 from io import StringIO
@@ -26,6 +27,7 @@ from sklearn.preprocessing import OneHotEncoder, StandardScaler
 from sklearn.svm import LinearSVC, LinearSVR
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.utils._estimator_html_repr import (
+    _get_css_style,
     _get_visual_block,
     _HTMLDocumentationLinkMixin,
     _write_label_html,
@@ -431,7 +433,33 @@ def test_html_documentation_link_mixin_sklearn(mock_version):
         )
 
 
-def test_html_documentation_link_mixin_get_doc_link():
+@pytest.mark.parametrize(
+    "module_path,expected_module",
+    [
+        ("prefix.mymodule", "prefix.mymodule"),
+        ("prefix._mymodule", "prefix"),
+        ("prefix.mypackage._mymodule", "prefix.mypackage"),
+        ("prefix.mypackage._mymodule.submodule", "prefix.mypackage"),
+        ("prefix.mypackage.mymodule.submodule", "prefix.mypackage.mymodule.submodule"),
+    ],
+)
+def test_html_documentation_link_mixin_get_doc_link(module_path, expected_module):
+    """Check the behaviour of the `_get_doc_link` with various parameter."""
+
+    class FooBar(_HTMLDocumentationLinkMixin):
+        pass
+
+    FooBar.__module__ = module_path
+    est = FooBar()
+    # if we set `_doc_link`, then we expect to infer a module and name for the estimator
+    est._doc_link_module = "prefix"
+    est._doc_link_template = (
+        "https://website.com/{estimator_module}.{estimator_name}.html"
+    )
+    assert est._get_doc_link() == f"https://website.com/{expected_module}.FooBar.html"
+
+
+def test_html_documentation_link_mixin_get_doc_link_out_of_library():
     """Check the behaviour of the `_get_doc_link` with various parameter."""
     mixin = _HTMLDocumentationLinkMixin()
 
@@ -440,16 +468,9 @@ def test_html_documentation_link_mixin_get_doc_link():
     mixin._doc_link_module = "xxx"
     assert mixin._get_doc_link() == ""
 
-    # if we set `_doc_link`, then we expect to infer a module and name for the estimator
-    mixin._doc_link_module = "sklearn"
-    mixin._doc_link_template = (
-        "https://website.com/{estimator_module}.{estimator_name}.html"
-    )
-    assert (
-        mixin._get_doc_link()
-        == "https://website.com/sklearn.utils._HTMLDocumentationLinkMixin.html"
-    )
 
+def test_html_documentation_link_mixin_doc_link_url_param_generator():
+    mixin = _HTMLDocumentationLinkMixin()
     # we can bypass the generation by providing our own callable
     mixin._doc_link_template = (
         "https://website.com/{my_own_variable}.{another_variable}.html"
@@ -464,3 +485,34 @@ def test_html_documentation_link_mixin_get_doc_link():
     mixin._doc_link_url_param_generator = url_param_generator
 
     assert mixin._get_doc_link() == "https://website.com/value_1.value_2.html"
+
+
+@pytest.fixture
+def set_non_utf8_locale():
+    """Pytest fixture to set non utf-8 locale during the test.
+
+    The locale is set to the original one after the test has run.
+    """
+    try:
+        locale.setlocale(locale.LC_CTYPE, "C")
+    except locale.Error:
+        pytest.skip("'C' locale is not available on this OS")
+
+    yield
+
+    # Resets the locale to the original one. Python calls setlocale(LC_TYPE, "")
+    # at startup according to
+    # https://docs.python.org/3/library/locale.html#background-details-hints-tips-and-caveats.
+    # This assumes that no other locale changes have been made. For some reason,
+    # on some platforms, trying to restore locale with something like
+    # locale.setlocale(locale.LC_CTYPE, locale.getlocale()) raises a
+    # locale.Error: unsupported locale setting
+    locale.setlocale(locale.LC_CTYPE, "")
+
+
+def test_non_utf8_locale(set_non_utf8_locale):
+    """Checks that utf8 encoding is used when reading the CSS file.
+
+    Non-regression test for https://github.com/scikit-learn/scikit-learn/issues/27725
+    """
+    _get_css_style()

@@ -1,4 +1,5 @@
 import html
+import itertools
 from contextlib import closing
 from inspect import isclass
 from io import StringIO
@@ -21,8 +22,13 @@ class _IDCounter:
         return f"{self.prefix}-{self.count}"
 
 
+def _get_css_style():
+    return Path(__file__).with_suffix(".css").read_text(encoding="utf-8")
+
+
 _CONTAINER_ID_COUNTER = _IDCounter("sk-container-id")
 _ESTIMATOR_ID_COUNTER = _IDCounter("sk-estimator-id")
+_CSS_STYLE = _get_css_style()
 
 
 class _VisualBlock:
@@ -309,11 +315,6 @@ def _write_estimator_html(
         )
 
 
-with open(Path(__file__).with_suffix(".css"), "r") as style_file:
-    # use the style defined in the css file
-    _STYLE = style_file.read()
-
-
 def estimator_html_repr(estimator):
     """Build a HTML representation of an estimator.
 
@@ -328,6 +329,13 @@ def estimator_html_repr(estimator):
     -------
     html: str
         HTML representation of estimator.
+
+    Examples
+    --------
+    >>> from sklearn.utils._estimator_html_repr import estimator_html_repr
+    >>> from sklearn.linear_model import LogisticRegression
+    >>> estimator_html_repr(LogisticRegression())
+    '<style>...</div>'
     """
     from sklearn.exceptions import NotFittedError
     from sklearn.utils.validation import check_is_fitted
@@ -350,7 +358,7 @@ def estimator_html_repr(estimator):
     )
     with closing(StringIO()) as out:
         container_id = _CONTAINER_ID_COUNTER.get_id()
-        style_template = Template(_STYLE)
+        style_template = Template(_CSS_STYLE)
         style_with_id = style_template.substitute(id=container_id)
         estimator_str = str(estimator)
 
@@ -471,12 +479,14 @@ class _HTMLDocumentationLinkMixin:
 
         if self._doc_link_url_param_generator is None:
             estimator_name = self.__class__.__name__
+            # Construct the estimator's module name, up to the first private submodule.
+            # This works because in scikit-learn all public estimators are exposed at
+            # that level, even if they actually live in a private sub-module.
             estimator_module = ".".join(
-                [
-                    _
-                    for _ in self.__class__.__module__.split(".")
-                    if not _.startswith("_")
-                ]
+                itertools.takewhile(
+                    lambda part: not part.startswith("_"),
+                    self.__class__.__module__.split("."),
+                )
             )
             return self._doc_link_template.format(
                 estimator_module=estimator_module, estimator_name=estimator_name
