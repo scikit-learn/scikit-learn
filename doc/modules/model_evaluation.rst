@@ -1470,7 +1470,11 @@ correspond to the probability estimates that a sample belongs to a particular
 class. The OvO and OvR algorithms support weighting uniformly
 (``average='macro'``) and by prevalence (``average='weighted'``).
 
-**One-vs-one Algorithm**: Computes the average AUC of all possible pairwise
+|details-start|
+**One-vs-one Algorithm**
+|details-split|
+
+Computes the average AUC of all possible pairwise
 combinations of classes. [HT2001]_ defines a multiclass AUC metric weighted
 uniformly:
 
@@ -1499,7 +1503,13 @@ the keyword argument ``multiclass`` to ``'ovo'`` and ``average`` to
 ``'weighted'``. The ``'weighted'`` option returns a prevalence-weighted average
 as described in [FC2009]_.
 
-**One-vs-rest Algorithm**: Computes the AUC of each class against the rest
+|details-end|
+
+|details-start|
+**One-vs-rest Algorithm**
+|details-split|
+
+Computes the AUC of each class against the rest
 [PD2000]_. The algorithm is functionally the same as the multilabel case. To
 enable this algorithm set the keyword argument ``multiclass`` to ``'ovr'``.
 Additionally to ``'macro'`` [F2006]_ and ``'weighted'`` [F2001]_ averaging, OvR
@@ -1517,6 +1527,8 @@ the :ref:`iris_dataset`:
    :target: ../auto_examples/model_selection/plot_roc.html
    :scale: 75
    :align: center
+
+|details-end|
 
 .. _roc_auc_multilabel:
 
