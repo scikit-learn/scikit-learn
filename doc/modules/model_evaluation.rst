@@ -2748,8 +2748,9 @@ model can be arbitrarily worse). A constant model that always predicts
 :math:`y_{\text{null}}`, disregarding the input features, would get a D² score
 of 0.0.
 
-D² Tweedie score
-^^^^^^^^^^^^^^^^
+|details-start|
+**D² Tweedie score**
+|details-split|
 
 The :func:`d2_tweedie_score` function implements the special case of D²
 where :math:`\text{dev}(y, \hat{y})` is the Tweedie deviance, see :ref:`mean_tweedie_deviance`.
@@ -2764,8 +2765,11 @@ A scorer object with a specific choice of ``power`` can be built by::
   >>> from sklearn.metrics import d2_tweedie_score, make_scorer
   >>> d2_tweedie_score_15 = make_scorer(d2_tweedie_score, power=1.5)
 
-D² pinball score
-^^^^^^^^^^^^^^^^^^^^^
+|details-end|
+
+|details-start|
+**D² pinball score**
+|details-split|
 
 The :func:`d2_pinball_score` function implements the special case
 of D² with the pinball loss, see :ref:`pinball_loss`, i.e.:
@@ -2785,8 +2789,11 @@ A scorer object with a specific choice of ``alpha`` can be built by::
   >>> from sklearn.metrics import d2_pinball_score, make_scorer
   >>> d2_pinball_score_08 = make_scorer(d2_pinball_score, alpha=0.8)
 
-D² absolute error score
-^^^^^^^^^^^^^^^^^^^^^^^
+|details-end|
+
+|details-start|
+**D² absolute error score**
+|details-split|
 
 The :func:`d2_absolute_error_score` function implements the special case of
 the :ref:`mean_absolute_error`:
@@ -2810,6 +2817,8 @@ Here are some usage examples of the :func:`d2_absolute_error_score` function::
   >>> y_pred = [2, 2, 2]
   >>> d2_absolute_error_score(y_true, y_pred)
   0.0
+
+|details-end|
 
 .. _visualization_regression_evaluation:
 
