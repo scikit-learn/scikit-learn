@@ -1084,11 +1084,16 @@ def check_array(
                 % (n_features, array.shape, ensure_min_features, context)
             )
 
-    # With pandas copy-on-write and if copy=True we know we can write to the
-    # pandas dataframe or series, see
-    # https://pandas.pydata.org/docs/dev/user_guide/copy_on_write.html#read-only-numpy-arrays
-    # for more details about pandas copy-on-write
-    if _is_pandas_df_or_series(array_orig) and copy:
+    # Wit an input pandas dataframe or series, we know we can always make the
+    # resulting array writeable:
+    # - if copy=True, we have already made a copy so it is fine to make the
+    #   array writeable
+    # - if copy=False, the caller is telling us explicitly that we can do
+    #   in-place modifications
+    # See https://pandas.pydata.org/docs/dev/user_guide/copy_on_write.html#read-only-numpy-arrays
+    # for more details about pandas copy-on-write mechanism, that is enabled by
+    # default in pandas 3.0.0.dev.
+    if _is_pandas_df_or_series(array_orig):
         array.flags.writeable = True
 
     return array
