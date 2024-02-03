@@ -1887,7 +1887,9 @@ counts ``tp`` (see `the wikipedia page
 <https://en.wikipedia.org/wiki/Likelihood_ratios_in_diagnostic_testing>`_ for
 the actual formulas).
 
-**Interpretation across varying prevalence:**
+|details-start|
+**Interpretation across varying prevalence**
+|details-split|
 
 Both class likelihood ratios are interpretable in terms of an odds ratio
 (pre-test and post-tests):
@@ -1922,7 +1924,11 @@ prediction:
 
    \text{post-test probability} = \frac{\text{post-test odds}}{1 + \text{post-test odds}}.
 
-**Mathematical divergences:**
+|details-end|
+
+|details-start|
+**Mathematical divergences**
+|details-split|
 
 The positive likelihood ratio is undefined when :math:`fp = 0`, which can be
 interpreted as the classifier perfectly identifying positive cases. If :math:`fp
@@ -1947,6 +1953,8 @@ averaging over cross-validation folds.
 
 For a worked-out demonstration of the :func:`class_likelihood_ratios` function,
 see the example below.
+
+|details-end|
 
 .. topic:: Examples:
 
