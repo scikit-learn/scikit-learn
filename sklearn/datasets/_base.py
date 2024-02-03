@@ -1453,7 +1453,7 @@ def _fetch_remote(remote, dirname=None, n_retries=3, delay=1):
                 raise
             warnings.warn(f"Retry downloading from url: {remote.url}")
             n_retries -= 1
-            time.sleep(delay)      
+            time.sleep(delay)
 
     checksum = _sha256(file_path)
     if remote.checksum != checksum:
