@@ -2375,15 +2375,9 @@ function::
     for an example of mean squared error usage to
     evaluate gradient boosting regression.
 
-|details-start|
-**Square root of the MSE**
-|details-split|
-
 Taking the square root of the MSE, called the root mean squared error (RMSE), is another
 common metric that provides a measure in the same units as the target variable. RSME is
 available through the :func:`root_mean_squared_error` function.
-
-|details-end|
 
 .. _mean_squared_log_error:
 
