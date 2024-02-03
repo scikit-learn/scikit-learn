@@ -7,6 +7,7 @@ from importlib import resources
 from pathlib import Path
 from pickle import dumps, loads
 from unittest.mock import Mock
+from urllib.error import HTTPError
 
 import numpy as np
 import pytest
@@ -370,7 +371,6 @@ def test_load_boston_error():
 
 def test_fetch_remote_raise_warnings_with_invalid_url(monkeypatch):
     """Check retry mechanism in _fetch_remote."""
-    from urllib.error import HTTPError
 
     url = "https://scikit-learn.org/this_file_does_not_exist.tar.gz"
     invalid_remote_file = RemoteFileMetadata("invalid_file", url, None)
