@@ -363,10 +363,6 @@ def cross_validate(
         )
 
     if _routing_enabled():
-        # `cross_validate` will create a `_MultiMetricScorer` if `scoring` is a
-        # dict at a later stage. We need the same object for the purpose of
-        # routing. However, creating it here and passing it around would create
-        # a much larger diff since the dict is used in many places.
         # For estimators, a MetadataRouter is created in get_metadata_routing
         # methods. For these router methods, we create the router to use
         # `process_routing` on it.
