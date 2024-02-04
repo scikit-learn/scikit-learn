@@ -116,7 +116,7 @@ Changelog
 ......................
 
 - |Feature| :func:`sklearn.metrics.check_scoring` now returns a multi-metric scorer
-  when `scoring` as a `dict`, `set`, `tuple`, or `list`. :pr:`xxxxx` by `Thomas Fan`_.
+  when `scoring` as a `dict`, `set`, `tuple`, or `list`. :pr:`28360` by `Thomas Fan`_.
 
 :mod:`sklearn.model_selection`
 ..............................
