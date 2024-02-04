@@ -1523,12 +1523,23 @@ def test_get_scorer_multimetric(pass_estimator):
         for name in result:
             assert result[name] == pytest.approx(expected_results[name])
 
+    def double_accuracy(y_true, y_pred):
+        return 2 * accuracy_score(y_true, y_pred)
+
+    custom_scorer = make_scorer(double_accuracy, response_method="predict")
+
     # dict with different names
     dict_scoring = check_scoring_(
-        scoring={"my_r2": "r2", "my_roc_auc": "roc_auc", "accuracy": "accuracy"}
+        scoring={
+            "my_r2": "r2",
+            "my_roc_auc": "roc_auc",
+            "double_accuracy": custom_scorer,
+        }
     )
     dict_result = dict_scoring(clf, X_test, y_test)
     assert len(dict_result) == 3
     assert dict_result["my_r2"] == pytest.approx(expected_results["r2"])
     assert dict_result["my_roc_auc"] == pytest.approx(expected_results["roc_auc"])
-    assert dict_result["accuracy"] == pytest.approx(expected_results["accuracy"])
+    assert dict_result["double_accuracy"] == pytest.approx(
+        2 * expected_results["accuracy"]
+    )
