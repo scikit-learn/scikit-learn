@@ -1490,3 +1490,45 @@ def test_make_scorer_deprecation(deprecated_params, new_params, warn_msg):
     assert deprecated_roc_auc_scorer(classifier, X, y) == pytest.approx(
         roc_auc_scorer(classifier, X, y)
     )
+
+
+@pytest.mark.parametrize("pass_estimator", [True, False])
+def test_get_scorer_multimetric(pass_estimator):
+    """Check that check_scoring is compatible with multi-metric configurations."""
+    X, y = make_classification(n_samples=150, n_features=10, random_state=0)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
+    clf = LogisticRegression(random_state=0)
+
+    if pass_estimator:
+        check_scoring_ = check_scoring
+    else:
+        check_scoring_ = partial(check_scoring, clf)
+
+    clf.fit(X_train, y_train)
+
+    y_pred = clf.predict(X_test)
+    y_proba = clf.predict_proba(X_test)
+
+    expected_results = {
+        "r2": r2_score(y_test, y_pred),
+        "roc_auc": roc_auc_score(y_test, y_proba[:, 1]),
+        "accuracy": accuracy_score(y_test, y_pred),
+    }
+
+    for container in [set, list, tuple]:
+        scoring = check_scoring_(scoring=container(["r2", "roc_auc", "accuracy"]))
+        result = scoring(clf, X_test, y_test)
+
+        assert result.keys() == expected_results.keys()
+        for name in result:
+            assert result[name] == pytest.approx(expected_results[name])
+
+    # dict with different names
+    dict_scoring = check_scoring_(
+        scoring={"my_r2": "r2", "my_roc_auc": "roc_auc", "accuracy": "accuracy"}
+    )
+    dict_result = dict_scoring(clf, X_test, y_test)
+    assert len(dict_result) == 3
+    assert dict_result["my_r2"] == pytest.approx(expected_results["r2"])
+    assert dict_result["my_roc_auc"] == pytest.approx(expected_results["roc_auc"])
+    assert dict_result["accuracy"] == pytest.approx(expected_results["accuracy"])
