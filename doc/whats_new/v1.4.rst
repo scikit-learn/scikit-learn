@@ -233,15 +233,6 @@ Changelog
   and outputs distances in the same dtype as the provided data.
   :pr:`27006` by :user:`Meekail Zain <micky774>`
 
-:mod:`sklearn.inspection`
-.........................
-
-- |Feature| Add `custom_values` parameter in
-  :func:`inspection.partial_dependence`. It enables users to pass their own grid
-  of values at which the partial dependence should be calculated.
-  :pr:`26202` by :user:`Freddy A. Boulton <freddyaboulton>`
-  and :user:`Stephen Pardy <stephenpardy>`.
-
 :mod:`sklearn.utils`
 ....................
 
