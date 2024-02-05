@@ -901,7 +901,7 @@ def check_scoring(estimator=None, scoring=None, *, allow_none=False):
 
     Parameters
     ----------
-    estimator : estimator object implementing 'fit' or None
+    estimator : estimator object implementing 'fit' or None, default=None
         The object to use to fit the data. If `None`, then this function may error
         depending on `allow_none`.
 
@@ -915,8 +915,9 @@ def check_scoring(estimator=None, scoring=None, *, allow_none=False):
 
         - a list or tuple of unique strings;
         - a callable returning a dictionary where the keys are the metric
-          names and the values are the metric scores;
+          names and the values are the metric scorers;
         - a dictionary with metric names as keys and callables a values.
+
         If None, the provided estimator object's `score` method is used.
 
     allow_none : bool, default=False
