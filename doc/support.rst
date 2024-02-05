@@ -2,7 +2,8 @@
 Support
 =======
 
-Connect with scikit-learn developers through various channels for assistance, feedback, or contributions.
+Connect with scikit-learn developers through various channels for assistance,
+feedback, or contributions.
 
 .. _mailing_lists:
 
