@@ -78,7 +78,7 @@ if [[ -n "$CHECK_WARNINGS" ]]; then
 
 fi
 
-if [[ "$PYTEST_XDIST_VERSION" != "none" ]]; then
+if [[ "$PYTEST_XDIST_VERSION" != "none" && "$DISTRIB" != "conda-pip-scipy-dev" ]]; then
     XDIST_WORKERS=$(python -c "import joblib; print(joblib.cpu_count(only_physical_cores=True))")
     TEST_CMD="$TEST_CMD -n$XDIST_WORKERS"
 fi
