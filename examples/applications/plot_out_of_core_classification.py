@@ -36,7 +36,6 @@ from sklearn.datasets import get_data_home
 from sklearn.feature_extraction.text import HashingVectorizer
 from sklearn.linear_model import PassiveAggressiveClassifier, Perceptron, SGDClassifier
 from sklearn.naive_bayes import MultinomialNB
-from sklearn.utils.fixes import tarfile_extractall
 
 
 def _not_in_sphinx():
@@ -176,8 +175,7 @@ def stream_reuters_documents(data_path=None):
         assert sha256(archive_path.read_bytes()).hexdigest() == ARCHIVE_SHA256
 
         print("untarring Reuters dataset...")
-        with tarfile.open(archive_path, "r:gz") as f:
-            tarfile_extractall(f, data_path)
+        tarfile.open(archive_path, "r:gz").extractall(data_path)
         print("done.")
 
     parser = ReutersParser()

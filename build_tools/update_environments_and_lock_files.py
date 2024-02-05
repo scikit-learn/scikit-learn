@@ -211,7 +211,7 @@ build_metadata_list = [
         "tag": "scipy-dev",
         "folder": "build_tools/azure",
         "platform": "linux-64",
-        "channel": "conda-forge",
+        "channel": "defaults",
         "conda_dependencies": ["python", "ccache"],
         "pip_dependencies": (
             remove_from(
@@ -238,6 +238,11 @@ build_metadata_list = [
             # the environment.yml. Adding python-dateutil so it is pinned
             + ["python-dateutil"]
         ),
+        "package_constraints": {
+            # Temporary pin for other dependencies to be able with deprecation
+            # warnings introduced by Python 3.12.
+            "python": "3.11",
+        },
     },
     {
         "name": "pypy3",

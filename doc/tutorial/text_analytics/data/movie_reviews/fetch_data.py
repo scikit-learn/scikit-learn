@@ -14,6 +14,7 @@ DATA_FOLDER = Path("txt_sentoken")
 
 
 if not DATA_FOLDER.exists():
+
     if not ARCHIVE_NAME.exists():
         print("Downloading dataset from %s (3 MB)" % URL)
         opener = urlopen(URL)
@@ -26,7 +27,7 @@ if not DATA_FOLDER.exists():
 
         print("Decompressing %s" % ARCHIVE_NAME)
         with tarfile.open(ARCHIVE_NAME, "r:gz") as archive:
-            archive.extractall(path=".", filter="data")
+            archive.extractall(path=".")
 
     finally:
         ARCHIVE_NAME.unlink()
