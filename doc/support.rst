@@ -91,4 +91,8 @@ Documentation Resources
 This documentation is for |release|. Find documentation for other versions 
 `here <https://scikit-learn.org/dev/versions.html>`__.
 
-Older versions' printable PDF documentation is available `here <https://sourceforge.net/projects/scikit-learn/files/documentation/>`_.
+Older versions' printable PDF documentation is available `here
+<https://sourceforge.net/projects/scikit-learn/files/documentation/>`_.
+Building the PDF documentation is no longer supported in the website,
+but you can still generate it locally by following the
+:ref:`building documentation instructions <building_documentation>`.
