@@ -5,6 +5,7 @@ import warnings
 from contextlib import suppress
 from functools import wraps
 from os import environ
+from pprint import pprint
 from unittest import SkipTest
 
 import joblib
@@ -27,7 +28,12 @@ from sklearn.datasets import (
 )
 from sklearn.tests import random_seed
 from sklearn.utils import _IS_32BIT
-from sklearn.utils.fixes import np_base_version, parse_version, sp_version
+from sklearn.utils.fixes import (
+    VisibleDeprecationWarning,
+    np_base_version,
+    parse_version,
+    sp_version,
+)
 
 if parse_version(pytest.__version__) < parse_version(PYTEST_MIN_VERSION):
     raise ImportError(
@@ -277,13 +283,68 @@ def pytest_configure(config):
         config.pluginmanager.register(random_seed)
 
 
-def pytest_collectstart(collector):
-    # XXX: Easiest way to ignore pandas Pyarrow DeprecationWarning in the
-    # short-term. See https://github.com/pandas-dev/pandas/issues/54466 for
-    # more details.
-    warnings.filterwarnings(
-        "ignore", message=r"\s*Pyarrow", category=DeprecationWarning
-    )
+def pytest_collection(session):
+    print("pytest_collection")
+    print(f"{len(warnings.filters)}")
+    pprint(warnings.filters)
+    if session.config.getoption("check_warnings"):
+        warnings.filterwarnings("error", category=DeprecationWarning)
+        warnings.filterwarnings("error", category=FutureWarning)
+        warnings.filterwarnings("error", category=VisibleDeprecationWarning)
+        # In some case, exceptions are raised (by bug) in tests, and captured
+        # by pytest, but not raised again. This is for instance the case when
+        # Cython directives are activated: IndexErrors (which aren't fatal) are
+        # raised on out-of-bound accesses. In those cases, pytest instead
+        # raises pytest.PytestUnraisableExceptionWarnings, which we must treat
+        # as errors on the CI.
+        warnings.filterwarnings(
+            "error", category=pytest.PytestUnraisableExceptionWarning
+        )
+        # Ignore pkg_resources deprecation warnings triggered by pyamg
+        warnings.filterwarnings(
+            "ignore",
+            message="pkg_resources is deprecated as an API",
+            category=DeprecationWarning,
+        )
+        warnings.filterwarnings(
+            "ignore",
+            message="Deprecated call to `pkg_resources",
+            category=DeprecationWarning,
+        )
+        # pytest-cov issue https://github.com/pytest-dev/pytest-cov/issues/557 not
+        # fixed although it has been closed. https://github.com/pytest-dev/pytest-cov/pull/623
+        # would probably fix it.
+        warnings.filterwarnings(
+            "ignore",
+            message=(
+                "The --rsyncdir command line argument and rsyncdirs config variable are"
+                " deprecated"
+            ),
+            category=DeprecationWarning,
+        )
+        # warnings has been fixed from dateutil main but not released yet, see
+        # https://github.com/dateutil/dateutil/issues/1314
+        warnings.filterwarnings(
+            "ignore",
+            message="datetime.datetime.utcfromtimestamp",
+            category=DeprecationWarning,
+        )
+        # Python 3.12 warnings from joblib fixed in master but not released yet,
+        # see https://github.com/joblib/joblib/pull/1518
+        warnings.filterwarnings(
+            "ignore", message="ast.Num is deprecated", category=DeprecationWarning
+        )
+        warnings.filterwarnings(
+            "ignore", message="Attribute n is deprecated", category=DeprecationWarning
+        )
+        # XXX: Easiest way to ignore pandas Pyarrow DeprecationWarning in the
+        # short-term. See https://github.com/pandas-dev/pandas/issues/54466 for
+        # more details.
+        warnings.filterwarnings(
+            "ignore", message=r"\s*Pyarrow", category=DeprecationWarning
+        )
+
+    return None
 
 
 @pytest.fixture
@@ -305,3 +366,24 @@ def print_changed_only_false():
     set_config(print_changed_only=False)
     yield
     set_config(print_changed_only=True)  # reset to default
+
+
+def pytest_addoption(parser):
+    parser.addoption(
+        "--check-warnings",
+        action="store_true",
+        default=False,
+        help="Whether to turn warning into errors",
+    )
+
+
+def pytest_sessionstart(session):
+    print("pytest_sessionstart")
+    print(f"{len(warnings.filters)}")
+    pprint(warnings.filters)
+
+
+def pytest_cmdline_main(config):
+    print("pytest_cmdline_main")
+    print(f"{len(warnings.filters)}")
+    pprint(warnings.filters)
