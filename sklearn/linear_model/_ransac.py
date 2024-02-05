@@ -452,8 +452,6 @@ class RANSACRegressor(
             if sample_weight is not None:
                 sample_weight = _check_sample_weight(sample_weight, X)
                 routed_params.estimator.fit = {"sample_weight": sample_weight}
-                routed_params.estimator.predict = {"sample_weight": sample_weight}
-                routed_params.estimator.score = {"sample_weight": sample_weight}
 
         n_inliers_best = 1
         score_best = -np.inf
