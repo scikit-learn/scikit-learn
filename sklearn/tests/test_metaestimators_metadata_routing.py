@@ -296,7 +296,7 @@ METAESTIMATORS: list = [
         "y": y,
         "preserves_metadata": False,
         "estimator_routing_methods": ["fit", "predict", "score"],
-        "requests_set_together": {"fit": ["predict", "score"]},
+        "requests_set_together": {"fit": ["score"]},
     },
 ]
 """List containing all metaestimators to be tested and their settings
@@ -330,7 +330,10 @@ The keys are as follows:
   methods, such as passing `classes` to `partial_fit`.
 - requests_set_together: a dict that defines which set_{method}_requests need
   to be set together with the key; used in case a router routes to different
-  methods from the sub-estimator.
+  methods from the sub-estimator from withing the same meta-estimator's method.
+  For instance, {"fit": ["score"]} would signal that
+  `estimator.set_fit_request` premises `estimator.set_score_request` to be set
+  as well.
 """
 
 # IDs used by pytest to get meaningful verbose messages when running the tests
@@ -497,17 +500,14 @@ def test_error_on_missing_requests_for_sub_estimator(metaestimator):
                     set_requests(estimator, methods=["fit"], metadata_name=key)
                     # make sure error message corresponding to `method_name`
                     # is used for test
-                    if method_name == "predict":
+                    if method_name != "score":
                         set_requests(estimator, methods=["score"], metadata_name=key)
-                    if method_name == "score":
-                        set_requests(estimator, methods=["predict"], metadata_name=key)
-                    # fit before calling method
-                    fit_method = getattr(instance, "fit")
-                    fit_method(X, y, **method_kwargs)
-                if method_name == "predict":
-                    method(X, **method_kwargs)
-                else:
+                    instance.fit(X, y, **method_kwargs)
+                try:
+                    # `fit` and `partial_fit` accept y, others don't.
                     method(X, y, **method_kwargs)
+                except TypeError:
+                    method(X, **method_kwargs)
 
 
 @pytest.mark.parametrize("metaestimator", METAESTIMATORS, ids=METAESTIMATOR_IDS)
@@ -551,7 +551,7 @@ def test_setting_request_on_sub_estimator_removes_error(metaestimator):
             extra_method_args = metaestimator.get("method_args", {}).get(
                 method_name, {}
             )
-            if method_name in ["predict", "score"]:
+            if "fit" not in method_name:
                 # fit before calling method
                 set_requests(estimator, methods=["fit"], metadata_name=key)
                 if requests_set_together:
@@ -560,12 +560,12 @@ def test_setting_request_on_sub_estimator_removes_error(metaestimator):
                         methods=requests_set_together["fit"],
                         metadata_name=key,
                     )
-                fit_method = getattr(instance, "fit")
-                fit_method(X, y, **method_kwargs, **extra_method_args)
-            if method_name == "predict":
-                method(X, **method_kwargs, **extra_method_args)
-            else:
+                instance.fit(X, y, **method_kwargs, **extra_method_args)
+            try:
+                # `fit` and `partial_fit` accept y, others don't.
                 method(X, y, **method_kwargs, **extra_method_args)
+            except TypeError:
+                method(X, **method_kwargs, **extra_method_args)
 
             # sanity check that registry is not empty, or else the test passes
             # trivially

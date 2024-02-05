@@ -722,7 +722,6 @@ class RANSACRegressor(
             estimator=self.estimator,
             method_mapping=MethodMapping()
             .add(caller="fit", callee="fit")
-            .add(caller="fit", callee="predict")
             .add(caller="fit", callee="score")
             .add(caller="score", callee="score")
             .add(caller="predict", callee="predict"),
