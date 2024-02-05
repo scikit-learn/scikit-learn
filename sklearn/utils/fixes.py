@@ -389,3 +389,13 @@ if sp_version < parse_version("1.12"):
     from ..externals._scipy.sparse.csgraph import laplacian  # type: ignore  # noqa
 else:
     from scipy.sparse.csgraph import laplacian  # type: ignore  # noqa  # pragma: no cover
+
+
+def tarfile_extractall(tarfile, *args, **kwargs):
+    try:
+        tarfile.extractall(*args, **kwargs, filter="data")
+    except TypeError:
+        # filter="data" has been added to Python 3.9.17, see
+        # https://docs.python.org/3.9/library/tarfile.html#tarfile.TarFile.extractall.
+        # This can be removed when Python 3.10 is the minimum supported version
+        tarfile.extractall(*args, **kwargs)
