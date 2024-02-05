@@ -333,7 +333,7 @@ def test_self_training_estimator_attribute_error():
         self_training.fit(X_train, y_train_missing_labels)
 
     # `DecisionTreeClassifier` does not implement 'decision_function' and
-    # should raise an error
+    # should raise an AttributeError
     self_training = SelfTrainingClassifier(base_estimator=DecisionTreeClassifier())
 
     outer_msg = "This 'SelfTrainingClassifier' has no attribute 'decision_function'"

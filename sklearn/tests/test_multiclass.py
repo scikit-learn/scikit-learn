@@ -938,7 +938,8 @@ def test_multiclass_estimator_attribute_error():
     """
     iris = datasets.load_iris()
 
-    # LogisticRegression does not implement 'partial_fit' and should raise an error
+    # LogisticRegression does not implement 'partial_fit' and should raise an
+    # AttributeError
     clf = OneVsRestClassifier(estimator=LogisticRegression(random_state=42))
 
     outer_msg = "This 'OneVsRestClassifier' has no attribute 'partial_fit'"

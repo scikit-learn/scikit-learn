@@ -874,13 +874,12 @@ def test_stacking_final_estimator_attribute_error():
         scale(X), y, stratify=y, random_state=42
     )
 
-    # both classifiers implement 'predict_proba' and will both drop one column
     estimators = [
         ("lr", LogisticRegression()),
         ("rf", RandomForestClassifier(n_estimators=2, random_state=42)),
     ]
     # RandomForestClassifier does not implement 'decision_function' and should raise
-    # an error
+    # an AttributeError
     final_estimator = RandomForestClassifier(n_estimators=2, random_state=42)
     clf = StackingClassifier(
         estimators=estimators, final_estimator=final_estimator, cv=3

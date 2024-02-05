@@ -672,7 +672,8 @@ def test_from_model_estimator_attribute_error():
     Non-regression test for:
     https://github.com/scikit-learn/scikit-learn/issues/28108
     """
-    # `LinearRegression` does not implement 'partial_fit' and should raise an error
+    # `LinearRegression` does not implement 'partial_fit' and should raise an
+    # AttributeError
     from_model = SelectFromModel(estimator=LinearRegression())
 
     outer_msg = "This 'SelectFromModel' has no attribute 'partial_fit'"

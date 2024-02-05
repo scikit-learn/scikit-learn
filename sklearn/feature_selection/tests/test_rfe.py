@@ -604,7 +604,7 @@ def test_rfe_estimator_attribute_error():
     iris = load_iris()
 
     # `LinearRegression` does not implement 'decision_function' and should raise an
-    # error
+    # AttributeError
     rfe = RFE(estimator=LinearRegression())
 
     outer_msg = "This 'RFE' has no attribute 'decision_function'"
