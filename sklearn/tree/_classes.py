@@ -1937,3 +1937,61 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
             ccp_alpha=ccp_alpha,
             monotonic_cst=monotonic_cst,
         )
+
+
+# Integration with AbstractTree (if installed)
+try:
+    from abstracttree.conversions import convert_tree, StoredParent
+except ImportError:
+    pass
+else:
+    class _DecisionTreeAdapter(StoredParent):
+        @staticmethod
+        def child_func(value):
+            tree, idx = value
+            lc, rc = tree.children_left[idx], tree.children_right[idx]
+            if lc != -1:
+                return (tree, lc), (tree, rc)
+            else:
+                return ()
+
+        @property
+        def feature(self):
+            tree, idx = self.value
+            return tree.feature[idx]
+
+        @property
+        def threshold(self):
+            tree, idx = self.value
+            return tree.threshold[idx]
+
+        @property
+        def data(self):
+            tree, idx = self.value
+            return tree.value[idx]
+
+        @property
+        def n_samples(self):
+            tree, idx = self.value
+            return tree.n_node_samples[idx]
+
+        @property
+        def impurity(self):
+            tree, idx = self.value
+            return tree.impurity[idx]
+
+        def __str__(self):
+            if self.children:
+                text = f"if X[:, {self.feature}] ≤ {self.threshold:.4g}:  # {self.data}"
+            else:
+                text = f"return {self.data}"
+            comment = f"# n_samples = {self.n_samples}, impurity = {self.impurity:.4g}"
+            return comment + "\n" + text
+
+    @convert_tree.register
+    def _(decision_tree: BaseDecisionTree):
+        return _DecisionTreeAdapter((decision_tree.tree_, 0))
+
+    @convert_tree.register
+    def _(tree: Tree):
+        return _DecisionTreeAdapter((tree, 0))
