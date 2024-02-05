@@ -1744,3 +1744,50 @@ def test_imputation_custom(csc_container):
     imputer = SimpleImputer(missing_values=np.nan, strategy=np.min)
     X_trans = imputer.fit_transform(csc_container(X))
     assert_array_equal(X_trans.toarray(), X_true)
+
+
+def test_type_promotion_fill_value():
+    # Check that the type infered during fit is the right one
+    # given the input type and the fill_value type.
+
+    # check that int64 is promoted to float64 when fill_value is float
+    X = np.array([1, 2, 3], dtype=np.int64).reshape(-1, 1)
+    imputer = SimpleImputer(strategy="constant", fill_value=1.5)
+    X_transformed = imputer.fit_transform(X)
+    assert X_transformed.dtype == np.float64
+    X_ = np.array([1, 2, np.nan]).reshape(-1, 1)
+    assert np.allclose(imputer.transform(X_), np.array([1, 2, 1.5]).reshape(-1, 1))
+
+    # Same test with values missing during fit
+    X = np.array([1, 2, 3], dtype=np.int64).reshape(-1, 1)
+    imputer = SimpleImputer(strategy="constant", fill_value=1.5, missing_values=1)
+    X_transformed = imputer.fit_transform(X)
+    assert X_transformed.dtype == np.float64
+    assert np.allclose(X_transformed, np.array([1.5, 2, 3]).reshape(-1, 1))
+
+    # check that int64 is not promoted when fill_value is int
+    X_for_fit = np.array([1, 2, 3], dtype=np.float64).reshape(-1, 1)
+    X = np.array([1, 2, 3], dtype=np.int64).reshape(-1, 1)
+    imputer = SimpleImputer(strategy="constant", fill_value=1)
+    imputer.fit(X_for_fit)
+    X_transformed = imputer.transform(X)
+    assert X_transformed.dtype == np.int64
+    assert np.allclose(X_transformed, np.array([1, 2, 3]).reshape(-1, 1))
+
+    # check that float32 is not promoted when fill_value is float
+    X_for_fit = np.array([1, 2, 3], dtype=np.float64).reshape(-1, 1)
+    X = np.array([1, 2, 3], dtype=np.float32).reshape(-1, 1)
+    imputer = SimpleImputer(strategy="constant", fill_value=1.5, missing_values=1)
+    imputer.fit(X_for_fit)
+    X_transformed = imputer.transform(X)
+    assert X_transformed.dtype == np.float32
+    assert np.allclose(X_transformed, np.array([1.5, 2, 3]).reshape(-1, 1))
+
+    # check that float fill_values work with object dtype input
+    X = np.array(["a", "b", "c"], dtype="O").reshape(-1, 1)
+    imputer = SimpleImputer(strategy="constant", fill_value=2.2, missing_values="b")
+    X_transformed = imputer.fit_transform(X)
+    assert X_transformed.dtype == np.dtype("O")
+    assert_array_equal(
+        X_transformed, np.array(["a", 2.2, "c"], dtype="O").reshape(-1, 1)
+    )

@@ -395,6 +395,8 @@ class SimpleImputer(_BaseImputer):
         else:
             fill_value = self.fill_value
 
+        self._fill_value_min_type = np.min_scalar_type(fill_value)
+
         # fill_value should be numerical in case of numerical input
         if (
             self.strategy == "constant"
@@ -529,7 +531,7 @@ class SimpleImputer(_BaseImputer):
         elif strategy == "constant":
             # for constant strategy, self.statistcs_ is used to store
             # fill_value in each column
-            return np.full(X.shape[1], fill_value, dtype=X.dtype)
+            return np.full(X.shape[1], fill_value)
 
         # Custom
         elif isinstance(strategy, Callable):
@@ -555,6 +557,11 @@ class SimpleImputer(_BaseImputer):
         check_is_fitted(self)
 
         X = self._validate_input(X, in_fit=False)
+        # we use min type for the fill_value to avoid changing the input dtype
+        # if not necessary
+        new_dtype = np.promote_types(X.dtype, self._fill_value_min_type)
+        if new_dtype != X.dtype:
+            X = X.astype(new_dtype, copy=self.copy)
         statistics = self.statistics_
 
         if X.shape[1] != statistics.shape[0]:
