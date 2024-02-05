@@ -5,7 +5,6 @@ import numpy as np
 
 from ..base import BaseEstimator, OutlierMixin, RegressorMixin, _fit_context
 from ..linear_model._base import LinearClassifierMixin, LinearModel, SparseCoefMixin
-from ..utils import deprecated
 from ..utils._param_validation import Hidden, Interval, StrOptions
 from ..utils.multiclass import check_classification_targets
 from ..utils.validation import _num_samples
@@ -641,6 +640,9 @@ class SVC(BaseSVC):
     other, see the corresponding section in the narrative documentation:
     :ref:`svm_kernels`.
 
+    To learn how to tune SVC's hyperparameters, see the following example:
+    :ref:`sphx_glr_auto_examples_model_selection_plot_nested_cross_validation_iris.py`
+
     Read more in the :ref:`User Guide <svm_classification>`.
 
     Parameters
@@ -652,10 +654,12 @@ class SVC(BaseSVC):
 
     kernel : {'linear', 'poly', 'rbf', 'sigmoid', 'precomputed'} or callable,  \
         default='rbf'
-        Specifies the kernel type to be used in the algorithm.
-        If none is given, 'rbf' will be used. If a callable is given it is
-        used to pre-compute the kernel matrix from data matrices; that matrix
-        should be an array of shape ``(n_samples, n_samples)``.
+        Specifies the kernel type to be used in the algorithm. If
+        none is given, 'rbf' will be used. If a callable is given it is used to
+        pre-compute the kernel matrix from data matrices; that matrix should be
+        an array of shape ``(n_samples, n_samples)``. For an intuitive
+        visualization of different kernel types see
+        :ref:`sphx_glr_auto_examples_svm_plot_svm_kernels.py`.
 
     degree : int, default=3
         Degree of the polynomial kernel function ('poly').
@@ -916,9 +920,11 @@ class NuSVC(BaseSVC):
 
     kernel : {'linear', 'poly', 'rbf', 'sigmoid', 'precomputed'} or callable,  \
         default='rbf'
-         Specifies the kernel type to be used in the algorithm.
-         If none is given, 'rbf' will be used. If a callable is given it is
-         used to precompute the kernel matrix.
+        Specifies the kernel type to be used in the algorithm.
+        If none is given, 'rbf' will be used. If a callable is given it is
+        used to precompute the kernel matrix. For an intuitive
+        visualization of different kernel types see
+        :ref:`sphx_glr_auto_examples_svm_plot_svm_kernels.py`.
 
     degree : int, default=3
         Degree of the polynomial kernel function ('poly').
@@ -1064,6 +1070,7 @@ class NuSVC(BaseSVC):
         0 if correctly fitted, 1 if the algorithm did not converge.
 
     probA_ : ndarray of shape (n_classes * (n_classes - 1) / 2,)
+
     probB_ : ndarray of shape (n_classes * (n_classes - 1) / 2,)
         If `probability=True`, it corresponds to the parameters learned in
         Platt scaling to produce probability estimates from decision values.
@@ -1244,13 +1251,6 @@ class SVR(RegressorMixin, BaseLibSVM):
 
     Attributes
     ----------
-    class_weight_ : ndarray of shape (n_classes,)
-        Multipliers of parameter C for each class.
-        Computed based on the ``class_weight`` parameter.
-
-        .. deprecated:: 1.2
-            `class_weight_` was deprecated in version 1.2 and will be removed in 1.4.
-
     coef_ : ndarray of shape (1, n_features)
         Weights assigned to the features (coefficients in the primal
         problem). This is only available in the case of a linear kernel.
@@ -1367,15 +1367,6 @@ class SVR(RegressorMixin, BaseLibSVM):
             random_state=None,
         )
 
-    # TODO(1.4): Remove
-    @deprecated(  # type: ignore
-        "Attribute `class_weight_` was deprecated in version 1.2 and will be removed in"
-        " 1.4."
-    )
-    @property
-    def class_weight_(self):
-        return np.empty(0)
-
     def _more_tags(self):
         return {
             "_xfail_checks": {
@@ -1452,13 +1443,6 @@ class NuSVR(RegressorMixin, BaseLibSVM):
 
     Attributes
     ----------
-    class_weight_ : ndarray of shape (n_classes,)
-        Multipliers of parameter C for each class.
-        Computed based on the ``class_weight`` parameter.
-
-        .. deprecated:: 1.2
-            `class_weight_` was deprecated in version 1.2 and will be removed in 1.4.
-
     coef_ : ndarray of shape (1, n_features)
         Weights assigned to the features (coefficients in the primal
         problem). This is only available in the case of a linear kernel.
@@ -1575,15 +1559,6 @@ class NuSVR(RegressorMixin, BaseLibSVM):
             random_state=None,
         )
 
-    # TODO(1.4): Remove
-    @deprecated(  # type: ignore
-        "Attribute `class_weight_` was deprecated in version 1.2 and will be removed in"
-        " 1.4."
-    )
-    @property
-    def class_weight_(self):
-        return np.empty(0)
-
     def _more_tags(self):
         return {
             "_xfail_checks": {
@@ -1656,13 +1631,6 @@ class OneClassSVM(OutlierMixin, BaseLibSVM):
 
     Attributes
     ----------
-    class_weight_ : ndarray of shape (n_classes,)
-        Multipliers of parameter C for each class.
-        Computed based on the ``class_weight`` parameter.
-
-        .. deprecated:: 1.2
-            `class_weight_` was deprecated in version 1.2 and will be removed in 1.4.
-
     coef_ : ndarray of shape (1, n_features)
         Weights assigned to the features (coefficients in the primal
         problem). This is only available in the case of a linear kernel.
@@ -1771,15 +1739,6 @@ class OneClassSVM(OutlierMixin, BaseLibSVM):
             max_iter,
             random_state=None,
         )
-
-    # TODO(1.4): Remove
-    @deprecated(  # type: ignore
-        "Attribute `class_weight_` was deprecated in version 1.2 and will be removed in"
-        " 1.4."
-    )
-    @property
-    def class_weight_(self):
-        return np.empty(0)
 
     def fit(self, X, y=None, sample_weight=None):
         """Detect the soft boundary of the set of samples X.

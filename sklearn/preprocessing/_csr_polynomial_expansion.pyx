@@ -166,7 +166,7 @@ cpdef void _csr_polynomial_expansion(
     INDEX_B_t[:] result_indptr,     # OUT
     FLAG_t interaction_only,
     FLAG_t degree
-) nogil:
+):
     """
     Perform a second or third degree polynomial or interaction expansion on a
     compressed sparse row (CSR) matrix. The method used only takes products of

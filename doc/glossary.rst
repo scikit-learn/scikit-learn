@@ -1078,7 +1078,7 @@ Metadata Routing
         meta-estimator uses the given :term:`groups`, and it also passes it
         along to some of its sub-objects, such as a :term:`CV splitter`.
 
-Please refer to :ref:`Metadta Routing User Guide <metadata_routing>` for more
+Please refer to :ref:`Metadata Routing User Guide <metadata_routing>` for more
 information.
 
 .. _glossary_target_types:
@@ -1731,7 +1731,7 @@ functions or non-estimator constructors.
         For these models, the number of iterations, reported via
         ``len(estimators_)`` or ``n_iter_``, corresponds the total number of
         estimators/iterations learnt since the initialization of the model.
-        Thus, if a model was already initialized with `N`` estimators, and `fit`
+        Thus, if a model was already initialized with `N` estimators, and `fit`
         is called with ``n_estimators`` or ``max_iter`` set to `M`, the model
         will train `M - N` new estimators.
 

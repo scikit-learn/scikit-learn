@@ -37,10 +37,11 @@ over the number of true positives plus the number of false negatives
 
 :math:`R = \\frac{T_p}{T_p + F_n}`
 
-These quantities are also related to the (:math:`F_1`) score, which is defined
-as the harmonic mean of precision and recall.
+These quantities are also related to the :math:`F_1` score, which is the
+harmonic mean of precision and recall. Thus, we can compute the :math:`F_1`
+using the following formula:
 
-:math:`F1 = 2\\frac{P \\times R}{P+R}`
+:math:`F_1 = \\frac{2T_p}{2T_p + F_p + F_n}`
 
 Note that the precision may not decrease with recall. The
 definition of precision (:math:`\\frac{T_p}{T_p + F_p}`) shows that lowering
@@ -269,8 +270,6 @@ handles, labels = display.ax_.get_legend_handles_labels()
 handles.extend([l])
 labels.extend(["iso-f1 curves"])
 # set the legend and the axes
-ax.set_xlim([0.0, 1.0])
-ax.set_ylim([0.0, 1.05])
 ax.legend(handles=handles, labels=labels, loc="best")
 ax.set_title("Extension of Precision-Recall curve to multi-class")
 

@@ -1,5 +1,6 @@
 """
-Extended math utilities.
+The :mod:`sklearn.utils.extmath` module includes utilities to perform
+optimal mathematical operations in scikit-learn that are not available in SciPy.
 """
 # Authors: Gael Varoquaux
 #          Alexandre Gramfort
@@ -18,10 +19,10 @@ from numbers import Integral
 import numpy as np
 from scipy import linalg, sparse
 
+from ..utils import deprecated
 from ..utils._param_validation import Interval, StrOptions, validate_params
 from . import check_random_state
 from ._array_api import _is_numpy_namespace, device, get_namespace
-from ._logistic_sigmoid import _log_logistic_sigmoid
 from .sparsefuncs_fast import csr_row_norms
 from .validation import check_array
 
@@ -77,11 +78,18 @@ def row_norms(X, squared=False):
     if sparse.issparse(X):
         X = X.tocsr()
         norms = csr_row_norms(X)
+        if not squared:
+            norms = np.sqrt(norms)
     else:
-        norms = np.einsum("ij,ij->i", X, X)
-
-    if not squared:
-        np.sqrt(norms, norms)
+        xp, _ = get_namespace(X)
+        if _is_numpy_namespace(xp):
+            X = np.asarray(X)
+            norms = np.einsum("ij,ij->i", X, X)
+            norms = xp.asarray(norms)
+        else:
+            norms = xp.sum(xp.multiply(X, X), axis=1)
+        if not squared:
+            norms = xp.sqrt(norms)
     return norms
 
 
@@ -125,34 +133,27 @@ def fast_logdet(A):
     return ld
 
 
-def density(w, **kwargs):
+def density(w):
     """Compute density of a sparse vector.
 
     Parameters
     ----------
-    w : array-like
-        The sparse vector.
-    **kwargs : keyword arguments
-        Ignored.
-
-        .. deprecated:: 1.2
-            ``**kwargs`` were deprecated in version 1.2 and will be removed in
-            1.4.
+    w : {ndarray, sparse matrix}
+        The input data can be numpy ndarray or a sparse matrix.
 
     Returns
     -------
     float
         The density of w, between 0 and 1.
-    """
-    if kwargs:
-        warnings.warn(
-            (
-                "Additional keyword arguments are deprecated in version 1.2 and will be"
-                " removed in version 1.4."
-            ),
-            FutureWarning,
-        )
 
+    Examples
+    --------
+    >>> from scipy import sparse
+    >>> from sklearn.utils.extmath import density
+    >>> X = sparse.random(10, 10, density=0.25, random_state=0)
+    >>> density(X)
+    0.25
+    """
     if hasattr(w, "toarray"):
         d = float(w.nnz) / (w.shape[0] * w.shape[1])
     else:
@@ -175,6 +176,17 @@ def safe_sparse_dot(a, b, *, dense_output=False):
     -------
     dot_product : {ndarray, sparse matrix}
         Sparse if ``a`` and ``b`` are sparse and ``dense_output=False``.
+
+    Examples
+    --------
+    >>> from scipy.sparse import csr_matrix
+    >>> from sklearn.utils.extmath import safe_sparse_dot
+    >>> X = csr_matrix([[1, 2], [3, 4], [5, 6]])
+    >>> dot_product = safe_sparse_dot(X, X.T)
+    >>> dot_product.toarray()
+    array([[ 5, 11, 17],
+           [11, 25, 39],
+           [17, 39, 61]])
     """
     if a.ndim > 2 or b.ndim > 2:
         if sparse.issparse(a):
@@ -255,6 +267,16 @@ def randomized_range_finder(
     An implementation of a randomized algorithm for principal component
     analysis
     A. Szlam et al. 2014
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.utils.extmath import randomized_range_finder
+    >>> A = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
+    >>> randomized_range_finder(A, size=2, n_iter=2, random_state=42)
+    array([[-0.21...,  0.88...],
+           [-0.52...,  0.24...],
+           [-0.82..., -0.38...]])
     """
     xp, is_array_api_compliant = get_namespace(A)
     random_state = check_random_state(random_state)
@@ -884,14 +906,15 @@ def svd_flip(u, v, u_based_decision=True):
     return u, v
 
 
+# TODO(1.6): remove
+@deprecated(  # type: ignore
+    "The function `log_logistic` is deprecated and will be removed in 1.6. "
+    "Use `-np.logaddexp(0, -x)` instead."
+)
 def log_logistic(X, out=None):
     """Compute the log of the logistic function, ``log(1 / (1 + e ** -x))``.
 
-    This implementation is numerically stable because it splits positive and
-    negative values::
-
-        -log(1 + exp(-x_i))     if x_i > 0
-        x_i - log(1 + exp(x_i)) if x_i <= 0
+    This implementation is numerically stable and uses `-np.logaddexp(0, -x)`.
 
     For the ordinary logistic function, use ``scipy.special.expit``.
 
@@ -913,19 +936,13 @@ def log_logistic(X, out=None):
     See the blog post describing this implementation:
     http://fa.bianp.net/blog/2013/numerical-optimizers-for-logistic-regression/
     """
-    is_1d = X.ndim == 1
-    X = np.atleast_2d(X)
-    X = check_array(X, dtype=np.float64)
-
-    n_samples, n_features = X.shape
+    X = check_array(X, dtype=np.float64, ensure_2d=False)
 
     if out is None:
         out = np.empty_like(X)
 
-    _log_logistic_sigmoid(n_samples, n_features, X, out)
-
-    if is_1d:
-        return np.squeeze(out)
+    np.logaddexp(0, -X, out=out)
+    out *= -1
     return out
 
 
@@ -1208,14 +1225,10 @@ def stable_cumsum(arr, axis=None, rtol=1e-05, atol=1e-08):
     out : ndarray
         Array with the cumulative sums along the chosen axis.
     """
-    xp, _ = get_namespace(arr)
-
-    out = xp.cumsum(arr, axis=axis, dtype=np.float64)
-    expected = xp.sum(arr, axis=axis, dtype=np.float64)
-    if not xp.all(
-        xp.isclose(
-            out.take(-1, axis=axis), expected, rtol=rtol, atol=atol, equal_nan=True
-        )
+    out = np.cumsum(arr, axis=axis, dtype=np.float64)
+    expected = np.sum(arr, axis=axis, dtype=np.float64)
+    if not np.allclose(
+        out.take(-1, axis=axis), expected, rtol=rtol, atol=atol, equal_nan=True
     ):
         warnings.warn(
             (
@@ -1262,7 +1275,7 @@ def _nanaverage(a, weights=None):
     if weights is None:
         return np.nanmean(a)
 
-    weights = np.array(weights, copy=False)
+    weights = np.asarray(weights)
     a, weights = a[~mask], weights[~mask]
     try:
         return np.average(a, weights=weights)

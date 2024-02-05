@@ -1,7 +1,7 @@
 """
-=============================================================
-Gaussian process regression (GPR) with noise-level estimation
-=============================================================
+=========================================================================
+Ability of Gaussian process regression (GPR) to estimate data noise-level
+=========================================================================
 
 This example shows the ability of the
 :class:`~sklearn.gaussian_process.kernels.WhiteKernel` to estimate the noise

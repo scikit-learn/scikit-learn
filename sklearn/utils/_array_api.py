@@ -24,7 +24,7 @@ def yield_namespace_device_dtype_combinations():
         The name of the device on which to allocate the arrays. Can be None to
         indicate that the default value should be used.
 
-    dtype : str
+    dtype_name : str
         The name of the data type to use for arrays. Can be None to indicate
         that the default value should be used.
     """
@@ -45,6 +45,7 @@ def yield_namespace_device_dtype_combinations():
                 ("cpu", "cuda"), ("float64", "float32")
             ):
                 yield array_namespace, device, dtype
+            yield array_namespace, "mps", "float32"
         else:
             yield array_namespace, None, None
 
@@ -145,7 +146,7 @@ def _isdtype_single(dtype, kind, *, xp):
                 for k in ("signed integer", "unsigned integer")
             )
         elif kind == "real floating":
-            return dtype in {xp.float32, xp.float64}
+            return dtype in supported_float_dtypes(xp)
         elif kind == "complex floating":
             # Some name spaces do not have complex, such as cupy.array_api
             # and numpy.array_api
@@ -166,14 +167,29 @@ def _isdtype_single(dtype, kind, *, xp):
         return dtype == kind
 
 
+def supported_float_dtypes(xp):
+    """Supported floating point types for the namespace
+
+    Note: float16 is not officially part of the Array API spec at the
+    time of writing but scikit-learn estimators and functions can choose
+    to accept it when xp.float16 is defined.
+
+    https://data-apis.org/array-api/latest/API_specification/data_types.html
+    """
+    if hasattr(xp, "float16"):
+        return (xp.float64, xp.float32, xp.float16)
+    else:
+        return (xp.float64, xp.float32)
+
+
 class _ArrayAPIWrapper:
     """sklearn specific Array API compatibility wrapper
 
     This wrapper makes it possible for scikit-learn maintainers to
     deal with discrepancies between different implementations of the
-    Python array API standard and its evolution over time.
+    Python Array API standard and its evolution over time.
 
-    The Python array API standard specification:
+    The Python Array API standard specification:
     https://data-apis.org/array-api/latest/
 
     Documentation of the NumPy implementation:
@@ -188,30 +204,6 @@ class _ArrayAPIWrapper:
 
     def __eq__(self, other):
         return self._namespace == other._namespace
-
-    def take(self, X, indices, *, axis=0):
-        # When array_api supports `take` we can use this directly
-        # https://github.com/data-apis/array-api/issues/177
-        if self._namespace.__name__ == "numpy.array_api":
-            X_np = numpy.take(X, indices, axis=axis)
-            return self._namespace.asarray(X_np)
-
-        # We only support axis in (0, 1) and ndim in (1, 2) because that is all we need
-        # in scikit-learn
-        if axis not in {0, 1}:
-            raise ValueError(f"Only axis in (0, 1) is supported. Got {axis}")
-
-        if X.ndim not in {1, 2}:
-            raise ValueError(f"Only X.ndim in (1, 2) is supported. Got {X.ndim}")
-
-        if axis == 0:
-            if X.ndim == 1:
-                selected = [X[i] for i in indices]
-            else:  # X.ndim == 2
-                selected = [X[i, :] for i in indices]
-        else:  # axis == 1
-            selected = [X[:, i] for i in indices]
-        return self._namespace.stack(selected, axis=axis)
 
     def isdtype(self, dtype, kind):
         return isdtype(dtype, kind, xp=self._namespace)
@@ -268,6 +260,9 @@ class _NumPyAPIWrapper:
         "uint16",
         "uint32",
         "uint64",
+        # XXX: float16 is not part of the Array API spec but exposed by
+        # some namespaces.
+        "float16",
         "float32",
         "float64",
         "complex64",
@@ -393,14 +388,17 @@ def get_namespace(*arrays):
 
     namespace, is_array_api_compliant = array_api_compat.get_namespace(*arrays), True
 
+    # These namespaces need additional wrapping to smooth out small differences
+    # between implementations
     if namespace.__name__ in {"numpy.array_api", "cupy.array_api"}:
         namespace = _ArrayAPIWrapper(namespace)
 
     return namespace, is_array_api_compliant
 
 
-def _expit(X):
-    xp, _ = get_namespace(X)
+def _expit(X, xp=None):
+    if xp is None:
+        xp = get_namespace(X)
     if _is_numpy_namespace(xp):
         return xp.asarray(special.expit(numpy.asarray(X)))
 
@@ -442,10 +440,14 @@ def _weighted_sum(sample_score, sample_weight, normalize=False, xp=None):
         return float(numpy.average(sample_score_np, weights=sample_weight_np))
 
     if not xp.isdtype(sample_score.dtype, "real floating"):
-        sample_score = xp.astype(sample_score, xp.float64)
+        # We move to cpu device ahead of time since certain devices may not support
+        # float64, but we want the same precision for all devices and namespaces.
+        sample_score = xp.astype(xp.asarray(sample_score, device="cpu"), xp.float64)
 
     if sample_weight is not None:
-        sample_weight = xp.asarray(sample_weight)
+        sample_weight = xp.asarray(
+            sample_weight, dtype=sample_score.dtype, device=device(sample_score)
+        )
         if not xp.isdtype(sample_weight.dtype, "real floating"):
             sample_weight = xp.astype(sample_weight, xp.float64)
 
@@ -461,6 +463,42 @@ def _weighted_sum(sample_score, sample_weight, normalize=False, xp=None):
         return float(sample_score @ sample_weight)
     else:
         return float(xp.sum(sample_score))
+
+
+def _nanmin(X, axis=None, xp=None):
+    # TODO: refactor once nan-aware reductions are standardized:
+    # https://github.com/data-apis/array-api/issues/621
+    if xp is None:
+        xp, _ = get_namespace(X)
+    if _is_numpy_namespace(xp):
+        return xp.asarray(numpy.nanmin(X, axis=axis))
+
+    else:
+        mask = xp.isnan(X)
+        X = xp.min(xp.where(mask, xp.asarray(+xp.inf, device=device(X)), X), axis=axis)
+        # Replace Infs from all NaN slices with NaN again
+        mask = xp.all(mask, axis=axis)
+        if xp.any(mask):
+            X = xp.where(mask, xp.asarray(xp.nan), X)
+        return X
+
+
+def _nanmax(X, axis=None, xp=None):
+    # TODO: refactor once nan-aware reductions are standardized:
+    # https://github.com/data-apis/array-api/issues/621
+    if xp is None:
+        xp, _ = get_namespace(X)
+    if _is_numpy_namespace(xp):
+        return xp.asarray(numpy.nanmax(X, axis=axis))
+
+    else:
+        mask = xp.isnan(X)
+        X = xp.max(xp.where(mask, xp.asarray(-xp.inf, device=device(X)), X), axis=axis)
+        # Replace Infs from all NaN slices with NaN again
+        mask = xp.all(mask, axis=axis)
+        if xp.any(mask):
+            X = xp.where(mask, xp.asarray(xp.nan), X)
+        return X
 
 
 def _asarray_with_order(array, dtype=None, order=None, copy=None, *, xp=None):
@@ -533,3 +571,8 @@ def _estimator_with_converted_arrays(estimator, converter):
             attribute = converter(attribute)
         setattr(new_estimator, key, attribute)
     return new_estimator
+
+
+def _atol_for_type(dtype):
+    """Return the absolute tolerance for a given numpy dtype."""
+    return numpy.finfo(dtype).eps * 100

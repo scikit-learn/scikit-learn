@@ -39,7 +39,7 @@ For an example of using this dataset, see
 
 import logging
 from io import BytesIO
-from os import makedirs, remove
+from os import PathLike, makedirs, remove
 from os.path import exists
 
 import joblib
@@ -103,7 +103,7 @@ def _load_csv(F):
     """
     names = F.readline().decode("ascii").strip().split(",")
 
-    rec = np.loadtxt(F, skiprows=0, delimiter=",", dtype="a22,f4,f4")
+    rec = np.loadtxt(F, skiprows=0, delimiter=",", dtype="S22,f4,f4")
     rec.dtype.names = names
     return rec
 
@@ -136,17 +136,17 @@ def construct_grids(batch):
 
 
 @validate_params(
-    {"data_home": [str, None], "download_if_missing": ["boolean"]},
+    {"data_home": [str, PathLike, None], "download_if_missing": ["boolean"]},
     prefer_skip_nested_validation=True,
 )
 def fetch_species_distributions(*, data_home=None, download_if_missing=True):
     """Loader for species distribution dataset from Phillips et. al. (2006).
 
-    Read more in the :ref:`User Guide <datasets>`.
+    Read more in the :ref:`User Guide <species_distribution_dataset>`.
 
     Parameters
     ----------
-    data_home : str, default=None
+    data_home : str or path-like, default=None
         Specify another download and cache folder for the datasets. By default
         all scikit-learn data is stored in '~/scikit_learn_data' subfolders.
 
@@ -207,6 +207,18 @@ def fetch_species_distributions(*, data_home=None, download_if_missing=True):
       <http://rob.schapire.net/papers/ecolmod.pdf>`_
       S. J. Phillips, R. P. Anderson, R. E. Schapire - Ecological Modelling,
       190:231-259, 2006.
+
+    Examples
+    --------
+    >>> from sklearn.datasets import fetch_species_distributions
+    >>> species = fetch_species_distributions()
+    >>> species.train[:5]
+    array([(b'microryzomys_minutus', -64.7   , -17.85  ),
+           (b'microryzomys_minutus', -67.8333, -16.3333),
+           (b'microryzomys_minutus', -67.8833, -16.3   ),
+           (b'microryzomys_minutus', -67.8   , -16.2667),
+           (b'microryzomys_minutus', -67.9833, -15.9   )],
+          dtype=[('species', 'S22'), ('dd long', '<f4'), ('dd lat', '<f4')])
     """
     data_home = get_data_home(data_home)
     if not exists(data_home):

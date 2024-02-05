@@ -56,7 +56,7 @@ X_train, X_test, y_train, y_test = train_test_split(
 # ---------------------------------
 # We train the :class:`~sklearn.ensemble.AdaBoostClassifier`. The estimator
 # utilizes boosting to improve the classification accuracy. Boosting is a method
-# designed to train weak learners (i.e. `base_estimator`) that learn from their
+# designed to train weak learners (i.e. `estimator`) that learn from their
 # predecessor's mistakes.
 #
 # Here, we define the weak learner as a
@@ -187,7 +187,7 @@ plt.show()
 # discrete outputs of the weak learners to train the boosted model.
 #
 # The convergence of :class:`~sklearn.ensemble.AdaBoostClassifier` is mainly
-# influenced by the learning rate (i.e `learning_rate`), the number of weak
+# influenced by the learning rate (i.e. `learning_rate`), the number of weak
 # learners used (`n_estimators`), and the expressivity of the weak learners
 # (e.g. `max_leaf_nodes`).
 

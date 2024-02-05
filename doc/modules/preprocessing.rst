@@ -10,9 +10,10 @@ The ``sklearn.preprocessing`` package provides several common
 utility functions and transformer classes to change raw feature vectors
 into a representation that is more suitable for the downstream estimators.
 
-In general, learning algorithms benefit from standardization of the data set. If
-some outliers are present in the set, robust scalers or transformers are more
-appropriate. The behaviors of the different scalers, transformers, and
+In general, many learning algorithms such as linear models benefit from standardization of the data set
+(see :ref:`sphx_glr_auto_examples_preprocessing_plot_scaling_importance.py`).
+If some outliers are present in the set, robust scalers or other transformers can
+be more appropriate. The behaviors of the different scalers, transformers, and
 normalizers on a dataset containing marginal outliers is highlighted in
 :ref:`sphx_glr_auto_examples_preprocessing_plot_all_scaling.py`.
 
@@ -902,6 +903,19 @@ computed as an empirical Bayes estimate: :math:`m=\sigma_i^2/\tau^2`, where
 :math:`\sigma_i^2` is the variance of `y` with category :math:`i` and
 :math:`\tau^2` is the global variance of `y`.
 
+For multiclass classification targets, the formulation is similar to binary
+classification:
+
+.. math::
+    S_{ij} = \lambda_i\frac{n_{iY_j}}{n_i} + (1 - \lambda_i)\frac{n_{Y_j}}{n}
+
+where :math:`S_{ij}` is the encoding for category :math:`i` and class :math:`j`,
+:math:`n_{iY_j}` is the number of observations with :math:`Y=j` and category
+:math:`i`, :math:`n_i` is the number of observations with category :math:`i`,
+:math:`n_{Y_j}` is the number of observations with :math:`Y=j`, :math:`n` is the
+number of observations, and :math:`\lambda_i` is a shrinkage factor for category
+:math:`i`.
+
 For continuous targets, the formulation is similar to binary classification:
 
 .. math::
@@ -994,9 +1008,9 @@ For each feature, the bin edges are computed during ``fit`` and together with
 the number of bins, they will define the intervals. Therefore, for the current
 example, these intervals are defined as:
 
- - feature 1: :math:`{[-\infty, -1), [-1, 2), [2, \infty)}`
- - feature 2: :math:`{[-\infty, 5), [5, \infty)}`
- - feature 3: :math:`{[-\infty, 14), [14, \infty)}`
+- feature 1: :math:`{[-\infty, -1), [-1, 2), [2, \infty)}`
+- feature 2: :math:`{[-\infty, 5), [5, \infty)}`
+- feature 3: :math:`{[-\infty, 14), [14, \infty)}`
 
 Based on these bin intervals, ``X`` is transformed as follows::
 
@@ -1185,23 +1199,23 @@ below.
 
 Some of the advantages of splines over polynomials are:
 
-    - B-splines are very flexible and robust if you keep a fixed low degree,
-      usually 3, and parsimoniously adapt the number of knots. Polynomials
-      would need a higher degree, which leads to the next point.
-    - B-splines do not have oscillatory behaviour at the boundaries as have
-      polynomials (the higher the degree, the worse). This is known as `Runge's
-      phenomenon <https://en.wikipedia.org/wiki/Runge%27s_phenomenon>`_.
-    - B-splines provide good options for extrapolation beyond the boundaries,
-      i.e. beyond the range of fitted values. Have a look at the option
-      ``extrapolation``.
-    - B-splines generate a feature matrix with a banded structure. For a single
-      feature, every row contains only ``degree + 1`` non-zero elements, which
-      occur consecutively and are even positive. This results in a matrix with
-      good numerical properties, e.g. a low condition number, in sharp contrast
-      to a matrix of polynomials, which goes under the name
-      `Vandermonde matrix <https://en.wikipedia.org/wiki/Vandermonde_matrix>`_.
-      A low condition number is important for stable algorithms of linear
-      models.
+- B-splines are very flexible and robust if you keep a fixed low degree,
+  usually 3, and parsimoniously adapt the number of knots. Polynomials
+  would need a higher degree, which leads to the next point.
+- B-splines do not have oscillatory behaviour at the boundaries as have
+  polynomials (the higher the degree, the worse). This is known as `Runge's
+  phenomenon <https://en.wikipedia.org/wiki/Runge%27s_phenomenon>`_.
+- B-splines provide good options for extrapolation beyond the boundaries,
+  i.e. beyond the range of fitted values. Have a look at the option
+  ``extrapolation``.
+- B-splines generate a feature matrix with a banded structure. For a single
+  feature, every row contains only ``degree + 1`` non-zero elements, which
+  occur consecutively and are even positive. This results in a matrix with
+  good numerical properties, e.g. a low condition number, in sharp contrast
+  to a matrix of polynomials, which goes under the name
+  `Vandermonde matrix <https://en.wikipedia.org/wiki/Vandermonde_matrix>`_.
+  A low condition number is important for stable algorithms of linear
+  models.
 
 The following code snippet shows splines in action::
 
