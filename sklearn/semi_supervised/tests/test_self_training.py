@@ -324,8 +324,9 @@ def test_self_training_estimator_attribute_error():
     Non-regression test for:
     https://github.com/scikit-learn/scikit-learn/issues/28108
     """
-    # `SVC` with `probability=False` does not implement 'predict_proba' and
-    # should raise an error
+    # `SVC` with `probability=False` does not implement 'predict_proba' that
+    # is required internally in `fit` of `SelfTrainingClassifier`. We expect
+    # an AttributeError to be raised.
     base_estimator = SVC(probability=False, gamma="scale")
     self_training = SelfTrainingClassifier(base_estimator)
 
