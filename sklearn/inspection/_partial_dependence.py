@@ -99,7 +99,12 @@ def _grid_from_X(X, percentiles, is_categorical, grid_resolution, custom_values)
     if grid_resolution <= 1:
         raise ValueError("'grid_resolution' must be strictly greater than 1.")
 
-    custom_values = {k: np.asarray(v) for k, v in custom_values.items()}
+    def _convert_custom_values(values):
+        # Convert custom types such that object types are always used for string arrays
+        dtype = object if any(isinstance(v, str) for v in values) else None
+        return np.asarray(values, dtype=dtype)
+
+    custom_values = {k: _convert_custom_values(v) for k, v in custom_values.items()}
     if any(v.ndim != 1 for v in custom_values.values()):
         error_string = ", ".join(
             f"Feature {str(k)}: {v.ndim} dimensions"
