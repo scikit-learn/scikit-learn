@@ -874,7 +874,7 @@ def test_stacking_regressor_multioutput():
 
     estimator1 = LinearRegression(fit_intercept=True)
     estimator2 = MultiOutputRegressor(DummyRegressor(strategy="constant", constant=0))
-    final_estimator = LinearRegression(fit_intercept=False, positive=True)
+    final_estimator = Ridge(alpha=1e-12, fit_intercept=False, random_state=42)
 
     reg = StackingRegressor(
         estimators=[("lr", estimator1), ("dr", estimator2)],
@@ -916,7 +916,7 @@ def test_stacking_regressor_multioutput_with_passthrough():
 
     estimator1 = LinearRegression(fit_intercept=True)
     estimator2 = MultiOutputRegressor(DummyRegressor(strategy="constant", constant=0))
-    final_estimator = LinearRegression(fit_intercept=False, positive=True)
+    final_estimator = Ridge(alpha=1e-12, fit_intercept=False, random_state=42)
 
     reg = StackingRegressor(
         estimators=[("lr", estimator1), ("dr", estimator2)],
