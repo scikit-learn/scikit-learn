@@ -42,16 +42,16 @@ if [[ $OSTYPE == *"linux"* ]]; then
     SHA256SUM="b9282b8b43eef83f722646d8992c4dd36563046afe0806722184e7e9923a6d7b  codecov"
     echo "$SHA256SUM" | shasum -a256 -c
     chmod +x codecov
-    ./codecov -t ${CODECOV_TOKEN} -R $BUILD_REPOSITORY_LOCALPATH -f coverage.xml -Z
+    ./codecov -t ${CODECOV_TOKEN} -R $BUILD_REPOSITORY_LOCALPATH -f coverage.xml -Z --verbose
 elif [[ $OSTYPE == *"darwin"* ]]; then
     curl -Os "$CODECOV_BASE_URL/macos/codecov"
     SHA256SUM="e4ce34c144d3195eccb7f8b9ca8de092d2a4be114d927ca942500f3a6326225c  codecov"
     echo "$SHA256SUM" | shasum -a256 -c
     chmod +x codecov
-    ./codecov -t ${CODECOV_TOKEN} -R $BUILD_REPOSITORY_LOCALPATH -f coverage.xml -Z
+    ./codecov -t ${CODECOV_TOKEN} -R $BUILD_REPOSITORY_LOCALPATH -f coverage.xml -Z --verbose
 else
     curl -Os "$CODECOV_BASE_URL/windows/codecov.exe"
     SHA256SUM="f5de88026f061ff08b88a5895f9c11855523924ceb8174e027403dd20fa5e4d6  codecov.exe"
     echo "$SHA256SUM" | sha256sum -c
-    ./codecov.exe -t ${CODECOV_TOKEN} -R $BUILD_REPOSITORY_LOCALPATH -f coverage.xml -Z
+    ./codecov.exe -t ${CODECOV_TOKEN} -R $BUILD_REPOSITORY_LOCALPATH -f coverage.xml -Z --verbose
 fi
