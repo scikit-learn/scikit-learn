@@ -156,7 +156,7 @@ plt.tight_layout()
 plt.show()
 
 # %% Analysis of the results
-# -----------------------
+# --------------------------
 #
 # :class:`~sklearn.linear_model.LogisticRegressionCV` returns reasonably well
 # calibrated predictions despite the small training set size: its reliability
