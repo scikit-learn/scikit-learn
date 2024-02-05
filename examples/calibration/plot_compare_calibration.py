@@ -155,47 +155,58 @@ for i, (_, name) in enumerate(clf_list):
 plt.tight_layout()
 plt.show()
 
-# %%
+# %% Analysis of the results
+# -----------------------
 #
 # :class:`~sklearn.linear_model.LogisticRegressionCV` returns reasonably well
 # calibrated predictions despite the small training set size: its reliability
-# curve is the closest to the diagonal. The reason is two-fold: this estimator
-# directly adjusts its trainable parameter to minimize negative loglikelihood
-# (a.k.a. "log-loss") on a given training set. Furthermore we configured it to
-# automatically tune the `C` regularization parameter to minimize the negative
-# loglikelihood via inner cross-validation.
+# curve is the closest to the diagonal among the four models.
 #
-# The negative log-likelihood is a proper scoring rule for probabilistic
-# classification models. In the limit of infinite training data, the negative
-# log-likelihood is minimized by a model that predicts the true conditional
-# probabilities and would therefore be perfectly calibrated. However, with a
-# finite training set, the calibration can still be suboptimal. Even a large
-# training set, logistic regression models can still be poorly calibrated if
-# they are too regularized or if they are mis-specified (e.g. the true decision
-# boundary is a highly non-linear function of the input features). In this
-# example with a very small training set size the calibration curve of the
-# logistic regression model is closest but not perfectly on the diagonal: this
-# model is slightly under-confident.
+# Logistic regression is trained by minimizing the log-loss which is a strictly
+# proper scoring rule: in the limit of infinite training data, strictly proper
+# scoring rules are minimized by the model that predicts the true conditional
+# probabilities and would therefore be perfectly calibrated. However, using a
+# proper scoring rule as training objective is not sufficient to guarantee a
+# well-calibrated model by itself: even with a very large training set,
+# logistic regression could still be poorly calibrated, if it was too
+# regularized or if the choice of input features made this model mis-specified
+# (e.g. the true decision boundary is a highly non-linear function of the input
+# features).
+#
+# In this example the training set was intentionally kept very small. In this
+# setting, optimizing the log-loss can still lead to poorly calibrated models
+# because of overfitting. To mitigate this, the `LogisticRegressionCV` class
+# was configured to tune the `C` regularization parameter to also minimize the
+# log-loss via inner cross-validation so as to find the best compromise for
+# this model in the small training set setting.
+#
+# Because of the finite training set size and the lack of guarantee for
+# well-specification, we observe that the calibration curve of the logistic
+# regression model is close but not perfectly on the diagonal. The shape of the
+# calibration curve of this model can be interpreted as slightly
+# under-confident: the predicted probabilities are a bit too close to 0.5
+# compared to the true fraction of positive samples.
 #
 # The other methods all output worse-calibrated probabilities:
 #
 # * :class:`~sklearn.naive_bayes.GaussianNB` tends to push probabilities to 0
-#   or 1 (see histogram) on this particular dataset. This is mainly because the
-#   naive Bayes equation only provides correct estimate of probabilities when
-#   the assumption that features are conditionally independent holds [2]_.
-#   However, features can be correlated and is the case with this dataset,
-#   which contains 2 features generated as random linear combinations of the
-#   informative features. These correlated features are effectively being
-#   'counted twice', resulting in pushing the predicted probabilities towards 0
-#   and 1 [3]_. Note however that changing the seed used to generate the
+#   or 1 (see histogram) on this particular dataset (over-confidence). This is
+#   mainly because the naive Bayes equation only provides correct estimate of
+#   probabilities when the assumption that features are conditionally
+#   independent holds [2]_. However, features can be correlated and is the case
+#   with this dataset, which contains 2 features generated as random linear
+#   combinations of the informative features. These correlated features are
+#   effectively being 'counted twice', resulting in pushing the predicted
+#   probabilities towards 0 and 1 [3]_. Note however that changing the seed
+#   used to generate the
 #   dataset can lead to widely varying results for the naive Bayes estimator.
 #
 # * :class:`~sklearn.svm.LinearSVC` is not a natural probabilistic classifier.
 #   In order to interpret its prediction as such, we naively scaled the output
 #   of the :term:`decision_function` into [0, 1] by applying min-max scaling in
-#   the `NaivelyCalibratedLinearSVC` wrapper class defined above.
-#   This estimator shows a typical sigmoid-shaped calibration curve on this
-#   data: predictions larger than 0.5 correspond to samples with an even larger
+#   the `NaivelyCalibratedLinearSVC` wrapper class defined above. This
+#   estimator shows a typical sigmoid-shaped calibration curve on this data:
+#   predictions larger than 0.5 correspond to samples with an even larger
 #   effective positive class fraction (above the diagonal), while predictions
 #   below 0.5 corresponds to even lower positive class fractions (below the
 #   diagonal). This under-confident predictions are typical for maximum-margin
@@ -239,14 +250,12 @@ plt.show()
 # ----------
 #
 # .. [1] `Predicting Good Probabilities with Supervised Learning
-#        <https://dl.acm.org/doi/pdf/10.1145/1102351.1102430>`_,
-#        A. Niculescu-Mizil & R. Caruana, ICML 2005
-# .. [2] `Beyond independence: Conditions for the optimality of the simple
-#        bayesian classifier
+#        <https://dl.acm.org/doi/pdf/10.1145/1102351.1102430>`_, A.
+#        Niculescu-Mizil & R. Caruana, ICML 2005 .. [2] `Beyond independence:
+# Conditions for the optimality of the simple bayesian classifier
 #        <https://www.ics.uci.edu/~pazzani/Publications/mlc96-pedro.pdf>`_
 #        Domingos, P., & Pazzani, M., Proc. 13th Intl. Conf. Machine Learning.
-#        1996.
-# .. [3] `Obtaining calibrated probability estimates from decision trees and
-#        naive Bayesian classifiers
-#        <https://citeseerx.ist.psu.edu/doc_view/pid/4f67a122ec3723f08ad5cbefecad119b432b3304>`_
+#        1996. .. [3] `Obtaining calibrated probability estimates from decision
+#        trees and naive Bayesian classifiers
+# <https://citeseerx.ist.psu.edu/doc_view/pid/4f67a122ec3723f08ad5cbefecad119b432b3304>`_
 #        Zadrozny, Bianca, and Charles Elkan. Icml. Vol. 1. 2001.
