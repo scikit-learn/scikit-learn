@@ -1,3 +1,5 @@
+import warnings
+
 import numpy as np
 import pytest
 from numpy.testing import assert_array_almost_equal, assert_array_equal
@@ -461,7 +463,13 @@ def test_ransac_fit_sample_weight():
     ransac_estimator = RANSACRegressor(random_state=0)
     n_samples = y.shape[0]
     weights = np.ones(n_samples)
-    ransac_estimator.fit(X, y, weights)
+    with warnings.catch_warnings(record=True):
+        warnings.filterwarnings(
+            "always",
+            category=FutureWarning,
+            message="Pass sample_weight=",
+        )
+        ransac_estimator.fit(X, y, weights)
     # sanity check
     assert ransac_estimator.inlier_mask_.shape[0] == n_samples
 
