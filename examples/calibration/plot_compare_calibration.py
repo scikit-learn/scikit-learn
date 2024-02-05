@@ -96,7 +96,9 @@ from sklearn.linear_model import LogisticRegressionCV
 from sklearn.naive_bayes import GaussianNB
 
 # Create classifiers
-lr = LogisticRegressionCV(Cs=np.logspace(-6, 6, 101), cv=10, scoring="neg_log_loss")
+lr = LogisticRegressionCV(
+    Cs=np.logspace(-6, 6, 101), cv=10, scoring="neg_log_loss", max_iter=1_000
+)
 gnb = GaussianNB()
 svc = NaivelyCalibratedLinearSVC(C=1.0, dual="auto")
 rfc = RandomForestClassifier(random_state=42)
@@ -155,8 +157,10 @@ for i, (_, name) in enumerate(clf_list):
 plt.tight_layout()
 plt.show()
 
-# %% Analysis of the results
-# --------------------------
+# %%
+#
+# Analysis of the results
+# -----------------------
 #
 # :class:`~sklearn.linear_model.LogisticRegressionCV` returns reasonably well
 # calibrated predictions despite the small training set size: its reliability
@@ -263,3 +267,5 @@ plt.show()
 #        naive Bayesian classifiers
 #        <https://citeseerx.ist.psu.edu/doc_view/pid/4f67a122ec3723f08ad5cbefecad119b432b3304>`_
 #        Zadrozny, Bianca, and Charles Elkan. Icml. Vol. 1. 2001.
+
+# %%
