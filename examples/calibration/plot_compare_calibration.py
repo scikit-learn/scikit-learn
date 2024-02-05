@@ -198,8 +198,8 @@ plt.show()
 #   combinations of the informative features. These correlated features are
 #   effectively being 'counted twice', resulting in pushing the predicted
 #   probabilities towards 0 and 1 [3]_. Note however that changing the seed
-#   used to generate the
-#   dataset can lead to widely varying results for the naive Bayes estimator.
+#   used to generate the dataset can lead to widely varying results for the
+#   naive Bayes estimator.
 #
 # * :class:`~sklearn.svm.LinearSVC` is not a natural probabilistic classifier.
 #   In order to interpret its prediction as such, we naively scaled the output
@@ -251,11 +251,15 @@ plt.show()
 #
 # .. [1] `Predicting Good Probabilities with Supervised Learning
 #        <https://dl.acm.org/doi/pdf/10.1145/1102351.1102430>`_, A.
-#        Niculescu-Mizil & R. Caruana, ICML 2005 .. [2] `Beyond independence:
-# Conditions for the optimality of the simple bayesian classifier
+#        Niculescu-Mizil & R. Caruana, ICML 2005
+#
+# .. [2] `Beyond independence: Conditions for the optimality of the simple
+#        bayesian classifier
 #        <https://www.ics.uci.edu/~pazzani/Publications/mlc96-pedro.pdf>`_
 #        Domingos, P., & Pazzani, M., Proc. 13th Intl. Conf. Machine Learning.
-#        1996. .. [3] `Obtaining calibrated probability estimates from decision
-#        trees and naive Bayesian classifiers
-# <https://citeseerx.ist.psu.edu/doc_view/pid/4f67a122ec3723f08ad5cbefecad119b432b3304>`_
+#        1996.
+#
+# .. [3] `Obtaining calibrated probability estimates from decision trees and
+#        naive Bayesian classifiers
+#        <https://citeseerx.ist.psu.edu/doc_view/pid/4f67a122ec3723f08ad5cbefecad119b432b3304>`_
 #        Zadrozny, Bianca, and Charles Elkan. Icml. Vol. 1. 2001.
