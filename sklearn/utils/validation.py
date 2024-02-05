@@ -1084,7 +1084,7 @@ def check_array(
                 % (n_features, array.shape, ensure_min_features, context)
             )
 
-    # Wit an input pandas dataframe or series, we know we can always make the
+    # With an input pandas dataframe or series, we know we can always make the
     # resulting array writeable:
     # - if copy=True, we have already made a copy so it is fine to make the
     #   array writeable
