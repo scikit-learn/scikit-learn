@@ -222,7 +222,7 @@ def test_grid_from_X():
     # axes is a list of arrays of different shapes
     assert axes[0].shape == (len(col_0_range),)
     assert axes[1].shape == (grid_resolution,)
-    assert grid.dtype == np.array(col_0_range).dtype
+    assert grid.dtype == np.result_type(X, np.asarray(col_0_range).dtype)
 
     X = np.array([[0, "a"], [1, "b"], [2, "c"]])
 
