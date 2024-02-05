@@ -68,9 +68,10 @@ components_col = "param_pca__n_components"
 best_clfs = results.groupby(components_col)[
     [components_col, "mean_test_score", "std_test_score"]
 ].apply(lambda g: g.nlargest(1, "mean_test_score"))
-
-best_clfs.plot(
-    x=components_col, y="mean_test_score", yerr="std_test_score", legend=False, ax=ax1
+ax1.errorbar(
+    best_clfs[components_col],
+    best_clfs["mean_test_score"],
+    yerr=best_clfs["std_test_score"],
 )
 ax1.set_ylabel("Classification accuracy (val)")
 ax1.set_xlabel("n_components")
