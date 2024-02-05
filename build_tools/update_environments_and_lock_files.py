@@ -211,7 +211,7 @@ build_metadata_list = [
         "tag": "scipy-dev",
         "folder": "build_tools/azure",
         "platform": "linux-64",
-        "channel": "defaults",
+        "channel": "conda-forge",
         "conda_dependencies": ["python", "ccache"],
         "pip_dependencies": (
             remove_from(
