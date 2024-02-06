@@ -1887,6 +1887,10 @@ counts ``tp`` (see `the wikipedia page
 <https://en.wikipedia.org/wiki/Likelihood_ratios_in_diagnostic_testing>`_ for
 the actual formulas).
 
+.. topic:: Examples:
+
+  * :ref:`sphx_glr_auto_examples_model_selection_plot_likelihood_ratios.py`
+
 |details-start|
 **Interpretation across varying prevalence**
 |details-split|
@@ -1955,10 +1959,6 @@ For a worked-out demonstration of the :func:`class_likelihood_ratios` function,
 see the example below.
 
 |details-end|
-
-.. topic:: Examples:
-
-  * :ref:`sphx_glr_auto_examples_model_selection_plot_likelihood_ratios.py`
 
 |details-start|
 **References**
