@@ -1084,6 +1084,18 @@ def check_array(
                 % (n_features, array.shape, ensure_min_features, context)
             )
 
+    # With an input pandas dataframe or series, we know we can always make the
+    # resulting array writeable:
+    # - if copy=True, we have already made a copy so it is fine to make the
+    #   array writeable
+    # - if copy=False, the caller is telling us explicitly that we can do
+    #   in-place modifications
+    # See https://pandas.pydata.org/docs/dev/user_guide/copy_on_write.html#read-only-numpy-arrays
+    # for more details about pandas copy-on-write mechanism, that is enabled by
+    # default in pandas 3.0.0.dev.
+    if _is_pandas_df_or_series(array_orig) and hasattr(array, "flags"):
+        array.flags.writeable = True
+
     return array
 
 
@@ -2138,6 +2150,15 @@ def _check_method_params(X, params, indices=None):
             )
 
     return method_params_validated
+
+
+def _is_pandas_df_or_series(X):
+    """Return True if the X is a pandas dataframe or series."""
+    try:
+        pd = sys.modules["pandas"]
+    except KeyError:
+        return False
+    return isinstance(X, (pd.DataFrame, pd.Series))
 
 
 def _is_pandas_df(X):
