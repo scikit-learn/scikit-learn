@@ -386,10 +386,10 @@ class LargeSparseNotSupportedClassifier(BaseEstimator):
         elif self.raise_for_type == "sparse_matrix":
             correct_type = isinstance(X, sp.spmatrix)
         if correct_type:
-            if X.getformat() == "coo":
+            if X.format == "coo":
                 if X.row.dtype == "int64" or X.col.dtype == "int64":
                     raise ValueError("Estimator doesn't support 64-bit indices")
-            elif X.getformat() in ["csc", "csr"]:
+            elif X.format in ["csc", "csr"]:
                 assert "int64" not in (
                     X.indices.dtype,
                     X.indptr.dtype,
@@ -678,21 +678,12 @@ def test_check_estimator():
         "Estimator LargeSparseNotSupportedClassifier doesn't seem to "
         r"support \S{3}_64 matrix, and is not failing gracefully.*"
     )
-    with warnings.catch_warnings(record=True) as records:
-        warnings.filterwarnings(
-            "always",
-            category=DeprecationWarning,
-            message=(
-                "`getformat` is deprecated and will be removed in v1.13.0; use"
-                " `X.format` instead."
-            ),
-        )
-        with raises(AssertionError, match=msg):
-            check_estimator(LargeSparseNotSupportedClassifier("sparse_matrix"))
+    with raises(AssertionError, match=msg):
+        check_estimator(LargeSparseNotSupportedClassifier("sparse_matrix"))
 
-        if SPARRAY_PRESENT:
-            with raises(AssertionError, match=msg):
-                check_estimator(LargeSparseNotSupportedClassifier("sparse_array"))
+    if SPARRAY_PRESENT:
+        with raises(AssertionError, match=msg):
+            check_estimator(LargeSparseNotSupportedClassifier("sparse_array"))
 
     # does error on binary_only untagged estimator
     msg = "Only 2 classes are supported"
