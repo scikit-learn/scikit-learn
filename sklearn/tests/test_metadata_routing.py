@@ -15,7 +15,9 @@ from sklearn.base import (
     BaseEstimator,
     clone,
 )
+from sklearn.dummy import DummyClassifier
 from sklearn.linear_model import LinearRegression
+from sklearn.metrics._scorer import _MultimetricScorer, get_scorer
 from sklearn.tests.metadata_routing_common import (
     ConsumingClassifier,
     ConsumingRegressor,
@@ -990,3 +992,18 @@ def test_no_metadata_always_works():
         NotImplementedError, match="Estimator has not implemented metadata routing yet."
     ):
         MetaRegressor(estimator=Estimator()).fit(X, y, metadata=my_groups)
+
+
+def test_metadata_routing_multimetric_behaves_equally_with_and_without_routing():
+    """Test multimetric scorer works with and without metadata routing enabled.
+
+    Non-regression test for https://github.com/scikit-learn/scikit-learn/issues/28256
+    """
+
+    multimetric_scorer = _MultimetricScorer(scorers={"acc": get_scorer("accuracy")})
+    estimator = DummyClassifier().fit(X, y)
+    with config_context(enable_metadata_routing=True):
+        multimetric_scorer(estimator, X, y)
+
+    with config_context(enable_metadata_routing=False):
+        multimetric_scorer(estimator, X, y)
