@@ -1530,7 +1530,10 @@ def process_routing(_obj, _method, /, **kwargs):
         # an empty dict on routed_params.ANYTHING.ANY_METHOD.
         class EmptyRequest:
             def get(self, name, default=None):
-                return default if default else {}
+                if not default:
+                    return Bunch(**{method: dict() for method in METHODS})
+
+                return default
 
             def __getitem__(self, name):
                 return Bunch(**{method: dict() for method in METHODS})
