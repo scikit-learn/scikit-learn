@@ -152,7 +152,6 @@ def test_assert_request_is_empty():
         ConsumingClassifier(registry=_Registry()),
         ConsumingRegressor(registry=_Registry()),
         ConsumingTransformer(registry=_Registry()),
-        NonConsumingClassifier(registry=_Registry()),
         WeightedMetaClassifier(estimator=ConsumingClassifier(), registry=_Registry()),
         WeightedMetaRegressor(estimator=ConsumingRegressor(), registry=_Registry()),
     ],

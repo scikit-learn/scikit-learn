@@ -168,14 +168,30 @@ class ConsumingRegressor(RegressorMixin, BaseEstimator):
 class NonConsumingClassifier(ClassifierMixin, BaseEstimator):
     """A classifier which accepts no metadata on any method."""
 
-    def __init__(self, registry=None):
-        self.registry = registry
+    def __init__(self, alpha=0.0):
+        self.alpha = alpha
 
     def fit(self, X, y):
-        if self.registry is not None:
-            self.registry.append(self)
-
         self.classes_ = np.unique(y)
+        return self
+
+    def partial_fit(self, X, y, classes=None):
+        return self
+
+    def decision_function(self, X):
+        return self.predict(X)
+
+    def predict(self, X):
+        return np.ones(len(X))
+
+
+class NonConsumingRegressor(RegressorMixin, BaseEstimator):
+    """A classifier which accepts no metadata on any method."""
+
+    def fit(self, X, y):
+        return self
+
+    def partial_fit(self, X, y):
         return self
 
     def predict(self, X):
