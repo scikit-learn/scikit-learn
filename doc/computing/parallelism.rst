@@ -321,11 +321,12 @@ especially with respect to their caches' sizes.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 This environment variable is used to turn warnings into errors in two different places:
+
 - tests, for example by running `SKLEARN_WARNINGS_AS_ERRORS=1 pytest sklearn`.
 - documentation build, where it is turned on by default when you do `make
   html`. You can do `SKLEARN_WARNINGS_AS_ERRORS=0 make html` if you want to
   ignore warnings. Note that this checks that running examples don't produce
-  any warnings which is not the same as `SHPINXOPTS="-W:` that checks syntax
+  any warnings which is not the same as `SHPINXOPTS="-W"` that checks syntax
   issues in the rst files.
 
 This environment variable use specific warning filters, since sometimes
