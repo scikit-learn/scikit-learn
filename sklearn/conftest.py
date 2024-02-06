@@ -302,15 +302,6 @@ def print_changed_only_false():
     set_config(print_changed_only=True)  # reset to default
 
 
-def pytest_addoption(parser):
-    parser.addoption(
-        "--check-warnings",
-        action="store_true",
-        default=False,
-        help="Whether to turn warning into errors",
-    )
-
-
 def pytest_sessionstart(session):
     if environ.get("SKLEARN_WARNINGS_AS_ERRORS", "0") != "0":
         # XXX: if sys.warnoptions is empty (i.e. PYTHONWARNINGS environment
