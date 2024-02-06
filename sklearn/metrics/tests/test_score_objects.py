@@ -1492,8 +1492,9 @@ def test_make_scorer_deprecation(deprecated_params, new_params, warn_msg):
     )
 
 
-def test_metadata_routing_multimetric_behaves_equally_with_and_without_routing():
-    """Test multimetric scorer works with and without metadata routing enabled.
+def test_metadata_routing_multimetric_without_metadata_works_with_and_without_routing():
+    """Test multimetric scorer works with and without metadata routing enabled when
+    there is no actual metadata to pass.
 
     Non-regression test for https://github.com/scikit-learn/scikit-learn/issues/28256
     """
