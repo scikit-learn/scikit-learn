@@ -224,18 +224,22 @@ plt.show()
 #   predictions near 0 and 1 because variance in the underlying base models
 #   will bias predictions that should be near zero or one away from these
 #   values. Because predictions are restricted to the interval [0, 1], errors
-#   caused by variance tend to be one- sided near zero and one. For example, if
+#   caused by variance tend to be one-sided near zero and one. For example, if
 #   a model should predict p = 0 for a case, the only way bagging can achieve
 #   this is if all bagged trees predict zero. If we add noise to the trees that
 #   bagging is averaging over, this noise will cause some trees to predict
 #   values larger than 0 for this case, thus moving the average prediction of
 #   the bagged ensemble away from 0. We observe this effect most strongly with
 #   random forests because the base-level trees trained with random forests
-#   have relatively high variance due to feature subsetting." As a result, this
-#   can make random forests under-confident. However, on this particular
-#   example dataset, the Random Forest model is not significantly more
-#   under-confident than the Logistic Regression model, but the predicted
-#   probabilies are under-estimated in the 0.4-0.6 range.
+#   have relatively high variance due to feature subsetting." This effect can
+#   make random forests under-confident. Despite this possible bias, note that
+#   the trees themselves are fit by minimizing either the Gini or Entropy
+#   criterion, both of which lead to splits that minimize proper scoring rules:
+#   the Brier score or the log-loss respectively. See :ref:`the user guide
+#   <tree_mathematical_formulation>` for more details. This can explain why
+#   this model shows a good enough calibration curve on this particular example
+#   dataset. Indeed the Random Forest model is not significantly more
+#   under-confident than the Logistic Regression model.
 #
 # Feel free to re-run this example with different random seeds and other
 # dataset generation parameters to see how different the calibration plots can
