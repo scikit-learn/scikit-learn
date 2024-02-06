@@ -1,11 +1,9 @@
 import builtins
 import platform
 import sys
-import warnings
 from contextlib import suppress
 from functools import wraps
 from os import environ
-from pprint import pprint
 from unittest import SkipTest
 
 import joblib
@@ -28,8 +26,8 @@ from sklearn.datasets import (
 )
 from sklearn.tests import random_seed
 from sklearn.utils import _IS_32BIT
+from sklearn.utils._testing import turn_warnings_into_errors
 from sklearn.utils.fixes import (
-    VisibleDeprecationWarning,
     np_base_version,
     parse_version,
     sp_version,
@@ -283,55 +281,6 @@ def pytest_configure(config):
         config.pluginmanager.register(random_seed)
 
 
-def pytest_collection(session):
-    print("pytest_collection")
-    print(f"{len(warnings.filters)}")
-    pprint(warnings.filters)
-    if session.config.getoption("check_warnings"):
-        warnings.filterwarnings("error", category=DeprecationWarning)
-        warnings.filterwarnings("error", category=FutureWarning)
-        warnings.filterwarnings("error", category=VisibleDeprecationWarning)
-        # In some case, exceptions are raised (by bug) in tests, and captured
-        # by pytest, but not raised again. This is for instance the case when
-        # Cython directives are activated: IndexErrors (which aren't fatal) are
-        # raised on out-of-bound accesses. In those cases, pytest instead
-        # raises pytest.PytestUnraisableExceptionWarnings, which we must treat
-        # as errors on the CI.
-        warnings.filterwarnings(
-            "error", category=pytest.PytestUnraisableExceptionWarning
-        )
-        # Ignore pkg_resources deprecation warnings triggered by pyamg
-        warnings.filterwarnings(
-            "ignore",
-            message="pkg_resources is deprecated as an API",
-            category=DeprecationWarning,
-        )
-        warnings.filterwarnings(
-            "ignore",
-            message="Deprecated call to `pkg_resources",
-            category=DeprecationWarning,
-        )
-        # pytest-cov issue https://github.com/pytest-dev/pytest-cov/issues/557 not
-        # fixed although it has been closed. https://github.com/pytest-dev/pytest-cov/pull/623
-        # would probably fix it.
-        warnings.filterwarnings(
-            "ignore",
-            message=(
-                "The --rsyncdir command line argument and rsyncdirs config variable are"
-                " deprecated"
-            ),
-            category=DeprecationWarning,
-        )
-        # XXX: Easiest way to ignore pandas Pyarrow DeprecationWarning in the
-        # short-term. See https://github.com/pandas-dev/pandas/issues/54466 for
-        # more details.
-        warnings.filterwarnings(
-            "ignore", message=r"\s*Pyarrow", category=DeprecationWarning
-        )
-
-    return None
-
-
 @pytest.fixture
 def hide_available_pandas(monkeypatch):
     """Pretend pandas was not installed."""
@@ -363,12 +312,12 @@ def pytest_addoption(parser):
 
 
 def pytest_sessionstart(session):
-    print("pytest_sessionstart")
-    print(f"{len(warnings.filters)}")
-    pprint(warnings.filters)
-
-
-def pytest_cmdline_main(config):
-    print("pytest_cmdline_main")
-    print(f"{len(warnings.filters)}")
-    pprint(warnings.filters)
+    if environ.get("SKLEARN_WARNINGS_AS_ERRORS", "0") != "0":
+        # XXX: if sys.warnoptions is empty (i.e. PYTHONWARNINGS environment
+        # variable is not set) pytest adds its own filters for
+        # DeprecationWarning), see
+        # https://github.com/pytest-dev/pytest/blob/404d31a942975c04d4a7d48e258260584930819f/src/_pytest/warnings.py#L45-L48
+        # This would overrides our warning filters modifications so we set it
+        # to a non-empty value
+        sys.warnoptions = "hack-to-avoid-pytest-overriding-warning-filters"
+        turn_warnings_into_errors()

@@ -712,7 +712,7 @@ warnings.filterwarnings(
         " non-GUI backend, so cannot show the figure."
     ),
 )
-if os.environ.get("SKLEARN_DOC_BUILD_WARNINGS_AS_ERRORS", "true").lower() == "true":
+if os.environ.get("SKLEARN_WARNINGS_AS_ERRORS", "1") != "0":
     # Raise warning as error in example to catch warnings when building the
     # documentation Since we are using lock files to build the documentation, we should
     # not have any warnings. Before updating the lock files, we need to fix them.

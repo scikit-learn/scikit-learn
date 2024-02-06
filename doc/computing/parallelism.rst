@@ -317,11 +317,17 @@ Users looking for the best performance might want to tune this variable using
 powers of 2 so as to get the best parallelism behavior for their hardware,
 especially with respect to their caches' sizes.
 
-`SKLEARN_DOC_BUILD_WARNINGS_AS_ERRORS`
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+`SKLEARN_WARNINGS_AS_ERRORS`
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-This environment variable issue errors instead of warnings when building the
-documentation. It ensures that we don't introduce new warnings in the example
-gallery. By default, the warnings are treated as errors (e.g. `"true"`). This
-is different from `SPHINXOPTS="-W"` that catch syntax warnings from the rst
-generation.
+This environment variable is used to turn warnings into errors in two different places:
+- tests, for example by running `SKLEARN_WARNINGS_AS_ERRORS=1 pytest sklearn`.
+- documentation build, where it is turned on by default when you do `make
+  html`. You can do `SKLEARN_WARNINGS_AS_ERRORS=0 make html` if you want to
+  ignore warnings. Note that this checks that running examples don't produce
+  any warnings which is not the same as `SHPINXOPTS="-W:` that checks syntax
+  issues in the rst files.
+
+This environment variable use specific warning filters, since sometimes
+warnings come from third-party libraries. You can see them in the
+`turn_warnings_into_errors` function in `sklearn/utils/_testing.py`.

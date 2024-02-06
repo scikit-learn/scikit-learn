@@ -49,7 +49,7 @@ from sklearn.utils import (
     _in_unstable_openblas_configuration,
 )
 from sklearn.utils._array_api import _check_array_api_dispatch
-from sklearn.utils.fixes import parse_version, sp_version
+from sklearn.utils.fixes import VisibleDeprecationWarning, parse_version, sp_version
 from sklearn.utils.multiclass import check_classification_targets
 from sklearn.utils.validation import (
     check_array,
@@ -1095,3 +1095,44 @@ def _array_api_for_tests(array_namespace, device):
         if cupy.cuda.runtime.getDeviceCount() == 0:
             raise SkipTest("CuPy test requires cuda, which is not available")
     return xp
+
+
+def turn_warnings_into_errors():
+    warnings.filterwarnings("error", category=DeprecationWarning)
+    warnings.filterwarnings("error", category=FutureWarning)
+    warnings.filterwarnings("error", category=VisibleDeprecationWarning)
+    # In some case, exceptions are raised (by bug) in tests, and captured
+    # by pytest, but not raised again. This is for instance the case when
+    # Cython directives are activated: IndexErrors (which aren't fatal) are
+    # raised on out-of-bound accesses. In those cases, pytest instead
+    # raises pytest.PytestUnraisableExceptionWarnings, which we must treat
+    # as errors on the CI.
+    warnings.filterwarnings("error", category=pytest.PytestUnraisableExceptionWarning)
+    # Ignore pkg_resources deprecation warnings triggered by pyamg
+    warnings.filterwarnings(
+        "ignore",
+        message="pkg_resources is deprecated as an API",
+        category=DeprecationWarning,
+    )
+    warnings.filterwarnings(
+        "ignore",
+        message="Deprecated call to `pkg_resources",
+        category=DeprecationWarning,
+    )
+    # pytest-cov issue https://github.com/pytest-dev/pytest-cov/issues/557 not
+    # fixed although it has been closed. https://github.com/pytest-dev/pytest-cov/pull/623
+    # would probably fix it.
+    warnings.filterwarnings(
+        "ignore",
+        message=(
+            "The --rsyncdir command line argument and rsyncdirs config variable are"
+            " deprecated"
+        ),
+        category=DeprecationWarning,
+    )
+    # XXX: Easiest way to ignore pandas Pyarrow DeprecationWarning in the
+    # short-term. See https://github.com/pandas-dev/pandas/issues/54466 for
+    # more details.
+    warnings.filterwarnings(
+        "ignore", message=r"\s*Pyarrow", category=DeprecationWarning
+    )
