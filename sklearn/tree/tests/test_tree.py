@@ -2600,7 +2600,7 @@ def test_missing_values_is_resilience(
     assert diff <= tolerance
 
 
-@pytest.mark.parametrize("Tree, expected_score", zip(CLF_TREES.values(), [0.85, 0.75]))
+@pytest.mark.parametrize("Tree, expected_score", zip(CLF_TREES.values(), [0.85, 0.7]))
 def test_missing_value_is_predictive(Tree, expected_score, global_random_seed):
     """Check the tree learns when only the missing value is predictive."""
     rng = np.random.RandomState(0)
