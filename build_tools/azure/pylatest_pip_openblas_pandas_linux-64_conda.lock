@@ -12,7 +12,7 @@ https://repo.anaconda.com/pkgs/main/linux-64/_openmp_mutex-5.1-1_gnu.conda#71d28
 https://repo.anaconda.com/pkgs/main/linux-64/libgcc-ng-11.2.0-h1234567_1.conda#a87728dabf3151fb9cfa990bd2eb0464
 https://repo.anaconda.com/pkgs/main/linux-64/libffi-3.4.4-h6a678d5_0.conda#06e288f9250abef59b9a367d151fc339
 https://repo.anaconda.com/pkgs/main/linux-64/ncurses-6.4-h6a678d5_0.conda#5558eec6e2191741a92f832ea826251c
-https://repo.anaconda.com/pkgs/main/linux-64/openssl-3.0.12-h7f8727e_0.conda#48caaebab690276acf1bc1f3b56febf4
+https://repo.anaconda.com/pkgs/main/linux-64/openssl-3.0.13-h7f8727e_0.conda#c73d46a4d666da0ae3dcd3fd8f805122
 https://repo.anaconda.com/pkgs/main/linux-64/xz-5.4.5-h5eee18b_0.conda#fb0f709ab3eb6ad3538677c327646581
 https://repo.anaconda.com/pkgs/main/linux-64/zlib-1.2.13-h5eee18b_0.conda#333e31fbfbb5057c92fa845ad6adef93
 https://repo.anaconda.com/pkgs/main/linux-64/ccache-3.7.9-hfe4627d_0.conda#bef6fc681c273bb7bd0c67d1a591365e
@@ -25,7 +25,7 @@ https://repo.anaconda.com/pkgs/main/linux-64/wheel-0.41.2-py39h06a4308_0.conda#e
 https://repo.anaconda.com/pkgs/main/linux-64/pip-23.3.1-py39h06a4308_0.conda#685007e3dae59d211620f19926577bd6
 # pip alabaster @ https://files.pythonhosted.org/packages/32/34/d4e1c02d3bee589efb5dfa17f88ea08bdb3e3eac12bc475462aec52ed223/alabaster-0.7.16-py3-none-any.whl#sha256=b46733c07dce03ae4e150330b975c75737fa60f0a7c591b6c8bf4928a28e2c92
 # pip babel @ https://files.pythonhosted.org/packages/0d/35/4196b21041e29a42dc4f05866d0c94fa26c9da88ce12c38c2265e42c82fb/Babel-2.14.0-py3-none-any.whl#sha256=efb1a25b7118e67ce3a259bed20545c29cb68be8ad2c784c83689981b7a57287
-# pip certifi @ https://files.pythonhosted.org/packages/64/62/428ef076be88fa93716b576e4a01f919d25968913e817077a386fcbe4f42/certifi-2023.11.17-py3-none-any.whl#sha256=e036ab49d5b79556f99cfc2d9320b34cfbe5be05c5871b51de9329f0603b0474
+# pip certifi @ https://files.pythonhosted.org/packages/ba/06/a07f096c664aeb9f01624f858c3add0a4e913d6c96257acb4fce61e7de14/certifi-2024.2.2-py3-none-any.whl#sha256=dc383c07b76109f368f6106eee2b593b04a011ea4d55f652c6ca24a754d1cdd1
 # pip charset-normalizer @ https://files.pythonhosted.org/packages/98/69/5d8751b4b670d623aa7a47bef061d69c279e9f922f6705147983aa76c3ce/charset_normalizer-3.3.2-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl#sha256=b261ccdec7821281dade748d088bb6e9b69e6d15b30652b74cbbac25e280b796
 # pip cycler @ https://files.pythonhosted.org/packages/e7/05/c19819d5e3d95294a6f5947fb9b9629efb316b96de511b418c53d245aae6/cycler-0.12.1-py3-none-any.whl#sha256=85cef7cff222d8644161529808465972e51340599459b8ac3ccbac5a854e0d30
 # pip cython @ https://files.pythonhosted.org/packages/c1/a7/606c4414a46d589114bf4de7eebeea315aae68283de095dd3e949d9c96d8/Cython-3.0.8-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl#sha256=de892422582f5758bd8de187e98ac829330ec1007bc42c661f687792999988a7
@@ -39,7 +39,7 @@ https://repo.anaconda.com/pkgs/main/linux-64/pip-23.3.1-py39h06a4308_0.conda#685
 # pip joblib @ https://files.pythonhosted.org/packages/10/40/d551139c85db202f1f384ba8bcf96aca2f329440a844f924c8a0040b6d02/joblib-1.3.2-py3-none-any.whl#sha256=ef4331c65f239985f3f2220ecc87db222f08fd22097a3dd5698f693875f8cbb9
 # pip kiwisolver @ https://files.pythonhosted.org/packages/c0/a8/841594f11d0b88d8aeb26991bc4dac38baa909dc58d0c4262a4f7893bcbf/kiwisolver-1.4.5-cp39-cp39-manylinux_2_12_x86_64.manylinux2010_x86_64.whl#sha256=6c3bd3cde54cafb87d74d8db50b909705c62b17c2099b8f2e25b461882e544ff
 # pip lazy-loader @ https://files.pythonhosted.org/packages/a1/c3/65b3814e155836acacf720e5be3b5757130346670ac454fee29d3eda1381/lazy_loader-0.3-py3-none-any.whl#sha256=1e9e76ee8631e264c62ce10006718e80b2cfc74340d17d1031e0f84af7478554
-# pip markupsafe @ https://files.pythonhosted.org/packages/1a/3c/ca3094664ce3126145cc28b61bb37253d9f1614c9d8bbfa358ac7fc472c0/MarkupSafe-2.1.4-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl#sha256=7653fa39578957bc42e5ebc15cf4361d9e0ee4b702d7d5ec96cdac860953c5b4
+# pip markupsafe @ https://files.pythonhosted.org/packages/5f/5a/360da85076688755ea0cceb92472923086993e86b5613bbae9fbc14136b0/MarkupSafe-2.1.5-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl#sha256=17b950fccb810b3293638215058e432159d2b71005c74371d784862b7e4683f3
 # pip networkx @ https://files.pythonhosted.org/packages/d5/f0/8fbc882ca80cf077f1b246c0e3c3465f7f415439bdea6b899f6b19f61f70/networkx-3.2.1-py3-none-any.whl#sha256=f18c69adc97877c42332c170849c96cefa91881c99a7cb3e95b7c659ebdc1ec2
 # pip numpy @ https://files.pythonhosted.org/packages/ea/ee/7a93594b78d7834d14ff49e74ba79e3f26b85604a542a790db81b1dd2326/numpy-1.26.3-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl#sha256=b4d362e17bcb0011738c2d83e0a65ea8ce627057b2fdda37678f4374a382a137
 # pip packaging @ https://files.pythonhosted.org/packages/ec/1a/610693ac4ee14fcdf2d9bf3c493370e4f2ef7ae2e19217d7a237ff42367d/packaging-23.2-py3-none-any.whl#sha256=8c491190033a9af7e1d931d0b5dacc2ef47509b34dd0de67ed209b5203fc88c7
@@ -47,7 +47,7 @@ https://repo.anaconda.com/pkgs/main/linux-64/pip-23.3.1-py39h06a4308_0.conda#685
 # pip pluggy @ https://files.pythonhosted.org/packages/a5/5b/0cc789b59e8cc1bf288b38111d002d8c5917123194d45b29dcdac64723cc/pluggy-1.4.0-py3-none-any.whl#sha256=7db9f7b503d67d1c5b95f59773ebb58a8c1c288129a88665838012cfb07b8981
 # pip pygments @ https://files.pythonhosted.org/packages/97/9c/372fef8377a6e340b1704768d20daaded98bf13282b5327beb2e2fe2c7ef/pygments-2.17.2-py3-none-any.whl#sha256=b27c2826c47d0f3219f29554824c30c5e8945175d888647acd804ddd04af846c
 # pip pyparsing @ https://files.pythonhosted.org/packages/39/92/8486ede85fcc088f1b3dba4ce92dd29d126fd96b0008ea213167940a2475/pyparsing-3.1.1-py3-none-any.whl#sha256=32c7c0b711493c72ff18a981d24f28aaf9c1fb7ed5e9667c9e84e3db623bdbfb
-# pip pytz @ https://files.pythonhosted.org/packages/3b/dd/9b84302ba85ac6d3d3042d3e8698374838bde1c386b4adb1223d7a0efd4e/pytz-2023.4-py2.py3-none-any.whl#sha256=f90ef520d95e7c46951105338d918664ebfd6f1d995bd7d153127ce90efafa6a
+# pip pytz @ https://files.pythonhosted.org/packages/9c/3d/a121f284241f08268b21359bd425f7d4825cffc5ac5cd0e1b3d82ffd2b10/pytz-2024.1-py2.py3-none-any.whl#sha256=328171f4e3623139da4983451950b28e95ac706e13f3f2630a879749e7a8b319
 # pip six @ https://files.pythonhosted.org/packages/d9/5a/e7c31adbe875f2abbb91bd84cf2dc52d792b5a01506781dbcf25c91daf11/six-1.16.0-py2.py3-none-any.whl#sha256=8abb2f1d86890a2dfb989f9a77cfcfd3e47c2a354b01111771326f8aa26e0254
 # pip snowballstemmer @ https://files.pythonhosted.org/packages/ed/dc/c02e01294f7265e63a7315fe086dd1df7dacb9f840a804da846b96d01b96/snowballstemmer-2.2.0-py2.py3-none-any.whl#sha256=c8e1716e83cc398ae16824e5572ae04e0d9fc2c6b985fb0f900f5f0c96ecba1a
 # pip sphinxcontrib-applehelp @ https://files.pythonhosted.org/packages/56/89/fea3fbf6785b388e6cb8a1beaf62f96e80b37311bdeed6e133388a732426/sphinxcontrib_applehelp-1.0.8-py3-none-any.whl#sha256=cb61eb0ec1b61f349e5cc36b2028e9e7ca765be05e49641c97241274753067b4
