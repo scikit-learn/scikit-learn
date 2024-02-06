@@ -2,6 +2,19 @@
 
 .. currentmodule:: sklearn
 
+.. _release_notes_1_5:
+
+===========
+Version 1.5
+===========
+
+..
+  -- UNCOMMENT WHEN 1.5.0 IS RELEASED --
+  For a short description of the main highlights of the release, please refer to
+  :ref:`sphx_glr_auto_examples_release_highlights_plot_release_highlights_1_5_0.py`.
+
+.. include:: changelog_legend.inc
+
 .. _changes_1_5:
 
 Version 1.5.0
@@ -9,7 +22,15 @@ Version 1.5.0
 
 **In Development**
 
-.. include:: changelog_legend.inc
+Support for building with Meson
+-------------------------------
+
+Meson is now supported as a build backend, see :ref:`Building with Meson
+<building_with_meson>` for more details.
+
+:pr:`28040` by :user:`Loïc Estève <lesteve>`
+
+TODO Fill more details before the 1.5 release, when the Meson story has settled down.
 
 Changelog
 ---------
@@ -33,11 +54,23 @@ Changelog
   which returns the fitted transformers by name. :pr:`27990` by `Thomas Fan`_.
 
 :mod:`sklearn.dummy`
-.......................
+....................
 
 - |Enhancement| :class:`dummy.DummyClassifier` and :class:`dummy.DummyRegressor` now
   have the `n_features_in_` and `feature_names_in_` attributes after `fit`.
   :pr:`27937` by :user:`Marco vd Boom <tvdboom>`.
+
+:mod:`sklearn.ensemble`
+.......................
+
+- |Efficiency| Improves runtime of `predict` of
+  :class:`ensemble.HistGradientBoostingClassifier` by avoiding to call `predict_proba`.
+  :pr:`27844` by :user:`Christian Lorentzen <lorentzenchr>`.
+
+- |Efficiency| :class:`ensemble.HistGradientBoostingClassifier` and
+  :class:`ensemble.HistGradientBoostingRegressor` are now a tiny bit faster by
+  pre-sorting the data before finding the thresholds for binning.
+  :pr:`28102` by :user:`Christian Lorentzen <lorentzenchr>`.
 
 :mod:`sklearn.feature_extraction`
 .................................
@@ -51,13 +84,6 @@ Changelog
   the data type of the input matrix if it is `np.float64` or `np.float32`.
   :pr:`28136` by :user:`Guillaume Lemaitre <glemaitre>`.
 
-:mod:`sklearn.impute`
-.....................
-
-- |Enhancement| :class:`impute.SimpleImputer` now supports custom strategies
-  by passing a function in place of a strategy name.
-  :pr:`28053` by :user:`Mark Elliot <mark-thm>`.
-
 :mod:`sklearn.feature_selection`
 ................................
 
@@ -66,11 +92,19 @@ Changelog
   :pr:`28085` by :user:`Neto Menoci <netomenoci>` and
   :user:`Florin Andrei <FlorinAndrei>`.
 
+:mod:`sklearn.impute`
+.....................
+
+- |Enhancement| :class:`impute.SimpleImputer` now supports custom strategies
+  by passing a function in place of a strategy name.
+  :pr:`28053` by :user:`Mark Elliot <mark-thm>`.
+
 :mod:`sklearn.metrics`
 ......................
 
 - |Efficiency| Improve efficiency of functions :func:`~metrics.brier_score_loss`,
-  :func:`~metrics.calibration_curve`, :func:`~metrics.det_curve`, :func:`~metrics.precision_recall_curve`,
+  :func:`~metrics.calibration_curve`, :func:`~metrics.det_curve`,
+  :func:`~metrics.precision_recall_curve`,
   :func:`~metrics.roc_curve` when `pos_label` argument is specified.
   Also improve efficiency of methods `from_estimator`
   and `from_predictions` in :class:`~metrics.RocCurveDisplay`,
@@ -78,9 +112,20 @@ Changelog
   :class:`~calibration.CalibrationDisplay`.
   :pr:`28051` by :user:`Pierre de Fréminville <pidefrem>`.
 
+:mod:`sklearn.model_selection`
+..............................
 
-Code and Documentation Contributors
------------------------------------
+- |Enhancement| :term:`CV splitters <CV splitter>` that ignores the group parameter now
+  raises a warning when groups are passed in to :term:`split`. :pr:`28210` by
+
+:mod:`sklearn.utils`
+....................
+
+- |Enhancement| :func:`utils.metaestimators.available_if` now reraises the error from
+  the `check` function as the cause of the `AttributeError`. :pr:`28198` by
+  `Thomas Fan`_.
+
+.. rubric:: Code and documentation contributors
 
 Thanks to everyone who has contributed to the maintenance and improvement of
 the project since version 1.4, including:
