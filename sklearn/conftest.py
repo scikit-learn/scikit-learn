@@ -305,10 +305,10 @@ def print_changed_only_false():
 def pytest_sessionstart(session):
     if environ.get("SKLEARN_WARNINGS_AS_ERRORS", "0") != "0":
         # XXX: if sys.warnoptions is empty (i.e. PYTHONWARNINGS environment
-        # variable is not set) pytest adds its own filters for
-        # DeprecationWarning), see
+        # variable is not set), pytest adds its own filters for
+        # DeprecationWarning, see
         # https://github.com/pytest-dev/pytest/blob/404d31a942975c04d4a7d48e258260584930819f/src/_pytest/warnings.py#L45-L48
-        # This would overrides our warning filters modifications so we set it
-        # to a non-empty value
+        # This would overrides our warning filters modifications so we set
+        # sys.warnoptions to a non-empty value
         sys.warnoptions = "hack-to-avoid-pytest-overriding-warning-filters"
         turn_warnings_into_errors()
