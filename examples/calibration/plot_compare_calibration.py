@@ -29,7 +29,7 @@ models: :ref:`Logistic_regression`, :ref:`gaussian_naive_bayes`,
 # remaining 16 are uninformative (random numbers).
 #
 # Of the 100,000 samples, 100 will be used for model fitting and the remaining
-# for testing. Note that this split is quite unusual: the goal is to obtain a
+# for testing. Note that this split is quite unusual: the goal is to obtain
 # stable calibration curve estimates for models that are potentially prone to
 # overfitting. In practice, one should rather use cross-validation with more
 # balanced splits but this would make the code of this example more complicated
@@ -201,7 +201,7 @@ plt.show()
 #   with this dataset, which contains 2 features generated as random linear
 #   combinations of the informative features. These correlated features are
 #   effectively being 'counted twice', resulting in pushing the predicted
-#   probabilities towards 0 and 1 [3]_. Note however that changing the seed
+#   probabilities towards 0 and 1 [3]_. Note, however, that changing the seed
 #   used to generate the dataset can lead to widely varying results for the
 #   naive Bayes estimator.
 #
