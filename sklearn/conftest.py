@@ -322,21 +322,6 @@ def pytest_collection(session):
             ),
             category=DeprecationWarning,
         )
-        # warnings has been fixed from dateutil main but not released yet, see
-        # https://github.com/dateutil/dateutil/issues/1314
-        warnings.filterwarnings(
-            "ignore",
-            message="datetime.datetime.utcfromtimestamp",
-            category=DeprecationWarning,
-        )
-        # Python 3.12 warnings from joblib fixed in master but not released yet,
-        # see https://github.com/joblib/joblib/pull/1518
-        warnings.filterwarnings(
-            "ignore", message="ast.Num is deprecated", category=DeprecationWarning
-        )
-        warnings.filterwarnings(
-            "ignore", message="Attribute n is deprecated", category=DeprecationWarning
-        )
         # XXX: Easiest way to ignore pandas Pyarrow DeprecationWarning in the
         # short-term. See https://github.com/pandas-dev/pandas/issues/54466 for
         # more details.
