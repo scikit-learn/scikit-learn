@@ -1064,7 +1064,7 @@ class SGDClassifier(BaseSGDClassifier):
         Values must be in the range `(0.0, inf)`.
 
     power_t : float, default=0.5
-        The exponent for inverse scaling learning rate [default 0.5].
+        The exponent for inverse scaling learning rate.
         Values must be in the range `(-inf, inf)`.
 
     early_stopping : bool, default=False
@@ -2104,7 +2104,7 @@ class SGDOneClassSVM(BaseSGD, OutlierMixin):
         the default schedule 'optimal'.
 
     power_t : float, default=0.5
-        The exponent for inverse scaling learning rate [default 0.5].
+        The exponent for inverse scaling learning rate.
 
     warm_start : bool, default=False
         When set to True, reuse the solution of the previous call to fit as
