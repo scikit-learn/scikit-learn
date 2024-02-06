@@ -7,7 +7,7 @@ from sklearn.ensemble._bagging import _generate_indices
 
 def _calculate_pd_over_data(estimator, X, feature_indices, sample_weight=None):
     """Calculates partial dependence over the data distribution.
-    
+
     It returns a 1D or 2D numpy array of the same length as X.
     """
 
@@ -20,15 +20,15 @@ def _calculate_pd_over_data(estimator, X, feature_indices, sample_weight=None):
     n = X.shape[0]
     X_stacked = _safe_indexing(X, np.tile(np.arange(n), n_grid), axis=0)
     _safe_assign(
-        X_stacked, values = np.repeat(grid, n, axis=0), column_indexer=feature_indices
+        X_stacked, values=np.repeat(grid, n, axis=0), column_indexer=feature_indices
     )
 
     # Predict on stacked data
     if hasattr(estimator, "predict_proba"):
         preds = estimator.predict_proba(X_stacked)
-    else: 
+    else:
         preds = estimator.predict(X_stacked)
-    
+
     # Predictions are averaged by grid value, mapped to original row order, and centered
     averaged_predictions = np.array(
         [np.average(Z, axis=0, weights=sample_weight) for Z in np.split(preds, n_grid)]
@@ -39,26 +39,20 @@ def _calculate_pd_over_data(estimator, X, feature_indices, sample_weight=None):
 
 
 def hstatistics(
-        model, 
-        X,
-        *,
-        features=None, 
-        n_max=500, 
-        random_state=None, 
-        sample_weight=None
-    ):
+    model, X, *, features=None, n_max=500, random_state=None, sample_weight=None
+):
     """Friedman and Popescu's H-statistics of pairwise interaction strength.
 
-    For each feature pair, Friedman and Popescu's H-squared statistic [FRI]_ of 
+    For each feature pair, Friedman and Popescu's H-squared statistic [FRI]_ of
     interaction is calculated. It equals the proportion of effect variability
     of the two features unexplained by the main effects. Besides the "official"
     H-squared statistic, also the unnormalized statistic is returned. Its root
     is on the scale of the predictions and can directly compared between feature
     pairs.
 
-    The complexity of the function is of O(n^2 p^2), where n is the number of 
-    data rows and p is the number of features considered. 
-    The size of n is automatically controlled via `n_max=500`, while it is 
+    The complexity of the function is of O(n^2 p^2), where n is the number of
+    data rows and p is the number of features considered.
+    The size of n is automatically controlled via `n_max=500`, while it is
     your responsibility to pass only 2-5 *important* features or features of
     special interest.
 
@@ -73,7 +67,7 @@ def hstatistics(
     features : array-like of {int, str}, default=None
         List of feature names or column indices used to calculate pairwise statistics.
         The default, None, will use all column indices of X.
-    
+
     n_max : int, default=500
         The number of rows to draw without replacement from X (and `sample_weight`).
 
@@ -92,9 +86,9 @@ def hstatistics(
 
     References
     ----------
-    .. [FRI] :doi:`J. H. Friedman and B. E. Popescu, 
-            "Predictive Learning via Rule Ensembles", 
-            The Annals of Applied Statistics, 2(3), 916-954, 
+    .. [FRI] :doi:`J. H. Friedman and B. E. Popescu,
+            "Predictive Learning via Rule Ensembles",
+            The Annals of Applied Statistics, 2(3), 916-954,
             2008. <10.1214/07-AOAS148>`
 
     Examples
@@ -116,7 +110,7 @@ def hstatistics(
     >>> [(3, 2, 50.42733968603663, 0.043352605995576346),
     >>> (3, 8, 20.34764277579143, 0.015648706966531766),
     >>> (2, 8, 56.778288912326026, 0.025823266523399196)]
-    
+
     """
     # Usually, the data is too large and we need subsampling
     if X.shape[0] > n_max:
@@ -147,19 +141,19 @@ def hstatistics(
                 model, X=X, feature_indices=[ind], sample_weight=sample_weight
             )
         )
-    
+
     stats = []
     for i, j in itertools.combinations(range(len(feature_indices)), 2):
         pd_bivariate = _calculate_pd_over_data(
-            model, 
-            X=X, 
-            feature_indices=feature_indices[[i, j]], 
-            sample_weight=sample_weight
+            model,
+            X=X,
+            feature_indices=feature_indices[[i, j]],
+            sample_weight=sample_weight,
         )
         numerator = np.average(
-            (pd_bivariate - pd_univariate[i] - pd_univariate[j])**2, 
-            axis=0, 
-            weights=sample_weight
+            (pd_bivariate - pd_univariate[i] - pd_univariate[j]) ** 2,
+            axis=0,
+            weights=sample_weight,
         )
         denominator = np.average(pd_bivariate**2, axis=0, weights=sample_weight)
         stats.append((features[i], features[j], numerator, numerator / denominator))
