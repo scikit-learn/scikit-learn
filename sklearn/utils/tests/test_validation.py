@@ -657,11 +657,11 @@ def X_64bit(request):
 
     if request.param == "coo":
         if hasattr(X, "coords"):
-            # for scipy >= 1.13 .indices is a new attribute and is a tuple. The
+            # for scipy >= 1.13 .coords is a new attribute and is a tuple. The
             # .col and .row attributes do not seem to be able to change the
             # dtype, for more details see https://github.com/scipy/scipy/pull/18530/
-            # Also indices was renamed to coords in
-            # https://github.com/scipy/scipy/pull/20003
+            # and https://github.com/scipy/scipy/pull/20003 where .indices was
+            # renamed to .coords
             X.coords = tuple(v.astype("int64") for v in X.coords)
         else:
             # scipy < 1.13
