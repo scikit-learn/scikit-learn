@@ -138,13 +138,21 @@ def density(w):
 
     Parameters
     ----------
-    w : array-like
-        The sparse vector.
+    w : {ndarray, sparse matrix}
+        The input data can be numpy ndarray or a sparse matrix.
 
     Returns
     -------
     float
         The density of w, between 0 and 1.
+
+    Examples
+    --------
+    >>> from scipy import sparse
+    >>> from sklearn.utils.extmath import density
+    >>> X = sparse.random(10, 10, density=0.25, random_state=0)
+    >>> density(X)
+    0.25
     """
     if hasattr(w, "toarray"):
         d = float(w.nnz) / (w.shape[0] * w.shape[1])
@@ -168,6 +176,17 @@ def safe_sparse_dot(a, b, *, dense_output=False):
     -------
     dot_product : {ndarray, sparse matrix}
         Sparse if ``a`` and ``b`` are sparse and ``dense_output=False``.
+
+    Examples
+    --------
+    >>> from scipy.sparse import csr_matrix
+    >>> from sklearn.utils.extmath import safe_sparse_dot
+    >>> X = csr_matrix([[1, 2], [3, 4], [5, 6]])
+    >>> dot_product = safe_sparse_dot(X, X.T)
+    >>> dot_product.toarray()
+    array([[ 5, 11, 17],
+           [11, 25, 39],
+           [17, 39, 61]])
     """
     if a.ndim > 2 or b.ndim > 2:
         if sparse.issparse(a):
@@ -248,6 +267,16 @@ def randomized_range_finder(
     An implementation of a randomized algorithm for principal component
     analysis
     A. Szlam et al. 2014
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.utils.extmath import randomized_range_finder
+    >>> A = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
+    >>> randomized_range_finder(A, size=2, n_iter=2, random_state=42)
+    array([[-0.21...,  0.88...],
+           [-0.52...,  0.24...],
+           [-0.82..., -0.38...]])
     """
     xp, is_array_api_compliant = get_namespace(A)
     random_state = check_random_state(random_state)
@@ -1246,7 +1275,7 @@ def _nanaverage(a, weights=None):
     if weights is None:
         return np.nanmean(a)
 
-    weights = np.array(weights, copy=False)
+    weights = np.asarray(weights)
     a, weights = a[~mask], weights[~mask]
     try:
         return np.average(a, weights=weights)

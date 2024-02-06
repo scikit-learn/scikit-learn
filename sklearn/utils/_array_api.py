@@ -396,8 +396,9 @@ def get_namespace(*arrays):
     return namespace, is_array_api_compliant
 
 
-def _expit(X):
-    xp, _ = get_namespace(X)
+def _expit(X, xp=None):
+    if xp is None:
+        xp = get_namespace(X)
     if _is_numpy_namespace(xp):
         return xp.asarray(special.expit(numpy.asarray(X)))
 
@@ -464,10 +465,11 @@ def _weighted_sum(sample_score, sample_weight, normalize=False, xp=None):
         return float(xp.sum(sample_score))
 
 
-def _nanmin(X, axis=None):
+def _nanmin(X, axis=None, xp=None):
     # TODO: refactor once nan-aware reductions are standardized:
     # https://github.com/data-apis/array-api/issues/621
-    xp, _ = get_namespace(X)
+    if xp is None:
+        xp, _ = get_namespace(X)
     if _is_numpy_namespace(xp):
         return xp.asarray(numpy.nanmin(X, axis=axis))
 
@@ -481,10 +483,11 @@ def _nanmin(X, axis=None):
         return X
 
 
-def _nanmax(X, axis=None):
+def _nanmax(X, axis=None, xp=None):
     # TODO: refactor once nan-aware reductions are standardized:
     # https://github.com/data-apis/array-api/issues/621
-    xp, _ = get_namespace(X)
+    if xp is None:
+        xp, _ = get_namespace(X)
     if _is_numpy_namespace(xp):
         return xp.asarray(numpy.nanmax(X, axis=axis))
 
@@ -571,5 +574,5 @@ def _estimator_with_converted_arrays(estimator, converter):
 
 
 def _atol_for_type(dtype):
-    """Return the absolute tolerance for a given dtype."""
+    """Return the absolute tolerance for a given numpy dtype."""
     return numpy.finfo(dtype).eps * 100
