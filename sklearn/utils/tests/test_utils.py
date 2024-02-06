@@ -3,11 +3,13 @@ import timeit
 import warnings
 from copy import copy
 from itertools import chain
+from unittest import SkipTest
 
 import numpy as np
 import pytest
 
 from sklearn import config_context
+from sklearn.externals._packaging.version import parse as parse_version
 from sklearn.utils import (
     _approximate_mode,
     _determine_key_type,
@@ -461,6 +463,12 @@ def test_safe_indexing_pandas_no_settingwithcopy_warning():
     # DataFrame -> ensure it doesn't raise a warning if modified
     pd = pytest.importorskip("pandas")
 
+    pd_version = parse_version(pd.__version__)
+    pd_base_version = parse_version(pd_version.base_version)
+
+    if pd_base_version >= parse_version("3"):
+        raise SkipTest("SettingWithCopyWarning has been removed in pandas 3.0.0.dev")
+
     X = pd.DataFrame({"a": [1, 2, 3], "b": [3, 4, 5]})
     subset = _safe_indexing(X, [0, 1], axis=0)
     if hasattr(pd.errors, "SettingWithCopyWarning"):
@@ -473,6 +481,15 @@ def test_safe_indexing_pandas_no_settingwithcopy_warning():
         subset.iloc[0, 0] = 10
     # The original dataframe is unaffected by the assignment on the subset:
     assert X.iloc[0, 0] == 1
+
+
+@pytest.mark.parametrize("indices", [0, [0, 1], slice(0, 2), np.array([0, 1])])
+def test_safe_indexing_list_axis_1_unsupported(indices):
+    """Check that we raise a ValueError when axis=1 with input as list."""
+    X = [[1, 2], [4, 5], [7, 8]]
+    err_msg = "axis=1 is not supported for lists"
+    with pytest.raises(ValueError, match=err_msg):
+        _safe_indexing(X, indices, axis=1)
 
 
 @pytest.mark.parametrize(
