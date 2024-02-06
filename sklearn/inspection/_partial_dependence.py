@@ -551,7 +551,7 @@ def partial_dependence(
         for that feature. Setting a range of values for a feature overrides
         `grid_resolution` and `percentiles`.
 
-        .. versionadded:: 1.3
+        .. versionadded:: 1.5
 
     Returns
     -------
