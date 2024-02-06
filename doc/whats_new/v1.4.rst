@@ -66,6 +66,14 @@ Changes impacting all modules
   columns of the returned dataframe.
   :pr:`28262` by :user:`Guillaume Lemaitre <glemaitre>`.
 
+Metadata Routing
+----------------
+
+- |Fix| Fix :class:`multioutput.MultiOutputRegressor` and
+  :class:`multioutput.MultiOutputClassifier` to work with estimators that don't
+  consume any metadata when metadata routing is enabled.
+  :pr:`28240` by `Adrin Jalali`_.
+
 Changelog
 ---------
 
