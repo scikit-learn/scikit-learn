@@ -85,9 +85,9 @@ def print_routing(obj):
 # Consuming Estimator
 # -------------------
 # Here we demonstrate how an estimator can expose the required API to support
-# metadata routing as a consumer and how a meta-estimator can be upgraded to be
-# a router. Imagine a simple classifier accepting ``sample_weight`` as a
-# metadata on its ``fit`` and ``groups`` in its ``predict`` method:
+# metadata routing as a consumer. Imagine a simple classifier accepting
+# ``sample_weight`` as a metadata on its ``fit`` and ``groups`` in its
+# ``predict`` method:
 
 
 class ExampleClassifier(ClassifierMixin, BaseEstimator):
@@ -148,8 +148,9 @@ est.predict(X[:3, :], groups=my_groups)
 # %%
 # Routing Meta-Estimator
 # ----------------------
-# Now let's have a meta-estimator, which doesn't do much other than routing the
-# metadata.
+# Now we show how to prepare a meta-estimator to be a router. As a simplified
+# example, here is a meta-estimator, which doesn't do much other than routing
+# the metadata.
 
 
 class MetaClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
@@ -175,19 +176,18 @@ class MetaClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
         # internally called.
         request_router = get_routing_for_object(self)
         # Meta-estimators are responsible for validating the given metadata.
-        # `MetadataRouter.validate_metadata` maps the given metadata to the
-        # metadata required by the underlying estimator. `method` refers to the
-        # parent's method, i.e. `fit` in this example.
+        # `method` refers to the parent's method, i.e. `fit` in this example.
         request_router.validate_metadata(params=fit_params, method="fit")
-        # `MetadataRouter.route_params` organizes the metadata parameters based
-        # on the routing information defined by the MetadataRouter. The output
-        # of type `Bunch` has a key for each consuming object and those hold
-        # keys for their consuming methods, which then contain key for the
-        # metadata which should be routed to them.
+        # `MetadataRouter.route_params` maps the given metadata to the metadata
+        # required by the underlying estimator based on the routing information
+        # defined by the MetadataRouter. The output of type `Bunch` has a key
+        # for each consuming object and those hold keys for their consuming
+        # methods, which then contain key for the metadata which should be
+        # routed to them.
         routed_params = request_router.route_params(params=fit_params, caller="fit")
 
-        # For demonstration purpose, only one sub-estimator is fitted and its
-        # classes are attributed to the meta-estimator.
+        # A sub-estimator is fitted and its classes are attributed to the
+        # meta-estimator.
         self.estimator_ = clone(self.estimator).fit(X, y, **routed_params.estimator.fit)
         self.classes_ = self.estimator_.classes_
         return self
@@ -687,6 +687,11 @@ with warnings.catch_warnings(record=True) as record:
     MetaRegressor(estimator=ExampleRegressor()).fit(X, y, sample_weight=my_weights)
 for w in record:
     print(w.message)
+
+# %%
+# At the end we disable the configuration flag for metadata routing:
+
+set_config(enable_metadata_routing=False)
 
 # %%
 # Third Party Development and scikit-learn Dependency
