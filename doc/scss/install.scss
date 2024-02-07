@@ -1,87 +1,46 @@
 /**
- * Styling for the installation page, see `install.rst`. It refers to the following
- * pytorch page: https://pytorch.org/get-started/locally/, subject to modifications.
- * This style sheet should be included only for the install page.
+ * Styling for the installation page. This style sheet should be included only for the
+ * install page.
  */
 
-/* Installation options grid */
+.sd-tab-set {
+  .sd-tab-content {
+    box-shadow: none !important;
+    padding-bottom: 0;
 
-div.sk-install-options-grid {
-  width: 95%;
-  margin: 1.15rem auto;
-
-  div.headings {
-    @media screen and (max-width: 768.02px) {
-      display: none; // hide on mobile
+    > p:first-child {
+      margin-top: 1rem !important;
     }
   }
 
-  div.title-block {
-    position: relative;
-    margin: 0.0625rem;
-    padding-left: 1rem;
-    height: 2.5rem;
-    font-size: 1rem;
-    font-weight: bold;
-    color: var(--pst-color-text-base);
-    line-height: 1.25rem;
-    display: flex;
-    align-items: center;
-
-    &:before {
-      display: block;
-      content: ".";
-      color: transparent;
-      border-left: 2px solid var(--pst-color-text-base);
-      height: 60%;
-      left: 0;
-      position: absolute;
-    }
-
-    &.mobile-heading {
-      @media screen and (min-width: 768px) {
-        display: none; // hide on desktop
-      }
-    }
-  }
-
-  div.block {
-    margin-bottom: 0.0625rem;
-    height: 2.5rem;
-    display: flex;
-    align-items: center;
-  }
-
-  div.option {
-    color: var(--pst-color-on-surface);
+  > label.sd-tab-label {
+    border: none !important;
+    padding: 0.3rem 0;
+    margin: 0 0.5%;
+    text-align: center;
+    font-weight: 400;
+    color: var(--pst-color-on-surface) !important;
     background-color: var(--pst-color-surface);
-    border: 2px solid var(--pst-color-background);
-    border-radius: 5px;
-    cursor: pointer;
+    border-radius: 0.5rem;
 
-    &.selected {
-      html[data-theme="light"] & {
-        background-color: var(--sk-cyan-tint-3);
-      }
+    &.tab-6 {
+      width: calc((100% / 2) - 1%) !important;
+    }
 
-      html[data-theme="dark"] & {
-        background-color: var(--sk-cyan-shades-3);
-      }
+    &.tab-4 {
+      width: calc((100% / 3) - 1%) !important;
     }
   }
-}
 
-/* Instruction block */
+  > input:checked + label.sd-tab-label {
+    font-weight: 600;
 
-div#skInstallInstructions {
-  &[data-os="windows"] pre.sk-install-prompt > span:before {
-    content: "C:\\> ";
-  }
+    html[data-theme="light"] & {
+      background-color: var(--sk-cyan-tint-6);
+    }
 
-  &[data-os="linux"],
-  &[data-os="macos"] {
-    pre.sk-install-prompt > span:before {
-      content: "$ ";
+    html[data-theme="dark"] & {
+      background-color: var(--sk-cyan-shades-3);
     }
   }
 }
