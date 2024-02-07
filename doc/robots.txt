@@ -1,0 +1,2 @@
+User-agent: *
+Disallow: /_pst_preview/
