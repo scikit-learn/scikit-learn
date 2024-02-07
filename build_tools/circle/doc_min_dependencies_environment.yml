@@ -31,7 +31,6 @@ dependencies:
   - polars=0.19.12  # min
   - pooch
   - sphinx-remove-toctrees=0.0.3  # min
-  - sphinx-design=0.5.0  # min
   - pydata-sphinx-theme=0.15.2  # min
   - pip
   - pip:

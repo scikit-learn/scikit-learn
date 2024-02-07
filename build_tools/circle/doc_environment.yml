@@ -32,7 +32,6 @@ dependencies:
   - pooch
   - sphinxext-opengraph
   - sphinx-remove-toctrees
-  - sphinx-design
   - pydata-sphinx-theme
   - pip
   - pip:

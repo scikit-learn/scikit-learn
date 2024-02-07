@@ -1,46 +1,31 @@
 /**
- * Styling for the installation page. This style sheet should be included only for the
- * install page.
+ * Styling for the installation page, including overriding some default styling of
+ * sphinx-design. This style sheet should be included only for the install page.
  */
 
 .sd-tab-set {
   .sd-tab-content {
-    box-shadow: none !important;
-    padding-bottom: 0;
+    box-shadow: 0 -0.0625rem var(--pst-color-border);
+    padding: 0.5rem 0 0 0;
 
     > p:first-child {
-      margin-top: 1rem !important;
+      margin-top: 1.25rem !important;
     }
   }
 
   > label.sd-tab-label {
-    border: none !important;
-    padding: 0.3rem 0;
-    margin: 0 0.5%;
+    border-top: none !important;
+    padding-top: 0;
+    padding-bottom: 0.1rem;
+    margin: 0;
     text-align: center;
-    font-weight: 400;
-    color: var(--pst-color-on-surface) !important;
-    background-color: var(--pst-color-surface);
-    border-radius: 0.5rem;
 
     &.tab-6 {
-      width: calc((100% / 2) - 1%) !important;
+      width: 50% !important;
     }
 
     &.tab-4 {
-      width: calc((100% / 3) - 1%) !important;
-    }
-  }
-
-  > input:checked + label.sd-tab-label {
-    font-weight: 600;
-
-    html[data-theme="light"] & {
-      background-color: var(--sk-cyan-tint-6);
-    }
-
-    html[data-theme="dark"] & {
-      background-color: var(--sk-cyan-shades-3);
+      width: calc(100% / 3) !important;
     }
   }
 }
