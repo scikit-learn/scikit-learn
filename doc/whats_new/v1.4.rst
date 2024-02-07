@@ -27,6 +27,10 @@ Metadata Routing
   inside another meta-estimator.
   :pr:`28188` by `Adrin Jalali`_.
 
+- |Fix| No error is raised when no metadata is passed to a metaestimator that
+  includes a sub-estimator which doesn't support metadata routing.
+  :pr:`28256` by `Adrin Jalali`_.
+
 DataFrame Support
 -----------------
 
@@ -61,6 +65,14 @@ Changes impacting all modules
   `transform` set to `pandas` or `polars`. The bug could lead to wrong naming of the
   columns of the returned dataframe.
   :pr:`28262` by :user:`Guillaume Lemaitre <glemaitre>`.
+
+Metadata Routing
+----------------
+
+- |Fix| Fix :class:`multioutput.MultiOutputRegressor` and
+  :class:`multioutput.MultiOutputClassifier` to work with estimators that don't
+  consume any metadata when metadata routing is enabled.
+  :pr:`28240` by `Adrin Jalali`_.
 
 Changelog
 ---------
@@ -130,6 +142,15 @@ Changelog
 - |Fix| :func:`utils._safe_indexing` now raises a `ValueError` when `X` is a Python list
   and `axis=1`, as documented in the docstring.
   :pr:`28222` by :user:`Guillaume Lemaitre <glemaitre>`.
+
+
+:mod:`sklearn.preprocessing`
+............................
+
+- |Fix| :class:`preprocessing.TargetEncoder` no longer fails when
+  `target_type="continuous"` and the input is read-only. In particular, it now
+  works with pandas copy-on-write mode enabled.
+  :pr:`28233` by :user:`John Hopfensperger <s-banach>`.
 
 .. _changes_1_4:
 
