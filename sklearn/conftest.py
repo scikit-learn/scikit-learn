@@ -281,12 +281,10 @@ def pytest_configure(config):
         config.pluginmanager.register(random_seed)
 
     if environ.get("SKLEARN_WARNINGS_AS_ERRORS", "0") != "0":
-        # This seems like the only way to programatically change the config
+        # This seems like the only way to programmatically change the config
         # filterwarnings. This was suggested in
         # https://github.com/pytest-dev/pytest/issues/3311#issuecomment-373177592
-        print(config.getini("filterwarnings"))
         config._inicache["filterwarnings"] += get_pytest_filterwarning_str()
-        print(config.getini("filterwarnings"))
 
 
 @pytest.fixture
