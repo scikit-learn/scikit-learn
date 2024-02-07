@@ -4,8 +4,8 @@ import itertools
 
 import numpy as np
 
-from ..utils import _safe_indexing, _safe_assign, _get_column_indices
 from ..ensemble._bagging import _generate_indices
+from ..utils import _get_column_indices, _safe_assign, _safe_indexing
 
 
 def _calculate_pd_over_data(estimator, X, feature_indices, sample_weight=None):
