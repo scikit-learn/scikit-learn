@@ -560,8 +560,7 @@ class SimpleImputer(_BaseImputer):
         # we use min type for the fill_value to avoid changing the input dtype
         # if not necessary
         new_dtype = np.promote_types(X.dtype, self._fill_value_min_type)
-        if new_dtype != X.dtype:
-            X = X.astype(new_dtype, copy=self.copy)
+        X = X.astype(new_dtype, copy=False)
         statistics = self.statistics_
 
         if X.shape[1] != statistics.shape[0]:

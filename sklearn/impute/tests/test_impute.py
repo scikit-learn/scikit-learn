@@ -1747,7 +1747,7 @@ def test_imputation_custom(csc_container):
 
 
 def test_type_promotion_fill_value():
-    # Check that the type infered during fit is the right one
+    # Check that the type inferred during fit is the right one
     # given the input type and the fill_value type.
 
     # check that int64 is promoted to float64 when fill_value is float
