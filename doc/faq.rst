@@ -100,31 +100,37 @@ See :ref:`adding_graphical_models`.
 Will you add GPU support?
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Since 2023, a limited but growing :ref:`list of scikit-learn estimators
-<array_api_supported>` can already run on GPUs if the input data is provided
-as a PyTorch or CuPy array and if scikit-learn has been configured to accept
-such inputs as explained in :ref:`array_api`.
+Adding GPU support by default would introduce heavy harware-specific software
+dependencies which make it both harder for the average user to install
+scikit-learn and harder for the developers to maintain the code.
+
+However, since 2023, a limited but growing :ref:`list of scikit-learn
+estimators <array_api_supported>` can already run on GPUs if the input data is
+provided as a PyTorch or CuPy array and if scikit-learn has been configured to
+accept such inputs as explained in :ref:`array_api`. This Array API support
+allows scikit-learn to run on GPUs without introducing heavy and
+hardware-specific software dependencies to the main package.
 
 Most estimators that rely on NumPy for their computationally intensive operations
 can be considered for Array API support and therefore GPU support.
 
-However, not all scikit-learn estimators are amenable to running on GPUs via
-the Array API for fundamental algorithmic reasons. For instance, tree-based
-models currently implemented with Cython in scikit-learn are fundamentally not
-array-based algorithms. Other algorithms such as k means or k nearest neighbors
-rely on array-based algorithms but cannot be efficiently implemented without
-fusing consecutive operations to avoid introducing performance killing memory
-access to unnecessarily large intermediate arrays. Fusing such operations
-cannot be expressed via the Array API for the foreseeable future. Adding
-efficient GPU support to these estimators would require designing and adopting
-a more flexible extension system for scikit-learn. This possibility is being
+However, not all scikit-learn estimators are amenable to efficiently running
+on GPUs via the Array API for fundamental algorithmic reasons. For instance,
+tree-based models currently implemented with Cython in scikit-learn are
+fundamentally not array-based algorithms. Other algorithms such as k means or k
+nearest neighbors rely on array-based algorithms but are also implemented in
+Cython in order to manually interleave consecutive array operations to avoid
+introducing performance killing memory access to large intermediate arrays:
+this low-level algorithmic rewrite is called "kernel fusion" and cannot be
+expressed via the Array API for the foreseeable future.
+
+Adding efficient GPU support to estimators that cannot be efficiently
+implemented with the Array API would require designing and adopting a more
+flexible extension system for scikit-learn. This possibility is being
 considered in the following GitHub issue (under discussion):
 
 - https://github.com/scikit-learn/scikit-learn/issues/22438
 
-The `scikit-learn` package itself will not add any mandatory
-GPU-specific software dependencies to keep the package lightweight and easy to
-install.
 
 Why do categorical variables need preprocessing in scikit-learn, compared to other tools?
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
