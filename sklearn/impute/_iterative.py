@@ -354,7 +354,7 @@ class IterativeImputer(_BaseImputer):
         neighbor_feat_idx,
         estimator=None,
         fit_mode=True,
-        fit_params=None,
+        params=None,
     ):
         """Impute a single feature from the others provided.
 
@@ -386,7 +386,7 @@ class IterativeImputer(_BaseImputer):
         fit_mode : boolean, default=True
             Whether to fit and predict with the estimator or just predict.
 
-        fit_params : dict
+        params : dict
             Additional params routed to the individual estimator.
 
         Returns
@@ -419,7 +419,7 @@ class IterativeImputer(_BaseImputer):
                 ~missing_row_mask,
                 axis=0,
             )
-            estimator.fit(X_train, y_train, **fit_params)
+            estimator.fit(X_train, y_train, **params)
 
         # if no missing values, don't predict
         if np.sum(missing_row_mask) == 0:
@@ -694,7 +694,7 @@ class IterativeImputer(_BaseImputer):
         # IterativeImputer.estimator is not validated yet
         prefer_skip_nested_validation=False
     )
-    def fit_transform(self, X, y=None, **fit_params):
+    def fit_transform(self, X, y=None, **params):
         """Fit the imputer on `X` and return the transformed `X`.
 
         Parameters
@@ -706,7 +706,7 @@ class IterativeImputer(_BaseImputer):
         y : Ignored
             Not used, present for API consistency by convention.
 
-        **fit_params : dict
+        **params : dict
             Parameters routed to the `fit` method of the sub-estimator via the
             metadata routing API.
 
@@ -721,12 +721,12 @@ class IterativeImputer(_BaseImputer):
         Xt : array-like, shape (n_samples, n_features)
             The imputed input data.
         """
-        _raise_for_params(fit_params, self, "fit")
+        _raise_for_params(params, self, "fit")
 
         routed_params = process_routing(
             self,
             "fit",
-            **fit_params,
+            **params,
         )
 
         self.random_state_ = getattr(
@@ -797,7 +797,7 @@ class IterativeImputer(_BaseImputer):
                     neighbor_feat_idx,
                     estimator=None,
                     fit_mode=True,
-                    fit_params=routed_params.estimator.fit,
+                    params=routed_params.estimator.fit,
                 )
                 estimator_triplet = _ImputerTriplet(
                     feat_idx, neighbor_feat_idx, estimator
