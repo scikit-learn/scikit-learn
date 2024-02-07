@@ -8,7 +8,6 @@ dependencies:
   - numpy=1.21
   - blas[build=openblas]
   - scipy=1.7
-  - cython=0.29.33  # min
   - joblib
   - threadpoolctl=2.2.0
   - matplotlib=3.3.4  # min
@@ -20,3 +19,6 @@ dependencies:
   - pytest-cov
   - coverage
   - ccache
+  - pip
+  - pip:
+    - cython==3.0.8  # min
