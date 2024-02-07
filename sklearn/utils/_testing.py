@@ -1146,6 +1146,36 @@ def _get_warnings_filters_info_list():
             message=r"\s*Pyarrow will become a required dependency",
             category=DeprecationWarning,
         ),
+        # warnings has been fixed from dateutil main but not released yet, see
+        # https://github.com/dateutil/dateutil/issues/1314
+        WarningInfo(
+            "ignore",
+            message="datetime.datetime.utcfromtimestamp",
+            category=DeprecationWarning,
+        ),
+        # Python 3.12 warnings from joblib fixed in master but not released yet,
+        # see https://github.com/joblib/joblib/pull/1518
+        WarningInfo(
+            "ignore", message="ast.Num is deprecated", category=DeprecationWarning
+        ),
+        WarningInfo(
+            "ignore", message="Attribute n is deprecated", category=DeprecationWarning
+        ),
+        # Python 3.12 warnings from sphinx-gallery fixed in master but not
+        # released yet, see
+        # https://github.com/sphinx-gallery/sphinx-gallery/pull/1242
+        WarningInfo(
+            "ignore", message="ast.Str is deprecated", category=DeprecationWarning
+        ),
+        WarningInfo(
+            "ignore", message="Attribute s is deprecated", category=DeprecationWarning
+        ),
+        # Python 3.12 warning about tarfile.extractall filter='data' argument
+        WarningInfo(
+            "ignore",
+            message="Python 3.14 will, by default, filter extracted tar archives",
+            category=DeprecationWarning,
+        ),
     ]
 
 
