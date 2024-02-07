@@ -31,7 +31,10 @@ dependencies:
   - polars
   - pooch
   - sphinxext-opengraph
+  - sphinx-remove-toctrees
+  - pydata-sphinx-theme
   - pip
   - pip:
     - jupyterlite-sphinx
     - jupyterlite-pyodide-kernel
+    - sphinxcontrib-sass

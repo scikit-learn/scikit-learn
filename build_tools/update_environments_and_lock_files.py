@@ -299,8 +299,13 @@ build_metadata_list = [
             "plotly",
             "polars",
             "pooch",
+            "sphinx-remove-toctrees",
+            "pydata-sphinx-theme",
         ],
-        "pip_dependencies": ["sphinxext-opengraph"],
+        "pip_dependencies": [
+            "sphinxext-opengraph",
+            "sphinxcontrib-sass",
+        ],
         "package_constraints": {
             "python": "3.9",
             "numpy": "min",
@@ -317,6 +322,9 @@ build_metadata_list = [
             "sphinxext-opengraph": "min",
             "plotly": "min",
             "polars": "min",
+            "sphinxcontrib-sass": "min",
+            "sphinx-remove-toctrees": "min",
+            "pydata-sphinx-theme": "min",
         },
     },
     {
@@ -340,8 +348,14 @@ build_metadata_list = [
             "polars",
             "pooch",
             "sphinxext-opengraph",
+            "sphinx-remove-toctrees",
+            "pydata-sphinx-theme",
         ],
-        "pip_dependencies": ["jupyterlite-sphinx", "jupyterlite-pyodide-kernel"],
+        "pip_dependencies": [
+            "jupyterlite-sphinx",
+            "jupyterlite-pyodide-kernel",
+            "sphinxcontrib-sass",
+        ],
         "package_constraints": {
             "python": "3.9",
         },

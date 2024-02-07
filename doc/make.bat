@@ -29,8 +29,23 @@ if "%1" == "help" (
 )
 
 if "%1" == "clean" (
-	for /d %%i in (%BUILDDIR%\*) do rmdir /q /s %%i
-	del /q /s %BUILDDIR%\*
+	if exist %BUILDDIR%\ (
+		for /d %%i in (%BUILDDIR%\*) do rmdir /q /s "%%i"
+		del /q /s %BUILDDIR%\*
+	)
+	if exist auto_examples\ (
+		rmdir /q /s auto_examples
+	)
+	if exist generated\ (
+		for /d %%i in (generated\*) do rmdir /q /s "%%i"
+		del /q /s generated\*
+	)
+	if exist modules\generated\ (
+		rmdir /q /s modules\generated
+	)
+	if exist css\styles\ (
+		rmdir /q /s css\styles
+	)
 	goto end
 )
 

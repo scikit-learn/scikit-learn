@@ -1,0 +1,90 @@
+/**
+ * This is a general styling sheet.
+ * It should be used for customizations that affect multiple pages.
+ */
+
+/* Global */
+
+code.literal {
+  border: 0;
+}
+
+/* Primary sidebar */
+
+.bd-sidebar-primary {
+  width: 22.5%;
+  min-width: 16rem;
+
+  // The version switcher button in the sidebar is ill-styled
+  button.version-switcher__button {
+    margin-bottom: unset;
+    margin-left: 0.3rem;
+    font-size: 1rem;
+  }
+
+  // The section navigation part is to close to the right boundary (originally an even
+  // larger negative right margin was used)
+  nav.bd-links {
+    margin-right: -0.5rem;
+  }
+}
+
+/* Article content */
+
+.bd-article {
+  h1 {
+    font-weight: 500;
+    margin-bottom: 2rem;
+  }
+
+  h2 {
+    font-weight: 500;
+    margin-bottom: 1.5rem;
+  }
+
+  // Avoid changing the aspect ratio of images; add some padding so that at least
+  // there is some space between image and background in dark mode
+  img {
+    height: unset !important;
+    padding: 1%;
+  }
+
+  // Override the pydata-sphinx-theme styling of .. topic:: directives
+  div.topic,
+  aside.topic {
+    background-color: transparent;
+    border: none;
+    padding: 0;
+    box-shadow: none !important;
+
+    p {
+      color: var(--pst-color-text-base) !important;
+    }
+
+    ul.simple {
+      padding-left: 2rem;
+    }
+  }
+}
+
+/* scikit-learn buttons */
+
+a.btn {
+  &.sk-btn-orange {
+    background-color: var(--sk-orange-tint-1);
+    color: black !important;
+
+    &:hover {
+      background-color: var(--sk-orange-tint-3);
+    }
+  }
+
+  &.sk-btn-cyan {
+    background-color: var(--sk-cyan-shades-2);
+    color: white !important;
+
+    &:hover {
+      background-color: var(--sk-cyan-shades-1);
+    }
+  }
+}
