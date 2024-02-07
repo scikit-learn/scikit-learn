@@ -149,6 +149,15 @@ div.clearer {
 
 /* details / summary */
 
+/* Enables section links to be visible when anchor-linked */
+div.sk-page-content details::before {
+  display: block;
+  height: 52px;
+  margin-top: -52px;
+  visibility: hidden;
+  content: "";
+}
+
 div.sk-page-content details {
     margin: 4ex 0pt;
 }
@@ -199,6 +208,10 @@ div.sk-page-content summary .tooltiptext::after {
 }
 
 div.sk-page-content summary:hover .tooltiptext {
+  visibility: visible;
+}
+
+div.sk-page-content summary:hover .headerlink {
   visibility: visible;
 }
 
@@ -661,11 +674,17 @@ div.sk-sidebar-global-toc ul ul {
 div.sk-page-content h1 {
   background-color: #cde8ef;
   padding: 0.5rem;
-  margin-top: calc(max(2.5rem, 1vh));
+  margin-top: calc(max(1rem, 1vh));
   border-radius: 0 1rem;
   text-align: center;
   font-size: 2rem;
   word-wrap: break-word;
+}
+
+/* General sibling selector: does not apply to first h1, to avoid gap in
+ * top of page */
+div.sk-page-content ~ h1 {
+    margin-top: calc(max(2.5rem, 1vh));
 }
 
 div.sk-page-content h2 {
@@ -759,7 +778,7 @@ span.descclassname {
 dl.field-list {
   display: flex;
   flex-wrap: wrap;
-  overflow-x: scroll;
+  overflow-x: auto;
 }
 
 dl.field-list > dt {
@@ -983,7 +1002,7 @@ table.docutils {
   line-height: 1rem;
   max-width: 100%;
   display: block;
-  overflow-x: scroll;
+  overflow-x: auto;
 }
 
 table.docutils p {
@@ -1198,8 +1217,11 @@ div.install > input:checked + label {
 .sk-expandable {
   display: none;
 }
+.sk-expandable + .copybtn {
+  display: none;
+}
 
-div.highlight span.sk-expandable:before {
+pre.sk-expandable > span:before {
   content: "$ ";
 }
 
@@ -1208,13 +1230,22 @@ div.highlight span.sk-expandable:before {
 #quickstart-conda:checked  ~* [data-packager="conda"] {
   display: block;
 }
+#quickstart-conda:checked  ~* [data-packager="conda"] + .copybtn {
+  display: block;
+}
 
 #quickstart-conda:checked ~ #quickstart-venv ~ label[for="quickstart-venv"] {
+  display: none;
+}
+#quickstart-conda:checked ~ #quickstart-venv ~ label[for="quickstart-venv"] + .copybtn {
   display: none;
 }
 
 /* for pip */
 #quickstart-pip:checked ~* [data-packager="pip"] {
+  display: block;
+}
+#quickstart-pip:checked ~* [data-packager="pip"] + .copybtn {
   display: block;
 }
 
@@ -1225,18 +1256,35 @@ div.highlight span.sk-expandable:before {
 #quickstart-win:not(:checked) ~* [data-os="windows"] {
   display: none;
 }
+#quickstart-win:not(:checked) ~* [data-os="windows"] + .copybtn {
+  display: none;
+}
+
 #quickstart-lin:not(:checked) ~* [data-os="linux"] {
   display: none;
 }
+#quickstart-lin:not(:checked) ~* [data-os="linux"] + .copybtn {
+  display: none;
+}
+
 #quickstart-mac:not(:checked) ~* [data-os="mac"] {
+  display: none;
+}
+#quickstart-mac:not(:checked) ~* [data-os="mac"] + .copybtn {
   display: none;
 }
 
 #quickstart-venv:not(:checked) ~* [data-venv=""] {
   display: none;
 }
+#quickstart-venv:not(:checked) ~* [data-venv=""] + .copybtn {
+  display: none;
+}
 
 #quickstart-venv:checked ~* [data-venv="no"] {
+  display: none;
+}
+#quickstart-venv:checked ~* [data-venv="no"] + .copybtn {
   display: none;
 }
 

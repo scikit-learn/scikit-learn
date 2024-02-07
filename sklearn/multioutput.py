@@ -162,11 +162,12 @@ class _MultiOutputEstimator(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta
             )
 
         if _routing_enabled():
+            if sample_weight is not None:
+                partial_fit_params["sample_weight"] = sample_weight
             routed_params = process_routing(
-                obj=self,
-                method="partial_fit",
-                other_params=partial_fit_params,
-                sample_weight=sample_weight,
+                self,
+                "partial_fit",
+                **partial_fit_params,
             )
         else:
             if sample_weight is not None and not has_fit_parameter(
@@ -248,11 +249,12 @@ class _MultiOutputEstimator(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta
             )
 
         if _routing_enabled():
+            if sample_weight is not None:
+                fit_params["sample_weight"] = sample_weight
             routed_params = process_routing(
-                obj=self,
-                method="fit",
-                other_params=fit_params,
-                sample_weight=sample_weight,
+                self,
+                "fit",
+                **fit_params,
             )
         else:
             if sample_weight is not None and not has_fit_parameter(
@@ -706,9 +708,7 @@ class _BaseChain(BaseEstimator, metaclass=ABCMeta):
         del Y_pred_chain
 
         if _routing_enabled():
-            routed_params = process_routing(
-                obj=self, method="fit", other_params=fit_params
-            )
+            routed_params = process_routing(self, "fit", **fit_params)
         else:
             routed_params = Bunch(estimator=Bunch(fit=fit_params))
 
@@ -778,6 +778,11 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
     Each model makes a prediction in the order specified by the chain using
     all of the available features provided to the model plus the predictions
     of models that are earlier in the chain.
+
+    For an example of how to use ``ClassifierChain`` and benefit from its
+    ensemble, see
+    :ref:`ClassifierChain on a yeast dataset
+    <sphx_glr_auto_examples_multioutput_plot_classifier_chain_yeast.py>` example.
 
     Read more in the :ref:`User Guide <classifierchain>`.
 
@@ -885,7 +890,7 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
     >>> chain.predict_proba(X_test)
     array([[0.8387..., 0.9431..., 0.4576...],
            [0.8878..., 0.3684..., 0.2640...],
-           [0.0321..., 0.9935..., 0.0625...]])
+           [0.0321..., 0.9935..., 0.0626...]])
     """
 
     @_fit_context(
@@ -919,9 +924,7 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
         _raise_for_params(fit_params, self, "fit")
 
         super().fit(X, Y, **fit_params)
-        self.classes_ = [
-            estimator.classes_ for chain_idx, estimator in enumerate(self.estimators_)
-        ]
+        self.classes_ = [estimator.classes_ for estimator in self.estimators_]
         return self
 
     @_available_if_base_estimator_has("predict_proba")
@@ -954,6 +957,21 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
         Y_prob = Y_prob_chain[:, inv_order]
 
         return Y_prob
+
+    def predict_log_proba(self, X):
+        """Predict logarithm of probability estimates.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+            The input data.
+
+        Returns
+        -------
+        Y_log_prob : array-like of shape (n_samples, n_classes)
+            The predicted logarithm of the probabilities.
+        """
+        return np.log(self.predict_proba(X))
 
     @_available_if_base_estimator_has("decision_function")
     def decision_function(self, X):

@@ -16,10 +16,6 @@ cdef enum:
     # 32-bit signed integers (i.e. 2^31 - 1).
     RAND_R_MAX = 2147483647
 
-cpdef sample_without_replacement(cnp.int_t n_population,
-                                 cnp.int_t n_samples,
-                                 method=*,
-                                 random_state=*)
 
 # rand_r replacement using a 32bit XorShift generator
 # See http://www.jstatsoft.org/v08/i14/paper for details

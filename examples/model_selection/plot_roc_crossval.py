@@ -122,12 +122,9 @@ ax.fill_between(
 )
 
 ax.set(
-    xlim=[-0.05, 1.05],
-    ylim=[-0.05, 1.05],
     xlabel="False Positive Rate",
     ylabel="True Positive Rate",
     title=f"Mean ROC curve with variability\n(Positive label '{target_names[1]}')",
 )
-ax.axis("square")
 ax.legend(loc="lower right")
 plt.show()

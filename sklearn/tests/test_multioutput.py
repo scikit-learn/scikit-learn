@@ -2,7 +2,6 @@ import re
 
 import numpy as np
 import pytest
-import scipy.sparse as sp
 from joblib import cpu_count
 
 from sklearn import datasets
@@ -48,6 +47,14 @@ from sklearn.utils._testing import (
     assert_almost_equal,
     assert_array_almost_equal,
     assert_array_equal,
+)
+from sklearn.utils.fixes import (
+    BSR_CONTAINERS,
+    COO_CONTAINERS,
+    CSC_CONTAINERS,
+    CSR_CONTAINERS,
+    DOK_CONTAINERS,
+    LIL_CONTAINERS,
 )
 
 
@@ -101,25 +108,29 @@ def test_multi_target_regression_one_target():
         rgr.fit(X, y)
 
 
-def test_multi_target_sparse_regression():
+@pytest.mark.parametrize(
+    "sparse_container",
+    CSR_CONTAINERS
+    + CSC_CONTAINERS
+    + COO_CONTAINERS
+    + LIL_CONTAINERS
+    + DOK_CONTAINERS
+    + BSR_CONTAINERS,
+)
+def test_multi_target_sparse_regression(sparse_container):
     X, y = datasets.make_regression(n_targets=3, random_state=0)
     X_train, y_train = X[:50], y[:50]
     X_test = X[50:]
 
-    for sparse in [
-        sp.csr_matrix,
-        sp.csc_matrix,
-        sp.coo_matrix,
-        sp.dok_matrix,
-        sp.lil_matrix,
-    ]:
-        rgr = MultiOutputRegressor(Lasso(random_state=0))
-        rgr_sparse = MultiOutputRegressor(Lasso(random_state=0))
+    rgr = MultiOutputRegressor(Lasso(random_state=0))
+    rgr_sparse = MultiOutputRegressor(Lasso(random_state=0))
 
-        rgr.fit(X_train, y_train)
-        rgr_sparse.fit(sparse(X_train), y_train)
+    rgr.fit(X_train, y_train)
+    rgr_sparse.fit(sparse_container(X_train), y_train)
 
-        assert_almost_equal(rgr.predict(X_test), rgr_sparse.predict(sparse(X_test)))
+    assert_almost_equal(
+        rgr.predict(X_test), rgr_sparse.predict(sparse_container(X_test))
+    )
 
 
 def test_multi_target_sample_weights_api():
@@ -242,9 +253,18 @@ def test_multi_output_predict_proba():
     sgd_linear_clf = SGDClassifier(random_state=1, max_iter=5)
     multi_target_linear = MultiOutputClassifier(sgd_linear_clf)
     multi_target_linear.fit(X, y)
-    err_msg = "probability estimates are not available for loss='hinge'"
-    with pytest.raises(AttributeError, match=err_msg):
+
+    inner2_msg = "probability estimates are not available for loss='hinge'"
+    inner1_msg = "'SGDClassifier' has no attribute 'predict_proba'"
+    outer_msg = "'MultiOutputClassifier' has no attribute 'predict_proba'"
+    with pytest.raises(AttributeError, match=outer_msg) as exec_info:
         multi_target_linear.predict_proba(X)
+
+    assert isinstance(exec_info.value.__cause__, AttributeError)
+    assert inner1_msg in str(exec_info.value.__cause__)
+
+    assert isinstance(exec_info.value.__cause__.__cause__, AttributeError)
+    assert inner2_msg in str(exec_info.value.__cause__.__cause__)
 
 
 def test_multi_output_classification_partial_fit():
@@ -460,13 +480,20 @@ def test_multi_output_delegate_predict_proba():
     # A base estimator without `predict_proba` should raise an AttributeError
     moc = MultiOutputClassifier(LinearSVC(dual="auto"))
     assert not hasattr(moc, "predict_proba")
-    msg = "'LinearSVC' object has no attribute 'predict_proba'"
-    with pytest.raises(AttributeError, match=msg):
+
+    outer_msg = "'MultiOutputClassifier' has no attribute 'predict_proba'"
+    inner_msg = "'LinearSVC' object has no attribute 'predict_proba'"
+    with pytest.raises(AttributeError, match=outer_msg) as exec_info:
         moc.predict_proba(X)
+    assert isinstance(exec_info.value.__cause__, AttributeError)
+    assert inner_msg == str(exec_info.value.__cause__)
+
     moc.fit(X, y)
     assert not hasattr(moc, "predict_proba")
-    with pytest.raises(AttributeError, match=msg):
+    with pytest.raises(AttributeError, match=outer_msg) as exec_info:
         moc.predict_proba(X)
+    assert isinstance(exec_info.value.__cause__, AttributeError)
+    assert inner_msg == str(exec_info.value.__cause__)
 
 
 def generate_multilabel_dataset_with_correlations():
@@ -497,10 +524,11 @@ def test_classifier_chain_fit_and_predict_with_linear_svc():
     assert not hasattr(classifier_chain, "predict_proba")
 
 
-def test_classifier_chain_fit_and_predict_with_sparse_data():
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_classifier_chain_fit_and_predict_with_sparse_data(csr_container):
     # Fit classifier chain with sparse data
     X, Y = generate_multilabel_dataset_with_correlations()
-    X_sparse = sp.csr_matrix(X)
+    X_sparse = csr_container(X)
 
     classifier_chain = ClassifierChain(LogisticRegression())
     classifier_chain.fit(X_sparse, Y)
@@ -536,7 +564,8 @@ def test_classifier_chain_vs_independent_models():
     )
 
 
-def test_base_chain_fit_and_predict():
+@pytest.mark.parametrize("response_method", ["predict_proba", "predict_log_proba"])
+def test_base_chain_fit_and_predict(response_method):
     # Fit base chain and verify predict performance
     X, Y = generate_multilabel_dataset_with_correlations()
     chains = [RegressorChain(Ridge()), ClassifierChain(LogisticRegression())]
@@ -548,17 +577,20 @@ def test_base_chain_fit_and_predict():
             range(X.shape[1], X.shape[1] + Y.shape[1])
         )
 
-    Y_prob = chains[1].predict_proba(X)
+    Y_prob = getattr(chains[1], response_method)(X)
+    if response_method == "predict_log_proba":
+        Y_prob = np.exp(Y_prob)
     Y_binary = Y_prob >= 0.5
     assert_array_equal(Y_binary, Y_pred)
 
     assert isinstance(chains[1], ClassifierMixin)
 
 
-def test_base_chain_fit_and_predict_with_sparse_data_and_cv():
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_base_chain_fit_and_predict_with_sparse_data_and_cv(csr_container):
     # Fit base chain with sparse data cross_val_predict
     X, Y = generate_multilabel_dataset_with_correlations()
-    X_sparse = sp.csr_matrix(X)
+    X_sparse = csr_container(X)
     base_chains = [
         ClassifierChain(LogisticRegression(), cv=3),
         RegressorChain(Ridge(), cv=3),

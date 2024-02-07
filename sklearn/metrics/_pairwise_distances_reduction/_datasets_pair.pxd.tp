@@ -38,22 +38,22 @@ cdef class DenseDenseDatasetsPair{{name_suffix}}(DatasetsPair{{name_suffix}}):
 cdef class SparseSparseDatasetsPair{{name_suffix}}(DatasetsPair{{name_suffix}}):
     cdef:
         const {{INPUT_DTYPE_t}}[:] X_data
-        const int32_t[:] X_indices
-        const int32_t[:] X_indptr
+        const int32_t[::1] X_indices
+        const int32_t[::1] X_indptr
 
         const {{INPUT_DTYPE_t}}[:] Y_data
-        const int32_t[:] Y_indices
-        const int32_t[:] Y_indptr
+        const int32_t[::1] Y_indices
+        const int32_t[::1] Y_indptr
 
 
 cdef class SparseDenseDatasetsPair{{name_suffix}}(DatasetsPair{{name_suffix}}):
     cdef:
         const {{INPUT_DTYPE_t}}[:] X_data
-        const int32_t[:] X_indices
-        const int32_t[:] X_indptr
+        const int32_t[::1] X_indices
+        const int32_t[::1] X_indptr
 
         const {{INPUT_DTYPE_t}}[:] Y_data
-        const int32_t[:] Y_indices
+        const int32_t[::1] Y_indices
         intp_t n_Y
 
 
