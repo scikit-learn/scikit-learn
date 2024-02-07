@@ -235,6 +235,9 @@ html_static_path = ["images"]
 # template names.
 html_additional_pages = {"index": "index.html"}
 
+# Additional files to copy
+html_extra_path = ["robots.txt"]
+
 # If false, no module index is generated.
 html_domain_indices = False
 
@@ -723,6 +726,13 @@ if os.environ.get("SKLEARN_DOC_BUILD_WARNINGS_AS_ERRORS", "true").lower() == "tr
     warnings.filterwarnings(
         "ignore",
         message="pkg_resources is deprecated as an API",
+        category=DeprecationWarning,
+    )
+    # XXX: Easiest way to ignore Pyarrow DeprecationWarning in the short-term.
+    # See https://github.com/pandas-dev/pandas/issues/54466 for more details.
+    warnings.filterwarnings(
+        "ignore",
+        message=r"\s*Pyarrow will become a required dependency of pandas.*",
         category=DeprecationWarning,
     )
 

@@ -1,5 +1,3 @@
-﻿.. _roadmap:
-
 .. |ss| raw:: html
 
    <strike>
@@ -7,6 +5,8 @@
 .. |se| raw:: html
 
    </strike>
+
+.. _roadmap:
 
 Roadmap
 =======
