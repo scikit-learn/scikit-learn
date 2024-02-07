@@ -352,6 +352,12 @@ class SimpleImputer(_BaseImputer):
             # Use the dtype seen in `fit` for non-`fit` conversion
             self._fit_dtype = X.dtype
 
+        if not in_fit:
+            # we use min type for the fill_value to avoid changing the input dtype
+            # if not necessary
+            new_dtype = np.promote_types(X.dtype, self._fill_value_min_type)
+            X = X.astype(new_dtype, copy=False)
+
         _check_inputs_dtype(X, self.missing_values)
         if X.dtype.kind not in ("i", "u", "f", "O"):
             raise ValueError(
@@ -557,10 +563,6 @@ class SimpleImputer(_BaseImputer):
         check_is_fitted(self)
 
         X = self._validate_input(X, in_fit=False)
-        # we use min type for the fill_value to avoid changing the input dtype
-        # if not necessary
-        new_dtype = np.promote_types(X.dtype, self._fill_value_min_type)
-        X = X.astype(new_dtype, copy=False)
         statistics = self.statistics_
 
         if X.shape[1] != statistics.shape[0]:
