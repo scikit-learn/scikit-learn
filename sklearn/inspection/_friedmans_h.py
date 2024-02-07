@@ -1,8 +1,11 @@
+"""Friedman and Popescu's H-squared statistics"""
+
 import itertools
 
 import numpy as np
-from sklearn.utils import _safe_indexing, _safe_assign, _get_column_indices
-from sklearn.ensemble._bagging import _generate_indices
+
+from ..utils import _safe_indexing, _safe_assign, _get_column_indices
+from ..ensemble._bagging import _generate_indices
 
 
 def _calculate_pd_over_data(estimator, X, feature_indices, sample_weight=None):
