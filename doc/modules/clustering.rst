@@ -1167,23 +1167,19 @@ than `minimum_cluster_size` many samples are considered noise. In practice, one
 can set `minimum_cluster_size = min_samples` to couple the parameters and
 simplify the hyperparameter space.
 
-|details-start|
-**References**
-|details-split|
+.. topic:: References:
 
-.. [CM2013] Campello, R.J.G.B., Moulavi, D., Sander, J. (2013). Density-Based
-  Clustering Based on Hierarchical Density Estimates. In: Pei, J., Tseng, V.S.,
-  Cao, L., Motoda, H., Xu, G. (eds) Advances in Knowledge Discovery and Data
-  Mining. PAKDD 2013. Lecture Notes in Computer Science(), vol 7819. Springer,
-  Berlin, Heidelberg. :doi:`Density-Based Clustering Based on Hierarchical
-  Density Estimates <10.1007/978-3-642-37456-2_14>`
+ .. [CM2013] Campello, R.J.G.B., Moulavi, D., Sander, J. (2013). Density-Based
+   Clustering Based on Hierarchical Density Estimates. In: Pei, J., Tseng, V.S.,
+   Cao, L., Motoda, H., Xu, G. (eds) Advances in Knowledge Discovery and Data
+   Mining. PAKDD 2013. Lecture Notes in Computer Science(), vol 7819. Springer,
+   Berlin, Heidelberg. :doi:`Density-Based Clustering Based on Hierarchical
+   Density Estimates <10.1007/978-3-642-37456-2_14>`
 
-.. [LJ2017] L. McInnes and J. Healy, (2017). Accelerated Hierarchical Density
-  Based Clustering. In: IEEE International Conference on Data Mining Workshops
-  (ICDMW), 2017, pp. 33-42. :doi:`Accelerated Hierarchical Density Based
-  Clustering <10.1109/ICDMW.2017.12>`
-
-|details-end|
+ .. [LJ2017] L. McInnes and J. Healy, (2017). Accelerated Hierarchical Density
+   Based Clustering. In: IEEE International Conference on Data Mining Workshops
+   (ICDMW), 2017, pp. 33-42. :doi:`Accelerated Hierarchical Density Based
+   Clustering <10.1109/ICDMW.2017.12>`
 
 .. _optics:
 
