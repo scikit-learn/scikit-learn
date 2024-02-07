@@ -67,6 +67,11 @@ Changelog
   :class:`ensemble.HistGradientBoostingClassifier` by avoiding to call `predict_proba`.
   :pr:`27844` by :user:`Christian Lorentzen <lorentzenchr>`.
 
+- |Efficiency| :class:`ensemble.HistGradientBoostingClassifier` and
+  :class:`ensemble.HistGradientBoostingRegressor` are now a tiny bit faster by
+  pre-sorting the data before finding the thresholds for binning.
+  :pr:`28102` by :user:`Christian Lorentzen <lorentzenchr>`.
+
 :mod:`sklearn.feature_extraction`
 .................................
 
