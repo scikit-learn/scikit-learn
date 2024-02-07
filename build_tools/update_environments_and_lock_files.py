@@ -300,6 +300,7 @@ build_metadata_list = [
             "polars",
             "pooch",
             "sphinx-remove-toctrees",
+            "sphinx-design",
             "pydata-sphinx-theme",
         ],
         "pip_dependencies": [
@@ -324,6 +325,7 @@ build_metadata_list = [
             "polars": "min",
             "sphinxcontrib-sass": "min",
             "sphinx-remove-toctrees": "min",
+            "sphinx-design": "min",
             "pydata-sphinx-theme": "min",
         },
     },
@@ -349,6 +351,7 @@ build_metadata_list = [
             "pooch",
             "sphinxext-opengraph",
             "sphinx-remove-toctrees",
+            "sphinx-design",
             "pydata-sphinx-theme",
         ],
         "pip_dependencies": [
