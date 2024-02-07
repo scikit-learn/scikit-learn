@@ -13,7 +13,14 @@ def _calculate_pd_over_data(estimator, X, feature_indices, sample_weight=None):
 
     # Select grid columns and remove duplicates (will compensate below)
     grid = _safe_indexing(X, feature_indices, axis=1)
-    grid, ix_reconstruct = np.unique(grid, return_inverse=True, axis=0)
+
+    # Unfortunately, the next line does not work in all cases. How to replace
+    # the next uncommented lines? We need unique grid rows and reconstruction index.
+    # grid, ix_reconstruct = np.unique(grid, return_inverse=True, axis=0)
+    _, ix, ix_reconstruct = np.unique(
+        [str(z) for z in grid.to_numpy()], return_index=True, return_inverse=True
+    )
+    grid = _safe_indexing(grid, ix, axis=0)
     n_grid = grid.shape[0]
 
     # X is stacked n_grid times, and grid columns are replaced by replicated grid
