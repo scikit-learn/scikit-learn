@@ -24,6 +24,7 @@ import tempfile
 import unittest
 import warnings
 from collections.abc import Iterable
+from dataclasses import dataclass
 from functools import wraps
 from inspect import signature
 from subprocess import STDOUT, CalledProcessError, TimeoutExpired, check_output
@@ -1097,42 +1098,66 @@ def _array_api_for_tests(array_namespace, device):
     return xp
 
 
-def turn_warnings_into_errors():
-    warnings.filterwarnings("error", category=DeprecationWarning)
-    warnings.filterwarnings("error", category=FutureWarning)
-    warnings.filterwarnings("error", category=VisibleDeprecationWarning)
-    # In some case, exceptions are raised (by bug) in tests, and captured
-    # by pytest, but not raised again. This is for instance the case when
-    # Cython directives are activated: IndexErrors (which aren't fatal) are
-    # raised on out-of-bound accesses. In those cases, pytest instead
-    # raises pytest.PytestUnraisableExceptionWarnings, which we must treat
-    # as errors on the CI.
-    warnings.filterwarnings("error", category=pytest.PytestUnraisableExceptionWarning)
-    # Ignore pkg_resources deprecation warnings triggered by pyamg
-    warnings.filterwarnings(
-        "ignore",
-        message="pkg_resources is deprecated as an API",
-        category=DeprecationWarning,
-    )
-    warnings.filterwarnings(
-        "ignore",
-        message="Deprecated call to `pkg_resources",
-        category=DeprecationWarning,
-    )
-    # pytest-cov issue https://github.com/pytest-dev/pytest-cov/issues/557 not
-    # fixed although it has been closed. https://github.com/pytest-dev/pytest-cov/pull/623
-    # would probably fix it.
-    warnings.filterwarnings(
-        "ignore",
-        message=(
-            "The --rsyncdir command line argument and rsyncdirs config variable are"
-            " deprecated"
+def _get_warnings_filters_info_list():
+    @dataclass
+    class WarningInfo:
+        action: "warnings._ActionKind"
+        message: str = ""
+        category: type[Warning] = Warning
+
+        def to_filterwarning_str(self):
+            if self.category.__module__ == "builtins":
+                category = self.category.__name__
+            else:
+                category = f"{self.category.__module__}.{self.category.__name__}"
+
+            return f"{self.action}:{self.message}:{category}"
+
+    return [
+        WarningInfo("error", category=DeprecationWarning),
+        WarningInfo("error", category=FutureWarning),
+        WarningInfo("error", category=VisibleDeprecationWarning),
+        WarningInfo(
+            "ignore",
+            message="pkg_resources is deprecated as an API",
+            category=DeprecationWarning,
         ),
-        category=DeprecationWarning,
-    )
-    # XXX: Easiest way to ignore pandas Pyarrow DeprecationWarning in the
-    # short-term. See https://github.com/pandas-dev/pandas/issues/54466 for
-    # more details.
-    warnings.filterwarnings(
-        "ignore", message=r"\s*Pyarrow", category=DeprecationWarning
-    )
+        WarningInfo(
+            "ignore",
+            message="Deprecated call to `pkg_resources",
+            category=DeprecationWarning,
+        ),
+        # pytest-cov issue https://github.com/pytest-dev/pytest-cov/issues/557 not
+        # fixed although it has been closed. https://github.com/pytest-dev/pytest-cov/pull/623
+        # would probably fix it.
+        WarningInfo(
+            "ignore",
+            message=(
+                "The --rsyncdir command line argument and rsyncdirs config variable are"
+                " deprecated"
+            ),
+            category=DeprecationWarning,
+        ),
+        # XXX: Easiest way to ignore pandas Pyarrow DeprecationWarning in the
+        # short-term. See https://github.com/pandas-dev/pandas/issues/54466 for
+        # more details.
+        WarningInfo("ignore", message=r"\s*Pyarrow", category=DeprecationWarning),
+    ]
+
+
+def get_pytest_filterwarning_str():
+    warning_filters_info_list = _get_warnings_filters_info_list()
+    return [
+        warning_info.to_filterwarning_str()
+        for warning_info in warning_filters_info_list
+    ]
+
+
+def turn_warning_into_errors():
+    warnings_filters_info_list = _get_warnings_filters_info_list()
+    for warning_info in warnings_filters_info_list:
+        warnings.filterwarnings(
+            warning_info.action,
+            message=warning_info.message,
+            category=warning_info.category,
+        )

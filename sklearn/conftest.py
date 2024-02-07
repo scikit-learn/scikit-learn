@@ -26,7 +26,7 @@ from sklearn.datasets import (
 )
 from sklearn.tests import random_seed
 from sklearn.utils import _IS_32BIT
-from sklearn.utils._testing import turn_warnings_into_errors
+from sklearn.utils._testing import get_pytest_filterwarning_str
 from sklearn.utils.fixes import (
     np_base_version,
     parse_version,
@@ -280,6 +280,14 @@ def pytest_configure(config):
     if not config.pluginmanager.hasplugin("sklearn.tests.random_seed"):
         config.pluginmanager.register(random_seed)
 
+    if environ.get("SKLEARN_WARNINGS_AS_ERRORS", "0") != "0":
+        # This seems like the only way to programatically change the config
+        # filterwarnings. This was suggested in
+        # https://github.com/pytest-dev/pytest/issues/3311#issuecomment-373177592
+        print(config.getini("filterwarnings"))
+        config._inicache["filterwarnings"] += get_pytest_filterwarning_str()
+        print(config.getini("filterwarnings"))
+
 
 @pytest.fixture
 def hide_available_pandas(monkeypatch):
@@ -300,15 +308,3 @@ def print_changed_only_false():
     set_config(print_changed_only=False)
     yield
     set_config(print_changed_only=True)  # reset to default
-
-
-def pytest_sessionstart(session):
-    if environ.get("SKLEARN_WARNINGS_AS_ERRORS", "0") != "0":
-        # XXX: if sys.warnoptions is empty (i.e. PYTHONWARNINGS environment
-        # variable is not set), pytest adds its own filters for
-        # DeprecationWarning, see
-        # https://github.com/pytest-dev/pytest/blob/404d31a942975c04d4a7d48e258260584930819f/src/_pytest/warnings.py#L45-L48
-        # This would overrides our warning filters modifications so we set
-        # sys.warnoptions to a non-empty value
-        sys.warnoptions = "hack-to-avoid-pytest-overriding-warning-filters"
-        turn_warnings_into_errors()

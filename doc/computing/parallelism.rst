@@ -320,15 +320,20 @@ especially with respect to their caches' sizes.
 `SKLEARN_WARNINGS_AS_ERRORS`
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-This environment variable is used to turn warnings into errors in two different places:
+This environment variable is used to turn warnings into errors in tests and
+documentation build.
 
-- tests, for example by running `SKLEARN_WARNINGS_AS_ERRORS=1 pytest sklearn`.
-- documentation build, where it is turned on by default when you do `make
-  html`. You can do `SKLEARN_WARNINGS_AS_ERRORS=0 make html` if you want to
-  ignore warnings. Note that this checks that running examples don't produce
-  any warnings which is not the same as `SHPINXOPTS="-W"` that checks syntax
-  issues in the rst files.
+Some CI (Continuous Integration) builds set `SKLEARN_WARNINGS_AS_ERRORS=1`, for
+example to make sure that we catch deprecation warnings from our dependencies
+and that we adapt our code.
 
-This environment variable use specific warning filters, since sometimes
-warnings come from third-party libraries. You can see them in the
-`turn_warnings_into_errors` function in `sklearn/utils/_testing.py`.
+To locally run with the same "warnings as errors" setting as in these CI builds
+you can set `SKLEARN_WARNINGS_AS_ERRORS=1`.
+
+By default, warnings are not turned into errors. This is the case if
+`SKLEARN_WARNINGS_AS_ERRORS` is unset, or `SKLEARN_WARNINGS_AS_ERRORS=0`.
+
+This environment variable use specific warning filters to ignore some warnings,
+since sometimes warnings originate from third-party libraries and there is not
+much we can do about it. You can see the warning filters in the
+`_get_warnings_filters_info_list` function in `sklearn/utils/_testing.py`.
