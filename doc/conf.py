@@ -61,7 +61,6 @@ extensions = [
     "matplotlib.sphinxext.plot_directive",
     "sphinxcontrib.sass",
     "sphinx_remove_toctrees",
-    "sphinx_design",
     # See sphinxext/
     "add_toctree_functions",
     "allow_nan_estimators",

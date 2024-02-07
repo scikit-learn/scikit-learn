@@ -1,31 +1,87 @@
 /**
- * Styling for the installation page, including overriding some default styling of
- * sphinx-design. This style sheet should be included only for the install page.
+ * Styling for the installation page, see `install.rst`. It refers to the following
+ * pytorch page: https://pytorch.org/get-started/locally/, subject to modifications.
+ * This style sheet should be included only for the install page.
  */
 
-.sd-tab-set {
-  .sd-tab-content {
-    box-shadow: 0 -0.0625rem var(--pst-color-border);
-    padding: 0.5rem 0 0 0;
+/* Installation options grid */
 
-    > p:first-child {
-      margin-top: 1.25rem !important;
+div.sk-install-options-grid {
+  width: 95%;
+  margin: 1.15rem auto;
+
+  div.headings {
+    @media screen and (max-width: 768.02px) {
+      display: none; // hide on mobile
     }
   }
 
-  > label.sd-tab-label {
-    border-top: none !important;
-    padding-top: 0;
-    padding-bottom: 0.1rem;
-    margin: 0;
-    text-align: center;
+  div.title-block {
+    position: relative;
+    margin: 0.0625rem;
+    padding-left: 1rem;
+    height: 2.5rem;
+    font-size: 1rem;
+    font-weight: bold;
+    color: var(--pst-color-text-base);
+    line-height: 1.25rem;
+    display: flex;
+    align-items: center;
 
-    &.tab-6 {
-      width: 50% !important;
+    &:before {
+      display: block;
+      content: ".";
+      color: transparent;
+      border-left: 2px solid var(--pst-color-text-base);
+      height: 60%;
+      left: 0;
+      position: absolute;
     }
 
-    &.tab-4 {
-      width: calc(100% / 3) !important;
+    &.mobile-heading {
+      @media screen and (min-width: 768px) {
+        display: none; // hide on desktop
+      }
+    }
+  }
+
+  div.block {
+    margin-bottom: 0.0625rem;
+    height: 2.5rem;
+    display: flex;
+    align-items: center;
+  }
+
+  div.option {
+    color: var(--pst-color-on-surface);
+    background-color: var(--pst-color-surface);
+    border: 2px solid var(--pst-color-background);
+    border-radius: 5px;
+    cursor: pointer;
+
+    &.selected {
+      html[data-theme="light"] & {
+        background-color: var(--sk-cyan-tint-3);
+      }
+
+      html[data-theme="dark"] & {
+        background-color: var(--sk-cyan-shades-3);
+      }
+    }
+  }
+}
+
+/* Instruction block */
+
+div#skInstallInstructions {
+  &[data-os="windows"] pre.sk-install-prompt > span:before {
+    content: "C:\\> ";
+  }
+
+  &[data-os="linux"],
+  &[data-os="macos"] {
+    pre.sk-install-prompt > span:before {
+      content: "$ ";
     }
   }
 }
