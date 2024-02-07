@@ -1,2 +1,5 @@
 User-agent: *
+# Do not let search engines index the pydata-sphinx-theme preview site
+# during the live testing phase.
+# https://github.com/scikit-learn/scikit-learn/pull/28353
 Disallow: /_pst_preview/
