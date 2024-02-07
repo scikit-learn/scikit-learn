@@ -952,6 +952,9 @@ by black points below.
 
 .. centered:: |dbscan_results|
 
+.. topic:: Examples:
+
+    * :ref:`sphx_glr_auto_examples_cluster_plot_dbscan.py`
 
 |details-start|
 **Implementation**
@@ -1001,10 +1004,6 @@ floats. A couple of mechanisms for getting around this are:
   ``sample_weight`` when fitting DBSCAN.
 
 |details-end|
-
-.. topic:: Examples:
-
-    * :ref:`sphx_glr_auto_examples_cluster_plot_dbscan.py`
 
 |details-start|
 **Implementation**
