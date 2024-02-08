@@ -51,7 +51,14 @@ def _calculate_pd_over_data(estimator, X, feature_indices, sample_weight=None):
 
 
 def hstatistics(
-    estimator, X, *, features=None, n_max=500, random_state=None, sample_weight=None
+    estimator,
+    X,
+    *,
+    features=None,
+    n_max=500,
+    random_state=None,
+    sample_weight=None,
+    eps=1e-10
 ):
     """Friedman and Popescu's H-statistics of pairwise interaction strength.
 
@@ -89,6 +96,9 @@ def hstatistics(
 
     sample_weight : array-like of shape (n_samples,), default=None
         Sample weights used in calculating partial dependences.
+
+    eps : float, default=1e-10
+        Threshold below which numerator values are set to 0.
 
     Returns
     -------
@@ -194,7 +204,11 @@ def hstatistics(
         )
         denom.append(np.average(pd_bivariate**2, axis=0, weights=sample_weight))
     
-    hstats_results["numerator_pairwise"] = np.array(num)
+    # Round small numerators to 0
+    num = np.array(num)
+    num[np.abs(num) < eps] = 0
+
+    hstats_results["numerator_pairwise"] = num
     hstats_results["denominator_pairwise"] = np.array(denom)
     hstats_results["hsquared_pairwise"] = (
         hstats_results["numerator_pairwise"] / hstats_results["denominator_pairwise"]
