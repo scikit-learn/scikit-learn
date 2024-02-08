@@ -64,7 +64,8 @@ fi
 ls -ltrh ~/scikit_learn_data || echo no datasets
 du -sh ~/scikit_learn_data || echo no datasets
 
-pip install ipython
+python -m ensurepip
+python -m pip install ipython
 
 python -m IPython rcv1.ipy
 
@@ -74,6 +75,7 @@ ls -ltrh ~/scikit_learn_data || echo no datasets
 du -sh ~/scikit_learn_data || echo no datasets
 rm -rf ~/scikit_learn_data
 
+export SKLEARN_SKIP_NETWORK_TESTS=0
 set -x
 eval "$TEST_CMD --maxfail=10 --pyargs sklearn"
 set +x
