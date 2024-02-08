@@ -18,13 +18,13 @@ def _calculate_pd_over_data(estimator, X, feature_indices, sample_weight=None):
     # Select grid columns and remove duplicates (will compensate below)
     grid = _safe_indexing(X, feature_indices, axis=1)
 
-    # Unfortunately, the next line does not work in all cases. How to replace
-    # the next uncommented lines? We need unique grid rows and reconstruction index.
-    # grid, ix_reconstruct = np.unique(grid, return_inverse=True, axis=0)
-    _, ix, ix_reconstruct = np.unique(
-        [str(z) for z in grid.to_numpy()], return_index=True, return_inverse=True
-    )
-    grid = _safe_indexing(grid, ix, axis=0)
+    # Unfortunately, the next line does not work in all cases, especially not in
+    # the important case of discrete pandas Dataframes.
+    try:
+        compressed = True
+        grid, ix_reconstruct = np.unique(grid, return_inverse=True, axis=0)
+    except:
+        compressed = False
     n_grid = grid.shape[0]
 
     # X is stacked n_grid times, and grid columns are replaced by replicated grid
@@ -44,7 +44,8 @@ def _calculate_pd_over_data(estimator, X, feature_indices, sample_weight=None):
     averaged_predictions = np.array(
         [np.average(Z, axis=0, weights=sample_weight) for Z in np.split(preds, n_grid)]
     )
-    averaged_predictions = averaged_predictions[ix_reconstruct]
+    if compressed:
+        averaged_predictions = averaged_predictions[ix_reconstruct]
     column_means = np.average(averaged_predictions, axis=0, weights=sample_weight)
     return averaged_predictions - column_means
 
