@@ -1,3 +1,3 @@
 from sklearn import datasets
 
-%prun -s cumulative datasets.fetch_rcv1()
+%prun -s cumulative -l 20 datasets.fetch_rcv1()

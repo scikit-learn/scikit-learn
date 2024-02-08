@@ -1,3 +1,3 @@
 from sklearn import datasets
 
-%prun -s cumulative datasets.fetch_covtype()
+%prun -s cumulative -l 20 datasets.fetch_covtype()
