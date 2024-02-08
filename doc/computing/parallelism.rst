@@ -337,3 +337,8 @@ This environment variable use specific warning filters to ignore some warnings,
 since sometimes warnings originate from third-party libraries and there is not
 much we can do about it. You can see the warning filters in the
 `_get_warnings_filters_info_list` function in `sklearn/utils/_testing.py`.
+
+Note that for documentation build, `SKLEARN_WARNING_AS_ERRORS=1` is checking
+that the documentation build, in particular running examples, does not produce
+any warnings. This is different from the `-W` `sphinx-build` argument that
+catches syntax warnings in the rst files.
