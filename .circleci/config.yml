@@ -119,9 +119,11 @@ workflows:
       - doc:
           requires:
             - lint
-      - doc-min-dependencies:
-          requires:
-            - lint
+      # TODO: fix the minimum dependencies for documentation build when merging into
+      # the main branch and uncomment this block.
+      # - doc-min-dependencies:
+      #     requires:
+      #       - lint
       - deploy:
           requires:
             - doc

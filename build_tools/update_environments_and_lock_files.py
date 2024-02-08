@@ -349,6 +349,7 @@ build_metadata_list = [
             "pooch",
             "sphinxext-opengraph",
             "sphinx-remove-toctrees",
+            "sphinx-design",
             "pydata-sphinx-theme",
         ],
         "pip_dependencies": [
