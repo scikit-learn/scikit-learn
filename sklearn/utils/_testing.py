@@ -1141,7 +1141,11 @@ def _get_warnings_filters_info_list():
         # XXX: Easiest way to ignore pandas Pyarrow DeprecationWarning in the
         # short-term. See https://github.com/pandas-dev/pandas/issues/54466 for
         # more details.
-        WarningInfo("ignore", message=r"\s*Pyarrow", category=DeprecationWarning),
+        WarningInfo(
+            "ignore",
+            message=r"\s*Pyarrow will become a required dependency",
+            category=DeprecationWarning,
+        ),
     ]
 
 
@@ -1153,7 +1157,7 @@ def get_pytest_filterwarning_str():
     ]
 
 
-def turn_warning_into_errors():
+def turn_warnings_into_errors():
     warnings_filters_info_list = _get_warnings_filters_info_list()
     for warning_info in warnings_filters_info_list:
         warnings.filterwarnings(
