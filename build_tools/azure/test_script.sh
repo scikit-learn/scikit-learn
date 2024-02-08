@@ -48,10 +48,10 @@ if [[ "$COVERAGE" == "true" ]]; then
     TEST_CMD="$TEST_CMD --cov-config='$COVERAGE_PROCESS_START' --cov sklearn --cov-report="
 fi
 
-if [[ "$PYTEST_XDIST_VERSION" != "none" ]]; then
-    XDIST_WORKERS=$(python -c "import joblib; print(joblib.cpu_count(only_physical_cores=True))")
-    TEST_CMD="$TEST_CMD -n$XDIST_WORKERS"
-fi
+# if [[ "$PYTEST_XDIST_VERSION" != "none" ]]; then
+#     XDIST_WORKERS=$(python -c "import joblib; print(joblib.cpu_count(only_physical_cores=True))")
+#     TEST_CMD="$TEST_CMD -n$XDIST_WORKERS"
+# fi
 
 if [[ -n "$SELECTED_TESTS" ]]; then
     TEST_CMD="$TEST_CMD -k $SELECTED_TESTS"

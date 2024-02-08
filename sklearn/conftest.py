@@ -1,6 +1,7 @@
 import builtins
 import platform
 import sys
+import time
 from contextlib import suppress
 from functools import wraps
 from os import environ
@@ -131,6 +132,8 @@ def pytest_collection_modifyitems(config, items):
     config : pytest config
     items : list of collected items
     """
+    pytest_collection_modifyitems_start = time.time()
+    print("pytest_collection_modifyitems")
     run_network_tests = environ.get("SKLEARN_SKIP_NETWORK_TESTS", "1") == "0"
     skip_network = pytest.mark.skip(
         reason="test is enabled when SKLEARN_SKIP_NETWORK_TESTS=0"
@@ -168,7 +171,11 @@ def pytest_collection_modifyitems(config, items):
     if worker_id == "gw0" and run_network_tests:
         for name in datasets_to_download:
             with suppress(SkipTest):
+                print(f"dataset: {name}")
+                tic = time.time()
                 dataset_fetchers[name]()
+                elapsed = time.time() - tic
+                print(f"dataset: {name} took {elapsed:.2f}s")
 
     for item in items:
         # Known failure on with GradientBoostingClassifier on ARM64
@@ -239,6 +246,14 @@ def pytest_collection_modifyitems(config, items):
             ]:
                 item.add_marker(skip_marker)
 
+    pytest_collection_modifyitems_elapsed = (
+        time.time() - pytest_collection_modifyitems_start
+    )
+    print(
+        "pytest_collection_modifyitems took"
+        f" {pytest_collection_modifyitems_elapsed:.2f}s"
+    )
+
 
 @pytest.fixture(scope="function")
 def pyplot():
@@ -260,6 +275,7 @@ def pyplot():
 
 
 def pytest_configure(config):
+    print("pytest_configure")
     # Use matplotlib agg backend during the tests including doctests
     try:
         import matplotlib
