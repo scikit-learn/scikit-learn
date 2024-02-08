@@ -14,6 +14,7 @@ from sklearn.utils._testing import (
     TempMemmap,
     _convert_container,
     _delete_folder,
+    _get_warnings_filters_info_list,
     assert_allclose,
     assert_allclose_dense_sparse,
     assert_no_warnings,
@@ -26,6 +27,7 @@ from sklearn.utils._testing import (
     ignore_warnings,
     raises,
     set_random_state,
+    turn_warnings_into_errors,
 )
 from sklearn.utils.deprecation import deprecated
 from sklearn.utils.fixes import (
@@ -882,3 +884,40 @@ def test_convert_container_sparse_to_sparse(constructor_name):
     """
     X_sparse = sparse.random(10, 10, density=0.1, format="csr")
     _convert_container(X_sparse, constructor_name)
+
+
+def check_warnings_as_errors(warning_info, warnings_as_errors):
+    if warning_info.action == "error" and warnings_as_errors:
+        with pytest.raises(warning_info.category, match=warning_info.message):
+            warnings.warn(
+                message=warning_info.message,
+                category=warning_info.category,
+            )
+    if warning_info.action == "ignore":
+        with warnings.catch_warnings(record=True) as record:
+            message = warning_info.message
+            # Special treatment when regex is used
+            if "Pyarrow" in message:
+                message = "\nPyarrow will become a required dependency"
+
+            warnings.warn(
+                message=message,
+                category=warning_info.category,
+            )
+            assert len(record) == 0 if warnings_as_errors else 1
+            if record:
+                assert str(record[0].message) == message
+                assert record[0].category == warning_info.category
+
+
+@pytest.mark.parametrize("warning_info", _get_warnings_filters_info_list())
+def test_sklearn_warnings_as_errors(warning_info):
+    warnings_as_errors = os.environ.get("SKLEARN_WARNINGS_AS_ERRORS", "0") != "0"
+    check_warnings_as_errors(warning_info, warnings_as_errors=warnings_as_errors)
+
+
+@pytest.mark.parametrize("warning_info", _get_warnings_filters_info_list())
+def test_turn_warnings_into_errors(warning_info):
+    with warnings.catch_warnings():
+        turn_warnings_into_errors()
+        check_warnings_as_errors(warning_info, warnings_as_errors=True)
