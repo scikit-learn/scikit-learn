@@ -229,6 +229,15 @@ def grid_to_graph(
     graph : np.ndarray or a sparse matrix class
         The computed adjacency matrix.
 
+    Notes
+    -----
+    For scikit-learn versions 0.14.1 and prior, return_as=np.ndarray was
+    handled by returning a dense np.matrix instance.  Going forward, np.ndarray
+    returns an np.ndarray, as expected.
+
+    For compatibility, user code relying on this method should wrap its
+    calls in ``np.asarray`` to avoid type issues.
+
     Examples
     --------
     >>> from sklearn.feature_extraction.image import grid_to_graph
@@ -284,16 +293,6 @@ def grid_to_graph(
       (5, 5)        1
       (6, 6)        1
       (7, 7)        1
-    >>>
-
-    Notes
-    -----
-    For scikit-learn versions 0.14.1 and prior, return_as=np.ndarray was
-    handled by returning a dense np.matrix instance.  Going forward, np.ndarray
-    returns an np.ndarray, as expected.
-
-    For compatibility, user code relying on this method should wrap its
-    calls in ``np.asarray`` to avoid type issues.
     """
     return _to_graph(n_x, n_y, n_z, mask=mask, return_as=return_as, dtype=dtype)
 
