@@ -62,6 +62,7 @@ if [[ -n "$SELECTED_TESTS" ]]; then
 fi
 
 du -sh ~/scikit_learn_data || echo no datasets
+ls -ltrh ~/scikit_learn_data || echo no datasets
 
 pip install ipython
 
