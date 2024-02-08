@@ -1117,6 +1117,8 @@ def _get_warnings_filters_info_list():
         WarningInfo("error", category=DeprecationWarning),
         WarningInfo("error", category=FutureWarning),
         WarningInfo("error", category=VisibleDeprecationWarning),
+        # TODO: remove when pyamg > 5.0.1
+        # Avoid a deprecation warning due pkg_resources usage in pyamg.
         WarningInfo(
             "ignore",
             message="pkg_resources is deprecated as an API",
@@ -1179,7 +1181,7 @@ def _get_warnings_filters_info_list():
     ]
 
 
-def get_pytest_filterwarning_str():
+def get_pytest_filterwarning_lines():
     warning_filters_info_list = _get_warnings_filters_info_list()
     return [
         warning_info.to_filterwarning_str()
