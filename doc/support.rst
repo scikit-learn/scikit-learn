@@ -65,8 +65,9 @@ Include in your report:
 
 - Python or gdb tracebacks, if applicable.
 
-- The ideal bug report contains a :ref:`short reproducible code snippet
-  <minimal_reproducer>`, this way anyone can try to reproduce the bug easily.
+- The ideal bug report contains a `short reproducible code snippet
+  <https://scikit-learn.org/stable/developers/minimal_reproducer.html>`_,
+  this way anyone can try to reproduce the bug easily. 
 
 - If your snippet is longer than around 50 lines, please link to a 
   `gist <https://gist.github.com>`_ or a github repo.
