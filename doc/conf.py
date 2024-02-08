@@ -235,9 +235,6 @@ html_static_path = ["images"]
 # template names.
 html_additional_pages = {"index": "index.html"}
 
-# Additional files to copy
-html_extra_path = ["robots.txt"]
-
 # If false, no module index is generated.
 html_domain_indices = False
 
