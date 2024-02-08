@@ -5,7 +5,7 @@ import itertools
 import numpy as np
 
 from ..ensemble._bagging import _generate_indices
-from ..utils import _get_column_indices, _safe_assign, _safe_indexing
+from ..utils import _get_column_indices, _safe_assign, _safe_indexing, Bunch
 from ..utils.validation import _check_sample_weight, check_is_fitted
 
 
@@ -92,9 +92,21 @@ def hstatistics(
 
     Returns
     -------
-    result : A list with a tuple per feature pair. Each element contains the two
-       feature names/indices, the unnormalized H-squared statistic, and the usual
-       (normalized) H-squared statistic.
+    result : :class:`~sklearn.utils.Bunch`
+        Dictionary-like object, with the following attributes.
+
+        feature_pair : ndarray of shape (n_feature_pairs, )
+            Contains feature pair tuples in the same order as pairwise statistics.
+        numerator_pairwise : ndarray of shape (n_pairs, ) or (n_pairs, output_dim)
+            Numerator of pairwise H-squared statistic.
+            Useful to see which feature pair has strongest absolute interaction.
+            Take square-root to get values on the scale of the predictions.
+        denominator_pairwise : ndarray of shape (n_pairs, ) or (n_pairs, output_dim)
+            Denominator of pairwise H-squared statistic.
+        hsquared_pairwise : ndarray of shape (n_pairs, ) or (n_pairs, output_dim)
+            Pairwise H-squared statistic. Useful to see which feature pair has
+            strongest relative interation (relative with respect to joint effect).
+            Calculated as numerator_pairwise / denominator_pairwise.
 
     References
     ----------
@@ -104,8 +116,7 @@ def hstatistics(
             2008. <10.1214/07-AOAS148>`
 
     Examples
-    ----------
-
+    --------
     >>> from sklearn.ensemble import HistGradientBoostingRegressor
     >>> from sklearn.inspection import permutation_importance
     >>> from sklearn.datasets import load_diabetes
@@ -118,10 +129,12 @@ def hstatistics(
     >>> top_3 = np.argsort(imp.importances_mean)[-3:]
     >>> hstatistics(est, X=X, features=top_3, random_state=4)
 
-    >>> For features 3 and 2, ~4% of joint effect variability comes from interaction:
-    >>> [(3, 2, 50.42733968603663, 0.043352605995576346),
-    >>> (3, 8, 20.34764277579143, 0.015648706966531766),
-    >>> (2, 8, 56.778288912326026, 0.025823266523399196)]
+    >>> # For feature pair (3, 2), about 4% of joint effect variability comes from 
+    >>> # their interaction. Unnormalized statistics are highest for pair (2, 8):
+    >>> {'feature_pair': [(3, 2), (3, 8), (2, 8)],
+    >>> 'numerator_pairwise': array([50.42733969, 20.34764278, 56.77828891]),
+    >>> 'denominator_pairwise': array([1163.19050558, 1300.27629882, 2198.72605431]),
+    >>> 'hsquared_pairwise': array([0.04335261, 0.01564871, 0.02582327])}
 
     """
     check_is_fitted(estimator)
@@ -160,7 +173,11 @@ def hstatistics(
             )
         )
 
-    stats = []
+    hstats_results = Bunch()
+    hstats_results["feature_pair"] = list(itertools.combinations(features, 2))
+    num = []
+    denom = []
+
     for i, j in itertools.combinations(range(len(feature_indices)), 2):
         pd_bivariate = _calculate_pd_over_data(
             estimator,
@@ -168,12 +185,19 @@ def hstatistics(
             feature_indices=feature_indices[[i, j]],
             sample_weight=sample_weight,
         )
-        numerator = np.average(
-            (pd_bivariate - pd_univariate[i] - pd_univariate[j]) ** 2,
-            axis=0,
-            weights=sample_weight,
+        num.append(
+            np.average(
+                (pd_bivariate - pd_univariate[i] - pd_univariate[j]) ** 2,
+                axis=0,
+                weights=sample_weight,
+            )
         )
-        denominator = np.average(pd_bivariate**2, axis=0, weights=sample_weight)
-        stats.append((features[i], features[j], numerator, numerator / denominator))
+        denom.append(np.average(pd_bivariate**2, axis=0, weights=sample_weight))
+    
+    hstats_results["numerator_pairwise"] = np.array(num)
+    hstats_results["denominator_pairwise"] = np.array(denom)
+    hstats_results["hsquared_pairwise"] = (
+        hstats_results["numerator_pairwise"] / hstats_results["denominator_pairwise"]
+    )
 
-    return stats
+    return hstats_results
