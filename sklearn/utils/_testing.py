@@ -1149,7 +1149,7 @@ def _get_warnings_filters_info_list():
     ]
 
 
-def get_pytest_filterwarning_str():
+def get_pytest_filterwarning_lines():
     warning_filters_info_list = _get_warnings_filters_info_list()
     return [
         warning_info.to_filterwarning_str()

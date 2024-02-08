@@ -26,7 +26,7 @@ from sklearn.datasets import (
 )
 from sklearn.tests import random_seed
 from sklearn.utils import _IS_32BIT
-from sklearn.utils._testing import get_pytest_filterwarning_str
+from sklearn.utils._testing import get_pytest_filterwarning_lines
 from sklearn.utils.fixes import (
     np_base_version,
     parse_version,
@@ -284,7 +284,7 @@ def pytest_configure(config):
         # This seems like the only way to programmatically change the config
         # filterwarnings. This was suggested in
         # https://github.com/pytest-dev/pytest/issues/3311#issuecomment-373177592
-        for line in get_pytest_filterwarning_str():
+        for line in get_pytest_filterwarning_lines():
             config.addinivalue_line("filterwarnings", line)
 
 
