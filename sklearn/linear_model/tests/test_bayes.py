@@ -6,13 +6,13 @@
 from math import log
 
 import numpy as np
-import pandas as pd
 import pytest
 
 from sklearn import datasets
 from sklearn.linear_model import ARDRegression, BayesianRidge, Ridge
 from sklearn.utils import check_random_state
 from sklearn.utils._testing import (
+    _convert_container,
     assert_almost_equal,
     assert_array_almost_equal,
     assert_array_less,
@@ -210,8 +210,8 @@ def test_ard_accuracy_on_easy_problem(global_random_seed, n_samples, n_features)
     assert abs_coef_error < 1e-10
 
 
-@pytest.mark.parametrize("as_frame", [True, False])
-def test_return_std(as_frame: bool):
+@pytest.mark.parametrize("constructor_name", ["array", "dataframe"])
+def test_return_std(constructor_name):
     # Test return_std option for both Bayesian regressors
     def f(X):
         return np.dot(X, w) + b
@@ -227,28 +227,22 @@ def test_return_std(as_frame: bool):
     b = 1.0
 
     X = np.random.random((n_train, d))
+    X = _convert_container(X, constructor_name)
+
     X_test = np.random.random((n_test, d))
+    X_test = _convert_container(X_test, constructor_name)
 
     for decimal, noise_mult in enumerate([1, 0.1, 0.01]):
         y = f_noise(X, noise_mult)
 
-        if as_frame:
-            _X = pd.DataFrame(X)
-            _y = pd.Series(y)
-            _X_test = pd.DataFrame(X_test)
-        else:
-            _X = X
-            _y = y
-            _X_test = X_test
-
         m1 = BayesianRidge()
-        m1.fit(_X, _y)
-        y_mean1, y_std1 = m1.predict(_X_test, return_std=True)
+        m1.fit(X, y)
+        y_mean1, y_std1 = m1.predict(X_test, return_std=True)
         assert_array_almost_equal(y_std1, noise_mult, decimal=decimal)
 
         m2 = ARDRegression()
-        m2.fit(_X, _y)
-        y_mean2, y_std2 = m2.predict(_X_test, return_std=True)
+        m2.fit(X, y)
+        y_mean2, y_std2 = m2.predict(X_test, return_std=True)
         assert_array_almost_equal(y_std2, noise_mult, decimal=decimal)
 
 
