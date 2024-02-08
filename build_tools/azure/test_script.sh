@@ -61,12 +61,16 @@ if [[ -n "$SELECTED_TESTS" ]]; then
     export SKLEARN_TESTS_GLOBAL_RANDOM_SEED="all"
 fi
 
-# set -x
-# eval "$TEST_CMD --maxfail=10 --pyargs sklearn"
-# set +x
+du -sh ~/scikit_learn_data || echo no datasets
 
 pip install ipython
 
 python -m IPython rcv1.ipy
 
 python -m IPython covtype.ipy
+
+rm -rf ~/scikit_learn_data
+
+set -x
+eval "$TEST_CMD --maxfail=10 --pyargs sklearn"
+set +x
