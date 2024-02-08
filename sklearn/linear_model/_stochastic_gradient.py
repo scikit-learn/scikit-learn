@@ -2067,10 +2067,12 @@ class SGDOneClassSVM(BaseSGD, OutlierMixin):
         The maximum number of passes over the training data (aka epochs).
         It only impacts the behavior in the ``fit`` method, and not the
         `partial_fit`. Defaults to 1000.
+        Values must be in the range `[1, inf)`.
 
     tol : float or None, default=1e-3
         The stopping criterion. If it is not None, the iterations will stop
         when (loss > previous_loss - tol). Defaults to 1e-3.
+        Values must be in the range `[0.0, inf)`.
 
     shuffle : bool, default=True
         Whether or not the training data should be shuffled after each epoch.
@@ -2103,9 +2105,11 @@ class SGDOneClassSVM(BaseSGD, OutlierMixin):
         The initial learning rate for the 'constant', 'invscaling' or
         'adaptive' schedules. The default value is 0.0 as eta0 is not used by
         the default schedule 'optimal'.
+        Values must be in the range `[0.0, inf)`.
 
     power_t : float, default=0.5
         The exponent for inverse scaling learning rate.
+        Values must be in the range `(-inf, inf)`.
 
     warm_start : bool, default=False
         When set to True, reuse the solution of the previous call to fit as
