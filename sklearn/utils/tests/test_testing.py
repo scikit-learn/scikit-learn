@@ -898,7 +898,7 @@ def check_warnings_as_errors(warning_info, warnings_as_errors):
             message = warning_info.message
             # Special treatment when regex is used
             if "Pyarrow" in message:
-                message = r"\nPyarrow will become a required dependency"
+                message = "\nPyarrow will become a required dependency"
 
             warnings.warn(
                 message=message,
