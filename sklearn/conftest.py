@@ -284,7 +284,8 @@ def pytest_configure(config):
         # This seems like the only way to programmatically change the config
         # filterwarnings. This was suggested in
         # https://github.com/pytest-dev/pytest/issues/3311#issuecomment-373177592
-        config._inicache["filterwarnings"] += get_pytest_filterwarning_str()
+        for line in get_pytest_filterwarning_str():
+            config.addinivalue_line("filterwarnings", line)
 
 
 @pytest.fixture
