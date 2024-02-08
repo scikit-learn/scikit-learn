@@ -67,6 +67,6 @@ fi
 
 pip install ipython
 
-ipython rcv1.ipy
+python -m IPython rcv1.ipy
 
-ipython covtype.ipy
+python -m IPython covtype.ipy
