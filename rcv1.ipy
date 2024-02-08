@@ -1,0 +1,3 @@
+from sklearn import datasets
+
+%prun -s cumulative datasets.fetch_rcv1()
