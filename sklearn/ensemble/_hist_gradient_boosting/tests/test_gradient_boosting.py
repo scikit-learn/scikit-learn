@@ -1676,7 +1676,7 @@ def test_pandas_nullable_dtype():
     pd = pytest.importorskip("pandas")
 
     rng = np.random.default_rng(0)
-    X = pd.DataFrame({"a": rng.integers(10, size=100)}).astype(pd.Int64Dtype)
+    X = pd.DataFrame({"a": rng.integers(10, size=100)}).astype(pd.Int64Dtype())
     y = rng.integers(2, size=100)
 
     clf = HistGradientBoostingClassifier()
