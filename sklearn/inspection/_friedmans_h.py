@@ -6,6 +6,7 @@ import numpy as np
 
 from ..ensemble._bagging import _generate_indices
 from ..utils import _get_column_indices, _safe_assign, _safe_indexing
+from ..utils.validation import _check_sample_weight, check_is_fitted
 
 
 def _calculate_pd_over_data(estimator, X, feature_indices, sample_weight=None):
@@ -49,7 +50,7 @@ def _calculate_pd_over_data(estimator, X, feature_indices, sample_weight=None):
 
 
 def hstatistics(
-    model, X, *, features=None, n_max=500, random_state=None, sample_weight=None
+    estimator, X, *, features=None, n_max=500, random_state=None, sample_weight=None
 ):
     """Friedman and Popescu's H-statistics of pairwise interaction strength.
 
@@ -122,6 +123,11 @@ def hstatistics(
     >>> (2, 8, 56.778288912326026, 0.025823266523399196)]
 
     """
+    check_is_fitted(estimator)
+
+    if sample_weight is not None:
+        sample_weight = _check_sample_weight(sample_weight, X)
+
     # Usually, the data is too large and we need subsampling
     if X.shape[0] > n_max:
         row_indices = _generate_indices(
@@ -136,6 +142,7 @@ def hstatistics(
     else:
         X = X.copy()
 
+    # TODO: Improve logic, e.g., use column names if there are some
     if features is None:
         features = feature_indices = np.arange(X.shape[1])
     else:
@@ -148,14 +155,14 @@ def hstatistics(
     for ind in feature_indices:
         pd_univariate.append(
             _calculate_pd_over_data(
-                model, X=X, feature_indices=[ind], sample_weight=sample_weight
+                estimator, X=X, feature_indices=[ind], sample_weight=sample_weight
             )
         )
 
     stats = []
     for i, j in itertools.combinations(range(len(feature_indices)), 2):
         pd_bivariate = _calculate_pd_over_data(
-            model,
+            estimator,
             X=X,
             feature_indices=feature_indices[[i, j]],
             sample_weight=sample_weight,
