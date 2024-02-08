@@ -1859,7 +1859,7 @@ class SGDRegressor(BaseSGDRegressor):
     eta0 : float, default=0.01
         The initial learning rate for the 'constant', 'invscaling' or
         'adaptive' schedules. The default value is 0.01.
-        Values must be in the range `(0.0, inf)`.
+        Values must be in the range `[0.0, inf)`.
 
     power_t : float, default=0.25
         The exponent for inverse scaling learning rate.
