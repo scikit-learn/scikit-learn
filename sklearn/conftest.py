@@ -169,7 +169,8 @@ def pytest_collection_modifyitems(config, items):
     # download before tests run.
     worker_id = environ.get("PYTEST_XDIST_WORKER", "gw0")
     if worker_id == "gw0" and run_network_tests:
-        for name in datasets_to_download:
+        print(f"{len(datasets_to_download)} datasets to download")
+        for name in sorted(datasets_to_download):
             with suppress(SkipTest):
                 print(f"dataset: {name}")
                 tic = time.time()
