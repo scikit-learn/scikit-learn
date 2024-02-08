@@ -1061,7 +1061,7 @@ class SGDClassifier(BaseSGDClassifier):
         The initial learning rate for the 'constant', 'invscaling' or
         'adaptive' schedules. The default value is 0.0 as eta0 is not used by
         the default schedule 'optimal'.
-        Values must be in the range `(0.0, inf)`.
+        Values must be in the range `[0.0, inf)`.
 
     power_t : float, default=0.5
         The exponent for inverse scaling learning rate.
