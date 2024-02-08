@@ -1125,7 +1125,7 @@ class SGDClassifier(BaseSGDClassifier):
         an int greater than 1, averaging will begin once the total number of
         samples seen reaches `average`. So ``average=10`` will begin
         averaging after seeing 10 samples.
-        Integer values must be in the range `[1, n_samples]`.
+        Integer values must be in the range `[0, n_samples]`.
 
     Attributes
     ----------
@@ -1915,6 +1915,7 @@ class SGDRegressor(BaseSGDRegressor):
         an int greater than 1, averaging will begin once the total number of
         samples seen reaches `average`. So ``average=10`` will begin
         averaging after seeing 10 samples.
+        Integer values must be in the range `[0, n_samples]`.
 
     Attributes
     ----------
@@ -2130,6 +2131,7 @@ class SGDOneClassSVM(BaseSGD, OutlierMixin):
         averaging will begin once the total number of samples seen reaches
         average. So ``average=10`` will begin averaging after seeing 10
         samples.
+        Integer values must be in the range `[0, n_samples]`.
 
     Attributes
     ----------
