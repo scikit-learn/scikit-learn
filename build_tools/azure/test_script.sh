@@ -61,8 +61,8 @@ if [[ -n "$SELECTED_TESTS" ]]; then
     export SKLEARN_TESTS_GLOBAL_RANDOM_SEED="all"
 fi
 
-du -sh ~/scikit_learn_data || echo no datasets
 ls -ltrh ~/scikit_learn_data || echo no datasets
+du -sh ~/scikit_learn_data || echo no datasets
 
 pip install ipython
 
@@ -70,6 +70,8 @@ python -m IPython rcv1.ipy
 
 python -m IPython covtype.ipy
 
+ls -ltrh ~/scikit_learn_data || echo no datasets
+du -sh ~/scikit_learn_data || echo no datasets
 rm -rf ~/scikit_learn_data
 
 set -x
