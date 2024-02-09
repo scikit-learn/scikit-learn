@@ -4,8 +4,8 @@ import itertools
 
 import numpy as np
 
-from ..ensemble._bagging import _generate_indices
-from ..utils import _get_column_indices, _safe_assign, _safe_indexing, Bunch
+from ..utils import Bunch, _get_column_indices, _safe_assign, _safe_indexing
+from ..utils.random import sample_without_replacement
 from ..utils.validation import _check_sample_weight, check_is_fitted
 
 
@@ -69,11 +69,10 @@ def h_statistics(
     is on the scale of the predictions and can directly compared between feature
     pairs.
 
-    The complexity of the function is :math:`O(n^2 n^2)`, where :math:`n` is the number of
-    data rows and :math:`p` is the number of features considered.
+    The complexity of the function is :math:`O(n^2 n^2)`, where :math:`n` is
+    the number of observations and :math:`p` is the number of features considered.
     The size of `n` is automatically controlled via `n_max=500`, while it is
-    the user's responsibility to pass only 2-5 *important* features or features of
-    special interest.
+    the user's responsibility to select some *important* features.
 
     Parameters
     ----------
@@ -106,13 +105,17 @@ def h_statistics(
         Dictionary-like object, with the following attributes.
 
         feature_pair : list of length n_feature_pairs
-            The list contains tuples of feature pairs (indices) in the same order as pairwise statistics.
+            The list contains tuples of feature pairs (indices) in the same order
+            as pairwise statistics.
+
         numerator_pairwise : ndarray of shape (n_pairs, ) or (n_pairs, output_dim)
             Numerator of pairwise H-squared statistic.
             Useful to see which feature pair has strongest absolute interaction.
             Take square-root to get values on the scale of the predictions.
+
         denominator_pairwise : ndarray of shape (n_pairs, ) or (n_pairs, output_dim)
             Denominator of pairwise H-squared statistic.
+
         hsquared_pairwise : ndarray of shape (n_pairs, ) or (n_pairs, output_dim)
             Pairwise H-squared statistic. Useful to see which feature pair has
             strongest relative interation (relative with respect to joint effect).
@@ -137,14 +140,14 @@ def h_statistics(
     >>> # Get Friedman's H-squared for top three predictors
     >>> imp = permutation_importance(est, X, y, n_repeats=10, random_state=0)
     >>> top_3 = np.argsort(imp.importances_mean)[-3:]
-    >>> hstatistics(est, X=X, features=top_3, random_state=4)
+    >>> h_statistics(est, X=X, features=top_3, random_state=4)
 
-    >>> # For feature pair (3, 2), about 4% of joint effect variability comes from 
+    >>> # For feature pair (3, 2), about 4% of joint effect variability comes from
     >>> # their interaction. Unnormalized statistics are highest for pair (2, 8):
-    >>> {'feature_pair': [(3, 2), (3, 8), (2, 8)],
-    >>> 'numerator_pairwise': array([50.42733969, 20.34764278, 56.77828891]),
-    >>> 'denominator_pairwise': array([1163.19050558, 1300.27629882, 2198.72605431]),
-    >>> 'hsquared_pairwise': array([0.04335261, 0.01564871, 0.02582327])}
+    >>> # {'feature_pair': [(3, 2), (3, 8), (2, 8)],
+    >>> # 'numerator_pairwise': array([50.42733969, 20.34764278, 56.77828891]),
+    >>> # 'denominator_pairwise': array([1163.19050558, 1300.27629882, 2198.72605431]),
+    >>> # 'hsquared_pairwise': array([0.04335261, 0.01564871, 0.02582327])}
 
     """
     check_is_fitted(estimator)
@@ -154,11 +157,8 @@ def h_statistics(
 
     # Usually, the data is too large and we need subsampling
     if X.shape[0] > n_max:
-        row_indices = _generate_indices(
-            random_state=random_state,
-            bootstrap=False,
-            n_population=X.shape[0],
-            n_samples=n_max,
+        row_indices = sample_without_replacement(
+            n_population=X.shape[0], n_samples=n_max, random_state=random_state
         )
         X = _safe_indexing(X, row_indices, axis=0)
         if sample_weight is not None:
@@ -203,7 +203,7 @@ def h_statistics(
             )
         )
         denom.append(np.average(pd_bivariate**2, axis=0, weights=sample_weight))
-    
+
     # Round small numerators to 0
     num = np.array(num)
     num[np.abs(num) < eps] = 0
