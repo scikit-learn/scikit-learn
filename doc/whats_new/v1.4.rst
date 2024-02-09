@@ -118,6 +118,13 @@ Changelog
   together with subsampling (i.e. `max_features` < 1.0).
   :pr:`28184` by :user:`Michael Mayer <mayer79>`.
 
+:mod:`sklearn.linear_model`
+...........................
+
+- |Fix| :class:`linear_model.ARDRegression` now handles pandas input types
+  for `predict(X, return_std=True)`.
+  :pr:`28377` by :user:`Eddie Bergman <eddiebergman>`.
+
 :mod:`sklearn.preprocessing`
 ............................
 
