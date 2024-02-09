@@ -781,17 +781,10 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             best_index = results[f"rank_test_{refit_metric}"].argmin()
         return best_index
 
-    def _get_scorers(self, convert_multimetric):
+    def _get_scorers(self):
         """Get the scorer(s) to be used.
 
         This is used in ``fit`` and ``get_metadata_routing``.
-
-        Parameters
-        ----------
-        convert_multimetric : bool
-            Whether to convert a dict of scorers to a _MultimetricScorer. This
-            is used in ``get_metadata_routing`` to include the routing info for
-            multiple scorers.
 
         Returns
         -------
@@ -807,10 +800,9 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             scorers = _check_multimetric_scoring(self.estimator, self.scoring)
             self._check_refit_for_multimetric(scorers)
             refit_metric = self.refit
-            if convert_multimetric and isinstance(scorers, dict):
-                scorers = _MultimetricScorer(
-                    scorers=scorers, raise_exc=(self.error_score == "raise")
-                )
+            scorers = _MultimetricScorer(
+                scorers=scorers, raise_exc=(self.error_score == "raise")
+            )
 
         return scorers, refit_metric
 
@@ -866,10 +858,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             Instance of fitted estimator.
         """
         estimator = self.estimator
-        # Here we keep a dict of scorers as is, and only convert to a
-        # _MultimetricScorer at a later stage. Issue:
-        # https://github.com/scikit-learn/scikit-learn/issues/27001
-        scorers, refit_metric = self._get_scorers(convert_multimetric=False)
+        scorers, refit_metric = self._get_scorers()
 
         X, y = indexable(X, y)
         params = _check_method_params(X, params=params)
@@ -1015,7 +1004,10 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
                 self.feature_names_in_ = self.best_estimator_.feature_names_in_
 
         # Store the only scorer not as a dict for single metric evaluation
-        self.scorer_ = scorers
+        if isinstance(scorers, _MultimetricScorer):
+            self.scorer_ = scorers._scorers
+        else:
+            self.scorer_ = scorers
 
         self.cv_results_ = results
         self.n_splits_ = n_splits
@@ -1147,7 +1139,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             method_mapping=MethodMapping().add(caller="fit", callee="fit"),
         )
 
-        scorer, _ = self._get_scorers(convert_multimetric=True)
+        scorer, _ = self._get_scorers()
         router.add(
             scorer=scorer,
             method_mapping=MethodMapping()
