@@ -58,13 +58,36 @@ def test_pandas_adapter():
     )
     pd.testing.assert_frame_equal(X_stacked, expected_df)
 
+    # check that we update properly the columns even with duplicate column names
+    # this use-case potentially happen when using ColumnTransformer
+    # non-regression test for gh-28260
+    X_df = pd.DataFrame([[1, 2], [1, 3]], columns=["a", "a"])
+    new_columns = np.array(["x__a", "y__a"], dtype=object)
+    new_df = adapter.rename_columns(X_df, new_columns)
+    assert_array_equal(new_df.columns, new_columns)
+
+    # check the behavior of the inplace parameter in `create_container`
+    # we should trigger a copy
+    X_df = pd.DataFrame([[1, 2], [1, 3]], index=index)
+    X_output = adapter.create_container(X_df, X_df, columns=["a", "b"], inplace=False)
+    assert X_output is not X_df
+    assert list(X_df.columns) == [0, 1]
+    assert list(X_output.columns) == ["a", "b"]
+
+    # the operation is inplace
+    X_df = pd.DataFrame([[1, 2], [1, 3]], index=index)
+    X_output = adapter.create_container(X_df, X_df, columns=["a", "b"], inplace=True)
+    assert X_output is X_df
+    assert list(X_df.columns) == ["a", "b"]
+    assert list(X_output.columns) == ["a", "b"]
+
 
 def test_polars_adapter():
     """Check Polars adapter has expected behavior."""
     pl = pytest.importorskip("polars")
     X_np = np.array([[1, 0, 3], [0, 0, 1]])
     columns = ["f1", "f2", "f3"]
-    X_df_orig = pl.DataFrame(X_np, schema=columns)
+    X_df_orig = pl.DataFrame(X_np, schema=columns, orient="row")
 
     adapter = ADAPTERS_MANAGER.adapters["polars"]
     X_container = adapter.create_container(X_np, X_df_orig, columns=lambda: columns)
@@ -86,16 +109,31 @@ def test_polars_adapter():
     assert_array_equal(new_df.columns, new_columns)
 
     # adapter.hstack stacks the dataframes horizontally.
-    X_df_1 = pl.DataFrame([[1, 2, 5], [3, 4, 6]], schema=["a", "b", "e"])
-    X_df_2 = pl.DataFrame([[4], [5]], schema=["c"])
+    X_df_1 = pl.DataFrame([[1, 2, 5], [3, 4, 6]], schema=["a", "b", "e"], orient="row")
+    X_df_2 = pl.DataFrame([[4], [5]], schema=["c"], orient="row")
     X_stacked = adapter.hstack([X_df_1, X_df_2])
 
     expected_df = pl.DataFrame(
-        [[1, 2, 5, 4], [3, 4, 6, 5]], schema=["a", "b", "e", "c"]
+        [[1, 2, 5, 4], [3, 4, 6, 5]], schema=["a", "b", "e", "c"], orient="row"
     )
     from polars.testing import assert_frame_equal
 
     assert_frame_equal(X_stacked, expected_df)
+
+    # check the behavior of the inplace parameter in `create_container`
+    # we should trigger a copy
+    X_df = pl.DataFrame([[1, 2], [1, 3]], schema=["a", "b"], orient="row")
+    X_output = adapter.create_container(X_df, X_df, columns=["c", "d"], inplace=False)
+    assert X_output is not X_df
+    assert list(X_df.columns) == ["a", "b"]
+    assert list(X_output.columns) == ["c", "d"]
+
+    # the operation is inplace
+    X_df = pl.DataFrame([[1, 2], [1, 3]], schema=["a", "b"], orient="row")
+    X_output = adapter.create_container(X_df, X_df, columns=["c", "d"], inplace=True)
+    assert X_output is X_df
+    assert list(X_df.columns) == ["c", "d"]
+    assert list(X_output.columns) == ["c", "d"]
 
 
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)

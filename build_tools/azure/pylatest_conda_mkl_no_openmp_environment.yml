@@ -8,7 +8,6 @@ dependencies:
   - numpy<1.25
   - blas[build=mkl]
   - scipy
-  - cython
   - joblib
   - threadpoolctl
   - matplotlib
@@ -16,9 +15,12 @@ dependencies:
   - rich
   - pyamg
   - pytest
-  - pytest-xdist=2.5.0
+  - pytest-xdist
   - pillow
   - setuptools
   - pytest-cov
   - coverage
   - ccache
+  - pip
+  - pip:
+    - cython

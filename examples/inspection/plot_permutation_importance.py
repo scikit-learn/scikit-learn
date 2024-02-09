@@ -24,8 +24,6 @@ can mitigate those limitations.
      2001. <10.1023/A:1010933404324>`
 
 """
-# %%
-import numpy as np
 
 # %%
 # Data Loading and Feature Engineering
@@ -40,6 +38,8 @@ import numpy as np
 #   values as records).
 # - ``random_cat`` is a low cardinality categorical variable (3 possible
 #   values).
+import numpy as np
+
 from sklearn.datasets import fetch_openml
 from sklearn.model_selection import train_test_split
 

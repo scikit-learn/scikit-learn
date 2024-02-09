@@ -16,7 +16,7 @@ dependencies:
   - rich
   - pyamg
   - pytest
-  - pytest-xdist=2.5.0
+  - pytest-xdist
   - pillow
   - setuptools
   - scikit-image
@@ -29,6 +29,7 @@ dependencies:
   - numpydoc
   - sphinx-prompt
   - plotly
+  - polars
   - pooch
   - sphinxext-opengraph
   - pip
