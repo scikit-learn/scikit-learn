@@ -1669,3 +1669,15 @@ def test_different_bitness_joblib_pickle():
     new_clf = joblib.load(joblib_dump_with_different_bitness())
     new_score = new_clf.score(X, y)
     assert score == pytest.approx(new_score)
+
+
+def test_pandas_nullable_dtype():
+    # Non regression test for https://github.com/scikit-learn/scikit-learn/issues/28317
+    pd = pytest.importorskip("pandas")
+
+    rng = np.random.default_rng(0)
+    X = pd.DataFrame({"a": rng.integers(10, size=100)}).astype(pd.Int64Dtype())
+    y = rng.integers(2, size=100)
+
+    clf = HistGradientBoostingClassifier()
+    clf.fit(X, y)

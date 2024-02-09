@@ -497,6 +497,17 @@ def indexable(*iterables):
     result : list of {ndarray, sparse matrix, dataframe} or None
         Returns a list containing indexable arrays (i.e. NumPy array,
         sparse matrix, or dataframe) or `None`.
+
+    Examples
+    --------
+    >>> from sklearn.utils import indexable
+    >>> from scipy.sparse import csr_matrix
+    >>> import numpy as np
+    >>> iterables = [
+    ...     [1, 2, 3], np.array([2, 3, 4]), None, csr_matrix([[5], [6], [7]])
+    ... ]
+    >>> indexable(*iterables)
+    [[1, 2, 3], array([2, 3, 4]), None, <3x1 sparse matrix ...>]
     """
 
     result = [_make_indexable(X) for X in iterables]
@@ -1073,6 +1084,18 @@ def check_array(
                 % (n_features, array.shape, ensure_min_features, context)
             )
 
+    # With an input pandas dataframe or series, we know we can always make the
+    # resulting array writeable:
+    # - if copy=True, we have already made a copy so it is fine to make the
+    #   array writeable
+    # - if copy=False, the caller is telling us explicitly that we can do
+    #   in-place modifications
+    # See https://pandas.pydata.org/docs/dev/user_guide/copy_on_write.html#read-only-numpy-arrays
+    # for more details about pandas copy-on-write mechanism, that is enabled by
+    # default in pandas 3.0.0.dev.
+    if _is_pandas_df_or_series(array_orig) and hasattr(array, "flags"):
+        array.flags.writeable = True
+
     return array
 
 
@@ -1568,6 +1591,7 @@ def check_is_fitted(estimator, attributes=None, *, msg=None, all_or_any=all):
 
     NotFittedError
         If the attributes are not found.
+
     Examples
     --------
     >>> from sklearn.linear_model import LogisticRegression
@@ -2126,6 +2150,15 @@ def _check_method_params(X, params, indices=None):
             )
 
     return method_params_validated
+
+
+def _is_pandas_df_or_series(X):
+    """Return True if the X is a pandas dataframe or series."""
+    try:
+        pd = sys.modules["pandas"]
+    except KeyError:
+        return False
+    return isinstance(X, (pd.DataFrame, pd.Series))
 
 
 def _is_pandas_df(X):
