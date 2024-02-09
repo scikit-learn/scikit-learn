@@ -112,6 +112,10 @@ Changelog
   :class:`~calibration.CalibrationDisplay`.
   :pr:`28051` by :user:`Pierre de Fréminville <pidefrem>`.
 
+- |Feature| :func:`metrics.d2_log_loss_score` has been added and this
+  calculates the D^2 score for the log loss.
+  :pr:`28351` by :user:`Omar Salman <OmarManzoor>`.
+
 :mod:`sklearn.model_selection`
 ..............................
 
