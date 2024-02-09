@@ -30,7 +30,6 @@ from sklearn.tests.metadata_routing_common import (
     assert_request_is_empty,
     check_recorded_metadata,
 )
-from sklearn.utils._bunch import Bunch
 from sklearn.utils import metadata_routing
 from sklearn.utils._metadata_requests import (
     COMPOSITE_METHODS,
