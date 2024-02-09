@@ -61,6 +61,7 @@ extensions = [
     "matplotlib.sphinxext.plot_directive",
     "sphinxcontrib.sass",
     "sphinx_remove_toctrees",
+    "sphinx_design",
     # See sphinxext/
     "add_toctree_functions",
     "allow_nan_estimators",
@@ -870,6 +871,13 @@ if os.environ.get("SKLEARN_DOC_BUILD_WARNINGS_AS_ERRORS", "true").lower() == "tr
     warnings.filterwarnings(
         "ignore",
         message="pkg_resources is deprecated as an API",
+        category=DeprecationWarning,
+    )
+    # XXX: Easiest way to ignore Pyarrow DeprecationWarning in the short-term.
+    # See https://github.com/pandas-dev/pandas/issues/54466 for more details.
+    warnings.filterwarnings(
+        "ignore",
+        message=r"\s*Pyarrow will become a required dependency of pandas.*",
         category=DeprecationWarning,
     )
 

@@ -891,7 +891,7 @@ class ValidationCurveDisplay(_BaseCurveDisplay):
 
         viz = cls(
             param_name=param_name,
-            param_range=np.array(param_range, copy=False),
+            param_range=np.asarray(param_range),
             train_scores=train_scores,
             test_scores=test_scores,
             score_name=score_name,
