@@ -45,6 +45,7 @@ from sklearn.utils.metadata_routing import (
     MetadataRequest,
     MetadataRouter,
     MethodMapping,
+    _RoutingNotSupportedMixin,
     get_routing_for_object,
     process_routing,
 )
@@ -151,7 +152,6 @@ def test_assert_request_is_empty():
         ConsumingClassifier(registry=_Registry()),
         ConsumingRegressor(registry=_Registry()),
         ConsumingTransformer(registry=_Registry()),
-        NonConsumingClassifier(registry=_Registry()),
         WeightedMetaClassifier(estimator=ConsumingClassifier(), registry=_Registry()),
         WeightedMetaRegressor(estimator=ConsumingRegressor(), registry=_Registry()),
     ],
@@ -228,7 +228,7 @@ def test_default_requests():
 
 def test_process_routing_invalid_method():
     with pytest.raises(TypeError, match="Can only route and process input"):
-        process_routing(ConsumingClassifier(), "invalid_method", **{})
+        process_routing(ConsumingClassifier(), "invalid_method", groups=my_groups)
 
 
 def test_process_routing_invalid_object():
@@ -236,7 +236,7 @@ def test_process_routing_invalid_object():
         pass
 
     with pytest.raises(AttributeError, match="either implement the routing method"):
-        process_routing(InvalidObject(), "fit", **{})
+        process_routing(InvalidObject(), "fit", groups=my_groups)
 
 
 def test_simple_metadata_routing():
@@ -970,3 +970,23 @@ def test_no_feature_flag_raises_error():
 def test_none_metadata_passed():
     """Test that passing None as metadata when not requested doesn't raise"""
     MetaRegressor(estimator=ConsumingRegressor()).fit(X, y, sample_weight=None)
+
+
+def test_no_metadata_always_works():
+    """Test that when no metadata is passed, having a meta-estimator which does
+    not yet support metadata routing works.
+
+    Non-regression test for https://github.com/scikit-learn/scikit-learn/issues/28246
+    """
+
+    class Estimator(_RoutingNotSupportedMixin, BaseEstimator):
+        def fit(self, X, y, metadata=None):
+            return self
+
+    # This passes since no metadata is passed.
+    MetaRegressor(estimator=Estimator()).fit(X, y)
+    # This fails since metadata is passed but Estimator() does not support it.
+    with pytest.raises(
+        NotImplementedError, match="Estimator has not implemented metadata routing yet."
+    ):
+        MetaRegressor(estimator=Estimator()).fit(X, y, metadata=my_groups)
