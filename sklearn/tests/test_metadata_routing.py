@@ -249,7 +249,7 @@ def test_process_routing_empty_params_get_with_default():
 
         # An empty dictionary for each method
         assert isinstance(params_for_method, dict)
-        assert len(params_for_method) == 0
+        assert set(params_for_method.keys()) == set(METHODS)
 
         # This behaviour should be equivalent with using `get` with no default
         assert routed_params.get(method) == params_for_method
