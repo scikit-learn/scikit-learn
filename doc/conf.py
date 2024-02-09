@@ -329,6 +329,8 @@ def add_js_css_files(app, pagename, templatename, context, doctree):
     """
     if pagename == "index":
         app.add_css_file("styles/index.css")
+    elif pagename == "install":
+        app.add_css_file("styles/install.css")
 
 
 # If false, no module index is generated.
