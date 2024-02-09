@@ -85,7 +85,7 @@ def _check_array_api_dispatch(array_api_dispatch):
 
 
 def _single_array_device(array):
-    """"Hardware device the array data resides on."""
+    """Hardware device where the array data resides on."""
     if isinstance(array, (numpy.ndarray, numpy.generic)) or not hasattr(
         array, "device"
     ):
@@ -169,19 +169,22 @@ def isdtype(dtype, kind, *, xp):
         return _isdtype_single(dtype, kind, xp=xp)
 
 
+def _match_dtype_names(dtype, dtype_names, xp):
+    return any(
+        hasattr(xp, dtype_name) and (dtype == getattr(xp, dtype_name))
+        for dtype_name in dtype_names
+    )
+
+
 def _isdtype_single(dtype, kind, *, xp):
     if isinstance(kind, str):
         if kind == "bool":
             return dtype == xp.bool
         elif kind == "signed integer":
-            return any(
-                hasattr(xp, dtype_name) and (dtype == getattr(xp, dtype_name))
-                for dtype_name in ["int8", "int16", "int32", "int64"]
-            )
+            return _match_dtype_names(dtype, ["int8", "int16", "int32", "int64"], xp)
         elif kind == "unsigned integer":
-            return any(
-                hasattr(xp, dtype_name) and (dtype == getattr(xp, dtype_name))
-                for dtype_name in ["uint8", "uint16", "uint32", "uint64"]
+            return _match_dtype_names(
+                dtype, ["uint8", "uint16", "uint32", "uint64"], xp
             )
         elif kind == "integral":
             return any(
@@ -210,7 +213,23 @@ def _isdtype_single(dtype, kind, *, xp):
         return dtype == kind
 
 
-@lru_cache
+class _HashableDevice:
+    """Some device inspection functions cache their results using a `lru_cache`
+    decorator, to enable fast repeated access. `lru_cache` derives the cache keys
+    by hashing the inputs. However the Array API does not enforces that the device
+    objects have to be hashable, and in practice it is sometimes not the case (e.g.
+    cupy cuda device object is not hashable). This class wraps the device to make
+    sure it is hashable, deriving a hash from `repr(device)`."""
+
+    def __init__(self, device, xp):
+        self.device = device
+        self.xp = xp
+
+    def __hash__(self):
+        device_name = repr(self.device) if self.device is not None else None
+        return hash((device_name, self.xp))
+
+
 def _supports_dtype(xp, device, dtype):
     """Check if a given namespace/device/dtype combination is supported.
 
@@ -224,15 +243,21 @@ def _supports_dtype(xp, device, dtype):
     This helper function can be refactored once an expressive enough inspection
     API has been specified as part of the standard and implemented in the main
     libraries:
+
     https://github.com/data-apis/array-api/issues/640
     """
+    return _supports_dtype_cached(xp, _HashableDevice(device, xp), dtype)
+
+
+@lru_cache
+def _supports_dtype_cached(xp, device, dtype):
     if not hasattr(xp, dtype):
         return False
 
     dtype = getattr(xp, dtype)
 
     try:
-        array = xp.ones((1,), device=device, dtype=dtype)
+        array = xp.ones((1,), device=device.device, dtype=dtype)
         array += array
         float(array[0])
     except Exception:
@@ -241,7 +266,6 @@ def _supports_dtype(xp, device, dtype):
     return True
 
 
-@lru_cache
 def supported_float_dtypes(xp, device=None):
     """Supported floating point types for the namespace.
 
@@ -251,10 +275,15 @@ def supported_float_dtypes(xp, device=None):
 
     https://data-apis.org/array-api/latest/API_specification/data_types.html
     """
+    return _supported_float_dtypes_cached(xp, device=_HashableDevice(device, xp))
+
+
+@lru_cache
+def _supported_float_dtypes_cached(xp, device=None):
     return tuple(
         getattr(xp, dtype)
         for dtype in ["float64", "float32", "float16"]
-        if _supports_dtype(xp, device, dtype)
+        if _supports_dtype_cached(xp, device, dtype)
     )
 
 
@@ -505,7 +534,13 @@ def _add_to_diagonal(array, value, xp):
 
 
 def _average(a, axis=None, weights=None, normalize=True, xp=None):
-    """Partial port of np.average to support the Array API."""
+    """Partial port of np.average to support the Array API.
+
+    It does a best effort at mimicking the casting rules described at
+    https://numpy.org/doc/stable/reference/generated/numpy.average.html
+    and in particular will fall back to CPU if float64 conversion is
+    required but the input device only has float32 support.
+    """
     input_arrays = [a]
     if weights is not None:
         input_arrays.append(weights)
@@ -522,8 +557,23 @@ def _average(a, axis=None, weights=None, normalize=True, xp=None):
     if weights is not None:
         weights = xp.asarray(weights, device=device_)
 
+    if weights is not None and a.shape != weights.shape:
+        if axis is None:
+            raise TypeError(
+                "Axis must be specified when shapes of a and weights differ."
+            )
+        if weights.ndim != 1:
+            raise TypeError("1D weights expected when shapes of a and weights differ.")
+
+        if size(weights) != a.shape[axis]:
+            raise ValueError("Length of weights not compatible with specified axis.")
+
+        # If weights are 1D, add singleton dimensions for broadcasting
+        shape = [1] * a.ndim
+        shape[axis] = a.shape[axis]
+        weights = xp.reshape(weights, shape)
+
     output_dtype = None
-    output_dtype_name = None
 
     if xp.isdtype(a.dtype, "bool"):
         a = xp.astype(a, xp.int32)
@@ -543,7 +593,7 @@ def _average(a, axis=None, weights=None, normalize=True, xp=None):
         raise ValueError("Expecting only boolean, integral or real floating values.")
 
     if weights is None and xp.isdtype(a.dtype, "integral"):
-        output_dtype_name = "float64"
+        output_dtype = xp.float64
     elif weights is None:
         output_dtype = a.dtype
     elif xp.isdtype(a.dtype, "real floating") and xp.isdtype(
@@ -551,17 +601,13 @@ def _average(a, axis=None, weights=None, normalize=True, xp=None):
     ):
         output_dtype = (
             a.dtype
-            if (xp.finfo(a.dtype).bits >= xp.finfo(a.dtype).bits)
+            if (xp.finfo(a.dtype).bits >= xp.finfo(weights.dtype).bits)
             else weights.dtype
         )
     else:
-        output_dtype_name = "float64"
+        output_dtype = xp.float64
 
-    cast_to_float64 = (output_dtype_name == "float64") or (
-        xp.finfo(output_dtype).bits == 64
-    )
-
-    if cast_to_float64 and not _supports_dtype(xp, device_, "float64"):
+    if (output_dtype == xp.float64) and not _supports_dtype(xp, device_, "float64"):
         a = _convert_to_numpy(a, xp)
         if weights is not None:
             weights = _convert_to_numpy(weights, xp)
@@ -571,31 +617,12 @@ def _average(a, axis=None, weights=None, normalize=True, xp=None):
             device=device_,
         )
 
-    if output_dtype is None:
-        output_dtype = getattr(xp, output_dtype_name)
-
     a = xp.astype(a, output_dtype)
 
     if weights is None:
         return (xp.mean if normalize else xp.sum)(a, axis=axis)
 
     weights = xp.astype(weights, output_dtype)
-
-    if a.shape != weights.shape:
-        if axis is None:
-            raise TypeError(
-                "Axis must be specified when shapes of a and weights differ."
-            )
-        if weights.ndim != 1:
-            raise TypeError("1D weights expected when shapes of a and weights differ.")
-
-        if size(weights) != a.shape[axis]:
-            raise ValueError("Length of weights not compatible with specified axis.")
-
-        # If weights are 1D, add singleton dimensions for broadcasting
-        shape = [1] * a.ndim
-        shape[axis] = a.shape[axis]
-        weights = xp.reshape(weights, shape)
 
     sum_ = xp.sum(xp.multiply(a, weights), axis=axis)
 

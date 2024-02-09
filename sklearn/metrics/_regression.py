@@ -870,16 +870,9 @@ def median_absolute_error(
 
 
 def _assemble_r2_explained_variance(
-    numerator, denominator, n_outputs, multioutput, force_finite, xp=None
+    numerator, denominator, n_outputs, multioutput, force_finite, xp, device
 ):
     """Common part used by explained variance score and :math:`R^2` score."""
-    if xp is None:
-        input_arrays = [numerator, denominator]
-        if multioutput is not None and not isinstance(multioutput, str):
-            input_arrays.append(multioutput)
-        xp, _ = get_namespace(*input_arrays)
-
-    device_ = device(numerator)
     dtype = numerator.dtype
 
     nonzero_denominator = denominator != 0
@@ -891,11 +884,11 @@ def _assemble_r2_explained_variance(
         nonzero_numerator = numerator != 0
         # Default = Zero Numerator = perfect predictions. Set to 1.0
         # (note: even if denominator is zero, thus avoiding NaN scores)
-        output_scores = xp.ones([n_outputs], device=device_, dtype=dtype)
+        output_scores = xp.ones([n_outputs], device=device, dtype=dtype)
         # Non-zero Numerator and Non-zero Denominator: use the formula
         valid_score = nonzero_denominator & nonzero_numerator
 
-        output_scores[valid_score] = xp.ones(1, device=device_, dtype=dtype) - (
+        output_scores[valid_score] = 1 - (
             numerator[valid_score] / denominator[valid_score]
         )
 
@@ -1058,6 +1051,8 @@ def explained_variance_score(
         n_outputs=y_true.shape[1],
         multioutput=multioutput,
         force_finite=force_finite,
+        xp=get_namespace(y_true)[0],
+        device=None,
     )
 
 
@@ -1242,7 +1237,7 @@ def r2_score(
         sample_weight = column_or_1d(sample_weight, dtype=dtype)
         weight = sample_weight[:, None]
     else:
-        weight = xp.asarray([1.0], dtype=y_true.dtype, device=device_)
+        weight = 1
 
     numerator = xp.sum(weight * (y_true - y_pred) ** 2, axis=0, dtype=xp.float64)
     denominator = xp.sum(
@@ -1258,6 +1253,7 @@ def r2_score(
         multioutput=multioutput,
         force_finite=force_finite,
         xp=xp,
+        device=device_,
     )
 
     result = input_xp.asarray(result, device=device_)

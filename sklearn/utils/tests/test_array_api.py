@@ -175,8 +175,19 @@ def test_average(
     with config_context(array_api_dispatch=True):
         result = _average(array_in, axis=axis, weights=weights, normalize=normalize)
 
+    assert array_in.device == result.device
+
     result = _convert_to_numpy(result, xp)
     assert_allclose(result, expected, atol=_atol_for_type(dtype_name))
+
+
+@pytest.mark.parametrize(
+    "array_namespace, device, dtype_name",
+    yield_namespace_device_dtype_combinations(include_numpy_namespaces=False),
+)
+def test_supports_dtype(array_namespace, device, dtype_name):
+    xp = _array_api_for_tests(array_namespace, device)
+    assert _supports_dtype(xp, device, "float32") is True
 
 
 @pytest.mark.parametrize(
@@ -343,6 +354,8 @@ def test_nan_reductions(library, X, reduction, expected):
 
     with config_context(array_api_dispatch=True):
         result = reduction(xp.asarray(X))
+
+    result = _convert_to_numpy(result, xp)
 
     assert_allclose(result, expected)
 
