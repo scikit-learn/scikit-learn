@@ -1040,6 +1040,8 @@ For instance, we can use the Pandas function :func:`pandas.cut`::
 
   >>> import pandas as pd
   >>> import numpy as np
+  >>> from sklearn import preprocessing
+  >>>
   >>> bins = [0, 1, 13, 20, 60, np.inf]
   >>> labels = ['infant', 'kid', 'teen', 'adult', 'senior citizen']
   >>> transformer = preprocessing.FunctionTransformer(
