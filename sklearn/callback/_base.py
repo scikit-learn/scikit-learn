@@ -136,3 +136,51 @@ class BaseCallback(ABC):
     # @property
     # def request_from_reconstruction_attributes(self):
     #     return False
+
+
+class CallbackPropagatorMixin:
+    """Mixin class for meta-estimators expected to propagate callbacks."""
+
+    def _propagate_callbacks(self, sub_estimator, *, parent_node):
+        """Propagate the auto-propagated callbacks to a sub-estimator.
+
+        Parameters
+        ----------
+        sub_estimator : estimator instance
+            The sub-estimator to propagate the callbacks to.
+
+        parent_node : ComputationNode instance
+            The computation node in this estimator to set as `parent_node` to the
+            computation tree of the sub-estimator. It must be the node where the fit
+            method of the sub-estimator is called.
+        """
+        if hasattr(sub_estimator, "_callbacks") and any(
+            callback.auto_propagate for callback in sub_estimator._callbacks
+        ):
+            bad_callbacks = [
+                callback.__class__.__name__
+                for callback in sub_estimator._callbacks
+                if callback.auto_propagate
+            ]
+            raise TypeError(
+                f"The sub-estimators ({sub_estimator.__class__.__name__}) of a"
+                f" meta-estimator ({self.__class__.__name__}) can't have"
+                f" auto-propagated callbacks ({bad_callbacks})."
+                " Set them directly on the meta-estimator."
+            )
+
+        if not hasattr(self, "_callbacks"):
+            return
+
+        propagated_callbacks = [
+            callback for callback in self._callbacks if callback.auto_propagate
+        ]
+
+        if not propagated_callbacks:
+            return
+
+        sub_estimator._parent_node = parent_node
+
+        sub_estimator._set_callbacks(
+            getattr(sub_estimator, "_callbacks", []) + propagated_callbacks
+        )

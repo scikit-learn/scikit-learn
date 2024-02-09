@@ -2,7 +2,7 @@
 # Authors: the scikit-learn developers
 
 from sklearn.base import BaseEstimator, _fit_context, clone
-from sklearn.callback import BaseCallback
+from sklearn.callback import BaseCallback, CallbackPropagatorMixin
 from sklearn.callback._base import _eval_callbacks_on_fit_iter_end
 from sklearn.utils.parallel import Parallel, delayed
 
@@ -64,7 +64,7 @@ class Estimator(BaseEstimator):
         return self
 
 
-class MetaEstimator(BaseEstimator):
+class MetaEstimator(BaseEstimator, CallbackPropagatorMixin):
     _parameter_constraints: dict = {}
 
     def __init__(

@@ -48,24 +48,24 @@ def test_propagate_callbacks():
     propagated_callback = TestingAutoPropagatedCallback()
 
     estimator = Estimator()
-    estimator._set_callbacks([not_propagated_callback, propagated_callback])
+    metaestimator = MetaEstimator(estimator)
+    metaestimator._set_callbacks([not_propagated_callback, propagated_callback])
 
-    sub_estimator = Estimator()
-    estimator._propagate_callbacks(sub_estimator, parent_node=None)
+    metaestimator._propagate_callbacks(estimator, parent_node=None)
 
-    assert hasattr(sub_estimator, "_parent_node")
-    assert not_propagated_callback not in sub_estimator._callbacks
-    assert propagated_callback in sub_estimator._callbacks
+    assert hasattr(estimator, "_parent_node")
+    assert not_propagated_callback not in estimator._callbacks
+    assert propagated_callback in estimator._callbacks
 
 
 def test_propagate_callback_no_callback():
     """Check that no callback is propagated if there's no callback."""
     estimator = Estimator()
-    sub_estimator = Estimator()
-    estimator._propagate_callbacks(sub_estimator, parent_node=None)
+    metaestimator = MetaEstimator(estimator)
+    metaestimator._propagate_callbacks(estimator, parent_node=None)
 
+    assert not hasattr(metaestimator, "_callbacks")
     assert not hasattr(estimator, "_callbacks")
-    assert not hasattr(sub_estimator, "_callbacks")
 
 
 def test_auto_propagated_callbacks():
