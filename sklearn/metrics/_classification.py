@@ -3256,7 +3256,7 @@ def brier_score_loss(y_true, y_prob, *, sample_weight=None, pos_label=None):
 )
 def d2_log_loss_score(y_true, y_pred, *, sample_weight=None, eps="auto", labels=None):
     """
-    :math:`D^2` regression score function, fraction of Tweedie deviance explained.
+    :math:`D^2` score function, fraction of log loss explained.
 
     Best possible score is 1.0 and it can be negative (because the model can be
     arbitrarily worse). A model that always uses the empirical mean of `y_true` as
