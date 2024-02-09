@@ -368,7 +368,15 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             Indicates whether a feature is categorical. If no feature is
             categorical, this is None.
         """
-        if hasattr(X, "__dataframe__"):
+        # Special code for pandas because of a bug in recent pandas, which is
+        # fixed in main and maybe included in 2.2.1, see
+        # https://github.com/pandas-dev/pandas/pull/57173.
+        # Also pandas versions < 1.5.1 do not support the dataframe interchange
+        if _is_pandas_df(X):
+            X_is_dataframe = True
+            categorical_columns_mask = np.asarray(X.dtypes == "category")
+            X_has_categorical_columns = categorical_columns_mask.any()
+        elif hasattr(X, "__dataframe__"):
             X_is_dataframe = True
             categorical_columns_mask = np.asarray(
                 [
@@ -376,12 +384,6 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                     for c in X.__dataframe__().get_columns()
                 ]
             )
-            X_has_categorical_columns = categorical_columns_mask.any()
-        # pandas versions < 1.5.1 do not support the dataframe interchange
-        # protocol so we inspect X.dtypes directly
-        elif _is_pandas_df(X):
-            X_is_dataframe = True
-            categorical_columns_mask = np.asarray(X.dtypes == "category")
             X_has_categorical_columns = categorical_columns_mask.any()
         else:
             X_is_dataframe = False
