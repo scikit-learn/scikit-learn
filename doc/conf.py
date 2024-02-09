@@ -773,9 +773,12 @@ def generate_min_dependency_substitutions():
 
 
 def generate_index_rst():
-    """Generate index.rst to imply the overall structure of docs."""
+    """Generate index.rst.
 
-    # See https://github.com/scikit-learn/scikit-learn/pull/22550
+    The reason for generating this file at build time is to allow specifying the
+    development link as a variable.
+    https://github.com/scikit-learn/scikit-learn/pull/22550
+    """
     development_link = (
         "developers/index"
         if parsed_version.is_devrelease
