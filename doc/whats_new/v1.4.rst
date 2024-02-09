@@ -103,6 +103,14 @@ Changelog
   the same columns. Previously, it would raise a due to duplicated column names.
   :pr:`28262` by :user:`Guillaume Lemaitre <glemaitre>`.
 
+:mod:`sklearn.ensemble`
+.......................
+
+- |Fix| :class:`HistGradientBoostingClassifier` and
+  :class:`HistGradientBoostingRegressor` when fitted on `pandas` `DataFrame`
+  with extension dtypes, for example `pd.Int64Dtype`
+  :pr:`28385` by :user:`Loïc Estève <lesteve>`.
+
 :mod:`sklearn.inspection`
 .........................
 
