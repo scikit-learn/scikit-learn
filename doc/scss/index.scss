@@ -161,10 +161,12 @@ div.sk-landing-footer {
     }
 
     div.sk-footer-funding-logos > img {
-      max-height: 36px;
-      max-width: 80px;
-      margin: 0 8px;
-      margin-bottom: 8px;
+      max-height: 40px;
+      max-width: 85px;
+      margin: 0 8px 8px 8px;
+      padding: 5px;
+      border-radius: 3px;
+      background-color: white;
     }
   }
 }
