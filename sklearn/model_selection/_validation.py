@@ -358,18 +358,11 @@ def cross_validate(
         scorers = check_scoring(estimator, scoring)
     else:
         scorers = _check_multimetric_scoring(estimator, scoring)
+        scorers = _MultimetricScorer(
+            scorers=scorers, raise_exc=(error_score == "raise")
+        )
 
     if _routing_enabled():
-        # `cross_validate` will create a `_MultiMetricScorer` if `scoring` is a
-        # dict at a later stage. We need the same object for the purpose of
-        # routing. However, creating it here and passing it around would create
-        # a much larger diff since the dict is used in many places.
-        if isinstance(scorers, dict):
-            _scorer = _MultimetricScorer(
-                scorers=scorers, raise_exc=(error_score == "raise")
-            )
-        else:
-            _scorer = scorers
         # For estimators, a MetadataRouter is created in get_metadata_routing
         # methods. For these router methods, we create the router to use
         # `process_routing` on it.
@@ -386,7 +379,7 @@ def cross_validate(
                 method_mapping=MethodMapping().add(caller="fit", callee="fit"),
             )
             .add(
-                scorer=_scorer,
+                scorer=scorers,
                 method_mapping=MethodMapping().add(caller="fit", callee="score"),
             )
         )
@@ -901,8 +894,8 @@ def _fit_and_score(
         if error_score == "raise":
             raise
         elif isinstance(error_score, numbers.Number):
-            if isinstance(scorer, dict):
-                test_scores = {name: error_score for name in scorer}
+            if isinstance(scorer, _MultimetricScorer):
+                test_scores = {name: error_score for name in scorer._scorers}
                 if return_train_score:
                     train_scores = test_scores.copy()
             else:
@@ -966,13 +959,9 @@ def _fit_and_score(
 def _score(estimator, X_test, y_test, scorer, score_params, error_score="raise"):
     """Compute the score(s) of an estimator on a given test set.
 
-    Will return a dict of floats if `scorer` is a dict, otherwise a single
+    Will return a dict of floats if `scorer` is a _MultiMetricScorer, otherwise a single
     float is returned.
     """
-    if isinstance(scorer, dict):
-        # will cache method calls if needed. scorer() returns a dict
-        scorer = _MultimetricScorer(scorers=scorer, raise_exc=(error_score == "raise"))
-
     score_params = {} if score_params is None else score_params
 
     try:

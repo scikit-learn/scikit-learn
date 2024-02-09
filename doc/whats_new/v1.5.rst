@@ -2,6 +2,19 @@
 
 .. currentmodule:: sklearn
 
+.. _release_notes_1_5:
+
+===========
+Version 1.5
+===========
+
+..
+  -- UNCOMMENT WHEN 1.5.0 IS RELEASED --
+  For a short description of the main highlights of the release, please refer to
+  :ref:`sphx_glr_auto_examples_release_highlights_plot_release_highlights_1_5_0.py`.
+
+.. include:: changelog_legend.inc
+
 .. _changes_1_5:
 
 Version 1.5.0
@@ -9,21 +22,17 @@ Version 1.5.0
 
 **In Development**
 
-.. include:: changelog_legend.inc
-
 Support for Array API
 ---------------------
 
-Several estimators and functions support the
-`Array API <https://data-apis.org/array-api/latest/>`_. Such changes allows for using
-the estimators and functions with other libraries such as JAX, CuPy, and PyTorch.
-This therefore enables some GPU-accelerated computations.
+Additional estimators and functions have been updated to include support for all
+`Array API <https://data-apis.org/array-api/latest/>`_ compliant inputs.
 
 See :ref:`array_api` for more details.
 
 **Functions:**
 
-- :func:`sklearn.metrics.r2_score` now supports Array API compatible inputs.
+- :func:`sklearn.metrics.r2_score` now supports Array API compliant inputs.
   :pr:`27904` by :user:`Eric Lindgren <elindgren>`, `Franck Charras <fcharras>`,
   `Olivier Grisel <ogrisel>` and `Tim Head <betatim>`.
 
@@ -74,6 +83,11 @@ Changelog
   :class:`ensemble.HistGradientBoostingClassifier` by avoiding to call `predict_proba`.
   :pr:`27844` by :user:`Christian Lorentzen <lorentzenchr>`.
 
+- |Efficiency| :class:`ensemble.HistGradientBoostingClassifier` and
+  :class:`ensemble.HistGradientBoostingRegressor` are now a tiny bit faster by
+  pre-sorting the data before finding the thresholds for binning.
+  :pr:`28102` by :user:`Christian Lorentzen <lorentzenchr>`.
+
 :mod:`sklearn.feature_extraction`
 .................................
 
@@ -114,6 +128,12 @@ Changelog
   :class:`~calibration.CalibrationDisplay`.
   :pr:`28051` by :user:`Pierre de Fréminville <pidefrem>`.
 
+:mod:`sklearn.model_selection`
+..............................
+
+- |Enhancement| :term:`CV splitters <CV splitter>` that ignores the group parameter now
+  raises a warning when groups are passed in to :term:`split`. :pr:`28210` by
+
 :mod:`sklearn.utils`
 ....................
 
@@ -121,8 +141,7 @@ Changelog
   the `check` function as the cause of the `AttributeError`. :pr:`28198` by
   `Thomas Fan`_.
 
-Code and Documentation Contributors
------------------------------------
+.. rubric:: Code and documentation contributors
 
 Thanks to everyone who has contributed to the maintenance and improvement of
 the project since version 1.4, including:

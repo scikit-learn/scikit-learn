@@ -1377,6 +1377,14 @@ def label_ranking_loss(y_true, y_score, *, sample_weight=None):
     .. [1] Tsoumakas, G., Katakis, I., & Vlahavas, I. (2010).
            Mining multi-label data. In Data mining and knowledge discovery
            handbook (pp. 667-685). Springer US.
+
+    Examples
+    --------
+    >>> from sklearn.metrics import label_ranking_loss
+    >>> y_true = [[1, 0, 0], [0, 0, 1]]
+    >>> y_score = [[0.75, 0.5, 1], [1, 0.2, 0.1]]
+    >>> label_ranking_loss(y_true, y_score)
+    0.75...
     """
     y_true = check_array(y_true, ensure_2d=False, accept_sparse="csr")
     y_score = check_array(y_score, ensure_2d=False)

@@ -778,7 +778,7 @@ span.descclassname {
 dl.field-list {
   display: flex;
   flex-wrap: wrap;
-  overflow-x: scroll;
+  overflow-x: auto;
 }
 
 dl.field-list > dt {
@@ -1002,7 +1002,7 @@ table.docutils {
   line-height: 1rem;
   max-width: 100%;
   display: block;
-  overflow-x: scroll;
+  overflow-x: auto;
 }
 
 table.docutils p {

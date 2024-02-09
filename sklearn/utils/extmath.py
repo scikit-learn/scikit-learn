@@ -1275,7 +1275,7 @@ def _nanaverage(a, weights=None):
     if weights is None:
         return np.nanmean(a)
 
-    weights = np.array(weights, copy=False)
+    weights = np.asarray(weights)
     a, weights = a[~mask], weights[~mask]
     try:
         return np.average(a, weights=weights)
