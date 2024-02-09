@@ -1,4 +1,4 @@
-"""Friedman and Popescu's H-squared statistics"""
+"""Friedman and Popescu's H-Statistic"""
 
 import itertools
 
@@ -50,7 +50,7 @@ def _calculate_pd_over_data(estimator, X, feature_indices, sample_weight=None):
     return averaged_predictions - column_means
 
 
-def h_statistics(
+def h_statistic(
     estimator,
     X,
     *,
@@ -60,14 +60,14 @@ def h_statistics(
     sample_weight=None,
     eps=1e-10,
 ):
-    """Friedman and Popescu's H-statistics of pairwise interaction strength.
+    """Friedman and Popescu's H-statistic of pairwise interaction strength.
 
-    For each feature pair, Friedman and Popescu's H-squared statistic [FRI]_ of
-    interaction is calculated. It equals the proportion of effect variability
-    of the two features unexplained by the main effects. Besides the "official"
-    H-squared statistic, also the unnormalized statistic is returned. Its root
-    is on the scale of the predictions and can directly compared between feature
-    pairs.
+    For each feature pair, Friedman and Popescu's H-statistic of
+    interaction strength [FRI]_ is calculated. It equals the proportion of
+    effect variability of the two features unexplained by their main effects.
+    Besides the (normalized) H-squared statistic, also the unnormalized statistic
+    is returned. Its root is on the scale of the predictions, and can directly
+    be compared between feature pairs.
 
     The complexity of the function is :math:`O(n^2 n^2)`, where :math:`n` is
     the number of observations and :math:`p` is the number of features considered.
@@ -106,7 +106,7 @@ def h_statistics(
 
         feature_pair : list of length n_feature_pairs
             The list contains tuples of feature pairs (indices) in the same order
-            as pairwise statistics.
+            as all pairwise statistics.
 
         numerator_pairwise : ndarray of shape (n_pairs, ) or (n_pairs, output_dim)
             Numerator of pairwise H-squared statistic.
@@ -132,7 +132,7 @@ def h_statistics(
     --------
     >>> import numpy as np
     >>> from sklearn.ensemble import HistGradientBoostingRegressor
-    >>> from sklearn.inspection import permutation_importance
+    >>> from sklearn.inspection import permutation_importance, h_statistic
     >>> from sklearn.datasets import load_diabetes
 
     >>> X, y = load_diabetes(return_X_y=True)
@@ -141,14 +141,14 @@ def h_statistics(
     >>> # Get Friedman's H-squared for top three predictors
     >>> imp = permutation_importance(est, X, y, n_repeats=10, random_state=0)
     >>> top_3 = np.argsort(imp.importances_mean)[-3:]
-    >>> h_statistics(est, X=X, features=top_3, random_state=4)
+    >>> h_statistic(est, X=X, features=top_3, random_state=4)
 
     >>> # For feature pair (3, 2), about 4% of joint effect variability comes from
     >>> # their interaction. Unnormalized statistics are highest for pair (2, 8):
     >>> # {'feature_pair': [(3, 2), (3, 8), (2, 8)],
     >>> # 'numerator_pairwise': array([50.42733969, 20.34764278, 56.77828891]),
     >>> # 'denominator_pairwise': array([1163.19050558, 1300.27629882, 2198.72605431]),
-    >>> # 'hsquared_pairwise': array([0.04335261, 0.01564871, 0.02582327])}
+    >>> # 'h_squared_pairwise': array([0.04335261, 0.01564871, 0.02582327])}
 
     """
     check_is_fitted(estimator)
@@ -184,8 +184,8 @@ def h_statistics(
             )
         )
 
-    hstats_results = Bunch()
-    hstats_results["feature_pair"] = list(itertools.combinations(features, 2))
+    hstat_results = Bunch()
+    hstat_results["feature_pair"] = list(itertools.combinations(features, 2))
     num = []
     denom = []
 
@@ -209,10 +209,10 @@ def h_statistics(
     num = np.array(num)
     num[np.abs(num) < eps] = 0
 
-    hstats_results["numerator_pairwise"] = num
-    hstats_results["denominator_pairwise"] = np.array(denom)
-    hstats_results["hsquared_pairwise"] = (
-        hstats_results["numerator_pairwise"] / hstats_results["denominator_pairwise"]
+    hstat_results["numerator_pairwise"] = num
+    hstat_results["denominator_pairwise"] = np.array(denom)
+    hstat_results["h_squared_pairwise"] = (
+        hstat_results["numerator_pairwise"] / hstat_results["denominator_pairwise"]
     )
 
-    return hstats_results
+    return hstat_results
