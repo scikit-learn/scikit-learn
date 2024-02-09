@@ -144,6 +144,7 @@ def permutation_importance(
     random_state=None,
     sample_weight=None,
     max_samples=1.0,
+    verbose = 0
 ):
     """Permutation importance for feature evaluation [BRE]_.
 
@@ -226,8 +227,11 @@ def permutation_importance(
         the computational speed vs statistical accuracy trade-off of this method.
 
         .. versionadded:: 1.0
-
-    Returns
+    
+    verbose : int
+        Controls the verbosity level: If non-zero, progress messages are printed.
+        The frequency of the messages increases with the verbosity level.
+        
     -------
     result : :class:`~sklearn.utils.Bunch` or dict of such instances
         Dictionary-like object, with the following attributes.
@@ -289,7 +293,7 @@ def permutation_importance(
 
     baseline_score = _weights_scorer(scorer, estimator, X, y, sample_weight)
 
-    scores = Parallel(n_jobs=n_jobs)(
+    scores = Parallel(n_jobs=n_jobs,verbose=verbose)(
         delayed(_calculate_permutation_scores)(
             estimator,
             X,
