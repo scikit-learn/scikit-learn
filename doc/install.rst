@@ -30,119 +30,125 @@ Installing the latest release
 
 .. `scss/install.scss` overrides some default sphinx-design styling for the tabs
 
-.. tab-set::
+.. div:: install-instructions
 
-  .. tab-item:: pip
-    :class-label: tab-6
-    :sync: packager-pip
+  .. tab-set::
 
-    .. tab-set::
+    .. tab-item:: pip
+      :class-label: tab-6
+      :sync: packager-pip
 
-      .. tab-item:: Windows
-        :class-label: tab-4
-        :sync: os-windows
+      .. tab-set::
 
-        Install the 64-bit version of Python 3, for instance from the `official website
-        <https://www.python.org/downloads/windows/>`__.
+        .. tab-item:: Windows
+          :class-label: tab-4
+          :sync: os-windows
 
-        Now create a `virtual environment (venv) <https://docs.python.org/3/tutorial/venv.html>`_
-        and install scikit-learn. Note that the virtual environment is optional but
-        strongly recommended, in order to avoid potential conflicts with other packages.
+          Install the 64-bit version of Python 3, for instance from the
+          `official website <https://www.python.org/downloads/windows/>`__.
 
-        .. prompt:: powershell
+          Now create a `virtual environment (venv)
+          <https://docs.python.org/3/tutorial/venv.html>`_ and install scikit-learn.
+          Note that the virtual environment is optional but strongly recommended, in
+          order to avoid potential conflicts with other packages.
 
-          python -m venv sklearn-env
-          sklearn-env\Scripts\activate  # activate
-          pip install -U scikit-learn
+          .. prompt:: powershell
 
-        In order to check your installation, you can use:
+            python -m venv sklearn-env
+            sklearn-env\Scripts\activate  # activate
+            pip install -U scikit-learn
 
-        .. prompt:: powershell
+          In order to check your installation, you can use:
 
-          python -m pip show scikit-learn  # show scikit-learn version and location
-          python -m pip freeze             # show all installed packages in the environment
-          python -c "import sklearn; sklearn.show_versions()"
+          .. prompt:: powershell
 
-      .. tab-item:: macOS
-        :class-label: tab-4
-        :sync: os-macos
+            python -m pip show scikit-learn  # show scikit-learn version and location
+            python -m pip freeze             # show all installed packages in the environment
+            python -c "import sklearn; sklearn.show_versions()"
 
-        Install Python 3 using `homebrew <https://brew.sh/>`_ (`brew install python`)
-        or by manually installing the package from the `official website
-        <https://www.python.org/downloads/macos/>`__.
+        .. tab-item:: macOS
+          :class-label: tab-4
+          :sync: os-macos
 
-        Now create a `virtual environment (venv) <https://docs.python.org/3/tutorial/venv.html>`_
-        and install scikit-learn. Note that the virtual environment is optional but
-        strongly recommended, in order to avoid potential conflicts with other packages.
+          Install Python 3 using `homebrew <https://brew.sh/>`_ (`brew install python`)
+          or by manually installing the package from the `official website
+          <https://www.python.org/downloads/macos/>`__.
 
-        .. prompt:: bash
+          Now create a `virtual environment (venv)
+          <https://docs.python.org/3/tutorial/venv.html>`_ and install scikit-learn.
+          Note that the virtual environment is optional but strongly recommended, in
+          order to avoid potential conflicts with other packges.
 
-          python -m venv sklearn-env
-          source sklearn-env/bin/activate  # activate
-          pip install -U scikit-learn
+          .. prompt:: bash
 
-        In order to check your installation, you can use:
+            python -m venv sklearn-env
+            source sklearn-env/bin/activate  # activate
+            pip install -U scikit-learn
 
-        .. prompt:: bash
+          In order to check your installation, you can use:
 
-          python -m pip show scikit-learn  # show scikit-learn version and location
-          python -m pip freeze             # show all installed packages in the environment
-          python -c "import sklearn; sklearn.show_versions()"
+          .. prompt:: bash
 
-      .. tab-item:: Linux
-        :class-label: tab-4
-        :sync: os-linux
+            python -m pip show scikit-learn  # show scikit-learn version and location
+            python -m pip freeze             # show all installed packages in the environment
+            python -c "import sklearn; sklearn.show_versions()"
 
-        Python 3 is usually installed by default on most Linux distributions. To check
-        if you have it installed, try:
+        .. tab-item:: Linux
+          :class-label: tab-4
+          :sync: os-linux
 
-        .. prompt:: bash
+          Python 3 is usually installed by default on most Linux distributions. To
+          check if you have it installed, try:
 
-          python3 --version
-          pip3 --version
+          .. prompt:: bash
 
-        If you don't have Python 3 installed, please install `python3` and `python3-pip`
-        from your distribution's package manager.
+            python3 --version
+            pip3 --version
 
-        Now create a `virtual environment (venv) <https://docs.python.org/3/tutorial/venv.html>`_
-        and install scikit-learn. Note that the virtual environment is optional but
-        strongly recommended, in order to avoid potential conflicts with other packages.
+          If you don't have Python 3 installed, please install `python3` and
+          `python3-pip` from your distribution's package manager.
 
-        .. prompt:: bash
+          Now create a `virtual environment (venv)
+          <https://docs.python.org/3/tutorial/venv.html>`_ and install scikit-learn.
+          Note that the virtual environment is optional but strongly recommended, in
+          order to avoid potential conflicts with other packages.
 
-          python3 -m venv sklearn-env
-          source sklearn-env/bin/activate  # activate
-          pip3 install -U scikit-learn
+          .. prompt:: bash
 
-        In order to check your installation, you can use:
+            python3 -m venv sklearn-env
+            source sklearn-env/bin/activate  # activate
+            pip3 install -U scikit-learn
 
-        .. prompt:: bash
+          In order to check your installation, you can use:
 
-          python3 -m pip show scikit-learn  # show scikit-learn version and location
-          python3 -m pip freeze             # show all installed packages in the environment
-          python3 -c "import sklearn; sklearn.show_versions()"
+          .. prompt:: bash
 
-  .. tab-item:: conda
-    :class-label: tab-6
-    :sync: packager-conda
+            python3 -m pip show scikit-learn  # show scikit-learn version and location
+            python3 -m pip freeze             # show all installed packages in the environment
+            python3 -c "import sklearn; sklearn.show_versions()"
 
-    Install conda using the `Anaconda or miniconda installers
-    <https://docs.conda.io/projects/conda/en/latest/user-guide/install/>`_
-    or the `miniforge installers <https://github.com/conda-forge/miniforge#miniforge>`_
-    (no administrator permission required for any of those). Then run:
+    .. tab-item:: conda
+      :class-label: tab-6
+      :sync: packager-conda
 
-    .. prompt:: bash
+      Install conda using the `Anaconda or miniconda installers
+      <https://docs.conda.io/projects/conda/en/latest/user-guide/install/>`__
+      or the `miniforge installers
+      <https://github.com/conda-forge/miniforge#miniforge>`__ (no administrator
+      permission required for any of those). Then run:
 
-      conda create -n sklearn-env -c conda-forge scikit-learn
-      conda activate sklearn-env
+      .. prompt:: bash
 
-    In order to check your installation, you can use:
+        conda create -n sklearn-env -c conda-forge scikit-learn
+        conda activate sklearn-env
 
-    .. prompt:: bash
+      In order to check your installation, you can use:
 
-      conda list scikit-learn  # show scikit-learn version and location
-      conda list               # show all installed packages in the environment
-      python -c "import sklearn; sklearn.show_versions()"
+      .. prompt:: bash
+
+        conda list scikit-learn  # show scikit-learn version and location
+        conda list               # show all installed packages in the environment
+        python -c "import sklearn; sklearn.show_versions()"
 
 Using an isolated environment such as pip venv or conda makes it possible to
 install a specific version of scikit-learn with pip or conda and its dependencies
