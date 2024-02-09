@@ -122,7 +122,7 @@ Changelog
 ...........................
 
 - |Fix| :class:`linear_model.ARDRegression` now handles pandas input types
-  for `predict_proba(X, return_std=True)`.
+  for `predict(X, return_std=True)`.
   :pr:`28377` by :user:`Eddie Bergman <eddiebergman>`.
 
 :mod:`sklearn.preprocessing`
