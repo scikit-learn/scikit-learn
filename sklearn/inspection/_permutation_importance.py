@@ -232,6 +232,7 @@ def permutation_importance(
         Controls the verbosity level: If non-zero, progress messages are printed.
         The frequency of the messages increases with the verbosity level.
         
+        
     -------
     result : :class:`~sklearn.utils.Bunch` or dict of such instances
         Dictionary-like object, with the following attributes.
