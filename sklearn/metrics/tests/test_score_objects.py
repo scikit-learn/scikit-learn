@@ -1492,7 +1492,8 @@ def test_make_scorer_deprecation(deprecated_params, new_params, warn_msg):
     )
 
 
-def test_metadata_routing_multimetric_without_metadata_works_with_and_without_routing():
+@pytest.mark.parametrize("enable_metadata_routing", [True, False])
+def test_metadata_routing_multimetric_metadata_routing(enable_metadata_routing):
     """Test multimetric scorer works with and without metadata routing enabled when
     there is no actual metadata to pass.
 
@@ -1502,8 +1503,5 @@ def test_metadata_routing_multimetric_without_metadata_works_with_and_without_ro
     estimator = EstimatorWithFitAndPredict().fit(X, y)
 
     multimetric_scorer = _MultimetricScorer(scorers={"acc": get_scorer("accuracy")})
-    with config_context(enable_metadata_routing=True):
-        multimetric_scorer(estimator, X, y)
-
-    with config_context(enable_metadata_routing=False):
+    with config_context(enable_metadata_routing=enable_metadata_routing):
         multimetric_scorer(estimator, X, y)
