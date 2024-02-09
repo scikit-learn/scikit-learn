@@ -3254,7 +3254,7 @@ def brier_score_loss(y_true, y_prob, *, sample_weight=None, pos_label=None):
     },
     prefer_skip_nested_validation=True,
 )
-def d2_log_loss_score(y_true, y_pred, *, eps="auto", sample_weight=None, labels=None):
+def d2_log_loss_score(y_true, y_pred, *, sample_weight=None, eps="auto", labels=None):
     """
     :math:`D^2` regression score function, fraction of Tweedie deviance explained.
 
@@ -3279,6 +3279,9 @@ def d2_log_loss_score(y_true, y_pred, *, eps="auto", sample_weight=None, labels=
         ordered alphabetically, as done by
         :class:`~sklearn.preprocessing.LabelBinarizer`.
 
+    sample_weight : array-like of shape (n_samples,), default=None
+        Sample weights.
+
     eps : float or "auto", default="auto"
         Log loss is undefined for p=0 or p=1, so probabilities are
         clipped to `max(eps, min(1 - eps, p))`. The default will depend on the
@@ -3292,9 +3295,6 @@ def d2_log_loss_score(y_true, y_pred, *, eps="auto", sample_weight=None, labels=
 
         .. deprecated:: 1.3
            `eps` is deprecated in 1.3 and will be removed in 1.5.
-
-    sample_weight : array-like of shape (n_samples,), default=None
-        Sample weights.
 
     labels : array-like, default=None
         If not provided, labels will be inferred from y_true. If ``labels``
