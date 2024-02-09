@@ -434,13 +434,13 @@ def make_multilabel_classification(
     Examples
     --------
     >>> from sklearn.datasets import make_multilabel_classification
-    >>> X, y = make_multilabel_classification(random_state=42)
+    >>> X, y = make_multilabel_classification(n_labels=3, random_state=42)
     >>> X.shape
     (100, 20)
     >>> y.shape
     (100, 5)
     >>> list(y[:3])
-    [array([0, 0, 0, 1, 0]), array([1, 1, 1, 0, 0]), array([0, 0, 1, 1, 0])]
+    [array([1, 1, 0, 1, 0]), array([0, 1, 1, 1, 0]), array([0, 1, 0, 0, 0])]
     """
 
     generator = check_random_state(random_state)
