@@ -3317,7 +3317,6 @@ def d2_log_loss_score(y_true, y_pred, *, eps="auto", sample_weight=None, labels=
 
     This metric is not well-defined for single samples and will return a NaN
     value if n_samples is less than two.
-
     """
     y_pred = check_array(
         y_pred, ensure_2d=False, dtype=[np.float64, np.float32, np.float16]
@@ -3328,8 +3327,8 @@ def d2_log_loss_score(y_true, y_pred, *, eps="auto", sample_weight=None, labels=
         warnings.warn(msg, UndefinedMetricWarning)
         return float("nan")
 
-    # log likelihood of the fitted model
-    numerator = -log_loss(
+    # log loss of the fitted model
+    numerator = log_loss(
         y_true=y_true,
         y_pred=y_pred,
         eps=eps,
@@ -3343,8 +3342,8 @@ def d2_log_loss_score(y_true, y_pred, *, eps="auto", sample_weight=None, labels=
     y_prob = counts / len(y_true)
     y_pred_null = np.tile(y_prob, (len(y_true), 1))
 
-    # log likelihood of the null model
-    denominator = -log_loss(
+    # log loss of the null model
+    denominator = log_loss(
         y_true=y_true,
         y_pred=y_pred_null,
         eps=eps,
