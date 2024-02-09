@@ -23,7 +23,7 @@ def _calculate_pd_over_data(estimator, X, feature_indices, sample_weight=None):
     try:
         compressed = True
         grid, ix_reconstruct = np.unique(grid, return_inverse=True, axis=0)
-    except:
+    except TypeError:  # TODO Better solution
         compressed = False
     n_grid = grid.shape[0]
 
@@ -130,6 +130,7 @@ def h_statistics(
 
     Examples
     --------
+    >>> import numpy as np
     >>> from sklearn.ensemble import HistGradientBoostingRegressor
     >>> from sklearn.inspection import permutation_importance
     >>> from sklearn.datasets import load_diabetes
