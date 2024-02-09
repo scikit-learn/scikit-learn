@@ -30,6 +30,7 @@ from sklearn.tests.metadata_routing_common import (
     assert_request_is_empty,
     check_recorded_metadata,
 )
+from sklearn.utils._bunch import Bunch
 from sklearn.utils import metadata_routing
 from sklearn.utils._metadata_requests import (
     COMPOSITE_METHODS,
@@ -237,6 +238,28 @@ def test_process_routing_invalid_object():
 
     with pytest.raises(AttributeError, match="either implement the routing method"):
         process_routing(InvalidObject(), "fit", groups=my_groups)
+
+
+def test_process_routing_empty_params_get_with_default():
+    empty_params = {}
+    routed_params = process_routing(ConsumingClassifier(), "fit", **empty_params)
+
+    # Behaviour should be an empty dictionary returned for each method when retrieved.
+    for method in METHODS:
+        params_for_method = routed_params[method]
+
+        # An empty dictionary for each method
+        assert isinstance(params_for_method, dict)
+        assert len(params_for_method) == 0
+
+        # This behaviour should be equivalent with using `get` with no default
+        assert routed_params.get(method) == params_for_method
+
+        # However, with a default, should return that instead.
+        assert routed_params.get(method, default="default") == "default"
+
+        # This would fail due to use of `if not default` instead of `if default is None`
+        # assert routed_params.get(method, default=[]) == []
 
 
 def test_simple_metadata_routing():
