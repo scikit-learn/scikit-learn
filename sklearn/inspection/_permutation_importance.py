@@ -144,7 +144,7 @@ def permutation_importance(
     random_state=None,
     sample_weight=None,
     max_samples=1.0,
-    verbose = 0
+    verbose=0
 ):
     """Permutation importance for feature evaluation [BRE]_.
 
@@ -233,6 +233,7 @@ def permutation_importance(
         The frequency of the messages increases with the verbosity level.
         
         
+    Returns
     -------
     result : :class:`~sklearn.utils.Bunch` or dict of such instances
         Dictionary-like object, with the following attributes.
