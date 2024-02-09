@@ -2512,19 +2512,22 @@ def test_missing_values_poisson():
     assert (y_pred >= 0.0).all()
 
 
+def make_friedman1_classification(*args, **kwargs):
+    X, y = datasets.make_friedman1(*args, **kwargs)
+    y = y > 14
+    return X, y
+
+
 @pytest.mark.parametrize(
-    "make_data, Tree, tolerance",
+    "make_data,Tree",
     [
-        # Due to the sine link between X and y, we expect the native handling of
-        # missing values to always be better than the naive mean imputation in the
-        # regression case.
-        (datasets.make_friedman1, DecisionTreeRegressor, 0.0),
-        (datasets.make_classification, DecisionTreeClassifier, 0.03),
+        (datasets.make_friedman1, DecisionTreeRegressor),
+        (make_friedman1_classification, DecisionTreeClassifier),
     ],
 )
 @pytest.mark.parametrize("sample_weight_train", [None, "ones"])
 def test_missing_values_is_resilience(
-    make_data, Tree, sample_weight_train, global_random_seed, tolerance
+    make_data, Tree, sample_weight_train, global_random_seed
 ):
     """Check that trees can deal with missing values have decent performance."""
     n_samples, n_features = 5_000, 10
@@ -2553,11 +2556,9 @@ def test_missing_values_is_resilience(
     tree_with_imputer.fit(X_missing_train, y_train)
     score_tree_with_imputer = tree_with_imputer.score(X_missing_test, y_test)
 
-    diff = score_tree_with_imputer - score_native_tree
-    # We don't want to check when the native handling of missing values is
-    # better than the imputer. Therefore, we clip the diff to 0.
-    diff = diff if diff > 0 else 0
-    assert diff <= tolerance
+    assert (
+        score_native_tree > score_tree_with_imputer
+    ), f"{score_native_tree=} should be strictly greater than {score_tree_with_imputer}"
 
 
 def test_missing_value_is_predictive():
