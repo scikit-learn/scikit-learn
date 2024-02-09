@@ -50,7 +50,7 @@ def _calculate_pd_over_data(estimator, X, feature_indices, sample_weight=None):
     return averaged_predictions - column_means
 
 
-def hstatistics(
+def h_statistics(
     estimator,
     X,
     *,
@@ -58,7 +58,7 @@ def hstatistics(
     n_max=500,
     random_state=None,
     sample_weight=None,
-    eps=1e-10
+    eps=1e-10,
 ):
     """Friedman and Popescu's H-statistics of pairwise interaction strength.
 
@@ -69,10 +69,10 @@ def hstatistics(
     is on the scale of the predictions and can directly compared between feature
     pairs.
 
-    The complexity of the function is of O(n^2 p^2), where n is the number of
-    data rows and p is the number of features considered.
-    The size of n is automatically controlled via `n_max=500`, while it is
-    your responsibility to pass only 2-5 *important* features or features of
+    The complexity of the function is :math:`O(n^2 n^2)`, where :math:`n` is the number of
+    data rows and :math:`p` is the number of features considered.
+    The size of `n` is automatically controlled via `n_max=500`, while it is
+    the user's responsibility to pass only 2-5 *important* features or features of
     special interest.
 
     Parameters
@@ -105,8 +105,8 @@ def hstatistics(
     result : :class:`~sklearn.utils.Bunch`
         Dictionary-like object, with the following attributes.
 
-        feature_pair : ndarray of shape (n_feature_pairs, )
-            Contains feature pair tuples in the same order as pairwise statistics.
+        feature_pair : list of length n_feature_pairs
+            The list contains tuples of feature pairs (indices) in the same order as pairwise statistics.
         numerator_pairwise : ndarray of shape (n_pairs, ) or (n_pairs, output_dim)
             Numerator of pairwise H-squared statistic.
             Useful to see which feature pair has strongest absolute interaction.
@@ -171,7 +171,7 @@ def hstatistics(
         features = feature_indices = np.arange(X.shape[1])
     else:
         feature_indices = np.asarray(
-            _get_column_indices(X, features), dtype="int32", order="C"
+            _get_column_indices(X, features), dtype=np.int32, order="C"
         ).ravel()
 
     # CALCULATIONS
