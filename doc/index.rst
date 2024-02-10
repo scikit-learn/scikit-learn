@@ -23,4 +23,3 @@
     roadmap
     Governance <governance>
     about
-    Other Versions and Download <https://scikit-learn.org/dev/versions.html>
