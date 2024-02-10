@@ -1172,12 +1172,6 @@ def _get_warnings_filters_info_list():
         WarningInfo(
             "ignore", message="Attribute s is deprecated", category=DeprecationWarning
         ),
-        # Python 3.12 warning about tarfile.extractall filter='data' argument
-        WarningInfo(
-            "ignore",
-            message="Python 3.14 will, by default, filter extracted tar archives",
-            category=DeprecationWarning,
-        ),
     ]
 
 
