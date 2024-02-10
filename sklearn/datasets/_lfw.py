@@ -278,6 +278,7 @@ def _fetch_lfw_people(
         "slice_": [tuple, Hidden(None)],
         "download_if_missing": ["boolean"],
         "return_X_y": ["boolean"],
+        "show_progress": ["boolean"],
     },
     prefer_skip_nested_validation=True,
 )

@@ -58,6 +58,7 @@ logger = logging.getLogger(__name__)
         "download_if_missing": ["boolean"],
         "return_X_y": ["boolean"],
         "as_frame": ["boolean"],
+        "show_progress": ["boolean"],
     },
     prefer_skip_nested_validation=True,
 )
