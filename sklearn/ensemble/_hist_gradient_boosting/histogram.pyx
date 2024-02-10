@@ -5,10 +5,11 @@
 cimport cython
 from libc.string cimport memset
 
-from ...utils._typedefs cimport uint32_t
-from .common cimport X_BINNED_DTYPE_C
+from ...utils._typedefs cimport uint8_t, uint16_t, uint32_t
+from .common cimport BinnedData
 from .common cimport G_H_DTYPE_C
 from .common cimport Histograms
+from .common cimport X_BINNED_DTYPE_FUSED_C
 from .common cimport hist_struct
 
 import numpy as np
@@ -57,8 +58,8 @@ cdef class HistogramBuilder:
 
     Parameters
     ----------
-    X_binned : ndarray of int, shape (n_samples, n_features)
-        The binned input samples. Must be Fortran-aligned.
+    X_binned : BinnedData of shape (n_samples, n_features)
+        The binned input samples. Underlying arrays are Fortran-aligned.
     n_bins : int or ndarray of shape (n_features,), dtype=np.uint32
         The total number of bins for each feature, always including the bin for missing
         values as the last bin. Used to define the shape of the histograms.
@@ -81,7 +82,7 @@ cdef class HistogramBuilder:
         the total number of bins over all features.
     """
     cdef public:
-        const X_BINNED_DTYPE_C [::1, :] X_binned
+        BinnedData X_binned
         unsigned int n_features
         uint32_t [::1] n_bins
         uint32_t [::1] bin_offsets
@@ -94,7 +95,7 @@ cdef class HistogramBuilder:
 
     def __init__(
         self,
-        const X_BINNED_DTYPE_C [::1, :] X_binned,
+        BinnedData X_binned,
         object n_bins,
         G_H_DTYPE_C [::1] gradients,
         G_H_DTYPE_C [::1] hessians,
@@ -197,14 +198,26 @@ cdef class HistogramBuilder:
                 else:
                     feature_idx = f_idx
 
-                self._compute_histogram_brute_single_feature(
-                    feature_idx, sample_indices, histograms
-                )
+                if self.X_binned.feature_is_8bit_view[feature_idx]:
+                    self._compute_histogram_brute_single_feature[uint8_t](
+                        X_binned=self.X_binned.get_feature_view8(feature_idx),
+                        feature_idx=feature_idx,
+                        sample_indices=sample_indices,
+                        histograms=histograms,
+                    )
+                else:
+                    self._compute_histogram_brute_single_feature[uint16_t](
+                        X_binned=self.X_binned.get_feature_view16(feature_idx),
+                        feature_idx=feature_idx,
+                        sample_indices=sample_indices,
+                        histograms=histograms,
+                    )
 
         return histograms
 
     cdef void _compute_histogram_brute_single_feature(
         HistogramBuilder self,
+        const X_BINNED_DTYPE_FUSED_C [::1] X_binned,
         const int feature_idx,
         const unsigned int [::1] sample_indices,  # IN
         Histograms histograms,                    # OUT
@@ -213,8 +226,6 @@ cdef class HistogramBuilder:
 
         cdef:
             unsigned int n_samples = sample_indices.shape[0]
-            const X_BINNED_DTYPE_C [::1] X_binned = \
-                self.X_binned[:, feature_idx]
             unsigned int root_node = X_binned.shape[0] == n_samples
             G_H_DTYPE_C [::1] ordered_gradients = \
                 self.ordered_gradients[:n_samples]
@@ -310,7 +321,7 @@ cdef class HistogramBuilder:
 cpdef void _build_histogram_naive(
     const int feature_idx,
     unsigned int [:] sample_indices,      # IN
-    X_BINNED_DTYPE_C [:] binned_feature,  # IN
+    X_BINNED_DTYPE_FUSED_C [:] binned_feature,  # IN
     G_H_DTYPE_C [:] ordered_gradients,    # IN
     G_H_DTYPE_C [:] ordered_hessians,     # IN
     Histograms out,                       # OUT
@@ -363,7 +374,7 @@ cpdef void _subtract_histograms(
 cpdef void _build_histogram(
     const int feature_idx,
     const unsigned int [::1] sample_indices,      # IN
-    const X_BINNED_DTYPE_C [::1] binned_feature,  # IN
+    const X_BINNED_DTYPE_FUSED_C [::1] binned_feature,  # IN
     const G_H_DTYPE_C [::1] ordered_gradients,    # IN
     const G_H_DTYPE_C [::1] ordered_hessians,     # IN
     Histograms out,                               # OUT
@@ -412,7 +423,7 @@ cpdef void _build_histogram(
 cpdef void _build_histogram_no_hessian(
     const int feature_idx,
     const unsigned int [::1] sample_indices,      # IN
-    const X_BINNED_DTYPE_C [::1] binned_feature,  # IN
+    const X_BINNED_DTYPE_FUSED_C [::1] binned_feature,  # IN
     const G_H_DTYPE_C [::1] ordered_gradients,    # IN
     Histograms out,                     # OUT
 ) noexcept nogil:
@@ -456,7 +467,7 @@ cpdef void _build_histogram_no_hessian(
 
 cpdef void _build_histogram_root(
     const int feature_idx,
-    const X_BINNED_DTYPE_C [::1] binned_feature,  # IN
+    const X_BINNED_DTYPE_FUSED_C [::1] binned_feature,  # IN
     const G_H_DTYPE_C [::1] all_gradients,        # IN
     const G_H_DTYPE_C [::1] all_hessians,         # IN
     Histograms out,                     # OUT
@@ -510,7 +521,7 @@ cpdef void _build_histogram_root(
 
 cpdef void _build_histogram_root_no_hessian(
     const int feature_idx,
-    const X_BINNED_DTYPE_C [::1] binned_feature,  # IN
+    const X_BINNED_DTYPE_FUSED_C [::1] binned_feature,  # IN
     const G_H_DTYPE_C [::1] all_gradients,        # IN
     Histograms out,                               # OUT
 ) noexcept nogil:

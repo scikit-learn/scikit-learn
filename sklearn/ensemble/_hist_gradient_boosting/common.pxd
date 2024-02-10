@@ -1,8 +1,13 @@
-from ...utils._typedefs cimport float32_t, float64_t, intp_t, uint8_t, uint32_t
+from ...utils._typedefs cimport (
+    float32_t, float64_t, int32_t, intp_t, uint8_t, uint16_t, uint32_t
+)
 
 
 ctypedef float64_t X_DTYPE_C
-ctypedef uint8_t X_BINNED_DTYPE_C
+ctypedef uint16_t X_BINNED_DTYPE_C
+ctypedef fused X_BINNED_DTYPE_FUSED_C:
+    uint8_t
+    uint16_t
 ctypedef float64_t Y_DTYPE_C
 ctypedef float32_t G_H_DTYPE_C
 ctypedef uint32_t BITSET_INNER_DTYPE_C
@@ -69,3 +74,25 @@ cdef class Bitsets:
     cdef inline uint32_t n_inner_bitsets(self, int feature_idx) noexcept nogil
 
     cdef inline BITSET_INNER_DTYPE_C* at(self, int feature_idx) noexcept nogil
+
+
+cdef class BinnedData:
+    # A data container for mixed uint8 and uint16 columns.
+    cdef:
+        uint8_t[::1, :] X8_view
+        uint16_t[::1, :] X16_view
+        uint8_t[::1] feature_is_8bit_view  # Python bool ~ unsigned char = uint8
+        int32_t[::1] feature_index_view
+    cdef public:
+        object X8
+        object X16
+        object feature_is_8bit
+        object feature_index
+
+    cdef inline uint8_t[::1] get_feature_view8(self, int feature_idx) noexcept nogil
+
+    cdef inline uint16_t[::1] get_feature_view16(self, int feature_idx) noexcept nogil
+
+    cdef inline uint8_t get_item8(self, int i, int feature_idx) noexcept nogil
+
+    cdef inline uint16_t get_item16(self, int i, int feature_idx) noexcept nogil

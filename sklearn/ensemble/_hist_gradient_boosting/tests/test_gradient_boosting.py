@@ -1245,13 +1245,13 @@ def test_categorical_bad_encoding_errors(Est, use_pandas, feature_name):
 
     if use_pandas:
         pd = pytest.importorskip("pandas")
-        X = pd.DataFrame({"f0": [0, 1, 2]})
+        X = pd.DataFrame({"f0": np.arange(2**16)})
     else:
-        X = np.array([[0, 1, 2]]).T
-    y = np.arange(3)
+        X = np.arange(2**16)[:, None]
+    y = np.ones(X.shape[0])
     msg = (
         f"Categorical feature {feature_name} is expected to have a "
-        "cardinality <= 2 but actually has a cardinality of 3."
+        "cardinality <= 65535 but actually has a cardinality of 65536."
     )
     with pytest.raises(ValueError, match=msg):
         gb.fit(X, y)
@@ -1308,12 +1308,23 @@ def test_interaction_cst_numerically():
     # y = x0 + x1 + 5 * x0 * x1
     y = np.hstack((X, 5 * X[:, [0]] * X[:, [1]])).sum(axis=1)
 
-    est = HistGradientBoostingRegressor(random_state=42)
+    est = HistGradientBoostingRegressor(random_state=43)
     est.fit(X, y)
     est_no_interactions = HistGradientBoostingRegressor(
-        interaction_cst=[{0}, {1}], random_state=42
+        interaction_cst=[{0}, {1}], random_state=43
     )
     est_no_interactions.fit(X, y)
+
+    # Check that there is no interaction violation.
+    for treenodes in est_no_interactions._predictors:
+        nodes = treenodes[0].nodes
+        root = nodes[0]
+        root_features_idx = root["feature_idx"]
+        # After the split on the root feature, only splits on the same feature are
+        # allowed according to interaction_cst=[{0}, {1}].
+        for i, node in enumerate(nodes[1:]):
+            if not node["is_leaf"]:
+                assert node["feature_idx"] == root_features_idx
 
     delta = 0.25
     # Make sure we do not extrapolate out of the training set as tree-based estimators
@@ -1510,15 +1521,15 @@ def test_dataframe_categorical_results_same_as_ndarray(
 def test_dataframe_categorical_errors(dataframe_lib, HistGradientBoosting):
     """Check error cases for pandas categorical feature."""
     pytest.importorskip(dataframe_lib)
-    msg = "Categorical feature 'f_cat' is expected to have a cardinality <= 16"
-    hist = HistGradientBoosting(categorical_features="from_dtype", max_bins=16)
+    msg = "Categorical feature 'f_cat' is expected to have a cardinality <= 65535"
+    hist = HistGradientBoosting(categorical_features="from_dtype")
 
     rng = np.random.RandomState(42)
-    f_cat = rng.randint(0, high=100, size=100).astype(str)
+    f_cat = rng.permutation(65536).astype(str)
     X_df = _convert_container(
         f_cat[:, None], dataframe_lib, ["f_cat"], categorical_feature_names=["f_cat"]
     )
-    y = rng.randint(0, high=2, size=100)
+    y = rng.randint(0, high=2, size=65536)
 
     with pytest.raises(ValueError, match=msg):
         hist.fit(X_df, y)

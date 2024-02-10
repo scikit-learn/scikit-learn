@@ -326,7 +326,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         unique values in the considered feature column, after removing missing
         values.
 
-        If ``n_categories > self.max_bins`` for any feature, a ``ValueError``
+        If ``n_categories > 65536 - 1`` for any feature, a ``ValueError``
         is raised.
         """
         encoder = self._preprocessor.named_transformers_["encoder"]
@@ -342,14 +342,14 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             # already added by the _BinMapper.
             if len(categories) and is_scalar_nan(categories[-1]):
                 categories = categories[:-1]
-            if categories.size > self.max_bins:
+            if categories.size >= 65536:
                 try:
                     feature_name = repr(encoder.feature_names_in_[feature_idx])
                 except AttributeError:
                     feature_name = f"at index {feature_idx}"
                 raise ValueError(
                     f"Categorical feature {feature_name} is expected to "
-                    f"have a cardinality <= {self.max_bins} but actually "
+                    f"have a cardinality <= {65536 - 1} but actually "
                     f"has a cardinality of {categories.size}."
                 )
             # TODO: Decide if dtype=uint16 would be a better fit.
@@ -682,11 +682,17 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         # Uses binned data to check for missing values
         # Note that the missing bin index is always the last bin, i.e. the value of
         # n_bins_non_missing.
-        has_missing_values = (
-            (X_binned_train == self._bin_mapper.n_bins_non_missing_)
-            .any(axis=0)
-            .astype(np.uint8)
-        )
+        # has_missing_values = (
+        #     (X_binned_train == self._bin_mapper.n_bins_non_missing_)
+        #     .any(axis=0)
+        #     .astype(np.uint8)
+        # )
+        # More memory-efficient version:
+        has_missing_values = np.empty(self._n_features, dtype=np.uint8)
+        for j in range(self._n_features):
+            has_missing_values[j] = np.any(
+                X_binned_train[:, j] == self._bin_mapper.n_bins_non_missing_[j]
+            )
 
         if self.verbose:
             print("Fitting gradient boosted rounds:")
@@ -1190,9 +1196,9 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             )
         tic = time()
         if is_training_data:
-            X_binned = self._bin_mapper.fit_transform(X)  # F-aligned array
+            X_binned = self._bin_mapper.fit_transform(X)  # F-aligned BinnedData
         else:
-            X_binned = self._bin_mapper.transform(X)  # F-aligned array
+            X_binned = self._bin_mapper.transform(X)  # F-aligned BinnedData
             # We convert the array to C-contiguous since predicting is faster
             # with this layout (training is faster on F-arrays though)
             X_binned = np.ascontiguousarray(X_binned)

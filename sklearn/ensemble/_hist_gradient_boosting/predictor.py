@@ -78,8 +78,8 @@ class TreePredictor:
 
         Parameters
         ----------
-        X : ndarray, shape (n_samples, n_features)
-            The input samples.
+        X : BinnedData of shape (n_samples, n_features)
+            The binned input samples.
         n_bins_non_missing : ndarray of shape (n_features,), dtype=np.uint16
             For each feature, gives the number of bins actually used for non-missing
             values. The index of the bin where missing values are mapped is always

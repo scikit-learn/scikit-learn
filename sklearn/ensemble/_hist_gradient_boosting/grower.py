@@ -18,6 +18,7 @@ from ...utils.arrayfuncs import sum_parallel
 from ._bitset import copyto_feature_bitset_array, set_raw_bitset_from_binned_bitset
 from .common import (
     PREDICTOR_RECORD_DTYPE,
+    BinnedData,
     Bitsets,
     MonotonicConstraint,
 )
@@ -366,13 +367,13 @@ class TreeGrower:
 
         Also validate parameters passed to splitter.
         """
-        if X_binned.dtype != np.uint8:
-            raise NotImplementedError("X_binned must be of type uint8.")
-        if not X_binned.flags.f_contiguous:
+        if not isinstance(X_binned, BinnedData):
             raise ValueError(
-                "X_binned should be passed as Fortran contiguous "
-                "array for maximum efficiency."
+                "X_binned must be of type BinnedData (mixed uint8/uin16), with "
+                "internal Fortran contiguous arrays for maximum efficiency."
             )
+            # As BinnedData is guaranteed to be F-contiguous, we do not need to check
+            # the array.flags.f_contiguous.
         if min_gain_to_split < 0:
             raise ValueError(
                 "min_gain_to_split={} must be positive.".format(min_gain_to_split)
