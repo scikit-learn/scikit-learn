@@ -62,17 +62,28 @@ def h_statistic(
 ):
     """Friedman and Popescu's H-statistic of pairwise interaction strength.
 
-    For each feature pair, Friedman and Popescu's H-statistic of
-    interaction strength [FRI]_ is calculated. It equals the proportion of
-    effect variability of the two features unexplained by their main effects.
-    Besides the (normalized) H-squared statistic, also the unnormalized statistic
-    is returned. Its root is on the scale of the predictions, and can directly
-    be compared between feature pairs.
+    Calculates Friedman and Popescu's H-statistic of interaction strength
+    for each feature pair j, k, see [FRI]_. The statistic is defined as::
 
-    The complexity of the function is :math:`O(n^2 n^2)`, where :math:`n` is
-    the number of observations and :math:`p` is the number of features considered.
-    The size of `n` is automatically controlled via `n_max=500`, while it is
-    the user's responsibility to select some *important* features.
+        H_jk^2 = Numerator_jk / Denominator_jk, where
+
+        - Numerator_jk = 1/n * sum(PD_{jk}(x_ij, x_ik) - PD_j(x_ij) - PD_k(x_ik)^2,
+        - Denominator_jk = 1/n * sum(PD_{jk}(x_ij, x_ik)^2),
+        - PD_j and PD_jk are the one- and two-dimensional partial dependence
+          functions centered to mean 0,
+        - and the sums run over 1 <= i <= n, where n is the sample size.
+
+    It equals the proportion of effect variability between two features that cannot
+    be explained by their main effects. When there is no interaction, the value is
+    precisely 0. The numerator (or its square root) provides an absolute measure
+    of interaction strength, enabling direct comparison across feature pairs.
+
+    The computational complexity of :term:`h_statistic()` is :math:`O(p^2 n^2)`,
+    where :math:`p` denotes the number of features considered. The size of `n` is
+    automatically controlled via `n_max=500`, while it is the user's responsibility
+    to select only a subset of *important* features. It is crucial to focus on important
+    features because for weak predictors, the denominator might be small, and
+    even a weak interaction could result in a high Friedman's H, sometimes exceeding 1.
 
     Parameters
     ----------
