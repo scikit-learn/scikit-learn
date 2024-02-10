@@ -111,6 +111,10 @@ Changelog
   with extension dtypes, for example `pd.Int64Dtype`
   :pr:`28385` by :user:`Loïc Estève <lesteve>`.
 
+- |Fix| Fixes error message raised by :class:`ensemble.VotingClassifier` when the
+  target is multilabel or multiclass-multioutput in a DataFrame format.
+  :pr:`27702` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 :mod:`sklearn.inspection`
 .........................
 
