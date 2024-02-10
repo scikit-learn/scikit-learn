@@ -111,6 +111,10 @@ Changelog
   with extension dtypes, for example `pd.Int64Dtype`
   :pr:`28385` by :user:`Loïc Estève <lesteve>`.
 
+- |Fix| Fixes error message raised by :class:`ensemble.VotingClassifier` when the
+  target is multilabel or multiclass-multioutput in a DataFrame format.
+  :pr:`27702` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 :mod:`sklearn.inspection`
 .........................
 
@@ -618,10 +622,6 @@ Changelog
   :class:`ensemble.GradientBoostingClassifier` and
   :class:`ensemble.GradientBoostingRegressor` when trained on sparse data.
   :pr:`26957` by `Thomas Fan`_.
-
-- |Fix| Fixes error message raised by :class:`ensemble.VotingClassifier` when the
-  target is multilabel or multiclass-multioutput in a DataFrame format.
-  :pr:`27702` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 - |Efficiency| :class:`ensemble.HistGradientBoostingClassifier` and
   :class:`ensemble.HistGradientBoostingRegressor` is now faster when `scoring`
