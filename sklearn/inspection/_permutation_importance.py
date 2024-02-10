@@ -130,6 +130,7 @@ def _create_importances_bunch(baseline_score, permuted_score):
             Interval(Integral, 1, None, closed="left"),
             Interval(RealNotInt, 0, 1, closed="right"),
         ],
+        "verbose": ["verbose"],
     },
     prefer_skip_nested_validation=True,
 )
@@ -144,7 +145,7 @@ def permutation_importance(
     random_state=None,
     sample_weight=None,
     max_samples=1.0,
-    verbose=0
+    verbose=0,
 ):
     """Permutation importance for feature evaluation [BRE]_.
 
@@ -227,12 +228,12 @@ def permutation_importance(
         the computational speed vs statistical accuracy trade-off of this method.
 
         .. versionadded:: 1.0
-    
+
     verbose : int
         Controls the verbosity level: If non-zero, progress messages are printed.
         The frequency of the messages increases with the verbosity level.
-        
-        
+
+
     Returns
     -------
     result : :class:`~sklearn.utils.Bunch` or dict of such instances
@@ -263,7 +264,7 @@ def permutation_importance(
     >>> y = [1, 1, 1, 0, 0, 0]
     >>> clf = LogisticRegression().fit(X, y)
     >>> result = permutation_importance(clf, X, y, n_repeats=10,
-    ...                                 random_state=0)
+    ...                                 random_state=0,verbose=0)
     >>> result.importances_mean
     array([0.4666..., 0.       , 0.       ])
     >>> result.importances_std
@@ -295,7 +296,7 @@ def permutation_importance(
 
     baseline_score = _weights_scorer(scorer, estimator, X, y, sample_weight)
 
-    scores = Parallel(n_jobs=n_jobs,verbose=verbose)(
+    scores = Parallel(n_jobs=n_jobs, verbose=verbose)(
         delayed(_calculate_permutation_scores)(
             estimator,
             X,
