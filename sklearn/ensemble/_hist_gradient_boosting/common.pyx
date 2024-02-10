@@ -8,7 +8,9 @@ from ...utils._typedefs cimport uint32_t
 # and hessians arrays are stored as floats to avoid using too much memory.
 Y_DTYPE = np.float64
 X_DTYPE = np.float64
-X_BINNED_DTYPE = np.uint8  # hence max_bins == 256
+# Potential mix of uint8 (max_bins = 256) and uint16, therefore we set it to uint16,
+# see BinnedData.
+X_BINNED_DTYPE = np.uint16
 # dtype for gradients and hessians arrays
 G_H_DTYPE = np.float32
 X_BITSET_INNER_DTYPE = np.uint32
@@ -175,3 +177,118 @@ cdef class Bitsets:
     def __reduce__(self):
         """Reduce method used for pickling."""
         return (Bitsets, (self.offsets,))
+
+
+@cython.final
+cdef class BinnedData:
+    """An extension type as data container for mixed uint8 and uint16 columns.
+
+    Parameters
+    ----------
+    n_samples : int
+        The number of samples of the data.
+    n_bins : ndarray of shape (n_features,)
+        For each feature the number of bins including the bin for missing values.
+
+    Attributes
+    ----------
+    Public, i.e. accessible from Python:
+
+        X8 : ndarray of shape (n_samples, n_features_8bit), dtype=np.uint8, F-aligned
+            The binned data, all features for which 256 bins are enough.
+        X16 : ndarray of shape (n_samples, n_features_bit16), dtype=np.uint16
+            The binned data, all features which exceed 256 bins; up to 2**16 = 65536
+            bins are supported.
+        feature_is_8bit : ndarray of shape (n_features,), dtype=bool (np.uint8)
+            Array to indicate if feature is in X8, if false feature is in X16.
+        feature_index : ndarray of shape (n_features,), dtype=np.uint32
+            Array to map from feature index to corresponding column in either X8 or
+            X16.
+
+    Private, i.e. only accessible from Cython:
+
+        X8_view : memoryview of `X8`, dtype=uint8_t
+        X16_view : memoryview of `X16`, dtype=uint16_t
+        feature_is_8bit_view : memoryview of `feature_is_8bit`, dtype=uint8_t
+        feature_index_view : memoryview of `feature_index`, dtype=uint32_t
+    """
+    def __init__(self, n_samples, n_bins):
+        n_features = n_bins.shape[0]
+        self.feature_is_8bit = n_bins <= 256
+        n_features8 = np.sum(self.feature_is_8bit)
+        n_features16 = n_features - n_features8
+        self.X8 = np.empty((n_samples, n_features8), dtype=np.uint8, order="F")
+        self.X16 = np.empty((n_samples, n_features16), dtype=np.uint16, order="F")
+        self.feature_index = np.empty(n_features, dtype=np.int32)
+        self.feature_index[self.feature_is_8bit] = np.arange(n_features8)
+        self.feature_index[~self.feature_is_8bit] = np.arange(n_features16)
+
+        self.X8_view = self.X8
+        self.X16_view = self.X16
+        self.feature_is_8bit_view = self.feature_is_8bit
+        self.feature_index_view = self.feature_index
+
+    @property
+    def shape(self):
+        return (self.X8.shape[0], self.feature_is_8bit.shape[0])
+
+    def __array__(self, dtype=None, copy=None):
+        if np.all(self.feature_is_8bit):
+            dtype = np.uint8
+        else:
+            dtype = np.uint16
+        X = np.empty(self.shape, dtype=dtype)
+        for j in range(X.shape[1]):
+            X[:, j] = self[:, j]
+        return X
+
+    def __eq__(self, x):
+        x = np.asarray(x)
+        r = np.empty(self.shape, dtype=bool, order="F")
+        if x.ndim == 0:
+            for j in range(self.shape[1]):
+                r[:, j] = (self[:, j] == x)
+        elif x.ndim == 1:
+            for j in range(self.shape[1]):
+                r[:, j] = (self[:, j] == x[j])
+        else:
+            for j in range(self.shape[1]):
+                r[:, j] = (self[:, j] == x[:, j])
+        return r
+
+    def __getitem__(self, x):
+        if isinstance(x, tuple):
+            i, j = x
+            f_idx = self.feature_index[j]
+            if self.feature_is_8bit[j]:
+                return self.X8[i, f_idx]
+            else:
+                return self.X16[i, f_idx]
+        else:
+            from exception import NotImplementedError
+            raise NotImplementedError()
+
+    @staticmethod
+    def from_array(array):
+        """For testing only."""
+        if array.dtype == np.uint8:
+            b = BinnedData(array.shape[0], np.max(array, axis=0))
+            b.X8[:] = array
+        elif array.dtype == np.uint16:
+            b = BinnedData(array.shape[0], np.maximum(256 + 1, np.max(array, axis=0)))
+            b.X16[:] = array
+        else:
+            raise ValueError("Wrong dtype of array.")
+        return b
+
+    cdef inline uint8_t[::1] get_feature_view8(self, int feature_idx) noexcept nogil:
+        return self.X8_view[:, self.feature_index_view[feature_idx]]
+
+    cdef inline uint16_t[::1] get_feature_view16(self, int feature_idx) noexcept nogil:
+        return self.X16_view[:, self.feature_index_view[feature_idx]]
+
+    cdef inline uint8_t get_item8(self, int i, int feature_idx) noexcept nogil:
+        return self.X8_view[i, self.feature_index_view[feature_idx]]
+
+    cdef inline uint16_t get_item16(self, int i, int feature_idx) noexcept nogil:
+        return self.X16_view[i, self.feature_index_view[feature_idx]]

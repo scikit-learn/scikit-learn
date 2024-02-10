@@ -9,8 +9,8 @@ from sklearn.ensemble._hist_gradient_boosting.binning import (
 )
 from sklearn.ensemble._hist_gradient_boosting.common import (
     ALMOST_INF,
-    X_BINNED_DTYPE,
     X_DTYPE,
+    BinnedData,
 )
 from sklearn.utils._openmp_helpers import _openmp_effective_n_threads
 
@@ -96,15 +96,20 @@ def test_map_to_bins(max_bins):
     bin_thresholds = [
         _find_binning_thresholds(DATA[:, i], max_bins=max_bins) for i in range(2)
     ]
-    binned = np.zeros_like(DATA, dtype=X_BINNED_DTYPE, order="F")
+    # binned = np.zeros_like(DATA, dtype=X_BINNED_DTYPE, order="F")
+    binned = BinnedData(
+        n_samples=DATA.shape[0], n_bins=np.full(DATA.shape[1], max_bins)
+    )
     is_categorical = np.zeros(2, dtype=np.uint8)
     n_bins_non_missing = np.array([max_bins] * 2, dtype=np.uint16)
     _map_to_bins(
         DATA, n_bins_non_missing, bin_thresholds, is_categorical, n_threads, binned
     )
     assert binned.shape == DATA.shape
-    assert binned.dtype == np.uint8
-    assert binned.flags.f_contiguous
+    assert binned.X8.dtype == np.uint8
+    assert binned.X16.dtype == np.uint16
+    assert binned.X8.flags.f_contiguous
+    assert binned.X16.flags.f_contiguous
 
     min_indices = DATA.argmin(axis=0)
     max_indices = DATA.argmax(axis=0)
@@ -128,9 +133,10 @@ def test_bin_mapper_random_data(max_bins):
     binned = mapper.transform(DATA)
 
     assert binned.shape == (n_samples, n_features)
-    assert binned.dtype == np.uint8
-    assert_array_equal(binned.min(axis=0), np.array([0, 0]))
-    assert_array_equal(binned.max(axis=0), np.array([max_bins - 1, max_bins - 1]))
+    assert binned.X8.dtype == np.uint8
+    assert binned.X16.dtype == np.uint16
+    assert_array_equal(np.min(binned, axis=0), np.array([0, 0]))
+    assert_array_equal(np.max(binned, axis=0), np.array([max_bins - 1, max_bins - 1]))
     assert len(mapper.bin_thresholds_) == n_features
     for bin_thresholds_feature in mapper.bin_thresholds_:
         assert bin_thresholds_feature.shape == (max_bins - 1,)
@@ -155,8 +161,11 @@ def test_bin_mapper_small_random_data(n_samples, max_bins):
     binned = mapper.fit_transform(data)
 
     assert binned.shape == data.shape
-    assert binned.dtype == np.uint8
-    assert_array_equal(binned.ravel()[np.argsort(data.ravel())], np.arange(n_samples))
+    assert binned.X8.dtype == np.uint8
+    assert binned.X16.dtype == np.uint16
+    assert_array_equal(
+        np.asarray(binned).ravel()[np.argsort(data.ravel())], np.arange(n_samples)
+    )
 
 
 @pytest.mark.parametrize(
@@ -370,6 +379,25 @@ def test_categorical_feature(n_bins):
     assert_array_equal(bin_mapper.transform(X), expected_trans)
 
 
+def test_high_cardinality_categorical_feature():
+    n_cat_small = 256 - 1
+    n_cat_large = 65536 - 1
+    n_samples = 2 * n_cat_large
+    shift = 100
+    X = np.empty((n_samples, 2))
+    X[:, 0] = np.arange(n_samples, dtype=X_DTYPE) % n_cat_small + shift
+    X[:, 1] = np.arange(n_samples, dtype=X_DTYPE) % n_cat_large + shift
+    known_categories = [np.unique(X[:, 0]), np.unique(X[:, 1])]
+    bin_mapper = _BinMapper(
+        n_bins=256,  # no impact on categoricals
+        is_categorical=np.array([True, True]),
+        known_categories=known_categories,
+    ).fit(X)
+    assert_array_equal(bin_mapper.n_bins_non_missing_, [n_cat_small, n_cat_large])
+    assert_array_equal(bin_mapper.bin_thresholds_[0], np.arange(n_cat_small) + shift)
+    assert_array_equal(bin_mapper.bin_thresholds_[1], np.arange(n_cat_large) + shift)
+
+
 def test_categorical_feature_negative_missing():
     """Make sure bin mapper treats negative categories as missing values."""
     X = np.array(
@@ -475,6 +503,16 @@ def test_make_known_categories_bitsets():
             np.array([False]),
             np.array([1, 2, 3]),
             "isn't marked as a categorical feature, but categories were passed",
+        ),
+        (
+            np.array([True]),
+            [np.arange(4).reshape(2, 2).astype(X_DTYPE)],
+            "The array of known categories of feature 0 must be of shape",
+        ),
+        (
+            np.array([True]),
+            [np.arange(2**16).astype(X_DTYPE)],
+            "Only a maximum of 2\\*\\*16 - 1 = 65535 categorical levels are supported.",
         ),
     ],
 )

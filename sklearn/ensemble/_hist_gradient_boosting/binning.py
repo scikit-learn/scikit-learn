@@ -16,7 +16,7 @@ from ...utils.fixes import percentile
 from ...utils.validation import check_is_fitted
 from ._binning import _map_to_bins
 from ._bitset import set_known_cat_bitset_from_known_categories
-from .common import ALMOST_INF, X_BINNED_DTYPE, X_DTYPE, Bitsets
+from .common import ALMOST_INF, X_DTYPE, BinnedData, Bitsets
 
 
 def _find_binning_thresholds(col_data, max_bins):
@@ -95,9 +95,10 @@ class _BinMapper(TransformerMixin, BaseEstimator):
         ``max_bins = n_bins - 1`` bins. The last bin is always reserved for
         missing values. If for a given feature the number of unique values is
         less than ``max_bins``, then those unique values will be used to
-        compute the bin thresholds, instead of the quantiles. For categorical
-        features indicated by ``is_categorical``, the docstring for
-        ``is_categorical`` details on this procedure.
+        compute the bin thresholds, instead of the quantiles.
+        For categorical features as indicated by ``is_categorical``, ``n_bins`` does
+        not apply, but a maximum of of 65536 categorical levels (16 bit) including a
+        missing value are allowed, see also the docstring of ``is_categorical``.
     subsample : int or None, default=2e5
         If ``n_samples > subsample``, then ``sub_samples`` samples will be
         randomly chosen to compute the quantiles. If ``None``, the whole data
@@ -108,9 +109,9 @@ class _BinMapper(TransformerMixin, BaseEstimator):
     known_categories : list of {ndarray, None} of shape (n_features,), \
             dtype=X_DTYPE, default=none
         For each categorical feature, the array indicates the set of unique
-        categorical values. These should be the possible values over all the
-        data, not just the training data. For continuous features, the
-        corresponding entry should be None.
+        categorical values, excluding missing values. These should be the possible
+        values over all the data, not just the training data. For continuous features,
+        the corresponding entry should be None.
     random_state: int, RandomState instance or None, default=None
         Pseudo-random number generator to control the random sub-sampling.
         Pass an int for reproducible output across multiple
@@ -223,6 +224,17 @@ class _BinMapper(TransformerMixin, BaseEstimator):
                     f"The array of known categories of feature {f_idx} must be of "
                     f"dtype={X_DTYPE}, got {known_cats.dtype=}."
                 )
+            if is_categorical and known_cats.ndim != 1:
+                raise ValueError(
+                    f"The array of known categories of feature {f_idx} must be of "
+                    f"shape=(n_categories,), got {known_cats.shape=}."
+                )
+            if is_categorical and known_cats.shape[0] >= 2**16:
+                raise ValueError(
+                    "Only a maximum of 2**16 - 1 = 65535 categorical levels are "
+                    f"supported. The array of known categories of feature {f_idx} has "
+                    f"{known_cats.shape[0]=} levels."
+                )
 
         self.bin_thresholds_ = []
         n_bins_non_missing = []
@@ -261,8 +273,8 @@ class _BinMapper(TransformerMixin, BaseEstimator):
 
         Returns
         -------
-        X_binned : array-like of shape (n_samples, n_features)
-            The binned data (fortran-aligned).
+        X_binned : BinnedData of shape (n_samples, n_features)
+            Fortran-aligned data container for uint8 and uin16 columns.
         """
         X = check_array(X, dtype=[X_DTYPE], force_all_finite=False)
         check_is_fitted(self)
@@ -273,7 +285,11 @@ class _BinMapper(TransformerMixin, BaseEstimator):
             )
 
         n_threads = _openmp_effective_n_threads(self.n_threads)
-        binned = np.zeros_like(X, dtype=X_BINNED_DTYPE, order="F")
+        # binned = np.zeros_like(X, dtype=X_BINNED_DTYPE, order="F")
+        binned = BinnedData(
+            n_samples=X.shape[0],
+            n_bins=np.add(self.n_bins_non_missing_, 1, dtype=np.uint32),
+        )
         _map_to_bins(
             X,
             self.n_bins_non_missing_,

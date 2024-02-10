@@ -3,8 +3,8 @@
 from cython.parallel import prange
 from libc.math cimport isnan
 
-from sklearn.utils._typedefs cimport uint16_t
-from .common cimport X_DTYPE_C, X_BINNED_DTYPE_C
+from sklearn.utils._typedefs cimport uint8_t, uint16_t
+from .common cimport X_DTYPE_C, X_BINNED_DTYPE_FUSED_C, BinnedData
 
 
 def _map_to_bins(const X_DTYPE_C[:, :] data,
@@ -12,7 +12,7 @@ def _map_to_bins(const X_DTYPE_C[:, :] data,
                  list binning_thresholds,
                  const unsigned char[::1] is_categorical,
                  int n_threads,
-                 X_BINNED_DTYPE_C [::1, :] binned):
+                 BinnedData binned):
     """Bin continuous and categorical values to discrete integer-coded levels.
 
     A given value x is mapped into bin value i iff
@@ -38,16 +38,30 @@ def _map_to_bins(const X_DTYPE_C[:, :] data,
     """
     cdef:
         int feature_idx
+        uint8_t[::1] binned_f8
+        uint16_t[::1] binned_f16
 
     for feature_idx in range(data.shape[1]):
-        _map_col_to_bins(
-            data=data[:, feature_idx],
-            binning_thresholds=binning_thresholds[feature_idx],
-            is_categorical=is_categorical[feature_idx],
-            missing_values_bin_idx=n_bins_non_missing[feature_idx],
-            n_threads=n_threads,
-            binned=binned[:, feature_idx]
-        )
+        if binned.feature_is_8bit_view[feature_idx]:
+            binned_f8 = binned[:, feature_idx]
+            _map_col_to_bins[uint8_t](
+                data=data[:, feature_idx],
+                binning_thresholds=binning_thresholds[feature_idx],
+                is_categorical=is_categorical[feature_idx],
+                missing_values_bin_idx=n_bins_non_missing[feature_idx],
+                n_threads=n_threads,
+                binned=binned_f8,
+            )
+        else:
+            binned_f16 = binned[:, feature_idx]
+            _map_col_to_bins[uint16_t](
+                data=data[:, feature_idx],
+                binning_thresholds=binning_thresholds[feature_idx],
+                is_categorical=is_categorical[feature_idx],
+                missing_values_bin_idx=n_bins_non_missing[feature_idx],
+                n_threads=n_threads,
+                binned=binned_f16,
+            )
 
 
 cdef void _map_col_to_bins(
@@ -56,7 +70,7 @@ cdef void _map_col_to_bins(
     const unsigned char is_categorical,
     const uint16_t missing_values_bin_idx,
     int n_threads,
-    X_BINNED_DTYPE_C [:] binned
+    X_BINNED_DTYPE_FUSED_C[::1] binned,
 ):
     """Binary search to find the bin index for each value in the data."""
     cdef:

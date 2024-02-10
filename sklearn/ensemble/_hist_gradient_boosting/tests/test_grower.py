@@ -9,6 +9,7 @@ from sklearn.ensemble._hist_gradient_boosting.common import (
     X_BINNED_DTYPE,
     X_DTYPE,
     Y_DTYPE,
+    BinnedData,
     Bitsets,
 )
 from sklearn.ensemble._hist_gradient_boosting.grower import TreeGrower
@@ -94,7 +95,7 @@ def test_grow_tree(n_bins, constant_hessian, stopping_param, shrinkage):
         stopping_param = {"min_gain_to_split": 0.01}
 
     grower = TreeGrower(
-        X_binned,
+        BinnedData.from_array(X_binned.astype(np.uint8)),
         all_gradients,
         all_hessians,
         n_bins=n_bins,
@@ -161,6 +162,7 @@ def test_predictor_from_grower():
     # Build a tree on the toy 3-leaf dataset to extract the predictor.
     n_bins = 256
     X_binned, all_gradients, all_hessians = _make_training_data(n_bins=n_bins)
+    X_binned = BinnedData.from_array(X_binned.astype(np.uint8))
     grower = TreeGrower(
         X_binned,
         all_gradients,
@@ -198,6 +200,7 @@ def test_predictor_from_grower():
         ],
         dtype=np.uint8,
     )
+    input_data = BinnedData.from_array(input_data)
     n_bins_non_missing = np.array([n_bins - 1] * 2, dtype=np.uint16)
     predictions = predictor.predict_binned(input_data, n_bins_non_missing, n_threads)
     expected_targets = [1, 1, 1, 1, 1, 1, -1, -1, -1]
@@ -325,18 +328,13 @@ def test_input_validation():
     X_binned, all_gradients, all_hessians = _make_training_data()
 
     X_binned_float = X_binned.astype(np.float32)
-    with pytest.raises(NotImplementedError, match="X_binned must be of type uint8"):
+    with pytest.raises(ValueError, match="X_binned must be of type BinnedData"):
         TreeGrower(X_binned_float, all_gradients, all_hessians)
-
-    X_binned_C_array = np.ascontiguousarray(X_binned)
-    with pytest.raises(
-        ValueError, match="X_binned should be passed as Fortran contiguous array"
-    ):
-        TreeGrower(X_binned_C_array, all_gradients, all_hessians)
 
 
 def test_init_parameters_validation():
     X_binned, all_gradients, all_hessians = _make_training_data()
+    X_binned = BinnedData.from_array(X_binned.astype(np.uint8))
     with pytest.raises(ValueError, match="min_gain_to_split=-1 must be positive"):
         TreeGrower(X_binned, all_gradients, all_hessians, min_gain_to_split=-1)
 
@@ -352,7 +350,7 @@ def test_missing_value_predict_only():
     rng = np.random.RandomState(0)
     n_samples = 100
     X_binned = rng.randint(0, 256, size=(n_samples, 1), dtype=np.uint8)
-    X_binned = np.asfortranarray(X_binned)
+    X_binned = BinnedData.from_array(np.asfortranarray(X_binned))
 
     gradients = rng.normal(size=n_samples).astype(G_H_DTYPE)
     hessians = np.ones(shape=1, dtype=G_H_DTYPE)
@@ -364,7 +362,7 @@ def test_missing_value_predict_only():
 
     # We pass undefined binning_thresholds because we won't use predict anyway
     predictor = grower.make_predictor(
-        binning_thresholds=np.zeros((X_binned.shape[1], X_binned.max() + 1))
+        binning_thresholds=np.zeros((X_binned.shape[1], np.max(X_binned) + 1))
     )
 
     # go from root to a leaf, always following node with the most samples.
@@ -441,7 +439,7 @@ def test_grow_tree_categories():
     # categorical.
     # First feature is numerical but constant, second is categorical and split on.
     X_binned = np.array([[0] * 23, [0, 1] * 11 + [1]], dtype=X_BINNED_DTYPE).T
-    X_binned = np.asfortranarray(X_binned)
+    X_binned = BinnedData.from_array(np.asfortranarray(X_binned))
 
     all_gradients = np.array([10, 1] * 11 + [1], dtype=G_H_DTYPE)
     all_hessians = np.ones(1, dtype=G_H_DTYPE)
@@ -466,18 +464,26 @@ def test_grow_tree_categories():
     assert root["count"] == 23
     assert root["depth"] == 0
     assert root["is_categorical"]
+    assert root["feature_idx"] == 1
 
     left, right = predictor.nodes[root["left"]], predictor.nodes[root["right"]]
 
     # arbitrary validation, but this means ones go to the left.
     assert left["count"] >= right["count"]
+    # some more checks
+    assert left["value"] == approx(-1)  # negative average gradient of left
+    assert right["value"] == approx(-10)  # negative average gradient of right
+    assert left["count"] == 12
+    assert right["count"] == 11
+    assert left["is_leaf"]
+    assert right["is_leaf"]
 
     # check binned category value (1)
     expected_binned_cat_bitset = [2**1]
     binned_cat_bitsets = predictor.binned_left_cat_bitsets
     assert_array_equal(binned_cat_bitsets.bitsets, expected_binned_cat_bitset)
 
-    # check raw category value (9)
+    # check raw category value (9), 2nd element of array in categories
     expected_raw_cat_bitsets = [2**9]
     raw_cat_bitsets = predictor.raw_left_cat_bitsets
     assert_array_equal(raw_cat_bitsets.bitsets, expected_raw_cat_bitsets)
@@ -492,7 +498,7 @@ def test_grow_tree_categories():
     # make sure binned missing values are mapped to the left child during
     # prediction
     prediction_binned = predictor.predict_binned(
-        np.asarray([[0, 6]]).astype(X_BINNED_DTYPE),
+        BinnedData.from_array(np.asarray([[0, 6]]).astype(X_BINNED_DTYPE)),
         n_bins_non_missing=np.array([1, 6], dtype=np.uint16),
         n_threads=n_threads,
     )
@@ -539,6 +545,7 @@ def test_ohe_equivalence(min_samples_leaf, n_unique_categories, target):
         "max_leaf_nodes": None,
     }
 
+    X_binned = BinnedData.from_array(X_binned)
     grower = TreeGrower(
         X_binned, gradients, hessians, is_categorical=[True], **grower_params
     )
@@ -552,6 +559,7 @@ def test_ohe_equivalence(min_samples_leaf, n_unique_categories, target):
         X_binned, n_bins_non_missing=n_bins_non_missing, n_threads=n_threads
     )
 
+    X_ohe = BinnedData.from_array(X_ohe)
     grower_ohe = TreeGrower(X_ohe, gradients, hessians, **grower_params)
     grower_ohe.grow()
     predictor_ohe = grower_ohe.make_predictor(
@@ -594,7 +602,7 @@ def test_grower_interaction_constraints():
         X_binned = rng.randint(
             0, n_bins - 1, size=(n_samples, n_features), dtype=X_BINNED_DTYPE
         )
-        X_binned = np.asfortranarray(X_binned)
+        X_binned = BinnedData.from_array(np.asfortranarray(X_binned))
         gradients = rng.normal(size=n_samples).astype(G_H_DTYPE)
         hessians = np.ones(shape=1, dtype=G_H_DTYPE)
 

@@ -14,6 +14,7 @@ from sklearn.ensemble._hist_gradient_boosting.common import (
     PREDICTOR_RECORD_DTYPE,
     X_BINNED_DTYPE,
     X_DTYPE,
+    BinnedData,
     Bitsets,
 )
 from sklearn.ensemble._hist_gradient_boosting.grower import TreeGrower
@@ -119,6 +120,7 @@ def test_categorical_predictor(bins_go_left, expected_predictions):
     # Test predictor outputs are correct with categorical features
 
     X_binned = np.array([[0, 1, 2, 3, 4, 5]], dtype=X_BINNED_DTYPE).T
+    X_binned = BinnedData.from_array(X_binned)
     categories = np.array([2, 5, 6, 8, 10, 15], dtype=X_DTYPE)
 
     bins_go_left = np.array(bins_go_left, dtype=X_BINNED_DTYPE)
@@ -174,7 +176,7 @@ def test_categorical_predictor(bins_go_left, expected_predictions):
     assert_allclose(predictions, expected_predictions)
 
     # Check missing goes left because missing_values_bin_idx=6
-    X_binned_missing = np.array([[6]], dtype=X_BINNED_DTYPE).T
+    X_binned_missing = BinnedData.from_array(np.array([[6]], dtype=X_BINNED_DTYPE).T)
     predictions = predictor.predict_binned(
         X_binned_missing, n_bins_non_missing=n_bins_non_missing, n_threads=n_threads
     )

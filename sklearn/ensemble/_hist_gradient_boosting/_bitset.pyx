@@ -1,8 +1,8 @@
 from .common cimport Bitsets
 from .common cimport BITSET_INNER_DTYPE_C
 from .common cimport X_DTYPE_C
-from .common cimport X_BINNED_DTYPE_C
-from ...utils._typedefs cimport uint8_t
+from .common cimport X_BINNED_DTYPE_C, X_BINNED_DTYPE_FUSED_C
+from ...utils._typedefs cimport uint8_t, uint16_t
 
 import numpy as np
 
@@ -16,29 +16,35 @@ import numpy as np
 
 
 cdef inline void set_bitset(
-    BITSET_INNER_DTYPE_C* bitset, X_BINNED_DTYPE_C val
+    BITSET_INNER_DTYPE_C* bitset, X_BINNED_DTYPE_FUSED_C val
 ) noexcept nogil:
     bitset[val // 32] |= (1 << (val % 32))
 
 
 cdef inline unsigned char in_bitset(
-    const BITSET_INNER_DTYPE_C* bitset, X_BINNED_DTYPE_C val
+    const BITSET_INNER_DTYPE_C* bitset, X_BINNED_DTYPE_FUSED_C val
 ) noexcept nogil:
     return (bitset[val // 32] >> (val % 32)) & 1
 
 
 def set_bitset_memoryview(
-    BITSET_INNER_DTYPE_C[:] bitset, X_BINNED_DTYPE_C val
+    BITSET_INNER_DTYPE_C[:] bitset, val
 ):
     """For testing only."""
-    set_bitset(&bitset[0], val)
+    if val <= np.iinfo(np.uint8).max:
+        set_bitset[uint8_t](&bitset[0], val)
+    else:
+        set_bitset[uint16_t](&bitset[0], val)
 
 
 def in_bitset_memoryview(
-    const BITSET_INNER_DTYPE_C[:] bitset, X_BINNED_DTYPE_C val
+    const BITSET_INNER_DTYPE_C[:] bitset, val
 ):
     """For testing only."""
-    return in_bitset(&bitset[0], val)
+    if val <= np.iinfo(np.uint8).max:
+        return in_bitset[uint8_t](&bitset[0], val)
+    else:
+        return in_bitset[uint16_t](&bitset[0], val)
 
 
 cdef create_feature_bitset_array(Bitsets b, int bitset_idx):
@@ -75,6 +81,8 @@ def set_raw_bitset_from_binned_bitset(
         X_DTYPE_C raw_cat_value
         BITSET_INNER_DTYPE_C* raw_bitset = raw_bitsets.at(bitset_idx)
 
+    # TODO: We could cast to uint8 instead of X_BINNED_DTYPE_C depending on
+    # raw_cat_value.
     for binned_cat_value, raw_cat_value in enumerate(categories):
         if in_bitset(&binned_bitset[0], binned_cat_value):
             set_bitset(raw_bitset, <X_BINNED_DTYPE_C>raw_cat_value)
@@ -108,6 +116,8 @@ def set_known_cat_bitset_from_known_categories(
 
     # TODO: Think twice if it's worth to parallelize, which would require to wrap
     # know_categories in a single array and a 2nd offset array.
+    # TODO: We could cast to uint8 instead of X_BINNED_DTYPE_C depending on
+    # raw_cat_value.
     for f_idx in range(n_features):
         if is_categorical[f_idx]:
             raw_bitset = known_cat_bitsets.at(f_idx)

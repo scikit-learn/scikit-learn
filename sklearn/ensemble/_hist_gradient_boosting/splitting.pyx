@@ -8,14 +8,14 @@
 # Author: Nicolas Hug
 
 cimport cython
-from cython.parallel import prange
-import numpy as np
 from libc.math cimport INFINITY, ceil
 from libc.stdlib cimport malloc, free, qsort
 from libc.string cimport memcpy
 
-from ...utils._typedefs cimport uint8_t
+from ...utils._typedefs cimport uint8_t, uint16_t, uint32_t
+from .common cimport BinnedData
 from .common cimport X_BINNED_DTYPE_C
+from .common cimport X_BINNED_DTYPE_FUSED_C
 from .common cimport Y_DTYPE_C
 from .common cimport BITSET_INNER_DTYPE_C
 from .common cimport Bitsets
@@ -25,7 +25,9 @@ from .common cimport hist_struct
 from ._bitset cimport create_feature_bitset_array
 from ._bitset cimport set_bitset
 from ._bitset cimport in_bitset
-from ...utils._typedefs cimport uint16_t, uint32_t
+
+from cython.parallel import prange
+import numpy as np
 
 
 cdef struct split_info_struct:
@@ -123,8 +125,8 @@ cdef class Splitter:
 
     Parameters
     ----------
-    X_binned : ndarray of int, shape (n_samples, n_features)
-        The binned input samples. Must be Fortran-aligned.
+    X_binned : BinnedData of shape (n_samples, n_features)
+        The binned input samples. Underlying arrays are Fortran-aligned.
     n_bins_non_missing : ndarray of shape (n_features,), dtype=np.uint16
         For each feature, gives the number of bins actually used for
         non-missing values.
@@ -173,7 +175,7 @@ cdef class Splitter:
         the total number of base bitsets (X_BITSET_INNER_DTYPE) over all features.
     """
     cdef public:
-        const X_BINNED_DTYPE_C [::1, :] X_binned
+        BinnedData X_binned
         unsigned int n_features
         unsigned int n_categorical_features
         const uint16_t [::1] n_bins_non_missing
@@ -195,7 +197,7 @@ cdef class Splitter:
         int n_threads
 
     def __init__(self,
-                 const X_BINNED_DTYPE_C [::1, :] X_binned,
+                 BinnedData X_binned,
                  const uint16_t [::1] n_bins_non_missing,
                  const unsigned char [::1] has_missing_values,
                  const unsigned char [::1] is_categorical,
@@ -327,8 +329,6 @@ cdef class Splitter:
             X_BINNED_DTYPE_C bin_idx = split_info.bin_idx
             unsigned char missing_go_to_left = split_info.missing_go_to_left
             uint16_t missing_values_bin_idx = self.n_bins_non_missing[feature_idx]
-            const X_BINNED_DTYPE_C [::1] X_binned = \
-                self.X_binned[:, feature_idx]
             unsigned int [::1] left_indices_buffer = self.left_indices_buffer
             unsigned int [::1] right_indices_buffer = self.right_indices_buffer
             unsigned char is_categorical = split_info.is_categorical
@@ -340,15 +340,10 @@ cdef class Splitter:
             int [:] offset_in_buffers = np.zeros(n_threads, dtype=np.int32)
             int [:] left_counts = np.empty(n_threads, dtype=np.int32)
             int [:] right_counts = np.empty(n_threads, dtype=np.int32)
-            int left_count
-            int right_count
             int start
             int stop
-            int i
             int thread_idx
-            int sample_idx
             int right_child_position
-            unsigned char turn_left
             int [:] left_offset = np.zeros(n_threads, dtype=np.int32)
             int [:] right_offset = np.zeros(n_threads, dtype=np.int32)
 
@@ -367,28 +362,42 @@ cdef class Splitter:
             # map indices from sample_indices to left/right_indices_buffer
             for thread_idx in prange(n_threads, schedule='static',
                                      chunksize=1, num_threads=n_threads):
-                left_count = 0
-                right_count = 0
-
                 start = offset_in_buffers[thread_idx]
                 stop = start + sizes[thread_idx]
-                for i in range(start, stop):
-                    sample_idx = sample_indices[i]
-                    turn_left = sample_goes_left(
-                        missing_go_to_left,
-                        missing_values_bin_idx, bin_idx,
-                        X_binned[sample_idx], is_categorical,
-                        left_cat_bitset)
-
-                    if turn_left:
-                        left_indices_buffer[start + left_count] = sample_idx
-                        left_count = left_count + 1
-                    else:
-                        right_indices_buffer[start + right_count] = sample_idx
-                        right_count = right_count + 1
-
-                left_counts[thread_idx] = left_count
-                right_counts[thread_idx] = right_count
+                if self.X_binned.feature_is_8bit_view[feature_idx]:
+                    sample_to_left_or_right(
+                        X_binned=self.X_binned.get_feature_view8(feature_idx),
+                        sample_indices=sample_indices,
+                        start=start,
+                        stop=stop,
+                        thread_idx=thread_idx,
+                        missing_go_to_left=missing_go_to_left,
+                        missing_values_bin_idx=missing_values_bin_idx,
+                        bin_idx=bin_idx,
+                        is_categorical=is_categorical,
+                        left_cat_bitset=left_cat_bitset,
+                        left_indices_buffer=left_indices_buffer,  # OUT
+                        right_indices_buffer=right_indices_buffer,  # OUT
+                        left_counts=left_counts,  # OUT
+                        right_counts=right_counts,  # OUT
+                    )
+                else:
+                    sample_to_left_or_right(
+                        X_binned=self.X_binned.get_feature_view16(feature_idx),
+                        sample_indices=sample_indices,
+                        start=start,
+                        stop=stop,
+                        thread_idx=thread_idx,
+                        missing_go_to_left=missing_go_to_left,
+                        missing_values_bin_idx=missing_values_bin_idx,
+                        bin_idx=bin_idx,
+                        is_categorical=is_categorical,
+                        left_cat_bitset=left_cat_bitset,
+                        left_indices_buffer=left_indices_buffer,  # OUT
+                        right_indices_buffer=right_indices_buffer,  # OUT
+                        left_counts=left_counts,  # OUT
+                        right_counts=right_counts,  # OUT
+                    )
 
             # position of right child = just after the left child
             right_child_position = 0
@@ -1113,6 +1122,73 @@ cdef class Splitter:
 cdef int compare_cat_infos(const void * a, const void * b) noexcept nogil:
     return -1 if (<categorical_info *>a).value < (<categorical_info *>b).value else 1
 
+
+cdef void sample_to_left_or_right(
+    const X_BINNED_DTYPE_FUSED_C [::1] X_binned,
+    unsigned int [::1] sample_indices,
+    int start,
+    int stop,
+    int thread_idx,
+    unsigned char missing_go_to_left,
+    uint16_t missing_values_bin_idx,
+    X_BINNED_DTYPE_C bin_idx,
+    unsigned char is_categorical,
+    BITSET_INNER_DTYPE_C [:] left_cat_bitset,
+    unsigned int [::1] left_indices_buffer,  # OUT
+    unsigned int [::1] right_indices_buffer,  # OUT
+    int [:] left_counts,  # OUT
+    int [:] right_counts,  # OUT
+) noexcept nogil:
+    cdef:
+        int left_count = 0
+        int right_count = 0
+        int sample_idx
+        unsigned char turn_left
+
+    for i in range(start, stop):
+        sample_idx = sample_indices[i]
+        turn_left = sample_goes_left(
+            missing_go_to_left,
+            missing_values_bin_idx,
+            bin_idx,
+            X_binned[sample_idx],
+            is_categorical,
+            left_cat_bitset,
+        )
+        if turn_left:
+            left_indices_buffer[start + left_count] = sample_idx
+            left_count = left_count + 1
+        else:
+            right_indices_buffer[start + right_count] = sample_idx
+            right_count = right_count + 1
+
+    left_counts[thread_idx] = left_count
+    right_counts[thread_idx] = right_count
+
+
+cdef inline unsigned char sample_goes_left(
+        unsigned char missing_go_to_left,
+        uint16_t missing_values_bin_idx,
+        X_BINNED_DTYPE_C split_bin_idx,
+        X_BINNED_DTYPE_FUSED_C bin_value,
+        unsigned char is_categorical,
+        BITSET_INNER_DTYPE_C [:] left_cat_bitset) noexcept nogil:
+    """Helper to decide whether sample should go to left or right child."""
+
+    if is_categorical:
+        # note: if any, missing values are encoded in left_cat_bitset
+        return in_bitset(&left_cat_bitset[0], bin_value)
+    else:
+        return (
+            (
+                missing_go_to_left and
+                bin_value == missing_values_bin_idx
+            )
+            or (
+                bin_value <= split_bin_idx
+            ))
+
+
 cdef inline Y_DTYPE_C _split_gain(
         Y_DTYPE_C sum_gradient_left,
         Y_DTYPE_C sum_hessian_left,
@@ -1162,6 +1238,7 @@ cdef inline Y_DTYPE_C _split_gain(
 
     return gain
 
+
 cdef inline Y_DTYPE_C _loss_from_value(
         Y_DTYPE_C value,
         Y_DTYPE_C sum_gradient) noexcept nogil:
@@ -1172,28 +1249,6 @@ cdef inline Y_DTYPE_C _loss_from_value(
     <1603.02754>.`
     """
     return sum_gradient * value
-
-cdef inline unsigned char sample_goes_left(
-        unsigned char missing_go_to_left,
-        uint16_t missing_values_bin_idx,
-        X_BINNED_DTYPE_C split_bin_idx,
-        X_BINNED_DTYPE_C bin_value,
-        unsigned char is_categorical,
-        BITSET_INNER_DTYPE_C [:] left_cat_bitset) noexcept nogil:
-    """Helper to decide whether sample should go to left or right child."""
-
-    if is_categorical:
-        # note: if any, missing values are encoded in left_cat_bitset
-        return in_bitset(&left_cat_bitset[0], bin_value)
-    else:
-        return (
-            (
-                missing_go_to_left and
-                bin_value == missing_values_bin_idx
-            )
-            or (
-                bin_value <= split_bin_idx
-            ))
 
 
 cpdef inline Y_DTYPE_C compute_node_value(

@@ -5,6 +5,7 @@ from numpy.testing import assert_allclose, assert_array_equal
 from sklearn.ensemble._hist_gradient_boosting.common import (
     G_H_DTYPE,
     X_BINNED_DTYPE,
+    BinnedData,
     Histograms,
 )
 from sklearn.ensemble._hist_gradient_boosting.histogram import (
@@ -30,6 +31,7 @@ def test_histogram_init_via_histogram_builder(n_bins):
         np.arange(n_samples * n_features).reshape((n_features, n_samples)).T,
         dtype=X_BINNED_DTYPE,
     )
+    X_binned = BinnedData.from_array(X_binned)
     gradients = np.array(np.arange(n_samples) ** 2, dtype=G_H_DTYPE)
     hessians = np.ones_like(gradients)
     sample_indices = np.arange(n_samples, dtype=np.uint32)
@@ -278,3 +280,41 @@ def test_hist_subtraction(constant_hessian):
         assert_allclose(
             hist_right.histograms[key], hist_right_sub.histograms[key], rtol=1e-6
         )
+
+
+def test_histogram_with_interaction_constraints():
+    X_binned = np.array(
+        [
+            [0, 0, 0],
+            [1, 0, 0],
+            [2, 1, 0],
+            [3, 1, 1],
+            [4, 2, 1],
+            [5, 2, 2],  # Note, last feature is a missing value.
+        ],
+        dtype=np.uint8,
+    )
+    X_binned = BinnedData.from_array(X_binned)
+    gradients = np.arange(X_binned.shape[0], dtype=G_H_DTYPE)
+    hessians = np.ones_like(gradients)
+    sample_indices = np.arange(X_binned.shape[0], dtype=np.uint32)
+    builder = HistogramBuilder(
+        X_binned=X_binned,
+        n_bins=np.array([7, 4, 3], dtype=np.uint32),
+        gradients=gradients,
+        hessians=hessians,
+        hessians_are_constant=False,
+        n_threads=1,
+    )
+    allowed_features = np.array([0, 2], dtype=np.uint32)
+    histograms = builder.compute_histograms_brute(sample_indices, allowed_features)
+    assert_allclose(histograms.feature_histo(0)["count"], [1, 1, 1, 1, 1, 1, 0])
+    assert_allclose(
+        histograms.feature_histo(2)["count"],
+        [3, 2, 1],
+    )
+    assert_allclose(histograms.feature_histo(0)["sum_gradients"], [0, 1, 2, 3, 4, 5, 0])
+    assert_allclose(
+        histograms.feature_histo(2)["sum_gradients"],
+        [0 + 1 + 2, 3 + 4, 5],
+    )

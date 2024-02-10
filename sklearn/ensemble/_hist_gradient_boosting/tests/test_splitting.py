@@ -5,6 +5,7 @@ from numpy.testing import assert_array_equal
 from sklearn.ensemble._hist_gradient_boosting.common import (
     G_H_DTYPE,
     X_BINNED_DTYPE,
+    BinnedData,
     MonotonicConstraint,
 )
 from sklearn.ensemble._hist_gradient_boosting.histogram import HistogramBuilder
@@ -30,6 +31,7 @@ def test_histogram_split(n_bins):
         rng.randint(0, n_bins - 1, size=(int(1e4), 1)), dtype=X_BINNED_DTYPE
     )
     binned_feature = X_binned.T[feature_idx]
+    X_binned = BinnedData.from_array(X_binned)
     sample_indices = np.arange(binned_feature.shape[0], dtype=np.uint32)
     ordered_hessians = np.ones_like(binned_feature, dtype=G_H_DTYPE)
     all_hessians = ordered_hessians
@@ -115,7 +117,7 @@ def test_gradient_and_hessian_sanity(constant_hessian):
     X_binned = rng.randint(
         0, n_bins, size=(n_samples, n_features), dtype=X_BINNED_DTYPE
     )
-    X_binned = np.asfortranarray(X_binned)
+    X_binned = BinnedData.from_array(np.asfortranarray(X_binned))
     sample_indices = np.arange(n_samples, dtype=np.uint32)
     all_gradients = rng.randn(n_samples).astype(G_H_DTYPE)
     sum_gradients = all_gradients.sum()
@@ -258,7 +260,7 @@ def test_split_indices():
         [0, 0],
         [0, 4],
     ]
-    X_binned = np.asfortranarray(X_binned, dtype=X_BINNED_DTYPE)
+    X_binned = BinnedData.from_array(np.asfortranarray(X_binned, dtype=X_BINNED_DTYPE))
     sample_indices = np.arange(n_samples, dtype=np.uint32)
     all_gradients = rng.randn(n_samples).astype(G_H_DTYPE)
     all_hessians = np.ones(1, dtype=G_H_DTYPE)
@@ -333,6 +335,7 @@ def test_min_gain_to_split():
         rng.randint(0, n_bins, size=(n_samples, 1)), dtype=X_BINNED_DTYPE
     )
     binned_feature = X_binned[:, 0]
+    X_binned = BinnedData.from_array(X_binned)
     sample_indices = np.arange(n_samples, dtype=np.uint32)
     all_hessians = np.ones_like(binned_feature, dtype=G_H_DTYPE)
     all_gradients = np.ones_like(binned_feature, dtype=G_H_DTYPE)
@@ -501,7 +504,7 @@ def test_splitting_missing_values(
 
     sample_indices = np.arange(n_samples, dtype=np.uint32)
     X_binned = np.array(X_binned, dtype=X_BINNED_DTYPE).reshape(-1, 1)
-    X_binned = np.asfortranarray(X_binned)
+    X_binned = BinnedData.from_array(np.asfortranarray(X_binned))
     all_gradients = np.array(all_gradients, dtype=G_H_DTYPE)
     has_missing_values = np.array([has_missing_values], dtype=np.uint8)
     all_hessians = np.ones(1, dtype=G_H_DTYPE)
@@ -543,7 +546,7 @@ def test_splitting_missing_values(
     if has_missing_values:
         assert split_info.missing_go_to_left == expected_go_to_left
 
-    n_empty_bins = n_bins - len(set(X_binned.flat))
+    n_empty_bins = n_bins - len(set(np.asarray(X_binned).flat))
     split_on_nan = split_info.bin_idx == n_bins_non_missing[0] - 1 - n_empty_bins
     assert split_on_nan == expected_split_on_nan
 
@@ -598,7 +601,7 @@ def test_splitting_categorical_cat_smooth(
     n_bins = max(X_binned) + 1
     n_samples = len(X_binned)
     X_binned = np.array([X_binned], dtype=X_BINNED_DTYPE).T
-    X_binned = np.asfortranarray(X_binned)
+    X_binned = BinnedData.from_array(np.asfortranarray(X_binned))
 
     l2_regularization = 0.0
     min_hessian_to_split = 1e-3
@@ -775,7 +778,7 @@ def test_splitting_categorical_sanity(
     n_bins = max(X_binned) + 1
 
     X_binned = np.array(X_binned, dtype=X_BINNED_DTYPE).reshape(-1, 1)
-    X_binned = np.asfortranarray(X_binned)
+    X_binned = BinnedData.from_array(np.asfortranarray(X_binned))
 
     l2_regularization = 0.0
     min_hessian_to_split = 1e-3
@@ -839,7 +842,7 @@ def test_splitting_categorical_sanity(
         split_info, splitter.partition
     )
 
-    left_mask = np.isin(X_binned.ravel(), expected_categories_left)
+    left_mask = np.isin(np.asarray(X_binned).ravel(), expected_categories_left)
     assert_array_equal(sample_indices[left_mask], samples_left)
     assert_array_equal(sample_indices[~left_mask], samples_right)
 
@@ -871,7 +874,9 @@ def test_split_interaction_constraints():
             rng.randint(0, n_bins - 1, size=(n_samples, n_features)),
             dtype=X_BINNED_DTYPE,
         )
-        X_binned = np.asfortranarray(X_binned, dtype=X_BINNED_DTYPE)
+        X_binned = BinnedData.from_array(
+            np.asfortranarray(X_binned, dtype=X_BINNED_DTYPE)
+        )
 
         # Make feature 1 very important
         all_gradients = (10 * X_binned[:, 1] + rng.randn(n_samples)).astype(G_H_DTYPE)
@@ -972,7 +977,7 @@ def test_split_feature_fraction_per_split(forbidden_features):
         rng.integers(low=0, high=n_bins - 1, size=(n_samples, n_features)),
         dtype=X_BINNED_DTYPE,
     )
-    X_binned = np.asfortranarray(X_binned, dtype=X_BINNED_DTYPE)
+    X_binned = BinnedData.from_array(np.asfortranarray(X_binned, dtype=X_BINNED_DTYPE))
     builder = HistogramBuilder(
         X_binned,
         n_bins,
