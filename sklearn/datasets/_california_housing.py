@@ -104,6 +104,10 @@ def fetch_california_housing(
 
         .. versionadded:: 0.23
 
+    show_progress : bool, default=False
+        If True, display a progress bar to show the download progress.
+        Need to have rich library installed.
+
     Returns
     -------
     dataset : :class:`~sklearn.utils.Bunch`

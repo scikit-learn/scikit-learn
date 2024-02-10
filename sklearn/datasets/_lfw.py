@@ -346,6 +346,10 @@ def fetch_lfw_people(
 
         .. versionadded:: 0.20
 
+    show_progress : bool, default=False
+        If True, display a progress bar to show the download progress.
+        Need to have rich library installed.
+
     Returns
     -------
     dataset : :class:`~sklearn.utils.Bunch`
