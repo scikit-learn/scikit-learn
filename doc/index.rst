@@ -1,4 +1,3 @@
-
 .. title:: Index
 
 .. Define the overall structure, that affects the prev-next buttons and the order
