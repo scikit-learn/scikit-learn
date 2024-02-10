@@ -1,0 +1,8 @@
+{# Displays links to the top-level TOCtree elements, in the header navbar. #}
+{# Modified based on the pydata-sphinx-theme "navbar-nav" component. #}
+{# See sphinxext/tweak_toctree_functions.py for the custom functions. #}
+<nav class="navbar-nav">
+  <ul class="bd-navbar-elements navbar-nav">
+    {{ generate_header_nav_html_with_substitution(n_links_before_dropdown=theme_header_links_before_dropdown, dropdown_text=theme_header_dropdown_text) }}
+  </ul>
+</nav>

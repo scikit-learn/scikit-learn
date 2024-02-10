@@ -63,10 +63,10 @@ extensions = [
     "sphinx_remove_toctrees",
     "sphinx_design",
     # See sphinxext/
-    "add_toctree_functions",
     "allow_nan_estimators",
     "doi_role",
     "sphinx_issues",
+    "tweak_toctree_functions",
 ]
 
 # Specify how to identify the prompt when copying code snippets
@@ -255,7 +255,7 @@ html_theme_options = {
     # -- Template placement in theme layouts ----------------------------------
     "navbar_start": ["navbar-logo"],
     # Note that the alignment of navbar_center is controlled by navbar_align
-    "navbar_center": ["navbar-nav"],
+    "navbar_center": ["sk-navbar-nav"],
     "navbar_end": ["theme-switcher", "navbar-icon-links", "version-switcher"],
     # navbar_persistent is persistent right (even when on mobiles)
     "navbar_persistent": ["search-button"],
@@ -774,52 +774,6 @@ def generate_min_dependency_substitutions():
         f.write(output)
 
 
-def generate_index_rst():
-    """Generate index.rst.
-
-    The reason for generating this file at build time is to allow specifying the
-    development link as a variable.
-    https://github.com/scikit-learn/scikit-learn/pull/22550
-    """
-    development_link = (
-        "developers/index"
-        if parsed_version.is_devrelease
-        else "https://scikit-learn.org/dev/developers/index.html"
-    )
-
-    output = f"""
-.. title:: Index
-
-.. Define the overall structure, that affects the prev-next buttons and the order
-   of the sections in the top navbar.
-
-.. toctree::
-    :hidden:
-    :maxdepth: 2
-
-    Install <install>
-    user_guide
-    API <modules/classes>
-    auto_examples/index
-    Community <https://blog.scikit-learn.org/>
-    getting_started
-    Tutorials <tutorial/index>
-    whats_new
-    Glossary <glossary>
-    Development <{development_link}>
-    FAQ <faq>
-    support
-    related_projects
-    roadmap
-    Governance <governance>
-    about
-    Other Versions and Download <https://scikit-learn.org/dev/versions.html>
-"""
-
-    with (Path(".") / "index.rst").open("w", encoding="utf-8") as f:
-        f.write(output)
-
-
 # Config for sphinx_issues
 
 # we use the issues path for PRs since the issues URL will forward
@@ -987,6 +941,5 @@ else:
     }
 
 # Write the pages prior to any sphinx event
-generate_index_rst()
 generate_min_dependency_table()
 generate_min_dependency_substitutions()
