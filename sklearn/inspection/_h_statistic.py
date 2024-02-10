@@ -134,21 +134,23 @@ def h_statistic(
     >>> from sklearn.ensemble import HistGradientBoostingRegressor
     >>> from sklearn.inspection import permutation_importance, h_statistic
     >>> from sklearn.datasets import load_diabetes
-
+    >>>
     >>> X, y = load_diabetes(return_X_y=True)
-    >>> est = HistGradientBoostingRegressor().fit(X, y)
+    >>> est = HistGradientBoostingRegressor(max_iter=5, max_depth=2).fit(X, y)
+    >>>
+    >>> # Get Friedman's H-squared for top m=3 predictors
+    >>> m = 3
+    >>> imp = permutation_importance(est, X, y, random_state=0)
+    >>> top_m = np.argsort(imp.importances_mean)[-m:]
+    >>> h_statistic(est, X=X, features=top_m, random_state=4)
 
-    >>> # Get Friedman's H-squared for top three predictors
-    >>> imp = permutation_importance(est, X, y, n_repeats=10, random_state=0)
-    >>> top_3 = np.argsort(imp.importances_mean)[-3:]
-    >>> h_statistic(est, X=X, features=top_3, random_state=4)
-
-    >>> # For feature pair (3, 2), about 4% of joint effect variability comes from
-    >>> # their interaction. Unnormalized statistics are highest for pair (2, 8):
-    >>> # {'feature_pair': [(3, 2), (3, 8), (2, 8)],
-    >>> # 'numerator_pairwise': array([50.42733969, 20.34764278, 56.77828891]),
-    >>> # 'denominator_pairwise': array([1163.19050558, 1300.27629882, 2198.72605431]),
-    >>> # 'h_squared_pairwise': array([0.04335261, 0.01564871, 0.02582327])}
+    >>> # For features (8, 2), 3.4% of the joint effect variability comes from
+    >>> # their interaction. These two features also have strongest absolute
+    >>> # interaction, see "numerator_pairwise":
+    >>> # {'feature_pair': [(3, 8), (3, 2), (8, 2)],
+    >>> # 'numerator_pairwise': array([ 1.2955532 ,  1.2419687 , 11.13358385]),
+    >>> # 'denominator_pairwise': array([131.39690331, 133.96210997, 323.6576595 ]),
+    >>> # 'h_squared_pairwise': array([0.00985985, 0.00927104, 0.03439926])}
 
     """
     check_is_fitted(estimator)
@@ -172,7 +174,7 @@ def h_statistic(
         features = feature_indices = np.arange(X.shape[1])
     else:
         feature_indices = np.asarray(
-            _get_column_indices(X, features), dtype=np.int32, order="C"
+            _get_column_indices(X, features), dtype=np.intp, order="C"
         ).ravel()
 
     # CALCULATIONS
@@ -184,10 +186,7 @@ def h_statistic(
             )
         )
 
-    hstat_results = Bunch()
-    hstat_results["feature_pair"] = list(itertools.combinations(features, 2))
-    num = []
-    denom = []
+    num, denom = [], []
 
     for i, j in itertools.combinations(range(len(feature_indices)), 2):
         pd_bivariate = _calculate_pd_over_data(
@@ -205,14 +204,13 @@ def h_statistic(
         )
         denom.append(np.average(pd_bivariate**2, axis=0, weights=sample_weight))
 
-    # Round small numerators to 0
     num = np.array(num)
-    num[np.abs(num) < eps] = 0
+    num[np.abs(num) < eps] = 0  # Round small numerators to 0
+    denom = np.array(denom)
 
-    hstat_results["numerator_pairwise"] = num
-    hstat_results["denominator_pairwise"] = np.array(denom)
-    hstat_results["h_squared_pairwise"] = (
-        hstat_results["numerator_pairwise"] / hstat_results["denominator_pairwise"]
+    return Bunch(
+        feature_pair=list(itertools.combinations(features, 2)),
+        numerator_pairwise=num,
+        denominator_pairwise=denom,
+        h_squared_pairwise=num / denom,
     )
-
-    return hstat_results
