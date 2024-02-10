@@ -15,7 +15,7 @@ import pytest
 from joblib.numpy_pickle import NumpyPickler
 from numpy.testing import assert_allclose
 
-from sklearn import datasets, tree
+from sklearn import clone, datasets, tree
 from sklearn.dummy import DummyRegressor
 from sklearn.exceptions import NotFittedError
 from sklearn.impute import SimpleImputer
@@ -2658,7 +2658,10 @@ def test_regression_tree_missing_values_toy(X, criterion):
     y = np.arange(6)
 
     tree = DecisionTreeRegressor(criterion=criterion, random_state=0).fit(X, y)
-    assert all(tree.tree_.impurity >= 0)  # MSE should always be positive
+    tree_ref = clone(tree).fit(y.reshape(-1, 1), y)
+    # assert all(tree.tree_.impurity >= 0)  # MSE should always be positive
+    # Check the impurity match after the first split
+    assert_allclose(tree.tree_.impurity[:2], tree_ref.tree_.impurity[:2])
 
     # Find the leaves with a single sample where the MSE should be 0
     leaves_idx = np.flatnonzero(
