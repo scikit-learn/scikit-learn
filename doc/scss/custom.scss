@@ -23,21 +23,6 @@ code.literal {
   }
 }
 
-/* Version warning banner */
-
-// TODO: can be removed when pydata-sphinx-theme > 0.15.2
-.bd-header-version-warning,
-.bd-header-annoucement {
-  min-height: unset;
-  transition: height 300ms ease-in-out;
-  overflow-y: hidden;
-
-  &.init {
-    position: fixed;
-    visibility: hidden;
-  }
-}
-
 /* Primary sidebar */
 
 .bd-sidebar-primary {

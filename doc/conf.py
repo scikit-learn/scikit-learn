@@ -268,9 +268,7 @@ html_theme_options = {
     "footer_end": [],
     # Use :html_theme.sidebar_secondary.remove: for file-wide removal
     "secondary_sidebar_items": ["page-toc", "sourcelink"],
-    # The version warning banner is not informative enough so we inject our own
-    # See `doc/js/scripts/version-warning.js`
-    "show_version_warning_banner": False,
+    "show_version_warning_banner": True,
     "announcement": None,
 }
 
@@ -315,7 +313,6 @@ html_extra_path = ["versions.json"]
 # Additional JS files
 html_js_files = [
     "scripts/details-permalink.js",
-    "scripts/version-warning.js",
     "scripts/version-switcher.js",
 ]
 
