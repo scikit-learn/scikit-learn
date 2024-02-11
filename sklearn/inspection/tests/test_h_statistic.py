@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 from numpy.testing import assert_allclose
 
-from sklearn.base import clone
+from sklearn.base import RegressorMixin, clone
 from sklearn.datasets import make_classification, make_regression
 from sklearn.ensemble import (
     HistGradientBoostingRegressor,
@@ -130,3 +130,42 @@ def test_h_statistic_reflect_interaction_constraints():
 
     assert result.h_squared_pairwise[0] > 1e-5
     assert_allclose(result.h_squared_pairwise[1:], 0)
+
+
+def test_h_statistic_matches_other_implementations():
+    # Checks for one specific example that the result matches the one from two
+    # independent R packages ({iml} of Christoph Molnar, {hstats} of Michael Mayer).
+    # The latter also allows for sample weights.
+    # X <- data.frame(x1 = c(1, 1, 1, 2), x2 = c(0, 0, 2, 1), x3 = c(2, 2, 1, 4))
+    # pred_fun <- function(model, newdata)
+    #   newdata[, 1] + newdata[, 2] * sqrt(newdata[, 3])
+    #
+    # library(iml)     # 0.11.1
+    # mod <- Predictor$new(data = X, predict.function = pred_fun)
+    # Interaction$new(mod, grid.size = 5, feature = "x3")$results$.interaction^2
+    # -> x2:x3 -> 0.078125
+    #
+    # library(hstats)  # 1.1.2
+    # h2_pairwise(hstats(X = X, pred_fun = pred_fun))           # x2:x3 -> 0.078125
+    # h2_pairwise(hstats(X = X, pred_fun = pred_fun, w = 0:3))  # weights -> 0.1010093
+    class Deterministic(RegressorMixin):
+        def __init__(self, pred_fun):
+            self._pred_fun = pred_fun
+            self.is_fitted_ = True
+
+        def fit(self, *args, **kwargs):
+            return self
+
+        def predict(self, X):
+            return self._pred_fun(X)
+
+    X = np.array([[1, 1, 1, 2], [0, 0, 2, 1], [2, 2, 1, 4]]).T
+
+    # Model with interaction in last feature pair
+    model = Deterministic(lambda X: X[:, 0] + X[:, 1] * np.sqrt(X[:, 2]))
+
+    assert_allclose(h_statistic(model, X=X).h_squared_pairwise[2], 0.078125)
+    assert_allclose(
+        h_statistic(model, X=X, sample_weight=range(4)).h_squared_pairwise[2],
+        0.1010093,
+    )
