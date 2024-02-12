@@ -240,59 +240,15 @@ def grid_to_graph(
 
     Examples
     --------
+    >>> import numpy as np
     >>> from sklearn.feature_extraction.image import grid_to_graph
-    >>>
-    >>> # example with a 2x2 matrix (4 cells between 0 to 3)
-    >>> graph = grid_to_graph(2, 2, 1)
+    >>> shape_img = (4, 4, 1)
+    >>> mask = np.zeros(shape=shape_img, dtype=bool)
+    >>> mask[[1, 2], [1, 2], :] = True
+    >>> graph = grid_to_graph(*shape_img, mask=mask)
     >>> print(graph)
-      (0, 1)        1
-      (2, 3)        1
-      (0, 2)        1
-      (1, 3)        1
-      (1, 0)        1
-      (3, 2)        1
-      (2, 0)        1
-      (3, 1)        1
-      (0, 0)        1
-      (1, 1)        1
-      (2, 2)        1
-      (3, 3)        1
-    >>>
-    >>> # example with a 2x2x2 matrix (8 cells between 0 to 7)
-    >>> graph = grid_to_graph(2, 2, 2)
-    >>> print(graph)
-      (0, 1)        1
-      (2, 3)        1
-      (4, 5)        1
-      (6, 7)        1
-      (0, 2)        1
-      (1, 3)        1
-      (4, 6)        1
-      (5, 7)        1
-      (0, 4)        1
-      (1, 5)        1
-      (2, 6)        1
-      (3, 7)        1
-      (1, 0)        1
-      (3, 2)        1
-      (5, 4)        1
-      (7, 6)        1
-      (2, 0)        1
-      (3, 1)        1
-      (6, 4)        1
-      (7, 5)        1
-      (4, 0)        1
-      (5, 1)        1
-      (6, 2)        1
-      (7, 3)        1
-      (0, 0)        1
-      (1, 1)        1
-      (2, 2)        1
-      (3, 3)        1
-      (4, 4)        1
-      (5, 5)        1
-      (6, 6)        1
-      (7, 7)        1
+      (0, 0)    1
+      (1, 1)    1
     """
     return _to_graph(n_x, n_y, n_z, mask=mask, return_as=return_as, dtype=dtype)
 
