@@ -110,7 +110,7 @@ def h_statistic(
     precisely 0. The numerator (or its square root) provides an absolute measure
     of interaction strength, enabling direct comparison across feature pairs.
 
-    The computational complexity of :term:`h_statistic()` is :math:`O(p^2 n^2)`,
+    The computational complexity of the function is :math:`O(p^2 n^2)`,
     where :math:`p` denotes the number of features considered. The size of `n` is
     automatically controlled via `n_max=500`, while it is the user's responsibility
     to select only a subset of *important* features. It is crucial to focus on important
@@ -137,7 +137,7 @@ def h_statistic(
         See :term:`Glossary <random_state>`.
 
     sample_weight : array-like of shape (n_samples,), default=None
-        Sample weights used in calculating partial dependences.
+        Sample weights used in calculating partial dependencies.
 
     eps : float, default=1e-10
         Threshold below which numerator values are set to 0.
@@ -151,18 +151,18 @@ def h_statistic(
             The list contains tuples of feature pairs (indices) in the same order
             as all pairwise statistics.
 
+        h_squared_pairwise : ndarray of shape (n_pairs, ) or (n_pairs, output_dim)
+            Pairwise H-squared statistic. Useful to see which feature pair has
+            strongest relative interation (relative with respect to joint effect).
+            Calculated as numerator_pairwise / denominator_pairwise.
+
         numerator_pairwise : ndarray of shape (n_pairs, ) or (n_pairs, output_dim)
             Numerator of pairwise H-squared statistic.
             Useful to see which feature pair has strongest absolute interaction.
             Take square-root to get values on the scale of the predictions.
 
         denominator_pairwise : ndarray of shape (n_pairs, ) or (n_pairs, output_dim)
-            Denominator of pairwise H-squared statistic.
-
-        hsquared_pairwise : ndarray of shape (n_pairs, ) or (n_pairs, output_dim)
-            Pairwise H-squared statistic. Useful to see which feature pair has
-            strongest relative interation (relative with respect to joint effect).
-            Calculated as numerator_pairwise / denominator_pairwise.
+            Denominator of pairwise H-squared statistic (not of particular interest).
 
     References
     ----------
