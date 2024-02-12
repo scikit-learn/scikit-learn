@@ -115,6 +115,9 @@ COMPOSITE_METHODS = {
 
 METHODS = SIMPLE_METHODS + list(COMPOSITE_METHODS.keys())
 
+# Used as a sentinel value to indicate nothing was passed.
+_MISSING = object()
+
 
 def _routing_enabled():
     """Return whether metadata routing is enabled.
