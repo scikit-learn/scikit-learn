@@ -175,7 +175,7 @@ def test_average(
     with config_context(array_api_dispatch=True):
         result = _average(array_in, axis=axis, weights=weights, normalize=normalize)
 
-    assert array_in.device == result.device
+    assert getattr(array_in, "device", None) == getattr(result, "device", None)
 
     result = _convert_to_numpy(result, xp)
     assert_allclose(result, expected, atol=_atol_for_type(dtype_name))
