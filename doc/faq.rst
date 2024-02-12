@@ -101,7 +101,7 @@ Will you add GPU support?
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Adding GPU support by default would introduce heavy harware-specific software
-dependencies which make it both harder for the average user to install
+dependencies and existing algorithms would need to be reimplemented. This would make it both harder for the average user to install
 scikit-learn and harder for the developers to maintain the code.
 
 However, since 2023, a limited but growing :ref:`list of scikit-learn
@@ -117,8 +117,8 @@ can be considered for Array API support and therefore GPU support.
 However, not all scikit-learn estimators are amenable to efficiently running
 on GPUs via the Array API for fundamental algorithmic reasons. For instance,
 tree-based models currently implemented with Cython in scikit-learn are
-fundamentally not array-based algorithms. Other algorithms such as k means or k
-nearest neighbors rely on array-based algorithms but are also implemented in
+fundamentally not array-based algorithms. Other algorithms such as k-means or
+k-nearest neighbors rely on array-based algorithms but are also implemented in
 Cython in order to manually interleave consecutive array operations to avoid
 introducing performance killing memory access to large intermediate arrays:
 this low-level algorithmic rewrite is called "kernel fusion" and cannot be
