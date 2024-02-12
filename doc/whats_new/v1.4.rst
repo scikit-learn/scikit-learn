@@ -157,7 +157,6 @@ Changelog
   :pr:`28233` by :user:`John Hopfensperger <s-banach>`.
 
 
-
 .. _changes_1_4:
 
 Version 1.4.0
