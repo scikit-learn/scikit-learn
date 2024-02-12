@@ -1150,6 +1150,8 @@ cdef class MSE(RegressionCriterion):
         cdef intp_t k
         cdef float64_t w = 1.0
 
+        cdef intp_t end_non_missing
+
         for p in range(start, pos):
             i = sample_indices[p]
 
@@ -1159,6 +1161,22 @@ cdef class MSE(RegressionCriterion):
             for k in range(self.n_outputs):
                 y_ik = self.y[i, k]
                 sq_sum_left += w * y_ik * y_ik
+
+        if self.missing_go_to_left:
+            # add up the impact of these missing values on the left child
+            # statistics.
+            # Note: this only impacts the square sum as the sum
+            # is modified elsewhere.
+            end_non_missing = self.end - self.n_missing
+
+            for p in range(end_non_missing, self.end):
+                i = sample_indices[p]
+                if sample_weight is not None:
+                    w = sample_weight[i]
+
+                for k in range(self.n_outputs):
+                    y_ik = self.y[i, k]
+                    sq_sum_left += w * y_ik * y_ik
 
         sq_sum_right = self.sq_sum_total - sq_sum_left
 
