@@ -352,12 +352,6 @@ class SimpleImputer(_BaseImputer):
             # Use the dtype seen in `fit` for non-`fit` conversion
             self._fit_dtype = X.dtype
 
-        if not in_fit:
-            # we use min type for the fill_value to avoid changing the input dtype
-            # if not necessary
-            new_dtype = np.promote_types(X.dtype, self._fill_value_min_type)
-            X = X.astype(new_dtype, copy=False)
-
         _check_inputs_dtype(X, self.missing_values)
         if X.dtype.kind not in ("i", "u", "f", "O"):
             raise ValueError(
@@ -367,6 +361,15 @@ class SimpleImputer(_BaseImputer):
                 "categorical data represented either as an array "
                 "with integer dtype or an array of string values "
                 "with an object dtype.".format(X.dtype)
+            )
+
+        # missing_values = 0 not allowed with sparse data as it would
+        # force densification
+        if sp.issparse(X) and self.missing_values == 0:
+            raise ValueError(
+                "Imputation not possible when missing_values "
+                "== 0 and input is sparse. Provide a dense "
+                "array instead."
             )
 
         return X
@@ -401,34 +404,17 @@ class SimpleImputer(_BaseImputer):
         else:
             fill_value = self.fill_value
 
-        self._fill_value_min_type = np.min_scalar_type(fill_value)
-
-        # fill_value should be numerical in case of numerical input
-        if (
-            self.strategy == "constant"
-            and X.dtype.kind in ("i", "u", "f")
-            and not isinstance(fill_value, numbers.Real)
-        ):
-            raise ValueError(
-                "'fill_value'={0} is invalid. Expected a "
-                "numerical value when imputing numerical "
-                "data".format(fill_value)
-            )
+        if self.strategy == "constant":
+            if not np.can_cast(type(fill_value), X.dtype, "same_kind"):
+                raise ValueError(
+                    f"fill_value={fill_value} cannot be cast to the input dtype"
+                    f" {X.dtype}"
+                )
 
         if sp.issparse(X):
-            # missing_values = 0 not allowed with sparse data as it would
-            # force densification
-            if self.missing_values == 0:
-                raise ValueError(
-                    "Imputation not possible when missing_values "
-                    "== 0 and input is sparse. Provide a dense "
-                    "array instead."
-                )
-            else:
-                self.statistics_ = self._sparse_fit(
-                    X, self.strategy, self.missing_values, fill_value
-                )
-
+            self.statistics_ = self._sparse_fit(
+                X, self.strategy, self.missing_values, fill_value
+            )
         else:
             self.statistics_ = self._dense_fit(
                 X, self.strategy, self.missing_values, fill_value
@@ -537,7 +523,7 @@ class SimpleImputer(_BaseImputer):
         elif strategy == "constant":
             # for constant strategy, self.statistcs_ is used to store
             # fill_value in each column
-            return np.full(X.shape[1], fill_value)
+            return np.full(X.shape[1], fill_value, dtype=X.dtype)
 
         # Custom
         elif isinstance(strategy, Callable):
@@ -564,6 +550,13 @@ class SimpleImputer(_BaseImputer):
 
         X = self._validate_input(X, in_fit=False)
         statistics = self.statistics_
+
+        if self.strategy == "constant":
+            if not np.can_cast(statistics.dtype, X.dtype, "same_kind"):
+                raise ValueError(
+                    f"fill_value={statistics.item()} cannot be cast to the input dtype"
+                    f" {X.dtype}"
+                )
 
         if X.shape[1] != statistics.shape[0]:
             raise ValueError(
