@@ -33,14 +33,6 @@ def _check_inputs_dtype(X, missing_values):
         )
 
 
-def _check_fill_values_dtype(fill_values, X_dtype):
-    for fill_value in fill_values:
-        if not np.can_cast(type(fill_value), X_dtype, "same_kind"):
-            raise ValueError(
-                f"fill_value={fill_value} cannot be cast to the input dtype {X_dtype}"
-            )
-
-
 def _most_frequent(array, extra_value, n_repeat):
     """Compute the most frequent value in a 1d array extended with
     [extra_value] * n_repeat, where extra_value is assumed to be not part
@@ -371,14 +363,25 @@ class SimpleImputer(_BaseImputer):
                 "with an object dtype.".format(X.dtype)
             )
 
-        # missing_values = 0 not allowed with sparse data as it would
-        # force densification
         if sp.issparse(X) and self.missing_values == 0:
+            # missing_values = 0 not allowed with sparse data as it would
+            # force densification
             raise ValueError(
                 "Imputation not possible when missing_values "
                 "== 0 and input is sparse. Provide a dense "
                 "array instead."
             )
+
+        if self.strategy == "constant" and self.fill_value is not None:
+            if in_fit:
+                fill_value = self.fill_value
+            else:
+                fill_value = self.statistics_[0]
+            if not np.can_cast(type(fill_value), X.dtype, "same_kind"):
+                raise ValueError(
+                    f"fill_value={fill_value} cannot be cast to the input dtype"
+                    f" {X.dtype}"
+                )
 
         return X
 
@@ -411,9 +414,6 @@ class SimpleImputer(_BaseImputer):
                 fill_value = "missing_value"
         else:
             fill_value = self.fill_value
-
-        if self.strategy == "constant":
-            _check_fill_values_dtype([fill_value], X.dtype)
 
         if sp.issparse(X):
             self.statistics_ = self._sparse_fit(
@@ -554,9 +554,6 @@ class SimpleImputer(_BaseImputer):
 
         X = self._validate_input(X, in_fit=False)
         statistics = self.statistics_
-
-        if self.strategy == "constant":
-            _check_fill_values_dtype(statistics, X.dtype)
 
         if X.shape[1] != statistics.shape[0]:
             raise ValueError(
