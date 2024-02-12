@@ -191,9 +191,9 @@ def h_statistic(
     >>> # their interaction. These two features also have strongest absolute
     >>> # interaction, see "numerator_pairwise":
     >>> # {'feature_pair': [(3, 8), (3, 2), (8, 2)],
+    >>> # 'h_squared_pairwise': array([0.00985985, 0.00927104, 0.03439926]),
     >>> # 'numerator_pairwise': array([ 1.2955532 ,  1.2419687 , 11.13358385]),
-    >>> # 'denominator_pairwise': array([131.39690331, 133.96210997, 323.6576595 ]),
-    >>> # 'h_squared_pairwise': array([0.00985985, 0.00927104, 0.03439926])}
+    >>> # 'denominator_pairwise': array([131.39690331, 133.96210997, 323.6576595 ])}
 
     """
     check_is_fitted(estimator)
