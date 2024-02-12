@@ -66,6 +66,7 @@ extensions = [
     "add_toctree_functions",
     "allow_nan_estimators",
     "doi_role",
+    "dropdown_anchors",
     "sphinx_issues",
 ]
 
@@ -683,60 +684,6 @@ def filter_search_index(app, exception):
         f.write(searchindex_text)
 
 
-def make_dropdown_anchors(app, exception):
-    """Insert anchor links to the sphinx-design dropdowns.
-
-    Some of the dropdowns were originally headers that had automatic anchors, so we
-    need to make sure that the old anchors still work. See the original implementation
-    (in JS): https://github.com/scikit-learn/scikit-learn/pull/27409
-    """
-    if exception is not None:
-        return
-
-    from bs4 import BeautifulSoup
-    from sphinx.util.display import status_iterator
-
-    for file in status_iterator(
-        Path(app.builder.outdir).rglob("*.html"),
-        summary="Inserting dropdown anchors... ",
-        stringify_func=lambda x: x.name,
-    ):
-        # Counter to store the duplicated summary text to add it as a suffix in the
-        # anchor ID
-        anchor_id_counters = {}
-
-        # Get all sphinx-design dropdowns in the current generated page
-        with file.open("r", encoding="utf-8") as f:
-            content = f.read()
-        soup = BeautifulSoup(content, "html.parser")
-        dropdowns = soup.find_all("details", class_="sd-dropdown")
-
-        for dropdown in dropdowns:
-            # The ID uses the first line, lowercased, with spaces replaced by dashes
-            summary_title = dropdown.find("summary", class_="sd-summary-title")
-            anchor_id = re.sub(
-                r"\s+", "-", summary_title.get_text().strip().split("\n")[0]
-            ).lower()
-
-            # Suffix the anchor ID with a counter if it already exists
-            if anchor_id in anchor_id_counters:
-                anchor_id_counters[anchor_id] += 1
-                anchor_id = f"{anchor_id}-{anchor_id_counters[anchor_id]}"
-            else:
-                anchor_id_counters[anchor_id] = 1
-
-            # Set the ID for the dropdown and create the anchor
-            dropdown["id"] = anchor_id
-            anchor_element = soup.new_tag("a", href=f"#{anchor_id}")
-            anchor_element["class"] = "headerlink"
-            anchor_element.string = "#"
-            summary_title.append(anchor_element)
-
-        # Write the modified content back to the file
-        with file.open("w", encoding="utf-8") as f:
-            f.write(str(soup))
-
-
 def generate_min_dependency_table(app):
     """Generate min dependency table for docs."""
     from sklearn._min_dependencies import dependent_packages
@@ -828,7 +775,6 @@ def setup(app):
     # to hide/show the prompt in code examples
     app.connect("build-finished", make_carousel_thumbs)
     app.connect("build-finished", filter_search_index)
-    app.connect("build-finished", make_dropdown_anchors)
 
 
 # The following is used by sphinx.ext.linkcode to provide links to github
