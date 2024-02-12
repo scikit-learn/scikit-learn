@@ -20,7 +20,7 @@ more details.
 
 - |Feature| :class:`pipeline.FeatureUnion` now supports metadata routing in its
   ``fit`` and ``fit_transform`` methods and route metadata to the underlying
-  transformers' ``fit`` and ``fit_transform``. :pr:`xxxxx` by :user:`Stefanie
+  transformers' ``fit`` and ``fit_transform``. :pr:`28205` by :user:`Stefanie
   Senger <StefanieSenger>`.
 
 
