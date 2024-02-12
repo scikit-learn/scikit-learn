@@ -33,6 +33,7 @@ from sklearn.pipeline import FeatureUnion, Pipeline, make_pipeline, make_union
 from sklearn.preprocessing import FunctionTransformer, StandardScaler
 from sklearn.svm import SVC
 from sklearn.tests.metadata_routing_common import (
+    ConsumingNoFitTransformTransformer,
     ConsumingTransformer,
     _Registry,
     check_recorded_metadata,
@@ -1891,7 +1892,10 @@ def test_featureunion_get_metadata_routing_without_fit():
 
 
 @pytest.mark.usefixtures("enable_slep006")
-def test_featureunion_metadata_routing():
+@pytest.mark.parametrize(
+    "transformer", [ConsumingTransformer, ConsumingNoFitTransformTransformer]
+)
+def test_featureunion_metadata_routing(transformer):
     """Test that metadata is routed correctly for Voting*."""
     X = np.array([[0, 1], [2, 2], [4, 6]])
     y = [1, 2, 3]
@@ -1901,13 +1905,13 @@ def test_featureunion_metadata_routing():
         [
             (
                 "sub_trans1",
-                ConsumingTransformer(registry=_Registry())
+                transformer(registry=_Registry())
                 .set_fit_request(sample_weight=True, metadata=True)
                 .set_transform_request(sample_weight=True, metadata=True),
             ),
             (
                 "sub_trans2",
-                ConsumingTransformer(registry=_Registry())
+                transformer(registry=_Registry())
                 .set_fit_request(sample_weight=True, metadata=True)
                 .set_transform_request(sample_weight=True, metadata=True),
             ),

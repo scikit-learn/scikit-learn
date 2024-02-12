@@ -306,6 +306,29 @@ class ConsumingTransformer(TransformerMixin, BaseEstimator):
         return X
 
 
+class ConsumingNoFitTransformTransformer(BaseEstimator):
+    """A metadata consuming transformer that doesn't inherit from
+    TransformerMixin, and thus doesn't implement `fit_transform`. Note that
+    TransformerMixin's `fit_transform` doesn't route metadata to `transform`."""
+
+    def __init__(self, registry=None):
+        self.registry = registry
+
+    def fit(self, X, y=None, sample_weight=None, metadata=None):
+        if self.registry is not None:
+            self.registry.append(self)
+
+        record_metadata(self, "fit", sample_weight=sample_weight, metadata=metadata)
+
+        return self
+
+    def transform(self, X, sample_weight=None, metadata=None):
+        record_metadata(
+            self, "transform", sample_weight=sample_weight, metadata=metadata
+        )
+        return X
+
+
 class ConsumingScorer(_Scorer):
     def __init__(self, registry=None):
         super().__init__(
