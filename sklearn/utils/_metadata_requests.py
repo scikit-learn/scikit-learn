@@ -115,9 +115,6 @@ COMPOSITE_METHODS = {
 
 METHODS = SIMPLE_METHODS + list(COMPOSITE_METHODS.keys())
 
-# Used as a sentinel value to indicate nothing was passed.
-_MISSING = object()
-
 
 def _routing_enabled():
     """Return whether metadata routing is enabled.
@@ -1085,8 +1082,12 @@ class MetadataRouter:
 
     def __iter__(self):
         if self._self_request:
-            yield "$self_request", RouterMappingPair(
-                mapping=MethodMapping.from_str("one-to-one"), router=self._self_request
+            yield (
+                "$self_request",
+                RouterMappingPair(
+                    mapping=MethodMapping.from_str("one-to-one"),
+                    router=self._self_request,
+                ),
             )
         for name, route_mapping in self._route_mappings.items():
             yield (name, route_mapping)
@@ -1532,11 +1533,8 @@ def process_routing(_obj, _method, /, **kwargs):
         # try doing any routing, we can simply return a structure which returns
         # an empty dict on routed_params.ANYTHING.ANY_METHOD.
         class EmptyRequest:
-            def get(self, name, default=_MISSING):
-                if default is _MISSING:
-                    return Bunch(**{method: dict() for method in METHODS})
-
-                return default
+            def get(self, name, default=None):
+                return Bunch(**{method: dict() for method in METHODS})
 
             def __getitem__(self, name):
                 return Bunch(**{method: dict() for method in METHODS})

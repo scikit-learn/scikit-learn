@@ -245,20 +245,19 @@ def test_process_routing_empty_params_get_with_default():
 
     # Behaviour should be an empty dictionary returned for each method when retrieved.
     for method in METHODS:
-        # This behaviour should be equivalent with using `get` with no default
         params_for_method = routed_params[method]
 
         # An empty dictionary for each method
         assert isinstance(params_for_method, dict)
         assert set(params_for_method.keys()) == set(METHODS)
 
+        # No default to `get` should be equivalent to the default
         default_params_for_method = routed_params.get(method)
         assert default_params_for_method == params_for_method
 
-        # However, with a default, should return that instead.
-        assert routed_params.get(method, default="default") == "default"
-        assert routed_params.get(method, default=[]) == []
-        assert routed_params.get(method, default=None) is None
+        # Default to `get` is ignored and equivalent to the default
+        default_params_for_method = routed_params.get(method, default="default")
+        assert default_params_for_method == params_for_method
 
 
 def test_simple_metadata_routing():
