@@ -28,10 +28,10 @@ def _estimator_has(attr):
     def check(self):
         if hasattr(self, "base_estimator_"):
             getattr(self.base_estimator_, attr)
-            return True
         else:
             getattr(self.base_estimator, attr)
-            return True
+
+        return True
 
     return check
 

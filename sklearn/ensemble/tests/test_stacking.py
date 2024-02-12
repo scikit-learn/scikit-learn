@@ -869,10 +869,7 @@ def test_stacking_final_estimator_attribute_error():
     Non-regression test for:
     https://github.com/scikit-learn/scikit-learn/issues/28108
     """
-    X, y = load_breast_cancer(return_X_y=True)
-    X_train, X_test, y_train, _ = train_test_split(
-        scale(X), y, stratify=y, random_state=42
-    )
+    X, y = make_classification(random_state=42)
 
     estimators = [
         ("lr", LogisticRegression()),
@@ -888,6 +885,6 @@ def test_stacking_final_estimator_attribute_error():
     outer_msg = "This 'StackingClassifier' has no attribute 'decision_function'"
     inner_msg = "'RandomForestClassifier' object has no attribute 'decision_function'"
     with pytest.raises(AttributeError, match=outer_msg) as exec_info:
-        clf.fit(X_train, y_train).decision_function(X_test)
+        clf.fit(X, y).decision_function(X)
     assert isinstance(exec_info.value.__cause__, AttributeError)
     assert inner_msg in str(exec_info.value.__cause__)
