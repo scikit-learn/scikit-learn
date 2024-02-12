@@ -1666,27 +1666,21 @@ class TfidfTransformer(
         )
         if not sp.issparse(X):
             X = sp.csr_matrix(X)
-        dtype = X.dtype if X.dtype in FLOAT_DTYPES else np.float64
+        dtype = X.dtype if X.dtype in (np.float64, np.float32) else np.float64
 
         if self.use_idf:
-            n_samples, n_features = X.shape
+            n_samples, _ = X.shape
             df = _document_frequency(X)
             df = df.astype(dtype, copy=False)
 
             # perform idf smoothing if required
-            df += int(self.smooth_idf)
+            df += float(self.smooth_idf)
             n_samples += int(self.smooth_idf)
 
             # log+1 instead of log makes sure terms with zero idf don't get
             # suppressed entirely.
-            idf = np.log(n_samples / df) + 1
-            self._idf_diag = sp.diags(
-                idf,
-                offsets=0,
-                shape=(n_features, n_features),
-                format="csr",
-                dtype=dtype,
-            )
+            # `np.log` preserves the dtype of `df` and thus `dtype`.
+            self.idf_ = np.log(n_samples / df) + 1.0
 
         return self
 
@@ -1700,58 +1694,45 @@ class TfidfTransformer(
 
         copy : bool, default=True
             Whether to copy X and operate on the copy or perform in-place
-            operations.
+            operations. `copy=False` will only be effective with CSR sparse matrix.
 
         Returns
         -------
         vectors : sparse matrix of shape (n_samples, n_features)
             Tf-idf-weighted document-term matrix.
         """
+        check_is_fitted(self)
         X = self._validate_data(
-            X, accept_sparse="csr", dtype=FLOAT_DTYPES, copy=copy, reset=False
+            X,
+            accept_sparse="csr",
+            dtype=[np.float64, np.float32],
+            copy=copy,
+            reset=False,
         )
         if not sp.issparse(X):
-            X = sp.csr_matrix(X, dtype=np.float64)
+            X = sp.csr_matrix(X, dtype=X.dtype)
 
         if self.sublinear_tf:
             np.log(X.data, X.data)
-            X.data += 1
+            X.data += 1.0
 
-        if self.use_idf:
-            # idf_ being a property, the automatic attributes detection
-            # does not work as usual and we need to specify the attribute
-            # name:
-            check_is_fitted(self, attributes=["idf_"], msg="idf vector is not fitted")
-
-            X = X @ self._idf_diag
+        if hasattr(self, "idf_"):
+            # the columns of X (CSR matrix) can be accessed with `X.indices `and
+            # multiplied with the corresponding `idf` value
+            X.data *= self.idf_[X.indices]
 
         if self.norm is not None:
             X = normalize(X, norm=self.norm, copy=False)
 
         return X
 
-    @property
-    def idf_(self):
-        """Inverse document frequency vector, only defined if `use_idf=True`.
-
-        Returns
-        -------
-        ndarray of shape (n_features,)
-        """
-        # if _idf_diag is not set, this will raise an attribute error,
-        # which means hasattr(self, "idf_") is False
-        return np.ravel(self._idf_diag.sum(axis=0))
-
-    @idf_.setter
-    def idf_(self, value):
-        value = np.asarray(value, dtype=np.float64)
-        n_features = value.shape[0]
-        self._idf_diag = sp.spdiags(
-            value, diags=0, m=n_features, n=n_features, format="csr"
-        )
-
     def _more_tags(self):
-        return {"X_types": ["2darray", "sparse"]}
+        return {
+            "X_types": ["2darray", "sparse"],
+            # FIXME: np.float16 could be preserved if _inplace_csr_row_normalize_l2
+            # accepted it.
+            "preserves_dtype": [np.float64, np.float32],
+        }
 
 
 class TfidfVectorizer(CountVectorizer):
