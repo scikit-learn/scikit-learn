@@ -1901,10 +1901,8 @@ def test_featureunion_metadata_routing():
         [
             (
                 "sub_trans1",
-                ConsumingTransformer(registry=_Registry()).set_fit_request(
-                    sample_weight=True, metadata=True
-                )
-                # question for review: why cannot I use set_fit_transform_request?
+                ConsumingTransformer(registry=_Registry())
+                .set_fit_request(sample_weight=True, metadata=True)
                 .set_transform_request(sample_weight=True, metadata=True),
             ),
             (
