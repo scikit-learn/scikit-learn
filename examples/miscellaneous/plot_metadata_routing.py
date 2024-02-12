@@ -14,13 +14,15 @@ routers and consumers. A router is an object which forwards given data and
 metadata to other objects. In most cases a router is a :term:`meta-estimator`,
 i.e. an estimator which takes another estimator as a parameter. A function such
 as :func:`sklearn.model_selection.cross_validate` which takes an estimator as a
-parameter and forwards data and metadata, is also a router. A consumer, on the
-other hand, is an object which accepts and uses a certain given metadata. For
-instance, an estimator taking into account ``sample_weight`` in its :term:`fit`
-method is a consumer of ``sample_weight``. It is possible for an object to be
-both a router and a consumer. For instance, a meta-estimator may take into
-account ``sample_weight`` in certain calculations, but it may also route it to
-the underlying estimator.
+parameter and forwards data and metadata, is also a router.
+
+A consumer, on the other hand, is an object which accepts and uses a certain
+given metadata. For instance, an estimator taking into account
+``sample_weight`` in its :term:`fit` method is a consumer of ``sample_weight``.
+
+It is possible for an object to be both a router and a consumer. For instance,
+a meta-estimator may take into account ``sample_weight`` in certain
+calculations, but it may also route it to the underlying estimator.
 
 First a few imports and some random data for the rest of the script.
 """
