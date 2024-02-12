@@ -12,6 +12,7 @@ import numpy as np
 
 from ..exceptions import DataConversionWarning
 from . import _joblib, metadata_routing
+from ._array_api import _is_numpy_namespace, get_namespace
 from ._bunch import Bunch
 from ._chunking import gen_batches, gen_even_slices
 from ._estimator_html_repr import estimator_html_repr
