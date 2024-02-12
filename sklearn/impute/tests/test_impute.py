@@ -1752,7 +1752,7 @@ def test_type_inconsistence_fill_value():
     # int input and float fill_value should raise an error
     fill_value = 1.5
     for input_type in [np.int64, np.int32]:
-        X = np.array([1, 2, 3], dtype=input_type).reshape(-1, 1)
+        X = np.array([[1, 2, 3], [2, 3, 4]], dtype=input_type)
         imputer = SimpleImputer(
             strategy="constant", fill_value=fill_value, missing_values=2
         )
@@ -1763,7 +1763,7 @@ def test_type_inconsistence_fill_value():
             ),
         ):
             imputer.fit(X)
-        X_float = np.array([1, 2, 3], dtype=np.float64).reshape(-1, 1)
+        X_float = np.array([[1, 2, 3], [2, 3, 4]], dtype=np.float64)
         imputer.fit(X_float)
         with pytest.raises(
             ValueError,
@@ -1777,14 +1777,14 @@ def test_type_inconsistence_fill_value():
     # float input and int fill_value should not raise an error
     for input_type in [np.float64, np.float32]:
         for fill_value in [1.5, 1]:
-            X = np.array([1, 2, 3], dtype=input_type).reshape(-1, 1)
+            X = np.array([[1, 2, 3], [2, 3, 4]], dtype=input_type)
             imputer = SimpleImputer(
                 strategy="constant", fill_value=fill_value, missing_values=2
             )
             imputer.fit_transform(X)
 
     # object input and any fill_value should not raise an error
-    X = np.array(["a", "b", "c"], dtype="O").reshape(-1, 1)
+    X = np.array([["a", "b", "c"], ["b", "c", "d"]], dtype="O")
     for fill_value in [1, 1.5, "a"]:
         imputer = SimpleImputer(
             strategy="constant", fill_value=fill_value, missing_values="b"
@@ -1792,7 +1792,7 @@ def test_type_inconsistence_fill_value():
         imputer.fit_transform(X)
 
     # float32 input and float64 fill_value should not raise an error
-    X = np.array([1, 2, 3], dtype=np.float32).reshape(-1, 1)
+    X = np.array([[1, 2, 3], [2, 3, 4]], dtype=np.float32)
     fill_value = np.float64(1.5)
     imputer = SimpleImputer(
         strategy="constant", fill_value=fill_value, missing_values=2

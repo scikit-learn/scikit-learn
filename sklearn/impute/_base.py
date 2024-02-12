@@ -33,6 +33,14 @@ def _check_inputs_dtype(X, missing_values):
         )
 
 
+def _check_fill_values_dtype(fill_values, X_dtype):
+    for fill_value in fill_values:
+        if not np.can_cast(type(fill_value), X_dtype, "same_kind"):
+            raise ValueError(
+                f"fill_value={fill_value} cannot be cast to the input dtype {X_dtype}"
+            )
+
+
 def _most_frequent(array, extra_value, n_repeat):
     """Compute the most frequent value in a 1d array extended with
     [extra_value] * n_repeat, where extra_value is assumed to be not part
@@ -405,11 +413,7 @@ class SimpleImputer(_BaseImputer):
             fill_value = self.fill_value
 
         if self.strategy == "constant":
-            if not np.can_cast(type(fill_value), X.dtype, "same_kind"):
-                raise ValueError(
-                    f"fill_value={fill_value} cannot be cast to the input dtype"
-                    f" {X.dtype}"
-                )
+            _check_fill_values_dtype([fill_value], X.dtype)
 
         if sp.issparse(X):
             self.statistics_ = self._sparse_fit(
@@ -552,11 +556,7 @@ class SimpleImputer(_BaseImputer):
         statistics = self.statistics_
 
         if self.strategy == "constant":
-            if not np.can_cast(statistics.dtype, X.dtype, "same_kind"):
-                raise ValueError(
-                    f"fill_value={statistics.item()} cannot be cast to the input dtype"
-                    f" {X.dtype}"
-                )
+            _check_fill_values_dtype(statistics, X.dtype)
 
         if X.shape[1] != statistics.shape[0]:
             raise ValueError(
