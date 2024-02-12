@@ -1883,6 +1883,14 @@ def test_featureunion_metadata_routing_error():
 
 
 @pytest.mark.usefixtures("enable_slep006")
+def test_featureunion_get_metadata_routing_without_fit():
+    """Test that get_metadata_routing() works regardless of the Child's
+    consumption of any metadata."""
+    featu = FeatureUnion([("sub_transformer", ConsumingTransformer())])
+    featu.get_metadata_routing()
+
+
+@pytest.mark.usefixtures("enable_slep006")
 def test_featureunion_metadata_routing():
     """Test that metadata is routed correctly for Voting*."""
     X = np.array([[0, 1], [2, 2], [4, 6]])
