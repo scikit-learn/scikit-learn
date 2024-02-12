@@ -35,9 +35,13 @@ from ..utils.metadata_routing import (
     _RoutingNotSupportedMixin,
 )
 from ..utils.metaestimators import available_if
-from ..utils.multiclass import check_classification_targets
+from ..utils.multiclass import type_of_target
 from ..utils.parallel import Parallel, delayed
-from ..utils.validation import _check_feature_names_in, check_is_fitted, column_or_1d
+from ..utils.validation import (
+    _check_feature_names_in,
+    check_is_fitted,
+    column_or_1d,
+)
 from ._base import _BaseHeterogeneousEnsemble, _fit_single_estimator
 
 
@@ -338,10 +342,21 @@ class VotingClassifier(_RoutingNotSupportedMixin, ClassifierMixin, _BaseVoting):
             Returns the instance itself.
         """
         _raise_for_unsupported_routing(self, "fit", sample_weight=sample_weight)
-        check_classification_targets(y)
-        if isinstance(y, np.ndarray) and len(y.shape) > 1 and y.shape[1] > 1:
+        y_type = type_of_target(y, input_name="y")
+        if y_type in ("unknown", "continuous"):
+            # raise a specific ValueError for non-classification tasks
+            raise ValueError(
+                f"Unknown label type: {y_type}. Maybe you are trying to fit a "
+                "classifier, which expects discrete classes on a "
+                "regression target with continuous values."
+            )
+        elif y_type not in ("binary", "multiclass"):
+            # raise a NotImplementedError for backward compatibility for non-supported
+            # classification tasks
             raise NotImplementedError(
-                "Multilabel and multi-output classification is not supported."
+                f"{self.__class__.__name__} only supports binary or multiclass "
+                "classification. Multilabel and multi-output classification are not "
+                "supported."
             )
 
         self.le_ = LabelEncoder().fit(y)
