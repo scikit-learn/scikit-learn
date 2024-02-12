@@ -14,6 +14,7 @@ from scipy import linalg
 from scipy.linalg import pinvh
 
 from ..base import RegressorMixin, _fit_context
+from ..utils import _safe_indexing
 from ..utils._param_validation import Hidden, Interval, StrOptions
 from ..utils.extmath import fast_logdet
 from ..utils.validation import _check_sample_weight
@@ -849,7 +850,8 @@ class ARDRegression(RegressorMixin, LinearModel):
         if return_std is False:
             return y_mean
         else:
-            X = X[:, self.lambda_ < self.threshold_lambda]
+            col_index = self.lambda_ < self.threshold_lambda
+            X = _safe_indexing(X, indices=col_index, axis=1)
             sigmas_squared_data = (np.dot(X, self.sigma_) * X).sum(axis=1)
             y_std = np.sqrt(sigmas_squared_data + (1.0 / self.alpha_))
             return y_mean, y_std
