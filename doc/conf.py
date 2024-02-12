@@ -712,7 +712,6 @@ def make_dropdown_anchors(app, exception):
         dropdowns = soup.find_all("details", class_="sd-dropdown")
 
         for dropdown in dropdowns:
-            breakpoint()
             # The ID uses the first line, lowercased, with spaces replaced by dashes
             summary_title = dropdown.find("summary", class_="sd-summary-title")
             anchor_id = re.sub(
