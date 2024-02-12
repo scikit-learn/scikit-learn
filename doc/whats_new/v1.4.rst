@@ -103,6 +103,18 @@ Changelog
   the same columns. Previously, it would raise a due to duplicated column names.
   :pr:`28262` by :user:`Guillaume Lemaitre <glemaitre>`.
 
+:mod:`sklearn.ensemble`
+.......................
+
+- |Fix| :class:`HistGradientBoostingClassifier` and
+  :class:`HistGradientBoostingRegressor` when fitted on `pandas` `DataFrame`
+  with extension dtypes, for example `pd.Int64Dtype`
+  :pr:`28385` by :user:`Loïc Estève <lesteve>`.
+
+- |Fix| Fixes error message raised by :class:`ensemble.VotingClassifier` when the
+  target is multilabel or multiclass-multioutput in a DataFrame format.
+  :pr:`27702` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 :mod:`sklearn.inspection`
 .........................
 
@@ -113,6 +125,13 @@ Changelog
 - |Fix|: :class:`impute.SimpleImputer` now raises an error instead of casting `fill_value` to an integer
   when input_data is an integer but `fill_value` is a float.
   :pr:`28365` by :user:`Leo Grinsztajn <LeoGrin>`.
+
+:mod:`sklearn.linear_model`
+...........................
+
+- |Fix| :class:`linear_model.ARDRegression` now handles pandas input types
+  for `predict(X, return_std=True)`.
+  :pr:`28377` by :user:`Eddie Bergman <eddiebergman>`.
 
 :mod:`sklearn.preprocessing`
 ............................
@@ -138,7 +157,8 @@ Changelog
   :class:`tree.DecisionTreeRegressor` are handling missing values properly. The internal
   criterion was not initialize when no missing values were present in the data, leading
   to potentially wrong criterion values.
-  :pr:`28295` by :user:`Guillaume Lemaitre <glemaitre>`.
+  :pr:`28295` by :user:`Guillaume Lemaitre <glemaitre>` and
+  :pr:`28327` by :user:`Adam Li <adam2392>`.
 
 :mod:`sklearn.utils`
 ....................
