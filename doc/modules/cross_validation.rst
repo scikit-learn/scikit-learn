@@ -660,10 +660,14 @@ complete partition of all the data. Unlike :class:`KFold`, :class:`GroupKFold`
 is not randomized at all, whereas :class:`KFold` is randomized when
 ``shuffle=True``.
 
+
+
 .. _stratified_group_k_fold:
 
+|details-start|
 StratifiedGroupKFold
 ^^^^^^^^^^^^^^^^^^^^
+|details-split|
 
 :class:`StratifiedGroupKFold` is a cross-validation scheme that combines both
 :class:`StratifiedKFold` and :class:`GroupKFold`. The idea is to try to
@@ -683,6 +687,8 @@ Example::
   [ 0  2  3  4  5  6  7 10 11 15 16 17] [ 1  8  9 12 13 14]
   [ 0  1  4  5  6  7  8  9 11 12 13 14] [ 2  3 10 15 16 17]
   [ 1  2  3  8  9 10 12 13 14 15 16 17] [ 0  4  5  6  7 11]
+
+|details-end|
 
 |details-start|
 Implementation notes:
