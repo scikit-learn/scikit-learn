@@ -4,50 +4,82 @@ import itertools
 
 import numpy as np
 
+from ..base import is_classifier, is_regressor
 from ..utils import Bunch, _get_column_indices, _safe_assign, _safe_indexing
 from ..utils.random import sample_without_replacement
 from ..utils.validation import _check_sample_weight, check_is_fitted
 
 
-def _calculate_pd_over_data(estimator, X, feature_indices, sample_weight=None):
-    """Calculates partial dependence over the data distribution.
+def _calculate_pd_brute_fast(estimator, X, feature_indices, grid, sample_weight=None):
+    """Fast version of _calculate_partial_dependence_brute()
 
-    It returns a 1D or 2D numpy array of the same length as X.
+    Returns np.array of size (n_grid, ) or (n_ngrid, output_dimension).
+    """
+
+    if is_regressor(estimator):
+        pred_fun = estimator.predict
+    elif is_classifier(estimator) and hasattr(estimator, "predict_proba"):
+        pred_fun = estimator.predict_proba
+    else:
+        raise ValueError("The estimator has no predict or predict_proba method.")
+
+    # X is stacked n_grid times, and grid columns are replaced by replicated grid
+    n = X.shape[0]
+    n_grid = grid.shape[0]
+    X_eval = X.copy()
+
+    X_stacked = _safe_indexing(X_eval, np.tile(np.arange(n), n_grid), axis=0)
+    grid_stacked = _safe_indexing(grid, np.repeat(np.arange(n_grid), n), axis=0)
+    _safe_assign(X_stacked, values=grid_stacked, column_indexer=feature_indices)
+
+    # Predict on stacked data. Pick positive class probs for binary classification
+    preds = pred_fun(X_stacked)
+    if is_classifier(estimator) and preds.shape[1] == 2:
+        preds = preds[:, 1]
+
+    # Partial dependences are averages per grid block
+    pd_values = [
+        np.average(Z, axis=0, weights=sample_weight) for Z in np.split(preds, n_grid)
+    ]
+
+    return np.array(pd_values)
+
+
+def _calculate_pd_over_data(estimator, X, feature_indices, sample_weight=None):
+    """Calculates centered partial dependence over the data distribution.
+
+    It returns a numpy array of size (n, ) or (n, output_dimension).
     """
 
     # Select grid columns and remove duplicates (will compensate below)
     grid = _safe_indexing(X, feature_indices, axis=1)
 
-    # Unfortunately, the next line does not work in all cases, especially not in
-    # the important case of discrete pandas Dataframes.
+    # np.unique() fails for mixed type and sparse objects
     try:
-        compressed = True
-        grid, ix_reconstruct = np.unique(grid, return_inverse=True, axis=0)
-    except TypeError:  # TODO Better solution
-        compressed = False
-    n_grid = grid.shape[0]
+        ax = 0 if grid.shape[1] > 1 else None  # np.unique works better in 1 dim
+        _, ix, ix_reconstruct = np.unique(
+            grid, return_index=True, return_inverse=True, axis=ax
+        )
+        grid = _safe_indexing(grid, ix, axis=0)
+        compressed_grid = True
+    except (TypeError, np.AxisError):
+        compressed_grid = False
 
-    # X is stacked n_grid times, and grid columns are replaced by replicated grid
-    n = X.shape[0]
-    X_stacked = _safe_indexing(X, np.tile(np.arange(n), n_grid), axis=0)
-    _safe_assign(
-        X_stacked, values=np.repeat(grid, n, axis=0), column_indexer=feature_indices
+    pd_values = _calculate_pd_brute_fast(
+        estimator,
+        X=X,
+        feature_indices=feature_indices,
+        grid=grid,
+        sample_weight=sample_weight,
     )
 
-    # Predict on stacked data
-    if hasattr(estimator, "predict_proba"):
-        preds = estimator.predict_proba(X_stacked)
-    else:
-        preds = estimator.predict(X_stacked)
+    if compressed_grid:
+        pd_values = pd_values[ix_reconstruct]
 
-    # Predictions are averaged by grid value, mapped to original row order, and centered
-    averaged_predictions = np.array(
-        [np.average(Z, axis=0, weights=sample_weight) for Z in np.split(preds, n_grid)]
-    )
-    if compressed:
-        averaged_predictions = averaged_predictions[ix_reconstruct]
-    column_means = np.average(averaged_predictions, axis=0, weights=sample_weight)
-    return averaged_predictions - column_means
+    # H-statistics are based on *centered* partial dependences
+    column_means = np.average(pd_values, axis=0, weights=sample_weight)
+
+    return pd_values - column_means
 
 
 def h_statistic(
@@ -180,7 +212,6 @@ def h_statistic(
     else:
         X = X.copy()
 
-    # TODO: Improve logic, e.g., use column names if there are some
     if features is None:
         features = feature_indices = np.arange(X.shape[1])
     else:
@@ -197,18 +228,19 @@ def h_statistic(
             )
         )
 
-    num, denom = [], []
+    num = []
+    denom = []
 
-    for i, j in itertools.combinations(range(len(feature_indices)), 2):
+    for j, k in itertools.combinations(range(len(feature_indices)), 2):
         pd_bivariate = _calculate_pd_over_data(
             estimator,
             X=X,
-            feature_indices=feature_indices[[i, j]],
+            feature_indices=feature_indices[[j, k]],
             sample_weight=sample_weight,
         )
         num.append(
             np.average(
-                (pd_bivariate - pd_univariate[i] - pd_univariate[j]) ** 2,
+                (pd_bivariate - pd_univariate[j] - pd_univariate[k]) ** 2,
                 axis=0,
                 weights=sample_weight,
             )
@@ -218,10 +250,11 @@ def h_statistic(
     num = np.array(num)
     num[np.abs(num) < eps] = 0  # Round small numerators to 0
     denom = np.array(denom)
+    h2_stat = np.divide(num, denom, out=np.zeros_like(num), where=denom > 0)
 
     return Bunch(
         feature_pair=list(itertools.combinations(features, 2)),
+        h_squared_pairwise=h2_stat,
         numerator_pairwise=num,
         denominator_pairwise=denom,
-        h_squared_pairwise=num / denom,
     )
