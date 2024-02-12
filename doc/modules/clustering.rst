@@ -241,13 +241,13 @@ K-means can be used for vector quantization. This is achieved using the
 performing vector quantization on an image refer to
 :ref:`sphx_glr_auto_examples_cluster_plot_color_quantization.py`.
 
-.. topic:: Examples:
+.. rubric:: Examples
 
- * :ref:`sphx_glr_auto_examples_cluster_plot_cluster_iris.py`: Example usage of
-   :class:`KMeans` using the iris dataset
+* :ref:`sphx_glr_auto_examples_cluster_plot_cluster_iris.py`: Example usage of
+  :class:`KMeans` using the iris dataset
 
- * :ref:`sphx_glr_auto_examples_text_plot_document_clustering.py`: Document clustering
-   using :class:`KMeans` and :class:`MiniBatchKMeans` based on sparse data
+* :ref:`sphx_glr_auto_examples_text_plot_document_clustering.py`: Document clustering
+  using :class:`KMeans` and :class:`MiniBatchKMeans` based on sparse data
 
 Low-level parallelism
 ---------------------
@@ -257,19 +257,19 @@ chunks of data (256 samples) are processed in parallel, which in addition
 yields a low memory footprint. For more details on how to control the number of
 threads, please refer to our :ref:`parallelism` notes.
 
-.. topic:: Examples:
+.. rubric:: Examples
 
- * :ref:`sphx_glr_auto_examples_cluster_plot_kmeans_assumptions.py`: Demonstrating when
-   k-means performs intuitively and when it does not
- * :ref:`sphx_glr_auto_examples_cluster_plot_kmeans_digits.py`: Clustering handwritten digits
+* :ref:`sphx_glr_auto_examples_cluster_plot_kmeans_assumptions.py`: Demonstrating when
+  k-means performs intuitively and when it does not
+* :ref:`sphx_glr_auto_examples_cluster_plot_kmeans_digits.py`: Clustering handwritten digits
 
-.. topic:: References:
+.. rubric:: References
 
- * `"k-means++: The advantages of careful seeding"
-   <http://ilpubs.stanford.edu:8090/778/1/2006-13.pdf>`_
-   Arthur, David, and Sergei Vassilvitskii,
-   *Proceedings of the eighteenth annual ACM-SIAM symposium on Discrete
-   algorithms*, Society for Industrial and Applied Mathematics (2007)
+* `"k-means++: The advantages of careful seeding"
+  <http://ilpubs.stanford.edu:8090/778/1/2006-13.pdf>`_
+  Arthur, David, and Sergei Vassilvitskii,
+  *Proceedings of the eighteenth annual ACM-SIAM symposium on Discrete
+  algorithms*, Society for Industrial and Applied Mathematics (2007)
 
 .. _mini_batch_kmeans:
 
@@ -305,23 +305,23 @@ small, as shown in the example and cited reference.
    :scale: 100
 
 
-.. topic:: Examples:
+.. rubric:: Examples
 
- * :ref:`sphx_glr_auto_examples_cluster_plot_mini_batch_kmeans.py`: Comparison of
-   :class:`KMeans` and :class:`MiniBatchKMeans`
+* :ref:`sphx_glr_auto_examples_cluster_plot_mini_batch_kmeans.py`: Comparison of
+  :class:`KMeans` and :class:`MiniBatchKMeans`
 
- * :ref:`sphx_glr_auto_examples_text_plot_document_clustering.py`: Document clustering
-   using :class:`KMeans` and :class:`MiniBatchKMeans` based on sparse data
+* :ref:`sphx_glr_auto_examples_text_plot_document_clustering.py`: Document clustering
+  using :class:`KMeans` and :class:`MiniBatchKMeans` based on sparse data
 
- * :ref:`sphx_glr_auto_examples_cluster_plot_dict_face_patches.py`
+* :ref:`sphx_glr_auto_examples_cluster_plot_dict_face_patches.py`
 
 
-.. topic:: References:
+.. rubric:: References
 
- * `"Web Scale K-Means clustering"
-   <https://www.eecs.tufts.edu/~dsculley/papers/fastkmeans.pdf>`_
-   D. Sculley, *Proceedings of the 19th international conference on World
-   wide web* (2010)
+* `"Web Scale K-Means clustering"
+  <https://www.eecs.tufts.edu/~dsculley/papers/fastkmeans.pdf>`_
+  D. Sculley, *Proceedings of the 19th international conference on World
+  wide web* (2010)
 
 .. _affinity_propagation:
 
@@ -358,13 +358,13 @@ convergence. Further, the memory complexity is of the order
 sparse similarity matrix is used. This makes Affinity Propagation most
 appropriate for small to medium sized datasets.
 
-.. topic:: Examples:
+.. rubric:: Examples
 
- * :ref:`sphx_glr_auto_examples_cluster_plot_affinity_propagation.py`: Affinity
-   Propagation on a synthetic 2D datasets with 3 classes.
+* :ref:`sphx_glr_auto_examples_cluster_plot_affinity_propagation.py`: Affinity
+  Propagation on a synthetic 2D datasets with 3 classes.
 
- * :ref:`sphx_glr_auto_examples_applications_plot_stock_market.py` Affinity Propagation on
-   Financial time series to find groups of companies
+* :ref:`sphx_glr_auto_examples_applications_plot_stock_market.py` Affinity Propagation on
+  Financial time series to find groups of companies
 
 
 **Algorithm description:**
@@ -466,16 +466,16 @@ given sample.
    :scale: 50
 
 
-.. topic:: Examples:
+.. rubric:: Examples
 
- * :ref:`sphx_glr_auto_examples_cluster_plot_mean_shift.py`: Mean Shift clustering
-   on a synthetic 2D datasets with 3 classes.
+* :ref:`sphx_glr_auto_examples_cluster_plot_mean_shift.py`: Mean Shift clustering
+  on a synthetic 2D datasets with 3 classes.
 
-.. topic:: References:
+.. rubric:: References
 
- * :doi:`"Mean shift: A robust approach toward feature space analysis"
-   <10.1109/34.1000236>`
-   D. Comaniciu and P. Meer, *IEEE Transactions on Pattern Analysis and Machine Intelligence* (2002)
+* :doi:`"Mean shift: A robust approach toward feature space analysis"
+  <10.1109/34.1000236>`
+  D. Comaniciu and P. Meer, *IEEE Transactions on Pattern Analysis and Machine Intelligence* (2002)
 
 
 .. _spectral_clustering:
@@ -526,13 +526,13 @@ computed using a function of a gradient of the image.
 
     See the examples for such an application.
 
-.. topic:: Examples:
+.. rubric:: Examples
 
- * :ref:`sphx_glr_auto_examples_cluster_plot_segmentation_toy.py`: Segmenting objects
-   from a noisy background using spectral clustering.
+* :ref:`sphx_glr_auto_examples_cluster_plot_segmentation_toy.py`: Segmenting objects
+  from a noisy background using spectral clustering.
 
- * :ref:`sphx_glr_auto_examples_cluster_plot_coin_segmentation.py`: Spectral clustering
-   to split the image of coins in regions.
+* :ref:`sphx_glr_auto_examples_cluster_plot_coin_segmentation.py`: Spectral clustering
+  to split the image of coins in regions.
 
 .. |coin_kmeans| image:: ../auto_examples/cluster/images/sphx_glr_plot_coin_segmentation_001.png
     :target: ../auto_examples/cluster/plot_coin_segmentation.html
@@ -566,14 +566,14 @@ below.
 |coin_kmeans|                          |coin_discretize|                  |coin_cluster_qr|
 ================================  ================================  ================================
 
-.. topic:: References:
+.. rubric:: References
 
- * `"Multiclass spectral clustering"
-   <https://people.eecs.berkeley.edu/~jordan/courses/281B-spring04/readings/yu-shi.pdf>`_
-   Stella X. Yu, Jianbo Shi, 2003
+* `"Multiclass spectral clustering"
+  <https://people.eecs.berkeley.edu/~jordan/courses/281B-spring04/readings/yu-shi.pdf>`_
+  Stella X. Yu, Jianbo Shi, 2003
 
- * :doi:`"Simple, direct, and efficient multi-way spectral clustering"<10.1093/imaiai/iay008>`
-   Anil Damle, Victor Minden, Lexing Ying, 2019
+* :doi:`"Simple, direct, and efficient multi-way spectral clustering"<10.1093/imaiai/iay008>`
+  Anil Damle, Victor Minden, Lexing Ying, 2019
 
 .. _spectral_clustering_graph:
 
@@ -589,28 +589,28 @@ graph, and SpectralClustering is initialized with `affinity='precomputed'`::
     ...                         assign_labels='discretize')
     >>> sc.fit_predict(adjacency_matrix)  # doctest: +SKIP
 
-.. topic:: References:
+.. rubric:: References
 
- * :doi:`"A Tutorial on Spectral Clustering"
-   <10.1007/s11222-007-9033-z>`
-   Ulrike von Luxburg, 2007
+* :doi:`"A Tutorial on Spectral Clustering"
+  <10.1007/s11222-007-9033-z>`
+  Ulrike von Luxburg, 2007
 
- * :doi:`"Normalized cuts and image segmentation"
-   <10.1109/34.868688>`
-   Jianbo Shi, Jitendra Malik, 2000
+* :doi:`"Normalized cuts and image segmentation"
+  <10.1109/34.868688>`
+  Jianbo Shi, Jitendra Malik, 2000
 
- * `"A Random Walks View of Spectral Segmentation"
-   <https://citeseerx.ist.psu.edu/doc_view/pid/84a86a69315e994cfd1e0c7debb86d62d7bd1f44>`_
-   Marina Meila, Jianbo Shi, 2001
+* `"A Random Walks View of Spectral Segmentation"
+  <https://citeseerx.ist.psu.edu/doc_view/pid/84a86a69315e994cfd1e0c7debb86d62d7bd1f44>`_
+  Marina Meila, Jianbo Shi, 2001
 
- * `"On Spectral Clustering: Analysis and an algorithm"
-   <https://citeseerx.ist.psu.edu/doc_view/pid/796c5d6336fc52aa84db575fb821c78918b65f58>`_
-   Andrew Y. Ng, Michael I. Jordan, Yair Weiss, 2001
+* `"On Spectral Clustering: Analysis and an algorithm"
+  <https://citeseerx.ist.psu.edu/doc_view/pid/796c5d6336fc52aa84db575fb821c78918b65f58>`_
+  Andrew Y. Ng, Michael I. Jordan, Yair Weiss, 2001
 
- * :arxiv:`"Preconditioned Spectral Clustering for Stochastic
-   Block Partition Streaming Graph Challenge"
-   <1708.07481>`
-   David Zhuzhunashvili, Andrew Knyazev
+* :arxiv:`"Preconditioned Spectral Clustering for Stochastic
+  Block Partition Streaming Graph Challenge"
+  <1708.07481>`
+  David Zhuzhunashvili, Andrew Knyazev
 
 .. _hierarchical_clustering:
 
@@ -671,10 +671,10 @@ while not robust to noisy data, can be computed very efficiently and can
 therefore be useful to provide hierarchical clustering of larger datasets.
 Single linkage can also perform well on non-globular data.
 
-.. topic:: Examples:
+.. rubric:: Examples
 
- * :ref:`sphx_glr_auto_examples_cluster_plot_digits_linkage.py`: exploration of the
-   different linkage strategies in a real dataset.
+* :ref:`sphx_glr_auto_examples_cluster_plot_digits_linkage.py`: exploration of the
+  different linkage strategies in a real dataset.
 
 Visualization of cluster hierarchy
 ----------------------------------
@@ -728,20 +728,20 @@ using :func:`sklearn.feature_extraction.image.grid_to_graph` to
 enable only merging of neighboring pixels on an image, as in the
 :ref:`coin <sphx_glr_auto_examples_cluster_plot_coin_ward_segmentation.py>` example.
 
-.. topic:: Examples:
+.. rubric:: Examples
 
- * :ref:`sphx_glr_auto_examples_cluster_plot_coin_ward_segmentation.py`: Ward clustering
-   to split the image of coins in regions.
+* :ref:`sphx_glr_auto_examples_cluster_plot_coin_ward_segmentation.py`: Ward clustering
+  to split the image of coins in regions.
 
- * :ref:`sphx_glr_auto_examples_cluster_plot_ward_structured_vs_unstructured.py`: Example of
-   Ward algorithm on a swiss-roll, comparison of structured approaches
-   versus unstructured approaches.
+* :ref:`sphx_glr_auto_examples_cluster_plot_ward_structured_vs_unstructured.py`: Example of
+  Ward algorithm on a swiss-roll, comparison of structured approaches
+  versus unstructured approaches.
 
- * :ref:`sphx_glr_auto_examples_cluster_plot_feature_agglomeration_vs_univariate_selection.py`:
-   Example of dimensionality reduction with feature agglomeration based on
-   Ward hierarchical clustering.
+* :ref:`sphx_glr_auto_examples_cluster_plot_feature_agglomeration_vs_univariate_selection.py`:
+  Example of dimensionality reduction with feature agglomeration based on
+  Ward hierarchical clustering.
 
- * :ref:`sphx_glr_auto_examples_cluster_plot_agglomerative_clustering.py`
+* :ref:`sphx_glr_auto_examples_cluster_plot_agglomerative_clustering.py`
 
 .. warning:: **Connectivity constraints with single, average and complete linkage**
 
@@ -802,9 +802,9 @@ each class.
     :target: ../auto_examples/cluster/plot_agglomerative_clustering_metrics.html
     :scale: 32
 
-.. topic:: Examples:
+.. rubric:: Examples
 
- * :ref:`sphx_glr_auto_examples_cluster_plot_agglomerative_clustering_metrics.py`
+* :ref:`sphx_glr_auto_examples_cluster_plot_agglomerative_clustering_metrics.py`
 
 Bisecting K-Means
 -----------------
@@ -847,24 +847,24 @@ Difference between Bisecting K-Means and regular K-Means can be seen on example
 While the regular K-Means algorithm tends to create non-related clusters,
 clusters from Bisecting K-Means are well ordered and create quite a visible hierarchy.
 
-.. topic:: References:
+.. rubric:: References
 
- * `"A Comparison of Document Clustering Techniques"
-   <http://www.philippe-fournier-viger.com/spmf/bisectingkmeans.pdf>`_
-   Michael Steinbach, George Karypis and Vipin Kumar,
-   Department of Computer Science and Egineering, University of Minnesota
-   (June 2000)
- * `"Performance Analysis of K-Means and Bisecting K-Means Algorithms in Weblog Data"
-   <https://ijeter.everscience.org/Manuscripts/Volume-4/Issue-8/Vol-4-issue-8-M-23.pdf>`_
-   K.Abirami and Dr.P.Mayilvahanan,
-   International Journal of Emerging Technologies in Engineering Research (IJETER)
-   Volume 4, Issue 8, (August 2016)
- * `"Bisecting K-means Algorithm Based on K-valued Self-determining
-   and Clustering Center Optimization"
-   <http://www.jcomputers.us/vol13/jcp1306-01.pdf>`_
-   Jian Di, Xinyue Gou
-   School of Control and Computer Engineering,North China Electric Power University,
-   Baoding, Hebei, China (August 2017)
+* `"A Comparison of Document Clustering Techniques"
+  <http://www.philippe-fournier-viger.com/spmf/bisectingkmeans.pdf>`_
+  Michael Steinbach, George Karypis and Vipin Kumar,
+  Department of Computer Science and Egineering, University of Minnesota
+  (June 2000)
+* `"Performance Analysis of K-Means and Bisecting K-Means Algorithms in Weblog Data"
+  <https://ijeter.everscience.org/Manuscripts/Volume-4/Issue-8/Vol-4-issue-8-M-23.pdf>`_
+  K.Abirami and Dr.P.Mayilvahanan,
+  International Journal of Emerging Technologies in Engineering Research (IJETER)
+  Volume 4, Issue 8, (August 2016)
+* `"Bisecting K-means Algorithm Based on K-valued Self-determining
+  and Clustering Center Optimization"
+  <http://www.jcomputers.us/vol13/jcp1306-01.pdf>`_
+  Jian Di, Xinyue Gou
+  School of Control and Computer Engineering,North China Electric Power University,
+  Baoding, Hebei, China (August 2017)
 
 .. _dbscan:
 
@@ -923,9 +923,9 @@ by black points below.
 
 .. centered:: |dbscan_results|
 
-.. topic:: Examples:
+.. rubric:: Examples
 
-    * :ref:`sphx_glr_auto_examples_cluster_plot_dbscan.py`
+* :ref:`sphx_glr_auto_examples_cluster_plot_dbscan.py`
 
 .. topic:: Implementation
 
@@ -971,18 +971,18 @@ by black points below.
       relatively small number of representatives for a large number of points.
       You can then provide a ``sample_weight`` when fitting DBSCAN.
 
-.. topic:: References:
+.. rubric:: References
 
- * `"A Density-Based Algorithm for Discovering Clusters in Large Spatial Databases
-   with Noise" <https://www.aaai.org/Papers/KDD/1996/KDD96-037.pdf>`_
-   Ester, M., H. P. Kriegel, J. Sander, and X. Xu,
-   In Proceedings of the 2nd International Conference on Knowledge Discovery
-   and Data Mining, Portland, OR, AAAI Press, pp. 226–231. 1996
+* `"A Density-Based Algorithm for Discovering Clusters in Large Spatial Databases
+  with Noise" <https://www.aaai.org/Papers/KDD/1996/KDD96-037.pdf>`_
+  Ester, M., H. P. Kriegel, J. Sander, and X. Xu,
+  In Proceedings of the 2nd International Conference on Knowledge Discovery
+  and Data Mining, Portland, OR, AAAI Press, pp. 226–231. 1996
 
- * :doi:`"DBSCAN revisited, revisited: why and how you should (still) use DBSCAN."
-   <10.1145/3068335>`
-   Schubert, E., Sander, J., Ester, M., Kriegel, H. P., & Xu, X. (2017).
-   In ACM Transactions on Database Systems (TODS), 42(3), 19.
+* :doi:`"DBSCAN revisited, revisited: why and how you should (still) use DBSCAN."
+  <10.1145/3068335>`
+  Schubert, E., Sander, J., Ester, M., Kriegel, H. P., & Xu, X. (2017).
+  In ACM Transactions on Database Systems (TODS), 42(3), 19.
 
 .. _hdbscan:
 
@@ -1076,19 +1076,19 @@ than `minimum_cluster_size` many samples are considered noise. In practice, one
 can set `minimum_cluster_size = min_samples` to couple the parameters and
 simplify the hyperparameter space.
 
-.. topic:: References:
+.. rubric:: References
 
- .. [CM2013] Campello, R.J.G.B., Moulavi, D., Sander, J. (2013). Density-Based Clustering
-   Based on Hierarchical Density Estimates. In: Pei, J., Tseng, V.S., Cao, L.,
-   Motoda, H., Xu, G. (eds) Advances in Knowledge Discovery and Data Mining.
-   PAKDD 2013. Lecture Notes in Computer Science(), vol 7819. Springer, Berlin,
-   Heidelberg.
-   :doi:`Density-Based Clustering Based on Hierarchical Density Estimates <10.1007/978-3-642-37456-2_14>`
+.. [CM2013] Campello, R.J.G.B., Moulavi, D., Sander, J. (2013). Density-Based Clustering
+  Based on Hierarchical Density Estimates. In: Pei, J., Tseng, V.S., Cao, L.,
+  Motoda, H., Xu, G. (eds) Advances in Knowledge Discovery and Data Mining.
+  PAKDD 2013. Lecture Notes in Computer Science(), vol 7819. Springer, Berlin,
+  Heidelberg.
+  :doi:`Density-Based Clustering Based on Hierarchical Density Estimates <10.1007/978-3-642-37456-2_14>`
 
- .. [LJ2017] L. McInnes and J. Healy, (2017). Accelerated Hierarchical Density Based
-   Clustering. In: IEEE International Conference on Data Mining Workshops (ICDMW),
-   2017, pp. 33-42.
-   :doi:`Accelerated Hierarchical Density Based Clustering <10.1109/ICDMW.2017.12>`
+.. [LJ2017] L. McInnes and J. Healy, (2017). Accelerated Hierarchical Density Based
+  Clustering. In: IEEE International Conference on Data Mining Workshops (ICDMW),
+  2017, pp. 33-42.
+  :doi:`Accelerated Hierarchical Density Based Clustering <10.1109/ICDMW.2017.12>`
 
 .. _optics:
 
@@ -1134,9 +1134,9 @@ the linear segment clusters of the reachability plot. Note that the blue and
 red clusters are adjacent in the reachability plot, and can be hierarchically
 represented as children of a larger parent cluster.
 
-.. topic:: Examples:
+.. rubric:: Examples
 
-     * :ref:`sphx_glr_auto_examples_cluster_plot_optics.py`
+* :ref:`sphx_glr_auto_examples_cluster_plot_optics.py`
 
 
 .. topic:: Comparison with DBSCAN
@@ -1170,11 +1170,11 @@ represented as children of a larger parent cluster.
     will likely need to be used to give a solution in a reasonable amount of
     wall time.
 
-.. topic:: References:
+.. rubric:: References
 
- *  "OPTICS: ordering points to identify the clustering structure."
-    Ankerst, Mihael, Markus M. Breunig, Hans-Peter Kriegel, and Jörg Sander.
-    In ACM Sigmod Record, vol. 28, no. 2, pp. 49-60. ACM, 1999.
+* "OPTICS: ordering points to identify the clustering structure."
+  Ankerst, Mihael, Markus M. Breunig, Hans-Peter Kriegel, and Jörg Sander.
+  In ACM Sigmod Record, vol. 28, no. 2, pp. 49-60. ACM, 1999.
 
 .. _birch:
 
@@ -1255,15 +1255,15 @@ the user is advised
 .. image:: ../auto_examples/cluster/images/sphx_glr_plot_birch_vs_minibatchkmeans_001.png
     :target: ../auto_examples/cluster/plot_birch_vs_minibatchkmeans.html
 
-.. topic:: References:
+.. rubric:: References
 
- * Tian Zhang, Raghu Ramakrishnan, Maron Livny
-   BIRCH: An efficient data clustering method for large databases.
-   https://www.cs.sfu.ca/CourseCentral/459/han/papers/zhang96.pdf
+* Tian Zhang, Raghu Ramakrishnan, Maron Livny
+  BIRCH: An efficient data clustering method for large databases.
+  https://www.cs.sfu.ca/CourseCentral/459/han/papers/zhang96.pdf
 
- * Roberto Perdisci
-   JBirch - Java implementation of BIRCH clustering algorithm
-   https://code.google.com/archive/p/jbirch
+* Roberto Perdisci
+  JBirch - Java implementation of BIRCH clustering algorithm
+  https://code.google.com/archive/p/jbirch
 
 
 .. _clustering_evaluation:
@@ -1392,11 +1392,11 @@ Drawbacks
   resulting in a high proportion of pair labels that agree, which
   leads subsequently to a high score.
 
-.. topic:: Examples:
+.. rubric:: Examples
 
- * :ref:`sphx_glr_auto_examples_cluster_plot_adjusted_for_chance_measures.py`:
-   Analysis of the impact of the dataset size on the value of
-   clustering measures for random assignments.
+* :ref:`sphx_glr_auto_examples_cluster_plot_adjusted_for_chance_measures.py`:
+  Analysis of the impact of the dataset size on the value of
+  clustering measures for random assignments.
 
 
 Mathematical formulation
@@ -1429,21 +1429,21 @@ random labelings by defining the adjusted Rand index as follows:
 
 .. math:: \text{ARI} = \frac{\text{RI} - E[\text{RI}]}{\max(\text{RI}) - E[\text{RI}]}
 
-.. topic:: References
+.. rubric:: References
 
- * `Comparing Partitions
-   <https://link.springer.com/article/10.1007%2FBF01908075>`_
-   L. Hubert and P. Arabie, Journal of Classification 1985
+* `Comparing Partitions
+  <https://link.springer.com/article/10.1007%2FBF01908075>`_
+  L. Hubert and P. Arabie, Journal of Classification 1985
 
- * `Properties of the Hubert-Arabie adjusted Rand index
-   <https://psycnet.apa.org/record/2004-17801-007>`_
-   D. Steinley, Psychological Methods 2004
+* `Properties of the Hubert-Arabie adjusted Rand index
+  <https://psycnet.apa.org/record/2004-17801-007>`_
+  D. Steinley, Psychological Methods 2004
 
- * `Wikipedia entry for the Rand index
-   <https://en.wikipedia.org/wiki/Rand_index>`_
+* `Wikipedia entry for the Rand index
+  <https://en.wikipedia.org/wiki/Rand_index>`_
 
- * `Wikipedia entry for the adjusted Rand index
-   <https://en.wikipedia.org/wiki/Rand_index#Adjusted_Rand_index>`_
+* `Wikipedia entry for the adjusted Rand index
+  <https://en.wikipedia.org/wiki/Rand_index#Adjusted_Rand_index>`_
 
 
 .. _mutual_info_score:
@@ -1530,12 +1530,11 @@ Drawbacks
 - NMI and MI are not adjusted against chance.
 
 
-.. topic:: Examples:
+.. rubric:: Examples
 
- * :ref:`sphx_glr_auto_examples_cluster_plot_adjusted_for_chance_measures.py`: Analysis of
-   the impact of the dataset size on the value of clustering measures
-   for random assignments. This example also includes the Adjusted Rand
-   Index.
+* :ref:`sphx_glr_auto_examples_cluster_plot_adjusted_for_chance_measures.py`: Analysis
+  of the impact of the dataset size on the value of clustering measures for random
+  assignments. This example also includes the Adjusted Rand Index.
 
 
 Mathematical formulation
@@ -1600,34 +1599,33 @@ Vinh et al. (2010) named variants of NMI and AMI by their averaging method [VEB2
 'sqrt' and 'sum' averages are the geometric and arithmetic means; we use these
 more broadly common names.
 
-.. topic:: References
+.. rubric:: References
 
- * Strehl, Alexander, and Joydeep Ghosh (2002). "Cluster ensembles – a
-   knowledge reuse framework for combining multiple partitions". Journal of
-   Machine Learning Research 3: 583–617.
-   `doi:10.1162/153244303321897735 <http://strehl.com/download/strehl-jmlr02.pdf>`_.
+* Strehl, Alexander, and Joydeep Ghosh (2002). "Cluster ensembles - a
+  knowledge reuse framework for combining multiple partitions". Journal of
+  Machine Learning Research 3: 583-617.
+  `doi:10.1162/153244303321897735 <http://strehl.com/download/strehl-jmlr02.pdf>`_.
 
- * `Wikipedia entry for the (normalized) Mutual Information
-   <https://en.wikipedia.org/wiki/Mutual_Information>`_
+* `Wikipedia entry for the (normalized) Mutual Information
+  <https://en.wikipedia.org/wiki/Mutual_Information>`_
 
- * `Wikipedia entry for the Adjusted Mutual Information
-   <https://en.wikipedia.org/wiki/Adjusted_Mutual_Information>`_
+* `Wikipedia entry for the Adjusted Mutual Information
+  <https://en.wikipedia.org/wiki/Adjusted_Mutual_Information>`_
 
- .. [VEB2009] Vinh, Epps, and Bailey, (2009). "Information theoretic measures
-   for clusterings comparison". Proceedings of the 26th Annual International
-   Conference on Machine Learning - ICML '09.
-   `doi:10.1145/1553374.1553511 <https://dl.acm.org/citation.cfm?doid=1553374.1553511>`_.
-   ISBN 9781605585161.
+.. [VEB2009] Vinh, Epps, and Bailey, (2009). "Information theoretic measures
+  for clusterings comparison". Proceedings of the 26th Annual International
+  Conference on Machine Learning - ICML '09.
+  `doi:10.1145/1553374.1553511 <https://dl.acm.org/citation.cfm?doid=1553374.1553511>`_.
+  ISBN 9781605585161.
 
- .. [VEB2010] Vinh, Epps, and Bailey, (2010). "Information Theoretic Measures for
-   Clusterings Comparison: Variants, Properties, Normalization and
-   Correction for Chance". JMLR
-   <https://jmlr.csail.mit.edu/papers/volume11/vinh10a/vinh10a.pdf>
+.. [VEB2010] Vinh, Epps, and Bailey, (2010). "Information Theoretic Measures for
+  Clusterings Comparison: Variants, Properties, Normalization and
+  Correction for Chance". JMLR
+  <https://jmlr.csail.mit.edu/papers/volume11/vinh10a/vinh10a.pdf>
 
- .. [YAT2016] Yang, Algesheimer, and Tessone, (2016). "A comparative analysis of
-   community
-   detection algorithms on artificial networks". Scientific Reports 6: 30750.
-   `doi:10.1038/srep30750 <https://www.nature.com/articles/srep30750>`_.
+.. [YAT2016] Yang, Algesheimer, and Tessone, (2016). "A comparative analysis of
+  community detection algorithms on artificial networks". Scientific Reports 6: 30750.
+  `doi:10.1038/srep30750 <https://www.nature.com/articles/srep30750>`_.
 
 
 
@@ -1751,11 +1749,11 @@ Drawbacks
   human annotators (as in the supervised learning setting).
 
 
-.. topic:: Examples:
+.. rubric:: Examples
 
- * :ref:`sphx_glr_auto_examples_cluster_plot_adjusted_for_chance_measures.py`: Analysis of
-   the impact of the dataset size on the value of clustering measures
-   for random assignments.
+* :ref:`sphx_glr_auto_examples_cluster_plot_adjusted_for_chance_measures.py`: Analysis of
+  the impact of the dataset size on the value of clustering measures
+  for random assignments.
 
 
 Mathematical formulation
@@ -1790,15 +1788,15 @@ mean of homogeneity and completeness**:
 
 .. math:: v = 2 \cdot \frac{h \cdot c}{h + c}
 
-.. topic:: References
+.. rubric:: References
 
- * `V-Measure: A conditional entropy-based external cluster evaluation
-   measure <https://aclweb.org/anthology/D/D07/D07-1043.pdf>`_
-   Andrew Rosenberg and Julia Hirschberg, 2007
+* `V-Measure: A conditional entropy-based external cluster evaluation
+  measure <https://aclweb.org/anthology/D/D07/D07-1043.pdf>`_
+  Andrew Rosenberg and Julia Hirschberg, 2007
 
- .. [B2011] `Identification and Characterization of Events in Social Media
-   <http://www.cs.columbia.edu/~hila/hila-thesis-distributed.pdf>`_, Hila
-   Becker, PhD Thesis.
+.. [B2011] `Identification and Characterization of Events in Social Media
+  <http://www.cs.columbia.edu/~hila/hila-thesis-distributed.pdf>`_, Hila
+  Becker, PhD Thesis.
 
 .. _fowlkes_mallows_scores:
 
@@ -1878,14 +1876,14 @@ Drawbacks
   requires manual assignment by human annotators (as in the supervised learning
   setting).
 
-.. topic:: References
+.. rubric:: References
 
-  * E. B. Fowkles and C. L. Mallows, 1983. "A method for comparing two
-    hierarchical clusterings". Journal of the American Statistical Association.
-    https://www.tandfonline.com/doi/abs/10.1080/01621459.1983.10478008
+* E. B. Fowkles and C. L. Mallows, 1983. "A method for comparing two
+  hierarchical clusterings". Journal of the American Statistical Association.
+  https://www.tandfonline.com/doi/abs/10.1080/01621459.1983.10478008
 
-  * `Wikipedia entry for the Fowlkes-Mallows Index
-    <https://en.wikipedia.org/wiki/Fowlkes-Mallows_index>`_
+* `Wikipedia entry for the Fowlkes-Mallows Index
+  <https://en.wikipedia.org/wiki/Fowlkes-Mallows_index>`_
 
 .. _silhouette_coefficient:
 
@@ -1929,11 +1927,11 @@ cluster analysis.
   >>> metrics.silhouette_score(X, labels, metric='euclidean')
   0.55...
 
-.. topic:: References
+.. rubric:: References
 
- * Peter J. Rousseeuw (1987). :doi:`"Silhouettes: a Graphical Aid to the
-   Interpretation and Validation of Cluster Analysis"<10.1016/0377-0427(87)90125-7>`
-   . Computational and Applied Mathematics 20: 53–65.
+* Peter J. Rousseeuw (1987). :doi:`"Silhouettes: a Graphical Aid to the
+  Interpretation and Validation of Cluster Analysis"<10.1016/0377-0427(87)90125-7>`.
+  Computational and Applied Mathematics 20: 53-65.
 
 
 Advantages
@@ -1953,10 +1951,10 @@ Drawbacks
   concepts of clusters, such as density based clusters like those obtained
   through DBSCAN.
 
-.. topic:: Examples:
+.. rubric:: Examples
 
- * :ref:`sphx_glr_auto_examples_cluster_plot_kmeans_silhouette_analysis.py` : In this example
-   the silhouette analysis is used to choose an optimal value for n_clusters.
+* :ref:`sphx_glr_auto_examples_cluster_plot_kmeans_silhouette_analysis.py` : In this example
+  the silhouette analysis is used to choose an optimal value for n_clusters.
 
 
 .. _calinski_harabasz_index:
@@ -2027,12 +2025,12 @@ with :math:`C_q` the set of points in cluster :math:`q`, :math:`c_q` the center
 of cluster :math:`q`, :math:`c_E` the center of :math:`E`, and :math:`n_q` the
 number of points in cluster :math:`q`.
 
-.. topic:: References
+.. rubric:: References
 
- * Caliński, T., & Harabasz, J. (1974).
-   `"A Dendrite Method for Cluster Analysis"
-   <https://www.researchgate.net/publication/233096619_A_Dendrite_Method_for_Cluster_Analysis>`_.
-   :doi:`Communications in Statistics-theory and Methods 3: 1-27 <10.1080/03610927408827101>`.
+* Caliński, T., & Harabasz, J. (1974).
+  `"A Dendrite Method for Cluster Analysis"
+  <https://www.researchgate.net/publication/233096619_A_Dendrite_Method_for_Cluster_Analysis>`_.
+  :doi:`Communications in Statistics-theory and Methods 3: 1-27 <10.1080/03610927408827101>`.
 
 
 .. _davies-bouldin_index:
@@ -2104,19 +2102,19 @@ Then the Davies-Bouldin index is defined as:
    DB = \frac{1}{k} \sum_{i=1}^k \max_{i \neq j} R_{ij}
 
 
-.. topic:: References
+.. rubric:: References
 
- * Davies, David L.; Bouldin, Donald W. (1979).
-   :doi:`"A Cluster Separation Measure" <10.1109/TPAMI.1979.4766909>`
-   IEEE Transactions on Pattern Analysis and Machine Intelligence.
-   PAMI-1 (2): 224-227.
+* Davies, David L.; Bouldin, Donald W. (1979).
+  :doi:`"A Cluster Separation Measure" <10.1109/TPAMI.1979.4766909>`
+  IEEE Transactions on Pattern Analysis and Machine Intelligence.
+  PAMI-1 (2): 224-227.
 
- * Halkidi, Maria; Batistakis, Yannis; Vazirgiannis, Michalis (2001).
-   :doi:`"On Clustering Validation Techniques" <10.1023/A:1012801612483>`
-   Journal of Intelligent Information Systems, 17(2-3), 107-145.
+* Halkidi, Maria; Batistakis, Yannis; Vazirgiannis, Michalis (2001).
+  :doi:`"On Clustering Validation Techniques" <10.1023/A:1012801612483>`
+  Journal of Intelligent Information Systems, 17(2-3), 107-145.
 
- * `Wikipedia entry for Davies-Bouldin index
-   <https://en.wikipedia.org/wiki/Davies–Bouldin_index>`_.
+* `Wikipedia entry for Davies-Bouldin index
+  <https://en.wikipedia.org/wiki/Davies–Bouldin_index>`_.
 
 
 .. _contingency_matrix:
@@ -2170,10 +2168,10 @@ Drawbacks
   optimisation.
 
 
-.. topic:: References
+.. rubric:: References
 
- * `Wikipedia entry for contingency matrix
-   <https://en.wikipedia.org/wiki/Contingency_table>`_
+* `Wikipedia entry for contingency matrix
+  <https://en.wikipedia.org/wiki/Contingency_table>`_
 
 .. _pair_confusion_matrix:
 
@@ -2251,7 +2249,7 @@ diagonal entries::
    array([[ 0,  0],
           [12,  0]])
 
-.. topic:: References
+.. rubric:: References
 
- * :doi:`"Comparing Partitions" <10.1007/BF01908075>`
-   L. Hubert and P. Arabie, Journal of Classification 1985
+* :doi:`"Comparing Partitions" <10.1007/BF01908075>`
+  L. Hubert and P. Arabie, Journal of Classification 1985

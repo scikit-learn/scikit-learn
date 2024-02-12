@@ -48,22 +48,17 @@ code.literal {
     height: unset !important;
     padding: 1%;
   }
+}
 
-  // Override the pydata-sphinx-theme styling of .. topic:: directives
-  div.topic,
-  aside.topic {
-    background-color: transparent;
-    border: none;
-    padding: 0;
-    box-shadow: none !important;
+/* Dropdowns (sphinx-design) */
 
-    p {
-      color: var(--pst-color-text-base) !important;
-    }
+details.sd-dropdown {
+  &:hover > summary.sd-summary-title > a.headerlink {
+    visibility: visible;
+  }
 
-    ul.simple {
-      padding-left: 2rem;
-    }
+  > summary.sd-summary-title > a.headerlink {
+    font-size: 1rem;
   }
 }
 

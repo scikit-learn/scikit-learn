@@ -143,10 +143,10 @@ indices where the value is `1` represents the assigned classes of that sample::
 See the examples below and the docstring of
 :meth:`MLPClassifier.fit` for further information.
 
-.. topic:: Examples:
+.. rubric:: Examples
 
- * :ref:`sphx_glr_auto_examples_neural_networks_plot_mlp_training_curves.py`
- * :ref:`sphx_glr_auto_examples_neural_networks_plot_mnist_filters.py`
+* :ref:`sphx_glr_auto_examples_neural_networks_plot_mlp_training_curves.py`
+* :ref:`sphx_glr_auto_examples_neural_networks_plot_mnist_filters.py`
 
 Regression
 ==========
@@ -175,9 +175,9 @@ decision function with value of alpha.
 
 See the examples below for further information.
 
-.. topic:: Examples:
+.. rubric:: Examples
 
- * :ref:`sphx_glr_auto_examples_neural_networks_plot_mlp_alpha.py`
+* :ref:`sphx_glr_auto_examples_neural_networks_plot_mlp_alpha.py`
 
 Algorithms
 ==========
@@ -355,21 +355,19 @@ or want to do additional monitoring, using ``warm_start=True`` and
     ...     # additional monitoring / inspection
     MLPClassifier(...
 
-.. topic:: References:
+.. rubric:: References
 
-    * `"Learning representations by back-propagating errors."
-      <https://www.iro.umontreal.ca/~pift6266/A06/refs/backprop_old.pdf>`_
-      Rumelhart, David E., Geoffrey E. Hinton, and Ronald J. Williams.
+* `"Learning representations by back-propagating errors."
+  <https://www.iro.umontreal.ca/~pift6266/A06/refs/backprop_old.pdf>`_
+  Rumelhart, David E., Geoffrey E. Hinton, and Ronald J. Williams.
 
-    * `"Stochastic Gradient Descent" <https://leon.bottou.org/projects/sgd>`_ L. Bottou - Website, 2010.
+* `"Stochastic Gradient Descent" <https://leon.bottou.org/projects/sgd>`_ L. Bottou - Website, 2010.
 
-    * `"Backpropagation" <http://ufldl.stanford.edu/wiki/index.php/Backpropagation_Algorithm>`_
-      Andrew Ng, Jiquan Ngiam, Chuan Yu Foo, Yifan Mai, Caroline Suen - Website, 2011.
+* `"Backpropagation" <http://ufldl.stanford.edu/wiki/index.php/Backpropagation_Algorithm>`_
+  Andrew Ng, Jiquan Ngiam, Chuan Yu Foo, Yifan Mai, Caroline Suen - Website, 2011.
 
-    * `"Efficient BackProp" <http://yann.lecun.com/exdb/publis/pdf/lecun-98b.pdf>`_
-      Y. LeCun, L. Bottou, G. Orr, K. Müller - In Neural Networks: Tricks
-      of the Trade 1998.
+* `"Efficient BackProp" <http://yann.lecun.com/exdb/publis/pdf/lecun-98b.pdf>`_
+  Y. LeCun, L. Bottou, G. Orr, K. Müller - In Neural Networks: Tricks of the Trade 1998.
 
-    *  :arxiv:`"Adam: A method for stochastic optimization."
-       <1412.6980>`
-       Kingma, Diederik, and Jimmy Ba (2014)
+*  :arxiv:`"Adam: A method for stochastic optimization." <1412.6980>`
+    Kingma, Diederik, and Jimmy Ba (2014)

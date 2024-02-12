@@ -21,9 +21,9 @@ predictions from a model and what affects them. This can be used to
 evaluate assumptions and biases of a model, design a better model, or
 to diagnose issues with model performance.
 
-.. topic:: Examples:
+.. rubric:: Examples
 
-   * :ref:`sphx_glr_auto_examples_inspection_plot_linear_model_coefficient_interpretation.py`
+* :ref:`sphx_glr_auto_examples_inspection_plot_linear_model_coefficient_interpretation.py`
 
 .. toctree::
 

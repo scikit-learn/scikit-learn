@@ -192,10 +192,10 @@ distance can be supplied to compute the weights.
 
 .. centered:: |classification_1|
 
-.. topic:: Examples:
+.. rubric:: Examples
 
-  * :ref:`sphx_glr_auto_examples_neighbors_plot_classification.py`: an example of
-    classification using nearest neighbors.
+* :ref:`sphx_glr_auto_examples_neighbors_plot_classification.py`: an example of
+  classification using nearest neighbors.
 
 .. _regression:
 
@@ -241,13 +241,13 @@ the lower half of those faces.
    :align: center
 
 
-.. topic:: Examples:
+.. rubric:: Examples
 
-  * :ref:`sphx_glr_auto_examples_neighbors_plot_regression.py`: an example of regression
-    using nearest neighbors.
+* :ref:`sphx_glr_auto_examples_neighbors_plot_regression.py`: an example of regression
+  using nearest neighbors.
 
-  * :ref:`sphx_glr_auto_examples_miscellaneous_plot_multioutput_face_completion.py`: an example of
-    multi-output regression using nearest neighbors.
+* :ref:`sphx_glr_auto_examples_miscellaneous_plot_multioutput_face_completion.py`:
+  an example of multi-output regression using nearest neighbors.
 
 
 Nearest Neighbor Algorithms
@@ -305,11 +305,11 @@ keyword ``algorithm = 'kd_tree'``, and are computed using the class
 :class:`KDTree`.
 
 
-.. topic:: References:
+.. rubric:: References
 
-   * `"Multidimensional binary search trees used for associative searching"
-     <https://dl.acm.org/citation.cfm?doid=361002.361007>`_,
-     Bentley, J.L., Communications of the ACM (1975)
+* `"Multidimensional binary search trees used for associative searching"
+  <https://dl.acm.org/citation.cfm?doid=361002.361007>`_,
+  Bentley, J.L., Communications of the ACM (1975)
 
 
 .. _ball_tree:
@@ -343,12 +343,12 @@ neighbors searches are specified using the keyword ``algorithm = 'ball_tree'``,
 and are computed using the class :class:`BallTree`.
 Alternatively, the user can work with the :class:`BallTree` class directly.
 
-.. topic:: References:
+.. rubric:: References
 
-   * `"Five Balltree Construction Algorithms"
-     <https://citeseerx.ist.psu.edu/doc_view/pid/17ac002939f8e950ffb32ec4dc8e86bdd8cb5ff1>`_,
-     Omohundro, S.M., International Computer Science Institute
-     Technical Report (1989)
+* `"Five Balltree Construction Algorithms"
+  <https://citeseerx.ist.psu.edu/doc_view/pid/17ac002939f8e950ffb32ec4dc8e86bdd8cb5ff1>`_,
+  Omohundro, S.M., International Computer Science Institute
+  Technical Report (1989)
 
 Choice of Nearest Neighbors Algorithm
 -------------------------------------
@@ -532,10 +532,10 @@ the model from 0.81 to 0.82.
 
 .. centered:: |nearest_centroid_1| |nearest_centroid_2|
 
-.. topic:: Examples:
+.. rubric:: Examples
 
-  * :ref:`sphx_glr_auto_examples_neighbors_plot_nearest_centroid.py`: an example of
-    classification using nearest centroid with different shrink thresholds.
+* :ref:`sphx_glr_auto_examples_neighbors_plot_nearest_centroid.py`: an example of
+  classification using nearest centroid with different shrink thresholds.
 
 .. _neighbors_transformer:
 
@@ -620,17 +620,17 @@ implementation with special data types. The precomputed neighbors
   include one extra neighbor in a custom nearest neighbors estimator, since
   unnecessary neighbors will be filtered by following estimators.
 
-.. topic:: Examples:
+.. rubric:: Examples
 
-  * :ref:`sphx_glr_auto_examples_neighbors_approximate_nearest_neighbors.py`:
-    an example of pipelining :class:`KNeighborsTransformer` and
-    :class:`~sklearn.manifold.TSNE`. Also proposes two custom nearest neighbors
-    estimators based on external packages.
+* :ref:`sphx_glr_auto_examples_neighbors_approximate_nearest_neighbors.py`:
+  an example of pipelining :class:`KNeighborsTransformer` and
+  :class:`~sklearn.manifold.TSNE`. Also proposes two custom nearest neighbors
+  estimators based on external packages.
 
-  * :ref:`sphx_glr_auto_examples_neighbors_plot_caching_nearest_neighbors.py`:
-    an example of pipelining :class:`KNeighborsTransformer` and
-    :class:`KNeighborsClassifier` to enable caching of the neighbors graph
-    during a hyper-parameter grid-search.
+* :ref:`sphx_glr_auto_examples_neighbors_plot_caching_nearest_neighbors.py`:
+  an example of pipelining :class:`KNeighborsTransformer` and
+  :class:`KNeighborsClassifier` to enable caching of the neighbors graph
+  during a hyper-parameter grid-search.
 
 .. _nca:
 
@@ -754,11 +754,11 @@ by each method. Each data sample belongs to one of 10 classes.
 .. centered:: |nca_dim_reduction_1| |nca_dim_reduction_2| |nca_dim_reduction_3|
 
 
-.. topic:: Examples:
+.. rubric:: Examples
 
- * :ref:`sphx_glr_auto_examples_neighbors_plot_nca_classification.py`
- * :ref:`sphx_glr_auto_examples_neighbors_plot_nca_dim_reduction.py`
- * :ref:`sphx_glr_auto_examples_manifold_plot_lle_digits.py`
+* :ref:`sphx_glr_auto_examples_neighbors_plot_nca_classification.py`
+* :ref:`sphx_glr_auto_examples_neighbors_plot_nca_dim_reduction.py`
+* :ref:`sphx_glr_auto_examples_manifold_plot_lle_digits.py`
 
 .. _nca_mathematical_formulation:
 
@@ -835,12 +835,12 @@ complexity equals ``n_components * n_features * n_samples_test``. There is no
 added space complexity in the operation.
 
 
-.. topic:: References:
+.. rubric:: References
 
-    .. [1] `"Neighbourhood Components Analysis"
-      <http://www.cs.nyu.edu/~roweis/papers/ncanips.pdf>`_,
-      J. Goldberger, S. Roweis, G. Hinton, R. Salakhutdinov, Advances in
-      Neural Information Processing Systems, Vol. 17, May 2005, pp. 513-520.
+.. [1] `"Neighbourhood Components Analysis"
+  <http://www.cs.nyu.edu/~roweis/papers/ncanips.pdf>`_,
+  J. Goldberger, S. Roweis, G. Hinton, R. Salakhutdinov, Advances in
+  Neural Information Processing Systems, Vol. 17, May 2005, pp. 513-520.
 
-    `Wikipedia entry on Neighborhood Components Analysis
-    <https://en.wikipedia.org/wiki/Neighbourhood_components_analysis>`_
+* `Wikipedia entry on Neighborhood Components Analysis
+  <https://en.wikipedia.org/wiki/Neighbourhood_components_analysis>`_

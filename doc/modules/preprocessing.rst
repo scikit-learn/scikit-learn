@@ -220,9 +220,9 @@ of the data is likely to not work very well. In these cases, you can use
 more robust estimates for the center and range of your data.
 
 
-.. topic:: References:
+.. rubric:: References
 
-  Further discussion on the importance of centering and scaling data is
+* Further discussion on the importance of centering and scaling data is
   available on this FAQ: `Should I normalize/standardize/rescale the data?
   <http://www.faqs.org/faqs/ai-faq/neural-nets/part2/section-16.html>`_
 
@@ -294,12 +294,12 @@ centering :math:`K_{test}` is done as:
 `(n_samples_test, n_samples)` where all entries are equal to
 :math:`\frac{1}{\text{n}_{samples}}`.
 
-.. topic:: References
+.. rubric:: References
 
-  .. [Scholkopf1998] B. Schölkopf, A. Smola, and K.R. Müller,
-    `"Nonlinear component analysis as a kernel eigenvalue problem."
-    <https://www.mlpack.org/papers/kpca.pdf>`_
-    Neural computation 10.5 (1998): 1299-1319.
+.. [Scholkopf1998] B. Schölkopf, A. Smola, and K.R. Müller,
+  `"Nonlinear component analysis as a kernel eigenvalue problem."
+  <https://www.mlpack.org/papers/kpca.pdf>`_
+  Neural computation 10.5 (1998): 1299-1319.
 
 .. _preprocessing_transformer:
 
@@ -958,21 +958,21 @@ encoding learned in :meth:`~TargetEncoder.fit_transform`.
   that are not seen during `fit` are encoded with the target mean, i.e.
   `target_mean_`.
 
-.. topic:: Examples:
+.. rubric:: Examples
 
-  * :ref:`sphx_glr_auto_examples_preprocessing_plot_target_encoder.py`
-  * :ref:`sphx_glr_auto_examples_preprocessing_plot_target_encoder_cross_val.py`
+* :ref:`sphx_glr_auto_examples_preprocessing_plot_target_encoder.py`
+* :ref:`sphx_glr_auto_examples_preprocessing_plot_target_encoder_cross_val.py`
 
-.. topic:: References
+.. rubric:: References
 
-  .. [MIC] :doi:`Micci-Barreca, Daniele. "A preprocessing scheme for high-cardinality
-     categorical attributes in classification and prediction problems"
-     SIGKDD Explor. Newsl. 3, 1 (July 2001), 27–32. <10.1145/507533.507538>`
+.. [MIC] :doi:`Micci-Barreca, Daniele. "A preprocessing scheme for high-cardinality
+    categorical attributes in classification and prediction problems"
+    SIGKDD Explor. Newsl. 3, 1 (July 2001), 27-32. <10.1145/507533.507538>`
 
-  .. [PAR] :doi:`Pargent, F., Pfisterer, F., Thomas, J. et al. "Regularized target
-     encoding outperforms traditional methods in supervised machine learning with
-     high cardinality features" Comput Stat 37, 2671–2692 (2022)
-     <10.1007/s00180-022-01207-6>`
+.. [PAR] :doi:`Pargent, F., Pfisterer, F., Thomas, J. et al. "Regularized target
+    encoding outperforms traditional methods in supervised machine learning with
+    high cardinality features" Comput Stat 37, 2671-2692 (2022)
+    <10.1007/s00180-022-01207-6>`
 
 .. _preprocessing_discretization:
 
@@ -1048,11 +1048,11 @@ For instance, we can use the Pandas function :func:`pandas.cut`::
   ['infant', 'kid', 'teen', 'adult', 'senior citizen']
   Categories (5, object): ['infant' < 'kid' < 'teen' < 'adult' < 'senior citizen']
 
-.. topic:: Examples:
+.. rubric:: Examples
 
-  * :ref:`sphx_glr_auto_examples_preprocessing_plot_discretization.py`
-  * :ref:`sphx_glr_auto_examples_preprocessing_plot_discretization_classification.py`
-  * :ref:`sphx_glr_auto_examples_preprocessing_plot_discretization_strategies.py`
+* :ref:`sphx_glr_auto_examples_preprocessing_plot_discretization.py`
+* :ref:`sphx_glr_auto_examples_preprocessing_plot_discretization_classification.py`
+* :ref:`sphx_glr_auto_examples_preprocessing_plot_discretization_strategies.py`
 
 .. _preprocessing_binarization:
 
@@ -1245,19 +1245,19 @@ Interestingly, a :class:`SplineTransformer` of ``degree=0`` is the same as
 ``encode='onehot-dense'`` and ``n_bins = n_knots - 1`` if
 ``knots = strategy``.
 
-.. topic:: Examples:
+.. rubric:: Examples
 
-    * :ref:`sphx_glr_auto_examples_linear_model_plot_polynomial_interpolation.py`
-    * :ref:`sphx_glr_auto_examples_applications_plot_cyclical_feature_engineering.py`
+* :ref:`sphx_glr_auto_examples_linear_model_plot_polynomial_interpolation.py`
+* :ref:`sphx_glr_auto_examples_applications_plot_cyclical_feature_engineering.py`
 
-.. topic:: References:
+.. rubric:: References
 
-    * Eilers, P., & Marx, B. (1996). :doi:`Flexible Smoothing with B-splines and
-      Penalties <10.1214/ss/1038425655>`. Statist. Sci. 11 (1996), no. 2, 89--121.
+* Eilers, P., & Marx, B. (1996). :doi:`Flexible Smoothing with B-splines and
+  Penalties <10.1214/ss/1038425655>`. Statist. Sci. 11 (1996), no. 2, 89--121.
 
-    * Perperoglou, A., Sauerbrei, W., Abrahamowicz, M. et al. :doi:`A review of
-      spline function procedures in R <10.1186/s12874-019-0666-3>`.
-      BMC Med Res Methodol 19, 46 (2019).
+* Perperoglou, A., Sauerbrei, W., Abrahamowicz, M. et al. :doi:`A review of
+  spline function procedures in R <10.1186/s12874-019-0666-3>`.
+  BMC Med Res Methodol 19, 46 (2019).
 
 .. _function_transformer:
 

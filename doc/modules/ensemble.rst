@@ -78,9 +78,9 @@ estimators is slightly different, and some of the features from
 :class:`GradientBoostingClassifier` and :class:`GradientBoostingRegressor`
 are not yet supported, for instance some loss functions.
 
-.. topic:: Examples:
+.. rubric:: Examples
 
- * :ref:`sphx_glr_auto_examples_inspection_plot_partial_dependence.py`
+* :ref:`sphx_glr_auto_examples_inspection_plot_partial_dependence.py`
 
 Usage
 ^^^^^
@@ -267,9 +267,9 @@ instead of :math:`2^{K - 1} - 1`. The initial sorting is a
 :math:`\mathcal{O}(K \log(K))` operation, leading to a total complexity of
 :math:`\mathcal{O}(K \log(K) + K)`, instead of :math:`\mathcal{O}(2^K)`.
 
-.. topic:: Examples:
+.. rubric:: Examples
 
-  * :ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_categorical.py`
+* :ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_categorical.py`
 
 .. _monotonic_cst_gbdt:
 
@@ -322,9 +322,9 @@ Also, monotonic constraints are not supported for multiclass classification.
     Since categories are unordered quantities, it is not possible to enforce
     monotonic constraints on categorical features.
 
-.. topic:: Examples:
+.. rubric:: Examples
 
-  * :ref:`sphx_glr_auto_examples_ensemble_plot_monotonic_constraints.py`
+* :ref:`sphx_glr_auto_examples_ensemble_plot_monotonic_constraints.py`
 
 .. _interaction_cst_hgbt:
 
@@ -357,16 +357,16 @@ Note that features not listed in ``interaction_cst`` are automatically
 assigned an interaction group for themselves. With again 3 features, this
 means that ``[{0}]`` is equivalent to ``[{0}, {1, 2}]``.
 
-.. topic:: Examples:
+.. rubric:: Examples
 
- * :ref:`sphx_glr_auto_examples_inspection_plot_partial_dependence.py`
+* :ref:`sphx_glr_auto_examples_inspection_plot_partial_dependence.py`
 
-.. topic:: References
+.. rubric:: References
 
-  .. [Mayer2022] M. Mayer, S.C. Bourassa, M. Hoesli, and D.F. Scognamiglio.
-     2022. :doi:`Machine Learning Applications to Land and Structure Valuation
-     <10.3390/jrfm15050193>`.
-     Journal of Risk and Financial Management 15, no. 5: 193
+.. [Mayer2022] M. Mayer, S.C. Bourassa, M. Hoesli, and D.F. Scognamiglio.
+    2022. :doi:`Machine Learning Applications to Land and Structure Valuation
+    <10.3390/jrfm15050193>`.
+    Journal of Risk and Financial Management 15, no. 5: 193
 
 Low-level parallelism
 ^^^^^^^^^^^^^^^^^^^^^
@@ -422,18 +422,18 @@ Finally, many parts of the implementation of
 :class:`HistGradientBoostingClassifier` and
 :class:`HistGradientBoostingRegressor` are parallelized.
 
-.. topic:: References
+.. rubric:: References
 
-  .. [XGBoost] Tianqi Chen, Carlos Guestrin, :arxiv:`"XGBoost: A Scalable Tree
-     Boosting System" <1603.02754>`
+.. [XGBoost] Tianqi Chen, Carlos Guestrin, :arxiv:`"XGBoost: A Scalable Tree
+   Boosting System" <1603.02754>`
 
-  .. [LightGBM] Ke et. al. `"LightGBM: A Highly Efficient Gradient
-     BoostingDecision Tree" <https://papers.nips.cc/paper/
-     6907-lightgbm-a-highly-efficient-gradient-boosting-decision-tree>`_
+.. [LightGBM] Ke et. al. `"LightGBM: A Highly Efficient Gradient
+   BoostingDecision Tree" <https://papers.nips.cc/paper/
+   6907-lightgbm-a-highly-efficient-gradient-boosting-decision-tree>`_
 
-  .. [Fisher1958] Fisher, W.D. (1958). `"On Grouping for Maximum Homogeneity"
-     <http://csiss.ncgia.ucsb.edu/SPACE/workshops/2004/SAC/files/fisher.pdf>`_
-     Journal of the American Statistical Association, 53, 789-798.
+.. [Fisher1958] Fisher, W.D. (1958). `"On Grouping for Maximum Homogeneity"
+   <http://csiss.ncgia.ucsb.edu/SPACE/workshops/2004/SAC/files/fisher.pdf>`_
+   Journal of the American Statistical Association, 53, 789-798.
 
 
 
@@ -524,10 +524,10 @@ to determine the optimal number of trees (i.e. ``n_estimators``) by early stoppi
    :align: center
    :scale: 75
 
-.. topic:: Examples:
+.. rubric:: Examples
 
- * :ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_regression.py`
- * :ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_oob.py`
+* :ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_regression.py`
+* :ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_oob.py`
 
 .. _gradient_boosting_warm_start:
 
@@ -794,11 +794,11 @@ the optimal number of iterations. OOB estimates are usually very pessimistic thu
 we recommend to use cross-validation instead and only use OOB if cross-validation
 is too time consuming.
 
-.. topic:: Examples:
+.. rubric:: Examples
 
- * :ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_regularization.py`
- * :ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_oob.py`
- * :ref:`sphx_glr_auto_examples_ensemble_plot_ensemble_oob.py`
+* :ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_regularization.py`
+* :ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_oob.py`
+* :ref:`sphx_glr_auto_examples_ensemble_plot_ensemble_oob.py`
 
 Interpretation with feature importance
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -841,22 +841,22 @@ Note that this computation of feature importance is based on entropy, and it
 is distinct from :func:`sklearn.inspection.permutation_importance` which is
 based on permutation of the features.
 
-.. topic:: Examples:
+.. rubric:: Examples
 
- * :ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_regression.py`
+* :ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_regression.py`
 
-.. topic:: References
+.. rubric:: References
 
-  .. [Friedman2001] Friedman, J.H. (2001). :doi:`Greedy function approximation: A gradient
-      boosting machine <10.1214/aos/1013203451>`.
-      Annals of Statistics, 29, 1189-1232.
+.. [Friedman2001] Friedman, J.H. (2001). :doi:`Greedy function approximation: A gradient
+   boosting machine <10.1214/aos/1013203451>`.
+   Annals of Statistics, 29, 1189-1232.
 
-  .. [Friedman2002] Friedman, J.H. (2002). `Stochastic gradient boosting.
-     <https://statweb.stanford.edu/~jhf/ftp/stobst.pdf>`_.
-     Computational Statistics & Data Analysis, 38, 367-378.
+.. [Friedman2002] Friedman, J.H. (2002). `Stochastic gradient boosting.
+   <https://statweb.stanford.edu/~jhf/ftp/stobst.pdf>`_.
+   Computational Statistics & Data Analysis, 38, 367-378.
 
-  .. [R2007] G. Ridgeway (2006). `Generalized Boosted Models: A guide to the gbm
-     package <https://cran.r-project.org/web/packages/gbm/vignettes/gbm.pdf>`_
+.. [R2007] G. Ridgeway (2006). `Generalized Boosted Models: A guide to the gbm
+   package <https://cran.r-project.org/web/packages/gbm/vignettes/gbm.pdf>`_
 
 .. _forest:
 
@@ -940,9 +940,9 @@ characteristics of the dataset and the modeling task. It's a good idea
 to try both models and compare their performance and computational efficiency
 on your specific problem to determine which model is the best fit.
 
-.. topic:: Examples:
+.. rubric:: Examples
 
- * :ref:`sphx_glr_auto_examples_ensemble_plot_forest_hist_grad_boosting_comparison.py`
+* :ref:`sphx_glr_auto_examples_ensemble_plot_forest_hist_grad_boosting_comparison.py`
 
 Extremely Randomized Trees
 --------------------------
@@ -1039,20 +1039,20 @@ fast). Significant speedup can still be achieved though when building
 a large number of trees, or when building a single tree requires a fair
 amount of time (e.g., on large datasets).
 
-.. topic:: Examples:
+.. rubric:: Examples
 
- * :ref:`sphx_glr_auto_examples_ensemble_plot_forest_iris.py`
- * :ref:`sphx_glr_auto_examples_ensemble_plot_forest_importances_faces.py`
- * :ref:`sphx_glr_auto_examples_miscellaneous_plot_multioutput_face_completion.py`
+* :ref:`sphx_glr_auto_examples_ensemble_plot_forest_iris.py`
+* :ref:`sphx_glr_auto_examples_ensemble_plot_forest_importances_faces.py`
+* :ref:`sphx_glr_auto_examples_miscellaneous_plot_multioutput_face_completion.py`
 
-.. topic:: References
+.. rubric:: References
 
- .. [B2001] L. Breiman, "Random Forests", Machine Learning, 45(1), 5-32, 2001.
+.. [B2001] L. Breiman, "Random Forests", Machine Learning, 45(1), 5-32, 2001.
 
- .. [B1998] L. Breiman, "Arcing Classifiers", Annals of Statistics 1998.
+.. [B1998] L. Breiman, "Arcing Classifiers", Annals of Statistics 1998.
 
- * P. Geurts, D. Ernst., and L. Wehenkel, "Extremely randomized
-   trees", Machine Learning, 63(1), 3-42, 2006.
+* P. Geurts, D. Ernst., and L. Wehenkel, "Extremely randomized
+  trees", Machine Learning, 63(1), 3-42, 2006.
 
 .. _random_forest_feature_importance:
 
@@ -1104,16 +1104,16 @@ In practice those estimates are stored as an attribute named
 the value, the more important is the contribution of the matching feature
 to the prediction function.
 
-.. topic:: Examples:
+.. rubric:: Examples
 
- * :ref:`sphx_glr_auto_examples_ensemble_plot_forest_importances_faces.py`
- * :ref:`sphx_glr_auto_examples_ensemble_plot_forest_importances.py`
+* :ref:`sphx_glr_auto_examples_ensemble_plot_forest_importances_faces.py`
+* :ref:`sphx_glr_auto_examples_ensemble_plot_forest_importances.py`
 
-.. topic:: References
+.. rubric:: References
 
- .. [L2014] G. Louppe, :arxiv:`"Understanding Random Forests: From Theory to
-    Practice" <1407.7502>`,
-    PhD Thesis, U. of Liege, 2014.
+.. [L2014] G. Louppe, :arxiv:`"Understanding Random Forests: From Theory to
+   Practice" <1407.7502>`,
+   PhD Thesis, U. of Liege, 2014.
 
 .. _random_trees_embedding:
 
@@ -1136,15 +1136,15 @@ As neighboring data points are more likely to lie within the same leaf of a
 tree, the transformation performs an implicit, non-parametric density
 estimation.
 
-.. topic:: Examples:
+.. rubric:: Examples
 
- * :ref:`sphx_glr_auto_examples_ensemble_plot_random_forest_embedding.py`
+* :ref:`sphx_glr_auto_examples_ensemble_plot_random_forest_embedding.py`
 
- * :ref:`sphx_glr_auto_examples_manifold_plot_lle_digits.py` compares non-linear
-   dimensionality reduction techniques on handwritten digits.
+* :ref:`sphx_glr_auto_examples_manifold_plot_lle_digits.py` compares non-linear
+  dimensionality reduction techniques on handwritten digits.
 
- * :ref:`sphx_glr_auto_examples_ensemble_plot_feature_transformation.py` compares
-   supervised and unsupervised tree based feature transformations.
+* :ref:`sphx_glr_auto_examples_ensemble_plot_feature_transformation.py` compares
+  supervised and unsupervised tree based feature transformations.
 
 .. seealso::
 
@@ -1203,24 +1203,23 @@ subsets of 50% of the samples and 50% of the features.
     >>> bagging = BaggingClassifier(KNeighborsClassifier(),
     ...                             max_samples=0.5, max_features=0.5)
 
-.. topic:: Examples:
+.. rubric:: Examples
 
- * :ref:`sphx_glr_auto_examples_ensemble_plot_bias_variance.py`
+* :ref:`sphx_glr_auto_examples_ensemble_plot_bias_variance.py`
 
-.. topic:: References
+.. rubric:: References
 
-  .. [B1999] L. Breiman, "Pasting small votes for classification in large
-         databases and on-line", Machine Learning, 36(1), 85-103, 1999.
+.. [B1999] L. Breiman, "Pasting small votes for classification in large
+   databases and on-line", Machine Learning, 36(1), 85-103, 1999.
 
-  .. [B1996] L. Breiman, "Bagging predictors", Machine Learning, 24(2),
-         123-140, 1996.
+.. [B1996] L. Breiman, "Bagging predictors", Machine Learning, 24(2),
+   123-140, 1996.
 
-  .. [H1998] T. Ho, "The random subspace method for constructing decision
-         forests", Pattern Analysis and Machine Intelligence, 20(8), 832-844,
-         1998.
+.. [H1998] T. Ho, "The random subspace method for constructing decision
+   forests", Pattern Analysis and Machine Intelligence, 20(8), 832-844, 1998.
 
-  .. [LG2012] G. Louppe and P. Geurts, "Ensembles on Random Patches",
-         Machine Learning and Knowledge Discovery in Databases, 346-361, 2012.
+.. [LG2012] G. Louppe and P. Geurts, "Ensembles on Random Patches",
+   Machine Learning and Knowledge Discovery in Databases, 346-361, 2012.
 
 
 
@@ -1432,9 +1431,9 @@ The following example shows how to fit the VotingRegressor::
     :align: center
     :scale: 75%
 
-.. topic:: Examples:
+.. rubric:: Examples
 
-  * :ref:`sphx_glr_auto_examples_ensemble_plot_voting_regressor.py`
+* :ref:`sphx_glr_auto_examples_ensemble_plot_voting_regressor.py`
 
 .. _stacking:
 
@@ -1553,10 +1552,10 @@ computationally expensive.
     ...       .format(multi_layer_regressor.score(X_test, y_test)))
     R2 score: 0.53
 
-.. topic:: References
+.. rubric:: References
 
-   .. [W1992] Wolpert, David H. "Stacked generalization." Neural networks 5.2
-      (1992): 241-259.
+.. [W1992] Wolpert, David H. "Stacked generalization." Neural networks 5.2
+   (1992): 241-259.
 
 
 
@@ -1622,27 +1621,26 @@ The main parameters to tune to obtain good results are ``n_estimators`` and
 the complexity of the base estimators (e.g., its depth ``max_depth`` or
 minimum required number of samples to consider a split ``min_samples_split``).
 
-.. topic:: Examples:
+.. rubric:: Examples
 
- * :ref:`sphx_glr_auto_examples_ensemble_plot_adaboost_multiclass.py` shows the performance
-   of AdaBoost on a multi-class problem.
+* :ref:`sphx_glr_auto_examples_ensemble_plot_adaboost_multiclass.py` shows the performance
+  of AdaBoost on a multi-class problem.
 
- * :ref:`sphx_glr_auto_examples_ensemble_plot_adaboost_twoclass.py` shows the decision boundary
-   and decision function values for a non-linearly separable two-class problem
-   using AdaBoost-SAMME.
+* :ref:`sphx_glr_auto_examples_ensemble_plot_adaboost_twoclass.py` shows the decision boundary
+  and decision function values for a non-linearly separable two-class problem
+  using AdaBoost-SAMME.
 
- * :ref:`sphx_glr_auto_examples_ensemble_plot_adaboost_regression.py` demonstrates regression
-   with the AdaBoost.R2 algorithm.
+* :ref:`sphx_glr_auto_examples_ensemble_plot_adaboost_regression.py` demonstrates regression
+  with the AdaBoost.R2 algorithm.
 
-.. topic:: References
+.. rubric:: References
 
- .. [FS1995] Y. Freund, and R. Schapire, "A Decision-Theoretic Generalization of
-             On-Line Learning and an Application to Boosting", 1997.
+.. [FS1995] Y. Freund, and R. Schapire, "A Decision-Theoretic Generalization of
+   On-Line Learning and an Application to Boosting", 1997.
 
- .. [ZZRH2009] J. Zhu, H. Zou, S. Rosset, T. Hastie. "Multi-class AdaBoost",
-               2009.
+.. [ZZRH2009] J. Zhu, H. Zou, S. Rosset, T. Hastie. "Multi-class AdaBoost", 2009.
 
- .. [D1997] H. Drucker. "Improving Regressors using Boosting Techniques", 1997.
+.. [D1997] H. Drucker. "Improving Regressors using Boosting Techniques", 1997.
 
- .. [HTF] T. Hastie, R. Tibshirani and J. Friedman, "Elements of
-              Statistical Learning Ed. 2", Springer, 2009.
+.. [HTF] T. Hastie, R. Tibshirani and J. Friedman, "Elements of Statistical Learning
+   Ed. 2", Springer, 2009.
