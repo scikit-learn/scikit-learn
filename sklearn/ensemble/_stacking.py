@@ -53,10 +53,10 @@ def _estimator_has(attr):
     def check(self):
         if hasattr(self, "final_estimator_"):
             getattr(self.final_estimator_, attr)
-            return True
         else:
             getattr(self.final_estimator, attr)
-            return True
+
+        return True
 
     return check
 
