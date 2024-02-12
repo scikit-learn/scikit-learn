@@ -53,7 +53,9 @@ def check_recorded_metadata(obj, method, split_params=tuple(), **kwargs):
         sub-estimator's method where metadata is routed to
     split_params : tuple, default=empty
         specifies any parameters which are to be checked as being a subset
-        of the original values.
+        of the original values
+    **kwargs : dict
+        passed metadata
     """
     records = getattr(obj, "_records", dict()).get(method, dict())
     assert set(kwargs.keys()) == set(records.keys())

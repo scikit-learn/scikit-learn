@@ -1585,14 +1585,24 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
                 transformers. See :ref:`Metadata Routing User Guide
                 <metadata_routing>` for more details.
 
-                .. versionchanged:: 1.5
+            .. versionchanged:: 1.5
+                `**fit_params` can be routed via metadata routing API
 
         Returns
         -------
         self : object
             FeatureUnion class instance.
         """
-        transformers = self._parallel_func(X, y, _fit_one, fit_params)
+        if _routing_enabled():
+            routed_fit_params = process_routing(self, "fit", **fit_params)
+        else:
+            # TODO(SLEP6): remove when metadata routing cannot be disabled.
+            routed_fit_params = Bunch()
+            for name, _ in self.transformer_list:
+                routed_fit_params[name] = Bunch(fit={})
+                routed_fit_params[name].fit = fit_params
+
+        transformers = self._parallel_func(X, y, _fit_one, routed_fit_params)
 
         if not transformers:
             # All transformers are None
@@ -1622,7 +1632,8 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
                 transformers. See :ref:`Metadata Routing User Guide
                 <metadata_routing>` for more details.
 
-                .. versionchanged:: 1.5
+            .. versionchanged:: 1.5
+                `**fit_params` can be routed via metadata routing API
 
         Returns
         -------
@@ -1631,7 +1642,20 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
             The `hstack` of results of transformers. `sum_n_components` is the
             sum of `n_components` (output dimension) over transformers.
         """
-        results = self._parallel_func(X, y, _fit_transform_one, fit_params)
+        if _routing_enabled():
+            routed_fit_transform_params = process_routing(
+                self, "fit_transform", **fit_params
+            )
+        else:
+            # TODO(SLEP6): remove when metadata routing cannot be disabled.
+            routed_fit_transform_params = Bunch()
+            for name, _ in self.transformer_list:
+                routed_fit_transform_params[name] = Bunch(fit_transform={})
+                routed_fit_transform_params[name].fit_transform = fit_params
+
+        results = self._parallel_func(
+            X, y, _fit_transform_one, routed_fit_transform_params
+        )
         if not results:
             # All transformers are None
             return np.zeros((X.shape[0], 0))
@@ -1646,23 +1670,12 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
             return None
         return "(step %d of %d) Processing %s" % (idx, total, name)
 
-    def _parallel_func(self, X, y, func, fit_params):
+    def _parallel_func(self, X, y, func, routed_params):
         """Runs func in parallel on X and y"""
         self.transformer_list = list(self.transformer_list)
         self._validate_transformers()
         self._validate_transformer_weights()
         transformers = list(self._iter())
-
-        if _routing_enabled():
-            routed_params = process_routing(self, "fit", **fit_params)
-        else:
-            # TODO(SLEP6): remove when metadata routing cannot be disabled.
-            routed_params = Bunch()
-            for name, _ in self.transformer_list:
-                routed_params[name] = Bunch(fit={})
-                routed_params[name] = Bunch(fit_transform={})
-                routed_params[name].fit = fit_params
-                routed_params[name].fit_transform = fit_params
 
         return Parallel(n_jobs=self.n_jobs)(
             delayed(func)(
@@ -1772,9 +1785,8 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
             router.add(
                 **{name: transformer},
                 method_mapping=MethodMapping()
-                .add(callee="fit", caller="fit")
-                .add(callee="fit_transform", caller="fit")
-                .add(callee="fit_transform", caller="fit_transform"),
+                .add(caller="fit", callee="fit")
+                .add(caller="fit_transform", callee="fit_transform"),
             )
 
         return router
