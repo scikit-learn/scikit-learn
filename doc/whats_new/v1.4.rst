@@ -103,12 +103,27 @@ Changelog
   the same columns. Previously, it would raise a due to duplicated column names.
   :pr:`28262` by :user:`Guillaume Lemaitre <glemaitre>`.
 
+:mod:`sklearn.ensemble`
+.......................
+
+- |Fix| :class:`HistGradientBoostingClassifier` and
+  :class:`HistGradientBoostingRegressor` when fitted on `pandas` `DataFrame`
+  with extension dtypes, for example `pd.Int64Dtype`
+  :pr:`28385` by :user:`Loïc Estève <lesteve>`.
+
 :mod:`sklearn.inspection`
 .........................
 
 - |Fix| :func:`inspection.permutation_importance` now handles properly `sample_weight`
   together with subsampling (i.e. `max_features` < 1.0).
   :pr:`28184` by :user:`Michael Mayer <mayer79>`.
+
+:mod:`sklearn.linear_model`
+...........................
+
+- |Fix| :class:`linear_model.ARDRegression` now handles pandas input types
+  for `predict(X, return_std=True)`.
+  :pr:`28377` by :user:`Eddie Bergman <eddiebergman>`.
 
 :mod:`sklearn.preprocessing`
 ............................

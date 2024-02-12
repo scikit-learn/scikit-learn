@@ -10,15 +10,15 @@ This document shows how you can use the :ref:`metadata routing mechanism
 scorers, and CV splitters consuming them.
 
 To better understand the following document, we need to introduce two concepts:
-routers and consumers. A router is an object which forwards given data and
-metadata to other objects. In most cases a router is a :term:`meta-estimator`,
+routers and consumers. A router is an object which forwards some given data and
+metadata to other objects. In most cases, a router is a :term:`meta-estimator`,
 i.e. an estimator which takes another estimator as a parameter. A function such
 as :func:`sklearn.model_selection.cross_validate` which takes an estimator as a
 parameter and forwards data and metadata, is also a router.
 
-A consumer, on the other hand, is an object which accepts and uses a certain
-given metadata. For instance, an estimator taking into account
-``sample_weight`` in its :term:`fit` method is a consumer of ``sample_weight``.
+A consumer, on the other hand, is an object which accepts and uses some given
+metadata. For instance, an estimator taking into account ``sample_weight`` in
+its :term:`fit` method is a consumer of ``sample_weight``.
 
 It is possible for an object to be both a router and a consumer. For instance,
 a meta-estimator may take into account ``sample_weight`` in certain
@@ -150,7 +150,7 @@ est.predict(X[:3, :], groups=my_groups)
 # %%
 # Routing Meta-Estimator
 # ----------------------
-# Now we show how to prepare a meta-estimator to be a router. As a simplified
+# Now, we show how to design a meta-estimator to be a router. As a simplified
 # example, here is a meta-estimator, which doesn't do much other than routing
 # the metadata.
 
@@ -162,7 +162,7 @@ class MetaClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
     def get_metadata_routing(self):
         # This method defines the routing for this meta-estimator.
         # In order to do so, a `MetadataRouter` instance is created, and the
-        # right routing is added to it. More explanations follow below.
+        # routing is added to it. More explanations follow below.
         router = MetadataRouter(owner=self.__class__.__name__).add(
             estimator=self.estimator,
             method_mapping=MethodMapping()
@@ -442,7 +442,7 @@ print_routing(meta_est)
 
 # %%
 # However, ``fit`` of the meta-estimator only needs the alias for the
-# sub-estimator and adresses their own sample weight as `sample_weight`, since
+# sub-estimator and addresses their own sample weight as `sample_weight`, since
 # it doesn't validate and route its own required metadata:
 meta_est.fit(X, y, sample_weight=my_weights, clf_sample_weight=my_other_weights)
 
