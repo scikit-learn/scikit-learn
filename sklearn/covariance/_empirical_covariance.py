@@ -255,6 +255,13 @@ class EmpiricalCovariance(BaseEstimator):
 
         return self
 
+    @validate_params(
+        {
+            "X_test" : ["array-like"],
+            "y" : None
+        },
+        prefer_skip_nested_validation= True
+    )
     def score(self, X_test, y=None):
         """Compute the log-likelihood of `X_test` under the estimated Gaussian model.
 
