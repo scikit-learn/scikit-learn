@@ -20,7 +20,7 @@ Multi-layer Perceptron
 ======================
 
 **Multi-layer Perceptron (MLP)** is a supervised learning algorithm that learns
-a function :math:`f(\cdot): R^m \rightarrow R^o` by training on a dataset,
+a function :math:`f: R^m \rightarrow R^o` by training on a dataset,
 where :math:`m` is the number of dimensions for input and :math:`o` is the
 number of dimensions for output. Given a set of features :math:`X = {x_1, x_2, ..., x_m}`
 and a target :math:`y`, it can learn a non-linear function approximator for either
@@ -49,6 +49,10 @@ The module contains the public attributes ``coefs_`` and ``intercepts_``.
 :math:`i+1`. ``intercepts_`` is a list of bias vectors, where the vector
 at index :math:`i` represents the bias values added to layer :math:`i+1`.
 
+|details-start|
+Advantages and disatvatages of Multi-layer Perceptron
+|details-split|
+
 The advantages of Multi-layer Perceptron are:
 
     + Capability to learn non-linear models.
@@ -71,6 +75,7 @@ The disadvantages of Multi-layer Perceptron (MLP) include:
 Please see :ref:`Tips on Practical Use <mlp_tips>` section that addresses
 some of these disadvantages.
 
+|details-end|
 
 Classification
 ==============
