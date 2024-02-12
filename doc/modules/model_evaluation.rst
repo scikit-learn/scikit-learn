@@ -2761,6 +2761,52 @@ Here are some usage examples of the :func:`d2_absolute_error_score` function::
   >>> d2_absolute_error_score(y_true, y_pred)
   0.0
 
+D² log loss score
+^^^^^^^^^^^^^^^^^^^^^^^
+The :func:`d2_log_loss_score` function implements the special case
+of D² with the log loss, see :ref:`log_loss`, i.e.:
+
+.. math::
+
+  \text{dev}(y, \hat{y}) = \text{log_loss}(y, \hat{y}).
+
+Here are some usage examples of the :func:`d2_log_loss_score` function::
+
+  >>> from sklearn.metrics import d2_log_loss_score
+  >>> y_true = [1, 1, 2, 3]
+  >>> y_pred = [
+  ...    [0.5, 0.25, 0.25],
+  ...    [0.5, 0.25, 0.25],
+  ...    [0.5, 0.25, 0.25],
+  ...    [0.5, 0.25, 0.25],
+  ... ]
+  >>> d2_log_loss_score(y_true, y_pred)
+  0.0
+  >>> y_true = [1, 2, 3]
+  >>> y_pred = [
+  ...     [0.98, 0.01, 0.01],
+  ...     [0.01, 0.98, 0.01],
+  ...     [0.01, 0.01, 0.98],
+  ... ]
+  >>> d2_log_loss_score(y_true, y_pred)
+  0.981...
+  >>> y_true = [1, 2, 3]
+  >>> y_pred = [
+  ...     [0.1, 0.6, 0.3],
+  ...     [0.1, 0.6, 0.3],
+  ...     [0.4, 0.5, 0.1],
+  ... ]
+  >>> d2_log_loss_score(y_true, y_pred)
+  -0.552...
+  >>> y_true = [0, 0, 1, 1]
+  >>> y_pred = [0.5, 0.5, 0.5, 0.5]
+  >>> d2_log_loss_score(y_true, y_pred)
+  0.0
+  >>> y_true = [0, 0, 1, 1]
+  >>> y_pred = [0.8, 0.8, 0.2, 0.2]
+  >>> d2_log_loss_score(y_true, y_pred)
+  -1.321...
+
 .. _visualization_regression_evaluation:
 
 Visual evaluation of regression models
