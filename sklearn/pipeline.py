@@ -1786,6 +1786,8 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
                 **{name: transformer},
                 method_mapping=MethodMapping()
                 .add(caller="fit", callee="fit")
+                .add(caller="fit_transform", callee="fit")
+                .add(caller="fit_transform", callee="transform")
                 .add(caller="fit_transform", callee="fit_transform"),
             )
 
