@@ -970,8 +970,10 @@ Note the following behaviors when averaging:
 * If all labels are included, "micro"-averaging in a multiclass setting will produce
   precision, recall and :math:`F` that are all identical to accuracy.
 * "weighted" averaging may produce a F-score that is not between precision and recall.
-* "macro" averaging for F-measures is NOT calculated as the harmonic mean over the
-  arithmetic precision and recall means, though some publications define it thus.
+* "macro" averaging for F-measures is calculated as the arithmetic mean over
+  per-label/class F-measures, not the harmonic mean over the arithmetic precision and
+  recall means. Both calculations can be seen in the literature but are not equivalent,
+  see [OB2019]_ for details.
 
 To make this more explicit, consider the following notation:
 
@@ -1031,6 +1033,12 @@ Similarly, labels not present in the data sample may be accounted for in macro-a
 
   >>> metrics.precision_score(y_true, y_pred, labels=[0, 1, 2, 3], average='macro')
   0.166...
+
+.. topic:: References:
+
+    .. [OB2019] Opitz, J., & Burst, S. (2019). `Macro f1 and macro f1
+       <https://arxiv.org/abs/1911.03347>`_.
+       arXiv preprint arXiv:1911.03347.
 
 .. _jaccard_similarity_score:
 
