@@ -1007,7 +1007,7 @@ individual model is very fast.
     * :ref:`sphx_glr_auto_examples_model_selection_plot_permutation_tests_for_classification.py`
 
 |details-start|
-.. topic:: References:
+**References**
 |details-split|
 
  * Ojala and Garriga. `Permutation Tests for Studying Classifier Performance
