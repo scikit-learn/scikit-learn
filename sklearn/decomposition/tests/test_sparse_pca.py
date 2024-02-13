@@ -268,7 +268,7 @@ def test_spca_feature_names_out(SPCA):
     assert_array_equal([f"{estimator_name}{i}" for i in range(4)], names)
 
 
-# TODO (1.6): remove in 1.6
+# TODO(1.6): remove in 1.6
 def test_spca_max_iter_None_deprecation():
     """Check that we raise a warning for the deprecation of `max_iter=None`."""
     rng = np.random.RandomState(0)

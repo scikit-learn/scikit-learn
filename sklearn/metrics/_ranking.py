@@ -538,6 +538,17 @@ def roc_auc_score(
     RocCurveDisplay.from_predictions : Plot Receiver Operating Characteristic
         (ROC) curve given the true and predicted values.
 
+    Notes
+    -----
+    The Gini Coefficient is a summary measure of the ranking ability of binary
+    classifiers. It is expressed using the area under of the ROC as follows:
+
+    G = 2 * AUC - 1
+
+    Where G is the Gini coefficient and AUC is the ROC-AUC score. This normalisation
+    will ensure that random guessing will yield a score of 0 in expectation, and it is
+    upper bounded by 1.
+
     References
     ----------
     .. [1] `Wikipedia entry for the Receiver operating characteristic
@@ -558,6 +569,8 @@ def roc_auc_score(
             Under the ROC Curve for Multiple Class Classification Problems.
             Machine Learning, 45(2), 171-186.
             <http://link.springer.com/article/10.1023/A:1010920819831>`_
+    .. [6] `Wikipedia entry for the Gini coefficient
+            <https://en.wikipedia.org/wiki/Gini_coefficient>`_
 
     Examples
     --------
@@ -1287,6 +1300,14 @@ def coverage_error(y_true, y_score, *, sample_weight=None):
     .. [1] Tsoumakas, G., Katakis, I., & Vlahavas, I. (2010).
            Mining multi-label data. In Data mining and knowledge discovery
            handbook (pp. 667-685). Springer US.
+
+    Examples
+    --------
+    >>> from sklearn.metrics import coverage_error
+    >>> y_true = [[1, 0, 0], [0, 1, 1]]
+    >>> y_score = [[1, 0, 0], [0, 1, 1]]
+    >>> coverage_error(y_true, y_score)
+    1.5
     """
     y_true = check_array(y_true, ensure_2d=True)
     y_score = check_array(y_score, ensure_2d=True)
@@ -1356,6 +1377,14 @@ def label_ranking_loss(y_true, y_score, *, sample_weight=None):
     .. [1] Tsoumakas, G., Katakis, I., & Vlahavas, I. (2010).
            Mining multi-label data. In Data mining and knowledge discovery
            handbook (pp. 667-685). Springer US.
+
+    Examples
+    --------
+    >>> from sklearn.metrics import label_ranking_loss
+    >>> y_true = [[1, 0, 0], [0, 0, 1]]
+    >>> y_score = [[0.75, 0.5, 1], [1, 0.2, 0.1]]
+    >>> label_ranking_loss(y_true, y_score)
+    0.75...
     """
     y_true = check_array(y_true, ensure_2d=False, accept_sparse="csr")
     y_score = check_array(y_score, ensure_2d=False)
