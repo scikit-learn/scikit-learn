@@ -172,6 +172,10 @@ Changelog
 :mod:`sklearn.utils`
 ....................
 
+- |Enhancement| |Fix| :func:`utils.metaestimators.available_if` now reraises the error
+  from the `check` function as the cause of the `AttributeError`.
+  :pr:`28198` by `Thomas Fan`_.
+
 - |Fix| :func:`utils._safe_indexing` now raises a `ValueError` when `X` is a Python list
   and `axis=1`, as documented in the docstring.
   :pr:`28222` by :user:`Guillaume Lemaitre <glemaitre>`.

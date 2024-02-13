@@ -129,13 +129,6 @@ Changelog
 - |Enhancement| :term:`CV splitters <CV splitter>` that ignores the group parameter now
   raises a warning when groups are passed in to :term:`split`. :pr:`28210` by
 
-:mod:`sklearn.utils`
-....................
-
-- |Enhancement| :func:`utils.metaestimators.available_if` now reraises the error from
-  the `check` function as the cause of the `AttributeError`. :pr:`28198` by
-  `Thomas Fan`_.
-
 .. rubric:: Code and documentation contributors
 
 Thanks to everyone who has contributed to the maintenance and improvement of
