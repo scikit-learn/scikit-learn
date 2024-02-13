@@ -713,6 +713,8 @@ Example::
   even if perfect stratification is possible. If you have relatively close
   distribution of classes in each group, using :class:`GroupKFold` is better.
 
+|details-end|
+
 Here is a visualization of cross-validation behavior for uneven groups:
 
 .. figure:: ../auto_examples/model_selection/images/sphx_glr_plot_cv_indices_005.png
@@ -720,7 +722,7 @@ Here is a visualization of cross-validation behavior for uneven groups:
    :align: center
    :scale: 75%
 
-|details-end|
+
 
 .. _leave_one_group_out:
 
