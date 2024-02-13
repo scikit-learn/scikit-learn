@@ -5,6 +5,7 @@ over the internet, all details are available on the official website:
 
     http://vis-www.cs.umass.edu/lfw/
 """
+
 # Copyright (c) 2011 Olivier Grisel <olivier.grisel@ensta.org>
 # License: BSD 3 clause
 
@@ -72,7 +73,9 @@ TARGETS = (
 #
 
 
-def _check_fetch_lfw(data_home=None, funneled=True, download_if_missing=True):
+def _check_fetch_lfw(
+    data_home=None, funneled=True, download_if_missing=True, show_progress=False
+):
     """Helper function to download any missing LFW data"""
 
     data_home = get_data_home(data_home=data_home)
@@ -81,14 +84,31 @@ def _check_fetch_lfw(data_home=None, funneled=True, download_if_missing=True):
     if not exists(lfw_home):
         makedirs(lfw_home)
 
+    progress = None
+    task = 0
+
+    if show_progress:
+        try:
+            from rich.progress import Progress
+
+            progress = Progress()
+            task = progress.add_task(
+                "[red]Downloading metadatas...", total=len(TARGETS)
+            )
+            progress.start()
+        except ImportError:
+            pass
+
     for target in TARGETS:
         target_filepath = join(lfw_home, target.filename)
         if not exists(target_filepath):
             if download_if_missing:
                 logger.info("Downloading LFW metadata: %s", target.url)
-                _fetch_remote(target, dirname=lfw_home)
+                _fetch_remote(target, dirname=lfw_home, progress=progress)
             else:
                 raise OSError("%s is missing" % target_filepath)
+        if progress:
+            progress.update(task, advance=1)
 
     if funneled:
         data_folder_path = join(lfw_home, "lfw_funneled")
@@ -102,15 +122,31 @@ def _check_fetch_lfw(data_home=None, funneled=True, download_if_missing=True):
         if not exists(archive_path):
             if download_if_missing:
                 logger.info("Downloading LFW data (~200MB): %s", archive.url)
-                _fetch_remote(archive, dirname=lfw_home)
+                if progress:
+                    task = progress.add_task(
+                        "[green]Downloading LFW data (~200MB)...", total=100
+                    )
+                _fetch_remote(
+                    archive, dirname=lfw_home, progress=progress, progress_task=task
+                )
             else:
                 raise OSError("%s is missing" % archive_path)
 
         import tarfile
 
         logger.debug("Decompressing the data archive to %s", data_folder_path)
-        tarfile.open(archive_path, "r:gz").extractall(path=lfw_home)
+        with tarfile.open(archive_path, "r:gz") as tar:
+            members = tar.getmembers()
+            if progress:
+                task2 = progress.add_task("[blue]Extracting...", total=len(members))
+            for member in members:
+                tar.extract(member, path=lfw_home)
+                if progress:
+                    progress.update(task2, advance=1)
         remove(archive_path)
+
+    if progress:
+        progress.stop()
 
     return lfw_home, data_folder_path
 
@@ -242,6 +278,7 @@ def _fetch_lfw_people(
         "slice_": [tuple, Hidden(None)],
         "download_if_missing": ["boolean"],
         "return_X_y": ["boolean"],
+        "show_progress": ["boolean"],
     },
     prefer_skip_nested_validation=True,
 )
@@ -255,6 +292,7 @@ def fetch_lfw_people(
     slice_=(slice(70, 195), slice(78, 172)),
     download_if_missing=True,
     return_X_y=False,
+    show_progress=False,
 ):
     """Load the Labeled Faces in the Wild (LFW) people dataset \
 (classification).
@@ -308,6 +346,10 @@ def fetch_lfw_people(
 
         .. versionadded:: 0.20
 
+    show_progress : bool, default=False
+        If True, display a progress bar to show the download progress.
+        Need to have rich library installed.
+
     Returns
     -------
     dataset : :class:`~sklearn.utils.Bunch`
@@ -340,7 +382,10 @@ def fetch_lfw_people(
         .. versionadded:: 0.20
     """
     lfw_home, data_folder_path = _check_fetch_lfw(
-        data_home=data_home, funneled=funneled, download_if_missing=download_if_missing
+        data_home=data_home,
+        funneled=funneled,
+        download_if_missing=download_if_missing,
+        show_progress=show_progress,
     )
     logger.debug("Loading LFW people faces from %s", lfw_home)
 

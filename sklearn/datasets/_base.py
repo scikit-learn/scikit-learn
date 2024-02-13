@@ -1407,7 +1407,7 @@ def _sha256(path):
     return sha256hash.hexdigest()
 
 
-def _fetch_remote(remote, dirname=None):
+def _fetch_remote(remote, dirname=None, progress=None, progress_task=None):
     """Helper function to download a remote dataset into path
 
     Fetch a dataset pointed by remote's url, save into path using remote's
@@ -1423,14 +1423,40 @@ def _fetch_remote(remote, dirname=None):
     dirname : str
         Directory to save the file to.
 
+    progress : rich.progress.Progress
+
+    progress_task : rich.progress.Task
+
     Returns
     -------
     file_path: str
         Full path of the created file.
     """
-
     file_path = remote.filename if dirname is None else join(dirname, remote.filename)
-    urlretrieve(remote.url, file_path)
+    if progress is not None:
+        is_new = False
+        total = 100
+        if progress_task is None:
+            progress_task = progress.add_task("[green]Downloading...", total=total)
+            is_new = True
+        else:
+            for task in progress.tasks:
+                if task.id == progress_task:
+                    total = task.total
+                    break
+
+        def update_progress(count, block_size, total_size):
+            percentage = total * count * block_size / total_size
+            progress.update(progress_task, completed=percentage)
+            if percentage >= total:
+                if is_new:
+                    progress.remove_task(progress_task)
+                return
+
+        urlretrieve(remote.url, file_path, reporthook=update_progress)
+    else:
+        urlretrieve(remote.url, file_path)
+
     checksum = _sha256(file_path)
     if remote.checksum != checksum:
         raise OSError(

@@ -18,6 +18,7 @@ Pace, R. Kelley and Ronald Barry, Sparse Spatial Autoregressions,
 Statistics and Probability Letters, 33 (1997) 291-297.
 
 """
+
 # Authors: Peter Prettenhofer
 # License: BSD 3 clause
 
@@ -57,11 +58,17 @@ logger = logging.getLogger(__name__)
         "download_if_missing": ["boolean"],
         "return_X_y": ["boolean"],
         "as_frame": ["boolean"],
+        "show_progress": ["boolean"],
     },
     prefer_skip_nested_validation=True,
 )
 def fetch_california_housing(
-    *, data_home=None, download_if_missing=True, return_X_y=False, as_frame=False
+    *,
+    data_home=None,
+    download_if_missing=True,
+    return_X_y=False,
+    as_frame=False,
+    show_progress=False,
 ):
     """Load the California housing dataset (regression).
 
@@ -96,6 +103,10 @@ def fetch_california_housing(
         a pandas DataFrame or Series depending on the number of target_columns.
 
         .. versionadded:: 0.23
+
+    show_progress : bool, default=False
+        If True, display a progress bar to show the download progress.
+        Need to have rich library installed.
 
     Returns
     -------
@@ -147,14 +158,28 @@ def fetch_california_housing(
 
     filepath = _pkl_filepath(data_home, "cal_housing.pkz")
     if not exists(filepath):
+        progress = None
+        task = 0
+
         if not download_if_missing:
             raise OSError("Data not found and `download_if_missing` is False")
+        if show_progress:
+            try:
+                from rich.progress import Progress
+
+                progress = Progress()
+                task = progress.add_task("[red]Downloading Cal. housing...", total=1)
+                progress.start()
+            except ImportError:
+                pass
 
         logger.info(
             "Downloading Cal. housing from {} to {}".format(ARCHIVE.url, data_home)
         )
 
-        archive_path = _fetch_remote(ARCHIVE, dirname=data_home)
+        archive_path = _fetch_remote(
+            ARCHIVE, dirname=data_home, progress=progress, progress_task=task
+        )
 
         with tarfile.open(mode="r:gz", name=archive_path) as f:
             cal_housing = np.loadtxt(
