@@ -15,11 +15,13 @@ import pytest
 from joblib.numpy_pickle import NumpyPickler
 from numpy.testing import assert_allclose
 
-from sklearn import datasets, tree
-from sklearn.dummy import DummyClassifier, DummyRegressor
+from sklearn import clone, datasets, tree
+from sklearn.dummy import DummyRegressor
 from sklearn.exceptions import NotFittedError
+from sklearn.impute import SimpleImputer
 from sklearn.metrics import accuracy_score, mean_poisson_deviance, mean_squared_error
 from sklearn.model_selection import train_test_split
+from sklearn.pipeline import make_pipeline
 from sklearn.random_projection import _sparse_random_matrix
 from sklearn.tree import (
     DecisionTreeClassifier,
@@ -2548,67 +2550,53 @@ def test_missing_values_poisson(Tree):
     assert (y_pred >= 0.0).all()
 
 
-# XXX: ExtraTreeRegressor performs very poorly, or sporadically with missing-values
-# at random. Is this something we should document?
+def make_friedman1_classification(*args, **kwargs):
+    X, y = datasets.make_friedman1(*args, **kwargs)
+    y = y > 14
+    return X, y
+
+
 @pytest.mark.parametrize(
-    "make_data, Tree, resilience_score, dummy_model",
+    "make_data,Tree",
     [
-        (datasets.make_regression, DecisionTreeRegressor, 0.7, DummyRegressor),
-        (datasets.make_classification, DecisionTreeClassifier, 0.9, DummyClassifier),
-        (datasets.make_regression, ExtraTreeRegressor, 0.55, DummyRegressor),
-        (
-            datasets.make_classification,
-            ExtraTreeClassifier,
-            0.75,
-            DummyClassifier,
-        ),
+        (datasets.make_friedman1, DecisionTreeRegressor),
+        (make_friedman1_classification, DecisionTreeClassifier),
     ],
 )
 @pytest.mark.parametrize("sample_weight_train", [None, "ones"])
 def test_missing_values_is_resilience(
-    make_data, Tree, resilience_score, dummy_model, sample_weight_train
+    make_data, Tree, sample_weight_train, global_random_seed
 ):
-    """Check that trees can deal with missing values and have decent performance."""
-
-    rng = np.random.RandomState(0)
-    n_samples, n_features = 1000, 50
-    X, y = make_data(n_samples=n_samples, n_features=n_features, random_state=rng)
-
-    # Create dataset with missing values
-    X_missing = X.copy()
-    X_missing[rng.choice([False, True], size=X.shape, p=[0.9, 0.1])] = np.nan
-    X_missing_train, X_missing_test, y_train, y_test = train_test_split(
-        X_missing, y, random_state=0
+    """Check that trees can deal with missing values have decent performance."""
+    n_samples, n_features = 5_000, 10
+    X, y = make_data(
+        n_samples=n_samples, n_features=n_features, random_state=global_random_seed
     )
 
+    X_missing = X.copy()
+    rng = np.random.RandomState(global_random_seed)
+    X_missing[rng.choice([False, True], size=X.shape, p=[0.9, 0.1])] = np.nan
+    X_missing_train, X_missing_test, y_train, y_test = train_test_split(
+        X_missing, y, random_state=global_random_seed
+    )
     if sample_weight_train == "ones":
-        sample_weight_train = np.ones(X_missing_train.shape[0])
+        sample_weight = np.ones(X_missing_train.shape[0])
+    else:
+        sample_weight = None
 
-    # Train tree with missing values
-    tree_with_missing = Tree(random_state=0)
-    tree_with_missing.fit(X_missing_train, y_train, sample_weight=sample_weight_train)
-    score_with_missing = tree_with_missing.score(X_missing_test, y_test)
+    native_tree = Tree(max_depth=10, random_state=global_random_seed)
+    native_tree.fit(X_missing_train, y_train, sample_weight=sample_weight)
+    score_native_tree = native_tree.score(X_missing_test, y_test)
 
-    # Train tree without missing values
-    X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
-    tree = Tree(random_state=0)
-    tree.fit(X_train, y_train, sample_weight=sample_weight_train)
-    score_without_missing = tree.score(X_test, y_test)
+    tree_with_imputer = make_pipeline(
+        SimpleImputer(), Tree(max_depth=10, random_state=global_random_seed)
+    )
+    tree_with_imputer.fit(X_missing_train, y_train)
+    score_tree_with_imputer = tree_with_imputer.score(X_missing_test, y_test)
 
-    # We should definitely be better than the dummy model
-    dummy_score = dummy_model().fit(X_train, y_train).score(X_test, y_test)
-
-    # Score is still a relatively large percent of the tree's score that had
-    # no missing values
     assert (
-        score_without_missing > dummy_score
-    ), f"{score_without_missing} is not > than {dummy_score}"
-    assert (
-        score_with_missing > dummy_score
-    ), f"{score_with_missing} is not > than {dummy_score}"
-    assert (
-        score_with_missing >= resilience_score * score_without_missing
-    ), f"{score_with_missing} is not > than {resilience_score * score_without_missing}"
+        score_native_tree > score_tree_with_imputer
+    ), f"{score_native_tree=} should be strictly greater than {score_tree_with_imputer}"
 
 
 @pytest.mark.parametrize("Tree, expected_score", zip(CLF_TREES.values(), [0.85, 0.82]))
@@ -2679,26 +2667,19 @@ def test_deterministic_pickle():
     assert pickle1 == pickle2
 
 
-@pytest.mark.parametrize("Tree", [DecisionTreeRegressor, ExtraTreeRegressor])
 @pytest.mark.parametrize(
     "X",
     [
-        np.array([np.nan, 2, np.nan, 4, 5, 6]).reshape(
-            -1, 1
-        ),  # missing values will go left for greedy splits
-        np.array([np.nan, np.nan, 3, 4, 5, 6]).reshape(
-            -1, 1
-        ),  # missing values will go left for greedy splits
-        np.array([1, 2, 3, 4, np.nan, np.nan]).reshape(
-            -1, 1
-        ),  # missing values will go right for greedy splits
-        np.array([1, 2, 3, 4, np.nan, 6]).reshape(
-            -1, 1
-        ),  # missing values will go right for greedy splits
+        # missing values will go left for greedy splits
+        np.array([np.nan, 2, np.nan, 4, 5, 6]),
+        np.array([np.nan, np.nan, 3, 4, 5, 6]),
+        # missing values will go right for greedy splits
+        np.array([1, 2, 3, 4, np.nan, np.nan]),
+        np.array([1, 2, 3, np.nan, 6, np.nan]),
     ],
 )
 @pytest.mark.parametrize("criterion", ["squared_error", "friedman_mse"])
-def test_regression_tree_missing_values_toy(Tree, X, criterion):
+def test_regression_tree_missing_values_toy(X, criterion):
     """Check that we properly handle missing values in regression trees using a toy
     dataset.
 
@@ -2710,14 +2691,16 @@ def test_regression_tree_missing_values_toy(Tree, X, criterion):
 
     Non-regression test for:
     https://github.com/scikit-learn/scikit-learn/issues/28254
+    https://github.com/scikit-learn/scikit-learn/issues/28316
     """
-
-    # With certain datasets, the missing values will always be sent to the left,
-    # or right child at the first split. The leaf will be pure.
+    X = X.reshape(-1, 1)
     y = np.arange(6)
 
-    tree = Tree(criterion=criterion, random_state=0).fit(X, y)
+    tree = DecisionTreeRegressor(criterion=criterion, random_state=0).fit(X, y)
+    tree_ref = clone(tree).fit(y.reshape(-1, 1), y)
     assert all(tree.tree_.impurity >= 0)  # MSE should always be positive
+    # Check the impurity match after the first split
+    assert_allclose(tree.tree_.impurity[:2], tree_ref.tree_.impurity[:2])
 
     # Find the leaves with a single sample where the MSE should be 0
     leaves_idx = np.flatnonzero(

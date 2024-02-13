@@ -223,7 +223,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
     :class:`ColumnTransformer` can be configured with a transformer that requires
     a 1d array by setting the column to a string:
 
-    >>> from sklearn.feature_extraction import FeatureHasher
+    >>> from sklearn.feature_extraction.text import CountVectorizer
     >>> from sklearn.preprocessing import MinMaxScaler
     >>> import pandas as pd   # doctest: +SKIP
     >>> X = pd.DataFrame({
@@ -231,9 +231,9 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
     ...     "width": [3, 4, 5],
     ... })  # doctest: +SKIP
     >>> # "documents" is a string which configures ColumnTransformer to
-    >>> # pass the documents column as a 1d array to the FeatureHasher
+    >>> # pass the documents column as a 1d array to the CountVectorizer
     >>> ct = ColumnTransformer(
-    ...     [("text_preprocess", FeatureHasher(input_type="string"), "documents"),
+    ...     [("text_preprocess", CountVectorizer(), "documents"),
     ...      ("num_preprocess", MinMaxScaler(), ["width"])])
     >>> X_trans = ct.fit_transform(X)  # doctest: +SKIP
 
@@ -1204,12 +1204,12 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
             routing information.
         """
         router = MetadataRouter(owner=self.__class__.__name__)
-        for name, step, _, _ in self._iter(
-            fitted=False,
-            column_as_labels=False,
-            skip_drop=True,
-            skip_empty_columns=True,
-        ):
+        # Here we don't care about which columns are used for which
+        # transformers, and whether or not a transformer is used at all, which
+        # might happen if no columns are selected for that transformer. We
+        # request all metadata requested by all transformers.
+        transformers = chain(self.transformers, [("remainder", self.remainder, None)])
+        for name, step, _ in transformers:
             method_mapping = MethodMapping()
             if hasattr(step, "fit_transform"):
                 (
