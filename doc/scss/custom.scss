@@ -48,6 +48,22 @@ code.literal {
     height: unset !important;
     padding: 1%;
   }
+
+  // Resize table of contents to make the top few levels of headings more visible
+  li.toctree-l1 {
+    padding-bottom: 0.5em;
+
+    > a {
+      font-size: 150%;
+      font-weight: bold;
+    }
+  }
+
+  li.toctree-l2,
+  li.toctree-l3,
+  li.toctree-l4 {
+    margin-left: 15px;
+  }
 }
 
 /* Dropdowns (sphinx-design) */
