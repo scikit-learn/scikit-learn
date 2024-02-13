@@ -179,7 +179,7 @@ plt.show()
 #
 # In this example the training set was intentionally kept very small. In this
 # setting, optimizing the log-loss can still lead to poorly calibrated models
-# because of overfitting. To mitigate this, the `LogisticRegressionCV` class
+# because of overfitting. To mitigate this, the :class:`~sklearn.linear_model.LogisticRegressionCV` class
 # was configured to tune the `C` regularization parameter to also minimize the
 # log-loss via inner cross-validation so as to find the best compromise for
 # this model in the small training set setting.
@@ -191,7 +191,7 @@ plt.show()
 # under-confident: the predicted probabilities are a bit too close to 0.5
 # compared to the true fraction of positive samples.
 #
-# The other methods all output worse-calibrated probabilities:
+# The other methods all output less well calibrated probabilities:
 #
 # * :class:`~sklearn.naive_bayes.GaussianNB` tends to push probabilities to 0
 #   or 1 (see histogram) on this particular dataset (over-confidence). This is
@@ -246,7 +246,7 @@ plt.show()
 # look. In general, Logistic Regression and Random Forest will tend to be the
 # best calibrated classifiers, while SVC will often display the typical
 # under-confident miscalibration. The naive Bayes model is also often poorly
-# calibrated but the genaral shape of its calibration curve can vary widely
+# calibrated but the general shape of its calibration curve can vary widely
 # depending on the dataset.
 #
 # Finally, note that for some dataset seeds, all models are poorly calibrated,
