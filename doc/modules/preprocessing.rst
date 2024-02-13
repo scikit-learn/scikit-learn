@@ -227,6 +227,8 @@ more robust estimates for the center and range of your data.
   available on this FAQ: `Should I normalize/standardize/rescale the data?
   <http://www.faqs.org/faqs/ai-faq/neural-nets/part2/section-16.html>`_
 
+|details-end|
+
 .. topic:: Scaling vs Whitening
 
   It is sometimes not enough to center and scale the features
@@ -235,8 +237,6 @@ more robust estimates for the center and range of your data.
 
   To address this issue you can use :class:`~sklearn.decomposition.PCA` with
   ``whiten=True`` to further remove the linear correlation across features.
-
-|details-end|
 
 .. _kernel_centering:
 
