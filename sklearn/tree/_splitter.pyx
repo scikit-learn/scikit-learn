@@ -809,40 +809,6 @@ cdef inline int node_split_random(
         has_missing = n_missing != 0
         criterion.init_missing(n_missing)
 
-        # TODO:
-        # 1. We can either compute the split of non-missing vs missing
-        # 2. or randomly select it.
-
-        # In addition, we either randomly split the non-missing values
-        # or we split entirely by separating the non-missing
-        # and missing-values
-        # separate_nan_and_non_nans = has_missing and (rand_int(0, 2, random_state) == 1)
-        # if separate_nan_and_non_nans:
-        #     missing_go_to_left = rand_int(0, 2, random_state)
-        #     p = end - n_missing
-        #     n_left, n_right = end - start - n_missing, n_missing
-
-        #     if (n_left < min_samples_leaf or n_right < min_samples_leaf):
-        #         continue
-
-        #     criterion.reset()
-        #     criterion.missing_go_to_left = missing_go_to_left
-        #     criterion.update(p)
-
-        #     if ((criterion.weighted_n_left < min_weight_leaf) or
-        #             (criterion.weighted_n_right < min_weight_leaf)):
-        #         continue
-
-        #     current_proxy_improvement = criterion.proxy_impurity_improvement()
-        #     if current_proxy_improvement > best_proxy_improvement:
-        #         best_proxy_improvement = current_proxy_improvement
-        #         current_split.threshold = INFINITY
-        #         current_split.missing_go_to_left = missing_go_to_left
-        #         current_split.n_missing = n_missing
-        #         current_split.pos = p
-        #         best_split = current_split
-        # else:
-
         # Draw a random threshold
         current_split.threshold = rand_uniform(
             min_feature_value,
