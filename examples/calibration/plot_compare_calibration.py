@@ -271,5 +271,3 @@ plt.show()
 #        naive Bayesian classifiers
 #        <https://citeseerx.ist.psu.edu/doc_view/pid/4f67a122ec3723f08ad5cbefecad119b432b3304>`_
 #        Zadrozny, Bianca, and Charles Elkan. Icml. Vol. 1. 2001.
-
-# %%
