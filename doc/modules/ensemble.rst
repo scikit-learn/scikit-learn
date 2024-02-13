@@ -456,8 +456,10 @@ The usage and the parameters of :class:`GradientBoostingClassifier` and
 :class:`GradientBoostingRegressor` are described below. The 2 most important
 parameters of these estimators are `n_estimators` and `learning_rate`.
 
+|details-start|
 Classification
 ^^^^^^^^^^^^^^^
+|details-split|
 
 :class:`GradientBoostingClassifier` supports both binary and multi-class
 classification.
@@ -494,8 +496,12 @@ depth via ``max_depth`` or by setting the number of leaf nodes via
    :class:`HistGradientBoostingClassifier` as an alternative to
    :class:`GradientBoostingClassifier` .
 
+|details-end|
+
+|details-start|
 Regression
 ^^^^^^^^^^^
+|details-split|
 
 :class:`GradientBoostingRegressor` supports a number of
 :ref:`different loss functions <gradient_boosting_loss>`
@@ -535,6 +541,8 @@ to determine the optimal number of trees (i.e. ``n_estimators``) by early stoppi
    :target: ../auto_examples/ensemble/plot_gradient_boosting_regression.html
    :align: center
    :scale: 75
+
+|details-end|
 
 .. topic:: Examples:
 
