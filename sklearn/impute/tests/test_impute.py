@@ -1758,31 +1758,31 @@ def test_simple_imputer_constant_fill_value_casting():
     """
     # cannot cast fill_value at fit
     fill_value = 1.5
-    X_int_64 = np.array([[1, 2, 3], [2, 3, 4]], dtype=np.int64)
+    X_int64 = np.array([[1, 2, 3], [2, 3, 4]], dtype=np.int64)
     imputer = SimpleImputer(
         strategy="constant", fill_value=fill_value, missing_values=2
     )
     err_msg = f"fill_value={fill_value!r} (of type {type(fill_value)!r}) cannot be cast"
     with pytest.raises(ValueError, match=re.escape(err_msg)):
-        imputer.fit(X_int_64)
+        imputer.fit(X_int64)
 
     # cannot cast fill_value at transform
-    X_float_64 = np.array([[1, 2, 3], [2, 3, 4]], dtype=np.float64)
-    imputer.fit(X_float_64)
+    X_float64 = np.array([[1, 2, 3], [2, 3, 4]], dtype=np.float64)
+    imputer.fit(X_float64)
     err_msg = (
         f"The dtype of the filling value (i.e. {imputer.statistics_.dtype!r}) "
         "cannot be cast"
     )
     with pytest.raises(ValueError, match=re.escape(err_msg)):
-        imputer.transform(X_int_64)
+        imputer.transform(X_int64)
 
     # check that no error is raised when having the same kind of dtype
     fill_value_list = [np.float64(1.5), 1.5, 1]
-    X_float_32 = X_float_64.astype(np.float32)
+    X_float32 = X_float64.astype(np.float32)
 
     for fill_value in fill_value_list:
         imputer = SimpleImputer(
             strategy="constant", fill_value=fill_value, missing_values=2
         )
-        X_trans = imputer.fit_transform(X_float_32)
-        assert X_trans.dtype == X_float_32.dtype
+        X_trans = imputer.fit_transform(X_float32)
+        assert X_trans.dtype == X_float32.dtype
