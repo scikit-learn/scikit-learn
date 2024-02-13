@@ -299,9 +299,7 @@ centering :math:`K_{test}` is done as:
 `(n_samples_test, n_samples)` where all entries are equal to
 :math:`\frac{1}{\text{n}_{samples}}`.
 
-|details-start|
 .. topic:: References
-|details-split|
 
   .. [Scholkopf1998] B. Schölkopf, A. Smola, and K.R. Müller,
     `"Nonlinear component analysis as a kernel eigenvalue problem."
