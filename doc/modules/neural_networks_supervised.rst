@@ -233,9 +233,10 @@ of iterations. Since backpropagation has a high time complexity, it is advisable
 to start with smaller number of hidden neurons and few hidden layers for
 training.
 
-
+|details-start|
 Mathematical formulation
 ========================
+|details-split|
 
 Given a set of training examples :math:`(x_1, y_1), (x_2, y_2), \ldots, (x_n, y_n)`
 where :math:`x_i \in \mathbf{R}^n` and :math:`y_i \in \{0, 1\}`, a one hidden
@@ -309,7 +310,7 @@ with a value larger than 0.
 The algorithm stops when it reaches a preset maximum number of iterations; or
 when the improvement in loss is below a certain, small number.
 
-
+|details-end|
 
 .. _mlp_tips:
 
