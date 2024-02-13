@@ -970,9 +970,7 @@ encoding learned in :meth:`~TargetEncoder.fit_transform`.
   * :ref:`sphx_glr_auto_examples_preprocessing_plot_target_encoder.py`
   * :ref:`sphx_glr_auto_examples_preprocessing_plot_target_encoder_cross_val.py`
 
-|details-start|
 .. topic:: References
-|details-split|
 
   .. [MIC] :doi:`Micci-Barreca, Daniele. "A preprocessing scheme for high-cardinality
      categorical attributes in classification and prediction problems"
@@ -983,7 +981,6 @@ encoding learned in :meth:`~TargetEncoder.fit_transform`.
      high cardinality features" Comput Stat 37, 2671–2692 (2022)
      <10.1007/s00180-022-01207-6>`
 
-|details-end|
 
 .. _preprocessing_discretization:
 
