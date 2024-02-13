@@ -927,6 +927,10 @@ computed as an empirical Bayes estimate: :math:`m=\sigma_i^2/\tau^2`, where
 :math:`\sigma_i^2` is the variance of `y` with category :math:`i` and
 :math:`\tau^2` is the global variance of `y`.
 
+|details-start|
+**Multiclass classification targets**
+|details-split|
+
 For multiclass classification targets, the formulation is similar to binary
 classification:
 
@@ -940,6 +944,12 @@ where :math:`S_{ij}` is the encoding for category :math:`i` and class :math:`j`,
 number of observations, and :math:`\lambda_i` is a shrinkage factor for category
 :math:`i`.
 
+|details-end|
+
+|details-start|
+**Continuous targets**
+|details-split|
+
 For continuous targets, the formulation is similar to binary classification:
 
 .. math::
@@ -947,6 +957,8 @@ For continuous targets, the formulation is similar to binary classification:
 
 where :math:`L_i` is the set of observations with category :math:`i` and
 :math:`n_i` is the number of observations with category :math:`i`.
+
+|details-end|
 
 :meth:`~TargetEncoder.fit_transform` internally relies on a :term:`cross fitting`
 scheme to prevent target information from leaking into the train-time
