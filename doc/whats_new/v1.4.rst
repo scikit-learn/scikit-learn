@@ -134,11 +134,9 @@ Changelog
 
 - |Fix| make :class:`preprocessing.FunctionTransformer` more lenient and overwrite
   output column names with the `get_feature_names_out` in the following cases:
-
-  - the input and output column names remain the same (happen when using NumPy `ufunc`);
-  - the input column names are numbers;
-  - the output will be set to Pandas or Polars dataframe.
-
+  (i) the input and output column names remain the same (happen when using NumPy
+  `ufunc`); (ii) the input column names are numbers; (iii) the output will be set to
+  Pandas or Polars dataframe.
   :pr:`28241` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 - |Fix| :class:`preprocessing.FunctionTransformer` now also warns when `set_output`
@@ -146,12 +144,17 @@ Changelog
   `feature_names_out` is not specified.
   :pr:`28263` by :user:`Guillaume Lemaitre <glemaitre>`.
 
+- |Fix| :class:`preprocessing.TargetEncoder` no longer fails when
+  `target_type="continuous"` and the input is read-only. In particular, it now
+  works with pandas copy-on-write mode enabled.
+  :pr:`28233` by :user:`John Hopfensperger <s-banach>`.
+
 :mod:`sklearn.tree`
 ...................
 
 - |Fix| :class:`tree.DecisionTreeClassifier` and
   :class:`tree.DecisionTreeRegressor` are handling missing values properly. The internal
-  criterion was not initialize when no missing values were present in the data, leading
+  criterion was not initialized when no missing values were present in the data, leading
   to potentially wrong criterion values.
   :pr:`28295` by :user:`Guillaume Lemaitre <glemaitre>` and
   :pr:`28327` by :user:`Adam Li <adam2392>`.
@@ -162,15 +165,6 @@ Changelog
 - |Fix| :func:`utils._safe_indexing` now raises a `ValueError` when `X` is a Python list
   and `axis=1`, as documented in the docstring.
   :pr:`28222` by :user:`Guillaume Lemaitre <glemaitre>`.
-
-
-:mod:`sklearn.preprocessing`
-............................
-
-- |Fix| :class:`preprocessing.TargetEncoder` no longer fails when
-  `target_type="continuous"` and the input is read-only. In particular, it now
-  works with pandas copy-on-write mode enabled.
-  :pr:`28233` by :user:`John Hopfensperger <s-banach>`.
 
 .. _changes_1_4:
 
