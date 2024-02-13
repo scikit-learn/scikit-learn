@@ -845,9 +845,7 @@ complexity equals ``n_components * n_features * n_samples_test``. There is no
 added space complexity in the operation.
 
 |details-start|
-
-.. topic:: References:
-
+**References**
 |details-split|
 
     .. [1] `"Neighbourhood Components Analysis"
