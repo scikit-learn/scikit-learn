@@ -348,9 +348,7 @@ and are computed using the class :class:`BallTree`.
 Alternatively, the user can work with the :class:`BallTree` class directly.
 
 |details-start|
-
-.. topic:: References:
-
+**References**
 |details-split|
 
    * `"Five Balltree Construction Algorithms"
