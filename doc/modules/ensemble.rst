@@ -594,8 +594,10 @@ The parameter ``max_leaf_nodes`` corresponds to the variable ``J`` in the
 chapter on gradient boosting in [Friedman2001]_ and is related to the parameter
 ``interaction.depth`` in R's gbm package where ``max_leaf_nodes == interaction.depth + 1`` .
 
+|details-start|
 Mathematical formulation
 ^^^^^^^^^^^^^^^^^^^^^^^^
+|details-split|
 
 We first present GBRT for regression, and then detail the classification
 case.
@@ -747,6 +749,8 @@ the parameter ``loss``:
     as :class:`AdaBoostClassifier`. Less robust to mislabeled
     examples than ``'log-loss'``; can only be used for binary
     classification.
+
+|details-end|
 
 .. _gradient_boosting_shrinkage:
 
