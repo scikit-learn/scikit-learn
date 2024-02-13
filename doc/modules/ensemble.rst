@@ -361,16 +361,16 @@ means that ``[{0}]`` is equivalent to ``[{0}, {1, 2}]``.
 
  * :ref:`sphx_glr_auto_examples_inspection_plot_partial_dependence.py`
 
-|details-start|
+
 .. topic:: References
-|details-split|
+
 
   .. [Mayer2022] M. Mayer, S.C. Bourassa, M. Hoesli, and D.F. Scognamiglio.
      2022. :doi:`Machine Learning Applications to Land and Structure Valuation
      <10.3390/jrfm15050193>`.
      Journal of Risk and Financial Management 15, no. 5: 193
 
-|details-end|
+
 
 Low-level parallelism
 ^^^^^^^^^^^^^^^^^^^^^
@@ -426,9 +426,9 @@ Finally, many parts of the implementation of
 :class:`HistGradientBoostingClassifier` and
 :class:`HistGradientBoostingRegressor` are parallelized.
 
-|details-start|
+
 .. topic:: References
-|details-split|
+
 
   .. [XGBoost] Tianqi Chen, Carlos Guestrin, :arxiv:`"XGBoost: A Scalable Tree
      Boosting System" <1603.02754>`
@@ -441,7 +441,7 @@ Finally, many parts of the implementation of
      <http://csiss.ncgia.ucsb.edu/SPACE/workshops/2004/SAC/files/fisher.pdf>`_
      Journal of the American Statistical Association, 53, 789-798.
 
-|details-end|
+
 
 :class:`GradientBoostingClassifier` and :class:`GradientBoostingRegressor`
 ----------------------------------------------------------------------------
@@ -851,9 +851,9 @@ based on permutation of the features.
 
  * :ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_regression.py`
 
-|details-start|
+
 .. topic:: References
-|details-split|
+
 
   .. [Friedman2001] Friedman, J.H. (2001). :doi:`Greedy function approximation: A gradient
       boosting machine <10.1214/aos/1013203451>`.
@@ -866,7 +866,7 @@ based on permutation of the features.
   .. [R2007] G. Ridgeway (2006). `Generalized Boosted Models: A guide to the gbm
      package <https://cran.r-project.org/web/packages/gbm/vignettes/gbm.pdf>`_
 
-|details-end|
+
 
 .. _forest:
 
@@ -1055,9 +1055,9 @@ amount of time (e.g., on large datasets).
  * :ref:`sphx_glr_auto_examples_ensemble_plot_forest_importances_faces.py`
  * :ref:`sphx_glr_auto_examples_miscellaneous_plot_multioutput_face_completion.py`
 
-|details-start|
+
 .. topic:: References
-|details-split|
+
 
  .. [B2001] L. Breiman, "Random Forests", Machine Learning, 45(1), 5-32, 2001.
 
@@ -1066,7 +1066,7 @@ amount of time (e.g., on large datasets).
  * P. Geurts, D. Ernst., and L. Wehenkel, "Extremely randomized
    trees", Machine Learning, 63(1), 3-42, 2006.
 
-|details-end|
+
 
 .. _random_forest_feature_importance:
 
@@ -1123,15 +1123,15 @@ to the prediction function.
  * :ref:`sphx_glr_auto_examples_ensemble_plot_forest_importances_faces.py`
  * :ref:`sphx_glr_auto_examples_ensemble_plot_forest_importances.py`
 
-|details-start|
+
 .. topic:: References
-|details-split|
+
 
  .. [L2014] G. Louppe, :arxiv:`"Understanding Random Forests: From Theory to
     Practice" <1407.7502>`,
     PhD Thesis, U. of Liege, 2014.
 
-|details-end|
+
 
 .. _random_trees_embedding:
 
@@ -1225,9 +1225,9 @@ subsets of 50% of the samples and 50% of the features.
 
  * :ref:`sphx_glr_auto_examples_ensemble_plot_bias_variance.py`
 
-|details-start|
+
 .. topic:: References
-|details-split|
+
 
   .. [B1999] L. Breiman, "Pasting small votes for classification in large
          databases and on-line", Machine Learning, 36(1), 85-103, 1999.
@@ -1242,7 +1242,7 @@ subsets of 50% of the samples and 50% of the features.
   .. [LG2012] G. Louppe and P. Geurts, "Ensembles on Random Patches",
          Machine Learning and Knowledge Discovery in Databases, 346-361, 2012.
 
-|details-end|
+
 
 .. _voting_classifier:
 
@@ -1573,14 +1573,14 @@ computationally expensive.
     ...       .format(multi_layer_regressor.score(X_test, y_test)))
     R2 score: 0.53
 
-|details-start|
+
 .. topic:: References
-|details-split|
+
 
    .. [W1992] Wolpert, David H. "Stacked generalization." Neural networks 5.2
       (1992): 241-259.
 
-|details-end|
+
 
 .. _adaboost:
 
@@ -1656,9 +1656,9 @@ minimum required number of samples to consider a split ``min_samples_split``).
  * :ref:`sphx_glr_auto_examples_ensemble_plot_adaboost_regression.py` demonstrates regression
    with the AdaBoost.R2 algorithm.
 
-|details-start|
+
 .. topic:: References
-|details-split|
+
 
  .. [FS1995] Y. Freund, and R. Schapire, "A Decision-Theoretic Generalization of
              On-Line Learning and an Application to Boosting", 1997.
@@ -1671,4 +1671,3 @@ minimum required number of samples to consider a split ``min_samples_split``).
  .. [HTF] T. Hastie, R. Tibshirani and J. Friedman, "Elements of
               Statistical Learning Ed. 2", Springer, 2009.
 
-|details-end|
