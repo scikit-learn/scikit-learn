@@ -372,16 +372,29 @@ class SimpleImputer(_BaseImputer):
                 "array instead."
             )
 
-        if self.strategy == "constant" and self.fill_value is not None:
-            if in_fit:
-                fill_value = self.fill_value
-            else:
-                fill_value = self.statistics_[0]
-            if not np.can_cast(type(fill_value), X.dtype, "same_kind"):
-                raise ValueError(
-                    f"fill_value={fill_value} cannot be cast to the input dtype"
-                    f" {X.dtype}"
+        if self.strategy == "constant":
+            # ensure that we can safely cast the value to fill the missing values with
+            # if needed
+            if in_fit and self.fill_value is not None:
+                fill_value_dtype = type(self.fill_value)
+                err_msg = (
+                    f"fill_value={self.fill_value!r} (of type {fill_value_dtype!r}) "
+                    f"cannot be cast to the input data that is {X.dtype!r}. Make sure "
+                    "that both dtypes are of the same kind."
                 )
+            elif not in_fit:
+                fill_value_dtype = self.statistics_.dtype
+                err_msg = (
+                    f"The dtype of the filling statistic (i.e. {fill_value_dtype!r}) "
+                    f"cannot be cast to the input data that is {X.dtype!r}. Make sure "
+                    "that the dtypes of the input data is of the same kind between "
+                    "fit and transform."
+                )
+            else:
+                # the default is always compatible with the input data
+                fill_value_dtype = X.dtype
+            if not np.can_cast(fill_value_dtype, X.dtype, "same_kind"):
+                raise ValueError(err_msg)
 
         return X
 

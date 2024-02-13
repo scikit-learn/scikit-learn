@@ -122,6 +122,9 @@ Changelog
   together with subsampling (i.e. `max_features` < 1.0).
   :pr:`28184` by :user:`Michael Mayer <mayer79>`.
 
+:mod:`sklearn.impute`
+.....................
+
 - |Fix|: :class:`impute.SimpleImputer` now raises an error instead of casting
   `fill_value` to an integer when input_data is an integer but `fill_value`
   is a float.

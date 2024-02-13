@@ -1,4 +1,5 @@
 import io
+import re
 import warnings
 from itertools import product
 
@@ -400,9 +401,11 @@ def test_imputation_constant_error_invalid_type(X_data, missing_value):
     X = np.full((3, 5), X_data, dtype=float)
     X[0, 0] = missing_value
 
-    with pytest.raises(ValueError, match="cannot be cast to the input dtype"):
+    fill_value = "x"
+    err_msg = f"fill_value={fill_value!r} (of type {type(fill_value)!r}) cannot be cast"
+    with pytest.raises(ValueError, match=re.escape(err_msg)):
         imputer = SimpleImputer(
-            missing_values=missing_value, strategy="constant", fill_value="x"
+            missing_values=missing_value, strategy="constant", fill_value=fill_value
         )
         imputer.fit_transform(X)
 
@@ -1746,55 +1749,38 @@ def test_imputation_custom(csc_container):
     assert_array_equal(X_trans.toarray(), X_true)
 
 
-def test_type_inconsistence_fill_value():
-    """Check that the type is consistent between the input and the fill_value"""
+def test_simple_imputer_constant_fill_value_casting():
+    """Check that we raise a proper error message when we cannot cast the fill value
+    to the input data type. Otherwise, check that the casting is done properly.
 
-    # int input and float fill_value should raise an error
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/28309
+    """
+    # cannot cast fill_value at fit
     fill_value = 1.5
-    for input_type in [np.int64, np.int32]:
-        X = np.array([[1, 2, 3], [2, 3, 4]], dtype=input_type)
-        imputer = SimpleImputer(
-            strategy="constant", fill_value=fill_value, missing_values=2
-        )
-        with pytest.raises(
-            ValueError,
-            match=(
-                rf"fill_value={fill_value} cannot be cast to the input dtype {X.dtype}"
-            ),
-        ):
-            imputer.fit(X)
-        X_float = np.array([[1, 2, 3], [2, 3, 4]], dtype=np.float64)
-        imputer.fit(X_float)
-        with pytest.raises(
-            ValueError,
-            match=(
-                rf"fill_value={fill_value} cannot be cast to the input dtype {X.dtype}"
-            ),
-        ):
-            imputer.transform(X)
-
-    # float input and float fill_value and
-    # float input and int fill_value should not raise an error
-    for input_type in [np.float64, np.float32]:
-        for fill_value in [1.5, 1]:
-            X = np.array([[1, 2, 3], [2, 3, 4]], dtype=input_type)
-            imputer = SimpleImputer(
-                strategy="constant", fill_value=fill_value, missing_values=2
-            )
-            imputer.fit_transform(X)
-
-    # object input and any fill_value should not raise an error
-    X = np.array([["a", "b", "c"], ["b", "c", "d"]], dtype="O")
-    for fill_value in [1, 1.5, "a"]:
-        imputer = SimpleImputer(
-            strategy="constant", fill_value=fill_value, missing_values="b"
-        )
-        imputer.fit_transform(X)
-
-    # float32 input and float64 fill_value should not raise an error
-    X = np.array([[1, 2, 3], [2, 3, 4]], dtype=np.float32)
-    fill_value = np.float64(1.5)
+    X_int_64 = np.array([[1, 2, 3], [2, 3, 4]], dtype=np.int64)
     imputer = SimpleImputer(
         strategy="constant", fill_value=fill_value, missing_values=2
     )
-    imputer.fit_transform(X)
+    err_msg = f"fill_value={fill_value!r} (of type {type(fill_value)!r}) cannot be cast"
+    with pytest.raises(ValueError, match=re.escape(err_msg)):
+        imputer.fit(X_int_64)
+
+    # cannot cast fill_value at transform
+    X_float_64 = np.array([[1, 2, 3], [2, 3, 4]], dtype=np.float64)
+    imputer.fit(X_float_64)
+    err_msg = (
+        f"The dtype of the filling statistic (i.e. {imputer.statistics_.dtype!r}) "
+        "cannot be cast"
+    )
+    with pytest.raises(ValueError, match=re.escape(err_msg)):
+        imputer.transform(X_int_64)
+
+    # check that no error is raised when having the same kind of dtype
+    fill_value = np.float64(1.5)
+    X_float_32 = X_float_64.astype(np.float32)
+    imputer = SimpleImputer(
+        strategy="constant", fill_value=fill_value, missing_values=2
+    )
+    X_trans = imputer.fit_transform(X_float_32)
+    assert X_trans.dtype == X_float_32.dtype
