@@ -252,7 +252,11 @@ the most samples (just like for continuous features). When predicting,
 categories that were not seen during fit time will be treated as missing
 values.
 
-**Split finding with categorical features**: The canonical way of considering
+|details-start|
+**Split finding with categorical features**:
+|details-split|
+
+The canonical way of considering
 categorical splits in a tree is to consider
 all of the :math:`2^{K - 1} - 1` partitions, where :math:`K` is the number of
 categories. This can quickly become prohibitive when :math:`K` is large.
@@ -266,6 +270,8 @@ formal proof). As a result, only :math:`K - 1` splits need to be considered
 instead of :math:`2^{K - 1} - 1`. The initial sorting is a
 :math:`\mathcal{O}(K \log(K))` operation, leading to a total complexity of
 :math:`\mathcal{O}(K \log(K) + K)`, instead of :math:`\mathcal{O}(2^K)`.
+
+|details-end|
 
 .. topic:: Examples:
 
