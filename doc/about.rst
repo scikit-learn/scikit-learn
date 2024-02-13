@@ -169,31 +169,31 @@ improving the project through their financial support.
    </div>
 
 .. |chanel| image:: images/chanel.png
-   :width: 70pt
+   :width: 55pt
    :target: https://www.chanel.com
 
 .. |axa| image:: images/axa.png
-   :width: 50pt
+   :width: 40pt
    :target: https://www.axa.fr/
 
 .. |bnp| image:: images/bnp.png
-   :width: 150pt
+   :width: 120pt
    :target: https://www.bnpparibascardif.com/
 
 .. |dataiku| image:: images/dataiku.png
-   :width: 70pt
+   :width: 55pt
    :target: https://www.dataiku.com/
 
 .. |hf| image:: images/huggingface_logo-noborder.png
-   :width: 70pt
+   :width: 55pt
    :target: https://huggingface.co
 
 .. |nvidia| image:: images/nvidia.png
-   :width: 70pt
+   :width: 55pt
    :target: https://www.nvidia.com
 
 .. |inria| image:: images/inria-logo.jpg
-   :width: 100pt
+   :width: 75pt
    :target: https://www.inria.fr
 
 
@@ -202,7 +202,7 @@ improving the project through their financial support.
    <div class="sk-sponsor-div-box">
 
 .. table::
-   :class: sk-sponsor-table align-default
+   :class: sk-sponsor-table
 
    +----------+-----------+
    |       |chanel|       |
@@ -245,8 +245,13 @@ François Goupil, Guillaume Lemaitre, Jérémie du Boisberranger, and Olivier Gr
 
    <div class="sk-sponsor-div-box">
 
+.. image:: images/probabl-small.png
+   :width: 35pt
+   :align: center
+   :target: https://probabl.ai
+
 .. image:: images/probabl.png
-   :width: 55pt
+   :width: 75pt
    :align: center
    :target: https://probabl.ai
 
