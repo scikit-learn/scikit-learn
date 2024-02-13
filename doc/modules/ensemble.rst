@@ -1409,8 +1409,29 @@ Vector Machine, a Decision Tree, and a K-nearest neighbor classifier::
     :align: center
     :scale: 75%
 
+Usage
+-----
+
+In order to predict the class labels based on the predicted
+class-probabilities (scikit-learn estimators in the VotingClassifier
+must support ``predict_proba`` method)::
+
+   >>> eclf = VotingClassifier(
+   ...     estimators=[('lr', clf1), ('rf', clf2), ('gnb', clf3)],
+   ...     voting='soft'
+   ... )
+
+Optionally, weights can be provided for the individual classifiers::
+
+   >>> eclf = VotingClassifier(
+   ...     estimators=[('lr', clf1), ('rf', clf2), ('gnb', clf3)],
+   ...     voting='soft', weights=[2,5,1]
+   ... )
+
+|details-start|
 Using the `VotingClassifier` with `GridSearchCV`
 ------------------------------------------------
+|details-split|
 
 The :class:`VotingClassifier` can also be used together with
 :class:`~sklearn.model_selection.GridSearchCV` in order to tune the
@@ -1430,24 +1451,7 @@ hyperparameters of the individual estimators::
    >>> grid = GridSearchCV(estimator=eclf, param_grid=params, cv=5)
    >>> grid = grid.fit(iris.data, iris.target)
 
-Usage
------
-
-In order to predict the class labels based on the predicted
-class-probabilities (scikit-learn estimators in the VotingClassifier
-must support ``predict_proba`` method)::
-
-   >>> eclf = VotingClassifier(
-   ...     estimators=[('lr', clf1), ('rf', clf2), ('gnb', clf3)],
-   ...     voting='soft'
-   ... )
-
-Optionally, weights can be provided for the individual classifiers::
-
-   >>> eclf = VotingClassifier(
-   ...     estimators=[('lr', clf1), ('rf', clf2), ('gnb', clf3)],
-   ...     voting='soft', weights=[2,5,1]
-   ... )
+|details-end|
 
 .. _voting_regressor:
 
