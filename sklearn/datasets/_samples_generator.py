@@ -430,6 +430,17 @@ def make_multilabel_classification(
     p_w_c : ndarray of shape (n_features, n_classes)
         The probability of each feature being drawn given each class.
         Only returned if ``return_distributions=True``.
+
+    Examples
+    --------
+    >>> from sklearn.datasets import make_multilabel_classification
+    >>> X, y = make_multilabel_classification(n_labels=3, random_state=42)
+    >>> X.shape
+    (100, 20)
+    >>> y.shape
+    (100, 5)
+    >>> list(y[:3])
+    [array([1, 1, 0, 1, 0]), array([0, 1, 1, 1, 0]), array([0, 1, 0, 0, 0])]
     """
 
     generator = check_random_state(random_state)
@@ -767,6 +778,17 @@ def make_circles(
 
     y : ndarray of shape (n_samples,)
         The integer labels (0 or 1) for class membership of each sample.
+
+    Examples
+    --------
+    >>> from sklearn.datasets import make_circles
+    >>> X, y = make_circles(random_state=42)
+    >>> X.shape
+    (100, 2)
+    >>> y.shape
+    (100,)
+    >>> list(y[:5])
+    [1, 1, 1, 0, 0]
     """
     if isinstance(n_samples, numbers.Integral):
         n_samples_out = n_samples // 2
@@ -1603,6 +1625,13 @@ def make_spd_matrix(n_dim, *, random_state=None):
     See Also
     --------
     make_sparse_spd_matrix: Generate a sparse symmetric definite positive matrix.
+
+    Examples
+    --------
+    >>> from sklearn.datasets import make_spd_matrix
+    >>> make_spd_matrix(n_dim=2, random_state=42)
+    array([[2.09..., 0.34...],
+           [0.34..., 0.21...]])
     """
     generator = check_random_state(random_state)
 
@@ -1701,6 +1730,15 @@ def make_sparse_spd_matrix(
     The sparsity is actually imposed on the cholesky factor of the matrix.
     Thus alpha does not translate directly into the filling fraction of
     the matrix itself.
+
+    Examples
+    --------
+    >>> from sklearn.datasets import make_sparse_spd_matrix
+    >>> make_sparse_spd_matrix(n_dim=4, norm_diag=False, random_state=42)
+    array([[1., 0., 0., 0.],
+           [0., 1., 0., 0.],
+           [0., 0., 1., 0.],
+           [0., 0., 0., 1.]])
     """
     random_state = check_random_state(random_state)
 
@@ -1915,7 +1953,7 @@ def make_gaussian_quantiles(
 
     Parameters
     ----------
-    mean : ndarray of shape (n_features,), default=None
+    mean : array-like of shape (n_features,), default=None
         The mean of the multi-dimensional normal distribution.
         If None then use the origin (0, 0, ...).
 
@@ -1955,6 +1993,17 @@ def make_gaussian_quantiles(
     References
     ----------
     .. [1] J. Zhu, H. Zou, S. Rosset, T. Hastie, "Multi-class AdaBoost", 2009.
+
+    Examples
+    --------
+    >>> from sklearn.datasets import make_gaussian_quantiles
+    >>> X, y = make_gaussian_quantiles(random_state=42)
+    >>> X.shape
+    (100, 2)
+    >>> y.shape
+    (100,)
+    >>> list(y[:5])
+    [2, 0, 1, 0, 2]
     """
     if n_samples < n_classes:
         raise ValueError("n_samples must be at least n_classes")
