@@ -136,17 +136,6 @@ Changelog
   the `check` function as the cause of the `AttributeError`. :pr:`28198` by
   `Thomas Fan`_.
 
-Multiple modules
-................
-- |Fix| When users try to use a method in :class:`~ensemble.StackingClassifier`,
-  :class:`~ensemble.StackingClassifier`, :class:`~ensemble.StackingClassifier`,
-  :class:`~feature_selection.SelectFromModel`, :class:`~feature_selection.RFE`,
-  :class:`~semi_supervised.SelfTrainingClassifier`,
-  :class:`~multiclass.OneVsOneClassifier`, :class:`~multiclass.OutputCodeClassifier` or
-  :class:`~multiclass.OneVsRestClassifier` that their sub-estimators don't implement,
-  the `AttributeError` now reraises in the Traceback. :pr:`28167` by :user:`Stefanie
-  Senger <StefanieSenger>`.
-
 .. rubric:: Code and documentation contributors
 
 Thanks to everyone who has contributed to the maintenance and improvement of

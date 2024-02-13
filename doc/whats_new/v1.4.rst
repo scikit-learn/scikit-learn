@@ -34,15 +34,16 @@ Metadata Routing
 DataFrame Support
 -----------------
 
-- |Enhancement| Pandas and Polars dataframe are validated directly without ducktyping
-  checks. :pr:`28195` by `Thomas Fan`_.
+- |Enhancement| |Fix| Pandas and Polars dataframe are validated directly without
+  ducktyping checks.
+  :pr:`28195` by `Thomas Fan`_.
 
-Changes impacting all modules
------------------------------
+Changes impacting many modules
+------------------------------
 
-- Partial revert of :pr:`28191` to avoid a performance regression for estimators
-  relying on euclidean pairwise computation with sparse matrices. The impacted
-  estimators are:
+- |Efficiency| |Fix| Partial revert of :pr:`28191` to avoid a performance regression for
+  estimators relying on euclidean pairwise computation with
+  sparse matrices. The impacted estimators are:
 
   - :func:`sklearn.metrics.pairwise_distances_argmin`
   - :func:`sklearn.metrics.pairwise_distances_argmin_min`
@@ -65,6 +66,15 @@ Changes impacting all modules
   `transform` set to `pandas` or `polars`. The bug could lead to wrong naming of the
   columns of the returned dataframe.
   :pr:`28262` by :user:`Guillaume Lemaitre <glemaitre>`.
+
+- |Fix| When users try to use a method in :class:`~ensemble.StackingClassifier`,
+  :class:`~ensemble.StackingClassifier`, :class:`~ensemble.StackingClassifier`,
+  :class:`~feature_selection.SelectFromModel`, :class:`~feature_selection.RFE`,
+  :class:`~semi_supervised.SelfTrainingClassifier`,
+  :class:`~multiclass.OneVsOneClassifier`, :class:`~multiclass.OutputCodeClassifier` or
+  :class:`~multiclass.OneVsRestClassifier` that their sub-estimators don't implement,
+  the `AttributeError` now reraises in the traceback.
+  :pr:`28167` by :user:`Stefanie Senger <StefanieSenger>`.
 
 Metadata Routing
 ----------------
