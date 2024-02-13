@@ -560,7 +560,7 @@ def ridge_regression(
     >>> y = 2.0 * X[:, 0] - 1.0 * X[:, 1] + 0.1 * rng.standard_normal(100)
     >>> coef, intercept = ridge_regression(X, y, alpha=1.0, return_intercept=True)
     >>> list(coef)
-    [1.97..., -1.00..., -0.0..., -0.0...]
+    [1.9..., -1.0..., -0.0..., -0.0...]
     >>> intercept
     -0.0...
     """

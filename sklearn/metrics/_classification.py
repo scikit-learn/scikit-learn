@@ -1329,6 +1329,16 @@ def fbeta_score(
     Asymptotically, `beta -> +inf` considers only recall, and `beta -> 0`
     only precision.
 
+    The formula for F-beta score is:
+
+    .. math::
+
+       F_\\beta = \\frac{(1 + \\beta^2) \\text{tp}}
+                        {(1 + \\beta^2) \\text{tp} + \\text{fp} + \\beta^2 \\text{fn}}
+
+    Where :math:`\\text{tp}` is the number of true positives, :math:`\\text{fp}` is the
+    number of false positives, and :math:`\\text{fn}` is the number of false negatives.
+
     Support beyond term:`binary` targets is achieved by treating :term:`multiclass`
     and :term:`multilabel` data as a collection of binary problems, one for each
     label. For the :term:`binary` case, setting `average='binary'` will return

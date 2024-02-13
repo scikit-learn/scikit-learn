@@ -32,6 +32,17 @@ Meson is now supported as a build backend, see :ref:`Building with Meson
 
 TODO Fill more details before the 1.5 release, when the Meson story has settled down.
 
+Metadata Routing
+----------------
+
+The following models now support metadata routing in one or more or their
+methods. Refer to the :ref:`Metadata Routing User Guide <metadata_routing>` for
+more details.
+
+- |Feature| :class:`impute.IterativeImputer` now supports metadata routing in
+  its `fit` method. :pr:`28187` by :user:`Stefanie Senger <StefanieSenger>`.
+
+
 Changelog
 ---------
 
@@ -66,6 +77,11 @@ Changelog
 - |Efficiency| Improves runtime of `predict` of
   :class:`ensemble.HistGradientBoostingClassifier` by avoiding to call `predict_proba`.
   :pr:`27844` by :user:`Christian Lorentzen <lorentzenchr>`.
+
+- |Efficiency| :class:`ensemble.HistGradientBoostingClassifier` and
+  :class:`ensemble.HistGradientBoostingRegressor` are now a tiny bit faster by
+  pre-sorting the data before finding the thresholds for binning.
+  :pr:`28102` by :user:`Christian Lorentzen <lorentzenchr>`.
 
 :mod:`sklearn.feature_extraction`
 .................................
@@ -127,6 +143,17 @@ Changelog
 - |Enhancement| :func:`utils.metaestimators.available_if` now reraises the error from
   the `check` function as the cause of the `AttributeError`. :pr:`28198` by
   `Thomas Fan`_.
+
+Multiple modules
+................
+- |Fix| When users try to use a method in :class:`~ensemble.StackingClassifier`,
+  :class:`~ensemble.StackingClassifier`, :class:`~ensemble.StackingClassifier`,
+  :class:`~feature_selection.SelectFromModel`, :class:`~feature_selection.RFE`,
+  :class:`~semi_supervised.SelfTrainingClassifier`,
+  :class:`~multiclass.OneVsOneClassifier`, :class:`~multiclass.OutputCodeClassifier` or
+  :class:`~multiclass.OneVsRestClassifier` that their sub-estimators don't implement,
+  the `AttributeError` now reraises in the Traceback. :pr:`28167` by :user:`Stefanie
+  Senger <StefanieSenger>`.
 
 .. rubric:: Code and documentation contributors
 

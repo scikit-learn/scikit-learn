@@ -1490,3 +1490,18 @@ def test_make_scorer_deprecation(deprecated_params, new_params, warn_msg):
     assert deprecated_roc_auc_scorer(classifier, X, y) == pytest.approx(
         roc_auc_scorer(classifier, X, y)
     )
+
+
+@pytest.mark.parametrize("enable_metadata_routing", [True, False])
+def test_metadata_routing_multimetric_metadata_routing(enable_metadata_routing):
+    """Test multimetric scorer works with and without metadata routing enabled when
+    there is no actual metadata to pass.
+
+    Non-regression test for https://github.com/scikit-learn/scikit-learn/issues/28256
+    """
+    X, y = make_classification(n_samples=50, n_features=10, random_state=0)
+    estimator = EstimatorWithFitAndPredict().fit(X, y)
+
+    multimetric_scorer = _MultimetricScorer(scorers={"acc": get_scorer("accuracy")})
+    with config_context(enable_metadata_routing=enable_metadata_routing):
+        multimetric_scorer(estimator, X, y)

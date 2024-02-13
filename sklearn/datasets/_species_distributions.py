@@ -103,7 +103,7 @@ def _load_csv(F):
     """
     names = F.readline().decode("ascii").strip().split(",")
 
-    rec = np.loadtxt(F, skiprows=0, delimiter=",", dtype="a22,f4,f4")
+    rec = np.loadtxt(F, skiprows=0, delimiter=",", dtype="S22,f4,f4")
     rec.dtype.names = names
     return rec
 
