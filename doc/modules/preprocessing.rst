@@ -220,7 +220,7 @@ of the data is likely to not work very well. In these cases, you can use
 more robust estimates for the center and range of your data.
 
 |details-start|
-.. topic:: References:
+**References**
 |details-split|
 
   Further discussion on the importance of centering and scaling data is
