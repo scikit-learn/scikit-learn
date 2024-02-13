@@ -479,9 +479,10 @@ leaf nodes.  The level of this switch can be specified with the parameter
 ``leaf_size`` is not referenced for brute force queries.
 |details-end|
 
-
+|details-start|
 Valid Metrics for Nearest Neighbor Algorithms
 ---------------------------------------------
+|details-split|
 
 For a list of available metrics, see the documentation of the
 :class:`~sklearn.metrics.DistanceMetric` class and the metrics listed in
@@ -495,6 +496,7 @@ A list of valid metrics for any of the above algorithms can be obtained by using
     >>> print(sorted(KDTree.valid_metrics))
     ['chebyshev', 'cityblock', 'euclidean', 'infinity', 'l1', 'l2', 'manhattan', 'minkowski', 'p']
 
+|details-end|
 
 .. _nearest_centroid_classifier:
 
