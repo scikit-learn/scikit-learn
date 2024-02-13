@@ -361,9 +361,7 @@ or want to do additional monitoring, using ``warm_start=True`` and
     MLPClassifier(...
 
 |details-start|
-
-.. topic:: References:
-
+**References**
 |details-split|
 
     * `"Learning representations by back-propagating errors."
