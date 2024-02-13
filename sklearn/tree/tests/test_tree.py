@@ -15,7 +15,7 @@ import pytest
 from joblib.numpy_pickle import NumpyPickler
 from numpy.testing import assert_allclose
 
-from sklearn import datasets, tree
+from sklearn import clone, datasets, tree
 from sklearn.dummy import DummyRegressor
 from sklearn.exceptions import NotFittedError
 from sklearn.impute import SimpleImputer
@@ -2550,21 +2550,27 @@ def test_missing_values_poisson(Tree):
     assert (y_pred >= 0.0).all()
 
 
+def make_friedman1_classification(*args, **kwargs):
+    X, y = datasets.make_friedman1(*args, **kwargs)
+    y = y > 14
+    return X, y
+
+
 @pytest.mark.parametrize(
-    "make_data, Tree, tolerance",
+    "make_data, Tree",
     [
         # Due to the sine link between X and y, we expect the native handling of
         # missing values to always be better than the naive mean imputation in the
         # regression case.
-        (datasets.make_friedman1, DecisionTreeRegressor, 0.0),
-        (datasets.make_friedman1, ExtraTreeRegressor, 0.02),
-        (datasets.make_classification, DecisionTreeClassifier, 0.03),
-        (datasets.make_classification, ExtraTreeClassifier, 0.34),
+        (datasets.make_friedman1, DecisionTreeRegressor),
+        (datasets.make_friedman1, ExtraTreeRegressor),
+        (make_friedman1_classification, DecisionTreeClassifier),
+        (make_friedman1_classification, ExtraTreeClassifier),
     ],
 )
 @pytest.mark.parametrize("sample_weight_train", [None, "ones"])
 def test_missing_values_is_resilience(
-    make_data, Tree, sample_weight_train, global_random_seed, tolerance
+    make_data, Tree, sample_weight_train, global_random_seed
 ):
     """Check that trees can deal with missing values have decent performance."""
     n_samples, n_features = 5_000, 10
@@ -2593,11 +2599,9 @@ def test_missing_values_is_resilience(
     tree_with_imputer.fit(X_missing_train, y_train)
     score_tree_with_imputer = tree_with_imputer.score(X_missing_test, y_test)
 
-    diff = score_tree_with_imputer - score_native_tree
-    # We don't want to check when the native handling of missing values is
-    # better than the imputer. Therefore, we clip the diff to 0.
-    diff = diff if diff > 0 else 0
-    assert diff <= tolerance
+    assert (
+        score_native_tree > score_tree_with_imputer
+    ), f"{score_native_tree=} should be strictly greater than {score_tree_with_imputer}"
 
 
 @pytest.mark.parametrize("Tree, expected_score", zip(CLF_TREES.values(), [0.85, 0.7]))
@@ -2699,7 +2703,11 @@ def test_regression_tree_missing_values_toy(Tree, X, criterion):
     y = np.arange(6)
 
     tree = Tree(criterion=criterion, random_state=0).fit(X, y)
+    tree_ref = clone(tree).fit(y.reshape(-1, 1), y)
+    
     assert all(tree.tree_.impurity >= 0)  # MSE should always be positive
+    # Check the impurity match after the first split
+    assert_allclose(tree.tree_.impurity[:2], tree_ref.tree_.impurity[:2])
 
     # Find the leaves with a single sample where the MSE should be 0
     leaves_idx = np.flatnonzero(
