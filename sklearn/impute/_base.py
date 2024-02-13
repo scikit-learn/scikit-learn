@@ -373,8 +373,6 @@ class SimpleImputer(_BaseImputer):
             )
 
         if self.strategy == "constant":
-            # ensure that we can safely cast the value to fill the missing values with
-            # if needed
             if in_fit and self.fill_value is not None:
                 fill_value_dtype = type(self.fill_value)
                 err_msg = (
@@ -391,9 +389,12 @@ class SimpleImputer(_BaseImputer):
                     "fit and transform."
                 )
             else:
-                # the default is always compatible with the input data
+                # By default, fill_value=None, and the replacement is always
+                # compatible with the input data
                 fill_value_dtype = X.dtype
-            if not np.can_cast(fill_value_dtype, X.dtype, "same_kind"):
+
+            # Make sure we can safely cast fill_value dtype to the input data dtype
+            if not np.can_cast(fill_value_dtype, X.dtype, casting="same_kind"):
                 raise ValueError(err_msg)
 
         return X
