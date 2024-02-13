@@ -179,10 +179,11 @@ plt.show()
 #
 # In this example the training set was intentionally kept very small. In this
 # setting, optimizing the log-loss can still lead to poorly calibrated models
-# because of overfitting. To mitigate this, the :class:`~sklearn.linear_model.LogisticRegressionCV` class
-# was configured to tune the `C` regularization parameter to also minimize the
-# log-loss via inner cross-validation so as to find the best compromise for
-# this model in the small training set setting.
+# because of overfitting. To mitigate this, the
+# :class:`~sklearn.linear_model.LogisticRegressionCV` class was configured to
+# tune the `C` regularization parameter to also minimize the log-loss via inner
+# cross-validation so as to find the best compromise for this model in the
+# small training set setting.
 #
 # Because of the finite training set size and the lack of guarantee for
 # well-specification, we observe that the calibration curve of the logistic
