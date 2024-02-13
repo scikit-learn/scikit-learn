@@ -808,9 +808,10 @@ space:
   p_{i j} = \frac{\exp(-||L x_i - L x_j||^2)}{\sum\limits_{k \ne
             i} {\exp{-(||L x_i - L x_k||^2)}}} , \quad p_{i i} = 0
 
-
+|details-start|
 Mahalanobis distance
 ^^^^^^^^^^^^^^^^^^^^
+|details-split|
 
 NCA can be seen as learning a (squared) Mahalanobis distance metric:
 
@@ -820,7 +821,7 @@ NCA can be seen as learning a (squared) Mahalanobis distance metric:
 
 where :math:`M = L^T L` is a symmetric positive semi-definite matrix of size
 ``(n_features, n_features)``.
-
+|details-end|
 
 Implementation
 --------------
