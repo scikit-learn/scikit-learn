@@ -691,7 +691,7 @@ Example::
 |details-end|
 
 |details-start|
-Implementation notes:
+**Implementation notes**
 |details-split|
 
 - With the current implementation full shuffle is not possible in most
