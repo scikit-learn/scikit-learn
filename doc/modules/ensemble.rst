@@ -594,16 +594,18 @@ The parameter ``max_leaf_nodes`` corresponds to the variable ``J`` in the
 chapter on gradient boosting in [Friedman2001]_ and is related to the parameter
 ``interaction.depth`` in R's gbm package where ``max_leaf_nodes == interaction.depth + 1`` .
 
-|details-start|
+
 Mathematical formulation
 ^^^^^^^^^^^^^^^^^^^^^^^^
-|details-split|
+
 
 We first present GBRT for regression, and then detail the classification
 case.
 
+|details-start|
 Regression
 ...........
+|details-split|
 
 GBRT regressors are additive models whose prediction :math:`\hat{y}_i` for a
 given input :math:`x_i` is of the following form:
@@ -685,8 +687,12 @@ space.
   update is loss-dependent: for the absolute error loss, the value of
   a leaf is updated to the median of the samples in that leaf.
 
+|details-end|
+
+|details-start|
 Classification
 ..............
+|details-split|
 
 Gradient boosting for classification is very similar to the regression case.
 However, the sum of the trees :math:`F_M(x_i) = \sum_m h_m(x_i)` is not
@@ -706,6 +712,8 @@ Note that even for a classification task, the :math:`h_m` sub-estimator is
 still a regressor, not a classifier. This is because the sub-estimators are
 trained to predict (negative) *gradients*, which are always continuous
 quantities.
+
+|details-end|
 
 .. _gradient_boosting_loss:
 
@@ -750,7 +758,6 @@ the parameter ``loss``:
     examples than ``'log-loss'``; can only be used for binary
     classification.
 
-|details-end|
 
 .. _gradient_boosting_shrinkage:
 
