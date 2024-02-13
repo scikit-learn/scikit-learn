@@ -111,6 +111,10 @@ Changelog
   with extension dtypes, for example `pd.Int64Dtype`
   :pr:`28385` by :user:`Loïc Estève <lesteve>`.
 
+- |Fix| Fixes error message raised by :class:`ensemble.VotingClassifier` when the
+  target is multilabel or multiclass-multioutput in a DataFrame format.
+  :pr:`27702` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 :mod:`sklearn.inspection`
 .........................
 
@@ -149,7 +153,8 @@ Changelog
   :class:`tree.DecisionTreeRegressor` are handling missing values properly. The internal
   criterion was not initialize when no missing values were present in the data, leading
   to potentially wrong criterion values.
-  :pr:`28295` by :user:`Guillaume Lemaitre <glemaitre>`.
+  :pr:`28295` by :user:`Guillaume Lemaitre <glemaitre>` and
+  :pr:`28327` by :user:`Adam Li <adam2392>`.
 
 :mod:`sklearn.utils`
 ....................
