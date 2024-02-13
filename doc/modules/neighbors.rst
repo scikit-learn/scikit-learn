@@ -305,9 +305,7 @@ keyword ``algorithm = 'kd_tree'``, and are computed using the class
 :class:`KDTree`.
 
 |details-start|
-
-.. topic:: References:
-
+**References**
 |details-split|
 
    * `"Multidimensional binary search trees used for associative searching"
