@@ -717,6 +717,10 @@ not dropped::
     >>> drop_enc.inverse_transform(X_trans)
     array([['female', None, None]], dtype=object)
 
+|details-start|
++*Missing values**
+|details-split|
+
 :class:`OneHotEncoder` supports categorical features with missing values by
 considering the missing values as an additional category::
 
@@ -747,6 +751,8 @@ separate categories::
 
 See :ref:`dict_feature_extraction` for categorical features that are
 represented as a dict, not as scalars.
+
+|details-end|
 
 .. _encoder_infrequent_categories:
 
