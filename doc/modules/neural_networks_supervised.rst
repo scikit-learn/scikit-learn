@@ -50,7 +50,7 @@ The module contains the public attributes ``coefs_`` and ``intercepts_``.
 at index :math:`i` represents the bias values added to layer :math:`i+1`.
 
 |details-start|
-Advantages and disatvatages of Multi-layer Perceptron
+**Advantages and disadvantages of Multi-layer Perceptron**
 |details-split|
 
 The advantages of Multi-layer Perceptron are:
