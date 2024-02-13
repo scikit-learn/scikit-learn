@@ -281,7 +281,6 @@ and is part of the scikit-learn consortium at Inria.
    </div>
    </div>
 
-
 ..........
 
 .. raw:: html
