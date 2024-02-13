@@ -1042,10 +1042,10 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
 
         Parameters
         ----------
-        grid : ndarray of shape (n_samples, n_target_features)
+        grid : ndarray of shape (n_samples, n_target_features), dtype=np.float32
             The grid points on which the partial dependence should be
             evaluated.
-        target_features : ndarray of shape (n_target_features,)
+        target_features : ndarray of shape (n_target_features,), dtype=np.intp
             The set of target features for which the partial dependence
             should be evaluated.
 
@@ -1068,6 +1068,8 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         averaged_predictions = np.zeros(
             (n_trees_per_stage, grid.shape[0]), dtype=np.float64, order="C"
         )
+        target_features = np.asarray(target_features, dtype=np.intp, order="C")
+
         for stage in range(n_estimators):
             for k in range(n_trees_per_stage):
                 tree = self.estimators_[stage, k].tree_
