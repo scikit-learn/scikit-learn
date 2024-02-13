@@ -514,8 +514,9 @@ The normalizer instance can then be used on sample vectors as any transformer::
 
 Note: L2 normalization is also known as spatial sign preprocessing.
 
-.. topic:: Sparse input
-
+|details-start|
+**Sparse input**
+|details-split|
   :func:`normalize` and :class:`Normalizer` accept **both dense array-like
   and sparse matrices from scipy.sparse as input**.
 
@@ -523,6 +524,8 @@ Note: L2 normalization is also known as spatial sign preprocessing.
   representation** (see ``scipy.sparse.csr_matrix``) before being fed to
   efficient Cython routines. To avoid unnecessary memory copies, it is
   recommended to choose the CSR representation upstream.
+
+|details-end|
 
 .. _preprocessing_categorical_features:
 
