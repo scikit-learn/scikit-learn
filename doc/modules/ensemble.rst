@@ -723,7 +723,9 @@ Loss Functions
 The following loss functions are supported and can be specified using
 the parameter ``loss``:
 
+|details-start|
 * Regression
+|details-split|
 
   * Squared error (``'squared_error'``): The natural choice for regression
     due to its superior computational properties. The initial model is
@@ -740,7 +742,12 @@ the parameter ``loss``:
     can be used to create prediction intervals
     (see :ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_quantile.py`).
 
+|details-end|
+
+
+|details-start|
 * Classification
+|details-split|
 
   * Binary log-loss (``'log-loss'``): The binomial
     negative log-likelihood loss function for binary classification. It provides
@@ -758,6 +765,7 @@ the parameter ``loss``:
     examples than ``'log-loss'``; can only be used for binary
     classification.
 
+|details-end|
 
 .. _gradient_boosting_shrinkage:
 
