@@ -161,8 +161,8 @@ The project would like to thank the following funders.
 
 The `Members <https://scikit-learn.fondation-inria.fr/en/home/#sponsors>`_ of
 the `Scikit-Learn Consortium at Inria Foundation
-<https://scikit-learn.fondation-inria.fr/en/home/>`_  fund Arturo Amor,
-François Goupil, Guillaume Lemaitre, Jérémie du Boisberranger, and Olivier Grisel.
+<https://scikit-learn.fondation-inria.fr/en/home/>`_ help at maintaining and
+improving the project through their financial support.
 
 .. raw:: html
 
@@ -236,6 +236,32 @@ François Goupil, Guillaume Lemaitre, Jérémie du Boisberranger, and Olivier Gr
    <div class="sk-sponsor-div">
    <div class="sk-sponsor-div-box">
 
+`:probabl. <https://probabl.ai>`_ funds Adrin Jalali, Arturo Amor,
+François Goupil, Guillaume Lemaitre, Jérémie du Boisberranger, and Olivier Grisel.
+
+.. raw:: html
+
+   </div>
+
+   <div class="sk-sponsor-div-box">
+
+.. image:: images/probabl.png
+   :width: 55pt
+   :align: center
+   :target: https://probabl.ai
+
+.. raw:: html
+
+   </div>
+   </div>
+
+..........
+
+.. raw:: html
+
+   <div class="sk-sponsor-div">
+   <div class="sk-sponsor-div-box">
+
 `NVidia <https://nvidia.com>`_ funds Tim Head since 2022
 and is part of the scikit-learn consortium at Inria.
 
@@ -257,32 +283,6 @@ and is part of the scikit-learn consortium at Inria.
 
 
 ..........
-
-.. raw:: html
-
-   <div class="sk-sponsor-div">
-   <div class="sk-sponsor-div-box">
-
-`Hugging Face <https://huggingface.co/>`_ funded Adrin Jalali in 2022,
-2023 and is part of the scikit-learn consortium at Inria.
-
-.. raw:: html
-
-   </div>
-
-   <div class="sk-sponsor-div-box">
-
-.. image:: images/huggingface_logo-noborder.png
-   :width: 55pt
-   :align: center
-   :target: https://huggingface.co/
-
-.. raw:: html
-
-   </div>
-   </div>
-
-...........
 
 .. raw:: html
 
@@ -314,8 +314,7 @@ and is part of the scikit-learn consortium at Inria.
    <div class="sk-sponsor-div">
    <div class="sk-sponsor-div-box">
 
-`Quansight Labs <https://labs.quansight.org>`_ funds Lucy Liu and
-Meekail Zain since 2022 and funded Thomas J. Fan from 2021 to 2023.
+`Quansight Labs <https://labs.quansight.org>`_ funds Lucy Liu since 2022.
 
 .. raw:: html
 
@@ -335,6 +334,57 @@ Meekail Zain since 2022 and funded Thomas J. Fan from 2021 to 2023.
 
 Past Sponsors
 .............
+
+.. raw:: html
+
+   <div class="sk-sponsor-div">
+   <div class="sk-sponsor-div-box">
+
+`Quansight Labs <https://labs.quansight.org>`_ funded Meekail Zain in 2022 and 2023 and,
+funded Thomas J. Fan from 2021 to 2023.
+
+.. raw:: html
+
+   </div>
+
+   <div class="sk-sponsor-div-box">
+
+.. image:: images/quansight-labs.png
+   :width: 100pt
+   :align: center
+   :target: https://labs.quansight.org
+
+.. raw:: html
+
+   </div>
+   </div>
+
+...........
+
+.. raw:: html
+
+   <div class="sk-sponsor-div">
+   <div class="sk-sponsor-div-box">
+
+`Hugging Face <https://huggingface.co/>`_ funded Adrin Jalali in 2022 and 2023
+
+.. raw:: html
+
+   </div>
+
+   <div class="sk-sponsor-div-box">
+
+.. image:: images/huggingface_logo-noborder.png
+   :width: 55pt
+   :align: center
+   :target: https://huggingface.co/
+
+.. raw:: html
+
+   </div>
+   </div>
+
+...........
 
 .. raw:: html
 
