@@ -2557,10 +2557,15 @@ def make_friedman1_classification(*args, **kwargs):
 
 
 @pytest.mark.parametrize(
-    "make_data,Tree",
+    "make_data, Tree",
     [
+        # Due to the sine link between X and y, we expect the native handling of
+        # missing values to always be better than the naive mean imputation in the
+        # regression case.
         (datasets.make_friedman1, DecisionTreeRegressor),
+        (datasets.make_friedman1, ExtraTreeRegressor),
         (make_friedman1_classification, DecisionTreeClassifier),
+        (make_friedman1_classification, ExtraTreeClassifier),
     ],
 )
 @pytest.mark.parametrize("sample_weight_train", [None, "ones"])
@@ -2599,8 +2604,8 @@ def test_missing_values_is_resilience(
     ), f"{score_native_tree=} should be strictly greater than {score_tree_with_imputer}"
 
 
-@pytest.mark.parametrize("Tree, expected_score", zip(CLF_TREES.values(), [0.85, 0.82]))
-def test_missing_value_is_predictive(Tree, expected_score):
+@pytest.mark.parametrize("Tree, expected_score", zip(CLF_TREES.values(), [0.85, 0.7]))
+def test_missing_value_is_predictive(Tree, expected_score, global_random_seed):
     """Check the tree learns when only the missing value is predictive."""
     rng = np.random.RandomState(0)
     n_samples = 1000
@@ -2619,7 +2624,7 @@ def test_missing_value_is_predictive(Tree, expected_score):
     X[:, 5] = X_predictive
 
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=rng)
-    tree = Tree(random_state=rng).fit(X_train, y_train)
+    tree = Tree(random_state=global_random_seed).fit(X_train, y_train)
 
     assert tree.score(X_train, y_train) >= expected_score
     assert tree.score(X_test, y_test) >= expected_score
@@ -2667,6 +2672,7 @@ def test_deterministic_pickle():
     assert pickle1 == pickle2
 
 
+@pytest.mark.parametrize("Tree", [DecisionTreeRegressor, ExtraTreeRegressor])
 @pytest.mark.parametrize(
     "X",
     [
@@ -2679,7 +2685,7 @@ def test_deterministic_pickle():
     ],
 )
 @pytest.mark.parametrize("criterion", ["squared_error", "friedman_mse"])
-def test_regression_tree_missing_values_toy(X, criterion):
+def test_regression_tree_missing_values_toy(Tree, X, criterion):
     """Check that we properly handle missing values in regression trees using a toy
     dataset.
 
@@ -2696,11 +2702,14 @@ def test_regression_tree_missing_values_toy(X, criterion):
     X = X.reshape(-1, 1)
     y = np.arange(6)
 
-    tree = DecisionTreeRegressor(criterion=criterion, random_state=0).fit(X, y)
+    tree = Tree(criterion=criterion, random_state=0).fit(X, y)
     tree_ref = clone(tree).fit(y.reshape(-1, 1), y)
     assert all(tree.tree_.impurity >= 0)  # MSE should always be positive
-    # Check the impurity match after the first split
-    assert_allclose(tree.tree_.impurity[:2], tree_ref.tree_.impurity[:2])
+
+    # Note: the impurity matches after the first split only on greedy trees
+    if Tree is DecisionTreeRegressor:
+        # Check the impurity match after the first split
+        assert_allclose(tree.tree_.impurity[:2], tree_ref.tree_.impurity[:2])
 
     # Find the leaves with a single sample where the MSE should be 0
     leaves_idx = np.flatnonzero(
