@@ -349,12 +349,12 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
         **fit_params : dict
             - If `enable_metadata_routing=False` (default):
 
-                Parameters directly passed to the `partial_fit` method of the
+                Parameters directly passed to the `fit` method of the
                 sub-estimator. They are ignored if `prefit=True`.
 
             - If `enable_metadata_routing=True`:
 
-                Parameters safely routed to the `partial_fit` method of the
+                Parameters safely routed to the `fit` method of the
                 sub-estimator. They are ignored if `prefit=True`.
 
                 .. versionchanged:: 1.4
