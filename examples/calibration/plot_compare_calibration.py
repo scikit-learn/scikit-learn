@@ -95,7 +95,11 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LogisticRegressionCV
 from sklearn.naive_bayes import GaussianNB
 
-# Create classifiers
+# Create classifiers: here we tune the main hyper-parameter automatically for
+# the logistic regression model because its efficient and concise to do so.
+# Ideally, we should run an hyper-parameter search for all the models but we
+# don't do it here for the sake of keeping the example code concise and fast
+# to execute.
 lr = LogisticRegressionCV(
     Cs=np.logspace(-6, 6, 101), cv=10, scoring="neg_log_loss", max_iter=1_000
 )
