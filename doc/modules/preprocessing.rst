@@ -1262,7 +1262,7 @@ Interestingly, a :class:`SplineTransformer` of ``degree=0`` is the same as
     * :ref:`sphx_glr_auto_examples_applications_plot_cyclical_feature_engineering.py`
 
 |details-start|
-.. topic:: References:
+**References**
 |details-split|
 
     * Eilers, P., & Marx, B. (1996). :doi:`Flexible Smoothing with B-splines and
