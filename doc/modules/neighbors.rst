@@ -356,8 +356,11 @@ Alternatively, the user can work with the :class:`BallTree` class directly.
 
 |details-end|
 
+|detail-start|
 Choice of Nearest Neighbors Algorithm
 -------------------------------------
+|details-split|
+
 The optimal algorithm for a given dataset is a complicated choice, and
 depends on a number of factors:
 
@@ -441,6 +444,8 @@ based on the following assumptions:
 * ``leaf_size`` is close to its default value of ``30``
 * when :math:`D > 15`, the intrinsic dimensionality of the data is generally
   too high for tree-based methods
+
+|details-end|
 
 Effect of ``leaf_size``
 -----------------------
