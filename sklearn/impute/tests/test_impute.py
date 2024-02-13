@@ -1770,7 +1770,7 @@ def test_simple_imputer_constant_fill_value_casting():
     X_float_64 = np.array([[1, 2, 3], [2, 3, 4]], dtype=np.float64)
     imputer.fit(X_float_64)
     err_msg = (
-        f"The dtype of the filling statistic (i.e. {imputer.statistics_.dtype!r}) "
+        f"The dtype of the filling value (i.e. {imputer.statistics_.dtype!r}) "
         "cannot be cast"
     )
     with pytest.raises(ValueError, match=re.escape(err_msg)):

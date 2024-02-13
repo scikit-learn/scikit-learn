@@ -385,7 +385,7 @@ class SimpleImputer(_BaseImputer):
             elif not in_fit:
                 fill_value_dtype = self.statistics_.dtype
                 err_msg = (
-                    f"The dtype of the filling statistic (i.e. {fill_value_dtype!r}) "
+                    f"The dtype of the filling value (i.e. {fill_value_dtype!r}) "
                     f"cannot be cast to the input data that is {X.dtype!r}. Make sure "
                     "that the dtypes of the input data is of the same kind between "
                     "fit and transform."
