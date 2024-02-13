@@ -133,8 +133,8 @@ class PCA(_BasePCA):
     It can also use the scipy.sparse.linalg ARPACK implementation of the
     truncated SVD.
 
-    Notice that this class does not support sparse input. See
-    :class:`TruncatedSVD` for an alternative with sparse data.
+    This class now supports `scipy.sparse.sparray` and `scipy.sparse.spmatrix`
+    inputs when using the ARPACK solver.
 
     For a usage example, see
     :ref:`sphx_glr_auto_examples_decomposition_plot_pca_iris.py`
