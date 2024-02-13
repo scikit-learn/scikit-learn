@@ -1777,10 +1777,12 @@ def test_simple_imputer_constant_fill_value_casting():
         imputer.transform(X_int_64)
 
     # check that no error is raised when having the same kind of dtype
-    fill_value = np.float64(1.5)
+    fill_value_list = [np.float64(1.5), 1.5, 1]
     X_float_32 = X_float_64.astype(np.float32)
-    imputer = SimpleImputer(
-        strategy="constant", fill_value=fill_value, missing_values=2
-    )
-    X_trans = imputer.fit_transform(X_float_32)
-    assert X_trans.dtype == X_float_32.dtype
+
+    for fill_value in fill_value_list:
+        imputer = SimpleImputer(
+            strategy="constant", fill_value=fill_value, missing_values=2
+        )
+        X_trans = imputer.fit_transform(X_float_32)
+        assert X_trans.dtype == X_float_32.dtype
