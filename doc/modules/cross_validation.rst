@@ -440,7 +440,7 @@ As a general rule, most authors, and empirical evidence, suggest that 5- or 10-
 fold cross validation should be preferred to LOO.
 
 |details-start|
-.. topic:: References:
+**References**
 |details-split|
 
  * `<http://www.faqs.org/faqs/ai-faq/neural-nets/part3/section-12.html>`_;
