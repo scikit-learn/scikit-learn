@@ -379,7 +379,9 @@ possible in order to stabilize variance and minimize skewness.
 :class:`PowerTransformer` currently provides two such power transformations,
 the Yeo-Johnson transform and the Box-Cox transform.
 
+|details-start|
 The Yeo-Johnson transform is given by:
+|details-split|
 
 .. math::
     x_i^{(\lambda)} =
@@ -390,7 +392,11 @@ The Yeo-Johnson transform is given by:
      - \ln (- x_i + 1) & \text{if } \lambda = 2, x_i < 0
     \end{cases}
 
+|details-end|
+
+|details-start|
 while the Box-Cox transform is given by:
+|details-split|
 
 .. math::
     x_i^{(\lambda)} =
@@ -419,6 +425,8 @@ samples drawn from a lognormal distribution to a normal distribution::
 While the above example sets the `standardize` option to `False`,
 :class:`PowerTransformer` will apply zero-mean, unit-variance normalization
 to the transformed output by default.
+
+|details-end|
 
 Below are examples of Box-Cox and Yeo-Johnson applied to various probability
 distributions.  Note that when applied to certain distributions, the power
