@@ -177,12 +177,11 @@ Since :class:`CCA` involves the inversion of :math:`X_k^TX_k` and
 :math:`Y_k^TY_k`, this estimator can be unstable if the number of features or
 targets is greater than the number of samples.
 
-.. dropdown:: Reference
+.. rubric:: References
 
-   .. [1] `A survey of Partial Least Squares (PLS) methods, with emphasis on
-      the two-block case
-      <https://stat.uw.edu/sites/default/files/files/reports/2000/tr371.pdf>`_
-      JA Wegelin
+.. [1] `A survey of Partial Least Squares (PLS) methods, with emphasis on the two-block
+  case <https://stat.uw.edu/sites/default/files/files/reports/2000/tr371.pdf>`_,
+  JA Wegelin
 
 .. rubric:: Examples
 

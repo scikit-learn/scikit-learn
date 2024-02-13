@@ -307,12 +307,12 @@ the lower half of those faces.
 * :ref:`sphx_glr_auto_examples_tree_plot_tree_regression_multioutput.py`
 * :ref:`sphx_glr_auto_examples_miscellaneous_plot_multioutput_face_completion.py`
 
-.. dropdown:: References
+.. rubric:: References
 
-  * M. Dumont et al,  `Fast multi-class image annotation with random subwindows
-    and multiple output randomized trees
-    <http://www.montefiore.ulg.ac.be/services/stochastic/pubs/2009/DMWG09/dumont-visapp09-shortpaper.pdf>`_, International Conference on
-    Computer Vision Theory and Applications 2009
+* M. Dumont et al,  `Fast multi-class image annotation with random subwindows
+  and multiple output randomized trees
+  <http://www.montefiore.ulg.ac.be/services/stochastic/pubs/2009/DMWG09/dumont-visapp09-shortpaper.pdf>`_,
+  International Conference on Computer Vision Theory and Applications 2009
 
 .. _tree_complexity:
 
@@ -673,17 +673,17 @@ be pruned. This process stops when the pruned tree's minimal
 
 * :ref:`sphx_glr_auto_examples_tree_plot_cost_complexity_pruning.py`
 
-.. dropdown:: References
+.. rubric:: References
 
-  .. [BRE] L. Breiman, J. Friedman, R. Olshen, and C. Stone. Classification
-    and Regression Trees. Wadsworth, Belmont, CA, 1984.
+.. [BRE] L. Breiman, J. Friedman, R. Olshen, and C. Stone. Classification
+  and Regression Trees. Wadsworth, Belmont, CA, 1984.
 
-  * https://en.wikipedia.org/wiki/Decision_tree_learning
+* https://en.wikipedia.org/wiki/Decision_tree_learning
 
-  * https://en.wikipedia.org/wiki/Predictive_analytics
+* https://en.wikipedia.org/wiki/Predictive_analytics
 
-  * J.R. Quinlan. C4. 5: programs for machine learning. Morgan
-    Kaufmann, 1993.
+* J.R. Quinlan. C4. 5: programs for machine learning. Morgan
+  Kaufmann, 1993.
 
-  * T. Hastie, R. Tibshirani and J. Friedman. Elements of Statistical
-    Learning, Springer, 2009.
+* T. Hastie, R. Tibshirani and J. Friedman. Elements of Statistical
+  Learning, Springer, 2009.
