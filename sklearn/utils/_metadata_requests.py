@@ -1082,8 +1082,12 @@ class MetadataRouter:
 
     def __iter__(self):
         if self._self_request:
-            yield "$self_request", RouterMappingPair(
-                mapping=MethodMapping.from_str("one-to-one"), router=self._self_request
+            yield (
+                "$self_request",
+                RouterMappingPair(
+                    mapping=MethodMapping.from_str("one-to-one"),
+                    router=self._self_request,
+                ),
             )
         for name, route_mapping in self._route_mappings.items():
             yield (name, route_mapping)
@@ -1530,7 +1534,7 @@ def process_routing(_obj, _method, /, **kwargs):
         # an empty dict on routed_params.ANYTHING.ANY_METHOD.
         class EmptyRequest:
             def get(self, name, default=None):
-                return default if default else {}
+                return Bunch(**{method: dict() for method in METHODS})
 
             def __getitem__(self, name):
                 return Bunch(**{method: dict() for method in METHODS})
