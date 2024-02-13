@@ -444,11 +444,13 @@ based on the following assumptions:
 * ``leaf_size`` is close to its default value of ``30``
 * when :math:`D > 15`, the intrinsic dimensionality of the data is generally
   too high for tree-based methods
-
 |details-end|
 
+|details-start|
 Effect of ``leaf_size``
 -----------------------
+|details-split|
+
 As noted above, for small sample sizes a brute force search can be more
 efficient than a tree-based query.  This fact is accounted for in the ball
 tree and KD tree by internally switching to brute force searches within
@@ -475,6 +477,8 @@ leaf nodes.  The level of this switch can be specified with the parameter
   the size of the training set.
 
 ``leaf_size`` is not referenced for brute force queries.
+|details-end|
+
 
 Valid Metrics for Nearest Neighbor Algorithms
 ---------------------------------------------
