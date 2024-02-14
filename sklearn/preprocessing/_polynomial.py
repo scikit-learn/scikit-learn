@@ -1006,7 +1006,7 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
                     )
                     denominator = spl.t[n] - spl.t[spl.k]
                     x = X[:, i]
-                    if check_constant_feature == False and denominator != 0:
+                    if check_constant_feature is False and denominator != 0:
                         # Assign to new array to avoid inplace operation
                         x = spl.t[spl.k] + (X[:, i] - spl.t[spl.k]) % (denominator)
                 else:

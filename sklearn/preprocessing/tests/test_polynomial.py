@@ -495,21 +495,12 @@ def test_spline_transformer_with_constant_features():
     features."""
     spt = SplineTransformer(extrapolation="periodic")
 
-    assert np.all(
-        SplineTransformer(extrapolation="periodic").fit_transform(np.ones(shape=(5, 1)))
-        == 0
-    )
+    assert np.all(spt.fit_transform(np.ones(shape=(5, 1))) == 0)
     assert not np.all(
-        SplineTransformer(extrapolation="periodic").fit_transform(
-            np.ones(shape=(5, 1)) + np.random.randn(5, 1) * 1e-16
-        )
-        == 0
+        spt.fit_transform(np.ones(shape=(5, 1)) + np.random.randn(5, 1) * 1e-16) == 0
     )
     assert np.all(
-        SplineTransformer(extrapolation="periodic").fit_transform(
-            np.ones(shape=(5, 1)) + np.random.randn(5, 1) * 1e-17
-        )
-        == 0
+        spt.fit_transform(np.ones(shape=(5, 1)) + np.random.randn(5, 1) * 1e-17) == 0
     )
 
 
