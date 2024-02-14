@@ -10,9 +10,10 @@ The ``sklearn.preprocessing`` package provides several common
 utility functions and transformer classes to change raw feature vectors
 into a representation that is more suitable for the downstream estimators.
 
-In general, learning algorithms benefit from standardization of the data set. If
-some outliers are present in the set, robust scalers or transformers are more
-appropriate. The behaviors of the different scalers, transformers, and
+In general, many learning algorithms such as linear models benefit from standardization of the data set
+(see :ref:`sphx_glr_auto_examples_preprocessing_plot_scaling_importance.py`).
+If some outliers are present in the set, robust scalers or other transformers can
+be more appropriate. The behaviors of the different scalers, transformers, and
 normalizers on a dataset containing marginal outliers is highlighted in
 :ref:`sphx_glr_auto_examples_preprocessing_plot_all_scaling.py`.
 
@@ -883,13 +884,14 @@ cardinality categories are location based such as zip code or region. For the
 binary classification target, the target encoding is given by:
 
 .. math::
-    S_i = \lambda_i\frac{n_{iY}}{n_i} + (1 - \lambda_i)\frac{n_y}{n}
+    S_i = \lambda_i\frac{n_{iY}}{n_i} + (1 - \lambda_i)\frac{n_Y}{n}
 
 where :math:`S_i` is the encoding for category :math:`i`, :math:`n_{iY}` is the
-number of observations with :math:`Y=1` with category :math:`i`, :math:`n_i` is
-the number of observations with category :math:`i`, :math:`n_y` is the number of
+number of observations with :math:`Y=1` and category :math:`i`, :math:`n_i` is
+the number of observations with category :math:`i`, :math:`n_Y` is the number of
 observations with :math:`Y=1`, :math:`n` is the number of observations, and
-:math:`\lambda_i` is a shrinkage factor. The shrinkage factor is given by:
+:math:`\lambda_i` is a shrinkage factor for category :math:`i`. The shrinkage
+factor is given by:
 
 .. math::
     \lambda_i = \frac{n_i}{m + n_i}
@@ -897,40 +899,58 @@ observations with :math:`Y=1`, :math:`n` is the number of observations, and
 where :math:`m` is a smoothing factor, which is controlled with the `smooth`
 parameter in :class:`TargetEncoder`. Large smoothing factors will put more
 weight on the global mean. When `smooth="auto"`, the smoothing factor is
-computed as an empirical Bayes estimate: :math:`m=\sigma_c^2/\tau^2`, where
+computed as an empirical Bayes estimate: :math:`m=\sigma_i^2/\tau^2`, where
 :math:`\sigma_i^2` is the variance of `y` with category :math:`i` and
 :math:`\tau^2` is the global variance of `y`.
+
+For multiclass classification targets, the formulation is similar to binary
+classification:
+
+.. math::
+    S_{ij} = \lambda_i\frac{n_{iY_j}}{n_i} + (1 - \lambda_i)\frac{n_{Y_j}}{n}
+
+where :math:`S_{ij}` is the encoding for category :math:`i` and class :math:`j`,
+:math:`n_{iY_j}` is the number of observations with :math:`Y=j` and category
+:math:`i`, :math:`n_i` is the number of observations with category :math:`i`,
+:math:`n_{Y_j}` is the number of observations with :math:`Y=j`, :math:`n` is the
+number of observations, and :math:`\lambda_i` is a shrinkage factor for category
+:math:`i`.
 
 For continuous targets, the formulation is similar to binary classification:
 
 .. math::
-    S_i = \lambda_i\frac{\sum_{k\in L_i}y_k}{n_i} + (1 - \lambda_i)\frac{\sum_{k=1}^{n}y_k}{n}
+    S_i = \lambda_i\frac{\sum_{k\in L_i}Y_k}{n_i} + (1 - \lambda_i)\frac{\sum_{k=1}^{n}Y_k}{n}
 
-where :math:`L_i` is the set of observations for which :math:`X=X_i` and
-:math:`n_i` is the cardinality of :math:`L_i`.
+where :math:`L_i` is the set of observations with category :math:`i` and
+:math:`n_i` is the number of observations with category :math:`i`.
 
-:meth:`~TargetEncoder.fit_transform` internally relies on a cross validation
-scheme to prevent information from the target from leaking into the train-time
-representation for non-informative high-cardinality categorical variables and
-help prevent the downstream model to overfit spurious correlations. Note that
-as a result, `fit(X, y).transform(X)` does not equal `fit_transform(X, y)`. In
-:meth:`~TargetEncoder.fit_transform`, the training data is split into multiple
-folds and encodes each fold by using the encodings trained on the other folds.
-After cross validation is complete in :meth:`~TargetEncoder.fit_transform`, the
-target encoder learns one final encoding on the whole training set. This final
-encoding is used to encode categories in :meth:`~TargetEncoder.transform`. The
-following diagram shows the cross validation scheme in
+:meth:`~TargetEncoder.fit_transform` internally relies on a :term:`cross fitting`
+scheme to prevent target information from leaking into the train-time
+representation, especially for non-informative high-cardinality categorical
+variables, and help prevent the downstream model from overfitting spurious
+correlations. Note that as a result, `fit(X, y).transform(X)` does not equal
+`fit_transform(X, y)`. In :meth:`~TargetEncoder.fit_transform`, the training
+data is split into *k* folds (determined by the `cv` parameter) and each fold is
+encoded using the encodings learnt using the other *k-1* folds. The following
+diagram shows the :term:`cross fitting` scheme in
 :meth:`~TargetEncoder.fit_transform` with the default `cv=5`:
 
 .. image:: ../images/target_encoder_cross_validation.svg
    :width: 600
    :align: center
 
-The :meth:`~TargetEncoder.fit` method does **not** use any cross validation
+:meth:`~TargetEncoder.fit_transform` also learns a 'full data' encoding using
+the whole training set. This is never used in
+:meth:`~TargetEncoder.fit_transform` but is saved to the attribute `encodings_`,
+for use when :meth:`~TargetEncoder.transform` is called. Note that the encodings
+learned for each fold during the :term:`cross fitting` scheme are not saved to
+an attribute.
+
+The :meth:`~TargetEncoder.fit` method does **not** use any :term:`cross fitting`
 schemes and learns one encoding on the entire training set, which is used to
 encode categories in :meth:`~TargetEncoder.transform`.
-:meth:`~TargetEncoder.fit`'s one encoding is the same as the final encoding
-learned in :meth:`~TargetEncoder.fit_transform`.
+This encoding is the same as the 'full data'
+encoding learned in :meth:`~TargetEncoder.fit_transform`.
 
 .. note::
   :class:`TargetEncoder` considers missing values, such as `np.nan` or `None`,
@@ -988,9 +1008,9 @@ For each feature, the bin edges are computed during ``fit`` and together with
 the number of bins, they will define the intervals. Therefore, for the current
 example, these intervals are defined as:
 
- - feature 1: :math:`{[-\infty, -1), [-1, 2), [2, \infty)}`
- - feature 2: :math:`{[-\infty, 5), [5, \infty)}`
- - feature 3: :math:`{[-\infty, 14), [14, \infty)}`
+- feature 1: :math:`{[-\infty, -1), [-1, 2), [2, \infty)}`
+- feature 2: :math:`{[-\infty, 5), [5, \infty)}`
+- feature 3: :math:`{[-\infty, 14), [14, \infty)}`
 
 Based on these bin intervals, ``X`` is transformed as follows::
 
@@ -1018,6 +1038,8 @@ For instance, we can use the Pandas function :func:`pandas.cut`::
 
   >>> import pandas as pd
   >>> import numpy as np
+  >>> from sklearn import preprocessing
+  >>>
   >>> bins = [0, 1, 13, 20, 60, np.inf]
   >>> labels = ['infant', 'kid', 'teen', 'adult', 'senior citizen']
   >>> transformer = preprocessing.FunctionTransformer(
@@ -1179,23 +1201,23 @@ below.
 
 Some of the advantages of splines over polynomials are:
 
-    - B-splines are very flexible and robust if you keep a fixed low degree,
-      usually 3, and parsimoniously adapt the number of knots. Polynomials
-      would need a higher degree, which leads to the next point.
-    - B-splines do not have oscillatory behaviour at the boundaries as have
-      polynomials (the higher the degree, the worse). This is known as `Runge's
-      phenomenon <https://en.wikipedia.org/wiki/Runge%27s_phenomenon>`_.
-    - B-splines provide good options for extrapolation beyond the boundaries,
-      i.e. beyond the range of fitted values. Have a look at the option
-      ``extrapolation``.
-    - B-splines generate a feature matrix with a banded structure. For a single
-      feature, every row contains only ``degree + 1`` non-zero elements, which
-      occur consecutively and are even positive. This results in a matrix with
-      good numerical properties, e.g. a low condition number, in sharp contrast
-      to a matrix of polynomials, which goes under the name
-      `Vandermonde matrix <https://en.wikipedia.org/wiki/Vandermonde_matrix>`_.
-      A low condition number is important for stable algorithms of linear
-      models.
+- B-splines are very flexible and robust if you keep a fixed low degree,
+  usually 3, and parsimoniously adapt the number of knots. Polynomials
+  would need a higher degree, which leads to the next point.
+- B-splines do not have oscillatory behaviour at the boundaries as have
+  polynomials (the higher the degree, the worse). This is known as `Runge's
+  phenomenon <https://en.wikipedia.org/wiki/Runge%27s_phenomenon>`_.
+- B-splines provide good options for extrapolation beyond the boundaries,
+  i.e. beyond the range of fitted values. Have a look at the option
+  ``extrapolation``.
+- B-splines generate a feature matrix with a banded structure. For a single
+  feature, every row contains only ``degree + 1`` non-zero elements, which
+  occur consecutively and are even positive. This results in a matrix with
+  good numerical properties, e.g. a low condition number, in sharp contrast
+  to a matrix of polynomials, which goes under the name
+  `Vandermonde matrix <https://en.wikipedia.org/wiki/Vandermonde_matrix>`_.
+  A low condition number is important for stable algorithms of linear
+  models.
 
 The following code snippet shows splines in action::
 

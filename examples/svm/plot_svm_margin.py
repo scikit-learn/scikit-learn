@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 =========================================================
 SVM Margins Example
@@ -18,8 +17,9 @@ the margins to be calculated using all the data in the area.
 # Modified for documentation by Jaques Grobler
 # License: BSD 3 clause
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
+
 from sklearn import svm
 
 # we create 40 separable points

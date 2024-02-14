@@ -87,15 +87,15 @@ will use as many threads as possible, i.e. as many threads as logical cores.
 
 You can control the exact number of threads that are used either:
 
- - via the ``OMP_NUM_THREADS`` environment variable, for instance when:
-   running a python script:
+- via the ``OMP_NUM_THREADS`` environment variable, for instance when:
+  running a python script:
 
-   .. prompt:: bash $
+  .. prompt:: bash $
 
-        OMP_NUM_THREADS=4 python my_script.py
+      OMP_NUM_THREADS=4 python my_script.py
 
- - or via `threadpoolctl` as explained by `this piece of documentation
-   <https://github.com/joblib/threadpoolctl/#setting-the-maximum-size-of-thread-pools>`_.
+- or via `threadpoolctl` as explained by `this piece of documentation
+  <https://github.com/joblib/threadpoolctl/#setting-the-maximum-size-of-thread-pools>`_.
 
 Parallel NumPy and SciPy routines from numerical libraries
 ..........................................................
@@ -107,15 +107,15 @@ such as MKL, OpenBLAS or BLIS.
 You can control the exact number of threads used by BLAS for each library
 using environment variables, namely:
 
-  - ``MKL_NUM_THREADS`` sets the number of thread MKL uses,
-  - ``OPENBLAS_NUM_THREADS`` sets the number of threads OpenBLAS uses
-  - ``BLIS_NUM_THREADS`` sets the number of threads BLIS uses
+- ``MKL_NUM_THREADS`` sets the number of thread MKL uses,
+- ``OPENBLAS_NUM_THREADS`` sets the number of threads OpenBLAS uses
+- ``BLIS_NUM_THREADS`` sets the number of threads BLIS uses
 
 Note that BLAS & LAPACK implementations can also be impacted by
 `OMP_NUM_THREADS`. To check whether this is the case in your environment,
 you can inspect how the number of threads effectively used by those libraries
-is affected when running the the following command in a bash or zsh terminal
-for different values of `OMP_NUM_THREADS`::
+is affected when running the following command in a bash or zsh terminal
+for different values of `OMP_NUM_THREADS`:
 
 .. prompt:: bash $
 
@@ -316,3 +316,29 @@ most machines.
 Users looking for the best performance might want to tune this variable using
 powers of 2 so as to get the best parallelism behavior for their hardware,
 especially with respect to their caches' sizes.
+
+`SKLEARN_WARNINGS_AS_ERRORS`
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+This environment variable is used to turn warnings into errors in tests and
+documentation build.
+
+Some CI (Continuous Integration) builds set `SKLEARN_WARNINGS_AS_ERRORS=1`, for
+example to make sure that we catch deprecation warnings from our dependencies
+and that we adapt our code.
+
+To locally run with the same "warnings as errors" setting as in these CI builds
+you can set `SKLEARN_WARNINGS_AS_ERRORS=1`.
+
+By default, warnings are not turned into errors. This is the case if
+`SKLEARN_WARNINGS_AS_ERRORS` is unset, or `SKLEARN_WARNINGS_AS_ERRORS=0`.
+
+This environment variable use specific warning filters to ignore some warnings,
+since sometimes warnings originate from third-party libraries and there is not
+much we can do about it. You can see the warning filters in the
+`_get_warnings_filters_info_list` function in `sklearn/utils/_testing.py`.
+
+Note that for documentation build, `SKLEARN_WARNING_AS_ERRORS=1` is checking
+that the documentation build, in particular running examples, does not produce
+any warnings. This is different from the `-W` `sphinx-build` argument that
+catches syntax warnings in the rst files.

@@ -4,9 +4,8 @@ or if specifically requested via environment variable
 
 import numpy as np
 
-from sklearn.utils import Bunch
 from sklearn.datasets.tests.test_common import check_return_X_y
-
+from sklearn.utils import Bunch
 from sklearn.utils._testing import assert_array_equal
 
 

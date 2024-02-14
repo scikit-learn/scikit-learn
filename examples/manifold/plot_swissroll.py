@@ -15,8 +15,8 @@ in the data.
 # We start by generating the Swiss Roll dataset.
 
 import matplotlib.pyplot as plt
-from sklearn import manifold, datasets
 
+from sklearn import datasets, manifold
 
 sr_points, sr_color = datasets.make_swiss_roll(n_samples=1500, random_state=0)
 

@@ -3,41 +3,32 @@ The :mod:`sklearn.preprocessing` module includes scaling, centering,
 normalization, binarization methods.
 """
 
-from ._function_transformer import FunctionTransformer
-
-from ._data import Binarizer
-from ._data import KernelCenterer
-from ._data import MinMaxScaler
-from ._data import MaxAbsScaler
-from ._data import Normalizer
-from ._data import RobustScaler
-from ._data import StandardScaler
-from ._data import QuantileTransformer
-from ._data import add_dummy_feature
-from ._data import binarize
-from ._data import normalize
-from ._data import scale
-from ._data import robust_scale
-from ._data import maxabs_scale
-from ._data import minmax_scale
-from ._data import quantile_transform
-from ._data import power_transform
-from ._data import PowerTransformer
-
-from ._encoders import OneHotEncoder
-from ._encoders import OrdinalEncoder
-from ._target_encoder import TargetEncoder
-
-from ._label import label_binarize
-from ._label import LabelBinarizer
-from ._label import LabelEncoder
-from ._label import MultiLabelBinarizer
-
+from ._data import (
+    Binarizer,
+    KernelCenterer,
+    MaxAbsScaler,
+    MinMaxScaler,
+    Normalizer,
+    PowerTransformer,
+    QuantileTransformer,
+    RobustScaler,
+    StandardScaler,
+    add_dummy_feature,
+    binarize,
+    maxabs_scale,
+    minmax_scale,
+    normalize,
+    power_transform,
+    quantile_transform,
+    robust_scale,
+    scale,
+)
 from ._discretization import KBinsDiscretizer
-
-from ._polynomial import PolynomialFeatures
-from ._polynomial import SplineTransformer
-
+from ._encoders import OneHotEncoder, OrdinalEncoder
+from ._function_transformer import FunctionTransformer
+from ._label import LabelBinarizer, LabelEncoder, MultiLabelBinarizer, label_binarize
+from ._polynomial import PolynomialFeatures, SplineTransformer
+from ._target_encoder import TargetEncoder
 
 __all__ = [
     "Binarizer",

@@ -1,9 +1,9 @@
 from sklearn.linear_model import (
-    LogisticRegression,
-    Ridge,
     ElasticNet,
     Lasso,
     LinearRegression,
+    LogisticRegression,
+    Ridge,
     SGDRegressor,
 )
 

@@ -11,14 +11,14 @@ extract features from images.
 
 from itertools import product
 from numbers import Integral, Number, Real
-import numpy as np
-from scipy import sparse
-from numpy.lib.stride_tricks import as_strided
 
-from ..base import BaseEstimator, TransformerMixin
+import numpy as np
+from numpy.lib.stride_tricks import as_strided
+from scipy import sparse
+
+from ..base import BaseEstimator, TransformerMixin, _fit_context
 from ..utils import check_array, check_random_state
-from ..utils._param_validation import Hidden, Interval, validate_params
-from ..utils._param_validation import RealNotInt
+from ..utils._param_validation import Hidden, Interval, RealNotInt, validate_params
 
 __all__ = [
     "PatchExtractor",
@@ -76,7 +76,7 @@ def _mask_edges_weights(mask, edges, weights=None):
     """Apply a mask to edges (weighted or not)"""
     inds = np.arange(mask.size)
     inds = inds[mask.ravel()]
-    ind_mask = np.logical_and(np.in1d(edges[0], inds), np.in1d(edges[1], inds))
+    ind_mask = np.logical_and(np.isin(edges[0], inds), np.isin(edges[1], inds))
     edges = edges[:, ind_mask]
     if weights is not None:
         weights = weights[ind_mask]
@@ -145,7 +145,8 @@ def _to_graph(
         "mask": [None, np.ndarray],
         "return_as": [type],
         "dtype": "no_validation",  # validation delegated to numpy
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def img_to_graph(img, *, mask=None, return_as=sparse.coo_matrix, dtype=None):
     """Graph of the pixel-to-pixel gradient connections.
@@ -196,7 +197,8 @@ def img_to_graph(img, *, mask=None, return_as=sparse.coo_matrix, dtype=None):
         "mask": [None, np.ndarray],
         "return_as": [type],
         "dtype": "no_validation",  # validation delegated to numpy
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def grid_to_graph(
     n_x, n_y, n_z=1, *, mask=None, return_as=sparse.coo_matrix, dtype=int
@@ -235,6 +237,18 @@ def grid_to_graph(
 
     For compatibility, user code relying on this method should wrap its
     calls in ``np.asarray`` to avoid type issues.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.feature_extraction.image import grid_to_graph
+    >>> shape_img = (4, 4, 1)
+    >>> mask = np.zeros(shape=shape_img, dtype=bool)
+    >>> mask[[1, 2], [1, 2], :] = True
+    >>> graph = grid_to_graph(*shape_img, mask=mask)
+    >>> print(graph)
+      (0, 0)    1
+      (1, 1)    1
     """
     return _to_graph(n_x, n_y, n_z, mask=mask, return_as=return_as, dtype=dtype)
 
@@ -259,9 +273,9 @@ def _compute_n_patches(i_h, i_w, p_h, p_w, max_patches=None):
     p_w : int
         The width of a patch
     max_patches : int or float, default=None
-        The maximum number of patches to extract. If max_patches is a float
+        The maximum number of patches to extract. If `max_patches` is a float
         between 0 and 1, it is taken to be a proportion of the total number
-        of patches.
+        of patches. If `max_patches` is None, all possible patches are extracted.
     """
     n_h = i_h - p_h + 1
     n_w = i_w - p_w + 1
@@ -349,7 +363,8 @@ def _extract_patches(arr, patch_shape=8, extraction_step=1):
             None,
         ],
         "random_state": ["random_state"],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def extract_patches_2d(image, patch_size, *, max_patches=None, random_state=None):
     """Reshape a 2D image into a collection of patches.
@@ -449,7 +464,10 @@ def extract_patches_2d(image, patch_size, *, max_patches=None, random_state=None
         return patches
 
 
-@validate_params({"patches": [np.ndarray], "image_size": [tuple, Hidden(list)]})
+@validate_params(
+    {"patches": [np.ndarray], "image_size": [tuple, Hidden(list)]},
+    prefer_skip_nested_validation=True,
+)
 def reconstruct_from_patches_2d(patches, image_size):
     """Reconstruct the image from all of its patches.
 
@@ -561,6 +579,7 @@ class PatchExtractor(TransformerMixin, BaseEstimator):
         self.max_patches = max_patches
         self.random_state = random_state
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y=None):
         """Only validate the parameters of the estimator.
 
@@ -583,7 +602,6 @@ class PatchExtractor(TransformerMixin, BaseEstimator):
         self : object
             Returns the instance itself.
         """
-        self._validate_params()
         return self
 
     def transform(self, X):
