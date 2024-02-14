@@ -1,4 +1,5 @@
 """Permutation importance for estimators."""
+
 import numbers
 
 import numpy as np
@@ -54,6 +55,8 @@ def _calculate_permutation_scores(
         )
         X_permuted = _safe_indexing(X, row_indices, axis=0)
         y = _safe_indexing(y, row_indices, axis=0)
+        if sample_weight is not None:
+            sample_weight = _safe_indexing(sample_weight, row_indices, axis=0)
     else:
         X_permuted = X.copy()
 

@@ -14,13 +14,15 @@ dependencies:
   - matplotlib
   - pandas
   - pyamg
-  - pytest
-  - pytest-xdist=2.5.0
+  - pytest<8
+  - pytest-xdist
   - pillow
   - setuptools
   - pytest-cov
   - coverage
   - ccache
+  - meson-python
+  - pip
   - pytorch=1.13
   - pytorch-cpu
   - polars

@@ -12,6 +12,7 @@ from scipy.sparse import csc_matrix, issparse
 
 from ..base import TransformerMixin
 from ..utils import (
+    _is_pandas_df,
     _safe_indexing,
     check_array,
     safe_sqr,
@@ -28,6 +29,24 @@ class SelectorMixin(TransformerMixin, metaclass=ABCMeta):
     This mixin provides a feature selector implementation with `transform` and
     `inverse_transform` functionality given an implementation of
     `_get_support_mask`.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.datasets import load_iris
+    >>> from sklearn.base import BaseEstimator
+    >>> from sklearn.feature_selection import SelectorMixin
+    >>> class FeatureSelector(SelectorMixin, BaseEstimator):
+    ...    def fit(self, X, y=None):
+    ...        self.n_features_in_ = X.shape[1]
+    ...        return self
+    ...    def _get_support_mask(self):
+    ...        mask = np.zeros(self.n_features_in_, dtype=bool)
+    ...        mask[:2] = True  # select the first two features
+    ...        return mask
+    >>> X, y = load_iris(return_X_y=True)
+    >>> FeatureSelector().fit_transform(X, y).shape
+    (150, 2)
     """
 
     def get_support(self, indices=False):
@@ -81,7 +100,7 @@ class SelectorMixin(TransformerMixin, metaclass=ABCMeta):
         # Preserve X when X is a dataframe and the output is configured to
         # be pandas.
         output_config_dense = _get_output_config("transform", estimator=self)["dense"]
-        preserve_X = hasattr(X, "iloc") and output_config_dense == "pandas"
+        preserve_X = output_config_dense != "default" and _is_pandas_df(X)
 
         # note: we use _safe_tags instead of _get_tags because this is a
         # public Mixin.

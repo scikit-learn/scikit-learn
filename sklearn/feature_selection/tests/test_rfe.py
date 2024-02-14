@@ -14,7 +14,8 @@ from sklearn.cross_decomposition import CCA, PLSCanonical, PLSRegression
 from sklearn.datasets import load_iris, make_friedman1
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.feature_selection import RFE, RFECV
-from sklearn.linear_model import LogisticRegression
+from sklearn.impute import SimpleImputer
+from sklearn.linear_model import LinearRegression, LogisticRegression
 from sklearn.metrics import get_scorer, make_scorer, zero_one_loss
 from sklearn.model_selection import GroupKFold, cross_val_score
 from sklearn.pipeline import make_pipeline
@@ -557,6 +558,28 @@ def test_multioutput(ClsRFE):
 
 
 @pytest.mark.parametrize("ClsRFE", [RFE, RFECV])
+def test_pipeline_with_nans(ClsRFE):
+    """Check that RFE works with pipeline that accept nans.
+
+    Non-regression test for gh-21743.
+    """
+    X, y = load_iris(return_X_y=True)
+    X[0, 0] = np.nan
+
+    pipe = make_pipeline(
+        SimpleImputer(),
+        StandardScaler(),
+        LogisticRegression(),
+    )
+
+    fs = ClsRFE(
+        estimator=pipe,
+        importance_getter="named_steps.logisticregression.coef_",
+    )
+    fs.fit(X, y)
+
+
+@pytest.mark.parametrize("ClsRFE", [RFE, RFECV])
 @pytest.mark.parametrize("PLSEstimator", [CCA, PLSCanonical, PLSRegression])
 def test_rfe_pls(ClsRFE, PLSEstimator):
     """Check the behaviour of RFE with PLS estimators.
@@ -568,3 +591,25 @@ def test_rfe_pls(ClsRFE, PLSEstimator):
     estimator = PLSEstimator(n_components=1)
     selector = ClsRFE(estimator, step=1).fit(X, y)
     assert selector.score(X, y) > 0.5
+
+
+def test_rfe_estimator_attribute_error():
+    """Check that we raise the proper AttributeError when the estimator
+    does not implement the `decision_function` method, which is decorated with
+    `available_if`.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/28108
+    """
+    iris = load_iris()
+
+    # `LinearRegression` does not implement 'decision_function' and should raise an
+    # AttributeError
+    rfe = RFE(estimator=LinearRegression())
+
+    outer_msg = "This 'RFE' has no attribute 'decision_function'"
+    inner_msg = "'LinearRegression' object has no attribute 'decision_function'"
+    with pytest.raises(AttributeError, match=outer_msg) as exec_info:
+        rfe.fit(iris.data, iris.target).decision_function(iris.data)
+    assert isinstance(exec_info.value.__cause__, AttributeError)
+    assert inner_msg in str(exec_info.value.__cause__)

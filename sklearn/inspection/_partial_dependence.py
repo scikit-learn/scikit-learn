@@ -660,7 +660,7 @@ def partial_dependence(
             raise ValueError("all features must be in [0, {}]".format(X.shape[1] - 1))
 
     features_indices = np.asarray(
-        _get_column_indices(X, features), dtype=np.int32, order="C"
+        _get_column_indices(X, features), dtype=np.intp, order="C"
     ).ravel()
 
     feature_names = _check_feature_names(X, feature_names)
@@ -669,7 +669,7 @@ def partial_dependence(
     if categorical_features is None:
         is_categorical = [False] * len(features_indices)
     else:
-        categorical_features = np.array(categorical_features, copy=False)
+        categorical_features = np.asarray(categorical_features)
         if categorical_features.dtype.kind == "b":
             # categorical features provided as a list of boolean
             if categorical_features.size != n_features:

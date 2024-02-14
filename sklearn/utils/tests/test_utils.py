@@ -3,15 +3,18 @@ import timeit
 import warnings
 from copy import copy
 from itertools import chain
+from unittest import SkipTest
 
 import numpy as np
 import pytest
 
 from sklearn import config_context
+from sklearn.externals._packaging.version import parse as parse_version
 from sklearn.utils import (
     _approximate_mode,
     _determine_key_type,
     _get_column_indices,
+    _is_polars_df,
     _message_with_time,
     _print_elapsed_time,
     _safe_assign,
@@ -167,8 +170,8 @@ def test_resample_stratify_sparse_error(csr_container):
     n_samples = 100
     X = rng.normal(size=(n_samples, 2))
     y = rng.randint(0, 2, size=n_samples)
-    stratify = csr_container(y)
-    with pytest.raises(TypeError, match="A sparse matrix was passed"):
+    stratify = csr_container(y.reshape(-1, 1))
+    with pytest.raises(TypeError, match="Sparse data was passed"):
         X, y = resample(X, y, n_samples=50, random_state=rng, stratify=stratify)
 
 
@@ -295,8 +298,7 @@ def test_safe_indexing_2d_container_axis_1(array_type, indices_type, indices):
 
     if isinstance(indices[0], str) and array_type != "dataframe":
         err_msg = (
-            "Specifying the columns using strings is only supported "
-            "for pandas DataFrames"
+            "Specifying the columns using strings is only supported for dataframes"
         )
         with pytest.raises(ValueError, match=err_msg):
             _safe_indexing(array, indices_converted, axis=1)
@@ -397,8 +399,7 @@ def test_safe_indexing_2d_scalar_axis_1(array_type, expected_output_type, indice
 
     if isinstance(indices, str) and array_type != "dataframe":
         err_msg = (
-            "Specifying the columns using strings is only supported "
-            "for pandas DataFrames"
+            "Specifying the columns using strings is only supported for dataframes"
         )
         with pytest.raises(ValueError, match=err_msg):
             _safe_indexing(array, indices, axis=1)
@@ -462,6 +463,12 @@ def test_safe_indexing_pandas_no_settingwithcopy_warning():
     # DataFrame -> ensure it doesn't raise a warning if modified
     pd = pytest.importorskip("pandas")
 
+    pd_version = parse_version(pd.__version__)
+    pd_base_version = parse_version(pd_version.base_version)
+
+    if pd_base_version >= parse_version("3"):
+        raise SkipTest("SettingWithCopyWarning has been removed in pandas 3.0.0.dev")
+
     X = pd.DataFrame({"a": [1, 2, 3], "b": [3, 4, 5]})
     subset = _safe_indexing(X, [0, 1], axis=0)
     if hasattr(pd.errors, "SettingWithCopyWarning"):
@@ -476,11 +483,21 @@ def test_safe_indexing_pandas_no_settingwithcopy_warning():
     assert X.iloc[0, 0] == 1
 
 
+@pytest.mark.parametrize("indices", [0, [0, 1], slice(0, 2), np.array([0, 1])])
+def test_safe_indexing_list_axis_1_unsupported(indices):
+    """Check that we raise a ValueError when axis=1 with input as list."""
+    X = [[1, 2], [4, 5], [7, 8]]
+    err_msg = "axis=1 is not supported for lists"
+    with pytest.raises(ValueError, match=err_msg):
+        _safe_indexing(X, indices, axis=1)
+
+
 @pytest.mark.parametrize(
     "key, err_msg",
     [
         (10, r"all features must be in \[0, 2\]"),
         ("whatever", "A given column is not a column of the dataframe"),
+        (object(), "No valid specification of the columns"),
     ],
 )
 def test_get_column_indices_error(key, err_msg):
@@ -763,3 +780,87 @@ def test_safe_assign(array_type):
     _safe_assign(X, values, column_indexer=column_indexer)
 
     assert_allclose_dense_sparse(X, _convert_container(values, array_type))
+
+
+def test_get_column_indices_interchange():
+    """Check _get_column_indices for edge cases with the interchange"""
+    pd = pytest.importorskip("pandas", minversion="1.5")
+
+    df = pd.DataFrame([[1, 2, 3], [4, 5, 6]], columns=["a", "b", "c"])
+
+    # Hide the fact that this is a pandas dataframe to trigger the dataframe protocol
+    # code path.
+    class MockDataFrame:
+        def __init__(self, df):
+            self._df = df
+
+        def __getattr__(self, name):
+            return getattr(self._df, name)
+
+    df_mocked = MockDataFrame(df)
+
+    key_results = [
+        (slice(1, None), [1, 2]),
+        (slice(None, 2), [0, 1]),
+        (slice(1, 2), [1]),
+        (["b", "c"], [1, 2]),
+        (slice("a", "b"), [0, 1]),
+        (slice("a", None), [0, 1, 2]),
+        (slice(None, "a"), [0]),
+        (["c", "a"], [2, 0]),
+        ([], []),
+    ]
+    for key, result in key_results:
+        assert _get_column_indices(df_mocked, key) == result
+
+    msg = "A given column is not a column of the dataframe"
+    with pytest.raises(ValueError, match=msg):
+        _get_column_indices(df_mocked, ["not_a_column"])
+
+    msg = "key.step must be 1 or None"
+    with pytest.raises(NotImplementedError, match=msg):
+        _get_column_indices(df_mocked, slice("a", None, 2))
+
+
+def test_polars_indexing():
+    """Check _safe_indexing for polars as expected."""
+    pl = pytest.importorskip("polars", minversion="0.18.2")
+    df = pl.DataFrame(
+        {"a": [1, 2, 3, 4], "b": [4, 5, 6, 8], "c": [1, 4, 1, 10]}, orient="row"
+    )
+
+    from polars.testing import assert_frame_equal
+
+    str_keys = [["b"], ["a", "b"], ["b", "a", "c"], ["c"], ["a"]]
+
+    for key in str_keys:
+        out = _safe_indexing(df, key, axis=1)
+        assert_frame_equal(df[key], out)
+
+    bool_keys = [([True, False, True], ["a", "c"]), ([False, False, True], ["c"])]
+
+    for bool_key, str_key in bool_keys:
+        out = _safe_indexing(df, bool_key, axis=1)
+        assert_frame_equal(df[:, str_key], out)
+
+    int_keys = [([0, 1], ["a", "b"]), ([2], ["c"])]
+
+    for int_key, str_key in int_keys:
+        out = _safe_indexing(df, int_key, axis=1)
+        assert_frame_equal(df[:, str_key], out)
+
+    axis_0_keys = [[0, 1], [1, 3], [3, 2]]
+    for key in axis_0_keys:
+        out = _safe_indexing(df, key, axis=0)
+        assert_frame_equal(df[key], out)
+
+
+def test__is_polars_df():
+    """Check that _is_polars_df return False for non-dataframe objects."""
+
+    class LooksLikePolars:
+        def __init__(self):
+            self.columns = ["a", "b"]
+            self.schema = ["a", "b"]
+
+    assert not _is_polars_df(LooksLikePolars())

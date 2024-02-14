@@ -162,10 +162,11 @@ class _MultiOutputEstimator(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta
             )
 
         if _routing_enabled():
+            if sample_weight is not None:
+                partial_fit_params["sample_weight"] = sample_weight
             routed_params = process_routing(
                 self,
                 "partial_fit",
-                sample_weight=sample_weight,
                 **partial_fit_params,
             )
         else:
@@ -248,10 +249,11 @@ class _MultiOutputEstimator(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta
             )
 
         if _routing_enabled():
+            if sample_weight is not None:
+                fit_params["sample_weight"] = sample_weight
             routed_params = process_routing(
                 self,
                 "fit",
-                sample_weight=sample_weight,
                 **fit_params,
             )
         else:
@@ -922,9 +924,7 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
         _raise_for_params(fit_params, self, "fit")
 
         super().fit(X, Y, **fit_params)
-        self.classes_ = [
-            estimator.classes_ for chain_idx, estimator in enumerate(self.estimators_)
-        ]
+        self.classes_ = [estimator.classes_ for estimator in self.estimators_]
         return self
 
     @_available_if_base_estimator_has("predict_proba")
@@ -957,6 +957,21 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
         Y_prob = Y_prob_chain[:, inv_order]
 
         return Y_prob
+
+    def predict_log_proba(self, X):
+        """Predict logarithm of probability estimates.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+            The input data.
+
+        Returns
+        -------
+        Y_log_prob : array-like of shape (n_samples, n_classes)
+            The predicted logarithm of the probabilities.
+        """
+        return np.log(self.predict_proba(X))
 
     @_available_if_base_estimator_has("decision_function")
     def decision_function(self, X):
