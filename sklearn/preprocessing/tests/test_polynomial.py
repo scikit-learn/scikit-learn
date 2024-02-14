@@ -490,6 +490,29 @@ def test_spline_transformer_n_features_out(
     assert splt.transform(X).shape[1] == splt.n_features_out_
 
 
+def test_spline_transformer_with_constant_features():
+    """Test SplineTransformer does not output nan values for constant
+    features."""
+    spt = SplineTransformer(extrapolation="periodic")
+
+    assert np.all(
+        SplineTransformer(extrapolation="periodic").fit_transform(np.ones(shape=(5, 1)))
+        == 0
+    )
+    assert not np.all(
+        SplineTransformer(extrapolation="periodic").fit_transform(
+            np.ones(shape=(5, 1)) + np.random.randn(5, 1) * 1e-16
+        )
+        == 0
+    )
+    assert np.all(
+        SplineTransformer(extrapolation="periodic").fit_transform(
+            np.ones(shape=(5, 1)) + np.random.randn(5, 1) * 1e-17
+        )
+        == 0
+    )
+
+
 @pytest.mark.parametrize(
     "params, err_msg",
     [

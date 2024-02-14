@@ -27,6 +27,8 @@ from ._csr_polynomial_expansion import (
     _calc_total_nnz,
     _csr_polynomial_expansion,
 )
+from ._data import _is_constant_feature
+import warnings
 
 __all__ = [
     "PolynomialFeatures",
@@ -962,6 +964,8 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
         n_samples, n_features = X.shape
         n_splines = self.bsplines_[0].c.shape[1]
         degree = self.degree
+        mean_X = np.mean(X, axis=0, dtype=np.float64)
+        var_X = np.var(X, axis=0, dtype=np.float64)
 
         # TODO: Remove this condition, once scipy 1.10 is the minimum version.
         #       Only scipy => 1.10 supports design_matrix(.., extrapolate=..).
@@ -998,10 +1002,14 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
                     # This is equivalent to BSpline(.., extrapolate="periodic")
                     # for scipy>=1.0.0.
                     n = spl.t.size - spl.k - 1
-                    # Assign to new array to avoid inplace operation
-                    x = spl.t[spl.k] + (X[:, i] - spl.t[spl.k]) % (
-                        spl.t[n] - spl.t[spl.k]
+                    check_constant_feature = _is_constant_feature(
+                        var_X[i], mean_X[i], n_samples
                     )
+                    denominator = spl.t[n] - spl.t[spl.k]
+                    x = X[:, i]
+                    if check_constant_feature == False and denominator != 0:
+                        # Assign to new array to avoid inplace operation
+                        x = spl.t[spl.k] + (X[:, i] - spl.t[spl.k]) % (denominator)
                 else:
                     x = X[:, i]
 
