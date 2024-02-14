@@ -358,7 +358,6 @@ Alternatively, the user can work with the :class:`BallTree` class directly.
 
 |detail-start|
 Choice of Nearest Neighbors Algorithm
--------------------------------------
 |details-split|
 
 The optimal algorithm for a given dataset is a complicated choice, and
