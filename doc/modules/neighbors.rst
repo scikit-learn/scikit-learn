@@ -850,9 +850,8 @@ Here the ``transform`` operation returns :math:`LX^T`, therefore its time
 complexity equals ``n_components * n_features * n_samples_test``. There is no
 added space complexity in the operation.
 
-|details-start|
-**References**
-|details-split|
+
+.. topic:: References:
 
     .. [1] `"Neighbourhood Components Analysis"
       <http://www.cs.nyu.edu/~roweis/papers/ncanips.pdf>`_,
