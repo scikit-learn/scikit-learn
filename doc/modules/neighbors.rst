@@ -808,7 +808,6 @@ space:
 
 |details-start|
 Mahalanobis distance
-^^^^^^^^^^^^^^^^^^^^
 |details-split|
 
 NCA can be seen as learning a (squared) Mahalanobis distance metric:
