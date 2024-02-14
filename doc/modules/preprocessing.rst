@@ -718,7 +718,7 @@ not dropped::
     array([['female', None, None]], dtype=object)
 
 |details-start|
-+*Missing values**
+**Support of categorical features with missing values**
 |details-split|
 
 :class:`OneHotEncoder` supports categorical features with missing values by
