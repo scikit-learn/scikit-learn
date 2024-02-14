@@ -98,8 +98,7 @@ def lars_path(
     y : None or ndarray of shape (n_samples,)
         Input targets.
 
-    Xy : array-like of shape (n_features,) or (n_features, n_targets), \
-            default=None
+    Xy : array-like of shape (n_features,), default=None
         `Xy = X.T @ y` that can be precomputed. It is useful
         only when the Gram matrix is precomputed.
 
@@ -262,7 +261,7 @@ def lars_path_gram(
 
     Parameters
     ----------
-    Xy : ndarray of shape (n_features,) or (n_features, n_targets)
+    Xy : ndarray of shape (n_features,)
         `Xy = X.T @ y`.
 
     Gram : ndarray of shape (n_features, n_features)
@@ -409,8 +408,7 @@ def _lars_path_solver(
     y : None or ndarray of shape (n_samples,)
         Input targets.
 
-    Xy : array-like of shape (n_features,) or (n_features, n_targets), \
-            default=None
+    Xy : array-like of shape (n_features,), default=None
         `Xy = np.dot(X.T, y)` that can be precomputed. It is useful
         only when the Gram matrix is precomputed.
 
