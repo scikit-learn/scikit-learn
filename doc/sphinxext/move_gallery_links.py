@@ -92,9 +92,11 @@ def move_gallery_links(app, exception):
                 new_link.append(download_icon)
 
                 # Create the text of the new link; it is shortend to fit better into
-                # the secondary sidebar
+                # the secondary sidebar. The leading space before "Download ..." is
+                # intentional to create a small gap between the icon and the text,
+                # being consistent with the other pydata-sphinx-theme components
                 link_type = "Jupyter notebook" if is_jupyter else "source code"
-                new_text = soup.new_string(f"Download {link_type}")
+                new_text = soup.new_string(f" Download {link_type}")
                 new_link.append(new_text)
 
                 # Get the file name to download and use it as the title of the new link
