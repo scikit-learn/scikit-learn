@@ -8,13 +8,13 @@ dependencies:
   - numpy=1.19.5  # min
   - blas
   - scipy=1.6.0  # min
-  - cython=0.29.33  # min
+  - cython=3.0.8  # min
   - joblib
   - threadpoolctl
   - matplotlib=3.3.4  # min
   - pandas=1.1.5  # min
   - pyamg
-  - pytest<8
+  - pytest
   - pytest-xdist
   - pillow
   - setuptools

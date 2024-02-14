@@ -325,12 +325,12 @@ def randomized_range_finder(
     else:
         # Use scipy.linalg instead of numpy.linalg when not explicitly
         # using the Array API.
-        qr_normalizer = partial(linalg.qr, mode="economic")
+        qr_normalizer = partial(linalg.qr, mode="economic", check_finite=False)
 
     if power_iteration_normalizer == "QR":
         normalizer = qr_normalizer
     elif power_iteration_normalizer == "LU":
-        normalizer = partial(linalg.lu, permute_l=True)
+        normalizer = partial(linalg.lu, permute_l=True, check_finite=False)
     else:
         normalizer = lambda x: (x, None)
 
@@ -1275,7 +1275,7 @@ def _nanaverage(a, weights=None):
     if weights is None:
         return np.nanmean(a)
 
-    weights = np.array(weights, copy=False)
+    weights = np.asarray(weights)
     a, weights = a[~mask], weights[~mask]
     try:
         return np.average(a, weights=weights)

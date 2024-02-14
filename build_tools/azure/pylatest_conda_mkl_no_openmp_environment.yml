@@ -5,19 +5,21 @@ channels:
   - defaults
 dependencies:
   - python
-  - numpy<1.25
+  - numpy
   - blas[build=mkl]
   - scipy
-  - cython
   - joblib
   - threadpoolctl
   - matplotlib
   - pandas
   - pyamg
-  - pytest<8
+  - pytest
   - pytest-xdist
   - pillow
   - setuptools
   - pytest-cov
   - coverage
   - ccache
+  - pip
+  - pip:
+    - cython
