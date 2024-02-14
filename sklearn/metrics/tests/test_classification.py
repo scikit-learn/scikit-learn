@@ -215,6 +215,44 @@ def test_classification_report_zero_division_warning(zero_division):
             assert not record
 
 
+def test_classification_report_input_subset_of_labels():
+    y_true, y_pred = [0, 1], [0, 1]
+    labels = [0, 1, 2]
+
+    expected_report = {
+        "0": {"precision": 1.0, "recall": 1.0, "f1-score": 1.0, "support": 1.0},
+        "1": {"precision": 1.0, "recall": 1.0, "f1-score": 1.0, "support": 1.0},
+        "2": {"precision": 0.0, "recall": 0.0, "f1-score": 0.0, "support": 0.0},
+        "accuracy": 1.0,
+        "macro avg": {
+            "precision": 0.67,
+            "recall": 0.67,
+            "f1-score": 0.67,
+            "support": 2.0,
+        },
+        "weighted avg": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1-score": 1.0,
+            "support": 2.0,
+        },
+    }
+
+    report = classification_report(y_true, y_pred, labels=labels, output_dict=True)
+    assert isinstance(report, dict)
+
+    # Assert if generated report and expected report are same
+    assert report.keys() == expected_report.keys()
+    for key in expected_report:
+        if key == "accuracy":
+            assert isinstance(report[key], float)
+            assert report[key] == expected_report[key]
+        else:
+            assert report[key].keys() == expected_report[key].keys()
+            for metric in expected_report[key]:
+                assert_almost_equal(expected_report[key][metric], report[key][metric])
+
+
 def test_multilabel_accuracy_score_subset_accuracy():
     # Dense label indicator matrix format
     y1 = np.array([[0, 1, 1], [1, 0, 1]])
