@@ -46,6 +46,9 @@ if "%1" == "clean" (
 	if exist css\styles\ (
 		rmdir /q /s css\styles
 	)
+	if exist api\ (
+		rmdir /q /s api
+	)
 	goto end
 )
 

@@ -1,5 +1,5 @@
 """
-The :mod:`sklearn.utils.estimator_checks` module includes various utilities to
+The :mod:`sklearn.utils.estimator_checks` submodule includes various utilities to
 check the compatibility of estimators with the scikit-learn API.
 """
 

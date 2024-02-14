@@ -114,8 +114,6 @@ else:
     extensions.append("sphinx.ext.mathjax")
     mathjax_path = "https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"
 
-autodoc_default_options = {"members": True, "inherited-members": True}
-
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["templates"]
 
@@ -269,7 +267,10 @@ html_theme_options = {
     "footer_center": [],
     "footer_end": [],
     # Use :html_theme.sidebar_secondary.remove: for file-wide removal
-    "secondary_sidebar_items": ["page-toc", "sourcelink"],
+    "secondary_sidebar_items": {
+        "**": ["page-toc", "sourcelink"],
+        "api/index": [],
+    },
     "show_version_warning_banner": True,
     "announcement": [],
 }
@@ -331,6 +332,8 @@ def add_js_css_files(app, pagename, templatename, context, doctree):
     """
     if pagename == "install":
         app.add_css_file("styles/install.css")
+    elif pagename.startswith("modules/generated/"):
+        app.add_css_file("styles/api.css")
 
 
 # If false, no module index is generated.
@@ -384,6 +387,7 @@ redirects = {
     "documentation": "index",
     "contents": "index",
     "preface": "index",
+    "modules/classes": "api/index",
     "auto_examples/feature_selection/plot_permutation_test_for_classification": (
         "auto_examples/model_selection/plot_permutation_tests_for_classification"
     ),
@@ -772,6 +776,64 @@ def generate_min_dependency_substitutions(app):
         f.write(output)
 
 
+def generate_api_reference():
+    """Generate API reference pages, including index and one page for each module.
+
+    This also sets the secondary sidebar components in `html_theme_options`.
+    """
+    from sklearn._api_reference import (
+        API_REFERENCE,
+        DEPRECATED_API_REFERENCE,
+        get_api_reference_rst,
+        get_deprecated_api_reference_rst,
+    )
+
+    # Create the directory if it does not already exist
+    api_dir = Path(".") / "api"
+    api_dir.mkdir(exist_ok=True)
+
+    # Write API reference for each module and remove secondary sidebar
+    for module in API_REFERENCE:
+        with (api_dir / f"{module}.rst").open("w") as f:
+            f.write(get_api_reference_rst(module))
+
+    # Write the API reference index page and remove secondary sidebar
+    with (api_dir / "index.rst").open("w") as f:
+        f.write(".. _api_ref:\n\n")
+        f.write("=============\n")
+        f.write("API Reference\n")
+        f.write("=============\n\n")
+        f.write(
+            "This is the class and function reference of scikit-learn. Please refer to "
+            "the :ref:`full user guide <user_guide>` for further details, as the raw "
+            "specifications of classes and functions may not be enough to give full "
+            "guidelines on their uses. For reference on concepts repeated across the"
+            "API, see :ref:`glossary`.\n\n"
+        )
+
+        # Define the toctree
+        f.write(".. toctree::\n")
+        f.write("   :maxdepth: 2\n")
+        f.write("   :hidden:\n\n")
+        sorted_module_names = sorted(API_REFERENCE)
+        for module_name in sorted_module_names:
+            f.write(f"   {module_name}\n")
+        f.write("\n")
+
+        # Write the module table
+        f.write(".. list-table::\n\n")
+        for module_name in sorted_module_names:
+            f.write(f"   * - :mod:`{module_name}`\n")
+            f.write(f"     - {API_REFERENCE[module_name]['short_summary']}\n\n")
+
+        # Write deprecated API
+        if DEPRECATED_API_REFERENCE:
+            f.write("Recently deprecated\n")
+            f.write("===================\n\n")
+            for ver in sorted(DEPRECATED_API_REFERENCE, key=parse, reverse=True):
+                f.write(get_deprecated_api_reference_rst(ver))
+
+
 # Config for sphinx_issues
 
 # we use the issues path for PRs since the issues URL will forward
@@ -939,3 +1001,5 @@ else:
     linkcheck_request_headers = {
         "https://github.com/": {"Authorization": f"token {github_token}"},
     }
+
+generate_api_reference()

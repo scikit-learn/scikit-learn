@@ -9,7 +9,7 @@
 
     Install <install>
     user_guide
-    API <modules/classes>
+    API <api/index>
     auto_examples/index
     Community <https://blog.scikit-learn.org/>
     getting_started

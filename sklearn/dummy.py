@@ -1,3 +1,8 @@
+"""
+The :mod:`sklearn.dummy` module includes dummy estimators that implement simple rules
+of thumb.
+"""
+
 # Author: Mathieu Blondel <mathieu@mblondel.org>
 #         Arnaud Joly <a.joly@ulg.ac.be>
 #         Maheshakya Wijewardena <maheshakya.10@cse.mrt.ac.lk>

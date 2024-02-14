@@ -1,5 +1,5 @@
 """
-The :mod:`sklearn.utils.graph` module includes graph utilities and algorithms.
+The :mod:`sklearn.utils.graph` submodule includes graph utilities and algorithms.
 """
 
 # Authors: Aric Hagberg <hagberg@lanl.gov>

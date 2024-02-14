@@ -1,3 +1,8 @@
+"""
+The :mod:`sklearn.model_selection` module includes tools for model selection, such as
+cross validation, hyper-parameter tuning, and dataset splitting.
+"""
+
 import typing
 
 from ._plot import LearningCurveDisplay, ValidationCurveDisplay

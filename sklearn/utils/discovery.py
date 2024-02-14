@@ -1,6 +1,6 @@
 """
-The :mod:`sklearn.utils.discovery` module includes utilities to discover
-objects (i.e. estimators, displays, functions) from the `sklearn` package.
+The :mod:`sklearn.utils.discovery` submodule includes utilities to discover
+scikit-learn objects (i.e., estimators, displays, and functions).
 """
 
 import inspect
