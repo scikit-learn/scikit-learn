@@ -28,7 +28,6 @@ from ._csr_polynomial_expansion import (
     _csr_polynomial_expansion,
 )
 from ._data import _is_constant_feature
-import warnings
 
 __all__ = [
     "PolynomialFeatures",
