@@ -110,8 +110,8 @@ to both the scorer and :class:`~linear_model.LogisticRegressionCV`.
 If we would pass `sample_weight` in the params of
 :func:`~model_selection.cross_validate`, but not set any object to request it,
 `UnsetMetadataPassedError` would be raised, hinting to us that we need to explicitly set
-where to route it. The same applies if ``params={"sample_weigh": my_weights, ...}`` were
-passed (note the typo), since ``sample_weigh`` was not requested by any of its
+where to route it. The same applies if ``params={"sample_weight": my_weights, ...}`` were
+passed (note the typo), since ``sample_weight`` was not requested by any of its
 underlying objects.
 
 Weighted scoring and unweighted fitting
