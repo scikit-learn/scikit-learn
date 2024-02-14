@@ -45,14 +45,20 @@ from ._base import _BaseHeterogeneousEnsemble, _fit_single_estimator
 def _estimator_has(attr):
     """Check if we can delegate a method to the underlying estimator.
 
-    First, we check the first fitted final estimator if available, otherwise we
-    check the unfitted final estimator.
+    First, we check the fitted `final_estimator_` if available, otherwise we check the
+    unfitted `final_estimator`. We raise the original `AttributeError` if `attr` does
+    not exist. This function is used together with `available_if`.
     """
-    return lambda self: (
-        hasattr(self.final_estimator_, attr)
-        if hasattr(self, "final_estimator_")
-        else hasattr(self.final_estimator, attr)
-    )
+
+    def check(self):
+        if hasattr(self, "final_estimator_"):
+            getattr(self.final_estimator_, attr)
+        else:
+            getattr(self.final_estimator, attr)
+
+        return True
+
+    return check
 
 
 class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble, metaclass=ABCMeta):
