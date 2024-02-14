@@ -117,6 +117,8 @@ Changelog
 
 - |Enhancement| :term:`CV splitters <CV splitter>` that ignores the group parameter now
   raises a warning when groups are passed in to :term:`split`. :pr:`28210` by
+- |Fix|:class:`metrics.classification_report` now shows only accuracy when input is a subset of labels.
+:pr:`28399` by :user:`Vineet Joshi <vjoshi253>`.
 
 :mod:`sklearn.utils`
 ....................
