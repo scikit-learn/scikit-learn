@@ -356,8 +356,8 @@ Alternatively, the user can work with the :class:`BallTree` class directly.
 
 |details-end|
 
-|detail-start|
-Choice of Nearest Neighbors Algorithm
+|details-start|
+**Choice of Nearest Neighbors Algorithm**
 |details-split|
 
 The optimal algorithm for a given dataset is a complicated choice, and
@@ -447,7 +447,7 @@ based on the following assumptions:
 |details-end|
 
 |details-start|
-Effect of ``leaf_size``
+**Effect of ``leaf_size``**
 |details-split|
 
 As noted above, for small sample sizes a brute force search can be more
@@ -479,7 +479,7 @@ leaf nodes.  The level of this switch can be specified with the parameter
 |details-end|
 
 |details-start|
-Valid Metrics for Nearest Neighbor Algorithms
+**Valid Metrics for Nearest Neighbor Algorithms**
 |details-split|
 
 For a list of available metrics, see the documentation of the
@@ -807,7 +807,7 @@ space:
             i} {\exp{-(||L x_i - L x_k||^2)}}} , \quad p_{i i} = 0
 
 |details-start|
-Mahalanobis distance
+**Mahalanobis distance**
 |details-split|
 
 NCA can be seen as learning a (squared) Mahalanobis distance metric:
