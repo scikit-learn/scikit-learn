@@ -19,6 +19,7 @@ from io import StringIO
 from pathlib import Path
 
 from sklearn.externals._packaging.version import parse
+from sklearn.utils._testing import turn_warnings_into_errors
 
 # If extensions (or modules to document with autodoc) are in another
 # directory, add these directories to sys.path here. If the directory
@@ -702,8 +703,6 @@ linkcode_resolve = make_linkcode_resolve(
     ),
 )
 
-from sklearn.utils.fixes import VisibleDeprecationWarning
-
 warnings.filterwarnings(
     "ignore",
     category=UserWarning,
@@ -712,26 +711,8 @@ warnings.filterwarnings(
         " non-GUI backend, so cannot show the figure."
     ),
 )
-if os.environ.get("SKLEARN_DOC_BUILD_WARNINGS_AS_ERRORS", "true").lower() == "true":
-    # Raise warning as error in example to catch warnings when building the
-    # documentation Since we are using lock files to build the documentation, we should
-    # not have any warnings. Before updating the lock files, we need to fix them.
-    for warning_type in (FutureWarning, DeprecationWarning, VisibleDeprecationWarning):
-        warnings.filterwarnings("error", category=warning_type)
-    # TODO: remove when pyamg > 5.0.1
-    # Avoid a deprecation warning due pkg_resources deprecation in pyamg.
-    warnings.filterwarnings(
-        "ignore",
-        message="pkg_resources is deprecated as an API",
-        category=DeprecationWarning,
-    )
-    # XXX: Easiest way to ignore Pyarrow DeprecationWarning in the short-term.
-    # See https://github.com/pandas-dev/pandas/issues/54466 for more details.
-    warnings.filterwarnings(
-        "ignore",
-        message=r"\s*Pyarrow will become a required dependency of pandas.*",
-        category=DeprecationWarning,
-    )
+if os.environ.get("SKLEARN_WARNINGS_AS_ERRORS", "0") != "0":
+    turn_warnings_into_errors()
 
 # maps functions with a class name that is indistinguishable when case is
 # ignore to another filename
