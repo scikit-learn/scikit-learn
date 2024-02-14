@@ -480,7 +480,6 @@ leaf nodes.  The level of this switch can be specified with the parameter
 
 |details-start|
 Valid Metrics for Nearest Neighbor Algorithms
----------------------------------------------
 |details-split|
 
 For a list of available metrics, see the documentation of the
