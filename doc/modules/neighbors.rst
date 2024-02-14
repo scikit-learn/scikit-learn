@@ -818,6 +818,7 @@ NCA can be seen as learning a (squared) Mahalanobis distance metric:
 
 where :math:`M = L^T L` is a symmetric positive semi-definite matrix of size
 ``(n_features, n_features)``.
+
 |details-end|
 
 Implementation
