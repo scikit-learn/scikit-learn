@@ -1,9 +1,8 @@
-
-.. _metadata_routing:
-
 .. currentmodule:: sklearn
 
 .. TODO: update doc/conftest.py once document is updated and examples run.
+
+.. _metadata_routing:
 
 Metadata Routing
 ================
@@ -253,6 +252,7 @@ Meta-estimators and functions supporting metadata routing:
 - :class:`sklearn.calibration.CalibratedClassifierCV`
 - :class:`sklearn.compose.ColumnTransformer`
 - :class:`sklearn.feature_selection.SelectFromModel`
+- :class:`sklearn.impute.IterativeImputer`
 - :class:`sklearn.linear_model.ElasticNetCV`
 - :class:`sklearn.linear_model.LarsCV`
 - :class:`sklearn.linear_model.LassoCV`
@@ -292,7 +292,6 @@ Meta-estimators and tools not supporting metadata routing yet:
 - :class:`sklearn.feature_selection.RFE`
 - :class:`sklearn.feature_selection.RFECV`
 - :class:`sklearn.feature_selection.SequentialFeatureSelector`
-- :class:`sklearn.impute.IterativeImputer`
 - :class:`sklearn.linear_model.RANSACRegressor`
 - :class:`sklearn.linear_model.RidgeClassifierCV`
 - :class:`sklearn.linear_model.RidgeCV`
