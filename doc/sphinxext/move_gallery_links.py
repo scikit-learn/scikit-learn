@@ -1,3 +1,13 @@
+"""
+This script intends to better integrate sphinx-gallery into pydata-sphinx-theme. In
+particular, it moves the download links and badge links in the footer of each generated
+example page into the secondary sidebar, then removes the footer and the top note
+pointing to the footer.
+
+The download links are for Python source code and Jupyter notebook respectively, and
+the badge links are for JupyterLite and Binder.
+"""
+
 from pathlib import Path
 
 from bs4 import BeautifulSoup
@@ -167,5 +177,5 @@ def move_gallery_links(app, exception):
 
 def setup(app):
     # Default priority is 500 which sphinx-gallery uses for its build-finished events;
-    # we need a larger (i.e. lower) priority to run after sphinx-gallery
+    # we need a larger priority to run after sphinx-gallery (larger is later)
     app.connect("build-finished", move_gallery_links, priority=900)
