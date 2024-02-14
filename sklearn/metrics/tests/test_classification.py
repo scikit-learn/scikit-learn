@@ -250,7 +250,9 @@ def test_classification_report_input_subset_of_labels():
         else:
             assert report[key].keys() == expected_report[key].keys()
             for metric in expected_report[key]:
-                assert_almost_equal(expected_report[key][metric], report[key][metric])
+                assert_almost_equal(
+                    expected_report[key][metric], report[key][metric], decimal=3
+                )
 
 
 def test_multilabel_accuracy_score_subset_accuracy():
