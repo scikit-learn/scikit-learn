@@ -235,7 +235,6 @@ training.
 
 |details-start|
 Mathematical formulation
-========================
 |details-split|
 
 Given a set of training examples :math:`(x_1, y_1), (x_2, y_2), \ldots, (x_n, y_n)`
