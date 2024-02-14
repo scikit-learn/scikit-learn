@@ -1374,7 +1374,7 @@ class FeatureUnion(_RoutingNotSupportedMixin, TransformerMixin, _BaseComposition
         If False, :meth:`get_feature_names_out` will not prefix any feature
         names and will error if feature names are not unique.
 
-        .. versionadded:: v1.3
+        .. versionadded:: 1.5
 
     Attributes
     ----------
