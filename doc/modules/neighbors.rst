@@ -448,7 +448,6 @@ based on the following assumptions:
 
 |details-start|
 Effect of ``leaf_size``
------------------------
 |details-split|
 
 As noted above, for small sample sizes a brute force search can be more
