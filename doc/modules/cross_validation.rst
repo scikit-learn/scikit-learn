@@ -170,7 +170,9 @@ indices, for example::
   >>> cross_val_score(clf, X, y, cv=custom_cv)
   array([1.        , 0.973...])
 
-.. topic:: Data transformation with held out data
+|details-start|
+**Data transformation with held out data**
+|details-split|
 
     Just as it is important to test a predictor on data held-out from
     training, preprocessing (such as standardization, feature selection, etc.)
@@ -197,6 +199,7 @@ indices, for example::
 
     See :ref:`combining_estimators`.
 
+|details-end|
 
 .. _multimetric_cross_validation:
 
