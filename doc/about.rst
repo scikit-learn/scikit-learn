@@ -154,6 +154,34 @@ The project would like to thank the following funders.
 
 ...................................
 
+
+.. raw:: html
+
+   <div class="sk-sponsor-div">
+   <div class="sk-sponsor-div-box">
+
+`:probabl. <https://probabl.ai>`_ funds Adrin Jalali, Arturo Amor,
+François Goupil, Guillaume Lemaitre, Jérémie du Boisberranger, Olivier Grisel, and
+Stefanie Senger.
+
+.. raw:: html
+
+   </div>
+
+   <div class="sk-sponsor-div-box">
+
+.. image:: images/probabl.png
+   :width: 75pt
+   :align: center
+   :target: https://probabl.ai
+
+.. raw:: html
+
+   </div>
+   </div>
+
+..........
+
 .. raw:: html
 
    <div class="sk-sponsor-div">
@@ -223,37 +251,6 @@ improving the project through their financial support.
    +----------+-----------+
    |        |inria|       |
    +----------+-----------+
-
-.. raw:: html
-
-   </div>
-   </div>
-
-..........
-
-.. raw:: html
-
-   <div class="sk-sponsor-div">
-   <div class="sk-sponsor-div-box">
-
-`:probabl. <https://probabl.ai>`_ funds Adrin Jalali, Arturo Amor,
-François Goupil, Guillaume Lemaitre, Jérémie du Boisberranger, and Olivier Grisel.
-
-.. raw:: html
-
-   </div>
-
-   <div class="sk-sponsor-div-box">
-
-.. image:: images/probabl-small.png
-   :width: 35pt
-   :align: center
-   :target: https://probabl.ai
-
-.. image:: images/probabl.png
-   :width: 75pt
-   :align: center
-   :target: https://probabl.ai
 
 .. raw:: html
 
@@ -357,31 +354,6 @@ funded Thomas J. Fan from 2021 to 2023.
    :width: 100pt
    :align: center
    :target: https://labs.quansight.org
-
-.. raw:: html
-
-   </div>
-   </div>
-
-...........
-
-.. raw:: html
-
-   <div class="sk-sponsor-div">
-   <div class="sk-sponsor-div-box">
-
-`Hugging Face <https://huggingface.co/>`_ funded Adrin Jalali in 2022 and 2023
-
-.. raw:: html
-
-   </div>
-
-   <div class="sk-sponsor-div-box">
-
-.. image:: images/huggingface_logo-noborder.png
-   :width: 55pt
-   :align: center
-   :target: https://huggingface.co/
 
 .. raw:: html
 
