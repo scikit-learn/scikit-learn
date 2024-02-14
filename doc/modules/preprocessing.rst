@@ -904,8 +904,11 @@ feature for encoding unordered categories, i.e. nominal categories [PAR]_
 [MIC]_. This encoding scheme is useful with categorical features with high
 cardinality, where one-hot encoding would inflate the feature space making it
 more expensive for a downstream model to process. A classical example of high
-cardinality categories are location based such as zip code or region. For the
-binary classification target, the target encoding is given by:
+cardinality categories are location based such as zip code or region.
+
+|details-start|
+**Binary classification targets**
+|details-split|
 
 .. math::
     S_i = \lambda_i\frac{n_{iY}}{n_i} + (1 - \lambda_i)\frac{n_Y}{n}
@@ -926,6 +929,8 @@ weight on the global mean. When `smooth="auto"`, the smoothing factor is
 computed as an empirical Bayes estimate: :math:`m=\sigma_i^2/\tau^2`, where
 :math:`\sigma_i^2` is the variance of `y` with category :math:`i` and
 :math:`\tau^2` is the global variance of `y`.
+
+|details-end|
 
 |details-start|
 **Multiclass classification targets**
