@@ -225,9 +225,9 @@ def test_classification_report_input_subset_of_labels():
         "2": {"precision": 0.0, "recall": 0.0, "f1-score": 0.0, "support": 0.0},
         "accuracy": 1.0,
         "macro avg": {
-            "precision": 0.67,
-            "recall": 0.67,
-            "f1-score": 0.67,
+            "precision": 0.6666,
+            "recall": 0.6666,
+            "f1-score": 0.6666,
             "support": 2.0,
         },
         "weighted avg": {
