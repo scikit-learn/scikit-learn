@@ -443,6 +443,7 @@ based on the following assumptions:
 * ``leaf_size`` is close to its default value of ``30``
 * when :math:`D > 15`, the intrinsic dimensionality of the data is generally
   too high for tree-based methods
+
 |details-end|
 
 |details-start|
