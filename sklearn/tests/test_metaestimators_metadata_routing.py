@@ -289,6 +289,15 @@ METAESTIMATORS: list = [
         "cv_name": "cv",
         "cv_routing_methods": ["fit"],
     },
+    {
+        "metaestimator": IterativeImputer,
+        "estimator_name": "estimator",
+        "estimator": ConsumingRegressor,
+        "init_args": {"skip_complete": False},
+        "X": X,
+        "y": y,
+        "estimator_routing_methods": ["fit"],
+    },
 ]
 """List containing all metaestimators to be tested and their settings
 
@@ -331,7 +340,6 @@ UNSUPPORTED_ESTIMATORS = [
     BaggingRegressor(),
     FeatureUnion([]),
     GraphicalLassoCV(),
-    IterativeImputer(),
     RANSACRegressor(),
     RFE(ConsumingClassifier()),
     RFECV(ConsumingClassifier()),
