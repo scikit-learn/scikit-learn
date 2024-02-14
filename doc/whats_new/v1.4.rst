@@ -20,6 +20,10 @@ Version 1.4.1
 
 **February 2024**
 
+.. note::
+    This release version number on PyPI and conda-forge is 1.4.1.post1 that follows
+    1.4.1 to fix a packaging issue to add an upper bound on the version of NumPy.
+
 Metadata Routing
 ----------------
 
