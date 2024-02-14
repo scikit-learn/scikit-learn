@@ -380,7 +380,7 @@ possible in order to stabilize variance and minimize skewness.
 the Yeo-Johnson transform and the Box-Cox transform.
 
 |details-start|
-The Yeo-Johnson transform is given by:
+**Yeo-Johnson transform**
 |details-split|
 
 .. math::
