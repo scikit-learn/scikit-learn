@@ -395,7 +395,7 @@ the Yeo-Johnson transform and the Box-Cox transform.
 |details-end|
 
 |details-start|
-while the Box-Cox transform is given by:
+**Box-Cox transform**
 |details-split|
 
 .. math::
