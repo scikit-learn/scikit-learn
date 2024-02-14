@@ -1010,7 +1010,6 @@ encoding learned in :meth:`~TargetEncoder.fit_transform`.
      high cardinality features" Comput Stat 37, 2671–2692 (2022)
      <10.1007/s00180-022-01207-6>`
 
-
 .. _preprocessing_discretization:
 
 Discretization
