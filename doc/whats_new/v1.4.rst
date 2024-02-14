@@ -22,8 +22,8 @@ Version 1.4.1.post1
 
 .. note::
     The 1.4.1.post1 release includes a packaging fix requiring `numpy<2` to account for
-    incompatibilities with NumPy 2.0 ABI. This release version number is used instead of
-    1.4.1 that is not made available on PyPI and conda-forge.
+    incompatibilities with NumPy 2.0 ABI. Note that the 1.4.1 release is not available
+    on PyPI and conda-forge.
 
 Metadata Routing
 ----------------
