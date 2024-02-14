@@ -156,7 +156,11 @@ class MetaClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
         # In order to do so, a `MetadataRouter` instance is created, and the
         # right routing is added to it. More explanations follow.
         router = MetadataRouter(owner=self.__class__.__name__).add(
-            estimator=self.estimator, method_mapping="one-to-one"
+            estimator=self.estimator,
+            method_mapping=MethodMapping()
+            .add(caller="fit", callee="fit")
+            .add(caller="predict", callee="predict")
+            .add(caller="score", callee="score"),
         )
         return router
 
@@ -286,11 +290,10 @@ print_routing(est)
 # ``"sample_weight"`` with ``"aliased_sample_weight"`` as the alias. The
 # ``~utils.metadata_routing.MetadataRouter`` class enables us to easily create
 # the routing object which would create the output we need for our
-# ``get_metadata_routing``. In the above implementation,
-# ``mapping="one-to-one"`` means there is a one to one mapping between
-# sub-estimator's methods and meta-estimator's ones, i.e. ``fit`` used in
-# ``fit`` and so on. In order to understand how aliases work in
-# meta-estimators, imagine our meta-estimator inside another one:
+# ``get_metadata_routing``.
+#
+# In order to understand how aliases work in meta-estimators, imagine our
+# meta-estimator inside another one:
 
 meta_est = MetaClassifier(estimator=est).fit(X, y, aliased_sample_weight=my_weights)
 
@@ -322,9 +325,15 @@ class RouterConsumerClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimato
 
     def get_metadata_routing(self):
         router = (
-            MetadataRouter(owner=self.__class__.__name__)
-            .add_self_request(self)
-            .add(estimator=self.estimator, method_mapping="one-to-one")
+            MetadataRouter(owner=self.__class__.__name__).add_self_request(self)
+            # defining metadata routing request values for usage in the sub-estimator
+            .add(
+                estimator=self.estimator,
+                method_mapping=MethodMapping()
+                .add(caller="fit", callee="fit")
+                .add(caller="predict", callee="predict")
+                .add(caller="score", callee="score"),
+            )
         )
         return router
 
@@ -434,15 +443,20 @@ class SimplePipeline(ClassifierMixin, BaseEstimator):
 
     def get_metadata_routing(self):
         router = (
-            MetadataRouter(owner=self.__class__.__name__)
-            .add(
+            MetadataRouter(owner=self.__class__.__name__).add(
                 transformer=self.transformer,
                 method_mapping=MethodMapping()
-                .add(callee="fit", caller="fit")
-                .add(callee="transform", caller="fit")
-                .add(callee="transform", caller="predict"),
+                .add(caller="fit", callee="fit")
+                .add(caller="fit", callee="transform")
+                .add(caller="predict", callee="transform"),
             )
-            .add(classifier=self.classifier, method_mapping="one-to-one")
+            # We add the routing for the classifier.
+            .add(
+                classifier=self.classifier,
+                method_mapping=MethodMapping()
+                .add(caller="fit", callee="fit")
+                .add(caller="predict", callee="predict"),
+            )
         )
         return router
 
@@ -548,7 +562,8 @@ class MetaRegressor(MetaEstimatorMixin, RegressorMixin, BaseEstimator):
 
     def get_metadata_routing(self):
         router = MetadataRouter(owner=self.__class__.__name__).add(
-            estimator=self.estimator, method_mapping="one-to-one"
+            estimator=self.estimator,
+            method_mapping=MethodMapping().add(caller="fit", callee="fit"),
         )
         return router
 
@@ -580,7 +595,10 @@ class WeightedMetaRegressor(MetaEstimatorMixin, RegressorMixin, BaseEstimator):
         router = (
             MetadataRouter(owner=self.__class__.__name__)
             .add_self_request(self)
-            .add(estimator=self.estimator, method_mapping="one-to-one")
+            .add(
+                estimator=self.estimator,
+                method_mapping=MethodMapping().add(caller="fit", callee="fit"),
+            )
         )
         return router
 

@@ -1833,7 +1833,7 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
             .add_self_request(self)
             .add(
                 splitter=check_cv(self.cv),
-                method_mapping=MethodMapping().add(callee="split", caller="fit"),
+                method_mapping=MethodMapping().add(caller="fit", callee="split"),
             )
         )
         return router

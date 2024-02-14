@@ -618,8 +618,8 @@ class OneVsRestClassifier(
             .add(
                 estimator=self.estimator,
                 method_mapping=MethodMapping()
-                .add(callee="fit", caller="fit")
-                .add(callee="partial_fit", caller="partial_fit"),
+                .add(caller="fit", callee="fit")
+                .add(caller="partial_fit", callee="partial_fit"),
             )
         )
         return router
@@ -1017,8 +1017,8 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
             .add(
                 estimator=self.estimator,
                 method_mapping=MethodMapping()
-                .add(callee="fit", caller="fit")
-                .add(callee="partial_fit", caller="partial_fit"),
+                .add(caller="fit", callee="fit")
+                .add(caller="partial_fit", callee="partial_fit"),
             )
         )
         return router
@@ -1263,6 +1263,6 @@ class OutputCodeClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
 
         router = MetadataRouter(owner=self.__class__.__name__).add(
             estimator=self.estimator,
-            method_mapping=MethodMapping().add(callee="fit", caller="fit"),
+            method_mapping=MethodMapping().add(caller="fit", callee="fit"),
         )
         return router

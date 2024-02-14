@@ -65,7 +65,7 @@ from sklearn.utils._testing import (
     assert_array_equal,
     ignore_warnings,
 )
-from sklearn.utils.metadata_routing import MetadataRouter
+from sklearn.utils.metadata_routing import MetadataRouter, MethodMapping
 
 REGRESSION_SCORERS = [
     "explained_variance",
@@ -1246,7 +1246,8 @@ def test_scorer_metadata_request(name):
     # make sure putting the scorer in a router doesn't request anything by
     # default
     router = MetadataRouter(owner="test").add(
-        method_mapping="score", scorer=get_scorer(name)
+        scorer=get_scorer(name),
+        method_mapping=MethodMapping().add(caller="score", callee="score"),
     )
     # make sure `sample_weight` is refused if passed.
     with pytest.raises(TypeError, match="got unexpected argument"):
@@ -1257,7 +1258,8 @@ def test_scorer_metadata_request(name):
 
     # make sure putting weighted_scorer in a router requests sample_weight
     router = MetadataRouter(owner="test").add(
-        scorer=weighted_scorer, method_mapping="score"
+        scorer=weighted_scorer,
+        method_mapping=MethodMapping().add(caller="score", callee="score"),
     )
     router.validate_metadata(params={"sample_weight": 1}, method="score")
     routed_params = router.route_params(params={"sample_weight": 1}, caller="score")

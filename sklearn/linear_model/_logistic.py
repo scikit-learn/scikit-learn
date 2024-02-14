@@ -2162,13 +2162,13 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
             .add_self_request(self)
             .add(
                 splitter=self.cv,
-                method_mapping=MethodMapping().add(callee="split", caller="fit"),
+                method_mapping=MethodMapping().add(caller="fit", callee="split"),
             )
             .add(
                 scorer=self._get_scorer(),
                 method_mapping=MethodMapping()
-                .add(callee="score", caller="score")
-                .add(callee="score", caller="fit"),
+                .add(caller="score", callee="score")
+                .add(caller="fit", callee="score"),
             )
         )
         return router

@@ -32,6 +32,7 @@ from ..utils._response import _get_response_values
 from ..utils.metadata_routing import (
     MetadataRequest,
     MetadataRouter,
+    MethodMapping,
     _MetadataRequester,
     _raise_for_params,
     _routing_enabled,
@@ -183,7 +184,8 @@ class _MultimetricScorer:
             routing information.
         """
         return MetadataRouter(owner=self.__class__.__name__).add(
-            **self._scorers, method_mapping="score"
+            **self._scorers,
+            method_mapping=MethodMapping().add(caller="score", callee="score"),
         )
 
 
