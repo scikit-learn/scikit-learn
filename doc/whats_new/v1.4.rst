@@ -15,10 +15,15 @@ For a short description of the main highlights of the release, please refer to
 
 .. _changes_1_4_1:
 
-Version 1.4.1
-=============
+Version 1.4.1.post1
+===================
 
 **February 2024**
+
+.. note::
+    The 1.4.1.post1 release includes a packaging fix requiring `numpy<2` to account for
+    incompatibilities with NumPy 2.0 ABI. Note that the 1.4.1 release is not available
+    on PyPI and conda-forge.
 
 Metadata Routing
 ----------------
