@@ -1,32 +1,4 @@
-"""Configuration for the API reference documentation.
-
-CONFIGURING AN AUTOSUMMARY BLOCK
-================================
-
-An autosummary block is configured as a list of dictionaries, each containing "template"
-that maps to a template name available under `doc/templates/` (class, function, or
-base), and "entries" that maps to a list of functions/classes/etc. that uses the
-corresponding template. For instance, we have the following translation:
-
-|---------------------------------------------| |--------------------------------------|
-|  [                                          | |                                      |
-|      {                                      | |  .. autosummary::                    |
-|          "template": "class",               | |     :nosignatures:                   |
-|          "entries": [                       | |     :toctree: ../modules/generated/  |
-|              "ColumnTransformer",           | |     :template: class.rst             |
-|              "TransformedTargetRegressor",  | |                                      |
-|          ],                                 | |     ColumnTransformer                |
-|      },                                     | |     TransformedTargetRegressor       |
-|      {                                      | |                                      |
-|          "template": "function",            | |     :template: function.rst          |
-|          "entries": [                       | |                                      |
-|              "make_column_transformer",     | |     make_column_selector             |
-|              "make_column_selector",        | |     make_column_transformer          |
-|          ],                                 | |                                      |
-|      },                                     | |                                      |
-|  ],                                         | |                                      |
-|---------------------------------------------| |--------------------------------------|
-"""
+"""Configuration for the API reference documentation."""
 
 from io import StringIO
 
@@ -57,14 +29,14 @@ def _get_submodule(module_name, submodule_name):
     submodule. `module_name` is used to reset the current module because autosummary
     automatically changes the current module.
 
-    Note that the generated string does not include any leading or trailing newlines,
-    so one must manually take care of that to ensure valid rst syntax.
+    Note that the generated string does not include any leading newlines, but has two
+    trailing newlines to ensure valid rst syntax.
     """
     lines = [
         f".. automodule:: {module_name}.{submodule_name}",
         f".. currentmodule:: {module_name}",
     ]
-    return "\n\n" + "\n\n".join(lines) + "\n\n"
+    return "\n\n".join(lines) + "\n\n"
 
 
 """
@@ -127,15 +99,10 @@ API_REFERENCE = {
             {
                 "title": None,
                 "autosummary": [
-                    {
-                        "template": "function",
-                        "entries": [
-                            "config_context",
-                            "get_config",
-                            "set_config",
-                            "show_versions",
-                        ],
-                    },
+                    "config_context",
+                    "get_config",
+                    "set_config",
+                    "show_versions",
                 ],
             },
         ],
@@ -147,30 +114,20 @@ API_REFERENCE = {
             {
                 "title": None,
                 "autosummary": [
-                    {
-                        "template": "class",
-                        "entries": [
-                            "BaseEstimator",
-                            "BiclusterMixin",
-                            "ClassifierMixin",
-                            "ClusterMixin",
-                            "DensityMixin",
-                            "RegressorMixin",
-                            "TransformerMixin",
-                            "MetaEstimatorMixin",
-                            "OneToOneFeatureMixin",
-                            "OutlierMixin",
-                            "ClassNamePrefixFeaturesOutMixin",
-                        ],
-                    },
-                    {
-                        "template": "function",
-                        "entries": [
-                            "clone",
-                            "is_classifier",
-                            "is_regressor",
-                        ],
-                    },
+                    "BaseEstimator",
+                    "BiclusterMixin",
+                    "ClassNamePrefixFeaturesOutMixin",
+                    "ClassifierMixin",
+                    "ClusterMixin",
+                    "DensityMixin",
+                    "MetaEstimatorMixin",
+                    "OneToOneFeatureMixin",
+                    "OutlierMixin",
+                    "RegressorMixin",
+                    "TransformerMixin",
+                    "clone",
+                    "is_classifier",
+                    "is_regressor",
                 ],
             }
         ],
@@ -181,25 +138,11 @@ API_REFERENCE = {
         "sections": [
             {
                 "title": None,
-                "autosummary": [
-                    {
-                        "template": "class",
-                        "entries": ["CalibratedClassifierCV"],
-                    },
-                    {
-                        "template": "function",
-                        "entries": ["calibration_curve"],
-                    },
-                ],
+                "autosummary": ["CalibratedClassifierCV", "calibration_curve"],
             },
             {
                 "title": "Visualization",
-                "autosummary": [
-                    {
-                        "template": "class",
-                        "entries": ["CalibrationDisplay"],
-                    },
-                ],
+                "autosummary": ["CalibrationDisplay"],
             },
         ],
     },
@@ -210,41 +153,31 @@ API_REFERENCE = {
             {
                 "title": None,
                 "autosummary": [
-                    {
-                        "template": "class",
-                        "entries": [
-                            "AffinityPropagation",
-                            "AgglomerativeClustering",
-                            "Birch",
-                            "DBSCAN",
-                            "HDBSCAN",
-                            "FeatureAgglomeration",
-                            "KMeans",
-                            "BisectingKMeans",
-                            "MiniBatchKMeans",
-                            "MeanShift",
-                            "OPTICS",
-                            "SpectralClustering",
-                            "SpectralBiclustering",
-                            "SpectralCoclustering",
-                        ],
-                    },
-                    {
-                        "template": "function",
-                        "entries": [
-                            "affinity_propagation",
-                            "cluster_optics_dbscan",
-                            "cluster_optics_xi",
-                            "compute_optics_graph",
-                            "dbscan",
-                            "estimate_bandwidth",
-                            "k_means",
-                            "kmeans_plusplus",
-                            "mean_shift",
-                            "spectral_clustering",
-                            "ward_tree",
-                        ],
-                    },
+                    "AffinityPropagation",
+                    "AgglomerativeClustering",
+                    "Birch",
+                    "BisectingKMeans",
+                    "DBSCAN",
+                    "FeatureAgglomeration",
+                    "HDBSCAN",
+                    "KMeans",
+                    "MeanShift",
+                    "MiniBatchKMeans",
+                    "OPTICS",
+                    "SpectralBiclustering",
+                    "SpectralClustering",
+                    "SpectralCoclustering",
+                    "affinity_propagation",
+                    "cluster_optics_dbscan",
+                    "cluster_optics_xi",
+                    "compute_optics_graph",
+                    "dbscan",
+                    "estimate_bandwidth",
+                    "k_means",
+                    "kmeans_plusplus",
+                    "mean_shift",
+                    "spectral_clustering",
+                    "ward_tree",
                 ],
             },
         ],
@@ -256,20 +189,10 @@ API_REFERENCE = {
             {
                 "title": None,
                 "autosummary": [
-                    {
-                        "template": "class",
-                        "entries": [
-                            "ColumnTransformer",
-                            "TransformedTargetRegressor",
-                        ],
-                    },
-                    {
-                        "template": "function",
-                        "entries": [
-                            "make_column_transformer",
-                            "make_column_selector",
-                        ],
-                    },
+                    "ColumnTransformer",
+                    "TransformedTargetRegressor",
+                    "make_column_selector",
+                    "make_column_transformer",
                 ],
             },
         ],
@@ -281,30 +204,20 @@ API_REFERENCE = {
             {
                 "title": None,
                 "autosummary": [
-                    {
-                        "template": "class",
-                        "entries": [
-                            "EmpiricalCovariance",
-                            "EllipticEnvelope",
-                            "GraphicalLasso",
-                            "GraphicalLassoCV",
-                            "LedoitWolf",
-                            "MinCovDet",
-                            "OAS",
-                            "ShrunkCovariance",
-                        ],
-                    },
-                    {
-                        "template": "function",
-                        "entries": [
-                            "empirical_covariance",
-                            "graphical_lasso",
-                            "ledoit_wolf",
-                            "ledoit_wolf_shrinkage",
-                            "oas",
-                            "shrunk_covariance",
-                        ],
-                    },
+                    "EllipticEnvelope",
+                    "EmpiricalCovariance",
+                    "GraphicalLasso",
+                    "GraphicalLassoCV",
+                    "LedoitWolf",
+                    "MinCovDet",
+                    "OAS",
+                    "ShrunkCovariance",
+                    "empirical_covariance",
+                    "graphical_lasso",
+                    "ledoit_wolf",
+                    "ledoit_wolf_shrinkage",
+                    "oas",
+                    "shrunk_covariance",
                 ],
             },
         ],
@@ -315,17 +228,7 @@ API_REFERENCE = {
         "sections": [
             {
                 "title": None,
-                "autosummary": [
-                    {
-                        "template": "class",
-                        "entries": [
-                            "CCA",
-                            "PLSCanonical",
-                            "PLSRegression",
-                            "PLSSVD",
-                        ],
-                    },
-                ],
+                "autosummary": ["CCA", "PLSCanonical", "PLSRegression", "PLSSVD"],
             },
         ],
     },
@@ -336,66 +239,56 @@ API_REFERENCE = {
             {
                 "title": "Loaders",
                 "autosummary": [
-                    {
-                        "template": "function",
-                        "entries": [
-                            "clear_data_home",
-                            "dump_svmlight_file",
-                            "fetch_20newsgroups",
-                            "fetch_20newsgroups_vectorized",
-                            "fetch_california_housing",
-                            "fetch_covtype",
-                            "fetch_kddcup99",
-                            "fetch_lfw_pairs",
-                            "fetch_lfw_people",
-                            "fetch_olivetti_faces",
-                            "fetch_openml",
-                            "fetch_rcv1",
-                            "fetch_species_distributions",
-                            "get_data_home",
-                            "load_breast_cancer",
-                            "load_diabetes",
-                            "load_digits",
-                            "load_files",
-                            "load_iris",
-                            "load_linnerud",
-                            "load_sample_image",
-                            "load_sample_images",
-                            "load_svmlight_file",
-                            "load_svmlight_files",
-                            "load_wine",
-                        ],
-                    },
+                    "clear_data_home",
+                    "dump_svmlight_file",
+                    "fetch_20newsgroups",
+                    "fetch_20newsgroups_vectorized",
+                    "fetch_california_housing",
+                    "fetch_covtype",
+                    "fetch_kddcup99",
+                    "fetch_lfw_pairs",
+                    "fetch_lfw_people",
+                    "fetch_olivetti_faces",
+                    "fetch_openml",
+                    "fetch_rcv1",
+                    "fetch_species_distributions",
+                    "get_data_home",
+                    "load_breast_cancer",
+                    "load_diabetes",
+                    "load_digits",
+                    "load_files",
+                    "load_iris",
+                    "load_linnerud",
+                    "load_sample_image",
+                    "load_sample_images",
+                    "load_svmlight_file",
+                    "load_svmlight_files",
+                    "load_wine",
                 ],
             },
             {
                 "title": "Sample generators",
                 "autosummary": [
-                    {
-                        "template": "function",
-                        "entries": [
-                            "make_biclusters",
-                            "make_blobs",
-                            "make_checkerboard",
-                            "make_circles",
-                            "make_classification",
-                            "make_friedman1",
-                            "make_friedman2",
-                            "make_friedman3",
-                            "make_gaussian_quantiles",
-                            "make_hastie_10_2",
-                            "make_low_rank_matrix",
-                            "make_moons",
-                            "make_multilabel_classification",
-                            "make_regression",
-                            "make_s_curve",
-                            "make_sparse_coded_signal",
-                            "make_sparse_spd_matrix",
-                            "make_sparse_uncorrelated",
-                            "make_spd_matrix",
-                            "make_swiss_roll",
-                        ],
-                    },
+                    "make_biclusters",
+                    "make_blobs",
+                    "make_checkerboard",
+                    "make_circles",
+                    "make_classification",
+                    "make_friedman1",
+                    "make_friedman2",
+                    "make_friedman3",
+                    "make_gaussian_quantiles",
+                    "make_hastie_10_2",
+                    "make_low_rank_matrix",
+                    "make_moons",
+                    "make_multilabel_classification",
+                    "make_regression",
+                    "make_s_curve",
+                    "make_sparse_coded_signal",
+                    "make_sparse_spd_matrix",
+                    "make_sparse_uncorrelated",
+                    "make_spd_matrix",
+                    "make_swiss_roll",
                 ],
             },
         ],
@@ -407,35 +300,25 @@ API_REFERENCE = {
             {
                 "title": None,
                 "autosummary": [
-                    {
-                        "template": "class",
-                        "entries": [
-                            "DictionaryLearning",
-                            "FactorAnalysis",
-                            "FastICA",
-                            "IncrementalPCA",
-                            "KernelPCA",
-                            "LatentDirichletAllocation",
-                            "MiniBatchDictionaryLearning",
-                            "MiniBatchSparsePCA",
-                            "NMF",
-                            "MiniBatchNMF",
-                            "PCA",
-                            "SparsePCA",
-                            "SparseCoder",
-                            "TruncatedSVD",
-                        ],
-                    },
-                    {
-                        "template": "function",
-                        "entries": [
-                            "dict_learning",
-                            "dict_learning_online",
-                            "fastica",
-                            "non_negative_factorization",
-                            "sparse_encode",
-                        ],
-                    },
+                    "DictionaryLearning",
+                    "FactorAnalysis",
+                    "FastICA",
+                    "IncrementalPCA",
+                    "KernelPCA",
+                    "LatentDirichletAllocation",
+                    "MiniBatchDictionaryLearning",
+                    "MiniBatchNMF",
+                    "MiniBatchSparsePCA",
+                    "NMF",
+                    "PCA",
+                    "SparseCoder",
+                    "SparsePCA",
+                    "TruncatedSVD",
+                    "dict_learning",
+                    "dict_learning_online",
+                    "fastica",
+                    "non_negative_factorization",
+                    "sparse_encode",
                 ],
             },
         ],
@@ -447,13 +330,8 @@ API_REFERENCE = {
             {
                 "title": None,
                 "autosummary": [
-                    {
-                        "template": "class",
-                        "entries": [
-                            "LinearDiscriminantAnalysis",
-                            "QuadraticDiscriminantAnalysis",
-                        ],
-                    },
+                    "LinearDiscriminantAnalysis",
+                    "QuadraticDiscriminantAnalysis",
                 ],
             },
         ],
@@ -464,15 +342,7 @@ API_REFERENCE = {
         "sections": [
             {
                 "title": None,
-                "autosummary": [
-                    {
-                        "template": "class",
-                        "entries": [
-                            "DummyClassifier",
-                            "DummyRegressor",
-                        ],
-                    },
-                ],
+                "autosummary": ["DummyClassifier", "DummyRegressor"],
             },
         ],
     },
@@ -483,29 +353,24 @@ API_REFERENCE = {
             {
                 "title": None,
                 "autosummary": [
-                    {
-                        "template": "class",
-                        "entries": [
-                            "AdaBoostClassifier",
-                            "AdaBoostRegressor",
-                            "BaggingClassifier",
-                            "BaggingRegressor",
-                            "ExtraTreesClassifier",
-                            "ExtraTreesRegressor",
-                            "GradientBoostingClassifier",
-                            "GradientBoostingRegressor",
-                            "IsolationForest",
-                            "RandomForestClassifier",
-                            "RandomForestRegressor",
-                            "RandomTreesEmbedding",
-                            "StackingClassifier",
-                            "StackingRegressor",
-                            "VotingClassifier",
-                            "VotingRegressor",
-                            "HistGradientBoostingRegressor",
-                            "HistGradientBoostingClassifier",
-                        ],
-                    },
+                    "AdaBoostClassifier",
+                    "AdaBoostRegressor",
+                    "BaggingClassifier",
+                    "BaggingRegressor",
+                    "ExtraTreesClassifier",
+                    "ExtraTreesRegressor",
+                    "GradientBoostingClassifier",
+                    "GradientBoostingRegressor",
+                    "HistGradientBoostingClassifier",
+                    "HistGradientBoostingRegressor",
+                    "IsolationForest",
+                    "RandomForestClassifier",
+                    "RandomForestRegressor",
+                    "RandomTreesEmbedding",
+                    "StackingClassifier",
+                    "StackingRegressor",
+                    "VotingClassifier",
+                    "VotingRegressor",
                 ],
             },
         ],
@@ -517,19 +382,14 @@ API_REFERENCE = {
             {
                 "title": None,
                 "autosummary": [
-                    {
-                        "template": "base",
-                        "entries": [
-                            "DataConversionWarning",
-                            "ConvergenceWarning",
-                            "DataDimensionalityWarning",
-                            "EfficiencyWarning",
-                            "FitFailedWarning",
-                            "InconsistentVersionWarning",
-                            "NotFittedError",
-                            "UndefinedMetricWarning",
-                        ],
-                    },
+                    "ConvergenceWarning",
+                    "DataConversionWarning",
+                    "DataDimensionalityWarning",
+                    "EfficiencyWarning",
+                    "FitFailedWarning",
+                    "InconsistentVersionWarning",
+                    "NotFittedError",
+                    "UndefinedMetricWarning",
                 ],
             },
         ],
@@ -540,15 +400,7 @@ API_REFERENCE = {
         "sections": [
             {
                 "title": None,
-                "autosummary": [
-                    {
-                        "template": "base",
-                        "entries": [
-                            "enable_iterative_imputer",
-                            "enable_halving_search_cv",
-                        ],
-                    },
-                ],
+                "autosummary": ["enable_halving_search_cv", "enable_iterative_imputer"],
             },
         ],
     },
@@ -558,48 +410,27 @@ API_REFERENCE = {
         "sections": [
             {
                 "title": None,
-                "autosummary": [
-                    {
-                        "template": "class",
-                        "entries": [
-                            "DictVectorizer",
-                            "FeatureHasher",
-                        ],
-                    },
-                ],
+                "autosummary": ["DictVectorizer", "FeatureHasher"],
             },
             {
                 "title": "From images",
                 "description": _get_submodule("sklearn.feature_extraction", "image"),
                 "autosummary": [
-                    {
-                        "template": "class",
-                        "entries": ["image.PatchExtractor"],
-                    },
-                    {
-                        "template": "function",
-                        "entries": [
-                            "image.extract_patches_2d",
-                            "image.grid_to_graph",
-                            "image.img_to_graph",
-                            "image.reconstruct_from_patches_2d",
-                        ],
-                    },
+                    "image.PatchExtractor",
+                    "image.extract_patches_2d",
+                    "image.grid_to_graph",
+                    "image.img_to_graph",
+                    "image.reconstruct_from_patches_2d",
                 ],
             },
             {
                 "title": "From text",
                 "description": _get_submodule("sklearn.feature_extraction", "text"),
                 "autosummary": [
-                    {
-                        "template": "class",
-                        "entries": [
-                            "text.CountVectorizer",
-                            "text.HashingVectorizer",
-                            "text.TfidfTransformer",
-                            "text.TfidfVectorizer",
-                        ],
-                    },
+                    "text.CountVectorizer",
+                    "text.HashingVectorizer",
+                    "text.TfidfTransformer",
+                    "text.TfidfVectorizer",
                 ],
             },
         ],
@@ -611,34 +442,24 @@ API_REFERENCE = {
             {
                 "title": None,
                 "autosummary": [
-                    {
-                        "template": "class",
-                        "entries": [
-                            "GenericUnivariateSelect",
-                            "SelectPercentile",
-                            "SelectKBest",
-                            "SelectFpr",
-                            "SelectFdr",
-                            "SelectFromModel",
-                            "SelectFwe",
-                            "SequentialFeatureSelector",
-                            "RFE",
-                            "RFECV",
-                            "VarianceThreshold",
-                            "SelectorMixin",
-                        ],
-                    },
-                    {
-                        "template": "function",
-                        "entries": [
-                            "chi2",
-                            "f_classif",
-                            "f_regression",
-                            "r_regression",
-                            "mutual_info_classif",
-                            "mutual_info_regression",
-                        ],
-                    },
+                    "GenericUnivariateSelect",
+                    "RFE",
+                    "RFECV",
+                    "SelectFdr",
+                    "SelectFpr",
+                    "SelectFromModel",
+                    "SelectFwe",
+                    "SelectKBest",
+                    "SelectPercentile",
+                    "SelectorMixin",
+                    "SequentialFeatureSelector",
+                    "VarianceThreshold",
+                    "chi2",
+                    "f_classif",
+                    "f_regression",
+                    "mutual_info_classif",
+                    "mutual_info_regression",
+                    "r_regression",
                 ],
             },
         ],
@@ -650,38 +471,28 @@ API_REFERENCE = {
             {
                 "title": None,
                 "autosummary": [
-                    {
-                        "template": "class",
-                        "entries": [
-                            "GaussianProcessClassifier",
-                            "GaussianProcessRegressor",
-                        ],
-                    },
+                    "GaussianProcessClassifier",
+                    "GaussianProcessRegressor",
                 ],
             },
             {
                 "title": "Kernels",
                 "description": _get_submodule("sklearn.gaussian_process", "kernels"),
                 "autosummary": [
-                    {
-                        "template": "class",
-                        "entries": [
-                            "kernels.CompoundKernel",
-                            "kernels.ConstantKernel",
-                            "kernels.DotProduct",
-                            "kernels.ExpSineSquared",
-                            "kernels.Exponentiation",
-                            "kernels.Hyperparameter",
-                            "kernels.Kernel",
-                            "kernels.Matern",
-                            "kernels.PairwiseKernel",
-                            "kernels.Product",
-                            "kernels.RBF",
-                            "kernels.RationalQuadratic",
-                            "kernels.Sum",
-                            "kernels.WhiteKernel",
-                        ],
-                    },
+                    "kernels.CompoundKernel",
+                    "kernels.ConstantKernel",
+                    "kernels.DotProduct",
+                    "kernels.ExpSineSquared",
+                    "kernels.Exponentiation",
+                    "kernels.Hyperparameter",
+                    "kernels.Kernel",
+                    "kernels.Matern",
+                    "kernels.PairwiseKernel",
+                    "kernels.Product",
+                    "kernels.RBF",
+                    "kernels.RationalQuadratic",
+                    "kernels.Sum",
+                    "kernels.WhiteKernel",
                 ],
             },
         ],
@@ -693,15 +504,10 @@ API_REFERENCE = {
             {
                 "title": None,
                 "autosummary": [
-                    {
-                        "template": "class",
-                        "entries": [
-                            "SimpleImputer",
-                            "IterativeImputer",
-                            "MissingIndicator",
-                            "KNNImputer",
-                        ],
-                    },
+                    "IterativeImputer",
+                    "KNNImputer",
+                    "MissingIndicator",
+                    "SimpleImputer",
                 ],
             },
         ],
@@ -712,27 +518,11 @@ API_REFERENCE = {
         "sections": [
             {
                 "title": None,
-                "autosummary": [
-                    {
-                        "template": "function",
-                        "entries": [
-                            "partial_dependence",
-                            "permutation_importance",
-                        ],
-                    },
-                ],
+                "autosummary": ["partial_dependence", "permutation_importance"],
             },
             {
                 "title": "Plotting",
-                "autosummary": [
-                    {
-                        "template": "class",
-                        "entries": [
-                            "DecisionBoundaryDisplay",
-                            "PartialDependenceDisplay",
-                        ],
-                    },
-                ],
+                "autosummary": ["DecisionBoundaryDisplay", "PartialDependenceDisplay"],
             },
         ],
     },
@@ -743,17 +533,9 @@ API_REFERENCE = {
             {
                 "title": None,
                 "autosummary": [
-                    {
-                        "template": "class",
-                        "entries": ["IsotonicRegression"],
-                    },
-                    {
-                        "template": "function",
-                        "entries": [
-                            "check_increasing",
-                            "isotonic_regression",
-                        ],
-                    },
+                    "IsotonicRegression",
+                    "check_increasing",
+                    "isotonic_regression",
                 ],
             },
         ],
@@ -765,16 +547,11 @@ API_REFERENCE = {
             {
                 "title": None,
                 "autosummary": [
-                    {
-                        "template": "class",
-                        "entries": [
-                            "AdditiveChi2Sampler",
-                            "Nystroem",
-                            "PolynomialCountSketch",
-                            "RBFSampler",
-                            "SkewedChi2Sampler",
-                        ],
-                    },
+                    "AdditiveChi2Sampler",
+                    "Nystroem",
+                    "PolynomialCountSketch",
+                    "RBFSampler",
+                    "SkewedChi2Sampler",
                 ],
             },
         ],
@@ -785,12 +562,7 @@ API_REFERENCE = {
         "sections": [
             {
                 "title": None,
-                "autosummary": [
-                    {
-                        "template": "class",
-                        "entries": ["KernelRidge"],
-                    },
-                ],
+                "autosummary": ["KernelRidge"],
             },
         ],
     },
@@ -805,34 +577,19 @@ API_REFERENCE = {
             {
                 "title": "Linear classifiers",
                 "autosummary": [
-                    {
-                        "template": "class",
-                        "entries": [
-                            "LogisticRegression",
-                            "LogisticRegressionCV",
-                            "PassiveAggressiveClassifier",
-                            "Perceptron",
-                            "RidgeClassifier",
-                            "RidgeClassifierCV",
-                            "SGDClassifier",
-                            "SGDOneClassSVM",
-                        ],
-                    },
+                    "LogisticRegression",
+                    "LogisticRegressionCV",
+                    "PassiveAggressiveClassifier",
+                    "Perceptron",
+                    "RidgeClassifier",
+                    "RidgeClassifierCV",
+                    "SGDClassifier",
+                    "SGDOneClassSVM",
                 ],
             },
             {
                 "title": "Classical linear regressors",
-                "autosummary": [
-                    {
-                        "template": "class",
-                        "entries": [
-                            "LinearRegression",
-                            "Ridge",
-                            "RidgeCV",
-                            "SGDRegressor",
-                        ],
-                    },
-                ],
+                "autosummary": ["LinearRegression", "Ridge", "RidgeCV", "SGDRegressor"],
             },
             {
                 "title": "Regressors with variable selection",
@@ -845,35 +602,22 @@ API_REFERENCE = {
                     "penalty."
                 ),
                 "autosummary": [
-                    {
-                        "template": "class",
-                        "entries": [
-                            "ElasticNet",
-                            "ElasticNetCV",
-                            "Lars",
-                            "LarsCV",
-                            "Lasso",
-                            "LassoCV",
-                            "LassoLars",
-                            "LassoLarsCV",
-                            "LassoLarsIC",
-                            "OrthogonalMatchingPursuit",
-                            "OrthogonalMatchingPursuitCV",
-                        ],
-                    },
+                    "ElasticNet",
+                    "ElasticNetCV",
+                    "Lars",
+                    "LarsCV",
+                    "Lasso",
+                    "LassoCV",
+                    "LassoLars",
+                    "LassoLarsCV",
+                    "LassoLarsIC",
+                    "OrthogonalMatchingPursuit",
+                    "OrthogonalMatchingPursuitCV",
                 ],
             },
             {
                 "title": "Bayesian regressors",
-                "autosummary": [
-                    {
-                        "template": "class",
-                        "entries": [
-                            "ARDRegression",
-                            "BayesianRidge",
-                        ],
-                    },
-                ],
+                "autosummary": ["ARDRegression", "BayesianRidge"],
             },
             {
                 "title": "Multi-task linear regressors with variable selection",
@@ -885,15 +629,10 @@ API_REFERENCE = {
                     " coefficients)."
                 ),
                 "autosummary": [
-                    {
-                        "template": "class",
-                        "entries": [
-                            "MultiTaskElasticNet",
-                            "MultiTaskElasticNetCV",
-                            "MultiTaskLasso",
-                            "MultiTaskLassoCV",
-                        ],
-                    },
+                    "MultiTaskElasticNet",
+                    "MultiTaskElasticNetCV",
+                    "MultiTaskLasso",
+                    "MultiTaskLassoCV",
                 ],
             },
             {
@@ -904,15 +643,10 @@ API_REFERENCE = {
                     "``loss='huber'``."
                 ),
                 "autosummary": [
-                    {
-                        "template": "class",
-                        "entries": [
-                            "HuberRegressor",
-                            "QuantileRegressor",
-                            "RANSACRegressor",
-                            "TheilSenRegressor",
-                        ],
-                    },
+                    "HuberRegressor",
+                    "QuantileRegressor",
+                    "RANSACRegressor",
+                    "TheilSenRegressor",
                 ],
             },
             {
@@ -922,35 +656,22 @@ API_REFERENCE = {
                     "distributions other than a normal distribution."
                 ),
                 "autosummary": [
-                    {
-                        "template": "class",
-                        "entries": [
-                            "PoissonRegressor",
-                            "TweedieRegressor",
-                            "GammaRegressor",
-                        ],
-                    },
+                    "GammaRegressor",
+                    "PoissonRegressor",
+                    "TweedieRegressor",
                 ],
             },
             {
                 "title": "Miscellaneous",
                 "autosummary": [
-                    {
-                        "template": "class",
-                        "entries": ["PassiveAggressiveRegressor"],
-                    },
-                    {
-                        "template": "function",
-                        "entries": [
-                            "enet_path",
-                            "lars_path",
-                            "lars_path_gram",
-                            "lasso_path",
-                            "orthogonal_mp",
-                            "orthogonal_mp_gram",
-                            "ridge_regression",
-                        ],
-                    },
+                    "PassiveAggressiveRegressor",
+                    "enet_path",
+                    "lars_path",
+                    "lars_path_gram",
+                    "lasso_path",
+                    "orthogonal_mp",
+                    "orthogonal_mp_gram",
+                    "ridge_regression",
                 ],
             },
         ],
@@ -962,25 +683,15 @@ API_REFERENCE = {
             {
                 "title": None,
                 "autosummary": [
-                    {
-                        "template": "class",
-                        "entries": [
-                            "Isomap",
-                            "LocallyLinearEmbedding",
-                            "MDS",
-                            "SpectralEmbedding",
-                            "TSNE",
-                        ],
-                    },
-                    {
-                        "template": "function",
-                        "entries": [
-                            "locally_linear_embedding",
-                            "smacof",
-                            "spectral_embedding",
-                            "trustworthiness",
-                        ],
-                    },
+                    "Isomap",
+                    "LocallyLinearEmbedding",
+                    "MDS",
+                    "SpectralEmbedding",
+                    "TSNE",
+                    "locally_linear_embedding",
+                    "smacof",
+                    "spectral_embedding",
+                    "trustworthiness",
                 ],
             },
         ],
@@ -993,201 +704,152 @@ API_REFERENCE = {
                 "title": "Model selection interface",
                 "description": _get_guide("scoring_parameter"),
                 "autosummary": [
-                    {
-                        "template": "function",
-                        "entries": [
-                            "check_scoring",
-                            "get_scorer",
-                            "get_scorer_names",
-                            "make_scorer",
-                        ],
-                    },
+                    "check_scoring",
+                    "get_scorer",
+                    "get_scorer_names",
+                    "make_scorer",
                 ],
             },
             {
                 "title": "Classification metrics",
                 "description": _get_guide("classification_metrics"),
                 "autosummary": [
-                    {
-                        "template": "function",
-                        "entries": [
-                            "accuracy_score",
-                            "auc",
-                            "average_precision_score",
-                            "balanced_accuracy_score",
-                            "brier_score_loss",
-                            "class_likelihood_ratios",
-                            "classification_report",
-                            "cohen_kappa_score",
-                            "confusion_matrix",
-                            "dcg_score",
-                            "det_curve",
-                            "f1_score",
-                            "fbeta_score",
-                            "hamming_loss",
-                            "hinge_loss",
-                            "jaccard_score",
-                            "log_loss",
-                            "matthews_corrcoef",
-                            "multilabel_confusion_matrix",
-                            "ndcg_score",
-                            "precision_recall_curve",
-                            "precision_recall_fscore_support",
-                            "precision_score",
-                            "recall_score",
-                            "roc_auc_score",
-                            "roc_curve",
-                            "top_k_accuracy_score",
-                            "zero_one_loss",
-                        ],
-                    },
+                    "accuracy_score",
+                    "auc",
+                    "average_precision_score",
+                    "balanced_accuracy_score",
+                    "brier_score_loss",
+                    "class_likelihood_ratios",
+                    "classification_report",
+                    "cohen_kappa_score",
+                    "confusion_matrix",
+                    "dcg_score",
+                    "det_curve",
+                    "f1_score",
+                    "fbeta_score",
+                    "hamming_loss",
+                    "hinge_loss",
+                    "jaccard_score",
+                    "log_loss",
+                    "matthews_corrcoef",
+                    "multilabel_confusion_matrix",
+                    "ndcg_score",
+                    "precision_recall_curve",
+                    "precision_recall_fscore_support",
+                    "precision_score",
+                    "recall_score",
+                    "roc_auc_score",
+                    "roc_curve",
+                    "top_k_accuracy_score",
+                    "zero_one_loss",
                 ],
             },
             {
                 "title": "Regression metrics",
                 "description": _get_guide("regression_metrics"),
                 "autosummary": [
-                    {
-                        "template": "function",
-                        "entries": [
-                            "explained_variance_score",
-                            "max_error",
-                            "mean_absolute_error",
-                            "mean_squared_error",
-                            "mean_squared_log_error",
-                            "median_absolute_error",
-                            "mean_absolute_percentage_error",
-                            "r2_score",
-                            "root_mean_squared_log_error",
-                            "root_mean_squared_error",
-                            "mean_poisson_deviance",
-                            "mean_gamma_deviance",
-                            "mean_tweedie_deviance",
-                            "d2_tweedie_score",
-                            "mean_pinball_loss",
-                            "d2_pinball_score",
-                            "d2_absolute_error_score",
-                        ],
-                    },
+                    "d2_absolute_error_score",
+                    "d2_pinball_score",
+                    "d2_tweedie_score",
+                    "explained_variance_score",
+                    "max_error",
+                    "mean_absolute_error",
+                    "mean_absolute_percentage_error",
+                    "mean_gamma_deviance",
+                    "mean_pinball_loss",
+                    "mean_poisson_deviance",
+                    "mean_squared_error",
+                    "mean_squared_log_error",
+                    "mean_tweedie_deviance",
+                    "median_absolute_error",
+                    "r2_score",
+                    "root_mean_squared_error",
+                    "root_mean_squared_log_error",
                 ],
             },
             {
                 "title": "Multilabel ranking metrics",
                 "description": _get_guide("multilabel_ranking_metrics"),
                 "autosummary": [
-                    {
-                        "template": "function",
-                        "entries": [
-                            "coverage_error",
-                            "label_ranking_average_precision_score",
-                            "label_ranking_loss",
-                        ],
-                    },
+                    "coverage_error",
+                    "label_ranking_average_precision_score",
+                    "label_ranking_loss",
                 ],
             },
             {
                 "title": "Clustering metrics",
-                "description": (
-                    _get_submodule("sklearn.metrics", "cluster")
-                    + "\n\n"
-                    + _get_guide("clustering_evaluation")
-                ),
+                "description": _get_submodule(
+                    "sklearn.metrics", "cluster"
+                ) + _get_guide("clustering_evaluation"),
                 "autosummary": [
-                    {
-                        "template": "function",
-                        "entries": [
-                            "adjusted_mutual_info_score",
-                            "adjusted_rand_score",
-                            "calinski_harabasz_score",
-                            "davies_bouldin_score",
-                            "completeness_score",
-                            "cluster.contingency_matrix",
-                            "cluster.pair_confusion_matrix",
-                            "fowlkes_mallows_score",
-                            "homogeneity_completeness_v_measure",
-                            "homogeneity_score",
-                            "mutual_info_score",
-                            "normalized_mutual_info_score",
-                            "rand_score",
-                            "silhouette_score",
-                            "silhouette_samples",
-                            "v_measure_score",
-                        ],
-                    },
+                    "adjusted_mutual_info_score",
+                    "adjusted_rand_score",
+                    "calinski_harabasz_score",
+                    "cluster.contingency_matrix",
+                    "cluster.pair_confusion_matrix",
+                    "completeness_score",
+                    "davies_bouldin_score",
+                    "fowlkes_mallows_score",
+                    "homogeneity_completeness_v_measure",
+                    "homogeneity_score",
+                    "mutual_info_score",
+                    "normalized_mutual_info_score",
+                    "rand_score",
+                    "silhouette_samples",
+                    "silhouette_score",
+                    "v_measure_score",
                 ],
             },
             {
                 "title": "Biclustering metrics",
                 "description": _get_guide("biclustering_evaluation"),
-                "autosummary": [
-                    {
-                        "template": "function",
-                        "entries": ["consensus_score"],
-                    },
-                ],
+                "autosummary": ["consensus_score"],
             },
             {
                 "title": "Distance metrics",
-                "autosummary": [
-                    {
-                        "template": "class",
-                        "entries": ["DistanceMetric"],
-                    },
-                ],
+                "autosummary": ["DistanceMetric"],
             },
             {
                 "title": "Pairwise metrics",
-                "description": (
-                    _get_submodule("sklearn.metrics", "pairwise")
-                    + "\n\n"
-                    + _get_guide("metrics")
-                ),
+                "description": _get_submodule(
+                    "sklearn.metrics", "pairwise"
+                ) + _get_guide("metrics"),
                 "autosummary": [
-                    {
-                        "template": "function",
-                        "entries": [
-                            "pairwise.additive_chi2_kernel",
-                            "pairwise.chi2_kernel",
-                            "pairwise.cosine_similarity",
-                            "pairwise.cosine_distances",
-                            "pairwise.distance_metrics",
-                            "pairwise.euclidean_distances",
-                            "pairwise.haversine_distances",
-                            "pairwise.kernel_metrics",
-                            "pairwise.laplacian_kernel",
-                            "pairwise.linear_kernel",
-                            "pairwise.manhattan_distances",
-                            "pairwise.nan_euclidean_distances",
-                            "pairwise.pairwise_kernels",
-                            "pairwise.polynomial_kernel",
-                            "pairwise.rbf_kernel",
-                            "pairwise.sigmoid_kernel",
-                            "pairwise.paired_euclidean_distances",
-                            "pairwise.paired_manhattan_distances",
-                            "pairwise.paired_cosine_distances",
-                            "pairwise.paired_distances",
-                            "pairwise_distances",
-                            "pairwise_distances_argmin",
-                            "pairwise_distances_argmin_min",
-                            "pairwise_distances_chunked",
-                        ],
-                    },
+                    "pairwise.additive_chi2_kernel",
+                    "pairwise.chi2_kernel",
+                    "pairwise.cosine_distances",
+                    "pairwise.cosine_similarity",
+                    "pairwise.distance_metrics",
+                    "pairwise.euclidean_distances",
+                    "pairwise.haversine_distances",
+                    "pairwise.kernel_metrics",
+                    "pairwise.laplacian_kernel",
+                    "pairwise.linear_kernel",
+                    "pairwise.manhattan_distances",
+                    "pairwise.nan_euclidean_distances",
+                    "pairwise.paired_cosine_distances",
+                    "pairwise.paired_distances",
+                    "pairwise.paired_euclidean_distances",
+                    "pairwise.paired_manhattan_distances",
+                    "pairwise.pairwise_kernels",
+                    "pairwise.polynomial_kernel",
+                    "pairwise.rbf_kernel",
+                    "pairwise.sigmoid_kernel",
+                    "pairwise_distances",
+                    "pairwise_distances_argmin",
+                    "pairwise_distances_argmin_min",
+                    "pairwise_distances_chunked",
                 ],
             },
             {
                 "title": "Plotting",
                 "description": _get_guide("visualizations"),
                 "autosummary": [
-                    {
-                        "template": "class",
-                        "entries": [
-                            "ConfusionMatrixDisplay",
-                            "DetCurveDisplay",
-                            "PrecisionRecallDisplay",
-                            "PredictionErrorDisplay",
-                            "RocCurveDisplay",
-                        ],
-                    },
+                    "ConfusionMatrixDisplay",
+                    "DetCurveDisplay",
+                    "PrecisionRecallDisplay",
+                    "PredictionErrorDisplay",
+                    "RocCurveDisplay",
                 ],
             },
         ],
@@ -1198,15 +860,7 @@ API_REFERENCE = {
         "sections": [
             {
                 "title": None,
-                "autosummary": [
-                    {
-                        "template": "class",
-                        "entries": [
-                            "BayesianGaussianMixture",
-                            "GaussianMixture",
-                        ],
-                    },
-                ],
+                "autosummary": ["BayesianGaussianMixture", "GaussianMixture"],
             },
         ],
     },
@@ -1217,78 +871,50 @@ API_REFERENCE = {
             {
                 "title": "Splitters",
                 "autosummary": [
-                    {
-                        "template": "class",
-                        "entries": [
-                            "GroupKFold",
-                            "GroupShuffleSplit",
-                            "KFold",
-                            "LeaveOneGroupOut",
-                            "LeavePGroupsOut",
-                            "LeaveOneOut",
-                            "LeavePOut",
-                            "PredefinedSplit",
-                            "RepeatedKFold",
-                            "RepeatedStratifiedKFold",
-                            "ShuffleSplit",
-                            "StratifiedKFold",
-                            "StratifiedShuffleSplit",
-                            "StratifiedGroupKFold",
-                            "TimeSeriesSplit",
-                        ],
-                    },
-                    {
-                        "template": "function",
-                        "entries": [
-                            "check_cv",
-                            "train_test_split",
-                        ],
-                    },
+                    "GroupKFold",
+                    "GroupShuffleSplit",
+                    "KFold",
+                    "LeaveOneGroupOut",
+                    "LeaveOneOut",
+                    "LeavePGroupsOut",
+                    "LeavePOut",
+                    "PredefinedSplit",
+                    "RepeatedKFold",
+                    "RepeatedStratifiedKFold",
+                    "ShuffleSplit",
+                    "StratifiedGroupKFold",
+                    "StratifiedKFold",
+                    "StratifiedShuffleSplit",
+                    "TimeSeriesSplit",
+                    "check_cv",
+                    "train_test_split",
                 ],
             },
             {
                 "title": "Hyper-parameter optimizers",
                 "autosummary": [
-                    {
-                        "template": "class",
-                        "entries": [
-                            "GridSearchCV",
-                            "HalvingGridSearchCV",
-                            "ParameterGrid",
-                            "ParameterSampler",
-                            "RandomizedSearchCV",
-                            "HalvingRandomSearchCV",
-                        ],
-                    },
+                    "GridSearchCV",
+                    "HalvingGridSearchCV",
+                    "HalvingRandomSearchCV",
+                    "ParameterGrid",
+                    "ParameterSampler",
+                    "RandomizedSearchCV",
                 ],
             },
             {
                 "title": "Model validation",
                 "autosummary": [
-                    {
-                        "template": "function",
-                        "entries": [
-                            "cross_validate",
-                            "cross_val_predict",
-                            "cross_val_score",
-                            "learning_curve",
-                            "permutation_test_score",
-                            "validation_curve",
-                        ],
-                    },
+                    "cross_val_predict",
+                    "cross_val_score",
+                    "cross_validate",
+                    "learning_curve",
+                    "permutation_test_score",
+                    "validation_curve",
                 ],
             },
             {
                 "title": "Visualization",
-                "autosummary": [
-                    {
-                        "template": "class",
-                        "entries": [
-                            "LearningCurveDisplay",
-                            "ValidationCurveDisplay",
-                        ],
-                    },
-                ],
+                "autosummary": ["LearningCurveDisplay", "ValidationCurveDisplay"],
             },
         ],
     },
@@ -1299,14 +925,9 @@ API_REFERENCE = {
             {
                 "title": None,
                 "autosummary": [
-                    {
-                        "template": "class",
-                        "entries": [
-                            "OneVsRestClassifier",
-                            "OneVsOneClassifier",
-                            "OutputCodeClassifier",
-                        ],
-                    },
+                    "OneVsOneClassifier",
+                    "OneVsRestClassifier",
+                    "OutputCodeClassifier",
                 ],
             },
         ],
@@ -1322,15 +943,10 @@ API_REFERENCE = {
             {
                 "title": None,
                 "autosummary": [
-                    {
-                        "template": "class",
-                        "entries": [
-                            "ClassifierChain",
-                            "MultiOutputRegressor",
-                            "MultiOutputClassifier",
-                            "RegressorChain",
-                        ],
-                    },
+                    "ClassifierChain",
+                    "MultiOutputClassifier",
+                    "MultiOutputRegressor",
+                    "RegressorChain",
                 ],
             },
         ],
@@ -1342,16 +958,11 @@ API_REFERENCE = {
             {
                 "title": None,
                 "autosummary": [
-                    {
-                        "template": "class",
-                        "entries": [
-                            "BernoulliNB",
-                            "CategoricalNB",
-                            "ComplementNB",
-                            "GaussianNB",
-                            "MultinomialNB",
-                        ],
-                    },
+                    "BernoulliNB",
+                    "CategoricalNB",
+                    "ComplementNB",
+                    "GaussianNB",
+                    "MultinomialNB",
                 ],
             },
         ],
@@ -1363,32 +974,22 @@ API_REFERENCE = {
             {
                 "title": None,
                 "autosummary": [
-                    {
-                        "template": "class",
-                        "entries": [
-                            "BallTree",
-                            "KDTree",
-                            "KernelDensity",
-                            "KNeighborsClassifier",
-                            "KNeighborsRegressor",
-                            "KNeighborsTransformer",
-                            "LocalOutlierFactor",
-                            "RadiusNeighborsClassifier",
-                            "RadiusNeighborsRegressor",
-                            "RadiusNeighborsTransformer",
-                            "NearestCentroid",
-                            "NearestNeighbors",
-                            "NeighborhoodComponentsAnalysis",
-                        ],
-                    },
-                    {
-                        "template": "function",
-                        "entries": [
-                            "kneighbors_graph",
-                            "radius_neighbors_graph",
-                            "sort_graph_by_row_values",
-                        ],
-                    },
+                    "BallTree",
+                    "KDTree",
+                    "KNeighborsClassifier",
+                    "KNeighborsRegressor",
+                    "KNeighborsTransformer",
+                    "KernelDensity",
+                    "LocalOutlierFactor",
+                    "NearestCentroid",
+                    "NearestNeighbors",
+                    "NeighborhoodComponentsAnalysis",
+                    "RadiusNeighborsClassifier",
+                    "RadiusNeighborsRegressor",
+                    "RadiusNeighborsTransformer",
+                    "kneighbors_graph",
+                    "radius_neighbors_graph",
+                    "sort_graph_by_row_values",
                 ],
             },
         ],
@@ -1401,16 +1002,7 @@ API_REFERENCE = {
         "sections": [
             {
                 "title": None,
-                "autosummary": [
-                    {
-                        "template": "class",
-                        "entries": [
-                            "BernoulliRBM",
-                            "MLPClassifier",
-                            "MLPRegressor",
-                        ],
-                    },
-                ],
+                "autosummary": ["BernoulliRBM", "MLPClassifier", "MLPRegressor"],
             },
         ],
     },
@@ -1421,20 +1013,10 @@ API_REFERENCE = {
             {
                 "title": None,
                 "autosummary": [
-                    {
-                        "template": "class",
-                        "entries": [
-                            "FeatureUnion",
-                            "Pipeline",
-                        ],
-                    },
-                    {
-                        "template": "function",
-                        "entries": [
-                            "make_pipeline",
-                            "make_union",
-                        ],
-                    },
+                    "FeatureUnion",
+                    "Pipeline",
+                    "make_pipeline",
+                    "make_union",
                 ],
             },
         ],
@@ -1446,45 +1028,35 @@ API_REFERENCE = {
             {
                 "title": None,
                 "autosummary": [
-                    {
-                        "template": "class",
-                        "entries": [
-                            "Binarizer",
-                            "FunctionTransformer",
-                            "KBinsDiscretizer",
-                            "KernelCenterer",
-                            "LabelBinarizer",
-                            "LabelEncoder",
-                            "MultiLabelBinarizer",
-                            "MaxAbsScaler",
-                            "MinMaxScaler",
-                            "Normalizer",
-                            "OneHotEncoder",
-                            "OrdinalEncoder",
-                            "PolynomialFeatures",
-                            "PowerTransformer",
-                            "QuantileTransformer",
-                            "RobustScaler",
-                            "SplineTransformer",
-                            "StandardScaler",
-                            "TargetEncoder",
-                        ],
-                    },
-                    {
-                        "template": "function",
-                        "entries": [
-                            "add_dummy_feature",
-                            "binarize",
-                            "label_binarize",
-                            "maxabs_scale",
-                            "minmax_scale",
-                            "normalize",
-                            "quantile_transform",
-                            "robust_scale",
-                            "scale",
-                            "power_transform",
-                        ],
-                    },
+                    "Binarizer",
+                    "FunctionTransformer",
+                    "KBinsDiscretizer",
+                    "KernelCenterer",
+                    "LabelBinarizer",
+                    "LabelEncoder",
+                    "MaxAbsScaler",
+                    "MinMaxScaler",
+                    "MultiLabelBinarizer",
+                    "Normalizer",
+                    "OneHotEncoder",
+                    "OrdinalEncoder",
+                    "PolynomialFeatures",
+                    "PowerTransformer",
+                    "QuantileTransformer",
+                    "RobustScaler",
+                    "SplineTransformer",
+                    "StandardScaler",
+                    "TargetEncoder",
+                    "add_dummy_feature",
+                    "binarize",
+                    "label_binarize",
+                    "maxabs_scale",
+                    "minmax_scale",
+                    "normalize",
+                    "power_transform",
+                    "quantile_transform",
+                    "robust_scale",
+                    "scale",
                 ],
             },
         ],
@@ -1496,17 +1068,9 @@ API_REFERENCE = {
             {
                 "title": None,
                 "autosummary": [
-                    {
-                        "template": "class",
-                        "entries": [
-                            "GaussianRandomProjection",
-                            "SparseRandomProjection",
-                        ],
-                    },
-                    {
-                        "template": "function",
-                        "entries": ["johnson_lindenstrauss_min_dim"],
-                    },
+                    "GaussianRandomProjection",
+                    "SparseRandomProjection",
+                    "johnson_lindenstrauss_min_dim",
                 ],
             },
         ],
@@ -1518,14 +1082,9 @@ API_REFERENCE = {
             {
                 "title": None,
                 "autosummary": [
-                    {
-                        "template": "class",
-                        "entries": [
-                            "LabelPropagation",
-                            "LabelSpreading",
-                            "SelfTrainingClassifier",
-                        ],
-                    },
+                    "LabelPropagation",
+                    "LabelSpreading",
+                    "SelfTrainingClassifier",
                 ],
             },
         ],
@@ -1537,22 +1096,14 @@ API_REFERENCE = {
             {
                 "title": None,
                 "autosummary": [
-                    {
-                        "template": "class",
-                        "entries": [
-                            "LinearSVC",
-                            "LinearSVR",
-                            "NuSVC",
-                            "NuSVR",
-                            "OneClassSVM",
-                            "SVC",
-                            "SVR",
-                        ],
-                    },
-                    {
-                        "template": "function",
-                        "entries": ["l1_min_c"],
-                    },
+                    "LinearSVC",
+                    "LinearSVR",
+                    "NuSVC",
+                    "NuSVR",
+                    "OneClassSVM",
+                    "SVC",
+                    "SVR",
+                    "l1_min_c",
                 ],
             },
         ],
@@ -1564,37 +1115,19 @@ API_REFERENCE = {
             {
                 "title": None,
                 "autosummary": [
-                    {
-                        "template": "class",
-                        "entries": [
-                            "DecisionTreeClassifier",
-                            "DecisionTreeRegressor",
-                            "ExtraTreeClassifier",
-                            "ExtraTreeRegressor",
-                        ],
-                    },
+                    "DecisionTreeClassifier",
+                    "DecisionTreeRegressor",
+                    "ExtraTreeClassifier",
+                    "ExtraTreeRegressor",
                 ],
             },
             {
                 "title": "Exporting",
-                "autosummary": [
-                    {
-                        "template": "function",
-                        "entries": [
-                            "export_graphviz",
-                            "export_text",
-                        ],
-                    },
-                ],
+                "autosummary": ["export_graphviz", "export_text"],
             },
             {
                 "title": "Plotting",
-                "autosummary": [
-                    {
-                        "template": "function",
-                        "entries": ["plot_tree"],
-                    },
-                ],
+                "autosummary": ["plot_tree"],
             },
         ],
     },
@@ -1605,239 +1138,152 @@ API_REFERENCE = {
             {
                 "title": None,
                 "autosummary": [
-                    {
-                        "template": "class",
-                        "entries": ["Bunch"],
-                    },
-                    {
-                        "template": "function",
-                        "entries": [
-                            "as_float_array",
-                            "assert_all_finite",
-                            "deprecated",
-                            "estimator_html_repr",
-                            "gen_batches",
-                            "gen_even_slices",
-                            "indexable",
-                            "murmurhash3_32",
-                            "resample",
-                            "_safe_indexing",
-                            "safe_mask",
-                            "safe_sqr",
-                            "shuffle",
-                        ],
-                    },
+                    "Bunch",
+                    "_safe_indexing",
+                    "as_float_array",
+                    "assert_all_finite",
+                    "deprecated",
+                    "estimator_html_repr",
+                    "gen_batches",
+                    "gen_even_slices",
+                    "indexable",
+                    "murmurhash3_32",
+                    "resample",
+                    "safe_mask",
+                    "safe_sqr",
+                    "shuffle",
                 ],
             },
             {
                 "title": "Input and parameter validation",
                 "description": _get_submodule("sklearn.utils", "validation"),
                 "autosummary": [
-                    {
-                        "template": "function",
-                        "entries": [
-                            "check_X_y",
-                            "check_array",
-                            "check_scalar",
-                            "check_consistent_length",
-                            "check_random_state",
-                            "validation.check_is_fitted",
-                            "validation.check_memory",
-                            "validation.check_symmetric",
-                            "validation.column_or_1d",
-                            "validation.has_fit_parameter",
-                        ],
-                    },
+                    "check_X_y",
+                    "check_array",
+                    "check_consistent_length",
+                    "check_random_state",
+                    "check_scalar",
+                    "validation.check_is_fitted",
+                    "validation.check_memory",
+                    "validation.check_symmetric",
+                    "validation.column_or_1d",
+                    "validation.has_fit_parameter",
                 ],
             },
             {
                 "title": "Meta-estimators",
                 "description": _get_submodule("sklearn.utils", "metaestimators"),
-                "autosummary": [
-                    {
-                        "template": "function",
-                        "entries": ["metaestimators.available_if"],
-                    },
-                ],
+                "autosummary": ["metaestimators.available_if"],
             },
             {
                 "title": "Weight handling based on class labels",
                 "description": _get_submodule("sklearn.utils", "class_weight"),
                 "autosummary": [
-                    {
-                        "template": "function",
-                        "entries": [
-                            "class_weight.compute_class_weight",
-                            "class_weight.compute_sample_weight",
-                        ],
-                    },
+                    "class_weight.compute_class_weight",
+                    "class_weight.compute_sample_weight",
                 ],
             },
             {
                 "title": "Dealing with multiclass target in classifiers",
                 "description": _get_submodule("sklearn.utils", "multiclass"),
                 "autosummary": [
-                    {
-                        "template": "function",
-                        "entries": [
-                            "multiclass.type_of_target",
-                            "multiclass.is_multilabel",
-                            "multiclass.unique_labels",
-                        ],
-                    },
+                    "multiclass.is_multilabel",
+                    "multiclass.type_of_target",
+                    "multiclass.unique_labels",
                 ],
             },
             {
                 "title": "Optimal mathematical operations",
                 "description": _get_submodule("sklearn.utils", "extmath"),
                 "autosummary": [
-                    {
-                        "template": "function",
-                        "entries": [
-                            "extmath.safe_sparse_dot",
-                            "extmath.randomized_range_finder",
-                            "extmath.randomized_svd",
-                            "extmath.fast_logdet",
-                            "extmath.density",
-                            "extmath.weighted_mode",
-                        ],
-                    },
+                    "extmath.density",
+                    "extmath.fast_logdet",
+                    "extmath.randomized_range_finder",
+                    "extmath.randomized_svd",
+                    "extmath.safe_sparse_dot",
+                    "extmath.weighted_mode",
                 ],
             },
             {
                 "title": "Working with sparse matrices and arrays",
                 "description": _get_submodule("sklearn.utils", "sparsefuncs"),
                 "autosummary": [
-                    {
-                        "template": "function",
-                        "entries": [
-                            "sparsefuncs.incr_mean_variance_axis",
-                            "sparsefuncs.inplace_column_scale",
-                            "sparsefuncs.inplace_row_scale",
-                            "sparsefuncs.inplace_swap_row",
-                            "sparsefuncs.inplace_swap_column",
-                            "sparsefuncs.mean_variance_axis",
-                            "sparsefuncs.inplace_csr_column_scale",
-                        ],
-                    },
+                    "sparsefuncs.incr_mean_variance_axis",
+                    "sparsefuncs.inplace_column_scale",
+                    "sparsefuncs.inplace_csr_column_scale",
+                    "sparsefuncs.inplace_row_scale",
+                    "sparsefuncs.inplace_swap_column",
+                    "sparsefuncs.inplace_swap_row",
+                    "sparsefuncs.mean_variance_axis",
                 ],
             },
             {
                 "title": None,
                 "description": _get_submodule("sklearn.utils", "sparsefuncs_fast"),
                 "autosummary": [
-                    {
-                        "template": "function",
-                        "entries": [
-                            "sparsefuncs_fast.inplace_csr_row_normalize_l1",
-                            "sparsefuncs_fast.inplace_csr_row_normalize_l2",
-                        ],
-                    },
+                    "sparsefuncs_fast.inplace_csr_row_normalize_l1",
+                    "sparsefuncs_fast.inplace_csr_row_normalize_l2",
                 ],
             },
             {
                 "title": "Working with graphs",
                 "description": _get_submodule("sklearn.utils", "graph"),
-                "autosummary": [
-                    {
-                        "template": "function",
-                        "entries": ["graph.single_source_shortest_path_length"],
-                    },
-                ],
+                "autosummary": ["graph.single_source_shortest_path_length"],
             },
             {
                 "title": "Random sampling",
                 "description": _get_submodule("sklearn.utils", "random"),
-                "autosummary": [
-                    {
-                        "template": "function",
-                        "entries": ["random.sample_without_replacement"],
-                    },
-                ],
+                "autosummary": ["random.sample_without_replacement"],
             },
             {
                 "title": "Auxiliary functions that operate on arrays",
                 "description": _get_submodule("sklearn.utils", "arrayfuncs"),
-                "autosummary": [
-                    {
-                        "template": "function",
-                        "entries": ["arrayfuncs.min_pos"],
-                    },
-                ],
+                "autosummary": ["arrayfuncs.min_pos"],
             },
             {
                 "title": "Metadata routing",
-                "description": (
-                    _get_submodule("sklearn.utils", "metadata_routing")
-                    + "\n\n"
-                    + _get_guide("metadata_routing")
-                ),
+                "description": _get_submodule(
+                    "sklearn.utils", "metadata_routing"
+                ) + _get_guide("metadata_routing"),
                 "autosummary": [
-                    {
-                        "template": "class",
-                        "entries": [
-                            "metadata_routing.MetadataRouter",
-                            "metadata_routing.MetadataRequest",
-                            "metadata_routing.MethodMapping",
-                        ],
-                    },
-                    {
-                        "template": "function",
-                        "entries": [
-                            "metadata_routing.get_routing_for_object",
-                            "metadata_routing.process_routing",
-                        ],
-                    },
+                    "metadata_routing.MetadataRequest",
+                    "metadata_routing.MetadataRouter",
+                    "metadata_routing.MethodMapping",
+                    "metadata_routing.get_routing_for_object",
+                    "metadata_routing.process_routing",
                 ],
             },
             {
                 "title": "Discovering scikit-learn objects",
                 "description": _get_submodule("sklearn.utils", "discovery"),
                 "autosummary": [
-                    {
-                        "template": "function",
-                        "entries": [
-                            "discovery.all_estimators",
-                            "discovery.all_displays",
-                            "discovery.all_functions",
-                        ],
-                    },
+                    "discovery.all_displays",
+                    "discovery.all_estimators",
+                    "discovery.all_functions",
                 ],
             },
             {
                 "title": "API compatibility checkers",
                 "description": _get_submodule("sklearn.utils", "estimator_checks"),
                 "autosummary": [
-                    {
-                        "template": "function",
-                        "entries": [
-                            "estimator_checks.check_estimator",
-                            "estimator_checks.parametrize_with_checks",
-                        ],
-                    },
+                    "estimator_checks.check_estimator",
+                    "estimator_checks.parametrize_with_checks",
                 ],
             },
             {
                 "title": "Parallel computing",
                 "description": _get_submodule("sklearn.utils", "parallel"),
                 "autosummary": [
-                    {
-                        "template": "class",
-                        "entries": ["parallel.Parallel"],
-                    },
-                    {
-                        "template": "function",
-                        "entries": [
-                            "parallel.delayed",
-                            "parallel_backend",
-                            "register_parallel_backend",
-                        ],
-                    },
+                    "parallel.Parallel",
+                    "parallel.delayed",
+                    "parallel_backend",
+                    "register_parallel_backend",
                 ],
             },
         ],
     },
 }
+
 
 """
 CONFIGURING DEPRECATED_API_REFERENCE
@@ -1873,14 +1319,10 @@ def _write_autosummary_rst(autosummary, f):
     f.write(".. autosummary::\n")
     f.write("   :nosignatures:\n")
     f.write("   :toctree: ../modules/generated/\n")
-    for autosummary_item in autosummary:
-        if autosummary_item["template"] is not None:
-            f.write(f"   :template: {autosummary_item['template']}.rst\n")
-        f.write("\n")
-        # Sort the entries in alphabetical order
-        for entry in sorted(autosummary_item["entries"]):
-            f.write(f"   {entry}\n")
-        f.write("\n")
+    f.write("   :template: base.rst\n\n")
+    for entry in sorted(autosummary):
+        f.write(f"   {entry}\n")
+    f.write("\n")
 
 
 def get_api_reference_rst(module_name):
