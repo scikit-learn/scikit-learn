@@ -66,6 +66,7 @@ extensions = [
     "add_toctree_functions",
     "allow_nan_estimators",
     "doi_role",
+    "override_pst_pagetoc",
     "sphinx_issues",
 ]
 
@@ -99,8 +100,12 @@ plot_include_source = True
 plot_html_show_formats = False
 plot_html_show_source_link = False
 
-# this is needed for some reason...
-# see https://github.com/numpy/numpydoc/issues/69
+# We do not need the table of class members because `sphinxext/override_pst_pagetoc.py`
+# will show them in the secondary sidebar
+numpydoc_show_class_members = False
+numpydoc_show_inherited_class_members = False
+
+# We want in-page toc of class members instead of a separate page for each entry
 numpydoc_class_members_toctree = False
 
 

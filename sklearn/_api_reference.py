@@ -4,9 +4,9 @@ CONFIGURING AN AUTOSUMMARY BLOCK
 ================================
 
 An autosummary block is configured as a list of dictionaries, each containing "template"
-that maps to a template name available under `doc/templates/` or `None` if no custom
-template is needed, and "entries" that maps to a list of functions/classes/etc. that
-uses the corresponding template. For instance, we have the following translation:
+that maps to a template name available under `doc/templates/` (class, function, or
+base), and "entries" that maps to a list of functions/classes/etc. that uses the
+corresponding template. For instance, we have the following translation:
 
 |---------------------------------------------| |--------------------------------------|
 |  [                                          | |                                      |
@@ -26,7 +26,48 @@ uses the corresponding template. For instance, we have the following translation
 |      },                                     | |                                      |
 |  ],                                         | |                                      |
 |---------------------------------------------| |--------------------------------------|
+"""
 
+from io import StringIO
+
+
+def _get_guide(*refs, is_developer=False):
+    """Get the rst to refer to user/developer guide.
+
+    `refs` is several references that can be used in the :ref:`...` directive. Note
+    that the generated rst does not include any leading or trailing newlines.
+    """
+    if len(refs) == 1:
+        ref_desc = f":ref:`{refs[0]}` section"
+    elif len(refs) == 2:
+        ref_desc = f":ref:`{refs[0]}` and :ref:`{refs[1]}` sections"
+    else:
+        ref_desc = ", ".join(f":ref:`{ref}`" for ref in refs[:-1])
+        ref_desc += f", and :ref:`{refs[-1]}` sections"
+
+    guide_name = "Developer" if is_developer else "User"
+    return f"**{guide_name} guide.** See the {ref_desc} for further details."
+
+
+def _get_submodule(module_name, submodule_name):
+    """Get the submodule docstring and automatically add the hook.
+
+    `module_name` is e.g. `sklearn.feature_extraction`, and `submodule_name` is e.g.
+    `image`, so we get the docstring and hook for `sklearn.feature_extraction.image`
+    submodule. `module_name` is used to reset the current module because autosummary
+    automatically changes the current module.
+
+    Note that the generated string does not include any leading or trailing newlines,
+    so one must manually take care of that to ensure valid rst syntax.
+    """
+    lines = [
+        f".. automodule:: {module_name}.{submodule_name}",
+        f".. currentmodule:: {module_name}",
+    ]
+    return "\n\n" + "\n\n".join(lines) + "\n\n"
+
+
+"""
 CONFIGURING API_REFERENCE
 =========================
 
@@ -76,70 +117,7 @@ the :mod: directive, e.g., :mod:`sklearn.feature_extraction` for the module and
 :mod:`sklearn.feature_extraction.text` for the section. Only in case that a section
 is not a particular submodule does the hook become useful, e.g., the "Loaders" section
 under `sklearn.datasets`.
-
-CONFIGURING DEPRECATED_API_REFERENCE
-====================================
-
-DEPRECATED_API_REFERENCE maps each deprecation target version to a corresponding
-autosummary block. It will be placed at the bottom of the API index page under the
-"Recently deprecated" section. Essentially, the rendered section would look like the
-following:
-
-|------------------------------------------|
-|     To be removed in {{ version_1 }}     |
-|     --------------------------------     |
-|     {{ autosummary_1 }}                  |
-|                                          |
-|     To be removed in {{ version_2 }}     |
-|     --------------------------------     |
-|     {{ autosummary_2 }}                  |
-|                                          |
-|     More versions...                     |
-|------------------------------------------|
-
-Note that the autosummary here assumes that the current module is `sklearn`, i.e., if
-`sklearn.utils.Memory` is deprecated, one should put `utils.Memory` in the "entries"
-slot of the autosummary block.
 """
-
-from io import StringIO
-
-
-def _get_guide(*refs, is_developer=False):
-    """Get the rst to refer to user/developer guide.
-
-    `refs` is several references that can be used in the :ref:`...` directive. Note
-    that the generated rst does not include any leading or trailing newlines.
-    """
-    if len(refs) == 1:
-        ref_desc = f":ref:`{refs[0]}` section"
-    elif len(refs) == 2:
-        ref_desc = f":ref:`{refs[0]}` and :ref:`{refs[1]}` sections"
-    else:
-        ref_desc = ", ".join(f":ref:`{ref}`" for ref in refs[:-1])
-        ref_desc += f", and :ref:`{refs[-1]}` sections"
-
-    guide_name = "Developer" if is_developer else "User"
-    return f"**{guide_name} guide.** See the {ref_desc} for further details."
-
-
-def _get_submodule(module_name, submodule_name):
-    """Get the submodule docstring and automatically add the hook.
-
-    `module_name` is e.g. `sklearn.feature_extraction`, and `submodule_name` is e.g.
-    `image`, so we get the docstring and hook for `sklearn.feature_extraction.image`
-    submodule. `module_name` is used to reset the current module because autosummary
-    automatically changes the current module.
-
-    Note that the generated string does not include any leading or trailing newlines,
-    so one must manually take care of that to ensure valid rst syntax.
-    """
-    lines = [
-        f".. automodule:: {module_name}.{submodule_name}",
-        f".. currentmodule:: {module_name}",
-    ]
-    return "\n\n" + "\n\n".join(lines) + "\n\n"
-
 
 API_REFERENCE = {
     "sklearn": {
@@ -540,7 +518,7 @@ API_REFERENCE = {
                 "title": None,
                 "autosummary": [
                     {
-                        "template": "class",
+                        "template": "base",
                         "entries": [
                             "DataConversionWarning",
                             "ConvergenceWarning",
@@ -564,7 +542,7 @@ API_REFERENCE = {
                 "title": None,
                 "autosummary": [
                     {
-                        "template": None,
+                        "template": "base",
                         "entries": [
                             "enable_iterative_imputer",
                             "enable_halving_search_cv",
@@ -1860,6 +1838,32 @@ API_REFERENCE = {
         ],
     },
 }
+
+"""
+CONFIGURING DEPRECATED_API_REFERENCE
+====================================
+
+DEPRECATED_API_REFERENCE maps each deprecation target version to a corresponding
+autosummary block. It will be placed at the bottom of the API index page under the
+"Recently deprecated" section. Essentially, the rendered section would look like the
+following:
+
+|------------------------------------------|
+|     To be removed in {{ version_1 }}     |
+|     --------------------------------     |
+|     {{ autosummary_1 }}                  |
+|                                          |
+|     To be removed in {{ version_2 }}     |
+|     --------------------------------     |
+|     {{ autosummary_2 }}                  |
+|                                          |
+|     More versions...                     |
+|------------------------------------------|
+
+Note that the autosummary here assumes that the current module is `sklearn`, i.e., if
+`sklearn.utils.Memory` is deprecated, one should put `utils.Memory` in the "entries"
+slot of the autosummary block.
+"""
 
 DEPRECATED_API_REFERENCE = {}  # type: ignore
 
