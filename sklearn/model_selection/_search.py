@@ -1079,15 +1079,16 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
                 param_results["param_%s" % name][cand_idx] = value
         for key in param_results:
             arr = np.array(list(param_results[key].values()))
-            # Use one MaskedArray and mask all the places where the param is not
-            # applicable for that candidate (which may not contain all the params).
-            ma = MaskedArray(
-                np.empty((n_candidates, *arr.shape[1:])), mask=True, dtype=arr.dtype
-            )
-            for index, value in param_results[key].items():
-                # Setting the value at an index unmasks that index
-                ma[index] = value
-            param_results[key] = ma
+            if len(arr) == n_candidates:
+                param_results[key] = MaskedArray(arr, mask=False)
+            else:
+                # Use one MaskedArray and mask all the places where the param is not
+                # applicable for that candidate (which may not contain all the params).
+                ma = MaskedArray(np.empty(n_candidates), mask=True, dtype=arr.dtype)
+                for index, value in param_results[key].items():
+                    # Setting the value at an index unmasks that index
+                    ma[index] = value
+                param_results[key] = ma
 
         results.update(param_results)
         # Store a list of param dicts at the key 'params'
