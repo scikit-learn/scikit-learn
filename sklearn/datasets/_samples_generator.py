@@ -2125,7 +2125,10 @@ def make_biclusters(
     Example
     ----------
     >>> from sklearn.datasets import make_checkerboard
-    >>> data, rows, columns = make_checkerboard(shape=(300, 300), n_clusters=10, random_state=42)
+    >>> data, rows, columns = make_checkerboard(
+        shape=(300, 300),
+        n_clusters=10,
+        random_state=42)
     >>> print(rows[0][:5], columns[0][:5])
     [False False False  True False] [False False False False False]
     """
