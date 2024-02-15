@@ -1437,7 +1437,6 @@ class _MetadataRequester:
                 if "__metadata_request__" in attr
             }
             defaults.update(base_defaults)
-        defaults = dict(sorted(defaults.items()))
 
         for attr, value in defaults.items():
             # we don't check for attr.startswith() since python prefixes attrs
