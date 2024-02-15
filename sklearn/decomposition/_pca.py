@@ -131,7 +131,7 @@ class PCA(_BasePCA):
     data and the number of components to extract.
 
     It can also use the scipy.sparse.linalg ARPACK implementation of the
-    truncated SVD. With sparse inputs, the ARPACK implementation of the truncated 
+    truncated SVD. With sparse inputs, the ARPACK implementation of the truncated
     SVD can be used through :func:`scipy.sparse.linalg.svds`. Alternatively, one may
     consider :class:`TruncatedSVD` where the data are not centered.
 
