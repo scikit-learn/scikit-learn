@@ -30,6 +30,7 @@ from ..utils.metadata_routing import (
     MethodMapping,
     _routing_enabled,
     process_routing,
+    _raise_for_params,
 )
 from ..utils.metaestimators import available_if
 from ..utils.multiclass import check_classification_targets
@@ -356,12 +357,7 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
         self : object
             Fitted estimator.
         """
-        if fit_params and not _routing_enabled():
-            raise ValueError(
-                "params is only supported if enable_metadata_routing=True. See the User"
-                " Guide at https://scikit-learn.org/stable/metadata_routing.html for"
-                " more information."
-            )
+        _raise_for_params(fit_params, self, "fit")
 
         # Convert data (X is required to be 2d and indexable)
         X, y = self._validate_data(
