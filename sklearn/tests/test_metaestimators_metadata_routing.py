@@ -12,8 +12,6 @@ from sklearn.covariance import GraphicalLassoCV
 from sklearn.ensemble import (
     AdaBoostClassifier,
     AdaBoostRegressor,
-    BaggingClassifier,
-    BaggingRegressor,
     StackingClassifier,
     StackingRegressor,
     VotingClassifier,
@@ -336,8 +334,6 @@ METAESTIMATOR_IDS = [str(row["metaestimator"].__name__) for row in METAESTIMATOR
 UNSUPPORTED_ESTIMATORS = [
     AdaBoostClassifier(),
     AdaBoostRegressor(),
-    BaggingClassifier(),
-    BaggingRegressor(),
     FeatureUnion([]),
     GraphicalLassoCV(),
     RANSACRegressor(),

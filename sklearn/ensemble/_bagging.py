@@ -13,7 +13,7 @@ from warnings import warn
 
 import numpy as np
 
-from ..base import ClassifierMixin, RegressorMixin, _fit_context
+from ..base import Bunch, ClassifierMixin, RegressorMixin, _fit_context
 from ..metrics import accuracy_score, r2_score
 from ..tree import DecisionTreeClassifier, DecisionTreeRegressor
 from ..utils import check_random_state, column_or_1d, indices_to_mask
@@ -21,7 +21,11 @@ from ..utils._param_validation import HasMethods, Interval, RealNotInt
 from ..utils._tags import _safe_tags
 from ..utils.metadata_routing import (
     _raise_for_unsupported_routing,
-    _RoutingNotSupportedMixin,
+    MetadataRouter,
+    MethodMapping,
+    _raise_for_params,
+    _routing_enabled,
+    process_routing,
 )
 from ..utils.metaestimators import available_if
 from ..utils.multiclass import check_classification_targets
@@ -298,7 +302,7 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
         # BaseBagging.estimator is not validated yet
         prefer_skip_nested_validation=False
     )
-    def fit(self, X, y, sample_weight=None):
+    def fit(self, X, y, **fit_params):
         """Build a Bagging ensemble of estimators from the training set (X, y).
 
         Parameters
@@ -316,12 +320,35 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
             Note that this is supported only if the base estimator supports
             sample weighting.
 
+        **fit_params : dict
+            Parameters to pass to the underlying estimators.
+
+            .. versionadded:: 1.5
+
+                Only available if `enable_metadata_routing=True`,
+                which can be set by using
+                ``sklearn.set_config(enable_metadata_routing=True)``.
+                See :ref:`Metadata Routing User Guide <metadata_routing>` for
+                more details.
+
         Returns
         -------
         self : object
             Fitted estimator.
         """
-        _raise_for_unsupported_routing(self, "fit", sample_weight=sample_weight)
+        _raise_for_params(self, "fit")
+
+        if _routing_enabled():
+            routed_params = process_routing(self, "fit", **fit_params)
+        else:
+            routed_params = Bunch()
+            for name in names:
+                routed_params[name] = Bunch(fit={})
+                if "sample_weight" in fit_params:
+                    routed_params[name].fit["sample_weight"] = fit_params[
+                        "sample_weight"
+                    ]
+
         # Convert data (X is required to be 2d and indexable)
         X, y = self._validate_data(
             X,
@@ -537,8 +564,32 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
         """
         return [sample_indices for _, sample_indices in self._get_estimators_indices()]
 
+    def get_metadata_routing(self):
+        """Get metadata routing of this object.
 
-class BaggingClassifier(_RoutingNotSupportedMixin, ClassifierMixin, BaseBagging):
+        Please check :ref:`User Guide <metadata_routing>` on how the routing
+        mechanism works.
+
+        .. versionadded:: 1.5
+
+        Returns
+        -------
+        routing : MetadataRouter
+            A :class:`~sklearn.utils.metadata_routing.MetadataRouter` encapsulating
+            routing information.
+        """
+        router = MetadataRouter(owner=self.__class__.__name__)
+
+        # `self.estimators` is a list of (name, est) tuples
+        for name, estimator in self.estimators:
+            router.add(
+                **{name: estimator},
+                method_mapping=MethodMapping().add(callee="fit", caller="fit"),
+            )
+        return router
+
+
+class BaggingClassifier(ClassifierMixin, BaseBagging):
     """A Bagging classifier.
 
     A Bagging classifier is an ensemble meta-estimator that fits base
@@ -970,7 +1021,7 @@ class BaggingClassifier(_RoutingNotSupportedMixin, ClassifierMixin, BaseBagging)
         return {"allow_nan": _safe_tags(estimator, "allow_nan")}
 
 
-class BaggingRegressor(_RoutingNotSupportedMixin, RegressorMixin, BaseBagging):
+class BaggingRegressor(RegressorMixin, BaseBagging):
     """A Bagging regressor.
 
     A Bagging regressor is an ensemble meta-estimator that fits base

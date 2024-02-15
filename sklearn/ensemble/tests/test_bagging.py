@@ -5,12 +5,14 @@ Testing for the bagging ensemble module (sklearn.ensemble.bagging).
 # Author: Gilles Louppe
 # License: BSD 3 clause
 from itertools import cycle, product
+import re
 
 import joblib
 import numpy as np
 import pytest
 
 from sklearn.base import BaseEstimator
+from sklearn.calibration import CalibratedClassifierCV
 from sklearn.datasets import load_diabetes, load_iris, make_hastie_10_2
 from sklearn.dummy import DummyClassifier, DummyRegressor
 from sklearn.ensemble import (
@@ -31,6 +33,12 @@ from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.utils import check_random_state
 from sklearn.utils._testing import assert_array_almost_equal, assert_array_equal
 from sklearn.utils.fixes import CSC_CONTAINERS, CSR_CONTAINERS
+from sklearn.tests.metadata_routing_common import (
+    ConsumingClassifier,
+    ConsumingRegressor,
+    _Registry,
+    check_recorded_metadata,
+)
 
 rng = check_random_state(0)
 
@@ -936,3 +944,95 @@ def test_bagging_get_estimators_indices():
 def test_bagging_allow_nan_tag(bagging, expected_allow_nan):
     """Check that bagging inherits allow_nan tag."""
     assert bagging._get_tags()["allow_nan"] == expected_allow_nan
+
+
+# Metadata Routing Tests
+# ======================
+
+
+@pytest.mark.parametrize(
+    "Estimator, BaseEst",
+    [(BaggingClassifier, ConsumingClassifier), (BaggingRegressor, ConsumingRegressor)],
+)
+def test_routing_passed_metadata_not_supported(Estimator, BaseEst):
+    """Test that the right error message is raised when metadata is passed while
+    not supported when `enable_metadata_routing=False`."""
+
+    X = np.array([[0, 1], [2, 2], [4, 6]])
+    y = [1, 2, 3]
+
+    with pytest.raises(
+        ValueError, match="is only supported if enable_metadata_routing=True"
+    ):
+        Estimator(estimator=BaseEst()).fit(X, y, sample_weight=[1, 1, 1], metadata="a")
+
+
+@pytest.mark.usefixtures("enable_slep006")
+@pytest.mark.parametrize(
+    "Estimator, BaseEst",
+    [(BaggingClassifier, ConsumingClassifier), (BaggingRegressor, ConsumingRegressor)],
+)
+def test_get_metadata_routing_without_fit(Estimator, BaseEst):
+    # Test that metadata_routing() doesn't raise when called before fit.
+    est = Estimator(estimator=BaseEst())
+    est.get_metadata_routing()
+
+
+@pytest.mark.usefixtures("enable_slep006")
+@pytest.mark.parametrize(
+    "Estimator, BaseEst",
+    [(BaggingClassifier, ConsumingClassifier), (BaggingRegressor, ConsumingRegressor)],
+)
+@pytest.mark.parametrize("prop", ["sample_weight", "metadata"])
+def test_metadata_routing_for_bagging_estimators(Estimator, BaseEst, prop):
+    """Test that metadata is routed correctly for Bagging*."""
+    X = np.array([[0, 1], [2, 2], [4, 6]])
+    y = [1, 2, 3]
+    sample_weight, metadata = [1, 1, 1], "a"
+
+    est = Estimator(
+        estimator=BaseEst(registry=_Registry()).set_fit_request(**{prop: True})
+    )
+
+    est.fit(X, y, **{prop: sample_weight if prop == "sample_weight" else metadata})
+
+    for estimator in est.estimators:
+        if prop == "sample_weight":
+            kwargs = {prop: sample_weight}
+        else:
+            kwargs = {prop: metadata}
+        # access sub-estimator in (name, est) with estimator[1]
+        registry = estimator[1].registry
+        assert len(registry)
+        for sub_est in registry:
+            check_recorded_metadata(
+                obj=sub_est,
+                method="fit",
+                **kwargs,
+            )
+
+
+@pytest.mark.usefixtures("enable_slep006")
+@pytest.mark.parametrize(
+    "Estimator, BaseEst",
+    [(BaggingClassifier, ConsumingClassifier), (BaggingClassifier, ConsumingRegressor)],
+)
+def test_metadata_routing_error_for_bagging_estimators(Estimator, BaseEst):
+    """Test that the right error is raised when metadata is not requested."""
+    X = np.array([[0, 1], [2, 2], [4, 6]])
+    y = [1, 2, 3]
+    sample_weight, metadata = [1, 1, 1], "a"
+
+    est = Estimator(estimator=BaseEst())
+
+    error_message = (
+        "[sample_weight, metadata] are passed but are not explicitly set as requested"
+        f" or not for {BaseEst.__name__}.fit"
+    )
+
+    with pytest.raises(ValueError, match=re.escape(error_message)):
+        est.fit(X, y, sample_weight=sample_weight, metadata=metadata)
+
+
+# End of Metadata Routing Tests
+# =============================
