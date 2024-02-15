@@ -27,9 +27,9 @@ dd {
   }
 }
 
-// The method table is too close to the first method
-table.autosummary {
-  margin-bottom: 1.5rem;
+// The first method is too close the the docstring above
+dl.py.method:first-of-type {
+  margin-top: 2rem;
 }
 
 // https://github.com/pydata/pydata-sphinx-theme/blob/8cf45f835bfdafc5f3821014a18f3b7e0fc2d44b/src/pydata_sphinx_theme/assets/styles/content/_api.scss
