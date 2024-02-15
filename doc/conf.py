@@ -782,10 +782,7 @@ def generate_min_dependency_substitutions(app):
 
 
 def generate_api_reference():
-    """Generate API reference pages, including index and one page for each module.
-
-    This also sets the secondary sidebar components in `html_theme_options`.
-    """
+    """Generate API reference pages, including index and one page for each module."""
     from sklearn._api_reference import (
         API_REFERENCE,
         DEPRECATED_API_REFERENCE,
