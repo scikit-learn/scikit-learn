@@ -2575,7 +2575,10 @@ def test_missing_values_is_resilience(
     """Check that trees can deal with missing values have decent performance."""
     n_samples, n_features = 5_000, 10
     X, y = make_data(
-        n_samples=n_samples, n_features=n_features, random_state=global_random_seed
+        n_samples=n_samples,
+        n_features=n_features,
+        noise=1.0,
+        random_state=global_random_seed,
     )
 
     X_missing = X.copy()
