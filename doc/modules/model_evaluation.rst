@@ -1036,9 +1036,8 @@ Similarly, labels not present in the data sample may be accounted for in macro-a
 
 .. topic:: References:
 
-    .. [OB2019] Opitz, J., & Burst, S. (2019). `Macro f1 and macro f1
-       <https://arxiv.org/abs/1911.03347>`_.
-       arXiv preprint arXiv:1911.03347.
+    .. :arxiv:`Opitz, J., & Burst, S. (2019). "Macro f1 and macro f1."
+       <1911.03347>`
 
 .. _jaccard_similarity_score:
 
