@@ -4,15 +4,14 @@ Testing for the bagging ensemble module (sklearn.ensemble.bagging).
 
 # Author: Gilles Louppe
 # License: BSD 3 clause
-from itertools import cycle, product
 import re
+from itertools import cycle, product
 
 import joblib
 import numpy as np
 import pytest
 
 from sklearn.base import BaseEstimator
-from sklearn.calibration import CalibratedClassifierCV
 from sklearn.datasets import load_diabetes, load_iris, make_hastie_10_2
 from sklearn.dummy import DummyClassifier, DummyRegressor
 from sklearn.ensemble import (
@@ -29,16 +28,16 @@ from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import FunctionTransformer, scale
 from sklearn.random_projection import SparseRandomProjection
 from sklearn.svm import SVC, SVR
-from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
-from sklearn.utils import check_random_state
-from sklearn.utils._testing import assert_array_almost_equal, assert_array_equal
-from sklearn.utils.fixes import CSC_CONTAINERS, CSR_CONTAINERS
 from sklearn.tests.metadata_routing_common import (
     ConsumingClassifier,
     ConsumingRegressor,
     _Registry,
     check_recorded_metadata,
 )
+from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
+from sklearn.utils import check_random_state
+from sklearn.utils._testing import assert_array_almost_equal, assert_array_equal
+from sklearn.utils.fixes import CSC_CONTAINERS, CSR_CONTAINERS
 
 rng = check_random_state(0)
 
@@ -988,7 +987,7 @@ def test_metadata_routing_for_bagging_estimators(Estimator, BaseEst, prop):
     """Test that metadata is routed correctly for Bagging*."""
     X = np.array([[0, 1], [2, 2], [4, 6]])
     y = [1, 2, 3]
-    sample_weight, metadata = [1, 1, 1], "a"
+    sample_weight, metadata = [1.0, 1.0, 1.0], "a"
 
     est = Estimator(
         estimator=BaseEst(registry=_Registry()).set_fit_request(**{prop: True})
@@ -996,13 +995,12 @@ def test_metadata_routing_for_bagging_estimators(Estimator, BaseEst, prop):
 
     est.fit(X, y, **{prop: sample_weight if prop == "sample_weight" else metadata})
 
-    for estimator in est.estimators:
+    for estimator in est.estimators_:
         if prop == "sample_weight":
             kwargs = {prop: sample_weight}
         else:
             kwargs = {prop: metadata}
-        # access sub-estimator in (name, est) with estimator[1]
-        registry = estimator[1].registry
+        registry = estimator.registry
         assert len(registry)
         for sub_est in registry:
             check_recorded_metadata(

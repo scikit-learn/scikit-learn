@@ -87,7 +87,7 @@ Changelog
   now supports metadata routing. The fit methods now
   accepts ``**fit_params`` which are passed to the underlying estimators
   via their `fit` methods.
-  :pr:`` by :user:`Adam Li <adam2392>`.
+  :pr:`28432` by :user:`Adam Li <adam2392>`.
 
 :mod:`sklearn.feature_extraction`
 .................................
