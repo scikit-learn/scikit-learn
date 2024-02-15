@@ -193,9 +193,11 @@ This method has the same order of complexity as
 Setting the regularization parameter: leave-one-out Cross-Validation
 --------------------------------------------------------------------
 
-:class:`RidgeCV` implements ridge regression with built-in
-cross-validation of the alpha parameter. The object works in the same way
-as GridSearchCV except that it defaults to Leave-One-Out Cross-Validation::
+:class:`RidgeCV` and :class:`RidgeClassifierCV` implement ridge
+regression/classification with built-in
+cross-validation of the alpha parameter. They work in the same way
+as GridSearchCV except that it defaults to efficient Leave-One-Out Cross-Validation,
+see [RL2007]_::
 
     >>> import numpy as np
     >>> from sklearn import linear_model
@@ -209,18 +211,16 @@ as GridSearchCV except that it defaults to Leave-One-Out Cross-Validation::
 Specifying the value of the :term:`cv` attribute will trigger the use of
 cross-validation with :class:`~sklearn.model_selection.GridSearchCV`, for
 example `cv=10` for 10-fold cross-validation, rather than Leave-One-Out
-Cross-Validation.
+Cross-Validation. When using Leave-One-Out Cross-Validation alphas cannot be 0.
 
-|details-start|
-**References**
-|details-split|
 
-* "Notes on Regularized Least Squares", Rifkin & Lippert (`technical report
-  <http://cbcl.mit.edu/publications/ps/MIT-CSAIL-TR-2007-025.pdf>`_,
-  `course slides
-  <https://www.mit.edu/~9.520/spring07/Classes/rlsslides.pdf>`_).
+.. topic:: References:
 
-|details-end|
+
+  .. [RL2007] "Notes on Regularized Least Squares", Rifkin & Lippert (`technical report
+    <http://cbcl.mit.edu/publications/ps/MIT-CSAIL-TR-2007-025.pdf>`_,
+    `course slides
+    <https://www.mit.edu/~9.520/spring07/Classes/rlsslides.pdf>`_).
 
 .. _lasso:
 
