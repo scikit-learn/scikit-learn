@@ -28,9 +28,9 @@ from ..utils._tags import _safe_tags
 from ..utils.metadata_routing import (
     MetadataRouter,
     MethodMapping,
+    _raise_for_params,
     _routing_enabled,
     process_routing,
-    _raise_for_params,
 )
 from ..utils.metaestimators import available_if
 from ..utils.multiclass import check_classification_targets
