@@ -196,8 +196,12 @@ Setting the regularization parameter: leave-one-out Cross-Validation
 :class:`RidgeCV` and :class:`RidgeClassifierCV` implement ridge
 regression/classification with built-in
 cross-validation of the alpha parameter. They work in the same way
-as GridSearchCV except that it defaults to efficient Leave-One-Out Cross-Validation,
-see [RL2007]_::
+as GridSearchCV except that it defaults to efficient Leave-One-Out
+:term:`cross-validation`.
+When using the default :term:`cross-validation`, alpha cannot be 0 due to the
+formulation used to calculate Leave-One-Out error. See [RL2007]_ for details.
+
+Usage example::
 
     >>> import numpy as np
     >>> from sklearn import linear_model
