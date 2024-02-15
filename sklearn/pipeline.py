@@ -1594,15 +1594,15 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
             FeatureUnion class instance.
         """
         if _routing_enabled():
-            routed_fit_params = process_routing(self, "fit", **fit_params)
+            routed_params = process_routing(self, "fit", **fit_params)
         else:
             # TODO(SLEP6): remove when metadata routing cannot be disabled.
-            routed_fit_params = Bunch()
+            routed_params = Bunch()
             for name, _ in self.transformer_list:
-                routed_fit_params[name] = Bunch(fit={})
-                routed_fit_params[name].fit = fit_params
+                routed_params[name] = Bunch(fit={})
+                routed_params[name].fit = fit_params
 
-        transformers = self._parallel_func(X, y, _fit_one, routed_fit_params)
+        transformers = self._parallel_func(X, y, _fit_one, routed_params)
 
         if not transformers:
             # All transformers are None
@@ -1611,7 +1611,7 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
         self._update_transformer_list(transformers)
         return self
 
-    def fit_transform(self, X, y=None, **fit_params):
+    def fit_transform(self, X, y=None, **params):
         """Fit all transformers, transform the data and concatenate results.
 
         Parameters
@@ -1622,7 +1622,7 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
         y : array-like of shape (n_samples, n_outputs), default=None
             Targets for supervised learning.
 
-        **fit_params : dict, default=None
+        **params : dict, default=None
             - If `enable_metadata_routing=False` (default):
                 Parameters directly passed to the `fit` methods of the
                 transformers.
@@ -1633,7 +1633,8 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
                 <metadata_routing>` for more details.
 
             .. versionchanged:: 1.5
-                `**fit_params` can be routed via metadata routing API
+                `**fit_params` are renamed into `**params` and can now be routed via
+                metadata routing API
 
         Returns
         -------
@@ -1643,19 +1644,21 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
             sum of `n_components` (output dimension) over transformers.
         """
         if _routing_enabled():
-            routed_fit_transform_params = process_routing(
-                self, "fit_transform", **fit_params
-            )
+            routed_params = process_routing(self, "fit_transform", **params)
         else:
             # TODO(SLEP6): remove when metadata routing cannot be disabled.
-            routed_fit_transform_params = Bunch()
-            for name, _ in self.transformer_list:
-                routed_fit_transform_params[name] = Bunch(fit_transform={})
-                routed_fit_transform_params[name].fit_transform = fit_params
+            routed_params = Bunch()
+            for name, obj in self.transformer_list:
+                if hasattr(obj, "fit_transform"):
+                    routed_params[name] = Bunch(fit_transform={})
+                    routed_params[name].fit_transform = params
+                else:
+                    routed_params[name] = Bunch(fit={})
+                    routed_params[name] = Bunch(transform={})
+                    routed_params[name].fit = params
+                    routed_params[name].transform = params
 
-        results = self._parallel_func(
-            X, y, _fit_transform_one, routed_fit_transform_params
-        )
+        results = self._parallel_func(X, y, _fit_transform_one, routed_params)
         if not results:
             # All transformers are None
             return np.zeros((X.shape[0], 0))
@@ -1782,14 +1785,21 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
         router = MetadataRouter(owner=self.__class__.__name__)
 
         for name, transformer in self.transformer_list:
-            router.add(
-                **{name: transformer},
-                method_mapping=MethodMapping()
-                .add(caller="fit", callee="fit")
-                .add(caller="fit_transform", callee="fit")
-                .add(caller="fit_transform", callee="transform")
-                .add(caller="fit_transform", callee="fit_transform"),
-            )
+            if hasattr(transformer, "fit_transform"):
+                router.add(
+                    **{name: transformer},
+                    method_mapping=MethodMapping()
+                    .add(caller="fit", callee="fit")
+                    .add(caller="fit_transform", callee="fit_transform"),
+                )
+            else:
+                router.add(
+                    **{name: transformer},
+                    method_mapping=MethodMapping()
+                    .add(caller="fit", callee="fit")
+                    .add(caller="fit_transform", callee="fit")
+                    .add(caller="fit_transform", callee="transform"),
+                )
 
         return router
 

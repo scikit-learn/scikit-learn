@@ -1480,6 +1480,30 @@ def test_feature_union_fit_params():
     t.fit_transform(X, y, a=0)
 
 
+def test_feature_union_fit_params_without_fit_transform():
+    # Test that metadata is passed correctly to underlying transformers that don't
+    # implement a `fit_transform` method.
+
+    class DummyTransformer(ConsumingNoFitTransformTransformer):
+        def fit(self, X, y=None, **fit_params):
+            if fit_params != {"metadata": 1}:
+                raise ValueError
+            return self
+
+    X, y = iris.data, iris.target
+    t = FeatureUnion(
+        [
+            ("nofittransform0", DummyTransformer()),
+            ("nofittransform1", DummyTransformer()),
+        ]
+    )
+
+    with pytest.raises(ValueError):
+        t.fit_transform(X, y, metadata=0)
+
+    t.fit_transform(X, y, metadata=1)
+
+
 def test_pipeline_missing_values_leniency():
     # check that pipeline let the missing values validation to
     # the underlying transformers and predictors.
