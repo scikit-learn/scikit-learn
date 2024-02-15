@@ -895,11 +895,6 @@ class MetadataRouter:
             )
 
         for name, route_mapping in self._route_mappings.items():
-            print(f"route_mapping.mapping: {route_mapping.mapping}")
-            for ele in route_mapping.mapping:
-                print(ele)
-                for c in ele:
-                    print(c)
             for caller, callee in route_mapping.mapping:
                 if caller == method:
                     res = res.union(
