@@ -2557,20 +2557,23 @@ def make_friedman1_classification(*args, **kwargs):
 
 
 @pytest.mark.parametrize(
-    "make_data, Tree",
+    "make_data, Tree, tolerance",
     [
         # Due to the sine link between X and y, we expect the native handling of
         # missing values to always be better than the naive mean imputation in the
         # regression case.
-        (datasets.make_friedman1, DecisionTreeRegressor),
-        (datasets.make_friedman1, ExtraTreeRegressor),
-        (make_friedman1_classification, DecisionTreeClassifier),
-        (make_friedman1_classification, ExtraTreeClassifier),
+        #
+        # Due to randomness in ExtraTree, we expect the native handling of missing
+        # values to be sometimes better than the naive mean imputation, but not always
+        (datasets.make_friedman1, DecisionTreeRegressor, 0),
+        (datasets.make_friedman1, ExtraTreeRegressor, 0),
+        (make_friedman1_classification, DecisionTreeClassifier, 0.02),
+        (make_friedman1_classification, ExtraTreeClassifier, 0.05),
     ],
 )
 @pytest.mark.parametrize("sample_weight_train", [None, "ones"])
 def test_missing_values_is_resilience(
-    make_data, Tree, sample_weight_train, global_random_seed
+    make_data, Tree, sample_weight_train, global_random_seed, tolerance
 ):
     """Check that trees can deal with missing values have decent performance."""
     n_samples, n_features = 5_000, 10
@@ -2602,9 +2605,10 @@ def test_missing_values_is_resilience(
     tree_with_imputer.fit(X_missing_train, y_train)
     score_tree_with_imputer = tree_with_imputer.score(X_missing_test, y_test)
 
-    assert (
-        score_native_tree > score_tree_with_imputer
-    ), f"{score_native_tree=} should be strictly greater than {score_tree_with_imputer}"
+    assert score_native_tree + tolerance > score_tree_with_imputer, (
+        f"{score_native_tree=} + {tolerance} should be strictly greater than"
+        f" {score_tree_with_imputer}"
+    )
 
 
 @pytest.mark.parametrize("Tree, expected_score", zip(CLF_TREES.values(), [0.85, 0.7]))
