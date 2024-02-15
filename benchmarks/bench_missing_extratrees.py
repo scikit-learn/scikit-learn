@@ -18,20 +18,19 @@ python bench_missing_extratrees.py plot ~/bench_results pr main results_image.pn
 ```
 """
 
-
-from functools import partial
 import argparse
-from time import perf_counter
-from statistics import mean, stdev
-from itertools import product
 import csv
+from functools import partial
+from itertools import product
 from pathlib import Path
+from statistics import mean, stdev
+from time import perf_counter
 
-
-from sklearn.tree import ExtraTreeRegressor, ExtraTreeClassifier
-from sklearn.datasets import make_classification, make_regression, make_low_rank_matrix
 import numpy as np
 from scipy.sparse import csc_matrix
+
+from sklearn.datasets import make_classification, make_low_rank_matrix, make_regression
+from sklearn.tree import ExtraTreeClassifier, ExtraTreeRegressor
 
 
 def make_poisson_data(n_samples, n_features=50, random_state=0, has_missing=False):
@@ -152,7 +151,6 @@ def bench(args):
         writer.writeheader()
 
         for Klass, items in benchmark_config:
-
             for config in items:
                 (
                     criterion,
@@ -252,7 +250,6 @@ def plot(args):
 
 
 if __name__ == "__main__":
-
     parser = argparse.ArgumentParser()
 
     subparsers = parser.add_subparsers()
