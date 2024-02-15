@@ -125,6 +125,14 @@ Changelog
   target is multilabel or multiclass-multioutput in a DataFrame format.
   :pr:`27702` by :user:`Guillaume Lemaitre <glemaitre>`.
 
+:mod:`sklearn.impute`
+.....................
+
+- |Fix|: :class:`impute.SimpleImputer` now raises an error in `.fit` and
+  `.transform` if `fill_value` can not be cast to input value dtype with
+  `casting='same_kind'`.
+  :pr:`28365` by :user:`Leo Grinsztajn <LeoGrin>`.
+
 :mod:`sklearn.inspection`
 .........................
 
