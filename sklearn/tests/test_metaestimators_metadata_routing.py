@@ -299,6 +299,8 @@ METAESTIMATORS: list = [
         "preserves_metadata": False,
         "estimator_routing_methods": ["fit", "predict", "score"],
         "requests_set_together": {"fit": ["score"]},
+    },
+    {
         "metaestimator": IterativeImputer,
         "estimator_name": "estimator",
         "estimator": ConsumingRegressor,
@@ -355,8 +357,6 @@ UNSUPPORTED_ESTIMATORS = [
     BaggingRegressor(),
     FeatureUnion([]),
     GraphicalLassoCV(),
-    IterativeImputer(),
-    RANSACRegressor(),
     RFE(ConsumingClassifier()),
     RFECV(ConsumingClassifier()),
     RidgeCV(),
@@ -641,8 +641,14 @@ def test_non_consuming_estimator_works(metaestimator):
         set_request(estimator, method_name)
         method = getattr(instance, method_name)
         extra_method_args = metaestimator.get("method_args", {}).get(method_name, {})
-        # This following line should pass w/o raising a routing error.
-        method(X, y, **extra_method_args)
+        if "fit" not in method_name:
+            instance.fit(X, y, **extra_method_args)
+        # The following should pass w/o raising a routing error.
+        try:
+            # `fit` and `partial_fit` accept y, others don't.
+            method(X, y, **extra_method_args)
+        except TypeError:
+            method(X, **extra_method_args)
 
 
 @pytest.mark.parametrize("metaestimator", METAESTIMATORS, ids=METAESTIMATOR_IDS)
