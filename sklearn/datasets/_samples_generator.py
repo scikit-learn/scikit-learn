@@ -2121,7 +2121,15 @@ def make_biclusters(
         words using bipartite spectral graph partitioning. In Proceedings
         of the seventh ACM SIGKDD international conference on Knowledge
         discovery and data mining (pp. 269-274). ACM.
+
+    Example
+    ----------
+    >>> from sklearn.datasets import make_checkerboard
+    >>> data, rows, columns = make_checkerboard(shape=(300, 300), n_clusters=10, random_state=42)
+    >>> print(rows[0][:5], columns[0][:5])
+    [False False False  True False] [False False False False False]
     """
+
     generator = check_random_state(random_state)
     n_rows, n_cols = shape
     consts = generator.uniform(minval, maxval, n_clusters)
