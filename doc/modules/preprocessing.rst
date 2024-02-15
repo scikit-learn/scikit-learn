@@ -910,6 +910,8 @@ cardinality categories are location based such as zip code or region.
 **Binary classification targets**
 |details-split|
 
+For the binary classification target, the target encoding is given by:
+
 .. math::
     S_i = \lambda_i\frac{n_{iY}}{n_i} + (1 - \lambda_i)\frac{n_Y}{n}
 
