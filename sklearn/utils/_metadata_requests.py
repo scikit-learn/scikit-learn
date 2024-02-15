@@ -1082,8 +1082,12 @@ class MetadataRouter:
 
     def __iter__(self):
         if self._self_request:
-            yield "$self_request", RouterMappingPair(
-                mapping=MethodMapping.from_str("one-to-one"), router=self._self_request
+            yield (
+                "$self_request",
+                RouterMappingPair(
+                    mapping=MethodMapping.from_str("one-to-one"),
+                    router=self._self_request,
+                ),
             )
         for name, route_mapping in self._route_mappings.items():
             yield (name, route_mapping)
@@ -1524,13 +1528,13 @@ def process_routing(_obj, _method, /, **kwargs):
         corresponding methods or corresponding child objects. The object names
         are those defined in `obj.get_metadata_routing()`.
     """
-    if not _routing_enabled() and not kwargs:
+    if not kwargs:
         # If routing is not enabled and kwargs are empty, then we don't have to
         # try doing any routing, we can simply return a structure which returns
         # an empty dict on routed_params.ANYTHING.ANY_METHOD.
         class EmptyRequest:
             def get(self, name, default=None):
-                return default if default else {}
+                return Bunch(**{method: dict() for method in METHODS})
 
             def __getitem__(self, name):
                 return Bunch(**{method: dict() for method in METHODS})

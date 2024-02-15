@@ -736,7 +736,7 @@ variable to be estimated from the data.
 To obtain a fully probabilistic model, the output :math:`y` is assumed
 to be Gaussian distributed around :math:`X w`:
 
-.. math::  p(y|X,w,\alpha) = \mathcal{N}(y|X w,\alpha)
+.. math::  p(y|X,w,\alpha) = \mathcal{N}(y|X w,\alpha^{-1})
 
 where :math:`\alpha` is again treated as a random variable that is to be
 estimated from the data.

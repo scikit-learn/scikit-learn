@@ -1122,16 +1122,18 @@ def f1_score(
     The F1 score can be interpreted as a harmonic mean of the precision and
     recall, where an F1 score reaches its best value at 1 and worst score at 0.
     The relative contribution of precision and recall to the F1 score are
-    equal. The formula for the F1 score is::
+    equal. The formula for the F1 score is:
 
-        F1 = 2 * TP / (2 * TP + FN + FP)
+    .. math::
+        \\text{F1} = \\frac{2 * \\text{TP}}{2 * \\text{TP} + \\text{FP} + \\text{FN}}
 
-    Where "TP" is the number of true positives, "FN" is the number of false
-    negatives, and "FP" is the number of false positives. F1 is by default
-    calculated as 0.0 when there are no true positives, false negatives, nor
+    Where :math:`\\text{TP}` is the number of true positives, :math:`\\text{FN}` is the
+    number of false negatives, and :math:`\\text{FP}` is the number of false positives.
+    F1 is by default
+    calculated as 0.0 when there are no true positives, false negatives, or
     false positives.
 
-    Support beyond term:`binary` targets is achieved by treating :term:`multiclass`
+    Support beyond :term:`binary` targets is achieved by treating :term:`multiclass`
     and :term:`multilabel` data as a collection of binary problems, one for each
     label. For the :term:`binary` case, setting `average='binary'` will return
     F1 score for `pos_label`. If `average` is not `'binary'`, `pos_label` is ignored
@@ -1320,6 +1322,16 @@ def fbeta_score(
     as important as precision, while `beta = 0.5` does the opposite.
     Asymptotically, `beta -> +inf` considers only recall, and `beta -> 0`
     only precision.
+
+    The formula for F-beta score is:
+
+    .. math::
+
+       F_\\beta = \\frac{(1 + \\beta^2) \\text{tp}}
+                        {(1 + \\beta^2) \\text{tp} + \\text{fp} + \\beta^2 \\text{fn}}
+
+    Where :math:`\\text{tp}` is the number of true positives, :math:`\\text{fp}` is the
+    number of false positives, and :math:`\\text{fn}` is the number of false negatives.
 
     Support beyond term:`binary` targets is achieved by treating :term:`multiclass`
     and :term:`multilabel` data as a collection of binary problems, one for each
