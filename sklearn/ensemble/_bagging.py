@@ -200,7 +200,6 @@ def _parallel_build_estimators(
             estimator_fit(X_, y_, **fit_params_)
 
         records = getattr(estimator, "_records", dict()).get("fit", dict())
-        print("Next here...", records)
         estimators.append(estimator)
         estimators_features.append(features)
 
