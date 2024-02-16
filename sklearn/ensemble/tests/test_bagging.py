@@ -40,7 +40,6 @@ from sklearn.utils._testing import assert_array_almost_equal, assert_array_equal
 from sklearn.utils.fixes import CSC_CONTAINERS, CSR_CONTAINERS
 from sklearn.utils.validation import has_fit_parameter
 
-
 rng = check_random_state(0)
 
 # also load the iris dataset

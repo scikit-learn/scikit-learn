@@ -30,8 +30,8 @@ from ..utils.metadata_routing import (
     MethodMapping,
     _raise_for_params,
     _routing_enabled,
-    process_routing,
     get_routing_for_object,
+    process_routing,
 )
 from ..utils.metaestimators import available_if
 from ..utils.multiclass import check_classification_targets
@@ -146,7 +146,7 @@ def _parallel_build_estimators(
         random_state = seeds[i]
         estimator = ensemble._make_estimator(append=False, random_state=random_state)
 
-        records = getattr(estimator, "_records", dict()).get('fit', dict())
+        records = getattr(estimator, "_records", dict()).get("fit", dict())
         if has_check_input:
             estimator_fit = partial(estimator.fit, check_input=check_input)
         else:
@@ -187,7 +187,8 @@ def _parallel_build_estimators(
             else:
                 estimator_fit(X_, y, **fit_params_)
         else:
-            # if sample_weight is not supported in the Bagging estimator, pop it from fit_params
+            # if sample_weight is not supported in the Bagging estimator, pop it
+            # from fit_params
             fit_params_.pop("sample_weight", None)
 
             # cannot use sample_weight, use indexing
@@ -198,8 +199,8 @@ def _parallel_build_estimators(
                 X_ = X_[:, features]
             estimator_fit(X_, y_, **fit_params_)
 
-        records = getattr(estimator, "_records", dict()).get('fit', dict())
-        print('Next here...' , records)
+        records = getattr(estimator, "_records", dict()).get("fit", dict())
+        print("Next here...", records)
         estimators.append(estimator)
         estimators_features.append(features)
 
