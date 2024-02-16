@@ -229,9 +229,11 @@ more robust estimates for the center and range of your data.
 
 |details-end|
 
-.. topic:: Scaling vs Whitening
+|details-start|
+**Scaling vs Whitening**
+|details-split|
 
-  It is sometimes not enough to center and scale the features
+It is sometimes not enough to center and scale the features
   independently, since a downstream model can further make some assumption
   on the linear independence of the features.
 
