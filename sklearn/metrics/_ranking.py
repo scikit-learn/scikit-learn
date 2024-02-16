@@ -936,7 +936,7 @@ def precision_recall_curve(
     probas_pred : array-like of shape (n_samples,)
         Target scores, can either be probability estimates of the positive
         class, or non-thresholded measure of decisions (as returned by
-        `decision_function` on some classifiers). By default None.
+        `decision_function` on some classifiers).
 
         .. deprecated:: 1.5
             `probas_pred` is deprecated and will be removed in 1.7. Use
@@ -982,7 +982,9 @@ def precision_recall_curve(
     array([0.1 , 0.35, 0.4 , 0.8 ])
     """
     # TODO(1.7): remove in 1.7 and reset y_score to be required
-    if y_score is not None and str(probas_pred) != "deprecated":
+    if y_score is not None and (
+        isinstance(probas_pred, str) and probas_pred != "deprecated"
+    ):
         raise ValueError(
             "`probas_pred` and `y_score` cannot be both specified. Please use `y_score`"
             " only as `probas_pred` is deprecated in v1.5 and will be removed in v1.7."
