@@ -698,6 +698,11 @@ class _BaseChain(BaseEstimator, metaclass=ABCMeta):
                 X_aug = np.hstack((X, Y_pred_chain))
 
         elif sp.issparse(X):
+            # to prevent scipy.sparse.hstack from breaking, we convert the sparse
+            # dok_array to a coo_array format, it's also faster; see scipy issue
+            # https://github.com/scipy/scipy/issues/20060#issuecomment-1937007039
+            if isinstance(X, sp._dok.dok_array):
+                X = sp.coo_array(X)
             Y_pred_chain = sp.lil_matrix((X.shape[0], Y.shape[1]))
             X_aug = sp.hstack((X, Y_pred_chain), format="lil")
 
