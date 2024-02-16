@@ -469,7 +469,7 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
         y = self._validate_y(y)
 
         # Check parameters
-        self._validate_estimator()
+        self._validate_estimator(self._get_estimator())
 
         if _routing_enabled():
             routed_params = process_routing(
@@ -848,10 +848,6 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
             random_state=random_state,
             verbose=verbose,
         )
-
-    def _validate_estimator(self):
-        """Check the estimator and set the estimator_ attribute."""
-        super()._validate_estimator(default=self._get_estimator())
 
     def _get_estimator(self):
         """Resolve which estimator to return (default is DecisionTreeClassifier)"""
@@ -1329,10 +1325,6 @@ class BaggingRegressor(RegressorMixin, BaseBagging):
         y_hat = sum(all_y_hat) / self.n_estimators
 
         return y_hat
-
-    def _validate_estimator(self):
-        """Check the estimator and set the estimator_ attribute."""
-        super()._validate_estimator(default=self._get_estimator())
 
     def _set_oob_score(self, X, y):
         n_samples = y.shape[0]
