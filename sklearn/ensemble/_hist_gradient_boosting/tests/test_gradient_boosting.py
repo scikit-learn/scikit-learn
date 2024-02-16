@@ -32,10 +32,10 @@ from sklearn.ensemble._hist_gradient_boosting.grower import TreeGrower
 from sklearn.ensemble._hist_gradient_boosting.predictor import TreePredictor
 from sklearn.exceptions import NotFittedError
 from sklearn.metrics import get_scorer, mean_gamma_deviance, mean_poisson_deviance
-from sklearn.model_selection import cross_val_score, train_test_split
+from sklearn.model_selection import ShuffleSplit, cross_val_score, train_test_split
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import KBinsDiscretizer, MinMaxScaler, OneHotEncoder
-from sklearn.utils import _IS_32BIT, shuffle
+from sklearn.utils import _IS_32BIT, check_random_state, shuffle
 from sklearn.utils._openmp_helpers import _openmp_effective_n_threads
 from sklearn.utils._testing import _convert_container
 
@@ -175,6 +175,36 @@ def test_early_stopping_classification(
         assert n_iter_no_change <= gb.n_iter_ < max_iter
     else:
         assert gb.n_iter_ == max_iter
+
+
+def test_validation_fraction_splitter_equivalence(global_random_seed):
+    """Test that passing a spitter gives same results."""
+    max_iter = 200
+    X, y = make_regression(n_samples=50, random_state=0)
+
+    gb_default = HistGradientBoostingRegressor(
+        min_samples_leaf=5,  # easier to overfit fast
+        early_stopping=True,
+        validation_fraction=0.25,
+        max_iter=max_iter,
+        random_state=global_random_seed,
+    )
+    gb_default.fit(X, y)
+
+    # Reproduce same RNG as HistGradientBoostingRegressor.
+    rng = check_random_state(global_random_seed)
+    _random_seed = rng.randint(np.iinfo(np.uint32).max, dtype="u8")
+    gb_splitter = HistGradientBoostingRegressor(
+        min_samples_leaf=5,  # easier to overfit fast
+        early_stopping=True,
+        validation_fraction=ShuffleSplit(test_size=0.25, random_state=_random_seed),
+        max_iter=max_iter,
+        random_state=global_random_seed,
+    )
+    gb_splitter.fit(X, y)
+
+    assert gb_splitter.n_iter_ == gb_default.n_iter_
+    assert_allclose(gb_splitter.predict(X), gb_default.predict(X))
 
 
 @pytest.mark.parametrize(

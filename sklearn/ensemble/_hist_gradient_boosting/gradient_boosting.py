@@ -33,7 +33,13 @@ from ...metrics import check_scoring
 from ...metrics._scorer import _SCORERS
 from ...model_selection import train_test_split
 from ...preprocessing import FunctionTransformer, LabelEncoder, OrdinalEncoder
-from ...utils import check_random_state, compute_sample_weight, is_scalar_nan, resample
+from ...utils import (
+    _safe_indexing,
+    check_random_state,
+    compute_sample_weight,
+    is_scalar_nan,
+    resample,
+)
 from ...utils._openmp_helpers import _openmp_effective_n_threads
 from ...utils._param_validation import Hidden, Interval, RealNotInt, StrOptions
 from ...utils.multiclass import check_classification_targets
@@ -159,6 +165,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         "validation_fraction": [
             Interval(RealNotInt, 0, 1, closed="neither"),
             Interval(Integral, 1, None, closed="left"),
+            "cv_object",
             None,
         ],
         "tol": [Interval(Real, 0, None, closed="left")],
@@ -616,41 +623,55 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         # create validation data if needed
         self._use_validation_data = self.validation_fraction is not None
         if self.do_early_stopping_ and self._use_validation_data:
+            is_splitter = hasattr(self.validation_fraction, "split")
+
             # stratify for classification
             # instead of checking predict_proba, loss.n_classes >= 2 would also work
             stratify = y if hasattr(self._loss, "predict_proba") else None
 
-            # Save the state of the RNG for the training and validation split.
-            # This is needed in order to have the same split when using
-            # warm starting.
-
             if sample_weight is None:
-                X_train, X_val, y_train, y_val = train_test_split(
-                    X,
-                    y,
-                    test_size=self.validation_fraction,
-                    stratify=stratify,
-                    random_state=self._random_seed,
-                )
+                if is_splitter:
+                    train_idx, val_idx = next(self.validation_fraction.split(X=X))
+                    X_train = _safe_indexing(X, train_idx)
+                    X_val = _safe_indexing(X, val_idx)
+                    y_train = _safe_indexing(y, train_idx)
+                    y_val = _safe_indexing(y, val_idx)
+                else:
+                    X_train, X_val, y_train, y_val = train_test_split(
+                        X,
+                        y,
+                        test_size=self.validation_fraction,
+                        stratify=stratify,
+                        random_state=self._random_seed,
+                    )
                 sample_weight_train = sample_weight_val = None
             else:
-                # TODO: incorporate sample_weight in sampling here, as well as
-                # stratify
-                (
-                    X_train,
-                    X_val,
-                    y_train,
-                    y_val,
-                    sample_weight_train,
-                    sample_weight_val,
-                ) = train_test_split(
-                    X,
-                    y,
-                    sample_weight,
-                    test_size=self.validation_fraction,
-                    stratify=stratify,
-                    random_state=self._random_seed,
-                )
+                if is_splitter:
+                    train_idx, val_idx = next(self.validation_fraction.split(X=X))
+                    X_train = _safe_indexing(X, train_idx)
+                    X_val = _safe_indexing(X, val_idx)
+                    y_train = _safe_indexing(y, train_idx)
+                    y_val = _safe_indexing(y, val_idx)
+                    sample_weight_train = _safe_indexing(sample_weight, train_idx)
+                    sample_weight_val = _safe_indexing(sample_weight, val_idx)
+                else:
+                    # TODO: incorporate sample_weight in sampling here, as well as
+                    # stratify
+                    (
+                        X_train,
+                        X_val,
+                        y_train,
+                        y_val,
+                        sample_weight_train,
+                        sample_weight_val,
+                    ) = train_test_split(
+                        X,
+                        y,
+                        sample_weight,
+                        test_size=self.validation_fraction,
+                        stratify=stratify,
+                        random_state=self._random_seed,
+                    )
         else:
             X_train, y_train, sample_weight_train = X, y, sample_weight
             X_val = y_val = sample_weight_val = None
