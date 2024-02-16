@@ -509,7 +509,7 @@ def test_ransac_fit_sample_weight():
 
     err_msg = f"{estimator.__class__.__name__} does not support sample_weight."
     with pytest.raises(ValueError, match=err_msg):
-        ransac_estimator.fit(X, y, weights)
+        ransac_estimator.fit(X, y, sample_weight=weights)
 
 
 def test_ransac_final_model_fit_sample_weight():
