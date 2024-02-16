@@ -411,13 +411,17 @@ def get_init_args(metaestimator_info, sub_estimator_consumes):
         if sub_estimator_consumes:
             if sub_estimator_type == "regressor":
                 estimator = ConsumingRegressor(estimator_registry)
-            else:
+            elif sub_estimator_type == "classifier":
                 estimator = ConsumingClassifier(estimator_registry)
+            else:
+                raise ValueError("Unpermitted `sub_estimator_type`.")
         else:
             if sub_estimator_type == "regressor":
                 estimator = NonConsumingRegressor()
-            else:
+            elif sub_estimator_type == "classifier":
                 estimator = NonConsumingClassifier()
+            else:
+                raise ValueError("Unpermitted `sub_estimator_type`.")
         kwargs[estimator_name] = estimator
     if "scorer_name" in metaestimator_info:
         scorer_name = metaestimator_info["scorer_name"]
