@@ -224,7 +224,9 @@ or not::
     ... except ValueError as e:
     ...     print(e)
     [sample_weight] are passed but are not explicitly set as requested or not requested
-    for LogisticRegression.score
+    for LogisticRegression.score. To set them, use
+    `set_score_request({metadata}={True, False})` for each metadata in [sample_weight]
+    on the instantiated object.
 
 The issue can be fixed by explicitly setting the request value::
 

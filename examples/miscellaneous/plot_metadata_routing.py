@@ -691,7 +691,7 @@ for w in record:
     print(w.message)
 
 # %%
-# At the end we disable the configuration flag for metadata routing:
+# In the end, we disable the configuration flag for metadata routing:
 
 set_config(enable_metadata_routing=False)
 
