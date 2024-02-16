@@ -129,6 +129,16 @@ Changelog
 - |Enhancement| :term:`CV splitters <CV splitter>` that ignores the group parameter now
   raises a warning when groups are passed in to :term:`split`. :pr:`28210` by
 
+:mod:`sklearn.pipeline`
+.......................
+
+- |Feature| :class:`pipeline.FeatureUnion` can now use the
+  `verbose_feature_names_out` attribute. If `True`, `get_feature_names_out`
+  will prefix all feature names with the name of the transformer
+  that generated that feature. If `False`, `get_feature_names_out` will not
+  prefix any feature names and will error if feature names are not unique.
+  :pr:`25991` by :user:`Jiawei Zhang <jiawei-zhang-a>`.
+
 .. rubric:: Code and documentation contributors
 
 Thanks to everyone who has contributed to the maintenance and improvement of
