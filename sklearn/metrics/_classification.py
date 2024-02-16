@@ -3239,7 +3239,8 @@ def brier_score_loss(
     0.0
     """
     # TODO(1.7): remove in 1.7 and reset y_proba to be required
-    # Note: validate params will raise an error if y_prob is not array-like, or "deprecated"
+    # Note: validate params will raise an error if y_prob is not array-like,
+    # or "deprecated"
     if y_proba is not None and not isinstance(y_prob, str):
         raise ValueError(
             "`y_prob` and `y_proba` cannot be both specified. Please use `y_proba` only"
