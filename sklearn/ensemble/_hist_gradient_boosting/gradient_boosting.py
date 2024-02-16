@@ -867,14 +867,15 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         # Out of bag settings
         do_oob = self.subsample < 1.0
         if do_oob:
+            # Note that setting sample_weight to zero for the corresponding samples
+            # would result in false "count" statistics of the histograms. Therefore,
+            # we make take copys (fancy indexed numpy arrays) for the subsampling.
             n_inbag = max(1, int(self.subsample * n_samples))
-            # Same dtype as sample_weight.
-            sample_mask = np.zeros((n_samples,), dtype=np.float64)
-            sample_mask[:n_inbag] = 1
-            if sample_weight_train is None:
-                sample_weight_train_original = np.ones(n_samples)
-            else:
-                sample_weight_train_original = sample_weight_train
+            sample_mask = np.zeros((n_samples,), dtype=np.bool)
+            sample_mask[:n_inbag] = True
+        else:
+            sample_mask = slice(None)
+            sample_mask_idx = None
 
         # initialize gradients and hessians (empty arrays).
         # shape = (n_samples, n_trees_per_iteration).
@@ -892,7 +893,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             # Do out of bag if required
             if do_oob:
                 self._bagging_subsample_rng.shuffle(sample_mask)
-                sample_weight_train = sample_weight_train_original * sample_mask
+                sample_mask_idx = np.flatnonzero(sample_mask)
 
             # Update gradients and hessians, inplace
             # Note that self._loss expects shape (n_samples,) for
@@ -930,9 +931,9 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             # Build `n_trees_per_iteration` trees.
             for k in range(self.n_trees_per_iteration_):
                 grower = TreeGrower(
-                    X_binned=X_binned_train,
-                    gradients=g_view[:, k],
-                    hessians=h_view[:, k],
+                    X_binned=X_binned_train[sample_mask],
+                    gradients=g_view[sample_mask, k],
+                    hessians=h_view[sample_mask, k],
                     n_bins=n_bins,
                     n_bins_non_missing=self._bin_mapper.n_bins_non_missing_,
                     has_missing_values=has_missing_values,
@@ -971,7 +972,12 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                 # Update raw_predictions with the predictions of the newly
                 # created tree.
                 tic_pred = time()
-                _update_raw_predictions(raw_predictions[:, k], grower, n_threads)
+                _update_raw_predictions(
+                    raw_predictions[:, k],
+                    grower,
+                    n_threads,
+                    sample_idx=sample_mask_idx,
+                )
                 toc_pred = time()
                 acc_prediction_time += toc_pred - tic_pred
 
