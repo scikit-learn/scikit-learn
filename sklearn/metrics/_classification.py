@@ -3252,3 +3252,114 @@ def brier_score_loss(y_true, y_prob, *, sample_weight=None, pos_label=None):
             raise
     y_true = np.array(y_true == pos_label, int)
     return np.average((y_true - y_prob) ** 2, weights=sample_weight)
+
+
+@validate_params(
+    {
+        "y_true": ["array-like"],
+        "y_pred": ["array-like"],
+        "eps": [StrOptions({"auto"}), Interval(Real, 0, 1, closed="both")],
+        "sample_weight": ["array-like", None],
+        "labels": ["array-like", None],
+    },
+    prefer_skip_nested_validation=True,
+)
+def d2_log_loss_score(y_true, y_pred, *, sample_weight=None, eps="auto", labels=None):
+    """
+    :math:`D^2` score function, fraction of log loss explained.
+
+    Best possible score is 1.0 and it can be negative (because the model can be
+    arbitrarily worse). A model that always uses the empirical mean of `y_true` as
+    constant prediction, disregarding the input features, gets a D^2 score of 0.0.
+
+    Read more in the :ref:`User Guide <d2_score>`.
+
+    .. versionadded:: 1.5
+
+    Parameters
+    ----------
+    y_true : array-like or label indicator matrix
+        Ground truth (correct) labels for n_samples samples.
+
+    y_pred : array-like of float, shape = (n_samples, n_classes) or (n_samples,)
+        Predicted probabilities, as returned by a classifier's
+        predict_proba method. If ``y_pred.shape = (n_samples,)``
+        the probabilities provided are assumed to be that of the
+        positive class. The labels in ``y_pred`` are assumed to be
+        ordered alphabetically, as done by
+        :class:`~sklearn.preprocessing.LabelBinarizer`.
+
+    sample_weight : array-like of shape (n_samples,), default=None
+        Sample weights.
+
+    eps : float or "auto", default="auto"
+        Log loss is undefined for p=0 or p=1, so probabilities are
+        clipped to `max(eps, min(1 - eps, p))`. The default will depend on the
+        data type of `y_pred` and is set to `np.finfo(y_pred.dtype).eps`.
+
+        .. versionadded:: 1.2
+
+        .. versionchanged:: 1.2
+           The default value changed from `1e-15` to `"auto"` that is
+           equivalent to `np.finfo(y_pred.dtype).eps`.
+
+        .. deprecated:: 1.3
+           `eps` is deprecated in 1.3 and will be removed in 1.5.
+
+    labels : array-like, default=None
+        If not provided, labels will be inferred from y_true. If ``labels``
+        is ``None`` and ``y_pred`` has shape (n_samples,) the labels are
+        assumed to be binary and are inferred from ``y_true``.
+
+        .. versionadded:: 0.18
+
+    Returns
+    -------
+    z : float or ndarray of floats
+        The D^2 score.
+
+    Notes
+    -----
+    This is not a symmetric function.
+
+    Like R^2, D^2 score may be negative (it need not actually be the square of
+    a quantity D).
+
+    This metric is not well-defined for single samples and will return a NaN
+    value if n_samples is less than two.
+    """
+    y_pred = check_array(
+        y_pred, ensure_2d=False, dtype=[np.float64, np.float32, np.float16]
+    )
+    check_consistent_length(y_pred, y_true, sample_weight)
+    if _num_samples(y_pred) < 2:
+        msg = "D^2 score is not well-defined with less than two samples."
+        warnings.warn(msg, UndefinedMetricWarning)
+        return float("nan")
+
+    # log loss of the fitted model
+    numerator = log_loss(
+        y_true=y_true,
+        y_pred=y_pred,
+        eps=eps,
+        normalize=False,
+        sample_weight=sample_weight,
+        labels=labels,
+    )
+
+    # Proportion of labels in the dataset
+    y_values, counts = np.unique(y_true, return_counts=True)
+    y_prob = counts / len(y_true)
+    y_pred_null = np.tile(y_prob, (len(y_true), 1))
+
+    # log loss of the null model
+    denominator = log_loss(
+        y_true=y_true,
+        y_pred=y_pred_null,
+        eps=eps,
+        normalize=False,
+        sample_weight=sample_weight,
+        labels=labels,
+    )
+
+    return 1 - (numerator / denominator)
