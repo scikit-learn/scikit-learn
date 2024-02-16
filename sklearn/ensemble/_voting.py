@@ -297,8 +297,6 @@ class VotingClassifier(_RoutingNotSupportedMixin, ClassifierMixin, _BaseVoting):
         the estimators can be used for voting correctly and set the attributes
         of this VotingClassifier accordingly.
 
-        .. versionadded:: 1.5
-
     See Also
     --------
     VotingRegressor : Prediction voting regressor.
@@ -615,8 +613,6 @@ class VotingRegressor(_RoutingNotSupportedMixin, RegressorMixin, _BaseVoting):
         fitted. In this case `fit()` will simply perform validation that
         the estimators can be used for voting correctly and set the attributes
         of this VotingRegressor accordingly.
-
-        .. versionadded:: 1.5
 
     Attributes
     ----------
