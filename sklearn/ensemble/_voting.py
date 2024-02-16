@@ -24,6 +24,8 @@ from ..base import (
     TransformerMixin,
     _fit_context,
     clone,
+    is_classifier,
+    is_regressor,
 )
 from ..exceptions import NotFittedError
 from ..preprocessing import LabelEncoder
@@ -57,7 +59,13 @@ class _BaseVoting(TransformerMixin, _BaseHeterogeneousEnsemble):
         "weights": ["array-like", None],
         "n_jobs": [None, Integral],
         "verbose": ["verbose"],
+        "prefit": ["boolean"],
     }
+
+    @abstractmethod
+    def __init__(self, estimators, prefit=False):
+        super().__init__(estimators=estimators)
+        self.prefit = prefit
 
     def _log_message(self, name, idx, total):
         if not self.verbose:
@@ -86,18 +94,57 @@ class _BaseVoting(TransformerMixin, _BaseHeterogeneousEnsemble):
                 f" {len(self.weights)} weights, {len(self.estimators)} estimators"
             )
 
-        self.estimators_ = Parallel(n_jobs=self.n_jobs)(
-            delayed(_fit_single_estimator)(
-                clone(clf),
-                X,
-                y,
-                sample_weight=sample_weight,
-                message_clsname="Voting",
-                message=self._log_message(names[idx], idx + 1, len(clfs)),
+        if not self.prefit:
+            self.estimators_ = Parallel(n_jobs=self.n_jobs)(
+                delayed(_fit_single_estimator)(
+                    clone(clf),
+                    X,
+                    y,
+                    sample_weight=sample_weight,
+                    message_clsname="Voting",
+                    message=self._log_message(names[idx], idx + 1, len(clfs)),
+                )
+                for idx, clf in enumerate(clfs)
+                if clf != "drop"
             )
-            for idx, clf in enumerate(clfs)
-            if clf != "drop"
-        )
+        else:
+            self.estimators_ = [clf for clf in clfs if clf != "drop"]
+
+            # Well it's specified as prefit, let's check that
+            for est in self.estimators_:
+                check_is_fitted(est)
+
+            # Check that all estimators have the same `n_features_in_`.
+            # TODO: I'm not sure if all estimators are gauranteed to have this property
+            est_itr = (e for e in self.estimators_ if hasattr(e, "n_features_in_"))
+            est = next(est_itr, None)
+            if est is not None:
+                for other_est in est_itr:
+                    if est.n_features_in_ != other_est.n_features_in_:
+                        raise ValueError(
+                            "All prefit estimators must have the same n_features_in_ "
+                            "but first estimator has "
+                            f"n_features_in_={est.n_features_in_} while estimator "
+                            f"{other_est} has n_features_in_={other_est.n_features_in_}"
+                        )
+
+            # We need to ensure that there feature_names_in_ match if the property
+            # exists such that data can be passed through to each model without issue.
+            # This is gauranteed in the fitting above but not if prefit is True.
+            est_itr = (e for e in self.estimators_ if hasattr(e, "feature_names_in_"))
+            est = next(est_itr, None)
+            if est is not None:
+                for other_est in est_itr:
+                    if not np.array_equal(
+                        est.feature_names_in_, other_est.feature_names_in_
+                    ):
+                        raise ValueError(
+                            "All prefit estimators must have the same "
+                            "feature_names_in_ but first estimator has "
+                            f"feature_names_in_={est.feature_names_in_} while "
+                            f"estimator {other_est} has "
+                            f"feature_names_in_={other_est.feature_names_in_}"
+                        )
 
         self.named_estimators_ = Bunch()
 
@@ -208,6 +255,12 @@ class VotingClassifier(_RoutingNotSupportedMixin, ClassifierMixin, _BaseVoting):
 
         .. versionadded:: 0.23
 
+    prefit : bool, default=False
+        If True, the underlying estimators are expected to be already
+        fitted. In this case `fit()` will simply perform validation that
+        the estimators can be used for voting correctly and set the attributes
+        of this VotingClassifier accordingly.
+
     Attributes
     ----------
     estimators_ : list of classifiers
@@ -237,6 +290,14 @@ class VotingClassifier(_RoutingNotSupportedMixin, ClassifierMixin, _BaseVoting):
         underlying estimators expose such an attribute when fit.
 
         .. versionadded:: 1.0
+
+    prefit: bool, default=False
+        If True, the underlying estimators are expected to be already
+        fitted. In this case `fit()` will simply perform validation that
+        the estimators can be used for voting correctly and set the attributes
+        of this VotingClassifier accordingly.
+
+        .. versionadded:: 1.5
 
     See Also
     --------
@@ -305,8 +366,9 @@ class VotingClassifier(_RoutingNotSupportedMixin, ClassifierMixin, _BaseVoting):
         n_jobs=None,
         flatten_transform=True,
         verbose=False,
+        prefit=False,
     ):
-        super().__init__(estimators=estimators)
+        super().__init__(estimators=estimators, prefit=prefit)
         self.voting = voting
         self.weights = weights
         self.n_jobs = n_jobs
@@ -361,6 +423,20 @@ class VotingClassifier(_RoutingNotSupportedMixin, ClassifierMixin, _BaseVoting):
 
         self.le_ = LabelEncoder().fit(y)
         self.classes_ = self.le_.classes_
+
+        if self.prefit:
+            for name, est in self.estimators:
+                if not is_classifier(est):
+                    raise ValueError(f"Estimator {name} is not a classifier. \n{est}")
+                if hasattr(est, "classes_") and not np.array_equal(
+                    est.classes_, self.classes_
+                ):
+                    raise ValueError(
+                        f"Prefit estimator {name} does not have the same "
+                        f"classes_={est.classes_} as the expected "
+                        f"classes={self.classes_}"
+                    )
+
         transformed_y = self.le_.transform(y)
 
         return super().fit(X, transformed_y, sample_weight)
@@ -534,6 +610,14 @@ class VotingRegressor(_RoutingNotSupportedMixin, RegressorMixin, _BaseVoting):
 
         .. versionadded:: 0.23
 
+    prefit: bool, default=False
+        If True, the underlying estimators are expected to be already
+        fitted. In this case `fit()` will simply perform validation that
+        the estimators can be used for voting correctly and set the attributes
+        of this VotingRegressor accordingly.
+
+        .. versionadded:: 1.5
+
     Attributes
     ----------
     estimators_ : list of regressors
@@ -586,8 +670,16 @@ class VotingRegressor(_RoutingNotSupportedMixin, RegressorMixin, _BaseVoting):
     2
     """
 
-    def __init__(self, estimators, *, weights=None, n_jobs=None, verbose=False):
-        super().__init__(estimators=estimators)
+    def __init__(
+        self,
+        estimators,
+        *,
+        weights=None,
+        n_jobs=None,
+        verbose=False,
+        prefit=False,
+    ):
+        super().__init__(estimators=estimators, prefit=prefit)
         self.weights = weights
         self.n_jobs = n_jobs
         self.verbose = verbose
@@ -620,6 +712,12 @@ class VotingRegressor(_RoutingNotSupportedMixin, RegressorMixin, _BaseVoting):
         """
         _raise_for_unsupported_routing(self, "fit", sample_weight=sample_weight)
         y = column_or_1d(y, warn=True)
+
+        if self.prefit:
+            for name, est in self.estimators:
+                if not is_regressor(est):
+                    raise ValueError(f"Estimator {name} is not a regressor. \n{est}")
+
         return super().fit(X, y, sample_weight)
 
     def predict(self, X):
