@@ -276,7 +276,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
 
         if self.is_categorical_ is None:
             self._preprocessor = None
-            self._is_categorical_remapped = self.is_categorical_
+            self._is_categorical_remapped = None
 
             X = self._validate_data(X, **check_X_kwargs)
             return X, None
@@ -372,7 +372,15 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             Indicates whether a feature is categorical. If no feature is
             categorical, this is None.
         """
-        if hasattr(X, "__dataframe__"):
+        # Special code for pandas because of a bug in recent pandas, which is
+        # fixed in main and maybe included in 2.2.1, see
+        # https://github.com/pandas-dev/pandas/pull/57173.
+        # Also pandas versions < 1.5.1 do not support the dataframe interchange
+        if _is_pandas_df(X):
+            X_is_dataframe = True
+            categorical_columns_mask = np.asarray(X.dtypes == "category")
+            X_has_categorical_columns = categorical_columns_mask.any()
+        elif hasattr(X, "__dataframe__"):
             X_is_dataframe = True
             categorical_columns_mask = np.asarray(
                 [
@@ -380,12 +388,6 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                     for c in X.__dataframe__().get_columns()
                 ]
             )
-            X_has_categorical_columns = categorical_columns_mask.any()
-        # pandas versions < 1.5.1 do not support the dataframe interchange
-        # protocol so we inspect X.dtypes directly
-        elif _is_pandas_df(X):
-            X_is_dataframe = True
-            categorical_columns_mask = np.asarray(X.dtypes == "category")
             X_has_categorical_columns = categorical_columns_mask.any()
         else:
             X_is_dataframe = False
@@ -1408,10 +1410,10 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
 
         Parameters
         ----------
-        grid : ndarray, shape (n_samples, n_target_features)
+        grid : ndarray, shape (n_samples, n_target_features), dtype=np.float32
             The grid points on which the partial dependence should be
             evaluated.
-        target_features : ndarray, shape (n_target_features)
+        target_features : ndarray, shape (n_target_features), dtype=np.intp
             The set of target features for which the partial dependence
             should be evaluated.
 
@@ -1434,6 +1436,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         averaged_predictions = np.zeros(
             (self.n_trees_per_iteration_, grid.shape[0]), dtype=Y_DTYPE
         )
+        target_features = np.asarray(target_features, dtype=np.intp, order="C")
 
         for predictors_of_ith_iteration in self._predictors:
             for k, predictor in enumerate(predictors_of_ith_iteration):
@@ -2208,7 +2211,13 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
             The predicted classes.
         """
         # TODO: This could be done in parallel
-        encoded_classes = np.argmax(self.predict_proba(X), axis=1)
+        raw_predictions = self._raw_predict(X)
+        if raw_predictions.shape[1] == 1:
+            # np.argmax([0.5, 0.5]) is 0, not 1. Therefore "> 0" not ">= 0" to be
+            # consistent with the multiclass case.
+            encoded_classes = (raw_predictions.ravel() > 0).astype(int)
+        else:
+            encoded_classes = np.argmax(raw_predictions, axis=1)
         return self.classes_[encoded_classes]
 
     def staged_predict(self, X):
@@ -2229,8 +2238,12 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
         y : generator of ndarray of shape (n_samples,)
             The predicted classes of the input samples, for each iteration.
         """
-        for proba in self.staged_predict_proba(X):
-            encoded_classes = np.argmax(proba, axis=1)
+        for raw_predictions in self._staged_raw_predict(X):
+            if raw_predictions.shape[1] == 1:
+                # np.argmax([0, 0]) is 0, not 1, therefor "> 0" not ">= 0"
+                encoded_classes = (raw_predictions.ravel() > 0).astype(int)
+            else:
+                encoded_classes = np.argmax(raw_predictions, axis=1)
             yield self.classes_.take(encoded_classes, axis=0)
 
     def predict_proba(self, X):

@@ -549,6 +549,20 @@ def ridge_regression(
     :class:`~sklearn.svm.LinearSVC`. If an array is passed, penalties are
     assumed to be specific to the targets. Hence they must correspond in
     number.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.datasets import make_regression
+    >>> from sklearn.linear_model import ridge_regression
+    >>> rng = np.random.RandomState(0)
+    >>> X = rng.randn(100, 4)
+    >>> y = 2.0 * X[:, 0] - 1.0 * X[:, 1] + 0.1 * rng.standard_normal(100)
+    >>> coef, intercept = ridge_regression(X, y, alpha=1.0, return_intercept=True)
+    >>> list(coef)
+    [1.9..., -1.0..., -0.0..., -0.0...]
+    >>> intercept
+    -0.0...
     """
     return _ridge_regression(
         X,
@@ -1969,7 +1983,9 @@ class _RidgeGCV(LinearModel):
 
         sample_weight : float or ndarray of shape (n_samples,), default=None
             Individual weights for each sample. If given a float, every sample
-            will have the same weight.
+            will have the same weight. Note that the scale of `sample_weight`
+            has an impact on the loss; i.e. multiplying all weights by `k`
+            is equivalent to setting `alpha / k`.
 
         Returns
         -------
