@@ -1,5 +1,3 @@
-import warnings
-
 import numpy as np
 import pytest
 from numpy.testing import assert_array_almost_equal, assert_array_equal
@@ -463,13 +461,7 @@ def test_ransac_fit_sample_weight():
     ransac_estimator = RANSACRegressor(random_state=0)
     n_samples = y.shape[0]
     weights = np.ones(n_samples)
-    with warnings.catch_warnings(record=True):
-        warnings.filterwarnings(
-            "always",
-            category=FutureWarning,
-            message="Pass sample_weight=",
-        )
-        ransac_estimator.fit(X, y, weights)
+    ransac_estimator.fit(X, y, sample_weight=weights)
     # sanity check
     assert ransac_estimator.inlier_mask_.shape[0] == n_samples
 
@@ -506,7 +498,7 @@ def test_ransac_fit_sample_weight():
     sample_weight = np.append(sample_weight, outlier_weight)
     X_ = np.append(X_, outlier_X, axis=0)
     y_ = np.append(y_, outlier_y)
-    ransac_estimator.fit(X_, y_, sample_weight)
+    ransac_estimator.fit(X_, y_, sample_weight=sample_weight)
 
     assert_allclose(ransac_estimator.estimator_.coef_, ref_coef_)
 
