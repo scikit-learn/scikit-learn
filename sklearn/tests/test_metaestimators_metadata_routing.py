@@ -292,7 +292,7 @@ METAESTIMATORS: list = [
     {
         "metaestimator": RANSACRegressor,
         "estimator_name": "estimator",
-        "estimator": ConsumingRegressor,
+        "estimator": "regressor",
         "init_args": {"min_samples": 0.5},
         "X": X,
         "y": y,
@@ -303,7 +303,7 @@ METAESTIMATORS: list = [
     {
         "metaestimator": IterativeImputer,
         "estimator_name": "estimator",
-        "estimator": ConsumingRegressor,
+        "estimator": "regressor",
         "init_args": {"skip_complete": False},
         "X": X,
         "y": y,

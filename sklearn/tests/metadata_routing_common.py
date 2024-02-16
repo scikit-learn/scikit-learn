@@ -273,11 +273,12 @@ class ConsumingClassifier(ClassifierMixin, BaseEstimator):
         )
         return np.zeros(shape=(len(X),))
 
-    def score(self, X, y, sample_weight="default", metadata="default"):
-        record_metadata_not_default(
-            self, "score", sample_weight=sample_weight, metadata=metadata
-        )
-        return 1
+    # def score(self, X, y, sample_weight="default", metadata="default"):
+    # uncomment when needed
+    # record_metadata_not_default(
+    #    self, "score", sample_weight=sample_weight, metadata=metadata
+    # )
+    # return 1
 
 
 class ConsumingTransformer(TransformerMixin, BaseEstimator):
