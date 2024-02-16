@@ -597,11 +597,10 @@ Here is a visualization of the cross-validation behavior.
    :align: center
    :scale: 75%
 
-|details-start|
+.. _predefined_split:
 
 Predefined fold-splits / Validation-sets
-
-|details-split|
+----------------------------------------
 
 For some datasets, a pre-defined split of the data into training- and
 validation fold or into several cross-validation folds already
@@ -610,8 +609,6 @@ e.g. when searching for hyperparameters.
 
 For example, when using a validation set, set the ``test_fold`` to 0 for all
 samples that are part of the validation set, and to -1 for all other samples.
-
-|details-end|
 
 .. _group_cv:
 
@@ -679,8 +676,6 @@ complete partition of all the data. Unlike :class:`KFold`, :class:`GroupKFold`
 is not randomized at all, whereas :class:`KFold` is randomized when
 ``shuffle=True``.
 
-
-
 .. _stratified_group_k_fold:
 
 StratifiedGroupKFold
@@ -736,8 +731,6 @@ Here is a visualization of cross-validation behavior for uneven groups:
    :target: ../auto_examples/model_selection/plot_cv_indices.html
    :align: center
    :scale: 75%
-
-
 
 .. _leave_one_group_out:
 
