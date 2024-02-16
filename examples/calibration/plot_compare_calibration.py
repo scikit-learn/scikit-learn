@@ -97,7 +97,7 @@ from sklearn.naive_bayes import GaussianNB
 
 # Create classifiers: here we tune the main hyper-parameter automatically for
 # the logistic regression model because its efficient and concise to do so.
-# Ideally, we should run an hyper-parameter search for all the models but we
+# Ideally, we should run a hyper-parameter search for all the models but we
 # don't do it here for the sake of keeping the example code concise and fast
 # to execute.
 lr = LogisticRegressionCV(
