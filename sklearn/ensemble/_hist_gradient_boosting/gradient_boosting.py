@@ -873,7 +873,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             # would result in false "count" statistics of the histograms. Therefore,
             # we make take copys (fancy indexed numpy arrays) for the subsampling.
             n_inbag = max(1, int(self.subsample * n_samples))
-            sample_mask = np.zeros((n_samples,), dtype=np.bool)
+            sample_mask = np.zeros((n_samples,), dtype=bool)
             sample_mask[:n_inbag] = True
         else:
             sample_mask = slice(None)
@@ -933,9 +933,9 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             # Build `n_trees_per_iteration` trees.
             for k in range(self.n_trees_per_iteration_):
                 grower = TreeGrower(
-                    X_binned=X_binned_train[sample_mask],
-                    gradients=g_view[sample_mask, k],
-                    hessians=h_view[sample_mask, k],
+                    X_binned=np.asfortranarray(X_binned_train[sample_mask]),
+                    gradients=np.asfortranarray(g_view[sample_mask, k]),
+                    hessians=np.asfortranarray(h_view[sample_mask, k]),
                     n_bins=n_bins,
                     n_bins_non_missing=self._bin_mapper.n_bins_non_missing_,
                     has_missing_values=has_missing_values,
