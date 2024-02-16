@@ -123,6 +123,14 @@ Changelog
   :class:`~calibration.CalibrationDisplay`.
   :pr:`28051` by :user:`Pierre de Fréminville <pidefrem>`.
 
+- |API| :func:`metrics.precision_recall_curve` deprecated the keyword argument `probas_pred`
+  in favor of `y_score`. `probas_pred` will be removed in version 1.7.
+  :pr:`28092` by :user:`Adam Li <adam2392>`.
+
+- |API| :func:`metrics.brier_score_loss` deprecated the keyword argument `y_prob`
+  in favor of `y_proba`. `y_prob` will be removed in version 1.7.
+  :pr:`28092` by :user:`Adam Li <adam2392>`.
+
 :mod:`sklearn.model_selection`
 ..............................
 
