@@ -146,7 +146,7 @@ def _parallel_build_estimators(
         random_state = seeds[i]
         estimator = ensemble._make_estimator(append=False, random_state=random_state)
 
-        records = getattr(estimator, "_records", dict()).get("fit", dict())
+        getattr(estimator, "_records", dict()).get("fit", dict())
         if has_check_input:
             estimator_fit = partial(estimator.fit, check_input=check_input)
         else:
@@ -199,7 +199,7 @@ def _parallel_build_estimators(
                 X_ = X_[:, features]
             estimator_fit(X_, y_, **fit_params_)
 
-        records = getattr(estimator, "_records", dict()).get("fit", dict())
+        getattr(estimator, "_records", dict()).get("fit", dict())
         estimators.append(estimator)
         estimators_features.append(features)
 
