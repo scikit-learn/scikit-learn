@@ -223,9 +223,9 @@ more robust estimates for the center and range of your data.
 **References**
 |details-split|
 
-  Further discussion on the importance of centering and scaling data is
-  available on this FAQ: `Should I normalize/standardize/rescale the data?
-  <http://www.faqs.org/faqs/ai-faq/neural-nets/part2/section-16.html>`_
+Further discussion on the importance of centering and scaling data is
+available on this FAQ: `Should I normalize/standardize/rescale the data?
+<http://www.faqs.org/faqs/ai-faq/neural-nets/part2/section-16.html>`_
 
 |details-end|
 
