@@ -31,6 +31,7 @@ from ..utils.metadata_routing import (
     _raise_for_params,
     _routing_enabled,
     process_routing,
+    get_routing_for_object,
 )
 from ..utils.metaestimators import available_if
 from ..utils.multiclass import check_classification_targets
@@ -87,6 +88,14 @@ def _generate_bagging_indices(
     return feature_indices, sample_indices
 
 
+def _supports_sample_weight(request_or_router):
+    """Check if the fit method supports sample_weight"""
+    param_names = request_or_router._get_param_names(
+        method="fit", return_alias=True, ignore_self_request=False
+    )
+    return "sample_weight" in param_names
+
+
 def _parallel_build_estimators(
     n_estimators,
     ensemble,
@@ -105,12 +114,24 @@ def _parallel_build_estimators(
     max_samples = ensemble._max_samples
     bootstrap = ensemble.bootstrap
     bootstrap_features = ensemble.bootstrap_features
+    support_sample_weight = has_fit_parameter(ensemble.estimator_, "sample_weight")
     has_check_input = has_fit_parameter(ensemble.estimator_, "check_input")
     requires_feature_indexing = bootstrap_features or max_features != n_features
 
     # Build estimators
     estimators = []
     estimators_features = []
+
+    request_or_router = get_routing_for_object(ensemble.estimator_)
+
+    if (
+        not _supports_sample_weight(request_or_router)
+        and fit_params.get("sample_weight") is not None
+    ):
+        raise ValueError(
+            "The base estimator doesn't support sample weight, but sample_weight is "
+            "passed to the fit method."
+        )
 
     # Row sampling can be achieved either through setting sample_weight or
     # by indexing. The former is more efficient. Therefore, use this method
@@ -125,6 +146,7 @@ def _parallel_build_estimators(
         random_state = seeds[i]
         estimator = ensemble._make_estimator(append=False, random_state=random_state)
 
+        records = getattr(estimator, "_records", dict()).get('fit', dict())
         if has_check_input:
             estimator_fit = partial(estimator.fit, check_input=check_input)
         else:
@@ -141,13 +163,14 @@ def _parallel_build_estimators(
             max_samples,
         )
 
+        fit_params_ = fit_params.copy()
         # TODO(SLEP6): remove if condition for unrouted sample_weight when metadata
         # routing can't be disabled.
         # Draw samples, using sample weights, and then fit
-        if not _routing_enabled() and "sample_weight" in fit_params:
+        if support_sample_weight:
             # row subsampling via sample_weight
             curr_sample_weight = _check_sample_weight(
-                fit_params.pop("sample_weight", None), X
+                fit_params_.pop("sample_weight", None), X
             ).copy()
 
             if bootstrap:
@@ -157,17 +180,26 @@ def _parallel_build_estimators(
                 not_indices_mask = ~indices_to_mask(indices, n_samples)
                 curr_sample_weight[not_indices_mask] = 0
 
+            fit_params_["sample_weight"] = curr_sample_weight
             X_ = X[:, features] if requires_feature_indexing else X
-            estimator_fit(X_, y, sample_weight=curr_sample_weight, **fit_params)
+            if not _routing_enabled():
+                estimator_fit(X_, y, sample_weight=curr_sample_weight)
+            else:
+                estimator_fit(X_, y, **fit_params_)
         else:
+            # if sample_weight is not supported in the Bagging estimator, pop it from fit_params
+            fit_params_.pop("sample_weight", None)
+
             # cannot use sample_weight, use indexing
             y_ = _safe_indexing(y, indices)
             X_ = _safe_indexing(X, indices)
-            fit_params = _check_method_params(X, params=fit_params, indices=indices)
+            fit_params_ = _check_method_params(X, params=fit_params_, indices=indices)
             if requires_feature_indexing:
                 X_ = X_[:, features]
-            estimator_fit(X_, y_, **fit_params)
+            estimator_fit(X_, y_, **fit_params_)
 
+        records = getattr(estimator, "_records", dict()).get('fit', dict())
+        print('Next here...' , records)
         estimators.append(estimator)
         estimators_features.append(features)
 
@@ -615,6 +647,10 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
         )
         return router
 
+    @abstractmethod
+    def _get_estimator(self):
+        """Resolve which estimator to return."""
+
 
 class BaggingClassifier(ClassifierMixin, BaseBagging):
     """A Bagging classifier.
@@ -815,7 +851,21 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
 
     def _validate_estimator(self):
         """Check the estimator and set the estimator_ attribute."""
-        super()._validate_estimator(default=DecisionTreeClassifier())
+        super()._validate_estimator(default=self._get_estimator())
+
+    def _get_estimator(self):
+        """Resolve which estimator to return (default is DecisionTreeClassifier)"""
+        estimator = self.estimator
+
+        if estimator is None:
+            # we want all classifiers that don't expose a random_state
+            # to be deterministic (and we don't want to expose this one).
+            estimator = DecisionTreeClassifier()
+
+            if _routing_enabled():
+                estimator.set_fit_request(sample_weight=True)
+
+        return estimator
 
     def _set_oob_score(self, X, y):
         n_samples = y.shape[0]
@@ -1282,7 +1332,7 @@ class BaggingRegressor(RegressorMixin, BaseBagging):
 
     def _validate_estimator(self):
         """Check the estimator and set the estimator_ attribute."""
-        super()._validate_estimator(default=DecisionTreeRegressor())
+        super()._validate_estimator(default=self._get_estimator())
 
     def _set_oob_score(self, X, y):
         n_samples = y.shape[0]
@@ -1318,3 +1368,15 @@ class BaggingRegressor(RegressorMixin, BaseBagging):
         else:
             estimator = self.estimator
         return {"allow_nan": _safe_tags(estimator, "allow_nan")}
+
+    def _get_estimator(self):
+        """Resolve which estimator to return (default is DecisionTreeClassifier)"""
+        estimator = self.estimator
+
+        if estimator is None:
+            # we want all classifiers that don't expose a random_state
+            # to be deterministic (and we don't want to expose this one).
+            estimator = DecisionTreeRegressor()
+            if _routing_enabled():
+                estimator.set_fit_request(sample_weight=True)
+        return estimator

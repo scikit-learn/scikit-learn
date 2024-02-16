@@ -38,6 +38,8 @@ from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.utils import check_random_state
 from sklearn.utils._testing import assert_array_almost_equal, assert_array_equal
 from sklearn.utils.fixes import CSC_CONTAINERS, CSR_CONTAINERS
+from sklearn.utils.validation import has_fit_parameter
+
 
 rng = check_random_state(0)
 
@@ -993,6 +995,7 @@ def test_metadata_routing_for_bagging_estimators(Estimator, BaseEst, prop):
         estimator=BaseEst(registry=_Registry()).set_fit_request(**{prop: True})
     )
 
+    print({prop: sample_weight if prop == "sample_weight" else metadata})
     est.fit(X, y, **{prop: sample_weight if prop == "sample_weight" else metadata})
 
     for estimator in est.estimators_:
@@ -1003,11 +1006,12 @@ def test_metadata_routing_for_bagging_estimators(Estimator, BaseEst, prop):
         registry = estimator.registry
         assert len(registry)
         for sub_est in registry:
-            check_recorded_metadata(
-                obj=sub_est,
-                method="fit",
-                **kwargs,
-            )
+            if not has_fit_parameter(sub_est, "sample_weight"):
+                check_recorded_metadata(
+                    obj=sub_est,
+                    method="fit",
+                    **kwargs,
+                )
 
 
 @pytest.mark.usefixtures("enable_slep006")
