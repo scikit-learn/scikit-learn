@@ -892,11 +892,6 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                     "[{}/{}] ".format(iteration + 1, self.max_iter), end="", flush=True
                 )
 
-            # Do out of bag if required
-            if do_oob:
-                self._bagging_subsample_rng.shuffle(sample_mask)
-                sample_mask_idx = np.flatnonzero(sample_mask)
-
             # Update gradients and hessians, inplace
             # Note that self._loss expects shape (n_samples,) for
             # n_trees_per_iteration = 1 else shape (n_samples, n_trees_per_iteration).
@@ -930,12 +925,28 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                 g_view = gradient
                 h_view = hessian
 
+            # Do out of bag if required
+            if do_oob:
+                self._bagging_subsample_rng.shuffle(sample_mask)
+                sample_mask_idx = np.flatnonzero(sample_mask)
+                X_binned_grow = np.asfortranarray(X_binned_train[sample_mask])
+                g_grow = np.asfortranarray(g_view[sample_mask])
+                if self._loss.constant_hessian:
+                    h_grow = h_view
+                else:
+                    h_grow = np.asfortranarray(h_view[sample_mask])
+
+            else:
+                X_binned_grow = X_binned_train
+                g_grow = g_view
+                h_grow = h_view
+
             # Build `n_trees_per_iteration` trees.
             for k in range(self.n_trees_per_iteration_):
                 grower = TreeGrower(
-                    X_binned=np.asfortranarray(X_binned_train[sample_mask]),
-                    gradients=np.asfortranarray(g_view[sample_mask, k]),
-                    hessians=np.asfortranarray(h_view[sample_mask, k]),
+                    X_binned=X_binned_grow,
+                    gradients=g_grow[:, k],
+                    hessians=h_grow[:, k],
                     n_bins=n_bins,
                     n_bins_non_missing=self._bin_mapper.n_bins_non_missing_,
                     has_missing_values=has_missing_values,
