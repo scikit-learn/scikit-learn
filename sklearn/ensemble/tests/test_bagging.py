@@ -980,6 +980,24 @@ def test_get_metadata_routing_without_fit(Estimator, BaseEst):
 
 @pytest.mark.usefixtures("enable_slep006")
 @pytest.mark.parametrize(
+    "Estimator",
+    [BaggingClassifier, BaggingRegressor],
+)
+def test_get_metadata_routing_with_default_estimator(Estimator):
+    """Test that metadata routing is off by default estimator."""
+    X = np.array([[0, 1], [2, 2], [4, 6]])
+    y = [1, 2, 3]
+    sample_weight = [1.0, 1.0, 1.0]
+    est = Estimator(estimator=None, n_estimators=2, random_state=0)
+
+    with pytest.raises(
+        TypeError, match="got unexpected argument\(s\) {'sample_weight'}"
+    ):
+        est.fit(X, y, sample_weight=sample_weight)
+
+
+@pytest.mark.usefixtures("enable_slep006")
+@pytest.mark.parametrize(
     "Estimator, BaseEst",
     [(BaggingClassifier, ConsumingClassifier), (BaggingRegressor, ConsumingRegressor)],
 )
@@ -994,7 +1012,6 @@ def test_metadata_routing_for_bagging_estimators(Estimator, BaseEst, prop):
         estimator=BaseEst(registry=_Registry()).set_fit_request(**{prop: True})
     )
 
-    print({prop: sample_weight if prop == "sample_weight" else metadata})
     est.fit(X, y, **{prop: sample_weight if prop == "sample_weight" else metadata})
 
     for estimator in est.estimators_:
@@ -1005,7 +1022,12 @@ def test_metadata_routing_for_bagging_estimators(Estimator, BaseEst, prop):
         registry = estimator.registry
         assert len(registry)
         for sub_est in registry:
-            if not has_fit_parameter(sub_est, "sample_weight"):
+            # When sample weight is passed in, the sub-estimators use
+            # bootstrapping to sample from the dataset, so we can't check
+            # that sample weight is the same within all sub-estimators.
+            #
+            # Note: We can check all other metadata is the same though.
+            if prop != "sample_weight":
                 check_recorded_metadata(
                     obj=sub_est,
                     method="fit",

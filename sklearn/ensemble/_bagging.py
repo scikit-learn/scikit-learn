@@ -164,10 +164,17 @@ def _parallel_build_estimators(
         )
 
         fit_params_ = fit_params.copy()
+
         # TODO(SLEP6): remove if condition for unrouted sample_weight when metadata
         # routing can't be disabled.
+        # 1. If routing is not enabled, we will check if the base
+        # estimator supports sample_weight and use it if it does.
+        # 2. If routing is enabled, we will check if the routing supports sample
+        # weight and use it if it does.
         # Draw samples, using sample weights, and then fit
-        if support_sample_weight:
+        if (_routing_enabled() and "sample_weight" in fit_params_) or (
+            not _routing_enabled() and support_sample_weight
+        ):
             # row subsampling via sample_weight
             curr_sample_weight = _check_sample_weight(
                 fit_params_.pop("sample_weight", None), X
@@ -182,15 +189,8 @@ def _parallel_build_estimators(
 
             fit_params_["sample_weight"] = curr_sample_weight
             X_ = X[:, features] if requires_feature_indexing else X
-            if not _routing_enabled():
-                estimator_fit(X_, y, sample_weight=curr_sample_weight)
-            else:
-                estimator_fit(X_, y, **fit_params_)
+            estimator_fit(X_, y, **fit_params_)
         else:
-            # if sample_weight is not supported in the Bagging estimator, pop it
-            # from fit_params
-            fit_params_.pop("sample_weight", None)
-
             # cannot use sample_weight, use indexing
             y_ = _safe_indexing(y, indices)
             X_ = _safe_indexing(X, indices)
@@ -401,9 +401,11 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
             multi_output=True,
         )
 
-        return self._fit(
-            X, y, self.max_samples, sample_weight=sample_weight, **fit_params
-        )
+        if sample_weight is not None:
+            sample_weight = _check_sample_weight(sample_weight, X, dtype=None)
+            fit_params["sample_weight"] = sample_weight
+
+        return self._fit(X, y, max_samples=self.max_samples, **fit_params)
 
     def _parallel_args(self):
         return {}
@@ -414,7 +416,6 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
         y,
         max_samples=None,
         max_depth=None,
-        sample_weight=None,
         check_input=True,
         **fit_params,
     ):
@@ -438,11 +439,6 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
             Override value used when constructing base estimator. Only
             supported if the base estimator has a max_depth parameter.
 
-        sample_weight : array-like of shape (n_samples,), default=None
-            Sample weights. If None, then samples are equally weighted.
-            Note that this is supported only if the base estimator supports
-            sample weighting.
-
         check_input : bool, default=True
             Override value used when fitting base estimator. Only supported
             if the base estimator has a check_input parameter for fit function.
@@ -460,9 +456,6 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
         """
         random_state = check_random_state(self.random_state)
 
-        if sample_weight is not None:
-            sample_weight = _check_sample_weight(sample_weight, X, dtype=None)
-
         # Remap output
         n_samples = X.shape[0]
         self._n_samples = n_samples
@@ -472,14 +465,14 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
         self._validate_estimator(self._get_estimator())
 
         if _routing_enabled():
-            routed_params = process_routing(
-                self, "fit", sample_weight=sample_weight, **fit_params
-            )
+            routed_params = process_routing(self, "fit", **fit_params)
         else:
             routed_params = Bunch()
             routed_params.estimator = Bunch(fit=fit_params)
-            if "sample_weight" != None:
-                routed_params.estimator.fit["sample_weight"] = sample_weight
+            if "sample_weight" in fit_params:
+                routed_params.estimator.fit["sample_weight"] = fit_params[
+                    "sample_weight"
+                ]
 
         if max_depth is not None:
             self.estimator_.max_depth = max_depth
@@ -857,9 +850,6 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
             # we want all classifiers that don't expose a random_state
             # to be deterministic (and we don't want to expose this one).
             estimator = DecisionTreeClassifier()
-
-            if _routing_enabled():
-                estimator.set_fit_request(sample_weight=True)
 
         return estimator
 
@@ -1369,6 +1359,4 @@ class BaggingRegressor(RegressorMixin, BaseBagging):
             # we want all classifiers that don't expose a random_state
             # to be deterministic (and we don't want to expose this one).
             estimator = DecisionTreeRegressor()
-            if _routing_enabled():
-                estimator.set_fit_request(sample_weight=True)
         return estimator
