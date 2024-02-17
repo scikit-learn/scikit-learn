@@ -2448,7 +2448,7 @@ class RidgeClassifierCV(_RoutingNotSupportedMixin, _RidgeClassifierMixin, _BaseR
         Alpha corresponds to ``1 / (2C)`` in other linear models such as
         :class:`~sklearn.linear_model.LogisticRegression` or
         :class:`~sklearn.svm.LinearSVC`.
-        If using Leave-One-Out cross-validation, alphas must be > 0.
+        If using Leave-One-Out cross-validation, alphas must be strictly positive.
 
     fit_intercept : bool, default=True
         Whether to calculate the intercept for this model. If set
