@@ -24,6 +24,7 @@ import tempfile
 import unittest
 import warnings
 from collections.abc import Iterable
+from dataclasses import dataclass
 from functools import wraps
 from inspect import signature
 from subprocess import STDOUT, CalledProcessError, TimeoutExpired, check_output
@@ -49,7 +50,7 @@ from sklearn.utils import (
     _in_unstable_openblas_configuration,
 )
 from sklearn.utils._array_api import _check_array_api_dispatch
-from sklearn.utils.fixes import parse_version, sp_version
+from sklearn.utils.fixes import VisibleDeprecationWarning, parse_version, sp_version
 from sklearn.utils.multiclass import check_classification_targets
 from sklearn.utils.validation import (
     check_array,
@@ -1095,3 +1096,98 @@ def _array_api_for_tests(array_namespace, device):
         if cupy.cuda.runtime.getDeviceCount() == 0:
             raise SkipTest("CuPy test requires cuda, which is not available")
     return xp
+
+
+def _get_warnings_filters_info_list():
+    @dataclass
+    class WarningInfo:
+        action: "warnings._ActionKind"
+        message: str = ""
+        category: type[Warning] = Warning
+
+        def to_filterwarning_str(self):
+            if self.category.__module__ == "builtins":
+                category = self.category.__name__
+            else:
+                category = f"{self.category.__module__}.{self.category.__name__}"
+
+            return f"{self.action}:{self.message}:{category}"
+
+    return [
+        WarningInfo("error", category=DeprecationWarning),
+        WarningInfo("error", category=FutureWarning),
+        WarningInfo("error", category=VisibleDeprecationWarning),
+        # TODO: remove when pyamg > 5.0.1
+        # Avoid a deprecation warning due pkg_resources usage in pyamg.
+        WarningInfo(
+            "ignore",
+            message="pkg_resources is deprecated as an API",
+            category=DeprecationWarning,
+        ),
+        WarningInfo(
+            "ignore",
+            message="Deprecated call to `pkg_resources",
+            category=DeprecationWarning,
+        ),
+        # pytest-cov issue https://github.com/pytest-dev/pytest-cov/issues/557 not
+        # fixed although it has been closed. https://github.com/pytest-dev/pytest-cov/pull/623
+        # would probably fix it.
+        WarningInfo(
+            "ignore",
+            message=(
+                "The --rsyncdir command line argument and rsyncdirs config variable are"
+                " deprecated"
+            ),
+            category=DeprecationWarning,
+        ),
+        # XXX: Easiest way to ignore pandas Pyarrow DeprecationWarning in the
+        # short-term. See https://github.com/pandas-dev/pandas/issues/54466 for
+        # more details.
+        WarningInfo(
+            "ignore",
+            message=r"\s*Pyarrow will become a required dependency",
+            category=DeprecationWarning,
+        ),
+        # warnings has been fixed from dateutil main but not released yet, see
+        # https://github.com/dateutil/dateutil/issues/1314
+        WarningInfo(
+            "ignore",
+            message="datetime.datetime.utcfromtimestamp",
+            category=DeprecationWarning,
+        ),
+        # Python 3.12 warnings from joblib fixed in master but not released yet,
+        # see https://github.com/joblib/joblib/pull/1518
+        WarningInfo(
+            "ignore", message="ast.Num is deprecated", category=DeprecationWarning
+        ),
+        WarningInfo(
+            "ignore", message="Attribute n is deprecated", category=DeprecationWarning
+        ),
+        # Python 3.12 warnings from sphinx-gallery fixed in master but not
+        # released yet, see
+        # https://github.com/sphinx-gallery/sphinx-gallery/pull/1242
+        WarningInfo(
+            "ignore", message="ast.Str is deprecated", category=DeprecationWarning
+        ),
+        WarningInfo(
+            "ignore", message="Attribute s is deprecated", category=DeprecationWarning
+        ),
+    ]
+
+
+def get_pytest_filterwarning_lines():
+    warning_filters_info_list = _get_warnings_filters_info_list()
+    return [
+        warning_info.to_filterwarning_str()
+        for warning_info in warning_filters_info_list
+    ]
+
+
+def turn_warnings_into_errors():
+    warnings_filters_info_list = _get_warnings_filters_info_list()
+    for warning_info in warnings_filters_info_list:
+        warnings.filterwarnings(
+            warning_info.action,
+            message=warning_info.message,
+            category=warning_info.category,
+        )
