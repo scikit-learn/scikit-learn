@@ -36,6 +36,9 @@ select = ["E", "F", "W", "I"]
 line-length = 88
 target-version = "py38"
 
+# For detection of first-party import (isort)
+src = ["sklearn"]
+
 ignore=[
     # space before : (needed for how black formats slicing)
     "E203",
