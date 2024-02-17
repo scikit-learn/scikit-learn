@@ -116,3 +116,6 @@ exclude= '''
   | sklearn/metrics/_pairwise_distances_reduction/_radius_neighbors.pyx
 )
 '''
+
+[tool.ruff.isort]
+known-first-party = ["sklearn"]
