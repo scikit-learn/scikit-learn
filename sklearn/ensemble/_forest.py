@@ -557,12 +557,7 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
             (accuracy score).
         """
 
-
-    def _get_oob_pred_parallel(self,
-                               estimator,
-                               n_samples,
-                               n_samples_bootstrap,
-                               X):
+    def _get_oob_pred_parallel(self, estimator, n_samples, n_samples_bootstrap, X):
         unsampled_indices = _generate_unsampled_indices(
             estimator.random_state,
             n_samples,
@@ -570,7 +565,6 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
         )
         y_pred = self._get_oob_predictions(estimator, X[unsampled_indices, :])
         return unsampled_indices, y_pred
-
 
     def _compute_oob_predictions(self, X, y):
         """Compute and set the OOB score.
@@ -613,9 +607,12 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
             self.max_samples,
         )
 
-        all_pred = Parallel(n_jobs=self.n_jobs, verbose=self.verbose, require="sharedmem")(
-                delayed(self._get_oob_pred_parallel)(e, n_samples, n_samples_bootstrap, X)
-            for e in self.estimators_)
+        all_pred = Parallel(
+            n_jobs=self.n_jobs, verbose=self.verbose, require="sharedmem"
+        )(
+            delayed(self._get_oob_pred_parallel)(e, n_samples, n_samples_bootstrap, X)
+            for e in self.estimators_
+        )
 
         for unsampled_indices, y_pred in all_pred:
             oob_pred[unsampled_indices, ...] += y_pred
