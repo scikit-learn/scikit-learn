@@ -147,6 +147,10 @@ class _MultimetricScorer:
                     scores[name] = format_exc()
         return scores
 
+    def __repr__(self):
+        scorers = ", ".join([f'"{s}"' for s in self._scorers])
+        return f"MultiMetricScorer({scorers})"
+
     def _use_cache(self, estimator):
         """Return True if using a cache is beneficial, thus when a response method will
         be called several time.

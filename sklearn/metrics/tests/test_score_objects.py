@@ -1545,6 +1545,13 @@ def test_get_scorer_multimetric(pass_estimator):
     )
 
 
+def test_multimetric_scorer_repr():
+    """Check repr for multimetric scorer"""
+    multi_metric_scorer = check_scoring(scoring=["accuracy", "r2"])
+
+    assert str(multi_metric_scorer) == 'MultiMetricScorer("accuracy", "r2")'
+
+
 @pytest.mark.parametrize("enable_metadata_routing", [True, False])
 def test_metadata_routing_multimetric_metadata_routing(enable_metadata_routing):
     """Test multimetric scorer works with and without metadata routing enabled when
