@@ -3,20 +3,8 @@
 implementation_specific_values = [
     # Values are the following ones:
     #
-    #       name_suffix, INPUT_DTYPE_t, INPUT_DTYPE
-    #
-    # On the first hand, an empty string is used for `name_suffix`
-    # for the float64 case as to still be able to expose the original
-    # float64 implementation under the same API, namely `DistanceMetric`.
-    #
-    # On the other hand, '32' is used for `name_suffix` for the float32
-    # case to remove ambiguity and use `DistanceMetric32`, which is not
-    # publicly exposed.
-    #
-    # The metric mapping is adapted accordingly to route to the correct
-    # implementations.
-    #
-    ('', 'float64_t', 'np.float64'),
+    # name_suffix, INPUT_DTYPE_t, INPUT_DTYPE
+    ('64', 'float64_t', 'np.float64'),
     ('32', 'float32_t', 'np.float32')
 ]
 
@@ -24,6 +12,9 @@ implementation_specific_values = [
 from libc.math cimport sqrt, exp
 
 from ..utils._typedefs cimport float64_t, float32_t, int32_t, intp_t
+
+cdef class DistanceMetric:
+    pass
 
 {{for name_suffix, INPUT_DTYPE_t, INPUT_DTYPE in implementation_specific_values}}
 
@@ -68,7 +59,7 @@ cdef inline float64_t euclidean_rdist_to_dist{{name_suffix}}(const {{INPUT_DTYPE
 
 ######################################################################
 # DistanceMetric{{name_suffix}} base class
-cdef class DistanceMetric{{name_suffix}}:
+cdef class DistanceMetric{{name_suffix}}(DistanceMetric):
     # The following attributes are required for a few of the subclasses.
     # we must define them here so that cython's limited polymorphism will work.
     # Because we don't expect to instantiate a lot of these objects, the
@@ -80,26 +71,26 @@ cdef class DistanceMetric{{name_suffix}}:
     cdef object func
     cdef object kwargs
 
-    cdef float64_t dist(
+    cdef {{INPUT_DTYPE_t}} dist(
         self,
         const {{INPUT_DTYPE_t}}* x1,
         const {{INPUT_DTYPE_t}}* x2,
         intp_t size,
     ) except -1 nogil
 
-    cdef float64_t rdist(
+    cdef {{INPUT_DTYPE_t}} rdist(
         self,
         const {{INPUT_DTYPE_t}}* x1,
         const {{INPUT_DTYPE_t}}* x2,
         intp_t size,
     ) except -1 nogil
 
-    cdef float64_t dist_csr(
+    cdef {{INPUT_DTYPE_t}} dist_csr(
         self,
         const {{INPUT_DTYPE_t}}* x1_data,
-        const int32_t[:] x1_indices,
+        const int32_t* x1_indices,
         const {{INPUT_DTYPE_t}}* x2_data,
-        const int32_t[:] x2_indices,
+        const int32_t* x2_indices,
         const int32_t x1_start,
         const int32_t x1_end,
         const int32_t x2_start,
@@ -107,12 +98,12 @@ cdef class DistanceMetric{{name_suffix}}:
         const intp_t size,
     ) except -1 nogil
 
-    cdef float64_t rdist_csr(
+    cdef {{INPUT_DTYPE_t}} rdist_csr(
         self,
         const {{INPUT_DTYPE_t}}* x1_data,
-        const int32_t[:] x1_indices,
+        const int32_t* x1_indices,
         const {{INPUT_DTYPE_t}}* x2_data,
-        const int32_t[:] x2_indices,
+        const int32_t* x2_indices,
         const int32_t x1_start,
         const int32_t x1_end,
         const int32_t x2_start,
@@ -123,39 +114,39 @@ cdef class DistanceMetric{{name_suffix}}:
     cdef int pdist(
         self,
         const {{INPUT_DTYPE_t}}[:, ::1] X,
-        float64_t[:, ::1] D,
+        {{INPUT_DTYPE_t}}[:, ::1] D,
     ) except -1
 
     cdef int cdist(
         self,
         const {{INPUT_DTYPE_t}}[:, ::1] X,
         const {{INPUT_DTYPE_t}}[:, ::1] Y,
-        float64_t[:, ::1] D,
+        {{INPUT_DTYPE_t}}[:, ::1] D,
     ) except -1
 
     cdef int pdist_csr(
         self,
         const {{INPUT_DTYPE_t}}* x1_data,
-        const int32_t[:] x1_indices,
-        const int32_t[:] x1_indptr,
+        const int32_t[::1] x1_indices,
+        const int32_t[::1] x1_indptr,
         const intp_t size,
-        float64_t[:, ::1] D,
+        {{INPUT_DTYPE_t}}[:, ::1] D,
     ) except -1 nogil
 
     cdef int cdist_csr(
         self,
         const {{INPUT_DTYPE_t}}* x1_data,
-        const int32_t[:] x1_indices,
-        const int32_t[:] x1_indptr,
+        const int32_t[::1] x1_indices,
+        const int32_t[::1] x1_indptr,
         const {{INPUT_DTYPE_t}}* x2_data,
-        const int32_t[:] x2_indices,
-        const int32_t[:] x2_indptr,
+        const int32_t[::1] x2_indices,
+        const int32_t[::1] x2_indptr,
         const intp_t size,
-        float64_t[:, ::1] D,
+        {{INPUT_DTYPE_t}}[:, ::1] D,
     ) except -1 nogil
 
-    cdef float64_t _rdist_to_dist(self, {{INPUT_DTYPE_t}} rdist) except -1 nogil
+    cdef {{INPUT_DTYPE_t}} _rdist_to_dist(self, {{INPUT_DTYPE_t}} rdist) except -1 nogil
 
-    cdef float64_t _dist_to_rdist(self, {{INPUT_DTYPE_t}} dist) except -1 nogil
+    cdef {{INPUT_DTYPE_t}} _dist_to_rdist(self, {{INPUT_DTYPE_t}} dist) except -1 nogil
 
 {{endfor}}

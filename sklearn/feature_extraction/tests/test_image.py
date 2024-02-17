@@ -3,17 +3,17 @@
 # License: BSD 3 clause
 
 import numpy as np
+import pytest
 from scipy import ndimage
 from scipy.sparse.csgraph import connected_components
-import pytest
 
 from sklearn.feature_extraction.image import (
-    img_to_graph,
-    grid_to_graph,
-    extract_patches_2d,
-    reconstruct_from_patches_2d,
     PatchExtractor,
     _extract_patches,
+    extract_patches_2d,
+    grid_to_graph,
+    img_to_graph,
+    reconstruct_from_patches_2d,
 )
 
 
@@ -282,7 +282,6 @@ def test_patch_extractor_color(orange_face):
 
 
 def test_extract_patches_strided():
-
     image_shapes_1D = [(10,), (10,), (11,), (10,)]
     patch_sizes_1D = [(1,), (2,), (3,), (8,)]
     patch_steps_1D = [(1,), (1,), (4,), (2,)]

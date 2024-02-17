@@ -1,6 +1,4 @@
-cimport cython
 from libc.math cimport isnan
-from libc.string cimport memset
 from libcpp.vector cimport vector
 
 cimport numpy as cnp
@@ -18,9 +16,10 @@ ctypedef fused Y_DTYPE:
     cnp.float64_t
     cnp.float32_t
 
+
 def _fit_encoding_fast(
     INT_DTYPE[:, ::1] X_int,
-    Y_DTYPE[:] y,
+    const Y_DTYPE[:] y,
     cnp.int64_t[::1] n_categories,
     double smooth,
     double y_mean,
@@ -80,7 +79,7 @@ def _fit_encoding_fast(
 
 def _fit_encoding_fast_auto_smooth(
     INT_DTYPE[:, ::1] X_int,
-    Y_DTYPE[:] y,
+    const Y_DTYPE[:] y,
     cnp.int64_t[::1] n_categories,
     double y_mean,
     double y_variance,

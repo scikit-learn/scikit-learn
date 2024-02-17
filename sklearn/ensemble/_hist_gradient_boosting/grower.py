@@ -6,22 +6,25 @@ the gradients and hessians of the training data.
 """
 # Author: Nicolas Hug
 
-from heapq import heappush, heappop
-import numpy as np
-from timeit import default_timer as time
 import numbers
+from heapq import heappop, heappush
+from timeit import default_timer as time
 
-from .splitting import Splitter
-from .histogram import HistogramBuilder
-from .predictor import TreePredictor
-from .utils import sum_parallel
-from .common import PREDICTOR_RECORD_DTYPE
-from .common import X_BITSET_INNER_DTYPE
-from .common import Y_DTYPE
-from .common import MonotonicConstraint
-from ._bitset import set_raw_bitset_from_binned_bitset
+import numpy as np
+
 from sklearn.utils._openmp_helpers import _openmp_effective_n_threads
 
+from ._bitset import set_raw_bitset_from_binned_bitset
+from .common import (
+    PREDICTOR_RECORD_DTYPE,
+    X_BITSET_INNER_DTYPE,
+    Y_DTYPE,
+    MonotonicConstraint,
+)
+from .histogram import HistogramBuilder
+from .predictor import TreePredictor
+from .splitting import Splitter
+from .utils import sum_parallel
 
 EPS = np.finfo(Y_DTYPE).eps  # to avoid zero division errors
 
@@ -36,7 +39,7 @@ class TreeNode:
     ----------
     depth : int
         The depth of the node, i.e. its distance from the root.
-    sample_indices : ndarray of shape (n_samples_at_node,), dtype=np.uint
+    sample_indices : ndarray of shape (n_samples_at_node,), dtype=np.uint32
         The indices of the samples at the node.
     sum_gradients : float
         The sum of the gradients of the samples at the node.
@@ -47,7 +50,7 @@ class TreeNode:
     ----------
     depth : int
         The depth of the node, i.e. its distance from the root.
-    sample_indices : ndarray of shape (n_samples_at_node,), dtype=np.uint
+    sample_indices : ndarray of shape (n_samples_at_node,), dtype=np.uint32
         The indices of the samples at the node.
     sum_gradients : float
         The sum of the gradients of the samples at the node.
@@ -161,6 +164,10 @@ class TreeGrower:
     min_gain_to_split : float, default=0.
         The minimum gain needed to split a node. Splits with lower gain will
         be ignored.
+    min_hessian_to_split : float, default=1e-3
+        The minimum sum of hessians needed in each node. Splits that result in
+        at least one child having a sum of hessians less than
+        ``min_hessian_to_split`` are discarded.
     n_bins : int, default=256
         The total number of bins, including the bin for missing values. Used
         to define the shape of the histograms.
@@ -186,10 +193,12 @@ class TreeGrower:
         List of interaction constraints.
     l2_regularization : float, default=0.
         The L2 regularization parameter.
-    min_hessian_to_split : float, default=1e-3
-        The minimum sum of hessians needed in each node. Splits that result in
-        at least one child having a sum of hessians less than
-        ``min_hessian_to_split`` are discarded.
+    feature_fraction_per_split : float, default=1
+        Proportion of randomly chosen features in each and every node split.
+        This is a form of regularization, smaller values make the trees weaker
+        learners and might prevent overfitting.
+    rng : Generator
+        Numpy random Generator used for feature subsampling.
     shrinkage : float, default=1.
         The shrinkage parameter to apply to the leaves values, also known as
         learning rate.
@@ -231,6 +240,7 @@ class TreeGrower:
         max_depth=None,
         min_samples_leaf=20,
         min_gain_to_split=0.0,
+        min_hessian_to_split=1e-3,
         n_bins=256,
         n_bins_non_missing=None,
         has_missing_values=False,
@@ -238,11 +248,11 @@ class TreeGrower:
         monotonic_cst=None,
         interaction_cst=None,
         l2_regularization=0.0,
-        min_hessian_to_split=1e-3,
+        feature_fraction_per_split=1.0,
+        rng=np.random.default_rng(),
         shrinkage=1.0,
         n_threads=None,
     ):
-
         self._validate_parameters(
             X_binned,
             min_gain_to_split,
@@ -295,33 +305,35 @@ class TreeGrower:
         )
         missing_values_bin_idx = n_bins - 1
         self.splitter = Splitter(
-            X_binned,
-            n_bins_non_missing,
-            missing_values_bin_idx,
-            has_missing_values,
-            is_categorical,
-            monotonic_cst,
-            l2_regularization,
-            min_hessian_to_split,
-            min_samples_leaf,
-            min_gain_to_split,
-            hessians_are_constant,
-            n_threads,
+            X_binned=X_binned,
+            n_bins_non_missing=n_bins_non_missing,
+            missing_values_bin_idx=missing_values_bin_idx,
+            has_missing_values=has_missing_values,
+            is_categorical=is_categorical,
+            monotonic_cst=monotonic_cst,
+            l2_regularization=l2_regularization,
+            min_hessian_to_split=min_hessian_to_split,
+            min_samples_leaf=min_samples_leaf,
+            min_gain_to_split=min_gain_to_split,
+            hessians_are_constant=hessians_are_constant,
+            feature_fraction_per_split=feature_fraction_per_split,
+            rng=rng,
+            n_threads=n_threads,
         )
-        self.n_bins_non_missing = n_bins_non_missing
-        self.missing_values_bin_idx = missing_values_bin_idx
+        self.X_binned = X_binned
         self.max_leaf_nodes = max_leaf_nodes
-        self.has_missing_values = has_missing_values
-        self.monotonic_cst = monotonic_cst
-        self.interaction_cst = interaction_cst
-        self.is_categorical = is_categorical
-        self.l2_regularization = l2_regularization
-        self.n_features = X_binned.shape[1]
         self.max_depth = max_depth
         self.min_samples_leaf = min_samples_leaf
-        self.X_binned = X_binned
         self.min_gain_to_split = min_gain_to_split
+        self.n_bins_non_missing = n_bins_non_missing
+        self.missing_values_bin_idx = missing_values_bin_idx
+        self.has_missing_values = has_missing_values
+        self.is_categorical = is_categorical
+        self.monotonic_cst = monotonic_cst
+        self.interaction_cst = interaction_cst
+        self.l2_regularization = l2_regularization
         self.shrinkage = shrinkage
+        self.n_features = X_binned.shape[1]
         self.n_threads = n_threads
         self.splittable_nodes = []
         self.finalized_leaves = []
@@ -564,7 +576,6 @@ class TreeGrower:
         should_split_left = not left_child_node.is_leaf
         should_split_right = not right_child_node.is_leaf
         if should_split_left or should_split_right:
-
             # We will compute the histograms of both nodes even if one of them
             # is a leaf, since computing the second histogram is very cheap
             # (using histogram subtraction).
@@ -592,6 +603,9 @@ class TreeGrower:
                     smallest_child.allowed_features,
                 )
             )
+            # node.histograms is reused in largest_child.histograms. To break cyclic
+            # memory references and help garbage collection, we set it to None.
+            node.histograms = None
             self.total_compute_hist_time += time() - tic
 
             tic = time()

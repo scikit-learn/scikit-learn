@@ -1,17 +1,18 @@
-import pytest
-
 import numpy as np
+import pytest
 import scipy.sparse as sp
 
 from sklearn.base import clone
-from sklearn.utils._testing import assert_array_equal
-from sklearn.utils._testing import assert_array_almost_equal
-from sklearn.utils._testing import assert_almost_equal
-from sklearn.utils._testing import ignore_warnings
-from sklearn.utils.stats import _weighted_percentile
-
 from sklearn.dummy import DummyClassifier, DummyRegressor
 from sklearn.exceptions import NotFittedError
+from sklearn.utils._testing import (
+    assert_almost_equal,
+    assert_array_almost_equal,
+    assert_array_equal,
+    ignore_warnings,
+)
+from sklearn.utils.fixes import CSC_CONTAINERS
+from sklearn.utils.stats import _weighted_percentile
 
 
 @ignore_warnings
@@ -69,6 +70,23 @@ def _check_behavior_2d_for_constant(clf):
 def _check_equality_regressor(statistic, y_learn, y_pred_learn, y_test, y_pred_test):
     assert_array_almost_equal(np.tile(statistic, (y_learn.shape[0], 1)), y_pred_learn)
     assert_array_almost_equal(np.tile(statistic, (y_test.shape[0], 1)), y_pred_test)
+
+
+def test_feature_names_in_and_n_features_in_(global_random_seed, n_samples=10):
+    pd = pytest.importorskip("pandas")
+
+    random_state = np.random.RandomState(seed=global_random_seed)
+
+    X = pd.DataFrame([[0]] * n_samples, columns=["feature_1"])
+    y = random_state.rand(n_samples)
+
+    est = DummyRegressor().fit(X, y)
+    assert hasattr(est, "feature_names_in_")
+    assert hasattr(est, "n_features_in_")
+
+    est = DummyClassifier().fit(X, y)
+    assert hasattr(est, "feature_names_in_")
+    assert hasattr(est, "n_features_in_")
 
 
 def test_most_frequent_and_prior_strategy():
@@ -236,7 +254,6 @@ def test_classifier_prediction_independent_of_X(strategy, global_random_seed):
 
 
 def test_mean_strategy_regressor(global_random_seed):
-
     random_state = np.random.RandomState(seed=global_random_seed)
 
     X = [[0]] * 4  # ignored
@@ -248,7 +265,6 @@ def test_mean_strategy_regressor(global_random_seed):
 
 
 def test_mean_strategy_multioutput_regressor(global_random_seed):
-
     random_state = np.random.RandomState(seed=global_random_seed)
 
     X_learn = random_state.randn(10, 10)
@@ -276,7 +292,6 @@ def test_regressor_exceptions():
 
 
 def test_median_strategy_regressor(global_random_seed):
-
     random_state = np.random.RandomState(seed=global_random_seed)
 
     X = [[0]] * 5  # ignored
@@ -288,7 +303,6 @@ def test_median_strategy_regressor(global_random_seed):
 
 
 def test_median_strategy_multioutput_regressor(global_random_seed):
-
     random_state = np.random.RandomState(seed=global_random_seed)
 
     X_learn = random_state.randn(10, 10)
@@ -310,7 +324,6 @@ def test_median_strategy_multioutput_regressor(global_random_seed):
 
 
 def test_quantile_strategy_regressor(global_random_seed):
-
     random_state = np.random.RandomState(seed=global_random_seed)
 
     X = [[0]] * 5  # ignored
@@ -334,7 +347,6 @@ def test_quantile_strategy_regressor(global_random_seed):
 
 
 def test_quantile_strategy_multioutput_regressor(global_random_seed):
-
     random_state = np.random.RandomState(seed=global_random_seed)
 
     X_learn = random_state.randn(10, 10)
@@ -368,7 +380,6 @@ def test_quantile_strategy_multioutput_regressor(global_random_seed):
 
 
 def test_quantile_invalid():
-
     X = [[0]] * 5  # ignored
     y = [0] * 5  # ignored
 
@@ -382,12 +393,11 @@ def test_quantile_invalid():
 
 def test_quantile_strategy_empty_train():
     est = DummyRegressor(strategy="quantile", quantile=0.4)
-    with pytest.raises(ValueError):
+    with pytest.raises(IndexError):
         est.fit([], [])
 
 
 def test_constant_strategy_regressor(global_random_seed):
-
     random_state = np.random.RandomState(seed=global_random_seed)
 
     X = [[0]] * 5  # ignored
@@ -406,7 +416,6 @@ def test_constant_strategy_regressor(global_random_seed):
 
 
 def test_constant_strategy_multioutput_regressor(global_random_seed):
-
     random_state = np.random.RandomState(seed=global_random_seed)
 
     X_learn = random_state.randn(10, 10)
@@ -536,9 +545,10 @@ def test_classification_sample_weight():
     assert_array_almost_equal(clf.class_prior_, [0.2 / 1.2, 1.0 / 1.2])
 
 
-def test_constant_strategy_sparse_target():
+@pytest.mark.parametrize("csc_container", CSC_CONTAINERS)
+def test_constant_strategy_sparse_target(csc_container):
     X = [[0]] * 5  # ignored
-    y = sp.csc_matrix(np.array([[0, 1], [4, 0], [1, 1], [1, 4], [1, 1]]))
+    y = csc_container(np.array([[0, 1], [4, 0], [1, 1], [1, 4], [1, 1]]))
 
     n_samples = len(X)
 
@@ -551,9 +561,10 @@ def test_constant_strategy_sparse_target():
     )
 
 
-def test_uniform_strategy_sparse_target_warning(global_random_seed):
+@pytest.mark.parametrize("csc_container", CSC_CONTAINERS)
+def test_uniform_strategy_sparse_target_warning(global_random_seed, csc_container):
     X = [[0]] * 5  # ignored
-    y = sp.csc_matrix(np.array([[2, 1], [2, 2], [1, 4], [4, 2], [1, 1]]))
+    y = csc_container(np.array([[2, 1], [2, 2], [1, 4], [4, 2], [1, 1]]))
 
     clf = DummyClassifier(strategy="uniform", random_state=global_random_seed)
     with pytest.warns(UserWarning, match="the uniform strategy would not save memory"):
@@ -569,9 +580,10 @@ def test_uniform_strategy_sparse_target_warning(global_random_seed):
         assert_almost_equal(p[4], 1 / 3, decimal=1)
 
 
-def test_stratified_strategy_sparse_target(global_random_seed):
+@pytest.mark.parametrize("csc_container", CSC_CONTAINERS)
+def test_stratified_strategy_sparse_target(global_random_seed, csc_container):
     X = [[0]] * 5  # ignored
-    y = sp.csc_matrix(np.array([[4, 1], [0, 0], [1, 1], [1, 4], [1, 1]]))
+    y = csc_container(np.array([[4, 1], [0, 0], [1, 1], [1, 4], [1, 1]]))
 
     clf = DummyClassifier(strategy="stratified", random_state=global_random_seed)
     clf.fit(X, y)
@@ -588,9 +600,10 @@ def test_stratified_strategy_sparse_target(global_random_seed):
         assert_almost_equal(p[4], 1.0 / 5, decimal=1)
 
 
-def test_most_frequent_and_prior_strategy_sparse_target():
+@pytest.mark.parametrize("csc_container", CSC_CONTAINERS)
+def test_most_frequent_and_prior_strategy_sparse_target(csc_container):
     X = [[0]] * 5  # ignored
-    y = sp.csc_matrix(np.array([[1, 0], [1, 3], [4, 0], [0, 1], [1, 0]]))
+    y = csc_container(np.array([[1, 0], [1, 3], [4, 0], [0, 1], [1, 0]]))
 
     n_samples = len(X)
     y_expected = np.hstack([np.ones((n_samples, 1)), np.zeros((n_samples, 1))])

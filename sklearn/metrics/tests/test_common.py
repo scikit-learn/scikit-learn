@@ -1,71 +1,73 @@
 from functools import partial
 from inspect import signature
-from itertools import product
-from itertools import chain
-from itertools import permutations
+from itertools import chain, permutations, product
 
 import numpy as np
-import scipy.sparse as sp
-
 import pytest
 
+from sklearn._config import config_context
 from sklearn.datasets import make_multilabel_classification
-from sklearn.preprocessing import LabelBinarizer
-from sklearn.utils.multiclass import type_of_target
-from sklearn.utils.validation import _num_samples
-from sklearn.utils.validation import check_random_state
-from sklearn.utils import shuffle
-
-from sklearn.utils._testing import assert_allclose
-from sklearn.utils._testing import assert_almost_equal
-from sklearn.utils._testing import assert_array_equal
-from sklearn.utils._testing import assert_array_less
-from sklearn.utils._testing import ignore_warnings
-
-from sklearn.metrics import accuracy_score
-from sklearn.metrics import average_precision_score
-from sklearn.metrics import balanced_accuracy_score
-from sklearn.metrics import brier_score_loss
-from sklearn.metrics import cohen_kappa_score
-from sklearn.metrics import confusion_matrix
-from sklearn.metrics import coverage_error
-from sklearn.metrics import d2_tweedie_score
-from sklearn.metrics import d2_pinball_score
-from sklearn.metrics import d2_absolute_error_score
-from sklearn.metrics import det_curve
-from sklearn.metrics import explained_variance_score
-from sklearn.metrics import f1_score
-from sklearn.metrics import fbeta_score
-from sklearn.metrics import hamming_loss
-from sklearn.metrics import hinge_loss
-from sklearn.metrics import jaccard_score
-from sklearn.metrics import label_ranking_average_precision_score
-from sklearn.metrics import label_ranking_loss
-from sklearn.metrics import log_loss
-from sklearn.metrics import max_error
-from sklearn.metrics import matthews_corrcoef
-from sklearn.metrics import mean_absolute_error
-from sklearn.metrics import mean_absolute_percentage_error
-from sklearn.metrics import mean_squared_error
-from sklearn.metrics import mean_tweedie_deviance
-from sklearn.metrics import mean_poisson_deviance
-from sklearn.metrics import mean_gamma_deviance
-from sklearn.metrics import median_absolute_error
-from sklearn.metrics import multilabel_confusion_matrix
-from sklearn.metrics import mean_pinball_loss
-from sklearn.metrics import precision_recall_curve
-from sklearn.metrics import precision_score
-from sklearn.metrics import r2_score
-from sklearn.metrics import recall_score
-from sklearn.metrics import roc_auc_score
-from sklearn.metrics import roc_curve
-from sklearn.metrics import zero_one_loss
-from sklearn.metrics import ndcg_score
-from sklearn.metrics import dcg_score
-from sklearn.metrics import top_k_accuracy_score
-
+from sklearn.metrics import (
+    accuracy_score,
+    average_precision_score,
+    balanced_accuracy_score,
+    brier_score_loss,
+    cohen_kappa_score,
+    confusion_matrix,
+    coverage_error,
+    d2_absolute_error_score,
+    d2_pinball_score,
+    d2_tweedie_score,
+    dcg_score,
+    det_curve,
+    explained_variance_score,
+    f1_score,
+    fbeta_score,
+    hamming_loss,
+    hinge_loss,
+    jaccard_score,
+    label_ranking_average_precision_score,
+    label_ranking_loss,
+    log_loss,
+    matthews_corrcoef,
+    max_error,
+    mean_absolute_error,
+    mean_absolute_percentage_error,
+    mean_gamma_deviance,
+    mean_pinball_loss,
+    mean_poisson_deviance,
+    mean_squared_error,
+    mean_tweedie_deviance,
+    median_absolute_error,
+    multilabel_confusion_matrix,
+    ndcg_score,
+    precision_recall_curve,
+    precision_score,
+    r2_score,
+    recall_score,
+    roc_auc_score,
+    roc_curve,
+    top_k_accuracy_score,
+    zero_one_loss,
+)
 from sklearn.metrics._base import _average_binary_score
-
+from sklearn.preprocessing import LabelBinarizer
+from sklearn.utils import shuffle
+from sklearn.utils._array_api import (
+    _atol_for_type,
+    yield_namespace_device_dtype_combinations,
+)
+from sklearn.utils._testing import (
+    _array_api_for_tests,
+    assert_allclose,
+    assert_almost_equal,
+    assert_array_equal,
+    assert_array_less,
+    ignore_warnings,
+)
+from sklearn.utils.fixes import COO_CONTAINERS
+from sklearn.utils.multiclass import type_of_target
+from sklearn.utils.validation import _num_samples, check_random_state
 
 # Note toward developers about metric testing
 # -------------------------------------------
@@ -285,10 +287,6 @@ METRIC_UNDEFINED_MULTICLASS = {
     "partial_roc_auc",
     "roc_auc_score",
     "weighted_roc_auc",
-    "average_precision_score",
-    "weighted_average_precision_score",
-    "micro_average_precision_score",
-    "samples_average_precision_score",
     "jaccard_score",
     # with default average='binary', multiclass is prohibited
     "precision_score",
@@ -549,7 +547,6 @@ def _require_positive_targets(y1, y2):
 
 
 def test_symmetry_consistency():
-
     # We shouldn't forget any metrics
     assert (
         SYMMETRIC_METRICS
@@ -1036,7 +1033,8 @@ def test_multioutput_regression_invariance_to_dimension_shuffling(name):
 
 
 @ignore_warnings
-def test_multilabel_representation_invariance():
+@pytest.mark.parametrize("coo_container", COO_CONTAINERS)
+def test_multilabel_representation_invariance(coo_container):
     # Generate some data
     n_classes = 4
     n_samples = 50
@@ -1060,8 +1058,8 @@ def test_multilabel_representation_invariance():
     y1 = np.vstack([y1, [[0] * n_classes]])
     y2 = np.vstack([y2, [[0] * n_classes]])
 
-    y1_sparse_indicator = sp.coo_matrix(y1)
-    y2_sparse_indicator = sp.coo_matrix(y2)
+    y1_sparse_indicator = coo_container(y1)
+    y2_sparse_indicator = coo_container(y2)
 
     y1_list_array_indicator = list(y1)
     y2_list_array_indicator = list(y2)
@@ -1732,3 +1730,110 @@ def test_metrics_pos_label_error_str(metric, y_pred_threshold, dtype_y_str):
     err_msg = err_msg_pos_label_1 if pos_label_default == 1 else err_msg_pos_label_None
     with pytest.raises(ValueError, match=err_msg):
         metric(y1, y2)
+
+
+def check_array_api_metric(
+    metric, array_namespace, device, dtype_name, y_true_np, y_pred_np, sample_weight
+):
+    xp = _array_api_for_tests(array_namespace, device)
+
+    y_true_xp = xp.asarray(y_true_np, device=device)
+    y_pred_xp = xp.asarray(y_pred_np, device=device)
+
+    metric_np = metric(y_true_np, y_pred_np, sample_weight=sample_weight)
+
+    if sample_weight is not None:
+        sample_weight = xp.asarray(sample_weight, device=device)
+
+    with config_context(array_api_dispatch=True):
+        metric_xp = metric(y_true_xp, y_pred_xp, sample_weight=sample_weight)
+
+        assert_allclose(
+            metric_xp,
+            metric_np,
+            atol=_atol_for_type(dtype_name),
+        )
+
+
+def check_array_api_binary_classification_metric(
+    metric, array_namespace, device, dtype_name
+):
+    y_true_np = np.array([0, 0, 1, 1])
+    y_pred_np = np.array([0, 1, 0, 1])
+
+    check_array_api_metric(
+        metric,
+        array_namespace,
+        device,
+        dtype_name,
+        y_true_np=y_true_np,
+        y_pred_np=y_pred_np,
+        sample_weight=None,
+    )
+
+    sample_weight = np.array([0.0, 0.1, 2.0, 1.0], dtype=dtype_name)
+
+    check_array_api_metric(
+        metric,
+        array_namespace,
+        device,
+        dtype_name,
+        y_true_np=y_true_np,
+        y_pred_np=y_pred_np,
+        sample_weight=sample_weight,
+    )
+
+
+def check_array_api_multiclass_classification_metric(
+    metric, array_namespace, device, dtype_name
+):
+    y_true_np = np.array([0, 1, 2, 3])
+    y_pred_np = np.array([0, 1, 0, 2])
+
+    check_array_api_metric(
+        metric,
+        array_namespace,
+        device,
+        dtype_name,
+        y_true_np=y_true_np,
+        y_pred_np=y_pred_np,
+        sample_weight=None,
+    )
+
+    sample_weight = np.array([0.0, 0.1, 2.0, 1.0], dtype=dtype_name)
+
+    check_array_api_metric(
+        metric,
+        array_namespace,
+        device,
+        dtype_name,
+        y_true_np=y_true_np,
+        y_pred_np=y_pred_np,
+        sample_weight=sample_weight,
+    )
+
+
+array_api_metric_checkers = {
+    accuracy_score: [
+        check_array_api_binary_classification_metric,
+        check_array_api_multiclass_classification_metric,
+    ],
+    zero_one_loss: [
+        check_array_api_binary_classification_metric,
+        check_array_api_multiclass_classification_metric,
+    ],
+}
+
+
+def yield_metric_checker_combinations(metric_checkers=array_api_metric_checkers):
+    for metric, checkers in metric_checkers.items():
+        for checker in checkers:
+            yield metric, checker
+
+
+@pytest.mark.parametrize(
+    "array_namespace, device, dtype_name", yield_namespace_device_dtype_combinations()
+)
+@pytest.mark.parametrize("metric, check_func", yield_metric_checker_combinations())
+def test_array_api_compliance(metric, array_namespace, device, dtype_name, check_func):
+    check_func(metric, array_namespace, device, dtype_name)

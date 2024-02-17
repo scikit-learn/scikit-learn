@@ -31,6 +31,7 @@ Isolation Forest trained on a toy dataset.
 # the label `-1`.
 
 import numpy as np
+
 from sklearn.model_selection import train_test_split
 
 n_samples, n_outliers = 120, 40
@@ -78,6 +79,7 @@ clf.fit(X_train)
 # or not. The scatter plot displays the true labels.
 
 import matplotlib.pyplot as plt
+
 from sklearn.inspection import DecisionBoundaryDisplay
 
 disp = DecisionBoundaryDisplay.from_estimator(

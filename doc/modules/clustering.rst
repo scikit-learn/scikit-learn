@@ -93,6 +93,13 @@ Overview of clustering methods
        transductive
      - Distances between nearest points
 
+   * - :ref:`HDBSCAN <hdbscan>`
+     - minimum cluster membership, minimum point neighbors
+     - large ``n_samples``, medium ``n_clusters``
+     - Non-flat geometry, uneven cluster sizes, outlier removal,
+       transductive, hierarchical, variable cluster density
+     - Distances between nearest points
+
    * - :ref:`OPTICS <optics>`
      - minimum cluster membership
      - Very large ``n_samples``, large ``n_clusters``
@@ -175,6 +182,10 @@ It suffers from various drawbacks:
    :align: center
    :scale: 50
 
+For more detailed descriptions of the issues shown above and how to address them,
+refer to the examples :ref:`sphx_glr_auto_examples_cluster_plot_kmeans_assumptions.py`
+and :ref:`sphx_glr_auto_examples_cluster_plot_kmeans_silhouette_analysis.py`.
+
 K-means is often referred to as Lloyd's algorithm. In basic terms, the
 algorithm has three steps. The first step chooses the initial centroids, with
 the most basic method being to choose :math:`k` samples from the dataset
@@ -211,7 +222,9 @@ initializations of the centroids. One method to help address this issue is the
 k-means++ initialization scheme, which has been implemented in scikit-learn
 (use the ``init='k-means++'`` parameter). This initializes the centroids to be
 (generally) distant from each other, leading to probably better results than
-random initialization, as shown in the reference.
+random initialization, as shown in the reference. For a detailed example of
+comaparing different initialization schemes, refer to
+:ref:`sphx_glr_auto_examples_cluster_plot_kmeans_digits.py`.
 
 K-means++ can also be called independently to select seeds for other
 clustering algorithms, see :func:`sklearn.cluster.kmeans_plusplus` for details
@@ -224,7 +237,17 @@ weight of 2 to a sample is equivalent to adding a duplicate of that sample
 to the dataset :math:`X`.
 
 K-means can be used for vector quantization. This is achieved using the
-transform method of a trained model of :class:`KMeans`.
+``transform`` method of a trained model of :class:`KMeans`. For an example of
+performing vector quantization on an image refer to
+:ref:`sphx_glr_auto_examples_cluster_plot_color_quantization.py`.
+
+.. topic:: Examples:
+
+ * :ref:`sphx_glr_auto_examples_cluster_plot_cluster_iris.py`: Example usage of
+   :class:`KMeans` using the iris dataset
+
+ * :ref:`sphx_glr_auto_examples_text_plot_document_clustering.py`: Document clustering
+   using :class:`KMeans` and :class:`MiniBatchKMeans` based on sparse data
 
 Low-level parallelism
 ---------------------
@@ -284,11 +307,11 @@ small, as shown in the example and cited reference.
 
 .. topic:: Examples:
 
- * :ref:`sphx_glr_auto_examples_cluster_plot_mini_batch_kmeans.py`: Comparison of KMeans and
-   MiniBatchKMeans
+ * :ref:`sphx_glr_auto_examples_cluster_plot_mini_batch_kmeans.py`: Comparison of
+   :class:`KMeans` and :class:`MiniBatchKMeans`
 
- * :ref:`sphx_glr_auto_examples_text_plot_document_clustering.py`: Document clustering using sparse
-   MiniBatchKMeans
+ * :ref:`sphx_glr_auto_examples_text_plot_document_clustering.py`: Document clustering
+   using :class:`KMeans` and :class:`MiniBatchKMeans` based on sparse data
 
  * :ref:`sphx_glr_auto_examples_cluster_plot_dict_face_patches.py`
 
@@ -392,8 +415,8 @@ for centroids to be the mean of the points within a given region. These
 candidates are then filtered in a post-processing stage to eliminate
 near-duplicates to form the final set of centroids.
 
-The position of centroid candidates is iteratively adjusted using a technique called hill 
-climbing, which finds local maxima of the estimated probability density. 
+The position of centroid candidates is iteratively adjusted using a technique called hill
+climbing, which finds local maxima of the estimated probability density.
 Given a candidate centroid :math:`x` for iteration :math:`t`, the candidate
 is updated according to the following equation:
 
@@ -412,14 +435,14 @@ its neighborhood:
 
     m(x) = \frac{1}{|N(x)|} \sum_{x_j \in N(x)}x_j - x
 
-In general, the equation for :math:`m` depends on a kernel used for density estimation. 
+In general, the equation for :math:`m` depends on a kernel used for density estimation.
 The generic formula is:
 
 .. math::
 
     m(x) = \frac{\sum_{x_j \in N(x)}K(x_j - x)x_j}{\sum_{x_j \in N(x)}K(x_j - x)} - x
 
-In our implementation, :math:`K(x)` is equal to 1 if :math:`x` is small enough and is 
+In our implementation, :math:`K(x)` is equal to 1 if :math:`x` is small enough and is
 equal to 0 otherwise. Effectively :math:`K(y - x)` indicates whether :math:`y` is in
 the neighborhood of :math:`x`.
 
@@ -924,7 +947,7 @@ by black points below.
     which avoids calculating the full distance matrix
     (as was done in scikit-learn versions before 0.14).
     The possibility to use custom metrics is retained;
-    for details, see :class:`NearestNeighbors`.
+    for details, see :class:`~sklearn.neighbors.NearestNeighbors`.
 
 .. topic:: Memory consumption for large sample sizes
 
@@ -960,6 +983,112 @@ by black points below.
    <10.1145/3068335>`
    Schubert, E., Sander, J., Ester, M., Kriegel, H. P., & Xu, X. (2017).
    In ACM Transactions on Database Systems (TODS), 42(3), 19.
+
+.. _hdbscan:
+
+HDBSCAN
+=======
+
+The :class:`HDBSCAN` algorithm can be seen as an extension of :class:`DBSCAN`
+and :class:`OPTICS`. Specifically, :class:`DBSCAN` assumes that the clustering
+criterion (i.e. density requirement) is *globally homogeneous*.
+In other words, :class:`DBSCAN` may struggle to successfully capture clusters
+with different densities.
+:class:`HDBSCAN` alleviates this assumption and explores all possible density
+scales by building an alternative representation of the clustering problem.
+
+.. note::
+
+  This implementation is adapted from the original implementation of HDBSCAN,
+  `scikit-learn-contrib/hdbscan <https://github.com/scikit-learn-contrib/hdbscan>`_ based on [LJ2017]_.
+
+Mutual Reachability Graph
+-------------------------
+
+HDBSCAN first defines :math:`d_c(x_p)`, the *core distance* of a sample :math:`x_p`, as the
+distance to its `min_samples` th-nearest neighbor, counting itself. For example,
+if `min_samples=5` and :math:`x_*` is the 5th-nearest neighbor of :math:`x_p`
+then the core distance is:
+
+.. math:: d_c(x_p)=d(x_p, x_*).
+
+Next it defines :math:`d_m(x_p, x_q)`, the *mutual reachability distance* of two points
+:math:`x_p, x_q`, as:
+
+.. math:: d_m(x_p, x_q) = \max\{d_c(x_p), d_c(x_q), d(x_p, x_q)\}
+
+These two notions allow us to construct the *mutual reachability graph*
+:math:`G_{ms}` defined for a fixed choice of `min_samples` by associating each
+sample :math:`x_p` with a vertex of the graph, and thus edges between points
+:math:`x_p, x_q` are the mutual reachability distance :math:`d_m(x_p, x_q)`
+between them. We may build subsets of this graph, denoted as
+:math:`G_{ms,\varepsilon}`, by removing any edges with value greater than :math:`\varepsilon`:
+from the original graph. Any points whose core distance is less than :math:`\varepsilon`:
+are at this staged marked as noise. The remaining points are then clustered by
+finding the connected components of this trimmed graph.
+
+.. note::
+
+  Taking the connected components of a trimmed graph :math:`G_{ms,\varepsilon}` is
+  equivalent to running DBSCAN* with `min_samples` and :math:`\varepsilon`. DBSCAN* is a
+  slightly modified version of DBSCAN mentioned in [CM2013]_.
+
+Hierarchical Clustering
+-----------------------
+HDBSCAN can be seen as an algorithm which performs DBSCAN* clustering across all
+values of :math:`\varepsilon`. As mentioned prior, this is equivalent to finding the connected
+components of the mutual reachability graphs for all values of :math:`\varepsilon`. To do this
+efficiently, HDBSCAN first extracts a minimum spanning tree (MST) from the fully
+-connected mutual reachability graph, then greedily cuts the edges with highest
+weight. An outline of the HDBSCAN algorithm is as follows:
+
+1. Extract the MST of :math:`G_{ms}`.
+2. Extend the MST by adding a "self edge" for each vertex, with weight equal
+   to the core distance of the underlying sample.
+3. Initialize a single cluster and label for the MST.
+4. Remove the edge with the greatest weight from the MST (ties are
+   removed simultaneously).
+5. Assign cluster labels to the connected components which contain the
+   end points of the now-removed edge. If the component does not have at least
+   one edge it is instead assigned a "null" label marking it as noise.
+6. Repeat 4-5 until there are no more connected components.
+
+HDBSCAN is therefore able to obtain all possible partitions achievable by
+DBSCAN* for a fixed choice of `min_samples` in a hierarchical fashion.
+Indeed, this allows HDBSCAN to perform clustering across multiple densities
+and as such it no longer needs :math:`\varepsilon` to be given as a hyperparameter. Instead
+it relies solely on the choice of `min_samples`, which tends to be a more robust
+hyperparameter.
+
+.. |hdbscan_ground_truth| image:: ../auto_examples/cluster/images/sphx_glr_plot_hdbscan_005.png
+        :target: ../auto_examples/cluster/plot_hdbscan.html
+        :scale: 75
+.. |hdbscan_results| image:: ../auto_examples/cluster/images/sphx_glr_plot_hdbscan_007.png
+        :target: ../auto_examples/cluster/plot_hdbscan.html
+        :scale: 75
+
+.. centered:: |hdbscan_ground_truth|
+.. centered:: |hdbscan_results|
+
+HDBSCAN can be smoothed with an additional hyperparameter `min_cluster_size`
+which specifies that during the hierarchical clustering, components with fewer
+than `minimum_cluster_size` many samples are considered noise. In practice, one
+can set `minimum_cluster_size = min_samples` to couple the parameters and
+simplify the hyperparameter space.
+
+.. topic:: References:
+
+ .. [CM2013] Campello, R.J.G.B., Moulavi, D., Sander, J. (2013). Density-Based Clustering
+   Based on Hierarchical Density Estimates. In: Pei, J., Tseng, V.S., Cao, L.,
+   Motoda, H., Xu, G. (eds) Advances in Knowledge Discovery and Data Mining.
+   PAKDD 2013. Lecture Notes in Computer Science(), vol 7819. Springer, Berlin,
+   Heidelberg.
+   :doi:`Density-Based Clustering Based on Hierarchical Density Estimates <10.1007/978-3-642-37456-2_14>`
+
+ .. [LJ2017] L. McInnes and J. Healy, (2017). Accelerated Hierarchical Density Based
+   Clustering. In: IEEE International Conference on Data Mining Workshops (ICDMW),
+   2017, pp. 33-42.
+   :doi:`Accelerated Hierarchical Density Based Clustering <10.1109/ICDMW.2017.12>`
 
 .. _optics:
 
@@ -1033,7 +1162,7 @@ represented as children of a larger parent cluster.
     Different distance metrics can be supplied via the ``metric`` keyword.
 
     For large datasets, similar (but not identical) results can be obtained via
-    `HDBSCAN <https://hdbscan.readthedocs.io>`_. The HDBSCAN implementation is
+    :class:`HDBSCAN`. The HDBSCAN implementation is
     multithreaded, and has better algorithmic runtime complexity than OPTICS,
     at the cost of worse memory scaling. For extremely large datasets that
     exhaust system memory using HDBSCAN, OPTICS will maintain :math:`n` (as opposed
@@ -1104,11 +1233,11 @@ clusters (labels) and the samples are mapped to the global label of the nearest 
 
 **BIRCH or MiniBatchKMeans?**
 
- - BIRCH does not scale very well to high dimensional data. As a rule of thumb if
-   ``n_features`` is greater than twenty, it is generally better to use MiniBatchKMeans.
- - If the number of instances of data needs to be reduced, or if one wants a
-   large number of subclusters either as a preprocessing step or otherwise,
-   BIRCH is more useful than MiniBatchKMeans.
+- BIRCH does not scale very well to high dimensional data. As a rule of thumb if
+  ``n_features`` is greater than twenty, it is generally better to use MiniBatchKMeans.
+- If the number of instances of data needs to be reduced, or if one wants a
+  large number of subclusters either as a preprocessing step or otherwise,
+  BIRCH is more useful than MiniBatchKMeans.
 
 
 **How to use partial_fit?**
@@ -1116,12 +1245,12 @@ clusters (labels) and the samples are mapped to the global label of the nearest 
 To avoid the computation of global clustering, for every call of ``partial_fit``
 the user is advised
 
- 1. To set ``n_clusters=None`` initially
- 2. Train all data by multiple calls to partial_fit.
- 3. Set ``n_clusters`` to a required value using
-    ``brc.set_params(n_clusters=n_clusters)``.
- 4. Call ``partial_fit`` finally with no arguments, i.e. ``brc.partial_fit()``
-    which performs the global clustering.
+1. To set ``n_clusters=None`` initially
+2. Train all data by multiple calls to partial_fit.
+3. Set ``n_clusters`` to a required value using
+   ``brc.set_params(n_clusters=n_clusters)``.
+4. Call ``partial_fit`` finally with no arguments, i.e. ``brc.partial_fit()``
+   which performs the global clustering.
 
 .. image:: ../auto_examples/cluster/images/sphx_glr_plot_birch_vs_minibatchkmeans_001.png
     :target: ../auto_examples/cluster/plot_birch_vs_minibatchkmeans.html
@@ -1667,7 +1796,7 @@ mean of homogeneity and completeness**:
    measure <https://aclweb.org/anthology/D/D07/D07-1043.pdf>`_
    Andrew Rosenberg and Julia Hirschberg, 2007
 
- .. [B2011] `Identication and Characterization of Events in Social Media
+ .. [B2011] `Identification and Characterization of Events in Social Media
    <http://www.cs.columbia.edu/~hila/hila-thesis-distributed.pdf>`_, Hila
    Becker, PhD Thesis.
 
@@ -1687,7 +1816,7 @@ Where ``TP`` is the number of **True Positive** (i.e. the number of pair
 of points that belong to the same clusters in both the true labels and the
 predicted labels), ``FP`` is the number of **False Positive** (i.e. the number
 of pair of points that belong to the same clusters in the true labels and not
-in the predicted labels) and ``FN`` is the number of **False Negative** (i.e the
+in the predicted labels) and ``FN`` is the number of **False Negative** (i.e. the
 number of pair of points that belongs in the same clusters in the predicted
 labels and not in the true labels).
 
@@ -1858,7 +1987,7 @@ cluster analysis:
   >>> kmeans_model = KMeans(n_clusters=3, random_state=1).fit(X)
   >>> labels = kmeans_model.labels_
   >>> metrics.calinski_harabasz_score(X, labels)
-  561.62...
+  561.59...
 
 Advantages
 ~~~~~~~~~~
@@ -1934,7 +2063,7 @@ cluster analysis as follows:
   >>> kmeans = KMeans(n_clusters=3, random_state=1).fit(X)
   >>> labels = kmeans.labels_
   >>> davies_bouldin_score(X, labels)
-  0.6619...
+  0.666...
 
 
 Advantages
@@ -2067,19 +2196,19 @@ under the true and predicted clusterings.
 
 It has the following entries:
 
-  :math:`C_{00}` : number of pairs with both clusterings having the samples
-  not clustered together
+:math:`C_{00}` : number of pairs with both clusterings having the samples
+not clustered together
 
-  :math:`C_{10}` : number of pairs with the true label clustering having the
-  samples clustered together but the other clustering not having the samples
-  clustered together
+:math:`C_{10}` : number of pairs with the true label clustering having the
+samples clustered together but the other clustering not having the samples
+clustered together
 
-  :math:`C_{01}` : number of pairs with the true label clustering not having
-  the samples clustered together but the other clustering having the samples
-  clustered together
+:math:`C_{01}` : number of pairs with the true label clustering not having
+the samples clustered together but the other clustering having the samples
+clustered together
 
-  :math:`C_{11}` : number of pairs with both clusterings having the samples
-  clustered together
+:math:`C_{11}` : number of pairs with both clusterings having the samples
+clustered together
 
 Considering a pair of samples that is clustered together a positive pair,
 then as in binary classification the count of true negatives is

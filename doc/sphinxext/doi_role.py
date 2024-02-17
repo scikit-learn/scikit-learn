@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
     doilinks
     ~~~~~~~~
@@ -16,7 +15,6 @@
 """
 
 from docutils import nodes, utils
-
 from sphinx.util.nodes import split_explicit_title
 
 

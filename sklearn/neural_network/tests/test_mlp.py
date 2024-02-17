@@ -5,32 +5,32 @@ Testing for Multi-layer Perceptron module (sklearn.neural_network)
 # Author: Issam H. Laradji
 # License: BSD 3 clause
 
-import pytest
+import re
 import sys
 import warnings
-import re
+from io import StringIO
 
-import numpy as np
 import joblib
-
+import numpy as np
+import pytest
 from numpy.testing import (
+    assert_allclose,
     assert_almost_equal,
     assert_array_equal,
-    assert_allclose,
 )
 
-from sklearn.datasets import load_digits, load_iris
-from sklearn.datasets import make_regression, make_multilabel_classification
+from sklearn.datasets import (
+    load_digits,
+    load_iris,
+    make_multilabel_classification,
+    make_regression,
+)
 from sklearn.exceptions import ConvergenceWarning
-from io import StringIO
 from sklearn.metrics import roc_auc_score
-from sklearn.neural_network import MLPClassifier
-from sklearn.neural_network import MLPRegressor
-from sklearn.preprocessing import LabelBinarizer
-from sklearn.preprocessing import MinMaxScaler, scale
-from scipy.sparse import csr_matrix
+from sklearn.neural_network import MLPClassifier, MLPRegressor
+from sklearn.preprocessing import LabelBinarizer, MinMaxScaler, scale
 from sklearn.utils._testing import ignore_warnings
-
+from sklearn.utils.fixes import CSR_CONTAINERS
 
 ACTIVATION_TYPES = ["identity", "logistic", "tanh", "relu"]
 
@@ -626,11 +626,12 @@ def test_shuffle():
     assert not np.array_equal(mlp1.coefs_[0], mlp2.coefs_[0])
 
 
-def test_sparse_matrices():
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_sparse_matrices(csr_container):
     # Test that sparse and dense input matrices output the same results.
     X = X_digits_binary[:50]
     y = y_digits_binary[:50]
-    X_sparse = csr_matrix(X)
+    X_sparse = csr_container(X)
     mlp = MLPClassifier(solver="lbfgs", hidden_layer_sizes=15, random_state=1)
     mlp.fit(X, y)
     pred1 = mlp.predict(X)

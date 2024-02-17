@@ -59,6 +59,7 @@ iteratively refined in the neighborhood of the maximum.
 # -----------------
 import numpy as np
 from scipy import linalg
+
 from sklearn.datasets import make_sparse_spd_matrix
 
 n_samples = 60

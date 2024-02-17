@@ -92,7 +92,7 @@ from sklearn.naive_bayes import GaussianNB
 # Create classifiers
 lr = LogisticRegression()
 gnb = GaussianNB()
-svc = NaivelyCalibratedLinearSVC(C=1.0)
+svc = NaivelyCalibratedLinearSVC(C=1.0, dual="auto")
 rfc = RandomForestClassifier()
 
 clf_list = [

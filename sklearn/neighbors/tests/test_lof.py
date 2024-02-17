@@ -2,26 +2,22 @@
 #          Alexandre Gramfort <alexandre.gramfort@telecom-paristech.fr>
 # License: BSD 3 clause
 
+import re
 from math import sqrt
 
 import numpy as np
-from scipy.sparse import csr_matrix
-
-from sklearn import neighbors
-import re
 import pytest
 
-from sklearn import metrics
-from sklearn.metrics import roc_auc_score
-
-from sklearn.utils import check_random_state
-from sklearn.utils._testing import assert_allclose
-from sklearn.utils._testing import assert_array_equal
-from sklearn.utils.estimator_checks import check_outlier_corruption
-from sklearn.utils.estimator_checks import parametrize_with_checks
-
+from sklearn import metrics, neighbors
 from sklearn.datasets import load_iris
-
+from sklearn.metrics import roc_auc_score
+from sklearn.utils import check_random_state
+from sklearn.utils._testing import assert_allclose, assert_array_equal
+from sklearn.utils.estimator_checks import (
+    check_outlier_corruption,
+    parametrize_with_checks,
+)
+from sklearn.utils.fixes import CSR_CONTAINERS
 
 # load the iris dataset
 # and randomly permute it
@@ -168,15 +164,24 @@ def test_novelty_errors():
     clf.fit(X)
     # predict, decision_function and score_samples raise ValueError
     for method in ["predict", "decision_function", "score_samples"]:
-        msg = "{} is not available when novelty=False".format(method)
-        with pytest.raises(AttributeError, match=msg):
+        outer_msg = f"'LocalOutlierFactor' has no attribute '{method}'"
+        inner_msg = "{} is not available when novelty=False".format(method)
+        with pytest.raises(AttributeError, match=outer_msg) as exec_info:
             getattr(clf, method)
+
+        assert isinstance(exec_info.value.__cause__, AttributeError)
+        assert inner_msg in str(exec_info.value.__cause__)
 
     # check errors for novelty=True
     clf = neighbors.LocalOutlierFactor(novelty=True)
-    msg = "fit_predict is not available when novelty=True"
-    with pytest.raises(AttributeError, match=msg):
+
+    outer_msg = "'LocalOutlierFactor' has no attribute 'fit_predict'"
+    inner_msg = "fit_predict is not available when novelty=True"
+    with pytest.raises(AttributeError, match=outer_msg) as exec_info:
         getattr(clf, "fit_predict")
+
+    assert isinstance(exec_info.value.__cause__, AttributeError)
+    assert inner_msg in str(exec_info.value.__cause__)
 
 
 def test_novelty_training_scores(global_dtype):
@@ -242,11 +247,12 @@ def test_predicted_outlier_number(expected_outliers):
         check_outlier_corruption(num_outliers, expected_outliers, y_dec)
 
 
-def test_sparse():
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_sparse(csr_container):
     # LocalOutlierFactor must support CSR inputs
     # TODO: compare results on dense and sparse data as proposed in:
     # https://github.com/scikit-learn/scikit-learn/pull/23585#discussion_r968388186
-    X = csr_matrix(iris.data)
+    X = csr_container(iris.data)
 
     lof = neighbors.LocalOutlierFactor(novelty=True)
     lof.fit(X)
@@ -256,6 +262,50 @@ def test_sparse():
 
     lof = neighbors.LocalOutlierFactor(novelty=False)
     lof.fit_predict(X)
+
+
+def test_lof_error_n_neighbors_too_large():
+    """Check that we raise a proper error message when n_neighbors == n_samples.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/17207
+    """
+    X = np.ones((7, 7))
+
+    msg = (
+        "Expected n_neighbors < n_samples_fit, but n_neighbors = 1, "
+        "n_samples_fit = 1, n_samples = 1"
+    )
+    with pytest.raises(ValueError, match=msg):
+        lof = neighbors.LocalOutlierFactor(n_neighbors=1).fit(X[:1])
+
+    lof = neighbors.LocalOutlierFactor(n_neighbors=2).fit(X[:2])
+    assert lof.n_samples_fit_ == 2
+
+    msg = (
+        "Expected n_neighbors < n_samples_fit, but n_neighbors = 2, "
+        "n_samples_fit = 2, n_samples = 2"
+    )
+    with pytest.raises(ValueError, match=msg):
+        lof.kneighbors(None, n_neighbors=2)
+
+    distances, indices = lof.kneighbors(None, n_neighbors=1)
+    assert distances.shape == (2, 1)
+    assert indices.shape == (2, 1)
+
+    msg = (
+        "Expected n_neighbors <= n_samples_fit, but n_neighbors = 3, "
+        "n_samples_fit = 2, n_samples = 7"
+    )
+    with pytest.raises(ValueError, match=msg):
+        lof.kneighbors(X, n_neighbors=3)
+
+    (
+        distances,
+        indices,
+    ) = lof.kneighbors(X, n_neighbors=2)
+    assert distances.shape == (7, 2)
+    assert indices.shape == (7, 2)
 
 
 @pytest.mark.parametrize("algorithm", ["auto", "ball_tree", "kd_tree", "brute"])
