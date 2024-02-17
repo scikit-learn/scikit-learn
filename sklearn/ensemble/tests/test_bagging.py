@@ -38,7 +38,6 @@ from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.utils import check_random_state
 from sklearn.utils._testing import assert_array_almost_equal, assert_array_equal
 from sklearn.utils.fixes import CSC_CONTAINERS, CSR_CONTAINERS
-from sklearn.utils.validation import has_fit_parameter
 
 rng = check_random_state(0)
 
@@ -991,7 +990,7 @@ def test_get_metadata_routing_with_default_estimator(Estimator):
     est = Estimator(estimator=None, n_estimators=2, random_state=0)
 
     with pytest.raises(
-        TypeError, match="got unexpected argument\(s\) {'sample_weight'}"
+        TypeError, match=r"got unexpected argument\(s\) {'sample_weight'}"
     ):
         est.fit(X, y, sample_weight=sample_weight)
 
