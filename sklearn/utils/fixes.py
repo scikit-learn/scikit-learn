@@ -389,3 +389,15 @@ if sp_version < parse_version("1.12"):
     from ..externals._scipy.sparse.csgraph import laplacian  # type: ignore  # noqa
 else:
     from scipy.sparse.csgraph import laplacian  # type: ignore  # noqa  # pragma: no cover
+
+
+# TODO: Remove when we drop support for Python 3.9. Note the filter argument has
+# been back-ported in 3.9.17 but we can not assume anything about the micro
+# version, see
+# https://docs.python.org/3.9/library/tarfile.html#tarfile.TarFile.extractall
+# for more details
+def tarfile_extractall(tarfile, path):
+    try:
+        tarfile.extractall(path, filter="data")
+    except TypeError:
+        tarfile.extractall(path)

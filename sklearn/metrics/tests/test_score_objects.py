@@ -1543,3 +1543,18 @@ def test_get_scorer_multimetric(pass_estimator):
     assert dict_result["double_accuracy"] == pytest.approx(
         2 * expected_results["accuracy"]
     )
+
+
+@pytest.mark.parametrize("enable_metadata_routing", [True, False])
+def test_metadata_routing_multimetric_metadata_routing(enable_metadata_routing):
+    """Test multimetric scorer works with and without metadata routing enabled when
+    there is no actual metadata to pass.
+
+    Non-regression test for https://github.com/scikit-learn/scikit-learn/issues/28256
+    """
+    X, y = make_classification(n_samples=50, n_features=10, random_state=0)
+    estimator = EstimatorWithFitAndPredict().fit(X, y)
+
+    multimetric_scorer = _MultimetricScorer(scorers={"acc": get_scorer("accuracy")})
+    with config_context(enable_metadata_routing=enable_metadata_routing):
+        multimetric_scorer(estimator, X, y)
