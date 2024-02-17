@@ -310,7 +310,7 @@ html_static_path = ["images", "css", "js"]
 html_additional_pages = {}
 
 # Additional JS files
-html_js_files = []
+html_js_files = ["scripts/dropdown.js"]
 
 # Compile scss files into css files using sphinxcontrib-sass
 sass_src_dir, sass_out_dir = "scss", "css/styles"

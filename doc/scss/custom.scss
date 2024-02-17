@@ -73,8 +73,28 @@ details.sd-dropdown {
     visibility: visible;
   }
 
-  > summary.sd-summary-title > a.headerlink {
-    font-size: 1rem;
+  > summary.sd-summary-title {
+    > a.headerlink {
+      font-size: 1rem;
+    }
+
+    // See `js/scripts/dropdown.js`: this is styling the "expand/collapse all" button
+    > button.sk-toggle-all {
+      color: var(--pst-sd-dropdown-color);
+      top: 0.9rem !important;
+      right: 3rem !important;
+      pointer-events: auto !important;
+      display: none;
+      border: none;
+      background: transparent;
+    }
+  }
+
+  &[open] > summary.sd-summary-title:hover > .sd-summary-up.sk-toggle-all,
+  &:not([open])
+    > summary.sd-summary-title:hover
+    > .sd-summary-down.sk-toggle-all {
+    display: block;
   }
 }
 
