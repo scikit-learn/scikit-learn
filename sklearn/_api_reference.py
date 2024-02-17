@@ -1267,6 +1267,7 @@ API_REFERENCE = {
                 "description": _get_submodule("sklearn.utils", "estimator_checks"),
                 "autosummary": [
                     "estimator_checks.check_estimator",
+                    "estimator_checks.parametrize_with_checks",
                 ],
             },
             {
@@ -1276,6 +1277,7 @@ API_REFERENCE = {
                     "parallel.Parallel",
                     "parallel.delayed",
                     "parallel_backend",
+                    "register_parallel_backend",
                 ],
             },
         ],
@@ -1318,12 +1320,7 @@ DEPRECATED_API_REFERENCE = {
 }
 """
 
-DEPRECATED_API_REFERENCE = {
-    "1.6": [
-        "utils.estimator_checks.parametrize_with_checks",
-        "utils.register_parallel_backend",
-    ],
-}
+DEPRECATED_API_REFERENCE = {}  # type: ignore
 
 
 def _write_autosummary_rst(autosummary, f):
