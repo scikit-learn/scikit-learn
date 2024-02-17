@@ -1267,7 +1267,6 @@ API_REFERENCE = {
                 "description": _get_submodule("sklearn.utils", "estimator_checks"),
                 "autosummary": [
                     "estimator_checks.check_estimator",
-                    "estimator_checks.parametrize_with_checks",
                 ],
             },
             {
@@ -1277,7 +1276,6 @@ API_REFERENCE = {
                     "parallel.Parallel",
                     "parallel.delayed",
                     "parallel_backend",
-                    "register_parallel_backend",
                 ],
             },
         ],
@@ -1309,9 +1307,23 @@ following:
 Note that the autosummary here assumes that the current module is `sklearn`, i.e., if
 `sklearn.utils.Memory` is deprecated, one should put `utils.Memory` in the "entries"
 slot of the autosummary block.
+
+Example:
+
+DEPRECATED_API_REFERENCE = {
+    "0.24": [
+        "model_selection.fit_grid_point",
+        "utils.safe_indexing",
+    ],
+}
 """
 
-DEPRECATED_API_REFERENCE = {}  # type: ignore
+DEPRECATED_API_REFERENCE = {
+    "1.6": [
+        "utils.estimator_checks.parametrize_with_checks",
+        "utils.register_parallel_backend",
+    ],
+}
 
 
 def _write_autosummary_rst(autosummary, f):
@@ -1378,8 +1390,11 @@ def get_deprecated_api_reference_rst(version):
     """Print the deprecated API reference for a version."""
     output = StringIO()
 
-    output.write(f"To be removed in {version}\n")
-    output.write("-" * (len(version) + 17) + "\n\n")
+    output.write(f".. _api_depr_{version.replace('.', '-')}:\n\n")
+    output.write(f".. rubric:: To be removed in {version}\n\n")
+
+    # Set current module to sklearn
+    output.write(".. currentmodule:: sklearn\n\n")
 
     # Print the autosummary
     _write_autosummary_rst(DEPRECATED_API_REFERENCE[version], output)

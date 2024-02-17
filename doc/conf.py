@@ -886,6 +886,11 @@ def generate_api_reference():
                         f.write(f"     - :mod:`{module_name}`\n")
                     else:  # len(parts) == 2, [submodule, object]
                         f.write(f"     - :mod:`{module_name}.{parts[0]}`\n")
+        for ver in sorted(DEPRECATED_API_REFERENCE, key=parse, reverse=True):
+            desc = f":ref:`Deprecated in {ver} <api_depr_{ver.replace('.', '-')}>`"
+            for obj_name in DEPRECATED_API_REFERENCE[ver]:
+                f.write(f"   * - :obj:`~sklearn.{obj_name}`\n")
+                f.write(f"     - {desc}\n")
         f.write("\n")
 
         # Write deprecated API
