@@ -132,8 +132,8 @@ def _clone_parametrized(estimator, *, safe=True):
     params_set = new_object.get_params(deep=False)
 
     # attach callbacks to the new estimator
-    if hasattr(estimator, "_callbacks"):
-        new_object._callbacks = estimator._callbacks
+    if hasattr(estimator, "_skl_callbacks"):
+        new_object._skl_callbacks = estimator._skl_callbacks
 
     # quick sanity check of the parameters of the clone
     for name in new_object_params:
@@ -693,7 +693,7 @@ class BaseEstimator(_HTMLDocumentationLinkMixin, _MetadataRequester):
         if not all(isinstance(callback, BaseCallback) for callback in callbacks):
             raise TypeError("callbacks must be subclasses of BaseCallback.")
 
-        self._callbacks = callbacks
+        self._skl_callbacks = callbacks
 
         return self
 
@@ -727,12 +727,12 @@ class BaseEstimator(_HTMLDocumentationLinkMixin, _MetadataRequester):
             parent=getattr(self, "_parent_node", None),
         )
 
-        if not hasattr(self, "_callbacks"):
+        if not hasattr(self, "_skl_callbacks"):
             return self._computation_tree
 
         # Only call the on_fit_begin method of callbacks that are not
         # propagated from a meta-estimator.
-        for callback in self._callbacks:
+        for callback in self._skl_callbacks:
             if not callback._is_propagated(estimator=self):
                 callback.on_fit_begin(estimator=self, X=X, y=y)
 
@@ -740,12 +740,14 @@ class BaseEstimator(_HTMLDocumentationLinkMixin, _MetadataRequester):
 
     def _eval_callbacks_on_fit_end(self):
         """Evaluate the `on_fit_end` method of the callbacks."""
-        if not hasattr(self, "_callbacks") or not hasattr(self, "_computation_tree"):
+        if not hasattr(self, "_skl_callbacks") or not hasattr(
+            self, "_computation_tree"
+        ):
             return
 
         # Only call the on_fit_end method of callbacks that are not
         # propagated from a meta-estimator.
-        for callback in self._callbacks:
+        for callback in self._skl_callbacks:
             if not callback._is_propagated(estimator=self):
                 callback.on_fit_end()
 

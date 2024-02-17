@@ -25,10 +25,10 @@ def test_set_callbacks(callbacks):
     estimator = Estimator()
 
     set_callbacks_return = estimator._set_callbacks(callbacks)
-    assert hasattr(estimator, "_callbacks")
+    assert hasattr(estimator, "_skl_callbacks")
 
     expected_callbacks = [callbacks] if not isinstance(callbacks, list) else callbacks
-    assert estimator._callbacks == expected_callbacks
+    assert estimator._skl_callbacks == expected_callbacks
 
     assert set_callbacks_return is estimator
 
@@ -54,8 +54,8 @@ def test_propagate_callbacks():
     metaestimator._propagate_callbacks(estimator, parent_node=None)
 
     assert hasattr(estimator, "_parent_node")
-    assert not_propagated_callback not in estimator._callbacks
-    assert propagated_callback in estimator._callbacks
+    assert not_propagated_callback not in estimator._skl_callbacks
+    assert propagated_callback in estimator._skl_callbacks
 
 
 def test_propagate_callback_no_callback():
@@ -64,8 +64,8 @@ def test_propagate_callback_no_callback():
     metaestimator = MetaEstimator(estimator)
     metaestimator._propagate_callbacks(estimator, parent_node=None)
 
-    assert not hasattr(metaestimator, "_callbacks")
-    assert not hasattr(estimator, "_callbacks")
+    assert not hasattr(metaestimator, "_skl_callbacks")
+    assert not hasattr(estimator, "_skl_callbacks")
 
 
 def test_auto_propagated_callbacks():

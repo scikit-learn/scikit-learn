@@ -24,7 +24,7 @@ def _eval_callbacks_on_fit_iter_end(**kwargs):
     estimator = kwargs.get("estimator")
     node = kwargs.get("node")
 
-    if not hasattr(estimator, "_callbacks") or node is None:
+    if not hasattr(estimator, "_skl_callbacks") or node is None:
         return False
 
     # stopping_criterion and reconstruction_attributes can be costly to compute.
@@ -32,15 +32,20 @@ def _eval_callbacks_on_fit_iter_end(**kwargs):
     # compute them if a callback requests it.
     # TODO: This is not used yet but will be necessary for next callbacks
     #       Uncomment when needed
-    # if any(cb.request_stopping_criterion for cb in estimator._callbacks):
+    # if any(cb.request_stopping_criterion for cb in estimator._skl_callbacks):
     #     kwarg = kwargs.pop("stopping_criterion", lambda: None)()
     #     kwargs["stopping_criterion"] = kwarg
 
-    # if any(cb.request_from_reconstruction_attributes for cb in estimator._callbacks):
+    # if any(
+    #         cb.request_from_reconstruction_attributes
+    #         for cb in estimator._skl_callbacks
+    # ):
     #     kwarg = kwargs.pop("from_reconstruction_attributes", lambda: None)()
     #     kwargs["from_reconstruction_attributes"] = kwarg
 
-    return any(callback.on_fit_iter_end(**kwargs) for callback in estimator._callbacks)
+    return any(
+        callback.on_fit_iter_end(**kwargs) for callback in estimator._skl_callbacks
+    )
 
 
 class BaseCallback(ABC):
@@ -154,12 +159,12 @@ class CallbackPropagatorMixin:
             computation tree of the sub-estimator. It must be the node where the fit
             method of the sub-estimator is called.
         """
-        if hasattr(sub_estimator, "_callbacks") and any(
-            callback.auto_propagate for callback in sub_estimator._callbacks
+        if hasattr(sub_estimator, "_skl_callbacks") and any(
+            callback.auto_propagate for callback in sub_estimator._skl_callbacks
         ):
             bad_callbacks = [
                 callback.__class__.__name__
-                for callback in sub_estimator._callbacks
+                for callback in sub_estimator._skl_callbacks
                 if callback.auto_propagate
             ]
             raise TypeError(
@@ -169,11 +174,11 @@ class CallbackPropagatorMixin:
                 " Set them directly on the meta-estimator."
             )
 
-        if not hasattr(self, "_callbacks"):
+        if not hasattr(self, "_skl_callbacks"):
             return
 
         propagated_callbacks = [
-            callback for callback in self._callbacks if callback.auto_propagate
+            callback for callback in self._skl_callbacks if callback.auto_propagate
         ]
 
         if not propagated_callbacks:
@@ -182,5 +187,5 @@ class CallbackPropagatorMixin:
         sub_estimator._parent_node = parent_node
 
         sub_estimator._set_callbacks(
-            getattr(sub_estimator, "_callbacks", []) + propagated_callbacks
+            getattr(sub_estimator, "_skl_callbacks", []) + propagated_callbacks
         )
