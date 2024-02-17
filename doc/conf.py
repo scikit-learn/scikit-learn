@@ -346,7 +346,22 @@ def add_js_css_files(app, pagename, templatename, context, doctree):
     should be used for the ones that are used by multiple pages. All page-specific
     JS and CSS files should be added here instead.
     """
-    if pagename == "install":
+    if pagename == "api/index":
+        # External: jQuery and DataTables
+        app.add_js_file("https://code.jquery.com/jquery-3.7.0.js")
+        app.add_js_file("https://cdn.datatables.net/2.0.0/js/dataTables.min.js")
+        app.add_css_file(
+            "https://cdn.datatables.net/2.0.0/css/dataTables.dataTables.min.css"
+        )
+        # Initialize the data table and add custom CSS
+        init_js = """
+        document.addEventListener("DOMContentLoaded", function () {
+            new DataTable("table.apisearch-table", { order: [] });
+        });
+        """
+        app.add_js_file(None, body=init_js)
+        app.add_css_file("styles/api-search.css")
+    elif pagename == "install":
         app.add_css_file("styles/install.css")
     elif pagename.startswith("modules/generated/"):
         app.add_css_file("styles/api.css")
@@ -842,8 +857,9 @@ def generate_api_reference():
             "This is the class and function reference of scikit-learn. Please refer to "
             "the :ref:`full user guide <user_guide>` for further details, as the raw "
             "specifications of classes and functions may not be enough to give full "
-            "guidelines on their uses. For reference on concepts repeated across the"
-            "API, see :ref:`glossary`.\n\n"
+            "guidelines on their uses. For reference on concepts repeated across the "
+            "API, see :ref:`glossary`. Start by searching for a class or function name "
+            "below, or navigate using the left sidebar.\n\n"
         )
 
         # Define the toctree
@@ -855,11 +871,22 @@ def generate_api_reference():
             f.write(f"   {module_name}\n")
         f.write("\n")
 
-        # Write the module table
-        f.write(".. list-table::\n\n")
+        # Write the API search table
+        f.write(".. list-table::\n")
+        f.write("   :header-rows: 1\n")
+        f.write("   :class: apisearch-table\n\n")
+        f.write("   * - Object\n")
+        f.write("     - Module\n")
         for module_name in sorted_module_names:
-            f.write(f"   * - :mod:`{module_name}`\n")
-            f.write(f"     - {API_REFERENCE[module_name]['short_summary']}\n\n")
+            for section in API_REFERENCE[module_name]["sections"]:
+                for obj_name in section["autosummary"]:
+                    f.write(f"   * - :obj:`~{module_name}.{obj_name}`\n")
+                    parts = obj_name.rsplit(".", 1)
+                    if len(parts) == 1:  # No submodule
+                        f.write(f"     - :mod:`{module_name}`\n")
+                    else:  # len(parts) == 2, [submodule, object]
+                        f.write(f"     - :mod:`{module_name}.{parts[0]}`\n")
+        f.write("\n")
 
         # Write deprecated API
         if DEPRECATED_API_REFERENCE:
