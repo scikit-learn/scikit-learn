@@ -1,15 +1,17 @@
 .. raw:: html
 
-  <!-- Each question is an h3-level heading; we restyle particularly for this page -->
+  <!-- h3 headings on this page are the questions; make them rubric-like -->
   <style>
     h3 {
-      background-color: var(--pst-color-surface);
-      color: var(--pst-color-on-surface) !important;
-      font-size: var(--pst-font-size-h6);
-      font-weight: 600;
-      padding: 0.3rem 0.5rem;
-      margin: 1.75rem -0.5rem 1.15rem -0.5rem;
-      border-radius: 0.5rem;
+      font-size: 1rem;
+      font-weight: bold;
+      padding-bottom: 0.2rem;
+      margin: 2rem 0 1.15rem 0;
+      border-bottom: 1px solid var(--pst-color-border);
+    }
+
+    h2 + section > h3 {
+      margin-top: 2.5rem;  /* Increase top margin for first question in each section */
     }
   </style>
 
@@ -324,12 +326,14 @@ Using scikit-learn
 
 What's the best way to get help on scikit-learn usage?
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-**For general machine learning questions**, please use
-`Cross Validated <https://stats.stackexchange.com/>`_ with the ``[machine-learning]`` tag.
 
-**For scikit-learn usage questions**, please use `Stack Overflow <https://stackoverflow.com/questions/tagged/scikit-learn>`_
-with the ``[scikit-learn]`` and ``[python]`` tags. You can alternatively use the `mailing list
-<https://mail.python.org/mailman/listinfo/scikit-learn>`_.
+* General machine learning questions: use `Cross Validated
+  <https://stats.stackexchange.com/>`_ with the ``[machine-learning]`` tag.
+
+* scikit-learn usage questions: use `Stack Overflow
+  <https://stackoverflow.com/questions/tagged/scikit-learn>`_ with the
+  ``[scikit-learn]`` and ``[python]`` tags. You can alternatively use the `mailing list
+  <https://mail.python.org/mailman/listinfo/scikit-learn>`_.
 
 Please make sure to include a minimal reproduction code snippet (ideally shorter
 than 10 lines) that highlights your problem on a toy dataset (for instance from
