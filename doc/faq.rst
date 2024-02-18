@@ -1,3 +1,18 @@
+.. raw:: html
+
+  <!-- Each question is an h3-level heading; we restyle particularly for this page -->
+  <style>
+    h3 {
+      background-color: var(--pst-color-surface);
+      color: var(--pst-color-on-surface) !important;
+      font-size: var(--pst-font-size-h6);
+      font-weight: 600;
+      padding: 0.3rem 0.5rem;
+      margin: 1.75rem -0.5rem 1.15rem -0.5rem;
+      border-radius: 0.5rem;
+    }
+  </style>
+
 .. _faq:
 
 ==========================
@@ -7,10 +22,6 @@ Frequently Asked Questions
 .. currentmodule:: sklearn
 
 Here we try to give some answers to questions that regularly pop up on the mailing list.
-
-.. contents:: Table of Contents
-   :local:
-   :depth: 2
 
 About the project
 -----------------
