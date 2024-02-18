@@ -1868,7 +1868,7 @@ def make_swiss_roll(n_samples=100, *, noise=0.0, random_state=None, hole=False):
            https://homepages.ecs.vuw.ac.nz/~marslast/Code/Ch6/lle.py
 
     Examples
-    -------- 
+    --------
     >>> from sklearn.datasets import make_swiss_roll
     >>> X,t = make_swiss_roll(n_samples=3, noise=0.1, random_state=34, hole=False)
     >>> print(X)
