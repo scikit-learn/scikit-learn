@@ -152,7 +152,6 @@ def test_assert_request_is_empty():
         ConsumingClassifier(registry=_Registry()),
         ConsumingRegressor(registry=_Registry()),
         ConsumingTransformer(registry=_Registry()),
-        NonConsumingClassifier(registry=_Registry()),
         WeightedMetaClassifier(estimator=ConsumingClassifier(), registry=_Registry()),
         WeightedMetaRegressor(estimator=ConsumingRegressor(), registry=_Registry()),
     ],
@@ -238,6 +237,22 @@ def test_process_routing_invalid_object():
 
     with pytest.raises(AttributeError, match="either implement the routing method"):
         process_routing(InvalidObject(), "fit", groups=my_groups)
+
+
+@pytest.mark.parametrize("method", METHODS)
+@pytest.mark.parametrize("default", [None, "default", []])
+def test_process_routing_empty_params_get_with_default(method, default):
+    empty_params = {}
+    routed_params = process_routing(ConsumingClassifier(), "fit", **empty_params)
+
+    # Behaviour should be an empty dictionary returned for each method when retrieved.
+    params_for_method = routed_params[method]
+    assert isinstance(params_for_method, dict)
+    assert set(params_for_method.keys()) == set(METHODS)
+
+    # No default to `get` should be equivalent to the default
+    default_params_for_method = routed_params.get(method, default=default)
+    assert default_params_for_method == params_for_method
 
 
 def test_simple_metadata_routing():

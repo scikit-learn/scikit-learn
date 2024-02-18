@@ -18,7 +18,7 @@ For a short description of the main highlights of the release, please refer to
 Version 1.4.1
 =============
 
-**In Development**
+**February 2024**
 
 Metadata Routing
 ----------------
@@ -31,18 +31,24 @@ Metadata Routing
   includes a sub-estimator which doesn't support metadata routing.
   :pr:`28256` by `Adrin Jalali`_.
 
+- |Fix| Fix :class:`multioutput.MultiOutputRegressor` and
+  :class:`multioutput.MultiOutputClassifier` to work with estimators that don't
+  consume any metadata when metadata routing is enabled.
+  :pr:`28240` by `Adrin Jalali`_.
+
 DataFrame Support
 -----------------
 
-- |Enhancement| Pandas and Polars dataframe are validated directly without ducktyping
-  checks. :pr:`28195` by `Thomas Fan`_.
+- |Enhancement| |Fix| Pandas and Polars dataframe are validated directly without
+  ducktyping checks.
+  :pr:`28195` by `Thomas Fan`_.
 
-Changes impacting all modules
------------------------------
+Changes impacting many modules
+------------------------------
 
-- Partial revert of :pr:`28191` to avoid a performance regression for estimators
-  relying on euclidean pairwise computation with sparse matrices. The impacted
-  estimators are:
+- |Efficiency| |Fix| Partial revert of :pr:`28191` to avoid a performance regression for
+  estimators relying on euclidean pairwise computation with
+  sparse matrices. The impacted estimators are:
 
   - :func:`sklearn.metrics.pairwise_distances_argmin`
   - :func:`sklearn.metrics.pairwise_distances_argmin_min`
@@ -65,6 +71,15 @@ Changes impacting all modules
   `transform` set to `pandas` or `polars`. The bug could lead to wrong naming of the
   columns of the returned dataframe.
   :pr:`28262` by :user:`Guillaume Lemaitre <glemaitre>`.
+
+- |Fix| When users try to use a method in :class:`~ensemble.StackingClassifier`,
+  :class:`~ensemble.StackingClassifier`, :class:`~ensemble.StackingClassifier`,
+  :class:`~feature_selection.SelectFromModel`, :class:`~feature_selection.RFE`,
+  :class:`~semi_supervised.SelfTrainingClassifier`,
+  :class:`~multiclass.OneVsOneClassifier`, :class:`~multiclass.OutputCodeClassifier` or
+  :class:`~multiclass.OneVsRestClassifier` that their sub-estimators don't implement,
+  the `AttributeError` now reraises in the traceback.
+  :pr:`28167` by :user:`Stefanie Senger <StefanieSenger>`.
 
 Changelog
 ---------
@@ -95,6 +110,26 @@ Changelog
   the same columns. Previously, it would raise a due to duplicated column names.
   :pr:`28262` by :user:`Guillaume Lemaitre <glemaitre>`.
 
+:mod:`sklearn.ensemble`
+.......................
+
+- |Fix| :class:`HistGradientBoostingClassifier` and
+  :class:`HistGradientBoostingRegressor` when fitted on `pandas` `DataFrame`
+  with extension dtypes, for example `pd.Int64Dtype`
+  :pr:`28385` by :user:`Loïc Estève <lesteve>`.
+
+- |Fix| Fixes error message raised by :class:`ensemble.VotingClassifier` when the
+  target is multilabel or multiclass-multioutput in a DataFrame format.
+  :pr:`27702` by :user:`Guillaume Lemaitre <glemaitre>`.
+
+:mod:`sklearn.impute`
+.....................
+
+- |Fix|: :class:`impute.SimpleImputer` now raises an error in `.fit` and
+  `.transform` if `fill_value` can not be cast to input value dtype with
+  `casting='same_kind'`.
+  :pr:`28365` by :user:`Leo Grinsztajn <LeoGrin>`.
+
 :mod:`sklearn.inspection`
 .........................
 
@@ -102,16 +137,21 @@ Changelog
   together with subsampling (i.e. `max_features` < 1.0).
   :pr:`28184` by :user:`Michael Mayer <mayer79>`.
 
+:mod:`sklearn.linear_model`
+...........................
+
+- |Fix| :class:`linear_model.ARDRegression` now handles pandas input types
+  for `predict(X, return_std=True)`.
+  :pr:`28377` by :user:`Eddie Bergman <eddiebergman>`.
+
 :mod:`sklearn.preprocessing`
 ............................
 
 - |Fix| make :class:`preprocessing.FunctionTransformer` more lenient and overwrite
   output column names with the `get_feature_names_out` in the following cases:
-
-  - the input and output column names remain the same (happen when using NumPy `ufunc`);
-  - the input column names are numbers;
-  - the output will be set to Pandas or Polars dataframe.
-
+  (i) the input and output column names remain the same (happen when using NumPy
+  `ufunc`); (ii) the input column names are numbers; (iii) the output will be set to
+  Pandas or Polars dataframe.
   :pr:`28241` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 - |Fix| :class:`preprocessing.FunctionTransformer` now also warns when `set_output`
@@ -119,30 +159,31 @@ Changelog
   `feature_names_out` is not specified.
   :pr:`28263` by :user:`Guillaume Lemaitre <glemaitre>`.
 
+- |Fix| :class:`preprocessing.TargetEncoder` no longer fails when
+  `target_type="continuous"` and the input is read-only. In particular, it now
+  works with pandas copy-on-write mode enabled.
+  :pr:`28233` by :user:`John Hopfensperger <s-banach>`.
+
 :mod:`sklearn.tree`
 ...................
 
 - |Fix| :class:`tree.DecisionTreeClassifier` and
   :class:`tree.DecisionTreeRegressor` are handling missing values properly. The internal
-  criterion was not initialize when no missing values were present in the data, leading
+  criterion was not initialized when no missing values were present in the data, leading
   to potentially wrong criterion values.
-  :pr:`28295` by :user:`Guillaume Lemaitre <glemaitre>`.
+  :pr:`28295` by :user:`Guillaume Lemaitre <glemaitre>` and
+  :pr:`28327` by :user:`Adam Li <adam2392>`.
 
 :mod:`sklearn.utils`
 ....................
 
+- |Enhancement| |Fix| :func:`utils.metaestimators.available_if` now reraises the error
+  from the `check` function as the cause of the `AttributeError`.
+  :pr:`28198` by `Thomas Fan`_.
+
 - |Fix| :func:`utils._safe_indexing` now raises a `ValueError` when `X` is a Python list
   and `axis=1`, as documented in the docstring.
   :pr:`28222` by :user:`Guillaume Lemaitre <glemaitre>`.
-
-
-:mod:`sklearn.preprocessing`
-............................
-
-- |Fix| :class:`preprocessing.TargetEncoder` no longer fails when
-  `target_type="continuous"` and the input is read-only. In particular, it now
-  works with pandas copy-on-write mode enabled.
-  :pr:`28233` by :user:`John Hopfensperger <s-banach>`.
 
 .. _changes_1_4:
 

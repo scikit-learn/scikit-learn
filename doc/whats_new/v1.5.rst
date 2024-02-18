@@ -32,6 +32,17 @@ Meson is now supported as a build backend, see :ref:`Building with Meson
 
 TODO Fill more details before the 1.5 release, when the Meson story has settled down.
 
+Metadata Routing
+----------------
+
+The following models now support metadata routing in one or more or their
+methods. Refer to the :ref:`Metadata Routing User Guide <metadata_routing>` for
+more details.
+
+- |Feature| :class:`impute.IterativeImputer` now supports metadata routing in
+  its `fit` method. :pr:`28187` by :user:`Stefanie Senger <StefanieSenger>`.
+
+
 Changelog
 ---------
 
@@ -112,18 +123,29 @@ Changelog
   :class:`~calibration.CalibrationDisplay`.
   :pr:`28051` by :user:`Pierre de Fréminville <pidefrem>`.
 
+- |API| :func:`metrics.precision_recall_curve` deprecated the keyword argument `probas_pred`
+  in favor of `y_score`. `probas_pred` will be removed in version 1.7.
+  :pr:`28092` by :user:`Adam Li <adam2392>`.
+
+- |API| :func:`metrics.brier_score_loss` deprecated the keyword argument `y_prob`
+  in favor of `y_proba`. `y_prob` will be removed in version 1.7.
+  :pr:`28092` by :user:`Adam Li <adam2392>`.
+
 :mod:`sklearn.model_selection`
 ..............................
 
 - |Enhancement| :term:`CV splitters <CV splitter>` that ignores the group parameter now
   raises a warning when groups are passed in to :term:`split`. :pr:`28210` by
 
-:mod:`sklearn.utils`
-....................
+:mod:`sklearn.pipeline`
+.......................
 
-- |Enhancement| :func:`utils.metaestimators.available_if` now reraises the error from
-  the `check` function as the cause of the `AttributeError`. :pr:`28198` by
-  `Thomas Fan`_.
+- |Feature| :class:`pipeline.FeatureUnion` can now use the
+  `verbose_feature_names_out` attribute. If `True`, `get_feature_names_out`
+  will prefix all feature names with the name of the transformer
+  that generated that feature. If `False`, `get_feature_names_out` will not
+  prefix any feature names and will error if feature names are not unique.
+  :pr:`25991` by :user:`Jiawei Zhang <jiawei-zhang-a>`.
 
 .. rubric:: Code and documentation contributors
 
