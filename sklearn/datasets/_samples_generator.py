@@ -864,6 +864,17 @@ def make_moons(n_samples=100, *, shuffle=True, noise=None, random_state=None):
 
     y : ndarray of shape (n_samples,)
         The integer labels (0 or 1) for class membership of each sample.
+
+    Examples
+    --------
+    >>> from sklearn.datasets import make_moons
+    >>> X, y = make_moons(n_samples = 200, noise =0.2, random_state = 2)
+    >>> X.shape
+    (200, 2)
+    >>> y.shape
+    (200,)
+    >>> list(y[:10])
+    [1, 0, 1, 1, 1, 0, 0, 0, 1, 0]
     """
 
     if isinstance(n_samples, numbers.Integral):
