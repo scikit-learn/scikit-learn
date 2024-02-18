@@ -1501,6 +1501,19 @@ def make_sparse_coded_signal(
         The sparse code such that each column of this matrix has exactly
         n_nonzero_coefs non-zero items (X). The shape is `(n_samples, n_components)`
         if `data_transposed` is False, otherwise it's `(n_components, n_samples)`.
+
+    Examples
+    -------
+    >>> from sklearn.datasets import make_sparse_coded_signal
+    >>> y, X, w = make_sparse_coded_signal(n_samples=1, n_components=2, n_features=2, n_nonzero_coefs=1, random_state=0)
+    >>> y
+    array([-1.24372273, -0.6900468 ])
+    >>> X
+    array([[0.87442883, 0.48515381],
+       [0.17578966, 0.98442775]])
+    >>> w
+    array([-1.42232584,  0.        ])
+
     """
     generator = check_random_state(random_state)
 
@@ -1583,6 +1596,16 @@ def make_sparse_uncorrelated(n_samples=100, n_features=10, *, random_state=None)
     .. [1] G. Celeux, M. El Anbari, J.-M. Marin, C. P. Robert,
            "Regularization in regression: comparing Bayesian and frequentist
            methods in a poorly informative situation", 2009.
+
+    Examples
+    --------
+    >>> from sklearn.datasets import make_sparse_uncorrelated
+    >>> X, y = make_sparse_uncorrelated(n_samples=2, n_features=4, random_state=34)
+    >>> X
+    array([[ 0.2438351 , -0.74731818, -1.56117699, -0.46425312],
+       [-0.35206234, -1.28149188,  0.28929924,  0.9800285 ]])
+    >>> y
+    array([ 3.04585663, -4.5128692 ])
     """
     generator = check_random_state(random_state)
 
@@ -1843,6 +1866,17 @@ def make_swiss_roll(n_samples=100, *, noise=0.0, random_state=None, hole=False):
     .. [1] S. Marsland, "Machine Learning: An Algorithmic Perspective", 2nd edition,
            Chapter 6, 2014.
            https://homepages.ecs.vuw.ac.nz/~marslast/Code/Ch6/lle.py
+
+    Examples
+    -------- 
+    >>> from sklearn.datasets import make_swiss_roll
+    >>> X,t = make_swiss_roll(n_samples=3, noise=0.1, random_state=34, hole=False)
+    >>> print(X)
+    [[ 1.64827294 13.16259723 -4.6964848 ]
+     [10.53141748  0.32063774 -5.75710103]
+     [ 4.24775516 19.75733211 -3.51094713]]
+    >>> print(t)
+    [ 5.07582426 12.06466261  5.58610129]
     """
     generator = check_random_state(random_state)
 
@@ -1903,6 +1937,16 @@ def make_s_curve(n_samples=100, *, noise=0.0, random_state=None):
     t : ndarray of shape (n_samples,)
         The univariate position of the sample according to the main dimension
         of the points in the manifold.
+
+    Examples
+    -------
+    >>> from sklearn.datasets import make_s_curve
+    >>> X,t = make_s_curve(n_samples=2, noise=0.1, random_state=34)
+    >>> X
+    array([[ 0.77856344,  0.15020128,  1.38441714],
+           [ 0.43449844,  1.13763619, -1.77875957]])
+    >>> t
+    array([-4.3489537 ,  2.63988465])
     """
     generator = check_random_state(random_state)
 
