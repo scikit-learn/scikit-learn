@@ -143,7 +143,9 @@ _ = ax.legend()
 # %%
 # With just a few iterations, HGBT models can achieve convergence (see
 # :ref:`sphx_glr_auto_examples_ensemble_plot_forest_hist_grad_boosting_comparison.py`),
-# meaning that adding more trees does not improve the model anymore.
+# meaning that adding more trees does not improve the model anymore. In the
+# figure above, 5 iterations are not enough to be able to predict. With 50
+# iterations, we are already able to do a good job.
 #
 # Instead of relying on `max_iter` alone to determine when to stop, the HGBT
 # implementation in scikit-learn supports early stopping. With it, the model
