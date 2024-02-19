@@ -1505,10 +1505,10 @@ def make_sparse_coded_signal(
     Examples
     -------
     >>> from sklearn.datasets import make_sparse_coded_signal
-    >>> y, X, w = make_sparse_coded_signal(n_samples=1, 
-    ...                                    n_components=2, 
-    ...                                    n_features=2, 
-    ...                                    n_nonzero_coefs=1, 
+    >>> y, X, w = make_sparse_coded_signal(n_samples=1,
+    ...                                    n_components=2,
+    ...                                    n_features=2,
+    ...                                    n_nonzero_coefs=1,
     ...                                    random_state=0)
     >>> y
     array([-1.24372273, -0.6900468 ])
