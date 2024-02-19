@@ -49,7 +49,7 @@ The module contains the public attributes ``coefs_`` and ``intercepts_``.
 :math:`i+1`. ``intercepts_`` is a list of bias vectors, where the vector
 at index :math:`i` represents the bias values added to layer :math:`i+1`.
 
-.. dropdown:: Advantages and disadvantages of Multi-layer Perceptron**
+.. dropdown:: Advantages and disadvantages of Multi-layer Perceptron
 
   The advantages of Multi-layer Perceptron are:
 
