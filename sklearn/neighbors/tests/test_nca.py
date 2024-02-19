@@ -531,9 +531,13 @@ def test_parameters_valid_types(param, value):
     nca.fit(X, y)
 
 
-@pytest.mark.parametrize("n_components", range(1, iris.data.shape[1]))
+@pytest.mark.parametrize("n_components", [None, 2])
 def test_nca_feature_names_out(n_components):
-    """Check `get_feature_names_out` for `NeighborhoodComponentsAnalysis`."""
+    """Check `get_feature_names_out` for `NeighborhoodComponentsAnalysis`.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/28293
+    """
 
     X = iris_data
     y = iris_target
@@ -542,8 +546,16 @@ def test_nca_feature_names_out(n_components):
     names_out = est.get_feature_names_out()
 
     class_name_lower = est.__class__.__name__.lower()
-    expected_names_out = np.array(
-        [f"{class_name_lower}{i}" for i in range(n_components)],
-        dtype=object,
-    )
+
+    if n_components is not None:
+        expected_names_out = np.array(
+            [f"{class_name_lower}{i}" for i in range(n_components)],
+            dtype=object,
+        )
+    else:
+        expected_names_out = np.array(
+            [f"{class_name_lower}{i}" for i in range(X.shape[1])],
+            dtype=object,
+        )
+
     assert_array_equal(names_out, expected_names_out)
