@@ -128,6 +128,9 @@ Changelog
   :class:`~calibration.CalibrationDisplay`.
   :pr:`28051` by :user:`Pierre de Fréminville <pidefrem>`.
 
+- |Feature| :func:`sklearn.metrics.check_scoring` now returns a multi-metric scorer
+  when `scoring` as a `dict`, `set`, `tuple`, or `list`. :pr:`28360` by `Thomas Fan`_.
+
 - |API| :func:`metrics.precision_recall_curve` deprecated the keyword argument `probas_pred`
   in favor of `y_score`. `probas_pred` will be removed in version 1.7.
   :pr:`28092` by :user:`Adam Li <adam2392>`.
