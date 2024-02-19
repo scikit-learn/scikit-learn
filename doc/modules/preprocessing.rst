@@ -220,13 +220,13 @@ of the data is likely to not work very well. In these cases, you can use
 more robust estimates for the center and range of your data.
 
 
-.. rubric:: References
+.. dropdown:: References
 
-* Further discussion on the importance of centering and scaling data is
+  Further discussion on the importance of centering and scaling data is
   available on this FAQ: `Should I normalize/standardize/rescale the data?
   <http://www.faqs.org/faqs/ai-faq/neural-nets/part2/section-16.html>`_
 
-.. topic:: Scaling vs Whitening
+.. dropdown:: Scaling vs Whitening
 
   It is sometimes not enough to center and scale the features
   independently, since a downstream model can further make some assumption
@@ -234,6 +234,7 @@ more robust estimates for the center and range of your data.
 
   To address this issue you can use :class:`~sklearn.decomposition.PCA` with
   ``whiten=True`` to further remove the linear correlation across features.
+
 
 .. _kernel_centering:
 
@@ -248,58 +249,58 @@ followed by the removal of the mean in that space. In other words,
 :class:`KernelCenterer` computes the centered Gram matrix associated to a
 positive semidefinite kernel :math:`K`.
 
-**Mathematical formulation**
+.. dropdown:: Mathematical formulation
 
-We can have a look at the mathematical formulation now that we have the
-intuition. Let :math:`K` be a kernel matrix of shape `(n_samples, n_samples)`
-computed from :math:`X`, a data matrix of shape `(n_samples, n_features)`,
-during the `fit` step. :math:`K` is defined by
+  We can have a look at the mathematical formulation now that we have the
+  intuition. Let :math:`K` be a kernel matrix of shape `(n_samples, n_samples)`
+  computed from :math:`X`, a data matrix of shape `(n_samples, n_features)`,
+  during the `fit` step. :math:`K` is defined by
 
-.. math::
-  K(X, X) = \phi(X) . \phi(X)^{T}
+  .. math::
+    K(X, X) = \phi(X) . \phi(X)^{T}
 
-:math:`\phi(X)` is a function mapping of :math:`X` to a Hilbert space. A
-centered kernel :math:`\tilde{K}` is defined as:
+  :math:`\phi(X)` is a function mapping of :math:`X` to a Hilbert space. A
+  centered kernel :math:`\tilde{K}` is defined as:
 
-.. math::
-  \tilde{K}(X, X) = \tilde{\phi}(X) . \tilde{\phi}(X)^{T}
+  .. math::
+    \tilde{K}(X, X) = \tilde{\phi}(X) . \tilde{\phi}(X)^{T}
 
-where :math:`\tilde{\phi}(X)` results from centering :math:`\phi(X)` in the
-Hilbert space.
+  where :math:`\tilde{\phi}(X)` results from centering :math:`\phi(X)` in the
+  Hilbert space.
 
-Thus, one could compute :math:`\tilde{K}` by mapping :math:`X` using the
-function :math:`\phi(\cdot)` and center the data in this new space. However,
-kernels are often used because they allows some algebra calculations that
-avoid computing explicitly this mapping using :math:`\phi(\cdot)`. Indeed, one
-can implicitly center as shown in Appendix B in [Scholkopf1998]_:
+  Thus, one could compute :math:`\tilde{K}` by mapping :math:`X` using the
+  function :math:`\phi(\cdot)` and center the data in this new space. However,
+  kernels are often used because they allows some algebra calculations that
+  avoid computing explicitly this mapping using :math:`\phi(\cdot)`. Indeed, one
+  can implicitly center as shown in Appendix B in [Scholkopf1998]_:
 
-.. math::
-  \tilde{K} = K - 1_{\text{n}_{samples}} K - K 1_{\text{n}_{samples}} + 1_{\text{n}_{samples}} K 1_{\text{n}_{samples}}
+  .. math::
+    \tilde{K} = K - 1_{\text{n}_{samples}} K - K 1_{\text{n}_{samples}} + 1_{\text{n}_{samples}} K 1_{\text{n}_{samples}}
 
-:math:`1_{\text{n}_{samples}}` is a matrix of `(n_samples, n_samples)` where
-all entries are equal to :math:`\frac{1}{\text{n}_{samples}}`. In the
-`transform` step, the kernel becomes :math:`K_{test}(X, Y)` defined as:
+  :math:`1_{\text{n}_{samples}}` is a matrix of `(n_samples, n_samples)` where
+  all entries are equal to :math:`\frac{1}{\text{n}_{samples}}`. In the
+  `transform` step, the kernel becomes :math:`K_{test}(X, Y)` defined as:
 
-.. math::
-  K_{test}(X, Y) = \phi(Y) . \phi(X)^{T}
+  .. math::
+    K_{test}(X, Y) = \phi(Y) . \phi(X)^{T}
 
-:math:`Y` is the test dataset of shape `(n_samples_test, n_features)` and thus
-:math:`K_{test}` is of shape `(n_samples_test, n_samples)`. In this case,
-centering :math:`K_{test}` is done as:
+  :math:`Y` is the test dataset of shape `(n_samples_test, n_features)` and thus
+  :math:`K_{test}` is of shape `(n_samples_test, n_samples)`. In this case,
+  centering :math:`K_{test}` is done as:
 
-.. math::
-  \tilde{K}_{test}(X, Y) = K_{test} - 1'_{\text{n}_{samples}} K - K_{test} 1_{\text{n}_{samples}} + 1'_{\text{n}_{samples}} K 1_{\text{n}_{samples}}
+  .. math::
+    \tilde{K}_{test}(X, Y) = K_{test} - 1'_{\text{n}_{samples}} K - K_{test} 1_{\text{n}_{samples}} + 1'_{\text{n}_{samples}} K 1_{\text{n}_{samples}}
 
-:math:`1'_{\text{n}_{samples}}` is a matrix of shape
-`(n_samples_test, n_samples)` where all entries are equal to
-:math:`\frac{1}{\text{n}_{samples}}`.
+  :math:`1'_{\text{n}_{samples}}` is a matrix of shape
+  `(n_samples_test, n_samples)` where all entries are equal to
+  :math:`\frac{1}{\text{n}_{samples}}`.
 
-.. rubric:: References
+  .. rubric:: References
 
-.. [Scholkopf1998] B. Schölkopf, A. Smola, and K.R. Müller,
-  `"Nonlinear component analysis as a kernel eigenvalue problem."
-  <https://www.mlpack.org/papers/kpca.pdf>`_
-  Neural computation 10.5 (1998): 1299-1319.
+  .. [Scholkopf1998] B. Schölkopf, A. Smola, and K.R. Müller,
+    `"Nonlinear component analysis as a kernel eigenvalue problem."
+    <https://www.mlpack.org/papers/kpca.pdf>`_
+    Neural computation 10.5 (1998): 1299-1319.
 
 .. _preprocessing_transformer:
 
@@ -372,46 +373,46 @@ possible in order to stabilize variance and minimize skewness.
 :class:`PowerTransformer` currently provides two such power transformations,
 the Yeo-Johnson transform and the Box-Cox transform.
 
-The Yeo-Johnson transform is given by:
+.. dropdown:: Yeo-Johnson transform
 
-.. math::
-    x_i^{(\lambda)} =
-    \begin{cases}
-     [(x_i + 1)^\lambda - 1] / \lambda & \text{if } \lambda \neq 0, x_i \geq 0, \\[8pt]
-    \ln{(x_i + 1)} & \text{if } \lambda = 0, x_i \geq 0 \\[8pt]
-    -[(-x_i + 1)^{2 - \lambda} - 1] / (2 - \lambda) & \text{if } \lambda \neq 2, x_i < 0, \\[8pt]
-     - \ln (- x_i + 1) & \text{if } \lambda = 2, x_i < 0
-    \end{cases}
+  .. math::
+      x_i^{(\lambda)} =
+      \begin{cases}
+      [(x_i + 1)^\lambda - 1] / \lambda & \text{if } \lambda \neq 0, x_i \geq 0, \\[8pt]
+      \ln{(x_i + 1)} & \text{if } \lambda = 0, x_i \geq 0 \\[8pt]
+      -[(-x_i + 1)^{2 - \lambda} - 1] / (2 - \lambda) & \text{if } \lambda \neq 2, x_i < 0, \\[8pt]
+      - \ln (- x_i + 1) & \text{if } \lambda = 2, x_i < 0
+      \end{cases}
 
-while the Box-Cox transform is given by:
+.. dropdown:: Box-Cox transform
 
-.. math::
-    x_i^{(\lambda)} =
-    \begin{cases}
-    \dfrac{x_i^\lambda - 1}{\lambda} & \text{if } \lambda \neq 0, \\[8pt]
-    \ln{(x_i)} & \text{if } \lambda = 0,
-    \end{cases}
+  .. math::
+      x_i^{(\lambda)} =
+      \begin{cases}
+      \dfrac{x_i^\lambda - 1}{\lambda} & \text{if } \lambda \neq 0, \\[8pt]
+      \ln{(x_i)} & \text{if } \lambda = 0,
+      \end{cases}
 
+  Box-Cox can only be applied to strictly positive data. In both methods, the
+  transformation is parameterized by :math:`\lambda`, which is determined through
+  maximum likelihood estimation. Here is an example of using Box-Cox to map
+  samples drawn from a lognormal distribution to a normal distribution::
 
-Box-Cox can only be applied to strictly positive data. In both methods, the
-transformation is parameterized by :math:`\lambda`, which is determined through
-maximum likelihood estimation. Here is an example of using Box-Cox to map
-samples drawn from a lognormal distribution to a normal distribution::
+    >>> pt = preprocessing.PowerTransformer(method='box-cox', standardize=False)
+    >>> X_lognormal = np.random.RandomState(616).lognormal(size=(3, 3))
+    >>> X_lognormal
+    array([[1.28..., 1.18..., 0.84...],
+          [0.94..., 1.60..., 0.38...],
+          [1.35..., 0.21..., 1.09...]])
+    >>> pt.fit_transform(X_lognormal)
+    array([[ 0.49...,  0.17..., -0.15...],
+          [-0.05...,  0.58..., -0.57...],
+          [ 0.69..., -0.84...,  0.10...]])
 
-  >>> pt = preprocessing.PowerTransformer(method='box-cox', standardize=False)
-  >>> X_lognormal = np.random.RandomState(616).lognormal(size=(3, 3))
-  >>> X_lognormal
-  array([[1.28..., 1.18..., 0.84...],
-         [0.94..., 1.60..., 0.38...],
-         [1.35..., 0.21..., 1.09...]])
-  >>> pt.fit_transform(X_lognormal)
-  array([[ 0.49...,  0.17..., -0.15...],
-         [-0.05...,  0.58..., -0.57...],
-         [ 0.69..., -0.84...,  0.10...]])
+  While the above example sets the `standardize` option to `False`,
+  :class:`PowerTransformer` will apply zero-mean, unit-variance normalization
+  to the transformed output by default.
 
-While the above example sets the `standardize` option to `False`,
-:class:`PowerTransformer` will apply zero-mean, unit-variance normalization
-to the transformed output by default.
 
 Below are examples of Box-Cox and Yeo-Johnson applied to various probability
 distributions.  Note that when applied to certain distributions, the power
@@ -499,7 +500,7 @@ The normalizer instance can then be used on sample vectors as any transformer::
 
 Note: L2 normalization is also known as spatial sign preprocessing.
 
-.. topic:: Sparse input
+.. dropdown:: Sparse input
 
   :func:`normalize` and :class:`Normalizer` accept **both dense array-like
   and sparse matrices from scipy.sparse as input**.
@@ -513,6 +514,7 @@ Note: L2 normalization is also known as spatial sign preprocessing.
 
 Encoding categorical features
 =============================
+
 Often features are not given as continuous values but categorical.
 For example a person could have features ``["male", "female"]``,
 ``["from Europe", "from US", "from Asia"]``,
@@ -699,36 +701,39 @@ not dropped::
     >>> drop_enc.inverse_transform(X_trans)
     array([['female', None, None]], dtype=object)
 
-:class:`OneHotEncoder` supports categorical features with missing values by
-considering the missing values as an additional category::
+.. dropdown:: Support of categorical features with missing values
 
-    >>> X = [['male', 'Safari'],
-    ...      ['female', None],
-    ...      [np.nan, 'Firefox']]
-    >>> enc = preprocessing.OneHotEncoder(handle_unknown='error').fit(X)
-    >>> enc.categories_
-    [array(['female', 'male', nan], dtype=object),
-     array(['Firefox', 'Safari', None], dtype=object)]
-    >>> enc.transform(X).toarray()
-    array([[0., 1., 0., 0., 1., 0.],
-           [1., 0., 0., 0., 0., 1.],
-           [0., 0., 1., 1., 0., 0.]])
+  :class:`OneHotEncoder` supports categorical features with missing values by
+  considering the missing values as an additional category::
 
-If a feature contains both `np.nan` and `None`, they will be considered
-separate categories::
+      >>> X = [['male', 'Safari'],
+      ...      ['female', None],
+      ...      [np.nan, 'Firefox']]
+      >>> enc = preprocessing.OneHotEncoder(handle_unknown='error').fit(X)
+      >>> enc.categories_
+      [array(['female', 'male', nan], dtype=object),
+      array(['Firefox', 'Safari', None], dtype=object)]
+      >>> enc.transform(X).toarray()
+      array([[0., 1., 0., 0., 1., 0.],
+            [1., 0., 0., 0., 0., 1.],
+            [0., 0., 1., 1., 0., 0.]])
 
-    >>> X = [['Safari'], [None], [np.nan], ['Firefox']]
-    >>> enc = preprocessing.OneHotEncoder(handle_unknown='error').fit(X)
-    >>> enc.categories_
-    [array(['Firefox', 'Safari', None, nan], dtype=object)]
-    >>> enc.transform(X).toarray()
-    array([[0., 1., 0., 0.],
-           [0., 0., 1., 0.],
-           [0., 0., 0., 1.],
-           [1., 0., 0., 0.]])
+  If a feature contains both `np.nan` and `None`, they will be considered
+  separate categories::
 
-See :ref:`dict_feature_extraction` for categorical features that are
-represented as a dict, not as scalars.
+      >>> X = [['Safari'], [None], [np.nan], ['Firefox']]
+      >>> enc = preprocessing.OneHotEncoder(handle_unknown='error').fit(X)
+      >>> enc.categories_
+      [array(['Firefox', 'Safari', None, nan], dtype=object)]
+      >>> enc.transform(X).toarray()
+      array([[0., 1., 0., 0.],
+            [0., 0., 1., 0.],
+            [0., 0., 0., 1.],
+            [1., 0., 0., 0.]])
+
+  See :ref:`dict_feature_extraction` for categorical features that are
+  represented as a dict, not as scalars.
+
 
 .. _encoder_infrequent_categories:
 
@@ -880,49 +885,57 @@ feature for encoding unordered categories, i.e. nominal categories [PAR]_
 [MIC]_. This encoding scheme is useful with categorical features with high
 cardinality, where one-hot encoding would inflate the feature space making it
 more expensive for a downstream model to process. A classical example of high
-cardinality categories are location based such as zip code or region. For the
-binary classification target, the target encoding is given by:
+cardinality categories are location based such as zip code or region.
 
-.. math::
-    S_i = \lambda_i\frac{n_{iY}}{n_i} + (1 - \lambda_i)\frac{n_Y}{n}
+.. dropdown:: Binary classification targets
 
-where :math:`S_i` is the encoding for category :math:`i`, :math:`n_{iY}` is the
-number of observations with :math:`Y=1` and category :math:`i`, :math:`n_i` is
-the number of observations with category :math:`i`, :math:`n_Y` is the number of
-observations with :math:`Y=1`, :math:`n` is the number of observations, and
-:math:`\lambda_i` is a shrinkage factor for category :math:`i`. The shrinkage
-factor is given by:
+  For the binary classification target, the target encoding is given by:
 
-.. math::
-    \lambda_i = \frac{n_i}{m + n_i}
+  .. math::
+      S_i = \lambda_i\frac{n_{iY}}{n_i} + (1 - \lambda_i)\frac{n_Y}{n}
 
-where :math:`m` is a smoothing factor, which is controlled with the `smooth`
-parameter in :class:`TargetEncoder`. Large smoothing factors will put more
-weight on the global mean. When `smooth="auto"`, the smoothing factor is
-computed as an empirical Bayes estimate: :math:`m=\sigma_i^2/\tau^2`, where
-:math:`\sigma_i^2` is the variance of `y` with category :math:`i` and
-:math:`\tau^2` is the global variance of `y`.
+  where :math:`S_i` is the encoding for category :math:`i`, :math:`n_{iY}` is the
+  number of observations with :math:`Y=1` and category :math:`i`, :math:`n_i` is
+  the number of observations with category :math:`i`, :math:`n_Y` is the number of
+  observations with :math:`Y=1`, :math:`n` is the number of observations, and
+  :math:`\lambda_i` is a shrinkage factor for category :math:`i`. The shrinkage
+  factor is given by:
 
-For multiclass classification targets, the formulation is similar to binary
-classification:
+  .. math::
+      \lambda_i = \frac{n_i}{m + n_i}
 
-.. math::
-    S_{ij} = \lambda_i\frac{n_{iY_j}}{n_i} + (1 - \lambda_i)\frac{n_{Y_j}}{n}
+  where :math:`m` is a smoothing factor, which is controlled with the `smooth`
+  parameter in :class:`TargetEncoder`. Large smoothing factors will put more
+  weight on the global mean. When `smooth="auto"`, the smoothing factor is
+  computed as an empirical Bayes estimate: :math:`m=\sigma_i^2/\tau^2`, where
+  :math:`\sigma_i^2` is the variance of `y` with category :math:`i` and
+  :math:`\tau^2` is the global variance of `y`.
 
-where :math:`S_{ij}` is the encoding for category :math:`i` and class :math:`j`,
-:math:`n_{iY_j}` is the number of observations with :math:`Y=j` and category
-:math:`i`, :math:`n_i` is the number of observations with category :math:`i`,
-:math:`n_{Y_j}` is the number of observations with :math:`Y=j`, :math:`n` is the
-number of observations, and :math:`\lambda_i` is a shrinkage factor for category
-:math:`i`.
+.. dropdown:: Multiclass classification targets
 
-For continuous targets, the formulation is similar to binary classification:
+  For multiclass classification targets, the formulation is similar to binary
+  classification:
 
-.. math::
-    S_i = \lambda_i\frac{\sum_{k\in L_i}Y_k}{n_i} + (1 - \lambda_i)\frac{\sum_{k=1}^{n}Y_k}{n}
+  .. math::
+      S_{ij} = \lambda_i\frac{n_{iY_j}}{n_i} + (1 - \lambda_i)\frac{n_{Y_j}}{n}
 
-where :math:`L_i` is the set of observations with category :math:`i` and
-:math:`n_i` is the number of observations with category :math:`i`.
+  where :math:`S_{ij}` is the encoding for category :math:`i` and class :math:`j`,
+  :math:`n_{iY_j}` is the number of observations with :math:`Y=j` and category
+  :math:`i`, :math:`n_i` is the number of observations with category :math:`i`,
+  :math:`n_{Y_j}` is the number of observations with :math:`Y=j`, :math:`n` is the
+  number of observations, and :math:`\lambda_i` is a shrinkage factor for category
+  :math:`i`.
+
+.. dropdown:: Continuous targets
+
+  For continuous targets, the formulation is similar to binary classification:
+
+  .. math::
+      S_i = \lambda_i\frac{\sum_{k\in L_i}Y_k}{n_i} + (1 - \lambda_i)\frac{\sum_{k=1}^{n}Y_k}{n}
+
+  where :math:`L_i` is the set of observations with category :math:`i` and
+  :math:`n_i` is the number of observations with category :math:`i`.
+
 
 :meth:`~TargetEncoder.fit_transform` internally relies on a :term:`cross fitting`
 scheme to prevent target information from leaking into the train-time
@@ -1252,14 +1265,15 @@ Interestingly, a :class:`SplineTransformer` of ``degree=0`` is the same as
 * :ref:`sphx_glr_auto_examples_linear_model_plot_polynomial_interpolation.py`
 * :ref:`sphx_glr_auto_examples_applications_plot_cyclical_feature_engineering.py`
 
-.. rubric:: References
+.. dropdown:: References
 
-* Eilers, P., & Marx, B. (1996). :doi:`Flexible Smoothing with B-splines and
-  Penalties <10.1214/ss/1038425655>`. Statist. Sci. 11 (1996), no. 2, 89--121.
+  * Eilers, P., & Marx, B. (1996). :doi:`Flexible Smoothing with B-splines and
+    Penalties <10.1214/ss/1038425655>`. Statist. Sci. 11 (1996), no. 2, 89--121.
 
-* Perperoglou, A., Sauerbrei, W., Abrahamowicz, M. et al. :doi:`A review of
-  spline function procedures in R <10.1186/s12874-019-0666-3>`.
-  BMC Med Res Methodol 19, 46 (2019).
+  * Perperoglou, A., Sauerbrei, W., Abrahamowicz, M. et al. :doi:`A review of
+    spline function procedures in R <10.1186/s12874-019-0666-3>`.
+    BMC Med Res Methodol 19, 46 (2019).
+
 
 .. _function_transformer:
 

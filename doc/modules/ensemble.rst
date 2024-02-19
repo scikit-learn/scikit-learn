@@ -252,20 +252,21 @@ the most samples (just like for continuous features). When predicting,
 categories that were not seen during fit time will be treated as missing
 values.
 
-**Split finding with categorical features**: The canonical way of considering
-categorical splits in a tree is to consider
-all of the :math:`2^{K - 1} - 1` partitions, where :math:`K` is the number of
-categories. This can quickly become prohibitive when :math:`K` is large.
-Fortunately, since gradient boosting trees are always regression trees (even
-for classification problems), there exist a faster strategy that can yield
-equivalent splits. First, the categories of a feature are sorted according to
-the variance of the target, for each category `k`. Once the categories are
-sorted, one can consider *continuous partitions*, i.e. treat the categories
-as if they were ordered continuous values (see Fisher [Fisher1958]_ for a
-formal proof). As a result, only :math:`K - 1` splits need to be considered
-instead of :math:`2^{K - 1} - 1`. The initial sorting is a
-:math:`\mathcal{O}(K \log(K))` operation, leading to a total complexity of
-:math:`\mathcal{O}(K \log(K) + K)`, instead of :math:`\mathcal{O}(2^K)`.
+.. dropdown:: Split finding with categorical features
+
+  The canonical way of considering categorical splits in a tree is to consider
+  all of the :math:`2^{K - 1} - 1` partitions, where :math:`K` is the number of
+  categories. This can quickly become prohibitive when :math:`K` is large.
+  Fortunately, since gradient boosting trees are always regression trees (even
+  for classification problems), there exist a faster strategy that can yield
+  equivalent splits. First, the categories of a feature are sorted according to
+  the variance of the target, for each category `k`. Once the categories are
+  sorted, one can consider *continuous partitions*, i.e. treat the categories
+  as if they were ordered continuous values (see Fisher [Fisher1958]_ for a
+  formal proof). As a result, only :math:`K - 1` splits need to be considered
+  instead of :math:`2^{K - 1} - 1`. The initial sorting is a
+  :math:`\mathcal{O}(K \log(K))` operation, leading to a total complexity of
+  :math:`\mathcal{O}(K \log(K) + K)`, instead of :math:`\mathcal{O}(2^K)`.
 
 .. rubric:: Examples
 
@@ -444,85 +445,83 @@ The usage and the parameters of :class:`GradientBoostingClassifier` and
 :class:`GradientBoostingRegressor` are described below. The 2 most important
 parameters of these estimators are `n_estimators` and `learning_rate`.
 
-Classification
-^^^^^^^^^^^^^^^
+.. dropdown:: Classification
 
-:class:`GradientBoostingClassifier` supports both binary and multi-class
-classification.
-The following example shows how to fit a gradient boosting classifier
-with 100 decision stumps as weak learners::
+  :class:`GradientBoostingClassifier` supports both binary and multi-class
+  classification.
+  The following example shows how to fit a gradient boosting classifier
+  with 100 decision stumps as weak learners::
 
-    >>> from sklearn.datasets import make_hastie_10_2
-    >>> from sklearn.ensemble import GradientBoostingClassifier
+      >>> from sklearn.datasets import make_hastie_10_2
+      >>> from sklearn.ensemble import GradientBoostingClassifier
 
-    >>> X, y = make_hastie_10_2(random_state=0)
-    >>> X_train, X_test = X[:2000], X[2000:]
-    >>> y_train, y_test = y[:2000], y[2000:]
+      >>> X, y = make_hastie_10_2(random_state=0)
+      >>> X_train, X_test = X[:2000], X[2000:]
+      >>> y_train, y_test = y[:2000], y[2000:]
 
-    >>> clf = GradientBoostingClassifier(n_estimators=100, learning_rate=1.0,
-    ...     max_depth=1, random_state=0).fit(X_train, y_train)
-    >>> clf.score(X_test, y_test)
-    0.913...
+      >>> clf = GradientBoostingClassifier(n_estimators=100, learning_rate=1.0,
+      ...     max_depth=1, random_state=0).fit(X_train, y_train)
+      >>> clf.score(X_test, y_test)
+      0.913...
 
-The number of weak learners (i.e. regression trees) is controlled by the
-parameter ``n_estimators``; :ref:`The size of each tree
-<gradient_boosting_tree_size>` can be controlled either by setting the tree
-depth via ``max_depth`` or by setting the number of leaf nodes via
-``max_leaf_nodes``. The ``learning_rate`` is a hyper-parameter in the range
-(0.0, 1.0] that controls overfitting via :ref:`shrinkage
-<gradient_boosting_shrinkage>` .
+  The number of weak learners (i.e. regression trees) is controlled by the
+  parameter ``n_estimators``; :ref:`The size of each tree
+  <gradient_boosting_tree_size>` can be controlled either by setting the tree
+  depth via ``max_depth`` or by setting the number of leaf nodes via
+  ``max_leaf_nodes``. The ``learning_rate`` is a hyper-parameter in the range
+  (0.0, 1.0] that controls overfitting via :ref:`shrinkage
+  <gradient_boosting_shrinkage>` .
 
-.. note::
+  .. note::
 
-   Classification with more than 2 classes requires the induction
-   of ``n_classes`` regression trees at each iteration,
-   thus, the total number of induced trees equals
-   ``n_classes * n_estimators``. For datasets with a large number
-   of classes we strongly recommend to use
-   :class:`HistGradientBoostingClassifier` as an alternative to
-   :class:`GradientBoostingClassifier` .
+    Classification with more than 2 classes requires the induction
+    of ``n_classes`` regression trees at each iteration,
+    thus, the total number of induced trees equals
+    ``n_classes * n_estimators``. For datasets with a large number
+    of classes we strongly recommend to use
+    :class:`HistGradientBoostingClassifier` as an alternative to
+    :class:`GradientBoostingClassifier` .
 
-Regression
-^^^^^^^^^^^
+.. dropdown:: Regression
 
-:class:`GradientBoostingRegressor` supports a number of
-:ref:`different loss functions <gradient_boosting_loss>`
-for regression which can be specified via the argument
-``loss``; the default loss function for regression is squared error
-(``'squared_error'``).
+  :class:`GradientBoostingRegressor` supports a number of
+  :ref:`different loss functions <gradient_boosting_loss>`
+  for regression which can be specified via the argument
+  ``loss``; the default loss function for regression is squared error
+  (``'squared_error'``).
 
-::
+  ::
 
-    >>> import numpy as np
-    >>> from sklearn.metrics import mean_squared_error
-    >>> from sklearn.datasets import make_friedman1
-    >>> from sklearn.ensemble import GradientBoostingRegressor
+      >>> import numpy as np
+      >>> from sklearn.metrics import mean_squared_error
+      >>> from sklearn.datasets import make_friedman1
+      >>> from sklearn.ensemble import GradientBoostingRegressor
 
-    >>> X, y = make_friedman1(n_samples=1200, random_state=0, noise=1.0)
-    >>> X_train, X_test = X[:200], X[200:]
-    >>> y_train, y_test = y[:200], y[200:]
-    >>> est = GradientBoostingRegressor(
-    ...     n_estimators=100, learning_rate=0.1, max_depth=1, random_state=0,
-    ...     loss='squared_error'
-    ... ).fit(X_train, y_train)
-    >>> mean_squared_error(y_test, est.predict(X_test))
-    5.00...
+      >>> X, y = make_friedman1(n_samples=1200, random_state=0, noise=1.0)
+      >>> X_train, X_test = X[:200], X[200:]
+      >>> y_train, y_test = y[:200], y[200:]
+      >>> est = GradientBoostingRegressor(
+      ...     n_estimators=100, learning_rate=0.1, max_depth=1, random_state=0,
+      ...     loss='squared_error'
+      ... ).fit(X_train, y_train)
+      >>> mean_squared_error(y_test, est.predict(X_test))
+      5.00...
 
-The figure below shows the results of applying :class:`GradientBoostingRegressor`
-with least squares loss and 500 base learners to the diabetes dataset
-(:func:`sklearn.datasets.load_diabetes`).
-The plot shows the train and test error at each iteration.
-The train error at each iteration is stored in the
-`train_score_` attribute of the gradient boosting model.
-The test error at each iterations can be obtained
-via the :meth:`~GradientBoostingRegressor.staged_predict` method which returns a
-generator that yields the predictions at each stage. Plots like these can be used
-to determine the optimal number of trees (i.e. ``n_estimators``) by early stopping.
+  The figure below shows the results of applying :class:`GradientBoostingRegressor`
+  with least squares loss and 500 base learners to the diabetes dataset
+  (:func:`sklearn.datasets.load_diabetes`).
+  The plot shows the train and test error at each iteration.
+  The train error at each iteration is stored in the
+  `train_score_` attribute of the gradient boosting model.
+  The test error at each iterations can be obtained
+  via the :meth:`~GradientBoostingRegressor.staged_predict` method which returns a
+  generator that yields the predictions at each stage. Plots like these can be used
+  to determine the optimal number of trees (i.e. ``n_estimators``) by early stopping.
 
-.. figure:: ../auto_examples/ensemble/images/sphx_glr_plot_gradient_boosting_regression_001.png
-   :target: ../auto_examples/ensemble/plot_gradient_boosting_regression.html
-   :align: center
-   :scale: 75
+  .. figure:: ../auto_examples/ensemble/images/sphx_glr_plot_gradient_boosting_regression_001.png
+    :target: ../auto_examples/ensemble/plot_gradient_boosting_regression.html
+    :align: center
+    :scale: 75
 
 .. rubric:: Examples
 
@@ -580,110 +579,108 @@ Mathematical formulation
 We first present GBRT for regression, and then detail the classification
 case.
 
-Regression
-...........
+.. dropdown:: Regression
 
-GBRT regressors are additive models whose prediction :math:`\hat{y}_i` for a
-given input :math:`x_i` is of the following form:
+  GBRT regressors are additive models whose prediction :math:`\hat{y}_i` for a
+  given input :math:`x_i` is of the following form:
 
-.. math::
+  .. math::
 
-  \hat{y}_i = F_M(x_i) = \sum_{m=1}^{M} h_m(x_i)
+    \hat{y}_i = F_M(x_i) = \sum_{m=1}^{M} h_m(x_i)
 
-where the :math:`h_m` are estimators called *weak learners* in the context
-of boosting. Gradient Tree Boosting uses :ref:`decision tree regressors
-<tree>` of fixed size as weak learners. The constant M corresponds to the
-`n_estimators` parameter.
+  where the :math:`h_m` are estimators called *weak learners* in the context
+  of boosting. Gradient Tree Boosting uses :ref:`decision tree regressors
+  <tree>` of fixed size as weak learners. The constant M corresponds to the
+  `n_estimators` parameter.
 
-Similar to other boosting algorithms, a GBRT is built in a greedy fashion:
+  Similar to other boosting algorithms, a GBRT is built in a greedy fashion:
 
-.. math::
+  .. math::
 
-  F_m(x) = F_{m-1}(x) + h_m(x),
+    F_m(x) = F_{m-1}(x) + h_m(x),
 
-where the newly added tree :math:`h_m` is fitted in order to minimize a sum
-of losses :math:`L_m`, given the previous ensemble :math:`F_{m-1}`:
+  where the newly added tree :math:`h_m` is fitted in order to minimize a sum
+  of losses :math:`L_m`, given the previous ensemble :math:`F_{m-1}`:
 
-.. math::
+  .. math::
 
-  h_m =  \arg\min_{h} L_m = \arg\min_{h} \sum_{i=1}^{n}
-  l(y_i, F_{m-1}(x_i) + h(x_i)),
+    h_m =  \arg\min_{h} L_m = \arg\min_{h} \sum_{i=1}^{n}
+    l(y_i, F_{m-1}(x_i) + h(x_i)),
 
-where :math:`l(y_i, F(x_i))` is defined by the `loss` parameter, detailed
-in the next section.
+  where :math:`l(y_i, F(x_i))` is defined by the `loss` parameter, detailed
+  in the next section.
 
-By default, the initial model :math:`F_{0}` is chosen as the constant that
-minimizes the loss: for a least-squares loss, this is the empirical mean of
-the target values. The initial model can also be specified via the ``init``
-argument.
+  By default, the initial model :math:`F_{0}` is chosen as the constant that
+  minimizes the loss: for a least-squares loss, this is the empirical mean of
+  the target values. The initial model can also be specified via the ``init``
+  argument.
 
-Using a first-order Taylor approximation, the value of :math:`l` can be
-approximated as follows:
+  Using a first-order Taylor approximation, the value of :math:`l` can be
+  approximated as follows:
 
-.. math::
+  .. math::
 
-  l(y_i, F_{m-1}(x_i) + h_m(x_i)) \approx
-  l(y_i, F_{m-1}(x_i))
-  + h_m(x_i)
-  \left[ \frac{\partial l(y_i, F(x_i))}{\partial F(x_i)} \right]_{F=F_{m - 1}}.
+    l(y_i, F_{m-1}(x_i) + h_m(x_i)) \approx
+    l(y_i, F_{m-1}(x_i))
+    + h_m(x_i)
+    \left[ \frac{\partial l(y_i, F(x_i))}{\partial F(x_i)} \right]_{F=F_{m - 1}}.
 
-.. note::
+  .. note::
 
-  Briefly, a first-order Taylor approximation says that
-  :math:`l(z) \approx l(a) + (z - a) \frac{\partial l}{\partial z}(a)`.
-  Here, :math:`z` corresponds to :math:`F_{m - 1}(x_i) + h_m(x_i)`, and
-  :math:`a` corresponds to :math:`F_{m-1}(x_i)`
+    Briefly, a first-order Taylor approximation says that
+    :math:`l(z) \approx l(a) + (z - a) \frac{\partial l}{\partial z}(a)`.
+    Here, :math:`z` corresponds to :math:`F_{m - 1}(x_i) + h_m(x_i)`, and
+    :math:`a` corresponds to :math:`F_{m-1}(x_i)`
 
-The quantity :math:`\left[ \frac{\partial l(y_i, F(x_i))}{\partial F(x_i)}
-\right]_{F=F_{m - 1}}` is the derivative of the loss with respect to its
-second parameter, evaluated at :math:`F_{m-1}(x)`. It is easy to compute for
-any given :math:`F_{m - 1}(x_i)` in a closed form since the loss is
-differentiable. We will denote it by :math:`g_i`.
+  The quantity :math:`\left[ \frac{\partial l(y_i, F(x_i))}{\partial F(x_i)}
+  \right]_{F=F_{m - 1}}` is the derivative of the loss with respect to its
+  second parameter, evaluated at :math:`F_{m-1}(x)`. It is easy to compute for
+  any given :math:`F_{m - 1}(x_i)` in a closed form since the loss is
+  differentiable. We will denote it by :math:`g_i`.
 
-Removing the constant terms, we have:
+  Removing the constant terms, we have:
 
-.. math::
+  .. math::
 
-  h_m \approx \arg\min_{h} \sum_{i=1}^{n} h(x_i) g_i
+    h_m \approx \arg\min_{h} \sum_{i=1}^{n} h(x_i) g_i
 
-This is minimized if :math:`h(x_i)` is fitted to predict a value that is
-proportional to the negative gradient :math:`-g_i`. Therefore, at each
-iteration, **the estimator** :math:`h_m` **is fitted to predict the negative
-gradients of the samples**. The gradients are updated at each iteration.
-This can be considered as some kind of gradient descent in a functional
-space.
+  This is minimized if :math:`h(x_i)` is fitted to predict a value that is
+  proportional to the negative gradient :math:`-g_i`. Therefore, at each
+  iteration, **the estimator** :math:`h_m` **is fitted to predict the negative
+  gradients of the samples**. The gradients are updated at each iteration.
+  This can be considered as some kind of gradient descent in a functional
+  space.
 
-.. note::
+  .. note::
 
-  For some losses, e.g. ``'absolute_error'`` where the gradients
-  are :math:`\pm 1`, the values predicted by a fitted :math:`h_m` are not
-  accurate enough: the tree can only output integer values. As a result, the
-  leaves values of the tree :math:`h_m` are modified once the tree is
-  fitted, such that the leaves values minimize the loss :math:`L_m`. The
-  update is loss-dependent: for the absolute error loss, the value of
-  a leaf is updated to the median of the samples in that leaf.
+    For some losses, e.g. ``'absolute_error'`` where the gradients
+    are :math:`\pm 1`, the values predicted by a fitted :math:`h_m` are not
+    accurate enough: the tree can only output integer values. As a result, the
+    leaves values of the tree :math:`h_m` are modified once the tree is
+    fitted, such that the leaves values minimize the loss :math:`L_m`. The
+    update is loss-dependent: for the absolute error loss, the value of
+    a leaf is updated to the median of the samples in that leaf.
 
-Classification
-..............
+.. dropdown:: Classification
 
-Gradient boosting for classification is very similar to the regression case.
-However, the sum of the trees :math:`F_M(x_i) = \sum_m h_m(x_i)` is not
-homogeneous to a prediction: it cannot be a class, since the trees predict
-continuous values.
+  Gradient boosting for classification is very similar to the regression case.
+  However, the sum of the trees :math:`F_M(x_i) = \sum_m h_m(x_i)` is not
+  homogeneous to a prediction: it cannot be a class, since the trees predict
+  continuous values.
 
-The mapping from the value :math:`F_M(x_i)` to a class or a probability is
-loss-dependent. For the log-loss, the probability that
-:math:`x_i` belongs to the positive class is modeled as :math:`p(y_i = 1 |
-x_i) = \sigma(F_M(x_i))` where :math:`\sigma` is the sigmoid or expit function.
+  The mapping from the value :math:`F_M(x_i)` to a class or a probability is
+  loss-dependent. For the log-loss, the probability that
+  :math:`x_i` belongs to the positive class is modeled as :math:`p(y_i = 1 |
+  x_i) = \sigma(F_M(x_i))` where :math:`\sigma` is the sigmoid or expit function.
 
-For multiclass classification, K trees (for K classes) are built at each of
-the :math:`M` iterations. The probability that :math:`x_i` belongs to class
-k is modeled as a softmax of the :math:`F_{M,k}(x_i)` values.
+  For multiclass classification, K trees (for K classes) are built at each of
+  the :math:`M` iterations. The probability that :math:`x_i` belongs to class
+  k is modeled as a softmax of the :math:`F_{M,k}(x_i)` values.
 
-Note that even for a classification task, the :math:`h_m` sub-estimator is
-still a regressor, not a classifier. This is because the sub-estimators are
-trained to predict (negative) *gradients*, which are always continuous
-quantities.
+  Note that even for a classification task, the :math:`h_m` sub-estimator is
+  still a regressor, not a classifier. This is because the sub-estimators are
+  trained to predict (negative) *gradients*, which are always continuous
+  quantities.
 
 .. _gradient_boosting_loss:
 
@@ -693,7 +690,7 @@ Loss Functions
 The following loss functions are supported and can be specified using
 the parameter ``loss``:
 
-* Regression
+.. dropdown:: Regression
 
   * Squared error (``'squared_error'``): The natural choice for regression
     due to its superior computational properties. The initial model is
@@ -710,7 +707,7 @@ the parameter ``loss``:
     can be used to create prediction intervals
     (see :ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_quantile.py`).
 
-* Classification
+.. dropdown:: Classification
 
   * Binary log-loss (``'log-loss'``): The binomial
     negative log-likelihood loss function for binary classification. It provides
@@ -1355,27 +1352,6 @@ Vector Machine, a Decision Tree, and a K-nearest neighbor classifier::
     :align: center
     :scale: 75%
 
-Using the `VotingClassifier` with `GridSearchCV`
-------------------------------------------------
-
-The :class:`VotingClassifier` can also be used together with
-:class:`~sklearn.model_selection.GridSearchCV` in order to tune the
-hyperparameters of the individual estimators::
-
-   >>> from sklearn.model_selection import GridSearchCV
-   >>> clf1 = LogisticRegression(random_state=1)
-   >>> clf2 = RandomForestClassifier(random_state=1)
-   >>> clf3 = GaussianNB()
-   >>> eclf = VotingClassifier(
-   ...     estimators=[('lr', clf1), ('rf', clf2), ('gnb', clf3)],
-   ...     voting='soft'
-   ... )
-
-   >>> params = {'lr__C': [1.0, 100.0], 'rf__n_estimators': [20, 200]}
-
-   >>> grid = GridSearchCV(estimator=eclf, param_grid=params, cv=5)
-   >>> grid = grid.fit(iris.data, iris.target)
-
 Usage
 -----
 
@@ -1394,6 +1370,26 @@ Optionally, weights can be provided for the individual classifiers::
    ...     estimators=[('lr', clf1), ('rf', clf2), ('gnb', clf3)],
    ...     voting='soft', weights=[2,5,1]
    ... )
+
+.. dropdown:: Using the `VotingClassifier` with `GridSearchCV`
+
+  The :class:`VotingClassifier` can also be used together with
+  :class:`~sklearn.model_selection.GridSearchCV` in order to tune the
+  hyperparameters of the individual estimators::
+
+    >>> from sklearn.model_selection import GridSearchCV
+    >>> clf1 = LogisticRegression(random_state=1)
+    >>> clf2 = RandomForestClassifier(random_state=1)
+    >>> clf3 = GaussianNB()
+    >>> eclf = VotingClassifier(
+    ...     estimators=[('lr', clf1), ('rf', clf2), ('gnb', clf3)],
+    ...     voting='soft'
+    ... )
+
+    >>> params = {'lr__C': [1.0, 100.0], 'rf__n_estimators': [20, 200]}
+
+    >>> grid = GridSearchCV(estimator=eclf, param_grid=params, cv=5)
+    >>> grid = grid.fit(iris.data, iris.target)
 
 .. _voting_regressor:
 
