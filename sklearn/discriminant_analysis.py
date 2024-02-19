@@ -114,7 +114,8 @@ def _class_means(X, y):
     xp, is_array_api_compliant = get_namespace(X)
     classes, y = xp.unique_inverse(y)
     # Force lazy array api backends to call compute
-    classes = np.asarray(classes)
+    if hasattr(classes, "persist"):
+        classes.compute_chunk_sizes()
     means = xp.zeros((classes.shape[0], X.shape[1]), device=device(X), dtype=X.dtype)
 
     if is_array_api_compliant:
@@ -497,7 +498,10 @@ class LinearDiscriminantAnalysis(
             svd = scipy.linalg.svd
 
         # Materialize, otherwise shape could be nan for like dask
-        n_samples, n_features = np.asarray(X).shape
+        if hasattr(X, "persist"):
+            # is dask array
+            X.compute_chunk_sizes()
+        n_samples, n_features = X.shape
         n_classes = self.classes_.shape[0]
 
         self.means_ = _class_means(X, y)
@@ -519,8 +523,6 @@ class LinearDiscriminantAnalysis(
         std[std == 0] = 1.0
         fac = xp.asarray(1.0 / (n_samples - n_classes))
 
-        import dask.array as da
-
         # 2) Within variance scaling
         X = xp.sqrt(fac) * (Xc / std)
         # SVD of centered (within)scaled data
@@ -539,6 +541,8 @@ class LinearDiscriminantAnalysis(
         # Centers are living in a space with n_classes-1 dim (maximum)
         # Use SVD to find projection in the space spanned by the
         # (n_classes) centers
+        import dask.array as da
+
         if isinstance(X, da.Array):
             # dask can flip signs of Vt sometimes
             _, S, Vt = svd(X, full_matrices=False, coerce_signs=False)
@@ -590,9 +594,13 @@ class LinearDiscriminantAnalysis(
         X, y = self._validate_data(
             X, y, ensure_min_samples=2, dtype=[xp.float64, xp.float32]
         )
+        if hasattr(X, "persist"):
+            X.compute_chunk_sizes()
         # This operation could result in nan shape for lazy backends
         # so realize by calling np.asarray
-        self.classes_ = np.asarray(unique_labels(y))
+        self.classes_ = unique_labels(y)
+        if hasattr(self.classes_, "persist"):
+            self.classes_.compute_chunk_sizes()
         n_samples, _ = X.shape
         n_classes = self.classes_.shape[0]
 
@@ -604,7 +612,9 @@ class LinearDiscriminantAnalysis(
         if self.priors is None:  # estimate priors from sample
             _, cnts = xp.unique_counts(y)  # non-negative ints
             # realize for lazy backends to prevent nan shapes
-            cnts = np.asarray(cnts)
+            # cnts = np.asarray(cnts)
+            if hasattr(cnts, "persist"):
+                cnts.compute_chunk_sizes()
             self.priors_ = xp.astype(cnts, X.dtype) / float(y.shape[0])
         else:
             self.priors_ = xp.asarray(self.priors, dtype=X.dtype)
@@ -620,7 +630,7 @@ class LinearDiscriminantAnalysis(
         # specified:
 
         # Force computing shape here
-        max_components = min(n_classes - 1, np.asarray(X).shape[1])
+        max_components = min(n_classes - 1, X.shape[1])
 
         if self.n_components is None:
             self._max_components = max_components
