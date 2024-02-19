@@ -1371,7 +1371,7 @@ Optionally, weights can be provided for the individual classifiers::
    ...     voting='soft', weights=[2,5,1]
    ... )
 
-.. dropdown:: Using the `VotingClassifier` with `GridSearchCV`
+.. dropdown:: Using the :class:`VotingClassifier` with :class:`~sklearn.model_selection.GridSearchCV`
 
   The :class:`VotingClassifier` can also be used together with
   :class:`~sklearn.model_selection.GridSearchCV` in order to tune the

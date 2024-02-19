@@ -16,9 +16,17 @@ class DropdownAnchorAdder(SphinxPostTransform):
 
     <dropdown_main ...>
         <dropdown_title ...>
-            ...icon, text, etc.
+            ...icon      <-- This exists if the "icon" option of the sphinx-design
+                             dropdown is set; we do not use it in our documentation
+
+            ...title     <-- This may contain multiple nodes, e.g. literal nodes if
+                             there are inline codes; we use the concatenated text of
+                             all these nodes to generate the anchor ID
+
             Here we insert the anchor link!
-            ...chevrons, etc.
+
+            <container ...>  <-- The "dropdown closed" marker
+            <container ...>  <-- The "dropdown open" marker
         </dropdown_title>
         <container...>
             ...main contents
@@ -36,15 +44,19 @@ class DropdownAnchorAdder(SphinxPostTransform):
         anchor_id_counters = {}
 
         for sd_dropdown in self.document.findall(dropdown_main):
-            # Grab the dropdown title and its index
+            # Grab the dropdown title
             sd_dropdown_title = sd_dropdown.next_node(dropdown_title)
-            title_text = sd_dropdown_title.next_node(nodes.Text)
+
+            # Concatenate the text of relevant nodes as the title text
+            # Since we do not have the prefix icon, the relevant nodes are the very
+            # first child node until the third last node (last two are markers)
+            title_text = "".join(
+                node.astext() for node in sd_dropdown_title.children[:-2]
+            )
 
             # The ID uses the first line, lowercased, with spaces replaced by dashes;
             # suffix the anchor ID with a counter if it already exists
-            anchor_id = re.sub(
-                r"\s+", "-", title_text.astext().strip().split("\n")[0]
-            ).lower()
+            anchor_id = re.sub(r"\s+", "-", title_text.strip().split("\n")[0]).lower()
             if anchor_id in anchor_id_counters:
                 anchor_id_counters[anchor_id] += 1
                 anchor_id = f"{anchor_id}-{anchor_id_counters[anchor_id]}"
@@ -59,8 +71,7 @@ class DropdownAnchorAdder(SphinxPostTransform):
                 'title="Link to this dropdown">#</a>'
             )
             anchor_node = nodes.raw("", anchor_html, format="html")
-            ind = sd_dropdown_title.index(title_text)
-            sd_dropdown_title.insert(ind + 1, anchor_node)
+            sd_dropdown_title.insert(-2, anchor_node)  # before the two markers
 
 
 def setup(app):
