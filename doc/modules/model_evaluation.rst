@@ -580,9 +580,7 @@ or *informedness*.
     * Balanced Accuracy as described in [Urbanowicz2015]_: the average of sensitivity and specificity
       is computed for each class and then averaged over total number of classes.
 
-|details-start|
-**References**
-|details-split|
+.. topic:: References:
 
   .. [Guyon2015] I. Guyon, K. Bennett, G. Cawley, H.J. Escalante, S. Escalera, T.K. Ho, N. Macià,
      B. Ray, M. Saeed, A.R. Statnikov, E. Viegas, `Design of the 2015 ChaLearn AutoML Challenge
@@ -598,8 +596,6 @@ or *informedness*.
   .. [Urbanowicz2015] Urbanowicz R.J.,  Moore, J.H. :doi:`ExSTraCS 2.0: description
       and evaluation of a scalable learning classifier
       system <10.1007/s12065-015-0128-8>`, Evol. Intel. (2015) 8: 89.
-
-|details-end|
 
 .. _cohen_kappa:
 
@@ -853,9 +849,7 @@ precision-recall curve as follows.
     for an example of :func:`precision_recall_curve` usage to evaluate
     classifier output quality.
 
-|details-start|
-**References**
-|details-split|
+.. topic:: References:
 
   .. [Manning2008] C.D. Manning, P. Raghavan, H. Schütze, `Introduction to Information Retrieval
      <https://nlp.stanford.edu/IR-book/html/htmledition/evaluation-of-ranked-retrieval-results-1.html>`_,
@@ -870,9 +864,6 @@ precision-recall curve as follows.
   .. [Flach2015] P.A. Flach, M. Kull, `Precision-Recall-Gain Curves: PR Analysis Done Right
      <https://papers.nips.cc/paper/5867-precision-recall-gain-curves-pr-analysis-done-right.pdf>`_,
      NIPS 2015.
-
-|details-end|
-
 
 Binary classification
 ^^^^^^^^^^^^^^^^^^^^^
@@ -1572,9 +1563,7 @@ And the decision values do not require such processing.
     for an example of using ROC to
     model species distribution.
 
-|details-start|
-**References**
-|details-split|
+.. topic:: References:
 
     .. [HT2001] Hand, D.J. and Till, R.J., (2001). `A simple generalisation
        of the area under the ROC curve for multiple class classification problems.
@@ -1600,8 +1589,6 @@ And the decision values do not require such processing.
        ROC performance <https://ieeexplore.ieee.org/document/989510/>`_
        In Data Mining, 2001.
        Proceedings IEEE International Conference, pp. 131-138.
-
-|details-end|
 
 .. _det_curve:
 
@@ -1680,9 +1667,7 @@ better suited.
 
 |details-end|
 
-|details-start|
-**References**
-|details-split|
+.. topic:: References:
 
   .. [WikipediaDET2017] Wikipedia contributors. Detection error tradeoff.
      Wikipedia, The Free Encyclopedia. September 4, 2017, 23:33 UTC.
@@ -1700,8 +1685,6 @@ better suited.
      2007 IEEE International Conference on Acoustics,
      Speech and Signal Processing - ICASSP '07, Honolulu,
      HI, 2007, pp. IV-229-IV-232.
-
-|details-end|
 
 .. _zero_one_loss:
 
@@ -1815,9 +1798,7 @@ the same does a lower Brier score loss always mean better calibration"
     for an example of Brier score loss usage to perform probability
     calibration of classifiers.
 
-|details-start|
-**References**
-|details-split|
+.. topic:: References:
 
   .. [Brier1950] G. Brier, `Verification of forecasts expressed in terms of
     probability
@@ -1833,8 +1814,6 @@ the same does a lower Brier score loss always mean better calibration"
   .. [Flach2008] Flach, Peter, and Edson Matsubara. `"On classification, ranking,
     and probability estimation." <https://drops.dagstuhl.de/opus/volltexte/2008/1382/>`_
     Dagstuhl Seminar Proceedings. Schloss Dagstuhl-Leibniz-Zentrum fr Informatik (2008).
-
-|details-end|
 
 .. _class_likelihood_ratios:
 
