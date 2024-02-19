@@ -325,7 +325,7 @@ _ = ax.legend(loc="lower right")
 # bias. Monotonic constraints can also be used to enforce specific regulatory
 # requirements, ensure compliance and align with ethical considerations.
 #
-# In the present example, the policy of transfering energy from Victoria to New
+# In the present example, the policy of transferring energy from Victoria to New
 # South Wales is meant to alleviate price fluctuations, meaning that the model
 # predictions have to enforce such goal, i.e. transfer should increase with
 # price and demand in New South Wales, but also decrease with price and demand
