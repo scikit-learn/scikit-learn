@@ -1505,7 +1505,11 @@ def make_sparse_coded_signal(
     Examples
     -------
     >>> from sklearn.datasets import make_sparse_coded_signal
-    >>> y, X, w = make_sparse_coded_signal(n_samples=1, n_components=2, n_features=2, n_nonzero_coefs=1, random_state=0)
+    >>> y, X, w = make_sparse_coded_signal(n_samples=1, 
+    ...                                    n_components=2, 
+    ...                                    n_features=2, 
+    ...                                    n_nonzero_coefs=1, 
+    ...                                    random_state=0)
     >>> y
     array([-1.24372273, -0.6900468 ])
     >>> X
@@ -1871,12 +1875,12 @@ def make_swiss_roll(n_samples=100, *, noise=0.0, random_state=None, hole=False):
     --------
     >>> from sklearn.datasets import make_swiss_roll
     >>> X,t = make_swiss_roll(n_samples=3, noise=0.1, random_state=34, hole=False)
-    >>> print(X)
-    [[ 1.64827294 13.16259723 -4.6964848 ]
-     [10.53141748  0.32063774 -5.75710103]
-     [ 4.24775516 19.75733211 -3.51094713]]
-    >>> print(t)
-    [ 5.07582426 12.06466261  5.58610129]
+    >>> X
+    array([[ 1.64827294, 13.16259723, -4.6964848 ],
+        [10.53141748,  0.32063774, -5.75710103],
+        [ 4.24775516, 19.75733211, -3.51094713]])
+    >>> t
+    array([ 5.07582426, 12.06466261,  5.58610129])
     """
     generator = check_random_state(random_state)
 
