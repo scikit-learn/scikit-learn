@@ -1915,8 +1915,8 @@ def make_swiss_roll(n_samples=100, *, noise=0.0, random_state=None, hole=False):
     prefer_skip_nested_validation=True,
 )
 def make_s_curve(n_samples=100, *, noise=0.0, random_state=None):
-    r"""Generate an S curve dataset.
-    
+    """Generate an S curve dataset.
+
     Read more in the :ref:`User Guide <sample_generators>`.
 
     Parameters
@@ -1938,7 +1938,7 @@ def make_s_curve(n_samples=100, *, noise=0.0, random_state=None):
         The points.
 
     t : ndarray of shape (n_samples,)
-        The univariate position of the sample according 
+        The univariate position of the sample according
         to the main dimension of the points in the manifold.
 
     Examples
