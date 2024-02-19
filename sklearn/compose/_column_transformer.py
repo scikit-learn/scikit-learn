@@ -223,7 +223,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
     :class:`ColumnTransformer` can be configured with a transformer that requires
     a 1d array by setting the column to a string:
 
-    >>> from sklearn.feature_extraction import FeatureHasher
+    >>> from sklearn.feature_extraction.text import CountVectorizer
     >>> from sklearn.preprocessing import MinMaxScaler
     >>> import pandas as pd   # doctest: +SKIP
     >>> X = pd.DataFrame({
@@ -231,9 +231,9 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
     ...     "width": [3, 4, 5],
     ... })  # doctest: +SKIP
     >>> # "documents" is a string which configures ColumnTransformer to
-    >>> # pass the documents column as a 1d array to the FeatureHasher
+    >>> # pass the documents column as a 1d array to the CountVectorizer
     >>> ct = ColumnTransformer(
-    ...     [("text_preprocess", FeatureHasher(input_type="string"), "documents"),
+    ...     [("text_preprocess", CountVectorizer(), "documents"),
     ...      ("num_preprocess", MinMaxScaler(), ["width"])])
     >>> X_trans = ct.fit_transform(X)  # doctest: +SKIP
 
@@ -941,7 +941,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         self._validate_output(Xs)
         self._record_output_indices(Xs)
 
-        return self._hstack(list(Xs))
+        return self._hstack(list(Xs), n_samples=n_samples)
 
     def transform(self, X, **params):
         """Transform X separately by each transformer, concatenate results.
@@ -1024,9 +1024,9 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
             # All transformers are None
             return np.zeros((n_samples, 0))
 
-        return self._hstack(list(Xs))
+        return self._hstack(list(Xs), n_samples=n_samples)
 
-    def _hstack(self, Xs):
+    def _hstack(self, Xs, *, n_samples):
         """Stacks Xs horizontally.
 
         This allows subclasses to control the stacking behavior, while reusing
@@ -1035,6 +1035,10 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         Parameters
         ----------
         Xs : list of {array-like, sparse matrix, dataframe}
+            The container to concatenate.
+        n_samples : int
+            The number of samples in the input data to checking the transformation
+            consistency.
         """
         if self.sparse_output_:
             try:
@@ -1056,24 +1060,8 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
             Xs = [f.toarray() if sparse.issparse(f) else f for f in Xs]
             adapter = _get_container_adapter("transform", self)
             if adapter and all(adapter.is_supported_container(X) for X in Xs):
-                output = adapter.hstack(Xs)
-
-                output_samples = output.shape[0]
-                if any(_num_samples(X) != output_samples for X in Xs):
-                    raise ValueError(
-                        "Concatenating DataFrames from the transformer's output lead to"
-                        " an inconsistent number of samples. The output may have Pandas"
-                        " Indexes that do not match."
-                    )
-
-                # If all transformers define `get_feature_names_out`, then transform
-                # will adjust the column names to be consistent with
-                # verbose_feature_names_out. Here we prefix the feature names if
-                # verbose_feature_names_out=True.
-
-                if not self.verbose_feature_names_out:
-                    return output
-
+                # rename before stacking as it avoids to error on temporary duplicated
+                # columns
                 transformer_names = [
                     t[0]
                     for t in self._iter(
@@ -1083,13 +1071,69 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
                         skip_empty_columns=True,
                     )
                 ]
-                # Selection of columns might be empty.
-                # Hence feature names are filtered for non-emptiness.
                 feature_names_outs = [X.columns for X in Xs if X.shape[1] != 0]
-                names_out = self._add_prefix_for_feature_names_out(
-                    list(zip(transformer_names, feature_names_outs))
-                )
-                return adapter.rename_columns(output, names_out)
+                if self.verbose_feature_names_out:
+                    # `_add_prefix_for_feature_names_out` takes care about raising
+                    # an error if there are duplicated columns.
+                    feature_names_outs = self._add_prefix_for_feature_names_out(
+                        list(zip(transformer_names, feature_names_outs))
+                    )
+                else:
+                    # check for duplicated columns and raise if any
+                    feature_names_outs = list(chain.from_iterable(feature_names_outs))
+                    feature_names_count = Counter(feature_names_outs)
+                    if any(count > 1 for count in feature_names_count.values()):
+                        duplicated_feature_names = sorted(
+                            name
+                            for name, count in feature_names_count.items()
+                            if count > 1
+                        )
+                        err_msg = (
+                            "Duplicated feature names found before concatenating the"
+                            " outputs of the transformers:"
+                            f" {duplicated_feature_names}.\n"
+                        )
+                        for transformer_name, X in zip(transformer_names, Xs):
+                            if X.shape[1] == 0:
+                                continue
+                            dup_cols_in_transformer = sorted(
+                                set(X.columns).intersection(duplicated_feature_names)
+                            )
+                            if len(dup_cols_in_transformer):
+                                err_msg += (
+                                    f"Transformer {transformer_name} has conflicting "
+                                    f"columns names: {dup_cols_in_transformer}.\n"
+                                )
+                        raise ValueError(
+                            err_msg
+                            + "Either make sure that the transformers named above "
+                            "do not generate columns with conflicting names or set "
+                            "verbose_feature_names_out=True to automatically "
+                            "prefix to the output feature names with the name "
+                            "of the transformer to prevent any conflicting "
+                            "names."
+                        )
+
+                names_idx = 0
+                for X in Xs:
+                    if X.shape[1] == 0:
+                        continue
+                    names_out = feature_names_outs[names_idx : names_idx + X.shape[1]]
+                    adapter.rename_columns(X, names_out)
+                    names_idx += X.shape[1]
+
+                output = adapter.hstack(Xs)
+                output_samples = output.shape[0]
+                if output_samples != n_samples:
+                    raise ValueError(
+                        "Concatenating DataFrames from the transformer's output lead to"
+                        " an inconsistent number of samples. The output may have Pandas"
+                        " Indexes that do not match, or that transformers are returning"
+                        " number of samples which are not the same as the number input"
+                        " samples."
+                    )
+
+                return output
 
             return np.hstack(Xs)
 
@@ -1160,12 +1204,12 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
             routing information.
         """
         router = MetadataRouter(owner=self.__class__.__name__)
-        for name, step, _, _ in self._iter(
-            fitted=False,
-            column_as_labels=False,
-            skip_drop=True,
-            skip_empty_columns=True,
-        ):
+        # Here we don't care about which columns are used for which
+        # transformers, and whether or not a transformer is used at all, which
+        # might happen if no columns are selected for that transformer. We
+        # request all metadata requested by all transformers.
+        transformers = chain(self.transformers, [("remainder", self.remainder, None)])
+        for name, step, _ in transformers:
             method_mapping = MethodMapping()
             if hasattr(step, "fit_transform"):
                 (

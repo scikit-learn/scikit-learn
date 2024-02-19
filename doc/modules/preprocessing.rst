@@ -219,21 +219,28 @@ of the data is likely to not work very well. In these cases, you can use
 :class:`RobustScaler` as a drop-in replacement instead. It uses
 more robust estimates for the center and range of your data.
 
+|details-start|
+**References**
+|details-split|
 
-.. topic:: References:
+Further discussion on the importance of centering and scaling data is
+available on this FAQ: `Should I normalize/standardize/rescale the data?
+<http://www.faqs.org/faqs/ai-faq/neural-nets/part2/section-16.html>`_
 
-  Further discussion on the importance of centering and scaling data is
-  available on this FAQ: `Should I normalize/standardize/rescale the data?
-  <http://www.faqs.org/faqs/ai-faq/neural-nets/part2/section-16.html>`_
+|details-end|
 
-.. topic:: Scaling vs Whitening
+|details-start|
+**Scaling vs Whitening**
+|details-split|
 
-  It is sometimes not enough to center and scale the features
-  independently, since a downstream model can further make some assumption
-  on the linear independence of the features.
+It is sometimes not enough to center and scale the features
+independently, since a downstream model can further make some assumption
+on the linear independence of the features.
 
-  To address this issue you can use :class:`~sklearn.decomposition.PCA` with
-  ``whiten=True`` to further remove the linear correlation across features.
+To address this issue you can use :class:`~sklearn.decomposition.PCA` with
+``whiten=True`` to further remove the linear correlation across features.
+
+|details-end|
 
 .. _kernel_centering:
 
@@ -248,7 +255,9 @@ followed by the removal of the mean in that space. In other words,
 :class:`KernelCenterer` computes the centered Gram matrix associated to a
 positive semidefinite kernel :math:`K`.
 
+|details-start|
 **Mathematical formulation**
+|details-split|
 
 We can have a look at the mathematical formulation now that we have the
 intuition. Let :math:`K` be a kernel matrix of shape `(n_samples, n_samples)`
@@ -300,6 +309,8 @@ centering :math:`K_{test}` is done as:
     `"Nonlinear component analysis as a kernel eigenvalue problem."
     <https://www.mlpack.org/papers/kpca.pdf>`_
     Neural computation 10.5 (1998): 1299-1319.
+
+|details-end|
 
 .. _preprocessing_transformer:
 
@@ -372,7 +383,9 @@ possible in order to stabilize variance and minimize skewness.
 :class:`PowerTransformer` currently provides two such power transformations,
 the Yeo-Johnson transform and the Box-Cox transform.
 
-The Yeo-Johnson transform is given by:
+|details-start|
+**Yeo-Johnson transform**
+|details-split|
 
 .. math::
     x_i^{(\lambda)} =
@@ -383,7 +396,11 @@ The Yeo-Johnson transform is given by:
      - \ln (- x_i + 1) & \text{if } \lambda = 2, x_i < 0
     \end{cases}
 
-while the Box-Cox transform is given by:
+|details-end|
+
+|details-start|
+**Box-Cox transform**
+|details-split|
 
 .. math::
     x_i^{(\lambda)} =
@@ -412,6 +429,8 @@ samples drawn from a lognormal distribution to a normal distribution::
 While the above example sets the `standardize` option to `False`,
 :class:`PowerTransformer` will apply zero-mean, unit-variance normalization
 to the transformed output by default.
+
+|details-end|
 
 Below are examples of Box-Cox and Yeo-Johnson applied to various probability
 distributions.  Note that when applied to certain distributions, the power
@@ -499,8 +518,9 @@ The normalizer instance can then be used on sample vectors as any transformer::
 
 Note: L2 normalization is also known as spatial sign preprocessing.
 
-.. topic:: Sparse input
-
+|details-start|
+**Sparse input**
+|details-split|
   :func:`normalize` and :class:`Normalizer` accept **both dense array-like
   and sparse matrices from scipy.sparse as input**.
 
@@ -508,6 +528,8 @@ Note: L2 normalization is also known as spatial sign preprocessing.
   representation** (see ``scipy.sparse.csr_matrix``) before being fed to
   efficient Cython routines. To avoid unnecessary memory copies, it is
   recommended to choose the CSR representation upstream.
+
+|details-end|
 
 .. _preprocessing_categorical_features:
 
@@ -699,6 +721,10 @@ not dropped::
     >>> drop_enc.inverse_transform(X_trans)
     array([['female', None, None]], dtype=object)
 
+|details-start|
+**Support of categorical features with missing values**
+|details-split|
+
 :class:`OneHotEncoder` supports categorical features with missing values by
 considering the missing values as an additional category::
 
@@ -729,6 +755,8 @@ separate categories::
 
 See :ref:`dict_feature_extraction` for categorical features that are
 represented as a dict, not as scalars.
+
+|details-end|
 
 .. _encoder_infrequent_categories:
 
@@ -880,8 +908,13 @@ feature for encoding unordered categories, i.e. nominal categories [PAR]_
 [MIC]_. This encoding scheme is useful with categorical features with high
 cardinality, where one-hot encoding would inflate the feature space making it
 more expensive for a downstream model to process. A classical example of high
-cardinality categories are location based such as zip code or region. For the
-binary classification target, the target encoding is given by:
+cardinality categories are location based such as zip code or region.
+
+|details-start|
+**Binary classification targets**
+|details-split|
+
+For the binary classification target, the target encoding is given by:
 
 .. math::
     S_i = \lambda_i\frac{n_{iY}}{n_i} + (1 - \lambda_i)\frac{n_Y}{n}
@@ -903,6 +936,12 @@ computed as an empirical Bayes estimate: :math:`m=\sigma_i^2/\tau^2`, where
 :math:`\sigma_i^2` is the variance of `y` with category :math:`i` and
 :math:`\tau^2` is the global variance of `y`.
 
+|details-end|
+
+|details-start|
+**Multiclass classification targets**
+|details-split|
+
 For multiclass classification targets, the formulation is similar to binary
 classification:
 
@@ -916,6 +955,12 @@ where :math:`S_{ij}` is the encoding for category :math:`i` and class :math:`j`,
 number of observations, and :math:`\lambda_i` is a shrinkage factor for category
 :math:`i`.
 
+|details-end|
+
+|details-start|
+**Continuous targets**
+|details-split|
+
 For continuous targets, the formulation is similar to binary classification:
 
 .. math::
@@ -923,6 +968,8 @@ For continuous targets, the formulation is similar to binary classification:
 
 where :math:`L_i` is the set of observations with category :math:`i` and
 :math:`n_i` is the number of observations with category :math:`i`.
+
+|details-end|
 
 :meth:`~TargetEncoder.fit_transform` internally relies on a :term:`cross fitting`
 scheme to prevent target information from leaking into the train-time
@@ -1038,6 +1085,8 @@ For instance, we can use the Pandas function :func:`pandas.cut`::
 
   >>> import pandas as pd
   >>> import numpy as np
+  >>> from sklearn import preprocessing
+  >>>
   >>> bins = [0, 1, 13, 20, 60, np.inf]
   >>> labels = ['infant', 'kid', 'teen', 'adult', 'senior citizen']
   >>> transformer = preprocessing.FunctionTransformer(
@@ -1250,7 +1299,9 @@ Interestingly, a :class:`SplineTransformer` of ``degree=0`` is the same as
     * :ref:`sphx_glr_auto_examples_linear_model_plot_polynomial_interpolation.py`
     * :ref:`sphx_glr_auto_examples_applications_plot_cyclical_feature_engineering.py`
 
-.. topic:: References:
+|details-start|
+**References**
+|details-split|
 
     * Eilers, P., & Marx, B. (1996). :doi:`Flexible Smoothing with B-splines and
       Penalties <10.1214/ss/1038425655>`. Statist. Sci. 11 (1996), no. 2, 89--121.
@@ -1258,6 +1309,8 @@ Interestingly, a :class:`SplineTransformer` of ``degree=0`` is the same as
     * Perperoglou, A., Sauerbrei, W., Abrahamowicz, M. et al. :doi:`A review of
       spline function procedures in R <10.1186/s12874-019-0666-3>`.
       BMC Med Res Methodol 19, 46 (2019).
+
+|details-end|
 
 .. _function_transformer:
 

@@ -22,10 +22,16 @@ from sklearn.datasets import (
     fetch_kddcup99,
     fetch_olivetti_faces,
     fetch_rcv1,
+    fetch_species_distributions,
 )
 from sklearn.tests import random_seed
 from sklearn.utils import _IS_32BIT
-from sklearn.utils.fixes import np_base_version, parse_version, sp_version
+from sklearn.utils._testing import get_pytest_filterwarning_lines
+from sklearn.utils.fixes import (
+    np_base_version,
+    parse_version,
+    sp_version,
+)
 
 if parse_version(pytest.__version__) < parse_version(PYTEST_MIN_VERSION):
     raise ImportError(
@@ -70,6 +76,7 @@ dataset_fetchers = {
     "fetch_kddcup99_fxt": fetch_kddcup99,
     "fetch_olivetti_faces_fxt": fetch_olivetti_faces,
     "fetch_rcv1_fxt": fetch_rcv1,
+    "fetch_species_distributions_fxt": fetch_species_distributions,
 }
 
 if scipy_datasets_require_network:
@@ -112,6 +119,7 @@ fetch_covtype_fxt = _fetch_fixture(fetch_covtype)
 fetch_kddcup99_fxt = _fetch_fixture(fetch_kddcup99)
 fetch_olivetti_faces_fxt = _fetch_fixture(fetch_olivetti_faces)
 fetch_rcv1_fxt = _fetch_fixture(fetch_rcv1)
+fetch_species_distributions_fxt = _fetch_fixture(fetch_species_distributions)
 raccoon_face_fxt = pytest.fixture(raccoon_face_or_skip)
 
 
@@ -271,6 +279,13 @@ def pytest_configure(config):
     # Register global_random_seed plugin if it is not already registered
     if not config.pluginmanager.hasplugin("sklearn.tests.random_seed"):
         config.pluginmanager.register(random_seed)
+
+    if environ.get("SKLEARN_WARNINGS_AS_ERRORS", "0") != "0":
+        # This seems like the only way to programmatically change the config
+        # filterwarnings. This was suggested in
+        # https://github.com/pytest-dev/pytest/issues/3311#issuecomment-373177592
+        for line in get_pytest_filterwarning_lines():
+            config.addinivalue_line("filterwarnings", line)
 
 
 @pytest.fixture
