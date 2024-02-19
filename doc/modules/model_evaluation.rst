@@ -898,27 +898,22 @@ In this context, we can define the notions of precision and recall:
 
 (Sometimes recall is also called ''sensitivity'')
 
-F-measure is the weighted harmonic mean of precision and recall, with precision's contribution to the mean weighted by
-some parameter :math:`\beta`:
 F-measure is the weighted harmonic mean of precision and recall, with precision's
 contribution to the mean weighted by some parameter :math:`\beta`:
+
 .. math::
 
    F_\beta = (1 + \beta^2) \frac{\text{precision} \times \text{recall}}{\beta^2 \text{precision} + \text{recall}}
 
 To avoid division by zero when precision and recall are zero, Scikit-Learn calculates F-measure with this
 otherwise-equivalent formula:
-To avoid division by zero when precision and recall are zero, we can define the
-F-measure with this otherwise-equivalent formula:
+
 .. math::
 
-   F_\beta = \frac{(1 + \beta^2) \text{tp}}{(1 + \beta^2) \text{tp} + \text{fp} + \beta^2 \text{fn}}.
+   F_\beta = \frac{(1 + \beta^2) \text{tp}}{(1 + \beta^2) \text{tp} + \text{fp} + \beta^2 \text{fn}}
 
-Note that this formula is still undefined when there are no true positives, false positives, nor false negatives. By
-default, F-1 for a set of exclusively true negatives is calculated as 0, however this behavior can be changed using the
-`zero_division` parameter.
 Note that this formula is still undefined when there are no true positives, false
-positives, nor false negatives. By default, F-1 for a set of exclusively true negatives
+positives, or false negatives. By default, F-1 for a set of exclusively true negatives
 is calculated as 0, however this behavior can be changed using the `zero_division`
 parameter.
 Here are some small examples in binary classification::
@@ -968,10 +963,17 @@ specified by the ``average`` argument to the
 :func:`average_precision_score`, :func:`f1_score`,
 :func:`fbeta_score`, :func:`precision_recall_fscore_support`,
 :func:`precision_score` and :func:`recall_score` functions, as described
-:ref:`above <average>`. Note that if all labels are included, "micro"-averaging
-in a multiclass setting will produce precision, recall and :math:`F`
-that are all identical to accuracy. Also note that "weighted" averaging may
-produce an F-score that is not between precision and recall.
+:ref:`above <average>`.
+
+Note the following behaviors when averaging:
+
+* If all labels are included, "micro"-averaging in a multiclass setting will produce
+  precision, recall and :math:`F` that are all identical to accuracy.
+* "weighted" averaging may produce a F-score that is not between precision and recall.
+* "macro" averaging for F-measures is calculated as the arithmetic mean over
+  per-label/class F-measures, not the harmonic mean over the arithmetic precision and
+  recall means. Both calculations can be seen in the literature but are not equivalent,
+  see [OB2019]_ for details.
 
 To make this more explicit, consider the following notation:
 
@@ -1031,6 +1033,11 @@ Similarly, labels not present in the data sample may be accounted for in macro-a
 
   >>> metrics.precision_score(y_true, y_pred, labels=[0, 1, 2, 3], average='macro')
   0.166...
+
+.. topic:: References:
+
+    .. [OB2019] :arxiv:`Opitz, J., & Burst, S. (2019). "Macro f1 and macro f1."
+       <1911.03347>`
 
 .. _jaccard_similarity_score:
 

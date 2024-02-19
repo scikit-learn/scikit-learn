@@ -26,7 +26,12 @@ from sklearn.datasets import (
 )
 from sklearn.tests import random_seed
 from sklearn.utils import _IS_32BIT
-from sklearn.utils.fixes import np_base_version, parse_version, sp_version
+from sklearn.utils._testing import get_pytest_filterwarning_lines
+from sklearn.utils.fixes import (
+    np_base_version,
+    parse_version,
+    sp_version,
+)
 
 if parse_version(pytest.__version__) < parse_version(PYTEST_MIN_VERSION):
     raise ImportError(
@@ -274,6 +279,13 @@ def pytest_configure(config):
     # Register global_random_seed plugin if it is not already registered
     if not config.pluginmanager.hasplugin("sklearn.tests.random_seed"):
         config.pluginmanager.register(random_seed)
+
+    if environ.get("SKLEARN_WARNINGS_AS_ERRORS", "0") != "0":
+        # This seems like the only way to programmatically change the config
+        # filterwarnings. This was suggested in
+        # https://github.com/pytest-dev/pytest/issues/3311#issuecomment-373177592
+        for line in get_pytest_filterwarning_lines():
+            config.addinivalue_line("filterwarnings", line)
 
 
 @pytest.fixture
