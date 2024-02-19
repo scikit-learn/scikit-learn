@@ -1438,7 +1438,7 @@ class _MetadataRequester:
                 # starting with __ with the `_ClassName`.
                 method = attr[attr.index(substr) + len(substr) :]
                 for prop, alias in value.items():
-                    # here we "add" request values specified via those class attributes
+                    # Here we add request values specified via those class attributes
                     # to the `MetadataRequest` object. Adding a request which already
                     # exists will override the previous one. Since we go through the
                     # MRO in reverse order, the one specified by the lowest most classes
