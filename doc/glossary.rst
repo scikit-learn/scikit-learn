@@ -285,23 +285,25 @@ General Concepts
         Note that in this case, the precision can be platform dependent.
         The `numeric` dtype refers to accepting both `integer` and `floating`.
 
-        In regards to the efficiency and precision of the NumPy array, directly
-        comparing the selection of 64-bit data types (np.float64, np.int64) with
-        32-bit types (np.float32, np.int32) underscores a critical trade-off. 
-        The 64-bit types offer more accurate results due to their lower floating-point
-        error, but demand more computational resources, resulting in slower 
-        operations and increased memory usage. In contrast, 32-bit types promise 
-        enhanced operation speed and reduced memory consumption, albeit at the 
-        sacrifice of accuracy. However, the actual benefit of using lower precision 
-        types hinges not only on potential optimizations like vectorization, SIMD, 
-        or cache optimization but crucially on the compatibility of the algorithm in use.
+        When it comes to choosing between 64-bit dtype (i.e. `np.float64` and
+        `np.int64`) and 32-bit dtype (i.e. `np.float32` and `np.int32`), it
+        boils down to a trade-off between efficiency and precision. The 64-bit
+        types offer more accurate results due to their lower floating-point
+        error, but demand more computational resources, resulting in slower
+        operations and increased memory usage. In contrast, 32-bit types
+        promise enhanced operation speed and reduced memory consumption, but
+        introduce a larger floating-point error. The efficiency improvement are
+        dependent on lower level optimization such as like vectorization,
+        single instruction multiple dispatch (SIMD), or cache optimization but
+        crucially on the compatibility of the algorithm in use.
 
-        Specifically, the choice of precision should account for whether the employed 
-        algorithm can effectively leverage np.float32. Some algorithms, especially 
-        certain minimization methods, are exclusively coded for np.float64, meaning
-        that even if np.float32 is passed, it triggers an automatic conversion back 
-        to np.float64. This not only negates the intended computational savings but 
-        also introduces additional overhead, making operations with np.float32 unexpectedly 
+        Specifically, the choice of precision should account for whether the
+        employed algorithm can effectively leverage `np.float32`. Some
+        algorithms, especially certain minimization methods, are exclusively
+        coded for `np.float64`, meaning that even if `np.float32` is passed, it
+        triggers an automatic conversion back to `np.float64`. This not only
+        negates the intended computational savings but also introduces
+        additional overhead, making operations with `np.float32` unexpectedly
         slower and more memory-intensive due to this extra conversion step.
 
     duck typing
