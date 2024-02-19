@@ -2,15 +2,17 @@ import functools
 import math
 import operator
 import re
+import warnings
 from abc import ABC, abstractmethod
 from collections.abc import Iterable
 from inspect import signature
 from numbers import Integral, Real
 
 import numpy as np
-from scipy.sparse import csr_matrix, issparse
-
+from scipy import sparse
+from scipy.sparse import issparse, isspmatrix
 from .._config import config_context, get_config
+from .fixes import parse_version, sp_version
 from .validation import _is_arraylike_not_scalar
 
 
@@ -36,6 +38,7 @@ def validate_parameter_constraints(parameter_constraints, params, caller_name):
         - an Interval object, representing a continuous or discrete range of numbers
         - the string "array-like"
         - the string "sparse matrix"
+        - the string "sparse container"
         - the string "random_state"
         - callable
         - None, meaning that None is a valid value for the parameter
@@ -113,8 +116,8 @@ def make_constraint(constraint):
     """
     if isinstance(constraint, str) and constraint == "array-like":
         return _ArrayLikes()
-    if isinstance(constraint, str) and constraint == "sparse matrix":
-        return _SparseMatrices()
+    if isinstance(constraint, str) and constraint == "sparse container":
+        return _SparseContainers()
     if isinstance(constraint, str) and constraint == "random_state":
         return _RandomStates()
     if constraint is callable:
@@ -529,18 +532,19 @@ class _ArrayLikes(_Constraint):
         return "an array-like"
 
 
-class _SparseMatrices(_Constraint):
-    """Constraint representing sparse matrices."""
+class _SparseContainers(_Constraint):
+    """Constraint representing sparse containers."""
 
     def is_satisfied_by(self, val):
         return issparse(val)
 
     def __str__(self):
-        return "a sparse matrix"
+        return "a sparse container"
 
 
 class _Callables(_Constraint):
     """Constraint representing callables."""
+
 
     def is_satisfied_by(self, val):
         return callable(val)
@@ -586,9 +590,20 @@ class _Booleans(_Constraint):
         self._constraints = [
             _InstancesOf(bool),
             _InstancesOf(np.bool_),
+            _InstancesOf(Integral),
         ]
 
     def is_satisfied_by(self, val):
+        # TODO(1.4) remove support for Integral.
+        if isinstance(val, Integral) and not isinstance(val, bool):
+            warnings.warn(
+                (
+                    "Passing an int for a boolean parameter is deprecated in version"
+                    " 1.2 and won't be supported anymore in version 1.4."
+                ),
+                FutureWarning,
+            )
+
         return any(c.is_satisfied_by(val) for c in self._constraints)
 
     def __str__(self):
@@ -838,11 +853,14 @@ def generate_valid_param(constraint):
     if isinstance(constraint, _ArrayLikes):
         return np.array([1, 2, 3])
 
-    if isinstance(constraint, _SparseMatrices):
-        return csr_matrix([[0, 1], [1, 0]])
+    if isinstance(constraint, _SparseContainers):
+        return sparse.csr_matrix([[0, 1], [1, 0]])
 
     if isinstance(constraint, _RandomStates):
-        return np.random.RandomState(42)
+        if sp_version >= parse_version("1.8"):
+            return sparse.csr_array([[0, 1], [1, 0]])
+        return sparse.csr_matrix([[0, 1], [1, 0]])
+
 
     if isinstance(constraint, _Callables):
         return lambda x: x
