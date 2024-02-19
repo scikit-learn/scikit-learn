@@ -31,6 +31,11 @@ Metadata Routing
   includes a sub-estimator which doesn't support metadata routing.
   :pr:`28256` by `Adrin Jalali`_.
 
+- |Fix| Fix :class:`multioutput.MultiOutputRegressor` and
+  :class:`multioutput.MultiOutputClassifier` to work with estimators that don't
+  consume any metadata when metadata routing is enabled.
+  :pr:`28240` by `Adrin Jalali`_.
+
 DataFrame Support
 -----------------
 
@@ -75,14 +80,6 @@ Changes impacting many modules
   :class:`~multiclass.OneVsRestClassifier` that their sub-estimators don't implement,
   the `AttributeError` now reraises in the traceback.
   :pr:`28167` by :user:`Stefanie Senger <StefanieSenger>`.
-
-Metadata Routing
-----------------
-
-- |Fix| Fix :class:`multioutput.MultiOutputRegressor` and
-  :class:`multioutput.MultiOutputClassifier` to work with estimators that don't
-  consume any metadata when metadata routing is enabled.
-  :pr:`28240` by `Adrin Jalali`_.
 
 Changelog
 ---------

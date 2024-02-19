@@ -123,6 +123,14 @@ Changelog
   :class:`~calibration.CalibrationDisplay`.
   :pr:`28051` by :user:`Pierre de Fréminville <pidefrem>`.
 
+- |API| :func:`metrics.precision_recall_curve` deprecated the keyword argument `probas_pred`
+  in favor of `y_score`. `probas_pred` will be removed in version 1.7.
+  :pr:`28092` by :user:`Adam Li <adam2392>`.
+
+- |API| :func:`metrics.brier_score_loss` deprecated the keyword argument `y_prob`
+  in favor of `y_proba`. `y_prob` will be removed in version 1.7.
+  :pr:`28092` by :user:`Adam Li <adam2392>`.
+
 :mod:`sklearn.model_selection`
 ..............................
 
@@ -136,6 +144,16 @@ Changelog
   missing-values in the data matrix ``X``. Missing-values are handled by randomly moving all of
   the samples to the left, or right child node as the tree is traversed. 
   :pr:`27966` by :user:`Adam Li <adam2392>`.
+
+:mod:`sklearn.pipeline`
+.......................
+
+- |Feature| :class:`pipeline.FeatureUnion` can now use the
+  `verbose_feature_names_out` attribute. If `True`, `get_feature_names_out`
+  will prefix all feature names with the name of the transformer
+  that generated that feature. If `False`, `get_feature_names_out` will not
+  prefix any feature names and will error if feature names are not unique.
+  :pr:`25991` by :user:`Jiawei Zhang <jiawei-zhang-a>`.
 
 .. rubric:: Code and documentation contributors
 
