@@ -635,7 +635,7 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
         """
         router = MetadataRouter(owner=self.__class__.__name__)
         router.add(
-            estimator=self.estimator,
+            estimator=self._get_estimator(),
             method_mapping=MethodMapping().add(callee="fit", caller="fit"),
         )
         return router
@@ -844,14 +844,7 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
 
     def _get_estimator(self):
         """Resolve which estimator to return (default is DecisionTreeClassifier)"""
-        estimator = self.estimator
-
-        if estimator is None:
-            # we want all classifiers that don't expose a random_state
-            # to be deterministic (and we don't want to expose this one).
-            estimator = DecisionTreeClassifier()
-
-        return estimator
+    return self.estimator or DecisionTreeClassifier()
 
     def _set_oob_score(self, X, y):
         n_samples = y.shape[0]
@@ -1353,10 +1346,4 @@ class BaggingRegressor(RegressorMixin, BaseBagging):
 
     def _get_estimator(self):
         """Resolve which estimator to return (default is DecisionTreeClassifier)"""
-        estimator = self.estimator
-
-        if estimator is None:
-            # we want all classifiers that don't expose a random_state
-            # to be deterministic (and we don't want to expose this one).
-            estimator = DecisionTreeRegressor()
-        return estimator
+    return self.estimator or DecisionTreeRegressor()
