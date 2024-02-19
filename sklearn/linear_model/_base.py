@@ -33,7 +33,7 @@ from ..base import (
     _fit_context,
 )
 from ..utils import check_array, check_random_state
-from ..utils._array_api import get_namespace
+from ..utils._array_api import _is_numpy_namespace, get_namespace
 from ..utils._seq_dataset import (
     ArrayDataset32,
     ArrayDataset64,
@@ -290,8 +290,11 @@ class LinearModel(BaseEstimator, metaclass=ABCMeta):
         if self.fit_intercept:
             # We always want coef_.dtype=X.dtype. For instance, X.dtype can differ from
             # coef_.dtype if warm_start=True.
-            self.coef_ = np.divide(self.coef_, X_scale, dtype=X_scale.dtype)
-            self.intercept_ = y_offset - np.dot(X_offset, self.coef_.T)
+            xp, _ = get_namespace(self.coef_)
+            self.coef = self.coef_ / X_scale
+            # vecdot not available in earlier numpy versions
+            vecdot = xp.vecdot if not _is_numpy_namespace(xp) else np.dot
+            self.intercept_ = y_offset - vecdot(X_offset, self.coef_.T)
         else:
             self.intercept_ = 0.0
 

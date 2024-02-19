@@ -87,7 +87,7 @@ def device(x):
     out : device
         `device` object (see the "Device Support" section of the array API spec).
     """
-    if isinstance(x, (numpy.ndarray, numpy.generic)):
+    if isinstance(x, (numpy.ndarray, numpy.generic)) or not hasattr(x, "device"):
         return "cpu"
     return x.device
 

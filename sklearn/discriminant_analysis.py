@@ -113,6 +113,8 @@ def _class_means(X, y):
     """
     xp, is_array_api_compliant = get_namespace(X)
     classes, y = xp.unique_inverse(y)
+    # Force lazy array api backends to call compute
+    classes = np.asarray(classes)
     means = xp.zeros((classes.shape[0], X.shape[1]), device=device(X), dtype=X.dtype)
 
     if is_array_api_compliant:
@@ -494,7 +496,8 @@ class LinearDiscriminantAnalysis(
         else:
             svd = scipy.linalg.svd
 
-        n_samples, n_features = X.shape
+        # Materialize, otherwise shape could be nan for like dask
+        n_samples, n_features = np.asarray(X).shape
         n_classes = self.classes_.shape[0]
 
         self.means_ = _class_means(X, y)
@@ -516,14 +519,16 @@ class LinearDiscriminantAnalysis(
         std[std == 0] = 1.0
         fac = xp.asarray(1.0 / (n_samples - n_classes))
 
+        import dask.array as da
+
         # 2) Within variance scaling
         X = xp.sqrt(fac) * (Xc / std)
         # SVD of centered (within)scaled data
         U, S, Vt = svd(X, full_matrices=False)
 
-        rank = xp.sum(xp.astype(S > self.tol, xp.int32))
+        rank = int(xp.sum(xp.astype(S > self.tol, xp.int32)))
         # Scaling of within covariance is: V' 1/S
-        scalings = (Vt[:rank, :] / std).T / S[:rank]
+        scalings = (Vt[:rank] / std).T / S[:rank]
         fac = 1.0 if n_classes == 1 else 1.0 / (n_classes - 1)
 
         # 3) Between variance scaling
@@ -534,7 +539,11 @@ class LinearDiscriminantAnalysis(
         # Centers are living in a space with n_classes-1 dim (maximum)
         # Use SVD to find projection in the space spanned by the
         # (n_classes) centers
-        _, S, Vt = svd(X, full_matrices=False)
+        if isinstance(X, da.Array):
+            # dask can flip signs of Vt sometimes
+            _, S, Vt = svd(X, full_matrices=False, coerce_signs=False)
+        else:
+            _, S, Vt = svd(X, full_matrices=False)
 
         if self._max_components == 0:
             self.explained_variance_ratio_ = xp.empty((0,), dtype=S.dtype)
@@ -543,7 +552,7 @@ class LinearDiscriminantAnalysis(
                 : self._max_components
             ]
 
-        rank = xp.sum(xp.astype(S > self.tol * S[0], xp.int32))
+        rank = int(xp.sum(xp.astype(S > self.tol * S[0], xp.int32)))
         self.scalings_ = scalings @ Vt.T[:, :rank]
         coef = (self.means_ - self.xbar_) @ self.scalings_
         self.intercept_ = -0.5 * xp.sum(coef**2, axis=1) + xp.log(self.priors_)
@@ -581,7 +590,9 @@ class LinearDiscriminantAnalysis(
         X, y = self._validate_data(
             X, y, ensure_min_samples=2, dtype=[xp.float64, xp.float32]
         )
-        self.classes_ = unique_labels(y)
+        # This operation could result in nan shape for lazy backends
+        # so realize by calling np.asarray
+        self.classes_ = np.asarray(unique_labels(y))
         n_samples, _ = X.shape
         n_classes = self.classes_.shape[0]
 
@@ -592,6 +603,8 @@ class LinearDiscriminantAnalysis(
 
         if self.priors is None:  # estimate priors from sample
             _, cnts = xp.unique_counts(y)  # non-negative ints
+            # realize for lazy backends to prevent nan shapes
+            cnts = np.asarray(cnts)
             self.priors_ = xp.astype(cnts, X.dtype) / float(y.shape[0])
         else:
             self.priors_ = xp.asarray(self.priors, dtype=X.dtype)
@@ -605,7 +618,9 @@ class LinearDiscriminantAnalysis(
 
         # Maximum number of components no matter what n_components is
         # specified:
-        max_components = min(n_classes - 1, X.shape[1])
+
+        # Force computing shape here
+        max_components = min(n_classes - 1, np.asarray(X).shape[1])
 
         if self.n_components is None:
             self._max_components = max_components
