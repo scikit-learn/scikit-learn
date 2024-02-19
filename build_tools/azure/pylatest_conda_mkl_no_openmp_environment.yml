@@ -5,7 +5,7 @@ channels:
   - defaults
 dependencies:
   - python
-  - numpy<1.25
+  - numpy
   - blas[build=mkl]
   - scipy
   - joblib
