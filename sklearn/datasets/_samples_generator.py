@@ -1503,7 +1503,7 @@ def make_sparse_coded_signal(
         if `data_transposed` is False, otherwise it's `(n_components, n_samples)`.
 
     Examples
-    -------
+    --------
     >>> from sklearn.datasets import make_sparse_coded_signal
     >>> data, dictionary, code = make_sparse_coded_signal(n_samples=1,
     ...                                    n_components=2,
@@ -1915,8 +1915,8 @@ def make_swiss_roll(n_samples=100, *, noise=0.0, random_state=None, hole=False):
     prefer_skip_nested_validation=True,
 )
 def make_s_curve(n_samples=100, *, noise=0.0, random_state=None):
-    """Generate an S curve dataset.
-
+    r"""Generate an S curve dataset.
+    
     Read more in the :ref:`User Guide <sample_generators>`.
 
     Parameters
@@ -1938,11 +1938,11 @@ def make_s_curve(n_samples=100, *, noise=0.0, random_state=None):
         The points.
 
     t : ndarray of shape (n_samples,)
-        The univariate position of the sample according to the main dimension
-        of the points in the manifold.
+        The univariate position of the sample according 
+        to the main dimension of the points in the manifold.
 
     Examples
-    -------
+    --------
     >>> from sklearn.datasets import make_s_curve
     >>> X,t = make_s_curve(n_samples=2, noise=0.1, random_state=34)
     >>> X
