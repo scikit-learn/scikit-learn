@@ -1505,19 +1505,18 @@ def make_sparse_coded_signal(
     Examples
     -------
     >>> from sklearn.datasets import make_sparse_coded_signal
-    >>> y, X, w = make_sparse_coded_signal(n_samples=1,
+    >>> data, dictionary, code = make_sparse_coded_signal(n_samples=1,
     ...                                    n_components=2,
     ...                                    n_features=2,
     ...                                    n_nonzero_coefs=1,
     ...                                    random_state=0)
-    >>> y
+    >>> data
     array([-1.24372273, -0.6900468 ])
-    >>> X
+    >>> dictionary
     array([[0.87442883, 0.48515381],
        [0.17578966, 0.98442775]])
-    >>> w
+    >>> code
     array([-1.42232584,  0.        ])
-
     """
     generator = check_random_state(random_state)
 
