@@ -9,8 +9,8 @@ estimator, as a chain of transforms and estimators.
 #         Lars Buitinck
 # License: BSD
 
-from collections import defaultdict
-from itertools import islice
+from collections import Counter, defaultdict
+from itertools import chain, islice
 
 import numpy as np
 from scipy import sparse
@@ -1368,6 +1368,14 @@ class FeatureUnion(_RoutingNotSupportedMixin, TransformerMixin, _BaseComposition
         If True, the time elapsed while fitting each transformer will be
         printed as it is completed.
 
+    verbose_feature_names_out : bool, default=True
+        If True, :meth:`get_feature_names_out` will prefix all feature names
+        with the name of the transformer that generated that feature.
+        If False, :meth:`get_feature_names_out` will not prefix any feature
+        names and will error if feature names are not unique.
+
+        .. versionadded:: 1.5
+
     Attributes
     ----------
     named_transformers : :class:`~sklearn.utils.Bunch`
@@ -1418,12 +1426,19 @@ class FeatureUnion(_RoutingNotSupportedMixin, TransformerMixin, _BaseComposition
     _required_parameters = ["transformer_list"]
 
     def __init__(
-        self, transformer_list, *, n_jobs=None, transformer_weights=None, verbose=False
+        self,
+        transformer_list,
+        *,
+        n_jobs=None,
+        transformer_weights=None,
+        verbose=False,
+        verbose_feature_names_out=True,
     ):
         self.transformer_list = transformer_list
         self.n_jobs = n_jobs
         self.transformer_weights = transformer_weights
         self.verbose = verbose
+        self.verbose_feature_names_out = verbose_feature_names_out
 
     def set_output(self, *, transform=None):
         """Set the output container when `"transform"` and `"fit_transform"` are called.
@@ -1554,17 +1569,68 @@ class FeatureUnion(_RoutingNotSupportedMixin, TransformerMixin, _BaseComposition
         feature_names_out : ndarray of str objects
             Transformed feature names.
         """
-        feature_names = []
+        # List of tuples (name, feature_names_out)
+        transformer_with_feature_names_out = []
         for name, trans, _ in self._iter():
             if not hasattr(trans, "get_feature_names_out"):
                 raise AttributeError(
                     "Transformer %s (type %s) does not provide get_feature_names_out."
                     % (str(name), type(trans).__name__)
                 )
-            feature_names.extend(
-                [f"{name}__{f}" for f in trans.get_feature_names_out(input_features)]
+            feature_names_out = trans.get_feature_names_out(input_features)
+            transformer_with_feature_names_out.append((name, feature_names_out))
+
+        return self._add_prefix_for_feature_names_out(
+            transformer_with_feature_names_out
+        )
+
+    def _add_prefix_for_feature_names_out(self, transformer_with_feature_names_out):
+        """Add prefix for feature names out that includes the transformer names.
+
+        Parameters
+        ----------
+        transformer_with_feature_names_out : list of tuples of (str, array-like of str)
+            The tuple consistent of the transformer's name and its feature names out.
+
+        Returns
+        -------
+        feature_names_out : ndarray of shape (n_features,), dtype=str
+            Transformed feature names.
+        """
+        if self.verbose_feature_names_out:
+            # Prefix the feature names out with the transformers name
+            names = list(
+                chain.from_iterable(
+                    (f"{name}__{i}" for i in feature_names_out)
+                    for name, feature_names_out in transformer_with_feature_names_out
+                )
             )
-        return np.asarray(feature_names, dtype=object)
+            return np.asarray(names, dtype=object)
+
+        # verbose_feature_names_out is False
+        # Check that names are all unique without a prefix
+        feature_names_count = Counter(
+            chain.from_iterable(s for _, s in transformer_with_feature_names_out)
+        )
+        top_6_overlap = [
+            name for name, count in feature_names_count.most_common(6) if count > 1
+        ]
+        top_6_overlap.sort()
+        if top_6_overlap:
+            if len(top_6_overlap) == 6:
+                # There are more than 5 overlapping names, we only show the 5
+                # of the feature names
+                names_repr = str(top_6_overlap[:5])[:-1] + ", ...]"
+            else:
+                names_repr = str(top_6_overlap)
+            raise ValueError(
+                f"Output feature names: {names_repr} are not unique. Please set "
+                "verbose_feature_names_out=True to add prefixes to feature names"
+            )
+
+        return np.concatenate(
+            [name for _, name in transformer_with_feature_names_out],
+        )
 
     def fit(self, X, y=None, **fit_params):
         """Fit all transformers using X.

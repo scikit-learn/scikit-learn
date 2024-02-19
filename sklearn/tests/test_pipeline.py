@@ -1138,10 +1138,8 @@ def test_set_feature_union_passthrough():
     )
 
 
-def test_feature_union_passthrough_get_feature_names_out():
-    """Check that get_feature_names_out works with passthrough without
-    passing input_features.
-    """
+def test_feature_union_passthrough_get_feature_names_out_true():
+    """Check feature_names_out for verbose_feature_names_out=True (default)"""
     X = iris.data
     pca = PCA(n_components=2, svd_solver="randomized", random_state=0)
 
@@ -1158,6 +1156,73 @@ def test_feature_union_passthrough_get_feature_names_out():
         ],
         ft.get_feature_names_out(),
     )
+
+
+def test_feature_union_passthrough_get_feature_names_out_false():
+    """Check feature_names_out for verbose_feature_names_out=False"""
+    X = iris.data
+    pca = PCA(n_components=2, svd_solver="randomized", random_state=0)
+
+    ft = FeatureUnion(
+        [("pca", pca), ("passthrough", "passthrough")], verbose_feature_names_out=False
+    )
+    ft.fit(X)
+    assert_array_equal(
+        [
+            "pca0",
+            "pca1",
+            "x0",
+            "x1",
+            "x2",
+            "x3",
+        ],
+        ft.get_feature_names_out(),
+    )
+
+
+def test_feature_union_passthrough_get_feature_names_out_false_errors():
+    """Check get_feature_names_out and non-verbose names and colliding names."""
+    pd = pytest.importorskip("pandas")
+    X = pd.DataFrame([[1, 2], [2, 3]], columns=["a", "b"])
+
+    select_a = FunctionTransformer(
+        lambda X: X[["a"]], feature_names_out=lambda self, _: np.asarray(["a"])
+    )
+    union = FeatureUnion(
+        [("t1", StandardScaler()), ("t2", select_a)],
+        verbose_feature_names_out=False,
+    )
+    union.fit(X)
+
+    msg = re.escape(
+        "Output feature names: ['a'] are not unique. "
+        "Please set verbose_feature_names_out=True to add prefixes to feature names"
+    )
+
+    with pytest.raises(ValueError, match=msg):
+        union.get_feature_names_out()
+
+
+def test_feature_union_passthrough_get_feature_names_out_false_errors_overlap_over_5():
+    """Check get_feature_names_out with non-verbose names and >= 5 colliding names."""
+    pd = pytest.importorskip("pandas")
+    X = pd.DataFrame([list(range(10))], columns=[f"f{i}" for i in range(10)])
+
+    union = FeatureUnion(
+        [("t1", "passthrough"), ("t2", "passthrough")],
+        verbose_feature_names_out=False,
+    )
+
+    union.fit(X)
+
+    msg = re.escape(
+        "Output feature names: ['f0', 'f1', 'f2', 'f3', 'f4', ...] "
+        "are not unique. Please set verbose_feature_names_out=True to add prefixes to"
+        " feature names"
+    )
+
+    with pytest.raises(ValueError, match=msg):
+        union.get_feature_names_out()
 
 
 def test_step_name_validation():
