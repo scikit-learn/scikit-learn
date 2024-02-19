@@ -304,6 +304,7 @@ METAESTIMATORS: list = [
         "estimator": ConsumingClassifier,
         "X": X,
         "y": y,
+        "preserves_metadata": False,
         "estimator_routing_methods": ["fit"],
     },
     {
@@ -312,6 +313,7 @@ METAESTIMATORS: list = [
         "estimator": ConsumingRegressor,
         "X": X,
         "y": y,
+        "preserves_metadata": False,
         "estimator_routing_methods": ["fit"],
     },
 ]

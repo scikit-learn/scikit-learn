@@ -106,7 +106,6 @@ def _parallel_build_estimators(
     max_samples = ensemble._max_samples
     bootstrap = ensemble.bootstrap
     bootstrap_features = ensemble.bootstrap_features
-    support_sample_weight = has_fit_parameter(ensemble.estimator_, "sample_weight")
     has_check_input = has_fit_parameter(ensemble.estimator_, "check_input")
     requires_feature_indexing = bootstrap_features or max_features != n_features
 
@@ -118,6 +117,7 @@ def _parallel_build_estimators(
 
     # TODO: (slep6) remove if condition for unrouted sample_weight when metadata
     # routing can't be disabled.
+    support_sample_weight = has_fit_parameter(ensemble.estimator_, "sample_weight")
     if not _routing_enabled() and (
         not support_sample_weight and fit_params.get("sample_weight") is not None
     ):

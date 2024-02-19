@@ -4,7 +4,6 @@ Testing for the bagging ensemble module (sklearn.ensemble.bagging).
 
 # Author: Gilles Louppe
 # License: BSD 3 clause
-import re
 from itertools import cycle, product
 
 import joblib
@@ -945,57 +944,6 @@ def test_bagging_allow_nan_tag(bagging, expected_allow_nan):
     assert bagging._get_tags()["allow_nan"] == expected_allow_nan
 
 
-# Metadata Routing Tests
-# ======================
-
-
-@pytest.mark.parametrize(
-    "Estimator, BaseEst",
-    [(BaggingClassifier, ConsumingClassifier), (BaggingRegressor, ConsumingRegressor)],
-)
-def test_routing_passed_metadata_not_supported(Estimator, BaseEst):
-    """Test that the right error message is raised when metadata is passed while
-    not supported when `enable_metadata_routing=False`."""
-
-    X = np.array([[0, 1], [2, 2], [4, 6]])
-    y = [1, 2, 3]
-
-    with pytest.raises(
-        ValueError, match="is only supported if enable_metadata_routing=True"
-    ):
-        Estimator(estimator=BaseEst()).fit(X, y, sample_weight=[1, 1, 1], metadata="a")
-
-
-@pytest.mark.usefixtures("enable_slep006")
-@pytest.mark.parametrize(
-    "Estimator, BaseEst",
-    [(BaggingClassifier, ConsumingClassifier), (BaggingRegressor, ConsumingRegressor)],
-)
-def test_get_metadata_routing_without_fit(Estimator, BaseEst):
-    # Test that metadata_routing() doesn't raise when called before fit.
-    est = Estimator(estimator=BaseEst())
-    est.get_metadata_routing()
-
-
-@pytest.mark.usefixtures("enable_slep006")
-@pytest.mark.parametrize(
-    "Estimator",
-    [BaggingClassifier, BaggingRegressor],
-)
-def test_get_metadata_routing_with_default_estimator(Estimator):
-    """Test that metadata routing is off by default estimator."""
-    X = np.array([[0, 1], [2, 2], [4, 6]])
-    y = [1, 2, 3]
-    sample_weight = [1.0, 1.0, 1.0]
-    est = Estimator(estimator=None, n_estimators=2, random_state=0)
-
-    with pytest.raises(
-        Exception,
-        match=r"\[sample_weight\] are passed but are not explicitly set as requested",
-    ):
-        est.fit(X, y, sample_weight=sample_weight)
-
-
 @pytest.mark.usefixtures("enable_slep006")
 @pytest.mark.parametrize(
     "Estimator, BaseEst",
@@ -1003,7 +951,11 @@ def test_get_metadata_routing_with_default_estimator(Estimator):
 )
 @pytest.mark.parametrize("prop", ["sample_weight", "metadata"])
 def test_metadata_routing_for_bagging_estimators(Estimator, BaseEst, prop):
-    """Test that metadata is routed correctly for Bagging*."""
+    """Test that metadata is routed correctly for Bagging*.
+
+    Bagging differs in that it should preserve all meta-data except for
+    ``sample_weight``.
+    """
     X = np.array([[0, 1], [2, 2], [4, 6]])
     y = [1, 2, 3]
     sample_weight, metadata = [1.0, 1.0, 1.0], "a"
@@ -1033,29 +985,3 @@ def test_metadata_routing_for_bagging_estimators(Estimator, BaseEst, prop):
                     method="fit",
                     **kwargs,
                 )
-
-
-@pytest.mark.usefixtures("enable_slep006")
-@pytest.mark.parametrize(
-    "Estimator, BaseEst",
-    [(BaggingClassifier, ConsumingClassifier), (BaggingClassifier, ConsumingRegressor)],
-)
-def test_metadata_routing_error_for_bagging_estimators(Estimator, BaseEst):
-    """Test that the right error is raised when metadata is not requested."""
-    X = np.array([[0, 1], [2, 2], [4, 6]])
-    y = [1, 2, 3]
-    sample_weight, metadata = [1, 1, 1], "a"
-
-    est = Estimator(estimator=BaseEst())
-
-    error_message = (
-        "[sample_weight, metadata] are passed but are not explicitly set as requested"
-        f" or not for {BaseEst.__name__}.fit"
-    )
-
-    with pytest.raises(ValueError, match=re.escape(error_message)):
-        est.fit(X, y, sample_weight=sample_weight, metadata=metadata)
-
-
-# End of Metadata Routing Tests
-# =============================
