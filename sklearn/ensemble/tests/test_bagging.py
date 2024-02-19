@@ -990,7 +990,8 @@ def test_get_metadata_routing_with_default_estimator(Estimator):
     est = Estimator(estimator=None, n_estimators=2, random_state=0)
 
     with pytest.raises(
-        TypeError, match=r"got unexpected argument\(s\) {'sample_weight'}"
+        Exception,
+        match=r"\[sample_weight\] are passed but are not explicitly set as requested",
     ):
         est.fit(X, y, sample_weight=sample_weight)
 

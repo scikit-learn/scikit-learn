@@ -88,14 +88,6 @@ def _generate_bagging_indices(
     return feature_indices, sample_indices
 
 
-def _supports_sample_weight(request_or_router):
-    """Check if the fit method supports sample_weight"""
-    param_names = request_or_router._get_param_names(
-        method="fit", return_alias=True, ignore_self_request=False
-    )
-    return "sample_weight" in param_names
-
-
 def _parallel_build_estimators(
     n_estimators,
     ensemble,
@@ -124,18 +116,16 @@ def _parallel_build_estimators(
 
     request_or_router = get_routing_for_object(ensemble.estimator_)
 
-    if (
-        not _supports_sample_weight(request_or_router)
-        and fit_params.get("sample_weight") is not None
+    # TODO: (slep6) remove if condition for unrouted sample_weight when metadata
+    # routing can't be disabled.
+    if not _routing_enabled() and (
+        not support_sample_weight and fit_params.get("sample_weight") is not None
     ):
         raise ValueError(
             "The base estimator doesn't support sample weight, but sample_weight is "
             "passed to the fit method."
         )
 
-    # Row sampling can be achieved either through setting sample_weight or
-    # by indexing. The former is more efficient. Therefore, use this method
-    # if possible, otherwise use indexing.
     for i in range(n_estimators):
         if verbose > 1:
             print(
@@ -146,7 +136,6 @@ def _parallel_build_estimators(
         random_state = seeds[i]
         estimator = ensemble._make_estimator(append=False, random_state=random_state)
 
-        getattr(estimator, "_records", dict()).get("fit", dict())
         if has_check_input:
             estimator_fit = partial(estimator.fit, check_input=check_input)
         else:
@@ -171,11 +160,14 @@ def _parallel_build_estimators(
         # estimator supports sample_weight and use it if it does.
         # 2. If routing is enabled, we will check if the routing supports sample
         # weight and use it if it does.
-        # Draw samples, using sample weights, and then fit
-        if (_routing_enabled() and "sample_weight" in fit_params_) or (
-            not _routing_enabled() and support_sample_weight
-        ):
-            # row subsampling via sample_weight
+
+        # Note: Row sampling can be achieved either through setting sample_weight or
+        # by indexing. The former is more efficient. Therefore, use this method
+        # if possible, otherwise use indexing.
+        if (
+            _routing_enabled() and request_or_router.consumes("fit", ("sample_weight",))
+        ) or (not _routing_enabled() and support_sample_weight):
+            # Draw sub samples, using sample weights, and then fit
             curr_sample_weight = _check_sample_weight(
                 fit_params_.pop("sample_weight", None), X
             ).copy()
@@ -191,7 +183,7 @@ def _parallel_build_estimators(
             X_ = X[:, features] if requires_feature_indexing else X
             estimator_fit(X_, y, **fit_params_)
         else:
-            # cannot use sample_weight, use indexing
+            # cannot use sample_weight, so use indexing
             y_ = _safe_indexing(y, indices)
             X_ = _safe_indexing(X, indices)
             fit_params_ = _check_method_params(X, params=fit_params_, indices=indices)
@@ -199,7 +191,6 @@ def _parallel_build_estimators(
                 X_ = X_[:, features]
             estimator_fit(X_, y_, **fit_params_)
 
-        getattr(estimator, "_records", dict()).get("fit", dict())
         estimators.append(estimator)
         estimators_features.append(features)
 
@@ -844,7 +835,7 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
 
     def _get_estimator(self):
         """Resolve which estimator to return (default is DecisionTreeClassifier)"""
-    return self.estimator or DecisionTreeClassifier()
+        return self.estimator or DecisionTreeClassifier()
 
     def _set_oob_score(self, X, y):
         n_samples = y.shape[0]
@@ -1346,4 +1337,4 @@ class BaggingRegressor(RegressorMixin, BaseBagging):
 
     def _get_estimator(self):
         """Resolve which estimator to return (default is DecisionTreeClassifier)"""
-    return self.estimator or DecisionTreeRegressor()
+        return self.estimator or DecisionTreeRegressor()

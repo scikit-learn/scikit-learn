@@ -42,6 +42,11 @@ more details.
 - |Feature| :class:`impute.IterativeImputer` now supports metadata routing in
   its `fit` method. :pr:`28187` by :user:`Stefanie Senger <StefanieSenger>`.
 
+- |Feature| :class:`ensemble.BaggingClassifier` and :class:`ensemble.BaggingRegressor`
+  now supports metadata routing. The fit methods now
+  accepts ``**fit_params`` which are passed to the underlying estimators
+  via their `fit` methods.
+  :pr:`28432` by :user:`Adam Li <adam2392>` and :user:`Benjamin Bossan <BenjaminBossan>`.
 
 Changelog
 ---------
@@ -82,12 +87,6 @@ Changelog
   :class:`ensemble.HistGradientBoostingRegressor` are now a tiny bit faster by
   pre-sorting the data before finding the thresholds for binning.
   :pr:`28102` by :user:`Christian Lorentzen <lorentzenchr>`.
-
-- |Enhancement| :class:`ensemble.BaggingClassifier` and :class:`ensemble.BaggingRegressor`
-  now supports metadata routing. The fit methods now
-  accepts ``**fit_params`` which are passed to the underlying estimators
-  via their `fit` methods.
-  :pr:`28432` by :user:`Adam Li <adam2392>`.
 
 :mod:`sklearn.feature_extraction`
 .................................
