@@ -788,7 +788,7 @@ def _convert_container(
         return sp.sparse.csr_matrix(container, dtype=dtype)
     elif constructor_name == "sparse_csr_array":
         if sp_version >= parse_version("1.8"):
-            return sp.sparse.csc_array(container, dtype=dtype)
+            return sp.sparse.csr_array(container, dtype=dtype)
         raise ValueError(
             f"sparse_csr_array is only available with scipy>=1.8.0, got {sp_version}"
         )
