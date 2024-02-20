@@ -63,6 +63,7 @@ extensions = [
     "sphinxcontrib.sass",
     "sphinx_remove_toctrees",
     "sphinx_design",
+    "sphinx_docsearch",
     # See sphinxext/
     "add_toctree_functions",
     "allow_nan_estimators",
@@ -266,7 +267,8 @@ html_theme_options = {
     "navbar_center": ["navbar-nav"],
     "navbar_end": ["theme-switcher", "navbar-icon-links", "version-switcher"],
     # navbar_persistent is persistent right (even when on mobiles)
-    "navbar_persistent": ["search-button"],
+    # "navbar_persistent": ["search-button"],
+    "navbar_persistent": "algolia-searchbox",
     "article_header_start": ["breadcrumbs"],
     "article_header_end": [],
     "article_footer_items": ["prev-next"],
@@ -954,3 +956,9 @@ else:
     linkcheck_request_headers = {
         "https://github.com/": {"Authorization": f"token {github_token}"},
     }
+
+# Algolia docsearch setting
+docsearch_app_id = os.getenv("DOCSEARCH_APP_ID")
+docsearch_api_key = os.getenv("DOCSEARCH_API_KEY")
+docsearch_index_name = "scikit-learn"
+docsearch_container = "#algolia-docsearch"
