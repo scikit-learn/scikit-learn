@@ -8,9 +8,7 @@ more than a couple of minutes) but as the dataset loader is leveraging
 joblib, successive runs will be fast (less than 200ms).
 """
 
-import os
 import random
-import shutil
 from functools import partial
 
 import numpy as np
@@ -37,9 +35,6 @@ def mock_empty_data_home(tmp_path_factory):
 
     yield data_dir
 
-    if os.path.isdir(data_dir):
-        shutil.rmtree(data_dir)
-
 
 @pytest.fixture(scope="module")
 def mock_data_home(tmp_path_factory):
@@ -47,10 +42,8 @@ def mock_data_home(tmp_path_factory):
     Image = pytest.importorskip("PIL.Image")
 
     data_dir = tmp_path_factory.mktemp("scikit_learn_lfw_test")
-    lfw_home = os.path.join(data_dir, "lfw_home")
-
-    if not os.path.exists(lfw_home):
-        os.makedirs(lfw_home)
+    lfw_home = data_dir / "lfw_home"
+    lfw_home.mkdir(parents=True, exist_ok=True)
 
     random_state = random.Random(42)
     np_rng = np.random.RandomState(42)
@@ -58,24 +51,24 @@ def mock_data_home(tmp_path_factory):
     # generate some random jpeg files for each person
     counts = {}
     for name in FAKE_NAMES:
-        folder_name = os.path.join(lfw_home, "lfw_funneled", name)
-        if not os.path.exists(folder_name):
-            os.makedirs(folder_name)
+        folder_name = lfw_home / "lfw_funneled" / name
+        folder_name.mkdir(parents=True, exist_ok=True)
 
         n_faces = np_rng.randint(1, 5)
         counts[name] = n_faces
         for i in range(n_faces):
-            file_path = os.path.join(folder_name, name + "_%04d.jpg" % i)
+            file_path = folder_name / (name + "_%04d.jpg" % i)
             uniface = np_rng.randint(0, 255, size=(250, 250, 3))
             img = Image.fromarray(uniface.astype(np.uint8))
             img.save(file_path)
 
     # add some random file pollution to test robustness
-    with open(os.path.join(lfw_home, "lfw_funneled", ".test.swp"), "wb") as f:
-        f.write(b"Text file to be ignored by the dataset loader.")
+    (lfw_home / "lfw_funneled" / ".test.swp").write_bytes(
+        b"Text file to be ignored by the dataset loader."
+    )
 
     # generate some pairing metadata files using the same format as LFW
-    with open(os.path.join(lfw_home, "pairsDevTrain.txt"), "wb") as f:
+    with open(lfw_home / "pairsDevTrain.txt", "wb") as f:
         f.write(b"10\n")
         more_than_two = [name for name, count in counts.items() if count >= 2]
         for i in range(5):
@@ -94,11 +87,10 @@ def mock_data_home(tmp_path_factory):
                 ).encode()
             )
 
-    with open(os.path.join(lfw_home, "pairsDevTest.txt"), "wb") as f:
-        f.write(b"Fake place holder that won't be tested")
-
-    with open(os.path.join(lfw_home, "pairs.txt"), "wb") as f:
-        f.write(b"Fake place holder that won't be tested")
+    (lfw_home / "pairsDevTest.txt").write_bytes(
+        b"Fake place holder that won't be tested"
+    )
+    (lfw_home / "pairs.txt").write_bytes(b"Fake place holder that won't be tested")
 
     yield data_dir
 

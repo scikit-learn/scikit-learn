@@ -1,5 +1,4 @@
 import numbers
-import os
 import pickle
 from copy import deepcopy
 from functools import partial
@@ -169,7 +168,7 @@ def memmap_data_and_estimators(tmp_path_factory):
     temp_folder = tmp_path_factory.mktemp("sklearn_test_score_objects")
     X, y = make_classification(n_samples=30, n_features=5, random_state=0)
     _, y_ml = make_multilabel_classification(n_samples=X.shape[0], random_state=0)
-    filename = os.path.join(temp_folder, "test_data.pkl")
+    filename = temp_folder / "test_data.pkl"
     joblib.dump((X, y, y_ml), filename)
     X_mm, y_mm, y_ml_mm = joblib.load(filename, mmap_mode="r")
     estimators = _make_estimators(X_mm, y_mm, y_ml_mm)
