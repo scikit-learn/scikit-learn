@@ -296,7 +296,7 @@ METAESTIMATORS: list = [
         "init_args": {"min_samples": 0.5},
         "X": X,
         "y": y,
-        "preserves_metadata": False,
+        "preserves_metadata": "subset",
         "estimator_routing_methods": ["fit", "predict", "score"],
         "requests_set_together": {"fit": ["score"]},
     },

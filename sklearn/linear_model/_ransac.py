@@ -442,7 +442,7 @@ class RANSACRegressor(
             except UnsetMetadataPassedError as e:
                 raise UnsetMetadataPassedError(
                     message=(
-                        f"{e}, which is used internally by `RANSACRegressor.fit()`."
+                        f"{e}, which is used internally by `RANSACRegressor.fit()`. "
                         f"Call `{estimator.__class__.__name__}.set_{{method}}_request("
                         "{metadata}=True)` for each metadata."
                     ),
@@ -497,12 +497,12 @@ class RANSACRegressor(
                 continue
 
             # cut `fit_params` down to `subset_idxs`
-            fit_params_cut_to_subset_idxs = _check_method_params(
+            fit_params_subset = _check_method_params(
                 X, params=routed_params.estimator.fit, indices=subset_idxs
             )
 
             # fit model for current random sample set
-            estimator.fit(X_subset, y_subset, **fit_params_cut_to_subset_idxs)
+            estimator.fit(X_subset, y_subset, **fit_params_subset)
 
             # check if estimated model is valid
             if self.is_model_valid is not None and not self.is_model_valid(
@@ -530,7 +530,7 @@ class RANSACRegressor(
             y_inlier_subset = y[inlier_idxs_subset]
 
             # cut `fit_params` down to `inlier_idxs_subset`
-            score_params_cut_to_inlier_idxs_subset = _check_method_params(
+            score_params_inlier_subset = _check_method_params(
                 X, params=routed_params.estimator.score, indices=inlier_idxs_subset
             )
 
@@ -538,7 +538,7 @@ class RANSACRegressor(
             score_subset = estimator.score(
                 X_inlier_subset,
                 y_inlier_subset,
-                **score_params_cut_to_inlier_idxs_subset,
+                **score_params_inlier_subset,
             )
 
             # same number of inliers but worse score -> skip current random
