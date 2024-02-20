@@ -110,6 +110,13 @@ Changelog
   by passing a function in place of a strategy name.
   :pr:`28053` by :user:`Mark Elliot <mark-thm>`.
 
+:mod:`sklearn.manifold`
+.......................
+
+- |API| Deprecates `n_iter` in favor of `max_iter` in :class:`manifold.TSNE`.
+  `n_iter` will be removed in version 1.7. This makes :class:`manifold.TSNE`
+  consistent with the rest of the estimators.
+
 :mod:`sklearn.metrics`
 ......................
 
