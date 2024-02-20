@@ -13,6 +13,20 @@ For a short description of the main highlights of the release, please refer to
 
 .. include:: changelog_legend.inc
 
+.. _changes_1_4_2:
+
+Version 1.4.2
+=============
+
+**TBA 2024**
+
+Metadata Routing
+----------------
+
+- |FIX| Fix an issue when resolving default routing requests set via class
+  attributes.
+  :pr:`28435` by `Adrin Jalali`_.
+
 .. _changes_1_4_1:
 
 Version 1.4.1
