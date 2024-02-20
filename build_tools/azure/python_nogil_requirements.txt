@@ -6,12 +6,11 @@
 # the latest cython will be picked up from PyPI, rather than the one from the
 # python-nogil index
 matplotlib
-# 2023-07-15 contourpy 1.1 needs meson which needs a recent pybind version
-# which is not available for python/nogil ...
-contourpy<1.1
 numpy
 scipy
-cython
+# Temporarily until there are Cython 3.0.8 wheels
+--extra-index https://pypi.anaconda.org/lesteve/simple
+cython>3
 joblib
 threadpoolctl
 pytest
