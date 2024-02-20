@@ -1,7 +1,8 @@
+import atexit
+import functools
 import numbers
 import os
 import pickle
-import shutil
 import tempfile
 from copy import deepcopy
 from functools import partial
@@ -61,6 +62,7 @@ from sklearn.tests.metadata_routing_common import (
 )
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.utils._testing import (
+    _delete_folder,
     assert_almost_equal,
     assert_array_equal,
     ignore_warnings,
@@ -175,10 +177,9 @@ def memmap_data_and_estimators():
     joblib.dump((X, y, y_ml), filename)
     X_mm, y_mm, y_ml_mm = joblib.load(filename, mmap_mode="r")
     estimators = _make_estimators(X_mm, y_mm, y_ml_mm)
+
+    atexit.register(functools.partial(_delete_folder, temp_folder, warn=True))
     yield X_mm, y_mm, y_ml_mm, estimators
-    # GC closes the mmap file descriptors
-    X_mm, y_mm, y_ml_mm, estimators = None, None, None, None
-    shutil.rmtree(temp_folder)
 
 
 class EstimatorWithFit(BaseEstimator):
