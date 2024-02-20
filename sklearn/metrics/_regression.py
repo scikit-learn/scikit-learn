@@ -1193,10 +1193,10 @@ def r2_score(
     else:
         weight = 1.0
 
-    numerator = (weight * (y_true - y_pred) ** 2).sum(axis=0, dtype=np.float64)
+    numerator = (weight * (y_true - y_pred) ** 2).sum(axis=0)
     denominator = (
         weight * (y_true - np.average(y_true, axis=0, weights=sample_weight)) ** 2
-    ).sum(axis=0, dtype=np.float64)
+    ).sum(axis=0)
 
     return _assemble_r2_explained_variance(
         numerator=numerator,
