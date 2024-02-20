@@ -18,6 +18,9 @@ from datetime import datetime
 from io import StringIO
 from pathlib import Path
 
+from sphinx.builders.dirhtml import DirectoryHTMLBuilder
+from sphinx.builders.html import StandaloneHTMLBuilder
+
 from sklearn.externals._packaging.version import parse
 from sklearn.utils._testing import turn_warnings_into_errors
 
@@ -833,6 +836,10 @@ def setup(app):
     # to hide/show the prompt in code examples:
     app.connect("build-finished", make_carousel_thumbs)
     app.connect("build-finished", filter_search_index)
+
+    # Renable built-in search disable by sphinx-docsearch
+    StandaloneHTMLBuilder.search = True
+    DirectoryHTMLBuilder.search = True
 
 
 # The following is used by sphinx.ext.linkcode to provide links to github
