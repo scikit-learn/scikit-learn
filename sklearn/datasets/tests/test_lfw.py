@@ -11,7 +11,6 @@ joblib, successive runs will be fast (less than 200ms).
 import os
 import random
 import shutil
-import tempfile
 from functools import partial
 
 import numpy as np
@@ -33,8 +32,8 @@ FAKE_NAMES = [
 
 
 @pytest.fixture(scope="module")
-def mock_empty_data_home():
-    data_dir = tempfile.mkdtemp(prefix="scikit_learn_empty_test_")
+def mock_empty_data_home(tmp_path_factory):
+    data_dir = tmp_path_factory.mktemp("scikit_learn_empty_test")
 
     yield data_dir
 
@@ -43,11 +42,11 @@ def mock_empty_data_home():
 
 
 @pytest.fixture(scope="module")
-def mock_data_home():
+def mock_data_home(tmp_path_factory):
     """Test fixture run once and common to all tests of this module"""
     Image = pytest.importorskip("PIL.Image")
 
-    data_dir = tempfile.mkdtemp(prefix="scikit_learn_lfw_test_")
+    data_dir = tmp_path_factory.mktemp("scikit_learn_lfw_test")
     lfw_home = os.path.join(data_dir, "lfw_home")
 
     if not os.path.exists(lfw_home):
@@ -102,9 +101,6 @@ def mock_data_home():
         f.write(b"Fake place holder that won't be tested")
 
     yield data_dir
-
-    if os.path.isdir(data_dir):
-        shutil.rmtree(data_dir)
 
 
 def test_load_empty_lfw_people(mock_empty_data_home):

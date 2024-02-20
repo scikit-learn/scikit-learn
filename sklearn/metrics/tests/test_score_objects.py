@@ -1,9 +1,6 @@
-import atexit
-import functools
 import numbers
 import os
 import pickle
-import tempfile
 from copy import deepcopy
 from functools import partial
 from unittest.mock import Mock
@@ -62,7 +59,6 @@ from sklearn.tests.metadata_routing_common import (
 )
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.utils._testing import (
-    _delete_folder,
     assert_almost_equal,
     assert_array_equal,
     ignore_warnings,
@@ -169,8 +165,8 @@ def _make_estimators(X_train, y_train, y_ml_train):
 
 
 @pytest.fixture(scope="module")
-def memmap_data_and_estimators():
-    temp_folder = tempfile.mkdtemp(prefix="sklearn_test_score_objects_")
+def memmap_data_and_estimators(tmp_path_factory):
+    temp_folder = tmp_path_factory.mktemp("sklearn_test_score_objects")
     X, y = make_classification(n_samples=30, n_features=5, random_state=0)
     _, y_ml = make_multilabel_classification(n_samples=X.shape[0], random_state=0)
     filename = os.path.join(temp_folder, "test_data.pkl")
@@ -178,7 +174,6 @@ def memmap_data_and_estimators():
     X_mm, y_mm, y_ml_mm = joblib.load(filename, mmap_mode="r")
     estimators = _make_estimators(X_mm, y_mm, y_ml_mm)
 
-    atexit.register(functools.partial(_delete_folder, temp_folder, warn=True))
     yield X_mm, y_mm, y_ml_mm, estimators
 
 
