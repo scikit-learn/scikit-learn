@@ -298,7 +298,7 @@ METAESTIMATORS: list = [
         "y": y,
         "preserves_metadata": "subset",
         "estimator_routing_methods": ["fit", "predict", "score"],
-        "requests_set_together": {"fit": ["score"]},
+        "method_mapping": {"fit": ["fit", "score"]},
     },
     {
         "metaestimator": IterativeImputer,
@@ -339,12 +339,9 @@ The keys are as follows:
   to the splitter
 - method_args: a dict of dicts, defining extra arguments needed to be passed to
   methods, such as passing `classes` to `partial_fit`.
-- requests_set_together: a dict that defines which set_{method}_requests need
-  to be set together with the key; used in case a router routes to different
-  methods from the sub-estimator from within the same meta-estimator's method.
-  For instance, {"fit": ["score"]} would signal that
-  `estimator.set_fit_request` premises `estimator.set_score_request` to be set
-  as well.
+- method_mapping: a dict of the form `{caller: [callee1, ...]}` which signals
+  which `.set_{method}_request` methods should be called to set request values.
+  If not present, a one-to-one mapping is assumed.
 """
 
 # IDs used by pytest to get meaningful verbose messages when running the tests
@@ -442,13 +439,36 @@ def get_init_args(metaestimator_info, sub_estimator_consumes):
     )
 
 
-def set_requests(estimator, methods, metadata_name):
-    """Call `set_fit_request` on a list of methods from the sub-estimator."""
-    for method in methods:
-        set_request_for_method = getattr(estimator, f"set_{method}_request")
-        set_request_for_method(**{metadata_name: True})
-        if is_classifier(estimator) and method == "partial_fit":
-            set_request_for_method(classes=True)
+def set_requests(estimator, *, method_mapping, methods, metadata_name, value=True):
+    """Call `set_{method}_request` on a list of methods from the sub-estimator.
+
+    Parameters
+    ----------
+    estimator : BaseEstimator
+        The estimator for which `set_{method}_request` methods are called.
+
+    method_mapping : dict
+        The method mapping in the form of `{caller: [callee, ...]}`.
+        If a "caller" is not present in the method mapping, a one-to-one mapping is
+        assumed.
+
+    methods : list of str
+        The list of methods as "caller"s for which the request for the child should
+        be set.
+
+    metadata_name : str
+        The name of the metadata to be routed, usually either `"metadata"` or
+        `"sample_weight"` in our tests.
+
+    value : None, bool, or str
+        The request value to be set, by default it's `True`
+    """
+    for caller in methods:
+        for callee in method_mapping.get(caller, [caller]):
+            set_request_for_method = getattr(estimator, f"set_{callee}_request")
+            set_request_for_method(**{metadata_name: value})
+            if is_classifier(estimator) and callee == "partial_fit":
+                set_request_for_method(classes=True)
 
 
 @pytest.mark.parametrize("estimator", UNSUPPORTED_ESTIMATORS)
@@ -531,13 +551,26 @@ def test_error_on_missing_requests_for_sub_estimator(metaestimator):
                 method = getattr(instance, method_name)
                 if "fit" not in method_name:
                     # set request on fit
-                    set_requests(estimator, methods=["fit"], metadata_name=key)
-                    # make sure error message corresponding to `method_name`
-                    # is used for test
-                    if method_name != "score":
-                        set_requests(estimator, methods=["score"], metadata_name=key)
+                    set_requests(
+                        estimator,
+                        method_mapping=metaestimator.get("method_mapping", {}),
+                        methods=["fit"],
+                        metadata_name=key,
+                    )
                     instance.fit(X, y, **method_kwargs)
                 try:
+                    # making sure the requests are unset, in case they were set as a
+                    # side effect of setting them for fit. For instance, if method
+                    # mapping for fit is: `"fit": ["fit", "score"]`, that would mean
+                    # calling `.score` here would not raise, because we have already
+                    # set request value for child estimator's `score`.
+                    set_requests(
+                        estimator,
+                        method_mapping=metaestimator.get("method_mapping", {}),
+                        methods=["fit"],
+                        metadata_name=key,
+                        value=None,
+                    )
                     # `fit` and `partial_fit` accept y, others don't.
                     method(X, y, **method_kwargs)
                 except TypeError:
@@ -557,7 +590,7 @@ def test_setting_request_on_sub_estimator_removes_error(metaestimator):
     X = metaestimator["X"]
     y = metaestimator["y"]
     routing_methods = metaestimator["estimator_routing_methods"]
-    requests_set_together = metaestimator.get("requests_set_together", {})
+    method_mapping = metaestimator.get("method_mapping", {})
     preserves_metadata = metaestimator.get("preserves_metadata", True)
 
     for method_name in routing_methods:
@@ -569,16 +602,19 @@ def test_setting_request_on_sub_estimator_removes_error(metaestimator):
                 metaestimator, sub_estimator_consumes=True
             )
             if scorer:
-                set_requests(scorer, methods=["score"], metadata_name=key)
+                set_requests(
+                    scorer, method_mapping={}, methods=["score"], metadata_name=key
+                )
             if cv:
                 cv.set_split_request(groups=True, metadata=True)
 
             # `set_{method}_request({metadata}==True)` on the underlying objects
-            set_requests(estimator, methods=[method_name], metadata_name=key)
-            if requests_set_together:
-                set_requests(
-                    estimator, methods=requests_set_together["fit"], metadata_name=key
-                )
+            set_requests(
+                estimator,
+                method_mapping=method_mapping,
+                methods=[method_name],
+                metadata_name=key,
+            )
 
             instance = cls(**kwargs)
             method = getattr(instance, method_name)
@@ -587,13 +623,12 @@ def test_setting_request_on_sub_estimator_removes_error(metaestimator):
             )
             if "fit" not in method_name:
                 # fit before calling method
-                set_requests(estimator, methods=["fit"], metadata_name=key)
-                if requests_set_together:
-                    set_requests(
-                        estimator,
-                        methods=requests_set_together["fit"],
-                        metadata_name=key,
-                    )
+                set_requests(
+                    estimator,
+                    method_mapping=metaestimator.get("method_mapping", {}),
+                    methods=["fit"],
+                    metadata_name=key,
+                )
                 instance.fit(X, y, **method_kwargs, **extra_method_args)
             try:
                 # `fit` and `partial_fit` accept y, others don't.
