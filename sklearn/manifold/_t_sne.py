@@ -1209,4 +1209,17 @@ class TSNE(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
         return self.embedding_.shape[1]
 
     def _more_tags(self):
-        return {"pairwise": self.metric == "precomputed"}
+        return {
+            "pairwise": self.metric == "precomputed",
+            # TODO(1.7): remove
+            "_xfail_checks": {
+                "check_estimators_overwrite_params": (
+                    "'max_iter' updated during fit due to parameter name update, "
+                    "to allow early parameter check and for easy removal in 1.7."
+                ),
+                "check_dont_overwrite_parameters": (
+                    "'max_iter' updated during fit due to parameter name update, "
+                    "to allow early parameter check and for easy removal in 1.7."
+                ),
+            }
+        }
