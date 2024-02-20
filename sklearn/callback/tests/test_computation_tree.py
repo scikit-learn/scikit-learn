@@ -5,22 +5,24 @@ import numpy as np
 
 from sklearn.callback import build_computation_tree
 
-LEVELS = [
-    {"descr": "level0", "max_iter": 3},
-    {"descr": "level1", "max_iter": 5},
-    {"descr": "level2", "max_iter": 7},
-    {"descr": "level3", "max_iter": None},
+TREE_STRUCTURE = [
+    {"stage": "stage0", "n_children": 3},
+    {"stage": "stage1", "n_children": 5},
+    {"stage": "stage2", "n_children": 7},
+    {"stage": "stage3", "n_children": None},
 ]
 
 
 def test_computation_tree():
     """Check the construction of the computation tree."""
-    computation_tree = build_computation_tree(estimator_name="estimator", levels=LEVELS)
+    computation_tree = build_computation_tree(
+        estimator_name="estimator", tree_structure=TREE_STRUCTURE
+    )
     assert computation_tree.estimator_name == ("estimator",)
     assert computation_tree.parent is None
     assert computation_tree.idx == 0
 
-    assert len(computation_tree.children) == computation_tree.max_iter == 3
+    assert len(computation_tree.children) == computation_tree.n_children == 3
     assert [node.idx for node in computation_tree.children] == list(range(3))
 
     for node1 in computation_tree.children:
@@ -39,10 +41,12 @@ def test_n_nodes():
     """Check that the number of node in a computation tree corresponds to what we expect
     from the level descriptions.
     """
-    computation_tree = build_computation_tree(estimator_name="", levels=LEVELS)
+    computation_tree = build_computation_tree(
+        estimator_name="", tree_structure=TREE_STRUCTURE
+    )
 
-    max_iter_per_level = [level["max_iter"] for level in LEVELS[:-1]]
-    expected_n_nodes = 1 + np.sum(np.cumprod(max_iter_per_level))
+    n_children_per_level = [stage["n_children"] for stage in TREE_STRUCTURE[:-1]]
+    expected_n_nodes = 1 + np.sum(np.cumprod(n_children_per_level))
 
     actual_n_nodes = sum(1 for _ in computation_tree)
 
@@ -51,7 +55,9 @@ def test_n_nodes():
 
 def test_path():
     """Check that the path from the root to a node is correct."""
-    computation_tree = build_computation_tree(estimator_name="", levels=LEVELS)
+    computation_tree = build_computation_tree(
+        estimator_name="", tree_structure=TREE_STRUCTURE
+    )
 
     assert computation_tree.path == [computation_tree]
 

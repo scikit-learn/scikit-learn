@@ -16,6 +16,7 @@ import numpy as np
 from . import __version__
 from ._config import config_context, get_config
 from .callback import BaseCallback, build_computation_tree
+from .callback._base import default_data
 from .exceptions import InconsistentVersionWarning
 from .utils import _IS_32BIT
 from .utils._estimator_html_repr import _HTMLDocumentationLinkMixin, estimator_html_repr
@@ -697,7 +698,7 @@ class BaseEstimator(_HTMLDocumentationLinkMixin, _MetadataRequester):
 
         return self
 
-    def _eval_callbacks_on_fit_begin(self, *, levels, X=None, y=None):
+    def _eval_callbacks_on_fit_begin(self, *, tree_structure, data):
         """Evaluate the `on_fit_begin` method of the callbacks.
 
         The computation tree is also built at this point.
@@ -706,15 +707,16 @@ class BaseEstimator(_HTMLDocumentationLinkMixin, _MetadataRequester):
 
         Parameters
         ----------
-        X : ndarray or sparse matrix, default=None
-            The training data.
+        tree_structure : list of dict
+            A description of the nested steps of computation of the estimator to build
+            the computation tree. It's a list of dict with keys "stage" and
+            "n_children".
 
-        y : ndarray, default=None
-            The target.
-
-        levels : list of dict
-            A description of the nested levels of computation of the estimator to build
-            the computation tree. It's a list of dict with "descr" and "max_iter" keys.
+        data : dict
+            Dictionary containing the training and validation data. The keys are
+            "X_train", "y_train", "sample_weight_train", "X_val", "y_val",
+            "sample_weight_val". The values are the corresponding data. If a key is
+            missing, the corresponding value is None.
 
         Returns
         -------
@@ -723,7 +725,7 @@ class BaseEstimator(_HTMLDocumentationLinkMixin, _MetadataRequester):
         """
         self._computation_tree = build_computation_tree(
             estimator_name=self.__class__.__name__,
-            levels=levels,
+            tree_structure=tree_structure,
             parent=getattr(self, "_parent_node", None),
         )
 
@@ -734,7 +736,7 @@ class BaseEstimator(_HTMLDocumentationLinkMixin, _MetadataRequester):
         # propagated from a meta-estimator.
         for callback in self._skl_callbacks:
             if not callback._is_propagated(estimator=self):
-                callback.on_fit_begin(estimator=self, X=X, y=y)
+                callback.on_fit_begin(estimator=self, data={**default_data, **data})
 
         return self._computation_tree
 

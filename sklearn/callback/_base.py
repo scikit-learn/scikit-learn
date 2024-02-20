@@ -3,79 +3,43 @@
 
 from abc import ABC, abstractmethod
 
-
-# Not a method of BaseEstimator because it might not be directly called from fit but
-# by a non-method function called by fit
-def _eval_callbacks_on_fit_iter_end(**kwargs):
-    """Evaluate the `on_fit_iter_end` method of the callbacks.
-
-    This function must be called at the end of each computation node.
-
-    Parameters
-    ----------
-    kwargs : dict
-        Arguments passed to the callback.
-
-    Returns
-    -------
-    stop : bool
-        Whether or not to stop the fit at this node.
-    """
-    estimator = kwargs.get("estimator")
-    node = kwargs.get("node")
-
-    if not hasattr(estimator, "_skl_callbacks") or node is None:
-        return False
-
-    # stopping_criterion and reconstruction_attributes can be costly to compute.
-    # They are passed as lambdas for lazy evaluation. We only actually
-    # compute them if a callback requests it.
-    # TODO: This is not used yet but will be necessary for next callbacks
-    #       Uncomment when needed
-    # if any(cb.request_stopping_criterion for cb in estimator._skl_callbacks):
-    #     kwarg = kwargs.pop("stopping_criterion", lambda: None)()
-    #     kwargs["stopping_criterion"] = kwarg
-
-    # if any(
-    #         cb.request_from_reconstruction_attributes
-    #         for cb in estimator._skl_callbacks
-    # ):
-    #     kwarg = kwargs.pop("from_reconstruction_attributes", lambda: None)()
-    #     kwargs["from_reconstruction_attributes"] = kwarg
-
-    return any(
-        callback.on_fit_iter_end(**kwargs) for callback in estimator._skl_callbacks
-    )
+# default values for the data dict passed to the callbacks
+default_data = {
+    "X_train": None,
+    "y_train": None,
+    "sample_weight_train": None,
+    "X_val": None,
+    "y_val": None,
+    "sample_weight_val": None,
+}
 
 
 class BaseCallback(ABC):
     """Abstract class for the callbacks"""
 
     @abstractmethod
-    def on_fit_begin(self, estimator, *, X=None, y=None):
-        """Method called at the beginning of the fit method of the estimator
-
-        Only called
+    def on_fit_begin(self, estimator, *, data):
+        """Method called at the beginning of the fit method of the estimator.
 
         Parameters
         ----------
         estimator : estimator instance
             The estimator the callback is set on.
 
-        X : ndarray or sparse matrix, default=None
-            The training data.
-
-        y : ndarray or sparse matrix, default=None
-            The target.
+        data : dict
+            Dictionary containing the training and validation data. The keys are
+            "X_train", "y_train", "sample_weight_train", "X_val", "y_val",
+            "sample_weight_val". The values are the corresponding data. If a key is
+            missing, the corresponding value is None.
         """
 
     @abstractmethod
     def on_fit_end(self):
-        """Method called at the end of the fit method of the estimator"""
+        """Method called at the end of the fit method of the estimator."""
 
     @abstractmethod
     def on_fit_iter_end(self, estimator, node, **kwargs):
-        """Method called at the end of each computation node of the estimator
+        """Method called at the end of each computation node of the estimator.
 
         Parameters
         ----------
@@ -88,6 +52,12 @@ class BaseCallback(ABC):
 
         **kwargs : dict
             arguments passed to the callback. Possible keys are
+
+            - data: dict
+                Dictionary containing the training and validation data. The keys are
+                "X_train", "y_train", "sample_weight_train", "X_val", "y_val",
+                "sample_weight_val". The values are the corresponding data. If a key is
+                missing, the corresponding value is None.
 
             - stopping_criterion: float
                 Usually iterations stop when `stopping_criterion <= tol`.
@@ -189,3 +159,47 @@ class CallbackPropagatorMixin:
         sub_estimator._set_callbacks(
             getattr(sub_estimator, "_skl_callbacks", []) + propagated_callbacks
         )
+
+
+# Not a method of BaseEstimator because it might not be directly called from fit but
+# by a non-method function called by fit
+def _eval_callbacks_on_fit_iter_end(**kwargs):
+    """Evaluate the `on_fit_iter_end` method of the callbacks.
+
+    This function must be called at the end of each computation node.
+
+    Parameters
+    ----------
+    kwargs : dict
+        Arguments passed to the callback.
+
+    Returns
+    -------
+    stop : bool
+        Whether or not to stop the fit at this node.
+    """
+    estimator = kwargs.get("estimator")
+    node = kwargs.get("node")
+
+    if not hasattr(estimator, "_skl_callbacks") or node is None:
+        return False
+
+    # stopping_criterion and reconstruction_attributes can be costly to compute.
+    # They are passed as lambdas for lazy evaluation. We only actually
+    # compute them if a callback requests it.
+    # TODO: This is not used yet but will be necessary for next callbacks
+    #       Uncomment when needed
+    # if any(cb.request_stopping_criterion for cb in estimator._skl_callbacks):
+    #     kwarg = kwargs.pop("stopping_criterion", lambda: None)()
+    #     kwargs["stopping_criterion"] = kwarg
+
+    # if any(
+    #         cb.request_from_reconstruction_attributes
+    #         for cb in estimator._skl_callbacks
+    # ):
+    #     kwarg = kwargs.pop("from_reconstruction_attributes", lambda: None)()
+    #     kwargs["from_reconstruction_attributes"] = kwarg
+
+    return any(
+        callback.on_fit_iter_end(**kwargs) for callback in estimator._skl_callbacks
+    )

@@ -10,10 +10,11 @@ class ComputationNode:
     estimator_name : str
         The name of the estimator this computation node belongs to.
 
-    description : str, default=None
-        A description of this computation node. None means it's a leaf.
+    stage : str, default=None
+        A description of the stage this computation node belongs to.
+        None means it's a leaf.
 
-    max_iter : int, default=None
+    n_children : int, default=None
         The number of its children. None means it's a leaf.
 
     idx : int, default=0
@@ -31,8 +32,8 @@ class ComputationNode:
     def __init__(
         self,
         estimator_name,
-        description=None,
-        max_iter=None,
+        stage=None,
+        n_children=None,
         idx=0,
         parent=None,
     ):
@@ -42,10 +43,10 @@ class ComputationNode:
         # meta-estimator correspond to the same computation step. Therefore, both
         # nodes are merged into a single node, retaining the information of both.
         self.estimator_name = (estimator_name,)
-        self.description = (description,)
+        self.stage = (stage,)
 
         self.parent = parent
-        self.max_iter = max_iter
+        self.n_children = n_children
         self.idx = idx
 
         self.children = []
@@ -67,7 +68,7 @@ class ComputationNode:
             yield from node
 
 
-def build_computation_tree(estimator_name, levels, parent=None, idx=0):
+def build_computation_tree(estimator_name, tree_structure, parent=None, idx=0):
     """Build the computation tree from the description of the levels.
 
     Parameters
@@ -75,12 +76,12 @@ def build_computation_tree(estimator_name, levels, parent=None, idx=0):
     estimator_name : str
         The name of the estimator this computation tree belongs to.
 
-    levels : list of dict
-        The description of the levels of the computation tree. Each dict must have
+    tree_structure : list of dict
+        The description of the stages of the computation tree. Each dict must have
         the following keys:
-            - descr: str
-                A description of the level
-            - max_iter: int or None
+            - stage: str
+                A human readable description of the stage.
+            - n_children: int or None
                 The number of its children. None means it's a leaf.
 
     parent : ComputationNode instance, default=None
@@ -94,30 +95,32 @@ def build_computation_tree(estimator_name, levels, parent=None, idx=0):
     computation_tree : ComputationNode instance
         The root of the computation tree.
     """
-    this_level = levels[0]
+    this_stage = tree_structure[0]
 
     node = ComputationNode(
         estimator_name=estimator_name,
         parent=parent,
-        max_iter=this_level["max_iter"],
-        description=this_level["descr"],
+        n_children=this_stage["n_children"],
+        stage=this_stage["stage"],
         idx=idx,
     )
 
-    if parent is not None and parent.max_iter is None:
+    if parent is not None and parent.n_children is None:
         # parent node is a leaf of the computation tree of an outer estimator. It means
         # that this node is the root of the computation tree of this estimator. They
         # both correspond the same computation step, so we merge both nodes.
-        node.description = parent.description + node.description
+        node.stage = parent.stage + node.stage
         node.estimator_name = parent.estimator_name + node.estimator_name
         node.parent = parent.parent
         node.idx = parent.idx
         parent.parent.children[node.idx] = node
 
-    if node.max_iter is not None:
-        for i in range(node.max_iter):
+    if node.n_children is not None:
+        for i in range(node.n_children):
             node.children.append(
-                build_computation_tree(estimator_name, levels[1:], parent=node, idx=i)
+                build_computation_tree(
+                    estimator_name, tree_structure[1:], parent=node, idx=i
+                )
             )
 
     return node

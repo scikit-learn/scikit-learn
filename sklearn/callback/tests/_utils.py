@@ -8,7 +8,7 @@ from sklearn.utils.parallel import Parallel, delayed
 
 
 class TestingCallback(BaseCallback):
-    def on_fit_begin(self, estimator, *, X=None, y=None):
+    def on_fit_begin(self, estimator, *, data):
         pass
 
     def on_fit_end(self):
@@ -25,7 +25,7 @@ class TestingAutoPropagatedCallback(TestingCallback):
 class NotValidCallback:
     """Unvalid callback since it does not inherit from `BaseCallback`."""
 
-    def on_fit_begin(self, estimator, *, X=None, y=None):
+    def on_fit_begin(self, estimator, *, data):
         pass  # pragma: no cover
 
     def on_fit_end(self):
@@ -44,12 +44,11 @@ class Estimator(BaseEstimator):
     @_fit_context(prefer_skip_nested_validation=False)
     def fit(self, X, y):
         root = self._eval_callbacks_on_fit_begin(
-            levels=[
-                {"descr": "fit", "max_iter": self.max_iter},
-                {"descr": "iter", "max_iter": None},
+            tree_structure=[
+                {"stage": "fit", "n_children": self.max_iter},
+                {"stage": "iter", "n_children": None},
             ],
-            X=X,
-            y=y,
+            data={"X_train": X, "y_train": y},
         )
 
         for i in range(self.max_iter):
@@ -79,13 +78,12 @@ class MetaEstimator(BaseEstimator, CallbackPropagatorMixin):
     @_fit_context(prefer_skip_nested_validation=False)
     def fit(self, X, y):
         root = self._eval_callbacks_on_fit_begin(
-            levels=[
-                {"descr": "fit", "max_iter": self.n_outer},
-                {"descr": "outer", "max_iter": self.n_inner},
-                {"descr": "inner", "max_iter": None},
+            tree_structure=[
+                {"stage": "fit", "n_children": self.n_outer},
+                {"stage": "outer", "n_children": self.n_inner},
+                {"stage": "inner", "n_children": None},
             ],
-            X=X,
-            y=y,
+            data={"X_train": X, "y_train": y},
         )
 
         Parallel(n_jobs=self.n_jobs, prefer=self.prefer)(

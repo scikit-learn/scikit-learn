@@ -89,11 +89,11 @@ def test_eval_callbacks_on_fit_begin():
     estimator = Estimator()._set_callbacks(TestingCallback())
     assert not hasattr(estimator, "_computation_tree")
 
-    levels = [
-        {"descr": "fit", "max_iter": 10},
-        {"descr": "iter", "max_iter": None},
+    tree_structure = [
+        {"stage": "fit", "n_children": 10},
+        {"stage": "iter", "n_children": None},
     ]
-    estimator._eval_callbacks_on_fit_begin(levels=levels)
+    estimator._eval_callbacks_on_fit_begin(tree_structure=tree_structure, data={})
     assert hasattr(estimator, "_computation_tree")
 
 

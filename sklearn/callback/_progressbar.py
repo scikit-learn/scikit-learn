@@ -16,7 +16,7 @@ class ProgressBar(BaseCallback):
     def __init__(self):
         check_rich_support("Progressbar")
 
-    def on_fit_begin(self, estimator, X=None, y=None):
+    def on_fit_begin(self, estimator, data):
         self._queue = Manager().Queue()
         self.progress_monitor = _RichProgressMonitor(queue=self._queue)
         self.progress_monitor.start()
@@ -156,9 +156,9 @@ class TaskNode:
         self.children = {}
         self.finished = False
 
-        if node.max_iter is not None:
+        if node.n_children is not None:
             description = self._format_task_description(node)
-            self.task_id = progress_ctx.add_task(description, total=node.max_iter)
+            self.task_id = progress_ctx.add_task(description, total=node.n_children)
 
     def _format_task_description(self, node):
         """Return a formatted description for the task of the node."""
@@ -167,11 +167,11 @@ class TaskNode:
         indent = f"{'  ' * (node.depth)}"
         style = f"[{colors[(node.depth)%len(colors)]}]"
 
-        description = f"{node.estimator_name[0]} - {node.description[0]}"
+        description = f"{node.estimator_name[0]} - {node.stage[0]}"
         if node.parent is not None:
             description += f" #{node.idx}"
         if len(node.estimator_name) == 2:
-            description += f" | {node.estimator_name[1]} - {node.description[1]}"
+            description += f" | {node.estimator_name[1]} - {node.stage[1]}"
 
         return f"{style}{indent}{description}"
 
