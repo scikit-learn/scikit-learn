@@ -1,6 +1,6 @@
 import copy
 import re
-from typing import Iterable
+
 import numpy as np
 import pytest
 
