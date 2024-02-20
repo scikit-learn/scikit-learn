@@ -1221,5 +1221,5 @@ class TSNE(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
                     "'max_iter' updated during fit due to parameter name update, "
                     "to allow early parameter check and for easy removal in 1.7."
                 ),
-            }
+            },
         }
