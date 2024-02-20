@@ -618,9 +618,9 @@ class TSNE(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
         .. versionchanged:: 1.2
            The default value changed to `"auto"`.
 
-    max_iter : int, default=None
+    max_iter : int, default=1000
         Maximum number of iterations for the optimization. Should be at
-        least 250. Default `None` corresponds to `max_iter=1000`.
+        least 250.
 
         .. versionchanged:: 1.5
             Parameter name changed from `n_iter` to `max_iter`.
