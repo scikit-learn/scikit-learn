@@ -39,3 +39,4 @@ dependencies:
     - jupyterlite-sphinx
     - jupyterlite-pyodide-kernel
     - sphinxcontrib-sass
+    - sphinx_docsearch

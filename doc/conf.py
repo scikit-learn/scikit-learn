@@ -18,6 +18,9 @@ from datetime import datetime
 from io import StringIO
 from pathlib import Path
 
+from sphinx.builders.dirhtml import DirectoryHTMLBuilder
+from sphinx.builders.html import StandaloneHTMLBuilder
+
 from sklearn.externals._packaging.version import parse
 from sklearn.utils._testing import turn_warnings_into_errors
 
@@ -63,6 +66,7 @@ extensions = [
     "sphinxcontrib.sass",
     "sphinx_remove_toctrees",
     "sphinx_design",
+    "sphinx_docsearch",
     # See sphinxext/
     "add_toctree_functions",
     "allow_nan_estimators",
@@ -266,7 +270,8 @@ html_theme_options = {
     "navbar_center": ["navbar-nav"],
     "navbar_end": ["theme-switcher", "navbar-icon-links", "version-switcher"],
     # navbar_persistent is persistent right (even when on mobiles)
-    "navbar_persistent": ["search-button"],
+    # "navbar_persistent": ["search-button"],
+    "navbar_persistent": "algolia-searchbox",
     "article_header_start": ["breadcrumbs"],
     "article_header_end": [],
     "article_footer_items": ["prev-next"],
@@ -832,6 +837,10 @@ def setup(app):
     app.connect("build-finished", make_carousel_thumbs)
     app.connect("build-finished", filter_search_index)
 
+    # Renable built-in search disable by sphinx-docsearch
+    StandaloneHTMLBuilder.search = True
+    DirectoryHTMLBuilder.search = True
+
 
 # The following is used by sphinx.ext.linkcode to provide links to github
 linkcode_resolve = make_linkcode_resolve(
@@ -954,3 +963,9 @@ else:
     linkcheck_request_headers = {
         "https://github.com/": {"Authorization": f"token {github_token}"},
     }
+
+# Algolia docsearch setting
+docsearch_app_id = os.getenv("DOCSEARCH_APP_ID")
+docsearch_api_key = os.getenv("DOCSEARCH_API_KEY")
+docsearch_index_name = "scikit-learn"
+docsearch_container = "#algolia-docsearch"

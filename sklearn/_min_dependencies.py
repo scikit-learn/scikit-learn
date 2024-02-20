@@ -45,6 +45,7 @@ dependent_packages = {
     "sphinxcontrib-sass": ("0.3.4", "docs"),
     "sphinx-remove-toctrees": ("0.0.3", "docs"),
     "pydata-sphinx-theme": ("0.15.2", "docs"),
+    "sphinx_docsearch": ("0.0.4", "docs"),
     # XXX: Pin conda-lock to the latest released version (needs manual update
     # from time to time)
     "conda-lock": ("2.4.2", "maintenance"),
