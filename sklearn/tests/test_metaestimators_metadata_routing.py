@@ -341,7 +341,7 @@ The keys are as follows:
   methods, such as passing `classes` to `partial_fit`.
 - requests_set_together: a dict that defines which set_{method}_requests need
   to be set together with the key; used in case a router routes to different
-  methods from the sub-estimator from withing the same meta-estimator's method.
+  methods from the sub-estimator from within the same meta-estimator's method.
   For instance, {"fit": ["score"]} would signal that
   `estimator.set_fit_request` premises `estimator.set_score_request` to be set
   as well.
