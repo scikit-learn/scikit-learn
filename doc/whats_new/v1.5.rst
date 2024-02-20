@@ -110,6 +110,14 @@ Changelog
   by passing a function in place of a strategy name.
   :pr:`28053` by :user:`Mark Elliot <mark-thm>`.
 
+:mod:`sklearn.linear_model`
+...........................
+
+- |API| :class:`linear_model.RidgeCV` and :class:`linear_model.RidgeClassifierCV`
+  will now allow `alpha=0` when `cv != None`, which is consistent with
+  :class:`linear_model.Ridge` and :class:`linear_model.RidgeClassifier`.
+  :pr:`28425` by :user:`Lucy Liu <lucyleeow>`.
+
 :mod:`sklearn.metrics`
 ......................
 
@@ -122,6 +130,9 @@ Changelog
   :class:`~metrics.PrecisionRecallDisplay`, :class:`~metrics.DetCurveDisplay`,
   :class:`~calibration.CalibrationDisplay`.
   :pr:`28051` by :user:`Pierre de Fréminville <pidefrem>`.
+
+- |Feature| :func:`sklearn.metrics.check_scoring` now returns a multi-metric scorer
+  when `scoring` as a `dict`, `set`, `tuple`, or `list`. :pr:`28360` by `Thomas Fan`_.
 
 - |API| :func:`metrics.precision_recall_curve` deprecated the keyword argument `probas_pred`
   in favor of `y_score`. `probas_pred` will be removed in version 1.7.
