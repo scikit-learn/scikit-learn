@@ -156,7 +156,7 @@ Changelog
 - |FIX| : Create copy of precomputed sparse matrix within the
   `fit` method of `cluster.OPTICS` to avoid in-place modification of
   the sparse matrix.
-  :pr:`` by :user:`Thanh Lam Dang <lamdang2k>`.
+  :pr:`28491` by :user:`Thanh Lam Dang <lamdang2k>`.
 
 .. rubric:: Code and documentation contributors
 
