@@ -548,12 +548,12 @@ def test_nca_feature_names_out(n_components):
     class_name_lower = est.__class__.__name__.lower()
 
     if n_components is not None:
-        expected_n_components = n_components
+        expected_n_features = n_components
     else:
-        expected_n_components = X.shape[1]
+        expected_n_features = X.shape[1]
 
     expected_names_out = np.array(
-        [f"{class_name_lower}{i}" for i in range(expected_n_components)],
+        [f"{class_name_lower}{i}" for i in range(expected_n_features)],
         dtype=object,
     )
 
