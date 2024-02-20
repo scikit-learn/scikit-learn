@@ -625,15 +625,6 @@ class TSNE(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
         .. versionchanged:: 1.5
             Parameter name changed from `n_iter` to `max_iter`.
 
-
-    n_iter : int
-        Maximum number of iterations for the optimization. Should be at
-        least 250.
-
-        .. deprecated:: 1.5
-            `n_iter` was deprecated in version 1.5 and will be removed in 1.7.
-            Please use `max_iter` instead.
-
     n_iter_without_progress : int, default=300
         Maximum number of iterations without progress before we abort the
         optimization, used after 250 initial iterations with early
@@ -712,6 +703,14 @@ class TSNE(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
         for more details.
 
         .. versionadded:: 0.22
+
+    n_iter : int
+        Maximum number of iterations for the optimization. Should be at
+        least 250.
+
+        .. deprecated:: 1.5
+            `n_iter` was deprecated in version 1.5 and will be removed in 1.7.
+            Please use `max_iter` instead.
 
     Attributes
     ----------
