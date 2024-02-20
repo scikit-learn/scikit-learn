@@ -115,7 +115,8 @@ Changelog
 
 - |API| Deprecates `n_iter` in favor of `max_iter` in :class:`manifold.TSNE`.
   `n_iter` will be removed in version 1.7. This makes :class:`manifold.TSNE`
-  consistent with the rest of the estimators.
+  consistent with the rest of the estimators. :pr:`28471` by
+  :user:`Lucy Liu <lucyleeow>`
 
 :mod:`sklearn.metrics`
 ......................
