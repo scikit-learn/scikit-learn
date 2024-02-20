@@ -39,7 +39,13 @@ from ..utils import (
     column_or_1d,
 )
 from ..utils._array_api import _union1d, _weighted_sum, get_namespace
-from ..utils._param_validation import Interval, Options, StrOptions, validate_params
+from ..utils._param_validation import (
+    Hidden,
+    Interval,
+    Options,
+    StrOptions,
+    validate_params,
+)
 from ..utils.extmath import _nanaverage
 from ..utils.multiclass import type_of_target, unique_labels
 from ..utils.sparsefuncs import count_nonzero
@@ -3146,13 +3152,16 @@ def hinge_loss(y_true, pred_decision, *, labels=None, sample_weight=None):
 @validate_params(
     {
         "y_true": ["array-like"],
-        "y_prob": ["array-like"],
+        "y_proba": ["array-like", Hidden(None)],
         "sample_weight": ["array-like", None],
         "pos_label": [Real, str, "boolean", None],
+        "y_prob": ["array-like", Hidden(StrOptions({"deprecated"}))],
     },
     prefer_skip_nested_validation=True,
 )
-def brier_score_loss(y_true, y_prob, *, sample_weight=None, pos_label=None):
+def brier_score_loss(
+    y_true, y_proba=None, *, sample_weight=None, pos_label=None, y_prob="deprecated"
+):
     """Compute the Brier score loss.
 
     The smaller the Brier score loss, the better, hence the naming with "loss".
@@ -3180,7 +3189,7 @@ def brier_score_loss(y_true, y_prob, *, sample_weight=None, pos_label=None):
     y_true : array-like of shape (n_samples,)
         True targets.
 
-    y_prob : array-like of shape (n_samples,)
+    y_proba : array-like of shape (n_samples,)
         Probabilities of the positive class.
 
     sample_weight : array-like of shape (n_samples,), default=None
@@ -3195,6 +3204,13 @@ def brier_score_loss(y_true, y_prob, *, sample_weight=None, pos_label=None):
           `pos_label` should be explicitly specified;
         * otherwise, `pos_label` defaults to the greater label,
           i.e. `np.unique(y_true)[-1]`.
+
+    y_prob : array-like of shape (n_samples,)
+        Probabilities of the positive class.
+
+        .. deprecated:: 1.5
+            `y_prob` is deprecated and will be removed in 1.7. Use
+            `y_proba` instead.
 
     Returns
     -------
@@ -3222,11 +3238,29 @@ def brier_score_loss(y_true, y_prob, *, sample_weight=None, pos_label=None):
     >>> brier_score_loss(y_true, np.array(y_prob) > 0.5)
     0.0
     """
+    # TODO(1.7): remove in 1.7 and reset y_proba to be required
+    # Note: validate params will raise an error if y_prob is not array-like,
+    # or "deprecated"
+    if y_proba is not None and not isinstance(y_prob, str):
+        raise ValueError(
+            "`y_prob` and `y_proba` cannot be both specified. Please use `y_proba` only"
+            " as `y_prob` is deprecated in v1.5 and will be removed in v1.7."
+        )
+    if y_proba is None:
+        warnings.warn(
+            (
+                "y_prob was deprecated in version 1.5 and will be removed in 1.7."
+                "Please use ``y_proba`` instead."
+            ),
+            FutureWarning,
+        )
+        y_proba = y_prob
+
     y_true = column_or_1d(y_true)
-    y_prob = column_or_1d(y_prob)
+    y_proba = column_or_1d(y_proba)
     assert_all_finite(y_true)
-    assert_all_finite(y_prob)
-    check_consistent_length(y_true, y_prob, sample_weight)
+    assert_all_finite(y_proba)
+    check_consistent_length(y_true, y_proba, sample_weight)
 
     y_type = type_of_target(y_true, input_name="y_true")
     if y_type != "binary":
@@ -3235,10 +3269,10 @@ def brier_score_loss(y_true, y_prob, *, sample_weight=None, pos_label=None):
             f"is {y_type}."
         )
 
-    if y_prob.max() > 1:
-        raise ValueError("y_prob contains values greater than 1.")
-    if y_prob.min() < 0:
-        raise ValueError("y_prob contains values less than 0.")
+    if y_proba.max() > 1:
+        raise ValueError("y_proba contains values greater than 1.")
+    if y_proba.min() < 0:
+        raise ValueError("y_proba contains values less than 0.")
 
     try:
         pos_label = _check_pos_label_consistency(pos_label, y_true)
@@ -3251,4 +3285,4 @@ def brier_score_loss(y_true, y_prob, *, sample_weight=None, pos_label=None):
         else:
             raise
     y_true = np.array(y_true == pos_label, int)
-    return np.average((y_true - y_prob) ** 2, weights=sample_weight)
+    return np.average((y_true - y_proba) ** 2, weights=sample_weight)
