@@ -150,6 +150,14 @@ Changelog
   prefix any feature names and will error if feature names are not unique.
   :pr:`25991` by :user:`Jiawei Zhang <jiawei-zhang-a>`.
 
+:mod:`sklearn.cluster`
+......................
+
+- |FIX| : Create copy of precomputed sparse matrix within the
+  `fit` method of `cluster.OPTICS` to avoid in-place modification of
+  the sparse matrix.
+  :pr:`` by :user:`Thanh Lam Dang <lamdang2k>`.
+
 .. rubric:: Code and documentation contributors
 
 Thanks to everyone who has contributed to the maintenance and improvement of
