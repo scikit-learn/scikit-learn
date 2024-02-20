@@ -347,7 +347,7 @@ class ConsumingScorer(_Scorer):
         return super()._score(method_caller, clf, X, y, sample_weight=sample_weight)
 
 
-class ConsumingSplitter(BaseCrossValidator, GroupsConsumerMixin):
+class ConsumingSplitter(GroupsConsumerMixin, BaseCrossValidator):
     def __init__(self, registry=None):
         self.registry = registry
 
