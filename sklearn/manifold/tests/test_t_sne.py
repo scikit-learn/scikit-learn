@@ -886,7 +886,11 @@ def test_accessible_kl_divergence():
     random_state = check_random_state(0)
     X = random_state.randn(50, 2)
     tsne = TSNE(
-        n_iter_without_progress=2, verbose=2, random_state=0, method="exact", max_iter=500
+        n_iter_without_progress=2,
+        verbose=2,
+        random_state=0,
+        method="exact",
+        max_iter=500,
     )
 
     old_stdout = sys.stdout
