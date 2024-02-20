@@ -36,3 +36,4 @@ dependencies:
   - pip:
     - sphinxext-opengraph==0.4.2  # min
     - sphinxcontrib-sass==0.3.4  # min
+    - sphinx_docsearch
