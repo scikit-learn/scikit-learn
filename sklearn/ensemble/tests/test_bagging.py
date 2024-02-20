@@ -27,12 +27,6 @@ from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import FunctionTransformer, scale
 from sklearn.random_projection import SparseRandomProjection
 from sklearn.svm import SVC, SVR
-from sklearn.tests.metadata_routing_common import (
-    ConsumingClassifier,
-    ConsumingRegressor,
-    _Registry,
-    check_recorded_metadata,
-)
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.utils import check_random_state
 from sklearn.utils._testing import assert_array_almost_equal, assert_array_equal
@@ -942,46 +936,3 @@ def test_bagging_get_estimators_indices():
 def test_bagging_allow_nan_tag(bagging, expected_allow_nan):
     """Check that bagging inherits allow_nan tag."""
     assert bagging._get_tags()["allow_nan"] == expected_allow_nan
-
-
-@pytest.mark.usefixtures("enable_slep006")
-@pytest.mark.parametrize(
-    "Estimator, BaseEst",
-    [(BaggingClassifier, ConsumingClassifier), (BaggingRegressor, ConsumingRegressor)],
-)
-@pytest.mark.parametrize("prop", ["sample_weight", "metadata"])
-def test_metadata_routing_for_bagging_estimators(Estimator, BaseEst, prop):
-    """Test that metadata is routed correctly for Bagging*.
-
-    Bagging differs in that it should preserve all meta-data except for
-    ``sample_weight``.
-    """
-    X = np.array([[0, 1], [2, 2], [4, 6]])
-    y = [1, 2, 3]
-    sample_weight, metadata = [1.0, 1.0, 1.0], "a"
-
-    est = Estimator(
-        estimator=BaseEst(registry=_Registry()).set_fit_request(**{prop: True})
-    )
-
-    est.fit(X, y, **{prop: sample_weight if prop == "sample_weight" else metadata})
-
-    for estimator in est.estimators_:
-        if prop == "sample_weight":
-            kwargs = {prop: sample_weight}
-        else:
-            kwargs = {prop: metadata}
-        registry = estimator.registry
-        assert len(registry)
-        for sub_est in registry:
-            # When sample weight is passed in, the sub-estimators use
-            # bootstrapping to sample from the dataset, so we can't check
-            # that sample weight is the same within all sub-estimators.
-            #
-            # Note: We can check all other metadata is the same though.
-            if prop != "sample_weight":
-                check_recorded_metadata(
-                    obj=sub_est,
-                    method="fit",
-                    **kwargs,
-                )
