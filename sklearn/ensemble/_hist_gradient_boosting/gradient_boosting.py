@@ -1498,7 +1498,7 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         ``max_bins`` bins. In addition to the ``max_bins`` bins, one more bin
         is always reserved for missing values. Must be no larger than 255.
     categorical_features : array-like of {bool, int, str} of shape (n_features) \
-            or shape (n_categorical_features,), default=None
+            or shape (n_categorical_features,), default="warn"
         Indicates the categorical features.
 
         - None : no feature will be considered categorical.
@@ -1511,6 +1511,8 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
           considered to be categorical features. The input must be an object
           exposing a ``__dataframe__`` method such as pandas or polars
           DataFrames to use this feature.
+        - `"warn"`: issue a warning when the input dataframe has undeclared
+          categorical columns.
 
         For each categorical feature, there must be at most `max_bins` unique
         categories. Negative values for categorical features encoded as numeric
@@ -1874,7 +1876,7 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
         ``max_bins`` bins. In addition to the ``max_bins`` bins, one more bin
         is always reserved for missing values. Must be no larger than 255.
     categorical_features : array-like of {bool, int, str} of shape (n_features) \
-            or shape (n_categorical_features,), default=None
+            or shape (n_categorical_features,), default="warn"
         Indicates the categorical features.
 
         - None : no feature will be considered categorical.
@@ -1887,6 +1889,8 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
           considered to be categorical features. The input must be an object
           exposing a ``__dataframe__`` method such as pandas or polars
           DataFrames to use this feature.
+        - `"warn"`: issue a warning when the input dataframe has undeclared
+          categorical columns.
 
         For each categorical feature, there must be at most `max_bins` unique
         categories. Negative values for categorical features encoded as numeric
