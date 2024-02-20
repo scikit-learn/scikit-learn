@@ -703,7 +703,7 @@ class _BaseChain(BaseEstimator, metaclass=ABCMeta):
             # https://github.com/scipy/scipy/issues/20060#issuecomment-1937007039
             # convert type of X only in case it a scipy.sparray:
             if not sp.isspmatrix(X):
-                if isinstance(X, sp._dok.dok_array):
+                if isinstance(X, sp.dok_array):
                     X = sp.coo_array(X)
             Y_pred_chain = sp.lil_matrix((X.shape[0], Y.shape[1]))
             X_aug = sp.hstack((X, Y_pred_chain), format="lil")
