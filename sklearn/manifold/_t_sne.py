@@ -8,9 +8,9 @@
 # * Fast Optimization for t-SNE:
 #   https://cseweb.ucsd.edu/~lvdmaaten/workshops/nips2010/papers/vandermaaten.pdf
 
+import warnings
 from numbers import Integral, Real
 from time import time
-import warnings
 
 import numpy as np
 from scipy import linalg
@@ -1152,16 +1152,20 @@ class TSNE(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
             Embedding of the training data in low-dimensional space.
         """
         # TODO(1.7): remove
-        if self.n_iter != 'deprecated':
+        if self.n_iter != "deprecated":
             if self.max_iter is not None:
                 raise ValueError(
                     "Both 'n_iter' and 'max_iter' attributes were set. Attribute"
                     " 'n_iter' was deprecated in version 1.5 and will be removed in"
                     " 1.7. To avoid this error, only set the 'max_iter' attribute."
                 )
-            warnings.warn("'n_iter' was renamed to 'max_iter' in version 1.5 and "
-                          "will be removed in 1.7.",
-                          FutureWarning)
+            warnings.warn(
+                (
+                    "'n_iter' was renamed to 'max_iter' in version 1.5 and "
+                    "will be removed in 1.7."
+                ),
+                FutureWarning,
+            )
             self.max_iter = self.n_iter
         elif self.max_iter is None:
             self.max_iter = 1000
