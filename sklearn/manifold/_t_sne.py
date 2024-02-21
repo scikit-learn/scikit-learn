@@ -811,7 +811,7 @@ class TSNE(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
         "angle": [Interval(Real, 0, 1, closed="both")],
         "n_jobs": [None, Integral],
         "n_iter": [
-            Interval(Integral, 1, None, closed="left"),
+            Interval(Integral, 250, None, closed="left"),
             Hidden(StrOptions({"deprecated"})),
         ],
     }
