@@ -42,6 +42,11 @@ more details.
 - |Feature| :class:`impute.IterativeImputer` now supports metadata routing in
   its `fit` method. :pr:`28187` by :user:`Stefanie Senger <StefanieSenger>`.
 
+- |Feature| :class:`ensemble.BaggingClassifier` and :class:`ensemble.BaggingRegressor`
+  now support metadata routing. The fit methods now
+  accept ``**fit_params`` which are passed to the underlying estimators
+  via their `fit` methods.
+  :pr:`28432` by :user:`Adam Li <adam2392>` and :user:`Benjamin Bossan <BenjaminBossan>`.
 
 Changelog
 ---------
