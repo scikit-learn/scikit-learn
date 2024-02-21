@@ -95,12 +95,14 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LogisticRegressionCV
 from sklearn.naive_bayes import GaussianNB
 
-# Define the classifiers to be compared in the study. Note that we use a variant of the
-# logistic regression model that can internally tuned its regularization parameter
-# efficient and concise to do so.
-# For a fair comparison, we should run a hyper-parameter search for all the models but we
-# don't do it here for the sake of keeping the example code concise and fast
-# to execute.
+# Define the classifiers to be compared in the study.
+#
+# Note that we use a variant of the logistic regression model that can
+# automatically tune its regularization parameter.
+#
+# For a fair comparison, we should run a hyper-parameter search for all the
+# classifiers but we don't do it here for the sake of keeping the example code
+# concise and fast to execute.
 lr = LogisticRegressionCV(
     Cs=np.logspace(-6, 6, 101), cv=10, scoring="neg_log_loss", max_iter=1_000
 )
@@ -174,13 +176,13 @@ plt.show()
 # Logistic regression is trained by minimizing the log-loss which is a strictly
 # proper scoring rule: in the limit of infinite training data, strictly proper
 # scoring rules are minimized by the model that predicts the true conditional
-# probabilities. That (hypothetical) model would therefore be perfectly calibrated. However, using a
-# proper scoring rule as training objective is not sufficient to guarantee a
-# well-calibrated model by itself: even with a very large training set,
-# logistic regression could still be poorly calibrated, if it was too strongly
-# regularized or if the choice and preprocessing of input features made this model mis-specified
-# (e.g. if the true decision boundary of the dataset is a highly non-linear function of the input
-# features).
+# probabilities. That (hypothetical) model would therefore be perfectly
+# calibrated. However, using a proper scoring rule as training objective is not
+# sufficient to guarantee a well-calibrated model by itself: even with a very
+# large training set, logistic regression could still be poorly calibrated, if
+# it was too strongly regularized or if the choice and preprocessing of input
+# features made this model mis-specified (e.g. if the true decision boundary of
+# the dataset is a highly non-linear function of the input features).
 #
 # In this example the training set was intentionally kept very small. In this
 # setting, optimizing the log-loss can still lead to poorly calibrated models
