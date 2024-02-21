@@ -44,7 +44,7 @@ more details.
 
 - |Feature| :class:`ensemble.BaggingClassifier` and :class:`ensemble.BaggingRegressor`
   now support metadata routing. The fit methods now
-  accepts ``**fit_params`` which are passed to the underlying estimators
+  accept ``**fit_params`` which are passed to the underlying estimators
   via their `fit` methods.
   :pr:`28432` by :user:`Adam Li <adam2392>` and :user:`Benjamin Bossan <BenjaminBossan>`.
 
