@@ -64,6 +64,14 @@ Changelog
 - |Feature| A fitted :class:`compose.ColumnTransformer` now implements `__getitem__`
   which returns the fitted transformers by name. :pr:`27990` by `Thomas Fan`_.
 
+:mod:`sklearn.cluster`
+......................
+
+- |FIX| Create copy of precomputed sparse matrix within the
+  `fit` method of :class:`~cluster.OPTICS` to avoid in-place modification of
+  the sparse matrix.
+  :pr:`28491` by :user:`Thanh Lam Dang <lamdang2k>`.
+
 :mod:`sklearn.dummy`
 ....................
 
@@ -157,14 +165,6 @@ Changelog
   that generated that feature. If `False`, `get_feature_names_out` will not
   prefix any feature names and will error if feature names are not unique.
   :pr:`25991` by :user:`Jiawei Zhang <jiawei-zhang-a>`.
-
-:mod:`sklearn.cluster`
-......................
-
-- |FIX| : Create copy of precomputed sparse matrix within the
-  `fit` method of `cluster.OPTICS` to avoid in-place modification of
-  the sparse matrix.
-  :pr:`28491` by :user:`Thanh Lam Dang <lamdang2k>`.
 
 .. rubric:: Code and documentation contributors
 
