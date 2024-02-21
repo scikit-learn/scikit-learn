@@ -6,20 +6,19 @@
 
 import warnings
 from abc import ABCMeta, abstractmethod
-from time import time
 from numbers import Integral, Real
+from time import time
 
 import numpy as np
 from scipy.special import logsumexp
 
 from .. import cluster
+from ..base import BaseEstimator, DensityMixin, _fit_context
 from ..cluster import kmeans_plusplus
-from ..base import BaseEstimator
-from ..base import DensityMixin
 from ..exceptions import ConvergenceWarning
 from ..utils import check_random_state
-from ..utils.validation import check_is_fitted
 from ..utils._param_validation import Interval, StrOptions
+from ..utils.validation import check_is_fitted
 
 
 def _check_shape(param, param_shape, name):
@@ -137,10 +136,6 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
                 random_state=random_state,
             )
             resp[indices, np.arange(self.n_components)] = 1
-        else:
-            raise ValueError(
-                "Unimplemented initialization method '%s'" % self.init_params
-            )
 
         self._initialize(X, resp)
 
@@ -186,6 +181,7 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
         self.fit_predict(X, y)
         return self
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit_predict(self, X, y=None):
         """Estimate model parameters using X and predict the labels for X.
 
@@ -213,8 +209,6 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
         labels : array, shape (n_samples,)
             Component labels.
         """
-        self._validate_params()
-
         X = self._validate_data(X, dtype=[np.float64, np.float32], ensure_min_samples=2)
         if X.shape[0] < self.n_components:
             raise ValueError(

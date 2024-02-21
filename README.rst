@@ -1,15 +1,12 @@
 .. -*- mode: rst -*-
 
-|Azure|_ |Travis|_ |CirrusCI|_ |Codecov|_ |CircleCI|_ |Nightly wheels|_ |Black|_ |PythonVersion|_ |PyPi|_ |DOI|_ |Benchmark|_
+|Azure|_ |CirrusCI|_ |Codecov|_ |CircleCI|_ |Nightly wheels|_ |Black|_ |PythonVersion|_ |PyPi|_ |DOI|_ |Benchmark|_
 
 .. |Azure| image:: https://dev.azure.com/scikit-learn/scikit-learn/_apis/build/status/scikit-learn.scikit-learn?branchName=main
 .. _Azure: https://dev.azure.com/scikit-learn/scikit-learn/_build/latest?definitionId=1&branchName=main
 
-.. |CircleCI| image:: https://circleci.com/gh/scikit-learn/scikit-learn/tree/main.svg?style=shield&circle-token=:circle-token
+.. |CircleCI| image:: https://circleci.com/gh/scikit-learn/scikit-learn/tree/main.svg?style=shield
 .. _CircleCI: https://circleci.com/gh/scikit-learn/scikit-learn
-
-.. |Travis| image:: https://api.travis-ci.com/scikit-learn/scikit-learn.svg?branch=main
-.. _Travis: https://app.travis-ci.com/github/scikit-learn/scikit-learn
 
 .. |CirrusCI| image:: https://img.shields.io/cirrus/github/scikit-learn/scikit-learn/main?label=Cirrus%20CI
 .. _CirrusCI: https://cirrus-ci.com/github/scikit-learn/scikit-learn/main
@@ -20,7 +17,7 @@
 .. |Nightly wheels| image:: https://github.com/scikit-learn/scikit-learn/workflows/Wheel%20builder/badge.svg?event=schedule
 .. _`Nightly wheels`: https://github.com/scikit-learn/scikit-learn/actions?query=workflow%3A%22Wheel+builder%22+event%3Aschedule
 
-.. |PythonVersion| image:: https://img.shields.io/badge/python-3.8%20%7C%203.9%20%7C%203.10-blue
+.. |PythonVersion| image:: https://img.shields.io/pypi/pyversions/scikit-learn.svg
 .. _PythonVersion: https://pypi.org/project/scikit-learn/
 
 .. |PyPi| image:: https://img.shields.io/pypi/v/scikit-learn
@@ -35,17 +32,17 @@
 .. |Benchmark| image:: https://img.shields.io/badge/Benchmarked%20by-asv-blue
 .. _`Benchmark`: https://scikit-learn.org/scikit-learn-benchmarks/
 
-.. |PythonMinVersion| replace:: 3.8
-.. |NumPyMinVersion| replace:: 1.17.3
-.. |SciPyMinVersion| replace:: 1.3.2
-.. |JoblibMinVersion| replace:: 1.1.1
+.. |PythonMinVersion| replace:: 3.9
+.. |NumPyMinVersion| replace:: 1.19.5
+.. |SciPyMinVersion| replace:: 1.6.0
+.. |JoblibMinVersion| replace:: 1.2.0
 .. |ThreadpoolctlMinVersion| replace:: 2.0.0
-.. |MatplotlibMinVersion| replace:: 3.1.3
-.. |Scikit-ImageMinVersion| replace:: 0.16.2
-.. |PandasMinVersion| replace:: 1.0.5
+.. |MatplotlibMinVersion| replace:: 3.3.4
+.. |Scikit-ImageMinVersion| replace:: 0.17.2
+.. |PandasMinVersion| replace:: 1.1.5
 .. |SeabornMinVersion| replace:: 0.9.0
-.. |PytestMinVersion| replace:: 5.3.1
-.. |PlotlyMinVersion| replace:: 5.10.0
+.. |PytestMinVersion| replace:: 7.1.2
+.. |PlotlyMinVersion| replace:: 5.14.0
 
 .. image:: https://raw.githubusercontent.com/scikit-learn/scikit-learn/main/doc/logos/scikit-learn-logo.png
   :target: https://scikit-learn.org/
@@ -83,7 +80,7 @@ scikit-learn 1.0 and later require Python 3.7 or newer.
 scikit-learn 1.1 and later require Python 3.8 or newer.
 
 Scikit-learn plotting capabilities (i.e., functions start with ``plot_`` and
-classes end with "Display") require Matplotlib (>= |MatplotlibMinVersion|).
+classes end with ``Display``) require Matplotlib (>= |MatplotlibMinVersion|).
 For running the examples Matplotlib >= |MatplotlibMinVersion| is required.
 A few examples require scikit-image >= |Scikit-ImageMinVersion|, a few examples
 require pandas >= |PandasMinVersion|, some examples require seaborn >=
@@ -92,7 +89,7 @@ require pandas >= |PandasMinVersion|, some examples require seaborn >=
 User installation
 ~~~~~~~~~~~~~~~~~
 
-If you already have a working installation of numpy and scipy,
+If you already have a working installation of NumPy and SciPy,
 the easiest way to install scikit-learn is using ``pip``::
 
     pip install -U scikit-learn
@@ -192,7 +189,6 @@ Communication
 - Blog: https://blog.scikit-learn.org
 - Calendar: https://blog.scikit-learn.org/calendar/
 - Twitter: https://twitter.com/scikit_learn
-- Twitter (commits): https://twitter.com/sklearn_commits
 - Stack Overflow: https://stackoverflow.com/questions/tagged/scikit-learn
 - Github Discussions: https://github.com/scikit-learn/scikit-learn/discussions
 - Website: https://scikit-learn.org

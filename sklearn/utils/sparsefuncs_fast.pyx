@@ -1,3 +1,8 @@
+"""
+The :mod:`sklearn.utils.sparsefuncs_fast` module includes a collection of utilities to
+work with sparse matrices and arrays written in Cython.
+"""
+
 # Authors: Mathieu Blondel
 #          Olivier Grisel
 #          Peter Prettenhofer
@@ -6,50 +11,51 @@
 #
 # License: BSD 3 clause
 
-#!python
+from libc.math cimport fabs, sqrt, isnan
+from libc.stdint cimport intptr_t
 
-from libc.math cimport fabs, sqrt
 cimport numpy as cnp
 import numpy as np
 from cython cimport floating
-from numpy.math cimport isnan
+from ..utils._typedefs cimport float64_t, int32_t, intp_t, uint64_t
 
 cnp.import_array()
 
-ctypedef fused integral:
-    int
-    long long
 
-ctypedef cnp.float64_t DOUBLE
+# This `integral` fused type is defined to be used over `cython.integral`
+# to only generate implementations for `int{32,64}_t`.
+# TODO: use `{int,float}{32,64}_t` when cython#5230 is resolved:
+# https://github.com/cython/cython/issues/5230
+ctypedef fused integral:
+    int  # int32_t
+    long long  # int64_t
 
 
 def csr_row_norms(X):
     """Squared L2 norm of each row in CSR matrix X."""
     if X.dtype not in [np.float32, np.float64]:
         X = X.astype(np.float64)
-    return _csr_row_norms(X.data, X.indices, X.indptr)
+    return _sqeuclidean_row_norms_sparse(X.data, X.indptr)
 
 
-def _csr_row_norms(
+def _sqeuclidean_row_norms_sparse(
     const floating[::1] X_data,
-    const integral[::1] X_indices,
     const integral[::1] X_indptr,
 ):
     cdef:
         integral n_samples = X_indptr.shape[0] - 1
         integral i, j
-        double sum_
 
     dtype = np.float32 if floating is float else np.float64
 
-    cdef floating[::1] norms = np.zeros(n_samples, dtype=dtype)
+    cdef floating[::1] squared_row_norms = np.zeros(n_samples, dtype=dtype)
 
     with nogil:
         for i in range(n_samples):
             for j in range(X_indptr[i], X_indptr[i + 1]):
-                norms[i] += X_data[j] * X_data[j]
+                squared_row_norms[i] += X_data[j] * X_data[j]
 
-    return np.asarray(norms)
+    return np.asarray(squared_row_norms)
 
 
 def csr_mean_variance_axis0(X, weights=None, return_sum_weights=False):
@@ -97,41 +103,42 @@ def csr_mean_variance_axis0(X, weights=None, return_sum_weights=False):
     return means, variances
 
 
-def _csr_mean_variance_axis0(cnp.ndarray[floating, ndim=1, mode="c"] X_data,
-                             unsigned long long n_samples,
-                             unsigned long long n_features,
-                             cnp.ndarray[integral, ndim=1] X_indices,
-                             cnp.ndarray[integral, ndim=1] X_indptr,
-                             cnp.ndarray[floating, ndim=1] weights):
+def _csr_mean_variance_axis0(
+    const floating[::1] X_data,
+    uint64_t n_samples,
+    uint64_t n_features,
+    const integral[:] X_indices,
+    const integral[:] X_indptr,
+    const floating[:] weights,
+):
     # Implement the function here since variables using fused types
     # cannot be declared directly and can only be passed as function arguments
     cdef:
-        cnp.intp_t row_ind
-        unsigned long long feature_idx
+        intp_t row_ind
+        uint64_t feature_idx
         integral i, col_ind
-        cnp.float64_t diff
+        float64_t diff
         # means[j] contains the mean of feature j
-        cnp.ndarray[cnp.float64_t, ndim=1] means = np.zeros(n_features)
+        float64_t[::1] means = np.zeros(n_features)
         # variances[j] contains the variance of feature j
-        cnp.ndarray[cnp.float64_t, ndim=1] variances = np.zeros(n_features)
+        float64_t[::1] variances = np.zeros(n_features)
 
-        cnp.ndarray[cnp.float64_t, ndim=1] sum_weights = np.full(
-            fill_value=np.sum(weights, dtype=np.float64), shape=n_features)
-        cnp.ndarray[cnp.float64_t, ndim=1] sum_weights_nz = np.zeros(
-            shape=n_features)
-        cnp.ndarray[cnp.float64_t, ndim=1] correction = np.zeros(
-            shape=n_features)
+        float64_t[::1] sum_weights = np.full(
+            fill_value=np.sum(weights, dtype=np.float64), shape=n_features
+        )
+        float64_t[::1] sum_weights_nz = np.zeros(shape=n_features)
+        float64_t[::1] correction = np.zeros(shape=n_features)
 
-        cnp.ndarray[cnp.uint64_t, ndim=1] counts = np.full(
-            fill_value=weights.shape[0], shape=n_features, dtype=np.uint64)
-        cnp.ndarray[cnp.uint64_t, ndim=1] counts_nz = np.zeros(
-            shape=n_features, dtype=np.uint64)
+        uint64_t[::1] counts = np.full(
+            fill_value=weights.shape[0], shape=n_features, dtype=np.uint64
+        )
+        uint64_t[::1] counts_nz = np.zeros(shape=n_features, dtype=np.uint64)
 
     for row_ind in range(len(X_indptr) - 1):
         for i in range(X_indptr[row_ind], X_indptr[row_ind + 1]):
             col_ind = X_indices[i]
             if not isnan(X_data[i]):
-                means[col_ind] += <cnp.float64_t>(X_data[i]) * weights[row_ind]
+                means[col_ind] += <float64_t>(X_data[i]) * weights[row_ind]
                 # sum of weights where X[:, col_ind] is non-zero
                 sum_weights_nz[col_ind] += weights[row_ind]
                 # number of non-zero elements of X[:, col_ind]
@@ -174,11 +181,15 @@ def _csr_mean_variance_axis0(cnp.ndarray[floating, ndim=1, mode="c"] X_data,
         )
 
     if floating is float:
-        return (np.array(means, dtype=np.float32),
-                np.array(variances, dtype=np.float32),
-                np.array(sum_weights, dtype=np.float32))
+        return (
+            np.array(means, dtype=np.float32),
+            np.array(variances, dtype=np.float32),
+            np.array(sum_weights, dtype=np.float32),
+        )
     else:
-        return means, variances, sum_weights
+        return (
+            np.asarray(means), np.asarray(variances), np.asarray(sum_weights)
+        )
 
 
 def csc_mean_variance_axis0(X, weights=None, return_sum_weights=False):
@@ -226,40 +237,41 @@ def csc_mean_variance_axis0(X, weights=None, return_sum_weights=False):
     return means, variances
 
 
-def _csc_mean_variance_axis0(cnp.ndarray[floating, ndim=1, mode="c"] X_data,
-                             unsigned long long n_samples,
-                             unsigned long long n_features,
-                             cnp.ndarray[integral, ndim=1] X_indices,
-                             cnp.ndarray[integral, ndim=1] X_indptr,
-                             cnp.ndarray[floating, ndim=1] weights):
+def _csc_mean_variance_axis0(
+    const floating[::1] X_data,
+    uint64_t n_samples,
+    uint64_t n_features,
+    const integral[:] X_indices,
+    const integral[:] X_indptr,
+    const floating[:] weights,
+):
     # Implement the function here since variables using fused types
     # cannot be declared directly and can only be passed as function arguments
     cdef:
         integral i, row_ind
-        unsigned long long feature_idx, col_ind
-        cnp.float64_t diff
+        uint64_t feature_idx, col_ind
+        float64_t diff
         # means[j] contains the mean of feature j
-        cnp.ndarray[cnp.float64_t, ndim=1] means = np.zeros(n_features)
+        float64_t[::1] means = np.zeros(n_features)
         # variances[j] contains the variance of feature j
-        cnp.ndarray[cnp.float64_t, ndim=1] variances = np.zeros(n_features)
+        float64_t[::1] variances = np.zeros(n_features)
 
-        cnp.ndarray[cnp.float64_t, ndim=1] sum_weights = np.full(
-            fill_value=np.sum(weights, dtype=np.float64), shape=n_features)
-        cnp.ndarray[cnp.float64_t, ndim=1] sum_weights_nz = np.zeros(
-            shape=n_features)
-        cnp.ndarray[cnp.float64_t, ndim=1] correction = np.zeros(
-            shape=n_features)
+        float64_t[::1] sum_weights = np.full(
+            fill_value=np.sum(weights, dtype=np.float64), shape=n_features
+        )
+        float64_t[::1] sum_weights_nz = np.zeros(shape=n_features)
+        float64_t[::1] correction = np.zeros(shape=n_features)
 
-        cnp.ndarray[cnp.uint64_t, ndim=1] counts = np.full(
-            fill_value=weights.shape[0], shape=n_features, dtype=np.uint64)
-        cnp.ndarray[cnp.uint64_t, ndim=1] counts_nz = np.zeros(
-            shape=n_features, dtype=np.uint64)
+        uint64_t[::1] counts = np.full(
+            fill_value=weights.shape[0], shape=n_features, dtype=np.uint64
+        )
+        uint64_t[::1] counts_nz = np.zeros(shape=n_features, dtype=np.uint64)
 
     for col_ind in range(n_features):
         for i in range(X_indptr[col_ind], X_indptr[col_ind + 1]):
             row_ind = X_indices[i]
             if not isnan(X_data[i]):
-                means[col_ind] += <cnp.float64_t>(X_data[i]) * weights[row_ind]
+                means[col_ind] += <float64_t>(X_data[i]) * weights[row_ind]
                 # sum of weights where X[:, col_ind] is non-zero
                 sum_weights_nz[col_ind] += weights[row_ind]
                 # number of non-zero elements of X[:, col_ind]
@@ -305,7 +317,9 @@ def _csc_mean_variance_axis0(cnp.ndarray[floating, ndim=1, mode="c"] X_data,
                 np.array(variances, dtype=np.float32),
                 np.array(sum_weights, dtype=np.float32))
     else:
-        return means, variances, sum_weights
+        return (
+            np.asarray(means), np.asarray(variances), np.asarray(sum_weights)
+        )
 
 
 def incr_mean_variance_axis0(X, last_mean, last_var, last_n, weights=None):
@@ -380,31 +394,33 @@ def incr_mean_variance_axis0(X, last_mean, last_var, last_n, weights=None):
                                      weights.astype(X_dtype, copy=False))
 
 
-def _incr_mean_variance_axis0(cnp.ndarray[floating, ndim=1] X_data,
-                              floating n_samples,
-                              unsigned long long n_features,
-                              cnp.ndarray[int, ndim=1] X_indices,
-                              # X_indptr might be either in32 or int64
-                              cnp.ndarray[integral, ndim=1] X_indptr,
-                              str X_format,
-                              cnp.ndarray[floating, ndim=1] last_mean,
-                              cnp.ndarray[floating, ndim=1] last_var,
-                              cnp.ndarray[floating, ndim=1] last_n,
-                              # previous sum of the weights (ie float)
-                              cnp.ndarray[floating, ndim=1] weights):
+def _incr_mean_variance_axis0(
+    const floating[:] X_data,
+    floating n_samples,
+    uint64_t n_features,
+    const int[:] X_indices,
+    # X_indptr might be either int32 or int64
+    const integral[:] X_indptr,
+    str X_format,
+    floating[:] last_mean,
+    floating[:] last_var,
+    floating[:] last_n,
+    # previous sum of the weights (ie float)
+    const floating[:] weights,
+):
     # Implement the function here since variables using fused types
     # cannot be declared directly and can only be passed as function arguments
     cdef:
-        unsigned long long i
+        uint64_t i
 
         # last = stats until now
         # new = the current increment
         # updated = the aggregated stats
         # when arrays, they are indexed by i per-feature
-        cnp.ndarray[floating, ndim=1] new_mean
-        cnp.ndarray[floating, ndim=1] new_var
-        cnp.ndarray[floating, ndim=1] updated_mean
-        cnp.ndarray[floating, ndim=1] updated_var
+        floating[::1] new_mean
+        floating[::1] new_var
+        floating[::1] updated_mean
+        floating[::1] updated_var
 
     if floating is float:
         dtype = np.float32
@@ -417,9 +433,9 @@ def _incr_mean_variance_axis0(cnp.ndarray[floating, ndim=1] X_data,
     updated_var = np.zeros_like(new_mean, dtype=dtype)
 
     cdef:
-        cnp.ndarray[floating, ndim=1] new_n
-        cnp.ndarray[floating, ndim=1] updated_n
-        cnp.ndarray[floating, ndim=1] last_over_new_n
+        floating[::1] new_n
+        floating[::1] updated_n
+        floating[::1] last_over_new_n
 
     # Obtain new stats first
     updated_n = np.zeros(shape=n_features, dtype=dtype)
@@ -441,7 +457,7 @@ def _incr_mean_variance_axis0(cnp.ndarray[floating, ndim=1] X_data,
             break
 
     if is_first_pass:
-        return new_mean, new_var, new_n
+        return np.asarray(new_mean), np.asarray(new_var), np.asarray(new_n)
 
     for i in range(n_features):
         updated_n[i] = last_n[i] + new_n[i]
@@ -468,7 +484,11 @@ def _incr_mean_variance_axis0(cnp.ndarray[floating, ndim=1] X_data,
             updated_mean[i] = last_mean[i]
             updated_n[i] = last_n[i]
 
-    return updated_mean, updated_var, updated_n
+    return (
+        np.asarray(updated_mean),
+        np.asarray(updated_var),
+        np.asarray(updated_n),
+    )
 
 
 def inplace_csr_row_normalize_l1(X):
@@ -476,19 +496,20 @@ def inplace_csr_row_normalize_l1(X):
     _inplace_csr_row_normalize_l1(X.data, X.shape, X.indices, X.indptr)
 
 
-def _inplace_csr_row_normalize_l1(cnp.ndarray[floating, ndim=1] X_data,
-                                  shape,
-                                  cnp.ndarray[integral, ndim=1] X_indices,
-                                  cnp.ndarray[integral, ndim=1] X_indptr):
+def _inplace_csr_row_normalize_l1(
+    floating[:] X_data,
+    shape,
+    const integral[:] X_indices,
+    const integral[:] X_indptr,
+):
     cdef:
-        unsigned long long n_samples = shape[0]
-        unsigned long long n_features = shape[1]
+        uint64_t n_samples = shape[0]
 
         # the column indices for row i are stored in:
         #    indices[indptr[i]:indices[i+1]]
         # and their corresponding values are stored in:
         #    data[indptr[i]:indptr[i+1]]
-        unsigned long long i
+        uint64_t i
         integral j
         double sum_
 
@@ -512,14 +533,15 @@ def inplace_csr_row_normalize_l2(X):
     _inplace_csr_row_normalize_l2(X.data, X.shape, X.indices, X.indptr)
 
 
-def _inplace_csr_row_normalize_l2(cnp.ndarray[floating, ndim=1] X_data,
-                                  shape,
-                                  cnp.ndarray[integral, ndim=1] X_indices,
-                                  cnp.ndarray[integral, ndim=1] X_indptr):
+def _inplace_csr_row_normalize_l2(
+    floating[:] X_data,
+    shape,
+    const integral[:] X_indices,
+    const integral[:] X_indptr,
+):
     cdef:
-        unsigned long long n_samples = shape[0]
-        unsigned long long n_features = shape[1]
-        unsigned long long i
+        uint64_t n_samples = shape[0]
+        uint64_t i
         integral j
         double sum_
 
@@ -540,10 +562,12 @@ def _inplace_csr_row_normalize_l2(cnp.ndarray[floating, ndim=1] X_data,
             X_data[j] /= sum_
 
 
-def assign_rows_csr(X,
-                    cnp.ndarray[cnp.npy_intp, ndim=1] X_rows,
-                    cnp.ndarray[cnp.npy_intp, ndim=1] out_rows,
-                    cnp.ndarray[floating, ndim=2, mode="c"] out):
+def assign_rows_csr(
+    X,
+    const intptr_t[:] X_rows,
+    const intptr_t[:] out_rows,
+    floating[:, ::1] out,
+):
     """Densify selected rows of a CSR matrix into a preallocated array.
 
     Like out[out_rows] = X[X_rows].toarray() but without copying.
@@ -557,20 +581,24 @@ def assign_rows_csr(X,
     out : array, shape=(arbitrary, n_features)
     """
     cdef:
-        # npy_intp (np.intp in Python) is what np.where returns,
+        # intptr_t (npy_intp, np.intp in Python) is what np.where returns,
         # but int is what scipy.sparse uses.
-        int i, ind, j
-        cnp.npy_intp rX
-        cnp.ndarray[floating, ndim=1] data = X.data
-        cnp.ndarray[int, ndim=1] indices = X.indices, indptr = X.indptr
+        intp_t i, ind, j, k
+        intptr_t rX
+        const floating[:] data = X.data
+        const int32_t[:] indices = X.indices
+        const int32_t[:] indptr = X.indptr
 
     if X_rows.shape[0] != out_rows.shape[0]:
         raise ValueError("cannot assign %d rows to %d"
                          % (X_rows.shape[0], out_rows.shape[0]))
 
-    out[out_rows] = 0.
-    for i in range(X_rows.shape[0]):
-        rX = X_rows[i]
-        for ind in range(indptr[rX], indptr[rX + 1]):
-            j = indices[ind]
-            out[out_rows[i], j] = data[ind]
+    with nogil:
+        for k in range(out_rows.shape[0]):
+            out[out_rows[k]] = 0.0
+
+        for i in range(X_rows.shape[0]):
+            rX = X_rows[i]
+            for ind in range(indptr[rX], indptr[rX + 1]):
+                j = indices[ind]
+                out[out_rows[i], j] = data[ind]

@@ -18,23 +18,31 @@ from numbers import Integral
 
 import numpy as np
 
-from ..base import ClassifierMixin
-from ..base import RegressorMixin
-from ..base import TransformerMixin
-from ..base import clone
-from ._base import _fit_single_estimator
-from ._base import _BaseHeterogeneousEnsemble
+from ..base import (
+    ClassifierMixin,
+    RegressorMixin,
+    TransformerMixin,
+    _fit_context,
+    clone,
+)
+from ..exceptions import NotFittedError
 from ..preprocessing import LabelEncoder
 from ..utils import Bunch
-from ..utils.metaestimators import available_if
-from ..utils.validation import check_is_fitted
-from ..utils.validation import _check_feature_names_in
-from ..utils.multiclass import check_classification_targets
-from ..utils.validation import column_or_1d
-from ..utils._param_validation import StrOptions
-from ..exceptions import NotFittedError
 from ..utils._estimator_html_repr import _VisualBlock
-from ..utils.parallel import delayed, Parallel
+from ..utils._param_validation import StrOptions
+from ..utils.metadata_routing import (
+    _raise_for_unsupported_routing,
+    _RoutingNotSupportedMixin,
+)
+from ..utils.metaestimators import available_if
+from ..utils.multiclass import type_of_target
+from ..utils.parallel import Parallel, delayed
+from ..utils.validation import (
+    _check_feature_names_in,
+    check_is_fitted,
+    column_or_1d,
+)
+from ._base import _BaseHeterogeneousEnsemble, _fit_single_estimator
 
 
 class _BaseVoting(TransformerMixin, _BaseHeterogeneousEnsemble):
@@ -148,11 +156,8 @@ class _BaseVoting(TransformerMixin, _BaseHeterogeneousEnsemble):
         names, estimators = zip(*self.estimators)
         return _VisualBlock("parallel", estimators, names=names)
 
-    def _more_tags(self):
-        return {"preserves_dtype": []}
 
-
-class VotingClassifier(ClassifierMixin, _BaseVoting):
+class VotingClassifier(_RoutingNotSupportedMixin, ClassifierMixin, _BaseVoting):
     """Soft Voting/Majority Rule classifier for unfitted estimators.
 
     Read more in the :ref:`User Guide <voting_classifier>`.
@@ -308,6 +313,10 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
         self.flatten_transform = flatten_transform
         self.verbose = verbose
 
+    @_fit_context(
+        # estimators in VotingClassifier.estimators are not validated yet
+        prefer_skip_nested_validation=False
+    )
     def fit(self, X, y, sample_weight=None):
         """Fit the estimators.
 
@@ -332,11 +341,22 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
         self : object
             Returns the instance itself.
         """
-        self._validate_params()
-        check_classification_targets(y)
-        if isinstance(y, np.ndarray) and len(y.shape) > 1 and y.shape[1] > 1:
+        _raise_for_unsupported_routing(self, "fit", sample_weight=sample_weight)
+        y_type = type_of_target(y, input_name="y")
+        if y_type in ("unknown", "continuous"):
+            # raise a specific ValueError for non-classification tasks
+            raise ValueError(
+                f"Unknown label type: {y_type}. Maybe you are trying to fit a "
+                "classifier, which expects discrete classes on a "
+                "regression target with continuous values."
+            )
+        elif y_type not in ("binary", "multiclass"):
+            # raise a NotImplementedError for backward compatibility for non-supported
+            # classification tasks
             raise NotImplementedError(
-                "Multilabel and multi-output classification is not supported."
+                f"{self.__class__.__name__} only supports binary or multiclass "
+                "classification. Multilabel and multi-output classification are not "
+                "supported."
             )
 
         self.le_ = LabelEncoder().fit(y)
@@ -475,7 +495,7 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
         return np.asarray(names_out, dtype=object)
 
 
-class VotingRegressor(RegressorMixin, _BaseVoting):
+class VotingRegressor(_RoutingNotSupportedMixin, RegressorMixin, _BaseVoting):
     """Prediction voting regressor for unfitted estimators.
 
     A voting regressor is an ensemble meta-estimator that fits several base
@@ -572,6 +592,10 @@ class VotingRegressor(RegressorMixin, _BaseVoting):
         self.n_jobs = n_jobs
         self.verbose = verbose
 
+    @_fit_context(
+        # estimators in VotingRegressor.estimators are not validated yet
+        prefer_skip_nested_validation=False
+    )
     def fit(self, X, y, sample_weight=None):
         """Fit the estimators.
 
@@ -594,7 +618,7 @@ class VotingRegressor(RegressorMixin, _BaseVoting):
         self : object
             Fitted estimator.
         """
-        self._validate_params()
+        _raise_for_unsupported_routing(self, "fit", sample_weight=sample_weight)
         y = column_or_1d(y, warn=True)
         return super().fit(X, y, sample_weight)
 

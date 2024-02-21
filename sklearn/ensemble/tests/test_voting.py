@@ -1,30 +1,35 @@
 """Testing for the VotingClassifier and VotingRegressor"""
 
-import pytest
 import re
-import numpy as np
 
-from sklearn.utils._testing import assert_almost_equal, assert_array_equal
-from sklearn.utils._testing import assert_array_almost_equal
-from sklearn.exceptions import NotFittedError
-from sklearn.linear_model import LinearRegression
-from sklearn.linear_model import LogisticRegression
-from sklearn.naive_bayes import GaussianNB
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.ensemble import RandomForestRegressor
-from sklearn.ensemble import VotingClassifier, VotingRegressor
-from sklearn.tree import DecisionTreeClassifier
-from sklearn.tree import DecisionTreeRegressor
-from sklearn.model_selection import GridSearchCV
+import numpy as np
+import pytest
+
 from sklearn import datasets
-from sklearn.model_selection import cross_val_score, train_test_split
-from sklearn.datasets import make_multilabel_classification
-from sklearn.svm import SVC
-from sklearn.multiclass import OneVsRestClassifier
-from sklearn.neighbors import KNeighborsClassifier
 from sklearn.base import BaseEstimator, ClassifierMixin, clone
+from sklearn.datasets import make_multilabel_classification
 from sklearn.dummy import DummyRegressor
+from sklearn.ensemble import (
+    RandomForestClassifier,
+    RandomForestRegressor,
+    VotingClassifier,
+    VotingRegressor,
+)
+from sklearn.exceptions import NotFittedError
+from sklearn.linear_model import LinearRegression, LogisticRegression
+from sklearn.model_selection import GridSearchCV, cross_val_score, train_test_split
+from sklearn.multiclass import OneVsRestClassifier
+from sklearn.naive_bayes import GaussianNB
+from sklearn.neighbors import KNeighborsClassifier
 from sklearn.preprocessing import StandardScaler
+from sklearn.svm import SVC
+from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
+from sklearn.utils._testing import (
+    _convert_container,
+    assert_almost_equal,
+    assert_array_almost_equal,
+    assert_array_equal,
+)
 
 # Load datasets
 iris = datasets.load_iris()
@@ -59,9 +64,13 @@ def test_predictproba_hardvoting():
         estimators=[("lr1", LogisticRegression()), ("lr2", LogisticRegression())],
         voting="hard",
     )
-    msg = "predict_proba is not available when voting='hard'"
-    with pytest.raises(AttributeError, match=msg):
+
+    inner_msg = "predict_proba is not available when voting='hard'"
+    outer_msg = "'VotingClassifier' has no attribute 'predict_proba'"
+    with pytest.raises(AttributeError, match=outer_msg) as exec_info:
         eclf.predict_proba
+    assert isinstance(exec_info.value.__cause__, AttributeError)
+    assert inner_msg in str(exec_info.value.__cause__)
 
     assert not hasattr(eclf, "predict_proba")
     eclf.fit(X_scaled, y)
@@ -234,28 +243,31 @@ def test_predict_proba_on_toy_problem():
     assert_almost_equal(t21, eclf_res[2][1], decimal=1)
     assert_almost_equal(t31, eclf_res[3][1], decimal=1)
 
-    with pytest.raises(
-        AttributeError, match="predict_proba is not available when voting='hard'"
-    ):
+    inner_msg = "predict_proba is not available when voting='hard'"
+    outer_msg = "'VotingClassifier' has no attribute 'predict_proba'"
+    with pytest.raises(AttributeError, match=outer_msg) as exec_info:
         eclf = VotingClassifier(
             estimators=[("lr", clf1), ("rf", clf2), ("gnb", clf3)], voting="hard"
         )
         eclf.fit(X, y).predict_proba(X)
 
+    assert isinstance(exec_info.value.__cause__, AttributeError)
+    assert inner_msg in str(exec_info.value.__cause__)
 
-def test_multilabel():
+
+@pytest.mark.parametrize("container_type", ["list", "array", "dataframe"])
+def test_multilabel(container_type):
     """Check if error is raised for multilabel classification."""
     X, y = make_multilabel_classification(
         n_classes=2, n_labels=1, allow_unlabeled=False, random_state=123
     )
+    y = _convert_container(y, container_type)
     clf = OneVsRestClassifier(SVC(kernel="linear"))
 
     eclf = VotingClassifier(estimators=[("ovr", clf)], voting="hard")
-
-    try:
+    err_msg = "only supports binary or multiclass classification"
+    with pytest.raises(NotImplementedError, match=err_msg):
         eclf.fit(X, y)
-    except NotImplementedError:
-        return
 
 
 def test_gridsearch():
@@ -552,7 +564,6 @@ def test_none_estimator_with_weights(X, y, voter):
     ids=["VotingRegressor", "VotingClassifier"],
 )
 def test_n_features_in(est):
-
     X = [[1, 2], [3, 4], [5, 6]]
     y = [0, 1, 2]
 
@@ -581,7 +592,6 @@ def test_n_features_in(est):
     ],
 )
 def test_voting_verbose(estimator, capsys):
-
     X = np.array([[-1.1, -1.5], [-1.2, -1.4], [-3.4, -2.2], [1.1, 1.2]])
     y = np.array([1, 1, 2, 2])
 

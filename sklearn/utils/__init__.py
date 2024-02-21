@@ -1,45 +1,48 @@
 """
 The :mod:`sklearn.utils` module includes various utilities.
 """
-from collections.abc import Sequence
-from contextlib import contextmanager
-from itertools import compress
-from itertools import islice
+
 import math
 import numbers
 import platform
 import struct
 import timeit
-from contextlib import suppress
-
 import warnings
+from collections.abc import Sequence
+from contextlib import contextmanager, suppress
+from itertools import compress, islice
+
 import numpy as np
 from scipy.sparse import issparse
 
-from .murmurhash import murmurhash3_32
-from .class_weight import compute_class_weight, compute_sample_weight
-from . import _joblib
+from .. import get_config
 from ..exceptions import DataConversionWarning
+from . import _joblib, metadata_routing
+from ._bunch import Bunch
+from ._estimator_html_repr import estimator_html_repr
+from ._param_validation import Integral, Interval, validate_params
+from .class_weight import compute_class_weight, compute_sample_weight
 from .deprecation import deprecated
 from .discovery import all_estimators
+from .extmath import _approximate_mode, safe_sqr
 from .fixes import parse_version, threadpool_info
-from ._estimator_html_repr import estimator_html_repr
+from .murmurhash import murmurhash3_32
 from .validation import (
+    _is_arraylike_not_scalar,
+    _is_pandas_df,
+    _is_polars_df,
+    _use_interchange_protocol,
     as_float_array,
     assert_all_finite,
-    check_random_state,
-    column_or_1d,
     check_array,
     check_consistent_length,
-    check_X_y,
-    indexable,
-    check_symmetric,
+    check_random_state,
     check_scalar,
-    _is_arraylike_not_scalar,
+    check_symmetric,
+    check_X_y,
+    column_or_1d,
+    indexable,
 )
-from .. import get_config
-from ._bunch import Bunch
-
 
 # Do not deprecate parallel_backend and register_parallel_backend as they are
 # needed to tune `scikit-learn` behavior and have different effect if called
@@ -69,15 +72,17 @@ __all__ = [
     "register_parallel_backend",
     "resample",
     "shuffle",
-    "check_matplotlib_support",
     "all_estimators",
     "DataConversionWarning",
     "estimator_html_repr",
     "Bunch",
+    "metadata_routing",
+    "safe_sqr",
 ]
 
 IS_PYPY = platform.python_implementation() == "PyPy"
 _IS_32BIT = 8 * struct.calcsize("P") == 32
+_IS_WASM = platform.machine() in ["wasm32", "wasm64"]
 
 
 def _in_unstable_openblas_configuration():
@@ -93,7 +98,7 @@ def _in_unstable_openblas_configuration():
     if not open_blas_used:
         return False
 
-    # OpenBLAS 0.3.16 fixed unstability for arm64, see:
+    # OpenBLAS 0.3.16 fixed instability for arm64, see:
     # https://github.com/xianyi/OpenBLAS/blob/1b6db3dbba672b4f8af935bd43a1ff6cff4d20b7/Changelog.txt#L56-L58 # noqa
     openblas_arm64_stable_version = parse_version("0.3.16")
     for info in modules_info:
@@ -113,6 +118,13 @@ def _in_unstable_openblas_configuration():
     return False
 
 
+@validate_params(
+    {
+        "X": ["array-like", "sparse matrix"],
+        "mask": ["array-like"],
+    },
+    prefer_skip_nested_validation=True,
+)
 def safe_mask(X, mask):
     """Return a mask which is safe to use on X.
 
@@ -121,13 +133,25 @@ def safe_mask(X, mask):
     X : {array-like, sparse matrix}
         Data on which to apply mask.
 
-    mask : ndarray
+    mask : array-like
         Mask to be used on X.
 
     Returns
     -------
     mask : ndarray
         Array that is safe to use on X.
+
+    Examples
+    --------
+    >>> from sklearn.utils import safe_mask
+    >>> from scipy.sparse import csr_matrix
+    >>> data = csr_matrix([[1], [2], [3], [4], [5]])
+    >>> condition = [False, True, True, False, True]
+    >>> mask = safe_mask(data, condition)
+    >>> data[mask].toarray()
+    array([[2],
+           [3],
+           [5]])
     """
     mask = np.asarray(mask)
     if np.issubdtype(mask.dtype, np.signedinteger):
@@ -182,7 +206,7 @@ def _array_indexing(array, key, key_dtype, axis):
         key = np.asarray(key)
     if isinstance(key, tuple):
         key = list(key)
-    return array[key] if axis == 0 else array[:, key]
+    return array[key, ...] if axis == 0 else array[:, key]
 
 
 def _pandas_indexing(X, key, key_dtype, axis):
@@ -210,6 +234,18 @@ def _list_indexing(X, key, key_dtype):
         return list(compress(X, key))
     # key is a integer array-like of key
     return [X[idx] for idx in key]
+
+
+def _polars_indexing(X, key, key_dtype, axis):
+    """Indexing X with polars interchange protocol."""
+    # Polars behavior is more consistent with lists
+    if isinstance(key, np.ndarray):
+        key = key.tolist()
+
+    if axis == 1:
+        return X[:, key]
+    else:
+        return X[key]
 
 
 def _determine_key_type(key, accept_slice=True):
@@ -322,6 +358,16 @@ def _safe_indexing(X, indices, *, axis=0):
     -----
     CSR, CSC, and LIL sparse matrices are supported. COO sparse matrices are
     not supported.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.utils import _safe_indexing
+    >>> data = np.array([[1, 2], [3, 4], [5, 6]])
+    >>> _safe_indexing(data, 0, axis=0)  # select the first row
+    array([1, 2])
+    >>> _safe_indexing(data, 0, axis=1)  # select the first column
+    array([1, 3, 5])
     """
     if indices is None:
         return X
@@ -337,21 +383,31 @@ def _safe_indexing(X, indices, *, axis=0):
     if axis == 0 and indices_dtype == "str":
         raise ValueError("String indexing is not supported with 'axis=0'")
 
-    if axis == 1 and X.ndim != 2:
+    if axis == 1 and isinstance(X, list):
+        raise ValueError("axis=1 is not supported for lists")
+
+    if axis == 1 and hasattr(X, "ndim") and X.ndim != 2:
         raise ValueError(
             "'X' should be a 2D NumPy array, 2D sparse matrix or pandas "
             "dataframe when indexing the columns (i.e. 'axis=1'). "
             "Got {} instead with {} dimension(s).".format(type(X), X.ndim)
         )
 
-    if axis == 1 and indices_dtype == "str" and not hasattr(X, "loc"):
+    if (
+        axis == 1
+        and indices_dtype == "str"
+        and not (_is_pandas_df(X) or _use_interchange_protocol(X))
+    ):
         raise ValueError(
-            "Specifying the columns using strings is only supported for "
-            "pandas DataFrames"
+            "Specifying the columns using strings is only supported for dataframes."
         )
 
     if hasattr(X, "iloc"):
+        # TODO: we should probably use _is_pandas_df(X) instead but this would
+        # require updating some tests such as test_train_test_split_mock_pandas.
         return _pandas_indexing(X, indices, indices_dtype, axis=axis)
+    elif _is_polars_df(X):
+        return _polars_indexing(X, indices, indices_dtype, axis=axis)
     elif hasattr(X, "shape"):
         return _array_indexing(X, indices, indices_dtype, axis=axis)
     else:
@@ -395,37 +451,39 @@ def _safe_assign(X, values, *, row_indexer=None, column_indexer=None):
         X[row_indexer, column_indexer] = values
 
 
+def _get_column_indices_for_bool_or_int(key, n_columns):
+    # Convert key into list of positive integer indexes
+    try:
+        idx = _safe_indexing(np.arange(n_columns), key)
+    except IndexError as e:
+        raise ValueError(
+            f"all features must be in [0, {n_columns - 1}] or [-{n_columns}, 0]"
+        ) from e
+    return np.atleast_1d(idx).tolist()
+
+
 def _get_column_indices(X, key):
     """Get feature column indices for input data X and key.
 
     For accepted values of `key`, see the docstring of
-    :func:`_safe_indexing_column`.
+    :func:`_safe_indexing`.
     """
-    n_columns = X.shape[1]
-
     key_dtype = _determine_key_type(key)
+    if _use_interchange_protocol(X):
+        return _get_column_indices_interchange(X.__dataframe__(), key, key_dtype)
 
+    n_columns = X.shape[1]
     if isinstance(key, (list, tuple)) and not key:
         # we get an empty list
         return []
     elif key_dtype in ("bool", "int"):
-        # Convert key into positive indexes
-        try:
-            idx = _safe_indexing(np.arange(n_columns), key)
-        except IndexError as e:
-            raise ValueError(
-                "all features must be in [0, {}] or [-{}, 0]".format(
-                    n_columns - 1, n_columns
-                )
-            ) from e
-        return np.atleast_1d(idx).tolist()
-    elif key_dtype == "str":
+        return _get_column_indices_for_bool_or_int(key, n_columns)
+    else:
         try:
             all_columns = X.columns
         except AttributeError:
             raise ValueError(
-                "Specifying the columns using strings is only "
-                "supported for pandas DataFrames"
+                "Specifying the columns using strings is only supported for dataframes."
             )
         if isinstance(key, str):
             columns = [key]
@@ -456,14 +514,51 @@ def _get_column_indices(X, key):
             raise ValueError("A given column is not a column of the dataframe") from e
 
         return column_indices
+
+
+def _get_column_indices_interchange(X_interchange, key, key_dtype):
+    """Same as _get_column_indices but for X with __dataframe__ protocol."""
+
+    n_columns = X_interchange.num_columns()
+
+    if isinstance(key, (list, tuple)) and not key:
+        # we get an empty list
+        return []
+    elif key_dtype in ("bool", "int"):
+        return _get_column_indices_for_bool_or_int(key, n_columns)
     else:
-        raise ValueError(
-            "No valid specification of the columns. Only a "
-            "scalar, list or slice of all integers or all "
-            "strings, or boolean mask is allowed"
-        )
+        column_names = list(X_interchange.column_names())
+
+        if isinstance(key, slice):
+            if key.step not in [1, None]:
+                raise NotImplementedError("key.step must be 1 or None")
+            start, stop = key.start, key.stop
+            if start is not None:
+                start = column_names.index(start)
+
+            if stop is not None:
+                stop = column_names.index(stop) + 1
+            else:
+                stop = n_columns + 1
+            return list(islice(range(n_columns), start, stop))
+
+        selected_columns = [key] if np.isscalar(key) else key
+
+        try:
+            return [column_names.index(col) for col in selected_columns]
+        except ValueError as e:
+            raise ValueError("A given column is not a column of the dataframe") from e
 
 
+@validate_params(
+    {
+        "replace": ["boolean"],
+        "n_samples": [Interval(numbers.Integral, 1, None, closed="left"), None],
+        "random_state": ["random_state"],
+        "stratify": ["array-like", None],
+    },
+    prefer_skip_nested_validation=True,
+)
 def resample(*arrays, replace=True, n_samples=None, random_state=None, stratify=None):
     """Resample arrays or sparse matrices in a consistent way.
 
@@ -685,35 +780,6 @@ def shuffle(*arrays, random_state=None, n_samples=None):
     )
 
 
-def safe_sqr(X, *, copy=True):
-    """Element wise squaring of array-likes and sparse matrices.
-
-    Parameters
-    ----------
-    X : {array-like, ndarray, sparse matrix}
-
-    copy : bool, default=True
-        Whether to create a copy of X and operate on it or to perform
-        inplace computation (default behaviour).
-
-    Returns
-    -------
-    X ** 2 : element wise square
-         Return the element-wise square of the input.
-    """
-    X = check_array(X, accept_sparse=["csr", "csc", "coo"], ensure_2d=False)
-    if issparse(X):
-        if copy:
-            X = X.copy()
-        X.data **= 2
-    else:
-        if copy:
-            X = X**2
-        else:
-            X **= 2
-    return X
-
-
 def _chunk_generator(gen, chunksize):
     """Chunk generator, ``gen`` into lists of length ``chunksize``. The last
     chunk may have a length less than ``chunksize``."""
@@ -725,6 +791,14 @@ def _chunk_generator(gen, chunksize):
             return
 
 
+@validate_params(
+    {
+        "n": [Interval(numbers.Integral, 1, None, closed="left")],
+        "batch_size": [Interval(numbers.Integral, 1, None, closed="left")],
+        "min_batch_size": [Interval(numbers.Integral, 0, None, closed="left")],
+    },
+    prefer_skip_nested_validation=True,
+)
 def gen_batches(n, batch_size, *, min_batch_size=0):
     """Generator to create slices containing `batch_size` elements from 0 to `n`.
 
@@ -762,12 +836,6 @@ def gen_batches(n, batch_size, *, min_batch_size=0):
     >>> list(gen_batches(7, 3, min_batch_size=2))
     [slice(0, 3, None), slice(3, 7, None)]
     """
-    if not isinstance(batch_size, numbers.Integral):
-        raise TypeError(
-            "gen_batches got batch_size=%s, must be an integer" % batch_size
-        )
-    if batch_size <= 0:
-        raise ValueError("gen_batches got batch_size=%s, must be positive" % batch_size)
     start = 0
     for _ in range(int(n // batch_size)):
         end = start + batch_size
@@ -779,6 +847,14 @@ def gen_batches(n, batch_size, *, min_batch_size=0):
         yield slice(start, n)
 
 
+@validate_params(
+    {
+        "n": [Interval(Integral, 1, None, closed="left")],
+        "n_packs": [Interval(Integral, 1, None, closed="left")],
+        "n_samples": [Interval(Integral, 1, None, closed="left"), None],
+    },
+    prefer_skip_nested_validation=True,
+)
 def gen_even_slices(n, n_packs, *, n_samples=None):
     """Generator to create `n_packs` evenly spaced slices going up to `n`.
 
@@ -818,8 +894,6 @@ def gen_even_slices(n, n_packs, *, n_samples=None):
     [slice(0, 4, None), slice(4, 7, None), slice(7, 10, None)]
     """
     start = 0
-    if n_packs < 1:
-        raise ValueError("gen_even_slices got n_packs=%s, must be >=1" % n_packs)
     for pack_num in range(n_packs):
         this_n = n // n_packs
         if pack_num < n % n_packs:
@@ -1071,117 +1145,8 @@ def is_scalar_nan(x):
     >>> is_scalar_nan([np.nan])
     False
     """
-    return isinstance(x, numbers.Real) and math.isnan(x)
-
-
-def _approximate_mode(class_counts, n_draws, rng):
-    """Computes approximate mode of multivariate hypergeometric.
-
-    This is an approximation to the mode of the multivariate
-    hypergeometric given by class_counts and n_draws.
-    It shouldn't be off by more than one.
-
-    It is the mostly likely outcome of drawing n_draws many
-    samples from the population given by class_counts.
-
-    Parameters
-    ----------
-    class_counts : ndarray of int
-        Population per class.
-    n_draws : int
-        Number of draws (samples to draw) from the overall population.
-    rng : random state
-        Used to break ties.
-
-    Returns
-    -------
-    sampled_classes : ndarray of int
-        Number of samples drawn from each class.
-        np.sum(sampled_classes) == n_draws
-
-    Examples
-    --------
-    >>> import numpy as np
-    >>> from sklearn.utils import _approximate_mode
-    >>> _approximate_mode(class_counts=np.array([4, 2]), n_draws=3, rng=0)
-    array([2, 1])
-    >>> _approximate_mode(class_counts=np.array([5, 2]), n_draws=4, rng=0)
-    array([3, 1])
-    >>> _approximate_mode(class_counts=np.array([2, 2, 2, 1]),
-    ...                   n_draws=2, rng=0)
-    array([0, 1, 1, 0])
-    >>> _approximate_mode(class_counts=np.array([2, 2, 2, 1]),
-    ...                   n_draws=2, rng=42)
-    array([1, 1, 0, 0])
-    """
-    rng = check_random_state(rng)
-    # this computes a bad approximation to the mode of the
-    # multivariate hypergeometric given by class_counts and n_draws
-    continuous = class_counts / class_counts.sum() * n_draws
-    # floored means we don't overshoot n_samples, but probably undershoot
-    floored = np.floor(continuous)
-    # we add samples according to how much "left over" probability
-    # they had, until we arrive at n_samples
-    need_to_add = int(n_draws - floored.sum())
-    if need_to_add > 0:
-        remainder = continuous - floored
-        values = np.sort(np.unique(remainder))[::-1]
-        # add according to remainder, but break ties
-        # randomly to avoid biases
-        for value in values:
-            (inds,) = np.where(remainder == value)
-            # if we need_to_add less than what's in inds
-            # we draw randomly from them.
-            # if we need to add more, we add them all and
-            # go to the next value
-            add_now = min(len(inds), need_to_add)
-            inds = rng.choice(inds, size=add_now, replace=False)
-            floored[inds] += 1
-            need_to_add -= add_now
-            if need_to_add == 0:
-                break
-    return floored.astype(int)
-
-
-def check_matplotlib_support(caller_name):
-    """Raise ImportError with detailed error message if mpl is not installed.
-
-    Plot utilities like any of the Display's plotting functions should lazily import
-    matplotlib and call this helper before any computation.
-
-    Parameters
-    ----------
-    caller_name : str
-        The name of the caller that requires matplotlib.
-    """
-    try:
-        import matplotlib  # noqa
-    except ImportError as e:
-        raise ImportError(
-            "{} requires matplotlib. You can install matplotlib with "
-            "`pip install matplotlib`".format(caller_name)
-        ) from e
-
-
-def check_pandas_support(caller_name):
-    """Raise ImportError with detailed error message if pandas is not installed.
-
-    Plot utilities like :func:`fetch_openml` should lazily import
-    pandas and call this helper before any computation.
-
-    Parameters
-    ----------
-    caller_name : str
-        The name of the caller that requires pandas.
-
-    Returns
-    -------
-    pandas
-        The pandas package.
-    """
-    try:
-        import pandas  # noqa
-
-        return pandas
-    except ImportError as e:
-        raise ImportError("{} requires pandas.".format(caller_name)) from e
+    return (
+        not isinstance(x, numbers.Integral)
+        and isinstance(x, numbers.Real)
+        and math.isnan(x)
+    )

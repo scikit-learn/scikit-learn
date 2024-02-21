@@ -15,13 +15,16 @@ space while controlling the distortion in the pairwise distances.
 
 import sys
 from time import time
-import numpy as np
+
 import matplotlib.pyplot as plt
-from sklearn.random_projection import johnson_lindenstrauss_min_dim
-from sklearn.random_projection import SparseRandomProjection
-from sklearn.datasets import fetch_20newsgroups_vectorized
-from sklearn.datasets import load_digits
+import numpy as np
+
+from sklearn.datasets import fetch_20newsgroups_vectorized, load_digits
 from sklearn.metrics.pairwise import euclidean_distances
+from sklearn.random_projection import (
+    SparseRandomProjection,
+    johnson_lindenstrauss_min_dim,
+)
 
 # %%
 # Theoretical bounds

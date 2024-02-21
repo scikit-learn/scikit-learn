@@ -3,24 +3,19 @@
 # License: BSD 3 clause
 
 from abc import ABCMeta, abstractmethod
-
-import numpy as np
 from numbers import Integral
 
+import numpy as np
 from scipy.linalg import norm
 from scipy.sparse import dia_matrix, issparse
 from scipy.sparse.linalg import eigsh, svds
 
-from . import KMeans, MiniBatchKMeans
-from ..base import BaseEstimator, BiclusterMixin
-from ..utils import check_random_state
-from ..utils import check_scalar
-
-from ..utils.extmath import make_nonnegative, randomized_svd, safe_sparse_dot
-
-from ..utils.validation import assert_all_finite
+from ..base import BaseEstimator, BiclusterMixin, _fit_context
+from ..utils import check_random_state, check_scalar
 from ..utils._param_validation import Interval, StrOptions
-
+from ..utils.extmath import make_nonnegative, randomized_svd, safe_sparse_dot
+from ..utils.validation import assert_all_finite
+from ._kmeans import KMeans, MiniBatchKMeans
 
 __all__ = ["SpectralCoclustering", "SpectralBiclustering"]
 
@@ -118,6 +113,7 @@ class BaseSpectral(BiclusterMixin, BaseEstimator, metaclass=ABCMeta):
     def _check_parameters(self, n_samples):
         """Validate parameters depending on the input data."""
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y=None):
         """Create a biclustering for X.
 
@@ -134,8 +130,6 @@ class BaseSpectral(BiclusterMixin, BaseEstimator, metaclass=ABCMeta):
         self : object
             SpectralBiclustering instance.
         """
-        self._validate_params()
-
         X = self._validate_data(X, accept_sparse="csr", dtype=np.float64)
         self._check_parameters(X.shape[0])
         self._fit(X)
@@ -487,7 +481,7 @@ class SpectralBiclustering(BaseSpectral):
     >>> clustering.row_labels_
     array([1, 1, 1, 0, 0, 0], dtype=int32)
     >>> clustering.column_labels_
-    array([0, 1], dtype=int32)
+    array([1, 0], dtype=int32)
     >>> clustering
     SpectralBiclustering(n_clusters=2, random_state=0)
     """
