@@ -37,7 +37,7 @@ def _estimator_has(attr):
 
 
 class SelfTrainingClassifier(
-    _RoutingNotSupportedMixin, MetaEstimatorMixin, BaseEstimator
+    MetaEstimatorMixin, BaseEstimator
 ):
     """Self-training classifier.
 
