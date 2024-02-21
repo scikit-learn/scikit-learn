@@ -24,6 +24,7 @@ from ._param_validation import Integral, Interval, validate_params
 from .class_weight import compute_class_weight, compute_sample_weight
 from .deprecation import deprecated
 from .discovery import all_estimators
+from .extmath import _approximate_mode, safe_sqr
 from .murmurhash import murmurhash3_32
 from .validation import (
     _is_arraylike_not_scalar,
@@ -70,12 +71,12 @@ __all__ = [
     "register_parallel_backend",
     "resample",
     "shuffle",
-    "check_matplotlib_support",
     "all_estimators",
     "DataConversionWarning",
     "estimator_html_repr",
     "Bunch",
     "metadata_routing",
+    "safe_sqr",
 ]
 
 IS_PYPY = platform.python_implementation() == "PyPy"
@@ -745,41 +746,6 @@ def shuffle(*arrays, random_state=None, n_samples=None):
     )
 
 
-def safe_sqr(X, *, copy=True):
-    """Element wise squaring of array-likes and sparse matrices.
-
-    Parameters
-    ----------
-    X : {array-like, ndarray, sparse matrix}
-
-    copy : bool, default=True
-        Whether to create a copy of X and operate on it or to perform
-        inplace computation (default behaviour).
-
-    Returns
-    -------
-    X ** 2 : element wise square
-         Return the element-wise square of the input.
-
-    Examples
-    --------
-    >>> from sklearn.utils import safe_sqr
-    >>> safe_sqr([1, 2, 3])
-    array([1, 4, 9])
-    """
-    X = check_array(X, accept_sparse=["csr", "csc", "coo"], ensure_2d=False)
-    if issparse(X):
-        if copy:
-            X = X.copy()
-        X.data **= 2
-    else:
-        if copy:
-            X = X**2
-        else:
-            X **= 2
-    return X
-
-
 def _chunk_generator(gen, chunksize):
     """Chunk generator, ``gen`` into lists of length ``chunksize``. The last
     chunk may have a length less than ``chunksize``."""
@@ -1150,116 +1116,3 @@ def is_scalar_nan(x):
         and isinstance(x, numbers.Real)
         and math.isnan(x)
     )
-
-
-def _approximate_mode(class_counts, n_draws, rng):
-    """Computes approximate mode of multivariate hypergeometric.
-
-    This is an approximation to the mode of the multivariate
-    hypergeometric given by class_counts and n_draws.
-    It shouldn't be off by more than one.
-
-    It is the mostly likely outcome of drawing n_draws many
-    samples from the population given by class_counts.
-
-    Parameters
-    ----------
-    class_counts : ndarray of int
-        Population per class.
-    n_draws : int
-        Number of draws (samples to draw) from the overall population.
-    rng : random state
-        Used to break ties.
-
-    Returns
-    -------
-    sampled_classes : ndarray of int
-        Number of samples drawn from each class.
-        np.sum(sampled_classes) == n_draws
-
-    Examples
-    --------
-    >>> import numpy as np
-    >>> from sklearn.utils import _approximate_mode
-    >>> _approximate_mode(class_counts=np.array([4, 2]), n_draws=3, rng=0)
-    array([2, 1])
-    >>> _approximate_mode(class_counts=np.array([5, 2]), n_draws=4, rng=0)
-    array([3, 1])
-    >>> _approximate_mode(class_counts=np.array([2, 2, 2, 1]),
-    ...                   n_draws=2, rng=0)
-    array([0, 1, 1, 0])
-    >>> _approximate_mode(class_counts=np.array([2, 2, 2, 1]),
-    ...                   n_draws=2, rng=42)
-    array([1, 1, 0, 0])
-    """
-    rng = check_random_state(rng)
-    # this computes a bad approximation to the mode of the
-    # multivariate hypergeometric given by class_counts and n_draws
-    continuous = class_counts / class_counts.sum() * n_draws
-    # floored means we don't overshoot n_samples, but probably undershoot
-    floored = np.floor(continuous)
-    # we add samples according to how much "left over" probability
-    # they had, until we arrive at n_samples
-    need_to_add = int(n_draws - floored.sum())
-    if need_to_add > 0:
-        remainder = continuous - floored
-        values = np.sort(np.unique(remainder))[::-1]
-        # add according to remainder, but break ties
-        # randomly to avoid biases
-        for value in values:
-            (inds,) = np.where(remainder == value)
-            # if we need_to_add less than what's in inds
-            # we draw randomly from them.
-            # if we need to add more, we add them all and
-            # go to the next value
-            add_now = min(len(inds), need_to_add)
-            inds = rng.choice(inds, size=add_now, replace=False)
-            floored[inds] += 1
-            need_to_add -= add_now
-            if need_to_add == 0:
-                break
-    return floored.astype(int)
-
-
-def check_matplotlib_support(caller_name):
-    """Raise ImportError with detailed error message if mpl is not installed.
-
-    Plot utilities like any of the Display's plotting functions should lazily import
-    matplotlib and call this helper before any computation.
-
-    Parameters
-    ----------
-    caller_name : str
-        The name of the caller that requires matplotlib.
-    """
-    try:
-        import matplotlib  # noqa
-    except ImportError as e:
-        raise ImportError(
-            "{} requires matplotlib. You can install matplotlib with "
-            "`pip install matplotlib`".format(caller_name)
-        ) from e
-
-
-def check_pandas_support(caller_name):
-    """Raise ImportError with detailed error message if pandas is not installed.
-
-    Plot utilities like :func:`fetch_openml` should lazily import
-    pandas and call this helper before any computation.
-
-    Parameters
-    ----------
-    caller_name : str
-        The name of the caller that requires pandas.
-
-    Returns
-    -------
-    pandas
-        The pandas package.
-    """
-    try:
-        import pandas  # noqa
-
-        return pandas
-    except ImportError as e:
-        raise ImportError("{} requires pandas.".format(caller_name)) from e

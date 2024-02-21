@@ -69,9 +69,9 @@ class TransformedTargetRegressor(
 
     func : function, default=None
         Function to apply to `y` before passing to :meth:`fit`. Cannot be set
-        at the same time as `transformer`. The function needs to return a
-        2-dimensional array. If `func is None`, the function used will be the
-        identity function.
+        at the same time as `transformer`. If `func is None`, the function used will be
+        the identity function. If `func` is set, `inverse_func` also needs to be
+        provided. The function needs to return a 2-dimensional array.
 
     inverse_func : function, default=None
         Function to apply to the prediction of the regressor. Cannot be set at
