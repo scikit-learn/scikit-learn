@@ -1103,9 +1103,9 @@ class TSNE(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
         # Learning schedule (part 2): disable early exaggeration and finish
         # optimization with a higher momentum at 0.8
         P /= self.early_exaggeration
-        remaining = self.max_iter - self._EXPLORATION_MAX_ITER
+        remaining = self.max_iter_ - self._EXPLORATION_MAX_ITER
         if it < self._EXPLORATION_MAX_ITER or remaining > 0:
-            opt_args["max_iter"] = self.max_iter
+            opt_args["max_iter"] = self.max_iter_
             opt_args["it"] = it + 1
             opt_args["momentum"] = 0.8
             opt_args["n_iter_without_progress"] = self.n_iter_without_progress
@@ -1166,9 +1166,11 @@ class TSNE(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
                 ),
                 FutureWarning,
             )
-            self.max_iter = self.n_iter
+            self.max_iter_ = self.n_iter
         elif self.max_iter is None:
-            self.max_iter = 1000
+            self.max_iter_ = 1000
+        else:
+            self.max_iter_ = self.max_iter
 
         self._check_params_vs_input(X)
         embedding = self._fit(X)
@@ -1209,17 +1211,4 @@ class TSNE(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
         return self.embedding_.shape[1]
 
     def _more_tags(self):
-        return {
-            "pairwise": self.metric == "precomputed",
-            # TODO(1.7): remove
-            "_xfail_checks": {
-                "check_estimators_overwrite_params": (
-                    "'max_iter' updated during fit due to parameter name update, "
-                    "to allow early parameter check and for easy removal in 1.7."
-                ),
-                "check_dont_overwrite_parameters": (
-                    "'max_iter' updated during fit due to parameter name update, "
-                    "to allow early parameter check and for easy removal in 1.7."
-                ),
-            },
-        }
+        return {"pairwise": self.metric == "precomputed"}
