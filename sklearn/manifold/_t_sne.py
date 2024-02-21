@@ -829,7 +829,6 @@ class TSNE(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
         perplexity=30.0,
         early_exaggeration=12.0,
         learning_rate="auto",
-        n_iter="deprecated",
         max_iter=None,  # TODO(1.7): set to 1000
         n_iter_without_progress=300,
         min_grad_norm=1e-7,
@@ -841,12 +840,12 @@ class TSNE(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
         method="barnes_hut",
         angle=0.5,
         n_jobs=None,
+        n_iter="deprecated",
     ):
         self.n_components = n_components
         self.perplexity = perplexity
         self.early_exaggeration = early_exaggeration
         self.learning_rate = learning_rate
-        self.n_iter = n_iter
         self.max_iter = max_iter
         self.n_iter_without_progress = n_iter_without_progress
         self.min_grad_norm = min_grad_norm
@@ -858,6 +857,7 @@ class TSNE(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
         self.method = method
         self.angle = angle
         self.n_jobs = n_jobs
+        self.n_iter = n_iter
 
     def _check_params_vs_input(self, X):
         if self.perplexity >= X.shape[0]:
