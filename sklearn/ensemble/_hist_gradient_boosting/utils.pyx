@@ -51,11 +51,10 @@ def get_equivalent_estimator(estimator, lib='lightgbm', n_classes=None):
         'n_estimators': sklearn_params['max_iter'],
         'num_leaves': sklearn_params['max_leaf_nodes'],
         'max_depth': sklearn_params['max_depth'],
-        'min_child_samples': sklearn_params['min_samples_leaf'],
+        'min_data_in_leaf': sklearn_params['min_samples_leaf'],
         'reg_lambda': sklearn_params['l2_regularization'],
         'max_bin': sklearn_params['max_bins'],
         'min_data_in_bin': 1,
-        'min_child_weight': 1e-3,  # alias for 'min_sum_hessian_in_leaf'
         'min_sum_hessian_in_leaf': 1e-3,
         'min_split_gain': 0,
         'verbosity': 10 if sklearn_params['verbose'] else -10,
@@ -63,6 +62,7 @@ def get_equivalent_estimator(estimator, lib='lightgbm', n_classes=None):
         'enable_bundle': False,  # also makes feature order consistent
         'subsample_for_bin': _BinMapper().subsample,
         'poisson_max_delta_step': 1e-12,
+        'feature_fraction_bynode': sklearn_params['max_features'],
     }
 
     if sklearn_params['loss'] == 'log_loss' and n_classes > 2:
@@ -97,6 +97,7 @@ def get_equivalent_estimator(estimator, lib='lightgbm', n_classes=None):
         'verbosity': 2 if sklearn_params['verbose'] else 0,
         'silent': sklearn_params['verbose'] == 0,
         'n_jobs': -1,
+        'colsample_bynode': sklearn_params['max_features'],
     }
 
     # Catboost
