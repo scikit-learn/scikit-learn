@@ -6,7 +6,7 @@ import re
 import pytest
 
 from sklearn.callback import ProgressBar
-from sklearn.utils import check_rich_support
+from sklearn.utils._optional_dependencies import check_rich_support
 from sklearn.utils._testing import SkipTest
 
 from ._utils import Estimator, MetaEstimator
