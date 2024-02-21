@@ -48,6 +48,12 @@ more details.
   via their `fit` methods.
   :pr:`28432` by :user:`Adam Li <adam2392>` and :user:`Benjamin Bossan <BenjaminBossan>`.
 
+- |Feature| :class:`semi_supervised.SelfTrainingClassifier`
+  now supports metadata routing. The fit method now
+  accept ``**fit_params`` which are passed to the underlying estimators
+  via their `fit` methods.
+  :pr:`28494` by :user:`Adam Li <adam2392>`.
+
 Changelog
 ---------
 

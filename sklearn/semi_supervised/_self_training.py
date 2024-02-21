@@ -4,9 +4,15 @@ from numbers import Integral, Real
 import numpy as np
 
 from ..base import BaseEstimator, MetaEstimatorMixin, _fit_context, clone
-from ..utils import safe_mask
+from ..utils import Bunch, safe_mask
 from ..utils._param_validation import HasMethods, Interval, StrOptions
-from ..utils.metadata_routing import _RoutingNotSupportedMixin
+from ..utils.metadata_routing import (
+    MetadataRouter,
+    MethodMapping,
+    _raise_for_params,
+    _routing_enabled,
+    process_routing,
+)
 from ..utils.metaestimators import available_if
 from ..utils.validation import check_is_fitted
 
@@ -36,9 +42,7 @@ def _estimator_has(attr):
     return check
 
 
-class SelfTrainingClassifier(
-    MetaEstimatorMixin, BaseEstimator
-):
+class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
     """Self-training classifier.
 
     This :term:`metaestimator` allows a given supervised classifier to function as a
@@ -188,7 +192,7 @@ class SelfTrainingClassifier(
         # SelfTrainingClassifier.base_estimator is not validated yet
         prefer_skip_nested_validation=False
     )
-    def fit(self, X, y):
+    def fit(self, X, y, **fit_params):
         """
         Fit self-training classifier using `X`, `y` as training data.
 
@@ -201,11 +205,24 @@ class SelfTrainingClassifier(
             Array representing the labels. Unlabeled samples should have the
             label -1.
 
+        **fit_params : dict
+            Parameters to pass to the underlying estimators.
+
+            .. versionadded:: 1.5
+
+                Only available if `enable_metadata_routing=True`,
+                which can be set by using
+                ``sklearn.set_config(enable_metadata_routing=True)``.
+                See :ref:`Metadata Routing User Guide <metadata_routing>` for
+                more details.
+
         Returns
         -------
         self : object
             Fitted estimator.
         """
+        _raise_for_params(fit_params, self, "fit")
+
         # we need row slicing support for sparse matrices, but costly finiteness check
         # can be delegated to the base estimator.
         X, y = self._validate_data(
@@ -238,6 +255,12 @@ class SelfTrainingClassifier(
                 UserWarning,
             )
 
+        if _routing_enabled():
+            routed_params = process_routing(self, "fit", **fit_params)
+        else:
+            routed_params = Bunch()
+            routed_params.base_estimator = Bunch(fit=fit_params)
+
         self.transduction_ = np.copy(y)
         self.labeled_iter_ = np.full_like(y, -1)
         self.labeled_iter_[has_label] = 0
@@ -249,7 +272,9 @@ class SelfTrainingClassifier(
         ):
             self.n_iter_ += 1
             self.base_estimator_.fit(
-                X[safe_mask(X, has_label)], self.transduction_[has_label]
+                X[safe_mask(X, has_label)],
+                self.transduction_[has_label],
+                **routed_params.base_estimator.fit,
             )
 
             # Predict on the unlabeled samples
@@ -293,13 +318,15 @@ class SelfTrainingClassifier(
             self.termination_condition_ = "all_labeled"
 
         self.base_estimator_.fit(
-            X[safe_mask(X, has_label)], self.transduction_[has_label]
+            X[safe_mask(X, has_label)],
+            self.transduction_[has_label],
+            **routed_params.base_estimator.fit,
         )
         self.classes_ = self.base_estimator_.classes_
         return self
 
     @available_if(_estimator_has("predict"))
-    def predict(self, X):
+    def predict(self, X, **params):
         """Predict the classes of `X`.
 
         Parameters
@@ -307,22 +334,34 @@ class SelfTrainingClassifier(
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Array representing the data.
 
+        **params : dict of str -> object
+            Parameters to pass to the underlying estimator's predict method.
+
+            .. versionadded:: 1.5
+
+            See :ref:`Metadata Routing User Guide <metadata_routing>` for more
+            details.
+
         Returns
         -------
         y : ndarray of shape (n_samples,)
             Array with predicted labels.
         """
         check_is_fitted(self)
+
+        # metadata routing enabled
+        routed_params = process_routing(self, "predict", other_params=params)
+
         X = self._validate_data(
             X,
             accept_sparse=True,
             force_all_finite=False,
             reset=False,
         )
-        return self.base_estimator_.predict(X)
+        return self.base_estimator_.predict(X, **routed_params.base_estimator.predict)
 
     @available_if(_estimator_has("predict_proba"))
-    def predict_proba(self, X):
+    def predict_proba(self, X, **params):
         """Predict probability for each possible outcome.
 
         Parameters
@@ -330,22 +369,33 @@ class SelfTrainingClassifier(
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Array representing the data.
 
+        **params : dict of str -> object
+            Parameters to pass to the underlying estimator's predict_proba method.
+
+            .. versionadded:: 1.5
+
+            See :ref:`Metadata Routing User Guide <metadata_routing>` for more
+            details.
+
         Returns
         -------
         y : ndarray of shape (n_samples, n_features)
             Array with prediction probabilities.
         """
         check_is_fitted(self)
+        # metadata routing enabled
+        routed_params = process_routing(self, "predict_proba", other_params=params)
+
         X = self._validate_data(
             X,
             accept_sparse=True,
             force_all_finite=False,
             reset=False,
         )
-        return self.base_estimator_.predict_proba(X)
+        return self.base_estimator_.predict_proba(X, **routed_params.base_estimator.predict_proba)
 
     @available_if(_estimator_has("decision_function"))
-    def decision_function(self, X):
+    def decision_function(self, X, **params):
         """Call decision function of the `base_estimator`.
 
         Parameters
@@ -353,22 +403,33 @@ class SelfTrainingClassifier(
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Array representing the data.
 
+        **params : dict of str -> object
+            Parameters to pass to the underlying estimator's decision_function method.
+
+            .. versionadded:: 1.5
+
+            See :ref:`Metadata Routing User Guide <metadata_routing>` for more
+            details.
+
         Returns
         -------
         y : ndarray of shape (n_samples, n_features)
             Result of the decision function of the `base_estimator`.
         """
         check_is_fitted(self)
+        # metadata routing enabled
+        routed_params = process_routing(self, "predict_proba", other_params=params)
+
         X = self._validate_data(
             X,
             accept_sparse=True,
             force_all_finite=False,
             reset=False,
         )
-        return self.base_estimator_.decision_function(X)
+        return self.base_estimator_.decision_function(X, **routed_params.base_estimator.decision_function)
 
     @available_if(_estimator_has("predict_log_proba"))
-    def predict_log_proba(self, X):
+    def predict_log_proba(self, X, **params):
         """Predict log probability for each possible outcome.
 
         Parameters
@@ -376,22 +437,33 @@ class SelfTrainingClassifier(
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Array representing the data.
 
+        **params : dict of str -> object
+            Parameters to pass to the underlying estimator's predict_log_proba method.
+
+            .. versionadded:: 1.5
+
+            See :ref:`Metadata Routing User Guide <metadata_routing>` for more
+            details.
+
         Returns
         -------
         y : ndarray of shape (n_samples, n_features)
             Array with log prediction probabilities.
         """
         check_is_fitted(self)
+        # metadata routing enabled
+        routed_params = process_routing(self, "predict_proba", other_params=params)
+
         X = self._validate_data(
             X,
             accept_sparse=True,
             force_all_finite=False,
             reset=False,
         )
-        return self.base_estimator_.predict_log_proba(X)
+        return self.base_estimator_.predict_log_proba(X, **routed_params.base_estimator.predict_log_proba)
 
     @available_if(_estimator_has("score"))
-    def score(self, X, y):
+    def score(self, X, y, **params):
         """Call score on the `base_estimator`.
 
         Parameters
@@ -402,16 +474,55 @@ class SelfTrainingClassifier(
         y : array-like of shape (n_samples,)
             Array representing the labels.
 
+        **params : dict of str -> object
+            Parameters requested and accepted by base estimator's score function.
+
+            .. versionadded:: 1.5
+
+            Only available if `enable_metadata_routing=True`. See
+            :ref:`Metadata Routing User Guide <metadata_routing>` for more
+            details.
+
         Returns
         -------
         score : float
             Result of calling score on the `base_estimator`.
         """
         check_is_fitted(self)
+
+        if _routing_enabled():
+            # metadata routing is enabled.
+            routed_params = process_routing(
+                self, "score", other_params=params
+            )
+        else:
+            routed_params = Bunch('base_estimator')
+
         X = self._validate_data(
             X,
             accept_sparse=True,
             force_all_finite=False,
             reset=False,
         )
-        return self.base_estimator_.score(X, y)
+        return self.base_estimator_.score(X, y, **routed_params.base_estimator.score)
+
+    def get_metadata_routing(self):
+        """Get metadata routing of this object.
+
+        Please check :ref:`User Guide <metadata_routing>` on how the routing
+        mechanism works.
+
+        .. versionadded:: 1.5
+
+        Returns
+        -------
+        routing : MetadataRouter
+            A :class:`~sklearn.utils.metadata_routing.MetadataRouter` encapsulating
+            routing information.
+        """
+        router = MetadataRouter(owner=self.__class__.__name__)
+        router.add(
+            estimator=self.base_estimator,
+            method_mapping=MethodMapping().add(callee="fit", caller="fit"),
+        )
+        return router
