@@ -528,7 +528,9 @@ class LinearDiscriminantAnalysis(
         # SVD of centered (within)scaled data
         U, S, Vt = svd(X, full_matrices=False)
 
-        rank = int(xp.sum(xp.astype(S > self.tol, xp.int32)))
+        rank = xp.sum(xp.astype(S > self.tol, xp.int32))
+        if hasattr(rank, "persist"):
+            rank = rank.persist()
         # Scaling of within covariance is: V' 1/S
         scalings = (Vt[:rank] / std).T / S[:rank]
         fac = 1.0 if n_classes == 1 else 1.0 / (n_classes - 1)
