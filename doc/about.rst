@@ -226,15 +226,30 @@ Funding
 .. |aphp| image:: images/logo_APHP_text.png
    :target: https://aphp.fr/
 
+.. |probabl| image:: images/probabl.png
+   :target: https://probabl.ai/
+
 Scikit-Learn is a community driven project, however institutional and private
 grants help to assure its sustainability. The project would like to thank the
 following funders:
 
 |grid-start|
+`:probabl. <https://probabl.ai>`_ funds Adrin Jalali, Arturo Amor,
+François Goupil, Guillaume Lemaitre, Jérémie du Boisberranger, Olivier Grisel, and
+Stefanie Senger.
+|grid-split|
+
+|probabl|
+
+|grid-end|
+
+...........
+
+|grid-start|
 The `Members <https://scikit-learn.fondation-inria.fr/en/home/#sponsors>`_ of
 the `Scikit-Learn Consortium at Inria Foundation
-<https://scikit-learn.fondation-inria.fr/en/home/>`_ fund Arturo Amor,
-François Goupil, Guillaume Lemaitre, Jérémie du Boisberranger, and Olivier Grisel.
+<https://scikit-learn.fondation-inria.fr/en/home/>`_ help at maintaining and
+improving the project through their financial support.
 |grid-split|
 
 .. raw:: html
@@ -285,17 +300,6 @@ and is part of the scikit-learn consortium at Inria.
 
 |grid-end|
 
-..........
-
-|grid-start|
-`Hugging Face <https://huggingface.co/>`_ funded Adrin Jalali in 2022,
-2023 and is part of the scikit-learn consortium at Inria.
-|grid-split|
-
-|hf|
-
-|grid-end|
-
 ...........
 
 |grid-start|
@@ -309,8 +313,7 @@ and is part of the scikit-learn consortium at Inria.
 ...........
 
 |grid-start|
-`Quansight Labs <https://labs.quansight.org>`_ funds Lucy Liu and
-Meekail Zain since 2022 and funded Thomas J. Fan from 2021 to 2023.
+`Quansight Labs <https://labs.quansight.org>`_ funds Lucy Liu since 2022.
 |grid-split|
 
 |quansight|
@@ -320,6 +323,17 @@ Meekail Zain since 2022 and funded Thomas J. Fan from 2021 to 2023.
 
 Past Sponsors
 .............
+
+|grid-start|
+`Quansight Labs <https://labs.quansight.org>`_ funded Meekail Zain in 2022 and 2023,
+and funded Thomas J. Fan from 2021 to 2023.
+|grid-split|
+
+|quansight|
+
+|grid-end|
+
+...........
 
 |grid-start|
 `Columbia University <https://columbia.edu/>`_ funded Andreas Müller
