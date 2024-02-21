@@ -8,9 +8,7 @@
 matplotlib
 numpy
 scipy
-# Temporarily until there are Cython 3.0.8 wheels
---extra-index https://pypi.anaconda.org/lesteve/simple
-cython>3
+cython
 joblib
 threadpoolctl
 # Avoid pytest 8.0.1 bug

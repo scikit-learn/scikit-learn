@@ -6,7 +6,6 @@
 #
 --index-url https://d1yxz45j0ypngg.cloudfront.net/
 --extra-index-url https://pypi.org/simple
---extra-index-url https://pypi.anaconda.org/lesteve/simple
 
 contourpy==1.1.1
     # via matplotlib
