@@ -44,8 +44,8 @@ class deprecated:
         if isinstance(obj, type):
             return self._decorate_class(obj)
         elif isinstance(obj, property):
-            # Note that this is only triggered properly if the `property`
-            # decorator comes before the `deprecated` decorator, like so:
+            # Note that this is only triggered properly if the `deprecated`
+            # decorator is placed before the `property` decorator, like so:
             #
             # @deprecated(msg)
             # @property
