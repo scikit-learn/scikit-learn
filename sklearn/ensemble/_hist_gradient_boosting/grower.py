@@ -14,6 +14,7 @@ import numpy as np
 
 from sklearn.utils._openmp_helpers import _openmp_effective_n_threads
 
+from ...utils.arrayfuncs import sum_parallel
 from ._bitset import set_raw_bitset_from_binned_bitset
 from .common import (
     PREDICTOR_RECORD_DTYPE,
@@ -24,7 +25,6 @@ from .common import (
 from .histogram import HistogramBuilder
 from .predictor import TreePredictor
 from .splitting import Splitter
-from .utils import sum_parallel
 
 EPS = np.finfo(Y_DTYPE).eps  # to avoid zero division errors
 
