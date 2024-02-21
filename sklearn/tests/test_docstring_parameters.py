@@ -240,6 +240,9 @@ def test_fit_docstring_attributes(name, Estimator):
     # Low max iter to speed up tests: we are only interested in checking the existence
     # of fitted attributes. This should be invariant to whether it has converged or not.
     if "max_iter" in est.get_params():
+        # min value for `TSNE` is 250
+        if Estimator.__name__ == "TSNE":
+            est.set_params(max_iter=250)
         est.set_params(max_iter=2)
 
     if "random_state" in est.get_params():
