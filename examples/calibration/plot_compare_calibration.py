@@ -95,9 +95,10 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LogisticRegressionCV
 from sklearn.naive_bayes import GaussianNB
 
-# Create classifiers: here we tune the main hyper-parameter automatically for
-# the logistic regression model because its efficient and concise to do so.
-# Ideally, we should run a hyper-parameter search for all the models but we
+# Define the classifiers to be compared in the study. Note that we use a variant of the
+# logistic regression model that can internally tuned its regularization parameter
+# efficient and concise to do so.
+# For a fair comparison, we should run a hyper-parameter search for all the models but we
 # don't do it here for the sake of keeping the example code concise and fast
 # to execute.
 lr = LogisticRegressionCV(
@@ -173,12 +174,12 @@ plt.show()
 # Logistic regression is trained by minimizing the log-loss which is a strictly
 # proper scoring rule: in the limit of infinite training data, strictly proper
 # scoring rules are minimized by the model that predicts the true conditional
-# probabilities and would therefore be perfectly calibrated. However, using a
+# probabilities. That (hypothetical) model would therefore be perfectly calibrated. However, using a
 # proper scoring rule as training objective is not sufficient to guarantee a
 # well-calibrated model by itself: even with a very large training set,
-# logistic regression could still be poorly calibrated, if it was too
-# regularized or if the choice of input features made this model mis-specified
-# (e.g. the true decision boundary is a highly non-linear function of the input
+# logistic regression could still be poorly calibrated, if it was too strongly
+# regularized or if the choice and preprocessing of input features made this model mis-specified
+# (e.g. if the true decision boundary of the dataset is a highly non-linear function of the input
 # features).
 #
 # In this example the training set was intentionally kept very small. In this
@@ -202,7 +203,7 @@ plt.show()
 #   or 1 (see histogram) on this particular dataset (over-confidence). This is
 #   mainly because the naive Bayes equation only provides correct estimate of
 #   probabilities when the assumption that features are conditionally
-#   independent holds [2]_. However, features can be correlated and is the case
+#   independent holds [2]_. However, features can be correlated and this is the case
 #   with this dataset, which contains 2 features generated as random linear
 #   combinations of the informative features. These correlated features are
 #   effectively being 'counted twice', resulting in pushing the predicted
@@ -221,10 +222,10 @@ plt.show()
 #   diagonal). This under-confident predictions are typical for maximum-margin
 #   methods [1]_.
 #
-# * :class:`~sklearn.ensemble.RandomForestClassifier`'s prediction histograms
-#   show peaks at approx. 0.2 and 0.9 probability, while probabilities close to
-#   0 or 1 are very rare. An explanation for this is given by Niculescu-Mizil
-#   and Caruana [1]_: "Methods such as bagging and random forests that average
+# * :class:`~sklearn.ensemble.RandomForestClassifier`'s prediction histogram
+#   shows peaks at approx. 0.2 and 0.9 probability, while probabilities close to
+#   0 or 1 are very rare. An explanation for this is given by [1]_:
+#   "Methods such as bagging and random forests that average
 #   predictions from a base set of models can have difficulty making
 #   predictions near 0 and 1 because variance in the underlying base models
 #   will bias predictions that should be near zero or one away from these
