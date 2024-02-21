@@ -139,10 +139,6 @@ build_metadata_list = [
         "conda_dependencies": remove_from(common_dependencies, ["cython"]) + ["ccache"],
         "package_constraints": {
             "blas": "[build=mkl]",
-            # TODO: temporary pin for numpy to avoid what seems a loky issue,
-            # for more details see
-            # https://github.com/scikit-learn/scikit-learn/pull/26845#issuecomment-1639917135
-            "numpy": "<1.25",
         },
         # TODO: put cython back to conda dependencies when required version is
         # available on the main channel
@@ -238,11 +234,6 @@ build_metadata_list = [
             # the environment.yml. Adding python-dateutil so it is pinned
             + ["python-dateutil"]
         ),
-        "package_constraints": {
-            # Temporary pin for other dependencies to be able with deprecation
-            # warnings introduced by Python 3.12.
-            "python": "3.11",
-        },
     },
     {
         "name": "pypy3",
