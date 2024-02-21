@@ -156,10 +156,10 @@ def _parallel_build_estimators(
 
         # TODO(SLEP6): remove if condition for unrouted sample_weight when metadata
         # routing can't be disabled.
-        # 1. If routing is not enabled, we will check if the base
-        # estimator supports sample_weight and use it if it does.
-        # 2. If routing is enabled, we will check if the routing supports sample
+        # 1. If routing is enabled, we will check if the routing supports sample
         # weight and use it if it does.
+        # 2. If routing is not enabled, we will check if the base
+        # estimator supports sample_weight and use it if it does.
 
         # Note: Row sampling can be achieved either through setting sample_weight or
         # by indexing. The former is more efficient. Therefore, use this method
