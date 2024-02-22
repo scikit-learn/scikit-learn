@@ -465,13 +465,9 @@ class PCA(_BasePCA):
         """Dispatch to the right submethod depending on the chosen solver."""
         xp, is_array_api_compliant = get_namespace(X)
 
-        # Raise an error for sparse input and unsupported svd_solver
+        # Automatically select "arpack" solver if the input is sparse
         if issparse(X) and self.svd_solver != "arpack":
-            raise TypeError(
-                'PCA only support sparse inputs with the "arpack" solver, while '
-                f'"{self.svd_solver}" was passed. See TruncatedSVD for a possible'
-                " alternative."
-            )
+            self.svd_solver = "arpack"
         # Raise an error for non-Numpy input and arpack solver.
         if self.svd_solver == "arpack" and is_array_api_compliant:
             raise ValueError(
