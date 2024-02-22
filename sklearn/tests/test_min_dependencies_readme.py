@@ -77,6 +77,10 @@ def test_min_dependencies_pyproject_toml():
             # Don't check NumPy: this requirement is only build time.
             if "numpy>=1.25" in requirement:
                 continue
+            # Don't check meson-python: this requirement is only build-time and
+            # there is no runtime equivalent to check against
+            if "meson-python" in requirement:
+                continue
             package, version = requirement.split(">=")
             package = package.lower()
             pyproject_build_min_versions[package] = version
