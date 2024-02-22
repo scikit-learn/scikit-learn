@@ -558,19 +558,19 @@ def test_error_on_missing_requests_for_sub_estimator(metaestimator):
                         metadata_name=key,
                     )
                     instance.fit(X, y, **method_kwargs)
+                # making sure the requests are unset, in case they were set as a
+                # side effect of setting them for fit. For instance, if method
+                # mapping for fit is: `"fit": ["fit", "score"]`, that would mean
+                # calling `.score` here would not raise, because we have already
+                # set request value for child estimator's `score`.
+                set_requests(
+                    estimator,
+                    method_mapping=metaestimator.get("method_mapping", {}),
+                    methods=["fit"],
+                    metadata_name=key,
+                    value=None,
+                )
                 try:
-                    # making sure the requests are unset, in case they were set as a
-                    # side effect of setting them for fit. For instance, if method
-                    # mapping for fit is: `"fit": ["fit", "score"]`, that would mean
-                    # calling `.score` here would not raise, because we have already
-                    # set request value for child estimator's `score`.
-                    set_requests(
-                        estimator,
-                        method_mapping=metaestimator.get("method_mapping", {}),
-                        methods=["fit"],
-                        metadata_name=key,
-                        value=None,
-                    )
                     # `fit` and `partial_fit` accept y, others don't.
                     method(X, y, **method_kwargs)
                 except TypeError:

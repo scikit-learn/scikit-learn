@@ -15,7 +15,7 @@ from ..base import (
     _fit_context,
     clone,
 )
-from ..exceptions import ConvergenceWarning, UnsetMetadataPassedError
+from ..exceptions import ConvergenceWarning
 from ..utils import check_consistent_length, check_random_state
 from ..utils._bunch import Bunch
 from ..utils._param_validation import (
@@ -437,18 +437,7 @@ class RANSACRegressor(
             fit_params["sample_weight"] = sample_weight
 
         if _routing_enabled():
-            try:
-                routed_params = process_routing(self, "fit", **fit_params)
-            except UnsetMetadataPassedError as e:
-                raise UnsetMetadataPassedError(
-                    message=(
-                        f"{e}, which is used internally by `RANSACRegressor.fit()`. "
-                        f"Call `{estimator.__class__.__name__}.set_{{method}}_request("
-                        "{metadata}=True)` for each metadata."
-                    ),
-                    unrequested_params=e.unrequested_params,
-                    routed_params=e.routed_params,
-                ) from e
+            routed_params = process_routing(self, "fit", **fit_params)
         else:
             routed_params = Bunch()
             routed_params.estimator = Bunch(fit={}, predict={}, score={})
