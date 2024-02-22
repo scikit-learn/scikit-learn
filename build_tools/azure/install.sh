@@ -140,7 +140,7 @@ scikit_learn_install() {
         python setup.py develop
     fi
 
-    ccache -s || echo ""
+    ccache -s || echo "ccache not installed, skipping ccache statistics"
 }
 
 main() {
