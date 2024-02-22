@@ -148,7 +148,8 @@ See the examples below and the docstring of
 .. rubric:: Examples
 
 * :ref:`sphx_glr_auto_examples_neural_networks_plot_mlp_training_curves.py`
-* :ref:`sphx_glr_auto_examples_neural_networks_plot_mnist_filters.py`
+* See :ref:`sphx_glr_auto_examples_neural_networks_plot_mnist_filters.py` for
+  visualized representation of trained weights.
 
 Regression
 ==========
