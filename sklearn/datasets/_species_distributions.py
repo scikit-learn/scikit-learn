@@ -39,7 +39,7 @@ For an example of using this dataset, see
 
 import logging
 from io import BytesIO
-from numbers import Integral
+from numbers import Integral, Real
 from os import PathLike, makedirs, remove
 from os.path import exists
 
@@ -141,7 +141,7 @@ def construct_grids(batch):
         "data_home": [str, PathLike, None],
         "download_if_missing": ["boolean"],
         "n_retries": [Interval(Integral, 1, None, closed="left")],
-        "delay": [Interval(Integral, 1, None, closed="left")],
+        "delay": [Interval(Real, 1.0, None, closed="left")],
     },
     prefer_skip_nested_validation=True,
 )
@@ -150,7 +150,7 @@ def fetch_species_distributions(
     data_home=None,
     download_if_missing=True,
     n_retries=3,
-    delay=1,
+    delay=1.0,
 ):
     """Loader for species distribution dataset from Phillips et. al. (2006).
 
@@ -171,7 +171,7 @@ def fetch_species_distributions(
 
         .. versionadded:: 1.5
 
-    delay : int, default=1
+    delay : float, default=1.0
         Number of seconds between retries.
 
         .. versionadded:: 1.5

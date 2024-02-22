@@ -13,7 +13,7 @@ web page of Sam Roweis:
 # Copyright (c) 2011 David Warde-Farley <wardefar at iro dot umontreal dot ca>
 # License: BSD 3 clause
 
-from numbers import Integral
+from numbers import Integral, Real
 from os import PathLike, makedirs, remove
 from os.path import exists
 
@@ -43,7 +43,7 @@ FACES = RemoteFileMetadata(
         "download_if_missing": ["boolean"],
         "return_X_y": ["boolean"],
         "n_retries": [Interval(Integral, 1, None, closed="left")],
-        "delay": [Interval(Integral, 1, None, closed="left")],
+        "delay": [Interval(Real, 1.0, None, closed="left")],
     },
     prefer_skip_nested_validation=True,
 )
@@ -55,7 +55,7 @@ def fetch_olivetti_faces(
     download_if_missing=True,
     return_X_y=False,
     n_retries=3,
-    delay=1,
+    delay=1.0,
 ):
     """Load the Olivetti faces data-set from AT&T (classification).
 
@@ -100,7 +100,7 @@ def fetch_olivetti_faces(
 
         .. versionadded:: 1.5
 
-    delay : int, default=1
+    delay : float, default=1.0
         Number of seconds between retries.
 
         .. versionadded:: 1.5

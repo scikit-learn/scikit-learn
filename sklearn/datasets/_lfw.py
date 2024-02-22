@@ -75,7 +75,7 @@ TARGETS = (
 
 
 def _check_fetch_lfw(
-    data_home=None, funneled=True, download_if_missing=True, n_retries=3, delay=1
+    data_home=None, funneled=True, download_if_missing=True, n_retries=3, delay=1.0
 ):
     """Helper function to download any missing LFW data"""
 
@@ -252,7 +252,7 @@ def _fetch_lfw_people(
         "download_if_missing": ["boolean"],
         "return_X_y": ["boolean"],
         "n_retries": [Interval(Integral, 1, None, closed="left")],
-        "delay": [Interval(Integral, 1, None, closed="left")],
+        "delay": [Interval(Real, 1.0, None, closed="left")],
     },
     prefer_skip_nested_validation=True,
 )
@@ -267,7 +267,7 @@ def fetch_lfw_people(
     download_if_missing=True,
     return_X_y=False,
     n_retries=3,
-    delay=1,
+    delay=1.0,
 ):
     """Load the Labeled Faces in the Wild (LFW) people dataset \
 (classification).
@@ -326,7 +326,7 @@ def fetch_lfw_people(
 
         .. versionadded:: 1.5
 
-    delay : int, default=1
+    delay : float, default=1.0
         Number of seconds between retries.
 
         .. versionadded:: 1.5
@@ -465,7 +465,7 @@ def _fetch_lfw_pairs(
         "slice_": [tuple, Hidden(None)],
         "download_if_missing": ["boolean"],
         "n_retries": [Interval(Integral, 1, None, closed="left")],
-        "delay": [Interval(Integral, 1, None, closed="left")],
+        "delay": [Interval(Real, 1.0, None, closed="left")],
     },
     prefer_skip_nested_validation=True,
 )
@@ -479,7 +479,7 @@ def fetch_lfw_pairs(
     slice_=(slice(70, 195), slice(78, 172)),
     download_if_missing=True,
     n_retries=3,
-    delay=1,
+    delay=1.0,
 ):
     """Load the Labeled Faces in the Wild (LFW) pairs dataset (classification).
 
@@ -541,7 +541,7 @@ def fetch_lfw_pairs(
 
         .. versionadded:: 1.5
 
-    delay : int, default=1
+    delay : float, default=1.0
         Number of seconds between retries.
 
         .. versionadded:: 1.5

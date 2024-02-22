@@ -12,7 +12,7 @@ import errno
 import logging
 import os
 from gzip import GzipFile
-from numbers import Integral
+from numbers import Integral, Real
 from os.path import exists, join
 
 import joblib
@@ -59,7 +59,7 @@ logger = logging.getLogger(__name__)
         "return_X_y": ["boolean"],
         "as_frame": ["boolean"],
         "n_retries": [Interval(Integral, 1, None, closed="left")],
-        "delay": [Interval(Integral, 1, None, closed="left")],
+        "delay": [Interval(Real, 1.0, None, closed="left")],
     },
     prefer_skip_nested_validation=True,
 )
@@ -74,7 +74,7 @@ def fetch_kddcup99(
     return_X_y=False,
     as_frame=False,
     n_retries=3,
-    delay=1,
+    delay=1.0,
 ):
     """Load the kddcup99 dataset (classification).
 
@@ -137,7 +137,7 @@ def fetch_kddcup99(
 
         .. versionadded:: 1.5
 
-    delay : int, default=1
+    delay : float, default=1.0
         Number of seconds between retries.
 
         .. versionadded:: 1.5
@@ -261,7 +261,7 @@ def fetch_kddcup99(
 
 
 def _fetch_brute_kddcup99(
-    data_home=None, download_if_missing=True, percent10=True, n_retries=3, delay=1
+    data_home=None, download_if_missing=True, percent10=True, n_retries=3, delay=1.0
 ):
     """Load the kddcup99 dataset, downloading it if necessary.
 
@@ -281,7 +281,7 @@ def _fetch_brute_kddcup99(
     n_retries : int, default=3
         Number of retries when HTTP errors are encountered.
 
-    delay : int, default=1
+    delay : float, default=1.0
         Number of seconds between retries.
 
     Returns

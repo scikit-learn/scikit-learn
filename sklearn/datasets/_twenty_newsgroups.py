@@ -33,7 +33,7 @@ import re
 import shutil
 import tarfile
 from contextlib import suppress
-from numbers import Integral
+from numbers import Integral, Real
 
 import joblib
 import numpy as np
@@ -170,7 +170,7 @@ def strip_newsgroup_footer(text):
         "download_if_missing": ["boolean"],
         "return_X_y": ["boolean"],
         "n_retries": [Interval(Integral, 1, None, closed="left")],
-        "delay": [Interval(Integral, 1, None, closed="left")],
+        "delay": [Interval(Real, 1.0, None, closed="left")],
     },
     prefer_skip_nested_validation=True,
 )
@@ -185,7 +185,7 @@ def fetch_20newsgroups(
     download_if_missing=True,
     return_X_y=False,
     n_retries=3,
-    delay=1,
+    delay=1.0,
 ):
     """Load the filenames and data from the 20 newsgroups dataset \
 (classification).
@@ -254,7 +254,7 @@ def fetch_20newsgroups(
 
         .. versionadded:: 1.5
 
-    delay : int, default=1
+    delay : float, default=1.0
         Number of seconds between retries.
 
         .. versionadded:: 1.5
@@ -381,6 +381,8 @@ def fetch_20newsgroups(
         "return_X_y": ["boolean"],
         "normalize": ["boolean"],
         "as_frame": ["boolean"],
+        "n_retries": [Interval(Integral, 1, None, closed="left")],
+        "delay": [Interval(Real, 1.0, None, closed="left")],
     },
     prefer_skip_nested_validation=True,
 )
@@ -393,6 +395,8 @@ def fetch_20newsgroups_vectorized(
     return_X_y=False,
     normalize=True,
     as_frame=False,
+    n_retries=3,
+    delay=1.0,
 ):
     """Load and vectorize the 20 newsgroups dataset (classification).
 
@@ -464,6 +468,16 @@ def fetch_20newsgroups_vectorized(
 
         .. versionadded:: 0.24
 
+    n_retries : int, default=3
+        Number of retries when HTTP errors are encountered.
+
+        .. versionadded:: 1.5
+
+    delay : float, default=1.0
+        Number of seconds between retries.
+
+        .. versionadded:: 1.5
+
     Returns
     -------
     bunch : :class:`~sklearn.utils.Bunch`
@@ -506,6 +520,8 @@ def fetch_20newsgroups_vectorized(
         random_state=12,
         remove=remove,
         download_if_missing=download_if_missing,
+        n_retries=n_retries,
+        delay=delay,
     )
 
     data_test = fetch_20newsgroups(
@@ -516,6 +532,8 @@ def fetch_20newsgroups_vectorized(
         random_state=12,
         remove=remove,
         download_if_missing=download_if_missing,
+        n_retries=n_retries,
+        delay=delay,
     )
 
     if os.path.exists(target_file):
