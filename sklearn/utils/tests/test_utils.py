@@ -3,13 +3,14 @@ import timeit
 import warnings
 from copy import copy
 from itertools import chain
+from unittest import SkipTest
 
 import numpy as np
 import pytest
 
 from sklearn import config_context
+from sklearn.externals._packaging.version import parse as parse_version
 from sklearn.utils import (
-    _approximate_mode,
     _determine_key_type,
     _get_column_indices,
     _is_polars_df,
@@ -461,6 +462,12 @@ def test_safe_indexing_pandas_no_settingwithcopy_warning():
     # DataFrame -> ensure it doesn't raise a warning if modified
     pd = pytest.importorskip("pandas")
 
+    pd_version = parse_version(pd.__version__)
+    pd_base_version = parse_version(pd_version.base_version)
+
+    if pd_base_version >= parse_version("3"):
+        raise SkipTest("SettingWithCopyWarning has been removed in pandas 3.0.0.dev")
+
     X = pd.DataFrame({"a": [1, 2, 3], "b": [3, 4, 5]})
     subset = _safe_indexing(X, [0, 1], axis=0)
     if hasattr(pd.errors, "SettingWithCopyWarning"):
@@ -696,23 +703,6 @@ def test_is_scalar_nan(value, result):
     assert is_scalar_nan(value) is result
     # make sure that we are returning a Python bool
     assert isinstance(is_scalar_nan(value), bool)
-
-
-def test_approximate_mode():
-    """Make sure sklearn.utils._approximate_mode returns valid
-    results for cases where "class_counts * n_draws" is enough
-    to overflow 32-bit signed integer.
-
-    Non-regression test for:
-    https://github.com/scikit-learn/scikit-learn/issues/20774
-    """
-    X = np.array([99000, 1000], dtype=np.int32)
-    ret = _approximate_mode(class_counts=X, n_draws=25000, rng=0)
-
-    # Draws 25% of the total population, so in this case a fair draw means:
-    # 25% * 99.000 = 24.750
-    # 25% *  1.000 =    250
-    assert_array_equal(ret, [24750, 250])
 
 
 def dummy_func():

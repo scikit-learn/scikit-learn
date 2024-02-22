@@ -38,7 +38,7 @@ from ..utils.metadata_routing import (
     process_routing,
 )
 from ..utils.metaestimators import available_if
-from ..utils.multiclass import check_classification_targets
+from ..utils.multiclass import type_of_target
 from ..utils.parallel import Parallel, delayed
 from ..utils.validation import (
     _check_feature_names_in,
@@ -396,10 +396,21 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
             Returns the instance itself.
         """
         _raise_for_params(fit_params, self, "fit")
-        check_classification_targets(y)
-        if isinstance(y, np.ndarray) and len(y.shape) > 1 and y.shape[1] > 1:
+        y_type = type_of_target(y, input_name="y")
+        if y_type in ("unknown", "continuous"):
+            # raise a specific ValueError for non-classification tasks
+            raise ValueError(
+                f"Unknown label type: {y_type}. Maybe you are trying to fit a "
+                "classifier, which expects discrete classes on a "
+                "regression target with continuous values."
+            )
+        elif y_type not in ("binary", "multiclass"):
+            # raise a NotImplementedError for backward compatibility for non-supported
+            # classification tasks
             raise NotImplementedError(
-                "Multilabel and multi-output classification is not supported."
+                f"{self.__class__.__name__} only supports binary or multiclass "
+                "classification. Multilabel and multi-output classification are not "
+                "supported."
             )
 
         self.le_ = LabelEncoder().fit(y)
