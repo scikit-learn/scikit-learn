@@ -959,6 +959,24 @@ def matthews_corrcoef(y_true, y_pred, *, sample_weight=None):
         prediction, 0 an average random prediction and -1 and inverse
         prediction).
 
+    Notes
+    -----
+    :func:`matthews_corrcoef` is ill-defined (due to zero division)
+    when only one class is present in either the true or predicted
+    labels.
+
+    If only one of the true or predicted labels contains a single
+    class, the limit value is 0. This is sensible as it suggests
+    that the model either provided constant predictions on
+    non-constant data, or variable predictions on single-class data.
+    In such cases, the metric will return a value of 0.
+
+    However, if both the true and predicted labels contain only a
+    single class, the limit does not exist, rendering the metric
+    undefined. Consequently, in this scenario, the metric will
+    return a nan value. This behaviour was chosen to aviod
+    returning 0 for perfect predictions on single-class data.
+
     References
     ----------
     .. [1] :doi:`Baldi, Brunak, Chauvin, Andersen and Nielsen, (2000). Assessing the
@@ -1003,8 +1021,12 @@ def matthews_corrcoef(y_true, y_pred, *, sample_weight=None):
     cov_ypyp = n_samples**2 - np.dot(p_sum, p_sum)
     cov_ytyt = n_samples**2 - np.dot(t_sum, t_sum)
 
-    if cov_ypyp * cov_ytyt == 0:
+    # Zero division, metric limit value is 0
+    if bool(cov_ypyp) ^ bool(cov_ytyt):
         return 0.0
+    # Zero division, metric limit does not exist
+    elif cov_ypyp * cov_ytyt == 0:
+        return np.nan
     else:
         return cov_ytyp / np.sqrt(cov_ytyt * cov_ypyp)
 
