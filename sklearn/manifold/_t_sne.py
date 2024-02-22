@@ -1103,9 +1103,9 @@ class TSNE(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
         # Learning schedule (part 2): disable early exaggeration and finish
         # optimization with a higher momentum at 0.8
         P /= self.early_exaggeration
-        remaining = self.max_iter_ - self._EXPLORATION_MAX_ITER
+        remaining = self._max_iter - self._EXPLORATION_MAX_ITER
         if it < self._EXPLORATION_MAX_ITER or remaining > 0:
-            opt_args["max_iter"] = self.max_iter_
+            opt_args["max_iter"] = self._max_iter
             opt_args["it"] = it + 1
             opt_args["momentum"] = 0.8
             opt_args["n_iter_without_progress"] = self.n_iter_without_progress
@@ -1166,11 +1166,11 @@ class TSNE(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
                 ),
                 FutureWarning,
             )
-            self.max_iter_ = self.n_iter
+            self._max_iter = self.n_iter
         elif self.max_iter is None:
-            self.max_iter_ = 1000
+            self._max_iter = 1000
         else:
-            self.max_iter_ = self.max_iter
+            self._max_iter = self.max_iter
 
         self._check_params_vs_input(X)
         embedding = self._fit(X)
