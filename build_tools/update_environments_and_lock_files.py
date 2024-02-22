@@ -82,7 +82,12 @@ common_dependencies = common_dependencies_without_coverage + [
 
 docstring_test_dependencies = ["sphinx", "numpydoc"]
 
-default_package_constraints = {}
+default_package_constraints = {
+    # TODO: somehow pytest 8 does not seem to work with meson editable
+    # install. Exit code is 5, i.e. no test collected
+    # This would be fixed by https://github.com/mesonbuild/meson-python/pull/569
+    "pytest": "<8",
+}
 
 
 def remove_from(alist, to_remove):
@@ -108,9 +113,6 @@ build_metadata_list = [
         "package_constraints": {
             "blas": "[build=mkl]",
             "pytorch": "1.13",
-            # TODO: somehow pytest 8 does not seem to work with meson editable
-            # install. Exit code is 5, i.e. no test collected
-            "pytest": "<8",
         },
     },
     {
