@@ -64,7 +64,6 @@ extensions = [
     "sphinx_remove_toctrees",
     "sphinx_design",
     # See sphinxext/
-    "add_toctree_functions",
     "allow_nan_estimators",
     "doi_role",
     "move_gallery_links",
@@ -315,9 +314,7 @@ html_static_path = ["images", "css", "js"]
 
 # Additional templates that should be rendered to pages, maps page names to
 # template names.
-# TODO: change to html_additional_pages = {"index": "index.html"} so that our landing
-# page template can override the one generated from index.rst
-html_additional_pages = {}
+html_additional_pages = {"index": "index.html"}
 
 # Additional JS files
 html_js_files = ["scripts/details-permalink.js"]
@@ -340,7 +337,9 @@ def add_js_css_files(app, pagename, templatename, context, doctree):
     should be used for the ones that are used by multiple pages. All page-specific
     JS and CSS files should be added here instead.
     """
-    if pagename == "install":
+    if pagename == "index":
+        app.add_css_file("styles/index.css")
+    elif pagename == "install":
         app.add_css_file("styles/install.css")
 
 
@@ -740,7 +739,7 @@ def filter_search_index(app, exception):
         f.write(searchindex_text)
 
 
-def generate_min_dependency_table(app):
+def generate_min_dependency_table():
     """Generate min dependency table for docs."""
     from sklearn._min_dependencies import dependent_packages
 
@@ -786,11 +785,11 @@ def generate_min_dependency_table(app):
     output.write("\n")
     output = output.getvalue()
 
-    with (Path(".") / "min_dependency_table.rst").open("w") as f:
+    with (Path(".") / "min_dependency_table.rst").open("w", encoding="utf-8") as f:
         f.write(output)
 
 
-def generate_min_dependency_substitutions(app):
+def generate_min_dependency_substitutions():
     """Generate min dependency substitutions for docs."""
     from sklearn._min_dependencies import dependent_packages
 
@@ -803,7 +802,55 @@ def generate_min_dependency_substitutions(app):
 
     output = output.getvalue()
 
-    with (Path(".") / "min_dependency_substitutions.rst").open("w") as f:
+    with (Path(".") / "min_dependency_substitutions.rst").open(
+        "w", encoding="utf-8"
+    ) as f:
+        f.write(output)
+
+
+def generate_index_rst():
+    """Generate index.rst.
+
+    The reason for generating this file at build time is to allow specifying the
+    development link as a variable.
+    https://github.com/scikit-learn/scikit-learn/pull/22550
+    """
+    development_link = (
+        "developers/index"
+        if parsed_version.is_devrelease
+        else "https://scikit-learn.org/dev/developers/index.html"
+    )
+
+    output = f"""
+.. title:: Index
+
+.. Define the overall structure, that affects the prev-next buttons and the order
+   of the sections in the top navbar.
+
+.. toctree::
+   :hidden:
+   :maxdepth: 2
+
+   Install <install>
+   user_guide
+   API <modules/classes>
+   auto_examples/index
+   Community <https://blog.scikit-learn.org/>
+   getting_started
+   Tutorials <tutorial/index>
+   whats_new
+   Glossary <glossary>
+   Development <{development_link}>
+   FAQ <faq>
+   support
+   related_projects
+   roadmap
+   Governance <governance>
+   about
+   Other Versions and Download <https://scikit-learn.org/dev/versions.html>
+"""
+
+    with (Path(".") / "index.rst").open("w", encoding="utf-8") as f:
         f.write(output)
 
 
@@ -822,8 +869,6 @@ def setup(app):
     # do not run the examples when using linkcheck by using a small priority
     # (default priority is 500 and sphinx-gallery using builder-inited event too)
     app.connect("builder-inited", disable_plot_gallery_for_linkcheck, priority=50)
-    app.connect("builder-inited", generate_min_dependency_table)
-    app.connect("builder-inited", generate_min_dependency_substitutions)
 
     # triggered just before the HTML for an individual page is created
     app.connect("html-page-context", add_js_css_files)
@@ -954,3 +999,8 @@ else:
     linkcheck_request_headers = {
         "https://github.com/": {"Authorization": f"token {github_token}"},
     }
+
+# Write the pages prior to any sphinx event
+generate_index_rst()
+generate_min_dependency_table()
+generate_min_dependency_substitutions()
