@@ -64,6 +64,13 @@ Changelog
 - |Feature| A fitted :class:`compose.ColumnTransformer` now implements `__getitem__`
   which returns the fitted transformers by name. :pr:`27990` by `Thomas Fan`_.
 
+:mod:`sklearn.decomposition`
+............................
+
+- |Enhancement| :class:`decomposition.PCA` now automatically select `arpack` solver
+  for sparse inputs and does not raise error if other solvers are passed.
+  :pr:`28498` by :user:`Thanh Lam Dang <lamdang2k>`.
+
 :mod:`sklearn.dummy`
 ....................
 
