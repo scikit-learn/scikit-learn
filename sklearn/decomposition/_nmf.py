@@ -1810,6 +1810,7 @@ class NMF(_BaseNMF):
             Data matrix to be decomposed.
 
         y : Ignored
+            Not used, present for API consistency by convention.
 
         normalize : bool, default=True
             If True, the objective function is normalized by the number of samples.
@@ -1819,6 +1820,11 @@ class NMF(_BaseNMF):
 
         H : array-like of shape (n_components, n_features), default=None
             If None, the components matrix of the fitted model is used.
+
+        Returns
+        -------
+        objective : ObjectiveFunction
+            The objective function of the NMF model.
         """
         if W is None:
             W = self.transform(X)
