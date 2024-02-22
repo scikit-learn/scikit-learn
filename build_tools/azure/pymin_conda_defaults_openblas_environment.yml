@@ -15,7 +15,6 @@ dependencies:
   - pytest
   - pytest-xdist
   - pillow
-  - setuptools
   - pytest-cov
   - coverage
   - ccache

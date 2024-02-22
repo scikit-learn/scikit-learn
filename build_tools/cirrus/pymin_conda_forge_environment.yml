@@ -15,6 +15,7 @@ dependencies:
   - pytest
   - pytest-xdist
   - pillow
-  - setuptools
+  - ninja
+  - meson-python
   - pip
   - ccache

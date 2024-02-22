@@ -70,7 +70,8 @@ common_dependencies_without_coverage = [
     "pytest",
     "pytest-xdist",
     "pillow",
-    "setuptools",
+    "ninja",
+    "meson-python",
 ]
 
 common_dependencies = common_dependencies_without_coverage + [
@@ -151,9 +152,9 @@ build_metadata_list = [
         "folder": "build_tools/azure",
         "platform": "linux-64",
         "channel": "defaults",
-        "conda_dependencies": remove_from(common_dependencies, ["pandas", "cython"]) + [
-            "ccache"
-        ],
+        "conda_dependencies": remove_from(
+            common_dependencies, ["pandas", "cython", "ninja", "meson-python"]
+        ) + ["ccache"],
         "package_constraints": {
             "python": "3.9",
             "blas": "[build=openblas]",
@@ -362,6 +363,8 @@ build_metadata_list = [
             "threadpoolctl",
             "pytest",
             "pytest-cov",
+            "ninja",
+            "meson-python",
         ],
         "package_constraints": {
             "joblib": "min",
@@ -385,6 +388,8 @@ build_metadata_list = [
             "threadpoolctl",
             "pytest",
             "pytest-xdist",
+            "ninja",
+            "meson-python",
         ],
         "package_constraints": {
             "joblib": "min",

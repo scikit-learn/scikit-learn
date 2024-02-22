@@ -6,3 +6,5 @@ joblib==1.2.0  # min
 threadpoolctl==2.0.0  # min
 pytest
 pytest-xdist
+ninja
+meson-python
