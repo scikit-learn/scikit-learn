@@ -2122,8 +2122,8 @@ def make_biclusters(
         of the seventh ACM SIGKDD international conference on Knowledge
         discovery and data mining (pp. 269-274). ACM.
 
-    Example
-    -------
+    Examples
+    --------
     >>> from sklearn.datasets import make_checkerboard
     >>> data, rows, columns = make_checkerboard(shape=(300, 300), n_clusters=10,
     ...                                         random_state=42)
