@@ -17,6 +17,7 @@ from ..utils._param_validation import (
     validate_params,
 )
 from ..utils.parallel import Parallel, delayed
+from ..utils.validation import _is_pandas_df, _is_polars_df
 
 
 def _weights_scorer(scorer, estimator, X, y, sample_weight):
@@ -35,6 +36,7 @@ def _calculate_permutation_scores(
     n_repeats,
     scorer,
     max_samples,
+    X_type,
 ):
     """Calculate score when `col_idx` is permuted."""
     random_state = check_random_state(random_state)
@@ -56,18 +58,24 @@ def _calculate_permutation_scores(
         y = _safe_indexing(y, row_indices, axis=0)
         if sample_weight is not None:
             sample_weight = _safe_indexing(sample_weight, row_indices, axis=0)
-    else:
+    elif X_type == "polars":
+        X_permuted = X.clone()  # polars DataFrame does not have `copy`
+    else:  # pandas DataFrame or numpy ndarray
         X_permuted = X.copy()
 
     scores = []
     shuffling_idx = np.arange(X_permuted.shape[0])
     for _ in range(n_repeats):
         random_state.shuffle(shuffling_idx)
-        if hasattr(X_permuted, "iloc"):
+        if X_type == "pandas":
             col = X_permuted.iloc[shuffling_idx, col_idx]
             col.index = X_permuted.index
             X_permuted[X_permuted.columns[col_idx]] = col
-        else:
+        elif X_type == "polars":
+            X_permuted = X_permuted.with_columns(
+                X_permuted.to_series(col_idx)[shuffling_idx]
+            )
+        else:  # X_type == "array"
             X_permuted[:, col_idx] = X_permuted[shuffling_idx, col_idx]
         scores.append(_weights_scorer(scorer, estimator, X_permuted, y, sample_weight))
 
@@ -262,8 +270,13 @@ def permutation_importance(
     >>> result.importances_std
     array([0.2211..., 0.       , 0.       ])
     """
-    if not hasattr(X, "iloc"):
+    if _is_pandas_df(X):
+        X_type = "pandas"
+    elif _is_polars_df(X):
+        X_type = "polars"
+    else:
         X = check_array(X, force_all_finite="allow-nan", dtype=None)
+        X_type = "array"
 
     # Precompute random seed from the random state to be used
     # to get a fresh independent RandomState instance for each
@@ -292,6 +305,7 @@ def permutation_importance(
             n_repeats,
             scorer,
             max_samples,
+            X_type,
         )
         for col_idx in range(X.shape[1])
     )

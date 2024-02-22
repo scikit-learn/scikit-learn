@@ -66,11 +66,10 @@ def test_permutation_importance_correlated_feature_regression(
 
 @pytest.mark.parametrize("n_jobs", [1, 2])
 @pytest.mark.parametrize("max_samples", [0.5, 1.0])
-def test_permutation_importance_correlated_feature_regression_pandas(
-    n_jobs, max_samples
+@pytest.mark.parametrize("dataframe_lib", ["pandas", "polars"])
+def test_permutation_importance_correlated_feature_regression_dataframe(
+    n_jobs, max_samples, dataframe_lib
 ):
-    pd = pytest.importorskip("pandas")
-
     # Make sure that feature highly correlated to the target have a higher
     # importance
     rng = np.random.RandomState(42)
@@ -81,8 +80,11 @@ def test_permutation_importance_correlated_feature_regression_pandas(
     y_with_little_noise = (y + rng.normal(scale=0.001, size=y.shape[0])).reshape(-1, 1)
 
     # Adds feature correlated with y as the last column
-    X = pd.DataFrame(X, columns=dataset.feature_names)
-    X["correlated_feature"] = y_with_little_noise
+    X = _convert_container(X, dataframe_lib, columns_name=dataset.feature_names)
+    if dataframe_lib == "pandas":
+        X["correlated_feature"] = y_with_little_noise
+    else:
+        X = X.with_columns(correlated_feature=y_with_little_noise)
 
     clf = RandomForestClassifier(n_estimators=10, random_state=42)
     clf.fit(X, y)
@@ -215,13 +217,14 @@ def test_permutation_importance_mixed_types():
     assert np.all(result2.importances_mean[-1] > result2.importances_mean[:-1])
 
 
-def test_permutation_importance_mixed_types_pandas():
-    pd = pytest.importorskip("pandas")
+@pytest.mark.parametrize("dataframe_lib", ["pandas", "polars"])
+def test_permutation_importance_mixed_types_dataframe(dataframe_lib):
     rng = np.random.RandomState(42)
     n_repeats = 5
 
     # Last column is correlated with y
-    X = pd.DataFrame({"col1": [1.0, 2.0, 3.0, np.nan], "col2": ["a", "b", "a", "b"]})
+    X = [[1.0, "a"], [2.0, "b"], [3.0, "a"], [np.nan, "b"]]
+    X = _convert_container(X, dataframe_lib, columns_name=["col1", "col2"])
     y = np.array([0, 1, 0, 1])
 
     num_preprocess = make_pipeline(SimpleImputer(), StandardScaler())
@@ -300,40 +303,35 @@ def test_permutation_importance_equivalence_sequential_parallel(max_samples):
 
 @pytest.mark.parametrize("n_jobs", [None, 1, 2])
 @pytest.mark.parametrize("max_samples", [0.5, 1.0])
-def test_permutation_importance_equivalence_array_dataframe(n_jobs, max_samples):
+@pytest.mark.parametrize("dataframe_lib", ["pandas", "polars"])
+def test_permutation_importance_equivalence_array_dataframe(
+    n_jobs, max_samples, dataframe_lib
+):
     # This test checks that the column shuffling logic has the same behavior
     # both a dataframe and a simple numpy array.
-    pd = pytest.importorskip("pandas")
 
     # regression test to make sure that sequential and parallel calls will
     # output the same results.
     X, y = make_regression(n_samples=100, n_features=5, random_state=0)
-    X_df = pd.DataFrame(X)
 
     # Add a categorical feature that is statistically linked to y:
     binner = KBinsDiscretizer(n_bins=3, encode="ordinal")
-    cat_column = binner.fit_transform(y.reshape(-1, 1))
-
-    # Concatenate the extra column to the numpy array: integers will be
-    # cast to float values
+    cat_column = binner.fit_transform(y.reshape(-1, 1)).astype(str)
     X = np.hstack([X, cat_column])
-    assert X.dtype.kind == "f"
 
-    # Insert extra column as a non-numpy-native dtype (while keeping backward
-    # compat for old pandas versions):
-    if hasattr(pd, "Categorical"):
-        cat_column = pd.Categorical(cat_column.ravel())
-    else:
-        cat_column = cat_column.ravel()
-    new_col_idx = len(X_df.columns)
-    X_df[new_col_idx] = cat_column
-    assert X_df[new_col_idx].dtype == cat_column.dtype
-
-    # Stich an arbitrary index to the dataframe:
-    X_df.index = np.arange(len(X_df)).astype(str)
+    # cat_column is converted to categorical dtype, which is non-numpy-native
+    X_df = _convert_container(
+        X,
+        dataframe_lib,
+        columns_name=[f"col_{i}" for i in range(X.shape[1])],
+        categorical_feature_names=[f"col_{X.shape[1] - 1}"],
+    )
 
     rf = RandomForestRegressor(n_estimators=5, max_depth=3, random_state=0)
     rf.fit(X, y)
+
+    rf_df = RandomForestRegressor(n_estimators=5, max_depth=3, random_state=0)
+    rf_df.fit(X_df, y)
 
     n_repeats = 3
     importance_array = permutation_importance(
@@ -352,10 +350,10 @@ def test_permutation_importance_equivalence_array_dataframe(n_jobs, max_samples)
     imp_max = importance_array["importances"].max()
     assert imp_max - imp_min > 0.3
 
-    # Now check that importances computed on dataframe matche the values
+    # Now check that importances computed on dataframe match the values
     # of those computed on the array with the same data.
     importance_dataframe = permutation_importance(
-        rf,
+        rf_df,
         X_df,
         y,
         n_repeats=n_repeats,
@@ -368,7 +366,7 @@ def test_permutation_importance_equivalence_array_dataframe(n_jobs, max_samples)
     )
 
 
-@pytest.mark.parametrize("input_type", ["array", "dataframe"])
+@pytest.mark.parametrize("input_type", ["array", "pandas", "polars"])
 def test_permutation_importance_large_memmaped_data(input_type):
     # Smoke, non-regression test for:
     # https://github.com/scikit-learn/scikit-learn/issues/15810
