@@ -1656,7 +1656,6 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
                     routed_params[name] = Bunch(fit={})
                     routed_params[name] = Bunch(transform={})
                     routed_params[name].fit = params
-                    routed_params[name].transform = params
 
         results = self._parallel_func(X, y, _fit_transform_one, routed_params)
         if not results:
