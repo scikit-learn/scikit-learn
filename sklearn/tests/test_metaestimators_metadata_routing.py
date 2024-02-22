@@ -312,7 +312,7 @@ METAESTIMATORS: list = [
     {
         "metaestimator": BaggingClassifier,
         "estimator_name": "estimator",
-        "estimator": ConsumingClassifier,
+        "estimator": "classifier",
         "X": X,
         "y": y,
         "preserves_metadata": False,
@@ -321,7 +321,7 @@ METAESTIMATORS: list = [
     {
         "metaestimator": BaggingRegressor,
         "estimator_name": "estimator",
-        "estimator": ConsumingRegressor,
+        "estimator": "regressor",
         "X": X,
         "y": y,
         "preserves_metadata": False,
