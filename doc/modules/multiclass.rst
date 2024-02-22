@@ -543,6 +543,7 @@ The regressors that natively support multioutput regression are as follows:
   - :class:`linear_model.Lasso`
   - :class:`linear_model.LassoLars`
   - :class:`linear_model.LinearRegression`
+  - :class:`multioutput.MultiOutputRegressor`
   - :class:`linear_model.MultiTaskElasticNet`
   - :class:`linear_model.MultiTaskElasticNetCV`
   - :class:`linear_model.MultiTaskLasso`
@@ -553,6 +554,7 @@ The regressors that natively support multioutput regression are as follows:
   - :class:`linear_model.RANSACRegressor`
   - :class:`neighbors.RadiusNeighborsRegressor`
   - :class:`ensemble.RandomForestRegressor`
+  - :class:`multioutput.RegressorChain`
   - :class:`linear_model.Ridge`
   - :class:`linear_model.RidgeCV`
   - :class:`compose.TransformedTargetRegressor`
