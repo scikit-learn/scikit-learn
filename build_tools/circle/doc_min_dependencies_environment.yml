@@ -17,6 +17,7 @@ dependencies:
   - pytest
   - pytest-xdist
   - pillow
+  - pip
   - ninja
   - meson-python
   - scikit-image=0.17.2  # min

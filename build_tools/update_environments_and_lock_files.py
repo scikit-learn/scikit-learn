@@ -70,6 +70,7 @@ common_dependencies_without_coverage = [
     "pytest",
     "pytest-xdist",
     "pillow",
+    "pip",
     "ninja",
     "meson-python",
 ]
@@ -98,8 +99,6 @@ build_metadata_list = [
         "channel": "conda-forge",
         "conda_dependencies": common_dependencies + [
             "ccache",
-            "meson-python",
-            "pip",
             "pytorch",
             "pytorch-cpu",
             "polars",
@@ -153,7 +152,7 @@ build_metadata_list = [
         "platform": "linux-64",
         "channel": "defaults",
         "conda_dependencies": remove_from(
-            common_dependencies, ["pandas", "cython", "ninja", "meson-python"]
+            common_dependencies, ["pandas", "cython", "pip", "ninja", "meson-python"]
         ) + ["ccache"],
         "package_constraints": {
             "python": "3.9",
@@ -194,7 +193,7 @@ build_metadata_list = [
         "channel": "defaults",
         "conda_dependencies": ["python", "ccache"],
         "pip_dependencies": (
-            remove_from(common_dependencies, ["python", "blas"])
+            remove_from(common_dependencies, ["python", "blas", "pip"])
             + docstring_test_dependencies
             + ["lightgbm", "scikit-image"]
         ),

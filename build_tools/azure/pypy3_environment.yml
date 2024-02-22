@@ -16,6 +16,7 @@ dependencies:
   - pyamg
   - pytest
   - pytest-xdist
+  - pip
   - ninja
   - meson-python
   - ccache
