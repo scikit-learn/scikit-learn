@@ -517,7 +517,7 @@ def test_classifier_chain_fit_and_predict_with_linear_svc():
     Y_pred = classifier_chain.predict(X)
     assert Y_pred.shape == Y.shape
 
-    Y_decision = classifier_chain.decision_function(X)
+    Y_decision = classifier_chain.decision_function(X).reshape(Y_pred.shape)
 
     Y_binary = Y_decision >= 0
     assert_array_equal(Y_binary, Y_pred)
