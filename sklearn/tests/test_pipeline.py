@@ -1482,7 +1482,7 @@ def test_feature_union_fit_params():
 
 def test_feature_union_fit_params_without_fit_transform():
     # Test that metadata is passed correctly to underlying transformers that don't
-    # implement a `fit_transform` method.
+    # implement a `fit_transform` method when SLEP6 is not enabled.
 
     class DummyTransformer(ConsumingNoFitTransformTransformer):
         def fit(self, X, y=None, **fit_params):
