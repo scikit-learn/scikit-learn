@@ -201,9 +201,10 @@ class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble, metaclass=ABCM
         names, all_estimators = self._validate_estimators()
         self._validate_final_estimator()
 
-        # This is a quick fix to make StackingClassifier and StackingRegressor
-        # pass the tests despite of metadata routing for VotingClassifer and
-        # VotingRegressor.
+        # FIXME: when adding support for metadata routing in Stacking*.
+        # This is a hotfix to make StackingClassifier and StackingRegressor
+        # pass the tests despite not supporting metadata routing but sharing
+        # the same base class with VotingClassifier and VotingRegressor.
         fit_params = dict()
         if sample_weight is not None:
             fit_params["sample_weight"] = sample_weight
