@@ -1,6 +1,7 @@
 from functools import partial
 
 import numpy as np
+from numpy.testing import assert_array_equal
 
 from sklearn.base import (
     BaseEstimator,
@@ -56,7 +57,9 @@ def check_recorded_metadata(obj, method, split_params=tuple(), **kwargs):
         of the original values.
     """
     records = getattr(obj, "_records", dict()).get(method, dict())
-    assert set(kwargs.keys()) == set(records.keys())
+    assert set(kwargs.keys()) == set(
+        records.keys()
+    ), f"Expected {kwargs.keys()} vs {records.keys()}"
     for key, value in kwargs.items():
         recorded_value = records[key]
         # The following condition is used to check for any specified parameters
@@ -64,7 +67,10 @@ def check_recorded_metadata(obj, method, split_params=tuple(), **kwargs):
         if key in split_params and recorded_value is not None:
             assert np.isin(recorded_value, value).all()
         else:
-            assert recorded_value is value
+            if isinstance(recorded_value, np.ndarray):
+                assert_array_equal(recorded_value, value)
+            else:
+                assert recorded_value is value, f"Expected {recorded_value} vs {value}"
 
 
 record_metadata_not_default = partial(record_metadata, record_default=False)
@@ -337,7 +343,7 @@ class ConsumingScorer(_Scorer):
         return super()._score(method_caller, clf, X, y, sample_weight=sample_weight)
 
 
-class ConsumingSplitter(BaseCrossValidator, GroupsConsumerMixin):
+class ConsumingSplitter(GroupsConsumerMixin, BaseCrossValidator):
     def __init__(self, registry=None):
         self.registry = registry
 
