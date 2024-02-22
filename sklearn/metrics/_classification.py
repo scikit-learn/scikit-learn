@@ -974,7 +974,7 @@ def matthews_corrcoef(y_true, y_pred, *, sample_weight=None):
     However, if both the true and predicted labels contain only a
     single class, the limit does not exist, rendering the metric
     undefined. Consequently, in this scenario, the metric will
-    return a nan value. This behaviour was chosen to aviod
+    return a nan value. This behavior was chosen to avoid
     returning 0 for perfect predictions on single-class data.
 
     References
