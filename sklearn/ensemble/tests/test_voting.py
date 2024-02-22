@@ -682,3 +682,143 @@ def test_get_features_names_out_classifier_error():
     )
     with pytest.raises(ValueError, match=msg):
         voting.get_feature_names_out()
+
+
+@pytest.mark.parametrize(
+    "X, y, Voter, estimators",
+    [
+        (
+            X,
+            y,
+            VotingClassifier,
+            [("lr", LogisticRegression()), ("rf", DecisionTreeClassifier())],
+        ),
+        (
+            X_r,
+            y_r,
+            VotingRegressor,
+            [("lr", LinearRegression()), ("rf", DecisionTreeRegressor())],
+        ),
+    ],
+)
+def test_prefit_estimators_produce_same_predictions_as_non_prefit(
+    X, y, Voter, estimators
+):
+    fitted_estimators = [(name, clone(est).fit(X, y)) for name, est in estimators]
+    prefit_voter = Voter(estimators=fitted_estimators, prefit=True)
+    prefit_voter.fit(X, y)
+    prefit_predictions = prefit_voter.predict(X)
+
+    unfitted_estimators = [(name, est) for name, est in estimators]
+    unfitted_voter = Voter(estimators=unfitted_estimators, prefit=False)
+    unfitted_voter.fit(X, y)
+    unfit_predictions = unfitted_voter.predict(X)
+
+    assert_array_equal(prefit_predictions, unfit_predictions)
+
+
+def test_prefit_voting_classifier_produce_same_probabilities_as_non_prefit():
+    estimators = [("lr", LogisticRegression()), ("rf", DecisionTreeClassifier())]
+
+    fitted_estimators = [(name, est.fit(X, y)) for name, est in estimators]
+    prefit_voter = VotingClassifier(
+        estimators=fitted_estimators,
+        prefit=True,
+        voting="soft",
+    )
+    prefit_voter.fit(X, y)
+    prefit_predictions = prefit_voter.predict_proba(X)
+
+    unfitted_estimators = [(name, est) for name, est in estimators]
+    unfitted_voter = VotingClassifier(
+        estimators=unfitted_estimators,
+        prefit=False,
+        voting="soft",
+    )
+    unfitted_voter.fit(X, y)
+    unfit_predictions = unfitted_voter.predict_proba(X)
+
+    assert_array_equal(prefit_predictions, unfit_predictions)
+
+
+@pytest.mark.parametrize(
+    "X, y, Voter, estimators",
+    [
+        (
+            X,
+            y,
+            VotingClassifier,
+            [("lr", LogisticRegression()), ("rf", DecisionTreeClassifier())],
+        ),
+        (
+            X_r,
+            y_r,
+            VotingRegressor,
+            [("lr", LinearRegression()), ("rf", DecisionTreeRegressor())],
+        ),
+    ],
+)
+def test_prefit_raises_if_estimators_fit_on_different_features_counts(
+    X, y, Voter, estimators
+):
+    est_one_name, est_one_model = estimators[0]
+    est_two_name, est_two_model = estimators[1]
+
+    est_one_model.fit(X[:, :2], y)
+    est_two_model.fit(X[:, 1:], y)
+
+    prefit_voter = Voter(
+        estimators=[(est_one_name, est_one_model), (est_two_name, est_two_model)],
+        prefit=True,
+    )
+
+    with pytest.raises(
+        ValueError,
+        match="All prefit estimators must have the same n_features_in_",
+    ):
+        prefit_voter.fit(X, y)
+
+
+@pytest.mark.parametrize(
+    "X, y, Voter, estimators",
+    [
+        (
+            X,
+            y,
+            VotingClassifier,
+            [("lr", LogisticRegression()), ("rf", DecisionTreeClassifier())],
+        ),
+        (
+            X_r,
+            y_r,
+            VotingRegressor,
+            [("lr", LinearRegression()), ("rf", DecisionTreeRegressor())],
+        ),
+    ],
+)
+def test_prefit_raises_if_estimators_fit_on_different_features_columns(
+    X, y, Voter, estimators
+):
+    est_one_name, est_one_model = estimators[0]
+    est_two_name, est_two_model = estimators[1]
+
+    _X = _convert_container(
+        X, "dataframe", columns_name=[f"col_{i}" for i in range(X.shape[1])]
+    )
+    _X_diff = _X.rename(columns={k: f"{k}_blub" for k in _X.columns})
+
+    est_one_model.fit(_X, y)
+    est_two_model.fit(_X_diff, y)
+
+    prefit_voter = Voter(
+        estimators=[(est_one_name, est_one_model), (est_two_name, est_two_model)],
+        prefit=True,
+    )
+
+    with pytest.raises(
+        ValueError,
+        match="All prefit estimators must have the same feature_names_in_",
+    ):
+        # TODO: Technically we need an X,y to fit too, we should likely check that this
+        # X and y is what the prefit estimators should match to.
+        prefit_voter.fit(X, y)
