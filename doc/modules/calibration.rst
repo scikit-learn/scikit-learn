@@ -79,7 +79,7 @@ canonical link function for its loss, i.e. the logit-link for the :ref:`log_loss
 In the unpenalized case, this leads to the so-called **balance property**, see [8]_ and :ref:`Logistic_regression`.
 In the plot above, data is generated according to a linear mechanism, which is
 consistent with the :class:`LogisticRegression` model (the model is 'well specified'),
-and the value of the regularization parameter `C` (chosen arbitrarily here) happens to be
+and the value of the regularization parameter `C` happens to be
 appropriate (neither too strong nor too low). As a consequence, this model returns
 accurate predictions from its `predict_proba` method.
 In contrast to that, the other shown models return biased probabilities; with
