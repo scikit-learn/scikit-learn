@@ -413,7 +413,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             min_weight_leaf = self.min_weight_fraction_leaf * np.sum(sample_weight)
 
         # build the actual tree now with the parameters
-        self._build_tree(
+        self = self._build_tree(
             X=X,
             y=y,
             sample_weight=sample_weight,
@@ -573,6 +573,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             self.classes_ = self.classes_[0]
 
         self._prune_tree()
+        return self
 
     def _validate_X_predict(self, X, check_input):
         """Validate the training data on predict (probabilities)."""
