@@ -309,6 +309,24 @@ METAESTIMATORS: list = [
         "y": y,
         "estimator_routing_methods": ["fit"],
     },
+    {
+        "metaestimator": BaggingClassifier,
+        "estimator_name": "estimator",
+        "estimator": ConsumingClassifier,
+        "X": X,
+        "y": y,
+        "preserves_metadata": False,
+        "estimator_routing_methods": ["fit"],
+    },
+    {
+        "metaestimator": BaggingRegressor,
+        "estimator_name": "estimator",
+        "estimator": ConsumingRegressor,
+        "X": X,
+        "y": y,
+        "preserves_metadata": False,
+        "estimator_routing_methods": ["fit"],
+    },
 ]
 """List containing all metaestimators to be tested and their settings
 
@@ -350,8 +368,6 @@ METAESTIMATOR_IDS = [str(row["metaestimator"].__name__) for row in METAESTIMATOR
 UNSUPPORTED_ESTIMATORS = [
     AdaBoostClassifier(),
     AdaBoostRegressor(),
-    BaggingClassifier(),
-    BaggingRegressor(),
     FeatureUnion([]),
     GraphicalLassoCV(),
     RFE(ConsumingClassifier()),

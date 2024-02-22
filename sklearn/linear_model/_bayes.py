@@ -79,10 +79,9 @@ class BayesianRidge(RegressorMixin, LinearModel):
 
     Parameters
     ----------
-    max_iter : int, default=None
+    max_iter : int, default=300
         Maximum number of iterations over the complete dataset before
-        stopping independently of any early stopping criterion. If `None`, it
-        corresponds to `max_iter=300`.
+        stopping independently of any early stopping criterion.
 
         .. versionchanged:: 1.3
 
@@ -499,8 +498,8 @@ class ARDRegression(RegressorMixin, LinearModel):
 
     Parameters
     ----------
-    max_iter : int, default=None
-        Maximum number of iterations. If `None`, it corresponds to `max_iter=300`.
+    max_iter : int, default=300
+        Maximum number of iterations.
 
         .. versionchanged:: 1.3
 
