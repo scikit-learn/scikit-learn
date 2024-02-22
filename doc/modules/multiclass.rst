@@ -530,6 +530,7 @@ obtained at one location and both wind speed and direction would be
 output for each sample.
 
 The regressors that natively support multioutput regression are as follows:
+
   - :class:`cross_decomposition.CCA`
   - :class:`tree.DecisionTreeRegressor`
   - :class:`dummy.DummyRegressor`
