@@ -21,7 +21,8 @@ from sklearn.datasets._openml import (
     _open_openml_url,
     _retry_with_clean_cache,
 )
-from sklearn.utils import Bunch, check_pandas_support
+from sklearn.utils import Bunch
+from sklearn.utils._optional_dependencies import check_pandas_support
 from sklearn.utils._testing import (
     SkipTest,
     assert_allclose,
