@@ -1660,7 +1660,10 @@ def test_max_samples_bootstrap(name):
 def test_large_max_samples_exception(name):
     # Check invalid `max_samples`
     est = FOREST_CLASSIFIERS_REGRESSORS[name](bootstrap=True, max_samples=int(1e9))
-    match = "`max_samples` must be <= n_samples=6 but got value 1000000000"
+    # TODO: remove the following line when the issue is fixed
+    # https://github.com/scikit-learn/scikit-learn/issues/28507
+    # match = "`max_samples` must be <= n_samples=6 but got value 1000000000"
+    match = "The expected number of unique samples"
     with pytest.raises(ValueError, match=match):
         est.fit(X, y)
 
