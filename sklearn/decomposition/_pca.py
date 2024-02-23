@@ -498,9 +498,13 @@ class PCA(_BasePCA):
         # Handle svd_solver
         self._fit_svd_solver = self.svd_solver
         if self._fit_svd_solver == "auto":
-            # Small problem or n_components == 'mle', just call full PCA
+            # Automatically select arpack for sparse inputs
+            # Reduce n_components by 1 when passing from auto to arpack
             if issparse(X):
                 self._fit_svd_solver = "arpack"
+                if self.n_components is None:
+                    n_components = n_components - 1
+            # Small problem or n_components == 'mle', just call full PCA
             elif max(X.shape) <= 500 or n_components == "mle":
                 self._fit_svd_solver = "full"
             elif 1 <= n_components < 0.8 * min(X.shape):
