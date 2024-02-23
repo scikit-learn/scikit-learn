@@ -1643,16 +1643,16 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
 
         **fit_params : dict, default=None
             - If `enable_metadata_routing=False` (default):
-                Parameters directly passed to the `fit` methods of the
-                transformers.
+              Parameters directly passed to the `fit` methods of the
+              transformers.
 
             - If `enable_metadata_routing=True`:
-                Parameters safely routed to the `fit` methods of the
-                transformers. See :ref:`Metadata Routing User Guide
-                <metadata_routing>` for more details.
+              Parameters safely routed to the `fit` methods of the
+              transformers. See :ref:`Metadata Routing User Guide
+              <metadata_routing>` for more details.
 
             .. versionchanged:: 1.5
-                `**fit_params` can be routed via metadata routing API
+                `**fit_params` can be routed via metadata routing API.
 
         Returns
         -------
@@ -1690,17 +1690,17 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
 
         **params : dict, default=None
             - If `enable_metadata_routing=False` (default):
-                Parameters directly passed to the `fit` methods of the
-                transformers.
+              Parameters directly passed to the `fit` methods of the
+              transformers.
 
             - If `enable_metadata_routing=True`:
-                Parameters safely routed to the `fit` methods of the
-                transformers. See :ref:`Metadata Routing User Guide
-                <metadata_routing>` for more details.
+              Parameters safely routed to the `fit` methods of the
+              transformers. See :ref:`Metadata Routing User Guide
+              <metadata_routing>` for more details.
 
             .. versionchanged:: 1.5
                 `**fit_params` are renamed into `**params` and can now be routed via
-                metadata routing API
+                metadata routing API.
 
         Returns
         -------

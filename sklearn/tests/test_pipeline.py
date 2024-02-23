@@ -1964,13 +1964,13 @@ def test_pipeline_with_no_last_step(last_step):
 
 
 @pytest.mark.usefixtures("enable_slep006")
-def test_featureunion_metadata_routing_error():
+def test_feature_union_metadata_routing_error():
     """Test that the right error is raised when metadata is not requested."""
     X = np.array([[0, 1], [2, 2], [4, 6]])
     y = [1, 2, 3]
     sample_weight, metadata = [1, 1, 1], "a"
 
-    featu = FeatureUnion([("sub_transformer", ConsumingTransformer())])
+    feature_union = FeatureUnion([("sub_transformer", ConsumingTransformer())])
 
     error_message = (
         "[sample_weight, metadata] are passed but are not explicitly set as requested"
@@ -1982,7 +1982,7 @@ def test_featureunion_metadata_routing_error():
 
 
 @pytest.mark.usefixtures("enable_slep006")
-def test_featureunion_get_metadata_routing_without_fit():
+def test_feature_union_get_metadata_routing_without_fit():
     """Test that get_metadata_routing() works regardless of the Child's
     consumption of any metadata."""
     featu = FeatureUnion([("sub_transformer", ConsumingTransformer())])
@@ -1993,13 +1993,13 @@ def test_featureunion_get_metadata_routing_without_fit():
 @pytest.mark.parametrize(
     "transformer", [ConsumingTransformer, ConsumingNoFitTransformTransformer]
 )
-def test_featureunion_metadata_routing(transformer):
-    """Test that metadata is routed correctly for Voting*."""
+def test_feature_union_metadata_routing(transformer):
+    """Test that metadata is routed correctly for FeatureUnion."""
     X = np.array([[0, 1], [2, 2], [4, 6]])
     y = [1, 2, 3]
     sample_weight, metadata = [1, 1, 1], "a"
 
-    featu = FeatureUnion(
+    feature_union = FeatureUnion(
         [
             (
                 "sub_trans1",
