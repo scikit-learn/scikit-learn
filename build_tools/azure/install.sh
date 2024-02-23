@@ -134,9 +134,10 @@ scikit_learn_install() {
         # environment:
         pip install --verbose .
     else
-        if [[ "$UNAMESTR" == "MINGW64"* ]];
+        if [[ "$UNAMESTR" == "MINGW64"* ]]; then
            # Needed on Windows CI to compile with Visual Studio compiler
-           # otherwise Meson detects MINGW64 and use MINGW64 toolchain
+           # otherwise Meson detects a MINGW64 platform and use MINGW64
+           # toolchain
            ADDITIONAL_PIP_OPTIONS='-Csetup-args="--vsenv"'
         fi
         # Use the pre-installed build dependencies and build directly in the
