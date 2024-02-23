@@ -15,7 +15,10 @@ from sklearn.base import (
     BaseEstimator,
     clone,
 )
+from sklearn.ensemble import VotingClassifier
+from sklearn.exceptions import UnsetMetadataPassedError
 from sklearn.linear_model import LinearRegression
+from sklearn.pipeline import Pipeline
 from sklearn.tests.metadata_routing_common import (
     ConsumingClassifier,
     ConsumingRegressor,
@@ -1029,3 +1032,18 @@ def test_no_metadata_always_works():
         NotImplementedError, match="Estimator has not implemented metadata routing yet."
     ):
         MetaRegressor(estimator=Estimator()).fit(X, y, metadata=my_groups)
+
+
+def test_unsetmetadatapassederror_correct():
+    """Test that UnsetMetadataPassedError raises the correct error message when
+    set_{method}_request is not set in nested cases."""
+    voting = VotingClassifier(estimators=[("classifier", ConsumingClassifier())])
+    pipe = Pipeline([("voting", voting)])
+    msg = re.escape(
+        "[metadata] are passed but are not explicitly set as requested or not requested"
+        " for ConsumingClassifier.fit, which is used within VotingClassifier.fit. Call"
+        " `ConsumingClassifier.set_fit_request({metadata}=True)` for each metadata."
+    )
+
+    with pytest.raises(UnsetMetadataPassedError, match=msg):
+        pipe.fit(X, y, metadata="blah")
