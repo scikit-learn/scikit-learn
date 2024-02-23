@@ -145,6 +145,8 @@ def move_gallery_links(app, exception):
                 # These will be removed at the end if new links are successfully created
                 sg_note = soup.find("div", class_="sphx-glr-download-link-note")
                 sg_footer = soup.find("div", class_="sphx-glr-footer")
+                assert sg_note is not None, "Failed to find the top note"
+                assert sg_footer is not None, "Failed to find the gallery footer"
 
                 # Move the download links into the secondary sidebar
                 py_link = sg_footer.find("div", class_="sphx-glr-download-python")
@@ -165,8 +167,8 @@ def move_gallery_links(app, exception):
                 assert binder_link is not None, "Failed to find Binder launch link"
                 _create_secondary_sidebar_component(
                     [
-                        _create_badge_link(lite_link).a,
-                        _create_badge_link(binder_link).a,
+                        _create_badge_link(lite_link.a),
+                        _create_badge_link(binder_link.a),
                     ]
                 )
 
