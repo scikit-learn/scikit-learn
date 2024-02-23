@@ -662,7 +662,9 @@ def test_create_memmap_backed_data(monkeypatch):
         *zip(["sparse_csr", "sparse_csr_array"], CSR_CONTAINERS),
         *zip(["sparse_csc", "sparse_csc_array"], CSC_CONTAINERS),
         ("dataframe", lambda: pytest.importorskip("pandas").DataFrame),
+        ("polars", lambda: pytest.importorskip("polars").DataFrame),
         ("series", lambda: pytest.importorskip("pandas").Series),
+        ("polars_series", lambda: pytest.importorskip("polars").Series),
         ("index", lambda: pytest.importorskip("pandas").Index),
         ("slice", slice),
     ],
@@ -684,8 +686,8 @@ def test_convert_container(
 ):
     """Check that we convert the container to the right type of array with the
     right data type."""
-    if constructor_name in ("dataframe", "series", "index"):
-        # delay the import of pandas within the function to only skip this test
+    if constructor_name in ("dataframe", "polars", "series", "polars_series", "index"):
+        # delay the import of pandas/polars within the function to only skip this test
         # instead of the whole file
         container_type = container_type()
     container = [0, 1]

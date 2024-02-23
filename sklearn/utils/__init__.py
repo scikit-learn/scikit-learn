@@ -206,9 +206,19 @@ def _polars_indexing(X, key, key_dtype, axis):
     # Polars behavior is more consistent with lists
     if isinstance(key, np.ndarray):
         key = key.tolist()
+    elif isinstance(key, tuple):
+        key = list(key)
 
     if axis == 1:
         return X[:, key]
+    elif key_dtype == "bool":
+        # filter rows by boolean mask
+        return X.filter(key)
+    elif np.isscalar(key) and len(X.shape) == 2 and axis == 0:
+        # select a row of a DataFrame by scalar index
+        import polars as pl  # polars should have already been imported at this point
+
+        return pl.Series(X.row(key))
     else:
         return X[key]
 
@@ -351,11 +361,11 @@ def _safe_indexing(X, indices, *, axis=0):
     if axis == 1 and isinstance(X, list):
         raise ValueError("axis=1 is not supported for lists")
 
-    if axis == 1 and hasattr(X, "ndim") and X.ndim != 2:
+    if axis == 1 and hasattr(X, "shape") and len(X.shape) != 2:
         raise ValueError(
-            "'X' should be a 2D NumPy array, 2D sparse matrix or pandas "
+            "'X' should be a 2D NumPy array, 2D sparse matrix or "
             "dataframe when indexing the columns (i.e. 'axis=1'). "
-            "Got {} instead with {} dimension(s).".format(type(X), X.ndim)
+            "Got {} instead with {} dimension(s).".format(type(X), len(X.shape))
         )
 
     if (
