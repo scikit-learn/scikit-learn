@@ -74,6 +74,10 @@ Changelog
 - |Feature| A fitted :class:`compose.ColumnTransformer` now implements `__getitem__`
   which returns the fitted transformers by name. :pr:`27990` by `Thomas Fan`_.
 
+- |ENH| :class:`compose.TransformedTargetRegressor` now raises an error in `fit` if
+  only `inverse_func` is provided without `func` (that would default to identity) being
+  explicitly set as well. :pr:`28483` by :user:`Stefanie Senger <StefanieSenger>`.
+
 :mod:`sklearn.dummy`
 ....................
 
