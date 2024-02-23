@@ -3,7 +3,6 @@
 import numpy as np
 cimport cython
 
-from ..metrics._dist_metrics cimport DistanceMetric64
 from ..utils._fast_dict cimport IntFloatDict
 from ..utils._typedefs cimport float64_t, intp_t, uint8_t
 
