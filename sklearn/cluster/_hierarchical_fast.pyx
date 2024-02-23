@@ -425,7 +425,10 @@ def single_linkage_label(L):
 
 
 # Implements MST-LINKAGE-CORE from https://arxiv.org/abs/1109.2378
-def mst_linkage_core(data, DistanceMetric64 dist_metric, precomputed=False):
+def mst_linkage_core(
+        const float64_t [:, ::1] data,
+        DistanceMetric64 dist_metric,
+        precomputed=False):
     """
     Compute the necessary elements of a minimum spanning
     tree for computation of single linkage clustering. This
