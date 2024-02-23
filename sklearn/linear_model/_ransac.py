@@ -592,13 +592,11 @@ class RANSACRegressor(
                 )
 
         # estimate final model using all inliers
-        fit_params_cut_to_best_idxs_subset = _check_method_params(
+        fit_params_best_idxs_subset = _check_method_params(
             X, params=routed_params.estimator.fit, indices=inlier_best_idxs_subset
         )
 
-        estimator.fit(
-            X_inlier_best, y_inlier_best, **fit_params_cut_to_best_idxs_subset
-        )
+        estimator.fit(X_inlier_best, y_inlier_best, **fit_params_best_idxs_subset)
 
         self.estimator_ = estimator
         self.inlier_mask_ = inlier_mask_best
