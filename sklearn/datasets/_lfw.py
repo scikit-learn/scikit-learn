@@ -18,6 +18,7 @@ from joblib import Memory
 
 from ..utils import Bunch
 from ..utils._param_validation import Hidden, Interval, StrOptions, validate_params
+from ..utils.fixes import tarfile_extractall
 from ._base import (
     RemoteFileMetadata,
     _fetch_remote,
@@ -109,7 +110,8 @@ def _check_fetch_lfw(data_home=None, funneled=True, download_if_missing=True):
         import tarfile
 
         logger.debug("Decompressing the data archive to %s", data_folder_path)
-        tarfile.open(archive_path, "r:gz").extractall(path=lfw_home)
+        with tarfile.open(archive_path, "r:gz") as fp:
+            tarfile_extractall(fp, path=lfw_home)
         remove(archive_path)
 
     return lfw_home, data_folder_path

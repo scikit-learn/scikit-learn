@@ -168,10 +168,11 @@ class _MultiOutputEstimator(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta
             )
 
         if _routing_enabled():
+            if sample_weight is not None:
+                partial_fit_params["sample_weight"] = sample_weight
             routed_params = process_routing(
                 self,
                 "partial_fit",
-                sample_weight=sample_weight,
                 **partial_fit_params,
             )
         else:
@@ -254,10 +255,11 @@ class _MultiOutputEstimator(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta
             )
 
         if _routing_enabled():
+            if sample_weight is not None:
+                fit_params["sample_weight"] = sample_weight
             routed_params = process_routing(
                 self,
                 "fit",
-                sample_weight=sample_weight,
                 **fit_params,
             )
         else:
