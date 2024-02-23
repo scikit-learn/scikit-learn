@@ -42,6 +42,16 @@ more details.
 - |Feature| :class:`impute.IterativeImputer` now supports metadata routing in
   its `fit` method. :pr:`28187` by :user:`Stefanie Senger <StefanieSenger>`.
 
+- |Feature| :class:`ensemble.BaggingClassifier` and :class:`ensemble.BaggingRegressor`
+  now support metadata routing. The fit methods now
+  accept ``**fit_params`` which are passed to the underlying estimators
+  via their `fit` methods.
+  :pr:`28432` by :user:`Adam Li <adam2392>` and :user:`Benjamin Bossan <BenjaminBossan>`.
+
+- |Feature| :class:`ensemble.VotingClassifier` and
+  :class:`ensemble.VotingRegressor` now support metadata routing and pass
+  ``**fit_params`` to the underlying estimators via their `fit` methods.
+  :pr:`27584` by :user:`Stefanie Senger <StefanieSenger>`.
 
 Changelog
 ---------
@@ -109,6 +119,14 @@ Changelog
 - |Enhancement| :class:`impute.SimpleImputer` now supports custom strategies
   by passing a function in place of a strategy name.
   :pr:`28053` by :user:`Mark Elliot <mark-thm>`.
+
+:mod:`sklearn.linear_model`
+...........................
+
+- |API| :class:`linear_model.RidgeCV` and :class:`linear_model.RidgeClassifierCV`
+  will now allow `alpha=0` when `cv != None`, which is consistent with
+  :class:`linear_model.Ridge` and :class:`linear_model.RidgeClassifier`.
+  :pr:`28425` by :user:`Lucy Liu <lucyleeow>`.
 
 :mod:`sklearn.metrics`
 ......................

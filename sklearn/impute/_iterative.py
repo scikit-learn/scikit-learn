@@ -14,9 +14,9 @@ from ..utils import (
     _safe_indexing,
     check_array,
     check_random_state,
-    is_scalar_nan,
 )
 from ..utils._mask import _get_mask
+from ..utils._missing import is_scalar_nan
 from ..utils._param_validation import HasMethods, Interval, StrOptions
 from ..utils.metadata_routing import (
     MetadataRouter,
