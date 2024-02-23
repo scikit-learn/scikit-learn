@@ -170,7 +170,7 @@ def strip_newsgroup_footer(text):
         "download_if_missing": ["boolean"],
         "return_X_y": ["boolean"],
         "n_retries": [Interval(Integral, 1, None, closed="left")],
-        "delay": [Interval(Real, 1.0, None, closed="left")],
+        "delay": [Interval(Real, 0.0, None, closed="neither")],
     },
     prefer_skip_nested_validation=True,
 )
@@ -382,7 +382,7 @@ def fetch_20newsgroups(
         "normalize": ["boolean"],
         "as_frame": ["boolean"],
         "n_retries": [Interval(Integral, 1, None, closed="left")],
-        "delay": [Interval(Real, 1.0, None, closed="left")],
+        "delay": [Interval(Real, 0.0, None, closed="neither")],
     },
     prefer_skip_nested_validation=True,
 )
