@@ -60,6 +60,10 @@ more details.
   underlying estimator's' ``fit``, ``score`` and ``predict`` methods.
   :pr:`28261` by :user:`Stefanie Senger <StefanieSenger>`.
 
+- |Feature| :class:`ensemble.VotingClassifier` and
+  :class:`ensemble.VotingRegressor` now support metadata routing and pass
+  ``**fit_params`` to the underlying estimators via their `fit` methods.
+  :pr:`27584` by :user:`Stefanie Senger <StefanieSenger>`.
 
 Changelog
 ---------
@@ -135,6 +139,14 @@ Changelog
   will now allow `alpha=0` when `cv != None`, which is consistent with
   :class:`linear_model.Ridge` and :class:`linear_model.RidgeClassifier`.
   :pr:`28425` by :user:`Lucy Liu <lucyleeow>`.
+
+:mod:`sklearn.manifold`
+.......................
+
+- |API| Deprecates `n_iter` in favor of `max_iter` in :class:`manifold.TSNE`.
+  `n_iter` will be removed in version 1.7. This makes :class:`manifold.TSNE`
+  consistent with the rest of the estimators. :pr:`28471` by
+  :user:`Lucy Liu <lucyleeow>`
 
 :mod:`sklearn.metrics`
 ......................

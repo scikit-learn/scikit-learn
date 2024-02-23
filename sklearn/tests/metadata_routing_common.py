@@ -55,6 +55,7 @@ def check_recorded_metadata(obj, method, split_params=tuple(), **kwargs):
     split_params : tuple, default=empty
         specifies any parameters which are to be checked as being a subset
         of the original values.
+    **kwargs : metadata to check
     """
     records = getattr(obj, "_records", dict()).get(method, dict())
     assert set(kwargs.keys()) == set(
@@ -246,6 +247,7 @@ class ConsumingClassifier(ClassifierMixin, BaseEstimator):
         record_metadata_not_default(
             self, "fit", sample_weight=sample_weight, metadata=metadata
         )
+
         self.classes_ = np.unique(y)
         return self
 
