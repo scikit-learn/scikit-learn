@@ -923,7 +923,7 @@ class _Raises(contextlib.AbstractContextManager):
 
 
 class MinimalClassifier:
-    """Minimal classifier implementation with inheriting from BaseEstimator.
+    """Minimal classifier implementation without inheriting from BaseEstimator.
 
     This estimator should be tested with:
 
@@ -972,7 +972,7 @@ class MinimalClassifier:
 
 
 class MinimalRegressor:
-    """Minimal regressor implementation with inheriting from BaseEstimator.
+    """Minimal regressor implementation without inheriting from BaseEstimator.
 
     This estimator should be tested with:
 
@@ -1012,7 +1012,7 @@ class MinimalRegressor:
 
 
 class MinimalTransformer:
-    """Minimal transformer implementation with inheriting from
+    """Minimal transformer implementation without inheriting from
     BaseEstimator.
 
     This estimator should be tested with:

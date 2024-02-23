@@ -1,7 +1,7 @@
 """
-===================================================================
-Use cases of advanced features in Histogram Gradient Boosting Trees
-===================================================================
+==============================================
+Features in Histogram Gradient Boosting Trees
+==============================================
 
 :ref:`histogram_based_gradient_boosting` (HGBT) models may be one of the most
 useful supervised learning models in scikit-learn. They are based on a modern
