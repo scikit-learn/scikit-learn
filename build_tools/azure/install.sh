@@ -139,7 +139,7 @@ scikit_learn_install() {
         pip install --verbose --no-build-isolation --editable .
     fi
 
-    ccache -s
+    ccache -s || echo "ccache not installed, skipping ccache statistics"
 }
 
 main() {
