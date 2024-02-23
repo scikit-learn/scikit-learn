@@ -4,10 +4,12 @@ functions that operate on arrays.
 """
 
 from cython cimport floating
+from cython.parallel cimport prange
 from libc.math cimport fabs
 from libc.float cimport DBL_MAX, FLT_MAX
 
 from ._cython_blas cimport _copy, _rotg, _rot
+from ._typedefs cimport float64_t
 
 
 ctypedef fused real_numeric:
@@ -23,6 +25,25 @@ def min_pos(const floating[:] X):
 
     Returns the maximum representable value of the input dtype if none of the
     values are positive.
+
+    Parameters
+    ----------
+    X : ndarray of shape (n,)
+        Input array.
+
+    Returns
+    -------
+    min_val : float
+        The smallest positive value in the array, or the maximum representable value
+         of the input dtype if no positive values are found.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.utils.arrayfuncs import min_pos
+    >>> X = np.array([0, -1, 2, 3, -4, 5])
+    >>> min_pos(X)
+    2.0
     """
     cdef Py_ssize_t i
     cdef floating min_val = FLT_MAX if floating is float else DBL_MAX
@@ -99,3 +120,17 @@ def cholesky_delete(floating[:, :] L, int go_out):
         L1 += m
 
         _rot(n - i - 2, L1 + i, m, L1 + i + 1, m, c, s)
+
+
+def sum_parallel(const floating [:] array, int n_threads):
+    """Parallel sum, always using float64 internally."""
+    cdef:
+        float64_t out = 0.
+        int i = 0
+
+    for i in prange(
+        array.shape[0], schedule='static', nogil=True, num_threads=n_threads
+    ):
+        out += array[i]
+
+    return out

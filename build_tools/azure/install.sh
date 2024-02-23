@@ -126,8 +126,9 @@ scikit_learn_install() {
         export LDFLAGS="$LDFLAGS -Wl,--sysroot=/"
     fi
 
-    # TODO use a specific variable for this rather than using a particular build ...
-    if [[ "$DISTRIB" == "conda-pip-latest" ]]; then
+    if [[ "$BUILD_WITH_MESON" == "true" ]]; then
+        make dev-meson
+    elif [[ "$PIP_BUILD_ISOLATION" == "true" ]]; then
         # Check that pip can automatically build scikit-learn with the build
         # dependencies specified in pyproject.toml using an isolated build
         # environment:
@@ -138,7 +139,7 @@ scikit_learn_install() {
         python setup.py develop
     fi
 
-    ccache -s
+    ccache -s || echo "ccache not installed, skipping ccache statistics"
 }
 
 main() {
