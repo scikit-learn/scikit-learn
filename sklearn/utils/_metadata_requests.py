@@ -403,7 +403,7 @@ class MethodMetadataRequest:
                 "warning, or to True to consume and use the metadata."
             )
 
-    def _route_params(self, params):
+    def _route_params(self, params, parent, caller_method):
         """Prepare the given parameters to be passed to the method.
 
         The output of this method can be used directly as the input to the
@@ -413,6 +413,12 @@ class MethodMetadataRequest:
         ----------
         params : dict
             A dictionary of provided metadata.
+
+        parent : object
+            Parent class object, that routes the metadata.
+
+        caller_method : str
+            Method from the parent class object, where the metadata is routed from.
 
         Returns
         -------
@@ -434,12 +440,20 @@ class MethodMetadataRequest:
             elif alias in args:
                 res[prop] = args[alias]
         if unrequested:
+            if self.method in COMPOSITE_METHODS:
+                callee_method = COMPOSITE_METHODS[self.method][0]
+            else:
+                callee_method = self.method
+            message = (
+                f"[{', '.join([key for key in unrequested])}] are passed but are"
+                " not explicitly set as requested or not requested for"
+                f" {self.owner}.{self.method}, which is used within"
+                f" {parent.__class__.__name__}.{caller_method}."
+                f" Call `{self.owner}.set_{callee_method}_request("
+                "{metadata}=True)` for each metadata."
+            )
             raise UnsetMetadataPassedError(
-                message=(
-                    f"[{', '.join([key for key in unrequested])}] are passed but are"
-                    " not explicitly set as requested or not for"
-                    f" {self.owner}.{self.method}"
-                ),
+                message=message,
                 unrequested_params=unrequested,
                 routed_params=res,
             )
@@ -591,7 +605,7 @@ class MetadataRequest:
         """
         return getattr(self, method)._get_param_names(return_alias=return_alias)
 
-    def _route_params(self, *, method, params):
+    def _route_params(self, *, method, caller_method, parent, params):
         """Prepare the given parameters to be passed to the method.
 
         The output of this method can be used directly as the input to the
@@ -603,6 +617,12 @@ class MetadataRequest:
             The name of the method for which the parameters are requested and
             routed.
 
+        caller_method : str
+            Method from the parent class object, where the metadata is routed from.
+
+        parent : object
+            Parent class object, that routes the metadata.
+
         params : dict
             A dictionary of provided metadata.
 
@@ -612,7 +632,9 @@ class MetadataRequest:
             A :class:`~sklearn.utils.Bunch` of {prop: value} which can be given to the
             corresponding method.
         """
-        return getattr(self, method)._route_params(params=params)
+        return getattr(self, method)._route_params(
+            params=params, parent=parent, caller_method=caller_method
+        )
 
     def _check_warnings(self, *, method, params):
         """Check whether metadata is passed which is marked as WARN.
@@ -938,7 +960,7 @@ class MetadataRouter:
                     )
         return res
 
-    def _route_params(self, *, params, method):
+    def _route_params(self, *, params, method, caller_method, parent):
         """Prepare the given parameters to be passed to the method.
 
         This is used when a router is used as a child object of another router.
@@ -950,12 +972,18 @@ class MetadataRouter:
 
         Parameters
         ----------
+        params : dict
+            A dictionary of provided metadata.
+
         method : str
             The name of the method for which the parameters are requested and
             routed.
 
-        params : dict
-            A dictionary of provided metadata.
+        caller_method : str
+            Method from the parent class object, where the metadata is routed from.
+
+        parent : object
+            Parent class object, that routes the metadata.
 
         Returns
         -------
@@ -965,7 +993,14 @@ class MetadataRouter:
         """
         res = Bunch()
         if self._self_request:
-            res.update(self._self_request._route_params(params=params, method=method))
+            res.update(
+                self._self_request._route_params(
+                    params=params,
+                    method=method,
+                    caller_method=caller_method,
+                    parent=parent,
+                )
+            )
 
         param_names = self._get_param_names(
             method=method, return_alias=True, ignore_self_request=True
@@ -987,7 +1022,7 @@ class MetadataRouter:
         res.update(child_params)
         return res
 
-    def route_params(self, *, caller, params):
+    def route_params(self, *, caller, params, parent):
         """Return the input parameters requested by child objects.
 
         The output of this method is a bunch, which includes the inputs for all
@@ -1006,6 +1041,9 @@ class MetadataRouter:
 
         params : dict
             A dictionary of provided metadata.
+
+        parent : object
+            Parent class object, that routes the metadata.
 
         Returns
         -------
@@ -1026,7 +1064,10 @@ class MetadataRouter:
             for _callee, _caller in mapping:
                 if _caller == caller:
                     res[name][_callee] = router._route_params(
-                        params=params, method=_callee
+                        params=params,
+                        caller_method=caller,
+                        method=_callee,
+                        parent=parent,
                     )
         return res
 
@@ -1556,6 +1597,8 @@ def process_routing(_obj, _method, /, **kwargs):
 
     request_routing = get_routing_for_object(_obj)
     request_routing.validate_metadata(params=kwargs, method=_method)
-    routed_params = request_routing.route_params(params=kwargs, caller=_method)
+    routed_params = request_routing.route_params(
+        params=kwargs, caller=_method, parent=_obj
+    )
 
     return routed_params
