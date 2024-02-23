@@ -15,7 +15,6 @@ import re
 import sys
 import warnings
 from datetime import datetime
-from io import StringIO
 from pathlib import Path
 
 from sklearn.externals._packaging.version import parse
@@ -27,6 +26,7 @@ from sklearn.utils._testing import turn_warnings_into_errors
 # absolute, like shown here.
 sys.path.insert(0, os.path.abspath("sphinxext"))
 
+import jinja2
 import sphinx_gallery
 from github_link import make_linkcode_resolve
 from sphinx_gallery.notebook import add_code_cell, add_markdown_cell
@@ -739,121 +739,6 @@ def filter_search_index(app, exception):
         f.write(searchindex_text)
 
 
-def generate_min_dependency_table():
-    """Generate min dependency table for docs."""
-    from sklearn._min_dependencies import dependent_packages
-
-    # get length of header
-    package_header_len = max(len(package) for package in dependent_packages) + 4
-    version_header_len = len("Minimum Version") + 4
-    tags_header_len = max(len(tags) for _, tags in dependent_packages.values()) + 4
-
-    output = StringIO()
-    output.write(
-        " ".join(
-            ["=" * package_header_len, "=" * version_header_len, "=" * tags_header_len]
-        )
-    )
-    output.write("\n")
-    dependency_title = "Dependency"
-    version_title = "Minimum Version"
-    tags_title = "Purpose"
-
-    output.write(
-        f"{dependency_title:<{package_header_len}} "
-        f"{version_title:<{version_header_len}} "
-        f"{tags_title}\n"
-    )
-
-    output.write(
-        " ".join(
-            ["=" * package_header_len, "=" * version_header_len, "=" * tags_header_len]
-        )
-    )
-    output.write("\n")
-
-    for package, (version, tags) in dependent_packages.items():
-        output.write(
-            f"{package:<{package_header_len}} {version:<{version_header_len}} {tags}\n"
-        )
-
-    output.write(
-        " ".join(
-            ["=" * package_header_len, "=" * version_header_len, "=" * tags_header_len]
-        )
-    )
-    output.write("\n")
-    output = output.getvalue()
-
-    with (Path(".") / "min_dependency_table.rst").open("w", encoding="utf-8") as f:
-        f.write(output)
-
-
-def generate_min_dependency_substitutions():
-    """Generate min dependency substitutions for docs."""
-    from sklearn._min_dependencies import dependent_packages
-
-    output = StringIO()
-
-    for package, (version, _) in dependent_packages.items():
-        package = package.capitalize()
-        output.write(f".. |{package}MinVersion| replace:: {version}")
-        output.write("\n")
-
-    output = output.getvalue()
-
-    with (Path(".") / "min_dependency_substitutions.rst").open(
-        "w", encoding="utf-8"
-    ) as f:
-        f.write(output)
-
-
-def generate_index_rst():
-    """Generate index.rst.
-
-    The reason for generating this file at build time is to allow specifying the
-    development link as a variable.
-    https://github.com/scikit-learn/scikit-learn/pull/22550
-    """
-    development_link = (
-        "developers/index"
-        if parsed_version.is_devrelease
-        else "https://scikit-learn.org/dev/developers/index.html"
-    )
-
-    output = f"""
-.. title:: Index
-
-.. Define the overall structure, that affects the prev-next buttons and the order
-   of the sections in the top navbar.
-
-.. toctree::
-   :hidden:
-   :maxdepth: 2
-
-   Install <install>
-   user_guide
-   API <modules/classes>
-   auto_examples/index
-   Community <https://blog.scikit-learn.org/>
-   getting_started
-   Tutorials <tutorial/index>
-   whats_new
-   Glossary <glossary>
-   Development <{development_link}>
-   FAQ <faq>
-   support
-   related_projects
-   roadmap
-   Governance <governance>
-   about
-   Other Versions and Download <https://scikit-learn.org/dev/versions.html>
-"""
-
-    with (Path(".") / "index.rst").open("w", encoding="utf-8") as f:
-        f.write(output)
-
-
 # Config for sphinx_issues
 
 # we use the issues path for PRs since the issues URL will forward
@@ -1000,7 +885,22 @@ else:
         "https://github.com/": {"Authorization": f"token {github_token}"},
     }
 
-# Write the pages prior to any sphinx event
-generate_index_rst()
-generate_min_dependency_table()
-generate_min_dependency_substitutions()
+# Convert the template rst files into actual rst files prior to any sphinx event
+
+from sklearn._min_dependencies import dependent_packages
+
+# (file name without suffix, kwargs for rendering)
+rst_templates = [
+    ("index", {"is_devrelease": parsed_version.is_devrelease}),
+    ("min_dependency_table", {"dependent_packages": dependent_packages}),
+    ("min_dependency_substitutions", {"dependent_packages": dependent_packages}),
+]
+
+for target_name, kwargs in rst_templates:
+    # Read the corresponding template file into jinja2
+    with (Path(".") / f"{target_name}.rst.template").open("r", encoding="utf-8") as f:
+        t = jinja2.Template(f.read())
+
+    # Render the template and write to the target
+    with (Path(".") / f"{target_name}.rst").open("w", encoding="utf-8") as f:
+        f.write(t.render(**kwargs))
