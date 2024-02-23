@@ -77,7 +77,7 @@ def test_permutation_importance_correlated_feature_regression_dataframe(
 
     dataset = load_iris()
     X, y = dataset.data, dataset.target
-    y_with_little_noise = (y + rng.normal(scale=0.001, size=y.shape[0])).reshape(-1, 1)
+    y_with_little_noise = y + rng.normal(scale=0.001, size=y.shape[0])
 
     # Adds feature correlated with y as the last column
     X = _convert_container(X, dataframe_lib, columns_name=dataset.feature_names)
