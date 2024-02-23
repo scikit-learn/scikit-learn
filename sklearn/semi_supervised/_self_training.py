@@ -349,12 +349,10 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
         """
         check_is_fitted(self)
         _raise_for_params(params, self, "predict")
-        
+
         if _routing_enabled():
             # metadata routing is enabled.
-            routed_params = process_routing(
-                self, "predict", other_params=params
-            )
+            routed_params = process_routing(self, "predict", **params)
         else:
             routed_params = Bunch()
             routed_params.base_estimator = Bunch(predict=params)
@@ -394,9 +392,7 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
 
         if _routing_enabled():
             # metadata routing is enabled.
-            routed_params = process_routing(
-                self, "predict_proba", other_params=params
-            )
+            routed_params = process_routing(self, "predict_proba", **params)
         else:
             routed_params = Bunch()
             routed_params.base_estimator = Bunch(predict_proba=params)
@@ -407,7 +403,9 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
             force_all_finite=False,
             reset=False,
         )
-        return self.base_estimator_.predict_proba(X, **routed_params.base_estimator.predict_proba)
+        return self.base_estimator_.predict_proba(
+            X, **routed_params.base_estimator.predict_proba
+        )
 
     @available_if(_estimator_has("decision_function"))
     def decision_function(self, X, **params):
@@ -436,9 +434,7 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
 
         if _routing_enabled():
             # metadata routing is enabled.
-            routed_params = process_routing(
-                self, "decision_function", other_params=params
-            )
+            routed_params = process_routing(self, "decision_function", **params)
         else:
             routed_params = Bunch()
             routed_params.base_estimator = Bunch(decision_function=params)
@@ -449,7 +445,9 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
             force_all_finite=False,
             reset=False,
         )
-        return self.base_estimator_.decision_function(X, **routed_params.base_estimator.decision_function)
+        return self.base_estimator_.decision_function(
+            X, **routed_params.base_estimator.decision_function
+        )
 
     @available_if(_estimator_has("predict_log_proba"))
     def predict_log_proba(self, X, **params):
@@ -478,9 +476,7 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
 
         if _routing_enabled():
             # metadata routing is enabled.
-            routed_params = process_routing(
-                self, "predict_log_proba", other_params=params
-            )
+            routed_params = process_routing(self, "predict_log_proba", **params)
         else:
             routed_params = Bunch()
             routed_params.base_estimator = Bunch(predict_log_proba=params)
@@ -491,7 +487,9 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
             force_all_finite=False,
             reset=False,
         )
-        return self.base_estimator_.predict_log_proba(X, **routed_params.base_estimator.predict_log_proba)
+        return self.base_estimator_.predict_log_proba(
+            X, **routed_params.base_estimator.predict_log_proba
+        )
 
     @available_if(_estimator_has("score"))
     def score(self, X, y, **params):
@@ -524,9 +522,7 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
 
         if _routing_enabled():
             # metadata routing is enabled.
-            routed_params = process_routing(
-                self, "score", other_params=params
-            )
+            routed_params = process_routing(self, "score", **params)
         else:
             routed_params = Bunch()
             routed_params.base_estimator = Bunch(score=params)
@@ -555,7 +551,7 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
         """
         router = MetadataRouter(owner=self.__class__.__name__)
         router.add(
-            estimator=self.base_estimator,
+            base_estimator=self.base_estimator,
             method_mapping=(
                 MethodMapping()
                 .add(callee="fit", caller="fit")
