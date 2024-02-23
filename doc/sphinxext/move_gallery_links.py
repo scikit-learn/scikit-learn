@@ -25,6 +25,10 @@ def move_gallery_links(app, exception):
     if exception is not None:
         return
 
+    # Skip if built without running any examples; e.g. `make html-noplot`
+    if not app.config.sphinx_gallery_conf["plot_gallery"]:
+        return
+
     for gallery_dir in app.config.sphinx_gallery_conf["gallery_dirs"]:
         html_gallery_dir = Path(app.builder.outdir, gallery_dir)
 
@@ -143,20 +147,27 @@ def move_gallery_links(app, exception):
                 sg_footer = soup.find("div", class_="sphx-glr-footer")
 
                 # Move the download links into the secondary sidebar
-                py_link = sg_footer.find("div", class_="sphx-glr-download-python").a
-                ipy_link = sg_footer.find("div", class_="sphx-glr-download-jupyter").a
+                py_link = sg_footer.find("div", class_="sphx-glr-download-python")
+                ipy_link = sg_footer.find("div", class_="sphx-glr-download-jupyter")
+                assert py_link is not None, "Failed to find Python download link"
+                assert ipy_link is not None, "Failed to find Jupyter download link"
                 _create_secondary_sidebar_component(
                     [
-                        _create_download_link(py_link, is_jupyter=False),
-                        _create_download_link(ipy_link, is_jupyter=True),
+                        _create_download_link(py_link.a, is_jupyter=False),
+                        _create_download_link(ipy_link.a, is_jupyter=True),
                     ]
                 )
 
                 # Move the badge links into the secondary sidebar
-                lite_link = sg_footer.find("div", class_="lite-badge").a
-                binder_link = sg_footer.find("div", class_="binder-badge").a
+                lite_link = sg_footer.find("div", class_="lite-badge")
+                binder_link = sg_footer.find("div", class_="binder-badge")
+                assert lite_link is not None, "Failed to find JupyterLite launch link"
+                assert binder_link is not None, "Failed to find Binder launch link"
                 _create_secondary_sidebar_component(
-                    [_create_badge_link(lite_link), _create_badge_link(binder_link)]
+                    [
+                        _create_badge_link(lite_link).a,
+                        _create_badge_link(binder_link).a,
+                    ]
                 )
 
                 # Remove the sourcelink component from the secondary sidebar; the reason
