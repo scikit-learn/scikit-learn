@@ -159,10 +159,29 @@ def test_pca_sparse_fit_transform(global_random_seed, sparse_container):
     assert_allclose(pca_fit.transform(X2), pca_fit_transform.transform(X2), rtol=2e-9)
 
 
-@pytest.mark.parametrize("svd_solver", ["randomized", "full", "auto"])
+@pytest.mark.parametrize("svd_solver", ["randomized", "full"])
 @pytest.mark.parametrize("sparse_container", CSR_CONTAINERS + CSC_CONTAINERS)
-def test_sparse_pca_solver_automatically_select_arpack(
-    global_random_seed, svd_solver, sparse_container
+def test_sparse_pca_solver_error(global_random_seed, svd_solver, sparse_container):
+    random_state = np.random.RandomState(global_random_seed)
+    X = sparse_container(
+        sp.sparse.random(
+            SPARSE_M,
+            SPARSE_N,
+            random_state=random_state,
+        )
+    )
+    pca = PCA(n_components=30, svd_solver=svd_solver)
+    error_msg_pattern = (
+        f'PCA only support sparse inputs with the "arpack" solver, while "{svd_solver}"'
+        " was passed"
+    )
+    with pytest.raises(TypeError, match=error_msg_pattern):
+        pca.fit(X)
+
+
+@pytest.mark.parametrize("sparse_container", CSR_CONTAINERS + CSC_CONTAINERS)
+def test_sparse_pca_auto_arpack_singluar_values_consistency(
+    global_random_seed, sparse_container
 ):
     random_state = np.random.RandomState(global_random_seed)
     X = sparse_container(
@@ -173,13 +192,13 @@ def test_sparse_pca_solver_automatically_select_arpack(
         )
     )
     pca_arpack = PCA(n_components=10, svd_solver="arpack")
-    pca_others = PCA(n_components=10, svd_solver=svd_solver)
+    pca_auto = PCA(n_components=10, svd_solver="auto")
 
-    # check the equivalence of pca_arpack.fit and pca_others.fit
+    # check the equivalence of pca_arpack.fit and pca_auto.fit
     X_arpack = pca_arpack.fit(X)
-    X_others = pca_others.fit(X)
+    X_auto = pca_auto.fit(X)
 
-    assert_allclose(X_arpack.singular_values_, X_others.singular_values_, rtol=5e-3)
+    assert_allclose(X_arpack.singular_values_, X_auto.singular_values_, rtol=5e-3)
 
 
 def test_no_empty_slice_warning():

@@ -465,9 +465,13 @@ class PCA(_BasePCA):
         """Dispatch to the right submethod depending on the chosen solver."""
         xp, is_array_api_compliant = get_namespace(X)
 
-        # Automatically select "arpack" solver if the input is sparse
-        if issparse(X) and self.svd_solver != "arpack":
-            self.svd_solver = "arpack"
+        # Raise an error for sparse input and unsupported svd_solver
+        if issparse(X) and self.svd_solver not in {"arpack", "auto"}:
+            raise TypeError(
+                'PCA only support sparse inputs with the "arpack" solver, while '
+                f'"{self.svd_solver}" was passed. See TruncatedSVD for a possible'
+                " alternative."
+            )
         # Raise an error for non-Numpy input and arpack solver.
         if self.svd_solver == "arpack" and is_array_api_compliant:
             raise ValueError(
@@ -495,7 +499,9 @@ class PCA(_BasePCA):
         self._fit_svd_solver = self.svd_solver
         if self._fit_svd_solver == "auto":
             # Small problem or n_components == 'mle', just call full PCA
-            if max(X.shape) <= 500 or n_components == "mle":
+            if issparse(X):
+                self._fit_svd_solver = "arpack"
+            elif max(X.shape) <= 500 or n_components == "mle":
                 self._fit_svd_solver = "full"
             elif 1 <= n_components < 0.8 * min(X.shape):
                 self._fit_svd_solver = "randomized"
