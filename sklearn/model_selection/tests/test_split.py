@@ -600,13 +600,17 @@ def test_shuffle_groupkfold():
     groups = np.arange(40) // 3
     gkf0 = GroupKFold(4, shuffle=True, random_state=0)
     gkf1 = GroupKFold(4, shuffle=True, random_state=1)
-    
+
     # Check that the groups are shuffled differently
-    test_groups0 = [set(groups[test_idx]) for _, test_idx in gkf0.split(X, None, groups)]
-    test_groups1 = [set(groups[test_idx]) for _, test_idx in gkf1.split(X, None, groups)]
+    test_groups0 = [
+        set(groups[test_idx]) for _, test_idx in gkf0.split(X, None, groups)
+    ]
+    test_groups1 = [
+        set(groups[test_idx]) for _, test_idx in gkf1.split(X, None, groups)
+    ]
     for g0, g1 in zip(test_groups0, test_groups1):
         assert g0 != g1, "Test groups should differ with different random states"
-    
+
     # Check coverage and splits
     check_cv_coverage(gkf0, X, y, groups, expected_n_splits=4)
     check_cv_coverage(gkf1, X, y, groups, expected_n_splits=4)
@@ -1180,7 +1184,9 @@ def test_repeated_cv_value_errors():
             cv(n_repeats=1.5)
 
 
-@pytest.mark.parametrize("RepeatedCV", [RepeatedKFold, RepeatedStratifiedKFold, RepeatedGroupKFold])
+@pytest.mark.parametrize(
+    "RepeatedCV", [RepeatedKFold, RepeatedStratifiedKFold, RepeatedGroupKFold]
+)
 def test_repeated_cv_repr(RepeatedCV):
     n_splits, n_repeats = 2, 6
     repeated_cv = RepeatedCV(n_splits=n_splits, n_repeats=n_repeats)
@@ -1621,11 +1627,14 @@ def test_cv_iterable_wrapper():
     )
 
 
-@pytest.mark.parametrize("kfold, shuffle", [
-    (GroupKFold, True),
-    (GroupKFold, False),
-    (StratifiedGroupKFold, False),
-])
+@pytest.mark.parametrize(
+    "kfold, shuffle",
+    [
+        (GroupKFold, True),
+        (GroupKFold, False),
+        (StratifiedGroupKFold, False),
+    ],
+)
 def test_group_kfold(kfold, shuffle):
     rng = np.random.RandomState(0)
 
@@ -2002,7 +2011,9 @@ def test_leave_p_out_empty_trainset():
         next(cv.split(X, y))
 
 
-@pytest.mark.parametrize("Klass", (KFold, StratifiedKFold, StratifiedGroupKFold, GroupKFold))
+@pytest.mark.parametrize(
+    "Klass", (KFold, StratifiedKFold, StratifiedGroupKFold, GroupKFold)
+)
 def test_random_state_shuffle_false(Klass):
     # passing a non-default random_state when shuffle=False makes no sense
     with pytest.raises(ValueError, match="has no effect since shuffle is False"):
