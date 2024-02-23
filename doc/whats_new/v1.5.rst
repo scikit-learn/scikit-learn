@@ -172,10 +172,10 @@ Changelog
   raises a warning when groups are passed in to :term:`split`. :pr:`28210` by
 
 - |Feature| :class:`model_selection.GroupKFold` now has the ability to shuffle groups
-  into different folds when `shuffle=True`. :pr:`28360` by `Zachary Vealey`_.
+  into different folds when `shuffle=True`. :pr:`42862` by `Zachary Vealey`_.
 
 - |Feature| :class:`model_selection.RepeatedGroupKFold` has been created for repeating
-  GroupKFold with different shuffling randomizations. :pr:`28360` by `Zachary Vealey`_.
+  GroupKFold with different shuffling randomizations. :pr:`42862` by `Zachary Vealey`_.
 
 :mod:`sklearn.pipeline`
 .......................
