@@ -886,12 +886,12 @@ def test_matthews_corrcoef():
     y_true_inv2 = np.where(y_true_inv2, "a", "b")
     assert_almost_equal(matthews_corrcoef(y_true, y_true_inv2), -1)
 
-    # For if both the true and predicted labels contain only a single class,
-    # the metric is undefined and the limit doesn't exist, should return a nan.
+    # If both the true and predicted labels contain only a single class,
+    # the metric is undefined and the limit doesn't exist, thus should return a nan.
     assert np.isnan(matthews_corrcoef([0, 0, 0, 0], [0, 0, 0, 0]))
 
-    # If only one of the true or predicted labels contains a single
-    # class is undefined, the limit is 0, should return a 0.
+    # If either the true or predicted labels contains a single
+    # class (but not both), the metric is undefined but the limit is 0, thus should return a 0.
     assert matthews_corrcoef(y_true, ["a"] * len(y_true)) == 0.0
 
     # These two vectors have 0 correlation and hence mcc should be 0
@@ -953,8 +953,8 @@ def test_matthews_corrcoef_multiclass():
         matthews_corrcoef(y_true, y_pred, sample_weight=sample_weight), -1
     )
 
-    # For if both the true and predicted labels contain only a single class,
-    # the metric is undefined and the limit doesn't exist, should return a nan.
+    # If both the true and predicted labels contain only a single class,
+    # the metric is undefined and the limit doesn't exist, thus should return a nan.
     y_true = [0, 0, 1, 2]
     y_pred = [0, 0, 1, 2]
     sample_weight = [1, 1, 0, 0]
