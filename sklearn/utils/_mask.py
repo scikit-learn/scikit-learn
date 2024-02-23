@@ -3,7 +3,7 @@ from contextlib import suppress
 import numpy as np
 from scipy import sparse as sp
 
-from . import is_scalar_nan
+from ._missing import is_scalar_nan
 from ._param_validation import validate_params
 from .fixes import _object_dtype_isnan
 
