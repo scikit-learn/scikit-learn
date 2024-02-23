@@ -134,9 +134,14 @@ scikit_learn_install() {
         # environment:
         pip install --verbose .
     else
+        if [[ "$UNAMESTR" == "MINGW64"* ]];
+           # Needed on Windows CI to compile with Visual Studio compiler
+           # otherwise Meson detects MINGW64 and use MINGW64 toolchain
+           ADDITIONAL_PIP_OPTIONS='-Csetup-args="--vsenv"'
+        fi
         # Use the pre-installed build dependencies and build directly in the
         # current environment.
-        pip install --verbose --no-build-isolation --editable .
+        pip install --verbose --no-build-isolation --editable . $ADDITIONAL_PIP_OPTIONS
     fi
 
     ccache -s || echo "ccache not installed, skipping ccache statistics"
