@@ -1429,23 +1429,21 @@ class _MetadataRequester:
         # ``vars`` doesn't report the parent class attributes. We go through
         # the reverse of the MRO so that child classes have precedence over
         # their parents.
-        defaults = dict()
+        substr = "__metadata_request__"
         for base_class in reversed(inspect.getmro(cls)):
-            base_defaults = {
-                attr: value
-                for attr, value in vars(base_class).items()
-                if "__metadata_request__" in attr
-            }
-            defaults.update(base_defaults)
-        defaults = dict(sorted(defaults.items()))
-
-        for attr, value in defaults.items():
-            # we don't check for attr.startswith() since python prefixes attrs
-            # starting with __ with the `_ClassName`.
-            substr = "__metadata_request__"
-            method = attr[attr.index(substr) + len(substr) :]
-            for prop, alias in value.items():
-                getattr(requests, method).add_request(param=prop, alias=alias)
+            for attr, value in vars(base_class).items():
+                if substr not in attr:
+                    continue
+                # we don't check for attr.startswith() since python prefixes attrs
+                # starting with __ with the `_ClassName`.
+                method = attr[attr.index(substr) + len(substr) :]
+                for prop, alias in value.items():
+                    # Here we add request values specified via those class attributes
+                    # to the `MetadataRequest` object. Adding a request which already
+                    # exists will override the previous one. Since we go through the
+                    # MRO in reverse order, the one specified by the lowest most classes
+                    # in the inheritance tree are the ones which take effect.
+                    getattr(requests, method).add_request(param=prop, alias=alias)
 
         return requests
 
