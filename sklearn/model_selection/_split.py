@@ -578,7 +578,7 @@ class GroupKFold(GroupsConsumerMixin, _BaseKFold):
     >>> group_kfold.get_n_splits(X, y, groups)
     2
     >>> print(group_kfold)
-    GroupKFold(n_splits=2)
+    GroupKFold(n_splits=2, random_state=None, shuffle=False)
     >>> for i, (train_index, test_index) in enumerate(group_kfold.split(X, y, groups)):
     ...     print(f"Fold {i}:")
     ...     print(f"  Train: index={train_index}, group={groups[train_index]}")
@@ -1827,17 +1827,17 @@ class RepeatedGroupKFold(GroupsConsumerMixin, _RepeatedSplits):
     ...       print(f"  Test:  index={test_index}, group={groups[test_index]}")
     ...
     Fold 0:
-    Train: index=[4 5 6], group=[3 3 4]
-    Test:  index=[0 1 2 3], group=[0 0 2 2]
+    Train: index=[2 3 4 5], group=[2 2 3 3]
+    Test:  index=[0 1 6], group=[0 0 4]
     Fold 1:
-    Train: index=[0 1 2 3], group=[0 0 2 2]
-    Test:  index=[4 5 6], group=[3 3 4]
+    Train: index=[0 1 6], group=[0 0 4]
+    Test:  index=[2 3 4 5], group=[2 2 3 3]
     Fold 2:
-    Train: index=[4 5 6], group=[3 3 4]
-    Test:  index=[0 1 2 3], group=[0 0 2 2]
+    Train: index=[0 1 4 5], group=[0 0 3 3]
+    Test:  index=[2 3 6], group=[2 2 4]
     Fold 3:
-    Train: index=[0 1 2 3], group=[0 0 2 2]
-    Test:  index=[4 5 6], group=[3 3 4]
+    Train: index=[2 3 6], group=[2 2 4]
+    Test:  index=[0 1 4 5], group=[0 0 3 3]
 
     Notes
     -----
