@@ -425,9 +425,7 @@ def single_linkage_label(L):
 
 
 # Implements MST-LINKAGE-CORE from https://arxiv.org/abs/1109.2378
-def mst_linkage_core(
-        const float64_t [:, ::1] raw_data,
-        DistanceMetric64 dist_metric):
+def mst_linkage_core(data, dist_metric):
     """
     Compute the necessary elements of a minimum spanning
     tree for computation of single linkage clustering. This
@@ -441,13 +439,17 @@ def mst_linkage_core(
 
     Parameters
     ----------
-    raw_data: array of shape (n_samples, n_features)
-        The array of feature data to be clustered. Must be C-aligned
+    data: array of shape (n_samples, n_samples) if metric == \
+            "precomputed" or array of shape (n_samples, n_features) otherwise
+        An array of pairwise distances between samples, or a feature array,
+        which must be C-aligned.
 
-    dist_metric: DistanceMetric64
+    dist_metric: DistanceMetric64 or str "precomputed"
         A DistanceMetric64 object conforming to the API from
         ``sklearn.metrics._dist_metrics.pxd`` that will be
-        used to compute distances.
+        used to compute distances. If the string literal
+        "precomputed" is passed instead, a corresponding
+        distance matrix has to be provided via the previous parameter.
 
     Returns
     -------
@@ -459,7 +461,7 @@ def mst_linkage_core(
         MST-LINKAGE-CORE for more details.
     """
     cdef:
-        intp_t n_samples = raw_data.shape[0]
+        intp_t n_samples = data.shape[0]
         uint8_t[:] in_tree = np.zeros(n_samples, dtype=bool)
         float64_t[:, ::1] result = np.zeros((n_samples - 1, 3))
 
@@ -467,7 +469,7 @@ def mst_linkage_core(
         intp_t new_node
         intp_t i
         intp_t j
-        intp_t num_features = raw_data.shape[1]
+        intp_t num_features = data.shape[1]
 
         float64_t right_value
         float64_t left_value
@@ -487,9 +489,12 @@ def mst_linkage_core(
                 continue
 
             right_value = current_distances[j]
-            left_value = dist_metric.dist(&raw_data[current_node, 0],
-                                          &raw_data[j, 0],
-                                          num_features)
+            if dist_metric == "precomputed":
+                left_value = data[current_node, j]
+            else:
+                left_value = dist_metric.dist(&data[current_node, 0],
+                                              &data[j, 0],
+                                              num_features)
 
             if left_value < right_value:
                 current_distances[j] = left_value
