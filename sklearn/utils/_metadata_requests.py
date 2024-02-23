@@ -1022,7 +1022,7 @@ class MetadataRouter:
         res.update(child_params)
         return res
 
-    def route_params(self, *, caller, params, parent):
+    def route_params(self, *, caller, params, parent=None):
         """Return the input parameters requested by child objects.
 
         The output of this method is a bunch, which includes the inputs for all
