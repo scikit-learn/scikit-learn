@@ -48,10 +48,17 @@ more details.
   via their `fit` methods.
   :pr:`28432` by :user:`Adam Li <adam2392>` and :user:`Benjamin Bossan <BenjaminBossan>`.
 
+- |Feature| :class:`ensemble.VotingClassifier` and
+  :class:`ensemble.VotingRegressor` now support metadata routing and pass
+  ``**fit_params`` to the underlying estimators via their `fit` methods.
+  :pr:`27584` by :user:`Stefanie Senger <StefanieSenger>`.
+
 - |Feature| :class:`semi_supervised.SelfTrainingClassifier`
-  now supports metadata routing. The fit method now
-  accept ``**fit_params`` which are passed to the underlying estimators
-  via their `fit` methods.
+  now supports metadata routing. The fit method now accepts ``**fit_params``
+  which are passed to the underlying estimators via their `fit` methods.
+  In addition, the `predict`, `predict_proba`, `predict_log_proba`, `score`
+  and `decision_function` methods also accept ``**params`` which are
+  passed to the underlying estimators via their respective methods.
   :pr:`28494` by :user:`Adam Li <adam2392>`.
 
 Changelog
@@ -124,10 +131,23 @@ Changelog
 :mod:`sklearn.linear_model`
 ...........................
 
+- |Fix| :class:`linear_model.ElasticNet`, :class:`linear_model.ElasticNetCV`,
+  :class:`linear_model.Lasso` and :class:`linear_model.LassoCV` now explicitly don't
+  accept large sparse data formats. :pr:`27576` by :user:`Stefanie Senger
+  <StefanieSenger>`.
+  
 - |API| :class:`linear_model.RidgeCV` and :class:`linear_model.RidgeClassifierCV`
   will now allow `alpha=0` when `cv != None`, which is consistent with
   :class:`linear_model.Ridge` and :class:`linear_model.RidgeClassifier`.
   :pr:`28425` by :user:`Lucy Liu <lucyleeow>`.
+
+:mod:`sklearn.manifold`
+.......................
+
+- |API| Deprecates `n_iter` in favor of `max_iter` in :class:`manifold.TSNE`.
+  `n_iter` will be removed in version 1.7. This makes :class:`manifold.TSNE`
+  consistent with the rest of the estimators. :pr:`28471` by
+  :user:`Lucy Liu <lucyleeow>`
 
 :mod:`sklearn.metrics`
 ......................
