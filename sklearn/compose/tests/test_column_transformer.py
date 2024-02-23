@@ -2517,7 +2517,6 @@ def test_metadata_routing_no_fit_transform():
 
     X = np.array([[0, 1, 2], [2, 4, 6]]).T
     y = [1, 2, 3]
-    _Registry()
     sample_weight, metadata = [1], "a"
     trs = ColumnTransformer(
         [
