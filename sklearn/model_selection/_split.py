@@ -552,6 +552,17 @@ class GroupKFold(GroupsConsumerMixin, _BaseKFold):
         .. versionchanged:: 0.22
             ``n_splits`` default value changed from 3 to 5.
 
+    shuffle : bool, default=False
+        Whether to shuffle the groups before splitting into batches.
+        Note that the samples within each split will not be shuffled.
+
+    random_state : int, RandomState instance or None, default=None
+        When `shuffle` is True, `random_state` affects the ordering of the
+        indices, which controls the randomness of each fold. Otherwise, this
+        parameter has no effect.
+        Pass an int for reproducible output across multiple function calls.
+        See :term:`Glossary <random_state>`.
+
     Notes
     -----
     Groups appear in an arbitrary order throughout the folds.
@@ -563,7 +574,7 @@ class GroupKFold(GroupsConsumerMixin, _BaseKFold):
     >>> X = np.array([[1, 2], [3, 4], [5, 6], [7, 8], [9, 10], [11, 12]])
     >>> y = np.array([1, 2, 3, 4, 5, 6])
     >>> groups = np.array([0, 0, 2, 2, 3, 3])
-    >>> group_kfold = GroupKFold(n_splits=2)
+    >>> group_kfold = GroupKFold(n_splits=2, shuffle=False)
     >>> group_kfold.get_n_splits(X, y, groups)
     2
     >>> print(group_kfold)
@@ -587,17 +598,23 @@ class GroupKFold(GroupsConsumerMixin, _BaseKFold):
     StratifiedKFold : Takes class information into account to avoid building
         folds with imbalanced class proportions (for binary or multiclass
         classification tasks).
+
+    RepeatedGroupKFold : Repeats Group K-Fold n times.
     """
 
-    def __init__(self, n_splits=5):
-        super().__init__(n_splits, shuffle=False, random_state=None)
+    def __init__(self, n_splits=5, shuffle=False, random_state=None):
+        super().__init__(n_splits, shuffle=shuffle, random_state=random_state)
+        if isinstance(random_state, np.random.RandomState):
+            self.rng = random_state
+        else:
+            self.rng = np.random.RandomState(random_state)
 
     def _iter_test_indices(self, X, y, groups):
         if groups is None:
             raise ValueError("The 'groups' parameter should not be None.")
         groups = check_array(groups, input_name="groups", ensure_2d=False, dtype=None)
 
-        unique_groups, groups = np.unique(groups, return_inverse=True)
+        unique_groups, group_inds = np.unique(groups, return_inverse=True)
         n_groups = len(unique_groups)
 
         if self.n_splits > n_groups:
@@ -606,29 +623,39 @@ class GroupKFold(GroupsConsumerMixin, _BaseKFold):
                 " than the number of groups: %d." % (self.n_splits, n_groups)
             )
 
-        # Weight groups by their number of occurrences
-        n_samples_per_group = np.bincount(groups)
+        if self.shuffle:
+            # Split and shuffle unique groups across n_splits
+            unique_groups = self.rng.permutation(unique_groups)
+            split_groups = np.array_split(unique_groups, self.n_splits)
 
-        # Distribute the most frequent groups first
-        indices = np.argsort(n_samples_per_group)[::-1]
-        n_samples_per_group = n_samples_per_group[indices]
+            for test_group_ids in split_groups:
+                test_mask = np.isin(groups, test_group_ids)
+                yield np.where(test_mask)[0]
 
-        # Total weight of each fold
-        n_samples_per_fold = np.zeros(self.n_splits)
+        else:
+            # Weight groups by their number of occurrences
+            n_samples_per_group = np.bincount(group_inds)
 
-        # Mapping from group index to fold index
-        group_to_fold = np.zeros(len(unique_groups))
+            # Distribute the most frequent groups first
+            indices = np.argsort(n_samples_per_group)[::-1]
+            n_samples_per_group = n_samples_per_group[indices]
 
-        # Distribute samples by adding the largest weight to the lightest fold
-        for group_index, weight in enumerate(n_samples_per_group):
-            lightest_fold = np.argmin(n_samples_per_fold)
-            n_samples_per_fold[lightest_fold] += weight
-            group_to_fold[indices[group_index]] = lightest_fold
+            # Total weight of each fold
+            n_samples_per_fold = np.zeros(self.n_splits)
 
-        indices = group_to_fold[groups]
+            # Mapping from group index to fold index
+            group_to_fold = np.zeros(len(unique_groups))
 
-        for f in range(self.n_splits):
-            yield np.where(indices == f)[0]
+            # Distribute samples by adding the largest weight to the lightest fold
+            for group_index, weight in enumerate(n_samples_per_group):
+                lightest_fold = np.argmin(n_samples_per_fold)
+                n_samples_per_fold[lightest_fold] += weight
+                group_to_fold[indices[group_index]] = lightest_fold
+
+            indices = group_to_fold[group_inds]
+
+            for f in range(self.n_splits):
+                yield np.where(indices == f)[0]
 
     def split(self, X, y=None, groups=None):
         """Generate indices to split data into training and test set.
@@ -1681,6 +1708,8 @@ class RepeatedKFold(_UnsupportedGroupCVMixin, _RepeatedSplits):
     See Also
     --------
     RepeatedStratifiedKFold : Repeats Stratified K-Fold n times.
+
+    RepeatedGroupKFold : Repeats Group K-Fold n times.
     """
 
     def __init__(self, *, n_splits=5, n_repeats=10, random_state=None):
@@ -1749,11 +1778,83 @@ class RepeatedStratifiedKFold(_UnsupportedGroupCVMixin, _RepeatedSplits):
     See Also
     --------
     RepeatedKFold : Repeats K-Fold n times.
+
+    RepeatedGroupKFold : Repeats Group K-Fold n times.
     """
 
     def __init__(self, *, n_splits=5, n_repeats=10, random_state=None):
         super().__init__(
             StratifiedKFold,
+            n_repeats=n_repeats,
+            random_state=random_state,
+            n_splits=n_splits,
+        )
+
+
+class RepeatedGroupKFold(GroupsConsumerMixin, _RepeatedSplits):
+    """Repeated Group K-Fold cross validator.
+
+    Repeats Group K-Fold n times with different randomization in each repetition.
+
+    Read more in the :ref:`User Guide <repeated_k_fold>`.
+
+    Parameters
+    ----------
+    n_splits : int, default=5
+        Number of folds. Must be at least 2.
+
+    n_repeats : int, default=10
+        Number of times cross-validator needs to be repeated.
+
+    random_state : int, RandomState instance or None, default=None
+        Controls the randomness of each repeated cross-validation instance.
+        Pass an int for reproducible output across multiple function calls.
+        See :term:`Glossary <random_state>`.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.model_selection import RepeatedGroupKFold
+    >>> X = np.array([[1, 2], [3, 4], [5, 6], [7, 8], [9, 10], [11, 12], [13, 14]])
+    >>> y = np.array([1, 2, 3, 4, 5, 6, 7])
+    >>> groups = np.array([0, 0, 2, 2, 3, 3, 4])
+    >>> rgkf = RepeatedGroupKFold(n_splits=2, n_repeats=2, random_state=123)
+    >>> rgkf.get_n_splits(X, y, groups)
+    4
+    >>> for i, (train_index, test_index) in enumerate(rgkf.split(X, y, groups)):
+    ...       print(f"Fold {i}:")
+    ...       print(f"  Train: index={train_index}, group={groups[train_index]}")
+    ...       print(f"  Test:  index={test_index}, group={groups[test_index]}")
+    ...
+    Fold 0:
+    Train: index=[4 5 6], group=[3 3 4]
+    Test:  index=[0 1 2 3], group=[0 0 2 2]
+    Fold 1:
+    Train: index=[0 1 2 3], group=[0 0 2 2]
+    Test:  index=[4 5 6], group=[3 3 4]
+    Fold 2:
+    Train: index=[4 5 6], group=[3 3 4]
+    Test:  index=[0 1 2 3], group=[0 0 2 2]
+    Fold 3:
+    Train: index=[0 1 2 3], group=[0 0 2 2]
+    Test:  index=[4 5 6], group=[3 3 4]
+
+    Notes
+    -----
+    Randomized CV splitters may return different results for each call of
+    split. You can make the results identical by setting `random_state`
+    to an integer.
+
+    See Also
+    --------
+    RepeatedKFold : Repeats K-Fold n times.
+
+    RepeatedStratifiedKFold : Repeats Stratified K-Fold n times.
+    """
+
+    def __init__(self, n_splits=5, n_repeats=10, random_state=None):
+        super().__init__(
+            GroupKFold,
             n_repeats=n_repeats,
             random_state=random_state,
             n_splits=n_splits,
