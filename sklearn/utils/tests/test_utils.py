@@ -24,11 +24,11 @@ from sklearn.utils import (
     deprecated,
     gen_even_slices,
     get_chunk_n_rows,
-    is_scalar_nan,
     resample,
     safe_mask,
     shuffle,
 )
+from sklearn.utils._missing import is_scalar_nan
 from sklearn.utils._mocking import MockDataFrame
 from sklearn.utils._testing import (
     _convert_container,
