@@ -11,6 +11,5 @@ scipy
 cython
 joblib
 threadpoolctl
-# Avoid pytest 8.0.1 bug
 pytest
 pytest-xdist
