@@ -1,8 +1,5 @@
 import numbers
-import os
 import pickle
-import shutil
-import tempfile
 from copy import deepcopy
 from functools import partial
 from unittest.mock import Mock
@@ -166,28 +163,17 @@ def _make_estimators(X_train, y_train, y_ml_train):
     )
 
 
-X_mm, y_mm, y_ml_mm = None, None, None
-ESTIMATORS = None
-TEMP_FOLDER = None
-
-
-def setup_module():
-    # Create some memory mapped data
-    global X_mm, y_mm, y_ml_mm, TEMP_FOLDER, ESTIMATORS
-    TEMP_FOLDER = tempfile.mkdtemp(prefix="sklearn_test_score_objects_")
+@pytest.fixture(scope="module")
+def memmap_data_and_estimators(tmp_path_factory):
+    temp_folder = tmp_path_factory.mktemp("sklearn_test_score_objects")
     X, y = make_classification(n_samples=30, n_features=5, random_state=0)
     _, y_ml = make_multilabel_classification(n_samples=X.shape[0], random_state=0)
-    filename = os.path.join(TEMP_FOLDER, "test_data.pkl")
+    filename = temp_folder / "test_data.pkl"
     joblib.dump((X, y, y_ml), filename)
     X_mm, y_mm, y_ml_mm = joblib.load(filename, mmap_mode="r")
-    ESTIMATORS = _make_estimators(X_mm, y_mm, y_ml_mm)
+    estimators = _make_estimators(X_mm, y_mm, y_ml_mm)
 
-
-def teardown_module():
-    global X_mm, y_mm, y_ml_mm, TEMP_FOLDER, ESTIMATORS
-    # GC closes the mmap file descriptors
-    X_mm, y_mm, y_ml_mm, ESTIMATORS = None, None, None, None
-    shutil.rmtree(TEMP_FOLDER)
+    yield X_mm, y_mm, y_ml_mm, estimators
 
 
 class EstimatorWithFit(BaseEstimator):
@@ -688,10 +674,11 @@ def test_regression_scorer_sample_weight():
 
 
 @pytest.mark.parametrize("name", get_scorer_names())
-def test_scorer_memmap_input(name):
+def test_scorer_memmap_input(name, memmap_data_and_estimators):
     # Non-regression test for #6147: some score functions would
     # return singleton memmap when computed on memmap data instead of scalar
     # float values.
+    X_mm, y_mm, y_ml_mm, estimators = memmap_data_and_estimators
 
     if name in REQUIRE_POSITIVE_Y_SCORERS:
         y_mm_1 = _require_positive_y(y_mm)
@@ -701,7 +688,7 @@ def test_scorer_memmap_input(name):
 
     # UndefinedMetricWarning for P / R scores
     with ignore_warnings():
-        scorer, estimator = get_scorer(name), ESTIMATORS[name]
+        scorer, estimator = get_scorer(name), estimators[name]
         if name in MULTILABEL_ONLY_SCORERS:
             score = scorer(estimator, X_mm, y_ml_mm_1)
         else:

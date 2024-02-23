@@ -88,7 +88,9 @@ enc.encodings_
 # :class:`tree.DecisionTreeRegressor` now support missing values. For each potential
 # threshold on the non-missing data, the splitter will evaluate the split with all the
 # missing values going to the left node or the right node.
-# More details in the :ref:`User Guide <tree_missing_value_support>`.
+# See more details in the :ref:`User Guide <tree_missing_value_support>` or see
+# :ref:`sphx_glr_auto_examples_ensemble_plot_hgbt_regression.py` for a usecase
+# example of this feature in :class:`~ensemble.HistGradientBoostingRegressor`.
 import numpy as np
 from sklearn.tree import DecisionTreeClassifier
 
