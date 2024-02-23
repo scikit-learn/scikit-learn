@@ -871,7 +871,7 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
           preference. The method used corresponds to the first method in
           the list that is implemented by `base_estimator`.
 
-        .. versionadded:: 1.4
+        .. versionadded:: 1.5
 
     random_state : int, RandomState instance or None, optional (default=None)
         If ``order='random'``, determines random number generation for the
