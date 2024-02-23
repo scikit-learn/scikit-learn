@@ -77,8 +77,8 @@ class TransformedTargetRegressor(
         Function to apply to the prediction of the regressor. Cannot be set at
         the same time as `transformer`. The inverse function is used to return
         predictions to the same space of the original training labels. If
-        `inverse_func` is set, `func` also needs to be provided. The function
-        needs to return a 2-dimensional array.
+        `inverse_func` is set, `func` also needs to be provided. The inverse
+        function needs to return a 2-dimensional array.
 
     check_inverse : bool, default=True
         Whether to check that `transform` followed by `inverse_transform`
@@ -175,7 +175,7 @@ class TransformedTargetRegressor(
             self.transformer_ = clone(self.transformer)
         else:
             if (self.func is not None and self.inverse_func is None) or (
-                self.inverse_func is not None and self.func is None
+                self.func is None and self.inverse_func is not None
             ):
                 lacking_param, existing_param = (
                     ("func", "inverse_func")
