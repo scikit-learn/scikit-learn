@@ -123,6 +123,11 @@ Changelog
 :mod:`sklearn.linear_model`
 ...........................
 
+- |Fix| :class:`linear_model.ElasticNet`, :class:`linear_model.ElasticNetCV`,
+  :class:`linear_model.Lasso` and :class:`linear_model.LassoCV` now explicitly don't
+  accept large sparse data formats. :pr:`27576` by :user:`Stefanie Senger
+  <StefanieSenger>`.
+  
 - |API| :class:`linear_model.RidgeCV` and :class:`linear_model.RidgeClassifierCV`
   will now allow `alpha=0` when `cv != None`, which is consistent with
   :class:`linear_model.Ridge` and :class:`linear_model.RidgeClassifier`.
