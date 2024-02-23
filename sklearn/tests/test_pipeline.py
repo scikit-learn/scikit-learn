@@ -1978,15 +1978,15 @@ def test_feature_union_metadata_routing_error():
     )
 
     with pytest.raises(ValueError, match=re.escape(error_message)):
-        featu.fit(X, y, sample_weight=sample_weight, metadata=metadata)
+        feature_union.fit(X, y, sample_weight=sample_weight, metadata=metadata)
 
 
 @pytest.mark.usefixtures("enable_slep006")
 def test_feature_union_get_metadata_routing_without_fit():
     """Test that get_metadata_routing() works regardless of the Child's
     consumption of any metadata."""
-    featu = FeatureUnion([("sub_transformer", ConsumingTransformer())])
-    featu.get_metadata_routing()
+    feature_union = FeatureUnion([("sub_transformer", ConsumingTransformer())])
+    feature_union.get_metadata_routing()
 
 
 @pytest.mark.usefixtures("enable_slep006")
@@ -2017,10 +2017,10 @@ def test_feature_union_metadata_routing(transformer):
     )
 
     kwargs = {"sample_weight": sample_weight, "metadata": metadata}
-    featu.fit(X, y, **kwargs)
-    featu.fit_transform(X, y, **kwargs)
+    feature_union.fit(X, y, **kwargs)
+    feature_union.fit_transform(X, y, **kwargs)
 
-    for transformer in featu.transformer_list:
+    for transformer in feature_union.transformer_list:
         # access sub-transformer in (name, trans) with transformer[1]
         registry = transformer[1].registry
         assert len(registry)
