@@ -3,6 +3,7 @@
 import numpy as np
 cimport cython
 
+from ..metrics._dist_metrics cimport DistanceMetric64
 from ..utils._fast_dict cimport IntFloatDict
 from ..utils._typedefs cimport float64_t, intp_t, uint8_t
 
@@ -424,7 +425,7 @@ def single_linkage_label(L):
 
 
 # Implements MST-LINKAGE-CORE from https://arxiv.org/abs/1109.2378
-def mst_linkage_core(data, dist_metric):
+def mst_linkage_core(data, DistanceMetric64 dist_metric, precomputed=False):
     """
     Compute the necessary elements of a minimum spanning
     tree for computation of single linkage clustering. This
@@ -438,17 +439,16 @@ def mst_linkage_core(data, dist_metric):
 
     Parameters
     ----------
-    data: array of shape (n_samples, n_samples) if metric == \
-            "precomputed" or array of shape (n_samples, n_features) otherwise
+    data: array of shape (n_samples, n_samples) if precomputed == \
+            True or array of shape (n_samples, n_features) otherwise
         An array of pairwise distances between samples, or a feature array,
         which must be C-aligned.
 
-    dist_metric: DistanceMetric64 or str "precomputed"
+    dist_metric: DistanceMetric64
         A DistanceMetric64 object conforming to the API from
         ``sklearn.metrics._dist_metrics.pxd`` that will be
-        used to compute distances. If the string literal
-        "precomputed" is passed instead, a corresponding
-        distance matrix has to be provided via the previous parameter.
+        used to compute distances. Ignored if precomputed == \
+        True
 
     Returns
     -------
@@ -488,7 +488,7 @@ def mst_linkage_core(data, dist_metric):
                 continue
 
             right_value = current_distances[j]
-            if dist_metric == "precomputed":
+            if precomputed:
                 left_value = data[current_node, j]
             else:
                 left_value = dist_metric.dist(&data[current_node, 0],
