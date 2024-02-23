@@ -323,8 +323,15 @@ METAESTIMATORS: list = [
         "X": X,
         "y": y,
         "preserves_metadata": True,
-        "estimator_routing_methods": ["fit"],
-    }
+        "estimator_routing_methods": [
+            "fit",
+            "predict",
+            "predict_proba",
+            "predict_log_proba",
+            "decision_function",
+            "score",
+        ],
+    },
 ]
 """List containing all metaestimators to be tested and their settings
 

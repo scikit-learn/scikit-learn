@@ -348,9 +348,16 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
             Array with predicted labels.
         """
         check_is_fitted(self)
-
-        # metadata routing enabled
-        routed_params = process_routing(self, "predict", other_params=params)
+        _raise_for_params(params, self, "predict")
+        
+        if _routing_enabled():
+            # metadata routing is enabled.
+            routed_params = process_routing(
+                self, "predict", other_params=params
+            )
+        else:
+            routed_params = Bunch()
+            routed_params.base_estimator = Bunch(predict=params)
 
         X = self._validate_data(
             X,
@@ -383,8 +390,16 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
             Array with prediction probabilities.
         """
         check_is_fitted(self)
-        # metadata routing enabled
-        routed_params = process_routing(self, "predict_proba", other_params=params)
+        _raise_for_params(params, self, "predict_proba")
+
+        if _routing_enabled():
+            # metadata routing is enabled.
+            routed_params = process_routing(
+                self, "predict_proba", other_params=params
+            )
+        else:
+            routed_params = Bunch()
+            routed_params.base_estimator = Bunch(predict_proba=params)
 
         X = self._validate_data(
             X,
@@ -417,8 +432,16 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
             Result of the decision function of the `base_estimator`.
         """
         check_is_fitted(self)
-        # metadata routing enabled
-        routed_params = process_routing(self, "predict_proba", other_params=params)
+        _raise_for_params(params, self, "decision_function")
+
+        if _routing_enabled():
+            # metadata routing is enabled.
+            routed_params = process_routing(
+                self, "decision_function", other_params=params
+            )
+        else:
+            routed_params = Bunch()
+            routed_params.base_estimator = Bunch(decision_function=params)
 
         X = self._validate_data(
             X,
@@ -451,8 +474,16 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
             Array with log prediction probabilities.
         """
         check_is_fitted(self)
-        # metadata routing enabled
-        routed_params = process_routing(self, "predict_proba", other_params=params)
+        _raise_for_params(params, self, "predict_log_proba")
+
+        if _routing_enabled():
+            # metadata routing is enabled.
+            routed_params = process_routing(
+                self, "predict_log_proba", other_params=params
+            )
+        else:
+            routed_params = Bunch()
+            routed_params.base_estimator = Bunch(predict_log_proba=params)
 
         X = self._validate_data(
             X,
@@ -489,6 +520,7 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
             Result of calling score on the `base_estimator`.
         """
         check_is_fitted(self)
+        _raise_for_params(params, self, "score")
 
         if _routing_enabled():
             # metadata routing is enabled.
@@ -496,7 +528,8 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
                 self, "score", other_params=params
             )
         else:
-            routed_params = Bunch('base_estimator')
+            routed_params = Bunch()
+            routed_params.base_estimator = Bunch(score=params)
 
         X = self._validate_data(
             X,
@@ -523,6 +556,14 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
         router = MetadataRouter(owner=self.__class__.__name__)
         router.add(
             estimator=self.base_estimator,
-            method_mapping=MethodMapping().add(callee="fit", caller="fit"),
+            method_mapping=(
+                MethodMapping()
+                .add(callee="fit", caller="fit")
+                .add(callee="predict", caller="predict")
+                .add(callee="predict_proba", caller="predict_proba")
+                .add(callee="decision_function", caller="decision_function")
+                .add(callee="predict_log_proba", caller="predict_log_proba")
+                .add(callee="score", caller="score")
+            ),
         )
         return router
