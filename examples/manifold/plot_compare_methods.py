@@ -164,7 +164,7 @@ plot_2d(S_isomap, S_color, "Isomap Embedding")
 
 md_scaling = manifold.MDS(
     n_components=n_components,
-    max_iter=50,
+    n_iter=50,
     n_init=4,
     random_state=0,
     normalized_stress=False,
