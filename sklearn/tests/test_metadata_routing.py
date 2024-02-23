@@ -226,6 +226,29 @@ def test_default_requests():
     assert_request_is_empty(est_request)
 
 
+def test_default_request_override():
+    """Test that default requests are correctly overridden regardless of the ASCII order
+    of the class names, hence testing small and capital letter class name starts.
+    Non-regression test for https://github.com/scikit-learn/scikit-learn/issues/28430
+    """
+
+    class Base(BaseEstimator):
+        __metadata_request__split = {"groups": True}
+
+    class class_1(Base):
+        __metadata_request__split = {"groups": "sample_domain"}
+
+    class Class_1(Base):
+        __metadata_request__split = {"groups": "sample_domain"}
+
+    assert_request_equal(
+        class_1()._get_metadata_request(), {"split": {"groups": "sample_domain"}}
+    )
+    assert_request_equal(
+        Class_1()._get_metadata_request(), {"split": {"groups": "sample_domain"}}
+    )
+
+
 def test_process_routing_invalid_method():
     with pytest.raises(TypeError, match="Can only route and process input"):
         process_routing(ConsumingClassifier(), "invalid_method", groups=my_groups)
