@@ -1801,7 +1801,7 @@ class NMF(_BaseNMF):
 
         return W
 
-    def objective_function(self, X, y=None, *, normalize=True, W=None, H=None):
+    def objective_function(self, X, y=None):
         """Compute the objective function of the NMF model.
 
         Parameters
@@ -1812,24 +1812,13 @@ class NMF(_BaseNMF):
         y : Ignored
             Not used, present for API consistency by convention.
 
-        normalize : bool, default=True
-            If True, the objective function is normalized by the number of samples.
-
-        W : array-like of shape (n_samples, n_components), default=None
-            If None, the transformed data is computed from X.
-
-        H : array-like of shape (n_components, n_features), default=None
-            If None, the components matrix of the fitted model is used.
-
         Returns
         -------
         objective : ObjectiveFunction
             The objective function of the NMF model.
         """
-        if W is None:
-            W = self.transform(X)
-        if H is None:
-            H = self.components_
+        W = self.transform(X)
+        H = self.components_
 
         data_fit = _beta_divergence(X, W, H, self._beta_loss)
         l1_W, l1_H, l2_W, l2_H = self._compute_regularization(X)
@@ -1840,18 +1829,17 @@ class NMF(_BaseNMF):
             "l2_H": 0.5 * l2_H * (H**2).sum(),
         }
 
-        if normalize:
-            data_fit /= X.shape[0]
-            for key in penalisations:
-                penalisations[key] /= X.shape[0]
+        # normalize by n_samples
+        data_fit /= X.shape[0]
+        for key in penalisations:
+            penalisations[key] /= X.shape[0]
 
         return ObjectiveFunction(
             name="penalized_beta_divergence",
-            value=data_fit + sum(penalisations.values()),
             goal="minimize",
+            value=data_fit + sum(penalisations.values()),
             data_fit=data_fit,
             penalisations=penalisations,
-            normalized=normalize,
         )
 
 
