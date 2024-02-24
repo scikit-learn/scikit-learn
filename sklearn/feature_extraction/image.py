@@ -174,15 +174,6 @@ def img_to_graph(img, *, mask=None, return_as=sparse.coo_matrix, dtype=None):
     -------
     graph : ndarray or a sparse matrix class
         The computed adjacency matrix.
-
-    Notes
-    -----
-    For scikit-learn versions 0.14.1 and prior, return_as=np.ndarray was
-    handled by returning a dense np.matrix instance.  Going forward, np.ndarray
-    returns an np.ndarray, as expected.
-
-    For compatibility, user code relying on this method should wrap its
-    calls in ``np.asarray`` to avoid type issues.
     """
     img = np.atleast_3d(img)
     n_x, n_y, n_z = img.shape
@@ -229,14 +220,17 @@ def grid_to_graph(
     graph : np.ndarray or a sparse matrix class
         The computed adjacency matrix.
 
-    Notes
-    -----
-    For scikit-learn versions 0.14.1 and prior, return_as=np.ndarray was
-    handled by returning a dense np.matrix instance.  Going forward, np.ndarray
-    returns an np.ndarray, as expected.
-
-    For compatibility, user code relying on this method should wrap its
-    calls in ``np.asarray`` to avoid type issues.
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.feature_extraction.image import grid_to_graph
+    >>> shape_img = (4, 4, 1)
+    >>> mask = np.zeros(shape=shape_img, dtype=bool)
+    >>> mask[[1, 2], [1, 2], :] = True
+    >>> graph = grid_to_graph(*shape_img, mask=mask)
+    >>> print(graph)
+      (0, 0)    1
+      (1, 1)    1
     """
     return _to_graph(n_x, n_y, n_z, mask=mask, return_as=return_as, dtype=dtype)
 

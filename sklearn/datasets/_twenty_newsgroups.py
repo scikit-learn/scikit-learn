@@ -41,6 +41,7 @@ from .. import preprocessing
 from ..feature_extraction.text import CountVectorizer
 from ..utils import Bunch, check_random_state
 from ..utils._param_validation import StrOptions, validate_params
+from ..utils.fixes import tarfile_extractall
 from . import get_data_home, load_files
 from ._base import (
     RemoteFileMetadata,
@@ -76,7 +77,8 @@ def _download_20newsgroups(target_dir, cache_path):
     archive_path = _fetch_remote(ARCHIVE, dirname=target_dir)
 
     logger.debug("Decompressing %s", archive_path)
-    tarfile.open(archive_path, "r:gz").extractall(path=target_dir)
+    with tarfile.open(archive_path, "r:gz") as fp:
+        tarfile_extractall(fp, path=target_dir)
 
     with suppress(FileNotFoundError):
         os.remove(archive_path)

@@ -45,14 +45,20 @@ from ._base import _BaseHeterogeneousEnsemble, _fit_single_estimator
 def _estimator_has(attr):
     """Check if we can delegate a method to the underlying estimator.
 
-    First, we check the first fitted final estimator if available, otherwise we
-    check the unfitted final estimator.
+    First, we check the fitted `final_estimator_` if available, otherwise we check the
+    unfitted `final_estimator`. We raise the original `AttributeError` if `attr` does
+    not exist. This function is used together with `available_if`.
     """
-    return lambda self: (
-        hasattr(self.final_estimator_, attr)
-        if hasattr(self, "final_estimator_")
-        else hasattr(self.final_estimator, attr)
-    )
+
+    def check(self):
+        if hasattr(self, "final_estimator_"):
+            getattr(self.final_estimator_, attr)
+        else:
+            getattr(self.final_estimator, attr)
+
+        return True
+
+    return check
 
 
 class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble, metaclass=ABCMeta):
@@ -195,6 +201,14 @@ class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble, metaclass=ABCM
         names, all_estimators = self._validate_estimators()
         self._validate_final_estimator()
 
+        # FIXME: when adding support for metadata routing in Stacking*.
+        # This is a hotfix to make StackingClassifier and StackingRegressor
+        # pass the tests despite not supporting metadata routing but sharing
+        # the same base class with VotingClassifier and VotingRegressor.
+        fit_params = dict()
+        if sample_weight is not None:
+            fit_params["sample_weight"] = sample_weight
+
         stack_method = [self.stack_method] * len(all_estimators)
 
         if self.cv == "prefit":
@@ -208,7 +222,7 @@ class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble, metaclass=ABCM
             # base estimators will be used in transform, predict, and
             # predict_proba. They are exposed publicly.
             self.estimators_ = Parallel(n_jobs=self.n_jobs)(
-                delayed(_fit_single_estimator)(clone(est), X, y, sample_weight)
+                delayed(_fit_single_estimator)(clone(est), X, y, fit_params)
                 for est in all_estimators
                 if est != "drop"
             )
@@ -247,9 +261,6 @@ class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble, metaclass=ABCM
             if hasattr(cv, "random_state") and cv.random_state is None:
                 cv.random_state = np.random.RandomState()
 
-            fit_params = (
-                {"sample_weight": sample_weight} if sample_weight is not None else None
-            )
             predictions = Parallel(n_jobs=self.n_jobs)(
                 delayed(cross_val_predict)(
                     clone(est),
@@ -274,9 +285,7 @@ class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble, metaclass=ABCM
         ]
 
         X_meta = self._concatenate_predictions(X, predictions)
-        _fit_single_estimator(
-            self.final_estimator_, X_meta, y, sample_weight=sample_weight
-        )
+        _fit_single_estimator(self.final_estimator_, X_meta, y, fit_params=fit_params)
 
         return self
 
