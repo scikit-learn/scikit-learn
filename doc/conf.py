@@ -889,18 +889,28 @@ else:
 
 from sklearn._min_dependencies import dependent_packages
 
-# (file name without suffix, kwargs for rendering)
+# (template name, file name, kwargs for rendering)
 rst_templates = [
-    ("index", {"is_devrelease": parsed_version.is_devrelease}),
-    ("min_dependency_table", {"dependent_packages": dependent_packages}),
-    ("min_dependency_substitutions", {"dependent_packages": dependent_packages}),
+    ("index", "index", {"is_devrelease": parsed_version.is_devrelease}),
+    (
+        "min_dependency_table",
+        "min_dependency_table",
+        {"dependent_packages": dependent_packages},
+    ),
+    (
+        "min_dependency_substitutions",
+        "min_dependency_substitutions",
+        {"dependent_packages": dependent_packages},
+    ),
 ]
 
-for target_name, kwargs in rst_templates:
+for rst_template_name, rst_target_name, kwargs in rst_templates:
     # Read the corresponding template file into jinja2
-    with (Path(".") / f"{target_name}.rst.template").open("r", encoding="utf-8") as f:
+    with (Path(".") / f"{rst_template_name}.rst.template").open(
+        "r", encoding="utf-8"
+    ) as f:
         t = jinja2.Template(f.read())
 
     # Render the template and write to the target
-    with (Path(".") / f"{target_name}.rst").open("w", encoding="utf-8") as f:
+    with (Path(".") / f"{rst_target_name}.rst").open("w", encoding="utf-8") as f:
         f.write(t.render(**kwargs))
