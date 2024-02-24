@@ -669,6 +669,11 @@ class _BaseChain(BaseEstimator, metaclass=ABCMeta):
         hstack = sp.hstack if sp.issparse(X) else np.hstack
         for chain_idx, estimator in enumerate(self.estimators_):
             previous_predictions = Y_feature_chain[:, :chain_idx]
+            # if `X` is a scipy sparse dok_array, we convert it to a sparse
+            # coo_array format before hstacking, it's faster; see
+            # https://github.com/scipy/scipy/issues/20060#issuecomment-1937007039:
+            if not sp.isspmatrix(X) and X.format == "dok":
+                X = sp.coo_array(X)
             X_aug = hstack((X, previous_predictions))
 
             feature_predictions, _ = _get_response_values(
