@@ -15,7 +15,6 @@ https://repo.anaconda.com/pkgs/main/linux-64/_openmp_mutex-5.1-1_gnu.conda#71d28
 https://repo.anaconda.com/pkgs/main/linux-64/libgcc-ng-11.2.0-h1234567_1.conda#a87728dabf3151fb9cfa990bd2eb0464
 https://repo.anaconda.com/pkgs/main/linux-64/expat-2.5.0-h6a678d5_0.conda#9a21d99d49a0a556cf9590430dec8ec0
 https://repo.anaconda.com/pkgs/main/linux-64/fftw-3.3.9-h27cfd23_1.conda#d266674fbd3345d45a69896e1bdef8be
-https://repo.anaconda.com/pkgs/main/linux-64/giflib-5.2.1-h5eee18b_3.conda#aa7d64adb3cd8a75d398167f8c29afc3
 https://repo.anaconda.com/pkgs/main/linux-64/icu-73.1-h6a678d5_0.conda#6d09df641fc23f7d277a04dc7ea32dd4
 https://repo.anaconda.com/pkgs/main/linux-64/jpeg-9e-h5eee18b_1.conda#ac373800fda872108412d1ccfe3fa572
 https://repo.anaconda.com/pkgs/main/linux-64/lerc-3.0-h295c915_0.conda#b97309770412f10bed8d9448f6f98f87
@@ -27,7 +26,7 @@ https://repo.anaconda.com/pkgs/main/linux-64/libwebp-base-1.3.2-h5eee18b_0.conda
 https://repo.anaconda.com/pkgs/main/linux-64/libxcb-1.15-h7f8727e_0.conda#ada518dcadd6aaee9aae47ba9a671553
 https://repo.anaconda.com/pkgs/main/linux-64/lz4-c-1.9.4-h6a678d5_0.conda#53915e9402180a7f22ea619c41089520
 https://repo.anaconda.com/pkgs/main/linux-64/ncurses-6.4-h6a678d5_0.conda#5558eec6e2191741a92f832ea826251c
-https://repo.anaconda.com/pkgs/main/linux-64/openssl-3.0.12-h7f8727e_0.conda#48caaebab690276acf1bc1f3b56febf4
+https://repo.anaconda.com/pkgs/main/linux-64/openssl-3.0.13-h7f8727e_0.conda#c73d46a4d666da0ae3dcd3fd8f805122
 https://repo.anaconda.com/pkgs/main/linux-64/pcre-8.45-h295c915_0.conda#b32ccc24d1d9808618c1e898da60f68d
 https://repo.anaconda.com/pkgs/main/linux-64/xz-5.4.5-h5eee18b_0.conda#fb0f709ab3eb6ad3538677c327646581
 https://repo.anaconda.com/pkgs/main/linux-64/zlib-1.2.13-h5eee18b_0.conda#333e31fbfbb5057c92fa845ad6adef93
@@ -55,10 +54,9 @@ https://repo.anaconda.com/pkgs/main/linux-64/gst-plugins-base-1.14.1-h6a678d5_1.
 https://repo.anaconda.com/pkgs/main/linux-64/lcms2-2.12-h3be6417_0.conda#719db47afba9f6586eecb5eacac70bff
 https://repo.anaconda.com/pkgs/main/linux-64/libclang-14.0.6-default_hc6dbbc7_1.conda#8f12583c4027b2861cff470f6b8837c4
 https://repo.anaconda.com/pkgs/main/linux-64/libpq-12.17-hdbd6064_0.conda#6bed363e25859faff66bf546a11c10e8
-https://repo.anaconda.com/pkgs/main/linux-64/libwebp-1.3.2-h11a3e52_0.conda#9e0d6c9abdd97b076c66d4cf488589ee
 https://repo.anaconda.com/pkgs/main/linux-64/openjpeg-2.4.0-h3ad879b_0.conda#86baecb47ecaa7f7ff2657a1f03b90c9
 https://repo.anaconda.com/pkgs/main/linux-64/python-3.9.18-h955ad1f_0.conda#65fb745edecf85675ed0487fc54316b5
-https://repo.anaconda.com/pkgs/main/linux-64/certifi-2023.11.17-py39h06a4308_0.conda#0c9e433ce0339763a520ae5663ba352d
+https://repo.anaconda.com/pkgs/main/linux-64/certifi-2024.2.2-py39h06a4308_0.conda#2bc1db9166ecbb968f61252e6f08c2ce
 https://repo.anaconda.com/pkgs/main/noarch/cycler-0.11.0-pyhd3eb1b0_0.conda#f5e365d2cdb66d547eb8c3ab93843aab
 https://repo.anaconda.com/pkgs/main/linux-64/exceptiongroup-1.2.0-py39h06a4308_0.conda#960e2cb83ac5134df8e593a130aa11af
 https://repo.anaconda.com/pkgs/main/noarch/execnet-1.9.0-pyhd3eb1b0_0.conda#f895937671af67cebb8af617494b3513
@@ -66,9 +64,9 @@ https://repo.anaconda.com/pkgs/main/noarch/iniconfig-1.1.1-pyhd3eb1b0_0.tar.bz2#
 https://repo.anaconda.com/pkgs/main/linux-64/joblib-1.2.0-py39h06a4308_0.conda#ac1f5687d70aa1128cbecb26bc9e559d
 https://repo.anaconda.com/pkgs/main/linux-64/kiwisolver-1.4.4-py39h6a678d5_0.conda#3d57aedbfbd054ce57fb3c1e4448828c
 https://repo.anaconda.com/pkgs/main/linux-64/mysql-5.7.24-h721c034_2.conda#dfc19ca2466d275c4c1f73b62c57f37b
-https://repo.anaconda.com/pkgs/main/linux-64/numpy-base-1.21.5-py39h1e6e340_3.conda#8e39e800797e1f967d10a778c129a4f2
+https://repo.anaconda.com/pkgs/main/linux-64/numpy-base-1.21.6-py39h375b286_0.conda#4ceaa5d6e6307fe06961d555f78b266f
 https://repo.anaconda.com/pkgs/main/linux-64/packaging-23.1-py39h06a4308_0.conda#b8179f352917de28dd6bdbbb79e1db3f
-https://repo.anaconda.com/pkgs/main/linux-64/pillow-10.0.1-py39ha6cbd5a_0.conda#a16f050efc583049a46accd497525967
+https://repo.anaconda.com/pkgs/main/linux-64/pillow-10.2.0-py39h5eee18b_0.conda#fca2a1c44d16ec4b8ba71759b4ba9ba4
 https://repo.anaconda.com/pkgs/main/linux-64/pluggy-1.0.0-py39h06a4308_1.conda#fb4fed11ed43cf727dbd51883cc1d9fa
 https://repo.anaconda.com/pkgs/main/linux-64/ply-3.11-py39h06a4308_0.conda#6c89bf6d2fdf6d24126e34cb83fd10f1
 https://repo.anaconda.com/pkgs/main/linux-64/pyparsing-3.0.9-py39h06a4308_0.conda#3a0537468e59760404f63b4f04369828
@@ -81,7 +79,7 @@ https://repo.anaconda.com/pkgs/main/linux-64/tomli-2.0.1-py39h06a4308_0.conda#b0
 https://repo.anaconda.com/pkgs/main/linux-64/tornado-6.3.3-py39h5eee18b_0.conda#9c4bd985bb8adcd12f47e790e95a9333
 https://repo.anaconda.com/pkgs/main/linux-64/wheel-0.41.2-py39h06a4308_0.conda#ec1b8213c3585defaa6042ed2f95861d
 https://repo.anaconda.com/pkgs/main/linux-64/coverage-7.2.2-py39h5eee18b_0.conda#e9da151b7e1f56be2cb569c65949a1d2
-https://repo.anaconda.com/pkgs/main/linux-64/numpy-1.21.5-py39hf838250_3.conda#417289c32cff118816482ae5f17d6c02
+https://repo.anaconda.com/pkgs/main/linux-64/numpy-1.21.6-py39hac523dd_0.conda#a03c1fe16cf2558bca3838062c334d7d
 https://repo.anaconda.com/pkgs/main/linux-64/pip-23.3.1-py39h06a4308_0.conda#685007e3dae59d211620f19926577bd6
 https://repo.anaconda.com/pkgs/main/linux-64/pytest-7.4.0-py39h06a4308_0.conda#99d92a7a39f7e615de84f8cc5606c49a
 https://repo.anaconda.com/pkgs/main/noarch/python-dateutil-2.8.2-pyhd3eb1b0_0.conda#211ee00320b08a1ac9fea6677649f6c9
