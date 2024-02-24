@@ -128,7 +128,9 @@ def internal_minimum_spanning_tree(mr_distances):
     Moulavi, D., Jaskowiak, P.A., Campello, R.J., Zimek, A. and Sander, J.,
     2014. Density-Based Clustering Validation. In SDM (pp. 839-847).
     """
-    single_linkage_data = cluster._hierarchical_fast.mst_linkage_core(mr_distances, None, precomputed=True)
+    single_linkage_data = cluster._hierarchical_fast.mst_linkage_core(
+        mr_distances, None, precomputed=True
+    )
     min_span_tree = single_linkage_data.copy()
     for index, row in enumerate(min_span_tree[1:], 1):
         candidates = np.where(np.isclose(mr_distances[int(row[1])], row[2]))[0]
