@@ -672,7 +672,7 @@ class _BaseChain(BaseEstimator, metaclass=ABCMeta):
             # if `X` is a scipy sparse dok_array, we convert it to a sparse
             # coo_array format before hstacking, it's faster; see
             # https://github.com/scipy/scipy/issues/20060#issuecomment-1937007039:
-            if not sp.isspmatrix(X) and X.format == "dok":
+            if sp.issparse(X) and not sp.isspmatrix(X) and X.format == "dok":
                 X = sp.coo_array(X)
             X_aug = hstack((X, previous_predictions))
 
