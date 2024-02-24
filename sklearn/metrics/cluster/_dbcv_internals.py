@@ -1,7 +1,7 @@
 import numpy as np
 from scipy.spatial.distance import cdist
 
-import ...cluster
+from ... import cluster
 from ..pairwise import pairwise_distances
 
 
