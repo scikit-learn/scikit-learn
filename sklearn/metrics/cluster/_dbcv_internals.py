@@ -1,7 +1,6 @@
 import numpy as np
 from scipy.spatial.distance import cdist
 
-from ... import cluster
 from ..pairwise import pairwise_distances
 
 
@@ -128,7 +127,9 @@ def internal_minimum_spanning_tree(mr_distances):
     Moulavi, D., Jaskowiak, P.A., Campello, R.J., Zimek, A. and Sander, J.,
     2014. Density-Based Clustering Validation. In SDM (pp. 839-847).
     """
-    single_linkage_data = cluster._hierarchical_fast.mst_linkage_core(
+    from ...cluster._hierarchical_fast import mst_linkage_core
+
+    single_linkage_data = mst_linkage_core(
         mr_distances, None, precomputed=True
     )
     min_span_tree = single_linkage_data.copy()
