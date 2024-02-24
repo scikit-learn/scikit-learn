@@ -32,15 +32,22 @@ for a class or function name below, or navigate using the left sidebar.
 {% for section in module_info["sections"] %}
 {% for obj in section["autosummary"] %}
 {% set parts = obj.rsplit(".", 1) %}
+{% if parts|length > 1 %}
+{% set full_module = module + "." + parts[0] %}
+{% else %}
+{% set full_module = module %}
+{% endif %}
   * - :obj:`~{{ module }}.{{ obj }}`
 
     - .. div:: sk-apisearch-desc
+
+        .. currentmodule:: {{ full_module }}
 
         .. autoshortsummary:: {{ module }}.{{ obj }}
 
         .. div:: caption
 
-          :mod:`{{ module }}{% if parts|length > 1 %}.{{ parts[0] }}{% endif %}`
+          :mod:`{{ full_module }}`
 {% endfor %}
 {% endfor %}
 {% endfor %}
@@ -48,15 +55,22 @@ for a class or function name below, or navigate using the left sidebar.
 {% for ver, objs in DEPRECATED_API_REFERENCE %}
 {% for obj in objs %}
 {% set parts = obj.rsplit(".", 1) %}
+{% if parts|length > 1 %}
+{% set full_module = "sklearn." + parts[0] %}
+{% else %}
+{% set full_module = "sklearn" %}
+{% endif %}
   * - :obj:`~sklearn.{{ obj }}`
 
     - .. div:: sk-apisearch-desc
+
+        .. currentmodule:: {{ full_module }}
 
         .. autoshortsummary:: sklearn.{{ obj }}
 
         .. div:: caption
 
-          :mod:`sklearn{% if parts|length > 1 %}.{{ parts[0] }}{% endif %}`
+          :mod:`{{ full_module }}`
           :bdg-ref-danger-line:`Deprecated in version {{ ver }} <api_depr_ref-{{ ver|replace(".", "-") }}>`
 {% endfor %}
 {% endfor %}
