@@ -51,7 +51,7 @@ clean:
 	-rm -rf generated/*
 	-rm -rf modules/generated/
 	-rm -rf css/styles/
-	-rm -rf api/
+	-rm -rf api/*.rst
 
 # Default to SPHINX_NUMJOBS=1 for full documentation build. Using
 # SPHINX_NUMJOBS!=1 may actually slow down the build, or cause weird issues in

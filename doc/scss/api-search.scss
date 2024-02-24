@@ -1,8 +1,7 @@
 /**
  * This is the styling for the API index page (`api/index`), in particular for the API
- * search table. It mainly overrides the style sheet of DataTables which does not fit
- * well with the theme, especially in dark theme.
- * For reference see DataTables: https://datatables.net/
+ * search table. It involves overriding the style sheet of DataTables which does not
+ * fit well into the theme, especially in dark theme; see https://datatables.net/
  */
 
 .dt-container {
@@ -11,14 +10,20 @@
   // Fix the selection box for entries per page
   select.dt-input {
     padding: 0 !important;
-    margin-right: 0.3rem !important;
+    margin-right: 0.4rem !important;
+
+    > option {
+      color: var(--pst-color-text-base);
+      background-color: var(--pst-color-background);
+    }
   }
 
   // Fix the search box
   input.dt-input {
+    width: 50%;
     line-height: normal;
     padding: 0.1rem 0.3rem !important;
-    margin-left: 0.3rem !important;
+    margin-left: 0.4rem !important;
   }
 
   table.dataTable {
@@ -31,12 +36,20 @@
         margin-bottom: 0;
       }
 
-      // Fix the color of up/down sorting buttons in the header
+      // Fix the ascending/descending order buttons in the header
       span.dt-column-order {
         &::before,
         &::after {
           color: var(--pst-color-text-base);
+          line-height: 0.7rem !important;
         }
+      }
+    }
+
+    td {
+      // Fix color of text warning no records found
+      &.dt-empty {
+        color: var(--pst-color-text-base) !important;
       }
     }
 
@@ -72,4 +85,36 @@
       border-color: var(--pst-color-text-base) !important;
     }
   }
+}
+
+// Styling the object description cells in the table
+div.sk-apisearch-desc {
+  p {
+    margin-bottom: 0;
+  }
+
+  div.caption > p {
+    a,
+    code {
+      color: var(--pst-color-text-muted);
+    }
+
+    code {
+      padding: 0;
+      font-size: 0.7rem;
+      font-weight: var(--pst-font-weight-caption);
+      background-color: transparent;
+    }
+
+    .sd-badge {
+      font-size: 0.7rem;
+      margin-left: 0.3rem;
+    }
+  }
+}
+
+// TODO: remove when pydata-sphinx-theme > 0.15.2
+// Hide the empty secondary sidebar that to avoid it taking up space
+div.bd-sidebar-secondary {
+  display: none;
 }

@@ -46,9 +46,7 @@ if "%1" == "clean" (
 	if exist css\styles\ (
 		rmdir /q /s css\styles
 	)
-	if exist api\ (
-		rmdir /q /s api
-	)
+	for %%i in (generated\*.rst) do del /q "%%i"
 	goto end
 )
 

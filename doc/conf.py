@@ -18,6 +18,7 @@ from datetime import datetime
 from io import StringIO
 from pathlib import Path
 
+from sklearn._api_reference import API_REFERENCE, DEPRECATED_API_REFERENCE
 from sklearn.externals._packaging.version import parse
 from sklearn.utils._testing import turn_warnings_into_errors
 
@@ -27,6 +28,7 @@ from sklearn.utils._testing import turn_warnings_into_errors
 # absolute, like shown here.
 sys.path.insert(0, os.path.abspath("sphinxext"))
 
+import jinja2
 import sphinx_gallery
 from github_link import make_linkcode_resolve
 from sphinx_gallery.notebook import add_code_cell, add_markdown_cell
@@ -65,6 +67,7 @@ extensions = [
     "sphinx_design",
     # See sphinxext/
     "allow_nan_estimators",
+    "autoshortsummary",
     "doi_role",
     "move_gallery_links",
     "override_pst_pagetoc",
@@ -285,6 +288,7 @@ html_theme_options = {
     "secondary_sidebar_items": {
         "**": ["page-toc", "sourcelink"],
         "api/index": [],
+        "api/deprecated": [],
     },
     "show_version_warning_banner": True,
     "announcement": [],
@@ -873,78 +877,6 @@ def generate_index_rst():
         f.write(output)
 
 
-def generate_api_reference():
-    """Generate API reference pages, including index and one page for each module."""
-    from sklearn._api_reference import (
-        API_REFERENCE,
-        DEPRECATED_API_REFERENCE,
-        get_api_reference_rst,
-        get_deprecated_api_reference_rst,
-    )
-
-    # Create the directory if it does not already exist
-    api_dir = Path(".") / "api"
-    api_dir.mkdir(exist_ok=True)
-
-    # Write API reference for each module and remove secondary sidebar
-    for module in API_REFERENCE:
-        with (api_dir / f"{module}.rst").open("w") as f:
-            f.write(get_api_reference_rst(module))
-
-    # Write the API reference index page and remove secondary sidebar
-    with (api_dir / "index.rst").open("w") as f:
-        f.write(".. _api_ref:\n\n")
-        f.write("=============\n")
-        f.write("API Reference\n")
-        f.write("=============\n\n")
-        f.write(
-            "This is the class and function reference of scikit-learn. Please refer to "
-            "the :ref:`full user guide <user_guide>` for further details, as the raw "
-            "specifications of classes and functions may not be enough to give full "
-            "guidelines on their uses. For reference on concepts repeated across the "
-            "API, see :ref:`glossary`. Start by searching for a class or function name "
-            "below, or navigate using the left sidebar.\n\n"
-        )
-
-        # Define the toctree
-        f.write(".. toctree::\n")
-        f.write("   :maxdepth: 2\n")
-        f.write("   :hidden:\n\n")
-        sorted_module_names = sorted(API_REFERENCE)
-        for module_name in sorted_module_names:
-            f.write(f"   {module_name}\n")
-        f.write("\n")
-
-        # Write the API search table
-        f.write(".. list-table::\n")
-        f.write("   :header-rows: 1\n")
-        f.write("   :class: apisearch-table\n\n")
-        f.write("   * - Object\n")
-        f.write("     - Module\n")
-        for module_name in sorted_module_names:
-            for section in API_REFERENCE[module_name]["sections"]:
-                for obj_name in section["autosummary"]:
-                    f.write(f"   * - :obj:`~{module_name}.{obj_name}`\n")
-                    parts = obj_name.rsplit(".", 1)
-                    if len(parts) == 1:  # No submodule
-                        f.write(f"     - :mod:`{module_name}`\n")
-                    else:  # len(parts) == 2, [submodule, object]
-                        f.write(f"     - :mod:`{module_name}.{parts[0]}`\n")
-        for ver in sorted(DEPRECATED_API_REFERENCE, key=parse, reverse=True):
-            desc = f":ref:`Deprecated in {ver} <api_depr_{ver.replace('.', '-')}>`"
-            for obj_name in DEPRECATED_API_REFERENCE[ver]:
-                f.write(f"   * - :obj:`~sklearn.{obj_name}`\n")
-                f.write(f"     - {desc}\n")
-        f.write("\n")
-
-        # Write deprecated API
-        if DEPRECATED_API_REFERENCE:
-            f.write("Recently deprecated\n")
-            f.write("===================\n\n")
-            for ver in sorted(DEPRECATED_API_REFERENCE, key=parse, reverse=True):
-                f.write(get_deprecated_api_reference_rst(ver))
-
-
 # Config for sphinx_issues
 
 # we use the issues path for PRs since the issues URL will forward
@@ -1071,7 +1003,7 @@ linkcheck_ignore = [
 
 # Config for sphinx-remove-toctrees
 
-remove_from_toctrees = ["metadata_routing.rst"]
+remove_from_toctrees = ["metadata_routing.rst", "api/deprecated.rst"]
 
 # Use a browser-like user agent to avoid some "403 Client Error: Forbidden for
 # url" errors. This is taken from the variable navigator.userAgent inside a
@@ -1095,4 +1027,55 @@ else:
 generate_index_rst()
 generate_min_dependency_table()
 generate_min_dependency_substitutions()
-generate_api_reference()
+
+
+# Convert the template rst files into actual rst files prior to any sphinx event
+
+# (template name, file name, kwargs for rendering)
+rst_templates = [
+    (
+        "api/index",
+        "api/index",
+        {
+            "API_REFERENCE": sorted(API_REFERENCE.items(), key=lambda x: x[0]),
+            "DEPRECATED_API_REFERENCE": sorted(
+                DEPRECATED_API_REFERENCE.items(), key=lambda x: x[0], reverse=True
+            ),
+        },
+    ),
+]
+
+# Generate the API reference page for each module
+for module in API_REFERENCE:
+    rst_templates.append(
+        (
+            "api/module",
+            f"api/{module}",
+            {"module": module, "module_info": API_REFERENCE[module]},
+        )
+    )
+
+# Generate the deprecated API reference page if there exists deprecated APIs
+if API_REFERENCE:
+    rst_templates.append(
+        (
+            "api/deprecated",
+            "api/deprecated",
+            {
+                "DEPRECATED_API_REFERENCE": sorted(
+                    DEPRECATED_API_REFERENCE.items(), key=lambda x: x[0], reverse=True
+                )
+            },
+        )
+    )
+
+for rst_template_name, rst_target_name, kwargs in rst_templates:
+    # Read the corresponding template file into jinja2
+    with (Path(".") / f"{rst_template_name}.rst.template").open(
+        "r", encoding="utf-8"
+    ) as f:
+        t = jinja2.Template(f.read())
+
+    # Render the template and write to the target
+    with (Path(".") / f"{rst_target_name}.rst").open("w", encoding="utf-8") as f:
+        f.write(t.render(**kwargs))

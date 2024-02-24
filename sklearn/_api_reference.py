@@ -1,13 +1,10 @@
 """Configuration for the API reference documentation."""
 
-from io import StringIO
-
 
 def _get_guide(*refs, is_developer=False):
     """Get the rst to refer to user/developer guide.
 
-    `refs` is several references that can be used in the :ref:`...` directive. Note
-    that the generated rst does not include any leading or trailing newlines.
+    `refs` is several references that can be used in the :ref:`...` directive.
     """
     if len(refs) == 1:
         ref_desc = f":ref:`{refs[0]}` section"
@@ -28,15 +25,12 @@ def _get_submodule(module_name, submodule_name):
     `image`, so we get the docstring and hook for `sklearn.feature_extraction.image`
     submodule. `module_name` is used to reset the current module because autosummary
     automatically changes the current module.
-
-    Note that the generated string does not include any leading newlines, but has two
-    trailing newlines to ensure valid rst syntax.
     """
     lines = [
         f".. automodule:: {module_name}.{submodule_name}",
         f".. currentmodule:: {module_name}",
     ]
-    return "\n\n".join(lines) + "\n\n"
+    return "\n\n".join(lines)
 
 
 """
@@ -778,9 +772,11 @@ API_REFERENCE = {
             },
             {
                 "title": "Clustering metrics",
-                "description": _get_submodule(
-                    "sklearn.metrics", "cluster"
-                ) + _get_guide("clustering_evaluation"),
+                "description": (
+                    _get_submodule("sklearn.metrics", "cluster")
+                    + "\n\n"
+                    + _get_guide("clustering_evaluation")
+                ),
                 "autosummary": [
                     "adjusted_mutual_info_score",
                     "adjusted_rand_score",
@@ -811,9 +807,11 @@ API_REFERENCE = {
             },
             {
                 "title": "Pairwise metrics",
-                "description": _get_submodule(
-                    "sklearn.metrics", "pairwise"
-                ) + _get_guide("metrics"),
+                "description": (
+                    _get_submodule("sklearn.metrics", "pairwise")
+                    + "\n\n"
+                    + _get_guide("metrics")
+                ),
                 "autosummary": [
                     "pairwise.additive_chi2_kernel",
                     "pairwise.chi2_kernel",
@@ -1242,9 +1240,11 @@ API_REFERENCE = {
             },
             {
                 "title": "Metadata routing",
-                "description": _get_submodule(
-                    "sklearn.utils", "metadata_routing"
-                ) + _get_guide("metadata_routing"),
+                "description": (
+                    _get_submodule("sklearn.utils", "metadata_routing")
+                    + "\n\n"
+                    + _get_guide("metadata_routing")
+                ),
                 "autosummary": [
                     "metadata_routing.MetadataRequest",
                     "metadata_routing.MetadataRouter",
@@ -1258,8 +1258,6 @@ API_REFERENCE = {
                 "description": _get_submodule("sklearn.utils", "discovery"),
                 "autosummary": [
                     "discovery.all_displays",
-                    "discovery.all_estimators",
-                    "discovery.all_functions",
                 ],
             },
             {
@@ -1276,8 +1274,6 @@ API_REFERENCE = {
                 "autosummary": [
                     "parallel.Parallel",
                     "parallel.delayed",
-                    "parallel_backend",
-                    "register_parallel_backend",
                 ],
             },
         ],
@@ -1320,80 +1316,13 @@ DEPRECATED_API_REFERENCE = {
 }
 """
 
-DEPRECATED_API_REFERENCE = {}  # type: ignore
-
-
-def _write_autosummary_rst(autosummary, f):
-    """Write the autosummary rst to a text stream."""
-    f.write(".. autosummary::\n")
-    f.write("   :nosignatures:\n")
-    f.write("   :toctree: ../modules/generated/\n")
-    f.write("   :template: base.rst\n\n")
-    for entry in sorted(autosummary):
-        f.write(f"   {entry}\n")
-    f.write("\n")
-
-
-def get_api_reference_rst(module_name):
-    """Get the API reference rst for a module."""
-    output = StringIO()
-
-    module_info = API_REFERENCE[module_name]
-    if module_name == "sklearn":
-        subname = None
-    else:
-        assert module_name.startswith("sklearn.")
-        subname = module_name[8:]
-
-    # Print the cross-reference hook
-    if subname is not None:
-        output.write(f".. _{subname}_ref:\n\n")
-
-    # Print the top-level heading
-    output.write(f"{module_name}\n")
-    output.write("=" * len(module_name) + "\n\n")
-
-    # Print the module docstring
-    output.write(f".. automodule:: {module_name}\n\n")
-
-    # Print the additional description if it exists
-    if module_info["description"] is not None:
-        output.write(module_info["description"] + "\n\n")
-
-    for section in module_info["sections"]:
-        # Print the cross-reference hook
-        section_title = section["title"]
-        if section_title is not None and subname is not None:
-            section_refname = section_title.lower().replace(" ", "-")
-            output.write(f".. _{subname}_ref-{section_refname}:\n\n")
-
-        # Print the title if it exists
-        if section_title is not None:
-            output.write(section_title + "\n")
-            output.write("-" * len(section_title) + "\n\n")
-
-        # Print the additional description if it exists
-        section_description = section.get("description", None)
-        if section_description is not None:
-            output.write(section_description + "\n\n")
-
-        # Print the autosummary
-        _write_autosummary_rst(section["autosummary"], output)
-
-    return output.getvalue()
-
-
-def get_deprecated_api_reference_rst(version):
-    """Print the deprecated API reference for a version."""
-    output = StringIO()
-
-    output.write(f".. _api_depr_{version.replace('.', '-')}:\n\n")
-    output.write(f".. rubric:: To be removed in {version}\n\n")
-
-    # Set current module to sklearn
-    output.write(".. currentmodule:: sklearn\n\n")
-
-    # Print the autosummary
-    _write_autosummary_rst(DEPRECATED_API_REFERENCE[version], output)
-
-    return output.getvalue()
+DEPRECATED_API_REFERENCE = {
+    "1.6": [
+        "utils.parallel_backend",
+        "utils.register_parallel_backend",
+    ],
+    "1.7": [
+        "utils.discovery.all_estimators",
+        "utils.discovery.all_functions",
+    ],
+}  # type: ignore
