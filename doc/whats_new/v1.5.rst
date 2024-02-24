@@ -127,7 +127,7 @@ Changelog
   :class:`linear_model.Lasso` and :class:`linear_model.LassoCV` now explicitly don't
   accept large sparse data formats. :pr:`27576` by :user:`Stefanie Senger
   <StefanieSenger>`.
-  
+
 - |API| :class:`linear_model.RidgeCV` and :class:`linear_model.RidgeClassifierCV`
   will now allow `alpha=0` when `cv != None`, which is consistent with
   :class:`linear_model.Ridge` and :class:`linear_model.RidgeClassifier`.
@@ -180,6 +180,13 @@ Changelog
   that generated that feature. If `False`, `get_feature_names_out` will not
   prefix any feature names and will error if feature names are not unique.
   :pr:`25991` by :user:`Jiawei Zhang <jiawei-zhang-a>`.
+
+:mod:`sklearn.utils`
+....................
+
+- |Fix| :func:`~utils._safe_indexing` now works correctly for polars Series and for
+  polars DataFrame when `indices` is a tuple, boolean mask, or scalar (when `axis=0`).
+  :pr:`28521` by :user:`Yao Xiao <Charlie-XIAO>`.
 
 .. rubric:: Code and documentation contributors
 
