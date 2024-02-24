@@ -66,15 +66,6 @@ from ._regression import (
     root_mean_squared_log_error,
 )
 from ._scorer import check_scoring, get_scorer, get_scorer_names, make_scorer
-from .pairwise import (
-    euclidean_distances,
-    nan_euclidean_distances,
-    pairwise_distances,
-    pairwise_distances_argmin,
-    pairwise_distances_argmin_min,
-    pairwise_distances_chunked,
-    pairwise_kernels,
-)
 from .cluster import (
     adjusted_mutual_info_score,
     adjusted_rand_score,
@@ -92,6 +83,15 @@ from .cluster import (
     silhouette_samples,
     silhouette_score,
     v_measure_score,
+)
+from .pairwise import (
+    euclidean_distances,
+    nan_euclidean_distances,
+    pairwise_distances,
+    pairwise_distances_argmin,
+    pairwise_distances_argmin_min,
+    pairwise_distances_chunked,
+    pairwise_kernels,
 )
 
 __all__ = [
