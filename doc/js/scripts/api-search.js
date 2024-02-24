@@ -7,6 +7,6 @@ document.addEventListener("DOMContentLoaded", function () {
   new DataTable("table.apisearch-table", {
     order: [], // Keep original order
     lengthMenu: [10, 25, 50, 100, { label: "All", value: -1 }],
-    pageLength: 100, // Show 100 entries by default
+    pageLength: -1, // Show all entries by default
   });
 });

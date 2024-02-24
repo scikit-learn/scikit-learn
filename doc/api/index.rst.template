@@ -57,6 +57,6 @@ for a class or function name below, or navigate using the left sidebar.
         .. div:: caption
 
           :mod:`sklearn{% if parts|length > 1 %}.{{ parts[0] }}{% endif %}`
-          :bdg-ref-danger:`Deprecated in version {{ ver }} <api_depr_ref-{{ ver|replace(".", "-") }}>`
+          :bdg-ref-danger-line:`Deprecated in version {{ ver }} <api_depr_ref-{{ ver|replace(".", "-") }}>`
 {% endfor %}
 {% endfor %}
