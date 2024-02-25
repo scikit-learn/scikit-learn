@@ -189,8 +189,10 @@ class DBSCAN(ClusterMixin, BaseEstimator):
     Finds core samples of high density and expands clusters from them.
     Good for data which contains clusters of similar density.
 
-    The worst case memory complexity of DBSCAN is :math:`O({n}^2)`, which can
-    occur when the `eps` param is large and `min_samples` is low.
+    This implementation has a worst case memory complexity of :math:`O({n}^2)`,
+    which can occur when the `eps` param is large and `min_samples` is low,
+    while the original DBSCAN only uses linear memory.
+    For further details, see the Notes below.
 
     Read more in the :ref:`User Guide <dbscan>`.
 
