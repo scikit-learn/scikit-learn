@@ -890,8 +890,8 @@ def test_matthews_corrcoef():
     # the metric is undefined and the limit doesn't exist, thus should return a nan.
     assert np.isnan(matthews_corrcoef([0, 0, 0, 0], [0, 0, 0, 0]))
 
-    # If either the true or predicted labels contains a single
-    # class (but not both), the metric is undefined but the limit is 0, thus should return a 0.
+    # If either the true or predicted labels contains a single class (but not both),
+    # the metric is undefined but the limit is 0, thus should return a 0.
     assert matthews_corrcoef(y_true, ["a"] * len(y_true)) == 0.0
 
     # These two vectors have 0 correlation and hence mcc should be 0
