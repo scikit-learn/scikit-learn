@@ -131,7 +131,7 @@ Changelog
   :class:`linear_model.Lasso` and :class:`linear_model.LassoCV` now explicitly don't
   accept large sparse data formats. :pr:`27576` by :user:`Stefanie Senger
   <StefanieSenger>`.
-  
+
 - |API| :class:`linear_model.RidgeCV` and :class:`linear_model.RidgeClassifierCV`
   will now allow `alpha=0` when `cv != None`, which is consistent with
   :class:`linear_model.Ridge` and :class:`linear_model.RidgeClassifier`.
@@ -168,6 +168,11 @@ Changelog
 - |API| :func:`metrics.brier_score_loss` deprecated the keyword argument `y_prob`
   in favor of `y_proba`. `y_prob` will be removed in version 1.7.
   :pr:`28092` by :user:`Adam Li <adam2392>`.
+
+- |Enhancement| `silhouette_samples`, `silhouette_score`, `calinski_harabasz_score`,
+  and `davies_bouldin_score` now return sensible value for edge cases instead
+  of raising an error. :pr:`TODO` by :user:`Rafikg <rafikg>` and
+  :user:`Filip Karlo Došilović <fkdosilovic>`.
 
 :mod:`sklearn.model_selection`
 ..............................

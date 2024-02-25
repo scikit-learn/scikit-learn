@@ -23,24 +23,6 @@ from ...utils._param_validation import (
 from ..pairwise import _VALID_METRICS, pairwise_distances, pairwise_distances_chunked
 
 
-def check_number_of_labels(n_labels, n_samples):
-    """Check that number of labels are valid.
-
-    Parameters
-    ----------
-    n_labels : int
-        Number of labels.
-
-    n_samples : int
-        Number of samples.
-    """
-    if not 1 < n_labels < n_samples:
-        raise ValueError(
-            "Number of labels is %d. Valid values are 2 to n_samples - 1 (inclusive)"
-            % n_labels
-        )
-
-
 @validate_params(
     {
         "X": ["array-like", "sparse matrix"],
@@ -60,9 +42,8 @@ def silhouette_score(
     distance (``a``) and the mean nearest-cluster distance (``b``) for each
     sample.  The Silhouette Coefficient for a sample is ``(b - a) / max(a,
     b)``.  To clarify, ``b`` is the distance between a sample and the nearest
-    cluster that the sample is not a part of.
-    Note that Silhouette Coefficient is only defined if number of labels
-    is ``2 <= n_labels <= n_samples - 1``.
+    cluster that the sample is not a part of. If `n_labels == 1` or
+    `n_labels == n_samples`, the function returns -1.
 
     This function returns the mean Silhouette Coefficient over all samples.
     To obtain the values for each sample, use :func:`silhouette_samples`.
@@ -215,9 +196,8 @@ def silhouette_samples(X, labels, *, metric="euclidean", **kwds):
     The Silhouette Coefficient is calculated using the mean intra-cluster
     distance (``a``) and the mean nearest-cluster distance (``b``) for each
     sample.  The Silhouette Coefficient for a sample is ``(b - a) / max(a,
-    b)``.
-    Note that Silhouette Coefficient is only defined if number of labels
-    is 2 ``<= n_labels <= n_samples - 1``.
+    b)``. If `n_labels == 1` or `n_labels == n_samples`, the function
+    returns -1.
 
     This function returns the Silhouette Coefficient for each sample.
 
@@ -296,7 +276,11 @@ def silhouette_samples(X, labels, *, metric="euclidean", **kwds):
     labels = le.fit_transform(labels)
     n_samples = len(labels)
     label_freqs = np.bincount(labels)
-    check_number_of_labels(len(le.classes_), n_samples)
+
+    # Do not raise an error when le.classes_ = 1 or le.classes_ = n_samples,
+    # instead return the worst score = -1
+    if len(le.classes_) == 1 or len(le.classes_) == n_samples:
+        return -1.0
 
     kwds["metric"] = metric
     reduce_func = functools.partial(
@@ -332,6 +316,8 @@ def calinski_harabasz_score(X, labels):
 
     The score is defined as ratio of the sum of between-cluster dispersion and
     of within-cluster dispersion.
+
+    If `n_labels == 1` or `n_labels == n_samples`, the function returns 0.
 
     Read more in the :ref:`User Guide <calinski_harabasz_index>`.
 
@@ -372,7 +358,10 @@ def calinski_harabasz_score(X, labels):
     n_samples, _ = X.shape
     n_labels = len(le.classes_)
 
-    check_number_of_labels(n_labels, n_samples)
+    # Do not raise an error when le.classes_ = 1 or le.classes_ = n_samples,
+    # instead return the worst score = 0.
+    if len(le.classes_) == 1 or len(le.classes_) == n_samples:
+        return 0.0
 
     extra_disp, intra_disp = 0.0, 0.0
     mean = np.mean(X, axis=0)
@@ -405,6 +394,7 @@ def davies_bouldin_score(X, labels):
     apart and less dispersed will result in a better score.
 
     The minimum score is zero, with lower values indicating better clustering.
+    If `n_labels == 1` or `n_labels == n_samples`, the function returns np.inf.
 
     Read more in the :ref:`User Guide <davies-bouldin_index>`.
 
@@ -445,7 +435,11 @@ def davies_bouldin_score(X, labels):
     labels = le.fit_transform(labels)
     n_samples, _ = X.shape
     n_labels = len(le.classes_)
-    check_number_of_labels(n_labels, n_samples)
+
+    # Do not raise an error when le.classes_ = 1 or le.classes_ = n_samples,
+    # instead return the worst score = np.inf
+    if len(le.classes_) == 1 or len(le.classes_) == n_samples:
+        return np.inf
 
     intra_dists = np.zeros(n_labels)
     centroids = np.zeros((n_labels, len(X[0])), dtype=float)
