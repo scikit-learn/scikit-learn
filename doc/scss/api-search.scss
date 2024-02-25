@@ -112,9 +112,3 @@ div.sk-apisearch-desc {
     }
   }
 }
-
-// TODO: remove when pydata-sphinx-theme > 0.15.2
-// Hide the empty secondary sidebar that to avoid it taking up space
-div.bd-sidebar-secondary {
-  display: none;
-}

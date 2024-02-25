@@ -1,3 +1,5 @@
+:html_theme.sidebar_secondary.remove: true
+
 {%- if module == "sklearn" -%}
 {%- set module_hook = "sklearn" -%}
 {%- elif module.startswith("sklearn.") -%}

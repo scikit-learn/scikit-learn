@@ -285,11 +285,7 @@ html_theme_options = {
     # https://www.sphinx-doc.org/en/master/usage/configuration.html#confval-exclude_patterns
     # In particular, "**" specifies the default for all pages
     # Use :html_theme.sidebar_secondary.remove: for file-wide removal
-    "secondary_sidebar_items": {
-        "**": ["page-toc", "sourcelink"],
-        "api/index": [],
-        "api/deprecated": [],
-    },
+    "secondary_sidebar_items": {"**": ["page-toc", "sourcelink"]},
     "show_version_warning_banner": True,
     "announcement": [],
 }
