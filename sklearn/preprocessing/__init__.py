@@ -29,6 +29,7 @@ from ._function_transformer import FunctionTransformer
 from ._label import LabelBinarizer, LabelEncoder, MultiLabelBinarizer, label_binarize
 from ._polynomial import PolynomialFeatures, SplineTransformer
 from ._target_encoder import TargetEncoder
+from ._denoiser import PSDDenoiser
 
 __all__ = [
     "Binarizer",
@@ -49,6 +50,7 @@ __all__ = [
     "SplineTransformer",
     "StandardScaler",
     "TargetEncoder",
+    "PSDDenoiser",
     "add_dummy_feature",
     "PolynomialFeatures",
     "binarize",
