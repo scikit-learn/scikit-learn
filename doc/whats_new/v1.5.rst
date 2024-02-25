@@ -48,6 +48,11 @@ more details.
   via their `fit` methods.
   :pr:`28432` by :user:`Adam Li <adam2392>` and :user:`Benjamin Bossan <BenjaminBossan>`.
 
+- |Feature| :class:`ensemble.VotingClassifier` and
+  :class:`ensemble.VotingRegressor` now support metadata routing and pass
+  ``**fit_params`` to the underlying estimators via their `fit` methods.
+  :pr:`27584` by :user:`Stefanie Senger <StefanieSenger>`.
+
 Changelog
 ---------
 
@@ -68,6 +73,10 @@ Changelog
 
 - |Feature| A fitted :class:`compose.ColumnTransformer` now implements `__getitem__`
   which returns the fitted transformers by name. :pr:`27990` by `Thomas Fan`_.
+
+- |ENH| :class:`compose.TransformedTargetRegressor` now raises an error in `fit` if
+  only `inverse_func` is provided without `func` (that would default to identity) being
+  explicitly set as well. :pr:`28483` by :user:`Stefanie Senger <StefanieSenger>`.
 
 :mod:`sklearn.dummy`
 ....................
@@ -118,10 +127,23 @@ Changelog
 :mod:`sklearn.linear_model`
 ...........................
 
+- |Fix| :class:`linear_model.ElasticNet`, :class:`linear_model.ElasticNetCV`,
+  :class:`linear_model.Lasso` and :class:`linear_model.LassoCV` now explicitly don't
+  accept large sparse data formats. :pr:`27576` by :user:`Stefanie Senger
+  <StefanieSenger>`.
+  
 - |API| :class:`linear_model.RidgeCV` and :class:`linear_model.RidgeClassifierCV`
   will now allow `alpha=0` when `cv != None`, which is consistent with
   :class:`linear_model.Ridge` and :class:`linear_model.RidgeClassifier`.
   :pr:`28425` by :user:`Lucy Liu <lucyleeow>`.
+
+:mod:`sklearn.manifold`
+.......................
+
+- |API| Deprecates `n_iter` in favor of `max_iter` in :class:`manifold.TSNE`.
+  `n_iter` will be removed in version 1.7. This makes :class:`manifold.TSNE`
+  consistent with the rest of the estimators. :pr:`28471` by
+  :user:`Lucy Liu <lucyleeow>`
 
 :mod:`sklearn.metrics`
 ......................
@@ -153,13 +175,12 @@ Changelog
 - |Enhancement| :term:`CV splitters <CV splitter>` that ignores the group parameter now
   raises a warning when groups are passed in to :term:`split`. :pr:`28210` by
 
-:mod:`sklearn.tree`
-...................
+:mod:`sklearn.multioutput`
+..........................
 
-- |Feature| :class:`tree.ExtraTreeClassifier` and :class:`tree.ExtraTreeRegressor` now support
-  missing-values in the data matrix ``X``. Missing-values are handled by randomly moving all of
-  the samples to the left, or right child node as the tree is traversed. 
-  :pr:`27966` by :user:`Adam Li <adam2392>`.
+- |Enhancement| `chain_method` parameter added to `:class:``multioutput.ClassifierChain`.
+  :pr:`27700` by :user:`Lucy Liu <lucyleeow>`.
+
 
 :mod:`sklearn.pipeline`
 .......................
@@ -170,6 +191,14 @@ Changelog
   that generated that feature. If `False`, `get_feature_names_out` will not
   prefix any feature names and will error if feature names are not unique.
   :pr:`25991` by :user:`Jiawei Zhang <jiawei-zhang-a>`.
+
+:mod:`sklearn.tree`
+...................
+
+- |Feature| :class:`tree.ExtraTreeClassifier` and :class:`tree.ExtraTreeRegressor` now support
+  missing-values in the data matrix ``X``. Missing-values are handled by randomly moving all of
+  the samples to the left, or right child node as the tree is traversed. 
+  :pr:`27966` by :user:`Adam Li <adam2392>`.
 
 .. rubric:: Code and documentation contributors
 

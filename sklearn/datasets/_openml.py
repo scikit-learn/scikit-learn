@@ -759,7 +759,7 @@ def _valid_data_column_names(features_list, target_columns):
         "return_X_y": [bool],
         "as_frame": [bool, StrOptions({"auto"})],
         "n_retries": [Interval(Integral, 1, None, closed="left")],
-        "delay": [Interval(Real, 0, None, closed="right")],
+        "delay": [Interval(Real, 0.0, None, closed="neither")],
         "parser": [
             StrOptions({"auto", "pandas", "liac-arff"}),
         ],
