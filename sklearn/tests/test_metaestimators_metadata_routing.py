@@ -16,8 +16,6 @@ from sklearn.ensemble import (
     BaggingRegressor,
     StackingClassifier,
     StackingRegressor,
-    VotingClassifier,
-    VotingRegressor,
 )
 from sklearn.exceptions import UnsetMetadataPassedError
 from sklearn.experimental import (
@@ -298,6 +296,24 @@ METAESTIMATORS: list = [
         "y": y,
         "estimator_routing_methods": ["fit"],
     },
+    {
+        "metaestimator": BaggingClassifier,
+        "estimator_name": "estimator",
+        "estimator": ConsumingClassifier,
+        "X": X,
+        "y": y,
+        "preserves_metadata": False,
+        "estimator_routing_methods": ["fit"],
+    },
+    {
+        "metaestimator": BaggingRegressor,
+        "estimator_name": "estimator",
+        "estimator": ConsumingRegressor,
+        "X": X,
+        "y": y,
+        "preserves_metadata": False,
+        "estimator_routing_methods": ["fit"],
+    },
 ]
 """List containing all metaestimators to be tested and their settings
 
@@ -336,8 +352,6 @@ METAESTIMATOR_IDS = [str(row["metaestimator"].__name__) for row in METAESTIMATOR
 UNSUPPORTED_ESTIMATORS = [
     AdaBoostClassifier(),
     AdaBoostRegressor(),
-    BaggingClassifier(),
-    BaggingRegressor(),
     FeatureUnion([]),
     GraphicalLassoCV(),
     RANSACRegressor(),
@@ -350,8 +364,6 @@ UNSUPPORTED_ESTIMATORS = [
     StackingClassifier(ConsumingClassifier()),
     StackingRegressor(ConsumingRegressor()),
     TransformedTargetRegressor(),
-    VotingClassifier(ConsumingClassifier()),
-    VotingRegressor(ConsumingRegressor()),
 ]
 
 
@@ -492,12 +504,11 @@ def test_error_on_missing_requests_for_sub_estimator(metaestimator):
                 scorer.set_score_request(**{key: True})
             val = {"sample_weight": sample_weight, "metadata": metadata}[key]
             method_kwargs = {key: val}
+            instance = cls(**kwargs)
             msg = (
                 f"[{key}] are passed but are not explicitly set as requested or not"
                 f" for {estimator.__class__.__name__}.{method_name}"
             )
-
-            instance = cls(**kwargs)
             with pytest.raises(UnsetMetadataPassedError, match=re.escape(msg)):
                 method = getattr(instance, method_name)
                 method(X, y, **method_kwargs)

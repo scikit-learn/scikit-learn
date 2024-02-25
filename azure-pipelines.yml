@@ -256,6 +256,7 @@ jobs:
         # threaded because by default the tests configuration (sklearn/conftest.py)
         # makes sure that they are single threaded in each xdist subprocess.
         PYTEST_XDIST_VERSION: 'none'
+        PIP_BUILD_ISOLATION: 'true'
 
 - template: build_tools/azure/posix-docker.yml
   parameters:
