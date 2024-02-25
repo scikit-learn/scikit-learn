@@ -503,7 +503,7 @@ class PCA(_BasePCA):
             if issparse(X):
                 self._fit_svd_solver = "arpack"
                 if self.n_components is None:
-                    n_components = n_components - 1
+                    n_components -= 1
             # Small problem or n_components == 'mle', just call full PCA
             elif max(X.shape) <= 500 or n_components == "mle":
                 self._fit_svd_solver = "full"

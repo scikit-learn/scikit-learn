@@ -183,6 +183,7 @@ def test_sparse_pca_solver_error(global_random_seed, svd_solver, sparse_containe
 def test_sparse_pca_auto_arpack_singluar_values_consistency(
     global_random_seed, sparse_container
 ):
+    """Check that "auto" and "arpack" solvers are equivalent for sparse inputs."""
     random_state = np.random.RandomState(global_random_seed)
     X = sparse_container(
         sp.sparse.random(
@@ -191,14 +192,9 @@ def test_sparse_pca_auto_arpack_singluar_values_consistency(
             random_state=random_state,
         )
     )
-    pca_arpack = PCA(n_components=10, svd_solver="arpack")
-    pca_auto = PCA(n_components=10, svd_solver="auto")
-
-    # check the equivalence of pca_arpack.fit and pca_auto.fit
-    X_arpack = pca_arpack.fit(X)
-    X_auto = pca_auto.fit(X)
-
-    assert_allclose(X_arpack.singular_values_, X_auto.singular_values_, rtol=5e-3)
+    pca_arpack = PCA(n_components=10, svd_solver="arpack").fit(X)
+    pca_auto = PCA(n_components=10, svd_solver="auto").fit(X)
+    assert_allclose(pca_arpack.singular_values_, pca_auto.singular_values_, rtol=5e-3)
 
 
 def test_no_empty_slice_warning():

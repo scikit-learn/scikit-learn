@@ -66,10 +66,11 @@ Changelog
 
 :mod:`sklearn.decomposition`
 ............................
-
-- |Enhancement| :class:`decomposition.PCA` now automatically select `arpack` solver
-  for sparse inputs and does not raise error if other solvers are passed.
-  :pr:`28498` by :user:`Thanh Lam Dang <lamdang2k>`.
+- |ENH| :class:`compose.TransformedTargetRegressor` now raises an error in `fit` if
+  only `inverse_func` is provided without `func` (that would default to identity) being
+  explicitly set as well. :pr:`28483` by :user:`Stefanie Senger <StefanieSenger>`.
+- |Enhancement| :class:`~decomposition.PCA` now automatically selects the ARPACK solver
+  for sparse inputs when `svd_solver="auto"` instead of raising an error.
 
 :mod:`sklearn.dummy`
 ....................
