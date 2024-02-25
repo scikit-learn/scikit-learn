@@ -23,13 +23,13 @@ from ._data import (
     robust_scale,
     scale,
 )
+from ._denoiser import PSDDenoiser
 from ._discretization import KBinsDiscretizer
 from ._encoders import OneHotEncoder, OrdinalEncoder
 from ._function_transformer import FunctionTransformer
 from ._label import LabelBinarizer, LabelEncoder, MultiLabelBinarizer, label_binarize
 from ._polynomial import PolynomialFeatures, SplineTransformer
 from ._target_encoder import TargetEncoder
-from ._denoiser import PSDDenoiser
 
 __all__ = [
     "Binarizer",

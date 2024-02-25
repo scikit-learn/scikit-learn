@@ -15,7 +15,7 @@ class PSDDenoiser:
     ----------
     threshold : Optional[Union[int, float, str]], optional
         threshold to create cutoff mask, but any threshold can be applied,
-        if it is precalculated by any method chosen by the process, by default "auto-mean"
+        if it is precalculated by any method chosen by the process, by default auto-mean
         { auto-mean, auto-max }
 
     Examples
