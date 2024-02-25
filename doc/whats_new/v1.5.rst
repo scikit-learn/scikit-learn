@@ -171,7 +171,7 @@ Changelog
 
 - |Enhancement| `silhouette_samples`, `silhouette_score`, `calinski_harabasz_score`,
   and `davies_bouldin_score` now return sensible value for edge cases instead
-  of raising an error. :pr:`TODO` by :user:`Rafikg <rafikg>` and
+  of raising an error. :pr:`28528` by :user:`Rafikg <rafikg>` and
   :user:`Filip Karlo Došilović <fkdosilovic>`.
 
 :mod:`sklearn.model_selection`
