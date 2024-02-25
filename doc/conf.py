@@ -999,7 +999,7 @@ linkcheck_ignore = [
 
 # Config for sphinx-remove-toctrees
 
-remove_from_toctrees = ["metadata_routing.rst", "api/deprecated.rst"]
+remove_from_toctrees = ["metadata_routing.rst"]
 
 # Use a browser-like user agent to avoid some "403 Client Error: Forbidden for
 # url" errors. This is taken from the variable navigator.userAgent inside a

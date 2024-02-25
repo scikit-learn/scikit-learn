@@ -9,8 +9,7 @@ API Reference
 This is the class and function reference of scikit-learn. Please refer to the
 :ref:`full user guide <user_guide>` for further details, as the raw specifications of
 classes and functions may not be enough to give full guidelines on their uses. For
-reference on concepts repeated across the API, see :ref:`glossary`. Start by searching
-for a class or function name below, or navigate using the left sidebar.
+reference on concepts repeated across the API, see :ref:`glossary`.
 
 .. toctree::
   :maxdepth: 2
