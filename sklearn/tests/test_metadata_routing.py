@@ -226,6 +226,29 @@ def test_default_requests():
     assert_request_is_empty(est_request)
 
 
+def test_default_request_override():
+    """Test that default requests are correctly overridden regardless of the ASCII order
+    of the class names, hence testing small and capital letter class name starts.
+    Non-regression test for https://github.com/scikit-learn/scikit-learn/issues/28430
+    """
+
+    class Base(BaseEstimator):
+        __metadata_request__split = {"groups": True}
+
+    class class_1(Base):
+        __metadata_request__split = {"groups": "sample_domain"}
+
+    class Class_1(Base):
+        __metadata_request__split = {"groups": "sample_domain"}
+
+    assert_request_equal(
+        class_1()._get_metadata_request(), {"split": {"groups": "sample_domain"}}
+    )
+    assert_request_equal(
+        Class_1()._get_metadata_request(), {"split": {"groups": "sample_domain"}}
+    )
+
+
 def test_process_routing_invalid_method():
     with pytest.raises(TypeError, match="Can only route and process input"):
         process_routing(ConsumingClassifier(), "invalid_method", groups=my_groups)
@@ -237,6 +260,22 @@ def test_process_routing_invalid_object():
 
     with pytest.raises(AttributeError, match="either implement the routing method"):
         process_routing(InvalidObject(), "fit", groups=my_groups)
+
+
+@pytest.mark.parametrize("method", METHODS)
+@pytest.mark.parametrize("default", [None, "default", []])
+def test_process_routing_empty_params_get_with_default(method, default):
+    empty_params = {}
+    routed_params = process_routing(ConsumingClassifier(), "fit", **empty_params)
+
+    # Behaviour should be an empty dictionary returned for each method when retrieved.
+    params_for_method = routed_params[method]
+    assert isinstance(params_for_method, dict)
+    assert set(params_for_method.keys()) == set(METHODS)
+
+    # No default to `get` should be equivalent to the default
+    default_params_for_method = routed_params.get(method, default=default)
+    assert default_params_for_method == params_for_method
 
 
 def test_simple_metadata_routing():
@@ -640,7 +679,7 @@ def test_estimator_warnings():
                 " 'predict'}], 'router': {'fit': {'sample_weight': None, 'metadata':"
                 " None}, 'partial_fit': {'sample_weight': None, 'metadata': None},"
                 " 'predict': {'sample_weight': None, 'metadata': None}, 'score':"
-                " {'sample_weight': None}}}}"
+                " {'sample_weight': None, 'metadata': None}}}}"
             ),
         ),
     ],
@@ -754,7 +793,8 @@ def test_metadata_routing_add():
         == "{'est': {'mapping': [{'callee': 'fit', 'caller': 'fit'}], 'router': {'fit':"
         " {'sample_weight': 'weights', 'metadata': None}, 'partial_fit':"
         " {'sample_weight': None, 'metadata': None}, 'predict': {'sample_weight':"
-        " None, 'metadata': None}, 'score': {'sample_weight': None}}}}"
+        " None, 'metadata': None}, 'score': {'sample_weight': None, 'metadata':"
+        " None}}}}"
     )
 
     # adding one with an instance of MethodMapping
@@ -767,7 +807,8 @@ def test_metadata_routing_add():
         == "{'est': {'mapping': [{'callee': 'score', 'caller': 'fit'}], 'router':"
         " {'fit': {'sample_weight': None, 'metadata': None}, 'partial_fit':"
         " {'sample_weight': None, 'metadata': None}, 'predict': {'sample_weight':"
-        " None, 'metadata': None}, 'score': {'sample_weight': True}}}}"
+        " None, 'metadata': None}, 'score': {'sample_weight': True, 'metadata':"
+        " None}}}}"
     )
 
 
