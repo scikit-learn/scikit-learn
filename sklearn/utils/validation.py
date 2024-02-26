@@ -2137,9 +2137,9 @@ def _check_method_params(X, params, indices=None):
 
     method_params_validated = {}
     for param_key, param_value in params.items():
-        if not _is_arraylike(param_value) or _num_samples(param_value) != _num_samples(
-            X
-        ):
+        if not (
+            _is_arraylike(param_value) or sp.isspmatrix(param_value)
+        ) or _num_samples(param_value) != _num_samples(X):
             # Non-indexable pass-through (for now for backward-compatibility).
             # https://github.com/scikit-learn/scikit-learn/issues/15805
             method_params_validated[param_key] = param_value
