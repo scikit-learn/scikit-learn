@@ -430,7 +430,7 @@ def get_init_args(metaestimator_info, sub_estimator_consumes):
             elif sub_estimator_type == "classifier":
                 estimator = NonConsumingClassifier()
             else:
-                raise ValueError("Unpermitted `sub_estimator_type`.")
+                raise ValueError("Unpermitted `sub_estimator_type`.")  # pragma: nocover
         kwargs[estimator_name] = estimator
     if "scorer_name" in metaestimator_info:
         scorer_name = metaestimator_info["scorer_name"]
