@@ -67,6 +67,12 @@ Changelog
     :pr:`123456` by :user:`Joe Bloggs <joeongithub>`.
     where 123455 is the *pull request* number, not the issue number.
 
+:mod:`sklearn.cluster`
+......................
+
+- |FIX| Create copy of precomputed sparse matrix within the `fit` method of
+  :class:`~cluster.OPTICS` to avoid in-place modification of the sparse matrix.
+  :pr:`28491` by :user:`Thanh Lam Dang <lamdang2k>`.
 
 :mod:`sklearn.compose`
 ......................
