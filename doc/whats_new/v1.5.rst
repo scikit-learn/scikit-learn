@@ -74,6 +74,10 @@ Changelog
 - |Feature| A fitted :class:`compose.ColumnTransformer` now implements `__getitem__`
   which returns the fitted transformers by name. :pr:`27990` by `Thomas Fan`_.
 
+- |ENH| :class:`compose.TransformedTargetRegressor` now raises an error in `fit` if
+  only `inverse_func` is provided without `func` (that would default to identity) being
+  explicitly set as well. :pr:`28483` by :user:`Stefanie Senger <StefanieSenger>`.
+
 :mod:`sklearn.dummy`
 ....................
 
@@ -123,10 +127,23 @@ Changelog
 :mod:`sklearn.linear_model`
 ...........................
 
+- |Fix| :class:`linear_model.ElasticNet`, :class:`linear_model.ElasticNetCV`,
+  :class:`linear_model.Lasso` and :class:`linear_model.LassoCV` now explicitly don't
+  accept large sparse data formats. :pr:`27576` by :user:`Stefanie Senger
+  <StefanieSenger>`.
+  
 - |API| :class:`linear_model.RidgeCV` and :class:`linear_model.RidgeClassifierCV`
   will now allow `alpha=0` when `cv != None`, which is consistent with
   :class:`linear_model.Ridge` and :class:`linear_model.RidgeClassifier`.
   :pr:`28425` by :user:`Lucy Liu <lucyleeow>`.
+
+:mod:`sklearn.manifold`
+.......................
+
+- |API| Deprecates `n_iter` in favor of `max_iter` in :class:`manifold.TSNE`.
+  `n_iter` will be removed in version 1.7. This makes :class:`manifold.TSNE`
+  consistent with the rest of the estimators. :pr:`28471` by
+  :user:`Lucy Liu <lucyleeow>`
 
 :mod:`sklearn.metrics`
 ......................
@@ -157,6 +174,12 @@ Changelog
 
 - |Enhancement| :term:`CV splitters <CV splitter>` that ignores the group parameter now
   raises a warning when groups are passed in to :term:`split`. :pr:`28210` by
+
+:mod:`sklearn.multioutput`
+..........................
+
+- |Enhancement| `chain_method` parameter added to `:class:``multioutput.ClassifierChain`.
+  :pr:`27700` by :user:`Lucy Liu <lucyleeow>`.
 
 :mod:`sklearn.pipeline`
 .......................
