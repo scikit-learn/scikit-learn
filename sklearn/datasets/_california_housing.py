@@ -23,6 +23,7 @@ Statistics and Probability Letters, 33 (1997) 291-297.
 
 import logging
 import tarfile
+from numbers import Integral, Real
 from os import PathLike, makedirs, remove
 from os.path import exists
 
@@ -30,7 +31,7 @@ import joblib
 import numpy as np
 
 from ..utils import Bunch
-from ..utils._param_validation import validate_params
+from ..utils._param_validation import Interval, validate_params
 from . import get_data_home
 from ._base import (
     RemoteFileMetadata,
@@ -57,11 +58,19 @@ logger = logging.getLogger(__name__)
         "download_if_missing": ["boolean"],
         "return_X_y": ["boolean"],
         "as_frame": ["boolean"],
+        "n_retries": [Interval(Integral, 1, None, closed="left")],
+        "delay": [Interval(Real, 0.0, None, closed="neither")],
     },
     prefer_skip_nested_validation=True,
 )
 def fetch_california_housing(
-    *, data_home=None, download_if_missing=True, return_X_y=False, as_frame=False
+    *,
+    data_home=None,
+    download_if_missing=True,
+    return_X_y=False,
+    as_frame=False,
+    n_retries=3,
+    delay=1.0,
 ):
     """Load the California housing dataset (regression).
 
@@ -96,6 +105,16 @@ def fetch_california_housing(
         a pandas DataFrame or Series depending on the number of target_columns.
 
         .. versionadded:: 0.23
+
+    n_retries : int, default=3
+        Number of retries when HTTP errors are encountered.
+
+        .. versionadded:: 1.5
+
+    delay : float, default=1.0
+        Number of seconds between retries.
+
+        .. versionadded:: 1.5
 
     Returns
     -------
@@ -154,7 +173,12 @@ def fetch_california_housing(
             "Downloading Cal. housing from {} to {}".format(ARCHIVE.url, data_home)
         )
 
-        archive_path = _fetch_remote(ARCHIVE, dirname=data_home)
+        archive_path = _fetch_remote(
+            ARCHIVE,
+            dirname=data_home,
+            n_retries=n_retries,
+            delay=delay,
+        )
 
         with tarfile.open(mode="r:gz", name=archive_path) as f:
             cal_housing = np.loadtxt(

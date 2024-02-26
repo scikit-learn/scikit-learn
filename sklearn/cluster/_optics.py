@@ -333,6 +333,7 @@ class OPTICS(ClusterMixin, BaseEstimator):
 
         X = self._validate_data(X, dtype=dtype, accept_sparse="csr")
         if self.metric == "precomputed" and issparse(X):
+            X = X.copy()  # copy to avoid in-place modification
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore", SparseEfficiencyWarning)
                 # Set each diagonal to an explicit value so each point is its
