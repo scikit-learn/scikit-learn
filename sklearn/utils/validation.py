@@ -270,7 +270,9 @@ def as_float_array(X, *, copy=True, force_all_finite=True):
 
 def _is_arraylike(x):
     """Returns whether the input is array-like."""
-    return hasattr(x, "__len__") or hasattr(x, "shape") or hasattr(x, "__array__")
+    return (
+        hasattr(x, "__len__") or hasattr(x, "shape") or hasattr(x, "__array__")
+    ) and not sp.isspmatrix(x)
 
 
 def _is_arraylike_not_scalar(array):

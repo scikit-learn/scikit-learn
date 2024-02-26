@@ -523,7 +523,7 @@ class _ArrayLikes(_Constraint):
     """Constraint representing array-likes"""
 
     def is_satisfied_by(self, val):
-        return _is_arraylike_not_scalar(val) and not issparse(val)
+        return _is_arraylike_not_scalar(val)
 
     def __str__(self):
         return "an array-like"
