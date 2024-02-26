@@ -423,7 +423,7 @@ def get_init_args(metaestimator_info, sub_estimator_consumes):
             elif sub_estimator_type == "classifier":
                 estimator = ConsumingClassifier(estimator_registry)
             else:
-                raise ValueError("Unpermitted `sub_estimator_type`.")
+                raise ValueError("Unpermitted `sub_estimator_type`.")  # pragma: nocover
         else:
             if sub_estimator_type == "regressor":
                 estimator = NonConsumingRegressor()
