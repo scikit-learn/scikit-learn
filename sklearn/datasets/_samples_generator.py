@@ -430,6 +430,17 @@ def make_multilabel_classification(
     p_w_c : ndarray of shape (n_features, n_classes)
         The probability of each feature being drawn given each class.
         Only returned if ``return_distributions=True``.
+
+    Examples
+    --------
+    >>> from sklearn.datasets import make_multilabel_classification
+    >>> X, y = make_multilabel_classification(n_labels=3, random_state=42)
+    >>> X.shape
+    (100, 20)
+    >>> y.shape
+    (100, 5)
+    >>> list(y[:3])
+    [array([1, 1, 0, 1, 0]), array([0, 1, 1, 1, 0]), array([0, 1, 0, 0, 0])]
     """
 
     generator = check_random_state(random_state)
@@ -2217,6 +2228,20 @@ def make_checkerboard(
     .. [1] Kluger, Y., Basri, R., Chang, J. T., & Gerstein, M. (2003).
         Spectral biclustering of microarray data: coclustering genes
         and conditions. Genome research, 13(4), 703-716.
+
+    Examples
+    --------
+    >>> from sklearn.datasets import make_checkerboard
+    >>> data, rows, columns = make_checkerboard(shape=(300, 300), n_clusters=10,
+    ...                                         random_state=42)
+    >>> data.shape
+    (300, 300)
+    >>> rows.shape
+    (100, 300)
+    >>> columns.shape
+    (100, 300)
+    >>> print(rows[0][:5], columns[0][:5])
+    [False False False  True False] [False False False False False]
     """
     generator = check_random_state(random_state)
 
