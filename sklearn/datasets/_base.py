@@ -22,7 +22,8 @@ from urllib.request import urlretrieve
 import numpy as np
 
 from ..preprocessing import scale
-from ..utils import Bunch, check_pandas_support, check_random_state
+from ..utils import Bunch, check_random_state
+from ..utils._optional_dependencies import check_pandas_support
 from ..utils._param_validation import Interval, StrOptions, validate_params
 
 DATA_MODULE = "sklearn.datasets.data"
@@ -85,6 +86,11 @@ def clear_data_home(data_home=None):
     data_home : str or path-like, default=None
         The path to scikit-learn data directory. If `None`, the default path
         is `~/scikit_learn_data`.
+
+    Examples
+    --------
+    >>> from sklearn.datasets import clear_data_home
+    >>> clear_data_home()  # doctest: +SKIP
     """
     data_home = get_data_home(data_home)
     shutil.rmtree(data_home)
@@ -233,6 +239,12 @@ def load_files(
             The full description of the dataset.
         filenames: ndarray
             The filenames holding the dataset.
+
+    Examples
+    --------
+    >>> from sklearn.datasets import load_files
+    >>> container_path = "./"
+    >>> load_files(container_path)  # doctest: +SKIP
     """
 
     target = []
@@ -1091,6 +1103,15 @@ def load_diabetes(*, return_X_y=False, as_frame=False, scaled=True):
         representing the features and/or target of a given sample.
 
         .. versionadded:: 0.18
+
+    Examples
+    --------
+    >>> from sklearn.datasets import load_diabetes
+    >>> diabetes = load_diabetes()
+    >>> diabetes.target[:3]
+    array([151.,  75., 141.])
+    >>> diabetes.data.shape
+    (442, 10)
     """
     data_filename = "diabetes_data_raw.csv.gz"
     target_filename = "diabetes_target.csv.gz"

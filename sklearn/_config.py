@@ -41,6 +41,13 @@ def get_config():
     --------
     config_context : Context manager for global scikit-learn configuration.
     set_config : Set global scikit-learn configuration.
+
+    Examples
+    --------
+    >>> import sklearn
+    >>> config = sklearn.get_config()
+    >>> config.keys()
+    dict_keys([...])
     """
     # Return a copy of the threadlocal configuration so that users will
     # not be able to modify the configuration with the returned dict.
@@ -168,6 +175,11 @@ def set_config(
     --------
     config_context : Context manager for global scikit-learn configuration.
     get_config : Retrieve current values of the global configuration.
+
+    Examples
+    --------
+    >>> from sklearn import set_config
+    >>> set_config(display='diagram')  # doctest: +SKIP
     """
     local_config = _get_threadlocal_config()
 
