@@ -885,13 +885,21 @@ else:
         "https://github.com/": {"Authorization": f"token {github_token}"},
     }
 
-# Convert the template rst files into actual rst files prior to any sphinx event
+# -- Convert .rst.template files to .rst ---------------------------------------
 
 from sklearn._min_dependencies import dependent_packages
 
-# (template name, file name, kwargs for rendering)
+# If development build, link to local page in the top navbar; otherwise link to the
+# development version; see https://github.com/scikit-learn/scikit-learn/pull/22550
+if parsed_version.is_devrelease:
+    development_link = "developers/index"
+else:
+    development_link = "https://scikit-learn.org/dev/developers/index.html"
+
+# Define the templates and target files for conversion
+# Each entry is in the format (template name, file name, kwargs for rendering)
 rst_templates = [
-    ("index", "index", {"is_devrelease": parsed_version.is_devrelease}),
+    ("index", "index", {"development_link": development_link}),
     (
         "min_dependency_table",
         "min_dependency_table",

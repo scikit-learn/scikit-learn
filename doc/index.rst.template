@@ -3,14 +3,6 @@
 .. Define the overall structure, that affects the prev-next buttons and the order
    of the sections in the top navbar.
 
-{#- If development build, link to local page; otherwise link to the development -#}
-{#- version; see https://github.com/scikit-learn/scikit-learn/pull/22550 -#}
-{% if is_devrelease -%}
-  {%- set development_link = "developers/index" -%}
-{%- else -%}
-  {%- set development_link = "https://scikit-learn.org/dev/developers/index.html" -%}
-{%- endif %}
-
 .. toctree::
    :hidden:
    :maxdepth: 2
