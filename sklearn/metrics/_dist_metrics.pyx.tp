@@ -999,7 +999,7 @@ cdef class EuclideanDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
     ) except -1 nogil:
         return euclidean_dist{{name_suffix}}(x1, x2, size)
 
-    cdef inline {{INPUT_DTYPE_t}} rdist(self,
+    cdef {{INPUT_DTYPE_t}} rdist(self,
         const {{INPUT_DTYPE_t}}* x1,
         const {{INPUT_DTYPE_t}}* x2,
         intp_t size,
@@ -1018,7 +1018,7 @@ cdef class EuclideanDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
     def dist_to_rdist(self, dist):
         return dist ** 2
 
-    cdef inline {{INPUT_DTYPE_t}} rdist_csr(
+    cdef {{INPUT_DTYPE_t}} rdist_csr(
         self,
         const {{INPUT_DTYPE_t}}* x1_data,
         const int32_t* x1_indices,
@@ -1113,7 +1113,7 @@ cdef class SEuclideanDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
         if X.shape[1] != self.size:
             raise ValueError('SEuclidean dist: size of V does not match')
 
-    cdef inline {{INPUT_DTYPE_t}} rdist(
+    cdef {{INPUT_DTYPE_t}} rdist(
         self,
         const {{INPUT_DTYPE_t}}* x1,
         const {{INPUT_DTYPE_t}}* x2,
@@ -1146,7 +1146,7 @@ cdef class SEuclideanDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
     def dist_to_rdist(self, dist):
         return dist ** 2
 
-    cdef inline {{INPUT_DTYPE_t}} rdist_csr(
+    cdef {{INPUT_DTYPE_t}} rdist_csr(
         self,
         const {{INPUT_DTYPE_t}}* x1_data,
         const int32_t* x1_indices,
@@ -1440,7 +1440,7 @@ cdef class MinkowskiDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
                              f"the number of features ({X.shape[1]}). "
                              f"Currently len(w)={self.size}.")
 
-    cdef inline {{INPUT_DTYPE_t}} rdist(
+    cdef {{INPUT_DTYPE_t}} rdist(
         self,
         const {{INPUT_DTYPE_t}}* x1,
         const {{INPUT_DTYPE_t}}* x2,
@@ -1477,7 +1477,7 @@ cdef class MinkowskiDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
     def dist_to_rdist(self, dist):
         return dist ** self.p
 
-    cdef inline {{INPUT_DTYPE_t}} rdist_csr(
+    cdef {{INPUT_DTYPE_t}} rdist_csr(
         self,
         const {{INPUT_DTYPE_t}}* x1_data,
         const int32_t* x1_indices,
@@ -1629,7 +1629,7 @@ cdef class MahalanobisDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
         if X.shape[1] != self.size:
             raise ValueError('Mahalanobis dist: size of V does not match')
 
-    cdef inline {{INPUT_DTYPE_t}} rdist(
+    cdef {{INPUT_DTYPE_t}} rdist(
         self,
         const {{INPUT_DTYPE_t}}* x1,
         const {{INPUT_DTYPE_t}}* x2,
@@ -1669,7 +1669,7 @@ cdef class MahalanobisDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
     def dist_to_rdist(self, dist):
         return dist ** 2
 
-    cdef inline {{INPUT_DTYPE_t}} rdist_csr(
+    cdef {{INPUT_DTYPE_t}} rdist_csr(
         self,
         const {{INPUT_DTYPE_t}}* x1_data,
         const int32_t* x1_indices,
@@ -2627,7 +2627,7 @@ cdef class HaversineDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
             raise ValueError("Haversine distance only valid "
                              "in 2 dimensions")
 
-    cdef inline {{INPUT_DTYPE_t}} rdist(self,
+    cdef {{INPUT_DTYPE_t}} rdist(self,
         const {{INPUT_DTYPE_t}}* x1,
         const {{INPUT_DTYPE_t}}* x2,
         intp_t size,
@@ -2681,7 +2681,7 @@ cdef class HaversineDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
             size,
         )))
 
-    cdef inline {{INPUT_DTYPE_t}} rdist_csr(
+    cdef {{INPUT_DTYPE_t}} rdist_csr(
         self,
         const {{INPUT_DTYPE_t}}* x1_data,
         const int32_t* x1_indices,
