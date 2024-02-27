@@ -328,7 +328,7 @@ METAESTIMATORS: list = [
     {
         "metaestimator": SelfTrainingClassifier,
         "estimator_name": "base_estimator",
-        "estimator": ConsumingClassifier,
+        "estimator": "classifier",
         "X": X,
         "y": y,
         "preserves_metadata": True,
