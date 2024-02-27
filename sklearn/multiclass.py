@@ -1,5 +1,4 @@
-"""
-The :mod:`sklearn.multiclass` module implements multiclass learning algorithms:
+"""Multiclass learning algorithms.
 
 - one-vs-the-rest / one-vs-all
 - one-vs-one

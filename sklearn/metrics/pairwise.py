@@ -1,7 +1,4 @@
-"""
-The :mod:`sklearn.metrics.pairwise` submodule implements metrics for pairwise
-distances and affinity of sets of samples.
-"""
+"""Metrics for pairwise distances and affinity of sets of samples."""
 
 # Authors: Alexandre Gramfort <alexandre.gramfort@inria.fr>
 #          Mathieu Blondel <mathieu@mblondel.org>

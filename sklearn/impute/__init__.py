@@ -1,6 +1,4 @@
-"""
-The :mod:`sklearn.impute` module includes transformers for missing value imputation.
-"""
+"""Transformers for missing value imputation."""
 
 import typing
 

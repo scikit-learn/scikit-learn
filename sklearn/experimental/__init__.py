@@ -1,6 +1,4 @@
-"""
-The :mod:`sklearn.experimental` module provides importable modules that enable
-the use of experimental features or estimators.
+"""Importable modules that enable the use of experimental features or estimators.
 
 .. warning::
 

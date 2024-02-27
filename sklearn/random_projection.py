@@ -1,6 +1,4 @@
-"""
-The :mod:`sklearn.random_projection` modules implements random projection
-transformers.
+"""Random projection transformers.
 
 Random projections are a simple and computationally efficient way to
 reduce the dimensionality of the data by trading a controlled amount

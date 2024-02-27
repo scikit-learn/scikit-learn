@@ -1,7 +1,4 @@
-"""
-The :mod:`sklearn.cross_decomposition` module includes algorithms for cross
-decomposition techniques.
-"""
+"""Algorithms for cross decomposition."""
 
 from ._pls import CCA, PLSSVD, PLSCanonical, PLSRegression
 

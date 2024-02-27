@@ -1,7 +1,4 @@
-"""
-The :mod:`sklearn.model_selection` module includes tools for model selection, such as
-cross validation, hyper-parameter tuning, and dataset splitting.
-"""
+"""Tools for model selection, such as cross validation and hyper-parameter tuning."""
 
 import typing
 

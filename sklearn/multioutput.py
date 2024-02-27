@@ -1,6 +1,4 @@
-"""
-The :mod:`sklearn.multioutput` module implements multioutput regression and
-classification.
+"""Multioutput regression and classification.
 
 The estimators provided in this module are meta-estimators: they require
 a base estimator to be provided in their constructor. The meta-estimator

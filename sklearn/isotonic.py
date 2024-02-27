@@ -1,7 +1,4 @@
-"""
-The :mod:`sklearn.isotonic` module implements isotonic regression for obtaining
-monotonic fit to data.
-"""
+"""Isotonic regression for obtaining monotonic fit to data."""
 
 # Authors: Fabian Pedregosa <fabian@fseoane.net>
 #          Alexandre Gramfort <alexandre.gramfort@inria.fr>

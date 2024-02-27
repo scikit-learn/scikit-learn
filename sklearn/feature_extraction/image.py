@@ -1,7 +1,4 @@
-"""
-The :mod:`sklearn.feature_extraction.image` submodule gathers utilities to
-extract features from images.
-"""
+"""Utilities to extract features from images."""
 
 # Authors: Emmanuelle Gouillart <emmanuelle.gouillart@normalesup.org>
 #          Gael Varoquaux <gael.varoquaux@normalesup.org>
