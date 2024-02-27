@@ -555,17 +555,17 @@ computed using a function of a gradient of the image.
   * :ref:`sphx_glr_auto_examples_cluster_plot_coin_segmentation.py`: Spectral
     clustering to split the image of coins in regions.
 
-  .. |coin_kmeans| image:: ../auto_examples/cluster/images/sphx_glr_plot_coin_segmentation_001.png
-    :target: ../auto_examples/cluster/plot_coin_segmentation.html
-    :scale: 35
+.. |coin_kmeans| image:: ../auto_examples/cluster/images/sphx_glr_plot_coin_segmentation_001.png
+  :target: ../auto_examples/cluster/plot_coin_segmentation.html
+  :scale: 35
 
-  .. |coin_discretize| image:: ../auto_examples/cluster/images/sphx_glr_plot_coin_segmentation_002.png
-    :target: ../auto_examples/cluster/plot_coin_segmentation.html
-    :scale: 35
+.. |coin_discretize| image:: ../auto_examples/cluster/images/sphx_glr_plot_coin_segmentation_002.png
+  :target: ../auto_examples/cluster/plot_coin_segmentation.html
+  :scale: 35
 
-  .. |coin_cluster_qr| image:: ../auto_examples/cluster/images/sphx_glr_plot_coin_segmentation_003.png
-    :target: ../auto_examples/cluster/plot_coin_segmentation.html
-    :scale: 35
+.. |coin_cluster_qr| image:: ../auto_examples/cluster/images/sphx_glr_plot_coin_segmentation_003.png
+  :target: ../auto_examples/cluster/plot_coin_segmentation.html
+  :scale: 35
 
 
 Different label assignment strategies
