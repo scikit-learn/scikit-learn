@@ -527,7 +527,7 @@ def dbcv_score(
     verbose : optional, bool (default False)
         If True additional, informational messages are ommitted via stdout.
         They specifically relate to the subcomponents which the mutual reachability
-        distances emerge from. 
+        distances emerge from.
 
     **kwd_args :
         Extra arguments to pass to the distance computation for other
