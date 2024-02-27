@@ -1,11 +1,9 @@
-"""
-The :mod:`sklearn.utils.multiclass` submodule includes utilities to handle
-multiclass/multioutput target in classifiers.
-"""
+"""Utilities to handle multiclass/multioutput target in classifiers."""
 
 # Author: Arnaud Joly, Joel Nothman, Hamzeh Alsalhi
 #
 # License: BSD 3 clause
+
 import warnings
 from collections.abc import Sequence
 from itertools import chain

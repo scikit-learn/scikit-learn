@@ -1,7 +1,4 @@
-"""
-The :mod:`sklearn.utils.metaestimators` submodule includes utilities for
-meta-estimators.
-"""
+"""Utilities for meta-estimators."""
 
 # Author: Joel Nothman
 #         Andreas Mueller
