@@ -473,8 +473,21 @@ def dbcv_score(
     **kwd_args,
 ):
     """
-    Compute the density based cluster validity index for the
-    clustering specified by `labels` and for each cluster in `labels`.
+    Compute the density based cluster validity index for a clustering.
+
+    Contrary to alternative, more widely used unsupervised clustering
+    metrics, it does not implicitly assume clusters of spherical shape.
+    This is accomplished by circumventing the need for calculating
+    cluster centroids as part of its mathematical definition. Instead,
+    it evaluates the quality of clusters based on the concepts of
+    density separation (highest density area between clusters) and
+    density sparseness (lowest density area within a cluster).
+    These concepts are propped up on the underlying construct of
+    minimum spanning trees, much like the HDBSCAN clustering algorithm.
+    The metric also accounts for noise points as part of its definition.
+    This implementation assumes such points to be labeled with -1.
+
+    The best value that can be returned is 1 and the worst value is -1.
 
     Parameters
     ----------
@@ -487,29 +500,34 @@ def dbcv_score(
         The label array output by the clustering, providing an integral
         cluster label to each data point, with -1 for noise points.
 
-    metric : optional, string (default 'euclidean')
+    metric : optional, str (default 'euclidean')
         The metric used to compute distances for the clustering (and
         to be re-used in computing distances for mr distance). If
         set to `precomputed` then X is assumed to be the precomputed
         distance matrix between samples.
 
-    d : optional, integer (or None) (default None)
+    d : optional, int (or None) (default None)
         The number of features (dimension) of the dataset. This need only
         be set in the case of metric being set to `precomputed`, where
         the ambient dimension of the data is unknown to the function.
 
-    per_cluster_scores : optional, boolean (default False)
+    per_cluster_scores : optional, bool (default False)
         Whether to return the validity index for individual clusters.
         Defaults to False with the function returning a single float
         value for the whole clustering.
 
-    mst_raw_dist : optional, boolean (default False)
+    mst_raw_dist : optional, bool (default False)
         If True, the MST's are constructed solely via 'raw' distances
         (depending on the given metric, e.g. euclidean distances)
         instead of using mutual reachability distances.
         Thus setting this parameter to True avoids using 'all-points-core-distances'.
         This is advantageous specifically in the case of elongated clusters
         that lie in close proximity to each other <citation needed>.
+
+    verbose : optional, bool (default False)
+        If True additional, informational messages are ommitted via stdout.
+        They specifically relate to the subcomponents which the mutual reachability
+        distances emerge from. 
 
     **kwd_args :
         Extra arguments to pass to the distance computation for other
