@@ -67,7 +67,9 @@ def get_data_home(data_home=None) -> str:
     Examples
     --------
     >>> from sklearn.datasets import get_data_home
-    >>> get_data_home()  # doctest: +SKIP
+    >>> data_home_path = get_data_home()
+    >>> os.path.exists(data_home_path)
+    True
     """
     if data_home is None:
         data_home = environ.get("SCIKIT_LEARN_DATA", join("~", "scikit_learn_data"))
