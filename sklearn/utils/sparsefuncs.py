@@ -93,6 +93,26 @@ def inplace_csr_row_scale(X, scale):
 
     scale : ndarray of float of shape (n_samples,)
         Array of precomputed sample-wise values to use for scaling.
+
+    Examples
+    --------
+    >>> from sklearn.utils import sparsefuncs
+    >>> from scipy import sparse
+    >>> import numpy as np
+    >>> indptr = np.array([0, 3, 6, 9])
+    >>> indices = np.array([0, 1, 2, 0, 1, 2, 0, 1, 2])
+    >>> data = np.array([1, 2, 3, 4, 5, 6, 7, 8, 9])
+    >>> scale = np.array([2, 3, 2])
+    >>> csr = sparse.csr_matrix((data, indices, indptr))
+    >>> csr.todense()
+    matrix([[1, 2, 3],
+            [4, 5, 6],
+            [7, 8, 9]])
+    >>> sparsefuncs.inplace_csr_row_scale(csr, scale)
+    >>> csr.todense()
+    matrix([[ 2,  6,  6],
+            [12, 15, 12],
+            [14, 16, 18]])
     """
     assert scale.shape[0] == X.shape[0]
     X.data *= np.repeat(scale, np.diff(X.indptr))
@@ -394,6 +414,28 @@ def inplace_swap_row_csc(X, m, n):
 
     n : int
         Index of the row of X to be swapped.
+
+    Examples
+    --------
+    >>> import scipy as sparse
+    >>> import numpy as np
+    >>> indptr = np.array([0, 2, 4, 4, 5])
+    >>> indices = np.array([0, 1, 0, 1, 2])
+    >>> data = np.array([8, 2, 5, 3, 1])
+    >>> csc = sparse.csc_matrix((data, indices, indptr))
+    >>> csc.todense()
+    matrix([[8, 0, 0],
+            [2, 0, 0],
+            [5, 0, 0],
+            [3, 0, 1],
+            [0, 0, 0]])
+    >>> inplace_swap_row_csc(csc, 0, 2)
+    >>> csc.todense()
+    matrix([[5, 0, 0],
+            [2, 0, 0],
+            [8, 0, 0],
+            [3, 0, 1],
+            [0, 0, 0]])
     """
     for t in [m, n]:
         if isinstance(t, np.ndarray):
@@ -423,6 +465,26 @@ def inplace_swap_row_csr(X, m, n):
 
     n : int
         Index of the row of X to be swapped.
+
+    Examples
+    --------
+    >>> from scipy import sparse
+    >>> import numpy as np
+    >>> indptr = np.array([0, 2, 3, 3, 3])
+    >>> indices = np.array([0, 2, 2])
+    >>> data = np.array([8, 2, 5])
+    >>> csr = sparse.csr_matrix((data, indices, indptr))
+    >>> csr.todense()
+    matrix([[8, 0, 2],
+            [0, 0, 5],
+            [0, 0, 0],
+            [0, 0, 0]])
+    >>> inplace_swap_row_csr(csr, 0, 1)
+    >>> csr.todense()
+    matrix([[0, 0, 5],
+            [8, 0, 2],
+            [0, 0, 0],
+            [0, 0, 0]])
     """
     for t in [m, n]:
         if isinstance(t, np.ndarray):
