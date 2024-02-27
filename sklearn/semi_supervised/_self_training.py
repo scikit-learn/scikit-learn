@@ -192,7 +192,7 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
         # SelfTrainingClassifier.base_estimator is not validated yet
         prefer_skip_nested_validation=False
     )
-    def fit(self, X, y, **fit_params):
+    def fit(self, X, y, **params):
         """
         Fit self-training classifier using `X`, `y` as training data.
 
@@ -205,11 +205,10 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
             Array representing the labels. Unlabeled samples should have the
             label -1.
 
-        **fit_params : dict
+        **params : dict
             Parameters to pass to the underlying estimators.
 
             .. versionadded:: 1.5
-
                 Only available if `enable_metadata_routing=True`,
                 which can be set by using
                 ``sklearn.set_config(enable_metadata_routing=True)``.
@@ -221,7 +220,7 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
         self : object
             Fitted estimator.
         """
-        _raise_for_params(fit_params, self, "fit")
+        _raise_for_params(params, self, "fit")
 
         # we need row slicing support for sparse matrices, but costly finiteness check
         # can be delegated to the base estimator.
@@ -256,10 +255,10 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
             )
 
         if _routing_enabled():
-            routed_params = process_routing(self, "fit", **fit_params)
+            routed_params = process_routing(self, "fit", **params)
         else:
             routed_params = Bunch()
-            routed_params.base_estimator = Bunch(fit=fit_params)
+            routed_params.base_estimator = Bunch(fit={})
 
         self.transduction_ = np.copy(y)
         self.labeled_iter_ = np.full_like(y, -1)
@@ -338,9 +337,11 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
             Parameters to pass to the underlying estimator's predict method.
 
             .. versionadded:: 1.5
-
-            See :ref:`Metadata Routing User Guide <metadata_routing>` for more
-            details.
+                Only available if `enable_metadata_routing=True`,
+                which can be set by using
+                ``sklearn.set_config(enable_metadata_routing=True)``.
+                See :ref:`Metadata Routing User Guide <metadata_routing>` for
+                more details.
 
         Returns
         -------
@@ -355,7 +356,7 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
             routed_params = process_routing(self, "predict", **params)
         else:
             routed_params = Bunch()
-            routed_params.base_estimator = Bunch(predict=params)
+            routed_params.base_estimator = Bunch(predict={})
 
         X = self._validate_data(
             X,
@@ -378,9 +379,11 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
             Parameters to pass to the underlying estimator's predict_proba method.
 
             .. versionadded:: 1.5
-
-            See :ref:`Metadata Routing User Guide <metadata_routing>` for more
-            details.
+                Only available if `enable_metadata_routing=True`,
+                which can be set by using
+                ``sklearn.set_config(enable_metadata_routing=True)``.
+                See :ref:`Metadata Routing User Guide <metadata_routing>` for
+                more details.
 
         Returns
         -------
@@ -395,7 +398,7 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
             routed_params = process_routing(self, "predict_proba", **params)
         else:
             routed_params = Bunch()
-            routed_params.base_estimator = Bunch(predict_proba=params)
+            routed_params.base_estimator = Bunch(predict_proba={})
 
         X = self._validate_data(
             X,
@@ -420,9 +423,11 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
             Parameters to pass to the underlying estimator's decision_function method.
 
             .. versionadded:: 1.5
-
-            See :ref:`Metadata Routing User Guide <metadata_routing>` for more
-            details.
+                Only available if `enable_metadata_routing=True`,
+                which can be set by using
+                ``sklearn.set_config(enable_metadata_routing=True)``.
+                See :ref:`Metadata Routing User Guide <metadata_routing>` for
+                more details.
 
         Returns
         -------
@@ -437,7 +442,7 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
             routed_params = process_routing(self, "decision_function", **params)
         else:
             routed_params = Bunch()
-            routed_params.base_estimator = Bunch(decision_function=params)
+            routed_params.base_estimator = Bunch(decision_function={})
 
         X = self._validate_data(
             X,
@@ -462,9 +467,11 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
             Parameters to pass to the underlying estimator's predict_log_proba method.
 
             .. versionadded:: 1.5
-
-            See :ref:`Metadata Routing User Guide <metadata_routing>` for more
-            details.
+                Only available if `enable_metadata_routing=True`,
+                which can be set by using
+                ``sklearn.set_config(enable_metadata_routing=True)``.
+                See :ref:`Metadata Routing User Guide <metadata_routing>` for
+                more details.
 
         Returns
         -------
@@ -479,7 +486,7 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
             routed_params = process_routing(self, "predict_log_proba", **params)
         else:
             routed_params = Bunch()
-            routed_params.base_estimator = Bunch(predict_log_proba=params)
+            routed_params.base_estimator = Bunch(predict_log_proba={})
 
         X = self._validate_data(
             X,
@@ -507,10 +514,11 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
             Parameters requested and accepted by base estimator's score function.
 
             .. versionadded:: 1.5
-
-            Only available if `enable_metadata_routing=True`. See
-            :ref:`Metadata Routing User Guide <metadata_routing>` for more
-            details.
+                Only available if `enable_metadata_routing=True`,
+                which can be set by using
+                ``sklearn.set_config(enable_metadata_routing=True)``.
+                See :ref:`Metadata Routing User Guide <metadata_routing>` for
+                more details.
 
         Returns
         -------
@@ -525,7 +533,7 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
             routed_params = process_routing(self, "score", **params)
         else:
             routed_params = Bunch()
-            routed_params.base_estimator = Bunch(score=params)
+            routed_params.base_estimator = Bunch(score={})
 
         X = self._validate_data(
             X,
