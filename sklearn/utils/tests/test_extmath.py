@@ -22,6 +22,7 @@ from sklearn.utils._testing import (
     skip_if_32bit,
 )
 from sklearn.utils.extmath import (
+    _approximate_mode,
     _deterministic_vector_sign_flip,
     _incremental_mean_and_var,
     _randomized_eigsh,
@@ -1062,3 +1063,20 @@ def test_safe_sparse_dot_dense_output(dense_output):
     if dense_output:
         expected = expected.toarray()
     assert_allclose_dense_sparse(actual, expected)
+
+
+def test_approximate_mode():
+    """Make sure sklearn.utils.extmath._approximate_mode returns valid
+    results for cases where "class_counts * n_draws" is enough
+    to overflow 32-bit signed integer.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/20774
+    """
+    X = np.array([99000, 1000], dtype=np.int32)
+    ret = _approximate_mode(class_counts=X, n_draws=25000, rng=0)
+
+    # Draws 25% of the total population, so in this case a fair draw means:
+    # 25% * 99.000 = 24.750
+    # 25% *  1.000 =    250
+    assert_array_equal(ret, [24750, 250])

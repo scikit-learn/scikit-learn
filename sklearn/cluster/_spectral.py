@@ -438,7 +438,8 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
 
     gamma : float, default=1.0
         Kernel coefficient for rbf, poly, sigmoid, laplacian and chi2 kernels.
-        Ignored for ``affinity='nearest_neighbors'``.
+        Ignored for ``affinity='nearest_neighbors'``, ``affinity='precomputed'``
+        or ``affinity='precomputed_nearest_neighbors'``.
 
     affinity : str or callable, default='rbf'
         How to construct the affinity matrix.
