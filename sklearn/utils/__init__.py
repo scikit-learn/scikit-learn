@@ -1,24 +1,23 @@
 """Various utilities to help with development."""
 
-import math
 import numbers
 import platform
 import struct
 import timeit
 import warnings
 from collections.abc import Sequence
-from contextlib import contextmanager, suppress
+from contextlib import contextmanager
 from itertools import compress, islice
 
 import numpy as np
 from scipy.sparse import issparse
 
-from .. import get_config
 from ..exceptions import DataConversionWarning
 from . import _joblib, metadata_routing
 from ._bunch import Bunch
+from ._chunking import gen_batches, gen_even_slices
 from ._estimator_html_repr import estimator_html_repr
-from ._param_validation import Integral, Interval, validate_params
+from ._param_validation import Interval, validate_params
 from .class_weight import compute_class_weight, compute_sample_weight
 from .deprecation import deprecated
 from .discovery import all_estimators
@@ -75,6 +74,8 @@ __all__ = [
     "Bunch",
     "metadata_routing",
     "safe_sqr",
+    "gen_batches",
+    "gen_even_slices",
 ]
 
 IS_PYPY = platform.python_implementation() == "PyPy"
@@ -744,132 +745,6 @@ def shuffle(*arrays, random_state=None, n_samples=None):
     )
 
 
-def _chunk_generator(gen, chunksize):
-    """Chunk generator, ``gen`` into lists of length ``chunksize``. The last
-    chunk may have a length less than ``chunksize``."""
-    while True:
-        chunk = list(islice(gen, chunksize))
-        if chunk:
-            yield chunk
-        else:
-            return
-
-
-@validate_params(
-    {
-        "n": [Interval(numbers.Integral, 1, None, closed="left")],
-        "batch_size": [Interval(numbers.Integral, 1, None, closed="left")],
-        "min_batch_size": [Interval(numbers.Integral, 0, None, closed="left")],
-    },
-    prefer_skip_nested_validation=True,
-)
-def gen_batches(n, batch_size, *, min_batch_size=0):
-    """Generator to create slices containing `batch_size` elements from 0 to `n`.
-
-    The last slice may contain less than `batch_size` elements, when
-    `batch_size` does not divide `n`.
-
-    Parameters
-    ----------
-    n : int
-        Size of the sequence.
-    batch_size : int
-        Number of elements in each batch.
-    min_batch_size : int, default=0
-        Minimum number of elements in each batch.
-
-    Yields
-    ------
-    slice of `batch_size` elements
-
-    See Also
-    --------
-    gen_even_slices: Generator to create n_packs slices going up to n.
-
-    Examples
-    --------
-    >>> from sklearn.utils import gen_batches
-    >>> list(gen_batches(7, 3))
-    [slice(0, 3, None), slice(3, 6, None), slice(6, 7, None)]
-    >>> list(gen_batches(6, 3))
-    [slice(0, 3, None), slice(3, 6, None)]
-    >>> list(gen_batches(2, 3))
-    [slice(0, 2, None)]
-    >>> list(gen_batches(7, 3, min_batch_size=0))
-    [slice(0, 3, None), slice(3, 6, None), slice(6, 7, None)]
-    >>> list(gen_batches(7, 3, min_batch_size=2))
-    [slice(0, 3, None), slice(3, 7, None)]
-    """
-    start = 0
-    for _ in range(int(n // batch_size)):
-        end = start + batch_size
-        if end + min_batch_size > n:
-            continue
-        yield slice(start, end)
-        start = end
-    if start < n:
-        yield slice(start, n)
-
-
-@validate_params(
-    {
-        "n": [Interval(Integral, 1, None, closed="left")],
-        "n_packs": [Interval(Integral, 1, None, closed="left")],
-        "n_samples": [Interval(Integral, 1, None, closed="left"), None],
-    },
-    prefer_skip_nested_validation=True,
-)
-def gen_even_slices(n, n_packs, *, n_samples=None):
-    """Generator to create `n_packs` evenly spaced slices going up to `n`.
-
-    If `n_packs` does not divide `n`, except for the first `n % n_packs`
-    slices, remaining slices may contain fewer elements.
-
-    Parameters
-    ----------
-    n : int
-        Size of the sequence.
-    n_packs : int
-        Number of slices to generate.
-    n_samples : int, default=None
-        Number of samples. Pass `n_samples` when the slices are to be used for
-        sparse matrix indexing; slicing off-the-end raises an exception, while
-        it works for NumPy arrays.
-
-    Yields
-    ------
-    `slice` representing a set of indices from 0 to n.
-
-    See Also
-    --------
-    gen_batches: Generator to create slices containing batch_size elements
-        from 0 to n.
-
-    Examples
-    --------
-    >>> from sklearn.utils import gen_even_slices
-    >>> list(gen_even_slices(10, 1))
-    [slice(0, 10, None)]
-    >>> list(gen_even_slices(10, 10))
-    [slice(0, 1, None), slice(1, 2, None), ..., slice(9, 10, None)]
-    >>> list(gen_even_slices(10, 5))
-    [slice(0, 2, None), slice(2, 4, None), ..., slice(8, 10, None)]
-    >>> list(gen_even_slices(10, 3))
-    [slice(0, 4, None), slice(4, 7, None), slice(7, 10, None)]
-    """
-    start = 0
-    for pack_num in range(n_packs):
-        this_n = n // n_packs
-        if pack_num < n % n_packs:
-            this_n += 1
-        if this_n > 0:
-            end = start + this_n
-            if n_samples is not None:
-                end = min(n_samples, end)
-            yield slice(start, end, None)
-            start = end
-
-
 def tosequence(x):
     """Cast iterable x to a Sequence, avoiding a copy if possible.
 
@@ -1011,106 +886,3 @@ def _print_elapsed_time(source, message=None):
         start = timeit.default_timer()
         yield
         print(_message_with_time(source, message, timeit.default_timer() - start))
-
-
-def get_chunk_n_rows(row_bytes, *, max_n_rows=None, working_memory=None):
-    """Calculate how many rows can be processed within `working_memory`.
-
-    Parameters
-    ----------
-    row_bytes : int
-        The expected number of bytes of memory that will be consumed
-        during the processing of each row.
-    max_n_rows : int, default=None
-        The maximum return value.
-    working_memory : int or float, default=None
-        The number of rows to fit inside this number of MiB will be
-        returned. When None (default), the value of
-        ``sklearn.get_config()['working_memory']`` is used.
-
-    Returns
-    -------
-    int
-        The number of rows which can be processed within `working_memory`.
-
-    Warns
-    -----
-    Issues a UserWarning if `row_bytes exceeds `working_memory` MiB.
-    """
-
-    if working_memory is None:
-        working_memory = get_config()["working_memory"]
-
-    chunk_n_rows = int(working_memory * (2**20) // row_bytes)
-    if max_n_rows is not None:
-        chunk_n_rows = min(chunk_n_rows, max_n_rows)
-    if chunk_n_rows < 1:
-        warnings.warn(
-            "Could not adhere to working_memory config. "
-            "Currently %.0fMiB, %.0fMiB required."
-            % (working_memory, np.ceil(row_bytes * 2**-20))
-        )
-        chunk_n_rows = 1
-    return chunk_n_rows
-
-
-def _is_pandas_na(x):
-    """Test if x is pandas.NA.
-
-    We intentionally do not use this function to return `True` for `pd.NA` in
-    `is_scalar_nan`, because estimators that support `pd.NA` are the exception
-    rather than the rule at the moment. When `pd.NA` is more universally
-    supported, we may reconsider this decision.
-
-    Parameters
-    ----------
-    x : any type
-
-    Returns
-    -------
-    boolean
-    """
-    with suppress(ImportError):
-        from pandas import NA
-
-        return x is NA
-
-    return False
-
-
-def is_scalar_nan(x):
-    """Test if x is NaN.
-
-    This function is meant to overcome the issue that np.isnan does not allow
-    non-numerical types as input, and that np.nan is not float('nan').
-
-    Parameters
-    ----------
-    x : any type
-        Any scalar value.
-
-    Returns
-    -------
-    bool
-        Returns true if x is NaN, and false otherwise.
-
-    Examples
-    --------
-    >>> import numpy as np
-    >>> from sklearn.utils import is_scalar_nan
-    >>> is_scalar_nan(np.nan)
-    True
-    >>> is_scalar_nan(float("nan"))
-    True
-    >>> is_scalar_nan(None)
-    False
-    >>> is_scalar_nan("")
-    False
-    >>> is_scalar_nan([np.nan])
-    False
-    """
-    return (
-        not isinstance(x, numbers.Integral)
-        and isinstance(x, numbers.Real)
-        and math.isnan(x)
-    )
