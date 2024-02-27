@@ -941,7 +941,7 @@ rst_templates = [
     ),
 ]
 
-# Generate the API reference page for each module
+# Convert each module API reference page
 for module in API_REFERENCE:
     rst_templates.append(
         (
@@ -951,8 +951,8 @@ for module in API_REFERENCE:
         )
     )
 
-# Generate the deprecated API reference page if there exists deprecated APIs
-if API_REFERENCE:
+# Convert the deprecated API reference page (if there exists any)
+if DEPRECATED_API_REFERENCE:
     rst_templates.append(
         (
             "api/deprecated",
