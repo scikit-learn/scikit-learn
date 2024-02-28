@@ -268,6 +268,13 @@ cdef inline void shift_missing_values_to_left_if_required(
     intp_t[::1] samples,
     intp_t end,
 ) noexcept nogil:
+    """Shift missing value sample indices to the left of the split if required.
+
+    Note: this should always be called at the very end because it will
+    move samples around, thereby affecting the criterion.
+    This affects the computation of the children impurity, which affects
+    the computation of the next node.
+    """
     cdef intp_t i, p, current_end
     # The partitioner partitions the data such that the missing values are in
     # samples[-n_missing:] for the criterion to consume. If the missing values

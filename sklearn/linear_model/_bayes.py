@@ -14,6 +14,7 @@ from scipy import linalg
 from scipy.linalg import pinvh
 
 from ..base import RegressorMixin, _fit_context
+from ..utils import _safe_indexing
 from ..utils._param_validation import Hidden, Interval, StrOptions
 from ..utils.extmath import fast_logdet
 from ..utils.validation import _check_sample_weight
@@ -78,10 +79,9 @@ class BayesianRidge(RegressorMixin, LinearModel):
 
     Parameters
     ----------
-    max_iter : int, default=None
+    max_iter : int, default=300
         Maximum number of iterations over the complete dataset before
-        stopping independently of any early stopping criterion. If `None`, it
-        corresponds to `max_iter=300`.
+        stopping independently of any early stopping criterion.
 
         .. versionchanged:: 1.3
 
@@ -498,8 +498,8 @@ class ARDRegression(RegressorMixin, LinearModel):
 
     Parameters
     ----------
-    max_iter : int, default=None
-        Maximum number of iterations. If `None`, it corresponds to `max_iter=300`.
+    max_iter : int, default=300
+        Maximum number of iterations.
 
         .. versionchanged:: 1.3
 
@@ -849,7 +849,8 @@ class ARDRegression(RegressorMixin, LinearModel):
         if return_std is False:
             return y_mean
         else:
-            X = X[:, self.lambda_ < self.threshold_lambda]
+            col_index = self.lambda_ < self.threshold_lambda
+            X = _safe_indexing(X, indices=col_index, axis=1)
             sigmas_squared_data = (np.dot(X, self.sigma_) * X).sum(axis=1)
             y_std = np.sqrt(sigmas_squared_data + (1.0 / self.alpha_))
             return y_mean, y_std
