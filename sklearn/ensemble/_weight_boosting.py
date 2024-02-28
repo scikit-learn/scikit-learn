@@ -479,7 +479,7 @@ class AdaBoostClassifier(
     >>> clf.score(X, y)
     0.96...
 
-    For an example of using AdaBoost to fit a sequence of DecisionTrees as weak learners,
+    For a detailed example of using AdaBoost to fit a sequence of DecisionTrees as weak learners,
     please refer to :ref:`sphx_glr_auto_examples_ensemble_plot_adaboost_multiclass.py`.
     """
 
