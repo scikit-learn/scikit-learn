@@ -106,6 +106,40 @@ class ContainerAdapterProtocol(Protocol):
             Stacked containers.
         """
 
+    def copy(self, X):
+        """Create a copy of the container.
+
+        Parameters
+        ----------
+        X : container
+            Container to copy.
+
+        Returns
+        -------
+        X_copy : container
+            Copy of the container.
+        """
+
+    def shuffle_column_with_index(self, X, col_idx, shuffling_idx):
+        """Shuffle a column in the container with a specified shuffling order.
+
+        Parameters
+        ----------
+        X : container
+            Container to shuffle column of.
+
+        col_idx : int
+            Index of the column to shuffle.
+
+        shuffling_idx : array-like
+            The shuffling order, i.e., `col` will become `col[shuffling_idx]`.
+
+        Returns
+        -------
+        X_shuffled : container
+            Container with shuffled column.
+        """
+
 
 class PandasAdapter:
     container_lib = "pandas"
@@ -148,6 +182,15 @@ class PandasAdapter:
         pd = check_library_installed("pandas")
         return pd.concat(Xs, axis=1)
 
+    def copy(self, X):
+        return X.copy()
+
+    def shuffle_column_with_index(self, X, col_idx, shuffling_idx):
+        col = X.iloc[shuffling_idx, col_idx]
+        col.index = X.index
+        X[X.columns[col_idx]] = col
+        return X
+
 
 class PolarsAdapter:
     container_lib = "polars"
@@ -178,6 +221,12 @@ class PolarsAdapter:
     def hstack(self, Xs):
         pl = check_library_installed("polars")
         return pl.concat(Xs, how="horizontal")
+
+    def copy(self, X):
+        return X.clone()
+
+    def shuffle_column_with_index(self, X, col_idx, shuffling_idx):
+        return X.with_columns(X.to_series(col_idx)[shuffling_idx])
 
 
 class ContainerAdaptersManager:
