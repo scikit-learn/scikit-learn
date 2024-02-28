@@ -448,6 +448,7 @@ def _locally_linear_embedding(
 
 @validate_params(
     {
+        "X": ["array-like", NearestNeighbors],
         "n_neighbors": [Interval(Integral, 1, None, closed="left")],
         "n_components": [Interval(Integral, 1, None, closed="left")],
         "reg": [Interval(Real, 0, None, closed="left")],
