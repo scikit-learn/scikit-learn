@@ -356,6 +356,10 @@ PARAM_VALIDATION_CLASS_WRAPPER_LIST = [
     ("sklearn.covariance.ledoit_wolf", "sklearn.covariance.LedoitWolf"),
     ("sklearn.covariance.oas", "sklearn.covariance.OAS"),
     ("sklearn.decomposition.dict_learning", "sklearn.decomposition.DictionaryLearning"),
+    (
+        "sklearn.decomposition.dict_learning_online",
+        "sklearn.decomposition.MiniBatchDictionaryLearning",
+    ),
     ("sklearn.decomposition.fastica", "sklearn.decomposition.FastICA"),
     ("sklearn.decomposition.non_negative_factorization", "sklearn.decomposition.NMF"),
     ("sklearn.preprocessing.maxabs_scale", "sklearn.preprocessing.MaxAbsScaler"),
