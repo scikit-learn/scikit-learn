@@ -1,5 +1,10 @@
-import pkgutil
+"""
+The :mod:`sklearn.utils.discovery` module includes utilities to discover
+objects (i.e. estimators, displays, functions) from the `sklearn` package.
+"""
+
 import inspect
+import pkgutil
 from importlib import import_module
 from operator import itemgetter
 from pathlib import Path
@@ -36,17 +41,45 @@ def all_estimators(type_filter=None):
     estimators : list of tuples
         List of (name, class), where ``name`` is the class name as string
         and ``class`` is the actual type of the class.
+
+    Examples
+    --------
+    >>> from sklearn.utils.discovery import all_estimators
+    >>> estimators = all_estimators()
+    >>> type(estimators)
+    <class 'list'>
+    >>> type(estimators[0])
+    <class 'tuple'>
+    >>> estimators[:2]
+    [('ARDRegression', <class 'sklearn.linear_model._bayes.ARDRegression'>),
+     ('AdaBoostClassifier',
+      <class 'sklearn.ensemble._weight_boosting.AdaBoostClassifier'>)]
+    >>> classifiers = all_estimators(type_filter="classifier")
+    >>> classifiers[:2]
+    [('AdaBoostClassifier',
+      <class 'sklearn.ensemble._weight_boosting.AdaBoostClassifier'>),
+     ('BaggingClassifier', <class 'sklearn.ensemble._bagging.BaggingClassifier'>)]
+    >>> regressors = all_estimators(type_filter="regressor")
+    >>> regressors[:2]
+    [('ARDRegression', <class 'sklearn.linear_model._bayes.ARDRegression'>),
+     ('AdaBoostRegressor',
+      <class 'sklearn.ensemble._weight_boosting.AdaBoostRegressor'>)]
+    >>> both = all_estimators(type_filter=["classifier", "regressor"])
+    >>> both[:2]
+    [('ARDRegression', <class 'sklearn.linear_model._bayes.ARDRegression'>),
+     ('AdaBoostClassifier',
+      <class 'sklearn.ensemble._weight_boosting.AdaBoostClassifier'>)]
     """
     # lazy import to avoid circular imports from sklearn.base
-    from . import IS_PYPY
-    from ._testing import ignore_warnings
     from ..base import (
         BaseEstimator,
         ClassifierMixin,
+        ClusterMixin,
         RegressorMixin,
         TransformerMixin,
-        ClusterMixin,
     )
+    from . import IS_PYPY
+    from ._testing import ignore_warnings
 
     def is_abstract(c):
         if not (hasattr(c, "__abstractmethods__")):
@@ -135,6 +168,13 @@ def all_displays():
     displays : list of tuples
         List of (name, class), where ``name`` is the display class name as
         string and ``class`` is the actual type of the class.
+
+    Examples
+    --------
+    >>> from sklearn.utils.discovery import all_displays
+    >>> displays = all_displays()
+    >>> displays[0]
+    ('CalibrationDisplay', <class 'sklearn.calibration.CalibrationDisplay'>)
     """
     # lazy import to avoid circular imports from sklearn.base
     from ._testing import ignore_warnings
@@ -185,6 +225,14 @@ def all_functions():
     functions : list of tuples
         List of (name, function), where ``name`` is the function name as
         string and ``function`` is the actual function.
+
+    Examples
+    --------
+    >>> from sklearn.utils.discovery import all_functions
+    >>> functions = all_functions()
+    >>> name, function = functions[0]
+    >>> name
+    'accuracy_score'
     """
     # lazy import to avoid circular imports from sklearn.base
     from ._testing import ignore_warnings

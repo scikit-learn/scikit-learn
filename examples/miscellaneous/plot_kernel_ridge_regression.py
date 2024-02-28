@@ -40,9 +40,9 @@ X_plot = np.linspace(0, 5, 100000)[:, None]
 # Construct the kernel-based regression models
 # --------------------------------------------
 
+from sklearn.kernel_ridge import KernelRidge
 from sklearn.model_selection import GridSearchCV
 from sklearn.svm import SVR
-from sklearn.kernel_ridge import KernelRidge
 
 train_size = 100
 
@@ -122,7 +122,7 @@ _ = plt.legend()
 # The previous figure compares the learned model of KRR and SVR when both
 # complexity/regularization and bandwidth of the RBF kernel are optimized using
 # grid-search. The learned functions are very similar; however, fitting KRR is
-# approximatively 3-4 times faster than fitting SVR (both with grid-search).
+# approximately 3-4 times faster than fitting SVR (both with grid-search).
 #
 # Prediction of 100000 target values could be in theory approximately three
 # times faster with SVR since it has learned a sparse model using only
@@ -203,6 +203,7 @@ common_params = {
     "scoring": "neg_mean_squared_error",
     "negate_score": True,
     "score_name": "Mean Squared Error",
+    "score_type": "test",
     "std_display_style": None,
     "ax": ax,
 }

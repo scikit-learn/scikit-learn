@@ -11,10 +11,10 @@ This scope allows the bot to create and edit its own issues. It is best to use a
 github account that does **not** have commit access to the public repo.
 """
 
-from pathlib import Path
-import sys
 import argparse
+import sys
 from datetime import datetime, timezone
+from pathlib import Path
 
 import defusedxml.ElementTree as ET
 from github import Github

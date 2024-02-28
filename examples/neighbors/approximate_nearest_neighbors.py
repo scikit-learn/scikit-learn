@@ -40,6 +40,7 @@ except ImportError:
 import joblib
 import numpy as np
 from scipy.sparse import csr_matrix
+
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.datasets import fetch_openml
 from sklearn.utils import shuffle
@@ -102,7 +103,7 @@ class NMSlibTransformer(TransformerMixin, BaseEstimator):
 
 def load_mnist(n_samples):
     """Load MNIST, shuffle the data, and return only n_samples."""
-    mnist = fetch_openml("mnist_784", as_frame=False, parser="pandas")
+    mnist = fetch_openml("mnist_784", as_frame=False)
     X, y = shuffle(mnist.data, mnist.target, random_state=2)
     return X[:n_samples] / 255, y[:n_samples]
 
@@ -155,7 +156,6 @@ transformers = [
 ]
 
 for dataset_name, (X, y) in datasets:
-
     msg = f"Benchmarking on {dataset_name}:"
     print(f"\n{msg}\n" + str("-" * len(msg)))
 
@@ -243,7 +243,6 @@ axes = axes.ravel()
 i_ax = 0
 
 for dataset_name, (X, y) in datasets:
-
     msg = f"Benchmarking on {dataset_name}:"
     print(f"\n{msg}\n" + str("-" * len(msg)))
 

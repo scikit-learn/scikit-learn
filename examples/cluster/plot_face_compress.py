@@ -77,7 +77,11 @@ from sklearn.preprocessing import KBinsDiscretizer
 
 n_bins = 8
 encoder = KBinsDiscretizer(
-    n_bins=n_bins, encode="ordinal", strategy="uniform", random_state=0
+    n_bins=n_bins,
+    encode="ordinal",
+    strategy="uniform",
+    random_state=0,
+    subsample=200_000,
 )
 compressed_raccoon_uniform = encoder.fit_transform(raccoon_face.reshape(-1, 1)).reshape(
     raccoon_face.shape
@@ -99,7 +103,7 @@ _ = fig.suptitle("Raccoon face compressed using 3 bits and a uniform strategy")
 # image is still looking good.
 #
 # We observe that the distribution of pixels values have been mapped to 8
-# different values. We can check the correspondance between such values and the
+# different values. We can check the correspondence between such values and the
 # original pixel values.
 
 bin_edges = encoder.bin_edges_[0]
@@ -122,7 +126,11 @@ for center in bin_center:
 # find a more optimal mapping.
 
 encoder = KBinsDiscretizer(
-    n_bins=n_bins, encode="ordinal", strategy="kmeans", random_state=0
+    n_bins=n_bins,
+    encode="ordinal",
+    strategy="kmeans",
+    random_state=0,
+    subsample=200_000,
 )
 compressed_raccoon_kmeans = encoder.fit_transform(raccoon_face.reshape(-1, 1)).reshape(
     raccoon_face.shape

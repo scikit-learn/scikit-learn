@@ -2,10 +2,9 @@
 # License: BSD 3 clause
 from numbers import Real
 
-from ._stochastic_gradient import BaseSGDClassifier
-from ._stochastic_gradient import BaseSGDRegressor
-from ._stochastic_gradient import DEFAULT_EPSILON
+from ..base import _fit_context
 from ..utils._param_validation import Interval, StrOptions
+from ._stochastic_gradient import DEFAULT_EPSILON, BaseSGDClassifier, BaseSGDRegressor
 
 
 class PassiveAggressiveClassifier(BaseSGDClassifier):
@@ -25,7 +24,7 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
     max_iter : int, default=1000
         The maximum number of passes over the training data (aka epochs).
         It only impacts the behavior in the ``fit`` method, and not the
-        :meth:`partial_fit` method.
+        :meth:`~sklearn.linear_model.PassiveAggressiveClassifier.partial_fit` method.
 
         .. versionadded:: 0.19
 
@@ -36,11 +35,11 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
         .. versionadded:: 0.19
 
     early_stopping : bool, default=False
-        Whether to use early stopping to terminate training when validation.
+        Whether to use early stopping to terminate training when validation
         score is not improving. If set to True, it will automatically set aside
         a stratified fraction of training data as validation and terminate
-        training when validation score is not improving by at least tol for
-        n_iter_no_change consecutive epochs.
+        training when validation score is not improving by at least `tol` for
+        `n_iter_no_change` consecutive epochs.
 
         .. versionadded:: 0.20
 
@@ -220,6 +219,7 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
         self.C = C
         self.loss = loss
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def partial_fit(self, X, y, classes=None):
         """Fit linear model with Passive Aggressive algorithm.
 
@@ -245,7 +245,6 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
             Fitted estimator.
         """
         if not hasattr(self, "classes_"):
-            self._validate_params()
             self._more_validate_params(for_partial_fit=True)
 
             if self.class_weight == "balanced":
@@ -276,6 +275,7 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
             intercept_init=None,
         )
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y, coef_init=None, intercept_init=None):
         """Fit linear model with Passive Aggressive algorithm.
 
@@ -298,7 +298,6 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
         self : object
             Fitted estimator.
         """
-        self._validate_params()
         self._more_validate_params()
 
         lr = "pa1" if self.loss == "hinge" else "pa2"
@@ -332,7 +331,7 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
     max_iter : int, default=1000
         The maximum number of passes over the training data (aka epochs).
         It only impacts the behavior in the ``fit`` method, and not the
-        :meth:`partial_fit` method.
+        :meth:`~sklearn.linear_model.PassiveAggressiveRegressor.partial_fit` method.
 
         .. versionadded:: 0.19
 
@@ -504,6 +503,7 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
         self.C = C
         self.loss = loss
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def partial_fit(self, X, y):
         """Fit linear model with Passive Aggressive algorithm.
 
@@ -521,7 +521,6 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
             Fitted estimator.
         """
         if not hasattr(self, "coef_"):
-            self._validate_params()
             self._more_validate_params(for_partial_fit=True)
 
         lr = "pa1" if self.loss == "epsilon_insensitive" else "pa2"
@@ -538,6 +537,7 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
             intercept_init=None,
         )
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y, coef_init=None, intercept_init=None):
         """Fit linear model with Passive Aggressive algorithm.
 
@@ -560,7 +560,6 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
         self : object
             Fitted estimator.
         """
-        self._validate_params()
         self._more_validate_params()
 
         lr = "pa1" if self.loss == "epsilon_insensitive" else "pa2"

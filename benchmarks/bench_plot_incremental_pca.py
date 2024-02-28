@@ -7,13 +7,15 @@ Benchmarks for IncrementalPCA
 
 """
 
-import numpy as np
 import gc
-from time import time
 from collections import defaultdict
+from time import time
+
 import matplotlib.pyplot as plt
+import numpy as np
+
 from sklearn.datasets import fetch_lfw_people
-from sklearn.decomposition import IncrementalPCA, PCA
+from sklearn.decomposition import PCA, IncrementalPCA
 
 
 def plot_results(X, y, label):

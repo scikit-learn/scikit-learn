@@ -5,24 +5,27 @@ The :mod:`sklearn.pls` module implements Partial Least Squares (PLS).
 # Author: Edouard Duchesnay <edouard.duchesnay@cea.fr>
 # License: BSD 3 clause
 
-from numbers import Integral, Real
-
 import warnings
 from abc import ABCMeta, abstractmethod
+from numbers import Integral, Real
 
 import numpy as np
 from scipy.linalg import svd
 
-from ..base import BaseEstimator, RegressorMixin, TransformerMixin
-from ..base import MultiOutputMixin
-from ..base import ClassNamePrefixFeaturesOutMixin
-from ..utils import check_array, check_consistent_length
-from ..utils.fixes import sp_version
-from ..utils.fixes import parse_version
-from ..utils.extmath import svd_flip
-from ..utils.validation import check_is_fitted, FLOAT_DTYPES
-from ..utils._param_validation import Interval, StrOptions
+from ..base import (
+    BaseEstimator,
+    ClassNamePrefixFeaturesOutMixin,
+    MultiOutputMixin,
+    RegressorMixin,
+    TransformerMixin,
+    _fit_context,
+)
 from ..exceptions import ConvergenceWarning
+from ..utils import check_array, check_consistent_length
+from ..utils._param_validation import Interval, StrOptions
+from ..utils.extmath import svd_flip
+from ..utils.fixes import parse_version, sp_version
+from ..utils.validation import FLOAT_DTYPES, check_is_fitted
 
 __all__ = ["PLSCanonical", "PLSRegression", "PLSSVD"]
 
@@ -208,6 +211,7 @@ class _PLS(
         self.tol = tol
         self.copy = copy
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, Y):
         """Fit model to data.
 
@@ -226,8 +230,6 @@ class _PLS(
         self : object
             Fitted model.
         """
-        self._validate_params()
-
         check_consistent_length(X, Y)
         X = self._validate_data(
             X, dtype=np.float64, copy=self.copy, ensure_min_samples=2
@@ -236,7 +238,10 @@ class _PLS(
             Y, input_name="Y", dtype=np.float64, copy=self.copy, ensure_2d=False
         )
         if Y.ndim == 1:
+            self._predict_1d = True
             Y = Y.reshape(-1, 1)
+        else:
+            self._predict_1d = False
 
         n = X.shape[0]
         p = X.shape[1]
@@ -351,9 +356,8 @@ class _PLS(
             self.y_weights_,
             pinv2(np.dot(self.y_loadings_.T, self.y_weights_), check_finite=False),
         )
-        # TODO(1.3): change `self._coef_` to `self.coef_`
-        self._coef_ = np.dot(self.x_rotations_, self.y_loadings_.T)
-        self._coef_ = (self._coef_ * self._y_std).T
+        self.coef_ = np.dot(self.x_rotations_, self.y_loadings_.T)
+        self.coef_ = (self.coef_ * self._y_std).T
         self.intercept_ = self._y_mean
         self._n_features_out = self.x_rotations_.shape[1]
         return self
@@ -468,9 +472,8 @@ class _PLS(
         # Normalize
         X -= self._x_mean
         X /= self._x_std
-        # TODO(1.3): change `self._coef_` to `self.coef_`
-        Ypred = X @ self._coef_.T
-        return Ypred + self.intercept_
+        Ypred = X @ self.coef_.T + self.intercept_
+        return Ypred.ravel() if self._predict_1d else Ypred
 
     def fit_transform(self, X, y=None):
         """Learn and apply the dimension reduction on the train data.
@@ -492,26 +495,6 @@ class _PLS(
         """
         return self.fit(X, y).transform(X, y)
 
-    @property
-    def coef_(self):
-        """The coefficients of the linear model."""
-        # TODO(1.3): remove and change `self._coef_` to `self.coef_`
-        #            remove catch warnings from `_get_feature_importances`
-        #            delete self._coef_no_warning
-        #            update the docstring of `coef_` and `intercept_` attribute
-        if hasattr(self, "_coef_") and getattr(self, "_coef_warning", True):
-            warnings.warn(
-                "The attribute `coef_` will be transposed in version 1.3 to be "
-                "consistent with other linear models in scikit-learn. Currently, "
-                "`coef_` has a shape of (n_features, n_targets) and in the future it "
-                "will have a shape of (n_targets, n_features).",
-                FutureWarning,
-            )
-            # Only warn the first time
-            self._coef_warning = False
-
-        return self._coef_.T
-
     def _more_tags(self):
         return {"poor_score": True, "requires_y": False}
 
@@ -521,6 +504,9 @@ class PLSRegression(_PLS):
 
     PLSRegression is also known as PLS2 or PLS1, depending on the number of
     targets.
+
+    For a comparison between other cross decomposition algorithms, see
+    :ref:`sphx_glr_auto_examples_cross_decomposition_plot_compare_cross_decomposition.py`.
 
     Read more in the :ref:`User Guide <cross_decomposition>`.
 
@@ -574,16 +560,16 @@ class PLSRegression(_PLS):
     x_rotations_ : ndarray of shape (n_features, n_components)
         The projection matrix used to transform `X`.
 
-    y_rotations_ : ndarray of shape (n_features, n_components)
+    y_rotations_ : ndarray of shape (n_targets, n_components)
         The projection matrix used to transform `Y`.
 
-    coef_ : ndarray of shape (n_features, n_targets)
+    coef_ : ndarray of shape (n_target, n_features)
         The coefficients of the linear model such that `Y` is approximated as
-        `Y = X @ coef_ + intercept_`.
+        `Y = X @ coef_.T + intercept_`.
 
     intercept_ : ndarray of shape (n_targets,)
         The intercepts of the linear model such that `Y` is approximated as
-        `Y = X @ coef_ + intercept_`.
+        `Y = X @ coef_.T + intercept_`.
 
         .. versionadded:: 1.1
 
@@ -613,6 +599,9 @@ class PLSRegression(_PLS):
     >>> pls2.fit(X, Y)
     PLSRegression()
     >>> Y_pred = pls2.predict(X)
+
+    For a comparison between PLS Regression and :class:`~sklearn.decomposition.PCA`, see
+    :ref:`sphx_glr_auto_examples_cross_decomposition_plot_pcr_vs_pls.py`.
     """
 
     _parameter_constraints: dict = {**_PLS._parameter_constraints}
@@ -667,6 +656,9 @@ class PLSRegression(_PLS):
 class PLSCanonical(_PLS):
     """Partial Least Squares transformer and regressor.
 
+    For a comparison between other cross decomposition algorithms, see
+    :ref:`sphx_glr_auto_examples_cross_decomposition_plot_compare_cross_decomposition.py`.
+
     Read more in the :ref:`User Guide <cross_decomposition>`.
 
     .. versionadded:: 0.8
@@ -718,16 +710,16 @@ class PLSCanonical(_PLS):
     x_rotations_ : ndarray of shape (n_features, n_components)
         The projection matrix used to transform `X`.
 
-    y_rotations_ : ndarray of shape (n_features, n_components)
+    y_rotations_ : ndarray of shape (n_targets, n_components)
         The projection matrix used to transform `Y`.
 
-    coef_ : ndarray of shape (n_features, n_targets)
+    coef_ : ndarray of shape (n_targets, n_features)
         The coefficients of the linear model such that `Y` is approximated as
-        `Y = X @ coef_ + intercept_`.
+        `Y = X @ coef_.T + intercept_`.
 
     intercept_ : ndarray of shape (n_targets,)
         The intercepts of the linear model such that `Y` is approximated as
-        `Y = X @ coef_ + intercept_`.
+        `Y = X @ coef_.T + intercept_`.
 
         .. versionadded:: 1.1
 
@@ -797,6 +789,9 @@ class PLSCanonical(_PLS):
 class CCA(_PLS):
     """Canonical Correlation Analysis, also known as "Mode B" PLS.
 
+    For a comparison between other cross decomposition algorithms, see
+    :ref:`sphx_glr_auto_examples_cross_decomposition_plot_compare_cross_decomposition.py`.
+
     Read more in the :ref:`User Guide <cross_decomposition>`.
 
     Parameters
@@ -840,16 +835,16 @@ class CCA(_PLS):
     x_rotations_ : ndarray of shape (n_features, n_components)
         The projection matrix used to transform `X`.
 
-    y_rotations_ : ndarray of shape (n_features, n_components)
+    y_rotations_ : ndarray of shape (n_targets, n_components)
         The projection matrix used to transform `Y`.
 
-    coef_ : ndarray of shape (n_features, n_targets)
+    coef_ : ndarray of shape (n_targets, n_features)
         The coefficients of the linear model such that `Y` is approximated as
-        `Y = X @ coef_ + intercept_`.
+        `Y = X @ coef_.T + intercept_`.
 
     intercept_ : ndarray of shape (n_targets,)
         The intercepts of the linear model such that `Y` is approximated as
-        `Y = X @ coef_ + intercept_`.
+        `Y = X @ coef_.T + intercept_`.
 
         .. versionadded:: 1.1
 
@@ -980,6 +975,7 @@ class PLSSVD(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
         self.scale = scale
         self.copy = copy
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, Y):
         """Fit model to data.
 
@@ -996,8 +992,6 @@ class PLSSVD(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
         self : object
             Fitted estimator.
         """
-        self._validate_params()
-
         check_consistent_length(X, Y)
         X = self._validate_data(
             X, dtype=np.float64, copy=self.copy, ensure_min_samples=2

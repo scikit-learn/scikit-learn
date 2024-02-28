@@ -14,12 +14,14 @@ shrunk_cov = (1-shrinkage)*cov + shrinkage*structured_estimate.
 
 # avoid division truncation
 import warnings
-from numbers import Real, Integral
+from numbers import Integral, Real
+
 import numpy as np
 
-from . import empirical_covariance, EmpiricalCovariance
+from ..base import _fit_context
 from ..utils import check_array
 from ..utils._param_validation import Interval, validate_params
+from . import EmpiricalCovariance, empirical_covariance
 
 
 def _ledoit_wolf(X, *, assume_centered, block_size):
@@ -103,17 +105,18 @@ def _oas(X, *, assume_centered=False):
     {
         "emp_cov": ["array-like"],
         "shrinkage": [Interval(Real, 0, 1, closed="both")],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def shrunk_covariance(emp_cov, shrinkage=0.1):
-    """Calculate a covariance matrix shrunk on the diagonal.
+    """Calculate covariance matrices shrunk on the diagonal.
 
     Read more in the :ref:`User Guide <shrunk_covariance>`.
 
     Parameters
     ----------
-    emp_cov : array-like of shape (n_features, n_features)
-        Covariance matrix to be shrunk.
+    emp_cov : array-like of shape (..., n_features, n_features)
+        Covariance matrices to be shrunk, at least 2D ndarray.
 
     shrinkage : float, default=0.1
         Coefficient in the convex combination used for the computation
@@ -121,8 +124,8 @@ def shrunk_covariance(emp_cov, shrinkage=0.1):
 
     Returns
     -------
-    shrunk_cov : ndarray of shape (n_features, n_features)
-        Shrunk covariance.
+    shrunk_cov : ndarray of shape (..., n_features, n_features)
+        Shrunk covariance matrices.
 
     Notes
     -----
@@ -131,13 +134,26 @@ def shrunk_covariance(emp_cov, shrinkage=0.1):
         (1 - shrinkage) * cov + shrinkage * mu * np.identity(n_features)
 
     where `mu = trace(cov) / n_features`.
-    """
-    emp_cov = check_array(emp_cov)
-    n_features = emp_cov.shape[0]
 
-    mu = np.trace(emp_cov) / n_features
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.datasets import make_gaussian_quantiles
+    >>> from sklearn.covariance import empirical_covariance, shrunk_covariance
+    >>> real_cov = np.array([[.8, .3], [.3, .4]])
+    >>> rng = np.random.RandomState(0)
+    >>> X = rng.multivariate_normal(mean=[0, 0], cov=real_cov, size=500)
+    >>> shrunk_covariance(empirical_covariance(X))
+    array([[0.73..., 0.25...],
+           [0.25..., 0.41...]])
+    """
+    emp_cov = check_array(emp_cov, allow_nd=True)
+    n_features = emp_cov.shape[-1]
+
     shrunk_cov = (1.0 - shrinkage) * emp_cov
-    shrunk_cov.flat[:: n_features + 1] += shrinkage * mu
+    mu = np.trace(emp_cov, axis1=-2, axis2=-1) / n_features
+    mu = np.expand_dims(mu, axis=tuple(range(mu.ndim, emp_cov.ndim)))
+    shrunk_cov += shrinkage * mu * np.eye(n_features)
 
     return shrunk_cov
 
@@ -237,6 +253,7 @@ class ShrunkCovariance(EmpiricalCovariance):
         )
         self.shrinkage = shrinkage
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y=None):
         """Fit the shrunk covariance model to X.
 
@@ -254,7 +271,6 @@ class ShrunkCovariance(EmpiricalCovariance):
         self : object
             Returns the instance itself.
         """
-        self._validate_params()
         X = self._validate_data(X)
         # Not calling the parent object to fit, to avoid a potential
         # matrix inversion when setting the precision
@@ -272,6 +288,14 @@ class ShrunkCovariance(EmpiricalCovariance):
 # Ledoit-Wolf estimator
 
 
+@validate_params(
+    {
+        "X": ["array-like"],
+        "assume_centered": ["boolean"],
+        "block_size": [Interval(Integral, 1, None, closed="left")],
+    },
+    prefer_skip_nested_validation=True,
+)
 def ledoit_wolf_shrinkage(X, assume_centered=False, block_size=1000):
     """Estimate the shrunk Ledoit-Wolf covariance matrix.
 
@@ -304,6 +328,17 @@ def ledoit_wolf_shrinkage(X, assume_centered=False, block_size=1000):
     (1 - shrinkage) * cov + shrinkage * mu * np.identity(n_features)
 
     where mu = trace(cov) / n_features
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.covariance import ledoit_wolf_shrinkage
+    >>> real_cov = np.array([[.4, .2], [.2, .8]])
+    >>> rng = np.random.RandomState(0)
+    >>> X = rng.multivariate_normal(mean=[0, 0], cov=real_cov, size=50)
+    >>> shrinkage_coefficient = ledoit_wolf_shrinkage(X)
+    >>> shrinkage_coefficient
+    0.23...
     """
     X = check_array(X)
     # for only one feature, the result is the same whatever the shrinkage
@@ -367,7 +402,10 @@ def ledoit_wolf_shrinkage(X, assume_centered=False, block_size=1000):
     return shrinkage
 
 
-@validate_params({"X": ["array-like"]})
+@validate_params(
+    {"X": ["array-like"]},
+    prefer_skip_nested_validation=False,
+)
 def ledoit_wolf(X, *, assume_centered=False, block_size=1000):
     """Estimate the shrunk Ledoit-Wolf covariance matrix.
 
@@ -404,6 +442,20 @@ def ledoit_wolf(X, *, assume_centered=False, block_size=1000):
     (1 - shrinkage) * cov + shrinkage * mu * np.identity(n_features)
 
     where mu = trace(cov) / n_features
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.covariance import empirical_covariance, ledoit_wolf
+    >>> real_cov = np.array([[.4, .2], [.2, .8]])
+    >>> rng = np.random.RandomState(0)
+    >>> X = rng.multivariate_normal(mean=[0, 0], cov=real_cov, size=50)
+    >>> covariance, shrinkage = ledoit_wolf(X)
+    >>> covariance
+    array([[0.44..., 0.16...],
+           [0.16..., 0.80...]])
+    >>> shrinkage
+    0.23...
     """
     estimator = LedoitWolf(
         assume_centered=assume_centered,
@@ -526,6 +578,7 @@ class LedoitWolf(EmpiricalCovariance):
         )
         self.block_size = block_size
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y=None):
         """Fit the Ledoit-Wolf shrunk covariance model to X.
 
@@ -542,7 +595,6 @@ class LedoitWolf(EmpiricalCovariance):
         self : object
             Returns the instance itself.
         """
-        self._validate_params()
         # Not calling the parent object to fit, to avoid computing the
         # covariance matrix (and potentially the precision)
         X = self._validate_data(X)
@@ -560,7 +612,10 @@ class LedoitWolf(EmpiricalCovariance):
 
 
 # OAS estimator
-@validate_params({"X": ["array-like"]})
+@validate_params(
+    {"X": ["array-like"]},
+    prefer_skip_nested_validation=False,
+)
 def oas(X, *, assume_centered=False):
     """Estimate covariance with the Oracle Approximating Shrinkage as proposed in [1]_.
 
@@ -607,6 +662,20 @@ def oas(X, *, assume_centered=False):
            Chen, Y., Wiesel, A., Eldar, Y. C., & Hero, A. O.
            IEEE Transactions on Signal Processing, 58(10), 5016-5029, 2010.
            <0907.4698>`
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.covariance import oas
+    >>> rng = np.random.RandomState(0)
+    >>> real_cov = [[.8, .3], [.3, .4]]
+    >>> X = rng.multivariate_normal(mean=[0, 0], cov=real_cov, size=500)
+    >>> shrunk_cov, shrinkage = oas(X)
+    >>> shrunk_cov
+    array([[0.7533..., 0.2763...],
+           [0.2763..., 0.3964...]])
+    >>> shrinkage
+    0.0195...
     """
     estimator = OAS(
         assume_centered=assume_centered,
@@ -715,6 +784,7 @@ class OAS(EmpiricalCovariance):
     0.0195...
     """
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y=None):
         """Fit the Oracle Approximating Shrinkage covariance model to X.
 
@@ -731,8 +801,6 @@ class OAS(EmpiricalCovariance):
         self : object
             Returns the instance itself.
         """
-        self._validate_params()
-
         X = self._validate_data(X)
         # Not calling the parent object to fit, to avoid computing the
         # covariance matrix (and potentially the precision)

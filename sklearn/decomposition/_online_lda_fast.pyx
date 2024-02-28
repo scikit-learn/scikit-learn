@@ -6,7 +6,6 @@ import numpy as np
 cnp.import_array()
 
 from libc.math cimport exp, fabs, log
-from numpy.math cimport EULER
 
 
 def mean_change(const floating[:] arr_1, const floating[:] arr_2):
@@ -90,7 +89,8 @@ def _dirichlet_expectation_2d(const floating[:, :] arr):
 #
 # After: J. Bernardo (1976). Algorithm AS 103: Psi (Digamma) Function.
 # https://www.uv.es/~bernardo/1976AppStatist.pdf
-cdef floating psi(floating x) nogil:
+cdef floating psi(floating x) noexcept nogil:
+    cdef double EULER = 0.577215664901532860606512090082402431
     if x <= 1e-6:
         # psi(x) = -EULER - 1/x + O(x)
         return -EULER - 1. / x
