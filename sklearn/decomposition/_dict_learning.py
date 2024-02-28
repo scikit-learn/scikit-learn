@@ -676,7 +676,7 @@ def _dict_learning(
         "method": [StrOptions({"cd", "lars"})],
         "method_max_iter": [Interval(Integral, 0, None, closed="left")],
     },
-    prefer_skip_nested_validation=True,
+    prefer_skip_nested_validation=False,
 )
 def dict_learning_online(
     X,
