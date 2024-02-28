@@ -207,6 +207,7 @@ PARAM_VALIDATION_FUNCTION_LIST = [
     "sklearn.linear_model.orthogonal_mp",
     "sklearn.linear_model.orthogonal_mp_gram",
     "sklearn.linear_model.ridge_regression",
+    "sklearn.manifold.locally_linear_embedding",
     "sklearn.manifold.smacof",
     "sklearn.manifold.spectral_embedding",
     "sklearn.manifold.trustworthiness",
