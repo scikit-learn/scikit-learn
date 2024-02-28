@@ -161,7 +161,8 @@ def _set_diag(laplacian, value, norm_laplacian):
         "eigen_tol": [Interval(Real, 0, None, closed="left"), StrOptions({"auto"})],
         "norm_laplacian": ["boolean"],
         "drop_first": ["boolean"],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def spectral_embedding(
     adjacency,
