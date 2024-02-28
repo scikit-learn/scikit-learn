@@ -2127,6 +2127,7 @@ class _RidgeGCV(LinearModel):
         return check_scoring(self, scoring=self.scoring, allow_none=True)
 
     def _score_without_scorer(self, squared_errors):
+        """Performs scoring using squared errors when the scorer is None."""
         if self.alpha_per_target:
             _score = -squared_errors.mean(axis=0)
         else:
@@ -2135,6 +2136,9 @@ class _RidgeGCV(LinearModel):
         return _score
 
     def _score(self, predictions, y, n_y, scorer, score_params):
+        """Performs scoring with the specified scorer using the
+        predictions and the true y values.
+        """
         if self.is_clf:
             identity_estimator = _IdentityClassifier(classes=np.arange(n_y))
             _score = scorer(
