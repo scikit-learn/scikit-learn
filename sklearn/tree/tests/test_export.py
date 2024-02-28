@@ -483,13 +483,15 @@ def test_plot_tree_entropy(pyplot):
     # Test export code
     feature_names = ["first feat", "sepal_width"]
     nodes = plot_tree(clf, feature_names=feature_names)
-    assert len(nodes) == 3
+    assert len(nodes) == 5
     assert (
         nodes[0].get_text()
         == "first feat <= 0.0\nentropy = 1.0\nsamples = 6\nvalue = [3, 3]"
     )
     assert nodes[1].get_text() == "entropy = 0.0\nsamples = 3\nvalue = [3, 0]"
-    assert nodes[2].get_text() == "entropy = 0.0\nsamples = 3\nvalue = [0, 3]"
+    assert nodes[2].get_text() == "True"
+    assert nodes[3].get_text() == "entropy = 0.0\nsamples = 3\nvalue = [0, 3]"
+    assert nodes[4].get_text() == "False"
 
 
 def test_plot_tree_gini(pyplot):
@@ -503,13 +505,15 @@ def test_plot_tree_gini(pyplot):
     # Test export code
     feature_names = ["first feat", "sepal_width"]
     nodes = plot_tree(clf, feature_names=feature_names)
-    assert len(nodes) == 3
+    assert len(nodes) == 5
     assert (
         nodes[0].get_text()
         == "first feat <= 0.0\ngini = 0.5\nsamples = 6\nvalue = [3, 3]"
     )
     assert nodes[1].get_text() == "gini = 0.0\nsamples = 3\nvalue = [3, 0]"
-    assert nodes[2].get_text() == "gini = 0.0\nsamples = 3\nvalue = [0, 3]"
+    assert nodes[2].get_text() == "True"
+    assert nodes[3].get_text() == "gini = 0.0\nsamples = 3\nvalue = [0, 3]"
+    assert nodes[4].get_text() == "False"
 
 
 def test_not_fitted_tree(pyplot):
