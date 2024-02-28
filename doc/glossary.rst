@@ -66,6 +66,7 @@ General Concepts
         It excludes:
 
         * a :term:`sparse matrix`
+        * a sparse array
         * an iterator
         * a generator
 
