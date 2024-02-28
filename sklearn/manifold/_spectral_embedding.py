@@ -146,8 +146,8 @@ def _set_diag(laplacian, value, norm_laplacian):
         "adjacency": ["array-like", "sparse matrix"],
         "n_components": [Interval(Integral, 1, None, closed="left")],
         "eigen_solver": [StrOptions({"arpack", "lobpcg", "amg"}), None],
-        "random_state": ["random_state", None],
-        "eigen_tol": [StrOptions({"auto"}), Interval(Real, 0, None, closed="left")],
+        "random_state": ["random_state"],
+        "eigen_tol": [Interval(Real, 0, None, closed="left"), StrOptions({"auto"})],
         "norm_laplacian": ["boolean"],
         "drop_first": ["boolean"],
     }
@@ -257,7 +257,29 @@ def spectral_embedding(
       <10.1137/S1064827500366124>`
     """
     adjacency = check_symmetric(adjacency)
+    random_state = check_random_state(random_state)
 
+    return _spectral_embedding(
+        adjacency,
+        n_components=n_components,
+        eigen_solver=eigen_solver,
+        random_state=random_state,
+        eigen_tol=eigen_tol,
+        norm_laplacian=norm_laplacian,
+        drop_first=drop_first,
+    )
+
+
+def _spectral_embedding(
+    adjacency,
+    *,
+    n_components=8,
+    eigen_solver=None,
+    random_state=None,
+    eigen_tol="auto",
+    norm_laplacian=True,
+    drop_first=True,
+):
     try:
         from pyamg import smoothed_aggregation_solver
     except ImportError as e:
@@ -268,8 +290,6 @@ def spectral_embedding(
 
     if eigen_solver is None:
         eigen_solver = "arpack"
-
-    random_state = check_random_state(random_state)
 
     n_nodes = adjacency.shape[0]
     # Whether to drop the first eigenvector
@@ -685,7 +705,7 @@ class SpectralEmbedding(BaseEstimator):
         random_state = check_random_state(self.random_state)
 
         affinity_matrix = self._get_affinity_matrix(X)
-        self.embedding_ = spectral_embedding(
+        self.embedding_ = _spectral_embedding(
             affinity_matrix,
             n_components=self.n_components,
             eigen_solver=self.eigen_solver,
