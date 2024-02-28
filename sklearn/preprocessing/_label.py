@@ -17,6 +17,10 @@ import scipy.sparse as sp
 
 from ..base import BaseEstimator, TransformerMixin, _fit_context
 from ..utils import column_or_1d
+from ..utils._array_api import (
+    device,
+    get_namespace,
+)
 from ..utils._encode import _encode, _unique
 from ..utils._param_validation import Interval, validate_params
 from ..utils.multiclass import type_of_target, unique_labels
@@ -487,6 +491,7 @@ def label_binarize(y, *, classes, neg_label=0, pos_label=1, sparse_output=False)
            [0],
            [1]])
     """
+    xp, _ = get_namespace(y)
     if not isinstance(y, list):
         # XXX Workaround that will be removed when list of list format is
         # dropped
@@ -533,7 +538,7 @@ def label_binarize(y, *, classes, neg_label=0, pos_label=1, sparse_output=False)
             if sparse_output:
                 return sp.csr_matrix((n_samples, 1), dtype=int)
             else:
-                Y = np.zeros((len(y), 1), dtype=int)
+                Y = xp.zeros((len(y), 1), dtype=int, device=device(y))
                 Y += neg_label
                 return Y
         elif len(classes) >= 3:
@@ -574,7 +579,7 @@ def label_binarize(y, *, classes, neg_label=0, pos_label=1, sparse_output=False)
 
     if not sparse_output:
         Y = Y.toarray()
-        Y = Y.astype(int, copy=False)
+        Y = xp.asarray(Y, dtype=int, copy=False, device=device(y))
 
         if neg_label != 0:
             Y[Y == 0] = neg_label
@@ -587,7 +592,7 @@ def label_binarize(y, *, classes, neg_label=0, pos_label=1, sparse_output=False)
     # preserve label ordering
     if np.any(classes != sorted_class):
         indices = np.searchsorted(sorted_class, classes)
-        Y = Y[:, indices]
+        Y = Y[:, xp.asarray(indices, device=device(y))]
 
     if y_type == "binary":
         if sparse_output:
