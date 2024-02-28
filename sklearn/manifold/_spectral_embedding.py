@@ -284,7 +284,6 @@ def spectral_embedding(
     >>> embedding.shape
     (100, 2)
     """
-    adjacency = check_symmetric(adjacency)
     random_state = check_random_state(random_state)
 
     return _spectral_embedding(
@@ -308,6 +307,8 @@ def _spectral_embedding(
     norm_laplacian=True,
     drop_first=True,
 ):
+    adjacency = check_symmetric(adjacency)
+
     if eigen_solver == "amg":
         try:
             from pyamg import smoothed_aggregation_solver
