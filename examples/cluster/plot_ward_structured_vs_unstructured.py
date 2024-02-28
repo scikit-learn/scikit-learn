@@ -29,18 +29,14 @@ import time as time
 
 # The following import is required
 # for 3D projection to work with matplotlib < 3.2
-
 import mpl_toolkits.mplot3d  # noqa: F401
-
 import numpy as np
-
 
 # %%
 # Generate data
 # -------------
 #
 # We start by generating the Swiss Roll dataset.
-
 from sklearn.datasets import make_swiss_roll
 
 n_samples = 1500

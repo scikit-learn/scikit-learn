@@ -1,6 +1,5 @@
-import warnings
 import functools
-
+import warnings
 
 __all__ = ["deprecated"]
 
@@ -15,10 +14,11 @@ class deprecated:
     and the docstring. Note: to use this with the default value for extra, put
     in an empty of parentheses:
 
+    Examples
+    --------
     >>> from sklearn.utils import deprecated
     >>> deprecated()
     <sklearn.utils.deprecation.deprecated object at ...>
-
     >>> @deprecated()
     ... def some_function(): pass
 
@@ -44,8 +44,8 @@ class deprecated:
         if isinstance(obj, type):
             return self._decorate_class(obj)
         elif isinstance(obj, property):
-            # Note that this is only triggered properly if the `property`
-            # decorator comes before the `deprecated` decorator, like so:
+            # Note that this is only triggered properly if the `deprecated`
+            # decorator is placed before the `property` decorator, like so:
             #
             # @deprecated(msg)
             # @property
@@ -60,17 +60,18 @@ class deprecated:
         if self.extra:
             msg += "; %s" % self.extra
 
-        # FIXME: we should probably reset __new__ for full generality
-        init = cls.__init__
+        new = cls.__new__
 
-        def wrapped(*args, **kwargs):
+        def wrapped(cls, *args, **kwargs):
             warnings.warn(msg, category=FutureWarning)
-            return init(*args, **kwargs)
+            if new is object.__new__:
+                return object.__new__(cls)
+            return new(cls, *args, **kwargs)
 
-        cls.__init__ = wrapped
+        cls.__new__ = wrapped
 
-        wrapped.__name__ = "__init__"
-        wrapped.deprecated_original = init
+        wrapped.__name__ = "__new__"
+        wrapped.deprecated_original = new
 
         return cls
 

@@ -24,25 +24,25 @@ the lower the better.
 #          Uttam kumar <bajiraouttamsinha@gmail.com>
 #          Sylvain Marie <sylvain.marie@se.com>
 #          Ohad Michel <ohadmich@gmail.com>
+#          Alejandro Martin Gil <almagil98@gmail.com>
 # License: BSD 3 clause
 
-import numbers
 import warnings
+from numbers import Real
 
 import numpy as np
 from scipy.special import xlogy
 
 from ..exceptions import UndefinedMetricWarning
+from ..utils._param_validation import Hidden, Interval, StrOptions, validate_params
+from ..utils.stats import _weighted_percentile
 from ..utils.validation import (
+    _check_sample_weight,
+    _num_samples,
     check_array,
     check_consistent_length,
-    check_scalar,
-    _num_samples,
     column_or_1d,
-    _check_sample_weight,
 )
-from ..utils.stats import _weighted_percentile
-
 
 __ALL__ = [
     "max_error",
@@ -53,6 +53,8 @@ __ALL__ = [
     "mean_absolute_percentage_error",
     "mean_pinball_loss",
     "r2_score",
+    "root_mean_squared_log_error",
+    "root_mean_squared_error",
     "explained_variance_score",
     "mean_tweedie_deviance",
     "mean_poisson_deviance",
@@ -138,6 +140,15 @@ def _check_reg_targets(y_true, y_pred, multioutput, dtype="numeric"):
     return y_type, y_true, y_pred, multioutput
 
 
+@validate_params(
+    {
+        "y_true": ["array-like"],
+        "y_pred": ["array-like"],
+        "sample_weight": ["array-like", None],
+        "multioutput": [StrOptions({"raw_values", "uniform_average"}), "array-like"],
+    },
+    prefer_skip_nested_validation=True,
+)
 def mean_absolute_error(
     y_true, y_pred, *, sample_weight=None, multioutput="uniform_average"
 ):
@@ -208,6 +219,16 @@ def mean_absolute_error(
     return np.average(output_errors, weights=multioutput)
 
 
+@validate_params(
+    {
+        "y_true": ["array-like"],
+        "y_pred": ["array-like"],
+        "sample_weight": ["array-like", None],
+        "alpha": [Interval(Real, 0, 1, closed="both")],
+        "multioutput": [StrOptions({"raw_values", "uniform_average"}), "array-like"],
+    },
+    prefer_skip_nested_validation=True,
+)
 def mean_pinball_loss(
     y_true, y_pred, *, sample_weight=None, alpha=0.5, multioutput="uniform_average"
 ):
@@ -277,22 +298,26 @@ def mean_pinball_loss(
     sign = (diff >= 0).astype(diff.dtype)
     loss = alpha * sign * diff - (1 - alpha) * (1 - sign) * diff
     output_errors = np.average(loss, weights=sample_weight, axis=0)
-    if isinstance(multioutput, str):
-        if multioutput == "raw_values":
-            return output_errors
-        elif multioutput == "uniform_average":
-            # pass None as weights to np.average: uniform mean
-            multioutput = None
-        else:
-            raise ValueError(
-                "multioutput is expected to be 'raw_values' "
-                "or 'uniform_average' but we got %r"
-                " instead." % multioutput
-            )
+
+    if isinstance(multioutput, str) and multioutput == "raw_values":
+        return output_errors
+
+    if isinstance(multioutput, str) and multioutput == "uniform_average":
+        # pass None as weights to np.average: uniform mean
+        multioutput = None
 
     return np.average(output_errors, weights=multioutput)
 
 
+@validate_params(
+    {
+        "y_true": ["array-like"],
+        "y_pred": ["array-like"],
+        "sample_weight": ["array-like", None],
+        "multioutput": [StrOptions({"raw_values", "uniform_average"}), "array-like"],
+    },
+    prefer_skip_nested_validation=True,
+)
 def mean_absolute_percentage_error(
     y_true, y_pred, *, sample_weight=None, multioutput="uniform_average"
 ):
@@ -379,8 +404,23 @@ def mean_absolute_percentage_error(
     return np.average(output_errors, weights=multioutput)
 
 
+@validate_params(
+    {
+        "y_true": ["array-like"],
+        "y_pred": ["array-like"],
+        "sample_weight": ["array-like", None],
+        "multioutput": [StrOptions({"raw_values", "uniform_average"}), "array-like"],
+        "squared": [Hidden(StrOptions({"deprecated"})), "boolean"],
+    },
+    prefer_skip_nested_validation=True,
+)
 def mean_squared_error(
-    y_true, y_pred, *, sample_weight=None, multioutput="uniform_average", squared=True
+    y_true,
+    y_pred,
+    *,
+    sample_weight=None,
+    multioutput="uniform_average",
+    squared="deprecated",
 ):
     """Mean squared error regression loss.
 
@@ -411,6 +451,11 @@ def mean_squared_error(
     squared : bool, default=True
         If True returns MSE value, if False returns RMSE value.
 
+        .. deprecated:: 1.4
+           `squared` is deprecated in 1.4 and will be removed in 1.6.
+           Use :func:`~sklearn.metrics.root_mean_squared_error`
+           instead to calculate the root mean squared error.
+
     Returns
     -------
     loss : float or ndarray of floats
@@ -424,29 +469,36 @@ def mean_squared_error(
     >>> y_pred = [2.5, 0.0, 2, 8]
     >>> mean_squared_error(y_true, y_pred)
     0.375
-    >>> y_true = [3, -0.5, 2, 7]
-    >>> y_pred = [2.5, 0.0, 2, 8]
-    >>> mean_squared_error(y_true, y_pred, squared=False)
-    0.612...
     >>> y_true = [[0.5, 1],[-1, 1],[7, -6]]
     >>> y_pred = [[0, 2],[-1, 2],[8, -5]]
     >>> mean_squared_error(y_true, y_pred)
     0.708...
-    >>> mean_squared_error(y_true, y_pred, squared=False)
-    0.822...
     >>> mean_squared_error(y_true, y_pred, multioutput='raw_values')
     array([0.41666667, 1.        ])
     >>> mean_squared_error(y_true, y_pred, multioutput=[0.3, 0.7])
     0.825...
     """
+    # TODO(1.6): remove
+    if squared != "deprecated":
+        warnings.warn(
+            (
+                "'squared' is deprecated in version 1.4 and "
+                "will be removed in 1.6. To calculate the "
+                "root mean squared error, use the function"
+                "'root_mean_squared_error'."
+            ),
+            FutureWarning,
+        )
+        if not squared:
+            return root_mean_squared_error(
+                y_true, y_pred, sample_weight=sample_weight, multioutput=multioutput
+            )
+
     y_type, y_true, y_pred, multioutput = _check_reg_targets(
         y_true, y_pred, multioutput
     )
     check_consistent_length(y_true, y_pred, sample_weight)
     output_errors = np.average((y_true - y_pred) ** 2, axis=0, weights=sample_weight)
-
-    if not squared:
-        output_errors = np.sqrt(output_errors)
 
     if isinstance(multioutput, str):
         if multioutput == "raw_values":
@@ -458,8 +510,97 @@ def mean_squared_error(
     return np.average(output_errors, weights=multioutput)
 
 
+@validate_params(
+    {
+        "y_true": ["array-like"],
+        "y_pred": ["array-like"],
+        "sample_weight": ["array-like", None],
+        "multioutput": [StrOptions({"raw_values", "uniform_average"}), "array-like"],
+    },
+    prefer_skip_nested_validation=True,
+)
+def root_mean_squared_error(
+    y_true, y_pred, *, sample_weight=None, multioutput="uniform_average"
+):
+    """Root mean squared error regression loss.
+
+    Read more in the :ref:`User Guide <mean_squared_error>`.
+
+    .. versionadded:: 1.4
+
+    Parameters
+    ----------
+    y_true : array-like of shape (n_samples,) or (n_samples, n_outputs)
+        Ground truth (correct) target values.
+
+    y_pred : array-like of shape (n_samples,) or (n_samples, n_outputs)
+        Estimated target values.
+
+    sample_weight : array-like of shape (n_samples,), default=None
+        Sample weights.
+
+    multioutput : {'raw_values', 'uniform_average'} or array-like of shape \
+            (n_outputs,), default='uniform_average'
+        Defines aggregating of multiple output values.
+        Array-like value defines weights used to average errors.
+
+        'raw_values' :
+            Returns a full set of errors in case of multioutput input.
+
+        'uniform_average' :
+            Errors of all outputs are averaged with uniform weight.
+
+    Returns
+    -------
+    loss : float or ndarray of floats
+        A non-negative floating point value (the best value is 0.0), or an
+        array of floating point values, one for each individual target.
+
+    Examples
+    --------
+    >>> from sklearn.metrics import root_mean_squared_error
+    >>> y_true = [3, -0.5, 2, 7]
+    >>> y_pred = [2.5, 0.0, 2, 8]
+    >>> root_mean_squared_error(y_true, y_pred)
+    0.612...
+    >>> y_true = [[0.5, 1],[-1, 1],[7, -6]]
+    >>> y_pred = [[0, 2],[-1, 2],[8, -5]]
+    >>> root_mean_squared_error(y_true, y_pred)
+    0.822...
+    """
+    output_errors = np.sqrt(
+        mean_squared_error(
+            y_true, y_pred, sample_weight=sample_weight, multioutput="raw_values"
+        )
+    )
+
+    if isinstance(multioutput, str):
+        if multioutput == "raw_values":
+            return output_errors
+        elif multioutput == "uniform_average":
+            # pass None as weights to np.average: uniform mean
+            multioutput = None
+
+    return np.average(output_errors, weights=multioutput)
+
+
+@validate_params(
+    {
+        "y_true": ["array-like"],
+        "y_pred": ["array-like"],
+        "sample_weight": ["array-like", None],
+        "multioutput": [StrOptions({"raw_values", "uniform_average"}), "array-like"],
+        "squared": [Hidden(StrOptions({"deprecated"})), "boolean"],
+    },
+    prefer_skip_nested_validation=True,
+)
 def mean_squared_log_error(
-    y_true, y_pred, *, sample_weight=None, multioutput="uniform_average", squared=True
+    y_true,
+    y_pred,
+    *,
+    sample_weight=None,
+    multioutput="uniform_average",
+    squared="deprecated",
 ):
     """Mean squared logarithmic error regression loss.
 
@@ -488,9 +629,15 @@ def mean_squared_log_error(
 
         'uniform_average' :
             Errors of all outputs are averaged with uniform weight.
+
     squared : bool, default=True
         If True returns MSLE (mean squared log error) value.
         If False returns RMSLE (root mean squared log error) value.
+
+        .. deprecated:: 1.4
+           `squared` is deprecated in 1.4 and will be removed in 1.6.
+           Use :func:`~sklearn.metrics.root_mean_squared_log_error`
+           instead to calculate the root mean squared logarithmic error.
 
     Returns
     -------
@@ -505,8 +652,6 @@ def mean_squared_log_error(
     >>> y_pred = [2.5, 5, 4, 8]
     >>> mean_squared_log_error(y_true, y_pred)
     0.039...
-    >>> mean_squared_log_error(y_true, y_pred, squared=False)
-    0.199...
     >>> y_true = [[0.5, 1], [1, 2], [7, 6]]
     >>> y_pred = [[0.5, 2], [1, 2.5], [8, 8]]
     >>> mean_squared_log_error(y_true, y_pred)
@@ -516,6 +661,22 @@ def mean_squared_log_error(
     >>> mean_squared_log_error(y_true, y_pred, multioutput=[0.3, 0.7])
     0.060...
     """
+    # TODO(1.6): remove
+    if squared != "deprecated":
+        warnings.warn(
+            (
+                "'squared' is deprecated in version 1.4 and "
+                "will be removed in 1.6. To calculate the "
+                "root mean squared logarithmic error, use the function"
+                "'root_mean_squared_log_error'."
+            ),
+            FutureWarning,
+        )
+        if not squared:
+            return root_mean_squared_log_error(
+                y_true, y_pred, sample_weight=sample_weight, multioutput=multioutput
+            )
+
     y_type, y_true, y_pred, multioutput = _check_reg_targets(
         y_true, y_pred, multioutput
     )
@@ -532,10 +693,91 @@ def mean_squared_log_error(
         np.log1p(y_pred),
         sample_weight=sample_weight,
         multioutput=multioutput,
-        squared=squared,
     )
 
 
+@validate_params(
+    {
+        "y_true": ["array-like"],
+        "y_pred": ["array-like"],
+        "sample_weight": ["array-like", None],
+        "multioutput": [StrOptions({"raw_values", "uniform_average"}), "array-like"],
+    },
+    prefer_skip_nested_validation=True,
+)
+def root_mean_squared_log_error(
+    y_true, y_pred, *, sample_weight=None, multioutput="uniform_average"
+):
+    """Root mean squared logarithmic error regression loss.
+
+    Read more in the :ref:`User Guide <mean_squared_log_error>`.
+
+    .. versionadded:: 1.4
+
+    Parameters
+    ----------
+    y_true : array-like of shape (n_samples,) or (n_samples, n_outputs)
+        Ground truth (correct) target values.
+
+    y_pred : array-like of shape (n_samples,) or (n_samples, n_outputs)
+        Estimated target values.
+
+    sample_weight : array-like of shape (n_samples,), default=None
+        Sample weights.
+
+    multioutput : {'raw_values', 'uniform_average'} or array-like of shape \
+            (n_outputs,), default='uniform_average'
+
+        Defines aggregating of multiple output values.
+        Array-like value defines weights used to average errors.
+
+        'raw_values' :
+            Returns a full set of errors when the input is of multioutput
+            format.
+
+        'uniform_average' :
+            Errors of all outputs are averaged with uniform weight.
+
+    Returns
+    -------
+    loss : float or ndarray of floats
+        A non-negative floating point value (the best value is 0.0), or an
+        array of floating point values, one for each individual target.
+
+    Examples
+    --------
+    >>> from sklearn.metrics import root_mean_squared_log_error
+    >>> y_true = [3, 5, 2.5, 7]
+    >>> y_pred = [2.5, 5, 4, 8]
+    >>> root_mean_squared_log_error(y_true, y_pred)
+    0.199...
+    """
+    _, y_true, y_pred, multioutput = _check_reg_targets(y_true, y_pred, multioutput)
+    check_consistent_length(y_true, y_pred, sample_weight)
+
+    if (y_true < 0).any() or (y_pred < 0).any():
+        raise ValueError(
+            "Root Mean Squared Logarithmic Error cannot be used when "
+            "targets contain negative values."
+        )
+
+    return root_mean_squared_error(
+        np.log1p(y_true),
+        np.log1p(y_pred),
+        sample_weight=sample_weight,
+        multioutput=multioutput,
+    )
+
+
+@validate_params(
+    {
+        "y_true": ["array-like"],
+        "y_pred": ["array-like"],
+        "multioutput": [StrOptions({"raw_values", "uniform_average"}), "array-like"],
+        "sample_weight": ["array-like", None],
+    },
+    prefer_skip_nested_validation=True,
+)
 def median_absolute_error(
     y_true, y_pred, *, multioutput="uniform_average", sample_weight=None
 ):
@@ -546,10 +788,10 @@ def median_absolute_error(
 
     Parameters
     ----------
-    y_true : array-like of shape = (n_samples) or (n_samples, n_outputs)
+    y_true : array-like of shape (n_samples,) or (n_samples, n_outputs)
         Ground truth (correct) target values.
 
-    y_pred : array-like of shape = (n_samples) or (n_samples, n_outputs)
+    y_pred : array-like of shape (n_samples,) or (n_samples, n_outputs)
         Estimated target values.
 
     multioutput : {'raw_values', 'uniform_average'} or array-like of shape \
@@ -656,6 +898,19 @@ def _assemble_r2_explained_variance(
     return np.average(output_scores, weights=avg_weights)
 
 
+@validate_params(
+    {
+        "y_true": ["array-like"],
+        "y_pred": ["array-like"],
+        "sample_weight": ["array-like", None],
+        "multioutput": [
+            StrOptions({"raw_values", "uniform_average", "variance_weighted"}),
+            "array-like",
+        ],
+        "force_finite": ["boolean"],
+    },
+    prefer_skip_nested_validation=True,
+)
 def explained_variance_score(
     y_true,
     y_pred,
@@ -781,6 +1036,20 @@ def explained_variance_score(
     )
 
 
+@validate_params(
+    {
+        "y_true": ["array-like"],
+        "y_pred": ["array-like"],
+        "sample_weight": ["array-like", None],
+        "multioutput": [
+            StrOptions({"raw_values", "uniform_average", "variance_weighted"}),
+            "array-like",
+            None,
+        ],
+        "force_finite": ["boolean"],
+    },
+    prefer_skip_nested_validation=True,
+)
 def r2_score(
     y_true,
     y_pred,
@@ -938,6 +1207,13 @@ def r2_score(
     )
 
 
+@validate_params(
+    {
+        "y_true": ["array-like"],
+        "y_pred": ["array-like"],
+    },
+    prefer_skip_nested_validation=True,
+)
 def max_error(y_true, y_pred):
     """
     The max_error metric calculates the maximum residual error.
@@ -1000,6 +1276,18 @@ def _mean_tweedie_deviance(y_true, y_pred, sample_weight, power):
     return np.average(dev, weights=sample_weight)
 
 
+@validate_params(
+    {
+        "y_true": ["array-like"],
+        "y_pred": ["array-like"],
+        "sample_weight": ["array-like", None],
+        "power": [
+            Interval(Real, None, 0, closed="right"),
+            Interval(Real, 1, None, closed="left"),
+        ],
+    },
+    prefer_skip_nested_validation=True,
+)
 def mean_tweedie_deviance(y_true, y_pred, *, sample_weight=None, power=0):
     """Mean Tweedie deviance regression loss.
 
@@ -1059,27 +1347,19 @@ def mean_tweedie_deviance(y_true, y_pred, *, sample_weight=None, power=0):
         sample_weight = column_or_1d(sample_weight)
         sample_weight = sample_weight[:, np.newaxis]
 
-    p = check_scalar(
-        power,
-        name="power",
-        target_type=numbers.Real,
-    )
-
-    message = f"Mean Tweedie deviance error with power={p} can only be used on "
-    if p < 0:
+    message = f"Mean Tweedie deviance error with power={power} can only be used on "
+    if power < 0:
         # 'Extreme stable', y any real number, y_pred > 0
         if (y_pred <= 0).any():
             raise ValueError(message + "strictly positive y_pred.")
-    elif p == 0:
+    elif power == 0:
         # Normal, y and y_pred can be any real number
         pass
-    elif 0 < p < 1:
-        raise ValueError("Tweedie deviance is only defined for power<=0 and power>=1.")
-    elif 1 <= p < 2:
+    elif 1 <= power < 2:
         # Poisson and compound Poisson distribution, y >= 0, y_pred > 0
         if (y_true < 0).any() or (y_pred <= 0).any():
             raise ValueError(message + "non-negative y and strictly positive y_pred.")
-    elif p >= 2:
+    elif power >= 2:
         # Gamma and Extreme stable distribution, y and y_pred > 0
         if (y_true <= 0).any() or (y_pred <= 0).any():
             raise ValueError(message + "strictly positive y and y_pred.")
@@ -1092,6 +1372,14 @@ def mean_tweedie_deviance(y_true, y_pred, *, sample_weight=None, power=0):
     )
 
 
+@validate_params(
+    {
+        "y_true": ["array-like"],
+        "y_pred": ["array-like"],
+        "sample_weight": ["array-like", None],
+    },
+    prefer_skip_nested_validation=True,
+)
 def mean_poisson_deviance(y_true, y_pred, *, sample_weight=None):
     """Mean Poisson deviance regression loss.
 
@@ -1127,6 +1415,14 @@ def mean_poisson_deviance(y_true, y_pred, *, sample_weight=None):
     return mean_tweedie_deviance(y_true, y_pred, sample_weight=sample_weight, power=1)
 
 
+@validate_params(
+    {
+        "y_true": ["array-like"],
+        "y_pred": ["array-like"],
+        "sample_weight": ["array-like", None],
+    },
+    prefer_skip_nested_validation=True,
+)
 def mean_gamma_deviance(y_true, y_pred, *, sample_weight=None):
     """Mean Gamma deviance regression loss.
 
@@ -1163,8 +1459,21 @@ def mean_gamma_deviance(y_true, y_pred, *, sample_weight=None):
     return mean_tweedie_deviance(y_true, y_pred, sample_weight=sample_weight, power=2)
 
 
+@validate_params(
+    {
+        "y_true": ["array-like"],
+        "y_pred": ["array-like"],
+        "sample_weight": ["array-like", None],
+        "power": [
+            Interval(Real, None, 0, closed="right"),
+            Interval(Real, 1, None, closed="left"),
+        ],
+    },
+    prefer_skip_nested_validation=True,
+)
 def d2_tweedie_score(y_true, y_pred, *, sample_weight=None, power=0):
-    """D^2 regression score function, fraction of Tweedie deviance explained.
+    """
+    :math:`D^2` regression score function, fraction of Tweedie deviance explained.
 
     Best possible score is 1.0 and it can be negative (because the model can be
     arbitrarily worse). A model that always uses the empirical mean of `y_true` as
@@ -1182,7 +1491,7 @@ def d2_tweedie_score(y_true, y_pred, *, sample_weight=None, power=0):
     y_pred : array-like of shape (n_samples,)
         Estimated target values.
 
-    sample_weight : array-like of shape (n_samples,), optional
+    sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
 
     power : float, default=0
@@ -1263,6 +1572,19 @@ def d2_tweedie_score(y_true, y_pred, *, sample_weight=None, power=0):
     return 1 - numerator / denominator
 
 
+@validate_params(
+    {
+        "y_true": ["array-like"],
+        "y_pred": ["array-like"],
+        "sample_weight": ["array-like", None],
+        "alpha": [Interval(Real, 0, 1, closed="both")],
+        "multioutput": [
+            StrOptions({"raw_values", "uniform_average"}),
+            "array-like",
+        ],
+    },
+    prefer_skip_nested_validation=True,
+)
 def d2_pinball_score(
     y_true, y_pred, *, sample_weight=None, alpha=0.5, multioutput="uniform_average"
 ):
@@ -1286,7 +1608,7 @@ def d2_pinball_score(
     y_pred : array-like of shape (n_samples,) or (n_samples, n_outputs)
         Estimated target values.
 
-    sample_weight : array-like of shape (n_samples,), optional
+    sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
 
     alpha : float, default=0.5
@@ -1323,7 +1645,7 @@ def d2_pinball_score(
     ----------
     .. [1] Eq. (7) of `Koenker, Roger; Machado, José A. F. (1999).
            "Goodness of Fit and Related Inference Processes for Quantile Regression"
-           <http://dx.doi.org/10.1080/01621459.1999.10473882>`_
+           <https://doi.org/10.1080/01621459.1999.10473882>`_
     .. [2] Eq. (3.11) of Hastie, Trevor J., Robert Tibshirani and Martin J.
            Wainwright. "Statistical Learning with Sparsity: The Lasso and
            Generalizations." (2015). https://hastie.su.domains/StatLearnSparsity/
@@ -1393,27 +1715,32 @@ def d2_pinball_score(
         if multioutput == "raw_values":
             # return scores individually
             return output_scores
-        elif multioutput == "uniform_average":
+        else:  # multioutput == "uniform_average"
             # passing None as weights to np.average results in uniform mean
             avg_weights = None
-        else:
-            raise ValueError(
-                "multioutput is expected to be 'raw_values' "
-                "or 'uniform_average' but we got %r"
-                " instead." % multioutput
-            )
     else:
         avg_weights = multioutput
 
     return np.average(output_scores, weights=avg_weights)
 
 
+@validate_params(
+    {
+        "y_true": ["array-like"],
+        "y_pred": ["array-like"],
+        "sample_weight": ["array-like", None],
+        "multioutput": [
+            StrOptions({"raw_values", "uniform_average"}),
+            "array-like",
+        ],
+    },
+    prefer_skip_nested_validation=True,
+)
 def d2_absolute_error_score(
     y_true, y_pred, *, sample_weight=None, multioutput="uniform_average"
 ):
     """
-    :math:`D^2` regression score function, \
-    fraction of absolute error explained.
+    :math:`D^2` regression score function, fraction of absolute error explained.
 
     Best possible score is 1.0 and it can be negative (because the model can be
     arbitrarily worse). A model that always uses the empirical median of `y_true`
@@ -1432,7 +1759,7 @@ def d2_absolute_error_score(
     y_pred : array-like of shape (n_samples,) or (n_samples, n_outputs)
         Estimated target values.
 
-    sample_weight : array-like of shape (n_samples,), optional
+    sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
 
     multioutput : {'raw_values', 'uniform_average'} or array-like of shape \

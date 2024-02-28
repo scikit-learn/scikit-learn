@@ -7,78 +7,85 @@ General tests for all estimators in sklearn.
 # License: BSD 3 clause
 
 import os
-import warnings
-import sys
-import re
 import pkgutil
-from inspect import isgenerator, signature
-from itertools import product, chain
+import re
+import sys
+import warnings
 from functools import partial
+from inspect import isgenerator, signature
+from itertools import chain, product
+from pathlib import Path
 
-import pytest
 import numpy as np
+import pytest
 
+import sklearn
 from sklearn.cluster import (
+    OPTICS,
     AffinityPropagation,
     Birch,
     MeanShift,
-    OPTICS,
     SpectralClustering,
 )
+from sklearn.compose import ColumnTransformer
 from sklearn.datasets import make_blobs
-from sklearn.manifold import Isomap, TSNE, LocallyLinearEmbedding
+from sklearn.decomposition import PCA
+from sklearn.exceptions import ConvergenceWarning, FitFailedWarning
+
+# make it possible to discover experimental estimators when calling `all_estimators`
+from sklearn.experimental import (
+    enable_halving_search_cv,  # noqa
+    enable_iterative_imputer,  # noqa
+)
+from sklearn.linear_model import LogisticRegression, Ridge
+from sklearn.linear_model._base import LinearClassifierMixin
+from sklearn.manifold import TSNE, Isomap, LocallyLinearEmbedding
+from sklearn.model_selection import (
+    GridSearchCV,
+    HalvingGridSearchCV,
+    HalvingRandomSearchCV,
+    RandomizedSearchCV,
+)
 from sklearn.neighbors import (
-    LocalOutlierFactor,
     KNeighborsClassifier,
     KNeighborsRegressor,
+    LocalOutlierFactor,
     RadiusNeighborsClassifier,
     RadiusNeighborsRegressor,
 )
-from sklearn.preprocessing import FunctionTransformer
+from sklearn.pipeline import Pipeline, make_pipeline
+from sklearn.preprocessing import (
+    FunctionTransformer,
+    MinMaxScaler,
+    OneHotEncoder,
+    StandardScaler,
+)
 from sklearn.semi_supervised import LabelPropagation, LabelSpreading
-
-from sklearn.utils import all_estimators
-from sklearn.utils._testing import ignore_warnings
-from sklearn.exceptions import ConvergenceWarning
-from sklearn.exceptions import FitFailedWarning
-from sklearn.utils.estimator_checks import check_estimator
-
-import sklearn
-
-# make it possible to discover experimental estimators when calling `all_estimators`
-from sklearn.experimental import enable_iterative_imputer  # noqa
-from sklearn.experimental import enable_halving_search_cv  # noqa
-
-from sklearn.decomposition import PCA
-from sklearn.preprocessing import StandardScaler, MinMaxScaler, OneHotEncoder
-from sklearn.linear_model._base import LinearClassifierMixin
-from sklearn.linear_model import LogisticRegression
-from sklearn.linear_model import Ridge
-from sklearn.model_selection import GridSearchCV
-from sklearn.model_selection import RandomizedSearchCV
-from sklearn.model_selection import HalvingGridSearchCV
-from sklearn.model_selection import HalvingRandomSearchCV
-from sklearn.pipeline import make_pipeline
-
-from sklearn.utils import IS_PYPY
+from sklearn.utils import _IS_WASM, IS_PYPY, all_estimators
 from sklearn.utils._tags import _DEFAULT_TAGS, _safe_tags
 from sklearn.utils._testing import (
     SkipTest,
+    ignore_warnings,
     set_random_state,
 )
 from sklearn.utils.estimator_checks import (
     _construct_instance,
-    _set_checking_parameters,
     _get_check_estimator_ids,
+    _set_checking_parameters,
     check_class_weight_balanced_linear_classifier,
-    parametrize_with_checks,
     check_dataframe_column_names_consistency,
+    check_estimator,
+    check_get_feature_names_out_error,
+    check_global_output_transform_pandas,
+    check_global_set_output_transform_polars,
     check_n_features_in_after_fitting,
     check_param_validation,
-    check_transformer_get_feature_names_out,
-    check_transformer_get_feature_names_out_pandas,
     check_set_output_transform,
     check_set_output_transform_pandas,
+    check_set_output_transform_polars,
+    check_transformer_get_feature_names_out,
+    check_transformer_get_feature_names_out_pandas,
+    parametrize_with_checks,
 )
 
 
@@ -109,8 +116,10 @@ def _sample_func(x, y=1):
                 class_weight="balanced",
                 warm_start=True,
             ),
-            "LogisticRegression(class_weight='balanced',random_state=1,"
-            "solver='newton-cg',warm_start=True)",
+            (
+                "LogisticRegression(class_weight='balanced',random_state=1,"
+                "solver='newton-cg',warm_start=True)"
+            ),
         ),
     ],
 )
@@ -128,7 +137,17 @@ def _tested_estimators(type_filter=None):
         yield estimator
 
 
-@parametrize_with_checks(list(_tested_estimators()))
+def _generate_pipeline():
+    for final_estimator in [Ridge(), LogisticRegression()]:
+        yield Pipeline(
+            steps=[
+                ("scaler", StandardScaler()),
+                ("final_estimator", final_estimator),
+            ]
+        )
+
+
+@parametrize_with_checks(list(chain(_tested_estimators(), _generate_pipeline())))
 def test_estimators(estimator, check, request):
     # Common tests for estimator instances
     with ignore_warnings(category=(FutureWarning, ConvergenceWarning, UserWarning)):
@@ -149,7 +168,7 @@ def test_configure():
     # is installed in editable mode by pip build isolation enabled.
     pytest.importorskip("Cython")
     cwd = os.getcwd()
-    setup_path = os.path.abspath(os.path.join(sklearn.__path__[0], ".."))
+    setup_path = Path(sklearn.__file__).parent.parent
     setup_filename = os.path.join(setup_path, "setup.py")
     if not os.path.exists(setup_filename):
         pytest.skip("setup.py not available")
@@ -190,16 +209,21 @@ def test_class_weight_balanced_linear_classifiers(name, Classifier):
     check_class_weight_balanced_linear_classifier(name, Classifier)
 
 
+@pytest.mark.xfail(_IS_WASM, reason="importlib not supported for Pyodide packages")
 @ignore_warnings
 def test_import_all_consistency():
+    sklearn_path = [os.path.dirname(sklearn.__file__)]
     # Smoke test to check that any name in a __all__ list is actually defined
     # in the namespace of the module or package.
     pkgs = pkgutil.walk_packages(
-        path=sklearn.__path__, prefix="sklearn.", onerror=lambda _: None
+        path=sklearn_path, prefix="sklearn.", onerror=lambda _: None
     )
     submods = [modname for _, modname, _ in pkgs]
     for modname in submods + ["sklearn"]:
         if ".tests." in modname:
+            continue
+        # Avoid test suite depending on setuptools
+        if "sklearn._build_utils" in modname:
             continue
         if IS_PYPY and (
             "_svmlight_format_io" in modname
@@ -214,34 +238,41 @@ def test_import_all_consistency():
 
 
 def test_root_import_all_completeness():
+    sklearn_path = [os.path.dirname(sklearn.__file__)]
     EXCEPTIONS = ("utils", "tests", "base", "setup", "conftest")
     for _, modname, _ in pkgutil.walk_packages(
-        path=sklearn.__path__, onerror=lambda _: None
+        path=sklearn_path, onerror=lambda _: None
     ):
         if "." in modname or modname.startswith("_") or modname in EXCEPTIONS:
             continue
         assert modname in sklearn.__all__
 
 
+@pytest.mark.skipif(
+    sklearn._BUILT_WITH_MESON,
+    reason=(
+        "This test fails with Meson editable installs see"
+        " https://github.com/mesonbuild/meson-python/issues/557 for more details"
+    ),
+)
 def test_all_tests_are_importable():
     # Ensure that for each contentful subpackage, there is a test directory
     # within it that is also a subpackage (i.e. a directory with __init__.py)
 
-    HAS_TESTS_EXCEPTIONS = re.compile(
-        r"""(?x)
+    HAS_TESTS_EXCEPTIONS = re.compile(r"""(?x)
                                       \.externals(\.|$)|
                                       \.tests(\.|$)|
                                       \._
-                                      """
-    )
+                                      """)
     resource_modules = {
         "sklearn.datasets.data",
         "sklearn.datasets.descr",
         "sklearn.datasets.images",
     }
+    sklearn_path = [os.path.dirname(sklearn.__file__)]
     lookup = {
         name: ispkg
-        for _, name, ispkg in pkgutil.walk_packages(sklearn.__path__, prefix="sklearn.")
+        for _, name, ispkg in pkgutil.walk_packages(sklearn_path, prefix="sklearn.")
     }
     missing_tests = [
         name
@@ -270,6 +301,14 @@ def test_class_support_removed():
 
     with pytest.raises(TypeError, match=msg):
         parametrize_with_checks([LogisticRegression])
+
+
+def _generate_column_transformer_instances():
+    yield ColumnTransformer(
+        transformers=[
+            ("trans1", StandardScaler(), [0, 1]),
+        ]
+    )
 
 
 def _generate_search_cv_instances():
@@ -437,6 +476,20 @@ def test_transformers_get_feature_names_out(transformer):
         )
 
 
+ESTIMATORS_WITH_GET_FEATURE_NAMES_OUT = [
+    est for est in _tested_estimators() if hasattr(est, "get_feature_names_out")
+]
+
+
+@pytest.mark.parametrize(
+    "estimator", ESTIMATORS_WITH_GET_FEATURE_NAMES_OUT, ids=_get_check_estimator_ids
+)
+def test_estimators_get_feature_names_out_error(estimator):
+    estimator_name = estimator.__class__.__name__
+    _set_checking_parameters(estimator)
+    check_get_feature_names_out_error(estimator_name, estimator)
+
+
 @pytest.mark.parametrize(
     "Estimator",
     [est for name, est in all_estimators()],
@@ -457,7 +510,14 @@ def test_estimators_do_not_raise_errors_in_init_or_set_params(Estimator):
 
 
 @pytest.mark.parametrize(
-    "estimator", _tested_estimators(), ids=_get_check_estimator_ids
+    "estimator",
+    chain(
+        _tested_estimators(),
+        _generate_pipeline(),
+        _generate_column_transformer_instances(),
+        _generate_search_cv_instances(),
+    ),
+    ids=_get_check_estimator_ids,
 )
 def test_check_param_validation(estimator):
     name = estimator.__class__.__name__
@@ -534,13 +594,22 @@ def test_set_output_transform(estimator):
 @pytest.mark.parametrize(
     "estimator", SET_OUTPUT_ESTIMATORS, ids=_get_check_estimator_ids
 )
-def test_set_output_transform_pandas(estimator):
+@pytest.mark.parametrize(
+    "check_func",
+    [
+        check_set_output_transform_pandas,
+        check_global_output_transform_pandas,
+        check_set_output_transform_polars,
+        check_global_set_output_transform_polars,
+    ],
+)
+def test_set_output_transform_configured(estimator, check_func):
     name = estimator.__class__.__name__
     if not hasattr(estimator, "set_output"):
         pytest.skip(
-            f"Skipping check_set_output_transform_pandas for {name}: Does not support"
+            f"Skipping {check_func.__name__} for {name}: Does not support"
             " set_output API yet"
         )
     _set_checking_parameters(estimator)
     with ignore_warnings(category=(FutureWarning)):
-        check_set_output_transform_pandas(estimator.__class__.__name__, estimator)
+        check_func(estimator.__class__.__name__, estimator)

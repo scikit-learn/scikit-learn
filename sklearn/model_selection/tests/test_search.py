@@ -1,75 +1,83 @@
 """Test the search module"""
 
+import pickle
+import re
+import sys
 from collections.abc import Iterable, Sized
+from functools import partial
 from io import StringIO
 from itertools import chain, product
-from functools import partial
-import pickle
-import sys
 from types import GeneratorType
-import re
 
 import numpy as np
-import scipy.sparse as sp
 import pytest
+from scipy.stats import bernoulli, expon, uniform
 
+from sklearn.base import BaseEstimator, ClassifierMixin, is_classifier
+from sklearn.cluster import KMeans
+from sklearn.datasets import (
+    make_blobs,
+    make_classification,
+    make_multilabel_classification,
+)
+from sklearn.ensemble import HistGradientBoostingClassifier
+from sklearn.exceptions import FitFailedWarning
+from sklearn.experimental import enable_halving_search_cv  # noqa
+from sklearn.impute import SimpleImputer
+from sklearn.linear_model import (
+    LinearRegression,
+    Ridge,
+    SGDClassifier,
+)
+from sklearn.metrics import (
+    accuracy_score,
+    confusion_matrix,
+    f1_score,
+    make_scorer,
+    r2_score,
+    recall_score,
+    roc_auc_score,
+)
+from sklearn.metrics.pairwise import euclidean_distances
+from sklearn.model_selection import (
+    GridSearchCV,
+    GroupKFold,
+    GroupShuffleSplit,
+    HalvingGridSearchCV,
+    KFold,
+    LeaveOneGroupOut,
+    LeavePGroupsOut,
+    ParameterGrid,
+    ParameterSampler,
+    RandomizedSearchCV,
+    StratifiedKFold,
+    StratifiedShuffleSplit,
+    train_test_split,
+)
+from sklearn.model_selection._search import BaseSearchCV
+from sklearn.model_selection.tests.common import OneTimeSplitter
+from sklearn.neighbors import KernelDensity, KNeighborsClassifier, LocalOutlierFactor
+from sklearn.pipeline import Pipeline
+from sklearn.svm import SVC, LinearSVC
+from sklearn.tests.metadata_routing_common import (
+    ConsumingScorer,
+    _Registry,
+    check_recorded_metadata,
+)
+from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
+from sklearn.utils._mocking import CheckingClassifier, MockDataFrame
 from sklearn.utils._testing import (
-    assert_array_equal,
-    assert_array_almost_equal,
-    assert_allclose,
-    assert_almost_equal,
-    ignore_warnings,
     MinimalClassifier,
     MinimalRegressor,
     MinimalTransformer,
+    assert_allclose,
+    assert_almost_equal,
+    assert_array_almost_equal,
+    assert_array_equal,
+    ignore_warnings,
 )
-from sklearn.utils._mocking import CheckingClassifier, MockDataFrame
-
-from scipy.stats import bernoulli, expon, uniform
-
-from sklearn.base import BaseEstimator, ClassifierMixin
-from sklearn.base import is_classifier
-from sklearn.datasets import make_classification
-from sklearn.datasets import make_blobs
-from sklearn.datasets import make_multilabel_classification
-
-from sklearn.model_selection import train_test_split
-from sklearn.model_selection import KFold
-from sklearn.model_selection import StratifiedKFold
-from sklearn.model_selection import StratifiedShuffleSplit
-from sklearn.model_selection import LeaveOneGroupOut
-from sklearn.model_selection import LeavePGroupsOut
-from sklearn.model_selection import GroupKFold
-from sklearn.model_selection import GroupShuffleSplit
-from sklearn.model_selection import GridSearchCV
-from sklearn.model_selection import RandomizedSearchCV
-from sklearn.model_selection import ParameterGrid
-from sklearn.model_selection import ParameterSampler
-from sklearn.model_selection._search import BaseSearchCV
-
-from sklearn.model_selection._validation import FitFailedWarning
-
-from sklearn.svm import LinearSVC, SVC
-from sklearn.tree import DecisionTreeRegressor
-from sklearn.tree import DecisionTreeClassifier
-from sklearn.cluster import KMeans
-from sklearn.neighbors import KernelDensity
-from sklearn.neighbors import LocalOutlierFactor
-from sklearn.neighbors import KNeighborsClassifier
-from sklearn.metrics import f1_score
-from sklearn.metrics import recall_score
-from sklearn.metrics import accuracy_score
-from sklearn.metrics import make_scorer
-from sklearn.metrics import roc_auc_score
-from sklearn.metrics import confusion_matrix
-from sklearn.metrics import r2_score
-from sklearn.metrics.pairwise import euclidean_distances
-from sklearn.impute import SimpleImputer
-from sklearn.pipeline import Pipeline
-from sklearn.linear_model import Ridge, SGDClassifier, LinearRegression
-from sklearn.ensemble import HistGradientBoostingClassifier
-
-from sklearn.model_selection.tests.common import OneTimeSplitter
+from sklearn.utils.fixes import CSR_CONTAINERS
+from sklearn.utils.validation import _num_samples
 
 
 # Neither of the following two estimators inherit from BaseEstimator,
@@ -149,7 +157,6 @@ def test_validate_parameter_input(klass, input, error_type, error_message):
 
 
 def test_parameter_grid():
-
     # Test basic properties of ParameterGrid.
     params1 = {"foo": [1, 2, 3]}
     grid1 = ParameterGrid(params1)
@@ -250,10 +257,10 @@ def test_SearchCV_with_fit_params(SearchCV):
 @ignore_warnings
 def test_grid_search_no_score():
     # Test grid-search on classifier that has no score function.
-    clf = LinearSVC(random_state=0)
+    clf = LinearSVC(dual="auto", random_state=0)
     X, y = make_blobs(random_state=0, centers=2)
     Cs = [0.1, 1, 10]
-    clf_no_score = LinearSVCNoScore(random_state=0)
+    clf_no_score = LinearSVCNoScore(dual="auto", random_state=0)
     grid_search = GridSearchCV(clf, {"C": Cs}, scoring="accuracy")
     grid_search.fit(X, y)
 
@@ -274,13 +281,13 @@ def test_grid_search_no_score():
 
 def test_grid_search_score_method():
     X, y = make_classification(n_samples=100, n_classes=2, flip_y=0.2, random_state=0)
-    clf = LinearSVC(random_state=0)
+    clf = LinearSVC(dual="auto", random_state=0)
     grid = {"C": [0.1]}
 
     search_no_scoring = GridSearchCV(clf, grid, scoring=None).fit(X, y)
     search_accuracy = GridSearchCV(clf, grid, scoring="accuracy").fit(X, y)
     search_no_score_method_auc = GridSearchCV(
-        LinearSVCNoScore(), grid, scoring="roc_auc"
+        LinearSVCNoScore(dual="auto"), grid, scoring="roc_auc"
     ).fit(X, y)
     search_auc = GridSearchCV(clf, grid, scoring="roc_auc").fit(X, y)
 
@@ -308,7 +315,7 @@ def test_grid_search_groups():
     X, y = make_classification(n_samples=15, n_classes=2, random_state=0)
     groups = rng.randint(0, 3, 15)
 
-    clf = LinearSVC(random_state=0)
+    clf = LinearSVC(dual="auto", random_state=0)
     grid = {"C": [1]}
 
     group_cvs = [
@@ -337,7 +344,7 @@ def test_classes__property():
     y = np.array([0] * 5 + [1] * 5)
     Cs = [0.1, 1, 10]
 
-    grid_search = GridSearchCV(LinearSVC(random_state=0), {"C": Cs})
+    grid_search = GridSearchCV(LinearSVC(dual="auto", random_state=0), {"C": Cs})
     grid_search.fit(X, y)
     assert_array_equal(grid_search.best_estimator_.classes_, grid_search.classes_)
 
@@ -347,11 +354,13 @@ def test_classes__property():
     assert not hasattr(grid_search, "classes_")
 
     # Test that the grid searcher has no classes_ attribute before it's fit
-    grid_search = GridSearchCV(LinearSVC(random_state=0), {"C": Cs})
+    grid_search = GridSearchCV(LinearSVC(dual="auto", random_state=0), {"C": Cs})
     assert not hasattr(grid_search, "classes_")
 
     # Test that the grid searcher has no classes_ attribute without a refit
-    grid_search = GridSearchCV(LinearSVC(random_state=0), {"C": Cs}, refit=False)
+    grid_search = GridSearchCV(
+        LinearSVC(dual="auto", random_state=0), {"C": Cs}, refit=False
+    )
     grid_search.fit(X, y)
     assert not hasattr(grid_search, "classes_")
 
@@ -380,7 +389,7 @@ def test_no_refit():
             and hasattr(grid_search, "best_params_")
         )
 
-        # Make sure the functions predict/transform etc raise meaningful
+        # Make sure the functions predict/transform etc. raise meaningful
         # error messages
         for fn_name in (
             "predict",
@@ -389,18 +398,22 @@ def test_no_refit():
             "transform",
             "inverse_transform",
         ):
-            error_msg = (
+            outer_msg = f"has no attribute '{fn_name}'"
+            inner_msg = (
                 f"`refit=False`. {fn_name} is available only after "
                 "refitting on the best parameters"
             )
-            with pytest.raises(AttributeError, match=error_msg):
+            with pytest.raises(AttributeError, match=outer_msg) as exec_info:
                 getattr(grid_search, fn_name)(X)
+
+            assert isinstance(exec_info.value.__cause__, AttributeError)
+            assert inner_msg in str(exec_info.value.__cause__)
 
     # Test that an invalid refit param raises appropriate error messages
     error_msg = (
         "For multi-metric scoring, the parameter refit must be set to a scorer key"
     )
-    for refit in ["", 5, True, "recall", "accuracy"]:
+    for refit in [True, "recall", "accuracy"]:
         with pytest.raises(ValueError, match=error_msg):
             GridSearchCV(
                 clf, {}, refit=refit, scoring={"acc": "accuracy", "prec": "precision"}
@@ -411,7 +424,7 @@ def test_grid_search_error():
     # Test that grid search will capture errors on data with different length
     X_, y_ = make_classification(n_samples=200, n_features=100, random_state=0)
 
-    clf = LinearSVC()
+    clf = LinearSVC(dual="auto")
     cv = GridSearchCV(clf, {"C": [0.1, 1.0]})
     with pytest.raises(ValueError):
         cv.fit(X_[:180], y_)
@@ -480,18 +493,19 @@ def test_grid_search_bad_param_grid():
         search.fit(X, y)
 
 
-def test_grid_search_sparse():
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_grid_search_sparse(csr_container):
     # Test that grid search works with both dense and sparse matrices
     X_, y_ = make_classification(n_samples=200, n_features=100, random_state=0)
 
-    clf = LinearSVC()
+    clf = LinearSVC(dual="auto")
     cv = GridSearchCV(clf, {"C": [0.1, 1.0]})
     cv.fit(X_[:180], y_[:180])
     y_pred = cv.predict(X_[180:])
     C = cv.best_estimator_.C
 
-    X_ = sp.csr_matrix(X_)
-    clf = LinearSVC()
+    X_ = csr_container(X_)
+    clf = LinearSVC(dual="auto")
     cv = GridSearchCV(clf, {"C": [0.1, 1.0]})
     cv.fit(X_[:180].tocoo(), y_[:180])
     y_pred2 = cv.predict(X_[180:])
@@ -501,17 +515,18 @@ def test_grid_search_sparse():
     assert C == C2
 
 
-def test_grid_search_sparse_scoring():
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_grid_search_sparse_scoring(csr_container):
     X_, y_ = make_classification(n_samples=200, n_features=100, random_state=0)
 
-    clf = LinearSVC()
+    clf = LinearSVC(dual="auto")
     cv = GridSearchCV(clf, {"C": [0.1, 1.0]}, scoring="f1")
     cv.fit(X_[:180], y_[:180])
     y_pred = cv.predict(X_[180:])
     C = cv.best_estimator_.C
 
-    X_ = sp.csr_matrix(X_)
-    clf = LinearSVC()
+    X_ = csr_container(X_)
+    clf = LinearSVC(dual="auto")
     cv = GridSearchCV(clf, {"C": [0.1, 1.0]}, scoring="f1")
     cv.fit(X_[:180], y_[:180])
     y_pred2 = cv.predict(X_[180:])
@@ -621,7 +636,7 @@ def test_refit_callable():
         # clf.cv_results_.
         X, y = make_classification(n_samples=100, n_features=4, random_state=42)
         clf = GridSearchCV(
-            LinearSVC(random_state=42),
+            LinearSVC(dual="auto", random_state=42),
             {"C": [0.01, 0.1, 1]},
             scoring="precision",
             refit=True,
@@ -638,7 +653,7 @@ def test_refit_callable():
 
     X, y = make_classification(n_samples=100, n_features=4, random_state=42)
     clf = GridSearchCV(
-        LinearSVC(random_state=42),
+        LinearSVC(dual="auto", random_state=42),
         {"C": [0.01, 0.1, 1]},
         scoring="precision",
         refit=refit_callable,
@@ -665,7 +680,7 @@ def test_refit_callable_invalid_type():
     X, y = make_classification(n_samples=100, n_features=4, random_state=42)
 
     clf = GridSearchCV(
-        LinearSVC(random_state=42),
+        LinearSVC(dual="auto", random_state=42),
         {"C": [0.1, 1]},
         scoring="precision",
         refit=refit_callable_invalid_type,
@@ -691,7 +706,7 @@ def test_refit_callable_out_bound(out_bound_value, search_cv):
     X, y = make_classification(n_samples=100, n_features=4, random_state=42)
 
     clf = search_cv(
-        LinearSVC(random_state=42),
+        LinearSVC(dual="auto", random_state=42),
         {"C": [0.1, 1]},
         scoring="precision",
         refit=refit_callable_out_bound,
@@ -717,7 +732,7 @@ def test_refit_callable_multi_metric():
     X, y = make_classification(n_samples=100, n_features=4, random_state=42)
     scoring = {"Accuracy": make_scorer(accuracy_score), "prec": "precision"}
     clf = GridSearchCV(
-        LinearSVC(random_state=42),
+        LinearSVC(dual="auto", random_state=42),
         {"C": [0.01, 0.1, 1]},
         scoring=scoring,
         refit=refit_callable,
@@ -785,7 +800,7 @@ def test_pandas_input():
     # check cross_val_score doesn't destroy pandas dataframe
     types = [(MockDataFrame, MockDataFrame)]
     try:
-        from pandas import Series, DataFrame
+        from pandas import DataFrame, Series
 
         types.append((DataFrame, Series))
     except ImportError:
@@ -901,18 +916,16 @@ def check_cv_results_array_types(search, param_keys, score_keys):
         assert cv_results["rank_test_%s" % key].dtype == np.int32
 
 
-def check_cv_results_keys(cv_results, param_keys, score_keys, n_cand):
+def check_cv_results_keys(cv_results, param_keys, score_keys, n_cand, extra_keys=()):
     # Test the search.cv_results_ contains all the required results
-    assert_array_equal(
-        sorted(cv_results.keys()), sorted(param_keys + score_keys + ("params",))
-    )
+    all_keys = param_keys + score_keys + extra_keys
+    assert_array_equal(sorted(cv_results.keys()), sorted(all_keys + ("params",)))
     assert all(cv_results[key].shape == (n_cand,) for key in param_keys + score_keys)
 
 
 def test_grid_search_cv_results():
     X, y = make_classification(n_samples=50, n_features=4, random_state=42)
 
-    n_splits = 3
     n_grid_points = 6
     params = [
         dict(
@@ -950,9 +963,7 @@ def test_grid_search_cv_results():
     )
     n_candidates = n_grid_points
 
-    search = GridSearchCV(
-        SVC(), cv=n_splits, param_grid=params, return_train_score=True
-    )
+    search = GridSearchCV(SVC(), cv=3, param_grid=params, return_train_score=True)
     search.fit(X, y)
     cv_results = search.cv_results_
     # Check if score and timing are reasonable
@@ -968,17 +979,20 @@ def test_grid_search_cv_results():
     check_cv_results_keys(cv_results, param_keys, score_keys, n_candidates)
     # Check masking
     cv_results = search.cv_results_
-    n_candidates = len(search.cv_results_["params"])
-    assert all(
+
+    poly_results = [
         (
             cv_results["param_C"].mask[i]
             and cv_results["param_gamma"].mask[i]
             and not cv_results["param_degree"].mask[i]
         )
         for i in range(n_candidates)
-        if cv_results["param_kernel"][i] == "linear"
-    )
-    assert all(
+        if cv_results["param_kernel"][i] == "poly"
+    ]
+    assert all(poly_results)
+    assert len(poly_results) == 2
+
+    rbf_results = [
         (
             not cv_results["param_C"].mask[i]
             and not cv_results["param_gamma"].mask[i]
@@ -986,13 +1000,14 @@ def test_grid_search_cv_results():
         )
         for i in range(n_candidates)
         if cv_results["param_kernel"][i] == "rbf"
-    )
+    ]
+    assert all(rbf_results)
+    assert len(rbf_results) == 4
 
 
 def test_random_search_cv_results():
     X, y = make_classification(n_samples=50, n_features=4, random_state=42)
 
-    n_splits = 3
     n_search_iter = 30
 
     params = [
@@ -1017,12 +1032,12 @@ def test_random_search_cv_results():
         "mean_score_time",
         "std_score_time",
     )
-    n_cand = n_search_iter
+    n_candidates = n_search_iter
 
     search = RandomizedSearchCV(
         SVC(),
         n_iter=n_search_iter,
-        cv=n_splits,
+        cv=3,
         param_distributions=params,
         return_train_score=True,
     )
@@ -1030,8 +1045,7 @@ def test_random_search_cv_results():
     cv_results = search.cv_results_
     # Check results structure
     check_cv_results_array_types(search, param_keys, score_keys)
-    check_cv_results_keys(cv_results, param_keys, score_keys, n_cand)
-    n_candidates = len(search.cv_results_["params"])
+    check_cv_results_keys(cv_results, param_keys, score_keys, n_candidates)
     assert all(
         (
             cv_results["param_C"].mask[i]
@@ -1039,7 +1053,7 @@ def test_random_search_cv_results():
             and not cv_results["param_degree"].mask[i]
         )
         for i in range(n_candidates)
-        if cv_results["param_kernel"][i] == "linear"
+        if cv_results["param_kernel"][i] == "poly"
     )
     assert all(
         (
@@ -1261,10 +1275,13 @@ def test_search_cv_score_samples_error(search_cv):
 
     # Make sure to error out when underlying estimator does not implement
     # the method `score_samples`
-    err_msg = "'DecisionTreeClassifier' object has no attribute 'score_samples'"
+    outer_msg = f"'{search_cv.__class__.__name__}' has no attribute 'score_samples'"
+    inner_msg = "'DecisionTreeClassifier' object has no attribute 'score_samples'"
 
-    with pytest.raises(AttributeError, match=err_msg):
+    with pytest.raises(AttributeError, match=outer_msg) as exec_info:
         search_cv.score_samples(X)
+    assert isinstance(exec_info.value.__cause__, AttributeError)
+    assert inner_msg == str(exec_info.value.__cause__)
 
 
 @pytest.mark.parametrize(
@@ -1366,7 +1383,7 @@ def test_search_cv_results_none_param():
 
 @ignore_warnings()
 def test_search_cv_timing():
-    svc = LinearSVC(random_state=0)
+    svc = LinearSVC(dual="auto", random_state=0)
 
     X = [
         [
@@ -1408,7 +1425,7 @@ def test_search_cv_timing():
 def test_grid_search_correct_score_results():
     # test that correct scores are used
     n_splits = 3
-    clf = LinearSVC(random_state=0)
+    clf = LinearSVC(dual="auto", random_state=0)
     X, y = make_blobs(random_state=0, centers=2)
     Cs = [0.1, 1, 10]
     for score in ["f1", "roc_auc"]:
@@ -1420,7 +1437,7 @@ def test_grid_search_correct_score_results():
         expected_keys = ("mean_test_score", "rank_test_score") + tuple(
             "split%d_test_score" % cv_i for cv_i in range(n_splits)
         )
-        assert all(np.in1d(expected_keys, result_keys))
+        assert all(np.isin(expected_keys, result_keys))
 
         cv = StratifiedKFold(n_splits=n_splits)
         n_splits = grid_search.n_splits_
@@ -1641,9 +1658,10 @@ def test_grid_search_classifier_all_fits_fail():
     )
 
     warning_message = re.compile(
-        "All the 15 fits failed.+"
-        "15 fits failed with the following error.+ValueError.+Failing classifier failed"
-        " as required",
+        (
+            "All the 15 fits failed.+15 fits failed with the following"
+            " error.+ValueError.+Failing classifier failed as required"
+        ),
         flags=re.DOTALL,
     )
     with pytest.raises(ValueError, match=warning_message):
@@ -1746,7 +1764,7 @@ def test_stochastic_gradient_loss_param():
 def test_search_train_scores_set_to_false():
     X = np.arange(6).reshape(6, -1)
     y = [0, 0, 0, 1, 1, 1]
-    clf = LinearSVC(random_state=0)
+    clf = LinearSVC(dual="auto", random_state=0)
 
     gs = GridSearchCV(clf, param_grid={"C": [0.1, 0.2]}, cv=3)
     gs.fit(X, y)
@@ -1759,7 +1777,7 @@ def test_grid_search_cv_splits_consistency():
     X, y = make_classification(n_samples=n_samples, random_state=0)
 
     gs = GridSearchCV(
-        LinearSVC(random_state=0),
+        LinearSVC(dual="auto", random_state=0),
         param_grid={"C": [0.1, 0.2, 0.3]},
         cv=OneTimeSplitter(n_splits=n_splits, n_samples=n_samples),
         return_train_score=True,
@@ -1767,7 +1785,7 @@ def test_grid_search_cv_splits_consistency():
     gs.fit(X, y)
 
     gs2 = GridSearchCV(
-        LinearSVC(random_state=0),
+        LinearSVC(dual="auto", random_state=0),
         param_grid={"C": [0.1, 0.2, 0.3]},
         cv=KFold(n_splits=n_splits),
         return_train_score=True,
@@ -1780,7 +1798,7 @@ def test_grid_search_cv_splits_consistency():
         GeneratorType,
     )
     gs3 = GridSearchCV(
-        LinearSVC(random_state=0),
+        LinearSVC(dual="auto", random_state=0),
         param_grid={"C": [0.1, 0.2, 0.3]},
         cv=KFold(n_splits=n_splits, shuffle=True, random_state=0).split(X, y),
         return_train_score=True,
@@ -1788,7 +1806,7 @@ def test_grid_search_cv_splits_consistency():
     gs3.fit(X, y)
 
     gs4 = GridSearchCV(
-        LinearSVC(random_state=0),
+        LinearSVC(dual="auto", random_state=0),
         param_grid={"C": [0.1, 0.2, 0.3]},
         cv=KFold(n_splits=n_splits, shuffle=True, random_state=0),
         return_train_score=True,
@@ -1824,7 +1842,7 @@ def test_grid_search_cv_splits_consistency():
 
     # Check consistency of folds across the parameters
     gs = GridSearchCV(
-        LinearSVC(random_state=0),
+        LinearSVC(dual="auto", random_state=0),
         param_grid={"C": [0.1, 0.1, 0.2, 0.2]},
         cv=KFold(n_splits=n_splits, shuffle=True),
         return_train_score=True,
@@ -1900,7 +1918,13 @@ def test_custom_run_search():
             attr[0].islower()
             and attr[-1:] == "_"
             and attr
-            not in {"cv_results_", "best_estimator_", "refit_time_", "classes_"}
+            not in {
+                "cv_results_",
+                "best_estimator_",
+                "refit_time_",
+                "classes_",
+                "scorer_",
+            }
         ):
             assert getattr(gscv, attr) == getattr(mycv, attr), (
                 "Attribute %s not equal" % attr
@@ -2042,7 +2066,7 @@ def test_callable_multimetric_confusion_matrix():
         return {"tn": cm[0, 0], "fp": cm[0, 1], "fn": cm[1, 0], "tp": cm[1, 1]}
 
     X, y = make_classification(n_samples=40, n_features=4, random_state=42)
-    est = LinearSVC(random_state=42)
+    est = LinearSVC(dual="auto", random_state=42)
     search = GridSearchCV(est, {"C": [0.1, 1]}, scoring=custom_scorer, refit="fp")
 
     search.fit(X, y)
@@ -2066,7 +2090,7 @@ def test_callable_multimetric_same_as_list_of_strings():
         }
 
     X, y = make_classification(n_samples=40, n_features=4, random_state=42)
-    est = LinearSVC(random_state=42)
+    est = LinearSVC(dual="auto", random_state=42)
     search_callable = GridSearchCV(
         est, {"C": [0.1, 1]}, scoring=custom_scorer, refit="recall"
     )
@@ -2089,7 +2113,7 @@ def test_callable_single_metric_same_as_single_string():
         return recall_score(y, y_pred)
 
     X, y = make_classification(n_samples=40, n_features=4, random_state=42)
-    est = LinearSVC(random_state=42)
+    est = LinearSVC(dual="auto", random_state=42)
     search_callable = GridSearchCV(
         est, {"C": [0.1, 1]}, scoring=custom_scorer, refit=True
     )
@@ -2117,7 +2141,7 @@ def test_callable_multimetric_error_on_invalid_key():
 
     X, y = make_classification(n_samples=40, n_features=4, random_state=42)
     clf = GridSearchCV(
-        LinearSVC(random_state=42),
+        LinearSVC(dual="auto", random_state=42),
         {"C": [0.1, 1]},
         scoring=bad_scorer,
         refit="good_name",
@@ -2178,8 +2202,10 @@ def test_callable_multimetric_clf_all_fits_fail():
 
     individual_fit_error_message = "ValueError: Failing classifier failed as required"
     error_message = re.compile(
-        "All the 15 fits failed.+your model is misconfigured.+"
-        f"{individual_fit_error_message}",
+        (
+            "All the 15 fits failed.+your model is misconfigured.+"
+            f"{individual_fit_error_message}"
+        ),
         flags=re.DOTALL,
     )
 
@@ -2397,7 +2423,7 @@ def test_search_cv_verbose_3(capsys, return_train_score):
     """Check that search cv with verbose>2 shows the score for single
     metrics. non-regression test for #19658."""
     X, y = make_classification(n_samples=100, n_classes=2, flip_y=0.2, random_state=0)
-    clf = LinearSVC(random_state=0)
+    clf = LinearSVC(dual="auto", random_state=0)
     grid = {"C": [0.1]}
 
     GridSearchCV(
@@ -2414,3 +2440,98 @@ def test_search_cv_verbose_3(capsys, return_train_score):
     else:
         match = re.findall(r"score=[\d\.]+", captured)
     assert len(match) == 3
+
+
+@pytest.mark.parametrize(
+    "SearchCV, param_search",
+    [
+        (GridSearchCV, "param_grid"),
+        (RandomizedSearchCV, "param_distributions"),
+        (HalvingGridSearchCV, "param_grid"),
+    ],
+)
+def test_search_estimator_param(SearchCV, param_search):
+    # test that SearchCV object doesn't change the object given in the parameter grid
+    X, y = make_classification(random_state=42)
+
+    params = {"clf": [LinearSVC(dual="auto")], "clf__C": [0.01]}
+    orig_C = params["clf"][0].C
+
+    pipe = Pipeline([("trs", MinimalTransformer()), ("clf", None)])
+
+    param_grid_search = {param_search: params}
+    gs = SearchCV(pipe, refit=True, cv=2, scoring="accuracy", **param_grid_search).fit(
+        X, y
+    )
+
+    # testing that the original object in params is not changed
+    assert params["clf"][0].C == orig_C
+    # testing that the GS is setting the parameter of the step correctly
+    assert gs.best_estimator_.named_steps["clf"].C == 0.01
+
+
+# Metadata Routing Tests
+# ======================
+
+
+@pytest.mark.usefixtures("enable_slep006")
+@pytest.mark.parametrize(
+    "SearchCV, param_search",
+    [
+        (GridSearchCV, "param_grid"),
+        (RandomizedSearchCV, "param_distributions"),
+    ],
+)
+def test_multi_metric_search_forwards_metadata(SearchCV, param_search):
+    """Test that *SearchCV forwards metadata correctly when passed multiple metrics."""
+    X, y = make_classification(random_state=42)
+    n_samples = _num_samples(X)
+    rng = np.random.RandomState(0)
+    score_weights = rng.rand(n_samples)
+    score_metadata = rng.rand(n_samples)
+
+    est = LinearSVC(dual="auto")
+    param_grid_search = {param_search: {"C": [1]}}
+
+    scorer_registry = _Registry()
+    scorer = ConsumingScorer(registry=scorer_registry).set_score_request(
+        sample_weight="score_weights", metadata="score_metadata"
+    )
+    scoring = dict(my_scorer=scorer, accuracy="accuracy")
+    SearchCV(est, refit="accuracy", cv=2, scoring=scoring, **param_grid_search).fit(
+        X, y, score_weights=score_weights, score_metadata=score_metadata
+    )
+    assert len(scorer_registry)
+    for _scorer in scorer_registry:
+        check_recorded_metadata(
+            obj=_scorer,
+            method="score",
+            split_params=("sample_weight", "metadata"),
+            sample_weight=score_weights,
+            metadata=score_metadata,
+        )
+
+
+@pytest.mark.parametrize(
+    "SearchCV, param_search",
+    [
+        (GridSearchCV, "param_grid"),
+        (RandomizedSearchCV, "param_distributions"),
+        (HalvingGridSearchCV, "param_grid"),
+    ],
+)
+def test_score_rejects_params_with_no_routing_enabled(SearchCV, param_search):
+    """*SearchCV should reject **params when metadata routing is not enabled
+    since this is added only when routing is enabled."""
+    X, y = make_classification(random_state=42)
+    est = LinearSVC(dual="auto")
+    param_grid_search = {param_search: {"C": [1]}}
+
+    gs = SearchCV(est, cv=2, **param_grid_search).fit(X, y)
+
+    with pytest.raises(ValueError, match="is only supported if"):
+        gs.score(X, y, metadata=1)
+
+
+# End of Metadata Routing Tests
+# =============================

@@ -8,6 +8,7 @@ Demo of OPTICS clustering algorithm
 Finds core samples of high density and expands clusters from them.
 This example uses data that is generated so that the clusters have
 different densities.
+
 The :class:`~cluster.OPTICS` is first used with its Xi cluster detection
 method, and then setting specific thresholds on the reachability, which
 corresponds to :class:`~cluster.DBSCAN`. We can see that the different
@@ -20,10 +21,11 @@ thresholds in DBSCAN.
 #          Adrin Jalali <adrin.jalali@gmail.com>
 # License: BSD 3 clause
 
-from sklearn.cluster import OPTICS, cluster_optics_dbscan
 import matplotlib.gridspec as gridspec
 import matplotlib.pyplot as plt
 import numpy as np
+
+from sklearn.cluster import OPTICS, cluster_optics_dbscan
 
 # Generate sample data
 

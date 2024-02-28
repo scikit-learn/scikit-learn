@@ -29,7 +29,6 @@ setup_ccache() {
 
 pre_python_environment_install() {
     if [[ "$DISTRIB" == "ubuntu" ]]; then
-        sudo add-apt-repository --remove ppa:ubuntu-toolchain-r/test
         sudo apt-get update
         sudo apt-get install python3-scipy python3-matplotlib \
              libatlas3-base libatlas-base-dev python3-virtualenv ccache
@@ -44,27 +43,26 @@ pre_python_environment_install() {
         # need compilers
         apt-get -yq update
         apt-get -yq install build-essential
-
-    elif [[ "$DISTRIB" == "pip-nogil" ]]; then
-        echo "deb-src http://archive.ubuntu.com/ubuntu/ focal main" | sudo tee -a /etc/apt/sources.list
-        sudo apt-get -yq update
-        sudo apt-get install -yq ccache
-        sudo apt-get build-dep -yq python3 python3-dev
-        setup_ccache  # speed-up the build of CPython itself
-        # build Python nogil
-        PYTHON_NOGIL_CLONE_PATH=../nogil
-        git clone --depth 1 https://github.com/colesbury/nogil $PYTHON_NOGIL_CLONE_PATH
-        cd $PYTHON_NOGIL_CLONE_PATH
-        ./configure && make -j 2
-        export PYTHON_NOGIL_PATH="${PYTHON_NOGIL_CLONE_PATH}/python"
-        cd $OLDPWD
-
     fi
+
+}
+
+check_packages_dev_version() {
+    for package in $@; do
+        package_version=$(python -c "import $package; print($package.__version__)")
+        if ! [[ $package_version =~ "dev" ]]; then
+            echo "$package is not a development version: $package_version"
+            exit 1
+        fi
+    done
 }
 
 python_environment_install_and_activate() {
     if [[ "$DISTRIB" == "conda"* ]]; then
-        conda update -n base conda -y
+        # Install/update conda with the libmamba solver because the legacy
+        # solver can be slow at installing a specific version of conda-lock.
+        conda install -n base conda conda-libmamba-solver -y
+        conda config --set solver libmamba
         conda install -c conda-forge "$(get_dep conda-lock min)" -y
         conda-lock install --name $VIRTUALENV $LOCK_FILE
         source activate $VIRTUALENV
@@ -75,21 +73,30 @@ python_environment_install_and_activate() {
         pip install -r "${LOCK_FILE}"
 
     elif [[ "$DISTRIB" == "pip-nogil" ]]; then
-        ${PYTHON_NOGIL_PATH} -m venv $VIRTUALENV
+        python -m venv $VIRTUALENV
         source $VIRTUALENV/bin/activate
         pip install -r "${LOCK_FILE}"
     fi
 
     if [[ "$DISTRIB" == "conda-pip-scipy-dev" ]]; then
         echo "Installing development dependency wheels"
-        dev_anaconda_url=https://pypi.anaconda.org/scipy-wheels-nightly/simple
-        pip install --pre --upgrade --timeout=60 --extra-index $dev_anaconda_url numpy pandas scipy
-        echo "Installing Cython from PyPI enabling pre-releases"
-        pip install --pre cython
-        echo "Installing joblib master"
+        dev_anaconda_url=https://pypi.anaconda.org/scientific-python-nightly-wheels/simple
+        dev_packages="numpy scipy pandas"
+        pip install --pre --upgrade --timeout=60 --extra-index $dev_anaconda_url $dev_packages
+
+        check_packages_dev_version $dev_packages
+
+        echo "Installing Cython from latest sources"
+        pip install https://github.com/cython/cython/archive/master.zip
+        echo "Installing joblib from latest sources"
         pip install https://github.com/joblib/joblib/archive/master.zip
-        echo "Installing pillow master"
+        echo "Installing pillow from latest sources"
         pip install https://github.com/python-pillow/Pillow/archive/main.zip
+
+    elif [[ "$DISTRIB" == "pip-nogil" ]]; then
+        apt-get -yq update
+        apt-get install -yq ccache
+
     fi
 }
 
@@ -105,6 +112,12 @@ scikit_learn_install() {
         # Without openmp, we use the system clang. Here we use /usr/bin/ar
         # instead because llvm-ar errors
         export AR=/usr/bin/ar
+        # Make sure omp.h is not present in the conda environment, so that
+        # using an unprotected "cimport openmp" will make this build fail. At
+        # the time of writing (2023-01-13), on OSX, blas (mkl or openblas)
+        # brings in openmp so that you end up having the omp.h include inside
+        # the conda environment.
+        find $CONDA_PREFIX -name omp.h -delete -print
     fi
 
     if [[ "$UNAMESTR" == "Linux" ]]; then
@@ -113,8 +126,9 @@ scikit_learn_install() {
         export LDFLAGS="$LDFLAGS -Wl,--sysroot=/"
     fi
 
-    # TODO use a specific variable for this rather than using a particular build ...
-    if [[ "$DISTRIB" == "conda-pip-latest" ]]; then
+    if [[ "$BUILD_WITH_MESON" == "true" ]]; then
+        make dev-meson
+    elif [[ "$PIP_BUILD_ISOLATION" == "true" ]]; then
         # Check that pip can automatically build scikit-learn with the build
         # dependencies specified in pyproject.toml using an isolated build
         # environment:
@@ -125,7 +139,7 @@ scikit_learn_install() {
         python setup.py develop
     fi
 
-    ccache -s
+    ccache -s || echo "ccache not installed, skipping ccache statistics"
 }
 
 main() {

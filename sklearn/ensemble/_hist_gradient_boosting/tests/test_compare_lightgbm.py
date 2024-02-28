@@ -1,16 +1,29 @@
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import accuracy_score
-from sklearn.datasets import make_classification, make_regression
 import numpy as np
 import pytest
 
-from sklearn.ensemble import HistGradientBoostingRegressor
-from sklearn.ensemble import HistGradientBoostingClassifier
+from sklearn.datasets import make_classification, make_regression
+from sklearn.ensemble import (
+    HistGradientBoostingClassifier,
+    HistGradientBoostingRegressor,
+)
 from sklearn.ensemble._hist_gradient_boosting.binning import _BinMapper
 from sklearn.ensemble._hist_gradient_boosting.utils import get_equivalent_estimator
+from sklearn.metrics import accuracy_score
+from sklearn.model_selection import train_test_split
 
 
 @pytest.mark.parametrize("seed", range(5))
+@pytest.mark.parametrize(
+    "loss",
+    [
+        "squared_error",
+        "poisson",
+        pytest.param(
+            "gamma",
+            marks=pytest.mark.skip("LightGBM with gamma loss has larger deviation."),
+        ),
+    ],
+)
 @pytest.mark.parametrize("min_samples_leaf", (1, 20))
 @pytest.mark.parametrize(
     "n_samples, max_leaf_nodes",
@@ -19,7 +32,9 @@ from sklearn.ensemble._hist_gradient_boosting.utils import get_equivalent_estima
         (1000, 8),
     ],
 )
-def test_same_predictions_regression(seed, min_samples_leaf, n_samples, max_leaf_nodes):
+def test_same_predictions_regression(
+    seed, loss, min_samples_leaf, n_samples, max_leaf_nodes
+):
     # Make sure sklearn has the same predictions as lightgbm for easy targets.
     #
     # In particular when the size of the trees are bound and the number of
@@ -33,7 +48,7 @@ def test_same_predictions_regression(seed, min_samples_leaf, n_samples, max_leaf
     #   is not exactly the same. To avoid this issue we only compare the
     #   predictions on the test set when the number of samples is large enough
     #   and max_leaf_nodes is low enough.
-    # - To ignore  discrepancies caused by small differences the binning
+    # - To ignore discrepancies caused by small differences in the binning
     #   strategy, data is pre-binned if n_samples > 255.
     # - We don't check the absolute_error loss here. This is because
     #   LightGBM's computation of the median (used for the initial value of
@@ -52,6 +67,10 @@ def test_same_predictions_regression(seed, min_samples_leaf, n_samples, max_leaf
         n_samples=n_samples, n_features=5, n_informative=5, random_state=0
     )
 
+    if loss in ("gamma", "poisson"):
+        # make the target positive
+        y = np.abs(y) + np.mean(np.abs(y))
+
     if n_samples > 255:
         # bin data and convert it to float32 so that the estimator doesn't
         # treat it as pre-binned
@@ -60,6 +79,7 @@ def test_same_predictions_regression(seed, min_samples_leaf, n_samples, max_leaf
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=rng)
 
     est_sklearn = HistGradientBoostingRegressor(
+        loss=loss,
         max_iter=max_iter,
         max_bins=max_bins,
         learning_rate=1,
@@ -68,6 +88,7 @@ def test_same_predictions_regression(seed, min_samples_leaf, n_samples, max_leaf
         max_leaf_nodes=max_leaf_nodes,
     )
     est_lightgbm = get_equivalent_estimator(est_sklearn, lib="lightgbm")
+    est_lightgbm.set_params(min_sum_hessian_in_leaf=0)
 
     est_lightgbm.fit(X_train, y_train)
     est_sklearn.fit(X_train, y_train)
@@ -77,14 +98,24 @@ def test_same_predictions_regression(seed, min_samples_leaf, n_samples, max_leaf
 
     pred_lightgbm = est_lightgbm.predict(X_train)
     pred_sklearn = est_sklearn.predict(X_train)
-    # less than 1% of the predictions are different up to the 3rd decimal
-    assert np.mean(abs(pred_lightgbm - pred_sklearn) > 1e-3) < 0.011
+    if loss in ("gamma", "poisson"):
+        # More than 65% of the predictions must be close up to the 2nd decimal.
+        # TODO: We are not entirely satisfied with this lax comparison, but the root
+        # cause is not clear, maybe algorithmic differences. One such example is the
+        # poisson_max_delta_step parameter of LightGBM which does not exist in HGBT.
+        assert (
+            np.mean(np.isclose(pred_lightgbm, pred_sklearn, rtol=1e-2, atol=1e-2))
+            > 0.65
+        )
+    else:
+        # Less than 1% of the predictions may deviate more than 1e-3 in relative terms.
+        assert np.mean(np.isclose(pred_lightgbm, pred_sklearn, rtol=1e-3)) > 1 - 0.01
 
-    if max_leaf_nodes < 10 and n_samples >= 1000:
+    if max_leaf_nodes < 10 and n_samples >= 1000 and loss in ("squared_error",):
         pred_lightgbm = est_lightgbm.predict(X_test)
         pred_sklearn = est_sklearn.predict(X_test)
-        # less than 1% of the predictions are different up to the 4th decimal
-        assert np.mean(abs(pred_lightgbm - pred_sklearn) > 1e-4) < 0.01
+        # Less than 1% of the predictions may deviate more than 1e-4 in relative terms.
+        assert np.mean(np.isclose(pred_lightgbm, pred_sklearn, rtol=1e-4)) > 1 - 0.01
 
 
 @pytest.mark.parametrize("seed", range(5))
@@ -151,7 +182,6 @@ def test_same_predictions_classification(
     np.testing.assert_almost_equal(acc_lightgbm, acc_sklearn)
 
     if max_leaf_nodes < 10 and n_samples >= 1000:
-
         pred_lightgbm = est_lightgbm.predict(X_test)
         pred_sklearn = est_sklearn.predict(X_test)
         assert np.mean(pred_sklearn == pred_lightgbm) > 0.89
@@ -234,7 +264,6 @@ def test_same_predictions_multiclass_classification(
     np.testing.assert_allclose(acc_lightgbm, acc_sklearn, rtol=0, atol=5e-2)
 
     if max_leaf_nodes < 10 and n_samples >= 1000:
-
         pred_lightgbm = est_lightgbm.predict(X_test)
         pred_sklearn = est_sklearn.predict(X_test)
         assert np.mean(pred_sklearn == pred_lightgbm) > 0.89

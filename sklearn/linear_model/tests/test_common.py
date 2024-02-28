@@ -59,7 +59,7 @@ from sklearn.linear_model import (
             ),
             marks=pytest.mark.xfail(reason="Missing importance sampling scheme"),
         ),
-        LogisticRegressionCV(),
+        LogisticRegressionCV(tol=1e-6),
         MultiTaskElasticNet(),
         MultiTaskElasticNetCV(),
         MultiTaskLasso(),
@@ -71,7 +71,7 @@ from sklearn.linear_model import (
         RidgeCV(),
         pytest.param(
             SGDRegressor(tol=1e-15),
-            marks=pytest.mark.xfail(reason="Unsufficient precision."),
+            marks=pytest.mark.xfail(reason="Insufficient precision."),
         ),
         SGDRegressor(penalty="elasticnet", max_iter=10_000),
         TweedieRegressor(power=0),  # same as Ridge
@@ -98,7 +98,7 @@ def test_balance_property(model, with_sample_weight, global_random_seed):
     ):
         pytest.skip("Estimator does not support sample_weight.")
 
-    rel = 1e-4  # test precision
+    rel = 2e-4  # test precision
     if isinstance(model, SGDRegressor):
         rel = 1e-1
     elif hasattr(model, "solver") and model.solver == "saga":

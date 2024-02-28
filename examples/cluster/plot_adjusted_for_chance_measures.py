@@ -102,7 +102,7 @@ def fixed_classes_uniform_labelings_scores(
 
 
 # %%
-# In this first example we set the number of clases (true number of clusters) to
+# In this first example we set the number of classes (true number of clusters) to
 # `n_classes=10`. The number of clusters varies over the values provided by
 # `n_clusters_range`.
 

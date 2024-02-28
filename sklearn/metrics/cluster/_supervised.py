@@ -18,13 +18,15 @@ better.
 
 import warnings
 from math import log
+from numbers import Real
 
 import numpy as np
 from scipy import sparse as sp
 
-from ._expected_mutual_info_fast import expected_mutual_information
+from ...utils._param_validation import Interval, StrOptions, validate_params
 from ...utils.multiclass import type_of_target
 from ...utils.validation import check_array, check_consistent_length
+from ._expected_mutual_info_fast import expected_mutual_information
 
 
 def check_clusterings(labels_true, labels_pred):
@@ -89,6 +91,16 @@ def _generalized_average(U, V, average_method):
         )
 
 
+@validate_params(
+    {
+        "labels_true": ["array-like", None],
+        "labels_pred": ["array-like", None],
+        "eps": [Interval(Real, 0, None, closed="left"), None],
+        "sparse": ["boolean"],
+        "dtype": "no_validation",  # delegate the validation to SciPy
+    },
+    prefer_skip_nested_validation=True,
+)
 def contingency_matrix(
     labels_true, labels_pred, *, eps=None, sparse=False, dtype=np.int64
 ):
@@ -96,7 +108,7 @@ def contingency_matrix(
 
     Parameters
     ----------
-    labels_true : int array, shape = [n_samples]
+    labels_true : array-like of shape (n_samples,)
         Ground truth class labels to be used as a reference.
 
     labels_pred : array-like of shape (n_samples,)
@@ -127,6 +139,16 @@ def contingency_matrix(
         otherwise with the ``dtype`` argument. If ``eps`` is given, the dtype
         will be float.
         Will be a ``sklearn.sparse.csr_matrix`` if ``sparse=True``.
+
+    Examples
+    --------
+    >>> from sklearn.metrics.cluster import contingency_matrix
+    >>> labels_true = [0, 0, 1, 1, 2, 2]
+    >>> labels_pred = [1, 0, 2, 1, 0, 2]
+    >>> contingency_matrix(labels_true, labels_pred)
+    array([[1, 1, 0],
+           [0, 1, 1],
+           [1, 0, 1]])
     """
 
     if eps is not None and sparse:
@@ -158,6 +180,13 @@ def contingency_matrix(
 # clustering measures
 
 
+@validate_params(
+    {
+        "labels_true": ["array-like"],
+        "labels_pred": ["array-like"],
+    },
+    prefer_skip_nested_validation=True,
+)
 def pair_confusion_matrix(labels_true, labels_pred):
     """Pair confusion matrix arising from two clusterings [1]_.
 
@@ -188,9 +217,9 @@ def pair_confusion_matrix(labels_true, labels_pred):
 
     See Also
     --------
-    rand_score: Rand Score.
-    adjusted_rand_score: Adjusted Rand Score.
-    adjusted_mutual_info_score: Adjusted Mutual Information.
+    sklearn.metrics.rand_score : Rand Score.
+    sklearn.metrics.adjusted_rand_score : Adjusted Rand Score.
+    sklearn.metrics.adjusted_mutual_info_score : Adjusted Mutual Information.
 
     References
     ----------
@@ -236,6 +265,13 @@ def pair_confusion_matrix(labels_true, labels_pred):
     return C
 
 
+@validate_params(
+    {
+        "labels_true": ["array-like"],
+        "labels_pred": ["array-like"],
+    },
+    prefer_skip_nested_validation=True,
+)
 def rand_score(labels_true, labels_pred):
     """Rand index.
 
@@ -307,6 +343,13 @@ def rand_score(labels_true, labels_pred):
     return numerator / denominator
 
 
+@validate_params(
+    {
+        "labels_true": ["array-like"],
+        "labels_pred": ["array-like"],
+    },
+    prefer_skip_nested_validation=True,
+)
 def adjusted_rand_score(labels_true, labels_pred):
     """Rand index adjusted for chance.
 
@@ -334,10 +377,10 @@ def adjusted_rand_score(labels_true, labels_pred):
 
     Parameters
     ----------
-    labels_true : int array, shape = [n_samples]
+    labels_true : array-like of shape (n_samples,), dtype=int
         Ground truth class labels to be used as a reference.
 
-    labels_pred : array-like of shape (n_samples,)
+    labels_pred : array-like of shape (n_samples,), dtype=int
         Cluster labels to evaluate.
 
     Returns
@@ -409,6 +452,14 @@ def adjusted_rand_score(labels_true, labels_pred):
     return 2.0 * (tp * tn - fn * fp) / ((tp + fn) * (fn + tn) + (tp + fp) * (fp + tn))
 
 
+@validate_params(
+    {
+        "labels_true": ["array-like"],
+        "labels_pred": ["array-like"],
+        "beta": [Interval(Real, 0, None, closed="left")],
+    },
+    prefer_skip_nested_validation=True,
+)
 def homogeneity_completeness_v_measure(labels_true, labels_pred, *, beta=1.0):
     """Compute the homogeneity and completeness and V-Measure scores at once.
 
@@ -439,7 +490,7 @@ def homogeneity_completeness_v_measure(labels_true, labels_pred, *, beta=1.0):
 
     Parameters
     ----------
-    labels_true : int array, shape = [n_samples]
+    labels_true : array-like of shape (n_samples,)
         Ground truth class labels to be used as a reference.
 
     labels_pred : array-like of shape (n_samples,)
@@ -467,6 +518,13 @@ def homogeneity_completeness_v_measure(labels_true, labels_pred, *, beta=1.0):
     homogeneity_score : Homogeneity metric of cluster labeling.
     completeness_score : Completeness metric of cluster labeling.
     v_measure_score : V-Measure (NMI with arithmetic mean option).
+
+    Examples
+    --------
+    >>> from sklearn.metrics import homogeneity_completeness_v_measure
+    >>> y_true, y_pred = [0, 0, 1, 1, 2, 2], [0, 0, 1, 2, 2, 2]
+    >>> homogeneity_completeness_v_measure(y_true, y_pred)
+    (0.71..., 0.77..., 0.73...)
     """
     labels_true, labels_pred = check_clusterings(labels_true, labels_pred)
 
@@ -495,6 +553,13 @@ def homogeneity_completeness_v_measure(labels_true, labels_pred, *, beta=1.0):
     return homogeneity, completeness, v_measure_score
 
 
+@validate_params(
+    {
+        "labels_true": ["array-like"],
+        "labels_pred": ["array-like"],
+    },
+    prefer_skip_nested_validation=True,
+)
 def homogeneity_score(labels_true, labels_pred):
     """Homogeneity metric of a cluster labeling given a ground truth.
 
@@ -513,7 +578,7 @@ def homogeneity_score(labels_true, labels_pred):
 
     Parameters
     ----------
-    labels_true : int array, shape = [n_samples]
+    labels_true : array-like of shape (n_samples,)
         Ground truth class labels to be used as a reference.
 
     labels_pred : array-like of shape (n_samples,)
@@ -564,6 +629,13 @@ def homogeneity_score(labels_true, labels_pred):
     return homogeneity_completeness_v_measure(labels_true, labels_pred)[0]
 
 
+@validate_params(
+    {
+        "labels_true": ["array-like"],
+        "labels_pred": ["array-like"],
+    },
+    prefer_skip_nested_validation=True,
+)
 def completeness_score(labels_true, labels_pred):
     """Compute completeness metric of a cluster labeling given a ground truth.
 
@@ -582,7 +654,7 @@ def completeness_score(labels_true, labels_pred):
 
     Parameters
     ----------
-    labels_true : int array, shape = [n_samples]
+    labels_true : array-like of shape (n_samples,)
         Ground truth class labels to be used as a reference.
 
     labels_pred : array-like of shape (n_samples,)
@@ -633,6 +705,14 @@ def completeness_score(labels_true, labels_pred):
     return homogeneity_completeness_v_measure(labels_true, labels_pred)[1]
 
 
+@validate_params(
+    {
+        "labels_true": ["array-like"],
+        "labels_pred": ["array-like"],
+        "beta": [Interval(Real, 0, None, closed="left")],
+    },
+    prefer_skip_nested_validation=True,
+)
 def v_measure_score(labels_true, labels_pred, *, beta=1.0):
     """V-measure cluster labeling given a ground truth.
 
@@ -657,7 +737,7 @@ def v_measure_score(labels_true, labels_pred, *, beta=1.0):
 
     Parameters
     ----------
-    labels_true : int array, shape = [n_samples]
+    labels_true : array-like of shape (n_samples,)
         Ground truth class labels to be used as a reference.
 
     labels_pred : array-like of shape (n_samples,)
@@ -729,6 +809,14 @@ def v_measure_score(labels_true, labels_pred, *, beta=1.0):
     return homogeneity_completeness_v_measure(labels_true, labels_pred, beta=beta)[2]
 
 
+@validate_params(
+    {
+        "labels_true": ["array-like", None],
+        "labels_pred": ["array-like", None],
+        "contingency": ["array-like", "sparse matrix", None],
+    },
+    prefer_skip_nested_validation=True,
+)
 def mutual_info_score(labels_true, labels_pred, *, contingency=None):
     """Mutual Information between two clusterings.
 
@@ -757,19 +845,20 @@ def mutual_info_score(labels_true, labels_pred, *, contingency=None):
 
     Parameters
     ----------
-    labels_true : int array, shape = [n_samples]
+    labels_true : array-like of shape (n_samples,), dtype=integral
         A clustering of the data into disjoint subsets, called :math:`U` in
         the above formula.
 
-    labels_pred : int array-like of shape (n_samples,)
+    labels_pred : array-like of shape (n_samples,), dtype=integral
         A clustering of the data into disjoint subsets, called :math:`V` in
         the above formula.
 
-    contingency : {ndarray, sparse matrix} of shape \
+    contingency : {array-like, sparse matrix} of shape \
             (n_classes_true, n_classes_pred), default=None
-        A contingency matrix given by the :func:`contingency_matrix` function.
-        If value is ``None``, it will be computed, otherwise the given value is
-        used, with ``labels_true`` and ``labels_pred`` ignored.
+        A contingency matrix given by the
+        :func:`~sklearn.metrics.cluster.contingency_matrix` function. If value
+        is ``None``, it will be computed, otherwise the given value is used,
+        with ``labels_true`` and ``labels_pred`` ignored.
 
     Returns
     -------
@@ -785,6 +874,14 @@ def mutual_info_score(labels_true, labels_pred, *, contingency=None):
     Notes
     -----
     The logarithm used is the natural logarithm (base-e).
+
+    Examples
+    --------
+    >>> from sklearn.metrics import mutual_info_score
+    >>> labels_true = [0, 1, 1, 0, 1, 0]
+    >>> labels_pred = [0, 1, 0, 0, 1, 1]
+    >>> mutual_info_score(labels_true, labels_pred)
+    0.056...
     """
     if contingency is None:
         labels_true, labels_pred = check_clusterings(labels_true, labels_pred)
@@ -800,11 +897,9 @@ def mutual_info_score(labels_true, labels_pred, *, contingency=None):
         # For an array
         nzx, nzy = np.nonzero(contingency)
         nz_val = contingency[nzx, nzy]
-    elif sp.issparse(contingency):
+    else:
         # For a sparse matrix
         nzx, nzy, nz_val = sp.find(contingency)
-    else:
-        raise ValueError("Unsupported type for 'contingency': %s" % type(contingency))
 
     contingency_sum = contingency.sum()
     pi = np.ravel(contingency.sum(axis=1))
@@ -830,6 +925,14 @@ def mutual_info_score(labels_true, labels_pred, *, contingency=None):
     return np.clip(mi.sum(), 0.0, None)
 
 
+@validate_params(
+    {
+        "labels_true": ["array-like"],
+        "labels_pred": ["array-like"],
+        "average_method": [StrOptions({"arithmetic", "max", "min", "geometric"})],
+    },
+    prefer_skip_nested_validation=True,
+)
 def adjusted_mutual_info_score(
     labels_true, labels_pred, *, average_method="arithmetic"
 ):
@@ -859,7 +962,7 @@ def adjusted_mutual_info_score(
 
     Parameters
     ----------
-    labels_true : int array, shape = [n_samples]
+    labels_true : int array-like of shape (n_samples,)
         A clustering of the data into disjoint subsets, called :math:`U` in
         the above formula.
 
@@ -867,9 +970,8 @@ def adjusted_mutual_info_score(
         A clustering of the data into disjoint subsets, called :math:`V` in
         the above formula.
 
-    average_method : str, default='arithmetic'
-        How to compute the normalizer in the denominator. Possible options
-        are 'min', 'geometric', 'arithmetic', and 'max'.
+    average_method : {'min', 'geometric', 'arithmetic', 'max'}, default='arithmetic'
+        How to compute the normalizer in the denominator.
 
         .. versionadded:: 0.20
 
@@ -936,7 +1038,6 @@ def adjusted_mutual_info_score(
         return 1.0
 
     contingency = contingency_matrix(labels_true, labels_pred, sparse=True)
-    contingency = contingency.astype(np.float64, copy=False)
     # Calculate the MI for the two clusterings
     mi = mutual_info_score(labels_true, labels_pred, contingency=contingency)
     # Calculate the expected value for the mutual information
@@ -945,7 +1046,7 @@ def adjusted_mutual_info_score(
     h_true, h_pred = entropy(labels_true), entropy(labels_pred)
     normalizer = _generalized_average(h_true, h_pred, average_method)
     denominator = normalizer - emi
-    # Avoid 0.0 / 0.0 when expectation equals maximum, i.e a perfect match.
+    # Avoid 0.0 / 0.0 when expectation equals maximum, i.e. a perfect match.
     # normalizer should always be >= emi, but because of floating-point
     # representation, sometimes emi is slightly larger. Correct this
     # by preserving the sign.
@@ -957,6 +1058,14 @@ def adjusted_mutual_info_score(
     return ami
 
 
+@validate_params(
+    {
+        "labels_true": ["array-like"],
+        "labels_pred": ["array-like"],
+        "average_method": [StrOptions({"arithmetic", "max", "min", "geometric"})],
+    },
+    prefer_skip_nested_validation=True,
+)
 def normalized_mutual_info_score(
     labels_true, labels_pred, *, average_method="arithmetic"
 ):
@@ -984,15 +1093,14 @@ def normalized_mutual_info_score(
 
     Parameters
     ----------
-    labels_true : int array, shape = [n_samples]
+    labels_true : int array-like of shape (n_samples,)
         A clustering of the data into disjoint subsets.
 
     labels_pred : int array-like of shape (n_samples,)
         A clustering of the data into disjoint subsets.
 
-    average_method : str, default='arithmetic'
-        How to compute the normalizer in the denominator. Possible options
-        are 'min', 'geometric', 'arithmetic', and 'max'.
+    average_method : {'min', 'geometric', 'arithmetic', 'max'}, default='arithmetic'
+        How to compute the normalizer in the denominator.
 
         .. versionadded:: 0.20
 
@@ -1065,6 +1173,14 @@ def normalized_mutual_info_score(
     return mi / normalizer
 
 
+@validate_params(
+    {
+        "labels_true": ["array-like"],
+        "labels_pred": ["array-like"],
+        "sparse": ["boolean"],
+    },
+    prefer_skip_nested_validation=True,
+)
 def fowlkes_mallows_score(labels_true, labels_pred, *, sparse=False):
     """Measure the similarity of two clusterings of a set of points.
 
@@ -1080,7 +1196,7 @@ def fowlkes_mallows_score(labels_true, labels_pred, *, sparse=False):
     ``labels_pred``), ``FP`` is the number of **False Positive** (i.e. the
     number of pair of points that belongs in the same clusters in
     ``labels_true`` and not in ``labels_pred``) and ``FN`` is the number of
-    **False Negative** (i.e the number of pair of points that belongs in the
+    **False Negative** (i.e. the number of pair of points that belongs in the
     same clusters in ``labels_pred`` and not in ``labels_True``).
 
     The score ranges from 0 to 1. A high value indicates a good similarity
@@ -1090,10 +1206,10 @@ def fowlkes_mallows_score(labels_true, labels_pred, *, sparse=False):
 
     Parameters
     ----------
-    labels_true : int array, shape = (``n_samples``,)
+    labels_true : array-like of shape (n_samples,), dtype=int
         A clustering of the data into disjoint subsets.
 
-    labels_pred : array, shape = (``n_samples``, )
+    labels_pred : array-like of shape (n_samples,), dtype=int
         A clustering of the data into disjoint subsets.
 
     sparse : bool, default=False
@@ -1143,6 +1259,12 @@ def fowlkes_mallows_score(labels_true, labels_pred, *, sparse=False):
     return np.sqrt(tk / pk) * np.sqrt(tk / qk) if tk != 0.0 else 0.0
 
 
+@validate_params(
+    {
+        "labels": ["array-like"],
+    },
+    prefer_skip_nested_validation=True,
+)
 def entropy(labels):
     """Calculate the entropy for a labeling.
 

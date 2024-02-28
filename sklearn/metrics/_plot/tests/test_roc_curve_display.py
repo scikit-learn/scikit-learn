@@ -1,24 +1,17 @@
-import pytest
 import numpy as np
+import pytest
 from numpy.testing import assert_allclose
 
-
 from sklearn.compose import make_column_transformer
-from sklearn.datasets import load_iris
-
-from sklearn.datasets import load_breast_cancer
+from sklearn.datasets import load_breast_cancer, load_iris
 from sklearn.exceptions import NotFittedError
 from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import roc_curve
-from sklearn.metrics import auc
-
+from sklearn.metrics import RocCurveDisplay, auc, roc_curve
 from sklearn.model_selection import train_test_split
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.utils import shuffle
-
-
-from sklearn.metrics import RocCurveDisplay
+from sklearn.utils.fixes import trapezoid
 
 
 @pytest.fixture(scope="module")
@@ -113,6 +106,9 @@ def test_roc_curve_display_plotting(
     assert display.line_.get_alpha() == 0.8
     assert isinstance(display.ax_, mpl.axes.Axes)
     assert isinstance(display.figure_, mpl.figure.Figure)
+    assert display.ax_.get_adjustable() == "box"
+    assert display.ax_.get_aspect() in ("equal", 1.0)
+    assert display.ax_.get_xlim() == display.ax_.get_ylim() == (-0.01, 1.01)
 
     expected_label = f"{default_name} (AUC = {display.roc_auc:.2f})"
     assert display.line_.get_label() == expected_label
@@ -123,6 +119,74 @@ def test_roc_curve_display_plotting(
 
     assert display.ax_.get_ylabel() == expected_ylabel
     assert display.ax_.get_xlabel() == expected_xlabel
+
+
+@pytest.mark.parametrize("plot_chance_level", [True, False])
+@pytest.mark.parametrize(
+    "chance_level_kw",
+    [None, {"linewidth": 1, "color": "red", "label": "DummyEstimator"}],
+)
+@pytest.mark.parametrize(
+    "constructor_name",
+    ["from_estimator", "from_predictions"],
+)
+def test_roc_curve_chance_level_line(
+    pyplot,
+    data_binary,
+    plot_chance_level,
+    chance_level_kw,
+    constructor_name,
+):
+    """Check the chance level line plotting behaviour."""
+    X, y = data_binary
+
+    lr = LogisticRegression()
+    lr.fit(X, y)
+
+    y_pred = getattr(lr, "predict_proba")(X)
+    y_pred = y_pred if y_pred.ndim == 1 else y_pred[:, 1]
+
+    if constructor_name == "from_estimator":
+        display = RocCurveDisplay.from_estimator(
+            lr,
+            X,
+            y,
+            alpha=0.8,
+            plot_chance_level=plot_chance_level,
+            chance_level_kw=chance_level_kw,
+        )
+    else:
+        display = RocCurveDisplay.from_predictions(
+            y,
+            y_pred,
+            alpha=0.8,
+            plot_chance_level=plot_chance_level,
+            chance_level_kw=chance_level_kw,
+        )
+
+    import matplotlib as mpl  # noqa
+
+    assert isinstance(display.line_, mpl.lines.Line2D)
+    assert display.line_.get_alpha() == 0.8
+    assert isinstance(display.ax_, mpl.axes.Axes)
+    assert isinstance(display.figure_, mpl.figure.Figure)
+
+    if plot_chance_level:
+        assert isinstance(display.chance_level_, mpl.lines.Line2D)
+        assert tuple(display.chance_level_.get_xdata()) == (0, 1)
+        assert tuple(display.chance_level_.get_ydata()) == (0, 1)
+    else:
+        assert display.chance_level_ is None
+
+    # Checking for chance level line styles
+    if plot_chance_level and chance_level_kw is None:
+        assert display.chance_level_.get_color() == "k"
+        assert display.chance_level_.get_linestyle() == "--"
+        assert display.chance_level_.get_label() == "Chance level (AUC = 0.5)"
+    elif plot_chance_level:
+        assert display.chance_level_.get_label() == chance_level_kw["label"]
+        assert display.chance_level_.get_color() == chance_level_kw["color"]
+        assert display.chance_level_.get_linewidth() == chance_level_kw["linewidth"]
 
 
 @pytest.mark.parametrize(
@@ -230,7 +294,7 @@ def test_plot_roc_curve_pos_label(pyplot, response_method, constructor_name):
     roc_auc_limit = 0.95679
 
     assert display.roc_auc == pytest.approx(roc_auc_limit)
-    assert np.trapz(display.tpr, display.fpr) == pytest.approx(roc_auc_limit)
+    assert trapezoid(display.tpr, display.fpr) == pytest.approx(roc_auc_limit)
 
     if constructor_name == "from_estimator":
         display = RocCurveDisplay.from_estimator(
@@ -248,4 +312,4 @@ def test_plot_roc_curve_pos_label(pyplot, response_method, constructor_name):
         )
 
     assert display.roc_auc == pytest.approx(roc_auc_limit)
-    assert np.trapz(display.tpr, display.fpr) == pytest.approx(roc_auc_limit)
+    assert trapezoid(display.tpr, display.fpr) == pytest.approx(roc_auc_limit)

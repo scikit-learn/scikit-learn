@@ -9,16 +9,16 @@ from numbers import Integral, Real
 from operator import itemgetter
 
 import numpy as np
-from scipy.linalg import cholesky, cho_solve, solve_triangular
 import scipy.optimize
+from scipy.linalg import cho_solve, cholesky, solve_triangular
 
-from ..base import BaseEstimator, RegressorMixin, clone
-from ..base import MultiOutputMixin
-from .kernels import Kernel, RBF, ConstantKernel as C
+from ..base import BaseEstimator, MultiOutputMixin, RegressorMixin, _fit_context, clone
 from ..preprocessing._data import _handle_zeros_in_scale
 from ..utils import check_random_state
-from ..utils.optimize import _check_optimize_result
 from ..utils._param_validation import Interval, StrOptions
+from ..utils.optimize import _check_optimize_result
+from .kernels import RBF, Kernel
+from .kernels import ConstantKernel as C
 
 GPR_CHOLESKY_LOWER = True
 
@@ -37,6 +37,10 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
        * exposes a method `log_marginal_likelihood(theta)`, which can be used
          externally for other ways of selecting hyperparameters, e.g., via
          Markov chain Monte Carlo.
+
+    To learn the difference between a point-estimate approach vs. a more
+    Bayesian modelling approach, refer to the example entitled
+    :ref:`sphx_glr_auto_examples_gaussian_process_plot_compare_gpr_krr.py`.
 
     Read more in the :ref:`User Guide <gaussian_process>`.
 
@@ -110,6 +114,14 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
         which might cause predictions to change if the data is modified
         externally.
 
+    n_targets : int, default=None
+        The number of dimensions of the target values. Used to decide the number
+        of outputs when sampling from the prior distributions (i.e. calling
+        :meth:`sample_y` before :meth:`fit`). This parameter is ignored once
+        :meth:`fit` has been called.
+
+        .. versionadded:: 1.3
+
     random_state : int, RandomState instance or None, default=None
         Determines random number generation used to initialize the centers.
         Pass an int for reproducible results across multiple function calls.
@@ -181,6 +193,7 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
         "n_restarts_optimizer": [Interval(Integral, 0, None, closed="left")],
         "normalize_y": ["boolean"],
         "copy_X_train": ["boolean"],
+        "n_targets": [Interval(Integral, 1, None, closed="left"), None],
         "random_state": ["random_state"],
     }
 
@@ -193,6 +206,7 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
         n_restarts_optimizer=0,
         normalize_y=False,
         copy_X_train=True,
+        n_targets=None,
         random_state=None,
     ):
         self.kernel = kernel
@@ -201,8 +215,10 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
         self.n_restarts_optimizer = n_restarts_optimizer
         self.normalize_y = normalize_y
         self.copy_X_train = copy_X_train
+        self.n_targets = n_targets
         self.random_state = random_state
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y):
         """Fit Gaussian process regression model.
 
@@ -219,8 +235,6 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
         self : object
             GaussianProcessRegressor class instance.
         """
-        self._validate_params()
-
         if self.kernel is None:  # Use an RBF kernel as default
             self.kernel_ = C(1.0, constant_value_bounds="fixed") * RBF(
                 1.0, length_scale_bounds="fixed"
@@ -242,6 +256,13 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
             ensure_2d=ensure_2d,
             dtype=dtype,
         )
+
+        n_targets_seen = y.shape[1] if y.ndim > 1 else 1
+        if self.n_targets is not None and n_targets_seen != self.n_targets:
+            raise ValueError(
+                "The number of targets seen in `y` is different from the parameter "
+                f"`n_targets`. Got {n_targets_seen} != {self.n_targets}."
+            )
 
         # Normalize target value
         if self.normalize_y:
@@ -324,9 +345,11 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
             self.L_ = cholesky(K, lower=GPR_CHOLESKY_LOWER, check_finite=False)
         except np.linalg.LinAlgError as exc:
             exc.args = (
-                f"The kernel, {self.kernel_}, is not returning a positive "
-                "definite matrix. Try gradually increasing the 'alpha' "
-                "parameter of your GaussianProcessRegressor estimator.",
+                (
+                    f"The kernel, {self.kernel_}, is not returning a positive "
+                    "definite matrix. Try gradually increasing the 'alpha' "
+                    "parameter of your GaussianProcessRegressor estimator."
+                ),
             ) + exc.args
             raise
         # Alg 2.1, page 19, line 3 -> alpha = L^T \ (L \ y)
@@ -391,12 +414,23 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
                 )
             else:
                 kernel = self.kernel
-            y_mean = np.zeros(X.shape[0])
+
+            n_targets = self.n_targets if self.n_targets is not None else 1
+            y_mean = np.zeros(shape=(X.shape[0], n_targets)).squeeze()
+
             if return_cov:
                 y_cov = kernel(X)
+                if n_targets > 1:
+                    y_cov = np.repeat(
+                        np.expand_dims(y_cov, -1), repeats=n_targets, axis=-1
+                    )
                 return y_mean, y_cov
             elif return_std:
                 y_var = kernel.diag(X)
+                if n_targets > 1:
+                    y_var = np.repeat(
+                        np.expand_dims(y_var, -1), repeats=n_targets, axis=-1
+                    )
                 return y_mean, np.sqrt(y_var)
             else:
                 return y_mean

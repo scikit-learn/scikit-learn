@@ -1,28 +1,55 @@
-from time import time
+import warnings
 from collections import namedtuple
 from numbers import Integral, Real
-import warnings
+from time import time
 
-from scipy import stats
 import numpy as np
+from scipy import stats
 
-from ..base import clone
+from ..base import _fit_context, clone
 from ..exceptions import ConvergenceWarning
 from ..preprocessing import normalize
-from ..utils import check_array, check_random_state, _safe_indexing, is_scalar_nan
-from ..utils.validation import FLOAT_DTYPES, check_is_fitted
-from ..utils.validation import _check_feature_names_in
+from ..utils import (
+    _safe_assign,
+    _safe_indexing,
+    check_array,
+    check_random_state,
+)
 from ..utils._mask import _get_mask
+from ..utils._missing import is_scalar_nan
 from ..utils._param_validation import HasMethods, Interval, StrOptions
-
-from ._base import _BaseImputer
-from ._base import SimpleImputer
-from ._base import _check_inputs_dtype
-
+from ..utils.metadata_routing import (
+    MetadataRouter,
+    MethodMapping,
+    _raise_for_params,
+    process_routing,
+)
+from ..utils.validation import FLOAT_DTYPES, _check_feature_names_in, check_is_fitted
+from ._base import SimpleImputer, _BaseImputer, _check_inputs_dtype
 
 _ImputerTriplet = namedtuple(
     "_ImputerTriplet", ["feat_idx", "neighbor_feat_idx", "estimator"]
 )
+
+
+def _assign_where(X1, X2, cond):
+    """Assign X2 to X1 where cond is True.
+
+    Parameters
+    ----------
+    X1 : ndarray or dataframe of shape (n_samples, n_features)
+        Data.
+
+    X2 : ndarray of shape (n_samples, n_features)
+        Data to be assigned.
+
+    cond : ndarray of shape (n_samples, n_features)
+        Boolean mask to assign data.
+    """
+    if hasattr(X1, "mask"):  # pandas dataframes
+        X1.mask(cond=cond, other=X2, inplace=True)
+    else:  # ndarrays
+        X1[cond] = X2[cond]
 
 
 class IterativeImputer(_BaseImputer):
@@ -90,6 +117,15 @@ class IterativeImputer(_BaseImputer):
             default='mean'
         Which strategy to use to initialize the missing values. Same as the
         `strategy` parameter in :class:`~sklearn.impute.SimpleImputer`.
+
+    fill_value : str or numerical value, default=None
+        When `strategy="constant"`, `fill_value` is used to replace all
+        occurrences of missing_values. For string or object data types,
+        `fill_value` must be a string.
+        If `None`, `fill_value` will be 0 when imputing numerical
+        data and "missing_value" for strings or object data types.
+
+        .. versionadded:: 1.3
 
     imputation_order : {'ascending', 'descending', 'roman', 'arabic', \
             'random'}, default='ascending'
@@ -243,6 +279,10 @@ class IterativeImputer(_BaseImputer):
     array([[ 6.9584...,  2.       ,  3.        ],
            [ 4.       ,  2.6000...,  6.        ],
            [10.       ,  4.9999...,  9.        ]])
+
+    For a more detailed example see
+    :ref:`sphx_glr_auto_examples_impute_plot_missing_values.py` or
+    :ref:`sphx_glr_auto_examples_impute_plot_iterative_imputer_variants_comparison.py`.
     """
 
     _parameter_constraints: dict = {
@@ -255,6 +295,7 @@ class IterativeImputer(_BaseImputer):
         "initial_strategy": [
             StrOptions({"mean", "median", "most_frequent", "constant"})
         ],
+        "fill_value": "no_validation",  # any object is valid
         "imputation_order": [
             StrOptions({"ascending", "descending", "roman", "arabic", "random"})
         ],
@@ -275,6 +316,7 @@ class IterativeImputer(_BaseImputer):
         tol=1e-3,
         n_nearest_features=None,
         initial_strategy="mean",
+        fill_value=None,
         imputation_order="ascending",
         skip_complete=False,
         min_value=-np.inf,
@@ -296,6 +338,7 @@ class IterativeImputer(_BaseImputer):
         self.tol = tol
         self.n_nearest_features = n_nearest_features
         self.initial_strategy = initial_strategy
+        self.fill_value = fill_value
         self.imputation_order = imputation_order
         self.skip_complete = skip_complete
         self.min_value = min_value
@@ -311,6 +354,7 @@ class IterativeImputer(_BaseImputer):
         neighbor_feat_idx,
         estimator=None,
         fit_mode=True,
+        params=None,
     ):
         """Impute a single feature from the others provided.
 
@@ -342,6 +386,9 @@ class IterativeImputer(_BaseImputer):
         fit_mode : boolean, default=True
             Whether to fit and predict with the estimator or just predict.
 
+        params : dict
+            Additional params routed to the individual estimator.
+
         Returns
         -------
         X_filled : ndarray
@@ -362,16 +409,28 @@ class IterativeImputer(_BaseImputer):
 
         missing_row_mask = mask_missing_values[:, feat_idx]
         if fit_mode:
-            X_train = _safe_indexing(X_filled[:, neighbor_feat_idx], ~missing_row_mask)
-            y_train = _safe_indexing(X_filled[:, feat_idx], ~missing_row_mask)
-            estimator.fit(X_train, y_train)
+            X_train = _safe_indexing(
+                _safe_indexing(X_filled, neighbor_feat_idx, axis=1),
+                ~missing_row_mask,
+                axis=0,
+            )
+            y_train = _safe_indexing(
+                _safe_indexing(X_filled, feat_idx, axis=1),
+                ~missing_row_mask,
+                axis=0,
+            )
+            estimator.fit(X_train, y_train, **params)
 
         # if no missing values, don't predict
         if np.sum(missing_row_mask) == 0:
             return X_filled, estimator
 
         # get posterior samples if there is at least one missing value
-        X_test = _safe_indexing(X_filled[:, neighbor_feat_idx], missing_row_mask)
+        X_test = _safe_indexing(
+            _safe_indexing(X_filled, neighbor_feat_idx, axis=1),
+            missing_row_mask,
+            axis=0,
+        )
         if self.sample_posterior:
             mus, sigmas = estimator.predict(X_test, return_std=True)
             imputed_values = np.zeros(mus.shape, dtype=X_filled.dtype)
@@ -402,7 +461,12 @@ class IterativeImputer(_BaseImputer):
             )
 
         # update the feature
-        X_filled[missing_row_mask, feat_idx] = imputed_values
+        _safe_assign(
+            X_filled,
+            imputed_values,
+            row_indexer=missing_row_mask,
+            column_indexer=feat_idx,
+        )
         return X_filled, estimator
 
     def _get_neighbor_feat_idx(self, n_features, feat_idx, abs_corr_mat):
@@ -570,8 +634,9 @@ class IterativeImputer(_BaseImputer):
             self.initial_imputer_ = SimpleImputer(
                 missing_values=self.missing_values,
                 strategy=self.initial_strategy,
+                fill_value=self.fill_value,
                 keep_empty_features=self.keep_empty_features,
-            )
+            ).set_output(transform="default")
             X_filled = self.initial_imputer_.fit_transform(X)
         else:
             X_filled = self.initial_imputer_.transform(X)
@@ -625,7 +690,11 @@ class IterativeImputer(_BaseImputer):
             )
         return limit
 
-    def fit_transform(self, X, y=None):
+    @_fit_context(
+        # IterativeImputer.estimator is not validated yet
+        prefer_skip_nested_validation=False
+    )
+    def fit_transform(self, X, y=None, **params):
         """Fit the imputer on `X` and return the transformed `X`.
 
         Parameters
@@ -637,12 +706,29 @@ class IterativeImputer(_BaseImputer):
         y : Ignored
             Not used, present for API consistency by convention.
 
+        **params : dict
+            Parameters routed to the `fit` method of the sub-estimator via the
+            metadata routing API.
+
+            .. versionadded:: 1.5
+              Only available if
+              `sklearn.set_config(enable_metadata_routing=True)` is set. See
+              :ref:`Metadata Routing User Guide <metadata_routing>` for more
+              details.
+
         Returns
         -------
         Xt : array-like, shape (n_samples, n_features)
             The imputed input data.
         """
-        self._validate_params()
+        _raise_for_params(params, self, "fit")
+
+        routed_params = process_routing(
+            self,
+            "fit",
+            **params,
+        )
+
         self.random_state_ = getattr(
             self, "random_state_", check_random_state(self.random_state)
         )
@@ -669,7 +755,7 @@ class IterativeImputer(_BaseImputer):
             self.n_iter_ = 0
             return super()._concatenate_indicator(Xt, X_indicator)
 
-        # Edge case: a single feature. We return the initial ...
+        # Edge case: a single feature, we return the initial imputation.
         if Xt.shape[1] == 1:
             self.n_iter_ = 0
             return super()._concatenate_indicator(Xt, X_indicator)
@@ -711,6 +797,7 @@ class IterativeImputer(_BaseImputer):
                     neighbor_feat_idx,
                     estimator=None,
                     fit_mode=True,
+                    params=routed_params.estimator.fit,
                 )
                 estimator_triplet = _ImputerTriplet(
                     feat_idx, neighbor_feat_idx, estimator
@@ -743,7 +830,8 @@ class IterativeImputer(_BaseImputer):
                     "[IterativeImputer] Early stopping criterion not reached.",
                     ConvergenceWarning,
                 )
-        Xt[~mask_missing_values] = X[~mask_missing_values]
+        _assign_where(Xt, X, cond=~mask_missing_values)
+
         return super()._concatenate_indicator(Xt, X_indicator)
 
     def transform(self, X):
@@ -796,10 +884,11 @@ class IterativeImputer(_BaseImputer):
                     )
                 i_rnd += 1
 
-        Xt[~mask_missing_values] = X[~mask_missing_values]
+        _assign_where(Xt, X, cond=~mask_missing_values)
+
         return super()._concatenate_indicator(Xt, X_indicator)
 
-    def fit(self, X, y=None):
+    def fit(self, X, y=None, **fit_params):
         """Fit the imputer on `X` and return self.
 
         Parameters
@@ -811,12 +900,22 @@ class IterativeImputer(_BaseImputer):
         y : Ignored
             Not used, present for API consistency by convention.
 
+        **fit_params : dict
+            Parameters routed to the `fit` method of the sub-estimator via the
+            metadata routing API.
+
+            .. versionadded:: 1.5
+              Only available if
+              `sklearn.set_config(enable_metadata_routing=True)` is set. See
+              :ref:`Metadata Routing User Guide <metadata_routing>` for more
+              details.
+
         Returns
         -------
         self : object
             Fitted estimator.
         """
-        self.fit_transform(X)
+        self.fit_transform(X, **fit_params)
         return self
 
     def get_feature_names_out(self, input_features=None):
@@ -839,6 +938,27 @@ class IterativeImputer(_BaseImputer):
         feature_names_out : ndarray of str objects
             Transformed feature names.
         """
+        check_is_fitted(self, "n_features_in_")
         input_features = _check_feature_names_in(self, input_features)
         names = self.initial_imputer_.get_feature_names_out(input_features)
         return self._concatenate_indicator_feature_names_out(names, input_features)
+
+    def get_metadata_routing(self):
+        """Get metadata routing of this object.
+
+        Please check :ref:`User Guide <metadata_routing>` on how the routing
+        mechanism works.
+
+        .. versionadded:: 1.5
+
+        Returns
+        -------
+        routing : MetadataRouter
+            A :class:`~sklearn.utils.metadata_routing.MetadataRouter` encapsulating
+            routing information.
+        """
+        router = MetadataRouter(owner=self.__class__.__name__).add(
+            estimator=self.estimator,
+            method_mapping=MethodMapping().add(callee="fit", caller="fit"),
+        )
+        return router

@@ -10,10 +10,6 @@
     <p>Juan Carlos Alfaro Jiménez</p>
     </div>
     <div>
-    <a href='https://github.com/ArturoAmorQ'><img src='https://avatars.githubusercontent.com/u/86408019?v=4' class='avatar' /></a> <br />
-    <p>Arturo Amor</p>
-    </div>
-    <div>
     <a href='https://github.com/lucyleeow'><img src='https://avatars.githubusercontent.com/u/23182829?v=4' class='avatar' /></a> <br />
     <p>Lucy Liu</p>
     </div>
@@ -30,10 +26,6 @@
     <p>Sylvain Marié</p>
     </div>
     <div>
-    <a href='https://github.com/cmarmo'><img src='https://avatars.githubusercontent.com/u/1662261?v=4' class='avatar' /></a> <br />
-    <p>Chiara Marmo</p>
-    </div>
-    <div>
     <a href='https://github.com/norbusan'><img src='https://avatars.githubusercontent.com/u/1735589?v=4' class='avatar' /></a> <br />
     <p>Norbert Preining</p>
     </div>
@@ -46,7 +38,7 @@
     <p>Albert Thomas</p>
     </div>
     <div>
-    <a href='https://github.com/betatim'><img src='https://avatars.githubusercontent.com/u/1448859?v=4' class='avatar' /></a> <br />
-    <p>Tim Head</p>
+    <a href='https://github.com/marenwestermann'><img src='https://avatars.githubusercontent.com/u/17019042?v=4' class='avatar' /></a> <br />
+    <p>Maren Westermann</p>
     </div>
     </div>

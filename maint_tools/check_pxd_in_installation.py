@@ -6,12 +6,11 @@ python check_pxd_in_installation.py path/to/install_dir/of/scikit-learn
 """
 
 import os
-import sys
 import pathlib
+import subprocess
+import sys
 import tempfile
 import textwrap
-import subprocess
-
 
 sklearn_dir = pathlib.Path(sys.argv[1])
 pxd_files = list(sklearn_dir.glob("**/*.pxd"))
@@ -37,9 +36,7 @@ with tempfile.TemporaryDirectory() as tmpdir:
     # We set the language to c++ and we use numpy.get_include() because
     # some modules require it.
     with open(tmpdir / "setup_tst.py", "w") as f:
-        f.write(
-            textwrap.dedent(
-                """
+        f.write(textwrap.dedent("""
             from setuptools import setup, Extension
             from Cython.Build import cythonize
             import numpy
@@ -50,9 +47,7 @@ with tempfile.TemporaryDirectory() as tmpdir:
                                     include_dirs=[numpy.get_include()])]
 
             setup(ext_modules=cythonize(extensions))
-            """
-            )
-        )
+            """))
 
     subprocess.run(
         ["python", "setup_tst.py", "build_ext", "-i"], check=True, cwd=tmpdir

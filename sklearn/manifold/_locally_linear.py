@@ -7,23 +7,23 @@
 from numbers import Integral, Real
 
 import numpy as np
-from scipy.linalg import eigh, svd, qr, solve
-from scipy.sparse import eye, csr_matrix
+from scipy.linalg import eigh, qr, solve, svd
+from scipy.sparse import csr_matrix, eye
 from scipy.sparse.linalg import eigsh
 
 from ..base import (
     BaseEstimator,
-    TransformerMixin,
-    _UnstableArchMixin,
     ClassNamePrefixFeaturesOutMixin,
+    TransformerMixin,
+    _fit_context,
+    _UnstableArchMixin,
 )
-from ..utils import check_random_state, check_array
+from ..neighbors import NearestNeighbors
+from ..utils import check_array, check_random_state
 from ..utils._arpack import _init_arpack_v0
 from ..utils._param_validation import Interval, StrOptions
 from ..utils.extmath import stable_cumsum
-from ..utils.validation import check_is_fitted
-from ..utils.validation import FLOAT_DTYPES
-from ..neighbors import NearestNeighbors
+from ..utils.validation import FLOAT_DTYPES, check_is_fitted
 
 
 def barycenter_weights(X, Y, indices, reg=1e-3):
@@ -190,7 +190,7 @@ def null_space(
         if hasattr(M, "toarray"):
             M = M.toarray()
         eigen_values, eigen_vectors = eigh(
-            M, eigvals=(k_skip, k + k_skip - 1), overwrite_a=True
+            M, subset_by_index=(k_skip, k + k_skip - 1), overwrite_a=True
         )
         index = np.argsort(np.abs(eigen_values))
         return eigen_vectors[:, index], np.sum(eigen_values)
@@ -307,6 +307,17 @@ def locally_linear_embedding(
     .. [4] Zhang, Z. & Zha, H. Principal manifolds and nonlinear
         dimensionality reduction via tangent space alignment.
         Journal of Shanghai Univ.  8:406 (2004)
+
+    Examples
+    --------
+    >>> from sklearn.datasets import load_digits
+    >>> from sklearn.manifold import locally_linear_embedding
+    >>> X, _ = load_digits(return_X_y=True)
+    >>> X.shape
+    (1797, 64)
+    >>> embedding, _ = locally_linear_embedding(X[:100],n_neighbors=5, n_components=2)
+    >>> embedding.shape
+    (100, 2)
     """
     if eigen_solver not in ("auto", "arpack", "dense"):
         raise ValueError("unrecognized eigen_solver '%s'" % eigen_solver)
@@ -758,6 +769,7 @@ class LocallyLinearEmbedding(
         )
         self._n_features_out = self.embedding_.shape[1]
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y=None):
         """Compute the embedding vectors for data X.
 
@@ -774,10 +786,10 @@ class LocallyLinearEmbedding(
         self : object
             Fitted `LocallyLinearEmbedding` class instance.
         """
-        self._validate_params()
         self._fit_transform(X)
         return self
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit_transform(self, X, y=None):
         """Compute the embedding vectors for data X and transform X.
 
@@ -794,7 +806,6 @@ class LocallyLinearEmbedding(
         X_new : array-like, shape (n_samples, n_components)
             Returns the instance itself.
         """
-        self._validate_params()
         self._fit_transform(X)
         return self.embedding_
 

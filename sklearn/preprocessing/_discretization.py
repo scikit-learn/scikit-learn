@@ -4,19 +4,23 @@
 # License: BSD
 
 
-from numbers import Integral
-import numpy as np
 import warnings
+from numbers import Integral
 
-from . import OneHotEncoder
+import numpy as np
 
-from ..base import BaseEstimator, TransformerMixin
-from ..utils._param_validation import Hidden, Interval, StrOptions, Options
-from ..utils.validation import check_array
-from ..utils.validation import check_is_fitted
-from ..utils.validation import check_random_state
-from ..utils.validation import _check_feature_names_in
+from ..base import BaseEstimator, TransformerMixin, _fit_context
 from ..utils import _safe_indexing
+from ..utils._param_validation import Hidden, Interval, Options, StrOptions
+from ..utils.stats import _weighted_percentile
+from ..utils.validation import (
+    _check_feature_names_in,
+    _check_sample_weight,
+    check_array,
+    check_is_fitted,
+    check_random_state,
+)
+from ._encoders import OneHotEncoder
 
 
 class KBinsDiscretizer(TransformerMixin, BaseEstimator):
@@ -51,6 +55,9 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
         - 'kmeans': Values in each bin have the same nearest center of a 1D
           k-means cluster.
 
+        For an example of the different strategies see:
+        :ref:`sphx_glr_auto_examples_preprocessing_plot_discretization_strategies.py`.
+
     dtype : {np.float32, np.float64}, default=None
         The desired data-type for the output. If None, output dtype is
         consistent with input dtype. Only np.float32 and np.float64 are
@@ -58,9 +65,10 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
 
         .. versionadded:: 0.24
 
-    subsample : int or None (default='warn')
+    subsample : int or None, default='warn'
         Maximum number of samples, used to fit the model, for computational
-        efficiency. Used when `strategy="quantile"`.
+        efficiency. Defaults to 200_000 when `strategy='quantile'` and to `None`
+        when `strategy='uniform'` or `strategy='kmeans'`.
         `subsample=None` means that all the training samples are used when
         computing the quantiles that determine the binning thresholds.
         Since quantile computation relies on sorting each column of `X` and
@@ -68,8 +76,13 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
         it is recommended to use subsampling on datasets with a
         very large number of samples.
 
-        .. deprecated:: 1.1
-           In version 1.3 and onwards, `subsample=2e5` will be the default.
+        .. versionchanged:: 1.3
+            The default value of `subsample` changed from `None` to `200_000` when
+            `strategy="quantile"`.
+
+        .. versionchanged:: 1.5
+            The default value of `subsample` changed from `None` to `200_000` when
+            `strategy="uniform"` or `strategy="kmeans"`.
 
     random_state : int, RandomState instance or None, default=None
         Determines random number generation for subsampling.
@@ -85,7 +98,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
         The edges of each bin. Contain arrays of varying shapes ``(n_bins_, )``
         Ignored features will have empty arrays.
 
-    n_bins_ : ndarray of shape (n_features,), dtype=np.int_
+    n_bins_ : ndarray of shape (n_features,), dtype=np.int64
         Number of bins per feature. Bins whose width are too small
         (i.e., <= 1e-8) are removed with a warning.
 
@@ -107,6 +120,12 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
 
     Notes
     -----
+
+    For a visualization of discretization on different datasets refer to
+    :ref:`sphx_glr_auto_examples_preprocessing_plot_discretization_classification.py`.
+    On the effect of discretization on linear models see:
+    :ref:`sphx_glr_auto_examples_preprocessing_plot_discretization.py`.
+
     In bin edges for feature ``i``, the first and last values are used only for
     ``inverse_transform``. During transform, bin edges are extended to::
 
@@ -128,7 +147,9 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
     ...      [-1, 2, -3, -0.5],
     ...      [ 0, 3, -2,  0.5],
     ...      [ 1, 4, -1,    2]]
-    >>> est = KBinsDiscretizer(n_bins=3, encode='ordinal', strategy='uniform')
+    >>> est = KBinsDiscretizer(
+    ...     n_bins=3, encode='ordinal', strategy='uniform', subsample=None
+    ... )
     >>> est.fit(X)
     KBinsDiscretizer(...)
     >>> Xt = est.transform(X)
@@ -182,7 +203,8 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
         self.subsample = subsample
         self.random_state = random_state
 
-    def fit(self, X, y=None):
+    @_fit_context(prefer_skip_nested_validation=True)
+    def fit(self, X, y=None, sample_weight=None):
         """
         Fit the estimator.
 
@@ -195,12 +217,17 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
             Ignored. This parameter exists only for compatibility with
             :class:`~sklearn.pipeline.Pipeline`.
 
+        sample_weight : ndarray of shape (n_samples,)
+            Contains weight values to be associated with each sample.
+            Only possible when `strategy` is set to `"quantile"`.
+
+            .. versionadded:: 1.3
+
         Returns
         -------
         self : object
             Returns the instance itself.
         """
-        self._validate_params()
         X = self._validate_data(X, dtype="numeric")
 
         if self.dtype in (np.float64, np.float32):
@@ -210,31 +237,37 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
 
         n_samples, n_features = X.shape
 
-        if self.strategy == "quantile" and self.subsample is not None:
-            if self.subsample == "warn":
-                if n_samples > 2e5:
-                    warnings.warn(
-                        "In version 1.3 onwards, subsample=2e5 "
-                        "will be used by default. Set subsample explicitly to "
-                        "silence this warning in the mean time. Set "
-                        "subsample=None to disable subsampling explicitly.",
-                        FutureWarning,
-                    )
-            else:
-                rng = check_random_state(self.random_state)
-                if n_samples > self.subsample:
-                    subsample_idx = rng.choice(
-                        n_samples, size=self.subsample, replace=False
-                    )
-                    X = _safe_indexing(X, subsample_idx)
-        elif self.strategy != "quantile" and isinstance(self.subsample, Integral):
+        if sample_weight is not None and self.strategy == "uniform":
             raise ValueError(
-                f"Invalid parameter for `strategy`: {self.strategy}. "
-                '`subsample` must be used with `strategy="quantile"`.'
+                "`sample_weight` was provided but it cannot be "
+                "used with strategy='uniform'. Got strategy="
+                f"{self.strategy!r} instead."
             )
+
+        if self.strategy in ("uniform", "kmeans") and self.subsample == "warn":
+            warnings.warn(
+                (
+                    "In version 1.5 onwards, subsample=200_000 "
+                    "will be used by default. Set subsample explicitly to "
+                    "silence this warning in the mean time. Set "
+                    "subsample=None to disable subsampling explicitly."
+                ),
+                FutureWarning,
+            )
+
+        subsample = self.subsample
+        if subsample == "warn":
+            subsample = 200000 if self.strategy == "quantile" else None
+        if subsample is not None and n_samples > subsample:
+            rng = check_random_state(self.random_state)
+            subsample_idx = rng.choice(n_samples, size=subsample, replace=False)
+            X = _safe_indexing(X, subsample_idx)
 
         n_features = X.shape[1]
         n_bins = self._validate_n_bins(n_features)
+
+        if sample_weight is not None:
+            sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
 
         bin_edges = np.zeros(n_features, dtype=object)
         for jj in range(n_features):
@@ -254,8 +287,16 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
 
             elif self.strategy == "quantile":
                 quantiles = np.linspace(0, 100, n_bins[jj] + 1)
-                bin_edges[jj] = np.asarray(np.percentile(column, quantiles))
-
+                if sample_weight is None:
+                    bin_edges[jj] = np.asarray(np.percentile(column, quantiles))
+                else:
+                    bin_edges[jj] = np.asarray(
+                        [
+                            _weighted_percentile(column, sample_weight, q)
+                            for q in quantiles
+                        ],
+                        dtype=np.float64,
+                    )
             elif self.strategy == "kmeans":
                 from ..cluster import KMeans  # fixes import loops
 
@@ -265,7 +306,9 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
 
                 # 1D k-means procedure
                 km = KMeans(n_clusters=n_bins[jj], init=init, n_init=1)
-                centers = km.fit(column[:, None]).cluster_centers_[:, 0]
+                centers = km.fit(
+                    column[:, None], sample_weight=sample_weight
+                ).cluster_centers_[:, 0]
                 # Must sort, centers may be unsorted even with sorted init
                 centers.sort()
                 bin_edges[jj] = (centers[1:] + centers[:-1]) * 0.5
@@ -396,7 +439,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
         for jj in range(n_features):
             bin_edges = self.bin_edges_[jj]
             bin_centers = (bin_edges[1:] + bin_edges[:-1]) * 0.5
-            Xinv[:, jj] = bin_centers[np.int_(Xinv[:, jj])]
+            Xinv[:, jj] = bin_centers[(Xinv[:, jj]).astype(np.int64)]
 
         return Xinv
 
@@ -420,6 +463,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
         feature_names_out : ndarray of str objects
             Transformed feature names.
         """
+        check_is_fitted(self, "n_features_in_")
         input_features = _check_feature_names_in(self, input_features)
         if hasattr(self, "_encoder"):
             return self._encoder.get_feature_names_out(input_features)

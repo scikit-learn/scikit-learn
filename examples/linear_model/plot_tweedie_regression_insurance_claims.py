@@ -34,7 +34,7 @@ helper functions for loading the data and visualizing results.
 
 .. [1]  A. Noll, R. Salzmann and M.V. Wuthrich, Case Study: French Motor
     Third-Party Liability Claims (November 8, 2018). `doi:10.2139/ssrn.3164764
-    <http://dx.doi.org/10.2139/ssrn.3164764>`_
+    <https://doi.org/10.2139/ssrn.3164764>`_
 """
 
 # Authors: Christian Lorentzen <lorentzen.ch@gmail.com>
@@ -46,14 +46,16 @@ helper functions for loading the data and visualizing results.
 
 from functools import partial
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 import pandas as pd
 
 from sklearn.datasets import fetch_openml
-from sklearn.metrics import mean_tweedie_deviance
-from sklearn.metrics import mean_absolute_error
-from sklearn.metrics import mean_squared_error
+from sklearn.metrics import (
+    mean_absolute_error,
+    mean_squared_error,
+    mean_tweedie_deviance,
+)
 
 
 def load_mtpl2(n_samples=None):
@@ -66,18 +68,18 @@ def load_mtpl2(n_samples=None):
       678013 samples.
     """
     # freMTPL2freq dataset from https://www.openml.org/d/41214
-    df_freq = fetch_openml(data_id=41214, as_frame=True, parser="pandas").data
+    df_freq = fetch_openml(data_id=41214, as_frame=True).data
     df_freq["IDpol"] = df_freq["IDpol"].astype(int)
     df_freq.set_index("IDpol", inplace=True)
 
     # freMTPL2sev dataset from https://www.openml.org/d/41215
-    df_sev = fetch_openml(data_id=41215, as_frame=True, parser="pandas").data
+    df_sev = fetch_openml(data_id=41215, as_frame=True).data
 
     # sum ClaimAmount over identical IDs
     df_sev = df_sev.groupby("IDpol").sum()
 
     df = df_freq.join(df_sev, how="left")
-    df["ClaimAmount"].fillna(0, inplace=True)
+    df["ClaimAmount"] = df["ClaimAmount"].fillna(0)
 
     # unquote string fields
     for column_name in df.columns[df.dtypes.values == object]:
@@ -209,23 +211,27 @@ def score_estimator(
 # containing the number of claims (``ClaimNb``), with the freMTPL2sev table,
 # containing the claim amount (``ClaimAmount``) for the same policy ids
 # (``IDpol``).
-from sklearn.pipeline import make_pipeline
-from sklearn.preprocessing import FunctionTransformer, OneHotEncoder
-from sklearn.preprocessing import StandardScaler, KBinsDiscretizer
 from sklearn.compose import ColumnTransformer
-
+from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import (
+    FunctionTransformer,
+    KBinsDiscretizer,
+    OneHotEncoder,
+    StandardScaler,
+)
 
 df = load_mtpl2()
 
-# Note: filter out claims with zero amount, as the severity model
-# requires strictly positive target values.
-df.loc[(df["ClaimAmount"] == 0) & (df["ClaimNb"] >= 1), "ClaimNb"] = 0
 
 # Correct for unreasonable observations (that might be data error)
 # and a few exceptionally large claim amounts
 df["ClaimNb"] = df["ClaimNb"].clip(upper=4)
 df["Exposure"] = df["Exposure"].clip(upper=1)
 df["ClaimAmount"] = df["ClaimAmount"].clip(upper=200000)
+# If the claim amount is 0, then we do not count it as a claim. The loss function
+# used by the severity model needs strictly positive claim amounts. This way
+# frequency and severity are more consistent with each other.
+df.loc[(df["ClaimAmount"] == 0) & (df["ClaimNb"] >= 1), "ClaimNb"] = 0
 
 log_scale_transformer = make_pipeline(
     FunctionTransformer(func=np.log), StandardScaler()
@@ -274,9 +280,8 @@ with pd.option_context("display.max_columns", 15):
 # constant rate in a given time interval (``Exposure``, in units of years).
 # Here we model the frequency ``y = ClaimNb / Exposure``, which is still a
 # (scaled) Poisson distribution, and use ``Exposure`` as `sample_weight`.
-from sklearn.model_selection import train_test_split
 from sklearn.linear_model import PoissonRegressor
-
+from sklearn.model_selection import train_test_split
 
 df_train, df_test, X_train, X_test = train_test_split(df, X, random_state=0)
 
@@ -396,7 +401,6 @@ plot_obs_pred(
 #   more than one claim.
 from sklearn.linear_model import GammaRegressor
 
-
 mask_train = df_train["ClaimAmount"] > 0
 mask_test = df_test["ClaimAmount"] > 0
 
@@ -451,9 +455,9 @@ print(scores)
 # %%
 #
 # We conclude that the claim amount is very challenging to predict. Still, the
-# :class:`~sklearn.linear.GammaRegressor` is able to leverage some information
-# from the input features to slighly improve upon the mean baseline in terms
-# of D².
+# :class:`~sklearn.linear_model.GammaRegressor` is able to leverage some
+# information from the input features to slightly improve upon the mean
+# baseline in terms of D².
 #
 # Note that the resulting model is the average claim amount per claim. As such,
 # it is conditional on having at least one claim, and cannot be used to predict
@@ -539,7 +543,6 @@ plt.tight_layout()
 # Ideally, we hope that one model will be consistently better than the other,
 # regardless of `power`.
 from sklearn.linear_model import TweedieRegressor
-
 
 glm_pure_premium = TweedieRegressor(power=1.9, alpha=0.1, solver="newton-cholesky")
 glm_pure_premium.fit(

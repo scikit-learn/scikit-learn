@@ -1,4 +1,6 @@
 include *.rst
+include *.build
+recursive-include sklearn *.build
 recursive-include doc *
 recursive-include examples *
 recursive-include sklearn *.c *.cpp *.h *.pyx *.pxd *.pxi *.tp
@@ -22,6 +24,7 @@ recursive-exclude maint_tools *
 recursive-exclude benchmarks *
 recursive-exclude .binder *
 recursive-exclude .circleci *
+exclude .cirrus.star
 exclude .codecov.yml
 exclude .git-blame-ignore-revs
 exclude .mailmap

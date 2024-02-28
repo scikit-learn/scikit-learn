@@ -382,7 +382,7 @@ This strategy is illustrated below.
 
    *  Breunig, Kriegel, Ng, and Sander (2000)
       `LOF: identifying density-based local outliers.
-      <http://www.dbs.ifi.lmu.de/Publikationen/Papers/LOF.pdf>`_
+      <https://www.dbs.ifi.lmu.de/Publikationen/Papers/LOF.pdf>`_
       Proc. ACM SIGMOD
 
 .. _novelty_with_lof:
@@ -411,7 +411,7 @@ Note that ``fit_predict`` is not available in this case to avoid inconsistencies
 
 Novelty detection with Local Outlier Factor is illustrated below.
 
-  .. figure:: ../auto_examples/neighbors/images/sphx_glr_plot_lof_novelty_detection_001.png
-     :target: ../auto_examples/neighbors/plot_lof_novelty_detection.html
-     :align: center
-     :scale: 75%
+.. figure:: ../auto_examples/neighbors/images/sphx_glr_plot_lof_novelty_detection_001.png
+    :target: ../auto_examples/neighbors/plot_lof_novelty_detection.html
+    :align: center
+    :scale: 75%

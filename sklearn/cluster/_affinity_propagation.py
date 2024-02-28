@@ -5,19 +5,18 @@
 
 # License: BSD 3 clause
 
-from numbers import Integral, Real
 import warnings
+from numbers import Integral, Real
 
 import numpy as np
 
-from ..exceptions import ConvergenceWarning
-from ..base import BaseEstimator, ClusterMixin
-from ..utils import as_float_array, check_random_state
-from ..utils._param_validation import Interval, StrOptions
-from ..utils.validation import check_is_fitted
-from ..metrics import euclidean_distances
-from ..metrics import pairwise_distances_argmin
 from .._config import config_context
+from ..base import BaseEstimator, ClusterMixin, _fit_context
+from ..exceptions import ConvergenceWarning
+from ..metrics import euclidean_distances, pairwise_distances_argmin
+from ..utils import check_random_state
+from ..utils._param_validation import Interval, StrOptions, validate_params
+from ..utils.validation import check_is_fitted
 
 
 def _equal_similarities_and_preferences(S, preference):
@@ -54,7 +53,7 @@ def _affinity_propagation(
             "All samples have mutually equal similarities. "
             "Returning arbitrary cluster center(s)."
         )
-        if preference.flat[0] >= S.flat[n_samples - 1]:
+        if preference.flat[0] > S.flat[n_samples - 1]:
             return (
                 (np.arange(n_samples), np.arange(n_samples), 0)
                 if return_n_iter
@@ -141,8 +140,10 @@ def _affinity_propagation(
     if K > 0:
         if never_converged:
             warnings.warn(
-                "Affinity propagation did not converge, this model "
-                "may return degenerate cluster centers and labels.",
+                (
+                    "Affinity propagation did not converge, this model "
+                    "may return degenerate cluster centers and labels."
+                ),
                 ConvergenceWarning,
             )
         c = np.argmax(S[:, I], axis=1)
@@ -161,8 +162,10 @@ def _affinity_propagation(
         labels = np.searchsorted(cluster_centers_indices, labels)
     else:
         warnings.warn(
-            "Affinity propagation did not converge and this model "
-            "will not have any cluster centers.",
+            (
+                "Affinity propagation did not converge and this model "
+                "will not have any cluster centers."
+            ),
             ConvergenceWarning,
         )
         labels = np.array([-1] * n_samples)
@@ -178,6 +181,13 @@ def _affinity_propagation(
 # Public API
 
 
+@validate_params(
+    {
+        "S": ["array-like"],
+        "return_n_iter": ["boolean"],
+    },
+    prefer_skip_nested_validation=False,
+)
 def affinity_propagation(
     S,
     *,
@@ -268,14 +278,26 @@ def affinity_propagation(
     ----------
     Brendan J. Frey and Delbert Dueck, "Clustering by Passing Messages
     Between Data Points", Science Feb. 2007
-    """
-    S = as_float_array(S, copy=copy)
 
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.cluster import affinity_propagation
+    >>> from sklearn.metrics.pairwise import euclidean_distances
+    >>> X = np.array([[1, 2], [1, 4], [1, 0],
+    ...               [4, 2], [4, 4], [4, 0]])
+    >>> S = -euclidean_distances(X, squared=True)
+    >>> cluster_centers_indices, labels = affinity_propagation(S, random_state=0)
+    >>> cluster_centers_indices
+    array([0, 3])
+    >>> labels
+    array([0, 0, 0, 1, 1, 1])
+    """
     estimator = AffinityPropagation(
         damping=damping,
         max_iter=max_iter,
         convergence_iter=convergence_iter,
-        copy=False,
+        copy=copy,
         preference=preference,
         affinity="precomputed",
         verbose=verbose,
@@ -449,7 +471,6 @@ class AffinityPropagation(ClusterMixin, BaseEstimator):
         verbose=False,
         random_state=None,
     ):
-
         self.damping = damping
         self.max_iter = max_iter
         self.convergence_iter = convergence_iter
@@ -462,6 +483,7 @@ class AffinityPropagation(ClusterMixin, BaseEstimator):
     def _more_tags(self):
         return {"pairwise": self.affinity == "precomputed"}
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y=None):
         """Fit the clustering from features, or affinity matrix.
 
@@ -481,8 +503,6 @@ class AffinityPropagation(ClusterMixin, BaseEstimator):
         self
             Returns the instance itself.
         """
-        self._validate_params()
-
         if self.affinity == "precomputed":
             accept_sparse = False
         else:
@@ -503,7 +523,7 @@ class AffinityPropagation(ClusterMixin, BaseEstimator):
             preference = np.median(self.affinity_matrix_)
         else:
             preference = self.preference
-        preference = np.array(preference, copy=False)
+        preference = np.asarray(preference)
 
         random_state = check_random_state(self.random_state)
 
@@ -553,9 +573,11 @@ class AffinityPropagation(ClusterMixin, BaseEstimator):
                 return pairwise_distances_argmin(X, self.cluster_centers_)
         else:
             warnings.warn(
-                "This model does not have any cluster centers "
-                "because affinity propagation did not converge. "
-                "Labeling every sample as '-1'.",
+                (
+                    "This model does not have any cluster centers "
+                    "because affinity propagation did not converge. "
+                    "Labeling every sample as '-1'."
+                ),
                 ConvergenceWarning,
             )
             return np.array([-1] * X.shape[0])

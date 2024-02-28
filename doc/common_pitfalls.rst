@@ -104,6 +104,26 @@ be the average of the train subset, **not** the average of all the data. If the
 test subset is included in the average calculation, information from the test
 subset is influencing the model.
 
+How to avoid data leakage
+-------------------------
+
+Below are some tips on avoiding data leakage:
+
+* Always split the data into train and test subsets first, particularly
+  before any preprocessing steps.
+* Never include test data when using the `fit` and `fit_transform`
+  methods. Using all the data, e.g., `fit(X)`, can result in overly optimistic
+  scores.
+
+  Conversely, the `transform` method should be used on both train and test
+  subsets as the same preprocessing should be applied to all the data.
+  This can be achieved by using `fit_transform` on the train subset and
+  `transform` on the test subset.
+* The scikit-learn :ref:`pipeline <pipeline>` is a great way to prevent data
+  leakage as it ensures that the appropriate method is performed on the
+  correct data subset. The pipeline is ideal for use in cross-validation
+  and hyper-parameter tuning functions.
+
 An example of data leakage during preprocessing is detailed below.
 
 Data leakage during pre-processing
@@ -211,27 +231,8 @@ method is used during fitting and predicting::
     >>> from sklearn.model_selection import cross_val_score
     >>> scores = cross_val_score(pipeline, X, y)
     >>> print(f"Mean accuracy: {scores.mean():.2f}+/-{scores.std():.2f}")
-    Mean accuracy: 0.45+/-0.07
+    Mean accuracy: 0.46+/-0.07
 
-How to avoid data leakage
--------------------------
-
-Below are some tips on avoiding data leakage:
-
-* Always split the data into train and test subsets first, particularly
-  before any preprocessing steps.
-* Never include test data when using the `fit` and `fit_transform`
-  methods. Using all the data, e.g., `fit(X)`, can result in overly optimistic
-  scores.
-
-  Conversely, the `transform` method should be used on both train and test
-  subsets as the same preprocessing should be applied to all the data.
-  This can be achieved by using `fit_transform` on the train subset and
-  `transform` on the test subset.
-* The scikit-learn :ref:`pipeline <pipeline>` is a great way to prevent data
-  leakage as it ensures that the appropriate method is performed on the
-  correct data subset. The pipeline is ideal for use in cross-validation
-  and hyper-parameter tuning functions.
 
 .. _randomness:
 
@@ -243,7 +244,7 @@ Some scikit-learn objects are inherently random. These are usually estimators
 splitters (e.g. :class:`~sklearn.model_selection.KFold`). The randomness of
 these objects is controlled via their `random_state` parameter, as described
 in the :term:`Glossary <random_state>`. This section expands on the glossary
-entry, and describes good practices and common pitfalls w.r.t. to this
+entry, and describes good practices and common pitfalls w.r.t. this
 subtle parameter.
 
 .. note:: Recommendation summary
@@ -316,7 +317,7 @@ inter-dependent. For example, two estimators that share the same
 we discuss cloning. This point is important to keep in mind when debugging.
 
 If we had passed an integer to the `random_state` parameter of the
-:class:`~sklearn.ensemble.RandomForestClassifier`, we would have obtained the
+:class:`~sklearn.linear_model.SGDClassifier`, we would have obtained the
 same models, and thus the same scores each time. When we pass an integer, the
 same RNG is used across all calls to `fit`. What internally happens is that
 even though the RNG is consumed when `fit` is called, it is always reset to
@@ -413,10 +414,12 @@ it will allow the estimator RNG to vary for each fold.
     illustration purpose: what matters is what we pass to the
     :class:`~sklearn.ensemble.RandomForestClassifier` estimator.
 
+|details-start|
 **Cloning**
+|details-split|
 
 Another subtle side effect of passing `RandomState` instances is how
-:func:`~sklearn.clone` will work::
+:func:`~sklearn.base.clone` will work::
 
     >>> from sklearn import clone
     >>> from sklearn.ensemble import RandomForestClassifier
@@ -439,13 +442,15 @@ If an integer were passed, `a` and `b` would be exact clones and they would not
 influence each other.
 
 .. warning::
-    Even though :func:`~sklearn.clone` is rarely used in user code, it is
+    Even though :func:`~sklearn.base.clone` is rarely used in user code, it is
     called pervasively throughout scikit-learn codebase: in particular, most
     meta-estimators that accept non-fitted estimators call
-    :func:`~sklearn.clone` internally
+    :func:`~sklearn.base.clone` internally
     (:class:`~sklearn.model_selection.GridSearchCV`,
     :class:`~sklearn.ensemble.StackingClassifier`,
     :class:`~sklearn.calibration.CalibratedClassifierCV`, etc.).
+
+|details-end|
 
 CV splitters
 ............
@@ -553,7 +558,7 @@ When we evaluate a randomized estimator performance by cross-validation, we
 want to make sure that the estimator can yield accurate predictions for new
 data, but we also want to make sure that the estimator is robust w.r.t. its
 random initialization. For example, we would like the random weights
-initialization of a :class:`~sklearn.linear_model.SGDCLassifier` to be
+initialization of a :class:`~sklearn.linear_model.SGDClassifier` to be
 consistently good across all folds: otherwise, when we train that estimator
 on new data, we might get unlucky and the random initialization may lead to
 bad performance. Similarly, we want a random forest to be robust w.r.t the

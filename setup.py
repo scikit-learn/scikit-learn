@@ -4,17 +4,16 @@
 #               2010 Fabian Pedregosa <fabian.pedregosa@inria.fr>
 # License: 3-clause BSD
 
-import sys
+import importlib
 import os
-from os.path import join
 import platform
 import shutil
+import sys
+import traceback
+from os.path import join
 
 from setuptools import Command, Extension, setup
 from setuptools.command.build_ext import build_ext
-
-import traceback
-import importlib
 
 try:
     import builtins
@@ -36,7 +35,7 @@ with open("README.rst") as f:
     LONG_DESCRIPTION = f.read()
 MAINTAINER = "Andreas Mueller"
 MAINTAINER_EMAIL = "amueller@ais.uni-bonn.de"
-URL = "http://scikit-learn.org"
+URL = "https://scikit-learn.org"
 DOWNLOAD_URL = "https://pypi.org/project/scikit-learn/#files"
 LICENSE = "new BSD"
 PROJECT_URLS = {
@@ -54,66 +53,6 @@ from sklearn.externals._packaging.version import parse as parse_version  # noqa
 
 
 VERSION = sklearn.__version__
-
-# See: https://numpy.org/doc/stable/reference/c-api/deprecations.html
-DEFINE_MACRO_NUMPY_C_API = (
-    "NPY_NO_DEPRECATED_API",
-    "NPY_1_7_API_VERSION",
-)
-
-# XXX: add new extensions to this list when they
-# are not using the old NumPy C API (i.e. version 1.7)
-# TODO: when Cython>=3.0 is used, make sure all Cython extensions
-# use the newest NumPy C API by `#defining` `NPY_NO_DEPRECATED_API` to be
-# `NPY_1_7_API_VERSION`, and remove this list.
-# See: https://github.com/cython/cython/blob/1777f13461f971d064bd1644b02d92b350e6e7d1/docs/src/userguide/migrating_to_cy30.rst#numpy-c-api # noqa
-USE_NEWEST_NUMPY_C_API = (
-    "sklearn.__check_build._check_build",
-    "sklearn._loss._loss",
-    "sklearn.cluster._dbscan_inner",
-    "sklearn.cluster._k_means_common",
-    "sklearn.cluster._k_means_lloyd",
-    "sklearn.cluster._k_means_elkan",
-    "sklearn.cluster._k_means_minibatch",
-    "sklearn.datasets._svmlight_format_fast",
-    "sklearn.decomposition._cdnmf_fast",
-    "sklearn.ensemble._hist_gradient_boosting._gradient_boosting",
-    "sklearn.ensemble._hist_gradient_boosting.histogram",
-    "sklearn.ensemble._hist_gradient_boosting.splitting",
-    "sklearn.ensemble._hist_gradient_boosting._binning",
-    "sklearn.ensemble._hist_gradient_boosting._predictor",
-    "sklearn.ensemble._hist_gradient_boosting._bitset",
-    "sklearn.ensemble._hist_gradient_boosting.common",
-    "sklearn.ensemble._hist_gradient_boosting.utils",
-    "sklearn.feature_extraction._hashing_fast",
-    "sklearn.linear_model._sgd_fast",
-    "sklearn.manifold._barnes_hut_tsne",
-    "sklearn.metrics.cluster._expected_mutual_info_fast",
-    "sklearn.metrics._pairwise_distances_reduction._datasets_pair",
-    "sklearn.metrics._pairwise_distances_reduction._middle_term_computer",
-    "sklearn.metrics._pairwise_distances_reduction._base",
-    "sklearn.metrics._pairwise_distances_reduction._argkmin",
-    "sklearn.metrics._pairwise_distances_reduction._radius_neighbors",
-    "sklearn.metrics._pairwise_fast",
-    "sklearn.neighbors._partition_nodes",
-    "sklearn.tree._splitter",
-    "sklearn.tree._utils",
-    "sklearn.utils._cython_blas",
-    "sklearn.utils._fast_dict",
-    "sklearn.utils._openmp_helpers",
-    "sklearn.utils._weight_vector",
-    "sklearn.utils._random",
-    "sklearn.utils._logistic_sigmoid",
-    "sklearn.utils._readonly_array_wrapper",
-    "sklearn.utils._typedefs",
-    "sklearn.utils._heap",
-    "sklearn.utils._sorting",
-    "sklearn.utils._vector_sentinel",
-    "sklearn.utils._isfinite",
-    "sklearn.svm._newrand",
-    "sklearn._isotonic",
-)
-
 
 # Custom clean command to remove build artifacts
 
@@ -139,17 +78,20 @@ class CleanCommand(Command):
             shutil.rmtree("build")
         for dirpath, dirnames, filenames in os.walk("sklearn"):
             for filename in filenames:
-                if any(
-                    filename.endswith(suffix)
-                    for suffix in (".so", ".pyd", ".dll", ".pyc")
-                ):
+                root, extension = os.path.splitext(filename)
+
+                if extension in [".so", ".pyd", ".dll", ".pyc"]:
                     os.unlink(os.path.join(dirpath, filename))
-                    continue
-                extension = os.path.splitext(filename)[1]
+
                 if remove_c_files and extension in [".c", ".cpp"]:
                     pyx_file = str.replace(filename, extension, ".pyx")
                     if os.path.exists(os.path.join(dirpath, pyx_file)):
                         os.unlink(os.path.join(dirpath, filename))
+
+                if remove_c_files and extension == ".tp":
+                    if os.path.exists(os.path.join(dirpath, root)):
+                        os.unlink(os.path.join(dirpath, root))
+
             for dirname in dirnames:
                 if dirname == "__pycache__":
                     shutil.rmtree(os.path.join(dirpath, dirname))
@@ -177,15 +119,17 @@ class build_ext_subclass(build_ext):
     def build_extensions(self):
         from sklearn._build_utils.openmp_helpers import get_openmp_flag
 
+        # Always use NumPy 1.7 C API for all compiled extensions.
+        # See: https://numpy.org/doc/stable/reference/c-api/deprecations.html
+        DEFINE_MACRO_NUMPY_C_API = (
+            "NPY_NO_DEPRECATED_API",
+            "NPY_1_7_API_VERSION",
+        )
         for ext in self.extensions:
-            if ext.name in USE_NEWEST_NUMPY_C_API:
-                print(f"Using newest NumPy C API for extension {ext.name}")
-                ext.define_macros.append(DEFINE_MACRO_NUMPY_C_API)
-            else:
-                print(f"Using old NumPy C API (version 1.7) for extension {ext.name}")
+            ext.define_macros.append(DEFINE_MACRO_NUMPY_C_API)
 
         if sklearn._OPENMP_SUPPORTED:
-            openmp_flag = get_openmp_flag(self.compiler)
+            openmp_flag = get_openmp_flag()
 
             for e in self.extensions:
                 e.extra_compile_args += openmp_flag
@@ -230,7 +174,7 @@ def check_package_status(package, min_version):
     instructions = (
         "Installation instructions are available on the "
         "scikit-learn website: "
-        "http://scikit-learn.org/stable/install.html\n"
+        "https://scikit-learn.org/stable/install.html\n"
     )
 
     if package_status["up_to_date"] is False:
@@ -251,10 +195,10 @@ extension_config = {
         {"sources": ["_check_build.pyx"]},
     ],
     "": [
-        {"sources": ["_isotonic.pyx"], "include_np": True},
+        {"sources": ["_isotonic.pyx"]},
     ],
     "_loss": [
-        {"sources": ["_loss.pyx.tp"], "include_np": True},
+        {"sources": ["_loss.pyx.tp"]},
     ],
     "cluster": [
         {"sources": ["_dbscan_inner.pyx"], "language": "c++", "include_np": True},
@@ -263,6 +207,11 @@ extension_config = {
         {"sources": ["_k_means_lloyd.pyx"], "include_np": True},
         {"sources": ["_k_means_elkan.pyx"], "include_np": True},
         {"sources": ["_k_means_minibatch.pyx"], "include_np": True},
+    ],
+    "cluster._hdbscan": [
+        {"sources": ["_linkage.pyx"], "include_np": True},
+        {"sources": ["_reachability.pyx"], "include_np": True},
+        {"sources": ["_tree.pyx"], "include_np": True},
     ],
     "datasets": [
         {
@@ -286,14 +235,13 @@ extension_config = {
         {"sources": ["_predictor.pyx"], "include_np": True},
         {"sources": ["_bitset.pyx"], "include_np": True},
         {"sources": ["common.pyx"], "include_np": True},
-        {"sources": ["utils.pyx"], "include_np": True},
     ],
     "feature_extraction": [
         {"sources": ["_hashing_fast.pyx"], "language": "c++", "include_np": True},
     ],
     "linear_model": [
         {"sources": ["_cd_fast.pyx"], "include_np": True},
-        {"sources": ["_sgd_fast.pyx"], "include_np": True},
+        {"sources": ["_sgd_fast.pyx.tp"], "include_np": True},
         {"sources": ["_sag_fast.pyx.tp"], "include_np": True},
     ],
     "manifold": [
@@ -320,7 +268,6 @@ extension_config = {
         {
             "sources": ["_middle_term_computer.pyx.tp", "_middle_term_computer.pxd.tp"],
             "language": "c++",
-            "include_np": True,
             "extra_compile_args": ["-std=c++11"],
         },
         {
@@ -336,18 +283,37 @@ extension_config = {
             "extra_compile_args": ["-std=c++11"],
         },
         {
+            "sources": ["_argkmin_classmode.pyx.tp"],
+            "language": "c++",
+            "include_np": True,
+            "extra_compile_args": ["-std=c++11"],
+        },
+        {
             "sources": ["_radius_neighbors.pyx.tp", "_radius_neighbors.pxd.tp"],
+            "language": "c++",
+            "include_np": True,
+            "extra_compile_args": ["-std=c++11"],
+        },
+        {
+            "sources": ["_radius_neighbors_classmode.pyx.tp"],
             "language": "c++",
             "include_np": True,
             "extra_compile_args": ["-std=c++11"],
         },
     ],
     "preprocessing": [
-        {"sources": ["_csr_polynomial_expansion.pyx"], "include_np": True},
+        {"sources": ["_csr_polynomial_expansion.pyx"]},
+        {
+            "sources": ["_target_encoder_fast.pyx"],
+            "include_np": True,
+            "language": "c++",
+            "extra_compile_args": ["-std=c++11"],
+        },
     ],
     "neighbors": [
-        {"sources": ["_ball_tree.pyx"], "include_np": True},
-        {"sources": ["_kd_tree.pyx"], "include_np": True},
+        {"sources": ["_binary_tree.pxi.tp"], "include_np": True},
+        {"sources": ["_ball_tree.pyx.tp"], "include_np": True},
+        {"sources": ["_kd_tree.pyx.tp"], "include_np": True},
         {"sources": ["_partition_nodes.pyx"], "language": "c++", "include_np": True},
         {"sources": ["_quad_tree.pyx"], "include_np": True},
     ],
@@ -411,22 +377,26 @@ extension_config = {
         },
     ],
     "tree": [
-        {"sources": ["_tree.pyx"], "language": "c++", "include_np": True},
-        {"sources": ["_splitter.pyx"], "include_np": True},
-        {"sources": ["_criterion.pyx"], "include_np": True},
-        {"sources": ["_utils.pyx"], "include_np": True},
+        {
+            "sources": ["_tree.pyx"],
+            "language": "c++",
+            "include_np": True,
+            "optimization_level": "O3",
+        },
+        {"sources": ["_splitter.pyx"], "include_np": True, "optimization_level": "O3"},
+        {"sources": ["_criterion.pyx"], "include_np": True, "optimization_level": "O3"},
+        {"sources": ["_utils.pyx"], "include_np": True, "optimization_level": "O3"},
     ],
     "utils": [
         {"sources": ["sparsefuncs_fast.pyx"], "include_np": True},
         {"sources": ["_cython_blas.pyx"]},
-        {"sources": ["arrayfuncs.pyx"], "include_np": True},
+        {"sources": ["arrayfuncs.pyx"]},
         {
             "sources": ["murmurhash.pyx", join("src", "MurmurHash3.cpp")],
             "include_dirs": ["src"],
             "include_np": True,
         },
-        {"sources": ["_fast_dict.pyx"], "language": "c++", "include_np": True},
-        {"sources": ["_fast_dict.pyx"], "language": "c++", "include_np": True},
+        {"sources": ["_fast_dict.pyx"], "language": "c++"},
         {"sources": ["_openmp_helpers.pyx"]},
         {"sources": ["_seq_dataset.pyx.tp", "_seq_dataset.pxd.tp"], "include_np": True},
         {
@@ -434,11 +404,9 @@ extension_config = {
             "include_np": True,
         },
         {"sources": ["_random.pyx"], "include_np": True},
-        {"sources": ["_logistic_sigmoid.pyx"], "include_np": True},
-        {"sources": ["_readonly_array_wrapper.pyx"], "include_np": True},
-        {"sources": ["_typedefs.pyx"], "include_np": True},
-        {"sources": ["_heap.pyx"], "include_np": True},
-        {"sources": ["_sorting.pyx"], "include_np": True},
+        {"sources": ["_typedefs.pyx"]},
+        {"sources": ["_heap.pyx"]},
+        {"sources": ["_sorting.pyx"]},
         {"sources": ["_vector_sentinel.pyx"], "language": "c++", "include_np": True},
         {"sources": ["_isfinite.pyx"]},
     ],
@@ -490,14 +458,29 @@ def configure_extension_modules():
     if "sdist" in sys.argv or "--help" in sys.argv:
         return []
 
-    from sklearn._build_utils import cythonize_extensions
-    from sklearn._build_utils import gen_from_templates
     import numpy
+
+    from sklearn._build_utils import cythonize_extensions, gen_from_templates
 
     is_pypy = platform.python_implementation() == "PyPy"
     np_include = numpy.get_include()
-    default_libraries = ["m"] if os.name == "posix" else []
-    default_extra_compile_args = ["-O3"]
+    default_optimization_level = "O2"
+
+    if os.name == "posix":
+        default_libraries = ["m"]
+    else:
+        default_libraries = []
+
+    default_extra_compile_args = []
+    build_with_debug_symbols = (
+        os.environ.get("SKLEARN_BUILD_ENABLE_DEBUG_SYMBOLS", "0") != "0"
+    )
+    if os.name == "posix":
+        if build_with_debug_symbols:
+            default_extra_compile_args.append("-g")
+        else:
+            # Setting -g0 will strip symbols, reducing the binary size of extensions
+            default_extra_compile_args.append("-g0")
 
     cython_exts = []
     for submodule, extensions in extension_config.items():
@@ -521,12 +504,17 @@ def configure_extension_modules():
                 # `source` is a Tempita file
                 tempita_sources.append(source)
 
-                # Do not include pxd files that were generated by tempita
-                if os.path.splitext(new_source_path)[-1] == ".pxd":
-                    continue
-                sources.append(new_source_path)
+                # Only include source files that are pyx files
+                if os.path.splitext(new_source_path)[-1] == ".pyx":
+                    sources.append(new_source_path)
 
             gen_from_templates(tempita_sources)
+
+            # Do not progress if we only have a tempita file which we don't
+            # want to include like the .pxi.tp extension. In such a case
+            # sources would be empty.
+            if not sources:
+                continue
 
             # By convention, our extensions always use the name of the first source
             source_name = os.path.splitext(os.path.basename(sources[0]))[0]
@@ -551,6 +539,14 @@ def configure_extension_modules():
             extra_compile_args = (
                 extension.get("extra_compile_args", []) + default_extra_compile_args
             )
+            optimization_level = extension.get(
+                "optimization_level", default_optimization_level
+            )
+            if os.name == "posix":
+                extra_compile_args.append(f"-{optimization_level}")
+            else:
+                extra_compile_args.append(f"/{optimization_level}")
+
             libraries_ext = extension.get("libraries", []) + default_libraries
 
             new_ext = Extension(
@@ -569,8 +565,8 @@ def configure_extension_modules():
 
 
 def setup_package():
-    python_requires = ">=3.8"
-    required_python_version = (3, 8)
+    python_requires = ">=3.9"
+    required_python_version = (3, 9)
 
     metadata = dict(
         name=DISTNAME,
@@ -597,19 +593,20 @@ def setup_package():
             "Operating System :: Unix",
             "Operating System :: MacOS",
             "Programming Language :: Python :: 3",
-            "Programming Language :: Python :: 3.8",
             "Programming Language :: Python :: 3.9",
             "Programming Language :: Python :: 3.10",
             "Programming Language :: Python :: 3.11",
+            "Programming Language :: Python :: 3.12",
             "Programming Language :: Python :: Implementation :: CPython",
             "Programming Language :: Python :: Implementation :: PyPy",
         ],
         cmdclass=cmdclass,
         python_requires=python_requires,
         install_requires=min_deps.tag_to_packages["install"],
-        package_data={"": ["*.pxd"]},
+        package_data={
+            "": ["*.csv", "*.gz", "*.txt", "*.pxd", "*.rst", "*.jpg", "*.css"]
+        },
         zip_safe=False,  # the package can run out of an .egg file
-        include_package_data=True,
         extras_require={
             key: min_deps.tag_to_packages[key]
             for key in ["examples", "docs", "tests", "benchmark"]

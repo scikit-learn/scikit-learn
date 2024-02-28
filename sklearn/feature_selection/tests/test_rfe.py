@@ -4,30 +4,26 @@ Testing Recursive feature elimination
 
 from operator import attrgetter
 
-import pytest
 import numpy as np
-from numpy.testing import assert_array_almost_equal, assert_array_equal, assert_allclose
-from scipy import sparse
+import pytest
+from numpy.testing import assert_allclose, assert_array_almost_equal, assert_array_equal
 
 from sklearn.base import BaseEstimator, ClassifierMixin
-from sklearn.cross_decomposition import PLSCanonical, PLSRegression, CCA
-from sklearn.feature_selection import RFE, RFECV
-from sklearn.datasets import load_iris, make_friedman1
-from sklearn.metrics import zero_one_loss
-from sklearn.svm import SVC, SVR, LinearSVR
-from sklearn.linear_model import LogisticRegression
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.model_selection import cross_val_score
-from sklearn.model_selection import GroupKFold
 from sklearn.compose import TransformedTargetRegressor
+from sklearn.cross_decomposition import CCA, PLSCanonical, PLSRegression
+from sklearn.datasets import load_iris, make_friedman1
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.feature_selection import RFE, RFECV
+from sklearn.impute import SimpleImputer
+from sklearn.linear_model import LinearRegression, LogisticRegression
+from sklearn.metrics import get_scorer, make_scorer, zero_one_loss
+from sklearn.model_selection import GroupKFold, cross_val_score
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
-
+from sklearn.svm import SVC, SVR, LinearSVR
 from sklearn.utils import check_random_state
 from sklearn.utils._testing import ignore_warnings
-
-from sklearn.metrics import make_scorer
-from sklearn.metrics import get_scorer
+from sklearn.utils.fixes import CSR_CONTAINERS
 
 
 class MockClassifier:
@@ -84,13 +80,14 @@ def test_rfe_features_importance():
     assert_array_equal(rfe.get_support(), rfe_svc.get_support())
 
 
-def test_rfe():
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_rfe(csr_container):
     generator = check_random_state(0)
     iris = load_iris()
     # Add some irrelevant features. Random seed is set to make sure that
     # irrelevant features are always irrelevant.
     X = np.c_[iris.data, generator.normal(size=(len(iris.data), 6))]
-    X_sparse = sparse.csr_matrix(X)
+    X_sparse = csr_container(X)
     y = iris.target
 
     # dense model
@@ -178,7 +175,8 @@ def test_rfe_mockclassifier():
     assert X_r.shape == iris.data.shape
 
 
-def test_rfecv():
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_rfecv(csr_container):
     generator = check_random_state(0)
     iris = load_iris()
     # Add some irrelevant features. Random seed is set to make sure that
@@ -202,7 +200,7 @@ def test_rfecv():
 
     # same in sparse
     rfecv_sparse = RFECV(estimator=SVC(kernel="linear"), step=1)
-    X_sparse = sparse.csr_matrix(X)
+    X_sparse = csr_container(X)
     rfecv_sparse.fit(X_sparse, y)
     X_r_sparse = rfecv_sparse.transform(X_sparse)
     assert_array_equal(X_r_sparse.toarray(), iris.data)
@@ -246,14 +244,14 @@ def test_rfecv():
     assert_array_equal(X_r, iris.data)
 
     rfecv_sparse = RFECV(estimator=SVC(kernel="linear"), step=2)
-    X_sparse = sparse.csr_matrix(X)
+    X_sparse = csr_container(X)
     rfecv_sparse.fit(X_sparse, y)
     X_r_sparse = rfecv_sparse.transform(X_sparse)
     assert_array_equal(X_r_sparse.toarray(), iris.data)
 
     # Verifying that steps < 1 don't blow up.
     rfecv_sparse = RFECV(estimator=SVC(kernel="linear"), step=0.2)
-    X_sparse = sparse.csr_matrix(X)
+    X_sparse = csr_container(X)
     rfecv_sparse.fit(X_sparse, y)
     X_r_sparse = rfecv_sparse.transform(X_sparse)
     assert_array_equal(X_r_sparse.toarray(), iris.data)
@@ -278,8 +276,8 @@ def test_rfecv_mockclassifier():
 
 def test_rfecv_verbose_output():
     # Check verbose=1 is producing an output.
-    from io import StringIO
     import sys
+    from io import StringIO
 
     sys.stdout = StringIO()
 
@@ -466,7 +464,7 @@ def test_rfe_wrapped_estimator(importance_getter, selector, expected_n_features)
     # Non-regression test for
     # https://github.com/scikit-learn/scikit-learn/issues/15312
     X, y = make_friedman1(n_samples=50, n_features=10, random_state=0)
-    estimator = LinearSVR(random_state=0)
+    estimator = LinearSVR(dual="auto", random_state=0)
 
     log_estimator = TransformedTargetRegressor(
         regressor=estimator, func=np.log, inverse_func=np.exp
@@ -488,7 +486,7 @@ def test_rfe_wrapped_estimator(importance_getter, selector, expected_n_features)
 @pytest.mark.parametrize("Selector", [RFE, RFECV])
 def test_rfe_importance_getter_validation(importance_getter, err_type, Selector):
     X, y = make_friedman1(n_samples=50, n_features=10, random_state=42)
-    estimator = LinearSVR()
+    estimator = LinearSVR(dual="auto")
     log_estimator = TransformedTargetRegressor(
         regressor=estimator, func=np.log, inverse_func=np.exp
     )
@@ -505,8 +503,8 @@ def test_rfe_allow_nan_inf_in_x(cv):
     y = iris.target
 
     # add nan and inf value to X
-    X[0][0] = np.NaN
-    X[0][1] = np.Inf
+    X[0][0] = np.nan
+    X[0][1] = np.inf
 
     clf = MockClassifier()
     if cv is not None:
@@ -560,6 +558,28 @@ def test_multioutput(ClsRFE):
 
 
 @pytest.mark.parametrize("ClsRFE", [RFE, RFECV])
+def test_pipeline_with_nans(ClsRFE):
+    """Check that RFE works with pipeline that accept nans.
+
+    Non-regression test for gh-21743.
+    """
+    X, y = load_iris(return_X_y=True)
+    X[0, 0] = np.nan
+
+    pipe = make_pipeline(
+        SimpleImputer(),
+        StandardScaler(),
+        LogisticRegression(),
+    )
+
+    fs = ClsRFE(
+        estimator=pipe,
+        importance_getter="named_steps.logisticregression.coef_",
+    )
+    fs.fit(X, y)
+
+
+@pytest.mark.parametrize("ClsRFE", [RFE, RFECV])
 @pytest.mark.parametrize("PLSEstimator", [CCA, PLSCanonical, PLSRegression])
 def test_rfe_pls(ClsRFE, PLSEstimator):
     """Check the behaviour of RFE with PLS estimators.
@@ -571,3 +591,25 @@ def test_rfe_pls(ClsRFE, PLSEstimator):
     estimator = PLSEstimator(n_components=1)
     selector = ClsRFE(estimator, step=1).fit(X, y)
     assert selector.score(X, y) > 0.5
+
+
+def test_rfe_estimator_attribute_error():
+    """Check that we raise the proper AttributeError when the estimator
+    does not implement the `decision_function` method, which is decorated with
+    `available_if`.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/28108
+    """
+    iris = load_iris()
+
+    # `LinearRegression` does not implement 'decision_function' and should raise an
+    # AttributeError
+    rfe = RFE(estimator=LinearRegression())
+
+    outer_msg = "This 'RFE' has no attribute 'decision_function'"
+    inner_msg = "'LinearRegression' object has no attribute 'decision_function'"
+    with pytest.raises(AttributeError, match=outer_msg) as exec_info:
+        rfe.fit(iris.data, iris.target).decision_function(iris.data)
+    assert isinstance(exec_info.value.__cause__, AttributeError)
+    assert inner_msg in str(exec_info.value.__cause__)
