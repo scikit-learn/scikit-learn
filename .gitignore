@@ -13,6 +13,7 @@ sklearn/**/*.html
 
 dist/
 MANIFEST
+doc/sg_execution_times.rst
 doc/_build/
 doc/auto_examples/
 doc/modules/generated/

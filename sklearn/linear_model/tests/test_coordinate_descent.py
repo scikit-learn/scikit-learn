@@ -1603,7 +1603,7 @@ def test_multitask_cv_estimators_with_sample_weight(MultiTaskEstimatorCV):
     completes smoothly as before.
     """
 
-    class CVSplitter(BaseCrossValidator, GroupsConsumerMixin):
+    class CVSplitter(GroupsConsumerMixin, BaseCrossValidator):
         def get_n_splits(self, X=None, y=None, groups=None, metadata=None):
             pass  # pragma: nocover
 

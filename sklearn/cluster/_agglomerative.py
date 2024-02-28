@@ -270,6 +270,24 @@ def ward_tree(X, *, connectivity=None, n_clusters=None, return_distance=False):
         cluster in the forest, :math:`T=|v|+|s|+|t|`, and
         :math:`|*|` is the cardinality of its argument. This is also
         known as the incremental algorithm.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.cluster import ward_tree
+    >>> X = np.array([[1, 2], [1, 4], [1, 0],
+    ...               [4, 2], [4, 4], [4, 0]])
+    >>> children, n_connected_components, n_leaves, parents = ward_tree(X)
+    >>> children
+    array([[0, 1],
+           [3, 5],
+           [2, 6],
+           [4, 7],
+           [8, 9]])
+    >>> n_connected_components
+    1
+    >>> n_leaves
+    6
     """
     X = np.asarray(X)
     if X.ndim == 1:

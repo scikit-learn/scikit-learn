@@ -175,7 +175,8 @@ def stream_reuters_documents(data_path=None):
         assert sha256(archive_path.read_bytes()).hexdigest() == ARCHIVE_SHA256
 
         print("untarring Reuters dataset...")
-        tarfile.open(archive_path, "r:gz").extractall(data_path)
+        with tarfile.open(archive_path, "r:gz") as fp:
+            fp.extractall(data_path, filter="data")
         print("done.")
 
     parser = ReutersParser()

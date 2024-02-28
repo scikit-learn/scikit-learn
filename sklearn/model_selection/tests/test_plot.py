@@ -570,3 +570,26 @@ def test_validation_curve_xscale_from_param_range_provided_as_a_list(
     )
 
     assert display.ax_.get_xscale() == xscale
+
+
+@pytest.mark.parametrize(
+    "Display, params",
+    [
+        (LearningCurveDisplay, {}),
+        (ValidationCurveDisplay, {"param_name": "max_depth", "param_range": [1, 3, 5]}),
+    ],
+)
+def test_subclassing_displays(pyplot, data, Display, params):
+    """Check that named constructors return the correct type when subclassed.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/pull/27675
+    """
+    X, y = data
+    estimator = DecisionTreeClassifier(random_state=0)
+
+    class SubclassOfDisplay(Display):
+        pass
+
+    display = SubclassOfDisplay.from_estimator(estimator, X, y, **params)
+    assert isinstance(display, SubclassOfDisplay)

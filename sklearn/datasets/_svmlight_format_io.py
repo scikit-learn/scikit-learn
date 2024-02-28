@@ -509,6 +509,13 @@ def dump_svmlight_file(
 
         .. versionadded:: 0.17
            parameter `multilabel` to support multilabel datasets.
+
+    Examples
+    --------
+    >>> from sklearn.datasets import dump_svmlight_file, make_classification
+    >>> X, y = make_classification(random_state=0)
+    >>> output_file = "my_dataset.svmlight"
+    >>> dump_svmlight_file(X, y, output_file)  # doctest: +SKIP
     """
     if comment is not None:
         # Convert comment string to list of lines in UTF-8.

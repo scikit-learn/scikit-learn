@@ -18,7 +18,7 @@ Documentation can be found under the
 But there are many other ways to help. In particular answering queries on the
 [issue tracker](https://github.com/scikit-learn/scikit-learn/issues),
 investigating bugs, and [reviewing other developers' pull
-requests](http://scikit-learn.org/dev/developers/contributing.html#code-review-guidelines)
+requests](https://scikit-learn.org/dev/developers/contributing.html#code-review-guidelines)
 are very valuable contributions that decrease the burden on the project
 maintainers.
 
@@ -30,8 +30,8 @@ link to it from your website, or simply star it in GitHub to say "I use it".
 Quick links
 -----------
 
-* [Submitting a bug report or feature request](http://scikit-learn.org/dev/developers/contributing.html#submitting-a-bug-report-or-a-feature-request)
-* [Contributing code](http://scikit-learn.org/dev/developers/contributing.html#contributing-code)
+* [Submitting a bug report or feature request](https://scikit-learn.org/dev/developers/contributing.html#submitting-a-bug-report-or-a-feature-request)
+* [Contributing code](https://scikit-learn.org/dev/developers/contributing.html#contributing-code)
 * [Coding guidelines](https://scikit-learn.org/dev/developers/develop.html#coding-guidelines)
 * [Tips to read current code](https://scikit-learn.org/dev/developers/contributing.html#reading-the-existing-code-base)
 

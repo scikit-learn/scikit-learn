@@ -200,21 +200,6 @@ def test_kmeans_convergence(algorithm, global_random_seed):
     assert km.n_iter_ < max_iter
 
 
-@pytest.mark.parametrize("algorithm", ["auto", "full"])
-def test_algorithm_auto_full_deprecation_warning(algorithm):
-    X = np.random.rand(100, 2)
-    kmeans = KMeans(algorithm=algorithm)
-    with pytest.warns(
-        FutureWarning,
-        match=(
-            f"algorithm='{algorithm}' is deprecated, it will "
-            "be removed in 1.3. Using 'lloyd' instead."
-        ),
-    ):
-        kmeans.fit(X)
-        assert kmeans._algorithm == "lloyd"
-
-
 @pytest.mark.parametrize("Estimator", [KMeans, MiniBatchKMeans])
 def test_predict_sample_weight_deprecation_warning(Estimator):
     X = np.random.rand(100, 2)
@@ -1367,3 +1352,21 @@ def test_sample_weight_zero(init, global_random_seed):
     # (i.e. be at a distance=0 from it)
     d = euclidean_distances(X[::2], clusters_weighted)
     assert not np.any(np.isclose(d, 0))
+
+
+@pytest.mark.parametrize("array_constr", data_containers, ids=data_containers_ids)
+@pytest.mark.parametrize("algorithm", ["lloyd", "elkan"])
+def test_relocating_with_duplicates(algorithm, array_constr):
+    """Check that kmeans stops when there are more centers than non-duplicate samples
+
+    Non-regression test for issue:
+    https://github.com/scikit-learn/scikit-learn/issues/28055
+    """
+    X = np.array([[0, 0], [1, 1], [1, 1], [1, 0], [0, 1]])
+    km = KMeans(n_clusters=5, init=X, algorithm=algorithm)
+
+    msg = r"Number of distinct clusters \(4\) found smaller than n_clusters \(5\)"
+    with pytest.warns(ConvergenceWarning, match=msg):
+        km.fit(array_constr(X))
+
+    assert km.n_iter_ == 1

@@ -10,14 +10,14 @@ documents (newsgroups posts) on twenty different topics.
 
 In this section we will see how to:
 
-  - load the file contents and the categories
+- load the file contents and the categories
 
-  - extract feature vectors suitable for machine learning
+- extract feature vectors suitable for machine learning
 
-  - train a linear model to perform categorization
+- train a linear model to perform categorization
 
-  - use a grid search strategy to find a good configuration of both
-    the feature extraction components and the classifier
+- use a grid search strategy to find a good configuration of both
+  the feature extraction components and the classifier
 
 
 Tutorial setup
@@ -38,13 +38,13 @@ The source can also be found `on Github
 
 The tutorial folder should contain the following sub-folders:
 
-  * ``*.rst files`` - the source of the tutorial document written with sphinx
+* ``*.rst files`` - the source of the tutorial document written with sphinx
 
-  * ``data`` - folder to put the datasets used during the tutorial
+* ``data`` - folder to put the datasets used during the tutorial
 
-  * ``skeletons`` - sample incomplete scripts for the exercises
+* ``skeletons`` - sample incomplete scripts for the exercises
 
-  * ``solutions`` - solutions of the exercises
+* ``solutions`` - solutions of the exercises
 
 
 You can already copy the skeletons into a new folder somewhere
@@ -180,13 +180,13 @@ Bags of words
 
 The most intuitive way to do so is to use a bags of words representation:
 
-  1. Assign a fixed integer id to each word occurring in any document
-     of the training set (for instance by building a dictionary
-     from words to integer indices).
+1. Assign a fixed integer id to each word occurring in any document
+   of the training set (for instance by building a dictionary
+   from words to integer indices).
 
-  2. For each document ``#i``, count the number of occurrences of each
-     word ``w`` and store it in ``X[i, j]`` as the value of feature
-     ``#j`` where ``j`` is the index of word ``w`` in the dictionary.
+2. For each document ``#i``, count the number of occurrences of each
+   word ``w`` and store it in ``X[i, j]`` as the value of feature
+   ``#j`` where ``j`` is the index of word ``w`` in the dictionary.
 
 The bags of words representation implies that ``n_features`` is
 the number of distinct words in the corpus: this number is typically

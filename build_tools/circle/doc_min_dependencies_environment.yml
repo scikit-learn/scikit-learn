@@ -8,14 +8,14 @@ dependencies:
   - numpy=1.19.5  # min
   - blas
   - scipy=1.6.0  # min
-  - cython=0.29.33  # min
+  - cython=3.0.8  # min
   - joblib
   - threadpoolctl
   - matplotlib=3.3.4  # min
   - pandas=1.1.5  # min
   - pyamg
   - pytest
-  - pytest-xdist=2.5.0
+  - pytest-xdist
   - pillow
   - setuptools
   - scikit-image=0.17.2  # min
@@ -28,6 +28,7 @@ dependencies:
   - numpydoc=1.2.0  # min
   - sphinx-prompt=1.3.0  # min
   - plotly=5.14.0  # min
+  - polars=0.19.12  # min
   - pooch
   - pip
   - pip:

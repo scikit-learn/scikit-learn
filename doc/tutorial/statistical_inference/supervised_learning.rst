@@ -157,10 +157,10 @@ of the model as small as possible.
 
 Linear models: :math:`y = X\beta + \epsilon`
 
- * :math:`X`: data
- * :math:`y`: target variable
- * :math:`\beta`: Coefficients
- * :math:`\epsilon`: Observation noise
+* :math:`X`: data
+* :math:`y`: target variable
+* :math:`\beta`: Coefficients
+* :math:`\epsilon`: Observation noise
 
 .. image:: /auto_examples/linear_model/images/sphx_glr_plot_ols_001.png
    :target: ../../auto_examples/linear_model/plot_ols.html

@@ -88,16 +88,16 @@ def make_prediction(dataset=None, binary=False):
 
     # run classifier, get class probabilities and label predictions
     clf = svm.SVC(kernel="linear", probability=True, random_state=0)
-    probas_pred = clf.fit(X[:half], y[:half]).predict_proba(X[half:])
+    y_pred_proba = clf.fit(X[:half], y[:half]).predict_proba(X[half:])
 
     if binary:
         # only interested in probabilities of the positive case
         # XXX: do we really want a special API for the binary case?
-        probas_pred = probas_pred[:, 1]
+        y_pred_proba = y_pred_proba[:, 1]
 
     y_pred = clf.predict(X[half:])
     y_true = y[half:]
-    return y_true, y_pred, probas_pred
+    return y_true, y_pred, y_pred_proba
 
 
 ###############################################################################
@@ -2864,3 +2864,26 @@ def test_classification_metric_division_by_zero_nan_validaton(scoring):
     X, y = datasets.make_classification(random_state=0)
     classifier = DecisionTreeClassifier(max_depth=3, random_state=0).fit(X, y)
     cross_val_score(classifier, X, y, scoring=scoring, n_jobs=2, error_score="raise")
+
+
+# TODO(1.7): remove
+def test_brier_score_loss_deprecation_warning():
+    """Check the message for future deprecation."""
+    # Check brier_score_loss function
+    y_true = np.array([0, 1, 1, 0, 1, 1])
+    y_pred = np.array([0.1, 0.8, 0.9, 0.3, 1.0, 0.95])
+
+    warn_msg = "y_prob was deprecated in version 1.5"
+    with pytest.warns(FutureWarning, match=warn_msg):
+        brier_score_loss(
+            y_true,
+            y_prob=y_pred,
+        )
+
+    error_msg = "`y_prob` and `y_proba` cannot be both specified"
+    with pytest.raises(ValueError, match=error_msg):
+        brier_score_loss(
+            y_true,
+            y_prob=y_pred,
+            y_proba=y_pred,
+        )

@@ -23,6 +23,14 @@ in: inplace # just a shortcut
 inplace:
 	$(PYTHON) setup.py build_ext -i
 
+dev-meson:
+	# Temporary script to try the experimental meson build. Once meson is
+	# accepted as the default build tool, this will go away.
+	python build_tools/build-meson-editable-install.py
+
+clean-meson:
+	pip uninstall -y scikit-learn
+
 test-code: in
 	$(PYTEST) --showlocals -v sklearn --durations=20
 test-sphinxext:

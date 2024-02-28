@@ -79,6 +79,10 @@ parameter takes a list of indices, names of the categorical features or a boolea
 mask. The graphical representation of partial dependence for categorical features is
 a bar plot or a 2D heatmap.
 
+|details-start|
+**PDPs for multi-class classification**
+|details-split|
+
 For multi-class classification, you need to set the class label for which
 the PDPs should be created via the ``target`` argument::
 
@@ -92,6 +96,8 @@ the PDPs should be created via the ``target`` argument::
 
 The same parameter ``target`` is used to specify the target in multi-output
 regression settings.
+
+|details-end|
 
 If you need the raw values of the partial dependence function rather than
 the plots, you can use the

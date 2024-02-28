@@ -147,35 +147,35 @@ Target format
 Valid :term:`multiclass` representations for
 :func:`~sklearn.utils.multiclass.type_of_target` (`y`) are:
 
-  - 1d or column vector containing more than two discrete values. An
-    example of a vector ``y`` for 4 samples:
+- 1d or column vector containing more than two discrete values. An
+  example of a vector ``y`` for 4 samples:
 
-      >>> import numpy as np
-      >>> y = np.array(['apple', 'pear', 'apple', 'orange'])
-      >>> print(y)
-      ['apple' 'pear' 'apple' 'orange']
+    >>> import numpy as np
+    >>> y = np.array(['apple', 'pear', 'apple', 'orange'])
+    >>> print(y)
+    ['apple' 'pear' 'apple' 'orange']
 
-  - Dense or sparse :term:`binary` matrix of shape ``(n_samples, n_classes)``
-    with a single sample per row, where each column represents one class. An
-    example of both a dense and sparse :term:`binary` matrix ``y`` for 4
-    samples, where the columns, in order, are apple, orange, and pear:
+- Dense or sparse :term:`binary` matrix of shape ``(n_samples, n_classes)``
+  with a single sample per row, where each column represents one class. An
+  example of both a dense and sparse :term:`binary` matrix ``y`` for 4
+  samples, where the columns, in order, are apple, orange, and pear:
 
-      >>> import numpy as np
-      >>> from sklearn.preprocessing import LabelBinarizer
-      >>> y = np.array(['apple', 'pear', 'apple', 'orange'])
-      >>> y_dense = LabelBinarizer().fit_transform(y)
-      >>> print(y_dense)
-        [[1 0 0]
-         [0 0 1]
-         [1 0 0]
-         [0 1 0]]
-      >>> from scipy import sparse
-      >>> y_sparse = sparse.csr_matrix(y_dense)
-      >>> print(y_sparse)
-          (0, 0)	1
-          (1, 2)	1
-          (2, 0)	1
-          (3, 1)	1
+    >>> import numpy as np
+    >>> from sklearn.preprocessing import LabelBinarizer
+    >>> y = np.array(['apple', 'pear', 'apple', 'orange'])
+    >>> y_dense = LabelBinarizer().fit_transform(y)
+    >>> print(y_dense)
+    [[1 0 0]
+     [0 0 1]
+     [1 0 0]
+     [0 1 0]]
+    >>> from scipy import sparse
+    >>> y_sparse = sparse.csr_matrix(y_dense)
+    >>> print(y_sparse)
+      (0, 0)	1
+      (1, 2)	1
+      (2, 0)	1
+      (3, 1)	1
 
 For more information about :class:`~sklearn.preprocessing.LabelBinarizer`,
 refer to :ref:`preprocessing_targets`.

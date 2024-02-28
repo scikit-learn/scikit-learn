@@ -398,12 +398,16 @@ def test_no_refit():
             "transform",
             "inverse_transform",
         ):
-            error_msg = (
+            outer_msg = f"has no attribute '{fn_name}'"
+            inner_msg = (
                 f"`refit=False`. {fn_name} is available only after "
                 "refitting on the best parameters"
             )
-            with pytest.raises(AttributeError, match=error_msg):
+            with pytest.raises(AttributeError, match=outer_msg) as exec_info:
                 getattr(grid_search, fn_name)(X)
+
+            assert isinstance(exec_info.value.__cause__, AttributeError)
+            assert inner_msg in str(exec_info.value.__cause__)
 
     # Test that an invalid refit param raises appropriate error messages
     error_msg = (
@@ -1271,10 +1275,13 @@ def test_search_cv_score_samples_error(search_cv):
 
     # Make sure to error out when underlying estimator does not implement
     # the method `score_samples`
-    err_msg = "'DecisionTreeClassifier' object has no attribute 'score_samples'"
+    outer_msg = f"'{search_cv.__class__.__name__}' has no attribute 'score_samples'"
+    inner_msg = "'DecisionTreeClassifier' object has no attribute 'score_samples'"
 
-    with pytest.raises(AttributeError, match=err_msg):
+    with pytest.raises(AttributeError, match=outer_msg) as exec_info:
         search_cv.score_samples(X)
+    assert isinstance(exec_info.value.__cause__, AttributeError)
+    assert inner_msg == str(exec_info.value.__cause__)
 
 
 @pytest.mark.parametrize(

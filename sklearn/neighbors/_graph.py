@@ -362,6 +362,12 @@ class KNeighborsTransformer(
     RadiusNeighborsTransformer : Transform X into a weighted graph of
         neighbors nearer than a radius.
 
+    Notes
+    -----
+    For an example of using :class:`~sklearn.neighbors.KNeighborsTransformer`
+    in combination with :class:`~sklearn.manifold.TSNE` see
+    :ref:`sphx_glr_auto_examples_neighbors_approximate_nearest_neighbors.py`.
+
     Examples
     --------
     >>> from sklearn.datasets import load_wine

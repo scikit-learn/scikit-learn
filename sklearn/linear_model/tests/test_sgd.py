@@ -724,15 +724,25 @@ def test_sgd_predict_proba_method_access(klass):
             assert hasattr(clf, "predict_proba")
             assert hasattr(clf, "predict_log_proba")
         else:
-            message = "probability estimates are not available for loss={!r}".format(
+            inner_msg = "probability estimates are not available for loss={!r}".format(
                 loss
             )
             assert not hasattr(clf, "predict_proba")
             assert not hasattr(clf, "predict_log_proba")
-            with pytest.raises(AttributeError, match=message):
+            with pytest.raises(
+                AttributeError, match="has no attribute 'predict_proba'"
+            ) as exec_info:
                 clf.predict_proba
-            with pytest.raises(AttributeError, match=message):
+
+            assert isinstance(exec_info.value.__cause__, AttributeError)
+            assert inner_msg in str(exec_info.value.__cause__)
+
+            with pytest.raises(
+                AttributeError, match="has no attribute 'predict_log_proba'"
+            ) as exec_info:
                 clf.predict_log_proba
+            assert isinstance(exec_info.value.__cause__, AttributeError)
+            assert inner_msg in str(exec_info.value.__cause__)
 
 
 @pytest.mark.parametrize("klass", [SGDClassifier, SparseSGDClassifier])
@@ -756,10 +766,13 @@ def test_sgd_proba(klass):
         p = clf.predict_proba([[-1, -1]])
         assert p[0, 1] < 0.5
 
-        p = clf.predict_log_proba([[3, 2]])
-        assert p[0, 1] > p[0, 0]
-        p = clf.predict_log_proba([[-1, -1]])
-        assert p[0, 1] < p[0, 0]
+        # If predict_proba is 0, we get "RuntimeWarning: divide by zero encountered
+        # in log". We avoid it here.
+        with np.errstate(divide="ignore"):
+            p = clf.predict_log_proba([[3, 2]])
+            assert p[0, 1] > p[0, 0]
+            p = clf.predict_log_proba([[-1, -1]])
+            assert p[0, 1] < p[0, 0]
 
     # log loss multiclass probability estimates
     clf = klass(loss="log_loss", alpha=0.01, max_iter=10).fit(X2, Y2)
@@ -2196,3 +2209,16 @@ def test_sgd_numerical_consistency(SGDEstimator):
     sgd_32.fit(X_32, Y_32)
 
     assert_allclose(sgd_64.coef_, sgd_32.coef_)
+
+
+# TODO(1.6): remove
+@pytest.mark.parametrize("Estimator", [SGDClassifier, SGDOneClassSVM])
+def test_loss_attribute_deprecation(Estimator):
+    # Check that we raise the proper deprecation warning if accessing
+    # `loss_function_`.
+    X = np.array([[1, 2], [3, 4]])
+    y = np.array([1, 0])
+    est = Estimator().fit(X, y)
+
+    with pytest.warns(FutureWarning, match="`loss_function_` was deprecated"):
+        est.loss_function_

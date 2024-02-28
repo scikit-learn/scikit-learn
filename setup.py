@@ -235,7 +235,6 @@ extension_config = {
         {"sources": ["_predictor.pyx"], "include_np": True},
         {"sources": ["_bitset.pyx"], "include_np": True},
         {"sources": ["common.pyx"], "include_np": True},
-        {"sources": ["utils.pyx"], "include_np": True},
     ],
     "feature_extraction": [
         {"sources": ["_hashing_fast.pyx"], "language": "c++", "include_np": True},

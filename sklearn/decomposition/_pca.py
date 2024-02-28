@@ -130,11 +130,12 @@ class PCA(_BasePCA):
     SVD by the method of Halko et al. 2009, depending on the shape of the input
     data and the number of components to extract.
 
-    It can also use the scipy.sparse.linalg ARPACK implementation of the
-    truncated SVD.
+    With sparse inputs, the ARPACK implementation of the truncated SVD can be
+    used (i.e. through :func:`scipy.sparse.linalg.svds`). Alternatively, one
+    may consider :class:`TruncatedSVD` where the data are not centered.
 
-    Notice that this class does not support sparse input. See
-    :class:`TruncatedSVD` for an alternative with sparse data.
+    For a usage example, see
+    :ref:`sphx_glr_auto_examples_decomposition_plot_pca_iris.py`
 
     Read more in the :ref:`User Guide <PCA>`.
 

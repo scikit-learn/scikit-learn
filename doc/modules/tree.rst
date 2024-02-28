@@ -23,68 +23,68 @@ the tree, the more complex the decision rules and the fitter the model.
 
 Some advantages of decision trees are:
 
-    - Simple to understand and to interpret. Trees can be visualized.
+- Simple to understand and to interpret. Trees can be visualized.
 
-    - Requires little data preparation. Other techniques often require data
-      normalization, dummy variables need to be created and blank values to
-      be removed. Some tree and algorithm combinations support
-      :ref:`missing values <tree_missing_value_support>`.
+- Requires little data preparation. Other techniques often require data
+  normalization, dummy variables need to be created and blank values to
+  be removed. Some tree and algorithm combinations support
+  :ref:`missing values <tree_missing_value_support>`.
 
-    - The cost of using the tree (i.e., predicting data) is logarithmic in the
-      number of data points used to train the tree.
+- The cost of using the tree (i.e., predicting data) is logarithmic in the
+  number of data points used to train the tree.
 
-    - Able to handle both numerical and categorical data. However, the scikit-learn
-      implementation does not support categorical variables for now. Other
-      techniques are usually specialized in analyzing datasets that have only one type
-      of variable. See :ref:`algorithms <tree_algorithms>` for more
-      information.
+- Able to handle both numerical and categorical data. However, the scikit-learn
+  implementation does not support categorical variables for now. Other
+  techniques are usually specialized in analyzing datasets that have only one type
+  of variable. See :ref:`algorithms <tree_algorithms>` for more
+  information.
 
-    - Able to handle multi-output problems.
+- Able to handle multi-output problems.
 
-    - Uses a white box model. If a given situation is observable in a model,
-      the explanation for the condition is easily explained by boolean logic.
-      By contrast, in a black box model (e.g., in an artificial neural
-      network), results may be more difficult to interpret.
+- Uses a white box model. If a given situation is observable in a model,
+  the explanation for the condition is easily explained by boolean logic.
+  By contrast, in a black box model (e.g., in an artificial neural
+  network), results may be more difficult to interpret.
 
-    - Possible to validate a model using statistical tests. That makes it
-      possible to account for the reliability of the model.
+- Possible to validate a model using statistical tests. That makes it
+  possible to account for the reliability of the model.
 
-    - Performs well even if its assumptions are somewhat violated by
-      the true model from which the data were generated.
+- Performs well even if its assumptions are somewhat violated by
+  the true model from which the data were generated.
 
 
 The disadvantages of decision trees include:
 
-    - Decision-tree learners can create over-complex trees that do not
-      generalize the data well. This is called overfitting. Mechanisms
-      such as pruning, setting the minimum number of samples required
-      at a leaf node or setting the maximum depth of the tree are
-      necessary to avoid this problem.
+- Decision-tree learners can create over-complex trees that do not
+  generalize the data well. This is called overfitting. Mechanisms
+  such as pruning, setting the minimum number of samples required
+  at a leaf node or setting the maximum depth of the tree are
+  necessary to avoid this problem.
 
-    - Decision trees can be unstable because small variations in the
-      data might result in a completely different tree being generated.
-      This problem is mitigated by using decision trees within an
-      ensemble.
+- Decision trees can be unstable because small variations in the
+  data might result in a completely different tree being generated.
+  This problem is mitigated by using decision trees within an
+  ensemble.
 
-    - Predictions of decision trees are neither smooth nor continuous, but
-      piecewise constant approximations as seen in the above figure. Therefore,
-      they are not good at extrapolation.
+- Predictions of decision trees are neither smooth nor continuous, but
+  piecewise constant approximations as seen in the above figure. Therefore,
+  they are not good at extrapolation.
 
-    - The problem of learning an optimal decision tree is known to be
-      NP-complete under several aspects of optimality and even for simple
-      concepts. Consequently, practical decision-tree learning algorithms
-      are based on heuristic algorithms such as the greedy algorithm where
-      locally optimal decisions are made at each node. Such algorithms
-      cannot guarantee to return the globally optimal decision tree.  This
-      can be mitigated by training multiple trees in an ensemble learner,
-      where the features and samples are randomly sampled with replacement.
+- The problem of learning an optimal decision tree is known to be
+  NP-complete under several aspects of optimality and even for simple
+  concepts. Consequently, practical decision-tree learning algorithms
+  are based on heuristic algorithms such as the greedy algorithm where
+  locally optimal decisions are made at each node. Such algorithms
+  cannot guarantee to return the globally optimal decision tree.  This
+  can be mitigated by training multiple trees in an ensemble learner,
+  where the features and samples are randomly sampled with replacement.
 
-    - There are concepts that are hard to learn because decision trees
-      do not express them easily, such as XOR, parity or multiplexer problems.
+- There are concepts that are hard to learn because decision trees
+  do not express them easily, such as XOR, parity or multiplexer problems.
 
-    - Decision tree learners create biased trees if some classes dominate.
-      It is therefore recommended to balance the dataset prior to fitting
-      with the decision tree.
+- Decision tree learners create biased trees if some classes dominate.
+  It is therefore recommended to balance the dataset prior to fitting
+  with the decision tree.
 
 
 .. _tree_classification:
@@ -273,19 +273,19 @@ generalization accuracy of the resulting estimator may often be increased.
 With regard to decision trees, this strategy can readily be used to support
 multi-output problems. This requires the following changes:
 
-  - Store n output values in leaves, instead of 1;
-  - Use splitting criteria that compute the average reduction across all
-    n outputs.
+- Store n output values in leaves, instead of 1;
+- Use splitting criteria that compute the average reduction across all
+  n outputs.
 
 This module offers support for multi-output problems by implementing this
 strategy in both :class:`DecisionTreeClassifier` and
 :class:`DecisionTreeRegressor`. If a decision tree is fit on an output array Y
 of shape ``(n_samples, n_outputs)`` then the resulting estimator will:
 
-  * Output n_output values upon ``predict``;
+* Output n_output values upon ``predict``;
 
-  * Output a list of n_output arrays of class probabilities upon
-    ``predict_proba``.
+* Output a list of n_output arrays of class probabilities upon
+  ``predict_proba``.
 
 The use of multi-output trees for regression is demonstrated in
 :ref:`sphx_glr_auto_examples_tree_plot_tree_regression_multioutput.py`. In this example, the input
@@ -315,10 +315,10 @@ the lower half of those faces.
 **References**
 |details-split|
 
- * M. Dumont et al,  `Fast multi-class image annotation with random subwindows
-   and multiple output randomized trees
-   <http://www.montefiore.ulg.ac.be/services/stochastic/pubs/2009/DMWG09/dumont-visapp09-shortpaper.pdf>`_, International Conference on
-   Computer Vision Theory and Applications 2009
+* M. Dumont et al,  `Fast multi-class image annotation with random subwindows
+  and multiple output randomized trees
+  <http://www.montefiore.ulg.ac.be/services/stochastic/pubs/2009/DMWG09/dumont-visapp09-shortpaper.pdf>`_, International Conference on
+  Computer Vision Theory and Applications 2009
 
 |details-end|
 
@@ -343,65 +343,65 @@ total cost over the entire trees (by summing the cost at each node) of
 Tips on practical use
 =====================
 
-  * Decision trees tend to overfit on data with a large number of features.
-    Getting the right ratio of samples to number of features is important, since
-    a tree with few samples in high dimensional space is very likely to overfit.
+* Decision trees tend to overfit on data with a large number of features.
+  Getting the right ratio of samples to number of features is important, since
+  a tree with few samples in high dimensional space is very likely to overfit.
 
-  * Consider performing  dimensionality reduction (:ref:`PCA <PCA>`,
-    :ref:`ICA <ICA>`, or :ref:`feature_selection`) beforehand to
-    give your tree a better chance of finding features that are discriminative.
+* Consider performing  dimensionality reduction (:ref:`PCA <PCA>`,
+  :ref:`ICA <ICA>`, or :ref:`feature_selection`) beforehand to
+  give your tree a better chance of finding features that are discriminative.
 
-  * :ref:`sphx_glr_auto_examples_tree_plot_unveil_tree_structure.py` will help
-    in gaining more insights about how the decision tree makes predictions, which is
-    important for understanding the important features in the data.
+* :ref:`sphx_glr_auto_examples_tree_plot_unveil_tree_structure.py` will help
+  in gaining more insights about how the decision tree makes predictions, which is
+  important for understanding the important features in the data.
 
-  * Visualize your tree as you are training by using the ``export``
-    function.  Use ``max_depth=3`` as an initial tree depth to get a feel for
-    how the tree is fitting to your data, and then increase the depth.
+* Visualize your tree as you are training by using the ``export``
+  function.  Use ``max_depth=3`` as an initial tree depth to get a feel for
+  how the tree is fitting to your data, and then increase the depth.
 
-  * Remember that the number of samples required to populate the tree doubles
-    for each additional level the tree grows to.  Use ``max_depth`` to control
-    the size of the tree to prevent overfitting.
+* Remember that the number of samples required to populate the tree doubles
+  for each additional level the tree grows to.  Use ``max_depth`` to control
+  the size of the tree to prevent overfitting.
 
-  * Use ``min_samples_split`` or ``min_samples_leaf`` to ensure that multiple
-    samples inform every decision in the tree, by controlling which splits will
-    be considered. A very small number will usually mean the tree will overfit,
-    whereas a large number will prevent the tree from learning the data. Try
-    ``min_samples_leaf=5`` as an initial value. If the sample size varies
-    greatly, a float number can be used as percentage in these two parameters.
-    While ``min_samples_split`` can create arbitrarily small leaves,
-    ``min_samples_leaf`` guarantees that each leaf has a minimum size, avoiding
-    low-variance, over-fit leaf nodes in regression problems.  For
-    classification with few classes, ``min_samples_leaf=1`` is often the best
-    choice.
+* Use ``min_samples_split`` or ``min_samples_leaf`` to ensure that multiple
+  samples inform every decision in the tree, by controlling which splits will
+  be considered. A very small number will usually mean the tree will overfit,
+  whereas a large number will prevent the tree from learning the data. Try
+  ``min_samples_leaf=5`` as an initial value. If the sample size varies
+  greatly, a float number can be used as percentage in these two parameters.
+  While ``min_samples_split`` can create arbitrarily small leaves,
+  ``min_samples_leaf`` guarantees that each leaf has a minimum size, avoiding
+  low-variance, over-fit leaf nodes in regression problems.  For
+  classification with few classes, ``min_samples_leaf=1`` is often the best
+  choice.
 
-    Note that ``min_samples_split`` considers samples directly and independent of
-    ``sample_weight``, if provided (e.g. a node with m weighted samples is still
-    treated as having exactly m samples). Consider ``min_weight_fraction_leaf`` or
-    ``min_impurity_decrease`` if accounting for sample weights is required at splits.
+  Note that ``min_samples_split`` considers samples directly and independent of
+  ``sample_weight``, if provided (e.g. a node with m weighted samples is still
+  treated as having exactly m samples). Consider ``min_weight_fraction_leaf`` or
+  ``min_impurity_decrease`` if accounting for sample weights is required at splits.
 
-  * Balance your dataset before training to prevent the tree from being biased
-    toward the classes that are dominant. Class balancing can be done by
-    sampling an equal number of samples from each class, or preferably by
-    normalizing the sum of the sample weights (``sample_weight``) for each
-    class to the same value. Also note that weight-based pre-pruning criteria,
-    such as ``min_weight_fraction_leaf``, will then be less biased toward
-    dominant classes than criteria that are not aware of the sample weights,
-    like ``min_samples_leaf``.
+* Balance your dataset before training to prevent the tree from being biased
+  toward the classes that are dominant. Class balancing can be done by
+  sampling an equal number of samples from each class, or preferably by
+  normalizing the sum of the sample weights (``sample_weight``) for each
+  class to the same value. Also note that weight-based pre-pruning criteria,
+  such as ``min_weight_fraction_leaf``, will then be less biased toward
+  dominant classes than criteria that are not aware of the sample weights,
+  like ``min_samples_leaf``.
 
-  * If the samples are weighted, it will be easier to optimize the tree
-    structure using weight-based pre-pruning criterion such as
-    ``min_weight_fraction_leaf``, which ensure that leaf nodes contain at least
-    a fraction of the overall sum of the sample weights.
+* If the samples are weighted, it will be easier to optimize the tree
+  structure using weight-based pre-pruning criterion such as
+  ``min_weight_fraction_leaf``, which ensure that leaf nodes contain at least
+  a fraction of the overall sum of the sample weights.
 
-  * All decision trees use ``np.float32`` arrays internally.
-    If training data is not in this format, a copy of the dataset will be made.
+* All decision trees use ``np.float32`` arrays internally.
+  If training data is not in this format, a copy of the dataset will be made.
 
-  * If the input matrix X is very sparse, it is recommended to convert to sparse
-    ``csc_matrix`` before calling fit and sparse ``csr_matrix`` before calling
-    predict. Training time can be orders of magnitude faster for a sparse
-    matrix input compared to a dense matrix when features have zero values in
-    most of the samples.
+* If the input matrix X is very sparse, it is recommended to convert to sparse
+  ``csc_matrix`` before calling fit and sparse ``csr_matrix`` before calling
+  predict. Training time can be orders of magnitude faster for a sparse
+  matrix input compared to a dense matrix when features have zero values in
+  most of the samples.
 
 
 .. _tree_algorithms:
@@ -516,36 +516,36 @@ Log Loss or Entropy:
     H(Q_m) = - \sum_k p_{mk} \log(p_{mk})
 
 |details-start|
-Shannon entropy:
+**Shannon entropy**
 |details-split|
 
-  The entropy criterion computes the Shannon entropy of the possible classes. It
-  takes the class frequencies of the training data points that reached a given
-  leaf :math:`m` as their probability. Using the **Shannon entropy as tree node
-  splitting criterion is equivalent to minimizing the log loss** (also known as
-  cross-entropy and multinomial deviance) between the true labels :math:`y_i`
-  and the probabilistic predictions :math:`T_k(x_i)` of the tree model :math:`T` for class :math:`k`.
+The entropy criterion computes the Shannon entropy of the possible classes. It
+takes the class frequencies of the training data points that reached a given
+leaf :math:`m` as their probability. Using the **Shannon entropy as tree node
+splitting criterion is equivalent to minimizing the log loss** (also known as
+cross-entropy and multinomial deviance) between the true labels :math:`y_i`
+and the probabilistic predictions :math:`T_k(x_i)` of the tree model :math:`T` for class :math:`k`.
 
-  To see this, first recall that the log loss of a tree model :math:`T`
-  computed on a dataset :math:`D` is defined as follows:
+To see this, first recall that the log loss of a tree model :math:`T`
+computed on a dataset :math:`D` is defined as follows:
 
-  .. math::
+.. math::
 
-      \mathrm{LL}(D, T) = -\frac{1}{n} \sum_{(x_i, y_i) \in D} \sum_k I(y_i = k) \log(T_k(x_i))
+    \mathrm{LL}(D, T) = -\frac{1}{n} \sum_{(x_i, y_i) \in D} \sum_k I(y_i = k) \log(T_k(x_i))
 
-  where :math:`D` is a training dataset of :math:`n` pairs :math:`(x_i, y_i)`.
+where :math:`D` is a training dataset of :math:`n` pairs :math:`(x_i, y_i)`.
 
-  In a classification tree, the predicted class probabilities within leaf nodes
-  are constant, that is: for all :math:`(x_i, y_i) \in Q_m`, one has:
-  :math:`T_k(x_i) = p_{mk}` for each class :math:`k`.
+In a classification tree, the predicted class probabilities within leaf nodes
+are constant, that is: for all :math:`(x_i, y_i) \in Q_m`, one has:
+:math:`T_k(x_i) = p_{mk}` for each class :math:`k`.
 
-  This property makes it possible to rewrite :math:`\mathrm{LL}(D, T)` as the
-  sum of the Shannon entropies computed for each leaf of :math:`T` weighted by
-  the number of training data points that reached each leaf:
+This property makes it possible to rewrite :math:`\mathrm{LL}(D, T)` as the
+sum of the Shannon entropies computed for each leaf of :math:`T` weighted by
+the number of training data points that reached each leaf:
 
-  .. math::
+.. math::
 
-      \mathrm{LL}(D, T) = \sum_{m \in T} \frac{n_m}{n} H(Q_m)
+    \mathrm{LL}(D, T) = \sum_{m \in T} \frac{n_m}{n} H(Q_m)
 
 |details-end|
 
@@ -605,50 +605,50 @@ the split with all the missing values going to the left node or the right node.
 
 Decisions are made as follows:
 
-    - By default when predicting, the samples with missing values are classified
-      with the class used in the split found during training::
+- By default when predicting, the samples with missing values are classified
+  with the class used in the split found during training::
 
-        >>> from sklearn.tree import DecisionTreeClassifier
-        >>> import numpy as np
+    >>> from sklearn.tree import DecisionTreeClassifier
+    >>> import numpy as np
 
-        >>> X = np.array([0, 1, 6, np.nan]).reshape(-1, 1)
-        >>> y = [0, 0, 1, 1]
+    >>> X = np.array([0, 1, 6, np.nan]).reshape(-1, 1)
+    >>> y = [0, 0, 1, 1]
 
-        >>> tree = DecisionTreeClassifier(random_state=0).fit(X, y)
-        >>> tree.predict(X)
-        array([0, 0, 1, 1])
+    >>> tree = DecisionTreeClassifier(random_state=0).fit(X, y)
+    >>> tree.predict(X)
+    array([0, 0, 1, 1])
 
-    - If the criterion evaluation is the same for both nodes,
-      then the tie for missing value at predict time is broken by going to the
-      right node. The splitter also checks the split where all the missing
-      values go to one child and non-missing values go to the other::
+- If the criterion evaluation is the same for both nodes,
+  then the tie for missing value at predict time is broken by going to the
+  right node. The splitter also checks the split where all the missing
+  values go to one child and non-missing values go to the other::
 
-        >>> from sklearn.tree import DecisionTreeClassifier
-        >>> import numpy as np
+    >>> from sklearn.tree import DecisionTreeClassifier
+    >>> import numpy as np
 
-        >>> X = np.array([np.nan, -1, np.nan, 1]).reshape(-1, 1)
-        >>> y = [0, 0, 1, 1]
+    >>> X = np.array([np.nan, -1, np.nan, 1]).reshape(-1, 1)
+    >>> y = [0, 0, 1, 1]
 
-        >>> tree = DecisionTreeClassifier(random_state=0).fit(X, y)
+    >>> tree = DecisionTreeClassifier(random_state=0).fit(X, y)
 
-        >>> X_test = np.array([np.nan]).reshape(-1, 1)
-        >>> tree.predict(X_test)
-        array([1])
+    >>> X_test = np.array([np.nan]).reshape(-1, 1)
+    >>> tree.predict(X_test)
+    array([1])
 
-    - If no missing values are seen during training for a given feature, then during
-      prediction missing values are mapped to the child with the most samples::
+- If no missing values are seen during training for a given feature, then during
+  prediction missing values are mapped to the child with the most samples::
 
-        >>> from sklearn.tree import DecisionTreeClassifier
-        >>> import numpy as np
+    >>> from sklearn.tree import DecisionTreeClassifier
+    >>> import numpy as np
 
-        >>> X = np.array([0, 1, 2, 3]).reshape(-1, 1)
-        >>> y = [0, 1, 1, 1]
+    >>> X = np.array([0, 1, 2, 3]).reshape(-1, 1)
+    >>> y = [0, 1, 1, 1]
 
-        >>> tree = DecisionTreeClassifier(random_state=0).fit(X, y)
+    >>> tree = DecisionTreeClassifier(random_state=0).fit(X, y)
 
-        >>> X_test = np.array([np.nan]).reshape(-1, 1)
-        >>> tree.predict(X_test)
-        array([1])
+    >>> X_test = np.array([np.nan]).reshape(-1, 1)
+    >>> tree.predict(X_test)
+    array([1])
 
 .. _minimal_cost_complexity_pruning:
 
@@ -693,17 +693,17 @@ be pruned. This process stops when the pruned tree's minimal
 **References**
 |details-split|
 
-    .. [BRE] L. Breiman, J. Friedman, R. Olshen, and C. Stone. Classification
-      and Regression Trees. Wadsworth, Belmont, CA, 1984.
+.. [BRE] L. Breiman, J. Friedman, R. Olshen, and C. Stone. Classification
+  and Regression Trees. Wadsworth, Belmont, CA, 1984.
 
-    * https://en.wikipedia.org/wiki/Decision_tree_learning
+* https://en.wikipedia.org/wiki/Decision_tree_learning
 
-    * https://en.wikipedia.org/wiki/Predictive_analytics
+* https://en.wikipedia.org/wiki/Predictive_analytics
 
-    * J.R. Quinlan. C4. 5: programs for machine learning. Morgan
-      Kaufmann, 1993.
+* J.R. Quinlan. C4. 5: programs for machine learning. Morgan
+  Kaufmann, 1993.
 
-    * T. Hastie, R. Tibshirani and J. Friedman. Elements of Statistical
-      Learning, Springer, 2009.
+* T. Hastie, R. Tibshirani and J. Friedman. Elements of Statistical
+  Learning, Springer, 2009.
 
 |details-end|

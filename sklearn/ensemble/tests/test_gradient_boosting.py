@@ -1452,9 +1452,9 @@ def test_huber_vs_mean_and_median():
 
 def test_safe_divide():
     """Test that _safe_divide handles division by zero."""
-    with pytest.warns(RuntimeWarning, match="divide"):
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
         assert _safe_divide(np.float64(1e300), 0) == 0
-    with pytest.warns(RuntimeWarning, match="divide"):
         assert _safe_divide(np.float64(0.0), np.float64(0.0)) == 0
     with pytest.warns(RuntimeWarning, match="overflow"):
         # np.finfo(float).max = 1.7976931348623157e+308
@@ -1680,3 +1680,31 @@ def test_multinomial_error_exact_backward_compat():
         ]
     )
     assert_allclose(gbt.train_score_[-10:], train_score, rtol=1e-8)
+
+
+def test_gb_denominator_zero(global_random_seed):
+    """Test _update_terminal_regions denominator is not zero.
+
+    For instance for log loss based binary classification, the line search step might
+    become nan/inf as denominator = hessian = prob * (1 - prob) and prob = 0 or 1 can
+    happen.
+    Here, we create a situation were this happens (at least with roughly 80%) based
+    on the random seed.
+    """
+    X, y = datasets.make_hastie_10_2(n_samples=100, random_state=20)
+
+    params = {
+        "learning_rate": 1.0,
+        "subsample": 0.5,
+        "n_estimators": 100,
+        "max_leaf_nodes": 4,
+        "max_depth": None,
+        "random_state": global_random_seed,
+        "min_samples_leaf": 2,
+    }
+
+    clf = GradientBoostingClassifier(**params)
+    # _safe_devide would raise a RuntimeWarning
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        clf.fit(X, y)

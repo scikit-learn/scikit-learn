@@ -2,6 +2,10 @@
 
 .. currentmodule:: sklearn
 
+============
+Version 0.17
+============
+
 .. _changes_0_17_1:
 
 Version 0.17.1

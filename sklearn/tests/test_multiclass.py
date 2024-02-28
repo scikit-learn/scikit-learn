@@ -926,3 +926,25 @@ def test_ovo_consistent_binary_classification():
     ovo.fit(X, y)
 
     assert_array_equal(clf.predict(X), ovo.predict(X))
+
+
+def test_multiclass_estimator_attribute_error():
+    """Check that we raise the proper AttributeError when the final estimator
+    does not implement the `partial_fit` method, which is decorated with
+    `available_if`.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/28108
+    """
+    iris = datasets.load_iris()
+
+    # LogisticRegression does not implement 'partial_fit' and should raise an
+    # AttributeError
+    clf = OneVsRestClassifier(estimator=LogisticRegression(random_state=42))
+
+    outer_msg = "This 'OneVsRestClassifier' has no attribute 'partial_fit'"
+    inner_msg = "'LogisticRegression' object has no attribute 'partial_fit'"
+    with pytest.raises(AttributeError, match=outer_msg) as exec_info:
+        clf.partial_fit(iris.data, iris.target)
+    assert isinstance(exec_info.value.__cause__, AttributeError)
+    assert inner_msg in str(exec_info.value.__cause__)

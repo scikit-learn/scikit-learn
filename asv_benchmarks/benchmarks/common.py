@@ -23,7 +23,7 @@ def get_from_config():
 
     n_jobs_vals_env = os.getenv("SKLBENCH_NJOBS")
     if n_jobs_vals_env:
-        n_jobs_vals = eval(n_jobs_vals_env)
+        n_jobs_vals = json.loads(n_jobs_vals_env)
     else:
         n_jobs_vals = config["n_jobs_vals"]
     if not n_jobs_vals:

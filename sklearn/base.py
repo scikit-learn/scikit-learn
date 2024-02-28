@@ -70,6 +70,21 @@ def clone(estimator, *, safe=True):
     results. Otherwise, *statistical clone* is returned: the clone might
     return different results from the original estimator. More details can be
     found in :ref:`randomness`.
+
+    Examples
+    --------
+    >>> from sklearn.base import clone
+    >>> from sklearn.linear_model import LogisticRegression
+    >>> X = [[-1, 0], [0, 1], [0, -1], [1, 0]]
+    >>> y = [0, 0, 1, 1]
+    >>> classifier = LogisticRegression().fit(X, y)
+    >>> cloned_classifier = clone(classifier)
+    >>> hasattr(classifier, "classes_")
+    True
+    >>> hasattr(cloned_classifier, "classes_")
+    False
+    >>> classifier is cloned_classifier
+    False
     """
     if hasattr(estimator, "__sklearn_clone__") and not inspect.isclass(estimator):
         return estimator.__sklearn_clone__()
@@ -137,11 +152,45 @@ def _clone_parametrized(estimator, *, safe=True):
 class BaseEstimator(_HTMLDocumentationLinkMixin, _MetadataRequester):
     """Base class for all estimators in scikit-learn.
 
+    Inheriting from this class provides default implementations of:
+
+    - setting and getting parameters used by `GridSearchCV` and friends;
+    - textual and HTML representation displayed in terminals and IDEs;
+    - estimator serialization;
+    - parameters validation;
+    - data validation;
+    - feature names validation.
+
+    Read more in the :ref:`User Guide <rolling_your_own_estimator>`.
+
+
     Notes
     -----
     All estimators should specify all the parameters that can be set
     at the class level in their ``__init__`` as explicit keyword
     arguments (no ``*args`` or ``**kwargs``).
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.base import BaseEstimator
+    >>> class MyEstimator(BaseEstimator):
+    ...     def __init__(self, *, param=1):
+    ...         self.param = param
+    ...     def fit(self, X, y=None):
+    ...         self.is_fitted_ = True
+    ...         return self
+    ...     def predict(self, X):
+    ...         return np.full(shape=X.shape[0], fill_value=self.param)
+    >>> estimator = MyEstimator(param=2)
+    >>> estimator.get_params()
+    {'param': 2}
+    >>> X = np.array([[1, 2], [2, 3], [3, 4]])
+    >>> y = np.array([1, 0, 1])
+    >>> estimator.fit(X, y).predict(X)
+    array([2, 2, 2])
+    >>> estimator.set_params(param=3).fit(X, y).predict(X)
+    array([3, 3, 3])
     """
 
     @classmethod
@@ -652,7 +701,37 @@ class BaseEstimator(_HTMLDocumentationLinkMixin, _MetadataRequester):
 
 
 class ClassifierMixin:
-    """Mixin class for all classifiers in scikit-learn."""
+    """Mixin class for all classifiers in scikit-learn.
+
+    This mixin defines the following functionality:
+
+    - `_estimator_type` class attribute defaulting to `"classifier"`;
+    - `score` method that default to :func:`~sklearn.metrics.accuracy_score`.
+    - enforce that `fit` requires `y` to be passed through the `requires_y` tag.
+
+    Read more in the :ref:`User Guide <rolling_your_own_estimator>`.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.base import BaseEstimator, ClassifierMixin
+    >>> # Mixin classes should always be on the left-hand side for a correct MRO
+    >>> class MyEstimator(ClassifierMixin, BaseEstimator):
+    ...     def __init__(self, *, param=1):
+    ...         self.param = param
+    ...     def fit(self, X, y=None):
+    ...         self.is_fitted_ = True
+    ...         return self
+    ...     def predict(self, X):
+    ...         return np.full(shape=X.shape[0], fill_value=self.param)
+    >>> estimator = MyEstimator(param=1)
+    >>> X = np.array([[1, 2], [2, 3], [3, 4]])
+    >>> y = np.array([1, 0, 1])
+    >>> estimator.fit(X, y).predict(X)
+    array([1, 1, 1])
+    >>> estimator.score(X, y)
+    0.66...
+    """
 
     _estimator_type = "classifier"
 
@@ -689,7 +768,37 @@ class ClassifierMixin:
 
 
 class RegressorMixin:
-    """Mixin class for all regression estimators in scikit-learn."""
+    """Mixin class for all regression estimators in scikit-learn.
+
+    This mixin defines the following functionality:
+
+    - `_estimator_type` class attribute defaulting to `"regressor"`;
+    - `score` method that default to :func:`~sklearn.metrics.r2_score`.
+    - enforce that `fit` requires `y` to be passed through the `requires_y` tag.
+
+    Read more in the :ref:`User Guide <rolling_your_own_estimator>`.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.base import BaseEstimator, RegressorMixin
+    >>> # Mixin classes should always be on the left-hand side for a correct MRO
+    >>> class MyEstimator(RegressorMixin, BaseEstimator):
+    ...     def __init__(self, *, param=1):
+    ...         self.param = param
+    ...     def fit(self, X, y=None):
+    ...         self.is_fitted_ = True
+    ...         return self
+    ...     def predict(self, X):
+    ...         return np.full(shape=X.shape[0], fill_value=self.param)
+    >>> estimator = MyEstimator(param=0)
+    >>> X = np.array([[1, 2], [2, 3], [3, 4]])
+    >>> y = np.array([-1, 0, 1])
+    >>> estimator.fit(X, y).predict(X)
+    array([0, 0, 0])
+    >>> estimator.score(X, y)
+    0.0
+    """
 
     _estimator_type = "regressor"
 
@@ -744,7 +853,23 @@ class RegressorMixin:
 
 
 class ClusterMixin:
-    """Mixin class for all cluster estimators in scikit-learn."""
+    """Mixin class for all cluster estimators in scikit-learn.
+
+    - `_estimator_type` class attribute defaulting to `"clusterer"`;
+    - `fit_predict` method returning the cluster labels associated to each sample.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.base import BaseEstimator, ClusterMixin
+    >>> class MyClusterer(ClusterMixin, BaseEstimator):
+    ...     def fit(self, X, y=None):
+    ...         self.labels_ = np.ones(shape=(len(X),), dtype=np.int64)
+    ...         return self
+    >>> X = [[1, 2], [2, 3], [3, 4]]
+    >>> MyClusterer().fit_predict(X)
+    array([1, 1, 1])
+    """
 
     _estimator_type = "clusterer"
 
@@ -780,7 +905,32 @@ class ClusterMixin:
 
 
 class BiclusterMixin:
-    """Mixin class for all bicluster estimators in scikit-learn."""
+    """Mixin class for all bicluster estimators in scikit-learn.
+
+    This mixin defines the following functionality:
+
+    - `biclusters_` property that returns the row and column indicators;
+    - `get_indices` method that returns the row and column indices of a bicluster;
+    - `get_shape` method that returns the shape of a bicluster;
+    - `get_submatrix` method that returns the submatrix corresponding to a bicluster.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.base import BaseEstimator, BiclusterMixin
+    >>> class DummyBiClustering(BiclusterMixin, BaseEstimator):
+    ...     def fit(self, X, y=None):
+    ...         self.rows_ = np.ones(shape=(1, X.shape[0]), dtype=bool)
+    ...         self.columns_ = np.ones(shape=(1, X.shape[1]), dtype=bool)
+    ...         return self
+    >>> X = np.array([[1, 1], [2, 1], [1, 0],
+    ...               [4, 7], [3, 5], [3, 6]])
+    >>> bicluster = DummyBiClustering().fit(X)
+    >>> hasattr(bicluster, "biclusters_")
+    True
+    >>> bicluster.get_indices(0)
+    (array([0, 1, 2, 3, 4, 5]), array([0, 1]))
+    """
 
     @property
     def biclusters_(self):
@@ -860,6 +1010,11 @@ class BiclusterMixin:
 class TransformerMixin(_SetOutputMixin):
     """Mixin class for all transformers in scikit-learn.
 
+    This mixin defines the following functionality:
+
+    - a `fit_transform` method that delegates to `fit` and `transform`;
+    - a `set_output` method to output `X` as a specific container type.
+
     If :term:`get_feature_names_out` is defined, then :class:`BaseEstimator` will
     automatically wrap `transform` and `fit_transform` to follow the `set_output`
     API. See the :ref:`developer_api_set_output` for details.
@@ -867,6 +1022,22 @@ class TransformerMixin(_SetOutputMixin):
     :class:`OneToOneFeatureMixin` and
     :class:`ClassNamePrefixFeaturesOutMixin` are helpful mixins for
     defining :term:`get_feature_names_out`.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.base import BaseEstimator, TransformerMixin
+    >>> class MyTransformer(TransformerMixin, BaseEstimator):
+    ...     def __init__(self, *, param=1):
+    ...         self.param = param
+    ...     def fit(self, X, y=None):
+    ...         return self
+    ...     def transform(self, X):
+    ...         return np.full(shape=len(X), fill_value=self.param)
+    >>> transformer = MyTransformer()
+    >>> X = [[1, 2], [2, 3], [3, 4]]
+    >>> transformer.fit_transform(X)
+    array([1, 1, 1])
     """
 
     def fit_transform(self, X, y=None, **fit_params):
@@ -935,6 +1106,18 @@ class OneToOneFeatureMixin:
 
     This mixin assumes there's a 1-to-1 correspondence between input features
     and output features, such as :class:`~sklearn.preprocessing.StandardScaler`.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.base import OneToOneFeatureMixin
+    >>> class MyEstimator(OneToOneFeatureMixin):
+    ...     def fit(self, X, y=None):
+    ...         self.n_features_in_ = X.shape[1]
+    ...         return self
+    >>> X = np.array([[1, 2], [3, 4]])
+    >>> MyEstimator().fit(X).get_feature_names_out()
+    array(['x0', 'x1'], dtype=object)
     """
 
     def get_feature_names_out(self, input_features=None):
@@ -972,6 +1155,18 @@ class ClassNamePrefixFeaturesOutMixin:
     This mixin assumes that a `_n_features_out` attribute is defined when the
     transformer is fitted. `_n_features_out` is the number of output features
     that the transformer will return in `transform` of `fit_transform`.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.base import ClassNamePrefixFeaturesOutMixin
+    >>> class MyEstimator(ClassNamePrefixFeaturesOutMixin):
+    ...     def fit(self, X, y=None):
+    ...         self._n_features_out = X.shape[1]
+    ...         return self
+    >>> X = np.array([[1, 2], [3, 4]])
+    >>> MyEstimator().fit(X).get_feature_names_out()
+    array(['myestimator0', 'myestimator1'], dtype=object)
     """
 
     def get_feature_names_out(self, input_features=None):
@@ -998,7 +1193,24 @@ class ClassNamePrefixFeaturesOutMixin:
 
 
 class DensityMixin:
-    """Mixin class for all density estimators in scikit-learn."""
+    """Mixin class for all density estimators in scikit-learn.
+
+    This mixin defines the following functionality:
+
+    - `_estimator_type` class attribute defaulting to `"DensityEstimator"`;
+    - `score` method that default that do no-op.
+
+    Examples
+    --------
+    >>> from sklearn.base import DensityMixin
+    >>> class MyEstimator(DensityMixin):
+    ...     def fit(self, X, y=None):
+    ...         self.is_fitted_ = True
+    ...         return self
+    >>> estimator = MyEstimator()
+    >>> hasattr(estimator, "score")
+    True
+    """
 
     _estimator_type = "DensityEstimator"
 
@@ -1021,7 +1233,28 @@ class DensityMixin:
 
 
 class OutlierMixin:
-    """Mixin class for all outlier detection estimators in scikit-learn."""
+    """Mixin class for all outlier detection estimators in scikit-learn.
+
+    This mixin defines the following functionality:
+
+    - `_estimator_type` class attribute defaulting to `outlier_detector`;
+    - `fit_predict` method that default to `fit` and `predict`.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.base import BaseEstimator, OutlierMixin
+    >>> class MyEstimator(OutlierMixin):
+    ...     def fit(self, X, y=None):
+    ...         self.is_fitted_ = True
+    ...         return self
+    ...     def predict(self, X):
+    ...         return np.ones(shape=len(X))
+    >>> estimator = MyEstimator()
+    >>> X = np.array([[1, 2], [2, 3], [3, 4]])
+    >>> estimator.fit_predict(X)
+    array([1., 1., 1.])
+    """
 
     _estimator_type = "outlier_detector"
 
@@ -1079,8 +1312,33 @@ class OutlierMixin:
 
 
 class MetaEstimatorMixin:
+    """Mixin class for all meta estimators in scikit-learn.
+
+    This mixin defines the following functionality:
+
+    - define `_required_parameters` that specify the mandatory `estimator` parameter.
+
+    Examples
+    --------
+    >>> from sklearn.base import MetaEstimatorMixin
+    >>> from sklearn.datasets import load_iris
+    >>> from sklearn.linear_model import LogisticRegression
+    >>> class MyEstimator(MetaEstimatorMixin):
+    ...     def __init__(self, *, estimator=None):
+    ...         self.estimator = estimator
+    ...     def fit(self, X, y=None):
+    ...         if self.estimator is None:
+    ...             self.estimator_ = LogisticRegression()
+    ...         else:
+    ...             self.estimator_ = self.estimator
+    ...         return self
+    >>> X, y = load_iris(return_X_y=True)
+    >>> estimator = MyEstimator().fit(X, y)
+    >>> estimator.estimator_
+    LogisticRegression()
+    """
+
     _required_parameters = ["estimator"]
-    """Mixin class for all meta estimators in scikit-learn."""
 
 
 class MultiOutputMixin:
@@ -1113,6 +1371,17 @@ def is_classifier(estimator):
     -------
     out : bool
         True if estimator is a classifier and False otherwise.
+
+    Examples
+    --------
+    >>> from sklearn.base import is_classifier
+    >>> from sklearn.svm import SVC, SVR
+    >>> classifier = SVC()
+    >>> regressor = SVR()
+    >>> is_classifier(classifier)
+    True
+    >>> is_classifier(regressor)
+    False
     """
     return getattr(estimator, "_estimator_type", None) == "classifier"
 
@@ -1129,6 +1398,17 @@ def is_regressor(estimator):
     -------
     out : bool
         True if estimator is a regressor and False otherwise.
+
+    Examples
+    --------
+    >>> from sklearn.base import is_regressor
+    >>> from sklearn.svm import SVC, SVR
+    >>> classifier = SVC()
+    >>> regressor = SVR()
+    >>> is_regressor(classifier)
+    False
+    >>> is_regressor(regressor)
+    True
     """
     return getattr(estimator, "_estimator_type", None) == "regressor"
 

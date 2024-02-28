@@ -98,6 +98,10 @@
     <p>Nelle Varoquaux</p>
     </div>
     <div>
+    <a href='https://github.com/Charlie-XIAO'><img src='https://avatars.githubusercontent.com/u/108576690?v=4' class='avatar' /></a> <br />
+    <p>Yao Xiao</p>
+    </div>
+    <div>
     <a href='https://github.com/rth'><img src='https://avatars.githubusercontent.com/u/630936?v=4' class='avatar' /></a> <br />
     <p>Roman Yurchak</p>
     </div>

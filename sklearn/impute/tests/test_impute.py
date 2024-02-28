@@ -1,4 +1,5 @@
 import io
+import re
 import warnings
 from itertools import product
 
@@ -400,9 +401,11 @@ def test_imputation_constant_error_invalid_type(X_data, missing_value):
     X = np.full((3, 5), X_data, dtype=float)
     X[0, 0] = missing_value
 
-    with pytest.raises(ValueError, match="imputing numerical"):
+    fill_value = "x"
+    err_msg = f"fill_value={fill_value!r} (of type {type(fill_value)!r}) cannot be cast"
+    with pytest.raises(ValueError, match=re.escape(err_msg)):
         imputer = SimpleImputer(
-            missing_values=missing_value, strategy="constant", fill_value="x"
+            missing_values=missing_value, strategy="constant", fill_value=fill_value
         )
         imputer.fit_transform(X)
 
@@ -1710,3 +1713,76 @@ def test_simple_imputer_keep_empty_features(strategy, array_type, keep_empty_fea
             assert_array_equal(constant_feature, 0)
         else:
             assert X_imputed.shape == (X.shape[0], X.shape[1] - 1)
+
+
+@pytest.mark.parametrize("csc_container", CSC_CONTAINERS)
+def test_imputation_custom(csc_container):
+    X = np.array(
+        [
+            [1.1, 1.1, 1.1],
+            [3.9, 1.2, np.nan],
+            [np.nan, 1.3, np.nan],
+            [0.1, 1.4, 1.4],
+            [4.9, 1.5, 1.5],
+            [np.nan, 1.6, 1.6],
+        ]
+    )
+
+    X_true = np.array(
+        [
+            [1.1, 1.1, 1.1],
+            [3.9, 1.2, 1.1],
+            [0.1, 1.3, 1.1],
+            [0.1, 1.4, 1.4],
+            [4.9, 1.5, 1.5],
+            [0.1, 1.6, 1.6],
+        ]
+    )
+
+    imputer = SimpleImputer(missing_values=np.nan, strategy=np.min)
+    X_trans = imputer.fit_transform(X)
+    assert_array_equal(X_trans, X_true)
+
+    # Sparse matrix
+    imputer = SimpleImputer(missing_values=np.nan, strategy=np.min)
+    X_trans = imputer.fit_transform(csc_container(X))
+    assert_array_equal(X_trans.toarray(), X_true)
+
+
+def test_simple_imputer_constant_fill_value_casting():
+    """Check that we raise a proper error message when we cannot cast the fill value
+    to the input data type. Otherwise, check that the casting is done properly.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/28309
+    """
+    # cannot cast fill_value at fit
+    fill_value = 1.5
+    X_int64 = np.array([[1, 2, 3], [2, 3, 4]], dtype=np.int64)
+    imputer = SimpleImputer(
+        strategy="constant", fill_value=fill_value, missing_values=2
+    )
+    err_msg = f"fill_value={fill_value!r} (of type {type(fill_value)!r}) cannot be cast"
+    with pytest.raises(ValueError, match=re.escape(err_msg)):
+        imputer.fit(X_int64)
+
+    # cannot cast fill_value at transform
+    X_float64 = np.array([[1, 2, 3], [2, 3, 4]], dtype=np.float64)
+    imputer.fit(X_float64)
+    err_msg = (
+        f"The dtype of the filling value (i.e. {imputer.statistics_.dtype!r}) "
+        "cannot be cast"
+    )
+    with pytest.raises(ValueError, match=re.escape(err_msg)):
+        imputer.transform(X_int64)
+
+    # check that no error is raised when having the same kind of dtype
+    fill_value_list = [np.float64(1.5), 1.5, 1]
+    X_float32 = X_float64.astype(np.float32)
+
+    for fill_value in fill_value_list:
+        imputer = SimpleImputer(
+            strategy="constant", fill_value=fill_value, missing_values=2
+        )
+        X_trans = imputer.fit_transform(X_float32)
+        assert X_trans.dtype == X_float32.dtype

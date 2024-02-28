@@ -41,7 +41,7 @@ n_colors = 64
 china = load_sample_image("china.jpg")
 
 # Convert to floats instead of the default 8 bits integer coding. Dividing by
-# 255 is important so that plt.imshow behaves works well on float data (need to
+# 255 is important so that plt.imshow works well on float data (need to
 # be in the range [0-1])
 china = np.array(china, dtype=np.float64) / 255
 

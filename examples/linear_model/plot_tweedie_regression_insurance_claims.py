@@ -79,7 +79,7 @@ def load_mtpl2(n_samples=None):
     df_sev = df_sev.groupby("IDpol").sum()
 
     df = df_freq.join(df_sev, how="left")
-    df["ClaimAmount"].fillna(0, inplace=True)
+    df["ClaimAmount"] = df["ClaimAmount"].fillna(0)
 
     # unquote string fields
     for column_name in df.columns[df.dtypes.values == object]:

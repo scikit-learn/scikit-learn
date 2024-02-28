@@ -57,10 +57,10 @@ points.
 
 where:
 
-    * :math:`U` is orthonormal
-    * :math:`Ʌ` is diagonal matrix of eigenvalues
-    * :math:`U_1` is orthonormal matrix of samples that were chosen
-    * :math:`U_2` is orthonormal matrix of samples that were not chosen
+* :math:`U` is orthonormal
+* :math:`\Lambda` is diagonal matrix of eigenvalues
+* :math:`U_1` is orthonormal matrix of samples that were chosen
+* :math:`U_2` is orthonormal matrix of samples that were not chosen
 
 Given that :math:`U_1 \Lambda U_1^T` can be obtained by orthonormalization of
 the matrix :math:`K_{11}`, and :math:`U_2 \Lambda U_1^T` can be evaluated (as
@@ -215,8 +215,8 @@ function given by:
 
 where:
 
-    * ``x``, ``y`` are the input vectors
-    * ``d`` is the kernel degree
+* ``x``, ``y`` are the input vectors
+* ``d`` is the kernel degree
 
 Intuitively, the feature space of the polynomial kernel of degree `d`
 consists of all possible degree-`d` products among input features, which enables

@@ -57,18 +57,18 @@ univariate statistical tests. It can be seen as a preprocessing step
 to an estimator. Scikit-learn exposes feature selection routines
 as objects that implement the ``transform`` method:
 
- * :class:`SelectKBest` removes all but the :math:`k` highest scoring features
+* :class:`SelectKBest` removes all but the :math:`k` highest scoring features
 
- * :class:`SelectPercentile` removes all but a user-specified highest scoring
-   percentage of features
+* :class:`SelectPercentile` removes all but a user-specified highest scoring
+  percentage of features
 
- * using common univariate statistical tests for each feature:
-   false positive rate :class:`SelectFpr`, false discovery rate
-   :class:`SelectFdr`, or family wise error :class:`SelectFwe`.
+* using common univariate statistical tests for each feature:
+  false positive rate :class:`SelectFpr`, false discovery rate
+  :class:`SelectFdr`, or family wise error :class:`SelectFwe`.
 
- * :class:`GenericUnivariateSelect` allows to perform univariate feature
-   selection with a configurable strategy. This allows to select the best
-   univariate selection strategy with hyper-parameter search estimator.
+* :class:`GenericUnivariateSelect` allows to perform univariate feature
+  selection with a configurable strategy. This allows to select the best
+  univariate selection strategy with hyper-parameter search estimator.
 
 For instance, we can use a F-test to retrieve the two
 best features for a dataset as follows:
@@ -87,9 +87,9 @@ These objects take as input a scoring function that returns univariate scores
 and p-values (or only scores for :class:`SelectKBest` and
 :class:`SelectPercentile`):
 
- * For regression: :func:`r_regression`, :func:`f_regression`, :func:`mutual_info_regression`
+* For regression: :func:`r_regression`, :func:`f_regression`, :func:`mutual_info_regression`
 
- * For classification: :func:`chi2`, :func:`f_classif`, :func:`mutual_info_classif`
+* For classification: :func:`chi2`, :func:`f_classif`, :func:`mutual_info_classif`
 
 The methods based on F-test estimate the degree of linear dependency between
 two random variables. On the other hand, mutual information methods can capture

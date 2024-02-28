@@ -8,7 +8,7 @@ SCIPY_MIN_VERSION = "1.6.0"
 JOBLIB_MIN_VERSION = "1.2.0"
 THREADPOOLCTL_MIN_VERSION = "2.0.0"
 PYTEST_MIN_VERSION = "7.1.2"
-CYTHON_MIN_VERSION = "0.29.33"
+CYTHON_MIN_VERSION = "3.0.8"
 
 
 # 'build' and 'install' is included to have structured metadata for CI.
@@ -27,7 +27,7 @@ dependent_packages = {
     "memory_profiler": ("0.57.0", "benchmark, docs"),
     "pytest": (PYTEST_MIN_VERSION, "tests"),
     "pytest-cov": ("2.9.0", "tests"),
-    "ruff": ("0.0.272", "tests"),
+    "ruff": ("0.2.1", "tests"),
     "black": ("23.3.0", "tests"),
     "mypy": ("1.3", "tests"),
     "pyamg": ("4.0.0", "tests"),

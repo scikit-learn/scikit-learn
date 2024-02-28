@@ -19,7 +19,7 @@ __all__ = [
 
 class UnsetMetadataPassedError(ValueError):
     """Exception class to raise if a metadata is passed which is not explicitly \
-        requested.
+        requested (metadata=True) or not requested (metadata=False).
 
     .. versionadded:: 1.3
 

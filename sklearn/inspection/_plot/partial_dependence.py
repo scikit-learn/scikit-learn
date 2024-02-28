@@ -11,10 +11,10 @@ from ...utils import (
     Bunch,
     _safe_indexing,
     check_array,
-    check_matplotlib_support,  # noqa
     check_random_state,
 )
 from ...utils._encode import _unique
+from ...utils._optional_dependencies import check_matplotlib_support  # noqa
 from ...utils.parallel import Parallel, delayed
 from .. import partial_dependence
 from .._pd_utils import _check_feature_names, _get_feature_index
@@ -602,7 +602,7 @@ class PartialDependenceDisplay:
         else:
             # we need to create a boolean indicator of which features are
             # categorical from the categorical_features list.
-            categorical_features = np.array(categorical_features, copy=False)
+            categorical_features = np.asarray(categorical_features)
             if categorical_features.dtype.kind == "b":
                 # categorical features provided as a list of boolean
                 if categorical_features.size != n_features:
@@ -744,7 +744,7 @@ class PartialDependenceDisplay:
                     X_col = _safe_indexing(X, fx, axis=1)
                     deciles[fx] = mquantiles(X_col, prob=np.arange(0.1, 1.0, 0.1))
 
-        display = PartialDependenceDisplay(
+        display = cls(
             pd_results=pd_results,
             features=features,
             feature_names=feature_names,

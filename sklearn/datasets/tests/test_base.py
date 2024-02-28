@@ -1,3 +1,4 @@
+import io
 import os
 import shutil
 import tempfile
@@ -6,6 +7,8 @@ from functools import partial
 from importlib import resources
 from pathlib import Path
 from pickle import dumps, loads
+from unittest.mock import Mock
+from urllib.error import HTTPError
 
 import numpy as np
 import pytest
@@ -24,6 +27,8 @@ from sklearn.datasets import (
     load_wine,
 )
 from sklearn.datasets._base import (
+    RemoteFileMetadata,
+    _fetch_remote,
     load_csv_data,
     load_gzip_compressed_csv_data,
 )
@@ -363,3 +368,26 @@ def test_load_boston_error():
     msg = "cannot import name 'non_existing_function' from 'sklearn.datasets'"
     with pytest.raises(ImportError, match=msg):
         from sklearn.datasets import non_existing_function  # noqa
+
+
+def test_fetch_remote_raise_warnings_with_invalid_url(monkeypatch):
+    """Check retry mechanism in _fetch_remote."""
+
+    url = "https://scikit-learn.org/this_file_does_not_exist.tar.gz"
+    invalid_remote_file = RemoteFileMetadata("invalid_file", url, None)
+    urlretrieve_mock = Mock(
+        side_effect=HTTPError(
+            url=url, code=404, msg="Not Found", hdrs=None, fp=io.BytesIO()
+        )
+    )
+    monkeypatch.setattr("sklearn.datasets._base.urlretrieve", urlretrieve_mock)
+
+    with pytest.warns(UserWarning, match="Retry downloading") as record:
+        with pytest.raises(HTTPError, match="HTTP Error 404"):
+            _fetch_remote(invalid_remote_file, n_retries=3, delay=0)
+
+        assert urlretrieve_mock.call_count == 4
+
+        for r in record:
+            assert str(r.message) == f"Retry downloading from url: {url}"
+        assert len(record) == 3

@@ -37,7 +37,7 @@ jobs:
         architecture: 'x86'
       displayName: Use 32 bit System Python
       condition: and(succeeded(), eq(variables['PYTHON_ARCH'], '32'))
-    - bash: ./build_tools/azure/install_win.sh
+    - bash: ./build_tools/azure/install.sh
       displayName: 'Install'
     - bash: ./build_tools/azure/test_script.sh
       displayName: 'Test Library'

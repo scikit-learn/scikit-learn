@@ -6,7 +6,7 @@ The Labeled Faces in the Wild face recognition dataset
 This dataset is a collection of JPEG pictures of famous people collected
 over the internet, all details are available on the official website:
 
-    http://vis-www.cs.umass.edu/lfw/
+http://vis-www.cs.umass.edu/lfw/
 
 Each picture is centered on a single face. The typical task is called
 Face Verification: given a pair of two pictures, a binary classifier
@@ -25,12 +25,12 @@ face detector from various online websites.
 
 **Data Set Characteristics:**
 
-    =================   =======================
-    Classes                                5749
-    Samples total                         13233
-    Dimensionality                         5828
-    Features            real, between 0 and 255
-    =================   =======================
+=================   =======================
+Classes                                5749
+Samples total                         13233
+Dimensionality                         5828
+Features            real, between 0 and 255
+=================   =======================
 
 |details-start|
 **Usage**

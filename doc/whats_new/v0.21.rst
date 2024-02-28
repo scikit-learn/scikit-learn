@@ -2,12 +2,16 @@
 
 .. currentmodule:: sklearn
 
+============
+Version 0.21
+============
+
+.. include:: changelog_legend.inc
+
 .. _changes_0_21_3:
 
 Version 0.21.3
 ==============
-
-.. include:: changelog_legend.inc
 
 **July 30, 2019**
 
@@ -1067,8 +1071,7 @@ These changes mostly affect library developers.
 - Many checks can now be disabled or configured with :ref:`estimator_tags`.
   :pr:`8022` by :user:`Andreas Müller <amueller>`.
 
-Code and Documentation Contributors
------------------------------------
+.. rubric:: Code and documentation contributors
 
 Thanks to everyone who has contributed to the maintenance and improvement of the
 project since version 0.20, including:

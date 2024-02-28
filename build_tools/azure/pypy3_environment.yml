@@ -15,6 +15,6 @@ dependencies:
   - matplotlib
   - pyamg
   - pytest
-  - pytest-xdist=2.5.0
+  - pytest-xdist
   - setuptools
   - ccache

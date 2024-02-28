@@ -13,4 +13,8 @@
     <a href='https://github.com/lucyleeow'><img src='https://avatars.githubusercontent.com/u/23182829?v=4' class='avatar' /></a> <br />
     <p>Lucy Liu</p>
     </div>
+    <div>
+    <a href='https://github.com/Charlie-XIAO'><img src='https://avatars.githubusercontent.com/u/108576690?v=4' class='avatar' /></a> <br />
+    <p>Yao Xiao</p>
+    </div>
     </div>

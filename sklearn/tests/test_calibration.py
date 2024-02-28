@@ -1072,3 +1072,19 @@ def test_sigmoid_calibration_max_abs_prediction_threshold(global_random_seed):
     assert_allclose(a2, a3, atol=atol)
     assert_allclose(b1, b2, atol=atol)
     assert_allclose(b2, b3, atol=atol)
+
+
+def test_float32_predict_proba(data):
+    """Check that CalibratedClassifierCV works with float32 predict proba.
+
+    Non-regression test for gh-28245.
+    """
+
+    class DummyClassifer32(DummyClassifier):
+        def predict_proba(self, X):
+            return super().predict_proba(X).astype(np.float32)
+
+    model = DummyClassifer32()
+    calibrator = CalibratedClassifierCV(model)
+    # Does not raise an error
+    calibrator.fit(*data)

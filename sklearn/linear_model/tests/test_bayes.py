@@ -12,6 +12,7 @@ from sklearn import datasets
 from sklearn.linear_model import ARDRegression, BayesianRidge, Ridge
 from sklearn.utils import check_random_state
 from sklearn.utils._testing import (
+    _convert_container,
     assert_almost_equal,
     assert_array_almost_equal,
     assert_array_less,
@@ -209,7 +210,8 @@ def test_ard_accuracy_on_easy_problem(global_random_seed, n_samples, n_features)
     assert abs_coef_error < 1e-10
 
 
-def test_return_std():
+@pytest.mark.parametrize("constructor_name", ["array", "dataframe"])
+def test_return_std(constructor_name):
     # Test return_std option for both Bayesian regressors
     def f(X):
         return np.dot(X, w) + b
@@ -225,7 +227,10 @@ def test_return_std():
     b = 1.0
 
     X = np.random.random((n_train, d))
+    X = _convert_container(X, constructor_name)
+
     X_test = np.random.random((n_test, d))
+    X_test = _convert_container(X_test, constructor_name)
 
     for decimal, noise_mult in enumerate([1, 0.1, 0.01]):
         y = f_noise(X, noise_mult)

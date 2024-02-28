@@ -906,8 +906,11 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
 
         Parameters
         ----------
-        X : {ndarray, sparse matrix} of (n_samples, n_features)
+        X : {ndarray, sparse matrix, sparse array} of (n_samples, n_features)
             Data.
+
+            Note that large sparse matrices and arrays requiring `int64`
+            indices are not accepted.
 
         y : ndarray of shape (n_samples,) or (n_samples, n_targets)
             Target. Will be cast to X's dtype if necessary.
@@ -958,6 +961,7 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
                 accept_sparse="csc",
                 order="F",
                 dtype=[np.float64, np.float32],
+                accept_large_sparse=False,
                 copy=X_copied,
                 multi_output=True,
                 y_numeric=True,
@@ -1532,7 +1536,8 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Training data. Pass directly as Fortran-contiguous data
             to avoid unnecessary memory duplication. If y is mono-output,
-            X can be sparse.
+            X can be sparse. Note that large sparse matrices and arrays
+            requiring `int64` indices are not accepted.
 
         y : array-like of shape (n_samples,) or (n_samples, n_targets)
             Target values.
@@ -1582,7 +1587,10 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
             # csr. We also want to allow y to be 64 or 32 but check_X_y only
             # allows to convert for 64.
             check_X_params = dict(
-                accept_sparse="csc", dtype=[np.float64, np.float32], copy=False
+                accept_sparse="csc",
+                dtype=[np.float64, np.float32],
+                copy=False,
+                accept_large_sparse=False,
             )
             X, y = self._validate_data(
                 X, y, validate_separately=(check_X_params, check_y_params)

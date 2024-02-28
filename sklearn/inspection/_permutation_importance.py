@@ -1,11 +1,11 @@
 """Permutation importance for estimators."""
+
 import numbers
 
 import numpy as np
 
 from ..ensemble._bagging import _generate_indices
 from ..metrics import check_scoring, get_scorer_names
-from ..metrics._scorer import _check_multimetric_scoring, _MultimetricScorer
 from ..model_selection._validation import _aggregate_score_dicts
 from ..utils import Bunch, _safe_indexing, check_array, check_random_state
 from ..utils._param_validation import (
@@ -54,6 +54,8 @@ def _calculate_permutation_scores(
         )
         X_permuted = _safe_indexing(X, row_indices, axis=0)
         y = _safe_indexing(y, row_indices, axis=0)
+        if sample_weight is not None:
+            sample_weight = _safe_indexing(sample_weight, row_indices, axis=0)
     else:
         X_permuted = X.copy()
 
@@ -276,14 +278,7 @@ def permutation_importance(
     elif max_samples > X.shape[0]:
         raise ValueError("max_samples must be <= n_samples")
 
-    if callable(scoring):
-        scorer = scoring
-    elif scoring is None or isinstance(scoring, str):
-        scorer = check_scoring(estimator, scoring=scoring)
-    else:
-        scorers_dict = _check_multimetric_scoring(estimator, scoring)
-        scorer = _MultimetricScorer(scorers=scorers_dict)
-
+    scorer = check_scoring(estimator, scoring=scoring)
     baseline_score = _weights_scorer(scorer, estimator, X, y, sample_weight)
 
     scores = Parallel(n_jobs=n_jobs)(

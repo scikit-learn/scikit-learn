@@ -14,13 +14,13 @@ matrices supported), sample them, and estimate them from
 data. Facilities to help determine the appropriate number of
 components are also provided.
 
- .. figure:: ../auto_examples/mixture/images/sphx_glr_plot_gmm_pdf_001.png
-   :target: ../auto_examples/mixture/plot_gmm_pdf.html
-   :align: center
-   :scale: 50%
+.. figure:: ../auto_examples/mixture/images/sphx_glr_plot_gmm_pdf_001.png
+  :target: ../auto_examples/mixture/plot_gmm_pdf.html
+  :align: center
+  :scale: 50%
 
-   **Two-component Gaussian mixture model:** *data points, and equi-probability
-   surfaces of the model.*
+  **Two-component Gaussian mixture model:** *data points, and equi-probability
+  surfaces of the model.*
 
 A Gaussian mixture model is a probabilistic model that assumes all the
 data points are generated from a mixture of a finite number of

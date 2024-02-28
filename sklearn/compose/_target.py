@@ -69,15 +69,16 @@ class TransformedTargetRegressor(
 
     func : function, default=None
         Function to apply to `y` before passing to :meth:`fit`. Cannot be set
-        at the same time as `transformer`. The function needs to return a
-        2-dimensional array. If `func is None`, the function used will be the
-        identity function.
+        at the same time as `transformer`. If `func is None`, the function used will be
+        the identity function. If `func` is set, `inverse_func` also needs to be
+        provided. The function needs to return a 2-dimensional array.
 
     inverse_func : function, default=None
         Function to apply to the prediction of the regressor. Cannot be set at
-        the same time as `transformer`. The function needs to return a
-        2-dimensional array. The inverse function is used to return
-        predictions to the same space of the original training labels.
+        the same time as `transformer`. The inverse function is used to return
+        predictions to the same space of the original training labels. If
+        `inverse_func` is set, `func` also needs to be provided. The inverse
+        function needs to return a 2-dimensional array.
 
     check_inverse : bool, default=True
         Whether to check that `transform` followed by `inverse_transform`
@@ -173,9 +174,18 @@ class TransformedTargetRegressor(
         elif self.transformer is not None:
             self.transformer_ = clone(self.transformer)
         else:
-            if self.func is not None and self.inverse_func is None:
+            if (self.func is not None and self.inverse_func is None) or (
+                self.func is None and self.inverse_func is not None
+            ):
+                lacking_param, existing_param = (
+                    ("func", "inverse_func")
+                    if self.func is None
+                    else ("inverse_func", "func")
+                )
                 raise ValueError(
-                    "When 'func' is provided, 'inverse_func' must also be provided"
+                    f"When '{existing_param}' is provided, '{lacking_param}' must also"
+                    f" be provided. If {lacking_param} is supposed to be the default,"
+                    " you need to explicitly pass it the identity function."
                 )
             self.transformer_ = FunctionTransformer(
                 func=self.func,

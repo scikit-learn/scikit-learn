@@ -134,6 +134,18 @@ def shrunk_covariance(emp_cov, shrinkage=0.1):
         (1 - shrinkage) * cov + shrinkage * mu * np.identity(n_features)
 
     where `mu = trace(cov) / n_features`.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.datasets import make_gaussian_quantiles
+    >>> from sklearn.covariance import empirical_covariance, shrunk_covariance
+    >>> real_cov = np.array([[.8, .3], [.3, .4]])
+    >>> rng = np.random.RandomState(0)
+    >>> X = rng.multivariate_normal(mean=[0, 0], cov=real_cov, size=500)
+    >>> shrunk_covariance(empirical_covariance(X))
+    array([[0.73..., 0.25...],
+           [0.25..., 0.41...]])
     """
     emp_cov = check_array(emp_cov, allow_nd=True)
     n_features = emp_cov.shape[-1]
@@ -316,6 +328,17 @@ def ledoit_wolf_shrinkage(X, assume_centered=False, block_size=1000):
     (1 - shrinkage) * cov + shrinkage * mu * np.identity(n_features)
 
     where mu = trace(cov) / n_features
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.covariance import ledoit_wolf_shrinkage
+    >>> real_cov = np.array([[.4, .2], [.2, .8]])
+    >>> rng = np.random.RandomState(0)
+    >>> X = rng.multivariate_normal(mean=[0, 0], cov=real_cov, size=50)
+    >>> shrinkage_coefficient = ledoit_wolf_shrinkage(X)
+    >>> shrinkage_coefficient
+    0.23...
     """
     X = check_array(X)
     # for only one feature, the result is the same whatever the shrinkage
@@ -419,6 +442,20 @@ def ledoit_wolf(X, *, assume_centered=False, block_size=1000):
     (1 - shrinkage) * cov + shrinkage * mu * np.identity(n_features)
 
     where mu = trace(cov) / n_features
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.covariance import empirical_covariance, ledoit_wolf
+    >>> real_cov = np.array([[.4, .2], [.2, .8]])
+    >>> rng = np.random.RandomState(0)
+    >>> X = rng.multivariate_normal(mean=[0, 0], cov=real_cov, size=50)
+    >>> covariance, shrinkage = ledoit_wolf(X)
+    >>> covariance
+    array([[0.44..., 0.16...],
+           [0.16..., 0.80...]])
+    >>> shrinkage
+    0.23...
     """
     estimator = LedoitWolf(
         assume_centered=assume_centered,
@@ -625,6 +662,20 @@ def oas(X, *, assume_centered=False):
            Chen, Y., Wiesel, A., Eldar, Y. C., & Hero, A. O.
            IEEE Transactions on Signal Processing, 58(10), 5016-5029, 2010.
            <0907.4698>`
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.covariance import oas
+    >>> rng = np.random.RandomState(0)
+    >>> real_cov = [[.8, .3], [.3, .4]]
+    >>> X = rng.multivariate_normal(mean=[0, 0], cov=real_cov, size=500)
+    >>> shrunk_cov, shrinkage = oas(X)
+    >>> shrunk_cov
+    array([[0.7533..., 0.2763...],
+           [0.2763..., 0.3964...]])
+    >>> shrinkage
+    0.0195...
     """
     estimator = OAS(
         assume_centered=assume_centered,

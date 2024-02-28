@@ -148,7 +148,7 @@ cdef inline Y_DTYPE_C _predict_one_from_binned_data(
 def _compute_partial_dependence(
     node_struct [:] nodes,
     const X_DTYPE_C [:, ::1] X,
-    int [:] target_features,
+    const intp_t [:] target_features,
     Y_DTYPE_C [:] out
 ):
     """Partial dependence of the response on the ``target_features`` set.
@@ -173,7 +173,7 @@ def _compute_partial_dependence(
     X : view on 2d ndarray, shape (n_samples, n_target_features)
         The grid points on which the partial dependence should be
         evaluated.
-    target_features : view on 1d ndarray, shape (n_target_features)
+    target_features : view on 1d ndarray of intp_t, shape (n_target_features)
         The set of target features for which the partial dependence
         should be evaluated.
     out : view on 1d ndarray, shape (n_samples)
