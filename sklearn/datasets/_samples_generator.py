@@ -868,7 +868,7 @@ def make_moons(n_samples=100, *, shuffle=True, noise=None, random_state=None):
     Examples
     --------
     >>> from sklearn.datasets import make_moons
-    >>> X, y = make_moons(n_samples = 200, noise =0.2, random_state = 2)
+    >>> X, y = make_moons(n_samples=200, noise=0.2, random_state=42)
     >>> X.shape
     (200, 2)
     >>> y.shape
