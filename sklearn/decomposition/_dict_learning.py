@@ -20,12 +20,7 @@ from ..base import (
     _fit_context,
 )
 from ..linear_model import Lars, Lasso, LassoLars, orthogonal_mp_gram
-from ..utils import (
-    check_array,
-    check_random_state,
-    gen_batches,
-    gen_even_slices,
-)
+from ..utils import check_array, check_random_state, gen_batches, gen_even_slices
 from ..utils._param_validation import Hidden, Interval, StrOptions, validate_params
 from ..utils.extmath import randomized_svd, row_norms, svd_flip
 from ..utils.parallel import Parallel, delayed
