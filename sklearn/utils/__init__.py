@@ -2,29 +2,28 @@
 The :mod:`sklearn.utils` module includes various utilities.
 """
 
-import math
 import numbers
 import platform
 import struct
 import timeit
 import warnings
 from collections.abc import Sequence
-from contextlib import contextmanager, suppress
+from contextlib import contextmanager
 from itertools import compress, islice
 
 import numpy as np
 from scipy.sparse import issparse
 
-from .. import get_config
 from ..exceptions import DataConversionWarning
 from . import _joblib, metadata_routing
 from ._bunch import Bunch
+from ._chunking import gen_batches, gen_even_slices
 from ._estimator_html_repr import estimator_html_repr
-from ._param_validation import Integral, Interval, validate_params
+from ._param_validation import Interval, validate_params
 from .class_weight import compute_class_weight, compute_sample_weight
 from .deprecation import deprecated
 from .discovery import all_estimators
-from .fixes import parse_version, threadpool_info
+from .extmath import _approximate_mode, safe_sqr
 from .murmurhash import murmurhash3_32
 from .validation import (
     _is_arraylike_not_scalar,
@@ -71,50 +70,19 @@ __all__ = [
     "register_parallel_backend",
     "resample",
     "shuffle",
-    "check_matplotlib_support",
     "all_estimators",
     "DataConversionWarning",
     "estimator_html_repr",
     "Bunch",
     "metadata_routing",
+    "safe_sqr",
+    "gen_batches",
+    "gen_even_slices",
 ]
 
 IS_PYPY = platform.python_implementation() == "PyPy"
 _IS_32BIT = 8 * struct.calcsize("P") == 32
 _IS_WASM = platform.machine() in ["wasm32", "wasm64"]
-
-
-def _in_unstable_openblas_configuration():
-    """Return True if in an unstable configuration for OpenBLAS"""
-
-    # Import libraries which might load OpenBLAS.
-    import numpy  # noqa
-    import scipy  # noqa
-
-    modules_info = threadpool_info()
-
-    open_blas_used = any(info["internal_api"] == "openblas" for info in modules_info)
-    if not open_blas_used:
-        return False
-
-    # OpenBLAS 0.3.16 fixed instability for arm64, see:
-    # https://github.com/xianyi/OpenBLAS/blob/1b6db3dbba672b4f8af935bd43a1ff6cff4d20b7/Changelog.txt#L56-L58 # noqa
-    openblas_arm64_stable_version = parse_version("0.3.16")
-    for info in modules_info:
-        if info["internal_api"] != "openblas":
-            continue
-        openblas_version = info.get("version")
-        openblas_architecture = info.get("architecture")
-        if openblas_version is None or openblas_architecture is None:
-            # Cannot be sure that OpenBLAS is good enough. Assume unstable:
-            return True
-        if (
-            openblas_architecture == "neoversen1"
-            and parse_version(openblas_version) < openblas_arm64_stable_version
-        ):
-            # See discussions in https://github.com/numpy/numpy/issues/19411
-            return True
-    return False
 
 
 @validate_params(
@@ -139,6 +107,18 @@ def safe_mask(X, mask):
     -------
     mask : ndarray
         Array that is safe to use on X.
+
+    Examples
+    --------
+    >>> from sklearn.utils import safe_mask
+    >>> from scipy.sparse import csr_matrix
+    >>> data = csr_matrix([[1], [2], [3], [4], [5]])
+    >>> condition = [False, True, True, False, True]
+    >>> mask = safe_mask(data, condition)
+    >>> data[mask].toarray()
+    array([[2],
+           [3],
+           [5]])
     """
     mask = np.asarray(mask)
     if np.issubdtype(mask.dtype, np.signedinteger):
@@ -767,167 +747,6 @@ def shuffle(*arrays, random_state=None, n_samples=None):
     )
 
 
-def safe_sqr(X, *, copy=True):
-    """Element wise squaring of array-likes and sparse matrices.
-
-    Parameters
-    ----------
-    X : {array-like, ndarray, sparse matrix}
-
-    copy : bool, default=True
-        Whether to create a copy of X and operate on it or to perform
-        inplace computation (default behaviour).
-
-    Returns
-    -------
-    X ** 2 : element wise square
-         Return the element-wise square of the input.
-
-    Examples
-    --------
-    >>> from sklearn.utils import safe_sqr
-    >>> safe_sqr([1, 2, 3])
-    array([1, 4, 9])
-    """
-    X = check_array(X, accept_sparse=["csr", "csc", "coo"], ensure_2d=False)
-    if issparse(X):
-        if copy:
-            X = X.copy()
-        X.data **= 2
-    else:
-        if copy:
-            X = X**2
-        else:
-            X **= 2
-    return X
-
-
-def _chunk_generator(gen, chunksize):
-    """Chunk generator, ``gen`` into lists of length ``chunksize``. The last
-    chunk may have a length less than ``chunksize``."""
-    while True:
-        chunk = list(islice(gen, chunksize))
-        if chunk:
-            yield chunk
-        else:
-            return
-
-
-@validate_params(
-    {
-        "n": [Interval(numbers.Integral, 1, None, closed="left")],
-        "batch_size": [Interval(numbers.Integral, 1, None, closed="left")],
-        "min_batch_size": [Interval(numbers.Integral, 0, None, closed="left")],
-    },
-    prefer_skip_nested_validation=True,
-)
-def gen_batches(n, batch_size, *, min_batch_size=0):
-    """Generator to create slices containing `batch_size` elements from 0 to `n`.
-
-    The last slice may contain less than `batch_size` elements, when
-    `batch_size` does not divide `n`.
-
-    Parameters
-    ----------
-    n : int
-        Size of the sequence.
-    batch_size : int
-        Number of elements in each batch.
-    min_batch_size : int, default=0
-        Minimum number of elements in each batch.
-
-    Yields
-    ------
-    slice of `batch_size` elements
-
-    See Also
-    --------
-    gen_even_slices: Generator to create n_packs slices going up to n.
-
-    Examples
-    --------
-    >>> from sklearn.utils import gen_batches
-    >>> list(gen_batches(7, 3))
-    [slice(0, 3, None), slice(3, 6, None), slice(6, 7, None)]
-    >>> list(gen_batches(6, 3))
-    [slice(0, 3, None), slice(3, 6, None)]
-    >>> list(gen_batches(2, 3))
-    [slice(0, 2, None)]
-    >>> list(gen_batches(7, 3, min_batch_size=0))
-    [slice(0, 3, None), slice(3, 6, None), slice(6, 7, None)]
-    >>> list(gen_batches(7, 3, min_batch_size=2))
-    [slice(0, 3, None), slice(3, 7, None)]
-    """
-    start = 0
-    for _ in range(int(n // batch_size)):
-        end = start + batch_size
-        if end + min_batch_size > n:
-            continue
-        yield slice(start, end)
-        start = end
-    if start < n:
-        yield slice(start, n)
-
-
-@validate_params(
-    {
-        "n": [Interval(Integral, 1, None, closed="left")],
-        "n_packs": [Interval(Integral, 1, None, closed="left")],
-        "n_samples": [Interval(Integral, 1, None, closed="left"), None],
-    },
-    prefer_skip_nested_validation=True,
-)
-def gen_even_slices(n, n_packs, *, n_samples=None):
-    """Generator to create `n_packs` evenly spaced slices going up to `n`.
-
-    If `n_packs` does not divide `n`, except for the first `n % n_packs`
-    slices, remaining slices may contain fewer elements.
-
-    Parameters
-    ----------
-    n : int
-        Size of the sequence.
-    n_packs : int
-        Number of slices to generate.
-    n_samples : int, default=None
-        Number of samples. Pass `n_samples` when the slices are to be used for
-        sparse matrix indexing; slicing off-the-end raises an exception, while
-        it works for NumPy arrays.
-
-    Yields
-    ------
-    `slice` representing a set of indices from 0 to n.
-
-    See Also
-    --------
-    gen_batches: Generator to create slices containing batch_size elements
-        from 0 to n.
-
-    Examples
-    --------
-    >>> from sklearn.utils import gen_even_slices
-    >>> list(gen_even_slices(10, 1))
-    [slice(0, 10, None)]
-    >>> list(gen_even_slices(10, 10))
-    [slice(0, 1, None), slice(1, 2, None), ..., slice(9, 10, None)]
-    >>> list(gen_even_slices(10, 5))
-    [slice(0, 2, None), slice(2, 4, None), ..., slice(8, 10, None)]
-    >>> list(gen_even_slices(10, 3))
-    [slice(0, 4, None), slice(4, 7, None), slice(7, 10, None)]
-    """
-    start = 0
-    for pack_num in range(n_packs):
-        this_n = n // n_packs
-        if pack_num < n % n_packs:
-            this_n += 1
-        if this_n > 0:
-            end = start + this_n
-            if n_samples is not None:
-                end = min(n_samples, end)
-            yield slice(start, end, None)
-            start = end
-
-
 def tosequence(x):
     """Cast iterable x to a Sequence, avoiding a copy if possible.
 
@@ -1069,219 +888,3 @@ def _print_elapsed_time(source, message=None):
         start = timeit.default_timer()
         yield
         print(_message_with_time(source, message, timeit.default_timer() - start))
-
-
-def get_chunk_n_rows(row_bytes, *, max_n_rows=None, working_memory=None):
-    """Calculate how many rows can be processed within `working_memory`.
-
-    Parameters
-    ----------
-    row_bytes : int
-        The expected number of bytes of memory that will be consumed
-        during the processing of each row.
-    max_n_rows : int, default=None
-        The maximum return value.
-    working_memory : int or float, default=None
-        The number of rows to fit inside this number of MiB will be
-        returned. When None (default), the value of
-        ``sklearn.get_config()['working_memory']`` is used.
-
-    Returns
-    -------
-    int
-        The number of rows which can be processed within `working_memory`.
-
-    Warns
-    -----
-    Issues a UserWarning if `row_bytes exceeds `working_memory` MiB.
-    """
-
-    if working_memory is None:
-        working_memory = get_config()["working_memory"]
-
-    chunk_n_rows = int(working_memory * (2**20) // row_bytes)
-    if max_n_rows is not None:
-        chunk_n_rows = min(chunk_n_rows, max_n_rows)
-    if chunk_n_rows < 1:
-        warnings.warn(
-            "Could not adhere to working_memory config. "
-            "Currently %.0fMiB, %.0fMiB required."
-            % (working_memory, np.ceil(row_bytes * 2**-20))
-        )
-        chunk_n_rows = 1
-    return chunk_n_rows
-
-
-def _is_pandas_na(x):
-    """Test if x is pandas.NA.
-
-    We intentionally do not use this function to return `True` for `pd.NA` in
-    `is_scalar_nan`, because estimators that support `pd.NA` are the exception
-    rather than the rule at the moment. When `pd.NA` is more universally
-    supported, we may reconsider this decision.
-
-    Parameters
-    ----------
-    x : any type
-
-    Returns
-    -------
-    boolean
-    """
-    with suppress(ImportError):
-        from pandas import NA
-
-        return x is NA
-
-    return False
-
-
-def is_scalar_nan(x):
-    """Test if x is NaN.
-
-    This function is meant to overcome the issue that np.isnan does not allow
-    non-numerical types as input, and that np.nan is not float('nan').
-
-    Parameters
-    ----------
-    x : any type
-        Any scalar value.
-
-    Returns
-    -------
-    bool
-        Returns true if x is NaN, and false otherwise.
-
-    Examples
-    --------
-    >>> import numpy as np
-    >>> from sklearn.utils import is_scalar_nan
-    >>> is_scalar_nan(np.nan)
-    True
-    >>> is_scalar_nan(float("nan"))
-    True
-    >>> is_scalar_nan(None)
-    False
-    >>> is_scalar_nan("")
-    False
-    >>> is_scalar_nan([np.nan])
-    False
-    """
-    return (
-        not isinstance(x, numbers.Integral)
-        and isinstance(x, numbers.Real)
-        and math.isnan(x)
-    )
-
-
-def _approximate_mode(class_counts, n_draws, rng):
-    """Computes approximate mode of multivariate hypergeometric.
-
-    This is an approximation to the mode of the multivariate
-    hypergeometric given by class_counts and n_draws.
-    It shouldn't be off by more than one.
-
-    It is the mostly likely outcome of drawing n_draws many
-    samples from the population given by class_counts.
-
-    Parameters
-    ----------
-    class_counts : ndarray of int
-        Population per class.
-    n_draws : int
-        Number of draws (samples to draw) from the overall population.
-    rng : random state
-        Used to break ties.
-
-    Returns
-    -------
-    sampled_classes : ndarray of int
-        Number of samples drawn from each class.
-        np.sum(sampled_classes) == n_draws
-
-    Examples
-    --------
-    >>> import numpy as np
-    >>> from sklearn.utils import _approximate_mode
-    >>> _approximate_mode(class_counts=np.array([4, 2]), n_draws=3, rng=0)
-    array([2, 1])
-    >>> _approximate_mode(class_counts=np.array([5, 2]), n_draws=4, rng=0)
-    array([3, 1])
-    >>> _approximate_mode(class_counts=np.array([2, 2, 2, 1]),
-    ...                   n_draws=2, rng=0)
-    array([0, 1, 1, 0])
-    >>> _approximate_mode(class_counts=np.array([2, 2, 2, 1]),
-    ...                   n_draws=2, rng=42)
-    array([1, 1, 0, 0])
-    """
-    rng = check_random_state(rng)
-    # this computes a bad approximation to the mode of the
-    # multivariate hypergeometric given by class_counts and n_draws
-    continuous = class_counts / class_counts.sum() * n_draws
-    # floored means we don't overshoot n_samples, but probably undershoot
-    floored = np.floor(continuous)
-    # we add samples according to how much "left over" probability
-    # they had, until we arrive at n_samples
-    need_to_add = int(n_draws - floored.sum())
-    if need_to_add > 0:
-        remainder = continuous - floored
-        values = np.sort(np.unique(remainder))[::-1]
-        # add according to remainder, but break ties
-        # randomly to avoid biases
-        for value in values:
-            (inds,) = np.where(remainder == value)
-            # if we need_to_add less than what's in inds
-            # we draw randomly from them.
-            # if we need to add more, we add them all and
-            # go to the next value
-            add_now = min(len(inds), need_to_add)
-            inds = rng.choice(inds, size=add_now, replace=False)
-            floored[inds] += 1
-            need_to_add -= add_now
-            if need_to_add == 0:
-                break
-    return floored.astype(int)
-
-
-def check_matplotlib_support(caller_name):
-    """Raise ImportError with detailed error message if mpl is not installed.
-
-    Plot utilities like any of the Display's plotting functions should lazily import
-    matplotlib and call this helper before any computation.
-
-    Parameters
-    ----------
-    caller_name : str
-        The name of the caller that requires matplotlib.
-    """
-    try:
-        import matplotlib  # noqa
-    except ImportError as e:
-        raise ImportError(
-            "{} requires matplotlib. You can install matplotlib with "
-            "`pip install matplotlib`".format(caller_name)
-        ) from e
-
-
-def check_pandas_support(caller_name):
-    """Raise ImportError with detailed error message if pandas is not installed.
-
-    Plot utilities like :func:`fetch_openml` should lazily import
-    pandas and call this helper before any computation.
-
-    Parameters
-    ----------
-    caller_name : str
-        The name of the caller that requires pandas.
-
-    Returns
-    -------
-    pandas
-        The pandas package.
-    """
-    try:
-        import pandas  # noqa
-
-        return pandas
-    except ImportError as e:
-        raise ImportError("{} requires pandas.".format(caller_name)) from e

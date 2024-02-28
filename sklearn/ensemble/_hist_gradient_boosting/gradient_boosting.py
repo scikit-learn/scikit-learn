@@ -33,7 +33,8 @@ from ...metrics import check_scoring
 from ...metrics._scorer import _SCORERS
 from ...model_selection import train_test_split
 from ...preprocessing import FunctionTransformer, LabelEncoder, OrdinalEncoder
-from ...utils import check_random_state, compute_sample_weight, is_scalar_nan, resample
+from ...utils import check_random_state, compute_sample_weight, resample
+from ...utils._missing import is_scalar_nan
 from ...utils._openmp_helpers import _openmp_effective_n_threads
 from ...utils._param_validation import Hidden, Interval, RealNotInt, StrOptions
 from ...utils.multiclass import check_classification_targets
@@ -368,7 +369,15 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             Indicates whether a feature is categorical. If no feature is
             categorical, this is None.
         """
-        if hasattr(X, "__dataframe__"):
+        # Special code for pandas because of a bug in recent pandas, which is
+        # fixed in main and maybe included in 2.2.1, see
+        # https://github.com/pandas-dev/pandas/pull/57173.
+        # Also pandas versions < 1.5.1 do not support the dataframe interchange
+        if _is_pandas_df(X):
+            X_is_dataframe = True
+            categorical_columns_mask = np.asarray(X.dtypes == "category")
+            X_has_categorical_columns = categorical_columns_mask.any()
+        elif hasattr(X, "__dataframe__"):
             X_is_dataframe = True
             categorical_columns_mask = np.asarray(
                 [
@@ -376,12 +385,6 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                     for c in X.__dataframe__().get_columns()
                 ]
             )
-            X_has_categorical_columns = categorical_columns_mask.any()
-        # pandas versions < 1.5.1 do not support the dataframe interchange
-        # protocol so we inspect X.dtypes directly
-        elif _is_pandas_df(X):
-            X_is_dataframe = True
-            categorical_columns_mask = np.asarray(X.dtypes == "category")
             X_has_categorical_columns = categorical_columns_mask.any()
         else:
             X_is_dataframe = False
@@ -1427,6 +1430,8 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
     assigned to the left or right child consequently. If no missing values
     were encountered for a given feature during training, then samples with
     missing values are mapped to whichever child has the most samples.
+    See :ref:`sphx_glr_auto_examples_ensemble_plot_hgbt_regression.py` for a
+    usecase example of this feature.
 
     This implementation is inspired by
     `LightGBM <https://github.com/Microsoft/LightGBM>`_.

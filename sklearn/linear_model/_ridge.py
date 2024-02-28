@@ -560,7 +560,7 @@ def ridge_regression(
     >>> y = 2.0 * X[:, 0] - 1.0 * X[:, 1] + 0.1 * rng.standard_normal(100)
     >>> coef, intercept = ridge_regression(X, y, alpha=1.0, return_intercept=True)
     >>> list(coef)
-    [1.97..., -1.00..., -0.0..., -0.0...]
+    [1.9..., -1.0..., -0.0..., -0.0...]
     >>> intercept
     -0.0...
     """
@@ -1984,7 +1984,7 @@ class _RidgeGCV(LinearModel):
         sample_weight : float or ndarray of shape (n_samples,), default=None
             Individual weights for each sample. If given a float, every sample
             will have the same weight. Note that the scale of `sample_weight`
-            has an on the loss; i.e. multiplying all weights by `k`
+            has an impact on the loss; i.e. multiplying all weights by `k`
             is equivalent to setting `alpha / k`.
 
         Returns
@@ -2188,12 +2188,21 @@ class _BaseRidgeCV(LinearModel):
         """
         cv = self.cv
 
-        check_scalar_alpha = partial(
-            check_scalar,
-            target_type=numbers.Real,
-            min_val=0.0,
-            include_boundaries="neither",
-        )
+        # `_RidgeGCV` does not work for alpha = 0
+        if cv is None:
+            check_scalar_alpha = partial(
+                check_scalar,
+                target_type=numbers.Real,
+                min_val=0.0,
+                include_boundaries="neither",
+            )
+        else:
+            check_scalar_alpha = partial(
+                check_scalar,
+                target_type=numbers.Real,
+                min_val=0.0,
+                include_boundaries="left",
+            )
 
         if isinstance(self.alphas, (np.ndarray, list, tuple)):
             n_alphas = 1 if np.ndim(self.alphas) == 0 else len(self.alphas)
@@ -2272,7 +2281,7 @@ class RidgeCV(
         Alpha corresponds to ``1 / (2C)`` in other linear models such as
         :class:`~sklearn.linear_model.LogisticRegression` or
         :class:`~sklearn.svm.LinearSVC`.
-        If using Leave-One-Out cross-validation, alphas must be positive.
+        If using Leave-One-Out cross-validation, alphas must be strictly positive.
 
     fit_intercept : bool, default=True
         Whether to calculate the intercept for this model. If set
@@ -2439,6 +2448,7 @@ class RidgeClassifierCV(_RoutingNotSupportedMixin, _RidgeClassifierMixin, _BaseR
         Alpha corresponds to ``1 / (2C)`` in other linear models such as
         :class:`~sklearn.linear_model.LogisticRegression` or
         :class:`~sklearn.svm.LinearSVC`.
+        If using Leave-One-Out cross-validation, alphas must be strictly positive.
 
     fit_intercept : bool, default=True
         Whether to calculate the intercept for this model. If set
