@@ -23,12 +23,7 @@ from ..utils import (
     check_symmetric,
 )
 from ..utils._arpack import _init_arpack_v0
-from ..utils.extmath import _deterministic_vector_sign_flip
 from ..utils._param_validation import Interval, StrOptions, validate_params
-from ..utils.fixes import lobpcg
-from ..metrics.pairwise import rbf_kernel
-from ..neighbors import kneighbors_graph, NearestNeighbors
-from ..utils._param_validation import Interval, StrOptions
 from ..utils.extmath import _deterministic_vector_sign_flip
 from ..utils.fixes import laplacian as csgraph_laplacian
 from ..utils.fixes import parse_version, sp_version
