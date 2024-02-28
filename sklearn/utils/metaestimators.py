@@ -1,21 +1,22 @@
-"""Utilities for meta-estimators"""
+"""
+The :mod:`sklearn.utils.metaestimators` module includes utilities for meta-estimators.
+"""
+
 # Author: Joel Nothman
 #         Andreas Mueller
 # License: BSD
-from typing import List, Any
-import warnings
-
 from abc import ABCMeta, abstractmethod
-from operator import attrgetter
-import numpy as np
 from contextlib import suppress
+from typing import Any, List
 
+import numpy as np
+
+from ..base import BaseEstimator
 from ..utils import _safe_indexing
 from ..utils._tags import _safe_tags
-from ..base import BaseEstimator
-from ._available_if import available_if, _AvailableIfDescriptor
+from ._available_if import available_if
 
-__all__ = ["available_if", "if_delegate_has_method"]
+__all__ = ["available_if"]
 
 
 class _BaseComposition(BaseEstimator, metaclass=ABCMeta):
@@ -94,82 +95,6 @@ class _BaseComposition(BaseEstimator, metaclass=ABCMeta):
             raise ValueError(
                 "Estimator names must not contain __: got {0!r}".format(invalid_names)
             )
-
-
-# TODO(1.3) remove
-class _IffHasAttrDescriptor(_AvailableIfDescriptor):
-    """Implements a conditional property using the descriptor protocol.
-
-    Using this class to create a decorator will raise an ``AttributeError``
-    if none of the delegates (specified in ``delegate_names``) is an attribute
-    of the base object or the first found delegate does not have an attribute
-    ``attribute_name``.
-
-    This allows ducktyping of the decorated method based on
-    ``delegate.attribute_name``. Here ``delegate`` is the first item in
-    ``delegate_names`` for which ``hasattr(object, delegate) is True``.
-
-    See https://docs.python.org/3/howto/descriptor.html for an explanation of
-    descriptors.
-    """
-
-    def __init__(self, fn, delegate_names, attribute_name):
-        super().__init__(fn, self._check, attribute_name)
-        self.delegate_names = delegate_names
-
-    def _check(self, obj):
-        warnings.warn(
-            "if_delegate_has_method was deprecated in version 1.1 and will be "
-            "removed in version 1.3. Use available_if instead.",
-            FutureWarning,
-        )
-
-        delegate = None
-        for delegate_name in self.delegate_names:
-            try:
-                delegate = attrgetter(delegate_name)(obj)
-                break
-            except AttributeError:
-                continue
-
-        if delegate is None:
-            return False
-        # raise original AttributeError
-        getattr(delegate, self.attribute_name)
-
-        return True
-
-
-# TODO(1.3) remove
-def if_delegate_has_method(delegate):
-    """Create a decorator for methods that are delegated to a sub-estimator.
-
-    .. deprecated:: 1.3
-        `if_delegate_has_method` is deprecated in version 1.1 and will be removed in
-        version 1.3. Use `available_if` instead.
-
-    This enables ducktyping by hasattr returning True according to the
-    sub-estimator.
-
-    Parameters
-    ----------
-    delegate : str, list of str or tuple of str
-        Name of the sub-estimator that can be accessed as an attribute of the
-        base object. If a list or a tuple of names are provided, the first
-        sub-estimator that is an attribute of the base object will be used.
-
-    Returns
-    -------
-    callable
-        Callable makes the decorated method available if the delegate
-        has a method with the same name as the decorated method.
-    """
-    if isinstance(delegate, list):
-        delegate = tuple(delegate)
-    if not isinstance(delegate, tuple):
-        delegate = (delegate,)
-
-    return lambda fn: _IffHasAttrDescriptor(fn, delegate, attribute_name=fn.__name__)
 
 
 def _safe_split(estimator, X, y, indices, train_indices=None):

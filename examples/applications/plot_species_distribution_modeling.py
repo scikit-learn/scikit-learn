@@ -43,12 +43,12 @@ References
 
 from time import time
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 
-from sklearn.utils import Bunch
+from sklearn import metrics, svm
 from sklearn.datasets import fetch_species_distributions
-from sklearn import svm, metrics
+from sklearn.utils import Bunch
 
 # if basemap is available, we'll use it.
 # otherwise, we'll improvise later...

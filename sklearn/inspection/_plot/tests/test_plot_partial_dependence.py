@@ -1,28 +1,28 @@
 import numpy as np
-from scipy.stats.mstats import mquantiles
-
 import pytest
 from numpy.testing import assert_allclose
-import warnings
+from scipy.stats.mstats import mquantiles
 
-from sklearn.datasets import load_diabetes
-from sklearn.datasets import load_iris
-from sklearn.datasets import make_classification, make_regression
-from sklearn.ensemble import GradientBoostingRegressor
-from sklearn.ensemble import GradientBoostingClassifier
-from sklearn.linear_model import LinearRegression
-from sklearn.utils._testing import _convert_container
 from sklearn.compose import make_column_transformer
-from sklearn.preprocessing import OneHotEncoder
-from sklearn.pipeline import make_pipeline
-
+from sklearn.datasets import (
+    load_diabetes,
+    load_iris,
+    make_classification,
+    make_regression,
+)
+from sklearn.ensemble import GradientBoostingClassifier, GradientBoostingRegressor
 from sklearn.inspection import PartialDependenceDisplay
-
+from sklearn.linear_model import LinearRegression
+from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import OneHotEncoder
+from sklearn.utils._testing import _convert_container
 
 # TODO: Remove when https://github.com/numpy/numpy/issues/14397 is resolved
 pytestmark = pytest.mark.filterwarnings(
-    "ignore:In future, it will be an error for 'np.bool_':DeprecationWarning:"
-    "matplotlib.*",
+    (
+        "ignore:In future, it will be an error for 'np.bool_':DeprecationWarning:"
+        "matplotlib.*"
+    ),
 )
 
 
@@ -103,7 +103,7 @@ def test_plot_partial_dependence(grid_resolution, pyplot, clf_diabetes, diabetes
         target_idx = disp.target_idx
 
         line_data = line.get_data()
-        assert_allclose(line_data[0], avg_preds["values"][0])
+        assert_allclose(line_data[0], avg_preds["grid_values"][0])
         assert_allclose(line_data[1], avg_preds.average[target_idx].ravel())
 
     # two feature position
@@ -243,7 +243,7 @@ def test_plot_partial_dependence_str_features(
     assert line.get_alpha() == 0.8
 
     line_data = line.get_data()
-    assert_allclose(line_data[0], avg_preds["values"][0])
+    assert_allclose(line_data[0], avg_preds["grid_values"][0])
     assert_allclose(line_data[1], avg_preds.average[target_idx].ravel())
 
     # contour
@@ -279,7 +279,7 @@ def test_plot_partial_dependence_custom_axes(pyplot, clf_diabetes, diabetes):
     target_idx = disp.target_idx
 
     line_data = line.get_data()
-    assert_allclose(line_data[0], avg_preds["values"][0])
+    assert_allclose(line_data[0], avg_preds["grid_values"][0])
     assert_allclose(line_data[1], avg_preds.average[target_idx].ravel())
 
     # contour
@@ -466,7 +466,7 @@ def test_plot_partial_dependence_multiclass(pyplot):
         disp_target_0.pd_results, disp_symbol.pd_results
     ):
         assert_allclose(int_result.average, symbol_result.average)
-        assert_allclose(int_result["values"], symbol_result["values"])
+        assert_allclose(int_result["grid_values"], symbol_result["grid_values"])
 
     # check that the pd plots are different for another target
     disp_target_1 = PartialDependenceDisplay.from_estimator(
@@ -608,16 +608,6 @@ dummy_classification_data = make_classification(random_state=0)
             dummy_classification_data,
             {"features": [1], "categorical_features": [1], "kind": "individual"},
             "It is not possible to display individual effects",
-        ),
-        (
-            dummy_classification_data,
-            {"features": [1], "kind": "foo"},
-            "Values provided to `kind` must be one of",
-        ),
-        (
-            dummy_classification_data,
-            {"features": [0, 1], "kind": ["foo", "individual"]},
-            "Values provided to `kind` must be one of",
         ),
     ],
 )
@@ -865,35 +855,6 @@ def test_grid_resolution_with_categorical(pyplot, categorical_features, array_ty
         )
 
 
-# TODO(1.3): remove
-def test_partial_dependence_display_deprecation(pyplot, clf_diabetes, diabetes):
-    """Check that we raise the proper warning in the display."""
-    disp = PartialDependenceDisplay.from_estimator(
-        clf_diabetes,
-        diabetes.data,
-        [0, 2],
-        grid_resolution=25,
-        feature_names=diabetes.feature_names,
-    )
-
-    deprecation_msg = "The `pdp_lim` parameter is deprecated"
-    overwritting_msg = (
-        "`pdp_lim` has been passed in both the constructor and the `plot` method"
-    )
-
-    disp.pdp_lim = None
-    # case when constructor and method parameters are the same
-    with pytest.warns(FutureWarning, match=deprecation_msg):
-        disp.plot(pdp_lim=None)
-    # case when constructor and method parameters are different
-    with warnings.catch_warnings(record=True) as record:
-        warnings.simplefilter("always", FutureWarning)
-        disp.plot(pdp_lim=(0, 1))
-    assert len(record) == 2
-    for warning in record:
-        assert warning.message.args[0].startswith((deprecation_msg, overwritting_msg))
-
-
 @pytest.mark.parametrize("kind", ["individual", "average", "both"])
 @pytest.mark.parametrize("centered", [True, False])
 def test_partial_dependence_plot_limits_one_way(
@@ -1125,3 +1086,55 @@ def test_partial_dependence_display_kind_centered_interaction(
     )
 
     assert all([ln._y[0] == 0.0 for ln in disp.lines_.ravel() if ln is not None])
+
+
+def test_partial_dependence_display_with_constant_sample_weight(
+    pyplot,
+    clf_diabetes,
+    diabetes,
+):
+    """Check that the utilization of a constant sample weight maintains the
+    standard behavior.
+    """
+    disp = PartialDependenceDisplay.from_estimator(
+        clf_diabetes,
+        diabetes.data,
+        [0, 1],
+        kind="average",
+        method="brute",
+    )
+
+    sample_weight = np.ones_like(diabetes.target)
+    disp_sw = PartialDependenceDisplay.from_estimator(
+        clf_diabetes,
+        diabetes.data,
+        [0, 1],
+        sample_weight=sample_weight,
+        kind="average",
+        method="brute",
+    )
+
+    assert np.array_equal(
+        disp.pd_results[0]["average"], disp_sw.pd_results[0]["average"]
+    )
+
+
+def test_subclass_named_constructors_return_type_is_subclass(
+    pyplot, diabetes, clf_diabetes
+):
+    """Check that named constructors return the correct type when subclassed.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/pull/27675
+    """
+
+    class SubclassOfDisplay(PartialDependenceDisplay):
+        pass
+
+    curve = SubclassOfDisplay.from_estimator(
+        clf_diabetes,
+        diabetes.data,
+        [0, 2, (0, 2)],
+    )
+
+    assert isinstance(curve, SubclassOfDisplay)

@@ -1,29 +1,32 @@
 import pickle
-
-import joblib
-import pytest
-import numpy as np
-import scipy.sparse as sp
 from unittest.mock import Mock
 
-from sklearn.utils._testing import assert_allclose
-from sklearn.utils._testing import assert_array_equal
-from sklearn.utils._testing import assert_almost_equal
-from sklearn.utils._testing import assert_array_almost_equal
-from sklearn.utils._testing import ignore_warnings
+import joblib
+import numpy as np
+import pytest
+import scipy.sparse as sp
 
-from sklearn import linear_model, datasets, metrics
+from sklearn import datasets, linear_model, metrics
 from sklearn.base import clone, is_classifier
-from sklearn.svm import OneClassSVM
-from sklearn.preprocessing import LabelEncoder, scale, MinMaxScaler
-from sklearn.preprocessing import StandardScaler
-from sklearn.kernel_approximation import Nystroem
-from sklearn.pipeline import make_pipeline
 from sklearn.exceptions import ConvergenceWarning
-from sklearn.model_selection import StratifiedShuffleSplit, ShuffleSplit
+from sklearn.kernel_approximation import Nystroem
 from sklearn.linear_model import _sgd_fast as sgd_fast
 from sklearn.linear_model import _stochastic_gradient
-from sklearn.model_selection import RandomizedSearchCV
+from sklearn.model_selection import (
+    RandomizedSearchCV,
+    ShuffleSplit,
+    StratifiedShuffleSplit,
+)
+from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import LabelEncoder, MinMaxScaler, StandardScaler, scale
+from sklearn.svm import OneClassSVM
+from sklearn.utils._testing import (
+    assert_allclose,
+    assert_almost_equal,
+    assert_array_almost_equal,
+    assert_array_equal,
+    ignore_warnings,
+)
 
 
 def _update_kwargs(kwargs):
@@ -179,6 +182,7 @@ true_result5 = [0, 1, 1]
 
 ###############################################################################
 # Common Test Case to classification and regression
+
 
 # a simple implementation of ASGD to use for testing
 # uses squared loss to find the gradient
@@ -716,20 +720,29 @@ def test_sgd_predict_proba_method_access(klass):
     # details.
     for loss in linear_model.SGDClassifier.loss_functions:
         clf = SGDClassifier(loss=loss)
-        # TODO(1.3): Remove "log"
-        if loss in ("log_loss", "log", "modified_huber"):
+        if loss in ("log_loss", "modified_huber"):
             assert hasattr(clf, "predict_proba")
             assert hasattr(clf, "predict_log_proba")
         else:
-            message = "probability estimates are not available for loss={!r}".format(
+            inner_msg = "probability estimates are not available for loss={!r}".format(
                 loss
             )
             assert not hasattr(clf, "predict_proba")
             assert not hasattr(clf, "predict_log_proba")
-            with pytest.raises(AttributeError, match=message):
+            with pytest.raises(
+                AttributeError, match="has no attribute 'predict_proba'"
+            ) as exec_info:
                 clf.predict_proba
-            with pytest.raises(AttributeError, match=message):
+
+            assert isinstance(exec_info.value.__cause__, AttributeError)
+            assert inner_msg in str(exec_info.value.__cause__)
+
+            with pytest.raises(
+                AttributeError, match="has no attribute 'predict_log_proba'"
+            ) as exec_info:
                 clf.predict_log_proba
+            assert isinstance(exec_info.value.__cause__, AttributeError)
+            assert inner_msg in str(exec_info.value.__cause__)
 
 
 @pytest.mark.parametrize("klass", [SGDClassifier, SparseSGDClassifier])
@@ -753,10 +766,13 @@ def test_sgd_proba(klass):
         p = clf.predict_proba([[-1, -1]])
         assert p[0, 1] < 0.5
 
-        p = clf.predict_log_proba([[3, 2]])
-        assert p[0, 1] > p[0, 0]
-        p = clf.predict_log_proba([[-1, -1]])
-        assert p[0, 1] < p[0, 0]
+        # If predict_proba is 0, we get "RuntimeWarning: divide by zero encountered
+        # in log". We avoid it here.
+        with np.errstate(divide="ignore"):
+            p = clf.predict_log_proba([[3, 2]])
+            assert p[0, 1] > p[0, 0]
+            p = clf.predict_log_proba([[-1, -1]])
+            assert p[0, 1] < p[0, 0]
 
     # log loss multiclass probability estimates
     clf = klass(loss="log_loss", alpha=0.01, max_iter=10).fit(X2, Y2)
@@ -1393,6 +1409,7 @@ def test_loss_function_epsilon(klass):
 
 ###############################################################################
 # SGD One Class SVM Test Case
+
 
 # a simple implementation of ASGD to use for testing SGDOneClassSVM
 def asgd_oneclass(klass, X, eta, nu, coef_init=None, offset_init=0.0):
@@ -2060,29 +2077,6 @@ def test_SGDClassifier_fit_for_all_backends(backend):
     assert_array_almost_equal(clf_sequential.coef_, clf_parallel.coef_)
 
 
-# TODO(1.3): Remove
-@pytest.mark.parametrize(
-    "old_loss, new_loss, Estimator",
-    [
-        ("log", "log_loss", linear_model.SGDClassifier),
-    ],
-)
-def test_loss_deprecated(old_loss, new_loss, Estimator):
-
-    # Note: class BaseSGD calls self._validate_params() in __init__, therefore
-    # even instantiation of class raises FutureWarning for deprecated losses.
-    with pytest.warns(FutureWarning, match=f"The loss '{old_loss}' was deprecated"):
-        est1 = Estimator(loss=old_loss, random_state=0)
-        est1.fit(X, Y)
-
-    est2 = Estimator(loss=new_loss, random_state=0)
-    est2.fit(X, Y)
-    if hasattr(est1, "predict_proba"):
-        assert_allclose(est1.predict_proba(X), est2.predict_proba(X))
-    else:
-        assert_allclose(est1.predict(X), est2.predict(X))
-
-
 @pytest.mark.parametrize(
     "Estimator", [linear_model.SGDClassifier, linear_model.SGDRegressor]
 )
@@ -2168,3 +2162,63 @@ def test_sgd_error_on_zero_validation_weight():
 def test_sgd_verbose(Estimator):
     """non-regression test for gh #25249"""
     Estimator(verbose=1).fit(X, Y)
+
+
+@pytest.mark.parametrize(
+    "SGDEstimator",
+    [
+        SGDClassifier,
+        SparseSGDClassifier,
+        SGDRegressor,
+        SparseSGDRegressor,
+        SGDOneClassSVM,
+        SparseSGDOneClassSVM,
+    ],
+)
+@pytest.mark.parametrize("data_type", (np.float32, np.float64))
+def test_sgd_dtype_match(SGDEstimator, data_type):
+    _X = X.astype(data_type)
+    _Y = np.array(Y, dtype=data_type)
+    sgd_model = SGDEstimator()
+    sgd_model.fit(_X, _Y)
+    assert sgd_model.coef_.dtype == data_type
+
+
+@pytest.mark.parametrize(
+    "SGDEstimator",
+    [
+        SGDClassifier,
+        SparseSGDClassifier,
+        SGDRegressor,
+        SparseSGDRegressor,
+        SGDOneClassSVM,
+        SparseSGDOneClassSVM,
+    ],
+)
+def test_sgd_numerical_consistency(SGDEstimator):
+    X_64 = X.astype(dtype=np.float64)
+    Y_64 = np.array(Y, dtype=np.float64)
+
+    X_32 = X.astype(dtype=np.float32)
+    Y_32 = np.array(Y, dtype=np.float32)
+
+    sgd_64 = SGDEstimator(max_iter=20)
+    sgd_64.fit(X_64, Y_64)
+
+    sgd_32 = SGDEstimator(max_iter=20)
+    sgd_32.fit(X_32, Y_32)
+
+    assert_allclose(sgd_64.coef_, sgd_32.coef_)
+
+
+# TODO(1.6): remove
+@pytest.mark.parametrize("Estimator", [SGDClassifier, SGDOneClassSVM])
+def test_loss_attribute_deprecation(Estimator):
+    # Check that we raise the proper deprecation warning if accessing
+    # `loss_function_`.
+    X = np.array([[1, 2], [3, 4]])
+    y = np.array([1, 0])
+    est = Estimator().fit(X, y)
+
+    with pytest.warns(FutureWarning, match="`loss_function_` was deprecated"):
+        est.loss_function_

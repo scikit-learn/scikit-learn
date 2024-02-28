@@ -1,21 +1,16 @@
-from sklearn.base import is_classifier
-from .base import _get_response
+from collections import Counter
 
-from .. import average_precision_score
-from .. import precision_recall_curve
-from .._base import _check_pos_label_consistency
-from .._classification import check_consistent_length
-
-from ...utils import check_matplotlib_support
+from ...utils._plotting import _BinaryClassifierCurveDisplayMixin
+from .._ranking import average_precision_score, precision_recall_curve
 
 
-class PrecisionRecallDisplay:
+class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
     """Precision Recall visualization.
 
     It is recommend to use
     :func:`~sklearn.metrics.PrecisionRecallDisplay.from_estimator` or
     :func:`~sklearn.metrics.PrecisionRecallDisplay.from_predictions` to create
-    a :class:`~sklearn.metrics.PredictionRecallDisplay`. All parameters are
+    a :class:`~sklearn.metrics.PrecisionRecallDisplay`. All parameters are
     stored as attributes.
 
     Read more in the :ref:`User Guide <visualizations>`.
@@ -34,16 +29,28 @@ class PrecisionRecallDisplay:
     estimator_name : str, default=None
         Name of estimator. If None, then the estimator name is not shown.
 
-    pos_label : str or int, default=None
+    pos_label : int, float, bool or str, default=None
         The class considered as the positive class. If None, the class will not
         be shown in the legend.
 
         .. versionadded:: 0.24
 
+    prevalence_pos_label : float, default=None
+        The prevalence of the positive label. It is used for plotting the
+        chance level line. If None, the chance level line will not be plotted
+        even if `plot_chance_level` is set to True when plotting.
+
+        .. versionadded:: 1.3
+
     Attributes
     ----------
     line_ : matplotlib Artist
         Precision recall curve.
+
+    chance_level_ : matplotlib Artist or None
+        The chance level line. It is `None` if the chance level is not plotted.
+
+        .. versionadded:: 1.3
 
     ax_ : matplotlib Axes
         Axes with precision recall curve.
@@ -62,7 +69,7 @@ class PrecisionRecallDisplay:
 
     Notes
     -----
-    The average precision (cf. :func:`~sklearn.metrics.average_precision`) in
+    The average precision (cf. :func:`~sklearn.metrics.average_precision_score`) in
     scikit-learn is computed without any interpolation. To be consistent with
     this metric, the precision-recall curve is plotted without any
     interpolation as well (step-wise style).
@@ -102,14 +109,24 @@ class PrecisionRecallDisplay:
         average_precision=None,
         estimator_name=None,
         pos_label=None,
+        prevalence_pos_label=None,
     ):
         self.estimator_name = estimator_name
         self.precision = precision
         self.recall = recall
         self.average_precision = average_precision
         self.pos_label = pos_label
+        self.prevalence_pos_label = prevalence_pos_label
 
-    def plot(self, ax=None, *, name=None, **kwargs):
+    def plot(
+        self,
+        ax=None,
+        *,
+        name=None,
+        plot_chance_level=False,
+        chance_level_kw=None,
+        **kwargs,
+    ):
         """Plot visualization.
 
         Extra keyword arguments will be passed to matplotlib's `plot`.
@@ -124,6 +141,19 @@ class PrecisionRecallDisplay:
             Name of precision recall curve for labeling. If `None`, use
             `estimator_name` if not `None`, otherwise no labeling is shown.
 
+        plot_chance_level : bool, default=False
+            Whether to plot the chance level. The chance level is the prevalence
+            of the positive label computed from the data passed during
+            :meth:`from_estimator` or :meth:`from_predictions` call.
+
+            .. versionadded:: 1.3
+
+        chance_level_kw : dict, default=None
+            Keyword arguments to be passed to matplotlib's `plot` for rendering
+            the chance level line.
+
+            .. versionadded:: 1.3
+
         **kwargs : dict
             Keyword arguments to be passed to matplotlib's `plot`.
 
@@ -134,7 +164,7 @@ class PrecisionRecallDisplay:
 
         Notes
         -----
-        The average precision (cf. :func:`~sklearn.metrics.average_precision`)
+        The average precision (cf. :func:`~sklearn.metrics.average_precision_score`)
         in scikit-learn is computed without any interpolation. To be consistent
         with this metric, the precision-recall curve is plotted without any
         interpolation as well (step-wise style).
@@ -143,9 +173,7 @@ class PrecisionRecallDisplay:
         `drawstyle="default"`. However, the curve will not be strictly
         consistent with the reported average precision.
         """
-        check_matplotlib_support("PrecisionRecallDisplay.plot")
-
-        name = self.estimator_name if name is None else name
+        self.ax_, self.figure_, name = self._validate_plot_params(ax=ax, name=name)
 
         line_kwargs = {"drawstyle": "steps-post"}
         if self.average_precision is not None and name is not None:
@@ -156,25 +184,52 @@ class PrecisionRecallDisplay:
             line_kwargs["label"] = name
         line_kwargs.update(**kwargs)
 
-        import matplotlib.pyplot as plt
+        (self.line_,) = self.ax_.plot(self.recall, self.precision, **line_kwargs)
 
-        if ax is None:
-            fig, ax = plt.subplots()
-
-        (self.line_,) = ax.plot(self.recall, self.precision, **line_kwargs)
         info_pos_label = (
             f" (Positive label: {self.pos_label})" if self.pos_label is not None else ""
         )
 
         xlabel = "Recall" + info_pos_label
         ylabel = "Precision" + info_pos_label
-        ax.set(xlabel=xlabel, ylabel=ylabel)
+        self.ax_.set(
+            xlabel=xlabel,
+            xlim=(-0.01, 1.01),
+            ylabel=ylabel,
+            ylim=(-0.01, 1.01),
+            aspect="equal",
+        )
 
-        if "label" in line_kwargs:
-            ax.legend(loc="lower left")
+        if plot_chance_level:
+            if self.prevalence_pos_label is None:
+                raise ValueError(
+                    "You must provide prevalence_pos_label when constructing the "
+                    "PrecisionRecallDisplay object in order to plot the chance "
+                    "level line. Alternatively, you may use "
+                    "PrecisionRecallDisplay.from_estimator or "
+                    "PrecisionRecallDisplay.from_predictions "
+                    "to automatically set prevalence_pos_label"
+                )
 
-        self.ax_ = ax
-        self.figure_ = ax.figure
+            chance_level_line_kw = {
+                "label": f"Chance level (AP = {self.prevalence_pos_label:0.2f})",
+                "color": "k",
+                "linestyle": "--",
+            }
+            if chance_level_kw is not None:
+                chance_level_line_kw.update(chance_level_kw)
+
+            (self.chance_level_,) = self.ax_.plot(
+                (0, 1),
+                (self.prevalence_pos_label, self.prevalence_pos_label),
+                **chance_level_line_kw,
+            )
+        else:
+            self.chance_level_ = None
+
+        if "label" in line_kwargs or plot_chance_level:
+            self.ax_.legend(loc="lower left")
+
         return self
 
     @classmethod
@@ -186,9 +241,12 @@ class PrecisionRecallDisplay:
         *,
         sample_weight=None,
         pos_label=None,
+        drop_intermediate=False,
         response_method="auto",
         name=None,
         ax=None,
+        plot_chance_level=False,
+        chance_level_kw=None,
         **kwargs,
     ):
         """Plot precision-recall curve given an estimator and some data.
@@ -208,10 +266,17 @@ class PrecisionRecallDisplay:
         sample_weight : array-like of shape (n_samples,), default=None
             Sample weights.
 
-        pos_label : str or int, default=None
+        pos_label : int, float, bool or str, default=None
             The class considered as the positive class when computing the
             precision and recall metrics. By default, `estimators.classes_[1]`
             is considered as the positive class.
+
+        drop_intermediate : bool, default=False
+            Whether to drop some suboptimal thresholds which would not appear
+            on a plotted precision-recall curve. This is useful in order to
+            create lighter precision-recall curves.
+
+            .. versionadded:: 1.3
 
         response_method : {'predict_proba', 'decision_function', 'auto'}, \
             default='auto'
@@ -225,6 +290,19 @@ class PrecisionRecallDisplay:
 
         ax : matplotlib axes, default=None
             Axes object to plot on. If `None`, a new figure and axes is created.
+
+        plot_chance_level : bool, default=False
+            Whether to plot the chance level. The chance level is the prevalence
+            of the positive label computed from the data passed during
+            :meth:`from_estimator` or :meth:`from_predictions` call.
+
+            .. versionadded:: 1.3
+
+        chance_level_kw : dict, default=None
+            Keyword arguments to be passed to matplotlib's `plot` for rendering
+            the chance level line.
+
+            .. versionadded:: 1.3
 
         **kwargs : dict
             Keyword arguments to be passed to matplotlib's `plot`.
@@ -240,7 +318,7 @@ class PrecisionRecallDisplay:
 
         Notes
         -----
-        The average precision (cf. :func:`~sklearn.metrics.average_precision`)
+        The average precision (cf. :func:`~sklearn.metrics.average_precision_score`)
         in scikit-learn is computed without any interpolation. To be consistent
         with this metric, the precision-recall curve is plotted without any
         interpolation as well (step-wise style).
@@ -267,18 +345,14 @@ class PrecisionRecallDisplay:
         <...>
         >>> plt.show()
         """
-        method_name = f"{cls.__name__}.from_estimator"
-        check_matplotlib_support(method_name)
-        if not is_classifier(estimator):
-            raise ValueError(f"{method_name} only supports classifiers")
-        y_pred, pos_label = _get_response(
-            X,
+        y_pred, pos_label, name = cls._validate_and_get_response_values(
             estimator,
-            response_method,
+            X,
+            y,
+            response_method=response_method,
             pos_label=pos_label,
+            name=name,
         )
-
-        name = name if name is not None else estimator.__class__.__name__
 
         return cls.from_predictions(
             y,
@@ -286,7 +360,10 @@ class PrecisionRecallDisplay:
             sample_weight=sample_weight,
             name=name,
             pos_label=pos_label,
+            drop_intermediate=drop_intermediate,
             ax=ax,
+            plot_chance_level=plot_chance_level,
+            chance_level_kw=chance_level_kw,
             **kwargs,
         )
 
@@ -298,8 +375,11 @@ class PrecisionRecallDisplay:
         *,
         sample_weight=None,
         pos_label=None,
+        drop_intermediate=False,
         name=None,
         ax=None,
+        plot_chance_level=False,
+        chance_level_kw=None,
         **kwargs,
     ):
         """Plot precision-recall curve given binary class predictions.
@@ -315,9 +395,16 @@ class PrecisionRecallDisplay:
         sample_weight : array-like of shape (n_samples,), default=None
             Sample weights.
 
-        pos_label : str or int, default=None
+        pos_label : int, float, bool or str, default=None
             The class considered as the positive class when computing the
             precision and recall metrics.
+
+        drop_intermediate : bool, default=False
+            Whether to drop some suboptimal thresholds which would not appear
+            on a plotted precision-recall curve. This is useful in order to
+            create lighter precision-recall curves.
+
+            .. versionadded:: 1.3
 
         name : str, default=None
             Name for labeling curve. If `None`, name will be set to
@@ -325,6 +412,19 @@ class PrecisionRecallDisplay:
 
         ax : matplotlib axes, default=None
             Axes object to plot on. If `None`, a new figure and axes is created.
+
+        plot_chance_level : bool, default=False
+            Whether to plot the chance level. The chance level is the prevalence
+            of the positive label computed from the data passed during
+            :meth:`from_estimator` or :meth:`from_predictions` call.
+
+            .. versionadded:: 1.3
+
+        chance_level_kw : dict, default=None
+            Keyword arguments to be passed to matplotlib's `plot` for rendering
+            the chance level line.
+
+            .. versionadded:: 1.3
 
         **kwargs : dict
             Keyword arguments to be passed to matplotlib's `plot`.
@@ -340,7 +440,7 @@ class PrecisionRecallDisplay:
 
         Notes
         -----
-        The average precision (cf. :func:`~sklearn.metrics.average_precision`)
+        The average precision (cf. :func:`~sklearn.metrics.average_precision_score`)
         in scikit-learn is computed without any interpolation. To be consistent
         with this metric, the precision-recall curve is plotted without any
         interpolation as well (step-wise style).
@@ -368,26 +468,37 @@ class PrecisionRecallDisplay:
         <...>
         >>> plt.show()
         """
-        check_matplotlib_support(f"{cls.__name__}.from_predictions")
-
-        check_consistent_length(y_true, y_pred, sample_weight)
-        pos_label = _check_pos_label_consistency(pos_label, y_true)
+        pos_label, name = cls._validate_from_predictions_params(
+            y_true, y_pred, sample_weight=sample_weight, pos_label=pos_label, name=name
+        )
 
         precision, recall, _ = precision_recall_curve(
-            y_true, y_pred, pos_label=pos_label, sample_weight=sample_weight
+            y_true,
+            y_pred,
+            pos_label=pos_label,
+            sample_weight=sample_weight,
+            drop_intermediate=drop_intermediate,
         )
         average_precision = average_precision_score(
             y_true, y_pred, pos_label=pos_label, sample_weight=sample_weight
         )
 
-        name = name if name is not None else "Classifier"
+        class_count = Counter(y_true)
+        prevalence_pos_label = class_count[pos_label] / sum(class_count.values())
 
-        viz = PrecisionRecallDisplay(
+        viz = cls(
             precision=precision,
             recall=recall,
             average_precision=average_precision,
             estimator_name=name,
             pos_label=pos_label,
+            prevalence_pos_label=prevalence_pos_label,
         )
 
-        return viz.plot(ax=ax, name=name, **kwargs)
+        return viz.plot(
+            ax=ax,
+            name=name,
+            plot_chance_level=plot_chance_level,
+            chance_level_kw=chance_level_kw,
+            **kwargs,
+        )

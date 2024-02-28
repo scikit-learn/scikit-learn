@@ -135,9 +135,8 @@ X_2d = scaler.fit_transform(X_2d)
 # 10 is often helpful. Using a basis of 2, a finer
 # tuning can be achieved but at a much higher cost.
 
+from sklearn.model_selection import GridSearchCV, StratifiedShuffleSplit
 from sklearn.svm import SVC
-from sklearn.model_selection import StratifiedShuffleSplit
-from sklearn.model_selection import GridSearchCV
 
 C_range = np.logspace(-2, 10, 13)
 gamma_range = np.logspace(-9, 3, 13)

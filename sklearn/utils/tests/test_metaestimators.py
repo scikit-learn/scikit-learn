@@ -1,94 +1,8 @@
-import numpy as np
-import pytest
-import warnings
-
 import pickle
 
-from sklearn.utils.metaestimators import if_delegate_has_method
+import pytest
+
 from sklearn.utils.metaestimators import available_if
-
-
-class Prefix:
-    def func(self):
-        pass
-
-
-class MockMetaEstimator:
-    """This is a mock meta estimator"""
-
-    a_prefix = Prefix()
-
-    @if_delegate_has_method(delegate="a_prefix")
-    def func(self):
-        """This is a mock delegated function"""
-        pass
-
-
-@pytest.mark.filterwarnings("ignore:if_delegate_has_method was deprecated")
-def test_delegated_docstring():
-    assert "This is a mock delegated function" in str(
-        MockMetaEstimator.__dict__["func"].__doc__
-    )
-    assert "This is a mock delegated function" in str(MockMetaEstimator.func.__doc__)
-    assert "This is a mock delegated function" in str(MockMetaEstimator().func.__doc__)
-
-
-class MetaEst:
-    """A mock meta estimator"""
-
-    def __init__(self, sub_est, better_sub_est=None):
-        self.sub_est = sub_est
-        self.better_sub_est = better_sub_est
-
-    @if_delegate_has_method(delegate="sub_est")
-    def predict(self):
-        pass
-
-
-class MetaEstTestTuple(MetaEst):
-    """A mock meta estimator to test passing a tuple of delegates"""
-
-    @if_delegate_has_method(delegate=("sub_est", "better_sub_est"))
-    def predict(self):
-        pass
-
-
-class MetaEstTestList(MetaEst):
-    """A mock meta estimator to test passing a list of delegates"""
-
-    @if_delegate_has_method(delegate=["sub_est", "better_sub_est"])
-    def predict(self):
-        pass
-
-
-class HasPredict:
-    """A mock sub-estimator with predict method"""
-
-    def predict(self):
-        pass
-
-
-class HasNoPredict:
-    """A mock sub-estimator with no predict method"""
-
-    pass
-
-
-class HasPredictAsNDArray:
-    """A mock sub-estimator where predict is a NumPy array"""
-
-    predict = np.ones((10, 2), dtype=np.int64)
-
-
-@pytest.mark.filterwarnings("ignore:if_delegate_has_method was deprecated")
-def test_if_delegate_has_method():
-    assert hasattr(MetaEst(HasPredict()), "predict")
-    assert not hasattr(MetaEst(HasNoPredict()), "predict")
-    assert not hasattr(MetaEstTestTuple(HasNoPredict(), HasNoPredict()), "predict")
-    assert hasattr(MetaEstTestTuple(HasPredict(), HasNoPredict()), "predict")
-    assert not hasattr(MetaEstTestTuple(HasNoPredict(), HasPredict()), "predict")
-    assert not hasattr(MetaEstTestList(HasNoPredict(), HasPredict()), "predict")
-    assert hasattr(MetaEstTestList(HasPredict(), HasPredict()), "predict")
 
 
 class AvailableParameterEstimator:
@@ -135,29 +49,6 @@ def test_available_if_unbound_method():
         match="This 'AvailableParameterEstimator' has no attribute 'available_func'",
     ):
         AvailableParameterEstimator.available_func(est)
-
-
-@pytest.mark.filterwarnings("ignore:if_delegate_has_method was deprecated")
-def test_if_delegate_has_method_numpy_array():
-    """Check that we can check for an attribute that is a NumPy array.
-
-    This is a non-regression test for:
-    https://github.com/scikit-learn/scikit-learn/issues/21144
-    """
-    estimator = MetaEst(HasPredictAsNDArray())
-    assert hasattr(estimator, "predict")
-
-
-def test_if_delegate_has_method_deprecated():
-    """Check the deprecation warning of if_delegate_has_method"""
-    # don't warn when creating the decorator
-    with warnings.catch_warnings():
-        warnings.simplefilter("error", FutureWarning)
-        _ = if_delegate_has_method(delegate="predict")
-
-    # Only when calling it
-    with pytest.warns(FutureWarning, match="if_delegate_has_method was deprecated"):
-        hasattr(MetaEst(HasPredict()), "predict")
 
 
 def test_available_if_methods_can_be_pickled():

@@ -38,16 +38,16 @@ X.head()
 
 # %%
 # Scikit-learn provides an estimator called
-# :class:`~sklearn.linear_model.LinearLarsIC` that uses either Akaike's
+# :class:`~sklearn.linear_model.LassoLarsIC` that uses either Akaike's
 # information criterion (AIC) or the Bayesian information criterion (BIC) to
 # select the best model. Before fitting
 # this model, we will scale the dataset.
 #
 # In the following, we are going to fit two models to compare the values
 # reported by AIC and BIC.
-from sklearn.preprocessing import StandardScaler
 from sklearn.linear_model import LassoLarsIC
 from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import StandardScaler
 
 lasso_lars_ic = make_pipeline(StandardScaler(), LassoLarsIC(criterion="aic")).fit(X, y)
 
