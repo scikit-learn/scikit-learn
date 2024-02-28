@@ -556,14 +556,15 @@ def ridge_regression(
 
     Examples
     --------
+    >>> import numpy as np
     >>> from sklearn.datasets import make_regression
     >>> from sklearn.linear_model import ridge_regression
-    >>> X, y = make_regression(
-    ...     n_features=4, n_informative=2, shuffle=False, random_state=0
-    ... )
+    >>> rng = np.random.RandomState(0)
+    >>> X = rng.randn(100, 4)
+    >>> y = 2.0 * X[:, 0] - 1.0 * X[:, 1] + 0.1 * rng.standard_normal(100)
     >>> coef, intercept = ridge_regression(X, y, alpha=1.0, return_intercept=True)
-    >>> coef
-    array([20.2..., 33.7...,  0.1...,  0.0...])
+    >>> list(coef)
+    [1.9..., -1.0..., -0.0..., -0.0...]
     >>> intercept
     -0.0...
     """
@@ -1986,7 +1987,9 @@ class _RidgeGCV(LinearModel):
 
         sample_weight : float or ndarray of shape (n_samples,), default=None
             Individual weights for each sample. If given a float, every sample
-            will have the same weight.
+            will have the same weight. Note that the scale of `sample_weight`
+            has an impact on the loss; i.e. multiplying all weights by `k`
+            is equivalent to setting `alpha / k`.
 
         score_params : dict, default=None
             Parameters to be passed to the underlying scorer.
@@ -2237,12 +2240,21 @@ class _BaseRidgeCV(LinearModel):
         _raise_for_params(params, self, "fit")
         cv = self.cv
 
-        check_scalar_alpha = partial(
-            check_scalar,
-            target_type=numbers.Real,
-            min_val=0.0,
-            include_boundaries="neither",
-        )
+        # `_RidgeGCV` does not work for alpha = 0
+        if cv is None:
+            check_scalar_alpha = partial(
+                check_scalar,
+                target_type=numbers.Real,
+                min_val=0.0,
+                include_boundaries="neither",
+            )
+        else:
+            check_scalar_alpha = partial(
+                check_scalar,
+                target_type=numbers.Real,
+                min_val=0.0,
+                include_boundaries="left",
+            )
 
         if isinstance(self.alphas, (np.ndarray, list, tuple)):
             n_alphas = 1 if np.ndim(self.alphas) == 0 else len(self.alphas)
@@ -2370,7 +2382,7 @@ class RidgeCV(MultiOutputMixin, RegressorMixin, _BaseRidgeCV):
         Alpha corresponds to ``1 / (2C)`` in other linear models such as
         :class:`~sklearn.linear_model.LogisticRegression` or
         :class:`~sklearn.svm.LinearSVC`.
-        If using Leave-One-Out cross-validation, alphas must be positive.
+        If using Leave-One-Out cross-validation, alphas must be strictly positive.
 
     fit_intercept : bool, default=True
         Whether to calculate the intercept for this model. If set
@@ -2546,6 +2558,7 @@ class RidgeClassifierCV(_RidgeClassifierMixin, _BaseRidgeCV):
         Alpha corresponds to ``1 / (2C)`` in other linear models such as
         :class:`~sklearn.linear_model.LogisticRegression` or
         :class:`~sklearn.svm.LinearSVC`.
+        If using Leave-One-Out cross-validation, alphas must be strictly positive.
 
     fit_intercept : bool, default=True
         Whether to calculate the intercept for this model. If set

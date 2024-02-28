@@ -1,6 +1,7 @@
 from functools import partial
 
 import numpy as np
+from numpy.testing import assert_array_equal
 
 from sklearn.base import (
     BaseEstimator,
@@ -54,9 +55,12 @@ def check_recorded_metadata(obj, method, split_params=tuple(), **kwargs):
     split_params : tuple, default=empty
         specifies any parameters which are to be checked as being a subset
         of the original values.
+    **kwargs : metadata to check
     """
     records = getattr(obj, "_records", dict()).get(method, dict())
-    assert set(kwargs.keys()) == set(records.keys())
+    assert set(kwargs.keys()) == set(
+        records.keys()
+    ), f"Expected {kwargs.keys()} vs {records.keys()}"
     for key, value in kwargs.items():
         recorded_value = records[key]
         # The following condition is used to check for any specified parameters
@@ -64,7 +68,10 @@ def check_recorded_metadata(obj, method, split_params=tuple(), **kwargs):
         if key in split_params and recorded_value is not None:
             assert np.isin(recorded_value, value).all()
         else:
-            assert recorded_value is value
+            if isinstance(recorded_value, np.ndarray):
+                assert_array_equal(recorded_value, value)
+            else:
+                assert recorded_value is value, f"Expected {recorded_value} vs {value}"
 
 
 record_metadata_not_default = partial(record_metadata, record_default=False)
@@ -155,27 +162,46 @@ class ConsumingRegressor(RegressorMixin, BaseEstimator):
         )
         return self
 
-    def predict(self, X, sample_weight="default", metadata="default"):
-        pass  # pragma: no cover
+    def predict(self, X, y=None, sample_weight="default", metadata="default"):
+        record_metadata_not_default(
+            self, "predict", sample_weight=sample_weight, metadata=metadata
+        )
+        return np.zeros(shape=(len(X),))
 
-        # when needed, uncomment the implementation
-        # record_metadata_not_default(
-        #     self, "predict", sample_weight=sample_weight, metadata=metadata
-        # )
-        # return np.zeros(shape=(len(X),))
+    def score(self, X, y, sample_weight="default", metadata="default"):
+        record_metadata_not_default(
+            self, "score", sample_weight=sample_weight, metadata=metadata
+        )
+        return 1
 
 
 class NonConsumingClassifier(ClassifierMixin, BaseEstimator):
     """A classifier which accepts no metadata on any method."""
 
-    def __init__(self, registry=None):
-        self.registry = registry
+    def __init__(self, alpha=0.0):
+        self.alpha = alpha
 
     def fit(self, X, y):
-        if self.registry is not None:
-            self.registry.append(self)
-
         self.classes_ = np.unique(y)
+        return self
+
+    def partial_fit(self, X, y, classes=None):
+        return self
+
+    def decision_function(self, X):
+        return self.predict(X)
+
+    def predict(self, X):
+        return np.ones(len(X))
+
+
+class NonConsumingRegressor(RegressorMixin, BaseEstimator):
+    """A classifier which accepts no metadata on any method."""
+
+    def fit(self, X, y):
+        return self
+
+    def partial_fit(self, X, y):
         return self
 
     def predict(self, X):
@@ -221,6 +247,7 @@ class ConsumingClassifier(ClassifierMixin, BaseEstimator):
         record_metadata_not_default(
             self, "fit", sample_weight=sample_weight, metadata=metadata
         )
+
         self.classes_ = np.unique(y)
         return self
 
@@ -253,6 +280,13 @@ class ConsumingClassifier(ClassifierMixin, BaseEstimator):
             self, "predict_proba", sample_weight=sample_weight, metadata=metadata
         )
         return np.zeros(shape=(len(X),))
+
+    # uncomment when needed
+    # def score(self, X, y, sample_weight="default", metadata="default"):
+    # record_metadata_not_default(
+    #    self, "score", sample_weight=sample_weight, metadata=metadata
+    # )
+    # return 1
 
 
 class ConsumingTransformer(TransformerMixin, BaseEstimator):
@@ -321,7 +355,7 @@ class ConsumingScorer(_Scorer):
         return super()._score(method_caller, clf, X, y, sample_weight=sample_weight)
 
 
-class ConsumingSplitter(BaseCrossValidator, GroupsConsumerMixin):
+class ConsumingSplitter(GroupsConsumerMixin, BaseCrossValidator):
     def __init__(self, registry=None):
         self.registry = registry
 

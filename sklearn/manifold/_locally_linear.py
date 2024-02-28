@@ -307,6 +307,17 @@ def locally_linear_embedding(
     .. [4] Zhang, Z. & Zha, H. Principal manifolds and nonlinear
         dimensionality reduction via tangent space alignment.
         Journal of Shanghai Univ.  8:406 (2004)
+
+    Examples
+    --------
+    >>> from sklearn.datasets import load_digits
+    >>> from sklearn.manifold import locally_linear_embedding
+    >>> X, _ = load_digits(return_X_y=True)
+    >>> X.shape
+    (1797, 64)
+    >>> embedding, _ = locally_linear_embedding(X[:100],n_neighbors=5, n_components=2)
+    >>> embedding.shape
+    (100, 2)
     """
     if eigen_solver not in ("auto", "arpack", "dense"):
         raise ValueError("unrecognized eigen_solver '%s'" % eigen_solver)

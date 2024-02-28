@@ -1383,6 +1383,28 @@ def test_ridgecv_alphas_conversion(Estimator):
     assert_array_equal(ridge_est.alphas, np.asarray(alphas))
 
 
+@pytest.mark.parametrize("cv", [None, 3])
+@pytest.mark.parametrize("Estimator", [RidgeCV, RidgeClassifierCV])
+def test_ridgecv_alphas_zero(cv, Estimator):
+    """Check alpha=0.0 raises error only when `cv=None`."""
+    rng = np.random.RandomState(0)
+    alphas = (0.0, 1.0, 10.0)
+
+    n_samples, n_features = 5, 5
+    if Estimator is RidgeCV:
+        y = rng.randn(n_samples)
+    else:
+        y = rng.randint(0, 2, n_samples)
+    X = rng.randn(n_samples, n_features)
+
+    ridge_est = Estimator(alphas=alphas, cv=cv)
+    if cv is None:
+        with pytest.raises(ValueError, match=r"alphas\[0\] == 0.0, must be > 0.0."):
+            ridge_est.fit(X, y)
+    else:
+        ridge_est.fit(X, y)
+
+
 def test_ridgecv_sample_weight():
     rng = np.random.RandomState(0)
     alphas = (0.1, 1.0, 10.0)
