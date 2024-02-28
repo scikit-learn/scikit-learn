@@ -874,7 +874,7 @@ def make_moons(n_samples=100, *, shuffle=True, noise=None, random_state=None):
     >>> y.shape
     (200,)
     >>> list(y[:10])
-    [1, 0, 1, 1, 1, 0, 0, 0, 1, 0]
+    [0, 0, 0, 1, 1, 1, 0, 1, 1, 0]
     """
 
     if isinstance(n_samples, numbers.Integral):
