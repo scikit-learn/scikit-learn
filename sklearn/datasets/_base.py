@@ -70,6 +70,7 @@ def get_data_home(data_home=None) -> str:
 
     Examples
     --------
+    >>> import os
     >>> from sklearn.datasets import get_data_home
     >>> data_home_path = get_data_home()
     >>> os.path.exists(data_home_path)
