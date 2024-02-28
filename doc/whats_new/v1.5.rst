@@ -226,6 +226,15 @@ Changelog
   prefix any feature names and will error if feature names are not unique.
   :pr:`25991` by :user:`Jiawei Zhang <jiawei-zhang-a>`.
 
+:mod:`sklearn.tree`
+...................
+
+- |Enhancement| Plotting trees in matplotlib via :func:`tree.plot_tree` now
+  show a "True/False" label to indicate the directionality the samples traverse
+  given the split condition.
+  :pr:`28552` by :user:`Adam Li <adam2392>`.
+
+
 .. rubric:: Code and documentation contributors
 
 Thanks to everyone who has contributed to the maintenance and improvement of
