@@ -18,7 +18,7 @@ reference on concepts repeated across the API, see :ref:`glossary`.
 {% for module, _ in API_REFERENCE %}
   {{ module }}
 {%- endfor %}
-{% if DEPRECATED_API_REFERENCE %}
+{%- if DEPRECATED_API_REFERENCE %}
   deprecated
 {%- endif %}
 
