@@ -436,7 +436,7 @@ def test_dbcv_score_basic_input(non_spherical_sample):
 
 
 def test_dbcv_score_verbose(non_spherical_sample):
-    with patch("print") as mocked_print:
+    with patch("builtins.print") as mocked_print:
         dbcv_score(*non_spherical_sample, verbose=True)
         mocked_print.assert_called()
 
