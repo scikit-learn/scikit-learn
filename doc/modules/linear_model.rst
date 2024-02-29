@@ -193,9 +193,14 @@ This method has the same order of complexity as
 Setting the regularization parameter: leave-one-out Cross-Validation
 --------------------------------------------------------------------
 
-:class:`RidgeCV` implements ridge regression with built-in
-cross-validation of the alpha parameter. The object works in the same way
-as GridSearchCV except that it defaults to Leave-One-Out Cross-Validation::
+:class:`RidgeCV` and :class:`RidgeClassifierCV` implement ridge
+regression/classification with built-in cross-validation of the alpha parameter.
+They work in the same way as :class:`~sklearn.model_selection.GridSearchCV` except
+that it defaults to efficient Leave-One-Out :term:`cross-validation`.
+When using the default :term:`cross-validation`, alpha cannot be 0 due to the
+formulation used to calculate Leave-One-Out error. See [RL2007]_ for details.
+
+Usage example::
 
     >>> import numpy as np
     >>> from sklearn import linear_model
@@ -211,16 +216,13 @@ cross-validation with :class:`~sklearn.model_selection.GridSearchCV`, for
 example `cv=10` for 10-fold cross-validation, rather than Leave-One-Out
 Cross-Validation.
 
-|details-start|
-**References**
-|details-split|
+.. topic:: References:
 
-* "Notes on Regularized Least Squares", Rifkin & Lippert (`technical report
-  <http://cbcl.mit.edu/publications/ps/MIT-CSAIL-TR-2007-025.pdf>`_,
-  `course slides
-  <https://www.mit.edu/~9.520/spring07/Classes/rlsslides.pdf>`_).
 
-|details-end|
+  .. [RL2007] "Notes on Regularized Least Squares", Rifkin & Lippert (`technical report
+    <http://cbcl.mit.edu/publications/ps/MIT-CSAIL-TR-2007-025.pdf>`_,
+    `course slides
+    <https://www.mit.edu/~9.520/spring07/Classes/rlsslides.pdf>`_).
 
 .. _lasso:
 
@@ -683,7 +685,7 @@ orthogonal matching pursuit can approximate the optimum solution vector with a
 fixed number of non-zero elements:
 
 .. math::
-    \underset{w}{\operatorname{arg\,min\,}}  ||y - Xw||_2^2 \text{ subject to } ||w||_0 \leq n_{\text{nonzero\_coefs}}
+    \underset{w}{\operatorname{arg\,min\,}}  ||y - Xw||_2^2 \text{ subject to } ||w||_0 \leq n_{\text{nonzero_coefs}}
 
 Alternatively, orthogonal matching pursuit can target a specific error instead
 of a specific number of non-zero coefficients. This can be expressed as:
@@ -736,7 +738,7 @@ variable to be estimated from the data.
 To obtain a fully probabilistic model, the output :math:`y` is assumed
 to be Gaussian distributed around :math:`X w`:
 
-.. math::  p(y|X,w,\alpha) = \mathcal{N}(y|X w,\alpha)
+.. math::  p(y|X,w,\alpha) = \mathcal{N}(y|X w,\alpha^{-1})
 
 where :math:`\alpha` is again treated as a random variable that is to be
 estimated from the data.
@@ -1534,10 +1536,10 @@ Each iteration performs the following steps:
 
 1. Select ``min_samples`` random samples from the original data and check
    whether the set of data is valid (see ``is_data_valid``).
-2. Fit a model to the random subset (``base_estimator.fit``) and check
+2. Fit a model to the random subset (``estimator.fit``) and check
    whether the estimated model is valid (see ``is_model_valid``).
 3. Classify all data as inliers or outliers by calculating the residuals
-   to the estimated model (``base_estimator.predict(X) - y``) - all data
+   to the estimated model (``estimator.predict(X) - y``) - all data
    samples with absolute residuals smaller than or equal to the
    ``residual_threshold`` are considered as inliers.
 4. Save fitted model as best model if number of inlier samples is

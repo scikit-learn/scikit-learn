@@ -2,6 +2,10 @@
 
 .. currentmodule:: sklearn
 
+==============
+Older Versions
+==============
+
 .. _changes_0_12.1:
 
 Version 0.12.1
@@ -1120,7 +1124,7 @@ Changelog
 ---------
 
 - New `stochastic gradient
-  <http://scikit-learn.org/stable/modules/sgd.html>`_ descent
+  <https://scikit-learn.org/stable/modules/sgd.html>`_ descent
   module by Peter Prettenhofer. The module comes with complete
   documentation and examples.
 
@@ -1252,9 +1256,9 @@ Documentation
 - Improved documentation for many modules, now separating
   narrative documentation from the class reference. As an example,
   see `documentation for the SVM module
-  <http://scikit-learn.org/stable/modules/svm.html>`_ and the
+  <https://scikit-learn.org/stable/modules/svm.html>`_ and the
   complete `class reference
-  <http://scikit-learn.org/stable/modules/classes.html>`_.
+  <https://scikit-learn.org/stable/modules/classes.html>`_.
 
 Fixes
 -----
@@ -1276,7 +1280,7 @@ Examples
   :ref:`sphx_glr_auto_examples_text_plot_document_classification_20newsgroups.py`
 
 - Many more examples. `See here
-  <http://scikit-learn.org/stable/auto_examples/index.html>`_
+  <https://scikit-learn.org/stable/auto_examples/index.html>`_
   the full list of examples.
 
 
