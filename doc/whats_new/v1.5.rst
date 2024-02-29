@@ -96,6 +96,9 @@ Changelog
   :class:`~calibration.CalibrationDisplay`.
   :pr:`28051` by :user:`Pierre de Fréminville <pidefrem>`.
 
+- |Feature| :func:`metrics.cluster.dbcv_score`
+  :pr:`28244` by :user:`Luis Goerler <luis261>`.
+
 :mod:`sklearn.utils`
 ....................
 
