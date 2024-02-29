@@ -6,7 +6,7 @@ Evaluation of outlier detection estimators
 This example compares two outlier detection algorithms, namely
 :ref:`local_outlier_factor` (LOF) and :ref:`isolation_forest` (IForest), on
 real-world datasets available in :class:`sklearn.datasets`. The goal is to show
-different algorithms perform well on different datasets and contrast their
+that different algorithms perform well on different datasets and contrast their
 training speed and sensitivity to hyperparameters.
 
 The algorithms are trained (without labels) on the whole dataset assumed to
@@ -317,9 +317,10 @@ _ = plt.tight_layout(pad=2.0)  # spacing between subplots
 # performs considerably better on the Ames housing dataset than IForest.
 #
 # Recall however that Isolation Forest tends to train much faster than LOF on
-# datasets with a large number of samples. Indeed LOF needs to compute pairwise
-# distances to find nearest neighbors, which has a quadratic complexity in large
-# dimensions. This can make this method prohibitive on large datasets.
+# datasets with a large number of samples. LOF needs to compute pairwise
+# distances to find nearest neighbors, which has a quadratic complexity with respect
+# to the number of observations. This can make this method prohibitive on large
+# datasets.
 #
 # Ablation study
 # ==============
