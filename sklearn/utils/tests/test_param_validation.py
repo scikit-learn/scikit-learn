@@ -34,6 +34,7 @@ from sklearn.utils._param_validation import (
     make_constraint,
     validate_params,
 )
+from sklearn.utils.fixes import CSR_CONTAINERS
 
 
 # Some helpers for the tests
@@ -405,6 +406,10 @@ def test_generate_valid_param(constraint):
         ("array-like", [[1, 2], [3, 4]]),
         ("array-like", np.array([[1, 2], [3, 4]])),
         ("sparse matrix", csr_matrix([[1, 2], [3, 4]])),
+        *[
+            ("sparse matrix", container([[1, 2], [3, 4]]))
+            for container in CSR_CONTAINERS
+        ],
         ("random_state", 0),
         ("random_state", np.random.RandomState(0)),
         ("random_state", None),

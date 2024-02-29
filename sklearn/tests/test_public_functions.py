@@ -209,6 +209,7 @@ PARAM_VALIDATION_FUNCTION_LIST = [
     "sklearn.linear_model.ridge_regression",
     "sklearn.manifold.locally_linear_embedding",
     "sklearn.manifold.smacof",
+    "sklearn.manifold.spectral_embedding",
     "sklearn.manifold.trustworthiness",
     "sklearn.metrics.accuracy_score",
     "sklearn.metrics.auc",

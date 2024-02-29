@@ -27,6 +27,16 @@ Metadata Routing
   attributes.
   :pr:`28435` by `Adrin Jalali`_.
 
+Changelog
+---------
+
+:mod:`sklearn.neighbors`
+........................
+
+- |Fix| Fixes :class:`neighbors.NeighborhoodComponentsAnalysis` such that
+  `get_feature_names_out` returns the correct number of feature names.
+  :pr:`28306` by :user:`Brendan Lu <brendanlu>`.
+
 .. _changes_1_4_1:
 
 Version 1.4.1

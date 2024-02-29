@@ -323,7 +323,6 @@ class NeighborhoodComponentsAnalysis(
 
         # Reshape the solution found by the optimizer
         self.components_ = opt_result.x.reshape(-1, X.shape[1])
-        self._n_features_out = self.components_.shape[1]
 
         # Stop timer
         t_train = time.time() - t_train
@@ -523,3 +522,8 @@ class NeighborhoodComponentsAnalysis(
 
     def _more_tags(self):
         return {"requires_y": True}
+
+    @property
+    def _n_features_out(self):
+        """Number of transformed output features."""
+        return self.components_.shape[0]

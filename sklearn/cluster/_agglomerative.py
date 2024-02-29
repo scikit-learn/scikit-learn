@@ -809,7 +809,7 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
         By default, no caching is done. If a string is given, it is the
         path to the caching directory.
 
-    connectivity : array-like or callable, default=None
+    connectivity : array-like, sparse matrix, or callable, default=None
         Connectivity matrix. Defines for each sample the neighboring
         samples following a given structure of the data.
         This can be a connectivity matrix itself or a callable that transforms
@@ -929,7 +929,7 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
             Hidden(None),
         ],
         "memory": [str, HasMethods("cache"), None],
-        "connectivity": ["array-like", callable, None],
+        "connectivity": ["array-like", "sparse matrix", callable, None],
         "compute_full_tree": [StrOptions({"auto"}), "boolean"],
         "linkage": [StrOptions(set(_TREE_BUILDERS.keys()))],
         "distance_threshold": [Interval(Real, 0, None, closed="left"), None],
@@ -1151,7 +1151,7 @@ class FeatureAgglomeration(
         By default, no caching is done. If a string is given, it is the
         path to the caching directory.
 
-    connectivity : array-like or callable, default=None
+    connectivity : array-like, sparse matrix, or callable, default=None
         Connectivity matrix. Defines for each feature the neighboring
         features following a given structure of the data.
         This can be a connectivity matrix itself or a callable that transforms
@@ -1275,7 +1275,7 @@ class FeatureAgglomeration(
             Hidden(None),
         ],
         "memory": [str, HasMethods("cache"), None],
-        "connectivity": ["array-like", callable, None],
+        "connectivity": ["array-like", "sparse matrix", callable, None],
         "compute_full_tree": [StrOptions({"auto"}), "boolean"],
         "linkage": [StrOptions(set(_TREE_BUILDERS.keys()))],
         "pooling_func": [callable],

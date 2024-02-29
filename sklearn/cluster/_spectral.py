@@ -14,7 +14,7 @@ from scipy.linalg import LinAlgError, qr, svd
 from scipy.sparse import csc_matrix
 
 from ..base import BaseEstimator, ClusterMixin, _fit_context
-from ..manifold import spectral_embedding
+from ..manifold._spectral_embedding import _spectral_embedding
 from ..metrics.pairwise import KERNEL_PARAMS, pairwise_kernels
 from ..neighbors import NearestNeighbors, kneighbors_graph
 from ..utils import as_float_array, check_random_state
@@ -741,7 +741,7 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
         # The first eigenvector is constant only for fully connected graphs
         # and should be kept for spectral clustering (drop_first = False)
         # See spectral_embedding documentation.
-        maps = spectral_embedding(
+        maps = _spectral_embedding(
             self.affinity_matrix_,
             n_components=n_components,
             eigen_solver=self.eigen_solver,
