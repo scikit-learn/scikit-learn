@@ -415,7 +415,7 @@ def test_dbcv_score_precomputed_missing_d_valerr(non_spherical_sample):
         dbcv_score(
             cdist(non_spherical_sample[0], non_spherical_sample[0], "euclidean"),
             non_spherical_sample[1],
-            metric="precomputed"
+            metric="precomputed",
         )
 
 
@@ -427,18 +427,24 @@ def test_dbcv_score_rand_in_output_val_range(non_spherical_sample):
 
 
 def test_dbcv_score_basic_input(non_spherical_sample):
+    res = dbcv_score(*non_spherical_sample, per_cluster_scores=True)
     # score should at least be non-negative if labeled by ground-truth
-    assert dbcv_score(*non_spherical_sample) >= 0
+    assert res[0] >= 0
+    assert dbcv_score(*non_spherical_sample) == res[0]
+    assert isinstance(res[1], dict)
 
 
 def test_dbcv_score_precomputed_input(non_spherical_sample):
     # score should at least be non-negative if labeled by ground-truth
-    assert dbcv_score(
-        cdist(non_spherical_sample[0], non_spherical_sample[0], "euclidean"),
-        non_spherical_sample[1],
-        metric="precomputed",
-        d=2
-    ) >= 0
+    assert (
+        dbcv_score(
+            cdist(non_spherical_sample[0], non_spherical_sample[0], "euclidean"),
+            non_spherical_sample[1],
+            metric="precomputed",
+            d=2,
+        )
+        >= 0
+    )
 
 
 def test_dbcv_score_mst_raw_dist(non_spherical_sample):
