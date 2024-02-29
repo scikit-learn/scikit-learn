@@ -29,6 +29,7 @@ from ..utils import (
     indexable,
     metadata_routing,
 )
+from ..utils._array_api import get_namespace, device as array_api_device
 from ..utils._param_validation import Interval, RealNotInt, validate_params
 from ..utils.extmath import _approximate_mode
 from ..utils.metadata_routing import _MetadataRequester
@@ -2786,6 +2787,14 @@ def train_test_split(
         cv = CVClass(test_size=n_test, train_size=n_train, random_state=random_state)
 
         train, test = next(cv.split(X=arrays[0], y=stratify))
+
+    xp, is_array_api_compliant = get_namespace(arrays[0])
+    if is_array_api_compliant:
+        # For indexing, the data and index arrays need to be of the same type
+        # and on the same device.
+        _device = array_api_device(arrays[0])
+        train = xp.asarray(train, device=_device)
+        test = xp.asarray(test, device=_device)
 
     return list(
         chain.from_iterable(

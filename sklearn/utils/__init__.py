@@ -16,6 +16,7 @@ from scipy.sparse import issparse
 
 from ..exceptions import DataConversionWarning
 from . import _joblib, metadata_routing
+from ._array_api import get_namespace
 from ._bunch import Bunch
 from ._chunking import gen_batches, gen_even_slices
 from ._estimator_html_repr import estimator_html_repr
@@ -92,6 +93,12 @@ def _array_indexing(array, key, key_dtype, axis):
         key = np.asarray(key)
     if isinstance(key, tuple):
         key = list(key)
+    if key_dtype == 'an-array-dtype':
+        # A non-numpy array for which determining the dtype kind wasn't
+        # possible. Use `take` over `__getitem__` to support integer indexing.
+        xp, _ = get_namespace(array)
+        if hasattr(xp, 'isdtype') and xp.isdtype(key.dtype, 'integral'):
+            return xp.take(array, key, axis=axis)
     return array[key, ...] if axis == 0 else array[:, key]
 
 
@@ -197,10 +204,14 @@ def _determine_key_type(key, accept_slice=True):
             raise ValueError(err_msg)
         return key_type.pop()
     if hasattr(key, "dtype"):
-        try:
-            return array_dtype_to_str[key.dtype.kind]
-        except KeyError:
-            raise ValueError(err_msg)
+        if hasattr(key.dtype, "kind"):
+            try:
+                return array_dtype_to_str[key.dtype.kind]
+            except KeyError:
+                raise ValueError(err_msg)
+        else:
+            # A `dtype` for a non-numpy library may not have a kind attribute
+            return 'an-array-dtype'
     raise ValueError(err_msg)
 
 

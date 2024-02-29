@@ -1315,6 +1315,7 @@ def test_array_api_train_test_split(
             stratify_xp = xp.asarray(stratify)
         else:
             stratify_xp = stratify
+
         X_train_xp, X_test_xp, y_train_xp, y_test_xp = train_test_split(
             X_xp, y_xp, shuffle=shuffle, stratify=stratify_xp, random_state=0
         )

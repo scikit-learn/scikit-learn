@@ -350,7 +350,7 @@ class LinearClassifierMixin(ClassifierMixin):
         xp, _ = get_namespace(X)
         scores = self.decision_function(X)
         if len(scores.shape) == 1:
-            indices = xp.astype(scores > 0, int)
+            indices = xp.astype(scores > 0, xp.int64)
         else:
             indices = xp.argmax(scores, axis=1)
 

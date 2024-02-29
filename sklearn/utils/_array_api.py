@@ -34,8 +34,8 @@ def yield_namespace_device_dtype_combinations():
         # tests are regular numpy arrays without any "device" attribute.
         "numpy",
         # Stricter NumPy-based Array API implementation. The
-        # numpy.array_api.Array instances always a dummy "device" attribute.
-        "numpy.array_api",
+        # array_api_strict.Array instances always a dummy "device" attribute.
+        "array_api_strict",
         "cupy",
         "cupy.array_api",
         "torch",
@@ -110,7 +110,7 @@ def size(x):
 
 def _is_numpy_namespace(xp):
     """Return True if xp is backed by NumPy."""
-    return xp.__name__ in {"numpy", "array_api_compat.numpy", "numpy.array_api"}
+    return xp.__name__ in {"numpy", "array_api_compat.numpy"}
 
 
 def _union1d(a, b, xp):
@@ -149,7 +149,6 @@ def _isdtype_single(dtype, kind, *, xp):
             return dtype in supported_float_dtypes(xp)
         elif kind == "complex floating":
             # Some name spaces do not have complex, such as cupy.array_api
-            # and numpy.array_api
             complex_dtypes = set()
             if hasattr(xp, "complex64"):
                 complex_dtypes.add(xp.complex64)
@@ -226,8 +225,8 @@ def _accept_device_cpu(func):
 class _NumPyAPIWrapper:
     """Array API compat wrapper for any numpy version
 
-    NumPy < 1.22 does not expose the numpy.array_api namespace. This
-    wrapper makes it possible to write code that uses the standard
+    NumPy < 1.22 and >=2.0 do not expose the numpy.array_api namespace.
+    This wrapper makes it possible to write code that uses the standard
     Array API while working with any version of NumPy supported by
     scikit-learn.
 
@@ -336,7 +335,7 @@ def get_namespace(*arrays):
 
     Introspect `arrays` arguments and return their common Array API
     compatible namespace object, if any. NumPy 1.22 and later can
-    construct such containers using the `numpy.array_api` namespace
+    construct such containers using the `array_api_strict` namespace
     for instance.
 
     See: https://numpy.org/neps/nep-0047-array-api-standard.html
@@ -390,7 +389,7 @@ def get_namespace(*arrays):
 
     # These namespaces need additional wrapping to smooth out small differences
     # between implementations
-    if namespace.__name__ in {"numpy.array_api", "cupy.array_api"}:
+    if namespace.__name__ in {"array_api_strict", "cupy.array_api"}:
         namespace = _ArrayAPIWrapper(namespace)
 
     return namespace, is_array_api_compliant
@@ -440,9 +439,21 @@ def _weighted_sum(sample_score, sample_weight, normalize=False, xp=None):
         return float(numpy.average(sample_score_np, weights=sample_weight_np))
 
     if not xp.isdtype(sample_score.dtype, "real floating"):
-        # We move to cpu device ahead of time since certain devices may not support
-        # float64, but we want the same precision for all devices and namespaces.
-        sample_score = xp.astype(xp.asarray(sample_score, device="cpu"), xp.float64)
+        # We move to cpu device since certain devices may not support float64,
+        # but we want the same precision for all devices and namespaces.
+        try:
+            sample_score = xp.astype(sample_score, xp.float64)
+        except Exception:
+            if  xp.__name__ not in {"numpy", "array_api_compat.numpy",
+                                    "cupy", "cupy.array_api", "array_api_strict"}:
+                # XXX: the 'cpu' string isn't portable. Once libraries support the
+                # 2023.12 version of the standard, there is an introspection API
+                # that can be used to check if float64 is supported on the current
+                # device (if it is, the try-except can be avoided here). And the
+                # copy/device keywords to `from_dlpack` can be used for
+                # portable "copy to host" behavior.)
+                sample_score = xp.astype(xp.asarray(sample_score, device="cpu"),
+                                         xp.float64)
 
     if sample_weight is not None:
         sample_weight = xp.asarray(

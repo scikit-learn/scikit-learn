@@ -25,10 +25,6 @@ from sklearn.utils._testing import (
     skip_if_array_api_compat_not_configured,
 )
 
-pytestmark = pytest.mark.filterwarnings(
-    "ignore:The numpy.array_api submodule:UserWarning"
-)
-
 
 @pytest.mark.parametrize("X", [numpy.asarray([1, 2, 3]), [1, 2, 3]])
 def test_get_namespace_ndarray_default(X):
@@ -66,7 +62,7 @@ def test_get_namespace_ndarray_with_dispatch():
 @skip_if_array_api_compat_not_configured
 def test_get_namespace_array_api():
     """Test get_namespace for ArrayAPI arrays."""
-    xp = pytest.importorskip("numpy.array_api")
+    xp = pytest.importorskip("array_api_strict")
 
     X_np = numpy.asarray([[1, 2, 3]])
     X_xp = xp.asarray(X_np)
@@ -89,8 +85,8 @@ class _AdjustableNameAPITestWrapper(_ArrayAPIWrapper):
 
 def test_array_api_wrapper_astype():
     """Test _ArrayAPIWrapper for ArrayAPIs that is not NumPy."""
-    numpy_array_api = pytest.importorskip("numpy.array_api")
-    xp_ = _AdjustableNameAPITestWrapper(numpy_array_api, "wrapped_numpy.array_api")
+    array_api_strict = pytest.importorskip("array_api_strict")
+    xp_ = _AdjustableNameAPITestWrapper(array_api_strict, "array_api_strict")
     xp = _ArrayAPIWrapper(xp_)
 
     X = xp.asarray(([[1, 2, 3], [3, 4, 5]]), dtype=xp.float64)
@@ -101,7 +97,7 @@ def test_array_api_wrapper_astype():
     assert X_converted.dtype == xp.float32
 
 
-@pytest.mark.parametrize("array_api", ["numpy", "numpy.array_api"])
+@pytest.mark.parametrize("array_api", ["numpy", "array_api_strict"])
 def test_asarray_with_order(array_api):
     """Test _asarray_with_order passes along order for NumPy arrays."""
     xp = pytest.importorskip(array_api)
@@ -115,8 +111,8 @@ def test_asarray_with_order(array_api):
 
 def test_asarray_with_order_ignored():
     """Test _asarray_with_order ignores order for Generic ArrayAPI."""
-    xp = pytest.importorskip("numpy.array_api")
-    xp_ = _AdjustableNameAPITestWrapper(xp, "wrapped.array_api")
+    xp = pytest.importorskip("array_api_strict")
+    xp_ = _AdjustableNameAPITestWrapper(xp, "array_api_strict")
 
     X = numpy.asarray([[1.2, 3.4, 5.1], [3.4, 5.5, 1.2]], order="C")
     X = xp_.asarray(X)
@@ -161,7 +157,7 @@ def test_weighted_sum(
 
 @skip_if_array_api_compat_not_configured
 @pytest.mark.parametrize(
-    "library", ["numpy", "numpy.array_api", "cupy", "cupy.array_api", "torch"]
+    "library", ["numpy", "array_api_strict", "cupy", "cupy.array_api", "torch"]
 )
 @pytest.mark.parametrize(
     "X,reduction,expected",
@@ -247,7 +243,7 @@ class SimpleEstimator(BaseEstimator):
     "array_namespace, converter",
     [
         ("torch", lambda array: array.cpu().numpy()),
-        ("numpy.array_api", lambda array: numpy.asarray(array)),
+        ("array_api_strict", lambda array: numpy.asarray(array)),
         ("cupy.array_api", lambda array: array._array.get()),
     ],
 )
@@ -265,7 +261,7 @@ def test_convert_estimator_to_ndarray(array_namespace, converter):
 @skip_if_array_api_compat_not_configured
 def test_convert_estimator_to_array_api():
     """Convert estimator attributes to ArrayAPI arrays."""
-    xp = pytest.importorskip("numpy.array_api")
+    xp = pytest.importorskip("array_api_strict")
 
     X_np = numpy.asarray([[1.3, 4.5]])
     est = SimpleEstimator().fit(X_np)
@@ -294,7 +290,7 @@ def test_get_namespace_array_api_isdtype(wrapper):
     """Test isdtype implementation from _ArrayAPIWrapper and _NumPyAPIWrapper."""
 
     if wrapper == _ArrayAPIWrapper:
-        xp_ = pytest.importorskip("numpy.array_api")
+        xp_ = pytest.importorskip("array_api_strict")
         xp = _ArrayAPIWrapper(xp_)
     else:
         xp = _NumPyAPIWrapper()
