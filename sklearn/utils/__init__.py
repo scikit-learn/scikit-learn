@@ -29,7 +29,7 @@ from .murmurhash import murmurhash3_32
 from .validation import (
     _is_arraylike_not_scalar,
     _is_pandas_df,
-    _is_polars_df,
+    _is_polars_df_or_series,
     _use_interchange_protocol,
     as_float_array,
     assert_all_finite,
@@ -292,7 +292,7 @@ def _safe_indexing(X, indices, *, axis=0):
         # TODO: we should probably use _is_pandas_df(X) instead but this would
         # require updating some tests such as test_train_test_split_mock_pandas.
         return _pandas_indexing(X, indices, indices_dtype, axis=axis)
-    elif _is_polars_df(X):
+    elif _is_polars_df_or_series(X):
         return _polars_indexing(X, indices, indices_dtype, axis=axis)
     elif hasattr(X, "shape"):
         return _array_indexing(X, indices, indices_dtype, axis=axis)

@@ -120,24 +120,21 @@ class ContainerAdapterProtocol(Protocol):
             Copy of the container.
         """
 
-    def shuffle_column_with_index(self, X, col_idx, shuffling_idx):
-        """Shuffle a column in the container with a specified shuffling order.
+    def replace_column(self, X, col_idx, col):
+        """Replace a column at the given index.
+
+        Note that this is an in-place operation.
 
         Parameters
         ----------
         X : container
-            Container to shuffle column of.
+            Container to modify.
 
         col_idx : int
-            Index of the column to shuffle.
+            Index of the column to be replaced.
 
-        shuffling_idx : array-like
-            The shuffling order, i.e., `col` will become `col[shuffling_idx]`.
-
-        Returns
-        -------
-        X_shuffled : container
-            Container with shuffled column.
+        col : Series (from container_lib)
+            The column to replace.
         """
 
 
@@ -185,11 +182,8 @@ class PandasAdapter:
     def copy(self, X):
         return X.copy()
 
-    def shuffle_column_with_index(self, X, col_idx, shuffling_idx):
-        col = X.iloc[shuffling_idx, col_idx]
-        col.index = X.index
-        X[X.columns[col_idx]] = col
-        return X
+    def replace_column(self, X, col_idx, col):
+        X.iloc[:, col_idx] = col
 
 
 class PolarsAdapter:
@@ -225,8 +219,8 @@ class PolarsAdapter:
     def copy(self, X):
         return X.clone()
 
-    def shuffle_column_with_index(self, X, col_idx, shuffling_idx):
-        return X.with_columns(X.to_series(col_idx)[shuffling_idx])
+    def replace_column(self, X, col_idx, col):
+        X.replace_column(col_idx, col)
 
 
 class ContainerAdaptersManager:
