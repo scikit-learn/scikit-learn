@@ -1,5 +1,4 @@
 import numpy as np
-from scipy.spatial.distance import cdist
 
 from ..pairwise import pairwise_distances
 
@@ -78,7 +77,7 @@ def density_separation(
     else:
         cluster1 = X[labels == cluster_id1][internal_nodes1]
         cluster2 = X[labels == cluster_id2][internal_nodes2]
-        distance_matrix = cdist(cluster1, cluster2, metric, **kwd_args)
+        distance_matrix = pairwise_distances(cluster1, cluster2, metric, **kwd_args)
 
     if no_coredist:
         return distance_matrix.min()
