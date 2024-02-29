@@ -4,6 +4,7 @@ import numpy as np
 import pytest
 from numpy.testing import assert_allclose
 from scipy.sparse import issparse
+from scipy.spatial.distance import cdist
 
 from sklearn import datasets
 from sklearn.metrics import pairwise_distances
@@ -402,6 +403,13 @@ def test_dbcv_score_basic_validation_errs():
     assert_raises_on_all_points_same_cluster(dbcv_score)
 
 
+def test_dbcv_score_missing_d_valerr():
+    X, y = datasets.make_moons()
+    distance_matrix = cdist(X[y == 0], X[y == 1], "euclidean")
+    with pytest.raises(ValueError, match="If metric is precomputed a d value must be provided!"):
+        dbcv_score(distance_matrix, y)
+
+
 def test_dbcv_score_rand_in_output_val_range():
     X, y = datasets.make_blobs()
     np.random.shuffle(y)
@@ -414,6 +422,13 @@ def test_dbcv_score_basic_input():
     X, y = datasets.make_moons()
     # score should at least be non-negative if labeled by ground-truth
     assert dbcv_score(X, y) >= 0
+
+
+def test_dbcv_score_precomputed_input():
+    X, y = datasets.make_moons()
+    distance_matrix = cdist(X[y == 0], X[y == 1], "euclidean")
+    # score should at least be non-negative if labeled by ground-truth
+    assert dbcv_score(distance_matrix, y, d=2) >= 0
 
 
 def test_dbcv_score_mst_raw_dist():
