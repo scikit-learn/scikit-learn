@@ -529,8 +529,8 @@ def label_binarize(y, *, classes, neg_label=0, pos_label=1, sparse_output=False)
     if y_type == "unknown":
         raise ValueError("The type of target data is not known")
 
-    n_samples = y.shape[0] if sp.issparse(y) else len(y)
-    n_classes = len(classes)
+    n_samples = y.shape[0] if hasattr(y, "shape") else len(y)
+    n_classes = classes.shape[0] if hasattr(classes, "shape") else len(classes)
     classes = np.asarray(classes)
 
     if y_type == "binary":
@@ -579,7 +579,7 @@ def label_binarize(y, *, classes, neg_label=0, pos_label=1, sparse_output=False)
 
     if not sparse_output:
         Y = Y.toarray()
-        Y = xp.asarray(Y, dtype=int, copy=False, device=device(y))
+        Y = xp.asarray(Y, dtype=xp.int64, device=device(y))
 
         if neg_label != 0:
             Y[Y == 0] = neg_label
