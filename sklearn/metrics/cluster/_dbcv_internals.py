@@ -137,7 +137,8 @@ def internal_minimum_spanning_tree(mr_distances):
             candidates, single_linkage_data[:index, :2].astype(int)
         )
         candidates = candidates[candidates != row[1]]
-        assert len(candidates) > 0
+        if len(candidates) == 0:
+            raise ValueError()
         row[0] = candidates[0]
 
     vertices = np.arange(mr_distances.shape[0])[
