@@ -1801,7 +1801,7 @@ class NMF(_BaseNMF):
 
         return W
 
-    def objective_function(self, X, y=None):
+    def objective_function(self, X, y=None, *, sample_weight=None):
         """Compute the objective function of the NMF model.
 
         Parameters
@@ -1810,6 +1810,9 @@ class NMF(_BaseNMF):
             Data matrix to be decomposed.
 
         y : Ignored
+            Not used, present for API consistency by convention.
+
+        sample_weight : Ignored
             Not used, present for API consistency by convention.
 
         Returns

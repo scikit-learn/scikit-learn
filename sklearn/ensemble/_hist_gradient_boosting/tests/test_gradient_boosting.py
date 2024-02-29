@@ -1681,3 +1681,34 @@ def test_pandas_nullable_dtype():
 
     clf = HistGradientBoostingClassifier()
     clf.fit(X, y)
+
+
+def test_hgbt_objective_function():
+    """Test that the objective function is correctly computed."""
+    rng = np.random.RandomState(0)
+    n_samples, n_features = 100, 3
+    X = rng.normal(size=(n_samples, n_features))
+    y = rng.normal(size=n_samples)
+    sample_weight = rng.uniform(0, 1, size=n_samples)
+
+    l2_regularization = 0.1
+
+    gbdt = HistGradientBoostingRegressor(
+        loss="squared_error",
+        validation_fraction=None,
+        l2_regularization=l2_regularization,
+    ).fit(X, y, sample_weight=sample_weight)
+
+    obj_func = gbdt.objective_function(X, y, sample_weight=sample_weight)
+
+    y_pred = gbdt.predict(X)
+    expected_data_fit = 0.5 * np.average((y - y_pred) ** 2, weights=sample_weight)
+    # The general formula is 0.5 * l2_regularization * np.mean(raw_predictions ** 2)
+    # but for the squared error loss, raw_predictions = y_pred
+    expected_l2 = 0.5 * l2_regularization * np.mean(y_pred**2)
+    expected_total = expected_data_fit + expected_l2
+
+    assert obj_func.name == "squared_error"
+    assert_allclose(obj_func.value, expected_total)
+    assert_allclose(obj_func.data_fit, expected_data_fit)
+    assert_allclose(sum(obj_func.penalisations.values()), expected_l2)

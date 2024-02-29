@@ -24,6 +24,7 @@ from ..._loss.loss import (
 from ...base import (
     BaseEstimator,
     ClassifierMixin,
+    ObjectiveFunction,
     RegressorMixin,
     _fit_context,
     is_classifier,
@@ -1022,6 +1023,48 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         self.validation_score_ = np.asarray(self.validation_score_)
         del self._in_fit  # hard delete so we're sure it can't be used anymore
         return self
+
+    def objective_function(self, X, y, *, sample_weight=None):
+        """Compute the objective function of the HistGradientBoosting model.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+            The input data.
+
+        y : array_like of shape (n_samples,)
+            The target.
+
+        sample_weight : array-like of shape (n_samples,), default=None
+            Sample weights.
+
+        Returns
+        -------
+        objective : ObjectiveFunction
+            The objective function of the HistGradientBoosting model.
+        """
+        raw_predictions = self._raw_predict(X)
+
+        data_fit = self._loss(
+            y_true=y,
+            raw_prediction=raw_predictions,
+            sample_weight=sample_weight,
+        )
+
+        l2 = 0.5 * self.l2_regularization * np.mean(raw_predictions**2)
+
+        if isinstance(self.loss, str):
+            name = self.loss
+        else:
+            name = self.loss.__class__.__name__.lower()
+
+        return ObjectiveFunction(
+            name=name,
+            goal="minimize",
+            value=data_fit + l2,
+            data_fit=data_fit,
+            penalisations={"l2": l2},
+        )
 
     def _is_fitted(self):
         return len(getattr(self, "_predictors", [])) > 0
