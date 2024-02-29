@@ -416,6 +416,13 @@ def test_dbcv_score_basic_input():
     assert dbcv_score(X, y) >= 0
 
 
+def test_dbcv_score_mst_raw_dist():
+    X, y = datasets.make_moons()
+    # should be non-negative if labeled by ground-truth, regardless
+    # (or arguably especially in the case) of non-MRD MST's
+    assert dbcv_score(X, y, mst_raw_dist=True) >= 0
+
+
 def test_silhouette_score_integer_precomputed():
     """Check that silhouette_score works for precomputed metrics that are integers.
 
