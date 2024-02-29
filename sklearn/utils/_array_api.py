@@ -396,7 +396,7 @@ def get_namespace(*arrays):
             True,
         )
     except TypeError as e:
-        if "The input is not a supported array type" in repr(e):
+        if "is not a supported array type" in repr(e):
             return _NUMPY_API_WRAPPER_INSTANCE, False
         raise
 
