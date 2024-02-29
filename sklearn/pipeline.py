@@ -1699,8 +1699,7 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
               <metadata_routing>` for more details.
 
             .. versionchanged:: 1.5
-                `**fit_params` are renamed into `**params` and can now be routed via
-                metadata routing API.
+                `**params` can now be routed via metadata routing API.
 
         Returns
         -------
