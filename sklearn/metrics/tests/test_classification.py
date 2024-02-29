@@ -215,7 +215,14 @@ def test_classification_report_zero_division_warning(zero_division):
             assert not record
 
 
-def test_classification_report_input_subset_of_labels():
+def test_classification_report_labels_subset_superset():
+    """Check the behaviour of passing `labels` as a superset or subset of the labels.
+    WHen a superset, we expect to show the "accuracy" in the report while it should be
+    the micro-averaging if the this is a subset.
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/27927
+    """
+
     y_true, y_pred = [0, 1], [0, 1]
     labels = [0, 1, 2]
 
@@ -241,7 +248,6 @@ def test_classification_report_input_subset_of_labels():
     report = classification_report(y_true, y_pred, labels=labels, output_dict=True)
     assert isinstance(report, dict)
 
-    # Assert if generated report and expected report are same
     assert report.keys() == expected_report.keys()
     for key in expected_report:
         if key == "accuracy":
