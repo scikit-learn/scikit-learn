@@ -397,10 +397,12 @@ def test_davies_bouldin_score():
     pytest.approx(davies_bouldin_score(X, labels), (5.0 / 4) / 3)
 
 
-def test_dbcv_score():
+def test_dbcv_score_basic_validation_errs():
     assert_raises_on_only_one_label(dbcv_score)
     assert_raises_on_all_points_same_cluster(dbcv_score)
 
+
+def test_dbcv_score():
     # test with two non-spherical clusters
     X, y = datasets.make_moons()
     # score should at least be non-negative if labeled by ground-truth
