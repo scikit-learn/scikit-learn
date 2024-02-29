@@ -398,45 +398,53 @@ def test_davies_bouldin_score():
     pytest.approx(davies_bouldin_score(X, labels), (5.0 / 4) / 3)
 
 
+@pytest.fixture
+def non_spherical_sample():
+    # test with two non-spherical clusters
+    return datasets.make_moons()
+
+
 def test_dbcv_score_basic_validation_errs():
     assert_raises_on_only_one_label(dbcv_score)
     assert_raises_on_all_points_same_cluster(dbcv_score)
 
 
-def test_dbcv_score_precomputed_missing_d_valerr():
-    X, y = datasets.make_blobs()
-    distance_matrix = cdist(X, X, "euclidean")
+def test_dbcv_score_precomputed_missing_d_valerr(non_spherical_sample):
     msg = "If metric is precomputed a d value must be provided!"
     with pytest.raises(ValueError, match=msg):
-        dbcv_score(distance_matrix, y, metric="precomputed")
+        dbcv_score(
+            cdist(non_spherical_sample[0], non_spherical_sample[0], "euclidean"),
+            non_spherical_sample[1],
+            metric="precomputed"
+        )
 
 
-def test_dbcv_score_rand_in_output_val_range():
-    X, y = datasets.make_blobs()
+def test_dbcv_score_rand_in_output_val_range(non_spherical_sample):
+    X, y = non_spherical_sample
     np.random.shuffle(y)
     # in general, the score lies between -1 and 1
     assert -1 <= dbcv_score(X, y) <= 1
 
 
-def test_dbcv_score_basic_input():
-    # test with two non-spherical clusters
-    X, y = datasets.make_moons()
+def test_dbcv_score_basic_input(non_spherical_sample):
     # score should at least be non-negative if labeled by ground-truth
-    assert dbcv_score(X, y) >= 0
+    assert dbcv_score(*non_spherical_sample) >= 0
 
 
-def test_dbcv_score_precomputed_input():
-    X, y = datasets.make_moons()
-    distance_matrix = cdist(X, X, "euclidean")
+def test_dbcv_score_precomputed_input(non_spherical_sample):
     # score should at least be non-negative if labeled by ground-truth
-    assert dbcv_score(distance_matrix, y, metric="precomputed", d=2) >= 0
+    assert dbcv_score(
+        cdist(non_spherical_sample[0], non_spherical_sample[0], "euclidean"),
+        non_spherical_sample[1],
+        metric="precomputed",
+        d=2
+    ) >= 0
 
 
-def test_dbcv_score_mst_raw_dist():
-    X, y = datasets.make_moons()
+def test_dbcv_score_mst_raw_dist(non_spherical_sample):
     # should be non-negative if labeled by ground-truth, regardless
     # (or arguably especially in the case) of non-MRD MST's
-    assert dbcv_score(X, y, mst_raw_dist=True) >= 0
+    assert dbcv_score(*non_spherical_sample, mst_raw_dist=True) >= 0
 
 
 def test_silhouette_score_integer_precomputed():
