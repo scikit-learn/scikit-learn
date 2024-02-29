@@ -402,14 +402,18 @@ def test_dbcv_score_basic_validation_errs():
     assert_raises_on_all_points_same_cluster(dbcv_score)
 
 
-def test_dbcv_score():
+def test_dbcv_score_rand_in_output_val_range():
+    X, y = datasets.make_blobs()
+    np.random.shuffle(y)
+    # in general, the score lies between -1 and 1
+    assert -1 <= dbcv_score(X, y) <= 1
+
+
+def test_dbcv_score_basic_input():
     # test with two non-spherical clusters
     X, y = datasets.make_moons()
     # score should at least be non-negative if labeled by ground-truth
     assert dbcv_score(X, y) >= 0
-    # in general, the score lies between -1 and 1
-    np.random.shuffle(y)
-    assert -1 <= dbcv_score(X, y) <= 1
 
 
 def test_silhouette_score_integer_precomputed():
