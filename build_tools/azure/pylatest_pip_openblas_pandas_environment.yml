@@ -17,7 +17,7 @@ dependencies:
     - pandas
     - pyamg
     - pytest
-    - pytest-xdist==2.5.0
+    - pytest-xdist
     - pillow
     - setuptools
     - pytest-cov

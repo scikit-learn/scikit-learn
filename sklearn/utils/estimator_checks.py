@@ -51,21 +51,21 @@ from ..preprocessing import StandardScaler, scale
 from ..random_projection import BaseRandomProjection
 from ..tree import DecisionTreeClassifier, DecisionTreeRegressor
 from ..utils._array_api import (
+    _atol_for_type,
     _convert_to_numpy,
     get_namespace,
     yield_namespace_device_dtype_combinations,
 )
-from ..utils._array_api import (
-    device as array_device,
-)
+from ..utils._array_api import device as array_device
 from ..utils._param_validation import (
     InvalidParameterError,
     generate_invalid_param_val,
     make_constraint,
 )
-from ..utils.fixes import parse_version, sp_version
+from ..utils.fixes import SPARSE_ARRAY_PRESENT, parse_version, sp_version
 from ..utils.validation import check_is_fitted
-from . import IS_PYPY, is_scalar_nan, shuffle
+from . import IS_PYPY, shuffle
+from ._missing import is_scalar_nan
 from ._param_validation import Interval
 from ._tags import (
     _DEFAULT_TAGS,
@@ -135,7 +135,8 @@ def _yield_checks(estimator):
     if hasattr(estimator, "sparsify"):
         yield check_sparsify_coefficients
 
-    yield check_estimator_sparse_data
+    yield check_estimator_sparse_array
+    yield check_estimator_sparse_matrix
 
     # Test that estimators can be pickled, and once pickled
     # give the same answer as before.
@@ -624,6 +625,13 @@ def check_estimator(estimator=None, generate_only=False):
     --------
     parametrize_with_checks : Pytest specific decorator for parametrizing estimator
         checks.
+
+    Examples
+    --------
+    >>> from sklearn.utils.estimator_checks import check_estimator
+    >>> from sklearn.linear_model import LogisticRegression
+    >>> check_estimator(LogisticRegression(), generate_only=True)
+    <generator object ...>
     """
     if isinstance(estimator, type):
         msg = (
@@ -830,17 +838,17 @@ def _is_pairwise_metric(estimator):
     return bool(metric == "precomputed")
 
 
-def _generate_sparse_matrix(X_csr):
-    """Generate sparse matrices with {32,64}bit indices of diverse format.
+def _generate_sparse_data(X_csr):
+    """Generate sparse matrices or arrays with {32,64}bit indices of diverse format.
 
     Parameters
     ----------
-    X_csr: CSR Matrix
-        Input matrix in CSR format.
+    X_csr: scipy.sparse.csr_matrix or scipy.sparse.csr_array
+        Input in CSR format.
 
     Returns
     -------
-    out: iter(Matrices)
+    out: iter(Matrices) or iter(Arrays)
         In format['dok', 'lil', 'dia', 'bsr', 'csr', 'csc', 'coo',
         'coo_64', 'csc_64', 'csr_64']
     """
@@ -922,7 +930,7 @@ def check_array_api_input(
                 attribute,
                 est_xp_param_np,
                 err_msg=f"{key} not the same",
-                atol=np.finfo(X.dtype).eps * 100,
+                atol=_atol_for_type(X.dtype),
             )
         else:
             assert attribute.shape == est_xp_param_np.shape
@@ -952,7 +960,7 @@ def check_array_api_input(
             assert isinstance(result, float)
             assert isinstance(result_xp, float)
             if check_values:
-                assert abs(result - result_xp) < np.finfo(X.dtype).eps * 100
+                assert abs(result - result_xp) < _atol_for_type(X.dtype)
             continue
         else:
             result = method(X)
@@ -974,7 +982,7 @@ def check_array_api_input(
                 result,
                 result_xp_np,
                 err_msg=f"{method} did not the return the same result",
-                atol=np.finfo(X.dtype).eps * 100,
+                atol=_atol_for_type(X.dtype),
             )
         else:
             if hasattr(result, "shape"):
@@ -999,7 +1007,7 @@ def check_array_api_input(
                     inverse_result,
                     invese_result_xp_np,
                     err_msg="inverse_transform did not the return the same result",
-                    atol=np.finfo(X.dtype).eps * 100,
+                    atol=_atol_for_type(X.dtype),
                 )
             else:
                 assert inverse_result.shape == invese_result_xp_np.shape
@@ -1023,19 +1031,18 @@ def check_array_api_input_and_values(
     )
 
 
-def check_estimator_sparse_data(name, estimator_orig):
+def _check_estimator_sparse_container(name, estimator_orig, sparse_type):
     rng = np.random.RandomState(0)
     X = rng.uniform(size=(40, 3))
     X[X < 0.8] = 0
     X = _enforce_estimator_tags_X(estimator_orig, X)
-    X_csr = sparse.csr_matrix(X)
     y = (4 * rng.uniform(size=40)).astype(int)
     # catch deprecation warnings
     with ignore_warnings(category=FutureWarning):
         estimator = clone(estimator_orig)
     y = _enforce_estimator_tags_y(estimator, y)
     tags = _safe_tags(estimator_orig)
-    for matrix_format, X in _generate_sparse_matrix(X_csr):
+    for matrix_format, X in _generate_sparse_data(sparse_type(X)):
         # catch deprecation warnings
         with ignore_warnings(category=FutureWarning):
             estimator = clone(estimator_orig)
@@ -1046,13 +1053,14 @@ def check_estimator_sparse_data(name, estimator_orig):
             err_msg = (
                 f"Estimator {name} doesn't seem to support {matrix_format} "
                 "matrix, and is not failing gracefully, e.g. by using "
-                "check_array(X, accept_large_sparse=False)"
+                "check_array(X, accept_large_sparse=False)."
             )
         else:
             err_msg = (
                 f"Estimator {name} doesn't seem to fail gracefully on sparse "
                 "data: error message should state explicitly that sparse "
-                "input is not supported if this is not the case."
+                "input is not supported if this is not the case, e.g. by using "
+                "check_array(X, accept_sparse=False)."
             )
         with raises(
             (TypeError, ValueError),
@@ -1075,6 +1083,15 @@ def check_estimator_sparse_data(name, estimator_orig):
                 else:
                     expected_probs_shape = (X.shape[0], 4)
                 assert probs.shape == expected_probs_shape
+
+
+def check_estimator_sparse_matrix(name, estimator_orig):
+    _check_estimator_sparse_container(name, estimator_orig, sparse.csr_matrix)
+
+
+def check_estimator_sparse_array(name, estimator_orig):
+    if SPARSE_ARRAY_PRESENT:
+        _check_estimator_sparse_container(name, estimator_orig, sparse.csr_array)
 
 
 @ignore_warnings(category=FutureWarning)

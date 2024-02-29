@@ -75,6 +75,11 @@ def show_versions():
     """Print useful debugging information"
 
     .. versionadded:: 0.20
+
+    Examples
+    --------
+    >>> from sklearn import show_versions
+    >>> show_versions()  # doctest: +SKIP
     """
 
     sys_info = _get_sys_info()
