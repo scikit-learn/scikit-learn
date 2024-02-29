@@ -1,4 +1,5 @@
 import warnings
+from unittest.mock import patch
 
 import numpy as np
 import pytest
@@ -432,6 +433,12 @@ def test_dbcv_score_basic_input(non_spherical_sample):
     assert res[0] >= 0
     assert dbcv_score(*non_spherical_sample) == res[0]
     assert isinstance(res[1], dict)
+
+
+def test_dbcv_score_verbose(non_spherical_sample):
+    with patch("print") as mocked_print:
+        dbcv_score(*non_spherical_sample, verbose=True)
+        mocked_print.assert_called()
 
 
 def test_dbcv_score_precomputed_input(non_spherical_sample):
