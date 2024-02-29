@@ -1691,7 +1691,7 @@ def test_hgbt_objective_function():
     y = rng.normal(size=n_samples)
     sample_weight = rng.uniform(0, 1, size=n_samples)
 
-    l2_regularization = 0.1
+    l2_regularization = 1.0
 
     gbdt = HistGradientBoostingRegressor(
         loss="squared_error",
@@ -1703,9 +1703,17 @@ def test_hgbt_objective_function():
 
     y_pred = gbdt.predict(X)
     expected_data_fit = 0.5 * np.average((y - y_pred) ** 2, weights=sample_weight)
-    # The general formula is 0.5 * l2_regularization * np.mean(raw_predictions ** 2)
-    # but for the squared error loss, raw_predictions = y_pred
-    expected_l2 = 0.5 * l2_regularization * np.mean(y_pred**2)
+
+    # The l2 Regularization term is the sum over all trees of the squared l2-norm of
+    # the nodes' values, see eq.2 in "XGBoost: A Scalable Tree Boosting System".
+    all_trees = [
+        tree
+        for trees_at_ith_iteration in gbdt._predictors
+        for tree in trees_at_ith_iteration
+    ]
+    all_l2_nodes = [np.sum([node[0] ** 2 for node in tree.nodes]) for tree in all_trees]
+    expected_l2 = 0.5 * l2_regularization * np.sum(all_l2_nodes) / X.shape[0]
+
     expected_total = expected_data_fit + expected_l2
 
     assert obj_func.name == "squared_error"

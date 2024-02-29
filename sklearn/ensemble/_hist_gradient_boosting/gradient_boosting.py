@@ -1051,7 +1051,15 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             sample_weight=sample_weight,
         )
 
-        l2 = 0.5 * self.l2_regularization * np.mean(raw_predictions**2)
+        all_trees = [
+            tree
+            for trees_at_ith_iteration in self._predictors
+            for tree in trees_at_ith_iteration
+        ]
+        all_l2_nodes = [
+            np.sum([node[0] ** 2 for node in tree.nodes]) for tree in all_trees
+        ]
+        l2 = 0.5 * self.l2_regularization * np.sum(all_l2_nodes) / X.shape[0]
 
         if isinstance(self.loss, str):
             name = self.loss
