@@ -404,9 +404,10 @@ def test_dbcv_score_basic_validation_errs():
 
 
 def test_dbcv_score_missing_d_valerr():
-    X, y = datasets.make_moons()
-    distance_matrix = cdist(X[y == 0], X[y == 1], "euclidean")
-    with pytest.raises(ValueError, match="If metric is precomputed a d value must be provided!"):
+    X, y = datasets.make_blobs()
+    distance_matrix = cdist(X, X, "euclidean")
+    msg = "If metric is precomputed a d value must be provided!"
+    with pytest.raises(ValueError, match=msg):
         dbcv_score(distance_matrix, y)
 
 
@@ -426,7 +427,7 @@ def test_dbcv_score_basic_input():
 
 def test_dbcv_score_precomputed_input():
     X, y = datasets.make_moons()
-    distance_matrix = cdist(X[y == 0], X[y == 1], "euclidean")
+    distance_matrix = cdist(X, X, "euclidean")
     # score should at least be non-negative if labeled by ground-truth
     assert dbcv_score(distance_matrix, y, d=2) >= 0
 
