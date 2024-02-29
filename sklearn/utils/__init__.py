@@ -14,12 +14,13 @@ from itertools import compress, islice
 import numpy as np
 from scipy.sparse import issparse
 
-from .. import get_config
 from ..exceptions import DataConversionWarning
 from . import _joblib, metadata_routing
 from ._bunch import Bunch
+from ._chunking import gen_batches, gen_even_slices
 from ._estimator_html_repr import estimator_html_repr
-from ._param_validation import Integral, Interval, validate_params
+from ._mask import safe_mask
+from ._param_validation import Interval, validate_params
 from .class_weight import compute_class_weight, compute_sample_weight
 from .deprecation import deprecated
 from .discovery import all_estimators
@@ -64,7 +65,6 @@ __all__ = [
     "check_scalar",
     "indexable",
     "check_symmetric",
-    "indices_to_mask",
     "deprecated",
     "parallel_backend",
     "register_parallel_backend",
@@ -76,93 +76,14 @@ __all__ = [
     "Bunch",
     "metadata_routing",
     "safe_sqr",
+    "safe_mask",
+    "gen_batches",
+    "gen_even_slices",
 ]
 
 IS_PYPY = platform.python_implementation() == "PyPy"
 _IS_32BIT = 8 * struct.calcsize("P") == 32
 _IS_WASM = platform.machine() in ["wasm32", "wasm64"]
-
-
-@validate_params(
-    {
-        "X": ["array-like", "sparse matrix"],
-        "mask": ["array-like"],
-    },
-    prefer_skip_nested_validation=True,
-)
-def safe_mask(X, mask):
-    """Return a mask which is safe to use on X.
-
-    Parameters
-    ----------
-    X : {array-like, sparse matrix}
-        Data on which to apply mask.
-
-    mask : array-like
-        Mask to be used on X.
-
-    Returns
-    -------
-    mask : ndarray
-        Array that is safe to use on X.
-
-    Examples
-    --------
-    >>> from sklearn.utils import safe_mask
-    >>> from scipy.sparse import csr_matrix
-    >>> data = csr_matrix([[1], [2], [3], [4], [5]])
-    >>> condition = [False, True, True, False, True]
-    >>> mask = safe_mask(data, condition)
-    >>> data[mask].toarray()
-    array([[2],
-           [3],
-           [5]])
-    """
-    mask = np.asarray(mask)
-    if np.issubdtype(mask.dtype, np.signedinteger):
-        return mask
-
-    if hasattr(X, "toarray"):
-        ind = np.arange(mask.shape[0])
-        mask = ind[mask]
-    return mask
-
-
-def axis0_safe_slice(X, mask, len_mask):
-    """Return a mask which is safer to use on X than safe_mask.
-
-    This mask is safer than safe_mask since it returns an
-    empty array, when a sparse matrix is sliced with a boolean mask
-    with all False, instead of raising an unhelpful error in older
-    versions of SciPy.
-
-    See: https://github.com/scipy/scipy/issues/5361
-
-    Also note that we can avoid doing the dot product by checking if
-    the len_mask is not zero in _huber_loss_and_gradient but this
-    is not going to be the bottleneck, since the number of outliers
-    and non_outliers are typically non-zero and it makes the code
-    tougher to follow.
-
-    Parameters
-    ----------
-    X : {array-like, sparse matrix}
-        Data on which to apply mask.
-
-    mask : ndarray
-        Mask to be used on X.
-
-    len_mask : int
-        The length of the mask.
-
-    Returns
-    -------
-    mask : ndarray
-        Array that is safe to use on X.
-    """
-    if len_mask != 0:
-        return X[safe_mask(X, mask), :]
-    return np.zeros(shape=(0, X.shape[1]))
 
 
 def _array_indexing(array, key, key_dtype, axis):
@@ -520,7 +441,7 @@ def _get_column_indices_interchange(X_interchange, key, key_dtype):
         "replace": ["boolean"],
         "n_samples": [Interval(numbers.Integral, 1, None, closed="left"), None],
         "random_state": ["random_state"],
-        "stratify": ["array-like", None],
+        "stratify": ["array-like", "sparse matrix", None],
     },
     prefer_skip_nested_validation=True,
 )
@@ -553,8 +474,8 @@ def resample(*arrays, replace=True, n_samples=None, random_state=None, stratify=
         Pass an int for reproducible results across multiple function calls.
         See :term:`Glossary <random_state>`.
 
-    stratify : array-like of shape (n_samples,) or (n_samples, n_outputs), \
-            default=None
+    stratify : {array-like, sparse matrix} of shape (n_samples,) or \
+            (n_samples, n_outputs), default=None
         If not None, data is split in a stratified fashion, using this as
         the class labels.
 
@@ -745,132 +666,6 @@ def shuffle(*arrays, random_state=None, n_samples=None):
     )
 
 
-def _chunk_generator(gen, chunksize):
-    """Chunk generator, ``gen`` into lists of length ``chunksize``. The last
-    chunk may have a length less than ``chunksize``."""
-    while True:
-        chunk = list(islice(gen, chunksize))
-        if chunk:
-            yield chunk
-        else:
-            return
-
-
-@validate_params(
-    {
-        "n": [Interval(numbers.Integral, 1, None, closed="left")],
-        "batch_size": [Interval(numbers.Integral, 1, None, closed="left")],
-        "min_batch_size": [Interval(numbers.Integral, 0, None, closed="left")],
-    },
-    prefer_skip_nested_validation=True,
-)
-def gen_batches(n, batch_size, *, min_batch_size=0):
-    """Generator to create slices containing `batch_size` elements from 0 to `n`.
-
-    The last slice may contain less than `batch_size` elements, when
-    `batch_size` does not divide `n`.
-
-    Parameters
-    ----------
-    n : int
-        Size of the sequence.
-    batch_size : int
-        Number of elements in each batch.
-    min_batch_size : int, default=0
-        Minimum number of elements in each batch.
-
-    Yields
-    ------
-    slice of `batch_size` elements
-
-    See Also
-    --------
-    gen_even_slices: Generator to create n_packs slices going up to n.
-
-    Examples
-    --------
-    >>> from sklearn.utils import gen_batches
-    >>> list(gen_batches(7, 3))
-    [slice(0, 3, None), slice(3, 6, None), slice(6, 7, None)]
-    >>> list(gen_batches(6, 3))
-    [slice(0, 3, None), slice(3, 6, None)]
-    >>> list(gen_batches(2, 3))
-    [slice(0, 2, None)]
-    >>> list(gen_batches(7, 3, min_batch_size=0))
-    [slice(0, 3, None), slice(3, 6, None), slice(6, 7, None)]
-    >>> list(gen_batches(7, 3, min_batch_size=2))
-    [slice(0, 3, None), slice(3, 7, None)]
-    """
-    start = 0
-    for _ in range(int(n // batch_size)):
-        end = start + batch_size
-        if end + min_batch_size > n:
-            continue
-        yield slice(start, end)
-        start = end
-    if start < n:
-        yield slice(start, n)
-
-
-@validate_params(
-    {
-        "n": [Interval(Integral, 1, None, closed="left")],
-        "n_packs": [Interval(Integral, 1, None, closed="left")],
-        "n_samples": [Interval(Integral, 1, None, closed="left"), None],
-    },
-    prefer_skip_nested_validation=True,
-)
-def gen_even_slices(n, n_packs, *, n_samples=None):
-    """Generator to create `n_packs` evenly spaced slices going up to `n`.
-
-    If `n_packs` does not divide `n`, except for the first `n % n_packs`
-    slices, remaining slices may contain fewer elements.
-
-    Parameters
-    ----------
-    n : int
-        Size of the sequence.
-    n_packs : int
-        Number of slices to generate.
-    n_samples : int, default=None
-        Number of samples. Pass `n_samples` when the slices are to be used for
-        sparse matrix indexing; slicing off-the-end raises an exception, while
-        it works for NumPy arrays.
-
-    Yields
-    ------
-    `slice` representing a set of indices from 0 to n.
-
-    See Also
-    --------
-    gen_batches: Generator to create slices containing batch_size elements
-        from 0 to n.
-
-    Examples
-    --------
-    >>> from sklearn.utils import gen_even_slices
-    >>> list(gen_even_slices(10, 1))
-    [slice(0, 10, None)]
-    >>> list(gen_even_slices(10, 10))
-    [slice(0, 1, None), slice(1, 2, None), ..., slice(9, 10, None)]
-    >>> list(gen_even_slices(10, 5))
-    [slice(0, 2, None), slice(2, 4, None), ..., slice(8, 10, None)]
-    >>> list(gen_even_slices(10, 3))
-    [slice(0, 4, None), slice(4, 7, None), slice(7, 10, None)]
-    """
-    start = 0
-    for pack_num in range(n_packs):
-        this_n = n // n_packs
-        if pack_num < n % n_packs:
-            this_n += 1
-        if this_n > 0:
-            end = start + this_n
-            if n_samples is not None:
-                end = min(n_samples, end)
-            yield slice(start, end, None)
-            start = end
-
-
 def tosequence(x):
     """Cast iterable x to a Sequence, avoiding a copy if possible.
 
@@ -930,38 +725,6 @@ def _to_object_array(sequence):
     return out
 
 
-def indices_to_mask(indices, mask_length):
-    """Convert list of indices to boolean mask.
-
-    Parameters
-    ----------
-    indices : list-like
-        List of integers treated as indices.
-    mask_length : int
-        Length of boolean mask to be generated.
-        This parameter must be greater than max(indices).
-
-    Returns
-    -------
-    mask : 1d boolean nd-array
-        Boolean array that is True where indices are present, else False.
-
-    Examples
-    --------
-    >>> from sklearn.utils import indices_to_mask
-    >>> indices = [1, 2 , 3, 4]
-    >>> indices_to_mask(indices, 5)
-    array([False,  True,  True,  True,  True])
-    """
-    if mask_length <= np.max(indices):
-        raise ValueError("mask_length must be greater than max(indices)")
-
-    mask = np.zeros(mask_length, dtype=bool)
-    mask[indices] = True
-
-    return mask
-
-
 def _message_with_time(source, message, time):
     """Create one line message for logging purposes.
 
@@ -1012,44 +775,3 @@ def _print_elapsed_time(source, message=None):
         start = timeit.default_timer()
         yield
         print(_message_with_time(source, message, timeit.default_timer() - start))
-
-
-def get_chunk_n_rows(row_bytes, *, max_n_rows=None, working_memory=None):
-    """Calculate how many rows can be processed within `working_memory`.
-
-    Parameters
-    ----------
-    row_bytes : int
-        The expected number of bytes of memory that will be consumed
-        during the processing of each row.
-    max_n_rows : int, default=None
-        The maximum return value.
-    working_memory : int or float, default=None
-        The number of rows to fit inside this number of MiB will be
-        returned. When None (default), the value of
-        ``sklearn.get_config()['working_memory']`` is used.
-
-    Returns
-    -------
-    int
-        The number of rows which can be processed within `working_memory`.
-
-    Warns
-    -----
-    Issues a UserWarning if `row_bytes exceeds `working_memory` MiB.
-    """
-
-    if working_memory is None:
-        working_memory = get_config()["working_memory"]
-
-    chunk_n_rows = int(working_memory * (2**20) // row_bytes)
-    if max_n_rows is not None:
-        chunk_n_rows = min(chunk_n_rows, max_n_rows)
-    if chunk_n_rows < 1:
-        warnings.warn(
-            "Could not adhere to working_memory config. "
-            "Currently %.0fMiB, %.0fMiB required."
-            % (working_memory, np.ceil(row_bytes * 2**-20))
-        )
-        chunk_n_rows = 1
-    return chunk_n_rows

@@ -48,6 +48,18 @@ more details.
   via their `fit` methods.
   :pr:`28432` by :user:`Adam Li <adam2392>` and :user:`Benjamin Bossan <BenjaminBossan>`.
 
+Metadata Routing
+----------------
+
+The following models now support metadata routing in one or more or their
+methods. Refer to the :ref:`Metadata Routing User Guide <metadata_routing>` for
+more details.
+
+- |Feature| :class:`linear_model.RANSACRegressor` now supports metadata routing
+  in its ``fit``, ``score`` and ``predict`` methods and route metadata to its
+  underlying estimator's' ``fit``, ``score`` and ``predict`` methods.
+  :pr:`28261` by :user:`Stefanie Senger <StefanieSenger>`.
+
 - |Feature| :class:`ensemble.VotingClassifier` and
   :class:`ensemble.VotingRegressor` now support metadata routing and pass
   ``**fit_params`` to the underlying estimators via their `fit` methods.
@@ -73,12 +85,39 @@ Changelog
     :pr:`123456` by :user:`Joe Bloggs <joeongithub>`.
     where 123455 is the *pull request* number, not the issue number.
 
+:mod:`sklearn.cluster`
+......................
+
+- |FIX| Create copy of precomputed sparse matrix within the `fit` method of
+  :class:`~cluster.OPTICS` to avoid in-place modification of the sparse matrix.
+  :pr:`28491` by :user:`Thanh Lam Dang <lamdang2k>`.
 
 :mod:`sklearn.compose`
 ......................
 
 - |Feature| A fitted :class:`compose.ColumnTransformer` now implements `__getitem__`
   which returns the fitted transformers by name. :pr:`27990` by `Thomas Fan`_.
+
+- |ENH| :class:`compose.TransformedTargetRegressor` now raises an error in `fit` if
+  only `inverse_func` is provided without `func` (that would default to identity) being
+  explicitly set as well. :pr:`28483` by :user:`Stefanie Senger <StefanieSenger>`.
+
+:mod:`sklearn.datasets`
+.......................
+
+- |Enhancement| Adds optional arguments `n_retries` and `delay` to functions
+  :func:`datasets.fetch_20newsgroups`,
+  :func:`datasets.fetch_20newsgroups_vectorized`,
+  :func:`datasets.fetch_california_housing`,
+  :func:`datasets.fetch_covtype`,
+  :func:`datasets.fetch_kddcup99`,
+  :func:`datasets.fetch_lfw_pairs`,
+  :func:`datasets.fetch_lfw_people`,
+  :func:`datasets.fetch_olivetti_faces`,
+  :func:`datasets.fetch_rcv1`,
+  and :func:`datasets.fetch_species_distributions`.
+  By default, the functions will retry up to 3 times in case of network failures.
+  :pr:`28160` by :user:`Zhehao Liu <MaxwellLZH>` and :user:`Filip Karlo Došilović <fkdosilovic>`.
 
 :mod:`sklearn.dummy`
 ....................
@@ -176,6 +215,12 @@ Changelog
 
 - |Enhancement| :term:`CV splitters <CV splitter>` that ignores the group parameter now
   raises a warning when groups are passed in to :term:`split`. :pr:`28210` by
+
+:mod:`sklearn.multioutput`
+..........................
+
+- |Enhancement| `chain_method` parameter added to `:class:``multioutput.ClassifierChain`.
+  :pr:`27700` by :user:`Lucy Liu <lucyleeow>`.
 
 :mod:`sklearn.pipeline`
 .......................

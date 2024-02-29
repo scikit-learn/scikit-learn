@@ -536,7 +536,7 @@ class GroupKFold(GroupsConsumerMixin, _BaseKFold):
     number of distinct groups has to be at least equal to the number of folds).
 
     The folds are approximately balanced in the sense that the number of
-    distinct groups is approximately the same in each fold.
+    samples is approximately the same in each test fold.
 
     Read more in the :ref:`User Guide <group_k_fold>`.
 
