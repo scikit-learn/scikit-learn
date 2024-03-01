@@ -241,5 +241,5 @@ jobs:
       - name: Upload artifacts
         uses: scientific-python/upload-nightly-action@b67d7fcc0396e1128a474d1ab2b48aa94680f9fc # 0.5.0
         with:
-          artifacts_path: dist
+          artifacts_path: dist/artifact
           anaconda_nightly_upload_token: ${{ secrets.SCIKIT_LEARN_NIGHTLY_UPLOAD_TOKEN }}
