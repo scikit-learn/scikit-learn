@@ -29,7 +29,8 @@ from ..utils import (
     indexable,
     metadata_routing,
 )
-from ..utils._array_api import get_namespace, device as array_api_device
+from ..utils._array_api import device as array_api_device
+from ..utils._array_api import get_namespace
 from ..utils._param_validation import Interval, RealNotInt, validate_params
 from ..utils.extmath import _approximate_mode
 from ..utils.metadata_routing import _MetadataRequester

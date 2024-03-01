@@ -93,11 +93,11 @@ def _array_indexing(array, key, key_dtype, axis):
         key = np.asarray(key)
     if isinstance(key, tuple):
         key = list(key)
-    if key_dtype == 'an-array-dtype':
+    if key_dtype == "an-array-dtype":
         # A non-numpy array for which determining the dtype kind wasn't
         # possible. Use `take` over `__getitem__` to support integer indexing.
         xp, _ = get_namespace(array)
-        if hasattr(xp, 'isdtype') and xp.isdtype(key.dtype, 'integral'):
+        if hasattr(xp, "isdtype") and xp.isdtype(key.dtype, "integral"):
             return xp.take(array, key, axis=axis)
     return array[key, ...] if axis == 0 else array[:, key]
 
@@ -211,7 +211,7 @@ def _determine_key_type(key, accept_slice=True):
                 raise ValueError(err_msg)
         else:
             # A `dtype` for a non-numpy library may not have a kind attribute
-            return 'an-array-dtype'
+            return "an-array-dtype"
     raise ValueError(err_msg)
 
 

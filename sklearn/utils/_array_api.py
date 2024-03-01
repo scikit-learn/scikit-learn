@@ -444,16 +444,22 @@ def _weighted_sum(sample_score, sample_weight, normalize=False, xp=None):
         try:
             sample_score = xp.astype(sample_score, xp.float64)
         except Exception:
-            if  xp.__name__ not in {"numpy", "array_api_compat.numpy",
-                                    "cupy", "cupy.array_api", "array_api_strict"}:
+            if xp.__name__ not in {
+                "numpy",
+                "array_api_compat.numpy",
+                "cupy",
+                "cupy.array_api",
+                "array_api_strict",
+            }:
                 # XXX: the 'cpu' string isn't portable. Once libraries support the
                 # 2023.12 version of the standard, there is an introspection API
                 # that can be used to check if float64 is supported on the current
                 # device (if it is, the try-except can be avoided here). And the
                 # copy/device keywords to `from_dlpack` can be used for
                 # portable "copy to host" behavior.)
-                sample_score = xp.astype(xp.asarray(sample_score, device="cpu"),
-                                         xp.float64)
+                sample_score = xp.astype(
+                    xp.asarray(sample_score, device="cpu"), xp.float64
+                )
 
     if sample_weight is not None:
         sample_weight = xp.asarray(
