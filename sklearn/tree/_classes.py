@@ -935,8 +935,9 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
     array([ 1.     ,  0.93...,  0.86...,  0.93...,  0.93...,
             0.93...,  0.93...,  1.     ,  0.93...,  1.      ])
 
-    For an example of using AdaBoost to fit a sequence of DecisionTrees as weak learners,
-    please refer to :ref:`sphx_glr_auto_examples_ensemble_plot_adaboost_multiclass.py`.
+    For an example of using AdaBoost to fit a sequence of
+    DecisionTrees as weak learners, please refer to
+    :ref:`sphx_glr_auto_examples_ensemble_plot_adaboost_multiclass.py`.
     """
 
     _parameter_constraints: dict = {
