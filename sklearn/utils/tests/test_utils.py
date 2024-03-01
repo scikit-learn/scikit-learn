@@ -254,9 +254,6 @@ def test_determine_key_type_slice_error():
 )
 @pytest.mark.parametrize("indices_type", ["list", "tuple", "array", "series", "slice"])
 def test_safe_indexing_2d_container_axis_0(array_type, indices_type):
-    if array_type == "polars" and indices_type == "series":
-        pytest.skip("polars does not support indexing with pandas Series")
-
     indices = [1, 2]
     if indices_type == "slice" and isinstance(indices[1], int):
         indices[1] += 1
@@ -271,9 +268,6 @@ def test_safe_indexing_2d_container_axis_0(array_type, indices_type):
 @pytest.mark.parametrize("array_type", ["list", "array", "series", "polars_series"])
 @pytest.mark.parametrize("indices_type", ["list", "tuple", "array", "series", "slice"])
 def test_safe_indexing_1d_container(array_type, indices_type):
-    if array_type == "polars_series" and indices_type == "series":
-        pytest.skip("polars does not support indexing with pandas Series")
-
     indices = [1, 2]
     if indices_type == "slice" and isinstance(indices[1], int):
         indices[1] += 1
@@ -287,9 +281,6 @@ def test_safe_indexing_1d_container(array_type, indices_type):
 @pytest.mark.parametrize("indices_type", ["list", "tuple", "array", "series", "slice"])
 @pytest.mark.parametrize("indices", [[1, 2], ["col_1", "col_2"]])
 def test_safe_indexing_2d_container_axis_1(array_type, indices_type, indices):
-    if array_type == "polars" and indices_type == "series":
-        pytest.skip("polars does not support indexing with pandas Series")
-
     # validation of the indices
     # we make a copy because indices is mutable and shared between tests
     indices_converted = copy(indices)
@@ -325,9 +316,6 @@ def test_safe_indexing_2d_container_axis_1(array_type, indices_type, indices):
 def test_safe_indexing_2d_read_only_axis_1(
     array_read_only, indices_read_only, array_type, indices_type, axis, expected_array
 ):
-    if array_type == "polars" and indices_type == "series":
-        pytest.skip("polars does not support indexing with pandas Series")
-
     array = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
     if array_read_only:
         array.setflags(write=False)
@@ -343,9 +331,6 @@ def test_safe_indexing_2d_read_only_axis_1(
 @pytest.mark.parametrize("array_type", ["list", "array", "series", "polars_series"])
 @pytest.mark.parametrize("indices_type", ["list", "tuple", "array", "series"])
 def test_safe_indexing_1d_container_mask(array_type, indices_type):
-    if array_type == "polars_series" and indices_type == "series":
-        pytest.skip("polars does not support indexing with pandas Series")
-
     indices = [False] + [True] * 2 + [False] * 6
     array = _convert_container([1, 2, 3, 4, 5, 6, 7, 8, 9], array_type)
     indices = _convert_container(indices, indices_type)
@@ -360,9 +345,6 @@ def test_safe_indexing_1d_container_mask(array_type, indices_type):
     [(0, [[4, 5, 6], [7, 8, 9]]), (1, [[2, 3], [5, 6], [8, 9]])],
 )
 def test_safe_indexing_2d_mask(array_type, indices_type, axis, expected_subset):
-    if array_type == "polars" and indices_type == "series":
-        pytest.skip("polars does not support indexing with pandas Series")
-
     columns_name = ["col_0", "col_1", "col_2"]
     array = _convert_container(
         [[1, 2, 3], [4, 5, 6], [7, 8, 9]], array_type, columns_name

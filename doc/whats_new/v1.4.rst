@@ -27,6 +27,16 @@ Metadata Routing
   attributes.
   :pr:`28435` by `Adrin Jalali`_.
 
+Changelog
+---------
+
+:mod:`sklearn.utils`
+....................
+
+- |Fix| :func:`~utils._safe_indexing` now works correctly for polars Series. It also
+  works correctly for polars DataFrame when `axis=0` and `indices` is a tuple, boolean
+  mask, scalar, or Series. :pr:`28521` by :user:`Yao Xiao <Charlie-XIAO>`.
+
 .. _changes_1_4_1:
 
 Version 1.4.1

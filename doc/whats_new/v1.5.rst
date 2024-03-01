@@ -226,13 +226,6 @@ Changelog
   prefix any feature names and will error if feature names are not unique.
   :pr:`25991` by :user:`Jiawei Zhang <jiawei-zhang-a>`.
 
-:mod:`sklearn.utils`
-....................
-
-- |Fix| :func:`~utils._safe_indexing` now works correctly for polars Series and for
-  polars DataFrame when `indices` is a tuple, boolean mask, or scalar (when `axis=0`).
-  :pr:`28521` by :user:`Yao Xiao <Charlie-XIAO>`.
-
 .. rubric:: Code and documentation contributors
 
 Thanks to everyone who has contributed to the maintenance and improvement of
