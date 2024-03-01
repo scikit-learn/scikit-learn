@@ -118,7 +118,7 @@ METAESTIMATORS: list = [
         "X": X,
         "y": y,
         "estimator_routing_methods": ["fit"],
-        "preserves_metadata": False,
+        "preserves_metadata": "subset",
     },
     {
         "metaestimator": ClassifierChain,
@@ -288,9 +288,20 @@ METAESTIMATORS: list = [
         "cv_routing_methods": ["fit"],
     },
     {
+        "metaestimator": RANSACRegressor,
+        "estimator_name": "estimator",
+        "estimator": "regressor",
+        "init_args": {"min_samples": 0.5},
+        "X": X,
+        "y": y,
+        "preserves_metadata": "subset",
+        "estimator_routing_methods": ["fit", "predict", "score"],
+        "method_mapping": {"fit": ["fit", "score"]},
+    },
+    {
         "metaestimator": IterativeImputer,
         "estimator_name": "estimator",
-        "estimator": ConsumingRegressor,
+        "estimator": "regressor",
         "init_args": {"skip_complete": False},
         "X": X,
         "y": y,
@@ -299,7 +310,7 @@ METAESTIMATORS: list = [
     {
         "metaestimator": BaggingClassifier,
         "estimator_name": "estimator",
-        "estimator": ConsumingClassifier,
+        "estimator": "classifier",
         "X": X,
         "y": y,
         "preserves_metadata": False,
@@ -308,7 +319,7 @@ METAESTIMATORS: list = [
     {
         "metaestimator": BaggingRegressor,
         "estimator_name": "estimator",
-        "estimator": ConsumingRegressor,
+        "estimator": "regressor",
         "X": X,
         "y": y,
         "preserves_metadata": False,
@@ -344,6 +355,9 @@ The keys are as follows:
   to the splitter
 - method_args: a dict of dicts, defining extra arguments needed to be passed to
   methods, such as passing `classes` to `partial_fit`.
+- method_mapping: a dict of the form `{caller: [callee1, ...]}` which signals
+  which `.set_{method}_request` methods should be called to set request values.
+  If not present, a one-to-one mapping is assumed.
 """
 
 # IDs used by pytest to get meaningful verbose messages when running the tests
@@ -354,7 +368,6 @@ UNSUPPORTED_ESTIMATORS = [
     AdaBoostRegressor(),
     FeatureUnion([]),
     GraphicalLassoCV(),
-    RANSACRegressor(),
     RFE(ConsumingClassifier()),
     RFECV(ConsumingClassifier()),
     RidgeCV(),
@@ -407,13 +420,17 @@ def get_init_args(metaestimator_info, sub_estimator_consumes):
         if sub_estimator_consumes:
             if sub_estimator_type == "regressor":
                 estimator = ConsumingRegressor(estimator_registry)
-            else:
+            elif sub_estimator_type == "classifier":
                 estimator = ConsumingClassifier(estimator_registry)
+            else:
+                raise ValueError("Unpermitted `sub_estimator_type`.")  # pragma: nocover
         else:
             if sub_estimator_type == "regressor":
                 estimator = NonConsumingRegressor()
-            else:
+            elif sub_estimator_type == "classifier":
                 estimator = NonConsumingClassifier()
+            else:
+                raise ValueError("Unpermitted `sub_estimator_type`.")  # pragma: nocover
         kwargs[estimator_name] = estimator
     if "scorer_name" in metaestimator_info:
         scorer_name = metaestimator_info["scorer_name"]
@@ -432,6 +449,38 @@ def get_init_args(metaestimator_info, sub_estimator_consumes):
         (scorer, scorer_registry),
         (cv, cv_registry),
     )
+
+
+def set_requests(estimator, *, method_mapping, methods, metadata_name, value=True):
+    """Call `set_{method}_request` on a list of methods from the sub-estimator.
+
+    Parameters
+    ----------
+    estimator : BaseEstimator
+        The estimator for which `set_{method}_request` methods are called.
+
+    method_mapping : dict
+        The method mapping in the form of `{caller: [callee, ...]}`.
+        If a "caller" is not present in the method mapping, a one-to-one mapping is
+        assumed.
+
+    methods : list of str
+        The list of methods as "caller"s for which the request for the child should
+        be set.
+
+    metadata_name : str
+        The name of the metadata to be routed, usually either `"metadata"` or
+        `"sample_weight"` in our tests.
+
+    value : None, bool, or str
+        The request value to be set, by default it's `True`
+    """
+    for caller in methods:
+        for callee in method_mapping.get(caller, [caller]):
+            set_request_for_method = getattr(estimator, f"set_{callee}_request")
+            set_request_for_method(**{metadata_name: value})
+            if is_classifier(estimator) and callee == "partial_fit":
+                set_request_for_method(classes=True)
 
 
 @pytest.mark.parametrize("estimator", UNSUPPORTED_ESTIMATORS)
@@ -511,7 +560,32 @@ def test_error_on_missing_requests_for_sub_estimator(metaestimator):
             )
             with pytest.raises(UnsetMetadataPassedError, match=re.escape(msg)):
                 method = getattr(instance, method_name)
-                method(X, y, **method_kwargs)
+                if "fit" not in method_name:
+                    # set request on fit
+                    set_requests(
+                        estimator,
+                        method_mapping=metaestimator.get("method_mapping", {}),
+                        methods=["fit"],
+                        metadata_name=key,
+                    )
+                    instance.fit(X, y, **method_kwargs)
+                # making sure the requests are unset, in case they were set as a
+                # side effect of setting them for fit. For instance, if method
+                # mapping for fit is: `"fit": ["fit", "score"]`, that would mean
+                # calling `.score` here would not raise, because we have already
+                # set request value for child estimator's `score`.
+                set_requests(
+                    estimator,
+                    method_mapping=metaestimator.get("method_mapping", {}),
+                    methods=["fit"],
+                    metadata_name=key,
+                    value=None,
+                )
+                try:
+                    # `fit` and `partial_fit` accept y, others don't.
+                    method(X, y, **method_kwargs)
+                except TypeError:
+                    method(X, **method_kwargs)
 
 
 @pytest.mark.parametrize("metaestimator", METAESTIMATORS, ids=METAESTIMATOR_IDS)
@@ -523,17 +597,11 @@ def test_setting_request_on_sub_estimator_removes_error(metaestimator):
         # sub-estimator, e.g. MyMetaEstimator(estimator=MySubEstimator())
         return
 
-    def set_request(estimator, method_name):
-        # e.g. call set_fit_request on estimator
-        set_request_for_method = getattr(estimator, f"set_{method_name}_request")
-        set_request_for_method(sample_weight=True, metadata=True)
-        if is_classifier(estimator) and method_name == "partial_fit":
-            set_request_for_method(classes=True)
-
     cls = metaestimator["metaestimator"]
     X = metaestimator["X"]
     y = metaestimator["y"]
     routing_methods = metaestimator["estimator_routing_methods"]
+    method_mapping = metaestimator.get("method_mapping", {})
     preserves_metadata = metaestimator.get("preserves_metadata", True)
 
     for method_name in routing_methods:
@@ -545,16 +613,40 @@ def test_setting_request_on_sub_estimator_removes_error(metaestimator):
                 metaestimator, sub_estimator_consumes=True
             )
             if scorer:
-                set_request(scorer, "score")
+                set_requests(
+                    scorer, method_mapping={}, methods=["score"], metadata_name=key
+                )
             if cv:
                 cv.set_split_request(groups=True, metadata=True)
-            set_request(estimator, method_name)
+
+            # `set_{method}_request({metadata}==True)` on the underlying objects
+            set_requests(
+                estimator,
+                method_mapping=method_mapping,
+                methods=[method_name],
+                metadata_name=key,
+            )
+
             instance = cls(**kwargs)
             method = getattr(instance, method_name)
             extra_method_args = metaestimator.get("method_args", {}).get(
                 method_name, {}
             )
-            method(X, y, **method_kwargs, **extra_method_args)
+            if "fit" not in method_name:
+                # fit before calling method
+                set_requests(
+                    estimator,
+                    method_mapping=metaestimator.get("method_mapping", {}),
+                    methods=["fit"],
+                    metadata_name=key,
+                )
+                instance.fit(X, y, **method_kwargs, **extra_method_args)
+            try:
+                # `fit` and `partial_fit` accept y, others don't.
+                method(X, y, **method_kwargs, **extra_method_args)
+            except TypeError:
+                method(X, **method_kwargs, **extra_method_args)
+
             # sanity check that registry is not empty, or else the test passes
             # trivially
             assert registry
@@ -599,8 +691,14 @@ def test_non_consuming_estimator_works(metaestimator):
         set_request(estimator, method_name)
         method = getattr(instance, method_name)
         extra_method_args = metaestimator.get("method_args", {}).get(method_name, {})
-        # This following line should pass w/o raising a routing error.
-        method(X, y, **extra_method_args)
+        if "fit" not in method_name:
+            instance.fit(X, y, **extra_method_args)
+        # The following should pass w/o raising a routing error.
+        try:
+            # `fit` and `partial_fit` accept y, others don't.
+            method(X, y, **extra_method_args)
+        except TypeError:
+            method(X, **extra_method_args)
 
 
 @pytest.mark.parametrize("metaestimator", METAESTIMATORS, ids=METAESTIMATOR_IDS)
