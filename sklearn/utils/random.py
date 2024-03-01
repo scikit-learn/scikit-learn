@@ -40,6 +40,19 @@ def _random_choice_csc(n_samples, classes, class_probability=None, random_state=
     -------
     random_matrix : sparse csc matrix of size (n_samples, n_outputs)
 
+    Examples
+    --------
+    >>> n_samples = 5
+    >>> classes = [np.array([0, 1]), np.array([1, 2, 3])]
+    >>> class_probability = [np.array([0.2, 0.8]), np.array([0.3, 0.5, 0.2])]
+    >>> random_matrix = _random_matrix_csc(n_samples, classes, class_probability, random_state = 42)
+    >>> random_matrix.todense()
+    matrix([[1, 2],
+            [1, 2],
+            [1, 3],
+            [1, 2],
+            [0, 2]])
+
     """
     data = array.array("i")
     indices = array.array("i")
