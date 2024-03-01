@@ -15,10 +15,8 @@ from sklearn.base import (
     BaseEstimator,
     clone,
 )
-from sklearn.ensemble import VotingClassifier
 from sklearn.exceptions import UnsetMetadataPassedError
 from sklearn.linear_model import LinearRegression
-from sklearn.pipeline import Pipeline
 from sklearn.tests.metadata_routing_common import (
     ConsumingClassifier,
     ConsumingRegressor,
@@ -71,7 +69,13 @@ def enable_slep006():
 
 
 class SimplePipeline(BaseEstimator):
-    """A very simple pipeline, assuming the last step is always a predictor."""
+    """A very simple pipeline, assuming the last step is always a predictor.
+
+    Parameters
+    ----------
+    steps : iterable of objects
+        An iterable of transformers with the last step being a predictor.
+    """
 
     def __init__(self, steps):
         self.steps = steps
@@ -1037,12 +1041,13 @@ def test_no_metadata_always_works():
 def test_unsetmetadatapassederror_correct():
     """Test that UnsetMetadataPassedError raises the correct error message when
     set_{method}_request is not set in nested cases."""
-    voting = VotingClassifier(estimators=[("classifier", ConsumingClassifier())])
-    pipe = Pipeline([("voting", voting)])
+    weighted_meta = WeightedMetaClassifier(estimator=ConsumingClassifier())
+    pipe = SimplePipeline([weighted_meta])
     msg = re.escape(
         "[metadata] are passed but are not explicitly set as requested or not requested"
-        " for ConsumingClassifier.fit, which is used within VotingClassifier.fit. Call"
-        " `ConsumingClassifier.set_fit_request({metadata}=True)` for each metadata."
+        " for ConsumingClassifier.fit, which is used within WeightedMetaClassifier.fit."
+        " Call `ConsumingClassifier.set_fit_request({metadata}=True/False)` for each"
+        " metadata you want to request/ignore."
     )
 
     with pytest.raises(UnsetMetadataPassedError, match=msg):
