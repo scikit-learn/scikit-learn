@@ -438,11 +438,11 @@ def test_dbcv_score_basic_input(density_sample):
 
     # score should at least be non-negative if labeled by ground-truth
     assert res[0] >= 0
-    
+
     assert dbcv_score(*density_sample) == res[0]
 
     assert isinstance(res[1], dict)
-    assert len(res[1]) == 2 # noise should not result in an extra entry
+    assert len(res[1]) == 2  # noise should not result in an extra entry
 
     non_noise = density_sample[1] != -1
     sample_without_noise = [component[non_noise] for component in density_sample]
