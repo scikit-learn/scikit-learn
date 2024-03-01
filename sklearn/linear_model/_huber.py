@@ -7,7 +7,7 @@ import numpy as np
 from scipy import optimize
 
 from ..base import BaseEstimator, RegressorMixin, _fit_context
-from ..utils import axis0_safe_slice
+from ..utils._mask import axis0_safe_slice
 from ..utils._param_validation import Interval
 from ..utils.extmath import safe_sparse_dot
 from ..utils.optimize import _check_optimize_result
