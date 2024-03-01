@@ -629,8 +629,9 @@ class OrthogonalMatchingPursuit(MultiOutputMixin, RegressorMixin, LinearModel):
     Parameters
     ----------
     n_nonzero_coefs : int, default=None
-        Desired number of non-zero entries in the solution. If None (by
-        default) this value is set to 10% of n_features.
+        Desired number of non-zero entries in the solution. If `None` and `tol` is
+        also `None` this value is either set to 10% of `n_features` or 1, whichever is
+        greater. Ignored if `tol` is not `None`.
 
     tol : float, default=None
         Maximum squared norm of the residual. If not None, overrides n_nonzero_coefs.
@@ -657,10 +658,11 @@ class OrthogonalMatchingPursuit(MultiOutputMixin, RegressorMixin, LinearModel):
     n_iter_ : int or array-like
         Number of active features across every target.
 
-    n_nonzero_coefs_ : int
+    n_nonzero_coefs_ : int or None
         The number of non-zero coefficients in the solution. If
         `n_nonzero_coefs` is None and `tol` is None this value is either set
         to 10% of `n_features` or 1, whichever is greater.
+        When `None`, `n_nonzero_coefs` has been ignored because `tol` has been set.
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
@@ -761,6 +763,8 @@ class OrthogonalMatchingPursuit(MultiOutputMixin, RegressorMixin, LinearModel):
             # default for n_nonzero_coefs is 0.1 * n_features
             # but at least one.
             self.n_nonzero_coefs_ = max(int(0.1 * n_features), 1)
+        elif self.tol is not None:
+            self.n_nonzero_coefs_ = None
         else:
             self.n_nonzero_coefs_ = self.n_nonzero_coefs
 

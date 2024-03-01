@@ -180,6 +180,10 @@ Changelog
   :class:`linear_model.Ridge` and :class:`linear_model.RidgeClassifier`.
   :pr:`28425` by :user:`Lucy Liu <lucyleeow>`.
 
+- |API| `n_nonzero_coefs_` attribute in :class:`linear_model.OrthogonalMatchingPursuit`
+  will now always be `None` when `tol` is set, as `n_nonzero_coefs` is ignored in
+  this case. :pr:`` by :user:`Lucy Liu <lucyleeow>`.
+
 :mod:`sklearn.manifold`
 .......................
 
