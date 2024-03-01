@@ -92,9 +92,10 @@ Changelog
 - |Feature| A fitted :class:`compose.ColumnTransformer` now implements `__getitem__`
   which returns the fitted transformers by name. :pr:`27990` by `Thomas Fan`_.
 
-- |ENH| :class:`compose.TransformedTargetRegressor` now raises an error in `fit` if
-  only `inverse_func` is provided without `func` (that would default to identity) being
-  explicitly set as well. :pr:`28483` by :user:`Stefanie Senger <StefanieSenger>`.
+- |Enhancement| :class:`compose.TransformedTargetRegressor` now raises an error in `fit`
+  if only `inverse_func` is provided without `func` (that would default to identity)
+  being explicitly set as well.
+  :pr:`28483` by :user:`Stefanie Senger <StefanieSenger>`.
 
 :mod:`sklearn.datasets`
 .......................
@@ -112,6 +113,13 @@ Changelog
   and :func:`datasets.fetch_species_distributions`.
   By default, the functions will retry up to 3 times in case of network failures.
   :pr:`28160` by :user:`Zhehao Liu <MaxwellLZH>` and :user:`Filip Karlo Došilović <fkdosilovic>`.
+
+:mod:`sklearn.decomposition`
+............................
+
+- |Enhancement| :class:`~decomposition.PCA` now automatically selects the ARPACK solver
+  for sparse inputs when `svd_solver="auto"` instead of raising an error.
+  :pr:`28498` by :user:`Thanh Lam Dang <lamdang2k>`.
 
 :mod:`sklearn.dummy`
 ....................
