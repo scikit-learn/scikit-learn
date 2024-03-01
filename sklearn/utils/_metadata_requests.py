@@ -440,6 +440,8 @@ class MethodMetadataRequest:
             elif alias in args:
                 res[prop] = args[alias]
         if unrequested:
+            if parent.__class__.__name__ != "str":
+                parent = parent.__class__.__name__
             if self.method in COMPOSITE_METHODS:
                 callee_methods = list(COMPOSITE_METHODS[self.method])
             else:
@@ -454,7 +456,7 @@ class MethodMetadataRequest:
                 f"[{', '.join([key for key in unrequested])}] are passed but are not"
                 " explicitly set as requested or not requested for"
                 f" {self.owner}.{self.method}, which is used within"
-                f" {parent.__class__.__name__}.{caller}. Call `{self.owner}"
+                f" {parent}.{caller}. Call `{self.owner}"
                 + set_requests_on
                 + "` for each metadata you want to request/ignore."
             )
@@ -1028,7 +1030,6 @@ class MetadataRouter:
         res.update(child_params)
         return res
 
-    # def route_params(self, *, caller, params, parent=None):
     def route_params(self, *, caller, params, parent):
         """Return the input parameters requested by child objects.
 
