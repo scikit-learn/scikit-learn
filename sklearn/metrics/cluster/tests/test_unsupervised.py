@@ -435,10 +435,20 @@ def test_dbcv_score_rand_in_output_val_range(density_sample):
 
 def test_dbcv_score_basic_input(density_sample):
     res = dbcv_score(*density_sample, per_cluster_scores=True)
+
     # score should at least be non-negative if labeled by ground-truth
     assert res[0] >= 0
+    
     assert dbcv_score(*density_sample) == res[0]
+
     assert isinstance(res[1], dict)
+    assert len(res[1]) == 2 # noise should not result in an extra entry
+
+    non_noise = density_sample[1] != -1
+    sample_without_noise = [component[non_noise] for component in density_sample]
+    # test for implicit noise penalty, which emerges from the definition of DBCV
+    # (as stated in the paper)
+    assert res[0] < dbcv_score(*sample_without_noise)
 
 
 def test_dbcv_score_verbose(density_sample):
