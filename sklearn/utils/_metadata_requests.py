@@ -441,16 +441,22 @@ class MethodMetadataRequest:
                 res[prop] = args[alias]
         if unrequested:
             if self.method in COMPOSITE_METHODS:
-                callee_method = COMPOSITE_METHODS[self.method][0]
+                callee_methods = list(COMPOSITE_METHODS[self.method])
             else:
-                callee_method = self.method
+                callee_methods = [self.method]
+            set_requests_on = "".join(
+                [
+                    f".set_{method}_request({{metadata}}=True/False)"
+                    for method in callee_methods
+                ]
+            )
             message = (
                 f"[{', '.join([key for key in unrequested])}] are passed but are not"
                 " explicitly set as requested or not requested for"
                 f" {self.owner}.{self.method}, which is used within"
-                f" {parent.__class__.__name__}.{caller}. Call"
-                f" `{self.owner}.set_{callee_method}_request({{metadata}}=True/False)`"
-                " for each metadata you want to request/ignore."
+                f" {parent.__class__.__name__}.{caller}. Call `{self.owner}"
+                + set_requests_on
+                + "` for each metadata you want to request/ignore."
             )
             raise UnsetMetadataPassedError(
                 message=message,

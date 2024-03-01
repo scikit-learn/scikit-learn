@@ -17,6 +17,7 @@ from sklearn.base import (
 )
 from sklearn.exceptions import UnsetMetadataPassedError
 from sklearn.linear_model import LinearRegression
+from sklearn.pipeline import Pipeline
 from sklearn.tests.metadata_routing_common import (
     ConsumingClassifier,
     ConsumingRegressor,
@@ -1052,3 +1053,21 @@ def test_unsetmetadatapassederror_correct():
 
     with pytest.raises(UnsetMetadataPassedError, match=msg):
         pipe.fit(X, y, metadata="blah")
+
+
+def test_unsetmetadatapassederror_correct_for_composite_methods():
+    """Test that UnsetMetadataPassedError raises the correct error message when
+    composite metadata request methods are not set in nested cases."""
+    consuming_transformer = ConsumingTransformer()
+    pipe = Pipeline([("consuming_transformer", consuming_transformer)])
+
+    msg = re.escape(
+        "[metadata] are passed but are not explicitly set as requested or not requested"
+        " for ConsumingTransformer.fit_transform, which is used within"
+        " Pipeline.fit_transform. Call"
+        " `ConsumingTransformer.set_fit_request({metadata}=True/False)"
+        ".set_transform_request({metadata}=True/False)`"
+        " for each metadata you want to request/ignore."
+    )
+    with pytest.raises(UnsetMetadataPassedError, match=msg):
+        pipe.fit_transform(X, y, metadata="blah")
