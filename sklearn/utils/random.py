@@ -45,7 +45,7 @@ def _random_choice_csc(n_samples, classes, class_probability=None, random_state=
     >>> n_samples = 5
     >>> classes = [np.array([0, 1]), np.array([1, 2, 3])]
     >>> class_probability = [np.array([0.2, 0.8]), np.array([0.3, 0.5, 0.2])]
-    >>> random_matrix = _random_matrix_csc(n_samples, classes, class_probability, random_state = 42)
+    >>> random_matrix = _random_choice_csc(n_samples, classes, class_probability, random_state=42)
     >>> random_matrix.todense()
     matrix([[1, 2],
             [1, 2],
