@@ -280,7 +280,7 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
         self._set_parameters(best_params)
         self.n_iter_ = best_n_iter
         self.lower_bound_ = max_lower_bound
-        self.best_lower_bounds_ = best_lower_bounds
+        self.lower_bounds_ = best_lower_bounds
 
         # Always do a final e-step to guarantee that the labels returned by
         # fit_predict(X) are always consistent with fit(X).predict(X)
