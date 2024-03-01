@@ -182,7 +182,7 @@ Changelog
 
 - |API| `n_nonzero_coefs_` attribute in :class:`linear_model.OrthogonalMatchingPursuit`
   will now always be `None` when `tol` is set, as `n_nonzero_coefs` is ignored in
-  this case. :pr:`` by :user:`Lucy Liu <lucyleeow>`.
+  this case. :pr:`28557` by :user:`Lucy Liu <lucyleeow>`.
 
 :mod:`sklearn.manifold`
 .......................
