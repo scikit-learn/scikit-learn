@@ -549,6 +549,17 @@ def make_hastie_10_2(n_samples=12000, *, random_state=None):
     ----------
     .. [1] T. Hastie, R. Tibshirani and J. Friedman, "Elements of Statistical
            Learning Ed. 2", Springer, 2009.
+
+    Examples
+    --------
+    >>> from sklearn.datasets import make_hastie_10_2
+    >>> X, y = make_hastie_10_2(n_samples=24000, random_state=42)
+    >>> X.shape
+    (24000, 10)
+    >>> y.shape
+    (24000,)
+    >>> list(y[:5])
+    [-1.0, 1.0, -1.0, 1.0, -1.0]
     """
     rs = check_random_state(random_state)
 
