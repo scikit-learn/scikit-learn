@@ -10,7 +10,7 @@ import scipy as sp
 
 from ..externals import _arff
 from ..externals._arff import ArffSparseDataType
-from ..utils import _chunk_generator, get_chunk_n_rows
+from ..utils._chunking import chunk_generator, get_chunk_n_rows
 from ..utils._optional_dependencies import check_pandas_support
 from ..utils.fixes import pd_fillna
 
@@ -192,7 +192,7 @@ def _liac_arff_parser(
         # read arff data with chunks
         columns_to_keep = [col for col in columns_names if col in columns_to_select]
         dfs = [first_df[columns_to_keep]]
-        for data in _chunk_generator(arff_container["data"], chunksize):
+        for data in chunk_generator(arff_container["data"], chunksize):
             dfs.append(
                 pd.DataFrame(data, columns=columns_names, copy=False)[columns_to_keep]
             )

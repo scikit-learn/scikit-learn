@@ -199,7 +199,7 @@ def fetch_covtype(
         with TemporaryDirectory(dir=covtype_dir) as temp_dir:
             logger.info(f"Downloading {ARCHIVE.url}")
             archive_path = _fetch_remote(
-                ARCHIVE, dirname=temp_dir, _retries=n_retries, delay=delay
+                ARCHIVE, dirname=temp_dir, n_retries=n_retries, delay=delay
             )
             Xy = np.genfromtxt(GzipFile(filename=archive_path), delimiter=",")
 
