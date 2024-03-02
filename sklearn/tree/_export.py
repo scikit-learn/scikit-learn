@@ -669,9 +669,9 @@ class _MPLTreeExporter(_BaseTreeExporter):
             # adjust fontsize to avoid overlap
             # get max box width and height
             extents = [
-                ann.get_bbox_patch().get_window_extent()
+                bbox_patch.get_window_extent()
                 for ann in anns
-                if ann.get_bbox_patch() is not None
+                if (bbox_patch := ann.get_bbox_patch()) is not None
             ]
             max_width = max([extent.width for extent in extents])
             max_height = max([extent.height for extent in extents])
@@ -700,10 +700,7 @@ class _MPLTreeExporter(_BaseTreeExporter):
         non_box_kwargs["arrowprops"]["edgecolor"] = plt.rcParams["text.color"]
 
         # kwargs for annotations with a bounding box
-        kwargs = dict(
-            bbox=self.bbox_args.copy(),
-            **non_box_kwargs,
-        )
+        kwargs = dict(bbox=self.bbox_args.copy(), **non_box_kwargs)
 
         # offset things by .5 to center them in plot
         xy = ((node.x + 0.5) / max_x, (max_y - node.y - 0.5) / max_y)
@@ -733,18 +730,9 @@ class _MPLTreeExporter(_BaseTreeExporter):
                     )
                     # Annotate the arrow with the edge label to indicate the child
                     # where the sample-split condition is satisfied
-                    if node.parent.left() == node:
-                        ax.annotate(
-                            "True",
-                            text_pos,
-                            **non_box_kwargs,
-                        )
-                    else:
-                        ax.annotate(
-                            "False",
-                            text_pos,
-                            **non_box_kwargs,
-                        )
+                    ax.annotate(
+                        node.parent.left() == node, text_pos, **non_box_kwargs,
+                    )
             for child in node.children:
                 self.recurse(child, tree, ax, max_x, max_y, depth=depth + 1)
 
