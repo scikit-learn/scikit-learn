@@ -5,6 +5,7 @@ over the internet, all details are available on the official website:
 
     http://vis-www.cs.umass.edu/lfw/
 """
+
 # Copyright (c) 2011 Olivier Grisel <olivier.grisel@ensta.org>
 # License: BSD 3 clause
 
@@ -73,7 +74,9 @@ TARGETS = (
 #
 
 
-def _check_fetch_lfw(data_home=None, funneled=True, download_if_missing=True):
+def _check_fetch_lfw(
+    data_home=None, funneled=True, download_if_missing=True, n_retries=3, delay=1.0
+):
     """Helper function to download any missing LFW data"""
 
     data_home = get_data_home(data_home=data_home)
@@ -87,7 +90,9 @@ def _check_fetch_lfw(data_home=None, funneled=True, download_if_missing=True):
         if not exists(target_filepath):
             if download_if_missing:
                 logger.info("Downloading LFW metadata: %s", target.url)
-                _fetch_remote(target, dirname=lfw_home)
+                _fetch_remote(
+                    target, dirname=lfw_home, n_retries=n_retries, delay=delay
+                )
             else:
                 raise OSError("%s is missing" % target_filepath)
 
@@ -103,7 +108,9 @@ def _check_fetch_lfw(data_home=None, funneled=True, download_if_missing=True):
         if not exists(archive_path):
             if download_if_missing:
                 logger.info("Downloading LFW data (~200MB): %s", archive.url)
-                _fetch_remote(archive, dirname=lfw_home)
+                _fetch_remote(
+                    archive, dirname=lfw_home, n_retries=n_retries, delay=delay
+                )
             else:
                 raise OSError("%s is missing" % archive_path)
 
@@ -244,6 +251,8 @@ def _fetch_lfw_people(
         "slice_": [tuple, Hidden(None)],
         "download_if_missing": ["boolean"],
         "return_X_y": ["boolean"],
+        "n_retries": [Interval(Integral, 1, None, closed="left")],
+        "delay": [Interval(Real, 0.0, None, closed="neither")],
     },
     prefer_skip_nested_validation=True,
 )
@@ -257,6 +266,8 @@ def fetch_lfw_people(
     slice_=(slice(70, 195), slice(78, 172)),
     download_if_missing=True,
     return_X_y=False,
+    n_retries=3,
+    delay=1.0,
 ):
     """Load the Labeled Faces in the Wild (LFW) people dataset \
 (classification).
@@ -310,6 +321,16 @@ def fetch_lfw_people(
 
         .. versionadded:: 0.20
 
+    n_retries : int, default=3
+        Number of retries when HTTP errors are encountered.
+
+        .. versionadded:: 1.5
+
+    delay : float, default=1.0
+        Number of seconds between retries.
+
+        .. versionadded:: 1.5
+
     Returns
     -------
     dataset : :class:`~sklearn.utils.Bunch`
@@ -342,7 +363,11 @@ def fetch_lfw_people(
         .. versionadded:: 0.20
     """
     lfw_home, data_folder_path = _check_fetch_lfw(
-        data_home=data_home, funneled=funneled, download_if_missing=download_if_missing
+        data_home=data_home,
+        funneled=funneled,
+        download_if_missing=download_if_missing,
+        n_retries=n_retries,
+        delay=delay,
     )
     logger.debug("Loading LFW people faces from %s", lfw_home)
 
@@ -439,6 +464,8 @@ def _fetch_lfw_pairs(
         "color": ["boolean"],
         "slice_": [tuple, Hidden(None)],
         "download_if_missing": ["boolean"],
+        "n_retries": [Interval(Integral, 1, None, closed="left")],
+        "delay": [Interval(Real, 0.0, None, closed="neither")],
     },
     prefer_skip_nested_validation=True,
 )
@@ -451,6 +478,8 @@ def fetch_lfw_pairs(
     color=False,
     slice_=(slice(70, 195), slice(78, 172)),
     download_if_missing=True,
+    n_retries=3,
+    delay=1.0,
 ):
     """Load the Labeled Faces in the Wild (LFW) pairs dataset (classification).
 
@@ -507,6 +536,16 @@ def fetch_lfw_pairs(
         If False, raise an OSError if the data is not locally available
         instead of trying to download the data from the source site.
 
+    n_retries : int, default=3
+        Number of retries when HTTP errors are encountered.
+
+        .. versionadded:: 1.5
+
+    delay : float, default=1.0
+        Number of seconds between retries.
+
+        .. versionadded:: 1.5
+
     Returns
     -------
     data : :class:`~sklearn.utils.Bunch`
@@ -533,7 +572,11 @@ def fetch_lfw_pairs(
             Description of the Labeled Faces in the Wild (LFW) dataset.
     """
     lfw_home, data_folder_path = _check_fetch_lfw(
-        data_home=data_home, funneled=funneled, download_if_missing=download_if_missing
+        data_home=data_home,
+        funneled=funneled,
+        download_if_missing=download_if_missing,
+        n_retries=n_retries,
+        delay=delay,
     )
     logger.debug("Loading %s LFW pairs from %s", subset, lfw_home)
 
