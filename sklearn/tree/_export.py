@@ -731,7 +731,9 @@ class _MPLTreeExporter(_BaseTreeExporter):
                     # Annotate the arrow with the edge label to indicate the child
                     # where the sample-split condition is satisfied
                     ax.annotate(
-                        node.parent.left() == node, text_pos, **non_box_kwargs,
+                        node.parent.left() == node,
+                        text_pos,
+                        **non_box_kwargs,
                     )
             for child in node.children:
                 self.recurse(child, tree, ax, max_x, max_y, depth=depth + 1)
