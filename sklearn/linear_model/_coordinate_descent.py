@@ -533,11 +533,20 @@ def enet_path(
     --------
     >>> from sklearn.linear_model import enet_path
     >>> from sklearn.datasets import make_regression
-    >>> X, y = make_regression(n_samples=100, n_features=2, noise=0.1,random_state=42)
-    >>> alphas, coefs, _ = enet_path(X, y, n_alphas=5,l1_ratio=0.7)
+    >>> X, y, true_coef = make_regression(
+    ...    n_samples=100, n_features=5, n_informative=2, coef=True, random_state=0
+    ... )
+    >>> true_coef
+    array([ 0.        ,  0.        ,  0.        , 97.9..., 45.7...])
+    >>> alphas, estimated_coef, _ = enet_path(X, y, n_alphas=3)
     >>> alphas
-    array([107.58708988,  19.13199067,   3.40220251,   0.60500667,
-         0.10758709])
+    array([174.96...,   5.53...,   0.17...])
+    >>> estimated_coef
+     array([[ 0.        ,  0.78...,  0.56...],
+            [ 0.        ,  1.12...,  0.61...],
+            [-0.        , -2.12..., -1.12...],
+            [ 0.        , 23.04..., 88.93...],
+            [ 0.        , 10.63..., 41.56...]])
     """
     X_offset_param = params.pop("X_offset", None)
     X_scale_param = params.pop("X_scale", None)
