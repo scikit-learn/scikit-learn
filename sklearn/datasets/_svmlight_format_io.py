@@ -176,7 +176,7 @@ def load_svmlight_file(
     To use joblib.Memory to cache the svmlight file::
 
         from joblib import Memory
-        from .datasets import load_svmlight_file
+        from sklearn.datasets import load_svmlight_file
         mem = Memory("./mycache")
 
         @mem.cache
@@ -362,15 +362,20 @@ def load_svmlight_files(
 
     Examples
     --------
-    >>> from joblib import Memory
-    >>> from sklearn.datasets import load_svmlight_files
-    >>> mem = Memory("./mycache")
-    >>> @mem.cache
-    ... def get_data():
-    ...     files = ["mysvmlightfile","mysvmlightfile"]
-    ...     X1, Y1, X2, Y2 = load_svmlight_files(files)
-    ...     return X1, Y1, X2, Y2
-    >>> X1, Y1, X2, Y2 = get_data() # doctest: +SKIP
+    To use joblib.Memory to cache the svmlight file::
+
+        from joblib import Memory
+        from sklearn.datasets import load_svmlight_file
+        mem = Memory("./mycache")
+
+        @mem.cache
+        def get_data():
+            data_train, target_train, data_test, target_test = load_svmlight_files(
+                ["svmlight_file_train", "svmlight_file_test"]
+            )
+            return data_train, target_train, data_test, target_test
+
+        X_train, y_train, X_test, y_test = get_data()
     """
     if (offset != 0 or length > 0) and zero_based == "auto":
         # disable heuristic search to avoid getting inconsistent results on
