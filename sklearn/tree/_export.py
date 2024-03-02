@@ -731,7 +731,8 @@ class _MPLTreeExporter(_BaseTreeExporter):
                         (xy_parent[0] + xy[0]) / 2 + 0.05,
                         (xy_parent[1] + xy[1]) / 2,
                     )
-                    # Annotate with your desired text
+                    # Annotate the arrow with the edge label to indicate the child
+                    # where the sample-split condition is satisfied
                     if node.parent.left() == node:
                         ax.annotate(
                             "True",
