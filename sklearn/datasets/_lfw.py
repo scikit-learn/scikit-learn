@@ -368,6 +368,8 @@ def fetch_lfw_people(
     >>> lfw_people = fetch_lfw_people()
     >>> lfw_people.data.shape
     (13233, 2914)
+    >>> lfw_people.target.shape
+    (13233,)
     >>> for name in lfw_people.target_names[:5]:
     ...    print(name)
     AJ Cook

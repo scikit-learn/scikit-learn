@@ -132,8 +132,10 @@ def fetch_olivetti_faces(
     --------
     >>> from sklearn.datasets import fetch_olivetti_faces
     >>> olivetti_faces = fetch_olivetti_faces()
-    >>> olivetti_faces.data.shape, olivetti_faces.target.shape
-    ((400, 4096), (400,))
+    >>> olivetti_faces.data.shape
+    (400, 4096)
+    >>> olivetti_faces.target.shape
+    (400,)
     >>> olivetti_faces.images.shape
     (400, 64, 64)
     """
