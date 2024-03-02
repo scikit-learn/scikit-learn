@@ -15,15 +15,13 @@ loader or setting them to `None` to get all 20 of them.
 import numpy as np
 
 from sklearn.datasets import fetch_20newsgroups
-from sklearn.feature_extraction.text import CountVectorizer
-from sklearn.feature_extraction.text import TfidfTransformer
-from sklearn.preprocessing import FunctionTransformer
+from sklearn.feature_extraction.text import CountVectorizer, TfidfTransformer
 from sklearn.linear_model import SGDClassifier
+from sklearn.metrics import f1_score
 from sklearn.model_selection import train_test_split
 from sklearn.pipeline import Pipeline
-from sklearn.semi_supervised import SelfTrainingClassifier
-from sklearn.semi_supervised import LabelSpreading
-from sklearn.metrics import f1_score
+from sklearn.preprocessing import FunctionTransformer
+from sklearn.semi_supervised import LabelSpreading, SelfTrainingClassifier
 
 # Loading dataset containing first five categories
 data = fetch_20newsgroups(

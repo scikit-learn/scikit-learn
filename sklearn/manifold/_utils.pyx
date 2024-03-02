@@ -2,6 +2,7 @@ from libc cimport math
 import numpy as np
 cimport numpy as cnp
 
+cnp.import_array()
 
 
 cdef extern from "numpy/npy_math.h":
@@ -10,6 +11,7 @@ cdef extern from "numpy/npy_math.h":
 
 cdef float EPSILON_DBL = 1e-8
 cdef float PERPLEXITY_TOLERANCE = 1e-5
+
 
 # TODO: have this function support float32 and float64 and preserve inputs' dtypes.
 def _binary_search_perplexity(

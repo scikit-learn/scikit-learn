@@ -4,97 +4,95 @@ and pairwise metrics and distance computations.
 """
 
 
-from ._ranking import auc
-from ._ranking import average_precision_score
-from ._ranking import coverage_error
-from ._ranking import det_curve
-from ._ranking import dcg_score
-from ._ranking import label_ranking_average_precision_score
-from ._ranking import label_ranking_loss
-from ._ranking import ndcg_score
-from ._ranking import precision_recall_curve
-from ._ranking import roc_auc_score
-from ._ranking import roc_curve
-from ._ranking import top_k_accuracy_score
-
-from ._classification import accuracy_score
-from ._classification import balanced_accuracy_score
-from ._classification import class_likelihood_ratios
-from ._classification import classification_report
-from ._classification import cohen_kappa_score
-from ._classification import confusion_matrix
-from ._classification import f1_score
-from ._classification import fbeta_score
-from ._classification import hamming_loss
-from ._classification import hinge_loss
-from ._classification import jaccard_score
-from ._classification import log_loss
-from ._classification import matthews_corrcoef
-from ._classification import precision_recall_fscore_support
-from ._classification import precision_score
-from ._classification import recall_score
-from ._classification import zero_one_loss
-from ._classification import brier_score_loss
-from ._classification import multilabel_confusion_matrix
-
-from ._dist_metrics import DistanceMetric
-
 from . import cluster
-from .cluster import adjusted_mutual_info_score
-from .cluster import adjusted_rand_score
-from .cluster import rand_score
-from .cluster import pair_confusion_matrix
-from .cluster import completeness_score
-from .cluster import consensus_score
-from .cluster import homogeneity_completeness_v_measure
-from .cluster import homogeneity_score
-from .cluster import mutual_info_score
-from .cluster import normalized_mutual_info_score
-from .cluster import fowlkes_mallows_score
-from .cluster import silhouette_samples
-from .cluster import silhouette_score
-from .cluster import calinski_harabasz_score
-from .cluster import v_measure_score
-from .cluster import davies_bouldin_score
-
-from .pairwise import euclidean_distances
-from .pairwise import nan_euclidean_distances
-from .pairwise import pairwise_distances
-from .pairwise import pairwise_distances_argmin
-from .pairwise import pairwise_distances_argmin_min
-from .pairwise import pairwise_kernels
-from .pairwise import pairwise_distances_chunked
-
-from ._regression import explained_variance_score
-from ._regression import max_error
-from ._regression import mean_absolute_error
-from ._regression import mean_squared_error
-from ._regression import mean_squared_log_error
-from ._regression import median_absolute_error
-from ._regression import mean_absolute_percentage_error
-from ._regression import mean_pinball_loss
-from ._regression import r2_score
-from ._regression import mean_tweedie_deviance
-from ._regression import mean_poisson_deviance
-from ._regression import mean_gamma_deviance
-from ._regression import d2_tweedie_score
-from ._regression import d2_pinball_score
-from ._regression import d2_absolute_error_score
-
-
-from ._scorer import check_scoring
-from ._scorer import make_scorer
-from ._scorer import SCORERS
-from ._scorer import get_scorer
-from ._scorer import get_scorer_names
-
-
-from ._plot.det_curve import DetCurveDisplay
-from ._plot.roc_curve import RocCurveDisplay
-from ._plot.precision_recall_curve import PrecisionRecallDisplay
+from ._classification import (
+    accuracy_score,
+    balanced_accuracy_score,
+    brier_score_loss,
+    class_likelihood_ratios,
+    classification_report,
+    cohen_kappa_score,
+    confusion_matrix,
+    f1_score,
+    fbeta_score,
+    hamming_loss,
+    hinge_loss,
+    jaccard_score,
+    log_loss,
+    matthews_corrcoef,
+    multilabel_confusion_matrix,
+    precision_recall_fscore_support,
+    precision_score,
+    recall_score,
+    zero_one_loss,
+)
+from ._dist_metrics import DistanceMetric
 from ._plot.confusion_matrix import ConfusionMatrixDisplay
+from ._plot.det_curve import DetCurveDisplay
+from ._plot.precision_recall_curve import PrecisionRecallDisplay
 from ._plot.regression import PredictionErrorDisplay
-
+from ._plot.roc_curve import RocCurveDisplay
+from ._ranking import (
+    auc,
+    average_precision_score,
+    coverage_error,
+    dcg_score,
+    det_curve,
+    label_ranking_average_precision_score,
+    label_ranking_loss,
+    ndcg_score,
+    precision_recall_curve,
+    roc_auc_score,
+    roc_curve,
+    top_k_accuracy_score,
+)
+from ._regression import (
+    d2_absolute_error_score,
+    d2_pinball_score,
+    d2_tweedie_score,
+    explained_variance_score,
+    max_error,
+    mean_absolute_error,
+    mean_absolute_percentage_error,
+    mean_gamma_deviance,
+    mean_pinball_loss,
+    mean_poisson_deviance,
+    mean_squared_error,
+    mean_squared_log_error,
+    mean_tweedie_deviance,
+    median_absolute_error,
+    r2_score,
+    root_mean_squared_error,
+    root_mean_squared_log_error,
+)
+from ._scorer import check_scoring, get_scorer, get_scorer_names, make_scorer
+from .cluster import (
+    adjusted_mutual_info_score,
+    adjusted_rand_score,
+    calinski_harabasz_score,
+    completeness_score,
+    consensus_score,
+    davies_bouldin_score,
+    fowlkes_mallows_score,
+    homogeneity_completeness_v_measure,
+    homogeneity_score,
+    mutual_info_score,
+    normalized_mutual_info_score,
+    pair_confusion_matrix,
+    rand_score,
+    silhouette_samples,
+    silhouette_score,
+    v_measure_score,
+)
+from .pairwise import (
+    euclidean_distances,
+    nan_euclidean_distances,
+    pairwise_distances,
+    pairwise_distances_argmin,
+    pairwise_distances_argmin_min,
+    pairwise_distances_chunked,
+    pairwise_kernels,
+)
 
 __all__ = [
     "accuracy_score",
@@ -170,7 +168,8 @@ __all__ = [
     "RocCurveDisplay",
     "roc_auc_score",
     "roc_curve",
-    "SCORERS",
+    "root_mean_squared_log_error",
+    "root_mean_squared_error",
     "get_scorer_names",
     "silhouette_samples",
     "silhouette_score",

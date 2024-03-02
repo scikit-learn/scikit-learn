@@ -10,14 +10,16 @@
 # All configuration values have a default; values that are commented out
 # serve to show the default.
 
-import sys
 import os
-import warnings
 import re
+import sys
+import warnings
 from datetime import datetime
-from sklearn.externals._packaging.version import parse
-from pathlib import Path
 from io import StringIO
+from pathlib import Path
+
+from sklearn.externals._packaging.version import parse
+from sklearn.utils._testing import turn_warnings_into_errors
 
 # If extensions (or modules to document with autodoc) are in another
 # directory, add these directories to sys.path here. If the directory
@@ -25,8 +27,9 @@ from io import StringIO
 # absolute, like shown here.
 sys.path.insert(0, os.path.abspath("sphinxext"))
 
-from github_link import make_linkcode_resolve
 import sphinx_gallery
+from github_link import make_linkcode_resolve
+from sphinx_gallery.notebook import add_code_cell, add_markdown_cell
 from sphinx_gallery.sorting import ExampleTitleSortKey
 
 try:
@@ -56,11 +59,31 @@ extensions = [
     "sphinx_issues",
     "add_toctree_functions",
     "sphinx-prompt",
+    "sphinx_copybutton",
     "sphinxext.opengraph",
     "doi_role",
     "allow_nan_estimators",
     "matplotlib.sphinxext.plot_directive",
 ]
+
+# Specify how to identify the prompt when copying code snippets
+copybutton_prompt_text = r">>> |\.\.\. "
+copybutton_prompt_is_regexp = True
+copybutton_exclude = "style"
+
+try:
+    import jupyterlite_sphinx  # noqa: F401
+
+    extensions.append("jupyterlite_sphinx")
+    with_jupyterlite = True
+except ImportError:
+    # In some cases we don't want to require jupyterlite_sphinx to be installed,
+    # e.g. the doc-min-dependencies build
+    warnings.warn(
+        "jupyterlite_sphinx is not installed, you need to install it "
+        "if you want JupyterLite links to appear in each example"
+    )
+    with_jupyterlite = False
 
 # Produce `plot::` directives for examples that contain `import matplotlib` or
 # `from matplotlib import`.
@@ -278,13 +301,45 @@ redirects = {
     "auto_examples/decomposition/plot_beta_divergence": (
         "auto_examples/applications/plot_topics_extraction_with_nmf_lda"
     ),
+    "auto_examples/ensemble/plot_adaboost_hastie_10_2": (
+        "auto_examples/ensemble/plot_adaboost_multiclass"
+    ),
+    "auto_examples/decomposition/plot_pca_3d": (
+        "auto_examples/decomposition/plot_pca_iris"
+    ),
+    "auto_examples/exercises/plot_cv_digits.py": (
+        "auto_examples/model_selection/plot_nested_cross_validation_iris.py"
+    ),
 }
 html_context["redirects"] = redirects
 for old_link in redirects:
     html_additional_pages[old_link] = "redirects.html"
 
 # Not showing the search summary makes the search page load faster.
-html_show_search_summary = False
+html_show_search_summary = True
+
+
+# The "summary-anchor" IDs will be overwritten via JavaScript to be unique.
+# See `doc/theme/scikit-learn-modern/static/js/details-permalink.js`.
+rst_prolog = """
+.. |details-start| raw:: html
+
+    <details id="summary-anchor">
+    <summary class="btn btn-light">
+
+.. |details-split| raw:: html
+
+    <span class="tooltiptext">Click for more details</span>
+    <a class="headerlink" href="#summary-anchor" title="Permalink to this heading">¶</a>
+    </summary>
+    <div class="card">
+
+.. |details-end| raw:: html
+
+    </div>
+    </details>
+
+"""
 
 # -- Options for LaTeX output ------------------------------------------------
 latex_elements = {
@@ -394,7 +449,7 @@ class SKExampleTitleSortKey(ExampleTitleSortKey):
         prefix = "plot_release_highlights_"
 
         # Use title to sort if not a release highlight
-        if not filename.startswith(prefix):
+        if not str(filename).startswith(prefix):
             return title
 
         major_minor = filename[len(prefix) :].split("_")[:2]
@@ -402,6 +457,74 @@ class SKExampleTitleSortKey(ExampleTitleSortKey):
 
         # negate to place the newest version highlights first
         return -version_float
+
+
+def notebook_modification_function(notebook_content, notebook_filename):
+    notebook_content_str = str(notebook_content)
+    warning_template = "\n".join(
+        [
+            "<div class='alert alert-{message_class}'>",
+            "",
+            "# JupyterLite warning",
+            "",
+            "{message}",
+            "</div>",
+        ]
+    )
+
+    message_class = "warning"
+    message = (
+        "Running the scikit-learn examples in JupyterLite is experimental and you may"
+        " encounter some unexpected behavior.\n\nThe main difference is that imports"
+        " will take a lot longer than usual, for example the first `import sklearn` can"
+        " take roughly 10-20s.\n\nIf you notice problems, feel free to open an"
+        " [issue](https://github.com/scikit-learn/scikit-learn/issues/new/choose)"
+        " about it."
+    )
+
+    markdown = warning_template.format(message_class=message_class, message=message)
+
+    dummy_notebook_content = {"cells": []}
+    add_markdown_cell(dummy_notebook_content, markdown)
+
+    code_lines = []
+
+    if "seaborn" in notebook_content_str:
+        code_lines.append("%pip install seaborn")
+    if "plotly.express" in notebook_content_str:
+        code_lines.append("%pip install plotly")
+    if "skimage" in notebook_content_str:
+        code_lines.append("%pip install scikit-image")
+    if "polars" in notebook_content_str:
+        code_lines.append("%pip install polars")
+    if "fetch_" in notebook_content_str:
+        code_lines.extend(
+            [
+                "%pip install pyodide-http",
+                "import pyodide_http",
+                "pyodide_http.patch_all()",
+            ]
+        )
+    # always import matplotlib and pandas to avoid Pyodide limitation with
+    # imports inside functions
+    code_lines.extend(["import matplotlib", "import pandas"])
+
+    if code_lines:
+        code_lines = ["# JupyterLite-specific code"] + code_lines
+        code = "\n".join(code_lines)
+        add_code_cell(dummy_notebook_content, code)
+
+    notebook_content["cells"] = (
+        dummy_notebook_content["cells"] + notebook_content["cells"]
+    )
+
+
+default_global_config = sklearn.get_config()
+
+
+def reset_sklearn_config(gallery_conf, fname):
+    """Reset sklearn config to default values."""
+    sklearn.set_config(**default_global_config)
 
 
 sphinx_gallery_conf = {
@@ -425,7 +548,13 @@ sphinx_gallery_conf = {
     "inspect_global_variables": False,
     "remove_config_comments": True,
     "plot_gallery": "True",
+    "recommender": {"enable": True, "n_examples": 5, "min_df": 12},
+    "reset_modules": ("matplotlib", "seaborn", reset_sklearn_config),
 }
+if with_jupyterlite:
+    sphinx_gallery_conf["jupyterlite"] = {
+        "notebook_modification_function": notebook_modification_function
+    }
 
 
 # The following dictionary contains the information used to create the
@@ -584,7 +713,8 @@ warnings.filterwarnings(
         " non-GUI backend, so cannot show the figure."
     ),
 )
-
+if os.environ.get("SKLEARN_WARNINGS_AS_ERRORS", "0") != "0":
+    turn_warnings_into_errors()
 
 # maps functions with a class name that is indistinguishable when case is
 # ignore to another filename

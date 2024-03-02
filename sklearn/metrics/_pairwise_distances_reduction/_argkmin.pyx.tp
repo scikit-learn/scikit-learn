@@ -12,7 +12,8 @@ import warnings
 
 from numbers import Integral
 from scipy.sparse import issparse
-from ...utils import check_array, check_scalar, _in_unstable_openblas_configuration
+from ...utils import check_array, check_scalar
+from ...utils.fixes import _in_unstable_openblas_configuration
 from ...utils.fixes import threadpool_limits
 
 {{for name_suffix in ['64', '32']}}
@@ -36,7 +37,7 @@ cdef class ArgKmin{{name_suffix}}(BaseDistancesReduction{{name_suffix}}):
         X,
         Y,
         intp_t k,
-        str metric="euclidean",
+        metric="euclidean",
         chunk_size=None,
         dict metric_kwargs=None,
         str strategy=None,

@@ -9,39 +9,39 @@ Ridge regression
 # License: BSD 3 clause
 
 
+import numbers
+import warnings
 from abc import ABCMeta, abstractmethod
 from functools import partial
 from numbers import Integral, Real
-import warnings
 
 import numpy as np
-import numbers
-from scipy import linalg
-from scipy import sparse
-from scipy import optimize
+from scipy import linalg, optimize, sparse
 from scipy.sparse import linalg as sp_linalg
 
-from ._base import LinearClassifierMixin, LinearModel
-from ._base import _preprocess_data, _rescale_data
-from ._sag import sag_solver
-from ..base import MultiOutputMixin, RegressorMixin, is_classifier
-from ..utils.extmath import safe_sparse_dot
-from ..utils.extmath import row_norms
-from ..utils import check_array
-from ..utils import check_consistent_length
-from ..utils import check_scalar
-from ..utils import compute_sample_weight
-from ..utils import column_or_1d
-from ..utils.validation import check_is_fitted
-from ..utils.validation import _check_sample_weight
-from ..utils._param_validation import Interval
-from ..utils._param_validation import StrOptions
-from ..preprocessing import LabelBinarizer
-from ..model_selection import GridSearchCV
-from ..metrics import check_scoring
-from ..metrics import get_scorer_names
+from ..base import MultiOutputMixin, RegressorMixin, _fit_context, is_classifier
 from ..exceptions import ConvergenceWarning
+from ..metrics import check_scoring, get_scorer_names
+from ..model_selection import GridSearchCV
+from ..preprocessing import LabelBinarizer
+from ..utils import (
+    check_array,
+    check_consistent_length,
+    check_scalar,
+    column_or_1d,
+    compute_sample_weight,
+)
+from ..utils._param_validation import Interval, StrOptions, validate_params
+from ..utils.extmath import row_norms, safe_sparse_dot
+from ..utils.fixes import _sparse_linalg_cg
+from ..utils.metadata_routing import (
+    _raise_for_unsupported_routing,
+    _RoutingNotSupportedMixin,
+)
 from ..utils.sparsefuncs import mean_variance_axis
+from ..utils.validation import _check_sample_weight, check_is_fitted
+from ._base import LinearClassifierMixin, LinearModel, _preprocess_data, _rescale_data
+from ._sag import sag_solver
 
 
 def _get_rescaled_operator(X, X_offset, sample_weight_sqrt):
@@ -110,12 +110,7 @@ def _solve_sparse_cg(
             C = sp_linalg.LinearOperator(
                 (n_samples, n_samples), matvec=mv, dtype=X.dtype
             )
-            # FIXME atol
-            try:
-                coef, info = sp_linalg.cg(C, y_column, tol=tol, atol="legacy")
-            except TypeError:
-                # old scipy
-                coef, info = sp_linalg.cg(C, y_column, tol=tol)
+            coef, info = _sparse_linalg_cg(C, y_column, rtol=tol)
             coefs[i] = X1.rmatvec(coef)
         else:
             # linear ridge
@@ -124,14 +119,7 @@ def _solve_sparse_cg(
             C = sp_linalg.LinearOperator(
                 (n_features, n_features), matvec=mv, dtype=X.dtype
             )
-            # FIXME atol
-            try:
-                coefs[i], info = sp_linalg.cg(
-                    C, y_column, maxiter=max_iter, tol=tol, atol="legacy"
-                )
-            except TypeError:
-                # old scipy
-                coefs[i], info = sp_linalg.cg(C, y_column, maxiter=max_iter, tol=tol)
+            coefs[i], info = _sparse_linalg_cg(C, y_column, maxiter=max_iter, rtol=tol)
 
         if info < 0:
             raise ValueError("Failed with error code %d" % info)
@@ -374,6 +362,32 @@ def _get_valid_accept_sparse(is_X_sparse, solver):
         return ["csr", "csc", "coo"]
 
 
+@validate_params(
+    {
+        "X": ["array-like", "sparse matrix", sp_linalg.LinearOperator],
+        "y": ["array-like"],
+        "alpha": [Interval(Real, 0, None, closed="left"), "array-like"],
+        "sample_weight": [
+            Interval(Real, None, None, closed="neither"),
+            "array-like",
+            None,
+        ],
+        "solver": [
+            StrOptions(
+                {"auto", "svd", "cholesky", "lsqr", "sparse_cg", "sag", "saga", "lbfgs"}
+            )
+        ],
+        "max_iter": [Interval(Integral, 0, None, closed="left"), None],
+        "tol": [Interval(Real, 0, None, closed="left")],
+        "verbose": ["verbose"],
+        "positive": ["boolean"],
+        "random_state": ["random_state"],
+        "return_n_iter": ["boolean"],
+        "return_intercept": ["boolean"],
+        "check_input": ["boolean"],
+    },
+    prefer_skip_nested_validation=True,
+)
 def ridge_regression(
     X,
     y,
@@ -396,11 +410,11 @@ def ridge_regression(
 
     Parameters
     ----------
-    X : {ndarray, sparse matrix, LinearOperator} of shape \
+    X : {array-like, sparse matrix, LinearOperator} of shape \
         (n_samples, n_features)
         Training data.
 
-    y : ndarray of shape (n_samples,) or (n_samples, n_targets)
+    y : array-like of shape (n_samples,) or (n_samples, n_targets)
         Target values.
 
     alpha : float or array-like of shape (n_targets,)
@@ -535,6 +549,20 @@ def ridge_regression(
     :class:`~sklearn.svm.LinearSVC`. If an array is passed, penalties are
     assumed to be specific to the targets. Hence they must correspond in
     number.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.datasets import make_regression
+    >>> from sklearn.linear_model import ridge_regression
+    >>> rng = np.random.RandomState(0)
+    >>> X = rng.randn(100, 4)
+    >>> y = 2.0 * X[:, 0] - 1.0 * X[:, 1] + 0.1 * rng.standard_normal(100)
+    >>> coef, intercept = ridge_regression(X, y, alpha=1.0, return_intercept=True)
+    >>> list(coef)
+    [1.9..., -1.0..., -0.0..., -0.0...]
+    >>> intercept
+    -0.0...
     """
     return _ridge_regression(
         X,
@@ -865,7 +893,7 @@ class _BaseRidge(LinearModel, metaclass=ABCMeta):
         X, y, X_offset, y_offset, X_scale = _preprocess_data(
             X,
             y,
-            self.fit_intercept,
+            fit_intercept=self.fit_intercept,
             copy=self.copy_X,
             sample_weight=sample_weight,
         )
@@ -1114,6 +1142,7 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
             random_state=random_state,
         )
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y, sample_weight=None):
         """Fit Ridge regression model.
 
@@ -1134,8 +1163,6 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
         self : object
             Fitted estimator.
         """
-        self._validate_params()
-
         _accept_sparse = _get_valid_accept_sparse(sparse.issparse(X), self.solver)
         X, y = self._validate_data(
             X,
@@ -1423,6 +1450,7 @@ class RidgeClassifier(_RidgeClassifierMixin, _BaseRidge):
         )
         self.class_weight = class_weight
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y, sample_weight=None):
         """Fit Ridge classifier model.
 
@@ -1446,8 +1474,6 @@ class RidgeClassifier(_RidgeClassifierMixin, _BaseRidge):
         self : object
             Instance of the estimator.
         """
-        self._validate_params()
-
         X, y, sample_weight, Y = self._prepare_data(X, y, sample_weight, self.solver)
 
         super().fit(X, Y, sample_weight=sample_weight)
@@ -1778,10 +1804,10 @@ class _RidgeGCV(LinearModel):
                 (X[batch].shape[0], X.shape[1] + self.fit_intercept), dtype=X.dtype
             )
             if self.fit_intercept:
-                X_batch[:, :-1] = X[batch].A - X_mean * scale[batch][:, None]
+                X_batch[:, :-1] = X[batch].toarray() - X_mean * scale[batch][:, None]
                 X_batch[:, -1] = intercept_col[batch]
             else:
-                X_batch = X[batch].A
+                X_batch = X[batch].toarray()
             diag[batch] = (X_batch.dot(A) * X_batch).sum(axis=1)
         return diag
 
@@ -1957,7 +1983,9 @@ class _RidgeGCV(LinearModel):
 
         sample_weight : float or ndarray of shape (n_samples,), default=None
             Individual weights for each sample. If given a float, every sample
-            will have the same weight.
+            will have the same weight. Note that the scale of `sample_weight`
+            has an impact on the loss; i.e. multiplying all weights by `k`
+            is equivalent to setting `alpha / k`.
 
         Returns
         -------
@@ -1985,7 +2013,7 @@ class _RidgeGCV(LinearModel):
         X, y, X_offset, y_offset, X_scale = _preprocess_data(
             X,
             y,
-            self.fit_intercept,
+            fit_intercept=self.fit_intercept,
             copy=self.copy_X,
             sample_weight=sample_weight,
         )
@@ -2160,12 +2188,21 @@ class _BaseRidgeCV(LinearModel):
         """
         cv = self.cv
 
-        check_scalar_alpha = partial(
-            check_scalar,
-            target_type=numbers.Real,
-            min_val=0.0,
-            include_boundaries="neither",
-        )
+        # `_RidgeGCV` does not work for alpha = 0
+        if cv is None:
+            check_scalar_alpha = partial(
+                check_scalar,
+                target_type=numbers.Real,
+                min_val=0.0,
+                include_boundaries="neither",
+            )
+        else:
+            check_scalar_alpha = partial(
+                check_scalar,
+                target_type=numbers.Real,
+                min_val=0.0,
+                include_boundaries="left",
+            )
 
         if isinstance(self.alphas, (np.ndarray, list, tuple)):
             n_alphas = 1 if np.ndim(self.alphas) == 0 else len(self.alphas)
@@ -2223,7 +2260,9 @@ class _BaseRidgeCV(LinearModel):
         return self
 
 
-class RidgeCV(MultiOutputMixin, RegressorMixin, _BaseRidgeCV):
+class RidgeCV(
+    _RoutingNotSupportedMixin, MultiOutputMixin, RegressorMixin, _BaseRidgeCV
+):
     """Ridge regression with built-in cross-validation.
 
     See glossary entry for :term:`cross-validation estimator`.
@@ -2242,7 +2281,7 @@ class RidgeCV(MultiOutputMixin, RegressorMixin, _BaseRidgeCV):
         Alpha corresponds to ``1 / (2C)`` in other linear models such as
         :class:`~sklearn.linear_model.LogisticRegression` or
         :class:`~sklearn.svm.LinearSVC`.
-        If using Leave-One-Out cross-validation, alphas must be positive.
+        If using Leave-One-Out cross-validation, alphas must be strictly positive.
 
     fit_intercept : bool, default=True
         Whether to calculate the intercept for this model. If set
@@ -2354,6 +2393,7 @@ class RidgeCV(MultiOutputMixin, RegressorMixin, _BaseRidgeCV):
     0.5166...
     """
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y, sample_weight=None):
         """Fit Ridge regression model with cv.
 
@@ -2383,13 +2423,12 @@ class RidgeCV(MultiOutputMixin, RegressorMixin, _BaseRidgeCV):
         cross-validation takes the sample weights into account when computing
         the validation score.
         """
-        self._validate_params()
-
+        _raise_for_unsupported_routing(self, "fit", sample_weight=sample_weight)
         super().fit(X, y, sample_weight=sample_weight)
         return self
 
 
-class RidgeClassifierCV(_RidgeClassifierMixin, _BaseRidgeCV):
+class RidgeClassifierCV(_RoutingNotSupportedMixin, _RidgeClassifierMixin, _BaseRidgeCV):
     """Ridge classifier with built-in cross-validation.
 
     See glossary entry for :term:`cross-validation estimator`.
@@ -2409,6 +2448,7 @@ class RidgeClassifierCV(_RidgeClassifierMixin, _BaseRidgeCV):
         Alpha corresponds to ``1 / (2C)`` in other linear models such as
         :class:`~sklearn.linear_model.LogisticRegression` or
         :class:`~sklearn.svm.LinearSVC`.
+        If using Leave-One-Out cross-validation, alphas must be strictly positive.
 
     fit_intercept : bool, default=True
         Whether to calculate the intercept for this model. If set
@@ -2533,6 +2573,7 @@ class RidgeClassifierCV(_RidgeClassifierMixin, _BaseRidgeCV):
         )
         self.class_weight = class_weight
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y, sample_weight=None):
         """Fit Ridge classifier with cv.
 
@@ -2555,8 +2596,7 @@ class RidgeClassifierCV(_RidgeClassifierMixin, _BaseRidgeCV):
         self : object
             Fitted estimator.
         """
-        self._validate_params()
-
+        _raise_for_unsupported_routing(self, "fit", sample_weight=sample_weight)
         # `RidgeClassifier` does not accept "sag" or "saga" solver and thus support
         # csr, csc, and coo sparse matrices. By using solver="eigen" we force to accept
         # all sparse format.

@@ -11,49 +11,48 @@
 #          Robert Layton <robertlayton@gmail.com>
 # License: BSD 3 clause
 
+import warnings
 from abc import ABC, abstractmethod
 from numbers import Integral, Real
-import warnings
 
 import numpy as np
 import scipy.sparse as sp
 
 from ..base import (
     BaseEstimator,
+    ClassNamePrefixFeaturesOutMixin,
     ClusterMixin,
     TransformerMixin,
-    ClassNamePrefixFeaturesOutMixin,
+    _fit_context,
 )
-from ..metrics.pairwise import euclidean_distances
-from ..metrics.pairwise import _euclidean_distances
-from ..utils.extmath import row_norms, stable_cumsum
-from ..utils.fixes import threadpool_limits
-from ..utils.fixes import threadpool_info
-from ..utils.sparsefuncs_fast import assign_rows_csr
-from ..utils.sparsefuncs import mean_variance_axis
-from ..utils import check_array
-from ..utils import check_random_state
-from ..utils.validation import check_is_fitted, _check_sample_weight
-from ..utils.validation import _is_arraylike_not_scalar
-from ..utils._param_validation import Hidden
-from ..utils._param_validation import Interval
-from ..utils._param_validation import StrOptions
-from ..utils._param_validation import validate_params
-from ..utils._openmp_helpers import _openmp_effective_n_threads
 from ..exceptions import ConvergenceWarning
-from ._k_means_common import CHUNK_SIZE
-from ._k_means_common import _inertia_dense
-from ._k_means_common import _inertia_sparse
-from ._k_means_common import _is_same_clustering
-from ._k_means_minibatch import _minibatch_update_dense
-from ._k_means_minibatch import _minibatch_update_sparse
-from ._k_means_lloyd import lloyd_iter_chunked_dense
-from ._k_means_lloyd import lloyd_iter_chunked_sparse
-from ._k_means_elkan import init_bounds_dense
-from ._k_means_elkan import init_bounds_sparse
-from ._k_means_elkan import elkan_iter_chunked_dense
-from ._k_means_elkan import elkan_iter_chunked_sparse
-
+from ..metrics.pairwise import _euclidean_distances, euclidean_distances
+from ..utils import check_array, check_random_state
+from ..utils._openmp_helpers import _openmp_effective_n_threads
+from ..utils._param_validation import Interval, StrOptions, validate_params
+from ..utils.extmath import row_norms, stable_cumsum
+from ..utils.fixes import threadpool_info, threadpool_limits
+from ..utils.sparsefuncs import mean_variance_axis
+from ..utils.sparsefuncs_fast import assign_rows_csr
+from ..utils.validation import (
+    _check_sample_weight,
+    _is_arraylike_not_scalar,
+    check_is_fitted,
+)
+from ._k_means_common import (
+    CHUNK_SIZE,
+    _inertia_dense,
+    _inertia_sparse,
+    _is_same_clustering,
+)
+from ._k_means_elkan import (
+    elkan_iter_chunked_dense,
+    elkan_iter_chunked_sparse,
+    init_bounds_dense,
+    init_bounds_sparse,
+)
+from ._k_means_lloyd import lloyd_iter_chunked_dense, lloyd_iter_chunked_sparse
+from ._k_means_minibatch import _minibatch_update_dense, _minibatch_update_sparse
 
 ###############################################################################
 # Initialization heuristic
@@ -67,7 +66,8 @@ from ._k_means_elkan import elkan_iter_chunked_sparse
         "x_squared_norms": ["array-like", None],
         "random_state": ["random_state"],
         "n_local_trials": [Interval(Integral, 1, None, closed="left"), None],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def kmeans_plusplus(
     X,
@@ -229,7 +229,7 @@ def _kmeans_plusplus(
     center_id = random_state.choice(n_samples, p=sample_weight / sample_weight.sum())
     indices = np.full(n_clusters, -1, dtype=int)
     if sp.issparse(X):
-        centers[0] = X[center_id].toarray()
+        centers[0] = X[[center_id]].toarray()
     else:
         centers[0] = X[center_id]
     indices[0] = center_id
@@ -268,7 +268,7 @@ def _kmeans_plusplus(
 
         # Permanently add best center candidate found in local tries
         if sp.issparse(X):
-            centers[c] = X[best_candidate].toarray()
+            centers[c] = X[[best_candidate]].toarray()
         else:
             centers[c] = X[best_candidate]
         indices[c] = best_candidate
@@ -294,24 +294,10 @@ def _tolerance(X, tol):
 @validate_params(
     {
         "X": ["array-like", "sparse matrix"],
-        "n_clusters": [Interval(Integral, 1, None, closed="left")],
         "sample_weight": ["array-like", None],
-        "init": [StrOptions({"k-means++", "random"}), callable, "array-like"],
-        "n_init": [
-            StrOptions({"auto"}),
-            Hidden(StrOptions({"warn"})),
-            Interval(Integral, 1, None, closed="left"),
-        ],
-        "max_iter": [Interval(Integral, 1, None, closed="left")],
-        "verbose": [Interval(Integral, 0, None, closed="left"), bool],
-        "tol": [Interval(Real, 0, None, closed="left")],
-        "random_state": ["random_state"],
-        "copy_x": [bool],
-        "algorithm": [
-            StrOptions({"lloyd", "elkan", "auto", "full"}, deprecated={"auto", "full"})
-        ],
         "return_n_iter": [bool],
-    }
+    },
+    prefer_skip_nested_validation=False,
 )
 def k_means(
     X,
@@ -319,7 +305,7 @@ def k_means(
     *,
     sample_weight=None,
     init="k-means++",
-    n_init="warn",
+    n_init="auto",
     max_iter=300,
     verbose=False,
     tol=1e-4,
@@ -362,19 +348,20 @@ def k_means(
         - If a callable is passed, it should take arguments `X`, `n_clusters` and a
           random state and return an initialization.
 
-    n_init : 'auto' or int, default=10
+    n_init : 'auto' or int, default="auto"
         Number of time the k-means algorithm will be run with different
         centroid seeds. The final results will be the best output of
         n_init consecutive runs in terms of inertia.
 
         When `n_init='auto'`, the number of runs depends on the value of init:
-        10 if using `init='random'`, 1 if using `init='k-means++'`.
+        10 if using `init='random'` or `init` is a callable;
+        1 if using `init='k-means++'` or `init` is an array-like.
 
         .. versionadded:: 1.2
            Added 'auto' option for `n_init`.
 
         .. versionchanged:: 1.4
-           Default value for `n_init` will change from 10 to `'auto'` in version 1.4.
+           Default value for `n_init` changed to `'auto'`.
 
     max_iter : int, default=300
         Maximum number of iterations of the k-means algorithm to run.
@@ -402,15 +389,12 @@ def k_means(
         `copy_x` is False. If the original data is sparse, but not in CSR format,
         a copy will be made even if `copy_x` is False.
 
-    algorithm : {"lloyd", "elkan", "auto", "full"}, default="lloyd"
+    algorithm : {"lloyd", "elkan"}, default="lloyd"
         K-means algorithm to use. The classical EM-style algorithm is `"lloyd"`.
         The `"elkan"` variation can be more efficient on some datasets with
         well-defined clusters, by using the triangle inequality. However it's
         more memory intensive due to the allocation of an extra array of shape
         `(n_samples, n_clusters)`.
-
-        `"auto"` and `"full"` are deprecated and they will be removed in
-        Scikit-Learn 1.3. They are both aliases for `"lloyd"`.
 
         .. versionchanged:: 0.18
             Added Elkan algorithm
@@ -438,6 +422,23 @@ def k_means(
     best_n_iter : int
         Number of iterations corresponding to the best results.
         Returned only if `return_n_iter` is set to True.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.cluster import k_means
+    >>> X = np.array([[1, 2], [1, 4], [1, 0],
+    ...               [10, 2], [10, 4], [10, 0]])
+    >>> centroid, label, inertia = k_means(
+    ...     X, n_clusters=2, n_init="auto", random_state=0
+    ... )
+    >>> centroid
+    array([[10.,  2.],
+           [ 1.,  2.]])
+    >>> label
+    array([1, 1, 1, 0, 0, 0], dtype=int32)
+    >>> inertia
+    16.0
     """
     est = KMeans(
         n_clusters=n_clusters,
@@ -845,7 +846,6 @@ class _BaseKMeans(
         "init": [StrOptions({"k-means++", "random"}), callable, "array-like"],
         "n_init": [
             StrOptions({"auto"}),
-            Hidden(StrOptions({"warn"})),
             Interval(Integral, 1, None, closed="left"),
         ],
         "max_iter": [Interval(Integral, 1, None, closed="left")],
@@ -884,23 +884,17 @@ class _BaseKMeans(
         self._tol = _tolerance(X, self.tol)
 
         # n-init
-        # TODO(1.4): Remove
-        self._n_init = self.n_init
-        if self._n_init == "warn":
-            warnings.warn(
-                (
-                    "The default value of `n_init` will change from "
-                    f"{default_n_init} to 'auto' in 1.4. Set the value of `n_init`"
-                    " explicitly to suppress the warning"
-                ),
-                FutureWarning,
-            )
-            self._n_init = default_n_init
-        if self._n_init == "auto":
-            if self.init == "k-means++":
+        if self.n_init == "auto":
+            if isinstance(self.init, str) and self.init == "k-means++":
                 self._n_init = 1
-            else:
+            elif isinstance(self.init, str) and self.init == "random":
                 self._n_init = default_n_init
+            elif callable(self.init):
+                self._n_init = default_n_init
+            else:  # array-like
+                self._n_init = 1
+        else:
+            self._n_init = self.n_init
 
         if _is_arraylike_not_scalar(self.init) and self._n_init != 1:
             warnings.warn(
@@ -971,9 +965,9 @@ class _BaseKMeans(
         x_squared_norms,
         init,
         random_state,
+        sample_weight,
         init_size=None,
         n_centroids=None,
-        sample_weight=None,
     ):
         """Compute the initial centroids.
 
@@ -994,6 +988,11 @@ class _BaseKMeans(
             Determines random number generation for centroid initialization.
             See :term:`Glossary <random_state>`.
 
+        sample_weight : ndarray of shape (n_samples,)
+            The weights for each observation in X. `sample_weight` is not used
+            during initialization if `init` is a callable or a user provided
+            array.
+
         init_size : int, default=None
             Number of samples to randomly sample for speeding up the
             initialization (sometimes at the expense of accuracy).
@@ -1001,16 +1000,12 @@ class _BaseKMeans(
         n_centroids : int, default=None
             Number of centroids to initialize.
             If left to 'None' the number of centroids will be equal to
-            number of clusters to form (self.n_clusters)
-
-        sample_weight : ndarray of shape (n_samples,), default=None
-            The weights for each observation in X. If None, all observations
-            are assigned equal weight. `sample_weight` is not used during
-            initialization if `init` is a callable or a user provided array.
+            number of clusters to form (self.n_clusters).
 
         Returns
         -------
         centers : ndarray of shape (n_clusters, n_features)
+            Initial centroids of clusters.
         """
         n_samples = X.shape[0]
         n_clusters = self.n_clusters if n_centroids is None else n_centroids
@@ -1227,40 +1222,47 @@ class KMeans(_BaseKMeans):
         The number of clusters to form as well as the number of
         centroids to generate.
 
+        For an example of how to choose an optimal value for `n_clusters` refer to
+        :ref:`sphx_glr_auto_examples_cluster_plot_kmeans_silhouette_analysis.py`.
+
     init : {'k-means++', 'random'}, callable or array-like of shape \
             (n_clusters, n_features), default='k-means++'
         Method for initialization:
 
-        'k-means++' : selects initial cluster centroids using sampling based on
-        an empirical probability distribution of the points' contribution to the
-        overall inertia. This technique speeds up convergence. The algorithm
-        implemented is "greedy k-means++". It differs from the vanilla k-means++
-        by making several trials at each sampling step and choosing the best centroid
-        among them.
+        * 'k-means++' : selects initial cluster centroids using sampling \
+            based on an empirical probability distribution of the points' \
+            contribution to the overall inertia. This technique speeds up \
+            convergence. The algorithm implemented is "greedy k-means++". It \
+            differs from the vanilla k-means++ by making several trials at \
+            each sampling step and choosing the best centroid among them.
 
-        'random': choose `n_clusters` observations (rows) at random from data
-        for the initial centroids.
+        * 'random': choose `n_clusters` observations (rows) at random from \
+        data for the initial centroids.
 
-        If an array is passed, it should be of shape (n_clusters, n_features)
+        * If an array is passed, it should be of shape (n_clusters, n_features)\
         and gives the initial centers.
 
-        If a callable is passed, it should take arguments X, n_clusters and a
+        * If a callable is passed, it should take arguments X, n_clusters and a\
         random state and return an initialization.
 
-    n_init : 'auto' or int, default=10
+        For an example of how to use the different `init` strategy, see the example
+        entitled :ref:`sphx_glr_auto_examples_cluster_plot_kmeans_digits.py`.
+
+    n_init : 'auto' or int, default='auto'
         Number of times the k-means algorithm is run with different centroid
         seeds. The final results is the best output of `n_init` consecutive runs
         in terms of inertia. Several runs are recommended for sparse
         high-dimensional problems (see :ref:`kmeans_sparse_high_dim`).
 
         When `n_init='auto'`, the number of runs depends on the value of init:
-        10 if using `init='random'`, 1 if using `init='k-means++'`.
+        10 if using `init='random'` or `init` is a callable;
+        1 if using `init='k-means++'` or `init` is an array-like.
 
         .. versionadded:: 1.2
            Added 'auto' option for `n_init`.
 
         .. versionchanged:: 1.4
-           Default value for `n_init` will change from 10 to `'auto'` in version 1.4.
+           Default value for `n_init` changed to `'auto'`.
 
     max_iter : int, default=300
         Maximum number of iterations of the k-means algorithm for a
@@ -1289,15 +1291,12 @@ class KMeans(_BaseKMeans):
         copy_x is False. If the original data is sparse, but not in CSR format,
         a copy will be made even if copy_x is False.
 
-    algorithm : {"lloyd", "elkan", "auto", "full"}, default="lloyd"
+    algorithm : {"lloyd", "elkan"}, default="lloyd"
         K-means algorithm to use. The classical EM-style algorithm is `"lloyd"`.
         The `"elkan"` variation can be more efficient on some datasets with
         well-defined clusters, by using the triangle inequality. However it's
         more memory intensive due to the allocation of an extra array of shape
         `(n_samples, n_clusters)`.
-
-        `"auto"` and `"full"` are deprecated and they will be removed in
-        Scikit-Learn 1.3. They are both aliases for `"lloyd"`.
 
         .. versionchanged:: 0.18
             Added Elkan algorithm
@@ -1379,14 +1378,27 @@ class KMeans(_BaseKMeans):
     >>> kmeans.cluster_centers_
     array([[10.,  2.],
            [ 1.,  2.]])
+
+    For a more detailed example of K-Means using the iris dataset see
+    :ref:`sphx_glr_auto_examples_cluster_plot_cluster_iris.py`.
+
+    For examples of common problems with K-Means and how to address them see
+    :ref:`sphx_glr_auto_examples_cluster_plot_kmeans_assumptions.py`.
+
+    For an example of how to use K-Means to perform color quantization see
+    :ref:`sphx_glr_auto_examples_cluster_plot_color_quantization.py`.
+
+    For a demonstration of how K-Means can be used to cluster text documents see
+    :ref:`sphx_glr_auto_examples_text_plot_document_clustering.py`.
+
+    For a comparison between K-Means and MiniBatchKMeans refer to example
+    :ref:`sphx_glr_auto_examples_cluster_plot_mini_batch_kmeans.py`.
     """
 
     _parameter_constraints: dict = {
         **_BaseKMeans._parameter_constraints,
         "copy_x": ["boolean"],
-        "algorithm": [
-            StrOptions({"lloyd", "elkan", "auto", "full"}, deprecated={"auto", "full"})
-        ],
+        "algorithm": [StrOptions({"lloyd", "elkan"})],
     }
 
     def __init__(
@@ -1394,7 +1406,7 @@ class KMeans(_BaseKMeans):
         n_clusters=8,
         *,
         init="k-means++",
-        n_init="warn",
+        n_init="auto",
         max_iter=300,
         tol=1e-4,
         verbose=0,
@@ -1419,15 +1431,6 @@ class KMeans(_BaseKMeans):
         super()._check_params_vs_input(X, default_n_init=10)
 
         self._algorithm = self.algorithm
-        if self._algorithm in ("auto", "full"):
-            warnings.warn(
-                (
-                    f"algorithm='{self._algorithm}' is deprecated, it will be "
-                    "removed in 1.3. Using 'lloyd' instead."
-                ),
-                FutureWarning,
-            )
-            self._algorithm = "lloyd"
         if self._algorithm == "elkan" and self.n_clusters == 1:
             warnings.warn(
                 (
@@ -1447,6 +1450,7 @@ class KMeans(_BaseKMeans):
             f" variable OMP_NUM_THREADS={n_active_threads}."
         )
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y=None, sample_weight=None):
         """Compute k-means clustering.
 
@@ -1474,8 +1478,6 @@ class KMeans(_BaseKMeans):
         self : object
             Fitted estimator.
         """
-        self._validate_params()
-
         X = self._validate_data(
             X,
             accept_sparse="csr",
@@ -1783,7 +1785,7 @@ class MiniBatchKMeans(_BaseKMeans):
         If `None`, the heuristic is `init_size = 3 * batch_size` if
         `3 * batch_size < n_clusters`, else `init_size = 3 * n_clusters`.
 
-    n_init : 'auto' or int, default=3
+    n_init : 'auto' or int, default="auto"
         Number of random initializations that are tried.
         In contrast to KMeans, the algorithm is only run once, using the best of
         the `n_init` initializations as measured by inertia. Several runs are
@@ -1791,13 +1793,14 @@ class MiniBatchKMeans(_BaseKMeans):
         :ref:`kmeans_sparse_high_dim`).
 
         When `n_init='auto'`, the number of runs depends on the value of init:
-        3 if using `init='random'`, 1 if using `init='k-means++'`.
+        3 if using `init='random'` or `init` is a callable;
+        1 if using `init='k-means++'` or `init` is an array-like.
 
         .. versionadded:: 1.2
            Added 'auto' option for `n_init`.
 
         .. versionchanged:: 1.4
-           Default value for `n_init` will change from 3 to `'auto'` in version 1.4.
+           Default value for `n_init` changed to `'auto'` in version.
 
     reassignment_ratio : float, default=0.01
         Control the fraction of the maximum number of counts for a center to
@@ -1914,7 +1917,7 @@ class MiniBatchKMeans(_BaseKMeans):
         tol=0.0,
         max_no_improvement=10,
         init_size=None,
-        n_init="warn",
+        n_init="auto",
         reassignment_ratio=0.01,
     ):
         super().__init__(
@@ -2056,6 +2059,7 @@ class MiniBatchKMeans(_BaseKMeans):
             return True
         return False
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y=None, sample_weight=None):
         """Compute the centroids on X by chunking it into mini-batches.
 
@@ -2083,8 +2087,6 @@ class MiniBatchKMeans(_BaseKMeans):
         self : object
             Fitted estimator.
         """
-        self._validate_params()
-
         X = self._validate_data(
             X,
             accept_sparse="csr",
@@ -2213,6 +2215,7 @@ class MiniBatchKMeans(_BaseKMeans):
 
         return self
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def partial_fit(self, X, y=None, sample_weight=None):
         """Update k means estimate on a single mini-batch X.
 
@@ -2239,9 +2242,6 @@ class MiniBatchKMeans(_BaseKMeans):
             Return updated estimator.
         """
         has_centers = hasattr(self, "cluster_centers_")
-
-        if not has_centers:
-            self._validate_params()
 
         X = self._validate_data(
             X,
