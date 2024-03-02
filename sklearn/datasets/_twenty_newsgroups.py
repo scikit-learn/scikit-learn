@@ -285,6 +285,7 @@ def fetch_20newsgroups(
 
     Examples
     --------
+    >>> from sklearn.datasets import fetch_20newsgroups
     >>> cats = ['alt.atheism', 'sci.space']
     >>> newsgroups_train = fetch_20newsgroups(subset='train', categories=cats)
     >>> list(newsgroups_train.target_names)
