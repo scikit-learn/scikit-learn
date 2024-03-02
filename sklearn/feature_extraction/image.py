@@ -178,31 +178,13 @@ def img_to_graph(img, *, mask=None, return_as=sparse.coo_matrix, dtype=None):
     Examples
     --------
     >>> import numpy as np
-    >>> from sklearn.feature_extraction import image
-    >>> from sklearn.datasets import load_digits
-    >>> import matplotlib.pyplot as plt
-
-    >>> digits = load_digits()
-    >>> img = digits.images[0]
-    >>> print(img.shape)
-    (8,8)
-    >>> graph = image.img_to_graph(img, return_as=np.ndarray)
-    >>> print(graph.shape)
-    (64,64)
-
-    >>> plt.figure(figsize=(8, 4))
-
-    >>> # Original Image
-    >>> plt.subplot(1, 2, 1)
-    >>> plt.imshow(img, cmap=plt.cm.gray)
-    >>> plt.title('Original Image')
-
-    >>> # Graph Representation
-    >>> plt.subplot(1, 2, 2)
-    >>> plt.spy(graph, markersize=1)
-    >>> plt.title('Graph Representation')
-
-    >>> plt.show()
+    >>> from sklearn.feature_extraction.image import img_to_graph
+    >>> img = np.array([[0, 0], [0, 1]])
+    >>> img_to_graph(img, return_as=np.ndarray)
+    array([[0, 0, 0, 0],
+           [0, 0, 0, 1],
+           [0, 0, 0, 1],
+           [0, 1, 1, 1]])
     """
     img = np.atleast_3d(img)
     n_x, n_y, n_z = img.shape
@@ -226,12 +208,6 @@ def grid_to_graph(
     """Graph of the pixel-to-pixel connections.
 
     Edges exist if 2 voxels are connected.
-
-    If the input shape is (n_x, n_y, n_z),
-    the resulting adjacency or connectivity matrix will be a square matrix with the shape (n_x*n_y*n_z, n_x*n_y*n_z)
-    which is the number of voxels present in the 3d image. Also,
-    connectivity_matrix[i,j]    = 1 if i'th voxel and j'th voxel are adjacent to each other.
-                                = 0 otherwise
 
     Parameters
     ----------
