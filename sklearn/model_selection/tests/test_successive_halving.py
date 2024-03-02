@@ -830,7 +830,7 @@ def test_halving_random_search_list_of_dicts():
         "param_C": "f",
         "param_degree": "i",
         "param_gamma": "f",
-        "param_kernel": "U",
+        "param_kernel": "O",
     }
     check_cv_results_array_types(
         search, param_keys, score_keys, expected_cv_results_kinds

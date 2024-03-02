@@ -983,7 +983,7 @@ def test_grid_search_cv_results():
         "param_C": "i",
         "param_degree": "i",
         "param_gamma": "f",
-        "param_kernel": "U",
+        "param_kernel": "O",
     }
     check_cv_results_array_types(
         search, param_keys, score_keys, expected_cv_results_kinds
@@ -1060,7 +1060,7 @@ def test_random_search_cv_results():
         "param_C": "f",
         "param_degree": "i",
         "param_gamma": "f",
-        "param_kernel": "U",
+        "param_kernel": "O",
     }
     check_cv_results_array_types(
         search, param_keys, score_keys, expected_cv_results_kinds
@@ -1398,7 +1398,7 @@ def test_search_cv_results_none_param():
             est_parameters,
             cv=cv,
         ).fit(X, y)
-        assert_array_equal(grid_search.cv_results_["param_random_state"], [0, None])
+        assert_array_equal(grid_search.cv_results_["param_random_state"], [0, float('nan')])
 
 
 @ignore_warnings()
