@@ -687,18 +687,23 @@ class _MPLTreeExporter(_BaseTreeExporter):
     def recurse(self, node, tree, ax, max_x, max_y, depth=0):
         import matplotlib.pyplot as plt
 
-        kwargs = dict(
-            bbox=self.bbox_args.copy(),
+        # kwargs for annotations without a bounding box
+        non_box_kwargs = dict(
             ha="center",
             va="center",
             zorder=100 - 10 * depth,
             xycoords="axes fraction",
             arrowprops=self.arrow_args.copy(),
         )
-        kwargs["arrowprops"]["edgecolor"] = plt.rcParams["text.color"]
-
         if self.fontsize is not None:
-            kwargs["fontsize"] = self.fontsize
+            non_box_kwargs["fontsize"] = self.fontsize
+        non_box_kwargs["arrowprops"]["edgecolor"] = plt.rcParams["text.color"]
+
+        # kwargs for annotations with a bounding box
+        kwargs = dict(
+            bbox=self.bbox_args.copy(),
+            **non_box_kwargs,
+        )
 
         # offset things by .5 to center them in plot
         xy = ((node.x + 0.5) / max_x, (max_y - node.y - 0.5) / max_y)
@@ -731,19 +736,13 @@ class _MPLTreeExporter(_BaseTreeExporter):
                         ax.annotate(
                             "True",
                             text_pos,
-                            ha="center",
-                            va="center",
-                            fontsize=10,
-                            zorder=100,
+                            **non_box_kwargs,
                         )
                     else:
                         ax.annotate(
                             "False",
                             text_pos,
-                            ha="center",
-                            va="center",
-                            fontsize=10,
-                            zorder=100,
+                            **non_box_kwargs,
                         )
             for child in node.children:
                 self.recurse(child, tree, ax, max_x, max_y, depth=depth + 1)
