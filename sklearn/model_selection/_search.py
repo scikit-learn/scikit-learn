@@ -1078,7 +1078,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             for name, value in params.items():
                 param_results["param_%s" % name][cand_idx] = value
         for key, param_result in param_results.items():
-            param_list = list(param_results[key].values())
+            param_list = list(param_result.values())
             try:
                 arr_dtype = np.result_type(*param_list)
             except TypeError:
