@@ -1398,7 +1398,9 @@ def test_search_cv_results_none_param():
             est_parameters,
             cv=cv,
         ).fit(X, y)
-        assert_array_equal(grid_search.cv_results_["param_random_state"], [0, float('nan')])
+        assert_array_equal(
+            grid_search.cv_results_["param_random_state"], [0, float("nan")]
+        )
 
 
 @ignore_warnings()
