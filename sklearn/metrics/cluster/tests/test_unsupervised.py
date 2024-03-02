@@ -451,6 +451,10 @@ def test_dbcv_score_basic_input(density_sample):
     assert res[0] < dbcv_score(*sample_without_noise)
 
 
+def test_dbcv_score_zero_distance():
+    dbcv_score([[0, 1] for _ in range(100)], [i % 2 for i in range(100)])
+
+
 def test_dbcv_score_verbose(density_sample):
     with patch("builtins.print") as mocked_print:
         dbcv_score(*density_sample, verbose=True)
