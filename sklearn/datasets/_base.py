@@ -11,18 +11,22 @@ import gzip
 import hashlib
 import os
 import shutil
+import time
+import warnings
 from collections import namedtuple
 from importlib import resources
 from numbers import Integral
 from os import environ, listdir, makedirs
 from os.path import expanduser, isdir, join, splitext
 from pathlib import Path
+from urllib.error import URLError
 from urllib.request import urlretrieve
 
 import numpy as np
 
 from ..preprocessing import scale
-from ..utils import Bunch, check_pandas_support, check_random_state
+from ..utils import Bunch, check_random_state
+from ..utils._optional_dependencies import check_pandas_support
 from ..utils._param_validation import Interval, StrOptions, validate_params
 
 DATA_MODULE = "sklearn.datasets.data"
@@ -63,6 +67,14 @@ def get_data_home(data_home=None) -> str:
     -------
     data_home: str
         The path to scikit-learn data directory.
+
+    Examples
+    --------
+    >>> import os
+    >>> from sklearn.datasets import get_data_home
+    >>> data_home_path = get_data_home()
+    >>> os.path.exists(data_home_path)
+    True
     """
     if data_home is None:
         data_home = environ.get("SCIKIT_LEARN_DATA", join("~", "scikit_learn_data"))
@@ -1426,7 +1438,7 @@ def _sha256(path):
     return sha256hash.hexdigest()
 
 
-def _fetch_remote(remote, dirname=None):
+def _fetch_remote(remote, dirname=None, n_retries=3, delay=1):
     """Helper function to download a remote dataset into path
 
     Fetch a dataset pointed by remote's url, save into path using remote's
@@ -1442,6 +1454,16 @@ def _fetch_remote(remote, dirname=None):
     dirname : str
         Directory to save the file to.
 
+    n_retries : int, default=3
+        Number of retries when HTTP errors are encountered.
+
+        .. versionadded:: 1.5
+
+    delay : int, default=1
+        Number of seconds between retries.
+
+        .. versionadded:: 1.5
+
     Returns
     -------
     file_path: str
@@ -1449,7 +1471,18 @@ def _fetch_remote(remote, dirname=None):
     """
 
     file_path = remote.filename if dirname is None else join(dirname, remote.filename)
-    urlretrieve(remote.url, file_path)
+    while True:
+        try:
+            urlretrieve(remote.url, file_path)
+            break
+        except (URLError, TimeoutError):
+            if n_retries == 0:
+                # If no more retries are left, re-raise the caught exception.
+                raise
+            warnings.warn(f"Retry downloading from url: {remote.url}")
+            n_retries -= 1
+            time.sleep(delay)
+
     checksum = _sha256(file_path)
     if remote.checksum != checksum:
         raise OSError(

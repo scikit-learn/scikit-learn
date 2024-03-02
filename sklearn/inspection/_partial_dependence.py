@@ -26,8 +26,8 @@ from ..utils import (
     _safe_assign,
     _safe_indexing,
     check_array,
-    check_matplotlib_support,  # noqa
 )
+from ..utils._optional_dependencies import check_matplotlib_support  # noqa
 from ..utils._param_validation import (
     HasMethods,
     Integral,
@@ -669,7 +669,7 @@ def partial_dependence(
     if categorical_features is None:
         is_categorical = [False] * len(features_indices)
     else:
-        categorical_features = np.array(categorical_features, copy=False)
+        categorical_features = np.asarray(categorical_features)
         if categorical_features.dtype.kind == "b":
             # categorical features provided as a list of boolean
             if categorical_features.size != n_features:
