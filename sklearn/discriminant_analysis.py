@@ -532,7 +532,7 @@ class LinearDiscriminantAnalysis(
         if hasattr(rank, "persist"):
             rank = rank.persist()
         # Scaling of within covariance is: V' 1/S
-        scalings = (Vt[:rank] / std).T / S[:rank]
+        scalings = (Vt[:rank, :] / std).T / S[:rank]
         fac = 1.0 if n_classes == 1 else 1.0 / (n_classes - 1)
 
         # 3) Between variance scaling
@@ -547,7 +547,7 @@ class LinearDiscriminantAnalysis(
 
         if isinstance(X, da.Array):
             # dask can flip signs of Vt sometimes
-            _, S, Vt = svd(X, full_matrices=False, coerce_signs=False)
+            _, S, Vt = svd(X, full_matrices=False)  # , coerce_signs=False)
         else:
             _, S, Vt = svd(X, full_matrices=False)
 

@@ -39,6 +39,7 @@ def yield_namespace_device_dtype_combinations():
         "cupy",
         "cupy.array_api",
         "torch",
+        "dask.array",
     ]:
         if array_namespace == "torch":
             for device, dtype in itertools.product(

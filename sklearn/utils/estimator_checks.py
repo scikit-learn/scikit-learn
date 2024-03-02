@@ -322,6 +322,7 @@ def _yield_array_api_checks(estimator):
             array_namespace=array_namespace,
             dtype_name=dtype_name,
             device=device,
+            check_values=True,
         )
 
 

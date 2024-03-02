@@ -291,7 +291,7 @@ class LinearModel(BaseEstimator, metaclass=ABCMeta):
             # We always want coef_.dtype=X.dtype. For instance, X.dtype can differ from
             # coef_.dtype if warm_start=True.
             xp, _ = get_namespace(self.coef_)
-            self.coef = self.coef_ / X_scale
+            self.coef_ = self.coef_ / X_scale
             # vecdot not available in earlier numpy versions
             vecdot = xp.vecdot if not _is_numpy_namespace(xp) else np.dot
             self.intercept_ = y_offset - vecdot(X_offset, self.coef_.T)

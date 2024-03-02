@@ -99,6 +99,7 @@ build_metadata_list = [
             "ccache",
             "meson-python",
             "pip",
+            "dask",
             "pytorch",
             "pytorch-cpu",
             "polars",
