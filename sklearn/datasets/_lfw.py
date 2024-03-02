@@ -365,18 +365,16 @@ def fetch_lfw_people(
     Examples
     --------
     >>> from sklearn.datasets import fetch_lfw_people
-    >>> lfw_people = fetch_lfw_people(min_faces_per_person=70, resize=0.4)
-
-    >>> for name in lfw_people.target_names:
-    ...     print(name)
-    ...
-    Ariel Sharon
-    Colin Powell
-    Donald Rumsfeld
-    George W Bush
-    Gerhard Schroeder
-    Hugo Chavez
-    Tony Blair
+    >>> lfw_people = fetch_lfw_people()
+    >>> lfw_people.data.shape
+    (13233, 2914)
+    >>> for name in lfw_people.target_names[:5]:
+    ...    print(name)
+    AJ Cook
+    AJ Lamas
+    Aaron Eckhart
+    Aaron Guiel
+    Aaron Patterson
     """
     lfw_home, data_folder_path = _check_fetch_lfw(
         data_home=data_home,
