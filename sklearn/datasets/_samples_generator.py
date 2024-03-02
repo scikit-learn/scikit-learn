@@ -2136,10 +2136,15 @@ def make_biclusters(
     Examples
     --------
     >>> from sklearn.datasets import make_biclusters
-    >>> shape = (100, 50)
-    >>> data, rows, columns = make_biclusters(shape=shape,n_clusters=5,random_state=42)
-    >>> print(rows[0][:5],columns[0][:5])
-    [False False False False False] [ True False  True False False]
+    >>> data, rows, cols = make_biclusters(
+    ...     shape=(10, 20), n_clusters=2, random_state=42
+    ... )
+    >>> data.shape
+    (10, 20)
+    >>> rows.shape
+    (2, 10)
+    >>> cols.shape
+    (2, 20)
     """
     generator = check_random_state(random_state)
     n_rows, n_cols = shape
