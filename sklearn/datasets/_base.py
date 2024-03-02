@@ -1238,21 +1238,11 @@ def load_linnerud(*, return_X_y=False, as_frame=False):
     Examples
     --------
     >>> from sklearn.datasets import load_linnerud
-    >>> linnerud_data = load_linnerud()
-    >>> physiological_data = linnerud_data.data
-    >>> exercise_data = linnerud_data.target
-    >>> print(physiological_data[:5])
-    [[  5. 162.  60.]
-    [  2. 110.  60.]
-    [ 12. 101. 101.]
-    [ 12. 105.  37.]
-    [ 13. 155.  58.]]
-    >>> print(exercise_data[:5])
-    [[191.  36.  50.]
-    [189.  37.  52.]
-    [193.  38.  58.]
-    [162.  35.  62.]
-    [189.  35.  46.]]
+    >>> linnerud = load_linnerud()
+    >>> linnerud.data.shape
+    (20, 3)
+    >>> linnerud.target.shape
+    (20, 3)
     """
     data_filename = "linnerud_exercise.csv"
     target_filename = "linnerud_physiological.csv"
