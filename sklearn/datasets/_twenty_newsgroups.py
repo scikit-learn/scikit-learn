@@ -518,6 +518,15 @@ def fetch_20newsgroups_vectorized(
         description above.
 
         .. versionadded:: 0.20
+
+    Examples
+    --------
+    >>> from sklearn.datasets import fetch_20newsgroups_vectorized
+    >>> newsgroups_vectorized = fetch_20newsgroups_vectorized(subset='test')
+    >>> newsgroups_vectorized.data.shape
+    (7532, 130107)
+    >>> newsgroups_vectorized.target.shape
+    (7532,)
     """
     data_home = get_data_home(data_home=data_home)
     filebase = "20newsgroup_vectorized"
