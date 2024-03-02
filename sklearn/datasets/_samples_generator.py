@@ -1505,18 +1505,19 @@ def make_sparse_coded_signal(
     Examples
     --------
     >>> from sklearn.datasets import make_sparse_coded_signal
-    >>> data, dictionary, code = make_sparse_coded_signal(n_samples=1,
-    ...                                    n_components=2,
-    ...                                    n_features=2,
-    ...                                    n_nonzero_coefs=1,
-    ...                                    random_state=0)
-    >>> data
-    array([-1.24372273, -0.6900468 ])
-    >>> dictionary
-    array([[0.87442883, 0.48515381],
-       [0.17578966, 0.98442775]])
-    >>> code
-    array([-1.42232584,  0.        ])
+    >>> data, dictionary, code = make_sparse_coded_signal(
+    ...     n_samples=50,
+    ...     n_components=100,
+    ...     n_features=10,
+    ...     n_nonzero_coefs=4,
+    ...     random_state=0
+    ... )
+    >>> data.shape
+    (50, 10)
+    >>> dictionary.shape
+    (100, 10)
+    >>> code.shape
+    (50, 100)
     """
     generator = check_random_state(random_state)
 
@@ -1603,12 +1604,11 @@ def make_sparse_uncorrelated(n_samples=100, n_features=10, *, random_state=None)
     Examples
     --------
     >>> from sklearn.datasets import make_sparse_uncorrelated
-    >>> X, y = make_sparse_uncorrelated(n_samples=2, n_features=4, random_state=34)
-    >>> X
-    array([[ 0.2438351 , -0.74731818, -1.56117699, -0.46425312],
-       [-0.35206234, -1.28149188,  0.28929924,  0.9800285 ]])
-    >>> y
-    array([ 3.04585663, -4.5128692 ])
+    >>> X, y = make_sparse_uncorrelated(random_state=0)
+    >>> X.shape
+    (100, 10)
+    >>> y.shape
+    (100,)
     """
     generator = check_random_state(random_state)
 
@@ -1873,13 +1873,11 @@ def make_swiss_roll(n_samples=100, *, noise=0.0, random_state=None, hole=False):
     Examples
     --------
     >>> from sklearn.datasets import make_swiss_roll
-    >>> X,t = make_swiss_roll(n_samples=3, noise=0.1, random_state=34, hole=False)
-    >>> X
-    array([[ 1.64827294, 13.16259723, -4.6964848 ],
-        [10.53141748,  0.32063774, -5.75710103],
-        [ 4.24775516, 19.75733211, -3.51094713]])
-    >>> t
-    array([ 5.07582426, 12.06466261,  5.58610129])
+    >>> X, t = make_swiss_roll(noise=0.05, random_state=0)
+    >>> X.shape
+    (100, 3)
+    >>> t.shape
+    (100,)
     """
     generator = check_random_state(random_state)
 
@@ -1944,12 +1942,11 @@ def make_s_curve(n_samples=100, *, noise=0.0, random_state=None):
     Examples
     --------
     >>> from sklearn.datasets import make_s_curve
-    >>> X,t = make_s_curve(n_samples=2, noise=0.1, random_state=34)
-    >>> X
-    array([[ 0.77856344,  0.15020128,  1.38441714],
-           [ 0.43449844,  1.13763619, -1.77875957]])
-    >>> t
-    array([-4.3489537 ,  2.63988465])
+    >>> X, t = make_s_curve(noise=0.05, random_state=0)
+    >>> X.shape
+    (100, 3)
+    >>> t.shape
+    (100,)
     """
     generator = check_random_state(random_state)
 
