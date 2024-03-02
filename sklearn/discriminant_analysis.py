@@ -547,7 +547,7 @@ class LinearDiscriminantAnalysis(
 
         if isinstance(X, da.Array):
             # dask can flip signs of Vt sometimes
-            _, S, Vt = svd(X, full_matrices=False)  # , coerce_signs=False)
+            _, S, Vt = svd(X, full_matrices=False, coerce_signs=False)
         else:
             _, S, Vt = svd(X, full_matrices=False)
 
