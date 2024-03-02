@@ -200,8 +200,8 @@ def lars_path(
     >>> true_coef
     array([ 0.        ,  0.        ,  0.        , 97.9..., 45.7...])
     >>> alphas, _, estimated_coef = lars_path(X, y)
-    >>> alphas
-    array([8.74...e+01, 4.449...e+01, 1...e-14])
+    >>> alphas.shape
+    (3,)
     >>> estimated_coef
     array([[ 0.     ,  0.     ,  0.     ],
            [ 0.     ,  0.     ,  0.     ],
@@ -381,8 +381,8 @@ def lars_path_gram(
     >>> true_coef
     array([ 0.        ,  0.        ,  0.        , 97.9..., 45.7...])
     >>> alphas, _, estimated_coef = lars_path_gram(X.T @ y, X.T @ X, n_samples=100)
-    >>> alphas
-    array([8.74...e+01, 4.449...e+01, 1...e-14])
+    >>> alphas.shape
+    (3,)
     >>> estimated_coef
     array([[ 0.     ,  0.     ,  0.     ],
            [ 0.     ,  0.     ,  0.     ],

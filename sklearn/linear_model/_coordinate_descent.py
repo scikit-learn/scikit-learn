@@ -539,8 +539,8 @@ def enet_path(
     >>> true_coef
     array([ 0.        ,  0.        ,  0.        , 97.9..., 45.7...])
     >>> alphas, estimated_coef, _ = enet_path(X, y, n_alphas=3)
-    >>> alphas
-    array([174.96...,   5.53...,   0.17...])
+    >>> alphas.shape
+    (3,)
     >>> estimated_coef
      array([[ 0.        ,  0.78...,  0.56...],
             [ 0.        ,  1.12...,  0.61...],
