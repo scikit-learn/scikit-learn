@@ -175,7 +175,7 @@ def accuracy_score(y_true, y_pred, *, normalize=True, sample_weight=None):
 
     Returns
     -------
-    score : float
+    score : float or int
         If ``normalize == True``, return the fraction of correctly
         classified samples (float), else returns the number of correctly
         classified samples (int).
