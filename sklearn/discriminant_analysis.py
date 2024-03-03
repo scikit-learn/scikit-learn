@@ -529,9 +529,9 @@ class LinearDiscriminantAnalysis(
         U, S, Vt = svd(X, full_matrices=False)
 
         # Call int to force computation for dask
-        rank = int(xp.sum(xp.astype(S > self.tol, xp.int32)))
+        rank = xp.sum(xp.astype(S > self.tol, xp.int32))
         # Scaling of within covariance is: V' 1/S
-        scalings = (Vt[:rank, :] / std).T / S[:rank]
+        scalings = (Vt[:rank] / std).T / S[:rank]
         fac = 1.0 if n_classes == 1 else 1.0 / (n_classes - 1)
 
         # 3) Between variance scaling
