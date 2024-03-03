@@ -693,14 +693,17 @@ class _MPLTreeExporter(_BaseTreeExporter):
             va="center",
             zorder=100 - 10 * depth,
             xycoords="axes fraction",
-            arrowprops=self.arrow_args.copy(),
         )
         if self.fontsize is not None:
             non_box_kwargs["fontsize"] = self.fontsize
-        non_box_kwargs["arrowprops"]["edgecolor"] = plt.rcParams["text.color"]
 
         # kwargs for annotations with a bounding box
-        kwargs = dict(bbox=self.bbox_args.copy(), **non_box_kwargs)
+        kwargs = dict(
+            bbox=self.bbox_args.copy(),
+            arrowprops=self.arrow_args.copy(),
+            **non_box_kwargs,
+        )
+        kwargs["arrowprops"]["edgecolor"] = plt.rcParams["text.color"]
 
         # offset things by .5 to center them in plot
         xy = ((node.x + 0.5) / max_x, (max_y - node.y - 0.5) / max_y)
