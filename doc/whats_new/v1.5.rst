@@ -111,8 +111,6 @@ Changelog
   :class:`~metrics.PrecisionRecallDisplay`, :class:`~metrics.DetCurveDisplay`,
   :class:`~calibration.CalibrationDisplay`.
   :pr:`28051` by :user:`Pierre de Fréminville <pidefrem>`.
-- |Fix|:class:`metrics.classification_report` now shows only accuracy and not micro-average when input is a subset of labels.
-  :pr:`28399` by :user:`Vineet Joshi <vjoshi253>`.
 
 :mod:`sklearn.model_selection`
 ..............................
