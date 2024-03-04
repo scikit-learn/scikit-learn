@@ -2,13 +2,39 @@
 name = "scikit-learn"
 version = "1.5.dev0"
 description = "A set of python modules for machine learning and data mining"
-
+readme = "README.rst"
 dependencies = [
   "numpy>=1.25",
   "scipy>=1.6.0",
   "joblib>=1.2.0",
   "threadpoolctl>=2.0.0",
 ]
+requires-python = ">=3.9"
+license = {text = "new BSD"}
+classifiers=[
+  "Intended Audience :: Science/Research",
+  "Intended Audience :: Developers",
+  "License :: OSI Approved :: BSD License",
+  "Programming Language :: C",
+  "Programming Language :: Python",
+  "Topic :: Software Development",
+  "Topic :: Scientific/Engineering",
+  "Development Status :: 5 - Production/Stable",
+  "Operating System :: Microsoft :: Windows",
+  "Operating System :: POSIX",
+  "Operating System :: Unix",
+  "Operating System :: MacOS",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: Implementation :: CPython",
+  "Programming Language :: Python :: Implementation :: PyPy",
+]
+
+[project.optional-dependencies]
+# TODO
 
 [build-system]
 build-backend = "mesonpy"
