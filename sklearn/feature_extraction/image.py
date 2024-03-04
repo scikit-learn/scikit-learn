@@ -174,6 +174,17 @@ def img_to_graph(img, *, mask=None, return_as=sparse.coo_matrix, dtype=None):
     -------
     graph : ndarray or a sparse matrix class
         The computed adjacency matrix.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.feature_extraction.image import img_to_graph
+    >>> img = np.array([[0, 0], [0, 1]])
+    >>> img_to_graph(img, return_as=np.ndarray)
+    array([[0, 0, 0, 0],
+           [0, 0, 0, 1],
+           [0, 0, 0, 1],
+           [0, 1, 1, 1]])
     """
     img = np.atleast_3d(img)
     n_x, n_y, n_z = img.shape
