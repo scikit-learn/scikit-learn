@@ -728,16 +728,16 @@ class _MPLTreeExporter(_BaseTreeExporter):
                 if node.parent.parent is None:
                     # Adjust the position for the text to be slightly above the arrow
                     text_pos = (
-                        (xy_parent[0] + xy[0]) / 2 + 0.05,
+                        (xy_parent[0] + xy[0]) / 2,
                         (xy_parent[1] + xy[1]) / 2,
                     )
                     # Annotate the arrow with the edge label to indicate the child
                     # where the sample-split condition is satisfied
-                    ax.annotate(
-                        node.parent.left() == node,
-                        text_pos,
-                        **non_box_kwargs,
-                    )
+                    if node.parent.left() == node:
+                        label_text, label_ha = ("True  ", "right")
+                    else:
+                        label_text, label_ha = ("  False", "left")
+                    ax.annotate(label_text, text_pos, ha=label_ha, **non_box_kwargs)
             for child in node.children:
                 self.recurse(child, tree, ax, max_x, max_y, depth=depth + 1)
 
