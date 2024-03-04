@@ -1,8 +1,19 @@
+[project]
+name = "scikit-learn"
+version = "1.5.dev0"
+description = "A set of python modules for machine learning and data mining"
+
+dependencies = [
+  "numpy>=1.25",
+  "scipy>=1.6.0",
+  "joblib>=1.2.0",
+  "threadpoolctl>=2.0.0",
+]
+
 [build-system]
 build-backend = "mesonpy"
 # Minimum requirements for the build system to execute.
 requires = [
-    "wheel",
     "meson-python>=0.15.0",
     "Cython>=3.0.8",
     "numpy>=1.25",
