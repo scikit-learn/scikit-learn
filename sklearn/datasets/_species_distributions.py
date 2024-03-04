@@ -39,6 +39,7 @@ For an example of using this dataset, see
 
 import logging
 from io import BytesIO
+from numbers import Integral, Real
 from os import PathLike, makedirs, remove
 from os.path import exists
 
@@ -46,7 +47,7 @@ import joblib
 import numpy as np
 
 from ..utils import Bunch
-from ..utils._param_validation import validate_params
+from ..utils._param_validation import Interval, validate_params
 from . import get_data_home
 from ._base import RemoteFileMetadata, _fetch_remote, _pkl_filepath
 
@@ -136,10 +137,21 @@ def construct_grids(batch):
 
 
 @validate_params(
-    {"data_home": [str, PathLike, None], "download_if_missing": ["boolean"]},
+    {
+        "data_home": [str, PathLike, None],
+        "download_if_missing": ["boolean"],
+        "n_retries": [Interval(Integral, 1, None, closed="left")],
+        "delay": [Interval(Real, 0.0, None, closed="neither")],
+    },
     prefer_skip_nested_validation=True,
 )
-def fetch_species_distributions(*, data_home=None, download_if_missing=True):
+def fetch_species_distributions(
+    *,
+    data_home=None,
+    download_if_missing=True,
+    n_retries=3,
+    delay=1.0,
+):
     """Loader for species distribution dataset from Phillips et. al. (2006).
 
     Read more in the :ref:`User Guide <species_distribution_dataset>`.
@@ -153,6 +165,16 @@ def fetch_species_distributions(*, data_home=None, download_if_missing=True):
     download_if_missing : bool, default=True
         If False, raise an OSError if the data is not locally available
         instead of trying to download the data from the source site.
+
+    n_retries : int, default=3
+        Number of retries when HTTP errors are encountered.
+
+        .. versionadded:: 1.5
+
+    delay : float, default=1.0
+        Number of seconds between retries.
+
+        .. versionadded:: 1.5
 
     Returns
     -------
@@ -242,7 +264,9 @@ def fetch_species_distributions(*, data_home=None, download_if_missing=True):
         if not download_if_missing:
             raise OSError("Data not found and `download_if_missing` is False")
         logger.info("Downloading species data from %s to %s" % (SAMPLES.url, data_home))
-        samples_path = _fetch_remote(SAMPLES, dirname=data_home)
+        samples_path = _fetch_remote(
+            SAMPLES, dirname=data_home, n_retries=n_retries, delay=delay
+        )
         with np.load(samples_path) as X:  # samples.zip is a valid npz
             for f in X.files:
                 fhandle = BytesIO(X[f])
@@ -255,7 +279,9 @@ def fetch_species_distributions(*, data_home=None, download_if_missing=True):
         logger.info(
             "Downloading coverage data from %s to %s" % (COVERAGES.url, data_home)
         )
-        coverages_path = _fetch_remote(COVERAGES, dirname=data_home)
+        coverages_path = _fetch_remote(
+            COVERAGES, dirname=data_home, n_retries=n_retries, delay=delay
+        )
         with np.load(coverages_path) as X:  # coverages.zip is a valid npz
             coverages = []
             for f in X.files:

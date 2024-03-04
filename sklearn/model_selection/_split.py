@@ -24,13 +24,13 @@ import numpy as np
 from scipy.special import comb
 
 from ..utils import (
-    _approximate_mode,
     _safe_indexing,
     check_random_state,
     indexable,
     metadata_routing,
 )
 from ..utils._param_validation import Interval, RealNotInt, validate_params
+from ..utils.extmath import _approximate_mode
 from ..utils.metadata_routing import _MetadataRequester
 from ..utils.multiclass import type_of_target
 from ..utils.validation import _num_samples, check_array, column_or_1d
@@ -536,7 +536,7 @@ class GroupKFold(GroupsConsumerMixin, _BaseKFold):
     number of distinct groups has to be at least equal to the number of folds).
 
     The folds are approximately balanced in the sense that the number of
-    distinct groups is approximately the same in each fold.
+    samples is approximately the same in each test fold.
 
     Read more in the :ref:`User Guide <group_k_fold>`.
 
