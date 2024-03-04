@@ -898,11 +898,15 @@ def test_param_sampler():
     assert [x for x in sampler] == [x for x in sampler]
 
 
-def check_cv_results_array_types(search, param_keys, score_keys):
+def check_cv_results_array_types(
+    search, param_keys, score_keys, expected_cv_results_kinds
+):
     # Check if the search `cv_results`'s array are of correct types
     cv_results = search.cv_results_
     assert all(isinstance(cv_results[param], np.ma.MaskedArray) for param in param_keys)
-    assert all(cv_results[key].dtype == object for key in param_keys)
+    assert {
+        key: cv_results[key].dtype.kind for key in param_keys
+    } == expected_cv_results_kinds
     assert not any(isinstance(cv_results[key], np.ma.MaskedArray) for key in score_keys)
     assert all(
         cv_results[key].dtype == np.float64
@@ -975,7 +979,15 @@ def test_grid_search_cv_results():
         if "time" not in k and k != "rank_test_score"
     )
     # Check cv_results structure
-    check_cv_results_array_types(search, param_keys, score_keys)
+    expected_cv_results_kinds = {
+        "param_C": "i",
+        "param_degree": "i",
+        "param_gamma": "f",
+        "param_kernel": "O",
+    }
+    check_cv_results_array_types(
+        search, param_keys, score_keys, expected_cv_results_kinds
+    )
     check_cv_results_keys(cv_results, param_keys, score_keys, n_candidates)
     # Check masking
     cv_results = search.cv_results_
@@ -1044,7 +1056,15 @@ def test_random_search_cv_results():
     search.fit(X, y)
     cv_results = search.cv_results_
     # Check results structure
-    check_cv_results_array_types(search, param_keys, score_keys)
+    expected_cv_results_kinds = {
+        "param_C": "f",
+        "param_degree": "i",
+        "param_gamma": "f",
+        "param_kernel": "O",
+    }
+    check_cv_results_array_types(
+        search, param_keys, score_keys, expected_cv_results_kinds
+    )
     check_cv_results_keys(cv_results, param_keys, score_keys, n_candidates)
     assert all(
         (
@@ -1378,7 +1398,9 @@ def test_search_cv_results_none_param():
             est_parameters,
             cv=cv,
         ).fit(X, y)
-        assert_array_equal(grid_search.cv_results_["param_random_state"], [0, None])
+        assert_array_equal(
+            grid_search.cv_results_["param_random_state"], [0, float("nan")]
+        )
 
 
 @ignore_warnings()
