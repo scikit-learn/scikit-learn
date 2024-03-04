@@ -1416,7 +1416,8 @@ def make_low_rank_matrix(
     --------
     >>> from numpy.linalg import svd
     >>> from sklearn.datasets import make_low_rank_matrix
-    >>> X = make_low_rank_matrix(n_samples=50,
+    >>> X = make_low_rank_matrix(
+    ...     n_samples=50,
     ...     n_features=25,
     ...     effective_rank=5,
     ...     tail_strength=0.01,
