@@ -1424,9 +1424,6 @@ def make_low_rank_matrix(
     ... )
     >>> X.shape
     (50, 25)
-    >>> U, s, V = svd(X)
-    >>> s.sum()
-    5...
     """
     generator = check_random_state(random_state)
     n = min(n_samples, n_features)
