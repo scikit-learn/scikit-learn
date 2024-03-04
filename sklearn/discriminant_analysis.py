@@ -116,6 +116,11 @@ def _class_means(X, y):
     # Force lazy array api backends to call compute
     if hasattr(classes, "persist"):
         classes.compute_chunk_sizes()
+        # We get a ValueError: no field named inverse later on if we don't
+        # compute right now
+        # Probably a dask bug
+        # (the error is also kinda flaky)
+        y = y.compute()
     means = xp.zeros((classes.shape[0], X.shape[1]), device=device(X), dtype=X.dtype)
 
     if is_array_api_compliant:
@@ -528,10 +533,9 @@ class LinearDiscriminantAnalysis(
         # SVD of centered (within)scaled data
         U, S, Vt = svd(X, full_matrices=False)
 
-        # Call int to force computation for dask
         rank = xp.sum(xp.astype(S > self.tol, xp.int32))
         # Scaling of within covariance is: V' 1/S
-        scalings = (Vt[:rank] / std).T / S[:rank]
+        scalings = (Vt[:rank, :] / std).T / S[:rank]
         fac = 1.0 if n_classes == 1 else 1.0 / (n_classes - 1)
 
         # 3) Between variance scaling
@@ -751,7 +755,12 @@ class LinearDiscriminantAnalysis(
             # smallest_normal was introduced in NumPy 1.22
             smallest_normal = info.tiny
 
-        prediction[prediction == 0.0] += smallest_normal
+        xp, _ = get_namespace(prediction)
+        prediction = xp.where(
+            prediction == 0.0,
+            np.array(smallest_normal, dtype=prediction.dtype),
+            prediction,
+        )
         return xp.log(prediction)
 
     def decision_function(self, X):
