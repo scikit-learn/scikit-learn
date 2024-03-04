@@ -689,8 +689,6 @@ class _MPLTreeExporter(_BaseTreeExporter):
 
         # kwargs for annotations without a bounding box
         non_box_kwargs = dict(
-            ha="center",
-            va="center",
             zorder=100 - 10 * depth,
             xycoords="axes fraction",
         )
@@ -699,6 +697,8 @@ class _MPLTreeExporter(_BaseTreeExporter):
 
         # kwargs for annotations with a bounding box
         kwargs = dict(
+            ha="center",
+            va="center",
             bbox=self.bbox_args.copy(),
             arrowprops=self.arrow_args.copy(),
             **non_box_kwargs,
