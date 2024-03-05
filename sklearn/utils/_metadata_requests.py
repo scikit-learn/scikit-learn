@@ -1108,7 +1108,7 @@ class MetadataRouter:
         if extra_keys:
             raise TypeError(
                 f"{self.owner}.{method} got unexpected argument(s) {extra_keys}, which"
-                " are not requested metadata in any object."
+                " are not routed to any object."
             )
 
     def _serialize(self):
