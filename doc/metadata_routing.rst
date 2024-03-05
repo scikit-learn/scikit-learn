@@ -247,7 +247,8 @@ should be passed to the estimator's scorer or not::
     ...     print(e)
     [sample_weight] are passed but are not explicitly set as requested or not
     requested for LogisticRegression.score, which is used within GridSearchCV.fit.
-    Call `LogisticRegression.set_score_request({metadata}=True)` for each metadata.
+    Call `LogisticRegression.set_score_request({metadata}=True/False)` for each metadata
+    you want to request/ignore.
 
 The issue can be fixed by explicitly setting the request value::
 
