@@ -3,7 +3,7 @@
 # input_hash: 0852937217d7f245972202bbf4d45e87bae0b554b334e0a6a351c65ba033ae17
 @EXPLICIT
 https://repo.anaconda.com/pkgs/main/osx-64/blas-1.0-mkl.conda#cb2c87e85ac8e0ceae776d26d4214c8a
-https://repo.anaconda.com/pkgs/main/osx-64/bzip2-1.0.8-h1de35cc_0.conda#19fcb113b170fe2a0be96b47801fed7d
+https://repo.anaconda.com/pkgs/main/osx-64/bzip2-1.0.8-h6c40b1e_5.conda#0f51dde96c82dcf58a788787fed4c5b9
 https://repo.anaconda.com/pkgs/main/osx-64/ca-certificates-2023.12.12-hecd8cb5_0.conda#1f885715539fba0c408ab58d1bda6c8e
 https://repo.anaconda.com/pkgs/main/osx-64/jpeg-9e-h6c40b1e_1.conda#fc3e61fa41309946c9283fe8737d7f41
 https://repo.anaconda.com/pkgs/main/osx-64/libbrotlicommon-1.0.9-hca72f7f_7.conda#6c865b9e76fa2fad0c8ac32aa0f01f75
@@ -14,7 +14,7 @@ https://repo.anaconda.com/pkgs/main/osx-64/libwebp-base-1.3.2-h6c40b1e_0.conda#d
 https://repo.anaconda.com/pkgs/main/osx-64/llvm-openmp-14.0.6-h0dcd299_0.conda#b5804d32b87dc61ca94561ade33d5f2d
 https://repo.anaconda.com/pkgs/main/osx-64/ncurses-6.4-hcec6c5f_0.conda#0214d1ee980e217fabc695f1e40662aa
 https://repo.anaconda.com/pkgs/main/noarch/tzdata-2024a-h04d1e81_0.conda#452af53adae0a5b06eb5d05c707b2f25
-https://repo.anaconda.com/pkgs/main/osx-64/xz-5.4.5-h6c40b1e_0.conda#351c5d33fe551018a2068e7a2ca8a6c1
+https://repo.anaconda.com/pkgs/main/osx-64/xz-5.4.6-h6c40b1e_0.conda#412bf13f273c0e086da65f86567cfe80
 https://repo.anaconda.com/pkgs/main/osx-64/zlib-1.2.13-h4dc903c_0.conda#d0202dd912bfb45d3422786531717882
 https://repo.anaconda.com/pkgs/main/osx-64/ccache-3.7.9-hf120daa_0.conda#a01515a32e721c51d631283f991bc8ea
 https://repo.anaconda.com/pkgs/main/osx-64/expat-2.5.0-hcec6c5f_0.conda#ce90fd42031d3c01944146f089a9130b
@@ -37,7 +37,7 @@ https://repo.anaconda.com/pkgs/main/osx-64/sqlite-3.41.2-h6c40b1e_0.conda#6947a5
 https://repo.anaconda.com/pkgs/main/osx-64/zstd-1.5.5-hc035e20_0.conda#5e0b7ddb1b7dc6b630e1f9a03499c19c
 https://repo.anaconda.com/pkgs/main/osx-64/brotli-1.0.9-hca72f7f_7.conda#68e54d12ec67591deb2ffd70348fb00f
 https://repo.anaconda.com/pkgs/main/osx-64/libtiff-4.5.1-hcec6c5f_0.conda#e127a800ffd9d300ed7d5e1b026944ec
-https://repo.anaconda.com/pkgs/main/osx-64/python-3.12.1-hd58486a_0.conda#92c7d155dcfbf64036ccccc3bd95f241
+https://repo.anaconda.com/pkgs/main/osx-64/python-3.12.2-hd58486a_0.conda#21efba1355d32906d082aaff16698961
 https://repo.anaconda.com/pkgs/main/osx-64/coverage-7.2.2-py312h6c40b1e_0.conda#b6e4b9fba325047c07f3c9211ae91d1c
 https://repo.anaconda.com/pkgs/main/noarch/cycler-0.11.0-pyhd3eb1b0_0.conda#f5e365d2cdb66d547eb8c3ab93843aab
 https://repo.anaconda.com/pkgs/main/noarch/execnet-1.9.0-pyhd3eb1b0_0.conda#f895937671af67cebb8af617494b3513
@@ -67,7 +67,7 @@ https://repo.anaconda.com/pkgs/main/osx-64/pytest-7.4.0-py312hecd8cb5_0.conda#b8
 https://repo.anaconda.com/pkgs/main/noarch/python-dateutil-2.8.2-pyhd3eb1b0_0.conda#211ee00320b08a1ac9fea6677649f6c9
 https://repo.anaconda.com/pkgs/main/osx-64/pytest-cov-4.1.0-py312hecd8cb5_1.conda#a33a24eb20359f464938e75b2f57e23a
 https://repo.anaconda.com/pkgs/main/osx-64/pytest-xdist-3.5.0-py312hecd8cb5_0.conda#d1ecfb3691cceecb1f16bcfdf0b67bb5
-https://repo.anaconda.com/pkgs/main/osx-64/bottleneck-1.3.5-py312h32608ca_0.conda#f002daa9c28b94536e464359cc7d04e7
+https://repo.anaconda.com/pkgs/main/osx-64/bottleneck-1.3.7-py312h32608ca_0.conda#f96a01eba5ea542cf9c7cc8d77447627
 https://repo.anaconda.com/pkgs/main/osx-64/contourpy-1.2.0-py312ha357a0b_0.conda#57d384ad07152375b40a6293f79e3f0c
 https://repo.anaconda.com/pkgs/main/osx-64/matplotlib-3.8.0-py312hecd8cb5_0.conda#64ffa3462aace0fc2d5fa5bff15f63f6
 https://repo.anaconda.com/pkgs/main/osx-64/matplotlib-base-3.8.0-py312h7f12edd_0.conda#bda389e5a1ff69f763911cf90102893b
