@@ -1420,6 +1420,20 @@ def make_low_rank_matrix(
     -------
     X : ndarray of shape (n_samples, n_features)
         The matrix.
+
+    Examples
+    --------
+    >>> from numpy.linalg import svd
+    >>> from sklearn.datasets import make_low_rank_matrix
+    >>> X = make_low_rank_matrix(
+    ...     n_samples=50,
+    ...     n_features=25,
+    ...     effective_rank=5,
+    ...     tail_strength=0.01,
+    ...     random_state=0,
+    ... )
+    >>> X.shape
+    (50, 25)
     """
     generator = check_random_state(random_state)
     n = min(n_samples, n_features)

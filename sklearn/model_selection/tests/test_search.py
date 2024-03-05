@@ -23,6 +23,7 @@ from sklearn.datasets import (
 from sklearn.ensemble import HistGradientBoostingClassifier
 from sklearn.exceptions import FitFailedWarning
 from sklearn.experimental import enable_halving_search_cv  # noqa
+from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.impute import SimpleImputer
 from sklearn.linear_model import (
     LinearRegression,
@@ -56,6 +57,7 @@ from sklearn.model_selection import (
 )
 from sklearn.model_selection._search import BaseSearchCV
 from sklearn.model_selection.tests.common import OneTimeSplitter
+from sklearn.naive_bayes import ComplementNB
 from sklearn.neighbors import KernelDensity, KNeighborsClassifier, LocalOutlierFactor
 from sklearn.pipeline import Pipeline
 from sklearn.svm import SVC, LinearSVC
@@ -2490,6 +2492,35 @@ def test_search_estimator_param(SearchCV, param_search):
     assert params["clf"][0].C == orig_C
     # testing that the GS is setting the parameter of the step correctly
     assert gs.best_estimator_.named_steps["clf"].C == 0.01
+
+
+def test_search_with_2d_array():
+    parameter_grid = {
+        "vect__ngram_range": ((1, 1), (1, 2)),  # unigrams or bigrams
+        "vect__norm": ("l1", "l2"),
+    }
+    pipeline = Pipeline(
+        [
+            ("vect", TfidfVectorizer()),
+            ("clf", ComplementNB()),
+        ]
+    )
+    random_search = RandomizedSearchCV(
+        estimator=pipeline,
+        param_distributions=parameter_grid,
+        n_iter=3,
+        random_state=0,
+        n_jobs=2,
+        verbose=1,
+        cv=3,
+    )
+    data_train = ["one", "two", "three", "four", "five"]
+    data_target = [0, 0, 1, 0, 1]
+    random_search.fit(data_train, data_target)
+    result = random_search.cv_results_["param_vect__ngram_range"]
+    expected_data = np.empty(3, dtype=object)
+    expected_data[:] = [(1, 2), (1, 2), (1, 1)]
+    np.testing.assert_array_equal(result.data, expected_data)
 
 
 # Metadata Routing Tests
