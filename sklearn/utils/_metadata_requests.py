@@ -1049,7 +1049,7 @@ class MetadataRouter:
     def __iter__(self):
         if self._self_request:
             method_mapping = MethodMapping()
-            for method in SIMPLE_METHODS:
+            for method in METHODS:
                 method_mapping.add(caller=method, callee=method)
             yield "$self_request", RouterMappingPair(
                 mapping=method_mapping, router=self._self_request
