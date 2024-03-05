@@ -2135,7 +2135,7 @@ class _RidgeGCV(LinearModel):
 
         return _score
 
-    def _score(self, predictions, y, n_y, scorer, score_params):
+    def _score(self, *, predictions, y, n_y, scorer, score_params):
         """Performs scoring with the specified scorer using the
         predictions and the true y values.
         """
@@ -2312,24 +2312,24 @@ class _BaseRidgeCV(LinearModel):
             parameters = {"alpha": alphas}
             solver = "sparse_cg" if sparse.issparse(X) else "auto"
             model = RidgeClassifier if is_classifier(self) else Ridge
-            est = model(
+            estimator = model(
                 fit_intercept=self.fit_intercept,
                 solver=solver,
             )
             if _routing_enabled():
-                est.set_fit_request(sample_weight=True)
+                estimator.set_fit_request(sample_weight=True)
 
-            gs = GridSearchCV(
-                est,
+            grid_search = GridSearchCV(
+                estimator,
                 parameters,
                 cv=cv,
                 scoring=self.scoring,
             )
 
-            gs.fit(X, y, **params)
-            estimator = gs.best_estimator_
-            self.alpha_ = gs.best_estimator_.alpha
-            self.best_score_ = gs.best_score_
+            grid_search.fit(X, y, **params)
+            estimator = grid_search.best_estimator_
+            self.alpha_ = grid_search.best_estimator_.alpha
+            self.best_score_ = grid_search.best_score_
 
         self.coef_ = estimator.coef_
         self.intercept_ = estimator.intercept_
