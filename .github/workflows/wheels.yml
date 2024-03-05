@@ -238,8 +238,26 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v4
 
+      - name: Set upload variables
+        env:
+            # Secret variables need to be mapped to environment variables explicitly
+            SCIKIT_LEARN_NIGHTLY_UPLOAD_TOKEN: ${{ secrets.SCIKIT_LEARN_NIGHTLY_UPLOAD_TOKEN }}
+            SCIKIT_LEARN_STAGING_UPLOAD_TOKEN: ${{ secrets.SCIKIT_LEARN_STAGING_UPLOAD_TOKEN }}
+        shell: bash
+        run: |
+          if [[ "$GITHUB_EVENT_NAME" == "schedule" || "$CIRRUS_CRON" == "nightly" ]]; then
+              echo "ANACONDA_ORG=scientific-python-nightly-wheels" >> $GITHUB_ENV
+              echo "ANACONDA_TOKEN=$SCIKIT_LEARN_NIGHTLY_UPLOAD_TOKEN" >> $GITHUB_ENV
+          else
+              echo "ANACONDA_ORG=scikit-learn-wheels-staging" >> $GITHUB_ENV
+              echo "ANACONDA_TOKEN=$SCIKIT_LEARN_STAGING_UPLOAD_TOKEN" >> $GITHUB_ENV
+          fi
+
       - name: Upload artifacts
+      # Use Github Action developed by scientific-python community
+      # Upload nightly builds to different channels
         uses: scientific-python/upload-nightly-action@b67d7fcc0396e1128a474d1ab2b48aa94680f9fc # 0.5.0
         with:
           artifacts_path: dist/artifact
-          anaconda_nightly_upload_token: ${{ secrets.SCIKIT_LEARN_NIGHTLY_UPLOAD_TOKEN }}
+          anaconda_nightly_upload_token: ${{env.ANACONDA_TOKEN}}
+          anaconda_nightly_upload_organization: ${{env.ANACONDA_ORG}}
