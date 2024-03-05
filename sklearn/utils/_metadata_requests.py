@@ -673,8 +673,8 @@ class MethodMapping:
     object when defining the mapping between a sub-object (a sub-estimator or a
     scorer) to the router's methods. It stores a collection of namedtuples.
 
-    Iterating through an instance of this class will yield several of the
-    following `namedtuple`: ``MethodPair(caller, callee)``.
+    Iterating through an instance of this class will yield named
+    ``MethodPair(caller, callee)`` tuples.
 
     .. versionadded:: 1.3
     """
