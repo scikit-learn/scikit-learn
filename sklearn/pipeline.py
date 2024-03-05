@@ -1863,23 +1863,15 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
         router = MetadataRouter(owner=self.__class__.__name__)
 
         for name, transformer in self.transformer_list:
-            if hasattr(transformer, "fit_transform"):
-                router.add(
-                    **{name: transformer},
-                    method_mapping=MethodMapping()
-                    .add(caller="fit", callee="fit")
-                    .add(caller="fit_transform", callee="fit_transform")
-                    .add(caller="transform", callee="transform"),
-                )
-            else:
-                router.add(
-                    **{name: transformer},
-                    method_mapping=MethodMapping()
-                    .add(caller="fit", callee="fit")
-                    .add(caller="fit_transform", callee="fit")
-                    .add(caller="fit_transform", callee="transform")
-                    .add(caller="transform", callee="transform"),
-                )
+            router.add(
+                **{name: transformer},
+                method_mapping=MethodMapping()
+                .add(caller="fit", callee="fit")
+                .add(caller="fit_transform", callee="fit_transform")
+                .add(caller="fit_transform", callee="fit")
+                .add(caller="fit_transform", callee="transform")
+                .add(caller="transform", callee="transform"),
+            )
 
         return router
 
