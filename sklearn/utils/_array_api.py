@@ -94,7 +94,7 @@ def _single_array_device(array):
         return array.device
 
 
-def device(*array_list):
+def device(*array_list, skip_none=False, skip_types=()):
     """Hardware device where the array data resides on.
 
     If the hardware device is not the same for all arrays, an error is raised.
@@ -104,14 +104,20 @@ def device(*array_list):
     *array_list : arrays
         List of array instances from NumPy or an array API compatible library.
 
+    skip_none : bool, default=False
+        Whether to ignore None objects passed in array_list.
+
+    skip_types : tuple, default=()
+        Types to ignore in array_list.
+
     Returns
     -------
     out : device
         `device` object (see the "Device Support" section of the array API spec).
     """
-    if not array_list:
-        raise ValueError("At least one input array expected, got none.")
+    array_list = _filter_arrays(*array_list, skip_none=skip_none, skip_types=skip_types)
 
+    # Note that _filter_arrays ensures that array_list is not empty.
     device_ = _single_array_device(array_list[0])
 
     # Note: here we cannot simply use a Python `set` as it requires
@@ -439,7 +445,44 @@ class _NumPyAPIWrapper:
 _NUMPY_API_WRAPPER_INSTANCE = _NumPyAPIWrapper()
 
 
-def get_namespace(*arrays):
+def _filter_arrays(*arrays, skip_none=True, skip_types=()):
+    """Filter arrays to exclude None and/or specific types.
+
+    Raise ValueError if no arrays are left after filtering.
+
+    Parameters
+    ----------
+    *arrays : array objects
+        Array objects.
+
+    skip_none : bool, default=True
+        Whether to ignore None objects passed in arrays.
+
+    skip_types : tuple, default=()
+        Types to ignore in the arrays.
+
+    Returns
+    -------
+    filtered_arrays : list
+        List of arrays with None and typoe
+    """
+    filtered_arrays = []
+    for array in arrays:
+        if skip_none and array is None:
+            continue
+        if isinstance(array, skip_types):
+            continue
+        filtered_arrays.append(array)
+
+    if not filtered_arrays:
+        raise ValueError(
+            f"At least one input array expected after filtering with {skip_none=}, "
+            f"{skip_types=}. Got none. Original types: {[type(a) for a in arrays]}."
+        )
+    return filtered_arrays
+
+
+def get_namespace(*arrays, skip_none=True, skip_types=()):
     """Get namespace of arrays.
 
     Introspect `arrays` arguments and return their common Array API
@@ -472,6 +515,12 @@ def get_namespace(*arrays):
     *arrays : array objects
         Array objects.
 
+    skip_none : bool, default=True
+        Whether to ignore None objects passed in arrays.
+
+    skip_types : tuple, default=()
+        Types to ignore in the arrays.
+
     Returns
     -------
     namespace : module
@@ -485,6 +534,8 @@ def get_namespace(*arrays):
     array_api_dispatch = get_config()["array_api_dispatch"]
     if not array_api_dispatch:
         return _NUMPY_API_WRAPPER_INSTANCE, False
+
+    arrays = _filter_arrays(*arrays, skip_none=skip_none, skip_types=skip_types)
 
     _check_array_api_dispatch(array_api_dispatch)
 
