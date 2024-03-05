@@ -36,8 +36,6 @@ from scipy.special import xlogy
 from ..exceptions import UndefinedMetricWarning
 from ..utils._array_api import (
     _average,
-    _convert_to_numpy,
-    _supports_dtype,
     device,
     get_namespace,
     supported_float_dtypes,
@@ -1197,27 +1195,11 @@ def r2_score(
     >>> r2_score(y_true, y_pred, force_finite=False)
     -inf
     """
-    input_arrays = [y_true, y_pred]
-    if sample_weight is not None:
-        input_arrays.append(sample_weight)
-
-    multioutput_is_array = multioutput is not None and not isinstance(multioutput, str)
-    if multioutput_is_array:
-        input_arrays.append(multioutput)
-
-    xp, is_array_api_compliant = get_namespace(*input_arrays)
-    input_xp = xp
-    device_ = device(*input_arrays)
-
-    if not _supports_dtype(xp, device_, "float64"):
-        y_true = _convert_to_numpy(y_true, xp)
-        y_pred = _convert_to_numpy(y_pred, xp)
-        if sample_weight is not None:
-            sample_weight = _convert_to_numpy(sample_weight, xp)
-        if multioutput_is_array:
-            multioutput = _convert_to_numpy(multioutput, xp)
-        xp, _ = get_namespace(y_true)
-        device_ = device(y_true)
+    input_arrays = [y_true, y_pred, sample_weight, multioutput]
+    # multioutput can be a str: ignore.
+    skip_types = (str,)
+    xp, is_array_api_compliant = get_namespace(*input_arrays, skip_types=skip_types)
+    device_ = device(*input_arrays, skip_types=skip_types)
 
     dtype = (
         "numeric" if not is_array_api_compliant else supported_float_dtypes(xp, device_)
@@ -1239,11 +1221,10 @@ def r2_score(
     else:
         weight = 1
 
-    numerator = xp.sum(weight * (y_true - y_pred) ** 2, axis=0, dtype=xp.float64)
+    numerator = xp.sum(weight * (y_true - y_pred) ** 2, axis=0)
     denominator = xp.sum(
         weight * (y_true - _average(y_true, axis=0, weights=sample_weight, xp=xp)) ** 2,
         axis=0,
-        dtype=xp.float64,
     )
 
     result = _assemble_r2_explained_variance(
@@ -1256,7 +1237,7 @@ def r2_score(
         device=device_,
     )
 
-    result = input_xp.asarray(result, device=device_)
+    result = xp.asarray(result, device=device_)
     if result.size == 1:
         return xp.reshape(result, (-1,))[0]
 

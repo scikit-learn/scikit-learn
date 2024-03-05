@@ -94,7 +94,7 @@ def _single_array_device(array):
         return array.device
 
 
-def device(*array_list, skip_none=False, skip_types=()):
+def device(*array_list, skip_none=True, skip_types=()):
     """Hardware device where the array data resides on.
 
     If the hardware device is not the same for all arrays, an error is raised.
@@ -104,7 +104,7 @@ def device(*array_list, skip_none=False, skip_types=()):
     *array_list : arrays
         List of array instances from NumPy or an array API compatible library.
 
-    skip_none : bool, default=False
+    skip_none : bool, default=True
         Whether to ignore None objects passed in array_list.
 
     skip_types : tuple, default=()
@@ -587,15 +587,11 @@ def _add_to_diagonal(array, value, xp):
 def _average(a, axis=None, weights=None, normalize=True, xp=None):
     """Partial port of np.average to support the Array API.
 
-    It does a best effort at mimicking the casting rules described at
-    https://numpy.org/doc/stable/reference/generated/numpy.average.html
-    and in particular will fall back to CPU if float64 conversion is
-    required but the input device only has float32 support.
+    It does a best effort at mimicking the return dtype rule described at
+    https://numpy.org/doc/stable/reference/generated/numpy.average.html but
+    only for the common cases needed in scikit-learn.
     """
-    input_arrays = [a]
-    if weights is not None:
-        input_arrays.append(weights)
-
+    input_arrays = [a, weights]
     if xp is None:
         xp, _ = get_namespace(*input_arrays)
 
@@ -611,13 +607,18 @@ def _average(a, axis=None, weights=None, normalize=True, xp=None):
     if weights is not None and a.shape != weights.shape:
         if axis is None:
             raise TypeError(
-                "Axis must be specified when shapes of a and weights differ."
+                "Axis must be specified when {a.shape=} and {weights.shape=} differ."
             )
+
         if weights.ndim != 1:
-            raise TypeError("1D weights expected when shapes of a and weights differ.")
+            raise TypeError(
+                f"1D weights expected when {a.shape=} and {weights.shape=} differ."
+            )
 
         if size(weights) != a.shape[axis]:
-            raise ValueError("Length of weights not compatible with specified axis.")
+            raise ValueError(
+                f"{size(weights)=} not compatible with {a.shape=} and {axis=}."
+            )
 
         # If weights are 1D, add singleton dimensions for broadcasting
         shape = [1] * a.ndim
@@ -631,17 +632,18 @@ def _average(a, axis=None, weights=None, normalize=True, xp=None):
     if weights is not None and xp.isdtype(weights.dtype, "bool"):
         weights = xp.astype(weights, xp.int32)
 
-    if any(
-        (
-            (input_array is not None)
-            and (
-                (not xp.isdtype(input_array.dtype, "numeric"))
-                or xp.isdtype(input_array.dtype, "complex floating")
+    for input_array in input_arrays:
+        if input_array is None:
+            continue
+        if not xp.isdtype(input_array.dtype, "numeric"):
+            raise ValueError(
+                "Expecting only boolean, integral or real floating values. "
+                f"Got {input_array.dtype}."
             )
-        )
-        for input_array in [a, weights]
-    ):
-        raise ValueError("Expecting only boolean, integral or real floating values.")
+        if xp.isdtype(input_array.dtype, "complex floating"):
+            raise NotImplementedError(
+                "Complex floating point values are not supported by average."
+            )
 
     if weights is None and xp.isdtype(a.dtype, "integral"):
         output_dtype = xp.float64
@@ -657,16 +659,6 @@ def _average(a, axis=None, weights=None, normalize=True, xp=None):
         )
     else:
         output_dtype = xp.float64
-
-    if (output_dtype == xp.float64) and not _supports_dtype(xp, device_, "float64"):
-        a = _convert_to_numpy(a, xp)
-        if weights is not None:
-            weights = _convert_to_numpy(weights, xp)
-        return xp.asarray(
-            _average(a, axis=axis, normalize=normalize, weights=weights),
-            dtype=xp.float32,
-            device=device_,
-        )
 
     a = xp.astype(a, output_dtype)
 
