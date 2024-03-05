@@ -59,7 +59,6 @@ from sklearn.multioutput import (
     MultiOutputRegressor,
     RegressorChain,
 )
-from sklearn.pipeline import FeatureUnion
 from sklearn.semi_supervised import SelfTrainingClassifier
 from sklearn.tests.metadata_routing_common import (
     ConsumingClassifier,
@@ -362,7 +361,7 @@ METAESTIMATORS: list = [
 
 The keys are as follows:
 
-- metaestimator: The metaestmator to be tested
+- metaestimator: The metaestimator to be tested
 - estimator_name: The name of the argument for the sub-estimator
 - estimator: The sub-estimator type, either "regressor" or "classifier"
 - init_args: The arguments to be passed to the metaestimator's constructor
@@ -398,7 +397,6 @@ METAESTIMATOR_IDS = [str(row["metaestimator"].__name__) for row in METAESTIMATOR
 UNSUPPORTED_ESTIMATORS = [
     AdaBoostClassifier(),
     AdaBoostRegressor(),
-    FeatureUnion([]),
     GraphicalLassoCV(),
     RFE(ConsumingClassifier()),
     RFECV(ConsumingClassifier()),
