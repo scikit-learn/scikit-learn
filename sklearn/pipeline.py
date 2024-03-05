@@ -1644,11 +1644,11 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
         **fit_params : dict, default=None
             - If `enable_metadata_routing=False` (default):
               Parameters directly passed to the `fit` methods of the
-              transformers.
+              sub-transformers.
 
             - If `enable_metadata_routing=True`:
               Parameters safely routed to the `fit` methods of the
-              transformers. See :ref:`Metadata Routing User Guide
+              sub-transformers. See :ref:`Metadata Routing User Guide
               <metadata_routing>` for more details.
 
             .. versionchanged:: 1.5
@@ -1691,11 +1691,11 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
         **params : dict, default=None
             - If `enable_metadata_routing=False` (default):
               Parameters directly passed to the `fit` methods of the
-              transformers.
+              sub-transformers.
 
             - If `enable_metadata_routing=True`:
               Parameters safely routed to the `fit` methods of the
-              transformers. See :ref:`Metadata Routing User Guide
+              sub-transformers. See :ref:`Metadata Routing User Guide
               <metadata_routing>` for more details.
 
             .. versionchanged:: 1.5
@@ -1757,7 +1757,7 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
             for idx, (name, transformer, weight) in enumerate(transformers, 1)
         )
 
-    def transform(self, X):
+    def transform(self, X, **params):
         """Transform X separately by each transformer, concatenate results.
 
         Parameters
@@ -1765,18 +1765,32 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
         X : iterable or array-like, depending on transformers
             Input data to be transformed.
 
+        **params : dict, default=None
+
+            Parameters routed to the `transform` method of the sub-transformers via the
+            metadata routing API. See :ref:`Metadata Routing User Guide
+            <metadata_routing>` for more details.
+
+            .. versionadded:: 1.5
+
         Returns
         -------
-        X_t : array-like or sparse matrix of \
-                shape (n_samples, sum_n_components)
+        X_t : array-like or sparse matrix of shape (n_samples, sum_n_components)
             The `hstack` of results of transformers. `sum_n_components` is the
             sum of `n_components` (output dimension) over transformers.
         """
-        # TODO(SLEP6): accept **params here in `transform` and route it to the
-        # underlying estimators.
-        params = Bunch(transform={})
+        _raise_for_params(params, self, "transform")
+
+        if _routing_enabled():
+            routed_params = process_routing(self, "transform", **params)
+        else:
+            # TODO(SLEP6): remove when metadata routing cannot be disabled.
+            routed_params = Bunch()
+            for name, _ in self.transformer_list:
+                routed_params[name] = Bunch(transform={})
+
         Xs = Parallel(n_jobs=self.n_jobs)(
-            delayed(_transform_one)(trans, X, None, weight, params)
+            delayed(_transform_one)(trans, X, None, weight, routed_params[name])
             for name, trans, weight in self._iter()
         )
         if not Xs:
@@ -1854,7 +1868,8 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
                     **{name: transformer},
                     method_mapping=MethodMapping()
                     .add(caller="fit", callee="fit")
-                    .add(caller="fit_transform", callee="fit_transform"),
+                    .add(caller="fit_transform", callee="fit_transform")
+                    .add(caller="transform", callee="transform"),
                 )
             else:
                 router.add(
@@ -1862,7 +1877,8 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
                     method_mapping=MethodMapping()
                     .add(caller="fit", callee="fit")
                     .add(caller="fit_transform", callee="fit")
-                    .add(caller="fit_transform", callee="transform"),
+                    .add(caller="fit_transform", callee="transform")
+                    .add(caller="transform", callee="transform"),
                 )
 
         return router

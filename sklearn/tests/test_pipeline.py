@@ -21,7 +21,7 @@ from sklearn.ensemble import (
     RandomForestClassifier,
     RandomTreesEmbedding,
 )
-from sklearn.exceptions import NotFittedError
+from sklearn.exceptions import NotFittedError, UnsetMetadataPassedError
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.feature_selection import SelectKBest, f_classif
 from sklearn.impute import SimpleImputer
@@ -1970,6 +1970,7 @@ def test_feature_union_metadata_routing_error():
     y = [1, 2, 3]
     sample_weight, metadata = [1, 1, 1], "a"
 
+    # test lacking set_fit_request
     feature_union = FeatureUnion([("sub_transformer", ConsumingTransformer())])
 
     error_message = (
@@ -1977,8 +1978,30 @@ def test_feature_union_metadata_routing_error():
         f" or not for {ConsumingTransformer.__name__}.fit"
     )
 
-    with pytest.raises(ValueError, match=re.escape(error_message)):
+    with pytest.raises(UnsetMetadataPassedError, match=re.escape(error_message)):
         feature_union.fit(X, y, sample_weight=sample_weight, metadata=metadata)
+
+    # test lacking set_transform_request
+    feature_union = FeatureUnion(
+        [
+            (
+                "sub_transformer",
+                ConsumingTransformer().set_fit_request(
+                    sample_weight=True, metadata=True
+                ),
+            )
+        ]
+    )
+
+    error_message = (
+        "[sample_weight, metadata] are passed but are not explicitly set as requested "
+        f"or not for {ConsumingTransformer.__name__}.transform"
+    )
+
+    with pytest.raises(UnsetMetadataPassedError, match=re.escape(error_message)):
+        feature_union.fit(
+            X, y, sample_weight=sample_weight, metadata=metadata
+        ).transform(X, sample_weight=sample_weight, metadata=metadata)
 
 
 @pytest.mark.usefixtures("enable_slep006")
@@ -2019,6 +2042,7 @@ def test_feature_union_metadata_routing(transformer):
     kwargs = {"sample_weight": sample_weight, "metadata": metadata}
     feature_union.fit(X, y, **kwargs)
     feature_union.fit_transform(X, y, **kwargs)
+    feature_union.fit(X, y, **kwargs).transform(X, **kwargs)
 
     for transformer in feature_union.transformer_list:
         # access sub-transformer in (name, trans) with transformer[1]
