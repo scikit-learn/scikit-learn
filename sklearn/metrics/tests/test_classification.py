@@ -221,7 +221,7 @@ def test_classification_report_zero_division_warning(zero_division):
 def test_classification_report_labels_subset_superset(labels, show_micro_avg):
     """Check the behaviour of passing `labels` as a superset or subset of the labels.
     WHen a superset, we expect to show the "accuracy" in the report while it should be
-    the micro-averaging if the this is a subset.
+    the micro-averaging if this is a subset.
 
     Non-regression test for:
     https://github.com/scikit-learn/scikit-learn/issues/27927
