@@ -15,7 +15,17 @@ from . import _joblib, metadata_routing
 from ._bunch import Bunch
 from ._chunking import gen_batches, gen_even_slices
 from ._estimator_html_repr import estimator_html_repr
-from ._indexing import _safe_indexing, resample, shuffle
+
+# Make _safe_indexing importable from here for backward compat as this particular
+# helper is considered semi-private and typically very useful for third-party
+# libraries that want to comply with scikit-learn's estimator API. In particular,
+# _safe_indexing was included in our public API documentation despite the leading
+# `_` in its name.
+from ._indexing import (
+    _safe_indexing,  # noqa
+    resample,
+    shuffle,
+)
 from ._mask import safe_mask
 from .class_weight import compute_class_weight, compute_sample_weight
 from .deprecation import deprecated
@@ -71,7 +81,6 @@ __all__ = [
     "safe_mask",
     "gen_batches",
     "gen_even_slices",
-    "_safe_indexing",
 ]
 
 IS_PYPY = platform.python_implementation() == "PyPy"
