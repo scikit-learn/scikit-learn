@@ -290,6 +290,9 @@ def as_float_array(X, *, copy=True, force_all_finite=True):
 
 def _is_arraylike(x):
     """Returns whether the input is array-like."""
+    if sp.issparse(x):
+        return False
+
     return hasattr(x, "__len__") or hasattr(x, "shape") or hasattr(x, "__array__")
 
 
@@ -2135,8 +2138,10 @@ def _check_method_params(X, params, indices=None):
 
     method_params_validated = {}
     for param_key, param_value in params.items():
-        if not _is_arraylike(param_value) or _num_samples(param_value) != _num_samples(
-            X
+        if (
+            not _is_arraylike(param_value)
+            and not sp.issparse(param_value)
+            or _num_samples(param_value) != _num_samples(X)
         ):
             # Non-indexable pass-through (for now for backward-compatibility).
             # https://github.com/scikit-learn/scikit-learn/issues/15805
