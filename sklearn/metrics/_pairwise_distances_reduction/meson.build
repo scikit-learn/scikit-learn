@@ -147,7 +147,7 @@ _argkmin_classmode = py.extension_module(
    _datasets_pair_pxd, _base_pxd, _middle_term_computer_pxd, utils_cython_tree],
   dependencies: [np_dep],
   override_options: ['cython_language=cpp'],
-  cython_args: cython_args,,
+  cython_args: cython_args,
   # XXX: for some reason -std=c++11 is needed otherwise there is an error with
   # undefined symbol: _ZdlPv at import time in manylinux wheels
   cpp_args:['-std=c++11'],
