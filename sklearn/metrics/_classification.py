@@ -229,12 +229,12 @@ def accuracy_score(y_true, y_pred, *, normalize=True, sample_weight=None):
 
 def _norm_cm(cm, normalize):
     """Normalize confusion matrix."""
-    with np.errstate(all='ignore'):
-        if normalize == 'true':
+    with np.errstate(all="ignore"):
+        if normalize == "true":
             cm = cm / cm.sum(axis=1, keepdims=True)
-        elif normalize == 'pred':
+        elif normalize == "pred":
             cm = cm / cm.sum(axis=0, keepdims=True)
-        elif normalize == 'all':
+        elif normalize == "all":
             cm = cm / cm.sum()
         cm = np.nan_to_num(cm)
     return cm
@@ -356,17 +356,17 @@ def confusion_matrix(
         check_consistent_length(y_true, y_pred, sample_weight)
 
     # fast path for binary case
-    if y_type == 'binary' and len(labels) == 2:
+    if y_type == "binary" and len(labels) == 2:
         if labels[0] != 0 or labels[1] != 1:
             y_true = y_true == labels[1]
             y_pred = y_pred == labels[1]
 
         # bincount does not handle 'object' sample_weight
-        if sample_weight is not None and sample_weight.dtype.kind == 'O':
+        if sample_weight is not None and sample_weight.dtype.kind == "O":
             sample_weight = sample_weight.astype(float)
-        out = np.bincount(y_true * 2 + y_pred,
-                          weights=sample_weight,
-                          minlength=4).reshape(2, 2)
+        out = np.bincount(
+            y_true * 2 + y_pred, weights=sample_weight, minlength=4
+        ).reshape(2, 2)
         if sample_weight is None or sample_weight.dtype.kind in {"i", "u", "b"}:
             out = out.astype(np.int64)
         return _norm_cm(out, normalize)
