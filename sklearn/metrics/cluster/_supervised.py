@@ -494,7 +494,7 @@ def homogeneity_completeness_v_measure(labels_true, labels_pred, *, beta=1.0):
         Ground truth class labels to be used as a reference.
 
     labels_pred : array-like of shape (n_samples,)
-        Gluster labels to evaluate.
+        Cluster labels to evaluate.
 
     beta : float, default=1.0
         Ratio of weight attributed to ``homogeneity`` vs ``completeness``.

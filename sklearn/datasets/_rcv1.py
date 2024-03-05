@@ -178,6 +178,15 @@ def fetch_rcv1(
         described above. Returned only if `return_X_y` is True.
 
         .. versionadded:: 0.20
+
+    Examples
+    --------
+    >>> from sklearn.datasets import fetch_rcv1
+    >>> rcv1 = fetch_rcv1()
+    >>> rcv1.data.shape
+    (804414, 47236)
+    >>> rcv1.target.shape
+    (804414, 103)
     """
     N_SAMPLES = 804414
     N_FEATURES = 47236

@@ -549,6 +549,17 @@ def make_hastie_10_2(n_samples=12000, *, random_state=None):
     ----------
     .. [1] T. Hastie, R. Tibshirani and J. Friedman, "Elements of Statistical
            Learning Ed. 2", Springer, 2009.
+
+    Examples
+    --------
+    >>> from sklearn.datasets import make_hastie_10_2
+    >>> X, y = make_hastie_10_2(n_samples=24000, random_state=42)
+    >>> X.shape
+    (24000, 10)
+    >>> y.shape
+    (24000,)
+    >>> list(y[:5])
+    [-1.0, 1.0, -1.0, 1.0, -1.0]
     """
     rs = check_random_state(random_state)
 
@@ -864,6 +875,15 @@ def make_moons(n_samples=100, *, shuffle=True, noise=None, random_state=None):
 
     y : ndarray of shape (n_samples,)
         The integer labels (0 or 1) for class membership of each sample.
+
+    Examples
+    --------
+    >>> from sklearn.datasets import make_moons
+    >>> X, y = make_moons(n_samples=200, noise=0.2, random_state=42)
+    >>> X.shape
+    (200, 2)
+    >>> y.shape
+    (200,)
     """
 
     if isinstance(n_samples, numbers.Integral):
@@ -1400,6 +1420,20 @@ def make_low_rank_matrix(
     -------
     X : ndarray of shape (n_samples, n_features)
         The matrix.
+
+    Examples
+    --------
+    >>> from numpy.linalg import svd
+    >>> from sklearn.datasets import make_low_rank_matrix
+    >>> X = make_low_rank_matrix(
+    ...     n_samples=50,
+    ...     n_features=25,
+    ...     effective_rank=5,
+    ...     tail_strength=0.01,
+    ...     random_state=0,
+    ... )
+    >>> X.shape
+    (50, 25)
     """
     generator = check_random_state(random_state)
     n = min(n_samples, n_features)
@@ -1501,6 +1535,23 @@ def make_sparse_coded_signal(
         The sparse code such that each column of this matrix has exactly
         n_nonzero_coefs non-zero items (X). The shape is `(n_samples, n_components)`
         if `data_transposed` is False, otherwise it's `(n_components, n_samples)`.
+
+    Examples
+    --------
+    >>> from sklearn.datasets import make_sparse_coded_signal
+    >>> data, dictionary, code = make_sparse_coded_signal(
+    ...     n_samples=50,
+    ...     n_components=100,
+    ...     n_features=10,
+    ...     n_nonzero_coefs=4,
+    ...     random_state=0
+    ... )
+    >>> data.shape
+    (50, 10)
+    >>> dictionary.shape
+    (100, 10)
+    >>> code.shape
+    (50, 100)
     """
     generator = check_random_state(random_state)
 
@@ -1583,6 +1634,15 @@ def make_sparse_uncorrelated(n_samples=100, n_features=10, *, random_state=None)
     .. [1] G. Celeux, M. El Anbari, J.-M. Marin, C. P. Robert,
            "Regularization in regression: comparing Bayesian and frequentist
            methods in a poorly informative situation", 2009.
+
+    Examples
+    --------
+    >>> from sklearn.datasets import make_sparse_uncorrelated
+    >>> X, y = make_sparse_uncorrelated(random_state=0)
+    >>> X.shape
+    (100, 10)
+    >>> y.shape
+    (100,)
     """
     generator = check_random_state(random_state)
 
@@ -1843,6 +1903,15 @@ def make_swiss_roll(n_samples=100, *, noise=0.0, random_state=None, hole=False):
     .. [1] S. Marsland, "Machine Learning: An Algorithmic Perspective", 2nd edition,
            Chapter 6, 2014.
            https://homepages.ecs.vuw.ac.nz/~marslast/Code/Ch6/lle.py
+
+    Examples
+    --------
+    >>> from sklearn.datasets import make_swiss_roll
+    >>> X, t = make_swiss_roll(noise=0.05, random_state=0)
+    >>> X.shape
+    (100, 3)
+    >>> t.shape
+    (100,)
     """
     generator = check_random_state(random_state)
 
@@ -1901,8 +1970,17 @@ def make_s_curve(n_samples=100, *, noise=0.0, random_state=None):
         The points.
 
     t : ndarray of shape (n_samples,)
-        The univariate position of the sample according to the main dimension
-        of the points in the manifold.
+        The univariate position of the sample according
+        to the main dimension of the points in the manifold.
+
+    Examples
+    --------
+    >>> from sklearn.datasets import make_s_curve
+    >>> X, t = make_s_curve(noise=0.05, random_state=0)
+    >>> X.shape
+    (100, 3)
+    >>> t.shape
+    (100,)
     """
     generator = check_random_state(random_state)
 
@@ -2121,6 +2199,19 @@ def make_biclusters(
         words using bipartite spectral graph partitioning. In Proceedings
         of the seventh ACM SIGKDD international conference on Knowledge
         discovery and data mining (pp. 269-274). ACM.
+
+    Examples
+    --------
+    >>> from sklearn.datasets import make_biclusters
+    >>> data, rows, cols = make_biclusters(
+    ...     shape=(10, 20), n_clusters=2, random_state=42
+    ... )
+    >>> data.shape
+    (10, 20)
+    >>> rows.shape
+    (2, 10)
+    >>> cols.shape
+    (2, 20)
     """
     generator = check_random_state(random_state)
     n_rows, n_cols = shape

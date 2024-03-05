@@ -325,6 +325,38 @@ METAESTIMATORS: list = [
         "preserves_metadata": False,
         "estimator_routing_methods": ["fit"],
     },
+    {
+        "metaestimator": RidgeCV,
+        "X": X,
+        "y": y,
+        "scorer_name": "scoring",
+        "scorer_routing_methods": ["fit"],
+    },
+    {
+        "metaestimator": RidgeClassifierCV,
+        "X": X,
+        "y": y,
+        "scorer_name": "scoring",
+        "scorer_routing_methods": ["fit"],
+    },
+    {
+        "metaestimator": RidgeCV,
+        "X": X,
+        "y": y,
+        "scorer_name": "scoring",
+        "scorer_routing_methods": ["fit"],
+        "cv_name": "cv",
+        "cv_routing_methods": ["fit"],
+    },
+    {
+        "metaestimator": RidgeClassifierCV,
+        "X": X,
+        "y": y,
+        "scorer_name": "scoring",
+        "scorer_routing_methods": ["fit"],
+        "cv_name": "cv",
+        "cv_routing_methods": ["fit"],
+    },
 ]
 """List containing all metaestimators to be tested and their settings
 
@@ -370,8 +402,6 @@ UNSUPPORTED_ESTIMATORS = [
     GraphicalLassoCV(),
     RFE(ConsumingClassifier()),
     RFECV(ConsumingClassifier()),
-    RidgeCV(),
-    RidgeClassifierCV(),
     SelfTrainingClassifier(ConsumingClassifier()),
     SequentialFeatureSelector(ConsumingClassifier()),
     StackingClassifier(ConsumingClassifier()),

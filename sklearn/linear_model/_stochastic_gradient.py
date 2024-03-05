@@ -90,7 +90,7 @@ class BaseSGD(SparseCoefMixin, BaseEstimator, metaclass=ABCMeta):
         "verbose": ["verbose"],
         "random_state": ["random_state"],
         "warm_start": ["boolean"],
-        "average": [Interval(Integral, 0, None, closed="left"), bool, np.bool_],
+        "average": [Interval(Integral, 0, None, closed="left"), "boolean"],
     }
 
     def __init__(

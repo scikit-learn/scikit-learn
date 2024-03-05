@@ -492,7 +492,29 @@ def _incr_mean_variance_axis0(
 
 
 def inplace_csr_row_normalize_l1(X):
-    """Inplace row normalize using the l1 norm"""
+    """Normalize inplace the rows of a CSR matrix or array by their L1 norm.
+
+    Parameters
+    ----------
+    X : scipy.sparse.csr_matrix and scipy.sparse.csr_array, \
+            shape=(n_samples, n_features)
+        The input matrix or array to be modified inplace.
+
+    Examples
+    --------
+    >>> from scipy.sparse import csr_matrix
+    >>> from sklearn.utils.sparsefuncs_fast import inplace_csr_row_normalize_l1
+    >>> X = csr_matrix(([1.0, 2.0, 3.0], [0, 2, 3], [0, 3, 4]), shape=(3, 4))
+    >>> X.toarray()
+    array([[1., 2., 0., 0.],
+           [0., 0., 3., 0.],
+           [0., 0., 0., 4.]])
+    >>> inplace_csr_row_normalize_l1(X)
+    >>> X.toarray()
+    array([[0.33...   , 0.66...   , 0.        , 0.        ],
+           [0.        , 0.        , 1.        , 0.        ],
+           [0.        , 0.        , 0.        , 1.        ]])
+    """
     _inplace_csr_row_normalize_l1(X.data, X.shape, X.indices, X.indptr)
 
 
@@ -529,7 +551,28 @@ def _inplace_csr_row_normalize_l1(
 
 
 def inplace_csr_row_normalize_l2(X):
-    """Inplace row normalize using the l2 norm"""
+    """Normalize inplace the rows of a CSR matrix or array by their L2 norm.
+
+    Parameters
+    ----------
+    X : scipy.sparse.csr_matrix, shape=(n_samples, n_features)
+        The input matrix or array to be modified inplace.
+
+    Examples
+    --------
+    >>> from scipy.sparse import csr_matrix
+    >>> from sklearn.utils.sparsefuncs_fast import inplace_csr_row_normalize_l2
+    >>> X = csr_matrix(([1.0, 2.0, 3.0], [0, 2, 3], [0, 3, 4]), shape=(3, 4))
+    >>> X.toarray()
+    array([[1., 2., 0., 0.],
+           [0., 0., 3., 0.],
+           [0., 0., 0., 4.]])
+    >>> inplace_csr_row_normalize_l2(X)
+    >>> X.toarray()
+    array([[0.44...   , 0.89...   , 0.        , 0.        ],
+           [0.        , 0.        , 1.        , 0.        ],
+           [0.        , 0.        , 0.        , 1.        ]])
+    """
     _inplace_csr_row_normalize_l2(X.data, X.shape, X.indices, X.indptr)
 
 
