@@ -664,6 +664,15 @@ def _dict_learning(
         return code, dictionary, errors
 
 
+@validate_params(
+    {
+        "X": ["array-like"],
+        "return_code": ["boolean"],
+        "method": [StrOptions({"cd", "lars"})],
+        "method_max_iter": [Interval(Integral, 0, None, closed="left")],
+    },
+    prefer_skip_nested_validation=False,
+)
 def dict_learning_online(
     X,
     n_components=2,
@@ -704,7 +713,7 @@ def dict_learning_online(
 
     Parameters
     ----------
-    X : ndarray of shape (n_samples, n_features)
+    X : array-like of shape (n_samples, n_features)
         Data matrix.
 
     n_components : int or None, default=2
