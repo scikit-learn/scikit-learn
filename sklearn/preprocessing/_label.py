@@ -491,7 +491,6 @@ def label_binarize(y, *, classes, neg_label=0, pos_label=1, sparse_output=False)
            [0],
            [1]])
     """
-    xp, _ = get_namespace(y)
     if not isinstance(y, list):
         # XXX Workaround that will be removed when list of list format is
         # dropped
@@ -533,12 +532,14 @@ def label_binarize(y, *, classes, neg_label=0, pos_label=1, sparse_output=False)
     n_classes = classes.shape[0] if hasattr(classes, "shape") else len(classes)
     classes = np.asarray(classes)
 
+    xp, is_array_api_compliant = get_namespace(y)
+    device_kwarg = {"device": device(y)} if is_array_api_compliant else {}
     if y_type == "binary":
         if n_classes == 1:
             if sparse_output:
                 return sp.csr_matrix((n_samples, 1), dtype=int)
             else:
-                Y = xp.zeros((len(y), 1), dtype=int, device=device(y))
+                Y = xp.zeros((len(y), 1), dtype=int, **device_kwarg)
                 Y += neg_label
                 return Y
         elif len(classes) >= 3:
@@ -579,7 +580,7 @@ def label_binarize(y, *, classes, neg_label=0, pos_label=1, sparse_output=False)
 
     if not sparse_output:
         Y = Y.toarray()
-        Y = xp.asarray(Y, dtype=xp.int64, device=device(y))
+        Y = xp.asarray(Y, dtype=xp.int64, **device_kwarg)
 
         if neg_label != 0:
             Y[Y == 0] = neg_label
@@ -592,7 +593,7 @@ def label_binarize(y, *, classes, neg_label=0, pos_label=1, sparse_output=False)
     # preserve label ordering
     if np.any(classes != sorted_class):
         indices = np.searchsorted(sorted_class, classes)
-        Y = Y[:, xp.asarray(indices, device=device(y))]
+        Y = Y[:, xp.asarray(indices, **device_kwarg)]
 
     if y_type == "binary":
         if sparse_output:
