@@ -25,6 +25,7 @@ from ..metrics import check_scoring, get_scorer_names
 from ..model_selection import GridSearchCV
 from ..preprocessing import LabelBinarizer
 from ..utils import (
+    Bunch,
     check_array,
     check_consistent_length,
     check_scalar,
@@ -35,8 +36,11 @@ from ..utils._param_validation import Interval, StrOptions, validate_params
 from ..utils.extmath import row_norms, safe_sparse_dot
 from ..utils.fixes import _sparse_linalg_cg
 from ..utils.metadata_routing import (
-    _raise_for_unsupported_routing,
-    _RoutingNotSupportedMixin,
+    MetadataRouter,
+    MethodMapping,
+    _raise_for_params,
+    _routing_enabled,
+    process_routing,
 )
 from ..utils.sparsefuncs import mean_variance_axis
 from ..utils.validation import _check_sample_weight, check_is_fitted
@@ -1970,7 +1974,7 @@ class _RidgeGCV(LinearModel):
             G_inverse_diag = G_inverse_diag[:, np.newaxis]
         return G_inverse_diag, c
 
-    def fit(self, X, y, sample_weight=None):
+    def fit(self, X, y, sample_weight=None, score_params=None):
         """Fit Ridge regression model with gcv.
 
         Parameters
@@ -1986,6 +1990,13 @@ class _RidgeGCV(LinearModel):
             will have the same weight. Note that the scale of `sample_weight`
             has an impact on the loss; i.e. multiplying all weights by `k`
             is equivalent to setting `alpha / k`.
+
+        score_params : dict, default=None
+            Parameters to be passed to the underlying scorer.
+
+            .. versionadded:: 1.5
+                See :ref:`Metadata Routing User Guide <metadata_routing>` for
+                more details.
 
         Returns
         -------
@@ -2040,8 +2051,7 @@ class _RidgeGCV(LinearModel):
 
         X_mean, *decomposition = decompose(X, y, sqrt_sw)
 
-        scorer = check_scoring(self, scoring=self.scoring, allow_none=True)
-        error = scorer is None
+        scorer = self._get_scorer()
 
         n_y = 1 if len(y.shape) == 1 else y.shape[1]
         n_alphas = 1 if np.ndim(self.alphas) == 0 else len(self.alphas)
@@ -2053,12 +2063,9 @@ class _RidgeGCV(LinearModel):
 
         for i, alpha in enumerate(np.atleast_1d(self.alphas)):
             G_inverse_diag, c = solve(float(alpha), y, sqrt_sw, X_mean, *decomposition)
-            if error:
+            if scorer is None:
                 squared_errors = (c / G_inverse_diag) ** 2
-                if self.alpha_per_target:
-                    alpha_score = -squared_errors.mean(axis=0)
-                else:
-                    alpha_score = -squared_errors.mean()
+                alpha_score = self._score_without_scorer(squared_errors=squared_errors)
                 if self.store_cv_values:
                     self.cv_values_[:, i] = squared_errors.ravel()
             else:
@@ -2066,24 +2073,14 @@ class _RidgeGCV(LinearModel):
                 if self.store_cv_values:
                     self.cv_values_[:, i] = predictions.ravel()
 
-                if self.is_clf:
-                    identity_estimator = _IdentityClassifier(classes=np.arange(n_y))
-                    alpha_score = scorer(
-                        identity_estimator, predictions, y.argmax(axis=1)
-                    )
-                else:
-                    identity_estimator = _IdentityRegressor()
-                    if self.alpha_per_target:
-                        alpha_score = np.array(
-                            [
-                                scorer(identity_estimator, predictions[:, j], y[:, j])
-                                for j in range(n_y)
-                            ]
-                        )
-                    else:
-                        alpha_score = scorer(
-                            identity_estimator, predictions.ravel(), y.ravel()
-                        )
+                score_params = score_params or {}
+                alpha_score = self._score(
+                    predictions=predictions,
+                    y=y,
+                    n_y=n_y,
+                    scorer=scorer,
+                    score_params=score_params,
+                )
 
             # Keep track of the best model
             if best_score is None:
@@ -2126,6 +2123,54 @@ class _RidgeGCV(LinearModel):
 
         return self
 
+    def _get_scorer(self):
+        return check_scoring(self, scoring=self.scoring, allow_none=True)
+
+    def _score_without_scorer(self, squared_errors):
+        """Performs scoring using squared errors when the scorer is None."""
+        if self.alpha_per_target:
+            _score = -squared_errors.mean(axis=0)
+        else:
+            _score = -squared_errors.mean()
+
+        return _score
+
+    def _score(self, *, predictions, y, n_y, scorer, score_params):
+        """Performs scoring with the specified scorer using the
+        predictions and the true y values.
+        """
+        if self.is_clf:
+            identity_estimator = _IdentityClassifier(classes=np.arange(n_y))
+            _score = scorer(
+                identity_estimator,
+                predictions,
+                y.argmax(axis=1),
+                **score_params,
+            )
+        else:
+            identity_estimator = _IdentityRegressor()
+            if self.alpha_per_target:
+                _score = np.array(
+                    [
+                        scorer(
+                            identity_estimator,
+                            predictions[:, j],
+                            y[:, j],
+                            **score_params,
+                        )
+                        for j in range(n_y)
+                    ]
+                )
+            else:
+                _score = scorer(
+                    identity_estimator,
+                    predictions.ravel(),
+                    y.ravel(),
+                    **score_params,
+                )
+
+        return _score
+
 
 class _BaseRidgeCV(LinearModel):
     _parameter_constraints: dict = {
@@ -2157,7 +2202,7 @@ class _BaseRidgeCV(LinearModel):
         self.store_cv_values = store_cv_values
         self.alpha_per_target = alpha_per_target
 
-    def fit(self, X, y, sample_weight=None):
+    def fit(self, X, y, sample_weight=None, **params):
         """Fit Ridge regression model with cv.
 
         Parameters
@@ -2173,6 +2218,16 @@ class _BaseRidgeCV(LinearModel):
             Individual weights for each sample. If given a float, every sample
             will have the same weight.
 
+        **params : dict, default=None
+            Extra parameters for the underlying scorer.
+
+            .. versionadded:: 1.5
+                Only available if `enable_metadata_routing=True`,
+                which can be set by using
+                ``sklearn.set_config(enable_metadata_routing=True)``.
+                See :ref:`Metadata Routing User Guide <metadata_routing>` for
+                more details.
+
         Returns
         -------
         self : object
@@ -2186,6 +2241,7 @@ class _BaseRidgeCV(LinearModel):
         cross-validation takes the sample weights into account when computing
         the validation score.
         """
+        _raise_for_params(params, self, "fit")
         cv = self.cv
 
         # `_RidgeGCV` does not work for alpha = 0
@@ -2213,7 +2269,21 @@ class _BaseRidgeCV(LinearModel):
                 self.alphas[0] = check_scalar_alpha(self.alphas[0], "alphas")
         alphas = np.asarray(self.alphas)
 
+        if sample_weight is not None:
+            params["sample_weight"] = sample_weight
+
         if cv is None:
+            if _routing_enabled():
+                routed_params = process_routing(
+                    self,
+                    "fit",
+                    **params,
+                )
+            else:
+                routed_params = Bunch(scorer=Bunch(score={}))
+                if sample_weight is not None:
+                    routed_params.scorer.score["sample_weight"] = sample_weight
+
             estimator = _RidgeGCV(
                 alphas,
                 fit_intercept=self.fit_intercept,
@@ -2223,7 +2293,12 @@ class _BaseRidgeCV(LinearModel):
                 is_clf=is_classifier(self),
                 alpha_per_target=self.alpha_per_target,
             )
-            estimator.fit(X, y, sample_weight=sample_weight)
+            estimator.fit(
+                X,
+                y,
+                sample_weight=sample_weight,
+                score_params=routed_params.scorer.score,
+            )
             self.alpha_ = estimator.alpha_
             self.best_score_ = estimator.best_score_
             if self.store_cv_values:
@@ -2237,19 +2312,24 @@ class _BaseRidgeCV(LinearModel):
             parameters = {"alpha": alphas}
             solver = "sparse_cg" if sparse.issparse(X) else "auto"
             model = RidgeClassifier if is_classifier(self) else Ridge
-            gs = GridSearchCV(
-                model(
-                    fit_intercept=self.fit_intercept,
-                    solver=solver,
-                ),
+            estimator = model(
+                fit_intercept=self.fit_intercept,
+                solver=solver,
+            )
+            if _routing_enabled():
+                estimator.set_fit_request(sample_weight=True)
+
+            grid_search = GridSearchCV(
+                estimator,
                 parameters,
                 cv=cv,
                 scoring=self.scoring,
             )
-            gs.fit(X, y, sample_weight=sample_weight)
-            estimator = gs.best_estimator_
-            self.alpha_ = gs.best_estimator_.alpha
-            self.best_score_ = gs.best_score_
+
+            grid_search.fit(X, y, **params)
+            estimator = grid_search.best_estimator_
+            self.alpha_ = grid_search.best_estimator_.alpha
+            self.best_score_ = grid_search.best_score_
 
         self.coef_ = estimator.coef_
         self.intercept_ = estimator.intercept_
@@ -2259,10 +2339,35 @@ class _BaseRidgeCV(LinearModel):
 
         return self
 
+    def get_metadata_routing(self):
+        """Get metadata routing of this object.
 
-class RidgeCV(
-    _RoutingNotSupportedMixin, MultiOutputMixin, RegressorMixin, _BaseRidgeCV
-):
+        Please check :ref:`User Guide <metadata_routing>` on how the routing
+        mechanism works.
+
+        .. versionadded:: 1.5
+
+        Returns
+        -------
+        routing : MetadataRouter
+            A :class:`~sklearn.utils.metadata_routing.MetadataRouter` encapsulating
+            routing information.
+        """
+        router = (
+            MetadataRouter(owner=self.__class__.__name__)
+            .add_self_request(self)
+            .add(
+                scorer=self._get_scorer(),
+                method_mapping=MethodMapping().add(callee="score", caller="fit"),
+            )
+        )
+        return router
+
+    def _get_scorer(self):
+        return check_scoring(self, scoring=self.scoring, allow_none=True)
+
+
+class RidgeCV(MultiOutputMixin, RegressorMixin, _BaseRidgeCV):
     """Ridge regression with built-in cross-validation.
 
     See glossary entry for :term:`cross-validation estimator`.
@@ -2394,7 +2499,7 @@ class RidgeCV(
     """
 
     @_fit_context(prefer_skip_nested_validation=True)
-    def fit(self, X, y, sample_weight=None):
+    def fit(self, X, y, sample_weight=None, **params):
         """Fit Ridge regression model with cv.
 
         Parameters
@@ -2410,6 +2515,16 @@ class RidgeCV(
             Individual weights for each sample. If given a float, every sample
             will have the same weight.
 
+        **params : dict, default=None
+            Parameters to be passed to the underlying scorer.
+
+            .. versionadded:: 1.5
+                Only available if `enable_metadata_routing=True`,
+                which can be set by using
+                ``sklearn.set_config(enable_metadata_routing=True)``.
+                See :ref:`Metadata Routing User Guide <metadata_routing>` for
+                more details.
+
         Returns
         -------
         self : object
@@ -2423,12 +2538,11 @@ class RidgeCV(
         cross-validation takes the sample weights into account when computing
         the validation score.
         """
-        _raise_for_unsupported_routing(self, "fit", sample_weight=sample_weight)
-        super().fit(X, y, sample_weight=sample_weight)
+        super().fit(X, y, sample_weight=sample_weight, **params)
         return self
 
 
-class RidgeClassifierCV(_RoutingNotSupportedMixin, _RidgeClassifierMixin, _BaseRidgeCV):
+class RidgeClassifierCV(_RidgeClassifierMixin, _BaseRidgeCV):
     """Ridge classifier with built-in cross-validation.
 
     See glossary entry for :term:`cross-validation estimator`.
@@ -2574,7 +2688,7 @@ class RidgeClassifierCV(_RoutingNotSupportedMixin, _RidgeClassifierMixin, _BaseR
         self.class_weight = class_weight
 
     @_fit_context(prefer_skip_nested_validation=True)
-    def fit(self, X, y, sample_weight=None):
+    def fit(self, X, y, sample_weight=None, **params):
         """Fit Ridge classifier with cv.
 
         Parameters
@@ -2591,12 +2705,21 @@ class RidgeClassifierCV(_RoutingNotSupportedMixin, _RidgeClassifierMixin, _BaseR
             Individual weights for each sample. If given a float, every sample
             will have the same weight.
 
+        **params : dict, default=None
+            Parameters to be passed to the underlying scorer.
+
+            .. versionadded:: 1.5
+                Only available if `enable_metadata_routing=True`,
+                which can be set by using
+                ``sklearn.set_config(enable_metadata_routing=True)``.
+                See :ref:`Metadata Routing User Guide <metadata_routing>` for
+                more details.
+
         Returns
         -------
         self : object
             Fitted estimator.
         """
-        _raise_for_unsupported_routing(self, "fit", sample_weight=sample_weight)
         # `RidgeClassifier` does not accept "sag" or "saga" solver and thus support
         # csr, csc, and coo sparse matrices. By using solver="eigen" we force to accept
         # all sparse format.
@@ -2608,7 +2731,7 @@ class RidgeClassifierCV(_RoutingNotSupportedMixin, _RidgeClassifierMixin, _BaseR
         # estimators are used where y will be binarized. Thus, we pass y
         # instead of the binarized Y.
         target = Y if self.cv is None else y
-        super().fit(X, target, sample_weight=sample_weight)
+        super().fit(X, target, sample_weight=sample_weight, **params)
         return self
 
     def _more_tags(self):

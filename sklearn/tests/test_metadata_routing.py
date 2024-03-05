@@ -687,7 +687,7 @@ def test_estimator_warnings():
                 " 'predict'}], 'router': {'fit': {'sample_weight': None, 'metadata':"
                 " None}, 'partial_fit': {'sample_weight': None, 'metadata': None},"
                 " 'predict': {'sample_weight': None, 'metadata': None}, 'score':"
-                " {'sample_weight': None}}}}"
+                " {'sample_weight': None, 'metadata': None}}}}"
             ),
         ),
     ],
@@ -795,7 +795,8 @@ def test_metadata_routing_add():
         == "{'est': {'mapping': [{'caller': 'fit', 'callee': 'fit'}], 'router': {'fit':"
         " {'sample_weight': 'weights', 'metadata': None}, 'partial_fit':"
         " {'sample_weight': None, 'metadata': None}, 'predict': {'sample_weight':"
-        " None, 'metadata': None}, 'score': {'sample_weight': None}}}}"
+        " None, 'metadata': None}, 'score': {'sample_weight': None, 'metadata':"
+        " None}}}}"
     )
 
     # adding one with an instance of MethodMapping
@@ -808,7 +809,8 @@ def test_metadata_routing_add():
         == "{'est': {'mapping': [{'caller': 'fit', 'callee': 'score'}], 'router':"
         " {'fit': {'sample_weight': None, 'metadata': None}, 'partial_fit':"
         " {'sample_weight': None, 'metadata': None}, 'predict': {'sample_weight':"
-        " None, 'metadata': None}, 'score': {'sample_weight': True}}}}"
+        " None, 'metadata': None}, 'score': {'sample_weight': True, 'metadata':"
+        " None}}}}"
     )
 
 
