@@ -34,6 +34,7 @@ _datasets_pair = py.extension_module(
   dependencies: [np_dep, openmp_dep],
   override_options: ['cython_language=cpp'],
   cython_args: cython_args,
+  cpp_args: ['-std=c++11'],
   subdir: 'sklearn/metrics/_pairwise_distances_reduction',
   install: true
 )
@@ -58,6 +59,7 @@ _base = py.extension_module(
   dependencies: [np_dep, openmp_dep],
   override_options: ['cython_language=cpp'],
   cython_args: cython_args,
+  cpp_args: ['-std=c++11'],
   subdir: 'sklearn/metrics/_pairwise_distances_reduction',
   install: true
 )
@@ -81,6 +83,7 @@ _middle_term_computer = py.extension_module(
   dependencies: [np_dep, openmp_dep],
   override_options: ['cython_language=cpp'],
   cython_args: cython_args,
+  cpp_args: ['-std=c++11'],
   subdir: 'sklearn/metrics/_pairwise_distances_reduction',
   install: true
 )
@@ -106,6 +109,7 @@ _argkmin = py.extension_module(
     dependencies: [np_dep, openmp_dep],
     override_options: ['cython_language=cpp'],
     cython_args: cython_args,
+    cpp_args: ['-std=c++11'],
     subdir: 'sklearn/metrics/_pairwise_distances_reduction',
     install: true
 )
@@ -130,6 +134,7 @@ _radius_neighbors = py.extension_module(
     dependencies: [np_dep, openmp_dep],
     override_options: ['cython_language=cpp'],
     cython_args: cython_args,
+    cpp_args: ['-std=c++11'],
     subdir: 'sklearn/metrics/_pairwise_distances_reduction',
     install: true
 )
@@ -148,6 +153,7 @@ _argkmin_classmode = py.extension_module(
   dependencies: [np_dep],
   override_options: ['cython_language=cpp'],
   cython_args: cython_args,
+  cpp_args: ['-std=c++11'],
   subdir: 'sklearn/metrics/_pairwise_distances_reduction',
   install: true
 )
@@ -167,6 +173,7 @@ _radius_neighbors_classmode = py.extension_module(
   dependencies: [np_dep],
   override_options: ['cython_language=cpp'],
   cython_args: cython_args,
+  cpp_args: ['-std=c++11'],
   subdir: 'sklearn/metrics/_pairwise_distances_reduction',
   install: true
 )
