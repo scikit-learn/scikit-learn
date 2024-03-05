@@ -1,199 +1,199 @@
 """
 Testing for export functions of decision trees (sklearn.tree.export).
 """
+from io import StringIO
 from re import finditer, search
 from textwrap import dedent
 
-from numpy.random import RandomState
+import numpy as np
 import pytest
+from numpy.random import RandomState
 
 from sklearn.base import is_classifier
-from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.ensemble import GradientBoostingClassifier
-from sklearn.tree import export_graphviz, plot_tree, export_text
-from io import StringIO
 from sklearn.exceptions import NotFittedError
+from sklearn.tree import (
+    DecisionTreeClassifier,
+    DecisionTreeRegressor,
+    export_graphviz,
+    export_text,
+    plot_tree,
+)
 
 # toy sample
 X = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]]
 y = [-1, -1, -1, 1, 1, 1]
 y2 = [[-1, 1], [-1, 1], [-1, 1], [1, 2], [1, 2], [1, 3]]
-w = [1, 1, 1, .5, .5, .5]
+w = [1, 1, 1, 0.5, 0.5, 0.5]
 y_degraded = [1, 1, 1, 1, 1, 1]
 
 
 def test_graphviz_toy():
     # Check correctness of export_graphviz
-    clf = DecisionTreeClassifier(max_depth=3,
-                                 min_samples_split=2,
-                                 criterion="gini",
-                                 random_state=2)
+    clf = DecisionTreeClassifier(
+        max_depth=3, min_samples_split=2, criterion="gini", random_state=2
+    )
     clf.fit(X, y)
 
     # Test export code
     contents1 = export_graphviz(clf, out_file=None)
-    contents2 = 'digraph Tree {\n' \
-                'node [shape=box] ;\n' \
-                '0 [label="X[0] <= 0.0\\ngini = 0.5\\nsamples = 6\\n' \
-                'value = [3, 3]"] ;\n' \
-                '1 [label="gini = 0.0\\nsamples = 3\\nvalue = [3, 0]"] ;\n' \
-                '0 -> 1 [labeldistance=2.5, labelangle=45, ' \
-                'headlabel="True"] ;\n' \
-                '2 [label="gini = 0.0\\nsamples = 3\\nvalue = [0, 3]"] ;\n' \
-                '0 -> 2 [labeldistance=2.5, labelangle=-45, ' \
-                'headlabel="False"] ;\n' \
-                '}'
-
-    assert contents1 == contents2
-
-    # Test with feature_names
-    contents1 = export_graphviz(clf, feature_names=["feature0", "feature1"],
-                                out_file=None)
-    contents2 = 'digraph Tree {\n' \
-                'node [shape=box] ;\n' \
-                '0 [label="feature0 <= 0.0\\ngini = 0.5\\nsamples = 6\\n' \
-                'value = [3, 3]"] ;\n' \
-                '1 [label="gini = 0.0\\nsamples = 3\\nvalue = [3, 0]"] ;\n' \
-                '0 -> 1 [labeldistance=2.5, labelangle=45, ' \
-                'headlabel="True"] ;\n' \
-                '2 [label="gini = 0.0\\nsamples = 3\\nvalue = [0, 3]"] ;\n' \
-                '0 -> 2 [labeldistance=2.5, labelangle=-45, ' \
-                'headlabel="False"] ;\n' \
-                '}'
-
-    assert contents1 == contents2
-
-    # Test with class_names
-    contents1 = export_graphviz(clf, class_names=["yes", "no"], out_file=None)
-    contents2 = 'digraph Tree {\n' \
-                'node [shape=box] ;\n' \
-                '0 [label="X[0] <= 0.0\\ngini = 0.5\\nsamples = 6\\n' \
-                'value = [3, 3]\\nclass = yes"] ;\n' \
-                '1 [label="gini = 0.0\\nsamples = 3\\nvalue = [3, 0]\\n' \
-                'class = yes"] ;\n' \
-                '0 -> 1 [labeldistance=2.5, labelangle=45, ' \
-                'headlabel="True"] ;\n' \
-                '2 [label="gini = 0.0\\nsamples = 3\\nvalue = [0, 3]\\n' \
-                'class = no"] ;\n' \
-                '0 -> 2 [labeldistance=2.5, labelangle=-45, ' \
-                'headlabel="False"] ;\n' \
-                '}'
+    contents2 = (
+        "digraph Tree {\n"
+        'node [shape=box, fontname="helvetica"] ;\n'
+        'edge [fontname="helvetica"] ;\n'
+        '0 [label="x[0] <= 0.0\\ngini = 0.5\\nsamples = 6\\n'
+        'value = [3, 3]"] ;\n'
+        '1 [label="gini = 0.0\\nsamples = 3\\nvalue = [3, 0]"] ;\n'
+        "0 -> 1 [labeldistance=2.5, labelangle=45, "
+        'headlabel="True"] ;\n'
+        '2 [label="gini = 0.0\\nsamples = 3\\nvalue = [0, 3]"] ;\n'
+        "0 -> 2 [labeldistance=2.5, labelangle=-45, "
+        'headlabel="False"] ;\n'
+        "}"
+    )
 
     assert contents1 == contents2
 
     # Test plot_options
-    contents1 = export_graphviz(clf, filled=True, impurity=False,
-                                proportion=True, special_characters=True,
-                                rounded=True, out_file=None)
-    contents2 = 'digraph Tree {\n' \
-                'node [shape=box, style="filled, rounded", color="black", ' \
-                'fontname=helvetica] ;\n' \
-                'edge [fontname=helvetica] ;\n' \
-                '0 [label=<X<SUB>0</SUB> &le; 0.0<br/>samples = 100.0%<br/>' \
-                'value = [0.5, 0.5]>, fillcolor="#ffffff"] ;\n' \
-                '1 [label=<samples = 50.0%<br/>value = [1.0, 0.0]>, ' \
-                'fillcolor="#e58139"] ;\n' \
-                '0 -> 1 [labeldistance=2.5, labelangle=45, ' \
-                'headlabel="True"] ;\n' \
-                '2 [label=<samples = 50.0%<br/>value = [0.0, 1.0]>, ' \
-                'fillcolor="#399de5"] ;\n' \
-                '0 -> 2 [labeldistance=2.5, labelangle=-45, ' \
-                'headlabel="False"] ;\n' \
-                '}'
+    contents1 = export_graphviz(
+        clf,
+        filled=True,
+        impurity=False,
+        proportion=True,
+        special_characters=True,
+        rounded=True,
+        out_file=None,
+        fontname="sans",
+    )
+    contents2 = (
+        "digraph Tree {\n"
+        'node [shape=box, style="filled, rounded", color="black", '
+        'fontname="sans"] ;\n'
+        'edge [fontname="sans"] ;\n'
+        "0 [label=<x<SUB>0</SUB> &le; 0.0<br/>samples = 100.0%<br/>"
+        'value = [0.5, 0.5]>, fillcolor="#ffffff"] ;\n'
+        "1 [label=<samples = 50.0%<br/>value = [1.0, 0.0]>, "
+        'fillcolor="#e58139"] ;\n'
+        "0 -> 1 [labeldistance=2.5, labelangle=45, "
+        'headlabel="True"] ;\n'
+        "2 [label=<samples = 50.0%<br/>value = [0.0, 1.0]>, "
+        'fillcolor="#399de5"] ;\n'
+        "0 -> 2 [labeldistance=2.5, labelangle=-45, "
+        'headlabel="False"] ;\n'
+        "}"
+    )
 
     assert contents1 == contents2
 
     # Test max_depth
-    contents1 = export_graphviz(clf, max_depth=0,
-                                class_names=True, out_file=None)
-    contents2 = 'digraph Tree {\n' \
-                'node [shape=box] ;\n' \
-                '0 [label="X[0] <= 0.0\\ngini = 0.5\\nsamples = 6\\n' \
-                'value = [3, 3]\\nclass = y[0]"] ;\n' \
-                '1 [label="(...)"] ;\n' \
-                '0 -> 1 ;\n' \
-                '2 [label="(...)"] ;\n' \
-                '0 -> 2 ;\n' \
-                '}'
+    contents1 = export_graphviz(clf, max_depth=0, class_names=True, out_file=None)
+    contents2 = (
+        "digraph Tree {\n"
+        'node [shape=box, fontname="helvetica"] ;\n'
+        'edge [fontname="helvetica"] ;\n'
+        '0 [label="x[0] <= 0.0\\ngini = 0.5\\nsamples = 6\\n'
+        'value = [3, 3]\\nclass = y[0]"] ;\n'
+        '1 [label="(...)"] ;\n'
+        "0 -> 1 ;\n"
+        '2 [label="(...)"] ;\n'
+        "0 -> 2 ;\n"
+        "}"
+    )
 
     assert contents1 == contents2
 
     # Test max_depth with plot_options
-    contents1 = export_graphviz(clf, max_depth=0, filled=True,
-                                out_file=None, node_ids=True)
-    contents2 = 'digraph Tree {\n' \
-                'node [shape=box, style="filled", color="black"] ;\n' \
-                '0 [label="node #0\\nX[0] <= 0.0\\ngini = 0.5\\n' \
-                'samples = 6\\nvalue = [3, 3]", fillcolor="#ffffff"] ;\n' \
-                '1 [label="(...)", fillcolor="#C0C0C0"] ;\n' \
-                '0 -> 1 ;\n' \
-                '2 [label="(...)", fillcolor="#C0C0C0"] ;\n' \
-                '0 -> 2 ;\n' \
-                '}'
+    contents1 = export_graphviz(
+        clf, max_depth=0, filled=True, out_file=None, node_ids=True
+    )
+    contents2 = (
+        "digraph Tree {\n"
+        'node [shape=box, style="filled", color="black", '
+        'fontname="helvetica"] ;\n'
+        'edge [fontname="helvetica"] ;\n'
+        '0 [label="node #0\\nx[0] <= 0.0\\ngini = 0.5\\n'
+        'samples = 6\\nvalue = [3, 3]", fillcolor="#ffffff"] ;\n'
+        '1 [label="(...)", fillcolor="#C0C0C0"] ;\n'
+        "0 -> 1 ;\n"
+        '2 [label="(...)", fillcolor="#C0C0C0"] ;\n'
+        "0 -> 2 ;\n"
+        "}"
+    )
 
     assert contents1 == contents2
 
     # Test multi-output with weighted samples
-    clf = DecisionTreeClassifier(max_depth=2,
-                                 min_samples_split=2,
-                                 criterion="gini",
-                                 random_state=2)
+    clf = DecisionTreeClassifier(
+        max_depth=2, min_samples_split=2, criterion="gini", random_state=2
+    )
     clf = clf.fit(X, y2, sample_weight=w)
 
-    contents1 = export_graphviz(clf, filled=True,
-                                impurity=False, out_file=None)
-    contents2 = 'digraph Tree {\n' \
-                'node [shape=box, style="filled", color="black"] ;\n' \
-                '0 [label="X[0] <= 0.0\\nsamples = 6\\n' \
-                'value = [[3.0, 1.5, 0.0]\\n' \
-                '[3.0, 1.0, 0.5]]", fillcolor="#ffffff"] ;\n' \
-                '1 [label="samples = 3\\nvalue = [[3, 0, 0]\\n' \
-                '[3, 0, 0]]", fillcolor="#e58139"] ;\n' \
-                '0 -> 1 [labeldistance=2.5, labelangle=45, ' \
-                'headlabel="True"] ;\n' \
-                '2 [label="X[0] <= 1.5\\nsamples = 3\\n' \
-                'value = [[0.0, 1.5, 0.0]\\n' \
-                '[0.0, 1.0, 0.5]]", fillcolor="#f1bd97"] ;\n' \
-                '0 -> 2 [labeldistance=2.5, labelangle=-45, ' \
-                'headlabel="False"] ;\n' \
-                '3 [label="samples = 2\\nvalue = [[0, 1, 0]\\n' \
-                '[0, 1, 0]]", fillcolor="#e58139"] ;\n' \
-                '2 -> 3 ;\n' \
-                '4 [label="samples = 1\\nvalue = [[0.0, 0.5, 0.0]\\n' \
-                '[0.0, 0.0, 0.5]]", fillcolor="#e58139"] ;\n' \
-                '2 -> 4 ;\n' \
-                '}'
+    contents1 = export_graphviz(clf, filled=True, impurity=False, out_file=None)
+    contents2 = (
+        "digraph Tree {\n"
+        'node [shape=box, style="filled", color="black", '
+        'fontname="helvetica"] ;\n'
+        'edge [fontname="helvetica"] ;\n'
+        '0 [label="x[0] <= 0.0\\nsamples = 6\\n'
+        "value = [[3.0, 1.5, 0.0]\\n"
+        '[3.0, 1.0, 0.5]]", fillcolor="#ffffff"] ;\n'
+        '1 [label="samples = 3\\nvalue = [[3, 0, 0]\\n'
+        '[3, 0, 0]]", fillcolor="#e58139"] ;\n'
+        "0 -> 1 [labeldistance=2.5, labelangle=45, "
+        'headlabel="True"] ;\n'
+        '2 [label="x[0] <= 1.5\\nsamples = 3\\n'
+        "value = [[0.0, 1.5, 0.0]\\n"
+        '[0.0, 1.0, 0.5]]", fillcolor="#f1bd97"] ;\n'
+        "0 -> 2 [labeldistance=2.5, labelangle=-45, "
+        'headlabel="False"] ;\n'
+        '3 [label="samples = 2\\nvalue = [[0, 1, 0]\\n'
+        '[0, 1, 0]]", fillcolor="#e58139"] ;\n'
+        "2 -> 3 ;\n"
+        '4 [label="samples = 1\\nvalue = [[0.0, 0.5, 0.0]\\n'
+        '[0.0, 0.0, 0.5]]", fillcolor="#e58139"] ;\n'
+        "2 -> 4 ;\n"
+        "}"
+    )
 
     assert contents1 == contents2
 
     # Test regression output with plot_options
-    clf = DecisionTreeRegressor(max_depth=3,
-                                min_samples_split=2,
-                                criterion="mse",
-                                random_state=2)
+    clf = DecisionTreeRegressor(
+        max_depth=3, min_samples_split=2, criterion="squared_error", random_state=2
+    )
     clf.fit(X, y)
 
-    contents1 = export_graphviz(clf, filled=True, leaves_parallel=True,
-                                out_file=None, rotate=True, rounded=True)
-    contents2 = 'digraph Tree {\n' \
-                'node [shape=box, style="filled, rounded", color="black", ' \
-                'fontname=helvetica] ;\n' \
-                'graph [ranksep=equally, splines=polyline] ;\n' \
-                'edge [fontname=helvetica] ;\n' \
-                'rankdir=LR ;\n' \
-                '0 [label="X[0] <= 0.0\\nmse = 1.0\\nsamples = 6\\n' \
-                'value = 0.0", fillcolor="#f2c09c"] ;\n' \
-                '1 [label="mse = 0.0\\nsamples = 3\\nvalue = -1.0", ' \
-                'fillcolor="#ffffff"] ;\n' \
-                '0 -> 1 [labeldistance=2.5, labelangle=-45, ' \
-                'headlabel="True"] ;\n' \
-                '2 [label="mse = 0.0\\nsamples = 3\\nvalue = 1.0", ' \
-                'fillcolor="#e58139"] ;\n' \
-                '0 -> 2 [labeldistance=2.5, labelangle=45, ' \
-                'headlabel="False"] ;\n' \
-                '{rank=same ; 0} ;\n' \
-                '{rank=same ; 1; 2} ;\n' \
-                '}'
+    contents1 = export_graphviz(
+        clf,
+        filled=True,
+        leaves_parallel=True,
+        out_file=None,
+        rotate=True,
+        rounded=True,
+        fontname="sans",
+    )
+    contents2 = (
+        "digraph Tree {\n"
+        'node [shape=box, style="filled, rounded", color="black", '
+        'fontname="sans"] ;\n'
+        "graph [ranksep=equally, splines=polyline] ;\n"
+        'edge [fontname="sans"] ;\n'
+        "rankdir=LR ;\n"
+        '0 [label="x[0] <= 0.0\\nsquared_error = 1.0\\nsamples = 6\\n'
+        'value = 0.0", fillcolor="#f2c09c"] ;\n'
+        '1 [label="squared_error = 0.0\\nsamples = 3\\'
+        'nvalue = -1.0", '
+        'fillcolor="#ffffff"] ;\n'
+        "0 -> 1 [labeldistance=2.5, labelangle=-45, "
+        'headlabel="True"] ;\n'
+        '2 [label="squared_error = 0.0\\nsamples = 3\\nvalue = 1.0", '
+        'fillcolor="#e58139"] ;\n'
+        "0 -> 2 [labeldistance=2.5, labelangle=45, "
+        'headlabel="False"] ;\n'
+        "{rank=same ; 0} ;\n"
+        "{rank=same ; 1; 2} ;\n"
+        "}"
+    )
 
     assert contents1 == contents2
 
@@ -202,11 +202,69 @@ def test_graphviz_toy():
     clf.fit(X, y_degraded)
 
     contents1 = export_graphviz(clf, filled=True, out_file=None)
-    contents2 = 'digraph Tree {\n' \
-                'node [shape=box, style="filled", color="black"] ;\n' \
-                '0 [label="gini = 0.0\\nsamples = 6\\nvalue = 6.0", ' \
-                'fillcolor="#ffffff"] ;\n' \
-                '}'
+    contents2 = (
+        "digraph Tree {\n"
+        'node [shape=box, style="filled", color="black", '
+        'fontname="helvetica"] ;\n'
+        'edge [fontname="helvetica"] ;\n'
+        '0 [label="gini = 0.0\\nsamples = 6\\nvalue = 6.0", '
+        'fillcolor="#ffffff"] ;\n'
+        "}"
+    )
+
+
+@pytest.mark.parametrize("constructor", [list, np.array])
+def test_graphviz_feature_class_names_array_support(constructor):
+    # Check that export_graphviz treats feature names
+    # and class names correctly and supports arrays
+    clf = DecisionTreeClassifier(
+        max_depth=3, min_samples_split=2, criterion="gini", random_state=2
+    )
+    clf.fit(X, y)
+
+    # Test with feature_names
+    contents1 = export_graphviz(
+        clf, feature_names=constructor(["feature0", "feature1"]), out_file=None
+    )
+    contents2 = (
+        "digraph Tree {\n"
+        'node [shape=box, fontname="helvetica"] ;\n'
+        'edge [fontname="helvetica"] ;\n'
+        '0 [label="feature0 <= 0.0\\ngini = 0.5\\nsamples = 6\\n'
+        'value = [3, 3]"] ;\n'
+        '1 [label="gini = 0.0\\nsamples = 3\\nvalue = [3, 0]"] ;\n'
+        "0 -> 1 [labeldistance=2.5, labelangle=45, "
+        'headlabel="True"] ;\n'
+        '2 [label="gini = 0.0\\nsamples = 3\\nvalue = [0, 3]"] ;\n'
+        "0 -> 2 [labeldistance=2.5, labelangle=-45, "
+        'headlabel="False"] ;\n'
+        "}"
+    )
+
+    assert contents1 == contents2
+
+    # Test with class_names
+    contents1 = export_graphviz(
+        clf, class_names=constructor(["yes", "no"]), out_file=None
+    )
+    contents2 = (
+        "digraph Tree {\n"
+        'node [shape=box, fontname="helvetica"] ;\n'
+        'edge [fontname="helvetica"] ;\n'
+        '0 [label="x[0] <= 0.0\\ngini = 0.5\\nsamples = 6\\n'
+        'value = [3, 3]\\nclass = yes"] ;\n'
+        '1 [label="gini = 0.0\\nsamples = 3\\nvalue = [3, 0]\\n'
+        'class = yes"] ;\n'
+        "0 -> 1 [labeldistance=2.5, labelangle=45, "
+        'headlabel="True"] ;\n'
+        '2 [label="gini = 0.0\\nsamples = 3\\nvalue = [0, 3]\\n'
+        'class = no"] ;\n'
+        "0 -> 2 [labeldistance=2.5, labelangle=-45, "
+        'headlabel="False"] ;\n'
+        "}"
+    )
+
+    assert contents1 == contents2
 
 
 def test_graphviz_errors():
@@ -222,13 +280,11 @@ def test_graphviz_errors():
 
     # Check if it errors when length of feature_names
     # mismatches with number of features
-    message = ("Length of feature_names, "
-               "1 does not match number of features, 2")
+    message = "Length of feature_names, 1 does not match number of features, 2"
     with pytest.raises(ValueError, match=message):
         export_graphviz(clf, None, feature_names=["a"])
 
-    message = ("Length of feature_names, "
-               "3 does not match number of features, 2")
+    message = "Length of feature_names, 3 does not match number of features, 2"
     with pytest.raises(ValueError, match=message):
         export_graphviz(clf, None, feature_names=["a", "b", "c"])
 
@@ -241,13 +297,6 @@ def test_graphviz_errors():
     out = StringIO()
     with pytest.raises(IndexError):
         export_graphviz(clf, out, class_names=[])
-
-    # Check precision error
-    out = StringIO()
-    with pytest.raises(ValueError, match="should be greater or equal"):
-        export_graphviz(clf, out, precision=-1)
-    with pytest.raises(ValueError, match="should be an integer"):
-        export_graphviz(clf, out, precision="1")
 
 
 def test_friedman_mse_in_graphviz():
@@ -266,22 +315,23 @@ def test_friedman_mse_in_graphviz():
 
 
 def test_precision():
-
     rng_reg = RandomState(2)
     rng_clf = RandomState(8)
     for X, y, clf in zip(
-            (rng_reg.random_sample((5, 2)),
-             rng_clf.random_sample((1000, 4))),
-            (rng_reg.random_sample((5, )),
-             rng_clf.randint(2, size=(1000, ))),
-            (DecisionTreeRegressor(criterion="friedman_mse", random_state=0,
-                                   max_depth=1),
-             DecisionTreeClassifier(max_depth=1, random_state=0))):
-
+        (rng_reg.random_sample((5, 2)), rng_clf.random_sample((1000, 4))),
+        (rng_reg.random_sample((5,)), rng_clf.randint(2, size=(1000,))),
+        (
+            DecisionTreeRegressor(
+                criterion="friedman_mse", random_state=0, max_depth=1
+            ),
+            DecisionTreeClassifier(max_depth=1, random_state=0),
+        ),
+    ):
         clf.fit(X, y)
         for precision in (4, 3):
-            dot_data = export_graphviz(clf, out_file=None, precision=precision,
-                                       proportion=True)
+            dot_data = export_graphviz(
+                clf, out_file=None, precision=precision, proportion=True
+            )
 
             # With the current random state, the impurity and the threshold
             # will have the number of precision set in the export_graphviz
@@ -291,9 +341,7 @@ def test_precision():
 
             # check value
             for finding in finditer(r"value = \d+\.\d+", dot_data):
-                assert (
-                    len(search(r"\.\d+", finding.group()).group()) <=
-                    precision + 1)
+                assert len(search(r"\.\d+", finding.group()).group()) <= precision + 1
             # check impurity
             if is_classifier(clf):
                 pattern = r"gini = \d+\.\d+"
@@ -302,30 +350,25 @@ def test_precision():
 
             # check impurity
             for finding in finditer(pattern, dot_data):
-                assert (len(search(r"\.\d+", finding.group()).group()) ==
-                             precision + 1)
+                assert len(search(r"\.\d+", finding.group()).group()) == precision + 1
             # check threshold
             for finding in finditer(r"<= \d+\.\d+", dot_data):
-                assert (len(search(r"\.\d+", finding.group()).group()) ==
-                             precision + 1)
+                assert len(search(r"\.\d+", finding.group()).group()) == precision + 1
 
 
 def test_export_text_errors():
     clf = DecisionTreeClassifier(max_depth=2, random_state=0)
     clf.fit(X, y)
-
-    err_msg = "max_depth bust be >= 0, given -1"
-    with pytest.raises(ValueError, match=err_msg):
-        export_text(clf, max_depth=-1)
     err_msg = "feature_names must contain 2 elements, got 1"
     with pytest.raises(ValueError, match=err_msg):
-        export_text(clf, feature_names=['a'])
-    err_msg = "decimals must be >= 0, given -1"
+        export_text(clf, feature_names=["a"])
+    err_msg = (
+        "When `class_names` is an array, it should contain as"
+        " many items as `decision_tree.classes_`. Got 1 while"
+        " the tree was fitted with 2 classes."
+    )
     with pytest.raises(ValueError, match=err_msg):
-        export_text(clf, decimals=-1)
-    err_msg = "spacing must be > 0, given 0"
-    with pytest.raises(ValueError, match=err_msg):
-        export_text(clf, spacing=0)
+        export_text(clf, class_names=["a"])
 
 
 def test_export_text():
@@ -344,14 +387,6 @@ def test_export_text():
     assert export_text(clf, max_depth=0) == expected_report
     # testing that the rest of the tree is truncated
     assert export_text(clf, max_depth=10) == expected_report
-
-    expected_report = dedent("""
-    |--- b <= 0.00
-    |   |--- class: -1
-    |--- b >  0.00
-    |   |--- class: 1
-    """).lstrip()
-    assert export_text(clf, feature_names=['a', 'b']) == expected_report
 
     expected_report = dedent("""
     |--- feature_1 <= 0.00
@@ -406,27 +441,53 @@ def test_export_text():
     |--- first >  0.0
     |   |--- value: [1.0, 1.0]
     """).lstrip()
-    assert export_text(reg, decimals=1,
-                       feature_names=['first']) == expected_report
-    assert export_text(reg, decimals=1, show_weights=True,
-                       feature_names=['first']) == expected_report
+    assert export_text(reg, decimals=1, feature_names=["first"]) == expected_report
+    assert (
+        export_text(reg, decimals=1, show_weights=True, feature_names=["first"])
+        == expected_report
+    )
+
+
+@pytest.mark.parametrize("constructor", [list, np.array])
+def test_export_text_feature_class_names_array_support(constructor):
+    # Check that export_graphviz treats feature names
+    # and class names correctly and supports arrays
+    clf = DecisionTreeClassifier(max_depth=2, random_state=0)
+    clf.fit(X, y)
+
+    expected_report = dedent("""
+    |--- b <= 0.00
+    |   |--- class: -1
+    |--- b >  0.00
+    |   |--- class: 1
+    """).lstrip()
+    assert export_text(clf, feature_names=constructor(["a", "b"])) == expected_report
+
+    expected_report = dedent("""
+    |--- feature_1 <= 0.00
+    |   |--- class: cat
+    |--- feature_1 >  0.00
+    |   |--- class: dog
+    """).lstrip()
+    assert export_text(clf, class_names=constructor(["cat", "dog"])) == expected_report
 
 
 def test_plot_tree_entropy(pyplot):
     # mostly smoke tests
     # Check correctness of export_graphviz for criterion = entropy
-    clf = DecisionTreeClassifier(max_depth=3,
-                                 min_samples_split=2,
-                                 criterion="entropy",
-                                 random_state=2)
+    clf = DecisionTreeClassifier(
+        max_depth=3, min_samples_split=2, criterion="entropy", random_state=2
+    )
     clf.fit(X, y)
 
     # Test export code
-    feature_names = ['first feat', 'sepal_width']
+    feature_names = ["first feat", "sepal_width"]
     nodes = plot_tree(clf, feature_names=feature_names)
     assert len(nodes) == 3
-    assert nodes[0].get_text() == ("first feat <= 0.0\nentropy = 1.0\n"
-                                   "samples = 6\nvalue = [3, 3]")
+    assert (
+        nodes[0].get_text()
+        == "first feat <= 0.0\nentropy = 1.0\nsamples = 6\nvalue = [3, 3]"
+    )
     assert nodes[1].get_text() == "entropy = 0.0\nsamples = 3\nvalue = [3, 0]"
     assert nodes[2].get_text() == "entropy = 0.0\nsamples = 3\nvalue = [0, 3]"
 
@@ -434,28 +495,25 @@ def test_plot_tree_entropy(pyplot):
 def test_plot_tree_gini(pyplot):
     # mostly smoke tests
     # Check correctness of export_graphviz for criterion = gini
-    clf = DecisionTreeClassifier(max_depth=3,
-                                 min_samples_split=2,
-                                 criterion="gini",
-                                 random_state=2)
+    clf = DecisionTreeClassifier(
+        max_depth=3, min_samples_split=2, criterion="gini", random_state=2
+    )
     clf.fit(X, y)
 
     # Test export code
-    feature_names = ['first feat', 'sepal_width']
+    feature_names = ["first feat", "sepal_width"]
     nodes = plot_tree(clf, feature_names=feature_names)
     assert len(nodes) == 3
-    assert nodes[0].get_text() == ("first feat <= 0.0\ngini = 0.5\n"
-                                   "samples = 6\nvalue = [3, 3]")
+    assert (
+        nodes[0].get_text()
+        == "first feat <= 0.0\ngini = 0.5\nsamples = 6\nvalue = [3, 3]"
+    )
     assert nodes[1].get_text() == "gini = 0.0\nsamples = 3\nvalue = [3, 0]"
     assert nodes[2].get_text() == "gini = 0.0\nsamples = 3\nvalue = [0, 3]"
 
 
-# FIXME: to be removed in 0.25
-def test_plot_tree_rotate_deprecation(pyplot):
-    tree = DecisionTreeClassifier()
-    tree.fit(X, y)
-    # test that a warning is raised when rotate is used.
-    match = ("'rotate' has no effect and is deprecated in 0.23. "
-             "It will be removed in 0.25.")
-    with pytest.warns(FutureWarning, match=match):
-        plot_tree(tree, rotate=True)
+def test_not_fitted_tree(pyplot):
+    # Testing if not fitted tree throws the correct error
+    clf = DecisionTreeRegressor()
+    with pytest.raises(NotFittedError):
+        plot_tree(clf)

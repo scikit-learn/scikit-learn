@@ -21,7 +21,7 @@
 # TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 # SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #
-# flake8: noqa
+# ruff: noqa
 
 __doc__ = \
 """
@@ -1020,20 +1020,14 @@ def _trim_arity(func, maxargs=2):
     limit = [0]
     foundArity = [False]
     
-    # traceback return data structure changed in Py3.5 - normalize back to plain tuples
-    if system_version[:2] >= (3,5):
-        def extract_stack(limit=0):
-            # special handling for Python 3.5.0 - extra deep call stack by 1
-            offset = -3 if system_version == (3,5,0) else -2
-            frame_summary = traceback.extract_stack(limit=-offset+limit-1)[offset]
-            return [(frame_summary.filename, frame_summary.lineno)]
-        def extract_tb(tb, limit=0):
-            frames = traceback.extract_tb(tb, limit=limit)
-            frame_summary = frames[-1]
-            return [(frame_summary.filename, frame_summary.lineno)]
-    else:
-        extract_stack = traceback.extract_stack
-        extract_tb = traceback.extract_tb
+    def extract_stack(limit=0):
+        offset = -2
+        frame_summary = traceback.extract_stack(limit=-offset+limit-1)[offset]
+        return [(frame_summary.filename, frame_summary.lineno)]
+    def extract_tb(tb, limit=0):
+        frames = traceback.extract_tb(tb, limit=limit)
+        frame_summary = frames[-1]
+        return [(frame_summary.filename, frame_summary.lineno)]
     
     # synthesize what would be returned by traceback.extract_stack at the call to 
     # user's parse action 'func', so that we don't incur call penalty at parse time
@@ -2842,7 +2836,7 @@ class QuotedString(Token):
     def __init__( self, quoteChar, escChar=None, escQuote=None, multiline=False, unquoteResults=True, endQuoteChar=None, convertWhitespaceEscapes=True):
         super(QuotedString,self).__init__()
 
-        # remove white space from quote chars - wont work anyway
+        # remove white space from quote chars - won't work anyway
         quoteChar = quoteChar.strip()
         if not quoteChar:
             warnings.warn("quoteChar cannot be the empty string",SyntaxWarning,stacklevel=2)
@@ -3848,7 +3842,7 @@ class _MultipleMatch(ParseElementEnhance):
             try_not_ender(instring, loc)
         loc, tokens = self_expr_parse( instring, loc, doActions, callPreParse=False )
         try:
-            hasIgnoreExprs = (not not self.ignoreExprs)
+            hasIgnoreExprs = bool(self.ignoreExprs)
             while 1:
                 if check_ender:
                     try_not_ender(instring, loc)

@@ -98,7 +98,7 @@ scoring method.
     ...                 scoring='precision_macro')
     array([0.96578289, 0.92708922, 0.96681476, 0.96362897, 0.93192644])
 
-   **Cross-validation generators**
+**Cross-validation generators**
 
 
 .. list-table::
@@ -180,23 +180,57 @@ scoring method.
 .. currentmodule:: sklearn.svm
 
 .. topic:: **Exercise**
-   :class: green
 
-   .. image:: /auto_examples/exercises/images/sphx_glr_plot_cv_digits_001.png
-        :target: ../../auto_examples/exercises/plot_cv_digits.html
-        :align: right
-        :scale: 90
+    On the digits dataset, plot the cross-validation score of a :class:`SVC`
+    estimator with a linear kernel as a function of parameter ``C`` (use a
+    logarithmic grid of points, from 1 to 10).
 
-   On the digits dataset, plot the cross-validation score of a :class:`SVC`
-   estimator with an linear kernel as a function of parameter ``C`` (use a
-   logarithmic grid of points, from 1 to 10).
+    ::
 
-   .. literalinclude:: ../../auto_examples/exercises/plot_cv_digits.py
-       :lines: 13-23
+        >>> import numpy as np
+        >>> from sklearn import datasets, svm
+        >>> from sklearn.model_selection import cross_val_score
+        >>> X, y = datasets.load_digits(return_X_y=True)
+        >>> svc = svm.SVC(kernel="linear")
+        >>> C_s = np.logspace(-10, 0, 10)
+        >>> scores = list()
+        >>> scores_std = list()
 
-   **Solution:** :ref:`sphx_glr_auto_examples_exercises_plot_cv_digits.py`
+    |details-start|
+    **Solution**
+    |details-split|
 
+    .. plot::
+        :context: close-figs
+        :align: center
 
+        import numpy as np
+        from sklearn import datasets, svm
+        from sklearn.model_selection import cross_val_score
+        X, y = datasets.load_digits(return_X_y=True)
+        svc = svm.SVC(kernel="linear")
+        C_s = np.logspace(-10, 0, 10)
+        scores = list()
+        scores_std = list()
+        for C in C_s:
+            svc.C = C
+            this_scores = cross_val_score(svc, X, y, n_jobs=1)
+            scores.append(np.mean(this_scores))
+            scores_std.append(np.std(this_scores))
+
+        import matplotlib.pyplot as plt
+
+        plt.figure()
+        plt.semilogx(C_s, scores)
+        plt.semilogx(C_s, np.array(scores) + np.array(scores_std), "b--")
+        plt.semilogx(C_s, np.array(scores) - np.array(scores_std), "b--")
+        locs, labels = plt.yticks()
+        plt.yticks(locs, list(map(lambda x: "%g" % x, locs)))
+        plt.ylabel("CV score")
+        plt.xlabel("Parameter C")
+        plt.ylim(0, 1.1)
+        plt.show()
+    |details-end|
 
 Grid-search and cross-validated estimators
 ============================================
@@ -227,10 +261,9 @@ estimator during the construction and exposes an estimator API::
     0.943...
 
 
-By default, the :class:`GridSearchCV` uses a 3-fold cross-validation. However,
+By default, the :class:`GridSearchCV` uses a 5-fold cross-validation. However,
 if it detects that a classifier is passed, rather than a regressor, it uses
-a stratified 3-fold. The default will change to a 5-fold cross-validation in
-version 0.22.
+a stratified 5-fold.
 
 .. topic:: Nested cross-validation
 
@@ -273,7 +306,6 @@ These estimators are called similarly to their counterparts, with 'CV'
 appended to their name.
 
 .. topic:: **Exercise**
-   :class: green
 
    On the diabetes dataset, find the optimal regularization parameter
    alpha.

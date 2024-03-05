@@ -3,9 +3,8 @@ r"""
 Scaling the regularization parameter for SVCs
 ==============================================
 
-The following example illustrates the effect of scaling the
-regularization parameter when using :ref:`svm` for
-:ref:`classification <svm_classification>`.
+The following example illustrates the effect of scaling the regularization
+parameter when using :ref:`svm` for :ref:`classification <svm_classification>`.
 For SVC classification, we are interested in a risk minimization for the
 equation:
 
@@ -21,130 +20,191 @@ where
       and our model parameters.
     - :math:`\Omega` is a `penalty` function of our model parameters
 
-If we consider the loss function to be the individual error per
-sample, then the data-fit term, or the sum of the error for each sample, will
-increase as we add more samples. The penalization term, however, will not
-increase.
+If we consider the loss function to be the individual error per sample, then the
+data-fit term, or the sum of the error for each sample, increases as we add more
+samples. The penalization term, however, does not increase.
 
-When using, for example, :ref:`cross validation <cross_validation>`, to
-set the amount of regularization with `C`, there will be a
-different amount of samples between the main problem and the smaller problems
-within the folds of the cross validation.
+When using, for example, :ref:`cross validation <cross_validation>`, to set the
+amount of regularization with `C`, there would be a different amount of samples
+between the main problem and the smaller problems within the folds of the cross
+validation.
 
-Since our loss function is dependent on the amount of samples, the latter
-will influence the selected value of `C`.
-The question that arises is `How do we optimally adjust C to
-account for the different amount of training samples?`
-
-The figures below are used to illustrate the effect of scaling our
-`C` to compensate for the change in the number of samples, in the
-case of using an `l1` penalty, as well as the `l2` penalty.
-
-l1-penalty case
------------------
-In the `l1` case, theory says that prediction consistency
-(i.e. that under given hypothesis, the estimator
-learned predicts as well as a model knowing the true distribution)
-is not possible because of the bias of the `l1`. It does say, however,
-that model consistency, in terms of finding the right set of non-zero
-parameters as well as their signs, can be achieved by scaling
-`C1`.
-
-l2-penalty case
------------------
-The theory says that in order to achieve prediction consistency, the
-penalty parameter should be kept constant
-as the number of samples grow.
-
-Simulations
-------------
-
-The two figures below plot the values of `C` on the `x-axis` and the
-corresponding cross-validation scores on the `y-axis`, for several different
-fractions of a generated data-set.
-
-In the `l1` penalty case, the cross-validation-error correlates best with
-the test-error, when scaling our `C` with the number of samples, `n`,
-which can be seen in the first figure.
-
-For the `l2` penalty case, the best result comes from the case where `C`
-is not scaled.
-
-.. topic:: Note:
-
-    Two separate datasets are used for the two different plots. The reason
-    behind this is the `l1` case works better on sparse data, while `l2`
-    is better suited to the non-sparse case.
+Since the loss function dependens on the amount of samples, the latter
+influences the selected value of `C`. The question that arises is "How do we
+optimally adjust C to account for the different amount of training samples?"
 """
-print(__doc__)
-
 
 # Author: Andreas Mueller <amueller@ais.uni-bonn.de>
 #         Jaques Grobler <jaques.grobler@inria.fr>
 # License: BSD 3 clause
 
+# %%
+# Data generation
+# ---------------
+#
+# In this example we investigate the effect of reparametrizing the regularization
+# parameter `C` to account for the number of samples when using either L1 or L2
+# penalty. For such purpose we create a synthetic dataset with a large number of
+# features, out of which only a few are informative. We therefore expect the
+# regularization to shrink the coefficients towards zero (L2 penalty) or exactly
+# zero (L1 penalty).
 
-import numpy as np
-import matplotlib.pyplot as plt
+from sklearn.datasets import make_classification
+
+n_samples, n_features = 100, 300
+X, y = make_classification(
+    n_samples=n_samples, n_features=n_features, n_informative=5, random_state=1
+)
+
+# %%
+# L1-penalty case
+# ---------------
+# In the L1 case, theory says that provided a strong regularization, the
+# estimator cannot predict as well as a model knowing the true distribution
+# (even in the limit where the sample size grows to infinity) as it may set some
+# weights of otherwise predictive features to zero, which induces a bias. It does
+# say, however, that it is possible to find the right set of non-zero parameters
+# as well as their signs by tuning `C`.
+#
+# We define a linear SVC with the L1 penalty.
 
 from sklearn.svm import LinearSVC
-from sklearn.model_selection import ShuffleSplit
-from sklearn.model_selection import GridSearchCV
-from sklearn.utils import check_random_state
-from sklearn import datasets
 
-rnd = check_random_state(1)
+model_l1 = LinearSVC(penalty="l1", loss="squared_hinge", dual=False, tol=1e-3)
 
-# set up dataset
-n_samples = 100
-n_features = 300
+# %%
+# We compute the mean test score for different values of `C` via
+# cross-validation.
 
-# l1 data (only 5 informative features)
-X_1, y_1 = datasets.make_classification(n_samples=n_samples,
-                                        n_features=n_features, n_informative=5,
-                                        random_state=1)
+import numpy as np
+import pandas as pd
 
-# l2 data: non sparse, but less features
-y_2 = np.sign(.5 - rnd.rand(n_samples))
-X_2 = rnd.randn(n_samples, n_features // 5) + y_2[:, np.newaxis]
-X_2 += 5 * rnd.randn(n_samples, n_features // 5)
+from sklearn.model_selection import ShuffleSplit, validation_curve
 
-clf_sets = [(LinearSVC(penalty='l1', loss='squared_hinge', dual=False,
-                       tol=1e-3),
-             np.logspace(-2.3, -1.3, 10), X_1, y_1),
-            (LinearSVC(penalty='l2', loss='squared_hinge', dual=True),
-             np.logspace(-4.5, -2, 10), X_2, y_2)]
+Cs = np.logspace(-2.3, -1.3, 10)
+train_sizes = np.linspace(0.3, 0.7, 3)
+labels = [f"fraction: {train_size}" for train_size in train_sizes]
+shuffle_params = {
+    "test_size": 0.3,
+    "n_splits": 150,
+    "random_state": 1,
+}
 
-colors = ['navy', 'cyan', 'darkorange']
-lw = 2
+results = {"C": Cs}
+for label, train_size in zip(labels, train_sizes):
+    cv = ShuffleSplit(train_size=train_size, **shuffle_params)
+    train_scores, test_scores = validation_curve(
+        model_l1,
+        X,
+        y,
+        param_name="C",
+        param_range=Cs,
+        cv=cv,
+        n_jobs=2,
+    )
+    results[label] = test_scores.mean(axis=1)
+results = pd.DataFrame(results)
 
-for clf, cs, X, y in clf_sets:
-    # set up the plot for each regressor
-    fig, axes = plt.subplots(nrows=2, sharey=True, figsize=(9, 10))
+# %%
+import matplotlib.pyplot as plt
 
-    for k, train_size in enumerate(np.linspace(0.3, 0.7, 3)[::-1]):
-        param_grid = dict(C=cs)
-        # To get nice curve, we need a large number of iterations to
-        # reduce the variance
-        grid = GridSearchCV(clf, refit=False, param_grid=param_grid,
-                            cv=ShuffleSplit(train_size=train_size,
-                                            test_size=.3,
-                                            n_splits=250, random_state=1))
-        grid.fit(X, y)
-        scores = grid.cv_results_['mean_test_score']
+fig, axes = plt.subplots(nrows=1, ncols=2, sharey=True, figsize=(12, 6))
 
-        scales = [(1, 'No scaling'),
-                  ((n_samples * train_size), '1/n_samples'),
-                  ]
+# plot results without scaling C
+results.plot(x="C", ax=axes[0], logx=True)
+axes[0].set_ylabel("CV score")
+axes[0].set_title("No scaling")
 
-        for ax, (scaler, name) in zip(axes, scales):
-            ax.set_xlabel('C')
-            ax.set_ylabel('CV Score')
-            grid_cs = cs * float(scaler)  # scale the C's
-            ax.semilogx(grid_cs, scores, label="fraction %.2f" %
-                        train_size, color=colors[k], lw=lw)
-            ax.set_title('scaling=%s, penalty=%s, loss=%s' %
-                         (name, clf.penalty, clf.loss))
+for label in labels:
+    best_C = results.loc[results[label].idxmax(), "C"]
+    axes[0].axvline(x=best_C, linestyle="--", color="grey", alpha=0.7)
 
-    plt.legend(loc="best")
+# plot results by scaling C
+for train_size_idx, label in enumerate(labels):
+    train_size = train_sizes[train_size_idx]
+    results_scaled = results[[label]].assign(
+        C_scaled=Cs * float(n_samples * np.sqrt(train_size))
+    )
+    results_scaled.plot(x="C_scaled", ax=axes[1], logx=True, label=label)
+    best_C_scaled = results_scaled["C_scaled"].loc[results[label].idxmax()]
+    axes[1].axvline(x=best_C_scaled, linestyle="--", color="grey", alpha=0.7)
+
+axes[1].set_title("Scaling C by sqrt(1 / n_samples)")
+
+_ = fig.suptitle("Effect of scaling C with L1 penalty")
+
+# %%
+# In the region of small `C` (strong regularization) all the coefficients
+# learned by the models are zero, leading to severe underfitting. Indeed, the
+# accuracy in this region is at the chance level.
+#
+# Using the default scale results in a somewhat stable optimal value of `C`,
+# whereas the transition out of the underfitting region depends on the number of
+# training samples. The reparametrization leads to even more stable results.
+#
+# See e.g. theorem 3 of :arxiv:`On the prediction performance of the Lasso
+# <1402.1700>` or :arxiv:`Simultaneous analysis of Lasso and Dantzig selector
+# <0801.1095>` where the regularization parameter is always assumed to be
+# proportional to 1 / sqrt(n_samples).
+#
+# L2-penalty case
+# ---------------
+# We can do a similar experiment with the L2 penalty. In this case, the
+# theory says that in order to achieve prediction consistency, the penalty
+# parameter should be kept constant as the number of samples grow.
+
+model_l2 = LinearSVC(penalty="l2", loss="squared_hinge", dual=True)
+Cs = np.logspace(-8, 4, 11)
+
+labels = [f"fraction: {train_size}" for train_size in train_sizes]
+results = {"C": Cs}
+for label, train_size in zip(labels, train_sizes):
+    cv = ShuffleSplit(train_size=train_size, **shuffle_params)
+    train_scores, test_scores = validation_curve(
+        model_l2,
+        X,
+        y,
+        param_name="C",
+        param_range=Cs,
+        cv=cv,
+        n_jobs=2,
+    )
+    results[label] = test_scores.mean(axis=1)
+results = pd.DataFrame(results)
+
+# %%
+import matplotlib.pyplot as plt
+
+fig, axes = plt.subplots(nrows=1, ncols=2, sharey=True, figsize=(12, 6))
+
+# plot results without scaling C
+results.plot(x="C", ax=axes[0], logx=True)
+axes[0].set_ylabel("CV score")
+axes[0].set_title("No scaling")
+
+for label in labels:
+    best_C = results.loc[results[label].idxmax(), "C"]
+    axes[0].axvline(x=best_C, linestyle="--", color="grey", alpha=0.8)
+
+# plot results by scaling C
+for train_size_idx, label in enumerate(labels):
+    results_scaled = results[[label]].assign(
+        C_scaled=Cs * float(n_samples * np.sqrt(train_sizes[train_size_idx]))
+    )
+    results_scaled.plot(x="C_scaled", ax=axes[1], logx=True, label=label)
+    best_C_scaled = results_scaled["C_scaled"].loc[results[label].idxmax()]
+    axes[1].axvline(x=best_C_scaled, linestyle="--", color="grey", alpha=0.8)
+axes[1].set_title("Scaling C by sqrt(1 / n_samples)")
+
+fig.suptitle("Effect of scaling C with L2 penalty")
 plt.show()
+
+# %%
+# For the L2 penalty case, the reparametrization seems to have a smaller impact
+# on the stability of the optimal value for the regularization. The transition
+# out of the overfitting region occurs in a more spread range and the accuracy
+# does not seem to be degraded up to chance level.
+#
+# Try increasing the value to `n_splits=1_000` for better results in the L2
+# case, which is not shown here due to the limitations on the documentation
+# builder.

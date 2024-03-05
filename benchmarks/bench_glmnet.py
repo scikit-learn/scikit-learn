@@ -16,9 +16,11 @@ the number of dimensions.
 
 In both cases, only 10% of the features are informative.
 """
-import numpy as np
 import gc
 from time import time
+
+import numpy as np
+
 from sklearn.datasets import make_regression
 
 alpha = 0.1
@@ -35,7 +37,7 @@ def bench(factory, X, Y, X_test, Y_test, ref_coef):
     # start time
     tstart = time()
     clf = factory(alpha=alpha).fit(X, Y)
-    delta = (time() - tstart)
+    delta = time() - tstart
     # stop time
 
     print("duration: %0.3fs" % delta)
@@ -44,11 +46,12 @@ def bench(factory, X, Y, X_test, Y_test, ref_coef):
     return delta
 
 
-if __name__ == '__main__':
-    from glmnet.elastic_net import Lasso as GlmnetLasso
-    from sklearn.linear_model import Lasso as ScikitLasso
+if __name__ == "__main__":
     # Delayed import of matplotlib.pyplot
     import matplotlib.pyplot as plt
+    from glmnet.elastic_net import Lasso as GlmnetLasso
+
+    from sklearn.linear_model import Lasso as ScikitLasso
 
     scikit_results = []
     glmnet_results = []
@@ -58,18 +61,22 @@ if __name__ == '__main__':
     n_informative = n_features / 10
     n_test_samples = 1000
     for i in range(1, n + 1):
-        print('==================')
-        print('Iteration %s of %s' % (i, n))
-        print('==================')
+        print("==================")
+        print("Iteration %s of %s" % (i, n))
+        print("==================")
 
         X, Y, coef_ = make_regression(
-            n_samples=(i * step) + n_test_samples, n_features=n_features,
-            noise=0.1, n_informative=n_informative, coef=True)
+            n_samples=(i * step) + n_test_samples,
+            n_features=n_features,
+            noise=0.1,
+            n_informative=n_informative,
+            coef=True,
+        )
 
         X_test = X[-n_test_samples:]
         Y_test = Y[-n_test_samples:]
-        X = X[:(i * step)]
-        Y = Y[:(i * step)]
+        X = X[: (i * step)]
+        Y = Y[: (i * step)]
 
         print("benchmarking scikit-learn: ")
         scikit_results.append(bench(ScikitLasso, X, Y, X_test, Y_test, coef_))
@@ -78,12 +85,12 @@ if __name__ == '__main__':
 
     plt.clf()
     xx = range(0, n * step, step)
-    plt.title('Lasso regression on sample dataset (%d features)' % n_features)
-    plt.plot(xx, scikit_results, 'b-', label='scikit-learn')
-    plt.plot(xx, glmnet_results, 'r-', label='glmnet')
+    plt.title("Lasso regression on sample dataset (%d features)" % n_features)
+    plt.plot(xx, scikit_results, "b-", label="scikit-learn")
+    plt.plot(xx, glmnet_results, "r-", label="glmnet")
     plt.legend()
-    plt.xlabel('number of samples to classify')
-    plt.ylabel('Time (s)')
+    plt.xlabel("number of samples to classify")
+    plt.ylabel("Time (s)")
     plt.show()
 
     # now do a benchmark where the number of points is fixed
@@ -96,15 +103,19 @@ if __name__ == '__main__':
     n_samples = 500
 
     for i in range(1, n + 1):
-        print('==================')
-        print('Iteration %02d of %02d' % (i, n))
-        print('==================')
+        print("==================")
+        print("Iteration %02d of %02d" % (i, n))
+        print("==================")
         n_features = i * step
         n_informative = n_features / 10
 
         X, Y, coef_ = make_regression(
-            n_samples=(i * step) + n_test_samples, n_features=n_features,
-            noise=0.1, n_informative=n_informative, coef=True)
+            n_samples=(i * step) + n_test_samples,
+            n_features=n_features,
+            noise=0.1,
+            n_informative=n_informative,
+            coef=True,
+        )
 
         X_test = X[-n_test_samples:]
         Y_test = Y[-n_test_samples:]
@@ -117,12 +128,12 @@ if __name__ == '__main__':
         glmnet_results.append(bench(GlmnetLasso, X, Y, X_test, Y_test, coef_))
 
     xx = np.arange(100, 100 + n * step, step)
-    plt.figure('scikit-learn vs. glmnet benchmark results')
-    plt.title('Regression in high dimensional spaces (%d samples)' % n_samples)
-    plt.plot(xx, scikit_results, 'b-', label='scikit-learn')
-    plt.plot(xx, glmnet_results, 'r-', label='glmnet')
+    plt.figure("scikit-learn vs. glmnet benchmark results")
+    plt.title("Regression in high dimensional spaces (%d samples)" % n_samples)
+    plt.plot(xx, scikit_results, "b-", label="scikit-learn")
+    plt.plot(xx, glmnet_results, "r-", label="glmnet")
     plt.legend()
-    plt.xlabel('number of features')
-    plt.ylabel('Time (s)')
-    plt.axis('tight')
+    plt.xlabel("number of features")
+    plt.ylabel("Time (s)")
+    plt.axis("tight")
     plt.show()

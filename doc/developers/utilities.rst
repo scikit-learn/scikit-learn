@@ -97,8 +97,8 @@ Efficient Linear Algebra & Array Operations
   fast on large matrices on which you wish to extract only a small
   number of components.
 
-- :func:`arrayfuncs.cholesky_delete`:
-  (used in :func:`sklearn.linear_model.lars_path`)  Remove an
+- `arrayfuncs.cholesky_delete`:
+  (used in :func:`~sklearn.linear_model.lars_path`)  Remove an
   item from a cholesky factorization.
 
 - :func:`arrayfuncs.min_pos`: (used in ``sklearn.linear_model.least_angle``)
@@ -121,7 +121,7 @@ Efficient Linear Algebra & Array Operations
   used in :func:`shuffle`, below.
 
 - :func:`shuffle`: Shuffle arrays or sparse matrices in a consistent way.
-  Used in :func:`sklearn.cluster.k_means`.
+  Used in :func:`~sklearn.cluster.k_means`.
 
 
 Efficient Random Sampling
@@ -141,17 +141,22 @@ efficiently process ``scipy.sparse`` data.
 - :func:`sparsefuncs.mean_variance_axis`: compute the means and
   variances along a specified axis of a CSR matrix.
   Used for normalizing the tolerance stopping criterion in
-  :class:`sklearn.cluster.KMeans`.
+  :class:`~sklearn.cluster.KMeans`.
 
 - :func:`sparsefuncs_fast.inplace_csr_row_normalize_l1` and
   :func:`sparsefuncs_fast.inplace_csr_row_normalize_l2`: can be used to normalize
   individual sparse samples to unit L1 or L2 norm as done in
-  :class:`sklearn.preprocessing.Normalizer`.
+  :class:`~sklearn.preprocessing.Normalizer`.
 
 - :func:`sparsefuncs.inplace_csr_column_scale`: can be used to multiply the
   columns of a CSR matrix by a constant scale (one scale per column).
   Used for scaling features to unit standard deviation in
-  :class:`sklearn.preprocessing.StandardScaler`.
+  :class:`~sklearn.preprocessing.StandardScaler`.
+
+- :func:`~sklearn.neighbors.sort_graph_by_row_values`: can be used to sort a
+  CSR sparse matrix such that each row is stored with increasing values. This
+  is useful to improve efficiency when using precomputed sparse distance
+  matrices in estimators relying on nearest neighbors graph.
 
 
 Graph Routines
@@ -165,18 +170,17 @@ Graph Routines
   If this is ever needed again, it would be far faster to use a single
   iteration of Dijkstra's algorithm from ``graph_shortest_path``.
 
-- :func:`graph_shortest_path.graph_shortest_path`:
-  (used in :class:`sklearn.manifold.Isomap`)
-  Return the shortest path between all pairs of connected points on a directed
-  or undirected graph.  Both the Floyd-Warshall algorithm and Dijkstra's
-  algorithm are available.  The algorithm is most efficient when the
-  connectivity matrix is a ``scipy.sparse.csr_matrix``.
-
 
 Testing Functions
 =================
 
-- :func:`all_estimators` : returns a list of all estimators in
+- :func:`discovery.all_estimators` : returns a list of all estimators in
+  scikit-learn to test for consistent behavior and interfaces.
+
+- :func:`discovery.all_displays` : returns a list of all displays (related to
+  plotting API) in scikit-learn to test for consistent behavior and interfaces.
+
+- :func:`discovery.all_functions` : returns a list all functions in
   scikit-learn to test for consistent behavior and interfaces.
 
 Multiclass and multilabel utility function
@@ -193,8 +197,11 @@ Helper Functions
 ================
 
 - :class:`gen_even_slices`: generator to create ``n``-packs of slices going up
-  to ``n``.  Used in :func:`sklearn.decomposition.dict_learning` and
-  :func:`sklearn.cluster.k_means`.
+  to ``n``.  Used in :func:`~sklearn.decomposition.dict_learning` and
+  :func:`~sklearn.cluster.k_means`.
+
+- :class:`gen_batches`: generator to create slices containing batch size elements
+  from 0 to ``n``
 
 - :func:`safe_mask`: Helper function to convert a mask to the format expected
   by the numpy array or scipy sparse matrix on which to use it (sparse
@@ -231,5 +238,5 @@ Warnings and Exceptions
 
 - :class:`deprecated`: Decorator to mark a function or class as deprecated.
 
-- :class:`sklearn.exceptions.ConvergenceWarning`: Custom warning to catch
+- :class:`~sklearn.exceptions.ConvergenceWarning`: Custom warning to catch
   convergence problems. Used in ``sklearn.covariance.graphical_lasso``.

@@ -14,7 +14,6 @@ make biclusters contiguous shows how accurately the algorithm found
 the biclusters.
 
 """
-print(__doc__)
 
 # Author: Kemal Eren <kemal@kemaleren.com>
 # License: BSD 3 clause
@@ -22,13 +21,13 @@ print(__doc__)
 import numpy as np
 from matplotlib import pyplot as plt
 
-from sklearn.datasets import make_biclusters
 from sklearn.cluster import SpectralCoclustering
+from sklearn.datasets import make_biclusters
 from sklearn.metrics import consensus_score
 
 data, rows, columns = make_biclusters(
-    shape=(300, 300), n_clusters=5, noise=5,
-    shuffle=False, random_state=0)
+    shape=(300, 300), n_clusters=5, noise=5, shuffle=False, random_state=0
+)
 
 plt.matshow(data, cmap=plt.cm.Blues)
 plt.title("Original dataset")
@@ -44,8 +43,7 @@ plt.title("Shuffled dataset")
 
 model = SpectralCoclustering(n_clusters=5, random_state=0)
 model.fit(data)
-score = consensus_score(model.biclusters_,
-                        (rows[:, row_idx], columns[:, col_idx]))
+score = consensus_score(model.biclusters_, (rows[:, row_idx], columns[:, col_idx]))
 
 print("consensus score: {:.3f}".format(score))
 

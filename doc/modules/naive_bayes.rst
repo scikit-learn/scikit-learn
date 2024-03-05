@@ -16,7 +16,7 @@ vector :math:`x_1` through :math:`x_n`, :
 
 .. math::
 
-   P(y \mid x_1, \dots, x_n) = \frac{P(y) P(x_1, \dots x_n \mid y)}
+   P(y \mid x_1, \dots, x_n) = \frac{P(y) P(x_1, \dots, x_n \mid y)}
                                     {P(x_1, \dots, x_n)}
 
 Using the naive conditional independence assumption that
@@ -69,11 +69,15 @@ On the flip side, although naive Bayes is known as a decent classifier,
 it is known to be a bad estimator, so the probability outputs from
 ``predict_proba`` are not to be taken too seriously.
 
-.. topic:: References:
+|details-start|
+**References**
+|details-split|
 
- * H. Zhang (2004). `The optimality of Naive Bayes.
-   <https://www.cs.unb.ca/~hzhang/publications/FLAIRS04ZhangH.pdf>`_
-   Proc. FLAIRS.
+* H. Zhang (2004). `The optimality of Naive Bayes.
+  <https://www.cs.unb.ca/~hzhang/publications/FLAIRS04ZhangH.pdf>`_
+  Proc. FLAIRS.
+
+|details-end|
 
 .. _gaussian_naive_bayes:
 
@@ -147,8 +151,13 @@ that is particularly suited for imbalanced data sets. Specifically, CNB uses
 statistics from the *complement* of each class to compute the model's weights.
 The inventors of CNB show empirically that the parameter estimates for CNB are
 more stable than those for MNB. Further, CNB regularly outperforms MNB (often
-by a considerable margin) on text classification tasks. The procedure for
-calculating the weights is as follows:
+by a considerable margin) on text classification tasks.
+
+|details-start|
+**Weights calculation**
+|details-split|
+
+The procedure for calculating the weights is as follows:
 
 .. math::
 
@@ -173,12 +182,18 @@ classification rule is:
 i.e., a document is assigned to the class that is the *poorest* complement
 match.
 
-.. topic:: References:
+|details-end|
 
- * Rennie, J. D., Shih, L., Teevan, J., & Karger, D. R. (2003).
-   `Tackling the poor assumptions of naive bayes text classifiers.
-   <https://people.csail.mit.edu/jrennie/papers/icml03-nb.pdf>`_
-   In ICML (Vol. 3, pp. 616-623).
+|details-start|
+**References**
+|details-split|
+
+* Rennie, J. D., Shih, L., Teevan, J., & Karger, D. R. (2003).
+  `Tackling the poor assumptions of naive bayes text classifiers.
+  <https://people.csail.mit.edu/jrennie/papers/icml03-nb.pdf>`_
+  In ICML (Vol. 3, pp. 616-623).
+
+|details-end|
 
 .. _bernoulli_naive_bayes:
 
@@ -190,14 +205,14 @@ algorithms for data that is distributed according to multivariate Bernoulli
 distributions; i.e., there may be multiple features but each one is assumed
 to be a binary-valued (Bernoulli, boolean) variable.
 Therefore, this class requires samples to be represented as binary-valued
-feature vectors; if handed any other kind of data, a ``BernoulliNB`` instance
+feature vectors; if handed any other kind of data, a :class:`BernoulliNB` instance
 may binarize its input (depending on the ``binarize`` parameter).
 
 The decision rule for Bernoulli naive Bayes is based on
 
 .. math::
 
-    P(x_i \mid y) = P(i \mid y) x_i + (1 - P(i \mid y)) (1 - x_i)
+    P(x_i \mid y) = P(x_i = 1 \mid y) x_i + (1 - P(x_i = 1 \mid y)) (1 - x_i)
 
 which differs from multinomial NB's rule
 in that it explicitly penalizes the non-occurrence of a feature :math:`i`
@@ -205,39 +220,47 @@ that is an indicator for class :math:`y`,
 where the multinomial variant would simply ignore a non-occurring feature.
 
 In the case of text classification, word occurrence vectors (rather than word
-count vectors) may be used to train and use this classifier. ``BernoulliNB``
+count vectors) may be used to train and use this classifier. :class:`BernoulliNB`
 might perform better on some datasets, especially those with shorter documents.
 It is advisable to evaluate both models, if time permits.
 
-.. topic:: References:
+|details-start|
+**References**
+|details-split|
 
- * C.D. Manning, P. Raghavan and H. Schütze (2008). Introduction to
-   Information Retrieval. Cambridge University Press, pp. 234-265.
+* C.D. Manning, P. Raghavan and H. Schütze (2008). Introduction to
+  Information Retrieval. Cambridge University Press, pp. 234-265.
 
- * A. McCallum and K. Nigam (1998).
-   `A comparison of event models for Naive Bayes text classification.
-   <http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.46.1529>`_
-   Proc. AAAI/ICML-98 Workshop on Learning for Text Categorization, pp. 41-48.
+* A. McCallum and K. Nigam (1998).
+  `A comparison of event models for Naive Bayes text classification.
+  <https://citeseerx.ist.psu.edu/doc_view/pid/04ce064505b1635583fa0d9cc07cac7e9ea993cc>`_
+  Proc. AAAI/ICML-98 Workshop on Learning for Text Categorization, pp. 41-48.
 
- * V. Metsis, I. Androutsopoulos and G. Paliouras (2006).
-   `Spam filtering with Naive Bayes -- Which Naive Bayes?
-   <http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.61.5542>`_
-   3rd Conf. on Email and Anti-Spam (CEAS).
+* V. Metsis, I. Androutsopoulos and G. Paliouras (2006).
+  `Spam filtering with Naive Bayes -- Which Naive Bayes?
+  <https://citeseerx.ist.psu.edu/doc_view/pid/8bd0934b366b539ec95e683ae39f8abb29ccc757>`_
+  3rd Conf. on Email and Anti-Spam (CEAS).
+
+|details-end|
 
 .. _categorical_naive_bayes:
 
 Categorical Naive Bayes
 -----------------------
 
-:class:`CategoricalNB` implements the categorical naive Bayes 
-algorithm for categorically distributed data. It assumes that each feature, 
-which is described by the index :math:`i`, has its own categorical 
-distribution. 
+:class:`CategoricalNB` implements the categorical naive Bayes
+algorithm for categorically distributed data. It assumes that each feature,
+which is described by the index :math:`i`, has its own categorical
+distribution.
 
 For each feature :math:`i` in the training set :math:`X`,
 :class:`CategoricalNB` estimates a categorical distribution for each feature i
 of X conditioned on the class y. The index set of the samples is defined as
 :math:`J = \{ 1, \dots, m \}`, with :math:`m` as the number of samples.
+
+|details-start|
+**Probability calculation**
+|details-split|
 
 The probability of category :math:`t` in feature :math:`i` given class
 :math:`c` is estimated as:
@@ -253,9 +276,11 @@ to class :math:`c`, :math:`N_{c} = |\{ j \in J\mid y_j = c\}|` is the number
 of samples with class c, :math:`\alpha` is a smoothing parameter and
 :math:`n_i` is the number of available categories of feature :math:`i`.
 
-:class:`CategoricalNB` assumes that the sample matrix :math:`X` is encoded
-(for instance with the help of :class:`OrdinalEncoder`) such that all
-categories for each feature :math:`i` are represented with numbers
+|details-end|
+
+:class:`CategoricalNB` assumes that the sample matrix :math:`X` is encoded (for
+instance with the help of :class:`~sklearn.preprocessing.OrdinalEncoder`) such
+that all categories for each feature :math:`i` are represented with numbers
 :math:`0, ..., n_i - 1` where :math:`n_i` is the number of available categories
 of feature :math:`i`.
 

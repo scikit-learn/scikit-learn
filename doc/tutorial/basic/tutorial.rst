@@ -23,41 +23,41 @@ data), it is said to have several attributes or **features**.
 
 Learning problems fall into a few categories:
 
- * `supervised learning <https://en.wikipedia.org/wiki/Supervised_learning>`_,
-   in which the data comes with additional attributes that we want to predict
-   (:ref:`Click here <supervised-learning>`
-   to go to the scikit-learn supervised learning page).This problem
-   can be either:
+* `supervised learning <https://en.wikipedia.org/wiki/Supervised_learning>`_,
+  in which the data comes with additional attributes that we want to predict
+  (:ref:`Click here <supervised-learning>`
+  to go to the scikit-learn supervised learning page).This problem
+  can be either:
 
-    * `classification
-      <https://en.wikipedia.org/wiki/Classification_in_machine_learning>`_:
-      samples belong to two or more classes and we
-      want to learn from already labeled data how to predict the class
-      of unlabeled data. An example of a classification problem would
-      be handwritten digit recognition, in which the aim is
-      to assign each input vector to one of a finite number of discrete
-      categories.  Another way to think of classification is as a discrete
-      (as opposed to continuous) form of supervised learning where one has a
-      limited number of categories and for each of the n samples provided,
-      one is to try to label them with the correct category or class.
+  * `classification
+    <https://en.wikipedia.org/wiki/Classification_in_machine_learning>`_:
+    samples belong to two or more classes and we
+    want to learn from already labeled data how to predict the class
+    of unlabeled data. An example of a classification problem would
+    be handwritten digit recognition, in which the aim is
+    to assign each input vector to one of a finite number of discrete
+    categories.  Another way to think of classification is as a discrete
+    (as opposed to continuous) form of supervised learning where one has a
+    limited number of categories and for each of the n samples provided,
+    one is to try to label them with the correct category or class.
 
-    * `regression <https://en.wikipedia.org/wiki/Regression_analysis>`_:
-      if the desired output consists of one or more
-      continuous variables, then the task is called *regression*. An
-      example of a regression problem would be the prediction of the
-      length of a salmon as a function of its age and weight.
+  * `regression <https://en.wikipedia.org/wiki/Regression_analysis>`_:
+    if the desired output consists of one or more
+    continuous variables, then the task is called *regression*. An
+    example of a regression problem would be the prediction of the
+    length of a salmon as a function of its age and weight.
 
- * `unsupervised learning <https://en.wikipedia.org/wiki/Unsupervised_learning>`_,
-   in which the training data consists of a set of input vectors x
-   without any corresponding target values. The goal in such problems
-   may be to discover groups of similar examples within the data, where
-   it is called `clustering <https://en.wikipedia.org/wiki/Cluster_analysis>`_,
-   or to determine the distribution of data within the input space, known as
-   `density estimation <https://en.wikipedia.org/wiki/Density_estimation>`_, or
-   to project the data from a high-dimensional space down to two or three
-   dimensions for the purpose of *visualization*
-   (:ref:`Click here <unsupervised-learning>`
-   to go to the Scikit-Learn unsupervised learning page).
+* `unsupervised learning <https://en.wikipedia.org/wiki/Unsupervised_learning>`_,
+  in which the training data consists of a set of input vectors x
+  without any corresponding target values. The goal in such problems
+  may be to discover groups of similar examples within the data, where
+  it is called `clustering <https://en.wikipedia.org/wiki/Cluster_analysis>`_,
+  or to determine the distribution of data within the input space, known as
+  `density estimation <https://en.wikipedia.org/wiki/Density_estimation>`_, or
+  to project the data from a high-dimensional space down to two or three
+  dimensions for the purpose of *visualization*
+  (:ref:`Click here <unsupervised-learning>`
+  to go to the Scikit-Learn unsupervised learning page).
 
 .. topic:: Training set and testing set
 
@@ -77,8 +77,8 @@ Loading an example dataset
 `scikit-learn` comes with a few standard datasets, for instance the
 `iris <https://en.wikipedia.org/wiki/Iris_flower_data_set>`_ and `digits
 <https://archive.ics.uci.edu/ml/datasets/Pen-Based+Recognition+of+Handwritten+Digits>`_
-datasets for classification and the `boston house prices dataset
-<https://archive.ics.uci.edu/ml/machine-learning-databases/housing/>`_ for regression.
+datasets for classification and the `diabetes dataset
+<https://www4.stat.ncsu.edu/~boos/var.select/diabetes.html>`_ for regression.
 
 In the following, we start a Python interpreter from our shell and then
 load the ``iris`` and ``digits`` datasets.  Our notational convention is that
@@ -93,7 +93,7 @@ interpreter prompt::
 A dataset is a dictionary-like object that holds all the data and some
 metadata about the data. This data is stored in the ``.data`` member,
 which is a ``n_samples, n_features`` array. In the case of supervised
-problem, one or more response variables are stored in the ``.target`` member. More
+problems, one or more response variables are stored in the ``.target`` member. More
 details on the different datasets can be found in the :ref:`dedicated
 section <datasets>`.
 
@@ -183,7 +183,7 @@ the last item from ``digits.data``::
   SVC(C=100.0, gamma=0.001)
 
 Now you can *predict* new values. In this case, you'll predict using the last
-image from ``digits.data``. By predicting, you'll determine the image from the 
+image from ``digits.data``. By predicting, you'll determine the image from the
 training set that best matches the last image.
 
 
@@ -204,52 +204,6 @@ A complete example of this classification problem is available as an
 example that you can run and study:
 :ref:`sphx_glr_auto_examples_classification_plot_digits_classification.py`.
 
-
-Model persistence
------------------
-
-It is possible to save a model in scikit-learn by using Python's built-in
-persistence model, `pickle <https://docs.python.org/2/library/pickle.html>`_::
-
-  >>> from sklearn import svm
-  >>> from sklearn import datasets
-  >>> clf = svm.SVC()
-  >>> X, y = datasets.load_iris(return_X_y=True)
-  >>> clf.fit(X, y)
-  SVC()
-
-  >>> import pickle
-  >>> s = pickle.dumps(clf)
-  >>> clf2 = pickle.loads(s)
-  >>> clf2.predict(X[0:1])
-  array([0])
-  >>> y[0]
-  0
-
-In the specific case of scikit-learn, it may be more interesting to use
-joblib's replacement for pickle (``joblib.dump`` & ``joblib.load``),
-which is more efficient on big data but it can only pickle to the disk
-and not to a string::
-
-  >>> from joblib import dump, load
-  >>> dump(clf, 'filename.joblib') # doctest: +SKIP
-
-Later, you can reload the pickled model (possibly in another Python process)
-with::
-
-  >>> clf = load('filename.joblib') # doctest:+SKIP
-
-.. note::
-
-    ``joblib.dump`` and ``joblib.load`` functions also accept file-like object
-    instead of filenames. More information on data persistence with Joblib is
-    available `here <https://joblib.readthedocs.io/en/latest/persistence.html>`_.
-
-Note that pickle has some security and maintainability issues. Please refer to
-section :ref:`model_persistence` for more detailed information about model
-persistence with scikit-learn.
-
-
 Conventions
 -----------
 
@@ -259,10 +213,11 @@ predictive.  These are described in more detail in the :ref:`glossary`.
 Type casting
 ~~~~~~~~~~~~
 
-Unless otherwise specified, input will be cast to ``float64``::
+Where possible, input of type ``float32`` will maintain its data type. Otherwise
+input will be cast to ``float64``::
 
   >>> import numpy as np
-  >>> from sklearn import random_projection
+  >>> from sklearn import kernel_approximation
 
   >>> rng = np.random.RandomState(0)
   >>> X = rng.rand(10, 2000)
@@ -270,13 +225,25 @@ Unless otherwise specified, input will be cast to ``float64``::
   >>> X.dtype
   dtype('float32')
 
-  >>> transformer = random_projection.GaussianRandomProjection()
+  >>> transformer = kernel_approximation.RBFSampler()
   >>> X_new = transformer.fit_transform(X)
   >>> X_new.dtype
-  dtype('float64')
+  dtype('float32')
 
-In this example, ``X`` is ``float32``, which is cast to ``float64`` by
-``fit_transform(X)``.
+In this example, ``X`` is ``float32``, and is unchanged by ``fit_transform(X)``.
+
+Using `float32`-typed training (or testing) data is often more
+efficient than using the usual ``float64`` ``dtype``: it allows to
+reduce the memory usage and sometimes also reduces processing time
+by leveraging the vector instructions of the CPU. However it can
+sometimes lead to numerical stability problems causing the algorithm
+to be more sensitive to the scale of the values and :ref:`require
+adequate preprocessing<preprocessing_scaler>`.
+
+Keep in mind however that not all scikit-learn estimators attempt to
+work in `float32` mode. For instance, some transformers will always
+cast their input to `float64` and return `float64` transformed
+values as a result.
 
 Regression targets are cast to ``float64`` and classification targets are
 maintained::
