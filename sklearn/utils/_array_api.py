@@ -107,7 +107,7 @@ def device(*array_list, skip_none=True, skip_types=(str,)):
     skip_none : bool, default=True
         Whether to ignore None objects passed in array_list.
 
-    skip_types : tuple, default=(str,)
+    skip_types : tuple or list, default=(str,)
         Types to ignore in array_list.
 
     Returns
@@ -460,7 +460,7 @@ def _skip_non_arrays(*arrays, skip_none=True, skip_types=(str,)):
     skip_none : bool, default=True
         Whether to ignore None objects passed in arrays.
 
-    skip_types : tuple, default=(str,)
+    skip_types : tuple or list, default=(str,)
         Types to ignore in the arrays.
 
     Returns
@@ -476,10 +476,12 @@ def _skip_non_arrays(*arrays, skip_none=True, skip_types=(str,)):
             continue
         filtered_arrays.append(array)
 
+    skip_types = tuple(skip_types)
     if not filtered_arrays:
         raise ValueError(
             f"At least one input array expected after filtering with {skip_none=}, "
-            f"{skip_types=}. Got none. Original types: {[type(a) for a in arrays]}."
+            f"skip_types=[{', '.join(t.__name__ for t in skip_types)}]. Got none. "
+            f"Original types: [{', '.join(type(a).__name__ for a in arrays)}]."
         )
     return filtered_arrays
 
@@ -520,7 +522,7 @@ def get_namespace(*arrays, skip_none=True, skip_types=(str,)):
     skip_none : bool, default=True
         Whether to ignore None objects passed in arrays.
 
-    skip_types : tuple, default=(str,)
+    skip_types : tuple or list, default=(str,)
         Types to ignore in the arrays.
 
     Returns

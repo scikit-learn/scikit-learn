@@ -1,3 +1,4 @@
+import re
 from functools import partial
 
 import numpy
@@ -209,6 +210,13 @@ def test_average_raises_with_wrong_dtype(array_namespace, device, dtype_name):
     ):
         _average(array_in)
 
+    err_msg = "Complex floating point values are not supported by average."
+    with (
+        config_context(array_api_dispatch=True),
+        pytest.raises(NotImplementedError, match=err_msg),
+    ):
+        _average(array_in)
+
 
 @pytest.mark.parametrize(
     "array_namespace, device, dtype_name",
@@ -266,9 +274,19 @@ def test_supports_dtype_return_value():
 
 
 def test_device_raises_if_no_input():
-    err_msg = "At least one input array expected, got none."
+    err_msg = re.escape(
+        "At least one input array expected after filtering with skip_none=True, "
+        "skip_types=[str]. Got none. Original types: []."
+    )
     with pytest.raises(ValueError, match=err_msg):
         device()
+
+    err_msg = re.escape(
+        "At least one input array expected after filtering with skip_none=True, "
+        "skip_types=[str]. Got none. Original types: [NoneType, str]."
+    )
+    with pytest.raises(ValueError, match=err_msg):
+        device(None, "name")
 
 
 def test_device_inspection():
