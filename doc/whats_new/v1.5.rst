@@ -48,6 +48,12 @@ more details.
   via their `fit` methods.
   :pr:`28432` by :user:`Adam Li <adam2392>` and :user:`Benjamin Bossan <BenjaminBossan>`.
 
+- |Feature| :class:`linear_model.RidgeCV` and
+  :class:`linear_model.RidgeClassifierCV` now support metadata routing in
+  their `fit` method and route metadata to the underlying
+  :class:`model_selection.GridSearchCV` object or the underlying scorer.
+  :pr:`27560` by :user:`Omar Salman <OmarManzoor>`.
+
 Metadata Routing
 ----------------
 
@@ -64,6 +70,12 @@ more details.
   :class:`ensemble.VotingRegressor` now support metadata routing and pass
   ``**fit_params`` to the underlying estimators via their `fit` methods.
   :pr:`27584` by :user:`Stefanie Senger <StefanieSenger>`.
+
+- |Feature| :class:`pipeline.FeatureUnion` now supports metadata routing in its
+  ``fit`` and ``fit_transform`` methods and route metadata to the underlying
+  transformers' ``fit`` and ``fit_transform``. :pr:`28205` by :user:`Stefanie
+  Senger <StefanieSenger>`.
+
 
 Changelog
 ---------
@@ -179,6 +191,10 @@ Changelog
   will now allow `alpha=0` when `cv != None`, which is consistent with
   :class:`linear_model.Ridge` and :class:`linear_model.RidgeClassifier`.
   :pr:`28425` by :user:`Lucy Liu <lucyleeow>`.
+
+- |Fix| :class:`linear_model.RidgeCV` and :class:`RidgeClassifierCV` correctly pass
+  `sample_weight` to the underlying scorer when `cv` is None.
+  :pr:`27560` by :user:`Omar Salman <OmarManzoor>`.
 
 :mod:`sklearn.manifold`
 .......................
