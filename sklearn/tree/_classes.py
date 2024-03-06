@@ -934,7 +934,6 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
     ...
     array([ 1.     ,  0.93...,  0.86...,  0.93...,  0.93...,
             0.93...,  0.93...,  1.     ,  0.93...,  1.      ])
-
     """
 
     _parameter_constraints: dict = {
