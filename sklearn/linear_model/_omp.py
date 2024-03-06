@@ -388,6 +388,17 @@ def orthogonal_mp(
     M., Efficient Implementation of the K-SVD Algorithm using Batch Orthogonal
     Matching Pursuit Technical Report - CS Technion, April 2008.
     https://www.cs.technion.ac.il/~ronrubin/Publications/KSVD-OMP-v2.pdf
+
+    Examples
+    --------
+    >>> from sklearn.datasets import make_regression
+    >>> from sklearn.linear_model import orthogonal_mp
+    >>> X, y = make_regression(noise=4, random_state=0)
+    >>> coef = orthogonal_mp(X, y)
+    >>> coef.shape
+    (100,)
+    >>> X[:1,] @ coef
+    array([-78.68...])
     """
     X = check_array(X, order="F", copy=copy_X)
     copy_X = False
@@ -555,6 +566,17 @@ def orthogonal_mp_gram(
     M., Efficient Implementation of the K-SVD Algorithm using Batch Orthogonal
     Matching Pursuit Technical Report - CS Technion, April 2008.
     https://www.cs.technion.ac.il/~ronrubin/Publications/KSVD-OMP-v2.pdf
+
+    Examples
+    --------
+    >>> from sklearn.datasets import make_regression
+    >>> from sklearn.linear_model import orthogonal_mp_gram
+    >>> X, y = make_regression(noise=4, random_state=0)
+    >>> coef = orthogonal_mp_gram(X.T @ X, X.T @ y)
+    >>> coef.shape
+    (100,)
+    >>> X[:1,] @ coef
+    array([-78.68...])
     """
     Gram = check_array(Gram, order="F", copy=copy_Gram)
     Xy = np.asarray(Xy)
