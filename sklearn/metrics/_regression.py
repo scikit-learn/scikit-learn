@@ -1197,9 +1197,8 @@ def r2_score(
     """
     input_arrays = [y_true, y_pred, sample_weight, multioutput]
     # multioutput can be a str: ignore.
-    skip_types = (str,)
-    xp, is_array_api_compliant = get_namespace(*input_arrays, skip_types=skip_types)
-    device_ = device(*input_arrays, skip_types=skip_types)
+    xp, is_array_api_compliant = get_namespace(*input_arrays)
+    device_ = device(*input_arrays)
 
     dtype = (
         "numeric" if not is_array_api_compliant else supported_float_dtypes(xp, device_)
