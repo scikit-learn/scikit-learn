@@ -964,7 +964,7 @@ class GraphicalLassoCV(BaseGraphicalLasso):
             Parameters to be passed to the CV splitter and the
             cross_val_score function.
 
-            .. versionadded:: 1.4
+            .. versionadded:: 1.5
                 Only available if `enable_metadata_routing=True`,
                 which can be set by using
                 ``sklearn.set_config(enable_metadata_routing=True)``.
