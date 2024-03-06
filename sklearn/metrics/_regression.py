@@ -38,7 +38,6 @@ from ..utils._array_api import (
     _average,
     device,
     get_namespace,
-    supported_float_dtypes,
 )
 from ..utils._param_validation import Hidden, Interval, StrOptions, validate_params
 from ..utils.stats import _weighted_percentile
@@ -1200,9 +1199,17 @@ def r2_score(
     xp, is_array_api_compliant = get_namespace(*input_arrays)
     device_ = device(*input_arrays)
 
-    dtype = (
-        "numeric" if not is_array_api_compliant else supported_float_dtypes(xp, device_)
-    )
+    # We want to make sure that the dtype used to perform the computation is
+    # always a floating point dtype, even if the inputs arrays (and possibly
+    # the weights) are integer typed. This output dtype should be determined in
+    # accordance to Array API type promotion rules while noting that Python
+    # scalar types and integer arrays are promoted to floating point dtypes in
+    # an implementation specific way:
+    # https://data-apis.org/array-api/latest/API_specification/type_promotion.html#type-promotion
+    default_floating_dtype = xp.asarray(0.0).dtype  # implementation specific
+    y_true, y_pred = xp.asarray(y_true), xp.asarray(y_pred)
+    dtype = xp.result_type(y_true, y_pred, default_floating_dtype)
+    y_true, y_pred = xp.astype(y_true, dtype), xp.astype(y_pred, dtype)
 
     _, y_true, y_pred, multioutput = _check_reg_targets(
         y_true, y_pred, multioutput, dtype=dtype, xp=xp
@@ -1218,7 +1225,7 @@ def r2_score(
         sample_weight = column_or_1d(sample_weight, dtype=dtype)
         weight = sample_weight[:, None]
     else:
-        weight = 1
+        weight = 1.0
 
     numerator = xp.sum(weight * (y_true - y_pred) ** 2, axis=0)
     denominator = xp.sum(
@@ -1235,11 +1242,6 @@ def r2_score(
         xp=xp,
         device=device_,
     )
-
-    result = xp.asarray(result, device=device_)
-    if result.size == 1:
-        return xp.reshape(result, (-1,))[0]
-
     return result
 
 

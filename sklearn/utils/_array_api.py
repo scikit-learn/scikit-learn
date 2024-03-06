@@ -634,7 +634,7 @@ def _average(a, axis=None, weights=None, normalize=True, xp=None):
     if weights is not None and xp.isdtype(weights.dtype, "bool"):
         weights = xp.astype(weights, xp.int32)
 
-    for input_array in input_arrays:
+    for input_array in [a, weights]:
         if input_array is None:
             continue
         if not xp.isdtype(input_array.dtype, "numeric"):
