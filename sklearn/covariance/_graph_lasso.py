@@ -1141,7 +1141,7 @@ class GraphicalLassoCV(BaseGraphicalLasso):
         Please check :ref:`User Guide <metadata_routing>` on how the routing
         mechanism works.
 
-        .. versionadded:: 1.4
+        .. versionadded:: 1.5
 
         Returns
         -------
