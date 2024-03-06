@@ -44,13 +44,14 @@ from numpy.testing import (
 )
 
 import sklearn
-from sklearn.utils import (
-    _IS_32BIT,
-    IS_PYPY,
-    _in_unstable_openblas_configuration,
-)
+from sklearn.utils import _IS_32BIT, IS_PYPY
 from sklearn.utils._array_api import _check_array_api_dispatch
-from sklearn.utils.fixes import VisibleDeprecationWarning, parse_version, sp_version
+from sklearn.utils.fixes import (
+    VisibleDeprecationWarning,
+    _in_unstable_openblas_configuration,
+    parse_version,
+    sp_version,
+)
 from sklearn.utils.multiclass import check_classification_targets
 from sklearn.utils.validation import (
     check_array,
@@ -922,7 +923,7 @@ class _Raises(contextlib.AbstractContextManager):
 
 
 class MinimalClassifier:
-    """Minimal classifier implementation with inheriting from BaseEstimator.
+    """Minimal classifier implementation without inheriting from BaseEstimator.
 
     This estimator should be tested with:
 
@@ -971,7 +972,7 @@ class MinimalClassifier:
 
 
 class MinimalRegressor:
-    """Minimal regressor implementation with inheriting from BaseEstimator.
+    """Minimal regressor implementation without inheriting from BaseEstimator.
 
     This estimator should be tested with:
 
@@ -1011,7 +1012,7 @@ class MinimalRegressor:
 
 
 class MinimalTransformer:
-    """Minimal transformer implementation with inheriting from
+    """Minimal transformer implementation without inheriting from
     BaseEstimator.
 
     This estimator should be tested with:
@@ -1147,6 +1148,30 @@ def _get_warnings_filters_info_list():
             "ignore",
             message=r"\s*Pyarrow will become a required dependency",
             category=DeprecationWarning,
+        ),
+        # warnings has been fixed from dateutil main but not released yet, see
+        # https://github.com/dateutil/dateutil/issues/1314
+        WarningInfo(
+            "ignore",
+            message="datetime.datetime.utcfromtimestamp",
+            category=DeprecationWarning,
+        ),
+        # Python 3.12 warnings from joblib fixed in master but not released yet,
+        # see https://github.com/joblib/joblib/pull/1518
+        WarningInfo(
+            "ignore", message="ast.Num is deprecated", category=DeprecationWarning
+        ),
+        WarningInfo(
+            "ignore", message="Attribute n is deprecated", category=DeprecationWarning
+        ),
+        # Python 3.12 warnings from sphinx-gallery fixed in master but not
+        # released yet, see
+        # https://github.com/sphinx-gallery/sphinx-gallery/pull/1242
+        WarningInfo(
+            "ignore", message="ast.Str is deprecated", category=DeprecationWarning
+        ),
+        WarningInfo(
+            "ignore", message="Attribute s is deprecated", category=DeprecationWarning
         ),
     ]
 
