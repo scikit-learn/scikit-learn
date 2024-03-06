@@ -637,11 +637,6 @@ def _average(a, axis=None, weights=None, normalize=True, xp=None):
     for input_array in [a, weights]:
         if input_array is None:
             continue
-        if not xp.isdtype(input_array.dtype, "numeric"):
-            raise ValueError(
-                "Expecting only boolean, integral or real floating values. "
-                f"Got {input_array.dtype}."
-            )
         if xp.isdtype(input_array.dtype, "complex floating"):
             raise NotImplementedError(
                 "Complex floating point values are not supported by average."

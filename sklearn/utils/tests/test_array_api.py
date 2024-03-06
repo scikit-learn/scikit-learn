@@ -202,10 +202,10 @@ def test_average_raises_with_wrong_dtype(array_namespace, device, dtype_name):
     )
     array_in = xp.asarray(array_in, device=device)
 
-    err_msg = "Expecting only boolean, integral or real floating values."
+    err_msg = "Complex floating point values are not supported by average."
     with (
         config_context(array_api_dispatch=True),
-        pytest.raises(ValueError, match=err_msg),
+        pytest.raises(NotImplementedError, match=err_msg),
     ):
         _average(array_in)
 
