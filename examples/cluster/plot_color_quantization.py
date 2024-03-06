@@ -41,7 +41,7 @@ n_colors = 64
 china = load_sample_image("china.jpg")
 
 # Convert to floats instead of the default 8 bits integer coding. Dividing by
-# 255 is important so that plt.imshow behaves works well on float data (need to
+# 255 is important so that plt.imshow works well on float data (need to
 # be in the range [0-1])
 china = np.array(china, dtype=np.float64) / 255
 
@@ -53,9 +53,7 @@ image_array = np.reshape(china, (w * h, d))
 print("Fitting model on a small sub-sample of the data")
 t0 = time()
 image_array_sample = shuffle(image_array, random_state=0, n_samples=1_000)
-kmeans = KMeans(n_clusters=n_colors, n_init="auto", random_state=0).fit(
-    image_array_sample
-)
+kmeans = KMeans(n_clusters=n_colors, random_state=0).fit(image_array_sample)
 print(f"done in {time() - t0:0.3f}s.")
 
 # Get labels for all points

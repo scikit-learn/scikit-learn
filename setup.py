@@ -35,7 +35,7 @@ with open("README.rst") as f:
     LONG_DESCRIPTION = f.read()
 MAINTAINER = "Andreas Mueller"
 MAINTAINER_EMAIL = "amueller@ais.uni-bonn.de"
-URL = "http://scikit-learn.org"
+URL = "https://scikit-learn.org"
 DOWNLOAD_URL = "https://pypi.org/project/scikit-learn/#files"
 LICENSE = "new BSD"
 PROJECT_URLS = {
@@ -174,7 +174,7 @@ def check_package_status(package, min_version):
     instructions = (
         "Installation instructions are available on the "
         "scikit-learn website: "
-        "http://scikit-learn.org/stable/install.html\n"
+        "https://scikit-learn.org/stable/install.html\n"
     )
 
     if package_status["up_to_date"] is False:
@@ -235,7 +235,6 @@ extension_config = {
         {"sources": ["_predictor.pyx"], "include_np": True},
         {"sources": ["_bitset.pyx"], "include_np": True},
         {"sources": ["common.pyx"], "include_np": True},
-        {"sources": ["utils.pyx"], "include_np": True},
     ],
     "feature_extraction": [
         {"sources": ["_hashing_fast.pyx"], "language": "c++", "include_np": True},
@@ -566,8 +565,8 @@ def configure_extension_modules():
 
 
 def setup_package():
-    python_requires = ">=3.8"
-    required_python_version = (3, 8)
+    python_requires = ">=3.9"
+    required_python_version = (3, 9)
 
     metadata = dict(
         name=DISTNAME,
@@ -594,7 +593,6 @@ def setup_package():
             "Operating System :: Unix",
             "Operating System :: MacOS",
             "Programming Language :: Python :: 3",
-            "Programming Language :: Python :: 3.8",
             "Programming Language :: Python :: 3.9",
             "Programming Language :: Python :: 3.10",
             "Programming Language :: Python :: 3.11",
@@ -605,7 +603,9 @@ def setup_package():
         cmdclass=cmdclass,
         python_requires=python_requires,
         install_requires=min_deps.tag_to_packages["install"],
-        package_data={"": ["*.csv", "*.gz", "*.txt", "*.pxd", "*.rst", "*.jpg"]},
+        package_data={
+            "": ["*.csv", "*.gz", "*.txt", "*.pxd", "*.rst", "*.jpg", "*.css"]
+        },
         zip_safe=False,  # the package can run out of an .egg file
         extras_require={
             key: min_deps.tag_to_packages[key]

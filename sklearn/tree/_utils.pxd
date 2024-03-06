@@ -39,7 +39,7 @@ ctypedef fused realloc_ptr:
     (Cell*)
     (Node**)
 
-cdef realloc_ptr safe_realloc(realloc_ptr* p, size_t nelems) except * nogil
+cdef int safe_realloc(realloc_ptr* p, size_t nelems) except -1 nogil
 
 
 cdef cnp.ndarray sizet_ptr_to_ndarray(intp_t* data, intp_t size)

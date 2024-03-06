@@ -22,22 +22,20 @@ from ..utils._random cimport our_rand_r
 # Helper functions
 # =============================================================================
 
-cdef realloc_ptr safe_realloc(realloc_ptr* p, size_t nelems) except * nogil:
+cdef int safe_realloc(realloc_ptr* p, size_t nelems) except -1 nogil:
     # sizeof(realloc_ptr[0]) would be more like idiomatic C, but causes Cython
     # 0.20.1 to crash.
     cdef size_t nbytes = nelems * sizeof(p[0][0])
     if nbytes / sizeof(p[0][0]) != nelems:
         # Overflow in the multiplication
-        with gil:
-            raise MemoryError("could not allocate (%d * %d) bytes"
-                              % (nelems, sizeof(p[0][0])))
+        raise MemoryError(f"could not allocate ({nelems} * {sizeof(p[0][0])}) bytes")
+
     cdef realloc_ptr tmp = <realloc_ptr>realloc(p[0], nbytes)
     if tmp == NULL:
-        with gil:
-            raise MemoryError("could not allocate %d bytes" % nbytes)
+        raise MemoryError(f"could not allocate {nbytes} bytes")
 
     p[0] = tmp
-    return tmp  # for convenience
+    return 0
 
 
 def _realloc_test():
@@ -111,7 +109,7 @@ cdef class WeightedPQueue:
         or 0 otherwise.
         """
         self.array_ptr = 0
-        # Since safe_realloc can raise MemoryError, use `except *`
+        # Since safe_realloc can raise MemoryError, use `except -1`
         safe_realloc(&self.array_, self.capacity)
         return 0
 
@@ -452,9 +450,9 @@ cdef class WeightedMedianCalculator:
 def _any_isnan_axis0(const float32_t[:, :] X):
     """Same as np.any(np.isnan(X), axis=0)"""
     cdef:
-        int i, j
-        int n_samples = X.shape[0]
-        int n_features = X.shape[1]
+        intp_t i, j
+        intp_t n_samples = X.shape[0]
+        intp_t n_features = X.shape[1]
         unsigned char[::1] isnan_out = np.zeros(X.shape[1], dtype=np.bool_)
 
     with nogil:
