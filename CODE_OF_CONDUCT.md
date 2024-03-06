@@ -1,6 +1,6 @@
 # Code of Conduct
 
-We are a community based on openness and friendly, didactic, discussions.
+We are a community based on openness, as well as friendly and didactic discussions.
 
 We aspire to treat everybody equally, and value their contributions.
 

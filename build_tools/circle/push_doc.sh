@@ -1,8 +1,8 @@
 #!/bin/bash
-# This script is meant to be called in the "deploy" step defined in 
-# circle.yml. See https://circleci.com/docs/ for more details.
+# This script is meant to be called in the "deploy" step defined in
+# .circleci/config.yml. See https://circleci.com/docs/ for more details.
 # The behavior of the script is controlled by environment variable defined
-# in the circle.yml in the top level folder of the project.
+# in the .circleci/config.yml file.
 
 set -ex
 
@@ -23,7 +23,7 @@ fi
 # Absolute path needed because we use cd further down in this script
 GENERATED_DOC_DIR=$(readlink -f $GENERATED_DOC_DIR)
 
-if [ "$CIRCLE_BRANCH" = "master" ]
+if [ "$CIRCLE_BRANCH" = "main" ]
 then
     dir=dev
 else
@@ -49,17 +49,17 @@ then
 	touch $dir/index.html
 	git add $dir
 fi
-git checkout master
-git reset --hard origin/master
+git checkout main
+git reset --hard origin/main
 if [ -d $dir ]
 then
 	git rm -rf $dir/ && rm -rf $dir/
 fi
 cp -R $GENERATED_DOC_DIR $dir
-git config user.email "olivier.grisel+sklearn-ci@gmail.com"
+git config user.email "ci@scikit-learn.org"
 git config user.name $USERNAME
 git config push.default matching
 git add -f $dir/
 git commit -m "$MSG" $dir
 git push
-echo $MSG 
+echo $MSG
