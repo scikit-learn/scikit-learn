@@ -196,6 +196,10 @@ Changelog
   `sample_weight` to the underlying scorer when `cv` is None.
   :pr:`27560` by :user:`Omar Salman <OmarManzoor>`.
 
+- |Fix| `n_nonzero_coefs_` attribute in :class:`linear_model.OrthogonalMatchingPursuit`
+  will now always be `None` when `tol` is set, as `n_nonzero_coefs` is ignored in
+  this case. :pr:`28557` by :user:`Lucy Liu <lucyleeow>`.
+
 :mod:`sklearn.manifold`
 .......................
 
