@@ -30,6 +30,13 @@ Metadata Routing
 Changelog
 ---------
 
+:mod:`sklearn.metrics`
+......................
+
+- |Fix|:class:`metrics.classification_report` now shows only accuracy and not
+  micro-average when input is a subset of labels.
+  :pr:`28399` by :user:`Vineet Joshi <vjoshi253>`.
+
 :mod:`sklearn.neighbors`
 ........................
 

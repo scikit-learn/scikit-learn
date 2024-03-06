@@ -54,8 +54,9 @@ def check_recorded_metadata(obj, method, split_params=tuple(), **kwargs):
         sub-estimator's method where metadata is routed to
     split_params : tuple, default=empty
         specifies any parameters which are to be checked as being a subset
-        of the original values.
-    **kwargs : metadata to check
+        of the original values
+    **kwargs : dict
+        passed metadata
     """
     records = getattr(obj, "_records", dict()).get(method, dict())
     assert set(kwargs.keys()) == set(
@@ -334,6 +335,29 @@ class ConsumingTransformer(TransformerMixin, BaseEstimator):
     def inverse_transform(self, X, sample_weight=None, metadata=None):
         record_metadata(
             self, "inverse_transform", sample_weight=sample_weight, metadata=metadata
+        )
+        return X
+
+
+class ConsumingNoFitTransformTransformer(BaseEstimator):
+    """A metadata consuming transformer that doesn't inherit from
+    TransformerMixin, and thus doesn't implement `fit_transform`. Note that
+    TransformerMixin's `fit_transform` doesn't route metadata to `transform`."""
+
+    def __init__(self, registry=None):
+        self.registry = registry
+
+    def fit(self, X, y=None, sample_weight=None, metadata=None):
+        if self.registry is not None:
+            self.registry.append(self)
+
+        record_metadata(self, "fit", sample_weight=sample_weight, metadata=metadata)
+
+        return self
+
+    def transform(self, X, sample_weight=None, metadata=None):
+        record_metadata(
+            self, "transform", sample_weight=sample_weight, metadata=metadata
         )
         return X
 
