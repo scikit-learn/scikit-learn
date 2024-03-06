@@ -134,6 +134,9 @@ class PCA(_BasePCA):
     used (i.e. through :func:`scipy.sparse.linalg.svds`). Alternatively, one
     may consider :class:`TruncatedSVD` where the data are not centered.
 
+    Spurious results may occur when fitting the `PCA()` model using data that
+    has dtype `'float32'`. In this instance convert input data to dtype `'float64'`.
+
     For a usage example, see
     :ref:`sphx_glr_auto_examples_decomposition_plot_pca_iris.py`
 
@@ -413,7 +416,9 @@ class PCA(_BasePCA):
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Training data, where `n_samples` is the number of samples
-            and `n_features` is the number of features.
+            and `n_features` is the number of features. If experiencing
+            unexpected performance with `X.dtype = 'float32'`, try
+            converting the dtype of `X` to `'float64'`.
 
         y : Ignored
             Ignored.
@@ -434,7 +439,9 @@ class PCA(_BasePCA):
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Training data, where `n_samples` is the number of samples
-            and `n_features` is the number of features.
+            and `n_features` is the number of features. If experiencing
+            unexpected performance with `X.dtype = 'float32'`, try
+            converting the dtype of `X` to `'float64'`.
 
         y : Ignored
             Ignored.
