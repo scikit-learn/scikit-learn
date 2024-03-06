@@ -61,5 +61,5 @@ if [[ -n "$SELECTED_TESTS" ]]; then
 fi
 
 set -x
-eval "$TEST_CMD --maxfail=7 --pyargs sklearn"
+eval "$TEST_CMD -x --pyargs sklearn"
 set +x
