@@ -2222,3 +2222,11 @@ def test_loss_attribute_deprecation(Estimator):
 
     with pytest.warns(FutureWarning, match="`loss_function_` was deprecated"):
         est.loss_function_
+
+
+# TODO(1.7): remove
+@pytest.mark.parametrize("Estimator", [SGDClassifier, SGDRegressor, SGDOneClassSVM])
+def test_passive_aggressive_deprecated_average(Estimator):
+    est = Estimator(average=0)
+    with pytest.warns(FutureWarning, match="average=0"):
+        est.fit(X, Y)
