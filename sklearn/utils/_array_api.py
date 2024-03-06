@@ -1,7 +1,8 @@
 """Tools to support array_api."""
+
 import itertools
 import math
-from functools import wraps
+from functools import lru_cache, wraps
 
 import numpy
 import scipy.special as special
@@ -9,11 +10,18 @@ import scipy.special as special
 from .._config import get_config
 from .fixes import parse_version
 
+_NUMPY_NAMESPACE_NAMES = {"numpy", "array_api_compat.numpy", "numpy.array_api"}
 
-def yield_namespace_device_dtype_combinations():
+
+def yield_namespace_device_dtype_combinations(include_numpy_namespaces=True):
     """Yield supported namespace, device, dtype tuples for testing.
 
     Use this to test that an estimator works with all combinations.
+
+    Parameters
+    ----------
+    include_numpy_namespaces : bool, default=True
+        If True, also yield numpy namespaces.
 
     Returns
     -------
@@ -40,6 +48,8 @@ def yield_namespace_device_dtype_combinations():
         "cupy.array_api",
         "torch",
     ]:
+        if not include_numpy_namespaces and array_namespace in _NUMPY_NAMESPACE_NAMES:
+            continue
         if array_namespace == "torch":
             for device, dtype in itertools.product(
                 ("cpu", "cuda"), ("float64", "float32")
@@ -74,22 +84,49 @@ def _check_array_api_dispatch(array_api_dispatch):
             )
 
 
-def device(x):
-    """Hardware device the array data resides on.
+def _single_array_device(array):
+    """Hardware device where the array data resides on."""
+    if isinstance(array, (numpy.ndarray, numpy.generic)) or not hasattr(
+        array, "device"
+    ):
+        return "cpu"
+    else:
+        return array.device
+
+
+def device(*array_list):
+    """Hardware device where the array data resides on.
+
+    If the hardware device is not the same for all arrays, an error is raised.
 
     Parameters
     ----------
-    x : array
-        Array instance from NumPy or an array API compatible library.
+    *array_list : arrays
+        List of array instances from NumPy or an array API compatible library.
 
     Returns
     -------
     out : device
         `device` object (see the "Device Support" section of the array API spec).
     """
-    if isinstance(x, (numpy.ndarray, numpy.generic)):
-        return "cpu"
-    return x.device
+    if not array_list:
+        raise ValueError("At least one input array expected, got none.")
+
+    device_ = _single_array_device(array_list[0])
+
+    # Note: here we cannot simply use a Python `set` as it requires
+    # hashable members which is not guaranteed for Array API device
+    # objects. In particular, CuPy devices are not hashable at the
+    # time of writing.
+    for array in array_list[1:]:
+        device_other = _single_array_device(array)
+        if device_ != device_other:
+            raise ValueError(
+                f"Input arrays use different devices: {str(device_)}, "
+                f"{str(device_other)}"
+            )
+
+    return device_
 
 
 def size(x):
@@ -110,7 +147,7 @@ def size(x):
 
 def _is_numpy_namespace(xp):
     """Return True if xp is backed by NumPy."""
-    return xp.__name__ in {"numpy", "array_api_compat.numpy", "numpy.array_api"}
+    return xp.__name__ in _NUMPY_NAMESPACE_NAMES
 
 
 def _union1d(a, b, xp):
@@ -132,14 +169,23 @@ def isdtype(dtype, kind, *, xp):
         return _isdtype_single(dtype, kind, xp=xp)
 
 
+def _match_dtype_names(dtype, dtype_names, xp):
+    return any(
+        hasattr(xp, dtype_name) and (dtype == getattr(xp, dtype_name))
+        for dtype_name in dtype_names
+    )
+
+
 def _isdtype_single(dtype, kind, *, xp):
     if isinstance(kind, str):
         if kind == "bool":
             return dtype == xp.bool
         elif kind == "signed integer":
-            return dtype in {xp.int8, xp.int16, xp.int32, xp.int64}
+            return _match_dtype_names(dtype, ["int8", "int16", "int32", "int64"], xp)
         elif kind == "unsigned integer":
-            return dtype in {xp.uint8, xp.uint16, xp.uint32, xp.uint64}
+            return _match_dtype_names(
+                dtype, ["uint8", "uint16", "uint32", "uint64"], xp
+            )
         elif kind == "integral":
             return any(
                 _isdtype_single(dtype, k, xp=xp)
@@ -167,8 +213,61 @@ def _isdtype_single(dtype, kind, *, xp):
         return dtype == kind
 
 
-def supported_float_dtypes(xp):
-    """Supported floating point types for the namespace
+class _HashableDevice:
+    """Some device inspection functions cache their results using a `lru_cache`
+    decorator, to enable fast repeated access. `lru_cache` derives the cache keys
+    by hashing the inputs. However the Array API does not enforces that the device
+    objects have to be hashable, and in practice it is sometimes not the case (e.g.
+    cupy cuda device object is not hashable). This class wraps the device to make
+    sure it is hashable, deriving a hash from `repr(device)`."""
+
+    def __init__(self, device, xp):
+        self.device = device
+        self.xp = xp
+
+    def __hash__(self):
+        device_name = repr(self.device) if self.device is not None else None
+        return hash((device_name, self.xp))
+
+
+def _supports_dtype(xp, device, dtype):
+    """Check if a given namespace/device/dtype combination is supported.
+
+    Note that some namespaces expose dtypes that can cause a failure at runtime
+    when trying to allocate an array with a specific device/dtype combination.
+
+    This is the case for the  Pytorch / mps / float64 combination:
+    at the time of writing, only float16/float32 arrays can be allocated on this
+    type of device.  Otherwise a `TypeError` would be raised.
+
+    This helper function can be refactored once an expressive enough inspection
+    API has been specified as part of the standard and implemented in the main
+    libraries:
+
+    https://github.com/data-apis/array-api/issues/640
+    """
+    return _supports_dtype_cached(xp, _HashableDevice(device, xp), dtype)
+
+
+@lru_cache
+def _supports_dtype_cached(xp, device, dtype):
+    if not hasattr(xp, dtype):
+        return False
+
+    dtype = getattr(xp, dtype)
+
+    try:
+        array = xp.ones((1,), device=device.device, dtype=dtype)
+        array += array
+        float(array[0])
+    except Exception:
+        return False
+
+    return True
+
+
+def supported_float_dtypes(xp, device=None):
+    """Supported floating point types for the namespace.
 
     Note: float16 is not officially part of the Array API spec at the
     time of writing but scikit-learn estimators and functions can choose
@@ -176,10 +275,16 @@ def supported_float_dtypes(xp):
 
     https://data-apis.org/array-api/latest/API_specification/data_types.html
     """
-    if hasattr(xp, "float16"):
-        return (xp.float64, xp.float32, xp.float16)
-    else:
-        return (xp.float64, xp.float32)
+    return _supported_float_dtypes_cached(xp, device=_HashableDevice(device, xp))
+
+
+@lru_cache
+def _supported_float_dtypes_cached(xp, device=None):
+    return tuple(
+        getattr(xp, dtype)
+        for dtype in ["float64", "float32", "float16"]
+        if _supports_dtype_cached(xp, device, dtype)
+    )
 
 
 class _ArrayAPIWrapper:
@@ -208,6 +313,9 @@ class _ArrayAPIWrapper:
     @property
     def newaxis(self):
         return None
+
+    def __hash__(self):
+        return hash((self._namespace, "_ArrayAPIWrapper"))
 
     def isdtype(self, dtype, kind):
         return isdtype(dtype, kind, xp=self._namespace)
@@ -402,7 +510,10 @@ def get_namespace(*arrays):
 
     # These namespaces need additional wrapping to smooth out small differences
     # between implementations
-    if namespace.__name__ in {"numpy.array_api", "cupy.array_api"}:
+    if namespace.__name__ in {
+        "numpy.array_api",
+        "cupy.array_api",
+    }:
         namespace = _ArrayAPIWrapper(namespace)
 
     return namespace, is_array_api_compliant
@@ -434,47 +545,107 @@ def _add_to_diagonal(array, value, xp):
             array[i, i] += value
 
 
-def _weighted_sum(sample_score, sample_weight, normalize=False, xp=None):
-    # XXX: this function accepts Array API input but returns a Python scalar
-    # float. The call to float() is convenient because it removes the need to
-    # move back results from device to host memory (e.g. calling `.cpu()` on a
-    # torch tensor). However, this might interact in unexpected ways (break?)
-    # with lazy Array API implementations. See:
-    # https://github.com/data-apis/array-api/issues/642
+def _average(a, axis=None, weights=None, normalize=True, xp=None):
+    """Partial port of np.average to support the Array API.
+
+    It does a best effort at mimicking the casting rules described at
+    https://numpy.org/doc/stable/reference/generated/numpy.average.html
+    and in particular will fall back to CPU if float64 conversion is
+    required but the input device only has float32 support.
+    """
+    input_arrays = [a]
+    if weights is not None:
+        input_arrays.append(weights)
+
     if xp is None:
-        xp, _ = get_namespace(sample_score)
-    if normalize and _is_numpy_namespace(xp):
-        sample_score_np = numpy.asarray(sample_score)
-        if sample_weight is not None:
-            sample_weight_np = numpy.asarray(sample_weight)
-        else:
-            sample_weight_np = None
-        return float(numpy.average(sample_score_np, weights=sample_weight_np))
+        xp, _ = get_namespace(*input_arrays)
 
-    if not xp.isdtype(sample_score.dtype, "real floating"):
-        # We move to cpu device ahead of time since certain devices may not support
-        # float64, but we want the same precision for all devices and namespaces.
-        sample_score = xp.astype(xp.asarray(sample_score, device="cpu"), xp.float64)
+    device_ = device(*input_arrays)
 
-    if sample_weight is not None:
-        sample_weight = xp.asarray(
-            sample_weight, dtype=sample_score.dtype, device=device(sample_score)
+    if _is_numpy_namespace(xp) and normalize:
+        return xp.asarray(numpy.average(a, axis=axis, weights=weights))
+
+    a = xp.asarray(a, device=device_)
+    if weights is not None:
+        weights = xp.asarray(weights, device=device_)
+
+    if weights is not None and a.shape != weights.shape:
+        if axis is None:
+            raise TypeError(
+                "Axis must be specified when shapes of a and weights differ."
+            )
+        if weights.ndim != 1:
+            raise TypeError("1D weights expected when shapes of a and weights differ.")
+
+        if size(weights) != a.shape[axis]:
+            raise ValueError("Length of weights not compatible with specified axis.")
+
+        # If weights are 1D, add singleton dimensions for broadcasting
+        shape = [1] * a.ndim
+        shape[axis] = a.shape[axis]
+        weights = xp.reshape(weights, shape)
+
+    output_dtype = None
+
+    if xp.isdtype(a.dtype, "bool"):
+        a = xp.astype(a, xp.int32)
+    if weights is not None and xp.isdtype(weights.dtype, "bool"):
+        weights = xp.astype(weights, xp.int32)
+
+    if any(
+        (
+            (input_array is not None)
+            and (
+                (not xp.isdtype(input_array.dtype, "numeric"))
+                or xp.isdtype(input_array.dtype, "complex floating")
+            )
         )
-        if not xp.isdtype(sample_weight.dtype, "real floating"):
-            sample_weight = xp.astype(sample_weight, xp.float64)
+        for input_array in [a, weights]
+    ):
+        raise ValueError("Expecting only boolean, integral or real floating values.")
 
-    if normalize:
-        if sample_weight is not None:
-            scale = xp.sum(sample_weight)
-        else:
-            scale = sample_score.shape[0]
-        if scale != 0:
-            sample_score = sample_score / scale
-
-    if sample_weight is not None:
-        return float(sample_score @ sample_weight)
+    if weights is None and xp.isdtype(a.dtype, "integral"):
+        output_dtype = xp.float64
+    elif weights is None:
+        output_dtype = a.dtype
+    elif xp.isdtype(a.dtype, "real floating") and xp.isdtype(
+        weights.dtype, "real floating"
+    ):
+        output_dtype = (
+            a.dtype
+            if (xp.finfo(a.dtype).bits >= xp.finfo(weights.dtype).bits)
+            else weights.dtype
+        )
     else:
-        return float(xp.sum(sample_score))
+        output_dtype = xp.float64
+
+    if (output_dtype == xp.float64) and not _supports_dtype(xp, device_, "float64"):
+        a = _convert_to_numpy(a, xp)
+        if weights is not None:
+            weights = _convert_to_numpy(weights, xp)
+        return xp.asarray(
+            _average(a, axis=axis, normalize=normalize, weights=weights),
+            dtype=xp.float32,
+            device=device_,
+        )
+
+    a = xp.astype(a, output_dtype)
+
+    if weights is None:
+        return (xp.mean if normalize else xp.sum)(a, axis=axis)
+
+    weights = xp.astype(weights, output_dtype)
+
+    sum_ = xp.sum(xp.multiply(a, weights), axis=axis)
+
+    if not normalize:
+        return sum_
+
+    scale = xp.sum(weights, axis=axis)
+    if xp.any(scale == 0.0):
+        raise ZeroDivisionError("Weights sum to zero, can't be normalized")
+
+    return sum_ / scale
 
 
 def _nanmin(X, axis=None, xp=None):

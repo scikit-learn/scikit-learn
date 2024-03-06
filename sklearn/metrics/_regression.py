@@ -34,6 +34,14 @@ import numpy as np
 from scipy.special import xlogy
 
 from ..exceptions import UndefinedMetricWarning
+from ..utils._array_api import (
+    _average,
+    _convert_to_numpy,
+    _supports_dtype,
+    device,
+    get_namespace,
+    supported_float_dtypes,
+)
 from ..utils._param_validation import Hidden, Interval, StrOptions, validate_params
 from ..utils.stats import _weighted_percentile
 from ..utils.validation import (
@@ -65,7 +73,7 @@ __ALL__ = [
 ]
 
 
-def _check_reg_targets(y_true, y_pred, multioutput, dtype="numeric"):
+def _check_reg_targets(y_true, y_pred, multioutput, dtype="numeric", xp=None):
     """Check that y_true and y_pred belong to the same regression task.
 
     Parameters
@@ -99,15 +107,22 @@ def _check_reg_targets(y_true, y_pred, multioutput, dtype="numeric"):
         just the corresponding argument if ``multioutput`` is a
         correct keyword.
     """
+    if xp is None:
+        input_arrays = [y_true, y_pred]
+        if multioutput is not None and not isinstance(multioutput, str):
+            input_arrays.append(multioutput)
+
+        xp, _ = get_namespace(*input_arrays)
+
     check_consistent_length(y_true, y_pred)
     y_true = check_array(y_true, ensure_2d=False, dtype=dtype)
     y_pred = check_array(y_pred, ensure_2d=False, dtype=dtype)
 
     if y_true.ndim == 1:
-        y_true = y_true.reshape((-1, 1))
+        y_true = xp.reshape(y_true, (-1, 1))
 
     if y_pred.ndim == 1:
-        y_pred = y_pred.reshape((-1, 1))
+        y_pred = xp.reshape(y_pred, (-1, 1))
 
     if y_true.shape[1] != y_pred.shape[1]:
         raise ValueError(
@@ -855,9 +870,10 @@ def median_absolute_error(
 
 
 def _assemble_r2_explained_variance(
-    numerator, denominator, n_outputs, multioutput, force_finite
+    numerator, denominator, n_outputs, multioutput, force_finite, xp, device
 ):
     """Common part used by explained variance score and :math:`R^2` score."""
+    dtype = numerator.dtype
 
     nonzero_denominator = denominator != 0
 
@@ -868,12 +884,14 @@ def _assemble_r2_explained_variance(
         nonzero_numerator = numerator != 0
         # Default = Zero Numerator = perfect predictions. Set to 1.0
         # (note: even if denominator is zero, thus avoiding NaN scores)
-        output_scores = np.ones([n_outputs])
+        output_scores = xp.ones([n_outputs], device=device, dtype=dtype)
         # Non-zero Numerator and Non-zero Denominator: use the formula
         valid_score = nonzero_denominator & nonzero_numerator
+
         output_scores[valid_score] = 1 - (
             numerator[valid_score] / denominator[valid_score]
         )
+
         # Non-zero Numerator and Zero Denominator:
         # arbitrary set to 0.0 to avoid -inf scores
         output_scores[nonzero_numerator & ~nonzero_denominator] = 0.0
@@ -887,7 +905,7 @@ def _assemble_r2_explained_variance(
             avg_weights = None
         elif multioutput == "variance_weighted":
             avg_weights = denominator
-            if not np.any(nonzero_denominator):
+            if not xp.any(nonzero_denominator):
                 # All weights are zero, np.average would raise a ZeroDiv error.
                 # This only happens when all y are constant (or 1-element long)
                 # Since weights are all equal, fall back to uniform weights.
@@ -895,7 +913,7 @@ def _assemble_r2_explained_variance(
     else:
         avg_weights = multioutput
 
-    return np.average(output_scores, weights=avg_weights)
+    return xp.reshape(_average(output_scores, weights=avg_weights), (-1,))[0]
 
 
 @validate_params(
@@ -1033,6 +1051,8 @@ def explained_variance_score(
         n_outputs=y_true.shape[1],
         multioutput=multioutput,
         force_finite=force_finite,
+        xp=get_namespace(y_true)[0],
+        device=None,
     )
 
 
@@ -1177,8 +1197,34 @@ def r2_score(
     >>> r2_score(y_true, y_pred, force_finite=False)
     -inf
     """
-    y_type, y_true, y_pred, multioutput = _check_reg_targets(
-        y_true, y_pred, multioutput
+    input_arrays = [y_true, y_pred]
+    if sample_weight is not None:
+        input_arrays.append(sample_weight)
+
+    multioutput_is_array = multioutput is not None and not isinstance(multioutput, str)
+    if multioutput_is_array:
+        input_arrays.append(multioutput)
+
+    xp, is_array_api_compliant = get_namespace(*input_arrays)
+    input_xp = xp
+    device_ = device(*input_arrays)
+
+    if not _supports_dtype(xp, device_, "float64"):
+        y_true = _convert_to_numpy(y_true, xp)
+        y_pred = _convert_to_numpy(y_pred, xp)
+        if sample_weight is not None:
+            sample_weight = _convert_to_numpy(sample_weight, xp)
+        if multioutput_is_array:
+            multioutput = _convert_to_numpy(multioutput, xp)
+        xp, _ = get_namespace(y_true)
+        device_ = device(y_true)
+
+    dtype = (
+        "numeric" if not is_array_api_compliant else supported_float_dtypes(xp, device_)
+    )
+
+    _, y_true, y_pred, multioutput = _check_reg_targets(
+        y_true, y_pred, multioutput, dtype=dtype, xp=xp
     )
     check_consistent_length(y_true, y_pred, sample_weight)
 
@@ -1188,23 +1234,33 @@ def r2_score(
         return float("nan")
 
     if sample_weight is not None:
-        sample_weight = column_or_1d(sample_weight)
-        weight = sample_weight[:, np.newaxis]
+        sample_weight = column_or_1d(sample_weight, dtype=dtype)
+        weight = sample_weight[:, None]
     else:
-        weight = 1.0
+        weight = 1
 
-    numerator = (weight * (y_true - y_pred) ** 2).sum(axis=0, dtype=np.float64)
-    denominator = (
-        weight * (y_true - np.average(y_true, axis=0, weights=sample_weight)) ** 2
-    ).sum(axis=0, dtype=np.float64)
+    numerator = xp.sum(weight * (y_true - y_pred) ** 2, axis=0, dtype=xp.float64)
+    denominator = xp.sum(
+        weight * (y_true - _average(y_true, axis=0, weights=sample_weight, xp=xp)) ** 2,
+        axis=0,
+        dtype=xp.float64,
+    )
 
-    return _assemble_r2_explained_variance(
+    result = _assemble_r2_explained_variance(
         numerator=numerator,
         denominator=denominator,
         n_outputs=y_true.shape[1],
         multioutput=multioutput,
         force_finite=force_finite,
+        xp=xp,
+        device=device_,
     )
+
+    result = input_xp.asarray(result, device=device_)
+    if result.size == 1:
+        return xp.reshape(result, (-1,))[0]
+
+    return result
 
 
 @validate_params(
