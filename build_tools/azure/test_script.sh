@@ -50,7 +50,7 @@ fi
 
 if [[ "$PYTEST_XDIST_VERSION" != "none" ]]; then
     XDIST_WORKERS=$(python -c "import joblib; print(joblib.cpu_count(only_physical_cores=True))")
-    TEST_CMD="$TEST_CMD"
+    TEST_CMD="$TEST_CMD -n$XDIST_WORKERS"
 fi
 
 if [[ -n "$SELECTED_TESTS" ]]; then
@@ -61,5 +61,5 @@ if [[ -n "$SELECTED_TESTS" ]]; then
 fi
 
 set -x
-eval "$TEST_CMD -x --pyargs sklearn"
+eval "$TEST_CMD --maxfail=10 --pyargs sklearn"
 set +x
