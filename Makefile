@@ -23,18 +23,31 @@ in: inplace # just a shortcut
 inplace:
 	$(PYTHON) setup.py build_ext -i
 
+dev-meson:
+	# Temporary script to try the experimental meson build. Once meson is
+	# accepted as the default build tool, this will go away.
+	python build_tools/build-meson-editable-install.py
+
+clean-meson:
+	pip uninstall -y scikit-learn
+
 test-code: in
-	$(PYTEST) --showlocals -v sklearn
+	$(PYTEST) --showlocals -v sklearn --durations=20
 test-sphinxext:
 	$(PYTEST) --showlocals -v doc/sphinxext/
 test-doc:
 ifeq ($(BITS),64)
 	$(PYTEST) $(shell find doc -name '*.rst' | sort)
 endif
+test-code-parallel: in
+	$(PYTEST) -n auto --showlocals -v sklearn --durations=20
 
 test-coverage:
 	rm -rf coverage .coverage
 	$(PYTEST) sklearn --showlocals -v --cov=sklearn --cov-report=html:coverage
+test-coverage-parallel:
+	rm -rf coverage .coverage .coverage.*
+	$(PYTEST) sklearn -n auto --showlocals -v --cov=sklearn --cov-report=html:coverage
 
 test: test-code test-sphinxext test-doc
 
@@ -56,8 +69,4 @@ doc-noplot: inplace
 	$(MAKE) -C doc html-noplot
 
 code-analysis:
-	flake8 sklearn | grep -v __init__ | grep -v external
-	pylint -E -i y sklearn/ -d E1103,E0611,E1101
-
-flake8-diff:
-	./build_tools/travis/flake8_diff.sh
+	build_tools/linting.sh

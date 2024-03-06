@@ -1,9 +1,11 @@
 .. raw:: html
 
-   <SCRIPT>
+   <script>
+   window.addEventListener('DOMContentLoaded', function() {
+        (function($) {
    //Function to make the index toctree collapsible
    $(function () {
-       $('.toctree-l2')
+       $('div.body .toctree-l2')
            .click(function(event){
                if (event.target.tagName.toLowerCase() != "a") {
                    if ($(this).children('ul').length > 0) {
@@ -17,14 +19,14 @@
            .mousedown(function(event){ return false; }) //Firefox highlighting fix
            .children('ul').hide();
        // Initialize the values
-       $('li.toctree-l2:not(:has(ul))').attr('data-content', '-');
-       $('li.toctree-l2:has(ul)').attr('data-content', '\u25ba');
-       $('li.toctree-l2:has(ul)').css('cursor', 'pointer');
+       $('div.body li.toctree-l2:not(:has(ul))').attr('data-content', '-');
+       $('div.body li.toctree-l2:has(ul)').attr('data-content', '\u25ba');
+       $('div.body li.toctree-l2:has(ul)').css('cursor', 'pointer');
 
-       $('.toctree-l2').hover(
+       $('div.body .toctree-l2').hover(
            function () {
                if ($(this).children('ul').length > 0) {
-                   $(this).css('background-color', '#D0D0D0').children('ul').css('background-color', '#F0F0F0');
+                   $(this).css('background-color', '#e5e5e5').children('ul').css('background-color', '#F0F0F0');
                    $(this).attr('data-content',
                        (!$(this).children('ul').is(':hidden')) ? '\u25bc' : '\u25ba');
                }
@@ -41,28 +43,19 @@
            }
        );
    });
-
-   </SCRIPT>
+        })(jQuery);
+    });
+   </script>
 
   <style type="text/css">
-    div.bodywrapper blockquote {
-        margin: 0 ;
-    }
-
-    div.toctree-wrapper ul {
-        margin: 0 ;
-        padding-left: 0px ;
-    }
-
-    li, ul {
+    div.body li, div.body ul {
         transition-duration: 0.2s;
     }
 
-    li.toctree-l1 {
+    div.body li.toctree-l1 {
         padding: 5px 0 0;
         list-style-type: none;
-        font-size: 150% ;
-        font-family: Arial, sans-serif;
+        font-size: 150%;
         background-color: #f2f2f2;
         font-weight: normal;
         color: #20435c;
@@ -71,45 +64,50 @@
         font-weight: bold;
         }
 
-    li.toctree-l1 a {
-        padding: 0 0 0 10px ;
-        color: #314F64 ;
+    div.body li.toctree-l1 a {
+        color: #314F64;
     }
 
-    li.toctree-l2 {
+    div.body li.toctree-l1 > a {
+        margin-left: 0.75rem;
+    }
+
+    div.body li.toctree-l2 {
         padding: 0.25em 0 0.25em 0 ;
         list-style-type: none;
         background-color: #FFFFFF;
         font-size: 85% ;
         font-weight: normal;
+        margin-left: 0;
     }
 
-    li.toctree-l2 ul {
+    div.body li.toctree-l2 ul {
         padding-left: 40px ;
     }
 
-
-    li.toctree-l2:before {
-        content: attr(data-content) ;
-        font-size: 85% ;
-        color: #777 ;
+    div.body li.toctree-l2:before {
+        content: attr(data-content);
+        font-size: 1rem;
+        color: #777;
         display: inline-block;
-        width: 10px;
+        width: 1.5rem;
     }
 
-    li.toctree-l3 {
+    div.body li.toctree-l3 {
         font-size: 88% ;
         list-style-type: square;
         font-weight: normal;
+        margin-left: 0;
     }
 
-    li.toctree-l4 {
+    div.body li.toctree-l4 {
         font-size: 93% ;
         list-style-type: circle;
         font-weight: normal;
+        margin-left: 0;
     }
 
-    div.topic li.toctree-l1 {
+    div.body div.topic li.toctree-l1 {
         font-size: 100% ;
         font-weight: bold;
         background-color: transparent;
@@ -118,21 +116,16 @@
         display:inline;
     }
 
-    div.topic p {
+    div.body div.topic p {
         font-size: 90% ;
         margin: 0.4ex;
     }
 
-    div.topic p.topic-title {
+    div.body div.topic p.topic-title {
         display:inline;
         font-size: 100% ;
         margin-bottom: 0;
     }
-
-    div.sidebar {
-        width: 25ex ;
-    }
-
   </style>
 
 

@@ -5,19 +5,13 @@
 # pool at each step.
 
 import numpy as np
-cimport numpy as np
-cimport cython
-
-ctypedef np.float64_t DOUBLE
+from cython cimport floating
 
 
-@cython.boundscheck(False)
-@cython.wraparound(False)
-@cython.cdivision(True)
-def _inplace_contiguous_isotonic_regression(DOUBLE[::1] y, DOUBLE[::1] w):
+def _inplace_contiguous_isotonic_regression(floating[::1] y, floating[::1] w):
     cdef:
         Py_ssize_t n = y.shape[0], i, k
-        DOUBLE prev_y, sum_wy, sum_w
+        floating prev_y, sum_wy, sum_w
         Py_ssize_t[::1] target = np.arange(n, dtype=np.intp)
 
     # target describes a list of blocks.  At any time, if [i..j] (inclusive) is
@@ -65,12 +59,9 @@ def _inplace_contiguous_isotonic_regression(DOUBLE[::1] y, DOUBLE[::1] w):
             i = k
 
 
-@cython.boundscheck(False)
-@cython.wraparound(False)
-@cython.cdivision(True)
-def _make_unique(np.ndarray[dtype=np.float64_t] X,
-                 np.ndarray[dtype=np.float64_t] y,
-                 np.ndarray[dtype=np.float64_t] sample_weights):
+def _make_unique(const floating[::1] X,
+                 const floating[::1] y,
+                 const floating[::1] sample_weights):
     """Average targets for duplicate X, drop duplicates.
 
     Aggregates duplicate X values into a single X value where
@@ -80,24 +71,28 @@ def _make_unique(np.ndarray[dtype=np.float64_t] X,
     Assumes that X is ordered, so that all duplicates follow each other.
     """
     unique_values = len(np.unique(X))
-    if unique_values == len(X):
-        return X, y, sample_weights
-    cdef np.ndarray[dtype=np.float64_t] y_out = np.empty(unique_values)
-    cdef np.ndarray[dtype=np.float64_t] x_out = np.empty(unique_values)
-    cdef np.ndarray[dtype=np.float64_t] weights_out = np.empty(unique_values)
 
-    cdef np.float64_t current_x = X[0]
-    cdef np.float64_t current_y = 0
-    cdef np.float64_t current_weight = 0
-    cdef np.float64_t y_old = 0
+    if floating is float:
+        dtype = np.float32
+    else:
+        dtype = np.float64
+
+    cdef floating[::1] y_out = np.empty(unique_values, dtype=dtype)
+    cdef floating[::1] x_out = np.empty_like(y_out)
+    cdef floating[::1] weights_out = np.empty_like(y_out)
+
+    cdef floating current_x = X[0]
+    cdef floating current_y = 0
+    cdef floating current_weight = 0
     cdef int i = 0
-    cdef int current_count = 0
     cdef int j
-    cdef np.float64_t x
+    cdef floating x
     cdef int n_samples = len(X)
+    cdef floating eps = np.finfo(dtype).resolution
+
     for j in range(n_samples):
         x = X[j]
-        if x != current_x:
+        if x - current_x >= eps:
             # next unique value
             x_out[i] = current_x
             weights_out[i] = current_weight
@@ -106,13 +101,15 @@ def _make_unique(np.ndarray[dtype=np.float64_t] X,
             current_x = x
             current_weight = sample_weights[j]
             current_y = y[j] * sample_weights[j]
-            current_count = 1
         else:
             current_weight += sample_weights[j]
             current_y += y[j] * sample_weights[j]
-            current_count += 1
 
     x_out[i] = current_x
     weights_out[i] = current_weight
     y_out[i] = current_y / current_weight
-    return x_out, y_out, weights_out
+    return(
+        np.asarray(x_out[:i+1]),
+        np.asarray(y_out[:i+1]),
+        np.asarray(weights_out[:i+1]),
+    )

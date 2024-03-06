@@ -3,29 +3,40 @@ The :mod:`sklearn.neighbors` module implements the k-nearest neighbors
 algorithm.
 """
 
-from .ball_tree import BallTree
-from .kd_tree import KDTree
-from .dist_metrics import DistanceMetric
-from .graph import kneighbors_graph, radius_neighbors_graph
-from .unsupervised import NearestNeighbors
-from .classification import KNeighborsClassifier, RadiusNeighborsClassifier
-from .regression import KNeighborsRegressor, RadiusNeighborsRegressor
-from .nearest_centroid import NearestCentroid
-from .kde import KernelDensity
-from .approximate import LSHForest
-from .lof import LocalOutlierFactor
+from ._ball_tree import BallTree
+from ._base import VALID_METRICS, VALID_METRICS_SPARSE, sort_graph_by_row_values
+from ._classification import KNeighborsClassifier, RadiusNeighborsClassifier
+from ._graph import (
+    KNeighborsTransformer,
+    RadiusNeighborsTransformer,
+    kneighbors_graph,
+    radius_neighbors_graph,
+)
+from ._kd_tree import KDTree
+from ._kde import KernelDensity
+from ._lof import LocalOutlierFactor
+from ._nca import NeighborhoodComponentsAnalysis
+from ._nearest_centroid import NearestCentroid
+from ._regression import KNeighborsRegressor, RadiusNeighborsRegressor
+from ._unsupervised import NearestNeighbors
 
-__all__ = ['BallTree',
-           'DistanceMetric',
-           'KDTree',
-           'KNeighborsClassifier',
-           'KNeighborsRegressor',
-           'NearestCentroid',
-           'NearestNeighbors',
-           'RadiusNeighborsClassifier',
-           'RadiusNeighborsRegressor',
-           'kneighbors_graph',
-           'radius_neighbors_graph',
-           'KernelDensity',
-           'LSHForest',
-           'LocalOutlierFactor']
+__all__ = [
+    "BallTree",
+    "KDTree",
+    "KNeighborsClassifier",
+    "KNeighborsRegressor",
+    "KNeighborsTransformer",
+    "NearestCentroid",
+    "NearestNeighbors",
+    "RadiusNeighborsClassifier",
+    "RadiusNeighborsRegressor",
+    "RadiusNeighborsTransformer",
+    "kneighbors_graph",
+    "radius_neighbors_graph",
+    "KernelDensity",
+    "LocalOutlierFactor",
+    "NeighborhoodComponentsAnalysis",
+    "sort_graph_by_row_values",
+    "VALID_METRICS",
+    "VALID_METRICS_SPARSE",
+]

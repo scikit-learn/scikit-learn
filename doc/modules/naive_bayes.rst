@@ -8,17 +8,18 @@ Naive Bayes
 
 
 Naive Bayes methods are a set of supervised learning algorithms
-based on applying Bayes' theorem with the "naive" assumption of independence
-between every pair of features. Given a class variable :math:`y` and a
-dependent feature vector :math:`x_1` through :math:`x_n`,
-Bayes' theorem states the following relationship:
+based on applying Bayes' theorem with the "naive" assumption of
+conditional independence between every pair of features given the
+value of the class variable. Bayes' theorem states the following
+relationship, given class variable :math:`y` and dependent feature
+vector :math:`x_1` through :math:`x_n`, :
 
 .. math::
 
-   P(y \mid x_1, \dots, x_n) = \frac{P(y) P(x_1, \dots x_n \mid y)}
+   P(y \mid x_1, \dots, x_n) = \frac{P(y) P(x_1, \dots, x_n \mid y)}
                                     {P(x_1, \dots, x_n)}
 
-Using the naive independence assumption that
+Using the naive conditional independence assumption that
 
 .. math::
 
@@ -68,11 +69,15 @@ On the flip side, although naive Bayes is known as a decent classifier,
 it is known to be a bad estimator, so the probability outputs from
 ``predict_proba`` are not to be taken too seriously.
 
-.. topic:: References:
+|details-start|
+**References**
+|details-split|
 
- * H. Zhang (2004). `The optimality of Naive Bayes.
-   <http://www.cs.unb.ca/~hzhang/publications/FLAIRS04ZhangH.pdf>`_
-   Proc. FLAIRS.
+* H. Zhang (2004). `The optimality of Naive Bayes.
+  <https://www.cs.unb.ca/~hzhang/publications/FLAIRS04ZhangH.pdf>`_
+  Proc. FLAIRS.
+
+|details-end|
 
 .. _gaussian_naive_bayes:
 
@@ -84,19 +89,21 @@ classification. The likelihood of the features is assumed to be Gaussian:
 
 .. math::
 
-   P(x_i \mid y) &= \frac{1}{\sqrt{2\pi\sigma^2_y}} \exp\left(-\frac{(x_i - \mu_y)^2}{2\sigma^2_y}\right)
+   P(x_i \mid y) = \frac{1}{\sqrt{2\pi\sigma^2_y}} \exp\left(-\frac{(x_i - \mu_y)^2}{2\sigma^2_y}\right)
 
 The parameters :math:`\sigma_y` and :math:`\mu_y`
 are estimated using maximum likelihood.
 
-    >>> from sklearn import datasets
-    >>> iris = datasets.load_iris()
-    >>> from sklearn.naive_bayes import GaussianNB
-    >>> gnb = GaussianNB()
-    >>> y_pred = gnb.fit(iris.data, iris.target).predict(iris.data)
-    >>> print("Number of mislabeled points out of a total %d points : %d"
-    ...       % (iris.data.shape[0],(iris.target != y_pred).sum()))
-    Number of mislabeled points out of a total 150 points : 6
+   >>> from sklearn.datasets import load_iris
+   >>> from sklearn.model_selection import train_test_split
+   >>> from sklearn.naive_bayes import GaussianNB
+   >>> X, y = load_iris(return_X_y=True)
+   >>> X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.5, random_state=0)
+   >>> gnb = GaussianNB()
+   >>> y_pred = gnb.fit(X_train, y_train).predict(X_test)
+   >>> print("Number of mislabeled points out of a total %d points : %d"
+   ...       % (X_test.shape[0], (y_test != y_pred).sum()))
+   Number of mislabeled points out of a total 75 points : 4
 
 .. _multinomial_naive_bayes:
 
@@ -124,7 +131,7 @@ version of maximum likelihood, i.e. relative frequency counting:
 where :math:`N_{yi} = \sum_{x \in T} x_i` is
 the number of times feature :math:`i` appears in a sample of class :math:`y`
 in the training set :math:`T`,
-and :math:`N_{y} = \sum_{i=1}^{|T|} N_{yi}` is the total count of
+and :math:`N_{y} = \sum_{i=1}^{n} N_{yi}` is the total count of
 all features for class :math:`y`.
 
 The smoothing priors :math:`\alpha \ge 0` accounts for
@@ -144,8 +151,13 @@ that is particularly suited for imbalanced data sets. Specifically, CNB uses
 statistics from the *complement* of each class to compute the model's weights.
 The inventors of CNB show empirically that the parameter estimates for CNB are
 more stable than those for MNB. Further, CNB regularly outperforms MNB (often
-by a considerable margin) on text classification tasks. The procedure for
-calculating the weights is as follows:
+by a considerable margin) on text classification tasks.
+
+|details-start|
+**Weights calculation**
+|details-split|
+
+The procedure for calculating the weights is as follows:
 
 .. math::
 
@@ -170,12 +182,18 @@ classification rule is:
 i.e., a document is assigned to the class that is the *poorest* complement
 match.
 
-.. topic:: References:
+|details-end|
 
- * Rennie, J. D., Shih, L., Teevan, J., & Karger, D. R. (2003).
-   `Tackling the poor assumptions of naive bayes text classifiers.
-   <http://people.csail.mit.edu/jrennie/papers/icml03-nb.pdf>`_
-   In ICML (Vol. 3, pp. 616-623).
+|details-start|
+**References**
+|details-split|
+
+* Rennie, J. D., Shih, L., Teevan, J., & Karger, D. R. (2003).
+  `Tackling the poor assumptions of naive bayes text classifiers.
+  <https://people.csail.mit.edu/jrennie/papers/icml03-nb.pdf>`_
+  In ICML (Vol. 3, pp. 616-623).
+
+|details-end|
 
 .. _bernoulli_naive_bayes:
 
@@ -187,14 +205,14 @@ algorithms for data that is distributed according to multivariate Bernoulli
 distributions; i.e., there may be multiple features but each one is assumed
 to be a binary-valued (Bernoulli, boolean) variable.
 Therefore, this class requires samples to be represented as binary-valued
-feature vectors; if handed any other kind of data, a ``BernoulliNB`` instance
+feature vectors; if handed any other kind of data, a :class:`BernoulliNB` instance
 may binarize its input (depending on the ``binarize`` parameter).
 
 The decision rule for Bernoulli naive Bayes is based on
 
 .. math::
 
-    P(x_i \mid y) = P(i \mid y) x_i + (1 - P(i \mid y)) (1 - x_i)
+    P(x_i \mid y) = P(x_i = 1 \mid y) x_i + (1 - P(x_i = 1 \mid y)) (1 - x_i)
 
 which differs from multinomial NB's rule
 in that it explicitly penalizes the non-occurrence of a feature :math:`i`
@@ -202,25 +220,69 @@ that is an indicator for class :math:`y`,
 where the multinomial variant would simply ignore a non-occurring feature.
 
 In the case of text classification, word occurrence vectors (rather than word
-count vectors) may be used to train and use this classifier. ``BernoulliNB``
+count vectors) may be used to train and use this classifier. :class:`BernoulliNB`
 might perform better on some datasets, especially those with shorter documents.
 It is advisable to evaluate both models, if time permits.
 
-.. topic:: References:
+|details-start|
+**References**
+|details-split|
 
- * C.D. Manning, P. Raghavan and H. Schütze (2008). Introduction to
-   Information Retrieval. Cambridge University Press, pp. 234-265.
+* C.D. Manning, P. Raghavan and H. Schütze (2008). Introduction to
+  Information Retrieval. Cambridge University Press, pp. 234-265.
 
- * A. McCallum and K. Nigam (1998).
-   `A comparison of event models for Naive Bayes text classification.
-   <http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.46.1529>`_
-   Proc. AAAI/ICML-98 Workshop on Learning for Text Categorization, pp. 41-48.
+* A. McCallum and K. Nigam (1998).
+  `A comparison of event models for Naive Bayes text classification.
+  <https://citeseerx.ist.psu.edu/doc_view/pid/04ce064505b1635583fa0d9cc07cac7e9ea993cc>`_
+  Proc. AAAI/ICML-98 Workshop on Learning for Text Categorization, pp. 41-48.
 
- * V. Metsis, I. Androutsopoulos and G. Paliouras (2006).
-   `Spam filtering with Naive Bayes -- Which Naive Bayes?
-   <http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.61.5542>`_
-   3rd Conf. on Email and Anti-Spam (CEAS).
+* V. Metsis, I. Androutsopoulos and G. Paliouras (2006).
+  `Spam filtering with Naive Bayes -- Which Naive Bayes?
+  <https://citeseerx.ist.psu.edu/doc_view/pid/8bd0934b366b539ec95e683ae39f8abb29ccc757>`_
+  3rd Conf. on Email and Anti-Spam (CEAS).
 
+|details-end|
+
+.. _categorical_naive_bayes:
+
+Categorical Naive Bayes
+-----------------------
+
+:class:`CategoricalNB` implements the categorical naive Bayes
+algorithm for categorically distributed data. It assumes that each feature,
+which is described by the index :math:`i`, has its own categorical
+distribution.
+
+For each feature :math:`i` in the training set :math:`X`,
+:class:`CategoricalNB` estimates a categorical distribution for each feature i
+of X conditioned on the class y. The index set of the samples is defined as
+:math:`J = \{ 1, \dots, m \}`, with :math:`m` as the number of samples.
+
+|details-start|
+**Probability calculation**
+|details-split|
+
+The probability of category :math:`t` in feature :math:`i` given class
+:math:`c` is estimated as:
+
+.. math::
+
+    P(x_i = t \mid y = c \: ;\, \alpha) = \frac{ N_{tic} + \alpha}{N_{c} +
+                                           \alpha n_i},
+
+where :math:`N_{tic} = |\{j \in J \mid x_{ij} = t, y_j = c\}|` is the number
+of times category :math:`t` appears in the samples :math:`x_{i}`, which belong
+to class :math:`c`, :math:`N_{c} = |\{ j \in J\mid y_j = c\}|` is the number
+of samples with class c, :math:`\alpha` is a smoothing parameter and
+:math:`n_i` is the number of available categories of feature :math:`i`.
+
+|details-end|
+
+:class:`CategoricalNB` assumes that the sample matrix :math:`X` is encoded (for
+instance with the help of :class:`~sklearn.preprocessing.OrdinalEncoder`) such
+that all categories for each feature :math:`i` are represented with numbers
+:math:`0, ..., n_i - 1` where :math:`n_i` is the number of available categories
+of feature :math:`i`.
 
 Out-of-core naive Bayes model fitting
 -------------------------------------

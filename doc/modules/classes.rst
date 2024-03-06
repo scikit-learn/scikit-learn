@@ -10,6 +10,23 @@ function raw specifications may not be enough to give full guidelines on their
 uses.
 For reference on concepts repeated across the API, see :ref:`glossary`.
 
+:mod:`sklearn`: Settings and information tools
+==============================================
+
+.. automodule:: sklearn
+    :no-members:
+    :no-inherited-members:
+
+.. currentmodule:: sklearn
+
+.. autosummary::
+   :toctree: generated/
+   :template: function.rst
+
+   config_context
+   get_config
+   set_config
+   show_versions
 
 :mod:`sklearn.base`: Base classes and utility functions
 =======================================================
@@ -23,6 +40,7 @@ Base classes
 .. currentmodule:: sklearn
 
 .. autosummary::
+   :nosignatures:
    :toctree: generated/
    :template: class.rst
 
@@ -33,6 +51,11 @@ Base classes
    base.DensityMixin
    base.RegressorMixin
    base.TransformerMixin
+   base.MetaEstimatorMixin
+   base.OneToOneFeatureMixin
+   base.OutlierMixin
+   base.ClassNamePrefixFeaturesOutMixin
+   feature_selection.SelectorMixin
 
 Functions
 ---------
@@ -45,9 +68,6 @@ Functions
    base.clone
    base.is_classifier
    base.is_regressor
-   config_context
-   get_config
-   set_config
 
 .. _calibration_ref:
 
@@ -84,7 +104,8 @@ Functions
    :no-members:
    :no-inherited-members:
 
-**User guide:** See the :ref:`clustering` section for further details.
+**User guide:** See the :ref:`clustering` and :ref:`biclustering` sections for
+further details.
 
 Classes
 -------
@@ -98,11 +119,16 @@ Classes
    cluster.AgglomerativeClustering
    cluster.Birch
    cluster.DBSCAN
+   cluster.HDBSCAN
    cluster.FeatureAgglomeration
    cluster.KMeans
+   cluster.BisectingKMeans
    cluster.MiniBatchKMeans
    cluster.MeanShift
+   cluster.OPTICS
    cluster.SpectralClustering
+   cluster.SpectralBiclustering
+   cluster.SpectralCoclustering
 
 Functions
 ---------
@@ -111,34 +137,44 @@ Functions
    :template: function.rst
 
    cluster.affinity_propagation
+   cluster.cluster_optics_dbscan
+   cluster.cluster_optics_xi
+   cluster.compute_optics_graph
    cluster.dbscan
    cluster.estimate_bandwidth
    cluster.k_means
+   cluster.kmeans_plusplus
    cluster.mean_shift
    cluster.spectral_clustering
    cluster.ward_tree
 
-.. _bicluster_ref:
+.. _compose_ref:
 
-:mod:`sklearn.cluster.bicluster`: Biclustering
-==============================================
+:mod:`sklearn.compose`: Composite Estimators
+============================================
 
-.. automodule:: sklearn.cluster.bicluster
+.. automodule:: sklearn.compose
    :no-members:
    :no-inherited-members:
 
-**User guide:** See the :ref:`biclustering` section for further details.
+**User guide:** See the :ref:`combining_estimators` section for further
+details.
 
-Classes
--------
-.. currentmodule:: sklearn.cluster.bicluster
+.. currentmodule:: sklearn
+
+.. autosummary::
+    :toctree: generated/
+    :template: class.rst
+
+    compose.ColumnTransformer
+    compose.TransformedTargetRegressor
 
 .. autosummary::
    :toctree: generated/
-   :template: class.rst
+   :template: function.rst
 
-   SpectralBiclustering
-   SpectralCoclustering
+   compose.make_column_transformer
+   compose.make_column_selector
 
 .. _covariance_ref:
 
@@ -159,8 +195,8 @@ Classes
 
    covariance.EmpiricalCovariance
    covariance.EllipticEnvelope
-   covariance.GraphLasso
-   covariance.GraphLassoCV
+   covariance.GraphicalLasso
+   covariance.GraphicalLassoCV
    covariance.LedoitWolf
    covariance.MinCovDet
    covariance.OAS
@@ -171,8 +207,9 @@ Classes
    :template: function.rst
 
    covariance.empirical_covariance
-   covariance.graph_lasso
+   covariance.graphical_lasso
    covariance.ledoit_wolf
+   covariance.ledoit_wolf_shrinkage
    covariance.oas
    covariance.shrunk_covariance
 
@@ -227,25 +264,22 @@ Loaders
    datasets.fetch_kddcup99
    datasets.fetch_lfw_pairs
    datasets.fetch_lfw_people
-   datasets.fetch_mldata
    datasets.fetch_olivetti_faces
+   datasets.fetch_openml
    datasets.fetch_rcv1
    datasets.fetch_species_distributions
    datasets.get_data_home
-   datasets.load_boston
    datasets.load_breast_cancer
    datasets.load_diabetes
    datasets.load_digits
    datasets.load_files
    datasets.load_iris
    datasets.load_linnerud
-   datasets.load_mlcomp
    datasets.load_sample_image
    datasets.load_sample_images
    datasets.load_svmlight_file
    datasets.load_svmlight_files
    datasets.load_wine
-   datasets.mldata_filename
 
 Samples generator
 -----------------
@@ -304,6 +338,7 @@ Samples generator
    decomposition.MiniBatchDictionaryLearning
    decomposition.MiniBatchSparsePCA
    decomposition.NMF
+   decomposition.MiniBatchNMF
    decomposition.PCA
    decomposition.SparsePCA
    decomposition.SparseCoder
@@ -316,6 +351,7 @@ Samples generator
    decomposition.dict_learning
    decomposition.dict_learning_online
    decomposition.fastica
+   decomposition.non_negative_factorization
    decomposition.sparse_encode
 
 .. _lda_ref:
@@ -332,7 +368,7 @@ Samples generator
 .. currentmodule:: sklearn
 
 .. autosummary::
-   :toctree: generated
+   :toctree: generated/
    :template: class.rst
 
    discriminant_analysis.LinearDiscriminantAnalysis
@@ -391,28 +427,17 @@ Samples generator
    ensemble.RandomForestClassifier
    ensemble.RandomForestRegressor
    ensemble.RandomTreesEmbedding
+   ensemble.StackingClassifier
+   ensemble.StackingRegressor
    ensemble.VotingClassifier
+   ensemble.VotingRegressor
+   ensemble.HistGradientBoostingRegressor
+   ensemble.HistGradientBoostingClassifier
+
 
 .. autosummary::
    :toctree: generated/
    :template: function.rst
-
-
-partial dependence
-------------------
-
-.. automodule:: sklearn.ensemble.partial_dependence
-   :no-members:
-   :no-inherited-members:
-
-.. currentmodule:: sklearn
-
-.. autosummary::
-   :toctree: generated/
-   :template: function.rst
-
-   ensemble.partial_dependence.partial_dependence
-   ensemble.partial_dependence.plot_partial_dependence
 
 
 .. _exceptions_ref:
@@ -428,17 +453,33 @@ partial dependence
 
 .. autosummary::
    :toctree: generated/
-   :template: class_without_init.rst
+   :template: class.rst
 
-   exceptions.ChangedBehaviorWarning
    exceptions.ConvergenceWarning
    exceptions.DataConversionWarning
    exceptions.DataDimensionalityWarning
    exceptions.EfficiencyWarning
    exceptions.FitFailedWarning
+   exceptions.InconsistentVersionWarning
    exceptions.NotFittedError
-   exceptions.NonBLASDotWarning
    exceptions.UndefinedMetricWarning
+
+
+:mod:`sklearn.experimental`: Experimental
+=========================================
+
+.. automodule:: sklearn.experimental
+   :no-members:
+   :no-inherited-members:
+
+.. currentmodule:: sklearn
+
+.. autosummary::
+   :toctree: generated/
+
+   experimental.enable_iterative_imputer
+   experimental.enable_halving_search_cv
+
 
 .. _feature_extraction_ref:
 
@@ -527,6 +568,7 @@ From text
    feature_selection.SelectFdr
    feature_selection.SelectFromModel
    feature_selection.SelectFwe
+   feature_selection.SequentialFeatureSelector
    feature_selection.RFE
    feature_selection.RFECV
    feature_selection.VarianceThreshold
@@ -538,6 +580,7 @@ From text
    feature_selection.chi2
    feature_selection.f_classif
    feature_selection.f_regression
+   feature_selection.r_regression
    feature_selection.mutual_info_classif
    feature_selection.mutual_info_regression
 
@@ -562,7 +605,14 @@ From text
   gaussian_process.GaussianProcessClassifier
   gaussian_process.GaussianProcessRegressor
 
-Kernels:
+Kernels
+-------
+
+.. automodule:: sklearn.gaussian_process.kernels
+   :no-members:
+   :no-inherited-members:
+
+.. currentmodule:: sklearn
 
 .. autosummary::
   :toctree: generated/
@@ -582,6 +632,60 @@ Kernels:
   gaussian_process.kernels.RationalQuadratic
   gaussian_process.kernels.Sum
   gaussian_process.kernels.WhiteKernel
+
+
+.. _impute_ref:
+
+:mod:`sklearn.impute`: Impute
+=============================
+
+.. automodule:: sklearn.impute
+   :no-members:
+   :no-inherited-members:
+
+**User guide:** See the :ref:`Impute` section for further details.
+
+.. currentmodule:: sklearn
+
+.. autosummary::
+   :toctree: generated/
+   :template: class.rst
+
+   impute.SimpleImputer
+   impute.IterativeImputer
+   impute.MissingIndicator
+   impute.KNNImputer
+
+
+.. _inspection_ref:
+
+:mod:`sklearn.inspection`: Inspection
+=====================================
+
+.. automodule:: sklearn.inspection
+   :no-members:
+   :no-inherited-members:
+
+.. currentmodule:: sklearn
+
+.. autosummary::
+   :toctree: generated/
+   :template: function.rst
+
+   inspection.partial_dependence
+   inspection.permutation_importance
+
+Plotting
+--------
+
+.. currentmodule:: sklearn
+
+.. autosummary::
+   :toctree: generated/
+   :template: display_only_from_estimator.rst
+
+   inspection.DecisionBoundaryDisplay
+   inspection.PartialDependenceDisplay
 
 .. _isotonic_ref:
 
@@ -603,16 +707,17 @@ Kernels:
    isotonic.IsotonicRegression
 
 .. autosummary::
-   :toctree: generated
+   :toctree: generated/
    :template: function.rst
 
    isotonic.check_increasing
    isotonic.isotonic_regression
 
+
 .. _kernel_approximation_ref:
 
-:mod:`sklearn.kernel_approximation` Kernel Approximation
-========================================================
+:mod:`sklearn.kernel_approximation`: Kernel Approximation
+=========================================================
 
 .. automodule:: sklearn.kernel_approximation
    :no-members:
@@ -628,13 +733,14 @@ Kernels:
 
    kernel_approximation.AdditiveChi2Sampler
    kernel_approximation.Nystroem
+   kernel_approximation.PolynomialCountSketch
    kernel_approximation.RBFSampler
    kernel_approximation.SkewedChi2Sampler
 
 .. _kernel_ridge_ref:
 
-:mod:`sklearn.kernel_ridge` Kernel Ridge Regression
-========================================================
+:mod:`sklearn.kernel_ridge`: Kernel Ridge Regression
+====================================================
 
 .. automodule:: sklearn.kernel_ridge
    :no-members:
@@ -652,8 +758,8 @@ Kernels:
 
 .. _linear_model_ref:
 
-:mod:`sklearn.linear_model`: Generalized Linear Models
-======================================================
+:mod:`sklearn.linear_model`: Linear Models
+==========================================
 
 .. automodule:: sklearn.linear_model
    :no-members:
@@ -661,17 +767,52 @@ Kernels:
 
 **User guide:** See the :ref:`linear_model` section for further details.
 
+The following subsections are only rough guidelines: the same estimator can
+fall into multiple categories, depending on its parameters.
+
 .. currentmodule:: sklearn
+
+Linear classifiers
+------------------
+.. autosummary::
+   :toctree: generated/
+   :template: class.rst
+
+   linear_model.LogisticRegression
+   linear_model.LogisticRegressionCV
+   linear_model.PassiveAggressiveClassifier
+   linear_model.Perceptron
+   linear_model.RidgeClassifier
+   linear_model.RidgeClassifierCV
+   linear_model.SGDClassifier
+   linear_model.SGDOneClassSVM
+
+Classical linear regressors
+---------------------------
 
 .. autosummary::
    :toctree: generated/
    :template: class.rst
 
-   linear_model.ARDRegression
-   linear_model.BayesianRidge
+   linear_model.LinearRegression
+   linear_model.Ridge
+   linear_model.RidgeCV
+   linear_model.SGDRegressor
+
+Regressors with variable selection
+----------------------------------
+
+The following estimators have built-in variable selection fitting
+procedures, but any estimator using a L1 or elastic-net penalty also
+performs variable selection: typically :class:`~linear_model.SGDRegressor`
+or :class:`~sklearn.linear_model.SGDClassifier` with an appropriate penalty.
+
+.. autosummary::
+   :toctree: generated/
+   :template: class.rst
+
    linear_model.ElasticNet
    linear_model.ElasticNetCV
-   linear_model.HuberRegressor
    linear_model.Lars
    linear_model.LarsCV
    linear_model.Lasso
@@ -679,26 +820,74 @@ Kernels:
    linear_model.LassoLars
    linear_model.LassoLarsCV
    linear_model.LassoLarsIC
-   linear_model.LinearRegression
-   linear_model.LogisticRegression
-   linear_model.LogisticRegressionCV
-   linear_model.MultiTaskLasso
-   linear_model.MultiTaskElasticNet
-   linear_model.MultiTaskLassoCV
-   linear_model.MultiTaskElasticNetCV
    linear_model.OrthogonalMatchingPursuit
    linear_model.OrthogonalMatchingPursuitCV
-   linear_model.PassiveAggressiveClassifier
-   linear_model.PassiveAggressiveRegressor
-   linear_model.Perceptron
+
+Bayesian regressors
+-------------------
+
+.. autosummary::
+   :toctree: generated/
+   :template: class.rst
+
+   linear_model.ARDRegression
+   linear_model.BayesianRidge
+
+Multi-task linear regressors with variable selection
+----------------------------------------------------
+
+These estimators fit multiple regression problems (or tasks) jointly, while
+inducing sparse coefficients. While the inferred coefficients may differ
+between the tasks, they are constrained to agree on the features that are
+selected (non-zero coefficients).
+
+.. autosummary::
+   :toctree: generated/
+   :template: class.rst
+
+   linear_model.MultiTaskElasticNet
+   linear_model.MultiTaskElasticNetCV
+   linear_model.MultiTaskLasso
+   linear_model.MultiTaskLassoCV
+
+Outlier-robust regressors
+-------------------------
+
+Any estimator using the Huber loss would also be robust to outliers, e.g.
+:class:`~linear_model.SGDRegressor` with ``loss='huber'``.
+
+.. autosummary::
+   :toctree: generated/
+   :template: class.rst
+
+   linear_model.HuberRegressor
+   linear_model.QuantileRegressor
    linear_model.RANSACRegressor
-   linear_model.Ridge
-   linear_model.RidgeClassifier
-   linear_model.RidgeClassifierCV
-   linear_model.RidgeCV
-   linear_model.SGDClassifier
-   linear_model.SGDRegressor
    linear_model.TheilSenRegressor
+
+Generalized linear models (GLM) for regression
+----------------------------------------------
+
+These models allow for response variables to have error distributions other
+than a normal distribution:
+
+.. autosummary::
+   :toctree: generated/
+   :template: class.rst
+
+   linear_model.PoissonRegressor
+   linear_model.TweedieRegressor
+   linear_model.GammaRegressor
+
+
+Miscellaneous
+-------------
+
+.. autosummary::
+   :toctree: generated/
+   :template: classes.rst
+
+   linear_model.PassiveAggressiveRegressor
 
 .. autosummary::
    :toctree: generated/
@@ -706,11 +895,11 @@ Kernels:
 
    linear_model.enet_path
    linear_model.lars_path
+   linear_model.lars_path_gram
    linear_model.lasso_path
-   linear_model.lasso_stability_path
-   linear_model.logistic_regression_path
    linear_model.orthogonal_mp
    linear_model.orthogonal_mp_gram
+   linear_model.ridge_regression
 
 
 .. _manifold_ref:
@@ -743,6 +932,7 @@ Kernels:
     manifold.locally_linear_embedding
     manifold.smacof
     manifold.spectral_embedding
+    manifold.trustworthiness
 
 
 .. _metrics_ref:
@@ -770,6 +960,7 @@ details.
 
    metrics.check_scoring
    metrics.get_scorer
+   metrics.get_scorer_names
    metrics.make_scorer
 
 Classification metrics
@@ -787,22 +978,28 @@ details.
    metrics.average_precision_score
    metrics.balanced_accuracy_score
    metrics.brier_score_loss
+   metrics.class_likelihood_ratios
    metrics.classification_report
    metrics.cohen_kappa_score
    metrics.confusion_matrix
+   metrics.dcg_score
+   metrics.det_curve
    metrics.f1_score
    metrics.fbeta_score
    metrics.hamming_loss
    metrics.hinge_loss
-   metrics.jaccard_similarity_score
+   metrics.jaccard_score
    metrics.log_loss
    metrics.matthews_corrcoef
+   metrics.multilabel_confusion_matrix
+   metrics.ndcg_score
    metrics.precision_recall_curve
    metrics.precision_recall_fscore_support
    metrics.precision_score
    metrics.recall_score
    metrics.roc_auc_score
    metrics.roc_curve
+   metrics.top_k_accuracy_score
    metrics.zero_one_loss
 
 Regression metrics
@@ -816,11 +1013,22 @@ details.
    :template: function.rst
 
    metrics.explained_variance_score
+   metrics.max_error
    metrics.mean_absolute_error
    metrics.mean_squared_error
    metrics.mean_squared_log_error
    metrics.median_absolute_error
+   metrics.mean_absolute_percentage_error
    metrics.r2_score
+   metrics.root_mean_squared_log_error
+   metrics.root_mean_squared_error
+   metrics.mean_poisson_deviance
+   metrics.mean_gamma_deviance
+   metrics.mean_tweedie_deviance
+   metrics.d2_tweedie_score
+   metrics.mean_pinball_loss
+   metrics.d2_pinball_score
+   metrics.d2_absolute_error_score
 
 Multilabel ranking metrics
 --------------------------
@@ -854,14 +1062,17 @@ details.
 
    metrics.adjusted_mutual_info_score
    metrics.adjusted_rand_score
-   metrics.calinski_harabaz_score
+   metrics.calinski_harabasz_score
+   metrics.davies_bouldin_score
    metrics.completeness_score
    metrics.cluster.contingency_matrix
+   metrics.cluster.pair_confusion_matrix
    metrics.fowlkes_mallows_score
    metrics.homogeneity_completeness_v_measure
    metrics.homogeneity_score
    metrics.mutual_info_score
    metrics.normalized_mutual_info_score
+   metrics.rand_score
    metrics.silhouette_score
    metrics.silhouette_samples
    metrics.v_measure_score
@@ -880,6 +1091,16 @@ further details.
 
    metrics.consensus_score
 
+Distance metrics
+----------------
+
+.. currentmodule:: sklearn
+
+.. autosummary::
+   :toctree: generated/
+   :template: class.rst
+
+   metrics.DistanceMetric
 
 Pairwise metrics
 ----------------
@@ -902,11 +1123,12 @@ See the :ref:`metrics` section of the user guide for further details.
    metrics.pairwise.cosine_distances
    metrics.pairwise.distance_metrics
    metrics.pairwise.euclidean_distances
+   metrics.pairwise.haversine_distances
    metrics.pairwise.kernel_metrics
    metrics.pairwise.laplacian_kernel
    metrics.pairwise.linear_kernel
    metrics.pairwise.manhattan_distances
-   metrics.pairwise.pairwise_distances
+   metrics.pairwise.nan_euclidean_distances
    metrics.pairwise.pairwise_kernels
    metrics.pairwise.polynomial_kernel
    metrics.pairwise.rbf_kernel
@@ -918,7 +1140,26 @@ See the :ref:`metrics` section of the user guide for further details.
    metrics.pairwise_distances
    metrics.pairwise_distances_argmin
    metrics.pairwise_distances_argmin_min
+   metrics.pairwise_distances_chunked
 
+
+Plotting
+--------
+
+See the :ref:`visualizations` section of the user guide for further details.
+
+.. currentmodule:: sklearn
+
+.. autosummary::
+   :toctree: generated/
+   :template: display_all_class_methods.rst
+
+   metrics.ConfusionMatrixDisplay
+   metrics.DetCurveDisplay
+   metrics.PrecisionRecallDisplay
+   metrics.PredictionErrorDisplay
+   metrics.RocCurveDisplay
+   calibration.CalibrationDisplay
 
 .. _mixture_ref:
 
@@ -974,6 +1215,7 @@ Splitter Classes
    model_selection.ShuffleSplit
    model_selection.StratifiedKFold
    model_selection.StratifiedShuffleSplit
+   model_selection.StratifiedGroupKFold
    model_selection.TimeSeriesSplit
 
 Splitter Functions
@@ -988,6 +1230,8 @@ Splitter Functions
    model_selection.check_cv
    model_selection.train_test_split
 
+.. _hyper_parameter_optimizers:
+
 Hyper-parameter optimizers
 --------------------------
 
@@ -998,16 +1242,12 @@ Hyper-parameter optimizers
    :template: class.rst
 
    model_selection.GridSearchCV
+   model_selection.HalvingGridSearchCV
    model_selection.ParameterGrid
    model_selection.ParameterSampler
    model_selection.RandomizedSearchCV
+   model_selection.HalvingRandomSearchCV
 
-
-.. autosummary::
-   :toctree: generated/
-   :template: function.rst
-
-   model_selection.fit_grid_point
 
 Model validation
 ----------------
@@ -1025,21 +1265,33 @@ Model validation
    model_selection.permutation_test_score
    model_selection.validation_curve
 
+Visualization
+-------------
+
+.. currentmodule:: sklearn
+
+.. autosummary::
+   :toctree: generated/
+   :template: display_only_from_estimator.rst
+
+   model_selection.LearningCurveDisplay
+   model_selection.ValidationCurveDisplay
+
 .. _multiclass_ref:
 
-:mod:`sklearn.multiclass`: Multiclass and multilabel classification
-===================================================================
+:mod:`sklearn.multiclass`: Multiclass classification
+====================================================
 
 .. automodule:: sklearn.multiclass
    :no-members:
    :no-inherited-members:
 
-**User guide:** See the :ref:`multiclass` section for further details.
+**User guide:** See the :ref:`multiclass_classification` section for further details.
 
 .. currentmodule:: sklearn
 
 .. autosummary::
-    :toctree: generated
+    :toctree: generated/
     :template: class.rst
 
     multiclass.OneVsRestClassifier
@@ -1055,7 +1307,9 @@ Model validation
    :no-members:
    :no-inherited-members:
 
-**User guide:** See the :ref:`multiclass` section for further details.
+**User guide:** See the :ref:`multilabel_classification`,
+:ref:`multiclass_multioutput_classification`, and
+:ref:`multioutput_regression` sections for further details.
 
 .. currentmodule:: sklearn
 
@@ -1086,9 +1340,10 @@ Model validation
    :template: class.rst
 
    naive_bayes.BernoulliNB
+   naive_bayes.CategoricalNB
+   naive_bayes.ComplementNB
    naive_bayes.GaussianNB
    naive_bayes.MultinomialNB
-   naive_bayes.ComplementNB
 
 
 .. _neighbors_ref:
@@ -1109,16 +1364,18 @@ Model validation
    :template: class.rst
 
    neighbors.BallTree
-   neighbors.DistanceMetric
    neighbors.KDTree
    neighbors.KernelDensity
    neighbors.KNeighborsClassifier
    neighbors.KNeighborsRegressor
+   neighbors.KNeighborsTransformer
    neighbors.LocalOutlierFactor
    neighbors.RadiusNeighborsClassifier
    neighbors.RadiusNeighborsRegressor
+   neighbors.RadiusNeighborsTransformer
    neighbors.NearestCentroid
    neighbors.NearestNeighbors
+   neighbors.NeighborhoodComponentsAnalysis
 
 .. autosummary::
    :toctree: generated/
@@ -1126,11 +1383,12 @@ Model validation
 
    neighbors.kneighbors_graph
    neighbors.radius_neighbors_graph
+   neighbors.sort_graph_by_row_values
 
 .. _neural_network_ref:
 
 :mod:`sklearn.neural_network`: Neural network models
-=====================================================
+====================================================
 
 .. automodule:: sklearn.neural_network
    :no-members:
@@ -1157,6 +1415,9 @@ Model validation
    :no-members:
    :no-inherited-members:
 
+**User guide:** See the :ref:`combining_estimators` section for further
+details.
+
 .. currentmodule:: sklearn
 
 .. autosummary::
@@ -1172,7 +1433,6 @@ Model validation
 
    pipeline.make_pipeline
    pipeline.make_union
-
 
 .. _preprocessing_ref:
 
@@ -1193,7 +1453,7 @@ Model validation
 
    preprocessing.Binarizer
    preprocessing.FunctionTransformer
-   preprocessing.Imputer
+   preprocessing.KBinsDiscretizer
    preprocessing.KernelCenterer
    preprocessing.LabelBinarizer
    preprocessing.LabelEncoder
@@ -1202,13 +1462,14 @@ Model validation
    preprocessing.MinMaxScaler
    preprocessing.Normalizer
    preprocessing.OneHotEncoder
-   preprocessing.CategoricalEncoder
+   preprocessing.OrdinalEncoder
    preprocessing.PolynomialFeatures
    preprocessing.PowerTransformer
    preprocessing.QuantileTransformer
    preprocessing.RobustScaler
+   preprocessing.SplineTransformer
    preprocessing.StandardScaler
-   preprocessing.TransformedTargetRegressor
+   preprocessing.TargetEncoder
 
 .. autosummary::
    :toctree: generated/
@@ -1255,7 +1516,7 @@ Model validation
 
 .. _semi_supervised_ref:
 
-:mod:`sklearn.semi_supervised` Semi-Supervised Learning
+:mod:`sklearn.semi_supervised`: Semi-Supervised Learning
 ========================================================
 
 .. automodule:: sklearn.semi_supervised
@@ -1272,6 +1533,7 @@ Model validation
 
    semi_supervised.LabelPropagation
    semi_supervised.LabelSpreading
+   semi_supervised.SelfTrainingClassifier
 
 
 .. _svm_ref:
@@ -1308,20 +1570,6 @@ Estimators
 
    svm.l1_min_c
 
-Low-level methods
------------------
-
-.. autosummary::
-   :toctree: generated
-   :template: function.rst
-
-   svm.libsvm.cross_validation
-   svm.libsvm.decision_function
-   svm.libsvm.fit
-   svm.libsvm.predict
-   svm.libsvm.predict_proba
-
-
 .. _tree_ref:
 
 :mod:`sklearn.tree`: Decision Trees
@@ -1349,7 +1597,18 @@ Low-level methods
    :template: function.rst
 
    tree.export_graphviz
+   tree.export_text
 
+Plotting
+--------
+
+.. currentmodule:: sklearn
+
+.. autosummary::
+   :toctree: generated/
+   :template: function.rst
+
+   tree.plot_tree
 
 .. _utils_ref:
 
@@ -1366,89 +1625,280 @@ Low-level methods
 
 .. autosummary::
    :toctree: generated/
+   :template: class.rst
+
+   utils.Bunch
+
+.. autosummary::
+   :toctree: generated/
    :template: function.rst
 
    utils.as_float_array
    utils.assert_all_finite
+   utils.deprecated
+   utils.estimator_html_repr
+   utils.gen_batches
+   utils.gen_even_slices
+   utils.indexable
+   utils.murmurhash3_32
+   utils.resample
+   utils._safe_indexing
+   utils.safe_mask
+   utils.safe_sqr
+   utils.shuffle
+
+Input and parameter validation
+------------------------------
+
+.. automodule:: sklearn.utils.validation
+   :no-members:
+   :no-inherited-members:
+
+.. currentmodule:: sklearn
+
+.. autosummary::
+   :toctree: generated/
+   :template: function.rst
+
    utils.check_X_y
    utils.check_array
+   utils.check_scalar
    utils.check_consistent_length
    utils.check_random_state
-   utils.class_weight.compute_class_weight
-   utils.class_weight.compute_sample_weight
-   utils.estimator_checks.check_estimator
-   utils.extmath.safe_sparse_dot
-   utils.indexable
-   utils.multiclass.type_of_target
-   utils.resample
-   utils.safe_indexing
-   utils.shuffle
-   utils.sparsefuncs.incr_mean_variance_axis
-   utils.sparsefuncs.inplace_column_scale
-   utils.sparsefuncs.inplace_row_scale
-   utils.sparsefuncs.inplace_swap_row
-   utils.sparsefuncs.inplace_swap_column
-   utils.sparsefuncs.mean_variance_axis
    utils.validation.check_is_fitted
    utils.validation.check_memory
    utils.validation.check_symmetric
    utils.validation.column_or_1d
    utils.validation.has_fit_parameter
 
+Utilities used in meta-estimators
+---------------------------------
+
+.. automodule:: sklearn.utils.metaestimators
+   :no-members:
+   :no-inherited-members:
+
+.. currentmodule:: sklearn
+
+.. autosummary::
+   :toctree: generated/
+   :template: function.rst
+
+   utils.metaestimators.available_if
+
+Utilities to handle weights based on class labels
+-------------------------------------------------
+
+.. automodule:: sklearn.utils.class_weight
+   :no-members:
+   :no-inherited-members:
+
+.. currentmodule:: sklearn
+
+.. autosummary::
+   :toctree: generated/
+   :template: function.rst
+
+   utils.class_weight.compute_class_weight
+   utils.class_weight.compute_sample_weight
+
+Utilities to deal with multiclass target in classifiers
+-------------------------------------------------------
+
+.. automodule:: sklearn.utils.multiclass
+   :no-members:
+   :no-inherited-members:
+
+.. currentmodule:: sklearn
+
+.. autosummary::
+   :toctree: generated/
+   :template: function.rst
+
+   utils.multiclass.type_of_target
+   utils.multiclass.is_multilabel
+   utils.multiclass.unique_labels
+
+Utilities for optimal mathematical operations
+---------------------------------------------
+
+.. automodule:: sklearn.utils.extmath
+   :no-members:
+   :no-inherited-members:
+
+.. currentmodule:: sklearn
+
+.. autosummary::
+   :toctree: generated/
+   :template: function.rst
+
+   utils.extmath.safe_sparse_dot
+   utils.extmath.randomized_range_finder
+   utils.extmath.randomized_svd
+   utils.extmath.fast_logdet
+   utils.extmath.density
+   utils.extmath.weighted_mode
+
+Utilities to work with sparse matrices and arrays
+-------------------------------------------------
+
+.. automodule:: sklearn.utils.sparsefuncs
+   :no-members:
+   :no-inherited-members:
+
+.. currentmodule:: sklearn
+
+.. autosummary::
+   :toctree: generated/
+   :template: function.rst
+
+   utils.sparsefuncs.incr_mean_variance_axis
+   utils.sparsefuncs.inplace_column_scale
+   utils.sparsefuncs.inplace_row_scale
+   utils.sparsefuncs.inplace_swap_row
+   utils.sparsefuncs.inplace_swap_column
+   utils.sparsefuncs.mean_variance_axis
+   utils.sparsefuncs.inplace_csr_column_scale
+
+.. automodule:: sklearn.utils.sparsefuncs_fast
+   :no-members:
+   :no-inherited-members:
+
+.. currentmodule:: sklearn
+
+.. autosummary::
+   :toctree: generated/
+   :template: function.rst
+
+   utils.sparsefuncs_fast.inplace_csr_row_normalize_l1
+   utils.sparsefuncs_fast.inplace_csr_row_normalize_l2
+
+Utilities to work with graphs
+-----------------------------
+
+.. automodule:: sklearn.utils.graph
+   :no-members:
+   :no-inherited-members:
+
+.. currentmodule:: sklearn
+
+.. autosummary::
+   :toctree: generated/
+   :template: function.rst
+
+   utils.graph.single_source_shortest_path_length
+
+Utilities for random sampling
+-----------------------------
+
+.. automodule:: sklearn.utils.random
+   :no-members:
+   :no-inherited-members:
+
+.. currentmodule:: sklearn
+
+.. autosummary::
+   :toctree: generated/
+   :template: function.rst
+
+   utils.random.sample_without_replacement
+
+
+Utilities to operate on arrays
+------------------------------
+
+.. automodule:: sklearn.utils.arrayfuncs
+   :no-members:
+   :no-inherited-members:
+
+.. currentmodule:: sklearn
+
+.. autosummary::
+   :toctree: generated/
+   :template: function.rst
+
+   utils.arrayfuncs.min_pos
+
+Metadata routing
+----------------
+
+.. automodule:: sklearn.utils.metadata_routing
+   :no-members:
+   :no-inherited-members:
+
+.. currentmodule:: sklearn
+
+.. autosummary::
+   :toctree: generated/
+   :template: function.rst
+
+   utils.metadata_routing.get_routing_for_object
+   utils.metadata_routing.process_routing
+
+.. autosummary::
+   :toctree: generated/
+   :template: class.rst
+
+   utils.metadata_routing.MetadataRouter
+   utils.metadata_routing.MetadataRequest
+   utils.metadata_routing.MethodMapping
+
+Scikit-learn object discovery
+-----------------------------
+
+.. automodule:: sklearn.utils.discovery
+   :no-members:
+   :no-inherited-members:
+
+.. currentmodule:: sklearn
+
+.. autosummary::
+   :toctree: generated/
+   :template: function.rst
+
+   utils.discovery.all_estimators
+   utils.discovery.all_displays
+   utils.discovery.all_functions
+
+Scikit-learn compatibility checker
+----------------------------------
+
+.. automodule:: sklearn.utils.estimator_checks
+   :no-members:
+   :no-inherited-members:
+
+.. currentmodule:: sklearn
+
+.. autosummary::
+   :toctree: generated/
+   :template: function.rst
+
+   utils.estimator_checks.check_estimator
+   utils.estimator_checks.parametrize_with_checks
+
+Utilities for parallel computing
+--------------------------------
+
+.. automodule:: sklearn.utils.parallel
+   :no-members:
+   :no-inherited-members:
+
+.. currentmodule:: sklearn
+
+.. autosummary::
+   :toctree: generated/
+   :template: function.rst
+
+   utils.parallel.delayed
+   utils.parallel_backend
+   utils.register_parallel_backend
+
+.. autosummary::
+   :toctree: generated/
+   :template: class.rst
+
+   utils.parallel.Parallel
+
+
 Recently deprecated
 ===================
-
-
-To be removed in 0.21
----------------------
-
-.. autosummary::
-   :toctree: generated/
-   :template: deprecated_class.rst
-
-   linear_model.RandomizedLasso
-   linear_model.RandomizedLogisticRegression
-   neighbors.LSHForest
-
-
-To be removed in 0.20
----------------------
-
-.. autosummary::
-   :toctree: generated/
-   :template: deprecated_class.rst
-
-   cross_validation.KFold
-   cross_validation.LabelKFold
-   cross_validation.LeaveOneLabelOut
-   cross_validation.LeaveOneOut
-   cross_validation.LeavePOut
-   cross_validation.LeavePLabelOut
-   cross_validation.LabelShuffleSplit
-   cross_validation.ShuffleSplit
-   cross_validation.StratifiedKFold
-   cross_validation.StratifiedShuffleSplit
-   cross_validation.PredefinedSplit
-   decomposition.RandomizedPCA
-   gaussian_process.GaussianProcess
-   grid_search.ParameterGrid
-   grid_search.ParameterSampler
-   grid_search.GridSearchCV
-   grid_search.RandomizedSearchCV
-   mixture.DPGMM
-   mixture.GMM
-   mixture.VBGMM
-
-
-.. autosummary::
-   :toctree: generated/
-   :template: deprecated_function.rst
-
-   cross_validation.check_cv
-   cross_validation.cross_val_predict
-   cross_validation.cross_val_score
-   cross_validation.permutation_test_score
-   cross_validation.train_test_split
-   grid_search.fit_grid_point
-   learning_curve.learning_curve
-   learning_curve.validation_curve

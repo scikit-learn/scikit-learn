@@ -1,80 +1,63 @@
-from sklearn.utils.testing import assert_true, assert_false
-from sklearn.utils.metaestimators import if_delegate_has_method
+import pickle
+
+import pytest
+
+from sklearn.utils.metaestimators import available_if
 
 
-class Prefix(object):
-    def func(self):
-        pass
+class AvailableParameterEstimator:
+    """This estimator's `available` parameter toggles the presence of a method"""
+
+    def __init__(self, available=True, return_value=1):
+        self.available = available
+        self.return_value = return_value
+
+    @available_if(lambda est: est.available)
+    def available_func(self):
+        """This is a mock available_if function"""
+        return self.return_value
 
 
-class MockMetaEstimator(object):
-    """This is a mock meta estimator"""
-    a_prefix = Prefix()
-
-    @if_delegate_has_method(delegate="a_prefix")
-    def func(self):
-        """This is a mock delegated function"""
-        pass
-
-
-def test_delegated_docstring():
-    assert_true("This is a mock delegated function"
-                in str(MockMetaEstimator.__dict__['func'].__doc__))
-    assert_true("This is a mock delegated function"
-                in str(MockMetaEstimator.func.__doc__))
-    assert_true("This is a mock delegated function"
-                in str(MockMetaEstimator().func.__doc__))
+def test_available_if_docstring():
+    assert "This is a mock available_if function" in str(
+        AvailableParameterEstimator.__dict__["available_func"].__doc__
+    )
+    assert "This is a mock available_if function" in str(
+        AvailableParameterEstimator.available_func.__doc__
+    )
+    assert "This is a mock available_if function" in str(
+        AvailableParameterEstimator().available_func.__doc__
+    )
 
 
-class MetaEst(object):
-    """A mock meta estimator"""
-    def __init__(self, sub_est, better_sub_est=None):
-        self.sub_est = sub_est
-        self.better_sub_est = better_sub_est
-
-    @if_delegate_has_method(delegate='sub_est')
-    def predict(self):
-        pass
+def test_available_if():
+    assert hasattr(AvailableParameterEstimator(), "available_func")
+    assert not hasattr(AvailableParameterEstimator(available=False), "available_func")
 
 
-class MetaEstTestTuple(MetaEst):
-    """A mock meta estimator to test passing a tuple of delegates"""
+def test_available_if_unbound_method():
+    # This is a non regression test for:
+    # https://github.com/scikit-learn/scikit-learn/issues/20614
+    # to make sure that decorated functions can be used as an unbound method,
+    # for instance when monkeypatching.
+    est = AvailableParameterEstimator()
+    AvailableParameterEstimator.available_func(est)
 
-    @if_delegate_has_method(delegate=('sub_est', 'better_sub_est'))
-    def predict(self):
-        pass
-
-
-class MetaEstTestList(MetaEst):
-    """A mock meta estimator to test passing a list of delegates"""
-
-    @if_delegate_has_method(delegate=['sub_est', 'better_sub_est'])
-    def predict(self):
-        pass
-
-
-class HasPredict(object):
-    """A mock sub-estimator with predict method"""
-
-    def predict(self):
-        pass
+    est = AvailableParameterEstimator(available=False)
+    with pytest.raises(
+        AttributeError,
+        match="This 'AvailableParameterEstimator' has no attribute 'available_func'",
+    ):
+        AvailableParameterEstimator.available_func(est)
 
 
-class HasNoPredict(object):
-    """A mock sub-estimator with no predict method"""
-    pass
+def test_available_if_methods_can_be_pickled():
+    """Check that available_if methods can be pickled.
 
-
-def test_if_delegate_has_method():
-    assert_true(hasattr(MetaEst(HasPredict()), 'predict'))
-    assert_false(hasattr(MetaEst(HasNoPredict()), 'predict'))
-    assert_false(
-        hasattr(MetaEstTestTuple(HasNoPredict(), HasNoPredict()), 'predict'))
-    assert_true(
-        hasattr(MetaEstTestTuple(HasPredict(), HasNoPredict()), 'predict'))
-    assert_false(
-        hasattr(MetaEstTestTuple(HasNoPredict(), HasPredict()), 'predict'))
-    assert_false(
-        hasattr(MetaEstTestList(HasNoPredict(), HasPredict()), 'predict'))
-    assert_true(
-        hasattr(MetaEstTestList(HasPredict(), HasPredict()), 'predict'))
+    Non-regression test for #21344.
+    """
+    return_value = 10
+    est = AvailableParameterEstimator(available=True, return_value=return_value)
+    pickled_bytes = pickle.dumps(est.available_func)
+    unpickled_func = pickle.loads(pickled_bytes)
+    assert unpickled_func() == return_value
