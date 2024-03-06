@@ -2316,7 +2316,7 @@ class SGDOneClassSVM(BaseSGD, OutlierMixin):
         pos_weight = 1
         neg_weight = 1
 
-        if self.average > 0:
+        if self.average:
             coef = self._standard_coef
             intercept = self._standard_intercept
             average_coef = self._average_coef
@@ -2434,7 +2434,7 @@ class SGDOneClassSVM(BaseSGD, OutlierMixin):
                 % (n_features, self.coef_.shape[-1])
             )
 
-        if self.average > 0 and getattr(self, "_average_coef", None) is None:
+        if self.average and getattr(self, "_average_coef", None) is None:
             self._average_coef = np.zeros(n_features, dtype=X.dtype, order="C")
             self._average_intercept = np.zeros(1, dtype=X.dtype, order="C")
 
