@@ -1,6 +1,8 @@
 """Implementation of ARFF parsers: via LIAC-ARFF and pandas."""
+
 import itertools
 import re
+import warnings
 from collections import OrderedDict
 from collections.abc import Generator
 from typing import List
@@ -456,6 +458,146 @@ def _pandas_arff_parser(
     return X, y, None, categories
 
 
+def _polars_arff_parser(
+    gzip_file,
+    output_arrays_type,
+    openml_columns_info,
+    feature_names_to_select,
+    target_names_to_select,
+    read_csv_kwargs=None,
+):
+    """ARFF parser using `polars.read_csv`.
+
+    This parser uses the metadata fetched directly from OpenML and skips the metadata
+    headers of ARFF file itself. The data is loaded as a CSV file.
+
+
+    Parameters
+    ----------
+    gzip_file : GzipFile instance
+        The GZip compressed file with the ARFF formatted payload.
+
+    output_arrays_type : {"numpy", "sparse", "polars"}
+        The type of the arrays that will be returned. The possibilities are:
+
+        - `"numpy"`: both `X` and `y` will be NumPy arrays;
+        - `"sparse"`: `X` will be sparse matrix and `y` will be a NumPy array;
+        - `"polars"`: `X` will be a polars DataFrame and `y` will be either a
+          polars Series or DataFrame.
+
+    openml_columns_info : dict
+        The information provided by OpenML regarding the columns of the ARFF
+        file.
+
+    feature_names_to_select : list of str
+        A list of the feature names to be selected to build `X`.
+
+    target_names_to_select : list of str
+        A list of the target names to be selected to build `y`.
+
+    read_csv_kwargs : dict, default=None
+        Keyword arguments to pass to `pandas.read_csv`. It allows to overwrite
+        the default options.
+
+    Returns
+    -------
+    X : {ndarray, sparse matrix, dataframe}
+        The data matrix.
+
+    y : {ndarray, dataframe, series}
+        The target.
+
+    frame : dataframe or None
+        A dataframe containing both `X` and `y`. `None` if
+        `output_array_type != "pandas"`.
+
+    categories : list of str or None
+        The names of the features that are categorical. `None` if
+        `output_array_type == "pandas"`.
+    """
+    import polars as pl
+
+    # read the file until the data section to skip the ARFF metadata headers
+    for line in gzip_file:
+        if line.decode("utf-8").lower().startswith("@data"):
+            break
+
+    dtypes = {}
+    for name in openml_columns_info:
+        column_dtype = openml_columns_info[name]["data_type"]
+        if column_dtype.lower() == "integer":
+            # Use Int64 to infer missing values from data
+            # XXX: this line is not covered by our tests. Is this really needed?
+            dtypes[name] = pl.Int64
+        elif column_dtype.lower() == "nominal":
+            dtypes[name] = pl.Categorical
+        elif column_dtype.lower() == "numeric" or column_dtype.lower() == "real":
+            dtypes[name] = pl.Float64
+        elif column_dtype.lower() == "string":
+            dtypes[name] = pl.String
+    # since we will not pass `names` when reading the ARFF file, we need to translate
+    # `dtypes` from column names to column indices to pass to `pandas.read_csv`
+
+    default_read_csv_kwargs = {
+        "has_header": False,
+        "comment_prefix": "%",  # skip line starting by `%` since they are comments
+        "quote_char": '"',  # delimiter to use for quoted strings
+        "schema": dtypes,
+    }
+    read_csv_kwargs = {**default_read_csv_kwargs, **(read_csv_kwargs or {})}
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        # Ignore warning about file like object instead of raw file
+        try:
+            frame = pl.read_csv(gzip_file, **read_csv_kwargs)
+        except pl.exceptions.ComputeError as err:
+            if "found more fields than defined in" in err.args:
+                raise pl.exceptions.ComputeError(
+                    "The number of columns provided by OpenML is fewer than the "
+                    "number of columns inferred by polars when reading the file."
+                )
+            else:
+                raise err
+    # polars will error if it is given a schema with fewer entries than the
+    # file but will ignore extras when the schema has more fields that the file
+    if len(frame.columns) > len(dtypes):
+        raise pl.exceptions.ComputeError(
+            "The number of columns provided by OpenML is larger than the "
+            "number of columns inferred by polars when reading the file."
+        )
+
+    columns_to_select = feature_names_to_select + target_names_to_select
+    columns_to_keep = [col for col in frame.columns if col in columns_to_select]
+    frame = frame.select(columns_to_keep).with_columns(
+        pl.col(col).cast(pl.Enum(openml_columns_info[col]["nominal_value"]))
+        for col, dtype in frame.schema.items()
+        if dtype == pl.Categorical
+    )
+
+    # This is missing the single quote, double quote post processing logic that pandas
+    # has. It might be best to put an ARFF reader in polars directly or just use the
+    # liac-arff python library directly. For now, it will botch quotes.
+    # TODO: add quoting logic or add liac-arff parser to polars
+
+    X = frame.select(feature_names_to_select)
+    if len(target_names_to_select) == 1:
+        y = frame[target_names_to_select]
+    else:
+        y = frame.select(target_names_to_select)
+
+    if output_arrays_type == "pandas":
+        return X, y, frame, None
+    else:
+        X, y = X.to_numpy(), y.to_numpy()
+
+    categories = {
+        name: frame[name].cat.get_categories().to_list()
+        for name, dtype in frame.schema.items()
+        if isinstance(dtype, pl.Enum)
+    }
+    return X, y, None, categories
+
+
 def load_arff_from_gzip_file(
     gzip_file,
     parser,
@@ -473,11 +615,11 @@ def load_arff_from_gzip_file(
     gzip_file : GzipFile instance
         The file compressed to be read.
 
-    parser : {"pandas", "liac-arff"}
+    parser : {"pandas", "polars", "liac-arff"}
         The parser used to parse the ARFF file. "pandas" is recommended
         but only supports loading dense datasets.
 
-    output_type : {"numpy", "sparse", "pandas"}
+    output_type : {"numpy", "sparse", "polars", "pandas"}
         The type of the arrays that will be returned. The possibilities ara:
 
         - `"numpy"`: both `X` and `y` will be NumPy arrays;
@@ -496,8 +638,8 @@ def load_arff_from_gzip_file(
         A list of the target names to be selected.
 
     read_csv_kwargs : dict, default=None
-        Keyword arguments to pass to `pandas.read_csv`. It allows to overwrite
-        the default options.
+        Keyword arguments to pass to `pandas.read_csv` or `polars.read_csv`. It allows
+        to overwrite the default options.
 
     Returns
     -------
@@ -526,6 +668,15 @@ def load_arff_from_gzip_file(
         )
     elif parser == "pandas":
         return _pandas_arff_parser(
+            gzip_file,
+            output_type,
+            openml_columns_info,
+            feature_names_to_select,
+            target_names_to_select,
+            read_csv_kwargs,
+        )
+    elif parser == "polars":
+        return _polars_arff_parser(
             gzip_file,
             output_type,
             openml_columns_info,

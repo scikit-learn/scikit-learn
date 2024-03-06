@@ -457,16 +457,18 @@ def _load_arff_response(
     data_home : str
         The location where to cache the data.
 
-    parser : {"liac-arff", "pandas"}
+    parser : {"liac-arff", "pandas", "polars"}
         The parser used to parse the ARFF file.
 
-    output_type : {"numpy", "pandas", "sparse"}
+    output_type : {"numpy", "pandas", "polars", "sparse"}
         The type of the arrays that will be returned. The possibilities are:
 
         - `"numpy"`: both `X` and `y` will be NumPy arrays;
         - `"sparse"`: `X` will be sparse matrix and `y` will be a NumPy array;
         - `"pandas"`: `X` will be a pandas DataFrame and `y` will be either a
           pandas Series or DataFrame.
+        - `"polars"`: `X` will be a polars DataFrame and `y` will be either a
+          polars Series or DataFrame.
 
     openml_columns_info : dict
         The information provided by OpenML regarding the columns of the ARFF
@@ -598,7 +600,7 @@ def _download_data_to_bunch(
         The location where to cache the data.
 
     as_frame : bool
-        Whether or not to return the data into a pandas DataFrame.
+        Whether or not to return the data into a DataFrame.
 
     openml_columns_info : list of dict
         The information regarding the columns provided by OpenML for the
@@ -761,7 +763,7 @@ def _valid_data_column_names(features_list, target_columns):
         "n_retries": [Interval(Integral, 1, None, closed="left")],
         "delay": [Interval(Real, 0.0, None, closed="neither")],
         "parser": [
-            StrOptions({"auto", "pandas", "liac-arff"}),
+            StrOptions({"auto", "pandas", "liac-arff", "polars"}),
         ],
         "read_csv_kwargs": [dict, None],
     },
