@@ -39,7 +39,13 @@ from ..utils import (
     column_or_1d,
 )
 from ..utils._array_api import _union1d, _weighted_sum, get_namespace
-from ..utils._param_validation import Interval, Options, StrOptions, validate_params
+from ..utils._param_validation import (
+    Hidden,
+    Interval,
+    Options,
+    StrOptions,
+    validate_params,
+)
 from ..utils.extmath import _nanaverage
 from ..utils.multiclass import type_of_target, unique_labels
 from ..utils.sparsefuncs import count_nonzero
@@ -169,7 +175,7 @@ def accuracy_score(y_true, y_pred, *, normalize=True, sample_weight=None):
 
     Returns
     -------
-    score : float
+    score : float or int
         If ``normalize == True``, return the fraction of correctly
         classified samples (float), else returns the number of correctly
         classified samples (int).
@@ -679,6 +685,14 @@ def cohen_kappa_score(y1, y2, *, labels=None, weights=None, sample_weight=None):
            <https://www.mitpressjournals.org/doi/pdf/10.1162/coli.07-034-R2>`_.
     .. [3] `Wikipedia entry for the Cohen's kappa
             <https://en.wikipedia.org/wiki/Cohen%27s_kappa>`_.
+
+    Examples
+    --------
+    >>> from sklearn.metrics import cohen_kappa_score
+    >>> y1 = ["negative", "positive", "negative", "neutral", "positive"]
+    >>> y2 = ["negative", "positive", "negative", "neutral", "negative"]
+    >>> cohen_kappa_score(y1, y2)
+    0.6875
     """
     confusion = confusion_matrix(y1, y2, labels=labels, sample_weight=sample_weight)
     n_classes = confusion.shape[0]
@@ -1114,11 +1128,18 @@ def f1_score(
     The F1 score can be interpreted as a harmonic mean of the precision and
     recall, where an F1 score reaches its best value at 1 and worst score at 0.
     The relative contribution of precision and recall to the F1 score are
-    equal. The formula for the F1 score is::
+    equal. The formula for the F1 score is:
 
-        F1 = 2 * (precision * recall) / (precision + recall)
+    .. math::
+        \\text{F1} = \\frac{2 * \\text{TP}}{2 * \\text{TP} + \\text{FP} + \\text{FN}}
 
-    Support beyond term:`binary` targets is achieved by treating :term:`multiclass`
+    Where :math:`\\text{TP}` is the number of true positives, :math:`\\text{FN}` is the
+    number of false negatives, and :math:`\\text{FP}` is the number of false positives.
+    F1 is by default
+    calculated as 0.0 when there are no true positives, false negatives, or
+    false positives.
+
+    Support beyond :term:`binary` targets is achieved by treating :term:`multiclass`
     and :term:`multilabel` data as a collection of binary problems, one for each
     label. For the :term:`binary` case, setting `average='binary'` will return
     F1 score for `pos_label`. If `average` is not `'binary'`, `pos_label` is ignored
@@ -1211,12 +1232,11 @@ def f1_score(
 
     Notes
     -----
-    When ``true positive + false positive == 0``, precision is undefined.
-    When ``true positive + false negative == 0``, recall is undefined.
-    In such cases, by default the metric will be set to 0, as will f-score,
-    and ``UndefinedMetricWarning`` will be raised. This behavior can be
-    modified with ``zero_division``. Note that if `zero_division` is np.nan,
-    scores being `np.nan` will be ignored for averaging.
+    When ``true positive + false positive + false negative == 0`` (i.e. a class
+    is completely absent from both ``y_true`` or ``y_pred``), f-score is
+    undefined. In such cases, by default f-score will be set to 0.0, and
+    ``UndefinedMetricWarning`` will be raised. This behavior can be modified by
+    setting the ``zero_division`` parameter.
 
     References
     ----------
@@ -1308,6 +1328,16 @@ def fbeta_score(
     as important as precision, while `beta = 0.5` does the opposite.
     Asymptotically, `beta -> +inf` considers only recall, and `beta -> 0`
     only precision.
+
+    The formula for F-beta score is:
+
+    .. math::
+
+       F_\\beta = \\frac{(1 + \\beta^2) \\text{tp}}
+                        {(1 + \\beta^2) \\text{tp} + \\text{fp} + \\beta^2 \\text{fn}}
+
+    Where :math:`\\text{tp}` is the number of true positives, :math:`\\text{fp}` is the
+    number of false positives, and :math:`\\text{fn}` is the number of false negatives.
 
     Support beyond term:`binary` targets is achieved by treating :term:`multiclass`
     and :term:`multilabel` data as a collection of binary problems, one for each
@@ -1404,10 +1434,9 @@ def fbeta_score(
 
     Notes
     -----
-    When ``true positive + false positive == 0`` or
-    ``true positive + false negative == 0``, f-score returns 0 and raises
-    ``UndefinedMetricWarning``. This behavior can be
-    modified with ``zero_division``.
+    When ``true positive + false positive + false negative == 0``, f-score
+    returns 0.0 and raises ``UndefinedMetricWarning``. This behavior can be
+    modified by setting ``zero_division``.
 
     References
     ----------
@@ -1434,7 +1463,7 @@ def fbeta_score(
     >>> y_pred_empty = [0, 0, 0, 0, 0, 0]
     >>> fbeta_score(y_true, y_pred_empty,
     ...             average="macro", zero_division=np.nan, beta=0.5)
-    0.38...
+    0.12...
     """
 
     _, _, f, _ = precision_recall_fscore_support(
@@ -1482,20 +1511,8 @@ def _prf_divide(
         return result
 
     # build appropriate warning
-    # E.g. "Precision and F-score are ill-defined and being set to 0.0 in
-    # labels with no predicted samples. Use ``zero_division`` parameter to
-    # control this behavior."
-
-    if metric in warn_for and "f-score" in warn_for:
-        msg_start = "{0} and F-score are".format(metric.title())
-    elif metric in warn_for:
-        msg_start = "{0} is".format(metric.title())
-    elif "f-score" in warn_for:
-        msg_start = "F-score is"
-    else:
-        return result
-
-    _warn_prf(average, modifier, msg_start, len(result))
+    if metric in warn_for:
+        _warn_prf(average, modifier, f"{metric.capitalize()} is", len(result))
 
     return result
 
@@ -1711,10 +1728,11 @@ def precision_recall_fscore_support(
     Notes
     -----
     When ``true positive + false positive == 0``, precision is undefined.
-    When ``true positive + false negative == 0``, recall is undefined.
-    In such cases, by default the metric will be set to 0, as will f-score,
-    and ``UndefinedMetricWarning`` will be raised. This behavior can be
-    modified with ``zero_division``.
+    When ``true positive + false negative == 0``, recall is undefined. When
+    ``true positive + false negative + false positive == 0``, f-score is
+    undefined. In such cases, by default the metric will be set to 0, and
+    ``UndefinedMetricWarning`` will be raised. This behavior can be modified
+    with ``zero_division``.
 
     References
     ----------
@@ -1751,7 +1769,7 @@ def precision_recall_fscore_support(
      array([0., 0., 1.]), array([0. , 0. , 0.8]),
      array([2, 2, 2]))
     """
-    zero_division_value = _check_zero_division(zero_division)
+    _check_zero_division(zero_division)
     labels = _check_set_wise_labels(y_true, y_pred, average, labels, pos_label)
 
     # Calculate tp_sum, pred_sum, true_sum ###
@@ -1784,12 +1802,6 @@ def precision_recall_fscore_support(
         tp_sum, true_sum, "recall", "true", average, warn_for, zero_division
     )
 
-    # warn for f-score only if zero_division is warn, it is in warn_for
-    # and BOTH prec and rec are ill-defined
-    if zero_division == "warn" and ("f-score",) == warn_for:
-        if (pred_sum[true_sum == 0] == 0).any():
-            _warn_prf(average, "true nor predicted", "F-score is", len(true_sum))
-
     if np.isposinf(beta):
         f_score = recall
     elif beta == 0:
@@ -1797,13 +1809,18 @@ def precision_recall_fscore_support(
     else:
         # The score is defined as:
         # score = (1 + beta**2) * precision * recall / (beta**2 * precision + recall)
-        # We set to `zero_division_value` if the denominator is 0 **or** if **both**
-        # precision and recall are ill-defined.
-        denom = beta2 * precision + recall
-        mask = np.isclose(denom, 0) | np.isclose(pred_sum + true_sum, 0)
-        denom[mask] = 1  # avoid division by 0
-        f_score = (1 + beta2) * precision * recall / denom
-        f_score[mask] = zero_division_value
+        # Therefore, we can express the score in terms of confusion matrix entries as:
+        # score = (1 + beta**2) * tp / ((1 + beta**2) * tp + beta**2 * fn + fp)
+        denom = beta2 * true_sum + pred_sum
+        f_score = _prf_divide(
+            (1 + beta2) * tp_sum,
+            denom,
+            "f-score",
+            "true nor predicted",
+            average,
+            warn_for,
+            zero_division,
+        )
 
     # Average the results
     if average == "weighted":
@@ -2601,7 +2618,7 @@ def classification_report(
 
     # labelled micro average
     micro_is_accuracy = (y_type == "multiclass" or y_type == "binary") and (
-        not labels_given or (set(labels) == set(unique_labels(y_true, y_pred)))
+        not labels_given or (set(labels) >= set(unique_labels(y_true, y_pred)))
     )
 
     if target_names is not None and len(labels) != len(target_names):
@@ -3135,13 +3152,16 @@ def hinge_loss(y_true, pred_decision, *, labels=None, sample_weight=None):
 @validate_params(
     {
         "y_true": ["array-like"],
-        "y_prob": ["array-like"],
+        "y_proba": ["array-like", Hidden(None)],
         "sample_weight": ["array-like", None],
         "pos_label": [Real, str, "boolean", None],
+        "y_prob": ["array-like", Hidden(StrOptions({"deprecated"}))],
     },
     prefer_skip_nested_validation=True,
 )
-def brier_score_loss(y_true, y_prob, *, sample_weight=None, pos_label=None):
+def brier_score_loss(
+    y_true, y_proba=None, *, sample_weight=None, pos_label=None, y_prob="deprecated"
+):
     """Compute the Brier score loss.
 
     The smaller the Brier score loss, the better, hence the naming with "loss".
@@ -3169,7 +3189,7 @@ def brier_score_loss(y_true, y_prob, *, sample_weight=None, pos_label=None):
     y_true : array-like of shape (n_samples,)
         True targets.
 
-    y_prob : array-like of shape (n_samples,)
+    y_proba : array-like of shape (n_samples,)
         Probabilities of the positive class.
 
     sample_weight : array-like of shape (n_samples,), default=None
@@ -3184,6 +3204,13 @@ def brier_score_loss(y_true, y_prob, *, sample_weight=None, pos_label=None):
           `pos_label` should be explicitly specified;
         * otherwise, `pos_label` defaults to the greater label,
           i.e. `np.unique(y_true)[-1]`.
+
+    y_prob : array-like of shape (n_samples,)
+        Probabilities of the positive class.
+
+        .. deprecated:: 1.5
+            `y_prob` is deprecated and will be removed in 1.7. Use
+            `y_proba` instead.
 
     Returns
     -------
@@ -3211,11 +3238,29 @@ def brier_score_loss(y_true, y_prob, *, sample_weight=None, pos_label=None):
     >>> brier_score_loss(y_true, np.array(y_prob) > 0.5)
     0.0
     """
+    # TODO(1.7): remove in 1.7 and reset y_proba to be required
+    # Note: validate params will raise an error if y_prob is not array-like,
+    # or "deprecated"
+    if y_proba is not None and not isinstance(y_prob, str):
+        raise ValueError(
+            "`y_prob` and `y_proba` cannot be both specified. Please use `y_proba` only"
+            " as `y_prob` is deprecated in v1.5 and will be removed in v1.7."
+        )
+    if y_proba is None:
+        warnings.warn(
+            (
+                "y_prob was deprecated in version 1.5 and will be removed in 1.7."
+                "Please use ``y_proba`` instead."
+            ),
+            FutureWarning,
+        )
+        y_proba = y_prob
+
     y_true = column_or_1d(y_true)
-    y_prob = column_or_1d(y_prob)
+    y_proba = column_or_1d(y_proba)
     assert_all_finite(y_true)
-    assert_all_finite(y_prob)
-    check_consistent_length(y_true, y_prob, sample_weight)
+    assert_all_finite(y_proba)
+    check_consistent_length(y_true, y_proba, sample_weight)
 
     y_type = type_of_target(y_true, input_name="y_true")
     if y_type != "binary":
@@ -3224,10 +3269,10 @@ def brier_score_loss(y_true, y_prob, *, sample_weight=None, pos_label=None):
             f"is {y_type}."
         )
 
-    if y_prob.max() > 1:
-        raise ValueError("y_prob contains values greater than 1.")
-    if y_prob.min() < 0:
-        raise ValueError("y_prob contains values less than 0.")
+    if y_proba.max() > 1:
+        raise ValueError("y_proba contains values greater than 1.")
+    if y_proba.min() < 0:
+        raise ValueError("y_proba contains values less than 0.")
 
     try:
         pos_label = _check_pos_label_consistency(pos_label, y_true)
@@ -3240,4 +3285,4 @@ def brier_score_loss(y_true, y_prob, *, sample_weight=None, pos_label=None):
         else:
             raise
     y_true = np.array(y_true == pos_label, int)
-    return np.average((y_true - y_prob) ** 2, weights=sample_weight)
+    return np.average((y_true - y_proba) ** 2, weights=sample_weight)

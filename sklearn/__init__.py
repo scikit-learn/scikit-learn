@@ -14,7 +14,7 @@ get information about the working environment.
 # that are accessible to everybody and reusable in various contexts:
 # machine-learning as a versatile tool for science and engineering.
 #
-# See http://scikit-learn.org for complete documentation.
+# See https://scikit-learn.org for complete documentation.
 
 import logging
 import os
@@ -42,7 +42,7 @@ logger = logging.getLogger(__name__)
 # Dev branch marker is: 'X.Y.dev' or 'X.Y.devN' where N is an integer.
 # 'X.Y.dev0' is the canonical version of 'X.Y.dev'
 #
-__version__ = "1.4.dev0"
+__version__ = "1.5.dev0"
 
 
 # On OSX, we can get a runtime error due to multiple OpenMP libraries loaded
@@ -132,6 +132,14 @@ else:
         "config_context",
         "show_versions",
     ]
+
+    _BUILT_WITH_MESON = False
+    try:
+        import sklearn._built_with_meson  # noqa: F401
+
+        _BUILT_WITH_MESON = True
+    except ModuleNotFoundError:
+        pass
 
 
 def setup_module(module):

@@ -505,6 +505,9 @@ class PLSRegression(_PLS):
     PLSRegression is also known as PLS2 or PLS1, depending on the number of
     targets.
 
+    For a comparison between other cross decomposition algorithms, see
+    :ref:`sphx_glr_auto_examples_cross_decomposition_plot_compare_cross_decomposition.py`.
+
     Read more in the :ref:`User Guide <cross_decomposition>`.
 
     .. versionadded:: 0.8
@@ -596,6 +599,9 @@ class PLSRegression(_PLS):
     >>> pls2.fit(X, Y)
     PLSRegression()
     >>> Y_pred = pls2.predict(X)
+
+    For a comparison between PLS Regression and :class:`~sklearn.decomposition.PCA`, see
+    :ref:`sphx_glr_auto_examples_cross_decomposition_plot_pcr_vs_pls.py`.
     """
 
     _parameter_constraints: dict = {**_PLS._parameter_constraints}
@@ -649,6 +655,9 @@ class PLSRegression(_PLS):
 
 class PLSCanonical(_PLS):
     """Partial Least Squares transformer and regressor.
+
+    For a comparison between other cross decomposition algorithms, see
+    :ref:`sphx_glr_auto_examples_cross_decomposition_plot_compare_cross_decomposition.py`.
 
     Read more in the :ref:`User Guide <cross_decomposition>`.
 
@@ -779,6 +788,9 @@ class PLSCanonical(_PLS):
 
 class CCA(_PLS):
     """Canonical Correlation Analysis, also known as "Mode B" PLS.
+
+    For a comparison between other cross decomposition algorithms, see
+    :ref:`sphx_glr_auto_examples_cross_decomposition_plot_compare_cross_decomposition.py`.
 
     Read more in the :ref:`User Guide <cross_decomposition>`.
 
