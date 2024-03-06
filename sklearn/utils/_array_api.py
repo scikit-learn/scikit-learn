@@ -648,7 +648,7 @@ def _average(a, axis=None, weights=None, normalize=True, xp=None):
             )
 
     if weights is None and xp.isdtype(a.dtype, "integral"):
-        output_dtype = xp.float64
+        output_dtype = xp.asarray(0.0).dtype  # implementation specific
     elif weights is None:
         output_dtype = a.dtype
     elif xp.isdtype(a.dtype, "real floating") and xp.isdtype(
