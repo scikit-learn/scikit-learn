@@ -30,12 +30,27 @@ Metadata Routing
 Changelog
 ---------
 
+:mod:`sklearn.metrics`
+......................
+
+- |Fix|:class:`metrics.classification_report` now shows only accuracy and not
+  micro-average when input is a subset of labels.
+  :pr:`28399` by :user:`Vineet Joshi <vjoshi253>`.
+
 :mod:`sklearn.neighbors`
 ........................
 
 - |Fix| Fixes :class:`neighbors.NeighborhoodComponentsAnalysis` such that
   `get_feature_names_out` returns the correct number of feature names.
   :pr:`28306` by :user:`Brendan Lu <brendanlu>`.
+
+:mod:`sklearn.utils`
+....................
+
+- |Fix| :func:`~utils._safe_indexing` now works correctly for polars DataFrame when
+  `axis=0` and supports indexing polars Series.
+  :pr:`28521` by :user:`Yao Xiao <Charlie-XIAO>`.
+
 
 .. _changes_1_4_1:
 
