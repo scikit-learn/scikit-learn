@@ -611,17 +611,20 @@ def _average(a, axis=None, weights=None, normalize=True, xp=None):
     if weights is not None and a.shape != weights.shape:
         if axis is None:
             raise TypeError(
-                "Axis must be specified when {a.shape=} and {weights.shape=} differ."
+                f"Axis must be specified when the shape of a {tuple(a.shape)} and "
+                f"weights {tuple(weights.shape)} differ."
             )
 
         if weights.ndim != 1:
             raise TypeError(
-                f"1D weights expected when {a.shape=} and {weights.shape=} differ."
+                f"1D weights expected when a.shape={tuple(a.shape)} and "
+                f"weights.shape={tuple(weights.shape)} differ."
             )
 
         if size(weights) != a.shape[axis]:
             raise ValueError(
-                f"{size(weights)=} not compatible with {a.shape=} and {axis=}."
+                f"Length of weights {size(weights)} not compatible with "
+                f" a.shape={tuple(a.shape)} and {axis=}."
             )
 
         # If weights are 1D, add singleton dimensions for broadcasting
