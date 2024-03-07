@@ -537,7 +537,7 @@ def _find_matching_floating_dtype(*arrays, xp):
         return xp.result_type(*floating_dtypes)
 
     # If none of the input arrays has a floating point dtype, they must be all
-    # integer arrays or container of Python scalars: return the default
+    # integer arrays or containers of Python scalars: return the default
     # floating point dtype for the namespace (implementation specific).
     return xp.asarray(0.0).dtype
 
