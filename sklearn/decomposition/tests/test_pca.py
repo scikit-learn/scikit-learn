@@ -8,7 +8,7 @@ from numpy.testing import assert_array_equal
 
 from sklearn import config_context, datasets
 from sklearn.base import clone
-from sklearn.datasets import load_iris
+from sklearn.datasets import load_iris, make_classification
 from sklearn.decomposition import PCA
 from sklearn.decomposition._pca import _assess_dimension, _infer_dimension
 from sklearn.utils._array_api import (
@@ -16,15 +16,33 @@ from sklearn.utils._array_api import (
     _convert_to_numpy,
     yield_namespace_device_dtype_combinations,
 )
+from sklearn.utils._array_api import device as array_device
 from sklearn.utils._testing import _array_api_for_tests, assert_allclose
 from sklearn.utils.estimator_checks import (
     _get_check_estimator_ids,
     check_array_api_input_and_values,
 )
-from sklearn.utils.fixes import CSR_CONTAINERS
+from sklearn.utils.fixes import CSC_CONTAINERS, CSR_CONTAINERS
 
 iris = datasets.load_iris()
 PCA_SOLVERS = ["full", "arpack", "randomized", "auto"]
+
+# `SPARSE_M` and `SPARSE_N` could be larger, but be aware:
+# * SciPy's generation of random sparse matrix can be costly
+# * A (SPARSE_M, SPARSE_N) dense array is allocated to compare against
+SPARSE_M, SPARSE_N = 1000, 300  # arbitrary
+SPARSE_MAX_COMPONENTS = min(SPARSE_M, SPARSE_N)
+
+
+def _check_fitted_pca_close(pca1, pca2, rtol):
+    assert_allclose(pca1.components_, pca2.components_, rtol=rtol)
+    assert_allclose(pca1.explained_variance_, pca2.explained_variance_, rtol=rtol)
+    assert_allclose(pca1.singular_values_, pca2.singular_values_, rtol=rtol)
+    assert_allclose(pca1.mean_, pca2.mean_, rtol=rtol)
+    assert_allclose(pca1.n_components_, pca2.n_components_, rtol=rtol)
+    assert_allclose(pca1.n_samples_, pca2.n_samples_, rtol=rtol)
+    assert_allclose(pca1.noise_variance_, pca2.noise_variance_, rtol=rtol)
+    assert_allclose(pca1.n_features_in_, pca2.n_features_in_, rtol=rtol)
 
 
 @pytest.mark.parametrize("svd_solver", PCA_SOLVERS)
@@ -47,6 +65,136 @@ def test_pca(svd_solver, n_components):
     cov = pca.get_covariance()
     precision = pca.get_precision()
     assert_allclose(np.dot(cov, precision), np.eye(X.shape[1]), atol=1e-12)
+
+
+@pytest.mark.parametrize("density", [0.01, 0.1, 0.30])
+@pytest.mark.parametrize("n_components", [1, 2, 10])
+@pytest.mark.parametrize("sparse_container", CSR_CONTAINERS + CSC_CONTAINERS)
+@pytest.mark.parametrize("svd_solver", ["arpack"])
+@pytest.mark.parametrize("scale", [1, 10, 100])
+def test_pca_sparse(
+    global_random_seed, svd_solver, sparse_container, n_components, density, scale
+):
+    # Make sure any tolerance changes pass with SKLEARN_TESTS_GLOBAL_RANDOM_SEED="all"
+    rtol = 5e-07
+    transform_rtol = 3e-05
+
+    random_state = np.random.default_rng(global_random_seed)
+    X = sparse_container(
+        sp.sparse.random(
+            SPARSE_M,
+            SPARSE_N,
+            random_state=random_state,
+            density=density,
+        )
+    )
+    # Scale the data + vary the column means
+    scale_vector = random_state.random(X.shape[1]) * scale
+    X = X.multiply(scale_vector)
+
+    pca = PCA(
+        n_components=n_components,
+        svd_solver=svd_solver,
+        random_state=global_random_seed,
+    )
+    pca.fit(X)
+
+    Xd = X.toarray()
+    pcad = PCA(
+        n_components=n_components,
+        svd_solver=svd_solver,
+        random_state=global_random_seed,
+    )
+    pcad.fit(Xd)
+
+    # Fitted attributes equality
+    _check_fitted_pca_close(pca, pcad, rtol=rtol)
+
+    # Test transform
+    X2 = sparse_container(
+        sp.sparse.random(
+            SPARSE_M,
+            SPARSE_N,
+            random_state=random_state,
+            density=density,
+        )
+    )
+    X2d = X2.toarray()
+
+    assert_allclose(pca.transform(X2), pca.transform(X2d), rtol=transform_rtol)
+    assert_allclose(pca.transform(X2), pcad.transform(X2d), rtol=transform_rtol)
+
+
+@pytest.mark.parametrize("sparse_container", CSR_CONTAINERS + CSC_CONTAINERS)
+def test_pca_sparse_fit_transform(global_random_seed, sparse_container):
+    random_state = np.random.default_rng(global_random_seed)
+    X = sparse_container(
+        sp.sparse.random(
+            SPARSE_M,
+            SPARSE_N,
+            random_state=random_state,
+            density=0.01,
+        )
+    )
+    X2 = sparse_container(
+        sp.sparse.random(
+            SPARSE_M,
+            SPARSE_N,
+            random_state=random_state,
+            density=0.01,
+        )
+    )
+
+    pca_fit = PCA(n_components=10, svd_solver="arpack", random_state=global_random_seed)
+    pca_fit_transform = PCA(
+        n_components=10, svd_solver="arpack", random_state=global_random_seed
+    )
+
+    pca_fit.fit(X)
+    transformed_X = pca_fit_transform.fit_transform(X)
+
+    _check_fitted_pca_close(pca_fit, pca_fit_transform, rtol=1e-10)
+    assert_allclose(transformed_X, pca_fit_transform.transform(X), rtol=2e-9)
+    assert_allclose(transformed_X, pca_fit.transform(X), rtol=2e-9)
+    assert_allclose(pca_fit.transform(X2), pca_fit_transform.transform(X2), rtol=2e-9)
+
+
+@pytest.mark.parametrize("svd_solver", ["randomized", "full"])
+@pytest.mark.parametrize("sparse_container", CSR_CONTAINERS + CSC_CONTAINERS)
+def test_sparse_pca_solver_error(global_random_seed, svd_solver, sparse_container):
+    random_state = np.random.RandomState(global_random_seed)
+    X = sparse_container(
+        sp.sparse.random(
+            SPARSE_M,
+            SPARSE_N,
+            random_state=random_state,
+        )
+    )
+    pca = PCA(n_components=30, svd_solver=svd_solver)
+    error_msg_pattern = (
+        f'PCA only support sparse inputs with the "arpack" solver, while "{svd_solver}"'
+        " was passed"
+    )
+    with pytest.raises(TypeError, match=error_msg_pattern):
+        pca.fit(X)
+
+
+@pytest.mark.parametrize("sparse_container", CSR_CONTAINERS + CSC_CONTAINERS)
+def test_sparse_pca_auto_arpack_singluar_values_consistency(
+    global_random_seed, sparse_container
+):
+    """Check that "auto" and "arpack" solvers are equivalent for sparse inputs."""
+    random_state = np.random.RandomState(global_random_seed)
+    X = sparse_container(
+        sp.sparse.random(
+            SPARSE_M,
+            SPARSE_N,
+            random_state=random_state,
+        )
+    )
+    pca_arpack = PCA(n_components=10, svd_solver="arpack").fit(X)
+    pca_auto = PCA(n_components=10, svd_solver="auto").fit(X)
+    assert_allclose(pca_arpack.singular_values_, pca_auto.singular_values_, rtol=5e-3)
 
 
 def test_no_empty_slice_warning():
@@ -503,18 +651,6 @@ def test_pca_svd_solver_auto(data, n_components, expected_solver):
 
 
 @pytest.mark.parametrize("svd_solver", PCA_SOLVERS)
-@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
-def test_pca_sparse_input(svd_solver, csr_container):
-    X = np.random.RandomState(0).rand(5, 4)
-    X = csr_container(X)
-    assert sp.sparse.issparse(X)
-
-    pca = PCA(n_components=3, svd_solver=svd_solver)
-    with pytest.raises(TypeError):
-        pca.fit(X)
-
-
-@pytest.mark.parametrize("svd_solver", PCA_SOLVERS)
 def test_pca_deterministic_output(svd_solver):
     rng = np.random.RandomState(0)
     X = rng.rand(10, 10)
@@ -699,9 +835,9 @@ def test_variance_correctness(copy):
     np.testing.assert_allclose(pca_var, true_var)
 
 
-def check_array_api_get_precision(name, estimator, array_namespace, device, dtype):
-    xp, device, dtype = _array_api_for_tests(array_namespace, device, dtype)
-    iris_np = iris.data.astype(dtype)
+def check_array_api_get_precision(name, estimator, array_namespace, device, dtype_name):
+    xp = _array_api_for_tests(array_namespace, device)
+    iris_np = iris.data.astype(dtype_name)
     iris_xp = xp.asarray(iris_np, device=device)
 
     estimator.fit(iris_np)
@@ -717,7 +853,7 @@ def check_array_api_get_precision(name, estimator, array_namespace, device, dtyp
         assert_allclose(
             _convert_to_numpy(precision_xp, xp=xp),
             precision_np,
-            atol=_atol_for_type(dtype),
+            atol=_atol_for_type(dtype_name),
         )
         covariance_xp = estimator_xp.get_covariance()
         assert covariance_xp.shape == (4, 4)
@@ -726,12 +862,12 @@ def check_array_api_get_precision(name, estimator, array_namespace, device, dtyp
         assert_allclose(
             _convert_to_numpy(covariance_xp, xp=xp),
             covariance_np,
-            atol=_atol_for_type(dtype),
+            atol=_atol_for_type(dtype_name),
         )
 
 
 @pytest.mark.parametrize(
-    "array_namespace, device, dtype", yield_namespace_device_dtype_combinations()
+    "array_namespace, device, dtype_name", yield_namespace_device_dtype_combinations()
 )
 @pytest.mark.parametrize(
     "check",
@@ -742,7 +878,7 @@ def check_array_api_get_precision(name, estimator, array_namespace, device, dtyp
     "estimator",
     [
         PCA(n_components=2, svd_solver="full"),
-        PCA(n_components=2, svd_solver="full", whiten=True),
+        PCA(n_components=0.1, svd_solver="full", whiten=True),
         PCA(
             n_components=2,
             svd_solver="randomized",
@@ -752,9 +888,89 @@ def check_array_api_get_precision(name, estimator, array_namespace, device, dtyp
     ],
     ids=_get_check_estimator_ids,
 )
-def test_pca_array_api_compliance(estimator, check, array_namespace, device, dtype):
+def test_pca_array_api_compliance(
+    estimator, check, array_namespace, device, dtype_name
+):
     name = estimator.__class__.__name__
-    check(name, estimator, array_namespace, device=device, dtype=dtype)
+    check(name, estimator, array_namespace, device=device, dtype_name=dtype_name)
+
+
+@pytest.mark.parametrize(
+    "array_namespace, device, dtype_name", yield_namespace_device_dtype_combinations()
+)
+@pytest.mark.parametrize(
+    "check",
+    [check_array_api_get_precision],
+    ids=_get_check_estimator_ids,
+)
+@pytest.mark.parametrize(
+    "estimator",
+    [
+        # PCA with mle cannot use check_array_api_input_and_values because of
+        # rounding errors in the noisy (low variance) components. Even checking
+        # the shape of the `components_` is problematic because the number of
+        # components depends on trimming threshold of the mle algorithm which
+        # can depend on device-specific rounding errors.
+        PCA(n_components="mle", svd_solver="full"),
+    ],
+    ids=_get_check_estimator_ids,
+)
+def test_pca_mle_array_api_compliance(
+    estimator, check, array_namespace, device, dtype_name
+):
+    name = estimator.__class__.__name__
+    check(name, estimator, array_namespace, device=device, dtype_name=dtype_name)
+
+    # Simpler variant of the generic check_array_api_input checker tailored for
+    # the specific case of PCA with mle-trimmed components.
+    xp = _array_api_for_tests(array_namespace, device)
+
+    X, y = make_classification(random_state=42)
+    X = X.astype(dtype_name, copy=False)
+    atol = _atol_for_type(X.dtype)
+
+    est = clone(estimator)
+
+    X_xp = xp.asarray(X, device=device)
+    y_xp = xp.asarray(y, device=device)
+
+    est.fit(X, y)
+
+    components_np = est.components_
+    explained_variance_np = est.explained_variance_
+
+    est_xp = clone(est)
+    with config_context(array_api_dispatch=True):
+        est_xp.fit(X_xp, y_xp)
+        components_xp = est_xp.components_
+        assert array_device(components_xp) == array_device(X_xp)
+        components_xp_np = _convert_to_numpy(components_xp, xp=xp)
+
+        explained_variance_xp = est_xp.explained_variance_
+        assert array_device(explained_variance_xp) == array_device(X_xp)
+        explained_variance_xp_np = _convert_to_numpy(explained_variance_xp, xp=xp)
+
+    assert components_xp_np.dtype == components_np.dtype
+    assert components_xp_np.shape[1] == components_np.shape[1]
+    assert explained_variance_xp_np.dtype == explained_variance_np.dtype
+
+    # Check that the explained variance values match for the
+    # common components:
+    min_components = min(components_xp_np.shape[0], components_np.shape[0])
+    assert_allclose(
+        explained_variance_xp_np[:min_components],
+        explained_variance_np[:min_components],
+        atol=atol,
+    )
+
+    # If the number of components differ, check that the explained variance of
+    # the trimmed components is very small.
+    if components_xp_np.shape[0] != components_np.shape[0]:
+        reference_variance = explained_variance_np[-1]
+        extra_variance_np = explained_variance_np[min_components:]
+        extra_variance_xp_np = explained_variance_xp_np[min_components:]
+        assert all(np.abs(extra_variance_np - reference_variance) < atol)
+        assert all(np.abs(extra_variance_xp_np - reference_variance) < atol)
 
 
 def test_array_api_error_and_warnings_on_unsupported_params():
