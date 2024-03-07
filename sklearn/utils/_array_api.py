@@ -588,6 +588,29 @@ def _add_to_diagonal(array, value, xp):
             array[i, i] += value
 
 
+def _find_matching_floating_dtype(*arrays, xp):
+    """Find a suitable floating point dtype when computing with arrays.
+
+    If any of the arrays are floating point, return the dtype with the highest
+    precision by following official type promotion rules:
+
+    https://data-apis.org/array-api/latest/API_specification/type_promotion.html
+
+    If there are no floating point input arrays (all integral inputs for
+    instance), return the default floating point dtype for the namespace.
+    """
+    arrays = _skip_non_arrays(*arrays)
+    floating_dtypes = [a.dtype for a in arrays if xp.isdtype(a.dtype, "real floating")]
+    if floating_dtypes:
+        # Return the floating dtype with the highest precision:
+        return xp.result_type(*floating_dtypes)
+
+    # If none of the input arrays has a floating point dtype, they must be all
+    # integer arrays: return the default floating point dtype for the namespace
+    # (implementation specific).
+    return xp.asarray(0.0).dtype
+
+
 def _average(a, axis=None, weights=None, normalize=True, xp=None):
     """Partial port of np.average to support the Array API.
 
@@ -647,21 +670,7 @@ def _average(a, axis=None, weights=None, normalize=True, xp=None):
                 "Complex floating point values are not supported by average."
             )
 
-    if weights is None and xp.isdtype(a.dtype, "integral"):
-        output_dtype = xp.asarray(0.0).dtype  # implementation specific
-    elif weights is None:
-        output_dtype = a.dtype
-    elif xp.isdtype(a.dtype, "real floating") and xp.isdtype(
-        weights.dtype, "real floating"
-    ):
-        output_dtype = (
-            a.dtype
-            if (xp.finfo(a.dtype).bits >= xp.finfo(weights.dtype).bits)
-            else weights.dtype
-        )
-    else:
-        output_dtype = xp.float64
-
+    output_dtype = _find_matching_floating_dtype(a, weights, xp=xp)
     a = xp.astype(a, output_dtype)
 
     if weights is None:

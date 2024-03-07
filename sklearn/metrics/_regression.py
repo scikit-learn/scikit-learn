@@ -36,6 +36,7 @@ from scipy.special import xlogy
 from ..exceptions import UndefinedMetricWarning
 from ..utils._array_api import (
     _average,
+    _find_matching_floating_dtype,
     device,
     get_namespace,
 )
@@ -1199,16 +1200,7 @@ def r2_score(
     xp, is_array_api_compliant = get_namespace(*input_arrays)
     device_ = device(*input_arrays)
 
-    # We want to make sure that the dtype used to perform the computation is
-    # always a floating point dtype, even if the inputs arrays (and possibly
-    # the weights) are integer typed. This output dtype should be determined in
-    # accordance to Array API type promotion rules while noting that Python
-    # scalar types and integer arrays are promoted to floating point dtypes in
-    # an implementation specific way:
-    # https://data-apis.org/array-api/latest/API_specification/type_promotion.html#type-promotion
-    default_floating_dtype = xp.asarray(0.0).dtype  # implementation specific
-    y_true, y_pred = xp.asarray(y_true), xp.asarray(y_pred)
-    dtype = xp.result_type(y_true, y_pred, default_floating_dtype)
+    dtype = _find_matching_floating_dtype(y_true, y_pred, sample_weight, xp=xp)
     y_true, y_pred = xp.astype(y_true, dtype), xp.astype(y_pred, dtype)
 
     _, y_true, y_pred, multioutput = _check_reg_targets(
