@@ -470,15 +470,6 @@ documentation <https://docs.python.org/3/library/multiprocessing.html#contexts-a
 
 .. _faq_mkl_threading:
 
-Why do estimators sometimes produce unexpected/spurious results?
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-This can often be due to floating-point issues related to the ``dtype`` of your
-input array. If you experience unexpected results for ``'float32'`` data, try
-converting the data to ``'float64'`` instead for greater precision.
-
-You can find more on the `dtype section of the Glossary <https://scikit-learn.org/stable/glossary.html#term-dtype>`_.
-
 Why does my job use more cores than specified with ``n_jobs``?
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
