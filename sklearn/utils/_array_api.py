@@ -618,16 +618,13 @@ def _average(a, axis=None, weights=None, normalize=True, xp=None):
 
     weights = xp.astype(weights, output_dtype)
 
-    sum_ = xp.sum(xp.multiply(a, weights), axis=axis)
+    if normalize:
+        scale = xp.sum(weights, axis=axis)
+        if xp.any(scale == 0.0):
+            raise ZeroDivisionError("Weights sum to zero, can't be normalized")
+        weights = weights / scale
 
-    if not normalize:
-        return sum_
-
-    scale = xp.sum(weights, axis=axis)
-    if xp.any(scale == 0.0):
-        raise ZeroDivisionError("Weights sum to zero, can't be normalized")
-
-    return sum_ / scale
+    return xp.sum(xp.multiply(a, weights), axis=axis)
 
 
 def _nanmin(X, axis=None, xp=None):
