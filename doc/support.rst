@@ -2,8 +2,7 @@
 Support
 =======
 
-There are several channels to connect with scikit-learn developers for assistance,
-feedback, or contributions.
+There are several channels to connect with scikit-learn developers for assistance, feedback, or contributions.
 
 **Note**: Communications on all channels should respect our our [Code of Conduct](https://github.com/scikit-learn/scikit-learn/blob/main/CODE_OF_CONDUCT.md).
 
