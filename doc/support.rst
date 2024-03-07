@@ -2,12 +2,15 @@
 Support
 =======
 
-There are several ways to get in touch with the developers.
+There are several channels to connect with scikit-learn developers for assistance,
+feedback, or contributions.
+
+**Note**: Our [Code of Conduct](https://github.com/scikit-learn/scikit-learn/blob/main/CODE_OF_CONDUCT.md) applies to all communications.
 
 
 .. _announcements_and_notification:
 
-Announcements and notification
+Announcements and notifications
 ===============================
 
 - The main mailing list is `scikit-learn
@@ -20,28 +23,27 @@ Announcements and notification
 .. _how_to_reach_out:
 
 How to reach out
-=================
+================
 
 The Discord server is intended for communication between the scikit-learn maintainers
-and community contributors during Office Hours and Sprints.
-If you have questions, this is our general workflow:
+and community contributors. If you have questions, this is our general workflow:
 
 - `GitHub Discussions <https://github.com/scikit-learn/scikit-learn/discussions>`_
   Usage questions such as methodological
 
-- `StackOverflow <https://stackoverflow.com/questions/tagged/scikit-learn>`_
-  programming/user questions with `[scikit-learn]` tag
+- `Stack Overflow <https://stackoverflow.com/questions/tagged/scikit-learn>`_
+  Programming/user questions with `[scikit-learn]` tag
 
 - `GitHub Bug Tracker <https://github.com/scikit-learn/scikit-learn/issues>`_
   Bug reports - Please do not ask usage questions on the issue tracker.
 
 - Discord server
-  current pull requests - Please post any specific PR-related questions on your PR, and you
-  can share a link to your PR on this server during office hours.
+  Current pull requests - Please post any specific PR-related questions on your PR, 
+  and you can share a link to your PR on this server during office hours.
 
 - `Reference on asking questions <http://matthewrocklin.com/blog/2019/02/28/slack-github>`_
 
-- `Calendar for Office Hours <https://blog.scikit-learn.org/calendar/>`_
+- `Calendar for Meetings <https://blog.scikit-learn.org/calendar/>`_
 
 
 .. _user_questions:
@@ -49,7 +51,7 @@ If you have questions, this is our general workflow:
 User questions
 ==============
 
-- Some scikit-learn developers support users on StackOverflow using
+- Some scikit-learn developers support users on Stack Overflow using
   the `[scikit-learn] <https://stackoverflow.com/questions/tagged/scikit-learn>`_
   tag.
 
@@ -100,15 +102,21 @@ as CSV files using ``numpy.savetxt``).
 Note: Gists are Git cloneable repositories and thus you can use Git to
 push datafiles to them.
 
-
 .. _gitter:
 
 Gitter
 ======
 
-Some developers like to hang out on scikit-learn Gitter room:
-https://gitter.im/scikit-learn/scikit-learn.
+**Note**: The scikit-learn Gitter room is no longer an active community. 
+For live discussions and support, please refer to the other channels 
+mentioned in this document.
 
+Social Media
+============
+
+scikit-learn has presence on various social media platforms to share
+updates with the community. The platforms are not monitored for user
+questions.
 
 .. _documentation_resources:
 
