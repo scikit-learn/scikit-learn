@@ -191,6 +191,10 @@ def test_average_raises_with_wrong_dtype(array_namespace, device, dtype_name):
     array_in = numpy.asarray([2, 0], dtype=dtype_name) + 1j * numpy.asarray(
         [4, 3], dtype=dtype_name
     )
+    complex_type_name = array_in.dtype.name
+    if not hasattr(xp, complex_type_name):
+        pytest.skip(f"{array_namespace} does not support {complex_type_name}")
+
     array_in = xp.asarray(array_in, device=device)
 
     err_msg = "Complex floating point values are not supported by average."
