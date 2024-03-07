@@ -401,6 +401,7 @@ def _skip_non_arrays(*arrays, skip_none=True, skip_types=(str,)):
         List of arrays with None and typoe
     """
     filtered_arrays = []
+    skip_types = tuple(skip_types)
     for array in arrays:
         if skip_none and array is None:
             continue
@@ -408,7 +409,6 @@ def _skip_non_arrays(*arrays, skip_none=True, skip_types=(str,)):
             continue
         filtered_arrays.append(array)
 
-    skip_types = tuple(skip_types)
     if not filtered_arrays:
         raise ValueError(
             f"At least one input array expected after filtering with {skip_none=}, "
