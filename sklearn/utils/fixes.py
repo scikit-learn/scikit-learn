@@ -50,6 +50,25 @@ if parse_version(scipy.__version__) >= parse_version("1.8"):
     BSR_CONTAINERS.append(scipy.sparse.bsr_array)
     DIA_CONTAINERS.append(scipy.sparse.dia_array)
 
+
+# Remove when minimum scipy version is 1.11.0
+try:
+    from scipy.sparse import sparray  # noqa
+
+    SPARRAY_PRESENT = True
+except ImportError:
+    SPARRAY_PRESENT = False
+
+
+# Remove when minimum scipy version is 1.8
+try:
+    from scipy.sparse import csr_array  # noqa
+
+    SPARSE_ARRAY_PRESENT = True
+except ImportError:
+    SPARSE_ARRAY_PRESENT = False
+
+
 try:
     from scipy.optimize._linesearch import line_search_wolfe1, line_search_wolfe2
 except ImportError:  # SciPy < 1.8

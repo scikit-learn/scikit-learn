@@ -1151,7 +1151,7 @@ class TSNE(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
             Embedding of the training data in low-dimensional space.
         """
         # TODO(1.7): remove
-        # Also make sure to change `max_iter` default back to 1 and deprecate None
+        # Also make sure to change `max_iter` default back to 1000 and deprecate None
         if self.n_iter != "deprecated":
             if self.max_iter is not None:
                 raise ValueError(

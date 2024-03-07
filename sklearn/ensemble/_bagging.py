@@ -21,8 +21,8 @@ from ..utils import (
     _safe_indexing,
     check_random_state,
     column_or_1d,
-    indices_to_mask,
 )
+from ..utils._mask import indices_to_mask
 from ..utils._param_validation import HasMethods, Interval, RealNotInt
 from ..utils._tags import _safe_tags
 from ..utils.metadata_routing import (
