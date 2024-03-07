@@ -907,7 +907,10 @@ def _assemble_r2_explained_variance(
     else:
         avg_weights = multioutput
 
-    return _average(output_scores, weights=avg_weights)
+    result = _average(output_scores, weights=avg_weights)
+    if result.size == 1:
+        return float(result)
+    return result
 
 
 @validate_params(
@@ -1220,7 +1223,7 @@ def r2_score(
         axis=0,
     )
 
-    result = _assemble_r2_explained_variance(
+    return _assemble_r2_explained_variance(
         numerator=numerator,
         denominator=denominator,
         n_outputs=y_true.shape[1],
@@ -1229,9 +1232,6 @@ def r2_score(
         xp=xp,
         device=device_,
     )
-    if result.size == 1:
-        return float(result)
-    return result
 
 
 @validate_params(
