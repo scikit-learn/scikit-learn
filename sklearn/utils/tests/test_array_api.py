@@ -17,7 +17,6 @@ from sklearn.utils._array_api import (
     _nanmax,
     _nanmin,
     _NumPyAPIWrapper,
-    _supports_dtype,
     device,
     get_namespace,
     supported_float_dtypes,
@@ -186,15 +185,6 @@ def test_average(
     "array_namespace, device, dtype_name",
     yield_namespace_device_dtype_combinations(include_numpy_namespaces=False),
 )
-def test_supports_dtype(array_namespace, device, dtype_name):
-    xp = _array_api_for_tests(array_namespace, device)
-    assert _supports_dtype(xp, device, "float32") is True
-
-
-@pytest.mark.parametrize(
-    "array_namespace, device, dtype_name",
-    yield_namespace_device_dtype_combinations(include_numpy_namespaces=False),
-)
 def test_average_raises_with_wrong_dtype(array_namespace, device, dtype_name):
     xp = _array_api_for_tests(array_namespace, device)
 
@@ -259,18 +249,6 @@ def test_average_raises_with_invalid_parameters(
 
     with config_context(array_api_dispatch=True), pytest.raises(error, match=error_msg):
         _average(array_in, axis=axis, weights=weights)
-
-
-class _NumPyAPIWrapperNoFloat64(_NumPyAPIWrapper):
-    def ones(self, shape, dtype, device):
-        if dtype == "float64":
-            raise ValueError
-        return numpy.ones(shape, dtype)
-
-
-def test_supports_dtype_return_value():
-    assert _supports_dtype(_NumPyAPIWrapperNoFloat64(), "device", "float64") is False
-    assert _supports_dtype(_NumPyAPIWrapperNoFloat64(), "device", "float32") is True
 
 
 def test_device_raises_if_no_input():

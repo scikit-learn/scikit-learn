@@ -2,7 +2,7 @@
 
 import itertools
 import math
-from functools import lru_cache, wraps
+from functools import wraps
 
 import numpy
 import scipy.special as special
@@ -221,60 +221,7 @@ def _isdtype_single(dtype, kind, *, xp):
         return dtype == kind
 
 
-class _HashableDevice:
-    """Some device inspection functions cache their results using a `lru_cache`
-    decorator, to enable fast repeated access. `lru_cache` derives the cache keys
-    by hashing the inputs. However the Array API does not enforces that the device
-    objects have to be hashable, and in practice it is sometimes not the case (e.g.
-    cupy cuda device object is not hashable). This class wraps the device to make
-    sure it is hashable, deriving a hash from `repr(device)`."""
-
-    def __init__(self, device, xp):
-        self.device = device
-        self.xp = xp
-
-    def __hash__(self):
-        device_name = repr(self.device) if self.device is not None else None
-        return hash((device_name, self.xp))
-
-
-def _supports_dtype(xp, device, dtype):
-    """Check if a given namespace/device/dtype combination is supported.
-
-    Note that some namespaces expose dtypes that can cause a failure at runtime
-    when trying to allocate an array with a specific device/dtype combination.
-
-    This is the case for the  Pytorch / mps / float64 combination:
-    at the time of writing, only float16/float32 arrays can be allocated on this
-    type of device.  Otherwise a `TypeError` would be raised.
-
-    This helper function can be refactored once an expressive enough inspection
-    API has been specified as part of the standard and implemented in the main
-    libraries:
-
-    https://github.com/data-apis/array-api/issues/640
-    """
-    return _supports_dtype_cached(xp, _HashableDevice(device, xp), dtype)
-
-
-@lru_cache
-def _supports_dtype_cached(xp, device, dtype):
-    if not hasattr(xp, dtype):
-        return False
-
-    dtype = getattr(xp, dtype)
-
-    try:
-        array = xp.ones((1,), device=device.device, dtype=dtype)
-        array += array
-        float(array[0])
-    except Exception:
-        return False
-
-    return True
-
-
-def supported_float_dtypes(xp, device=None):
+def supported_float_dtypes(xp):
     """Supported floating point types for the namespace.
 
     Note: float16 is not officially part of the Array API spec at the
@@ -283,16 +230,10 @@ def supported_float_dtypes(xp, device=None):
 
     https://data-apis.org/array-api/latest/API_specification/data_types.html
     """
-    return _supported_float_dtypes_cached(xp, device=_HashableDevice(device, xp))
-
-
-@lru_cache
-def _supported_float_dtypes_cached(xp, device=None):
-    return tuple(
-        getattr(xp, dtype)
-        for dtype in ["float64", "float32", "float16"]
-        if _supports_dtype_cached(xp, device, dtype)
-    )
+    if hasattr(xp, "float16"):
+        return (xp.float64, xp.float32, xp.float16)
+    else:
+        return (xp.float64, xp.float32)
 
 
 class _ArrayAPIWrapper:
