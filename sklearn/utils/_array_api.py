@@ -177,23 +177,14 @@ def isdtype(dtype, kind, *, xp):
         return _isdtype_single(dtype, kind, xp=xp)
 
 
-def _match_dtype_names(dtype, dtype_names, xp):
-    return any(
-        hasattr(xp, dtype_name) and (dtype == getattr(xp, dtype_name))
-        for dtype_name in dtype_names
-    )
-
-
 def _isdtype_single(dtype, kind, *, xp):
     if isinstance(kind, str):
         if kind == "bool":
             return dtype == xp.bool
         elif kind == "signed integer":
-            return _match_dtype_names(dtype, ["int8", "int16", "int32", "int64"], xp)
+            return dtype in {xp.int8, xp.int16, xp.int32, xp.int64}
         elif kind == "unsigned integer":
-            return _match_dtype_names(
-                dtype, ["uint8", "uint16", "uint32", "uint64"], xp
-            )
+            return dtype in {xp.uint8, xp.uint16, xp.uint32, xp.uint64}
         elif kind == "integral":
             return any(
                 _isdtype_single(dtype, k, xp=xp)
