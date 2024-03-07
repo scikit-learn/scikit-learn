@@ -911,7 +911,7 @@ def _assemble_r2_explained_variance(
     else:
         avg_weights = multioutput
 
-    return xp.reshape(_average(output_scores, weights=avg_weights), (-1,))[0]
+    return _average(output_scores, weights=avg_weights)
 
 
 @validate_params(
@@ -1050,6 +1050,7 @@ def explained_variance_score(
         multioutput=multioutput,
         force_finite=force_finite,
         xp=get_namespace(y_true)[0],
+        # TODO: update once Array API support is added to explained_variance_score.
         device=None,
     )
 
