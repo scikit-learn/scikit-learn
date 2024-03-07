@@ -270,9 +270,8 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
             warnings.warn(
                 (
                     "Best performing initialization did not converge. "
-                    "Try different init parameters, "
-                    "or increase max_iter, tol, "
-                    "or check for degenerate data."
+                    "Try different init parameters, or increase max_iter, "
+                    "tol, or check for degenerate data."
                 ),
                 ConvergenceWarning,
             )
@@ -553,12 +552,14 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
                 )
                 self._iter_prev_time = cur_time
 
-    def _print_verbose_msg_init_end(self, ll, converged):
+    def _print_verbose_msg_init_end(self, lb, init_has_converged):
         """Print verbose message on the end of iteration."""
+        converged_msg = "converged" if init_has_converged else "did not converge"
         if self.verbose == 1:
-            print("Initialization converged: %s" % converged)
+            print(f"Initialization {converged_msg}.")
         elif self.verbose >= 2:
+            t = time() - self._init_prev_time
             print(
-                "Initialization converged: %s\t time lapse %.5fs\t ll %.5f"
-                % (converged, time() - self._init_prev_time, ll)
+                f"Initialization {converged_msg}. time lapse {t:.5f}s\t lower bound"
+                f" {lb:.5f}."
             )
