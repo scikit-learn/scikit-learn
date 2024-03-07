@@ -440,10 +440,12 @@ class MethodMetadataRequest:
             elif alias in args:
                 res[prop] = args[alias]
         if unrequested:
+            # we want to get the parent's class name, except for cases, when the router
+            # is a function
             if parent.__class__.__name__ != "str":
                 parent = parent.__class__.__name__
             if self.method in COMPOSITE_METHODS:
-                callee_methods = list(COMPOSITE_METHODS[self.method])
+                callee_methods = COMPOSITE_METHODS[self.method]
             else:
                 callee_methods = [self.method]
             set_requests_on = "".join(
