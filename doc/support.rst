@@ -2,61 +2,19 @@
 Support
 =======
 
-<<<<<<< HEAD
 There are several channels to connect with scikit-learn developers for assistance, feedback, or contributions.
 
 **Note**: Communications on all channels should respect our our [Code of Conduct](https://github.com/scikit-learn/scikit-learn/blob/main/CODE_OF_CONDUCT.md).
 
-=======
-Connect with scikit-learn developers through various channels for assistance,
-feedback, or contributions.
->>>>>>> fad66eb8296d0d7da27e041d78a8edff5b7d4361
 
 .. _announcements_and_notification:
 
-<<<<<<< HEAD
-Announcements and notifications
-===============================
-
-- The main mailing list is `scikit-learn
-  <https://mail.python.org/mailman/listinfo/scikit-learn>`_.
-
-- Commit notifications are sent via the twitter account `sklearn_commits
-  <https://twitter.com/sklearn_commits>`_.
-
-
-.. _how_to_reach_out:
-
-How to reach out
-================
-
-The Discord server is intended for communication between the scikit-learn maintainers
-and community contributors. If you have questions, this is our general workflow:
-
-- `GitHub Discussions <https://github.com/scikit-learn/scikit-learn/discussions>`_
-  Usage questions such as methodological
-
-- `Stack Overflow <https://stackoverflow.com/questions/tagged/scikit-learn>`_
-  Programming/user questions with `[scikit-learn]` tag
-
-- `GitHub Bug Tracker <https://github.com/scikit-learn/scikit-learn/issues>`_
-  Bug reports - Please do not ask usage questions on the issue tracker.
-
-- Discord server
-  Current pull requests - Please post any specific PR-related questions on your PR, 
-  and you can share a link to your PR on this server during office hours.
-
-- `Reference on asking questions <http://matthewrocklin.com/blog/2019/02/28/slack-github>`_
-
-- `Calendar for Meetings <https://blog.scikit-learn.org/calendar/>`_
-=======
 Mailing Lists
 =============
 
 - **Main Mailing List**: Join the primary discussion 
   platform for scikit-learn at `scikit-learn Mailing List       
   <https://mail.python.org/mailman/listinfo/scikitlearn>`_.
->>>>>>> fad66eb8296d0d7da27e041d78a8edff5b7d4361
 
 - **Commit Updates**: Stay informed about repository 
   updates and test failures on the `scikit-learn-commits list 
@@ -67,7 +25,7 @@ Mailing Lists
 User Questions
 ==============
 
-Engage with the scikit-learn community and seek answers to your questions:
+If you have questions, this is our general workflow.
 
 - **Stack Overflow**: Some scikit-learn developers support users using the 
   `[scikit-learn] <https://stackoverflow.com/questions/tagged/scikit-learn>`_ 
@@ -92,6 +50,19 @@ When posting questions:
 
 **Note**: Avoid asking user questions on the bug tracker to keep 
 the focus on development.
+
+- `GitHub Discussions <https://github.com/scikit-learn/scikit-learn/discussions>`_
+  Usage questions such as methodological
+
+- `Stack Overflow <https://stackoverflow.com/questions/tagged/scikit-learn>`_
+  Programming/user questions with `[scikit-learn]` tag
+
+- `GitHub Bug Tracker <https://github.com/scikit-learn/scikit-learn/issues>`_
+  Bug reports - Please do not ask usage questions on the issue tracker.
+
+- Discord server
+  Current pull requests - Post any specific PR-related questions on your PR, 
+  and you can share a link to your PR on this server.
 
 .. _bug_tracker:
 
