@@ -310,9 +310,7 @@ def test_device_inspection():
 # the following upstream issue has been fixed:
 # https://github.com/cupy/cupy/issues/8180
 @skip_if_array_api_compat_not_configured
-@pytest.mark.parametrize(
-    "library", ["numpy", "numpy.array_api", "torch"]
-)
+@pytest.mark.parametrize("library", ["numpy", "numpy.array_api", "torch"])
 @pytest.mark.parametrize(
     "X,reduction,expected",
     [
