@@ -175,7 +175,7 @@ def accuracy_score(y_true, y_pred, *, normalize=True, sample_weight=None):
 
     Returns
     -------
-    score : float
+    score : float or int
         If ``normalize == True``, return the fraction of correctly
         classified samples (float), else returns the number of correctly
         classified samples (int).
@@ -2618,7 +2618,7 @@ def classification_report(
 
     # labelled micro average
     micro_is_accuracy = (y_type == "multiclass" or y_type == "binary") and (
-        not labels_given or (set(labels) == set(unique_labels(y_true, y_pred)))
+        not labels_given or (set(labels) >= set(unique_labels(y_true, y_pred)))
     )
 
     if target_names is not None and len(labels) != len(target_names):

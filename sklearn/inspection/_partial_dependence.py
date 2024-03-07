@@ -26,8 +26,8 @@ from ..utils import (
     _safe_assign,
     _safe_indexing,
     check_array,
-    check_matplotlib_support,  # noqa
 )
+from ..utils._optional_dependencies import check_matplotlib_support  # noqa
 from ..utils._param_validation import (
     HasMethods,
     Integral,

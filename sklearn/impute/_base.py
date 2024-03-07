@@ -13,8 +13,8 @@ import numpy.ma as ma
 from scipy import sparse as sp
 
 from ..base import BaseEstimator, TransformerMixin, _fit_context
-from ..utils import _is_pandas_na, is_scalar_nan
 from ..utils._mask import _get_mask
+from ..utils._missing import is_pandas_na, is_scalar_nan
 from ..utils._param_validation import MissingValues, StrOptions
 from ..utils.fixes import _mode
 from ..utils.sparsefuncs import _get_median
@@ -22,7 +22,7 @@ from ..utils.validation import FLOAT_DTYPES, _check_feature_names_in, check_is_f
 
 
 def _check_inputs_dtype(X, missing_values):
-    if _is_pandas_na(missing_values):
+    if is_pandas_na(missing_values):
         # Allow using `pd.NA` as missing values to impute numerical arrays.
         return
     if X.dtype.kind in ("f", "i", "u") and not isinstance(missing_values, numbers.Real):
@@ -323,7 +323,7 @@ class SimpleImputer(_BaseImputer):
             # Use object dtype if fitted on object dtypes
             dtype = self._fit_dtype
 
-        if _is_pandas_na(self.missing_values) or is_scalar_nan(self.missing_values):
+        if is_pandas_na(self.missing_values) or is_scalar_nan(self.missing_values):
             force_all_finite = "allow-nan"
         else:
             force_all_finite = True
@@ -701,7 +701,7 @@ class SimpleImputer(_BaseImputer):
 
     def _more_tags(self):
         return {
-            "allow_nan": _is_pandas_na(self.missing_values) or is_scalar_nan(
+            "allow_nan": is_pandas_na(self.missing_values) or is_scalar_nan(
                 self.missing_values
             )
         }
