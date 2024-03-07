@@ -69,7 +69,7 @@ User Questions
 
 Engage with the scikit-learn community and seek answers to your questions:
 
-- **StackOverflow**: Some scikit-learn developers support users using the 
+- **Stack Overflow**: Some scikit-learn developers support users using the 
   `[scikit-learn] <https://stackoverflow.com/questions/tagged/scikit-learn>`_ 
   tag.
 
@@ -116,6 +116,15 @@ Include in your report:
   `gist <https://gist.github.com>`_ or a github repo.
 
 **Tip**: Gists are Git repositories; you can push data files to them using Git.
+
+.. _social_media:
+
+Social Media
+============
+
+scikit-learn has presence on various social media platforms to share
+updates with the community. The platforms are not monitored for user
+questions.
 
 .. _gitter:
 
