@@ -5,7 +5,7 @@ Support
 There are several channels to connect with scikit-learn developers for assistance,
 feedback, or contributions.
 
-**Note**: Our [Code of Conduct](https://github.com/scikit-learn/scikit-learn/blob/main/CODE_OF_CONDUCT.md) applies to all communications.
+**Note**: Communications on all channels should respect our Our [Code of Conduct](https://github.com/scikit-learn/scikit-learn/blob/main/CODE_OF_CONDUCT.md).
 
 
 .. _announcements_and_notification:
