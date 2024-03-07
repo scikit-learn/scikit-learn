@@ -306,9 +306,12 @@ def test_device_inspection():
     assert array1.device == device(array1, array1, array2)
 
 
+# TODO: add cupy and cupy.array_api to the list of libraries once the
+# the following upstream issue has been fixed:
+# https://github.com/cupy/cupy/issues/8180
 @skip_if_array_api_compat_not_configured
 @pytest.mark.parametrize(
-    "library", ["numpy", "numpy.array_api", "cupy", "cupy.array_api", "torch"]
+    "library", ["numpy", "numpy.array_api", "torch"]
 )
 @pytest.mark.parametrize(
     "X,reduction,expected",
@@ -345,14 +348,10 @@ def test_nan_reductions(library, X, reduction, expected):
     """Check NaN reductions like _nanmin and _nanmax"""
     xp = pytest.importorskip(library)
 
-    if isinstance(expected, list):
-        expected = xp.asarray(expected)
-
     with config_context(array_api_dispatch=True):
         result = reduction(xp.asarray(X))
 
     result = _convert_to_numpy(result, xp)
-
     assert_allclose(result, expected)
 
 
