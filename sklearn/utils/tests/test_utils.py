@@ -15,9 +15,15 @@ from sklearn.utils import (
     safe_mask,
 )
 from sklearn.utils._missing import is_scalar_nan
-from sklearn.utils._testing import assert_array_equal, assert_no_warnings
+from sklearn.utils._testing import (
+    assert_array_equal,
+    assert_no_warnings,
+)
 from sklearn.utils.fixes import CSR_CONTAINERS
 from sklearn.utils.validation import _is_polars_df
+
+# toy array
+X_toy = np.arange(9).reshape((3, 3))
 
 
 def test_make_rng():
