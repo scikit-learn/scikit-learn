@@ -150,7 +150,7 @@ def test_assert_request_is_empty():
         .add(
             estimator=ConsumingRegressor(),
             method_mapping=MethodMapping().add(caller="fit", callee="fit"),
-        )  ###########m not sure if correct
+        )
     )
 
 
