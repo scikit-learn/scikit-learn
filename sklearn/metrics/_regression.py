@@ -106,11 +106,7 @@ def _check_reg_targets(y_true, y_pred, multioutput, dtype="numeric", xp=None):
         correct keyword.
     """
     if xp is None:
-        input_arrays = [y_true, y_pred]
-        if multioutput is not None and not isinstance(multioutput, str):
-            input_arrays.append(multioutput)
-
-        xp, _ = get_namespace(*input_arrays)
+        xp, _ = get_namespace(y_true, y_pred, multioutput)
 
     check_consistent_length(y_true, y_pred)
     y_true = check_array(y_true, ensure_2d=False, dtype=dtype)
@@ -1197,8 +1193,7 @@ def r2_score(
     -inf
     """
     input_arrays = [y_true, y_pred, sample_weight, multioutput]
-    # multioutput can be a str: ignore.
-    xp, is_array_api_compliant = get_namespace(*input_arrays)
+    xp, _ = get_namespace(*input_arrays)
     device_ = device(*input_arrays)
 
     dtype = _find_matching_floating_dtype(y_true, y_pred, sample_weight, xp=xp)
@@ -1225,7 +1220,7 @@ def r2_score(
         axis=0,
     )
 
-    result = _assemble_r2_explained_variance(
+    return _assemble_r2_explained_variance(
         numerator=numerator,
         denominator=denominator,
         n_outputs=y_true.shape[1],
@@ -1234,7 +1229,6 @@ def r2_score(
         xp=xp,
         device=device_,
     )
-    return result
 
 
 @validate_params(

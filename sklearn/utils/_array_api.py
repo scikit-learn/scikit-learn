@@ -494,10 +494,7 @@ def get_namespace(*arrays, skip_none=True, skip_types=(str,)):
 
     # These namespaces need additional wrapping to smooth out small differences
     # between implementations
-    if namespace.__name__ in {
-        "numpy.array_api",
-        "cupy.array_api",
-    }:
+    if namespace.__name__ in {"numpy.array_api", "cupy.array_api"}:
         namespace = _ArrayAPIWrapper(namespace)
 
     return namespace, is_array_api_compliant
