@@ -31,18 +31,21 @@ from abc import ABCMeta, abstractmethod
 from numbers import Integral, Real
 
 import numpy as np
-from scipy import linalg
 import scipy.sparse as sp
+from scipy import linalg
 
-from .base import BaseEstimator, TransformerMixin
-from .base import _ClassNamePrefixFeaturesOutMixin
-
+from .base import (
+    BaseEstimator,
+    ClassNamePrefixFeaturesOutMixin,
+    TransformerMixin,
+    _fit_context,
+)
+from .exceptions import DataDimensionalityWarning
 from .utils import check_random_state
-from .utils._param_validation import Interval, StrOptions
+from .utils._param_validation import Interval, StrOptions, validate_params
 from .utils.extmath import safe_sparse_dot
 from .utils.random import sample_without_replacement
 from .utils.validation import check_array, check_is_fitted
-from .exceptions import DataDimensionalityWarning
 
 __all__ = [
     "SparseRandomProjection",
@@ -51,11 +54,18 @@ __all__ = [
 ]
 
 
+@validate_params(
+    {
+        "n_samples": ["array-like", Interval(Real, 1, None, closed="left")],
+        "eps": ["array-like", Interval(Real, 0, 1, closed="neither")],
+    },
+    prefer_skip_nested_validation=True,
+)
 def johnson_lindenstrauss_min_dim(n_samples, *, eps=0.1):
     """Find a 'safe' number of components to randomly project to.
 
     The distortion introduced by a random projection `p` only changes the
-    distance between two points by a factor (1 +- eps) in an euclidean space
+    distance between two points by a factor (1 +- eps) in a euclidean space
     with good probability. The projection `p` is an eps-embedding as defined
     by:
 
@@ -81,12 +91,12 @@ def johnson_lindenstrauss_min_dim(n_samples, *, eps=0.1):
     Parameters
     ----------
     n_samples : int or array-like of int
-        Number of samples that should be a integer greater than 0. If an array
+        Number of samples that should be an integer greater than 0. If an array
         is given, it will compute a safe number of components array-wise.
 
-    eps : float or ndarray of shape (n_components,), dtype=float, \
+    eps : float or array-like of shape (n_components,), dtype=float, \
             default=0.1
-        Maximum distortion rate in the range (0,1 ) as defined by the
+        Maximum distortion rate in the range (0, 1) as defined by the
         Johnson-Lindenstrauss lemma. If an array is given, it will compute a
         safe number of components array-wise.
 
@@ -101,9 +111,9 @@ def johnson_lindenstrauss_min_dim(n_samples, *, eps=0.1):
 
     .. [1] https://en.wikipedia.org/wiki/Johnson%E2%80%93Lindenstrauss_lemma
 
-    .. [2] Sanjoy Dasgupta and Anupam Gupta, 1999,
+    .. [2] `Sanjoy Dasgupta and Anupam Gupta, 1999,
            "An elementary proof of the Johnson-Lindenstrauss Lemma."
-           http://citeseer.ist.psu.edu/viewdoc/summary?doi=10.1.1.45.3654
+           <https://citeseerx.ist.psu.edu/doc_view/pid/95cd464d27c25c9c8690b378b894d337cdf021f9>`_
 
     Examples
     --------
@@ -123,7 +133,7 @@ def johnson_lindenstrauss_min_dim(n_samples, *, eps=0.1):
     if np.any(eps <= 0.0) or np.any(eps >= 1):
         raise ValueError("The JL bound is defined for eps in ]0, 1[, got %r" % eps)
 
-    if np.any(n_samples) <= 0:
+    if np.any(n_samples <= 0):
         raise ValueError(
             "The JL bound is defined for n_samples greater than zero, got %r"
             % n_samples
@@ -292,7 +302,7 @@ def _sparse_random_matrix(n_components, n_features, density="auto", random_state
 
 
 class BaseRandomProjection(
-    TransformerMixin, BaseEstimator, _ClassNamePrefixFeaturesOutMixin, metaclass=ABCMeta
+    TransformerMixin, BaseEstimator, ClassNamePrefixFeaturesOutMixin, metaclass=ABCMeta
 ):
     """Base class for random projections.
 
@@ -300,7 +310,7 @@ class BaseRandomProjection(
     Use derived classes instead.
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         "n_components": [
             Interval(Integral, 1, None, closed="left"),
             StrOptions({"auto"}),
@@ -350,6 +360,7 @@ class BaseRandomProjection(
             components = components.toarray()
         return linalg.pinv(components, check_finite=False)
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y=None):
         """Generate a sparse random projection matrix.
 
@@ -368,7 +379,6 @@ class BaseRandomProjection(
         self : object
             BaseRandomProjection class instance.
         """
-        self._validate_params()
         X = self._validate_data(
             X, accept_sparse=["csr", "csc"], dtype=[np.float64, np.float32]
         )
@@ -413,15 +423,10 @@ class BaseRandomProjection(
         if self.compute_inverse_components:
             self.inverse_components_ = self._compute_inverse_components()
 
+        # Required by ClassNamePrefixFeaturesOutMixin.get_feature_names_out.
+        self._n_features_out = self.n_components
+
         return self
-
-    @property
-    def _n_features_out(self):
-        """Number of transformed output features.
-
-        Used by _ClassNamePrefixFeaturesOutMixin.get_feature_names_out.
-        """
-        return self.n_components
 
     def inverse_transform(self, X):
         """Project data back to its original space.
@@ -734,7 +739,7 @@ class SparseRandomProjection(BaseRandomProjection):
     0.0182...
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         **BaseRandomProjection._parameter_constraints,
         "density": [Interval(Real, 0.0, 1.0, closed="right"), StrOptions({"auto"})],
         "dense_output": ["boolean"],

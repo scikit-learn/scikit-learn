@@ -86,10 +86,10 @@ the training set is split into *k* smaller sets
 but generally follow the same principles).
 The following procedure is followed for each of the *k* "folds":
 
- * A model is trained using :math:`k-1` of the folds as training data;
- * the resulting model is validated on the remaining part of the data
-   (i.e., it is used as a test set to compute a performance measure
-   such as accuracy).
+* A model is trained using :math:`k-1` of the folds as training data;
+* the resulting model is validated on the remaining part of the data
+  (i.e., it is used as a test set to compute a performance measure
+  such as accuracy).
 
 The performance measure reported by *k*-fold cross-validation
 is then the average of the values computed in the loop.
@@ -102,6 +102,7 @@ where the number of samples is very small.
 .. image:: ../images/grid_search_cross_validation.png
    :width: 500px
    :height: 300px
+   :alt: A depiction of a 5 fold cross validation on a training set, while holding out a test set.
    :align: center
 
 Computing cross-validated metrics
@@ -169,7 +170,9 @@ indices, for example::
   >>> cross_val_score(clf, X, y, cv=custom_cv)
   array([1.        , 0.973...])
 
-.. topic:: Data transformation with held out data
+|details-start|
+**Data transformation with held out data**
+|details-split|
 
     Just as it is important to test a predictor on data held-out from
     training, preprocessing (such as standardization, feature selection, etc.)
@@ -196,6 +199,7 @@ indices, for example::
 
     See :ref:`combining_estimators`.
 
+|details-end|
 
 .. _multimetric_cross_validation:
 
@@ -208,8 +212,8 @@ two ways:
 - It allows specifying multiple metrics for evaluation.
 
 - It returns a dict containing fit-times, score-times
-  (and optionally training scores as well as fitted estimators) in
-  addition to the test score.
+  (and optionally training scores, fitted estimators, train-test split indices)
+  in addition to the test score.
 
 For single metric evaluation, where the scoring parameter is a string,
 callable or None, the keys will be - ``['test_score', 'fit_time', 'score_time']``
@@ -220,10 +224,10 @@ following keys -
 
 ``return_train_score`` is set to ``False`` by default to save computation time.
 To evaluate the scores on the training set as well you need to set it to
-``True``.
-
-You may also retain the estimator fitted on each training set by setting
-``return_estimator=True``.
+``True``. You may also retain the estimator fitted on each training set by
+setting ``return_estimator=True``. Similarly, you may set
+`return_indices=True` to retain the training and testing indices used to split
+the dataset into train and test sets for each cv split.
 
 The multiple metrics can be specified either as a list, tuple or set of
 predefined scorer names::
@@ -295,7 +299,7 @@ section.
     * :ref:`sphx_glr_auto_examples_model_selection_plot_roc_crossval.py`,
     * :ref:`sphx_glr_auto_examples_feature_selection_plot_rfe_with_cross_validation.py`,
     * :ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_digits.py`,
-    * :ref:`sphx_glr_auto_examples_model_selection_grid_search_text_feature_extraction.py`,
+    * :ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_text_feature_extraction.py`,
     * :ref:`sphx_glr_auto_examples_model_selection_plot_cv_predict.py`,
     * :ref:`sphx_glr_auto_examples_model_selection_plot_nested_cross_validation_iris.py`.
 
@@ -438,20 +442,23 @@ then 5- or 10- fold cross validation can overestimate the generalization error.
 As a general rule, most authors, and empirical evidence, suggest that 5- or 10-
 fold cross validation should be preferred to LOO.
 
-
-.. topic:: References:
+|details-start|
+**References**
+|details-split|
 
  * `<http://www.faqs.org/faqs/ai-faq/neural-nets/part3/section-12.html>`_;
  * T. Hastie, R. Tibshirani, J. Friedman,  `The Elements of Statistical Learning
    <https://web.stanford.edu/~hastie/ElemStatLearn/>`_, Springer 2009
  * L. Breiman, P. Spector `Submodel selection and evaluation in regression: The X-random case
-   <http://digitalassets.lib.berkeley.edu/sdtr/ucb/text/197.pdf>`_, International Statistical Review 1992;
+   <https://digitalassets.lib.berkeley.edu/sdtr/ucb/text/197.pdf>`_, International Statistical Review 1992;
  * R. Kohavi, `A Study of Cross-Validation and Bootstrap for Accuracy Estimation and Model Selection
    <https://www.ijcai.org/Proceedings/95-2/Papers/016.pdf>`_, Intl. Jnt. Conf. AI
  * R. Bharat Rao, G. Fung, R. Rosales, `On the Dangers of Cross-Validation. An Experimental Evaluation
    <https://people.csail.mit.edu/romer/papers/CrossVal_SDM08.pdf>`_, SIAM 2008;
  * G. James, D. Witten, T. Hastie, R Tibshirani, `An Introduction to
-   Statistical Learning <https://www-bcf.usc.edu/~gareth/ISL/>`_, Springer 2013.
+   Statistical Learning <https://www.statlearning.com>`_, Springer 2013.
+
+|details-end|
 
 .. _leave_p_out:
 
@@ -520,8 +527,8 @@ the proportion of samples on each side of the train / test split.
 
 .. _stratification:
 
-Cross-validation iterators with stratification based on class labels.
----------------------------------------------------------------------
+Cross-validation iterators with stratification based on class labels
+--------------------------------------------------------------------
 
 Some classification problems can exhibit a large imbalance in the distribution
 of the target classes: for instance there could be several times more negative
@@ -589,6 +596,19 @@ Here is a visualization of the cross-validation behavior.
    :target: ../auto_examples/model_selection/plot_cv_indices.html
    :align: center
    :scale: 75%
+
+.. _predefined_split:
+
+Predefined fold-splits / Validation-sets
+----------------------------------------
+
+For some datasets, a pre-defined split of the data into training- and
+validation fold or into several cross-validation folds already
+exists. Using :class:`PredefinedSplit` it is possible to use these folds
+e.g. when searching for hyperparameters.
+
+For example, when using a validation set, set the ``test_fold`` to 0 for all
+samples that are part of the validation set, and to -1 for all other samples.
 
 .. _group_cv:
 
@@ -680,7 +700,9 @@ Example::
   [ 0  1  4  5  6  7  8  9 11 12 13 14] [ 2  3 10 15 16 17]
   [ 1  2  3  8  9 10 12 13 14 15 16 17] [ 0  4  5  6  7 11]
 
-Implementation notes:
+|details-start|
+**Implementation notes**
+|details-split|
 
 - With the current implementation full shuffle is not possible in most
   scenarios. When shuffle=True, the following happens:
@@ -701,6 +723,8 @@ Implementation notes:
   even if perfect stratification is possible. If you have relatively close
   distribution of classes in each group, using :class:`GroupKFold` is better.
 
+|details-end|
+
 Here is a visualization of cross-validation behavior for uneven groups:
 
 .. figure:: ../auto_examples/model_selection/images/sphx_glr_plot_cv_indices_005.png
@@ -713,14 +737,14 @@ Here is a visualization of cross-validation behavior for uneven groups:
 Leave One Group Out
 ^^^^^^^^^^^^^^^^^^^
 
-:class:`LeaveOneGroupOut` is a cross-validation scheme which holds out
-the samples according to a third-party provided array of integer groups. This
-group information can be used to encode arbitrary domain specific pre-defined
-cross-validation folds.
+:class:`LeaveOneGroupOut` is a cross-validation scheme where each split holds
+out samples belonging to one specific group. Group information is
+provided via an array that encodes the group of each sample.
 
 Each training set is thus constituted by all the samples except the ones
-related to a specific group. This is basically the same as
-:class:`LeavePGroupsOut` with ``n_groups=1``.
+related to a specific group. This is the same as :class:`LeavePGroupsOut` with
+`n_groups=1` and the same as :class:`GroupKFold` with `n_splits` equal to the
+number of unique labels passed to the `groups` parameter.
 
 For example, in the cases of multiple experiments, :class:`LeaveOneGroupOut`
 can be used to create a cross-validation based on the different experiments:
@@ -806,19 +830,6 @@ possible partitions with :math:`P` groups withheld would be prohibitively
 expensive. In such a scenario, :class:`GroupShuffleSplit` provides
 a random sample (with replacement) of the train / test splits
 generated by :class:`LeavePGroupsOut`.
-
-.. _predefined_split:
-
-Predefined Fold-Splits / Validation-Sets
-----------------------------------------
-
-For some datasets, a pre-defined split of the data into training- and
-validation fold or into several cross-validation folds already
-exists. Using :class:`PredefinedSplit` it is possible to use these folds
-e.g. when searching for hyperparameters.
-
-For example, when using a validation set, set the ``test_fold`` to 0 for all
-samples that are part of the validation set, and to -1 for all other samples.
 
 Using cross-validation iterators to split train and test
 --------------------------------------------------------
@@ -992,8 +1003,12 @@ individual model is very fast.
 
     * :ref:`sphx_glr_auto_examples_model_selection_plot_permutation_tests_for_classification.py`
 
-.. topic:: References:
+|details-start|
+**References**
+|details-split|
 
  * Ojala and Garriga. `Permutation Tests for Studying Classifier Performance
    <http://www.jmlr.org/papers/volume11/ojala10a/ojala10a.pdf>`_.
    J. Mach. Learn. Res. 2010.
+
+|details-end|

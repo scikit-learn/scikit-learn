@@ -11,9 +11,10 @@ dependencies:
     - threadpoolctl
     - pytest
     - pytest-xdist
-    - codecov
+    - setuptools
     - pytest-cov
     - coverage
+    - pooch
     - sphinx
     - numpydoc
     - python-dateutil

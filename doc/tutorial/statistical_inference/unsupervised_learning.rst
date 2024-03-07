@@ -12,7 +12,8 @@ Clustering: grouping observations together
     **clustering task**: split the observations into well-separated group
     called *clusters*.
 
-..
+::
+
    >>> # Set the PRNG
    >>> import numpy as np
    >>> np.random.seed(1)
@@ -23,11 +24,6 @@ K-means clustering
 Note that there exist a lot of different clustering criteria and associated
 algorithms. The simplest clustering algorithm is :ref:`k_means`.
 
-.. image:: /auto_examples/cluster/images/sphx_glr_plot_cluster_iris_002.png
-   :target: ../../auto_examples/cluster/plot_cluster_iris.html
-   :scale: 70
-   :align: center
-
 ::
 
     >>> from sklearn import cluster, datasets
@@ -37,9 +33,13 @@ algorithms. The simplest clustering algorithm is :ref:`k_means`.
     >>> k_means.fit(X_iris)
     KMeans(n_clusters=3)
     >>> print(k_means.labels_[::10])
-    [1 1 1 1 1 0 0 0 0 0 2 2 2 2 2]
+    [1 1 1 1 1 2 0 0 0 0 2 2 2 2 2]
     >>> print(y_iris[::10])
     [0 0 0 0 0 1 1 1 1 1 2 2 2 2 2]
+
+.. figure:: /auto_examples/cluster/images/sphx_glr_plot_cluster_iris_001.png
+   :target: ../../auto_examples/cluster/plot_cluster_iris.html
+   :scale: 63
 
 .. warning::
 
@@ -48,27 +48,13 @@ algorithms. The simplest clustering algorithm is :ref:`k_means`.
     is sensitive to initialization, and can fall into local minima,
     although scikit-learn employs several tricks to mitigate this issue.
 
-    |
+    For instance, on the image above, we can observe the difference between the
+    ground-truth (bottom right figure) and different clustering. We do not
+    recover the expected labels, either because the number of cluster was
+    chosen to be to large (top left figure) or suffer from a bad initialization
+    (bottom left figure).
 
-    .. figure:: /auto_examples/cluster/images/sphx_glr_plot_cluster_iris_003.png
-       :target: ../../auto_examples/cluster/plot_cluster_iris.html
-       :scale: 63
-
-       **Bad initialization**
-
-    .. figure:: /auto_examples/cluster/images/sphx_glr_plot_cluster_iris_001.png
-       :target: ../../auto_examples/cluster/plot_cluster_iris.html
-       :scale: 63
-
-       **8 clusters**
-
-    .. figure:: /auto_examples/cluster/images/sphx_glr_plot_cluster_iris_004.png
-       :target: ../../auto_examples/cluster/plot_cluster_iris.html
-       :scale: 63
-
-       **Ground truth**
-
-    **Don't over-interpret clustering results**
+    **It is therefore important to not over-interpret clustering results.**
 
 .. topic:: **Application example: vector quantization**
 
@@ -93,27 +79,20 @@ algorithms. The simplest clustering algorithm is :ref:`k_means`.
     	>>> face_compressed = np.choose(labels, values)
     	>>> face_compressed.shape = face.shape
 
+**Raw image**
 
-    .. figure:: /auto_examples/cluster/images/sphx_glr_plot_face_compress_001.png
-       :target: ../../auto_examples/cluster/plot_face_compress.html
+.. figure:: /auto_examples/cluster/images/sphx_glr_plot_face_compress_001.png
+   :target: ../../auto_examples/cluster/plot_face_compress.html
 
-       **Raw image**
+**K-means quantization**
 
-    .. figure:: /auto_examples/cluster/images/sphx_glr_plot_face_compress_003.png
-       :target: ../../auto_examples/cluster/plot_face_compress.html
+.. figure:: /auto_examples/cluster/images/sphx_glr_plot_face_compress_004.png
+   :target: ../../auto_examples/cluster/plot_face_compress.html
 
-       **K-means quantization**
+**Equal bins**
 
-    .. figure:: /auto_examples/cluster/images/sphx_glr_plot_face_compress_002.png
-       :target: ../../auto_examples/cluster/plot_face_compress.html
-
-       **Equal bins**
-
-
-    .. figure:: /auto_examples/cluster/images/sphx_glr_plot_face_compress_004.png
-       :target: ../../auto_examples/cluster/plot_face_compress.html
-
-       **Image histogram**
+.. figure:: /auto_examples/cluster/images/sphx_glr_plot_face_compress_002.png
+   :target: ../../auto_examples/cluster/plot_face_compress.html
 
 Hierarchical agglomerative clustering: Ward
 ---------------------------------------------
@@ -122,18 +101,18 @@ A :ref:`hierarchical_clustering` method is a type of cluster analysis
 that aims to build a hierarchy of clusters. In general, the various approaches
 of this technique are either:
 
-  * **Agglomerative** - bottom-up approaches: each observation starts in its
-    own cluster, and clusters are iteratively merged in such a way to
-    minimize a *linkage* criterion. This approach is particularly interesting
-    when the clusters of interest are made of only a few observations. When
-    the number of clusters is large, it is much more computationally efficient
-    than k-means.
+* **Agglomerative** - bottom-up approaches: each observation starts in its
+  own cluster, and clusters are iteratively merged in such a way to
+  minimize a *linkage* criterion. This approach is particularly interesting
+  when the clusters of interest are made of only a few observations. When
+  the number of clusters is large, it is much more computationally efficient
+  than k-means.
 
-  * **Divisive** - top-down approaches: all observations start in one
-    cluster, which is iteratively split as one moves down the hierarchy.
-    For estimating large numbers of clusters, this approach is both slow (due
-    to all observations starting as one cluster, which it splits recursively)
-    and statistically ill-posed.
+* **Divisive** - top-down approaches: all observations start in one
+  cluster, which is iteratively split as one moves down the hierarchy.
+  For estimating large numbers of clusters, this approach is both slow (due
+  to all observations starting as one cluster, which it splits recursively)
+  and statistically ill-posed.
 
 Connectivity-constrained clustering
 .....................................
@@ -156,7 +135,7 @@ also referred to as connected components) when clustering an image.
     >>> from skimage.transform import rescale
     >>> rescaled_coins = rescale(
     ...     gaussian_filter(coins(), sigma=2),
-    ...     0.2, mode='reflect', anti_aliasing=False, multichannel=False
+    ...     0.2, mode='reflect', anti_aliasing=False
     ... )
     >>> X = np.reshape(rescaled_coins, (-1, 1))
 
@@ -226,51 +205,57 @@ Decompositions: from a signal to components and loadings
 Principal component analysis: PCA
 -----------------------------------
 
-:ref:`PCA` selects the successive components that
-explain the maximum variance in the signal.
-
-.. |pca_3d_axis| image:: /auto_examples/decomposition/images/sphx_glr_plot_pca_3d_001.png
-   :target: ../../auto_examples/decomposition/plot_pca_3d.html
-   :scale: 70
-
-.. |pca_3d_aligned| image:: /auto_examples/decomposition/images/sphx_glr_plot_pca_3d_002.png
-   :target: ../../auto_examples/decomposition/plot_pca_3d.html
-   :scale: 70
-
-.. rst-class:: centered
-
-   |pca_3d_axis| |pca_3d_aligned|
-
-The point cloud spanned by the observations above is very flat in one
-direction: one of the three univariate features can almost be exactly
-computed using the other two. PCA finds the directions in which the data is
-not *flat*
-
-When used to *transform* data, PCA can reduce the dimensionality of the
-data by projecting on a principal subspace.
+:ref:`PCA` selects the successive components that explain the maximum variance in the
+signal. Let's create a synthetic 3-dimensional dataset.
 
 .. np.random.seed(0)
 
 ::
 
     >>> # Create a signal with only 2 useful dimensions
-    >>> x1 = np.random.normal(size=100)
-    >>> x2 = np.random.normal(size=100)
+    >>> x1 = np.random.normal(size=(100, 1))
+    >>> x2 = np.random.normal(size=(100, 1))
     >>> x3 = x1 + x2
-    >>> X = np.c_[x1, x2, x3]
+    >>> X = np.concatenate([x1, x2, x3], axis=1)
 
-    >>> from sklearn import decomposition
-    >>> pca = decomposition.PCA()
-    >>> pca.fit(X)
-    PCA()
-    >>> print(pca.explained_variance_)  # doctest: +SKIP
-    [  2.18565811e+00   1.19346747e+00   8.43026679e-32]
+The point cloud spanned by the observations above is very flat in one
+direction: one of the three univariate features (i.e. z-axis) can almost be exactly
+computed using the other two.
 
-    >>> # As we can see, only the 2 first components are useful
-    >>> pca.n_components = 2
-    >>> X_reduced = pca.fit_transform(X)
-    >>> X_reduced.shape
-    (100, 2)
+.. plot::
+   :context: close-figs
+   :align: center
+
+   >>> import matplotlib.pyplot as plt
+   >>> fig = plt.figure()
+   >>> ax = fig.add_subplot(111, projection='3d')
+   >>> ax.scatter(X[:, 0], X[:, 1], X[:, 2])
+   <...>
+   >>> _ = ax.set(xlabel="x", ylabel="y", zlabel="z")
+
+
+PCA finds the directions in which the data is not *flat*.
+
+::
+
+   >>> from sklearn import decomposition
+   >>> pca = decomposition.PCA()
+   >>> pca.fit(X)
+   PCA()
+   >>> print(pca.explained_variance_)  # doctest: +SKIP
+   [  2.18565811e+00   1.19346747e+00   8.43026679e-32]
+
+Looking at the explained variance, we see that only the first two components
+are useful. PCA can be used to reduce dimensionality while preserving
+most of the information. It will project the data on the principal subspace.
+
+::
+
+   >>> pca.set_params(n_components=2)
+   PCA(n_components=2)
+   >>> X_reduced = pca.fit_transform(X)
+   >>> X_reduced.shape
+   (100, 2)
 
 .. Eigenfaces here?
 

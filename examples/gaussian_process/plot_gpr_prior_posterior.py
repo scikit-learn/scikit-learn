@@ -159,7 +159,7 @@ print(
 
 # %%
 # Exp-Sine-Squared kernel
-# ...............
+# .......................
 from sklearn.gaussian_process.kernels import ExpSineSquared
 
 kernel = 1.0 * ExpSineSquared(

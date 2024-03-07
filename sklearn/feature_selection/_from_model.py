@@ -2,18 +2,23 @@
 # License: BSD 3 clause
 
 from copy import deepcopy
+from numbers import Integral, Real
 
 import numpy as np
-import numbers
 
-from ._base import SelectorMixin
-from ._base import _get_feature_importances
-from ..base import BaseEstimator, clone, MetaEstimatorMixin
-from ..utils._tags import _safe_tags
-from ..utils.validation import check_is_fitted, check_scalar, _num_features
-
+from ..base import BaseEstimator, MetaEstimatorMixin, _fit_context, clone
 from ..exceptions import NotFittedError
+from ..utils._param_validation import HasMethods, Interval, Options
+from ..utils._tags import _safe_tags
+from ..utils.metadata_routing import (
+    MetadataRouter,
+    MethodMapping,
+    _routing_enabled,
+    process_routing,
+)
 from ..utils.metaestimators import available_if
+from ..utils.validation import _num_features, check_is_fitted, check_scalar
+from ._base import SelectorMixin, _get_feature_importances
 
 
 def _calculate_threshold(estimator, importances, threshold):
@@ -69,14 +74,20 @@ def _calculate_threshold(estimator, importances, threshold):
 def _estimator_has(attr):
     """Check if we can delegate a method to the underlying estimator.
 
-    First, we check the fitted estimator if available, otherwise we
-    check the unfitted estimator.
+    First, we check the fitted `estimator_` if available, otherwise we check the
+    unfitted `estimator`. We raise the original `AttributeError` if `attr` does
+    not exist. This function is used together with `available_if`.
     """
-    return lambda self: (
-        hasattr(self.estimator_, attr)
-        if hasattr(self, "estimator_")
-        else hasattr(self.estimator, attr)
-    )
+
+    def check(self):
+        if hasattr(self, "estimator_"):
+            getattr(self.estimator_, attr)
+        else:
+            getattr(self.estimator, attr)
+
+        return True
+
+    return check
 
 
 class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
@@ -97,9 +108,9 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
 
     threshold : str or float, default=None
         The threshold value to use for feature selection. Features whose
-        importance is greater or equal are kept while the others are
-        discarded. If "median" (resp. "mean"), then the ``threshold`` value is
-        the median (resp. the mean) of the feature importances. A scaling
+        absolute importance value is greater or equal are kept while the others
+        are discarded. If "median" (resp. "mean"), then the ``threshold`` value
+        is the median (resp. the mean) of the feature importances. A scaling
         factor (e.g., "1.25*mean") may also be used. If None and if the
         estimator has a parameter penalty set to l1, either explicitly
         or implicitly (e.g, Lasso), the threshold used is 1e-5.
@@ -123,7 +134,7 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
         - If an integer, then it specifies the maximum number of features to
           allow.
         - If a callable, then it specifies how to calculate the maximum number of
-          features allowed by using the output of `max_feaures(X)`.
+          features allowed by using the output of `max_features(X)`.
         - If `None`, then all features are kept.
 
         To only select based on ``max_features``, set ``threshold=-np.inf``.
@@ -206,9 +217,9 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
     >>> y = [0, 1, 0, 1]
     >>> selector = SelectFromModel(estimator=LogisticRegression()).fit(X, y)
     >>> selector.estimator_.coef_
-    array([[-0.3252302 ,  0.83462377,  0.49750423]])
+    array([[-0.3252...,  0.8345...,  0.4976...]])
     >>> selector.threshold_
-    0.55245...
+    0.55249...
     >>> selector.get_support()
     array([False,  True, False])
     >>> selector.transform(X)
@@ -228,6 +239,19 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
     >>> half_selector.max_features_
     2
     """
+
+    _parameter_constraints: dict = {
+        "estimator": [HasMethods("fit")],
+        "threshold": [Interval(Real, None, None, closed="both"), str, None],
+        "prefit": ["boolean"],
+        "norm_order": [
+            Interval(Integral, None, -1, closed="right"),
+            Interval(Integral, 1, None, closed="left"),
+            Options(Real, {np.inf, -np.inf}),
+        ],
+        "max_features": [Interval(Integral, 0, None, closed="left"), callable, None],
+        "importance_getter": [str, callable],
+    }
 
     def __init__(
         self,
@@ -266,9 +290,7 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
                 "When `prefit=True` and `max_features` is a callable, call `fit` "
                 "before calling `transform`."
             )
-        elif max_features is not None and not isinstance(
-            max_features, numbers.Integral
-        ):
+        elif max_features is not None and not isinstance(max_features, Integral):
             raise ValueError(
                 f"`max_features` must be an integer. Got `max_features={max_features}` "
                 "instead."
@@ -294,31 +316,24 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
         if self.max_features is not None:
             n_features = _num_features(X)
 
-            if isinstance(self.max_features, numbers.Integral):
-                check_scalar(
-                    self.max_features,
-                    "max_features",
-                    numbers.Integral,
-                    min_val=0,
-                    max_val=n_features,
-                )
-                self.max_features_ = self.max_features
-            elif callable(self.max_features):
+            if callable(self.max_features):
                 max_features = self.max_features(X)
-                check_scalar(
-                    max_features,
-                    "max_features(X)",
-                    numbers.Integral,
-                    min_val=0,
-                    max_val=n_features,
-                )
-                self.max_features_ = max_features
-            else:
-                raise TypeError(
-                    "'max_features' must be either an int or a callable that takes"
-                    f" 'X' as input. Got {self.max_features} instead."
-                )
+            else:  # int
+                max_features = self.max_features
 
+            check_scalar(
+                max_features,
+                "max_features",
+                Integral,
+                min_val=0,
+                max_val=n_features,
+            )
+            self.max_features_ = max_features
+
+    @_fit_context(
+        # SelectFromModel.estimator is not validated yet
+        prefer_skip_nested_validation=False
+    )
     def fit(self, X, y=None, **fit_params):
         """Fit the SelectFromModel meta-transformer.
 
@@ -332,7 +347,19 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
             classification, real numbers in regression).
 
         **fit_params : dict
-            Other estimator specific parameters.
+            - If `enable_metadata_routing=False` (default):
+
+                Parameters directly passed to the `fit` method of the
+                sub-estimator. They are ignored if `prefit=True`.
+
+            - If `enable_metadata_routing=True`:
+
+                Parameters safely routed to the `fit` method of the
+                sub-estimator. They are ignored if `prefit=True`.
+
+                .. versionchanged:: 1.4
+                    See :ref:`Metadata Routing User Guide <metadata_routing>` for
+                    more details.
 
         Returns
         -------
@@ -351,8 +378,14 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
                 ) from exc
             self.estimator_ = deepcopy(self.estimator)
         else:
-            self.estimator_ = clone(self.estimator)
-            self.estimator_.fit(X, y, **fit_params)
+            if _routing_enabled():
+                routed_params = process_routing(self, "fit", **fit_params)
+                self.estimator_ = clone(self.estimator)
+                self.estimator_.fit(X, y, **routed_params.estimator.fit)
+            else:
+                # TODO(SLEP6): remove when metadata routing cannot be disabled.
+                self.estimator_ = clone(self.estimator)
+                self.estimator_.fit(X, y, **fit_params)
 
         if hasattr(self.estimator_, "feature_names_in_"):
             self.feature_names_in_ = self.estimator_.feature_names_in_
@@ -373,7 +406,11 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
         return _calculate_threshold(self.estimator, scores, self.threshold)
 
     @available_if(_estimator_has("partial_fit"))
-    def partial_fit(self, X, y=None, **fit_params):
+    @_fit_context(
+        # SelectFromModel.estimator is not validated yet
+        prefer_skip_nested_validation=False
+    )
+    def partial_fit(self, X, y=None, **partial_fit_params):
         """Fit the SelectFromModel meta-transformer only once.
 
         Parameters
@@ -385,18 +422,37 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
             The target values (integers that correspond to classes in
             classification, real numbers in regression).
 
-        **fit_params : dict
-            Other estimator specific parameters.
+        **partial_fit_params : dict
+            - If `enable_metadata_routing=False` (default):
+
+                Parameters directly passed to the `partial_fit` method of the
+                sub-estimator.
+
+            - If `enable_metadata_routing=True`:
+
+                Parameters passed to the `partial_fit` method of the
+                sub-estimator. They are ignored if `prefit=True`.
+
+                .. versionchanged:: 1.4
+                    `**partial_fit_params` are routed to the sub-estimator, if
+                    `enable_metadata_routing=True` is set via
+                    :func:`~sklearn.set_config`, which allows for aliasing.
+
+                See :ref:`Metadata Routing User Guide <metadata_routing>` for
+                more details.
 
         Returns
         -------
         self : object
             Fitted estimator.
         """
-        self._check_max_features(X)
+        first_call = not hasattr(self, "estimator_")
+
+        if first_call:
+            self._check_max_features(X)
 
         if self.prefit:
-            if not hasattr(self, "estimator_"):
+            if first_call:
                 try:
                     check_is_fitted(self.estimator)
                 except NotFittedError as exc:
@@ -407,10 +463,15 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
                 self.estimator_ = deepcopy(self.estimator)
             return self
 
-        first_call = not hasattr(self, "estimator_")
         if first_call:
             self.estimator_ = clone(self.estimator)
-        self.estimator_.partial_fit(X, y, **fit_params)
+        if _routing_enabled():
+            routed_params = process_routing(self, "partial_fit", **partial_fit_params)
+            self.estimator_ = clone(self.estimator)
+            self.estimator_.partial_fit(X, y, **routed_params.estimator.partial_fit)
+        else:
+            # TODO(SLEP6): remove when metadata routing cannot be disabled.
+            self.estimator_.partial_fit(X, y, **partial_fit_params)
 
         if hasattr(self.estimator_, "feature_names_in_"):
             self.feature_names_in_ = self.estimator_.feature_names_in_
@@ -434,6 +495,28 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
             ) from nfe
 
         return self.estimator_.n_features_in_
+
+    def get_metadata_routing(self):
+        """Get metadata routing of this object.
+
+        Please check :ref:`User Guide <metadata_routing>` on how the routing
+        mechanism works.
+
+        .. versionadded:: 1.4
+
+        Returns
+        -------
+        routing : MetadataRouter
+            A :class:`~sklearn.utils.metadata_routing.MetadataRouter` encapsulating
+            routing information.
+        """
+        router = MetadataRouter(owner=self.__class__.__name__).add(
+            estimator=self.estimator,
+            method_mapping=MethodMapping()
+            .add(callee="partial_fit", caller="partial_fit")
+            .add(callee="fit", caller="fit"),
+        )
+        return router
 
     def _more_tags(self):
         return {"allow_nan": _safe_tags(self.estimator, key="allow_nan")}

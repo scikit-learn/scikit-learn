@@ -4,12 +4,19 @@
 #         Tom Dupre la Tour
 #
 # License: BSD 3 clause (C) INRIA, University of Amsterdam
-from ._base import KNeighborsMixin, RadiusNeighborsMixin
-from ._base import NeighborsBase
-from ._unsupervised import NearestNeighbors
-from ..base import TransformerMixin, _ClassNamePrefixFeaturesOutMixin
-from ..utils._param_validation import StrOptions
+import itertools
+
+from ..base import ClassNamePrefixFeaturesOutMixin, TransformerMixin, _fit_context
+from ..utils._param_validation import (
+    Integral,
+    Interval,
+    Real,
+    StrOptions,
+    validate_params,
+)
 from ..utils.validation import check_is_fitted
+from ._base import VALID_METRICS, KNeighborsMixin, NeighborsBase, RadiusNeighborsMixin
+from ._unsupervised import NearestNeighbors
 
 
 def _check_params(X, metric, p, metric_params):
@@ -36,6 +43,19 @@ def _query_include_self(X, include_self, mode):
     return X
 
 
+@validate_params(
+    {
+        "X": ["array-like", "sparse matrix", KNeighborsMixin],
+        "n_neighbors": [Interval(Integral, 1, None, closed="left")],
+        "mode": [StrOptions({"connectivity", "distance"})],
+        "metric": [StrOptions(set(itertools.chain(*VALID_METRICS.values()))), callable],
+        "p": [Interval(Real, 0, None, closed="right"), None],
+        "metric_params": [dict, None],
+        "include_self": ["boolean", StrOptions({"auto"})],
+        "n_jobs": [Integral, None],
+    },
+    prefer_skip_nested_validation=False,  # metric is not validated yet
+)
 def kneighbors_graph(
     X,
     n_neighbors,
@@ -53,9 +73,8 @@ def kneighbors_graph(
 
     Parameters
     ----------
-    X : array-like of shape (n_samples, n_features) or BallTree
-        Sample data, in the form of a numpy array or a precomputed
-        :class:`BallTree`.
+    X : {array-like, sparse matrix} of shape (n_samples, n_features)
+        Sample data.
 
     n_neighbors : int
         Number of neighbors for each sample.
@@ -74,10 +93,11 @@ def kneighbors_graph(
         :class:`~sklearn.metrics.pairwise.distance_metrics` for valid metric
         values.
 
-    p : int, default=2
-        Power parameter for the Minkowski metric. When p = 1, this is
-        equivalent to using manhattan_distance (l1), and euclidean_distance
-        (l2) for p = 2. For arbitrary p, minkowski_distance (l_p) is used.
+    p : float, default=2
+        Power parameter for the Minkowski metric. When p = 1, this is equivalent
+        to using manhattan_distance (l1), and euclidean_distance (l2) for p = 2.
+        For arbitrary p, minkowski_distance (l_p) is used. This parameter is expected
+        to be positive.
 
     metric_params : dict, default=None
         Additional keyword arguments for the metric function.
@@ -128,6 +148,19 @@ def kneighbors_graph(
     return X.kneighbors_graph(X=query, n_neighbors=n_neighbors, mode=mode)
 
 
+@validate_params(
+    {
+        "X": ["array-like", "sparse matrix", RadiusNeighborsMixin],
+        "radius": [Interval(Real, 0, None, closed="both")],
+        "mode": [StrOptions({"connectivity", "distance"})],
+        "metric": [StrOptions(set(itertools.chain(*VALID_METRICS.values()))), callable],
+        "p": [Interval(Real, 0, None, closed="right"), None],
+        "metric_params": [dict, None],
+        "include_self": ["boolean", StrOptions({"auto"})],
+        "n_jobs": [Integral, None],
+    },
+    prefer_skip_nested_validation=False,  # metric is not validated yet
+)
 def radius_neighbors_graph(
     X,
     radius,
@@ -148,9 +181,8 @@ def radius_neighbors_graph(
 
     Parameters
     ----------
-    X : array-like of shape (n_samples, n_features) or BallTree
-        Sample data, in the form of a numpy array or a precomputed
-        :class:`BallTree`.
+    X : {array-like, sparse matrix} of shape (n_samples, n_features)
+        Sample data.
 
     radius : float
         Radius of neighborhoods.
@@ -169,7 +201,7 @@ def radius_neighbors_graph(
         :class:`~sklearn.metrics.pairwise.distance_metrics` for valid metric
         values.
 
-    p : int, default=2
+    p : float, default=2
         Power parameter for the Minkowski metric. When p = 1, this is
         equivalent to using manhattan_distance (l1), and euclidean_distance
         (l2) for p = 2. For arbitrary p, minkowski_distance (l_p) is used.
@@ -225,7 +257,7 @@ def radius_neighbors_graph(
 
 
 class KNeighborsTransformer(
-    _ClassNamePrefixFeaturesOutMixin, KNeighborsMixin, TransformerMixin, NeighborsBase
+    ClassNamePrefixFeaturesOutMixin, KNeighborsMixin, TransformerMixin, NeighborsBase
 ):
     """Transform X into a (weighted) graph of k nearest neighbors.
 
@@ -282,16 +314,17 @@ class KNeighborsTransformer(
 
         Distance matrices are not supported.
 
-    p : int, default=2
+    p : float, default=2
         Parameter for the Minkowski metric from
         sklearn.metrics.pairwise.pairwise_distances. When p = 1, this is
         equivalent to using manhattan_distance (l1), and euclidean_distance
         (l2) for p = 2. For arbitrary p, minkowski_distance (l_p) is used.
+        This parameter is expected to be positive.
 
     metric_params : dict, default=None
         Additional keyword arguments for the metric function.
 
-    n_jobs : int, default=1
+    n_jobs : int, default=None
         The number of parallel jobs to run for neighbors search.
         If ``-1``, then the number of jobs is set to the number of CPU cores.
 
@@ -329,6 +362,12 @@ class KNeighborsTransformer(
     RadiusNeighborsTransformer : Transform X into a weighted graph of
         neighbors nearer than a radius.
 
+    Notes
+    -----
+    For an example of using :class:`~sklearn.neighbors.KNeighborsTransformer`
+    in combination with :class:`~sklearn.manifold.TSNE` see
+    :ref:`sphx_glr_auto_examples_neighbors_approximate_nearest_neighbors.py`.
+
     Examples
     --------
     >>> from sklearn.datasets import load_wine
@@ -342,7 +381,7 @@ class KNeighborsTransformer(
     (178, 178)
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         **NeighborsBase._parameter_constraints,
         "mode": [StrOptions({"distance", "connectivity"})],
     }
@@ -358,7 +397,7 @@ class KNeighborsTransformer(
         metric="minkowski",
         p=2,
         metric_params=None,
-        n_jobs=1,
+        n_jobs=None,
     ):
         super(KNeighborsTransformer, self).__init__(
             n_neighbors=n_neighbors,
@@ -372,6 +411,10 @@ class KNeighborsTransformer(
         )
         self.mode = mode
 
+    @_fit_context(
+        # KNeighborsTransformer.metric is not validated yet
+        prefer_skip_nested_validation=False
+    )
     def fit(self, X, y=None):
         """Fit the k-nearest neighbors transformer from the training dataset.
 
@@ -388,7 +431,6 @@ class KNeighborsTransformer(
         self : KNeighborsTransformer
             The fitted k-nearest neighbors transformer.
         """
-        self._validate_params()
         self._fit(X)
         self._n_features_out = self.n_samples_fit_
         return self
@@ -448,7 +490,7 @@ class KNeighborsTransformer(
 
 
 class RadiusNeighborsTransformer(
-    _ClassNamePrefixFeaturesOutMixin,
+    ClassNamePrefixFeaturesOutMixin,
     RadiusNeighborsMixin,
     TransformerMixin,
     NeighborsBase,
@@ -506,16 +548,17 @@ class RadiusNeighborsTransformer(
 
         Distance matrices are not supported.
 
-    p : int, default=2
+    p : float, default=2
         Parameter for the Minkowski metric from
         sklearn.metrics.pairwise.pairwise_distances. When p = 1, this is
         equivalent to using manhattan_distance (l1), and euclidean_distance
         (l2) for p = 2. For arbitrary p, minkowski_distance (l_p) is used.
+        This parameter is expected to be positive.
 
     metric_params : dict, default=None
         Additional keyword arguments for the metric function.
 
-    n_jobs : int, default=1
+    n_jobs : int, default=None
         The number of parallel jobs to run for neighbors search.
         If ``-1``, then the number of jobs is set to the number of CPU cores.
 
@@ -570,7 +613,7 @@ class RadiusNeighborsTransformer(
     [ 29  15 111  11  12]
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         **NeighborsBase._parameter_constraints,
         "mode": [StrOptions({"distance", "connectivity"})],
     }
@@ -586,7 +629,7 @@ class RadiusNeighborsTransformer(
         metric="minkowski",
         p=2,
         metric_params=None,
-        n_jobs=1,
+        n_jobs=None,
     ):
         super(RadiusNeighborsTransformer, self).__init__(
             n_neighbors=None,
@@ -600,6 +643,10 @@ class RadiusNeighborsTransformer(
         )
         self.mode = mode
 
+    @_fit_context(
+        # RadiusNeighborsTransformer.metric is not validated yet
+        prefer_skip_nested_validation=False
+    )
     def fit(self, X, y=None):
         """Fit the radius neighbors transformer from the training dataset.
 
@@ -617,7 +664,6 @@ class RadiusNeighborsTransformer(
         self : RadiusNeighborsTransformer
             The fitted radius neighbors transformer.
         """
-        self._validate_params()
         self._fit(X)
         self._n_features_out = self.n_samples_fit_
         return self
