@@ -684,9 +684,8 @@ def test_gaussian_mixture_fit_convergence_warning():
         )
         msg = (
             "Best performing initialization did not converge. "
-            "Try different init parameters, "
-            "or increase max_iter, tol, "
-            "or check for degenerate data."
+            "Try different init parameters, or increase max_iter, "
+            "tol, or check for degenerate data."
         )
         with pytest.warns(ConvergenceWarning, match=msg):
             g.fit(X)
