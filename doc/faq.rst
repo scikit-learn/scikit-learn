@@ -417,7 +417,7 @@ Note that the example above uses the third-party edit distance package
 `leven <https://pypi.org/project/leven/>`_. Similar tricks can be used,
 with some care, for tree kernels, graph kernels, etc.
 
-Why do I sometime get a crash/freeze with ``n_jobs > 1`` under OSX or Linux?
+Why do I sometimes get a crash/freeze with ``n_jobs > 1`` under OSX or Linux?
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Several scikit-learn tools such as :class:`~model_selection.GridSearchCV` and
@@ -469,6 +469,15 @@ You can find more default on the new start methods in the `multiprocessing
 documentation <https://docs.python.org/3/library/multiprocessing.html#contexts-and-start-methods>`_.
 
 .. _faq_mkl_threading:
+
+Why do estimators sometimes produce unexpected/spurious results?
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+This can often be due to floating-point issues related to the ``dtype`` of your
+input array. If you experience unexpected results for ``'float32'`` data, try
+converting the data to ``'float64'`` instead for greater precision.
+
+You can find more on the `dtype section of the Glossary <https://scikit-learn.org/stable/glossary.html#term-dtype>`_.
 
 Why does my job use more cores than specified with ``n_jobs``?
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
