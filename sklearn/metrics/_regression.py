@@ -1201,7 +1201,6 @@ def r2_score(
     device_ = device(*input_arrays)
 
     dtype = _find_matching_floating_dtype(y_true, y_pred, sample_weight, xp=xp)
-    y_true, y_pred = xp.astype(y_true, dtype), xp.astype(y_pred, dtype)
 
     _, y_true, y_pred, multioutput = _check_reg_targets(
         y_true, y_pred, multioutput, dtype=dtype, xp=xp
