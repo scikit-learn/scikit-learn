@@ -938,9 +938,6 @@ Changelog
   'multiclass'.
   :pr:`26674` by :user:`Lucy Liu <lucyleeow>`.
 
-- |Enhancement| :class:`preprocessing.QuantileTransformer` now supports disabling
-  subsampling explicitly :pr:`27636` by :user:`Ralph Urlus <rurlus>`.
-  
 - |Fix| :class:`preprocessing.OneHotEncoder` and :class:`preprocessing.OrdinalEncoder`
   raise an exception when `nan` is a category and is not the last in the user's
   provided categories.

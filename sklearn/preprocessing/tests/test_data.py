@@ -1378,9 +1378,8 @@ def test_quantile_transform_subsampling():
 
 
 def test_quantile_transform_subsampling_disabled():
-    """ "Check the behaviour of `QuantileTransformer` when `subsample=None`."""
-    rng = np.random.RandomState(1)
-    X = rng.randn(200, 1)
+    """Check the behaviour of `QuantileTransformer` when `subsample=None`."""
+    X = np.random.RandomState(0).normal(size=(200, 1))
 
     n_quantiles = 5
     transformer = QuantileTransformer(n_quantiles=n_quantiles, subsample=None).fit(X)
