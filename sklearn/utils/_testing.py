@@ -24,6 +24,7 @@ import tempfile
 import unittest
 import warnings
 from collections.abc import Iterable
+from dataclasses import dataclass
 from functools import wraps
 from inspect import signature
 from subprocess import STDOUT, CalledProcessError, TimeoutExpired, check_output
@@ -43,13 +44,14 @@ from numpy.testing import (
 )
 
 import sklearn
-from sklearn.utils import (
-    _IS_32BIT,
-    IS_PYPY,
-    _in_unstable_openblas_configuration,
-)
+from sklearn.utils import _IS_32BIT, IS_PYPY
 from sklearn.utils._array_api import _check_array_api_dispatch
-from sklearn.utils.fixes import parse_version, sp_version
+from sklearn.utils.fixes import (
+    VisibleDeprecationWarning,
+    _in_unstable_openblas_configuration,
+    parse_version,
+    sp_version,
+)
 from sklearn.utils.multiclass import check_classification_targets
 from sklearn.utils.validation import (
     check_array,
@@ -66,7 +68,7 @@ __all__ = [
     "assert_array_less",
     "assert_approx_equal",
     "assert_allclose",
-    "assert_run_python_script",
+    "assert_run_python_script_without_output",
     "assert_no_warnings",
     "SkipTest",
 ]
@@ -669,11 +671,11 @@ def check_docstring_parameters(func, doc=None, ignore=None):
     return incorrect
 
 
-def assert_run_python_script(source_code, timeout=60):
+def assert_run_python_script_without_output(source_code, pattern=".+", timeout=60):
     """Utility to check assertions in an independent Python subprocess.
 
-    The script provided in the source code should return 0 and not print
-    anything on stderr or stdout.
+    The script provided in the source code should return 0 and the stdtout +
+    stderr should not match the pattern `pattern`.
 
     This is a port from cloudpickle https://github.com/cloudpipe/cloudpickle
 
@@ -681,6 +683,9 @@ def assert_run_python_script(source_code, timeout=60):
     ----------
     source_code : str
         The Python source code to execute.
+    pattern : str
+        Pattern that the stdout + stderr should not match. By default, unless
+        stdout + stderr are both empty, an error will be raised.
     timeout : int, default=60
         Time in seconds before timeout.
     """
@@ -710,8 +715,16 @@ def assert_run_python_script(source_code, timeout=60):
                 raise RuntimeError(
                     "script errored with output:\n%s" % e.output.decode("utf-8")
                 )
-            if out != b"":
-                raise AssertionError(out.decode("utf-8"))
+
+            out = out.decode("utf-8")
+            if re.search(pattern, out):
+                if pattern == ".+":
+                    expectation = "Expected no output"
+                else:
+                    expectation = f"The output was not supposed to match {pattern!r}"
+
+                message = f"{expectation}, got the following output instead: {out!r}"
+                raise AssertionError(message)
         except TimeoutExpired as e:
             raise RuntimeError(
                 "script timeout, output so far:\n%s" % e.output.decode("utf-8")
@@ -735,7 +748,9 @@ def _convert_container(
     container : array-like
         The container to convert.
     constructor_name : {"list", "tuple", "array", "sparse", "dataframe", \
-            "series", "index", "slice", "sparse_csr", "sparse_csc"}
+            "series", "index", "slice", "sparse_csr", "sparse_csc", \
+            "sparse_csr_array", "sparse_csc_array", "pyarrow", "polars", \
+            "polars_series"}
         The type of the returned container.
     columns_name : index or array-like, default=None
         For pandas container supporting `columns_names`, it will affect
@@ -764,8 +779,6 @@ def _convert_container(
             return tuple(np.asarray(container, dtype=dtype).tolist())
     elif constructor_name == "array":
         return np.asarray(container, dtype=dtype)
-    elif constructor_name == "sparse":
-        return sp.sparse.csr_matrix(container, dtype=dtype)
     elif constructor_name in ("pandas", "dataframe"):
         pd = pytest.importorskip("pandas", minversion=minversion)
         result = pd.DataFrame(container, columns=columns_name, dtype=dtype, copy=False)
@@ -797,27 +810,36 @@ def _convert_container(
     elif constructor_name == "series":
         pd = pytest.importorskip("pandas", minversion=minversion)
         return pd.Series(container, dtype=dtype)
+    elif constructor_name == "polars_series":
+        pl = pytest.importorskip("polars", minversion=minversion)
+        return pl.Series(values=container)
     elif constructor_name == "index":
         pd = pytest.importorskip("pandas", minversion=minversion)
         return pd.Index(container, dtype=dtype)
     elif constructor_name == "slice":
         return slice(container[0], container[1])
-    elif constructor_name == "sparse_csr":
-        return sp.sparse.csr_matrix(container, dtype=dtype)
-    elif constructor_name == "sparse_csr_array":
-        if sp_version >= parse_version("1.8"):
+    elif "sparse" in constructor_name:
+        if not sp.sparse.issparse(container):
+            # For scipy >= 1.13, sparse array constructed from 1d array may be
+            # 1d or raise an exception. To avoid this, we make sure that the
+            # input container is 2d. For more details, see
+            # https://github.com/scipy/scipy/pull/18530#issuecomment-1878005149
+            container = np.atleast_2d(container)
+
+        if "array" in constructor_name and sp_version < parse_version("1.8"):
+            raise ValueError(
+                f"{constructor_name} is only available with scipy>=1.8.0, got "
+                f"{sp_version}"
+            )
+        if constructor_name in ("sparse", "sparse_csr"):
+            # sparse and sparse_csr are equivalent for legacy reasons
+            return sp.sparse.csr_matrix(container, dtype=dtype)
+        elif constructor_name == "sparse_csr_array":
             return sp.sparse.csr_array(container, dtype=dtype)
-        raise ValueError(
-            f"sparse_csr_array is only available with scipy>=1.8.0, got {sp_version}"
-        )
-    elif constructor_name == "sparse_csc":
-        return sp.sparse.csc_matrix(container, dtype=dtype)
-    elif constructor_name == "sparse_csc_array":
-        if sp_version >= parse_version("1.8"):
+        elif constructor_name == "sparse_csc":
+            return sp.sparse.csc_matrix(container, dtype=dtype)
+        elif constructor_name == "sparse_csc_array":
             return sp.sparse.csc_array(container, dtype=dtype)
-        raise ValueError(
-            f"sparse_csc_array is only available with scipy>=1.8.0, got {sp_version}"
-        )
 
 
 def raises(expected_exc_type, match=None, may_pass=False, err_msg=None):
@@ -906,7 +928,7 @@ class _Raises(contextlib.AbstractContextManager):
 
 
 class MinimalClassifier:
-    """Minimal classifier implementation with inheriting from BaseEstimator.
+    """Minimal classifier implementation without inheriting from BaseEstimator.
 
     This estimator should be tested with:
 
@@ -955,7 +977,7 @@ class MinimalClassifier:
 
 
 class MinimalRegressor:
-    """Minimal regressor implementation with inheriting from BaseEstimator.
+    """Minimal regressor implementation without inheriting from BaseEstimator.
 
     This estimator should be tested with:
 
@@ -995,7 +1017,7 @@ class MinimalRegressor:
 
 
 class MinimalTransformer:
-    """Minimal transformer implementation with inheriting from
+    """Minimal transformer implementation without inheriting from
     BaseEstimator.
 
     This estimator should be tested with:
@@ -1080,3 +1102,98 @@ def _array_api_for_tests(array_namespace, device):
         if cupy.cuda.runtime.getDeviceCount() == 0:
             raise SkipTest("CuPy test requires cuda, which is not available")
     return xp
+
+
+def _get_warnings_filters_info_list():
+    @dataclass
+    class WarningInfo:
+        action: "warnings._ActionKind"
+        message: str = ""
+        category: type[Warning] = Warning
+
+        def to_filterwarning_str(self):
+            if self.category.__module__ == "builtins":
+                category = self.category.__name__
+            else:
+                category = f"{self.category.__module__}.{self.category.__name__}"
+
+            return f"{self.action}:{self.message}:{category}"
+
+    return [
+        WarningInfo("error", category=DeprecationWarning),
+        WarningInfo("error", category=FutureWarning),
+        WarningInfo("error", category=VisibleDeprecationWarning),
+        # TODO: remove when pyamg > 5.0.1
+        # Avoid a deprecation warning due pkg_resources usage in pyamg.
+        WarningInfo(
+            "ignore",
+            message="pkg_resources is deprecated as an API",
+            category=DeprecationWarning,
+        ),
+        WarningInfo(
+            "ignore",
+            message="Deprecated call to `pkg_resources",
+            category=DeprecationWarning,
+        ),
+        # pytest-cov issue https://github.com/pytest-dev/pytest-cov/issues/557 not
+        # fixed although it has been closed. https://github.com/pytest-dev/pytest-cov/pull/623
+        # would probably fix it.
+        WarningInfo(
+            "ignore",
+            message=(
+                "The --rsyncdir command line argument and rsyncdirs config variable are"
+                " deprecated"
+            ),
+            category=DeprecationWarning,
+        ),
+        # XXX: Easiest way to ignore pandas Pyarrow DeprecationWarning in the
+        # short-term. See https://github.com/pandas-dev/pandas/issues/54466 for
+        # more details.
+        WarningInfo(
+            "ignore",
+            message=r"\s*Pyarrow will become a required dependency",
+            category=DeprecationWarning,
+        ),
+        # warnings has been fixed from dateutil main but not released yet, see
+        # https://github.com/dateutil/dateutil/issues/1314
+        WarningInfo(
+            "ignore",
+            message="datetime.datetime.utcfromtimestamp",
+            category=DeprecationWarning,
+        ),
+        # Python 3.12 warnings from joblib fixed in master but not released yet,
+        # see https://github.com/joblib/joblib/pull/1518
+        WarningInfo(
+            "ignore", message="ast.Num is deprecated", category=DeprecationWarning
+        ),
+        WarningInfo(
+            "ignore", message="Attribute n is deprecated", category=DeprecationWarning
+        ),
+        # Python 3.12 warnings from sphinx-gallery fixed in master but not
+        # released yet, see
+        # https://github.com/sphinx-gallery/sphinx-gallery/pull/1242
+        WarningInfo(
+            "ignore", message="ast.Str is deprecated", category=DeprecationWarning
+        ),
+        WarningInfo(
+            "ignore", message="Attribute s is deprecated", category=DeprecationWarning
+        ),
+    ]
+
+
+def get_pytest_filterwarning_lines():
+    warning_filters_info_list = _get_warnings_filters_info_list()
+    return [
+        warning_info.to_filterwarning_str()
+        for warning_info in warning_filters_info_list
+    ]
+
+
+def turn_warnings_into_errors():
+    warnings_filters_info_list = _get_warnings_filters_info_list()
+    for warning_info in warnings_filters_info_list:
+        warnings.filterwarnings(
+            warning_info.action,
+            message=warning_info.message,
+            category=warning_info.category,
+        )

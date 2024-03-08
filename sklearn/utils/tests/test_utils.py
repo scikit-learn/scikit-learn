@@ -2,17 +2,15 @@ import string
 import timeit
 import warnings
 from copy import copy
-from itertools import chain
+from unittest import SkipTest
 
 import numpy as np
 import pytest
 
-from sklearn import config_context
+from sklearn.externals._packaging.version import parse as parse_version
 from sklearn.utils import (
-    _approximate_mode,
     _determine_key_type,
     _get_column_indices,
-    _is_polars_df,
     _message_with_time,
     _print_elapsed_time,
     _safe_assign,
@@ -21,13 +19,11 @@ from sklearn.utils import (
     check_random_state,
     column_or_1d,
     deprecated,
-    gen_even_slices,
-    get_chunk_n_rows,
-    is_scalar_nan,
     resample,
     safe_mask,
     shuffle,
 )
+from sklearn.utils._missing import is_scalar_nan
 from sklearn.utils._mocking import MockDataFrame
 from sklearn.utils._testing import (
     _convert_container,
@@ -36,6 +32,7 @@ from sklearn.utils._testing import (
     assert_no_warnings,
 )
 from sklearn.utils.fixes import CSC_CONTAINERS, CSR_CONTAINERS
+from sklearn.utils.validation import _is_polars_df
 
 # toy array
 X_toy = np.arange(9).reshape((3, 3))
@@ -168,7 +165,7 @@ def test_resample_stratify_sparse_error(csr_container):
     n_samples = 100
     X = rng.normal(size=(n_samples, 2))
     y = rng.randint(0, 2, size=n_samples)
-    stratify = csr_container(y)
+    stratify = csr_container(y.reshape(-1, 1))
     with pytest.raises(TypeError, match="Sparse data was passed"):
         X, y = resample(X, y, n_samples=50, random_state=rng, stratify=stratify)
 
@@ -252,7 +249,9 @@ def test_determine_key_type_slice_error():
         _determine_key_type(slice(0, 2, 1), accept_slice=False)
 
 
-@pytest.mark.parametrize("array_type", ["list", "array", "sparse", "dataframe"])
+@pytest.mark.parametrize(
+    "array_type", ["list", "array", "sparse", "dataframe", "polars"]
+)
 @pytest.mark.parametrize("indices_type", ["list", "tuple", "array", "series", "slice"])
 def test_safe_indexing_2d_container_axis_0(array_type, indices_type):
     indices = [1, 2]
@@ -266,7 +265,7 @@ def test_safe_indexing_2d_container_axis_0(array_type, indices_type):
     )
 
 
-@pytest.mark.parametrize("array_type", ["list", "array", "series"])
+@pytest.mark.parametrize("array_type", ["list", "array", "series", "polars_series"])
 @pytest.mark.parametrize("indices_type", ["list", "tuple", "array", "series", "slice"])
 def test_safe_indexing_1d_container(array_type, indices_type):
     indices = [1, 2]
@@ -278,7 +277,7 @@ def test_safe_indexing_1d_container(array_type, indices_type):
     assert_allclose_dense_sparse(subset, _convert_container([2, 3], array_type))
 
 
-@pytest.mark.parametrize("array_type", ["array", "sparse", "dataframe"])
+@pytest.mark.parametrize("array_type", ["array", "sparse", "dataframe", "polars"])
 @pytest.mark.parametrize("indices_type", ["list", "tuple", "array", "series", "slice"])
 @pytest.mark.parametrize("indices", [[1, 2], ["col_1", "col_2"]])
 def test_safe_indexing_2d_container_axis_1(array_type, indices_type, indices):
@@ -294,7 +293,7 @@ def test_safe_indexing_2d_container_axis_1(array_type, indices_type, indices):
     )
     indices_converted = _convert_container(indices_converted, indices_type)
 
-    if isinstance(indices[0], str) and array_type != "dataframe":
+    if isinstance(indices[0], str) and array_type not in ("dataframe", "polars"):
         err_msg = (
             "Specifying the columns using strings is only supported for dataframes"
         )
@@ -309,7 +308,7 @@ def test_safe_indexing_2d_container_axis_1(array_type, indices_type, indices):
 
 @pytest.mark.parametrize("array_read_only", [True, False])
 @pytest.mark.parametrize("indices_read_only", [True, False])
-@pytest.mark.parametrize("array_type", ["array", "sparse", "dataframe"])
+@pytest.mark.parametrize("array_type", ["array", "sparse", "dataframe", "polars"])
 @pytest.mark.parametrize("indices_type", ["array", "series"])
 @pytest.mark.parametrize(
     "axis, expected_array", [(0, [[4, 5, 6], [7, 8, 9]]), (1, [[2, 3], [5, 6], [8, 9]])]
@@ -329,7 +328,7 @@ def test_safe_indexing_2d_read_only_axis_1(
     assert_allclose_dense_sparse(subset, _convert_container(expected_array, array_type))
 
 
-@pytest.mark.parametrize("array_type", ["list", "array", "series"])
+@pytest.mark.parametrize("array_type", ["list", "array", "series", "polars_series"])
 @pytest.mark.parametrize("indices_type", ["list", "tuple", "array", "series"])
 def test_safe_indexing_1d_container_mask(array_type, indices_type):
     indices = [False] + [True] * 2 + [False] * 6
@@ -339,7 +338,7 @@ def test_safe_indexing_1d_container_mask(array_type, indices_type):
     assert_allclose_dense_sparse(subset, _convert_container([2, 3], array_type))
 
 
-@pytest.mark.parametrize("array_type", ["array", "sparse", "dataframe"])
+@pytest.mark.parametrize("array_type", ["array", "sparse", "dataframe", "polars"])
 @pytest.mark.parametrize("indices_type", ["list", "tuple", "array", "series"])
 @pytest.mark.parametrize(
     "axis, expected_subset",
@@ -366,6 +365,7 @@ def test_safe_indexing_2d_mask(array_type, indices_type, axis, expected_subset):
         ("array", "array"),
         ("sparse", "sparse"),
         ("dataframe", "series"),
+        ("polars", "polars_series"),
     ],
 )
 def test_safe_indexing_2d_scalar_axis_0(array_type, expected_output_type):
@@ -376,7 +376,7 @@ def test_safe_indexing_2d_scalar_axis_0(array_type, expected_output_type):
     assert_allclose_dense_sparse(subset, expected_array)
 
 
-@pytest.mark.parametrize("array_type", ["list", "array", "series"])
+@pytest.mark.parametrize("array_type", ["list", "array", "series", "polars_series"])
 def test_safe_indexing_1d_scalar(array_type):
     array = _convert_container([1, 2, 3, 4, 5, 6, 7, 8, 9], array_type)
     indices = 2
@@ -386,7 +386,12 @@ def test_safe_indexing_1d_scalar(array_type):
 
 @pytest.mark.parametrize(
     "array_type, expected_output_type",
-    [("array", "array"), ("sparse", "sparse"), ("dataframe", "series")],
+    [
+        ("array", "array"),
+        ("sparse", "sparse"),
+        ("dataframe", "series"),
+        ("polars", "polars_series"),
+    ],
 )
 @pytest.mark.parametrize("indices", [2, "col_2"])
 def test_safe_indexing_2d_scalar_axis_1(array_type, expected_output_type, indices):
@@ -395,7 +400,7 @@ def test_safe_indexing_2d_scalar_axis_1(array_type, expected_output_type, indice
         [[1, 2, 3], [4, 5, 6], [7, 8, 9]], array_type, columns_name
     )
 
-    if isinstance(indices, str) and array_type != "dataframe":
+    if isinstance(indices, str) and array_type not in ("dataframe", "polars"):
         err_msg = (
             "Specifying the columns using strings is only supported for dataframes"
         )
@@ -432,7 +437,7 @@ def test_safe_indexing_error_axis(axis):
         _safe_indexing(X_toy, [0, 1], axis=axis)
 
 
-@pytest.mark.parametrize("X_constructor", ["array", "series"])
+@pytest.mark.parametrize("X_constructor", ["array", "series", "polars_series"])
 def test_safe_indexing_1d_array_error(X_constructor):
     # check that we are raising an error if the array-like passed is 1D and
     # we try to index on the 2nd dimension
@@ -442,8 +447,11 @@ def test_safe_indexing_1d_array_error(X_constructor):
     elif X_constructor == "series":
         pd = pytest.importorskip("pandas")
         X_constructor = pd.Series(X)
+    elif X_constructor == "polars_series":
+        pl = pytest.importorskip("polars")
+        X_constructor = pl.Series(values=X)
 
-    err_msg = "'X' should be a 2D NumPy array, 2D sparse matrix or pandas"
+    err_msg = "'X' should be a 2D NumPy array, 2D sparse matrix or dataframe"
     with pytest.raises(ValueError, match=err_msg):
         _safe_indexing(X_constructor, [0, 1], axis=1)
 
@@ -461,6 +469,12 @@ def test_safe_indexing_pandas_no_settingwithcopy_warning():
     # DataFrame -> ensure it doesn't raise a warning if modified
     pd = pytest.importorskip("pandas")
 
+    pd_version = parse_version(pd.__version__)
+    pd_base_version = parse_version(pd_version.base_version)
+
+    if pd_base_version >= parse_version("3"):
+        raise SkipTest("SettingWithCopyWarning has been removed in pandas 3.0.0.dev")
+
     X = pd.DataFrame({"a": [1, 2, 3], "b": [3, 4, 5]})
     subset = _safe_indexing(X, [0, 1], axis=0)
     if hasattr(pd.errors, "SettingWithCopyWarning"):
@@ -473,6 +487,15 @@ def test_safe_indexing_pandas_no_settingwithcopy_warning():
         subset.iloc[0, 0] = 10
     # The original dataframe is unaffected by the assignment on the subset:
     assert X.iloc[0, 0] == 1
+
+
+@pytest.mark.parametrize("indices", [0, [0, 1], slice(0, 2), np.array([0, 1])])
+def test_safe_indexing_list_axis_1_unsupported(indices):
+    """Check that we raise a ValueError when axis=1 with input as list."""
+    X = [[1, 2], [4, 5], [7, 8]]
+    err_msg = "axis=1 is not supported for lists"
+    with pytest.raises(ValueError, match=err_msg):
+        _safe_indexing(X, indices, axis=1)
 
 
 @pytest.mark.parametrize(
@@ -540,71 +563,6 @@ def test_shuffle_dont_convert_to_array(csc_container):
     assert type(d_s) == MockDataFrame  # noqa: E721
 
     assert_array_equal(e_s.toarray(), np.array([[4, 5], [2, 3], [0, 1]]))
-
-
-def test_gen_even_slices():
-    # check that gen_even_slices contains all samples
-    some_range = range(10)
-    joined_range = list(chain(*[some_range[slice] for slice in gen_even_slices(10, 3)]))
-    assert_array_equal(some_range, joined_range)
-
-
-@pytest.mark.parametrize(
-    ("row_bytes", "max_n_rows", "working_memory", "expected"),
-    [
-        (1024, None, 1, 1024),
-        (1024, None, 0.99999999, 1023),
-        (1023, None, 1, 1025),
-        (1025, None, 1, 1023),
-        (1024, None, 2, 2048),
-        (1024, 7, 1, 7),
-        (1024 * 1024, None, 1, 1),
-    ],
-)
-def test_get_chunk_n_rows(row_bytes, max_n_rows, working_memory, expected):
-    with warnings.catch_warnings():
-        warnings.simplefilter("error", UserWarning)
-        actual = get_chunk_n_rows(
-            row_bytes=row_bytes,
-            max_n_rows=max_n_rows,
-            working_memory=working_memory,
-        )
-
-    assert actual == expected
-    assert type(actual) is type(expected)
-    with config_context(working_memory=working_memory):
-        with warnings.catch_warnings():
-            warnings.simplefilter("error", UserWarning)
-            actual = get_chunk_n_rows(row_bytes=row_bytes, max_n_rows=max_n_rows)
-        assert actual == expected
-        assert type(actual) is type(expected)
-
-
-def test_get_chunk_n_rows_warns():
-    """Check that warning is raised when working_memory is too low."""
-    row_bytes = 1024 * 1024 + 1
-    max_n_rows = None
-    working_memory = 1
-    expected = 1
-
-    warn_msg = (
-        "Could not adhere to working_memory config. Currently 1MiB, 2MiB required."
-    )
-    with pytest.warns(UserWarning, match=warn_msg):
-        actual = get_chunk_n_rows(
-            row_bytes=row_bytes,
-            max_n_rows=max_n_rows,
-            working_memory=working_memory,
-        )
-
-    assert actual == expected
-    assert type(actual) is type(expected)
-
-    with config_context(working_memory=working_memory):
-        with pytest.warns(UserWarning, match=warn_msg):
-            actual = get_chunk_n_rows(row_bytes=row_bytes, max_n_rows=max_n_rows)
-        assert actual == expected
-        assert type(actual) is type(expected)
 
 
 @pytest.mark.parametrize(
@@ -687,23 +645,6 @@ def test_is_scalar_nan(value, result):
     assert is_scalar_nan(value) is result
     # make sure that we are returning a Python bool
     assert isinstance(is_scalar_nan(value), bool)
-
-
-def test_approximate_mode():
-    """Make sure sklearn.utils._approximate_mode returns valid
-    results for cases where "class_counts * n_draws" is enough
-    to overflow 32-bit signed integer.
-
-    Non-regression test for:
-    https://github.com/scikit-learn/scikit-learn/issues/20774
-    """
-    X = np.array([99000, 1000], dtype=np.int32)
-    ret = _approximate_mode(class_counts=X, n_draws=25000, rng=0)
-
-    # Draws 25% of the total population, so in this case a fair draw means:
-    # 25% * 99.000 = 24.750
-    # 25% *  1.000 =    250
-    assert_array_equal(ret, [24750, 250])
 
 
 def dummy_func():

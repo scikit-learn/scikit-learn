@@ -419,7 +419,7 @@ class LabelBinarizer(TransformerMixin, BaseEstimator, auto_wrap_output_keys=None
 
 @validate_params(
     {
-        "y": ["array-like"],
+        "y": ["array-like", "sparse matrix"],
         "classes": ["array-like"],
         "neg_label": [Interval(Integral, None, None, closed="neither")],
         "pos_label": [Interval(Integral, None, None, closed="neither")],
@@ -440,7 +440,7 @@ def label_binarize(y, *, classes, neg_label=0, pos_label=1, sparse_output=False)
 
     Parameters
     ----------
-    y : array-like
+    y : array-like or sparse matrix
         Sequence of integer labels or multilabel data to encode.
 
     classes : array-like of shape (n_classes,)
@@ -827,7 +827,7 @@ class MultiLabelBinarizer(TransformerMixin, BaseEstimator, auto_wrap_output_keys
         class_mapping[:] = tmp
         self.classes_, inverse = np.unique(class_mapping, return_inverse=True)
         # ensure yt.indices keeps its current dtype
-        yt.indices = np.array(inverse[yt.indices], dtype=yt.indices.dtype, copy=False)
+        yt.indices = np.asarray(inverse[yt.indices], dtype=yt.indices.dtype)
 
         if not self.sparse_output:
             yt = yt.toarray()
