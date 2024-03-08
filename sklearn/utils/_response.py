@@ -143,11 +143,11 @@ def _get_response_values(
     X : {array-like, sparse matrix} of shape (n_samples, n_features)
         Input values.
 
-    response_method : {"predict_proba", "decision_function", "predict"} or \
-            list of such str
+    response_method : {"predict_proba", "predict_log_proba", "decision_function", \
+            "predict"} or list of such str
         Specifies the response method to use get prediction from an estimator
-        (i.e. :term:`predict_proba`, :term:`decision_function` or
-        :term:`predict`). Possible choices are:
+        (i.e. :term:`predict_proba`, :term:`predict_log_proba`,
+        :term:`decision_function` or :term:`predict`). Possible choices are:
 
         - if `str`, it corresponds to the name to the method to return;
         - if a list of `str`, it provides the method names in order of
@@ -209,7 +209,7 @@ def _get_response_values(
 
         y_pred = prediction_method(X)
 
-        if prediction_method.__name__ == "predict_proba":
+        if prediction_method.__name__ in ("predict_proba", "predict_log_proba"):
             y_pred = _process_predict_proba(
                 y_pred=y_pred,
                 target_type=target_type,

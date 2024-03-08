@@ -63,26 +63,21 @@ _LOGISTIC_SOLVER_CONVERGENCE_MSG = (
 
 
 def _check_solver(solver, penalty, dual):
-    # TODO(1.4): Remove "none" option
-    if solver not in ["liblinear", "saga"] and penalty not in ("l2", "none", None):
+    if solver not in ["liblinear", "saga"] and penalty not in ("l2", None):
         raise ValueError(
-            "Solver %s supports only 'l2' or 'none' penalties, got %s penalty."
-            % (solver, penalty)
+            f"Solver {solver} supports only 'l2' or None penalties, got {penalty} "
+            "penalty."
         )
     if solver != "liblinear" and dual:
-        raise ValueError(
-            "Solver %s supports only dual=False, got dual=%s" % (solver, dual)
-        )
+        raise ValueError(f"Solver {solver} supports only dual=False, got dual={dual}")
 
     if penalty == "elasticnet" and solver != "saga":
         raise ValueError(
-            "Only 'saga' solver supports elasticnet penalty, got solver={}.".format(
-                solver
-            )
+            f"Only 'saga' solver supports elasticnet penalty, got solver={solver}."
         )
 
-    if solver == "liblinear" and penalty == "none":
-        raise ValueError("penalty='none' is not supported for the liblinear solver")
+    if solver == "liblinear" and penalty is None:
+        raise ValueError("penalty=None is not supported for the liblinear solver")
 
     return solver
 
@@ -422,7 +417,7 @@ def _logistic_regression_path(
                 fit_intercept=fit_intercept,
             )
         target = Y_multi
-        if solver in "lbfgs":
+        if solver == "lbfgs":
             func = loss.loss_gradient
         elif solver == "newton-cg":
             func = loss.loss
@@ -624,34 +619,32 @@ def _log_reg_scoring_path(
     test : list of indices
         The indices of the test set.
 
-    pos_class : int, default=None
+    pos_class : int
         The class with respect to which we perform a one-vs-all fit.
         If None, then it is assumed that the given problem is binary.
 
-    Cs : int or list of floats, default=10
+    Cs : int or list of floats
         Each of the values in Cs describes the inverse of
         regularization strength. If Cs is as an int, then a grid of Cs
         values are chosen in a logarithmic scale between 1e-4 and 1e4.
-        If not provided, then a fixed set of values for Cs are used.
 
-    scoring : callable, default=None
+    scoring : callable
         A string (see model evaluation documentation) or
         a scorer callable object / function with signature
         ``scorer(estimator, X, y)``. For a list of scoring functions
-        that can be used, look at :mod:`sklearn.metrics`. The
-        default scoring option used is accuracy_score.
+        that can be used, look at :mod:`sklearn.metrics`.
 
-    fit_intercept : bool, default=False
+    fit_intercept : bool
         If False, then the bias term is set to zero. Else the last
         term of each coef_ gives us the intercept.
 
-    max_iter : int, default=100
+    max_iter : int
         Maximum number of iterations for the solver.
 
-    tol : float, default=1e-4
+    tol : float
         Tolerance for stopping criteria.
 
-    class_weight : dict or 'balanced', default=None
+    class_weight : dict or 'balanced'
         Weights associated with classes in the form ``{class_label: weight}``.
         If not given, all classes are supposed to have weight one.
 
@@ -662,25 +655,24 @@ def _log_reg_scoring_path(
         Note that these weights will be multiplied with sample_weight (passed
         through the fit method) if sample_weight is specified.
 
-    verbose : int, default=0
+    verbose : int
         For the liblinear and lbfgs solvers set verbose to any positive
         number for verbosity.
 
-    solver : {'lbfgs', 'liblinear', 'newton-cg', 'newton-cholesky', 'sag', 'saga'}, \
-            default='lbfgs'
+    solver : {'lbfgs', 'liblinear', 'newton-cg', 'newton-cholesky', 'sag', 'saga'}
         Decides which solver to use.
 
-    penalty : {'l1', 'l2', 'elasticnet'}, default='l2'
+    penalty : {'l1', 'l2', 'elasticnet'}
         Used to specify the norm used in the penalization. The 'newton-cg',
         'sag' and 'lbfgs' solvers support only l2 penalties. 'elasticnet' is
         only supported by the 'saga' solver.
 
-    dual : bool, default=False
+    dual : bool
         Dual or primal formulation. Dual formulation is only implemented for
         l2 penalty with liblinear solver. Prefer dual=False when
         n_samples > n_features.
 
-    intercept_scaling : float, default=1.
+    intercept_scaling : float
         Useful only when the solver 'liblinear' is used
         and self.fit_intercept is set to True. In this case, x becomes
         [x, self.intercept_scaling],
@@ -692,26 +684,26 @@ def _log_reg_scoring_path(
         To lessen the effect of regularization on synthetic feature weight
         (and therefore on the intercept) intercept_scaling has to be increased.
 
-    multi_class : {'auto', 'ovr', 'multinomial'}, default='auto'
+    multi_class : {'auto', 'ovr', 'multinomial'}
         If the option chosen is 'ovr', then a binary problem is fit for each
         label. For 'multinomial' the loss minimised is the multinomial loss fit
         across the entire probability distribution, *even when the data is
         binary*. 'multinomial' is unavailable when solver='liblinear'.
 
-    random_state : int, RandomState instance, default=None
+    random_state : int, RandomState instance
         Used when ``solver`` == 'sag', 'saga' or 'liblinear' to shuffle the
         data. See :term:`Glossary <random_state>` for details.
 
-    max_squared_sum : float, default=None
+    max_squared_sum : float
         Maximum squared sum of X over samples. Used only in SAG solver.
         If None, it will be computed, going through all the samples.
         The value should be precomputed to speed up cross validation.
 
-    sample_weight : array-like of shape(n_samples,), default=None
+    sample_weight : array-like of shape(n_samples,)
         Array of weights that are assigned to individual samples.
         If not provided, then each sample is given unit weight.
 
-    l1_ratio : float, default=None
+    l1_ratio : float
         The Elastic-Net mixing parameter, with ``0 <= l1_ratio <= 1``. Only
         used if ``penalty='elasticnet'``. Setting ``l1_ratio=0`` is equivalent
         to using ``penalty='l2'``, while setting ``l1_ratio=1`` is equivalent
@@ -850,10 +842,6 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
 
         .. versionadded:: 0.19
            l1 penalty with SAGA solver (allowing 'multinomial' + L1)
-
-        .. deprecated:: 1.2
-           The 'none' option was deprecated in version 1.2, and will be removed
-           in 1.4. Use `None` instead.
 
     dual : bool, default=False
         Dual (constrained) or primal (regularized, see also
@@ -1095,11 +1083,7 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
     """
 
     _parameter_constraints: dict = {
-        # TODO(1.4): Remove "none" option
-        "penalty": [
-            StrOptions({"l1", "l2", "elasticnet", "none"}, deprecated={"none"}),
-            None,
-        ],
+        "penalty": [StrOptions({"l1", "l2", "elasticnet"}), None],
         "dual": ["boolean"],
         "tol": [Interval(Real, 0, None, closed="left")],
         "C": [Interval(Real, 0, None, closed="right")],
@@ -1197,17 +1181,7 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         if self.penalty == "elasticnet" and self.l1_ratio is None:
             raise ValueError("l1_ratio must be specified when penalty is elasticnet.")
 
-        # TODO(1.4): Remove "none" option
-        if self.penalty == "none":
-            warnings.warn(
-                (
-                    "`penalty='none'`has been deprecated in 1.2 and will be removed in"
-                    " 1.4. To keep the past behaviour, set `penalty=None`."
-                ),
-                FutureWarning,
-            )
-
-        if self.penalty is None or self.penalty == "none":
+        if self.penalty is None:
             if self.C != 1.0:  # default values
                 warnings.warn(
                     "Setting penalty=None will ignore the C and l1_ratio parameters"

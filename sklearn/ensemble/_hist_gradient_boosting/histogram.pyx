@@ -4,6 +4,7 @@
 
 cimport cython
 from cython.parallel import prange
+from libc.string cimport memset
 
 import numpy as np
 
@@ -196,12 +197,9 @@ cdef class HistogramBuilder:
                 self.ordered_hessians[:n_samples]
             unsigned char hessians_are_constant = \
                 self.hessians_are_constant
-            unsigned int bin_idx = 0
 
-        for bin_idx in range(self.n_bins):
-            histograms[feature_idx, bin_idx].sum_gradients = 0.
-            histograms[feature_idx, bin_idx].sum_hessians = 0.
-            histograms[feature_idx, bin_idx].count = 0
+        # Set histograms to zero.
+        memset(&histograms[feature_idx, 0], 0, self.n_bins * sizeof(hist_struct))
 
         if root_node:
             if hessians_are_constant:
@@ -224,7 +222,7 @@ cdef class HistogramBuilder:
 
     def compute_histograms_subtraction(
         HistogramBuilder self,
-        hist_struct [:, ::1] parent_histograms,        # IN
+        hist_struct [:, ::1] parent_histograms,        # IN and OUT
         hist_struct [:, ::1] sibling_histograms,       # IN
         const unsigned int [:] allowed_features=None,  # IN
     ):
@@ -252,16 +250,14 @@ cdef class HistogramBuilder:
         -------
         histograms : ndarray of HISTOGRAM_DTYPE, shape(n_features, n_bins)
             The computed histograms of the current node.
+            We repurpose parent_histograms for this and don't need to allocate new
+            memory.
         """
 
         cdef:
             int feature_idx
             int f_idx
             int n_allowed_features = self.n_features
-            hist_struct [:, ::1] histograms = np.empty(
-                shape=(self.n_features, self.n_bins),
-                dtype=HISTOGRAM_DTYPE
-            )
             bint has_interaction_cst = allowed_features is not None
             int n_threads = self.n_threads
 
@@ -281,9 +277,8 @@ cdef class HistogramBuilder:
                 self.n_bins,
                 parent_histograms,
                 sibling_histograms,
-                histograms,
             )
-        return histograms
+        return parent_histograms
 
 
 cpdef void _build_histogram_naive(
@@ -313,25 +308,27 @@ cpdef void _build_histogram_naive(
 cpdef void _subtract_histograms(
         const int feature_idx,
         unsigned int n_bins,
-        hist_struct [:, ::1] hist_a,  # IN
+        hist_struct [:, ::1] hist_a,  # IN and OUT
         hist_struct [:, ::1] hist_b,  # IN
-        hist_struct [:, ::1] out) noexcept nogil:  # OUT
-    """compute (hist_a - hist_b) in out"""
+) noexcept nogil:  # OUT
+    """compute hist_a = hist_a - hist_b"""
+    # Note that subtraction of large sums of floating point numbers, as we have here,
+    # can exhibit catastrophic cancallation. This is in particular true for gradients
+    # as they can be positive and negative, while hessians are non-negative.
+    # Remember that gradients and hessians are originally computed in
+    # G_H_DTYPE_C = float32 precision. Therefore, if sum_gradients and sum_hessians are
+    # float64, we don't loose precision. But if we also used float32 for summation, we
+    # would need to take care of floating point errors.
+    #
+    # Note that we could protect for negative hessians by setting:
+    #     sum_hessians = max(0, sum_hessians)
+    # But as we use float64 for summing float32, that's veeeery unlikely.
     cdef:
         unsigned int i = 0
     for i in range(n_bins):
-        out[feature_idx, i].sum_gradients = (
-            hist_a[feature_idx, i].sum_gradients -
-            hist_b[feature_idx, i].sum_gradients
-        )
-        out[feature_idx, i].sum_hessians = (
-            hist_a[feature_idx, i].sum_hessians -
-            hist_b[feature_idx, i].sum_hessians
-        )
-        out[feature_idx, i].count = (
-            hist_a[feature_idx, i].count -
-            hist_b[feature_idx, i].count
-        )
+        hist_a[feature_idx, i].sum_gradients -= hist_b[feature_idx, i].sum_gradients
+        hist_a[feature_idx, i].sum_hessians -= hist_b[feature_idx, i].sum_hessians
+        hist_a[feature_idx, i].count -= hist_b[feature_idx, i].count
 
 
 cpdef void _build_histogram(

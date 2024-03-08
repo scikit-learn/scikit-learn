@@ -42,7 +42,7 @@ bike sharing dataset. The example is inspired by [1]_.
 # rentals using weather and season data as well as the datetime information.
 from sklearn.datasets import fetch_openml
 
-bikes = fetch_openml("Bike_Sharing_Demand", version=2, as_frame=True, parser="pandas")
+bikes = fetch_openml("Bike_Sharing_Demand", version=2, as_frame=True)
 # Make an explicit copy to avoid "SettingWithCopyWarning" from pandas
 X, y = bikes.data.copy(), bikes.target
 
@@ -57,7 +57,12 @@ X["weather"].value_counts()
 
 # %%
 # Because of this rare category, we collapse it into `"rain"`.
-X["weather"].replace(to_replace="heavy_rain", value="rain", inplace=True)
+X["weather"] = (
+    X["weather"]
+    .astype(object)
+    .replace(to_replace="heavy_rain", value="rain")
+    .astype("category")
+)
 
 # %%
 # We now have a closer look at the `"year"` feature:
