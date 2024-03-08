@@ -74,20 +74,15 @@ def test_min_dependencies_pyproject_toml():
     pyproject_build_min_versions = {}
     for requirement in build_requirements:
         if ">=" in requirement:
-            # Don't check NumPy: this requirement is only build time.
+            # NumPy is more complex because build-time and run-time requirement
+            # don't match
             if "numpy>=1.25" in requirement:
-                continue
-            # Don't check meson-python: this requirement is only build-time and
-            # there is no runtime equivalent to check against
-            if "meson-python" in requirement:
                 continue
             package, version = requirement.split(">=")
             package = package.lower()
             pyproject_build_min_versions[package] = version
 
-    # Only scipy and cython are listed in pyproject.toml
-    # NumPy is more complex using oldest-supported-numpy or >=1.25.
-    assert set(["scipy", "cython"]) == set(pyproject_build_min_versions)
+    assert set(["scipy", "cython", "meson-python"]) == set(pyproject_build_min_versions)
 
     for package, version in pyproject_build_min_versions.items():
         version = parse_version(version)
