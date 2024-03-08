@@ -193,16 +193,10 @@ def test_average_raises_with_wrong_dtype(array_namespace, device, dtype_name):
     )
     complex_type_name = array_in.dtype.name
     if not hasattr(xp, complex_type_name):
+        # This is the case for cupy as of March 2024 for instance.
         pytest.skip(f"{array_namespace} does not support {complex_type_name}")
 
     array_in = xp.asarray(array_in, device=device)
-
-    err_msg = "Complex floating point values are not supported by average."
-    with (
-        config_context(array_api_dispatch=True),
-        pytest.raises(NotImplementedError, match=err_msg),
-    ):
-        _average(array_in)
 
     err_msg = "Complex floating point values are not supported by average."
     with (
