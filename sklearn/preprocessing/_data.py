@@ -2495,6 +2495,9 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
         differ for value-identical sparse and dense matrices.
         Disable subsampling by setting `subsample=None`.
 
+        .. versionadded:: 1.5
+           The option `None` to disable subsampling was added.
+
     random_state : int, RandomState instance or None, default=None
         Determines random number generation for subsampling and smoothing
         noise.
@@ -2940,6 +2943,9 @@ def quantile_transform(
         computational efficiency. Note that the subsampling procedure may
         differ for value-identical sparse and dense matrices.
         Disable subsampling by setting `subsample=None`.
+
+        .. versionadded:: 1.5
+           The option `None` to disable subsampling was added.
 
     random_state : int, RandomState instance or None, default=None
         Determines random number generation for subsampling and smoothing
