@@ -812,13 +812,6 @@ Changelog
 :mod:`sklearn.metrics`
 ......................
 
-- |Feature| :func:`metrics.pairwise_distances` accepts calculating pairwise distances
-  for non-numeric arrays as well. This is supported only with custom functions
-  and the user is expected to pass `ensure_2d=False` to be lenient
-  regarding the input validation.
-  :pr:`27456` by :user:`Venkatachalam N <venkyyuvy>`, :user:`Kshitij Mathur <Kshitij68>`
-  and :user:`Julian Libiseller-Egger <julibeg>`.
-
 - |Efficiency| Computing pairwise distances via :class:`metrics.DistanceMetric`
   for CSR x CSR,  Dense x CSR, and CSR x Dense datasets is now 1.5x faster.
   :pr:`26765` by :user:`Meekail Zain <micky774>`.

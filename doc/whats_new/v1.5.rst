@@ -218,6 +218,13 @@ Changelog
 :mod:`sklearn.metrics`
 ......................
 
+- |Feature| :func:`metrics.pairwise_distances` accepts calculating pairwise distances for
+  non-numeric arrays as well. This is supported through custom metrics only.
+  This function has a new parameter `ensure_2d` (ignored when not using a custom metric)
+  expected to be set to `False` to be lenient regarding the input validation.
+  :pr:`27456` by :user:`Venkatachalam N <venkyyuvy>`, :user:`Kshitij Mathur <Kshitij68>`
+  and :user:`Julian Libiseller-Egger <julibeg>`.
+
 - |Efficiency| Improve efficiency of functions :func:`~metrics.brier_score_loss`,
   :func:`~metrics.calibration_curve`, :func:`~metrics.det_curve`,
   :func:`~metrics.precision_recall_curve`,

@@ -137,7 +137,7 @@ def check_pairwise_arrays(
         this to `False` is necessary when using a custom metric with certain
         non-numerical inputs (e.g. a list of strings).
 
-        .. versionadded:: 1.4
+        .. versionadded:: 1.5
 
     copy : bool, default=False
         Whether a forced copy will be triggered. If copy=False, a copy might
@@ -2291,10 +2291,11 @@ def pairwise_distances(
 
     ensure_2d : bool, default=True
         Whether to raise an error when the input arrays are not 2-dimensional.
-        Ignored if `metric` is not a callable. Setting it to `False` is necessary when
-        using a custom metric with certain non-numerical inputs (e.g. a list of strings).
+        Ignored if `metric` is not a callable. Setting it to `False` can be
+        necessary when using a custom metric with certain non-numerical inputs
+        (e.g. a list of strings).
 
-        .. versionadded:: 1.4
+        .. versionadded:: 1.5
 
     **kwds : optional keyword parameters
         Any further parameters are passed directly to the distance function.
