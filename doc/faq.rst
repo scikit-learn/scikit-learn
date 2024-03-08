@@ -417,8 +417,8 @@ Note that the example above uses the third-party edit distance package
 `leven <https://pypi.org/project/leven/>`_. Similar tricks can be used,
 with some care, for tree kernels, graph kernels, etc.
 
-Why do I sometime get a crash/freeze with ``n_jobs > 1`` under OSX or Linux?
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Why do I sometimes get a crash/freeze with ``n_jobs > 1`` under OSX or Linux?
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Several scikit-learn tools such as :class:`~model_selection.GridSearchCV` and
 :class:`~model_selection.cross_val_score` rely internally on Python's
