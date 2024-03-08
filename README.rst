@@ -197,6 +197,7 @@ Communication
 - Instagram: https://www.instagram.com/scikitlearnofficial/
 - TikTok: https://www.tiktok.com/@scikit.learn
 - Mastodon: https://mastodon.social/@sklearn@fosstodon.org
+- Discord: https://discord.gg/h9qyrK8Jc8
 
 
 Citation

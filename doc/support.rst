@@ -60,7 +60,7 @@ the focus on development.
 - `GitHub Bug Tracker <https://github.com/scikit-learn/scikit-learn/issues>`_
   Bug reports - Please do not ask usage questions on the issue tracker.
 
-- Discord server
+- `Discord Server <https://discord.gg/h9qyrK8Jc8>`_
   Current pull requests - Post any specific PR-related questions on your PR, 
   and you can share a link to your PR on this server.
 
