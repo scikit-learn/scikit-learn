@@ -2353,7 +2353,7 @@ def pairwise_distances(
         if issparse(X) or issparse(Y):
             raise TypeError("scipy distance metrics do not support sparse matrices.")
 
-        dtype = bool if metric in PAIRWISE_BOOLEAN_FUNCTIONS else None
+        dtype = bool if metric in PAIRWISE_BOOLEAN_FUNCTIONS else "infer_float"
 
         if dtype == bool and (X.dtype != bool or (Y is not None and Y.dtype != bool)):
             msg = "Data was converted to boolean for metric %s" % metric
