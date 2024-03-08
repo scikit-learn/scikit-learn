@@ -1320,6 +1320,10 @@ div.sk-sponsor-div-box, div.sk-testimonial-div-box {
   }
 }
 
+div.sk-sponsor-div-box table.sk-sponsor-table {
+  display: table;
+}
+
 table.sk-sponsor-table tr, table.sk-sponsor-table tr:nth-child(odd) {
   border-style: none;
   background-color: white;
