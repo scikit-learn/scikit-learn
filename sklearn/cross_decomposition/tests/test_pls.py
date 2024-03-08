@@ -552,7 +552,7 @@ def test_pls_constant_y():
 
     pls = PLSRegression()
 
-    msg = "Y residual is constant at iteration"
+    msg = "y residual is constant at iteration"
     with pytest.warns(UserWarning, match=msg):
         pls.fit(x, y)
 
@@ -644,3 +644,29 @@ def test_pls_regression_fit_1d_y():
     y_pred = vr.fit(X, y).predict(X)
     assert y_pred.shape == expected.shape
     assert_allclose(y_pred, expected)
+
+
+# TODO(1.7): Remove
+@pytest.mark.parametrize("Klass", [PLSRegression, CCA, PLSSVD, PLSCanonical])
+def test_pls_warning_on_deprecated_Y_argument(Klass):
+    # Test warning message is shown when using Y instead of y
+
+    d = load_linnerud()
+    X = d.data
+    Y = d.target
+    y = d.target
+
+    msg = "`Y` is deprecated in 1.5 and will be removed in 1.7. Use `y` instead."
+    with pytest.warns(FutureWarning, match=msg):
+        Klass().fit(X=X, Y=Y)
+
+    err_msg1 = "Cannot use both `y` and `Y`. Use only `y` as `Y` is deprecated."
+    with (
+        pytest.warns(FutureWarning, match=msg),
+        pytest.raises(ValueError, match=err_msg1),
+    ):
+        Klass().fit(X, y, Y)
+
+    err_msg2 = "y is required."
+    with pytest.raises(ValueError, match=err_msg2):
+        Klass().fit(X)
