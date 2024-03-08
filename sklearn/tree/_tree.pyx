@@ -63,10 +63,10 @@ cdef float64_t INFINITY = np.inf
 cdef float64_t EPSILON = np.finfo('double').eps
 
 # Some handy constants (BestFirstTreeBuilder)
-cdef int IS_FIRST = 1
-cdef int IS_NOT_FIRST = 0
-cdef int IS_LEFT = 1
-cdef int IS_NOT_LEFT = 0
+cdef bint IS_FIRST = 1
+cdef bint IS_NOT_FIRST = 0
+cdef bint IS_LEFT = 1
+cdef bint IS_NOT_LEFT = 0
 
 TREE_LEAF = -1
 TREE_UNDEFINED = -2
@@ -177,10 +177,10 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
         X, y, sample_weight = self._check_input(X, y, sample_weight)
 
         # Initial capacity
-        cdef int init_capacity
+        cdef intp_t init_capacity
 
         if tree.max_depth <= 10:
-            init_capacity = <int> (2 ** (tree.max_depth + 1)) - 1
+            init_capacity = <intp_t> (2 ** (tree.max_depth + 1)) - 1
         else:
             init_capacity = 2047
 
@@ -696,32 +696,32 @@ cdef class Tree:
 
     Attributes
     ----------
-    node_count : int
+    node_count : intp_t
         The number of nodes (internal nodes + leaves) in the tree.
 
-    capacity : int
+    capacity : intp_t
         The current capacity (i.e., size) of the arrays, which is at least as
         great as `node_count`.
 
-    max_depth : int
+    max_depth : intp_t
         The depth of the tree, i.e. the maximum depth of its leaves.
 
-    children_left : array of int, shape [node_count]
+    children_left : array of intp_t, shape [node_count]
         children_left[i] holds the node id of the left child of node i.
         For leaves, children_left[i] == TREE_LEAF. Otherwise,
         children_left[i] > i. This child handles the case where
         X[:, feature[i]] <= threshold[i].
 
-    children_right : array of int, shape [node_count]
+    children_right : array of intp_t, shape [node_count]
         children_right[i] holds the node id of the right child of node i.
         For leaves, children_right[i] == TREE_LEAF. Otherwise,
         children_right[i] > i. This child handles the case where
         X[:, feature[i]] > threshold[i].
 
-    n_leaves : int
+    n_leaves : intp_t
         Number of leaves in the tree.
 
-    feature : array of int, shape [node_count]
+    feature : array of intp_t, shape [node_count]
         feature[i] holds the feature to split on, for the internal node i.
 
     threshold : array of float64_t, shape [node_count]
@@ -734,7 +734,7 @@ cdef class Tree:
         impurity[i] holds the impurity (i.e., the value of the splitting
         criterion) at node i.
 
-    n_node_samples : array of int, shape [node_count]
+    n_node_samples : array of intp_t, shape [node_count]
         n_node_samples[i] holds the number of training samples reaching node i.
 
     weighted_n_node_samples : array of float64_t, shape [node_count]
@@ -797,7 +797,7 @@ cdef class Tree:
 
     # TODO: Convert n_classes to cython.integral memory view once
     #  https://github.com/cython/cython/issues/5243 is fixed
-    def __cinit__(self, int n_features, cnp.ndarray n_classes, int n_outputs):
+    def __cinit__(self, intp_t n_features, cnp.ndarray n_classes, intp_t n_outputs):
         """Constructor."""
         cdef intp_t dummy = 0
         size_t_dtype = np.array(dummy).dtype
@@ -1343,7 +1343,7 @@ cdef class Tree:
         return arr
 
     def compute_partial_dependence(self, float32_t[:, ::1] X,
-                                   int[::1] target_features,
+                                   const intp_t[::1] target_features,
                                    float64_t[::1] out):
         """Partial dependence of the response on the ``target_feature`` set.
 
@@ -1379,7 +1379,7 @@ cdef class Tree:
                                                   dtype=np.intp)
             intp_t sample_idx
             intp_t feature_idx
-            int stack_size
+            intp_t stack_size
             float64_t left_sample_frac
             float64_t current_weight
             float64_t total_weight  # used for sanity check only
@@ -1627,7 +1627,7 @@ cdef class _PathFinder(_CCPPruneController):
     cdef float64_t[:] impurities
     cdef uint32_t count
 
-    def __cinit__(self,  int node_count):
+    def __cinit__(self,  intp_t node_count):
         self.ccp_alphas = np.zeros(shape=(node_count), dtype=np.float64)
         self.impurities = np.zeros(shape=(node_count), dtype=np.float64)
         self.count = 0

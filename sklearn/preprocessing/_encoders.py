@@ -10,10 +10,11 @@ import numpy as np
 from scipy import sparse
 
 from ..base import BaseEstimator, OneToOneFeatureMixin, TransformerMixin, _fit_context
-from ..utils import _safe_indexing, check_array, is_scalar_nan
+from ..utils import _safe_indexing, check_array
 from ..utils._encode import _check_unknown, _encode, _get_counts, _unique
 from ..utils._mask import _get_mask
-from ..utils._param_validation import Hidden, Interval, RealNotInt, StrOptions
+from ..utils._missing import is_scalar_nan
+from ..utils._param_validation import Interval, RealNotInt, StrOptions
 from ..utils._set_output import _get_output_config
 from ..utils.validation import _check_feature_names_in, check_is_fitted
 
@@ -169,10 +170,9 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
         missing_indices = {}
         if return_and_ignore_missing_for_infrequent:
             for feature_idx, categories_for_idx in enumerate(self.categories_):
-                for category_idx, category in enumerate(categories_for_idx):
-                    if is_scalar_nan(category):
-                        missing_indices[feature_idx] = category_idx
-                        break
+                if is_scalar_nan(categories_for_idx[-1]):
+                    # `nan` values can only be placed in the latest position
+                    missing_indices[feature_idx] = categories_for_idx.size - 1
             output["missing_indices"] = missing_indices
 
         if self._infrequent_enabled:
@@ -528,13 +528,6 @@ class OneHotEncoder(_BaseEncoder):
         .. versionchanged:: 1.1
             Support for dropping infrequent categories.
 
-    sparse : bool, default=True
-        Will return sparse matrix if set True else will return an array.
-
-        .. deprecated:: 1.2
-           `sparse` is deprecated in 1.2 and will be removed in 1.4. Use
-           `sparse_output` instead.
-
     sparse_output : bool, default=True
         When ``True``, it returns a :class:`scipy.sparse.csr_matrix`,
         i.e. a sparse matrix in "Compressed Sparse Row" (CSR) format.
@@ -743,7 +736,6 @@ class OneHotEncoder(_BaseEncoder):
             Interval(RealNotInt, 0, 1, closed="neither"),
             None,
         ],
-        "sparse": [Hidden(StrOptions({"deprecated"})), "boolean"],  # deprecated
         "sparse_output": ["boolean"],
         "feature_name_combiner": [StrOptions({"concat"}), callable],
     }
@@ -753,7 +745,6 @@ class OneHotEncoder(_BaseEncoder):
         *,
         categories="auto",
         drop=None,
-        sparse="deprecated",
         sparse_output=True,
         dtype=np.float64,
         handle_unknown="error",
@@ -762,8 +753,6 @@ class OneHotEncoder(_BaseEncoder):
         feature_name_combiner="concat",
     ):
         self.categories = categories
-        # TODO(1.4): Remove self.sparse
-        self.sparse = sparse
         self.sparse_output = sparse_output
         self.dtype = dtype
         self.handle_unknown = handle_unknown
@@ -867,13 +856,11 @@ class OneHotEncoder(_BaseEncoder):
                     continue
 
                 # drop_val is nan, find nan in categories manually
-                for cat_idx, cat in enumerate(cat_list):
-                    if is_scalar_nan(cat):
-                        drop_indices.append(
-                            self._map_drop_idx_to_infrequent(feature_idx, cat_idx)
-                        )
-                        break
-                else:  # loop did not break thus drop is missing
+                if is_scalar_nan(cat_list[-1]):
+                    drop_indices.append(
+                        self._map_drop_idx_to_infrequent(feature_idx, cat_list.size - 1)
+                    )
+                else:  # nan is missing
                     missing_drops.append((feature_idx, drop_val))
 
             if any(missing_drops):
@@ -986,17 +973,6 @@ class OneHotEncoder(_BaseEncoder):
         self
             Fitted encoder.
         """
-        if self.sparse != "deprecated":
-            warnings.warn(
-                (
-                    "`sparse` was renamed to `sparse_output` in version 1.2 and "
-                    "will be removed in 1.4. `sparse_output` is ignored unless you "
-                    "leave `sparse` to its default value."
-                ),
-                FutureWarning,
-            )
-            self.sparse_output = self.sparse
-
         self._fit(
             X,
             handle_unknown=self.handle_unknown,
@@ -1536,10 +1512,8 @@ class OrdinalEncoder(OneToOneFeatureMixin, _BaseEncoder):
         # missing values are not considered part of the cardinality
         # when considering unknown categories or encoded_missing_value
         for cat_idx, categories_for_idx in enumerate(self.categories_):
-            for cat in categories_for_idx:
-                if is_scalar_nan(cat):
-                    cardinalities[cat_idx] -= 1
-                    continue
+            if is_scalar_nan(categories_for_idx[-1]):
+                cardinalities[cat_idx] -= 1
 
         if self.handle_unknown == "use_encoded_value":
             for cardinality in cardinalities:
@@ -1600,6 +1574,7 @@ class OrdinalEncoder(OneToOneFeatureMixin, _BaseEncoder):
         X_out : ndarray of shape (n_samples, n_features)
             Transformed input.
         """
+        check_is_fitted(self, "categories_")
         X_int, X_mask = self._transform(
             X,
             handle_unknown=self.handle_unknown,

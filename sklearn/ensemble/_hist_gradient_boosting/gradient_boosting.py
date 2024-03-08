@@ -5,7 +5,7 @@
 import itertools
 import warnings
 from abc import ABC, abstractmethod
-from contextlib import suppress
+from contextlib import contextmanager, nullcontext, suppress
 from functools import partial
 from numbers import Integral, Real
 from time import time
@@ -30,10 +30,11 @@ from ...base import (
 )
 from ...compose import ColumnTransformer
 from ...metrics import check_scoring
+from ...metrics._scorer import _SCORERS
 from ...model_selection import train_test_split
 from ...preprocessing import FunctionTransformer, LabelEncoder, OrdinalEncoder
-from ...utils import _safe_indexing, check_random_state, compute_sample_weight, resample
-from ...utils._encode import _unique
+from ...utils import check_random_state, compute_sample_weight, resample
+from ...utils._missing import is_scalar_nan
 from ...utils._openmp_helpers import _openmp_effective_n_threads
 from ...utils._param_validation import Hidden, Interval, RealNotInt, StrOptions
 from ...utils.multiclass import check_classification_targets
@@ -100,6 +101,40 @@ def _update_leaves_values(loss, grower, y_true, raw_prediction, sample_weight):
         )
         leaf.value = grower.shrinkage * update
         # Note that the regularization is ignored here
+
+
+@contextmanager
+def _patch_raw_predict(estimator, raw_predictions):
+    """Context manager that patches _raw_predict to return raw_predictions.
+
+    `raw_predictions` is typically a precomputed array to avoid redundant
+    state-wise computations fitting with early stopping enabled: in this case
+    `raw_predictions` is incrementally updated whenever we add a tree to the
+    boosted ensemble.
+
+    Note: this makes fitting HistGradientBoosting* models inherently non thread
+    safe at fit time. However thread-safety at fit time was never guaranteed nor
+    enforced for scikit-learn estimators in general.
+
+    Thread-safety at prediction/transform time is another matter as those
+    operations are typically side-effect free and therefore often thread-safe by
+    default for most scikit-learn models and would like to keep it that way.
+    Therefore this context manager should only be used at fit time.
+
+    TODO: in the future, we could explore the possibility to extend the scorer
+    public API to expose a way to compute vales from raw predictions. That would
+    probably require also making the scorer aware of the inverse link function
+    used by the estimator which is typically private API for now, hence the need
+    for this patching mechanism.
+    """
+    orig_raw_predict = estimator._raw_predict
+
+    def _patched_raw_predicts(*args, **kwargs):
+        return raw_predictions
+
+    estimator._raw_predict = _patched_raw_predicts
+    yield estimator
+    estimator._raw_predict = orig_raw_predict
 
 
 class BaseHistGradientBoosting(BaseEstimator, ABC):
@@ -234,22 +269,18 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             return self._preprocessor.transform(X)
 
         # At this point, reset is False, which runs during `fit`.
-        self.is_categorical_, known_categories = self._check_categories(X)
+        self.is_categorical_ = self._check_categorical_features(X)
 
-        if known_categories is None:
+        if self.is_categorical_ is None:
             self._preprocessor = None
-            self._is_categorical_remapped = self.is_categorical_
+            self._is_categorical_remapped = None
 
             X = self._validate_data(X, **check_X_kwargs)
-            return X, known_categories
+            return X, None
 
         n_features = X.shape[1]
-
-        # Create categories to pass into ordinal_encoder based on known_categories
-        categories_ = [c for c in known_categories if c is not None]
-
         ordinal_encoder = OrdinalEncoder(
-            categories=categories_,
+            categories="auto",
             handle_unknown="use_encoded_value",
             unknown_value=np.nan,
             encoded_missing_value=np.nan,
@@ -266,6 +297,8 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         )
         self._preprocessor.set_output(transform="default")
         X = self._preprocessor.fit_transform(X)
+        # check categories found by the OrdinalEncoder and get their encoded values
+        known_categories = self._check_categories()
         self.n_features_in_ = self._preprocessor.n_features_in_
         with suppress(AttributeError):
             self.feature_names_in_ = self._preprocessor.feature_names_in_
@@ -273,19 +306,56 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         # The ColumnTransformer's output places the categorical features at the
         # beginning
         categorical_remapped = np.zeros(n_features, dtype=bool)
-        n_categorical = self.is_categorical_.sum()
-        categorical_remapped[:n_categorical] = True
-
+        categorical_remapped[self._preprocessor.output_indices_["encoder"]] = True
         self._is_categorical_remapped = categorical_remapped
 
-        # OrdinalEncoder will map categories to [0,..., cardinality - 1]
-        renamed_categories = [np.arange(len(c), dtype=X_DTYPE) for c in categories_]
-
-        n_numerical = n_features - n_categorical
-        known_categories = renamed_categories + [None] * n_numerical
         return X, known_categories
 
-    def _check_categories(self, X):
+    def _check_categories(self):
+        """Check categories found by the preprocessor and return their encoded values.
+
+        Returns a list of length ``self.n_features_in_``, with one entry per
+        input feature.
+
+        For non-categorical features, the corresponding entry is ``None``.
+
+        For categorical features, the corresponding entry is an array
+        containing the categories as encoded by the preprocessor (an
+        ``OrdinalEncoder``), excluding missing values. The entry is therefore
+        ``np.arange(n_categories)`` where ``n_categories`` is the number of
+        unique values in the considered feature column, after removing missing
+        values.
+
+        If ``n_categories > self.max_bins`` for any feature, a ``ValueError``
+        is raised.
+        """
+        encoder = self._preprocessor.named_transformers_["encoder"]
+        known_categories = [None] * self._preprocessor.n_features_in_
+        categorical_column_indices = np.arange(self._preprocessor.n_features_in_)[
+            self._preprocessor.output_indices_["encoder"]
+        ]
+        for feature_idx, categories in zip(
+            categorical_column_indices, encoder.categories_
+        ):
+            # OrdinalEncoder always puts np.nan as the last category if the
+            # training data has missing values. Here we remove it because it is
+            # already added by the _BinMapper.
+            if len(categories) and is_scalar_nan(categories[-1]):
+                categories = categories[:-1]
+            if categories.size > self.max_bins:
+                try:
+                    feature_name = repr(encoder.feature_names_in_[feature_idx])
+                except AttributeError:
+                    feature_name = f"at index {feature_idx}"
+                raise ValueError(
+                    f"Categorical feature {feature_name} is expected to "
+                    f"have a cardinality <= {self.max_bins} but actually "
+                    f"has a cardinality of {categories.size}."
+                )
+            known_categories[feature_idx] = np.arange(len(categories), dtype=X_DTYPE)
+        return known_categories
+
+    def _check_categorical_features(self, X):
         """Check and validate categorical features in X
 
         Parameters
@@ -298,20 +368,35 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         is_categorical : ndarray of shape (n_features,) or None, dtype=bool
             Indicates whether a feature is categorical. If no feature is
             categorical, this is None.
-        known_categories : list of size n_features or None
-            The list contains, for each feature:
-                - an array of shape (n_categories,) with the unique cat values
-                - None if the feature is not categorical
-            None if no feature is categorical.
         """
-        X_is_dataframe = _is_pandas_df(X)
+        # Special code for pandas because of a bug in recent pandas, which is
+        # fixed in main and maybe included in 2.2.1, see
+        # https://github.com/pandas-dev/pandas/pull/57173.
+        # Also pandas versions < 1.5.1 do not support the dataframe interchange
+        if _is_pandas_df(X):
+            X_is_dataframe = True
+            categorical_columns_mask = np.asarray(X.dtypes == "category")
+            X_has_categorical_columns = categorical_columns_mask.any()
+        elif hasattr(X, "__dataframe__"):
+            X_is_dataframe = True
+            categorical_columns_mask = np.asarray(
+                [
+                    c.dtype[0].name == "CATEGORICAL"
+                    for c in X.__dataframe__().get_columns()
+                ]
+            )
+            X_has_categorical_columns = categorical_columns_mask.any()
+        else:
+            X_is_dataframe = False
+            categorical_columns_mask = None
+            X_has_categorical_columns = False
 
         # TODO(1.6): Remove warning and change default to "from_dtype" in v1.6
         if (
             isinstance(self.categorical_features, str)
             and self.categorical_features == "warn"
         ):
-            if X_is_dataframe and (X.dtypes == "category").any():
+            if X_has_categorical_columns:
                 warnings.warn(
                     (
                         "The categorical_features parameter will change to 'from_dtype'"
@@ -333,16 +418,16 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         )
 
         if no_categorical_dtype:
-            return None, None
+            return None
 
         use_pandas_categorical = categorical_by_dtype and X_is_dataframe
         if use_pandas_categorical:
-            categorical_features = np.asarray(X.dtypes == "category")
+            categorical_features = categorical_columns_mask
         else:
             categorical_features = np.asarray(categorical_features)
 
         if categorical_features.size == 0:
-            return None, None
+            return None
 
         if categorical_features.dtype.kind not in ("i", "b", "U", "O"):
             raise ValueError(
@@ -373,7 +458,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                     "on data without feature names."
                 )
             is_categorical = np.zeros(n_features, dtype=bool)
-            feature_names = feature_names_in_.tolist()
+            feature_names = list(feature_names_in_)
             for feature_name in categorical_features:
                 try:
                     is_categorical[feature_names.index(feature_name)] = True
@@ -405,58 +490,8 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             is_categorical = categorical_features
 
         if not np.any(is_categorical):
-            return None, None
-
-        # Compute the known categories in the training data. We cannot do this
-        # in the BinMapper because it only gets a fraction of the training data
-        # when early stopping is enabled.
-        known_categories = []
-
-        for f_idx in range(n_features):
-            if is_categorical[f_idx]:
-                if use_pandas_categorical:
-                    # pandas categories do not include missing values so there is
-                    # no need to filter them out.
-                    categories = X.iloc[:, f_idx].unique().dropna().to_numpy()
-                    # OrdinalEncoder requires categories backed by numerical values
-                    # to be sorted
-                    if categories.dtype.kind not in "OUS":
-                        categories = np.sort(categories)
-                else:
-                    categories = _unique(_safe_indexing(X, f_idx, axis=1))
-                    missing = np.isnan(categories)
-                    if missing.any():
-                        categories = categories[~missing]
-
-                    # Treat negative values for categorical features as missing values.
-                    negative_categories = categories < 0
-                    if negative_categories.any():
-                        categories = categories[~negative_categories]
-
-                if feature_names_in_ is not None:
-                    feature_name = f"'{feature_names_in_[f_idx]}'"
-                else:
-                    feature_name = f"at index {f_idx}"
-
-                if categories.size > self.max_bins:
-                    raise ValueError(
-                        f"Categorical feature {feature_name} is expected to "
-                        f"have a cardinality <= {self.max_bins} but actually "
-                        f"has a cardinality of {categories.size}."
-                    )
-
-                if not use_pandas_categorical and (categories >= self.max_bins).any():
-                    raise ValueError(
-                        f"Categorical feature {feature_name} is expected to "
-                        f"be encoded with values < {self.max_bins} but the "
-                        "largest value for the encoded categories is "
-                        f"{categories.max()}."
-                    )
-            else:
-                categories = None
-            known_categories.append(categories)
-
-        return is_categorical, known_categories
+            return None
+        return is_categorical
 
     def _check_interaction_cst(self, n_features):
         """Check and validation for interaction constraints."""
@@ -654,7 +689,10 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             print("Fitting gradient boosted rounds:")
 
         n_samples = X_binned_train.shape[0]
-
+        scoring_is_predefined_string = self.scoring in _SCORERS
+        need_raw_predictions_val = X_binned_val is not None and (
+            scoring_is_predefined_string or self.scoring == "loss"
+        )
         # First time calling fit, or no warm start
         if not (self._is_fitted() and self.warm_start):
             # Clear random state and score attributes
@@ -682,7 +720,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
 
             # Initialize structures and attributes related to early stopping
             self._scorer = None  # set if scoring != loss
-            raw_predictions_val = None  # set if scoring == loss and use val
+            raw_predictions_val = None  # set if use val and scoring is a string
             self.train_score_ = []
             self.validation_score_ = []
 
@@ -690,24 +728,24 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                 # populate train_score and validation_score with the
                 # predictions of the initial model (before the first tree)
 
+                # Create raw_predictions_val for storing the raw predictions of
+                # the validation data.
+                if need_raw_predictions_val:
+                    raw_predictions_val = np.zeros(
+                        shape=(X_binned_val.shape[0], self.n_trees_per_iteration_),
+                        dtype=self._baseline_prediction.dtype,
+                        order="F",
+                    )
+
+                    raw_predictions_val += self._baseline_prediction
+
                 if self.scoring == "loss":
                     # we're going to compute scoring w.r.t the loss. As losses
                     # take raw predictions as input (unlike the scorers), we
                     # can optimize a bit and avoid repeating computing the
                     # predictions of the previous trees. We'll reuse
                     # raw_predictions (as it's needed for training anyway) for
-                    # evaluating the training loss, and create
-                    # raw_predictions_val for storing the raw predictions of
-                    # the validation data.
-
-                    if self._use_validation_data:
-                        raw_predictions_val = np.zeros(
-                            shape=(X_binned_val.shape[0], self.n_trees_per_iteration_),
-                            dtype=self._baseline_prediction.dtype,
-                            order="F",
-                        )
-
-                        raw_predictions_val += self._baseline_prediction
+                    # evaluating the training loss.
 
                     self._check_early_stopping_loss(
                         raw_predictions=raw_predictions,
@@ -732,9 +770,23 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                         X_binned_small_train,
                         y_small_train,
                         sample_weight_small_train,
+                        indices_small_train,
                     ) = self._get_small_trainset(
-                        X_binned_train, y_train, sample_weight_train, self._random_seed
+                        X_binned_train,
+                        y_train,
+                        sample_weight_train,
+                        self._random_seed,
                     )
+
+                    # If the scorer is a predefined string, then we optimize
+                    # the evaluation by re-using the incrementally updated raw
+                    # predictions.
+                    if scoring_is_predefined_string:
+                        raw_predictions_small_train = raw_predictions[
+                            indices_small_train
+                        ]
+                    else:
+                        raw_predictions_small_train = None
 
                     self._check_early_stopping_scorer(
                         X_binned_small_train,
@@ -743,6 +795,8 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                         X_binned_val,
                         y_val,
                         sample_weight_val,
+                        raw_predictions_small_train=raw_predictions_small_train,
+                        raw_predictions_val=raw_predictions_val,
                     )
             begin_at_stage = 0
 
@@ -762,7 +816,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
 
             # Compute raw predictions
             raw_predictions = self._raw_predict(X_binned_train, n_threads=n_threads)
-            if self.do_early_stopping_ and self._use_validation_data:
+            if self.do_early_stopping_ and need_raw_predictions_val:
                 raw_predictions_val = self._raw_predict(
                     X_binned_val, n_threads=n_threads
                 )
@@ -775,6 +829,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                     X_binned_small_train,
                     y_small_train,
                     sample_weight_small_train,
+                    indices_small_train,
                 ) = self._get_small_trainset(
                     X_binned_train, y_train, sample_weight_train, self._random_seed
                 )
@@ -880,16 +935,16 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
 
             should_early_stop = False
             if self.do_early_stopping_:
-                if self.scoring == "loss":
-                    # Update raw_predictions_val with the newest tree(s)
-                    if self._use_validation_data:
-                        for k, pred in enumerate(self._predictors[-1]):
-                            raw_predictions_val[:, k] += pred.predict_binned(
-                                X_binned_val,
-                                self._bin_mapper.missing_values_bin_idx_,
-                                n_threads,
-                            )
+                # Update raw_predictions_val with the newest tree(s)
+                if need_raw_predictions_val:
+                    for k, pred in enumerate(self._predictors[-1]):
+                        raw_predictions_val[:, k] += pred.predict_binned(
+                            X_binned_val,
+                            self._bin_mapper.missing_values_bin_idx_,
+                            n_threads,
+                        )
 
+                if self.scoring == "loss":
                     should_early_stop = self._check_early_stopping_loss(
                         raw_predictions=raw_predictions,
                         y_train=y_train,
@@ -901,6 +956,15 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                     )
 
                 else:
+                    # If the scorer is a predefined string, then we optimize the
+                    # evaluation by re-using the incrementally computed raw predictions.
+                    if scoring_is_predefined_string:
+                        raw_predictions_small_train = raw_predictions[
+                            indices_small_train
+                        ]
+                    else:
+                        raw_predictions_small_train = None
+
                     should_early_stop = self._check_early_stopping_scorer(
                         X_binned_small_train,
                         y_small_train,
@@ -908,6 +972,8 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                         X_binned_val,
                         y_val,
                         sample_weight_val,
+                        raw_predictions_small_train=raw_predictions_small_train,
+                        raw_predictions_val=raw_predictions_val,
                     )
 
             if self.verbose:
@@ -991,9 +1057,14 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             else:
                 sample_weight_small_train = None
             X_binned_small_train = np.ascontiguousarray(X_binned_small_train)
-            return (X_binned_small_train, y_small_train, sample_weight_small_train)
+            return (
+                X_binned_small_train,
+                y_small_train,
+                sample_weight_small_train,
+                indices,
+            )
         else:
-            return X_binned_train, y_train, sample_weight_train
+            return X_binned_train, y_train, sample_weight_train, slice(None)
 
     def _check_early_stopping_scorer(
         self,
@@ -1003,6 +1074,8 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         X_binned_val,
         y_val,
         sample_weight_val,
+        raw_predictions_small_train=None,
+        raw_predictions_val=None,
     ):
         """Check if fitting should be early-stopped based on scorer.
 
@@ -1011,34 +1084,38 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         if is_classifier(self):
             y_small_train = self.classes_[y_small_train.astype(int)]
 
-        if sample_weight_small_train is None:
-            self.train_score_.append(
-                self._scorer(self, X_binned_small_train, y_small_train)
+        self.train_score_.append(
+            self._score_with_raw_predictions(
+                X_binned_small_train,
+                y_small_train,
+                sample_weight_small_train,
+                raw_predictions_small_train,
             )
-        else:
-            self.train_score_.append(
-                self._scorer(
-                    self,
-                    X_binned_small_train,
-                    y_small_train,
-                    sample_weight=sample_weight_small_train,
-                )
-            )
+        )
 
         if self._use_validation_data:
             if is_classifier(self):
                 y_val = self.classes_[y_val.astype(int)]
-            if sample_weight_val is None:
-                self.validation_score_.append(self._scorer(self, X_binned_val, y_val))
-            else:
-                self.validation_score_.append(
-                    self._scorer(
-                        self, X_binned_val, y_val, sample_weight=sample_weight_val
-                    )
+            self.validation_score_.append(
+                self._score_with_raw_predictions(
+                    X_binned_val, y_val, sample_weight_val, raw_predictions_val
                 )
+            )
             return self._should_stop(self.validation_score_)
         else:
             return self._should_stop(self.train_score_)
+
+    def _score_with_raw_predictions(self, X, y, sample_weight, raw_predictions=None):
+        if raw_predictions is None:
+            patcher_raw_predict = nullcontext()
+        else:
+            patcher_raw_predict = _patch_raw_predict(self, raw_predictions)
+
+        with patcher_raw_predict:
+            if sample_weight is None:
+                return self._scorer(self, X, y)
+            else:
+                return self._scorer(self, X, y, sample_weight=sample_weight)
 
     def _check_early_stopping_loss(
         self,
@@ -1283,10 +1360,10 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
 
         Parameters
         ----------
-        grid : ndarray, shape (n_samples, n_target_features)
+        grid : ndarray, shape (n_samples, n_target_features), dtype=np.float32
             The grid points on which the partial dependence should be
             evaluated.
-        target_features : ndarray, shape (n_target_features)
+        target_features : ndarray, shape (n_target_features), dtype=np.intp
             The set of target features for which the partial dependence
             should be evaluated.
 
@@ -1309,6 +1386,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         averaged_predictions = np.zeros(
             (self.n_trees_per_iteration_, grid.shape[0]), dtype=Y_DTYPE
         )
+        target_features = np.asarray(target_features, dtype=np.intp, order="C")
 
         for predictors_of_ith_iteration in self._predictors:
             for k, predictor in enumerate(predictors_of_ith_iteration):
@@ -1352,6 +1430,8 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
     assigned to the left or right child consequently. If no missing values
     were encountered for a given feature during training, then samples with
     missing values are mapped to whichever child has the most samples.
+    See :ref:`sphx_glr_auto_examples_ensemble_plot_hgbt_regression.py` for a
+    usecase example of this feature.
 
     This implementation is inspired by
     `LightGBM <https://github.com/Microsoft/LightGBM>`_.
@@ -1430,15 +1510,16 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
           features.
         - str array-like: names of categorical features (assuming the training
           data has feature names).
-        - `"from_dtype"`: Pandas categorical dtypes are considered categorical.
-          The input must be a pandas DataFrame to use this feature.
+        - `"from_dtype"`: dataframe columns with dtype "category" are
+          considered to be categorical features. The input must be an object
+          exposing a ``__dataframe__`` method such as pandas or polars
+          DataFrames to use this feature.
 
         For each categorical feature, there must be at most `max_bins` unique
-        categories, and each categorical value must be less then `max_bins - 1`.
-        Negative values for categorical features are treated as missing values.
-        All categorical values are converted to floating point numbers.
-        This means that categorical values of 1.0 and 1 are treated as
-        the same category.
+        categories. Negative values for categorical features encoded as numeric
+        dtypes are treated as missing values. All categorical values are
+        converted to floating point numbers. This means that categorical values
+        of 1.0 and 1 are treated as the same category.
 
         Read more in the :ref:`User Guide <categorical_support_gbdt>`.
 
@@ -1805,15 +1886,16 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
           features.
         - str array-like: names of categorical features (assuming the training
           data has feature names).
-        - `"from_dtype"`: Pandas categorical dtypes are considered categorical.
-          The input must be a pandas DataFrame to use this feature.
+        - `"from_dtype"`: dataframe columns with dtype "category" are
+          considered to be categorical features. The input must be an object
+          exposing a ``__dataframe__`` method such as pandas or polars
+          DataFrames to use this feature.
 
         For each categorical feature, there must be at most `max_bins` unique
-        categories, and each categorical value must be less then `max_bins - 1`.
-        Negative values for categorical features are treated as missing values.
-        All categorical values are converted to floating point numbers.
-        This means that categorical values of 1.0 and 1 are treated as
-        the same category.
+        categories. Negative values for categorical features encoded as numeric
+        dtypes are treated as missing values. All categorical values are
+        converted to floating point numbers. This means that categorical values
+        of 1.0 and 1 are treated as the same category.
 
         Read more in the :ref:`User Guide <categorical_support_gbdt>`.
 
@@ -2061,7 +2143,13 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
             The predicted classes.
         """
         # TODO: This could be done in parallel
-        encoded_classes = np.argmax(self.predict_proba(X), axis=1)
+        raw_predictions = self._raw_predict(X)
+        if raw_predictions.shape[1] == 1:
+            # np.argmax([0.5, 0.5]) is 0, not 1. Therefore "> 0" not ">= 0" to be
+            # consistent with the multiclass case.
+            encoded_classes = (raw_predictions.ravel() > 0).astype(int)
+        else:
+            encoded_classes = np.argmax(raw_predictions, axis=1)
         return self.classes_[encoded_classes]
 
     def staged_predict(self, X):
@@ -2082,8 +2170,12 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
         y : generator of ndarray of shape (n_samples,)
             The predicted classes of the input samples, for each iteration.
         """
-        for proba in self.staged_predict_proba(X):
-            encoded_classes = np.argmax(proba, axis=1)
+        for raw_predictions in self._staged_raw_predict(X):
+            if raw_predictions.shape[1] == 1:
+                # np.argmax([0, 0]) is 0, not 1, therefor "> 0" not ">= 0"
+                encoded_classes = (raw_predictions.ravel() > 0).astype(int)
+            else:
+                encoded_classes = np.argmax(raw_predictions, axis=1)
             yield self.classes_.take(encoded_classes, axis=0)
 
     def predict_proba(self, X):
