@@ -2244,7 +2244,7 @@ def pairwise_distances(
 
         The "euclidean" and "cosine" metrics rely heavily on BLAS which is already
         multithreaded. So, increasing `n_jobs` would likely cause oversubscription
-        and quickly degrade performances.
+        and quickly degrade performance.
 
     force_all_finite : bool or 'allow-nan', default=True
         Whether to raise an error on np.inf, np.nan, pd.NA in array. Ignored
