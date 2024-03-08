@@ -23,6 +23,7 @@ the lower the better.
 # License: BSD 3 clause
 
 
+from random import sample
 import warnings
 from numbers import Integral, Real
 
@@ -156,11 +157,7 @@ def _weighted_sum_1d(sample_score, sample_weight, normalize=False, xp=None):
     array namespace and device agnostic.
     """
     if xp is None:
-        input_arrays = [sample_score]
-        if sample_weight is not None:
-            input_arrays.append(sample_weight)
-
-        xp, _ = get_namespace(*input_arrays)
+        xp, _ = get_namespace(sample_score, sample_weight)
 
     if not _is_numpy_namespace(xp):
         return float(_average(sample_score, weights=sample_weight, normalize=normalize))
