@@ -23,7 +23,6 @@ the lower the better.
 # License: BSD 3 clause
 
 
-from random import sample
 import warnings
 from numbers import Integral, Real
 
