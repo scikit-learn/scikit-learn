@@ -74,7 +74,7 @@ def check_pairwise_arrays(
     Y,
     *,
     precomputed=False,
-    dtype=None,
+    dtype="infer_float",
     accept_sparse="csr",
     force_all_finite=True,
     ensure_2d=True,
@@ -103,9 +103,10 @@ def check_pairwise_arrays(
         True if X is to be treated as precomputed distances to the samples in
         Y.
 
-    dtype : str, type, list of type, default=None
-        Data type required for X and Y. If None, the dtype will be an
-        appropriate float type selected by _return_float_dtype.
+    dtype : str, type, list of type or None default="infer_float"
+        Data type required for X and Y. If "infer_float", the dtype will be an
+        appropriate float type selected by _return_float_dtype. If None, the
+        dtype of the input is preserved.
 
         .. versionadded:: 0.18
 
@@ -156,7 +157,7 @@ def check_pairwise_arrays(
     X, Y, dtype_float = _return_float_dtype(X, Y)
 
     estimator = "check_pairwise_arrays"
-    if dtype is None:
+    if dtype == "infer_float":
         dtype = dtype_float
 
     if Y is X or Y is None:
@@ -196,20 +197,12 @@ def check_pairwise_arrays(
                 "(n_queries, n_indexed). Got (%d, %d) "
                 "for %d indexed." % (X.shape[0], X.shape[1], Y.shape[0])
             )
-    elif ensure_2d:
-        if X.shape[1] != Y.shape[1]:
-            raise ValueError(
-                "Incompatible dimension for X and Y matrices: "
-                "X.shape[1] == %d while Y.shape[1] == %d" % (X.shape[1], Y.shape[1])
-            )
-    else:
-        # the distances are neither pre-computed nor is the input expected to be 2D; we
-        # thus only check if the number of samples is the same in both arrays
-        if len(X) != len(Y):
-            raise ValueError(
-                f"Incompatible length for X and Y matrices: len(X) == {len(X)} while "
-                f" len(Y) == {len(Y)}"
-            )
+    elif X.ndim == 2 and X.shape[1] != Y.shape[1]:
+        raise ValueError(
+            "Incompatible dimension for X and Y matrices: "
+            "X.shape[1] == %d while Y.shape[1] == %d" % (X.shape[1], Y.shape[1])
+        )
+
     return X, Y
 
 
@@ -892,13 +885,13 @@ def pairwise_distances_argmin(X, Y, *, axis=1, metric="euclidean", metric_kwargs
     pairwise_distances_argmin_min : Same as `pairwise_distances_argmin` but also
         returns the distances.
     """
-    if metric_kwargs is None:
-        metric_kwargs = {}
-
     X, Y = check_pairwise_arrays(X, Y)
 
     if axis == 0:
         X, Y = Y, X
+
+    if metric_kwargs is None:
+        metric_kwargs = {}
 
     if ArgKmin.is_usable_for(X, Y, metric):
         # This is an adaptor for one "sqeuclidean" specification.
@@ -1786,14 +1779,12 @@ def _parallel_pairwise(X, Y, func, n_jobs, **kwds):
     return ret
 
 
-def _pairwise_callable(
-    X, Y, metric, dtype=None, force_all_finite=True, ensure_2d=True, **kwds
-):
+def _pairwise_callable(X, Y, metric, force_all_finite=True, ensure_2d=True, **kwds):
     """Handle the callable case for pairwise_{distances,kernels}."""
     X, Y = check_pairwise_arrays(
         X,
         Y,
-        dtype=dtype,
+        dtype=None,
         force_all_finite=force_all_finite,
         ensure_2d=ensure_2d,
     )
@@ -2179,9 +2170,9 @@ def pairwise_distances(
            Accepts `pd.NA` and converts it into `np.nan`.
 
     ensure_2d : bool, default=True
-        Raise an error when the input arrays are not 2-dimensional. Setting
-        this to `False` is necessary when using a custom metric with certain
-        non-numerical inputs (e.g. a list of strings).
+        Whether to raise an error when the input arrays are not 2-dimensional.
+        Ignored if `metric` is not a callable. Setting it to `False` is necessary when
+        using a custom metric with certain non-numerical inputs (e.g. a list of strings).
 
         .. versionadded:: 1.4
 
@@ -2221,17 +2212,9 @@ def pairwise_distances(
     elif metric in PAIRWISE_DISTANCE_FUNCTIONS:
         func = PAIRWISE_DISTANCE_FUNCTIONS[metric]
     elif callable(metric):
-        # we got a custom metric and should accept non-float dtypes
-        dtype = X.dtype if hasattr(X, "dtype") else type(X[0])
-        if Y is not None:
-            y_dtype = Y.dtype if hasattr(Y, "dtype") else type(Y[0])
-            if dtype != y_dtype:
-                raise TypeError("X and Y have different dtypes.")
-
         func = partial(
             _pairwise_callable,
             metric=metric,
-            dtype=dtype,
             force_all_finite=force_all_finite,
             ensure_2d=ensure_2d,
             **kwds,

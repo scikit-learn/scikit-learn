@@ -1611,21 +1611,20 @@ def test_numeric_pairwise_distances_datatypes(metric, global_dtype, y_is_x):
 @pytest.mark.parametrize(
     "X,Y,expected_distance",
     [
-        (["a", "ab", "abc"], None, [[0.0, 1.0, 2.0], [1.0, 0.0, 1.0], [2.0, 1.0, 0.0]]),
         (
             ["a", "ab", "abc"],
-            ["a", "a", "a"],
-            [[0.0, 0.0, 0.0], [1.0, 1.0, 1.0], [2.0, 2.0, 2.0]],
+            None,
+            [[0.0, 1.0, 2.0], [1.0, 0.0, 1.0], [2.0, 1.0, 0.0]],
+        ),
+        (
+            ["a", "ab", "abc"],
+            ["a", "ab"],
+            [[0.0, 1.0], [1.0, 0.0], [2.0, 1.0]],
         ),
     ],
 )
-def test_pairwise_dist_custom_scoring_for_string(X, Y, expected_distance):
-    """
-    Checks the pairwise distance between any two matrices containing strings.
-
-    This is done by passing a metric to calculate the similarity and also setting
-    `ensure_2d` to `False`.
-    """
+def test_pairwise_dist_custom_metric_for_string(X, Y, expected_distance):
+    """Check pairwise_distances with lists of strings as input."""
 
     def dummy_string_similarity(x, y):
         return np.abs(len(x) - len(y))
@@ -1633,28 +1632,19 @@ def test_pairwise_dist_custom_scoring_for_string(X, Y, expected_distance):
     actual_distance = pairwise_distances(
         X=X, Y=Y, metric=dummy_string_similarity, ensure_2d=False
     )
-    assert_array_equal(actual_distance, expected_distance)
+    assert_allclose(actual_distance, expected_distance)
 
 
-def test_pairwise_dist_custom_scoring_for_bool():
-    """
-    Checks the pairwise distances between boolean arrays.
-
-    This is done by passing a dummy metric to calculate the distances and also setting
-    `ensure_2d` to `False`.
+def test_pairwise_dist_custom_metric_for_bool():
+    """Check that pairwise_distances does not convert boolean input to float
+    when using a custom metric.
     """
 
     def dummy_bool_dist(v1, v2):
         # dummy distance func using `&` and thus relying on the input data being boolean
         return 1 - (v1 & v2).sum() / (v1 | v2).sum()
 
-    X = np.array(
-        [
-            [1, 0, 0, 0],
-            [1, 0, 1, 0],
-            [1, 1, 1, 1],
-        ]
-    ).astype(bool)
+    X = np.array([[1, 0, 0, 0], [1, 0, 1, 0], [1, 1, 1, 1]], dtype=bool)
 
     expected_distance = np.array(
         [
@@ -1664,34 +1654,35 @@ def test_pairwise_dist_custom_scoring_for_bool():
         ]
     )
 
-    actual_distance = pairwise_distances(X=X, metric=dummy_bool_dist, ensure_2d=False)
-    assert_array_equal(actual_distance, expected_distance)
+    actual_distance = pairwise_distances(X=X, metric=dummy_bool_dist)
+    assert_allclose(actual_distance, expected_distance)
 
 
-def test_pairwise_distances_raises_error_for_incompatible_length():
-    """Check that we raise an error if `X` and `Y` do not have compatible length."""
+def test_pairwise_distances_ensure_2d_ignored():
+    """Check that pairwise_distances ignores the ensure_2d parameter when not
+    using a custom metric.
+    """
+    rng = np.random.RandomState(0)
+    X = rng.normal(size=5)
+    Y = rng.normal(size=4)
 
-    def dummy_string_similarity(x, y):
-        return np.abs(len(x) - len(y))  # pragma: no cover
-
-    X = ["a"]
-    Y = ["a", "a"]
-    msg = "Incompatible length for X and Y matrices"
-    with pytest.raises(ValueError, match=msg):
-        pairwise_distances(X, Y, metric=dummy_string_similarity, ensure_2d=False)
+    with pytest.raises(ValueError, match="Expected 2D array, got 1D array instead"):
+        pairwise_distances(X, Y, ensure_2d=False)
 
 
-def test_pairwise_distances_raises_error_for_incompatible_dtypes():
-    """Check that we raise an error if `X` and `Y` have different dtypes."""
+def test_pairwise_distances_ensure_2d_custom_metric():
+    """Check that pairwise_distances respects the ensure_2d parameter when using
+    a custom metric.
+    """
+    rng = np.random.RandomState(0)
+    X = rng.normal(size=5)
+    Y = rng.normal(size=4)
 
-    def dummy_string_similarity(x, y):
-        return np.abs(len(x) - len(y))  # pragma: no cover
+    def custom_metric(x, y):
+        return np.sum(np.abs(x - y))
 
-    X = np.array([1, 2])
-    Y = ["a", "a"]
-    msg = "X and Y have different dtypes."
-    with pytest.raises(TypeError, match=msg):
-        pairwise_distances(X, Y, metric=dummy_string_similarity, ensure_2d=False)
+    with pytest.raises(ValueError, match="Expected 2D array, got 1D array instead"):
+        pairwise_distances(X, Y, metric=custom_metric, ensure_2d=True)
 
 
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
