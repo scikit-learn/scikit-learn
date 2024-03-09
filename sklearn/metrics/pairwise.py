@@ -24,8 +24,8 @@ from ..utils import (
     check_array,
     gen_batches,
     gen_even_slices,
-    get_chunk_n_rows,
 )
+from ..utils._chunking import get_chunk_n_rows
 from ..utils._mask import _get_mask
 from ..utils._missing import is_scalar_nan
 from ..utils._param_validation import (
@@ -2241,6 +2241,10 @@ def pairwise_distances(
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
+
+        The "euclidean" and "cosine" metrics rely heavily on BLAS which is already
+        multithreaded. So, increasing `n_jobs` would likely cause oversubscription
+        and quickly degrade performance.
 
     force_all_finite : bool or 'allow-nan', default=True
         Whether to raise an error on np.inf, np.nan, pd.NA in array. Ignored

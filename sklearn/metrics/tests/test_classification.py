@@ -215,6 +215,29 @@ def test_classification_report_zero_division_warning(zero_division):
             assert not record
 
 
+@pytest.mark.parametrize(
+    "labels, show_micro_avg", [([0], True), ([0, 1], False), ([0, 1, 2], False)]
+)
+def test_classification_report_labels_subset_superset(labels, show_micro_avg):
+    """Check the behaviour of passing `labels` as a superset or subset of the labels.
+    WHen a superset, we expect to show the "accuracy" in the report while it should be
+    the micro-averaging if this is a subset.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/27927
+    """
+
+    y_true, y_pred = [0, 1], [0, 1]
+
+    report = classification_report(y_true, y_pred, labels=labels, output_dict=True)
+    if show_micro_avg:
+        assert "micro avg" in report
+        assert "accuracy" not in report
+    else:  # accuracy should be shown
+        assert "accuracy" in report
+        assert "micro avg" not in report
+
+
 def test_multilabel_accuracy_score_subset_accuracy():
     # Dense label indicator matrix format
     y1 = np.array([[0, 1, 1], [1, 0, 1]])
