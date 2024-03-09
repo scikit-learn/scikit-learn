@@ -42,6 +42,7 @@ dependent_packages = {
     "sphinx-prompt": ("1.3.0", "docs"),
     "sphinxext-opengraph": ("0.4.2", "docs"),
     "plotly": ("5.14.0", "docs, examples"),
+    "great-tables": ("0.3.1", "docs, examples"),
     # XXX: Pin conda-lock to the latest released version (needs manual update
     # from time to time)
     "conda-lock": ("2.4.2", "maintenance"),
