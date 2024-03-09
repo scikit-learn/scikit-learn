@@ -24,7 +24,7 @@ can offer.
 Workflow Overview
 -----------------
 
-In this section we will present a general workflow on how to persist a
+In this section we present a general workflow on how to persist a
 scikit-learn model. We will demonstrate this with a simple example using
 Python's built-in persistence module, namely `pickle
 <https://docs.python.org/3/library/pickle.html>`_.
