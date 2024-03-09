@@ -48,6 +48,12 @@ more details.
   via their `fit` methods.
   :pr:`28432` by :user:`Adam Li <adam2392>` and :user:`Benjamin Bossan <BenjaminBossan>`.
 
+- |Feature| :class:`linear_model.RidgeCV` and
+  :class:`linear_model.RidgeClassifierCV` now support metadata routing in
+  their `fit` method and route metadata to the underlying
+  :class:`model_selection.GridSearchCV` object or the underlying scorer.
+  :pr:`27560` by :user:`Omar Salman <OmarManzoor>`.
+
 Metadata Routing
 ----------------
 
@@ -64,6 +70,12 @@ more details.
   :class:`ensemble.VotingRegressor` now support metadata routing and pass
   ``**fit_params`` to the underlying estimators via their `fit` methods.
   :pr:`27584` by :user:`Stefanie Senger <StefanieSenger>`.
+
+- |Feature| :class:`pipeline.FeatureUnion` now supports metadata routing in its
+  ``fit`` and ``fit_transform`` methods and route metadata to the underlying
+  transformers' ``fit`` and ``fit_transform``. :pr:`28205` by :user:`Stefanie
+  Senger <StefanieSenger>`.
+
 
 Changelog
 ---------
@@ -180,6 +192,21 @@ Changelog
   :class:`linear_model.Ridge` and :class:`linear_model.RidgeClassifier`.
   :pr:`28425` by :user:`Lucy Liu <lucyleeow>`.
 
+- |Fix| :class:`linear_model.RidgeCV` and :class:`RidgeClassifierCV` correctly pass
+  `sample_weight` to the underlying scorer when `cv` is None.
+  :pr:`27560` by :user:`Omar Salman <OmarManzoor>`.
+
+- |Fix| `n_nonzero_coefs_` attribute in :class:`linear_model.OrthogonalMatchingPursuit`
+  will now always be `None` when `tol` is set, as `n_nonzero_coefs` is ignored in
+  this case. :pr:`28557` by :user:`Lucy Liu <lucyleeow>`.
+
+- |API| Passing `average=0` to disable averaging is deprecated in
+  :class:`linear_model.PassiveAggressiveClassifier`,
+  :class:`linear_model.PassiveAggressiveRegressor`,
+  :class:`linear_model.SGDClassifier`, :class:`linear_model.SGDRegressor` and
+  :class:`linear_model.SGDOneClassSVM`. Pass `average=False` instead.
+  :pr:`28582` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
+
 :mod:`sklearn.manifold`
 .......................
 
@@ -217,6 +244,9 @@ Changelog
 
 - |Enhancement| :term:`CV splitters <CV splitter>` that ignores the group parameter now
   raises a warning when groups are passed in to :term:`split`. :pr:`28210` by
+- |Fix| the ``cv_results_`` attribute (of :class:`model_selection.GridSearchCV`) now
+  returns masked arrays of the appropriate NumPy dtype, as opposed to always returning
+  dtype ``object``. :pr:`28352` by :user:`Marco Gorelli<MarcoGorelli>`.
 
 :mod:`sklearn.multioutput`
 ..........................
@@ -233,6 +263,14 @@ Changelog
   that generated that feature. If `False`, `get_feature_names_out` will not
   prefix any feature names and will error if feature names are not unique.
   :pr:`25991` by :user:`Jiawei Zhang <jiawei-zhang-a>`.
+
+:mod:`sklearn.preprocessing`
+............................
+
+- |Enhancement| :class:`preprocessing.QuantileTransformer` and
+  :func:`preprocessing.quantile_transform` now supports disabling
+  subsampling explicitly.
+  :pr:`27636` by :user:`Ralph Urlus <rurlus>`.
 
 .. rubric:: Code and documentation contributors
 
