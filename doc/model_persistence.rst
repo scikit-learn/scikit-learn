@@ -49,13 +49,11 @@ a byte stream. We can persist a trained model in the following manner::
 Replicating the training environment in production
 ..................................................
 
-The dependencies used during the training process may differ from the
-dependencies used in the production environment. The versions of the
-dependencies used may also differ from training to production. This may
-result in unexpected behaviour and errors while using the trained model.
-To prevent such situations it is recommended to use the same dependencies
-and versions in both the training and production environment. These
-transitive dependencies can be pinned with the help of `pip`, `conda`,
+The versions of the dependencies used may differ from training to production.
+This may result in unexpected behaviour and errors while using the trained
+model. To prevent such situations it is recommended to use the same
+dependencies and versions in both the training and production environment.
+These transitive dependencies can be pinned with the help of `pip`, `conda`,
 `poetry`, `conda-lock`, `pixi`, etc.
 
 .. note::
@@ -271,68 +269,28 @@ To convert scikit-learn model to PMML you can use for example `sklearn2pmml
 <https://github.com/jpmml/sklearn2pmml>`_ distributed under the Affero GPLv3
 license.
 
-Choosing the right approach for model persistence
--------------------------------------------------
-
-Different approaches to persist scikit-learn models have been explored through
-this guide. Let us examine the key considerations of each approach so that it
-is easier to make an informed decision on how to persist a scikit-learn model.
-
-Any Python object can be serialized and deserialized using `pickle`, including
-custom Python classes and objects. It can be used for general purpose
-serialization tasks and is part of the standard Python library. It is advisable
-to pin all transitive dependencies while using `pickle` to prevent any
-compatibility issues. While `pickle` can be used to easily save and load
-scikit-learn models, unpickling of untrusted data might lead to security
-issues.
-
-Efficient storage and memory mapping techniques make `joblib` faster than
-`pickle` for serializing and deserializing large numpy arrays. For smaller
-models the difference in performance may not be very significant, however
-`joblib` is more efficient when it comes to working with large machine
-learning models. For tasks in which performance is a priority `joblib` proves
-to be highly effective. Similar to `pickle`, care must be taken when loading
-untrusted data as it can lead to the execution of arbitrary Python code, which
-may be malicious.
-
-Trained scikit-learn models can be easily shared and put into production using
-`skops`. The use of `skops` provides a more secure approach for loading models
-when compared to `pickle` as it prevents users from executing unknown arbitrary
-code. It also allows users to specify whether the data is trusted or not,
-making it more secure compared to other approaches. A disadvantage of using
-`skops` is that it does not offer support to persist arbitrary Python code.
-Custom functions created to be used with transformer classes for preprocessing
-will not work.
-
-`ONNX` can be used to represent any machine learning or deep learning model.
-It provides a uniform format and allows for framework interoperability. Due to
-this trained models can be easily deployed on different platforms.
-`ONNX` can be used to persist any machine learning or deep learning model,
-whereas `skops` only helps with persisting scikit-learn models. `ONNX` is
-optimized for performance efficiency, however, `ONNX` models might not be
-compatible with all versions of different frameworks.
-
-`PMML` is a platform independent format that can be used to persist models. It
-helps reduce the risk of vendor lock-ins and can be easily deployed in
-production. `PMML` is based on XML and the format used to persist models can be
-highly verbose. The complexity and verbosity of `PMML` might make it harder to
-use for larger models.
-
 Summarizing the keypoints
 -------------------------
 
 Based on the different approaches for model persistence, the keypoints for each
 approach can be summarized as follows:
 
-* `pickle`: It is native to Python and easy to use, however it leads to
-  security issues with untrusted data.
-* `joblib`: It is faster when working with large numpy arrays, but might
-  trigger the execution of malicious code while loading untrusted data.
-* `skops`: More secure compared to alternate approaches as it allows users to
-  load data from trusted sources. It however, does not allow for persistence
-  of arbitrary Python code.
-* `ONNX`: It provides a uniform format for persisting models and is useful
+* `pickle`: It is native to Python and any Python object can be serialized and
+  deserialized using `pickle`, including custom Python classes and objects.
+  While `pickle` can be used to easily save and load scikit-learn models,
+  unpickling of untrusted data might lead to security issues.
+* `joblib`: Efficient storage and memory mapping techniques make it faster
+  for serializing and deserializing large numpy arrays. However, care must be
+  taken when loading untrusted data as it can lead to the execution of
+  arbitrary Python code, which may be malicious.
+* `skops`: Trained scikit-learn models can be easily shared and put into
+  production using `skops`. It is more secure compared to alternate approaches
+  as it allows users to load data from trusted sources. It however, does not
+  allow for persistence of arbitrary Python code.
+* `ONNX`: It provides a uniform format for persisting any machine learning
+  or deep learning model (other than scikit-learn) and is useful
   for model inference. It can however, result in compatibility issues with
   different frameworks.
-* `PMML`: It reduces vendor lock-ins, but might not be suitable for use with
-  large models due to its complexity. 
+* `PMML`: Platform independent format that can be used to persist models
+  and reduce the risk of vendor lock-ins. The complexity and verbosity of
+  this format might make it harder to use for larger models.
