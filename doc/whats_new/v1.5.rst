@@ -274,6 +274,17 @@ Changelog
 
 .. rubric:: Code and documentation contributors
 
+..........................
+
+- |Fix| `matthews_corrcoef` behaviour in cases of constant predictions
+or targets was modified to align with the limit value of the function
+and avoid returning 0 for perfect predictions.
+  :pr:`28509` by :user:`Noam Keidar <redjest>`.
+
+:mod:`sklearn.pipeline`
+
+
+
 Thanks to everyone who has contributed to the maintenance and improvement of
 the project since version 1.4, including:
 
