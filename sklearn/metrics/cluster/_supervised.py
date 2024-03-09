@@ -494,7 +494,7 @@ def homogeneity_completeness_v_measure(labels_true, labels_pred, *, beta=1.0):
         Ground truth class labels to be used as a reference.
 
     labels_pred : array-like of shape (n_samples,)
-        Gluster labels to evaluate.
+        Cluster labels to evaluate.
 
     beta : float, default=1.0
         Ratio of weight attributed to ``homogeneity`` vs ``completeness``.
@@ -518,6 +518,13 @@ def homogeneity_completeness_v_measure(labels_true, labels_pred, *, beta=1.0):
     homogeneity_score : Homogeneity metric of cluster labeling.
     completeness_score : Completeness metric of cluster labeling.
     v_measure_score : V-Measure (NMI with arithmetic mean option).
+
+    Examples
+    --------
+    >>> from sklearn.metrics import homogeneity_completeness_v_measure
+    >>> y_true, y_pred = [0, 0, 1, 1, 2, 2], [0, 0, 1, 2, 2, 2]
+    >>> homogeneity_completeness_v_measure(y_true, y_pred)
+    (0.71..., 0.77..., 0.73...)
     """
     labels_true, labels_pred = check_clusterings(labels_true, labels_pred)
 

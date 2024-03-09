@@ -204,11 +204,10 @@ Persisting models with a more secure format using skops
 `skops <https://skops.readthedocs.io/en/stable/>`__ provides a more secure
 format via the :mod:`skops.io` module. It avoids using :mod:`pickle` and only
 loads files which have types and references to functions which are trusted
-either by default or by the user. 
+either by default or by the user.
 
 |details-start|
 **Using skops**
-
 |details-split|
 
 The API is very similar to ``pickle``, and
