@@ -838,16 +838,6 @@ def _is_pairwise_metric(estimator):
     return bool(metric == "precomputed")
 
 
-def _pairwise_estimator_convert_X(X, estimator, kernel=linear_kernel):
-    if _is_pairwise_metric(estimator):
-        return pairwise_distances(X, metric="euclidean")
-    tags = _safe_tags(estimator)
-    if tags["pairwise"]:
-        return kernel(X, X)
-
-    return X
-
-
 def _generate_sparse_data(X_csr):
     """Generate sparse matrices or arrays with {32,64}bit indices of diverse format.
 
