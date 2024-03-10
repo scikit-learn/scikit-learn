@@ -433,7 +433,7 @@ class _PLS(
 
         return x_scores
 
-    def inverse_transform(self, X, Y=None):
+    def inverse_transform(self, X, y=None, Y=None):
         """Transform data back to its original space.
 
         Parameters
@@ -458,6 +458,17 @@ class _PLS(
         -----
         This transformation will only be exact if `n_components=n_features`.
         """
+        if Y is not None:
+            warnings.warn(
+                "`Y` is deprecated in 1.5 and will be removed in 1.7. Use `y` instead.",
+                FutureWarning,
+            )
+            if y is not None:
+                raise ValueError(
+                    "Cannot use both `y` and `Y`. Use only `y` as `Y` is deprecated."
+                )
+            y = Y
+
         check_is_fitted(self)
         X = check_array(X, input_name="X", dtype=FLOAT_DTYPES)
         # From pls space to original space
@@ -466,14 +477,14 @@ class _PLS(
         X_reconstructed *= self._x_std
         X_reconstructed += self._x_mean
 
-        if Y is not None:
-            Y = check_array(Y, input_name="Y", dtype=FLOAT_DTYPES)
+        if y is not None:
+            y = check_array(y, input_name="y", dtype=FLOAT_DTYPES)
             # From pls space to original space
-            Y_reconstructed = np.matmul(Y, self.y_loadings_.T)
+            y_reconstructed = np.matmul(y, self.y_loadings_.T)
             # Denormalize
-            Y_reconstructed *= self._y_std
-            Y_reconstructed += self._y_mean
-            return X_reconstructed, Y_reconstructed
+            y_reconstructed *= self._y_std
+            y_reconstructed += self._y_mean
+            return X_reconstructed, y_reconstructed
 
         return X_reconstructed
 
