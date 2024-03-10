@@ -7,19 +7,16 @@ import pytest
 
 from sklearn import datasets
 from sklearn.base import BaseEstimator, clone
+from sklearn.datasets import fetch_california_housing
 from sklearn.dummy import DummyClassifier, DummyRegressor
 from sklearn.ensemble import AdaBoostClassifier, AdaBoostRegressor
 from sklearn.ensemble._weight_boosting import _samme_proba
 from sklearn.linear_model import LinearRegression
-from sklearn.model_selection import GridSearchCV, train_test_split
+from sklearn.model_selection import GridSearchCV, cross_val_score, train_test_split
 from sklearn.svm import SVC, SVR
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.utils import shuffle
 from sklearn.utils._mocking import NoSampleWeightWrapper
-from sklearn import datasets
-from sklearn.datasets import fetch_california_housing
-from sklearn.model_selection import cross_val_score
-
 from sklearn.utils._testing import (
     assert_allclose,
     assert_array_almost_equal,

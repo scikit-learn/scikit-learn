@@ -152,6 +152,11 @@ Changelog
   pre-sorting the data before finding the thresholds for binning.
   :pr:`28102` by :user:`Christian Lorentzen <lorentzenchr>`.
 
+- |API| Adds `no_improvement` option in
+  :class:`ensemble.AdaBoostRegressor` to detect whether a weak learner
+  is too weak.
+  :pr:`21010` by :user:`Tomohiro Endo <europeanplaice>`.
+
 :mod:`sklearn.feature_extraction`
 .................................
 

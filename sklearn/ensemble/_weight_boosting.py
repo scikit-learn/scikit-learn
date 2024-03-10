@@ -37,6 +37,8 @@ from ..base import (
     is_classifier,
     is_regressor,
 )
+from ..dummy import DummyRegressor
+from ..exceptions import ConvergenceWarning
 from ..metrics import accuracy_score, r2_score
 from ..tree import DecisionTreeClassifier, DecisionTreeRegressor
 from ..utils import _safe_indexing, check_random_state
@@ -1014,16 +1016,6 @@ class AdaBoostRegressor(_RoutingNotSupportedMixin, RegressorMixin, BaseWeightBoo
         Pass an int for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
 
-    base_estimator : object, default=None
-        The base estimator from which the boosted ensemble is built.
-        If ``None``, then the base estimator is
-        :class:`~sklearn.tree.DecisionTreeRegressor` initialized with
-        `max_depth=3`.
-
-        .. deprecated:: 1.2
-            `base_estimator` is deprecated and will be removed in 1.4.
-            Use `estimator` instead.
-
     no_improvement : {'reset_weights', 'stop', 'warn', 'continue'}, default='warn'
         Determines a strategy when an error rate is increasing during training.
         - `reset_weights` resets sample weights and continues training.
@@ -1109,7 +1101,6 @@ class AdaBoostRegressor(_RoutingNotSupportedMixin, RegressorMixin, BaseWeightBoo
         learning_rate=1.0,
         loss="linear",
         random_state=None,
-        base_estimator="deprecated",
         no_improvement="warn",
     ):
         super().__init__(
@@ -1245,9 +1236,11 @@ class AdaBoostRegressor(_RoutingNotSupportedMixin, RegressorMixin, BaseWeightBoo
                 elif self.no_improvement == "warn":
                     update_weight_method = "update"
                     warnings.warn(
-                        "The base estimator is too weak. "
-                        "Please consider hyper-parameter tuning for "
-                        "the base estimators.",
+                        (
+                            "The estimator is too weak. "
+                            "Please consider hyper-parameter tuning for "
+                            "the estimators."
+                        ),
                         ConvergenceWarning,
                     )
                 else:
