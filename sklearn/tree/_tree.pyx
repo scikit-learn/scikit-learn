@@ -153,6 +153,7 @@ cdef class TreeBuilder:
 
         return X, y, sample_weight
 
+
 # Depth first builder ---------------------------------------------------------
 # A record on the stack for depth-first tree growing
 cdef struct StackRecord:
@@ -165,6 +166,7 @@ cdef struct StackRecord:
     intp_t n_constant_features
     float64_t lower_bound
     float64_t upper_bound
+
 
 cdef class DepthFirstTreeBuilder(TreeBuilder):
     """Build a decision tree in depth-first fashion."""
@@ -328,7 +330,6 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
         cdef float64_t lower_bound
         cdef float64_t upper_bound
         cdef float64_t middle_value
-        cdef intp_t n_constant_features
         cdef bint is_leaf
         cdef intp_t max_depth_seen = -1 if first else tree.max_depth
 
@@ -379,7 +380,7 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
                 parent = stack_record.parent
                 is_left = stack_record.is_left
                 impurity = stack_record.impurity
-                n_constant_features = stack_record.n_constant_features
+                split_ptr.n_constant_features = stack_record.n_constant_features
                 lower_bound = stack_record.lower_bound
                 upper_bound = stack_record.upper_bound
 
@@ -398,7 +399,6 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
                     splitter.node_split(
                         impurity,
                         split_ptr,
-                        &n_constant_features,
                         lower_bound,
                         upper_bound
                     )
@@ -470,7 +470,7 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
                         "parent": node_id,
                         "is_left": 0,
                         "impurity": split.impurity_right,
-                        "n_constant_features": n_constant_features,
+                        "n_constant_features": split.n_constant_features,
                         "lower_bound": right_child_min,
                         "upper_bound": right_child_max,
                     })
@@ -483,7 +483,7 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
                         "parent": node_id,
                         "is_left": 1,
                         "impurity": split.impurity_left,
-                        "n_constant_features": n_constant_features,
+                        "n_constant_features": split.n_constant_features,
                         "lower_bound": left_child_min,
                         "upper_bound": left_child_max,
                     })
@@ -504,7 +504,7 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
                 parent = stack_record.parent
                 is_left = stack_record.is_left
                 impurity = stack_record.impurity
-                n_constant_features = stack_record.n_constant_features
+                split_ptr.n_constant_features = stack_record.n_constant_features
                 lower_bound = stack_record.lower_bound
                 upper_bound = stack_record.upper_bound
 
@@ -527,7 +527,6 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
                     splitter.node_split(
                         impurity,
                         split_ptr,
-                        &n_constant_features,
                         lower_bound,
                         upper_bound
                     )
@@ -598,7 +597,7 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
                         "parent": node_id,
                         "is_left": 0,
                         "impurity": split.impurity_right,
-                        "n_constant_features": n_constant_features,
+                        "n_constant_features": split.n_constant_features,
                         "lower_bound": right_child_min,
                         "upper_bound": right_child_max,
                     })
@@ -611,7 +610,7 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
                         "parent": node_id,
                         "is_left": 1,
                         "impurity": split.impurity_left,
-                        "n_constant_features": n_constant_features,
+                        "n_constant_features": split.n_constant_features,
                         "lower_bound": left_child_min,
                         "upper_bound": left_child_max,
                     })
@@ -901,11 +900,12 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
 
         cdef intp_t node_id
         cdef intp_t n_node_samples
-        cdef intp_t n_constant_features = 0
         cdef float64_t min_impurity_decrease = self.min_impurity_decrease
         cdef float64_t weighted_n_node_samples
         cdef bint is_leaf
 
+        # there are no constant features in best first splits
+        split_ptr.n_constant_features = 0
         splitter.node_reset(start, end, &weighted_n_node_samples)
 
         if is_first:
@@ -923,7 +923,6 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
             splitter.node_split(
                 impurity,
                 split_ptr,
-                &n_constant_features,
                 lower_bound,
                 upper_bound
             )

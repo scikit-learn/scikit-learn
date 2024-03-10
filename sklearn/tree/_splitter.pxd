@@ -33,6 +33,7 @@ cdef struct SplitRecord:
     float64_t upper_bound     # Upper bound on value of both children for monotonicity
     unsigned char missing_go_to_left  # Controls if missing values go to the left node.
     intp_t n_missing       # Number of missing values for the feature being split on
+    intp_t n_constant_features  # Number of constant features in the split
 
 cdef class BaseSplitter:
     """Abstract interface for splitter."""
@@ -90,7 +91,6 @@ cdef class BaseSplitter:
         self,
         float64_t impurity,   # Impurity of the node
         SplitRecord* split,
-        intp_t* n_constant_features,
         float64_t lower_bound,
         float64_t upper_bound,
     ) except -1 nogil

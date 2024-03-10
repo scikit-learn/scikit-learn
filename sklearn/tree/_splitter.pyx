@@ -52,6 +52,7 @@ cdef inline void _init_split(SplitRecord* self, intp_t start_pos) noexcept nogil
     self.improvement = -INFINITY
     self.missing_go_to_left = False
     self.n_missing = 0
+    self.n_constant_features = 0
 
 cdef class BaseSplitter:
     """This is an abstract interface for splitters.
@@ -100,7 +101,6 @@ cdef class BaseSplitter:
         self,
         float64_t impurity,
         SplitRecord* split,
-        intp_t* n_constant_features,
         float64_t lower_bound,
         float64_t upper_bound
     ) except -1 nogil:
@@ -118,9 +118,6 @@ cdef class BaseSplitter:
         split : SplitRecord pointer
             A pointer to a memory-allocated SplitRecord object which will be filled with the
             split chosen.
-        n_constant_features : intp_t pointer
-            A pointer to a memory-allocated intp_t object which will be filled with the
-            number of constant features. Optional to use.
         lower_bound : float64_t
             The lower bound of the monotonic constraint if used.
         upper_bound : float64_t
@@ -322,7 +319,6 @@ cdef class Splitter(BaseSplitter):
         self,
         float64_t impurity,
         SplitRecord* split,
-        intp_t* n_constant_features,
         float64_t lower_bound,
         float64_t upper_bound,
     ) except -1 nogil:
@@ -444,7 +440,6 @@ cdef inline intp_t node_split_best(
     Criterion criterion,
     float64_t impurity,
     SplitRecord* split,
-    intp_t* n_constant_features,
     bint with_monotonic_cst,
     const cnp.int8_t[:] monotonic_cst,
     float64_t lower_bound,
@@ -490,7 +485,7 @@ cdef inline intp_t node_split_best(
     cdef intp_t n_found_constants = 0
     # Number of features known to be constant and drawn without replacement
     cdef intp_t n_drawn_constants = 0
-    cdef intp_t n_known_constants = n_constant_features[0]
+    cdef intp_t n_known_constants = split.n_constant_features
     # n_total_constants = n_known_constants + n_found_constants
     cdef intp_t n_total_constants = n_known_constants
 
@@ -711,7 +706,7 @@ cdef inline intp_t node_split_best(
 
     # Return values
     split[0] = best_split
-    n_constant_features[0] = n_total_constants
+    split.n_constant_features = n_total_constants
     return 0
 
 
@@ -834,7 +829,6 @@ cdef inline int node_split_random(
     Criterion criterion,
     float64_t impurity,
     SplitRecord* split,
-    intp_t* n_constant_features,
     bint with_monotonic_cst,
     const cnp.int8_t[:] monotonic_cst,
     float64_t lower_bound,
@@ -866,7 +860,7 @@ cdef inline int node_split_random(
     cdef intp_t n_found_constants = 0
     # Number of features known to be constant and drawn without replacement
     cdef intp_t n_drawn_constants = 0
-    cdef intp_t n_known_constants = n_constant_features[0]
+    cdef intp_t n_known_constants = split.n_constant_features
     # n_total_constants = n_known_constants + n_found_constants
     cdef intp_t n_total_constants = n_known_constants
     cdef intp_t n_visited_features = 0
@@ -1021,7 +1015,7 @@ cdef inline int node_split_random(
 
     # Return values
     split[0] = best_split
-    n_constant_features[0] = n_total_constants
+    split.n_constant_features = n_total_constants
     return 0
 
 
@@ -1679,7 +1673,6 @@ cdef class BestSplitter(Splitter):
         self,
         float64_t impurity,
         SplitRecord* split,
-        intp_t* n_constant_features,
         float64_t lower_bound,
         float64_t upper_bound
     ) except -1 nogil:
@@ -1689,7 +1682,6 @@ cdef class BestSplitter(Splitter):
             self.criterion,
             impurity,
             split,
-            n_constant_features,
             self.with_monotonic_cst,
             self.monotonic_cst,
             lower_bound,
@@ -1715,7 +1707,6 @@ cdef class BestSparseSplitter(Splitter):
         self,
         float64_t impurity,
         SplitRecord* split,
-        intp_t* n_constant_features,
         float64_t lower_bound,
         float64_t upper_bound
     ) except -1 nogil:
@@ -1725,7 +1716,6 @@ cdef class BestSparseSplitter(Splitter):
             self.criterion,
             impurity,
             split,
-            n_constant_features,
             self.with_monotonic_cst,
             self.monotonic_cst,
             lower_bound,
@@ -1751,7 +1741,6 @@ cdef class RandomSplitter(Splitter):
         self,
         float64_t impurity,
         SplitRecord* split,
-        intp_t* n_constant_features,
         float64_t lower_bound,
         float64_t upper_bound
     ) except -1 nogil:
@@ -1761,7 +1750,6 @@ cdef class RandomSplitter(Splitter):
             self.criterion,
             impurity,
             split,
-            n_constant_features,
             self.with_monotonic_cst,
             self.monotonic_cst,
             lower_bound,
@@ -1786,7 +1774,6 @@ cdef class RandomSparseSplitter(Splitter):
             self,
             float64_t impurity,
             SplitRecord* split,
-            intp_t* n_constant_features,
             float64_t lower_bound,
             float64_t upper_bound
     ) except -1 nogil:
@@ -1796,7 +1783,6 @@ cdef class RandomSparseSplitter(Splitter):
             self.criterion,
             impurity,
             split,
-            n_constant_features,
             self.with_monotonic_cst,
             self.monotonic_cst,
             lower_bound,
