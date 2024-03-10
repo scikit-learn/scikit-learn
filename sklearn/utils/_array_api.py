@@ -119,7 +119,7 @@ def device(*array_list, skip_none=True, skip_types=(str,)):
         *array_list, skip_none=skip_none, skip_types=skip_types
     )
 
-    # Note that _filter_arrays ensures that array_list is not empty.
+    # Note that _skip_non_arrays ensures that array_list is not empty.
     device_ = _single_array_device(array_list[0])
 
     # Note: here we cannot simply use a Python `set` as it requires

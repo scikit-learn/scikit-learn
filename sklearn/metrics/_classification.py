@@ -149,7 +149,7 @@ def _weighted_sum_1d(sample_score, sample_weight, normalize=False, xp=None):
     """Specialized _array_api._average for the 1D output case.
 
     Implements numpy-specific variants when the backing data is managed by
-    NumPy and delegate to the generic Array API `_average` function
+    NumPy and delegates to the generic Array API `_average` function
     otherwise.
 
     This function converts the result to a Python `float` to make the result
