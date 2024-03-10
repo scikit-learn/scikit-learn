@@ -26,10 +26,6 @@
     <p>Sylvain Marié</p>
     </div>
     <div>
-    <a href='https://github.com/cmarmo'><img src='https://avatars.githubusercontent.com/u/1662261?v=4' class='avatar' /></a> <br />
-    <p>Chiara Marmo</p>
-    </div>
-    <div>
     <a href='https://github.com/norbusan'><img src='https://avatars.githubusercontent.com/u/1735589?v=4' class='avatar' /></a> <br />
     <p>Norbert Preining</p>
     </div>
@@ -42,7 +38,7 @@
     <p>Albert Thomas</p>
     </div>
     <div>
-    <a href='https://github.com/Micky774'><img src='https://avatars.githubusercontent.com/u/34613774?v=4' class='avatar' /></a> <br />
-    <p>Meekail Zain</p>
+    <a href='https://github.com/marenwestermann'><img src='https://avatars.githubusercontent.com/u/17019042?v=4' class='avatar' /></a> <br />
+    <p>Maren Westermann</p>
     </div>
     </div>

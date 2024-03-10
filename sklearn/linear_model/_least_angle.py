@@ -8,31 +8,59 @@ Generalized Linear Model for a complete discussion.
 #
 # License: BSD 3 clause
 
-from math import log
 import sys
 import warnings
-
+from math import log
 from numbers import Integral, Real
-import numpy as np
-from scipy import linalg, interpolate
-from scipy.linalg.lapack import get_lapack_funcs
-from joblib import Parallel
 
-from ._base import LinearModel, LinearRegression
-from ._base import _deprecate_normalize, _preprocess_data
-from ..base import RegressorMixin, MultiOutputMixin
+import numpy as np
+from scipy import interpolate, linalg
+from scipy.linalg.lapack import get_lapack_funcs
+
+from ..base import MultiOutputMixin, RegressorMixin, _fit_context
+from ..exceptions import ConvergenceWarning
+from ..model_selection import check_cv
 
 # mypy error: Module 'sklearn.utils' has no attribute 'arrayfuncs'
-from ..utils import arrayfuncs, as_float_array  # type: ignore
-from ..utils import check_random_state
-from ..utils._param_validation import Hidden, Interval, StrOptions
-from ..model_selection import check_cv
-from ..exceptions import ConvergenceWarning
-from ..utils.fixes import delayed
+from ..utils import (  # type: ignore
+    Bunch,
+    arrayfuncs,
+    as_float_array,
+    check_random_state,
+)
+from ..utils._metadata_requests import (
+    MetadataRouter,
+    MethodMapping,
+    _raise_for_params,
+    _routing_enabled,
+    process_routing,
+)
+from ..utils._param_validation import Hidden, Interval, StrOptions, validate_params
+from ..utils.parallel import Parallel, delayed
+from ._base import LinearModel, LinearRegression, _preprocess_data
 
 SOLVE_TRIANGULAR_ARGS = {"check_finite": False}
 
 
+@validate_params(
+    {
+        "X": [np.ndarray, None],
+        "y": [np.ndarray, None],
+        "Xy": [np.ndarray, None],
+        "Gram": [StrOptions({"auto"}), "boolean", np.ndarray, None],
+        "max_iter": [Interval(Integral, 0, None, closed="left")],
+        "alpha_min": [Interval(Real, 0, None, closed="left")],
+        "method": [StrOptions({"lar", "lasso"})],
+        "copy_X": ["boolean"],
+        "eps": [Interval(Real, 0, None, closed="neither"), None],
+        "copy_Gram": ["boolean"],
+        "verbose": ["verbose"],
+        "return_path": ["boolean"],
+        "return_n_iter": ["boolean"],
+        "positive": ["boolean"],
+    },
+    prefer_skip_nested_validation=True,
+)
 def lars_path(
     X,
     y,
@@ -50,34 +78,33 @@ def lars_path(
     return_n_iter=False,
     positive=False,
 ):
-    """Compute Least Angle Regression or Lasso path using LARS algorithm [1].
+    """Compute Least Angle Regression or Lasso path using the LARS algorithm [1].
 
     The optimization objective for the case method='lasso' is::
 
     (1 / (2 * n_samples)) * ||y - Xw||^2_2 + alpha * ||w||_1
 
-    in the case of method='lars', the objective function is only known in
-    the form of an implicit equation (see discussion in [1])
+    in the case of method='lar', the objective function is only known in
+    the form of an implicit equation (see discussion in [1]).
 
     Read more in the :ref:`User Guide <least_angle_regression>`.
 
     Parameters
     ----------
-    X : None or array-like of shape (n_samples, n_features)
-        Input data. Note that if X is None then the Gram matrix must be
-        specified, i.e., cannot be None or False.
+    X : None or ndarray of shape (n_samples, n_features)
+        Input data. Note that if X is `None` then the Gram matrix must be
+        specified, i.e., cannot be `None` or `False`.
 
-    y : None or array-like of shape (n_samples,)
+    y : None or ndarray of shape (n_samples,)
         Input targets.
 
-    Xy : array-like of shape (n_samples,) or (n_samples, n_targets), \
-            default=None
-        Xy = np.dot(X.T, y) that can be precomputed. It is useful
+    Xy : array-like of shape (n_features,), default=None
+        `Xy = X.T @ y` that can be precomputed. It is useful
         only when the Gram matrix is precomputed.
 
-    Gram : None, 'auto', array-like of shape (n_features, n_features), \
+    Gram : None, 'auto', bool, ndarray of shape (n_features, n_features), \
             default=None
-        Precomputed Gram matrix (X' * X), if ``'auto'``, the Gram
+        Precomputed Gram matrix `X.T @ X`, if `'auto'`, the Gram
         matrix is precomputed from the given X, if there are more samples
         than features.
 
@@ -86,30 +113,30 @@ def lars_path(
 
     alpha_min : float, default=0
         Minimum correlation along the path. It corresponds to the
-        regularization parameter alpha parameter in the Lasso.
+        regularization parameter `alpha` in the Lasso.
 
     method : {'lar', 'lasso'}, default='lar'
-        Specifies the returned model. Select ``'lar'`` for Least Angle
-        Regression, ``'lasso'`` for the Lasso.
+        Specifies the returned model. Select `'lar'` for Least Angle
+        Regression, `'lasso'` for the Lasso.
 
     copy_X : bool, default=True
-        If ``False``, ``X`` is overwritten.
+        If `False`, `X` is overwritten.
 
     eps : float, default=np.finfo(float).eps
         The machine-precision regularization in the computation of the
         Cholesky diagonal factors. Increase this for very ill-conditioned
-        systems. Unlike the ``tol`` parameter in some iterative
+        systems. Unlike the `tol` parameter in some iterative
         optimization-based algorithms, this parameter does not control
         the tolerance of the optimization.
 
     copy_Gram : bool, default=True
-        If ``False``, ``Gram`` is overwritten.
+        If `False`, `Gram` is overwritten.
 
     verbose : int, default=0
         Controls output verbosity.
 
     return_path : bool, default=True
-        If ``return_path==True`` returns the entire path, else returns only the
+        If `True`, returns the entire path, else returns only the
         last point of the path.
 
     return_n_iter : bool, default=False
@@ -120,26 +147,26 @@ def lars_path(
         This option is only allowed with method 'lasso'. Note that the model
         coefficients will not converge to the ordinary-least-squares solution
         for small values of alpha. Only coefficients up to the smallest alpha
-        value (``alphas_[alphas_ > 0.].min()`` when fit_path=True) reached by
+        value (`alphas_[alphas_ > 0.].min()` when fit_path=True) reached by
         the stepwise Lars-Lasso algorithm are typically in congruence with the
-        solution of the coordinate descent lasso_path function.
+        solution of the coordinate descent `lasso_path` function.
 
     Returns
     -------
-    alphas : array-like of shape (n_alphas + 1,)
+    alphas : ndarray of shape (n_alphas + 1,)
         Maximum of covariances (in absolute value) at each iteration.
-        ``n_alphas`` is either ``max_iter``, ``n_features`` or the
-        number of nodes in the path with ``alpha >= alpha_min``, whichever
+        `n_alphas` is either `max_iter`, `n_features`, or the
+        number of nodes in the path with `alpha >= alpha_min`, whichever
         is smaller.
 
-    active : array-like of shape (n_alphas,)
+    active : ndarray of shape (n_alphas,)
         Indices of active variables at the end of the path.
 
-    coefs : array-like of shape (n_features, n_alphas + 1)
+    coefs : ndarray of shape (n_features, n_alphas + 1)
         Coefficients along the path.
 
     n_iter : int
-        Number of iterations run. Returned only if return_n_iter is set
+        Number of iterations run. Returned only if `return_n_iter` is set
         to True.
 
     See Also
@@ -162,6 +189,25 @@ def lars_path(
 
     .. [3] `Wikipedia entry on the Lasso
            <https://en.wikipedia.org/wiki/Lasso_(statistics)>`_
+
+    Examples
+    --------
+    >>> from sklearn.linear_model import lars_path
+    >>> from sklearn.datasets import make_regression
+    >>> X, y, true_coef = make_regression(
+    ...    n_samples=100, n_features=5, n_informative=2, coef=True, random_state=0
+    ... )
+    >>> true_coef
+    array([ 0.        ,  0.        ,  0.        , 97.9..., 45.7...])
+    >>> alphas, _, estimated_coef = lars_path(X, y)
+    >>> alphas.shape
+    (3,)
+    >>> estimated_coef
+    array([[ 0.     ,  0.     ,  0.     ],
+           [ 0.     ,  0.     ,  0.     ],
+           [ 0.     ,  0.     ,  0.     ],
+           [ 0.     , 46.96..., 97.99...],
+           [ 0.     ,  0.     , 45.70...]])
     """
     if X is None and Gram is not None:
         raise ValueError(
@@ -187,6 +233,24 @@ def lars_path(
     )
 
 
+@validate_params(
+    {
+        "Xy": [np.ndarray],
+        "Gram": [np.ndarray],
+        "n_samples": [Interval(Integral, 0, None, closed="left")],
+        "max_iter": [Interval(Integral, 0, None, closed="left")],
+        "alpha_min": [Interval(Real, 0, None, closed="left")],
+        "method": [StrOptions({"lar", "lasso"})],
+        "copy_X": ["boolean"],
+        "eps": [Interval(Real, 0, None, closed="neither"), None],
+        "copy_Gram": ["boolean"],
+        "verbose": ["verbose"],
+        "return_path": ["boolean"],
+        "return_n_iter": ["boolean"],
+        "positive": ["boolean"],
+    },
+    prefer_skip_nested_validation=True,
+)
 def lars_path_gram(
     Xy,
     Gram,
@@ -216,13 +280,13 @@ def lars_path_gram(
 
     Parameters
     ----------
-    Xy : array-like of shape (n_samples,) or (n_samples, n_targets)
-        Xy = np.dot(X.T, y).
+    Xy : ndarray of shape (n_features,)
+        `Xy = X.T @ y`.
 
-    Gram : array-like of shape (n_features, n_features)
-        Gram = np.dot(X.T * X).
+    Gram : ndarray of shape (n_features, n_features)
+        `Gram = X.T @ X`.
 
-    n_samples : int or float
+    n_samples : int
         Equivalent size of sample.
 
     max_iter : int, default=500
@@ -233,27 +297,27 @@ def lars_path_gram(
         regularization parameter alpha parameter in the Lasso.
 
     method : {'lar', 'lasso'}, default='lar'
-        Specifies the returned model. Select ``'lar'`` for Least Angle
+        Specifies the returned model. Select `'lar'` for Least Angle
         Regression, ``'lasso'`` for the Lasso.
 
     copy_X : bool, default=True
-        If ``False``, ``X`` is overwritten.
+        If `False`, `X` is overwritten.
 
     eps : float, default=np.finfo(float).eps
         The machine-precision regularization in the computation of the
         Cholesky diagonal factors. Increase this for very ill-conditioned
-        systems. Unlike the ``tol`` parameter in some iterative
+        systems. Unlike the `tol` parameter in some iterative
         optimization-based algorithms, this parameter does not control
         the tolerance of the optimization.
 
     copy_Gram : bool, default=True
-        If ``False``, ``Gram`` is overwritten.
+        If `False`, `Gram` is overwritten.
 
     verbose : int, default=0
         Controls output verbosity.
 
     return_path : bool, default=True
-        If ``return_path==True`` returns the entire path, else returns only the
+        If `return_path==True` returns the entire path, else returns only the
         last point of the path.
 
     return_n_iter : bool, default=False
@@ -264,26 +328,26 @@ def lars_path_gram(
         This option is only allowed with method 'lasso'. Note that the model
         coefficients will not converge to the ordinary-least-squares solution
         for small values of alpha. Only coefficients up to the smallest alpha
-        value (``alphas_[alphas_ > 0.].min()`` when fit_path=True) reached by
+        value (`alphas_[alphas_ > 0.].min()` when `fit_path=True`) reached by
         the stepwise Lars-Lasso algorithm are typically in congruence with the
         solution of the coordinate descent lasso_path function.
 
     Returns
     -------
-    alphas : array-like of shape (n_alphas + 1,)
+    alphas : ndarray of shape (n_alphas + 1,)
         Maximum of covariances (in absolute value) at each iteration.
-        ``n_alphas`` is either ``max_iter``, ``n_features`` or the
-        number of nodes in the path with ``alpha >= alpha_min``, whichever
+        `n_alphas` is either `max_iter`, `n_features` or the
+        number of nodes in the path with `alpha >= alpha_min`, whichever
         is smaller.
 
-    active : array-like of shape (n_alphas,)
+    active : ndarray of shape (n_alphas,)
         Indices of active variables at the end of the path.
 
-    coefs : array-like of shape (n_features, n_alphas + 1)
+    coefs : ndarray of shape (n_features, n_alphas + 1)
         Coefficients along the path.
 
     n_iter : int
-        Number of iterations run. Returned only if return_n_iter is set
+        Number of iterations run. Returned only if `return_n_iter` is set
         to True.
 
     See Also
@@ -306,6 +370,25 @@ def lars_path_gram(
 
     .. [3] `Wikipedia entry on the Lasso
            <https://en.wikipedia.org/wiki/Lasso_(statistics)>`_
+
+    Examples
+    --------
+    >>> from sklearn.linear_model import lars_path_gram
+    >>> from sklearn.datasets import make_regression
+    >>> X, y, true_coef = make_regression(
+    ...    n_samples=100, n_features=5, n_informative=2, coef=True, random_state=0
+    ... )
+    >>> true_coef
+    array([ 0.        ,  0.        ,  0.        , 97.9..., 45.7...])
+    >>> alphas, _, estimated_coef = lars_path_gram(X.T @ y, X.T @ X, n_samples=100)
+    >>> alphas.shape
+    (3,)
+    >>> estimated_coef
+    array([[ 0.     ,  0.     ,  0.     ],
+           [ 0.     ,  0.     ,  0.     ],
+           [ 0.     ,  0.     ,  0.     ],
+           [ 0.     , 46.96..., 97.99...],
+           [ 0.     ,  0.     , 45.70...]])
     """
     return _lars_path_solver(
         X=None,
@@ -363,8 +446,7 @@ def _lars_path_solver(
     y : None or ndarray of shape (n_samples,)
         Input targets.
 
-    Xy : array-like of shape (n_samples,) or (n_samples, n_targets), \
-            default=None
+    Xy : array-like of shape (n_features,), default=None
         `Xy = np.dot(X.T, y)` that can be precomputed. It is useful
         only when the Gram matrix is precomputed.
 
@@ -588,7 +670,6 @@ def _lars_path_solver(
         if n_iter >= max_iter or n_active >= n_features:
             break
         if not drop:
-
             ##########################################################
             # Append x_j to the Cholesky factorization of (Xa * Xa') #
             #                                                        #
@@ -640,12 +721,6 @@ def _lars_path_solver(
                 # The system is becoming too ill-conditioned.
                 # We have degenerate vectors in our active set.
                 # We'll 'drop for good' the last regressor added.
-
-                # Note: this case is very rare. It is no longer triggered by
-                # the test suite. The `equality_tolerance` margin added in 0.16
-                # to get early stopping to work consistently on all versions of
-                # Python including 32 bit Python under Windows seems to make it
-                # very difficult to trigger the 'drop for good' strategy.
                 warnings.warn(
                     "Regressors in active set degenerate. "
                     "Dropping a regressor, after %i iterations, "
@@ -653,7 +728,7 @@ def _lars_path_solver(
                     "with an active set of %i regressors, and "
                     "the smallest cholesky pivot element being %.3e."
                     " Reduce max_iter or increase eps parameters."
-                    % (n_iter, alpha, n_active, diag),
+                    % (n_iter, alpha.item(), n_active, diag),
                     ConvergenceWarning,
                 )
 
@@ -681,7 +756,7 @@ def _lars_path_solver(
                 "are small and the current value of alpha is no "
                 "longer well controlled. %i iterations, alpha=%.3e, "
                 "previous alpha=%.3e, with an active set of %i "
-                "regressors." % (n_iter, alpha, prev_alpha, n_active),
+                "regressors." % (n_iter, alpha.item(), prev_alpha.item(), n_active),
                 ConvergenceWarning,
             )
             break
@@ -777,7 +852,6 @@ def _lars_path_solver(
 
         # See if any coefficient has changed sign
         if drop and method == "lasso":
-
             # handle the case when idx is not length of 1
             for ii in idx:
                 arrayfuncs.cholesky_delete(L[:n_active, :n_active], ii)
@@ -858,18 +932,6 @@ class Lars(MultiOutputMixin, RegressorMixin, LinearModel):
 
     verbose : bool or int, default=False
         Sets the verbosity amount.
-
-    normalize : bool, default=True
-        This parameter is ignored when ``fit_intercept`` is set to False.
-        If True, the regressors X will be normalized before regression by
-        subtracting the mean and dividing by the l2-norm.
-        If you wish to standardize, please use
-        :class:`~sklearn.preprocessing.StandardScaler` before calling ``fit``
-        on an estimator with ``normalize=False``.
-
-        .. deprecated:: 1.0
-            ``normalize`` was deprecated in version 1.0. It will default
-            to False in 1.2 and be removed in 1.4.
 
     precompute : bool, 'auto' or array-like , default='auto'
         Whether to use a precomputed Gram matrix to speed up
@@ -959,9 +1021,9 @@ class Lars(MultiOutputMixin, RegressorMixin, LinearModel):
     Examples
     --------
     >>> from sklearn import linear_model
-    >>> reg = linear_model.Lars(n_nonzero_coefs=1, normalize=False)
+    >>> reg = linear_model.Lars(n_nonzero_coefs=1)
     >>> reg.fit([[-1, 1], [0, 0], [1, 1]], [-1.1111, 0, -1.1111])
-    Lars(n_nonzero_coefs=1, normalize=False)
+    Lars(n_nonzero_coefs=1)
     >>> print(reg.coef_)
     [ 0. -1.11...]
     """
@@ -969,7 +1031,6 @@ class Lars(MultiOutputMixin, RegressorMixin, LinearModel):
     _parameter_constraints: dict = {
         "fit_intercept": ["boolean"],
         "verbose": ["verbose"],
-        "normalize": ["boolean", Hidden(StrOptions({"deprecated"}))],
         "precompute": ["boolean", StrOptions({"auto"}), np.ndarray, Hidden(None)],
         "n_nonzero_coefs": [Interval(Integral, 1, None, closed="left")],
         "eps": [Interval(Real, 0, None, closed="left")],
@@ -987,7 +1048,6 @@ class Lars(MultiOutputMixin, RegressorMixin, LinearModel):
         *,
         fit_intercept=True,
         verbose=False,
-        normalize="deprecated",
         precompute="auto",
         n_nonzero_coefs=500,
         eps=np.finfo(float).eps,
@@ -998,7 +1058,6 @@ class Lars(MultiOutputMixin, RegressorMixin, LinearModel):
     ):
         self.fit_intercept = fit_intercept
         self.verbose = verbose
-        self.normalize = normalize
         self.precompute = precompute
         self.n_nonzero_coefs = n_nonzero_coefs
         self.eps = eps
@@ -1018,12 +1077,12 @@ class Lars(MultiOutputMixin, RegressorMixin, LinearModel):
 
         return precompute
 
-    def _fit(self, X, y, max_iter, alpha, fit_path, normalize, Xy=None):
+    def _fit(self, X, y, max_iter, alpha, fit_path, Xy=None):
         """Auxiliary method to fit the model using X, y as training data"""
         n_features = X.shape[1]
 
         X, y, X_offset, y_offset, X_scale = _preprocess_data(
-            X, y, self.fit_intercept, normalize, self.copy_X
+            X, y, fit_intercept=self.fit_intercept, copy=self.copy_X
         )
 
         if y.ndim == 1:
@@ -1098,6 +1157,7 @@ class Lars(MultiOutputMixin, RegressorMixin, LinearModel):
         self._set_intercept(X_offset, y_offset, X_scale)
         return self
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y, Xy=None):
         """Fit the model using X, y as training data.
 
@@ -1109,7 +1169,7 @@ class Lars(MultiOutputMixin, RegressorMixin, LinearModel):
         y : array-like of shape (n_samples,) or (n_samples, n_targets)
             Target values.
 
-        Xy : array-like of shape (n_samples,) or (n_samples, n_targets), \
+        Xy : array-like of shape (n_features,) or (n_features, n_targets), \
                 default=None
             Xy = np.dot(X.T, y) that can be precomputed. It is useful
             only when the Gram matrix is precomputed.
@@ -1119,13 +1179,7 @@ class Lars(MultiOutputMixin, RegressorMixin, LinearModel):
         self : object
             Returns an instance of self.
         """
-        self._validate_params()
-
         X, y = self._validate_data(X, y, y_numeric=True, multi_output=True)
-
-        _normalize = _deprecate_normalize(
-            self.normalize, default=True, estimator_name=self.__class__.__name__
-        )
 
         alpha = getattr(self, "alpha", 0.0)
         if hasattr(self, "n_nonzero_coefs"):
@@ -1146,7 +1200,6 @@ class Lars(MultiOutputMixin, RegressorMixin, LinearModel):
             max_iter=max_iter,
             alpha=alpha,
             fit_path=self.fit_path,
-            normalize=_normalize,
             Xy=Xy,
         )
 
@@ -1180,18 +1233,6 @@ class LassoLars(Lars):
 
     verbose : bool or int, default=False
         Sets the verbosity amount.
-
-    normalize : bool, default=True
-        This parameter is ignored when ``fit_intercept`` is set to False.
-        If True, the regressors X will be normalized before regression by
-        subtracting the mean and dividing by the l2-norm.
-        If you wish to standardize, please use
-        :class:`~sklearn.preprocessing.StandardScaler` before calling ``fit``
-        on an estimator with ``normalize=False``.
-
-        .. deprecated:: 1.0
-            ``normalize`` was deprecated in version 1.0. It will default
-            to False in 1.2 and be removed in 1.4.
 
     precompute : bool, 'auto' or array-like, default='auto'
         Whether to use a precomputed Gram matrix to speed up
@@ -1299,9 +1340,9 @@ class LassoLars(Lars):
     Examples
     --------
     >>> from sklearn import linear_model
-    >>> reg = linear_model.LassoLars(alpha=0.01, normalize=False)
+    >>> reg = linear_model.LassoLars(alpha=0.01)
     >>> reg.fit([[-1, 1], [0, 0], [1, 1]], [-1, 0, -1])
-    LassoLars(alpha=0.01, normalize=False)
+    LassoLars(alpha=0.01)
     >>> print(reg.coef_)
     [ 0.         -0.955...]
     """
@@ -1322,7 +1363,6 @@ class LassoLars(Lars):
         *,
         fit_intercept=True,
         verbose=False,
-        normalize="deprecated",
         precompute="auto",
         max_iter=500,
         eps=np.finfo(float).eps,
@@ -1336,7 +1376,6 @@ class LassoLars(Lars):
         self.fit_intercept = fit_intercept
         self.max_iter = max_iter
         self.verbose = verbose
-        self.normalize = normalize
         self.positive = positive
         self.precompute = precompute
         self.copy_X = copy_X
@@ -1363,10 +1402,9 @@ def _lars_path_residues(
     y_test,
     Gram=None,
     copy=True,
-    method="lars",
+    method="lar",
     verbose=False,
     fit_intercept=True,
-    normalize=True,
     max_iter=500,
     eps=np.finfo(float).eps,
     positive=False,
@@ -1416,18 +1454,6 @@ def _lars_path_residues(
         'lasso' for expected small values of alpha in the doc of LassoLarsCV
         and LassoLarsIC.
 
-    normalize : bool, default=True
-        This parameter is ignored when ``fit_intercept`` is set to False.
-        If True, the regressors X will be normalized before regression by
-        subtracting the mean and dividing by the l2-norm.
-        If you wish to standardize, please use
-        :class:`~sklearn.preprocessing.StandardScaler` before calling ``fit``
-        on an estimator with ``normalize=False``.
-
-        .. deprecated:: 1.0
-            ``normalize`` was deprecated in version 1.0. It will default
-            to False in 1.2 and be removed in 1.4.
-
     max_iter : int, default=500
         Maximum number of iterations to perform.
 
@@ -1469,11 +1495,6 @@ def _lars_path_residues(
         y_test = as_float_array(y_test, copy=False)
         y_test -= y_mean
 
-    if normalize:
-        norms = np.sqrt(np.sum(X_train**2, axis=0))
-        nonzeros = np.flatnonzero(norms)
-        X_train[:, nonzeros] /= norms[nonzeros]
-
     alphas, active, coefs = lars_path(
         X_train,
         y_train,
@@ -1486,8 +1507,6 @@ def _lars_path_residues(
         eps=eps,
         positive=positive,
     )
-    if normalize:
-        coefs[nonzeros] /= norms[nonzeros][:, np.newaxis]
     residues = np.dot(X_test, coefs) - y_test[:, np.newaxis]
     return alphas, active, coefs, residues.T
 
@@ -1512,18 +1531,6 @@ class LarsCV(Lars):
     max_iter : int, default=500
         Maximum number of iterations to perform.
 
-    normalize : bool, default=True
-        This parameter is ignored when ``fit_intercept`` is set to False.
-        If True, the regressors X will be normalized before regression by
-        subtracting the mean and dividing by the l2-norm.
-        If you wish to standardize, please use
-        :class:`~sklearn.preprocessing.StandardScaler` before calling ``fit``
-        on an estimator with ``normalize=False``.
-
-        .. deprecated:: 1.0
-            ``normalize`` was deprecated in version 1.0. It will default
-            to False in 1.2 and be removed in 1.4.
-
     precompute : bool, 'auto' or array-like , default='auto'
         Whether to use a precomputed Gram matrix to speed up
         calculations. If set to ``'auto'`` let us decide. The Gram matrix
@@ -1538,7 +1545,7 @@ class LarsCV(Lars):
         - :term:`CV splitter`,
         - An iterable yielding (train, test) splits as arrays of indices.
 
-        For integer/None inputs, :class:`KFold` is used.
+        For integer/None inputs, :class:`~sklearn.model_selection.KFold` is used.
 
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
@@ -1632,7 +1639,7 @@ class LarsCV(Lars):
     >>> from sklearn.linear_model import LarsCV
     >>> from sklearn.datasets import make_regression
     >>> X, y = make_regression(n_samples=200, noise=4.0, random_state=0)
-    >>> reg = LarsCV(cv=5, normalize=False).fit(X, y)
+    >>> reg = LarsCV(cv=5).fit(X, y)
     >>> reg.score(X, y)
     0.9996...
     >>> reg.alpha_
@@ -1660,7 +1667,6 @@ class LarsCV(Lars):
         fit_intercept=True,
         verbose=False,
         max_iter=500,
-        normalize="deprecated",
         precompute="auto",
         cv=None,
         max_n_alphas=1000,
@@ -1675,7 +1681,6 @@ class LarsCV(Lars):
         super().__init__(
             fit_intercept=fit_intercept,
             verbose=verbose,
-            normalize=normalize,
             precompute=precompute,
             n_nonzero_coefs=500,
             eps=eps,
@@ -1686,7 +1691,8 @@ class LarsCV(Lars):
     def _more_tags(self):
         return {"multioutput": False}
 
-    def fit(self, X, y):
+    @_fit_context(prefer_skip_nested_validation=True)
+    def fit(self, X, y, **params):
         """Fit the model using X, y as training data.
 
         Parameters
@@ -1697,16 +1703,22 @@ class LarsCV(Lars):
         y : array-like of shape (n_samples,)
             Target values.
 
+        **params : dict, default=None
+            Parameters to be passed to the CV splitter.
+
+            .. versionadded:: 1.4
+                Only available if `enable_metadata_routing=True`,
+                which can be set by using
+                ``sklearn.set_config(enable_metadata_routing=True)``.
+                See :ref:`Metadata Routing User Guide <metadata_routing>` for
+                more details.
+
         Returns
         -------
         self : object
             Returns an instance of self.
         """
-        self._validate_params()
-
-        _normalize = _deprecate_normalize(
-            self.normalize, default=True, estimator_name=self.__class__.__name__
-        )
+        _raise_for_params(params, self, "fit")
 
         X, y = self._validate_data(X, y, y_numeric=True)
         X = as_float_array(X, copy=self.copy_X)
@@ -1714,6 +1726,11 @@ class LarsCV(Lars):
 
         # init cross-validation generator
         cv = check_cv(self.cv, classifier=False)
+
+        if _routing_enabled():
+            routed_params = process_routing(self, "fit", **params)
+        else:
+            routed_params = Bunch(splitter=Bunch(split={}))
 
         # As we use cross-validation, the Gram matrix is not precomputed here
         Gram = self.precompute
@@ -1735,13 +1752,12 @@ class LarsCV(Lars):
                 copy=False,
                 method=self.method,
                 verbose=max(0, self.verbose - 1),
-                normalize=_normalize,
                 fit_intercept=self.fit_intercept,
                 max_iter=self.max_iter,
                 eps=self.eps,
                 positive=self.positive,
             )
-            for train, test in cv.split(X, y)
+            for train, test in cv.split(X, y, **routed_params.splitter.split)
         )
         all_alphas = np.concatenate(list(zip(*cv_paths))[0])
         # Unique also sorts
@@ -1786,9 +1802,28 @@ class LarsCV(Lars):
             alpha=best_alpha,
             Xy=None,
             fit_path=True,
-            normalize=_normalize,
         )
         return self
+
+    def get_metadata_routing(self):
+        """Get metadata routing of this object.
+
+        Please check :ref:`User Guide <metadata_routing>` on how the routing
+        mechanism works.
+
+        .. versionadded:: 1.4
+
+        Returns
+        -------
+        routing : MetadataRouter
+            A :class:`~sklearn.utils.metadata_routing.MetadataRouter` encapsulating
+            routing information.
+        """
+        router = MetadataRouter(owner=self.__class__.__name__).add(
+            splitter=check_cv(self.cv),
+            method_mapping=MethodMapping().add(callee="split", caller="fit"),
+        )
+        return router
 
 
 class LassoLarsCV(LarsCV):
@@ -1815,18 +1850,6 @@ class LassoLarsCV(LarsCV):
     max_iter : int, default=500
         Maximum number of iterations to perform.
 
-    normalize : bool, default=True
-        This parameter is ignored when ``fit_intercept`` is set to False.
-        If True, the regressors X will be normalized before regression by
-        subtracting the mean and dividing by the l2-norm.
-        If you wish to standardize, please use
-        :class:`~sklearn.preprocessing.StandardScaler` before calling ``fit``
-        on an estimator with ``normalize=False``.
-
-        .. deprecated:: 1.0
-            ``normalize`` was deprecated in version 1.0. It will default
-            to False in 1.2 and be removed in 1.4.
-
     precompute : bool or 'auto' , default='auto'
         Whether to use a precomputed Gram matrix to speed up
         calculations. If set to ``'auto'`` let us decide. The Gram matrix
@@ -1841,7 +1864,7 @@ class LassoLarsCV(LarsCV):
         - :term:`CV splitter`,
         - An iterable yielding (train, test) splits as arrays of indices.
 
-        For integer/None inputs, :class:`KFold` is used.
+        For integer/None inputs, :class:`~sklearn.model_selection.KFold` is used.
 
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
@@ -1957,7 +1980,7 @@ class LassoLarsCV(LarsCV):
     >>> from sklearn.linear_model import LassoLarsCV
     >>> from sklearn.datasets import make_regression
     >>> X, y = make_regression(noise=4.0, random_state=0)
-    >>> reg = LassoLarsCV(cv=5, normalize=False).fit(X, y)
+    >>> reg = LassoLarsCV(cv=5).fit(X, y)
     >>> reg.score(X, y)
     0.9993...
     >>> reg.alpha_
@@ -1979,7 +2002,6 @@ class LassoLarsCV(LarsCV):
         fit_intercept=True,
         verbose=False,
         max_iter=500,
-        normalize="deprecated",
         precompute="auto",
         cv=None,
         max_n_alphas=1000,
@@ -1991,7 +2013,6 @@ class LassoLarsCV(LarsCV):
         self.fit_intercept = fit_intercept
         self.verbose = verbose
         self.max_iter = max_iter
-        self.normalize = normalize
         self.precompute = precompute
         self.cv = cv
         self.max_n_alphas = max_n_alphas
@@ -2030,18 +2051,6 @@ class LassoLarsIC(LassoLars):
 
     verbose : bool or int, default=False
         Sets the verbosity amount.
-
-    normalize : bool, default=True
-        This parameter is ignored when ``fit_intercept`` is set to False.
-        If True, the regressors X will be normalized before regression by
-        subtracting the mean and dividing by the l2-norm.
-        If you wish to standardize, please use
-        :class:`~sklearn.preprocessing.StandardScaler` before calling ``fit``
-        on an estimator with ``normalize=False``.
-
-        .. deprecated:: 1.0
-            ``normalize`` was deprecated in version 1.0. It will default
-            to False in 1.2 and be removed in 1.4.
 
     precompute : bool, 'auto' or array-like, default='auto'
         Whether to use a precomputed Gram matrix to speed up
@@ -2160,11 +2169,11 @@ class LassoLarsIC(LassoLars):
     Examples
     --------
     >>> from sklearn import linear_model
-    >>> reg = linear_model.LassoLarsIC(criterion='bic', normalize=False)
+    >>> reg = linear_model.LassoLarsIC(criterion='bic')
     >>> X = [[-2, 2], [-1, 1], [0, 0], [1, 1], [2, 2]]
     >>> y = [-2.2222, -1.1111, 0, -1.1111, -2.2222]
     >>> reg.fit(X, y)
-    LassoLarsIC(criterion='bic', normalize=False)
+    LassoLarsIC(criterion='bic')
     >>> print(reg.coef_)
     [ 0.  -1.11...]
     """
@@ -2184,7 +2193,6 @@ class LassoLarsIC(LassoLars):
         *,
         fit_intercept=True,
         verbose=False,
-        normalize="deprecated",
         precompute="auto",
         max_iter=500,
         eps=np.finfo(float).eps,
@@ -2197,7 +2205,6 @@ class LassoLarsIC(LassoLars):
         self.positive = positive
         self.max_iter = max_iter
         self.verbose = verbose
-        self.normalize = normalize
         self.copy_X = copy_X
         self.precompute = precompute
         self.eps = eps
@@ -2207,6 +2214,7 @@ class LassoLarsIC(LassoLars):
     def _more_tags(self):
         return {"multioutput": False}
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y, copy_X=None):
         """Fit the model using X, y as training data.
 
@@ -2228,18 +2236,12 @@ class LassoLarsIC(LassoLars):
         self : object
             Returns an instance of self.
         """
-        self._validate_params()
-
-        _normalize = _deprecate_normalize(
-            self.normalize, default=True, estimator_name=self.__class__.__name__
-        )
-
         if copy_X is None:
             copy_X = self.copy_X
         X, y = self._validate_data(X, y, y_numeric=True)
 
         X, y, Xmean, ymean, Xstd = _preprocess_data(
-            X, y, self.fit_intercept, _normalize, copy_X
+            X, y, fit_intercept=self.fit_intercept, copy=copy_X
         )
 
         Gram = self.precompute

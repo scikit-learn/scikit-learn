@@ -52,9 +52,8 @@ cdef float compute_gradient(float[:] val_P,
                             float theta,
                             int dof,
                             long start,
-                            long stop,
                             bint compute_error,
-                            int num_threads) nogil:
+                            int num_threads) noexcept nogil:
     # Having created the tree, calculate the gradient
     # in two components, the positive and negative forces
     cdef:
@@ -69,14 +68,14 @@ cdef float compute_gradient(float[:] val_P,
 
     if qt.verbose > 11:
         printf("[t-SNE] Allocating %li elements in force arrays\n",
-                n_samples * n_dimensions * 2)
+               n_samples * n_dimensions * 2)
     cdef float* neg_f = <float*> malloc(sizeof(float) * n_samples * n_dimensions)
     cdef float* pos_f = <float*> malloc(sizeof(float) * n_samples * n_dimensions)
 
     if take_timing:
         t1 = clock()
     sQ = compute_gradient_negative(pos_reference, neg_f, qt, dof, theta, start,
-                                   stop, num_threads)
+                                   num_threads)
     if take_timing:
         t2 = clock()
         printf("[t-SNE] Computing negative gradient: %e ticks\n", ((float) (t2 - t1)))
@@ -112,7 +111,7 @@ cdef float compute_gradient_positive(float[:] val_P,
                                      cnp.int64_t start,
                                      int verbose,
                                      bint compute_error,
-                                     int num_threads) nogil:
+                                     int num_threads) noexcept nogil:
     # Sum over the following expression for i not equal to j
     # grad_i = p_ij (1 + ||y_i - y_j||^2)^-1 (y_i - y_j)
     # This is equivalent to compute_edge_forces in the authors' code
@@ -157,8 +156,7 @@ cdef float compute_gradient_positive(float[:] val_P,
                 # only compute the error when needed
                 if compute_error:
                     qij = qij / sum_Q
-                    C += pij * log(max(pij, FLOAT32_TINY) \
-                        / max(qij, FLOAT32_TINY))
+                    C += pij * log(max(pij, FLOAT32_TINY) / max(qij, FLOAT32_TINY))
                 for ax in range(n_dimensions):
                     pos_f[i * n_dimensions + ax] += dij * buff[ax]
 
@@ -176,16 +174,14 @@ cdef double compute_gradient_negative(float[:, :] pos_reference,
                                       int dof,
                                       float theta,
                                       long start,
-                                      long stop,
-                                      int num_threads) nogil:
-    if stop == -1:
-        stop = pos_reference.shape[0]
+                                      int num_threads) noexcept nogil:
     cdef:
         int ax
         int n_dimensions = qt.n_dimensions
         int offset = n_dimensions + 2
         long i, j, idx
-        long n = stop - start
+        long n_samples = pos_reference.shape[0]
+        long n = n_samples - start
         long dta = 0
         long dtb = 0
         float size, dist2s, mult
@@ -198,7 +194,6 @@ cdef double compute_gradient_negative(float[:, :] pos_reference,
         clock_t t1 = 0, t2 = 0, t3 = 0
         int take_timing = 1 if qt.verbose > 20 else 0
 
-
     with nogil, parallel(num_threads=num_threads):
         # Define thread-local buffers
         summary = <float*> malloc(sizeof(float) * n * offset)
@@ -206,7 +201,7 @@ cdef double compute_gradient_negative(float[:, :] pos_reference,
         force = <float *> malloc(sizeof(float) * n_dimensions)
         neg_force = <float *> malloc(sizeof(float) * n_dimensions)
 
-        for i in prange(start, stop, schedule='static'):
+        for i in prange(start, n_samples, schedule='static'):
             # Clear the arrays
             for ax in range(n_dimensions):
                 force[ax] = 0.0
@@ -294,7 +289,7 @@ def gradient(float[:] val_P,
         printf("[t-SNE] Computing gradient\n%s", EMPTY_STRING)
 
     C = compute_gradient(val_P, pos_output, neighbors, indptr, forces,
-                         qt, theta, dof, skip_num_points, -1, compute_error,
+                         qt, theta, dof, skip_num_points, compute_error,
                          num_threads)
 
     if verbose > 10:

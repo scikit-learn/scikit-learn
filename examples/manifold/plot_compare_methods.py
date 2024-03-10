@@ -29,12 +29,12 @@ representation of the data in the low-dimensional space.
 # We start by generating the S-curve dataset.
 
 import matplotlib.pyplot as plt
-from matplotlib import ticker
 
 # unused but required import for doing 3d projections with matplotlib < 3.2
 import mpl_toolkits.mplot3d  # noqa: F401
+from matplotlib import ticker
 
-from sklearn import manifold, datasets
+from sklearn import datasets, manifold
 
 n_samples = 1500
 S_points, S_color = datasets.make_s_curve(n_samples, random_state=0)
@@ -119,7 +119,7 @@ S_ltsa = lle_ltsa.fit_transform(S_points)
 lle_hessian = manifold.LocallyLinearEmbedding(method="hessian", **params)
 S_hessian = lle_hessian.fit_transform(S_points)
 
-lle_mod = manifold.LocallyLinearEmbedding(method="modified", modified_tol=0.8, **params)
+lle_mod = manifold.LocallyLinearEmbedding(method="modified", **params)
 S_mod = lle_mod.fit_transform(S_points)
 
 # %%
@@ -163,7 +163,11 @@ plot_2d(S_isomap, S_color, "Isomap Embedding")
 # Read more in the :ref:`User Guide <multidimensional_scaling>`.
 
 md_scaling = manifold.MDS(
-    n_components=n_components, max_iter=50, n_init=4, random_state=0
+    n_components=n_components,
+    max_iter=50,
+    n_init=4,
+    random_state=0,
+    normalized_stress=False,
 )
 S_scaling = md_scaling.fit_transform(S_points)
 
@@ -178,7 +182,7 @@ plot_2d(S_scaling, S_color, "Multidimensional scaling")
 # Read more in the :ref:`User Guide <spectral_embedding>`.
 
 spectral = manifold.SpectralEmbedding(
-    n_components=n_components, n_neighbors=n_neighbors
+    n_components=n_components, n_neighbors=n_neighbors, random_state=42
 )
 S_spectral = spectral.fit_transform(S_points)
 
@@ -198,7 +202,7 @@ t_sne = manifold.TSNE(
     n_components=n_components,
     perplexity=30,
     init="random",
-    n_iter=250,
+    max_iter=250,
     random_state=0,
 )
 S_t_sne = t_sne.fit_transform(S_points)

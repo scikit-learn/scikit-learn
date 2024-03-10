@@ -7,23 +7,23 @@
 from numbers import Integral, Real
 
 import numpy as np
-from scipy.linalg import eigh, svd, qr, solve
-from scipy.sparse import eye, csr_matrix
+from scipy.linalg import eigh, qr, solve, svd
+from scipy.sparse import csr_matrix, eye
 from scipy.sparse.linalg import eigsh
 
 from ..base import (
     BaseEstimator,
+    ClassNamePrefixFeaturesOutMixin,
     TransformerMixin,
+    _fit_context,
     _UnstableArchMixin,
-    _ClassNamePrefixFeaturesOutMixin,
 )
-from ..utils import check_random_state, check_array
-from ..utils._arpack import _init_arpack_v0
-from ..utils._param_validation import Interval, StrOptions
-from ..utils.extmath import stable_cumsum
-from ..utils.validation import check_is_fitted
-from ..utils.validation import FLOAT_DTYPES
 from ..neighbors import NearestNeighbors
+from ..utils import check_array, check_random_state
+from ..utils._arpack import _init_arpack_v0
+from ..utils._param_validation import Interval, StrOptions, validate_params
+from ..utils.extmath import stable_cumsum
+from ..utils.validation import FLOAT_DTYPES, check_is_fitted
 
 
 def barycenter_weights(X, Y, indices, reg=1e-3):
@@ -190,7 +190,7 @@ def null_space(
         if hasattr(M, "toarray"):
             M = M.toarray()
         eigen_values, eigen_vectors = eigh(
-            M, eigvals=(k_skip, k + k_skip - 1), overwrite_a=True
+            M, subset_by_index=(k_skip, k + k_skip - 1), overwrite_a=True
         )
         index = np.argsort(np.abs(eigen_values))
         return eigen_vectors[:, index], np.sum(eigen_values)
@@ -198,7 +198,7 @@ def null_space(
         raise ValueError("Unrecognized eigen_solver '%s'" % eigen_solver)
 
 
-def locally_linear_embedding(
+def _locally_linear_embedding(
     X,
     *,
     n_neighbors,
@@ -213,107 +213,6 @@ def locally_linear_embedding(
     random_state=None,
     n_jobs=None,
 ):
-    """Perform a Locally Linear Embedding analysis on the data.
-
-    Read more in the :ref:`User Guide <locally_linear_embedding>`.
-
-    Parameters
-    ----------
-    X : {array-like, NearestNeighbors}
-        Sample data, shape = (n_samples, n_features), in the form of a
-        numpy array or a NearestNeighbors object.
-
-    n_neighbors : int
-        Number of neighbors to consider for each point.
-
-    n_components : int
-        Number of coordinates for the manifold.
-
-    reg : float, default=1e-3
-        Regularization constant, multiplies the trace of the local covariance
-        matrix of the distances.
-
-    eigen_solver : {'auto', 'arpack', 'dense'}, default='auto'
-        auto : algorithm will attempt to choose the best method for input data
-
-        arpack : use arnoldi iteration in shift-invert mode.
-                    For this method, M may be a dense matrix, sparse matrix,
-                    or general linear operator.
-                    Warning: ARPACK can be unstable for some problems.  It is
-                    best to try several random seeds in order to check results.
-
-        dense  : use standard dense matrix operations for the eigenvalue
-                    decomposition.  For this method, M must be an array
-                    or matrix type.  This method should be avoided for
-                    large problems.
-
-    tol : float, default=1e-6
-        Tolerance for 'arpack' method
-        Not used if eigen_solver=='dense'.
-
-    max_iter : int, default=100
-        Maximum number of iterations for the arpack solver.
-
-    method : {'standard', 'hessian', 'modified', 'ltsa'}, default='standard'
-        standard : use the standard locally linear embedding algorithm.
-                   see reference [1]_
-        hessian  : use the Hessian eigenmap method.  This method requires
-                   n_neighbors > n_components * (1 + (n_components + 1) / 2.
-                   see reference [2]_
-        modified : use the modified locally linear embedding algorithm.
-                   see reference [3]_
-        ltsa     : use local tangent space alignment algorithm
-                   see reference [4]_
-
-    hessian_tol : float, default=1e-4
-        Tolerance for Hessian eigenmapping method.
-        Only used if method == 'hessian'.
-
-    modified_tol : float, default=1e-12
-        Tolerance for modified LLE method.
-        Only used if method == 'modified'.
-
-    random_state : int, RandomState instance, default=None
-        Determines the random number generator when ``solver`` == 'arpack'.
-        Pass an int for reproducible results across multiple function calls.
-        See :term:`Glossary <random_state>`.
-
-    n_jobs : int or None, default=None
-        The number of parallel jobs to run for neighbors search.
-        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
-        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
-        for more details.
-
-    Returns
-    -------
-    Y : array-like, shape [n_samples, n_components]
-        Embedding vectors.
-
-    squared_error : float
-        Reconstruction error for the embedding vectors. Equivalent to
-        ``norm(Y - W Y, 'fro')**2``, where W are the reconstruction weights.
-
-    References
-    ----------
-
-    .. [1] Roweis, S. & Saul, L. Nonlinear dimensionality reduction
-        by locally linear embedding.  Science 290:2323 (2000).
-    .. [2] Donoho, D. & Grimes, C. Hessian eigenmaps: Locally
-        linear embedding techniques for high-dimensional data.
-        Proc Natl Acad Sci U S A.  100:5591 (2003).
-    .. [3] Zhang, Z. & Wang, J. MLLE: Modified Locally Linear
-        Embedding Using Multiple Weights.
-        http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.70.382
-    .. [4] Zhang, Z. & Zha, H. Principal manifolds and nonlinear
-        dimensionality reduction via tangent space alignment.
-        Journal of Shanghai Univ.  8:406 (2004)
-    """
-    if eigen_solver not in ("auto", "arpack", "dense"):
-        raise ValueError("unrecognized eigen_solver '%s'" % eigen_solver)
-
-    if method not in ("standard", "hessian", "modified", "ltsa"):
-        raise ValueError("unrecognized method '%s'" % method)
-
     nbrs = NearestNeighbors(n_neighbors=n_neighbors + 1, n_jobs=n_jobs)
     nbrs.fit(X)
     X = nbrs._fit_X
@@ -329,9 +228,6 @@ def locally_linear_embedding(
             "Expected n_neighbors <= n_samples,  but n_samples = %d, n_neighbors = %d"
             % (N, n_neighbors)
         )
-
-    if n_neighbors <= 0:
-        raise ValueError("n_neighbors must be positive")
 
     M_sparse = eigen_solver != "dense"
 
@@ -550,8 +446,162 @@ def locally_linear_embedding(
     )
 
 
+@validate_params(
+    {
+        "X": ["array-like", NearestNeighbors],
+        "n_neighbors": [Interval(Integral, 1, None, closed="left")],
+        "n_components": [Interval(Integral, 1, None, closed="left")],
+        "reg": [Interval(Real, 0, None, closed="left")],
+        "eigen_solver": [StrOptions({"auto", "arpack", "dense"})],
+        "tol": [Interval(Real, 0, None, closed="left")],
+        "max_iter": [Interval(Integral, 1, None, closed="left")],
+        "method": [StrOptions({"standard", "hessian", "modified", "ltsa"})],
+        "hessian_tol": [Interval(Real, 0, None, closed="left")],
+        "modified_tol": [Interval(Real, 0, None, closed="left")],
+        "random_state": ["random_state"],
+        "n_jobs": [None, Integral],
+    },
+    prefer_skip_nested_validation=True,
+)
+def locally_linear_embedding(
+    X,
+    *,
+    n_neighbors,
+    n_components,
+    reg=1e-3,
+    eigen_solver="auto",
+    tol=1e-6,
+    max_iter=100,
+    method="standard",
+    hessian_tol=1e-4,
+    modified_tol=1e-12,
+    random_state=None,
+    n_jobs=None,
+):
+    """Perform a Locally Linear Embedding analysis on the data.
+
+    Read more in the :ref:`User Guide <locally_linear_embedding>`.
+
+    Parameters
+    ----------
+    X : {array-like, NearestNeighbors}
+        Sample data, shape = (n_samples, n_features), in the form of a
+        numpy array or a NearestNeighbors object.
+
+    n_neighbors : int
+        Number of neighbors to consider for each point.
+
+    n_components : int
+        Number of coordinates for the manifold.
+
+    reg : float, default=1e-3
+        Regularization constant, multiplies the trace of the local covariance
+        matrix of the distances.
+
+    eigen_solver : {'auto', 'arpack', 'dense'}, default='auto'
+        auto : algorithm will attempt to choose the best method for input data
+
+        arpack : use arnoldi iteration in shift-invert mode.
+                    For this method, M may be a dense matrix, sparse matrix,
+                    or general linear operator.
+                    Warning: ARPACK can be unstable for some problems.  It is
+                    best to try several random seeds in order to check results.
+
+        dense  : use standard dense matrix operations for the eigenvalue
+                    decomposition.  For this method, M must be an array
+                    or matrix type.  This method should be avoided for
+                    large problems.
+
+    tol : float, default=1e-6
+        Tolerance for 'arpack' method
+        Not used if eigen_solver=='dense'.
+
+    max_iter : int, default=100
+        Maximum number of iterations for the arpack solver.
+
+    method : {'standard', 'hessian', 'modified', 'ltsa'}, default='standard'
+        standard : use the standard locally linear embedding algorithm.
+                   see reference [1]_
+        hessian  : use the Hessian eigenmap method.  This method requires
+                   n_neighbors > n_components * (1 + (n_components + 1) / 2.
+                   see reference [2]_
+        modified : use the modified locally linear embedding algorithm.
+                   see reference [3]_
+        ltsa     : use local tangent space alignment algorithm
+                   see reference [4]_
+
+    hessian_tol : float, default=1e-4
+        Tolerance for Hessian eigenmapping method.
+        Only used if method == 'hessian'.
+
+    modified_tol : float, default=1e-12
+        Tolerance for modified LLE method.
+        Only used if method == 'modified'.
+
+    random_state : int, RandomState instance, default=None
+        Determines the random number generator when ``solver`` == 'arpack'.
+        Pass an int for reproducible results across multiple function calls.
+        See :term:`Glossary <random_state>`.
+
+    n_jobs : int or None, default=None
+        The number of parallel jobs to run for neighbors search.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
+
+    Returns
+    -------
+    Y : ndarray of shape (n_samples, n_components)
+        Embedding vectors.
+
+    squared_error : float
+        Reconstruction error for the embedding vectors. Equivalent to
+        ``norm(Y - W Y, 'fro')**2``, where W are the reconstruction weights.
+
+    References
+    ----------
+
+    .. [1] Roweis, S. & Saul, L. Nonlinear dimensionality reduction
+        by locally linear embedding.  Science 290:2323 (2000).
+    .. [2] Donoho, D. & Grimes, C. Hessian eigenmaps: Locally
+        linear embedding techniques for high-dimensional data.
+        Proc Natl Acad Sci U S A.  100:5591 (2003).
+    .. [3] `Zhang, Z. & Wang, J. MLLE: Modified Locally Linear
+        Embedding Using Multiple Weights.
+        <https://citeseerx.ist.psu.edu/doc_view/pid/0b060fdbd92cbcc66b383bcaa9ba5e5e624d7ee3>`_
+    .. [4] Zhang, Z. & Zha, H. Principal manifolds and nonlinear
+        dimensionality reduction via tangent space alignment.
+        Journal of Shanghai Univ.  8:406 (2004)
+
+    Examples
+    --------
+    >>> from sklearn.datasets import load_digits
+    >>> from sklearn.manifold import locally_linear_embedding
+    >>> X, _ = load_digits(return_X_y=True)
+    >>> X.shape
+    (1797, 64)
+    >>> embedding, _ = locally_linear_embedding(X[:100],n_neighbors=5, n_components=2)
+    >>> embedding.shape
+    (100, 2)
+    """
+    return _locally_linear_embedding(
+        X=X,
+        n_neighbors=n_neighbors,
+        n_components=n_components,
+        reg=reg,
+        eigen_solver=eigen_solver,
+        tol=tol,
+        max_iter=max_iter,
+        method=method,
+        hessian_tol=hessian_tol,
+        modified_tol=modified_tol,
+        random_state=random_state,
+        n_jobs=n_jobs,
+    )
+
+
 class LocallyLinearEmbedding(
-    _ClassNamePrefixFeaturesOutMixin,
+    ClassNamePrefixFeaturesOutMixin,
     TransformerMixin,
     _UnstableArchMixin,
     BaseEstimator,
@@ -668,9 +718,9 @@ class LocallyLinearEmbedding(
     .. [2] Donoho, D. & Grimes, C. Hessian eigenmaps: Locally
         linear embedding techniques for high-dimensional data.
         Proc Natl Acad Sci U S A.  100:5591 (2003).
-    .. [3] Zhang, Z. & Wang, J. MLLE: Modified Locally Linear
+    .. [3] `Zhang, Z. & Wang, J. MLLE: Modified Locally Linear
         Embedding Using Multiple Weights.
-        http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.70.382
+        <https://citeseerx.ist.psu.edu/doc_view/pid/0b060fdbd92cbcc66b383bcaa9ba5e5e624d7ee3>`_
     .. [4] Zhang, Z. & Zha, H. Principal manifolds and nonlinear
         dimensionality reduction via tangent space alignment.
         Journal of Shanghai Univ.  8:406 (2004)
@@ -742,7 +792,7 @@ class LocallyLinearEmbedding(
         random_state = check_random_state(self.random_state)
         X = self._validate_data(X, dtype=float)
         self.nbrs_.fit(X)
-        self.embedding_, self.reconstruction_error_ = locally_linear_embedding(
+        self.embedding_, self.reconstruction_error_ = _locally_linear_embedding(
             X=self.nbrs_,
             n_neighbors=self.n_neighbors,
             n_components=self.n_components,
@@ -758,6 +808,7 @@ class LocallyLinearEmbedding(
         )
         self._n_features_out = self.embedding_.shape[1]
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y=None):
         """Compute the embedding vectors for data X.
 
@@ -774,10 +825,10 @@ class LocallyLinearEmbedding(
         self : object
             Fitted `LocallyLinearEmbedding` class instance.
         """
-        self._validate_params()
         self._fit_transform(X)
         return self
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit_transform(self, X, y=None):
         """Compute the embedding vectors for data X and transform X.
 
@@ -794,7 +845,6 @@ class LocallyLinearEmbedding(
         X_new : array-like, shape (n_samples, n_components)
             Returns the instance itself.
         """
-        self._validate_params()
         self._fit_transform(X)
         return self.embedding_
 

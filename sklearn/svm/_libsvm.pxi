@@ -1,7 +1,7 @@
 ################################################################################
 # Includes
 cdef extern from "_svm_cython_blas_helpers.h":
-    ctypedef double (*dot_func)(int, double*, int, double*, int)
+    ctypedef double (*dot_func)(int, const double*, int, const double*, int)
     cdef struct BlasFunctions:
         dot_func dot
 
@@ -12,29 +12,29 @@ cdef extern from "svm.h":
     cdef struct svm_parameter:
         int svm_type
         int kernel_type
-        int degree	# for poly
-        double gamma	# for poly/rbf/sigmoid
-        double coef0	# for poly/sigmoid
+        int degree    # for poly
+        double gamma  # for poly/rbf/sigmoid
+        double coef0  # for poly/sigmoid
 
         # these are for training only
-        double cache_size # in MB
-        double eps	# stopping criteria
-        double C	# for C_SVC, EPSILON_SVR and NU_SVR
-        int nr_weight		# for C_SVC
-        int *weight_label	# for C_SVC
-        double* weight		# for C_SVC
-        double nu	# for NU_SVC, ONE_CLASS, and NU_SVR
-        double p	# for EPSILON_SVR
-        int shrinking	# use the shrinking heuristics
-        int probability # do probability estimates
-        int max_iter  # ceiling on Solver runtime
-        int random_seed  # seed for random generator in probability estimation
+        double cache_size  # in MB
+        double eps         # stopping criteria
+        double C           # for C_SVC, EPSILON_SVR and NU_SVR
+        int nr_weight      # for C_SVC
+        int *weight_label  # for C_SVC
+        double* weight     # for C_SVC
+        double nu          # for NU_SVC, ONE_CLASS, and NU_SVR
+        double p           # for EPSILON_SVR
+        int shrinking      # use the shrinking heuristics
+        int probability    # do probability estimates
+        int max_iter       # ceiling on Solver runtime
+        int random_seed    # seed for random generator in probability estimation
 
     cdef struct svm_problem:
         int l
         double *y
         svm_node *x
-        double *W # instance weights
+        double *W  # instance weights
 
     char *svm_check_parameter(svm_problem *, svm_parameter *)
     svm_model *svm_train(svm_problem *, svm_parameter *, int *, BlasFunctions *) nogil
@@ -46,14 +46,14 @@ cdef extern from "libsvm_helper.c":
     # this file contains methods for accessing libsvm 'hidden' fields
     svm_node **dense_to_sparse (char *, cnp.npy_intp *)
     void set_parameter (svm_parameter *, int , int , int , double, double ,
-                                  double , double , double , double,
-                                  double, int, int, int, char *, char *, int,
-                                  int)
+                        double , double , double , double,
+                        double, int, int, int, char *, char *, int,
+                        int)
     void set_problem (svm_problem *, char *, char *, char *, cnp.npy_intp *, int)
 
     svm_model *set_model (svm_parameter *, int, char *, cnp.npy_intp *,
-                         char *, cnp.npy_intp *, cnp.npy_intp *, char *,
-                         char *, char *, char *, char *)
+                          char *, cnp.npy_intp *, cnp.npy_intp *, char *,
+                          char *, char *, char *, char *)
 
     void copy_sv_coef   (char *, svm_model *)
     void copy_n_iter  (char *, svm_model *)
