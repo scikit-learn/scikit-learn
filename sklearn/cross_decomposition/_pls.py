@@ -383,7 +383,7 @@ class _PLS(
         self._n_features_out = self.x_rotations_.shape[1]
         return self
 
-    def transform(self, X, Y=None, copy=True):
+    def transform(self, X, y=None, Y=None, copy=True):
         """Apply the dimension reduction.
 
         Parameters
@@ -402,6 +402,17 @@ class _PLS(
         x_scores, y_scores : array-like or tuple of array-like
             Return `x_scores` if `Y` is not given, `(x_scores, y_scores)` otherwise.
         """
+        if Y is not None:
+            warnings.warn(
+                "`Y` is deprecated in 1.5 and will be removed in 1.7. Use `y` instead.",
+                FutureWarning,
+            )
+            if y is not None:
+                raise ValueError(
+                    "Cannot use both `y` and `Y`. Use only `y` as `Y` is deprecated."
+                )
+            y = Y
+
         check_is_fitted(self)
         X = self._validate_data(X, copy=copy, dtype=FLOAT_DTYPES, reset=False)
         # Normalize
@@ -409,15 +420,15 @@ class _PLS(
         X /= self._x_std
         # Apply rotation
         x_scores = np.dot(X, self.x_rotations_)
-        if Y is not None:
-            Y = check_array(
-                Y, input_name="Y", ensure_2d=False, copy=copy, dtype=FLOAT_DTYPES
+        if y is not None:
+            y = check_array(
+                y, input_name="y", ensure_2d=False, copy=copy, dtype=FLOAT_DTYPES
             )
-            if Y.ndim == 1:
-                Y = Y.reshape(-1, 1)
-            Y -= self._y_mean
-            Y /= self._y_std
-            y_scores = np.dot(Y, self.y_rotations_)
+            if y.ndim == 1:
+                y = y.reshape(-1, 1)
+            y -= self._y_mean
+            y /= self._y_std
+            y_scores = np.dot(y, self.y_rotations_)
             return x_scores, y_scores
 
         return x_scores
@@ -792,7 +803,7 @@ class PLSCanonical(_PLS):
     >>> plsca = PLSCanonical(n_components=2)
     >>> plsca.fit(X, y)
     PLSCanonical()
-    >>> X_c, Y_c = plsca.transform(X, y)
+    >>> X_c, y_c = plsca.transform(X, y)
     """
 
     _parameter_constraints: dict = {**_PLS._parameter_constraints}
@@ -1087,7 +1098,7 @@ class PLSSVD(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
         self._n_features_out = self.x_weights_.shape[1]
         return self
 
-    def transform(self, X, Y=None):
+    def transform(self, X, y=None, Y=None):
         """
         Apply the dimensionality reduction.
 
@@ -1106,16 +1117,26 @@ class PLSSVD(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
             The transformed data `X_transformed` if `Y is not None`,
             `(X_transformed, Y_transformed)` otherwise.
         """
+        if Y is not None:
+            warnings.warn(
+                "`Y` is deprecated in 1.5 and will be removed in 1.7. Use `y` instead.",
+                FutureWarning,
+            )
+            if y is not None:
+                raise ValueError(
+                    "Cannot use both `y` and `Y`. Use only `y` as `Y` is deprecated."
+                )
+            y = Y
         check_is_fitted(self)
         X = self._validate_data(X, dtype=np.float64, reset=False)
         Xr = (X - self._x_mean) / self._x_std
         x_scores = np.dot(Xr, self.x_weights_)
-        if Y is not None:
-            Y = check_array(Y, input_name="Y", ensure_2d=False, dtype=np.float64)
-            if Y.ndim == 1:
-                Y = Y.reshape(-1, 1)
-            Yr = (Y - self._y_mean) / self._y_std
-            y_scores = np.dot(Yr, self.y_weights_)
+        if y is not None:
+            y = check_array(y, input_name="y", ensure_2d=False, dtype=np.float64)
+            if y.ndim == 1:
+                y = y.reshape(-1, 1)
+            yr = (y - self._y_mean) / self._y_std
+            y_scores = np.dot(yr, self.y_weights_)
             return x_scores, y_scores
         return x_scores
 

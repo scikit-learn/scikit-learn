@@ -648,7 +648,7 @@ def test_pls_regression_fit_1d_y():
 
 # TODO(1.7): Remove
 @pytest.mark.parametrize("Klass", [PLSRegression, CCA, PLSSVD, PLSCanonical])
-def test_pls_warning_on_deprecated_Y_argument(Klass):
+def test_pls_fit_warning_on_deprecated_Y_argument(Klass):
     # Test warning message is shown when using Y instead of y
 
     d = load_linnerud()
@@ -670,3 +670,25 @@ def test_pls_warning_on_deprecated_Y_argument(Klass):
     err_msg2 = "y is required."
     with pytest.raises(ValueError, match=err_msg2):
         Klass().fit(X)
+
+
+# TODO(1.7): Remove
+@pytest.mark.parametrize("Klass", [PLSRegression, CCA, PLSSVD, PLSCanonical])
+def test_pls_transform_warning_on_deprecated_Y_argument(Klass):
+    # Test warning message is shown when using Y instead of y
+
+    d = load_linnerud()
+    X = d.data
+    Y = d.target
+    y = d.target
+
+    msg = "`Y` is deprecated in 1.5 and will be removed in 1.7. Use `y` instead."
+    with pytest.warns(FutureWarning, match=msg):
+        Klass().fit(X, Y).transform(X=X, Y=Y)
+
+    err_msg1 = "Cannot use both `y` and `Y`. Use only `y` as `Y` is deprecated."
+    with (
+        pytest.warns(FutureWarning, match=msg),
+        pytest.raises(ValueError, match=err_msg1),
+    ):
+        Klass().fit(X, y).transform(X, y, Y)
