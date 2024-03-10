@@ -140,3 +140,9 @@ cdef class Splitter(BaseSplitter):
         float64_t lower_bound,
         float64_t upper_bound
     ) noexcept nogil
+
+cdef void shift_missing_values_to_left_if_required(
+    SplitRecord* best,
+    intp_t[::1] samples,
+    intp_t end,
+) noexcept nogil
