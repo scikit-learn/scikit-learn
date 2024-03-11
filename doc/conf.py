@@ -15,7 +15,6 @@ import re
 import sys
 import warnings
 from datetime import datetime
-from io import StringIO
 from pathlib import Path
 
 from sklearn.externals._packaging.version import parse
@@ -27,6 +26,7 @@ from sklearn.utils._testing import turn_warnings_into_errors
 # absolute, like shown here.
 sys.path.insert(0, os.path.abspath("sphinxext"))
 
+import jinja2
 import sphinx_gallery
 from github_link import make_linkcode_resolve
 from sphinx_gallery.notebook import add_code_cell, add_markdown_cell
@@ -64,7 +64,6 @@ extensions = [
     "sphinx_remove_toctrees",
     "sphinx_design",
     # See sphinxext/
-    "add_toctree_functions",
     "allow_nan_estimators",
     "doi_role",
     "dropdown_anchors",
@@ -316,9 +315,7 @@ html_static_path = ["images", "css", "js"]
 
 # Additional templates that should be rendered to pages, maps page names to
 # template names.
-# TODO: change to html_additional_pages = {"index": "index.html"} so that our landing
-# page template can override the one generated from index.rst
-html_additional_pages = {}
+html_additional_pages = {"index": "index.html"}
 
 # Additional JS files
 html_js_files = ["scripts/dropdown.js"]
@@ -341,7 +338,9 @@ def add_js_css_files(app, pagename, templatename, context, doctree):
     should be used for the ones that are used by multiple pages. All page-specific
     JS and CSS files should be added here instead.
     """
-    if pagename == "install":
+    if pagename == "index":
+        app.add_css_file("styles/index.css")
+    elif pagename == "install":
         app.add_css_file("styles/install.css")
 
 
@@ -719,73 +718,6 @@ def filter_search_index(app, exception):
         f.write(searchindex_text)
 
 
-def generate_min_dependency_table(app):
-    """Generate min dependency table for docs."""
-    from sklearn._min_dependencies import dependent_packages
-
-    # get length of header
-    package_header_len = max(len(package) for package in dependent_packages) + 4
-    version_header_len = len("Minimum Version") + 4
-    tags_header_len = max(len(tags) for _, tags in dependent_packages.values()) + 4
-
-    output = StringIO()
-    output.write(
-        " ".join(
-            ["=" * package_header_len, "=" * version_header_len, "=" * tags_header_len]
-        )
-    )
-    output.write("\n")
-    dependency_title = "Dependency"
-    version_title = "Minimum Version"
-    tags_title = "Purpose"
-
-    output.write(
-        f"{dependency_title:<{package_header_len}} "
-        f"{version_title:<{version_header_len}} "
-        f"{tags_title}\n"
-    )
-
-    output.write(
-        " ".join(
-            ["=" * package_header_len, "=" * version_header_len, "=" * tags_header_len]
-        )
-    )
-    output.write("\n")
-
-    for package, (version, tags) in dependent_packages.items():
-        output.write(
-            f"{package:<{package_header_len}} {version:<{version_header_len}} {tags}\n"
-        )
-
-    output.write(
-        " ".join(
-            ["=" * package_header_len, "=" * version_header_len, "=" * tags_header_len]
-        )
-    )
-    output.write("\n")
-    output = output.getvalue()
-
-    with (Path(".") / "min_dependency_table.rst").open("w") as f:
-        f.write(output)
-
-
-def generate_min_dependency_substitutions(app):
-    """Generate min dependency substitutions for docs."""
-    from sklearn._min_dependencies import dependent_packages
-
-    output = StringIO()
-
-    for package, (version, _) in dependent_packages.items():
-        package = package.capitalize()
-        output.write(f".. |{package}MinVersion| replace:: {version}")
-        output.write("\n")
-
-    output = output.getvalue()
-
-    with (Path(".") / "min_dependency_substitutions.rst").open("w") as f:
-        f.write(output)
-
-
 # Config for sphinx_issues
 
 # we use the issues path for PRs since the issues URL will forward
@@ -801,8 +733,6 @@ def setup(app):
     # do not run the examples when using linkcheck by using a small priority
     # (default priority is 500 and sphinx-gallery using builder-inited event too)
     app.connect("builder-inited", disable_plot_gallery_for_linkcheck, priority=50)
-    app.connect("builder-inited", generate_min_dependency_table)
-    app.connect("builder-inited", generate_min_dependency_substitutions)
 
     # triggered just before the HTML for an individual page is created
     app.connect("html-page-context", add_js_css_files)
@@ -933,3 +863,41 @@ else:
     linkcheck_request_headers = {
         "https://github.com/": {"Authorization": f"token {github_token}"},
     }
+
+# -- Convert .rst.template files to .rst ---------------------------------------
+
+from sklearn._min_dependencies import dependent_packages
+
+# If development build, link to local page in the top navbar; otherwise link to the
+# development version; see https://github.com/scikit-learn/scikit-learn/pull/22550
+if parsed_version.is_devrelease:
+    development_link = "developers/index"
+else:
+    development_link = "https://scikit-learn.org/dev/developers/index.html"
+
+# Define the templates and target files for conversion
+# Each entry is in the format (template name, file name, kwargs for rendering)
+rst_templates = [
+    ("index", "index", {"development_link": development_link}),
+    (
+        "min_dependency_table",
+        "min_dependency_table",
+        {"dependent_packages": dependent_packages},
+    ),
+    (
+        "min_dependency_substitutions",
+        "min_dependency_substitutions",
+        {"dependent_packages": dependent_packages},
+    ),
+]
+
+for rst_template_name, rst_target_name, kwargs in rst_templates:
+    # Read the corresponding template file into jinja2
+    with (Path(".") / f"{rst_template_name}.rst.template").open(
+        "r", encoding="utf-8"
+    ) as f:
+        t = jinja2.Template(f.read())
+
+    # Render the template and write to the target
+    with (Path(".") / f"{rst_target_name}.rst").open("w", encoding="utf-8") as f:
+        f.write(t.render(**kwargs))

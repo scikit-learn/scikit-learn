@@ -663,7 +663,7 @@ orthogonal matching pursuit can approximate the optimum solution vector with a
 fixed number of non-zero elements:
 
 .. math::
-    \underset{w}{\operatorname{arg\,min\,}}  ||y - Xw||_2^2 \text{ subject to } ||w||_0 \leq n_{\text{nonzero\_coefs}}
+    \underset{w}{\operatorname{arg\,min\,}}  ||y - Xw||_2^2 \text{ subject to } ||w||_0 \leq n_{\text{nonzero_coefs}}
 
 Alternatively, orthogonal matching pursuit can target a specific error instead
 of a specific number of non-zero coefficients. This can be expressed as:
@@ -1475,16 +1475,16 @@ estimated only from the determined inliers.
   Each iteration performs the following steps:
 
   1. Select ``min_samples`` random samples from the original data and check
-     whether the set of data is valid (see ``is_data_valid``).
-  2. Fit a model to the random subset (``base_estimator.fit``) and check
-     whether the estimated model is valid (see ``is_model_valid``).
+    whether the set of data is valid (see ``is_data_valid``).
+  2. Fit a model to the random subset (``estimator.fit``) and check
+    whether the estimated model is valid (see ``is_model_valid``).
   3. Classify all data as inliers or outliers by calculating the residuals
-     to the estimated model (``base_estimator.predict(X) - y``) - all data
-     samples with absolute residuals smaller than or equal to the
-     ``residual_threshold`` are considered as inliers.
+    to the estimated model (``estimator.predict(X) - y``) - all data
+    samples with absolute residuals smaller than or equal to the
+    ``residual_threshold`` are considered as inliers.
   4. Save fitted model as best model if number of inlier samples is
-     maximal. In case the current estimated model has the same number of
-     inliers, it is only considered as the best model if it has better score.
+    maximal. In case the current estimated model has the same number of
+    inliers, it is only considered as the best model if it has better score.
 
   These steps are performed either a maximum number of times (``max_trials``) or
   until one of the special stop criteria are met (see ``stop_n_inliers`` and
