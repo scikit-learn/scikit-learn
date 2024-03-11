@@ -6,7 +6,6 @@ hist_gradient_boosting_extension_metadata = {
   '_predictor': {'sources': ['_predictor.pyx']},
   '_bitset': {'sources': ['_bitset.pyx']},
   'common': {'sources': ['common.pyx']},
-  'utils': {'sources': ['utils.pyx']},
 }
 
 foreach ext_name, ext_dict : hist_gradient_boosting_extension_metadata
