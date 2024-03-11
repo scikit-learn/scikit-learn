@@ -251,15 +251,15 @@ def test_average_raises_with_invalid_parameters(
 
 def test_device_raises_if_no_input():
     err_msg = re.escape(
-        "At least one input array expected after filtering with skip_none=True, "
-        "skip_types=[str]. Got none. Original types: []."
+        "At least one input array expected after filtering with remove_none=True, "
+        "remove_types=[str]. Got none. Original types: []."
     )
     with pytest.raises(ValueError, match=err_msg):
         device()
 
     err_msg = re.escape(
-        "At least one input array expected after filtering with skip_none=True, "
-        "skip_types=[str]. Got none. Original types: [NoneType, str]."
+        "At least one input array expected after filtering with remove_none=True, "
+        "remove_types=[str]. Got none. Original types: [NoneType, str]."
     )
     with pytest.raises(ValueError, match=err_msg):
         device(None, "name")

@@ -94,7 +94,7 @@ def _single_array_device(array):
         return array.device
 
 
-def device(*array_list, skip_none=True, skip_types=(str,)):
+def device(*array_list, remove_none=True, remove_types=(str,)):
     """Hardware device where the array data resides on.
 
     If the hardware device is not the same for all arrays, an error is raised.
@@ -104,10 +104,10 @@ def device(*array_list, skip_none=True, skip_types=(str,)):
     *array_list : arrays
         List of array instances from NumPy or an array API compatible library.
 
-    skip_none : bool, default=True
+    remove_none : bool, default=True
         Whether to ignore None objects passed in array_list.
 
-    skip_types : tuple or list, default=(str,)
+    remove_types : tuple or list, default=(str,)
         Types to ignore in array_list.
 
     Returns
@@ -115,11 +115,11 @@ def device(*array_list, skip_none=True, skip_types=(str,)):
     out : device
         `device` object (see the "Device Support" section of the array API spec).
     """
-    array_list = _skip_non_arrays(
-        *array_list, skip_none=skip_none, skip_types=skip_types
+    array_list = _remove_non_arrays(
+        *array_list, remove_none=remove_none, remove_types=remove_types
     )
 
-    # Note that _skip_non_arrays ensures that array_list is not empty.
+    # Note that _remove_non_arrays ensures that array_list is not empty.
     device_ = _single_array_device(array_list[0])
 
     # Note: here we cannot simply use a Python `set` as it requires
@@ -379,7 +379,7 @@ class _NumPyAPIWrapper:
 _NUMPY_API_WRAPPER_INSTANCE = _NumPyAPIWrapper()
 
 
-def _skip_non_arrays(*arrays, skip_none=True, skip_types=(str,)):
+def _remove_non_arrays(*arrays, remove_none=True, remove_types=(str,)):
     """Filter arrays to exclude None and/or specific types.
 
     Raise ValueError if no arrays are left after filtering.
@@ -389,10 +389,10 @@ def _skip_non_arrays(*arrays, skip_none=True, skip_types=(str,)):
     *arrays : array objects
         Array objects.
 
-    skip_none : bool, default=True
+    remove_none : bool, default=True
         Whether to ignore None objects passed in arrays.
 
-    skip_types : tuple or list, default=(str,)
+    remove_types : tuple or list, default=(str,)
         Types to ignore in the arrays.
 
     Returns
@@ -401,24 +401,24 @@ def _skip_non_arrays(*arrays, skip_none=True, skip_types=(str,)):
         List of arrays with None and typoe
     """
     filtered_arrays = []
-    skip_types = tuple(skip_types)
+    remove_types = tuple(remove_types)
     for array in arrays:
-        if skip_none and array is None:
+        if remove_none and array is None:
             continue
-        if isinstance(array, skip_types):
+        if isinstance(array, remove_types):
             continue
         filtered_arrays.append(array)
 
     if not filtered_arrays:
         raise ValueError(
-            f"At least one input array expected after filtering with {skip_none=}, "
-            f"skip_types=[{', '.join(t.__name__ for t in skip_types)}]. Got none. "
+            f"At least one input array expected after filtering with {remove_none=}, "
+            f"remove_types=[{', '.join(t.__name__ for t in remove_types)}]. Got none. "
             f"Original types: [{', '.join(type(a).__name__ for a in arrays)}]."
         )
     return filtered_arrays
 
 
-def get_namespace(*arrays, skip_none=True, skip_types=(str,)):
+def get_namespace(*arrays, remove_none=True, remove_types=(str,)):
     """Get namespace of arrays.
 
     Introspect `arrays` arguments and return their common Array API
@@ -451,10 +451,10 @@ def get_namespace(*arrays, skip_none=True, skip_types=(str,)):
     *arrays : array objects
         Array objects.
 
-    skip_none : bool, default=True
+    remove_none : bool, default=True
         Whether to ignore None objects passed in arrays.
 
-    skip_types : tuple or list, default=(str,)
+    remove_types : tuple or list, default=(str,)
         Types to ignore in the arrays.
 
     Returns
@@ -471,7 +471,9 @@ def get_namespace(*arrays, skip_none=True, skip_types=(str,)):
     if not array_api_dispatch:
         return _NUMPY_API_WRAPPER_INSTANCE, False
 
-    arrays = _skip_non_arrays(*arrays, skip_none=skip_none, skip_types=skip_types)
+    arrays = _remove_non_arrays(
+        *arrays, remove_none=remove_none, remove_types=remove_types
+    )
 
     _check_array_api_dispatch(array_api_dispatch)
 
@@ -593,13 +595,14 @@ def _average(a, axis=None, weights=None, normalize=True, xp=None):
     if weights is not None and xp.isdtype(weights.dtype, "bool"):
         weights = xp.astype(weights, xp.int32)
 
-    for input_array in [a, weights]:
-        if input_array is None:
-            continue
-        if xp.isdtype(input_array.dtype, "complex floating"):
-            raise NotImplementedError(
-                "Complex floating point values are not supported by average."
-            )
+    if xp.isdtype(a.dtype, "complex floating"):
+        raise NotImplementedError(
+            "Complex floating point values are not supported by average."
+        )
+    if weights is not None and xp.isdtype(weights.dtype, "complex floating"):
+        raise NotImplementedError(
+            "Complex floating point values are not supported by average."
+        )
 
     output_dtype = _find_matching_floating_dtype(a, weights, xp=xp)
     a = xp.astype(a, output_dtype)
