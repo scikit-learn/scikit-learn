@@ -891,8 +891,16 @@ def check_array_api_get_precision(name, estimator, array_namespace, device, dtyp
 def test_pca_array_api_compliance(
     estimator, check, array_namespace, device, dtype_name
 ):
+    # Dask doesn't implement slogdet from the Array API
+    # which is used in score/score_samples
+    skip_methods = {"dask.array": ["score", "score_samples"]}
     name = estimator.__class__.__name__
-    check(name, estimator, array_namespace, device=device, dtype_name=dtype_name)
+    kwargs = {}
+    if check is check_array_api_input_and_values:
+        kwargs = {"skip_methods": skip_methods}
+    check(
+        name, estimator, array_namespace, device=device, dtype_name=dtype_name, **kwargs
+    )
 
 
 @pytest.mark.parametrize(

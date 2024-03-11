@@ -9,6 +9,10 @@ import scipy.special as special
 from .._config import get_config
 from .fixes import parse_version
 
+# Dictionary listing the methods to skip
+# testing for, for a certain array api namespace
+_array_api_skip_methods = {"PCA": {"dask.array": ["score", "score_samples"]}}
+
 
 def yield_namespace_device_dtype_combinations():
     """Yield supported namespace, device, dtype tuples for testing.
@@ -577,3 +581,13 @@ def _estimator_with_converted_arrays(estimator, converter):
 def _atol_for_type(dtype):
     """Return the absolute tolerance for a given numpy dtype."""
     return numpy.finfo(dtype).eps * 100
+
+
+def _compute_shape(arr):
+    """
+    When arr has a null shape, force computation on its shape
+    """
+    if hasattr(arr, "compute_chunk_sizes"):
+        # Dask case
+        arr.compute_chunk_sizes()
+    return arr

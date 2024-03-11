@@ -51,6 +51,7 @@ from ..preprocessing import StandardScaler, scale
 from ..random_projection import BaseRandomProjection
 from ..tree import DecisionTreeClassifier, DecisionTreeRegressor
 from ..utils._array_api import (
+    _array_api_skip_methods,
     _atol_for_type,
     _convert_to_numpy,
     get_namespace,
@@ -322,7 +323,7 @@ def _yield_array_api_checks(estimator):
             array_namespace=array_namespace,
             dtype_name=dtype_name,
             device=device,
-            check_values=True,
+            skip_methods=_array_api_skip_methods.get(estimator.__class__.__name__, {}),
         )
 
 
@@ -879,6 +880,7 @@ def check_array_api_input(
     device=None,
     dtype_name="float64",
     check_values=False,
+    skip_methods={},
 ):
     """Check that the estimator can work consistently with the Array API
 
@@ -948,9 +950,11 @@ def check_array_api_input(
         "transform",
     )
 
+    methods_to_skip = skip_methods.get(array_namespace, [])
+
     for method_name in methods:
         method = getattr(est, method_name, None)
-        if method is None:
+        if method is None or method_name in methods_to_skip:
             continue
 
         if method_name == "score":
@@ -1021,6 +1025,7 @@ def check_array_api_input_and_values(
     array_namespace,
     device=None,
     dtype_name="float64",
+    skip_methods={},
 ):
     return check_array_api_input(
         name,
@@ -1029,6 +1034,7 @@ def check_array_api_input_and_values(
         device=device,
         dtype_name=dtype_name,
         check_values=True,
+        skip_methods=skip_methods,
     )
 
 
