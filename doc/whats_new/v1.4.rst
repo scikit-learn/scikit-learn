@@ -30,10 +30,18 @@ Metadata Routing
 Changelog
 ---------
 
+:mod:`sklearn.cross_decomposition`
+..................................
+
+- |Fix| The `coef_` fitted attribute in :class:`cross_decomposition.PLSRegression`
+  now takes into account both the scale of `X` and `Y` when `scale=True`. Note that
+  the previous predicted values were not affected by this bug.
+  :pr:`xxxx` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 :mod:`sklearn.metrics`
 ......................
 
-- |Fix|:class:`metrics.classification_report` now shows only accuracy and not
+- |Fix| :class:`metrics.classification_report` now shows only accuracy and not
   micro-average when input is a subset of labels.
   :pr:`28399` by :user:`Vineet Joshi <vjoshi253>`.
 
