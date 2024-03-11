@@ -176,7 +176,7 @@ def load_svmlight_file(
     To use joblib.Memory to cache the svmlight file::
 
         from joblib import Memory
-        from .datasets import load_svmlight_file
+        from sklearn.datasets import load_svmlight_file
         mem = Memory("./mycache")
 
         @mem.cache
@@ -359,6 +359,23 @@ def load_svmlight_files(
     matrix X_test, it is essential that X_train and X_test have the same
     number of features (X_train.shape[1] == X_test.shape[1]). This may not
     be the case if you load the files individually with load_svmlight_file.
+
+    Examples
+    --------
+    To use joblib.Memory to cache the svmlight file::
+
+        from joblib import Memory
+        from sklearn.datasets import load_svmlight_file
+        mem = Memory("./mycache")
+
+        @mem.cache
+        def get_data():
+            data_train, target_train, data_test, target_test = load_svmlight_files(
+                ["svmlight_file_train", "svmlight_file_test"]
+            )
+            return data_train, target_train, data_test, target_test
+
+        X_train, y_train, X_test, y_test = get_data()
     """
     if (offset != 0 or length > 0) and zero_based == "auto":
         # disable heuristic search to avoid getting inconsistent results on
@@ -509,6 +526,13 @@ def dump_svmlight_file(
 
         .. versionadded:: 0.17
            parameter `multilabel` to support multilabel datasets.
+
+    Examples
+    --------
+    >>> from sklearn.datasets import dump_svmlight_file, make_classification
+    >>> X, y = make_classification(random_state=0)
+    >>> output_file = "my_dataset.svmlight"
+    >>> dump_svmlight_file(X, y, output_file)  # doctest: +SKIP
     """
     if comment is not None:
         # Convert comment string to list of lines in UTF-8.

@@ -10,7 +10,7 @@ dependencies:
   - pip:
     - threadpoolctl
     - pytest
-    - pytest-xdist==2.5.0
+    - pytest-xdist
     - setuptools
     - pytest-cov
     - coverage

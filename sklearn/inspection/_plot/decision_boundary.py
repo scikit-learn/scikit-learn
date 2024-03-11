@@ -2,7 +2,8 @@ import numpy as np
 
 from ...base import is_regressor
 from ...preprocessing import LabelEncoder
-from ...utils import _safe_indexing, check_matplotlib_support
+from ...utils import _safe_indexing
+from ...utils._optional_dependencies import check_matplotlib_support
 from ...utils._response import _get_response_values
 from ...utils.validation import (
     _is_arraylike_not_scalar,
@@ -396,7 +397,7 @@ class DecisionBoundaryDisplay:
         if ylabel is None:
             ylabel = X.columns[1] if hasattr(X, "columns") else ""
 
-        display = DecisionBoundaryDisplay(
+        display = cls(
             xx0=xx0,
             xx1=xx1,
             response=response.reshape(xx0.shape),

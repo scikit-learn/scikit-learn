@@ -96,14 +96,17 @@ Estimators
 - :class:`decomposition.PCA` (with `svd_solver="full"`,
   `svd_solver="randomized"` and `power_iteration_normalizer="QR"`)
 - :class:`discriminant_analysis.LinearDiscriminantAnalysis` (with `solver="svd"`)
+- :class:`preprocessing.KernelCenterer`
 - :class:`preprocessing.Binarizer`
 - :class:`preprocessing.MaxAbsScaler`
 - :class:`preprocessing.MinMaxScaler`
+- :class:`preprocessing.Normalizer`
 
 Metrics
 -------
 
 - :func:`sklearn.metrics.accuracy_score`
+- :func:`sklearn.metrics.r2_score`
 - :func:`sklearn.metrics.zero_one_loss`
 
 Tools
@@ -113,6 +116,22 @@ Tools
 
 Coverage is expected to grow over time. Please follow the dedicated `meta-issue on GitHub
 <https://github.com/scikit-learn/scikit-learn/issues/22352>`_ to track progress.
+
+Type of return values and fitted attributes
+-------------------------------------------
+
+When calling functions or methods with Array API compatible inputs, the
+convention is to return array values of the same array container type and
+device as the input data.
+
+Similarly, when an estimator is fitted with Array API compatible inputs, the
+fitted attributes will be arrays from the same library as the input and stored
+on the same device. The `predict` and `transform` method subsequently expect
+inputs from the same array library and device as the data passed to the `fit`
+method.
+
+Note however that scoring functions that return scalar values return Python
+scalars (typically a `float` instance) instead of an array scalar value.
 
 Common estimator checks
 =======================
