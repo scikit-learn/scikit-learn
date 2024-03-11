@@ -680,6 +680,32 @@ def test_adaboost_regressor_reset_weights():
     # We got an expected result.
     assert mae_10 > mae_500
 
+    # With no_improvement="stop", iterations are stopped similarly to early stopping.
+    # After the iteration where training stops,
+    # the remaining estimator_weights_ will be zero.
+    adaboost_500_rw = AdaBoostRegressor(
+        learning_rate=1.0,
+        estimator=DecisionTreeRegressor(max_depth=3),
+        n_estimators=500,
+        no_improvement="reset_weights",
+        random_state=0,
+    )
+    adaboost_500_rw.fit(data, target)
+
+    adaboost_500_stop = AdaBoostRegressor(
+        learning_rate=1.0,
+        estimator=DecisionTreeRegressor(max_depth=3),
+        n_estimators=500,
+        no_improvement="stop",
+        random_state=0,
+    )
+
+    adaboost_500_stop.fit(data, target)
+
+    n_nonzero_weights = np.count_nonzero(adaboost_500_rw.estimator_weights_)
+    n_nonzero_weights_with_stop = np.count_nonzero(adaboost_500_stop.estimator_weights_)
+    assert n_nonzero_weights > n_nonzero_weights_with_stop
+
 
 def test_adaboost_numerically_stable_feature_importance_with_small_weights():
     """Check that we don't create NaN feature importance with numerically
