@@ -124,9 +124,10 @@ convention is to return array values of the same array container type and
 device as the input data.
 
 Similarly, when an estimator is fitted with Array API compatible inputs, the
-fitted attributes will be of the same type and device as the input data. The
-`predict` and `transform` method subsequently expect inputs from the same type
-of array and device as the data passed to the `fit` method.
+fitted attributes will be arrays from the same library as the input and stored
+on the same device. The `predict` and `transform` method subsequently expect
+inputs from the same array library and device as the data passed to the `fit`
+method.
 
 Note however that scoring functions that return scalar values return Python
 scalars (typically a `float` instance) instead of an array scalar value.
