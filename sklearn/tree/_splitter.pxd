@@ -28,7 +28,8 @@ cdef struct SplitRecord:
     float64_t lower_bound     # Lower bound on value of both children for monotonicity
     float64_t upper_bound     # Upper bound on value of both children for monotonicity
     unsigned char missing_go_to_left  # Controls if missing values go to the left node.
-    intp_t n_missing       # Number of missing values for the feature being split on
+    intp_t n_missing            # Number of missing values for the feature being split on
+    intp_t n_constant_features  # Number of constant features in the split from parent
 
 cdef class Splitter:
     # The splitter searches in the input space for a feature and a threshold
@@ -102,7 +103,6 @@ cdef class Splitter:
         self,
         float64_t impurity,   # Impurity of the node
         SplitRecord* split,
-        intp_t* n_constant_features,
         float64_t lower_bound,
         float64_t upper_bound,
     ) except -1 nogil
