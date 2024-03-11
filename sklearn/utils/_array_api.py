@@ -415,7 +415,7 @@ def _remove_non_arrays(*arrays, remove_none=True, remove_types=(str,)):
     return filtered_arrays
 
 
-def get_namespace(*arrays, remove_none=True, remove_types=(str,)):
+def get_namespace(*arrays, remove_none=True, remove_types=(str,), xp=None):
     """Get namespace of arrays.
 
     Introspect `arrays` arguments and return their common Array API
@@ -454,6 +454,11 @@ def get_namespace(*arrays, remove_none=True, remove_types=(str,)):
     remove_types : tuple or list, default=(str,)
         Types to ignore in the arrays.
 
+    xp : module, default=None
+        Precomputed array namespace module. When passed, typically from a caller
+        that has already performed inspection of its own inputs, skips array
+        namespace inspection.
+
     Returns
     -------
     namespace : module
@@ -467,6 +472,9 @@ def get_namespace(*arrays, remove_none=True, remove_types=(str,)):
     array_api_dispatch = get_config()["array_api_dispatch"]
     if not array_api_dispatch:
         return _NUMPY_API_WRAPPER_INSTANCE, False
+
+    if xp is not None:
+        return xp, True
 
     arrays = _remove_non_arrays(
         *arrays, remove_none=remove_none, remove_types=remove_types
@@ -491,8 +499,7 @@ def get_namespace(*arrays, remove_none=True, remove_types=(str,)):
 
 
 def _expit(X, xp=None):
-    if xp is None:
-        xp = get_namespace(X)
+    xp, _ = get_namespace(X, xp=xp)
     if _is_numpy_namespace(xp):
         return xp.asarray(special.expit(numpy.asarray(X)))
 
@@ -549,8 +556,7 @@ def _average(a, axis=None, weights=None, normalize=True, xp=None):
     only for the common cases needed in scikit-learn.
     """
     input_arrays = [a, weights]
-    if xp is None:
-        xp, _ = get_namespace(*input_arrays)
+    xp, _ = get_namespace(*input_arrays, xp=xp)
 
     device_ = device(*input_arrays)
 
@@ -617,8 +623,7 @@ def _average(a, axis=None, weights=None, normalize=True, xp=None):
 def _nanmin(X, axis=None, xp=None):
     # TODO: refactor once nan-aware reductions are standardized:
     # https://github.com/data-apis/array-api/issues/621
-    if xp is None:
-        xp, _ = get_namespace(X)
+    xp, _ = get_namespace(X, xp=xp)
     if _is_numpy_namespace(xp):
         return xp.asarray(numpy.nanmin(X, axis=axis))
 
@@ -635,8 +640,7 @@ def _nanmin(X, axis=None, xp=None):
 def _nanmax(X, axis=None, xp=None):
     # TODO: refactor once nan-aware reductions are standardized:
     # https://github.com/data-apis/array-api/issues/621
-    if xp is None:
-        xp, _ = get_namespace(X)
+    xp, _ = get_namespace(X, xp=xp)
     if _is_numpy_namespace(xp):
         return xp.asarray(numpy.nanmax(X, axis=axis))
 
@@ -663,8 +667,7 @@ def _asarray_with_order(array, dtype=None, order=None, copy=None, *, xp=None):
     the `order` parameter is only enforced if the input array implementation
     is NumPy based, otherwise `order` is just silently ignored.
     """
-    if xp is None:
-        xp, _ = get_namespace(array)
+    xp, _ = get_namespace(array, xp=xp)
     if _is_numpy_namespace(xp):
         # Use NumPy API to support order
         if copy is True:
