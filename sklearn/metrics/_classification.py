@@ -40,7 +40,6 @@ from ..utils import (
 )
 from ..utils._array_api import (
     _average,
-    _is_numpy_namespace,
     _union1d,
     get_namespace,
 )
@@ -145,32 +144,6 @@ def _check_targets(y_true, y_pred):
     return y_type, y_true, y_pred
 
 
-def _weighted_sum_1d(sample_score, sample_weight, normalize=False, xp=None):
-    """Specialized _array_api._average for the 1D output case.
-
-    Implements numpy-specific variants when the backing data is managed by
-    NumPy and delegates to the generic Array API `_average` function
-    otherwise.
-
-    This function converts the result to a Python `float` to make the result
-    array namespace and device agnostic.
-    """
-    xp, _ = get_namespace(sample_score, sample_weight, xp=xp)
-
-    if not _is_numpy_namespace(xp):
-        return float(_average(sample_score, weights=sample_weight, normalize=normalize))
-
-    # faster, simpler track for numpy namespace, compared to _average.
-    elif normalize:
-        res = np.average(sample_score, weights=sample_weight)
-    elif sample_weight is not None:
-        res = np.dot(sample_score, sample_weight)
-    else:
-        res = np.sum(sample_score)
-
-    return float(res)
-
-
 @validate_params(
     {
         "y_true": ["array-like", "sparse matrix"],
@@ -255,7 +228,7 @@ def accuracy_score(y_true, y_pred, *, normalize=True, sample_weight=None):
     else:
         score = y_true == y_pred
 
-    return _weighted_sum_1d(score, sample_weight, normalize)
+    return float(_average(score, weights=sample_weight, normalize=normalize))
 
 
 @validate_params(
@@ -2840,7 +2813,7 @@ def hamming_loss(y_true, y_pred, *, sample_weight=None):
         return n_differences / (y_true.shape[0] * y_true.shape[1] * weight_average)
 
     elif y_type in ["binary", "multiclass"]:
-        return _weighted_sum_1d(y_true != y_pred, sample_weight, normalize=True)
+        return float(_average(y_true != y_pred, weights=sample_weight, normalize=True))
     else:
         raise ValueError("{0} is not supported".format(y_type))
 
@@ -3025,7 +2998,7 @@ def log_loss(
     y_pred = y_pred / y_pred_sum[:, np.newaxis]
     loss = -xlogy(transformed_labels, y_pred).sum(axis=1)
 
-    return _weighted_sum_1d(loss, sample_weight, normalize)
+    return float(_average(loss, weights=sample_weight, normalize=normalize))
 
 
 @validate_params(

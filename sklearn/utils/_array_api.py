@@ -563,8 +563,11 @@ def _average(a, axis=None, weights=None, normalize=True, xp=None):
 
     device_ = device(*input_arrays)
 
-    if _is_numpy_namespace(xp) and normalize:
-        return xp.asarray(numpy.average(a, axis=axis, weights=weights))
+    if _is_numpy_namespace(xp):
+        if normalize:
+            return xp.asarray(numpy.average(a, axis=axis, weights=weights))
+        elif axis is None and weights is not None:
+            return xp.asarray(numpy.dot(a, weights))
 
     a = xp.asarray(a, device=device_)
     if weights is not None:
