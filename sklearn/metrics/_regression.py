@@ -105,8 +105,7 @@ def _check_reg_targets(y_true, y_pred, multioutput, dtype="numeric", xp=None):
         just the corresponding argument if ``multioutput`` is a
         correct keyword.
     """
-    if xp is None:
-        xp, _ = get_namespace(y_true, y_pred, multioutput)
+    xp, _ = get_namespace(y_true, y_pred, multioutput, xp=xp)
 
     check_consistent_length(y_true, y_pred)
     y_true = check_array(y_true, ensure_2d=False, dtype=dtype)
