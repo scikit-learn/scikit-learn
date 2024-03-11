@@ -585,13 +585,6 @@ def _average(a, axis=None, weights=None, normalize=True, xp=None):
         shape[axis] = a.shape[axis]
         weights = xp.reshape(weights, shape)
 
-    output_dtype = None
-
-    if xp.isdtype(a.dtype, "bool"):
-        a = xp.astype(a, xp.int32)
-    if weights is not None and xp.isdtype(weights.dtype, "bool"):
-        weights = xp.astype(weights, xp.int32)
-
     if xp.isdtype(a.dtype, "complex floating"):
         raise NotImplementedError(
             "Complex floating point values are not supported by average."
