@@ -193,7 +193,11 @@ class LinearDiscriminantAnalysis(
     `transform` method.
 
     .. versionadded:: 0.17
-       *LinearDiscriminantAnalysis*.
+       *LinearDiscriminantAnalysis*. 
+    
+    For a comparison between :class:`~sklearn.discriminant_analysis.LinearDiscriminantAnalysis`
+    and :class:`~sklearn.discriminant_analysis.QuadraticDiscriminantAnalysis`, see
+    :ref:`sphx_glr_auto_examples_classification_plot_lda_qda.py`.
 
     Read more in the :ref:`User Guide <lda_qda>`.
 
@@ -221,6 +225,9 @@ class LinearDiscriminantAnalysis(
 
         This should be left to None if `covariance_estimator` is used.
         Note that shrinkage works only with 'lsqr' and 'eigen' solvers.
+        
+        For an example usage, see
+        :ref:`sphx_glr_auto_examples_classification_plot_lda.py`.
 
     priors : array-like of shape (n_classes,), default=None
         The class prior probabilities. By default, the class proportions are
@@ -231,6 +238,9 @@ class LinearDiscriminantAnalysis(
         dimensionality reduction. If None, will be set to
         min(n_classes - 1, n_features). This parameter only affects the
         `transform` method.
+        
+        For an example usage for dimensionality reduction, see 
+        :ref:`sphx_glr_auto_examples_decomposition_plot_pca_vs_lda.py`.
 
     store_covariance : bool, default=False
         If True, explicitly compute the weighted within-class covariance
@@ -766,6 +776,10 @@ class QuadraticDiscriminantAnalysis(ClassifierMixin, BaseEstimator):
 
     .. versionadded:: 0.17
        *QuadraticDiscriminantAnalysis*
+       
+    For a comparison between :class:`~sklearn.discriminant_analysis.QuadraticDiscriminantAnalysis`
+    and :class:`~sklearn.discriminant_analysis.LinearDiscriminantAnalysis`, see
+    :ref:`sphx_glr_auto_examples_classification_plot_lda_qda.py`.
 
     Read more in the :ref:`User Guide <lda_qda>`.
 
