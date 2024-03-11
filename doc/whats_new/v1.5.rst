@@ -38,6 +38,9 @@ See :ref:`array_api` for more details.
 
 **Classes:**
 
+- :class:`preprocessing.Binarizer` now supports Array API compliant inputs.
+  :pr:`27588` by :user:`Yaroslav Korobko <Tialo>`
+
 Support for building with Meson
 -------------------------------
 
