@@ -394,6 +394,13 @@ class _PLS(
         Y : array-like of shape (n_samples, n_targets), default=None
             Target vectors.
 
+            .. deprecated:: 1.5
+            `Y` is deprecated in 1.5 and will be removed in 1.7. Use `y` instead.
+
+        y : array-like of shape (n_samples, n_targets), default=None
+            Target vectors.
+
+
         copy : bool, default=True
             Whether to copy `X` and `Y`, or perform in-place normalization.
 
@@ -446,13 +453,21 @@ class _PLS(
             New target, where `n_samples` is the number of samples
             and `n_components` is the number of pls components.
 
+            .. deprecated:: 1.5
+            `Y` is deprecated in 1.5 and will be removed in 1.7. Use `y` instead.
+
+        y : array-like of shape (n_samples,) or (n_samples, n_components)
+            New target, where `n_samples` is the number of samples
+            and `n_components` is the number of pls components.
+
+
         Returns
         -------
         X_reconstructed : ndarray of shape (n_samples, n_features)
             Return the reconstructed `X` data.
 
-        Y_reconstructed : ndarray of shape (n_samples, n_targets)
-            Return the reconstructed `X` target. Only returned when `Y` is given.
+        y_reconstructed : ndarray of shape (n_samples, n_targets)
+            Return the reconstructed `X` target. Only returned when `y` is given.
 
         Notes
         -----
@@ -1049,6 +1064,12 @@ class PLSSVD(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
         X : array-like of shape (n_samples, n_features)
             Training samples.
 
+        Y : array-like of shape (n_samples,) or (n_samples, n_targets)
+            Targets.
+
+            .. deprecated:: 1.5
+            `Y` is deprecated in 1.5 and will be removed in 1.7. Use `y` instead.
+
         y : array-like of shape (n_samples,) or (n_samples, n_targets)
             Targets.
 
@@ -1119,6 +1140,13 @@ class PLSSVD(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
             Samples to be transformed.
 
         Y : array-like of shape (n_samples,) or (n_samples, n_targets), \
+                default=None
+            Targets.
+
+            .. deprecated:: 1.5
+            `Y` is deprecated in 1.5 and will be removed in 1.7. Use `y` instead.
+
+        y : array-like of shape (n_samples,) or (n_samples, n_targets), \
                 default=None
             Targets.
 
