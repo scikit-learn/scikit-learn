@@ -250,9 +250,6 @@ class _ArrayAPIWrapper:
     def __eq__(self, other):
         return self._namespace == other._namespace
 
-    def __hash__(self):
-        return hash((self._namespace, "_ArrayAPIWrapper"))
-
     def isdtype(self, dtype, kind):
         return isdtype(dtype, kind, xp=self._namespace)
 
