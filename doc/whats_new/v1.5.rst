@@ -280,6 +280,14 @@ Changelog
   prefix any feature names and will error if feature names are not unique.
   :pr:`25991` by :user:`Jiawei Zhang <jiawei-zhang-a>`.
 
+:mod:`sklearn.preprocessing`
+............................
+
+- |Enhancement| :class:`preprocessing.QuantileTransformer` and
+  :func:`preprocessing.quantile_transform` now supports disabling
+  subsampling explicitly.
+  :pr:`27636` by :user:`Ralph Urlus <rurlus>`.
+
 .. rubric:: Code and documentation contributors
 
 Thanks to everyone who has contributed to the maintenance and improvement of
