@@ -272,6 +272,14 @@ Changelog
   subsampling explicitly.
   :pr:`27636` by :user:`Ralph Urlus <rurlus>`.
 
+..........................
+
+- |Fix| `matthews_corrcoef` behaviour in cases of constant predictions
+  or targets was modified to align with the limit value of the function
+  and avoid returning 0 for perfect predictions.
+  :pr:`28509` by :user:`Noam Keidar <redjest>`.
+
+:mod:`sklearn.pipeline`
 .. rubric:: Code and documentation contributors
 
 Thanks to everyone who has contributed to the maintenance and improvement of
