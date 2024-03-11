@@ -195,7 +195,8 @@ class LinearDiscriminantAnalysis(
     .. versionadded:: 0.17
        *LinearDiscriminantAnalysis*.
 
-    For a comparison between :class:`~sklearn.discriminant_analysis.LinearDiscriminantAnalysis`
+    For a comparison between
+    :class:`~sklearn.discriminant_analysis.LinearDiscriminantAnalysis`
     and :class:`~sklearn.discriminant_analysis.QuadraticDiscriminantAnalysis`, see
     :ref:`sphx_glr_auto_examples_classification_plot_lda_qda.py`.
 
@@ -776,8 +777,9 @@ class QuadraticDiscriminantAnalysis(ClassifierMixin, BaseEstimator):
 
     .. versionadded:: 0.17
        *QuadraticDiscriminantAnalysis*
-       
-    For a comparison between :class:`~sklearn.discriminant_analysis.QuadraticDiscriminantAnalysis`
+
+    For a comparison between 
+    :class:`~sklearn.discriminant_analysis.QuadraticDiscriminantAnalysis`
     and :class:`~sklearn.discriminant_analysis.LinearDiscriminantAnalysis`, see
     :ref:`sphx_glr_auto_examples_classification_plot_lda_qda.py`.
 
