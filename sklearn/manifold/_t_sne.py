@@ -8,6 +8,7 @@
 # * Fast Optimization for t-SNE:
 #   https://cseweb.ucsd.edu/~lvdmaaten/workshops/nips2010/papers/vandermaaten.pdf
 
+import warnings
 from numbers import Integral, Real
 from time import time
 
@@ -27,7 +28,7 @@ from ..metrics.pairwise import _VALID_METRICS, pairwise_distances
 from ..neighbors import NearestNeighbors
 from ..utils import check_random_state
 from ..utils._openmp_helpers import _openmp_effective_n_threads
-from ..utils._param_validation import Interval, StrOptions, validate_params
+from ..utils._param_validation import Hidden, Interval, StrOptions, validate_params
 from ..utils.validation import _num_samples, check_non_negative
 
 # mypy error: Module 'sklearn.manifold' has no attribute '_utils'
@@ -304,7 +305,7 @@ def _gradient_descent(
     objective,
     p0,
     it,
-    n_iter,
+    max_iter,
     n_iter_check=1,
     n_iter_without_progress=300,
     momentum=0.8,
@@ -332,7 +333,7 @@ def _gradient_descent(
         Current number of iterations (this function will be called more than
         once during the optimization).
 
-    n_iter : int
+    max_iter : int
         Maximum number of gradient descent iterations.
 
     n_iter_check : int, default=1
@@ -394,10 +395,10 @@ def _gradient_descent(
     best_iter = i = it
 
     tic = time()
-    for i in range(it, n_iter):
+    for i in range(it, max_iter):
         check_convergence = (i + 1) % n_iter_check == 0
         # only compute the error when needed
-        kwargs["compute_error"] = check_convergence or i == n_iter - 1
+        kwargs["compute_error"] = check_convergence or i == max_iter - 1
 
         error, grad = objective(p, *args, **kwargs)
 
@@ -617,9 +618,12 @@ class TSNE(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
         .. versionchanged:: 1.2
            The default value changed to `"auto"`.
 
-    n_iter : int, default=1000
+    max_iter : int, default=1000
         Maximum number of iterations for the optimization. Should be at
         least 250.
+
+        .. versionchanged:: 1.5
+            Parameter name changed from `n_iter` to `max_iter`.
 
     n_iter_without_progress : int, default=300
         Maximum number of iterations without progress before we abort the
@@ -699,6 +703,14 @@ class TSNE(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
         for more details.
 
         .. versionadded:: 0.22
+
+    n_iter : int
+        Maximum number of iterations for the optimization. Should be at
+        least 250.
+
+        .. deprecated:: 1.5
+            `n_iter` was deprecated in version 1.5 and will be removed in 1.7.
+            Please use `max_iter` instead.
 
     Attributes
     ----------
@@ -784,7 +796,7 @@ class TSNE(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
             StrOptions({"auto"}),
             Interval(Real, 0, None, closed="neither"),
         ],
-        "n_iter": [Interval(Integral, 250, None, closed="left")],
+        "max_iter": [Interval(Integral, 250, None, closed="left"), None],
         "n_iter_without_progress": [Interval(Integral, -1, None, closed="left")],
         "min_grad_norm": [Interval(Real, 0, None, closed="left")],
         "metric": [StrOptions(set(_VALID_METRICS) | {"precomputed"}), callable],
@@ -798,10 +810,14 @@ class TSNE(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
         "method": [StrOptions({"barnes_hut", "exact"})],
         "angle": [Interval(Real, 0, 1, closed="both")],
         "n_jobs": [None, Integral],
+        "n_iter": [
+            Interval(Integral, 250, None, closed="left"),
+            Hidden(StrOptions({"deprecated"})),
+        ],
     }
 
     # Control the number of exploration iterations with early_exaggeration on
-    _EXPLORATION_N_ITER = 250
+    _EXPLORATION_MAX_ITER = 250
 
     # Control the number of iterations between progress checks
     _N_ITER_CHECK = 50
@@ -813,7 +829,7 @@ class TSNE(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
         perplexity=30.0,
         early_exaggeration=12.0,
         learning_rate="auto",
-        n_iter=1000,
+        max_iter=None,  # TODO(1.7): set to 1000
         n_iter_without_progress=300,
         min_grad_norm=1e-7,
         metric="euclidean",
@@ -824,12 +840,13 @@ class TSNE(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
         method="barnes_hut",
         angle=0.5,
         n_jobs=None,
+        n_iter="deprecated",
     ):
         self.n_components = n_components
         self.perplexity = perplexity
         self.early_exaggeration = early_exaggeration
         self.learning_rate = learning_rate
-        self.n_iter = n_iter
+        self.max_iter = max_iter
         self.n_iter_without_progress = n_iter_without_progress
         self.min_grad_norm = min_grad_norm
         self.metric = metric
@@ -840,6 +857,7 @@ class TSNE(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
         self.method = method
         self.angle = angle
         self.n_jobs = n_jobs
+        self.n_iter = n_iter
 
     def _check_params_vs_input(self, X):
         if self.perplexity >= X.shape[0]:
@@ -1057,8 +1075,8 @@ class TSNE(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
             "verbose": self.verbose,
             "kwargs": dict(skip_num_points=skip_num_points),
             "args": [P, degrees_of_freedom, n_samples, self.n_components],
-            "n_iter_without_progress": self._EXPLORATION_N_ITER,
-            "n_iter": self._EXPLORATION_N_ITER,
+            "n_iter_without_progress": self._EXPLORATION_MAX_ITER,
+            "max_iter": self._EXPLORATION_MAX_ITER,
             "momentum": 0.5,
         }
         if self.method == "barnes_hut":
@@ -1085,9 +1103,9 @@ class TSNE(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
         # Learning schedule (part 2): disable early exaggeration and finish
         # optimization with a higher momentum at 0.8
         P /= self.early_exaggeration
-        remaining = self.n_iter - self._EXPLORATION_N_ITER
-        if it < self._EXPLORATION_N_ITER or remaining > 0:
-            opt_args["n_iter"] = self.n_iter
+        remaining = self._max_iter - self._EXPLORATION_MAX_ITER
+        if it < self._EXPLORATION_MAX_ITER or remaining > 0:
+            opt_args["max_iter"] = self._max_iter
             opt_args["it"] = it + 1
             opt_args["momentum"] = 0.8
             opt_args["n_iter_without_progress"] = self.n_iter_without_progress
@@ -1132,6 +1150,28 @@ class TSNE(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
         X_new : ndarray of shape (n_samples, n_components)
             Embedding of the training data in low-dimensional space.
         """
+        # TODO(1.7): remove
+        # Also make sure to change `max_iter` default back to 1000 and deprecate None
+        if self.n_iter != "deprecated":
+            if self.max_iter is not None:
+                raise ValueError(
+                    "Both 'n_iter' and 'max_iter' attributes were set. Attribute"
+                    " 'n_iter' was deprecated in version 1.5 and will be removed in"
+                    " 1.7. To avoid this error, only set the 'max_iter' attribute."
+                )
+            warnings.warn(
+                (
+                    "'n_iter' was renamed to 'max_iter' in version 1.5 and "
+                    "will be removed in 1.7."
+                ),
+                FutureWarning,
+            )
+            self._max_iter = self.n_iter
+        elif self.max_iter is None:
+            self._max_iter = 1000
+        else:
+            self._max_iter = self.max_iter
+
         self._check_params_vs_input(X)
         embedding = self._fit(X)
         self.embedding_ = embedding

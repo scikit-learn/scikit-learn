@@ -1,0 +1,3 @@
+{% for package, (version, _) in dependent_packages.items() -%}
+.. |{{ package|capitalize }}MinVersion| replace:: {{ version }}
+{% endfor %}
