@@ -155,8 +155,7 @@ def _weighted_sum_1d(sample_score, sample_weight, normalize=False, xp=None):
     This function converts the result to a Python `float` to make the result
     array namespace and device agnostic.
     """
-    if xp is None:
-        xp, _ = get_namespace(sample_score, sample_weight)
+    xp, _ = get_namespace(sample_score, sample_weight, xp=xp)
 
     if not _is_numpy_namespace(xp):
         return float(_average(sample_score, weights=sample_weight, normalize=normalize))
