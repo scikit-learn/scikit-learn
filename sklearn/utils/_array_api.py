@@ -471,7 +471,10 @@ def get_namespace(*arrays, remove_none=True, remove_types=(str,), xp=None):
     """
     array_api_dispatch = get_config()["array_api_dispatch"]
     if not array_api_dispatch:
-        return _NUMPY_API_WRAPPER_INSTANCE, False
+        if xp is not None:
+            return xp, False
+        else:
+            return _NUMPY_API_WRAPPER_INSTANCE, False
 
     if xp is not None:
         return xp, True
