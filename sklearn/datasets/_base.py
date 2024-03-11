@@ -67,6 +67,14 @@ def get_data_home(data_home=None) -> str:
     -------
     data_home: str
         The path to scikit-learn data directory.
+
+    Examples
+    --------
+    >>> import os
+    >>> from sklearn.datasets import get_data_home
+    >>> data_home_path = get_data_home()
+    >>> os.path.exists(data_home_path)
+    True
     """
     if data_home is None:
         data_home = environ.get("SCIKIT_LEARN_DATA", join("~", "scikit_learn_data"))
@@ -1226,6 +1234,15 @@ def load_linnerud(*, return_X_y=False, as_frame=False):
         features in `X` and a target in `y` of a given sample.
 
         .. versionadded:: 0.18
+
+    Examples
+    --------
+    >>> from sklearn.datasets import load_linnerud
+    >>> linnerud = load_linnerud()
+    >>> linnerud.data.shape
+    (20, 3)
+    >>> linnerud.target.shape
+    (20, 3)
     """
     data_filename = "linnerud_exercise.csv"
     target_filename = "linnerud_physiological.csv"
