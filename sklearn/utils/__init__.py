@@ -5,6 +5,7 @@ The :mod:`sklearn.utils` module includes various utilities.
 import numbers
 import platform
 import struct
+import sys
 import timeit
 import warnings
 from collections.abc import Sequence
@@ -19,6 +20,7 @@ from . import _joblib, metadata_routing
 from ._bunch import Bunch
 from ._chunking import gen_batches, gen_even_slices
 from ._estimator_html_repr import estimator_html_repr
+from ._mask import safe_mask
 from ._param_validation import Interval, validate_params
 from .class_weight import compute_class_weight, compute_sample_weight
 from .deprecation import deprecated
@@ -28,7 +30,7 @@ from .murmurhash import murmurhash3_32
 from .validation import (
     _is_arraylike_not_scalar,
     _is_pandas_df,
-    _is_polars_df,
+    _is_polars_df_or_series,
     _use_interchange_protocol,
     as_float_array,
     assert_all_finite,
@@ -64,7 +66,6 @@ __all__ = [
     "check_scalar",
     "indexable",
     "check_symmetric",
-    "indices_to_mask",
     "deprecated",
     "parallel_backend",
     "register_parallel_backend",
@@ -76,6 +77,7 @@ __all__ = [
     "Bunch",
     "metadata_routing",
     "safe_sqr",
+    "safe_mask",
     "gen_batches",
     "gen_even_slices",
 ]
@@ -83,88 +85,6 @@ __all__ = [
 IS_PYPY = platform.python_implementation() == "PyPy"
 _IS_32BIT = 8 * struct.calcsize("P") == 32
 _IS_WASM = platform.machine() in ["wasm32", "wasm64"]
-
-
-@validate_params(
-    {
-        "X": ["array-like", "sparse matrix"],
-        "mask": ["array-like"],
-    },
-    prefer_skip_nested_validation=True,
-)
-def safe_mask(X, mask):
-    """Return a mask which is safe to use on X.
-
-    Parameters
-    ----------
-    X : {array-like, sparse matrix}
-        Data on which to apply mask.
-
-    mask : array-like
-        Mask to be used on X.
-
-    Returns
-    -------
-    mask : ndarray
-        Array that is safe to use on X.
-
-    Examples
-    --------
-    >>> from sklearn.utils import safe_mask
-    >>> from scipy.sparse import csr_matrix
-    >>> data = csr_matrix([[1], [2], [3], [4], [5]])
-    >>> condition = [False, True, True, False, True]
-    >>> mask = safe_mask(data, condition)
-    >>> data[mask].toarray()
-    array([[2],
-           [3],
-           [5]])
-    """
-    mask = np.asarray(mask)
-    if np.issubdtype(mask.dtype, np.signedinteger):
-        return mask
-
-    if hasattr(X, "toarray"):
-        ind = np.arange(mask.shape[0])
-        mask = ind[mask]
-    return mask
-
-
-def axis0_safe_slice(X, mask, len_mask):
-    """Return a mask which is safer to use on X than safe_mask.
-
-    This mask is safer than safe_mask since it returns an
-    empty array, when a sparse matrix is sliced with a boolean mask
-    with all False, instead of raising an unhelpful error in older
-    versions of SciPy.
-
-    See: https://github.com/scipy/scipy/issues/5361
-
-    Also note that we can avoid doing the dot product by checking if
-    the len_mask is not zero in _huber_loss_and_gradient but this
-    is not going to be the bottleneck, since the number of outliers
-    and non_outliers are typically non-zero and it makes the code
-    tougher to follow.
-
-    Parameters
-    ----------
-    X : {array-like, sparse matrix}
-        Data on which to apply mask.
-
-    mask : ndarray
-        Mask to be used on X.
-
-    len_mask : int
-        The length of the mask.
-
-    Returns
-    -------
-    mask : ndarray
-        Array that is safe to use on X.
-    """
-    if len_mask != 0:
-        return X[safe_mask(X, mask), :]
-    return np.zeros(shape=(0, X.shape[1]))
 
 
 def _array_indexing(array, key, key_dtype, axis):
@@ -207,12 +127,29 @@ def _polars_indexing(X, key, key_dtype, axis):
     """Indexing X with polars interchange protocol."""
     # Polars behavior is more consistent with lists
     if isinstance(key, np.ndarray):
+        # Convert each element of the array to a Python scalar
         key = key.tolist()
+    elif not (np.isscalar(key) or isinstance(key, slice)):
+        key = list(key)
 
     if axis == 1:
+        # Here we are certain to have a polars DataFrame; which can be indexed with
+        # integer and string scalar, and list of integer, string and boolean
         return X[:, key]
-    else:
-        return X[key]
+
+    if key_dtype == "bool":
+        # Boolean mask can be indexed in the same way for Series and DataFrame (axis=0)
+        return X.filter(key)
+
+    # Integer scalar and list of integer can be indexed in the same way for Series and
+    # DataFrame (axis=0)
+    X_indexed = X[key]
+    if np.isscalar(key) and len(X.shape) == 2:
+        # `X_indexed` is a DataFrame with a single row; we return a Series to be
+        # consistent with pandas
+        pl = sys.modules["polars"]
+        return pl.Series(X_indexed.row(0))
+    return X_indexed
 
 
 def _determine_key_type(key, accept_slice=True):
@@ -353,11 +290,11 @@ def _safe_indexing(X, indices, *, axis=0):
     if axis == 1 and isinstance(X, list):
         raise ValueError("axis=1 is not supported for lists")
 
-    if axis == 1 and hasattr(X, "ndim") and X.ndim != 2:
+    if axis == 1 and hasattr(X, "shape") and len(X.shape) != 2:
         raise ValueError(
-            "'X' should be a 2D NumPy array, 2D sparse matrix or pandas "
+            "'X' should be a 2D NumPy array, 2D sparse matrix or "
             "dataframe when indexing the columns (i.e. 'axis=1'). "
-            "Got {} instead with {} dimension(s).".format(type(X), X.ndim)
+            "Got {} instead with {} dimension(s).".format(type(X), len(X.shape))
         )
 
     if (
@@ -370,10 +307,10 @@ def _safe_indexing(X, indices, *, axis=0):
         )
 
     if hasattr(X, "iloc"):
-        # TODO: we should probably use _is_pandas_df(X) instead but this would
-        # require updating some tests such as test_train_test_split_mock_pandas.
+        # TODO: we should probably use _is_pandas_df_or_series(X) instead but this
+        # would require updating some tests such as test_train_test_split_mock_pandas.
         return _pandas_indexing(X, indices, indices_dtype, axis=axis)
-    elif _is_polars_df(X):
+    elif _is_polars_df_or_series(X):
         return _polars_indexing(X, indices, indices_dtype, axis=axis)
     elif hasattr(X, "shape"):
         return _array_indexing(X, indices, indices_dtype, axis=axis)
@@ -522,7 +459,7 @@ def _get_column_indices_interchange(X_interchange, key, key_dtype):
         "replace": ["boolean"],
         "n_samples": [Interval(numbers.Integral, 1, None, closed="left"), None],
         "random_state": ["random_state"],
-        "stratify": ["array-like", None],
+        "stratify": ["array-like", "sparse matrix", None],
     },
     prefer_skip_nested_validation=True,
 )
@@ -555,8 +492,8 @@ def resample(*arrays, replace=True, n_samples=None, random_state=None, stratify=
         Pass an int for reproducible results across multiple function calls.
         See :term:`Glossary <random_state>`.
 
-    stratify : array-like of shape (n_samples,) or (n_samples, n_outputs), \
-            default=None
+    stratify : {array-like, sparse matrix} of shape (n_samples,) or \
+            (n_samples, n_outputs), default=None
         If not None, data is split in a stratified fashion, using this as
         the class labels.
 
@@ -804,38 +741,6 @@ def _to_object_array(sequence):
     out = np.empty(len(sequence), dtype=object)
     out[:] = sequence
     return out
-
-
-def indices_to_mask(indices, mask_length):
-    """Convert list of indices to boolean mask.
-
-    Parameters
-    ----------
-    indices : list-like
-        List of integers treated as indices.
-    mask_length : int
-        Length of boolean mask to be generated.
-        This parameter must be greater than max(indices).
-
-    Returns
-    -------
-    mask : 1d boolean nd-array
-        Boolean array that is True where indices are present, else False.
-
-    Examples
-    --------
-    >>> from sklearn.utils import indices_to_mask
-    >>> indices = [1, 2 , 3, 4]
-    >>> indices_to_mask(indices, 5)
-    array([False,  True,  True,  True,  True])
-    """
-    if mask_length <= np.max(indices):
-        raise ValueError("mask_length must be greater than max(indices)")
-
-    mask = np.zeros(mask_length, dtype=bool)
-    mask[indices] = True
-
-    return mask
 
 
 def _message_with_time(source, message, time):
