@@ -1,7 +1,7 @@
 .. raw:: html
 
-  <!-- h3 headings on this page are the questions; make them rubric-like -->
   <style>
+    /* h3 headings on this page are the questions; make them rubric-like */
     h3 {
       font-size: 1rem;
       font-weight: bold;
@@ -10,8 +10,17 @@
       border-bottom: 1px solid var(--pst-color-border);
     }
 
+    /* Increase top margin for first question in each section */
     h2 + section > h3 {
-      margin-top: 2.5rem;  /* Increase top margin for first question in each section */
+      margin-top: 2.5rem;
+    }
+
+    /* Remove the backlink styles on the titles */
+    h2 > a.toc-backref,
+    h3 > a.toc-backref {
+      text-decoration: none;
+      color: var(--pst-color-text-base);
+      pointer-events: none;
     }
   </style>
 
@@ -24,6 +33,11 @@ Frequently Asked Questions
 .. currentmodule:: sklearn
 
 Here we try to give some answers to questions that regularly pop up on the mailing list.
+
+.. contents:: Table of Contents
+  :local:
+  :depth: 2
+
 
 About the project
 -----------------
