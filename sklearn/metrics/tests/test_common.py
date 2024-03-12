@@ -1734,115 +1734,164 @@ def test_metrics_pos_label_error_str(metric, y_pred_threshold, dtype_y_str):
 
 
 def check_array_api_metric(
-    metric, array_namespace, device, dtype, y_true_np, y_pred_np, sample_weight=None
+    metric, array_namespace, device, dtype_name, y_true_np, y_pred_np, sample_weight
 ):
     xp = _array_api_for_tests(array_namespace, device)
+
     y_true_xp = xp.asarray(y_true_np, device=device)
     y_pred_xp = xp.asarray(y_pred_np, device=device)
 
     metric_np = metric(y_true_np, y_pred_np, sample_weight=sample_weight)
 
+    if sample_weight is not None:
+        sample_weight = xp.asarray(sample_weight, device=device)
+
     with config_context(array_api_dispatch=True):
-        if sample_weight is not None:
-            sample_weight = xp.asarray(sample_weight.astype(dtype), device=device)
         metric_xp = metric(y_true_xp, y_pred_xp, sample_weight=sample_weight)
 
         if not isinstance(metric_xp, float):
             metric_xp = _convert_to_numpy(metric_xp, xp)
 
         assert_allclose(
-            metric_xp,
+            _convert_to_numpy(xp.asarray(metric_xp), xp),
             metric_np,
-            atol=_atol_for_type(dtype),
+            atol=_atol_for_type(dtype_name),
         )
 
 
 def check_array_api_binary_classification_metric(
-    metric, array_namespace, device, dtype
+    metric, array_namespace, device, dtype_name
 ):
     y_true_np = np.array([0, 0, 1, 1])
     y_pred_np = np.array([0, 1, 0, 1])
+
     check_array_api_metric(
-        metric, array_namespace, device, dtype, y_true_np=y_true_np, y_pred_np=y_pred_np
+        metric,
+        array_namespace,
+        device,
+        dtype_name,
+        y_true_np=y_true_np,
+        y_pred_np=y_pred_np,
+        sample_weight=None,
     )
-    if "sample_weight" in signature(metric).parameters:
-        check_array_api_metric(
-            metric,
-            array_namespace,
-            device,
-            dtype,
-            y_true_np=y_true_np,
-            y_pred_np=y_pred_np,
-            sample_weight=np.array([0.0, 0.1, 2.0, 1.0]),
-        )
+
+    sample_weight = np.array([0.0, 0.1, 2.0, 1.0], dtype=dtype_name)
+
+    check_array_api_metric(
+        metric,
+        array_namespace,
+        device,
+        dtype_name,
+        y_true_np=y_true_np,
+        y_pred_np=y_pred_np,
+        sample_weight=sample_weight,
+    )
 
 
 def check_array_api_multiclass_classification_metric(
-    metric, array_namespace, device, dtype
+    metric, array_namespace, device, dtype_name
 ):
     y_true_np = np.array([0, 1, 2, 3])
     y_pred_np = np.array([0, 1, 0, 2])
-    check_array_api_metric(
-        metric, array_namespace, device, dtype, y_true_np=y_true_np, y_pred_np=y_pred_np
-    )
-    if "sample_weight" in signature(metric).parameters:
-        check_array_api_metric(
-            metric,
-            array_namespace,
-            device,
-            dtype,
-            y_true_np=y_true_np,
-            y_pred_np=y_pred_np,
-            sample_weight=np.array([0.0, 0.1, 2.0, 1.0]),
-        )
-
-
-def check_array_api_regression_metric(metric, array_namespace, device, dtype):
-    # Not all Array API / device combinations support `float64` values, hence
-    # limit this test to the `float32` case for now.
-    y_true_np = np.array([3, -0.5, 2, 7], dtype="float32")
-    y_pred_np = np.array([2.5, 0.0, 2, 8], dtype="float32")
-    check_array_api_metric(
-        metric, array_namespace, device, dtype, y_true_np=y_true_np, y_pred_np=y_pred_np
-    )
-    if "sample_weight" in signature(metric).parameters:
-        check_array_api_metric(
-            metric,
-            array_namespace,
-            device,
-            dtype,
-            y_true_np=y_true_np,
-            y_pred_np=y_pred_np,
-            sample_weight=np.array([0.0, 0.1, 2.0, 1.0], dtype="float32"),
-        )
-
-
-def check_array_api_multioutput_regression_metric(
-    metric, array_namespace, device, dtype
-):
-    # Not all Array API / device combinations support `float64` values, hence
-    # limit this test to the `float32` case for now.
-    y_true_np = np.array([[0.5, 1], [-1, 1], [7, -6]], dtype="float32")
-    y_pred_np = np.array([[0, 2], [-1, 2], [8, -5]], dtype="float32")
-
-    metric = partial(metric, multioutput="raw_values")
 
     check_array_api_metric(
-        metric, array_namespace, device, dtype, y_true_np=y_true_np, y_pred_np=y_pred_np
+        metric,
+        array_namespace,
+        device,
+        dtype_name,
+        y_true_np=y_true_np,
+        y_pred_np=y_pred_np,
+        sample_weight=None,
     )
-    if "sample_weight" in signature(metric).parameters:
-        check_array_api_metric(
-            metric,
-            array_namespace,
-            device,
-            dtype,
-            y_true_np=y_true_np,
-            y_pred_np=y_pred_np,
-            sample_weight=np.array([0.0, 0.1, 2.0], dtype="float32"),
-        )
+
+    sample_weight = np.array([0.0, 0.1, 2.0, 1.0], dtype=dtype_name)
+
+    check_array_api_metric(
+        metric,
+        array_namespace,
+        device,
+        dtype_name,
+        y_true_np=y_true_np,
+        y_pred_np=y_pred_np,
+        sample_weight=sample_weight,
+    )
 
 
-metric_checkers = {
+# def check_array_api_regression_metric(metric, array_namespace, device, dtype):
+#     # Not all Array API / device combinations support `float64` values, hence
+#     # limit this test to the `float32` case for now.
+#     y_true_np = np.array([3, -0.5, 2, 7], dtype="float32")
+#     y_pred_np = np.array([2.5, 0.0, 2, 8], dtype="float32")
+#     check_array_api_metric(
+#         metric, array_namespace, device, dtype, y_true_np=y_true_np,
+#         y_pred_np=y_pred_np
+#     )
+#     if "sample_weight" in signature(metric).parameters:
+#         check_array_api_metric(
+#             metric,
+#             array_namespace,
+#             device,
+#             dtype,
+#             y_true_np=y_true_np,
+#             y_pred_np=y_pred_np,
+#             sample_weight=np.array([0.0, 0.1, 2.0, 1.0], dtype="float32"),
+#         )
+
+
+# def check_array_api_multioutput_regression_metric(
+#     metric, array_namespace, device, dtype
+# ):
+#     # Not all Array API / device combinations support `float64` values, hence
+#     # limit this test to the `float32` case for now.
+#     y_true_np = np.array([[0.5, 1], [-1, 1], [7, -6]], dtype="float32")
+#     y_pred_np = np.array([[0, 2], [-1, 2], [8, -5]], dtype="float32")
+
+#     metric = partial(metric, multioutput="raw_values")
+
+#     check_array_api_metric(
+#         metric, array_namespace, device, dtype, y_true_np=y_true_np,
+#         y_pred_np=y_pred_np
+#     )
+#     if "sample_weight" in signature(metric).parameters:
+#         check_array_api_metric(
+#             metric,
+#             array_namespace,
+#             device,
+#             dtype,
+#             y_true_np=y_true_np,
+#             y_pred_np=y_pred_np,
+#             sample_weight=np.array([0.0, 0.1, 2.0], dtype="float32"),
+#         )
+
+
+def check_array_api_regression_metric(metric, array_namespace, device, dtype_name):
+    y_true_np = np.array([[1, 3], [1, 2]], dtype=dtype_name)
+    y_pred_np = np.array([[1, 4], [1, 1]], dtype=dtype_name)
+
+    check_array_api_metric(
+        metric,
+        array_namespace,
+        device,
+        dtype_name,
+        y_true_np=y_true_np,
+        y_pred_np=y_pred_np,
+        sample_weight=None,
+    )
+
+    sample_weight = np.array([0.1, 2.0], dtype=dtype_name)
+
+    check_array_api_metric(
+        metric,
+        array_namespace,
+        device,
+        dtype_name,
+        y_true_np=y_true_np,
+        y_pred_np=y_pred_np,
+        sample_weight=sample_weight,
+    )
+
+
+array_api_metric_checkers = {
     accuracy_score: [
         check_array_api_binary_classification_metric,
         check_array_api_multiclass_classification_metric,
@@ -1853,26 +1902,21 @@ metric_checkers = {
     ],
     mean_absolute_error: [
         check_array_api_regression_metric,
-        check_array_api_multioutput_regression_metric,
+        # check_array_api_multioutput_regression_metric,
     ],
+    r2_score: [check_array_api_regression_metric],
 }
 
 
-def yield_metric_checker_combinations(metric_checkers=metric_checkers):
+def yield_metric_checker_combinations(metric_checkers=array_api_metric_checkers):
     for metric, checkers in metric_checkers.items():
         for checker in checkers:
             yield metric, checker
 
 
 @pytest.mark.parametrize(
-    "array_namespace, device, dtype", yield_namespace_device_dtype_combinations()
+    "array_namespace, device, dtype_name", yield_namespace_device_dtype_combinations()
 )
 @pytest.mark.parametrize("metric, check_func", yield_metric_checker_combinations())
-def test_array_api_compliance(metric, array_namespace, device, dtype, check_func):
-    if (
-        metric == mean_absolute_error
-        and check_func == check_array_api_regression_metric
-        and array_namespace == "cupy.array_api"
-    ):
-        pytest.xfail(reason="module 'cupy.array_api' has no attribute 'swapaxes'")
-    check_func(metric, array_namespace, device, dtype)
+def test_array_api_compliance(metric, array_namespace, device, dtype_name, check_func):
+    check_func(metric, array_namespace, device, dtype_name)

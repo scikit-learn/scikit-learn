@@ -13,12 +13,13 @@ on:
 jobs:
   publish:
     runs-on: ubuntu-latest
+    environment: publish_pypi
     permissions:
       # IMPORTANT: this permission is mandatory for trusted publishing
       id-token: write
     steps:
     - uses: actions/checkout@v3
-    - uses: actions/setup-python@v4
+    - uses: actions/setup-python@v5
       with:
         python-version: '3.8'
     - name: Install dependencies

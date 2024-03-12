@@ -20,7 +20,6 @@ cirrus_path = Path.cwd() / "build_tools" / "cirrus" / "arm_wheel.yml"
 with cirrus_path.open("r") as f:
     cirrus_config = yaml.safe_load(f)
 
-n_wheels += len(cirrus_config["macos_arm64_wheel_task"]["matrix"])
 n_wheels += len(cirrus_config["linux_arm64_wheel_task"]["matrix"])
 
 dist_files = list(Path("dist").glob("**/*"))

@@ -9,7 +9,7 @@ Release Highlights for scikit-learn 1.3
 We are pleased to announce the release of scikit-learn 1.3! Many bug fixes
 and improvements were added, as well as some new key features. We detail
 below a few of the major features of this release. **For an exhaustive list of
-all the changes**, please refer to the :ref:`release notes <changes_1_3>`.
+all the changes**, please refer to the :ref:`release notes <release_notes_1_3>`.
 
 To install the latest version (with pip)::
 
@@ -88,7 +88,9 @@ enc.encodings_
 # :class:`tree.DecisionTreeRegressor` now support missing values. For each potential
 # threshold on the non-missing data, the splitter will evaluate the split with all the
 # missing values going to the left node or the right node.
-# More details in the :ref:`User Guide <tree_missing_value_support>`.
+# See more details in the :ref:`User Guide <tree_missing_value_support>` or see
+# :ref:`sphx_glr_auto_examples_ensemble_plot_hgbt_regression.py` for a usecase
+# example of this feature in :class:`~ensemble.HistGradientBoostingRegressor`.
 import numpy as np
 from sklearn.tree import DecisionTreeClassifier
 
