@@ -1239,9 +1239,7 @@ def test_scorer_metadata_request(name):
     with pytest.raises(TypeError, match="got unexpected argument"):
         router.validate_metadata(params={"sample_weight": 1}, method="score")
     # make sure `sample_weight` is not routed even if passed.
-    routed_params = router.route_params(
-        params={"sample_weight": 1}, caller="score", parent=name
-    )
+    routed_params = router.route_params(params={"sample_weight": 1}, caller="score")
     assert not routed_params.scorer.score
 
     # make sure putting weighted_scorer in a router requests sample_weight
@@ -1249,9 +1247,7 @@ def test_scorer_metadata_request(name):
         scorer=weighted_scorer, method_mapping="score"
     )
     router.validate_metadata(params={"sample_weight": 1}, method="score")
-    routed_params = router.route_params(
-        params={"sample_weight": 1}, caller="score", parent=name
-    )
+    routed_params = router.route_params(params={"sample_weight": 1}, caller="score")
     assert list(routed_params.scorer.score.keys()) == ["sample_weight"]
 
 

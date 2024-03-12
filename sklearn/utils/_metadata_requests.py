@@ -440,10 +440,6 @@ class MethodMetadataRequest:
             elif alias in args:
                 res[prop] = args[alias]
         if unrequested:
-            # we want to get the parent's class name, except for cases, when the router
-            # is a function
-            if parent.__class__.__name__ != "str":
-                parent = parent.__class__.__name__
             if self.method in COMPOSITE_METHODS:
                 callee_methods = COMPOSITE_METHODS[self.method]
             else:
@@ -1032,7 +1028,7 @@ class MetadataRouter:
         res.update(child_params)
         return res
 
-    def route_params(self, *, caller, params, parent):
+    def route_params(self, *, caller, params):
         """Return the input parameters requested by child objects.
 
         The output of this method is a bunch, which includes the inputs for all
@@ -1051,9 +1047,6 @@ class MetadataRouter:
 
         params : dict
             A dictionary of provided metadata.
-
-        parent : object
-            Parent class object, that routes the metadata.
 
         Returns
         -------
@@ -1075,7 +1068,7 @@ class MetadataRouter:
                 if _caller == caller:
                     res[name][_callee] = router._route_params(
                         params=params,
-                        parent=parent,
+                        parent=self.owner,
                         caller=caller,
                         method=_callee,
                     )
@@ -1607,8 +1600,6 @@ def process_routing(_obj, _method, /, **kwargs):
 
     request_routing = get_routing_for_object(_obj)
     request_routing.validate_metadata(params=kwargs, method=_method)
-    routed_params = request_routing.route_params(
-        params=kwargs, caller=_method, parent=_obj
-    )
+    routed_params = request_routing.route_params(params=kwargs, caller=_method)
 
     return routed_params

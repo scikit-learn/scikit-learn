@@ -169,9 +169,7 @@ class MetaClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
         # we can use provided utility methods to map the given metadata to what
         # is required by the underlying estimator. Here `method` refers to the
         # parent's method, i.e. `fit` in this example.
-        routed_params = request_router.route_params(
-            params=fit_params, caller="fit", parent=self.__class__
-        )
+        routed_params = request_router.route_params(params=fit_params, caller="fit")
 
         # the output has a key for each object's method which is used here,
         # i.e. parent's `fit` method, containing the metadata which should be
@@ -188,7 +186,7 @@ class MetaClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
         request_router.validate_metadata(params=predict_params, method="predict")
         # and then prepare the input to the underlying `predict` method.
         routed_params = request_router.route_params(
-            params=predict_params, caller="predict", parent=self.__class__
+            params=predict_params, caller="predict"
         )
         return self.estimator_.predict(X, **routed_params.estimator.predict)
 
@@ -344,9 +342,7 @@ class RouterConsumerClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimato
         request_router.validate_metadata(params=fit_params, method="fit")
         # we can use provided utility methods to map the given metadata to what
         # is required by the underlying estimator
-        params = request_router.route_params(
-            params=fit_params, caller="fit", parent=self.__class__
-        )
+        params = request_router.route_params(params=fit_params, caller="fit")
         self.estimator_ = clone(self.estimator).fit(X, y, **params.estimator.fit)
         self.classes_ = self.estimator_.classes_
         return self
@@ -357,9 +353,7 @@ class RouterConsumerClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimato
         request_router = get_routing_for_object(self)
         request_router.validate_metadata(params=predict_params, method="predict")
         # and then prepare the input to the underlying ``predict`` method.
-        params = request_router.route_params(
-            params=predict_params, caller="predict", parent=self.__class__
-        )
+        params = request_router.route_params(params=predict_params, caller="predict")
         return self.estimator_.predict(X, **params.estimator.predict)
 
 
