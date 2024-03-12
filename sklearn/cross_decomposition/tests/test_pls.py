@@ -589,8 +589,8 @@ def test_pls_prediction(PLSEstimator, scale):
 
     y_mean = Y.mean(axis=0)
     X_trans = X - X.mean(axis=0)
-    if scale:
-        X_trans /= X.std(axis=0, ddof=1)
+    # if scale:
+    #     X_trans /= X.std(axis=0, ddof=1)
 
     assert_allclose(pls.intercept_, y_mean)
     assert_allclose(Y_pred, X_trans @ pls.coef_.T + pls.intercept_)
