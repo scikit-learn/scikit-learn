@@ -245,7 +245,7 @@ class BayesianGaussianMixture(BaseMixture):
             (n_components, n_features, n_features) if 'full'
 
     converged_ : bool
-        True when convergence was reached in fit(), False otherwise.
+        True when convergence of the best fit of inference was reached, False otherwise.
 
     n_iter_ : int
         Number of step used by the best fit of inference to reach the
