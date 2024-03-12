@@ -221,16 +221,16 @@ class _PLS(
             Training vectors, where `n_samples` is the number of samples and
             `n_features` is the number of predictors.
 
+        y : array-like of shape (n_samples,) or (n_samples, n_targets)
+            Target vectors, where `n_samples` is the number of samples and
+            `n_targets` is the number of response variables.
+
         Y : array-like of shape (n_samples,) or (n_samples, n_targets)
             Target vectors, where `n_samples` is the number of samples and
             `n_targets` is the number of response variables.
 
             .. deprecated:: 1.5
                `Y` is deprecated in 1.5 and will be removed in 1.7. Use `y` instead.
-
-        y : array-like of shape (n_samples,) or (n_samples, n_targets)
-            Target vectors, where `n_samples` is the number of samples and
-            `n_targets` is the number of response variables.
 
         Returns
         -------
@@ -391,15 +391,14 @@ class _PLS(
         X : array-like of shape (n_samples, n_features)
             Samples to transform.
 
+        y : array-like of shape (n_samples, n_targets), default=None
+            Target vectors.
+
         Y : array-like of shape (n_samples, n_targets), default=None
             Target vectors.
 
             .. deprecated:: 1.5
                `Y` is deprecated in 1.5 and will be removed in 1.7. Use `y` instead.
-
-        y : array-like of shape (n_samples, n_targets), default=None
-            Target vectors.
-
 
         copy : bool, default=True
             Whether to copy `X` and `Y`, or perform in-place normalization.
@@ -449,17 +448,16 @@ class _PLS(
             New data, where `n_samples` is the number of samples
             and `n_components` is the number of pls components.
 
+        y : array-like of shape (n_samples,) or (n_samples, n_components)
+            New target, where `n_samples` is the number of samples
+            and `n_components` is the number of pls components.
+
         Y : array-like of shape (n_samples, n_components)
             New target, where `n_samples` is the number of samples
             and `n_components` is the number of pls components.
 
             .. deprecated:: 1.5
                `Y` is deprecated in 1.5 and will be removed in 1.7. Use `y` instead.
-
-        y : array-like of shape (n_samples,) or (n_samples, n_components)
-            New target, where `n_samples` is the number of samples
-            and `n_components` is the number of pls components.
-
 
         Returns
         -------
@@ -695,17 +693,16 @@ class PLSRegression(_PLS):
             Training vectors, where `n_samples` is the number of samples and
             `n_features` is the number of predictors.
 
+        y : array-like of shape (n_samples,) or (n_samples, n_targets)
+            Target vectors, where `n_samples` is the number of samples and
+            `n_targets` is the number of response variables.
+
         Y : array-like of shape (n_samples,) or (n_samples, n_targets)
             Target vectors, where `n_samples` is the number of samples and
             `n_targets` is the number of response variables.
 
             .. deprecated:: 1.5
                `Y` is deprecated in 1.5 and will be removed in 1.7. Use `y` instead.
-
-        y : array-like of shape (n_samples,) or (n_samples, n_targets)
-            Target vectors, where `n_samples` is the number of samples and
-            `n_targets` is the number of response variables.
-
 
         Returns
         -------
@@ -1064,14 +1061,14 @@ class PLSSVD(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
         X : array-like of shape (n_samples, n_features)
             Training samples.
 
+        y : array-like of shape (n_samples,) or (n_samples, n_targets)
+            Targets.
+
         Y : array-like of shape (n_samples,) or (n_samples, n_targets)
             Targets.
 
             .. deprecated:: 1.5
                `Y` is deprecated in 1.5 and will be removed in 1.7. Use `y` instead.
-
-        y : array-like of shape (n_samples,) or (n_samples, n_targets)
-            Targets.
 
         Returns
         -------
@@ -1139,6 +1136,10 @@ class PLSSVD(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
         X : array-like of shape (n_samples, n_features)
             Samples to be transformed.
 
+        y : array-like of shape (n_samples,) or (n_samples, n_targets), \
+                default=None
+            Targets.
+
         Y : array-like of shape (n_samples,) or (n_samples, n_targets), \
                 default=None
             Targets.
@@ -1146,9 +1147,6 @@ class PLSSVD(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
             .. deprecated:: 1.5
                `Y` is deprecated in 1.5 and will be removed in 1.7. Use `y` instead.
 
-        y : array-like of shape (n_samples,) or (n_samples, n_targets), \
-                default=None
-            Targets.
 
         Returns
         -------
