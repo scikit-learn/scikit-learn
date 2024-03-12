@@ -256,8 +256,9 @@ class BayesianGaussianMixture(BaseMixture):
         best fit of inference.
 
     lower_bounds_ : array-like of shape (`n_iter_`,)
-        The list of lower bound values at each iteration of the best fit of
-        EM algorithm.
+        The list of lower bound values on the model evidence from each iteration
+        of the best fit of inference.
+
 
     weight_concentration_prior_ : tuple or float
         The dirichlet concentration of each component on the weight
