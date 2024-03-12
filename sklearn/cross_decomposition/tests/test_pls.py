@@ -589,8 +589,6 @@ def test_pls_prediction(PLSEstimator, scale):
 
     y_mean = Y.mean(axis=0)
     X_trans = X - X.mean(axis=0)
-    # if scale:
-    #     X_trans /= X.std(axis=0, ddof=1)
 
     assert_allclose(pls.intercept_, y_mean)
     assert_allclose(Y_pred, X_trans @ pls.coef_.T + pls.intercept_)
@@ -655,7 +653,7 @@ def test_pls_regression_scaling_coef():
     """
     # handcrafted data where we can predict Y from X with an additional scaling factor
     rng = np.random.RandomState(0)
-    coef = rng.random_integers(0, 3, size=(3, 5)).astype(np.float64)
+    coef = rng.randint(0, 4, size=(3, 5)).astype(np.float64)
     X = rng.randn(30, 5) * 10  # add a variance of 10
     Y = X @ coef.T
 
