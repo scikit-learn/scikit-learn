@@ -1147,7 +1147,6 @@ class PLSSVD(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
             .. deprecated:: 1.5
                `Y` is deprecated in 1.5 and will be removed in 1.7. Use `y` instead.
 
-
         Returns
         -------
         x_scores : array-like or tuple of array-like
