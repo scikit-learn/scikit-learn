@@ -65,13 +65,17 @@ until all samples have labels or no new samples are selected in that iteration.
   * :ref:`sphx_glr_auto_examples_semi_supervised_plot_self_training_varying_threshold.py`
   * :ref:`sphx_glr_auto_examples_semi_supervised_plot_semi_supervised_versus_svm_iris.py`
 
-.. topic:: References
+|details-start|
+**References**
+|details-split|
 
     .. [1] :doi:`"Unsupervised word sense disambiguation rivaling supervised methods"
        <10.3115/981658.981684>`
        David Yarowsky, Proceedings of the 33rd annual meeting on Association for
        Computational Linguistics (ACL '95). Association for Computational Linguistics,
        Stroudsburg, PA, USA, 189-196.
+
+|details-end|
 
 .. _label_propagation:
 
@@ -141,7 +145,9 @@ which can drastically reduce running times.
   * :ref:`sphx_glr_auto_examples_semi_supervised_plot_label_propagation_digits.py`
   * :ref:`sphx_glr_auto_examples_semi_supervised_plot_label_propagation_digits_active_learning.py`
 
-.. topic:: References
+|details-start|
+**References**
+|details-split|
 
     [2] Yoshua Bengio, Olivier Delalleau, Nicolas Le Roux. In Semi-Supervised
     Learning (2006), pp. 193-216
@@ -149,3 +155,5 @@ which can drastically reduce running times.
     [3] Olivier Delalleau, Yoshua Bengio, Nicolas Le Roux. Efficient
     Non-Parametric Function Induction in Semi-Supervised Learning. AISTAT 2005
     https://www.gatsby.ucl.ac.uk/aistats/fullpapers/204.pdf
+
+|details-end|
