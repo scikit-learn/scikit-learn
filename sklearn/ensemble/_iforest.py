@@ -2,9 +2,11 @@
 #          Alexandre Gramfort <alexandre.gramfort@telecom-paristech.fr>
 # License: BSD 3 clause
 
+import threading
 import numbers
 from numbers import Integral, Real
 from warnings import warn
+from joblib import Parallel, delayed
 
 import numpy as np
 from scipy.sparse import issparse
@@ -21,8 +23,34 @@ from ..utils._chunking import get_chunk_n_rows
 from ..utils._param_validation import Interval, RealNotInt, StrOptions
 from ..utils.validation import _num_samples, check_is_fitted
 from ._bagging import BaseBagging
+from ._base import _partition_estimators
 
 __all__ = ["IsolationForest"]
+
+
+def _parallel_compute_tree_depths(
+    tree,
+    X,
+    features,
+    tree_decision_path_lengths,
+    tree_avg_path_lengths,
+    depths,
+    lock,
+):
+    """Parallel computation of isolation tree depth."""
+    if features is None:
+        X_subset = X
+    else:
+        X_subset = X[:, features]
+
+    leaves_index = tree.apply(X_subset, check_input=False)
+
+    with lock:
+        depths += (
+            tree_decision_path_lengths[leaves_index]
+            + tree_avg_path_lengths[leaves_index]
+            - 1.0
+        )
 
 
 class IsolationForest(OutlierMixin, BaseBagging):
@@ -370,6 +398,21 @@ class IsolationForest(OutlierMixin, BaseBagging):
         is_inlier : ndarray of shape (n_samples,)
             For each observation, tells whether or not (+1 or -1) it should
             be considered as an inlier according to the fitted model.
+
+        Notes
+        -----
+        The predict method can be parallelized by setting a joblib context. This
+        inherently does NOT use the ``n_jobs`` parameter initialized in the class,
+        which is used during ``fit``. This is because, predict may actually be faster
+        without parallelization for a small number of samples. The user can set the
+        number of jobs in the joblib context to control the number of parallel jobs.
+
+        .. code-block:: python
+
+            from joblib import parallel_backend
+
+            with parallel_backend('loky', n_jobs=4):
+                model.predict(X)
         """
         check_is_fitted(self)
         decision_func = self.decision_function(X)
@@ -403,6 +446,22 @@ class IsolationForest(OutlierMixin, BaseBagging):
             The anomaly score of the input samples.
             The lower, the more abnormal. Negative scores represent outliers,
             positive scores represent inliers.
+
+        Notes
+        -----
+        The decision_function method can be parallelized by setting a joblib context. This
+        inherently does NOT use the ``n_jobs`` parameter initialized in the class,
+        which is used during ``fit``. This is because, calculating the score may
+        actually be faster without parallelization for a small number of samples.
+        The user can set the number of jobs in the joblib context to control the
+        number of parallel jobs.
+
+        .. code-block:: python
+
+            from joblib import parallel_backend
+
+            with parallel_backend('loky', n_jobs=4):
+                model.decision_function(X)
         """
         # We subtract self.offset_ to make 0 be the threshold value for being
         # an outlier:
@@ -432,6 +491,22 @@ class IsolationForest(OutlierMixin, BaseBagging):
         scores : ndarray of shape (n_samples,)
             The anomaly score of the input samples.
             The lower, the more abnormal.
+
+        Notes
+        -----
+        The score function method can be parallelized by setting a joblib context. This
+        inherently does NOT use the ``n_jobs`` parameter initialized in the class,
+        which is used during ``fit``. This is because, calculating the score may
+        actually be faster without parallelization for a small number of samples.
+        The user can set the number of jobs in the joblib context to control the
+        number of parallel jobs.
+
+        .. code-block:: python
+
+            from joblib import parallel_backend
+
+            with parallel_backend('loky', n_jobs=4):
+                model.score(X)
         """
         # Check data
         X = self._validate_data(X, accept_sparse="csr", dtype=tree_dtype, reset=False)
@@ -493,6 +568,11 @@ class IsolationForest(OutlierMixin, BaseBagging):
 
         subsample_features : bool
             Whether features should be subsampled.
+
+        Returns
+        -------
+        scores : ndarray of shape (n_samples,)
+            The score of each sample in X.
         """
         n_samples = X.shape[0]
 
@@ -500,18 +580,33 @@ class IsolationForest(OutlierMixin, BaseBagging):
 
         average_path_length_max_samples = _average_path_length([self._max_samples])
 
-        for tree_idx, (tree, features) in enumerate(
-            zip(self.estimators_, self.estimators_features_)
-        ):
-            X_subset = X[:, features] if subsample_features else X
+        # Note: allows joblib.parallel_backend to set the number of jobs separately
+        # from the number of n_jobs during fit. This is useful for parallelizing
+        # the computation of the scores, which will not require a high n_jobs.
+        # value for e.g. < 1k samples.
+        n_jobs, _, _ = _partition_estimators(self.n_estimators, None)
 
-            leaves_index = tree.apply(X_subset, check_input=False)
-
-            depths += (
-                self._decision_path_lengths[tree_idx][leaves_index]
-                + self._average_path_length_per_tree[tree_idx][leaves_index]
-                - 1.0
+        lock = threading.Lock()
+        Parallel(
+            n_jobs=n_jobs,
+            verbose=self.verbose,
+            require="sharedmem",
+            **self._parallel_args(),
+        )(
+            delayed(_parallel_compute_tree_depths)(
+                tree,
+                X,
+                features if subsample_features else None,
+                self._decision_path_lengths[tree_idx],
+                self._average_path_length_per_tree[tree_idx],
+                depths,
+                lock,
             )
+            for tree_idx, (tree, features) in enumerate(
+                zip(self.estimators_, self.estimators_features_)
+            )
+        )
+
         denominator = len(self.estimators_) * average_path_length_max_samples
         scores = 2 ** (
             # For a single training sample, denominator and depth are 0.

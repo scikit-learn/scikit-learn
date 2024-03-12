@@ -12,6 +12,8 @@ from unittest.mock import Mock, patch
 import numpy as np
 import pytest
 
+from joblib import parallel_backend, effective_n_jobs
+
 from sklearn.datasets import load_diabetes, load_iris, make_classification
 from sklearn.ensemble import IsolationForest
 from sklearn.ensemble._iforest import _average_path_length
@@ -361,3 +363,31 @@ def test_iforest_sparse_input_float_contamination(sparse_container):
 
     X_decision = iforest.decision_function(X)
     assert (X_decision < 0).sum() / X.shape[0] == pytest.approx(contamination)
+
+
+@pytest.mark.parametrize("contamination", [0.25, "auto"])
+def test_iforest_predict_parallel(global_random_seed, contamination):
+    """Check that `IsolationForest.predict` is parallelized."""
+    # toy sample (the last two samples are outliers)
+    X = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1], [7, 4], [-5, 9]]
+
+    # Test IsolationForest
+    clf = IsolationForest(
+        random_state=global_random_seed, contamination=contamination, n_jobs=None
+    )
+    clf.fit(X)
+    decision_func = -clf.decision_function(X)
+    pred = clf.predict(X)
+
+    # assert detect outliers:
+    assert np.min(decision_func[-2:]) > np.max(decision_func[:-2])
+    assert_array_equal(pred, 6 * [1] + 2 * [-1])
+
+    clf_parallel = IsolationForest(
+        random_state=global_random_seed, contamination=contamination, n_jobs=-1
+    )
+    clf_parallel.fit(X)
+    pred_paralell = clf_parallel.predict(X)
+
+    # assert the same results as non-parallel
+    assert_array_equal(pred, pred_paralell)
