@@ -2793,9 +2793,9 @@ def train_test_split(
     if is_array_api_compliant:
         # For indexing, the data and index arrays need to be of the same type
         # and on the same device.
-        _device = array_api_device(arrays[0])
-        train = xp.asarray(train, device=_device)
-        test = xp.asarray(test, device=_device)
+        device_ = array_api_device(arrays[0])
+        train = xp.asarray(train, device=device_)
+        test = xp.asarray(test, device=device_)
 
     return list(
         chain.from_iterable(

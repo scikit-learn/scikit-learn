@@ -42,7 +42,7 @@ def yield_namespace_device_dtype_combinations(include_numpy_namespaces=True):
         # tests are regular numpy arrays without any "device" attribute.
         "numpy",
         # Stricter NumPy-based Array API implementation. The
-        # array_api_strict.Array instances always a dummy "device" attribute.
+        # array_api_strict.Array instances always have a dummy "device" attribute.
         "array_api_strict",
         "cupy",
         "cupy.array_api",
