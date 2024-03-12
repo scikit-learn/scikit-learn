@@ -169,7 +169,7 @@ Changelog
   :pr:`28102` by :user:`Christian Lorentzen <lorentzenchr>`.
 
 - |Efficiency| :class:`ensemble.IsolationForest` now runs parallel jobs
-  during :term:`predict`. :pr:`14001` by :user:`Adam Li <adam2392>` and
+  during :term:`predict`. :pr:`28622` by :user:`Adam Li <adam2392>` and
   :user:`Sérgio Pereira <sergiormpereira>`.
 
 :mod:`sklearn.feature_extraction`
