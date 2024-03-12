@@ -342,6 +342,13 @@ For bug reports or feature requests, please make use of the
   Please do not email any authors directly to ask for assistance, report bugs,
   or for any other issue related to scikit-learn.
 
+How can I obtain permission to use the images in scikit-learn for my work?
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The images in scikit-learn can be used for your work by complying with the BSD
+3-clause license, which grants permission for usage. Should you use
+scikit-learn, please feel free to :ref:`cite us <citing-scikit-learn>`.
+
 How should I save, export or deploy estimators for production?
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
