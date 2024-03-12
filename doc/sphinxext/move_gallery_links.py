@@ -25,10 +25,6 @@ def move_gallery_links(app, exception):
     if exception is not None:
         return
 
-    # Skip if built without running any examples; e.g. `make html-noplot`
-    if not app.config.sphinx_gallery_conf["plot_gallery"]:
-        return
-
     for gallery_dir in app.config.sphinx_gallery_conf["gallery_dirs"]:
         html_gallery_dir = Path(app.builder.outdir, gallery_dir)
 
