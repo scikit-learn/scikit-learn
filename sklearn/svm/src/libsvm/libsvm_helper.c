@@ -2,6 +2,13 @@
 #include <numpy/arrayobject.h>
 #include "svm.h"
 #include "_svm_cython_blas_helpers.h"
+
+
+#ifndef MAX
+    #define MAX(x, y) (((x) > (y)) ? (x) : (y))
+#endif
+
+
 /*
  * Some helper methods for libsvm bindings.
  *
@@ -128,6 +135,9 @@ struct svm_model *set_model(struct svm_parameter *param, int nr_class,
     if ((model->rho = malloc( m * sizeof(double))) == NULL)
         goto rho_error;
 
+    // This is only allocated in dynamic memory while training.
+    model->n_iter = NULL;
+
     model->nr_class = nr_class;
     model->param = *param;
     model->l = (int) support_dims[0];
@@ -216,6 +226,15 @@ npy_intp get_l(struct svm_model *model)
 npy_intp get_nr(struct svm_model *model)
 {
     return (npy_intp) model->nr_class;
+}
+
+/*
+ * Get the number of iterations run in optimization
+ */
+void copy_n_iter(char *data, struct svm_model *model)
+{
+    const int n_models = MAX(1, model->nr_class * (model->nr_class-1) / 2);
+    memcpy(data, model->n_iter, n_models * sizeof(int));
 }
 
 /*
@@ -363,9 +382,11 @@ int free_model(struct svm_model *model)
     if (model == NULL) return -1;
     free(model->SV);
 
-    /* We don't free sv_ind, since we did not create them in
+    /* We don't free sv_ind and n_iter, since we did not create them in
        set_model */
-    /* free(model->sv_ind); */
+    /* free(model->sv_ind);
+     * free(model->n_iter);
+     */
     free(model->sv_coef);
     free(model->rho);
     free(model->label);
