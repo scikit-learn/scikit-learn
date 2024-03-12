@@ -80,6 +80,12 @@ cdef intp_t _TREE_UNDEFINED = TREE_UNDEFINED
 cdef Node dummy
 NODE_DTYPE = np.asarray(<Node[:1]>(&dummy)).dtype
 
+cdef inline void _init_parent_record(ParentInfo* self) noexcept nogil:
+    self.n_constant_features = 0
+    self.impurity = INFINITY
+    self.lower_bound = -INFINITY
+    self.upper_bound = INFINITY
+
 # =============================================================================
 # TreeBuilder
 # =============================================================================
@@ -207,7 +213,6 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
         cdef SplitRecord split
         cdef intp_t node_id
 
-        cdef float64_t impurity = INFINITY
         cdef float64_t lower_bound
         cdef float64_t upper_bound
         cdef float64_t middle_value
@@ -222,6 +227,8 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
 
         cdef stack[StackRecord] builder_stack
         cdef StackRecord stack_record
+
+        cdef ParentInfo parent_record
 
         with nogil:
             # push root node onto stack
@@ -246,10 +253,10 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
                 depth = stack_record.depth
                 parent = stack_record.parent
                 is_left = stack_record.is_left
-                impurity = stack_record.impurity
-                split.n_constant_features = stack_record.n_constant_features
-                lower_bound = stack_record.lower_bound
-                upper_bound = stack_record.upper_bound
+                parent_record.impurity = stack_record.impurity
+                parent_record.n_constant_features = stack_record.n_constant_features
+                parent_record.lower_bound = stack_record.lower_bound
+                parent_record.upper_bound = stack_record.upper_bound
 
                 n_node_samples = end - start
                 splitter.node_reset(start, end, &weighted_n_node_samples)
@@ -260,18 +267,16 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
                            weighted_n_node_samples < 2 * min_weight_leaf)
 
                 if first:
-                    impurity = splitter.node_impurity()
+                    parent_record.impurity = splitter.node_impurity()
                     first = 0
 
                 # impurity == 0 with tolerance due to rounding errors
-                is_leaf = is_leaf or impurity <= EPSILON
+                is_leaf = is_leaf or parent_record.impurity <= EPSILON
 
                 if not is_leaf:
                     splitter.node_split(
-                        impurity,
+                        &parent_record,
                         &split,
-                        lower_bound,
-                        upper_bound
                     )
                     # If EPSILON=0 in the below comparison, float precision
                     # issues stop splitting, producing trees that are
@@ -281,8 +286,8 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
                                 min_impurity_decrease))
 
                 node_id = tree._add_node(parent, is_left, is_leaf, split.feature,
-                                         split.threshold, impurity, n_node_samples,
-                                         weighted_n_node_samples,
+                                         split.threshold, parent_record.impurity,
+                                         n_node_samples, weighted_n_node_samples,
                                          split.missing_go_to_left)
 
                 if node_id == INTPTR_MAX:
@@ -293,7 +298,7 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
                 # inspection and interpretation
                 splitter.node_value(tree.value + node_id * tree.value_stride)
                 if splitter.with_monotonic_cst:
-                    splitter.clip_node_value(tree.value + node_id * tree.value_stride, lower_bound, upper_bound)
+                    splitter.clip_node_value(tree.value + node_id * tree.value_stride, parent_record.lower_bound, parent_record.upper_bound)
 
                 if not is_leaf:
                     if (
@@ -336,7 +341,7 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
                         "parent": node_id,
                         "is_left": 0,
                         "impurity": split.impurity_right,
-                        "n_constant_features": split.n_constant_features,
+                        "n_constant_features": parent_record.n_constant_features,
                         "lower_bound": right_child_min,
                         "upper_bound": right_child_max,
                     })
@@ -349,7 +354,7 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
                         "parent": node_id,
                         "is_left": 1,
                         "impurity": split.impurity_left,
-                        "n_constant_features": split.n_constant_features,
+                        "n_constant_features": parent_record.n_constant_features,
                         "lower_bound": left_child_min,
                         "upper_bound": left_child_max,
                     })
@@ -456,6 +461,9 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
         cdef int rc = 0
         cdef Node* node
 
+        cdef ParentInfo parent_record
+        parent_record.n_constant_features = 0
+
         # Initial capacity
         cdef intp_t init_capacity = max_split_nodes + max_leaf_nodes
         tree._resize(init_capacity)
@@ -467,13 +475,11 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
                 tree=tree,
                 start=0,
                 end=n_node_samples,
-                impurity=INFINITY,
                 is_first=IS_FIRST,
                 is_left=IS_LEFT,
                 parent=NULL,
                 depth=0,
-                lower_bound=-INFINITY,
-                upper_bound=INFINITY,
+                parent_record=&parent_record,
                 res=&split_node_left,
             )
             if rc >= 0:
@@ -531,18 +537,19 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
                     max_split_nodes -= 1
 
                     # Compute left split node
+                    parent_record.lower_bound = left_child_min
+                    parent_record.upper_bound = left_child_max
+                    parent_record.impurity = record.impurity_left
                     rc = self._add_split_node(
                         splitter=splitter,
                         tree=tree,
                         start=record.start,
                         end=record.pos,
-                        impurity=record.impurity_left,
                         is_first=IS_NOT_FIRST,
                         is_left=IS_LEFT,
                         parent=node,
                         depth=record.depth + 1,
-                        lower_bound=left_child_min,
-                        upper_bound=left_child_max,
+                        parent_record=&parent_record,
                         res=&split_node_left,
                     )
                     if rc == -1:
@@ -552,18 +559,19 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
                     node = &tree.nodes[record.node_id]
 
                     # Compute right split node
+                    parent_record.lower_bound = right_child_min
+                    parent_record.upper_bound = right_child_max
+                    parent_record.impurity = record.impurity_right
                     rc = self._add_split_node(
                         splitter=splitter,
                         tree=tree,
                         start=record.pos,
                         end=record.end,
-                        impurity=record.impurity_right,
                         is_first=IS_NOT_FIRST,
                         is_left=IS_NOT_LEFT,
                         parent=node,
                         depth=record.depth + 1,
-                        lower_bound=right_child_min,
-                        upper_bound=right_child_max,
+                        parent_record=&parent_record,
                         res=&split_node_right,
                     )
                     if rc == -1:
@@ -591,20 +599,17 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
         Tree tree,
         intp_t start,
         intp_t end,
-        float64_t impurity,
         bint is_first,
         bint is_left,
         Node* parent,
         intp_t depth,
-        float64_t lower_bound,
-        float64_t upper_bound,
+        ParentInfo* parent_record,
         FrontierRecord* res
     ) except -1 nogil:
         """Adds node w/ partition ``[start, end)`` to the frontier. """
         cdef SplitRecord split
         cdef intp_t node_id
         cdef intp_t n_node_samples
-        split.n_constant_features = 0
         cdef float64_t min_impurity_decrease = self.min_impurity_decrease
         cdef float64_t weighted_n_node_samples
         cdef bint is_leaf
@@ -612,22 +617,20 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
         splitter.node_reset(start, end, &weighted_n_node_samples)
 
         if is_first:
-            impurity = splitter.node_impurity()
+            parent_record.impurity = splitter.node_impurity()
 
         n_node_samples = end - start
         is_leaf = (depth >= self.max_depth or
                    n_node_samples < self.min_samples_split or
                    n_node_samples < 2 * self.min_samples_leaf or
                    weighted_n_node_samples < 2 * self.min_weight_leaf or
-                   impurity <= EPSILON  # impurity == 0 with tolerance
+                   parent_record.impurity <= EPSILON  # impurity == 0 with tolerance
                    )
 
         if not is_leaf:
             splitter.node_split(
-                impurity,
+                parent_record,
                 &split,
-                lower_bound,
-                upper_bound
             )
             # If EPSILON=0 in the below comparison, float precision issues stop
             # splitting early, producing trees that are dissimilar to v0.18
@@ -638,8 +641,8 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
                                  if parent != NULL
                                  else _TREE_UNDEFINED,
                                  is_left, is_leaf,
-                                 split.feature, split.threshold, impurity, n_node_samples,
-                                 weighted_n_node_samples,
+                                 split.feature, split.threshold, parent_record.impurity,
+                                 n_node_samples, weighted_n_node_samples,
                                  split.missing_go_to_left)
         if node_id == INTPTR_MAX:
             return -1
@@ -647,15 +650,15 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
         # compute values also for split nodes (might become leafs later).
         splitter.node_value(tree.value + node_id * tree.value_stride)
         if splitter.with_monotonic_cst:
-            splitter.clip_node_value(tree.value + node_id * tree.value_stride, lower_bound, upper_bound)
+            splitter.clip_node_value(tree.value + node_id * tree.value_stride, parent_record.lower_bound, parent_record.upper_bound)
 
         res.node_id = node_id
         res.start = start
         res.end = end
         res.depth = depth
-        res.impurity = impurity
-        res.lower_bound = lower_bound
-        res.upper_bound = upper_bound
+        res.impurity = parent_record.impurity
+        res.lower_bound = parent_record.lower_bound
+        res.upper_bound = parent_record.upper_bound
         res.middle_value = splitter.criterion.middle_value()
 
         if not is_leaf:
@@ -671,8 +674,8 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
             res.pos = end
             res.is_leaf = 1
             res.improvement = 0.0
-            res.impurity_left = impurity
-            res.impurity_right = impurity
+            res.impurity_left = parent_record.impurity
+            res.impurity_right = parent_record.impurity
 
         return 0
 
