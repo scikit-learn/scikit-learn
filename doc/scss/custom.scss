@@ -12,6 +12,20 @@ code.literal {
   border: 0;
 }
 
+/* Version switcher */
+
+.version-switcher__menu a.list-group-item.sk-avail-docs-link {
+  display: flex;
+  align-items: center;
+
+  &:after {
+    content: var(--pst-icon-external-link);
+    font: var(--fa-font-solid);
+    font-size: 0.75rem;
+    margin-left: 0.5rem;
+  }
+}
+
 /* Primary sidebar */
 
 .bd-sidebar-primary {
