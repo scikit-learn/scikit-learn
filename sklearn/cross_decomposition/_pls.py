@@ -395,7 +395,7 @@ class _PLS(
             Target vectors.
 
             .. deprecated:: 1.5
-            `Y` is deprecated in 1.5 and will be removed in 1.7. Use `y` instead.
+               `Y` is deprecated in 1.5 and will be removed in 1.7. Use `y` instead.
 
         y : array-like of shape (n_samples, n_targets), default=None
             Target vectors.
@@ -454,7 +454,7 @@ class _PLS(
             and `n_components` is the number of pls components.
 
             .. deprecated:: 1.5
-            `Y` is deprecated in 1.5 and will be removed in 1.7. Use `y` instead.
+               `Y` is deprecated in 1.5 and will be removed in 1.7. Use `y` instead.
 
         y : array-like of shape (n_samples,) or (n_samples, n_components)
             New target, where `n_samples` is the number of samples
@@ -1068,7 +1068,7 @@ class PLSSVD(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
             Targets.
 
             .. deprecated:: 1.5
-            `Y` is deprecated in 1.5 and will be removed in 1.7. Use `y` instead.
+               `Y` is deprecated in 1.5 and will be removed in 1.7. Use `y` instead.
 
         y : array-like of shape (n_samples,) or (n_samples, n_targets)
             Targets.
@@ -1144,7 +1144,7 @@ class PLSSVD(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
             Targets.
 
             .. deprecated:: 1.5
-            `Y` is deprecated in 1.5 and will be removed in 1.7. Use `y` instead.
+               `Y` is deprecated in 1.5 and will be removed in 1.7. Use `y` instead.
 
         y : array-like of shape (n_samples,) or (n_samples, n_targets), \
                 default=None
