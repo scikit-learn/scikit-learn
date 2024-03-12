@@ -434,9 +434,7 @@ See :ref:`array_api` for more details.
   :pr:`27137` by :user:`Edoardo Abati <EdAbati>`;
 - :func:`sklearn.model_selection.train_test_split` in :pr:`26855` by `Tim Head`_;
 - :func:`~utils.multiclass.is_multilabel` in :pr:`27601` by
-  :user:`Yaroslav Korobko <Tialo>`;
-- :func:`sklearn.metrics.mean_absolute_error` :pr:`27736` by :user:`Edoardo Abati <EdAbati>`.
-
+  :user:`Yaroslav Korobko <Tialo>`.
 
 **Classes:**
 
