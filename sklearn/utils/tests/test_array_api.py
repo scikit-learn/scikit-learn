@@ -218,10 +218,10 @@ def test_average_raises_with_wrong_dtype(array_namespace, device, dtype_name):
     )
     array_in = xp.asarray(array_in, device=device)
 
-    err_msg = "Expecting only boolean, integral or real floating values."
+    err_msg = "Complex floating point values are not supported by average."
     with (
         config_context(array_api_dispatch=True),
-        pytest.raises(ValueError, match=err_msg),
+        pytest.raises(NotImplementedError, match=err_msg),
     ):
         _average(array_in)
 
@@ -237,19 +237,28 @@ def test_average_raises_with_wrong_dtype(array_namespace, device, dtype_name):
             None,
             [1, 2],
             TypeError,
-            "Axis must be specified when shapes of a and weights differ.",
+            (
+                r"Axis must be specified when (the )?shapes? of a (\(\d+, \d+\) )?and"
+                r" weights (\(\d+,\) )?differ."
+            ),
         ),
         (
             0,
             [[1, 2]],
             TypeError,
-            "1D weights expected when shapes of a and weights differ.",
+            (
+                r"1D weights expected when (a.shape=\(\d+, \d+\) and"
+                r" weights.shape=\(\d+, \d+\)|shapes of a and weights) differ."
+            ),
         ),
         (
             0,
             [1, 2, 3, 4],
             ValueError,
-            "Length of weights not compatible with specified axis.",
+            (
+                r"Length of weights (\d+ )?not compatible with (specified axis|"
+                r" a.shape=\(\d+, \d+\) and axis=0)."
+            ),
         ),
         (0, [-1, 1], ZeroDivisionError, "Weights sum to zero, can't be normalized"),
     ),
