@@ -81,7 +81,7 @@ evaluated and the best combination is retained.
       of Grid Search coupling parameters from a text documents feature
       extractor (n-gram count vectorizer and TF-IDF transformer) with a
       classifier (here a linear SVM trained with SGD with either elastic
-      net or L2 penalty) using a :class:`pipeline.Pipeline` instance.
+      net or L2 penalty) using a :class:`~sklearn.pipeline.Pipeline` instance.
 
     - See :ref:`sphx_glr_auto_examples_model_selection_plot_nested_cross_validation_iris.py`
       for an example of Grid Search within a cross validation loop on the iris
@@ -135,14 +135,14 @@ variate sample) method to sample a value. A call to the ``rvs`` function should
 provide independent random samples from possible parameter values on
 consecutive calls.
 
-    .. warning::
+.. warning::
 
-        The distributions in ``scipy.stats`` prior to version scipy 0.16
-        do not allow specifying a random state. Instead, they use the global
-        numpy random state, that can be seeded via ``np.random.seed`` or set
-        using ``np.random.set_state``. However, beginning scikit-learn 0.18,
-        the :mod:`sklearn.model_selection` module sets the random state provided
-        by the user if scipy >= 0.16 is also available.
+    The distributions in ``scipy.stats`` prior to version scipy 0.16
+    do not allow specifying a random state. Instead, they use the global
+    numpy random state, that can be seeded via ``np.random.seed`` or set
+    using ``np.random.set_state``. However, beginning scikit-learn 0.18,
+    the :mod:`sklearn.model_selection` module sets the random state provided
+    by the user if scipy >= 0.16 is also available.
 
 For continuous parameters, such as ``C`` above, it is important to specify
 a continuous distribution to take full advantage of the randomization. This way,
@@ -612,7 +612,7 @@ Here, ``<estimator>`` is the parameter name of the nested estimator,
 in this case ``estimator``.
 If the meta-estimator is constructed as a collection of estimators as in
 `pipeline.Pipeline`, then ``<estimator>`` refers to the name of the estimator,
-see :ref:`pipeline_nested_parameters`.  In practice, there can be several
+see :ref:`pipeline_nested_parameters`. In practice, there can be several
 levels of nesting::
 
   >>> from sklearn.pipeline import Pipeline

@@ -1,25 +1,14 @@
 import numpy as np
 import pytest
 
-from sklearn.base import clone
-from sklearn.base import BaseEstimator
-from sklearn.base import TransformerMixin
-
-from sklearn.dummy import DummyRegressor
-
-from sklearn.utils._testing import assert_allclose
-from sklearn.utils._testing import assert_no_warnings
-
-from sklearn.preprocessing import FunctionTransformer
-from sklearn.preprocessing import StandardScaler
-
-from sklearn.pipeline import Pipeline
-
-from sklearn.linear_model import LinearRegression, OrthogonalMatchingPursuit
-
 from sklearn import datasets
-
+from sklearn.base import BaseEstimator, TransformerMixin, clone
 from sklearn.compose import TransformedTargetRegressor
+from sklearn.dummy import DummyRegressor
+from sklearn.linear_model import LinearRegression, OrthogonalMatchingPursuit
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import FunctionTransformer, StandardScaler
+from sklearn.utils._testing import assert_allclose, assert_no_warnings
 
 friedman = datasets.make_friedman1(random_state=0)
 
@@ -48,11 +37,19 @@ def test_transform_target_regressor_error():
         match=r"fit\(\) got an unexpected " "keyword argument 'sample_weight'",
     ):
         regr.fit(X, y, sample_weight=sample_weight)
-    # func is given but inverse_func is not
+
+    # one of (func, inverse_func) is given but the other one is not
     regr = TransformedTargetRegressor(func=np.exp)
     with pytest.raises(
         ValueError,
         match="When 'func' is provided, 'inverse_func' must also be provided",
+    ):
+        regr.fit(X, y)
+
+    regr = TransformedTargetRegressor(inverse_func=np.log)
+    with pytest.raises(
+        ValueError,
+        match="When 'inverse_func' is provided, 'func' must also be provided",
     ):
         regr.fit(X, y)
 

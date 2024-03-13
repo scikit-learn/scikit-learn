@@ -78,6 +78,10 @@
     <p>Hanmin Qin</p>
     </div>
     <div>
+    <a href='https://github.com/OmarManzoor'><img src='https://avatars.githubusercontent.com/u/17495884?v=4' class='avatar' /></a> <br />
+    <p>Omar Salman</p>
+    </div>
+    <div>
     <a href='https://github.com/bthirion'><img src='https://avatars.githubusercontent.com/u/234454?v=4' class='avatar' /></a> <br />
     <p>Bertrand Thirion</p>
     </div>
@@ -92,6 +96,10 @@
     <div>
     <a href='https://github.com/NelleV'><img src='https://avatars.githubusercontent.com/u/184798?v=4' class='avatar' /></a> <br />
     <p>Nelle Varoquaux</p>
+    </div>
+    <div>
+    <a href='https://github.com/Charlie-XIAO'><img src='https://avatars.githubusercontent.com/u/108576690?v=4' class='avatar' /></a> <br />
+    <p>Yao Xiao</p>
     </div>
     <div>
     <a href='https://github.com/rth'><img src='https://avatars.githubusercontent.com/u/630936?v=4' class='avatar' /></a> <br />

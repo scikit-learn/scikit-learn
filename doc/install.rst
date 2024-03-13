@@ -61,7 +61,7 @@ Installing the latest release
          ><span class="sk-expandable" data-packager="pip" data-os="linux">Install python3 and python3-pip using the package manager of the Linux Distribution.</span
          ><span class="sk-expandable" data-packager="conda"
             >Install conda using the <a href="https://docs.conda.io/projects/conda/en/latest/user-guide/install/">Anaconda or miniconda</a>
-             installers or the <a href="https://https://github.com/conda-forge/miniforge#miniforge">miniforge</a> installers
+             installers or the <a href="https://github.com/conda-forge/miniforge#miniforge">miniforge</a> installers
              (no administrator permission required for any of those).</span>
        </div>
 
@@ -69,42 +69,65 @@ Then run:
 
 .. raw:: html
 
-       <div class="highlight"><pre><code
-        ><span class="sk-expandable" data-packager="pip" data-os="linux" data-venv="">python3 -m venv sklearn-venv</span
-        ><span class="sk-expandable" data-packager="pip" data-os="windows" data-venv="">python -m venv sklearn-venv</span
-        ><span class="sk-expandable" data-packager="pip" data-os="mac" data-venv="">python -m venv sklearn-venv</span
-        ><span class="sk-expandable" data-packager="pip" data-os="linux" data-venv="">source sklearn-venv/bin/activate</span
-        ><span class="sk-expandable" data-packager="pip" data-os="mac" data-venv="">source sklearn-venv/bin/activate</span
-        ><span class="sk-expandable" data-packager="pip" data-os="windows" data-venv="">sklearn-venv\Scripts\activate</span
-        ><span class="sk-expandable" data-packager="pip" data-venv="">pip install -U scikit-learn</span
-        ><span class="sk-expandable" data-packager="pip" data-os="mac" data-venv="no">pip install -U scikit-learn</span
-        ><span class="sk-expandable" data-packager="pip" data-os="windows" data-venv="no">pip install -U scikit-learn</span
-        ><span class="sk-expandable" data-packager="pip" data-os="linux" data-venv="no">pip3 install -U scikit-learn</span
-        ><span class="sk-expandable" data-packager="conda">conda create -n sklearn-env -c conda-forge scikit-learn</span
-        ><span class="sk-expandable" data-packager="conda">conda activate sklearn-env</span
-       ></code></pre></div>
+  <div class="highlight">
+    <pre class="sk-expandable" data-packager="pip" data-os="linux" data-venv="no"
+    ><span>pip3 install -U scikit-learn</span></pre>
+
+    <pre class="sk-expandable" data-packager="pip" data-os="windows" data-venv="no"
+    ><span>pip install -U scikit-learn</span></pre>
+
+    <pre class="sk-expandable" data-packager="pip" data-os="mac" data-venv="no"
+    ><span>pip install -U scikit-learn</span></pre>
+
+    <pre class="sk-expandable" data-packager="pip" data-os="linux" data-venv=""
+    ><span>python3 -m venv sklearn-venv</span>
+  <span>source sklearn-venv/bin/activate</span>
+  <span>pip3 install -U scikit-learn</span></pre>
+
+    <pre class="sk-expandable" data-packager="pip" data-os="windows" data-venv=""
+    ><span>python -m venv sklearn-venv</span>
+  <span>sklearn-venv\Scripts\activate</span>
+  <span>pip install -U scikit-learn</span></pre>
+
+    <pre class="sk-expandable" data-packager="pip" data-os="mac" data-venv=""
+    ><span>python -m venv sklearn-venv</span>
+  <span>source sklearn-venv/bin/activate</span>
+  <span>pip install -U scikit-learn</span></pre>
+
+    <pre class="sk-expandable" data-packager="conda"
+    ><span>conda create -n sklearn-env -c conda-forge scikit-learn</span>
+  <span>conda activate sklearn-env</span></pre>
+  </div>
 
 In order to check your installation you can use
 
 .. raw:: html
 
-   <div class="highlight"><pre><code
-      ><span class="sk-expandable" data-packager="pip" data-os="linux" data-venv="no">python3 -m pip show scikit-learn  # to see which version and where scikit-learn is installed</span
-      ><span class="sk-expandable" data-packager="pip" data-os="linux" data-venv="no">python3 -m pip freeze  # to see all packages installed in the active virtualenv</span
-      ><span class="sk-expandable" data-packager="pip" data-os="linux" data-venv="no">python3 -c "import sklearn; sklearn.show_versions()"</span
-      ><span class="sk-expandable" data-packager="pip" data-venv="">python -m pip show scikit-learn  # to see which version and where scikit-learn is installed</span
-      ><span class="sk-expandable" data-packager="pip" data-venv="">python -m pip freeze  # to see all packages installed in the active virtualenv</span
-      ><span class="sk-expandable" data-packager="pip" data-venv="">python -c "import sklearn; sklearn.show_versions()"</span
-      ><span class="sk-expandable" data-packager="pip" data-os="windows" data-venv="no">python -m pip show scikit-learn  # to see which version and where scikit-learn is installed</span
-      ><span class="sk-expandable" data-packager="pip" data-os="windows" data-venv="no">python -m pip freeze  # to see all packages installed in the active virtualenv</span
-      ><span class="sk-expandable" data-packager="pip" data-os="windows" data-venv="no">python -c "import sklearn; sklearn.show_versions()"</span
-      ><span class="sk-expandable" data-packager="pip" data-os="mac" data-venv="no">python -m pip show scikit-learn  # to see which version and where scikit-learn is installed</span
-      ><span class="sk-expandable" data-packager="pip" data-os="mac" data-venv="no">python -m pip freeze  # to see all packages installed in the active virtualenv</span
-      ><span class="sk-expandable" data-packager="pip" data-os="mac" data-venv="no">python -c "import sklearn; sklearn.show_versions()"</span
-      ><span class="sk-expandable" data-packager="conda">conda list scikit-learn  # to see which scikit-learn version is installed</span
-      ><span class="sk-expandable" data-packager="conda">conda list  # to see all packages installed in the active conda environment</span
-      ><span class="sk-expandable" data-packager="conda">python -c "import sklearn; sklearn.show_versions()"</span
-      ></code></pre></div>
+  <div class="highlight">
+    <pre class="sk-expandable" data-packager="pip" data-os="linux" data-venv="no"
+    ><span>python3 -m pip show scikit-learn  # to see which version and where scikit-learn is installed</span>
+  <span>python3 -m pip freeze  # to see all packages installed in the active virtualenv</span>
+  <span>python3 -c "import sklearn; sklearn.show_versions()"</span></pre>
+
+    <pre class="sk-expandable" data-packager="pip" data-os="windows" data-venv="no"
+    ><span>python -m pip show scikit-learn  # to see which version and where scikit-learn is installed</span>
+  <span>python -m pip freeze  # to see all packages installed in the active virtualenv</span>
+  <span>python -c "import sklearn; sklearn.show_versions()"</span></pre>
+
+    <pre class="sk-expandable" data-packager="pip" data-os="mac" data-venv="no"
+    ><span>python -m pip show scikit-learn  # to see which version and where scikit-learn is installed</span>
+  <span>python -m pip freeze  # to see all packages installed in the active virtualenv</span>
+  <span>python -c "import sklearn; sklearn.show_versions()"</span></pre>
+
+    <pre class="sk-expandable" data-packager="pip" data-venv=""
+    ><span>python -m pip show scikit-learn  # to see which version and where scikit-learn is installed</span>
+  <span>python -m pip freeze  # to see all packages installed in the active virtualenv</span>
+  <span>python -c "import sklearn; sklearn.show_versions()"</span></pre>
+
+    <pre class="sk-expandable" data-packager="conda"
+    ><span>conda list scikit-learn  # to see which scikit-learn version is installed</span>
+  <span>conda list  # to see all packages installed in the active conda environment</span>
+  <span>python -c "import sklearn; sklearn.show_versions()"</span></pre>
   </div>
 
 Note that in order to avoid potential conflicts with other packages it is
@@ -144,28 +167,6 @@ purpose.
     Scikit-learn 0.23 - 0.24 require Python 3.6 or newer.
     Scikit-learn 1.0 supported Python 3.7-3.10.
     Scikit-learn 1.1 and later requires Python 3.8 or newer.
-
-
-.. _install_on_apple_silicon_m1:
-
-Installing on Apple Silicon M1 hardware
-=======================================
-
-The recently introduced `macos/arm64` platform (sometimes also known as
-`macos/aarch64`) requires the open source community to upgrade the build
-configuration and automation to properly support it.
-
-At the time of writing (January 2021), the only way to get a working
-installation of scikit-learn on this hardware is to install scikit-learn and its
-dependencies from the conda-forge distribution, for instance using the miniforge
-installers:
-
-https://github.com/conda-forge/miniforge
-
-The following issue tracks progress on making it possible to install
-scikit-learn from PyPI with pip:
-
-https://github.com/scikit-learn/scikit-learn/issues/19137
 
 
 .. _install_by_distribution:
@@ -215,8 +216,8 @@ Debian/Ubuntu
 The Debian/Ubuntu package is split in three different packages called
 ``python3-sklearn`` (python modules), ``python3-sklearn-lib`` (low-level
 implementations and bindings), ``python3-sklearn-doc`` (documentation).
-Only the Python 3 version is available in the Debian Buster (the more recent
-Debian distribution).
+Note that scikit-learn requires Python 3, hence the need to use the `python3-`
+suffixed package names.
 Packages can be installed using ``apt-get``:
 
 .. prompt:: bash $
@@ -228,7 +229,7 @@ Fedora
 ------
 
 The Fedora package is called ``python3-scikit-learn`` for the python 3 version,
-the only one available in Fedora30.
+the only one available in Fedora.
 It can be installed using ``dnf``:
 
 .. prompt:: bash $
@@ -269,26 +270,35 @@ python library for Windows, Mac OSX and Linux.
 Anaconda offers scikit-learn as part of its free distribution.
 
 
-Intel conda channel
--------------------
+Intel Extension for Scikit-learn
+--------------------------------
 
-Intel maintains a dedicated conda channel that ships scikit-learn:
+Intel maintains an optimized x86_64 package, available in PyPI (via `pip`),
+and in the `main`, `conda-forge` and `intel` conda channels:
 
 .. prompt:: bash $
 
-  conda install -c intel scikit-learn
+  conda install scikit-learn-intelex
 
-This version of scikit-learn comes with alternative solvers for some common
-estimators. Those solvers come from the DAAL C++ library and are optimized for
-multi-core Intel CPUs.
+This package has an Intel optimized version of many estimators. Whenever
+an alternative implementation doesn't exist, scikit-learn implementation
+is used as a fallback. Those optimized solvers come from the oneDAL
+C++ library and are optimized for the x86_64 architecture, and are
+optimized for multi-core Intel CPUs.
 
 Note that those solvers are not enabled by default, please refer to the
-`daal4py <https://intelpython.github.io/daal4py/sklearn.html>`_ documentation
-for more details.
+`scikit-learn-intelex <https://intel.github.io/scikit-learn-intelex/latest/what-is-patching.html>`_
+documentation for more details on usage scenarios. Direct export example:
+
+.. prompt:: python >>>
+
+  from sklearnex.neighbors import NearestNeighbors
 
 Compatibility with the standard scikit-learn solvers is checked by running the
 full scikit-learn test suite via automated continuous integration as reported
-on https://github.com/IntelPython/daal4py.
+on https://github.com/intel/scikit-learn-intelex. If you observe any issue
+with `scikit-learn-intelex`, please report the issue on their
+`issue tracker <https://github.com/intel/scikit-learn-intelex/issues>`__.
 
 
 WinPython for Windows
@@ -314,7 +324,7 @@ size limit of Windows if Python is installed in a nested location such as the
     Collecting scikit-learn
     ...
     Installing collected packages: scikit-learn
-    ERROR: Could not install packages due to an EnvironmentError: [Errno 2] No such file or directory: 'C:\\Users\\username\\AppData\\Local\\Packages\\PythonSoftwareFoundation.Python.3.7_qbz5n2kfra8p0\\LocalCache\\local-packages\\Python37\\site-packages\\sklearn\\datasets\\tests\\data\\openml\\292\\api-v1-json-data-list-data_name-australian-limit-2-data_version-1-status-deactivated.json.gz'
+    ERROR: Could not install packages due to an OSError: [Errno 2] No such file or directory: 'C:\\Users\\username\\AppData\\Local\\Packages\\PythonSoftwareFoundation.Python.3.7_qbz5n2kfra8p0\\LocalCache\\local-packages\\Python37\\site-packages\\sklearn\\datasets\\tests\\data\\openml\\292\\api-v1-json-data-list-data_name-australian-limit-2-data_version-1-status-deactivated.json.gz'
 
 In this case it is possible to lift that limit in the Windows registry by
 using the ``regedit`` tool:
@@ -330,6 +340,6 @@ using the ``regedit`` tool:
 
 #. Reinstall scikit-learn (ignoring the previous broken installation):
 
-.. prompt:: python $
+.. prompt:: bash $
 
     pip install --exists-action=i scikit-learn

@@ -74,10 +74,14 @@ by showing the number of samples in each predicted probability bin.
 
 .. currentmodule:: sklearn.linear_model
 
-:class:`LogisticRegression` returns well calibrated predictions by default as it has a
+:class:`LogisticRegression` is more likely to return well calibrated predictions by itself as it has a
 canonical link function for its loss, i.e. the logit-link for the :ref:`log_loss`.
-This leads to the so-called **balance property**, see [8]_ and
-:ref:`Logistic_regression`.
+In the unpenalized case, this leads to the so-called **balance property**, see [8]_ and :ref:`Logistic_regression`.
+In the plot above, data is generated according to a linear mechanism, which is
+consistent with the :class:`LogisticRegression` model (the model is 'well specified'),
+and the value of the regularization parameter `C` is tuned to be
+appropriate (neither too strong nor too low). As a consequence, this model returns
+accurate predictions from its `predict_proba` method.
 In contrast to that, the other shown models return biased probabilities; with
 different biases per model.
 
@@ -241,7 +245,7 @@ there is enough data (greater than ~ 1000 samples) to avoid overfitting [3]_.
     `method="isotonic"` since isotonic regression introduces ties in the predicted
     probabilities. This can be seen as within the uncertainty of the model predictions.
     In case, you strictly want to keep the ranking and thus AUC scores, use
-    `method="logistic"` which is a strictly monotonic transformation and thus keeps
+    `method="sigmoid"` which is a strictly monotonic transformation and thus keeps
     the ranking.
 
 Multiclass support

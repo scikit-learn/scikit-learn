@@ -27,11 +27,12 @@ proportional to (n_samples * iterations).
 # License: BSD 3 clause
 
 from time import time
+
 import matplotlib.pyplot as plt
 
-from sklearn.feature_extraction.text import TfidfVectorizer, CountVectorizer
-from sklearn.decomposition import NMF, MiniBatchNMF, LatentDirichletAllocation
 from sklearn.datasets import fetch_20newsgroups
+from sklearn.decomposition import NMF, LatentDirichletAllocation, MiniBatchNMF
+from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
 
 n_samples = 2000
 n_features = 1000
@@ -45,14 +46,13 @@ def plot_top_words(model, feature_names, n_top_words, title):
     fig, axes = plt.subplots(2, 5, figsize=(30, 15), sharex=True)
     axes = axes.flatten()
     for topic_idx, topic in enumerate(model.components_):
-        top_features_ind = topic.argsort()[: -n_top_words - 1 : -1]
-        top_features = [feature_names[i] for i in top_features_ind]
+        top_features_ind = topic.argsort()[-n_top_words:]
+        top_features = feature_names[top_features_ind]
         weights = topic[top_features_ind]
 
         ax = axes[topic_idx]
         ax.barh(top_features, weights, height=0.7)
         ax.set_title(f"Topic {topic_idx +1}", fontdict={"fontsize": 30})
-        ax.invert_yaxis()
         ax.tick_params(axis="both", which="major", labelsize=20)
         for i in "top right left".split():
             ax.spines[i].set_visible(False)

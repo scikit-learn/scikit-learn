@@ -15,21 +15,20 @@ use a kernel approximation prior to the application of :class:`SGDOneClassSVM`.
 """
 
 from time import time
-import numpy as np
 
+import matplotlib
+import matplotlib.pyplot as plt
+import numpy as np
 from scipy.interpolate import interp1d
 
-from sklearn.metrics import roc_curve, auc
-from sklearn.datasets import fetch_kddcup99, fetch_covtype
-from sklearn.preprocessing import LabelBinarizer, StandardScaler
-from sklearn.pipeline import make_pipeline
-from sklearn.utils import shuffle
+from sklearn.datasets import fetch_covtype, fetch_kddcup99
 from sklearn.kernel_approximation import Nystroem
-from sklearn.svm import OneClassSVM
 from sklearn.linear_model import SGDOneClassSVM
-
-import matplotlib.pyplot as plt
-import matplotlib
+from sklearn.metrics import auc, roc_curve
+from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import LabelBinarizer, StandardScaler
+from sklearn.svm import OneClassSVM
+from sklearn.utils import shuffle
 
 font = {"weight": "normal", "size": 15}
 
@@ -65,7 +64,6 @@ results_libsvm = np.empty((len(datasets), n_axis + 5))
 results_online = np.empty((len(datasets), n_axis + 5))
 
 for dat, dataset_name in enumerate(datasets):
-
     print(dataset_name)
 
     # Loading datasets
@@ -133,7 +131,6 @@ for dat, dataset_name in enumerate(datasets):
     gamma = 1 / n_features  # OCSVM default parameter
 
     for random_state in random_states:
-
         print("random state: %s" % random_state)
 
         X, y = shuffle(X, y, random_state=random_state)

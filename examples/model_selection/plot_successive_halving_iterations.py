@@ -10,16 +10,15 @@ multiple candidates.
 
 """
 
-import pandas as pd
-from sklearn import datasets
 import matplotlib.pyplot as plt
-from scipy.stats import randint
 import numpy as np
+import pandas as pd
+from scipy.stats import randint
 
+from sklearn import datasets
+from sklearn.ensemble import RandomForestClassifier
 from sklearn.experimental import enable_halving_search_cv  # noqa
 from sklearn.model_selection import HalvingRandomSearchCV
-from sklearn.ensemble import RandomForestClassifier
-
 
 # %%
 # We first define the parameter space and train a

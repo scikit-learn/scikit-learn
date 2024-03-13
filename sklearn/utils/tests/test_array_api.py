@@ -1,35 +1,71 @@
-import numpy
-from numpy.testing import assert_array_equal
-import pytest
+import re
+from functools import partial
 
-from sklearn.base import BaseEstimator
-from sklearn.utils._array_api import get_namespace
-from sklearn.utils._array_api import _NumPyApiWrapper
-from sklearn.utils._array_api import _ArrayAPIWrapper
-from sklearn.utils._array_api import _asarray_with_order
-from sklearn.utils._array_api import _convert_to_numpy
-from sklearn.utils._array_api import _estimator_with_converted_arrays
+import numpy
+import pytest
+from numpy.testing import assert_allclose
+
 from sklearn._config import config_context
+from sklearn.base import BaseEstimator
+from sklearn.utils._array_api import (
+    _ArrayAPIWrapper,
+    _asarray_with_order,
+    _atol_for_type,
+    _average,
+    _convert_to_numpy,
+    _estimator_with_converted_arrays,
+    _nanmax,
+    _nanmin,
+    _NumPyAPIWrapper,
+    device,
+    get_namespace,
+    supported_float_dtypes,
+    yield_namespace_device_dtype_combinations,
+)
+from sklearn.utils._testing import (
+    _array_api_for_tests,
+    skip_if_array_api_compat_not_configured,
+)
 
 pytestmark = pytest.mark.filterwarnings(
     "ignore:The numpy.array_api submodule:UserWarning"
 )
 
 
-def test_get_namespace_ndarray():
+@pytest.mark.parametrize("X", [numpy.asarray([1, 2, 3]), [1, 2, 3]])
+def test_get_namespace_ndarray_default(X):
+    """Check that get_namespace returns NumPy wrapper"""
+    xp_out, is_array_api_compliant = get_namespace(X)
+    assert isinstance(xp_out, _NumPyAPIWrapper)
+    assert not is_array_api_compliant
+
+
+def test_get_namespace_ndarray_creation_device():
+    """Check expected behavior with device and creation functions."""
+    X = numpy.asarray([1, 2, 3])
+    xp_out, _ = get_namespace(X)
+
+    full_array = xp_out.full(10, fill_value=2.0, device="cpu")
+    assert_allclose(full_array, [2.0] * 10)
+
+    with pytest.raises(ValueError, match="Unsupported device"):
+        xp_out.zeros(10, device="cuda")
+
+
+@skip_if_array_api_compat_not_configured
+def test_get_namespace_ndarray_with_dispatch():
     """Test get_namespace on NumPy ndarrays."""
-    pytest.importorskip("numpy.array_api")
+    array_api_compat = pytest.importorskip("array_api_compat")
 
     X_np = numpy.asarray([[1, 2, 3]])
 
-    # Dispatching on Numpy regardless or the value of array_api_dispatch.
-    for array_api_dispatch in [True, False]:
-        with config_context(array_api_dispatch=array_api_dispatch):
-            xp_out, is_array_api = get_namespace(X_np)
-            assert not is_array_api
-            assert isinstance(xp_out, _NumPyApiWrapper)
+    with config_context(array_api_dispatch=True):
+        xp_out, is_array_api_compliant = get_namespace(X_np)
+        assert is_array_api_compliant
+        assert xp_out is array_api_compat.numpy
 
 
+@skip_if_array_api_compat_not_configured
 def test_get_namespace_array_api():
     """Test get_namespace for ArrayAPI arrays."""
     xp = pytest.importorskip("numpy.array_api")
@@ -37,16 +73,12 @@ def test_get_namespace_array_api():
     X_np = numpy.asarray([[1, 2, 3]])
     X_xp = xp.asarray(X_np)
     with config_context(array_api_dispatch=True):
-        xp_out, is_array_api = get_namespace(X_xp)
-        assert is_array_api
+        xp_out, is_array_api_compliant = get_namespace(X_xp)
+        assert is_array_api_compliant
         assert isinstance(xp_out, _ArrayAPIWrapper)
 
-        # check errors
-        with pytest.raises(ValueError, match="Multiple namespaces"):
-            get_namespace(X_np, X_xp)
-
-        with pytest.raises(ValueError, match="Unrecognized array input"):
-            get_namespace(1)
+        with pytest.raises(TypeError):
+            xp_out, is_array_api_compliant = get_namespace(X_xp, X_np)
 
 
 class _AdjustableNameAPITestWrapper(_ArrayAPIWrapper):
@@ -71,58 +103,13 @@ def test_array_api_wrapper_astype():
     assert X_converted.dtype == xp.float32
 
 
-def test_array_api_wrapper_take_for_numpy_api():
-    """Test that fast path is called for numpy.array_api."""
-    numpy_array_api = pytest.importorskip("numpy.array_api")
-    # USe the same name as numpy.array_api
-    xp_ = _AdjustableNameAPITestWrapper(numpy_array_api, "numpy.array_api")
-    xp = _ArrayAPIWrapper(xp_)
-
-    X = xp.asarray(([[1, 2, 3], [3, 4, 5]]), dtype=xp.float64)
-    X_take = xp.take(X, xp.asarray([1]), axis=0)
-    assert hasattr(X_take, "__array_namespace__")
-    assert_array_equal(X_take, numpy.take(X, [1], axis=0))
-
-
-def test_array_api_wrapper_take():
-    """Test _ArrayAPIWrapper API for take."""
-    numpy_array_api = pytest.importorskip("numpy.array_api")
-    xp_ = _AdjustableNameAPITestWrapper(numpy_array_api, "wrapped_numpy.array_api")
-    xp = _ArrayAPIWrapper(xp_)
-
-    # Check take compared to NumPy's with axis=0
-    X_1d = xp.asarray([1, 2, 3], dtype=xp.float64)
-    X_take = xp.take(X_1d, xp.asarray([1]), axis=0)
-    assert hasattr(X_take, "__array_namespace__")
-    assert_array_equal(X_take, numpy.take(X_1d, [1], axis=0))
-
-    X = xp.asarray(([[1, 2, 3], [3, 4, 5]]), dtype=xp.float64)
-    X_take = xp.take(X, xp.asarray([0]), axis=0)
-    assert hasattr(X_take, "__array_namespace__")
-    assert_array_equal(X_take, numpy.take(X, [0], axis=0))
-
-    # Check take compared to NumPy's with axis=1
-    X_take = xp.take(X, xp.asarray([0, 2]), axis=1)
-    assert hasattr(X_take, "__array_namespace__")
-    assert_array_equal(X_take, numpy.take(X, [0, 2], axis=1))
-
-    with pytest.raises(ValueError, match=r"Only axis in \(0, 1\) is supported"):
-        xp.take(X, xp.asarray([0]), axis=2)
-
-    with pytest.raises(ValueError, match=r"Only X.ndim in \(1, 2\) is supported"):
-        xp.take(xp.asarray([[[0]]]), xp.asarray([0]), axis=0)
-
-
-@pytest.mark.parametrize("is_array_api", [True, False])
-def test_asarray_with_order(is_array_api):
+@pytest.mark.parametrize("array_api", ["numpy", "numpy.array_api"])
+def test_asarray_with_order(array_api):
     """Test _asarray_with_order passes along order for NumPy arrays."""
-    if is_array_api:
-        xp = pytest.importorskip("numpy.array_api")
-    else:
-        xp = numpy
+    xp = pytest.importorskip(array_api)
 
     X = xp.asarray([1.2, 3.4, 5.1])
-    X_new = _asarray_with_order(X, order="F")
+    X_new = _asarray_with_order(X, order="F", xp=xp)
 
     X_new_np = numpy.asarray(X_new)
     assert X_new_np.flags["F_CONTIGUOUS"]
@@ -143,15 +130,253 @@ def test_asarray_with_order_ignored():
     assert not X_new_np.flags["F_CONTIGUOUS"]
 
 
-def test_convert_to_numpy_error():
-    """Test convert to numpy errors for unsupported namespaces."""
-    xp = pytest.importorskip("numpy.array_api")
-    xp_ = _AdjustableNameAPITestWrapper(xp, "wrapped.array_api")
+@pytest.mark.parametrize(
+    "array_namespace, device, dtype_name", yield_namespace_device_dtype_combinations()
+)
+@pytest.mark.parametrize(
+    "weights, axis, normalize, expected",
+    [
+        # normalize = True
+        (None, None, True, 3.5),
+        (None, 0, True, [2.5, 3.5, 4.5]),
+        (None, 1, True, [2, 5]),
+        ([True, False], 0, True, [1, 2, 3]),  # boolean weights
+        ([True, True, False], 1, True, [1.5, 4.5]),  # boolean weights
+        ([0.4, 0.1], 0, True, [1.6, 2.6, 3.6]),
+        ([0.4, 0.2, 0.2], 1, True, [1.75, 4.75]),
+        ([1, 2], 0, True, [3, 4, 5]),
+        ([1, 1, 2], 1, True, [2.25, 5.25]),
+        ([[1, 2, 3], [1, 2, 3]], 0, True, [2.5, 3.5, 4.5]),
+        ([[1, 2, 1], [2, 2, 2]], 1, True, [2, 5]),
+        # normalize = False
+        (None, None, False, 21),
+        (None, 0, False, [5, 7, 9]),
+        (None, 1, False, [6, 15]),
+        ([True, False], 0, False, [1, 2, 3]),  # boolean weights
+        ([True, True, False], 1, False, [3, 9]),  # boolean weights
+        ([0.4, 0.1], 0, False, [0.8, 1.3, 1.8]),
+        ([0.4, 0.2, 0.2], 1, False, [1.4, 3.8]),
+        ([1, 2], 0, False, [9, 12, 15]),
+        ([1, 1, 2], 1, False, [9, 21]),
+        ([[1, 2, 3], [1, 2, 3]], 0, False, [5, 14, 27]),
+        ([[1, 2, 1], [2, 2, 2]], 1, False, [8, 30]),
+    ],
+)
+def test_average(
+    array_namespace, device, dtype_name, weights, axis, normalize, expected
+):
+    xp = _array_api_for_tests(array_namespace, device)
+    array_in = numpy.asarray([[1, 2, 3], [4, 5, 6]], dtype=dtype_name)
+    array_in = xp.asarray(array_in, device=device)
+    if weights is not None:
+        weights = numpy.asarray(weights, dtype=dtype_name)
+        weights = xp.asarray(weights, device=device)
 
-    X = xp_.asarray([1.2, 3.4])
+    with config_context(array_api_dispatch=True):
+        result = _average(array_in, axis=axis, weights=weights, normalize=normalize)
 
-    with pytest.raises(ValueError, match="Supported namespaces are:"):
-        _convert_to_numpy(X, xp=xp_)
+    assert getattr(array_in, "device", None) == getattr(result, "device", None)
+
+    result = _convert_to_numpy(result, xp)
+    assert_allclose(result, expected, atol=_atol_for_type(dtype_name))
+
+
+@pytest.mark.parametrize(
+    "array_namespace, device, dtype_name",
+    yield_namespace_device_dtype_combinations(include_numpy_namespaces=False),
+)
+def test_average_raises_with_wrong_dtype(array_namespace, device, dtype_name):
+    xp = _array_api_for_tests(array_namespace, device)
+
+    array_in = numpy.asarray([2, 0], dtype=dtype_name) + 1j * numpy.asarray(
+        [4, 3], dtype=dtype_name
+    )
+    complex_type_name = array_in.dtype.name
+    if not hasattr(xp, complex_type_name):
+        # This is the case for cupy as of March 2024 for instance.
+        pytest.skip(f"{array_namespace} does not support {complex_type_name}")
+
+    array_in = xp.asarray(array_in, device=device)
+
+    err_msg = "Complex floating point values are not supported by average."
+    with (
+        config_context(array_api_dispatch=True),
+        pytest.raises(NotImplementedError, match=err_msg),
+    ):
+        _average(array_in)
+
+
+@pytest.mark.parametrize(
+    "array_namespace, device, dtype_name",
+    yield_namespace_device_dtype_combinations(include_numpy_namespaces=True),
+)
+@pytest.mark.parametrize(
+    "axis, weights, error, error_msg",
+    (
+        (
+            None,
+            [1, 2],
+            TypeError,
+            "Axis must be specified",
+        ),
+        (
+            0,
+            [[1, 2]],
+            TypeError,
+            "1D weights expected",
+        ),
+        (
+            0,
+            [1, 2, 3, 4],
+            ValueError,
+            "Length of weights",
+        ),
+        (0, [-1, 1], ZeroDivisionError, "Weights sum to zero, can't be normalized"),
+    ),
+)
+def test_average_raises_with_invalid_parameters(
+    array_namespace, device, dtype_name, axis, weights, error, error_msg
+):
+    xp = _array_api_for_tests(array_namespace, device)
+
+    array_in = numpy.asarray([[1, 2, 3], [4, 5, 6]], dtype=dtype_name)
+    array_in = xp.asarray(array_in, device=device)
+
+    weights = numpy.asarray(weights, dtype=dtype_name)
+    weights = xp.asarray(weights, device=device)
+
+    with config_context(array_api_dispatch=True), pytest.raises(error, match=error_msg):
+        _average(array_in, axis=axis, weights=weights)
+
+
+def test_device_raises_if_no_input():
+    err_msg = re.escape(
+        "At least one input array expected after filtering with remove_none=True, "
+        "remove_types=[str]. Got none. Original types: []."
+    )
+    with pytest.raises(ValueError, match=err_msg):
+        device()
+
+    err_msg = re.escape(
+        "At least one input array expected after filtering with remove_none=True, "
+        "remove_types=[str]. Got none. Original types: [NoneType, str]."
+    )
+    with pytest.raises(ValueError, match=err_msg):
+        device(None, "name")
+
+
+def test_device_inspection():
+    class Device:
+        def __init__(self, name):
+            self.name = name
+
+        def __eq__(self, device):
+            return self.name == device.name
+
+        def __hash__(self):
+            raise TypeError("Device object is not hashable")
+
+        def __str__(self):
+            return self.name
+
+    class Array:
+        def __init__(self, device_name):
+            self.device = Device(device_name)
+
+    # Sanity check: ensure our Device mock class is non hashable, to
+    # accurately account for non-hashable device objects in some array
+    # libraries, because of which the `device` inspection function should'nt
+    # make use of hash lookup tables (in particular, not use `set`)
+    with pytest.raises(TypeError):
+        hash(Array("device").device)
+
+    # Test raise if on different devices
+    err_msg = "Input arrays use different devices: cpu, mygpu"
+    with pytest.raises(ValueError, match=err_msg):
+        device(Array("cpu"), Array("mygpu"))
+
+    # Test expected value is returned otherwise
+    array1 = Array("device")
+    array2 = Array("device")
+
+    assert array1.device == device(array1)
+    assert array1.device == device(array1, array2)
+    assert array1.device == device(array1, array1, array2)
+
+
+# TODO: add cupy and cupy.array_api to the list of libraries once the
+# the following upstream issue has been fixed:
+# https://github.com/cupy/cupy/issues/8180
+@skip_if_array_api_compat_not_configured
+@pytest.mark.parametrize("library", ["numpy", "numpy.array_api", "torch"])
+@pytest.mark.parametrize(
+    "X,reduction,expected",
+    [
+        ([1, 2, numpy.nan], _nanmin, 1),
+        ([1, -2, -numpy.nan], _nanmin, -2),
+        ([numpy.inf, numpy.inf], _nanmin, numpy.inf),
+        (
+            [[1, 2, 3], [numpy.nan, numpy.nan, numpy.nan], [4, 5, 6.0]],
+            partial(_nanmin, axis=0),
+            [1.0, 2.0, 3.0],
+        ),
+        (
+            [[1, 2, 3], [numpy.nan, numpy.nan, numpy.nan], [4, 5, 6.0]],
+            partial(_nanmin, axis=1),
+            [1.0, numpy.nan, 4.0],
+        ),
+        ([1, 2, numpy.nan], _nanmax, 2),
+        ([1, 2, numpy.nan], _nanmax, 2),
+        ([-numpy.inf, -numpy.inf], _nanmax, -numpy.inf),
+        (
+            [[1, 2, 3], [numpy.nan, numpy.nan, numpy.nan], [4, 5, 6.0]],
+            partial(_nanmax, axis=0),
+            [4.0, 5.0, 6.0],
+        ),
+        (
+            [[1, 2, 3], [numpy.nan, numpy.nan, numpy.nan], [4, 5, 6.0]],
+            partial(_nanmax, axis=1),
+            [3.0, numpy.nan, 6.0],
+        ),
+    ],
+)
+def test_nan_reductions(library, X, reduction, expected):
+    """Check NaN reductions like _nanmin and _nanmax"""
+    xp = pytest.importorskip(library)
+
+    with config_context(array_api_dispatch=True):
+        result = reduction(xp.asarray(X))
+
+    result = _convert_to_numpy(result, xp)
+    assert_allclose(result, expected)
+
+
+@skip_if_array_api_compat_not_configured
+@pytest.mark.parametrize("library", ["cupy", "torch", "cupy.array_api"])
+def test_convert_to_numpy_gpu(library):  # pragma: nocover
+    """Check convert_to_numpy for GPU backed libraries."""
+    xp = pytest.importorskip(library)
+
+    if library == "torch":
+        if not xp.backends.cuda.is_built():
+            pytest.skip("test requires cuda")
+        X_gpu = xp.asarray([1.0, 2.0, 3.0], device="cuda")
+    else:
+        X_gpu = xp.asarray([1.0, 2.0, 3.0])
+
+    X_cpu = _convert_to_numpy(X_gpu, xp=xp)
+    expected_output = numpy.asarray([1.0, 2.0, 3.0])
+    assert_allclose(X_cpu, expected_output)
+
+
+def test_convert_to_numpy_cpu():
+    """Check convert_to_numpy for PyTorch CPU arrays."""
+    torch = pytest.importorskip("torch")
+    X_torch = torch.asarray([1.0, 2.0, 3.0], device="cpu")
+
+    X_cpu = _convert_to_numpy(X_torch, xp=torch)
+    expected_output = numpy.asarray([1.0, 2.0, 3.0])
+    assert_allclose(X_cpu, expected_output)
 
 
 class SimpleEstimator(BaseEstimator):
@@ -161,15 +386,18 @@ class SimpleEstimator(BaseEstimator):
         return self
 
 
-@pytest.mark.parametrize("array_namespace", ["numpy.array_api", "cupy.array_api"])
-def test_convert_estimator_to_ndarray(array_namespace):
+@skip_if_array_api_compat_not_configured
+@pytest.mark.parametrize(
+    "array_namespace, converter",
+    [
+        ("torch", lambda array: array.cpu().numpy()),
+        ("numpy.array_api", lambda array: numpy.asarray(array)),
+        ("cupy.array_api", lambda array: array._array.get()),
+    ],
+)
+def test_convert_estimator_to_ndarray(array_namespace, converter):
     """Convert estimator attributes to ndarray."""
     xp = pytest.importorskip(array_namespace)
-
-    if array_namespace == "numpy.array_api":
-        converter = lambda array: numpy.asarray(array)  # noqa
-    else:  # pragma: no cover
-        converter = lambda array: array._array.get()  # noqa
 
     X = xp.asarray([[1.3, 4.5]])
     est = SimpleEstimator().fit(X)
@@ -178,6 +406,7 @@ def test_convert_estimator_to_ndarray(array_namespace):
     assert isinstance(new_est.X_, numpy.ndarray)
 
 
+@skip_if_array_api_compat_not_configured
 def test_convert_estimator_to_array_api():
     """Convert estimator attributes to ArrayAPI arrays."""
     xp = pytest.importorskip("numpy.array_api")
@@ -187,3 +416,60 @@ def test_convert_estimator_to_array_api():
 
     new_est = _estimator_with_converted_arrays(est, lambda array: xp.asarray(array))
     assert hasattr(new_est.X_, "__array_namespace__")
+
+
+def test_reshape_behavior():
+    """Check reshape behavior with copy and is strict with non-tuple shape."""
+    xp = _NumPyAPIWrapper()
+    X = xp.asarray([[1, 2, 3], [3, 4, 5]])
+
+    X_no_copy = xp.reshape(X, (-1,), copy=False)
+    assert X_no_copy.base is X
+
+    X_copy = xp.reshape(X, (6, 1), copy=True)
+    assert X_copy.base is not X.base
+
+    with pytest.raises(TypeError, match="shape must be a tuple"):
+        xp.reshape(X, -1)
+
+
+@pytest.mark.parametrize("wrapper", [_ArrayAPIWrapper, _NumPyAPIWrapper])
+def test_get_namespace_array_api_isdtype(wrapper):
+    """Test isdtype implementation from _ArrayAPIWrapper and _NumPyAPIWrapper."""
+
+    if wrapper == _ArrayAPIWrapper:
+        xp_ = pytest.importorskip("numpy.array_api")
+        xp = _ArrayAPIWrapper(xp_)
+    else:
+        xp = _NumPyAPIWrapper()
+
+    assert xp.isdtype(xp.float32, xp.float32)
+    assert xp.isdtype(xp.float32, "real floating")
+    assert xp.isdtype(xp.float64, "real floating")
+    assert not xp.isdtype(xp.int32, "real floating")
+
+    for dtype in supported_float_dtypes(xp):
+        assert xp.isdtype(dtype, "real floating")
+
+    assert xp.isdtype(xp.bool, "bool")
+    assert not xp.isdtype(xp.float32, "bool")
+
+    assert xp.isdtype(xp.int16, "signed integer")
+    assert not xp.isdtype(xp.uint32, "signed integer")
+
+    assert xp.isdtype(xp.uint16, "unsigned integer")
+    assert not xp.isdtype(xp.int64, "unsigned integer")
+
+    assert xp.isdtype(xp.int64, "numeric")
+    assert xp.isdtype(xp.float32, "numeric")
+    assert xp.isdtype(xp.uint32, "numeric")
+
+    assert not xp.isdtype(xp.float32, "complex floating")
+
+    if wrapper == _NumPyAPIWrapper:
+        assert not xp.isdtype(xp.int8, "complex floating")
+        assert xp.isdtype(xp.complex64, "complex floating")
+        assert xp.isdtype(xp.complex128, "complex floating")
+
+    with pytest.raises(ValueError, match="Unrecognized data type"):
+        assert xp.isdtype(xp.int16, "unknown")

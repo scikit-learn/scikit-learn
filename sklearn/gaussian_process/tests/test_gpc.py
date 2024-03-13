@@ -4,22 +4,22 @@
 # License: BSD 3 clause
 
 import warnings
-import numpy as np
 
+import numpy as np
+import pytest
 from scipy.optimize import approx_fprime
 
-import pytest
-
+from sklearn.exceptions import ConvergenceWarning
 from sklearn.gaussian_process import GaussianProcessClassifier
 from sklearn.gaussian_process.kernels import (
     RBF,
     CompoundKernel,
-    ConstantKernel as C,
     WhiteKernel,
 )
+from sklearn.gaussian_process.kernels import (
+    ConstantKernel as C,
+)
 from sklearn.gaussian_process.tests._mini_sequence_kernel import MiniSeqKernel
-from sklearn.exceptions import ConvergenceWarning
-
 from sklearn.utils._testing import assert_almost_equal, assert_array_equal
 
 

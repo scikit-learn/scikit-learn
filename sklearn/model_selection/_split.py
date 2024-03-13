@@ -11,25 +11,29 @@ functions to split the data based on a preset strategy.
 #         Rodion Martynov <marrodion@gmail.com>
 # License: BSD 3 clause
 
-from collections.abc import Iterable
-from collections import defaultdict
+import numbers
 import warnings
+from abc import ABCMeta, abstractmethod
+from collections import defaultdict
+from collections.abc import Iterable
+from inspect import signature
 from itertools import chain, combinations
 from math import ceil, floor
-import numbers
-from abc import ABCMeta, abstractmethod
-from inspect import signature
 
 import numpy as np
 from scipy.special import comb
 
-from ..utils import indexable, check_random_state, _safe_indexing
-from ..utils import _approximate_mode
-from ..utils.validation import _num_samples, column_or_1d
-from ..utils.validation import check_array
+from ..utils import (
+    _safe_indexing,
+    check_random_state,
+    indexable,
+    metadata_routing,
+)
+from ..utils._param_validation import Interval, RealNotInt, validate_params
+from ..utils.extmath import _approximate_mode
+from ..utils.metadata_routing import _MetadataRequester
 from ..utils.multiclass import type_of_target
-from ..utils._param_validation import validate_params, Interval
-from ..utils._param_validation import RealNotInt
+from ..utils.validation import _num_samples, check_array, column_or_1d
 
 __all__ = [
     "BaseCrossValidator",
@@ -52,11 +56,62 @@ __all__ = [
 ]
 
 
-class BaseCrossValidator(metaclass=ABCMeta):
-    """Base class for all cross-validators
+class _UnsupportedGroupCVMixin:
+    """Mixin for splitters that do not support Groups."""
+
+    def split(self, X, y=None, groups=None):
+        """Generate indices to split data into training and test set.
+
+        Parameters
+        ----------
+        X : array-like of shape (n_samples, n_features)
+            Training data, where `n_samples` is the number of samples
+            and `n_features` is the number of features.
+
+        y : array-like of shape (n_samples,)
+            The target variable for supervised learning problems.
+
+        groups : object
+            Always ignored, exists for compatibility.
+
+        Yields
+        ------
+        train : ndarray
+            The training set indices for that split.
+
+        test : ndarray
+            The testing set indices for that split.
+        """
+        if groups is not None:
+            warnings.warn(
+                f"The groups parameter is ignored by {self.__class__.__name__}",
+                UserWarning,
+            )
+        return super().split(X, y, groups=groups)
+
+
+class GroupsConsumerMixin(_MetadataRequester):
+    """A Mixin to ``groups`` by default.
+
+    This Mixin makes the object to request ``groups`` by default as ``True``.
+
+    .. versionadded:: 1.3
+    """
+
+    __metadata_request__split = {"groups": True}
+
+
+class BaseCrossValidator(_MetadataRequester, metaclass=ABCMeta):
+    """Base class for all cross-validators.
 
     Implementations must define `_iter_test_masks` or `_iter_test_indices`.
     """
+
+    # This indicates that by default CV splitters don't have a "groups" kwarg,
+    # unless indicated by inheriting from ``GroupsConsumerMixin``.
+    # This also prevents ``set_split_request`` to be generated for splitters
+    # which don't support ``groups``.
+    __metadata_request__split = {"groups": metadata_routing.UNUSED}
 
     def split(self, X, y=None, groups=None):
         """Generate indices to split data into training and test set.
@@ -107,14 +162,14 @@ class BaseCrossValidator(metaclass=ABCMeta):
 
     @abstractmethod
     def get_n_splits(self, X=None, y=None, groups=None):
-        """Returns the number of splitting iterations in the cross-validator"""
+        """Returns the number of splitting iterations in the cross-validator."""
 
     def __repr__(self):
         return _build_repr(self)
 
 
-class LeaveOneOut(BaseCrossValidator):
-    """Leave-One-Out cross-validator
+class LeaveOneOut(_UnsupportedGroupCVMixin, BaseCrossValidator):
+    """Leave-One-Out cross-validator.
 
     Provides train/test indices to split data in train/test sets. Each
     sample is used once as a test set (singleton) while the remaining
@@ -168,7 +223,7 @@ class LeaveOneOut(BaseCrossValidator):
         return range(n_samples)
 
     def get_n_splits(self, X, y=None, groups=None):
-        """Returns the number of splitting iterations in the cross-validator
+        """Returns the number of splitting iterations in the cross-validator.
 
         Parameters
         ----------
@@ -192,8 +247,8 @@ class LeaveOneOut(BaseCrossValidator):
         return _num_samples(X)
 
 
-class LeavePOut(BaseCrossValidator):
-    """Leave-P-Out cross-validator
+class LeavePOut(_UnsupportedGroupCVMixin, BaseCrossValidator):
+    """Leave-P-Out cross-validator.
 
     Provides train/test indices to split data in train/test sets. This results
     in testing on all distinct samples of size p, while the remaining n - p
@@ -265,7 +320,7 @@ class LeavePOut(BaseCrossValidator):
             yield np.array(combination)
 
     def get_n_splits(self, X, y=None, groups=None):
-        """Returns the number of splitting iterations in the cross-validator
+        """Returns the number of splitting iterations in the cross-validator.
 
         Parameters
         ----------
@@ -285,7 +340,7 @@ class LeavePOut(BaseCrossValidator):
 
 
 class _BaseKFold(BaseCrossValidator, metaclass=ABCMeta):
-    """Base class for KFold, GroupKFold, and StratifiedKFold"""
+    """Base class for K-Fold cross-validators and TimeSeriesSplit."""
 
     @abstractmethod
     def __init__(self, n_splits, *, shuffle, random_state):
@@ -308,9 +363,11 @@ class _BaseKFold(BaseCrossValidator, metaclass=ABCMeta):
 
         if not shuffle and random_state is not None:  # None is the default
             raise ValueError(
-                "Setting a random_state has no effect since shuffle is "
-                "False. You should leave "
-                "random_state to its default (None), or set shuffle=True.",
+                (
+                    "Setting a random_state has no effect since shuffle is "
+                    "False. You should leave "
+                    "random_state to its default (None), or set shuffle=True."
+                ),
             )
 
         self.n_splits = n_splits
@@ -355,7 +412,7 @@ class _BaseKFold(BaseCrossValidator, metaclass=ABCMeta):
             yield train, test
 
     def get_n_splits(self, X=None, y=None, groups=None):
-        """Returns the number of splitting iterations in the cross-validator
+        """Returns the number of splitting iterations in the cross-validator.
 
         Parameters
         ----------
@@ -376,8 +433,8 @@ class _BaseKFold(BaseCrossValidator, metaclass=ABCMeta):
         return self.n_splits
 
 
-class KFold(_BaseKFold):
-    """K-Folds cross-validator
+class KFold(_UnsupportedGroupCVMixin, _BaseKFold):
+    """K-Fold cross-validator.
 
     Provides train/test indices to split data in train/test sets. Split
     dataset into k consecutive folds (without shuffling by default).
@@ -386,6 +443,10 @@ class KFold(_BaseKFold):
     folds form the training set.
 
     Read more in the :ref:`User Guide <k_fold>`.
+
+    For visualisation of cross-validation behaviour and
+    comparison between common scikit-learn split methods
+    refer to :ref:`sphx_glr_auto_examples_model_selection_plot_cv_indices.py`
 
     Parameters
     ----------
@@ -468,16 +529,20 @@ class KFold(_BaseKFold):
             current = stop
 
 
-class GroupKFold(_BaseKFold):
+class GroupKFold(GroupsConsumerMixin, _BaseKFold):
     """K-fold iterator variant with non-overlapping groups.
 
     Each group will appear exactly once in the test set across all folds (the
     number of distinct groups has to be at least equal to the number of folds).
 
     The folds are approximately balanced in the sense that the number of
-    distinct groups is approximately the same in each fold.
+    samples is approximately the same in each test fold.
 
     Read more in the :ref:`User Guide <group_k_fold>`.
+
+    For visualisation of cross-validation behaviour and
+    comparison between common scikit-learn split methods
+    refer to :ref:`sphx_glr_auto_examples_model_selection_plot_cv_indices.py`
 
     Parameters
     ----------
@@ -593,7 +658,7 @@ class GroupKFold(_BaseKFold):
 
 
 class StratifiedKFold(_BaseKFold):
-    """Stratified K-Folds cross-validator.
+    """Stratified K-Fold cross-validator.
 
     Provides train/test indices to split data in train/test sets.
 
@@ -602,6 +667,10 @@ class StratifiedKFold(_BaseKFold):
     samples for each class.
 
     Read more in the :ref:`User Guide <stratified_k_fold>`.
+
+    For visualisation of cross-validation behaviour and
+    comparison between common scikit-learn split methods
+    refer to :ref:`sphx_glr_auto_examples_model_selection_plot_cv_indices.py`
 
     Parameters
     ----------
@@ -770,12 +839,17 @@ class StratifiedKFold(_BaseKFold):
         split. You can make the results identical by setting `random_state`
         to an integer.
         """
+        if groups is not None:
+            warnings.warn(
+                f"The groups parameter is ignored by {self.__class__.__name__}",
+                UserWarning,
+            )
         y = check_array(y, input_name="y", ensure_2d=False, dtype=None)
         return super().split(X, y, groups)
 
 
-class StratifiedGroupKFold(_BaseKFold):
-    """Stratified K-Folds iterator variant with non-overlapping groups.
+class StratifiedGroupKFold(GroupsConsumerMixin, _BaseKFold):
+    """Stratified K-Fold iterator variant with non-overlapping groups.
 
     This cross-validation object is a variation of StratifiedKFold attempts to
     return stratified folds with non-overlapping groups. The folds are made by
@@ -793,6 +867,10 @@ class StratifiedGroupKFold(_BaseKFold):
     constraint of non-overlapping groups between splits.
 
     Read more in the :ref:`User Guide <cross_validation>`.
+
+    For visualisation of cross-validation behaviour and
+    comparison between common scikit-learn split methods
+    refer to :ref:`sphx_glr_auto_examples_model_selection_plot_cv_indices.py`
 
     Parameters
     ----------
@@ -977,7 +1055,7 @@ class StratifiedGroupKFold(_BaseKFold):
 
 
 class TimeSeriesSplit(_BaseKFold):
-    """Time Series cross-validator
+    """Time Series cross-validator.
 
     Provides train/test indices to split time series data samples
     that are observed at fixed time intervals, in train/test sets.
@@ -992,6 +1070,10 @@ class TimeSeriesSplit(_BaseKFold):
     training sets are supersets of those that come before them.
 
     Read more in the :ref:`User Guide <time_series_split>`.
+
+    For visualisation of cross-validation behaviour and
+    comparison between common scikit-learn split methods
+    refer to :ref:`sphx_glr_auto_examples_model_selection_plot_cv_indices.py`
 
     .. versionadded:: 0.18
 
@@ -1080,6 +1162,9 @@ class TimeSeriesSplit(_BaseKFold):
       Train: index=[0 1 2 3 4 5 6 7]
       Test:  index=[10 11]
 
+    For a more extended example see
+    :ref:`sphx_glr_auto_examples_applications_plot_cyclical_feature_engineering.py`.
+
     Notes
     -----
     The training set has size ``i * n_samples // (n_splits + 1)
@@ -1117,7 +1202,31 @@ class TimeSeriesSplit(_BaseKFold):
         test : ndarray
             The testing set indices for that split.
         """
-        X, y, groups = indexable(X, y, groups)
+        if groups is not None:
+            warnings.warn(
+                f"The groups parameter is ignored by {self.__class__.__name__}",
+                UserWarning,
+            )
+        return self._split(X)
+
+    def _split(self, X):
+        """Generate indices to split data into training and test set.
+
+        Parameters
+        ----------
+        X : array-like of shape (n_samples, n_features)
+            Training data, where `n_samples` is the number of samples
+            and `n_features` is the number of features.
+
+        Yields
+        ------
+        train : ndarray
+            The training set indices for that split.
+
+        test : ndarray
+            The testing set indices for that split.
+        """
+        (X,) = indexable(X)
         n_samples = _num_samples(X)
         n_splits = self.n_splits
         n_folds = n_splits + 1
@@ -1155,8 +1264,8 @@ class TimeSeriesSplit(_BaseKFold):
                 )
 
 
-class LeaveOneGroupOut(BaseCrossValidator):
-    """Leave One Group Out cross-validator
+class LeaveOneGroupOut(GroupsConsumerMixin, BaseCrossValidator):
+    """Leave One Group Out cross-validator.
 
     Provides train/test indices to split data such that each training set is
     comprised of all samples except ones belonging to one specific group.
@@ -1221,7 +1330,7 @@ class LeaveOneGroupOut(BaseCrossValidator):
             yield groups == i
 
     def get_n_splits(self, X=None, y=None, groups=None):
-        """Returns the number of splitting iterations in the cross-validator
+        """Returns the number of splitting iterations in the cross-validator.
 
         Parameters
         ----------
@@ -1274,8 +1383,8 @@ class LeaveOneGroupOut(BaseCrossValidator):
         return super().split(X, y, groups)
 
 
-class LeavePGroupsOut(BaseCrossValidator):
-    """Leave P Group(s) Out cross-validator
+class LeavePGroupsOut(GroupsConsumerMixin, BaseCrossValidator):
+    """Leave P Group(s) Out cross-validator.
 
     Provides train/test indices to split data according to a third-party
     provided group. This group information can be used to encode arbitrary
@@ -1354,7 +1463,7 @@ class LeavePGroupsOut(BaseCrossValidator):
             yield test_index
 
     def get_n_splits(self, X=None, y=None, groups=None):
-        """Returns the number of splitting iterations in the cross-validator
+        """Returns the number of splitting iterations in the cross-validator.
 
         Parameters
         ----------
@@ -1407,7 +1516,7 @@ class LeavePGroupsOut(BaseCrossValidator):
         return super().split(X, y, groups)
 
 
-class _RepeatedSplits(metaclass=ABCMeta):
+class _RepeatedSplits(_MetadataRequester, metaclass=ABCMeta):
     """Repeated splits for an arbitrary randomized CV splitter.
 
     Repeats splits for cross-validators n times with different randomization
@@ -1430,6 +1539,12 @@ class _RepeatedSplits(metaclass=ABCMeta):
         Constructor parameters for cv. Must not contain random_state
         and shuffle.
     """
+
+    # This indicates that by default CV splitters don't have a "groups" kwarg,
+    # unless indicated by inheriting from ``GroupsConsumerMixin``.
+    # This also prevents ``set_split_request`` to be generated for splitters
+    # which don't support ``groups``.
+    __metadata_request__split = {"groups": metadata_routing.UNUSED}
 
     def __init__(self, cv, *, n_repeats=10, random_state=None, **cvargs):
         if not isinstance(n_repeats, numbers.Integral):
@@ -1479,7 +1594,7 @@ class _RepeatedSplits(metaclass=ABCMeta):
                 yield train_index, test_index
 
     def get_n_splits(self, X=None, y=None, groups=None):
-        """Returns the number of splitting iterations in the cross-validator
+        """Returns the number of splitting iterations in the cross-validator.
 
         Parameters
         ----------
@@ -1508,7 +1623,7 @@ class _RepeatedSplits(metaclass=ABCMeta):
         return _build_repr(self)
 
 
-class RepeatedKFold(_RepeatedSplits):
+class RepeatedKFold(_UnsupportedGroupCVMixin, _RepeatedSplits):
     """Repeated K-Fold cross validator.
 
     Repeats K-Fold n times with different randomization in each repetition.
@@ -1574,7 +1689,7 @@ class RepeatedKFold(_RepeatedSplits):
         )
 
 
-class RepeatedStratifiedKFold(_RepeatedSplits):
+class RepeatedStratifiedKFold(_UnsupportedGroupCVMixin, _RepeatedSplits):
     """Repeated Stratified K-Fold cross validator.
 
     Repeats Stratified K-Fold n times with different randomization in each
@@ -1645,8 +1760,38 @@ class RepeatedStratifiedKFold(_RepeatedSplits):
         )
 
 
-class BaseShuffleSplit(metaclass=ABCMeta):
-    """Base class for ShuffleSplit and StratifiedShuffleSplit"""
+class BaseShuffleSplit(_MetadataRequester, metaclass=ABCMeta):
+    """Base class for *ShuffleSplit.
+
+    Parameters
+    ----------
+    n_splits : int, default=10
+        Number of re-shuffling & splitting iterations.
+
+    test_size : float or int, default=None
+        If float, should be between 0.0 and 1.0 and represent the proportion
+        of the dataset to include in the test split. If int, represents the
+        absolute number of test samples. If None, the value is set to the
+        complement of the train size. If ``train_size`` is also None, it will
+        be set to 0.1.
+
+    train_size : float or int, default=None
+        If float, should be between 0.0 and 1.0 and represent the
+        proportion of the dataset to include in the train split. If
+        int, represents the absolute number of train samples. If None,
+        the value is automatically set to the complement of the test size.
+
+    random_state : int, RandomState instance or None, default=None
+        Controls the randomness of the training and testing indices produced.
+        Pass an int for reproducible output across multiple function calls.
+        See :term:`Glossary <random_state>`.
+    """
+
+    # This indicates that by default CV splitters don't have a "groups" kwarg,
+    # unless indicated by inheriting from ``GroupsConsumerMixin``.
+    # This also prevents ``set_split_request`` to be generated for splitters
+    # which don't support ``groups``.
+    __metadata_request__split = {"groups": metadata_routing.UNUSED}
 
     def __init__(
         self, n_splits=10, *, test_size=None, train_size=None, random_state=None
@@ -1691,12 +1836,26 @@ class BaseShuffleSplit(metaclass=ABCMeta):
         for train, test in self._iter_indices(X, y, groups):
             yield train, test
 
-    @abstractmethod
     def _iter_indices(self, X, y=None, groups=None):
         """Generate (train, test) indices"""
+        n_samples = _num_samples(X)
+        n_train, n_test = _validate_shuffle_split(
+            n_samples,
+            self.test_size,
+            self.train_size,
+            default_test_size=self._default_test_size,
+        )
+
+        rng = check_random_state(self.random_state)
+        for i in range(self.n_splits):
+            # random partition
+            permutation = rng.permutation(n_samples)
+            ind_test = permutation[:n_test]
+            ind_train = permutation[n_test : (n_test + n_train)]
+            yield ind_train, ind_test
 
     def get_n_splits(self, X=None, y=None, groups=None):
-        """Returns the number of splitting iterations in the cross-validator
+        """Returns the number of splitting iterations in the cross-validator.
 
         Parameters
         ----------
@@ -1720,8 +1879,8 @@ class BaseShuffleSplit(metaclass=ABCMeta):
         return _build_repr(self)
 
 
-class ShuffleSplit(BaseShuffleSplit):
-    """Random permutation cross-validator
+class ShuffleSplit(_UnsupportedGroupCVMixin, BaseShuffleSplit):
+    """Random permutation cross-validator.
 
     Yields indices to split data into training and test sets.
 
@@ -1730,6 +1889,10 @@ class ShuffleSplit(BaseShuffleSplit):
     still very likely for sizeable datasets.
 
     Read more in the :ref:`User Guide <ShuffleSplit>`.
+
+    For visualisation of cross-validation behaviour and
+    comparison between common scikit-learn split methods
+    refer to :ref:`sphx_glr_auto_examples_model_selection_plot_cv_indices.py`
 
     Parameters
     ----------
@@ -1819,26 +1982,9 @@ class ShuffleSplit(BaseShuffleSplit):
         )
         self._default_test_size = 0.1
 
-    def _iter_indices(self, X, y=None, groups=None):
-        n_samples = _num_samples(X)
-        n_train, n_test = _validate_shuffle_split(
-            n_samples,
-            self.test_size,
-            self.train_size,
-            default_test_size=self._default_test_size,
-        )
 
-        rng = check_random_state(self.random_state)
-        for i in range(self.n_splits):
-            # random partition
-            permutation = rng.permutation(n_samples)
-            ind_test = permutation[:n_test]
-            ind_train = permutation[n_test : (n_test + n_train)]
-            yield ind_train, ind_test
-
-
-class GroupShuffleSplit(ShuffleSplit):
-    """Shuffle-Group(s)-Out cross-validation iterator
+class GroupShuffleSplit(GroupsConsumerMixin, BaseShuffleSplit):
+    """Shuffle-Group(s)-Out cross-validation iterator.
 
     Provides randomized train/test indices to split data according to a
     third-party provided group. This group information can be used to encode
@@ -1860,6 +2006,10 @@ class GroupShuffleSplit(ShuffleSplit):
     not to samples, as in ShuffleSplit.
 
     Read more in the :ref:`User Guide <group_shuffle_split>`.
+
+    For visualisation of cross-validation behaviour and
+    comparison between common scikit-learn split methods
+    refer to :ref:`sphx_glr_auto_examples_model_selection_plot_cv_indices.py`
 
     Parameters
     ----------
@@ -1938,8 +2088,8 @@ class GroupShuffleSplit(ShuffleSplit):
             # these are the indices of classes in the partition
             # invert them into data indices
 
-            train = np.flatnonzero(np.in1d(group_indices, group_train))
-            test = np.flatnonzero(np.in1d(group_indices, group_test))
+            train = np.flatnonzero(np.isin(group_indices, group_train))
+            test = np.flatnonzero(np.isin(group_indices, group_test))
 
             yield train, test
 
@@ -1977,7 +2127,7 @@ class GroupShuffleSplit(ShuffleSplit):
 
 
 class StratifiedShuffleSplit(BaseShuffleSplit):
-    """Stratified ShuffleSplit cross-validator
+    """Stratified ShuffleSplit cross-validator.
 
     Provides train/test indices to split data in train/test sets.
 
@@ -1990,6 +2140,10 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
     still very likely for sizeable datasets.
 
     Read more in the :ref:`User Guide <stratified_shuffle_split>`.
+
+    For visualisation of cross-validation behaviour and
+    comparison between common scikit-learn split methods
+    refer to :ref:`sphx_glr_auto_examples_model_selection_plot_cv_indices.py`
 
     Parameters
     ----------
@@ -2159,6 +2313,11 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
         split. You can make the results identical by setting `random_state`
         to an integer.
         """
+        if groups is not None:
+            warnings.warn(
+                f"The groups parameter is ignored by {self.__class__.__name__}",
+                UserWarning,
+            )
         y = check_array(y, input_name="y", ensure_2d=False, dtype=None)
         return super().split(X, y, groups)
 
@@ -2245,7 +2404,7 @@ def _validate_shuffle_split(n_samples, test_size, train_size, default_test_size=
 
 
 class PredefinedSplit(BaseCrossValidator):
-    """Predefined split cross-validator
+    """Predefined split cross-validator.
 
     Provides train/test indices to split data into train/test sets using a
     predefined scheme specified by the user with the ``test_fold`` parameter.
@@ -2314,6 +2473,24 @@ class PredefinedSplit(BaseCrossValidator):
         test : ndarray
             The testing set indices for that split.
         """
+        if groups is not None:
+            warnings.warn(
+                f"The groups parameter is ignored by {self.__class__.__name__}",
+                UserWarning,
+            )
+        return self._split()
+
+    def _split(self):
+        """Generate indices to split data into training and test set.
+
+        Yields
+        ------
+        train : ndarray
+            The training set indices for that split.
+
+        test : ndarray
+            The testing set indices for that split.
+        """
         ind = np.arange(len(self.test_fold))
         for test_index in self._iter_test_masks():
             train_index = ind[np.logical_not(test_index)]
@@ -2329,7 +2506,7 @@ class PredefinedSplit(BaseCrossValidator):
             yield test_mask
 
     def get_n_splits(self, X=None, y=None, groups=None):
-        """Returns the number of splitting iterations in the cross-validator
+        """Returns the number of splitting iterations in the cross-validator.
 
         Parameters
         ----------
@@ -2357,7 +2534,7 @@ class _CVIterableWrapper(BaseCrossValidator):
         self.cv = list(cv)
 
     def get_n_splits(self, X=None, y=None, groups=None):
-        """Returns the number of splitting iterations in the cross-validator
+        """Returns the number of splitting iterations in the cross-validator.
 
         Parameters
         ----------
@@ -2438,6 +2615,14 @@ def check_cv(cv=5, y=None, *, classifier=False):
     checked_cv : a cross-validator instance.
         The return value is a cross-validator which generates the train/test
         splits via the ``split`` method.
+
+    Examples
+    --------
+    >>> from sklearn.model_selection import check_cv
+    >>> check_cv(cv=5, y=None, classifier=False)
+    KFold(...)
+    >>> check_cv(cv=5, y=[1, 1, 0, 0, 0, 0], classifier=True)
+    StratifiedKFold(...)
     """
     cv = 5 if cv is None else cv
     if isinstance(cv, numbers.Integral):
@@ -2477,7 +2662,8 @@ def check_cv(cv=5, y=None, *, classifier=False):
         "random_state": ["random_state"],
         "shuffle": ["boolean"],
         "stratify": ["array-like", None],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def train_test_split(
     *arrays,
@@ -2637,7 +2823,7 @@ def _pprint(params, offset=0, printer=repr):
     this_line_length = offset
     line_sep = ",\n" + (1 + offset // 2) * " "
     for i, (k, v) in enumerate(sorted(params.items())):
-        if type(v) is float:
+        if isinstance(v, float):
             # use str for representing floating point numbers
             # this way we get consistent representation across
             # architectures and versions.
