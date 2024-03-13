@@ -26,7 +26,7 @@ from .base import (
 from .covariance import empirical_covariance, ledoit_wolf, shrunk_covariance
 from .linear_model._base import LinearClassifierMixin
 from .preprocessing import StandardScaler
-from .utils._array_api import _expit, device, get_namespace, size
+from .utils._array_api import _compute_shape, _expit, device, get_namespace, size
 from .utils._param_validation import HasMethods, Interval, StrOptions
 from .utils.extmath import softmax
 from .utils.multiclass import check_classification_targets, unique_labels
@@ -115,12 +115,14 @@ def _class_means(X, y):
     classes, y = xp.unique_inverse(y)
     # Force lazy array api backends to call compute
     if hasattr(classes, "persist"):
-        classes.compute_chunk_sizes()
+        classes = _compute_shape(classes)
+        y = _compute_shape(y)
         # We get a ValueError: no field named inverse later on if we don't
         # compute right now
         # Probably a dask bug
         # (the error is also kinda flaky)
-        y = y.compute()
+        if hasattr(y, "compute"):
+            y = y.compute()
     means = xp.zeros((classes.shape[0], X.shape[1]), device=device(X), dtype=X.dtype)
 
     if is_array_api_compliant:
@@ -502,10 +504,6 @@ class LinearDiscriminantAnalysis(
         else:
             svd = scipy.linalg.svd
 
-        # Materialize, otherwise shape could be nan for like dask
-        if hasattr(X, "persist"):
-            # is dask array
-            X.compute_chunk_sizes()
         n_samples, n_features = X.shape
         n_classes = self.classes_.shape[0]
 
@@ -518,6 +516,7 @@ class LinearDiscriminantAnalysis(
             Xg = X[y == group]
             Xc.append(Xg - self.means_[idx, :])
 
+        self.priors_ = _compute_shape(self.priors_)
         self.xbar_ = self.priors_ @ self.means_
 
         Xc = xp.concat(Xc, axis=0)
@@ -546,13 +545,7 @@ class LinearDiscriminantAnalysis(
         # Centers are living in a space with n_classes-1 dim (maximum)
         # Use SVD to find projection in the space spanned by the
         # (n_classes) centers
-        import dask.array as da
-
-        if isinstance(X, da.Array):
-            # dask can flip signs of Vt sometimes
-            _, S, Vt = svd(X, full_matrices=False, coerce_signs=False)
-        else:
-            _, S, Vt = svd(X, full_matrices=False)
+        _, S, Vt = svd(X, full_matrices=False)
 
         if self._max_components == 0:
             self.explained_variance_ratio_ = xp.empty((0,), dtype=S.dtype)
@@ -599,13 +592,11 @@ class LinearDiscriminantAnalysis(
         X, y = self._validate_data(
             X, y, ensure_min_samples=2, dtype=[xp.float64, xp.float32]
         )
-        if hasattr(X, "persist"):
-            X.compute_chunk_sizes()
+        X = _compute_shape(X)
         # This operation could result in nan shape for lazy backends
         # so realize by calling np.asarray
         self.classes_ = unique_labels(y)
-        if hasattr(self.classes_, "persist"):
-            self.classes_.compute_chunk_sizes()
+        self.classes_ = _compute_shape(self.classes_)
         n_samples, _ = X.shape
         n_classes = self.classes_.shape[0]
 
@@ -615,11 +606,8 @@ class LinearDiscriminantAnalysis(
             )
 
         if self.priors is None:  # estimate priors from sample
+            y = _compute_shape(y)
             _, cnts = xp.unique_counts(y)  # non-negative ints
-            # realize for lazy backends to prevent nan shapes
-            # cnts = np.asarray(cnts)
-            if hasattr(cnts, "persist"):
-                cnts.compute_chunk_sizes()
             self.priors_ = xp.astype(cnts, X.dtype) / float(y.shape[0])
         else:
             self.priors_ = xp.asarray(self.priors, dtype=X.dtype)
@@ -634,7 +622,6 @@ class LinearDiscriminantAnalysis(
         # Maximum number of components no matter what n_components is
         # specified:
 
-        # Force computing shape here
         max_components = min(n_classes - 1, X.shape[1])
 
         if self.n_components is None:
@@ -756,9 +743,12 @@ class LinearDiscriminantAnalysis(
             smallest_normal = info.tiny
 
         xp, _ = get_namespace(prediction)
+        # Some Array API libraries don't support inplace operations
+        # prediction[prediction == 0.0] += smallest_normal
+        # is the equivalent code
         prediction = xp.where(
             prediction == 0.0,
-            np.array(smallest_normal, dtype=prediction.dtype),
+            xp.asarray(smallest_normal, dtype=prediction.dtype),
             prediction,
         )
         return xp.log(prediction)
