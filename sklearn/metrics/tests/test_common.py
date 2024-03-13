@@ -1817,53 +1817,6 @@ def check_array_api_multiclass_classification_metric(
     )
 
 
-# def check_array_api_regression_metric(metric, array_namespace, device, dtype):
-#     # Not all Array API / device combinations support `float64` values, hence
-#     # limit this test to the `float32` case for now.
-#     y_true_np = np.array([3, -0.5, 2, 7], dtype="float32")
-#     y_pred_np = np.array([2.5, 0.0, 2, 8], dtype="float32")
-#     check_array_api_metric(
-#         metric, array_namespace, device, dtype, y_true_np=y_true_np,
-#         y_pred_np=y_pred_np
-#     )
-#     if "sample_weight" in signature(metric).parameters:
-#         check_array_api_metric(
-#             metric,
-#             array_namespace,
-#             device,
-#             dtype,
-#             y_true_np=y_true_np,
-#             y_pred_np=y_pred_np,
-#             sample_weight=np.array([0.0, 0.1, 2.0, 1.0], dtype="float32"),
-#         )
-
-
-# def check_array_api_multioutput_regression_metric(
-#     metric, array_namespace, device, dtype
-# ):
-#     # Not all Array API / device combinations support `float64` values, hence
-#     # limit this test to the `float32` case for now.
-#     y_true_np = np.array([[0.5, 1], [-1, 1], [7, -6]], dtype="float32")
-#     y_pred_np = np.array([[0, 2], [-1, 2], [8, -5]], dtype="float32")
-
-#     metric = partial(metric, multioutput="raw_values")
-
-#     check_array_api_metric(
-#         metric, array_namespace, device, dtype, y_true_np=y_true_np,
-#         y_pred_np=y_pred_np
-#     )
-#     if "sample_weight" in signature(metric).parameters:
-#         check_array_api_metric(
-#             metric,
-#             array_namespace,
-#             device,
-#             dtype,
-#             y_true_np=y_true_np,
-#             y_pred_np=y_pred_np,
-#             sample_weight=np.array([0.0, 0.1, 2.0], dtype="float32"),
-#         )
-
-
 def check_array_api_regression_metric(metric, array_namespace, device, dtype_name):
     y_true_np = np.array([[1, 3], [1, 2]], dtype=dtype_name)
     y_pred_np = np.array([[1, 4], [1, 1]], dtype=dtype_name)
@@ -1891,6 +1844,13 @@ def check_array_api_regression_metric(metric, array_namespace, device, dtype_nam
     )
 
 
+def check_array_api_multioutput_regression_metric(
+    metric, array_namespace, device, dtype_name
+):
+    metric = partial(metric, multioutput="raw_values")
+    check_array_api_regression_metric(metric, array_namespace, device, dtype_name)
+
+
 array_api_metric_checkers = {
     accuracy_score: [
         check_array_api_binary_classification_metric,
@@ -1902,7 +1862,7 @@ array_api_metric_checkers = {
     ],
     mean_absolute_error: [
         check_array_api_regression_metric,
-        # check_array_api_multioutput_regression_metric,
+        check_array_api_multioutput_regression_metric,
     ],
     r2_score: [check_array_api_regression_metric],
 }
