@@ -5,8 +5,10 @@ from unittest import SkipTest
 import numpy as np
 import pytest
 
+import sklearn
 from sklearn.externals._packaging.version import parse as parse_version
 from sklearn.utils import _safe_indexing, resample, shuffle
+from sklearn.utils._array_api import yield_namespace_device_dtype_combinations
 from sklearn.utils._indexing import (
     _determine_key_type,
     _get_column_indices,
@@ -14,9 +16,11 @@ from sklearn.utils._indexing import (
 )
 from sklearn.utils._mocking import MockDataFrame
 from sklearn.utils._testing import (
+    _array_api_for_tests,
     _convert_container,
     assert_allclose_dense_sparse,
     assert_array_equal,
+    skip_if_array_api_compat_not_configured,
 )
 from sklearn.utils.fixes import CSC_CONTAINERS, CSR_CONTAINERS
 
@@ -97,6 +101,20 @@ def test_determine_key_type_slice_error():
     with pytest.raises(TypeError, match="Only array-like or scalar are"):
         _determine_key_type(slice(0, 2, 1), accept_slice=False)
 
+
+@skip_if_array_api_compat_not_configured
+@pytest.mark.parametrize(
+    "array_namespace, device, dtype_name", yield_namespace_device_dtype_combinations()
+)
+def test_determine_key_type_array_api(array_namespace, device, dtype_name):
+    xp = _array_api_for_tests(array_namespace, device)
+
+    with sklearn.config_context(array_api_dispatch=True):
+        int_array_key = xp.asarray([1, 2, 3])
+        assert _determine_key_type(int_array_key) == "int"
+
+        bool_array_key = xp.asarray([True, False, True])
+        assert _determine_key_type(bool_array_key) == "bool"
 
 @pytest.mark.parametrize(
     "array_type", ["list", "array", "sparse", "dataframe", "polars"]
