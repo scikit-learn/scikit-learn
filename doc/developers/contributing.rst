@@ -1378,7 +1378,7 @@ up this process by providing your feedback.
   better addressed immediately.
 
 |details-start|
-**Few important aspects that need to be covered in any code review**
+**Important aspects to be covered in any code review**
 |details-split|
 
 Here are a few important aspects that need to be covered in any code review,
