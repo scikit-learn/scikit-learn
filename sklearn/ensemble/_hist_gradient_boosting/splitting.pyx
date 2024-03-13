@@ -431,6 +431,7 @@ cdef class Splitter:
             const Y_DTYPE_C lower_bound=-INFINITY,
             const Y_DTYPE_C upper_bound=INFINITY,
             const unsigned int [:] allowed_features=None,
+            unsigned char debug=False,
             ):
         """For each feature, find the best bin to split on at a given node.
 
@@ -559,7 +560,9 @@ cdef class Splitter:
                         feature_idx, has_missing_values[feature_idx],
                         histograms, n_samples, sum_gradients, sum_hessians,
                         value, monotonic_cst[feature_idx],
-                        lower_bound, upper_bound, &split_infos[split_info_idx])
+                        lower_bound, upper_bound, &split_infos[split_info_idx],
+                        debug=debug,
+                    )
 
                     if has_missing_values[feature_idx]:
                         # We need to explore both directions to check whether
@@ -569,7 +572,9 @@ cdef class Splitter:
                             feature_idx, histograms, n_samples,
                             sum_gradients, sum_hessians,
                             value, monotonic_cst[feature_idx],
-                            lower_bound, upper_bound, &split_infos[split_info_idx])
+                            lower_bound, upper_bound, &split_infos[split_info_idx],
+                            debug=debug,
+                        )
 
             # then compute best possible split among all features
             # split_info is set to the best of split_infos
@@ -628,7 +633,9 @@ cdef class Splitter:
             signed char monotonic_cst,
             Y_DTYPE_C lower_bound,
             Y_DTYPE_C upper_bound,
-            split_info_struct * split_info) noexcept nogil:  # OUT
+            split_info_struct * split_info,
+            unsigned char debug=False,
+    ) noexcept nogil:  # OUT
         """Find best bin to split on for a given feature.
 
         Splits that do not satisfy the splitting constraints
@@ -704,6 +711,9 @@ cdef class Splitter:
                                upper_bound,
                                self.l2_regularization)
 
+            if debug:
+                with gil:
+                    print(f"_find_best_bin_to_split_left_to_right \ngain > best_gain: {gain=} > {best_gain} {gain > best_gain} at {bin_idx=}", flush=True)
             if gain > best_gain and gain > self.min_gain_to_split:
                 found_better_split = True
                 best_gain = gain
@@ -744,7 +754,9 @@ cdef class Splitter:
             signed char monotonic_cst,
             Y_DTYPE_C lower_bound,
             Y_DTYPE_C upper_bound,
-            split_info_struct * split_info) noexcept nogil:  # OUT
+            split_info_struct * split_info,
+            unsigned char debug=False,
+    ) noexcept nogil:  # OUT
         """Find best bin to split on for a given feature.
 
         Splits that do not satisfy the splitting constraints
@@ -818,6 +830,9 @@ cdef class Splitter:
                                upper_bound,
                                self.l2_regularization)
 
+            if debug:
+                with gil:
+                    print(f"_find_best_bin_to_split_right_to_left \ngain > best_gain: {gain=} > {best_gain} {gain > best_gain} at {bin_idx=}", flush=True)
             if gain > best_gain and gain > self.min_gain_to_split:
                 found_better_split = True
                 best_gain = gain
