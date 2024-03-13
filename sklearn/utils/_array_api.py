@@ -248,7 +248,7 @@ def ensure_common_namespace_device(reference, *arrays):
     """
     xp, is_array_api = get_namespace(reference)
 
-    if is_array_api and not _is_numpy_namespace(xp):
+    if is_array_api:
         device_ = device(reference)
         # Move arrays to the same namespace and device as the reference array.
         return [xp.asarray(a, device=device_) for a in arrays]
