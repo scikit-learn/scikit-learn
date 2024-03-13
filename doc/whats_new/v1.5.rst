@@ -22,6 +22,22 @@ Version 1.5.0
 
 **In Development**
 
+Support for Array API
+---------------------
+
+Additional estimators and functions have been updated to include support for all
+`Array API <https://data-apis.org/array-api/latest/>`_ compliant inputs.
+
+See :ref:`array_api` for more details.
+
+**Functions:**
+
+- :func:`sklearn.metrics.r2_score` now supports Array API compliant inputs.
+  :pr:`27904` by :user:`Eric Lindgren <elindgren>`, `Franck Charras <fcharras>`,
+  `Olivier Grisel <ogrisel>` and `Tim Head <betatim>`.
+
+**Classes:**
+
 Support for building with Meson
 -------------------------------
 
@@ -268,6 +284,14 @@ Changelog
   that generated that feature. If `False`, `get_feature_names_out` will not
   prefix any feature names and will error if feature names are not unique.
   :pr:`25991` by :user:`Jiawei Zhang <jiawei-zhang-a>`.
+
+:mod:`sklearn.preprocessing`
+............................
+
+- |Enhancement| :class:`preprocessing.QuantileTransformer` and
+  :func:`preprocessing.quantile_transform` now supports disabling
+  subsampling explicitly.
+  :pr:`27636` by :user:`Ralph Urlus <rurlus>`.
 
 .. rubric:: Code and documentation contributors
 
