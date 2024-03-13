@@ -226,7 +226,14 @@ def mean_absolute_error(
             multioutput = None
 
     # Average across the outputs (if needed).
-    return _average(output_errors, weights=multioutput)
+    mean_absolute_error = _average(output_errors, weights=multioutput)
+
+    # Since `y_pred.ndim <= 2` and `y_true.ndim <= 2`, the second call to _average
+    # should always return a scalar array that we convert to a Python float to
+    # consistently return the same eager evaluated value, irrespective of the
+    # Array API implementation.
+    assert mean_absolute_error.shape == ()
+    return float(mean_absolute_error)
 
 
 @validate_params(
