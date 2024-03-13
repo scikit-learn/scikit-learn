@@ -52,7 +52,6 @@ cdef float compute_gradient(float[:] val_P,
                             float theta,
                             int dof,
                             long start,
-                            long stop,
                             bint compute_error,
                             int num_threads) noexcept nogil:
     # Having created the tree, calculate the gradient
@@ -76,7 +75,7 @@ cdef float compute_gradient(float[:] val_P,
     if take_timing:
         t1 = clock()
     sQ = compute_gradient_negative(pos_reference, neg_f, qt, dof, theta, start,
-                                   stop, num_threads)
+                                   num_threads)
     if take_timing:
         t2 = clock()
         printf("[t-SNE] Computing negative gradient: %e ticks\n", ((float) (t2 - t1)))
@@ -175,16 +174,14 @@ cdef double compute_gradient_negative(float[:, :] pos_reference,
                                       int dof,
                                       float theta,
                                       long start,
-                                      long stop,
                                       int num_threads) noexcept nogil:
-    if stop == -1:
-        stop = pos_reference.shape[0]
     cdef:
         int ax
         int n_dimensions = qt.n_dimensions
         int offset = n_dimensions + 2
         long i, j, idx
-        long n = stop - start
+        long n_samples = pos_reference.shape[0]
+        long n = n_samples - start
         long dta = 0
         long dtb = 0
         float size, dist2s, mult
@@ -204,7 +201,7 @@ cdef double compute_gradient_negative(float[:, :] pos_reference,
         force = <float *> malloc(sizeof(float) * n_dimensions)
         neg_force = <float *> malloc(sizeof(float) * n_dimensions)
 
-        for i in prange(start, stop, schedule='static'):
+        for i in prange(start, n_samples, schedule='static'):
             # Clear the arrays
             for ax in range(n_dimensions):
                 force[ax] = 0.0
@@ -292,7 +289,7 @@ def gradient(float[:] val_P,
         printf("[t-SNE] Computing gradient\n%s", EMPTY_STRING)
 
     C = compute_gradient(val_P, pos_output, neighbors, indptr, forces,
-                         qt, theta, dof, skip_num_points, -1, compute_error,
+                         qt, theta, dof, skip_num_points, compute_error,
                          num_threads)
 
     if verbose > 10:

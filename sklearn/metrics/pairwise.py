@@ -2242,6 +2242,10 @@ def pairwise_distances(
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
+        The "euclidean" and "cosine" metrics rely heavily on BLAS which is already
+        multithreaded. So, increasing `n_jobs` would likely cause oversubscription
+        and quickly degrade performance.
+
     force_all_finite : bool or 'allow-nan', default=True
         Whether to raise an error on np.inf, np.nan, pd.NA in array. Ignored
         for a metric listed in ``pairwise.PAIRWISE_DISTANCE_FUNCTIONS``. The

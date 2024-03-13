@@ -337,9 +337,6 @@ reproduction script.
 
 For bug reports or feature requests, please make use of the
 `issue tracker on GitHub <https://github.com/scikit-learn/scikit-learn/issues>`_.
-There is also a `scikit-learn Gitter channel
-<https://gitter.im/scikit-learn/scikit-learn>`_ where some users and developers
-might be found.
 
 .. warning::
   Please do not email any authors directly to ask for assistance, report bugs,
@@ -417,8 +414,8 @@ Note that the example above uses the third-party edit distance package
 `leven <https://pypi.org/project/leven/>`_. Similar tricks can be used,
 with some care, for tree kernels, graph kernels, etc.
 
-Why do I sometime get a crash/freeze with ``n_jobs > 1`` under OSX or Linux?
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Why do I sometimes get a crash/freeze with ``n_jobs > 1`` under OSX or Linux?
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Several scikit-learn tools such as :class:`~model_selection.GridSearchCV` and
 :class:`~model_selection.cross_val_score` rely internally on Python's

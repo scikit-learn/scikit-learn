@@ -2,10 +2,12 @@
 Support
 =======
 
-Connect with scikit-learn developers through various channels for assistance,
-feedback, or contributions.
+There are several channels to connect with scikit-learn developers for assistance, feedback, or contributions.
 
-.. _mailing_lists:
+**Note**: Communications on all channels should respect our `Code of Conduct <https://github.com/scikit-learn/scikit-learn/blob/main/CODE_OF_CONDUCT.md>`_.
+
+
+.. _announcements_and_notification:
 
 Mailing Lists
 =============
@@ -23,9 +25,9 @@ Mailing Lists
 User Questions
 ==============
 
-Engage with the scikit-learn community and seek answers to your questions:
+If you have questions, this is our general workflow.
 
-- **StackOverflow**: Some scikit-learn developers support users using the 
+- **Stack Overflow**: Some scikit-learn developers support users using the 
   `[scikit-learn] <https://stackoverflow.com/questions/tagged/scikit-learn>`_ 
   tag.
 
@@ -48,6 +50,19 @@ When posting questions:
 
 **Note**: Avoid asking user questions on the bug tracker to keep 
 the focus on development.
+
+- `GitHub Discussions <https://github.com/scikit-learn/scikit-learn/discussions>`_
+  Usage questions such as methodological
+
+- `Stack Overflow <https://stackoverflow.com/questions/tagged/scikit-learn>`_
+  Programming/user questions with `[scikit-learn]` tag
+
+- `GitHub Bug Tracker <https://github.com/scikit-learn/scikit-learn/issues>`_
+  Bug reports - Please do not ask usage questions on the issue tracker.
+
+- `Discord Server <https://discord.gg/h9qyrK8Jc8>`_
+  Current pull requests - Post any specific PR-related questions on your PR, 
+  and you can share a link to your PR on this server.
 
 .. _bug_tracker:
 
@@ -72,6 +87,15 @@ Include in your report:
   `gist <https://gist.github.com>`_ or a github repo.
 
 **Tip**: Gists are Git repositories; you can push data files to them using Git.
+
+.. _social_media:
+
+Social Media
+============
+
+scikit-learn has presence on various social media platforms to share
+updates with the community. The platforms are not monitored for user
+questions.
 
 .. _gitter:
 

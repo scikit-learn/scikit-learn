@@ -1377,6 +1377,19 @@ def test_quantile_transform_subsampling():
     assert len(np.unique(inf_norm_arr)) == len(inf_norm_arr)
 
 
+def test_quantile_transform_subsampling_disabled():
+    """Check the behaviour of `QuantileTransformer` when `subsample=None`."""
+    X = np.random.RandomState(0).normal(size=(200, 1))
+
+    n_quantiles = 5
+    transformer = QuantileTransformer(n_quantiles=n_quantiles, subsample=None).fit(X)
+
+    expected_references = np.linspace(0, 1, n_quantiles)
+    assert_allclose(transformer.references_, expected_references)
+    expected_quantiles = np.quantile(X.ravel(), expected_references)
+    assert_allclose(transformer.quantiles_.ravel(), expected_quantiles)
+
+
 @pytest.mark.parametrize("csc_container", CSC_CONTAINERS)
 def test_quantile_transform_sparse_toy(csc_container):
     X = np.array(

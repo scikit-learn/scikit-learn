@@ -684,8 +684,8 @@ def test_convert_container(
 ):
     """Check that we convert the container to the right type of array with the
     right data type."""
-    if constructor_name in ("dataframe", "series", "index"):
-        # delay the import of pandas within the function to only skip this test
+    if constructor_name in ("dataframe", "polars", "series", "polars_series", "index"):
+        # delay the import of pandas/polars within the function to only skip this test
         # instead of the whole file
         container_type = container_type()
     container = [0, 1]

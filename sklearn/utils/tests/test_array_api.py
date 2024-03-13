@@ -1,3 +1,4 @@
+import re
 from functools import partial
 
 import numpy
@@ -280,12 +281,6 @@ def test_supports_dtype_return_value():
     assert _supports_dtype(_NumPyAPIWrapperNoFloat64(), "device", "float32") is True
 
 
-def test_device_raises_if_no_input():
-    err_msg = "At least one input array expected, got none."
-    with pytest.raises(ValueError, match=err_msg):
-        device()
-
-
 def test_device_inspection():
     class Device:
         def __init__(self, name):
@@ -325,10 +320,27 @@ def test_device_inspection():
     assert array1.device == device(array1, array1, array2)
 
 
+def test_device_raises_if_no_input():
+    err_msg = re.escape(
+        "At least one input array expected after filtering with remove_none=True, "
+        "remove_types=[str]. Got none. Original types: []."
+    )
+    with pytest.raises(ValueError, match=err_msg):
+        device()
+
+    err_msg = re.escape(
+        "At least one input array expected after filtering with remove_none=True, "
+        "remove_types=[str]. Got none. Original types: [NoneType, str]."
+    )
+    with pytest.raises(ValueError, match=err_msg):
+        device(None, "name")
+
+
+# TODO: add cupy and cupy.array_api to the list of libraries once the
+# the following upstream issue has been fixed:
+# https://github.com/cupy/cupy/issues/8180
 @skip_if_array_api_compat_not_configured
-@pytest.mark.parametrize(
-    "library", ["numpy", "numpy.array_api", "cupy", "cupy.array_api", "torch"]
-)
+@pytest.mark.parametrize("library", ["numpy", "numpy.array_api", "torch"])
 @pytest.mark.parametrize(
     "X,reduction,expected",
     [
@@ -376,9 +388,6 @@ def test_device_inspection():
 def test_nan_reductions(library, X, reduction, expected):
     """Check NaN reductions like _nanmin, _nanmax and _nansum"""
     xp = pytest.importorskip(library)
-
-    if isinstance(expected, list):
-        expected = xp.asarray(expected)
 
     with config_context(array_api_dispatch=True):
         result = reduction(xp.asarray(X))
