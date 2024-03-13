@@ -82,7 +82,9 @@ or changes to dependencies or supported versions, it must be backed by a
 using the `SLEP template <https://scikit-learn-enhancement-proposals.readthedocs.io/en/latest/slep_template.html>`_
 and follows the decision-making process outlined in :ref:`governance`.
 
-.. topic:: Contributing to related projects
+|details-start|
+**Contributing to related projects**
+|details-split|
 
    Scikit-learn thrives in an ecosystem of several related projects, which also
    may have relevant issues to work on, including smaller projects such as:
@@ -104,6 +106,7 @@ and follows the decision-making process outlined in :ref:`governance`.
    Helping these projects may help Scikit-learn too.
    See also :ref:`related_projects`.
 
+|details-end|
 
 Submitting a bug report or a feature request
 ============================================
@@ -1006,9 +1009,9 @@ subpackages. For a more detailed `pytest` workflow, please refer to the
 
 We expect code coverage of new features to be at least around 90%.
 
-
-Writing matplotlib related tests
---------------------------------
+|details-start|
+**Writing matplotlib related tests**
+|details-split|
 
 Test fixtures ensure that a set of tests will be executing with the appropriate
 initialization and cleanup. The scikit-learn test suite implements a fixture
@@ -1027,8 +1030,11 @@ argument::
     def test_requiring_mpl_fixture(pyplot):
         # you can now safely use matplotlib
 
-Workflow to improve test coverage
----------------------------------
+|details-end|
+
+|details-start|
+**Workflow to improve test coverage**
+|details-split|
 
 To test code coverage, you need to install the `coverage
 <https://pypi.org/project/coverage/>`_ package in addition to pytest.
@@ -1040,6 +1046,8 @@ To test code coverage, you need to install the `coverage
     write or adapt a test specifically for these lines.
 
 3. Loop.
+
+|details-end|
 
 .. _monitoring_performances:
 
@@ -1369,6 +1377,10 @@ up this process by providing your feedback.
   retraction. Regarding docs: typos, grammar issues and disambiguations are
   better addressed immediately.
 
+|details-start|
+**Important aspects to be covered in any code review**
+|details-split|
+
 Here are a few important aspects that need to be covered in any code review,
 from high-level questions to a more detailed check-list.
 
@@ -1418,10 +1430,13 @@ from high-level questions to a more detailed check-list.
 
 :ref:`saved_replies` includes some frequent comments that reviewers may make.
 
+|details-end|
+
 .. _communication:
 
-Communication Guidelines
-------------------------
+|details-start|
+**Communication Guidelines**
+|details-split|
 
 Reviewing open pull requests (PRs) helps move the project forward. It is a
 great way to get familiar with the codebase and should motivate the
@@ -1449,6 +1464,8 @@ contributor to keep involved in the project. [1]_
 
 .. [1] Adapted from the numpy `communication guidelines
        <https://numpy.org/devdocs/dev/reviewer_guidelines.html#communication-guidelines>`_.
+
+|details-end|
 
 Reading the existing code base
 ==============================
