@@ -1,3 +1,5 @@
+:orphan:
+
 .. title:: Testimonials
 
 .. _testimonials:
