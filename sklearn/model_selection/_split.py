@@ -31,8 +31,7 @@ from ..utils import (
 )
 from ..utils._array_api import (
     _convert_to_numpy,
-    _is_numpy_namespace,
-    device,
+    ensure_common_namespace_device,
     get_namespace,
 )
 from ..utils._param_validation import Interval, RealNotInt, validate_params
@@ -2799,12 +2798,7 @@ def train_test_split(
 
         train, test = next(cv.split(X=arrays[0], y=stratify))
 
-    xp, is_array_api = get_namespace(*arrays)
-    if is_array_api and not _is_numpy_namespace(xp):
-        # Move train and test indexers to the same namespace and device as the
-        # arrays we are indexing. Assumes that all arrays are on the same device
-        train = xp.asarray(train, device=device(arrays[0]))
-        test = xp.asarray(test, device=device(arrays[0]))
+    train, test = ensure_common_namespace_device(arrays[0], train, test)
 
     return list(
         chain.from_iterable(
