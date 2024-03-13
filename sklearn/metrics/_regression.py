@@ -212,12 +212,19 @@ def mean_absolute_error(
     >>> mean_absolute_error(y_true, y_pred, multioutput=[0.3, 0.7])
     0.85...
     """
-    xp, _ = get_namespace(y_true, y_pred)
-    y_type, y_true, y_pred, multioutput = _check_reg_targets(
-        y_true, y_pred, multioutput
+    input_arrays = [y_true, y_pred, sample_weight, multioutput]
+    xp, _ = get_namespace(*input_arrays)
+
+    dtype = _find_matching_floating_dtype(y_true, y_pred, sample_weight, xp=xp)
+
+    _, y_true, y_pred, multioutput = _check_reg_targets(
+        y_true, y_pred, multioutput, dtype=dtype, xp=xp
     )
     check_consistent_length(y_true, y_pred, sample_weight)
-    output_errors = _average(xp.abs(y_pred - y_true), weights=sample_weight, axis=0)
+
+    output_errors = _average(
+        xp.abs(y_pred - y_true), weights=sample_weight, axis=0, xp=xp
+    )
     if isinstance(multioutput, str):
         if multioutput == "raw_values":
             return output_errors
