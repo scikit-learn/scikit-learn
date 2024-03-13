@@ -1214,7 +1214,7 @@ def r2_score(
         sample_weight = column_or_1d(sample_weight, dtype=dtype)
         weight = sample_weight[:, None]
     else:
-        weight = 1
+        weight = 1.0
 
     numerator = xp.sum(weight * (y_true - y_pred) ** 2, axis=0)
     denominator = xp.sum(
@@ -1233,8 +1233,8 @@ def r2_score(
     )
 
     result = xp.asarray(result, device=device_)
-    if result.size == 1:
-        return xp.reshape(result, (-1,))[0]
+    if np.prod(result.shape) == 1:
+        return float(xp.reshape(result, (-1,))[0])
 
     return result
 
