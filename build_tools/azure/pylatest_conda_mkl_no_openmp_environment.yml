@@ -8,7 +8,6 @@ dependencies:
   - numpy
   - blas[build=mkl]
   - scipy
-  - cython
   - joblib
   - threadpoolctl
   - matplotlib
@@ -17,7 +16,10 @@ dependencies:
   - pytest
   - pytest-xdist
   - pillow
-  - codecov
+  - setuptools
   - pytest-cov
-  - coverage=6.2
+  - coverage
   - ccache
+  - pip
+  - pip:
+    - cython

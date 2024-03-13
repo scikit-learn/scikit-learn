@@ -2,28 +2,27 @@ import warnings
 
 import numpy as np
 import pytest
+from numpy.testing import assert_allclose, assert_array_almost_equal, assert_array_equal
 
-from sklearn.metrics.cluster import adjusted_mutual_info_score
-from sklearn.metrics.cluster import adjusted_rand_score
-from sklearn.metrics.cluster import rand_score
-from sklearn.metrics.cluster import completeness_score
-from sklearn.metrics.cluster import contingency_matrix
-from sklearn.metrics.cluster import pair_confusion_matrix
-from sklearn.metrics.cluster import entropy
-from sklearn.metrics.cluster import expected_mutual_information
-from sklearn.metrics.cluster import fowlkes_mallows_score
-from sklearn.metrics.cluster import homogeneity_completeness_v_measure
-from sklearn.metrics.cluster import homogeneity_score
-from sklearn.metrics.cluster import mutual_info_score
-from sklearn.metrics.cluster import normalized_mutual_info_score
-from sklearn.metrics.cluster import v_measure_score
-from sklearn.metrics.cluster._supervised import _generalized_average
-from sklearn.metrics.cluster._supervised import check_clusterings
-
+from sklearn.metrics.cluster import (
+    adjusted_mutual_info_score,
+    adjusted_rand_score,
+    completeness_score,
+    contingency_matrix,
+    entropy,
+    expected_mutual_information,
+    fowlkes_mallows_score,
+    homogeneity_completeness_v_measure,
+    homogeneity_score,
+    mutual_info_score,
+    normalized_mutual_info_score,
+    pair_confusion_matrix,
+    rand_score,
+    v_measure_score,
+)
+from sklearn.metrics.cluster._supervised import _generalized_average, check_clusterings
 from sklearn.utils import assert_all_finite
 from sklearn.utils._testing import assert_almost_equal
-from numpy.testing import assert_array_equal, assert_array_almost_equal, assert_allclose
-
 
 score_funcs = [
     adjusted_rand_score,

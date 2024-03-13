@@ -3,11 +3,12 @@
 from numbers import Real
 
 import numpy as np
-from ..base import BaseEstimator
-from ._base import SelectorMixin
+
+from ..base import BaseEstimator, _fit_context
+from ..utils._param_validation import Interval
 from ..utils.sparsefuncs import mean_variance_axis, min_max_axis
 from ..utils.validation import check_is_fitted
-from ..utils._param_validation import Interval
+from ._base import SelectorMixin
 
 
 class VarianceThreshold(SelectorMixin, BaseEstimator):
@@ -69,11 +70,14 @@ class VarianceThreshold(SelectorMixin, BaseEstimator):
                [1, 1]])
     """
 
-    _parameter_constraints = {"threshold": [Interval(Real, 0, None, closed="left")]}
+    _parameter_constraints: dict = {
+        "threshold": [Interval(Real, 0, None, closed="left")]
+    }
 
     def __init__(self, threshold=0.0):
         self.threshold = threshold
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y=None):
         """Learn empirical variances from X.
 
@@ -92,7 +96,6 @@ class VarianceThreshold(SelectorMixin, BaseEstimator):
         self : object
             Returns the instance itself.
         """
-        self._validate_params()
         X = self._validate_data(
             X,
             accept_sparse=("csr", "csc"),

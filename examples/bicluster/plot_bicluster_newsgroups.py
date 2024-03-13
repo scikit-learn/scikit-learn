@@ -23,14 +23,13 @@ achieve a better V-measure than clusters found by MiniBatchKMeans.
 
 """
 
-from collections import defaultdict
 import operator
+from collections import defaultdict
 from time import time
 
 import numpy as np
 
-from sklearn.cluster import SpectralCoclustering
-from sklearn.cluster import MiniBatchKMeans
+from sklearn.cluster import MiniBatchKMeans, SpectralCoclustering
 from sklearn.datasets import fetch_20newsgroups
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.cluster import v_measure_score
@@ -81,7 +80,9 @@ vectorizer = NumberNormalizingVectorizer(stop_words="english", min_df=5)
 cocluster = SpectralCoclustering(
     n_clusters=len(categories), svd_method="arpack", random_state=0
 )
-kmeans = MiniBatchKMeans(n_clusters=len(categories), batch_size=20000, random_state=0)
+kmeans = MiniBatchKMeans(
+    n_clusters=len(categories), batch_size=20000, random_state=0, n_init=3
+)
 
 print("Vectorizing...")
 X = vectorizer.fit_transform(newsgroups.data)

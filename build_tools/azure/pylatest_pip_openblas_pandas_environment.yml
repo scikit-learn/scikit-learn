@@ -19,7 +19,7 @@ dependencies:
     - pytest
     - pytest-xdist
     - pillow
-    - codecov
+    - setuptools
     - pytest-cov
     - coverage
     - sphinx

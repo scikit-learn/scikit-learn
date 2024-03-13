@@ -28,7 +28,7 @@ technique for distance based method.
    Kaufmann Publishers Inc., San Francisco, CA, USA, 143-151.
 
  * Ella Bingham and Heikki Mannila. 2001.
-   `Random projection in dimensionality reduction: applications to image and text data. <http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.24.5135&rep=rep1&type=pdf>`_
+   `Random projection in dimensionality reduction: applications to image and text data. <https://citeseerx.ist.psu.edu/doc_view/pid/aed77346f737b0ed5890b61ad02e5eb4ab2f3dc6>`_
    In Proceedings of the seventh ACM SIGKDD international conference on
    Knowledge discovery and data mining (KDD '01). ACM, New York, NY, USA,
    245-250.
@@ -84,7 +84,7 @@ bounded distortion introduced by the random projection::
 
   * Sanjoy Dasgupta and Anupam Gupta, 1999.
     `An elementary proof of the Johnson-Lindenstrauss Lemma.
-    <http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.39.3334&rep=rep1&type=pdf>`_
+    <https://citeseerx.ist.psu.edu/doc_view/pid/95cd464d27c25c9c8690b378b894d337cdf021f9>`_
 
 .. _gaussian_random_matrix:
 

@@ -19,13 +19,13 @@ training set.
 
 import matplotlib.pyplot as plt
 from matplotlib.colors import ListedColormap
+
 from sklearn import datasets
+from sklearn.inspection import DecisionBoundaryDisplay
 from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import StandardScaler
 from sklearn.neighbors import KNeighborsClassifier, NeighborhoodComponentsAnalysis
 from sklearn.pipeline import Pipeline
-from sklearn.inspection import DecisionBoundaryDisplay
-
+from sklearn.preprocessing import StandardScaler
 
 n_neighbors = 1
 
@@ -65,7 +65,6 @@ classifiers = [
 ]
 
 for name, clf in zip(names, classifiers):
-
     clf.fit(X_train, y_train)
     score = clf.score(X_test, y_test)
 

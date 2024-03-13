@@ -27,7 +27,7 @@
 - Peter Prettenhofer
 - (Venkat) Raghav, Rajagopalan
 - Jacob Schreiber
-- Du Shiqiao
+- 杜世橋 Du Shiqiao
 - Jake Vanderplas
 - David Warde-Farley
 - Ron Weiss

@@ -19,18 +19,18 @@ A third party can give useful feedback or even add
 comments on the issue.
 The following actions are typically useful:
 
-  - documenting issues that are missing elements to reproduce the problem
-    such as code samples
+- documenting issues that are missing elements to reproduce the problem
+  such as code samples
 
-  - suggesting better use of code formatting
+- suggesting better use of code formatting
 
-  - suggesting to reformulate the title and description to make them more
-    explicit about the problem to be solved
+- suggesting to reformulate the title and description to make them more
+  explicit about the problem to be solved
 
-  - linking to related issues or discussions while briefly describing how
-    they are related, for instance "See also #xyz for a similar attempt
-    at this" or "See also #xyz where the same thing happened in
-    SomeEstimator" provides context and helps the discussion.
+- linking to related issues or discussions while briefly describing how
+  they are related, for instance "See also #xyz for a similar attempt
+  at this" or "See also #xyz where the same thing happened in
+  SomeEstimator" provides context and helps the discussion.
 
 .. topic:: Fruitful discussions
 
@@ -40,7 +40,7 @@ The following actions are typically useful:
 
    Overall, it is useful to stay positive and assume good will. `The
    following article
-   <http://gael-varoquaux.info/programming/technical-discussions-are-hard-a-few-tips.html>`_
+   <https://gael-varoquaux.info/programming/technical-discussions-are-hard-a-few-tips.html>`_
    explores how to lead online discussions in the context of open source.
 
 Working on PRs to help review

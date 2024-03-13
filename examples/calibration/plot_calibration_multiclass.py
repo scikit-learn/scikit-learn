@@ -31,6 +31,7 @@ class of an instance (red: class 1, green: class 2, blue: class 3).
 # License: BSD Style.
 
 import numpy as np
+
 from sklearn.datasets import make_blobs
 
 np.random.seed(0)

@@ -9,5 +9,5 @@ COMMIT_MSG=$(git log --no-merges -1 --oneline)
 if [[ "$GITHUB_EVENT_NAME" == schedule ||
       "$COMMIT_MSG" =~ \[cd\ build\] ||
       "$COMMIT_MSG" =~ \[cd\ build\ gh\] ]]; then
-    echo "::set-output name=build::true"
+    echo "build=true" >> $GITHUB_OUTPUT
 fi

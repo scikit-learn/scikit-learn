@@ -5,10 +5,12 @@ This module contains the TreePredictor class which is used for prediction.
 
 import numpy as np
 
-from .common import Y_DTYPE
-from ._predictor import _predict_from_raw_data
-from ._predictor import _predict_from_binned_data
-from ._predictor import _compute_partial_dependence
+from ._predictor import (
+    _compute_partial_dependence,
+    _predict_from_binned_data,
+    _predict_from_raw_data,
+)
+from .common import PREDICTOR_RECORD_DTYPE, Y_DTYPE
 
 
 class TreePredictor:
@@ -18,15 +20,12 @@ class TreePredictor:
     ----------
     nodes : ndarray of PREDICTOR_RECORD_DTYPE
         The nodes of the tree.
-    binned_left_cat_bitsets : ndarray of shape (n_categorical_splits, 8), \
-            dtype=uint32
+    binned_left_cat_bitsets : ndarray of shape (n_categorical_splits, 8), dtype=uint32
         Array of bitsets for binned categories used in predict_binned when a
         split is categorical.
-    raw_left_cat_bitsets : ndarray of shape (n_categorical_splits, 8), \
-            dtype=uint32
+    raw_left_cat_bitsets : ndarray of shape (n_categorical_splits, 8), dtype=uint32
         Array of bitsets for raw categories used in predict when a split is
         categorical.
-
     """
 
     def __init__(self, nodes, binned_left_cat_bitsets, raw_left_cat_bitsets):
@@ -66,6 +65,7 @@ class TreePredictor:
             The raw predicted values.
         """
         out = np.empty(X.shape[0], dtype=Y_DTYPE)
+
         _predict_from_raw_data(
             self.nodes,
             X,
@@ -123,3 +123,22 @@ class TreePredictor:
             point.
         """
         _compute_partial_dependence(self.nodes, grid, target_features, out)
+
+    def __setstate__(self, state):
+        try:
+            super().__setstate__(state)
+        except AttributeError:
+            self.__dict__.update(state)
+
+        # The dtype of feature_idx is np.intp which is platform dependent. Here, we
+        # make sure that saving and loading on different bitness systems works without
+        # errors. For instance, on a 64 bit Python runtime, np.intp = np.int64,
+        # while on 32 bit np.intp = np.int32.
+        #
+        # TODO: consider always using platform agnostic dtypes for fitted
+        # estimator attributes. For this particular estimator, this would
+        # mean replacing the intp field of PREDICTOR_RECORD_DTYPE by an int32
+        # field. Ideally this should be done consistently throughout
+        # scikit-learn along with a common test.
+        if self.nodes.dtype != PREDICTOR_RECORD_DTYPE:
+            self.nodes = self.nodes.astype(PREDICTOR_RECORD_DTYPE, casting="same_kind")

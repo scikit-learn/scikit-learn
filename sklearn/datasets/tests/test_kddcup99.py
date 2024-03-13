@@ -1,17 +1,20 @@
 """Test  kddcup99 loader, if the data is available,
 or if specifically requested via environment variable
-(e.g. for travis cron job).
+(e.g. for CI jobs).
 
 Only 'percent10' mode is tested, as the full data
 is too big to use in unit-testing.
 """
 
 from functools import partial
+
 import pytest
 
-from sklearn.datasets.tests.test_common import check_as_frame
-from sklearn.datasets.tests.test_common import check_pandas_dependency_message
-from sklearn.datasets.tests.test_common import check_return_X_y
+from sklearn.datasets.tests.test_common import (
+    check_as_frame,
+    check_pandas_dependency_message,
+    check_return_X_y,
+)
 
 
 @pytest.mark.parametrize("as_frame", [True, False])
@@ -82,5 +85,5 @@ def test_corrupted_file_error_message(fetch_kddcup99_fxt, tmp_path):
         f"delete {str(kddcup99_dir)} and run the fetch_kddcup99 again"
     )
 
-    with pytest.raises(IOError, match=msg):
+    with pytest.raises(OSError, match=msg):
         fetch_kddcup99_fxt(data_home=str(tmp_path))

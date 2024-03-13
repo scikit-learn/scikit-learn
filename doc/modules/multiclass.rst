@@ -147,35 +147,35 @@ Target format
 Valid :term:`multiclass` representations for
 :func:`~sklearn.utils.multiclass.type_of_target` (`y`) are:
 
-  - 1d or column vector containing more than two discrete values. An
-    example of a vector ``y`` for 4 samples:
+- 1d or column vector containing more than two discrete values. An
+  example of a vector ``y`` for 4 samples:
 
-      >>> import numpy as np
-      >>> y = np.array(['apple', 'pear', 'apple', 'orange'])
-      >>> print(y)
-      ['apple' 'pear' 'apple' 'orange']
+    >>> import numpy as np
+    >>> y = np.array(['apple', 'pear', 'apple', 'orange'])
+    >>> print(y)
+    ['apple' 'pear' 'apple' 'orange']
 
-  - Dense or sparse :term:`binary` matrix of shape ``(n_samples, n_classes)``
-    with a single sample per row, where each column represents one class. An
-    example of both a dense and sparse :term:`binary` matrix ``y`` for 4
-    samples, where the columns, in order, are apple, orange, and pear:
+- Dense or sparse :term:`binary` matrix of shape ``(n_samples, n_classes)``
+  with a single sample per row, where each column represents one class. An
+  example of both a dense and sparse :term:`binary` matrix ``y`` for 4
+  samples, where the columns, in order, are apple, orange, and pear:
 
-      >>> import numpy as np
-      >>> from sklearn.preprocessing import LabelBinarizer
-      >>> y = np.array(['apple', 'pear', 'apple', 'orange'])
-      >>> y_dense = LabelBinarizer().fit_transform(y)
-      >>> print(y_dense)
-        [[1 0 0]
-         [0 0 1]
-         [1 0 0]
-         [0 1 0]]
-      >>> from scipy import sparse
-      >>> y_sparse = sparse.csr_matrix(y_dense)
-      >>> print(y_sparse)
-          (0, 0)	1
-          (1, 2)	1
-          (2, 0)	1
-          (3, 1)	1
+    >>> import numpy as np
+    >>> from sklearn.preprocessing import LabelBinarizer
+    >>> y = np.array(['apple', 'pear', 'apple', 'orange'])
+    >>> y_dense = LabelBinarizer().fit_transform(y)
+    >>> print(y_dense)
+    [[1 0 0]
+     [0 0 1]
+     [1 0 0]
+     [0 1 0]]
+    >>> from scipy import sparse
+    >>> y_sparse = sparse.csr_matrix(y_dense)
+    >>> print(y_sparse)
+      (0, 0)	1
+      (1, 2)	1
+      (2, 0)	1
+      (3, 1)	1
 
 For more information about :class:`~sklearn.preprocessing.LabelBinarizer`,
 refer to :ref:`preprocessing_targets`.
@@ -201,7 +201,7 @@ Below is an example of multiclass learning using OvR::
   >>> from sklearn.multiclass import OneVsRestClassifier
   >>> from sklearn.svm import LinearSVC
   >>> X, y = datasets.load_iris(return_X_y=True)
-  >>> OneVsRestClassifier(LinearSVC(random_state=0)).fit(X, y).predict(X)
+  >>> OneVsRestClassifier(LinearSVC(dual="auto", random_state=0)).fit(X, y).predict(X)
   array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
          0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
          0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
@@ -253,7 +253,7 @@ Below is an example of multiclass learning using OvO::
   >>> from sklearn.multiclass import OneVsOneClassifier
   >>> from sklearn.svm import LinearSVC
   >>> X, y = datasets.load_iris(return_X_y=True)
-  >>> OneVsOneClassifier(LinearSVC(random_state=0)).fit(X, y).predict(X)
+  >>> OneVsOneClassifier(LinearSVC(dual="auto", random_state=0)).fit(X, y).predict(X)
   array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
          0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
          0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
@@ -311,7 +311,7 @@ Below is an example of multiclass learning using Output-Codes::
   >>> from sklearn.multiclass import OutputCodeClassifier
   >>> from sklearn.svm import LinearSVC
   >>> X, y = datasets.load_iris(return_X_y=True)
-  >>> clf = OutputCodeClassifier(LinearSVC(random_state=0),
+  >>> clf = OutputCodeClassifier(LinearSVC(dual="auto", random_state=0),
   ...                            code_size=2, random_state=0)
   >>> clf.fit(X, y).predict(X)
   array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -464,7 +464,7 @@ Note that all classifiers handling multiclass-multioutput (also known as
 multitask classification) tasks, support the multilabel classification task
 as a special case. Multitask classification is similar to the multioutput
 classification task with different model formulations. For more information,
-see the relevant estimator documentat
+see the relevant estimator documentation.
 
 Below is an example of multiclass-multioutput classification:
 
