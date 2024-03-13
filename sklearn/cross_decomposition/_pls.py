@@ -251,7 +251,7 @@ class _PLS(
         # With PLSRegression n_components is bounded by the rank of (X.T X) see
         # Wegelin page 25. With CCA and PLSCanonical, n_components is bounded
         # by the rank of X and the rank of Y: see Wegelin page 12
-        rank_upper_bound = min(n - 1, p) if self.deflation_mode == "regression" else min(n, p, q)
+        rank_upper_bound = p if self.deflation_mode == "regression" else min(n, p, q)
         if n_components > rank_upper_bound:
             raise ValueError(
                 f"`n_components` upper bound is {rank_upper_bound}. "
@@ -515,8 +515,7 @@ class PLSRegression(_PLS):
     Parameters
     ----------
     n_components : int, default=2
-        Number of components to keep. Should be in `[1, min(n_samples - 1,
-        n_features)]`.
+        Number of components to keep. Should be in `[1, n_features]`.
 
     scale : bool, default=True
         Whether to scale `X` and `Y`.
