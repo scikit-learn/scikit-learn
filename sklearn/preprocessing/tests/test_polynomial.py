@@ -536,8 +536,12 @@ def test_spline_transformer_handles_missing_values(knots, extrapolation, sparse_
 
     X_transform = spline.fit_transform(X)
     X_nan_transform = spline.fit_transform(X_nan)
-    X_nan_transform_without_extra = X_nan_transform[~mask[:, 0], :-1]
+    X_nan_transform_without_extra = X_nan_transform[~mask[:, 0], :]
 
+    if sparse.issparse(X_transform):
+        X_transform = X_transform.toarray()
+    if sparse.issparse(X_nan_transform_without_extra):
+        X_nan_transform_without_extra = X_nan_transform_without_extra.toarray()
     assert np.array_equal(X_transform, X_nan_transform_without_extra)
 
 
