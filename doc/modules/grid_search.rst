@@ -233,12 +233,11 @@ need to explicitly import ``enable_halving_search_cv``::
     * :ref:`sphx_glr_auto_examples_model_selection_plot_successive_halving_heatmap.py`
     * :ref:`sphx_glr_auto_examples_model_selection_plot_successive_halving_iterations.py`
 
-|details-start|
-Technical aspects of successive halving
-|details-split|
+The sections below dive into technical aspects of successive halving.
 
+|details-start|
 Choosing ``min_resources`` and the number of candidates
--------------------------------------------------------
+|details-split|
 
 Beside ``factor``, the two main parameters that influence the behaviour of a
 successive halving search are the ``min_resources`` parameter, and the
@@ -291,11 +290,13 @@ in the next section). :class:`HalvingRandomSearchCV` achieves this by
 sampling the right amount of candidates, while :class:`HalvingGridSearchCV`
 achieves this by properly setting `min_resources`. Please see
 :ref:`exhausting_the_resources` for details.
+|details-end|
 
 .. _amount_of_resource_and_number_of_candidates:
 
+|details-start|
 Amount of resource and number of candidates at each iteration
--------------------------------------------------------------
+|details-split|
 
 At any iteration `i`, each candidate is allocated a given amount of resources
 which we denote `n_resources_i`. This quantity is controlled by the
@@ -362,9 +363,11 @@ We can note that:
 
 The amount of resources that is used at each iteration can be found in the
 `n_resources_` attribute.
+|details-end|
 
+|details-start|
 Choosing a resource
--------------------
+|details-split|
 
 By default, the resource is defined in terms of number of samples. That is,
 each iteration will use an increasing amount of samples to train on. You can
@@ -390,11 +393,13 @@ terms of the number of estimators of a random forest::
 
 Note that it is not possible to budget on a parameter that is part of the
 parameter grid.
+|details-end|
 
 .. _exhausting_the_resources:
 
+|details-start|
 Exhausting the available resources
-----------------------------------
+|details-split|
 
 As mentioned above, the number of resources that is used at each iteration
 depends on the `min_resources` parameter.
@@ -446,11 +451,13 @@ requires knowing `min_resources`.
 
 In general, exhausting the total number of resources leads to a better final
 candidate parameter, and is slightly more time-intensive.
+|details-end|
 
 .. _aggressive_elimination:
 
+|details-start|
 Aggressive elimination of candidates
-------------------------------------
+|details-split|
 
 Ideally, we want the last iteration to evaluate ``factor`` candidates (see
 :ref:`amount_of_resource_and_number_of_candidates`). We then just have to
@@ -499,11 +506,13 @@ necessary using ``min_resources`` resources::
 Notice that we end with 2 candidates at the last iteration since we have
 eliminated enough candidates during the first iterations, using ``n_resources =
 min_resources = 20``.
+|details-end|
 
 .. _successive_halving_cv_results:
 
+|details-start|
 Analyzing results with the `cv_results_` attribute
---------------------------------------------------
+|details-split|
 
 The ``cv_results_`` attribute contains useful information for analyzing the
 results of a search. It can be converted to a pandas dataframe with ``df =
