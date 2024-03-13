@@ -17,6 +17,10 @@ import scipy.sparse as sp
 
 from ..base import BaseEstimator, TransformerMixin, _fit_context
 from ..utils import column_or_1d
+from ..utils._array_api import (
+    device,
+    get_namespace,
+)
 from ..utils._encode import _encode, _unique
 from ..utils._param_validation import Interval, validate_params
 from ..utils.multiclass import type_of_target, unique_labels
@@ -414,7 +418,7 @@ class LabelBinarizer(TransformerMixin, BaseEstimator, auto_wrap_output_keys=None
         return y_inv
 
     def _more_tags(self):
-        return {"X_types": ["1dlabels"]}
+        return {"X_types": ["1dlabels"], "array_api_support": True}
 
 
 @validate_params(
@@ -524,16 +528,18 @@ def label_binarize(y, *, classes, neg_label=0, pos_label=1, sparse_output=False)
     if y_type == "unknown":
         raise ValueError("The type of target data is not known")
 
-    n_samples = y.shape[0] if sp.issparse(y) else len(y)
-    n_classes = len(classes)
+    n_samples = y.shape[0] if hasattr(y, "shape") else len(y)
+    n_classes = classes.shape[0] if hasattr(classes, "shape") else len(classes)
     classes = np.asarray(classes)
 
+    xp, is_array_api_compliant = get_namespace(y)
+    device_kwarg = {"device": device(y)} if is_array_api_compliant else {}
     if y_type == "binary":
         if n_classes == 1:
             if sparse_output:
                 return sp.csr_matrix((n_samples, 1), dtype=int)
             else:
-                Y = np.zeros((len(y), 1), dtype=int)
+                Y = xp.zeros((len(y), 1), dtype=int, **device_kwarg)
                 Y += neg_label
                 return Y
         elif len(classes) >= 3:
@@ -574,7 +580,7 @@ def label_binarize(y, *, classes, neg_label=0, pos_label=1, sparse_output=False)
 
     if not sparse_output:
         Y = Y.toarray()
-        Y = Y.astype(int, copy=False)
+        Y = xp.asarray(Y, dtype=xp.int64, **device_kwarg)
 
         if neg_label != 0:
             Y[Y == 0] = neg_label
@@ -587,13 +593,13 @@ def label_binarize(y, *, classes, neg_label=0, pos_label=1, sparse_output=False)
     # preserve label ordering
     if np.any(classes != sorted_class):
         indices = np.searchsorted(sorted_class, classes)
-        Y = Y[:, indices]
+        Y = Y[:, xp.asarray(indices, **device_kwarg)]
 
     if y_type == "binary":
         if sparse_output:
             Y = Y.getcol(-1)
         else:
-            Y = Y[:, -1].reshape((-1, 1))
+            Y = xp.reshape(Y[:, -1], (-1, 1))
 
     return Y
 
