@@ -24,6 +24,7 @@ from sklearn.utils._testing import turn_warnings_into_errors
 # directory, add these directories to sys.path here. If the directory
 # is relative to the documentation root, use os.path.abspath to make it
 # absolute, like shown here.
+sys.path.insert(0, os.path.abspath("."))
 sys.path.insert(0, os.path.abspath("sphinxext"))
 
 import jinja2
@@ -905,7 +906,8 @@ else:
 
 # -- Convert .rst.template files to .rst ---------------------------------------
 
-from sklearn._api_reference import API_REFERENCE, DEPRECATED_API_REFERENCE
+from api_reference import API_REFERENCE, DEPRECATED_API_REFERENCE
+
 from sklearn._min_dependencies import dependent_packages
 
 # If development build, link to local page in the top navbar; otherwise link to the
