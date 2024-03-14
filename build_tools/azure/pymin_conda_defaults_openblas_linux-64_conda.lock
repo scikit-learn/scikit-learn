@@ -13,7 +13,7 @@ https://repo.anaconda.com/pkgs/main/linux-64/libgomp-11.2.0-h1234567_1.conda#b37
 https://repo.anaconda.com/pkgs/main/linux-64/libstdcxx-ng-11.2.0-h1234567_1.conda#57623d10a70e09e1d048c2b2b6f4e2dd
 https://repo.anaconda.com/pkgs/main/linux-64/_openmp_mutex-5.1-1_gnu.conda#71d281e9c2192cb3fa425655a8defb85
 https://repo.anaconda.com/pkgs/main/linux-64/libgcc-ng-11.2.0-h1234567_1.conda#a87728dabf3151fb9cfa990bd2eb0464
-https://repo.anaconda.com/pkgs/main/linux-64/bzip2-1.0.8-h7b6447c_0.conda#9303f4af7c004e069bae22bde8d800ee
+https://repo.anaconda.com/pkgs/main/linux-64/bzip2-1.0.8-h5eee18b_5.conda#9c8dec113089c4aca7392c6a3864f505
 https://repo.anaconda.com/pkgs/main/linux-64/expat-2.5.0-h6a678d5_0.conda#9a21d99d49a0a556cf9590430dec8ec0
 https://repo.anaconda.com/pkgs/main/linux-64/fftw-3.3.9-h27cfd23_1.conda#d266674fbd3345d45a69896e1bdef8be
 https://repo.anaconda.com/pkgs/main/linux-64/icu-73.1-h6a678d5_0.conda#6d09df641fc23f7d277a04dc7ea32dd4
@@ -29,7 +29,7 @@ https://repo.anaconda.com/pkgs/main/linux-64/libxcb-1.15-h7f8727e_0.conda#ada518
 https://repo.anaconda.com/pkgs/main/linux-64/lz4-c-1.9.4-h6a678d5_0.conda#53915e9402180a7f22ea619c41089520
 https://repo.anaconda.com/pkgs/main/linux-64/ncurses-6.4-h6a678d5_0.conda#5558eec6e2191741a92f832ea826251c
 https://repo.anaconda.com/pkgs/main/linux-64/openssl-3.0.13-h7f8727e_0.conda#c73d46a4d666da0ae3dcd3fd8f805122
-https://repo.anaconda.com/pkgs/main/linux-64/xz-5.4.5-h5eee18b_0.conda#fb0f709ab3eb6ad3538677c327646581
+https://repo.anaconda.com/pkgs/main/linux-64/xz-5.4.6-h5eee18b_0.conda#81a9916f581d4da15a3839216a487c66
 https://repo.anaconda.com/pkgs/main/linux-64/zlib-1.2.13-h5eee18b_0.conda#333e31fbfbb5057c92fa845ad6adef93
 https://repo.anaconda.com/pkgs/main/linux-64/ccache-3.7.9-hfe4627d_0.conda#bef6fc681c273bb7bd0c67d1a591365e
 https://repo.anaconda.com/pkgs/main/linux-64/libcups-2.4.2-h2d74bed_1.conda#3f265c2172a9e8c90a74037b6fa13685
