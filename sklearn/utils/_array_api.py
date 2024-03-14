@@ -423,18 +423,16 @@ def _remove_non_arrays(*arrays, remove_none=True, remove_types=(str,)):
 def get_namespace(*arrays, remove_none=True, remove_types=(str,), xp=None):
     """Get namespace of arrays.
 
-    Introspect `arrays` arguments and return their common Array API
-    compatible namespace object, if any. NumPy 1.22 and later can
-    construct such containers using the `array_api_strict` namespace
-    for instance.
+    Introspect `arrays` arguments and return their common Array API compatible
+    namespace object, if any. It is possible to construct such containers using
+    the `array_api_strict` namespace for instance.
 
     See: https://numpy.org/neps/nep-0047-array-api-standard.html
 
-    If `arrays` are regular numpy arrays, an instance of the
-    `_NumPyAPIWrapper` compatibility wrapper is returned instead.
+    If `arrays` are regular numpy arrays, an instance of the `_NumPyAPIWrapper`
+    compatibility wrapper is returned instead.
 
-    Namespace support is not enabled by default. To enabled it
-    call:
+    Namespace support is not enabled by default. To enabled it call:
 
       sklearn.set_config(array_api_dispatch=True)
 
@@ -443,10 +441,9 @@ def get_namespace(*arrays, remove_none=True, remove_types=(str,), xp=None):
       with sklearn.config_context(array_api_dispatch=True):
           # your code here
 
-    Otherwise an instance of the `_NumPyAPIWrapper`
-    compatibility wrapper is always returned irrespective of
-    the fact that arrays implement the `__array_namespace__`
-    protocol or not.
+    Otherwise an instance of the `_NumPyAPIWrapper` compatibility wrapper is
+    always returned irrespective of the fact that arrays implement the
+    `__array_namespace__` protocol or not.
 
     Parameters
     ----------
@@ -500,7 +497,7 @@ def get_namespace(*arrays, remove_none=True, remove_types=(str,), xp=None):
 
     # These namespaces need additional wrapping to smooth out small differences
     # between implementations
-    if namespace.__name__ in {"array_api_strict", "cupy.array_api"}:
+    if namespace.__name__ in {"cupy.array_api"}:
         namespace = _ArrayAPIWrapper(namespace)
 
     return namespace, is_array_api_compliant

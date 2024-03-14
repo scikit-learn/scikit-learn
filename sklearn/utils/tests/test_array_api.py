@@ -73,7 +73,6 @@ def test_get_namespace_array_api():
     with config_context(array_api_dispatch=True):
         xp_out, is_array_api_compliant = get_namespace(X_xp)
         assert is_array_api_compliant
-        assert isinstance(xp_out, _ArrayAPIWrapper)
 
         with pytest.raises(TypeError):
             xp_out, is_array_api_compliant = get_namespace(X_xp, X_np)
