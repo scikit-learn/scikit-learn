@@ -37,6 +37,14 @@ Changelog
   micro-average when input is a subset of labels.
   :pr:`28399` by :user:`Vineet Joshi <vjoshi253>`.
 
+:mod:`sklearn.mixture`
+......................
+
+- |Fix| The `converged_` attribute of :class:`mixture.GaussianMixture` and
+  :class:`mixture.BayesianGaussianMixture` now reflects the convergence status of
+  the best fit whereas it was previously `True` if any of the fits converged.
+  :pr:`26837` by :user:`Krsto Proroković <krstopro>`.
+
 :mod:`sklearn.neighbors`
 ........................
 
