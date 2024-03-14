@@ -643,6 +643,7 @@ cdef class Splitter:
             unsigned int n_samples_left
             unsigned int n_samples_right
             unsigned int n_samples_ = n_samples
+            unsigned int count
             # We set the 'end' variable such that the last non-missing-values
             # bin never goes to the left child (which would result in and
             # empty right child), unless there are missing values, since these
@@ -672,11 +673,16 @@ cdef class Splitter:
         loss_current_node = _loss_from_value(value, sum_gradients)
 
         for bin_idx in range(end):
-            n_samples_left += hist[bin_idx].count
+            count = hist[bin_idx].count
+            n_samples_left += count
             n_samples_right = n_samples_ - n_samples_left
 
-            if self.hessians_are_constant:
-                sum_hessian_left += hist[bin_idx].count
+            if count == 0:
+                # Can only happen for empty bins, i.e., if not the full X_binned
+                # was passed for growing trees.
+                continue
+            elif self.hessians_are_constant:
+                sum_hessian_left += count
             else:
                 sum_hessian_left += hist[bin_idx].sum_hessians
             sum_hessian_right = sum_hessians - sum_hessian_left
@@ -763,6 +769,7 @@ cdef class Splitter:
             unsigned int n_samples_left
             unsigned int n_samples_right
             unsigned int n_samples_ = n_samples
+            unsigned int count
             Y_DTYPE_C sum_hessian_left
             Y_DTYPE_C sum_hessian_right
             Y_DTYPE_C sum_gradient_left
@@ -786,11 +793,16 @@ cdef class Splitter:
         loss_current_node = _loss_from_value(value, sum_gradients)
 
         for bin_idx in range(start, -1, -1):
-            n_samples_right += hist[bin_idx + 1].count
+            count = hist[bin_idx + 1].count
+            n_samples_right += count
             n_samples_left = n_samples_ - n_samples_right
 
-            if self.hessians_are_constant:
-                sum_hessian_right += hist[bin_idx + 1].count
+            if count == 0:
+                # Can only happen for empty bins, i.e., if not the full X_binned
+                # was passed for growing trees.
+                continue
+            elif self.hessians_are_constant:
+                sum_hessian_right += count
             else:
                 sum_hessian_right += hist[bin_idx + 1].sum_hessians
             sum_hessian_left = sum_hessians - sum_hessian_right
