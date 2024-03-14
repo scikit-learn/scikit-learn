@@ -14,7 +14,6 @@ from sklearn.utils import (
     deprecated,
     safe_mask,
 )
-from sklearn.utils._array_api import yield_namespace_device_dtype_combinations
 from sklearn.utils._missing import is_scalar_nan
 from sklearn.utils._testing import assert_array_equal, assert_no_warnings
 from sklearn.utils.fixes import CSR_CONTAINERS
