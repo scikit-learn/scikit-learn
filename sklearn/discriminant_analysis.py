@@ -193,7 +193,6 @@ class LinearDiscriminantAnalysis(
     `transform` method.
 
     .. versionadded:: 0.17
-       *LinearDiscriminantAnalysis*.
 
     For a comparison between
     :class:`~sklearn.discriminant_analysis.LinearDiscriminantAnalysis`
@@ -776,7 +775,6 @@ class QuadraticDiscriminantAnalysis(ClassifierMixin, BaseEstimator):
     The model fits a Gaussian density to each class.
 
     .. versionadded:: 0.17
-       *QuadraticDiscriminantAnalysis*
 
     For a comparison between
     :class:`~sklearn.discriminant_analysis.QuadraticDiscriminantAnalysis`
