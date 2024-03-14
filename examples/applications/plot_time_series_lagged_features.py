@@ -272,7 +272,14 @@ styled_df = pl.DataFrame(scores)
 
 
 def extract_numeric(col):
-    return pl.col(col).str.split(by=" ").list.take([0, 2]).cast(pl.List(pl.Float64))
+    from sklearn.utils.fixes import parse_version
+
+    if parse_version(pl.__version__) < parse_version("0.19.14"):
+        return pl.col(col).str.split(by=" ").list.take([0, 2]).cast(pl.List(pl.Float64))
+    else:
+        return (
+            pl.col(col).str.split(by=" ").list.gather([0, 2]).cast(pl.List(pl.Float64))
+        )
 
 
 def list_min(col):
