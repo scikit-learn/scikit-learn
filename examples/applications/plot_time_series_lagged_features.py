@@ -52,7 +52,7 @@ from great_tables import GT, loc, style
 
 summary = df.select(cs.numeric()).describe()
 gt_summary = (
-    GT(summary, rowname_col="statistic")
+    GT(summary)
     .tab_header("Statistics of the Dataset")
     .fmt_number(columns=summary.select(cs.numeric()).columns, decimals=6)
 )
