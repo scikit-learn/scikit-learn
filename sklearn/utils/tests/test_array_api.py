@@ -7,6 +7,7 @@ from numpy.testing import assert_allclose
 
 from sklearn._config import config_context
 from sklearn.base import BaseEstimator
+from sklearn.utils import _IS_32BIT
 from sklearn.utils._array_api import (
     _ArrayAPIWrapper,
     _asarray_with_order,
@@ -19,6 +20,7 @@ from sklearn.utils._array_api import (
     _NumPyAPIWrapper,
     device,
     get_namespace,
+    indexing_dtype,
     supported_float_dtypes,
     yield_namespace_device_dtype_combinations,
 )
@@ -469,3 +471,15 @@ def test_get_namespace_array_api_isdtype(wrapper):
 
     with pytest.raises(ValueError, match="Unrecognized data type"):
         assert xp.isdtype(xp.int16, "unknown")
+
+
+@pytest.mark.parametrize(
+    "namespace, _device, _dtype", yield_namespace_device_dtype_combinations()
+)
+def test_indexing_dtype(namespace, _device, _dtype):
+    xp = _array_api_for_tests(namespace, _device)
+
+    if _IS_32BIT:
+        assert indexing_dtype(xp) == xp.int32
+    else:
+        assert indexing_dtype(xp) == xp.int64
