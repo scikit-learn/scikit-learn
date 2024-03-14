@@ -76,6 +76,6 @@ https://repo.anaconda.com/pkgs/main/osx-64/mkl_random-1.2.4-py312ha357a0b_0.cond
 https://repo.anaconda.com/pkgs/main/osx-64/numpy-1.26.4-py312hac873b0_0.conda#3150bac1e382156f82a153229e1ebd06
 https://repo.anaconda.com/pkgs/main/osx-64/numexpr-2.8.7-py312hac873b0_0.conda#6303ba071636ef57fddf69eb6f440ec1
 https://repo.anaconda.com/pkgs/main/osx-64/scipy-1.11.4-py312h81688c2_0.conda#7d57b4c21a9261f97fa511e0940c5d93
-https://repo.anaconda.com/pkgs/main/osx-64/pandas-2.1.4-py312he282a81_0.conda#dcbed31bc94e03cc6f53312e0fb4eb49
+https://repo.anaconda.com/pkgs/main/osx-64/pandas-2.2.1-py312he282a81_0.conda#021b70a1e40efb75b89eb8ebdb347132
 https://repo.anaconda.com/pkgs/main/osx-64/pyamg-4.2.3-py312h44cbcf4_0.conda#3bdc7be74087b3a5a83c520a74e1e8eb
-# pip cython @ https://files.pythonhosted.org/packages/3d/8e/28f8c6109990eef7317ab7e43644092b49a88a39f9373dcd19318946df09/Cython-3.0.8-cp312-cp312-macosx_10_9_x86_64.whl#sha256=90d3fe31db55685d8cb97d43b0ec39ef614fcf660f83c77ed06aa670cb0e164f
+# pip cython @ https://files.pythonhosted.org/packages/be/67/6a1316e4b3201b44d245873f62395bd8ea7d181c4b6b2d43fe7da486bf61/Cython-3.0.9-cp312-cp312-macosx_10_9_x86_64.whl#sha256=157973807c2796addbed5fbc4d9c882ab34bbc60dc297ca729504901479d5df7
