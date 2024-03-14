@@ -1083,7 +1083,9 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
                 arr_dtype = np.result_type(*param_list)
             except TypeError:
                 arr_dtype = object
-            if len(param_list) == n_candidates:
+            if len(param_list) == n_candidates and arr_dtype != object:
+                # Exclude `object` else the numpy constructor might infer a list of
+                # tuples to be a 2d array.
                 results[key] = MaskedArray(param_list, mask=False, dtype=arr_dtype)
             else:
                 # Use one MaskedArray and mask all the places where the param is not

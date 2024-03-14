@@ -53,7 +53,7 @@ https://conda.anaconda.org/conda-forge/linux-64/ccache-4.9.1-h1fcd64f_0.conda#36
 https://conda.anaconda.org/conda-forge/linux-64/lcms2-2.16-hb7c19ff_0.conda#51bb7010fc86f70eee639b4bb7a894f5
 https://conda.anaconda.org/conda-forge/linux-64/libblas-3.9.0-21_linux64_openblas.conda#0ac9f44fc096772b0aa092119b00c3ca
 https://conda.anaconda.org/conda-forge/linux-64/openblas-0.3.26-pthreads_h7a3da1a_0.conda#bda28edbedb0ae5f0a9d3ebcb4290c1d
-https://conda.anaconda.org/conda-forge/linux-64/openjpeg-2.5.0-h488ebb8_3.conda#128c25b7fe6a25286a48f3a6a9b5b6f3
+https://conda.anaconda.org/conda-forge/linux-64/openjpeg-2.5.2-h488ebb8_0.conda#7f2e286780f072ed750df46dc2631138
 https://conda.anaconda.org/conda-forge/linux-64/pypy3.9-7.3.15-h9557127_0.conda#0a12c57c7fefeb6407c1ff47aa0b35df
 https://conda.anaconda.org/conda-forge/linux-64/libcblas-3.9.0-21_linux64_openblas.conda#4a3816d06451c4946e2db26b86472cb6
 https://conda.anaconda.org/conda-forge/linux-64/liblapack-3.9.0-21_linux64_openblas.conda#1a42f305615c3867684e049e85927531
@@ -84,13 +84,13 @@ https://conda.anaconda.org/conda-forge/noarch/zipp-3.17.0-pyhd8ed1ab_0.conda#2e4
 https://conda.anaconda.org/conda-forge/linux-64/blas-devel-3.9.0-21_linux64_openblas.conda#77cefbfb4d47ba8cafef8e3f768a4538
 https://conda.anaconda.org/conda-forge/linux-64/contourpy-1.2.0-py39ha90811c_0.conda#f3b2afc64bf0cbe901a9b00d44611c61
 https://conda.anaconda.org/conda-forge/linux-64/fonttools-4.49.0-py39hf860d4a_0.conda#fa0d38d44f69d5c8ca476beb24fb456e
-https://conda.anaconda.org/conda-forge/noarch/importlib_resources-6.1.1-pyhd8ed1ab_0.conda#3d5fa25cf42f3f32a12b2d874ace8574
+https://conda.anaconda.org/conda-forge/noarch/importlib_resources-6.1.2-pyhd8ed1ab_0.conda#6f4399795892835bd192ea210ca69447
 https://conda.anaconda.org/conda-forge/noarch/joblib-1.3.2-pyhd8ed1ab_0.conda#4da50d410f553db77e62ab62ffaa1abc
-https://conda.anaconda.org/conda-forge/noarch/pytest-8.0.2-pyhd8ed1ab_0.conda#40bd3ef942b9642a3eb20b0bbf92469b
-https://conda.anaconda.org/conda-forge/noarch/python-dateutil-2.8.2-pyhd8ed1ab_0.tar.bz2#dd999d1cc9f79e67dbb855c8924c7984
+https://conda.anaconda.org/conda-forge/noarch/pytest-8.1.0-pyhd8ed1ab_0.conda#e2eeb8b7c5506b9778e8c41934e8dc6e
+https://conda.anaconda.org/conda-forge/noarch/python-dateutil-2.9.0-pyhd8ed1ab_0.conda#2cf4264fffb9e6eff6031c5b6884d61c
 https://conda.anaconda.org/conda-forge/linux-64/scipy-1.12.0-py39h6dedee3_2.conda#6c5d74bac41838f4377dfd45085e1fec
 https://conda.anaconda.org/conda-forge/linux-64/blas-2.121-openblas.conda#4a279792fd8861a15705516a52872eb6
-https://conda.anaconda.org/conda-forge/noarch/importlib-resources-6.1.1-pyhd8ed1ab_0.conda#d04bd1b5bed9177dd7c3cef15e2b6710
+https://conda.anaconda.org/conda-forge/noarch/importlib-resources-6.1.2-pyhd8ed1ab_0.conda#c69b222e1a89945b80feb249d57d8949
 https://conda.anaconda.org/conda-forge/linux-64/pyamg-5.0.1-py39h5fd064f_1.conda#e364cfb3ffb590ccef24b5a92389e751
 https://conda.anaconda.org/conda-forge/noarch/pytest-xdist-3.5.0-pyhd8ed1ab_0.conda#d5f595da2daead898ca958ac62f0307b
 https://conda.anaconda.org/conda-forge/linux-64/matplotlib-base-3.8.3-py39h4e7d633_0.conda#0b15e2f7764b1f64a5f4156ba20b090e
