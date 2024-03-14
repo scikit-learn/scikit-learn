@@ -270,13 +270,19 @@ def _accept_device_cpu(func):
 class _NumPyAPIWrapper:
     """Array API compat wrapper for any numpy version
 
-    NumPy < 1.22 and >=2.0 do not expose the numpy.array_api namespace.
-    This wrapper makes it possible to write code that uses the standard
-    Array API while working with any version of NumPy supported by
-    scikit-learn.
+    NumPy < 2 does not implement the namespace. NumPy 2 and later should
+    progressively implement more an more of the latest Array API spec but this
+    is still work in progress at this time.
+
+    This wrapper makes it possible to write code that uses the standard Array
+    API while working with any version of NumPy supported by scikit-learn.
 
     See the `get_namespace()` public function for more details.
     """
+
+    # TODO: once scikit-learn drops support for NumPy < 2, this class can be
+    # removed, assuming Array API compliance of NumPy 2 is actually sufficient
+    # for scikit-learn's needs.
 
     # Creation functions in spec:
     # https://data-apis.org/array-api/latest/API_specification/creation_functions.html
