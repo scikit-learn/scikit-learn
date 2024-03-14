@@ -688,12 +688,12 @@ class _MPLTreeExporter(_BaseTreeExporter):
         import matplotlib.pyplot as plt
 
         # kwargs for annotations without a bounding box
-        non_box_kwargs = dict(
+        common_kwargs = dict(
             zorder=100 - 10 * depth,
             xycoords="axes fraction",
         )
         if self.fontsize is not None:
-            non_box_kwargs["fontsize"] = self.fontsize
+            common_kwargs["fontsize"] = self.fontsize
 
         # kwargs for annotations with a bounding box
         kwargs = dict(
@@ -701,7 +701,7 @@ class _MPLTreeExporter(_BaseTreeExporter):
             va="center",
             bbox=self.bbox_args.copy(),
             arrowprops=self.arrow_args.copy(),
-            **non_box_kwargs,
+            **common_kwargs,
         )
         kwargs["arrowprops"]["edgecolor"] = plt.rcParams["text.color"]
 
@@ -737,7 +737,7 @@ class _MPLTreeExporter(_BaseTreeExporter):
                         label_text, label_ha = ("True  ", "right")
                     else:
                         label_text, label_ha = ("  False", "left")
-                    ax.annotate(label_text, text_pos, ha=label_ha, **non_box_kwargs)
+                    ax.annotate(label_text, text_pos, ha=label_ha, **common_kwargs)
             for child in node.children:
                 self.recurse(child, tree, ax, max_x, max_y, depth=depth + 1)
 
