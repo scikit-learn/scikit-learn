@@ -15,12 +15,15 @@
       margin-top: 2.5rem;
     }
 
-    /* Remove the backlink styles on the titles */
+    /* Make the headerlinks a bit more visible */
+    h3 > a.headerlink {
+      font-size: 0.9rem;
+    }
+
+    /* Remove the backlink decoration on the titles */
     h2 > a.toc-backref,
     h3 > a.toc-backref {
       text-decoration: none;
-      color: var(--pst-color-text-base);
-      pointer-events: none;
     }
   </style>
 
