@@ -11,15 +11,10 @@ import numpy as np
 from scipy.sparse import csc_matrix, issparse
 
 from ..base import TransformerMixin
-from ..utils import (
-    _is_pandas_df,
-    _safe_indexing,
-    check_array,
-    safe_sqr,
-)
+from ..utils import _safe_indexing, check_array, safe_sqr
 from ..utils._set_output import _get_output_config
 from ..utils._tags import _safe_tags
-from ..utils.validation import _check_feature_names_in, check_is_fitted
+from ..utils.validation import _check_feature_names_in, _is_pandas_df, check_is_fitted
 
 
 class SelectorMixin(TransformerMixin, metaclass=ABCMeta):
