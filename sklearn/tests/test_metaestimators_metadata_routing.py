@@ -59,7 +59,6 @@ from sklearn.multioutput import (
     MultiOutputRegressor,
     RegressorChain,
 )
-from sklearn.pipeline import FeatureUnion
 from sklearn.semi_supervised import SelfTrainingClassifier
 from sklearn.tests.metadata_routing_common import (
     ConsumingClassifier,
@@ -326,20 +325,52 @@ METAESTIMATORS: list = [
         "estimator_routing_methods": ["fit"],
     },
     {
-        "metaestimator": SelfTrainingClassifier,
-        "estimator_name": "base_estimator",
-        "estimator": "classifier",
+        "metaestimator": RidgeCV,
         "X": X,
         "y": y,
-        "preserves_metadata": True,
-        "estimator_routing_methods": ["fit"],
+        "scorer_name": "scoring",
+        "scorer_routing_methods": ["fit"],
+    },
+    {
+        "metaestimator": RidgeClassifierCV,
+        "X": X,
+        "y": y,
+        "scorer_name": "scoring",
+        "scorer_routing_methods": ["fit"],
+    },
+    {
+        "metaestimator": RidgeCV,
+        "X": X,
+        "y": y,
+        "scorer_name": "scoring",
+        "scorer_routing_methods": ["fit"],
+        "cv_name": "cv",
+        "cv_routing_methods": ["fit"],
+    },
+    {
+        "metaestimator": RidgeClassifierCV,
+        "X": X,
+        "y": y,
+        "scorer_name": "scoring",
+        "scorer_routing_methods": ["fit"],
+        "cv_name": "cv",
+        "cv_routing_methods": ["fit"],
+    },
+    {
+      "metaestimator": SelfTrainingClassifier,
+      "estimator_name": "base_estimator",
+      "estimator": "classifier",
+      "X": X,
+      "y": y,
+      "preserves_metadata": True,
+      "estimator_routing_methods": ["fit"],
     },
 ]
 """List containing all metaestimators to be tested and their settings
 
 The keys are as follows:
 
-- metaestimator: The metaestmator to be tested
+- metaestimator: The metaestimator to be tested
 - estimator_name: The name of the argument for the sub-estimator
 - estimator: The sub-estimator type, either "regressor" or "classifier"
 - init_args: The arguments to be passed to the metaestimator's constructor
@@ -375,12 +406,9 @@ METAESTIMATOR_IDS = [str(row["metaestimator"].__name__) for row in METAESTIMATOR
 UNSUPPORTED_ESTIMATORS = [
     AdaBoostClassifier(),
     AdaBoostRegressor(),
-    FeatureUnion([]),
     GraphicalLassoCV(),
     RFE(ConsumingClassifier()),
     RFECV(ConsumingClassifier()),
-    RidgeCV(),
-    RidgeClassifierCV(),
     SequentialFeatureSelector(ConsumingClassifier()),
     StackingClassifier(ConsumingClassifier()),
     StackingRegressor(ConsumingRegressor()),
