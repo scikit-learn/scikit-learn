@@ -532,15 +532,12 @@ def test_splitting_missing_values(
     )
 
     histograms = builder.compute_histograms_brute(sample_indices)
-    print("DEBUG info")
-    print(f" histogram of feature 0 = {histograms.feature_histo(0)}")
     value = compute_node_value(
         sum_gradients, sum_hessians, -np.inf, np.inf, l2_regularization
     )
     split_info = splitter.find_node_split(
-        n_samples, histograms, sum_gradients, sum_hessians, value, debug=True
+        n_samples, histograms, sum_gradients, sum_hessians, value
     )
-    print(f"{value=} {sum_gradients=} {sum_hessians=}")
 
     assert split_info.bin_idx == expected_bin_idx
     if has_missing_values:
