@@ -241,15 +241,9 @@ html_theme_options = {
     # to be displayed, one adds "version-switcher" somewhere in the page layout. See
     # https://pydata-sphinx-theme.readthedocs.io/en/stable/user_guide/version-dropdown.html
     "switcher": {
-        # TODO: Change to (maybe) https://scikit-learn.org/dev/_static/versions.json
-        # The current URL is hosted on my personal website, and is for testing purpose.
-        # My ideal logic is here: in CircleCI when running build_doc.sh we generate the
-        # versions.json file under doc/, and this file is added in html_extra_path to be
-        # copied into the build directory, uploaded somewhere under scikit-learn.org,
-        # and that "somewhere" is the "json_url" here.
-        "json_url": (
-            "https://charlie-xiao.github.io/assets/json/sklearn-versions-test.json"
-        ),
+        # TODO: change to https://scikit-learn.org/dev/versions.json before merging the
+        # new_web_theme branch into main
+        "json_url": "https://scikit-learn.org/_pst_preview/versions.json",
         "version_match": release,
     },
     # check_switcher may be set to False if docbuild pipeline fails. See
@@ -286,7 +280,7 @@ html_theme_options = {
     # Use :html_theme.sidebar_secondary.remove: for file-wide removal
     "secondary_sidebar_items": {"**": ["page-toc", "sourcelink"]},
     "show_version_warning_banner": True,
-    "announcement": [],
+    "announcement": None,
 }
 
 # Add any paths that contain custom themes here, relative to this directory.
@@ -321,8 +315,15 @@ html_static_path = ["images", "css", "js"]
 # template names.
 html_additional_pages = {"index": "index.html"}
 
+# Additional files to copy
+# versions.json is generated in build_tools/circle/build_doc.sh
+html_extra_path = ["versions.json"]
+
 # Additional JS files
-html_js_files = ["scripts/details-permalink.js"]
+html_js_files = [
+    "scripts/details-permalink.js",
+    "scripts/version-switcher.js",
+]
 
 # Compile scss files into css files using sphinxcontrib-sass
 sass_src_dir, sass_out_dir = "scss", "css/styles"

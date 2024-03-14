@@ -142,21 +142,28 @@ def move_gallery_links(app, exception):
                 sg_note = soup.find("div", class_="sphx-glr-download-link-note")
                 sg_footer = soup.find("div", class_="sphx-glr-footer")
 
+                # If any one of these two is not found, we directly give up tweaking
+                if sg_note is None or sg_footer is None:
+                    continue
+
                 # Move the download links into the secondary sidebar
-                py_link = sg_footer.find("div", class_="sphx-glr-download-python").a
-                ipy_link = sg_footer.find("div", class_="sphx-glr-download-jupyter").a
+                py_link_div = sg_footer.find("div", class_="sphx-glr-download-python")
+                ipy_link_div = sg_footer.find("div", class_="sphx-glr-download-jupyter")
                 _create_secondary_sidebar_component(
                     [
-                        _create_download_link(py_link, is_jupyter=False),
-                        _create_download_link(ipy_link, is_jupyter=True),
+                        _create_download_link(py_link_div.a, is_jupyter=False),
+                        _create_download_link(ipy_link_div.a, is_jupyter=True),
                     ]
                 )
 
                 # Move the badge links into the secondary sidebar
-                lite_link = sg_footer.find("div", class_="lite-badge").a
-                binder_link = sg_footer.find("div", class_="binder-badge").a
+                lite_link_div = sg_footer.find("div", class_="lite-badge")
+                binder_link_div = sg_footer.find("div", class_="binder-badge")
                 _create_secondary_sidebar_component(
-                    [_create_badge_link(lite_link), _create_badge_link(binder_link)]
+                    [
+                        _create_badge_link(lite_link_div.a),
+                        _create_badge_link(binder_link_div.a),
+                    ]
                 )
 
                 # Remove the sourcelink component from the secondary sidebar; the reason
@@ -171,9 +178,8 @@ def move_gallery_links(app, exception):
                 sg_note.extract()
                 sg_footer.extract()
 
-            except Exception as e:
+            except Exception:
                 # If any step fails we directly skip the file
-                logger.warning(f"Failed to tweak gallery links in {html_file}: {e}")
                 continue
 
             # Write the modified file back
