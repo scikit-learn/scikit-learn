@@ -272,7 +272,7 @@ styled_df = pl.DataFrame(scores)
 
 
 def extract_numeric(col):
-    return pl.col(col).str.split(by=" ").list.gather([0, 2]).cast(pl.List(pl.Float64))
+    return pl.col(col).str.split(by=" ").list.take([0, 2]).cast(pl.List(pl.Float64))
 
 
 def list_min(col):
