@@ -116,6 +116,17 @@ def test_determine_key_type_array_api(array_namespace, device, dtype_name):
         bool_array_key = xp.asarray([True, False, True])
         assert _determine_key_type(bool_array_key) == "bool"
 
+        try:
+            complex_array_key = xp.asarray([1 + 1j, 2 + 2j, 3 + 3j])
+        except TypeError:
+            # Complex numbers are not supported by all Array API libraries.
+            complex_array_key = None
+
+        if complex_array_key is not None:
+            with pytest.raises(ValueError, match="No valid specification of the"):
+                _determine_key_type(complex_array_key)
+
+
 @pytest.mark.parametrize(
     "array_type", ["list", "array", "sparse", "dataframe", "polars"]
 )
