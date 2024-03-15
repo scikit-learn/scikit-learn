@@ -107,7 +107,7 @@ def device(*array_list, remove_none=True, remove_types=(str,)):
     remove_none : bool, default=True
         Whether to ignore None objects passed in array_list.
 
-     : tuple or list, default=(str,)
+    remove_types : tuple or list, default=(str,)
         Types to ignore in array_list.
 
     Returns
