@@ -44,12 +44,12 @@ How can I obtain permission to use the images in scikit-learn for my work?
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The images contained in the `scikit-learn repository
-<https://github.com/scikit-learn/scikit-learn>` and the images generated within
-the `scikit-learn documentation <https://scikit-learn.org/stable/index.html>`
+<https://github.com/scikit-learn/scikit-learn>`_ and the images generated within
+the `scikit-learn documentation <https://scikit-learn.org/stable/index.html>`_
 can be used via the `BSD 3-Clause License
-<https://github.com/scikit-learn/scikit-learn?tab=BSD-3-Clause-1-ov-file>` for
-your work. Citations of scikit-learn are highly encouraged and appreciated
-:ref:`cite us <citing-scikit-learn>`.
+<https://github.com/scikit-learn/scikit-learn?tab=BSD-3-Clause-1-ov-file>`_ for
+your work. Citations of scikit-learn are highly encouraged and appreciated. See
+:ref:`citing scikit-learn <citing-scikit-learn>`.
 
 Implementation decisions
 ------------------------
