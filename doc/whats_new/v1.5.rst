@@ -287,7 +287,10 @@ Changelog
   :func:`preprocessing.quantile_transform` now supports disabling
   subsampling explicitly.
   :pr:`27636` by :user:`Ralph Urlus <rurlus>`.
-  
+- |Enhancement| Added `warn` option to `handle_unknown` parameter in
+  :class:`preprocessing.OneHotEncoder`.
+  :pr:`28637` by :user:`Gleb Levitski <glevv>`.
+
 :mod:`sklearn.tree`
 ...................
 
