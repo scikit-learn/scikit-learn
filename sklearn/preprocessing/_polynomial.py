@@ -642,13 +642,11 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
         Order of output array in the dense case. `'F'` order is faster to compute, but
         may slow down subsequent estimators.
 
-    handle_missing : {'error', 'indicator'}, default='error'
+    handle_missing : {'error', 'constant'}, default='error'
         Specifies the way missing values are handled.
 
         - 'error' : Raise an error if missing values are present in :meth:`fit`
-        - 'indicator' :  Encode the splines from missing values as 0 and add a
-          :class:`MissingIndicator` (binary matrix indicating the presence of
-          missing values).
+        - 'constant' :  Encode the splines from missing values as 0.
 
         .. versionadded:: 1.5
 
@@ -719,7 +717,7 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
         ],
         "include_bias": ["boolean"],
         "order": [StrOptions({"C", "F"})],
-        "handle_missing": [StrOptions({"error", "indicator"})],
+        "handle_missing": [StrOptions({"error", "constant"})],
         "sparse_output": ["boolean"],
     }
 
@@ -881,8 +879,6 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
                 sample_weight=sample_weight,
             )
         else:
-            # do we have to handle the case, where nan are given as knots by
-            # the user?
             base_knots = check_array(self.knots, dtype=np.float64)
             if base_knots.shape[0] < 2:
                 raise ValueError("Number of knots, knots.shape[0], must be >= 2.")
@@ -1049,7 +1045,7 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
                         spl.t[n] - spl.t[spl.k]
                     )
                 else:
-                    x = X[:, i]
+                    x = X[:, i].copy()  # copy to avoid inplace operation
 
                 if use_sparse:
                     # as a workaround to BSpline.design_matrix() raising when X is

@@ -491,6 +491,10 @@ def test_spline_transformer_n_features_out(
     assert splt.transform(X).shape[1] == splt.n_features_out_
 
 
+@pytest.mark.skipif(
+    sp_version < parse_version("1.8.0"),
+    reason="The option `sparse_output` is available as of scipy 1.8.0",
+)
 @pytest.mark.parametrize("knots", ["uniform", "quantile"])
 @pytest.mark.parametrize(
     "extrapolation", ["error", "constant", "linear", "continue", "periodic"]
@@ -498,12 +502,8 @@ def test_spline_transformer_n_features_out(
 @pytest.mark.parametrize("sparse_output", [False, True])
 def test_spline_transformer_handles_missing_values(knots, extrapolation, sparse_output):
     """Test that SplineTransformer handles missing values correctly."""
-    X_nan = [[1, 1], [2, 2], [3, 3], [np.nan, 4], [4, 4]]
-    X = [[1, 1], [2, 2], [3, 3], [4, 4]]
-
-    # only for development, will later be removed
-    # X_nan = [[1], [2], [3], [np.nan], [4]]
-    # X = [[1], [2], [3], [4]]
+    X_nan = np.array([[1, 1], [2, 2], [3, 3], [np.nan, 4], [4, 4]])
+    X = np.array([[1, 1], [2, 2], [3, 3], [4, 4]])
 
     # check correct error message for handle_missing="error"
     msg = (
@@ -519,29 +519,59 @@ def test_spline_transformer_handles_missing_values(knots, extrapolation, sparse_
         )
         spline.fit_transform(X_nan)
 
-    # check correct results for handle_missing="indicator", remark: check only
-    # for knots="uniform", since for "quantile" the metrics will be calculated
+    # check correct results for handle_missing="constant", remark: check only
+    # for knots="uniform", since for "quantile" the metrics are calculated
     # differently with nan present and a different result is thus expected
     spline = SplineTransformer(
         degree=2,
         n_knots=3,
         knots="uniform",
-        handle_missing="indicator",
+        handle_missing="constant",
         extrapolation=extrapolation,
         sparse_output=sparse_output,
     )
 
-    X_nan = np.array(X_nan)
-    mask = _get_mask(X_nan, np.nan)
+    # check for generic invariants
+    X_nan_fit_transformed = spline.fit_transform(X_nan)
+    if sparse.issparse(X_nan_fit_transformed):
+        X_nan_fit_transformed = X_nan_fit_transformed.toarray()
+    assert (X_nan_fit_transformed >= 0).all()
+    assert (X_nan_fit_transformed <= 1).all()
 
+    X_nan_fit_then_transformed = spline.fit(X_nan).transform(X_nan)
+    if sparse.issparse(X_nan_fit_then_transformed):
+        X_nan_fit_then_transformed = X_nan_fit_then_transformed.toarray()
+    assert_allclose(X_nan_fit_transformed, X_nan_fit_then_transformed)
+
+    # check that B-splines sum to one * n_features also with nan values present in X
+    assert_allclose(
+        X_nan_fit_transformed.sum(axis=1), np.ones(X_nan.shape[0]) * X_nan.shape[1]
+    )
+
+    # check that transform works as expected when the passed data has not the same
+    # shape as the training set array:
+    X_transformed_same_shape = spline.fit_transform(X_nan)[::2]
+    if sparse.issparse(X_transformed_same_shape):
+        X_transformed_same_shape = X_transformed_same_shape.toarray()
+    X_transformed_different_shapes = spline.fit(X_nan).transform(X_nan[::2])
+    if sparse.issparse(X_transformed_different_shapes):
+        X_transformed_different_shapes = X_transformed_different_shapes.toarray()
+    assert_allclose(X_transformed_same_shape, X_transformed_different_shapes)
+
+    # check that additional nan values don't change the calculation of the other splines
+    mask = _get_mask(X_nan, np.nan)
     X_transform = spline.fit_transform(X)
-    X_nan_transform = spline.fit_transform(X_nan)
-    X_nan_transform_without_extra = X_nan_transform[~mask[:, 0], :]
+    X_nan_transform_without_extra = X_nan_fit_transformed[~mask[:, 0], :]
 
     if sparse.issparse(X_transform):
         X_transform = X_transform.toarray()
     if sparse.issparse(X_nan_transform_without_extra):
         X_nan_transform_without_extra = X_nan_transform_without_extra.toarray()
+
+    # this assertion only holds as long as no np.nan value constructs the min or max
+    # value of the data space (in this case, SplineTransformer's stats would be
+    # calculated based on the other values and thus differ from another
+    # SplineTransformer fit on the whole range)
     assert np.array_equal(X_transform, X_nan_transform_without_extra)
 
 
