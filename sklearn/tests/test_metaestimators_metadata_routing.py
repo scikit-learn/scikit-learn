@@ -357,13 +357,13 @@ METAESTIMATORS: list = [
         "cv_routing_methods": ["fit"],
     },
     {
-      "metaestimator": SelfTrainingClassifier,
-      "estimator_name": "base_estimator",
-      "estimator": "classifier",
-      "X": X,
-      "y": y,
-      "preserves_metadata": True,
-      "estimator_routing_methods": ["fit"],
+        "metaestimator": SelfTrainingClassifier,
+        "estimator_name": "base_estimator",
+        "estimator": "classifier",
+        "X": X,
+        "y": y,
+        "preserves_metadata": True,
+        "estimator_routing_methods": ["fit"],
     },
 ]
 """List containing all metaestimators to be tested and their settings
