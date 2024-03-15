@@ -1241,19 +1241,19 @@ clusters (labels) and the samples are mapped to the global label of the nearest 
     BIRCH is more useful than MiniBatchKMeans.
 
   .. image:: ../auto_examples/cluster/images/sphx_glr_plot_birch_vs_minibatchkmeans_001.png
-      :target: ../auto_examples/cluster/plot_birch_vs_minibatchkmeans.html
+    :target: ../auto_examples/cluster/plot_birch_vs_minibatchkmeans.html
 
 .. dropdown:: How to use partial_fit?
 
   To avoid the computation of global clustering, for every call of ``partial_fit``
-  the user is advised
+  the user is advised:
 
-  1. To set ``n_clusters=None`` initially
+  1. To set ``n_clusters=None`` initially.
   2. Train all data by multiple calls to partial_fit.
   3. Set ``n_clusters`` to a required value using
-    ``brc.set_params(n_clusters=n_clusters)``.
+     ``brc.set_params(n_clusters=n_clusters)``.
   4. Call ``partial_fit`` finally with no arguments, i.e. ``brc.partial_fit()``
-    which performs the global clustering.
+     which performs the global clustering.
 
 .. dropdown:: References
 
