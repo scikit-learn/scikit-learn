@@ -645,7 +645,7 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
     handle_missing : {'error', 'constant'}, default='error'
         Specifies the way missing values are handled.
 
-        - 'error' : Raise an error if missing values are present in :meth:`fit`
+        - 'error' : Raise an error if np.nan values are present during :meth:`fit`
         - 'constant' :  Encode the splines from missing values as 0.
 
         .. versionadded:: 1.5

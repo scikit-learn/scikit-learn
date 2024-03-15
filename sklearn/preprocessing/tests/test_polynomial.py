@@ -69,7 +69,7 @@ def test_spline_transformer_integer_knots(extrapolation):
 
 
 def test_spline_transformer_feature_names():
-    """Test that SplineTransformer generates correct features name."""
+    """Test that SplineTransformer generates correct feature names."""
     X = np.arange(20).reshape(10, 2)
     splt = SplineTransformer(n_knots=3, degree=3, include_bias=True).fit(X)
     feature_names = splt.get_feature_names_out()
