@@ -40,6 +40,16 @@ Note however that this support is still considered experimental and specific
 components might behave slightly differently. Please refer to the test
 suite of the specific module of interest for more details.
 
+How can I obtain permission to use the images in scikit-learn for my work?
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The images contained in the `scikit-learn repository
+<https://github.com/scikit-learn/scikit-learn>` and the images generated within
+the `scikit-learn documentation <https://scikit-learn.org/stable/index.html>`
+can be used via the `BSD 3-Clause License
+<https://github.com/scikit-learn/scikit-learn?tab=BSD-3-Clause-1-ov-file>` for
+your work. Citations of scikit-learn are highly encouraged and appreciated
+:ref:`cite us <citing-scikit-learn>`.
 
 Implementation decisions
 ------------------------
@@ -341,11 +351,6 @@ For bug reports or feature requests, please make use of the
 .. warning::
   Please do not email any authors directly to ask for assistance, report bugs,
   or for any other issue related to scikit-learn.
-
-How can I obtain permission to use the images in scikit-learn for my work?
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-The images contained in the `scikit-learn repository <https://github.com/scikit-learn/scikit-learn>` and the images generated within the `scikit-learn documentation`<https://scikit-learn.org/stable/index.html> can be used via the `BSD 3-Clause License <https://github.com/scikit-learn/scikit-learn?tab=BSD-3-Clause-1-ov-file>` for your work. Citations of scikit-learn are highly encouraged and appreciated ref:`cite us <citing-scikit-learn>`.
 
 How should I save, export or deploy estimators for production?
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
