@@ -161,12 +161,12 @@ def _preprocess_data(
         Always an array of ones. TODO: refactor the code base to make it
         possible to remove this unused variable.
     """
-    input_arrays = (X, y) if sample_weight is None else (X, y, sample_weight)
+    input_arrays = (X, y, sample_weight)
     xp, _ = get_namespace(*input_arrays)
     n_samples, n_features = X.shape
-    _X_is_sparse = sp.issparse(X)
+    X_is_sparse = sp.issparse(X)
 
-    if not _X_is_sparse:
+    if not X_is_sparse:
         device_ = device(*input_arrays)
     else:
         device_ = "cpu"
@@ -178,10 +178,7 @@ def _preprocess_data(
 
     if check_input:
         X = check_array(
-            X,
-            copy=copy,
-            accept_sparse=["csr", "csc"],
-            dtype=supported_float_dtypes(xp, device_),
+            X, copy=copy, accept_sparse=["csr", "csc"], dtype=supported_float_dtypes(xp)
         )
         y = check_array(y, dtype=X.dtype, copy=copy_y, ensure_2d=False)
     else:
@@ -195,26 +192,26 @@ def _preprocess_data(
     dtype_ = X.dtype
 
     if fit_intercept:
-        if _X_is_sparse:
+        if X_is_sparse:
             X_offset, X_var = mean_variance_axis(X, axis=0, weights=sample_weight)
         else:
             X_offset = _average(X, axis=0, weights=sample_weight, xp=xp)
 
-            X_offset = xp.astype(X_offset, dtype_, copy=False)
+            X_offset = xp.astype(X_offset, X.dtype, copy=False)
             X -= X_offset
 
         y_offset = _average(y, axis=0, weights=sample_weight, xp=xp)
         y -= y_offset
     else:
-        X_offset = xp.zeros(n_features, dtype=dtype_, device=device_)
+        X_offset = xp.zeros(n_features, dtype=X.dtype, device=device_)
         if y.ndim == 1:
-            y_offset = xp.zeros((1,), dtype=dtype_, device=device_)[0]
+            y_offset = xp.zeros((1,), dtype=dtype_, device=device_)
         else:
             y_offset = xp.zeros(y.shape[1], dtype=dtype_, device=device_)
 
     # XXX: X_scale is no longer needed. It is an historic artifact from the
     # time where linear model exposed the normalize parameter.
-    X_scale = xp.ones(n_features, dtype=dtype_, device=device_)
+    X_scale = xp.ones(n_features, dtype=X.dtype, device=device_)
     return X, y, X_offset, y_offset, X_scale
 
 
@@ -245,12 +242,9 @@ def _rescale_data(X, y, sample_weight, inplace=False):
 
     y_rescaled : {array-like, sparse matrix}
     """
-    input_arrays = (X, y) if sample_weight is None else (X, y, sample_weight)
-
-    xp, _ = get_namespace(*input_arrays)
-
     # Assume that _validate_data and _check_sample_weight have been called by
     # the caller.
+    xp, _ = get_namespace(X, y, sample_weight)
     n_samples = X.shape[0]
     sample_weight_sqrt = xp.sqrt(sample_weight)
 
@@ -263,9 +257,9 @@ def _rescale_data(X, y, sample_weight, inplace=False):
         X = safe_sparse_dot(sw_matrix, X)
     else:
         if inplace:
-            X *= sample_weight_sqrt[:, xp.newaxis]
+            X *= sample_weight_sqrt[:, None]
         else:
-            X = X * sample_weight_sqrt[:, xp.newaxis]
+            X = X * sample_weight_sqrt[:, None]
 
     if sp.issparse(y):
         y = safe_sparse_dot(sw_matrix, y)
@@ -274,12 +268,12 @@ def _rescale_data(X, y, sample_weight, inplace=False):
             if y.ndim == 1:
                 y *= sample_weight_sqrt
             else:
-                y *= sample_weight_sqrt[:, xp.newaxis]
+                y *= sample_weight_sqrt[:, None]
         else:
             if y.ndim == 1:
                 y = y * sample_weight_sqrt
             else:
-                y = y * sample_weight_sqrt[:, xp.newaxis]
+                y = y * sample_weight_sqrt[:, None]
     return X, y, sample_weight_sqrt
 
 
@@ -295,7 +289,7 @@ class LinearModel(BaseEstimator, metaclass=ABCMeta):
 
         X = self._validate_data(X, accept_sparse=["csr", "csc", "coo"], reset=False)
         coef_T = self.coef_ if (self.coef_.ndim < 2) else self.coef_.T
-        return safe_sparse_dot(X, coef_T, dense_output=True) + self.intercept_
+        return X @ coef_T + self.intercept_
 
     def predict(self, X):
         """
@@ -324,7 +318,6 @@ class LinearModel(BaseEstimator, metaclass=ABCMeta):
             coef_ = self.coef_ = xp.divide(
                 xp.astype(self.coef_, X_scale.dtype), X_scale
             )
-
             ravel = False
             if self.coef_.ndim == 1:
                 coef_ = xp.reshape(coef_, (1, -1))
@@ -342,6 +335,7 @@ class LinearModel(BaseEstimator, metaclass=ABCMeta):
                 intercept_ = intercept_[0]
 
             self.intercept_ = intercept_
+
         else:
             self.intercept_ = 0.0
 

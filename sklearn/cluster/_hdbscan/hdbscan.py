@@ -594,6 +594,14 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
     OPTICS : Ordering Points To Identify the Clustering Structure.
     Birch : Memory-efficient, online-learning algorithm.
 
+    Notes
+    -----
+    The `min_samples` parameter includes the point itself, whereas the implementation in
+    `scikit-learn-contrib/hdbscan <https://github.com/scikit-learn-contrib/hdbscan>`_
+    does not. To get the same results in both versions, the value of `min_samples` here
+    must be 1 greater than the value used in `scikit-learn-contrib/hdbscan
+    <https://github.com/scikit-learn-contrib/hdbscan>`_.
+
     References
     ----------
 

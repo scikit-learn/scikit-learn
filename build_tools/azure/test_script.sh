@@ -48,28 +48,6 @@ if [[ "$COVERAGE" == "true" ]]; then
     TEST_CMD="$TEST_CMD --cov-config='$COVERAGE_PROCESS_START' --cov sklearn --cov-report="
 fi
 
-if [[ -n "$CHECK_WARNINGS" ]]; then
-    TEST_CMD="$TEST_CMD -Werror::DeprecationWarning -Werror::FutureWarning -Werror::sklearn.utils.fixes.VisibleDeprecationWarning"
-
-    # numpy's 1.19.0's tostring() deprecation is ignored until scipy and joblib
-    # removes its usage
-    TEST_CMD="$TEST_CMD -Wignore:tostring:DeprecationWarning"
-
-    # Ignore distutils deprecation warning, used by joblib internally
-    TEST_CMD="$TEST_CMD -Wignore:distutils\ Version\ classes\ are\ deprecated:DeprecationWarning"
-
-    # Ignore pkg_resources deprecation warnings triggered by pyamg
-    TEST_CMD="$TEST_CMD -W 'ignore:pkg_resources is deprecated as an API:DeprecationWarning'"
-    TEST_CMD="$TEST_CMD -W 'ignore:Deprecated call to \`pkg_resources:DeprecationWarning'"
-
-    # In some case, exceptions are raised (by bug) in tests, and captured by pytest,
-    # but not raised again. This is for instance the case when Cython directives are
-    # activated: IndexErrors (which aren't fatal) are raised on out-of-bound accesses.
-    # In those cases, pytest instead raises pytest.PytestUnraisableExceptionWarnings,
-    # which we must treat as errors on the CI.
-    TEST_CMD="$TEST_CMD -Werror::pytest.PytestUnraisableExceptionWarning"
-fi
-
 if [[ "$PYTEST_XDIST_VERSION" != "none" ]]; then
     XDIST_WORKERS=$(python -c "import joblib; print(joblib.cpu_count(only_physical_cores=True))")
     TEST_CMD="$TEST_CMD -n$XDIST_WORKERS"
@@ -83,5 +61,5 @@ if [[ -n "$SELECTED_TESTS" ]]; then
 fi
 
 set -x
-eval "$TEST_CMD --maxfail=10 --pyargs sklearn"
+eval "$TEST_CMD --pyargs sklearn"
 set +x

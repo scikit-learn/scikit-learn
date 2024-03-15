@@ -80,7 +80,8 @@ are not yet supported, for instance some loss functions.
 
 .. topic:: Examples:
 
- * :ref:`sphx_glr_auto_examples_inspection_plot_partial_dependence.py`
+  * :ref:`sphx_glr_auto_examples_inspection_plot_partial_dependence.py`
+  * :ref:`sphx_glr_auto_examples_ensemble_plot_forest_hist_grad_boosting_comparison.py`
 
 Usage
 ^^^^^
@@ -129,6 +130,8 @@ Note that for technical reasons, using a callable as a scorer is significantly s
 than using the loss. By default, early-stopping is performed if there are at least
 10,000 samples in the training set, using the validation loss.
 
+.. _nan_support_hgbt:
+
 Missing values support
 ^^^^^^^^^^^^^^^^^^^^^^
 
@@ -166,6 +169,10 @@ whether the feature value is missing or not::
 If no missing values were encountered for a given feature during training,
 then samples with missing values are mapped to whichever child has the most
 samples.
+
+.. topic:: Examples:
+
+  * :ref:`sphx_glr_auto_examples_ensemble_plot_hgbt_regression.py`
 
 .. _sw_hgbdt:
 
@@ -252,7 +259,11 @@ the most samples (just like for continuous features). When predicting,
 categories that were not seen during fit time will be treated as missing
 values.
 
-**Split finding with categorical features**: The canonical way of considering
+|details-start|
+**Split finding with categorical features**:
+|details-split|
+
+The canonical way of considering
 categorical splits in a tree is to consider
 all of the :math:`2^{K - 1} - 1` partitions, where :math:`K` is the number of
 categories. This can quickly become prohibitive when :math:`K` is large.
@@ -266,6 +277,8 @@ formal proof). As a result, only :math:`K - 1` splits need to be considered
 instead of :math:`2^{K - 1} - 1`. The initial sorting is a
 :math:`\mathcal{O}(K \log(K))` operation, leading to a total complexity of
 :math:`\mathcal{O}(K \log(K) + K)`, instead of :math:`\mathcal{O}(2^K)`.
+
+|details-end|
 
 .. topic:: Examples:
 
@@ -285,13 +298,15 @@ model.
 
 For a predictor :math:`F` with two features:
 
- - a **monotonic increase constraint** is a constraint of the form:
-    .. math::
-        x_1 \leq x_1' \implies F(x_1, x_2) \leq F(x_1', x_2)
+- a **monotonic increase constraint** is a constraint of the form:
 
- - a **monotonic decrease constraint** is a constraint of the form:
-    .. math::
-        x_1 \leq x_1' \implies F(x_1, x_2) \geq F(x_1', x_2)
+  .. math::
+      x_1 \leq x_1' \implies F(x_1, x_2) \leq F(x_1', x_2)
+
+- a **monotonic decrease constraint** is a constraint of the form:
+
+  .. math::
+      x_1 \leq x_1' \implies F(x_1, x_2) \geq F(x_1', x_2)
 
 You can specify a monotonic constraint on each feature using the
 `monotonic_cst` parameter. For each feature, a value of 0 indicates no
@@ -311,8 +326,8 @@ Nevertheless, monotonic constraints only marginally constrain feature effects on
 For instance, monotonic increase and decrease constraints cannot be used to enforce the
 following modelling constraint:
 
-    .. math::
-        x_1 \leq x_1' \implies F(x_1, x_2) \leq F(x_1', x_2')
+.. math::
+    x_1 \leq x_1' \implies F(x_1, x_2) \leq F(x_1', x_2')
 
 Also, monotonic constraints are not supported for multiclass classification.
 
@@ -323,6 +338,7 @@ Also, monotonic constraints are not supported for multiclass classification.
 .. topic:: Examples:
 
   * :ref:`sphx_glr_auto_examples_ensemble_plot_monotonic_constraints.py`
+  * :ref:`sphx_glr_auto_examples_ensemble_plot_hgbt_regression.py`
 
 .. _interaction_cst_hgbt:
 
@@ -442,8 +458,9 @@ The usage and the parameters of :class:`GradientBoostingClassifier` and
 :class:`GradientBoostingRegressor` are described below. The 2 most important
 parameters of these estimators are `n_estimators` and `learning_rate`.
 
-Classification
-^^^^^^^^^^^^^^^
+|details-start|
+**Classification**
+|details-split|
 
 :class:`GradientBoostingClassifier` supports both binary and multi-class
 classification.
@@ -480,8 +497,11 @@ depth via ``max_depth`` or by setting the number of leaf nodes via
    :class:`HistGradientBoostingClassifier` as an alternative to
    :class:`GradientBoostingClassifier` .
 
-Regression
-^^^^^^^^^^^
+|details-end|
+
+|details-start|
+**Regression**
+|details-split|
 
 :class:`GradientBoostingRegressor` supports a number of
 :ref:`different loss functions <gradient_boosting_loss>`
@@ -521,6 +541,8 @@ to determine the optimal number of trees (i.e. ``n_estimators``) by early stoppi
    :target: ../auto_examples/ensemble/plot_gradient_boosting_regression.html
    :align: center
    :scale: 75
+
+|details-end|
 
 .. topic:: Examples:
 
@@ -578,15 +600,16 @@ Mathematical formulation
 We first present GBRT for regression, and then detail the classification
 case.
 
-Regression
-...........
+|details-start|
+**Regression**
+|details-split|
 
 GBRT regressors are additive models whose prediction :math:`\hat{y}_i` for a
 given input :math:`x_i` is of the following form:
 
-  .. math::
+.. math::
 
-    \hat{y}_i = F_M(x_i) = \sum_{m=1}^{M} h_m(x_i)
+  \hat{y}_i = F_M(x_i) = \sum_{m=1}^{M} h_m(x_i)
 
 where the :math:`h_m` are estimators called *weak learners* in the context
 of boosting. Gradient Tree Boosting uses :ref:`decision tree regressors
@@ -595,17 +618,17 @@ of boosting. Gradient Tree Boosting uses :ref:`decision tree regressors
 
 Similar to other boosting algorithms, a GBRT is built in a greedy fashion:
 
-  .. math::
+.. math::
 
-    F_m(x) = F_{m-1}(x) + h_m(x),
+  F_m(x) = F_{m-1}(x) + h_m(x),
 
 where the newly added tree :math:`h_m` is fitted in order to minimize a sum
 of losses :math:`L_m`, given the previous ensemble :math:`F_{m-1}`:
 
-  .. math::
+.. math::
 
-    h_m =  \arg\min_{h} L_m = \arg\min_{h} \sum_{i=1}^{n}
-    l(y_i, F_{m-1}(x_i) + h(x_i)),
+  h_m =  \arg\min_{h} L_m = \arg\min_{h} \sum_{i=1}^{n}
+  l(y_i, F_{m-1}(x_i) + h(x_i)),
 
 where :math:`l(y_i, F(x_i))` is defined by the `loss` parameter, detailed
 in the next section.
@@ -618,12 +641,12 @@ argument.
 Using a first-order Taylor approximation, the value of :math:`l` can be
 approximated as follows:
 
-  .. math::
+.. math::
 
-    l(y_i, F_{m-1}(x_i) + h_m(x_i)) \approx
-    l(y_i, F_{m-1}(x_i))
-    + h_m(x_i)
-    \left[ \frac{\partial l(y_i, F(x_i))}{\partial F(x_i)} \right]_{F=F_{m - 1}}.
+  l(y_i, F_{m-1}(x_i) + h_m(x_i)) \approx
+  l(y_i, F_{m-1}(x_i))
+  + h_m(x_i)
+  \left[ \frac{\partial l(y_i, F(x_i))}{\partial F(x_i)} \right]_{F=F_{m - 1}}.
 
 .. note::
 
@@ -640,9 +663,9 @@ differentiable. We will denote it by :math:`g_i`.
 
 Removing the constant terms, we have:
 
-  .. math::
+.. math::
 
-    h_m \approx \arg\min_{h} \sum_{i=1}^{n} h(x_i) g_i
+  h_m \approx \arg\min_{h} \sum_{i=1}^{n} h(x_i) g_i
 
 This is minimized if :math:`h(x_i)` is fitted to predict a value that is
 proportional to the negative gradient :math:`-g_i`. Therefore, at each
@@ -661,8 +684,11 @@ space.
   update is loss-dependent: for the absolute error loss, the value of
   a leaf is updated to the median of the samples in that leaf.
 
-Classification
-..............
+|details-end|
+
+|details-start|
+**Classification**
+|details-split|
 
 Gradient boosting for classification is very similar to the regression case.
 However, the sum of the trees :math:`F_M(x_i) = \sum_m h_m(x_i)` is not
@@ -683,6 +709,8 @@ still a regressor, not a classifier. This is because the sub-estimators are
 trained to predict (negative) *gradients*, which are always continuous
 quantities.
 
+|details-end|
+
 .. _gradient_boosting_loss:
 
 Loss Functions
@@ -691,40 +719,49 @@ Loss Functions
 The following loss functions are supported and can be specified using
 the parameter ``loss``:
 
-  * Regression
+|details-start|
+**Regression**
+|details-split|
 
-    * Squared error (``'squared_error'``): The natural choice for regression
-      due to its superior computational properties. The initial model is
-      given by the mean of the target values.
-    * Absolute error (``'absolute_error'``): A robust loss function for
-      regression. The initial model is given by the median of the
-      target values.
-    * Huber (``'huber'``): Another robust loss function that combines
-      least squares and least absolute deviation; use ``alpha`` to
-      control the sensitivity with regards to outliers (see [Friedman2001]_ for
-      more details).
-    * Quantile (``'quantile'``): A loss function for quantile regression.
-      Use ``0 < alpha < 1`` to specify the quantile. This loss function
-      can be used to create prediction intervals
-      (see :ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_quantile.py`).
+  * Squared error (``'squared_error'``): The natural choice for regression
+    due to its superior computational properties. The initial model is
+    given by the mean of the target values.
+  * Absolute error (``'absolute_error'``): A robust loss function for
+    regression. The initial model is given by the median of the
+    target values.
+  * Huber (``'huber'``): Another robust loss function that combines
+    least squares and least absolute deviation; use ``alpha`` to
+    control the sensitivity with regards to outliers (see [Friedman2001]_ for
+    more details).
+  * Quantile (``'quantile'``): A loss function for quantile regression.
+    Use ``0 < alpha < 1`` to specify the quantile. This loss function
+    can be used to create prediction intervals
+    (see :ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_quantile.py`).
 
-  * Classification
+|details-end|
 
-    * Binary log-loss (``'log-loss'``): The binomial
-      negative log-likelihood loss function for binary classification. It provides
-      probability estimates.  The initial model is given by the
-      log odds-ratio.
-    * Multi-class log-loss (``'log-loss'``): The multinomial
-      negative log-likelihood loss function for multi-class classification with
-      ``n_classes`` mutually exclusive classes. It provides
-      probability estimates.  The initial model is given by the
-      prior probability of each class. At each iteration ``n_classes``
-      regression trees have to be constructed which makes GBRT rather
-      inefficient for data sets with a large number of classes.
-    * Exponential loss (``'exponential'``): The same loss function
-      as :class:`AdaBoostClassifier`. Less robust to mislabeled
-      examples than ``'log-loss'``; can only be used for binary
-      classification.
+
+|details-start|
+**Classification**
+|details-split|
+
+  * Binary log-loss (``'log-loss'``): The binomial
+    negative log-likelihood loss function for binary classification. It provides
+    probability estimates.  The initial model is given by the
+    log odds-ratio.
+  * Multi-class log-loss (``'log-loss'``): The multinomial
+    negative log-likelihood loss function for multi-class classification with
+    ``n_classes`` mutually exclusive classes. It provides
+    probability estimates.  The initial model is given by the
+    prior probability of each class. At each iteration ``n_classes``
+    regression trees have to be constructed which makes GBRT rather
+    inefficient for data sets with a large number of classes.
+  * Exponential loss (``'exponential'``): The same loss function
+    as :class:`AdaBoostClassifier`. Less robust to mislabeled
+    examples than ``'log-loss'``; can only be used for binary
+    classification.
+
+|details-end|
 
 .. _gradient_boosting_shrinkage:
 
@@ -1171,17 +1208,17 @@ shallow decision trees).
 Bagging methods come in many flavours but mostly differ from each other by the
 way they draw random subsets of the training set:
 
-  * When random subsets of the dataset are drawn as random subsets of the
-    samples, then this algorithm is known as Pasting [B1999]_.
+* When random subsets of the dataset are drawn as random subsets of the
+  samples, then this algorithm is known as Pasting [B1999]_.
 
-  * When samples are drawn with replacement, then the method is known as
-    Bagging [B1996]_.
+* When samples are drawn with replacement, then the method is known as
+  Bagging [B1996]_.
 
-  * When random subsets of the dataset are drawn as random subsets of
-    the features, then the method is known as Random Subspaces [H1998]_.
+* When random subsets of the dataset are drawn as random subsets of
+  the features, then the method is known as Random Subspaces [H1998]_.
 
-  * Finally, when base estimators are built on subsets of both samples and
-    features, then the method is known as Random Patches [LG2012]_.
+* Finally, when base estimators are built on subsets of both samples and
+  features, then the method is known as Random Patches [LG2012]_.
 
 In scikit-learn, bagging methods are offered as a unified
 :class:`BaggingClassifier` meta-estimator  (resp. :class:`BaggingRegressor`),
@@ -1354,8 +1391,28 @@ Vector Machine, a Decision Tree, and a K-nearest neighbor classifier::
     :align: center
     :scale: 75%
 
-Using the `VotingClassifier` with `GridSearchCV`
-------------------------------------------------
+Usage
+-----
+
+In order to predict the class labels based on the predicted
+class-probabilities (scikit-learn estimators in the VotingClassifier
+must support ``predict_proba`` method)::
+
+   >>> eclf = VotingClassifier(
+   ...     estimators=[('lr', clf1), ('rf', clf2), ('gnb', clf3)],
+   ...     voting='soft'
+   ... )
+
+Optionally, weights can be provided for the individual classifiers::
+
+   >>> eclf = VotingClassifier(
+   ...     estimators=[('lr', clf1), ('rf', clf2), ('gnb', clf3)],
+   ...     voting='soft', weights=[2,5,1]
+   ... )
+
+|details-start|
+**Using the `VotingClassifier` with `GridSearchCV`**
+|details-split|
 
 The :class:`VotingClassifier` can also be used together with
 :class:`~sklearn.model_selection.GridSearchCV` in order to tune the
@@ -1375,24 +1432,7 @@ hyperparameters of the individual estimators::
    >>> grid = GridSearchCV(estimator=eclf, param_grid=params, cv=5)
    >>> grid = grid.fit(iris.data, iris.target)
 
-Usage
------
-
-In order to predict the class labels based on the predicted
-class-probabilities (scikit-learn estimators in the VotingClassifier
-must support ``predict_proba`` method)::
-
-   >>> eclf = VotingClassifier(
-   ...     estimators=[('lr', clf1), ('rf', clf2), ('gnb', clf3)],
-   ...     voting='soft'
-   ... )
-
-Optionally, weights can be provided for the individual classifiers::
-
-   >>> eclf = VotingClassifier(
-   ...     estimators=[('lr', clf1), ('rf', clf2), ('gnb', clf3)],
-   ...     voting='soft', weights=[2,5,1]
-   ... )
+|details-end|
 
 .. _voting_regressor:
 
@@ -1591,10 +1631,10 @@ concentrate on the examples that are missed by the previous ones in the sequence
 
 AdaBoost can be used both for classification and regression problems:
 
-  - For multi-class classification, :class:`AdaBoostClassifier` implements
-    AdaBoost.SAMME [ZZRH2009]_.
+- For multi-class classification, :class:`AdaBoostClassifier` implements
+  AdaBoost.SAMME [ZZRH2009]_.
 
-  - For regression, :class:`AdaBoostRegressor` implements AdaBoost.R2 [D1997]_.
+- For regression, :class:`AdaBoostRegressor` implements AdaBoost.R2 [D1997]_.
 
 Usage
 -----
