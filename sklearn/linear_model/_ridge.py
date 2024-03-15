@@ -662,7 +662,7 @@ def _ridge_regression(
         )
 
     if check_input:
-        _dtype = [np.float64, np.float32]
+        _dtype = [xp.float64, xp.float32]
         _accept_sparse = _get_valid_accept_sparse(sparse.issparse(X), solver)
         X = check_array(X, accept_sparse=_accept_sparse, dtype=_dtype, order="C")
         y = check_array(y, dtype=X.dtype, ensure_2d=False, order=None)
