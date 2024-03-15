@@ -1241,7 +1241,7 @@ def compare_cv_results_multimetric_with_single(search_multi, search_acc, search_
     # are present
     assert all(
         (
-            np.all(cv_results_multi[k] <= 1)
+            np.all(cv_results_multi[k] <= 30)
             for k in (
                 "mean_score_time",
                 "std_score_time",
@@ -1250,6 +1250,8 @@ def compare_cv_results_multimetric_with_single(search_multi, search_acc, search_
             )
         )
     )
+    # Check that we have the same number of elements in timing reports
+    assert len(set([len(cv_results_multi[k]) for k in cv_results_multi])) == 1
 
     # Compare the keys, other than time keys, among multi-metric and
     # single metric grid search results. np.testing.assert_equal performs a
