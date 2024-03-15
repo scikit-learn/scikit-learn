@@ -287,6 +287,14 @@ Changelog
   :func:`preprocessing.quantile_transform` now supports disabling
   subsampling explicitly.
   :pr:`27636` by :user:`Ralph Urlus <rurlus>`.
+  
+:mod:`sklearn.tree`
+...................
+
+- |Enhancement| Plotting trees in matplotlib via :func:`tree.plot_tree` now
+  show a "True/False" label to indicate the directionality the samples traverse
+  given the split condition.
+  :pr:`28552` by :user:`Adam Li <adam2392>`.
 
 .. rubric:: Code and documentation contributors
 
