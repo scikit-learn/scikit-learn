@@ -119,7 +119,45 @@ parameter. Using less bins acts as a form of regularization. It is
 generally recommended to use as many bins as possible (256), which is the default.
 
 The ``l2_regularization`` parameter is a regularizer on the loss function and
-corresponds to :math:`\lambda` in equation (2) of [XGBoost]_.
+corresponds to :math:`\lambda` in the following regularized objective (see
+equation (2) of [XGBoost]_):
+
+.. math::
+
+      \mathcal{L}(\phi) =  \sum_i l(\hat{y}_i, y_i) + \sum_k \Omega(f_k) \\
+      \text{where} ~ \Omega(f_k) = \gamma T_k  + \frac12 \lambda ||w_k||^2
+
+Here :math:`l` is the loss function; :math:`T` is the number of leaves in the
+tree; :math:`f_k` corresponds to the k-th tree in the ensemble of trees (such
+that :math:`\hat{y}_i=\phi(x_i)=\sum_k f_k(x_i)`); and :math:`w_k` is a vector
+of lenght :math:`T` containing the leaf weights.
+
+Notice that :math:`\gamma` penalizes the number of leaves (which makes it
+a smooth version of `max_leaf_nodes`) whereas :math:`\lambda` penalizes the
+magnitude of the individual tree predictions.
+
+|details-start|
+**Leaf weights in regression and classification**:
+|details-split|
+
+**Regression**: In the case of regression, the leaf weight is a continuous value
+that directly contributes to the model's prediction for a given input. The final
+prediction is the sum of the base prediction and the contributions from each
+tree. As regression gradient boosting models grow one tree per iteration, then
+:math:`k` goes from 1 to `max_iter`.
+
+**Classification**: For classification, the leaf weight is a continuous value
+corresponding to the loss function to use in the boosting process. For binary
+classification, the gradient boosting model fits one tree per iteration (similar
+to regression) and uses the logistic sigmoid function (expit) to compute the
+predicted positive class probability. For multi-class classification, the model
+fits one tree per boosting iteration and per class and uses the softmax function
+as inverse link function to compute the predicted probabilities of the classes.
+
+The total number of trees in the ensemble (and then the maximal value of the
+index :math:`k`) is `n_classes` :math:`\times` `max_iter`.
+
+|details-end|
 
 Note that **early-stopping is enabled by default if the number of samples is
 larger than 10,000**. The early-stopping behaviour is controlled via the
