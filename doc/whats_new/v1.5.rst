@@ -292,6 +292,11 @@ Changelog
 :mod:`sklearn.tree`
 ...................
 
+- |Enhancement| Plotting trees in matplotlib via :func:`tree.plot_tree` now
+  show a "True/False" label to indicate the directionality the samples traverse
+  given the split condition.
+  :pr:`28552` by :user:`Adam Li <adam2392>`.
+  
 - |Feature| :class:`tree.ExtraTreeClassifier` and :class:`tree.ExtraTreeRegressor` now support
   missing-values in the data matrix ``X``. Missing-values are handled by randomly moving all of
   the samples to the left, or right child node as the tree is traversed. 
