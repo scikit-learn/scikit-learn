@@ -36,8 +36,9 @@ from ..utils import check_array, check_random_state
 from ..utils._array_api import (
     _asarray_with_order,
     _average,
-    device,
+    _ravel,
     get_namespace,
+    get_namespace_and_device,
     supported_float_dtypes,
 )
 from ..utils._seq_dataset import (
@@ -162,14 +163,9 @@ def _preprocess_data(
         possible to remove this unused variable.
     """
     input_arrays = (X, y, sample_weight)
-    xp, _ = get_namespace(*input_arrays)
+    xp, _, device_ = get_namespace_and_device(*input_arrays)
     n_samples, n_features = X.shape
     X_is_sparse = sp.issparse(X)
-
-    if not X_is_sparse:
-        device_ = device(*input_arrays)
-    else:
-        device_ = "cpu"
 
     if isinstance(sample_weight, numbers.Number):
         sample_weight = None
@@ -326,10 +322,7 @@ class LinearModel(BaseEstimator, metaclass=ABCMeta):
             intercept_ = y_offset - (X_offset @ (coef_.T))
 
             if ravel:
-                intercept_ = _asarray_with_order(
-                    intercept_, dtype=intercept_.dtype, order="C", copy=None, xp=xp
-                )
-                intercept_ = xp.reshape(intercept_, shape=(-1,))
+                intercept_ = _ravel(intercept_, xp=xp)
 
             if y_offset.ndim < 1:
                 intercept_ = intercept_[0]

@@ -33,9 +33,10 @@ from ..utils import (
     compute_sample_weight,
 )
 from ..utils._array_api import (
-    _asarray_with_order,
+    _ravel,
     device,
     get_namespace,
+    get_namespace_and_device,
 )
 from ..utils._param_validation import Interval, StrOptions, validate_params
 from ..utils.extmath import row_norms, safe_sparse_dot
@@ -613,9 +614,7 @@ def _ridge_regression(
 ):
     input_arrays = [X, y, sample_weight, X_scale, X_offset]
 
-    xp, is_array_api_compliant = get_namespace(*input_arrays)
-    X_is_sparse = sparse.issparse(X)
-    device_ = "cpu" if X_is_sparse else device(*input_arrays)
+    xp, is_array_api_compliant, device_ = get_namespace_and_device(*input_arrays)
 
     has_sw = sample_weight is not None
 
@@ -707,11 +706,7 @@ def _ridge_regression(
         )
 
     # There should be either 1 or n_targets penalties
-    # TODO: use _ravel in utils._array_api instead
-    alpha = _asarray_with_order(
-        alpha, dtype=X.dtype, order="C", copy=None, xp=xp, device=device_
-    )
-    alpha = xp.reshape(alpha, shape=(-1,))
+    alpha = _ravel(xp.asarray(alpha, device=device_, dtype=X.dtype), xp=xp)
     if alpha.shape[0] not in [1, n_targets]:
         raise ValueError(
             "Number of targets and number of penalties do not correspond: %d != %d"
@@ -824,11 +819,7 @@ def _ridge_regression(
         coef = _solve_svd(X, y, alpha, xp)
 
     if ravel:
-        # TODO: factorize in utils._array_api (ravel)
-        coef = _asarray_with_order(
-            coef, dtype=coef.dtype, order="C", copy=None, xp=xp, device=device
-        )
-        coef = xp.reshape(coef, shape=(-1,))
+        coef = _ravel(coef)
 
     if return_n_iter and return_intercept:
         return coef, n_iter, intercept

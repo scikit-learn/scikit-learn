@@ -107,7 +107,7 @@ def device(*array_list, remove_none=True, remove_types=(str,)):
     remove_none : bool, default=True
         Whether to ignore None objects passed in array_list.
 
-    remove_types : tuple or list, default=(str,)
+     : tuple or list, default=(str,)
         Types to ignore in array_list.
 
     Returns
@@ -501,6 +501,16 @@ def get_namespace(*arrays, remove_none=True, remove_types=(str,), xp=None):
     return namespace, is_array_api_compliant
 
 
+def get_namespace_and_device(*array_list, remove_none=True, remove_types=(str,)):
+    """Combination into one single function of `get_namespace` and `device`."""
+    # TODO: should we refactor in order to avoid the double call to
+    # _remove_non_arrays ?
+    return (
+        *get_namespace(*array_list, remove_none=remove_none, remove_types=remove_types),
+        device(*array_list, remove_none=remove_none, remove_types=remove_types),
+    )
+
+
 def _expit(X, xp=None):
     xp, _ = get_namespace(X, xp=xp)
     if _is_numpy_namespace(xp):
@@ -688,6 +698,30 @@ def _asarray_with_order(
         return xp.asarray(array)
     else:
         return xp.asarray(array, dtype=dtype, copy=copy, device=device)
+
+
+def _ravel(array, order="C", xp=None):
+    """Array API compliant version of np.ravel.
+
+    For non numpy namespaces, it just returns a flattened array, that might
+    be or not be a copy.
+    """
+    if order != "C":
+        raise ValueError(
+            "'sklearn.utils._array_api._ravel' only expects order='C' but "
+            f" got '{order}' instead."
+        )
+
+    if sum(x > 1 for x in array.shape) > 1:
+        raise ValueError(
+            "'sklearn.utils._array_api._ravel' only expects at most one "
+            "non-empty dimension, but got an array of shape "
+            f"'{array.shape}' "
+        )
+
+    xp, _ = get_namespace(array, xp=xp)
+    array = _asarray_with_order(array, order=order, xp=xp)
+    return xp.reshape(array, shape=(-1,))
 
 
 def _convert_to_numpy(array, xp):
