@@ -18,24 +18,54 @@ and drag to pan around. You can also download the chart:
 .. raw:: html
 
   <style>
-    .ml-map {
+    #sk-ml-map {
       height: 80vh;
       margin: 1.5rem 0;
     }
 
-    .ml-map svg {
+    #sk-ml-map svg {
       height: 100%;
       width: 100%;
+      border: 2px solid var(--pst-color-border);
+      border-radius: 0.5rem;
     }
 
-    html[data-theme="dark"] .ml-map svg {
+    html[data-theme="dark"] #sk-ml-map svg {
       filter: invert(90%) hue-rotate(180deg);
     }
   </style>
 
-  <script src="https://cdn.jsdelivr.net/npm/svg-pan-zoom-container@0.6.1"></script>
+  <script src="../../_static/scripts/vendor/svg-pan-zoom.min.js"></script>
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      const beforePan = function (oldPan, newPan) {
+        const gutterWidth = 100, gutterHeight = 100;
+        const sizes = this.getSizes();
 
-  <div class="ml-map" data-zoom-on-wheel data-pan-on-drag>
+        // Compute pan limits
+        const leftLimit = -((sizes.viewBox.x + sizes.viewBox.width) * sizes.realZoom) + gutterWidth;
+        const rightLimit = sizes.width - gutterWidth - (sizes.viewBox.x * sizes.realZoom);
+        const topLimit = -((sizes.viewBox.y + sizes.viewBox.height) * sizes.realZoom) + gutterHeight;
+        const bottomLimit = sizes.height - gutterHeight - (sizes.viewBox.y * sizes.realZoom);
+
+        return {
+          x: Math.max(leftLimit, Math.min(rightLimit, newPan.x)),
+          y: Math.max(topLimit, Math.min(bottomLimit, newPan.y))
+        };
+      };
+
+      // Limit the pan
+      svgPanZoom("#sk-ml-map svg", {
+        zoomEnabled: true,
+        controlIconsEnabled: true,
+        fit: 1,
+        center: 1,
+        beforePan: beforePan,
+      });
+    });
+  </script>
+
+  <div id="sk-ml-map">
 
 .. raw:: html
   :file: ../../images/ml_map.svg
