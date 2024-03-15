@@ -180,7 +180,7 @@ def _preprocess_data(
     else:
         y = xp.astype(y, X.dtype, copy=copy_y)
         if copy:
-            if sp.issparse(X):
+            if X_is_sparse:
                 X = X.copy()
             else:
                 X = _asarray_with_order(X, order="K", copy=True, xp=xp)
