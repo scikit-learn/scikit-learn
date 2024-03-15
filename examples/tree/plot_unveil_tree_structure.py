@@ -68,7 +68,7 @@ clf.fit(X_train, y_train)
 #   - ``weighted_n_node_samples[i]``: the weighted number of training samples
 #     reaching node ``i``
 #   - ``value[i, j, k]``: the summary of the training samples that reached node i for
-#     class j and output k.
+#     output j and class k (for regression tree, class is set to 1).
 #
 # Using the arrays, we can traverse the tree structure to compute various
 # properties. Below, we will compute the depth of each node and whether or not

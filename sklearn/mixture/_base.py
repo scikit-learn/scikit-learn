@@ -240,6 +240,7 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
                 best_params = self._get_parameters()
                 best_n_iter = 0
             else:
+                converged = False
                 for n_iter in range(1, self.max_iter + 1):
                     prev_lower_bound = lower_bound
 
@@ -251,25 +252,27 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
                     self._print_verbose_msg_iter_end(n_iter, change)
 
                     if abs(change) < self.tol:
-                        self.converged_ = True
+                        converged = True
                         break
 
-                self._print_verbose_msg_init_end(lower_bound)
+                self._print_verbose_msg_init_end(lower_bound, converged)
 
                 if lower_bound > max_lower_bound or max_lower_bound == -np.inf:
                     max_lower_bound = lower_bound
                     best_params = self._get_parameters()
                     best_n_iter = n_iter
+                    self.converged_ = converged
 
         # Should only warn about convergence if max_iter > 0, otherwise
         # the user is assumed to have used 0-iters initialization
         # to get the initial means.
         if not self.converged_ and self.max_iter > 0:
             warnings.warn(
-                "Initialization %d did not converge. "
-                "Try different init parameters, "
-                "or increase max_iter, tol "
-                "or check for degenerate data." % (init + 1),
+                (
+                    "Best performing initialization did not converge. "
+                    "Try different init parameters, or increase max_iter, "
+                    "tol, or check for degenerate data."
+                ),
                 ConvergenceWarning,
             )
 
@@ -549,12 +552,14 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
                 )
                 self._iter_prev_time = cur_time
 
-    def _print_verbose_msg_init_end(self, ll):
+    def _print_verbose_msg_init_end(self, lb, init_has_converged):
         """Print verbose message on the end of iteration."""
+        converged_msg = "converged" if init_has_converged else "did not converge"
         if self.verbose == 1:
-            print("Initialization converged: %s" % self.converged_)
+            print(f"Initialization {converged_msg}.")
         elif self.verbose >= 2:
+            t = time() - self._init_prev_time
             print(
-                "Initialization converged: %s\t time lapse %.5fs\t ll %.5f"
-                % (self.converged_, time() - self._init_prev_time, ll)
+                f"Initialization {converged_msg}. time lapse {t:.5f}s\t lower bound"
+                f" {lb:.5f}."
             )
