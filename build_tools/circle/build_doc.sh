@@ -187,7 +187,8 @@ ccache -s
 
 export OMP_NUM_THREADS=1
 
-if [[ "$CIRCLE_BRANCH" =~ ^main$ && -z "$CI_PULL_REQUEST" ]]
+# TODO: remove the new_web_theme part when the branch is merged into main
+if [[ "$CIRCLE_BRANCH" =~ ^(main|new_web_theme)$ && -z "$CI_PULL_REQUEST" ]]
 then
     # List available documentation versions if on main
     python build_tools/circle/list_versions.py --json doc/versions.json --rst doc/versions.rst

@@ -138,5 +138,5 @@ for i, name in enumerate(
 with open(args.rst, "w", encoding="utf-8") as f:
     f.write("\n".join(rst_content) + "\n")
 
-with open(args.json_loc, "w", encoding="utf-8") as f:
+with open(args.json, "w", encoding="utf-8") as f:
     json.dump(json_content, f, indent=2)
