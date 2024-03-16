@@ -24,7 +24,6 @@ from ..utils import check_random_state
 from ..utils._arpack import _init_arpack_v0
 from ..utils._array_api import _convert_to_numpy, get_namespace
 from ..utils._param_validation import Interval, RealNotInt, StrOptions
-from ..utils.deprecation import deprecated
 from ..utils.extmath import fast_logdet, randomized_svd, stable_cumsum, svd_flip
 from ..utils.sparsefuncs import _implicit_column_offset, mean_variance_axis
 from ..utils.validation import check_is_fitted
@@ -131,11 +130,12 @@ class PCA(_BasePCA):
     SVD by the method of Halko et al. 2009, depending on the shape of the input
     data and the number of components to extract.
 
-    It can also use the scipy.sparse.linalg ARPACK implementation of the
-    truncated SVD.
+    With sparse inputs, the ARPACK implementation of the truncated SVD can be
+    used (i.e. through :func:`scipy.sparse.linalg.svds`). Alternatively, one
+    may consider :class:`TruncatedSVD` where the data are not centered.
 
-    Notice that this class does not support sparse input. See
-    :class:`TruncatedSVD` for an alternative with sparse data.
+    For a usage example, see
+    :ref:`sphx_glr_auto_examples_decomposition_plot_pca_iris.py`
 
     Read more in the :ref:`User Guide <PCA>`.
 
@@ -274,9 +274,6 @@ class PCA(_BasePCA):
         n_components, or the lesser value of n_features and n_samples
         if n_components is None.
 
-    n_features_ : int
-        Number of features in the training data.
-
     n_samples_ : int
         Number of samples in the training data.
 
@@ -408,16 +405,6 @@ class PCA(_BasePCA):
         self.power_iteration_normalizer = power_iteration_normalizer
         self.random_state = random_state
 
-    # TODO(1.4): remove in 1.4
-    # mypy error: Decorated property not supported
-    @deprecated(  # type: ignore
-        "Attribute `n_features_` was deprecated in version 1.2 and will be "
-        "removed in 1.4. Use `n_features_in_` instead."
-    )
-    @property
-    def n_features_(self):
-        return self.n_features_in_
-
     @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y=None):
         """Fit the model with X.
@@ -478,14 +465,12 @@ class PCA(_BasePCA):
         """Dispatch to the right submethod depending on the chosen solver."""
         xp, is_array_api_compliant = get_namespace(X)
 
-        # Raise an error for sparse input and unsupported svd_solver
-        if issparse(X) and self.svd_solver != "arpack":
+        if issparse(X) and self.svd_solver not in {"arpack", "auto"}:
             raise TypeError(
                 'PCA only support sparse inputs with the "arpack" solver, while '
                 f'"{self.svd_solver}" was passed. See TruncatedSVD for a possible'
                 " alternative."
             )
-        # Raise an error for non-Numpy input and arpack solver.
         if self.svd_solver == "arpack" and is_array_api_compliant:
             raise ValueError(
                 "PCA with svd_solver='arpack' is not supported for Array API inputs."
@@ -498,29 +483,28 @@ class PCA(_BasePCA):
             ensure_2d=True,
             copy=self.copy,
         )
+        self._fit_svd_solver = self.svd_solver
+        if self._fit_svd_solver == "auto" and issparse(X):
+            self._fit_svd_solver = "arpack"
 
-        # Handle n_components==None
         if self.n_components is None:
-            if self.svd_solver != "arpack":
+            if self._fit_svd_solver != "arpack":
                 n_components = min(X.shape)
             else:
                 n_components = min(X.shape) - 1
         else:
             n_components = self.n_components
 
-        # Handle svd_solver
-        self._fit_svd_solver = self.svd_solver
         if self._fit_svd_solver == "auto":
             # Small problem or n_components == 'mle', just call full PCA
             if max(X.shape) <= 500 or n_components == "mle":
                 self._fit_svd_solver = "full"
             elif 1 <= n_components < 0.8 * min(X.shape):
                 self._fit_svd_solver = "randomized"
-            # This is also the case of n_components in (0,1)
+            # This is also the case of n_components in (0, 1)
             else:
                 self._fit_svd_solver = "full"
 
-        # Call different fits for either full or truncated SVD
         if self._fit_svd_solver == "full":
             return self._fit_full(X, n_components)
         elif self._fit_svd_solver in ["arpack", "randomized"]:

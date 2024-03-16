@@ -29,7 +29,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 
-X, y = fetch_openml(data_id=1464, return_X_y=True, parser="pandas")
+X, y = fetch_openml(data_id=1464, return_X_y=True)
 X_train, X_test, y_train, y_test = train_test_split(X, y, stratify=y)
 
 clf = make_pipeline(StandardScaler(), LogisticRegression(random_state=0))

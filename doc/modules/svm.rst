@@ -16,27 +16,27 @@ methods used for :ref:`classification <svm_classification>`,
 
 The advantages of support vector machines are:
 
-    - Effective in high dimensional spaces.
+- Effective in high dimensional spaces.
 
-    - Still effective in cases where number of dimensions is greater
-      than the number of samples.
+- Still effective in cases where number of dimensions is greater
+  than the number of samples.
 
-    - Uses a subset of training points in the decision function (called
-      support vectors), so it is also memory efficient.
+- Uses a subset of training points in the decision function (called
+  support vectors), so it is also memory efficient.
 
-    - Versatile: different :ref:`svm_kernels` can be
-      specified for the decision function. Common kernels are
-      provided, but it is also possible to specify custom kernels.
+- Versatile: different :ref:`svm_kernels` can be
+  specified for the decision function. Common kernels are
+  provided, but it is also possible to specify custom kernels.
 
 The disadvantages of support vector machines include:
 
-    - If the number of features is much greater than the number of
-      samples, avoid over-fitting in choosing :ref:`svm_kernels` and regularization
-      term is crucial.
+- If the number of features is much greater than the number of
+  samples, avoid over-fitting in choosing :ref:`svm_kernels` and regularization
+  term is crucial.
 
-    - SVMs do not directly provide probability estimates, these are
-      calculated using an expensive five-fold cross-validation
-      (see :ref:`Scores and probabilities <scores_probabilities>`, below).
+- SVMs do not directly provide probability estimates, these are
+  calculated using an expensive five-fold cross-validation
+  (see :ref:`Scores and probabilities <scores_probabilities>`, below).
 
 The support vector machines in scikit-learn support both dense
 (``numpy.ndarray`` and convertible to that by ``numpy.asarray``) and
@@ -381,95 +381,95 @@ Tips on Practical Use
 =====================
 
 
-  * **Avoiding data copy**: For :class:`SVC`, :class:`SVR`, :class:`NuSVC` and
-    :class:`NuSVR`, if the data passed to certain methods is not C-ordered
-    contiguous and double precision, it will be copied before calling the
-    underlying C implementation. You can check whether a given numpy array is
-    C-contiguous by inspecting its ``flags`` attribute.
+* **Avoiding data copy**: For :class:`SVC`, :class:`SVR`, :class:`NuSVC` and
+  :class:`NuSVR`, if the data passed to certain methods is not C-ordered
+  contiguous and double precision, it will be copied before calling the
+  underlying C implementation. You can check whether a given numpy array is
+  C-contiguous by inspecting its ``flags`` attribute.
 
-    For :class:`LinearSVC` (and :class:`LogisticRegression
-    <sklearn.linear_model.LogisticRegression>`) any input passed as a numpy
-    array will be copied and converted to the `liblinear`_ internal sparse data
-    representation (double precision floats and int32 indices of non-zero
-    components). If you want to fit a large-scale linear classifier without
-    copying a dense numpy C-contiguous double precision array as input, we
-    suggest to use the :class:`SGDClassifier
-    <sklearn.linear_model.SGDClassifier>` class instead.  The objective
-    function can be configured to be almost the same as the :class:`LinearSVC`
-    model.
+  For :class:`LinearSVC` (and :class:`LogisticRegression
+  <sklearn.linear_model.LogisticRegression>`) any input passed as a numpy
+  array will be copied and converted to the `liblinear`_ internal sparse data
+  representation (double precision floats and int32 indices of non-zero
+  components). If you want to fit a large-scale linear classifier without
+  copying a dense numpy C-contiguous double precision array as input, we
+  suggest to use the :class:`SGDClassifier
+  <sklearn.linear_model.SGDClassifier>` class instead.  The objective
+  function can be configured to be almost the same as the :class:`LinearSVC`
+  model.
 
-  * **Kernel cache size**: For :class:`SVC`, :class:`SVR`, :class:`NuSVC` and
-    :class:`NuSVR`, the size of the kernel cache has a strong impact on run
-    times for larger problems.  If you have enough RAM available, it is
-    recommended to set ``cache_size`` to a higher value than the default of
-    200(MB), such as 500(MB) or 1000(MB).
+* **Kernel cache size**: For :class:`SVC`, :class:`SVR`, :class:`NuSVC` and
+  :class:`NuSVR`, the size of the kernel cache has a strong impact on run
+  times for larger problems.  If you have enough RAM available, it is
+  recommended to set ``cache_size`` to a higher value than the default of
+  200(MB), such as 500(MB) or 1000(MB).
 
 
-  * **Setting C**: ``C`` is ``1`` by default and it's a reasonable default
-    choice.  If you have a lot of noisy observations you should decrease it:
-    decreasing C corresponds to more regularization.
+* **Setting C**: ``C`` is ``1`` by default and it's a reasonable default
+  choice.  If you have a lot of noisy observations you should decrease it:
+  decreasing C corresponds to more regularization.
 
-    :class:`LinearSVC` and :class:`LinearSVR` are less sensitive to ``C`` when
-    it becomes large, and prediction results stop improving after a certain
-    threshold. Meanwhile, larger ``C`` values will take more time to train,
-    sometimes up to 10 times longer, as shown in [#3]_.
+  :class:`LinearSVC` and :class:`LinearSVR` are less sensitive to ``C`` when
+  it becomes large, and prediction results stop improving after a certain
+  threshold. Meanwhile, larger ``C`` values will take more time to train,
+  sometimes up to 10 times longer, as shown in [#3]_.
 
-  * Support Vector Machine algorithms are not scale invariant, so **it
-    is highly recommended to scale your data**. For example, scale each
-    attribute on the input vector X to [0,1] or [-1,+1], or standardize it
-    to have mean 0 and variance 1. Note that the *same* scaling must be
-    applied to the test vector to obtain meaningful results. This can be done
-    easily by using a :class:`~sklearn.pipeline.Pipeline`::
+* Support Vector Machine algorithms are not scale invariant, so **it
+  is highly recommended to scale your data**. For example, scale each
+  attribute on the input vector X to [0,1] or [-1,+1], or standardize it
+  to have mean 0 and variance 1. Note that the *same* scaling must be
+  applied to the test vector to obtain meaningful results. This can be done
+  easily by using a :class:`~sklearn.pipeline.Pipeline`::
 
-        >>> from sklearn.pipeline import make_pipeline
-        >>> from sklearn.preprocessing import StandardScaler
-        >>> from sklearn.svm import SVC
+      >>> from sklearn.pipeline import make_pipeline
+      >>> from sklearn.preprocessing import StandardScaler
+      >>> from sklearn.svm import SVC
 
-        >>> clf = make_pipeline(StandardScaler(), SVC())
+      >>> clf = make_pipeline(StandardScaler(), SVC())
 
-    See section :ref:`preprocessing` for more details on scaling and
-    normalization.
+  See section :ref:`preprocessing` for more details on scaling and
+  normalization.
 
-  .. _shrinking_svm:
+.. _shrinking_svm:
 
-  * Regarding the `shrinking` parameter, quoting [#4]_: *We found that if the
-    number of iterations is large, then shrinking can shorten the training
-    time. However, if we loosely solve the optimization problem (e.g., by
-    using a large stopping tolerance), the code without using shrinking may
-    be much faster*
+* Regarding the `shrinking` parameter, quoting [#4]_: *We found that if the
+  number of iterations is large, then shrinking can shorten the training
+  time. However, if we loosely solve the optimization problem (e.g., by
+  using a large stopping tolerance), the code without using shrinking may
+  be much faster*
 
-  * Parameter ``nu`` in :class:`NuSVC`/:class:`OneClassSVM`/:class:`NuSVR`
-    approximates the fraction of training errors and support vectors.
+* Parameter ``nu`` in :class:`NuSVC`/:class:`OneClassSVM`/:class:`NuSVR`
+  approximates the fraction of training errors and support vectors.
 
-  * In :class:`SVC`, if the data is unbalanced (e.g. many
-    positive and few negative), set ``class_weight='balanced'`` and/or try
-    different penalty parameters ``C``.
+* In :class:`SVC`, if the data is unbalanced (e.g. many
+  positive and few negative), set ``class_weight='balanced'`` and/or try
+  different penalty parameters ``C``.
 
-  * **Randomness of the underlying implementations**: The underlying
-    implementations of :class:`SVC` and :class:`NuSVC` use a random number
-    generator only to shuffle the data for probability estimation (when
-    ``probability`` is set to ``True``). This randomness can be controlled
-    with the ``random_state`` parameter. If ``probability`` is set to ``False``
-    these estimators are not random and ``random_state`` has no effect on the
-    results. The underlying :class:`OneClassSVM` implementation is similar to
-    the ones of :class:`SVC` and :class:`NuSVC`. As no probability estimation
-    is provided for :class:`OneClassSVM`, it is not random.
+* **Randomness of the underlying implementations**: The underlying
+  implementations of :class:`SVC` and :class:`NuSVC` use a random number
+  generator only to shuffle the data for probability estimation (when
+  ``probability`` is set to ``True``). This randomness can be controlled
+  with the ``random_state`` parameter. If ``probability`` is set to ``False``
+  these estimators are not random and ``random_state`` has no effect on the
+  results. The underlying :class:`OneClassSVM` implementation is similar to
+  the ones of :class:`SVC` and :class:`NuSVC`. As no probability estimation
+  is provided for :class:`OneClassSVM`, it is not random.
 
-    The underlying :class:`LinearSVC` implementation uses a random number
-    generator to select features when fitting the model with a dual coordinate
-    descent (i.e. when ``dual`` is set to ``True``). It is thus not uncommon
-    to have slightly different results for the same input data. If that
-    happens, try with a smaller `tol` parameter. This randomness can also be
-    controlled with the ``random_state`` parameter. When ``dual`` is
-    set to ``False`` the underlying implementation of :class:`LinearSVC` is
-    not random and ``random_state`` has no effect on the results.
+  The underlying :class:`LinearSVC` implementation uses a random number
+  generator to select features when fitting the model with a dual coordinate
+  descent (i.e. when ``dual`` is set to ``True``). It is thus not uncommon
+  to have slightly different results for the same input data. If that
+  happens, try with a smaller `tol` parameter. This randomness can also be
+  controlled with the ``random_state`` parameter. When ``dual`` is
+  set to ``False`` the underlying implementation of :class:`LinearSVC` is
+  not random and ``random_state`` has no effect on the results.
 
-  * Using L1 penalization as provided by ``LinearSVC(penalty='l1',
-    dual=False)`` yields a sparse solution, i.e. only a subset of feature
-    weights is different from zero and contribute to the decision function.
-    Increasing ``C`` yields a more complex model (more features are selected).
-    The ``C`` value that yields a "null" model (all weights equal to zero) can
-    be calculated using :func:`l1_min_c`.
+* Using L1 penalization as provided by ``LinearSVC(penalty='l1',
+  dual=False)`` yields a sparse solution, i.e. only a subset of feature
+  weights is different from zero and contribute to the decision function.
+  Increasing ``C`` yields a more complex model (more features are selected).
+  The ``C`` value that yields a "null" model (all weights equal to zero) can
+  be calculated using :func:`l1_min_c`.
 
 
 .. _svm_kernels:
@@ -479,16 +479,16 @@ Kernel functions
 
 The *kernel function* can be any of the following:
 
-  * linear: :math:`\langle x, x'\rangle`.
+* linear: :math:`\langle x, x'\rangle`.
 
-  * polynomial: :math:`(\gamma \langle x, x'\rangle + r)^d`, where
-    :math:`d` is specified by parameter ``degree``, :math:`r` by ``coef0``.
+* polynomial: :math:`(\gamma \langle x, x'\rangle + r)^d`, where
+  :math:`d` is specified by parameter ``degree``, :math:`r` by ``coef0``.
 
-  * rbf: :math:`\exp(-\gamma \|x-x'\|^2)`, where :math:`\gamma` is
-    specified by parameter ``gamma``, must be greater than 0.
+* rbf: :math:`\exp(-\gamma \|x-x'\|^2)`, where :math:`\gamma` is
+  specified by parameter ``gamma``, must be greater than 0.
 
-  * sigmoid :math:`\tanh(\gamma \langle x,x'\rangle + r)`,
-    where :math:`r` is specified by ``coef0``.
+* sigmoid :math:`\tanh(\gamma \langle x,x'\rangle + r)`,
+  where :math:`r` is specified by ``coef0``.
 
 Different kernels are specified by the `kernel` parameter::
 
@@ -530,12 +530,12 @@ python function or by precomputing the Gram matrix.
 Classifiers with custom kernels behave the same way as any other
 classifiers, except that:
 
-    * Field ``support_vectors_`` is now empty, only indices of support
-      vectors are stored in ``support_``
+* Field ``support_vectors_`` is now empty, only indices of support
+  vectors are stored in ``support_``
 
-    * A reference (and not a copy) of the first argument in the ``fit()``
-      method is stored for future reference. If that array changes between the
-      use of ``fit()`` and ``predict()`` you will have unexpected results.
+* A reference (and not a copy) of the first argument in the ``fit()``
+  method is stored for future reference. If that array changes between the
+  use of ``fit()`` and ``predict()`` you will have unexpected results.
 
 
 |details-start|

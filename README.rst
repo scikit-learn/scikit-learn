@@ -32,14 +32,14 @@
 .. |Benchmark| image:: https://img.shields.io/badge/Benchmarked%20by-asv-blue
 .. _`Benchmark`: https://scikit-learn.org/scikit-learn-benchmarks/
 
-.. |PythonMinVersion| replace:: 3.8
-.. |NumPyMinVersion| replace:: 1.17.3
-.. |SciPyMinVersion| replace:: 1.5.0
+.. |PythonMinVersion| replace:: 3.9
+.. |NumPyMinVersion| replace:: 1.19.5
+.. |SciPyMinVersion| replace:: 1.6.0
 .. |JoblibMinVersion| replace:: 1.2.0
 .. |ThreadpoolctlMinVersion| replace:: 2.0.0
 .. |MatplotlibMinVersion| replace:: 3.3.4
-.. |Scikit-ImageMinVersion| replace:: 0.16.2
-.. |PandasMinVersion| replace:: 1.0.5
+.. |Scikit-ImageMinVersion| replace:: 0.17.2
+.. |PandasMinVersion| replace:: 1.1.5
 .. |SeabornMinVersion| replace:: 0.9.0
 .. |PytestMinVersion| replace:: 7.1.2
 .. |PlotlyMinVersion| replace:: 5.14.0
@@ -184,19 +184,21 @@ Communication
 ~~~~~~~~~~~~~
 
 - Mailing list: https://mail.python.org/mailman/listinfo/scikit-learn
-- Gitter: https://gitter.im/scikit-learn/scikit-learn
 - Logos & Branding: https://github.com/scikit-learn/scikit-learn/tree/main/doc/logos
 - Blog: https://blog.scikit-learn.org
 - Calendar: https://blog.scikit-learn.org/calendar/
 - Twitter: https://twitter.com/scikit_learn
 - Stack Overflow: https://stackoverflow.com/questions/tagged/scikit-learn
-- Github Discussions: https://github.com/scikit-learn/scikit-learn/discussions
+- GitHub Discussions: https://github.com/scikit-learn/scikit-learn/discussions
 - Website: https://scikit-learn.org
 - LinkedIn: https://www.linkedin.com/company/scikit-learn
 - YouTube: https://www.youtube.com/channel/UCJosFjYm0ZYVUARxuOZqnnw/playlists
 - Facebook: https://www.facebook.com/scikitlearnofficial/
 - Instagram: https://www.instagram.com/scikitlearnofficial/
 - TikTok: https://www.tiktok.com/@scikit.learn
+- Mastodon: https://mastodon.social/@sklearn@fosstodon.org
+- Discord: https://discord.gg/h9qyrK8Jc8
+
 
 Citation
 ~~~~~~~~

@@ -505,6 +505,9 @@ class PLSRegression(_PLS):
     PLSRegression is also known as PLS2 or PLS1, depending on the number of
     targets.
 
+    For a comparison between other cross decomposition algorithms, see
+    :ref:`sphx_glr_auto_examples_cross_decomposition_plot_compare_cross_decomposition.py`.
+
     Read more in the :ref:`User Guide <cross_decomposition>`.
 
     .. versionadded:: 0.8
@@ -512,8 +515,7 @@ class PLSRegression(_PLS):
     Parameters
     ----------
     n_components : int, default=2
-        Number of components to keep. Should be in `[1, min(n_samples,
-        n_features, n_targets)]`.
+        Number of components to keep. Should be in `[1, n_features]`.
 
     scale : bool, default=True
         Whether to scale `X` and `Y`.
@@ -557,7 +559,7 @@ class PLSRegression(_PLS):
     x_rotations_ : ndarray of shape (n_features, n_components)
         The projection matrix used to transform `X`.
 
-    y_rotations_ : ndarray of shape (n_features, n_components)
+    y_rotations_ : ndarray of shape (n_targets, n_components)
         The projection matrix used to transform `Y`.
 
     coef_ : ndarray of shape (n_target, n_features)
@@ -596,6 +598,9 @@ class PLSRegression(_PLS):
     >>> pls2.fit(X, Y)
     PLSRegression()
     >>> Y_pred = pls2.predict(X)
+
+    For a comparison between PLS Regression and :class:`~sklearn.decomposition.PCA`, see
+    :ref:`sphx_glr_auto_examples_cross_decomposition_plot_pcr_vs_pls.py`.
     """
 
     _parameter_constraints: dict = {**_PLS._parameter_constraints}
@@ -650,6 +655,9 @@ class PLSRegression(_PLS):
 class PLSCanonical(_PLS):
     """Partial Least Squares transformer and regressor.
 
+    For a comparison between other cross decomposition algorithms, see
+    :ref:`sphx_glr_auto_examples_cross_decomposition_plot_compare_cross_decomposition.py`.
+
     Read more in the :ref:`User Guide <cross_decomposition>`.
 
     .. versionadded:: 0.8
@@ -701,7 +709,7 @@ class PLSCanonical(_PLS):
     x_rotations_ : ndarray of shape (n_features, n_components)
         The projection matrix used to transform `X`.
 
-    y_rotations_ : ndarray of shape (n_features, n_components)
+    y_rotations_ : ndarray of shape (n_targets, n_components)
         The projection matrix used to transform `Y`.
 
     coef_ : ndarray of shape (n_targets, n_features)
@@ -780,6 +788,9 @@ class PLSCanonical(_PLS):
 class CCA(_PLS):
     """Canonical Correlation Analysis, also known as "Mode B" PLS.
 
+    For a comparison between other cross decomposition algorithms, see
+    :ref:`sphx_glr_auto_examples_cross_decomposition_plot_compare_cross_decomposition.py`.
+
     Read more in the :ref:`User Guide <cross_decomposition>`.
 
     Parameters
@@ -823,7 +834,7 @@ class CCA(_PLS):
     x_rotations_ : ndarray of shape (n_features, n_components)
         The projection matrix used to transform `X`.
 
-    y_rotations_ : ndarray of shape (n_features, n_components)
+    y_rotations_ : ndarray of shape (n_targets, n_components)
         The projection matrix used to transform `Y`.
 
     coef_ : ndarray of shape (n_targets, n_features)

@@ -20,7 +20,7 @@ Multi-layer Perceptron
 ======================
 
 **Multi-layer Perceptron (MLP)** is a supervised learning algorithm that learns
-a function :math:`f(\cdot): R^m \rightarrow R^o` by training on a dataset,
+a function :math:`f: R^m \rightarrow R^o` by training on a dataset,
 where :math:`m` is the number of dimensions for input and :math:`o` is the
 number of dimensions for output. Given a set of features :math:`X = {x_1, x_2, ..., x_m}`
 and a target :math:`y`, it can learn a non-linear function approximator for either
@@ -49,28 +49,33 @@ The module contains the public attributes ``coefs_`` and ``intercepts_``.
 :math:`i+1`. ``intercepts_`` is a list of bias vectors, where the vector
 at index :math:`i` represents the bias values added to layer :math:`i+1`.
 
+|details-start|
+**Advantages and disadvantages of Multi-layer Perceptron**
+|details-split|
+
 The advantages of Multi-layer Perceptron are:
 
-    + Capability to learn non-linear models.
++ Capability to learn non-linear models.
 
-    + Capability to learn models in real-time (on-line learning)
-      using ``partial_fit``.
++ Capability to learn models in real-time (on-line learning)
+  using ``partial_fit``.
 
 
 The disadvantages of Multi-layer Perceptron (MLP) include:
 
-    + MLP with hidden layers have a non-convex loss function where there exists
-      more than one local minimum. Therefore different random weight
-      initializations can lead to different validation accuracy.
++ MLP with hidden layers have a non-convex loss function where there exists
+  more than one local minimum. Therefore different random weight
+  initializations can lead to different validation accuracy.
 
-    + MLP requires tuning a number of hyperparameters such as the number of
-      hidden neurons, layers, and iterations.
++ MLP requires tuning a number of hyperparameters such as the number of
+  hidden neurons, layers, and iterations.
 
-    + MLP is sensitive to feature scaling.
++ MLP is sensitive to feature scaling.
 
 Please see :ref:`Tips on Practical Use <mlp_tips>` section that addresses
 some of these disadvantages.
 
+|details-end|
 
 Classification
 ==============
@@ -146,7 +151,8 @@ See the examples below and the docstring of
 .. topic:: Examples:
 
  * :ref:`sphx_glr_auto_examples_neural_networks_plot_mlp_training_curves.py`
- * :ref:`sphx_glr_auto_examples_neural_networks_plot_mnist_filters.py`
+ * See :ref:`sphx_glr_auto_examples_neural_networks_plot_mnist_filters.py` for
+   visualized representation of trained weights.
 
 Regression
 ==========
@@ -228,9 +234,9 @@ of iterations. Since backpropagation has a high time complexity, it is advisable
 to start with smaller number of hidden neurons and few hidden layers for
 training.
 
-
+|details-start|
 Mathematical formulation
-========================
+|details-split|
 
 Given a set of training examples :math:`(x_1, y_1), (x_2, y_2), \ldots, (x_n, y_n)`
 where :math:`x_i \in \mathbf{R}^n` and :math:`y_i \in \{0, 1\}`, a one hidden
@@ -304,42 +310,42 @@ with a value larger than 0.
 The algorithm stops when it reaches a preset maximum number of iterations; or
 when the improvement in loss is below a certain, small number.
 
-
+|details-end|
 
 .. _mlp_tips:
 
 Tips on Practical Use
 =====================
 
-  * Multi-layer Perceptron is sensitive to feature scaling, so it
-    is highly recommended to scale your data. For example, scale each
-    attribute on the input vector X to [0, 1] or [-1, +1], or standardize
-    it to have mean 0 and variance 1. Note that you must apply the *same*
-    scaling to the test set for meaningful results.
-    You can use :class:`~sklearn.preprocessing.StandardScaler` for standardization.
+* Multi-layer Perceptron is sensitive to feature scaling, so it
+  is highly recommended to scale your data. For example, scale each
+  attribute on the input vector X to [0, 1] or [-1, +1], or standardize
+  it to have mean 0 and variance 1. Note that you must apply the *same*
+  scaling to the test set for meaningful results.
+  You can use :class:`~sklearn.preprocessing.StandardScaler` for standardization.
 
-      >>> from sklearn.preprocessing import StandardScaler  # doctest: +SKIP
-      >>> scaler = StandardScaler()  # doctest: +SKIP
-      >>> # Don't cheat - fit only on training data
-      >>> scaler.fit(X_train)  # doctest: +SKIP
-      >>> X_train = scaler.transform(X_train)  # doctest: +SKIP
-      >>> # apply same transformation to test data
-      >>> X_test = scaler.transform(X_test)  # doctest: +SKIP
+    >>> from sklearn.preprocessing import StandardScaler  # doctest: +SKIP
+    >>> scaler = StandardScaler()  # doctest: +SKIP
+    >>> # Don't cheat - fit only on training data
+    >>> scaler.fit(X_train)  # doctest: +SKIP
+    >>> X_train = scaler.transform(X_train)  # doctest: +SKIP
+    >>> # apply same transformation to test data
+    >>> X_test = scaler.transform(X_test)  # doctest: +SKIP
 
-    An alternative and recommended approach is to use
-    :class:`~sklearn.preprocessing.StandardScaler` in a
-    :class:`~sklearn.pipeline.Pipeline`
+  An alternative and recommended approach is to use
+  :class:`~sklearn.preprocessing.StandardScaler` in a
+  :class:`~sklearn.pipeline.Pipeline`
 
-  * Finding a reasonable regularization parameter :math:`\alpha` is best done
-    using :class:`~sklearn.model_selection.GridSearchCV`, usually in the range
-    ``10.0 ** -np.arange(1, 7)``.
+* Finding a reasonable regularization parameter :math:`\alpha` is best done
+  using :class:`~sklearn.model_selection.GridSearchCV`, usually in the range
+  ``10.0 ** -np.arange(1, 7)``.
 
-  * Empirically, we observed that `L-BFGS` converges faster and
-    with better solutions on small datasets. For relatively large
-    datasets, however, `Adam` is very robust. It usually converges
-    quickly and gives pretty good performance. `SGD` with momentum or
-    nesterov's momentum, on the other hand, can perform better than
-    those two algorithms if learning rate is correctly tuned.
+* Empirically, we observed that `L-BFGS` converges faster and
+  with better solutions on small datasets. For relatively large
+  datasets, however, `Adam` is very robust. It usually converges
+  quickly and gives pretty good performance. `SGD` with momentum or
+  nesterov's momentum, on the other hand, can perform better than
+  those two algorithms if learning rate is correctly tuned.
 
 More control with warm_start
 ============================
@@ -355,7 +361,9 @@ or want to do additional monitoring, using ``warm_start=True`` and
     ...     # additional monitoring / inspection
     MLPClassifier(...
 
-.. topic:: References:
+|details-start|
+**References**
+|details-split|
 
     * `"Learning representations by back-propagating errors."
       <https://www.iro.umontreal.ca/~pift6266/A06/refs/backprop_old.pdf>`_
@@ -373,3 +381,5 @@ or want to do additional monitoring, using ``warm_start=True`` and
     *  :arxiv:`"Adam: A method for stochastic optimization."
        <1412.6980>`
        Kingma, Diederik, and Jimmy Ba (2014)
+
+|details-end|

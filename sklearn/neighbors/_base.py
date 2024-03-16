@@ -224,6 +224,20 @@ def sort_graph_by_row_values(graph, copy=False, warn_when_not_sorted=True):
     graph : sparse matrix of shape (n_samples, n_samples)
         Distance matrix to other samples, where only non-zero elements are
         considered neighbors. Matrix is in CSR format.
+
+    Examples
+    --------
+    >>> from scipy.sparse import csr_matrix
+    >>> from sklearn.neighbors import sort_graph_by_row_values
+    >>> X = csr_matrix(
+    ...     [[0., 3., 1.],
+    ...      [3., 0., 2.],
+    ...      [1., 2., 0.]])
+    >>> X.data
+    array([3., 1., 3., 2., 1., 2.])
+    >>> X_ = sort_graph_by_row_values(X)
+    >>> X_.data
+    array([1., 3., 2., 3., 1., 2.])
     """
     if graph.format == "csr" and _is_sorted_by_data(graph):
         return graph
@@ -813,9 +827,15 @@ class KNeighborsMixin:
 
         n_samples_fit = self.n_samples_fit_
         if n_neighbors > n_samples_fit:
+            if query_is_train:
+                n_neighbors -= 1  # ok to modify inplace because an error is raised
+                inequality_str = "n_neighbors < n_samples_fit"
+            else:
+                inequality_str = "n_neighbors <= n_samples_fit"
             raise ValueError(
-                "Expected n_neighbors <= n_samples, "
-                " but n_samples = %d, n_neighbors = %d" % (n_samples_fit, n_neighbors)
+                f"Expected {inequality_str}, but "
+                f"n_neighbors = {n_neighbors}, n_samples_fit = {n_samples_fit}, "
+                f"n_samples = {X.shape[0]}"  # include n_samples for common tests
             )
 
         n_jobs = effective_n_jobs(self.n_jobs)

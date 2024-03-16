@@ -6,7 +6,7 @@ from scipy import sparse
 
 from sklearn.exceptions import NotFittedError
 from sklearn.preprocessing import OneHotEncoder, OrdinalEncoder
-from sklearn.utils import is_scalar_nan
+from sklearn.utils._missing import is_scalar_nan
 from sklearn.utils._testing import (
     _convert_container,
     assert_allclose,
@@ -60,18 +60,6 @@ def test_one_hot_encoder_handle_unknown(handle_unknown):
     )
     # ensure transformed data was not modified in place
     assert_allclose(X2, X2_passed)
-
-
-def test_one_hot_encoder_not_fitted():
-    X = np.array([["a"], ["b"]])
-    enc = OneHotEncoder(categories=["a", "b"])
-    msg = (
-        "This OneHotEncoder instance is not fitted yet. "
-        "Call 'fit' with appropriate arguments before using this "
-        "estimator."
-    )
-    with pytest.raises(NotFittedError, match=msg):
-        enc.transform(X)
 
 
 @pytest.mark.parametrize("handle_unknown", ["ignore", "infrequent_if_exist"])
@@ -399,7 +387,7 @@ def test_X_is_not_1D_pandas(method):
     X = pd.Series([6, 3, 4, 6])
     oh = OneHotEncoder()
 
-    msg = "Expected 2D array, got 1D array instead"
+    msg = f"Expected a 2-dimensional container but got {type(X)} instead."
     with pytest.raises(ValueError, match=msg):
         getattr(oh, method)(X)
 
@@ -1362,15 +1350,6 @@ def test_ohe_infrequent_user_cats_unknown_training_errors(kwargs):
     assert_allclose(X_trans, [[1], [1]])
 
 
-# TODO(1.4): Remove when `sparse` parameter is replaced by `sparse_output`
-def test_one_hot_encoder_sparse_deprecated():
-    X = [["Male", 1], ["Female", 3], ["Female", 2]]
-
-    msg = "`sparse` was renamed to `sparse_output`"
-    with pytest.warns(FutureWarning, match=msg):
-        OneHotEncoder(sparse=False).fit(X)
-
-
 # deliberately omit 'OS' as an invalid combo
 @pytest.mark.parametrize(
     "input_dtype, category_dtype", ["OO", "OU", "UO", "UU", "SO", "SU", "SS"]
@@ -1600,7 +1579,7 @@ def test_ohe_more_informative_error_message():
 
     msg = (
         "Pandas output does not support sparse data. Set "
-        "sparse_output=False to output pandas DataFrames or disable pandas output"
+        "sparse_output=False to output pandas dataframes or disable Pandas output"
     )
     with pytest.raises(ValueError, match=msg):
         ohe.fit_transform(df)
@@ -2342,3 +2321,18 @@ def test_ordinal_encoder_missing_appears_infrequent():
     )
     X_trans = ordinal.transform(X_test)
     assert_allclose(X_trans, [[2, 1], [2, 0], [np.nan, 0], [1, 0], [0, 1]])
+
+
+@pytest.mark.parametrize("Encoder", [OneHotEncoder, OrdinalEncoder])
+def test_encoder_not_fitted(Encoder):
+    """Check that we raise a `NotFittedError` by calling transform before fit with
+    the encoders.
+
+    One could expect that the passing the `categories` argument to the encoder
+    would make it stateless. However, `fit` is making a couple of check, such as the
+    position of `np.nan`.
+    """
+    X = np.array([["A"], ["B"], ["C"]], dtype=object)
+    encoder = Encoder(categories=[["A", "B", "C"]])
+    with pytest.raises(NotFittedError):
+        encoder.transform(X)
