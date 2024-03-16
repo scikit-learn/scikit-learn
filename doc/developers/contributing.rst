@@ -683,219 +683,200 @@ We are glad to accept any sort of documentation:
   useful information (e.g., the :ref:`contributing` guide) and live in
   `doc/ <https://github.com/scikit-learn/scikit-learn/tree/main/doc>`_.
 
-|details-start|
-**Guidelines for writing docstrings**
-|details-split|
-
-* When documenting the parameters and attributes, here is a list of some
-  well-formatted examples::
-
-    n_clusters : int, default=3
-        The number of clusters detected by the algorithm.
-
-    some_param : {'hello', 'goodbye'}, bool or int, default=True
-        The parameter description goes here, which can be either a string
-        literal (either `hello` or `goodbye`), a bool, or an int. The default
-        value is True.
 
-    array_parameter : {array-like, sparse matrix} of shape (n_samples, n_features) or (n_samples,)
-        This parameter accepts data in either of the mentioned forms, with one
-        of the mentioned shapes. The default value is
-        `np.ones(shape=(n_samples,))`.
+.. dropdown:: Guidelines for writing docstrings
 
-    list_param : list of int
+  * When documenting the parameters and attributes, here is a list of some
+    well-formatted examples::
 
-    typed_ndarray : ndarray of shape (n_samples,), dtype=np.int32
+      n_clusters : int, default=3
+          The number of clusters detected by the algorithm.
 
-    sample_weight : array-like of shape (n_samples,), default=None
+      some_param : {'hello', 'goodbye'}, bool or int, default=True
+          The parameter description goes here, which can be either a string
+          literal (either `hello` or `goodbye`), a bool, or an int. The default
+          value is True.
 
-    multioutput_array : ndarray of shape (n_samples, n_classes) or list of such arrays
+      array_parameter : {array-like, sparse matrix} of shape (n_samples, n_features) or (n_samples,)
+          This parameter accepts data in either of the mentioned forms, with one
+          of the mentioned shapes. The default value is
+          `np.ones(shape=(n_samples,))`.
 
-  In general have the following in mind:
+      list_param : list of int
 
-  * Use Python basic types. (``bool`` instead of ``boolean``)
-  * Use parenthesis for defining shapes: ``array-like of shape (n_samples,)``
-    or ``array-like of shape (n_samples, n_features)``
-  * For strings with multiple options, use brackets: ``input: {'log',
-    'squared', 'multinomial'}``
-  * 1D or 2D data can be a subset of ``{array-like, ndarray, sparse matrix,
-    dataframe}``. Note that ``array-like`` can also be a ``list``, while
-    ``ndarray`` is explicitly only a ``numpy.ndarray``.
-  * Specify ``dataframe`` when "frame-like" features are being used, such as
-    the column names.
-  * When specifying the data type of a list, use ``of`` as a delimiter: ``list
-    of int``. When the parameter supports arrays giving details about the
-    shape and/or data type and a list of such arrays, you can use one of
-    ``array-like of shape (n_samples,) or list of such arrays``.
-  * When specifying the dtype of an ndarray, use e.g. ``dtype=np.int32`` after
-    defining the shape: ``ndarray of shape (n_samples,), dtype=np.int32``. You
-    can specify multiple dtype as a set: ``array-like of shape (n_samples,),
-    dtype={np.float64, np.float32}``. If one wants to mention arbitrary
-    precision, use `integral` and `floating` rather than the Python dtype
-    `int` and `float`. When both `int` and `floating` are supported, there is
-    no need to specify the dtype.
-  * When the default is ``None``, ``None`` only needs to be specified at the
-    end with ``default=None``. Be sure to include in the docstring, what it
-    means for the parameter or attribute to be ``None``.
+      typed_ndarray : ndarray of shape (n_samples,), dtype=np.int32
 
-* Add "See Also" in docstrings for related classes/functions.
+      sample_weight : array-like of shape (n_samples,), default=None
 
-* "See Also" in docstrings should be one line per reference, with a colon and an
-  explanation, for example::
+      multioutput_array : ndarray of shape (n_samples, n_classes) or list of such arrays
 
-    See Also
-    --------
-    SelectKBest : Select features based on the k highest scores.
-    SelectFpr : Select features based on a false positive rate test.
+    In general have the following in mind:
 
-* Add one or two snippets of code in "Example" section to show how it can be used.
+    * Use Python basic types. (``bool`` instead of ``boolean``)
+    * Use parenthesis for defining shapes: ``array-like of shape (n_samples,)``
+      or ``array-like of shape (n_samples, n_features)``
+    * For strings with multiple options, use brackets: ``input: {'log',
+      'squared', 'multinomial'}``
+    * 1D or 2D data can be a subset of ``{array-like, ndarray, sparse matrix,
+      dataframe}``. Note that ``array-like`` can also be a ``list``, while
+      ``ndarray`` is explicitly only a ``numpy.ndarray``.
+    * Specify ``dataframe`` when "frame-like" features are being used, such as
+      the column names.
+    * When specifying the data type of a list, use ``of`` as a delimiter: ``list
+      of int``. When the parameter supports arrays giving details about the
+      shape and/or data type and a list of such arrays, you can use one of
+      ``array-like of shape (n_samples,) or list of such arrays``.
+    * When specifying the dtype of an ndarray, use e.g. ``dtype=np.int32`` after
+      defining the shape: ``ndarray of shape (n_samples,), dtype=np.int32``. You
+      can specify multiple dtype as a set: ``array-like of shape (n_samples,),
+      dtype={np.float64, np.float32}``. If one wants to mention arbitrary
+      precision, use `integral` and `floating` rather than the Python dtype
+      `int` and `float`. When both `int` and `floating` are supported, there is
+      no need to specify the dtype.
+    * When the default is ``None``, ``None`` only needs to be specified at the
+      end with ``default=None``. Be sure to include in the docstring, what it
+      means for the parameter or attribute to be ``None``.
 
-|details-end|
+  * Add "See Also" in docstrings for related classes/functions.
 
-|details-start|
-**Guidelines for writing the user guide and other reStructuredText documents**
-|details-split|
+  * "See Also" in docstrings should be one line per reference, with a colon and an
+    explanation, for example::
 
-It is important to keep a good compromise between mathematical and algorithmic
-details, and give intuition to the reader on what the algorithm does.
+      See Also
+      --------
+      SelectKBest : Select features based on the k highest scores.
+      SelectFpr : Select features based on a false positive rate test.
 
-* Begin with a concise, hand-waving explanation of what the algorithm/code does on
-  the data.
+  * Add one or two snippets of code in "Example" section to show how it can be used.
 
-* Highlight the usefulness of the feature and its recommended application.
-  Consider including the algorithm's complexity
-  (:math:`O\left(g\left(n\right)\right)`) if available, as "rules of thumb" can
-  be very machine-dependent. Only if those complexities are not available, then
-  rules of thumb may be provided instead.
 
-* Incorporate a relevant figure (generated from an example) to provide intuitions.
+.. dropdown:: Guidelines for writing the user guide and other reStructuredText documents
 
-* Include one or two short code examples to demonstrate the feature's usage.
+  It is important to keep a good compromise between mathematical and algorithmic
+  details, and give intuition to the reader on what the algorithm does.
 
-* Introduce any necessary mathematical equations, followed by references. By
-  deferring the mathematical aspects, the documentation becomes more accessible
-  to users primarily interested in understanding the feature's practical
-  implications rather than its underlying mechanics.
+  * Begin with a concise, hand-waving explanation of what the algorithm/code does on
+    the data.
 
-* When editing reStructuredText (``.rst``) files, try to keep line length under
-  88 characters when possible (exceptions include links and tables).
+  * Highlight the usefulness of the feature and its recommended application.
+    Consider including the algorithm's complexity
+    (:math:`O\left(g\left(n\right)\right)`) if available, as "rules of thumb" can
+    be very machine-dependent. Only if those complexities are not available, then
+    rules of thumb may be provided instead.
 
-* In scikit-learn reStructuredText files both single and double backticks
-  surrounding text will render as inline literal (often used for code, e.g.,
-  `list`). This is due to specific configurations we have set. Single
-  backticks should be used nowadays.
+  * Incorporate a relevant figure (generated from an example) to provide intuitions.
 
-* Too much information makes it difficult for users to access the content they
-  are interested in. Use dropdowns to factorize it by using the following
-  syntax::
+  * Include one or two short code examples to demonstrate the feature's usage.
 
-    |details-start|
-    **Dropdown title**
-    |details-split|
+  * Introduce any necessary mathematical equations, followed by references. By
+    deferring the mathematical aspects, the documentation becomes more accessible
+    to users primarily interested in understanding the feature's practical
+    implications rather than its underlying mechanics.
 
-    Dropdown content.
+  * When editing reStructuredText (``.rst``) files, try to keep line length under
+    88 characters when possible (exceptions include links and tables).
 
-    |details-end|
+  * In scikit-learn reStructuredText files both single and double backticks
+    surrounding text will render as inline literal (often used for code, e.g.,
+    `list`). This is due to specific configurations we have set. Single
+    backticks should be used nowadays.
 
-  The snippet above will result in the following dropdown:
+  * Too much information makes it difficult for users to access the content they
+    are interested in. Use dropdowns to factorize it by using the following syntax::
 
-  |details-start|
-  **Dropdown title**
-  |details-split|
+      .. dropdown:: Dropdown title
 
-  Dropdown content.
+        Dropdown content.
 
-  |details-end|
+    The snippet above will result in the following dropdown:
 
-* Information that can be hidden by default using dropdowns is:
+    .. dropdown:: Dropdown title
 
-  * low hierarchy sections such as `References`, `Properties`, etc. (see for
-    instance the subsections in :ref:`det_curve`);
+      Dropdown content.
 
-  * in-depth mathematical details;
+  * Information that can be hidden by default using dropdowns is:
 
-  * narrative that is use-case specific;
+    * low hierarchy sections such as `References`, `Properties`, etc. (see for
+      instance the subsections in :ref:`det_curve`);
 
-  * in general, narrative that may only interest users that want to go beyond
-    the pragmatics of a given tool.
+    * in-depth mathematical details;
 
-* Do not use dropdowns for the low level section `Examples`, as it should stay
-  visible to all users. Make sure that the `Examples` section comes right after
-  the main discussion with the least possible folded section in-between.
+    * narrative that is use-case specific;
 
-* Be aware that dropdowns break cross-references. If that makes sense, hide the
-  reference along with the text mentioning it. Else, do not use dropdown.
+    * in general, narrative that may only interest users that want to go beyond
+      the pragmatics of a given tool.
 
-|details-end|
+  * Do not use dropdowns for the low level section `Examples`, as it should stay
+    visible to all users. Make sure that the `Examples` section comes right after
+    the main discussion with the least possible folded section in-between.
 
+  * Be aware that dropdowns break cross-references. If that makes sense, hide the
+    reference along with the text mentioning it. Else, do not use dropdown.
 
-|details-start|
-**Guidelines for writing references**
-|details-split|
 
-* When bibliographic references are available with `arxiv <https://arxiv.org/>`_
-  or `Digital Object Identifier <https://www.doi.org/>`_ identification numbers,
-  use the sphinx directives `:arxiv:` or `:doi:`. For example, see references in
-  :ref:`Spectral Clustering Graphs <spectral_clustering_graph>`.
+.. dropdown:: Guidelines for writing references
 
-* For "References" in docstrings, see the Silhouette Coefficient
-  (:func:`sklearn.metrics.silhouette_score`).
+  * When bibliographic references are available with `arxiv <https://arxiv.org/>`_
+    or `Digital Object Identifier <https://www.doi.org/>`_ identification numbers,
+    use the sphinx directives `:arxiv:` or `:doi:`. For example, see references in
+    :ref:`Spectral Clustering Graphs <spectral_clustering_graph>`.
 
-* To cross-reference to other pages in the scikit-learn documentation use the
-  reStructuredText cross-referencing syntax:
+  * For "References" in docstrings, see the Silhouette Coefficient
+    (:func:`sklearn.metrics.silhouette_score`).
 
-  * Section - to link to an arbitrary section in the documentation, use
-    reference labels (see `Sphinx docs
-    <https://www.sphinx-doc.org/en/master/usage/restructuredtext/roles.html#ref-role>`_).
-    For example:
+  * To cross-reference to other pages in the scikit-learn documentation use the
+    reStructuredText cross-referencing syntax:
 
-    .. code-block:: rst
+    * Section - to link to an arbitrary section in the documentation, use
+      reference labels (see `Sphinx docs
+      <https://www.sphinx-doc.org/en/master/usage/restructuredtext/roles.html#ref-role>`_).
+      For example:
 
-        .. _my-section:
+      .. code-block:: rst
 
-        My section
-        ----------
+          .. _my-section:
 
-        This is the text of the section.
+          My section
+          ----------
 
-        To refer to itself use :ref:`my-section`.
+          This is the text of the section.
 
-    You should not modify existing sphinx reference labels as this would break
-    existing cross references and external links pointing to specific sections
-    in the scikit-learn documentation.
+          To refer to itself use :ref:`my-section`.
 
-  * Glossary - linking to a term in the :ref:`glossary`:
+      You should not modify existing sphinx reference labels as this would break
+      existing cross references and external links pointing to specific sections
+      in the scikit-learn documentation.
 
-    .. code-block:: rst
+    * Glossary - linking to a term in the :ref:`glossary`:
 
-        :term:`cross_validation`
+      .. code-block:: rst
 
-  * Function - to link to the documentation of a function, use the full import
-    path to the function:
+          :term:`cross_validation`
 
-    .. code-block:: rst
+    * Function - to link to the documentation of a function, use the full import
+      path to the function:
 
-        :func:`~sklearn.model_selection.cross_val_score`
+      .. code-block:: rst
 
-    However, if there is a `.. currentmodule::` directive above you in the document,
-    you will only need to use the path to the function succeeding the current
-    module specified. For example:
+          :func:`~sklearn.model_selection.cross_val_score`
 
-    .. code-block:: rst
+      However, if there is a `.. currentmodule::` directive above you in the document,
+      you will only need to use the path to the function succeeding the current
+      module specified. For example:
 
-        .. currentmodule:: sklearn.model_selection
+      .. code-block:: rst
 
-        :func:`cross_val_score`
+          .. currentmodule:: sklearn.model_selection
 
-  * Class - to link to documentation of a class, use the full import path to the
-    class, unless there is a 'currentmodule' directive in the document above
-    (see above):
+          :func:`cross_val_score`
 
-    .. code-block:: rst
+    * Class - to link to documentation of a class, use the full import path to the
+      class, unless there is a 'currentmodule' directive in the document above
+      (see above):
 
-        :class:`~sklearn.preprocessing.StandardScaler`
+      .. code-block:: rst
 
-|details-end|
+          :class:`~sklearn.preprocessing.StandardScaler`
 
 You can edit the documentation using any text editor, and then generate the
 HTML output by following :ref:`building_documentation`. The resulting HTML files

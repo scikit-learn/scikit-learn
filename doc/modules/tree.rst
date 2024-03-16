@@ -146,82 +146,78 @@ Once trained, you can plot the tree with the :func:`plot_tree` function::
    :scale: 75
    :align: center
 
-|details-start|
-**Alternative ways to export trees**
-|details-split|
+.. dropdown:: Alternative ways to export trees
 
-We can also export the tree in `Graphviz
-<https://www.graphviz.org/>`_ format using the :func:`export_graphviz`
-exporter. If you use the `conda <https://conda.io>`_ package manager, the graphviz binaries
-and the python package can be installed with `conda install python-graphviz`.
+  We can also export the tree in `Graphviz
+  <https://www.graphviz.org/>`_ format using the :func:`export_graphviz`
+  exporter. If you use the `conda <https://conda.io>`_ package manager, the graphviz binaries
+  and the python package can be installed with `conda install python-graphviz`.
 
-Alternatively binaries for graphviz can be downloaded from the graphviz project homepage,
-and the Python wrapper installed from pypi with `pip install graphviz`.
+  Alternatively binaries for graphviz can be downloaded from the graphviz project homepage,
+  and the Python wrapper installed from pypi with `pip install graphviz`.
 
-Below is an example graphviz export of the above tree trained on the entire
-iris dataset; the results are saved in an output file `iris.pdf`::
+  Below is an example graphviz export of the above tree trained on the entire
+  iris dataset; the results are saved in an output file `iris.pdf`::
 
 
-    >>> import graphviz # doctest: +SKIP
-    >>> dot_data = tree.export_graphviz(clf, out_file=None) # doctest: +SKIP
-    >>> graph = graphviz.Source(dot_data) # doctest: +SKIP
-    >>> graph.render("iris") # doctest: +SKIP
+      >>> import graphviz # doctest: +SKIP
+      >>> dot_data = tree.export_graphviz(clf, out_file=None) # doctest: +SKIP
+      >>> graph = graphviz.Source(dot_data) # doctest: +SKIP
+      >>> graph.render("iris") # doctest: +SKIP
 
-The :func:`export_graphviz` exporter also supports a variety of aesthetic
-options, including coloring nodes by their class (or value for regression) and
-using explicit variable and class names if desired. Jupyter notebooks also
-render these plots inline automatically::
+  The :func:`export_graphviz` exporter also supports a variety of aesthetic
+  options, including coloring nodes by their class (or value for regression) and
+  using explicit variable and class names if desired. Jupyter notebooks also
+  render these plots inline automatically::
 
-    >>> dot_data = tree.export_graphviz(clf, out_file=None, # doctest: +SKIP
-    ...                      feature_names=iris.feature_names,  # doctest: +SKIP
-    ...                      class_names=iris.target_names,  # doctest: +SKIP
-    ...                      filled=True, rounded=True,  # doctest: +SKIP
-    ...                      special_characters=True)  # doctest: +SKIP
-    >>> graph = graphviz.Source(dot_data)  # doctest: +SKIP
-    >>> graph # doctest: +SKIP
+      >>> dot_data = tree.export_graphviz(clf, out_file=None, # doctest: +SKIP
+      ...                      feature_names=iris.feature_names,  # doctest: +SKIP
+      ...                      class_names=iris.target_names,  # doctest: +SKIP
+      ...                      filled=True, rounded=True,  # doctest: +SKIP
+      ...                      special_characters=True)  # doctest: +SKIP
+      >>> graph = graphviz.Source(dot_data)  # doctest: +SKIP
+      >>> graph # doctest: +SKIP
 
-.. only:: html
+  .. only:: html
 
-    .. figure:: ../images/iris.svg
-       :align: center
+      .. figure:: ../images/iris.svg
+        :align: center
 
-.. only:: latex
+  .. only:: latex
 
-    .. figure:: ../images/iris.pdf
-       :align: center
+      .. figure:: ../images/iris.pdf
+        :align: center
 
-.. figure:: ../auto_examples/tree/images/sphx_glr_plot_iris_dtc_001.png
-   :target: ../auto_examples/tree/plot_iris_dtc.html
-   :align: center
-   :scale: 75
+  .. figure:: ../auto_examples/tree/images/sphx_glr_plot_iris_dtc_001.png
+    :target: ../auto_examples/tree/plot_iris_dtc.html
+    :align: center
+    :scale: 75
 
-Alternatively, the tree can also be exported in textual format with the
-function :func:`export_text`. This method doesn't require the installation
-of external libraries and is more compact:
+  Alternatively, the tree can also be exported in textual format with the
+  function :func:`export_text`. This method doesn't require the installation
+  of external libraries and is more compact:
 
-    >>> from sklearn.datasets import load_iris
-    >>> from sklearn.tree import DecisionTreeClassifier
-    >>> from sklearn.tree import export_text
-    >>> iris = load_iris()
-    >>> decision_tree = DecisionTreeClassifier(random_state=0, max_depth=2)
-    >>> decision_tree = decision_tree.fit(iris.data, iris.target)
-    >>> r = export_text(decision_tree, feature_names=iris['feature_names'])
-    >>> print(r)
-    |--- petal width (cm) <= 0.80
-    |   |--- class: 0
-    |--- petal width (cm) >  0.80
-    |   |--- petal width (cm) <= 1.75
-    |   |   |--- class: 1
-    |   |--- petal width (cm) >  1.75
-    |   |   |--- class: 2
-    <BLANKLINE>
+      >>> from sklearn.datasets import load_iris
+      >>> from sklearn.tree import DecisionTreeClassifier
+      >>> from sklearn.tree import export_text
+      >>> iris = load_iris()
+      >>> decision_tree = DecisionTreeClassifier(random_state=0, max_depth=2)
+      >>> decision_tree = decision_tree.fit(iris.data, iris.target)
+      >>> r = export_text(decision_tree, feature_names=iris['feature_names'])
+      >>> print(r)
+      |--- petal width (cm) <= 0.80
+      |   |--- class: 0
+      |--- petal width (cm) >  0.80
+      |   |--- petal width (cm) <= 1.75
+      |   |   |--- class: 1
+      |   |--- petal width (cm) >  1.75
+      |   |   |--- class: 2
+      <BLANKLINE>
 
-|details-end|
+.. rubric:: Examples
 
-.. topic:: Examples:
-
- * :ref:`sphx_glr_auto_examples_tree_plot_iris_dtc.py`
- * :ref:`sphx_glr_auto_examples_tree_plot_unveil_tree_structure.py`
+* :ref:`sphx_glr_auto_examples_tree_plot_iris_dtc.py`
+* :ref:`sphx_glr_auto_examples_tree_plot_unveil_tree_structure.py`
 
 .. _tree_regression:
 
@@ -248,9 +244,9 @@ instead of integer values::
     >>> clf.predict([[1, 1]])
     array([0.5])
 
-.. topic:: Examples:
+.. rubric:: Examples
 
- * :ref:`sphx_glr_auto_examples_tree_plot_tree_regression.py`
+* :ref:`sphx_glr_auto_examples_tree_plot_tree_regression.py`
 
 
 .. _tree_multioutput:
@@ -306,21 +302,17 @@ the lower half of those faces.
    :scale: 75
    :align: center
 
-.. topic:: Examples:
+.. rubric:: Examples
 
-  * :ref:`sphx_glr_auto_examples_tree_plot_tree_regression_multioutput.py`
-  * :ref:`sphx_glr_auto_examples_miscellaneous_plot_multioutput_face_completion.py`
+* :ref:`sphx_glr_auto_examples_tree_plot_tree_regression_multioutput.py`
+* :ref:`sphx_glr_auto_examples_miscellaneous_plot_multioutput_face_completion.py`
 
-|details-start|
-**References**
-|details-split|
+.. rubric:: References
 
 * M. Dumont et al,  `Fast multi-class image annotation with random subwindows
   and multiple output randomized trees
-  <http://www.montefiore.ulg.ac.be/services/stochastic/pubs/2009/DMWG09/dumont-visapp09-shortpaper.pdf>`_, International Conference on
-  Computer Vision Theory and Applications 2009
-
-|details-end|
+  <http://www.montefiore.ulg.ac.be/services/stochastic/pubs/2009/DMWG09/dumont-visapp09-shortpaper.pdf>`_,
+  International Conference on Computer Vision Theory and Applications 2009
 
 .. _tree_complexity:
 
@@ -412,36 +404,32 @@ Tree algorithms: ID3, C4.5, C5.0 and CART
 What are all the various decision tree algorithms and how do they differ
 from each other? Which one is implemented in scikit-learn?
 
-|details-start|
-**Various decision tree algorithms**
-|details-split|
+.. dropdown:: Various decision tree algorithms
 
-ID3_ (Iterative Dichotomiser 3) was developed in 1986 by Ross Quinlan.
-The algorithm creates a multiway tree, finding for each node (i.e. in
-a greedy manner) the categorical feature that will yield the largest
-information gain for categorical targets. Trees are grown to their
-maximum size and then a pruning step is usually applied to improve the
-ability of the tree to generalize to unseen data.
+  ID3_ (Iterative Dichotomiser 3) was developed in 1986 by Ross Quinlan.
+  The algorithm creates a multiway tree, finding for each node (i.e. in
+  a greedy manner) the categorical feature that will yield the largest
+  information gain for categorical targets. Trees are grown to their
+  maximum size and then a pruning step is usually applied to improve the
+  ability of the tree to generalize to unseen data.
 
-C4.5 is the successor to ID3 and removed the restriction that features
-must be categorical by dynamically defining a discrete attribute (based
-on numerical variables) that partitions the continuous attribute value
-into a discrete set of intervals. C4.5 converts the trained trees
-(i.e. the output of the ID3 algorithm) into sets of if-then rules.
-The accuracy of each rule is then evaluated to determine the order
-in which they should be applied. Pruning is done by removing a rule's
-precondition if the accuracy of the rule improves without it.
+  C4.5 is the successor to ID3 and removed the restriction that features
+  must be categorical by dynamically defining a discrete attribute (based
+  on numerical variables) that partitions the continuous attribute value
+  into a discrete set of intervals. C4.5 converts the trained trees
+  (i.e. the output of the ID3 algorithm) into sets of if-then rules.
+  The accuracy of each rule is then evaluated to determine the order
+  in which they should be applied. Pruning is done by removing a rule's
+  precondition if the accuracy of the rule improves without it.
 
-C5.0 is Quinlan's latest version release under a proprietary license.
-It uses less memory and builds smaller rulesets than C4.5 while being
-more accurate.
+  C5.0 is Quinlan's latest version release under a proprietary license.
+  It uses less memory and builds smaller rulesets than C4.5 while being
+  more accurate.
 
-CART (Classification and Regression Trees) is very similar to C4.5, but
-it differs in that it supports numerical target variables (regression) and
-does not compute rule sets. CART constructs binary trees using the feature
-and threshold that yield the largest information gain at each node.
-
-|details-end|
+  CART (Classification and Regression Trees) is very similar to C4.5, but
+  it differs in that it supports numerical target variables (regression) and
+  does not compute rule sets. CART constructs binary trees using the feature
+  and threshold that yield the largest information gain at each node.
 
 scikit-learn uses an optimized version of the CART algorithm; however, the
 scikit-learn implementation does not support categorical variables for now.
@@ -515,39 +503,35 @@ Log Loss or Entropy:
 
     H(Q_m) = - \sum_k p_{mk} \log(p_{mk})
 
-|details-start|
-**Shannon entropy**
-|details-split|
+.. dropdown:: Shannon entropy
 
-The entropy criterion computes the Shannon entropy of the possible classes. It
-takes the class frequencies of the training data points that reached a given
-leaf :math:`m` as their probability. Using the **Shannon entropy as tree node
-splitting criterion is equivalent to minimizing the log loss** (also known as
-cross-entropy and multinomial deviance) between the true labels :math:`y_i`
-and the probabilistic predictions :math:`T_k(x_i)` of the tree model :math:`T` for class :math:`k`.
+  The entropy criterion computes the Shannon entropy of the possible classes. It
+  takes the class frequencies of the training data points that reached a given
+  leaf :math:`m` as their probability. Using the **Shannon entropy as tree node
+  splitting criterion is equivalent to minimizing the log loss** (also known as
+  cross-entropy and multinomial deviance) between the true labels :math:`y_i`
+  and the probabilistic predictions :math:`T_k(x_i)` of the tree model :math:`T` for class :math:`k`.
 
-To see this, first recall that the log loss of a tree model :math:`T`
-computed on a dataset :math:`D` is defined as follows:
+  To see this, first recall that the log loss of a tree model :math:`T`
+  computed on a dataset :math:`D` is defined as follows:
 
-.. math::
+  .. math::
 
-    \mathrm{LL}(D, T) = -\frac{1}{n} \sum_{(x_i, y_i) \in D} \sum_k I(y_i = k) \log(T_k(x_i))
+      \mathrm{LL}(D, T) = -\frac{1}{n} \sum_{(x_i, y_i) \in D} \sum_k I(y_i = k) \log(T_k(x_i))
 
-where :math:`D` is a training dataset of :math:`n` pairs :math:`(x_i, y_i)`.
+  where :math:`D` is a training dataset of :math:`n` pairs :math:`(x_i, y_i)`.
 
-In a classification tree, the predicted class probabilities within leaf nodes
-are constant, that is: for all :math:`(x_i, y_i) \in Q_m`, one has:
-:math:`T_k(x_i) = p_{mk}` for each class :math:`k`.
+  In a classification tree, the predicted class probabilities within leaf nodes
+  are constant, that is: for all :math:`(x_i, y_i) \in Q_m`, one has:
+  :math:`T_k(x_i) = p_{mk}` for each class :math:`k`.
 
-This property makes it possible to rewrite :math:`\mathrm{LL}(D, T)` as the
-sum of the Shannon entropies computed for each leaf of :math:`T` weighted by
-the number of training data points that reached each leaf:
+  This property makes it possible to rewrite :math:`\mathrm{LL}(D, T)` as the
+  sum of the Shannon entropies computed for each leaf of :math:`T` weighted by
+  the number of training data points that reached each leaf:
 
-.. math::
+  .. math::
 
-    \mathrm{LL}(D, T) = \sum_{m \in T} \frac{n_m}{n} H(Q_m)
-
-|details-end|
+      \mathrm{LL}(D, T) = \sum_{m \in T} \frac{n_m}{n} H(Q_m)
 
 Regression criteria
 -------------------
@@ -685,13 +669,11 @@ with the smallest value of :math:`\alpha_{eff}` is the weakest link and will
 be pruned. This process stops when the pruned tree's minimal
 :math:`\alpha_{eff}` is greater than the ``ccp_alpha`` parameter.
 
-.. topic:: Examples:
+.. rubric:: Examples
 
-    * :ref:`sphx_glr_auto_examples_tree_plot_cost_complexity_pruning.py`
+* :ref:`sphx_glr_auto_examples_tree_plot_cost_complexity_pruning.py`
 
-|details-start|
-**References**
-|details-split|
+.. rubric:: References
 
 .. [BRE] L. Breiman, J. Friedman, R. Olshen, and C. Stone. Classification
   and Regression Trees. Wadsworth, Belmont, CA, 1984.
@@ -705,5 +687,3 @@ be pruned. This process stops when the pruned tree's minimal
 
 * T. Hastie, R. Tibshirani and J. Friedman. Elements of Statistical
   Learning, Springer, 2009.
-
-|details-end|

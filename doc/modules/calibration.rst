@@ -262,51 +262,51 @@ probabilities, the calibrated probabilities for each class
 are predicted separately. As those probabilities do not necessarily sum to
 one, a postprocessing is performed to normalize them.
 
-.. topic:: Examples:
+.. rubric:: Examples
 
-   * :ref:`sphx_glr_auto_examples_calibration_plot_calibration_curve.py`
-   * :ref:`sphx_glr_auto_examples_calibration_plot_calibration_multiclass.py`
-   * :ref:`sphx_glr_auto_examples_calibration_plot_calibration.py`
-   * :ref:`sphx_glr_auto_examples_calibration_plot_compare_calibration.py`
+* :ref:`sphx_glr_auto_examples_calibration_plot_calibration_curve.py`
+* :ref:`sphx_glr_auto_examples_calibration_plot_calibration_multiclass.py`
+* :ref:`sphx_glr_auto_examples_calibration_plot_calibration.py`
+* :ref:`sphx_glr_auto_examples_calibration_plot_compare_calibration.py`
 
-.. topic:: References:
+.. rubric:: References
 
-    .. [1] Allan H. Murphy (1973).
-           :doi:`"A New Vector Partition of the Probability Score"
-           <10.1175/1520-0450(1973)012%3C0595:ANVPOT%3E2.0.CO;2>`
-           Journal of Applied Meteorology and Climatology
+.. [1] Allan H. Murphy (1973).
+       :doi:`"A New Vector Partition of the Probability Score"
+       <10.1175/1520-0450(1973)012%3C0595:ANVPOT%3E2.0.CO;2>`
+       Journal of Applied Meteorology and Climatology
 
-    .. [2] `On the combination of forecast probabilities for
-           consecutive precipitation periods.
-           <https://journals.ametsoc.org/waf/article/5/4/640/40179>`_
-           Wea. Forecasting, 5, 640–650., Wilks, D. S., 1990a
+.. [2] `On the combination of forecast probabilities for
+       consecutive precipitation periods.
+       <https://journals.ametsoc.org/waf/article/5/4/640/40179>`_
+       Wea. Forecasting, 5, 640–650., Wilks, D. S., 1990a
 
-    .. [3] `Predicting Good Probabilities with Supervised Learning
-           <https://www.cs.cornell.edu/~alexn/papers/calibration.icml05.crc.rev3.pdf>`_,
-           A. Niculescu-Mizil & R. Caruana, ICML 2005
+.. [3] `Predicting Good Probabilities with Supervised Learning
+       <https://www.cs.cornell.edu/~alexn/papers/calibration.icml05.crc.rev3.pdf>`_,
+       A. Niculescu-Mizil & R. Caruana, ICML 2005
 
 
-    .. [4] `Probabilistic Outputs for Support Vector Machines and Comparisons
-           to Regularized Likelihood Methods.
-           <https://www.cs.colorado.edu/~mozer/Teaching/syllabi/6622/papers/Platt1999.pdf>`_
-           J. Platt, (1999)
+.. [4] `Probabilistic Outputs for Support Vector Machines and Comparisons
+       to Regularized Likelihood Methods.
+       <https://www.cs.colorado.edu/~mozer/Teaching/syllabi/6622/papers/Platt1999.pdf>`_
+       J. Platt, (1999)
 
-    .. [5] `Transforming Classifier Scores into Accurate Multiclass
-           Probability Estimates.
-           <https://dl.acm.org/doi/pdf/10.1145/775047.775151>`_
-           B. Zadrozny & C. Elkan, (KDD 2002)
+.. [5] `Transforming Classifier Scores into Accurate Multiclass
+       Probability Estimates.
+       <https://dl.acm.org/doi/pdf/10.1145/775047.775151>`_
+       B. Zadrozny & C. Elkan, (KDD 2002)
 
-    .. [6] `Predicting accurate probabilities with a ranking loss.
-           <https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4180410/>`_
-           Menon AK, Jiang XJ, Vembu S, Elkan C, Ohno-Machado L.
-           Proc Int Conf Mach Learn. 2012;2012:703-710
+.. [6] `Predicting accurate probabilities with a ranking loss.
+       <https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4180410/>`_
+       Menon AK, Jiang XJ, Vembu S, Elkan C, Ohno-Machado L.
+       Proc Int Conf Mach Learn. 2012;2012:703-710
 
-    .. [7] `Beyond sigmoids: How to obtain well-calibrated probabilities from
-           binary classifiers with beta calibration
-           <https://projecteuclid.org/euclid.ejs/1513306867>`_
-           Kull, M., Silva Filho, T. M., & Flach, P. (2017).
+.. [7] `Beyond sigmoids: How to obtain well-calibrated probabilities from
+       binary classifiers with beta calibration
+       <https://projecteuclid.org/euclid.ejs/1513306867>`_
+       Kull, M., Silva Filho, T. M., & Flach, P. (2017).
 
-    .. [8] Mario V. Wüthrich, Michael Merz (2023).
-           :doi:`"Statistical Foundations of Actuarial Learning and its Applications"
-           <10.1007/978-3-031-12409-9>`
-           Springer Actuarial
+.. [8] Mario V. Wüthrich, Michael Merz (2023).
+       :doi:`"Statistical Foundations of Actuarial Learning and its Applications"
+       <10.1007/978-3-031-12409-9>`
+       Springer Actuarial

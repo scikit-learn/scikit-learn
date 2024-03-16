@@ -426,9 +426,9 @@ the separating line (less regularization).
 
    **Regularized SVM (default)**
 
-.. topic:: Example:
+.. rubric:: Examples
 
- - :ref:`sphx_glr_auto_examples_svm_plot_iris_svc.py`
+- :ref:`sphx_glr_auto_examples_svm_plot_iris_svc.py`
 
 
 SVMs can be used in regression --:class:`SVR` (Support Vector Regression)--, or in

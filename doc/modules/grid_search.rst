@@ -72,35 +72,35 @@ evaluated and the best combination is retained.
 
 .. currentmodule:: sklearn.model_selection
 
-.. topic:: Examples:
+.. rubric:: Examples
 
-    - See :ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_digits.py` for an example of
-      Grid Search computation on the digits dataset.
+- See :ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_digits.py` for an example of
+  Grid Search computation on the digits dataset.
 
-    - See :ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_text_feature_extraction.py` for an example
-      of Grid Search coupling parameters from a text documents feature
-      extractor (n-gram count vectorizer and TF-IDF transformer) with a
-      classifier (here a linear SVM trained with SGD with either elastic
-      net or L2 penalty) using a :class:`~sklearn.pipeline.Pipeline` instance.
+- See :ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_text_feature_extraction.py` for an example
+  of Grid Search coupling parameters from a text documents feature
+  extractor (n-gram count vectorizer and TF-IDF transformer) with a
+  classifier (here a linear SVM trained with SGD with either elastic
+  net or L2 penalty) using a :class:`~sklearn.pipeline.Pipeline` instance.
 
-    - See :ref:`sphx_glr_auto_examples_model_selection_plot_nested_cross_validation_iris.py`
-      for an example of Grid Search within a cross validation loop on the iris
-      dataset. This is the best practice for evaluating the performance of a
-      model with grid search.
+- See :ref:`sphx_glr_auto_examples_model_selection_plot_nested_cross_validation_iris.py`
+  for an example of Grid Search within a cross validation loop on the iris
+  dataset. This is the best practice for evaluating the performance of a
+  model with grid search.
 
-    - See :ref:`sphx_glr_auto_examples_model_selection_plot_multi_metric_evaluation.py`
-      for an example of :class:`GridSearchCV` being used to evaluate multiple
-      metrics simultaneously.
+- See :ref:`sphx_glr_auto_examples_model_selection_plot_multi_metric_evaluation.py`
+  for an example of :class:`GridSearchCV` being used to evaluate multiple
+  metrics simultaneously.
 
-    - See :ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_refit_callable.py`
-      for an example of using ``refit=callable`` interface in
-      :class:`GridSearchCV`. The example shows how this interface adds certain
-      amount of flexibility in identifying the "best" estimator. This interface
-      can also be used in multiple metrics evaluation.
+- See :ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_refit_callable.py`
+  for an example of using ``refit=callable`` interface in
+  :class:`GridSearchCV`. The example shows how this interface adds certain
+  amount of flexibility in identifying the "best" estimator. This interface
+  can also be used in multiple metrics evaluation.
 
-    - See :ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_stats.py`
-      for an example of how to do a statistical comparison on the outputs of
-      :class:`GridSearchCV`.
+- See :ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_stats.py`
+  for an example of how to do a statistical comparison on the outputs of
+  :class:`GridSearchCV`.
 
 .. _randomized_parameter_search:
 
@@ -161,16 +161,16 @@ variable that is log-uniformly distributed between ``1e0`` and ``1e3``::
    'kernel': ['rbf'],
    'class_weight':['balanced', None]}
 
-.. topic:: Examples:
+.. rubric:: Examples
 
-    * :ref:`sphx_glr_auto_examples_model_selection_plot_randomized_search.py` compares the usage and efficiency
-      of randomized search and grid search.
+* :ref:`sphx_glr_auto_examples_model_selection_plot_randomized_search.py` compares the usage and efficiency
+  of randomized search and grid search.
 
-.. topic:: References:
+.. rubric:: References
 
-    * Bergstra, J. and Bengio, Y.,
-      Random search for hyper-parameter optimization,
-      The Journal of Machine Learning Research (2012)
+* Bergstra, J. and Bengio, Y.,
+  Random search for hyper-parameter optimization,
+  The Journal of Machine Learning Research (2012)
 
 .. _successive_halving_user_guide:
 
@@ -222,10 +222,10 @@ need to explicitly import ``enable_halving_search_cv``::
   >>> from sklearn.model_selection import HalvingGridSearchCV
   >>> from sklearn.model_selection import HalvingRandomSearchCV
 
-.. topic:: Examples:
+.. rubric:: Examples
 
-    * :ref:`sphx_glr_auto_examples_model_selection_plot_successive_halving_heatmap.py`
-    * :ref:`sphx_glr_auto_examples_model_selection_plot_successive_halving_iterations.py`
+* :ref:`sphx_glr_auto_examples_model_selection_plot_successive_halving_heatmap.py`
+* :ref:`sphx_glr_auto_examples_model_selection_plot_successive_halving_iterations.py`
 
 Choosing ``min_resources`` and the number of candidates
 -------------------------------------------------------
@@ -528,15 +528,16 @@ In the example above, the best parameter combination is ``{'criterion':
 since it has reached the last iteration (3) with the highest score:
 0.96.
 
-.. topic:: References:
+.. rubric:: References
 
-    .. [1] K. Jamieson, A. Talwalkar,
-       `Non-stochastic Best Arm Identification and Hyperparameter
-       Optimization <http://proceedings.mlr.press/v51/jamieson16.html>`_, in
-       proc. of Machine Learning Research, 2016.
-    .. [2] L. Li, K. Jamieson, G. DeSalvo, A. Rostamizadeh, A. Talwalkar,
-       :arxiv:`Hyperband: A Novel Bandit-Based Approach to Hyperparameter Optimization
-       <1603.06560>`, in Machine Learning Research 18, 2018.
+.. [1] K. Jamieson, A. Talwalkar,
+   `Non-stochastic Best Arm Identification and Hyperparameter
+   Optimization <http://proceedings.mlr.press/v51/jamieson16.html>`_, in
+   proc. of Machine Learning Research, 2016.
+
+.. [2] L. Li, K. Jamieson, G. DeSalvo, A. Rostamizadeh, A. Talwalkar,
+   :arxiv:`Hyperband: A Novel Bandit-Based Approach to Hyperparameter Optimization
+   <1603.06560>`, in Machine Learning Research 18, 2018.
 
 .. _grid_search_tips:
 

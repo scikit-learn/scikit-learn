@@ -66,6 +66,7 @@ extensions = [
     # See sphinxext/
     "allow_nan_estimators",
     "doi_role",
+    "dropdown_anchors",
     "move_gallery_links",
     "sphinx_issues",
 ]
@@ -316,7 +317,7 @@ html_extra_path = ["versions.json"]
 
 # Additional JS files
 html_js_files = [
-    "scripts/details-permalink.js",
+    "scripts/dropdown.js",
     "scripts/version-switcher.js",
 ]
 
@@ -431,28 +432,6 @@ html_context["is_devrelease"] = parsed_version.is_devrelease
 # Not showing the search summary makes the search page load faster.
 html_show_search_summary = True
 
-
-# The "summary-anchor" IDs will be overwritten via JavaScript to be unique.
-# See `doc/js/scripts/details-permalink.js`.
-rst_prolog = """
-.. |details-start| raw:: html
-
-    <details id="summary-anchor">
-    <summary class="btn btn-light">
-
-.. |details-split| raw:: html
-
-    <span class="tooltiptext">Click for more details</span>
-    <a class="headerlink" href="#summary-anchor" title="Permalink to this heading">¶</a>
-    </summary>
-    <div class="card">
-
-.. |details-end| raw:: html
-
-    </div>
-    </details>
-
-"""
 
 # -- Options for LaTeX output ------------------------------------------------
 latex_elements = {
@@ -759,7 +738,7 @@ def setup(app):
     # triggered just before the HTML for an individual page is created
     app.connect("html-page-context", add_js_css_files)
 
-    # to hide/show the prompt in code examples:
+    # to hide/show the prompt in code examples
     app.connect("build-finished", make_carousel_thumbs)
     app.connect("build-finished", filter_search_index)
 

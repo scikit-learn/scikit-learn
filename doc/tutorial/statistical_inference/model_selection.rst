@@ -196,41 +196,38 @@ scoring method.
         >>> scores = list()
         >>> scores_std = list()
 
-    |details-start|
-    **Solution**
-    |details-split|
+    .. dropdown:: Solution
 
-    .. plot::
-        :context: close-figs
-        :align: center
+        .. plot::
+            :context: close-figs
+            :align: center
 
-        import numpy as np
-        from sklearn import datasets, svm
-        from sklearn.model_selection import cross_val_score
-        X, y = datasets.load_digits(return_X_y=True)
-        svc = svm.SVC(kernel="linear")
-        C_s = np.logspace(-10, 0, 10)
-        scores = list()
-        scores_std = list()
-        for C in C_s:
-            svc.C = C
-            this_scores = cross_val_score(svc, X, y, n_jobs=1)
-            scores.append(np.mean(this_scores))
-            scores_std.append(np.std(this_scores))
+            import numpy as np
+            from sklearn import datasets, svm
+            from sklearn.model_selection import cross_val_score
+            X, y = datasets.load_digits(return_X_y=True)
+            svc = svm.SVC(kernel="linear")
+            C_s = np.logspace(-10, 0, 10)
+            scores = list()
+            scores_std = list()
+            for C in C_s:
+                svc.C = C
+                this_scores = cross_val_score(svc, X, y, n_jobs=1)
+                scores.append(np.mean(this_scores))
+                scores_std.append(np.std(this_scores))
 
-        import matplotlib.pyplot as plt
+            import matplotlib.pyplot as plt
 
-        plt.figure()
-        plt.semilogx(C_s, scores)
-        plt.semilogx(C_s, np.array(scores) + np.array(scores_std), "b--")
-        plt.semilogx(C_s, np.array(scores) - np.array(scores_std), "b--")
-        locs, labels = plt.yticks()
-        plt.yticks(locs, list(map(lambda x: "%g" % x, locs)))
-        plt.ylabel("CV score")
-        plt.xlabel("Parameter C")
-        plt.ylim(0, 1.1)
-        plt.show()
-    |details-end|
+            plt.figure()
+            plt.semilogx(C_s, scores)
+            plt.semilogx(C_s, np.array(scores) + np.array(scores_std), "b--")
+            plt.semilogx(C_s, np.array(scores) - np.array(scores_std), "b--")
+            locs, labels = plt.yticks()
+            plt.yticks(locs, list(map(lambda x: "%g" % x, locs)))
+            plt.ylabel("CV score")
+            plt.xlabel("Parameter C")
+            plt.ylim(0, 1.1)
+            plt.show()
 
 Grid-search and cross-validated estimators
 ============================================

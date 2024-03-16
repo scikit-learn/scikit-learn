@@ -29,8 +29,8 @@ of a species at a specific location.
 
 The dataset is provided by Phillips et. al. (2006).
 
-.. topic:: References
+.. rubric:: References
 
- * `"Maximum entropy modeling of species geographic distributions"
-   <http://rob.schapire.net/papers/ecolmod.pdf>`_ S. J. Phillips,
-   R. P. Anderson, R. E. Schapire - Ecological Modelling, 190:231-259, 2006.
+* `"Maximum entropy modeling of species geographic distributions"
+  <http://rob.schapire.net/papers/ecolmod.pdf>`_ S. J. Phillips,
+  R. P. Anderson, R. E. Schapire - Ecological Modelling, 190:231-259, 2006.

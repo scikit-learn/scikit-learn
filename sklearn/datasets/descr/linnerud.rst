@@ -18,11 +18,7 @@ twenty middle-aged men in a fitness club:
 - *exercise* - CSV containing 20 observations on 3 exercise variables:
    Chins, Situps and Jumps.
 
-|details-start|
-**References**
-|details-split|
+.. dropdown:: References
 
-* Tenenhaus, M. (1998). La regression PLS: theorie et pratique. Paris:
-  Editions Technic.
-
-|details-end|
+   * Tenenhaus, M. (1998). La regression PLS: theorie et pratique. Paris:
+     Editions Technic.
