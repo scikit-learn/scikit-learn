@@ -306,7 +306,8 @@ jobs:
   parameters:
     name: Windows
     vmImage: windows-latest
-    dependsOn: [linting, git_commit, Ubuntu_Jammy_Jellyfish]
+    # dependsOn: [linting, git_commit, Ubuntu_Jammy_Jellyfish]
+    dependsOn: [git_commit]
     # Runs when dependencies succeeded or skipped
     condition: |
       and(

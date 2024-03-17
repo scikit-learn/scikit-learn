@@ -4,8 +4,8 @@ from numpy.testing import assert_array_equal
 
 from sklearn.ensemble._hist_gradient_boosting.common import (
     G_H_DTYPE,
-    HISTOGRAM_DTYPE,
     X_BINNED_DTYPE,
+    BinnedData,
     MonotonicConstraint,
 )
 from sklearn.ensemble._hist_gradient_boosting.histogram import HistogramBuilder
@@ -31,6 +31,7 @@ def test_histogram_split(n_bins):
         rng.randint(0, n_bins - 1, size=(int(1e4), 1)), dtype=X_BINNED_DTYPE
     )
     binned_feature = X_binned.T[feature_idx]
+    X_binned = BinnedData.from_array(X_binned)
     sample_indices = np.arange(binned_feature.shape[0], dtype=np.uint32)
     ordered_hessians = np.ones_like(binned_feature, dtype=G_H_DTYPE)
     all_hessians = ordered_hessians
@@ -53,26 +54,24 @@ def test_histogram_split(n_bins):
                 n_threads,
             )
             n_bins_non_missing = np.array(
-                [n_bins - 1] * X_binned.shape[1], dtype=np.uint32
+                [n_bins - 1] * X_binned.shape[1], dtype=np.uint16
             )
             has_missing_values = np.array([False] * X_binned.shape[1], dtype=np.uint8)
             monotonic_cst = np.array(
                 [MonotonicConstraint.NO_CST] * X_binned.shape[1], dtype=np.int8
             )
             is_categorical = np.zeros_like(monotonic_cst, dtype=np.uint8)
-            missing_values_bin_idx = n_bins - 1
             splitter = Splitter(
-                X_binned,
-                n_bins_non_missing,
-                missing_values_bin_idx,
-                has_missing_values,
-                is_categorical,
-                monotonic_cst,
-                l2_regularization,
-                min_hessian_to_split,
-                min_samples_leaf,
-                min_gain_to_split,
-                hessians_are_constant,
+                X_binned=X_binned,
+                n_bins_non_missing=n_bins_non_missing,
+                has_missing_values=has_missing_values,
+                is_categorical=is_categorical,
+                monotonic_cst=monotonic_cst,
+                l2_regularization=l2_regularization,
+                min_hessian_to_split=min_hessian_to_split,
+                min_samples_leaf=min_samples_leaf,
+                min_gain_to_split=min_gain_to_split,
+                hessians_are_constant=hessians_are_constant,
             )
 
             histograms = builder.compute_histograms_brute(sample_indices)
@@ -118,7 +117,7 @@ def test_gradient_and_hessian_sanity(constant_hessian):
     X_binned = rng.randint(
         0, n_bins, size=(n_samples, n_features), dtype=X_BINNED_DTYPE
     )
-    X_binned = np.asfortranarray(X_binned)
+    X_binned = BinnedData.from_array(np.asfortranarray(X_binned))
     sample_indices = np.arange(n_samples, dtype=np.uint32)
     all_gradients = rng.randn(n_samples).astype(G_H_DTYPE)
     sum_gradients = all_gradients.sum()
@@ -132,17 +131,15 @@ def test_gradient_and_hessian_sanity(constant_hessian):
     builder = HistogramBuilder(
         X_binned, n_bins, all_gradients, all_hessians, constant_hessian, n_threads
     )
-    n_bins_non_missing = np.array([n_bins - 1] * X_binned.shape[1], dtype=np.uint32)
+    n_bins_non_missing = np.array([n_bins - 1] * X_binned.shape[1], dtype=np.uint16)
     has_missing_values = np.array([False] * X_binned.shape[1], dtype=np.uint8)
     monotonic_cst = np.array(
         [MonotonicConstraint.NO_CST] * X_binned.shape[1], dtype=np.int8
     )
     is_categorical = np.zeros_like(monotonic_cst, dtype=np.uint8)
-    missing_values_bin_idx = n_bins - 1
     splitter = Splitter(
         X_binned,
         n_bins_non_missing,
-        missing_values_bin_idx,
         has_missing_values,
         is_categorical,
         monotonic_cst,
@@ -215,9 +212,6 @@ def test_gradient_and_hessian_sanity(constant_hessian):
 
     # make sure sum of gradients in histograms are the same for all features,
     # and make sure they're equal to their expected value
-    hists_parent = np.asarray(hists_parent, dtype=HISTOGRAM_DTYPE)
-    hists_left = np.asarray(hists_left, dtype=HISTOGRAM_DTYPE)
-    hists_right = np.asarray(hists_right, dtype=HISTOGRAM_DTYPE)
     for hists, indices in (
         (hists_parent, sample_indices),
         (hists_left, sample_indices_left),
@@ -226,9 +220,11 @@ def test_gradient_and_hessian_sanity(constant_hessian):
         # note: gradients and hessians have shape (n_features,),
         # we're comparing them to *scalars*. This has the benefit of also
         # making sure that all the entries are equal across features.
-        gradients = hists["sum_gradients"].sum(axis=1)  # shape = (n_features,)
+        # gradients = hists["sum_gradients"].sum(axis=1)  # shape = (n_features,)
+        gradients = hists.feature_sum("sum_gradients")
         expected_gradient = all_gradients[indices].sum()  # scalar
-        hessians = hists["sum_hessians"].sum(axis=1)
+        # hessians = hists["sum_hessians"].sum(axis=1)
+        hessians = hists.feature_sum("sum_hessians")
         if constant_hessian:
             # 0 is not the actual hessian, but it's not computed in this case
             expected_hessian = 0.0
@@ -264,7 +260,7 @@ def test_split_indices():
         [0, 0],
         [0, 4],
     ]
-    X_binned = np.asfortranarray(X_binned, dtype=X_BINNED_DTYPE)
+    X_binned = BinnedData.from_array(np.asfortranarray(X_binned, dtype=X_BINNED_DTYPE))
     sample_indices = np.arange(n_samples, dtype=np.uint32)
     all_gradients = rng.randn(n_samples).astype(G_H_DTYPE)
     all_hessians = np.ones(1, dtype=G_H_DTYPE)
@@ -275,17 +271,15 @@ def test_split_indices():
     builder = HistogramBuilder(
         X_binned, n_bins, all_gradients, all_hessians, hessians_are_constant, n_threads
     )
-    n_bins_non_missing = np.array([n_bins] * X_binned.shape[1], dtype=np.uint32)
+    n_bins_non_missing = np.array([n_bins] * X_binned.shape[1], dtype=np.uint16)
     has_missing_values = np.array([False] * X_binned.shape[1], dtype=np.uint8)
     monotonic_cst = np.array(
         [MonotonicConstraint.NO_CST] * X_binned.shape[1], dtype=np.int8
     )
     is_categorical = np.zeros_like(monotonic_cst, dtype=np.uint8)
-    missing_values_bin_idx = n_bins - 1
     splitter = Splitter(
         X_binned,
         n_bins_non_missing,
-        missing_values_bin_idx,
         has_missing_values,
         is_categorical,
         monotonic_cst,
@@ -341,6 +335,7 @@ def test_min_gain_to_split():
         rng.randint(0, n_bins, size=(n_samples, 1)), dtype=X_BINNED_DTYPE
     )
     binned_feature = X_binned[:, 0]
+    X_binned = BinnedData.from_array(X_binned)
     sample_indices = np.arange(n_samples, dtype=np.uint32)
     all_hessians = np.ones_like(binned_feature, dtype=G_H_DTYPE)
     all_gradients = np.ones_like(binned_feature, dtype=G_H_DTYPE)
@@ -351,17 +346,15 @@ def test_min_gain_to_split():
     builder = HistogramBuilder(
         X_binned, n_bins, all_gradients, all_hessians, hessians_are_constant, n_threads
     )
-    n_bins_non_missing = np.array([n_bins - 1] * X_binned.shape[1], dtype=np.uint32)
+    n_bins_non_missing = np.array([n_bins - 1] * X_binned.shape[1], dtype=np.uint16)
     has_missing_values = np.array([False] * X_binned.shape[1], dtype=np.uint8)
     monotonic_cst = np.array(
         [MonotonicConstraint.NO_CST] * X_binned.shape[1], dtype=np.int8
     )
     is_categorical = np.zeros_like(monotonic_cst, dtype=np.uint8)
-    missing_values_bin_idx = n_bins - 1
     splitter = Splitter(
         X_binned,
         n_bins_non_missing,
-        missing_values_bin_idx,
         has_missing_values,
         is_categorical,
         monotonic_cst,
@@ -394,7 +387,7 @@ def test_min_gain_to_split():
             [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],  # X_binned
             [1, 1, 1, 1, 5, 5, 5, 5, 5, 5],  # gradients
             False,  # no missing values
-            10,  # n_bins_non_missing
+            10,  # n_bins_non_missing = index of missing value bin
             False,  # don't split on nans
             3,  # expected_bin_idx
             "not_applicable",
@@ -406,7 +399,7 @@ def test_min_gain_to_split():
         (
             [8, 0, 1, 8, 2, 3, 4, 5, 6, 7],  # 8 <=> missing
             [1, 1, 1, 1, 5, 5, 5, 5, 5, 5],
-            True,  # missing values
+            True,  # missing values = index of missing value bin
             8,  # n_bins_non_missing
             False,  # don't split on nans
             1,  # cut on bin_idx=1
@@ -417,7 +410,7 @@ def test_min_gain_to_split():
             [9, 0, 1, 9, 2, 3, 4, 5, 6, 7],  # 9 <=> missing
             [1, 1, 1, 1, 5, 5, 5, 5, 5, 5],
             True,  # missing values
-            8,  # n_bins_non_missing
+            9,  # n_bins_non_missing = index of missing value bin
             False,  # don't split on nans
             1,  # cut on bin_idx=1
             True,
@@ -427,7 +420,7 @@ def test_min_gain_to_split():
             [0, 1, 2, 3, 8, 4, 8, 5, 6, 7],  # 8 <=> missing
             [1, 1, 1, 1, 5, 5, 5, 5, 5, 5],
             True,  # missing values
-            8,  # n_bins_non_missing
+            8,  # n_bins_non_missing = index of missing value bin
             False,  # don't split on nans
             3,  # cut on bin_idx=3 (like in first case)
             False,
@@ -437,7 +430,7 @@ def test_min_gain_to_split():
             [0, 1, 2, 3, 9, 4, 9, 5, 6, 7],  # 9 <=> missing
             [1, 1, 1, 1, 5, 5, 5, 5, 5, 5],
             True,  # missing values
-            8,  # n_bins_non_missing
+            8,  # n_bins_non_missing = index of missing value bin
             False,  # don't split on nans
             3,  # cut on bin_idx=3 (like in first case)
             False,
@@ -448,7 +441,7 @@ def test_min_gain_to_split():
             [0, 1, 2, 3, 4, 4, 4, 4, 4, 4],  # 4 <=> missing
             [1, 1, 1, 1, 5, 5, 5, 5, 5, 5],
             True,  # missing values
-            4,  # n_bins_non_missing
+            4,  # n_bins_non_missing = index of missing value bin
             True,  # split on nans
             3,  # cut on bin_idx=3
             False,
@@ -458,7 +451,7 @@ def test_min_gain_to_split():
             [0, 1, 2, 3, 9, 9, 9, 9, 9, 9],  # 9 <=> missing
             [1, 1, 1, 1, 1, 1, 5, 5, 5, 5],
             True,  # missing values
-            4,  # n_bins_non_missing
+            9,  # n_bins_non_missing = index of missing value bin
             True,  # split on nans
             3,  # cut on bin_idx=3
             False,
@@ -467,7 +460,7 @@ def test_min_gain_to_split():
             [6, 6, 6, 6, 0, 1, 2, 3, 4, 5],  # 6 <=> missing
             [1, 1, 1, 1, 5, 5, 5, 5, 5, 5],
             True,  # missing values
-            6,  # n_bins_non_missing
+            6,  # n_bins_non_missing = index of missing value bin
             True,  # split on nans
             5,  # cut on bin_idx=5
             False,
@@ -477,7 +470,7 @@ def test_min_gain_to_split():
             [9, 9, 9, 9, 0, 1, 2, 3, 4, 5],  # 9 <=> missing
             [1, 1, 1, 1, 5, 5, 5, 5, 5, 5],
             True,  # missing values
-            6,  # n_bins_non_missing
+            9,  # n_bins_non_missing = index of missing value bin
             True,  # split on nans
             5,  # cut on bin_idx=5
             False,
@@ -511,7 +504,7 @@ def test_splitting_missing_values(
 
     sample_indices = np.arange(n_samples, dtype=np.uint32)
     X_binned = np.array(X_binned, dtype=X_BINNED_DTYPE).reshape(-1, 1)
-    X_binned = np.asfortranarray(X_binned)
+    X_binned = BinnedData.from_array(np.asfortranarray(X_binned))
     all_gradients = np.array(all_gradients, dtype=G_H_DTYPE)
     has_missing_values = np.array([has_missing_values], dtype=np.uint8)
     all_hessians = np.ones(1, dtype=G_H_DTYPE)
@@ -523,16 +516,14 @@ def test_splitting_missing_values(
         X_binned, n_bins, all_gradients, all_hessians, hessians_are_constant, n_threads
     )
 
-    n_bins_non_missing = np.array([n_bins_non_missing], dtype=np.uint32)
+    n_bins_non_missing = np.array([n_bins_non_missing], dtype=np.uint16)
     monotonic_cst = np.array(
         [MonotonicConstraint.NO_CST] * X_binned.shape[1], dtype=np.int8
     )
     is_categorical = np.zeros_like(monotonic_cst, dtype=np.uint8)
-    missing_values_bin_idx = n_bins - 1
     splitter = Splitter(
         X_binned,
         n_bins_non_missing,
-        missing_values_bin_idx,
         has_missing_values,
         is_categorical,
         monotonic_cst,
@@ -555,7 +546,8 @@ def test_splitting_missing_values(
     if has_missing_values:
         assert split_info.missing_go_to_left == expected_go_to_left
 
-    split_on_nan = split_info.bin_idx == n_bins_non_missing[0] - 1
+    n_empty_bins = n_bins - len(set(np.asarray(X_binned).flat))
+    split_on_nan = split_info.bin_idx == n_bins_non_missing[0] - 1 - n_empty_bins
     assert split_on_nan == expected_split_on_nan
 
     # Make sure the split is properly computed.
@@ -572,11 +564,12 @@ def test_splitting_missing_values(
     else:
         # When we split on nans, samples with missing values are always mapped
         # to the right child.
+        # Note that missing value bin of feature j = n_bins_non_missing[j]
         missing_samples_indices = np.flatnonzero(
-            np.array(X_binned) == missing_values_bin_idx
+            np.array(X_binned) == n_bins_non_missing
         )
         non_missing_samples_indices = np.flatnonzero(
-            np.array(X_binned) != missing_values_bin_idx
+            np.array(X_binned) != n_bins_non_missing
         )
 
         assert set(samples_right) == set(missing_samples_indices)
@@ -608,7 +601,7 @@ def test_splitting_categorical_cat_smooth(
     n_bins = max(X_binned) + 1
     n_samples = len(X_binned)
     X_binned = np.array([X_binned], dtype=X_BINNED_DTYPE).T
-    X_binned = np.asfortranarray(X_binned)
+    X_binned = BinnedData.from_array(np.asfortranarray(X_binned))
 
     l2_regularization = 0.0
     min_hessian_to_split = 1e-3
@@ -627,17 +620,15 @@ def test_splitting_categorical_cat_smooth(
         X_binned, n_bins, all_gradients, all_hessians, hessians_are_constant, n_threads
     )
 
-    n_bins_non_missing = np.array([n_bins_non_missing], dtype=np.uint32)
+    n_bins_non_missing = np.array([n_bins_non_missing], dtype=np.uint16)
     monotonic_cst = np.array(
         [MonotonicConstraint.NO_CST] * X_binned.shape[1], dtype=np.int8
     )
     is_categorical = np.ones_like(monotonic_cst, dtype=np.uint8)
-    missing_values_bin_idx = n_bins - 1
 
     splitter = Splitter(
         X_binned,
         n_bins_non_missing,
-        missing_values_bin_idx,
         has_missing_values,
         is_categorical,
         monotonic_cst,
@@ -660,12 +651,13 @@ def test_splitting_categorical_cat_smooth(
     assert split_info.gain == -1
 
 
-def _assert_categories_equals_bitset(categories, bitset):
+def _assert_categories_equals_bitset(categories, bitset, n_bins_non_missing):
     # assert that the bitset exactly corresponds to the categories
-    # bitset is assumed to be an array of 8 uint32 elements
+    # bitset is assumed to be an array of ceil(n_bins / 32) uint32 elements
 
+    n_base_bitsets = np.ceil((n_bins_non_missing + 1) / 32).astype(np.uint32)
     # form bitset from threshold
-    expected_bitset = np.zeros(8, dtype=np.uint32)
+    expected_bitset = np.zeros(n_base_bitsets, dtype=np.uint32)
     for cat in categories:
         idx = cat // 32
         shift = cat % 32
@@ -678,7 +670,7 @@ def _assert_categories_equals_bitset(categories, bitset):
 @pytest.mark.parametrize(
     (
         "X_binned, all_gradients, expected_categories_left, n_bins_non_missing,"
-        "missing_values_bin_idx, has_missing_values, expected_missing_go_to_left"
+        "has_missing_values, expected_missing_go_to_left"
     ),
     [
         # 4 categories
@@ -686,11 +678,10 @@ def _assert_categories_equals_bitset(categories, bitset):
             [0, 1, 2, 3] * 11,  # X_binned
             [10, 1, 10, 10] * 11,  # all_gradients
             [1],  # expected_categories_left
-            4,  # n_bins_non_missing
-            4,  # missing_values_bin_idx
+            4,  # n_bins_non_missing = index of missing value bin
             False,  # has_missing_values
-            None,
-        ),  # expected_missing_go_to_left, unchecked
+            None,  # expected_missing_go_to_left, unchecked
+        ),
         # Make sure that the categories that are on the right (second half) of
         # the sorted categories array can still go in the left child. In this
         # case, the best split was found when scanning from right to left.
@@ -698,22 +689,20 @@ def _assert_categories_equals_bitset(categories, bitset):
             [0, 1, 2, 3] * 11,  # X_binned
             [10, 10, 10, 1] * 11,  # all_gradients
             [3],  # expected_categories_left
-            4,  # n_bins_non_missing
-            4,  # missing_values_bin_idx
+            4,  # n_bins_non_missing = index of missing value bin
             False,  # has_missing_values
-            None,
-        ),  # expected_missing_go_to_left, unchecked
+            None,  # expected_missing_go_to_left, unchecked
+        ),
         # categories that don't respect MIN_CAT_SUPPORT (cat 4) are always
         # mapped to the right child
         (
             [0, 1, 2, 3] * 11 + [4] * 5,  # X_binned
             [10, 10, 10, 1] * 11 + [10] * 5,  # all_gradients
             [3],  # expected_categories_left
-            4,  # n_bins_non_missing
-            4,  # missing_values_bin_idx
+            4,  # n_bins_non_missing = index of missing value bin
             False,  # has_missing_values
-            None,
-        ),  # expected_missing_go_to_left, unchecked
+            None,  # expected_missing_go_to_left, unchecked
+        ),
         # categories that don't respect MIN_CAT_SUPPORT are always mapped to
         # the right child: in this case a more sensible split could have been
         # 3, 4 - 0, 1, 2
@@ -724,61 +713,55 @@ def _assert_categories_equals_bitset(categories, bitset):
             [0, 1, 2, 3] * 11 + [4] * 5,  # X_binned
             [10, 10, 10, 1] * 11 + [1] * 5,  # all_gradients
             [3],  # expected_categories_left
-            4,  # n_bins_non_missing
-            4,  # missing_values_bin_idx
+            4,  # n_bins_non_missing = index of missing value bin
             False,  # has_missing_values
-            None,
-        ),  # expected_missing_go_to_left, unchecked
+            None,  # expected_missing_go_to_left, unchecked
+        ),
         # 4 categories with missing values that go to the right
         (
-            [0, 1, 2] * 11 + [9] * 11,  # X_binned
+            [0, 1, 2] * 11 + [3] * 11,  # X_binned
             [10, 1, 10] * 11 + [10] * 11,  # all_gradients
             [1],  # expected_categories_left
             3,  # n_bins_non_missing
-            9,  # missing_values_bin_idx
             True,  # has_missing_values
-            False,
-        ),  # expected_missing_go_to_left
+            False,  # expected_missing_go_to_left
+        ),
         # 4 categories with missing values that go to the left
         (
-            [0, 1, 2] * 11 + [9] * 11,  # X_binned
+            [0, 1, 2] * 11 + [3] * 11,  # X_binned
             [10, 1, 10] * 11 + [1] * 11,  # all_gradients
-            [1, 9],  # expected_categories_left
-            3,  # n_bins_non_missing
-            9,  # missing_values_bin_idx
+            [1, 3],  # expected_categories_left
+            3,  # n_bins_non_missing = index of missing value bin
             True,  # has_missing_values
-            True,
-        ),  # expected_missing_go_to_left
+            True,  # expected_missing_go_to_left
+        ),
         # split is on the missing value
         (
             [0, 1, 2, 3, 4] * 11 + [255] * 12,  # X_binned
             [10, 10, 10, 10, 10] * 11 + [1] * 12,  # all_gradients
             [255],  # expected_categories_left
-            5,  # n_bins_non_missing
-            255,  # missing_values_bin_idx
+            255,  # n_bins_non_missing = index of missing value bin
             True,  # has_missing_values
-            True,
-        ),  # expected_missing_go_to_left
+            True,  # expected_missing_go_to_left
+        ),
         # split on even categories
         (
             list(range(60)) * 12,  # X_binned
             [10, 1] * 360,  # all_gradients
             list(range(1, 60, 2)),  # expected_categories_left
-            59,  # n_bins_non_missing
-            59,  # missing_values_bin_idx
+            59,  # n_bins_non_missing = index of missing value bin
             True,  # has_missing_values
-            True,
-        ),  # expected_missing_go_to_left
+            True,  # expected_missing_go_to_left
+        ),
         # split on every 8 categories
         (
             list(range(256)) * 12,  # X_binned
             [10, 10, 10, 10, 10, 10, 10, 1] * 384,  # all_gradients
             list(range(7, 256, 8)),  # expected_categories_left
-            255,  # n_bins_non_missing
-            255,  # missing_values_bin_idx
+            255,  # n_bins_non_missing = index of missing value bin
             True,  # has_missing_values
-            True,
-        ),  # expected_missing_go_to_left
+            True,  # expected_missing_go_to_left
+        ),
     ],
 )
 def test_splitting_categorical_sanity(
@@ -786,7 +769,6 @@ def test_splitting_categorical_sanity(
     all_gradients,
     expected_categories_left,
     n_bins_non_missing,
-    missing_values_bin_idx,
     has_missing_values,
     expected_missing_go_to_left,
 ):
@@ -796,7 +778,7 @@ def test_splitting_categorical_sanity(
     n_bins = max(X_binned) + 1
 
     X_binned = np.array(X_binned, dtype=X_BINNED_DTYPE).reshape(-1, 1)
-    X_binned = np.asfortranarray(X_binned)
+    X_binned = BinnedData.from_array(np.asfortranarray(X_binned))
 
     l2_regularization = 0.0
     min_hessian_to_split = 1e-3
@@ -815,7 +797,7 @@ def test_splitting_categorical_sanity(
         X_binned, n_bins, all_gradients, all_hessians, hessians_are_constant, n_threads
     )
 
-    n_bins_non_missing = np.array([n_bins_non_missing], dtype=np.uint32)
+    n_bins_non_missing = np.array([n_bins_non_missing], dtype=np.uint16)
     monotonic_cst = np.array(
         [MonotonicConstraint.NO_CST] * X_binned.shape[1], dtype=np.int8
     )
@@ -824,7 +806,6 @@ def test_splitting_categorical_sanity(
     splitter = Splitter(
         X_binned,
         n_bins_non_missing,
-        missing_values_bin_idx,
         has_missing_values,
         is_categorical,
         monotonic_cst,
@@ -847,7 +828,9 @@ def test_splitting_categorical_sanity(
     assert split_info.is_categorical
     assert split_info.gain > 0
     _assert_categories_equals_bitset(
-        expected_categories_left, split_info.left_cat_bitset
+        categories=expected_categories_left,
+        bitset=split_info.left_cat_bitset,
+        n_bins_non_missing=n_bins_non_missing[split_info.feature_idx],
     )
     if has_missing_values:
         assert split_info.missing_go_to_left == expected_missing_go_to_left
@@ -859,7 +842,7 @@ def test_splitting_categorical_sanity(
         split_info, splitter.partition
     )
 
-    left_mask = np.isin(X_binned.ravel(), expected_categories_left)
+    left_mask = np.isin(np.asarray(X_binned).ravel(), expected_categories_left)
     assert_array_equal(sample_indices[left_mask], samples_left)
     assert_array_equal(sample_indices[~left_mask], samples_right)
 
@@ -891,7 +874,9 @@ def test_split_interaction_constraints():
             rng.randint(0, n_bins - 1, size=(n_samples, n_features)),
             dtype=X_BINNED_DTYPE,
         )
-        X_binned = np.asfortranarray(X_binned, dtype=X_BINNED_DTYPE)
+        X_binned = BinnedData.from_array(
+            np.asfortranarray(X_binned, dtype=X_BINNED_DTYPE)
+        )
 
         # Make feature 1 very important
         all_gradients = (10 * X_binned[:, 1] + rng.randn(n_samples)).astype(G_H_DTYPE)
@@ -905,17 +890,15 @@ def test_split_interaction_constraints():
             hessians_are_constant,
             n_threads,
         )
-        n_bins_non_missing = np.array([n_bins] * X_binned.shape[1], dtype=np.uint32)
+        n_bins_non_missing = np.array([n_bins] * X_binned.shape[1], dtype=np.uint16)
         has_missing_values = np.array([False] * X_binned.shape[1], dtype=np.uint8)
         monotonic_cst = np.array(
             [MonotonicConstraint.NO_CST] * X_binned.shape[1], dtype=np.int8
         )
         is_categorical = np.zeros_like(monotonic_cst, dtype=np.uint8)
-        missing_values_bin_idx = n_bins - 1
         splitter = Splitter(
             X_binned,
             n_bins_non_missing,
-            missing_values_bin_idx,
             has_missing_values,
             is_categorical,
             monotonic_cst,
@@ -994,7 +977,7 @@ def test_split_feature_fraction_per_split(forbidden_features):
         rng.integers(low=0, high=n_bins - 1, size=(n_samples, n_features)),
         dtype=X_BINNED_DTYPE,
     )
-    X_binned = np.asfortranarray(X_binned, dtype=X_BINNED_DTYPE)
+    X_binned = BinnedData.from_array(np.asfortranarray(X_binned, dtype=X_BINNED_DTYPE))
     builder = HistogramBuilder(
         X_binned,
         n_bins,
@@ -1007,18 +990,16 @@ def test_split_feature_fraction_per_split(forbidden_features):
     value = compute_node_value(
         sum_gradients, sum_hessians, -np.inf, np.inf, l2_regularization
     )
-    n_bins_non_missing = np.array([n_bins] * X_binned.shape[1], dtype=np.uint32)
+    n_bins_non_missing = np.array([n_bins] * X_binned.shape[1], dtype=np.uint16)
     has_missing_values = np.array([False] * X_binned.shape[1], dtype=np.uint8)
     monotonic_cst = np.array(
         [MonotonicConstraint.NO_CST] * X_binned.shape[1], dtype=np.int8
     )
     is_categorical = np.zeros_like(monotonic_cst, dtype=np.uint8)
-    missing_values_bin_idx = n_bins - 1
 
     params = dict(
         X_binned=X_binned,
         n_bins_non_missing=n_bins_non_missing,
-        missing_values_bin_idx=missing_values_bin_idx,
         has_missing_values=has_missing_values,
         is_categorical=is_categorical,
         monotonic_cst=monotonic_cst,
