@@ -2807,7 +2807,8 @@ def train_test_split(
         test = np.arange(n_train, n_train + n_test)
 
     else:
-        if stratify is not None:
+        n_classes = len(np.unique(stratify))
+        if stratify is not None and n_classes > 1:
             CVClass = StratifiedShuffleSplit
         else:
             CVClass = ShuffleSplit
