@@ -135,6 +135,11 @@ class build_ext_subclass(build_ext):
                 e.extra_compile_args += openmp_flag
                 e.extra_link_args += openmp_flag
 
+        if sys.platform == "win32":
+            for e in self.extensions:
+                e.extra_compile_args += ["/diagnostics"]
+                e.extra_link_args += ["/VERBOSE"]
+
         build_ext.build_extensions(self)
 
     def run(self):
