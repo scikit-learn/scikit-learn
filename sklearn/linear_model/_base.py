@@ -36,7 +36,7 @@ from ..utils import check_array, check_random_state
 from ..utils._array_api import (
     _asarray_with_order,
     _average,
-    _ravel,
+    _item,
     get_namespace,
     get_namespace_and_device,
     supported_float_dtypes,
@@ -162,8 +162,7 @@ def _preprocess_data(
         Always an array of ones. TODO: refactor the code base to make it
         possible to remove this unused variable.
     """
-    input_arrays = (X, y, sample_weight)
-    xp, _, device_ = get_namespace_and_device(*input_arrays)
+    xp, _, device_ = get_namespace_and_device(X, y, sample_weight)
     n_samples, n_features = X.shape
     X_is_sparse = sp.issparse(X)
 
@@ -201,7 +200,7 @@ def _preprocess_data(
     else:
         X_offset = xp.zeros(n_features, dtype=X.dtype, device=device_)
         if y.ndim == 1:
-            y_offset = xp.zeros((1,), dtype=dtype_, device=device_)
+            y_offset = xp.zeros(1, dtype=dtype_, device=device_)
         else:
             y_offset = xp.zeros(y.shape[1], dtype=dtype_, device=device_)
 
@@ -284,8 +283,11 @@ class LinearModel(BaseEstimator, metaclass=ABCMeta):
         check_is_fitted(self)
 
         X = self._validate_data(X, accept_sparse=["csr", "csc", "coo"], reset=False)
-        coef_T = self.coef_ if (self.coef_.ndim < 2) else self.coef_.T
-        return X @ coef_T + self.intercept_
+        coef_ = self.coef_
+        if coef_.ndim == 1:
+            return X @ coef_ + self.intercept_
+        else:
+            return X @ coef_.T + self.intercept_
 
     def predict(self, X):
         """
@@ -311,21 +313,16 @@ class LinearModel(BaseEstimator, metaclass=ABCMeta):
         if self.fit_intercept:
             # We always want coef_.dtype=X.dtype. For instance, X.dtype can differ from
             # coef_.dtype if warm_start=True.
-            coef_ = self.coef_ = xp.divide(
-                xp.astype(self.coef_, X_scale.dtype), X_scale
-            )
-            ravel = False
-            if self.coef_.ndim == 1:
-                coef_ = xp.reshape(coef_, (1, -1))
-                ravel = True
+            coef_ = xp.astype(self.coef_, X_scale.dtype, copy=False)
+            coef_ = self.coef_ = xp.divide(coef_, X_scale)
 
-            intercept_ = y_offset - (X_offset @ (coef_.T))
-
-            if ravel:
-                intercept_ = _ravel(intercept_, xp=xp)
+            if coef_.ndim == 1:
+                intercept_ = y_offset - X_offset @ coef_
+            else:
+                intercept_ = y_offset - X_offset @ coef_.T
 
             if y_offset.ndim < 1:
-                intercept_ = intercept_[0]
+                intercept_ = _item(intercept_, xp=xp)
 
             self.intercept_ = intercept_
 

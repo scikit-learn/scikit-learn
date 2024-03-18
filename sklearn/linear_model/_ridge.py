@@ -284,7 +284,7 @@ def _solve_cholesky_kernel(K, y, alpha, sample_weight=None, copy=False):
 
 
 def _solve_svd(X, y, alpha, xp=None):
-    xp, _ = get_namespace(X, xp=None)
+    xp, _ = get_namespace(X, xp=xp)
     U, s, Vt = xp.linalg.svd(X, full_matrices=False)
     idx = s > 1e-15  # same default value as scipy.linalg.pinv
     s_nnz = s[idx][:, None]
@@ -612,9 +612,9 @@ def _ridge_regression(
     check_input=True,
     fit_intercept=False,
 ):
-    input_arrays = [X, y, sample_weight, X_scale, X_offset]
-
-    xp, is_array_api_compliant, device_ = get_namespace_and_device(*input_arrays)
+    xp, is_array_api_compliant, device_ = get_namespace_and_device(
+        X, y, sample_weight, X_scale, X_offset
+    )
 
     has_sw = sample_weight is not None
 
@@ -870,8 +870,7 @@ class _BaseRidge(LinearModel, metaclass=ABCMeta):
         self.random_state = random_state
 
     def fit(self, X, y, sample_weight=None):
-        input_arrays = (X, y, sample_weight)
-        xp, is_array_api_compliant = get_namespace(*input_arrays)
+        xp, is_array_api_compliant = get_namespace(X, y, sample_weight)
 
         if is_array_api_compliant and self.solver != "svd":
             raise ValueError(

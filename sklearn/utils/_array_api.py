@@ -503,11 +503,15 @@ def get_namespace(*arrays, remove_none=True, remove_types=(str,), xp=None):
 
 def get_namespace_and_device(*array_list, remove_none=True, remove_types=(str,)):
     """Combination into one single function of `get_namespace` and `device`."""
-    # TODO: should we refactor in order to avoid the double call to
-    # _remove_non_arrays ?
+    array_list = _remove_non_arrays(
+        *array_list, remove_none=remove_none, remove_types=remove_types
+    )
+
+    skip_remove_kwargs = dict(remove_none=False, remove_types=[])
+
     return (
-        *get_namespace(*array_list, remove_none=remove_none, remove_types=remove_types),
-        device(*array_list, remove_none=remove_none, remove_types=remove_types),
+        *get_namespace(*array_list, **skip_remove_kwargs),
+        device(*array_list, **skip_remove_kwargs),
     )
 
 
@@ -568,10 +572,7 @@ def _average(a, axis=None, weights=None, normalize=True, xp=None):
     https://numpy.org/doc/stable/reference/generated/numpy.average.html but
     only for the common cases needed in scikit-learn.
     """
-    input_arrays = [a, weights]
-    xp, _ = get_namespace(*input_arrays, xp=xp)
-
-    device_ = device(*input_arrays)
+    xp, _, device_ = get_namespace_and_device(a, weights)
 
     if _is_numpy_namespace(xp):
         if normalize:
@@ -700,28 +701,28 @@ def _asarray_with_order(
         return xp.asarray(array, dtype=dtype, copy=copy, device=device)
 
 
-def _ravel(array, order="C", xp=None):
+def _ravel(array, xp=None):
     """Array API compliant version of np.ravel.
 
     For non numpy namespaces, it just returns a flattened array, that might
     be or not be a copy.
     """
-    if order != "C":
-        raise ValueError(
-            "'sklearn.utils._array_api._ravel' only expects order='C' but "
-            f" got '{order}' instead."
-        )
-
-    if sum(x > 1 for x in array.shape) > 1:
-        raise ValueError(
-            "'sklearn.utils._array_api._ravel' only expects at most one "
-            "non-empty dimension, but got an array of shape "
-            f"'{array.shape}' "
-        )
-
     xp, _ = get_namespace(array, xp=xp)
-    array = _asarray_with_order(array, order=order, xp=xp)
+    if _is_numpy_namespace(xp):
+        array = numpy.asarray(array)
+        return xp.asarray(numpy.ravel(array, order="C"))
+
+    array = _asarray_with_order(array, order="C", xp=xp)
     return xp.reshape(array, shape=(-1,))
+
+
+def _item(x, xp=None):
+    """Returns the one-sized tensor as a Python number with metadata."""
+    xp, _ = get_namespace(x, xp=xp)
+    x = xp.reshape(x, (-1,))
+    if x.shape[0] > 1:
+        raise ValueError("Expected a tensor with a single element.")
+    return x[0]
 
 
 def _convert_to_numpy(array, xp):
