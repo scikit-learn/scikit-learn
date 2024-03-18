@@ -165,7 +165,7 @@ def _estimator_has(attr):
     return check
 
 
-def _fit_and_score(
+def _fit_and_score_over_thresholds(
     classifier,
     X,
     y,
@@ -652,7 +652,7 @@ class TunedThresholdClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimato
 
         cv_thresholds, cv_scores = zip(
             *Parallel(n_jobs=self.n_jobs)(
-                delayed(_fit_and_score)(
+                delayed(_fit_and_score_over_thresholds)(
                     classifier,
                     X,
                     y,
@@ -674,8 +674,12 @@ class TunedThresholdClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimato
             )
 
         # find the global min and max thresholds across all folds
-        min_threshold = min(split_thresholds.min() for split_thresholds in cv_thresholds)
-        max_threshold = np.max([th.max() for th in cv_thresholds])
+        min_threshold = min(
+            split_thresholds.min() for split_thresholds in cv_thresholds
+        )
+        max_threshold = max(
+            split_thresholds.max() for split_thresholds in cv_thresholds
+        )
         if isinstance(self.n_thresholds, Integral):
             self.decision_thresholds_ = np.linspace(
                 min_threshold, max_threshold, num=self.n_thresholds
@@ -683,11 +687,11 @@ class TunedThresholdClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimato
         else:
             self.decision_thresholds_ = np.asarray(self.n_thresholds)
 
-        def _mean_interpolated_score(threshold_interpolated, cv_thresholds, cv_scores):
+        def _mean_interpolated_score(target_thresholds, cv_thresholds, cv_scores):
             return np.mean(
                 [
                     np.interp(target_thresholds, split_thresholds, split_score)
-                    for split_thresholds, c in zip(cv_thresholds, cv_scores)
+                    for split_thresholds, split_score in zip(cv_thresholds, cv_scores)
                 ],
                 axis=0,
             )
@@ -717,7 +721,6 @@ class TunedThresholdClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimato
 
             def _get_best_idx(constrained_score, maximized_score):
                 """Find the index of the best score constrained by another score."""
-                indices = np.arange(len(constrained_score))
                 mask = constrained_score >= constraint_value
                 mask_idx = maximized_score[mask].argmax()
                 return np.flatnonzero(mask)[mask_idx]

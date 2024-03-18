@@ -21,7 +21,7 @@ from sklearn.metrics import (
 from sklearn.model_selection import TunedThresholdClassifier
 from sklearn.model_selection._classification_threshold import (
     _ContinuousScorer,
-    _fit_and_score,
+    _fit_and_score_over_thresholds,
 )
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
@@ -153,14 +153,14 @@ def test_continuous_scorer_pos_label(global_random_seed):
         ),
     ],
 )
-def test_fit_and_score_scorers(scorer, score_method):
-    """Check that `_fit_and_score` returns thresholds in ascending order for the
-    different accepted scorers."""
+def test_fit_and_score_over_thresholds_scorers(scorer, score_method):
+    """Check that `_fit_and_score_over_thresholds` returns thresholds in ascending order
+    for the different accepted scorers."""
     X, y = make_classification(n_samples=100, random_state=0)
     train_idx, val_idx = np.arange(50), np.arange(50, 100)
     classifier = LogisticRegression()
 
-    thresholds, scores = _fit_and_score(
+    thresholds, scores = _fit_and_score_over_thresholds(
         classifier,
         X,
         y,
@@ -219,7 +219,7 @@ def test_fit_and_score_scorers(scorer, score_method):
         ),
     ],
 )
-def test_fit_and_score_prefit(scorer, score_method, expected_score):
+def test_fit_and_score_over_thresholds_prefit(scorer, score_method, expected_score):
     """Check the behaviour with a prefit classifier."""
     X, y = make_classification(n_samples=100, random_state=0)
 
@@ -228,7 +228,7 @@ def test_fit_and_score_prefit(scorer, score_method, expected_score):
     classifier = DecisionTreeClassifier(random_state=0)
 
     with pytest.raises(NotFittedError):
-        _fit_and_score(
+        _fit_and_score_over_thresholds(
             classifier,
             X,
             y,
@@ -245,7 +245,7 @@ def test_fit_and_score_prefit(scorer, score_method, expected_score):
     # we get perfect predictions and thus match the expected score
     assert classifier.score(X[val_idx], y[val_idx]) == pytest.approx(1.0)
 
-    thresholds, scores = _fit_and_score(
+    thresholds, scores = _fit_and_score_over_thresholds(
         classifier,
         X,
         y,
@@ -292,7 +292,7 @@ def test_fit_and_score_prefit(scorer, score_method, expected_score):
         ),
     ],
 )
-def test_fit_and_score_sample_weight(scorer, score_method):
+def test_fit_and_score_over_thresholds_sample_weight(scorer, score_method):
     """Check that we dispatch the sample-weight to fit and score the classifier."""
     X, y = load_iris(return_X_y=True)
     X, y = X[:100], y[:100]  # only 2 classes
@@ -306,7 +306,7 @@ def test_fit_and_score_sample_weight(scorer, score_method):
     classifier = LogisticRegression()
     train_repeated_idx = np.arange(X_repeated.shape[0])
     val_repeated_idx = np.arange(X_repeated.shape[0])
-    thresholds_repeated, scores_repeated = _fit_and_score(
+    thresholds_repeated, scores_repeated = _fit_and_score_over_thresholds(
         classifier,
         X_repeated,
         y_repeated,
@@ -319,7 +319,7 @@ def test_fit_and_score_sample_weight(scorer, score_method):
     )
 
     train_idx, val_idx = np.arange(X.shape[0]), np.arange(X.shape[0])
-    thresholds, scores = _fit_and_score(
+    thresholds, scores = _fit_and_score_over_thresholds(
         classifier.set_fit_request(sample_weight=True),
         X,
         y,
@@ -368,7 +368,9 @@ def test_fit_and_score_sample_weight(scorer, score_method):
     ],
 )
 @pytest.mark.parametrize("fit_params_type", ["list", "array"])
-def test_fit_and_score_fit_params(scorer, score_method, fit_params_type):
+def test_fit_and_score_over_thresholds_fit_params(
+    scorer, score_method, fit_params_type
+):
     """Check that we pass `fit_params` to the classifier when calling `fit`."""
     X, y = make_classification(n_samples=100, random_state=0)
     fit_params = {
@@ -380,7 +382,7 @@ def test_fit_and_score_fit_params(scorer, score_method, fit_params_type):
     classifier.set_fit_request(a=True, b=True)
     train_idx, val_idx = np.arange(50), np.arange(50, 100)
 
-    _fit_and_score(
+    _fit_and_score_over_thresholds(
         classifier,
         X,
         y,
