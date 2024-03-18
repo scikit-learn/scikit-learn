@@ -227,6 +227,35 @@ def supported_float_dtypes(xp):
         return (xp.float64, xp.float32)
 
 
+def ensure_common_namespace_device(reference, *arrays):
+    """Ensure that all arrays use the same namespace and device as reference.
+
+    If neccessary the arrays are moved to the same namespace and device as
+    the reference array.
+
+    Parameters
+    ----------
+    reference : array
+        Reference array.
+
+    *arrays : array
+        Arrays to check.
+
+    Returns
+    -------
+    arrays : list
+        Arrays with the same namespace and device as reference.
+    """
+    xp, is_array_api = get_namespace(reference)
+
+    if is_array_api:
+        device_ = device(reference)
+        # Move arrays to the same namespace and device as the reference array.
+        return [xp.asarray(a, device=device_) for a in arrays]
+    else:
+        return arrays
+
+
 class _ArrayAPIWrapper:
     """sklearn specific Array API compatibility wrapper
 
