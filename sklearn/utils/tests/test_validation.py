@@ -1972,7 +1972,7 @@ def test_pandas_array_returns_ndarray(input_values):
 
 
 @skip_if_array_api_compat_not_configured
-@pytest.mark.parametrize("array_namespace", ["numpy.array_api", "cupy.array_api"])
+@pytest.mark.parametrize("array_namespace", ["array_api_strict", "cupy.array_api"])
 def test_check_array_array_api_has_non_finite(array_namespace):
     """Checks that Array API arrays checks non-finite correctly."""
     xp = pytest.importorskip(array_namespace)
