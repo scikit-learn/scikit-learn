@@ -77,10 +77,11 @@ feature, code or documentation improvement).
 
      conda activate sklearn-env
 
-#. **Alternative to conda:** If you run Linux or similar, you can instead use
-   your system's Python provided it is recent enough (3.8 or higher
-   at the time of writing). In this case, we recommend to create a dedicated
-   virtualenv_ and install the scikit-learn build dependencies with pip:
+#. **Alternative to conda:** You can use your system's Python provided it is
+   recent enough (3.8 or higher at the time of writing), or use a third-party
+   tool (like pyenv_) to manage your python version. In this case, we recommend
+   to create a dedicated virtualenv_ and install the scikit-learn build
+   dependencies with pip:
 
    .. prompt:: bash $
 
@@ -565,6 +566,7 @@ the base system and these steps will not be necessary.
 .. _virtualenv: https://docs.python.org/3/tutorial/venv.html
 .. _conda environment: https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html
 .. _Miniforge3: https://github.com/conda-forge/miniforge#miniforge3
+.. _pyenv: https://github.com/pyenv/pyenv
 
 Alternative compilers
 =====================
