@@ -25,5 +25,6 @@ ctypedef double float64_t
 # When large sparse matrices are supported, indexing must use int64_t.
 # See https://github.com/scikit-learn/scikit-learn/issues/23653 which tracks the
 # ongoing work to support large sparse matrices.
+ctypedef signed char int8_t
 ctypedef signed int int32_t
 ctypedef signed long long int64_t

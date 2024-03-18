@@ -13,6 +13,7 @@ ctypedef fused testing_type_t:
     intp_t
     float32_t
     float64_t
+    int8_t
     int32_t
     int64_t
 
