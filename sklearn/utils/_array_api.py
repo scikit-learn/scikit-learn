@@ -712,7 +712,6 @@ def _ravel(array, xp=None):
         array = numpy.asarray(array)
         return xp.asarray(numpy.ravel(array, order="C"))
 
-    array = _asarray_with_order(array, order="C", xp=xp)
     return xp.reshape(array, shape=(-1,))
 
 
