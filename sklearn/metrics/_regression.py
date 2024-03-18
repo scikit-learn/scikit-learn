@@ -39,6 +39,7 @@ from ..utils._array_api import (
     _find_matching_floating_dtype,
     get_namespace,
     get_namespace_and_device,
+    size,
 )
 from ..utils._param_validation import Hidden, Interval, StrOptions, validate_params
 from ..utils.stats import _weighted_percentile
@@ -907,7 +908,7 @@ def _assemble_r2_explained_variance(
         avg_weights = multioutput
 
     result = _average(output_scores, weights=avg_weights)
-    if result.size == 1:
+    if size(result) == 1:
         return float(result)
     return result
 
