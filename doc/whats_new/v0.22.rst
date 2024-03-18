@@ -2,6 +2,17 @@
 
 .. currentmodule:: sklearn
 
+.. _release_notes_0_22:
+
+============
+Version 0.22
+============
+
+For a short description of the main highlights of the release, please refer to
+:ref:`sphx_glr_auto_examples_release_highlights_plot_release_highlights_0_22_0.py`.
+
+.. include:: changelog_legend.inc
+
 .. _changes_0_22_2:
 
 Version 0.22.2.post1
@@ -157,12 +168,6 @@ Version 0.22.0
 ==============
 
 **December 3 2019**
-
-For a short description of the main highlights of the release, please
-refer to
-:ref:`sphx_glr_auto_examples_release_highlights_plot_release_highlights_0_22_0.py`.
-
-.. include:: changelog_legend.inc
 
 Website update
 --------------
@@ -1103,8 +1108,7 @@ These changes mostly affect library developers.
   to be overridable only once. :pr:`14884` by `Andreas Müller`_.
 
 
-Code and Documentation Contributors
------------------------------------
+.. rubric:: Code and documentation contributors
 
 Thanks to everyone who has contributed to the maintenance and improvement of the
 project since version 0.21, including:

@@ -849,7 +849,6 @@ precision-recall curve as follows.
     for an example of :func:`precision_recall_curve` usage to evaluate
     classifier output quality.
 
-
 .. topic:: References:
 
   .. [Manning2008] C.D. Manning, P. Raghavan, H. Schütze, `Introduction to Information Retrieval
@@ -865,7 +864,6 @@ precision-recall curve as follows.
   .. [Flach2015] P.A. Flach, M. Kull, `Precision-Recall-Gain Curves: PR Analysis Done Right
      <https://papers.nips.cc/paper/5867-precision-recall-gain-curves-pr-analysis-done-right.pdf>`_,
      NIPS 2015.
-
 
 Binary classification
 ^^^^^^^^^^^^^^^^^^^^^
@@ -898,27 +896,22 @@ In this context, we can define the notions of precision and recall:
 
 (Sometimes recall is also called ''sensitivity'')
 
-F-measure is the weighted harmonic mean of precision and recall, with precision's contribution to the mean weighted by
-some parameter :math:`\beta`:
 F-measure is the weighted harmonic mean of precision and recall, with precision's
 contribution to the mean weighted by some parameter :math:`\beta`:
+
 .. math::
 
    F_\beta = (1 + \beta^2) \frac{\text{precision} \times \text{recall}}{\beta^2 \text{precision} + \text{recall}}
 
 To avoid division by zero when precision and recall are zero, Scikit-Learn calculates F-measure with this
 otherwise-equivalent formula:
-To avoid division by zero when precision and recall are zero, we can define the
-F-measure with this otherwise-equivalent formula:
+
 .. math::
 
-   F_\beta = \frac{(1 + \beta^2) \text{tp}}{(1 + \beta^2) \text{tp} + \text{fp} + \beta^2 \text{fn}}.
+   F_\beta = \frac{(1 + \beta^2) \text{tp}}{(1 + \beta^2) \text{tp} + \text{fp} + \beta^2 \text{fn}}
 
-Note that this formula is still undefined when there are no true positives, false positives, nor false negatives. By
-default, F-1 for a set of exclusively true negatives is calculated as 0, however this behavior can be changed using the
-`zero_division` parameter.
 Note that this formula is still undefined when there are no true positives, false
-positives, nor false negatives. By default, F-1 for a set of exclusively true negatives
+positives, or false negatives. By default, F-1 for a set of exclusively true negatives
 is calculated as 0, however this behavior can be changed using the `zero_division`
 parameter.
 Here are some small examples in binary classification::
@@ -968,10 +961,17 @@ specified by the ``average`` argument to the
 :func:`average_precision_score`, :func:`f1_score`,
 :func:`fbeta_score`, :func:`precision_recall_fscore_support`,
 :func:`precision_score` and :func:`recall_score` functions, as described
-:ref:`above <average>`. Note that if all labels are included, "micro"-averaging
-in a multiclass setting will produce precision, recall and :math:`F`
-that are all identical to accuracy. Also note that "weighted" averaging may
-produce an F-score that is not between precision and recall.
+:ref:`above <average>`.
+
+Note the following behaviors when averaging:
+
+* If all labels are included, "micro"-averaging in a multiclass setting will produce
+  precision, recall and :math:`F` that are all identical to accuracy.
+* "weighted" averaging may produce a F-score that is not between precision and recall.
+* "macro" averaging for F-measures is calculated as the arithmetic mean over
+  per-label/class F-measures, not the harmonic mean over the arithmetic precision and
+  recall means. Both calculations can be seen in the literature but are not equivalent,
+  see [OB2019]_ for details.
 
 To make this more explicit, consider the following notation:
 
@@ -1031,6 +1031,11 @@ Similarly, labels not present in the data sample may be accounted for in macro-a
 
   >>> metrics.precision_score(y_true, y_pred, labels=[0, 1, 2, 3], average='macro')
   0.166...
+
+.. topic:: References:
+
+    .. [OB2019] :arxiv:`Opitz, J., & Burst, S. (2019). "Macro f1 and macro f1."
+       <1911.03347>`
 
 .. _jaccard_similarity_score:
 
@@ -1482,7 +1487,11 @@ correspond to the probability estimates that a sample belongs to a particular
 class. The OvO and OvR algorithms support weighting uniformly
 (``average='macro'``) and by prevalence (``average='weighted'``).
 
-**One-vs-one Algorithm**: Computes the average AUC of all possible pairwise
+|details-start|
+**One-vs-one Algorithm**
+|details-split|
+
+Computes the average AUC of all possible pairwise
 combinations of classes. [HT2001]_ defines a multiclass AUC metric weighted
 uniformly:
 
@@ -1511,7 +1520,13 @@ the keyword argument ``multiclass`` to ``'ovo'`` and ``average`` to
 ``'weighted'``. The ``'weighted'`` option returns a prevalence-weighted average
 as described in [FC2009]_.
 
-**One-vs-rest Algorithm**: Computes the AUC of each class against the rest
+|details-end|
+
+|details-start|
+**One-vs-rest Algorithm**
+|details-split|
+
+Computes the AUC of each class against the rest
 [PD2000]_. The algorithm is functionally the same as the multilabel case. To
 enable this algorithm set the keyword argument ``multiclass`` to ``'ovr'``.
 Additionally to ``'macro'`` [F2006]_ and ``'weighted'`` [F2001]_ averaging, OvR
@@ -1529,6 +1544,8 @@ the :ref:`iris_dataset`:
    :target: ../auto_examples/model_selection/plot_roc.html
    :scale: 75
    :align: center
+
+|details-end|
 
 .. _roc_auc_multilabel:
 
@@ -1633,7 +1650,15 @@ same classification task:
    :scale: 75
    :align: center
 
-**Properties:**
+.. topic:: Examples:
+
+  * See :ref:`sphx_glr_auto_examples_model_selection_plot_det.py`
+    for an example comparison between receiver operating characteristic (ROC)
+    curves and Detection error tradeoff (DET) curves.
+
+|details-start|
+**Properties**
+|details-split|
 
 * DET curves form a linear curve in normal deviate scale if the detection
   scores are normally (or close-to normally) distributed.
@@ -1649,7 +1674,11 @@ same classification task:
   of perfection for DET curves is the origin (in contrast to the top left
   corner for ROC curves).
 
-**Applications and limitations:**
+|details-end|
+
+|details-start|
+**Applications and limitations**
+|details-split|
 
 DET curves are intuitive to read and hence allow quick visual assessment of a
 classifier's performance.
@@ -1662,11 +1691,7 @@ Therefore for either automated evaluation or comparison to other
 classification tasks metrics like the derived area under ROC curve might be
 better suited.
 
-.. topic:: Examples:
-
-  * See :ref:`sphx_glr_auto_examples_model_selection_plot_det.py`
-    for an example comparison between receiver operating characteristic (ROC)
-    curves and Detection error tradeoff (DET) curves.
+|details-end|
 
 .. topic:: References:
 
@@ -1867,7 +1892,13 @@ counts ``tp`` (see `the wikipedia page
 <https://en.wikipedia.org/wiki/Likelihood_ratios_in_diagnostic_testing>`_ for
 the actual formulas).
 
-**Interpretation across varying prevalence:**
+.. topic:: Examples:
+
+  * :ref:`sphx_glr_auto_examples_model_selection_plot_likelihood_ratios.py`
+
+|details-start|
+**Interpretation across varying prevalence**
+|details-split|
 
 Both class likelihood ratios are interpretable in terms of an odds ratio
 (pre-test and post-tests):
@@ -1902,7 +1933,11 @@ prediction:
 
    \text{post-test probability} = \frac{\text{post-test odds}}{1 + \text{post-test odds}}.
 
-**Mathematical divergences:**
+|details-end|
+
+|details-start|
+**Mathematical divergences**
+|details-split|
 
 The positive likelihood ratio is undefined when :math:`fp = 0`, which can be
 interpreted as the classifier perfectly identifying positive cases. If :math:`fp
@@ -1928,11 +1963,11 @@ averaging over cross-validation folds.
 For a worked-out demonstration of the :func:`class_likelihood_ratios` function,
 see the example below.
 
-.. topic:: Examples:
+|details-end|
 
-  * :ref:`sphx_glr_auto_examples_model_selection_plot_likelihood_ratios.py`
-
-.. topic:: References:
+|details-start|
+**References**
+|details-split|
 
   * `Wikipedia entry for Likelihood ratios in diagnostic testing
     <https://en.wikipedia.org/wiki/Likelihood_ratios_in_diagnostic_testing>`_
@@ -1942,6 +1977,7 @@ see the example below.
     values with disease prevalence.
     Statistics in medicine, 16(9), 981-991.
 
+|details-end|
 
 .. _multilabel_ranking_metrics:
 
@@ -2081,10 +2117,14 @@ Here is a small example of usage of this function::
     0.0
 
 
-.. topic:: References:
+|details-start|
+**References**
+|details-split|
 
   * Tsoumakas, G., Katakis, I., & Vlahavas, I. (2010). Mining multi-label data. In
     Data mining and knowledge discovery handbook (pp. 667-685). Springer US.
+
+|details-end|
 
 .. _ndcg:
 
@@ -2130,7 +2170,9 @@ DCG score is
 and the NDCG score is the DCG score divided by the DCG score obtained for
 :math:`y`.
 
-.. topic:: References:
+|details-start|
+**References**
+|details-split|
 
   * `Wikipedia entry for Discounted Cumulative Gain
     <https://en.wikipedia.org/wiki/Discounted_cumulative_gain>`_
@@ -2147,6 +2189,8 @@ and the NDCG score is the DCG score divided by the DCG score obtained for
     performance measures efficiently in the presence of tied scores. In
     European conference on information retrieval (pp. 414-421). Springer,
     Berlin, Heidelberg.
+
+|details-end|
 
 .. _regression_metrics:
 
@@ -2703,8 +2747,9 @@ model can be arbitrarily worse). A constant model that always predicts
 :math:`y_{\text{null}}`, disregarding the input features, would get a D² score
 of 0.0.
 
-D² Tweedie score
-^^^^^^^^^^^^^^^^
+|details-start|
+**D² Tweedie score**
+|details-split|
 
 The :func:`d2_tweedie_score` function implements the special case of D²
 where :math:`\text{dev}(y, \hat{y})` is the Tweedie deviance, see :ref:`mean_tweedie_deviance`.
@@ -2719,8 +2764,11 @@ A scorer object with a specific choice of ``power`` can be built by::
   >>> from sklearn.metrics import d2_tweedie_score, make_scorer
   >>> d2_tweedie_score_15 = make_scorer(d2_tweedie_score, power=1.5)
 
-D² pinball score
-^^^^^^^^^^^^^^^^^^^^^
+|details-end|
+
+|details-start|
+**D² pinball score**
+|details-split|
 
 The :func:`d2_pinball_score` function implements the special case
 of D² with the pinball loss, see :ref:`pinball_loss`, i.e.:
@@ -2740,8 +2788,11 @@ A scorer object with a specific choice of ``alpha`` can be built by::
   >>> from sklearn.metrics import d2_pinball_score, make_scorer
   >>> d2_pinball_score_08 = make_scorer(d2_pinball_score, alpha=0.8)
 
-D² absolute error score
-^^^^^^^^^^^^^^^^^^^^^^^
+|details-end|
+
+|details-start|
+**D² absolute error score**
+|details-split|
 
 The :func:`d2_absolute_error_score` function implements the special case of
 the :ref:`mean_absolute_error`:
@@ -2765,6 +2816,8 @@ Here are some usage examples of the :func:`d2_absolute_error_score` function::
   >>> y_pred = [2, 2, 2]
   >>> d2_absolute_error_score(y_true, y_pred)
   0.0
+
+|details-end|
 
 .. _visualization_regression_evaluation:
 

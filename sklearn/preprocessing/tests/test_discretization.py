@@ -356,7 +356,7 @@ def test_overwrite():
 )
 def test_redundant_bins(strategy, expected_bin_edges):
     X = [[0], [0], [0], [0], [3], [3]]
-    kbd = KBinsDiscretizer(n_bins=3, strategy=strategy)
+    kbd = KBinsDiscretizer(n_bins=3, strategy=strategy, subsample=None)
     warning_message = "Consider decreasing the number of bins."
     with pytest.warns(UserWarning, match=warning_message):
         kbd.fit(X)
