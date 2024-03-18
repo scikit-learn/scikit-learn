@@ -39,7 +39,6 @@ to only update the documentation builds you can use:
 import json
 import logging
 import re
-import shlex
 import subprocess
 import sys
 from importlib.metadata import version
@@ -98,15 +97,21 @@ build_metadata_list = [
         "channel": "conda-forge",
         "conda_dependencies": common_dependencies + [
             "ccache",
+            "meson-python",
+            "pip",
             "pytorch",
             "pytorch-cpu",
             "polars",
             "pyarrow",
             "array-api-compat",
+            "array-api-strict",
         ],
         "package_constraints": {
             "blas": "[build=mkl]",
             "pytorch": "1.13",
+            # TODO: somehow pytest 8 does not seem to work with meson editable
+            # install. Exit code is 5, i.e. no test collected
+            "pytest": "<8",
         },
     },
     {
@@ -132,14 +137,13 @@ build_metadata_list = [
         "folder": "build_tools/azure",
         "platform": "osx-64",
         "channel": "defaults",
-        "conda_dependencies": common_dependencies + ["ccache"],
+        "conda_dependencies": remove_from(common_dependencies, ["cython"]) + ["ccache"],
         "package_constraints": {
             "blas": "[build=mkl]",
-            # TODO: temporary pin for numpy to avoid what seems a loky issue,
-            # for more details see
-            # https://github.com/scikit-learn/scikit-learn/pull/26845#issuecomment-1639917135
-            "numpy": "<1.25",
         },
+        # TODO: put cython back to conda dependencies when required version is
+        # available on the main channel
+        "pip_dependencies": ["cython"],
     },
     {
         "name": "pymin_conda_defaults_openblas",
@@ -148,7 +152,9 @@ build_metadata_list = [
         "folder": "build_tools/azure",
         "platform": "linux-64",
         "channel": "defaults",
-        "conda_dependencies": remove_from(common_dependencies, ["pandas"]) + ["ccache"],
+        "conda_dependencies": remove_from(common_dependencies, ["pandas", "cython"]) + [
+            "ccache"
+        ],
         "package_constraints": {
             "python": "3.9",
             "blas": "[build=openblas]",
@@ -158,6 +164,9 @@ build_metadata_list = [
             "threadpoolctl": "2.2.0",
             "cython": "min",
         },
+        # TODO: put cython back to conda dependencies when required version is
+        # available on the main channel
+        "pip_dependencies": ["cython"],
     },
     {
         "name": "pymin_conda_forge_openblas_ubuntu_2204",
@@ -226,11 +235,6 @@ build_metadata_list = [
             # the environment.yml. Adding python-dateutil so it is pinned
             + ["python-dateutil"]
         ),
-        "package_constraints": {
-            # Temporary pin for other dependencies to be able with deprecation
-            # warnings introduced by Python 3.12.
-            "python": "3.11",
-        },
     },
     {
         "name": "pypy3",
@@ -481,11 +485,21 @@ def write_all_conda_environments(build_metadata_list):
 
 
 def conda_lock(environment_path, lock_file_path, platform):
-    command = (
-        f"conda-lock lock --mamba --kind explicit --platform {platform} "
-        f"--file {environment_path} --filename-template {lock_file_path}"
+    execute_command(
+        [
+            "conda-lock",
+            "lock",
+            "--mamba",
+            "--kind",
+            "explicit",
+            "--platform",
+            platform,
+            "--file",
+            str(environment_path),
+            "--filename-template",
+            str(lock_file_path),
+        ]
     )
-    execute_command(shlex.split(command))
 
 
 def create_conda_lock_file(build_metadata):
@@ -533,8 +547,15 @@ def write_all_pip_requirements(build_metadata_list):
 
 
 def pip_compile(pip_compile_path, requirements_path, lock_file_path):
-    command = f"{pip_compile_path} --upgrade {requirements_path} -o {lock_file_path}"
-    execute_command(shlex.split(command))
+    execute_command(
+        [
+            str(pip_compile_path),
+            "--upgrade",
+            str(requirements_path),
+            "-o",
+            str(lock_file_path),
+        ]
+    )
 
 
 def write_pip_lock_file(build_metadata):
@@ -546,13 +567,21 @@ def write_pip_lock_file(build_metadata):
     # create a conda environment with the correct Python version and
     # pip-compile and run pip-compile in this environment
 
-    command = (
-        "conda create -c conda-forge -n"
-        f" pip-tools-python{python_version} python={python_version} pip-tools -y"
+    execute_command(
+        [
+            "conda",
+            "create",
+            "-c",
+            "conda-forge",
+            "-n",
+            f"pip-tools-python{python_version}",
+            f"python={python_version}",
+            "pip-tools",
+            "-y",
+        ]
     )
-    execute_command(shlex.split(command))
 
-    json_output = execute_command(shlex.split("conda info --json"))
+    json_output = execute_command(["conda", "info", "--json"])
     conda_info = json.loads(json_output)
     environment_folder = [
         each for each in conda_info["envs"] if each.endswith(environment_name)

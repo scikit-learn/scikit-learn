@@ -55,6 +55,7 @@ from sklearn.preprocessing import LabelBinarizer
 from sklearn.utils import shuffle
 from sklearn.utils._array_api import (
     _atol_for_type,
+    _convert_to_numpy,
     yield_namespace_device_dtype_combinations,
 )
 from sklearn.utils._testing import (
@@ -1749,7 +1750,7 @@ def check_array_api_metric(
         metric_xp = metric(y_true_xp, y_pred_xp, sample_weight=sample_weight)
 
         assert_allclose(
-            metric_xp,
+            _convert_to_numpy(xp.asarray(metric_xp), xp),
             metric_np,
             atol=_atol_for_type(dtype_name),
         )
@@ -1813,9 +1814,9 @@ def check_array_api_multiclass_classification_metric(
     )
 
 
-def check_array_api_regression_metric_1d(metric, array_namespace, device, dtype_name):
-    y_true_np = np.array([2, 0, 1, 4], dtype=dtype_name)
-    y_pred_np = np.array([0.5, 0.5, 2, 2], dtype=dtype_name)
+def check_array_api_regression_metric(metric, array_namespace, device, dtype_name):
+    y_true_np = np.array([[1, 3], [1, 2]], dtype=dtype_name)
+    y_pred_np = np.array([[1, 4], [1, 1]], dtype=dtype_name)
 
     check_array_api_metric(
         metric,
@@ -1827,7 +1828,7 @@ def check_array_api_regression_metric_1d(metric, array_namespace, device, dtype_
         sample_weight=None,
     )
 
-    sample_weight = np.array([0.1, 2.0, 1.5, 0.5], dtype=dtype_name)
+    sample_weight = np.array([0.1, 2.0], dtype=dtype_name)
 
     check_array_api_metric(
         metric,
@@ -1850,6 +1851,7 @@ array_api_metric_checkers = {
         check_array_api_multiclass_classification_metric,
     ],
     mean_tweedie_deviance: [check_array_api_regression_metric_1d],
+    r2_score: [check_array_api_regression_metric],
 }
 
 
