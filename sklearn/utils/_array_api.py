@@ -453,8 +453,7 @@ def get_namespace(*arrays, remove_none=True, remove_types=(str,), xp=None):
     """Get namespace of arrays.
 
     Introspect `arrays` arguments and return their common Array API compatible
-    namespace object, if any. It is possible to construct such containers using
-    the `array_api_strict` namespace for instance.
+    namespace object, if any.
 
     See: https://numpy.org/neps/nep-0047-array-api-standard.html
 
