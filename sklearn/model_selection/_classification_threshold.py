@@ -132,7 +132,7 @@ class _ContinuousScorer(_BaseScorer):
                 np.min(y_score), np.max(y_score), self._n_thresholds
             )
         else:
-            potential_thresholds = np.array(self._n_thresholds, copy=False)
+            potential_thresholds = np.asarray(self._n_thresholds)
         score_thresholds = [
             self._sign
             * self._score_func(
@@ -219,7 +219,7 @@ def _fit_and_score(
         The decision thresholds used to compute the scores. They are returned in
         ascending order.
 
-    scores : ndarray of shape (n_thresholds,) or tuple os such arrays
+    scores : ndarray of shape (n_thresholds,) or tuple of such arrays
         The scores computed for each decision threshold. When TPR/TNR or precision/
         recall are computed, `scores` is a tuple of two arrays.
     """
@@ -269,7 +269,7 @@ class TunedThresholdClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimato
 
     Read more in the :ref:`User Guide <tunedthresholdclassifier>`.
 
-    .. versionadded:: 1.4
+    .. versionadded:: 1.5
 
     Parameters
     ----------
@@ -618,7 +618,7 @@ class TunedThresholdClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimato
         if cv == "prefit":
             self.estimator_ = self.estimator
             classifier = self.estimator_
-            splits = ([None, range(_num_samples(X))],)
+            splits = [(None, range(_num_samples(X)))]
         else:
             self.estimator_ = clone(self.estimator)
             classifier = clone(self.estimator)
@@ -674,20 +674,20 @@ class TunedThresholdClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimato
             )
 
         # find the global min and max thresholds across all folds
-        min_threshold = np.min([th.min() for th in cv_thresholds])
+        min_threshold = min(split_thresholds.min() for split_thresholds in cv_thresholds)
         max_threshold = np.max([th.max() for th in cv_thresholds])
         if isinstance(self.n_thresholds, Integral):
             self.decision_thresholds_ = np.linspace(
                 min_threshold, max_threshold, num=self.n_thresholds
             )
         else:
-            self.decision_thresholds_ = np.array(self.n_thresholds, copy=False)
+            self.decision_thresholds_ = np.asarray(self.n_thresholds)
 
         def _mean_interpolated_score(threshold_interpolated, cv_thresholds, cv_scores):
             return np.mean(
                 [
-                    np.interp(threshold_interpolated, th, sc)
-                    for th, sc in zip(cv_thresholds, cv_scores)
+                    np.interp(target_thresholds, split_thresholds, split_score)
+                    for split_thresholds, c in zip(cv_thresholds, cv_scores)
                 ],
                 axis=0,
             )
@@ -720,7 +720,7 @@ class TunedThresholdClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimato
                 indices = np.arange(len(constrained_score))
                 mask = constrained_score >= constraint_value
                 mask_idx = maximized_score[mask].argmax()
-                return indices[mask][mask_idx]
+                return np.flatnonzero(mask)[mask_idx]
 
             if self.objective_metric == "max_tpr_at_tnr_constraint":
                 constrained_score, maximized_score = mean_tnr, mean_tpr
