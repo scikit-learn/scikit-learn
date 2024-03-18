@@ -141,7 +141,7 @@ However, you should be extremely careful when using this option. You should neve
 the same data for training the classifier and tuning the cut-off point due to the risk
 of overfitting. Refer to the following example section for more details (cf.
 :ref:`tunedthresholdclassifier_no_cv`). If you have limited resources, consider using a
-float number to limit to an internal single train-test split.
+float number for `cv` to limit to an internal single train-test split.
 
 The option `cv="prefit"` should only be used when the provided classifier was already
 trained, and you just want to find the best cut-off using a new validation set.
