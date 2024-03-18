@@ -1629,9 +1629,7 @@ def test_pairwise_dist_custom_metric_for_string(X, Y, expected_distance):
     def dummy_string_similarity(x, y):
         return np.abs(len(x) - len(y))
 
-    actual_distance = pairwise_distances(
-        X=X, Y=Y, metric=dummy_string_similarity, ensure_2d=False
-    )
+    actual_distance = pairwise_distances(X=X, Y=Y, metric=dummy_string_similarity)
     assert_allclose(actual_distance, expected_distance)
 
 
