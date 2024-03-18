@@ -1895,14 +1895,14 @@ def _parallel_pairwise(X, Y, func, n_jobs, **kwds):
     return ret
 
 
-def _pairwise_callable(X, Y, metric, force_all_finite=True, ensure_2d=True, **kwds):
+def _pairwise_callable(X, Y, metric, force_all_finite=True, **kwds):
     """Handle the callable case for pairwise_{distances,kernels}."""
     X, Y = check_pairwise_arrays(
         X,
         Y,
         dtype=None,
         force_all_finite=force_all_finite,
-        ensure_2d=ensure_2d,
+        ensure_2d=False,
     )
 
     if X is Y:
@@ -2177,7 +2177,6 @@ def pairwise_distances_chunked(
         "metric": [StrOptions(set(_VALID_METRICS) | {"precomputed"}), callable],
         "n_jobs": [Integral, None],
         "force_all_finite": ["boolean", StrOptions({"allow-nan"})],
-        "ensure_2d": ["boolean"],
     },
     prefer_skip_nested_validation=True,
 )
@@ -2188,7 +2187,6 @@ def pairwise_distances(
     *,
     n_jobs=None,
     force_all_finite=True,
-    ensure_2d=True,
     **kwds,
 ):
     """Compute the distance matrix from a vector array X and optional Y.
@@ -2198,8 +2196,7 @@ def pairwise_distances(
     If the input is a vector array, the distances are computed.
     If the input is a distances matrix, it is returned instead.
     If the input is a collection of non-numeric data (e.g. a list of strings or a
-    boolean array), a custom metric must be passed and `ensure_2d` should
-    be set to `False` if required.
+    boolean array), a custom metric must be passed.
 
     This method provides a safe way to take a distance matrix as input, while
     preserving compatibility with many other algorithms that take a vector
@@ -2289,14 +2286,6 @@ def pairwise_distances(
         .. versionchanged:: 0.23
            Accepts `pd.NA` and converts it into `np.nan`.
 
-    ensure_2d : bool, default=True
-        Whether to raise an error when the input arrays are not 2-dimensional.
-        Ignored if `metric` is not a callable. Setting it to `False` can be
-        necessary when using a custom metric with certain non-numerical inputs
-        (e.g. a list of strings).
-
-        .. versionadded:: 1.5
-
     **kwds : optional keyword parameters
         Any further parameters are passed directly to the distance function.
         If using a scipy.spatial.distance metric, the parameters are still
@@ -2346,7 +2335,6 @@ def pairwise_distances(
             _pairwise_callable,
             metric=metric,
             force_all_finite=force_all_finite,
-            ensure_2d=ensure_2d,
             **kwds,
         )
     else:

@@ -1658,33 +1658,6 @@ def test_pairwise_dist_custom_metric_for_bool():
     assert_allclose(actual_distance, expected_distance)
 
 
-def test_pairwise_distances_ensure_2d_ignored():
-    """Check that pairwise_distances ignores the ensure_2d parameter when not
-    using a custom metric.
-    """
-    rng = np.random.RandomState(0)
-    X = rng.normal(size=5)
-    Y = rng.normal(size=4)
-
-    with pytest.raises(ValueError, match="Expected 2D array, got 1D array instead"):
-        pairwise_distances(X, Y, ensure_2d=False)
-
-
-def test_pairwise_distances_ensure_2d_custom_metric():
-    """Check that pairwise_distances respects the ensure_2d parameter when using
-    a custom metric.
-    """
-    rng = np.random.RandomState(0)
-    X = rng.normal(size=5)
-    Y = rng.normal(size=4)
-
-    def custom_metric(x, y):
-        return np.sum(np.abs(x - y))
-
-    with pytest.raises(ValueError, match="Expected 2D array, got 1D array instead"):
-        pairwise_distances(X, Y, metric=custom_metric, ensure_2d=True)
-
-
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
 def test_sparse_manhattan_readonly_dataset(csr_container):
     # Non-regression test for: https://github.com/scikit-learn/scikit-learn/issues/7981
