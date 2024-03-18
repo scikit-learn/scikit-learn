@@ -132,9 +132,10 @@ tree; :math:`f_k` corresponds to the k-th tree in the ensemble of trees (such
 that :math:`\hat{y}_i=\phi(x_i)=\sum_k f_k(x_i)`); and :math:`w_k` is a vector
 of lenght :math:`T` containing the leaf weights.
 
-Notice that :math:`\gamma` penalizes the number of leaves (which makes it
-a smooth version of `max_leaf_nodes`) whereas :math:`\lambda` penalizes the
-magnitude of the individual tree predictions.
+Notice that :math:`\gamma` penalizes the number of leaves (which makes it a
+smooth version of `max_leaf_nodes` and is not implemented in scikit-learn),
+whereas :math:`\lambda` penalizes the magnitude of the individual tree
+predictions.
 
 |details-start|
 **Leaf weights in regression and classification**:
