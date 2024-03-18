@@ -264,6 +264,12 @@ Changelog
   returns masked arrays of the appropriate NumPy dtype, as opposed to always returning
   dtype ``object``. :pr:`28352` by :user:`Marco Gorelli<MarcoGorelli>`.
 
+- |Fix| :func:`sklearn.model_selection.train_test_score` works with Array API inputs.
+  Previously indexing was not handled correctly leading to exceptions when using strict
+  implementations of the Array API like CuPY.
+  :pr:`28407` by `Tim Head <betatim>`.
+
+
 :mod:`sklearn.multioutput`
 ..........................
 
@@ -287,6 +293,14 @@ Changelog
   :func:`preprocessing.quantile_transform` now supports disabling
   subsampling explicitly.
   :pr:`27636` by :user:`Ralph Urlus <rurlus>`.
+  
+:mod:`sklearn.tree`
+...................
+
+- |Enhancement| Plotting trees in matplotlib via :func:`tree.plot_tree` now
+  show a "True/False" label to indicate the directionality the samples traverse
+  given the split condition.
+  :pr:`28552` by :user:`Adam Li <adam2392>`.
 
 .. rubric:: Code and documentation contributors
 

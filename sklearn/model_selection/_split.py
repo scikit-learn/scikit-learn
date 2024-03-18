@@ -29,8 +29,11 @@ from ..utils import (
     indexable,
     metadata_routing,
 )
-from ..utils._array_api import device as array_api_device
-from ..utils._array_api import get_namespace
+from ..utils._array_api import (
+    _convert_to_numpy,
+    ensure_common_namespace_device,
+    get_namespace,
+)
 from ..utils._param_validation import Interval, RealNotInt, validate_params
 from ..utils.extmath import _approximate_mode
 from ..utils.metadata_routing import _MetadataRequester
@@ -2223,6 +2226,12 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
             default_test_size=self._default_test_size,
         )
 
+        # Convert to numpy as not all operations are supported by the Array API.
+        # `y` is probably never a very large array, which means that converting it
+        # should be cheap
+        xp, _ = get_namespace(y)
+        y = _convert_to_numpy(y, xp=xp)
+
         if y.ndim == 2:
             # for multi-label y, map each distinct row to a string repr
             # using join because str(row) uses an ellipsis if len(row) > 1000
@@ -2789,13 +2798,7 @@ def train_test_split(
 
         train, test = next(cv.split(X=arrays[0], y=stratify))
 
-    xp, is_array_api_compliant = get_namespace(arrays[0])
-    if is_array_api_compliant:
-        # For indexing, the data and index arrays need to be of the same type
-        # and on the same device.
-        device_ = array_api_device(arrays[0])
-        train = xp.asarray(train, device=device_)
-        test = xp.asarray(test, device=device_)
+    train, test = ensure_common_namespace_device(arrays[0], train, test)
 
     return list(
         chain.from_iterable(

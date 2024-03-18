@@ -1632,7 +1632,6 @@ def test_check_pandas_sparse_invalid(ntype1, ntype2):
     "ntype1, ntype2, expected_subtype",
     [
         ("double", "longdouble", np.floating),
-        ("float16", "half", np.floating),
         ("single", "float32", np.floating),
         ("double", "float64", np.floating),
         ("int8", "byte", np.integer),
