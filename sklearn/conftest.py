@@ -1,11 +1,9 @@
 import builtins
-import os
 import platform
 import sys
 from contextlib import suppress
 from functools import wraps
 from os import environ
-from pathlib import Path
 from random import Random
 from unittest import SkipTest
 
@@ -314,12 +312,6 @@ def handle_global_random_seed(config):
             # pytest -n2 --pyargs sklearn.tests.test_dummy
             # In these edge cases, random_seeds is set to a fixed value
             random_seeds = config.workerinput.get("random_seeds", default_random_seeds)
-            with open("/tmp/test.log", "a") as f:
-                f.write(
-                    "handle_global_random_seed"
-                    f" {os.getpid()} {is_xdist_controller(config)} {random_seeds} "
-                    f"{config.workerinput}\n"
-                )
 
     # When SKLEARN_TESTS_GLOBAL_RANDOM_SEED != 'any', we rely on the
     # SKLEARN_TESTS_GLOBAL_RANDOM_SEED environment variable
@@ -347,23 +339,8 @@ def handle_global_random_seed(config):
 
     class XDistHooks:
         def pytest_configure_node(self, node) -> None:
-            import os
-
             # This passes the random seeds generated in the xdist controller to
             # xdist workers
-            print(
-                "pytest_configure_node",
-                os.getpid(),
-                is_xdist_controller(node.config),
-                flush=True,
-            )
-            with open("/tmp/test.log", mode="a") as f:
-                f.write(
-                    "pytest_configure_node"
-                    f" {os.getpid()} {is_xdist_controller(node.config)}\n"
-                )
-                f.flush()
-
             random_seeds = node.config.getoption("random_seeds")
             node.workerinput["random_seeds"] = random_seeds
 
@@ -391,8 +368,6 @@ def pytest_report_header(config):
 
 
 def pytest_configure(config):
-    if is_xdist_controller(config):
-        Path("/tmp/test.log").write_text("")
     # Use matplotlib agg backend during the tests including doctests
     try:
         import matplotlib
@@ -400,10 +375,6 @@ def pytest_configure(config):
         matplotlib.use("agg")
     except ImportError:
         pass
-
-    print(f"pytest_configure {os.getpid()} {is_xdist_controller(config)}\n")
-    with open("/tmp/test.log", "a") as f:
-        f.write(f"pytest_configure {os.getpid()} {is_xdist_controller(config)}\n")
 
     allowed_parallelism = joblib.cpu_count(only_physical_cores=True)
     xdist_worker_count = environ.get("PYTEST_XDIST_WORKER_COUNT")
