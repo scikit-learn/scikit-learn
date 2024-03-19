@@ -612,17 +612,9 @@ def _ridge_regression(
     check_input=True,
     fit_intercept=False,
 ):
-    xp, is_array_api_compliant, device_ = get_namespace_and_device(
-        X, y, sample_weight, X_scale, X_offset
-    )
+    xp, _, device_ = get_namespace_and_device(X, y, sample_weight, X_scale, X_offset)
 
     has_sw = sample_weight is not None
-
-    if is_array_api_compliant and solver != "svd":
-        raise ValueError(
-            "Array API dispatch is only supported with the 'svd' solver "
-            f"but got solver='{solver}' with array namespace '{xp.__name__}'."
-        )
 
     if solver == "auto":
         if positive:
@@ -1206,9 +1198,8 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
         )
         return super().fit(X, y, sample_weight=sample_weight)
 
-
-def _more_tags(self):
-    return {"array_api_support": True}
+    def _more_tags(self):
+        return {"array_api_support": True}
 
 
 class _RidgeClassifierMixin(LinearClassifierMixin):
