@@ -1,3 +1,5 @@
+"""Metrics for pairwise distances and affinity of sets of samples."""
+
 # Authors: Alexandre Gramfort <alexandre.gramfort@inria.fr>
 #          Mathieu Blondel <mathieu@mblondel.org>
 #          Robert Layton <robertlayton@gmail.com>

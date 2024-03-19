@@ -1,3 +1,5 @@
+"""Utilities to build feature vectors from text documents."""
+
 # Authors: Olivier Grisel <olivier.grisel@ensta.org>
 #          Mathieu Blondel <mathieu@mblondel.org>
 #          Lars Buitinck
@@ -6,10 +8,6 @@
 #          Roman Sinayev <roman.sinayev@gmail.com>
 #
 # License: BSD 3 clause
-"""
-The :mod:`sklearn.feature_extraction.text` submodule gathers utilities to
-build feature vectors from text documents.
-"""
 
 import array
 import re

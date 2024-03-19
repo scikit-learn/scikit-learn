@@ -1,0 +1,77 @@
+:html_theme.sidebar_secondary.remove:
+
+.. _api_ref:
+
+=============
+API Reference
+=============
+
+This is the class and function reference of scikit-learn. Please refer to the
+:ref:`full user guide <user_guide>` for further details, as the raw specifications of
+classes and functions may not be enough to give full guidelines on their uses. For
+reference on concepts repeated across the API, see :ref:`glossary`.
+
+.. toctree::
+  :maxdepth: 2
+  :hidden:
+
+{% for module, _ in API_REFERENCE %}
+  {{ module }}
+{%- endfor %}
+{%- if DEPRECATED_API_REFERENCE %}
+  deprecated
+{%- endif %}
+
+.. list-table::
+  :header-rows: 1
+  :class: apisearch-table
+
+  * - Object
+    - Description
+
+{% for module, module_info in API_REFERENCE %}
+{% for section in module_info["sections"] %}
+{% for obj in section["autosummary"] %}
+{% set parts = obj.rsplit(".", 1) %}
+{% if parts|length > 1 %}
+{% set full_module = module + "." + parts[0] %}
+{% else %}
+{% set full_module = module %}
+{% endif %}
+  * - :obj:`~{{ module }}.{{ obj }}`
+
+    - .. div:: sk-apisearch-desc
+
+        .. currentmodule:: {{ full_module }}
+
+        .. autoshortsummary:: {{ module }}.{{ obj }}
+
+        .. div:: caption
+
+          :mod:`{{ full_module }}`
+{% endfor %}
+{% endfor %}
+{% endfor %}
+
+{% for ver, objs in DEPRECATED_API_REFERENCE %}
+{% for obj in objs %}
+{% set parts = obj.rsplit(".", 1) %}
+{% if parts|length > 1 %}
+{% set full_module = "sklearn." + parts[0] %}
+{% else %}
+{% set full_module = "sklearn" %}
+{% endif %}
+  * - :obj:`~sklearn.{{ obj }}`
+
+    - .. div:: sk-apisearch-desc
+
+        .. currentmodule:: {{ full_module }}
+
+        .. autoshortsummary:: sklearn.{{ obj }}
+
+        .. div:: caption
+
+          :mod:`{{ full_module }}`
+          :bdg-ref-danger-line:`Deprecated in version {{ ver }} <api_depr_ref-{{ ver|replace(".", "-") }}>`
+{% endfor %}
+{% endfor %}

@@ -1,7 +1,4 @@
-"""
-The :mod:`sklearn.utils.estimator_checks` module includes various utilities to
-check the compatibility of estimators with the scikit-learn API.
-"""
+"""Various utilities to check the compatibility of estimators with scikit-learn API."""
 
 import pickle
 import re

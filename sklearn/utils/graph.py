@@ -1,6 +1,4 @@
-"""
-The :mod:`sklearn.utils.graph` module includes graph utilities and algorithms.
-"""
+"""Graph utilities and algorithms."""
 
 # Authors: Aric Hagberg <hagberg@lanl.gov>
 #          Gael Varoquaux <gael.varoquaux@normalesup.org>

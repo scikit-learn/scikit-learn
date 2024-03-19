@@ -1,7 +1,4 @@
-"""
-The :mod:`sklearn.preprocessing` module includes scaling, centering,
-normalization, binarization methods.
-"""
+"""Methods for scaling, centering, normalization, binarization, and more."""
 
 from ._data import (
     Binarizer,

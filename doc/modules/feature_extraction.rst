@@ -310,7 +310,7 @@ counting in a single class::
 
 This model has many parameters, however the default values are quite
 reasonable (please see  the :ref:`reference documentation
-<text_feature_extraction_ref>` for the details)::
+<feature_extraction_ref-from-text>` for the details)::
 
   >>> vectorizer = CountVectorizer()
   >>> vectorizer
@@ -492,7 +492,7 @@ class::
   TfidfTransformer(smooth_idf=False)
 
 Again please see the :ref:`reference documentation
-<text_feature_extraction_ref>` for the details on all the parameters.
+<feature_extraction_ref-from-text>` for the details on all the parameters.
 
 |details-start|
 **Numeric example of a tf-idf matrix**

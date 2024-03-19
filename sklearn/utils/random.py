@@ -1,6 +1,4 @@
-"""
-The mod:`sklearn.utils.random` module includes utilities for random sampling.
-"""
+"""Utilities for random sampling."""
 
 # Author: Hamzeh Alsalhi <ha258@cornell.edu>
 #

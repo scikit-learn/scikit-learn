@@ -1,7 +1,7 @@
-"""
-The :mod:`sklearn.feature_selection` module implements feature selection
-algorithms. It currently includes univariate filter selection methods and the
-recursive feature elimination algorithm.
+"""Feature selection algorithms.
+
+These include univariate filter selection methods and the recursive feature elimination
+algorithm.
 """
 
 from ._base import SelectorMixin
