@@ -14,7 +14,7 @@ and can be found here:
 #
 # License: BSD 3 clause
 
-from sklearn.utils._typedefs cimport int32_t, uint32_t
+from ..utils._typedefs cimport int32_t, uint32_t
 
 import numpy as np
 

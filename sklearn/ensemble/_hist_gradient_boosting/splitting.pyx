@@ -14,7 +14,7 @@ from libc.math cimport INFINITY, ceil
 from libc.stdlib cimport malloc, free, qsort
 from libc.string cimport memcpy
 
-from sklearn.utils._typedefs cimport uint8_t
+from ...utils._typedefs cimport uint8_t
 from .common cimport X_BINNED_DTYPE_C
 from .common cimport Y_DTYPE_C
 from .common cimport hist_struct

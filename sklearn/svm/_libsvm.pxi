@@ -1,6 +1,6 @@
 ################################################################################
 # Includes
-from sklearn.utils._typedefs cimport intp_t
+from ..utils._typedefs cimport intp_t
 
 cdef extern from "_svm_cython_blas_helpers.h":
     ctypedef double (*dot_func)(int, const double*, int, const double*, int)
