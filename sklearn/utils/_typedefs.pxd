@@ -1,8 +1,6 @@
 # Commonly used types
 # These are redefinitions of the ones defined by numpy in
-# https://github.com/numpy/numpy/blob/main/numpy/__init__.pxd
-# and exposed by cython in
-# https://github.com/cython/cython/blob/master/Cython/Includes/numpy/__init__.pxd.
+# https://github.com/numpy/numpy/blob/main/numpy/__init__.pxd.
 # It will eventually avoid having to always include the numpy headers even when we
 # would only use it for the types.
 #
@@ -17,6 +15,7 @@
 ctypedef unsigned char uint8_t
 ctypedef unsigned int uint32_t
 ctypedef unsigned long long uint64_t
+# Note: As of numpy 2.0, np.intp = Py_ssize_t.
 ctypedef Py_ssize_t intp_t
 ctypedef float float32_t
 ctypedef double float64_t
