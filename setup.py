@@ -240,9 +240,9 @@ extension_config = {
         {"sources": ["_hashing_fast.pyx"], "language": "c++", "include_np": True},
     ],
     "linear_model": [
-        {"sources": ["_cd_fast.pyx"], "include_np": False},
-        {"sources": ["_sgd_fast.pyx.tp"], "include_np": False},
-        {"sources": ["_sag_fast.pyx.tp"], "include_np": False},
+        {"sources": ["_cd_fast.pyx"]},
+        {"sources": ["_sgd_fast.pyx.tp"]},
+        {"sources": ["_sag_fast.pyx.tp"]},
     ],
     "manifold": [
         {"sources": ["_utils.pyx"]},
