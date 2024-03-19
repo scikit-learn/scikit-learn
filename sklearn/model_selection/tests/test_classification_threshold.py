@@ -480,7 +480,7 @@ def test_tunedthresholdclassifier_estimator_response_methods(
 @pytest.mark.parametrize(
     "response_method", ["auto", "decision_function", "predict_proba"]
 )
-def test_tunedthresholdclassifier_with_constraint_value(response_method):
+def test_tunedthresholdclassifier_without_constraint_value(response_method):
     """Check that `TunedThresholdClassifier` is optimizing a given objective metric."""
     X, y = load_breast_cancer(return_X_y=True)
     # remove feature to degrade performances
