@@ -579,3 +579,22 @@ def test_hdbscan_error_precomputed_and_store_centers(store_centers):
     err_msg = "Cannot store centers when using a precomputed distance matrix."
     with pytest.raises(ValueError, match=err_msg):
         HDBSCAN(metric="precomputed", store_centers=store_centers).fit(X_dist)
+
+
+@pytest.mark.parametrize("valid_algo", ["auto", "brute"])
+def test_hdbscan_cosine_metric_valid_algorithm(valid_algo):
+    """
+    Tests that HDBSCAN works with the "cosine" metric when the algorithm is set
+    to "brute" or "auto".
+    """
+    HDBSCAN(metric="cosine", algorithm=valid_algo).fit_predict(X)
+
+
+@pytest.mark.parametrize("invalid_algo", ["kd_tree", "ball_tree"])
+def test_hdbscan_cosine_metric_invalid_algorithm(invalid_algo):
+    """
+    Tests that HDBSCAN raises a ValueError when an unsupported algorithm is
+    used with the "cosine" metric.
+    """
+    with pytest.raises(ValueError):
+        HDBSCAN(metric="cosine", algorithm=invalid_algo).fit_predict(X)
