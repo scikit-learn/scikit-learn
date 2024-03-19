@@ -8,7 +8,6 @@ import pytest
 from sklearn.utils import (
     _message_with_time,
     _print_elapsed_time,
-    _to_object_array,
     check_random_state,
     column_or_1d,
     deprecated,
@@ -210,14 +209,6 @@ def test_deprecation_joblib_api(tmpdir):
     from sklearn.utils._joblib import joblib
 
     del joblib.parallel.BACKENDS["failing"]
-
-
-@pytest.mark.parametrize("sequence", [[np.array(1), np.array(2)], [[1, 2], [3, 4]]])
-def test_to_object_array(sequence):
-    out = _to_object_array(sequence)
-    assert isinstance(out, np.ndarray)
-    assert out.dtype.kind == "O"
-    assert out.ndim == 1
 
 
 def test__is_polars_df():
