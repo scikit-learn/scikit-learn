@@ -19,8 +19,8 @@ from numbers import Integral
 import numpy as np
 from scipy import linalg, sparse
 
-from ..utils import deprecated
 from ..utils._param_validation import Interval, StrOptions, validate_params
+from ..utils.deprecation import deprecated
 from ._array_api import _is_numpy_namespace, device, get_namespace
 from .sparsefuncs_fast import csr_row_norms
 from .validation import check_array, check_random_state
