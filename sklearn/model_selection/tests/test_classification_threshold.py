@@ -2,7 +2,12 @@ import numpy as np
 import pytest
 
 from sklearn.base import clone
-from sklearn.datasets import load_breast_cancer, load_iris, make_classification
+from sklearn.datasets import (
+    load_breast_cancer,
+    load_iris,
+    make_classification,
+    make_multilabel_classification,
+)
 from sklearn.dummy import DummyClassifier
 from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.exceptions import NotFittedError
@@ -395,12 +400,18 @@ def test_fit_and_score_over_thresholds_fit_params(
     )
 
 
-def test_tunedthresholdclassifier_no_binary():
+@pytest.mark.parametrize(
+    "data",
+    [
+        make_classification(n_classes=3, n_clusters_per_class=1, random_state=0),
+        make_multilabel_classification(random_state=0),
+    ],
+)
+def test_tunedthresholdclassifier_no_binary(data):
     """Check that we raise an informative error message for non-binary problem."""
-    X, y = make_classification(n_classes=3, n_clusters_per_class=1)
     err_msg = "Only binary classification is supported."
     with pytest.raises(ValueError, match=err_msg):
-        TunedThresholdClassifier(LogisticRegression()).fit(X, y)
+        TunedThresholdClassifier(LogisticRegression()).fit(*data)
 
 
 @pytest.mark.parametrize(
