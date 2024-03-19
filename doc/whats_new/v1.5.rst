@@ -114,6 +114,10 @@ Changelog
   :class:`~cluster.OPTICS` to avoid in-place modification of the sparse matrix.
   :pr:`28491` by :user:`Thanh Lam Dang <lamdang2k>`.
 
+- |Fix| Enabled `HDBSCAN` to use "cosine" metric with "brute" or "auto" algorithms,
+  enhancing clustering flexibility.
+  :pr:`28664` by :user:`Manideep Yenugula <myenugula>`.
+
 :mod:`sklearn.compose`
 ......................
 
