@@ -30,6 +30,5 @@ ignore:
 - "sklearn/_build_utils"
 - "sklearn/__check_build"
 - "sklearn/_min_dependencies.py"
-- "sklearn/_api_reference.py"
 - "**/setup.py"
 - "**/conftest.py"
