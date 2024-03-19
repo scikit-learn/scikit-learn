@@ -33,7 +33,7 @@ from ..base import (
     _fit_context,
 )
 from ..utils import check_array, check_random_state
-from ..utils._array_api import get_namespace
+from ..utils._array_api import get_namespace, indexing_dtype
 from ..utils._seq_dataset import (
     ArrayDataset32,
     ArrayDataset64,
@@ -350,7 +350,7 @@ class LinearClassifierMixin(ClassifierMixin):
         xp, _ = get_namespace(X)
         scores = self.decision_function(X)
         if len(scores.shape) == 1:
-            indices = xp.astype(scores > 0, int)
+            indices = xp.astype(scores > 0, indexing_dtype(xp))
         else:
             indices = xp.argmax(scores, axis=1)
 

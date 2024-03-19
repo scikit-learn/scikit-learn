@@ -21,4 +21,4 @@ dependencies:
   - ccache
   - pip
   - pip:
-    - cython==3.0.8  # min
+    - cython==3.0.9  # min

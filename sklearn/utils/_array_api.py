@@ -10,7 +10,7 @@ import scipy.special as special
 from .._config import get_config
 from .fixes import parse_version
 
-_NUMPY_NAMESPACE_NAMES = {"numpy", "array_api_compat.numpy", "numpy.array_api"}
+_NUMPY_NAMESPACE_NAMES = {"numpy", "array_api_compat.numpy"}
 
 
 def yield_namespace_device_dtype_combinations(include_numpy_namespaces=True):
@@ -42,8 +42,8 @@ def yield_namespace_device_dtype_combinations(include_numpy_namespaces=True):
         # tests are regular numpy arrays without any "device" attribute.
         "numpy",
         # Stricter NumPy-based Array API implementation. The
-        # numpy.array_api.Array instances always a dummy "device" attribute.
-        "numpy.array_api",
+        # array_api_strict.Array instances always have a dummy "device" attribute.
+        "array_api_strict",
         "cupy",
         "cupy.array_api",
         "torch",
@@ -194,7 +194,6 @@ def _isdtype_single(dtype, kind, *, xp):
             return dtype in supported_float_dtypes(xp)
         elif kind == "complex floating":
             # Some name spaces do not have complex, such as cupy.array_api
-            # and numpy.array_api
             complex_dtypes = set()
             if hasattr(xp, "complex64"):
                 complex_dtypes.add(xp.complex64)
@@ -225,6 +224,35 @@ def supported_float_dtypes(xp):
         return (xp.float64, xp.float32, xp.float16)
     else:
         return (xp.float64, xp.float32)
+
+
+def ensure_common_namespace_device(reference, *arrays):
+    """Ensure that all arrays use the same namespace and device as reference.
+
+    If neccessary the arrays are moved to the same namespace and device as
+    the reference array.
+
+    Parameters
+    ----------
+    reference : array
+        Reference array.
+
+    *arrays : array
+        Arrays to check.
+
+    Returns
+    -------
+    arrays : list
+        Arrays with the same namespace and device as reference.
+    """
+    xp, is_array_api = get_namespace(reference)
+
+    if is_array_api:
+        device_ = device(reference)
+        # Move arrays to the same namespace and device as the reference array.
+        return [xp.asarray(a, device=device_) for a in arrays]
+    else:
+        return arrays
 
 
 class _ArrayAPIWrapper:
@@ -271,13 +299,19 @@ def _accept_device_cpu(func):
 class _NumPyAPIWrapper:
     """Array API compat wrapper for any numpy version
 
-    NumPy < 1.22 does not expose the numpy.array_api namespace. This
-    wrapper makes it possible to write code that uses the standard
-    Array API while working with any version of NumPy supported by
-    scikit-learn.
+    NumPy < 2 does not implement the namespace. NumPy 2 and later should
+    progressively implement more an more of the latest Array API spec but this
+    is still work in progress at this time.
+
+    This wrapper makes it possible to write code that uses the standard Array
+    API while working with any version of NumPy supported by scikit-learn.
 
     See the `get_namespace()` public function for more details.
     """
+
+    # TODO: once scikit-learn drops support for NumPy < 2, this class can be
+    # removed, assuming Array API compliance of NumPy 2 is actually sufficient
+    # for scikit-learn's needs.
 
     # Creation functions in spec:
     # https://data-apis.org/array-api/latest/API_specification/creation_functions.html
@@ -418,18 +452,15 @@ def _remove_non_arrays(*arrays, remove_none=True, remove_types=(str,)):
 def get_namespace(*arrays, remove_none=True, remove_types=(str,), xp=None):
     """Get namespace of arrays.
 
-    Introspect `arrays` arguments and return their common Array API
-    compatible namespace object, if any. NumPy 1.22 and later can
-    construct such containers using the `numpy.array_api` namespace
-    for instance.
+    Introspect `arrays` arguments and return their common Array API compatible
+    namespace object, if any.
 
     See: https://numpy.org/neps/nep-0047-array-api-standard.html
 
-    If `arrays` are regular numpy arrays, an instance of the
-    `_NumPyAPIWrapper` compatibility wrapper is returned instead.
+    If `arrays` are regular numpy arrays, an instance of the `_NumPyAPIWrapper`
+    compatibility wrapper is returned instead.
 
-    Namespace support is not enabled by default. To enabled it
-    call:
+    Namespace support is not enabled by default. To enabled it call:
 
       sklearn.set_config(array_api_dispatch=True)
 
@@ -438,10 +469,9 @@ def get_namespace(*arrays, remove_none=True, remove_types=(str,), xp=None):
       with sklearn.config_context(array_api_dispatch=True):
           # your code here
 
-    Otherwise an instance of the `_NumPyAPIWrapper`
-    compatibility wrapper is always returned irrespective of
-    the fact that arrays implement the `__array_namespace__`
-    protocol or not.
+    Otherwise an instance of the `_NumPyAPIWrapper` compatibility wrapper is
+    always returned irrespective of the fact that arrays implement the
+    `__array_namespace__` protocol or not.
 
     Parameters
     ----------
@@ -495,7 +525,7 @@ def get_namespace(*arrays, remove_none=True, remove_types=(str,), xp=None):
 
     # These namespaces need additional wrapping to smooth out small differences
     # between implementations
-    if namespace.__name__ in {"numpy.array_api", "cupy.array_api"}:
+    if namespace.__name__ in {"cupy.array_api"}:
         namespace = _ArrayAPIWrapper(namespace)
 
     return namespace, is_array_api_compliant
@@ -734,3 +764,27 @@ def _estimator_with_converted_arrays(estimator, converter):
 def _atol_for_type(dtype):
     """Return the absolute tolerance for a given numpy dtype."""
     return numpy.finfo(dtype).eps * 100
+
+
+def indexing_dtype(xp):
+    """Return a platform-specific integer dtype suitable for indexing.
+
+    On 32-bit platforms, this will typically return int32 and int64 otherwise.
+
+    Note: using dtype is recommended for indexing transient array
+    datastructures. For long-lived arrays, such as the fitted attributes of
+    estimators, it is instead recommended to use platform-independent int32 if
+    we do not expect to index more 2B elements. Using fixed dtypes simplifies
+    the handling of serialized models, e.g. to deploy a model fit on a 64-bit
+    platform to a target 32-bit platform such as WASM/pyodide.
+    """
+    # Currently this is implemented with simple hack that assumes that
+    # following "may be" statements in the Array API spec always hold:
+    # > The default integer data type should be the same across platforms, but
+    # > the default may vary depending on whether Python is 32-bit or 64-bit.
+    # > The default array index data type may be int32 on 32-bit platforms, but
+    # > the default should be int64 otherwise.
+    # https://data-apis.org/array-api/latest/API_specification/data_types.html#default-data-types
+    # TODO: once sufficiently adopted, we might want to instead rely on the
+    # newer inspection API: https://github.com/data-apis/array-api/issues/640
+    return xp.asarray(0).dtype
