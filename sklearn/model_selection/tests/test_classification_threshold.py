@@ -535,19 +535,26 @@ def test_tunedthresholdclassifier_limit_metric_tradeoff(metrics):
 
 def test_tunedthresholdclassifier_metric_with_parameter():
     """Check that we can pass a metric with a parameter in addition check that
-    `f_beta with beta=1` is equivalent to `f1`.
+    `f_beta` with `beta=1` is equivalent to `f1` and different from `f_beta` with
+    `beta=2`.
     """
     X, y = load_breast_cancer(return_X_y=True)
     lr = make_pipeline(StandardScaler(), LogisticRegression()).fit(X, y)
-    model_fbeta = TunedThresholdClassifier(
+    model_fbeta_1 = TunedThresholdClassifier(
         estimator=lr, objective_metric=make_scorer(fbeta_score, beta=1)
+    ).fit(X, y)
+    model_fbeta_2 = TunedThresholdClassifier(
+        estimator=lr, objective_metric=make_scorer(fbeta_score, beta=2)
     ).fit(X, y)
     model_f1 = TunedThresholdClassifier(
         estimator=lr, objective_metric=make_scorer(f1_score)
     ).fit(X, y)
 
-    assert model_fbeta.decision_threshold_ == pytest.approx(
+    assert model_fbeta_1.decision_threshold_ == pytest.approx(
         model_f1.decision_threshold_
+    )
+    assert model_fbeta_1.decision_threshold_ != pytest.approx(
+        model_fbeta_2.decision_threshold_
     )
 
 
