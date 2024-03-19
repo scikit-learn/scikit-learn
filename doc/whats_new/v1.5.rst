@@ -113,7 +113,7 @@ Changelog
 - |Feature| Added the ability to store and access the list of lower bounds for
   each iteration in the `BaseMixture` class, providing insights into the convergence
   behavior of mixture models like `GaussianMixture`.
-  :pr:`28559` by :user:`myenugula`.
+  :pr:`28559` by :user:`Manideep Yenugula <myenugula>`.
 
 :mod:`sklearn.cluster`
 ......................
