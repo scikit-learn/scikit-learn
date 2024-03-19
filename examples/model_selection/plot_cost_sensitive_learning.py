@@ -380,10 +380,10 @@ print(f"Business defined metric: {scoring['cost_gain'](tuned_model, X_test, y_te
 # These two strategies can be changed by providing the `refit` and `cv` parameters.
 # For instance, one could provide a fitted `estimator` and set `cv="prefit"`, in which
 # case the cut-off point is found on the entire dataset provided at fitting time.
-# Also, the underlying classifier is not be refitted. Here, we can try to do such
-# experiment.
+# Also, the underlying classifier is not be refitted by setting `refit=False`. Here, we
+# can try to do such experiment.
 model.fit(X_train, y_train)
-tuned_model.set_params(cv="prefit").fit(X_train, y_train)
+tuned_model.set_params(cv="prefit", refit=False).fit(X_train, y_train)
 
 
 # %%

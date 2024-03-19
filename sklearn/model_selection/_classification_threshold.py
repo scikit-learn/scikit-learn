@@ -157,10 +157,9 @@ def _estimator_has(attr):
     def check(self):
         if hasattr(self, "estimator_"):
             getattr(self.estimator_, attr)
-            return True
         else:
             getattr(self.estimator, attr)
-            return True
+        return True
 
     return check
 
@@ -358,12 +357,10 @@ class TunedThresholdClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimato
             different from the one used to tune the cut-off point (by calling
             :meth:`TunedThresholdClassifier.fit`).
 
-    refit : "auto" or bool, default="auto"
+    refit : bool, default=True
         Whether or not to refit the classifier on the entire training set once
-        the decision threshold has been found. By default, `refit="auto"` is
-        equivalent to `refit=False` when `cv` is a float number using a single
-        shuffle split or `cv="prefit"` otherwise `refit=True` in all other
-        cases. Note that forcing `refit=False` on cross-validation having more
+        the decision threshold has been found.
+        Note that forcing `refit=False` on cross-validation having more
         than a single split will raise an error. Similarly, `refit=True` in
         conjunction with `cv="prefit"` will raise an error.
 
@@ -491,9 +488,9 @@ class TunedThresholdClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimato
         "cv": [
             "cv_object",
             StrOptions({"prefit"}),
-            Interval(RealNotInt, 0.0, 1.0, closed="right"),
+            Interval(RealNotInt, 0.0, 1.0, closed="neither"),
         ],
-        "refit": ["boolean", StrOptions({"auto"})],
+        "refit": ["boolean"],
         "n_jobs": [Integral, None],
         "random_state": ["random_state"],
     }
@@ -510,7 +507,7 @@ class TunedThresholdClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimato
         response_method="auto",
         n_thresholds=100,
         cv=None,
-        refit="auto",
+        refit=True,
         n_jobs=None,
         random_state=None,
     ):
@@ -562,11 +559,10 @@ class TunedThresholdClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimato
                 f"Only binary classification is supported. Unknown label type: {y_type}"
             )
 
-        if isinstance(self.cv, Real) and 0 < self.cv <= 1:
+        if isinstance(self.cv, Real) and 0 < self.cv < 1:
             cv = StratifiedShuffleSplit(
                 n_splits=1, test_size=self.cv, random_state=self.random_state
             )
-            refit = False if self.refit == "auto" else self.refit
         elif self.cv == "prefit":
             if self.refit is True:
                 raise ValueError("When cv='prefit', refit cannot be True.")
@@ -576,15 +572,11 @@ class TunedThresholdClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimato
                 raise NotFittedError(
                     """When cv='prefit', `estimator` must be fitted."""
                 ) from exc
-            cv, refit = self.cv, False
+            cv = self.cv
         else:
             cv = check_cv(self.cv, y=y, classifier=True)
             if self.refit is False and cv.get_n_splits() > 1:
                 raise ValueError("When cv has several folds, refit cannot be False.")
-            if self.refit == "auto":
-                refit = cv.get_n_splits() > 1
-            else:
-                refit = self.refit
 
         if self.response_method == "auto":
             self._response_method = ["predict_proba", "decision_function"]
@@ -624,7 +616,7 @@ class TunedThresholdClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimato
             classifier = clone(self.estimator)
             splits = cv.split(X, y, **routed_params.splitter.split)
 
-            if refit:
+            if self.refit:
                 # train on the whole dataset
                 X_train, y_train, fit_params_train = X, y, routed_params.estimator.fit
             else:

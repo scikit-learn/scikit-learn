@@ -778,6 +778,7 @@ def test_tunedthresholdclassifier_pos_label_precision_recall(
         objective_metric=objective_metric,
         constraint_value=constraint_value,
         cv="prefit",
+        refit=False,
         pos_label=pos_label,
     ).fit(X, y)
 
@@ -811,6 +812,7 @@ def test_tunedthresholdclassifier_pos_label_tnr_tpr(objective_metric, pos_label)
         objective_metric=objective_metric,
         constraint_value=constraint_value,
         cv="prefit",
+        refit=False,
         pos_label=pos_label,
     ).fit(X, y)
 
@@ -859,6 +861,7 @@ def test_tunedthresholdclassifier_pos_label_single_metric(pos_label, metric_type
         estimator,
         objective_metric=objective_metric,
         cv="prefit",
+        refit=False,
         pos_label=pos_label,
         n_thresholds=500,
     ).fit(X, y)
