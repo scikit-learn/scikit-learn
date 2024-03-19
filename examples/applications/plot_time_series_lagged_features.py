@@ -273,10 +273,8 @@ styled_df = pl.DataFrame(scores)
 
 def extract_numeric(col):
     col_split = pl.col(col).str.split(by=" ")
-    return (
-        pl.concat_str([col_split.list.get(0), col_split.list.get(2)], separator=" ")
-        .str.split(" ")
-        .cast(pl.List(pl.Float64))
+    return pl.concat_list([col_split.list.get(0), col_split.list.get(2)]).cast(
+        pl.List(pl.Float64)
     )
 
 
