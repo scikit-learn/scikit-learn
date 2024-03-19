@@ -197,7 +197,9 @@ def check_pairwise_arrays(
                 "(n_queries, n_indexed). Got (%d, %d) "
                 "for %d indexed." % (X.shape[0], X.shape[1], Y.shape[0])
             )
-    elif X.ndim == 2 and X.shape[1] != Y.shape[1]:
+    elif ensure_2d and X.shape[1] != Y.shape[1]:
+        # Only check the number of features if 2d arrays are enforced. Otherwise,
+        # validation is left to the user for custom metrics.
         raise ValueError(
             "Incompatible dimension for X and Y matrices: "
             "X.shape[1] == %d while Y.shape[1] == %d" % (X.shape[1], Y.shape[1])
