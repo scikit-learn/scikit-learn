@@ -298,8 +298,8 @@ def handle_global_random_seed(config):
     # SKLEARN_TESTS_GLOBAL_RANDOM_SEED == 'any' case to generate a random seed
     # in the xdist controller and reuse it in the xdist workers.
     if random_seed_var == "any":
-        # inside the xdist controller: pick-up one seed at random in the range
-        # of admissible random seeds.
+        # Inside the xdist controller, or when xdist is disabled: pick-up one
+        # seed at random in the range of admissible random seeds.
         if is_xdist_controller(config):
             random_seeds = [Random().choice(RANDOM_SEED_RANGE)]
         else:
