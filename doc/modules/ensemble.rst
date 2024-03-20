@@ -146,9 +146,13 @@ models.
 |details-split|
 
 **Regression**: In the case of regression, the leaf weight is a continuous value
-that directly contributes to the model's prediction for a given input. The final
-prediction is the sum of the base prediction and the contributions from each
-tree. As regression gradient boosting models grow one tree per iteration, then
+that contributes to the model's prediction for a given input that ends up in a
+given leaf. The final prediction is the sum of the base prediction and the
+contributions from each tree. The result of that sum is then transformed by the
+inverse link function depending on the choice of the loss function, e.g. the
+exponential function is applied if the loss of the regressor is Poisson loss.
+
+As regression gradient boosting models grow one tree per iteration, then
 :math:`k` goes from 1 to `max_iter`.
 
 **Classification**: For classification, the leaf weight is a continuous value
