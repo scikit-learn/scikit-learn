@@ -18,7 +18,7 @@ ctypedef unsigned long long uint64_t
 # Note: In NumPy 2, indexing always happens with npy_intp which is an alias for
 # the Py_ssize_t type, see PEP 353.
 #
-# Note that on most platforms Py_ssize_t is equivalent to C99's intptr_t),
+# Note that on most platforms Py_ssize_t is equivalent to C99's intptr_t,
 # but they can differ on architecture with segmented memory (none
 # supported by scikit-learn at the time of writing).
 #
