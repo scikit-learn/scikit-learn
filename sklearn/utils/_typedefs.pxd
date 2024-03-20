@@ -15,7 +15,19 @@
 ctypedef unsigned char uint8_t
 ctypedef unsigned int uint32_t
 ctypedef unsigned long long uint64_t
-# Note: As of numpy 2.0, np.intp = Py_ssize_t.
+# Note: In NumPy 2, indexing always happens with npy_intp which is an alias for
+# the Py_ssize_t type, see PEP 353.
+#
+# Note that on most platforms Py_ssize_t is equivalent to C99's intptr_t),
+# but they can differ on architecture with segmented memory (none
+# supported by scikit-learn at the time of writing).
+#
+# intp_t/np.intp should be used to index arrays in a platform dependent way.
+# Storing arrays with platform dependent dtypes as attribute on picklable
+# objects is not recommended as it requires special care when loading and
+# using such datastructures on a host with different bitness. Instead one
+# should rather use fixed width integer types such as int32 or uint32 when we know
+# that the number of elements to index is not larger to 2 or 4 billions.
 ctypedef Py_ssize_t intp_t
 ctypedef float float32_t
 ctypedef double float64_t
