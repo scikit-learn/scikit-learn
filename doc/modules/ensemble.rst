@@ -127,10 +127,10 @@ equation (2) of [XGBoost]_):
       \mathcal{L}(\phi) =  \sum_i l(\hat{y}_i, y_i) + \sum_k \Omega(f_k) \\
       \text{where} ~ \Omega(f_k) = \gamma T_k  + \frac12 \lambda ||w_k||^2
 
-Here :math:`l` is the loss function; :math:`T` is the number of leaves in the
+Here :math:`l` is the loss function; :math:`T_k` is the number of leaves in the
 tree; :math:`f_k` corresponds to the k-th tree in the ensemble of trees (such
 that :math:`\hat{y}_i=\phi(x_i)=\sum_k f_k(x_i)`); and :math:`w_k` is a vector
-of lenght :math:`T` containing the leaf weights.
+of length :math:`T_k` containing the leaf weights.
 
 Notice that :math:`\gamma` penalizes the number of leaves (which makes it a
 smooth version of `max_leaf_nodes` and is not implemented in scikit-learn),
