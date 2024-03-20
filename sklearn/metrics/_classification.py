@@ -197,11 +197,6 @@ def accuracy_score(y_true, y_pred, *, normalize=True, sample_weight=None):
     zero_one_loss : Compute the Zero-one classification loss. By default, the
         function will return the percentage of imperfectly predicted subsets.
 
-    Notes
-    -----
-    In binary classification, this function is equal to the `jaccard_score`
-    function.
-
     Examples
     --------
     >>> from sklearn.metrics import accuracy_score
