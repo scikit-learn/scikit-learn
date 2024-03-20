@@ -944,6 +944,13 @@ def test_tuned_threshold_classifier_cv_float():
 
     assert_allclose(tuned_model.estimator_.coef_, cloned_estimator.coef_)
 
+    # case where `refit=True`, then the underlying estimator is fitted on the full
+    # dataset.
+    tuned_model.set_params(refit=True).fit(X, y)
+    cloned_estimator = clone(estimator).fit(X, y)
+
+    assert_allclose(tuned_model.estimator_.coef_, cloned_estimator.coef_)
+
 
 @pytest.mark.parametrize(
     "objective_metric",
