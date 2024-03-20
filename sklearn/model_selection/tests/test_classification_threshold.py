@@ -23,7 +23,7 @@ from sklearn.metrics import (
     recall_score,
     roc_curve,
 )
-from sklearn.model_selection import TunedThresholdClassifier
+from sklearn.model_selection import StratifiedShuffleSplit, TunedThresholdClassifier
 from sklearn.model_selection._classification_threshold import (
     _ContinuousScorer,
     _fit_and_score_over_thresholds,
@@ -98,7 +98,7 @@ def test_continuous_scorer_pos_label(global_random_seed):
         recall_score,
         sign=1,
         response_method="predict_proba",
-        n_thresholds=1000,
+        n_thresholds=1_000,
         kwargs={"pos_label": 1},
     )
     thresholds_pos_label_1, scores_pos_label_1 = scorer(estimator, X, y)
@@ -107,7 +107,7 @@ def test_continuous_scorer_pos_label(global_random_seed):
         recall_score,
         sign=1,
         response_method="predict_proba",
-        n_thresholds=1000,
+        n_thresholds=1_000,
         kwargs={"pos_label": 0},
     )
     thresholds_pos_label_0, scores_pos_label_0 = scorer(estimator, X, y)
@@ -407,7 +407,7 @@ def test_fit_and_score_over_thresholds_fit_params(
         make_multilabel_classification(random_state=0),
     ],
 )
-def test_tunedthresholdclassifier_no_binary(data):
+def test_tuned_threshold_classifier_no_binary(data):
     """Check that we raise an informative error message for non-binary problem."""
     err_msg = "Only binary classification is supported."
     with pytest.raises(ValueError, match=err_msg):
@@ -435,7 +435,7 @@ def test_tunedthresholdclassifier_no_binary(data):
     ],
 )
 @pytest.mark.parametrize("strategy", ["optimum", "constant"])
-def test_tunedthresholdclassifier_conflict_cv_refit(
+def test_tuned_threshold_classifier_conflict_cv_refit(
     strategy, params, err_type, err_msg
 ):
     """Check that we raise an informative error message when `cv` and `refit`
@@ -456,7 +456,7 @@ def test_tunedthresholdclassifier_conflict_cv_refit(
     "response_method", ["predict_proba", "predict_log_proba", "decision_function"]
 )
 @pytest.mark.parametrize("strategy", ["optimum", "constant"])
-def test_tunedthresholdclassifier_estimator_response_methods(
+def test_tuned_threshold_classifier_estimator_response_methods(
     estimator, strategy, response_method
 ):
     """Check that `TunedThresholdClassifier` exposes the same response methods as the
@@ -480,7 +480,7 @@ def test_tunedthresholdclassifier_estimator_response_methods(
 @pytest.mark.parametrize(
     "response_method", ["auto", "decision_function", "predict_proba"]
 )
-def test_tunedthresholdclassifier_without_constraint_value(response_method):
+def test_tuned_threshold_classifier_without_constraint_value(response_method):
     """Check that `TunedThresholdClassifier` is optimizing a given objective metric."""
     X, y = load_breast_cancer(return_X_y=True)
     # remove feature to degrade performances
@@ -516,7 +516,7 @@ def test_tunedthresholdclassifier_without_constraint_value(response_method):
         ("max_tnr_at_tpr_constraint", "max_tpr_at_tnr_constraint"),
     ],
 )
-def test_tunedthresholdclassifier_limit_metric_tradeoff(metrics):
+def test_tuned_threshold_classifier_limit_metric_tradeoff(metrics):
     """Check that an objective value of 0 give opposite predictions with tnr/tpr and
     precision/recall.
     """
@@ -533,7 +533,7 @@ def test_tunedthresholdclassifier_limit_metric_tradeoff(metrics):
     assert np.mean(y_pred_1 == y_pred_2) > 0.98
 
 
-def test_tunedthresholdclassifier_metric_with_parameter():
+def test_tuned_threshold_classifier_metric_with_parameter():
     """Check that we can pass a metric with a parameter in addition check that
     `f_beta` with `beta=1` is equivalent to `f1` and different from `f_beta` with
     `beta=2`.
@@ -572,7 +572,7 @@ def test_tunedthresholdclassifier_metric_with_parameter():
         make_scorer(f1_score, pos_label="cancer"),
     ],
 )
-def test_tunedthresholdclassifier_with_string_targets(response_method, metric):
+def test_tuned_threshold_classifier_with_string_targets(response_method, metric):
     """Check that targets represented by str are properly managed.
     Also, check with several metrics to be sure that `pos_label` is properly
     dispatched.
@@ -599,7 +599,7 @@ def test_tunedthresholdclassifier_with_string_targets(response_method, metric):
 @pytest.mark.usefixtures("enable_slep006")
 @pytest.mark.parametrize("strategy", ["optimum", "constant"])
 @pytest.mark.parametrize("with_sample_weight", [True, False])
-def test_tunedthresholdclassifier_refit(
+def test_tuned_threshold_classifier_refit(
     strategy, with_sample_weight, global_random_seed
 ):
     """Check the behaviour of the `refit` parameter."""
@@ -663,7 +663,7 @@ def test_tunedthresholdclassifier_refit(
     ],
 )
 @pytest.mark.parametrize("fit_params_type", ["list", "array"])
-def test_tunedthresholdclassifier_fit_params(objective_metric, fit_params_type):
+def test_tuned_threshold_classifier_fit_params(objective_metric, fit_params_type):
     """Check that we pass `fit_params` to the classifier when calling `fit`."""
     X, y = make_classification(n_samples=100, random_state=0)
     fit_params = {
@@ -691,7 +691,7 @@ def test_tunedthresholdclassifier_fit_params(objective_metric, fit_params_type):
 @pytest.mark.parametrize(
     "response_method", ["auto", "decision_function", "predict_proba"]
 )
-def test_tunedthresholdclassifier_response_method_scorer_with_constraint_metric(
+def test_tuned_threshold_classifier_response_method_scorer_with_constraint_metric(
     objective_metric, constraint_value, response_method, global_random_seed
 ):
     """Check that we use the proper scorer and forwarding the requested response method
@@ -736,7 +736,7 @@ def test_tunedthresholdclassifier_response_method_scorer_with_constraint_metric(
 
 
 @pytest.mark.usefixtures("enable_slep006")
-def test_tunedthresholdclassifier_cv_zeros_sample_weights_equivalence():
+def test_tuned_threshold_classifier_cv_zeros_sample_weights_equivalence():
     """Check that passing removing some sample from the dataset `X` is
     equivalent to passing a `sample_weight` with a factor 0."""
     X, y = load_iris(return_X_y=True)
@@ -765,7 +765,7 @@ def test_tunedthresholdclassifier_cv_zeros_sample_weights_equivalence():
     assert_allclose(y_pred_with_weights, y_pred_without_weights)
 
 
-def test_tunedthresholdclassifier_error_constant_learner():
+def test_tuned_threshold_classifier_error_constant_learner():
     """Check that we raise an error message when providing an estimator that predicts
     only a single class."""
     X, y = make_classification(random_state=0)
@@ -780,7 +780,7 @@ def test_tunedthresholdclassifier_error_constant_learner():
     ["max_precision_at_recall_constraint", "max_recall_at_precision_constraint"],
 )
 @pytest.mark.parametrize("pos_label", [0, 1])
-def test_tunedthresholdclassifier_pos_label_precision_recall(
+def test_tuned_threshold_classifier_pos_label_precision_recall(
     objective_metric, pos_label
 ):
     """Check that `pos_label` is dispatched correctly by checking the precision and
@@ -816,7 +816,7 @@ def test_tunedthresholdclassifier_pos_label_precision_recall(
     "objective_metric", ["max_tnr_at_tpr_constraint", "max_tpr_at_tnr_constraint"]
 )
 @pytest.mark.parametrize("pos_label", [0, 1])
-def test_tunedthresholdclassifier_pos_label_tnr_tpr(objective_metric, pos_label):
+def test_tuned_threshold_classifier_pos_label_tnr_tpr(objective_metric, pos_label):
     """Check that `pos_label` is dispatched correctly by checking the TNR and TPR
     score found during the optimization and the one found at `predict` time."""
     X, y = make_classification(n_samples=5_000, weights=[0.6, 0.4], random_state=42)
@@ -858,7 +858,7 @@ def test_tunedthresholdclassifier_pos_label_tnr_tpr(objective_metric, pos_label)
     ["string", "scorer_without_pos_label", "scorer_with_pos_label"],
 )
 @pytest.mark.parametrize("pos_label", [0, 1])
-def test_tunedthresholdclassifier_pos_label_single_metric(pos_label, metric_type):
+def test_tuned_threshold_classifier_pos_label_single_metric(pos_label, metric_type):
     """Check that `pos_label` is dispatched correctly when getting a scorer linked to
     a known metric. By default, the scorer in scikit-learn only have a default value
     for `pos_label` which is 1.
@@ -892,7 +892,7 @@ def test_tunedthresholdclassifier_pos_label_single_metric(pos_label, metric_type
     "predict_method",
     ["predict", "predict_proba", "decision_function", "predict_log_proba"],
 )
-def test_tunedthresholdclassifier_constant_strategy(predict_method):
+def test_tuned_threshold_classifier_constant_strategy(predict_method):
     """Check the behavior when `strategy='contant'."""
     X, y = make_classification(n_samples=100, weights=[0.6, 0.4], random_state=42)
 
@@ -910,3 +910,55 @@ def test_tunedthresholdclassifier_constant_strategy(predict_method):
     assert_allclose(
         getattr(tuned_model, predict_method)(X), getattr(estimator, predict_method)(X)
     )
+
+
+def test_tuned_threshold_classifier_n_thresholds_array():
+    """Check that we can pass an array to `n_thresholds` and it is used as candidate
+    threshold internally."""
+    X, y = make_classification(random_state=0)
+    estimator = LogisticRegression()
+    n_thresholds = np.linspace(0, 1, 11)
+    tuned_model = TunedThresholdClassifier(
+        estimator, n_thresholds=n_thresholds, response_method="predict_proba"
+    ).fit(X, y)
+    assert_allclose(tuned_model.decision_thresholds_, n_thresholds)
+
+
+def test_tuned_threshold_classifier_cv_float():
+    """Check the behaviour when `cv` is set to a float."""
+    X, y = make_classification(random_state=0)
+
+    # case where `refit=False` and cv is a float: the underlying estimator will be fit
+    # on the training set given by a ShuffleSplit. We check that we get the same model
+    # coefficients.
+    test_size = 0.3
+    estimator = LogisticRegression()
+    tuned_model = TunedThresholdClassifier(
+        estimator, cv=test_size, refit=False, random_state=0
+    ).fit(X, y)
+    tuned_model.fit(X, y)
+
+    cv = StratifiedShuffleSplit(n_splits=1, test_size=test_size, random_state=0)
+    train_idx, val_idx = next(cv.split(X, y))
+    cloned_estimator = clone(estimator).fit(X[train_idx], y[train_idx])
+
+    assert_allclose(tuned_model.estimator_.coef_, cloned_estimator.coef_)
+
+
+@pytest.mark.parametrize(
+    "objective_metric",
+    [
+        "max_tpr_at_tnr_constraint",
+        "max_tnr_at_tpr_constraint",
+        "max_precision_at_recall_constraint",
+        "max_recall_at_precision_constraint",
+    ],
+)
+def test_tuned_threshold_classifier_error_missing_constraint(objective_metric):
+    """Check that we raise an informative error when using a objective metric requested
+    a constraint but no `constraint_value` is provided."""
+    X, y = make_classification(random_state=0)
+    estimator = LogisticRegression()
+    tuned_model = TunedThresholdClassifier(estimator, objective_metric=objective_metric)
+    with pytest.raises(ValueError, match="`constraint_value` must be provided"):
+        tuned_model.fit(X, y)
