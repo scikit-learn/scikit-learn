@@ -31,3 +31,6 @@ thus form a function that is piecewise linear:
 .. figure:: ../auto_examples/miscellaneous/images/sphx_glr_plot_isotonic_regression_001.png
    :target: ../auto_examples/miscellaneous/plot_isotonic_regression.html
    :align: center
+
+For implementation of Isotonic regression using scikit-learn:
+:ref:`sphx_glr_auto_examples_miscellaneous_plot_isotonic_regression.py`
