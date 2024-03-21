@@ -35,10 +35,10 @@ cdef struct ParentInfo:
     # Structure to store information about the parent of a node
     # This is passed to the splitter, to provide information about the previous split
 
-    intp_t n_constant_features      # the number of constant features found in parent
     float64_t lower_bound           # the lower bound of the parent's impurity
     float64_t upper_bound           # the upper bound of the parent's impurity
     float64_t impurity              # the impurity of the parent
+    intp_t n_constant_features      # the number of constant features found in parent
 
 cdef class Tree:
     # The Tree object is a binary tree structure constructed by the
@@ -57,7 +57,7 @@ cdef class Tree:
     cdef public intp_t node_count        # Counter for node IDs
     cdef public intp_t capacity          # Capacity of tree, in terms of nodes
     cdef Node* nodes                     # Array of nodes
-    cdef float64_t* value                   # (capacity, n_outputs, max_n_classes) array of values
+    cdef float64_t* value                # (capacity, n_outputs, max_n_classes) array of values
     cdef intp_t value_stride             # = n_outputs * max_n_classes
 
     # Methods

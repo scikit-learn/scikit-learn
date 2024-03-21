@@ -310,12 +310,12 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
                         # Current bounds must always be propagated to both children.
                         # If a monotonic constraint is active, bounds are used in
                         # node value clipping.
-                        left_child_min = right_child_min = lower_bound
-                        left_child_max = right_child_max = upper_bound
+                        left_child_min = right_child_min = parent_record.lower_bound
+                        left_child_max = right_child_max = parent_record.upper_bound
                     elif splitter.monotonic_cst[split.feature] == 1:
                         # Split on a feature with monotonic increase constraint
-                        left_child_min = lower_bound
-                        right_child_max = upper_bound
+                        left_child_min = parent_record.lower_bound
+                        right_child_max = parent_record.upper_bound
 
                         # Lower bound for right child and upper bound for left child
                         # are set to the same value.
@@ -324,8 +324,8 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
                         left_child_max = middle_value
                     else:  # i.e. splitter.monotonic_cst[split.feature] == -1
                         # Split on a feature with monotonic decrease constraint
-                        right_child_min = lower_bound
-                        left_child_max = upper_bound
+                        right_child_min = parent_record.lower_bound
+                        left_child_max = parent_record.upper_bound
 
                         # Lower bound for left child and upper bound for right child
                         # are set to the same value.
