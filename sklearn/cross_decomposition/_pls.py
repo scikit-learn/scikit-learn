@@ -161,6 +161,28 @@ def _svd_flip_1d(u, v):
     v *= sign
 
 
+# TODO(1.7): Remove
+def _deprecate_Y_when_optional(y, Y):
+    if Y is not None:
+        warnings.warn(
+            "`Y` is deprecated in 1.5 and will be removed in 1.7. Use `y` instead.",
+            FutureWarning,
+        )
+        if y is not None:
+            raise ValueError(
+                "Cannot use both `y` and `Y`. Use only `y` as `Y` is deprecated."
+            )
+        return Y
+    return y
+
+
+# TODO(1.7): Remove
+def _deprecate_Y_when_required(y, Y):
+    if y is None and Y is None:
+        raise ValueError("y is required.")
+    return _deprecate_Y_when_optional(y, Y)
+
+
 class _PLS(
     ClassNamePrefixFeaturesOutMixin,
     TransformerMixin,
@@ -237,19 +259,7 @@ class _PLS(
         self : object
             Fitted model.
         """
-        if Y is not None:
-            warnings.warn(
-                "`Y` is deprecated in 1.5 and will be removed in 1.7. Use `y` instead.",
-                FutureWarning,
-            )
-            if y is not None:
-                raise ValueError(
-                    "Cannot use both `y` and `Y`. Use only `y` as `Y` is deprecated."
-                )
-            y = Y
-        # Needed to deprecate Y
-        if y is None and Y is None:
-            raise ValueError("y is required.")
+        y = _deprecate_Y_when_required(y, Y)
 
         check_consistent_length(X, y)
         X = self._validate_data(
@@ -366,7 +376,7 @@ class _PLS(
         # Xi . Gamma.T is a sum of n_components rank-1 matrices. X_(R+1) is
         # whatever is left to fully reconstruct X, and can be 0 if X is of rank
         # n_components.
-        # Similarly, y was approximated as Omega . Delta.T + Y_(R+1)
+        # Similarly, y was approximated as Omega . Delta.T + y_(R+1)
 
         # Compute transformation matrices (rotations_). See User Guide.
         self.x_rotations_ = np.dot(
@@ -408,16 +418,7 @@ class _PLS(
         x_scores, y_scores : array-like or tuple of array-like
             Return `x_scores` if `Y` is not given, `(x_scores, y_scores)` otherwise.
         """
-        if Y is not None:
-            warnings.warn(
-                "`Y` is deprecated in 1.5 and will be removed in 1.7. Use `y` instead.",
-                FutureWarning,
-            )
-            if y is not None:
-                raise ValueError(
-                    "Cannot use both `y` and `Y`. Use only `y` as `Y` is deprecated."
-                )
-            y = Y
+        y = _deprecate_Y_when_optional(y, Y)
 
         check_is_fitted(self)
         X = self._validate_data(X, copy=copy, dtype=FLOAT_DTYPES, reset=False)
@@ -471,16 +472,7 @@ class _PLS(
         -----
         This transformation will only be exact if `n_components=n_features`.
         """
-        if Y is not None:
-            warnings.warn(
-                "`Y` is deprecated in 1.5 and will be removed in 1.7. Use `y` instead.",
-                FutureWarning,
-            )
-            if y is not None:
-                raise ValueError(
-                    "Cannot use both `y` and `Y`. Use only `y` as `Y` is deprecated."
-                )
-            y = Y
+        y = _deprecate_Y_when_optional(y, Y)
 
         check_is_fitted(self)
         X = check_array(X, input_name="X", dtype=FLOAT_DTYPES)
@@ -708,19 +700,7 @@ class PLSRegression(_PLS):
         self : object
             Fitted model.
         """
-        if Y is not None:
-            warnings.warn(
-                "`Y` is deprecated in 1.5 and will be removed in 1.7. Use `y` instead.",
-                FutureWarning,
-            )
-            if y is not None:
-                raise ValueError(
-                    "Cannot use both `y` and `Y`. Use only `y` as `Y` is deprecated."
-                )
-            y = Y
-        # Needed to deprecate Y
-        if y is None and Y is None:
-            raise ValueError("y is required.")
+        y = _deprecate_Y_when_required(y, Y)
 
         super().fit(X, y)
         # expose the fitted attributes `x_scores_` and `y_scores_`
@@ -1074,20 +1054,7 @@ class PLSSVD(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
         self : object
             Fitted estimator.
         """
-        if Y is not None:
-            warnings.warn(
-                "`Y` is deprecated in 1.5 and will be removed in 1.7. Use `y` instead.",
-                FutureWarning,
-            )
-            if y is not None:
-                raise ValueError(
-                    "Cannot use both `y` and `Y`. Use only `y` as `Y` is deprecated."
-                )
-            y = Y
-        # Needed to deprecate Y
-        if y is None and Y is None:
-            raise ValueError("y is required.")
-
+        y = _deprecate_Y_when_required(y, Y)
         check_consistent_length(X, y)
         X = self._validate_data(
             X, dtype=np.float64, copy=self.copy, ensure_min_samples=2
@@ -1152,16 +1119,7 @@ class PLSSVD(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
             The transformed data `X_transformed` if `Y is not None`,
             `(X_transformed, Y_transformed)` otherwise.
         """
-        if Y is not None:
-            warnings.warn(
-                "`Y` is deprecated in 1.5 and will be removed in 1.7. Use `y` instead.",
-                FutureWarning,
-            )
-            if y is not None:
-                raise ValueError(
-                    "Cannot use both `y` and `Y`. Use only `y` as `Y` is deprecated."
-                )
-            y = Y
+        y = _deprecate_Y_when_optional(y, Y)
         check_is_fitted(self)
         X = self._validate_data(X, dtype=np.float64, reset=False)
         Xr = (X - self._x_mean) / self._x_std

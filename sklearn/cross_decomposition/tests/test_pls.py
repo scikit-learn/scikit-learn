@@ -682,16 +682,17 @@ def test_pls_transform_warning_on_deprecated_Y_argument(Klass):
     Y = d.target
     y = d.target
 
+    plsr = Klass().fit(X, y)
     msg = "`Y` is deprecated in 1.5 and will be removed in 1.7. Use `y` instead."
     with pytest.warns(FutureWarning, match=msg):
-        Klass().fit(X, Y).transform(X=X, Y=Y)
+        plsr.transform(X=X, Y=Y)
 
     err_msg1 = "Cannot use both `y` and `Y`. Use only `y` as `Y` is deprecated."
     with (
         pytest.warns(FutureWarning, match=msg),
         pytest.raises(ValueError, match=err_msg1),
     ):
-        Klass().fit(X, y).transform(X, y, Y)
+        plsr.transform(X, y, Y)
 
 
 # TODO(1.7): Remove
