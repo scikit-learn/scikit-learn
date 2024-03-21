@@ -240,7 +240,7 @@ class LatentDirichletAllocation(
         Total number of documents. Only used in the :meth:`partial_fit` method.
 
     perp_tol : float, default=1e-1
-        Perplexity tolerance in batch learning. Only used when
+        Perplexity tolerance. Only used when
         ``evaluate_every`` is greater than 0.
 
     mean_change_tol : float, default=1e-3
