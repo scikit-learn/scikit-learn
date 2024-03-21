@@ -1,10 +1,12 @@
 import numbers
+import sys
 import warnings
 from itertools import compress, islice
 
 import numpy as np
 from scipy.sparse import issparse
 
+from ._array_api import _is_numpy_namespace, get_namespace
 from ._param_validation import Interval, validate_params
 from .extmath import _approximate_mode
 from .validation import (
@@ -20,6 +22,9 @@ from .validation import (
 
 def _array_indexing(array, key, key_dtype, axis):
     """Index an array or scipy.sparse consistently across NumPy version."""
+    xp, is_array_api = get_namespace(array)
+    if is_array_api:
+        return xp.take(array, key, axis=axis)
     if issparse(array) and key_dtype == "bool":
         key = np.asarray(key)
     if isinstance(key, tuple):
@@ -58,12 +63,29 @@ def _polars_indexing(X, key, key_dtype, axis):
     """Indexing X with polars interchange protocol."""
     # Polars behavior is more consistent with lists
     if isinstance(key, np.ndarray):
+        # Convert each element of the array to a Python scalar
         key = key.tolist()
+    elif not (np.isscalar(key) or isinstance(key, slice)):
+        key = list(key)
 
     if axis == 1:
+        # Here we are certain to have a polars DataFrame; which can be indexed with
+        # integer and string scalar, and list of integer, string and boolean
         return X[:, key]
-    else:
-        return X[key]
+
+    if key_dtype == "bool":
+        # Boolean mask can be indexed in the same way for Series and DataFrame (axis=0)
+        return X.filter(key)
+
+    # Integer scalar and list of integer can be indexed in the same way for Series and
+    # DataFrame (axis=0)
+    X_indexed = X[key]
+    if np.isscalar(key) and len(X.shape) == 2:
+        # `X_indexed` is a DataFrame with a single row; we return a Series to be
+        # consistent with pandas
+        pl = sys.modules["polars"]
+        return pl.Series(X_indexed.row(0))
+    return X_indexed
 
 
 def _determine_key_type(key, accept_slice=True):
@@ -129,10 +151,22 @@ def _determine_key_type(key, accept_slice=True):
             raise ValueError(err_msg)
         return key_type.pop()
     if hasattr(key, "dtype"):
-        try:
-            return array_dtype_to_str[key.dtype.kind]
-        except KeyError:
-            raise ValueError(err_msg)
+        xp, is_array_api = get_namespace(key)
+        # NumPy arrays are special-cased in their own branch because the Array API
+        # cannot handle object/string-based dtypes that are often used to index
+        # columns of dataframes by names.
+        if is_array_api and not _is_numpy_namespace(xp):
+            if xp.isdtype(key.dtype, "bool"):
+                return "bool"
+            elif xp.isdtype(key.dtype, "integral"):
+                return "int"
+            else:
+                raise ValueError(err_msg)
+        else:
+            try:
+                return array_dtype_to_str[key.dtype.kind]
+            except KeyError:
+                raise ValueError(err_msg)
     raise ValueError(err_msg)
 
 
@@ -204,11 +238,11 @@ def _safe_indexing(X, indices, *, axis=0):
     if axis == 1 and isinstance(X, list):
         raise ValueError("axis=1 is not supported for lists")
 
-    if axis == 1 and hasattr(X, "ndim") and X.ndim != 2:
+    if axis == 1 and hasattr(X, "shape") and len(X.shape) != 2:
         raise ValueError(
-            "'X' should be a 2D NumPy array, 2D sparse matrix or pandas "
+            "'X' should be a 2D NumPy array, 2D sparse matrix or "
             "dataframe when indexing the columns (i.e. 'axis=1'). "
-            "Got {} instead with {} dimension(s).".format(type(X), X.ndim)
+            "Got {} instead with {} dimension(s).".format(type(X), len(X.shape))
         )
 
     if (
@@ -221,8 +255,8 @@ def _safe_indexing(X, indices, *, axis=0):
         )
 
     if hasattr(X, "iloc"):
-        # TODO: we should probably use _is_pandas_df(X) instead but this would
-        # require updating some tests such as test_train_test_split_mock_pandas.
+        # TODO: we should probably use _is_pandas_df_or_series(X) instead but this
+        # would require updating some tests such as test_train_test_split_mock_pandas.
         return _pandas_indexing(X, indices, indices_dtype, axis=axis)
     elif _is_polars_df_or_series(X):
         return _polars_indexing(X, indices, indices_dtype, axis=axis)
