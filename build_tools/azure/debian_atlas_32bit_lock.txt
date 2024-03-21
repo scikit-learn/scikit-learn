@@ -6,15 +6,15 @@
 #
 attrs==23.2.0
     # via pytest
-coverage==7.4.3
+coverage==7.4.4
     # via pytest-cov
-cython==3.0.8
+cython==3.0.9
     # via -r build_tools/azure/debian_atlas_32bit_requirements.txt
 iniconfig==2.0.0
     # via pytest
 joblib==1.2.0
     # via -r build_tools/azure/debian_atlas_32bit_requirements.txt
-packaging==23.2
+packaging==24.0
     # via pytest
 pluggy==1.4.0
     # via pytest

@@ -25,10 +25,27 @@ Version 1.5.0
 Changed models
 --------------
 
-- |Efficiency| :class:`preprocessing.QuantileTransformer` now modifies subsampling
-  and improves efficiency for dense matrices. Note the samples used to compute
-  quantiles will be different leading to a change in when calling `transform`.
+- |Efficiency| The subsampling in :class:`preprocessing.QuantileTransformer` is now
+  more efficient for dense arrays but the fitted quantiles and the results of
+  `transform` may be slightly different than before (keeping the same statistical
+  properties).
   :pr:`27344` by :user:`Xuefeng Xu <xuefeng-xu>`.
+
+Support for Array API
+---------------------
+
+Additional estimators and functions have been updated to include support for all
+`Array API <https://data-apis.org/array-api/latest/>`_ compliant inputs.
+
+See :ref:`array_api` for more details.
+
+**Functions:**
+
+- :func:`sklearn.metrics.r2_score` now supports Array API compliant inputs.
+  :pr:`27904` by :user:`Eric Lindgren <elindgren>`, `Franck Charras <fcharras>`,
+  `Olivier Grisel <ogrisel>` and `Tim Head <betatim>`.
+
+**Classes:**
 
 Support for building with Meson
 -------------------------------
@@ -226,6 +243,11 @@ Changelog
 :mod:`sklearn.metrics`
 ......................
 
+- |Feature| :func:`metrics.pairwise_distances` accepts calculating pairwise distances
+  for non-numeric arrays as well. This is supported through custom metrics only.
+  :pr:`27456` by :user:`Venkatachalam N <venkyyuvy>`, :user:`Kshitij Mathur <Kshitij68>`
+  and :user:`Julian Libiseller-Egger <julibeg>`.
+
 - |Efficiency| Improve efficiency of functions :func:`~metrics.brier_score_loss`,
   :func:`~metrics.calibration_curve`, :func:`~metrics.det_curve`,
   :func:`~metrics.precision_recall_curve`,
@@ -256,6 +278,12 @@ Changelog
   returns masked arrays of the appropriate NumPy dtype, as opposed to always returning
   dtype ``object``. :pr:`28352` by :user:`Marco Gorelli<MarcoGorelli>`.
 
+- |Fix| :func:`sklearn.model_selection.train_test_score` works with Array API inputs.
+  Previously indexing was not handled correctly leading to exceptions when using strict
+  implementations of the Array API like CuPY.
+  :pr:`28407` by `Tim Head <betatim>`.
+
+
 :mod:`sklearn.multioutput`
 ..........................
 
@@ -279,6 +307,14 @@ Changelog
   :func:`preprocessing.quantile_transform` now supports disabling
   subsampling explicitly.
   :pr:`27636` by :user:`Ralph Urlus <rurlus>`.
+  
+:mod:`sklearn.tree`
+...................
+
+- |Enhancement| Plotting trees in matplotlib via :func:`tree.plot_tree` now
+  show a "True/False" label to indicate the directionality the samples traverse
+  given the split condition.
+  :pr:`28552` by :user:`Adam Li <adam2392>`.
 
 .. rubric:: Code and documentation contributors
 
