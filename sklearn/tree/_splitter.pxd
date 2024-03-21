@@ -8,12 +8,10 @@
 # License: BSD 3 clause
 
 # See _splitter.pyx for details.
-cimport numpy as cnp
-
 from ._criterion cimport Criterion
 from ._tree cimport ParentInfo
 
-from ..utils._typedefs cimport float32_t, float64_t, intp_t, int32_t, uint32_t
+from ..utils._typedefs cimport float32_t, float64_t, intp_t, int8_t, int32_t, uint32_t
 
 
 cdef struct SplitRecord:
@@ -63,7 +61,7 @@ cdef class Splitter:
     #   -1: monotonic decrease
     #    0: no constraint
     #   +1: monotonic increase
-    cdef const cnp.int8_t[:] monotonic_cst
+    cdef const int8_t[:] monotonic_cst
     cdef bint with_monotonic_cst
     cdef const float64_t[:] sample_weight
 
