@@ -28,6 +28,7 @@ from collections.abc import Iterable
 from dataclasses import dataclass
 from functools import wraps
 from inspect import signature
+from itertools import chain
 from subprocess import STDOUT, CalledProcessError, TimeoutExpired, check_output
 from unittest import TestCase
 
@@ -472,6 +473,19 @@ def create_memmap_backed_data(data, mmap_mode="r", return_folder=False):
 
 # Utils to test docstrings
 
+def _is_numpydoc():
+    try:
+        import numpydoc
+        assert parse_version(numpydoc.__version__) >= parse_version("1.2.0")
+    except (ImportError, AssertionError):
+        return False
+    else:
+        return True
+
+skip_if_no_numpydoc = pytest.mark.skipif(
+    not _is_numpydoc(), reason="numpydoc >= 1.2.0 is required to test the docstrings"
+    )
+
 
 def _get_args(function, varargs=False):
     """Helper to get function arguments."""
@@ -686,20 +700,23 @@ def _check_grouped_dict(grouped_dict, type_or_desc, section, n_objects):
 
     If item is not present in all objects, checking is skipped and warning raised.
     """
+    skipped = []
     for item_name, gd in grouped_dict.items():
         # If item not found in all objects, skip
         if sum(map(len, gd.values())) < n_objects:
-            warnings.warn(
-                f"{section[:-1]}: {item_name} was not found in all objects, checking "
-                "was skipped for this item."
-            )
+            skipped.append(item_name)
         elif len(gd.keys()) > 1:
             obj_groups = " and ".join(str(group) for group in gd.values())
             msg = (
-                f"The {type_or_desc} of {section[:-1]}: {item_name} is inconsistent "
+                f"The {type_or_desc} of {section[:-1]} '{item_name}' is inconsistent "
                 f"between {obj_groups}."
             )
             raise AssertionError(msg)
+    if skipped:
+        warnings.warn(
+            f"Checking was skipped for {section}: {skipped} as they were "
+            "not found in all objects."
+        )
 
 
 def assert_docstring_consistency(
@@ -812,7 +829,9 @@ def assert_docstring_consistency(
                 if _check_item_included(item_name, args):
                     # Normalize white space
                     type_def = " ".join(type_def.strip().split())
-                    desc = " ".join([line.strip() for line in desc]).strip()
+                    desc = " ".join(
+                        list(chain.from_iterable([line.split() for line in desc]))
+                    )
                     # Use string type/desc as key, to group consistent objs together
                     if type_def:
                         type_dd[item_name][type_def].append(obj_name)

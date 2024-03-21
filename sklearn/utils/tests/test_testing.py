@@ -17,6 +17,7 @@ from sklearn.utils._testing import (
     _get_warnings_filters_info_list,
     assert_allclose,
     assert_allclose_dense_sparse,
+    assert_docstring_consistency,
     assert_no_warnings,
     assert_raise_message,
     assert_raises,
@@ -27,6 +28,7 @@ from sklearn.utils._testing import (
     ignore_warnings,
     raises,
     set_random_state,
+    skip_if_no_numpydoc,
     turn_warnings_into_errors,
 )
 from sklearn.utils.deprecation import deprecated
@@ -446,13 +448,8 @@ class MockMetaEstimator:
         """Incorrect docstring but should not be tested"""
 
 
+@skip_if_no_numpydoc
 def test_check_docstring_parameters():
-    pytest.importorskip(
-        "numpydoc",
-        reason="numpydoc is required to test the docstrings",
-        minversion="1.2.0",
-    )
-
     incorrect = check_docstring_parameters(f_ok)
     assert incorrect == []
     incorrect = check_docstring_parameters(f_ok, ignore=["b"])
@@ -580,6 +577,118 @@ def test_check_docstring_parameters():
     ):
         incorrect = check_docstring_parameters(f)
         assert msg == incorrect, '\n"%s"\n not in \n"%s"' % (msg, incorrect)
+
+
+def f_one(a, b):
+    """Function one.
+
+    Parameters
+    ----------
+    a : int,   float
+        Parameter a.
+        Second    line.
+
+    b : str
+        Parameter b.
+
+    Returns
+    -------
+    c : int
+       Returning
+
+    d : int
+       Returning
+    """
+    pass
+
+
+def f_two(a, b):
+    """Function two.
+
+    Parameters
+    ----------
+    a :   int, float
+        Parameter a.
+          Second line.
+
+    b : str
+        Parameter bb.
+
+    e : int
+        Extra parameter.
+
+    Returns
+    -------
+    c : int
+       Returning
+
+    d : int
+       Returning
+    """
+    pass
+
+
+def f_three(a, b):
+    """Function two.
+
+    Parameters
+    ----------
+    a :   int, float
+        Parameter a.
+
+    b : str
+        Parameter B!
+
+    Returns
+    -------
+    c : int
+       Returning.
+
+    d : int
+       Returning
+    """
+    pass
+
+
+@skip_if_no_numpydoc
+@pytest.mark.parametrize(
+        "objects, kwargs, error, warn",
+        [
+            pytest.param([f_one, f_two], {"include_params": ["a"]}, "", "", id="whitespace"),
+            pytest.param([f_one, f_two], {"include_returns": True}, "", "", id="incl_all"),
+            pytest.param(
+                [f_one, f_two, f_three], {"include_params": ["a"]},
+                r"The description of Parameter 'a' is inconsistent between \['f_one', 'f_two'\]", "", id="2-1 group"),
+            pytest.param(
+                [f_one, f_two, f_three], {"include_params": ["b"]},
+                r"The description of Parameter 'b' is inconsistent between \['f_one'\] and \['f_two'\] and", "", id="1-1-1 group"),
+            pytest.param([f_one, f_two], {"include_params": True, "exclude_params": ["b"]}, "", r"Checking was skipped for Parameters: \['e'\]", id="skip_warn"),
+        ]
+)
+def test_assert_docstring_consistency(objects, kwargs, error, warn):
+    """Check `assert_docstring_consistency` gives correct results."""
+    if error:
+        with pytest.raises(AssertionError, match=error):
+            assert_docstring_consistency(objects, **kwargs)
+    elif warn:
+        with pytest.warns(UserWarning, match=warn):
+            assert_docstring_consistency(objects, **kwargs)
+    else:
+        assert_docstring_consistency(objects, **kwargs)
+
+
+@skip_if_no_numpydoc
+@pytest.mark.parametrize(
+        "objects, kwargs, error",
+        [
+            ([f_one, f_two], {"include_params": ['a'], "exclude_params": ["b"]}, "The 'exclude_params' argument"),
+            ([f_one, f_two], {"include_returns": False, "exclude_returns": ["c"]}, "The 'exclude_returns' argument"),
+        ]
+    )
+def test_assert_docstring_consistency_arg_checks(objects, kwargs, error):
+    """Check `assert_docstring_consistency` argument checking correct."""
+    with pytest.raises(TypeError, match=""):
+        assert_docstring_consistency(objects, **kwargs)
 
 
 class RegistrationCounter:
