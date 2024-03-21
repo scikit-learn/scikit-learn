@@ -297,13 +297,7 @@ cdef inline int node_split_best(
     SplitRecord* split,
     ParentInfo* parent_record,
     bint with_monotonic_cst,
-<<<<<<< HEAD
-    const cnp.int8_t[:] monotonic_cst,
-=======
     const int8_t[:] monotonic_cst,
-    float64_t lower_bound,
-    float64_t upper_bound,
->>>>>>> main
 ) except -1 nogil:
     """Find the best split on node samples[start:end]
 
