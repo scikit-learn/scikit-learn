@@ -652,18 +652,40 @@ def f_three(a, b):
 
 @skip_if_no_numpydoc
 @pytest.mark.parametrize(
-        "objects, kwargs, error, warn",
-        [
-            pytest.param([f_one, f_two], {"include_params": ["a"]}, "", "", id="whitespace"),
-            pytest.param([f_one, f_two], {"include_returns": True}, "", "", id="incl_all"),
-            pytest.param(
-                [f_one, f_two, f_three], {"include_params": ["a"]},
-                r"The description of Parameter 'a' is inconsistent between \['f_one', 'f_two'\]", "", id="2-1 group"),
-            pytest.param(
-                [f_one, f_two, f_three], {"include_params": ["b"]},
-                r"The description of Parameter 'b' is inconsistent between \['f_one'\] and \['f_two'\] and", "", id="1-1-1 group"),
-            pytest.param([f_one, f_two], {"include_params": True, "exclude_params": ["b"]}, "", r"Checking was skipped for Parameters: \['e'\]", id="skip_warn"),
-        ]
+    "objects, kwargs, error, warn",
+    [
+        pytest.param(
+            [f_one, f_two], {"include_params": ["a"]}, "", "", id="whitespace"
+        ),
+        pytest.param([f_one, f_two], {"include_returns": True}, "", "", id="incl_all"),
+        pytest.param(
+            [f_one, f_two, f_three],
+            {"include_params": ["a"]},
+            (
+                r"The description of Parameter 'a' is inconsistent between \['f_one',"
+                r" 'f_two'\]"
+            ),
+            "",
+            id="2-1 group",
+        ),
+        pytest.param(
+            [f_one, f_two, f_three],
+            {"include_params": ["b"]},
+            (
+                r"The description of Parameter 'b' is inconsistent between \['f_one'\]"
+                r" and \['f_two'\] and"
+            ),
+            "",
+            id="1-1-1 group",
+        ),
+        pytest.param(
+            [f_one, f_two],
+            {"include_params": True, "exclude_params": ["b"]},
+            "",
+            r"Checking was skipped for Parameters: \['e'\]",
+            id="skip_warn",
+        ),
+    ],
 )
 def test_assert_docstring_consistency(objects, kwargs, error, warn):
     """Check `assert_docstring_consistency` gives correct results."""
@@ -679,12 +701,20 @@ def test_assert_docstring_consistency(objects, kwargs, error, warn):
 
 @skip_if_no_numpydoc
 @pytest.mark.parametrize(
-        "objects, kwargs, error",
-        [
-            ([f_one, f_two], {"include_params": ['a'], "exclude_params": ["b"]}, "The 'exclude_params' argument"),
-            ([f_one, f_two], {"include_returns": False, "exclude_returns": ["c"]}, "The 'exclude_returns' argument"),
-        ]
-    )
+    "objects, kwargs, error",
+    [
+        (
+            [f_one, f_two],
+            {"include_params": ["a"], "exclude_params": ["b"]},
+            "The 'exclude_params' argument",
+        ),
+        (
+            [f_one, f_two],
+            {"include_returns": False, "exclude_returns": ["c"]},
+            "The 'exclude_returns' argument",
+        ),
+    ],
+)
 def test_assert_docstring_consistency_arg_checks(objects, kwargs, error):
     """Check `assert_docstring_consistency` argument checking correct."""
     with pytest.raises(TypeError, match=""):
