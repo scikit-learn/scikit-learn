@@ -80,6 +80,14 @@ def _check_array_api_dispatch(array_api_dispatch):
                 " specification"
             )
 
+        array_api_compat_version = parse_version(array_api_compat.__version__)
+        min_array_api_compat_version = "1.5.1"
+        if array_api_compat_version < min_array_api_compat_version:
+            raise ImportError(
+                f"array-api-compat must be {min_array_api_compat_version} or newer to"
+                " dispatch array using the API specification"
+            )
+
         numpy_version = parse_version(numpy.__version__)
         min_numpy_version = "1.21"
         if numpy_version < parse_version(min_numpy_version):
