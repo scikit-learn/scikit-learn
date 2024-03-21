@@ -703,11 +703,14 @@ def _check_grouped_dict(grouped_dict, type_or_desc, section, n_objects):
 
 
 def assert_docstring_consistency(
-        objects,
-        include_params=False, exclude_params=None,
-        include_attribs=False, exclude_attribs=None,
-        include_returns=False, exclude_returns=None
-    ):
+    objects,
+    include_params=False,
+    exclude_params=None,
+    include_attribs=False,
+    exclude_attribs=None,
+    include_returns=False,
+    exclude_returns=None,
+):
     """Check consistency between docstring parameters/attributes/returns of objects.
 
     Checks if parameters/attributes/returns have the same type specification and
@@ -786,14 +789,19 @@ def assert_docstring_consistency(
     doc_dict = dict()
     for i, obj in enumerate(objects):
         if isinstance(obj, docscrape.NumpyDocString):
-            doc_dict[f'Object {i}'] = obj
-        elif (inspect.isdatadescriptor(obj) or inspect.isfunction(obj) or
-              inspect.isclass(obj)):
+            doc_dict[f"Object {i}"] = obj
+        elif (
+            inspect.isdatadescriptor(obj)
+            or inspect.isfunction(obj)
+            or inspect.isclass(obj)
+        ):
             doc = docscrape.NumpyDocString(inspect.getdoc(obj))
             doc_dict[obj.__name__] = doc
         else:
-            raise TypeError("All 'objects' must be one of: function, class, descriptor"
-                            f" or NumpyDocString instance, got a: {type(obj)}.")
+            raise TypeError(
+                "All 'objects' must be one of: function, class, descriptor"
+                f" or NumpyDocString instance, got a: {type(obj)}."
+            )
 
     n_objects = len(objects)
     for section, args in section_dict.items():

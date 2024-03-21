@@ -2892,11 +2892,14 @@ def test_classification_metric_division_by_zero_nan_validaton(scoring):
 
 def test_prfs_docstring_consistency():
     """Check docstrings parameters of related metrics are consistent."""
-    assert_docstring_consistency([precision_recall_fscore_support,
-        f1_score,
-        fbeta_score,
-        precision_score,
-        recall_score,],
+    assert_docstring_consistency(
+        [
+            precision_recall_fscore_support,
+            f1_score,
+            fbeta_score,
+            precision_score,
+            recall_score,
+        ],
         include_params=True,
         exclude_params=["average", "zero_division"],
     )
