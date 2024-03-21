@@ -15,9 +15,15 @@ python bench_randomforest.py bench ~/bench_results_forest main
 
 ```bash
 python bench_randomforest.py plot ~/bench_results_forest pr main results_image.png
+
+# or plot size
+python bench_randomforest.py plot_size ~/bench_results_forest pr main results_image.png
 ```
 """
-
+import os
+import tempfile
+import sys
+import pickle
 from functools import partial
 import argparse
 from time import perf_counter
@@ -82,6 +88,8 @@ def bench(args):
                 "splitter",
                 "n_repeat",
                 "duration",
+                "ram_size",
+                "file_size",
             ],
         )
         writer.writeheader()
@@ -124,12 +132,21 @@ def bench(args):
                     forest.fit(X, y)
                     duration = perf_counter() - start
                     klass_results.append(duration)
+
+                    # benchmark size of object
+                    ram_size = sys.getsizeof(forest)
+                    with tempfile.TemporaryFile() as f:
+                        pickle.dump(forest, f, -1)
+                        file_size = os.path.getsize(f.name)
+
                     writer.writerow(
                         {
                             **default_config,
                             **{
                                 "n_repeat": n_repeat,
                                 "duration": duration,
+                                "ram_size": ram_size,
+                                "file_size": file_size,
                             },
                         }
                     )
@@ -176,6 +193,49 @@ def plot(args):
 
     fig.savefig(image_path)
     print(f"Saved image to {image_path}")
+
+
+def plot_size(args):
+    size_id = 'file_size'
+
+    import matplotlib.pyplot as plt
+    import pandas as pd
+    import seaborn as sns
+
+    results_path = Path(args.bench_results)
+    pr_path = results_path / f"{args.pr_name}.csv"
+    main_path = results_path / f"{args.main_name}.csv"
+    image_path = results_path / args.image_path
+
+    df_pr = pd.read_csv(pr_path).assign(branch=args.pr_name)
+    df_main = pd.read_csv(main_path).assign(branch=args.main_name)
+    df_all = pd.concat((df_pr, df_main), ignore_index=True)
+
+    df_all = df_all.assign(
+        make_data=df_all["make_data"]
+        .str.replace("_custom", "")
+        .str.replace("make_", "")
+        .str.replace("_data", "")
+    )
+
+    gb = df_all.groupby(["criterion", "make_data"])
+    groups = gb.groups
+
+    n_rows, n_cols = 2, 4
+    fig, axes = plt.subplots(n_rows, n_cols, figsize=(12, 8), constrained_layout=True)
+    axes_flat = axes.ravel()
+    for i, (keys, idx) in enumerate(groups.items()):
+        ax = axes_flat[i]
+        ax.set_title(" | ".join(keys))
+        sns.boxplot(data=df_all.loc[idx], y=size_id, x="branch", ax=ax)
+        if i % n_cols != 0:
+            ax.set_ylabel("")
+
+    axes_flat[-1].set_visible(False)
+
+    fig.savefig(image_path)
+    print(f"Saved image to {image_path}")
+
 
 if __name__ == "__main__":
 
