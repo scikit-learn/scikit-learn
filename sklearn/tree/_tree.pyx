@@ -213,8 +213,6 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
         cdef SplitRecord split
         cdef intp_t node_id
 
-        cdef float64_t lower_bound
-        cdef float64_t upper_bound
         cdef float64_t middle_value
         cdef float64_t left_child_min
         cdef float64_t left_child_max
