@@ -32,5 +32,6 @@ thus form a function that is piecewise linear:
    :target: ../auto_examples/miscellaneous/plot_isotonic_regression.html
    :align: center
 
-For implementation of Isotonic regression using scikit-learn:
-:ref:`sphx_glr_auto_examples_miscellaneous_plot_isotonic_regression.py`
+.. topic:: Examples:
+
+  * :ref:`sphx_glr_auto_examples_miscellaneous_plot_isotonic_regression.py`
