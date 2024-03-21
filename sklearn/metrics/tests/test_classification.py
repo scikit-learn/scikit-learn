@@ -45,6 +45,7 @@ from sklearn.utils._testing import (
     assert_almost_equal,
     assert_array_almost_equal,
     assert_array_equal,
+    assert_docstring_consistency,
     assert_no_warnings,
     ignore_warnings,
 )
@@ -2887,6 +2888,18 @@ def test_classification_metric_division_by_zero_nan_validaton(scoring):
     X, y = datasets.make_classification(random_state=0)
     classifier = DecisionTreeClassifier(max_depth=3, random_state=0).fit(X, y)
     cross_val_score(classifier, X, y, scoring=scoring, n_jobs=2, error_score="raise")
+
+
+def test_prfs_docstring_consistency():
+    """Check docstrings parameters of related metrics are consistent."""
+    assert_docstring_consistency([precision_recall_fscore_support,
+        f1_score,
+        fbeta_score,
+        precision_score,
+        recall_score,],
+        include_params=True,
+        exclude_params=["average", "zero_division"],
+    )
 
 
 # TODO(1.7): remove
