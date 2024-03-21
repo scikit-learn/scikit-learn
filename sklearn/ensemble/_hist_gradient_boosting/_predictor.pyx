@@ -4,6 +4,7 @@ from cython.parallel import prange
 from libc.math cimport isnan
 import numpy as np
 
+from ...utils._typedefs cimport intp_t
 from .common cimport X_DTYPE_C
 from .common cimport Y_DTYPE_C
 from .common import Y_DTYPE
@@ -11,7 +12,6 @@ from .common cimport X_BINNED_DTYPE_C
 from .common cimport BITSET_INNER_DTYPE_C
 from .common cimport node_struct
 from ._bitset cimport in_bitset_2d_memoryview
-from sklearn.utils._typedefs cimport intp_t
 
 
 def _predict_from_raw_data(  # raw data = non-binned data

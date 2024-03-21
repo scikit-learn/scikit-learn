@@ -748,7 +748,9 @@ def _convert_container(
     container : array-like
         The container to convert.
     constructor_name : {"list", "tuple", "array", "sparse", "dataframe", \
-            "series", "index", "slice", "sparse_csr", "sparse_csc"}
+            "series", "index", "slice", "sparse_csr", "sparse_csc", \
+            "sparse_csr_array", "sparse_csc_array", "pyarrow", "polars", \
+            "polars_series"}
         The type of the returned container.
     columns_name : index or array-like, default=None
         For pandas container supporting `columns_names`, it will affect
@@ -808,6 +810,9 @@ def _convert_container(
     elif constructor_name == "series":
         pd = pytest.importorskip("pandas", minversion=minversion)
         return pd.Series(container, dtype=dtype)
+    elif constructor_name == "polars_series":
+        pl = pytest.importorskip("polars", minversion=minversion)
+        return pl.Series(values=container)
     elif constructor_name == "index":
         pd = pytest.importorskip("pandas", minversion=minversion)
         return pd.Index(container, dtype=dtype)
@@ -1049,13 +1054,7 @@ class MinimalTransformer:
 
 def _array_api_for_tests(array_namespace, device):
     try:
-        if array_namespace == "numpy.array_api":
-            # FIXME: once it is not experimental anymore
-            with ignore_warnings(category=UserWarning):
-                # UserWarning: numpy.array_api submodule is still experimental.
-                array_mod = importlib.import_module(array_namespace)
-        else:
-            array_mod = importlib.import_module(array_namespace)
+        array_mod = importlib.import_module(array_namespace)
     except ModuleNotFoundError:
         raise SkipTest(
             f"{array_namespace} is not installed: not checking array_api input"

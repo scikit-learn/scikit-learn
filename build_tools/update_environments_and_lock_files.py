@@ -105,6 +105,7 @@ build_metadata_list = [
             "polars",
             "pyarrow",
             "array-api-compat",
+            "array-api-strict",
         ],
         "package_constraints": {
             "blas": "[build=mkl]",
