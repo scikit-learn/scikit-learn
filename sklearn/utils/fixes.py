@@ -50,6 +50,25 @@ if parse_version(scipy.__version__) >= parse_version("1.8"):
     BSR_CONTAINERS.append(scipy.sparse.bsr_array)
     DIA_CONTAINERS.append(scipy.sparse.dia_array)
 
+
+# Remove when minimum scipy version is 1.11.0
+try:
+    from scipy.sparse import sparray  # noqa
+
+    SPARRAY_PRESENT = True
+except ImportError:
+    SPARRAY_PRESENT = False
+
+
+# Remove when minimum scipy version is 1.8
+try:
+    from scipy.sparse import csr_array  # noqa
+
+    SPARSE_ARRAY_PRESENT = True
+except ImportError:
+    SPARSE_ARRAY_PRESENT = False
+
+
 try:
     from scipy.optimize._linesearch import line_search_wolfe1, line_search_wolfe2
 except ImportError:  # SciPy < 1.8
@@ -256,14 +275,17 @@ except ImportError:
     from scipy.integrate import trapz as trapezoid  # type: ignore  # noqa
 
 
-# TODO: Remove when Pandas > 2.2 is the minimum supported version
+# TODO: Adapt when Pandas > 2.2 is the minimum supported version
 def pd_fillna(pd, frame):
     pd_version = parse_version(pd.__version__).base_version
     if parse_version(pd_version) < parse_version("2.2"):
         frame = frame.fillna(value=np.nan)
     else:
+        infer_objects_kwargs = (
+            {} if parse_version(pd_version) >= parse_version("3") else {"copy": False}
+        )
         with pd.option_context("future.no_silent_downcasting", True):
-            frame = frame.fillna(value=np.nan).infer_objects(copy=False)
+            frame = frame.fillna(value=np.nan).infer_objects(**infer_objects_kwargs)
     return frame
 
 
