@@ -489,6 +489,7 @@ def create_memmap_backed_data(data, mmap_mode="r", return_folder=False):
 
 # Utils to test docstrings
 
+
 def _get_args(function, varargs=False):
     """Helper to get function arguments."""
 
