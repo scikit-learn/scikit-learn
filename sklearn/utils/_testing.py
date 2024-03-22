@@ -739,7 +739,7 @@ def _convert_container(
     dtype=None,
     sparse_format=None,
     sparse_container="array_or_matrix",
-    constructor_lib=None,
+    constructor_lib="pandas",
     minversion=None,
     column_names=None,
     categorical_feature_names=None,
@@ -771,9 +771,9 @@ def _convert_container(
         - "array_or_skip" returns a sparse array if scipy >= 1.8.0 and skip the test
           otherwise.
 
-    constructor_lib : {"pandas", "polars", "pyarrow"}, default=None
-        The library to use, only applies to and must be specified for "dataframe",
-        "series", and "index". Skip the test if the specified library is not available.
+    constructor_lib : {"pandas", "polars", "pyarrow"}, default="pandas"
+        The library to use. Only applies to "dataframe", "series", and "index". Skip
+        the test if the specified library is not available.
 
         - "pandas" is compatible with "dataframe", "series", and "index"
         - "polars" is compatible with "dataframe" and "series"

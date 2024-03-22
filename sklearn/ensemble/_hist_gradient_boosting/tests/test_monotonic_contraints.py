@@ -220,7 +220,6 @@ def test_predictions(global_random_seed, use_feature_names):
     X = np.c_[f_0, f_1]
     convert_container_kwargs = {
         "constructor_type": "dataframe" if use_feature_names else "array",
-        "constructor_lib": "pandas",  # no effect if array
         "column_names": ["f_0", "f_1"],  # no effect if array
     }
     X = _convert_container(X, **convert_container_kwargs)
