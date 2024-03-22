@@ -183,6 +183,9 @@ class PandasAdapter:
         return X.copy()
 
     def replace_column(self, X, col_idx, col):
+        # pandas may match the indices of `X` and `col` on certain platforms, but we
+        # want the column replacement to behave as if `col` is an array without index,
+        # so we reset the index of `col` in the first place
         col.index = X.index
         X.iloc[:, col_idx] = col
 
