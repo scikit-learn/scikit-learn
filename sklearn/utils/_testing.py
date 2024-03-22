@@ -792,19 +792,15 @@ def assert_docstring_consistency(
         "Attributes": Args(include_attribs, exclude_attribs, "attribs"),
         "Returns": Args(include_returns, exclude_returns, "returns"),
     }
-    skip_sections = []
-    for section, args in section_dict.items():
+    for section in list(section_dict):
+        args = section_dict[section]
         if args.exclude and args.include is not True:
             raise TypeError(
                 f"The 'exclude_{args.arg_name}' argument can be set only when the "
                 f"'include_{args.arg_name}' argument is True."
             )
         if args.include is False:
-            skip_sections.append(section)
-
-    # Skip section by removing from dictionary
-    for section in skip_sections:
-        del section_dict[section]
+            del section_dict[section]
 
     doc_dict = dict()
     for i, obj in enumerate(objects):
@@ -832,9 +828,7 @@ def assert_docstring_consistency(
                 if _check_item_included(item_name, args):
                     # Normalize white space
                     type_def = " ".join(type_def.strip().split())
-                    desc = " ".join(
-                        list(chain.from_iterable([line.split() for line in desc]))
-                    )
+                    desc = " ".join(chain.from_iterable(line.split() for line in desc))
                     # Use string type/desc as key, to group consistent objs together
                     type_dd[item_name][type_def].append(obj_name)
                     desc_dd[item_name][desc].append(obj_name)
