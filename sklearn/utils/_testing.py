@@ -836,12 +836,10 @@ def assert_docstring_consistency(
                         list(chain.from_iterable([line.split() for line in desc]))
                     )
                     # Use string type/desc as key, to group consistent objs together
-                    if type_def:
-                        type_dd[item_name][type_def].append(obj_name)
-                    if desc:
-                        desc_dd[item_name][desc].append(obj_name)
+                    type_dd[item_name][type_def].append(obj_name)
+                    desc_dd[item_name][desc].append(obj_name)
 
-        _check_grouped_dict(type_dd, "type definition", section, n_objects)
+        _check_grouped_dict(type_dd, "type specification", section, n_objects)
         _check_grouped_dict(desc_dd, "description", section, n_objects)
 
 

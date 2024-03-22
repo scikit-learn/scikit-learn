@@ -639,6 +639,9 @@ def f_three(a, b):
     b : str
         Parameter B!
 
+    e :
+        Extra parameter.
+
     Returns
     -------
     c : int
@@ -679,11 +682,21 @@ def f_three(a, b):
             id="1-1-1 group",
         ),
         pytest.param(
+            [f_two, f_three],
+            {"include_params": ["e"]},
+            (
+                r"The type specification of Parameter 'e' is inconsistent between "
+                r"\['f_two'\] and"
+            ),
+            "",
+            id="empty type",
+        ),
+        pytest.param(
             [f_one, f_two],
             {"include_params": True, "exclude_params": ["b"]},
             "",
             r"Checking was skipped for Parameters: \['e'\]",
-            id="skip_warn",
+            id="skip warn",
         ),
     ],
 )
