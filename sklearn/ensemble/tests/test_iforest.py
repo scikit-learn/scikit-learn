@@ -365,8 +365,9 @@ def test_iforest_sparse_input_float_contamination(sparse_container):
     assert (X_decision < 0).sum() / X.shape[0] == pytest.approx(contamination)
 
 
+@pytest.mark.parametrize("n_jobs", [1, 2])
 @pytest.mark.parametrize("contamination", [0.25, "auto"])
-def test_iforest_predict_parallel(global_random_seed, contamination):
+def test_iforest_predict_parallel(global_random_seed, contamination, n_jobs):
     """Check that `IsolationForest.predict` is parallelized."""
     # toy sample (the last two samples are outliers)
     X = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1], [7, 4], [-5, 9]]
@@ -387,7 +388,8 @@ def test_iforest_predict_parallel(global_random_seed, contamination):
         random_state=global_random_seed, contamination=contamination, n_jobs=-1
     )
     clf_parallel.fit(X)
-    pred_paralell = clf_parallel.predict(X)
+    with parallel_backend("loky", n_jobs=n_jobs):
+        pred_paralell = clf_parallel.predict(X)
 
     # assert the same results as non-parallel
     assert_array_equal(pred, pred_paralell)
