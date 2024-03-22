@@ -183,6 +183,7 @@ class PandasAdapter:
         return X.copy()
 
     def replace_column(self, X, col_idx, col):
+        col.index = X.index
         X.iloc[:, col_idx] = col
 
 
