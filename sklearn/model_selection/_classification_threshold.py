@@ -860,7 +860,14 @@ class TunedThresholdClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimato
         return router
 
     def _get_curve_scorer(self):
-        """Get the curve scorer based on the objective metric used."""
+        """Get the curve scorer based on the objective metric used.
+
+        Here, we reuse the conventional "scorer API" via `make_scorer` or
+        `_CurveScorer`. Note that the use here is unconventional because `make_scorer`
+        or the "scorer API" is expected to return a single score value when calling
+        `scorer(estimator, X, y)`. Here the score function used are both returning
+        scores and thresholds representing a curve.
+        """
         if self.objective_metric in {
             "max_tnr_at_tpr_constraint",
             "max_tpr_at_tnr_constraint",
