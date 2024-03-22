@@ -489,29 +489,6 @@ def create_memmap_backed_data(data, mmap_mode="r", return_folder=False):
 
 # Utils to test docstrings
 
-
-def _is_numpydoc():
-    try:
-        import numpydoc
-
-        assert parse_version(numpydoc.__version__) >= parse_version("1.2.0")
-    except (ImportError, AssertionError):
-        return False
-    else:
-        return True
-
-
-try:
-    import pytest
-
-    skip_if_no_numpydoc = pytest.mark.skipif(
-        not _is_numpydoc(),
-        reason="numpydoc >= 1.2.0 is required to test the docstrings",
-    )
-except ImportError:
-    pass
-
-
 def _get_args(function, varargs=False):
     """Helper to get function arguments."""
 
