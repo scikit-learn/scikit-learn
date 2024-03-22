@@ -460,7 +460,6 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
         cdef Node* node
 
         cdef ParentInfo parent_record
-        parent_record.n_constant_features = 0
 
         # Initial capacity
         cdef intp_t init_capacity = max_split_nodes + max_leaf_nodes
@@ -613,6 +612,9 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
         cdef bint is_leaf
 
         splitter.node_reset(start, end, &weighted_n_node_samples)
+
+        # best-first splits do not track the number of constants when adding a split node
+        parent_record.n_constant_features = 0
 
         if is_first:
             parent_record.impurity = splitter.node_impurity()
