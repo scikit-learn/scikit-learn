@@ -54,7 +54,7 @@ def _threshold_scores_to_class_labels(y_score, threshold, classes, pos_label):
     return classes[map_thresholded_score_to_label[(y_score >= threshold).astype(int)]]
 
 
-class _ContinuousScorer(_BaseScorer):
+class _CurveScorer(_BaseScorer):
     """Scorer taking a continuous response and output a score for each threshold."""
 
     def __init__(self, score_func, sign, kwargs, n_thresholds, response_method):
@@ -118,8 +118,11 @@ class _ContinuousScorer(_BaseScorer):
 
         Returns
         -------
-        score : float
-            Score function applied to prediction of estimator on X.
+        scores : ndarray of shape (n_thresholds,)
+            The scores associated to each threshold.
+
+        potential_thresholds : ndarray of shape (n_thresholds,)
+            The potential thresholds used to compute the scores.
         """
         pos_label = self._get_pos_label()
         y_score = method_caller(
@@ -144,7 +147,7 @@ class _ContinuousScorer(_BaseScorer):
             )
             for th in potential_thresholds
         ]
-        return potential_thresholds, np.array(score_thresholds)
+        return np.array(score_thresholds), potential_thresholds
 
 
 def _estimator_has(attr):
@@ -172,11 +175,12 @@ def _fit_and_score_over_thresholds(
     fit_params,
     train_idx,
     val_idx,
-    scorer,
+    curve_scorer,
     score_method,
     score_params,
 ):
-    """Fit a classifier and compute the scores for different decision thresholds.
+    """Fit a classifier and compute the scores for different decision thresholds
+    representing a curve.
 
     Parameters
     ----------
@@ -201,9 +205,10 @@ def _fit_and_score_over_thresholds(
         The indices of the validation set used to score `classifier`. If `train_idx`,
         the entire set will be used.
 
-    scorer : scorer instance
+    curve_scorer : scorer instance
         The scorer taking `classifier` and the validation set as input and outputting
-        decision thresholds and scores.
+        decision thresholds and scores as a curve. Note that this is different from
+        the usual scorer that output a single score value.
 
     score_method : str or callable
         The scoring method to use. Used to detect if we compute TPR/TNR or precision/
@@ -214,7 +219,7 @@ def _fit_and_score_over_thresholds(
 
     Returns
     -------
-    thresholds : ndarray of shape (n_thresholds,)
+    potential_thresholds : ndarray of shape (n_thresholds,)
         The decision thresholds used to compute the scores. They are returned in
         ascending order.
 
@@ -236,7 +241,7 @@ def _fit_and_score_over_thresholds(
 
     if isinstance(score_method, str):
         if score_method in {"max_tpr_at_tnr_constraint", "max_tnr_at_tpr_constraint"}:
-            fpr, tpr, potential_thresholds = scorer(
+            fpr, tpr, potential_thresholds = curve_scorer(
                 classifier, X_val, y_val, **score_params_val
             )
             # For fpr=0/tpr=0, the threshold is set to `np.inf`. We need to remove it.
@@ -247,14 +252,17 @@ def _fit_and_score_over_thresholds(
             "max_precision_at_recall_constraint",
             "max_recall_at_precision_constraint",
         }:
-            precision, recall, potential_thresholds = scorer(
+            precision, recall, potential_thresholds = curve_scorer(
                 classifier, X_val, y_val, **score_params_val
             )
             # thresholds are in increasing order
             # the last element of the precision and recall is not associated with any
             # threshold and should be discarded
             return potential_thresholds, (precision[:-1], recall[:-1])
-    return scorer(classifier, X_val, y_val, **score_params_val)
+    scores, potential_thresholds = curve_scorer(
+        classifier, X_val, y_val, **score_params_val
+    )
+    return potential_thresholds, scores
 
 
 class TunedThresholdClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimator):
@@ -601,7 +609,7 @@ class TunedThresholdClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimato
             constraint_value = "highest"
 
         routed_params = process_routing(self, "fit", **params)
-        self._scorer = self._get_scorer()
+        self._curve_scorer = self._get_curve_scorer()
 
         # in the following block, we:
         # - define the final classifier `self.estimator_` and train it if necessary
@@ -651,7 +659,7 @@ class TunedThresholdClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimato
                     fit_params=routed_params.estimator.fit,
                     train_idx=train_idx,
                     val_idx=val_idx,
-                    scorer=self._scorer,
+                    curve_scorer=self._curve_scorer,
                     score_method=self.objective_metric,
                     score_params=routed_params.scorer.score,
                 )
@@ -757,7 +765,7 @@ class TunedThresholdClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimato
         check_is_fitted(self, "estimator_")
         if self.strategy == "optimum":
             # `pos_label` has been validated and is stored in the scorer
-            pos_label = self._scorer._get_pos_label()
+            pos_label = self._curve_scorer._get_pos_label()
         else:
             pos_label = self.pos_label
         y_score, _ = _get_response_values_binary(
@@ -836,7 +844,6 @@ class TunedThresholdClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimato
         """
         router = (
             MetadataRouter(owner=self.__class__.__name__)
-            .add_self_request(self)
             .add(
                 estimator=self.estimator,
                 method_mapping=MethodMapping().add(callee="fit", caller="fit"),
@@ -846,14 +853,14 @@ class TunedThresholdClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimato
                 method_mapping=MethodMapping().add(callee="split", caller="fit"),
             )
             .add(
-                scorer=self._get_scorer(),
+                scorer=self._get_curve_scorer(),
                 method_mapping=MethodMapping().add(callee="score", caller="fit"),
             )
         )
         return router
 
-    def _get_scorer(self):
-        """Get the scorer based on the objective metric used."""
+    def _get_curve_scorer(self):
+        """Get the curve scorer based on the objective metric used."""
         if self.objective_metric in {
             "max_tnr_at_tpr_constraint",
             "max_tpr_at_tnr_constraint",
@@ -861,20 +868,20 @@ class TunedThresholdClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimato
             "max_recall_at_precision_constraint",
         }:
             if "tpr" in self.objective_metric:  # tpr/tnr
-                score_func = roc_curve
+                score_curve_func = roc_curve
             else:  # precision/recall
-                score_func = precision_recall_curve
-            scorer = make_scorer(
-                score_func,
+                score_curve_func = precision_recall_curve
+            curve_scorer = make_scorer(
+                score_curve_func,
                 response_method=self._response_method,
                 pos_label=self.pos_label,
             )
         else:
             scoring = check_scoring(self.estimator, scoring=self.objective_metric)
-            scorer = _ContinuousScorer.from_scorer(
+            curve_scorer = _CurveScorer.from_scorer(
                 scoring, self._response_method, self.n_thresholds, self.pos_label
             )
-        return scorer
+        return curve_scorer
 
     def _more_tags(self):
         return {

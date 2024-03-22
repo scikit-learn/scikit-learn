@@ -25,7 +25,7 @@ from sklearn.metrics import (
 )
 from sklearn.model_selection import StratifiedShuffleSplit, TunedThresholdClassifier
 from sklearn.model_selection._classification_threshold import (
-    _ContinuousScorer,
+    _CurveScorer,
     _fit_and_score_over_thresholds,
 )
 from sklearn.pipeline import make_pipeline
@@ -40,18 +40,18 @@ from sklearn.utils._testing import (
 )
 
 
-def test_continuous_scorer():
-    """Check the behaviour of the `_ContinuousScorer` class."""
+def test_curve_scorer():
+    """Check the behaviour of the `_CurveScorer` class."""
     X, y = make_classification(random_state=0)
     estimator = LogisticRegression().fit(X, y)
-    scorer = _ContinuousScorer(
+    curve_scorer = _CurveScorer(
         balanced_accuracy_score,
         sign=1,
         response_method="predict_proba",
         n_thresholds=10,
         kwargs={},
     )
-    thresholds, scores = scorer(estimator, X, y)
+    scores, thresholds = curve_scorer(estimator, X, y)
 
     assert thresholds.shape == scores.shape
     # check that the thresholds are probability with extreme values close to 0 and 1
@@ -61,32 +61,32 @@ def test_continuous_scorer():
     assert 0.5 <= scores.min() <= 1
 
     # check that passing kwargs to the scorer works
-    scorer = _ContinuousScorer(
+    curve_scorer = _CurveScorer(
         balanced_accuracy_score,
         sign=1,
         response_method="predict_proba",
         n_thresholds=10,
         kwargs={"adjusted": True},
     )
-    thresholds, scores = scorer(estimator, X, y)
+    scores, thresholds = curve_scorer(estimator, X, y)
 
     # balanced accuracy should be between 0.5 and 1 when it is not adjusted
     assert 0 <= scores.min() <= 0.5
 
     # check that we can inverse the sign of the score when dealing with `neg_*` scorer
-    scorer = _ContinuousScorer(
+    curve_scorer = _CurveScorer(
         balanced_accuracy_score,
         sign=-1,
         response_method="predict_proba",
         n_thresholds=10,
         kwargs={"adjusted": True},
     )
-    thresholds, scores = scorer(estimator, X, y)
+    scores, thresholds = curve_scorer(estimator, X, y)
 
     assert all(scores <= 0)
 
 
-def test_continuous_scorer_pos_label(global_random_seed):
+def test_curve_scorer_pos_label(global_random_seed):
     """Check that we propagate properly the `pos_label` parameter to the scorer."""
     n_samples = 30
     X, y = make_classification(
@@ -94,25 +94,25 @@ def test_continuous_scorer_pos_label(global_random_seed):
     )
     estimator = LogisticRegression().fit(X, y)
 
-    scorer = _ContinuousScorer(
+    curve_scorer = _CurveScorer(
         recall_score,
         sign=1,
         response_method="predict_proba",
         n_thresholds=1_000,
         kwargs={"pos_label": 1},
     )
-    thresholds_pos_label_1, scores_pos_label_1 = scorer(estimator, X, y)
+    scores_pos_label_1, thresholds_pos_label_1 = curve_scorer(estimator, X, y)
 
-    scorer = _ContinuousScorer(
+    curve_scorer = _CurveScorer(
         recall_score,
         sign=1,
         response_method="predict_proba",
         n_thresholds=1_000,
         kwargs={"pos_label": 0},
     )
-    thresholds_pos_label_0, scores_pos_label_0 = scorer(estimator, X, y)
+    scores_pos_label_0, thresholds_pos_label_0 = curve_scorer(estimator, X, y)
 
-    # If `pos_label` is not forwarded to the scorer, the thresholds will be equal.
+    # If `pos_label` is not forwarded to the curve_scorer, the thresholds will be equal.
     # Make sure that this is not the case.
     # assert not (thresholds_pos_label_1 == thresholds_pos_label_0).all()
     # Since we have an imbalanced problem, the thresholds should represent higher
@@ -128,10 +128,10 @@ def test_continuous_scorer_pos_label(global_random_seed):
 
 
 @pytest.mark.parametrize(
-    "scorer, score_method",
+    "curve_scorer, score_method",
     [
         (
-            _ContinuousScorer(
+            _CurveScorer(
                 score_func=balanced_accuracy_score,
                 sign=1,
                 response_method="predict_proba",
@@ -158,9 +158,9 @@ def test_continuous_scorer_pos_label(global_random_seed):
         ),
     ],
 )
-def test_fit_and_score_over_thresholds_scorers(scorer, score_method):
+def test_fit_and_score_over_thresholds_curve_scorers(curve_scorer, score_method):
     """Check that `_fit_and_score_over_thresholds` returns thresholds in ascending order
-    for the different accepted scorers."""
+    for the different accepted curve scorers."""
     X, y = make_classification(n_samples=100, random_state=0)
     train_idx, val_idx = np.arange(50), np.arange(50, 100)
     classifier = LogisticRegression()
@@ -172,7 +172,7 @@ def test_fit_and_score_over_thresholds_scorers(scorer, score_method):
         fit_params={},
         train_idx=train_idx,
         val_idx=val_idx,
-        scorer=scorer,
+        curve_scorer=curve_scorer,
         score_method=score_method,
         score_params={},
     )
@@ -189,10 +189,10 @@ def test_fit_and_score_over_thresholds_scorers(scorer, score_method):
 
 
 @pytest.mark.parametrize(
-    "scorer, score_method, expected_score",
+    "curve_scorer, score_method, expected_score",
     [
         (
-            _ContinuousScorer(
+            _CurveScorer(
                 score_func=balanced_accuracy_score,
                 sign=1,
                 response_method="predict_proba",
@@ -224,7 +224,9 @@ def test_fit_and_score_over_thresholds_scorers(scorer, score_method):
         ),
     ],
 )
-def test_fit_and_score_over_thresholds_prefit(scorer, score_method, expected_score):
+def test_fit_and_score_over_thresholds_prefit(
+    curve_scorer, score_method, expected_score
+):
     """Check the behaviour with a prefit classifier."""
     X, y = make_classification(n_samples=100, random_state=0)
 
@@ -240,7 +242,7 @@ def test_fit_and_score_over_thresholds_prefit(scorer, score_method, expected_sco
             fit_params={},
             train_idx=train_idx,
             val_idx=val_idx,
-            scorer=scorer,
+            curve_scorer=curve_scorer,
             score_method=score_method,
             score_params={},
         )
@@ -257,7 +259,7 @@ def test_fit_and_score_over_thresholds_prefit(scorer, score_method, expected_sco
         fit_params={},
         train_idx=train_idx,
         val_idx=val_idx,
-        scorer=scorer,
+        curve_scorer=curve_scorer,
         score_method=score_method,
         score_params={},
     )
@@ -267,10 +269,10 @@ def test_fit_and_score_over_thresholds_prefit(scorer, score_method, expected_sco
 
 @pytest.mark.usefixtures("enable_slep006")
 @pytest.mark.parametrize(
-    "scorer, score_method",
+    "curve_scorer, score_method",
     [
         (
-            _ContinuousScorer(
+            _CurveScorer(
                 score_func=balanced_accuracy_score,
                 sign=1,
                 response_method="predict_proba",
@@ -297,7 +299,7 @@ def test_fit_and_score_over_thresholds_prefit(scorer, score_method, expected_sco
         ),
     ],
 )
-def test_fit_and_score_over_thresholds_sample_weight(scorer, score_method):
+def test_fit_and_score_over_thresholds_sample_weight(curve_scorer, score_method):
     """Check that we dispatch the sample-weight to fit and score the classifier."""
     X, y = load_iris(return_X_y=True)
     X, y = X[:100], y[:100]  # only 2 classes
@@ -318,7 +320,7 @@ def test_fit_and_score_over_thresholds_sample_weight(scorer, score_method):
         fit_params={},
         train_idx=train_repeated_idx,
         val_idx=val_repeated_idx,
-        scorer=scorer,
+        curve_scorer=curve_scorer,
         score_method=score_method,
         score_params={},
     )
@@ -331,7 +333,7 @@ def test_fit_and_score_over_thresholds_sample_weight(scorer, score_method):
         fit_params={"sample_weight": sample_weight},
         train_idx=train_idx,
         val_idx=val_idx,
-        scorer=scorer.set_score_request(sample_weight=True),
+        curve_scorer=curve_scorer.set_score_request(sample_weight=True),
         score_method=score_method,
         score_params={"sample_weight": sample_weight},
     )
@@ -342,10 +344,10 @@ def test_fit_and_score_over_thresholds_sample_weight(scorer, score_method):
 
 @pytest.mark.usefixtures("enable_slep006")
 @pytest.mark.parametrize(
-    "scorer, score_method",
+    "curve_scorer, score_method",
     [
         (
-            _ContinuousScorer(
+            _CurveScorer(
                 score_func=balanced_accuracy_score,
                 sign=1,
                 response_method="predict_proba",
@@ -374,7 +376,7 @@ def test_fit_and_score_over_thresholds_sample_weight(scorer, score_method):
 )
 @pytest.mark.parametrize("fit_params_type", ["list", "array"])
 def test_fit_and_score_over_thresholds_fit_params(
-    scorer, score_method, fit_params_type
+    curve_scorer, score_method, fit_params_type
 ):
     """Check that we pass `fit_params` to the classifier when calling `fit`."""
     X, y = make_classification(n_samples=100, random_state=0)
@@ -394,7 +396,7 @@ def test_fit_and_score_over_thresholds_fit_params(
         fit_params=fit_params,
         train_idx=train_idx,
         val_idx=val_idx,
-        scorer=scorer,
+        curve_scorer=curve_scorer,
         score_method=score_method,
         score_params={},
     )
@@ -691,11 +693,11 @@ def test_tuned_threshold_classifier_fit_params(objective_metric, fit_params_type
 @pytest.mark.parametrize(
     "response_method", ["auto", "decision_function", "predict_proba"]
 )
-def test_tuned_threshold_classifier_response_method_scorer_with_constraint_metric(
+def test_tuned_threshold_classifier_response_method_curve_scorer_with_constraint_metric(
     objective_metric, constraint_value, response_method, global_random_seed
 ):
-    """Check that we use the proper scorer and forwarding the requested response method
-    for TNR/TPR and precision/recall metrics.
+    """Check that we use the proper curve scorer and forwarding the requested
+    response method for TNR/TPR and precision/recall metrics.
     """
     X, y = make_classification(n_samples=100, random_state=global_random_seed)
     classifier = LogisticRegression()
