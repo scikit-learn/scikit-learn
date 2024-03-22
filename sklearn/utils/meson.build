@@ -13,17 +13,16 @@ utils_cython_tree = [
 
 utils_extension_metadata = {
   'sparsefuncs_fast':
-    {'sources': ['sparsefuncs_fast.pyx'], 'dependencies': [np_dep]},
+    {'sources': ['sparsefuncs_fast.pyx']},
   '_cython_blas': {'sources': ['_cython_blas.pyx']},
   'arrayfuncs': {'sources': ['arrayfuncs.pyx']},
   'murmurhash': {
       'sources': ['murmurhash.pyx', 'src' / 'MurmurHash3.cpp'],
-      'dependencies': [np_dep]
   },
   '_fast_dict':
     {'sources': ['_fast_dict.pyx'], 'override_options': ['cython_language=cpp']},
   '_openmp_helpers': {'sources': ['_openmp_helpers.pyx'], 'dependencies': [openmp_dep]},
-  '_random': {'sources': ['_random.pyx'], 'dependencies': [np_dep]},
+  '_random': {'sources': ['_random.pyx']},
   '_typedefs': {'sources': ['_typedefs.pyx']},
   '_heap': {'sources': ['_heap.pyx']},
   '_sorting': {'sources': ['_sorting.pyx']},
@@ -65,7 +64,6 @@ foreach name: util_extension_names
   py.extension_module(
     name,
     [pxd, pyx] + utils_cython_tree,
-    dependencies: [np_dep],
     cython_args: cython_args,
     subdir: 'sklearn/utils',
     install: true

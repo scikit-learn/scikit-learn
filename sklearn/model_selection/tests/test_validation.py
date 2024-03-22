@@ -43,6 +43,7 @@ from sklearn.metrics import (
     precision_score,
     r2_score,
 )
+from sklearn.metrics._scorer import _MultimetricScorer
 from sklearn.model_selection import (
     GridSearchCV,
     GroupKFold,
@@ -2323,7 +2324,9 @@ def three_params_scorer(i, j, k):
         ),
         (
             True,
-            {"sc1": three_params_scorer, "sc2": three_params_scorer},
+            _MultimetricScorer(
+                scorers={"sc1": three_params_scorer, "sc2": three_params_scorer}
+            ),
             3,
             (1, 3),
             (0, 1),
@@ -2332,7 +2335,9 @@ def three_params_scorer(i, j, k):
         ),
         (
             False,
-            {"sc1": three_params_scorer, "sc2": three_params_scorer},
+            _MultimetricScorer(
+                scorers={"sc1": three_params_scorer, "sc2": three_params_scorer}
+            ),
             10,
             (1, 3),
             (0, 1),

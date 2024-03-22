@@ -49,14 +49,20 @@ def _rfe_single_fit(rfe, estimator, X, y, train, test, scorer):
 def _estimator_has(attr):
     """Check if we can delegate a method to the underlying estimator.
 
-    First, we check the first fitted estimator if available, otherwise we
-    check the unfitted estimator.
+    First, we check the fitted `estimator_` if available, otherwise we check the
+    unfitted `estimator`. We raise the original `AttributeError` if `attr` does
+    not exist. This function is used together with `available_if`.
     """
-    return lambda self: (
-        hasattr(self.estimator_, attr)
-        if hasattr(self, "estimator_")
-        else hasattr(self.estimator, attr)
-    )
+
+    def check(self):
+        if hasattr(self, "estimator_"):
+            getattr(self.estimator_, attr)
+        else:
+            getattr(self.estimator, attr)
+
+        return True
+
+    return check
 
 
 class RFE(_RoutingNotSupportedMixin, SelectorMixin, MetaEstimatorMixin, BaseEstimator):
@@ -560,7 +566,11 @@ class RFECV(RFE):
         The fitted estimator used to select features.
 
     cv_results_ : dict of ndarrays
-        A dict with keys:
+        All arrays (values of the dictionary) are sorted in ascending order
+        by the number of features used (i.e., the first element of the array
+        represents the models that used the least number of features, while the
+        last element represents the models that used all available features).
+        This dictionary contains the following keys:
 
         split(k)_test_score : ndarray of shape (n_subsets_of_features,)
             The cross-validation scores across (k)th fold.
