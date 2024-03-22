@@ -1661,6 +1661,9 @@ def precision_recall_fscore_support(
         "assigned" 0 samples. For multilabel targets, labels are column indices.
         By default, all labels in `y_true` and `y_pred` are used in sorted order.
 
+        .. versionchanged:: 0.17
+           Parameter `labels` improved for multiclass problem.
+
     pos_label : int, float, bool or str, default=1
         The class to report if `average='binary'` and the data is binary,
         otherwise this parameter is ignored.
