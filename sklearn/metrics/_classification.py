@@ -3284,8 +3284,7 @@ def brier_score_loss(
         else:
             raise
     y_true = np.array(y_true == pos_label, int)
-
-    return np.average((y_true - y_prob) ** 2, weights=sample_weight)
+    return np.average((y_true - y_proba) ** 2, weights=sample_weight)
 
 
 @validate_params(
