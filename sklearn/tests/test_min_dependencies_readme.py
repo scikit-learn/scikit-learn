@@ -103,7 +103,10 @@ def check_pyproject_section(
         elif "==" in requirement:
             package, version = requirement.split("==")
         else:
-            continue
+            raise NotImplementedError(
+                f"{requirement} not supported yet in this test. "
+                "Only >= and == are supported for version requirements"
+            )
 
         pyproject_build_min_versions[package] = version
 
