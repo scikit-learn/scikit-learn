@@ -234,6 +234,11 @@ Changelog
 :mod:`sklearn.metrics`
 ......................
 
+- |Feature| :func:`metrics.pairwise_distances` accepts calculating pairwise distances
+  for non-numeric arrays as well. This is supported through custom metrics only.
+  :pr:`27456` by :user:`Venkatachalam N <venkyyuvy>`, :user:`Kshitij Mathur <Kshitij68>`
+  and :user:`Julian Libiseller-Egger <julibeg>`.
+
 - |Efficiency| Improve efficiency of functions :func:`~metrics.brier_score_loss`,
   :func:`~metrics.calibration_curve`, :func:`~metrics.det_curve`,
   :func:`~metrics.precision_recall_curve`,
@@ -263,6 +268,12 @@ Changelog
 - |Fix| the ``cv_results_`` attribute (of :class:`model_selection.GridSearchCV`) now
   returns masked arrays of the appropriate NumPy dtype, as opposed to always returning
   dtype ``object``. :pr:`28352` by :user:`Marco Gorelli<MarcoGorelli>`.
+
+- |Fix| :func:`sklearn.model_selection.train_test_score` works with Array API inputs.
+  Previously indexing was not handled correctly leading to exceptions when using strict
+  implementations of the Array API like CuPY.
+  :pr:`28407` by `Tim Head <betatim>`.
+
 
 :mod:`sklearn.multioutput`
 ..........................

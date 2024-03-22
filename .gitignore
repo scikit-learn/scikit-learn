@@ -54,11 +54,14 @@ nips2010_pdf/
 examples/cluster/joblib
 reuters/
 benchmarks/bench_covertype_data/
+benchmarks/HIGGS.csv.gz
 
 *.prefs
 .pydevproject
 .idea
 .vscode
+# used by pyenv
+.python-version
 
 *.c
 *.cpp
