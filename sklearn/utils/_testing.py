@@ -361,6 +361,17 @@ def set_random_state(estimator, random_state=0):
         estimator.set_params(random_state=random_state)
 
 
+def _is_numpydoc():
+    try:
+        import numpydoc
+
+        assert parse_version(numpydoc.__version__) >= parse_version("1.2.0")
+    except (ImportError, AssertionError):
+        return False
+    else:
+        return True
+
+
 try:
     _check_array_api_dispatch(True)
     ARRAY_API_COMPAT_FUNCTIONAL = True
@@ -405,6 +416,11 @@ try:
 
     if_safe_multiprocessing_with_blas = pytest.mark.skipif(
         sys.platform == "darwin", reason="Possible multi-process bug with some BLAS"
+    )
+
+    skip_if_no_numpydoc = pytest.mark.skipif(
+        not _is_numpydoc(),
+        reason="numpydoc >= 1.2.0 is required to test the docstrings",
     )
 except ImportError:
     pass
@@ -485,9 +501,15 @@ def _is_numpydoc():
         return True
 
 
-skip_if_no_numpydoc = pytest.mark.skipif(
-    not _is_numpydoc(), reason="numpydoc >= 1.2.0 is required to test the docstrings"
-)
+try:
+    import pytest
+
+    skip_if_no_numpydoc = pytest.mark.skipif(
+        not _is_numpydoc(),
+        reason="numpydoc >= 1.2.0 is required to test the docstrings",
+    )
+except ImportError:
+    pass
 
 
 def _get_args(function, varargs=False):
