@@ -227,6 +227,7 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
         cdef StackRecord stack_record
 
         cdef ParentInfo parent_record
+        _init_parent_record(&parent_record)
 
         with nogil:
             # push root node onto stack
@@ -460,6 +461,7 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
         cdef Node* node
 
         cdef ParentInfo parent_record
+        _init_parent_record(&parent_record)
 
         # Initial capacity
         cdef intp_t init_capacity = max_split_nodes + max_leaf_nodes
