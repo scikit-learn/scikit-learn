@@ -606,7 +606,7 @@ class TunedThresholdClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimato
                 )
             constraint_value = self.constraint_value
         else:
-            constraint_value = "highest"
+            constraint_value = None  # ignore the constraint value
 
         routed_params = process_routing(self, "fit", **params)
         self._curve_scorer = self._get_curve_scorer()
@@ -696,7 +696,7 @@ class TunedThresholdClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimato
                 axis=0,
             )
 
-        if constraint_value == "highest":  # find best score
+        if constraint_value is None:  # find best score that is the highest value
             self.objective_scores_ = _mean_interpolated_score(
                 self.decision_thresholds_, cv_thresholds, cv_scores
             )
