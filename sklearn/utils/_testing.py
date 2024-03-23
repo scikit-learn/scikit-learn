@@ -751,6 +751,9 @@ def _convert_container(
     container : array-like
         The container to convert.
 
+        - Converting to "dataframe" requires 2D container
+        - Converting to "series" and "index" requires 1D container
+
     constructor_type : {"list", "tuple", "slice", "array", "dataframe", "series", \
                         "index"}
         The type of the returned container.
@@ -759,7 +762,9 @@ def _convert_container(
         Force the dtype of the container. Does not apply to "slice".
 
     sparse_container : {"matrix", "array"}, default=None
-        The sparse container to use. Only applies to "array".
+        The sparse container to use. Only applies to "array". Note that if this
+        parameter is not None and `container` is 1-dimensional of length n, then the
+        converted container will be 2-dimensional of shape (1, n).
 
         - None returns a dense numpy array
         - "matrix" returns a sparse matrix
@@ -791,25 +796,53 @@ def _convert_container(
     -------
     converted_container
     """
+    if sp.sparse.issparse(container):
+        # Converting from a sparse container to a non-sparse container, so we densify
+        # the container in the first place
+        if sparse_container is None:
+            container = container.toarray()
+        if dtype is not None:
+            container = container.astype(dtype, copy=False)
+    else:
+        container = np.asarray(container, dtype=dtype)
+
+    # Check the dimension of the container
+    if constructor_type == "slice":
+        if container.shape != (2,):
+            raise ValueError(
+                "Only 1D containers with exactly 2 elements can be converted to slice; "
+                f"got shape {container.shape} instead"
+            )
+    elif constructor_type == "dataframe":
+        if container.ndim != 2:
+            raise ValueError(
+                "Only 2D containers can be converted to dataframe; got shape "
+                f"{container.shape} instead"
+            )
+    elif constructor_type in ("series", "index"):
+        if container.ndim != 1:
+            raise ValueError(
+                f"Only 1D containers can be converted to {constructor_type}; got shape "
+                f"{container.shape} instead"
+            )
+
+    # ---- Conversion ---------------------------------------------------------
+
     if constructor_type == "list":
-        if dtype is None:
-            return list(container)
-        return np.asarray(container, dtype=dtype).tolist()
+        return container.tolist()
 
     if constructor_type == "tuple":
-        if dtype is None:
-            return tuple(container)
-        return tuple(np.asarray(container, dtype=dtype).tolist())
+        return tuple(container.tolist())
 
     if constructor_type == "slice":
         return slice(container[0], container[1])
 
     if constructor_type == "array":
         if sparse_container is None:
-            return np.asarray(container, dtype=dtype)
+            return container
 
         if sp_version < parse_version("1.8") and sparse_container == "array":
-            pytest.skip("`sparse_container='array'` requires scipy >= 1.8")
+            pytest.skip("Sparse arrays require scipy >= 1.8")
 
         if not sp.sparse.issparse(container):
             # For scipy >= 1.13, sparse array constructed from 1d array may be
@@ -819,15 +852,15 @@ def _convert_container(
             container = np.atleast_2d(container)
 
         if sparse_container == "array":
-            sparse_container = sp.sparse.csr_array(container, dtype=dtype)
+            sparse_container = sp.sparse.csr_array(container)
         else:
-            sparse_container = sp.sparse.csr_matrix(container, dtype=dtype)
+            sparse_container = sp.sparse.csr_matrix(container)
         return sparse_container.asformat(sparse_format)
 
     if constructor_type == "dataframe":
         if constructor_lib == "pandas":
             pd = pytest.importorskip("pandas", minversion=minversion)
-            df = pd.DataFrame(container, columns=column_names, dtype=dtype, copy=False)
+            df = pd.DataFrame(container, columns=column_names)
             if categorical_feature_names is not None:
                 for col_name in categorical_feature_names:
                     df[col_name] = df[col_name].astype("category")
@@ -835,8 +868,6 @@ def _convert_container(
 
         if constructor_lib == "polars":
             pl = pytest.importorskip("polars", minversion=minversion)
-            if dtype is not None:  # polars constructor does not support dtype
-                container = np.asarray(container, dtype=dtype)
             df = pl.DataFrame(container, schema=column_names, orient="row")
             if categorical_feature_names is not None:
                 for col_name in categorical_feature_names:
@@ -845,11 +876,11 @@ def _convert_container(
 
         if constructor_lib == "pyarrow":
             pa = pytest.importorskip("pyarrow", minversion=minversion)
-            arr = np.asarray(container, dtype=dtype)
             if column_names is None:
-                column_names = [f"col{i}" for i in range(arr.shape[1])]
-            data = {name: arr[:, i] for i, name in enumerate(column_names)}
-            table = pa.Table.from_pydict(data)
+                column_names = [f"col{i}" for i in range(container.shape[1])]
+            table = pa.Table.from_pydict(
+                {name: container[:, i] for i, name in enumerate(column_names)}
+            )
             if categorical_feature_names is not None:
                 for col_idx, col_name in enumerate(table.column_names):
                     if col_name in categorical_feature_names:
@@ -865,12 +896,10 @@ def _convert_container(
     if constructor_type == "series":
         if constructor_lib == "pandas":
             pd = pytest.importorskip("pandas", minversion=minversion)
-            return pd.Series(container, dtype=dtype)
+            return pd.Series(container)
 
         if constructor_lib == "polars":
             pl = pytest.importorskip("polars", minversion=minversion)
-            if dtype is not None:  # polars constructor does not support dtype
-                container = np.asarray(container, dtype=dtype)
             return pl.Series(values=container)
 
         raise ValueError(f"{constructor_lib=} is incompatible with series")
@@ -878,10 +907,9 @@ def _convert_container(
     if constructor_type == "index":
         if constructor_lib == "pandas":
             pd = pytest.importorskip("pandas", minversion=minversion)
-            return pd.Index(container, dtype=dtype)
-        raise ValueError(f"{constructor_lib=} is incompatible with index")
+            return pd.Index(container)
 
-    raise ValueError(f"{constructor_type=} is not supported")
+        raise ValueError(f"{constructor_lib=} is incompatible with index")
 
 
 def raises(expected_exc_type, match=None, may_pass=False, err_msg=None):

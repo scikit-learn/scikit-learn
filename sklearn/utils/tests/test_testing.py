@@ -1,5 +1,6 @@
 import atexit
 import os
+import re
 import unittest
 import warnings
 
@@ -646,12 +647,11 @@ def test_create_memmap_backed_data(monkeypatch):
 
 
 @pytest.mark.parametrize(
-    "constructor_kwargs, container_type",
+    "constructor_kwargs, expected_output_type",
     [
         ({"constructor_type": "list"}, list),
         ({"constructor_type": "tuple"}, tuple),
         ({"constructor_type": "array"}, np.ndarray),
-        ({"constructor_type": "slice"}, slice),
         # Use `zip` to keep only the available sparse containers depending of the
         # installed scipy version
         *zip(
@@ -701,6 +701,17 @@ def test_create_memmap_backed_data(monkeypatch):
     ],
 )
 @pytest.mark.parametrize(
+    "input_type, input_shape",
+    [
+        (list, (-1,)),
+        (list, (2, -1)),
+        (np.array, (-1,)),
+        (np.array, (2, -1)),
+        # sparse containers are always 2-dimensional
+        *[(csr_container, (2, -1)) for csr_container in CSR_CONTAINERS],
+    ],
+)
+@pytest.mark.parametrize(
     "dtype, superdtype",
     [
         (np.int32, np.integer),
@@ -709,36 +720,89 @@ def test_create_memmap_backed_data(monkeypatch):
         (np.float64, np.floating),
     ],
 )
-def test_convert_container(constructor_kwargs, container_type, dtype, superdtype):
+def test_convert_container(
+    constructor_kwargs, expected_output_type, input_type, input_shape, dtype, superdtype
+):
     """
     Check that we convert the container to the right type of array with the
-    right data type.
+    right data type and shape.
     """
-    if constructor_kwargs["constructor_type"] in ("dataframe", "series", "index"):
+    constructor_type = constructor_kwargs["constructor_type"]
+    if constructor_type in ("dataframe", "series", "index"):
         # Run the lambda function to import the library or skip
-        container_type = container_type()
+        expected_output_type = expected_output_type()
 
-    container_converted = _convert_container([0, 1], dtype=dtype, **constructor_kwargs)
-    assert isinstance(container_converted, container_type)
+    container = np.arange(12).reshape(input_shape)
 
-    if constructor_kwargs["constructor_type"] in ("list", "tuple", "index"):
+    # Certain constructor types require specific-dimensional input containers
+    # None stands for no constraint
+    desired_dimension = None
+    if constructor_type in ("series", "index"):
+        desired_dimension = 1
+    elif constructor_type == "dataframe":
+        desired_dimension = 2
+
+    if desired_dimension is None or desired_dimension == len(input_shape):
+        container_converted = _convert_container(
+            input_type(container.tolist()),
+            dtype=dtype,
+            **constructor_kwargs,
+        )
+    else:  # dimension mismatch
+        msg = (
+            f"Only {desired_dimension}D containers can be converted to "
+            f"{constructor_type}; got shape {container.shape} instead"
+        )
+        with pytest.raises(ValueError, match=re.escape(msg)):
+            _convert_container(
+                input_type(container.tolist()),
+                dtype=dtype,
+                **constructor_kwargs,
+            )
+        return
+
+    # Check output data type and shape
+    assert isinstance(container_converted, expected_output_type)
+    if constructor_type in ("list", "tuple"):
+        # list and tuple does not have a shape attribute
+        if len(input_shape) == 1:
+            assert len(container_converted) == container.size
+        else:
+            assert len(container_converted) == container.shape[0]
+            assert len(container_converted[0]) == container.shape[1]
+    elif (
+        constructor_type == "dataframe"
+        or constructor_kwargs.get("sparse_container") is not None
+    ) and len(input_shape) == 1:
+        # sparse containers will convert to 2-dimensional
+        assert container_converted.shape == (1, container.size)
+    else:
+        assert container_converted.shape == container.shape
+
+    if constructor_type in ("list", "tuple", "index"):
         # list and tuple will use Python class dtype: int, float
         # pandas index will always use high precision: np.int64 and np.float64
-        assert np.issubdtype(type(container_converted[0]), superdtype)
+        first_element = (
+            container_converted[0]
+            if len(input_shape) == 1
+            else container_converted[0][0]
+        )
+        assert np.issubdtype(type(first_element), superdtype)
     else:
+        # Determine the dtype of the converted container
         if hasattr(container_converted, "dtype"):
             converted_dtype = container_converted.dtype
         elif hasattr(container_converted, "dtypes"):
             converted_dtype = container_converted.dtypes[0]
-        elif constructor_kwargs["constructor_type"] == "slice":
+        elif constructor_type == "slice":
             return  # dtype does not apply to slice
         else:
             assert False, f"{type(container_converted).__name__} has no dtype"
 
         if constructor_kwargs.get("constructor_lib") == "polars":
+            # Polars has its own data types so we have to map from numpy to polars
             import polars as pl  # polars is already imported if we reach this point
 
-            # polars has its own data types
             dtype_mapping = {
                 np.int32: pl.Int32,
                 np.int64: pl.Int64,
