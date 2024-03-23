@@ -30,12 +30,7 @@ from sklearn.utils._testing import (
     turn_warnings_into_errors,
 )
 from sklearn.utils.deprecation import deprecated
-from sklearn.utils.fixes import (
-    CSC_CONTAINERS,
-    CSR_CONTAINERS,
-    parse_version,
-    sp_version,
-)
+from sklearn.utils.fixes import CSC_CONTAINERS, CSR_CONTAINERS
 from sklearn.utils.metaestimators import available_if
 
 
@@ -651,20 +646,58 @@ def test_create_memmap_backed_data(monkeypatch):
 
 
 @pytest.mark.parametrize(
-    "constructor_name, container_type",
+    "constructor_kwargs, container_type",
     [
-        ("list", list),
-        ("tuple", tuple),
-        ("array", np.ndarray),
-        ("sparse", sparse.csr_matrix),
-        # using `zip` will only keep the available sparse containers
-        # depending of the installed SciPy version
-        *zip(["sparse_csr", "sparse_csr_array"], CSR_CONTAINERS),
-        *zip(["sparse_csc", "sparse_csc_array"], CSC_CONTAINERS),
-        ("dataframe", lambda: pytest.importorskip("pandas").DataFrame),
-        ("series", lambda: pytest.importorskip("pandas").Series),
-        ("index", lambda: pytest.importorskip("pandas").Index),
-        ("slice", slice),
+        ({"constructor_type": "list"}, list),
+        ({"constructor_type": "tuple"}, tuple),
+        ({"constructor_type": "array"}, np.ndarray),
+        ({"constructor_type": "slice"}, slice),
+        # Use `zip` to keep only the available sparse containers depending of the
+        # installed scipy version
+        *zip(
+            (
+                {
+                    "constructor_type": "array",
+                    "sparse_container": sparse_container,
+                    "sparse_format": "csr",
+                }
+                for sparse_container in ("matrix", "array")
+            ),
+            CSR_CONTAINERS,
+        ),
+        *zip(
+            (
+                {
+                    "constructor_type": "array",
+                    "sparse_container": sparse_container,
+                    "sparse_format": "csc",
+                }
+                for sparse_container in ("matrix", "array")
+            ),
+            CSC_CONTAINERS,
+        ),
+        # Use a lambda function to delay the import of optional dependencies to within
+        # the function to only skip a specific test instead of the whole file
+        (
+            {"constructor_type": "dataframe", "constructor_lib": "pandas"},
+            lambda: pytest.importorskip("pandas").DataFrame,
+        ),
+        (
+            {"constructor_type": "dataframe", "constructor_lib": "polars"},
+            lambda: pytest.importorskip("polars").DataFrame,
+        ),
+        (
+            {"constructor_type": "series", "constructor_lib": "pandas"},
+            lambda: pytest.importorskip("pandas").Series,
+        ),
+        (
+            {"constructor_type": "series", "constructor_lib": "polars"},
+            lambda: pytest.importorskip("polars").Series,
+        ),
+        (
+            {"constructor_type": "index", "constructor_lib": "pandas"},
+            lambda: pytest.importorskip("pandas").Index,
+        ),
     ],
 )
 @pytest.mark.parametrize(
@@ -676,73 +709,87 @@ def test_create_memmap_backed_data(monkeypatch):
         (np.float64, np.floating),
     ],
 )
-def test_convert_container(
-    constructor_name,
-    container_type,
-    dtype,
-    superdtype,
-):
-    """Check that we convert the container to the right type of array with the
-    right data type."""
-    if constructor_name in ("dataframe", "polars", "series", "polars_series", "index"):
-        # delay the import of pandas/polars within the function to only skip this test
-        # instead of the whole file
+def test_convert_container(constructor_kwargs, container_type, dtype, superdtype):
+    """
+    Check that we convert the container to the right type of array with the
+    right data type.
+    """
+    if constructor_kwargs["constructor_type"] in ("dataframe", "series", "index"):
+        # Run the lambda function to import the library or skip
         container_type = container_type()
-    container = [0, 1]
 
-    container_converted = _convert_container(
-        container,
-        constructor_name,
-        dtype=dtype,
-    )
+    container_converted = _convert_container([0, 1], dtype=dtype, **constructor_kwargs)
     assert isinstance(container_converted, container_type)
 
-    if constructor_name in ("list", "tuple", "index"):
+    if constructor_kwargs["constructor_type"] in ("list", "tuple", "index"):
         # list and tuple will use Python class dtype: int, float
         # pandas index will always use high precision: np.int64 and np.float64
         assert np.issubdtype(type(container_converted[0]), superdtype)
-    elif hasattr(container_converted, "dtype"):
-        assert container_converted.dtype == dtype
-    elif hasattr(container_converted, "dtypes"):
-        assert container_converted.dtypes[0] == dtype
+    else:
+        if hasattr(container_converted, "dtype"):
+            converted_dtype = container_converted.dtype
+        elif hasattr(container_converted, "dtypes"):
+            converted_dtype = container_converted.dtypes[0]
+        elif constructor_kwargs["constructor_type"] == "slice":
+            return  # dtype does not apply to slice
+        else:
+            assert False, f"{type(container_converted).__name__} has no dtype"
+
+        if constructor_kwargs.get("constructor_lib") == "polars":
+            import polars as pl  # polars is already imported if we reach this point
+
+            # polars has its own data types
+            dtype_mapping = {
+                np.int32: pl.Int32,
+                np.int64: pl.Int64,
+                np.float32: pl.Float32,
+                np.float64: pl.Float64,
+            }
+            assert converted_dtype == dtype_mapping[dtype]
+        else:
+            assert converted_dtype == dtype
 
 
-def test_convert_container_categories_pandas():
-    pytest.importorskip("pandas")
+@pytest.mark.parametrize("constructor_lib", ["pandas", "polars", "pyarrow"])
+def test_convert_container_categories(constructor_lib):
+    lib = pytest.importorskip(constructor_lib)
     df = _convert_container(
-        [["x"]], "dataframe", ["A"], categorical_feature_names=["A"]
+        [["x"]],
+        constructor_type="dataframe",
+        constructor_lib=constructor_lib,
+        column_names=["A"],
+        categorical_feature_names=["A"],
     )
-    assert df.dtypes.iloc[0] == "category"
+
+    if constructor_lib == "pandas":
+        assert isinstance(df, lib.DataFrame)
+        assert df.dtypes.iloc[0] == "category"
+    elif constructor_lib == "polars":
+        assert isinstance(df, lib.DataFrame)
+        assert df.schema["A"] == lib.Categorical()
+    elif constructor_lib == "pyarrow":
+        assert isinstance(df, lib.Table)
+        assert type(df.schema[0].type) is lib.DictionaryType
 
 
-def test_convert_container_categories_polars():
-    pl = pytest.importorskip("polars")
-    df = _convert_container([["x"]], "polars", ["A"], categorical_feature_names=["A"])
-    assert df.schema["A"] == pl.Categorical()
-
-
-def test_convert_container_categories_pyarrow():
-    pa = pytest.importorskip("pyarrow")
-    df = _convert_container([["x"]], "pyarrow", ["A"], categorical_feature_names=["A"])
-    assert type(df.schema[0].type) is pa.DictionaryType
-
-
-@pytest.mark.skipif(
-    sp_version >= parse_version("1.8"),
-    reason="sparse arrays are available as of scipy 1.8.0",
-)
-@pytest.mark.parametrize("constructor_name", ["sparse_csr_array", "sparse_csc_array"])
-@pytest.mark.parametrize("dtype", [np.int32, np.int64, np.float32, np.float64])
-def test_convert_container_raise_when_sparray_not_available(constructor_name, dtype):
-    """Check that if we convert to sparse array but sparse array are not supported
-    (scipy<1.8.0), we should raise an explicit error."""
-    container = [0, 1]
-
-    with pytest.raises(
-        ValueError,
-        match=f"only available with scipy>=1.8.0, got {sp_version}",
-    ):
-        _convert_container(container, constructor_name, dtype=dtype)
+@pytest.mark.parametrize("sparse_container", ["matrix", "array"])
+@pytest.mark.parametrize("sparse_format", ["csc", "csr"])
+@pytest.mark.parametrize("orig_csr_container", CSR_CONTAINERS)
+def test_convert_container_sparse_to_sparse(
+    sparse_container, sparse_format, orig_csr_container
+):
+    """
+    Non-regression test to check that we can still convert a sparse container
+    from a given format to another format.
+    """
+    X_sparse = orig_csr_container(np.random.randn(10, 10))
+    X_converted = _convert_container(
+        X_sparse,
+        constructor_type="array",
+        sparse_container=sparse_container,
+        sparse_format=sparse_format,
+    )
+    assert X_converted.format == sparse_format
 
 
 def test_raises():
@@ -855,35 +902,6 @@ def test_assert_run_python_script_without_output():
         match="output was not supposed to match.+got.+something to stderr",
     ):
         assert_run_python_script_without_output(code, pattern="to.+stderr")
-
-
-@pytest.mark.parametrize(
-    "constructor_name",
-    [
-        "sparse_csr",
-        "sparse_csc",
-        pytest.param(
-            "sparse_csr_array",
-            marks=pytest.mark.skipif(
-                sp_version < parse_version("1.8"),
-                reason="sparse arrays are available as of scipy 1.8.0",
-            ),
-        ),
-        pytest.param(
-            "sparse_csc_array",
-            marks=pytest.mark.skipif(
-                sp_version < parse_version("1.8"),
-                reason="sparse arrays are available as of scipy 1.8.0",
-            ),
-        ),
-    ],
-)
-def test_convert_container_sparse_to_sparse(constructor_name):
-    """Non-regression test to check that we can still convert a sparse container
-    from a given format to another format.
-    """
-    X_sparse = sparse.random(10, 10, density=0.1, format="csr")
-    _convert_container(X_sparse, constructor_name)
 
 
 def check_warnings_as_errors(warning_info, warnings_as_errors):

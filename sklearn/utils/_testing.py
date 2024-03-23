@@ -819,9 +819,9 @@ def _convert_container(
             container = np.atleast_2d(container)
 
         if sparse_container == "array":
-            sparse_container = sp.sparse.csr_array(container)
+            sparse_container = sp.sparse.csr_array(container, dtype=dtype)
         else:
-            sparse_container = sp.sparse.csr_matrix(container)
+            sparse_container = sp.sparse.csr_matrix(container, dtype=dtype)
         return sparse_container.asformat(sparse_format)
 
     if constructor_type == "dataframe":
