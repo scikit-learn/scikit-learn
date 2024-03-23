@@ -75,7 +75,7 @@ def yield_namespaces(include_numpy_namespaces=True):
     """
     # Yield namespaces that are hardcoded in `yield_namespace_device_dtype_combinations`
     # and yield each one only once.
-    yield from list(
+    yield from sorted(
         set(
             list(
                 zip(
