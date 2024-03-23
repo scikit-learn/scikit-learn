@@ -145,45 +145,13 @@ scoring["cost_gain"] = make_scorer(
 # Vanilla predictive model
 # ^^^^^^^^^^^^^^^^^^^^^^^^
 #
-# We first design our predictive model consisting of a
-# :class:`~sklearn.ensemble.HistGradientBoostingClassifier`. We encode the categorical
-# features with an :class:`~sklearn.preprocessing.OrdinalEncoder` but the numerical
-# features are kept as they are. To identify the categorical columns, we use the helper
-# function :func:`~sklearn.compose.make_column_selector` and the fact that the
-# categorical features are stored as `category` dtype.
-from sklearn.compose import ColumnTransformer
-from sklearn.compose import make_column_selector as selector
+# We use :class:`~sklearn.ensemble.HistGradientBoostingClassifier` as a predictive model
+# that natively handles categorical features and missing values.
 from sklearn.ensemble import HistGradientBoostingClassifier
-from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import OrdinalEncoder
 
-categorical_columns = selector(dtype_include="category")(X)
-numerical_columns = selector(dtype_exclude="category")(X)
-
-preprocessor = ColumnTransformer(
-    [
-        (
-            "categorical",
-            OrdinalEncoder(handle_unknown="use_encoded_value", unknown_value=-1),
-            categorical_columns,
-        ),
-        ("numerical", "passthrough", numerical_columns),
-    ],
-    verbose_feature_names_out=False,
-)
-model = Pipeline(
-    [
-        ("preprocessor", preprocessor),
-        (
-            "classifier",
-            HistGradientBoostingClassifier(
-                categorical_features=categorical_columns, random_state=0
-            ),
-        ),
-    ]
-)
-
-model.fit(X_train, y_train)
+model = HistGradientBoostingClassifier(
+    categorical_features="from_dtype", random_state=0
+).fit(X_train, y_train)
 
 # %%
 # We evaluate the performance of our predictive model using the ROC and Precision-Recall
