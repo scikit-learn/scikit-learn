@@ -503,12 +503,13 @@ def test_tuned_threshold_classifier_without_constraint_value(response_method):
         objective_metric="balanced_accuracy",
         response_method=response_method,
         n_thresholds=n_thresholds,
+        store_cv_results=True,
     )
     score_optimized = balanced_accuracy_score(y, model.fit(X, y).predict(X))
     score_baseline = balanced_accuracy_score(y, lr.predict(X))
     assert score_optimized > score_baseline
-    assert model.decision_thresholds_.shape == (n_thresholds,)
-    assert model.objective_scores_.shape == (n_thresholds,)
+    assert model.cv_results_["thresholds"].shape == (n_thresholds,)
+    assert model.cv_results_["scores"].shape == (n_thresholds,)
 
 
 @pytest.mark.parametrize(
@@ -552,12 +553,8 @@ def test_tuned_threshold_classifier_metric_with_parameter():
         estimator=lr, objective_metric=make_scorer(f1_score)
     ).fit(X, y)
 
-    assert model_fbeta_1.decision_threshold_ == pytest.approx(
-        model_f1.decision_threshold_
-    )
-    assert model_fbeta_1.decision_threshold_ != pytest.approx(
-        model_fbeta_2.decision_threshold_
-    )
+    assert model_fbeta_1.best_threshold_ == pytest.approx(model_f1.best_threshold_)
+    assert model_fbeta_1.best_threshold_ != pytest.approx(model_fbeta_2.best_threshold_)
 
 
 @pytest.mark.parametrize(
@@ -709,10 +706,12 @@ def test_tuned_threshold_classifier_response_method_curve_scorer_with_constraint
         constraint_value=constraint_value,
         response_method=response_method,
         n_thresholds=n_thresholds,
+        store_cv_results=True,
     )
     model.fit(X, y)
-    assert model.decision_thresholds_.shape == (n_thresholds,)
-    assert all(score.shape == (n_thresholds,) for score in model.objective_scores_)
+    assert model.cv_results_["thresholds"].shape == (n_thresholds,)
+    assert model.cv_results_["constrained_scores"].shape == (n_thresholds,)
+    assert model.cv_results_["maximized_scores"].shape == (n_thresholds,)
 
     if response_method in ("auto", "predict_proba"):
         # "auto" will fall back  in priority on `predict_proba` if `estimator`
@@ -722,9 +721,9 @@ def test_tuned_threshold_classifier_response_method_curve_scorer_with_constraint
             "max_tnr_at_tpr_constraint",
             "max_precision_at_recall_constraint",
         ):
-            assert 0.5 <= model.decision_threshold_ <= 1
+            assert 0.5 <= model.best_threshold_ <= 1
         else:  # "max_tpr_at_tnr_constraint" or "max_recall_at_precision_constraint"
-            assert 0 <= model.decision_threshold_ <= 0.5
+            assert 0 <= model.best_threshold_ <= 0.5
     else:  # "decision_function"
         # we expect the decision function to be centered in 0.0 and to be larger than
         # -1 and 1.
@@ -732,9 +731,9 @@ def test_tuned_threshold_classifier_response_method_curve_scorer_with_constraint
             "max_tnr_at_tpr_constraint",
             "max_precision_at_recall_constraint",
         ):
-            assert 0 < model.decision_threshold_ < 20
+            assert 0 < model.best_threshold_ < 20
         else:  # "max_tpr_at_tnr_constraint" or "max_recall_at_precision_constraint"
-            assert -20 < model.decision_threshold_ < 0
+            assert -20 < model.best_threshold_ < 0
 
 
 @pytest.mark.usefixtures("enable_slep006")
@@ -807,11 +806,11 @@ def test_tuned_threshold_classifier_pos_label_precision_recall(
 
     # due to internal interpolation, the scores will vary slightly
     if objective_metric == "max_precision_at_recall_constraint":
-        assert recall == pytest.approx(model.objective_score_[0], abs=1e-3)
-        assert precision == pytest.approx(model.objective_score_[1], abs=1e-3)
+        assert precision == pytest.approx(model.best_score_, abs=1e-3)
+        assert recall == pytest.approx(model.constrained_score_, abs=1e-3)
     else:
-        assert precision == pytest.approx(model.objective_score_[0], abs=1e-3)
-        assert recall == pytest.approx(model.objective_score_[1], abs=1e-3)
+        assert recall == pytest.approx(model.best_score_, abs=1e-3)
+        assert precision == pytest.approx(model.constrained_score_, abs=1e-3)
 
 
 @pytest.mark.parametrize(
@@ -848,11 +847,11 @@ def test_tuned_threshold_classifier_pos_label_tnr_tpr(objective_metric, pos_labe
     tnr, tpr = tnr_tpr_score(y, model.predict(X), pos_label=pos_label)
     # due to internal interpolation, the scores will vary slightly
     if objective_metric == "max_tnr_at_tpr_constraint":
-        assert tpr == pytest.approx(model.objective_score_[0], abs=0.05)
-        assert tnr == pytest.approx(model.objective_score_[1], abs=0.05)
+        assert tnr == pytest.approx(model.best_score_, abs=0.05)
+        assert tpr == pytest.approx(model.constrained_score_, abs=0.05)
     else:
-        assert tnr == pytest.approx(model.objective_score_[0], abs=0.05)
-        assert tpr == pytest.approx(model.objective_score_[1], abs=0.05)
+        assert tpr == pytest.approx(model.best_score_, abs=0.05)
+        assert tnr == pytest.approx(model.constrained_score_, abs=0.05)
 
 
 @pytest.mark.parametrize(
@@ -887,7 +886,7 @@ def test_tuned_threshold_classifier_pos_label_single_metric(pos_label, metric_ty
     ).fit(X, y)
 
     precision = precision_score(y, model.predict(X), pos_label=pos_label)
-    assert precision == pytest.approx(model.objective_score_, abs=1e-3)
+    assert precision == pytest.approx(model.best_score_, abs=1e-3)
 
 
 @pytest.mark.parametrize(
@@ -905,8 +904,8 @@ def test_tuned_threshold_classifier_constant_strategy(predict_method):
     tuned_model = TunedThresholdClassifier(
         estimator, strategy="constant", constant_threshold=constant_threshold
     ).fit(X, y)
-    assert tuned_model.decision_threshold_ == pytest.approx(constant_threshold)
-    for attribute in ("decision_thresholds_", "objective_score_", "objective_scores_"):
+    assert tuned_model.best_threshold_ == pytest.approx(constant_threshold)
+    for attribute in ("best_score_", "constrained_score_"):
         assert getattr(tuned_model, attribute) is None
 
     assert_allclose(
@@ -921,9 +920,12 @@ def test_tuned_threshold_classifier_n_thresholds_array():
     estimator = LogisticRegression()
     n_thresholds = np.linspace(0, 1, 11)
     tuned_model = TunedThresholdClassifier(
-        estimator, n_thresholds=n_thresholds, response_method="predict_proba"
+        estimator,
+        n_thresholds=n_thresholds,
+        response_method="predict_proba",
+        store_cv_results=True,
     ).fit(X, y)
-    assert_allclose(tuned_model.decision_thresholds_, n_thresholds)
+    assert_allclose(tuned_model.cv_results_["thresholds"], n_thresholds)
 
 
 def test_tuned_threshold_classifier_cv_float():

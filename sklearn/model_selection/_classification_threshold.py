@@ -383,30 +383,42 @@ class TunedThresholdClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimato
         Controls the randomness of cross-validation when `cv` is a float.
         See :term:`Glossary <random_state>`.
 
+    store_cv_results : bool, default=False
+        Whether to store all scores and thresholds computed during the cross-validation
+        process.
+
     Attributes
     ----------
     estimator_ : estimator instance
         The fitted classifier used when predicting.
 
-    decision_threshold_ : float
+    best_threshold_ : float
         The new decision threshold.
 
-    decision_thresholds_ : ndarray of shape (n_thresholds,) or None
-        All decision thresholds that were evaluated. If `strategy="constant"`,
-        `decision_thresholds_` is None.
+    best_score_ : float or None
+        The score of the objective metric maximized associated with the decision
+        threshold found. If `strategy="constant"`, `best_score_` is None.
 
-    objective_score_ : float or tuple of floats
-        The score of the objective metric associated with the decision threshold found.
+    constrained_score_ : float or None
         When `objective_metric` is one of `"max_tpr_at_tnr_constraint"`,
         `"max_tnr_at_tpr_constraint"`, `"max_precision_at_recall_constraint"`,
-        `"max_recall_at_precision_constraint"`, it will corresponds to a tuple of
-        two float values: the first one is the score of the metric which is constrained
-        and the second one is the score of the maximized metric. If
-        `strategy="constant"`, `objective_score_` is None.
+        `"max_recall_at_precision_constraint"`, it will corresponds to the score of the
+        metric which is constrained. It should be close to `constraint_value`. If
+        `objective_metric` is not one of the above or when `strategy="constant",
+        `constrained_score_` is None.
 
-    objective_scores_ : ndarray of shape (n_thresholds,)
-        The scores of the objective metric associated with the decision thresholds.
-        If `strategy="constant"`, `objective_scores_` is None.
+    cv_results_ : dict or None
+        A dictionary containing the scores and thresholds computed during the
+        cross-validation process. Only exist if `store_cv_results=True`.
+        The keys are different depending on the `objective_metric` and `strategy` used:
+
+        * when `strategy="constant"`, `cv_results_` is None;
+        * when `objective_metric` is one of `"max_tpr_at_tnr_constraint"`,
+          `"max_tnr_at_tpr_constraint"`, `"max_precision_at_recall_constraint"`,
+          `"max_recall_at_precision_constraint"`, the keys are `"thresholds"`,
+          `"constrained_scores"`, and `"maximized_scores"`;
+        * otherwise, for score computing a single values, the keys are `"thresholds"`
+          and `"scores"`.
 
     classes_ : ndarray of shape (n_classes,)
         The class labels.
@@ -452,9 +464,9 @@ class TunedThresholdClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimato
     ...     constraint_value=0.7,
     ... ).fit(X_train, y_train)
     >>> print(
-    ...     f"Cut-off point found at {classifier_tuned.decision_threshold_:.3f} for a "
-    ...     f"recall of {classifier_tuned.objective_score_[0]:.3f} and a precision of "
-    ...     f"{classifier_tuned.objective_score_[1]:.3f}."
+    ...     f"Cut-off point found at {classifier_tuned.best_threshold_:.3f} for a "
+    ...     f"recall of {classifier_tuned.best_score_[0]:.3f} and a precision of "
+    ...     f"{classifier_tuned.best_score_[1]:.3f}."
     ... )
     Cut-off point found at 0.3... for a recall of 0.7... and a precision of 0.7...
     >>> print(classification_report(y_test, classifier_tuned.predict(X_test)))
@@ -501,6 +513,7 @@ class TunedThresholdClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimato
         "refit": ["boolean"],
         "n_jobs": [Integral, None],
         "random_state": ["random_state"],
+        "store_cv_results": ["boolean"],
     }
 
     def __init__(
@@ -518,6 +531,7 @@ class TunedThresholdClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimato
         refit=True,
         n_jobs=None,
         random_state=None,
+        store_cv_results=False,
     ):
         self.estimator = estimator
         self.strategy = strategy
@@ -531,6 +545,7 @@ class TunedThresholdClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimato
         self.refit = refit
         self.n_jobs = n_jobs
         self.random_state = random_state
+        self.store_cv_results = store_cv_results
 
     @_fit_context(
         # estimators in TunedThresholdClassifier.estimator is not validated yet
@@ -645,9 +660,10 @@ class TunedThresholdClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimato
 
         if self.strategy == "constant":
             # early exit when we don't need to find the optimal threshold
-            self.decision_threshold_ = self.constant_threshold
-            self.decision_thresholds_ = None
-            self.objective_score_, self.objective_scores_ = None, None
+            self.best_threshold_ = self.constant_threshold
+            self.best_score_, self.constrained_score_ = None, None
+            if self.store_cv_results:
+                self.cv_results_ = None
             return self
 
         cv_thresholds, cv_scores = zip(
@@ -681,11 +697,11 @@ class TunedThresholdClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimato
             split_thresholds.max() for split_thresholds in cv_thresholds
         )
         if isinstance(self.n_thresholds, Integral):
-            self.decision_thresholds_ = np.linspace(
+            decision_thresholds = np.linspace(
                 min_threshold, max_threshold, num=self.n_thresholds
             )
         else:
-            self.decision_thresholds_ = np.asarray(self.n_thresholds)
+            decision_thresholds = np.asarray(self.n_thresholds)
 
         def _mean_interpolated_score(target_thresholds, cv_thresholds, cv_scores):
             return np.mean(
@@ -697,25 +713,27 @@ class TunedThresholdClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimato
             )
 
         if constraint_value is None:  # find best score that is the highest value
-            self.objective_scores_ = _mean_interpolated_score(
-                self.decision_thresholds_, cv_thresholds, cv_scores
+            objective_scores = _mean_interpolated_score(
+                decision_thresholds, cv_thresholds, cv_scores
             )
-            best_idx = self.objective_scores_.argmax()
-            self.objective_score_ = self.objective_scores_[best_idx]
-            self.decision_threshold_ = self.decision_thresholds_[best_idx]
+            best_idx = objective_scores.argmax()
+            self.best_score_ = objective_scores[best_idx]
+            self.best_threshold_ = decision_thresholds[best_idx]
+            self.constrained_score_ = None
+            if self.store_cv_results:
+                self.cv_results_ = {
+                    "thresholds": decision_thresholds,
+                    "scores": objective_scores,
+                }
         else:
             if "tpr" in self.objective_metric:  # tpr/tnr
                 mean_tnr, mean_tpr = [
-                    _mean_interpolated_score(
-                        self.decision_thresholds_, cv_thresholds, sc
-                    )
+                    _mean_interpolated_score(decision_thresholds, cv_thresholds, sc)
                     for sc in zip(*cv_scores)
                 ]
             else:  # precision/recall
                 mean_precision, mean_recall = [
-                    _mean_interpolated_score(
-                        self.decision_thresholds_, cv_thresholds, sc
-                    )
+                    _mean_interpolated_score(decision_thresholds, cv_thresholds, sc)
                     for sc in zip(*cv_scores)
                 ]
 
@@ -726,21 +744,24 @@ class TunedThresholdClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimato
                 return np.flatnonzero(mask)[mask_idx]
 
             if self.objective_metric == "max_tpr_at_tnr_constraint":
-                constrained_score, maximized_score = mean_tnr, mean_tpr
+                constrained_scores, maximized_scores = mean_tnr, mean_tpr
             elif self.objective_metric == "max_tnr_at_tpr_constraint":
-                constrained_score, maximized_score = mean_tpr, mean_tnr
+                constrained_scores, maximized_scores = mean_tpr, mean_tnr
             elif self.objective_metric == "max_precision_at_recall_constraint":
-                constrained_score, maximized_score = mean_recall, mean_precision
+                constrained_scores, maximized_scores = mean_recall, mean_precision
             else:  # max_recall_at_precision_constraint
-                constrained_score, maximized_score = mean_precision, mean_recall
+                constrained_scores, maximized_scores = mean_precision, mean_recall
 
-            self.objective_scores_ = (constrained_score, maximized_score)
-            best_idx = _get_best_idx(constrained_score, maximized_score)
-            self.objective_score_ = (
-                constrained_score[best_idx],
-                maximized_score[best_idx],
-            )
-            self.decision_threshold_ = self.decision_thresholds_[best_idx]
+            best_idx = _get_best_idx(constrained_scores, maximized_scores)
+            self.best_score_ = maximized_scores[best_idx]
+            self.constrained_score_ = constrained_scores[best_idx]
+            self.best_threshold_ = decision_thresholds[best_idx]
+            if self.store_cv_results:
+                self.cv_results_ = {
+                    "thresholds": decision_thresholds,
+                    "constrained_scores": constrained_scores,
+                    "maximized_scores": maximized_scores,
+                }
 
         return self
 
@@ -773,7 +794,7 @@ class TunedThresholdClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimato
         )
 
         return _threshold_scores_to_class_labels(
-            y_score, self.decision_threshold_, self.classes_, pos_label
+            y_score, self.best_threshold_, self.classes_, pos_label
         )
 
     @available_if(_estimator_has("predict_proba"))
