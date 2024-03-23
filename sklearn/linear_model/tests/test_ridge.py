@@ -1311,7 +1311,7 @@ def test_array_api_error_and_warnings_for_solver_parameter(
             ridge.fit(X_iris_xp, y_iris_xp)
 
 
-@pytest.mark.parametrize("array_namespace", _NUMPY_NAMESPACE_NAMES)
+@pytest.mark.parametrize("array_namespace", sorted(_NUMPY_NAMESPACE_NAMES))
 def test_array_api_numpy_namespace_no_warning(array_namespace):
     xp = pytest.importorskip(array_namespace)
 
