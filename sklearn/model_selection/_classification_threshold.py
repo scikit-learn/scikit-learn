@@ -465,8 +465,8 @@ class TunedThresholdClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimato
     ... ).fit(X_train, y_train)
     >>> print(
     ...     f"Cut-off point found at {classifier_tuned.best_threshold_:.3f} for a "
-    ...     f"recall of {classifier_tuned.best_score_[0]:.3f} and a precision of "
-    ...     f"{classifier_tuned.best_score_[1]:.3f}."
+    ...     f"recall of {classifier_tuned.constrained_score_:.3f} and a precision of "
+    ...     f"{classifier_tuned.best_score_:.3f}."
     ... )
     Cut-off point found at 0.3... for a recall of 0.7... and a precision of 0.7...
     >>> print(classification_report(y_test, classifier_tuned.predict(X_test)))

@@ -109,7 +109,7 @@ In this example, we maximize the balanced accuracy.
         >>> scorer(model, X_test, y_test)
         0.79...
         >>> # compare it with the internal score found by cross-validation
-        >>> model.objective_score_
+        >>> model.best_score_
         0.86...
 
 A second strategy aims to maximize one metric while imposing constraints on another
