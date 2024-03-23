@@ -795,9 +795,9 @@ def _ridge_regression(
                 coef[i] = coef_
             n_iter[i] = n_iter_
 
+        intercept = xp.asarray(intercept)
         if intercept.shape[0] == 1:
             intercept = intercept[0]
-        coef = np.asarray(coef)
 
     elif solver == "lbfgs":
         coef = _solve_lbfgs(
@@ -823,9 +823,9 @@ def _ridge_regression(
     coef = xp.asarray(coef)
 
     if return_n_iter and return_intercept:
-        return coef, n_iter, xp.asarray(intercept)
+        return coef, n_iter, intercept
     elif return_intercept:
-        return coef, xp.asarray(intercept)
+        return coef, intercept
     elif return_n_iter:
         return coef, n_iter
     else:

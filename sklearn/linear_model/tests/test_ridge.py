@@ -45,6 +45,7 @@ from sklearn.utils._array_api import (
     _NUMPY_NAMESPACE_NAMES,
     _convert_to_numpy,
     yield_namespace_device_dtype_combinations,
+    yield_namespaces,
 )
 from sklearn.utils._testing import (
     assert_allclose,
@@ -1271,12 +1272,9 @@ def test_ridge_array_api_compliance(
 
 
 @pytest.mark.parametrize(
-    "array_namespace, device, dtype_name",
-    yield_namespace_device_dtype_combinations(include_numpy_namespaces=False),
+    "array_namespace", yield_namespaces(include_numpy_namespaces=False)
 )
-def test_array_api_error_and_warnings_for_solver_parameter(
-    array_namespace, device, dtype_name
-):
+def test_array_api_error_and_warnings_for_solver_parameter(array_namespace):
     xp = pytest.importorskip(array_namespace)
 
     X_iris_xp = xp.asarray(X_iris)

@@ -60,6 +60,34 @@ def yield_namespace_device_dtype_combinations(include_numpy_namespaces=True):
             yield array_namespace, None, None
 
 
+def yield_namespaces(include_numpy_namespaces=True):
+    """Yield supported namespace.
+
+    Parameters
+    ----------
+    include_numpy_namespaces : bool, default=True
+        If True, also yield numpy namespaces.
+
+    Returns
+    -------
+    array_namespace : str
+        The name of the Array API namespace.
+    """
+    # Yield namespaces that are hardcoded in `yield_namespace_device_dtype_combinations`
+    # and yield each one only once.
+    yield from list(
+        set(
+            list(
+                zip(
+                    *yield_namespace_device_dtype_combinations(
+                        include_numpy_namespaces=include_numpy_namespaces
+                    )
+                )
+            )[0]
+        )
+    )
+
+
 def _check_array_api_dispatch(array_api_dispatch):
     """Check that array_api_compat is installed and NumPy version is compatible.
 
