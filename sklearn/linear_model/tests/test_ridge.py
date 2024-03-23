@@ -42,6 +42,7 @@ from sklearn.model_selection import (
 from sklearn.preprocessing import minmax_scale
 from sklearn.utils import _IS_32BIT, check_random_state
 from sklearn.utils._array_api import (
+    _NUMPY_NAMESPACE_NAMES,
     _convert_to_numpy,
     yield_namespace_device_dtype_combinations,
 )
@@ -1269,24 +1270,64 @@ def test_ridge_array_api_compliance(
     check(name, estimator, array_namepsace, device=device, dtype_name=dtype_name)
 
 
-def test_array_api_error_and_warnings_on_unsupported_params():
-    pytest.importorskip("array_api_compat")
-    xp = pytest.importorskip("numpy.array_api")
+@pytest.mark.parametrize(
+    "array_namespace, device, dtype_name",
+    yield_namespace_device_dtype_combinations(include_numpy_namespaces=False),
+)
+def test_array_api_error_and_warnings_for_solver_parameter(
+    array_namespace, device, dtype_name
+):
+    xp = pytest.importorskip(array_namespace)
 
     X_iris_xp = xp.asarray(X_iris)
     y_iris_xp = xp.asarray(y_iris)
 
     available_solvers = Ridge._parameter_constraints["solver"][0].options
     for solver in available_solvers - {"auto", "svd"}:
-        ridge = Ridge(solver=solver)
+        ridge = Ridge(solver=solver, positive=solver == "lbfgs")
         expected_msg = (
-            "Array API dispatch is only supported with the 'svd' solver but got "
-            f"solver='{solver}' with array namespace '{xp.__name__}'"
+            "Array API dispatch to namespace (.*) only supports "
+            f"solver 'svd'. Got '{solver}'."
         )
 
         with pytest.raises(ValueError, match=expected_msg):
             with config_context(array_api_dispatch=True):
                 ridge.fit(X_iris_xp, y_iris_xp)
+
+    ridge = Ridge()
+    solver = "svd"
+    np_solver = "cholesky"
+    expected_msg = (
+        "Using Array API dispatch to namespace {xp.__name__} with "
+        f"`solver='auto'`will result in using the solver '{solver}'. "
+        "Results might be different than when Array API dispatch is "
+        "disabled, or when a numpy-like namespace is used, in which case "
+        f"the preferred solver would be '{np_solver}'. Set "
+        f"`solver='{solver}'` to suppress this warning."
+    )
+
+    with pytest.warns(UserWarning, match=expected_msg):
+        with config_context(array_api_dispatch=True):
+            ridge.fit(X_iris_xp, y_iris_xp)
+
+
+@pytest.mark.parametrize("array_namespace", _NUMPY_NAMESPACE_NAMES)
+def test_array_api_numpy_namespace_no_warning(array_namespace):
+    xp = pytest.importorskip(array_namespace)
+
+    X_iris_xp = xp.asarray(X_iris)
+    y_iris_xp = xp.asarray(y_iris)
+
+    ridge = Ridge()
+    expected_msg = (
+        "Results might be different than when Array API dispatch is "
+        "disabled, or when a numpy-like namespace is used"
+    )
+
+    with warnings.catch_warnings():
+        warnings.filterwarnings("error", message=expected_msg, category=UserWarning)
+        with config_context(array_api_dispatch=True):
+            ridge.fit(X_iris_xp, y_iris_xp)
 
 
 @pytest.mark.parametrize(

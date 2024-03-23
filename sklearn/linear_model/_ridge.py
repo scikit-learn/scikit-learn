@@ -33,6 +33,7 @@ from ..utils import (
     compute_sample_weight,
 )
 from ..utils._array_api import (
+    _is_numpy_namespace,
     _ravel,
     device,
     get_namespace,
@@ -612,25 +613,31 @@ def _ridge_regression(
     check_input=True,
     fit_intercept=False,
 ):
-    xp, _, device_ = get_namespace_and_device(X, y, sample_weight, X_scale, X_offset)
+    xp, is_array_api_compliant, device_ = get_namespace_and_device(
+        X, y, sample_weight, X_scale, X_offset
+    )
+    is_numpy_namespace = _is_numpy_namespace(xp)
+    X_is_sparse = sparse.issparse(X)
 
     has_sw = sample_weight is not None
 
-    if solver == "auto":
-        if positive:
-            solver = "lbfgs"
-        elif return_intercept:
-            # sag supports fitting intercept directly
-            solver = "sag"
-        elif not sparse.issparse(X):
-            solver = "cholesky"
-        else:
-            solver = "sparse_cg"
+    solver = _solver_auto_set(
+        solver, positive, return_intercept, X_is_sparse, is_numpy_namespace
+    )
 
-    if solver not in ("sparse_cg", "cholesky", "svd", "lsqr", "sag", "saga", "lbfgs"):
+    if is_numpy_namespace and not X_is_sparse:
+        X = np.asarray(X)
+
+    _available_solvers = _BaseRidge._parameter_constraints["solver"][0].options
+    if solver not in _available_solvers:
+        options = "'" + "', '".join(_available_solvers[:-1]) + "'"
+        options += f" or '{_available_solvers[-1]}'"
+        raise ValueError(f"Known solvers are {options}. Got {solver}.")
+
+    if not is_numpy_namespace and solver != "svd":
         raise ValueError(
-            "Known solvers are 'sparse_cg', 'cholesky', 'svd'"
-            " 'lsqr', 'sag', 'saga' or 'lbfgs'. Got %s." % solver
+            f"Array API dispatch to namespace {xp.__name__} only supports "
+            f"solver 'svd'. Got '{solver}'."
         )
 
     if positive and solver != "lbfgs":
@@ -655,7 +662,7 @@ def _ridge_regression(
 
     if check_input:
         _dtype = [xp.float64, xp.float32]
-        _accept_sparse = _get_valid_accept_sparse(sparse.issparse(X), solver)
+        _accept_sparse = _get_valid_accept_sparse(X_is_sparse, solver)
         X = check_array(X, accept_sparse=_accept_sparse, dtype=_dtype, order="C")
         y = check_array(y, dtype=X.dtype, ensure_2d=False, order=None)
     check_consistent_length(X, y)
@@ -806,21 +813,66 @@ def _ridge_regression(
         )
 
     if solver == "svd":
-        if sparse.issparse(X):
+        if X_is_sparse:
             raise TypeError("SVD solver does not support sparse inputs currently")
         coef = _solve_svd(X, y, alpha, xp)
 
     if ravel:
         coef = _ravel(coef)
 
+    coef = xp.asarray(coef)
+
     if return_n_iter and return_intercept:
-        return coef, n_iter, intercept
+        return coef, n_iter, xp.asarray(intercept)
     elif return_intercept:
-        return coef, intercept
+        return coef, xp.asarray(intercept)
     elif return_n_iter:
         return coef, n_iter
     else:
         return coef
+
+
+def _solver_auto_set(solver, positive, return_intercept, is_sparse, is_numpy_namespace):
+    if solver != "auto":
+        return solver
+
+    if is_numpy_namespace:
+        if positive:
+            return "lbfgs"
+
+        if return_intercept:
+            # sag supports fitting intercept directly
+            return "sag"
+
+        if not is_sparse:
+            return "cholesky"
+
+        return "sparse_cg"
+
+    if positive:
+        raise ValueError(
+            "The solvers that support positive fitting do not support "
+            "Array API dispatch to namespace {xp.__name__}. Please "
+            "either disable Array API dispatch, or use a numpy-like "
+            "namespace, or set `positive=False`."
+        )
+
+    # At the moment, Array API dispatch only supports the "svd" solver.
+    np_solver = _solver_auto_set(
+        solver, positive, return_intercept, is_sparse, is_numpy_namespace=True
+    )
+    solver = "svd"
+    if solver != np_solver:
+        warnings.warn(
+            "Using Array API dispatch to namespace {xp.__name__} with "
+            f"`solver='auto'`will result in using the solver '{solver}'. "
+            "Results might be different than when Array API dispatch is "
+            "disabled, or when a numpy-like namespace is used, in which case "
+            f"the preferred solver would be '{np_solver}'. Set "
+            f"`solver='{solver}'` to suppress this warning."
+        )
+
+    return solver
 
 
 class _BaseRidge(LinearModel, metaclass=ABCMeta):
@@ -863,13 +915,6 @@ class _BaseRidge(LinearModel, metaclass=ABCMeta):
 
     def fit(self, X, y, sample_weight=None):
         xp, is_array_api_compliant = get_namespace(X, y, sample_weight)
-
-        if is_array_api_compliant and self.solver != "svd":
-            raise ValueError(
-                "Array API dispatch is only supported with the 'svd' solver "
-                f"but got solver='{self.solver}' with array namespace "
-                f"'{xp.__name__}'."
-            )
 
         if self.solver == "lbfgs" and not self.positive:
             raise ValueError(

@@ -745,15 +745,6 @@ def _ravel(array, xp=None):
     return xp.reshape(array, shape=(-1,))
 
 
-def _item(x, xp=None):
-    """Returns the one-sized tensor as a Python number with metadata."""
-    xp, _ = get_namespace(x, xp=xp)
-    x = xp.reshape(x, (-1,))
-    if x.shape[0] > 1:
-        raise ValueError("Expected a tensor with a single element.")
-    return x[0]
-
-
 def _convert_to_numpy(array, xp):
     """Convert X into a NumPy ndarray on the CPU."""
     xp_name = xp.__name__
