@@ -25,8 +25,11 @@ def _array_indexing(array, key, key_dtype, axis):
     xp, is_array_api = get_namespace(array)
     if is_array_api:
         return xp.take(array, key, axis=axis)
-    if issparse(array) and key_dtype == "bool":
-        key = np.asarray(key)
+    if issparse(array):
+        if key_dtype == "bool":
+            key = np.asarray(key)
+        if np.isscalar(key):
+            key = [key]
     if isinstance(key, tuple):
         key = list(key)
     return array[key, ...] if axis == 0 else array[:, key]
