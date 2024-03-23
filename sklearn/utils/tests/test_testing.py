@@ -794,10 +794,8 @@ def test_convert_container(
             converted_dtype = container_converted.dtype
         elif hasattr(container_converted, "dtypes"):
             converted_dtype = container_converted.dtypes[0]
-        elif constructor_type == "slice":
-            return  # dtype does not apply to slice
         else:
-            assert False, f"{type(container_converted).__name__} has no dtype"
+            assert False, f"{type(container_converted).__name__} has no dtype"  # noqa
 
         if constructor_kwargs.get("constructor_lib") == "polars":
             # Polars has its own data types so we have to map from numpy to polars
@@ -812,6 +810,36 @@ def test_convert_container(
             assert converted_dtype == dtype_mapping[dtype]
         else:
             assert converted_dtype == dtype
+
+
+def test_convert_container_slice():
+    """Check that converting to slice works and raises correctly."""
+    container = [0, 1]
+    result = _convert_container(container, "slice")
+    assert result == slice(*container, None)
+
+    container = [0, 1, 2]
+    msg = (
+        "Only 1D containers with exactly 2 elements can be converted to slice; got "
+        "shape (3,) instead"
+    )
+    with pytest.raises(ValueError, match=re.escape(msg)):
+        _convert_container(container, "slice")
+
+
+@pytest.mark.parametrize("constructor_type", ["dataframe", "series", "index"])
+def test_convert_container_invalid_library(constructor_type):
+    """Check that incompatible library raises the correct error."""
+    if constructor_type == "dataframe":
+        container = [[0, 1], [2, 3]]
+    else:
+        container = [0, 1]
+
+    msg = f"constructor_lib='scipy' is incompatible with {constructor_type}"
+    with pytest.raises(ValueError, match=re.escape(msg)):
+        _convert_container(
+            container, constructor_type=constructor_type, constructor_lib="scipy"
+        )
 
 
 @pytest.mark.parametrize("constructor_lib", ["pandas", "polars", "pyarrow"])
