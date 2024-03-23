@@ -269,6 +269,7 @@ tuned_model = TunedThresholdClassifier(
     estimator=model,
     pos_label=pos_label,
     objective_metric=scoring["cost_gain"],
+    store_cv_results=True,  # necessary to inspect all results
 )
 tuned_model.fit(X_train, y_train)
 
@@ -329,11 +330,13 @@ axs[1].set_title("ROC curve")
 axs[1].legend()
 
 axs[2].plot(
-    tuned_model.decision_thresholds_, tuned_model.objective_scores_, color="tab:orange"
+    tuned_model.cv_results_["thresholds"],
+    tuned_model.cv_results_["scores"],
+    color="tab:orange",
 )
 axs[2].plot(
-    tuned_model.decision_threshold_,
-    tuned_model.objective_score_,
+    tuned_model.best_threshold_,
+    tuned_model.best_score_,
     "o",
     markersize=10,
     color="tab:orange",
@@ -442,11 +445,13 @@ axs[1].set_title("ROC curve")
 axs[1].legend()
 
 axs[2].plot(
-    tuned_model.decision_thresholds_, tuned_model.objective_scores_, color="tab:orange"
+    tuned_model.cv_results_["thresholds"],
+    tuned_model.cv_results_["scores"],
+    color="tab:orange",
 )
 axs[2].plot(
-    tuned_model.decision_threshold_,
-    tuned_model.objective_score_,
+    tuned_model.best_threshold_,
+    tuned_model.best_score_,
     "o",
     markersize=10,
     color="tab:orange",
@@ -490,7 +495,7 @@ names = ("Vanilla GBDT", "Tuned GBDT")
 for idx, (est, linestyle, marker, color, name) in enumerate(
     zip((model, tuned_model), linestyles, markerstyles, colors, names)
 ):
-    decision_threshold = getattr(est, "decision_threshold_", 0.5)
+    decision_threshold = getattr(est, "best_threshold_", 0.5)
     PrecisionRecallDisplay.from_estimator(
         est,
         X_test,
@@ -535,11 +540,13 @@ axs[1].set_title("ROC curve")
 axs[1].legend()
 
 axs[2].plot(
-    tuned_model.decision_thresholds_, tuned_model.objective_scores_, color="tab:orange"
+    tuned_model.cv_results_["thresholds"],
+    tuned_model.cv_results_["scores"],
+    color="tab:orange",
 )
 axs[2].plot(
-    tuned_model.decision_threshold_,
-    tuned_model.objective_score_,
+    tuned_model.best_threshold_,
+    tuned_model.best_score_,
     "o",
     markersize=10,
     color="tab:orange",

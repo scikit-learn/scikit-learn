@@ -152,7 +152,7 @@ _ = fig.suptitle("Coefficients of the predictive models")
 # %%
 # Only the decision threshold of each model was changed during the cross-validation.
 decision_threshold = pd.Series(
-    [est.decision_threshold_ for est in cv_results_tuned_model["estimator"]],
+    [est.best_threshold_ for est in cv_results_tuned_model["estimator"]],
 )
 ax = decision_threshold.plot.kde()
 ax.axvline(
@@ -262,7 +262,7 @@ disp.ax_.plot(
     marker=">",
     markersize=10,
     color="tab:orange",
-    label=f"Cut-off point at probability of {tuned_model.decision_threshold_:.2f}",
+    label=f"Cut-off point at probability of {tuned_model.best_threshold_:.2f}",
 )
 disp.ax_.legend()
 _ = disp.ax_.set_title("ROC curves")
@@ -293,6 +293,7 @@ tuned_model.set_params(
     objective_metric="max_tpr_at_tnr_constraint",
     constraint_value=constraint_value,
     pos_label=pos_label,
+    store_cv_results=True,
 )
 tuned_model.fit(data_train, target_train)
 
@@ -303,18 +304,18 @@ import matplotlib.pyplot as plt
 _, axs = plt.subplots(ncols=2, figsize=(12, 5))
 
 disp = RocCurveDisplay(
-    fpr=1 - tuned_model.objective_scores_[0],
-    tpr=tuned_model.objective_scores_[1],
+    fpr=1 - tuned_model.cv_results_["constrained_scores"],
+    tpr=tuned_model.cv_results_["maximized_scores"],
     estimator_name="ROC of the tuned model",
     pos_label=pos_label,
 )
 axs[0].plot(
-    1 - tuned_model.objective_score_[0],
-    tuned_model.objective_score_[1],
+    1 - tuned_model.constrained_score_,
+    tuned_model.best_score_,
     marker="o",
     markersize=10,
     color="tab:blue",
-    label=f"Cut-off point at probability of {tuned_model.decision_threshold_:.2f}",
+    label=f"Cut-off point at probability of {tuned_model.best_threshold_:.2f}",
 )
 axs[0].axvline(
     1 - constraint_value, 0, 1, color="tab:blue", linestyle="--", label="FPR constraint"
@@ -347,12 +348,12 @@ axs[1].plot(
     label="Default cut-off point at a probability of 0.5",
 )
 axs[1].plot(
-    1 - tuned_model.objective_score_[0],
-    tuned_model.objective_score_[1],
+    1 - tuned_model.constrained_score_,
+    tuned_model.best_score_,
     marker="^",
     markersize=10,
     color="tab:orange",
-    label=f"Cut-off point at probability of {tuned_model.decision_threshold_:.2f}",
+    label=f"Cut-off point at probability of {tuned_model.best_threshold_:.2f}",
 )
 axs[1].legend()
 axs[1].set_title("ROC curves")
