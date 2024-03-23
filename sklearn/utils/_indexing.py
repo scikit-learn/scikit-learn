@@ -113,7 +113,13 @@ def _determine_key_type(key, accept_slice=True):
         "allowed"
     )
 
-    dtype_to_str = {int: "int", str: "str", bool: "bool", np.bool_: "bool"}
+    dtype_to_str = {
+        int: "int",
+        str: "str",
+        bool: "bool",
+        np.bool_: "bool",
+        np.str_: "str",
+    }
     array_dtype_to_str = {
         "i": "int",
         "u": "int",
