@@ -205,6 +205,8 @@ def test_ridge_regression(solver, fit_intercept, ols_ridge_dataset, global_rando
     assert_allclose(model.coef_, coef)
     assert model.score(X, y) == pytest.approx(R2_Ridge)
 
+    assert model.solver_ == solver
+
 
 @pytest.mark.parametrize("solver", SOLVERS)
 @pytest.mark.parametrize("fit_intercept", [True, False])
@@ -1274,8 +1276,8 @@ def test_array_api_error_and_warnings_for_solver_parameter(array_namespace):
     pytest.importorskip("array_api_compat")
     xp = pytest.importorskip(array_namespace)
 
-    X_iris_xp = xp.asarray(X_iris)
-    y_iris_xp = xp.asarray(y_iris)
+    X_iris_xp = xp.asarray(X_iris[:5])
+    y_iris_xp = xp.asarray(y_iris[:5])
 
     available_solvers = Ridge._parameter_constraints["solver"][0].options
     for solver in available_solvers - {"auto", "svd"}:
@@ -1288,6 +1290,18 @@ def test_array_api_error_and_warnings_for_solver_parameter(array_namespace):
         with pytest.raises(ValueError, match=expected_msg):
             with config_context(array_api_dispatch=True):
                 ridge.fit(X_iris_xp, y_iris_xp)
+
+    ridge = Ridge(solver="auto", positive=True)
+    expected_msg = (
+        "The solvers that support positive fitting do not support "
+        "Array API dispatch to namespace {xp.__name__}. Please "
+        "either disable Array API dispatch, or use a numpy-like "
+        "namespace, or set `positive=False`."
+    )
+
+    with pytest.raises(ValueError, match=expected_msg):
+        with config_context(array_api_dispatch=True):
+            ridge.fit(X_iris_xp, y_iris_xp)
 
     ridge = Ridge()
     solver = "svd"
@@ -1311,8 +1325,8 @@ def test_array_api_numpy_namespace_no_warning(array_namespace):
     pytest.importorskip("array_api_compat")
     xp = pytest.importorskip(array_namespace)
 
-    X_iris_xp = xp.asarray(X_iris)
-    y_iris_xp = xp.asarray(y_iris)
+    X_iris_xp = xp.asarray(X_iris[:5])
+    y_iris_xp = xp.asarray(y_iris[:5])
 
     ridge = Ridge()
     expected_msg = (
@@ -1324,6 +1338,11 @@ def test_array_api_numpy_namespace_no_warning(array_namespace):
         warnings.filterwarnings("error", message=expected_msg, category=UserWarning)
         with config_context(array_api_dispatch=True):
             ridge.fit(X_iris_xp, y_iris_xp)
+
+    # All numpy namespaces are compatible with all solver, in particular
+    # solvers that support `positive=True` (like 'lbfgs') should work.
+    with config_context(array_api_dispatch=True):
+        Ridge(solver="auto", positive=True).fit(X_iris_xp, y_iris_xp)
 
 
 @pytest.mark.parametrize(

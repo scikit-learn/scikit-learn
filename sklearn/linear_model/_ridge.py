@@ -608,6 +608,7 @@ def _ridge_regression(
     random_state=None,
     return_n_iter=False,
     return_intercept=False,
+    return_solver=False,
     X_scale=None,
     X_offset=None,
     check_input=True,
@@ -627,12 +628,6 @@ def _ridge_regression(
 
     if is_numpy_namespace and not X_is_sparse:
         X = np.asarray(X)
-
-    _available_solvers = _BaseRidge._parameter_constraints["solver"][0].options
-    if solver not in _available_solvers:
-        options = "'" + "', '".join(_available_solvers[:-1]) + "'"
-        options += f" or '{_available_solvers[-1]}'"
-        raise ValueError(f"Known solvers are {options}. Got {solver}.")
 
     if not is_numpy_namespace and solver != "svd":
         raise ValueError(
@@ -823,13 +818,15 @@ def _ridge_regression(
     coef = xp.asarray(coef)
 
     if return_n_iter and return_intercept:
-        return coef, n_iter, intercept
+        res = coef, n_iter, intercept
     elif return_intercept:
-        return coef, intercept
+        res = coef, intercept
     elif return_n_iter:
-        return coef, n_iter
+        res = coef, n_iter
     else:
-        return coef
+        res = coef
+
+    return (*res, solver) if return_solver else res
 
 
 def _solver_auto_set(solver, positive, return_intercept, is_sparse, is_numpy_namespace):
@@ -967,7 +964,7 @@ class _BaseRidge(LinearModel, metaclass=ABCMeta):
         )
 
         if solver == "sag" and sparse.issparse(X) and self.fit_intercept:
-            self.coef_, self.n_iter_, self.intercept_ = _ridge_regression(
+            self.coef_, self.n_iter_, self.intercept_, self.solver_ = _ridge_regression(
                 X,
                 y,
                 alpha=self.alpha,
@@ -979,6 +976,7 @@ class _BaseRidge(LinearModel, metaclass=ABCMeta):
                 random_state=self.random_state,
                 return_n_iter=True,
                 return_intercept=True,
+                return_solver=True,
                 check_input=False,
             )
             # add the offset which was subtracted by _preprocess_data
@@ -992,7 +990,7 @@ class _BaseRidge(LinearModel, metaclass=ABCMeta):
                 # for dense matrices or when intercept is set to 0
                 params = {}
 
-            self.coef_, self.n_iter_ = _ridge_regression(
+            self.coef_, self.n_iter_, self.solver_ = _ridge_regression(
                 X,
                 y,
                 alpha=self.alpha,
@@ -1004,6 +1002,7 @@ class _BaseRidge(LinearModel, metaclass=ABCMeta):
                 random_state=self.random_state,
                 return_n_iter=True,
                 return_intercept=False,
+                return_solver=True,
                 check_input=False,
                 fit_intercept=self.fit_intercept,
                 **params,
@@ -1158,6 +1157,12 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
         has feature names that are all strings.
 
         .. versionadded:: 1.0
+
+    solver_ : str
+        The solver that was used at fit time by the computational
+        routines.
+
+        .. versionadded:: 1.5
 
     See Also
     --------
@@ -1470,6 +1475,12 @@ class RidgeClassifier(_RidgeClassifierMixin, _BaseRidge):
         has feature names that are all strings.
 
         .. versionadded:: 1.0
+
+    solver_ : str
+        The solver that was used at fit time by the computational
+        routines.
+
+        .. versionadded:: 1.5
 
     See Also
     --------
