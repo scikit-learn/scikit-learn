@@ -1260,10 +1260,6 @@ def check_array_api_attributes(name, estimator, array_namepsace, device, dtype_n
     [Ridge(solver="svd")],
     ids=_get_check_estimator_ids,
 )
-# TODO: does this test the following cases:
-# - non null sample_weight
-# - multi dimensional y
-# ?
 def test_ridge_array_api_compliance(
     estimator, check, array_namepsace, device, dtype_name
 ):
@@ -1275,6 +1271,7 @@ def test_ridge_array_api_compliance(
     "array_namespace", yield_namespaces(include_numpy_namespaces=False)
 )
 def test_array_api_error_and_warnings_for_solver_parameter(array_namespace):
+    pytest.importorskip("array_api_compat")
     xp = pytest.importorskip(array_namespace)
 
     X_iris_xp = xp.asarray(X_iris)
@@ -1311,6 +1308,7 @@ def test_array_api_error_and_warnings_for_solver_parameter(array_namespace):
 
 @pytest.mark.parametrize("array_namespace", sorted(_NUMPY_NAMESPACE_NAMES))
 def test_array_api_numpy_namespace_no_warning(array_namespace):
+    pytest.importorskip("array_api_compat")
     xp = pytest.importorskip(array_namespace)
 
     X_iris_xp = xp.asarray(X_iris)
