@@ -152,6 +152,7 @@ from sklearn.ensemble import HistGradientBoostingClassifier
 model = HistGradientBoostingClassifier(
     categorical_features="from_dtype", random_state=0
 ).fit(X_train, y_train)
+model
 
 # %%
 # We evaluate the performance of our predictive model using the ROC and Precision-Recall
