@@ -153,6 +153,9 @@ class RFE(_RoutingNotSupportedMixin, SelectorMixin, MetaEstimatorMixin, BaseEsti
     support_ : ndarray of shape (n_features,)
         The mask of selected features.
 
+    n_features_fitted_: ndarray of shape (n_features_in_ // step [+1],)
+        Number of features used for fitting at each step.
+
     See Also
     --------
     RFECV : Recursive feature elimination with built-in cross-validated
@@ -294,6 +297,7 @@ class RFE(_RoutingNotSupportedMixin, SelectorMixin, MetaEstimatorMixin, BaseEsti
 
         support_ = np.ones(n_features, dtype=bool)
         ranking_ = np.ones(n_features, dtype=int)
+        self.n_features_fitted_ = []
 
         if step_score:
             self.scores_ = []
@@ -329,6 +333,7 @@ class RFE(_RoutingNotSupportedMixin, SelectorMixin, MetaEstimatorMixin, BaseEsti
             # that have not been eliminated yet
             if step_score:
                 self.scores_.append(step_score(estimator, features))
+                self.n_features_fitted_.append(len(features))
             support_[features[ranks][:threshold]] = False
             ranking_[np.logical_not(support_)] += 1
 
@@ -340,9 +345,11 @@ class RFE(_RoutingNotSupportedMixin, SelectorMixin, MetaEstimatorMixin, BaseEsti
         # Compute step score when only n_features_to_select features left
         if step_score:
             self.scores_.append(step_score(self.estimator_, features))
+            self.n_features_fitted_.append(len(features))
         self.n_features_ = support_.sum()
         self.support_ = support_
         self.ranking_ = ranking_
+        self.n_features_fitted_ = np.array(self.n_features_fitted_)
 
         return self
 
@@ -581,6 +588,9 @@ class RFECV(RFE):
         std_test_score : ndarray of shape (n_subsets_of_features,)
             Standard deviation of scores over the folds.
 
+        n_features : ndarray of shape (n_subsets_of_features,)
+            Number of features used at each step.
+
         .. versionadded:: 1.0
 
     n_features_ : int
@@ -758,6 +768,7 @@ class RFECV(RFE):
             for train, test in cv.split(X, y, groups)
         )
 
+        n_features_fitted = rfe.n_features_fitted_
         scores = np.array(scores)
         scores_sum = np.sum(scores, axis=0)
         scores_sum_rev = scores_sum[::-1]
@@ -786,11 +797,10 @@ class RFECV(RFE):
 
         # reverse to stay consistent with before
         scores_rev = scores[:, ::-1]
-        self.cv_results_ = {}
-        self.cv_results_["mean_test_score"] = np.mean(scores_rev, axis=0)
-        self.cv_results_["std_test_score"] = np.std(scores_rev, axis=0)
-
-        for i in range(scores.shape[0]):
-            self.cv_results_[f"split{i}_test_score"] = scores_rev[i]
-
+        self.cv_results_ = {
+            "mean_test_score": np.mean(scores_rev, axis=0),
+            "std_test_score": np.std(scores_rev, axis=0),
+            **{f"split{i}_test_score": scores_rev[i] for i in range(scores.shape[0])},
+            "n_features": np.flip(n_features_fitted),
+        }
         return self
