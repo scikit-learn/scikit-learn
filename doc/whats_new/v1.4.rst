@@ -59,6 +59,9 @@ Changelog
   `axis=0` and supports indexing polars Series.
   :pr:`28521` by :user:`Yao Xiao <Charlie-XIAO>`.
 
+- |Fix| :func:`~utils._safe_indexing` now works correctly for scipy sparse arrays with
+  scalar index.
+  :pr:`28681` by :user:`Yao Xiao <Charlie-XIAO>`.
 
 .. _changes_1_4_1:
 
