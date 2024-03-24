@@ -185,7 +185,11 @@ def test_config_array_api_dispatch_error_numpy(monkeypatch):
 
     def mocked_import(name, *args, **kwargs):
         if name == "array_api_compat":
-            return object()
+
+            class _MockArrayAPICompat:
+                __version__ = "1.5.1"
+
+            return _MockArrayAPICompat()
         return orig_import(name, *args, **kwargs)
 
     monkeypatch.setattr(builtins, "__import__", mocked_import)
