@@ -128,6 +128,25 @@ def test_ScoreCutModelSelector_methods(grid_search_simulated):
 
     assert ss.transform(mock_favorability_ranker) == 0
 
+    assert ss.best_params_cut_ == [
+        {"C": 1, "gamma": 0.1, "kernel": "rbf"},
+        {"C": 1, "gamma": 1, "kernel": "rbf"},
+        {"C": 10, "gamma": 0.1, "kernel": "rbf"},
+        {"C": 10, "gamma": 1, "kernel": "rbf"},
+        {"degree": 1, "kernel": "poly"},
+        {"degree": 2, "kernel": "poly"},
+    ]
+
+    assert (
+        np.testing.assert_almost_equal(
+            ss.best_scores_cut_,
+            np.array(
+                [0.95833333, 0.93872549, 0.93872549, 0.93995098, 0.95833333, 0.48039216]
+            ),
+        )
+        is None
+    )
+
 
 def test_ScoreCutModelSelector_errors(grid_search_simulated):
     cv_results = grid_search_simulated["cv_results"]
@@ -408,6 +427,31 @@ def test_promote_successive_halving(
             assert search.best_score_ > simplified_best_score_
 
 
+def test_score_cut_model_selector_tied_ranks(grid_search_simulated):
+    cv_results = grid_search_simulated["cv_results"]
+
+    def mock_favorability_ranker(params):
+        favorability_ranks = {
+            "rbf": 1,  # assuming 'rbf' kernel is more favorable
+            "poly": 2,  # 'poly' kernel is less favorable
+        }
+        default_rank = len(favorability_ranks) + 1
+        ranks = []
+        for p in params:
+            if "kernel" in p:
+                rank = favorability_ranks.get(p["kernel"], default_rank)
+            else:
+                rank = default_rank
+            ranks.append(rank)
+        return ranks
+
+    ss = ScoreCutModelSelector(cv_results)
+    ss.fit(FixedWindowSlicer(min_cut=0.90, max_cut=0.94))
+    best_index = ss.transform(mock_favorability_ranker)
+
+    assert best_index in [0, 2, 3]
+
+
 def test_standard_error_slicer(generate_fit_params):
     # Test that the StandardErrorSlicer function returns the correct score_slice_rule
     assert pytest.approx(
@@ -514,9 +558,9 @@ def test_fixed_window_slicer(generate_fit_params):
 def test_favorability_ranker():
     ranker = FavorabilityRanker(
         {
-            "param1": (True, 1.0),  # Lower is more favorable
-            "param2": (["low", "medium", "high"], 1.0),  # Order of favorability
-            "param3": ("mean", 1.0),  # Mean of dist
+            "param1": (True, 1.0),
+            "param2": (["low", "medium", "high"], 1.0),
+            "param3": ("mean", 1.0),
         },
         seed=42,
     )
@@ -527,10 +571,8 @@ def test_favorability_ranker():
         {"param1": 1, "param2": "high", "param3": 2.5},
     ]
 
-    # Test ranking with direct values
     assert ranker(params) == [3, 2, 1]
 
-    # Test ranking with a callable parameter generator and dist objects
     param_generator = lambda rng: rng.choice([10, 5, 1])
     params_with_callable = [
         {
@@ -558,3 +600,119 @@ def test_favorability_ranker():
         == "FavorabilityRanker({'param1': (True, 1.0), 'param2': (['low', 'medium',"
         " 'high'], 1.0), 'param3': ('mean', 1.0)})"
     )
+
+
+def test_favorability_ranker_validation():
+    # invalid hyperparameter type (not a string)
+    with pytest.raises(TypeError):
+        FavorabilityRanker({1: (True, 1.0)})
+
+    # invalid rule type (not a tuple)
+    with pytest.raises(TypeError):
+        FavorabilityRanker({"param": "not_a_tuple"})
+
+    # invalid first element in rule (not a bool, list, or string)
+    with pytest.raises(TypeError):
+        FavorabilityRanker({"param": (1, 1.0)})
+
+    # invalid second element in rule (not a float)
+    with pytest.raises(TypeError):
+        FavorabilityRanker({"param": (True, "not_a_float")})
+
+
+def test_favorability_ranker_process_parameter_values():
+    ranker = FavorabilityRanker(
+        {
+            "param_continuous_mean": ("mean", 1.0),
+            "param_continuous_median": ("median", 1.0),
+            "param_continuous_percentile": ("percentile_75", 1.0),
+        },
+        seed=42,
+    )
+
+    params = {
+        "param_continuous_mean": scipy.stats.norm(loc=0, scale=1),
+        "param_continuous_median": scipy.stats.norm(loc=0, scale=1),
+        "param_continuous_percentile": scipy.stats.norm(loc=0, scale=1),
+    }
+
+    # expects: mean, median, and 75th percentile of a normal dist
+    expected_values = {
+        "param_continuous_mean": 0.0,
+        "param_continuous_median": 0.0,
+        "param_continuous_percentile": scipy.stats.norm(loc=0, scale=1).ppf(0.75),
+    }
+
+    processed_values = {}
+    for key, value in params.items():
+        processed_values[key] = ranker._process_parameter_values(
+            value, ranker.favorability_rules[key]
+        )
+
+    for key in processed_values:
+        assert np.isclose(processed_values[key], expected_values[key]), (
+            f"Processed value {processed_values[key]} does not match expected value"
+            f" {expected_values[key]}"
+        )
+
+    # test case where `distribution_property` is not a supported one
+    with pytest.raises(ValueError):
+        ranker._process_parameter_values(scipy.stats.norm(loc=0, scale=1), "foo")
+
+
+def test_favorability_ranker_with_distribution_handling_corrected():
+    favorability_rules = {
+        "param1": ("mean", 1.0),
+        "param2": (["low", "medium", "high"], 1.0),
+    }
+
+    params = {
+        "param1": scipy.stats.norm(loc=0, scale=1),
+        "param2": "medium",
+    }
+
+    ranker = FavorabilityRanker(favorability_rules, seed=42)
+
+    ranks = ranker([params])
+    assert isinstance(ranks, list), "Expected output to be a list"
+    assert len(ranks) == 1, "Expected a single rank output for a single parameter set"
+
+
+def test_favorability_ranker_with_categorical_combinations():
+    favorability_rules = {
+        "param2": (["a", "b", "c"], 1.0),
+    }
+
+    # Correcting the test to reflect how FavorabilityRanker expects its input
+    params = [
+        {"param2": value}  # Each value is treated as a separate parameter set
+        for value in ["a", "b", "c"]
+    ]
+
+    ranker = FavorabilityRanker(favorability_rules, seed=42)
+
+    # Directly use the list of parameter dictionaries without additional wrapping
+    ranks = ranker(params)
+
+    assert isinstance(ranks, list), "Ranks should be a list"
+    assert len(ranks) == len(params), "Should produce a rank for each parameter set"
+
+
+def test_favorability_ranker_simple_warning_emission():
+    favorability_rules = {
+        "param_simple": ("mean", 1.0),
+    }
+
+    params_simple = {
+        "param_simple": scipy.stats.norm(loc=0, scale=1),
+    }
+
+    ranker = FavorabilityRanker(favorability_rules, seed=None)
+
+    with pytest.warns(UserWarning, match="A seed value was not set"):
+        ranker(params_simple)
+
+
+def is_user_warning(warning_record):
+    """Check if the warning record is a UserWarning."""
+    return issubclass(warning_record.category, UserWarning)
