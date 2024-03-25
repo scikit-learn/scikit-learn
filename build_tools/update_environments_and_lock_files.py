@@ -142,6 +142,10 @@ build_metadata_list = [
         "conda_dependencies": remove_from(common_dependencies, ["cython"]) + ["ccache"],
         "package_constraints": {
             "blas": "[build=mkl]",
+            # scipy 1.12.x crashes on this platform (https://github.com/scipy/scipy/pull/20086)
+            # TODO: release scipy constraint when 1.13 is available in the "default"
+            # channel.
+            "scipy": "<1.12",
         },
         # TODO: put cython back to conda dependencies when required version is
         # available on the main channel
