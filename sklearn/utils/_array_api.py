@@ -10,6 +10,10 @@ import scipy.special as special
 from .._config import get_config
 from .fixes import parse_version
 
+# Dictionary listing the methods to skip
+# testing for, for a certain array api namespace
+_array_api_skip_methods = {"PCA": {"dask.array": ["score", "score_samples"]}}
+
 _NUMPY_NAMESPACE_NAMES = {"numpy", "array_api_compat.numpy"}
 
 
@@ -47,6 +51,7 @@ def yield_namespace_device_dtype_combinations(include_numpy_namespaces=True):
         "cupy",
         "cupy.array_api",
         "torch",
+        "dask.array",
     ]:
         if not include_numpy_namespaces and array_namespace in _NUMPY_NAMESPACE_NAMES:
             continue
@@ -73,6 +78,13 @@ def _check_array_api_dispatch(array_api_dispatch):
             raise ImportError(
                 "array_api_compat is required to dispatch arrays using the API"
                 " specification"
+            )
+        array_api_compat_version = parse_version(array_api_compat.__version__)
+        min_array_api_compat_version = "1.5.1"
+        if array_api_compat_version < parse_version(min_array_api_compat_version):
+            raise ImportError(
+                f"array-api-compat must be {min_array_api_compat_version} or newer to"
+                " dispatch array using the API specification"
             )
 
         numpy_version = parse_version(numpy.__version__)
@@ -764,6 +776,16 @@ def _estimator_with_converted_arrays(estimator, converter):
 def _atol_for_type(dtype):
     """Return the absolute tolerance for a given numpy dtype."""
     return numpy.finfo(dtype).eps * 100
+
+
+def _compute_shape(arr):
+    """
+    When arr has a null shape, force computation on its shape
+    """
+    if hasattr(arr, "compute_chunk_sizes"):
+        # Dask case
+        arr.compute_chunk_sizes()
+    return arr
 
 
 def indexing_dtype(xp):

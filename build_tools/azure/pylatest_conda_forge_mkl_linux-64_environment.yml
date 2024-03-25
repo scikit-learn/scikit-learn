@@ -23,6 +23,7 @@ dependencies:
   - ccache
   - meson-python
   - pip
+  - dask
   - pytorch=1.13
   - pytorch-cpu
   - polars

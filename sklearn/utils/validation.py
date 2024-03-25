@@ -1303,8 +1303,10 @@ def _check_y(y, multi_output=False, y_numeric=False, estimator=None):
         y = column_or_1d(y, warn=True)
         _assert_all_finite(y, input_name="y", estimator_name=estimator_name)
         _ensure_no_complex_data(y)
-    if y_numeric and y.dtype.kind == "O":
-        y = y.astype(np.float64)
+    if y_numeric:
+        xp, _ = get_namespace(y)
+        if not xp.isdtype(y.dtype, "numeric"):
+            y = xp.astype(y, xp.float64)
 
     return y
 
