@@ -33,8 +33,8 @@ See :ref:`array_api` for more details.
 **Functions:**
 
 - :func:`sklearn.metrics.r2_score` now supports Array API compliant inputs.
-  :pr:`27904` by :user:`Eric Lindgren <elindgren>`, `Franck Charras <fcharras>`,
-  `Olivier Grisel <ogrisel>` and `Tim Head <betatim>`;
+  :pr:`27904` by :user:`Eric Lindgren <elindgren>`, :user:`Franck Charras <fcharras>`,
+  :user:`Olivier Grisel <ogrisel>` and :user:`Tim Head <betatim>`;
 - :func:`sklearn.metrics.mean_absolute_error` :pr:`27736` by :user:`Edoardo Abati <EdAbati>`.
 
 **Classes:**
