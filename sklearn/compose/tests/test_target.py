@@ -37,11 +37,19 @@ def test_transform_target_regressor_error():
         match=r"fit\(\) got an unexpected " "keyword argument 'sample_weight'",
     ):
         regr.fit(X, y, sample_weight=sample_weight)
-    # func is given but inverse_func is not
+
+    # one of (func, inverse_func) is given but the other one is not
     regr = TransformedTargetRegressor(func=np.exp)
     with pytest.raises(
         ValueError,
         match="When 'func' is provided, 'inverse_func' must also be provided",
+    ):
+        regr.fit(X, y)
+
+    regr = TransformedTargetRegressor(inverse_func=np.log)
+    with pytest.raises(
+        ValueError,
+        match="When 'inverse_func' is provided, 'func' must also be provided",
     ):
         regr.fit(X, y)
 

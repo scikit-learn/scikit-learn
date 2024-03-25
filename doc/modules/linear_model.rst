@@ -193,9 +193,14 @@ This method has the same order of complexity as
 Setting the regularization parameter: leave-one-out Cross-Validation
 --------------------------------------------------------------------
 
-:class:`RidgeCV` implements ridge regression with built-in
-cross-validation of the alpha parameter. The object works in the same way
-as GridSearchCV except that it defaults to Leave-One-Out Cross-Validation::
+:class:`RidgeCV` and :class:`RidgeClassifierCV` implement ridge
+regression/classification with built-in cross-validation of the alpha parameter.
+They work in the same way as :class:`~sklearn.model_selection.GridSearchCV` except
+that it defaults to efficient Leave-One-Out :term:`cross-validation`.
+When using the default :term:`cross-validation`, alpha cannot be 0 due to the
+formulation used to calculate Leave-One-Out error. See [RL2007]_ for details.
+
+Usage example::
 
     >>> import numpy as np
     >>> from sklearn import linear_model
@@ -211,16 +216,13 @@ cross-validation with :class:`~sklearn.model_selection.GridSearchCV`, for
 example `cv=10` for 10-fold cross-validation, rather than Leave-One-Out
 Cross-Validation.
 
-|details-start|
-**References**
-|details-split|
+.. topic:: References:
 
-    * "Notes on Regularized Least Squares", Rifkin & Lippert (`technical report
-      <http://cbcl.mit.edu/publications/ps/MIT-CSAIL-TR-2007-025.pdf>`_,
-      `course slides
-      <https://www.mit.edu/~9.520/spring07/Classes/rlsslides.pdf>`_).
 
-|details-end|
+  .. [RL2007] "Notes on Regularized Least Squares", Rifkin & Lippert (`technical report
+    <http://cbcl.mit.edu/publications/ps/MIT-CSAIL-TR-2007-025.pdf>`_,
+    `course slides
+    <https://www.mit.edu/~9.520/spring07/Classes/rlsslides.pdf>`_).
 
 .. _lasso:
 
@@ -587,30 +589,30 @@ between the features.
 
 The advantages of LARS are:
 
-  - It is numerically efficient in contexts where the number of features
-    is significantly greater than the number of samples.
+- It is numerically efficient in contexts where the number of features
+  is significantly greater than the number of samples.
 
-  - It is computationally just as fast as forward selection and has
-    the same order of complexity as ordinary least squares.
+- It is computationally just as fast as forward selection and has
+  the same order of complexity as ordinary least squares.
 
-  - It produces a full piecewise linear solution path, which is
-    useful in cross-validation or similar attempts to tune the model.
+- It produces a full piecewise linear solution path, which is
+  useful in cross-validation or similar attempts to tune the model.
 
-  - If two features are almost equally correlated with the target,
-    then their coefficients should increase at approximately the same
-    rate. The algorithm thus behaves as intuition would expect, and
-    also is more stable.
+- If two features are almost equally correlated with the target,
+  then their coefficients should increase at approximately the same
+  rate. The algorithm thus behaves as intuition would expect, and
+  also is more stable.
 
-  - It is easily modified to produce solutions for other estimators,
-    like the Lasso.
+- It is easily modified to produce solutions for other estimators,
+  like the Lasso.
 
 The disadvantages of the LARS method include:
 
-  - Because LARS is based upon an iterative refitting of the
-    residuals, it would appear to be especially sensitive to the
-    effects of noise. This problem is discussed in detail by Weisberg
-    in the discussion section of the Efron et al. (2004) Annals of
-    Statistics article.
+- Because LARS is based upon an iterative refitting of the
+  residuals, it would appear to be especially sensitive to the
+  effects of noise. This problem is discussed in detail by Weisberg
+  in the discussion section of the Efron et al. (2004) Annals of
+  Statistics article.
 
 The LARS model can be used via the estimator :class:`Lars`, or its
 low-level implementation :func:`lars_path` or :func:`lars_path_gram`.
@@ -683,7 +685,7 @@ orthogonal matching pursuit can approximate the optimum solution vector with a
 fixed number of non-zero elements:
 
 .. math::
-    \underset{w}{\operatorname{arg\,min\,}}  ||y - Xw||_2^2 \text{ subject to } ||w||_0 \leq n_{\text{nonzero\_coefs}}
+    \underset{w}{\operatorname{arg\,min\,}}  ||y - Xw||_2^2 \text{ subject to } ||w||_0 \leq n_{\text{nonzero_coefs}}
 
 Alternatively, orthogonal matching pursuit can target a specific error instead
 of a specific number of non-zero coefficients. This can be expressed as:
@@ -707,11 +709,11 @@ previously chosen dictionary elements.
 **References**
 |details-split|
 
-  * https://www.cs.technion.ac.il/~ronrubin/Publications/KSVD-OMP-v2.pdf
+* https://www.cs.technion.ac.il/~ronrubin/Publications/KSVD-OMP-v2.pdf
 
-  * `Matching pursuits with time-frequency dictionaries
-    <https://www.di.ens.fr/~mallat/papiers/MallatPursuit93.pdf>`_,
-    S. G. Mallat, Z. Zhang,
+* `Matching pursuits with time-frequency dictionaries
+  <https://www.di.ens.fr/~mallat/papiers/MallatPursuit93.pdf>`_,
+  S. G. Mallat, Z. Zhang,
 
 |details-end|
 
@@ -736,31 +738,31 @@ variable to be estimated from the data.
 To obtain a fully probabilistic model, the output :math:`y` is assumed
 to be Gaussian distributed around :math:`X w`:
 
-.. math::  p(y|X,w,\alpha) = \mathcal{N}(y|X w,\alpha)
+.. math::  p(y|X,w,\alpha) = \mathcal{N}(y|X w,\alpha^{-1})
 
 where :math:`\alpha` is again treated as a random variable that is to be
 estimated from the data.
 
 The advantages of Bayesian Regression are:
 
-    - It adapts to the data at hand.
+- It adapts to the data at hand.
 
-    - It can be used to include regularization parameters in the
-      estimation procedure.
+- It can be used to include regularization parameters in the
+  estimation procedure.
 
 The disadvantages of Bayesian regression include:
 
-    - Inference of the model can be time consuming.
+- Inference of the model can be time consuming.
 
 |details-start|
 **References**
 |details-split|
 
-  * A good introduction to Bayesian methods is given in C. Bishop: Pattern
-    Recognition and Machine learning
+* A good introduction to Bayesian methods is given in C. Bishop: Pattern
+  Recognition and Machine learning
 
-  * Original Algorithm is detailed in the  book `Bayesian learning for neural
-    networks` by Radford M. Neal
+* Original Algorithm is detailed in the  book `Bayesian learning for neural
+  networks` by Radford M. Neal
 
 |details-end|
 
@@ -827,11 +829,11 @@ is more robust to ill-posed problems.
 **References**
 |details-split|
 
-  * Section 3.3 in Christopher M. Bishop: Pattern Recognition and Machine Learning, 2006
+* Section 3.3 in Christopher M. Bishop: Pattern Recognition and Machine Learning, 2006
 
-  * David J. C. MacKay, `Bayesian Interpolation <https://citeseerx.ist.psu.edu/doc_view/pid/b14c7cc3686e82ba40653c6dff178356a33e5e2c>`_, 1992.
+* David J. C. MacKay, `Bayesian Interpolation <https://citeseerx.ist.psu.edu/doc_view/pid/b14c7cc3686e82ba40653c6dff178356a33e5e2c>`_, 1992.
 
-  * Michael E. Tipping, `Sparse Bayesian Learning and the Relevance Vector Machine <https://www.jmlr.org/papers/volume1/tipping01a/tipping01a.pdf>`_, 2001.
+* Michael E. Tipping, `Sparse Bayesian Learning and the Relevance Vector Machine <https://www.jmlr.org/papers/volume1/tipping01a/tipping01a.pdf>`_, 2001.
 
 |details-end|
 
@@ -1372,11 +1374,11 @@ Perceptron
 The :class:`Perceptron` is another simple classification algorithm suitable for
 large scale learning. By default:
 
-    - It does not require a learning rate.
+- It does not require a learning rate.
 
-    - It is not regularized (penalized).
+- It is not regularized (penalized).
 
-    - It updates its model only on mistakes.
+- It updates its model only on mistakes.
 
 The last characteristic implies that the Perceptron is slightly faster to
 train than SGD with the hinge loss and that the resulting models are
@@ -1407,9 +1409,9 @@ For classification, :class:`PassiveAggressiveClassifier` can be used with
 **References**
 |details-split|
 
- * `"Online Passive-Aggressive Algorithms"
-   <http://jmlr.csail.mit.edu/papers/volume7/crammer06a/crammer06a.pdf>`_
-   K. Crammer, O. Dekel, J. Keshat, S. Shalev-Shwartz, Y. Singer - JMLR 7 (2006)
+* `"Online Passive-Aggressive Algorithms"
+  <http://jmlr.csail.mit.edu/papers/volume7/crammer06a/crammer06a.pdf>`_
+  K. Crammer, O. Dekel, J. Keshat, S. Shalev-Shwartz, Y. Singer - JMLR 7 (2006)
 
 |details-end|
 
@@ -1534,10 +1536,10 @@ Each iteration performs the following steps:
 
 1. Select ``min_samples`` random samples from the original data and check
    whether the set of data is valid (see ``is_data_valid``).
-2. Fit a model to the random subset (``base_estimator.fit``) and check
+2. Fit a model to the random subset (``estimator.fit``) and check
    whether the estimated model is valid (see ``is_model_valid``).
 3. Classify all data as inliers or outliers by calculating the residuals
-   to the estimated model (``base_estimator.predict(X) - y``) - all data
+   to the estimated model (``estimator.predict(X) - y``) - all data
    samples with absolute residuals smaller than or equal to the
    ``residual_threshold`` are considered as inliers.
 4. Save fitted model as best model if number of inlier samples is

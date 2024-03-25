@@ -388,6 +388,17 @@ def orthogonal_mp(
     M., Efficient Implementation of the K-SVD Algorithm using Batch Orthogonal
     Matching Pursuit Technical Report - CS Technion, April 2008.
     https://www.cs.technion.ac.il/~ronrubin/Publications/KSVD-OMP-v2.pdf
+
+    Examples
+    --------
+    >>> from sklearn.datasets import make_regression
+    >>> from sklearn.linear_model import orthogonal_mp
+    >>> X, y = make_regression(noise=4, random_state=0)
+    >>> coef = orthogonal_mp(X, y)
+    >>> coef.shape
+    (100,)
+    >>> X[:1,] @ coef
+    array([-78.68...])
     """
     X = check_array(X, order="F", copy=copy_X)
     copy_X = False
@@ -555,6 +566,17 @@ def orthogonal_mp_gram(
     M., Efficient Implementation of the K-SVD Algorithm using Batch Orthogonal
     Matching Pursuit Technical Report - CS Technion, April 2008.
     https://www.cs.technion.ac.il/~ronrubin/Publications/KSVD-OMP-v2.pdf
+
+    Examples
+    --------
+    >>> from sklearn.datasets import make_regression
+    >>> from sklearn.linear_model import orthogonal_mp_gram
+    >>> X, y = make_regression(noise=4, random_state=0)
+    >>> coef = orthogonal_mp_gram(X.T @ X, X.T @ y)
+    >>> coef.shape
+    (100,)
+    >>> X[:1,] @ coef
+    array([-78.68...])
     """
     Gram = check_array(Gram, order="F", copy=copy_Gram)
     Xy = np.asarray(Xy)
@@ -629,8 +651,9 @@ class OrthogonalMatchingPursuit(MultiOutputMixin, RegressorMixin, LinearModel):
     Parameters
     ----------
     n_nonzero_coefs : int, default=None
-        Desired number of non-zero entries in the solution. If None (by
-        default) this value is set to 10% of n_features.
+        Desired number of non-zero entries in the solution. Ignored if `tol` is set.
+        When `None` and `tol` is also `None`, this value is either set to 10% of
+        `n_features` or 1, whichever is greater.
 
     tol : float, default=None
         Maximum squared norm of the residual. If not None, overrides n_nonzero_coefs.
@@ -657,9 +680,9 @@ class OrthogonalMatchingPursuit(MultiOutputMixin, RegressorMixin, LinearModel):
     n_iter_ : int or array-like
         Number of active features across every target.
 
-    n_nonzero_coefs_ : int
-        The number of non-zero coefficients in the solution. If
-        `n_nonzero_coefs` is None and `tol` is None this value is either set
+    n_nonzero_coefs_ : int or None
+        The number of non-zero coefficients in the solution or `None` when `tol` is
+        set. If `n_nonzero_coefs` is None and `tol` is None this value is either set
         to 10% of `n_features` or 1, whichever is greater.
 
     n_features_in_ : int
@@ -761,6 +784,8 @@ class OrthogonalMatchingPursuit(MultiOutputMixin, RegressorMixin, LinearModel):
             # default for n_nonzero_coefs is 0.1 * n_features
             # but at least one.
             self.n_nonzero_coefs_ = max(int(0.1 * n_features), 1)
+        elif self.tol is not None:
+            self.n_nonzero_coefs_ = None
         else:
             self.n_nonzero_coefs_ = self.n_nonzero_coefs
 

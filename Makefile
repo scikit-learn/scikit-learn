@@ -23,6 +23,12 @@ in: inplace # just a shortcut
 inplace:
 	$(PYTHON) setup.py build_ext -i
 
+dev-meson:
+	pip install --verbose --no-build-isolation --editable . --config-settings editable-verbose=true
+
+clean-meson:
+	pip uninstall -y scikit-learn
+
 test-code: in
 	$(PYTEST) --showlocals -v sklearn --durations=20
 test-sphinxext:

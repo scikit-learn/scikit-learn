@@ -4,6 +4,7 @@
 
 import importlib
 import inspect
+import os
 import warnings
 from inspect import signature
 from pkgutil import walk_packages
@@ -40,7 +41,7 @@ from sklearn.utils.fixes import parse_version, sp_version
 with warnings.catch_warnings():
     warnings.simplefilter("ignore", FutureWarning)
     # mypy error: Module has no attribute "__path__"
-    sklearn_path = sklearn.__path__  # type: ignore  # mypy issue #1422
+    sklearn_path = [os.path.dirname(sklearn.__file__)]
     PUBLIC_MODULES = set(
         [
             pckg[1]
@@ -240,6 +241,9 @@ def test_fit_docstring_attributes(name, Estimator):
     # of fitted attributes. This should be invariant to whether it has converged or not.
     if "max_iter" in est.get_params():
         est.set_params(max_iter=2)
+        # min value for `TSNE` is 250
+        if Estimator.__name__ == "TSNE":
+            est.set_params(max_iter=250)
 
     if "random_state" in est.get_params():
         est.set_params(random_state=0)

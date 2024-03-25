@@ -81,16 +81,16 @@ tag under that branch.
 This is done only once, as the major and minor releases happen on the same
 branch:
 
-   .. prompt:: bash $
+.. prompt:: bash $
 
-     # Assuming upstream is an alias for the main scikit-learn repo:
-     git fetch upstream main
-     git checkout upstream/main
-     git checkout -b 0.99.X
-     git push --set-upstream upstream 0.99.X
+  # Assuming upstream is an alias for the main scikit-learn repo:
+  git fetch upstream main
+  git checkout upstream/main
+  git checkout -b 0.99.X
+  git push --set-upstream upstream 0.99.X
 
-   Again, `X` is literal here, and `99` is replaced by the release number.
-   The branches are called ``0.19.X``, ``0.20.X``, etc.
+Again, `X` is literal here, and `99` is replaced by the release number.
+The branches are called ``0.19.X``, ``0.20.X``, etc.
 
 In terms of including changes, the first RC ideally counts as a *feature
 freeze*. Each coming release candidate and the final release afterwards will
@@ -121,67 +121,67 @@ The minor releases should include bug fixes and some relevant documentation
 changes only. Any PR resulting in a behavior change which is not a bug fix
 should be excluded. As an example, instructions are given for the `1.2.2` release.
 
- - Create a branch, **on your own fork** (here referred to as `fork`) for the release
-   from `upstream/main`.
+- Create a branch, **on your own fork** (here referred to as `fork`) for the release
+  from `upstream/main`.
 
-    .. prompt:: bash $
+  .. prompt:: bash $
 
-        git fetch upstream/main
-        git checkout -b release-1.2.2 upstream/main
-        git push -u fork release-1.2.2:release-1.2.2
+      git fetch upstream/main
+      git checkout -b release-1.2.2 upstream/main
+      git push -u fork release-1.2.2:release-1.2.2
 
- - Create a **draft** PR to the `upstream/1.2.X` branch (not to `upstream/main`)
-   with all the desired changes.
+- Create a **draft** PR to the `upstream/1.2.X` branch (not to `upstream/main`)
+  with all the desired changes.
 
- - Do not push anything on that branch yet.
+- Do not push anything on that branch yet.
 
- - Locally rebase `release-1.2.2` from the `upstream/1.2.X` branch using:
+- Locally rebase `release-1.2.2` from the `upstream/1.2.X` branch using:
 
-    .. prompt:: bash $
+  .. prompt:: bash $
 
-        git rebase -i upstream/1.2.X
+      git rebase -i upstream/1.2.X
 
-   This will open an interactive rebase with the `git-rebase-todo` containing all
-   the latest commit on `main`. At this stage, you have to perform
-   this interactive rebase with at least someone else (being three people rebasing
-   is better not to forget something and to avoid any doubt).
+  This will open an interactive rebase with the `git-rebase-todo` containing all
+  the latest commit on `main`. At this stage, you have to perform
+  this interactive rebase with at least someone else (being three people rebasing
+  is better not to forget something and to avoid any doubt).
 
-     - **Do not remove lines but drop commit by replace** ``pick`` **with** ``drop``
+  - **Do not remove lines but drop commit by replace** ``pick`` **with** ``drop``
 
-     - Commits to pick for bug-fix release *generally* are prefixed with: `FIX`, `CI`,
-       `DOC`. They should at least include all the commits of the merged PRs
-       that were milestoned for this release on GitHub and/or documented as such in
-       the changelog. It's likely that some bugfixes were documented in the
-       changelog of the main major release instead of the next bugfix release,
-       in which case, the matching changelog entries will need to be moved,
-       first in the `main` branch then backported in the release PR.
+  - Commits to pick for bug-fix release *generally* are prefixed with: `FIX`, `CI`,
+    `DOC`. They should at least include all the commits of the merged PRs
+    that were milestoned for this release on GitHub and/or documented as such in
+    the changelog. It's likely that some bugfixes were documented in the
+    changelog of the main major release instead of the next bugfix release,
+    in which case, the matching changelog entries will need to be moved,
+    first in the `main` branch then backported in the release PR.
 
-     - Commits to drop for bug-fix release *generally* are prefixed with: `FEAT`,
-       `MAINT`, `ENH`, `API`. Reasons for not including them is to prevent change of
-       behavior (which only must feature in breaking or major releases).
+  - Commits to drop for bug-fix release *generally* are prefixed with: `FEAT`,
+    `MAINT`, `ENH`, `API`. Reasons for not including them is to prevent change of
+    behavior (which only must feature in breaking or major releases).
 
-     - After having dropped or picked commit, **do no exit** but paste the content
-       of the `git-rebase-todo` message in the PR.
-       This file is located at `.git/rebase-merge/git-rebase-todo`.
+  - After having dropped or picked commit, **do no exit** but paste the content
+    of the `git-rebase-todo` message in the PR.
+    This file is located at `.git/rebase-merge/git-rebase-todo`.
 
-     - Save and exit, starting the interactive rebase.
+  - Save and exit, starting the interactive rebase.
 
-     - Resolve merge conflicts when they happen.
+  - Resolve merge conflicts when they happen.
 
- - Force push the result of the rebase and the extra release commits to the release PR:
+- Force push the result of the rebase and the extra release commits to the release PR:
 
-   .. prompt:: bash $
+  .. prompt:: bash $
 
-       git push -f fork release-1.2.2:release-1.2.2
+      git push -f fork release-1.2.2:release-1.2.2
 
- - Copy the :ref:`release_checklist` template and paste it in the description of the
-   Pull Request to track progress.
+- Copy the :ref:`release_checklist` template and paste it in the description of the
+  Pull Request to track progress.
 
- - Review all the commits included in the release to make sure that they do not
-   introduce any new feature. We should not blindly trust the commit message prefixes.
+- Review all the commits included in the release to make sure that they do not
+  introduce any new feature. We should not blindly trust the commit message prefixes.
 
- - Remove the draft status of the release PR and invite other maintainers to review the
-   list of included commits.
+- Remove the draft status of the release PR and invite other maintainers to review the
+  list of included commits.
 
 .. _making_a_release:
 
@@ -210,7 +210,7 @@ Making a release
    - Edit the ``doc/templates/index.html`` to change the 'News' entry of the
      front page (with the release month as well). Do not forget to remove
      the old entries (two years or three releases are typically good
-     enough)
+     enough) and to update the on-going development entry.
 
 2. On the branch for releasing, update the version number in
    ``sklearn/__init__.py``, the ``__version__``.
