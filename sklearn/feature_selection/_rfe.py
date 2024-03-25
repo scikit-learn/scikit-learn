@@ -566,7 +566,11 @@ class RFECV(RFE):
         The fitted estimator used to select features.
 
     cv_results_ : dict of ndarrays
-        A dict with keys:
+        All arrays (values of the dictionary) are sorted in ascending order
+        by the number of features used (i.e., the first element of the array
+        represents the models that used the least number of features, while the
+        last element represents the models that used all available features).
+        This dictionary contains the following keys:
 
         split(k)_test_score : ndarray of shape (n_subsets_of_features,)
             The cross-validation scores across (k)th fold.
