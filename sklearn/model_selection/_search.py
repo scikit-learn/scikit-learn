@@ -1468,7 +1468,7 @@ class GridSearchCV(BaseSearchCV):
 
     >>> from sklearn.metrics import make_scorer, d2_pinball_score
     >>> custom_scorer = make_scorer(d2_pinball_score, greater_is_better=True,
-    ...                                                           alpha=0.95)
+                                                                  alpha=0.95)
 
     This custom scorer can then be used in GridSearchCV or RandomizedSearchCV:
 
