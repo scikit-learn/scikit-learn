@@ -1467,15 +1467,17 @@ class GridSearchCV(BaseSearchCV):
     create a scorer with `make_scorer` and pass it to `scoring`. For instance:
 
     >>> from sklearn.metrics import make_scorer, d2_pinball_score
-    >>> custom_scorer = make_scorer(d2_pinball_score, greater_is_better=True, alpha=0.95)
-    
+    >>> custom_scorer = make_scorer(d2_pinball_score, greater_is_better=True,
+    ...                                                           alpha=0.95)
+
     This custom scorer can then be used in GridSearchCV or RandomizedSearchCV:
 
     >>> from sklearn.model_selection import RandomizedSearchCV
     >>> from sklearn.linear_model import LinearRegression
     >>> from scipy.stats import expon
     >>> param_dist = {'alpha': expon()}
-    >>> rnd_search = RandomizedSearchCV(LinearRegression(), param_distributions=param_dist, scoring=custom_scorer)
+    >>> rnd_search = RandomizedSearchCV(LinearRegression(),
+    param_distributions=param_dist, scoring=custom_scorer)
 
     Examples
     --------
