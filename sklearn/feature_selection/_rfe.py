@@ -32,7 +32,8 @@ def _rfe_single_fit(rfe, estimator, X, y, train, test, scorer):
     """
     X_train, y_train = _safe_split(estimator, X, y, train)
     X_test, y_test = _safe_split(estimator, X, y, test, train)
-    return rfe._fit(
+
+    rfe._fit(
         X_train,
         y_train,
         lambda estimator, features: _score(
@@ -43,7 +44,9 @@ def _rfe_single_fit(rfe, estimator, X, y, train, test, scorer):
             scorer,
             score_params=None,
         ),
-    ).scores_
+    )
+
+    return rfe.scores_, rfe.n_features_selected_
 
 
 def _estimator_has(attr):
@@ -152,9 +155,6 @@ class RFE(_RoutingNotSupportedMixin, SelectorMixin, MetaEstimatorMixin, BaseEsti
 
     support_ : ndarray of shape (n_features,)
         The mask of selected features.
-
-    n_features_fitted_: ndarray of shape (n_features_in_ // step [+1],)
-        Number of features used for fitting at each step.
 
     See Also
     --------
@@ -297,9 +297,9 @@ class RFE(_RoutingNotSupportedMixin, SelectorMixin, MetaEstimatorMixin, BaseEsti
 
         support_ = np.ones(n_features, dtype=bool)
         ranking_ = np.ones(n_features, dtype=int)
-        self.n_features_fitted_ = []
 
         if step_score:
+            self.n_features_selected_ = []
             self.scores_ = []
 
         # Elimination
@@ -332,8 +332,8 @@ class RFE(_RoutingNotSupportedMixin, SelectorMixin, MetaEstimatorMixin, BaseEsti
             # because 'estimator' must use features
             # that have not been eliminated yet
             if step_score:
+                self.n_features_selected_.append(len(features))
                 self.scores_.append(step_score(estimator, features))
-                self.n_features_fitted_.append(len(features))
             support_[features[ranks][:threshold]] = False
             ranking_[np.logical_not(support_)] += 1
 
@@ -344,12 +344,11 @@ class RFE(_RoutingNotSupportedMixin, SelectorMixin, MetaEstimatorMixin, BaseEsti
 
         # Compute step score when only n_features_to_select features left
         if step_score:
+            self.n_features_selected_.append(len(features))
             self.scores_.append(step_score(self.estimator_, features))
-            self.n_features_fitted_.append(len(features))
         self.n_features_ = support_.sum()
         self.support_ = support_
         self.ranking_ = ranking_
-        self.n_features_fitted_ = np.array(self.n_features_fitted_)
 
         return self
 
@@ -728,12 +727,6 @@ class RFECV(RFE):
         # Initialization
         cv = check_cv(self.cv, y, classifier=is_classifier(self.estimator))
         scorer = check_scoring(self.estimator, scoring=self.scoring)
-        n_features = X.shape[1]
-
-        if 0.0 < self.step < 1.0:
-            step = int(max(1, self.step * n_features))
-        else:
-            step = int(self.step)
 
         # Build an RFE object, which will evaluate and score each possible
         # feature count, down to self.min_features_to_select
@@ -763,19 +756,18 @@ class RFECV(RFE):
             parallel = Parallel(n_jobs=self.n_jobs)
             func = delayed(_rfe_single_fit)
 
-        scores = parallel(
+        scores_features = parallel(
             func(rfe, self.estimator, X, y, train, test, scorer)
             for train, test in cv.split(X, y, groups)
         )
+        scores, n_features_per_iter = zip(*scores_features)
 
-        n_features_fitted = rfe.n_features_fitted_
+        n_features_per_iter_rev = np.array(n_features_per_iter[0])[::-1]
         scores = np.array(scores)
-        scores_sum = np.sum(scores, axis=0)
-        scores_sum_rev = scores_sum[::-1]
-        argmax_idx = len(scores_sum) - np.argmax(scores_sum_rev) - 1
-        n_features_to_select = max(
-            n_features - (argmax_idx * step), self.min_features_to_select
-        )
+
+        # Reverse order such that lowest number of features is selected in case of tie.
+        scores_sum_rev = np.sum(scores, axis=0)[::-1]
+        n_features_to_select = n_features_per_iter_rev[np.argmax(scores_sum_rev)]
 
         # Re-execute an elimination with best_k over the whole set
         rfe = RFE(
@@ -801,6 +793,6 @@ class RFECV(RFE):
             "mean_test_score": np.mean(scores_rev, axis=0),
             "std_test_score": np.std(scores_rev, axis=0),
             **{f"split{i}_test_score": scores_rev[i] for i in range(scores.shape[0])},
-            "n_features": np.flip(n_features_fitted),
+            "n_features": n_features_per_iter_rev,
         }
         return self

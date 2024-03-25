@@ -537,10 +537,7 @@ def test_rfecv_std_and_mean(global_random_seed):
 
     rfecv = RFECV(estimator=SVC(kernel="linear"))
     rfecv.fit(X, y)
-    n_non_split_keys = 3
-    n_split_keys = len(rfecv.cv_results_) - n_non_split_keys
-    split_keys = [f"split{i}_test_score" for i in range(n_split_keys)]
-
+    split_keys = [key for key in rfecv.cv_results_.keys() if "split" in key]
     cv_scores = np.asarray([rfecv.cv_results_[key] for key in split_keys])
     expected_mean = np.mean(cv_scores, axis=0)
     expected_std = np.std(cv_scores, axis=0)
