@@ -15,7 +15,7 @@ https://repo.anaconda.com/pkgs/main/linux-64/_openmp_mutex-5.1-1_gnu.conda#71d28
 https://repo.anaconda.com/pkgs/main/linux-64/libgcc-ng-11.2.0-h1234567_1.conda#a87728dabf3151fb9cfa990bd2eb0464
 https://repo.anaconda.com/pkgs/main/linux-64/bzip2-1.0.8-h5eee18b_5.conda#9c8dec113089c4aca7392c6a3864f505
 https://repo.anaconda.com/pkgs/main/linux-64/expat-2.5.0-h6a678d5_0.conda#9a21d99d49a0a556cf9590430dec8ec0
-https://repo.anaconda.com/pkgs/main/linux-64/fftw-3.3.9-h27cfd23_1.conda#d266674fbd3345d45a69896e1bdef8be
+https://repo.anaconda.com/pkgs/main/linux-64/fftw-3.3.9-h5eee18b_2.conda#db1df41113accc18ec59a99f1631bfcd
 https://repo.anaconda.com/pkgs/main/linux-64/icu-73.1-h6a678d5_0.conda#6d09df641fc23f7d277a04dc7ea32dd4
 https://repo.anaconda.com/pkgs/main/linux-64/jpeg-9e-h5eee18b_1.conda#ac373800fda872108412d1ccfe3fa572
 https://repo.anaconda.com/pkgs/main/linux-64/lerc-3.0-h295c915_0.conda#b97309770412f10bed8d9448f6f98f87
@@ -55,7 +55,7 @@ https://repo.anaconda.com/pkgs/main/linux-64/lcms2-2.12-h3be6417_0.conda#719db47
 https://repo.anaconda.com/pkgs/main/linux-64/libclang-14.0.6-default_hc6dbbc7_1.conda#8f12583c4027b2861cff470f6b8837c4
 https://repo.anaconda.com/pkgs/main/linux-64/libpq-12.17-hdbd6064_0.conda#6bed363e25859faff66bf546a11c10e8
 https://repo.anaconda.com/pkgs/main/linux-64/openjpeg-2.4.0-h3ad879b_0.conda#86baecb47ecaa7f7ff2657a1f03b90c9
-https://repo.anaconda.com/pkgs/main/linux-64/python-3.9.18-h955ad1f_0.conda#65fb745edecf85675ed0487fc54316b5
+https://repo.anaconda.com/pkgs/main/linux-64/python-3.9.19-h955ad1f_0.conda#33cb019c40e3409df392c99e3c34f352
 https://repo.anaconda.com/pkgs/main/linux-64/certifi-2024.2.2-py39h06a4308_0.conda#2bc1db9166ecbb968f61252e6f08c2ce
 https://repo.anaconda.com/pkgs/main/noarch/cycler-0.11.0-pyhd3eb1b0_0.conda#f5e365d2cdb66d547eb8c3ab93843aab
 https://repo.anaconda.com/pkgs/main/linux-64/exceptiongroup-1.2.0-py39h06a4308_0.conda#960e2cb83ac5134df8e593a130aa11af
