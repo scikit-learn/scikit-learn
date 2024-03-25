@@ -425,6 +425,7 @@ class FavorabilityRanker:
 
         Examples
         --------
+        >>> import scipy
         >>> from sklearn.model_selection import FavorabilityRanker
         >>> favorability_rules = {
         ...    'reduce_dim__n_components': (True, 1.0),  # Lower is more favorable
@@ -638,7 +639,7 @@ class ScoreCutModelSelector:
     >>> from sklearn.svm import LinearSVC
     >>> from sklearn.pipeline import Pipeline
     >>> from sklearn.model_selection import ScoreCutModelSelector, \
-    ... StandardErrorSlicer, FavorabilityRanker
+        StandardErrorSlicer, FavorabilityRanker
     >>> X, y = load_digits(return_X_y=True)
     >>> pipe = Pipeline([
     ...      ("reduce_dim", PCA(random_state=42)),
@@ -1147,7 +1148,7 @@ def promote(score_slice_fn: Callable, favorability_rank_fn: Callable) -> Callabl
     >>> from sklearn.svm import LinearSVC
     >>> from sklearn.pipeline import Pipeline
     >>> from sklearn.model_selection import promote, StandardErrorSlicer, \
-    ... FavorabilityRanker
+        FavorabilityRanker
     >>> X, y = load_digits(return_X_y=True)
     >>> pipe = Pipeline([
     ...      ("reduce_dim", PCA(random_state=42)),

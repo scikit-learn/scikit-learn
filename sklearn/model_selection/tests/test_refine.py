@@ -645,9 +645,10 @@ def test_favorability_ranker_process_parameter_values():
 
     processed_values = {}
     for key, value in params.items():
-        processed_values[key] = ranker._process_parameter_values(
+        processed_res = ranker._process_parameter_values(
             value, ranker.favorability_rules[key]
         )
+        processed_values[key] = processed_res
 
     for key in processed_values:
         assert np.isclose(processed_values[key], expected_values[key]), (
