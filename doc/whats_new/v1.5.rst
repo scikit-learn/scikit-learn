@@ -190,11 +190,11 @@ Changelog
 
 - |Enhancement| :class:`feature_selection.RFE`  now have the `n_features_fitted_`
   attribute after `_fit`.
-  :pr:`43745` by :user:`Miguel Silva <miguelcsilva>`.
+  :pr:`28670` by :user:`Miguel Silva <miguelcsilva>`.
 
 - |Feature| :class:`feature_selection.RFECV` adds a new key to its `cv_results_`
   `dict`, containing an `np.array` with the number of features fitted at each step.
-  :pr:`43745` by :user:`Miguel Silva <miguelcsilva>`.
+  :pr:`28670` by :user:`Miguel Silva <miguelcsilva>`.
 
 :mod:`sklearn.impute`
 .....................
