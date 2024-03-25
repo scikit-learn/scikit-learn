@@ -292,7 +292,7 @@ build_metadata_list = [
             "polars",
             "pooch",
         ],
-        "pip_dependencies": ["sphinxext-opengraph"],
+        "pip_dependencies": ["great-tables", "sphinxext-opengraph"],
         "package_constraints": {
             "python": "3.9",
             "numpy": "min",
@@ -309,6 +309,7 @@ build_metadata_list = [
             "sphinxext-opengraph": "min",
             "plotly": "min",
             "polars": "min",
+            "great-tables": "min",
         },
     },
     {
@@ -333,7 +334,11 @@ build_metadata_list = [
             "pooch",
             "sphinxext-opengraph",
         ],
-        "pip_dependencies": ["jupyterlite-sphinx", "jupyterlite-pyodide-kernel"],
+        "pip_dependencies": [
+            "great-tables",
+            "jupyterlite-sphinx",
+            "jupyterlite-pyodide-kernel",
+        ],
         "package_constraints": {
             "python": "3.9",
         },

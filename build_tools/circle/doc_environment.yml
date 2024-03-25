@@ -33,5 +33,6 @@ dependencies:
   - sphinxext-opengraph
   - pip
   - pip:
+    - great-tables
     - jupyterlite-sphinx
     - jupyterlite-pyodide-kernel
