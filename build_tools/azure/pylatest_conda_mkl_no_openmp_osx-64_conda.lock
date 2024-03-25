@@ -48,7 +48,7 @@ https://repo.anaconda.com/pkgs/main/osx-64/lcms2-2.12-hf1fd2bf_0.conda#697aba7a3
 https://repo.anaconda.com/pkgs/main/osx-64/mkl-service-2.4.0-py312h6c40b1e_1.conda#b1ef860be9043b35c5e8d9388b858514
 https://repo.anaconda.com/pkgs/main/noarch/munkres-1.1.4-py_0.conda#148362ba07f92abab76999a680c80084
 https://repo.anaconda.com/pkgs/main/osx-64/openjpeg-2.4.0-h66ea3da_0.conda#882833bd7befc5e60e6fba9c518c1b79
-https://repo.anaconda.com/pkgs/main/osx-64/packaging-23.1-py312hecd8cb5_0.conda#27f59725d093a50f366eaeba0db9ec61
+https://repo.anaconda.com/pkgs/main/osx-64/packaging-23.2-py312hecd8cb5_0.conda#2b4e331c8f6df5d95a5dd3af37a34d89
 https://repo.anaconda.com/pkgs/main/osx-64/pluggy-1.0.0-py312hecd8cb5_1.conda#647fada22f1697691fdee90b52c99bcb
 https://repo.anaconda.com/pkgs/main/osx-64/pyparsing-3.0.9-py312hecd8cb5_0.conda#d85cf2b81c6d9326a57a6418e14db258
 https://repo.anaconda.com/pkgs/main/noarch/python-tzdata-2023.3-pyhd3eb1b0_0.conda#479c037de0186d114b9911158427624e
@@ -75,7 +75,7 @@ https://repo.anaconda.com/pkgs/main/osx-64/mkl_fft-1.3.8-py312h6c40b1e_0.conda#d
 https://repo.anaconda.com/pkgs/main/osx-64/mkl_random-1.2.4-py312ha357a0b_0.conda#c1ea9c8eee79a5af3399f3c31be0e9c6
 https://repo.anaconda.com/pkgs/main/osx-64/numpy-1.26.4-py312hac873b0_0.conda#3150bac1e382156f82a153229e1ebd06
 https://repo.anaconda.com/pkgs/main/osx-64/numexpr-2.8.7-py312hac873b0_0.conda#6303ba071636ef57fddf69eb6f440ec1
-https://repo.anaconda.com/pkgs/main/osx-64/scipy-1.11.4-py312h81688c2_0.conda#7d57b4c21a9261f97fa511e0940c5d93
+https://repo.anaconda.com/pkgs/main/osx-64/scipy-1.12.0-py312h81688c2_0.conda#52e69281febef4f87c88f2c9c1385bd2
 https://repo.anaconda.com/pkgs/main/osx-64/pandas-2.2.1-py312he282a81_0.conda#021b70a1e40efb75b89eb8ebdb347132
 https://repo.anaconda.com/pkgs/main/osx-64/pyamg-4.2.3-py312h44cbcf4_0.conda#3bdc7be74087b3a5a83c520a74e1e8eb
 # pip cython @ https://files.pythonhosted.org/packages/be/67/6a1316e4b3201b44d245873f62395bd8ea7d181c4b6b2d43fe7da486bf61/Cython-3.0.9-cp312-cp312-macosx_10_9_x86_64.whl#sha256=157973807c2796addbed5fbc4d9c882ab34bbc60dc297ca729504901479d5df7
