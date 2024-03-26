@@ -403,16 +403,14 @@ class FavorabilityRanker:
         favorability_rules: Dict[str, Tuple[Union[bool, List], float]],
         seed: Optional[int] = None,
     ):
-        """
-        Initializes the FavorabilityRanker class with a dictionary of favorability
-        rules for ranking hyperparameters based on their favorability for a
-        hypothetical optimization process. Favorability can be defined in terms of
-        numerical lower-is-better, a specific order for categorical variables, or
+        """The FavorabilityRanker class provides a mechanism for ranking hyperparameters
+        based on user-defined favorability rules. Favorability can be defined in terms
+        of numerical lower-is-better, a specific order for categorical variables, or
         proximity to a statistical measure for distributions.
 
         Parameters
         ----------
-        favorability_rules : dict of {str: (bool or list of str or str, float)}
+        favorability_rules : dict
             A dictionary mapping hyperparameter names to a tuple where the first
             element is either a boolean indicating that lower numerical values are
             more favorable, a list of strings indicating the order of favorability for
@@ -650,14 +648,8 @@ class ScoreCutModelSelector:
     ...     param_grid=param_grid,
     ...     scoring="accuracy",
     ... )
-    >>> search.fit(X, y)
-    GridSearchCV(estimator=Pipeline(steps=[('reduce_dim', PCA(random_state=42)),
-                                        ('classify',
-                                            LinearSVC(C=0.01, dual='auto',
-                                                    random_state=42))]),
-                param_grid={'reduce_dim__n_components': [6, 8, 10, 12, 14]},
-                scoring='accuracy')
-    >>> ss = ScoreCutModelSelector(search.cv_results_)
+    >>> fitted = search.fit(X, y)
+    >>> ss = ScoreCutModelSelector(fitted.cv_results_)
     >>> bounds = ss.fit(StandardErrorSlicer(sigma=1))
     Min: 0.884825465639171
     Max: 0.9148526525904792
