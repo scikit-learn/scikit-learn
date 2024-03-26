@@ -218,7 +218,7 @@ def test_ScoreCutModelSelector_errors(grid_search_simulated):
 )
 @pytest.mark.parametrize(
     "search_cv",
-    [GridSearchCV, RandomizedSearchCV],
+    ["GridSearchCV", "RandomizedSearchCV"],
 )
 def test_promote(param, scoring, score_slice_rule, favorability_rank_rule, search_cv):
     """
@@ -226,6 +226,11 @@ def test_promote(param, scoring, score_slice_rule, favorability_rank_rule, searc
     refitted grid and random search object to those of a non-refitted grid and random
     search object, respectively.
     """
+
+    if search_cv == "GridSearchCV":
+        search_cv = GridSearchCV
+    else:
+        search_cv = RandomizedSearchCV
 
     X, y = make_classification(n_samples=350, n_features=16, random_state=42)
 
@@ -242,7 +247,7 @@ def test_promote(param, scoring, score_slice_rule, favorability_rank_rule, searc
         )
 
     # Instantiate a non-refitted grid search object for comparison
-    grid = search_cv(pipe, param_grid, scoring=scoring, n_jobs=-1)
+    grid = search_cv(pipe, param_grid, scoring=scoring, n_jobs=1)
     grid.fit(X, y)
 
     score_slice_rule = (

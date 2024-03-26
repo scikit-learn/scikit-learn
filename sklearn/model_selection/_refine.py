@@ -645,11 +645,11 @@ class ScoreCutModelSelector:
     ... )
     >>> search.fit(X, y)
     GridSearchCV(estimator=Pipeline(steps=[('reduce_dim', PCA(random_state=42)),
-                                           ('classify',
-                                            LinearSVC(dual='auto',
-                                            C=0.01, random_state=42))]),
-                 param_grid={'reduce_dim__n_components': [6, 8, 10, 12, 14]},
-                 scoring='accuracy')
+                                        ('classify',
+                                            LinearSVC(C=0.01, dual='auto',
+                                                    random_state=42))]),
+                param_grid={'reduce_dim__n_components': [6, 8, 10, 12, 14]},
+                scoring='accuracy')
     >>> ss = ScoreCutModelSelector(search.cv_results_)
     >>> ss.fit(StandardErrorSlicer(sigma=1))
     >>> favorability_rules = {
@@ -1161,7 +1161,7 @@ def promote(score_slice_fn: Callable, favorability_rank_fn: Callable) -> Callabl
     ...     refit=promote(score_slice_fn=StandardErrorSlicer(sigma=1),
     ...     favorability_rank_fn=FavorabilityRanker(favorability_rules)),
     ... )
-    >>> search.fit(X, y)
+    >>> fitted = search.fit(X, y)
     Min: 0.8898918397688278
     Max: 0.9186844524007791
     Original best index: 6
@@ -1170,7 +1170,7 @@ def promote(score_slice_fn: Callable, favorability_rank_fn: Callable) -> Callabl
     Promoted best index: 3
     Promoted best params: {'reduce_dim__n_components': 12}
     Promoted best score: 0.8926121943670691
-    >>> search.best_params_
+    >>> fitted.best_params_
     {'reduce_dim__n_components': 12}
     """
     if not callable(score_slice_fn) or not callable(favorability_rank_fn):
