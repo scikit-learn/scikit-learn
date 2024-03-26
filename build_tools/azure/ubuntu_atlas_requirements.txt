@@ -4,5 +4,7 @@
 cython==3.0.9  # min
 joblib==1.2.0  # min
 threadpoolctl==2.0.0  # min
-pytest
+pytest<8
 pytest-xdist
+ninja
+meson-python
