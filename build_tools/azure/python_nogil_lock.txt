@@ -31,6 +31,8 @@ meson==1.4.0
     # via meson-python
 meson-python==0.15.0
     # via -r /scikit-learn/build_tools/azure/python_nogil_requirements.txt
+ninja==1.11.1.1
+    # via -r /scikit-learn/build_tools/azure/python_nogil_requirements.txt
 numpy==1.24.0
     # via
     #   -r /scikit-learn/build_tools/azure/python_nogil_requirements.txt
