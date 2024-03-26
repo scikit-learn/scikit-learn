@@ -398,6 +398,10 @@ class LabelBinarizer(TransformerMixin, BaseEstimator, auto_wrap_output_keys=None
         """
         check_is_fitted(self)
 
+        xp, is_array_api_compliant = get_namespace(Y)
+        device_ = device(Y) if is_array_api_compliant else None
+        Y = _convert_to_numpy(Y, xp)
+
         if threshold is None:
             threshold = (self.pos_label + self.neg_label) / 2.0
 
@@ -412,6 +416,8 @@ class LabelBinarizer(TransformerMixin, BaseEstimator, auto_wrap_output_keys=None
             y_inv = sp.csr_matrix(y_inv)
         elif sp.issparse(y_inv):
             y_inv = y_inv.toarray()
+        if is_array_api_compliant and not sp.issparse(y_inv):
+            y_inv = xp.asarray(y_inv, device=device_)
 
         return y_inv
 
