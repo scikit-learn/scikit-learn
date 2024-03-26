@@ -60,7 +60,8 @@ benchmarks/HIGGS.csv.gz
 .pydevproject
 .idea
 .vscode
-.python-version  # used by pyenv
+# used by pyenv
+.python-version
 
 *.c
 *.cpp

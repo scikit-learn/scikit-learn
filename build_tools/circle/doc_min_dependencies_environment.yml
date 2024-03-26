@@ -14,10 +14,12 @@ dependencies:
   - matplotlib=3.3.4  # min
   - pandas=1.1.5  # min
   - pyamg
-  - pytest
+  - pytest<8
   - pytest-xdist
   - pillow
-  - setuptools
+  - pip
+  - ninja
+  - meson-python
   - scikit-image=0.17.2  # min
   - seaborn
   - memory_profiler
