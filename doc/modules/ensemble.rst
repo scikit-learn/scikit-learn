@@ -137,7 +137,8 @@ leaf weights.
 Notice that :math:`\gamma` penalizes the number of leaves (which makes it a
 smooth version of `max_leaf_nodes` and is not implemented in scikit-learn),
 whereas :math:`\lambda` penalizes the magnitude of the individual tree
-predictions.
+predictions before being rescaled by the learning rate (See
+:ref:`gradient_boosting_shrinkage`).
 
 |details-start|
 **Leaf weights in regression and classification**:
