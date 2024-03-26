@@ -46,7 +46,7 @@ def _rfe_single_fit(rfe, estimator, X, y, train, test, scorer):
         ),
     )
 
-    return rfe.scores_, rfe.n_features_selected_
+    return rfe.step_scores_, rfe.step_n_features_
 
 
 def _estimator_has(attr):
@@ -267,10 +267,9 @@ class RFE(_RoutingNotSupportedMixin, SelectorMixin, MetaEstimatorMixin, BaseEsti
         return self._fit(X, y, **fit_params)
 
     def _fit(self, X, y, step_score=None, **fit_params):
-        # Parameter step_score controls the calculation of self.scores_
-        # step_score is not exposed to users
-        # and is used when implementing RFECV
-        # self.scores_ will not be calculated when calling _fit through fit
+        # Parameter step_score controls the calculation of self.step_scores_
+        # step_score is not exposed to users and is used when implementing RFECV
+        # self.step_scores_ will not be calculated when calling _fit through fit
 
         X, y = self._validate_data(
             X,
@@ -299,8 +298,8 @@ class RFE(_RoutingNotSupportedMixin, SelectorMixin, MetaEstimatorMixin, BaseEsti
         ranking_ = np.ones(n_features, dtype=int)
 
         if step_score:
-            self.n_features_selected_ = []
-            self.scores_ = []
+            self.step_n_features_ = []
+            self.step_scores_ = []
 
         # Elimination
         while np.sum(support_) > n_features_to_select:
@@ -332,8 +331,8 @@ class RFE(_RoutingNotSupportedMixin, SelectorMixin, MetaEstimatorMixin, BaseEsti
             # because 'estimator' must use features
             # that have not been eliminated yet
             if step_score:
-                self.n_features_selected_.append(len(features))
-                self.scores_.append(step_score(estimator, features))
+                self.step_n_features_.append(len(features))
+                self.step_scores_.append(step_score(estimator, features))
             support_[features[ranks][:threshold]] = False
             ranking_[np.logical_not(support_)] += 1
 
@@ -344,8 +343,8 @@ class RFE(_RoutingNotSupportedMixin, SelectorMixin, MetaEstimatorMixin, BaseEsti
 
         # Compute step score when only n_features_to_select features left
         if step_score:
-            self.n_features_selected_.append(len(features))
-            self.scores_.append(step_score(self.estimator_, features))
+            self.step_n_features_.append(len(features))
+            self.step_scores_.append(step_score(self.estimator_, features))
         self.n_features_ = support_.sum()
         self.support_ = support_
         self.ranking_ = ranking_
