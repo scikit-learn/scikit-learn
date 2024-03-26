@@ -57,7 +57,7 @@ cdef class ArgKmin{{name_suffix}}(BaseDistancesReduction{{name_suffix}}):
         No instance should directly be created outside of this class method.
         """
         # Limit the number of threads in second level of nested parallelism for BLAS
-        # to avoid threads over-subscription (in GEMM for instance).
+        # to avoid threads over-subscription (in DOT or GEMM for instance).
         with threadpool_limits(limits=1, user_api='blas'):
           if metric in ("euclidean", "sqeuclidean"):
               # Specialized implementation of ArgKmin for the Euclidean distance
@@ -68,6 +68,12 @@ cdef class ArgKmin{{name_suffix}}(BaseDistancesReduction{{name_suffix}}):
               # the dense and sparse settings, allowing in most case speed-ups of
               # several orders of magnitude compared to the generic ArgKmin
               # implementation.
+              # Note that squared norms of X and Y are precomputed in the
+              # constructor of this class by issuing BLAS calls that may use
+              # multithreading (depending on the BLAS implementation), hence calling
+              # the constructor needs to be protected under the threadpool_limits
+              # context, along with the main calls to _parallel_on_Y and
+              # _parallel_on_X.
               # For more information see MiddleTermComputer.
               use_squared_distances = metric == "sqeuclidean"
               pda = EuclideanArgKmin{{name_suffix}}(
