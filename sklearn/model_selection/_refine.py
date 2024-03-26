@@ -5,12 +5,13 @@ selecting models from ``GridSearchCV``, ``RandomizedSearchCV``, or
 and favorability criteria.
 """
 
+import itertools
 import warnings
 from functools import partial
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 import numpy as np
-import scipy
+from scipy import stats
 
 __all__ = [
     "BaseScoreSlicer",
@@ -295,10 +296,6 @@ class WilcoxonSlicer(BaseScoreSlicer):
         ValueError
             If the number of folds is less than 3.
         """
-        import itertools
-
-        from scipy.stats import wilcoxon
-
         if n_folds < 3:
             raise ValueError("Number of folds must be greater than 2.")
 
@@ -312,7 +309,7 @@ class WilcoxonSlicer(BaseScoreSlicer):
 
         pvals = {}
         for pair in tests:
-            pvals[pair] = wilcoxon(
+            pvals[pair] = stats.wilcoxon(
                 score_grid[pair[0]],
                 score_grid[pair[1]],
                 alternative=self.alternative,
@@ -425,18 +422,17 @@ class FavorabilityRanker:
 
         Examples
         --------
-        >>> import scipy
         >>> from sklearn.model_selection import FavorabilityRanker
         >>> favorability_rules = {
         ...    'reduce_dim__n_components': (True, 1.0),  # Lower is more favorable
-        ...    'classify__degree': (True, 1.0), # Lower more favorable
+        ...    'classify__degree': (True, 1.0), # Lower is more favorable
         ...    'classify__kernel': (['linear', 'rbf'], 1.0), # Linear is more favorable
         ...    'classify__C': ('median', 0.25), # Closer to median is more favorable
         ... }
         >>> fr = FavorabilityRanker(favorability_rules)
         >>> fr({'reduce_dim__n_components': [6, 2, 8], 'classify__degree': [2,
         ... 3, 1], 'classify__kernel': ['rbf', 'linear'], 'classify__C':
-        ... scipy.stats.norm(loc=0.0, scale=1.0)}) # Params from a SearchCV object
+        ... stats.norm(loc=0.0, scale=1.0)}) # Params from a SearchCV object
         >>> [12, 11, 8, 7, 10, 9, 6, 2, 5, 1, 4, 18, 3, 14, 17, 13, 16, 15]
         """
         self.favorability_rules = favorability_rules
@@ -473,7 +469,7 @@ class FavorabilityRanker:
     def _process_parameter_values(self, value: Any, rule: Tuple[Any, float]) -> Any:
         """Process a single hyperparameter value, handling distribution objects."""
 
-        if isinstance(value, scipy.stats.rv_continuous):
+        if isinstance(value, stats._distn_infrastructure.rv_continuous_frozen):
             distribution_property = rule[0]
             rng = np.random.default_rng(self.seed)
 
@@ -483,7 +479,7 @@ class FavorabilityRanker:
                 return value.median()
             elif distribution_property.startswith("percentile_"):
                 percentile = float(distribution_property.split("_")[1])
-                return value.ppf(percentile / 100, random_state=rng)
+                return value.ppf(percentile / 100)
             else:
                 raise ValueError(
                     f"Unsupported distribution property: {distribution_property}"
@@ -523,7 +519,7 @@ class FavorabilityRanker:
 
                     is_numeric = isinstance(hyperparam_value, (int, float, np.number))
 
-                    # Numeric hyperparameter
+                    # numerical
                     if isinstance(rule[0], bool):
                         lower_is_favorable, weight = rule
                         if not is_numeric:
@@ -539,7 +535,7 @@ class FavorabilityRanker:
                             )
                         favorability_score += weight * score_component
 
-                    # Categorical hyperparameter
+                    # categorical
                     elif isinstance(rule[0], list):
                         rule_values, weight = rule
                         if hyperparam_value in rule_values:
@@ -558,15 +554,12 @@ class FavorabilityRanker:
             # if it's a list, process each set of parameters separately
             favorability_scores = [calculate_favorability_score(p) for p in params]
         elif isinstance(params, dict):
-            from itertools import product
-
-            import scipy
-
             # if it's a dictionary, first check if it contains distribution objects or
             # callable parameter generators, and if so, but no seed is set, issue a
             # warning
             if self.seed is None and any(
-                isinstance(v, scipy.stats.rv_continuous) or callable(v)
+                isinstance(v, stats._distn_infrastructure.rv_continuous_frozen)
+                or callable(v)
                 for p in params.values()
                 for v in (p if isinstance(p, list) else [p])
             ):
@@ -579,7 +572,7 @@ class FavorabilityRanker:
                     ),
                     UserWarning,
                 )
-            # generate a grid of parameter combinations and
+            # generate a grid of param combinations and
             # process them as though they were a list of dictionaries
             processed_params = {}
             for key, value in params.items():
@@ -591,7 +584,7 @@ class FavorabilityRanker:
                 )
             combinations = [
                 dict(zip(processed_params.keys(), v))
-                for v in product(*processed_params.values())
+                for v in itertools.product(*processed_params.values())
             ]
             favorability_scores = [
                 calculate_favorability_score(p) for p in combinations
@@ -601,9 +594,7 @@ class FavorabilityRanker:
                 "params must be either a list of dictionaries or a single dictionary"
             )
 
-        # Determine ranks based on favorability scores
-        ranks = [x + 1 for x in np.argsort(favorability_scores)]
-        return ranks
+        return [x + 1 for x in np.argsort(favorability_scores)]  # ranks
 
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}({self.favorability_rules})"
@@ -643,7 +634,7 @@ class ScoreCutModelSelector:
     >>> X, y = load_digits(return_X_y=True)
     >>> pipe = Pipeline([
     ...      ("reduce_dim", PCA(random_state=42)),
-    ...      ("classify", LinearSVC(random_state=42, C=0.01)),
+    ...      ("classify", LinearSVC(dual='auto', random_state=42, C=0.01)),
     ... ])
     >>> param_grid = {"reduce_dim__n_components": [6, 8, 10, 12, 14]}
     >>> search = GridSearchCV(
@@ -654,7 +645,8 @@ class ScoreCutModelSelector:
     >>> search.fit(X, y)
     GridSearchCV(estimator=Pipeline(steps=[('reduce_dim', PCA(random_state=42)),
                                            ('classify',
-                                            LinearSVC(C=0.01, random_state=42))]),
+                                            LinearSVC(dual='auto',
+                                            C=0.01, random_state=42))]),
                  param_grid={'reduce_dim__n_components': [6, 8, 10, 12, 14]},
                  scoring='accuracy')
     >>> ss = ScoreCutModelSelector(search.cv_results_)
@@ -1152,7 +1144,7 @@ def promote(score_slice_fn: Callable, favorability_rank_fn: Callable) -> Callabl
     >>> X, y = load_digits(return_X_y=True)
     >>> pipe = Pipeline([
     ...      ("reduce_dim", PCA(random_state=42)),
-    ...      ("classify", LinearSVC(random_state=42, C=0.01)),
+    ...      ("classify", LinearSVC(dual='auto', random_state=42, C=0.01)),
     ... ])
     >>> param_grid = {"reduce_dim__n_components": [6, 8, 10, 12, 14, 16, 18]}
     >>> favorability_rules = {

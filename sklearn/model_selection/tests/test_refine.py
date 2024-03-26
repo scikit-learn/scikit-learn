@@ -231,7 +231,7 @@ def test_promote(param, scoring, score_slice_rule, favorability_rank_rule, searc
 
     # Instantiate a pipeline with parameter grid representing different levels of
     # favorability
-    clf = LinearSVC(random_state=42)
+    clf = LinearSVC(dual="auto", random_state=42)
     if param == "reduce_dim__n_components":
         param_grid = {"reduce_dim__n_components": [4, 8, 12]}
         pipe = Pipeline([("reduce_dim", PCA(random_state=42)), ("classify", clf)])
