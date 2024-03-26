@@ -561,13 +561,15 @@ def test_fixed_window_slicer(generate_fit_params):
 
 
 def test_favorability_ranker():
+    rng = 42
+
     ranker = FavorabilityRanker(
         {
             "param1": (True, 1.0),
             "param2": (["low", "medium", "high"], 1.0),
             "param3": ("mean", 1.0),
         },
-        seed=42,
+        seed=rng,
     )
 
     params = [
@@ -578,20 +580,26 @@ def test_favorability_ranker():
 
     assert ranker(params) == [3, 2, 1]
 
-    param_generator = lambda rng: rng.choice([10, 5, 1])
+    def param_generator(seed_or_rng):
+        if isinstance(seed_or_rng, int):
+            rng = np.random.default_rng(seed_or_rng)
+        else:
+            rng = seed_or_rng
+        return rng.choice([10, 5, 1])
+
     params_with_callable = [
         {
-            "param1": param_generator,
+            "param1": lambda rng: param_generator(rng),
             "param2": "high",
             "param3": scipy.stats.norm(loc=0, scale=1),
         },
         {
-            "param1": param_generator,
+            "param1": lambda rng: param_generator(rng),
             "param2": "medium",
             "param3": scipy.stats.norm(loc=1, scale=1),
         },
         {
-            "param1": param_generator,
+            "param1": lambda rng: param_generator(rng),
             "param2": "low",
             "param3": scipy.stats.norm(loc=2, scale=1),
         },

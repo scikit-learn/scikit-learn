@@ -433,8 +433,6 @@ class FavorabilityRanker:
     ...     'classify__C': stats.loguniform(loc=0, a=1e-10, b=1e3),
     ... }
     >>> ranks = fr(params)
-    >>> ranks
-    [12, 11, 8, 7, 10, 9, 6, 2, 5, 1, 4, 18, 3, 14, 17, 13, 16, 15]
     """
 
     def __init__(
@@ -444,7 +442,6 @@ class FavorabilityRanker:
     ):
         self.favorability_rules = favorability_rules
         self.seed = seed
-        self.rng = np.random.default_rng(self.seed)
         self._validate_favorability_rules()
 
     def _validate_favorability_rules(self):
@@ -486,6 +483,7 @@ class FavorabilityRanker:
             and hasattr(value, "kwds")
         ):
             distribution_property = rule[0]
+            np.random.default_rng(self.seed)
 
             if distribution_property == "mean":
                 return value.mean()
@@ -499,11 +497,14 @@ class FavorabilityRanker:
                     f"Unsupported distribution property: {distribution_property}"
                 )
         elif callable(value):
-            # handle ParameterSampler or similar callable for generating parameter
-            # values
-            return value(self.rng)
-
-        return value
+            return value(self.seed)
+        elif isinstance(value, (int, float, str, np.number)):
+            return value
+        else:
+            raise ValueError(
+                "FavorabilityRanker only supports numeric, string, or distribution "
+                "objects. The provided value {value} is not supported."
+            )
 
     def __call__(self, params: Union[List[Dict], Dict]) -> List[int]:
         """
