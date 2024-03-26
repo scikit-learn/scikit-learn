@@ -430,11 +430,12 @@ class FavorabilityRanker:
         ...    'classify__kernel': (['linear', 'rbf'], 1.0), # Linear is more favorable
         ...    'classify__C': ('median', 0.25), # Closer to median is more favorable
         ... }
-        >>> fr = FavorabilityRanker(favorability_rules)
-        >>> fr({'reduce_dim__n_components': [6, 2, 8], 'classify__degree': [2,
+        >>> fr = FavorabilityRanker(favorability_rules, seed=42)
+        >>> params = {'reduce_dim__n_components': [6, 2, 8], 'classify__degree': [2,
         ... 3, 1], 'classify__kernel': ['rbf', 'linear'], 'classify__C':
-        ... stats.norm(loc=0.0, scale=1.0)}) # Params from a SearchCV object
-        >>> [12, 11, 8, 7, 10, 9, 6, 2, 5, 1, 4, 18, 3, 14, 17, 13, 16, 15]
+        ... stats.norm(loc=0.0, scale=1.0)} # Params from a SearchCV object
+        >>> fr(params)
+        [12, 11, 8, 7, 10, 9, 6, 2, 5, 1, 4, 18, 3, 14, 17, 13, 16, 15]
         """
         self.favorability_rules = favorability_rules
         self.seed = seed
@@ -498,7 +499,7 @@ class FavorabilityRanker:
 
         Parameters
         ----------
-        params: Union[List[Dict], Dict]
+        params : Union[List[Dict], Dict]
             A parameter grid in the form of a list of dictionaries or a single
             dictionary.
 
@@ -651,7 +652,9 @@ class ScoreCutModelSelector:
                 param_grid={'reduce_dim__n_components': [6, 8, 10, 12, 14]},
                 scoring='accuracy')
     >>> ss = ScoreCutModelSelector(search.cv_results_)
-    >>> ss.fit(StandardErrorSlicer(sigma=1))
+    >>> bounds = ss.fit(StandardErrorSlicer(sigma=1))
+    Min: 0.884825465639171
+    Max: 0.9148526525904792
     >>> favorability_rules = {
     ...     'reduce_dim__n_components': (True, 2.0), # Lower is simpler and
     ...                                              # more favorable
@@ -1108,11 +1111,12 @@ def _wrap_refit(
 
 
 def promote(score_slice_fn: Callable, favorability_rank_fn: Callable) -> Callable:
-    """Callable returning the most favorable model index based on
-    ``favorability_rank_fn`` with score constraints determined by a ``score_slice_fn``.
+    """Returns a callable to select the most favorable model within performance bounds.
 
-    Intended to be used as the ``refit`` parameter in ``GridSearchCV``,
-    ``RandomSearchCV``, or ``HalvingRandomSearchCV``.
+    This function is designed to be used as the `refit` parameter in `GridSearchCV`,
+    `RandomSearchCV`, or `HalvingRandomSearchCV`, allowing for custom model selection
+    based on `favorability_rank_fn` within score constraints defined by
+    `score_slice_fn`.
 
     Parameters
     ----------
