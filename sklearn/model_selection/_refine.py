@@ -398,49 +398,50 @@ class FixedWindowSlicer(BaseScoreSlicer):
 
 
 class FavorabilityRanker:
+    """The FavorabilityRanker class provides a mechanism for ranking hyperparameters
+    based on user-defined favorability rules. Favorability can be defined in terms
+    of numerical lower-is-better, a specific order for categorical variables, or
+    proximity to a statistical measure for distributions.
+
+    Parameters
+    ----------
+    favorability_rules : dict
+        A dictionary mapping hyperparameter names to a tuple where the first
+        element is either a boolean indicating that lower numerical values are
+        more favorable, a list of strings indicating the order of favorability for
+        categorical variables, or a string specifying a statistical measure for
+        distributions ('mean' or 'median'). The second element is a float
+        indicating the relative importance of the hyperparameter.
+    seed : int, optional
+        An optional random seed for consistent random sampling.
+
+    Examples
+    --------
+    >>> from scipy import stats
+    >>> from sklearn.model_selection import FavorabilityRanker
+    >>> favorability_rules = {
+    ...     'reduce_dim__n_components': (True, 1.0),
+    ...     'classify__degree': (True, 1.0),
+    ...     'classify__kernel': (['linear', 'rbf'], 1.0),
+    ...     'classify__C': ('median', 0.25),
+    ... }
+    >>> fr = FavorabilityRanker(favorability_rules, seed=42)
+    >>> params = {
+    ...     'reduce_dim__n_components': [6, 2, 8],
+    ...     'classify__degree': [2, 3, 1],
+    ...     'classify__kernel': ['rbf', 'linear'],
+    ...     'classify__C': stats.norm(loc=0.0, scale=1.0),
+    ... }
+    >>> ranks = fr(params)
+    >>> ranks
+    [12, 8, 11, 7, 10, 9, 6, 2, 5, 1, 4, 18, 14, 3, 17, 13, 16, 15]
+    """
+
     def __init__(
         self,
         favorability_rules: Dict[str, Tuple[Union[bool, List], float]],
         seed: Optional[int] = None,
     ):
-        """The FavorabilityRanker class provides a mechanism for ranking hyperparameters
-        based on user-defined favorability rules. Favorability can be defined in terms
-        of numerical lower-is-better, a specific order for categorical variables, or
-        proximity to a statistical measure for distributions.
-
-        Parameters
-        ----------
-        favorability_rules : dict
-            A dictionary mapping hyperparameter names to a tuple where the first
-            element is either a boolean indicating that lower numerical values are
-            more favorable, a list of strings indicating the order of favorability for
-            categorical variables, or a string specifying a statistical measure for
-            distributions ('mean' or 'median'). The second element is a float
-            indicating the relative importance of the hyperparameter.
-        seed : int, optional
-            An optional random seed for consistent random sampling.
-
-        Examples
-        --------
-        >>> from scipy import stats
-        >>> from sklearn.model_selection import FavorabilityRanker
-        >>> favorability_rules = {
-        ...     'reduce_dim__n_components': (True, 1.0),
-        ...     'classify__degree': (True, 1.0),
-        ...     'classify__kernel': (['linear', 'rbf'], 1.0),
-        ...     'classify__C': ('median', 0.25),
-        ... }
-        >>> fr = FavorabilityRanker(favorability_rules, seed=42)
-        >>> params = {
-        ...     'reduce_dim__n_components': [6, 2, 8],
-        ...     'classify__degree': [2, 3, 1],
-        ...     'classify__kernel': ['rbf', 'linear'],
-        ...     'classify__C': stats.norm(loc=0.0, scale=1.0),
-        ... }
-        >>> ranks = fr(params)
-        >>> ranks
-        [12, 8, 11, 7, 10, 9, 6, 2, 5, 1, 4, 18, 14, 3, 17, 13, 16, 15]
-        """
         self.favorability_rules = favorability_rules
         self.seed = seed
         self._validate_favorability_rules()
