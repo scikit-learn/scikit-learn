@@ -95,8 +95,7 @@ more details.
   - |Feature| :class:`ensemble.StackingClassifier` and
   :class:`ensemble.StackingRegressor` now support metadata routing and pass
   ``**fit_params`` to the underlying estimators via their `fit` methods.
-  :pr:`.....` by :user:`Stefanie Senger <StefanieSenger>`.
-
+  :pr:`28701` by :user:`Stefanie Senger <StefanieSenger>`.
 
 Changelog
 ---------
