@@ -404,37 +404,43 @@ class FavorabilityRanker:
         seed: Optional[int] = None,
     ):
         """
-        Initializes the FavorabilityRanker class with a user-supplied dictionary of
-        favorability rules.
+        Initializes the FavorabilityRanker class with a dictionary of favorability
+        rules for ranking hyperparameters based on their favorability for a
+        hypothetical optimization process. Favorability can be defined in terms of
+        numerical lower-is-better, a specific order for categorical variables, or
+        proximity to a statistical measure for distributions.
 
         Parameters
         ----------
-        favorability_rules : Dict[str, Tuple[Union[bool, List], float]]
-            A dictionary mapping hyperparameters to a tuple, where the first element is
-            either a boolean (numeric case) indicating whether lower values imply
-            higher favorability (True), or a list that defines the order of
-            favorability from most favorable to least favorable (categorical case), and
-            the second element is a float (weight), indicating the relative importance
-            of the hyperparameter in the overall favorability ranking.
-        seed : Optional[int]
-            An optional seed for consistent random sampling from probability
-            distributions.
+        favorability_rules : dict of {str: (bool or list of str or str, float)}
+            A dictionary mapping hyperparameter names to a tuple where the first
+            element is either a boolean indicating that lower numerical values are
+            more favorable, a list of strings indicating the order of favorability for
+            categorical variables, or a string specifying a statistical measure for
+            distributions ('mean' or 'median'). The second element is a float
+            indicating the relative importance of the hyperparameter.
+        seed : int, optional
+            An optional random seed for consistent random sampling.
 
         Examples
         --------
         >>> from scipy import stats
         >>> from sklearn.model_selection import FavorabilityRanker
         >>> favorability_rules = {
-        ...    'reduce_dim__n_components': (True, 1.0),  # Lower is more favorable
-        ...    'classify__degree': (True, 1.0), # Lower is more favorable
-        ...    'classify__kernel': (['linear', 'rbf'], 1.0), # Linear is more favorable
-        ...    'classify__C': ('median', 0.25), # Closer to median is more favorable
+        ...     'reduce_dim__n_components': (True, 1.0),
+        ...     'classify__degree': (True, 1.0),
+        ...     'classify__kernel': (['linear', 'rbf'], 1.0),
+        ...     'classify__C': ('median', 0.25),
         ... }
         >>> fr = FavorabilityRanker(favorability_rules, seed=42)
-        >>> params = {'reduce_dim__n_components': [6, 2, 8], 'classify__degree': [2,
-        ... 3, 1], 'classify__kernel': ['rbf', 'linear'], 'classify__C':
-        ... stats.norm(loc=0.0, scale=1.0)} # Params from a SearchCV object
-        >>> fr(params)
+        >>> params = {
+        ...     'reduce_dim__n_components': [6, 2, 8],
+        ...     'classify__degree': [2, 3, 1],
+        ...     'classify__kernel': ['rbf', 'linear'],
+        ...     'classify__C': stats.norm(loc=0.0, scale=1.0),
+        ... }
+        >>> ranks = fr(params)
+        >>> ranks
         [12, 11, 8, 7, 10, 9, 6, 2, 5, 1, 4, 18, 3, 14, 17, 13, 16, 15]
         """
         self.favorability_rules = favorability_rules
