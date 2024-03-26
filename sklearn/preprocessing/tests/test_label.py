@@ -228,7 +228,9 @@ def test_label_binarizer_sparse_errors(csr_container):
 @pytest.mark.parametrize(
     "array_namespace, device, dtype_name", yield_namespace_device_dtype_combinations()
 )
-@pytest.mark.parametrize("y", [np.array([1, 0, 2]), np.array([[0, 1, 1], [1, 0, 1]])])
+@pytest.mark.parametrize(
+    "y", [np.array([1, 0, 2]), np.array([1, 0, 0]), np.array([[0, 1, 1], [1, 0, 1]])]
+)
 def test_label_binarizer_array_api(y, array_namespace, device, dtype_name):
     xp = _array_api_for_tests(array_namespace, device)
     xp_y = xp.asarray(y, device=device)
