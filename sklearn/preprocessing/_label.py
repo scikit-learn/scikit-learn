@@ -400,7 +400,8 @@ class LabelBinarizer(TransformerMixin, BaseEstimator, auto_wrap_output_keys=None
 
         xp, is_array_api_compliant = get_namespace(Y)
         device_ = device(Y) if is_array_api_compliant else None
-        Y = _convert_to_numpy(Y, xp)
+        if not sp.issparse(Y):
+            Y = _convert_to_numpy(Y, xp)
 
         if threshold is None:
             threshold = (self.pos_label + self.neg_label) / 2.0
