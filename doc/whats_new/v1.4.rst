@@ -37,6 +37,10 @@ Changelog
   micro-average when input is a subset of labels.
   :pr:`28399` by :user:`Vineet Joshi <vjoshi253>`.
 
+- |Fix| Fix OpenBLAS 0.3.26 dead-lock on Windows in pairwise distances
+  computation. This is likely to affect neighbor-based algorithms.
+  :pr:`28692` by :user:`Loïc Estève <lesteve>`.
+
 :mod:`sklearn.mixture`
 ......................
 
