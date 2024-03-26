@@ -139,10 +139,6 @@ smooth version of `max_leaf_nodes` and is not implemented in scikit-learn),
 whereas :math:`\lambda` penalizes the magnitude of the individual tree
 predictions.
 
-**Note**: In practice we don't recommend tuning `l2_regularization`, as it does
-not significantly affect the generalization performance of gradient boosting
-models.
-
 |details-start|
 **Leaf weights in regression and classification**:
 |details-split|
