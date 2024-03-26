@@ -430,7 +430,7 @@ class FavorabilityRanker:
     ...     'reduce_dim__n_components': [6, 2, 8],
     ...     'classify__degree': [2, 3, 1],
     ...     'classify__kernel': ['rbf', 'linear'],
-    ...     'classify__C': stats.norm(loc=0.0, scale=1.0),
+    ...     'classify__C': stats.loguniform(loc=0, a=1e-10, b=1e3),
     ... }
     >>> ranks = fr(params)
     >>> ranks
@@ -493,7 +493,7 @@ class FavorabilityRanker:
                 return value.median()
             elif distribution_property.startswith("percentile_"):
                 percentile = float(distribution_property.split("_")[1])
-                return value.ppf(percentile / 100, random_state=self.rng)
+                return value.ppf(percentile / 100)
             else:
                 raise ValueError(
                     f"Unsupported distribution property: {distribution_property}"
