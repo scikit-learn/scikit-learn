@@ -82,7 +82,9 @@ def _convert_container_kwargs(
                     "constructor_lib": series_lib,
                 }
         else:
-            raise ValueError(f"Invalid constructor type: {constructor_type}")  # noqa
+            raise ValueError(
+                f"Invalid constructor type: {constructor_type}"
+            )  # pragma: no cover
 
 
 def test_polars_indexing():
