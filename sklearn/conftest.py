@@ -305,11 +305,13 @@ def handle_global_random_seed(config):
         else:
             # inside a xdist worker: reuse random_seeds that have been
             # generated in the xdist controller and passed to the xdist workers
-            # by pytest_configure_node. For some unknown reason,
-            # pytest_configure in not called in the xdist controller (hence
-            # pytest_configure_node is not called and config.workerinput does
-            # not have the key "random_seeds") in some edge cases, for example:
+            # by pytest_configure_node. In some edge cases, pytest_configure in
+            # not called in the xdist controller (hence pytest_configure_node
+            # is not called and config.workerinput does not have the key
+            # "random_seeds"), for example:
             # pytest -n2 --pyargs sklearn.tests.test_dummy
+            # For more details, see
+            # https://github.com/pytest-dev/pytest-xdist/issues/917#issuecomment-2015189622.
             # In these edge cases, random_seeds is set to a fixed value
             random_seeds = config.workerinput.get("random_seeds", default_random_seeds)
 
