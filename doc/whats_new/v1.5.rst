@@ -260,6 +260,9 @@ Changelog
   in favor of `y_proba`. `y_prob` will be removed in version 1.7.
   :pr:`28092` by :user:`Adam Li <adam2392>`.
 
+- |Fix| Fix dead-lock in pairwise distance computation.
+  :pr:`28692` by :user:`Loïc Estève <lesteve>`.
+
 :mod:`sklearn.model_selection`
 ..............................
 
@@ -298,7 +301,7 @@ Changelog
   :func:`preprocessing.quantile_transform` now supports disabling
   subsampling explicitly.
   :pr:`27636` by :user:`Ralph Urlus <rurlus>`.
-  
+
 :mod:`sklearn.tree`
 ...................
 
