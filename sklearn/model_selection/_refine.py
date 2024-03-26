@@ -434,7 +434,7 @@ class FavorabilityRanker:
     ... }
     >>> ranks = fr(params)
     >>> ranks
-    [12, 8, 11, 7, 10, 9, 6, 2, 5, 1, 4, 18, 14, 3, 17, 13, 16, 15]
+    [12, 11, 8, 7, 10, 9, 6, 2, 5, 1, 4, 18, 3, 14, 17, 13, 16, 15]
     """
 
     def __init__(
@@ -475,7 +475,15 @@ class FavorabilityRanker:
 
     def _process_parameter_values(self, value: Any, rule: Tuple[Any, float]) -> Any:
         """Process a single hyperparameter value, handling distribution objects."""
-        if isinstance(value, stats._distn_infrastructure.rv_continuous_frozen):
+        if (
+            hasattr(value, "dist")
+            and (
+                isinstance(value.dist, stats.rv_continuous)
+                or isinstance(value.dist, stats.rv_discrete)
+            )
+            and hasattr(value, "args")
+            and hasattr(value, "kwds")
+        ):
             distribution_property = rule[0]
             rng = np.random.default_rng(self.seed)
 
@@ -564,7 +572,15 @@ class FavorabilityRanker:
             # callable parameter generators, and if so, but no seed is set, issue a
             # warning
             if self.seed is None and any(
-                isinstance(v, stats._distn_infrastructure.rv_continuous_frozen)
+                (
+                    hasattr(v, "dist")
+                    and (
+                        isinstance(v.dist, stats.rv_continuous)
+                        or isinstance(v.dist, stats.rv_discrete)
+                    )
+                    and hasattr(v, "args")
+                    and hasattr(v, "kwds")
+                )
                 or callable(v)
                 for p in params.values()
                 for v in (p if isinstance(p, list) else [p])
