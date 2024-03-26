@@ -422,6 +422,7 @@ class FavorabilityRanker:
 
         Examples
         --------
+        >>> from scipy import stats
         >>> from sklearn.model_selection import FavorabilityRanker
         >>> favorability_rules = {
         ...    'reduce_dim__n_components': (True, 1.0),  # Lower is more favorable
@@ -468,7 +469,6 @@ class FavorabilityRanker:
 
     def _process_parameter_values(self, value: Any, rule: Tuple[Any, float]) -> Any:
         """Process a single hyperparameter value, handling distribution objects."""
-
         if isinstance(value, stats._distn_infrastructure.rv_continuous_frozen):
             distribution_property = rule[0]
             rng = np.random.default_rng(self.seed)
@@ -594,7 +594,8 @@ class FavorabilityRanker:
                 "params must be either a list of dictionaries or a single dictionary"
             )
 
-        return [x + 1 for x in np.argsort(favorability_scores)]  # ranks
+        ranks = [x + 1 for x in np.argsort(favorability_scores)]
+        return ranks
 
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}({self.favorability_rules})"
