@@ -9,12 +9,12 @@
 
 cimport cython
 from cython.parallel import prange
-cimport numpy as cnp
 import numpy as np
 from libc.math cimport INFINITY, ceil
 from libc.stdlib cimport malloc, free, qsort
 from libc.string cimport memcpy
 
+from ...utils._typedefs cimport uint8_t
 from .common cimport X_BINNED_DTYPE_C
 from .common cimport Y_DTYPE_C
 from .common cimport hist_struct
@@ -24,8 +24,6 @@ from .common cimport MonotonicConstraint
 from ._bitset cimport init_bitset
 from ._bitset cimport set_bitset
 from ._bitset cimport in_bitset
-
-cnp.import_array()
 
 
 cdef struct split_info_struct:
@@ -490,7 +488,7 @@ cdef class Splitter:
             int n_threads = self.n_threads
             bint has_interaction_cst = False
             Y_DTYPE_C feature_fraction_per_split = self.feature_fraction_per_split
-            cnp.npy_bool [:] subsample_mask
+            uint8_t [:] subsample_mask  # same as npy_bool
             int n_subsampled_features
 
         has_interaction_cst = allowed_features is not None

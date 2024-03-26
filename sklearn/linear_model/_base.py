@@ -37,6 +37,7 @@ from ..utils._array_api import (
     _asarray_with_order,
     device,
     get_namespace,
+    indexing_dtype,
     supported_float_dtypes,
 )
 from ..utils._seq_dataset import (
@@ -419,7 +420,7 @@ class LinearClassifierMixin(ClassifierMixin):
         xp, _ = get_namespace(X)
         scores = self.decision_function(X)
         if len(scores.shape) == 1:
-            indices = xp.astype(scores > 0, int)
+            indices = xp.astype(scores > 0, indexing_dtype(xp))
         else:
             indices = xp.argmax(scores, axis=1)
 

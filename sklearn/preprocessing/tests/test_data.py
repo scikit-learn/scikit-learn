@@ -208,7 +208,13 @@ def test_standard_scaler_dtype(add_sample_weight, sparse_container):
     else:
         sample_weight = None
     with_mean = True
-    for dtype in [np.float16, np.float32, np.float64]:
+    if sparse_container is not None:
+        # scipy sparse containers do not support float16, see
+        # https://github.com/scipy/scipy/issues/7408 for more details.
+        supported_dtype = [np.float64, np.float32]
+    else:
+        supported_dtype = [np.float64, np.float32, np.float16]
+    for dtype in supported_dtype:
         X = rng.randn(n_samples, n_features).astype(dtype)
         if sparse_container is not None:
             X = sparse_container(X)

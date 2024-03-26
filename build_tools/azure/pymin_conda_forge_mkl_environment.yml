@@ -12,10 +12,12 @@ dependencies:
   - joblib
   - threadpoolctl
   - matplotlib
-  - pytest
+  - pytest<8
   - pytest-xdist
   - pillow
-  - setuptools
+  - pip
+  - ninja
+  - meson-python
   - pytest-cov
   - coverage
   - wheel

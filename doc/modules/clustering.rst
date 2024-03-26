@@ -1039,6 +1039,10 @@ scales by building an alternative representation of the clustering problem.
   This implementation is adapted from the original implementation of HDBSCAN,
   `scikit-learn-contrib/hdbscan <https://github.com/scikit-learn-contrib/hdbscan>`_ based on [LJ2017]_.
 
+.. topic:: Examples:
+
+    * :ref:`sphx_glr_auto_examples_cluster_plot_hdbscan.py`
+  
 Mutual Reachability Graph
 -------------------------
 

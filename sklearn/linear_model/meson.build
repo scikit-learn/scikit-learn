@@ -7,7 +7,6 @@ linear_model_cython_tree = [
 py.extension_module(
   '_cd_fast',
   '_cd_fast.pyx',
-  dependencies: [np_dep],
   cython_args: cython_args,
   subdir: 'sklearn/linear_model',
   install: true
@@ -25,7 +24,6 @@ foreach name: name_list
   py.extension_module(
     name,
     [pyx, linear_model_cython_tree],
-    dependencies: [np_dep],
     cython_args: cython_args,
     subdir: 'sklearn/linear_model',
     install: true

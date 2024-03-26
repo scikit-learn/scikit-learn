@@ -1608,6 +1608,54 @@ def test_numeric_pairwise_distances_datatypes(metric, global_dtype, y_is_x):
     assert_allclose(dist, expected_dist)
 
 
+@pytest.mark.parametrize(
+    "X,Y,expected_distance",
+    [
+        (
+            ["a", "ab", "abc"],
+            None,
+            [[0.0, 1.0, 2.0], [1.0, 0.0, 1.0], [2.0, 1.0, 0.0]],
+        ),
+        (
+            ["a", "ab", "abc"],
+            ["a", "ab"],
+            [[0.0, 1.0], [1.0, 0.0], [2.0, 1.0]],
+        ),
+    ],
+)
+def test_pairwise_dist_custom_metric_for_string(X, Y, expected_distance):
+    """Check pairwise_distances with lists of strings as input."""
+
+    def dummy_string_similarity(x, y):
+        return np.abs(len(x) - len(y))
+
+    actual_distance = pairwise_distances(X=X, Y=Y, metric=dummy_string_similarity)
+    assert_allclose(actual_distance, expected_distance)
+
+
+def test_pairwise_dist_custom_metric_for_bool():
+    """Check that pairwise_distances does not convert boolean input to float
+    when using a custom metric.
+    """
+
+    def dummy_bool_dist(v1, v2):
+        # dummy distance func using `&` and thus relying on the input data being boolean
+        return 1 - (v1 & v2).sum() / (v1 | v2).sum()
+
+    X = np.array([[1, 0, 0, 0], [1, 0, 1, 0], [1, 1, 1, 1]], dtype=bool)
+
+    expected_distance = np.array(
+        [
+            [0.0, 0.5, 0.75],
+            [0.5, 0.0, 0.5],
+            [0.75, 0.5, 0.0],
+        ]
+    )
+
+    actual_distance = pairwise_distances(X=X, metric=dummy_bool_dist)
+    assert_allclose(actual_distance, expected_distance)
+
+
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
 def test_sparse_manhattan_readonly_dataset(csr_container):
     # Non-regression test for: https://github.com/scikit-learn/scikit-learn/issues/7981

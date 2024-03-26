@@ -11,5 +11,10 @@ scipy
 cython
 joblib
 threadpoolctl
-pytest
+# TODO: somehow pytest 8 does not seem to work with meson editable
+# install. Exit code is 5, i.e. no test collected
+# This would be fixed by https://github.com/mesonbuild/meson-python/pull/569
+pytest<8
 pytest-xdist
+meson-python
+ninja

@@ -70,7 +70,9 @@ common_dependencies_without_coverage = [
     "pytest",
     "pytest-xdist",
     "pillow",
-    "setuptools",
+    "pip",
+    "ninja",
+    "meson-python",
 ]
 
 common_dependencies = common_dependencies_without_coverage + [
@@ -80,7 +82,12 @@ common_dependencies = common_dependencies_without_coverage + [
 
 docstring_test_dependencies = ["sphinx", "numpydoc"]
 
-default_package_constraints = {}
+default_package_constraints = {
+    # TODO: somehow pytest 8 does not seem to work with meson editable
+    # install. Exit code is 5, i.e. no test collected
+    # This would be fixed by https://github.com/mesonbuild/meson-python/pull/569
+    "pytest": "<8",
+}
 
 
 def remove_from(alist, to_remove):
@@ -97,20 +104,16 @@ build_metadata_list = [
         "channel": "conda-forge",
         "conda_dependencies": common_dependencies + [
             "ccache",
-            "meson-python",
-            "pip",
             "pytorch",
             "pytorch-cpu",
             "polars",
             "pyarrow",
             "array-api-compat",
+            "array-api-strict",
         ],
         "package_constraints": {
             "blas": "[build=mkl]",
             "pytorch": "1.13",
-            # TODO: somehow pytest 8 does not seem to work with meson editable
-            # install. Exit code is 5, i.e. no test collected
-            "pytest": "<8",
         },
     },
     {
@@ -139,6 +142,10 @@ build_metadata_list = [
         "conda_dependencies": remove_from(common_dependencies, ["cython"]) + ["ccache"],
         "package_constraints": {
             "blas": "[build=mkl]",
+            # scipy 1.12.x crashes on this platform (https://github.com/scipy/scipy/pull/20086)
+            # TODO: release scipy constraint when 1.13 is available in the "default"
+            # channel.
+            "scipy": "<1.12",
         },
         # TODO: put cython back to conda dependencies when required version is
         # available on the main channel
@@ -151,9 +158,9 @@ build_metadata_list = [
         "folder": "build_tools/azure",
         "platform": "linux-64",
         "channel": "defaults",
-        "conda_dependencies": remove_from(common_dependencies, ["pandas", "cython"]) + [
-            "ccache"
-        ],
+        "conda_dependencies": remove_from(
+            common_dependencies, ["pandas", "cython", "pip", "ninja", "meson-python"]
+        ) + ["ccache"],
         "package_constraints": {
             "python": "3.9",
             "blas": "[build=openblas]",
@@ -193,7 +200,7 @@ build_metadata_list = [
         "channel": "defaults",
         "conda_dependencies": ["python", "ccache"],
         "pip_dependencies": (
-            remove_from(common_dependencies, ["python", "blas"])
+            remove_from(common_dependencies, ["python", "blas", "pip"])
             + docstring_test_dependencies
             + ["lightgbm", "scikit-image"]
         ),
@@ -362,6 +369,8 @@ build_metadata_list = [
             "threadpoolctl",
             "pytest",
             "pytest-cov",
+            "ninja",
+            "meson-python",
         ],
         "package_constraints": {
             "joblib": "min",
@@ -385,6 +394,8 @@ build_metadata_list = [
             "threadpoolctl",
             "pytest",
             "pytest-xdist",
+            "ninja",
+            "meson-python",
         ],
         "package_constraints": {
             "joblib": "min",

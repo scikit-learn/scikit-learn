@@ -148,6 +148,10 @@ _argkmin_classmode = py.extension_module(
   dependencies: [np_dep],
   override_options: ['cython_language=cpp'],
   cython_args: cython_args,
+  # XXX: for some reason -fno-sized-deallocation is needed otherwise there is
+  # an error with undefined symbol _ZdlPv at import time in manylinux wheels.
+  # See https://github.com/scikit-learn/scikit-learn/issues/28596 for more details.
+  cpp_args: ['-fno-sized-deallocation'],
   subdir: 'sklearn/metrics/_pairwise_distances_reduction',
   install: true
 )

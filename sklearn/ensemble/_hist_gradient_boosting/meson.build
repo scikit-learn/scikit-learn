@@ -12,7 +12,7 @@ foreach ext_name, ext_dict : hist_gradient_boosting_extension_metadata
   py.extension_module(
     ext_name,
     ext_dict.get('sources'),
-    dependencies: [np_dep, openmp_dep],
+    dependencies: [openmp_dep],
     cython_args: cython_args,
     subdir: 'sklearn/ensemble/_hist_gradient_boosting',
     install: true
