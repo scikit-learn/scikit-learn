@@ -38,6 +38,9 @@ See :ref:`array_api` for more details.
 
 **Classes:**
 
+- :class:`sklearn.preprocessing.LabelBinarizer` now supports Array API compliant inputs.
+  :pr:`28626` by :user:`Jérôme Dockès <jeromedockes>`.
+
 Support for building with Meson
 -------------------------------
 
@@ -298,7 +301,7 @@ Changelog
   :func:`preprocessing.quantile_transform` now supports disabling
   subsampling explicitly.
   :pr:`27636` by :user:`Ralph Urlus <rurlus>`.
-  
+
 :mod:`sklearn.tree`
 ...................
 
