@@ -439,7 +439,7 @@ class FavorabilityRanker:
         ... }
         >>> ranks = fr(params)
         >>> ranks
-        [12, 11, 8, 7, 10, 9, 6, 2, 5, 1, 4, 18, 3, 14, 17, 13, 16, 15]
+        [12, 8, 11, 7, 10, 9, 6, 2, 5, 1, 4, 18, 14, 3, 17, 13, 16, 15]
         """
         self.favorability_rules = favorability_rules
         self.seed = seed
