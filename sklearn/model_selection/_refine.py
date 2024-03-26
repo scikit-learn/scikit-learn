@@ -434,7 +434,7 @@ class FavorabilityRanker:
     ... }
     >>> ranks = fr(params)
     >>> ranks
-    [12, 8, 11, 7, 10, 9, 6, 2, 5, 1, 4, 18, 14, 3, 17, 13, 16, 15]
+    [12, 11, 8, 7, 10, 9, 6, 2, 5, 1, 4, 18, 3, 14, 17, 13, 16, 15]
     """
 
     def __init__(
@@ -444,6 +444,7 @@ class FavorabilityRanker:
     ):
         self.favorability_rules = favorability_rules
         self.seed = seed
+        self.rng = np.random.default_rng(self.seed)
         self._validate_favorability_rules()
 
     def _validate_favorability_rules(self):
@@ -485,7 +486,6 @@ class FavorabilityRanker:
             and hasattr(value, "kwds")
         ):
             distribution_property = rule[0]
-            rng = np.random.default_rng(self.seed)
 
             if distribution_property == "mean":
                 return value.mean()
@@ -493,7 +493,7 @@ class FavorabilityRanker:
                 return value.median()
             elif distribution_property.startswith("percentile_"):
                 percentile = float(distribution_property.split("_")[1])
-                return value.ppf(percentile / 100)
+                return value.ppf(percentile / 100, random_state=self.rng)
             else:
                 raise ValueError(
                     f"Unsupported distribution property: {distribution_property}"
@@ -501,8 +501,7 @@ class FavorabilityRanker:
         elif callable(value):
             # handle ParameterSampler or similar callable for generating parameter
             # values
-            rng = np.random.default_rng(self.seed)
-            return value(rng)
+            return value(self.rng)
 
         return value
 
