@@ -13,6 +13,38 @@ from .fixes import parse_version
 _NUMPY_NAMESPACE_NAMES = {"numpy", "array_api_compat.numpy"}
 
 
+def yield_namespaces(include_numpy_namespaces=True):
+    """Yield supported namespace.
+
+    This is meant to be used for testing purposes only.
+
+    Parameters
+    ----------
+    include_numpy_namespaces : bool, default=True
+        If True, also yield numpy namespaces.
+
+    Returns
+    -------
+    array_namespace : str
+        The name of the Array API namespace.
+    """
+    for array_namespace in [
+        # The following is used to test the array_api_compat wrapper when
+        # array_api_dispatch is enabled: in particular, the arrays used in the
+        # tests are regular numpy arrays without any "device" attribute.
+        "numpy",
+        # Stricter NumPy-based Array API implementation. The
+        # array_api_strict.Array instances always have a dummy "device" attribute.
+        "array_api_strict",
+        "cupy",
+        "cupy.array_api",
+        "torch",
+    ]:
+        if not include_numpy_namespaces and array_namespace in _NUMPY_NAMESPACE_NAMES:
+            continue
+        yield array_namespace
+
+
 def yield_namespace_device_dtype_combinations(include_numpy_namespaces=True):
     """Yield supported namespace, device, dtype tuples for testing.
 
@@ -36,20 +68,9 @@ def yield_namespace_device_dtype_combinations(include_numpy_namespaces=True):
         The name of the data type to use for arrays. Can be None to indicate
         that the default value should be used.
     """
-    for array_namespace in [
-        # The following is used to test the array_api_compat wrapper when
-        # array_api_dispatch is enabled: in particular, the arrays used in the
-        # tests are regular numpy arrays without any "device" attribute.
-        "numpy",
-        # Stricter NumPy-based Array API implementation. The
-        # array_api_strict.Array instances always have a dummy "device" attribute.
-        "array_api_strict",
-        "cupy",
-        "cupy.array_api",
-        "torch",
-    ]:
-        if not include_numpy_namespaces and array_namespace in _NUMPY_NAMESPACE_NAMES:
-            continue
+    for array_namespace in yield_namespaces(
+        include_numpy_namespaces=include_numpy_namespaces
+    ):
         if array_namespace == "torch":
             for device, dtype in itertools.product(
                 ("cpu", "cuda"), ("float64", "float32")
@@ -58,34 +79,6 @@ def yield_namespace_device_dtype_combinations(include_numpy_namespaces=True):
             yield array_namespace, "mps", "float32"
         else:
             yield array_namespace, None, None
-
-
-def yield_namespaces(include_numpy_namespaces=True):
-    """Yield supported namespace.
-
-    Parameters
-    ----------
-    include_numpy_namespaces : bool, default=True
-        If True, also yield numpy namespaces.
-
-    Returns
-    -------
-    array_namespace : str
-        The name of the Array API namespace.
-    """
-    # Yield namespaces that are hardcoded in `yield_namespace_device_dtype_combinations`
-    # and yield each one only once.
-    yield from sorted(
-        set(
-            list(
-                zip(
-                    *yield_namespace_device_dtype_combinations(
-                        include_numpy_namespaces=include_numpy_namespaces
-                    )
-                )
-            )[0]
-        )
-    )
 
 
 def _check_array_api_dispatch(array_api_dispatch):

@@ -200,7 +200,7 @@ def _preprocess_data(
     else:
         X_offset = xp.zeros(n_features, dtype=X.dtype, device=device_)
         if y.ndim == 1:
-            y_offset = xp.zeros(1, dtype=dtype_, device=device_)[0]
+            y_offset = xp.asarray(0.0, dtype=dtype_, device=device_)
         else:
             y_offset = xp.zeros(y.shape[1], dtype=dtype_, device=device_)
 

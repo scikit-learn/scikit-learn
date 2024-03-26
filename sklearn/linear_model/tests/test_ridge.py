@@ -43,6 +43,7 @@ from sklearn.preprocessing import minmax_scale
 from sklearn.utils import _IS_32BIT, check_random_state
 from sklearn.utils._array_api import (
     _NUMPY_NAMESPACE_NAMES,
+    _atol_for_type,
     _convert_to_numpy,
     yield_namespace_device_dtype_combinations,
     yield_namespaces,
@@ -1236,7 +1237,7 @@ def check_array_api_attributes(name, estimator, array_namepsace, device, dtype_n
         assert_allclose(
             _convert_to_numpy(coef_xp, xp=xp),
             coef_np,
-            atol=np.finfo(dtype_name).eps * 100,
+            atol=_atol_for_type(dtype_name),
         )
         intercept_xp = estimator_xp.intercept_
         assert intercept_xp.shape == ()
@@ -1245,7 +1246,7 @@ def check_array_api_attributes(name, estimator, array_namepsace, device, dtype_n
         assert_allclose(
             _convert_to_numpy(intercept_xp, xp=xp),
             intercept_np,
-            atol=np.finfo(dtype_name).eps * 100,
+            atol=_atol_for_type(dtype_name),
         )
 
 
@@ -1304,15 +1305,13 @@ def test_array_api_error_and_warnings_for_solver_parameter(array_namespace):
             ridge.fit(X_iris_xp, y_iris_xp)
 
     ridge = Ridge()
-    solver = "svd"
-    np_solver = "cholesky"
     expected_msg = (
         "Using Array API dispatch to namespace {xp.__name__} with "
-        f"`solver='auto'`will result in using the solver '{solver}'. "
+        "`solver='auto'`will result in using the solver 'svd'. "
         "Results might be different than when Array API dispatch is "
         "disabled, or when a numpy-like namespace is used, in which case "
-        f"the preferred solver would be '{np_solver}'. Set "
-        f"`solver='{solver}'` to suppress this warning."
+        "the preferred solver would be 'cholesky'. Set "
+        "`solver='svd'` to suppress this warning."
     )
 
     with pytest.warns(UserWarning, match=expected_msg):

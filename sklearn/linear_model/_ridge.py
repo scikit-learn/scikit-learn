@@ -833,18 +833,9 @@ def _solver_auto_set(solver, positive, return_intercept, is_sparse, is_numpy_nam
     if solver != "auto":
         return solver
 
+    auto_solver_np = _solver_auto_set_np(positive, return_intercept, is_sparse)
     if is_numpy_namespace:
-        if positive:
-            return "lbfgs"
-
-        if return_intercept:
-            # sag supports fitting intercept directly
-            return "sag"
-
-        if not is_sparse:
-            return "cholesky"
-
-        return "sparse_cg"
+        return auto_solver_np
 
     if positive:
         raise ValueError(
@@ -855,21 +846,32 @@ def _solver_auto_set(solver, positive, return_intercept, is_sparse, is_numpy_nam
         )
 
     # At the moment, Array API dispatch only supports the "svd" solver.
-    np_solver = _solver_auto_set(
-        solver, positive, return_intercept, is_sparse, is_numpy_namespace=True
-    )
     solver = "svd"
-    if solver != np_solver:
+    if solver != auto_solver_np:
         warnings.warn(
             "Using Array API dispatch to namespace {xp.__name__} with "
             f"`solver='auto'`will result in using the solver '{solver}'. "
             "Results might be different than when Array API dispatch is "
             "disabled, or when a numpy-like namespace is used, in which case "
-            f"the preferred solver would be '{np_solver}'. Set "
+            f"the preferred solver would be '{auto_solver_np}'. Set "
             f"`solver='{solver}'` to suppress this warning."
         )
 
     return solver
+
+
+def _solver_auto_set_np(positive, return_intercept, is_sparse):
+    if positive:
+        return "lbfgs"
+
+    if return_intercept:
+        # sag supports fitting intercept directly
+        return "sag"
+
+    if not is_sparse:
+        return "cholesky"
+
+    return "sparse_cg"
 
 
 class _BaseRidge(LinearModel, metaclass=ABCMeta):
