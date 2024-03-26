@@ -116,7 +116,7 @@ The size of the trees can be controlled through the ``max_leaf_nodes``,
 
 The number of bins used to bin the data is controlled with the ``max_bins``
 parameter. Using less bins acts as a form of regularization. It is generally
-recommended to use as many bins as possible (256), which is the default.
+recommended to use as many bins as possible (255), which is the default.
 
 The ``l2_regularization`` parameter acts as a regularizer for the loss function,
 and corresponds to :math:`\lambda` in the following regularized objective (see
@@ -127,9 +127,9 @@ equation (2) of [XGBoost]_):
       \mathcal{L}(\phi) =  \sum_i l(\hat{y}_i, y_i) + \sum_k \Omega(f_k) \\
       \text{where} ~ \Omega(f_k) = \gamma T_k  + \frac12 \lambda ||w_k||^2
 
-Here :math:`l` is the loss function; :math:`T_k` is the number of leaves in the
+Here :math:`\mathrm{loss}` is the loss function (actually only half of it for all but pinball loss and absolute error); :math:`T_k` is the number of leaves in the
 tree; :math:`f_k` corresponds to the k-th tree in the ensemble of trees (such
-that :math:`\hat{y}_i=\phi(x_i)=\sum_k f_k(x_i)`); and :math:`w_k` is a vector
+that :math:`\hat{y}_i=h(\sum_k f_k(x_i))` with inverse link function :math:`h`); and :math:`w_k` is a vector
 of length :math:`T_k` containing the leaf weights.
 
 Notice that :math:`\gamma` penalizes the number of leaves (which makes it a
