@@ -1042,6 +1042,7 @@ scales by building an alternative representation of the clustering problem.
 .. topic:: Examples:
 
     * :ref:`sphx_glr_auto_examples_cluster_plot_hdbscan.py`
+  
 Mutual Reachability Graph
 -------------------------
 
