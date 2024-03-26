@@ -409,14 +409,14 @@ class FavorabilityRanker:
 
         Parameters
         ----------
-        favorability_rules: Dict[str, Tuple[Union[bool, List], float]]
+        favorability_rules : Dict[str, Tuple[Union[bool, List], float]]
             A dictionary mapping hyperparameters to a tuple, where the first element is
             either a boolean (numeric case) indicating whether lower values imply
             higher favorability (True), or a list that defines the order of
             favorability from most favorable to least favorable (categorical case), and
             the second element is a float (weight), indicating the relative importance
             of the hyperparameter in the overall favorability ranking.
-        seed: Optional[int]
+        seed : Optional[int]
             An optional seed for consistent random sampling from probability
             distributions.
 
@@ -662,8 +662,6 @@ class ScoreCutModelSelector:
     ...                                 # less favorable
     ... }
     >>> favorable_index = ss.transform(FavorabilityRanker(favorability_rules))
-    Min: 0.884825465639171
-    Max: 0.9148526525904792
     Original best index: 4
     Original best params: {'reduce_dim__n_components': 14}
     Original best score: 0.8998390591148251
@@ -1111,7 +1109,7 @@ def _wrap_refit(
 
 
 def promote(score_slice_fn: Callable, favorability_rank_fn: Callable) -> Callable:
-    """Returns a callable to select the most favorable model within performance bounds.
+    """Return a callable to select the most favorable model within performance bounds.
 
     This function is designed to be used as the `refit` parameter in `GridSearchCV`,
     `RandomSearchCV`, or `HalvingRandomSearchCV`, allowing for custom model selection
