@@ -27,6 +27,10 @@ kiwisolver==1.4.4
     # via matplotlib
 matplotlib==3.6.2
     # via -r /scikit-learn/build_tools/azure/python_nogil_requirements.txt
+meson==1.4.0
+    # via meson-python
+meson-python==0.15.0
+    # via -r /scikit-learn/build_tools/azure/python_nogil_requirements.txt
 numpy==1.24.0
     # via
     #   -r /scikit-learn/build_tools/azure/python_nogil_requirements.txt
@@ -36,6 +40,7 @@ numpy==1.24.0
 packaging==24.0
     # via
     #   matplotlib
+    #   pyproject-metadata
     #   pytest
 pillow==9.5.0
     # via matplotlib
@@ -43,6 +48,8 @@ pluggy==1.4.0
     # via pytest
 pyparsing==3.1.2
     # via matplotlib
+pyproject-metadata==0.7.1
+    # via meson-python
 pytest==8.1.1
     # via
     #   -r /scikit-learn/build_tools/azure/python_nogil_requirements.txt
@@ -55,7 +62,9 @@ scipy==1.9.3
     # via -r /scikit-learn/build_tools/azure/python_nogil_requirements.txt
 six==1.16.0
     # via python-dateutil
-threadpoolctl==3.3.0
+threadpoolctl==3.4.0
     # via -r /scikit-learn/build_tools/azure/python_nogil_requirements.txt
 tomli==2.0.1
-    # via pytest
+    # via
+    #   meson-python
+    #   pytest
