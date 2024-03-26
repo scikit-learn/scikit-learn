@@ -52,7 +52,7 @@ pyparsing==3.1.2
     # via matplotlib
 pyproject-metadata==0.7.1
     # via meson-python
-pytest==8.1.1
+pytest==7.4.4
     # via
     #   -r /scikit-learn/build_tools/azure/python_nogil_requirements.txt
     #   pytest-xdist
