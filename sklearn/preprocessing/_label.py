@@ -550,6 +550,7 @@ def label_binarize(y, *, classes, neg_label=0, pos_label=1, sparse_output=False)
             else:
                 Y = np.zeros((len(y), 1), dtype=int)
                 Y += neg_label
+
                 if not y_is_array_api:
                     return Y
                 return y_xp.asarray(Y, device=device_)
