@@ -414,9 +414,12 @@ class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble, metaclass=ABCM
 
     def get_metadata_routing(self):
         """Get metadata routing of this object.
+
         Please check :ref:`User Guide <metadata_routing>` on how the routing
         mechanism works.
+
         .. versionadded:: 1.5
+
         Returns
         -------
         routing : MetadataRouter
