@@ -1295,7 +1295,7 @@ def test_array_api_error_and_warnings_for_solver_parameter(array_namespace):
     ridge = Ridge(solver="auto", positive=True)
     expected_msg = (
         "The solvers that support positive fitting do not support "
-        "Array API dispatch to namespace {xp.__name__}. Please "
+        "Array API dispatch to namespace (.*). Please "
         "either disable Array API dispatch, or use a numpy-like "
         "namespace, or set `positive=False`."
     )
@@ -1306,7 +1306,7 @@ def test_array_api_error_and_warnings_for_solver_parameter(array_namespace):
 
     ridge = Ridge()
     expected_msg = (
-        "Using Array API dispatch to namespace {xp.__name__} with "
+        "Using Array API dispatch to namespace (.*) with "
         "`solver='auto'`will result in using the solver 'svd'. "
         "Results might be different than when Array API dispatch is "
         "disabled, or when a numpy-like namespace is used, in which case "

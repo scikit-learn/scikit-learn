@@ -622,9 +622,7 @@ def _ridge_regression(
 
     has_sw = sample_weight is not None
 
-    solver = _solver_auto_set(
-        solver, positive, return_intercept, X_is_sparse, is_numpy_namespace
-    )
+    solver = _solver_auto_set(solver, positive, return_intercept, X_is_sparse, xp)
 
     if is_numpy_namespace and not X_is_sparse:
         X = np.asarray(X)
@@ -829,9 +827,11 @@ def _ridge_regression(
     return (*res, solver) if return_solver else res
 
 
-def _solver_auto_set(solver, positive, return_intercept, is_sparse, is_numpy_namespace):
+def _solver_auto_set(solver, positive, return_intercept, is_sparse, xp):
     if solver != "auto":
         return solver
+
+    is_numpy_namespace = _is_numpy_namespace(xp)
 
     auto_solver_np = _solver_auto_set_np(positive, return_intercept, is_sparse)
     if is_numpy_namespace:
@@ -840,7 +840,7 @@ def _solver_auto_set(solver, positive, return_intercept, is_sparse, is_numpy_nam
     if positive:
         raise ValueError(
             "The solvers that support positive fitting do not support "
-            "Array API dispatch to namespace {xp.__name__}. Please "
+            f"Array API dispatch to namespace {xp.__name__}. Please "
             "either disable Array API dispatch, or use a numpy-like "
             "namespace, or set `positive=False`."
         )
@@ -849,7 +849,7 @@ def _solver_auto_set(solver, positive, return_intercept, is_sparse, is_numpy_nam
     solver = "svd"
     if solver != auto_solver_np:
         warnings.warn(
-            "Using Array API dispatch to namespace {xp.__name__} with "
+            f"Using Array API dispatch to namespace {xp.__name__} with "
             f"`solver='auto'`will result in using the solver '{solver}'. "
             "Results might be different than when Array API dispatch is "
             "disabled, or when a numpy-like namespace is used, in which case "
