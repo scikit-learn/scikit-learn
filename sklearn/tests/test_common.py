@@ -160,6 +160,13 @@ def test_check_estimator_generate_only():
     assert isgenerator(all_instance_gen_checks)
 
 
+@pytest.mark.skipif(
+    sklearn._BUILT_WITH_MESON,
+    reason=(
+        "This test does not make too much sense when building with Meson. "
+        "It cythonizes pyx files, and takes more than one minute on CIs."
+    ),
+)
 def test_configure():
     # Smoke test `python setup.py config` command run at the root of the
     # scikit-learn source tree.
