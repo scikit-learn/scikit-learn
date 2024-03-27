@@ -28,7 +28,7 @@ from ._base import SelectorMixin, _get_feature_importances
 
 def _rfe_single_fit(rfe, estimator, X, y, train, test, scorer):
     """
-    Return the score for a fit across one fold.
+    Return the score and n_features per step for a fit across one fold.
     """
     X_train, y_train = _safe_split(estimator, X, y, train)
     X_test, y_test = _safe_split(estimator, X, y, test, train)
@@ -760,14 +760,14 @@ class RFECV(RFE):
             func(rfe, self.estimator, X, y, train, test, scorer)
             for train, test in cv.split(X, y, groups)
         )
-        scores, n_features_per_iter = zip(*scores_features)
+        scores, step_n_features = zip(*scores_features)
 
-        n_features_per_iter_rev = np.array(n_features_per_iter[0])[::-1]
+        step_n_features_rev = np.array(step_n_features[0])[::-1]
         scores = np.array(scores)
 
         # Reverse order such that lowest number of features is selected in case of tie.
         scores_sum_rev = np.sum(scores, axis=0)[::-1]
-        n_features_to_select = n_features_per_iter_rev[np.argmax(scores_sum_rev)]
+        n_features_to_select = step_n_features_rev[np.argmax(scores_sum_rev)]
 
         # Re-execute an elimination with best_k over the whole set
         rfe = RFE(
@@ -793,6 +793,6 @@ class RFECV(RFE):
             "mean_test_score": np.mean(scores_rev, axis=0),
             "std_test_score": np.std(scores_rev, axis=0),
             **{f"split{i}_test_score": scores_rev[i] for i in range(scores.shape[0])},
-            "n_features": n_features_per_iter_rev,
+            "n_features": step_n_features_rev,
         }
         return self
