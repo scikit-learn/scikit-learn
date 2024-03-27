@@ -196,7 +196,7 @@ class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble, metaclass=ABCM
                when not None, `sample_weight` is passed to all underlying
                estimators
 
-            .. deprecated:: 1.4
+            .. deprecated:: 1.5
                 `sample_weight` is deprecated in 1.5 and will be removed in 1.7.
 
         **fit_params : dict
