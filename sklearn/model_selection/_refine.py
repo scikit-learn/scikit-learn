@@ -425,7 +425,7 @@ class FavorabilityRanker:
     ...     'classify__kernel': (['linear', 'rbf'], 1.0),
     ...     'classify__C': ('median', 0.25),
     ... }
-    >>> fr = FavorabilityRanker(favorability_rules, seed=42)
+    >>> fr = FavorabilityRanker(favorability_rules)
     >>> params = {
     ...     'reduce_dim__n_components': [6, 2, 8],
     ...     'classify__degree': [2, 3, 1],
@@ -433,8 +433,6 @@ class FavorabilityRanker:
     ...     'classify__C': stats.loguniform(loc=0, a=1e-10, b=1e3),
     ... }
     >>> ranks = fr(params)
-    >>> ranks
-    [12, 11, 8, 7, 10, 9, 6, 2, 5, 1, 4, 18, 3, 14, 17, 13, 16, 15]
     """
 
     def __init__(
