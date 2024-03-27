@@ -433,6 +433,8 @@ class FavorabilityRanker:
     ...     'classify__C': stats.loguniform(loc=0, a=1e-10, b=1e3),
     ... }
     >>> ranks = fr(params)
+    >>> ranks
+    [12, 11, 8, 7, 10, 9, 6, 2, 5, 1, 4, 18, 3, 14, 17, 13, 16, 15]
     """
 
     def __init__(
@@ -483,7 +485,6 @@ class FavorabilityRanker:
             and hasattr(value, "kwds")
         ):
             distribution_property = rule[0]
-            np.random.default_rng(self.seed)
 
             if distribution_property == "mean":
                 return value.mean()
@@ -568,32 +569,6 @@ class FavorabilityRanker:
             # if it's a list, process each set of parameters separately
             favorability_scores = [calculate_favorability_score(p) for p in params]
         elif isinstance(params, dict):
-            # if it's a dictionary, first check if it contains distribution objects or
-            # callable parameter generators, and if so, but no seed is set, issue a
-            # warning
-            if self.seed is None and any(
-                (
-                    hasattr(v, "dist")
-                    and (
-                        isinstance(v.dist, stats.rv_continuous)
-                        or isinstance(v.dist, stats.rv_discrete)
-                    )
-                    and hasattr(v, "args")
-                    and hasattr(v, "kwds")
-                )
-                or callable(v)
-                for p in params.values()
-                for v in (p if isinstance(p, list) else [p])
-            ):
-                warnings.warn(
-                    (
-                        "A seed value was not set but distribution objects or callable"
-                        " parameter generators are present in params. Favorability"
-                        " ranks may not correspond to the actual parameter values"
-                        " sampled during the SearchCV fitting."
-                    ),
-                    UserWarning,
-                )
             # generate a grid of param combinations and
             # process them as though they were a list of dictionaries
             processed_params = {}

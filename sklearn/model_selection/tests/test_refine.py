@@ -662,7 +662,6 @@ def test_favorability_ranker_process_parameter_values():
             "param_continuous_median": ("median", 1.0),
             "param_continuous_percentile": ("percentile_75", 1.0),
         },
-        seed=42,
     )
 
     params = {
@@ -707,7 +706,7 @@ def test_favorability_ranker_with_distribution_handling_corrected():
         "param2": "medium",
     }
 
-    ranker = FavorabilityRanker(favorability_rules, seed=42)
+    ranker = FavorabilityRanker(favorability_rules)
 
     ranks = ranker([params])
     assert isinstance(ranks, list), "Expected output to be a list"
@@ -725,7 +724,7 @@ def test_favorability_ranker_with_categorical_combinations():
         for value in ["a", "b", "c"]
     ]
 
-    ranker = FavorabilityRanker(favorability_rules, seed=42)
+    ranker = FavorabilityRanker(favorability_rules)
 
     # Directly use the list of parameter dictionaries without additional wrapping
     ranks = ranker(params)
@@ -734,24 +733,9 @@ def test_favorability_ranker_with_categorical_combinations():
     assert len(ranks) == len(params), "Should produce a rank for each parameter set"
 
 
-def test_favorability_ranker_simple_warning_emission():
-    favorability_rules = {
-        "param_simple": ("mean", 1.0),
-    }
-
-    params_simple = {
-        "param_simple": scipy.stats.norm(loc=0, scale=1),
-    }
-
-    ranker = FavorabilityRanker(favorability_rules, seed=None)
-
-    with pytest.warns(UserWarning, match="A seed value was not set"):
-        ranker(params_simple)
-
-
 def test_favorability_ranker_unsupported_value_error():
     favorability_rules = {"param_invalid": (True, 1.0)}
-    ranker = FavorabilityRanker(favorability_rules, seed=42)
+    ranker = FavorabilityRanker(favorability_rules)
 
     class CustomObject:
         pass
@@ -804,7 +788,7 @@ def test_favorability_ranker_invalid_params_type():
         "param1": (True, 1.0),
     }
 
-    ranker = FavorabilityRanker(favorability_rules, seed=42)
+    ranker = FavorabilityRanker(favorability_rules)
 
     params_invalid = 12345
 
