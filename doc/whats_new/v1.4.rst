@@ -27,6 +27,10 @@ Metadata Routing
   attributes.
   :pr:`28435` by `Adrin Jalali`_.
 
+- |FIX| Fix an issue when `set_{method}_request` methods are used as unbound
+  methods, which can happen if one tries to decorate them.
+  :pr:`28651` by `Adrin Jalali`_.
+
 Changelog
 ---------
 
