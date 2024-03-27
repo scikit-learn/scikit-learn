@@ -26,9 +26,10 @@ import warnings
 from collections import defaultdict, namedtuple
 from collections.abc import Iterable
 from dataclasses import dataclass
+from difflib import context_diff
 from functools import wraps
 from inspect import signature
-from itertools import chain
+from itertools import chain, groupby
 from subprocess import STDOUT, CalledProcessError, TimeoutExpired, check_output
 from unittest import TestCase
 
@@ -709,10 +710,37 @@ def _check_grouped_dict(grouped_dict, type_or_desc, section, n_objects):
         if sum(map(len, gd.values())) < n_objects:
             skipped.append(item_name)
         elif len(gd.keys()) > 1:
+            msg_diff = ""
+            ref_str = ""
+            ref_group = []
+            for docstring, group in gd.items():
+                if not ref_str and not ref_group:
+                    ref_str += docstring
+                    ref_group.extend(group)
+                diff = list(context_diff(
+                    ref_str.split(),
+                    docstring.split(),
+                    fromfile=str(ref_group),
+                    tofile=str(group),
+                    n=1,
+                ))
+                # Add header
+                msg_diff += "".join((diff[:3]))
+                # '+' and '-' indicates words unique to one group of objects.
+                # Group consecutive '+' and '-' words to shorten error message
+                for unique, group in groupby(diff[3:], key=lambda x: x.startswith(("- ", "+ "))):
+                    if unique:
+                        group = list(group)
+                        msg_diff += "\n" + group[0][:1] + " " + " ".join(word[2:] for word in group)
+                    else:
+                        msg_diff += "\n" + "\n".join(group)
+                # Add new line at end of diff for one comparison
+                msg_diff += "\n\n"
+
             obj_groups = " and ".join(str(group) for group in gd.values())
             msg = (
                 f"The {type_or_desc} of {section[:-1]} '{item_name}' is inconsistent "
-                f"between {obj_groups}."
+                f"between {obj_groups}:\n\n{msg_diff}"
             )
             raise AssertionError(msg)
     if skipped:
