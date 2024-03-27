@@ -39,6 +39,8 @@ from sklearn.model_selection import (
     cross_val_predict,
 )
 from sklearn.preprocessing import minmax_scale
+from sklearn.tests.metadata_routing_common import ConsumingTransformer
+from sklearn.tests.test_metadata_routing import SimplePipeline
 from sklearn.utils import _IS_32BIT, check_random_state
 from sklearn.utils._testing import (
     assert_allclose,
@@ -2084,3 +2086,34 @@ def test_ridge_sample_weight_consistency(
     assert_allclose(reg1.coef_, reg2.coef_)
     if fit_intercept:
         assert_allclose(reg1.intercept_, reg2.intercept_)
+
+
+# Metadata Routing Tests
+# ======================
+
+
+@pytest.mark.usefixtures("enable_slep006")
+@pytest.mark.parametrize("metaestimator", [RidgeCV, RidgeClassifierCV])
+def test_metadata_routing_with_default_scoring(metaestimator):
+    X = np.array([[0, 1], [2, 2], [4, 6], [9, 0], [2, 4]])
+    y = [1, 2, 3, 4, 5]
+
+    pipe = SimplePipeline(
+        [
+            ConsumingTransformer()
+            .set_fit_request(sample_weight=True)
+            .set_transform_request(sample_weight=True),
+            ConsumingTransformer()
+            .set_fit_request(sample_weight=True)
+            .set_transform_request(sample_weight=True),
+            metaestimator().set_fit_request(sample_weight=True),
+        ]
+    )
+
+    params = {"sample_weight": [1, 1, 1, 1, 1]}
+
+    pipe.fit(X, y, **params)
+
+
+# End of Metadata Routing Tests
+# =============================
