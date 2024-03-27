@@ -13,4 +13,3 @@ joblib
 threadpoolctl
 pytest
 pytest-xdist
-meson-python
