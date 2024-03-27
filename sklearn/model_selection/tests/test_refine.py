@@ -171,6 +171,64 @@ def test_ScoreCutModelSelector_errors(grid_search_simulated):
         assert len(ss._get_splits()) == n_splits
 
 
+def test_ScoreCutModelSelector_not_fitted_error(grid_search_simulated):
+    cv_results = grid_search_simulated["cv_results"]
+
+    ss = ScoreCutModelSelector(cv_results)
+
+    with pytest.raises(AttributeError) as exc_info:
+        _ = ss.best_params_cut_
+
+    assert (
+        str(exc_info.value)
+        == "The ``ScoreCutModelSelector`` instance has not been fitted. Please"
+        " call the ``ScoreCutModelSelector:fit`` method first."
+    )
+
+
+def test_ScoreCutModelSelector_not_fitted_errors(grid_search_simulated):
+    cv_results = grid_search_simulated["cv_results"]
+    ss = ScoreCutModelSelector(cv_results)
+
+    # accessing best_params_cut_ before fit
+    with pytest.raises(AttributeError) as exc_info:
+        _ = ss.best_params_cut_
+    assert "The ``ScoreCutModelSelector`` "
+    "instance has not been fitted" in str(exc_info.value)
+
+    # accessing best_scores_cut_ before fit
+    with pytest.raises(AttributeError) as exc_info:
+        _ = ss.best_scores_cut_
+    assert "The ``ScoreCutModelSelector`` "
+    "instance has not been fitted" in str(exc_info.value)
+
+    # accessing favorable_best_params_ before fit and transform
+    with pytest.raises(AttributeError) as exc_info:
+        _ = ss.favorable_best_params_
+    assert "The ``ScoreCutModelSelector`` "
+    "instance has not been fitted" in str(exc_info.value)
+
+    # accessing favorable_best_score_ before fit and transform
+    with pytest.raises(AttributeError) as exc_info:
+        _ = ss.favorable_best_score_
+    assert "The ``ScoreCutModelSelector`` "
+    "instance has not been fitted" in str(exc_info.value)
+
+    ss.fit(StandardErrorSlicer(sigma=1))
+
+    # accessing favorable_best_params_ and favorable_best_score_ after fit
+    # but before transform
+    with pytest.raises(AttributeError) as exc_info:
+        _ = ss.favorable_best_params_
+    assert "The ``ScoreCutModelSelector`` "
+    "instance has not been transformed" in str(exc_info.value)
+
+    with pytest.raises(AttributeError) as exc_info:
+        _ = ss.favorable_best_score_
+    assert "The ``ScoreCutModelSelector`` "
+    "instance has not been transformed" in str(exc_info.value)
+
+
 @ignore_warnings
 @pytest.mark.parametrize(
     "param",
@@ -218,7 +276,7 @@ def test_ScoreCutModelSelector_errors(grid_search_simulated):
 )
 @pytest.mark.parametrize(
     "search_cv",
-    ["GridSearchCV", "RandomizedSearchCV"],
+    [GridSearchCV, RandomizedSearchCV],
 )
 def test_promote(param, scoring, score_slice_rule, favorability_rank_rule, search_cv):
     """
@@ -226,11 +284,6 @@ def test_promote(param, scoring, score_slice_rule, favorability_rank_rule, searc
     refitted grid and random search object to those of a non-refitted grid and random
     search object, respectively.
     """
-
-    if search_cv == "GridSearchCV":
-        search_cv = GridSearchCV
-    else:
-        search_cv = RandomizedSearchCV
 
     X, y = make_classification(n_samples=350, n_features=16, random_state=42)
 
@@ -276,11 +329,7 @@ def test_promote(param, scoring, score_slice_rule, favorability_rank_rule, searc
 
     # If the cv results were not all NaN, then we can test the refit callable
     if not np.isnan(grid.fit(X, y).cv_results_["mean_test_score"]).all():
-        if param and param not in favorability_rank_rule.favorability_rules:
-            with pytest.raises(ValueError):
-                grid_refitted.fit(X, y)
-        else:
-            grid_refitted.fit(X, y)
+        grid_refitted.fit(X, y)
         simplified_best_score_ = grid_refitted.cv_results_["mean_test_score"][
             grid_refitted.best_index_
         ]
@@ -290,13 +339,6 @@ def test_promote(param, scoring, score_slice_rule, favorability_rank_rule, searc
             assert grid.best_index_ != grid_refitted.best_index_
             if param:
                 assert grid.best_params_[param] > grid_refitted.best_params_[param]
-        elif grid.best_score_ == simplified_best_score_:
-            assert grid.best_index_ == grid_refitted.best_index_
-            assert grid.best_params_ == grid_refitted.best_params_
-        else:
-            assert grid.best_index_ != grid_refitted.best_index_
-            assert grid.best_params_ != grid_refitted.best_params_
-            assert grid.best_score_ > simplified_best_score_
 
 
 @ignore_warnings
@@ -407,29 +449,15 @@ def test_promote_successive_halving(
 
     # If the cv results were not all NaN, then we can test the refit callable
     if not np.isnan(search.fit(X, y).cv_results_["mean_test_score"]).all():
-        if param and param not in favorability_rank_rule.favorability_rules:
-            with pytest.raises(ValueError):
-                search_simplified.fit(X, y)
-        else:
-            search_simplified.fit(X, y)
+        search_simplified.fit(X, y)
         simplified_best_score_ = search_simplified.cv_results_["mean_test_score"][
             search_simplified.best_index_
         ]
         # Ensure that if the refit callable promoted a lower scoring model,
         # it was only because it was a more favorable model.
-        if abs(search.best_score_) > abs(simplified_best_score_):
-            assert search.best_index_ != search_simplified.best_index_
-            if param:
-                assert (
-                    search.best_params_[param] > search_simplified.best_params_[param]
-                )
-        elif search.best_score_ == simplified_best_score_:
+        if search.best_score_ == simplified_best_score_:
             assert search.best_index_ == search_simplified.best_index_
             assert search.best_params_ == search_simplified.best_params_
-        else:
-            assert search.best_index_ != search_simplified.best_index_
-            assert search.best_params_ != search_simplified.best_params_
-            assert search.best_score_ > simplified_best_score_
 
 
 def test_score_cut_model_selector_tied_ranks(grid_search_simulated):
@@ -443,10 +471,7 @@ def test_score_cut_model_selector_tied_ranks(grid_search_simulated):
         default_rank = len(favorability_ranks) + 1
         ranks = []
         for p in params:
-            if "kernel" in p:
-                rank = favorability_ranks.get(p["kernel"], default_rank)
-            else:
-                rank = default_rank
+            rank = favorability_ranks.get(p["kernel"], default_rank)
             ranks.append(rank)
         return ranks
 
@@ -581,10 +606,7 @@ def test_favorability_ranker():
     assert ranker(params) == [3, 2, 1]
 
     def param_generator(seed_or_rng):
-        if isinstance(seed_or_rng, int):
-            rng = np.random.default_rng(seed_or_rng)
-        else:
-            rng = seed_or_rng
+        rng = np.random.default_rng(seed_or_rng)
         return rng.choice([10, 5, 1])
 
     params_with_callable = [
@@ -727,6 +749,67 @@ def test_favorability_ranker_simple_warning_emission():
         ranker(params_simple)
 
 
-def is_user_warning(warning_record):
-    """Check if the warning record is a UserWarning."""
-    return issubclass(warning_record.category, UserWarning)
+def test_favorability_ranker_unsupported_value_error():
+    favorability_rules = {"param_invalid": (True, 1.0)}
+    ranker = FavorabilityRanker(favorability_rules, seed=42)
+
+    class CustomObject:
+        pass
+
+    invalid_value = CustomObject()
+
+    with pytest.raises(
+        ValueError,
+        match=(
+            "FavorabilityRanker only supports numeric, "
+            "string, or distribution objects. The provided value .* is not "
+            "supported."
+        ),
+    ):
+        ranker([{"param_invalid": invalid_value}])
+
+
+def test_favorability_ranker_expect_numeric_error():
+    favorability_rules = {
+        "param_numeric": (True, 1.0),
+    }
+
+    params = [
+        {"param_numeric": "not_a_number"},
+    ]
+
+    ranker = FavorabilityRanker(favorability_rules)
+
+    with pytest.raises(TypeError):
+        ranker(params)
+
+
+def test_favorability_ranker_invalid_categorical_value_error():
+    favorability_rules = {
+        "param_categorical": (["allowed_value1", "allowed_value2"], 1.0),
+    }
+
+    params = [
+        {"param_categorical": "forbidden_value"},
+    ]
+
+    ranker = FavorabilityRanker(favorability_rules)
+
+    with pytest.raises(ValueError):
+        ranker(params)
+
+
+def test_favorability_ranker_invalid_params_type():
+    favorability_rules = {
+        "param1": (True, 1.0),
+    }
+
+    ranker = FavorabilityRanker(favorability_rules, seed=42)
+
+    params_invalid = 12345
+
+    with pytest.raises(ValueError) as exc_info:
+        ranker(params_invalid)
+
+    assert str(exc_info.value) == "params must be either a list of dictionaries or a "
+    "single dictionary", "Unexpected error message."

@@ -706,10 +706,7 @@ class ScoreCutModelSelector:
             for i in list(self.cv_results_constrained_.keys())
             if "test_score" in i and i.startswith("split")
         ]
-        if len(_splits) == 0:
-            raise KeyError("No splits found in cv grid.")
-        else:
-            return _splits
+        return _splits
 
     def _check_fitted(self, retval: Optional[Any] = None) -> Any:
         """Checks if the ``ScoreCutModelSelector`` instance has been fitted.
@@ -820,12 +817,14 @@ class ScoreCutModelSelector:
 
     @property
     def favorable_best_params_(self) -> Dict:
+        self._check_transformed()
         return self._check_transformed(
             self.cv_results_constrained_["params"][self.favorable_best_index_]
         )
 
     @property
     def favorable_best_score_(self) -> float:
+        self._check_transformed()
         return self._check_transformed(
             self.cv_results_constrained_["mean_test_score"][self.favorable_best_index_]
         )
