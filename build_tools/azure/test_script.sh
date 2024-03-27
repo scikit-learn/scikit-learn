@@ -66,7 +66,7 @@ if [[ "$DISTRIB" == "conda-pypy3" ]]; then
     # much memory and causes the test to time out sometimes. See
     # https://github.com/scikit-learn/scikit-learn/issues/27662 for more
     # details.
-    $TEST_CMD="$TEST_CMD.tests.test_common"
+    TEST_CMD="$TEST_CMD.tests.test_common"
 fi
 
 set -x
