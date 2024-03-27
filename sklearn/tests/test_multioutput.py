@@ -766,7 +766,7 @@ def test_classifier_chain_tuple_order(order_type):
     y = [[3, 2], [2, 3], [3, 2]]
     order = order_type([1, 0])
 
-    chain = ClassifierChain(RandomForestClassifier(), order=order)
+    chain = ClassifierChain(RandomForestClassifier(n_estimators=2), order=order)
 
     chain.fit(X, y)
     X_test = [[1.5, 2.5, 3.5]]
