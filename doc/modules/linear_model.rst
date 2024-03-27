@@ -948,14 +948,14 @@ following cost function:
 .. math::
     :name: regularized-logistic-loss
 
-    \min_{w} \frac{1}{s}\sum_{i=1}^n s_i
+    \min_{w} \frac{1}{S}\sum_{i=1}^n s_i
     \left(-y_i \log(\hat{p}(X_i)) - (1 - y_i) \log(1 - \hat{p}(X_i))\right)
-    + \frac{r(w)}{sC}\,,
+    + \frac{r(w)}{S C}\,,
 
 where :math:`{s_i}` corresponds to the weights assigned by the user to a
 specific training sample (the vector :math:`s` is formed by element-wise
 multiplication of the class weights and sample weights),
-and the sum :math:`s = \sum_{i=1}^n s_i`.
+and the sum :math:`S = \sum_{i=1}^n s_i`.
 
 We currently provide four choices for the regularization term  :math:`r(w)` via
 the `penalty` argument:
@@ -1014,13 +1014,13 @@ a matrix of coefficients :math:`W` where each row vector :math:`W_k` corresponds
 The objective for the optimization becomes
 
 .. math::
-  \min_W -\frac{1}{s}\sum_{i=1}^n \sum_{k=0}^{K-1} s_{ik} [y_i = k] \log(\hat{p}_k(X_i))
-  + \frac{r(W)}{C}\,.
+  \min_W -\frac{1}{S}\sum_{i=1}^n \sum_{k=0}^{K-1} s_{ik} [y_i = k] \log(\hat{p}_k(X_i))
+  + \frac{r(W)}{S C}\,.
 
 Where :math:`[P]` represents the Iverson bracket which evaluates to :math:`0`
 if :math:`P` is false, otherwise it evaluates to :math:`1`.
 Again, :math:`s_{ik}` are the weights assigned by the user (multiplication of sample
-weights and class weights) with their sum :math:`s = \sum_{i=1}^n \sum_{k=0}^{K-1} s_{ik}`.
+weights and class weights) with their sum :math:`S = \sum_{i=1}^n \sum_{k=0}^{K-1} s_{ik}`.
 We currently provide four choices
 for the regularization term :math:`r(W)` via the `penalty` argument, where :math:`m`
 is the number of features:
