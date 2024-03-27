@@ -799,6 +799,32 @@ def test_one_hot_encoder_warning():
     np.testing.assert_no_warnings(enc.fit_transform, X)
 
 
+@pytest.mark.parametrize("drop", ["if_binary", "first"])
+def test_ohe_handle_unknown_warn(drop):
+    """Check handle_unknown='warn' works correctly."""
+
+    X = [["a", 0], ["b", 2], ["b", 1]]
+
+    ohe = OneHotEncoder(
+        drop=drop,
+        sparse_output=False,
+        handle_unknown="warn",
+        categories=[["b", "a"], [1, 2]],
+    )
+    ohe.fit(X)
+
+    X_test = [["c", 1]]
+    X_expected = np.array([[0, 0]])
+
+    warn_msg = (
+        r"Found unknown categories in columns \[0\] during transform. "
+        r"These unknown categories will be encoded as all zeros"
+    )
+    with pytest.warns(UserWarning, match=warn_msg):
+        X_trans = ohe.transform(X_test)
+    assert_allclose(X_trans, X_expected)
+
+
 @pytest.mark.parametrize("missing_value", [np.nan, None, float("nan")])
 def test_one_hot_encoder_drop_manual(missing_value):
     cats_to_drop = ["def", 12, 3, 56, missing_value]
