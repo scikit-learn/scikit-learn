@@ -223,6 +223,11 @@ Changelog
   :class:`linear_model.SGDOneClassSVM`. Pass `average=False` instead.
   :pr:`28582` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
+- |FIX| Prevent a `RecursionError` when :class:`~linear_model.RidgeCV` or
+  :class:`~linear_model.RidgeClassifierCV` with the default `scoring` param
+  (`None`) route metadata. :pr:`28712` by :user:`Stefanie Senger
+  <StefanieSenger>`.
+
 :mod:`sklearn.manifold`
 .......................
 
@@ -298,7 +303,7 @@ Changelog
   :func:`preprocessing.quantile_transform` now supports disabling
   subsampling explicitly.
   :pr:`27636` by :user:`Ralph Urlus <rurlus>`.
-  
+
 :mod:`sklearn.tree`
 ...................
 
