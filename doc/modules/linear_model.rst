@@ -948,7 +948,7 @@ following cost function:
 .. math::
     :name: regularized-logistic-loss
 
-    \min_{w} C \sum_{i=1}^n s_i \left(-y_i \log(\hat{p}(X_i)) - (1 - y_i) \log(1 - \hat{p}(X_i))\right) + r(w),
+    \min_{w} \sum_{i=1}^n s_i \left(-y_i \log(\hat{p}(X_i)) - (1 - y_i) \log(1 - \hat{p}(X_i))\right) + \frac{r(w)}{C},
 
 where :math:`{s_i}` corresponds to the weights assigned by the user to a
 specific training sample (the vector :math:`s` is formed by element-wise
@@ -1010,7 +1010,7 @@ a matrix of coefficients :math:`W` where each row vector :math:`W_k` corresponds
 
 The objective for the optimization becomes
 
-.. math:: \min_W -C \sum_{i=1}^n \sum_{k=0}^{K-1} [y_i = k] \log(\hat{p}_k(X_i)) + r(W).
+.. math:: \min_W -\sum_{i=1}^n \sum_{k=0}^{K-1} [y_i = k] \log(\hat{p}_k(X_i)) + \frac{r(W)}{C}.
 
 Where :math:`[P]` represents the Iverson bracket which evaluates to :math:`0`
 if :math:`P` is false, otherwise it evaluates to :math:`1`. We currently provide four choices
