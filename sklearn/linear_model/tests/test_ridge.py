@@ -2095,6 +2095,9 @@ def test_ridge_sample_weight_consistency(
 @pytest.mark.usefixtures("enable_slep006")
 @pytest.mark.parametrize("metaestimator", [RidgeCV, RidgeClassifierCV])
 def test_metadata_routing_with_default_scoring(metaestimator):
+    """Test that `RidgeCV` or `RidgeClassifierCV` with default `scoring`
+    argument (`None`), don't enter into `RecursionError` when metadata is routed.
+    """
     X = np.array([[0, 1], [2, 2], [4, 6], [9, 0], [2, 4]])
     y = [1, 2, 3, 4, 5]
 
