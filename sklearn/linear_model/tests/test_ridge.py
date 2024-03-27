@@ -1215,8 +1215,8 @@ def _test_tolerance(sparse_container):
     assert score >= score2
 
 
-def check_array_api_attributes(name, estimator, array_namepsace, device, dtype_name):
-    xp = _array_api_for_tests(array_namepsace, device)
+def check_array_api_attributes(name, estimator, array_namespace, device, dtype_name):
+    xp = _array_api_for_tests(array_namespace, device)
 
     X_iris_np = X_iris.astype(dtype_name)
     y_iris_np = y_iris.astype(dtype_name)
@@ -1251,7 +1251,7 @@ def check_array_api_attributes(name, estimator, array_namepsace, device, dtype_n
 
 
 @pytest.mark.parametrize(
-    "array_namepsace, device, dtype_name", yield_namespace_device_dtype_combinations()
+    "array_namespace, device, dtype_name", yield_namespace_device_dtype_combinations()
 )
 @pytest.mark.parametrize(
     "check",
@@ -1264,18 +1264,17 @@ def check_array_api_attributes(name, estimator, array_namepsace, device, dtype_n
     ids=_get_check_estimator_ids,
 )
 def test_ridge_array_api_compliance(
-    estimator, check, array_namepsace, device, dtype_name
+    estimator, check, array_namespace, device, dtype_name
 ):
     name = estimator.__class__.__name__
-    check(name, estimator, array_namepsace, device=device, dtype_name=dtype_name)
+    check(name, estimator, array_namespace, device=device, dtype_name=dtype_name)
 
 
 @pytest.mark.parametrize(
     "array_namespace", yield_namespaces(include_numpy_namespaces=False)
 )
 def test_array_api_error_and_warnings_for_solver_parameter(array_namespace):
-    pytest.importorskip("array_api_compat")
-    xp = pytest.importorskip(array_namespace)
+    xp = _array_api_for_tests(array_namespace, device=None)
 
     X_iris_xp = xp.asarray(X_iris[:5])
     y_iris_xp = xp.asarray(y_iris[:5])
@@ -1284,7 +1283,7 @@ def test_array_api_error_and_warnings_for_solver_parameter(array_namespace):
     for solver in available_solvers - {"auto", "svd"}:
         ridge = Ridge(solver=solver, positive=solver == "lbfgs")
         expected_msg = (
-            "Array API dispatch to namespace (.*) only supports "
+            f"Array API dispatch to namespace {xp.__name__} only supports "
             f"solver 'svd'. Got '{solver}'."
         )
 
@@ -1295,7 +1294,7 @@ def test_array_api_error_and_warnings_for_solver_parameter(array_namespace):
     ridge = Ridge(solver="auto", positive=True)
     expected_msg = (
         "The solvers that support positive fitting do not support "
-        "Array API dispatch to namespace (.*). Please "
+        f"Array API dispatch to namespace {xp.__name__}. Please "
         "either disable Array API dispatch, or use a numpy-like "
         "namespace, or set `positive=False`."
     )
@@ -1306,7 +1305,7 @@ def test_array_api_error_and_warnings_for_solver_parameter(array_namespace):
 
     ridge = Ridge()
     expected_msg = (
-        "Using Array API dispatch to namespace (.*) with "
+        f"Using Array API dispatch to namespace {xp.__name__} with "
         "`solver='auto'`will result in using the solver 'svd'. "
         "Results might be different than when Array API dispatch is "
         "disabled, or when a numpy-like namespace is used, in which case "
@@ -1321,8 +1320,7 @@ def test_array_api_error_and_warnings_for_solver_parameter(array_namespace):
 
 @pytest.mark.parametrize("array_namespace", sorted(_NUMPY_NAMESPACE_NAMES))
 def test_array_api_numpy_namespace_no_warning(array_namespace):
-    pytest.importorskip("array_api_compat")
-    xp = pytest.importorskip(array_namespace)
+    xp = _array_api_for_tests(array_namespace, device=None)
 
     X_iris_xp = xp.asarray(X_iris[:5])
     y_iris_xp = xp.asarray(y_iris[:5])
