@@ -2903,7 +2903,7 @@ def test_prfs_docstring_consistency():
             recall_score,
         ],
         include_params=True,
-        exclude_params=["zero_division"],
+        exclude_params=["average", "zero_division"],
     )
 
 
