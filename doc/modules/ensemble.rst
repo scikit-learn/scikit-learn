@@ -1536,8 +1536,8 @@ availability, tested in the order of preference: `predict_proba`,
 `decision_function` and `predict`.
 
 A :class:`StackingRegressor` and :class:`StackingClassifier` can be used as
-any other regressor or classifier, exposing a `predict`, `predict_proba`, and
-`decision_function` methods, e.g.::
+any other regressor or classifier, exposing a `predict`, `predict_proba`, or
+`decision_function` method, e.g.::
 
    >>> y_pred = reg.predict(X_test)
    >>> from sklearn.metrics import r2_score
