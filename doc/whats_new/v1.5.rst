@@ -179,6 +179,11 @@ Changelog
 :mod:`sklearn.ensemble`
 .......................
 
+- |Enhancement| :class:`ensemble.HistGradientBoostingClassifier` and
+  :class:`ensemble.HistGradientBoostingRegressor` now support up to 2**16 = 65536
+  bins for categorical levels (including one bin for missing values).
+  :pr:`28603` by :user:`Christian Lorentzen <lorentzenchr>`.
+
 - |Efficiency| Improves runtime of `predict` of
   :class:`ensemble.HistGradientBoostingClassifier` by avoiding to call `predict_proba`.
   :pr:`27844` by :user:`Christian Lorentzen <lorentzenchr>`.
