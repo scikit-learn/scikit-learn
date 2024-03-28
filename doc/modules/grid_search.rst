@@ -726,8 +726,8 @@ by (i).
 
 The slack constraint, :math:`S(P(m^*), P(m))`, could be defined in various ways and
 with varying degrees of leniency depending on the application. For example, in the case
-of refitting a SearchCV object with the simplest best-performing model, for example,
-one common constraint to use is the "One Standard Error Rule" (1-SE) (see the
+of refitting a SearchCV object with the simplest best-performing model, one common
+constraint to use is the "One Standard Error Rule" (1-SE) (see the
 :class:`~sklearn.model_selection._refine.StandardErrorSlicer`). 1-SE is a slack
 constraint for identifying the most parsimonious model whose cross-validated
 performance is not more than 1 standard error worse than the best CV performance. In
