@@ -74,8 +74,10 @@ evaluated and the best combination is retained.
 
 .. topic:: Examples:
 
-    - See :ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_digits.py` for an example of
-      Grid Search computation on the digits dataset.
+    - See :ref:`sphx_glr_auto_examples_model_selection_plot_nested_cross_validation_iris.py`
+      for an example of Grid Search within a cross validation loop on the iris
+      dataset. This is the best practice for evaluating the performance of a
+      model with grid search.
 
     - See :ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_text_feature_extraction.py` for an example
       of Grid Search coupling parameters from a text documents feature
@@ -83,24 +85,28 @@ evaluated and the best combination is retained.
       classifier (here a linear SVM trained with SGD with either elastic
       net or L2 penalty) using a :class:`~sklearn.pipeline.Pipeline` instance.
 
-    - See :ref:`sphx_glr_auto_examples_model_selection_plot_nested_cross_validation_iris.py`
-      for an example of Grid Search within a cross validation loop on the iris
-      dataset. This is the best practice for evaluating the performance of a
-      model with grid search.
+
+    |details-start|
+    Advanced examples
+    |details-split|
 
     - See :ref:`sphx_glr_auto_examples_model_selection_plot_multi_metric_evaluation.py`
       for an example of :class:`GridSearchCV` being used to evaluate multiple
       metrics simultaneously.
 
-    - See :ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_refit_callable.py`
-      for an example of using ``refit=callable`` interface in
-      :class:`GridSearchCV`. The example shows how this interface adds certain
-      amount of flexibility in identifying the "best" estimator. This interface
-      can also be used in multiple metrics evaluation.
+    - See
+      :ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_refit_callable.py`
+      and
+      :ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_digits.py`
+      for examples of using ``refit=callable`` interface in
+      :class:`GridSearchCV`. This allows providing a custom strategy to decide
+      what is the "best" estimator.
 
     - See :ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_stats.py`
       for an example of how to do a statistical comparison on the outputs of
       :class:`GridSearchCV`.
+
+    |details-end|
 
 .. _randomized_parameter_search:
 
@@ -199,7 +205,7 @@ here the number of samples.
    :align: center
 
 We here briefly describe the main parameters, but each parameter and their
-interactions are described in more details in the sections below. The
+interactions are described in more details in the dropdown section below. The
 ``factor`` (> 1) parameter controls the rate at which the resources grow, and
 the rate at which the number of candidates decreases. In each iteration, the
 number of resources per candidate is multiplied by ``factor`` and the number
@@ -227,8 +233,11 @@ need to explicitly import ``enable_halving_search_cv``::
     * :ref:`sphx_glr_auto_examples_model_selection_plot_successive_halving_heatmap.py`
     * :ref:`sphx_glr_auto_examples_model_selection_plot_successive_halving_iterations.py`
 
+The sections below dive into technical aspects of successive halving.
+
+|details-start|
 Choosing ``min_resources`` and the number of candidates
--------------------------------------------------------
+|details-split|
 
 Beside ``factor``, the two main parameters that influence the behaviour of a
 successive halving search are the ``min_resources`` parameter, and the
@@ -281,11 +290,13 @@ in the next section). :class:`HalvingRandomSearchCV` achieves this by
 sampling the right amount of candidates, while :class:`HalvingGridSearchCV`
 achieves this by properly setting `min_resources`. Please see
 :ref:`exhausting_the_resources` for details.
+|details-end|
 
 .. _amount_of_resource_and_number_of_candidates:
 
+|details-start|
 Amount of resource and number of candidates at each iteration
--------------------------------------------------------------
+|details-split|
 
 At any iteration `i`, each candidate is allocated a given amount of resources
 which we denote `n_resources_i`. This quantity is controlled by the
@@ -352,9 +363,11 @@ We can note that:
 
 The amount of resources that is used at each iteration can be found in the
 `n_resources_` attribute.
+|details-end|
 
+|details-start|
 Choosing a resource
--------------------
+|details-split|
 
 By default, the resource is defined in terms of number of samples. That is,
 each iteration will use an increasing amount of samples to train on. You can
@@ -380,11 +393,13 @@ terms of the number of estimators of a random forest::
 
 Note that it is not possible to budget on a parameter that is part of the
 parameter grid.
+|details-end|
 
 .. _exhausting_the_resources:
 
+|details-start|
 Exhausting the available resources
-----------------------------------
+|details-split|
 
 As mentioned above, the number of resources that is used at each iteration
 depends on the `min_resources` parameter.
@@ -436,11 +451,13 @@ requires knowing `min_resources`.
 
 In general, exhausting the total number of resources leads to a better final
 candidate parameter, and is slightly more time-intensive.
+|details-end|
 
 .. _aggressive_elimination:
 
+|details-start|
 Aggressive elimination of candidates
-------------------------------------
+|details-split|
 
 Ideally, we want the last iteration to evaluate ``factor`` candidates (see
 :ref:`amount_of_resource_and_number_of_candidates`). We then just have to
@@ -489,11 +506,13 @@ necessary using ``min_resources`` resources::
 Notice that we end with 2 candidates at the last iteration since we have
 eliminated enough candidates during the first iterations, using ``n_resources =
 min_resources = 20``.
+|details-end|
 
 .. _successive_halving_cv_results:
 
+|details-start|
 Analyzing results with the `cv_results_` attribute
---------------------------------------------------
+|details-split|
 
 The ``cv_results_`` attribute contains useful information for analyzing the
 results of a search. It can be converted to a pandas dataframe with ``df =
@@ -537,6 +556,9 @@ since it has reached the last iteration (3) with the highest score:
     .. [2] L. Li, K. Jamieson, G. DeSalvo, A. Rostamizadeh, A. Talwalkar,
        :arxiv:`Hyperband: A Novel Bandit-Based Approach to Hyperparameter Optimization
        <1603.06560>`, in Machine Learning Research 18, 2018.
+
+
+|details-end|
 
 .. _grid_search_tips:
 
@@ -654,12 +676,11 @@ entry for :term:`n_jobs`.
 Robustness to failure
 ---------------------
 
-Some parameter settings may result in a failure to ``fit`` one or more folds
-of the data.  By default, this will cause the entire search to fail, even if
-some parameter settings could be fully evaluated. Setting ``error_score=0``
-(or `=np.nan`) will make the procedure robust to such failure, issuing a
-warning and setting the score for that fold to 0 (or `nan`), but completing
-the search.
+Some parameter settings may result in a failure to ``fit`` one or more folds of
+the data. By default, the score for those settings will be `np.nan`. This can
+be controlled by setting `error_score="raise"` to raise an exception if one fit
+fails, or for example `error_score=0` to set another value for the score of
+failing parameter combinations.
 
 .. _alternative_cv:
 
