@@ -332,6 +332,12 @@ Changelog
   given the split condition.
   :pr:`28552` by :user:`Adam Li <adam2392>`.
 
+:mod:`sklearn.preprocessing`
+............................
+
+- |FIX| :class:`preprocessing.SplineTransformer` does not output `nan` results
+  with constant or near constant features. :pr:`28421` by :user:`Rahil Parikh <rprkh>`.
+
 .. rubric:: Code and documentation contributors
 
 Thanks to everyone who has contributed to the maintenance and improvement of
