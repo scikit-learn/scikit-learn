@@ -608,6 +608,17 @@ Changelog
 :mod:`sklearn.decomposition`
 ............................
 
+- |Enhancement| :class:`decomposition.PCA` now supports the Array API for the
+  `full` and `randomized` solvers (with QR power iterations). See
+  :ref:`array_api` for more details.
+  :pr:`26315`, :pr:`27098` and :pr:`27431` by :user:`Mateusz Sokół <mtsokol>`,
+  :user:`Olivier Grisel <ogrisel>` and :user:`Edoardo Abati <EdAbati>`.
+
+- |Enhancement| :class:`linear_model.Ridge` now supports the Array API for the
+  `svd` solver. See :ref:`array_api` for more details.
+  :pr:`27800` by :user:`Franck Charras <fcharras>`, :user:`TODO <TODO>` and
+  :user:`TODO <TODO>`.
+
 - |Feature| :class:`decomposition.PCA` now supports :class:`scipy.sparse.sparray`
   and :class:`scipy.sparse.spmatrix` inputs when using the `arpack` solver.
   When used on sparse data like :func:`datasets.fetch_20newsgroups_vectorized` this

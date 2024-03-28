@@ -78,8 +78,10 @@ def _is_constant_feature(var, mean, n_samples):
     See "Algorithms for computing the sample variance: analysis and
     recommendations", by Chan, Golub, and LeVeque.
     """
+    xp, _ = get_namespace(var)
+
     # In scikit-learn, variance is always computed using float64 accumulators.
-    eps = np.finfo(np.float64).eps
+    eps = xp.finfo(xp.float64).eps
 
     upper_bound = n_samples * eps * var + (n_samples * mean * eps) ** 2
     return var <= upper_bound

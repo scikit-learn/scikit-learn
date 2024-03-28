@@ -1222,7 +1222,7 @@ def r2_score(
         axis=0,
     )
 
-    return _assemble_r2_explained_variance(
+    result = _assemble_r2_explained_variance(
         numerator=numerator,
         denominator=denominator,
         n_outputs=y_true.shape[1],
@@ -1231,6 +1231,12 @@ def r2_score(
         xp=xp,
         device=device_,
     )
+
+    result = xp.asarray(result, device=device_)
+    if np.prod(result.shape) == 1:
+        return float(xp.reshape(result, (-1,))[0])
+
+    return result
 
 
 @validate_params(

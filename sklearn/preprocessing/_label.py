@@ -17,6 +17,7 @@ import scipy.sparse as sp
 
 from ..base import BaseEstimator, TransformerMixin, _fit_context
 from ..utils import column_or_1d
+from ..utils._array_api import _convert_to_numpy, device, get_namespace
 from ..utils._encode import _encode, _unique
 from ..utils._param_validation import Interval, validate_params
 from ..utils.multiclass import type_of_target, unique_labels
@@ -303,7 +304,7 @@ class LabelBinarizer(TransformerMixin, BaseEstimator, auto_wrap_output_keys=None
             raise ValueError("y has 0 samples: %r" % y)
 
         self.sparse_input_ = sp.issparse(y)
-        self.classes_ = unique_labels(y)
+        self.classes_ = np.asarray(unique_labels(y))
         return self
 
     def fit_transform(self, y):
@@ -524,22 +525,24 @@ def label_binarize(y, *, classes, neg_label=0, pos_label=1, sparse_output=False)
     if y_type == "unknown":
         raise ValueError("The type of target data is not known")
 
-    n_samples = y.shape[0] if sp.issparse(y) else len(y)
-    n_classes = len(classes)
-    classes = np.asarray(classes)
+    n_samples = y.shape[0] if hasattr(y, "shape") else len(y)
+    n_classes = classes.shape[0] if hasattr(classes, "shape") else len(classes)
 
+    xp, is_array_api_compliant = get_namespace(y)
+    classes = xp.asarray(classes)
+    device_kwarg = {"device": device(y)} if is_array_api_compliant else {}
     if y_type == "binary":
         if n_classes == 1:
             if sparse_output:
                 return sp.csr_matrix((n_samples, 1), dtype=int)
             else:
-                Y = np.zeros((len(y), 1), dtype=int)
+                Y = xp.zeros((len(y), 1), dtype=int, **device_kwarg)
                 Y += neg_label
                 return Y
         elif len(classes) >= 3:
             y_type = "multiclass"
 
-    sorted_class = np.sort(classes)
+    sorted_class = xp.sort(classes)
     if y_type == "multilabel-indicator":
         y_n_classes = y.shape[1] if hasattr(y, "shape") else len(y[0])
         if classes.size != y_n_classes:
@@ -553,13 +556,15 @@ def label_binarize(y, *, classes, neg_label=0, pos_label=1, sparse_output=False)
         y = column_or_1d(y)
 
         # pick out the known labels from y
-        y_in_classes = np.isin(y, classes)
-        y_seen = y[y_in_classes]
-        indices = np.searchsorted(sorted_class, y_seen)
-        indptr = np.hstack((0, np.cumsum(y_in_classes)))
+        y_in_classes = xp.isin(y, classes)
+        y_seen = xp.asarray(y[y_in_classes])
+        indices = xp.searchsorted(sorted_class, y_seen)
+        indptr = xp.hstack((xp.asarray(0), xp.cumsum(y_in_classes, 0)))
 
-        data = np.empty_like(indices)
-        data.fill(pos_label)
+        data = xp.full(indices.shape, pos_label)
+        data = _convert_to_numpy(data, xp)
+        indptr = _convert_to_numpy(indptr, xp)
+        indices = _convert_to_numpy(indices, xp)
         Y = sp.csr_matrix((data, indices, indptr), shape=(n_samples, n_classes))
     elif y_type == "multilabel-indicator":
         Y = sp.csr_matrix(y)
@@ -574,7 +579,7 @@ def label_binarize(y, *, classes, neg_label=0, pos_label=1, sparse_output=False)
 
     if not sparse_output:
         Y = Y.toarray()
-        Y = Y.astype(int, copy=False)
+        Y = xp.asarray(Y, dtype=xp.int64, **device_kwarg)
 
         if neg_label != 0:
             Y[Y == 0] = neg_label
@@ -585,15 +590,15 @@ def label_binarize(y, *, classes, neg_label=0, pos_label=1, sparse_output=False)
         Y.data = Y.data.astype(int, copy=False)
 
     # preserve label ordering
-    if np.any(classes != sorted_class):
-        indices = np.searchsorted(sorted_class, classes)
-        Y = Y[:, indices]
+    if xp.any(classes != sorted_class):
+        indices = xp.searchsorted(sorted_class, classes)
+        Y = Y[:, xp.asarray(indices, **device_kwarg)]
 
     if y_type == "binary":
         if sparse_output:
             Y = Y.getcol(-1)
         else:
-            Y = Y[:, -1].reshape((-1, 1))
+            Y = xp.reshape(Y[:, -1], (-1, 1))
 
     return Y
 

@@ -3,7 +3,7 @@ from functools import partial
 
 import numpy
 import pytest
-from numpy.testing import assert_allclose
+from numpy.testing import assert_allclose, assert_array_equal
 
 from sklearn._config import config_context
 from sklearn.base import BaseEstimator
@@ -17,7 +17,10 @@ from sklearn.utils._array_api import (
     _estimator_with_converted_arrays,
     _nanmax,
     _nanmin,
+    _nansum,
     _NumPyAPIWrapper,
+    _signbit,
+    _supports_dtype,
     device,
     get_namespace,
     indexing_dtype,
@@ -98,6 +101,19 @@ def test_array_api_wrapper_astype():
 
     X_converted = xp.asarray(X, dtype=xp.float32)
     assert X_converted.dtype == xp.float32
+
+
+def test_array_api_wrapper_take_for_numpy_api():
+    """Test that fast path is called for numpy.array_api."""
+    numpy_array_api = pytest.importorskip("numpy.array_api")
+    # USe the same name as numpy.array_api
+    xp_ = _AdjustableNameAPITestWrapper(numpy_array_api, "numpy.array_api")
+    xp = _ArrayAPIWrapper(xp_)
+
+    X = xp.asarray(([[1, 2, 3], [3, 4, 5]]), dtype=xp.float64)
+    X_take = xp.take(X, xp.asarray([1]), axis=0)
+    assert hasattr(X_take, "__array_namespace__")
+    assert_array_equal(X_take, numpy.take(X, [1], axis=0))
 
 
 @pytest.mark.parametrize("array_api", ["numpy", "array_api_strict"])
@@ -182,17 +198,21 @@ def test_average(
     "array_namespace, device, dtype_name",
     yield_namespace_device_dtype_combinations(include_numpy_namespaces=False),
 )
+def test_supports_dtype(array_namespace, device, dtype_name):
+    xp = _array_api_for_tests(array_namespace, device)
+    assert _supports_dtype(xp, device, "float32") is True
+
+
+@pytest.mark.parametrize(
+    "array_namespace, device, dtype_name",
+    yield_namespace_device_dtype_combinations(include_numpy_namespaces=False),
+)
 def test_average_raises_with_wrong_dtype(array_namespace, device, dtype_name):
     xp = _array_api_for_tests(array_namespace, device)
 
     array_in = numpy.asarray([2, 0], dtype=dtype_name) + 1j * numpy.asarray(
         [4, 3], dtype=dtype_name
     )
-    complex_type_name = array_in.dtype.name
-    if not hasattr(xp, complex_type_name):
-        # This is the case for cupy as of March 2024 for instance.
-        pytest.skip(f"{array_namespace} does not support {complex_type_name}")
-
     array_in = xp.asarray(array_in, device=device)
 
     err_msg = "Complex floating point values are not supported by average."
@@ -214,19 +234,28 @@ def test_average_raises_with_wrong_dtype(array_namespace, device, dtype_name):
             None,
             [1, 2],
             TypeError,
-            "Axis must be specified",
+            (
+                r"Axis must be specified when (the )?shapes? of a (\(\d+, \d+\) )?and"
+                r" weights (\(\d+,\) )?differ."
+            ),
         ),
         (
             0,
             [[1, 2]],
             TypeError,
-            "1D weights expected",
+            (
+                r"1D weights expected when (a.shape=\(\d+, \d+\) and"
+                r" weights.shape=\(\d+, \d+\)|shapes of a and weights) differ."
+            ),
         ),
         (
             0,
             [1, 2, 3, 4],
             ValueError,
-            "Length of weights",
+            (
+                r"Length of weights (\d+ )?not compatible with (specified axis|"
+                r" a.shape=\(\d+, \d+\) and axis=0)."
+            ),
         ),
         (0, [-1, 1], ZeroDivisionError, "Weights sum to zero, can't be normalized"),
     ),
@@ -246,20 +275,16 @@ def test_average_raises_with_invalid_parameters(
         _average(array_in, axis=axis, weights=weights)
 
 
-def test_device_raises_if_no_input():
-    err_msg = re.escape(
-        "At least one input array expected after filtering with remove_none=True, "
-        "remove_types=[str]. Got none. Original types: []."
-    )
-    with pytest.raises(ValueError, match=err_msg):
-        device()
+class _NumPyAPIWrapperNoFloat64(_NumPyAPIWrapper):
+    def ones(self, shape, dtype, device):
+        if dtype == "float64":
+            raise ValueError
+        return numpy.ones(shape, dtype)
 
-    err_msg = re.escape(
-        "At least one input array expected after filtering with remove_none=True, "
-        "remove_types=[str]. Got none. Original types: [NoneType, str]."
-    )
-    with pytest.raises(ValueError, match=err_msg):
-        device(None, "name")
+
+def test_supports_dtype_return_value():
+    assert _supports_dtype(_NumPyAPIWrapperNoFloat64(), "device", "float64") is False
+    assert _supports_dtype(_NumPyAPIWrapperNoFloat64(), "device", "float32") is True
 
 
 def test_device_inspection():
@@ -301,6 +326,22 @@ def test_device_inspection():
     assert array1.device == device(array1, array1, array2)
 
 
+def test_device_raises_if_no_input():
+    err_msg = re.escape(
+        "At least one input array expected after filtering with remove_none=True, "
+        "remove_types=[str]. Got none. Original types: []."
+    )
+    with pytest.raises(ValueError, match=err_msg):
+        device()
+
+    err_msg = re.escape(
+        "At least one input array expected after filtering with remove_none=True, "
+        "remove_types=[str]. Got none. Original types: [NoneType, str]."
+    )
+    with pytest.raises(ValueError, match=err_msg):
+        device(None, "name")
+
+
 # TODO: add cupy and cupy.array_api to the list of libraries once the
 # the following upstream issue has been fixed:
 # https://github.com/cupy/cupy/issues/8180
@@ -335,16 +376,49 @@ def test_device_inspection():
             partial(_nanmax, axis=1),
             [3.0, numpy.nan, 6.0],
         ),
+        ([1, 2, numpy.nan], _nansum, 3),
+        ([1, -2, -numpy.nan], _nansum, -1),
+        ([numpy.inf, numpy.inf], _nansum, numpy.inf),
+        (
+            [[1, 2, 3], [numpy.nan, numpy.nan, numpy.nan], [4, 5, 6.0]],
+            partial(_nansum, axis=0),
+            [5.0, 7.0, 9.0],
+        ),
+        (
+            [[1, 2, 3], [numpy.nan, numpy.nan, numpy.nan], [4, 5, 6.0]],
+            partial(_nansum, axis=1),
+            [6.0, 0.0, 15.0],
+        ),
     ],
 )
 def test_nan_reductions(library, X, reduction, expected):
-    """Check NaN reductions like _nanmin and _nanmax"""
+    """Check NaN reductions like _nanmin, _nanmax and _nansum"""
     xp = pytest.importorskip(library)
 
     with config_context(array_api_dispatch=True):
         result = reduction(xp.asarray(X))
 
     result = _convert_to_numpy(result, xp)
+
+    assert_allclose(result, expected)
+
+
+@skip_if_array_api_compat_not_configured
+@pytest.mark.parametrize(
+    "library", ["numpy", "numpy.array_api", "cupy", "cupy.array_api", "torch"]
+)
+def test_signbit(library):
+    xp = pytest.importorskip(library)
+
+    X = xp.asarray([[1, -1, 1, -1, xp.nan]], dtype=xp.float32) / xp.asarray(
+        [1, 1, xp.inf, xp.inf, 1]
+    )
+
+    expected = xp.asarray([[False, True, False, True, False]])
+
+    with config_context(array_api_dispatch=True):
+        result = _signbit(xp.asarray(X))
+
     assert_allclose(result, expected)
 
 

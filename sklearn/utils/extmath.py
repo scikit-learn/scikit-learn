@@ -21,7 +21,13 @@ from scipy import linalg, sparse
 
 from ..utils._param_validation import Interval, StrOptions, validate_params
 from ..utils.deprecation import deprecated
-from ._array_api import _is_numpy_namespace, device, get_namespace
+from ._array_api import (
+    _is_numpy_namespace,
+    _nansum,
+    _signbit,
+    device,
+    get_namespace,
+)
 from .sparsefuncs_fast import csr_row_norms
 from .validation import check_array, check_random_state
 
@@ -1020,39 +1026,6 @@ def make_nonnegative(X, min_value=0):
     return X
 
 
-# Use at least float64 for the accumulating functions to avoid precision issue
-# see https://github.com/numpy/numpy/issues/9393. The float64 is also retained
-# as it is in case the float overflows
-def _safe_accumulator_op(op, x, *args, **kwargs):
-    """
-    This function provides numpy accumulator functions with a float64 dtype
-    when used on a floating point input. This prevents accumulator overflow on
-    smaller floating point dtypes.
-
-    Parameters
-    ----------
-    op : function
-        A numpy accumulator function such as np.mean or np.sum.
-    x : ndarray
-        A numpy array to apply the accumulator function.
-    *args : positional arguments
-        Positional arguments passed to the accumulator function after the
-        input x.
-    **kwargs : keyword arguments
-        Keyword arguments passed to the accumulator function.
-
-    Returns
-    -------
-    result
-        The output of the accumulator function passed to this function.
-    """
-    if np.issubdtype(x.dtype, np.floating) and x.dtype.itemsize < 8:
-        result = op(x, *args, **kwargs, dtype=np.float64)
-    else:
-        result = op(x, *args, **kwargs)
-    return result
-
-
 def _incremental_mean_and_var(
     X, last_mean, last_variance, last_sample_count, sample_weight=None
 ):
@@ -1108,28 +1081,31 @@ def _incremental_mean_and_var(
     `utils.sparsefuncs.incr_mean_variance_axis` and
     `utils.sparsefuncs_fast.incr_mean_variance_axis0`
     """
+    xp, _ = get_namespace(X)
+    zero_ = xp.asarray(0.0, dtype=X.dtype, device=device(X))
+
     # old = stats until now
     # new = the current increment
     # updated = the aggregated stats
     last_sum = last_mean * last_sample_count
-    X_nan_mask = np.isnan(X)
-    if np.any(X_nan_mask):
-        sum_op = np.nansum
+    X_nan_mask = xp.isnan(X)
+    if xp.any(X_nan_mask):
+        sum_op = _nansum
     else:
-        sum_op = np.sum
+        sum_op = xp.sum
     if sample_weight is not None:
-        # equivalent to np.nansum(X * sample_weight, axis=0)
-        # safer because np.float64(X*W) != np.float64(X)*np.float64(W)
-        new_sum = _safe_accumulator_op(
-            np.matmul, sample_weight, np.where(X_nan_mask, 0, X)
+        # equivalent to _nansum(X * sample_weight, axis=0)
+        # safer because xp.float64(X*W) != xp.float64(X)*xp.float64(W)
+        new_sum = _safe_weighted_accumulator_axis0(
+            xp.where(X_nan_mask, zero_, X), sample_weight, xp=xp
         )
         new_sample_count = _safe_accumulator_op(
-            np.sum, sample_weight[:, None] * (~X_nan_mask), axis=0
+            xp.sum, sample_weight[:, xp.newaxis] * (~X_nan_mask), axis=0, xp=xp
         )
     else:
-        new_sum = _safe_accumulator_op(sum_op, X, axis=0)
+        new_sum = _safe_accumulator_op(sum_op, X, axis=0, xp=xp)
         n_samples = X.shape[0]
-        new_sample_count = n_samples - np.sum(X_nan_mask, axis=0)
+        new_sample_count = n_samples - xp.sum(X_nan_mask, axis=0)
 
     updated_sample_count = last_sample_count + new_sample_count
 
@@ -1143,17 +1119,19 @@ def _incremental_mean_and_var(
         if sample_weight is not None:
             # equivalent to np.nansum((X-T)**2 * sample_weight, axis=0)
             # safer because np.float64(X*W) != np.float64(X)*np.float64(W)
-            correction = _safe_accumulator_op(
-                np.matmul, sample_weight, np.where(X_nan_mask, 0, temp)
+            correction = _safe_weighted_accumulator_axis0(
+                xp.where(X_nan_mask, zero_, temp), sample_weight, xp=xp
             )
             temp **= 2
-            new_unnormalized_variance = _safe_accumulator_op(
-                np.matmul, sample_weight, np.where(X_nan_mask, 0, temp)
+            new_unnormalized_variance = _safe_weighted_accumulator_axis0(
+                xp.where(X_nan_mask, zero_, temp), sample_weight, xp=xp
             )
         else:
-            correction = _safe_accumulator_op(sum_op, temp, axis=0)
+            correction = _safe_accumulator_op(sum_op, temp, axis=0, xp=xp)
             temp **= 2
-            new_unnormalized_variance = _safe_accumulator_op(sum_op, temp, axis=0)
+            new_unnormalized_variance = _safe_accumulator_op(
+                sum_op, temp, axis=0, xp=xp
+            )
 
         # correction term of the corrected 2 pass algorithm.
         # See "Algorithms for computing the sample variance: analysis
@@ -1162,9 +1140,155 @@ def _incremental_mean_and_var(
 
         last_unnormalized_variance = last_variance * last_sample_count
 
+        updated_unnormalized_variance = _update_unnormalized_variance(
+            last_unnormalized_variance,
+            new_unnormalized_variance,
+            last_sample_count,
+            last_sum,
+            new_sum,
+            new_sample_count,
+            updated_sample_count,
+            xp,
+        )
+
+        updated_unnormalized_variance = xp.where(
+            last_sample_count == 0,
+            new_unnormalized_variance,
+            updated_unnormalized_variance,
+        )
+        updated_variance = updated_unnormalized_variance / updated_sample_count
+
+    return updated_mean, updated_variance, updated_sample_count
+
+
+def _safe_average_axis0(X, sample_weight, xp=None):
+    """
+    This function returns the weighted average over axis 0 while ensuring the weighed
+    sum accumulator uses a float64 dtype when used on a floating point input. This
+    prevents accumulator overflow on smaller floating point dtypes.
+
+    Parameters
+    ----------
+    X : ndarray
+        A numpy array or an array-api compliant arra
+    sample_weight : ndarray
+        A numpy array or an array-api compliant array.
+    xp: Array API namespace or None
+        Optional array-api namespace.
+
+    Returns
+    -------
+    result
+        The weighted average over axis 0
+    """
+    if xp is None:
+        xp, _ = get_namespace(X)
+
+    if sample_weight is not None:
+        # equivalent to xp.sum(X * sample_weight, axis=0)
+        # safer because xp.float64(X*W) != xp.float64(X)*xp.float64(W)
+        per_col_sum = _safe_weighted_accumulator_axis0(X, sample_weight)
+        total_weight = _safe_accumulator_op(xp.sum, sample_weight, axis=0)
+    else:
+        per_col_sum = _safe_accumulator_op(xp.sum, X, axis=0)
+        total_weight = X.shape[0]
+
+    return per_col_sum / total_weight
+
+
+# Use at least float64 for the accumulating functions to avoid precision issue
+# see https://github.com/numpy/numpy/issues/9393. The float64 is also retained
+# as it is in case the float overflows
+def _safe_weighted_accumulator_axis0(X, sample_weight, xp=None):
+    """
+    This function provides a weighed sum accumulator over axis 0 with a float64 dtype
+    when used on a floating point input. This prevents accumulator overflow on smaller
+    floating point dtypes.
+
+    Parameters
+    ----------
+    X : ndarray
+        A numpy array or an array-api compliant array to apply the sum accumulator.
+    sample_weight : ndarray
+        A numpy array or an array-api compliant array.
+    xp: Array API namespace or None
+        Optional array-api namespace.
+
+    Returns
+    -------
+    result
+        The output of the accumulator function passed to this function.
+    """
+
+    if xp is None:
+        xp, _ = get_namespace(X)
+
+    if _is_numpy_namespace(xp):
+        if np.issubdtype(X.dtype, np.floating) and X.dtype.itemsize < 8:
+            return xp.asarray(np.matmul(sample_weight, X, dtype=np.float64))
+
+    _is_float16 = hasattr(xp, "float16") and xp.isdtype(X.dtype, xp.float16)
+
+    # The Array API spec does not expose a `dtype` parameter, instead we convert the
+    # weights to float64 and rely on casting rules to ensure a float64 accumulator.
+    if xp.isdtype(X.dtype, xp.float32) or _is_float16:
+        sample_weight = xp.asarray(sample_weight, dtype=xp.float64, device=device(X))
+
+    return xp.matmul(sample_weight, X)
+
+
+def _safe_accumulator_op(op, X, axis=None, xp=None):
+    """
+    This function provides array accumulator functions with a float64 dtype
+    when used on a floating point input. This prevents accumulator overflow on
+    smaller floating point dtypes.
+
+    Parameters
+    ----------
+    op : function
+        An accumulator function such as sum. It is expected to expose a `dtype`
+        parameter that set the dtype of both the accumulator and the output.
+    X : ndarray
+        A numpy array or an array-api compliant array to apply the accumulator function.
+    axis : int
+        the axis over which the accumulation is computed.
+    xp: Array API namespace or None
+        Optional array-api namespace.
+
+    Returns
+    -------
+    result
+        The output of the accumulator function passed to this function.
+    """
+    if xp is None:
+        xp, _ = get_namespace(X)
+
+    _is_float16 = hasattr(xp, "float16") and xp.isdtype(X.dtype, xp.float16)
+
+    if xp.isdtype(X.dtype, xp.float32) or _is_float16:
+        return op(X, axis=axis, dtype=xp.float64)
+
+    return op(X, axis=axis)
+
+
+def _update_unnormalized_variance(
+    last_unnormalized_variance,
+    new_unnormalized_variance,
+    last_sample_count,
+    last_sum,
+    new_sum,
+    new_sample_count,
+    updated_sample_count,
+    xp,
+):
+    """Aggregate quantities that have been computed over previous and new data into
+    unnormalized variance over the union of all the data. Suppress any warning or
+    errors relating to invalid divisions or divisions by zero and return nan instead
+    where it happens."""
+    if _is_numpy_namespace(xp):
         with np.errstate(divide="ignore", invalid="ignore"):
             last_over_new_count = last_sample_count / new_sample_count
-            updated_unnormalized_variance = (
+            return (
                 last_unnormalized_variance
                 + new_unnormalized_variance
                 + last_over_new_count
@@ -1172,11 +1296,102 @@ def _incremental_mean_and_var(
                 * (last_sum / last_over_new_count - new_sum) ** 2
             )
 
-        zeros = last_sample_count == 0
-        updated_unnormalized_variance[zeros] = new_unnormalized_variance[zeros]
-        updated_variance = updated_unnormalized_variance / updated_sample_count
+    # The Array API does not expose tools that can set the behavior on division
+    # by zero of invalid division, so instead we use a custom
+    # _float_itemwise_divide_and_ignore_errors function that  mimic the behavior.
+    last_over_new_count = _float_itemwise_divide_and_ignore_errors(
+        last_sample_count, new_sample_count, xp=xp
+    )
+    return (
+        last_unnormalized_variance
+        + new_unnormalized_variance
+        + _float_itemwise_divide_and_ignore_errors(
+            last_over_new_count, updated_sample_count, xp=xp
+        )
+        * (
+            _float_itemwise_divide_and_ignore_errors(
+                last_sum, last_over_new_count, xp=xp
+            )
+            - new_sum
+        )
+        ** 2
+    )
 
-    return updated_mean, updated_variance, updated_sample_count
+
+def _float_itemwise_divide_and_ignore_errors(dividend, divisor, xp=None):
+    """Itemwise division that silences errors.
+
+    Parameters
+    ----------
+    dividend: ndarray
+        A numpy array or an array-api compliant array to apply the accumulator function.
+    divisor: ndarray
+        A numpy array or an array-api compliant array to apply the accumulator function.
+    xp: Array API namespace or None
+        Optional array-api namespace.
+
+    Returns
+    -------
+    result
+        The itemwise division
+    """
+    if xp is None:
+        xp, _ = get_namespace(dividend)
+
+    # Numpy expose a context manager that can suppress warnings and errors
+    if _is_numpy_namespace(xp):
+        with np.errstate(divide="ignore", invalid="ignore"):
+            return xp.asarray(dividend / divisor)
+
+    # The Array API spec does not expose such tools so we scan inputs in advance
+    # to anticipate errors and replace the faulty inputs with sane inputs, then
+    # override with np.nan before returning the output.
+    # We comply to the list of possible invalid operations provided by the IEEE
+    # Standard for Floating-Point Arithmetic, see
+    # https://en.wikipedia.org/wiki/IEEE_754#Exception_handling
+
+    device_ = device(dividend)
+    dtype = divisor.dtype
+
+    one_ = xp.asarray(1.0, dtype=dtype, device=device_)
+    nan_ = xp.asarray(xp.nan, dtype=dtype, device=device_)
+    inf_ = xp.asarray(xp.inf, dtype=dtype, device=device_)
+
+    dividend_isinf = xp.isinf(dividend)
+    divisor_iszero = ~xp.astype(divisor, xp.bool)
+    divisor_isinf = xp.isinf(divisor)
+
+    # Invalid operation is  either +-inf / +-inf or 0/0
+    invalid_op = (dividend_isinf & divisor_isinf) | (
+        (~xp.astype(dividend, xp.bool)) & divisor_iszero
+    )
+
+    # Set the divisor to 1 wherever there is an invalid op
+    divisor = xp.where(invalid_op, one_, divisor)
+
+    # Division by zero is x/0 where x is finite and non-zero. It saves a pass and does
+    # not alter the output to also include x/0 where x is +-inf.
+    division_by_zero = (~invalid_op) & divisor_iszero  # & (~divisor_isinf)
+
+    # The output of such divisions by zero are either +inf or -inf, it depends on the
+    # sign of x but also on the signbit of 0. Indeed, results of divisions by +0 or -0
+    # will have opposite signs, despite that +0 == -0 is True !
+    division_by_zero_pinf = division_by_zero & (
+        _signbit(X=divisor, X_isinf=divisor_isinf)
+        == _signbit(X=dividend, X_isinf=dividend_isinf)
+    )
+    division_by_zero_ninf = division_by_zero & (~division_by_zero_pinf)
+
+    # Set the divisor to 1 wherever there is a division by 0
+    divisor = xp.where(division_by_zero, one_, divisor)
+
+    result = dividend / divisor
+
+    # Set result items to nan or +-inf where there were invalid results of divisions by
+    # zero.
+    result = xp.where(invalid_op, nan_, result)
+    result = xp.where(division_by_zero_pinf, inf_, result)
+    return xp.where(division_by_zero_ninf, -inf_, result)
 
 
 def _deterministic_vector_sign_flip(u):

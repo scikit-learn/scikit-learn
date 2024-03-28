@@ -2,7 +2,7 @@
 
 import itertools
 import math
-from functools import wraps
+from functools import lru_cache, wraps
 
 import numpy
 import scipy.special as special
@@ -177,14 +177,23 @@ def isdtype(dtype, kind, *, xp):
         return _isdtype_single(dtype, kind, xp=xp)
 
 
+def _match_dtype_names(dtype, dtype_names, xp):
+    return any(
+        hasattr(xp, dtype_name) and (dtype == getattr(xp, dtype_name))
+        for dtype_name in dtype_names
+    )
+
+
 def _isdtype_single(dtype, kind, *, xp):
     if isinstance(kind, str):
         if kind == "bool":
             return dtype == xp.bool
         elif kind == "signed integer":
-            return dtype in {xp.int8, xp.int16, xp.int32, xp.int64}
+            return _match_dtype_names(dtype, ["int8", "int16", "int32", "int64"], xp)
         elif kind == "unsigned integer":
-            return dtype in {xp.uint8, xp.uint16, xp.uint32, xp.uint64}
+            return _match_dtype_names(
+                dtype, ["uint8", "uint16", "uint32", "uint64"], xp
+            )
         elif kind == "integral":
             return any(
                 _isdtype_single(dtype, k, xp=xp)
@@ -211,7 +220,60 @@ def _isdtype_single(dtype, kind, *, xp):
         return dtype == kind
 
 
-def supported_float_dtypes(xp):
+class _HashableDevice:
+    """Some device inspection functions cache their results using a `lru_cache`
+    decorator, to enable fast repeated access. `lru_cache` derives the cache keys
+    by hashing the inputs. However the Array API does not enforces that the device
+    objects have to be hashable, and in practice it is sometimes not the case (e.g.
+    cupy cuda device object is not hashable). This class wraps the device to make
+    sure it is hashable, deriving a hash from `repr(device)`."""
+
+    def __init__(self, device, xp):
+        self.device = device
+        self.xp = xp
+
+    def __hash__(self):
+        device_name = repr(self.device) if self.device is not None else None
+        return hash((device_name, self.xp))
+
+
+def _supports_dtype(xp, device, dtype):
+    """Check if a given namespace/device/dtype combination is supported.
+
+    Note that some namespaces expose dtypes that can cause a failure at runtime
+    when trying to allocate an array with a specific device/dtype combination.
+
+    This is the case for the  Pytorch / mps / float64 combination:
+    at the time of writing, only float16/float32 arrays can be allocated on this
+    type of device.  Otherwise a `TypeError` would be raised.
+
+    This helper function can be refactored once an expressive enough inspection
+    API has been specified as part of the standard and implemented in the main
+    libraries:
+
+    https://github.com/data-apis/array-api/issues/640
+    """
+    return _supports_dtype_cached(xp, _HashableDevice(device, xp), dtype)
+
+
+@lru_cache
+def _supports_dtype_cached(xp, device, dtype):
+    if not hasattr(xp, dtype):
+        return False
+
+    dtype = getattr(xp, dtype)
+
+    try:
+        array = xp.ones((1,), device=device.device, dtype=dtype)
+        array += array
+        float(array[0])
+    except Exception:
+        return False
+
+    return True
+
+
+def supported_float_dtypes(xp, device=None):
     """Supported floating point types for the namespace.
 
     Note: float16 is not officially part of the Array API spec at the
@@ -220,10 +282,16 @@ def supported_float_dtypes(xp):
 
     https://data-apis.org/array-api/latest/API_specification/data_types.html
     """
-    if hasattr(xp, "float16"):
-        return (xp.float64, xp.float32, xp.float16)
-    else:
-        return (xp.float64, xp.float32)
+    return _supported_float_dtypes_cached(xp, device=_HashableDevice(device, xp))
+
+
+@lru_cache
+def _supported_float_dtypes_cached(xp, device=None):
+    return tuple(
+        getattr(xp, dtype)
+        for dtype in ["float64", "float32", "float16"]
+        if _supports_dtype_cached(xp, device, dtype)
+    )
 
 
 def ensure_common_namespace_device(reference, *arrays):
@@ -277,6 +345,13 @@ class _ArrayAPIWrapper:
 
     def __eq__(self, other):
         return self._namespace == other._namespace
+
+    @property
+    def newaxis(self):
+        return None
+
+    def __hash__(self):
+        return hash((self._namespace, "_ArrayAPIWrapper"))
 
     def isdtype(self, dtype, kind):
         return isdtype(dtype, kind, xp=self._namespace)
@@ -521,7 +596,15 @@ def get_namespace(*arrays, remove_none=True, remove_types=(str,), xp=None):
     # message in case it is missing.
     import array_api_compat
 
-    namespace, is_array_api_compliant = array_api_compat.get_namespace(*arrays), True
+    try:
+        namespace, is_array_api_compliant = (
+            array_api_compat.get_namespace(*arrays),
+            True,
+        )
+    except TypeError as e:
+        if "is not a supported array type" in repr(e):
+            return _NUMPY_API_WRAPPER_INSTANCE, False
+        raise
 
     # These namespaces need additional wrapping to smooth out small differences
     # between implementations
@@ -688,6 +771,42 @@ def _nanmax(X, axis=None, xp=None):
         if xp.any(mask):
             X = xp.where(mask, xp.asarray(xp.nan), X)
         return X
+
+
+def _nansum(X, axis=None, dtype=None, xp=None):
+    # TODO: refactor once nan-aware reductions are standardized:
+    # https://github.com/data-apis/array-api/issues/621
+    if xp is None:
+        xp, _ = get_namespace(X)
+
+    if _is_numpy_namespace(xp):
+        return xp.asarray(numpy.nansum(X, axis=axis, dtype=dtype))
+
+    else:
+        mask = xp.isnan(X)
+        return xp.sum(
+            xp.where(mask, xp.asarray(0.0, dtype=X.dtype, device=device(X)), X),
+            axis=axis,
+            dtype=dtype,
+        )
+
+
+def _signbit(X, X_isinf=None, xp=None):
+    # TODO: refactor once signbit is standardized:
+    # https://github.com/data-apis/array-api/issues/670
+    if xp is None:
+        xp, _ = get_namespace(X)
+
+    if _is_numpy_namespace(xp):
+        return numpy.signbit(X)
+
+    # NB: this trick is necessary because signbit(0) can be either True or False,
+    # and it affects the result from +-inf/0, despite always having +0 == -0 !
+
+    # This step to avoid invalid inf/+-inf division
+    X = xp.where(X_isinf or xp.isinf(X), xp.sign(X), X)
+
+    return (xp.inf / X) < 0
 
 
 def _asarray_with_order(array, dtype=None, order=None, copy=None, *, xp=None):

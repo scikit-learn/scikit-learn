@@ -95,6 +95,9 @@ Estimators
 
 - :class:`decomposition.PCA` (with `svd_solver="full"`,
   `svd_solver="randomized"` and `power_iteration_normalizer="QR"`)
+- :class:`linear_model.Ridge` (with `solver="svd"`)
+- :class:`linear_model.RidgeCV`
+- :class:`linear_model.RidgeClassifierCV`
 - :class:`discriminant_analysis.LinearDiscriminantAnalysis` (with `solver="svd"`)
 - :class:`preprocessing.KernelCenterer`
 - :class:`preprocessing.MaxAbsScaler`
