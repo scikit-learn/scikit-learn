@@ -288,6 +288,10 @@ Changelog
 :mod:`sklearn.model_selection`
 ..............................
 
+- |Feature| added :class:`model_selection.RepeatedStratifiedGroupKFold`, that repeats
+  the :class:`model_selection.StratifiedGroupKFold` n times.
+  :pr:`24227` by :user:`Kevin Arvai <arvkevi>`.
+
 - |Enhancement| :term:`CV splitters <CV splitter>` that ignores the group parameter now
   raises a warning when groups are passed in to :term:`split`. :pr:`28210` by
 - |Fix| the ``cv_results_`` attribute (of :class:`model_selection.GridSearchCV`) now
