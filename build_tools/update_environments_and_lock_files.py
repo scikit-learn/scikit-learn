@@ -127,6 +127,10 @@ build_metadata_list = [
             "ccache",
             "compilers",
             "llvm-openmp",
+            # Test Array API with PyTorch on a non-CPU (MPS) device:
+            "pytorch",
+            "pytorch-cpu",
+            "array-api-compat",
         ],
         "package_constraints": {
             "blas": "[build=mkl]",
