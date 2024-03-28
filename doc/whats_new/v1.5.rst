@@ -22,6 +22,15 @@ Version 1.5.0
 
 **In Development**
 
+Changed models
+--------------
+
+- |Efficiency| The subsampling in :class:`preprocessing.QuantileTransformer` is now
+  more efficient for dense arrays but the fitted quantiles and the results of
+  `transform` may be slightly different than before (keeping the same statistical
+  properties).
+  :pr:`27344` by :user:`Xuefeng Xu <xuefeng-xu>`.
+
 Support for Array API
 ---------------------
 
