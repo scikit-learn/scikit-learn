@@ -1236,7 +1236,7 @@ class RequestMethod:
 
     def __get__(self, instance, owner):
         # we would want to have a method which accepts only the expected args
-        def func(**kw):
+        def func(*args, **kw):
             """Updates the request for provided parameters
 
             This docstring is overwritten below.
@@ -1255,15 +1255,32 @@ class RequestMethod:
                     f"Accepted arguments are: {set(self.keys)}"
                 )
 
-            requests = instance._get_metadata_request()
+            # This makes it possible to use the decorated method as an unbound method,
+            # for instance when monkeypatching.
+            # https://github.com/scikit-learn/scikit-learn/issues/28632
+            if instance is None:
+                _instance = args[0]
+                args = args[1:]
+            else:
+                _instance = instance
+
+            # Replicating python's behavior when positional args are given other than
+            # `self`, and `self` is only allowed if this method is unbound.
+            if args:
+                raise TypeError(
+                    f"set_{self.name}_request() takes 0 positional argument but"
+                    f" {len(args)} were given"
+                )
+
+            requests = _instance._get_metadata_request()
             method_metadata_request = getattr(requests, self.name)
 
             for prop, alias in kw.items():
                 if alias is not UNCHANGED:
                     method_metadata_request.add_request(param=prop, alias=alias)
-            instance._metadata_request = requests
+            _instance._metadata_request = requests
 
-            return instance
+            return _instance
 
         # Now we set the relevant attributes of the function so that it seems
         # like a normal method to the end user, with known expected arguments.
