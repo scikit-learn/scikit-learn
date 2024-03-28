@@ -162,6 +162,15 @@ div.sk-page-content details {
     margin: 4ex 0pt;
 }
 
+div.sk-page-content details[open] summary ~ * {
+  animation: fadein .35s ease-in-out;
+}
+
+@keyframes fadein {
+  0%    {opacity: 0; margin-top: -10px}
+  100%  {opacity: 1; margin-top: 0px}
+}
+
 div.sk-page-content summary.btn {
     display: list-item;
     padding: 6px 20px;
@@ -169,8 +178,7 @@ div.sk-page-content summary.btn {
 }
 
 div.sk-page-content details div.card {
-    padding: 0pt .5ex;
-    margin: 1ex 0pt;
+    padding: 1.25rem;
     border: 1px solid #e9ecef;
     border-left-width: .25rem;
     border-radius: .25rem;
@@ -491,13 +499,22 @@ div.section h6 {
   margin-top: 1rem;
 }
 
-.sk-btn-toggle-toc {
+.sk-btns-sk-btn-toggle-wrapper {
   position: fixed;
+  bottom: 0;
+  margin: 0;
+  z-index: 3;
+}
+
+.sk-btn-toggle {
+  position: relative;
   bottom: 0;
   margin: 0;
   border-radius: 0;
   border-top-right-radius: 0.5rem;
-  z-index: 3;
+  border-top-left-radius: 0.5rem;
+  width: 115px;
+  font-size: small;
   cursor: pointer;
 }
 
@@ -506,12 +523,12 @@ div.sk-page-content {
 }
 
 @media screen and (min-width: 1400px) {
-  .sk-btn-toggle-toc {
+  .sk-btn-toggle {
     border-top-left-radius: 0.5rem;
   }
 }
 
-.sk-btn-toggle-toc:hover {
+.sk-btn-toggle:hover {
   color: white;
   background-color: #297ca7;
 }
