@@ -27,7 +27,7 @@ dtypes = [('64', 'double', 'np.float64'),
 """SAG and SAGA implementation"""
 
 import numpy as np
-from libc.math cimport fabs, exp, log
+from libc.math cimport exp, fabs, isfinite, log
 from libc.time cimport time, time_t
 
 from ._sgd_fast cimport LossFunction
@@ -37,14 +37,6 @@ from ..utils._seq_dataset cimport SequentialDataset32, SequentialDataset64
 
 from libc.stdio cimport printf
 
-
-{{for name_suffix, c_type, np_type in dtypes}}
-
-cdef extern from "_sgd_fast_helpers.h":
-    bint skl_isfinite{{name_suffix}}({{c_type}}) nogil
-
-
-{{endfor}}
 
 {{for name_suffix, c_type, np_type in dtypes}}
 
@@ -458,7 +450,7 @@ def sag{{name_suffix}}(
                                  num_seen * intercept_decay)
 
                         # check to see that the intercept is not inf or NaN
-                        if not skl_isfinite{{name_suffix}}(intercept_array[class_ind]):
+                        if not isfinite(intercept_array[class_ind]):
                             status = -1
                             break
                     # Break from the n_samples outer loop if an error happened
@@ -668,7 +660,7 @@ cdef int lagged_update{{name_suffix}}(
                 weights[idx] -= cum_sum * sum_gradient[idx]
                 if reset:
                     weights[idx] *= wscale
-                    if not skl_isfinite{{name_suffix}}(weights[idx]):
+                    if not isfinite(weights[idx]):
                         # returning here does not require the gil as the return
                         # type is a C integer
                         return -1
@@ -704,7 +696,7 @@ cdef int lagged_update{{name_suffix}}(
                 if reset:
                     weights[idx] *= wscale
                     # check to see that the weight is not inf or NaN
-                    if not skl_isfinite{{name_suffix}}(weights[idx]):
+                    if not isfinite(weights[idx]):
                         return -1
         if reset:
             feature_hist[feature_ind] = sample_itr % n_samples

@@ -27,6 +27,10 @@ Metadata Routing
   attributes.
   :pr:`28435` by `Adrin Jalali`_.
 
+- |FIX| Fix an issue when `set_{method}_request` methods are used as unbound
+  methods, which can happen if one tries to decorate them.
+  :pr:`28651` by `Adrin Jalali`_.
+
 Changelog
 ---------
 
@@ -36,6 +40,10 @@ Changelog
 - |Fix|:class:`metrics.classification_report` now shows only accuracy and not
   micro-average when input is a subset of labels.
   :pr:`28399` by :user:`Vineet Joshi <vjoshi253>`.
+
+- |Fix| Fix OpenBLAS 0.3.26 dead-lock on Windows in pairwise distances
+  computation. This is likely to affect neighbor-based algorithms.
+  :pr:`28692` by :user:`Loïc Estève <lesteve>`.
 
 :mod:`sklearn.mixture`
 ......................
