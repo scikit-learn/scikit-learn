@@ -340,9 +340,9 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
         Parameters
         ----------
         theta : array-like of shape (n_kernel_params,), default=None
-            Kernel hyperparameters for which the log-marginal likelihood is
-            evaluated. If None, the precomputed log_marginal_likelihood
-            of ``self.kernel_.theta`` is returned.
+            Log-transformed kernel hyperparameters for which the log-marginal
+            likelihood is evaluated. If None, the precomputed
+            log_marginal_likelihood of ``self.kernel_.theta`` is returned.
 
         eval_gradient : bool, default=False
             If True, the gradient of the log-marginal likelihood with respect
@@ -827,12 +827,12 @@ class GaussianProcessClassifier(ClassifierMixin, BaseEstimator):
         Parameters
         ----------
         theta : array-like of shape (n_kernel_params,), default=None
-            Kernel hyperparameters for which the log-marginal likelihood is
-            evaluated. In the case of multi-class classification, theta may
-            be the  hyperparameters of the compound kernel or of an individual
-            kernel. In the latter case, all individual kernel get assigned the
-            same theta values. If None, the precomputed log_marginal_likelihood
-            of ``self.kernel_.theta`` is returned.
+            Log-transformed kernel hyperparameters for which the log-marginal
+            likelihood is evaluated. In the case of multi-class classification,
+            theta may be the  hyperparameters of the compound kernel or of an
+            individual kernel. In the latter case, all individual kernel get
+            assigned the same theta values. If None, the precomputed
+            log_marginal_likelihood of ``self.kernel_.theta`` is returned.
 
         eval_gradient : bool, default=False
             If True, the gradient of the log-marginal likelihood with respect

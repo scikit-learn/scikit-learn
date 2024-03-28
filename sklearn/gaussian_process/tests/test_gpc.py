@@ -118,6 +118,26 @@ def test_lml_gradient(kernel):
     assert_almost_equal(lml_gradient, lml_gradient_approx, 3)
 
 
+@pytest.mark.parametrize("kernel", non_fixed_kernels)
+def test_lml_log_theta_input(kernel):
+    """Show that log_marginal_likelihood() expects log(theta) as argument."""
+
+    # Use non_fixed_kernels because len(gp.kernel_.theta) = 0 for fixed_kernel (no
+    # optimization done).
+
+    gp = GaussianProcessClassifier(kernel=kernel).fit(X, y)
+
+    log_theta = gp.kernel_.theta
+    theta_dct = gp.kernel_.get_params()
+    theta = np.array([theta_dct[hp.name] for hp in gp.kernel_.hyperparameters])
+
+    assert_almost_equal(
+        gp.log_marginal_likelihood(log_theta),
+        gp.log_marginal_likelihood_value_,
+    )
+    assert_almost_equal(np.exp(log_theta), theta)
+
+
 def test_random_starts(global_random_seed):
     # Test that an increasing number of random-starts of GP fitting only
     # increases the log marginal likelihood of the chosen theta.
