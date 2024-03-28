@@ -13,6 +13,38 @@ from .fixes import parse_version
 _NUMPY_NAMESPACE_NAMES = {"numpy", "array_api_compat.numpy"}
 
 
+def yield_namespaces(include_numpy_namespaces=True):
+    """Yield supported namespace.
+
+    This is meant to be used for testing purposes only.
+
+    Parameters
+    ----------
+    include_numpy_namespaces : bool, default=True
+        If True, also yield numpy namespaces.
+
+    Returns
+    -------
+    array_namespace : str
+        The name of the Array API namespace.
+    """
+    for array_namespace in [
+        # The following is used to test the array_api_compat wrapper when
+        # array_api_dispatch is enabled: in particular, the arrays used in the
+        # tests are regular numpy arrays without any "device" attribute.
+        "numpy",
+        # Stricter NumPy-based Array API implementation. The
+        # array_api_strict.Array instances always have a dummy "device" attribute.
+        "array_api_strict",
+        "cupy",
+        "cupy.array_api",
+        "torch",
+    ]:
+        if not include_numpy_namespaces and array_namespace in _NUMPY_NAMESPACE_NAMES:
+            continue
+        yield array_namespace
+
+
 def yield_namespace_device_dtype_combinations(include_numpy_namespaces=True):
     """Yield supported namespace, device, dtype tuples for testing.
 
@@ -36,20 +68,9 @@ def yield_namespace_device_dtype_combinations(include_numpy_namespaces=True):
         The name of the data type to use for arrays. Can be None to indicate
         that the default value should be used.
     """
-    for array_namespace in [
-        # The following is used to test the array_api_compat wrapper when
-        # array_api_dispatch is enabled: in particular, the arrays used in the
-        # tests are regular numpy arrays without any "device" attribute.
-        "numpy",
-        # Stricter NumPy-based Array API implementation. The
-        # array_api_strict.Array instances always have a dummy "device" attribute.
-        "array_api_strict",
-        "cupy",
-        "cupy.array_api",
-        "torch",
-    ]:
-        if not include_numpy_namespaces and array_namespace in _NUMPY_NAMESPACE_NAMES:
-            continue
+    for array_namespace in yield_namespaces(
+        include_numpy_namespaces=include_numpy_namespaces
+    ):
         if array_namespace == "torch":
             for device, dtype in itertools.product(
                 ("cpu", "cuda"), ("float64", "float32")
@@ -531,6 +552,20 @@ def get_namespace(*arrays, remove_none=True, remove_types=(str,), xp=None):
     return namespace, is_array_api_compliant
 
 
+def get_namespace_and_device(*array_list, remove_none=True, remove_types=(str,)):
+    """Combination into one single function of `get_namespace` and `device`."""
+    array_list = _remove_non_arrays(
+        *array_list, remove_none=remove_none, remove_types=remove_types
+    )
+
+    skip_remove_kwargs = dict(remove_none=False, remove_types=[])
+
+    return (
+        *get_namespace(*array_list, **skip_remove_kwargs),
+        device(*array_list, **skip_remove_kwargs),
+    )
+
+
 def _expit(X, xp=None):
     xp, _ = get_namespace(X, xp=xp)
     if _is_numpy_namespace(xp):
@@ -588,10 +623,7 @@ def _average(a, axis=None, weights=None, normalize=True, xp=None):
     https://numpy.org/doc/stable/reference/generated/numpy.average.html but
     only for the common cases needed in scikit-learn.
     """
-    input_arrays = [a, weights]
-    xp, _ = get_namespace(*input_arrays, xp=xp)
-
-    device_ = device(*input_arrays)
+    xp, _, device_ = get_namespace_and_device(a, weights)
 
     if _is_numpy_namespace(xp):
         if normalize:
@@ -690,7 +722,9 @@ def _nanmax(X, axis=None, xp=None):
         return X
 
 
-def _asarray_with_order(array, dtype=None, order=None, copy=None, *, xp=None):
+def _asarray_with_order(
+    array, dtype=None, order=None, copy=None, *, xp=None, device=None
+):
     """Helper to support the order kwarg only for NumPy-backed arrays
 
     Memory layout parameter `order` is not exposed in the Array API standard,
@@ -715,7 +749,21 @@ def _asarray_with_order(array, dtype=None, order=None, copy=None, *, xp=None):
         # container that is consistent with the input's namespace.
         return xp.asarray(array)
     else:
-        return xp.asarray(array, dtype=dtype, copy=copy)
+        return xp.asarray(array, dtype=dtype, copy=copy, device=device)
+
+
+def _ravel(array, xp=None):
+    """Array API compliant version of np.ravel.
+
+    For non numpy namespaces, it just returns a flattened array, that might
+    be or not be a copy.
+    """
+    xp, _ = get_namespace(array, xp=xp)
+    if _is_numpy_namespace(xp):
+        array = numpy.asarray(array)
+        return xp.asarray(numpy.ravel(array, order="C"))
+
+    return xp.reshape(array, shape=(-1,))
 
 
 def _convert_to_numpy(array, xp):

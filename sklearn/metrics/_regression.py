@@ -37,8 +37,9 @@ from ..exceptions import UndefinedMetricWarning
 from ..utils._array_api import (
     _average,
     _find_matching_floating_dtype,
-    device,
     get_namespace,
+    get_namespace_and_device,
+    size,
 )
 from ..utils._param_validation import Hidden, Interval, StrOptions, validate_params
 from ..utils.stats import _weighted_percentile
@@ -907,7 +908,7 @@ def _assemble_r2_explained_variance(
         avg_weights = multioutput
 
     result = _average(output_scores, weights=avg_weights)
-    if result.size == 1:
+    if size(result) == 1:
         return float(result)
     return result
 
@@ -1194,9 +1195,9 @@ def r2_score(
     >>> r2_score(y_true, y_pred, force_finite=False)
     -inf
     """
-    input_arrays = [y_true, y_pred, sample_weight, multioutput]
-    xp, _ = get_namespace(*input_arrays)
-    device_ = device(*input_arrays)
+    xp, _, device_ = get_namespace_and_device(
+        y_true, y_pred, sample_weight, multioutput
+    )
 
     dtype = _find_matching_floating_dtype(y_true, y_pred, sample_weight, xp=xp)
 
