@@ -33,7 +33,7 @@ from ..utils import (
     check_random_state,
     compute_class_weight,
 )
-from ..utils._param_validation import Interval, StrOptions
+from ..utils._param_validation import Hidden, Interval, StrOptions
 from ..utils.extmath import row_norms, softmax
 from ..utils.metadata_routing import (
     MetadataRouter,
@@ -956,6 +956,9 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
            Stochastic Average Gradient descent solver for 'multinomial' case.
         .. versionchanged:: 0.22
             Default changed from 'ovr' to 'auto' in 0.22.
+        .. deprecated:: 1.5
+           ``multi_class`` was deprecated in version 1.5 and will be removed in 1.7.
+           Use `sklearn.multiclass.OneVsRestClassifier(LogisticRegression())` instead.
 
     verbose : int, default=0
         For the liblinear and lbfgs solvers set verbose to any positive
@@ -1097,11 +1100,14 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
             )
         ],
         "max_iter": [Interval(Integral, 0, None, closed="left")],
-        "multi_class": [StrOptions({"auto", "ovr", "multinomial"})],
         "verbose": ["verbose"],
         "warm_start": ["boolean"],
         "n_jobs": [None, Integral],
         "l1_ratio": [Interval(Real, 0, 1, closed="both"), None],
+        "multi_class": [
+            StrOptions({"auto", "ovr", "multinomial"}),
+            Hidden(StrOptions({"deprecated"})),
+        ],
     }
 
     def __init__(
@@ -1117,7 +1123,7 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         random_state=None,
         solver="lbfgs",
         max_iter=100,
-        multi_class="auto",
+        multi_class="deprecated",
         verbose=0,
         warm_start=False,
         n_jobs=None,
@@ -1209,6 +1215,17 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         check_classification_targets(y)
         self.classes_ = np.unique(y)
 
+        if self.multi_class != "deprecated":
+            warnings.warn(
+                (
+                    "'multi_class' was deprecated in version 1.5 and will be removed in"
+                    " 1.7. Use OneVsRestClassifier(LogisticRegression(..)) instead."
+                ),
+                FutureWarning,
+            )
+        else:
+            # Set to old default value.
+            self.multi_class = "auto"
         multi_class = _check_multi_class(self.multi_class, solver, len(self.classes_))
 
         if solver == "liblinear":
