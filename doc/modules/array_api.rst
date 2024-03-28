@@ -100,6 +100,7 @@ Estimators
 - :class:`preprocessing.MaxAbsScaler`
 - :class:`preprocessing.MinMaxScaler`
 - :class:`preprocessing.Normalizer`
+- :class:`preprocessing.LabelBinarizer`
 
 Metrics
 -------

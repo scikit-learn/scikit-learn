@@ -17,6 +17,7 @@ import scipy.sparse as sp
 
 from ..base import BaseEstimator, TransformerMixin, _fit_context
 from ..utils import column_or_1d
+from ..utils._array_api import _convert_to_numpy, device, get_namespace
 from ..utils._encode import _encode, _unique
 from ..utils._param_validation import Interval, validate_params
 from ..utils.multiclass import type_of_target, unique_labels
@@ -303,7 +304,8 @@ class LabelBinarizer(TransformerMixin, BaseEstimator, auto_wrap_output_keys=None
             raise ValueError("y has 0 samples: %r" % y)
 
         self.sparse_input_ = sp.issparse(y)
-        self.classes_ = unique_labels(y)
+        xp, _ = get_namespace(y)
+        self.classes_ = _convert_to_numpy(unique_labels(y), xp)
         return self
 
     def fit_transform(self, y):
@@ -396,6 +398,11 @@ class LabelBinarizer(TransformerMixin, BaseEstimator, auto_wrap_output_keys=None
         """
         check_is_fitted(self)
 
+        xp, is_array_api_compliant = get_namespace(Y)
+        device_ = device(Y) if is_array_api_compliant else None
+        if not sp.issparse(Y):
+            Y = _convert_to_numpy(Y, xp)
+
         if threshold is None:
             threshold = (self.pos_label + self.neg_label) / 2.0
 
@@ -410,11 +417,13 @@ class LabelBinarizer(TransformerMixin, BaseEstimator, auto_wrap_output_keys=None
             y_inv = sp.csr_matrix(y_inv)
         elif sp.issparse(y_inv):
             y_inv = y_inv.toarray()
+        if is_array_api_compliant and not sp.issparse(y_inv):
+            y_inv = xp.asarray(y_inv, device=device_)
 
         return y_inv
 
     def _more_tags(self):
-        return {"X_types": ["1dlabels"]}
+        return {"X_types": ["1dlabels"], "array_api_support": True}
 
 
 @validate_params(
@@ -487,6 +496,13 @@ def label_binarize(y, *, classes, neg_label=0, pos_label=1, sparse_output=False)
            [0],
            [1]])
     """
+    y_xp, y_is_array_api = get_namespace(y)
+    if y_is_array_api:
+        device_ = device(y)
+        y = _convert_to_numpy(y, y_xp)
+    classes_xp, classes_is_array_api = get_namespace(classes)
+    if classes_is_array_api:
+        classes = _convert_to_numpy(classes, classes_xp)
     if not isinstance(y, list):
         # XXX Workaround that will be removed when list of list format is
         # dropped
@@ -535,7 +551,10 @@ def label_binarize(y, *, classes, neg_label=0, pos_label=1, sparse_output=False)
             else:
                 Y = np.zeros((len(y), 1), dtype=int)
                 Y += neg_label
-                return Y
+
+                if not y_is_array_api:
+                    return Y
+                return y_xp.asarray(Y, device=device_)
         elif len(classes) >= 3:
             y_type = "multiclass"
 
@@ -595,7 +614,9 @@ def label_binarize(y, *, classes, neg_label=0, pos_label=1, sparse_output=False)
         else:
             Y = Y[:, -1].reshape((-1, 1))
 
-    return Y
+    if not y_is_array_api:
+        return Y
+    return y_xp.asarray(Y, device=device_)
 
 
 def _inverse_binarize_multiclass(y, classes):
