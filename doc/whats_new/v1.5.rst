@@ -288,6 +288,11 @@ Changelog
 :mod:`sklearn.model_selection`
 ..............................
 
+- |MajorFeature| :class:`model_selection.TunedThresholdClassifier` calibrates
+  the decision threshold function of a binary classifier by maximizing a
+  classification metric through cross-validation.
+  :pr:`26120` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 - |Enhancement| :term:`CV splitters <CV splitter>` that ignores the group parameter now
   raises a warning when groups are passed in to :term:`split`. :pr:`28210` by
 - |Fix| the ``cv_results_`` attribute (of :class:`model_selection.GridSearchCV`) now
