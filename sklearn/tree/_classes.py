@@ -78,6 +78,7 @@ CRITERIA_REG = {
     "friedman_mse": _criterion.FriedmanMSE,
     "absolute_error": _criterion.MAE,
     "poisson": _criterion.Poisson,
+    "huber": _criterion.Huber,
 }
 
 DENSE_SPLITTERS = {"best": _splitter.BestSplitter, "random": _splitter.RandomSplitter}
@@ -141,6 +142,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         class_weight=None,
         ccp_alpha=0.0,
         monotonic_cst=None,
+        delta=1.0,
     ):
         self.criterion = criterion
         self.splitter = splitter
@@ -155,6 +157,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         self.class_weight = class_weight
         self.ccp_alpha = ccp_alpha
         self.monotonic_cst = monotonic_cst
+        self.delta = delta
 
     def get_depth(self):
         """Return the depth of the decision tree.
@@ -380,7 +383,12 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                     self.n_outputs_, self.n_classes_
                 )
             else:
-                criterion = CRITERIA_REG[self.criterion](self.n_outputs_, n_samples)
+                if self.criterion == "huber":
+                    criterion = CRITERIA_REG[self.criterion](
+                        self.n_outputs_, n_samples, self.delta
+                    )
+                else:
+                    criterion = CRITERIA_REG[self.criterion](self.n_outputs_, n_samples)
         else:
             # Make a deepcopy in case the criterion has mutable attributes that
             # might be shared and modified concurrently during parallel fitting
@@ -1098,7 +1106,7 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
     Parameters
     ----------
     criterion : {"squared_error", "friedman_mse", "absolute_error", \
-            "poisson"}, default="squared_error"
+            "poisson", "huber"}, default="squared_error"
         The function to measure the quality of a split. Supported criteria
         are "squared_error" for the mean squared error, which is equal to
         variance reduction as feature selection criterion and minimizes the L2
@@ -1106,7 +1114,8 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
         mean squared error with Friedman's improvement score for potential
         splits, "absolute_error" for the mean absolute error, which minimizes
         the L1 loss using the median of each terminal node, and "poisson" which
-        uses reduction in Poisson deviance to find splits.
+        uses reduction in Poisson deviance to find splits. "huber" uses Huber's Loss
+        function for robust regression.
 
         .. versionadded:: 0.18
            Mean Absolute Error (MAE) criterion.
@@ -1229,6 +1238,18 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
 
         .. versionadded:: 1.4
 
+    delta: positive float > 0.0, default=1.0
+        The delta parameter applies to the "huber" criterion and essentially
+        acts as a threshold to balance
+        between "squared_error" and "absolute_error". For errors smaller
+        than delta, the loss is quadratic and sensitive to the magnitude
+        of the error, making it efficient for minimizing small errors.
+        For larger errors, the loss becomes linear, which mitigates the
+        impact of outliers that would otherwise dramatically
+        affect the loss magnitude if "squared_error" were used.
+
+        .. versionadded:: 1.4
+
     Attributes
     ----------
     feature_importances_ : ndarray of shape (n_features,)
@@ -1308,7 +1329,9 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
     _parameter_constraints: dict = {
         **BaseDecisionTree._parameter_constraints,
         "criterion": [
-            StrOptions({"squared_error", "friedman_mse", "absolute_error", "poisson"}),
+            StrOptions(
+                {"squared_error", "friedman_mse", "absolute_error", "poisson", "huber"}
+            ),
             Hidden(Criterion),
         ],
     }
@@ -1328,6 +1351,7 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
         min_impurity_decrease=0.0,
         ccp_alpha=0.0,
         monotonic_cst=None,
+        delta=1.0,
     ):
         super().__init__(
             criterion=criterion,
@@ -1342,6 +1366,7 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
             min_impurity_decrease=min_impurity_decrease,
             ccp_alpha=ccp_alpha,
             monotonic_cst=monotonic_cst,
+            delta=delta,
         )
 
     @_fit_context(prefer_skip_nested_validation=True)
