@@ -1,5 +1,6 @@
 """Global configuration state and functions for management
 """
+import inspect
 import os
 import threading
 from contextlib import contextmanager as contextmanager
@@ -14,6 +15,8 @@ _global_config = {
     ),
     "enable_cython_pairwise_dist": True,
     "array_api_dispatch": False,
+    "engine_provider": (),
+    "engine_attributes": "engine_types",
     "transform_output": "default",
     "enable_metadata_routing": False,
     "skip_parameter_validation": False,
@@ -62,6 +65,8 @@ def set_config(
     pairwise_dist_chunk_size=None,
     enable_cython_pairwise_dist=None,
     array_api_dispatch=None,
+    engine_provider=None,
+    engine_attributes=None,
     transform_output=None,
     enable_metadata_routing=None,
     skip_parameter_validation=None,
@@ -133,6 +138,26 @@ def set_config(
 
         .. versionadded:: 1.2
 
+    engine_provider : str or sequence of {str, engine class}, default=None
+        Specify list of enabled computational engine implementations provided
+        by third party packages. Engines are enabled by listing the name of
+        the provider or listing an engine class directly.
+
+        See the :ref:`User Guide <engine>` for more details.
+
+        .. versionadded:: 1.4
+
+    engine_attributes : str, default=None
+        Enable conversion of estimator attributes to scikit-learn native
+        types by setting to "sklearn_types". By default attributes are
+        stored using engine native types. This avoids additional conversions
+        and memory transfers between host and device when calling `predict`/
+        `transform` after `fit` of an engine-aware estimator.
+
+        See the :ref:`User Guide <engine>` for more details.
+
+        .. versionadded:: 1.4
+
     transform_output : str, default=None
         Configure output of `transform` and `fit_transform`.
 
@@ -200,6 +225,18 @@ def set_config(
 
         _check_array_api_dispatch(array_api_dispatch)
         local_config["array_api_dispatch"] = array_api_dispatch
+    if engine_provider is not None:
+        # Single provider name was passed in
+        if isinstance(engine_provider, str):
+            engine_provider = (engine_provider,)
+        # Allow direct registration of engine classes to ease testing, debugging
+        # and benchmarking without having to register a fake package with metadata
+        # just to use a custom engine not meant to be used by end-users.
+        elif inspect.isclass(engine_provider):
+            engine_provider = (engine_provider,)
+        local_config["engine_provider"] = engine_provider
+    if engine_attributes is not None:
+        local_config["engine_attributes"] = engine_attributes
     if transform_output is not None:
         local_config["transform_output"] = transform_output
     if enable_metadata_routing is not None:
@@ -218,6 +255,8 @@ def config_context(
     pairwise_dist_chunk_size=None,
     enable_cython_pairwise_dist=None,
     array_api_dispatch=None,
+    engine_provider=None,
+    engine_attributes=None,
     transform_output=None,
     enable_metadata_routing=None,
     skip_parameter_validation=None,
@@ -287,6 +326,24 @@ def config_context(
         See the :ref:`User Guide <array_api>` for more details.
 
         .. versionadded:: 1.2
+
+    engine_provider : str or sequence of {str, engine class}, default=None
+        Specify list of enabled computational engine implementations provided
+        by third party packages. Engines are enabled by listing the name of
+        the provider or listing an engine class directly.
+
+        See the :ref:`User Guide <engine>` for more details.
+
+        .. versionadded:: 1.4
+
+    engine_attributes : str, default=None
+        Enable conversion of estimator attributes to scikit-learn native
+        types by setting to "sklearn_types". By default attributes are
+        stored using engine native types.
+
+        See the :ref:`User Guide <engine>` for more details.
+
+        .. versionadded:: 1.4
 
     transform_output : str, default=None
         Configure output of `transform` and `fit_transform`.
@@ -362,6 +419,8 @@ def config_context(
         pairwise_dist_chunk_size=pairwise_dist_chunk_size,
         enable_cython_pairwise_dist=enable_cython_pairwise_dist,
         array_api_dispatch=array_api_dispatch,
+        engine_provider=engine_provider,
+        engine_attributes=engine_attributes,
         transform_output=transform_output,
         enable_metadata_routing=enable_metadata_routing,
         skip_parameter_validation=skip_parameter_validation,

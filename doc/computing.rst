@@ -14,3 +14,4 @@ Computing with scikit-learn
     computing/scaling_strategies
     computing/computational_performance
     computing/parallelism
+    computing/engine
