@@ -1850,6 +1850,7 @@ array_api_metric_checkers = {
         check_array_api_binary_classification_metric,
         check_array_api_multiclass_classification_metric,
     ],
+    mean_tweedie_deviance: [check_array_api_regression_metric_1d],
     r2_score: [check_array_api_regression_metric],
 }
 
