@@ -22,6 +22,15 @@ Version 1.5.0
 
 **In Development**
 
+Changed models
+--------------
+
+- |Efficiency| The subsampling in :class:`preprocessing.QuantileTransformer` is now
+  more efficient for dense arrays but the fitted quantiles and the results of
+  `transform` may be slightly different than before (keeping the same statistical
+  properties).
+  :pr:`27344` by :user:`Xuefeng Xu <xuefeng-xu>`.
+
 Support for Array API
 ---------------------
 
@@ -124,6 +133,17 @@ Changelog
   if only `inverse_func` is provided without `func` (that would default to identity)
   being explicitly set as well.
   :pr:`28483` by :user:`Stefanie Senger <StefanieSenger>`.
+
+:mod:`sklearn.cross_decomposition`
+..................................
+
+- |API| Deprecates `Y` in favor of `y` in the methods fit, transform and inverse_transform of:
+  :class:`cross_decomposition.PLSRegression`.
+  :class:`cross_decomposition.PLSCanonical`,
+  :class:`cross_decomposition.CCA`,
+  and :class:`cross_decomposition.PLSSVD`.
+  `Y` will be removed in version 1.7.
+  :pr:`28604` by :user:`David Leon <davidleon123>`
 
 :mod:`sklearn.datasets`
 .......................
