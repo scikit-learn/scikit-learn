@@ -667,46 +667,91 @@ Model refinement
 ----------------
 
 Model refinement methods expand the user's level of control over the hyper-parameter
-tuning process by leveraging various model selection heuristics to promote
-more optimal models with balanced performance. Such control can be especially
-useful, for instance, when the user wishes to select the simplest model from
-among a group of similarly top-performing candidates with varying degrees of
-complexity. Model refinement might also be useful when the user aims to select the most
-interpretable or computationally efficient model from among a group of top-performing
-candidates.
+optimization process by constraining it to find a balance between the rote performance
+of a model (e.g., its accuracy, R2 score, or multi-metric criteria) and its
+\"favorability\" (e.g., simplicity, computational efficiency, interpretability).
+Formally, model refinement can be framed as a constrained optimization problem with
+three key components:
+
+1. **Performance Metric Score** (:math:`P`): A function that evaluates the performance
+of a model, :math:`m`, on a given dataset. This is the objective function that a
+SearchCV object uses by default and which we aim to optimize in traditional model
+selection.
+
+2. **Slack Constraint** (:math:`S`): A function that incorporates a slack variable into
+the model selection process, allowing for a trade-off between performance and
+favorability by defining an allowable margin of error in performance (e.g., within one
+standard error of the best score) or a similar concept.
+
+3. **Favorability Score** (:math:`F`): A user-defined function that evaluates the
+favorability of a model based on specified criteria. The criteria might include model
+complexity, interpretability, or other user-defined measures.
+
+Given these components, the model refinement problem can be expressed as follows:
+
+The goal is to select a model, :math:`m^*`, from a set of candidate models,
+:math:`\mathcal{M}`, such that :math:`m^*` optimizes a weighted combination of
+performance and favorability. More specifically,
+
+.. math::
+  m^* = \arg \max_{m \in \mathcal{M}} \big\{ \omega P(m) + (1 - \omega) F(m) \big\}
+
+which is further subject to a slack constraint on :math:`P`:
+
+.. math::
+  S(P(m^*), P(m)) \leq \delta
+
+where:
+
+- :math:`\omega` is a weighting parameter that balances the importance of performance versus favorability, with :math:`0 \leq \omega \leq 1`.
+
+- :math:`\delta` is a threshold that defines the allowable slack in performance to consider a model's favorability.
 
 Scikit-Learn provides two mechanisms for model refinement that can be easily extended
-to each of these scenarios using a common set of semantics. The first is after
+to each of these scenarios using a common set of semantics. The first is *after*
 conducting a SearchCV -- by fitting a
-:class:`~sklearn.model_selection.ScoreCutModelSelector` instance to the ``cv_results_``
+:class:`~sklearn.model_selection.ScoreCutModelSelector` instance, together with a
+:class:`~sklearn.model_selection.FavorabilityRanker` instance, to the ``cv_results_``
 attribute of a fitted instance of ``GridSearchCV``, ``RandomizedSearchCV``,  or
-``HalvingRandomSearchCV``. The second is while initializing a SearchCV -- by setting
+``HalvingRandomSearchCV``. The second is *before* conducting a SearchCV -- by setting
 the ``refit`` parameter in a ``GridSearchCV``, ``RandomizedSearchCV``, or
 ``RandomizedSearchCV`` instance to a callable function
-:func:`~sklearn.model_selection.promote` before running the search. In either case, the
-user can specify a :class:`~sklearn.model_selection.ScoreCutModelSelector` instance,
-comprising both a score slicing rule instance and a model ranking rule instance, to
-control the refinement strategy. Finally, model refinement supports composite
-estimators and parameter spaces, as well as both numeric and categorical hyperparameter
-data types.
+:func:`~sklearn.model_selection.promote` with a
+:class:`~sklearn.model_selection.FavorabilityRanker` instance. In either case, the model
+refinement process comprises two steps, respectively: (i) defining a slack constraint
+that determines the performance margin within which hyper-parameter optimization is
+relaxed to accommodate for secondary model favorability objectives; and (ii) defining a
+favorability ranking among the models whose performance falls within the margin defined
+by (i).
 
-In the case of refitting a ``GridSearchCV``, ``RandomizedSearchCV``, or
-``HalvingRandomSearchCV`` object with the simplest best-performing model, for example,
-one common constraint to use is the "One Standard Error Rule" (1-SE)
-(see :class:`~sklearn.model_selection.StandardErrorSlicer`). 1-SE is a heuristic for
-promoting the most parsimonious model whose cross-validated performance is not more
-than 1 standard error worse than the best CV performance. In effect, this technique
-helps to identify simpler, more generalizeable models, as those with the highest rote
-performance can be more prone to overfitting (Breiman et al., 1984).Although it is easy
-to demonstrate the value of 1-SE (e.g. see
-:ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_refit_callable.py`),
-the 1-SE criteria may be too rigid or lenient in some contexts. In these cases,
+The slack constraint, :math:`S(P(m^*), P(m))`, could be defined in various ways and
+with varying degrees of leniency depending on the application. For example, in the case
+of refitting a SearchCV object with the simplest best-performing model, for example,
+one common constraint to use is the "One Standard Error Rule" (1-SE) (see the
+:class:`~sklearn.model_selection._refine.StandardErrorSlicer`). 1-SE is a slack
+constraint for identifying the most parsimonious model whose cross-validated
+performance is not more than 1 standard error worse than the best CV performance. In
+this scenario, :math:`\delta` would be set to the standard error of the best model's
+performance, and :math:`S` could be defined as the absolute difference in performance:
+
+.. math::
+  S(P(m^*), P(m)) = |P(m^*) - P(m)|
+
+The benefit of constraining a SearchCV by a user-defined ranking of model complexity
+within such a 1-SE slack constraint, is that it can help to promote more generalizeable
+models, since those with the highest rote performance can be more prone to overfit
+(Breiman et al., 1984). Although it is easy to demonstrate the value of 1-SE,
+the 1-SE criteria alone may be too rigid or lenient in some contexts. In such cases, the
 :class:`~sklearn.model_selection.ScoreCutModelSelector` also supports other score
 slicing rules, including:
 
-    :class:`~sklearn.model_selection.PercentileSlicer`
-    :class:`~sklearn.model_selection.WilcoxonSlicer`
-    :class:`~sklearn.model_selection.FixedWindowSlicer`
+.. currentmodule:: sklearn
+
+.. autosummary::
+
+    model_selection.PercentileSlicer
+    model_selection.WilcoxonSlicer
+    model_selection.FixedWindowSlicer
 
 These callable classes follow a common structure that subclasses
 :class:`~sklearn.model_selection.BaseScoreSlicer`, enabling users to easily define
