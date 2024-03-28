@@ -4,6 +4,7 @@ import numpy as np
 import pytest
 from numpy.testing import assert_array_equal
 
+from sklearn.base import BaseEstimator
 from sklearn.datasets import load_iris, make_blobs
 from sklearn.ensemble import StackingClassifier
 from sklearn.exceptions import NotFittedError
@@ -343,3 +344,111 @@ def test_self_training_estimator_attribute_error():
         self_training.fit(X_train, y_train_missing_labels).decision_function(X_train)
     assert isinstance(exec_info.value.__cause__, AttributeError)
     assert inner_msg in str(exec_info.value.__cause__)
+
+
+# Test that metadata is routed correctly for pipelines
+# ====================================================
+
+
+class SimpleEstimator(BaseEstimator):
+    classes_ = [0, 1, 2]
+
+    # This class is used in this section for testing routing in the pipeline.
+    # This class should have every set_{method}_request
+    def fit(self, X, y, sample_weight=None, prop=None):
+        # assert sample_weight is not None
+        # assert prop is not None
+        return self
+
+    def fit_predict(self, X, y, sample_weight=None, prop=None):
+        assert sample_weight is not None
+        assert prop is not None
+
+    def predict(self, X, sample_weight=None, prop=None):
+        assert sample_weight is not None
+        assert prop is not None
+
+    def predict_proba(self, X, sample_weight=None, prop=None):
+        assert sample_weight is not None
+        assert prop is not None
+
+    def predict_log_proba(self, X, sample_weight=None, prop=None):
+        assert sample_weight is not None
+        assert prop is not None
+
+    def decision_function(self, X, sample_weight=None, prop=None):
+        assert sample_weight is not None
+        assert prop is not None
+
+    def score(self, X, y, sample_weight=None, prop=None):
+        assert sample_weight is not None
+        assert prop is not None
+
+
+SIMPLE_METHODS = [
+    "fit",
+    "predict",
+    "predict_proba",
+    "predict_log_proba",
+    "decision_function",
+    "score",
+]
+
+
+@pytest.mark.usefixtures("enable_slep006")
+# split and partial_fit not relevant for pipelines
+@pytest.mark.parametrize("method", sorted(set(SIMPLE_METHODS)))
+def test_metadata_routing_for_self_training_classifier(method):
+    """Test that metadata is routed correctly for pipelines."""
+
+    def set_request(est, method, **kwarg):
+        """Set requests for a given method.
+
+        If the given method is a composite method, set the same requests for
+        all the methods that compose it.
+        """
+        getattr(est, f"set_{method}_request")(**kwarg)
+        return est
+
+    X, y = [[1]], [1]
+    sample_weight, prop = [1], "a"
+
+    # test that metadata is routed correctly for pipelines when requested
+    est = SimpleEstimator()
+    est = set_request(est, method, sample_weight=True, prop=True)
+    est = set_request(est, "fit", sample_weight=True, prop=True)
+
+    clf = SelfTrainingClassifier(base_estimator=est)
+    clf = clf.fit([[1]], [1], sample_weight=sample_weight, prop=prop)
+
+    try:
+        getattr(clf, method)(X, y, sample_weight=sample_weight, prop=prop)
+    except TypeError:
+        # Some methods don't accept y
+        getattr(clf, method)(X, sample_weight=sample_weight, prop=prop)
+
+
+@pytest.mark.filterwarnings("ignore:y contains no unlabeled samples:UserWarning")
+@pytest.mark.parametrize(
+    "method", ["decision_function", "predict_log_proba", "predict_proba", "predict"]
+)
+def test_routing_passed_metadata_not_supported(method):
+    """Test that the right error message is raised when metadata is passed while
+    not supported when `enable_metadata_routing=False`."""
+
+    est = SelfTrainingClassifier(base_estimator=SimpleEstimator())
+    with pytest.raises(
+        ValueError, match="is only supported if enable_metadata_routing=True"
+    ):
+        est.fit([[1], [1]], [1, 1], sample_weight=[1])
+
+    est = SelfTrainingClassifier(base_estimator=SimpleEstimator())
+    est.fit([[1], [1]], [1, 1])
+    with pytest.raises(
+        ValueError, match="is only supported if enable_metadata_routing=True"
+    ):
+        getattr(est, method)([[1]], sample_weight=[1], prop="a")
+
+
+# End of routing tests
+# ====================
