@@ -295,6 +295,7 @@ jobs:
         DISTRIB: 'conda'
         LOCK_FILE: './build_tools/azure/pylatest_conda_forge_mkl_osx-64_conda.lock'
         SKLEARN_TESTS_GLOBAL_RANDOM_SEED: '5'  # non-default seed
+        PYTORCH_ENABLE_MPS_FALLBACK: '1'  # Array API tests with PyTorch on MPS device
       pylatest_conda_mkl_no_openmp:
         DISTRIB: 'conda'
         LOCK_FILE: './build_tools/azure/pylatest_conda_mkl_no_openmp_osx-64_conda.lock'
