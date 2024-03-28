@@ -704,6 +704,7 @@ def test_standard_check_array_of_inverse_transform():
         Normalizer(norm="l1"),
         Normalizer(norm="l2"),
         Normalizer(norm="max"),
+        Binarizer(),
     ],
     ids=_get_check_estimator_ids,
 )
