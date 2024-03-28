@@ -718,11 +718,11 @@ the ``refit`` parameter in a ``GridSearchCV``, ``RandomizedSearchCV``, or
 ``RandomizedSearchCV`` instance to a callable function
 :func:`~sklearn.model_selection.promote` with a
 :class:`~sklearn.model_selection.FavorabilityRanker` instance. In either case, the model
-refinement process comprises two steps, respectively: (i) defining a slack constraint
-that determines the performance margin within which hyper-parameter optimization is
-relaxed to accommodate for secondary model favorability objectives; and (ii) defining a
-favorability ranking among the models whose performance falls within the margin defined
-by (i).
+refinement process comprises two steps, respectively: (i) specifying a rule for
+defining a margin of model performance, wherein hyper-parameter optimization is relaxed
+to accommodate for secondary model favorability objectives; and (ii) specifying a
+ranking of hyper-parameter values, for each searched hyperparameter, whose
+corresponding model performance falls within the margin defined by (i).
 
 The slack constraint, :math:`S(P(m^*), P(m))`, could be defined in various ways and
 with varying degrees of leniency depending on the application. For example, in the case
@@ -738,7 +738,7 @@ performance, and :math:`S` could be defined as the absolute difference in perfor
   S(P(m^*), P(m)) = |P(m^*) - P(m)|
 
 The benefit of constraining a SearchCV by a user-defined ranking of model complexity
-within such a 1-SE slack constraint, is that it can help to promote more generalizeable
+within a 1-SE performance margin, is that it can help to promote more generalizeable
 models, since those with the highest rote performance can be more prone to overfit
 (Breiman et al., 1984). Although it is easy to demonstrate the value of 1-SE,
 the 1-SE criteria alone may be too rigid or lenient in some contexts. In such cases, the
