@@ -134,6 +134,17 @@ Changelog
   being explicitly set as well.
   :pr:`28483` by :user:`Stefanie Senger <StefanieSenger>`.
 
+:mod:`sklearn.cross_decomposition`
+..................................
+
+- |API| Deprecates `Y` in favor of `y` in the methods fit, transform and inverse_transform of:
+  :class:`cross_decomposition.PLSRegression`.
+  :class:`cross_decomposition.PLSCanonical`,
+  :class:`cross_decomposition.CCA`,
+  and :class:`cross_decomposition.PLSSVD`.
+  `Y` will be removed in version 1.7.
+  :pr:`28604` by :user:`David Leon <davidleon123>`
+
 :mod:`sklearn.datasets`
 .......................
 
