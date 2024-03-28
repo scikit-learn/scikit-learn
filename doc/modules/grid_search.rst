@@ -716,7 +716,7 @@ attribute of a fitted instance of ``GridSearchCV``, ``RandomizedSearchCV``,  or
 ``HalvingRandomSearchCV``. The second is *before* conducting a SearchCV -- by setting
 the ``refit`` parameter in a ``GridSearchCV``, ``RandomizedSearchCV``, or
 ``RandomizedSearchCV`` instance to a callable function
-:func:`~sklearn.model_selection.promote` with a
+:func:`~sklearn.model_selection.promote` with an accompanying
 :class:`~sklearn.model_selection.FavorabilityRanker` instance. In either case, the model
 refinement process comprises two steps, respectively: (i) specifying a rule for
 defining a margin of model performance, wherein hyper-parameter optimization is relaxed
@@ -740,7 +740,8 @@ not more than 1 standard error worse than the best CV performance. In this scena
 The benefit of constraining a SearchCV by a user-defined ranking of model complexity
 within a 1-SE performance margin, is that it can help to promote more generalizeable
 models, since those with the highest rote performance can be more prone to overfit
-(Breiman et al., 1984). Although it is easy to demonstrate the value of 1-SE,
+(Breiman et al., 1984). Although it is easy to demonstrate the value of 1-SE (e.g. see
+:ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_refit_callable.py`),
 the 1-SE criteria alone may be too rigid or lenient in some contexts. In such cases, the
 :class:`~sklearn.model_selection.ScoreCutModelSelector` also supports other score
 slicing rules, including:
