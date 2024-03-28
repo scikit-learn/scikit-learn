@@ -11,7 +11,6 @@ from sklearn.preprocessing._label import (
     _inverse_binarize_thresholding,
     label_binarize,
 )
-from sklearn.utils import _to_object_array
 from sklearn.utils._array_api import (
     _convert_to_numpy,
     get_namespace,
@@ -30,6 +29,7 @@ from sklearn.utils.fixes import (
     LIL_CONTAINERS,
 )
 from sklearn.utils.multiclass import type_of_target
+from sklearn.utils.validation import _to_object_array
 
 iris = datasets.load_iris()
 
