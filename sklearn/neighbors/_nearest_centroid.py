@@ -8,6 +8,7 @@ Nearest Centroid Classification
 # License: BSD 3 clause
 
 import warnings
+from functools import partial
 from numbers import Real
 
 import numpy as np
@@ -90,10 +91,16 @@ class NearestCentroid(ClassifierMixin, BaseEstimator):
 
     References
     ----------
-    Tibshirani, R., Hastie, T., Narasimhan, B., & Chu, G. (2002). Diagnosis of
-    multiple cancer types by shrunken centroids of gene expression. Proceedings
-    of the National Academy of Sciences of the United States of America,
-    99(10), 6567-6572. The National Academy of Sciences.
+    .. [1] `Tibshirani, R., Hastie, T., Narasimhan, B., & Chu, G. (2002). Diagnosis of
+       multiple cancer types by shrunken centroids of gene expression. Proceedings
+       of the National Academy of Sciences of the United States of America,
+       99(10), 6567-6572. The National Academy of Sciences.
+       <https://www.pnas.org/doi/full/10.1073/pnas.082099299>`_
+
+    .. [2] `Tibshirani, R., Hastie, T., Narasimhan, B., & Chu, G. (2003). Class
+       prediction by nearest shrunken centroids, with applications to DNA
+       microarrays. Statistical Science, 104-117.
+       <https://web.archive.org/web/20040912071135id_/http://www-stat-class.stanford.edu:80/~tibs/ftp/STS040.pdf>`_
 
     Examples
     --------
@@ -162,73 +169,86 @@ class NearestCentroid(ClassifierMixin, BaseEstimator):
             X, y = self._validate_data(X, y, accept_sparse=["csc"])
         else:
             X, y = self._validate_data(X, y, accept_sparse=["csr", "csc"])
+
         is_X_sparse = sp.issparse(X)
         if is_X_sparse and self.shrink_threshold:
             raise ValueError("threshold shrinking not supported for sparse input")
+
         check_classification_targets(y)
 
-        n_samples, n_features = X.shape
         le = LabelEncoder()
         y_ind = le.fit_transform(y)
         self.classes_ = classes = le.classes_
+
         n_classes = classes.size
         if n_classes < 2:
             raise ValueError(
-                "The number of classes has to be greater than one; got %d class"
-                % (n_classes)
+                "The number of classes has to be greater than one; got"
+                f" {n_classes} class."
             )
 
-        # Mask mapping each class to its members.
-        self.centroids_ = np.empty((n_classes, n_features), dtype=np.float64)
-        # Number of clusters in each class.
-        nk = np.zeros(n_classes)
-
-        for cur_class in range(n_classes):
-            center_mask = y_ind == cur_class
-            nk[cur_class] = np.sum(center_mask)
+        # Choose the function from computing centroids.
+        if self.metric == "manhattan":
+            # NumPy does not calculate median of sparse matrices.
             if is_X_sparse:
-                center_mask = np.where(center_mask)[0]
-
-            if self.metric == "manhattan":
-                # NumPy does not calculate median of sparse matrices.
-                if not is_X_sparse:
-                    self.centroids_[cur_class] = np.median(X[center_mask], axis=0)
-                else:
-                    self.centroids_[cur_class] = csc_median_axis_0(X[center_mask])
+                compute_centroid = csc_median_axis_0
             else:
-                # TODO(1.5) remove warning when metric is only manhattan or euclidean
-                if self.metric != "euclidean":
-                    warnings.warn(
-                        "Averaging for metrics other than "
-                        "euclidean and manhattan not supported. "
-                        "The average is set to be the mean."
-                    )
-                self.centroids_[cur_class] = X[center_mask].mean(axis=0)
+                compute_centroid = partial(np.median, axis=0)
+        else:
+            # TODO(1.5) remove warning when metric is only manhattan or euclidean
+            if self.metric != "euclidean":
+                warnings.warn(
+                    "Averaging for metrics other than "
+                    "euclidean and manhattan not supported. "
+                    "The average is set to be the mean."
+                )
+            compute_centroid = partial(np.mean, axis=0)
 
-        if self.shrink_threshold:
+        # Choose the transformation for boolean class mask vector.
+        if is_X_sparse:
+            mask_trf = lambda mask: np.where(mask)[0]  # noqa: E731
+        else:
+            mask_trf = lambda mask: mask  # noqa: E731
+
+        n_samples, n_features = X.shape
+
+        # Compute the centroids.
+        self.centroids_ = np.empty((n_classes, n_features), dtype=np.float64)
+        for cur_class in range(n_classes):
+            class_mask = mask_trf(y_ind == cur_class)
+            self.centroids_[cur_class] = compute_centroid(X[class_mask])
+
+        if self.shrink_threshold is not None:
             if np.all(np.ptp(X, axis=0) == 0):
                 raise ValueError("All features have zero variance. Division by zero.")
-            dataset_centroid_ = np.mean(X, axis=0)
+
+            nk = np.bincount(y_ind)
 
             # m parameter for determining deviation
-            m = np.sqrt((1.0 / nk) - (1.0 / n_samples))
+            m = np.sqrt((n_samples - nk) / (n_samples * nk))
+
             # Calculate deviation using the standard deviation of centroids.
             variance = (X - self.centroids_[y_ind]) ** 2
-            variance = variance.sum(axis=0)
-            s = np.sqrt(variance / (n_samples - n_classes))
+            variance = variance.sum(axis=0) / (n_samples - n_classes)
+            s = np.sqrt(variance)
             s += np.median(s)  # To deter outliers from affecting the results.
             mm = m.reshape(len(m), 1)  # Reshape to allow broadcasting.
             ms = mm * s
+
+            dataset_centroid_ = np.mean(X, axis=0)
             deviation = (self.centroids_ - dataset_centroid_) / ms
+
             # Soft thresholding: if the deviation crosses 0 during shrinking,
             # it becomes zero.
             signs = np.sign(deviation)
             deviation = np.abs(deviation) - self.shrink_threshold
             np.clip(deviation, 0, None, out=deviation)
             deviation *= signs
+
             # Now adjust the centroids using the deviation
             msd = ms * deviation
             self.centroids_ = dataset_centroid_[np.newaxis, :] + msd
+
         return self
 
     # TODO(1.5) remove note about precomputed metric
