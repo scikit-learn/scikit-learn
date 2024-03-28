@@ -1,4 +1,5 @@
 import warnings
+from warnings import warn
 from numbers import Integral, Real
 
 import numpy as np
@@ -307,6 +308,7 @@ class LinearSVC(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         self : object
             An instance of the estimator.
         """
+
         X, y = self._validate_data(
             X,
             y,
@@ -315,8 +317,23 @@ class LinearSVC(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
             order="C",
             accept_large_sparse=False,
         )
+
         check_classification_targets(y)
+
         self.classes_ = np.unique(y)
+        if self.kernel == 'linear':
+            if self.gamma not in ('scale', 'auto'):
+                warn(
+                    "The 'gamma' parameter has been set but is not relevant for the 'linear' kernel. It will be ignored.",
+                    UserWarning)
+            if self.coef0 != 0:
+                warn(
+                    "The 'coef0' parameter has been set but is not relevant for the 'linear' kernel. It will be ignored.",
+                    UserWarning)
+            if self.degree != 3:
+                warn(
+                    "The 'degree' parameter has been set but is not relevant for the 'linear' kernel. It will be ignored.",
+                    UserWarning)
 
         _dual = _validate_dual_parameter(
             self.dual, self.loss, self.penalty, self.multi_class, X
