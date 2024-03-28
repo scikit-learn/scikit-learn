@@ -845,7 +845,7 @@ def _convert_container(
         return _convert_container_to_array(container, sparse_container, sparse_format)
 
     if constructor_type == "dataframe":
-        _convert_container_to_dataframe(
+        return _convert_container_to_dataframe(
             container,
             constructor_lib,
             minversion,
@@ -854,10 +854,10 @@ def _convert_container(
         )
 
     if constructor_type == "series":
-        _convert_container_to_series(container, constructor_lib, minversion)
+        return _convert_container_to_series(container, constructor_lib, minversion)
 
     if constructor_type == "index":
-        _convert_container_to_index(container, constructor_lib, minversion)
+        return _convert_container_to_index(container, constructor_lib, minversion)
 
 
 def _convert_container_to_array(container, sparse_container, sparse_format):
@@ -875,11 +875,31 @@ def _convert_container_to_array(container, sparse_container, sparse_format):
         # https://github.com/scipy/scipy/pull/18530#issuecomment-1878005149
         container = np.atleast_2d(container)
 
+    supported_sparse_containers = ("matrix", "array")
+    if sparse_container not in supported_sparse_containers:
+        raise ValueError(
+            f"Invalid {sparse_container=}; expected one of"
+            f" {supported_sparse_containers}"
+        )
+
+    supported_sparse_formats = ("csr", "csc")
+    if sparse_format not in supported_sparse_formats:
+        raise ValueError(
+            f"Invalid {sparse_format=}; expected one of {supported_sparse_formats}"
+        )
+
     if sparse_container == "array":
-        sparse_container = sp.sparse.csr_array(container)
-    else:
-        sparse_container = sp.sparse.csr_matrix(container)
-    return sparse_container.asformat(sparse_format)
+        if sparse_format == "csr":
+            container = sp.sparse.csr_array(container)
+        else:  # csc
+            container = sp.sparse.csc_array(container)
+    else:  # matrix
+        if sparse_format == "csr":
+            container = sp.sparse.csr_matrix(container)
+        else:  # csc
+            container = sp.sparse.csc_matrix(container)
+
+    return container
 
 
 def _convert_container_to_dataframe(

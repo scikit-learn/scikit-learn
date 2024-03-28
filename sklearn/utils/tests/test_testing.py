@@ -827,6 +827,26 @@ def test_convert_container_slice():
         _convert_container(container, "slice")
 
 
+def test_convert_container_invalid_sparse_options():
+    """Check that invalid sparse options raise the correct error."""
+    container = np.arange(12).reshape(3, -1)
+
+    msg = "Invalid sparse_format='dok'; expected one of ('csr', 'csc')"
+    with pytest.raises(ValueError, match=re.escape(msg)):
+        _convert_container(
+            container,
+            constructor_type="array",
+            sparse_container="array",
+            sparse_format="dok",
+        )
+
+    msg = "Invalid sparse_container='series'; expected one of ('matrix', 'array')"
+    with pytest.raises(ValueError, match=re.escape(msg)):
+        _convert_container(
+            container, constructor_type="array", sparse_container="series"
+        )
+
+
 @pytest.mark.parametrize("constructor_type", ["dataframe", "series", "index"])
 def test_convert_container_invalid_library(constructor_type):
     """Check that incompatible library raises the correct error."""
