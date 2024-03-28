@@ -21,6 +21,11 @@ from ...utils._param_validation import (
     validate_params,
 )
 from ..pairwise import _VALID_METRICS, pairwise_distances, pairwise_distances_chunked
+from ._dbcv_internals import (
+    density_separation,
+    distances_between_points,
+    internal_minimum_spanning_tree,
+)
 
 
 def check_number_of_labels(n_labels, n_samples):
@@ -464,3 +469,185 @@ def davies_bouldin_score(X, labels):
     combined_intra_dists = intra_dists[:, None] + intra_dists
     scores = np.max(combined_intra_dists / centroid_distances, axis=1)
     return np.mean(scores)
+
+
+@validate_params(
+    {
+        "X": ["array-like"],
+        "labels": ["array-like"],
+        "metric": [StrOptions(set(_VALID_METRICS) | {"precomputed"}), callable],
+        "d": [None, int],
+        "per_cluster_scores": ["boolean"],
+        "mst_raw_dist": ["boolean"],
+        "verbose": ["boolean"],
+    },
+    prefer_skip_nested_validation=True,
+)
+def dbcv_score(
+    X,
+    labels,
+    metric="euclidean",
+    d=None,
+    per_cluster_scores=False,
+    mst_raw_dist=False,
+    verbose=False,
+    **kwd_args,
+):
+    """
+    Compute the density based cluster validity index for a clustering.
+
+    Contrary to alternative, more widely used unsupervised clustering
+    metrics, it does not implicitly assume clusters of spherical shape.
+    This is accomplished by circumventing the need for calculating
+    cluster centroids as part of its mathematical definition. Instead,
+    it evaluates the quality of clusters based on the concepts of
+    density separation (highest density area between clusters) and
+    density sparseness (lowest density area within a cluster).
+    These concepts are propped up on the underlying construct of
+    minimum spanning trees, much like the HDBSCAN clustering algorithm.
+    The metric also accounts for noise points as part of its definition.
+    This implementation assumes such points to be labeled with -1.
+
+    The best value that can be returned is 1 and the worst value is -1.
+
+    Parameters
+    ----------
+    X : array (n_samples, n_features) or (n_samples, n_samples)
+        The input data of the clustering. This can be the data, or, if
+        metric is set to `precomputed` the pairwise distance matrix used
+        for the clustering.
+
+    labels : array (n_samples)
+        The label array output by the clustering, providing an integral
+        cluster label to each data point, with -1 for noise points.
+
+    metric : optional, str (default 'euclidean')
+        The metric used to compute distances for the clustering (and
+        to be re-used in computing distances for mr distance). If
+        set to `precomputed` then X is assumed to be the precomputed
+        distance matrix between samples.
+
+    d : optional, int (or None) (default None)
+        The number of features (dimension) of the dataset. This need only
+        be set in the case of metric being set to `precomputed`, where
+        the ambient dimension of the data is unknown to the function.
+
+    per_cluster_scores : optional, bool (default False)
+        Whether to return the validity index for individual clusters.
+        Defaults to False with the function returning a single float
+        value for the whole clustering.
+
+    mst_raw_dist : optional, bool (default False)
+        If True, the MST's are constructed solely via 'raw' distances
+        (depending on the given metric, e.g. euclidean distances)
+        instead of using mutual reachability distances.
+        Thus setting this parameter to True avoids using 'all-points-core-distances'.
+        This is advantageous specifically in the case of elongated clusters
+        that lie in close proximity to each other <citation needed>.
+
+    verbose : optional, bool (default False)
+        If True additional, informational messages are ommitted via stdout.
+        They specifically relate to the subcomponents which the mutual reachability
+        distances emerge from.
+
+    **kwd_args :
+        Extra arguments to pass to the distance computation for other
+        metrics, such as minkowski, Mahanalobis etc.
+
+    Returns
+    -------
+    validity_index : float
+        The density based cluster validity index for the clustering. This
+        is a numeric value between -1 and 1, with higher values indicating
+        a 'better' clustering.
+
+    labels_to_scores : dictionary
+        The cluster validity index of each individual cluster, retrievable by label.
+        The overall validity index is the weighted average of these values.
+        Only returned if per_cluster_scores is set to True.
+
+    References
+    ----------
+    .. [1] `Moulavi, D., Jaskowiak, P.A., Campello, R.J., Zimek, A. and Sander, J.,
+    2014. Density-Based Clustering Validation. In SDM (pp. 839-847).
+    <https://www.dbs.ifi.lmu.de/~zimek/publications/SDM2014/DBCV.pdf>`_
+    """
+
+    X, labels = check_X_y(X, labels)
+
+    le = LabelEncoder()
+    labels = le.fit_transform(labels)
+    encoding_cluster_indices = [
+        i for i in range(len(le.classes_)) if str(le.classes_[i]) != "-1"
+    ]
+    check_number_of_labels(len(encoding_cluster_indices), len(labels))
+    n_labels = len(le.classes_)
+
+    core_distances = {}
+    density_sparseness = {}
+    mst_nodes = {}
+    mst_edges = {}
+
+    density_sep = np.inf * np.ones((n_labels, n_labels), dtype=np.float64)
+    labels_to_scores = {}
+
+    for encoding_index in encoding_cluster_indices:
+        distances_for_mst, core_distances[encoding_index] = distances_between_points(
+            X,
+            labels,
+            encoding_index,
+            metric,
+            d,
+            no_coredist=mst_raw_dist,
+            print_max_raw_to_coredist_ratio=verbose,
+            **kwd_args,
+        )
+
+        mst_nodes[encoding_index], mst_edges[encoding_index] = (
+            internal_minimum_spanning_tree(distances_for_mst)
+        )
+        density_sparseness[encoding_index] = mst_edges[encoding_index].T[2].max()
+
+    for encoding_index in encoding_cluster_indices:
+        internal_nodes_i = mst_nodes[encoding_index]
+        for j in encoding_cluster_indices[
+            encoding_cluster_indices.index(encoding_index) + 1 :
+        ]:
+            internal_nodes_j = mst_nodes[j]
+            density_sep[encoding_index, j] = density_separation(
+                X,
+                labels,
+                encoding_index,
+                j,
+                internal_nodes_i,
+                internal_nodes_j,
+                core_distances[encoding_index],
+                core_distances[j],
+                metric=metric,
+                no_coredist=mst_raw_dist,
+                **kwd_args,
+            )
+            density_sep[j, encoding_index] = density_sep[encoding_index, j]
+
+    n_samples = float(X.shape[0])
+    result = 0
+
+    for encoding_index in encoding_cluster_indices:
+        min_density_sep = density_sep[encoding_index].min()
+        labels_to_scores[le.classes_[encoding_index]] = (
+            min_density_sep - density_sparseness[encoding_index]
+        ) / max(min_density_sep, density_sparseness[encoding_index])
+
+        if verbose:
+            print("Minimum density separation: " + str(min_density_sep))
+            print("Density sparseness: " + str(density_sparseness[encoding_index]))
+
+        cluster_size = np.sum(labels == encoding_index)
+        result += (cluster_size / n_samples) * labels_to_scores[
+            le.classes_[encoding_index]
+        ]
+
+    if per_cluster_scores:
+        return result, labels_to_scores
+    else:
+        return result

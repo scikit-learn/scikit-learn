@@ -1,15 +1,19 @@
+import itertools
 import warnings
+from unittest.mock import patch
 
 import numpy as np
 import pytest
 from numpy.testing import assert_allclose
 from scipy.sparse import issparse
+from scipy.spatial.distance import cdist
 
 from sklearn import datasets
 from sklearn.metrics import pairwise_distances
 from sklearn.metrics.cluster import (
     calinski_harabasz_score,
     davies_bouldin_score,
+    dbcv_score,
     silhouette_samples,
     silhouette_score,
 )
@@ -394,6 +398,86 @@ def test_davies_bouldin_score():
     X = [[0, 0], [2, 2], [3, 3], [5, 5]]
     labels = [0, 0, 1, 2]
     pytest.approx(davies_bouldin_score(X, labels), (5.0 / 4) / 3)
+
+
+@pytest.fixture
+def density_sample():
+    # start off with two non-spherical clusters
+    points, labels = datasets.make_moons()
+    bounds = np.array([np.max(points, axis=0), np.min(points, axis=0)]).transpose()
+    # add one point labelled as noise in each "corner"
+    points = np.append(points, list(itertools.product(*bounds)), axis=0)
+    labels = np.append(labels, [-1 for _ in range(4)])
+    return points, labels
+
+
+def test_dbcv_score_basic_validation_errs():
+    assert_raises_on_only_one_label(dbcv_score)
+    assert_raises_on_all_points_same_cluster(dbcv_score)
+
+
+def test_dbcv_score_precomputed_missing_d_valerr(density_sample):
+    msg = "If metric is precomputed a d value must be provided!"
+    with pytest.raises(ValueError, match=msg):
+        dbcv_score(
+            cdist(density_sample[0], density_sample[0], "euclidean"),
+            density_sample[1],
+            metric="precomputed",
+        )
+
+
+def test_dbcv_score_rand_in_output_val_range(density_sample):
+    X, y = density_sample
+    np.random.shuffle(y)
+    # in general, the score lies between -1 and 1
+    assert -1 <= dbcv_score(X, y) <= 1
+
+
+def test_dbcv_score_basic_input(density_sample):
+    res = dbcv_score(*density_sample, per_cluster_scores=True)
+
+    # score should at least be non-negative if labeled by ground-truth
+    assert res[0] >= 0
+
+    assert dbcv_score(*density_sample) == res[0]
+
+    assert isinstance(res[1], dict)
+    assert len(res[1]) == 2  # noise should not result in an extra entry
+
+    non_noise = density_sample[1] != -1
+    sample_without_noise = [component[non_noise] for component in density_sample]
+    # test for implicit noise penalty, which emerges from the definition of DBCV
+    # (as stated in the paper)
+    assert res[0] < dbcv_score(*sample_without_noise)
+
+
+def test_dbcv_score_zero_distance():
+    dbcv_score([[0, 1] for _ in range(100)], [i % 2 for i in range(100)])
+
+
+def test_dbcv_score_verbose(density_sample):
+    with patch("builtins.print") as mocked_print:
+        dbcv_score(*density_sample, verbose=True)
+        mocked_print.assert_called()
+
+
+def test_dbcv_score_precomputed_input(density_sample):
+    # score should at least be non-negative if labeled by ground-truth
+    assert (
+        dbcv_score(
+            cdist(density_sample[0], density_sample[0], "euclidean"),
+            density_sample[1],
+            metric="precomputed",
+            d=2,
+        )
+        >= 0
+    )
+
+
+def test_dbcv_score_mst_raw_dist(density_sample):
+    # should be non-negative if labeled by ground-truth, regardless
+    # (or arguably especially in the case) of non-MRD MST's
+    assert dbcv_score(*density_sample, mst_raw_dist=True) >= 0
 
 
 def test_silhouette_score_integer_precomputed():
