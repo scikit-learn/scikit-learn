@@ -295,7 +295,7 @@ def test_simple_metadata_routing():
     clf = WeightedMetaClassifier(estimator=ConsumingClassifier())
     err_message = (
         "[sample_weight] are passed but are not explicitly set as requested or"
-        " not for ConsumingClassifier.fit"
+        " not requested for ConsumingClassifier.fit"
     )
     with pytest.raises(ValueError, match=re.escape(err_message)):
         clf.fit(X, y, sample_weight=my_weights)
