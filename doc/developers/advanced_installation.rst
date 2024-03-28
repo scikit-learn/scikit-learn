@@ -245,15 +245,7 @@ More advanced way to build with Meson
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 If you can not use `make`, want to do it yourself or understand what goes in
-behind the scenes, you can edit `pyproject.toml` and make sure `build-backend`
-is set to `"mesonpy"`
-
-.. code-block:: toml
-
-    [build-system]
-    build-backend = "mesonpy"
-
-Build with the following `pip` command:
+behind the scenes, you can build scikit-learn with the following `pip` command:
 
 .. code-block:: bash
 
