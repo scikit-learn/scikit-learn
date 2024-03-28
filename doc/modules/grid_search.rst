@@ -661,6 +661,71 @@ some parameter settings could be fully evaluated. Setting ``error_score=0``
 warning and setting the score for that fold to 0 (or `nan`), but completing
 the search.
 
+.. _refit_constraints:
+
+Model refinement
+----------------
+
+Model refinement methods expand the user's level of control over the hyper-parameter
+tuning process by leveraging various model selection heuristics to promote
+more optimal models with balanced performance. Such control can be especially
+useful, for instance, when the user wishes to select the simplest model from
+among a group of similarly top-performing candidates with varying degrees of
+complexity. Model refinement might also be useful when the user aims to select the most
+interpretable or computationally efficient model from among a group of top-performing
+candidates.
+
+Scikit-Learn provides two mechanisms for model refinement that can be easily extended
+to each of these scenarios using a common set of semantics. The first is after
+conducting a SearchCV -- by fitting a
+:class:`~sklearn.model_selection.ScoreCutModelSelector` instance to the ``cv_results_``
+attribute of a fitted instance of ``GridSearchCV``, ``RandomizedSearchCV``,  or
+``HalvingRandomSearchCV``. The second is while initializing a SearchCV -- by setting
+the ``refit`` parameter in a ``GridSearchCV``, ``RandomizedSearchCV``, or
+``RandomizedSearchCV`` instance to a callable function
+:func:`~sklearn.model_selection.promote` before running the search. In either case, the
+user can specify a :class:`~sklearn.model_selection.ScoreCutModelSelector` instance,
+comprising both a score slicing rule instance and a model ranking rule instance, to
+control the refinement strategy. Finally, model refinement supports composite
+estimators and parameter spaces, as well as both numeric and categorical hyperparameter
+data types.
+
+In the case of refitting a ``GridSearchCV``, ``RandomizedSearchCV``, or
+``HalvingRandomSearchCV`` object with the simplest best-performing model, for example,
+one common constraint to use is the "One Standard Error Rule" (1-SE)
+(see :class:`~sklearn.model_selection.StandardErrorSlicer`). 1-SE is a heuristic for
+promoting the most parsimonious model whose cross-validated performance is not more
+than 1 standard error worse than the best CV performance. In effect, this technique
+helps to identify simpler, more generalizeable models, as those with the highest rote
+performance can be more prone to overfitting (Breiman et al., 1984).Although it is easy
+to demonstrate the value of 1-SE (e.g. see
+:ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_refit_callable.py`),
+the 1-SE criteria may be too rigid or lenient in some contexts. In these cases,
+:class:`~sklearn.model_selection.ScoreCutModelSelector` also supports other score
+slicing rules, including:
+
+    :class:`~sklearn.model_selection.PercentileSlicer`
+    :class:`~sklearn.model_selection.WilcoxonSlicer`
+    :class:`~sklearn.model_selection.FixedWindowSlicer`
+
+These callable classes follow a common structure that subclasses
+:class:`~sklearn.model_selection.BaseScoreSlicer`, enabling users to easily define
+their own custom slicing rules as well.
+
+.. topic:: References:
+
+  * Breiman, Leo, Jerome Friedman, Richard Olshen, and Charles Stone. 1984.
+    "Classification and Regression Trees." :doi:`10.1080/01621459.1984.10477025`
+  * Chen, Yuchen, and Yuhong Yang. 2021. "The One Standard Error Rule for Model
+    Selection: Does It Work?" Stats 4, no. 4: 868-892.
+    :doi:`https://doi.org/10.3390/stats404005`
+  * Hastie, Trevor, Robert Tibshirani, and Jerome Friedman. 2009. The Elements of
+    Statistical Learning: Data Mining, Inference, and Prediction. New York:
+    Springer Series in Statistics. :doi:`10.1007/978-0-387-84858-7`
+  * Zacharias, J., von Zahn, M., Chen, J. et al. 2022. Designing a feature selection
+    method based on explainable artificial intelligence. Electron Markets 32, 2159-2184
+    (2022). :doi:`https://doi.org/10.1007/s12525-022-00608-1`
+
 .. _alternative_cv:
 
 Alternatives to brute force parameter search

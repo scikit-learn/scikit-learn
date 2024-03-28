@@ -1,6 +1,15 @@
 import typing
 
 from ._plot import LearningCurveDisplay, ValidationCurveDisplay
+from ._refine import (
+    FavorabilityRanker,
+    FixedWindowSlicer,
+    PercentileSlicer,
+    ScoreCutModelSelector,
+    StandardErrorSlicer,
+    WilcoxonSlicer,
+    promote,
+)
 from ._search import GridSearchCV, ParameterGrid, ParameterSampler, RandomizedSearchCV
 from ._split import (
     BaseCrossValidator,
@@ -40,7 +49,6 @@ if typing.TYPE_CHECKING:
         HalvingRandomSearchCV,
     )
 
-
 __all__ = [
     "BaseCrossValidator",
     "BaseShuffleSplit",
@@ -69,10 +77,17 @@ __all__ = [
     "cross_validate",
     "learning_curve",
     "LearningCurveDisplay",
+    "ValidationCurveDisplay",
     "permutation_test_score",
     "train_test_split",
     "validation_curve",
-    "ValidationCurveDisplay",
+    "ScoreCutModelSelector",
+    "FixedWindowSlicer",
+    "PercentileSlicer",
+    "WilcoxonSlicer",
+    "StandardErrorSlicer",
+    "FavorabilityRanker",
+    "promote",
 ]
 
 
