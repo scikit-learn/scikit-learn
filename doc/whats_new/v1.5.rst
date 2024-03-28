@@ -306,7 +306,7 @@ Changelog
   :class:`~model_selection.RandomizedSearchCV`,
   :class:`~model_selection.HalvingGridSearchCV`, and
   :class:`~model_selection.HalvingRandomSearchCV` will show the best estimator when
-  `refit=True`. :pr:`28272` by :user:`Yao Xiao <Charlie-XIAO>` and `Thomas Fan`_.
+  `refit=True`. :pr:`28722` by :user:`Yao Xiao <Charlie-XIAO>` and `Thomas Fan`_.
 
 :mod:`sklearn.multioutput`
 ..........................
