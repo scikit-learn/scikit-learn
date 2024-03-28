@@ -16,7 +16,9 @@ from ..utils._param_validation import (
     StrOptions,
     validate_params,
 )
+from ..utils._set_output import ADAPTERS_MANAGER
 from ..utils.parallel import Parallel, delayed
+from ..utils.validation import _is_pandas_df, _is_polars_df
 
 
 def _weights_scorer(scorer, estimator, X, y, sample_weight):
@@ -35,6 +37,7 @@ def _calculate_permutation_scores(
     n_repeats,
     scorer,
     max_samples,
+    adapter,
 ):
     """Calculate score when `col_idx` is permuted."""
     random_state = check_random_state(random_state)
@@ -56,6 +59,8 @@ def _calculate_permutation_scores(
         y = _safe_indexing(y, row_indices, axis=0)
         if sample_weight is not None:
             sample_weight = _safe_indexing(sample_weight, row_indices, axis=0)
+    elif adapter is not None:
+        X_permuted = adapter.copy(X)
     else:
         X_permuted = X.copy()
 
@@ -63,10 +68,12 @@ def _calculate_permutation_scores(
     shuffling_idx = np.arange(X_permuted.shape[0])
     for _ in range(n_repeats):
         random_state.shuffle(shuffling_idx)
-        if hasattr(X_permuted, "iloc"):
-            col = X_permuted.iloc[shuffling_idx, col_idx]
-            col.index = X_permuted.index
-            X_permuted[X_permuted.columns[col_idx]] = col
+        if adapter is not None:
+            col = _safe_indexing(
+                _safe_indexing(X_permuted, col_idx, axis=1),
+                shuffling_idx,
+            )
+            adapter.replace_column(X_permuted, col_idx, col)
         else:
             X_permuted[:, col_idx] = X_permuted[shuffling_idx, col_idx]
         scores.append(_weights_scorer(scorer, estimator, X_permuted, y, sample_weight))
@@ -262,7 +269,12 @@ def permutation_importance(
     >>> result.importances_std
     array([0.2211..., 0.       , 0.       ])
     """
-    if not hasattr(X, "iloc"):
+    if _is_pandas_df(X):
+        adapter = ADAPTERS_MANAGER.adapters["pandas"]
+    elif _is_polars_df(X):
+        adapter = ADAPTERS_MANAGER.adapters["polars"]
+    else:
+        adapter = None
         X = check_array(X, force_all_finite="allow-nan", dtype=None)
 
     # Precompute random seed from the random state to be used
@@ -292,6 +304,7 @@ def permutation_importance(
             n_repeats,
             scorer,
             max_samples,
+            adapter,
         )
         for col_idx in range(X.shape[1])
     )

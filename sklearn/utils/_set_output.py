@@ -106,6 +106,37 @@ class ContainerAdapterProtocol(Protocol):
             Stacked containers.
         """
 
+    def copy(self, X):
+        """Create a copy of the container.
+
+        Parameters
+        ----------
+        X : container
+            Container to copy.
+
+        Returns
+        -------
+        X_copy : container
+            Copy of the container.
+        """
+
+    def replace_column(self, X, col_idx, col):
+        """Replace a column at the given index.
+
+        Note that this is an in-place operation.
+
+        Parameters
+        ----------
+        X : container
+            Container to modify.
+
+        col_idx : int
+            Index of the column to be replaced.
+
+        col : Series (from container_lib)
+            The column to replace.
+        """
+
 
 class PandasAdapter:
     container_lib = "pandas"
@@ -148,6 +179,16 @@ class PandasAdapter:
         pd = check_library_installed("pandas")
         return pd.concat(Xs, axis=1)
 
+    def copy(self, X):
+        return X.copy()
+
+    def replace_column(self, X, col_idx, col):
+        # pandas may match the indices of `X` and `col` on certain platforms, but we
+        # want the column replacement to behave as if `col` is an array without index,
+        # so we reset the index of `col` in the first place
+        col.index = X.index
+        X.iloc[:, col_idx] = col
+
 
 class PolarsAdapter:
     container_lib = "polars"
@@ -178,6 +219,12 @@ class PolarsAdapter:
     def hstack(self, Xs):
         pl = check_library_installed("polars")
         return pl.concat(Xs, how="horizontal")
+
+    def copy(self, X):
+        return X.clone()
+
+    def replace_column(self, X, col_idx, col):
+        X.replace_column(col_idx, col)
 
 
 class ContainerAdaptersManager:
