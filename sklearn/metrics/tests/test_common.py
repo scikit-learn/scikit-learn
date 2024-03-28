@@ -1749,6 +1749,9 @@ def check_array_api_metric(
     with config_context(array_api_dispatch=True):
         metric_xp = metric(y_true_xp, y_pred_xp, sample_weight=sample_weight)
 
+        if not isinstance(metric_xp, float):
+            metric_xp = _convert_to_numpy(metric_xp, xp)
+
         assert_allclose(
             _convert_to_numpy(xp.asarray(metric_xp), xp),
             metric_np,
@@ -1841,6 +1844,13 @@ def check_array_api_regression_metric(metric, array_namespace, device, dtype_nam
     )
 
 
+def check_array_api_multioutput_regression_metric(
+    metric, array_namespace, device, dtype_name
+):
+    metric = partial(metric, multioutput="raw_values")
+    check_array_api_regression_metric(metric, array_namespace, device, dtype_name)
+
+
 array_api_metric_checkers = {
     accuracy_score: [
         check_array_api_binary_classification_metric,
@@ -1849,6 +1859,10 @@ array_api_metric_checkers = {
     zero_one_loss: [
         check_array_api_binary_classification_metric,
         check_array_api_multiclass_classification_metric,
+    ],
+    mean_absolute_error: [
+        check_array_api_regression_metric,
+        check_array_api_multioutput_regression_metric,
     ],
     r2_score: [check_array_api_regression_metric],
 }
