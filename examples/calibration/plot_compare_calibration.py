@@ -117,6 +117,7 @@ clf_list = [
     (rfc, "Random forest"),
 ]
 
+
 # %%
 
 import matplotlib.pyplot as plt
@@ -261,7 +262,51 @@ plt.show()
 # even when tuning the regularization parameter as above. This is bound to
 # happen when the training size is too small or when the model is severely
 # misspecified.
+
+# %%
+# Metrics to assess calibration
+# -----------------------------
 #
+# Reliability diagrams are an extremely useful visual tool. However, reliable
+# metrics to assess calibration are also highly demanded, for instance,
+# for an automatic model selection based on this assessment.
+# Scikit-learn provides the ECCE metrics to assess calibraiton
+# :func:`~sklearn.metrics.ecce_mad_loss` and the :func:`~sklearn.metrics.ecce_mad_loss`.
+# The following advantages motivatethe choice of the ECCEs over other metrics
+# based on binning. First, ECCEs yield trustworthy results needing a lower numbers
+# of observations than the metrics based on binning such as the ECE metrics.
+# Furthermore, ECCE metrics do not need to set any parameters such as the number
+# of bins removing the trade-off between statistical confidence and power for the
+# methodologies based on binnning. Moreover, choosing among the possible binnings
+# can be confusing, yet makes all the difference [4]_ [7]_.
+# This does ECCE metrics more convenient and robust for an automatic solution.
+# In addition, alternative metrics such as the Brier score could be used to assess
+# how well a classifier is calibrated, but they come with serious limitations and
+# drawbacks. In fact, a lower Brier score loss does not necessarily mean a better
+# calibration, thus not being appropiate if your main goal is to find the best
+# probability estimator [5]_ [6]_ [7]_. Below is an example of how the ECCE metrics
+# can automatically select correctly the best calibrated model as we have
+# seen in the reliability diagrams.
+
+# %%
+from sklearn.metrics import ecce_mad_loss
+
+ecce_metrics = {}
+for i, (clf, name) in enumerate(clf_list):
+    clf.fit(X_train, y_train)
+    ecce_metrics[name] = ecce_mad_loss(
+        y_true=y_test, y_prob=clf.predict_proba(X_test)[:, 1]
+    )
+
+print(ecce_metrics)
+
+# %%
+# As it can be seen, the most calibrated model is Logistic Regression followed by
+# Random forest. This can be used for automatic model selection without need of
+# visual assessments and with mathematical proves that guarantee the choice of
+# the best calibrated model.
+
+# %%
 # References
 # ----------
 #
@@ -279,3 +324,19 @@ plt.show()
 #        naive Bayesian classifiers
 #        <https://citeseerx.ist.psu.edu/doc_view/pid/4f67a122ec3723f08ad5cbefecad119b432b3304>`_
 #        Zadrozny, Bianca, and Charles Elkan. Icml. Vol. 1. 2001.
+# .. [4] `Metrics of calibration for probabilistic predictions
+#        <https://www.jmlr.org/papers/volume23/22-0658/22-0658.pdf>`_
+#        Imanol Arrieta-Ibarra, Paman Gujral, Jonathan Tannen, Mark Tygert,
+#        and Cherie Xu. J. Mach. Learn. Res. Vol. 23. 2022.
+# .. [5] `Calibration of Machine Learning Models
+#        <https://dmip.webs.upv.es/papers/BFHRHandbook2010.pdf>`_
+#        Bella, Ferri, Hernández-Orallo, and Ramírez-Quintana Hershey,
+#        PA: Information Science Reference (2012).
+# .. [6] `On classification, ranking, and probability estimation
+#        <https://drops.dagstuhl.de/entities/document/10.4230/DagSemProc.07161.8>`_
+#        Flach, Peter, and Edson Matsubara, Dagstuhl Seminar Proceedings.
+#        Schloss Dagstuhl-Leibniz-Zentrum fr Informatik 2008.
+# .. [7] `Towards a data-driven debt collection strategy based on an advanced machine
+#        learning framework <https://arxiv.org/pdf/2311.06292.pdf>`_
+#        Abel Sancarlos, Edgar Bahilo, Pablo Mozo, Lukas Norman,
+#        Obaid Ur Rehma and Mihails Anufrijevs 2023
