@@ -13,6 +13,7 @@ from scipy.special import comb
 
 from ..base import BaseEstimator, TransformerMixin, _fit_context
 from ..utils import check_array
+from ..utils._mask import _get_mask
 from ..utils._param_validation import Interval, StrOptions
 from ..utils.fixes import parse_version, sp_version
 from ..utils.stats import _weighted_percentile
@@ -641,6 +642,14 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
         Order of output array in the dense case. `'F'` order is faster to compute, but
         may slow down subsequent estimators.
 
+    handle_missing : {'error', 'constant'}, default='error'
+        Specifies the way missing values are handled.
+
+        - 'error' : Raise an error if np.nan values are present during :meth:`fit`
+        - 'constant' :  Encode the splines from missing values as 0.
+
+        .. versionadded:: 1.5
+
     sparse_output : bool, default=False
         Will return sparse CSR matrix if set True else will return an array. This
         option is only available with `scipy>=1.8`.
@@ -708,6 +717,7 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
         ],
         "include_bias": ["boolean"],
         "order": [StrOptions({"C", "F"})],
+        "handle_missing": [StrOptions({"error", "constant"})],
         "sparse_output": ["boolean"],
     }
 
@@ -720,6 +730,7 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
         extrapolation="constant",
         include_bias=True,
         order="C",
+        handle_missing="error",
         sparse_output=False,
     ):
         self.n_knots = n_knots
@@ -728,11 +739,12 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
         self.extrapolation = extrapolation
         self.include_bias = include_bias
         self.order = order
+        self.handle_missing = handle_missing
         self.sparse_output = sparse_output
 
     @staticmethod
     def _get_base_knot_positions(X, n_knots=10, knots="uniform", sample_weight=None):
-        """Calculate base knot positions.
+        """Calculate base knot positions for `knots` either "uniform" or "quantile".
 
         Base knots such that first knot <= feature <= last knot. For the
         B-spline construction with scipy.interpolate.BSpline, 2*degree knots
@@ -749,8 +761,10 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
             )
 
             if sample_weight is None:
-                knots = np.percentile(X, percentiles, axis=0)
+                knots = np.nanpercentile(X, percentiles, axis=0)
             else:
+                # if we use np.nanpercentile above, then nan values also should
+                # be excluded from _weighted_percentile
                 knots = np.array(
                     [
                         _weighted_percentile(X, sample_weight, percentile)
@@ -764,8 +778,8 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
             # `else` is therefore safe.
             # Disregard observations with zero weight.
             mask = slice(None, None, 1) if sample_weight is None else sample_weight > 0
-            x_min = np.amin(X[mask], axis=0)
-            x_max = np.amax(X[mask], axis=0)
+            x_min = np.nanmin(X[mask], axis=0)
+            x_max = np.nanmax(X[mask], axis=0)
 
             knots = np.linspace(
                 start=x_min,
@@ -776,6 +790,14 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
             )
 
         return knots
+
+    def _fit_indicator(self, X):
+        """Fit a MissingIndicator."""
+        # import here because of CircularImportError
+        from sklearn.impute._base import MissingIndicator
+
+        indicator = MissingIndicator(missing_values=np.nan, error_on_new=False)
+        return indicator._fit(X, precomputed=True)
 
     def get_feature_names_out(self, input_features=None):
         """Get output feature names for transformation.
@@ -835,15 +857,26 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
             accept_sparse=False,
             ensure_min_samples=2,
             ensure_2d=True,
+            force_all_finite=False,
         )
         if sample_weight is not None:
             sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
 
         _, n_features = X.shape
 
+        if self.handle_missing == "error":
+            if np.isnan(X).any():
+                raise ValueError(
+                    "'X' contains np.nan values, which is conflicting with"
+                    " handle_missing='error'."
+                )
+
         if isinstance(self.knots, str):
             base_knots = self._get_base_knot_positions(
-                X, n_knots=self.n_knots, knots=self.knots, sample_weight=sample_weight
+                X,
+                n_knots=self.n_knots,
+                knots=self.knots,
+                sample_weight=sample_weight,
             )
         else:
             base_knots = check_array(self.knots, dtype=np.float64)
@@ -957,11 +990,20 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
         """
         check_is_fitted(self)
 
-        X = self._validate_data(X, reset=False, accept_sparse=False, ensure_2d=True)
+        X = self._validate_data(
+            X,
+            reset=False,
+            accept_sparse=False,
+            ensure_2d=True,
+            force_all_finite=False,
+        )
 
         n_samples, n_features = X.shape
         n_splines = self.bsplines_[0].c.shape[1]
         degree = self.degree
+
+        # get indicator for nan values
+        nan_indicator = self._fit_indicator(_get_mask(X, np.nan))
 
         # TODO: Remove this condition, once scipy 1.10 is the minimum version.
         #       Only scipy => 1.10 supports design_matrix(.., extrapolate=..).
@@ -1003,9 +1045,14 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
                         spl.t[n] - spl.t[spl.k]
                     )
                 else:
-                    x = X[:, i]
+                    x = X[:, i].copy()  # copy to avoid inplace operation
 
                 if use_sparse:
+                    # as a workaround to BSpline.design_matrix() raising when X is
+                    # sparse and np.nan values are present, we temporarily substitute
+                    # the nan values by some value from within the original feature
+                    # space:
+                    x[nan_indicator[:, i]] = np.nanmean(x)
                     XBS_sparse = BSpline.design_matrix(
                         x, spl.t, spl.k, **kwargs_extrapolate
                     )
@@ -1051,6 +1098,10 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
                     and np.any(
                         np.isnan(XBS[:, (i * n_splines) : ((i + 1) * n_splines)])
                     )
+                    # to distinguish original np.nan values from the ones
+                    # created by any element in X < xmin (=spl.t[degree]) or >
+                    # xmax (=spl.t[-degree - 1])
+                    and np.any((X < spl.t[degree]) | (X > spl.t[-degree - 1]))
                 ):
                     raise ValueError(
                         "X contains values beyond the limits of the knots."
@@ -1123,6 +1174,10 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
 
             if use_sparse:
                 XBS_sparse = XBS_sparse.tocsr()
+                # replace any indicated values with 0 as a workaround to
+                # BSpline.design_matrix() raising when X is sparse and np.nan values are
+                # present
+                XBS_sparse[nan_indicator] = 0
                 output_list.append(XBS_sparse)
 
         if use_sparse:
@@ -1150,8 +1205,12 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
                 )
             XBS = sparse.hstack(output_list, format="csr")
         elif self.sparse_output:
-            # TODO: Remove ones scipy 1.10 is the minimum version. See comments above.
+            # TODO: Remove once scipy 1.10 is the minimum version. See comments above.
             XBS = sparse.csr_matrix(XBS)
+        else:
+            # replace any indicated values with 0
+            extended_nan_indicator = np.repeat(nan_indicator, n_splines, axis=1)
+            XBS[extended_nan_indicator] = 0
 
         if self.include_bias:
             return XBS
@@ -1168,5 +1227,6 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
                     "Current Scipy implementation of _bsplines does not"
                     "support const memory views."
                 ),
-            }
+            },
+            "allow_nan": True,
         }

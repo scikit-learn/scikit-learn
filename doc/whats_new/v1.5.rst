@@ -220,6 +220,7 @@ Changelog
   by passing a function in place of a strategy name.
   :pr:`28053` by :user:`Mark Elliot <mark-thm>`.
 
+
 :mod:`sklearn.linear_model`
 ...........................
 
@@ -315,6 +316,12 @@ Changelog
   that generated that feature. If `False`, `get_feature_names_out` will not
   prefix any feature names and will error if feature names are not unique.
   :pr:`25991` by :user:`Jiawei Zhang <jiawei-zhang-a>`.
+  
+:mod:`sklearn.preprocessing`
+............................
+- |Enhancement| :class:`preprocessing.SplineTransformer` can now handle missing
+  values with the parameter `handle_missing`. :pr:`28043` by :user:`Stefanie
+  Senger <StefanieSenger>`.
 
 :mod:`sklearn.preprocessing`
 ............................
