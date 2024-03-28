@@ -168,6 +168,7 @@ def libsvm_sparse_train (int n_features,
     blas_functions.dot = _dot[double]
     # call svm_train, this does the real work
     cdef int fit_status = 0
+
     with nogil:
         model = svm_csr_train(problem, param, &fit_status, &blas_functions)
 

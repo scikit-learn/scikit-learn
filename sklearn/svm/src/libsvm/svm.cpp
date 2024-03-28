@@ -70,6 +70,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <stdarg.h>
 #include <climits>
 #include <random>
+#include <map>
 #include "svm.h"
 #include "_svm_cython_blas_helpers.h"
 #include "../newrand/newrand.h"
@@ -2327,58 +2328,151 @@ static void svm_group_classes(const PREFIX(problem) *prob, int *nr_class_ret, in
 
 } /* end namespace */
 
+// Helper function to count the number of elements in classes
+//
+static void class_counter_with_positive_weights(
+	const PREFIX(problem) *prob,
+	int *nr_classes_ret,
+	int **class_label_ret,
+	int **class_count_ret
+) {
+	int n_samples = prob->l;
+
+	std::map<int, int> class_counter;
+	for (int sample_idx = 0; sample_idx < n_samples; ++sample_idx) {
+		int this_label = (int)prob->y[sample_idx];
+		if (prob->W[sample_idx] > 0) {
+			if (class_counter.find(this_label) == class_counter.end())
+				class_counter[this_label] = 1;
+			else
+				++class_counter[this_label];
+		} else {
+			if (class_counter.find(this_label) == class_counter.end())
+				class_counter[this_label] = 0;
+		}
+	}
+
+	int nr_classes = class_counter.size();
+	int *class_label = Malloc(int, nr_classes);
+	int *class_count = Malloc(int, nr_classes);
+
+	for (auto it = class_counter.begin(); it != class_counter.end(); ++it) {
+		class_label[it->first] = it->first;
+		class_count[it->first] = it->second;
+	}
+
+	*nr_classes_ret = nr_classes;
+	*class_label_ret = class_label;
+	*class_count_ret = class_count;
+}
+
 // Remove zero weighed data as libsvm and some liblinear solvers require C > 0.
 //
-static void remove_zero_weight(PREFIX(problem) *newprob, const PREFIX(problem) *prob)
+static void remove_negative_and_null_weights(
+	PREFIX(problem) *newprob,
+	const PREFIX(problem) *prob,
+	bool return_positive_samples_idx,
+	int **positive_samples_idx_ret,
+	bool return_classes_info,
+	int *nr_classes_ret,
+	int **class_label_ret,
+	int **class_count_ret
+)
 {
-	int i;
-	int l = 0;
-	for(i=0;i<prob->l;i++)
-		if(prob->W[i] > 0) l++;
-	*newprob = *prob;
-	newprob->l = l;
-#ifdef _DENSE_REP
-	newprob->x = Malloc(PREFIX(node),l);
-#else
-      	newprob->x = Malloc(PREFIX(node) *,l);
-#endif
-	newprob->y = Malloc(double,l);
-	newprob->W = Malloc(double,l);
 
-	int j = 0;
-	for(i=0;i<prob->l;i++)
-		if(prob->W[i] > 0)
-		{
-			newprob->x[j] = prob->x[i];
-			newprob->y[j] = prob->y[i];
-			newprob->W[j] = prob->W[i];
-			j++;
+	if (return_classes_info) {
+		class_counter_with_positive_weights(
+			prob, nr_classes_ret, class_label_ret, class_count_ret
+		);
+	}
+
+	int sample_idx;
+	int n_samples = prob->l;
+	int n_positive_samples = 0;
+	for(sample_idx=0; sample_idx < n_samples; ++sample_idx)
+		if(prob->W[sample_idx] > 0) n_positive_samples++;
+
+	*newprob = *prob;
+	newprob->l = n_positive_samples;
+	#ifdef _DENSE_REP
+		newprob->x = Malloc(PREFIX(node), n_positive_samples);
+	#else
+		newprob->x = Malloc(PREFIX(node) *, n_positive_samples);
+	#endif
+	newprob->y = Malloc(double, n_positive_samples);
+	newprob->W = Malloc(double, n_positive_samples);
+
+	int subsample_idx = 0;
+	int *positive_samples_idx = NULL;
+	if (return_positive_samples_idx)
+		positive_samples_idx = Malloc(int, n_positive_samples);
+
+	for(sample_idx=0; sample_idx < n_samples; sample_idx++) {
+		if(prob->W[sample_idx] > 0) {
+			newprob->x[subsample_idx] = prob->x[sample_idx];
+			newprob->y[subsample_idx] = prob->y[sample_idx];
+			newprob->W[subsample_idx] = prob->W[sample_idx];
+			if (return_positive_samples_idx)
+				positive_samples_idx[subsample_idx] = sample_idx;
+			subsample_idx++;
 		}
+	}
+
+	if (return_positive_samples_idx)
+		*positive_samples_idx_ret = positive_samples_idx;
 }
 
 //
 // Interface functions
 //
-PREFIX(model) *PREFIX(train)(const PREFIX(problem) *prob, const svm_parameter *param,
-        int *status, BlasFunctions *blas_functions)
-{
+PREFIX(model) *PREFIX(train)(
+	const PREFIX(problem) *prob,
+	const svm_parameter *param,
+	int *status,
+	BlasFunctions *blas_functions
+) {
 	PREFIX(problem) newprob;
-	remove_zero_weight(&newprob, prob);
+	// positive_samples_idx will be resized in remove_negative_and_null_weights
+	int *positive_samples_idx = NULL;
+	int nr_classes_original = 0;
+	int *class_label_original = NULL;
+	int *class_count_original = NULL;
+	if (
+		param->svm_type == ONE_CLASS ||
+	    param->svm_type == EPSILON_SVR ||
+	    param->svm_type == NU_SVR
+	) {
+		remove_negative_and_null_weights(
+			&newprob, prob, true, &positive_samples_idx, false, NULL, NULL, NULL
+		);
+	} else {
+		// Only get information about the classes for the SVC classifier.
+		remove_negative_and_null_weights(
+			&newprob,
+			prob,
+			true,
+			&positive_samples_idx,
+			true,
+			&nr_classes_original,
+			&class_label_original,
+			&class_count_original
+		);
+	}
 	prob = &newprob;
 
-	PREFIX(model) *model = Malloc(PREFIX(model),1);
+	PREFIX(model) *model = Malloc(PREFIX(model), 1);
 	model->param = *param;
 	model->free_sv = 0;	// XXX
 
-    if(param->random_seed >= 0)
-    {
+    if(param->random_seed >= 0) {
         set_seed(param->random_seed);
-    }
+	}
 
-	if(param->svm_type == ONE_CLASS ||
-	   param->svm_type == EPSILON_SVR ||
-	   param->svm_type == NU_SVR)
-	{
+	if(
+		param->svm_type == ONE_CLASS ||
+	    param->svm_type == EPSILON_SVR ||
+	    param->svm_type == NU_SVR
+	) {
 		// regression or one-class-svm
 		model->nr_class = 2;
 		model->label = NULL;
@@ -2386,243 +2480,337 @@ PREFIX(model) *PREFIX(train)(const PREFIX(problem) *prob, const svm_parameter *p
 		model->probA = NULL; model->probB = NULL;
 		model->sv_coef = Malloc(double *,1);
 
-		if(param->probability &&
-		   (param->svm_type == EPSILON_SVR ||
-		    param->svm_type == NU_SVR))
-		{
-			model->probA = Malloc(double,1);
-			model->probA[0] = NAMESPACE::svm_svr_probability(prob,param,blas_functions);
+		if(
+			param->probability &&
+		    (param->svm_type == EPSILON_SVR || param->svm_type == NU_SVR)
+		) {
+			model->probA = Malloc(double, 1);
+			model->probA[0] = NAMESPACE::svm_svr_probability(
+				prob, param, blas_functions
+			);
 		}
 
-                NAMESPACE::decision_function f = NAMESPACE::svm_train_one(prob,param,0,0, status,blas_functions);
-		model->rho = Malloc(double,1);
+		NAMESPACE::decision_function f = NAMESPACE::svm_train_one(
+			prob, param, 0, 0, status,blas_functions
+		);
+		model->rho = Malloc(double, 1);
 		model->rho[0] = f.rho;
-		model->n_iter = Malloc(int,1);
+		model->n_iter = Malloc(int, 1);
 		model->n_iter[0] = f.n_iter;
 
 		int nSV = 0;
-		int i;
-		for(i=0;i<prob->l;i++)
-			if(fabs(f.alpha[i]) > 0) ++nSV;
+		int n_samples = prob->l;
+		int sample_idx;
+		for(sample_idx=0; sample_idx < n_samples; ++sample_idx)
+			if(fabs(f.alpha[sample_idx]) > 0) ++nSV;
 		model->l = nSV;
-#ifdef _DENSE_REP
-		model->SV = Malloc(PREFIX(node),nSV);
-#else
-		model->SV = Malloc(PREFIX(node) *,nSV);
-#endif
-                model->sv_ind = Malloc(int, nSV);
-		model->sv_coef[0] = Malloc(double, nSV);
-		int j = 0;
-		for(i=0;i<prob->l;i++)
-			if(fabs(f.alpha[i]) > 0)
-			{
-				model->SV[j] = prob->x[i];
-                                model->sv_ind[j] = i;
-				model->sv_coef[0][j] = f.alpha[i];
-				++j;
-			}
 
+		#ifdef _DENSE_REP
+			model->SV = Malloc(PREFIX(node), nSV);
+		#else
+			model->SV = Malloc(PREFIX(node) *, nSV);
+		#endif
+
+		model->sv_ind = Malloc(int, nSV);
+		model->sv_coef[0] = Malloc(double, nSV);
+		int support_vector_idx = 0;
+		for(sample_idx=0; sample_idx < n_samples; ++sample_idx)
+			if(fabs(f.alpha[sample_idx]) > 0) {
+				model->SV[support_vector_idx] = prob->x[sample_idx];
+				model->sv_ind[support_vector_idx] = positive_samples_idx[sample_idx];
+				model->sv_coef[0][support_vector_idx] = f.alpha[sample_idx];
+				++support_vector_idx;
+			}
 		free(f.alpha);
 	}
-	else
-	{
-		// classification
-		int l = prob->l;
-		int nr_class;
+	else {
+		// classification - svm_type in {"C_SVC", "NU_SVC"}
+		int n_samples = prob->l;
+		int nr_classes;
 		int *label = NULL;
 		int *start = NULL;
 		int *count = NULL;
-		int *perm = Malloc(int,l);
+		int *perm = Malloc(int, n_samples);
 
 		// group training data of the same class
-                NAMESPACE::svm_group_classes(prob,&nr_class,&label,&start,&count,perm);
-#ifdef _DENSE_REP
-		PREFIX(node) *x = Malloc(PREFIX(node),l);
-#else
-		PREFIX(node) **x = Malloc(PREFIX(node) *,l);
-#endif
-                double *W = Malloc(double, l);
+		NAMESPACE::svm_group_classes(prob, &nr_classes, &label, &start, &count, perm);
 
-		int i;
-		for(i=0;i<l;i++)
-                {
-			x[i] = prob->x[perm[i]];
-			W[i] = prob->W[perm[i]];
-                }
+		#ifdef _DENSE_REP
+			PREFIX(node) *x = Malloc(PREFIX(node), n_samples);
+		#else
+			PREFIX(node) **x = Malloc(PREFIX(node) *, n_samples);
+		#endif
+
+		double *W = Malloc(double, n_samples);
+
+		int sample_idx;
+		for(sample_idx=0; sample_idx < n_samples; ++sample_idx) {
+			x[sample_idx] = prob->x[perm[sample_idx]];
+			W[sample_idx] = prob->W[perm[sample_idx]];
+		}
 
 		// calculate weighted C
-
-		double *weighted_C = Malloc(double, nr_class);
-		for(i=0;i<nr_class;i++)
-			weighted_C[i] = param->C;
-		for(i=0;i<param->nr_weight;i++)
-		{
-			int j;
-			for(j=0;j<nr_class;j++)
-				if(param->weight_label[i] == label[j])
+		double *weighted_C = Malloc(double, nr_classes);
+		int class_idx;
+		for(class_idx = 0; class_idx < nr_classes; ++class_idx)
+			weighted_C[class_idx] = param->C;
+		int weight_idx;
+		for(weight_idx=0; weight_idx < param->nr_weight; ++weight_idx) {
+			for(class_idx=0; class_idx < nr_classes; ++class_idx)
+				if(param->weight_label[weight_idx] == label[class_idx])
 					break;
-			if(j == nr_class)
-				fprintf(stderr,"warning: class label %d specified in weight is not found\n", param->weight_label[i]);
+			if(class_idx == nr_classes)
+				fprintf(
+					stderr,
+					"warning: class label %d specified in weight is not found\n",
+					param->weight_label[weight_idx]
+				);
 			else
-				weighted_C[j] *= param->weight[i];
+				weighted_C[class_idx] *= param->weight[weight_idx];
 		}
 
 		// train k*(k-1)/2 models
 
-		bool *nonzero = Malloc(bool,l);
-		for(i=0;i<l;i++)
-			nonzero[i] = false;
-                NAMESPACE::decision_function *f = Malloc(NAMESPACE::decision_function,nr_class*(nr_class-1)/2);
+		// If some sample weights to zero cancelled out a class, we need to know later
+		// which combination of classes were skipped.
+		bool *train_binary_classifier = Malloc(
+			bool, nr_classes_original * (nr_classes_original - 1) / 2
+		);
+		for (int i = 0; i < nr_classes_original; ++i) {
+			for (int j = i + 1; j < nr_classes_original; ++j) {
+				if (class_count_original[i] == 0 || class_count_original[j] == 0)
+					train_binary_classifier[i * nr_classes_original + j] = false;
+				else
+					train_binary_classifier[i * nr_classes_original + j] = true;
+			}
+		}
 
-		double *probA=NULL,*probB=NULL;
-		if (param->probability)
-		{
-			probA=Malloc(double,nr_class*(nr_class-1)/2);
-			probB=Malloc(double,nr_class*(nr_class-1)/2);
+		bool *nonzero = Malloc(bool, n_samples);
+		for(sample_idx=0; sample_idx < n_samples; ++sample_idx)
+			nonzero[sample_idx] = false;
+		NAMESPACE::decision_function *f = Malloc(
+			NAMESPACE::decision_function, nr_classes * (nr_classes - 1) / 2
+		);
+
+		double *probA=NULL, *probB=NULL;
+		if (param->probability) {
+			probA=Malloc(double, nr_classes * (nr_classes - 1) / 2);
+			probB=Malloc(double, nr_classes * (nr_classes - 1) / 2);
 		}
 
 		int p = 0;
-		for(i=0;i<nr_class;i++)
-			for(int j=i+1;j<nr_class;j++)
-			{
+		int neg_class_idx, pos_class_idx;
+		for(neg_class_idx=0; neg_class_idx < nr_classes; ++neg_class_idx)
+			for(
+				pos_class_idx=neg_class_idx + 1;
+				pos_class_idx < nr_classes;
+				++pos_class_idx
+			) {
 				PREFIX(problem) sub_prob;
-				int si = start[i], sj = start[j];
-				int ci = count[i], cj = count[j];
-				sub_prob.l = ci+cj;
-#ifdef _DENSE_REP
-				sub_prob.x = Malloc(PREFIX(node),sub_prob.l);
-#else
-				sub_prob.x = Malloc(PREFIX(node) *,sub_prob.l);
-#endif
-				sub_prob.W = Malloc(double,sub_prob.l);
-				sub_prob.y = Malloc(double,sub_prob.l);
-				int k;
-				for(k=0;k<ci;k++)
-				{
-					sub_prob.x[k] = x[si+k];
-					sub_prob.y[k] = +1;
-					sub_prob.W[k] = W[si+k];
+				int start_neg_class = start[neg_class_idx];
+				int start_pos_class = start[pos_class_idx];
+				int count_neg_class = count[neg_class_idx];
+				int count_pos_class = count[pos_class_idx];
+				sub_prob.l = count_neg_class + count_pos_class;
+
+				#ifdef _DENSE_REP
+					sub_prob.x = Malloc(PREFIX(node), sub_prob.l);
+				#else
+					sub_prob.x = Malloc(PREFIX(node) *, sub_prob.l);
+				#endif
+
+				sub_prob.W = Malloc(double, sub_prob.l);
+				sub_prob.y = Malloc(double, sub_prob.l);
+				for(sample_idx=0; sample_idx < count_neg_class; ++sample_idx) {
+					sub_prob.x[sample_idx] = x[start_neg_class + sample_idx];
+					sub_prob.y[sample_idx] = +1;
+					sub_prob.W[sample_idx] = W[start_neg_class + sample_idx];
 				}
-				for(k=0;k<cj;k++)
-				{
-					sub_prob.x[ci+k] = x[sj+k];
-					sub_prob.y[ci+k] = -1;
-					sub_prob.W[ci+k] = W[sj+k];
+				for(sample_idx=0; sample_idx < count_pos_class; ++sample_idx) {
+					sub_prob.x[count_neg_class + sample_idx] = x[
+						start_pos_class + sample_idx
+					];
+					sub_prob.y[count_neg_class + sample_idx] = -1;
+					sub_prob.W[count_neg_class + sample_idx] = W[
+						start_pos_class + sample_idx
+					];
 				}
 
 				if(param->probability)
-                                    NAMESPACE::svm_binary_svc_probability(&sub_prob,param,weighted_C[i],weighted_C[j],probA[p],probB[p], status, blas_functions);
+					NAMESPACE::svm_binary_svc_probability(
+						&sub_prob,
+						param,
+						weighted_C[neg_class_idx],
+						weighted_C[pos_class_idx],
+						probA[p],
+						probB[p],
+						status,
+						blas_functions
+					);
 
-				f[p] = NAMESPACE::svm_train_one(&sub_prob,param,weighted_C[i],weighted_C[j], status, blas_functions);
-				for(k=0;k<ci;k++)
-					if(!nonzero[si+k] && fabs(f[p].alpha[k]) > 0)
-						nonzero[si+k] = true;
-				for(k=0;k<cj;k++)
-					if(!nonzero[sj+k] && fabs(f[p].alpha[ci+k]) > 0)
-						nonzero[sj+k] = true;
+				f[p] = NAMESPACE::svm_train_one(
+					&sub_prob,
+					param,
+					weighted_C[neg_class_idx],
+					weighted_C[pos_class_idx],
+					status,
+					blas_functions
+				);
+				for(sample_idx=0; sample_idx < count_neg_class; ++sample_idx)
+					if(
+						!nonzero[start_neg_class + sample_idx] &&
+						fabs(f[p].alpha[sample_idx]) > 0
+					)
+						nonzero[start_neg_class + sample_idx] = true;
+				for(sample_idx=0; sample_idx < count_pos_class; ++sample_idx)
+					if(
+						!nonzero[start_pos_class + sample_idx] &&
+						fabs(f[p].alpha[count_neg_class + sample_idx]) > 0
+					)
+						nonzero[start_pos_class + sample_idx] = true;
 				free(sub_prob.x);
 				free(sub_prob.y);
-                                free(sub_prob.W);
+				free(sub_prob.W);
 				++p;
 			}
 
 		// build output
 
-		model->nr_class = nr_class;
-
-		model->label = Malloc(int,nr_class);
-		for(i=0;i<nr_class;i++)
-			model->label[i] = label[i];
-
-		model->rho = Malloc(double,nr_class*(nr_class-1)/2);
-		model->n_iter = Malloc(int,nr_class*(nr_class-1)/2);
-		for(i=0;i<nr_class*(nr_class-1)/2;i++)
-		{
-			model->rho[i] = f[i].rho;
-			model->n_iter[i] = f[i].n_iter;
-		}
-
-		if(param->probability)
-		{
-			model->probA = Malloc(double,nr_class*(nr_class-1)/2);
-			model->probB = Malloc(double,nr_class*(nr_class-1)/2);
-			for(i=0;i<nr_class*(nr_class-1)/2;i++)
-			{
-				model->probA[i] = probA[i];
-				model->probB[i] = probB[i];
+		model->nr_class = nr_classes_original;
+		model->label = Malloc(int, nr_classes_original);
+		for(class_idx=0; class_idx < nr_classes_original; ++class_idx)
+			model->label[class_idx] = class_label_original[class_idx];
+		model->rho = Malloc(
+			double, nr_classes_original * (nr_classes_original - 1) / 2
+		);
+		model->n_iter = Malloc(
+			int, nr_classes_original * (nr_classes_original - 1) / 2
+		);
+		for(
+			class_idx = 0;
+			class_idx < nr_classes_original * (nr_classes_original - 1) / 2;
+			++class_idx
+		) {
+			if (train_binary_classifier[class_idx]) {
+				model->rho[class_idx] = f[class_idx].rho;
+				model->n_iter[class_idx] = f[class_idx].n_iter;
+			} else {
+				model->rho[class_idx] = 0;
+				model->n_iter[class_idx] = 0;
 			}
 		}
-		else
-		{
+
+		if(param->probability) {
+			model->probA = Malloc(
+				double, nr_classes_original * (nr_classes_original - 1) / 2
+			);
+			model->probB = Malloc(
+				double, nr_classes_original * (nr_classes_original - 1) / 2
+			);
+			for(
+				class_idx=0;
+				class_idx < nr_classes * (nr_classes - 1) / 2;
+				++class_idx
+			){
+				if (train_binary_classifier[class_idx]) {
+					model->probA[class_idx] = probA[class_idx];
+					model->probB[class_idx] = probB[class_idx];
+				} else {
+					model->probA[class_idx] = 0;
+					model->probB[class_idx] = 0;
+				}
+			}
+		}
+		else {
 			model->probA=NULL;
 			model->probB=NULL;
 		}
 
 		int total_sv = 0;
-		int *nz_count = Malloc(int,nr_class);
-		model->nSV = Malloc(int,nr_class);
-		for(i=0;i<nr_class;i++)
-		{
+		int *nz_count = Malloc(int, nr_classes);
+		for(class_idx=0; class_idx < nr_classes; ++class_idx) {
 			int nSV = 0;
-			for(int j=0;j<count[i];j++)
-				if(nonzero[start[i]+j])
-				{
+			for(sample_idx=0; sample_idx < count[class_idx]; ++sample_idx)
+				if(nonzero[start[class_idx] + sample_idx]){
 					++nSV;
 					++total_sv;
 				}
-			model->nSV[i] = nSV;
-			nz_count[i] = nSV;
+			nz_count[class_idx] = nSV;
+		}
+		model->nSV = Malloc(int, nr_classes_original);
+		if (nr_classes < nr_classes_original) {
+			// Some classes have been washed out because of the null or negative
+			// sample weights. We need to add them back with zero support vectors.
+			int nz_count_idx = 0;
+			for (class_idx = 0; class_idx < nr_classes_original; ++class_idx) {
+				if (class_count_original[class_idx] > 0) {
+					model->nSV[class_idx] = nz_count[nz_count_idx];
+					++nz_count_idx;
+				} else {
+					model->nSV[class_idx] = 0;
+				}
+			}
+		} else {
+			for (class_idx = 0; class_idx < nr_classes; ++class_idx) {
+				model->nSV[class_idx] = nz_count[class_idx];
+			}
 		}
 
-                info("Total nSV = %d\n",total_sv);
+		info("Total nSV = %d\n", total_sv);
 
 		model->l = total_sv;
-                model->sv_ind = Malloc(int, total_sv);
-#ifdef _DENSE_REP
-		model->SV = Malloc(PREFIX(node),total_sv);
-#else
-		model->SV = Malloc(PREFIX(node) *,total_sv);
-#endif
+		model->sv_ind = Malloc(int, total_sv);
+		#ifdef _DENSE_REP
+			model->SV = Malloc(PREFIX(node), total_sv);
+		#else
+			model->SV = Malloc(PREFIX(node) *, total_sv);
+		#endif
 		p = 0;
-		for(i=0;i<l;i++) {
-			if(nonzero[i]) {
-                                model->SV[p] = x[i];
-                                model->sv_ind[p] = perm[i];
-                                ++p;
-                        }
-                }
+		for(sample_idx=0; sample_idx < n_samples; ++sample_idx) {
+			if(nonzero[sample_idx]) {
+				model->SV[p] = x[sample_idx];
+				model->sv_ind[p] = positive_samples_idx[perm[sample_idx]];
+				++p;
+			}
+		}
 
-		int *nz_start = Malloc(int,nr_class);
+		int *nz_start = Malloc(int, nr_classes);
 		nz_start[0] = 0;
-		for(i=1;i<nr_class;i++)
-			nz_start[i] = nz_start[i-1]+nz_count[i-1];
+		for(class_idx=1; class_idx < nr_classes; ++class_idx)
+			nz_start[class_idx] = nz_start[class_idx - 1] + nz_count[class_idx - 1];
 
-		model->sv_coef = Malloc(double *,nr_class-1);
-		for(i=0;i<nr_class-1;i++)
-			model->sv_coef[i] = Malloc(double,total_sv);
+		model->sv_coef = Malloc(double *, nr_classes_original - 1);
+		for(class_idx=0; class_idx < nr_classes_original - 1; ++class_idx)
+			model->sv_coef[class_idx] = Malloc(double, total_sv);
 
 		p = 0;
-		for(i=0;i<nr_class;i++)
-			for(int j=i+1;j<nr_class;j++)
-			{
-				// classifier (i,j): coefficients with
+		for(neg_class_idx=0; neg_class_idx < nr_classes; ++neg_class_idx)
+			for(
+				pos_class_idx=neg_class_idx + 1;
+				pos_class_idx< nr_classes;
+				++pos_class_idx
+			) {
+				// classifier (i, j): coefficients with
 				// i are in sv_coef[j-1][nz_start[i]...],
 				// j are in sv_coef[i][nz_start[j]...]
 
-				int si = start[i];
-				int sj = start[j];
-				int ci = count[i];
-				int cj = count[j];
+				int start_neg_class = start[neg_class_idx];
+				int start_pos_class = start[pos_class_idx];
+				int count_neg_class = count[neg_class_idx];
+				int count_pos_class = count[pos_class_idx];
 
-				int q = nz_start[i];
-				int k;
-				for(k=0;k<ci;k++)
-					if(nonzero[si+k])
-						model->sv_coef[j-1][q++] = f[p].alpha[k];
-				q = nz_start[j];
-				for(k=0;k<cj;k++)
-					if(nonzero[sj+k])
-						model->sv_coef[i][q++] = f[p].alpha[ci+k];
+				int q = nz_start[neg_class_idx];
+				for(sample_idx=0; sample_idx < count_neg_class; ++sample_idx)
+					if(nonzero[start_neg_class + sample_idx])
+						model->sv_coef[class_label_original[pos_class_idx - 1]][q++] = (
+							f[p].alpha[sample_idx]
+						);
+				q = nz_start[pos_class_idx];
+				for(sample_idx=0; sample_idx < count_pos_class; ++sample_idx)
+					if(nonzero[start_pos_class + sample_idx])
+						model->sv_coef[class_label_original[neg_class_idx]][q++] = (
+							f[p].alpha[count_neg_class + sample_idx]
+						);
 				++p;
 			}
 
@@ -2632,15 +2820,23 @@ PREFIX(model) *PREFIX(train)(const PREFIX(problem) *prob, const svm_parameter *p
 		free(count);
 		free(perm);
 		free(start);
-                free(W);
+		free(W);
 		free(x);
 		free(weighted_C);
 		free(nonzero);
-		for(i=0;i<nr_class*(nr_class-1)/2;i++)
-			free(f[i].alpha);
+		for(class_idx=0; class_idx < nr_classes * (nr_classes - 1) / 2; ++class_idx)
+			free(f[class_idx].alpha);
 		free(f);
 		free(nz_count);
 		free(nz_start);
+		free(positive_samples_idx);
+		if (class_count_original != NULL) {
+			free(class_count_original);
+		}
+		if (class_label_original != NULL) {
+			free(class_label_original);
+		}
+		free(train_binary_classifier);
 	}
 	free(newprob.x);
 	free(newprob.y);
@@ -3079,51 +3275,51 @@ const char *PREFIX(check_parameter)(const PREFIX(problem) *prob, const svm_param
 	   svm_type == ONE_CLASS)
 		return "one-class SVM probability output not supported yet";
 
+	if(svm_type == NU_SVC){
+		// check whether or not nu-svc is feasible.
+		// The condition is (
+		// nu * (n_samples_neg_class + n_samples_pos_class) / 2 >
+		// min(n_samples_neg_class, n_samples_pos_class)
+		int n_samples = prob->l;
+		int max_nr_classes = 16;  // Temporary upper limit: we reallocate if needed
+		int nr_classes = 0;
+		int *label = Malloc(int, max_nr_classes);
+		double *count = Malloc(double, max_nr_classes);
 
-	// check whether nu-svc is feasible
-
-	if(svm_type == NU_SVC)
-	{
-		int l = prob->l;
-		int max_nr_class = 16;
-		int nr_class = 0;
-		int *label = Malloc(int,max_nr_class);
-		double *count = Malloc(double,max_nr_class);
-
-		int i;
-		for(i=0;i<l;i++)
-		{
-			int this_label = (int)prob->y[i];
-			int j;
-			for(j=0;j<nr_class;j++)
-				if(this_label == label[j])
-				{
-					count[j] += prob->W[i];
+		for(int sample_idx=0; sample_idx < n_samples; ++sample_idx) {
+			int this_label = (int) prob->y[sample_idx];
+			int class_idx;
+			for(class_idx = 0; class_idx < nr_classes; ++class_idx) {
+				if(this_label == label[class_idx]) {
+					count[class_idx] += prob->W[sample_idx];
 					break;
 				}
-			if(j == nr_class)
-			{
-				if(nr_class == max_nr_class)
-				{
-					max_nr_class *= 2;
-					label = (int *)realloc(label,max_nr_class*sizeof(int));
-					count = (double *)realloc(count,max_nr_class*sizeof(double));
-
+			}
+			if(class_idx == nr_classes) {
+				if(nr_classes == max_nr_classes) {
+					// reallocate counts and labels if needed
+					max_nr_classes *= 2;
+					label = (int *)realloc(label, max_nr_classes * sizeof(int));
+					count = (double *)realloc(count, max_nr_classes * sizeof(double));
 				}
-				label[nr_class] = this_label;
-				count[nr_class] = prob->W[i];
-				++nr_class;
+				label[nr_classes] = this_label;
+				count[nr_classes] = prob->W[sample_idx];
+				++nr_classes;
 			}
 		}
 
-		for(i=0;i<nr_class;i++)
-		{
-			double n1 = count[i];
-			for(int j=i+1;j<nr_class;j++)
-			{
-				double n2 = count[j];
-				if(param->nu*(n1+n2)/2 > min(n1,n2))
-				{
+		for(int neg_class_idx = 0; neg_class_idx < nr_classes; ++neg_class_idx) {
+			double total_weight_neg_class = count[neg_class_idx];
+			for(
+				int pos_class_idx = neg_class_idx + 1;
+				pos_class_idx < nr_classes;
+				++pos_class_idx
+			) {
+				double total_weight_pos_class = count[pos_class_idx];
+				if(
+					param->nu * (total_weight_neg_class + total_weight_pos_class) / 2 >
+					min(total_weight_neg_class, total_weight_pos_class)
+				) {
 					free(label);
 					free(count);
 					return "specified nu is infeasible";
@@ -3134,47 +3330,43 @@ const char *PREFIX(check_parameter)(const PREFIX(problem) *prob, const svm_param
 		free(count);
 	}
 
-	if(svm_type == C_SVC ||
-	   svm_type == EPSILON_SVR ||
-	   svm_type == NU_SVR ||
-	   svm_type == ONE_CLASS)
-	{
-		PREFIX(problem) newprob;
-		// filter samples with negative and null weights
-		remove_zero_weight(&newprob, prob);
+	// Check that we are not in a ill-posed problem once we remove negative and null
+	// weights
+	PREFIX(problem) newprob;
+	remove_negative_and_null_weights(
+		&newprob, prob, false, NULL, false, NULL, NULL, NULL
+	);
 
-		// all samples were removed
-		if(newprob.l == 0) {
-			free(newprob.x);
-			free(newprob.y);
-			free(newprob.W);
-			return "Invalid input - all samples have zero or negative weights.";
-		}
-		else if(prob->l != newprob.l &&
-		        svm_type == C_SVC)
-		{
-			bool only_one_label = true;
-			int first_label = newprob.y[0];
-			for(int i=1;i<newprob.l;i++)
-			{
-				if(newprob.y[i] != first_label)
-				{
-					only_one_label = false;
-					break;
-				}
-			}
-			if(only_one_label) {
-				free(newprob.x);
-				free(newprob.y);
-				free(newprob.W);
-				return "Invalid input - all samples with positive weights belong to the same class.";
-			}
-		}
-
+	if(newprob.l == 0) {
+		// No samples are positive
 		free(newprob.x);
 		free(newprob.y);
 		free(newprob.W);
+		return "Invalid input - all samples have zero or negative weights.";
 	}
+	else if(prob->l != newprob.l && svm_type == C_SVC)
+	{
+		// For C-SVC, we need at least samples from both classes
+		bool only_one_label = true;
+		int first_label = newprob.y[0];
+		for(int i=1; i < newprob.l; ++i) {
+			if(newprob.y[i] != first_label) {
+				only_one_label = false;
+				break;
+			}
+		}
+		if(only_one_label) {
+			free(newprob.x);
+			free(newprob.y);
+			free(newprob.W);
+			return "Invalid input - all samples with positive weights belong to the same class.";
+		}
+	}
+
+	free(newprob.x);
+	free(newprob.y);
+	free(newprob.W);
+
 	return NULL;
 }
 
