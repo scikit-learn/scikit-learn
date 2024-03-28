@@ -1332,10 +1332,11 @@ def check_sample_weights_not_overwritten(name, estimator_orig):
 def check_dtype_object(name, estimator_orig):
     # check that estimators treat dtype object as numeric if possible
     rng = np.random.RandomState(0)
-    X = _enforce_estimator_tags_X(estimator_orig, rng.uniform(size=(40, 10)))
+    X = rng.uniform(size=(40, 10))
+    y = (X[:, 0] * 4).astype(int)
+    X = _enforce_estimator_tags_X(estimator_orig, X)
     X = X.astype(object)
     tags = _safe_tags(estimator_orig)
-    y = (X[:, 0] * 4).astype(int)
     estimator = clone(estimator_orig)
     y = _enforce_estimator_tags_y(estimator, y)
 
@@ -1393,9 +1394,9 @@ def check_dict_unchanged(name, estimator_orig):
     else:
         X = 2 * rnd.uniform(size=(20, 3))
 
+    y = X[:, 0].astype(int)
     X = _enforce_estimator_tags_X(estimator_orig, X)
 
-    y = X[:, 0].astype(int)
     estimator = clone(estimator_orig)
     y = _enforce_estimator_tags_y(estimator, y)
     if hasattr(estimator, "n_components"):
@@ -1432,8 +1433,8 @@ def check_dont_overwrite_parameters(name, estimator_orig):
     estimator = clone(estimator_orig)
     rnd = np.random.RandomState(0)
     X = 3 * rnd.uniform(size=(20, 3))
-    X = _enforce_estimator_tags_X(estimator_orig, X)
     y = X[:, 0].astype(int)
+    X = _enforce_estimator_tags_X(estimator_orig, X)
     y = _enforce_estimator_tags_y(estimator, y)
 
     if hasattr(estimator, "n_components"):
@@ -1487,8 +1488,8 @@ def check_fit2d_predict1d(name, estimator_orig):
     # check by fitting a 2d array and predicting with a 1d array
     rnd = np.random.RandomState(0)
     X = 3 * rnd.uniform(size=(20, 3))
-    X = _enforce_estimator_tags_X(estimator_orig, X)
     y = X[:, 0].astype(int)
+    X = _enforce_estimator_tags_X(estimator_orig, X)
     estimator = clone(estimator_orig)
     y = _enforce_estimator_tags_y(estimator, y)
 
@@ -1531,8 +1532,8 @@ def check_methods_subset_invariance(name, estimator_orig):
     # on mini batches or the whole set
     rnd = np.random.RandomState(0)
     X = 3 * rnd.uniform(size=(20, 3))
-    X = _enforce_estimator_tags_X(estimator_orig, X)
     y = X[:, 0].astype(int)
+    X = _enforce_estimator_tags_X(estimator_orig, X)
     estimator = clone(estimator_orig)
     y = _enforce_estimator_tags_y(estimator, y)
 
@@ -1568,8 +1569,8 @@ def check_methods_sample_order_invariance(name, estimator_orig):
     # on a subset with different sample order
     rnd = np.random.RandomState(0)
     X = 3 * rnd.uniform(size=(20, 3))
-    X = _enforce_estimator_tags_X(estimator_orig, X)
     y = X[:, 0].astype(np.int64)
+    X = _enforce_estimator_tags_X(estimator_orig, X)
     if _safe_tags(estimator_orig, key="binary_only"):
         y[y == 2] = 1
     estimator = clone(estimator_orig)
@@ -1613,9 +1614,9 @@ def check_fit2d_1sample(name, estimator_orig):
     # the number of samples or the number of classes.
     rnd = np.random.RandomState(0)
     X = 3 * rnd.uniform(size=(1, 10))
-    X = _enforce_estimator_tags_X(estimator_orig, X)
-
     y = X[:, 0].astype(int)
+
+    X = _enforce_estimator_tags_X(estimator_orig, X)
     estimator = clone(estimator_orig)
     y = _enforce_estimator_tags_y(estimator, y)
 
@@ -1653,8 +1654,8 @@ def check_fit2d_1feature(name, estimator_orig):
     # informative message
     rnd = np.random.RandomState(0)
     X = 3 * rnd.uniform(size=(10, 1))
-    X = _enforce_estimator_tags_X(estimator_orig, X)
     y = X[:, 0].astype(int)
+    X = _enforce_estimator_tags_X(estimator_orig, X)
     estimator = clone(estimator_orig)
     y = _enforce_estimator_tags_y(estimator, y)
 
@@ -1923,11 +1924,11 @@ def check_fit_score_takes_y(name, estimator_orig):
 def check_estimators_dtypes(name, estimator_orig):
     rnd = np.random.RandomState(0)
     X_train_32 = 3 * rnd.uniform(size=(20, 5)).astype(np.float32)
+    y = X_train_32[:, 0].astype(np.int64)
     X_train_32 = _enforce_estimator_tags_X(estimator_orig, X_train_32)
     X_train_64 = X_train_32.astype(np.float64)
     X_train_int_64 = X_train_32.astype(np.int64)
     X_train_int_32 = X_train_32.astype(np.int32)
-    y = X_train_int_64[:, 0]
     y = _enforce_estimator_tags_y(estimator_orig, y)
 
     methods = ["predict", "transform", "decision_function", "predict_proba"]
