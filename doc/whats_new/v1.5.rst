@@ -40,8 +40,8 @@ See :ref:`array_api` for more details.
 
 - :class:`linear_model.Ridge` now supports the Array API for the `svd` solver.
   See :ref:`array_api` for more details.
-  :pr:`27800` by :user:`Franck Charras <fcharras>`, :user:`TODO <TODO>` and
-  :user:`TODO <TODO>`.
+  :pr:`27800` by :user:`Franck Charras <fcharras>`, :user:`Olivier Grisel <ogrisel>`
+  and :user:`Tim Head <betatim>`.
 
 Support for building with Meson
 -------------------------------
