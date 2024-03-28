@@ -11,6 +11,7 @@ import shutil
 import sys
 import traceback
 from os.path import join
+from pathlib import Path
 
 from setuptools import Command, Extension, setup
 from setuptools.command.build_ext import build_ext
@@ -28,7 +29,6 @@ except ImportError:
 # away from numpy.distutils?
 builtins.__SKLEARN_SETUP__ = True
 
-
 DISTNAME = "scikit-learn"
 DESCRIPTION = "A set of python modules for machine learning and data mining"
 with open("README.rst") as f:
@@ -43,6 +43,7 @@ PROJECT_URLS = {
     "Documentation": "https://scikit-learn.org/stable/documentation.html",
     "Source Code": "https://github.com/scikit-learn/scikit-learn",
 }
+SIMD_DIRECTORY = join("sklearn", "metrics", "_simd")
 
 # We can actually import a restricted version of sklearn that
 # does not need the compiled code
@@ -50,6 +51,10 @@ import sklearn  # noqa
 import sklearn._min_dependencies as min_deps  # noqa
 from sklearn._build_utils import _check_cython_version  # noqa
 from sklearn.externals._packaging.version import parse as parse_version  # noqa
+from sklearn._build_utils.pre_build_helpers import compile_test_program  # noqa
+
+dir_path = os.path.dirname(os.path.realpath(__file__))
+HWY_INCLUDE_PATH = Path(dir_path, "highway")
 
 
 VERSION = sklearn.__version__
@@ -251,8 +256,15 @@ extension_config = {
     "metrics": [
         {"sources": ["_pairwise_fast.pyx"]},
         {
-            "sources": ["_dist_metrics.pyx.tp", "_dist_metrics.pxd.tp"],
+            "sources": [
+                "_dist_metrics.pyx.tp",
+                "_dist_metrics.pxd.tp",
+            ],
             "include_np": True,
+            "language": "c++",
+            "extra_compile_args": ["-std=c++11"],
+            "define_macros": [("DIST_METRICS", None)],
+            "include_dirs": [join("..", "..", HWY_INCLUDE_PATH), "_simd"],
         },
     ],
     "metrics.cluster": [
@@ -466,6 +478,31 @@ def configure_extension_modules():
     build_with_debug_symbols = (
         os.environ.get("SKLEARN_BUILD_ENABLE_DEBUG_SYMBOLS", "0") != "0"
     )
+    BUILD_WITH_SIMD = int(os.environ.get("SKLEARN_NO_SIMD", "0") == "0")
+    if BUILD_WITH_SIMD:
+        hwy_srcs = [
+            "hwy/aligned_allocator.cc",
+            "hwy/per_target.cc",
+            "hwy/print.cc",
+            "hwy/targets.cc",
+            "hwy/timer.cc",
+        ]
+        hwy_src_paths = [join(HWY_INCLUDE_PATH, src) for src in hwy_srcs]
+        libraries.append(
+            (
+                "avx_dist_metrics",
+                {
+                    "language": "c++",
+                    "sources": [join(SIMD_DIRECTORY, "simd.cpp"), *hwy_src_paths],
+                    "cflags": ["-std=c++14"],
+                    "extra_link_args": ["-std=c++14"],
+                    "include_dirs": [HWY_INCLUDE_PATH, SIMD_DIRECTORY],
+                },
+            ),
+        )
+    extension_config["metrics"][1]["define_macros"].append(
+        ("WITH_SIMD", BUILD_WITH_SIMD)
+    )
     if os.name == "posix":
         if build_with_debug_symbols:
             default_extra_compile_args.append("-g")
@@ -533,13 +570,13 @@ def configure_extension_modules():
             optimization_level = extension.get(
                 "optimization_level", default_optimization_level
             )
+            define_macros = extension.get("define_macros", [])
             if os.name == "posix":
                 extra_compile_args.append(f"-{optimization_level}")
             else:
                 extra_compile_args.append(f"/{optimization_level}")
 
             libraries_ext = extension.get("libraries", []) + default_libraries
-
             new_ext = Extension(
                 name=name,
                 sources=sources,
@@ -549,6 +586,7 @@ def configure_extension_modules():
                 depends=depends,
                 extra_link_args=extension.get("extra_link_args", None),
                 extra_compile_args=extra_compile_args,
+                define_macros=define_macros,
             )
             cython_exts.append(new_ext)
 
