@@ -661,6 +661,10 @@ class GaussianMixture(BaseMixture):
         Lower bound value on the log-likelihood (of the training data with
         respect to the model) of the best fit of EM.
 
+    lower_bounds_ : array-like of shape (`n_iter_`,)
+        The list of lower bound values on the log-likelihood from each
+        iteration of the best fit of EM.
+
     n_features_in_ : int
         Number of features seen during :term:`fit`.
 

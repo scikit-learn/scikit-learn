@@ -223,6 +223,7 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
         n_init = self.n_init if do_init else 1
 
         max_lower_bound = -np.inf
+        best_lower_bounds = []
         self.converged_ = False
 
         random_state = check_random_state(self.random_state)
@@ -235,6 +236,7 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
                 self._initialize_parameters(X, random_state)
 
             lower_bound = -np.inf if do_init else self.lower_bound_
+            current_lower_bounds = []
 
             if self.max_iter == 0:
                 best_params = self._get_parameters()
@@ -247,6 +249,7 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
                     log_prob_norm, log_resp = self._e_step(X)
                     self._m_step(X, log_resp)
                     lower_bound = self._compute_lower_bound(log_resp, log_prob_norm)
+                    current_lower_bounds.append(lower_bound)
 
                     change = lower_bound - prev_lower_bound
                     self._print_verbose_msg_iter_end(n_iter, change)
@@ -261,6 +264,7 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
                     max_lower_bound = lower_bound
                     best_params = self._get_parameters()
                     best_n_iter = n_iter
+                    best_lower_bounds = current_lower_bounds
                     self.converged_ = converged
 
         # Should only warn about convergence if max_iter > 0, otherwise
@@ -279,6 +283,7 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
         self._set_parameters(best_params)
         self.n_iter_ = best_n_iter
         self.lower_bound_ = max_lower_bound
+        self.lower_bounds_ = best_lower_bounds
 
         # Always do a final e-step to guarantee that the labels returned by
         # fit_predict(X) are always consistent with fit(X).predict(X)
