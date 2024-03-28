@@ -11,13 +11,13 @@ contourpy==1.1.1
     # via matplotlib
 cycler==0.12.1
     # via matplotlib
-cython==3.0.8
+cython==3.0.9
     # via -r /scikit-learn/build_tools/azure/python_nogil_requirements.txt
 exceptiongroup==1.2.0
     # via pytest
 execnet==2.0.2
     # via pytest-xdist
-fonttools==4.49.0
+fonttools==4.50.0
     # via matplotlib
 iniconfig==2.0.0
     # via pytest
@@ -27,35 +27,46 @@ kiwisolver==1.4.4
     # via matplotlib
 matplotlib==3.6.2
     # via -r /scikit-learn/build_tools/azure/python_nogil_requirements.txt
+meson==1.4.0
+    # via meson-python
+meson-python==0.15.0
+    # via -r /scikit-learn/build_tools/azure/python_nogil_requirements.txt
+ninja==1.11.1.1
+    # via -r /scikit-learn/build_tools/azure/python_nogil_requirements.txt
 numpy==1.24.0
     # via
     #   -r /scikit-learn/build_tools/azure/python_nogil_requirements.txt
     #   contourpy
     #   matplotlib
     #   scipy
-packaging==23.2
+packaging==24.0
     # via
     #   matplotlib
+    #   pyproject-metadata
     #   pytest
 pillow==9.5.0
     # via matplotlib
 pluggy==1.4.0
     # via pytest
-pyparsing==3.1.1
+pyparsing==3.1.2
     # via matplotlib
-pytest==8.0.1
+pyproject-metadata==0.7.1
+    # via meson-python
+pytest==7.4.4
     # via
     #   -r /scikit-learn/build_tools/azure/python_nogil_requirements.txt
     #   pytest-xdist
 pytest-xdist==3.5.0
     # via -r /scikit-learn/build_tools/azure/python_nogil_requirements.txt
-python-dateutil==2.8.2
+python-dateutil==2.9.0.post0
     # via matplotlib
 scipy==1.9.3
     # via -r /scikit-learn/build_tools/azure/python_nogil_requirements.txt
 six==1.16.0
     # via python-dateutil
-threadpoolctl==3.3.0
+threadpoolctl==3.4.0
     # via -r /scikit-learn/build_tools/azure/python_nogil_requirements.txt
 tomli==2.0.1
-    # via pytest
+    # via
+    #   meson-python
+    #   pytest

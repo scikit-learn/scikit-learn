@@ -12,13 +12,12 @@ dependencies:
   - threadpoolctl=2.2.0
   - matplotlib=3.3.4  # min
   - pyamg
-  - pytest
+  - pytest<8
   - pytest-xdist
   - pillow
-  - setuptools
   - pytest-cov
   - coverage
   - ccache
   - pip
   - pip:
-    - cython==3.0.8  # min
+    - cython==3.0.9  # min
