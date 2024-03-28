@@ -411,6 +411,8 @@ def get_scorer(scoring):
 
 
 class _PassthroughScorer:
+    # TODO: document the usage of this class, especially within the `check_scoring`
+    # function below.
     def __init__(self, estimator):
         self._estimator = estimator
 
