@@ -469,7 +469,7 @@ class _PLS(
         """
         check_is_fitted(self)
         X = self._validate_data(X, copy=copy, dtype=FLOAT_DTYPES, reset=False)
-        # Only center X but do not scale it since the coefficients are already
+        # Only center X but do not scale it since the coefficients are already scaled
         X -= self._x_mean
         Ypred = X @ self.coef_.T + self.intercept_
         return Ypred.ravel() if self._predict_1d else Ypred

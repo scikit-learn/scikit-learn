@@ -632,7 +632,7 @@ def test_pls_regression_fit_1d_y():
     y = np.array([2, 6, 12, 20, 30, 42])
     expected = y.copy()
 
-    plsr = PLSRegression(scale=False).fit(X, y)
+    plsr = PLSRegression().fit(X, y)
     y_pred = plsr.predict(X)
     assert y_pred.shape == expected.shape
 
@@ -653,14 +653,14 @@ def test_pls_regression_scaling_coef():
     """
     # handcrafted data where we can predict Y from X with an additional scaling factor
     rng = np.random.RandomState(0)
-    coef = rng.randint(0, 4, size=(3, 5)).astype(np.float64)
-    X = rng.randn(30, 5) * 10  # add a variance of 10
+    coef = rng.uniform(size=(3, 5))
+    X = rng.normal(scale=10, size=(30, 5))  # add a std of 10
     Y = X @ coef.T
 
     # we need to make sure that the dimension of the latent space is large enough to
     # perfectly predict `Y` from `X` (no information loss)
     pls = PLSRegression(n_components=5, scale=True).fit(X, Y)
-    assert_allclose(pls.coef_, coef, atol=1e-7)
+    assert_allclose(pls.coef_, coef)
 
     # we therefore should be able to predict `Y` from `X`
-    assert_allclose(pls.predict(X), Y, atol=1e-7)
+    assert_allclose(pls.predict(X), Y)

@@ -33,7 +33,7 @@ Changelog
 :mod:`sklearn.cross_decomposition`
 ..................................
 
-- |Fix| The `coef_` fitted attribute in :class:`cross_decomposition.PLSRegression`
+- |Fix| The `coef_` fitted attribute of :class:`cross_decomposition.PLSRegression`
   now takes into account both the scale of `X` and `Y` when `scale=True`. Note that
   the previous predicted values were not affected by this bug.
   :pr:`28612` by :user:`Guillaume Lemaitre <glemaitre>`.
