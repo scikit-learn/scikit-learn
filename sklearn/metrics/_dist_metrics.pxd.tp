@@ -16,6 +16,11 @@ from ..utils._typedefs cimport float64_t, float32_t, int32_t, intp_t
 cdef class DistanceMetric:
     pass
 
+cdef extern from "_simd/_dist_optim.cpp":
+    cdef Type xsimd_manhattan_dist[Type](Type * x, Type * y, intp_t size) nogil
+    cdef Type xsimd_manhattan_dist_scalar[Type](Type * x, Type * y, intp_t size) nogil
+    bint WITH_SIMD
+
 {{for name_suffix, INPUT_DTYPE_t, INPUT_DTYPE in implementation_specific_values}}
 
 ######################################################################
@@ -70,6 +75,7 @@ cdef class DistanceMetric{{name_suffix}}(DistanceMetric):
     cdef intp_t size
     cdef object func
     cdef object kwargs
+    cdef bint simd_runtime
 
     cdef {{INPUT_DTYPE_t}} dist(
         self,
