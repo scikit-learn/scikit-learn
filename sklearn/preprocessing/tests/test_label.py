@@ -243,7 +243,7 @@ def test_label_binarizer_array_api(y, array_namespace, device, dtype_name):
         assert get_namespace(xp_transformed)[0].__name__ == xp.__name__
         assert get_namespace(xp_inv_transformed)[0].__name__ == xp.__name__
         assert_array_equal(_convert_to_numpy(xp_transformed, xp), np_transformed)
-        assert_array_equal(xp_inv_transformed, y)
+        assert_array_equal(_convert_to_numpy(xp_inv_transformed, xp), y)
 
 
 @pytest.mark.parametrize(
