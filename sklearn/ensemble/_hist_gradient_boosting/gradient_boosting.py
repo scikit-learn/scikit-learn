@@ -170,6 +170,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             Hidden(StrOptions({"warn"})),
             None,
         ],
+        "on_high_cardinality_categories": [StrOptions({"error", "bin_infrequent"})],
         "warm_start": ["boolean"],
         "early_stopping": [StrOptions({"auto"}), "boolean"],
         "scoring": [str, callable, None],
@@ -191,6 +192,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         max_features,
         max_bins,
         categorical_features,
+        on_high_cardinality_categories,
         monotonic_cst,
         interaction_cst,
         warm_start,
@@ -214,6 +216,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         self.monotonic_cst = monotonic_cst
         self.interaction_cst = interaction_cst
         self.categorical_features = categorical_features
+        self.on_high_cardinality_categories = on_high_cardinality_categories
         self.warm_start = warm_start
         self.early_stopping = early_stopping
         self.scoring = scoring
@@ -278,12 +281,18 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             X = self._validate_data(X, **check_X_kwargs)
             return X, None
 
+        if self.on_high_cardinality_categories == "bin_infrequent":
+            max_categories = self.max_bins
+        else:
+            max_categories = None
+
         n_features = X.shape[1]
         ordinal_encoder = OrdinalEncoder(
             categories="auto",
             handle_unknown="use_encoded_value",
             unknown_value=np.nan,
             encoded_missing_value=np.nan,
+            max_categories=max_categories,
             dtype=X_DTYPE,
         )
 
@@ -334,15 +343,23 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         categorical_column_indices = np.arange(self._preprocessor.n_features_in_)[
             self._preprocessor.output_indices_["encoder"]
         ]
-        for feature_idx, categories in zip(
-            categorical_column_indices, encoder.categories_
+        bin_infrequent = self.on_high_cardinality_categories == "bin_infrequent"
+        try:
+            n_infrequent_categories = [
+                0 if cat is None else len(cat) for cat in encoder.infrequent_categories_
+            ]
+        except AttributeError:
+            n_infrequent_categories = [0] * len(encoder.categories_)
+
+        for feature_idx, categories, n_infrequent in zip(
+            categorical_column_indices, encoder.categories_, n_infrequent_categories
         ):
             # OrdinalEncoder always puts np.nan as the last category if the
             # training data has missing values. Here we remove it because it is
             # already added by the _BinMapper.
             if len(categories) and is_scalar_nan(categories[-1]):
                 categories = categories[:-1]
-            if categories.size > self.max_bins:
+            if not bin_infrequent and categories.size > self.max_bins:
                 try:
                     feature_name = repr(encoder.feature_names_in_[feature_idx])
                 except AttributeError:
@@ -352,7 +369,10 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                     f"have a cardinality <= {self.max_bins} but actually "
                     f"has a cardinality of {categories.size}."
                 )
-            known_categories[feature_idx] = np.arange(len(categories), dtype=X_DTYPE)
+
+            # infrequent categories are grouped into one category
+            total_categories = len(categories) - n_infrequent + 1
+            known_categories[feature_idx] = np.arange(total_categories, dtype=X_DTYPE)
         return known_categories
 
     def _check_categorical_features(self, X):
@@ -1532,6 +1552,17 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
            Added `"from_dtype"` option. The default will change to `"from_dtype"` in
            v1.6.
 
+    on_high_cardinality_categories : {"error", "bin_infrequent"}, default="error"
+        Whether to raise an error or to bin together the least frequent categorical
+        features.
+
+        - `"error"`: Raises an error when the cardinality of a categorical feature
+          is higher than `max_bins` or is encoded with a value greater than `max_bins`.
+        - `"bin_infrequent"`: Bins the least frequent categorical features
+          such that there is no more than `max_bins` categories.
+
+        .. versionadded:: 1.5
+
     monotonic_cst : array-like of int of shape (n_features) or dict, default=None
         Monotonic constraint to enforce on each feature are specified using the
         following integer values:
@@ -1703,6 +1734,7 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         max_features=1.0,
         max_bins=255,
         categorical_features="warn",
+        on_high_cardinality_categories="error",
         monotonic_cst=None,
         interaction_cst=None,
         warm_start=False,
@@ -1727,6 +1759,7 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
             monotonic_cst=monotonic_cst,
             interaction_cst=interaction_cst,
             categorical_features=categorical_features,
+            on_high_cardinality_categories=on_high_cardinality_categories,
             early_stopping=early_stopping,
             warm_start=warm_start,
             scoring=scoring,
@@ -1908,6 +1941,17 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
            Added `"from_dtype"` option. The default will change to `"from_dtype"` in
            v1.6.
 
+    on_high_cardinality_categories : {"error", "bin_infrequent"}, default="error"
+        Whether to raise an error or to bin together the least frequent categorical
+        features.
+
+        - `"error"`: Raises an error when the cardinality of a categorical feature
+          is higher than `max_bins` or is encoded with a value greater than `max_bins`.
+        - `"bin_infrequent"`: Bins the least frequent categorical features
+          such that there is no more than `max_bins` categories.
+
+        .. versionadded:: 1.5
+
     monotonic_cst : array-like of int of shape (n_features) or dict, default=None
         Monotonic constraint to enforce on each feature are specified using the
         following integer values:
@@ -2081,6 +2125,7 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
         max_features=1.0,
         max_bins=255,
         categorical_features="warn",
+        on_high_cardinality_categories="error",
         monotonic_cst=None,
         interaction_cst=None,
         warm_start=False,
@@ -2104,6 +2149,7 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
             max_features=max_features,
             max_bins=max_bins,
             categorical_features=categorical_features,
+            on_high_cardinality_categories=on_high_cardinality_categories,
             monotonic_cst=monotonic_cst,
             interaction_cst=interaction_cst,
             warm_start=warm_start,
