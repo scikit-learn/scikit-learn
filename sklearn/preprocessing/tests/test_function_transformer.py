@@ -204,7 +204,7 @@ def test_function_transformer_raise_error_with_mixed_dtype(X_type):
     dtype = "object"
 
     data = ["one", "two", "three", "one", "one", 5, 6]
-    data = _convert_container(data, X_type, columns_name=["value"], dtype=dtype)
+    data = _convert_container(data, X_type, column_names=["value"], dtype=dtype)
 
     def func(X):
         return np.array([mapping[X[i]] for i in range(X.size)], dtype=object)
@@ -213,7 +213,7 @@ def test_function_transformer_raise_error_with_mixed_dtype(X_type):
         return _convert_container(
             [inverse_mapping[x] for x in X],
             X_type,
-            columns_name=["value"],
+            column_names=["value"],
             dtype=dtype,
         )
 
