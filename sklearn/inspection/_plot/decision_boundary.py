@@ -7,6 +7,8 @@ from ...utils._optional_dependencies import check_matplotlib_support
 from ...utils._response import _get_response_values
 from ...utils.validation import (
     _is_arraylike_not_scalar,
+    _is_pandas_df,
+    _is_polars_df,
     _num_features,
     check_is_fitted,
 )
@@ -345,11 +347,18 @@ class DecisionBoundaryDisplay:
             np.linspace(x0_min, x0_max, grid_resolution),
             np.linspace(x1_min, x1_max, grid_resolution),
         )
-        if hasattr(X, "iloc"):
+        if _is_pandas_df(X):
             # we need to preserve the feature names and therefore get an empty dataframe
             X_grid = X.iloc[[], :].copy()
             X_grid.iloc[:, 0] = xx0.ravel()
             X_grid.iloc[:, 1] = xx1.ravel()
+        elif _is_polars_df(X):
+            X_grid = X.drop(X.columns).with_columns(
+                **{
+                    column: series
+                    for column, series in zip(X.columns, (xx0.ravel(), xx1.ravel()))
+                }
+            )
         else:
             X_grid = np.c_[xx0.ravel(), xx1.ravel()]
 
