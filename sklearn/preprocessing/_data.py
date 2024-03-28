@@ -12,8 +12,10 @@ import warnings
 from numbers import Integral, Real
 
 import numpy as np
+import scipy
 from scipy import optimize, sparse, stats
 from scipy.special import boxcox
+from scipy.stats import yeojohnson
 
 from ..base import (
     BaseEstimator,
@@ -26,6 +28,7 @@ from ..utils import _array_api, check_array, resample
 from ..utils._array_api import get_namespace
 from ..utils._param_validation import Interval, Options, StrOptions, validate_params
 from ..utils.extmath import _incremental_mean_and_var, row_norms
+from ..utils.fixes import parse_version
 from ..utils.sparsefuncs import (
     incr_mean_variance_axis,
     inplace_column_scale,
@@ -3264,7 +3267,7 @@ class PowerTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
 
         transform_function = {
             "box-cox": boxcox,
-            "yeo-johnson": self._yeo_johnson_transform,
+            "yeo-johnson": yeojohnson,
         }[self.method]
 
         with np.errstate(invalid="ignore"):  # hide NaN warnings
@@ -3309,7 +3312,7 @@ class PowerTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
 
         transform_function = {
             "box-cox": boxcox,
-            "yeo-johnson": self._yeo_johnson_transform,
+            "yeo-johnson": yeojohnson,
         }[self.method]
         for i, lmbda in enumerate(self.lambdas_):
             with np.errstate(invalid="ignore"):  # hide NaN warnings
@@ -3399,28 +3402,6 @@ class PowerTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
 
         return x_inv
 
-    def _yeo_johnson_transform(self, x, lmbda):
-        """Return transformed input x following Yeo-Johnson transform with
-        parameter lambda.
-        """
-
-        out = np.zeros_like(x)
-        pos = x >= 0  # binary mask
-
-        # when x >= 0
-        if abs(lmbda) < np.spacing(1.0):
-            out[pos] = np.log1p(x[pos])
-        else:  # lmbda != 0
-            out[pos] = (np.power(x[pos] + 1, lmbda) - 1) / lmbda
-
-        # when x < 0
-        if abs(lmbda - 2) > np.spacing(1.0):
-            out[~pos] = -(np.power(-x[~pos] + 1, 2 - lmbda) - 1) / (2 - lmbda)
-        else:  # lmbda == 2
-            out[~pos] = -np.log1p(-x[~pos])
-
-        return out
-
     def _box_cox_optimize(self, x):
         """Find and return optimal lambda parameter of the Box-Cox transform by
         MLE, for observed data x.
@@ -3448,7 +3429,7 @@ class PowerTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         def _neg_log_likelihood(lmbda):
             """Return the negative log likelihood of the observed data x as a
             function of lambda."""
-            x_trans = self._yeo_johnson_transform(x, lmbda)
+            x_trans = yeojohnson(x, lmbda)
             n_samples = x.shape[0]
             x_trans_var = x_trans.var()
 
@@ -3465,8 +3446,16 @@ class PowerTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         # the computation of lambda is influenced by NaNs so we need to
         # get rid of them
         x = x[~np.isnan(x)]
-        # choosing bracket -2, 2 like for boxcox
-        return optimize.brent(_neg_log_likelihood, brack=(-2, 2))
+
+        # TODO: remove this when minimum version of scipy >= 1.9.0
+        scipy_version = parse_version(scipy.__version__)
+        min_scipy_version = "1.9.0"
+        if scipy_version < parse_version(min_scipy_version):
+            # choosing bracket -2, 2 like for boxcox
+            return optimize.brent(_neg_log_likelihood, brack=(-2, 2))
+
+        _, lmbda = yeojohnson(x, lmbda=None)
+        return lmbda
 
     def _check_input(self, X, in_fit, check_positive=False, check_shape=False):
         """Validate the input before fit and transform.
