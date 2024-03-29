@@ -468,32 +468,17 @@ def test_string_target(pyplot):
     )
 
 
-def test_pandas_dataframe_support(pyplot):
-    """Check that passing a pandas dataframe at fit and to the Display does not
+@pytest.mark.parametrize("df_module_name", ["pandas", "polars"])
+def test_dataframe_support(pyplot, df_module_name):
+    """Check that passing a dataframe at fit and to the Display does not
     raise warnings.
 
     Non-regression test for:
-    https://github.com/scikit-learn/scikit-learn/issues/23311
+    * https://github.com/scikit-learn/scikit-learn/issues/23311
+    * https://github.com/scikit-learn/scikit-learn/issues/28717
     """
-    pd = pytest.importorskip("pandas")
-    df = pd.DataFrame(X, columns=["col_x", "col_y"])
-    estimator = LogisticRegression().fit(df, y)
-
-    with warnings.catch_warnings():
-        # no warnings linked to feature names validation should be raised
-        warnings.simplefilter("error", UserWarning)
-        DecisionBoundaryDisplay.from_estimator(estimator, df, response_method="predict")
-
-
-def test_polars_dataframe_support(pyplot):
-    """Check that passing a polars dataframe at fit and to the Display does not
-    raise warnings.
-
-    Non-regression test for:
-    https://github.com/scikit-learn/scikit-learn/issues/28717
-    """
-    pl = pytest.importorskip("polars")
-    df = pl.DataFrame({"col_x": X[:, 0], "col_y": X[:, 1]})
+    df_module = pytest.importorskip(df_module_name)
+    df = df_module.DataFrame({"col_x": X[:, 0], "col_y": X[:, 1]})
     estimator = LogisticRegression().fit(df, y)
 
     with warnings.catch_warnings():
