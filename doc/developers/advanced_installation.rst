@@ -77,10 +77,11 @@ feature, code or documentation improvement).
 
      conda activate sklearn-env
 
-#. **Alternative to conda:** If you run Linux or similar, you can instead use
-   your system's Python provided it is recent enough (3.8 or higher
-   at the time of writing). In this case, we recommend to create a dedicated
-   virtualenv_ and install the scikit-learn build dependencies with pip:
+#. **Alternative to conda:** You can use alternative installations of Python
+   provided they are recent enough (3.9 or higher at the time of writing).
+   Here is an example on how to create a build environment for a Linux system's
+   Python. Build dependencies are installed with `pip` in a dedicated virtualenv_
+   to avoid disrupting other Python programs installed on the system:
 
    .. prompt:: bash $
 
@@ -244,15 +245,7 @@ More advanced way to build with Meson
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 If you can not use `make`, want to do it yourself or understand what goes in
-behind the scenes, you can edit `pyproject.toml` and make sure `build-backend`
-is set to `"mesonpy"`
-
-.. code-block:: toml
-
-    [build-system]
-    build-backend = "mesonpy"
-
-Build with the following `pip` command:
+behind the scenes, you can build scikit-learn with the following `pip` command:
 
 .. code-block:: bash
 

@@ -11,22 +11,23 @@ The module contains:
     * Fast rand_r alternative based on xor shifts
 """
 import numpy as np
-cimport numpy as cnp
-cnp.import_array()
 
 # XXX: added instead of relative import to make scikit-tree easier
 # from .utils import check_random_state
 from sklearn.utils import check_random_state
 
-cdef UINT32_t DEFAULT_SEED = 1
+from ._typedefs cimport intp_t
+
+
+cdef uint32_t DEFAULT_SEED = 1
 
 
 # Compatibility type to always accept the default int type used by NumPy, both
-# before and after NumPy 2. On Windows, `long` does not always match `cnp.inp_t`.
+# before and after NumPy 2. On Windows, `long` does not always match `inp_t`.
 # See the comments in the `sample_without_replacement` Python function for more
 # details.
 ctypedef fused default_int:
-    cnp.intp_t
+    intp_t
     long
 
 
@@ -328,7 +329,7 @@ def sample_without_replacement(
     array([8, 1, 5, 0, 7])
     """
     cdef:
-        cnp.intp_t n_pop_intp, n_samples_intp
+        intp_t n_pop_intp, n_samples_intp
         long n_pop_long, n_samples_long
 
     # On most platforms `np.int_ is np.intp`.  However, before NumPy 2 the
@@ -353,5 +354,5 @@ def sample_without_replacement(
 
 def _our_rand_r_py(seed):
     """Python utils to test the our_rand_r function"""
-    cdef UINT32_t my_seed = seed
+    cdef uint32_t my_seed = seed
     return our_rand_r(&my_seed)

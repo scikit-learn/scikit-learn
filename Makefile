@@ -24,9 +24,7 @@ inplace:
 	$(PYTHON) setup.py build_ext -i
 
 dev-meson:
-	# Temporary script to try the experimental meson build. Once meson is
-	# accepted as the default build tool, this will go away.
-	python build_tools/build-meson-editable-install.py
+	pip install --verbose --no-build-isolation --editable . --config-settings editable-verbose=true
 
 clean-meson:
 	pip uninstall -y scikit-learn

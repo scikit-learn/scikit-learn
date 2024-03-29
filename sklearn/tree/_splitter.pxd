@@ -10,11 +10,9 @@
 # License: BSD 3 clause
 
 # See _splitter.pyx for details.
-cimport numpy as cnp
-
 from libcpp.vector cimport vector
 
-from ..utils._typedefs cimport float32_t, float64_t, intp_t, int32_t
+from ..utils._typedefs cimport float32_t, float64_t, intp_t, int8_t, int32_t, uint32_t
 from ._utils cimport UINT32_t
 from ._criterion cimport BaseCriterion, Criterion
 
@@ -109,7 +107,7 @@ cdef class Splitter(BaseSplitter):
     #   -1: monotonic decrease
     #    0: no constraint
     #   +1: monotonic increase
-    cdef const cnp.int8_t[:] monotonic_cst
+    cdef const int8_t[:] monotonic_cst
     cdef bint with_monotonic_cst
 
     cdef int init(

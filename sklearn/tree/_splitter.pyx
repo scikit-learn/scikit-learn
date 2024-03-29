@@ -21,18 +21,17 @@ from cython cimport final
 from libc.math cimport isnan
 from libc.stdlib cimport qsort
 from libc.string cimport memcpy
-cimport numpy as cnp
 
 from ._criterion cimport Criterion
+from ._utils cimport log
+from ._utils cimport rand_int
+from ._utils cimport rand_uniform
+from ._utils cimport RAND_R_MAX
+from ..utils._typedefs cimport int8_t
 
 import numpy as np
-
 from scipy.sparse import issparse
 
-from ._utils cimport RAND_R_MAX, log, rand_int, rand_uniform
-
-
-cnp.import_array()
 
 cdef float64_t INFINITY = np.inf
 
@@ -151,7 +150,7 @@ cdef class Splitter(BaseSplitter):
         intp_t min_samples_leaf,
         float64_t min_weight_leaf,
         object random_state,
-        const cnp.int8_t[:] monotonic_cst,
+        const int8_t[:] monotonic_cst,
         *argv
     ):
         """
@@ -176,7 +175,7 @@ cdef class Splitter(BaseSplitter):
         random_state : object
             The user inputted random state to be used for pseudo-randomness
 
-        monotonic_cst : const cnp.int8_t[:]
+        monotonic_cst : const int8_t[:]
             Monotonicity constraints
 
         """
@@ -441,7 +440,7 @@ cdef inline intp_t node_split_best(
     float64_t impurity,
     SplitRecord* split,
     bint with_monotonic_cst,
-    const cnp.int8_t[:] monotonic_cst,
+    const int8_t[:] monotonic_cst,
     float64_t lower_bound,
     float64_t upper_bound,
 ) except -1 nogil:
@@ -830,7 +829,7 @@ cdef inline int node_split_random(
     float64_t impurity,
     SplitRecord* split,
     bint with_monotonic_cst,
-    const cnp.int8_t[:] monotonic_cst,
+    const int8_t[:] monotonic_cst,
     float64_t lower_bound,
     float64_t upper_bound,
 ) except -1 nogil:

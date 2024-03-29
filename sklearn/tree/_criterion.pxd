@@ -10,10 +10,8 @@
 # License: BSD 3 clause
 
 # See _criterion.pyx for implementation details.
-cimport numpy as cnp
-
 from libcpp.vector cimport vector
-from ..utils._typedefs cimport float64_t, intp_t
+from ..utils._typedefs cimport float64_t, int8_t, intp_t
 
 
 cdef class BaseCriterion:
@@ -87,13 +85,13 @@ cdef class Criterion(BaseCriterion):
 
     cdef bint check_monotonicity(
         self,
-        cnp.int8_t monotonic_cst,
+        int8_t monotonic_cst,
         float64_t lower_bound,
         float64_t upper_bound,
     ) noexcept nogil
     cdef inline bint _check_monotonicity(
         self,
-        cnp.int8_t monotonic_cst,
+        int8_t monotonic_cst,
         float64_t lower_bound,
         float64_t upper_bound,
         float64_t sum_left,

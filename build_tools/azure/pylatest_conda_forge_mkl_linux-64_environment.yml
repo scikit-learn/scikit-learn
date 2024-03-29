@@ -17,14 +17,15 @@ dependencies:
   - pytest<8
   - pytest-xdist
   - pillow
-  - setuptools
+  - pip
+  - ninja
+  - meson-python
   - pytest-cov
   - coverage
   - ccache
-  - meson-python
-  - pip
   - pytorch=1.13
   - pytorch-cpu
   - polars
   - pyarrow
   - array-api-compat
+  - array-api-strict
