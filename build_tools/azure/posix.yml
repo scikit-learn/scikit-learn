@@ -38,10 +38,10 @@ jobs:
       condition: eq(variables['Build.Reason'], 'PullRequest')
     - bash: echo "##vso[task.prependpath]$CONDA/bin"
       displayName: Add conda to PATH
-      condition: and(startsWith(variables['DISTRIB'], 'conda'), neq(variables['CONDA'], ''))
+      condition: and(startsWith(variables['DISTRIB'], 'conda'), not(eq(variables['CONDA'], '')))
     - bash: sudo chown -R $USER $CONDA
       displayName: Take ownership of conda installation
-      condition: and(startsWith(variables['DISTRIB'], 'conda'), neq(variables['CONDA'], ''))
+      condition: and(startsWith(variables['DISTRIB'], 'conda'), not(eq(variables['CONDA'], '')))
     - bash: |
         curl -L -O "https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-$(uname)-$(uname -m).sh"
         bash Miniforge3-$(uname)-$(uname -m).sh -p $HOME/miniforge3  -b
