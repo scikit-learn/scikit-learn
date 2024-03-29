@@ -438,6 +438,11 @@ class SimpleImputer(_BaseImputer):
                 X, self.strategy, self.missing_values, fill_value
             )
 
+        if not self.keep_empty_features:
+            removals_maks = _get_mask(self.statistics_, np.nan)
+            self._removals = X[:, removals_maks]
+            self._removals_index = np.where(removals_maks)[0]
+
         return self
 
     def _sparse_fit(self, X, strategy, missing_values, fill_value):
@@ -678,25 +683,9 @@ class SimpleImputer(_BaseImputer):
 
         n_features_missing = len(self.indicator_.features_)
         non_empty_feature_count = X.shape[1] - n_features_missing
-        array_imputed = X[:, :non_empty_feature_count].copy()
-        missing_mask = X[:, non_empty_feature_count:].astype(bool)
-
-        n_features_original = len(self.statistics_)
-        shape_original = (X.shape[0], n_features_original)
-        X_original = np.zeros(shape_original)
-        X_original[:, self.indicator_.features_] = missing_mask
-        full_mask = X_original.astype(bool)
-
-        imputed_idx, original_idx = 0, 0
-        while imputed_idx < len(array_imputed.T):
-            if not np.all(X_original[:, original_idx]):
-                X_original[:, original_idx] = array_imputed.T[imputed_idx]
-                imputed_idx += 1
-                original_idx += 1
-            else:
-                original_idx += 1
-
-        X_original[full_mask] = self.missing_values
+        X_original = X[:, :non_empty_feature_count].copy()
+        if not self.keep_empty_features:
+            return np.insert(X_original, self._removals_index, self._removals, axis=1)
         return X_original
 
     def _more_tags(self):
