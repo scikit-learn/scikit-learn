@@ -39,7 +39,10 @@ jobs:
     - bash: echo "##vso[task.prependpath]$CONDA/bin"
       displayName: Add conda to PATH
       condition: startsWith(variables['DISTRIB'], 'conda')
-    - bash: sudo chown -R $USER $CONDA
+    - bash: |
+        echo "USER=$USER, CONDA=$CONDA"
+        sudo echo "USER=$USER, CONDA=$CONDA"
+        sudo chown -R $USER $CONDA
       displayName: Take ownership of conda installation
       condition: startsWith(variables['DISTRIB'], 'conda')
     - task: Cache@2
