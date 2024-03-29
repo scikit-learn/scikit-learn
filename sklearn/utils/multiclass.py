@@ -534,8 +534,27 @@ def _ovr_decision_function(predictions, confidences, n_classes):
     k = 0
     for i in range(n_classes):
         for j in range(i + 1, n_classes):
-            sum_of_confidences[:, i] -= confidences[:, k]
-            sum_of_confidences[:, j] += confidences[:, k]
+            # Handle confidences as probabilities
+            # if probabilities are >= 0.5, (j is more probable) we should increase
+            # the sum of confidences of j and decrease the sum of confidences of i
+            if np.max(confidences) <= 1.0 and np.min(confidences) >= 0:
+                sum_of_confidences[confidences[:, k] >= 0.5, i] -= confidences[
+                    confidences[:, k] >= 0.5, k
+                ]
+                sum_of_confidences[confidences[:, k] < 0.5, i] += confidences[
+                    confidences[:, k] < 0.5, k
+                ]
+
+                sum_of_confidences[confidences[:, k] >= 0.5, j] += confidences[
+                    confidences[:, k] >= 0.5, k
+                ]
+                sum_of_confidences[confidences[:, k] < 0.5, j] -= confidences[
+                    confidences[:, k] < 0.5, k
+                ]
+            else:
+                sum_of_confidences[:, i] -= confidences[:, k]
+                sum_of_confidences[:, j] += confidences[:, k]
+
             votes[predictions[:, k] == 0, i] += 1
             votes[predictions[:, k] == 1, j] += 1
             k += 1
