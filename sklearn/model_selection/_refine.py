@@ -399,7 +399,7 @@ class FixedWindowSlicer(BaseScoreSlicer):
 
 class FavorabilityRanker:
     """The FavorabilityRanker class provides a mechanism for ranking hyperparameters
-    based on user-defined favorability rules. Favorability can be defined in terms
+    based on user-specified favorability rules. Favorability can be defined in terms
     of numerical lower-is-better, a specific order for categorical variables, or
     proximity to a statistical measure for distributions.
 
@@ -447,10 +447,7 @@ class FavorabilityRanker:
     def _validate_favorability_rules(self):
         for hyperparam, rule in self.favorability_rules.items():
             if not isinstance(hyperparam, str):
-                raise TypeError(
-                    f"Hyperparameter {hyperparam} must be a string, and correspond "
-                    "to a hyperparameter in the hyperparameter grid."
-                )
+                raise TypeError(f"Hyperparameter {hyperparam} must be a string.")
             if not isinstance(rule, tuple):
                 raise TypeError(
                     f"Favorability rule for hyperparameter {hyperparam} must be a"
@@ -462,17 +459,17 @@ class FavorabilityRanker:
                 and not isinstance(rule[0], str)
             ):
                 raise TypeError(
-                    "First element of favorability rule for hyperparameter"
+                    "First element of favorability rule tuple for hyperparameter"
                     f" {hyperparam} must be a boolean, list, or string."
                 )
             if not isinstance(rule[1], float):
                 raise TypeError(
-                    "Second element of favorability rule for hyperparameter"
+                    "Second element of favorability rule tuple for hyperparameter"
                     f" {hyperparam} must be a float."
                 )
 
     def _process_parameter_values(self, value: Any, rule: Tuple[Any, float]) -> Any:
-        """Process a single hyperparameter value, handling distribution objects."""
+        """Parses a single hyperparameter value, for a variety of data types."""
         if (
             hasattr(value, "dist")
             and (
@@ -507,7 +504,7 @@ class FavorabilityRanker:
 
     def __call__(self, params: Union[List[Dict], Dict]) -> List[int]:
         """
-        Ranks the given hyperparameter sets based on the defined favorability rules.
+        Ranks the provided hyperparameter set based on the specified favorability rules.
 
         Parameters
         ----------
@@ -518,8 +515,8 @@ class FavorabilityRanker:
         Returns
         -------
         List[int]
-            A list of ranks corresponding to the favorability of each set of
-            hyperparameters.
+            A list of favorability ranks corresponding to each unique combination of
+            hyperparameter values in the parameter grid.
         """
 
         def calculate_favorability_score(param_set):
@@ -586,7 +583,7 @@ class FavorabilityRanker:
             ]
         else:
             raise ValueError(
-                "params must be either a list of dictionaries or a single dictionary"
+                "`params` must be either a list of dictionaries or a single dictionary"
             )
 
         ranks = [x + 1 for x in np.argsort(favorability_scores)]
@@ -870,9 +867,9 @@ class ScoreCutModelSelector:
         ----------
         favorability_rank_fn : callable
             A callable that consumes a hyperparameter grid in the form of a list of
-            hyperparameter dictionaries and returns an list of ranked integers
-            corresponding to model favorability of each hyperparameter setting, from
-            least to most favorable. For example a valid ``favorability_rank_fn`` might
+            hyperparameter dictionaries and returns a list of integers indicating
+            the favorability ranks for each model candidate, sorted from least to most
+            favorable. For example, a valid ``favorability_rank_fn`` might
             consume [{"reduce_dim__n_components": [6, 8, 10, 12, 14, 16, 18]}]
             and return [0, 1, 2, 3, 4, 5, 6].
         """
@@ -1046,7 +1043,39 @@ class ScoreCutModelSelector:
 
         self._check_fitted()
 
-        self.favorable_best_index_ = self._select_best_favorable(favorability_rank_fn)
+        # apply the favorability rank fn correctly to the parameter sets
+        favorability_ranks = favorability_rank_fn(self.cv_results_["params"])
+
+        # generate a list of parameter sets with their corresponding favorability ranks
+        ranked_params = list(zip(self.cv_results_["params"], favorability_ranks))
+
+        # sort the list of tuples by rank
+        ranked_params.sort(key=lambda x: x[1])
+
+        # filter ranked parameters by the performance window
+        filtered_ranked_params = [
+            (params, rank)
+            for params, rank in ranked_params
+            if self.min_cut_
+            <= self.cv_results_["mean_test_score"][
+                self.cv_results_["params"].index(params)
+            ]
+            <= self.max_cut_
+        ]
+
+        # if no parameters are within the performance window, raise a warning, and
+        # return the best performing model
+        if not filtered_ranked_params:
+            warnings.warn(
+                "No alternative models found within the sliced performance window."
+            )
+            return self._best_score_idx
+
+        # identify the most favorable configuration within the performance window
+        most_favorable_params, _ = filtered_ranked_params[0]
+        self.favorable_best_index_ = self.cv_results_["params"].index(
+            most_favorable_params
+        )
 
         print(
             f"Original best index: {self._best_score_idx}\nOriginal best "
