@@ -681,14 +681,22 @@ class SimpleImputer(_BaseImputer):
                 "instead."
             )
 
+        X_copy = X.copy()
         n_original_columns = X.shape[1] - len(self.indicator_.features_)
-        X_original, indicator_mask = np.hsplit(X.copy(), [n_original_columns])
+        if not self.keep_empty_features:
+            n_original_columns += len(self._removals_index)
+            n_all_columns = n_original_columns + len(self.indicator_.features_)
+            X_reconstructed = np.empty((X_copy.shape[0], n_all_columns))
+            removals_mask = np.zeros(n_all_columns, dtype=bool)
+            removals_mask[self._removals_index] = True
+            X_reconstructed[:, removals_mask] = self._removals
+            X_reconstructed[:, ~removals_mask] = X_copy
+            X_copy = X_reconstructed
+        X_original, indicator_mask = np.hsplit(X_copy, [n_original_columns])
+
         missing_mask = np.zeros(X_original.shape, dtype=bool)
         missing_mask[:, self.indicator_.features_] = indicator_mask
         X_original[missing_mask] = self.missing_values
-
-        if not self.keep_empty_features:
-            return np.insert(X_original, self._removals_index, self._removals, axis=1)
         return X_original
 
     def _more_tags(self):
