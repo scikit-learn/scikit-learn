@@ -1514,6 +1514,23 @@ def test_imputation_order(order, idx_order):
                 (np.nan, -1), (True, False)
             )
         ],
+        *[
+            [
+                np.array(
+                    [
+                        [missing_value, 12, 13, missing_value, missing_value, 16],
+                        [missing_value, 22, 23, missing_value, missing_value, 26],
+                        [missing_value, 32, 33, missing_value, missing_value, 36],
+                        [missing_value, 42, 43, missing_value, missing_value, 46],
+                    ]
+                ),
+                missing_value,
+                keep_empty_features,
+            ]
+            for missing_value, keep_empty_features in product(
+                (np.nan, -1), (True, False)
+            )
+        ],
     ],
 )
 def test_simple_imputation_inverse_transform(
