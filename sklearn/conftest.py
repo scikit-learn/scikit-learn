@@ -1,7 +1,6 @@
 import builtins
 import platform
 import sys
-import warnings
 from contextlib import suppress
 from functools import wraps
 from os import environ
@@ -21,13 +20,20 @@ from sklearn.datasets import (
     fetch_california_housing,
     fetch_covtype,
     fetch_kddcup99,
+    fetch_lfw_pairs,
+    fetch_lfw_people,
     fetch_olivetti_faces,
     fetch_rcv1,
     fetch_species_distributions,
 )
 from sklearn.tests import random_seed
 from sklearn.utils import _IS_32BIT
-from sklearn.utils.fixes import np_base_version, parse_version, sp_version
+from sklearn.utils._testing import get_pytest_filterwarning_lines
+from sklearn.utils.fixes import (
+    np_base_version,
+    parse_version,
+    sp_version,
+)
 
 if parse_version(pytest.__version__) < parse_version(PYTEST_MIN_VERSION):
     raise ImportError(
@@ -70,6 +76,8 @@ dataset_fetchers = {
     "fetch_california_housing_fxt": fetch_california_housing,
     "fetch_covtype_fxt": fetch_covtype,
     "fetch_kddcup99_fxt": fetch_kddcup99,
+    "fetch_lfw_pairs_fxt": fetch_lfw_pairs,
+    "fetch_lfw_people_fxt": fetch_lfw_people,
     "fetch_olivetti_faces_fxt": fetch_olivetti_faces,
     "fetch_rcv1_fxt": fetch_rcv1,
     "fetch_species_distributions_fxt": fetch_species_distributions,
@@ -113,6 +121,8 @@ fetch_20newsgroups_vectorized_fxt = _fetch_fixture(fetch_20newsgroups_vectorized
 fetch_california_housing_fxt = _fetch_fixture(fetch_california_housing)
 fetch_covtype_fxt = _fetch_fixture(fetch_covtype)
 fetch_kddcup99_fxt = _fetch_fixture(fetch_kddcup99)
+fetch_lfw_pairs_fxt = _fetch_fixture(fetch_lfw_pairs)
+fetch_lfw_people_fxt = _fetch_fixture(fetch_lfw_people)
 fetch_olivetti_faces_fxt = _fetch_fixture(fetch_olivetti_faces)
 fetch_rcv1_fxt = _fetch_fixture(fetch_rcv1)
 fetch_species_distributions_fxt = _fetch_fixture(fetch_species_distributions)
@@ -276,14 +286,12 @@ def pytest_configure(config):
     if not config.pluginmanager.hasplugin("sklearn.tests.random_seed"):
         config.pluginmanager.register(random_seed)
 
-
-def pytest_collectstart(collector):
-    # XXX: Easiest way to ignore pandas Pyarrow DeprecationWarning in the
-    # short-term. See https://github.com/pandas-dev/pandas/issues/54466 for
-    # more details.
-    warnings.filterwarnings(
-        "ignore", message=r"\s*Pyarrow", category=DeprecationWarning
-    )
+    if environ.get("SKLEARN_WARNINGS_AS_ERRORS", "0") != "0":
+        # This seems like the only way to programmatically change the config
+        # filterwarnings. This was suggested in
+        # https://github.com/pytest-dev/pytest/issues/3311#issuecomment-373177592
+        for line in get_pytest_filterwarning_lines():
+            config.addinivalue_line("filterwarnings", line)
 
 
 @pytest.fixture

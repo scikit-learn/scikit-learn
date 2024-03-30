@@ -23,6 +23,7 @@ from sklearn.datasets import (
 from sklearn.ensemble import HistGradientBoostingClassifier
 from sklearn.exceptions import FitFailedWarning
 from sklearn.experimental import enable_halving_search_cv  # noqa
+from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.impute import SimpleImputer
 from sklearn.linear_model import (
     LinearRegression,
@@ -56,6 +57,7 @@ from sklearn.model_selection import (
 )
 from sklearn.model_selection._search import BaseSearchCV
 from sklearn.model_selection.tests.common import OneTimeSplitter
+from sklearn.naive_bayes import ComplementNB
 from sklearn.neighbors import KernelDensity, KNeighborsClassifier, LocalOutlierFactor
 from sklearn.pipeline import Pipeline
 from sklearn.svm import SVC, LinearSVC
@@ -898,11 +900,15 @@ def test_param_sampler():
     assert [x for x in sampler] == [x for x in sampler]
 
 
-def check_cv_results_array_types(search, param_keys, score_keys):
+def check_cv_results_array_types(
+    search, param_keys, score_keys, expected_cv_results_kinds
+):
     # Check if the search `cv_results`'s array are of correct types
     cv_results = search.cv_results_
     assert all(isinstance(cv_results[param], np.ma.MaskedArray) for param in param_keys)
-    assert all(cv_results[key].dtype == object for key in param_keys)
+    assert {
+        key: cv_results[key].dtype.kind for key in param_keys
+    } == expected_cv_results_kinds
     assert not any(isinstance(cv_results[key], np.ma.MaskedArray) for key in score_keys)
     assert all(
         cv_results[key].dtype == np.float64
@@ -975,7 +981,15 @@ def test_grid_search_cv_results():
         if "time" not in k and k != "rank_test_score"
     )
     # Check cv_results structure
-    check_cv_results_array_types(search, param_keys, score_keys)
+    expected_cv_results_kinds = {
+        "param_C": "i",
+        "param_degree": "i",
+        "param_gamma": "f",
+        "param_kernel": "O",
+    }
+    check_cv_results_array_types(
+        search, param_keys, score_keys, expected_cv_results_kinds
+    )
     check_cv_results_keys(cv_results, param_keys, score_keys, n_candidates)
     # Check masking
     cv_results = search.cv_results_
@@ -1044,7 +1058,15 @@ def test_random_search_cv_results():
     search.fit(X, y)
     cv_results = search.cv_results_
     # Check results structure
-    check_cv_results_array_types(search, param_keys, score_keys)
+    expected_cv_results_kinds = {
+        "param_C": "f",
+        "param_degree": "i",
+        "param_gamma": "f",
+        "param_kernel": "O",
+    }
+    check_cv_results_array_types(
+        search, param_keys, score_keys, expected_cv_results_kinds
+    )
     check_cv_results_keys(cv_results, param_keys, score_keys, n_candidates)
     assert all(
         (
@@ -1378,7 +1400,9 @@ def test_search_cv_results_none_param():
             est_parameters,
             cv=cv,
         ).fit(X, y)
-        assert_array_equal(grid_search.cv_results_["param_random_state"], [0, None])
+        assert_array_equal(
+            grid_search.cv_results_["param_random_state"], [0, float("nan")]
+        )
 
 
 @ignore_warnings()
@@ -2468,6 +2492,35 @@ def test_search_estimator_param(SearchCV, param_search):
     assert params["clf"][0].C == orig_C
     # testing that the GS is setting the parameter of the step correctly
     assert gs.best_estimator_.named_steps["clf"].C == 0.01
+
+
+def test_search_with_2d_array():
+    parameter_grid = {
+        "vect__ngram_range": ((1, 1), (1, 2)),  # unigrams or bigrams
+        "vect__norm": ("l1", "l2"),
+    }
+    pipeline = Pipeline(
+        [
+            ("vect", TfidfVectorizer()),
+            ("clf", ComplementNB()),
+        ]
+    )
+    random_search = RandomizedSearchCV(
+        estimator=pipeline,
+        param_distributions=parameter_grid,
+        n_iter=3,
+        random_state=0,
+        n_jobs=2,
+        verbose=1,
+        cv=3,
+    )
+    data_train = ["one", "two", "three", "four", "five"]
+    data_target = [0, 0, 1, 0, 1]
+    random_search.fit(data_train, data_target)
+    result = random_search.cv_results_["param_vect__ngram_range"]
+    expected_data = np.empty(3, dtype=object)
+    expected_data[:] = [(1, 2), (1, 2), (1, 1)]
+    np.testing.assert_array_equal(result.data, expected_data)
 
 
 # Metadata Routing Tests

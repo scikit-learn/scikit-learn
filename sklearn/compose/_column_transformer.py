@@ -18,8 +18,9 @@ from scipy import sparse
 from ..base import TransformerMixin, _fit_context, clone
 from ..pipeline import _fit_transform_one, _name_estimators, _transform_one
 from ..preprocessing import FunctionTransformer
-from ..utils import Bunch, _get_column_indices, _safe_indexing
+from ..utils import Bunch, _safe_indexing
 from ..utils._estimator_html_repr import _VisualBlock
+from ..utils._indexing import _get_column_indices
 from ..utils._metadata_requests import METHODS
 from ..utils._param_validation import HasMethods, Hidden, Interval, StrOptions
 from ..utils._set_output import (
@@ -223,7 +224,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
     :class:`ColumnTransformer` can be configured with a transformer that requires
     a 1d array by setting the column to a string:
 
-    >>> from sklearn.feature_extraction import FeatureHasher
+    >>> from sklearn.feature_extraction.text import CountVectorizer
     >>> from sklearn.preprocessing import MinMaxScaler
     >>> import pandas as pd   # doctest: +SKIP
     >>> X = pd.DataFrame({
@@ -231,9 +232,9 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
     ...     "width": [3, 4, 5],
     ... })  # doctest: +SKIP
     >>> # "documents" is a string which configures ColumnTransformer to
-    >>> # pass the documents column as a 1d array to the FeatureHasher
+    >>> # pass the documents column as a 1d array to the CountVectorizer
     >>> ct = ColumnTransformer(
-    ...     [("text_preprocess", FeatureHasher(input_type="string"), "documents"),
+    ...     [("text_preprocess", CountVectorizer(), "documents"),
     ...      ("num_preprocess", MinMaxScaler(), ["width"])])
     >>> X_trans = ct.fit_transform(X)  # doctest: +SKIP
 

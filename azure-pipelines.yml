@@ -59,11 +59,8 @@ jobs:
       pylatest_pip_scipy_dev:
         DISTRIB: 'conda-pip-scipy-dev'
         LOCK_FILE: './build_tools/azure/pylatest_pip_scipy_dev_linux-64_conda.lock'
-        CHECK_WARNINGS: 'true'
+        SKLEARN_WARNINGS_AS_ERRORS: '1'
         CHECK_PYTEST_SOFT_DEPENDENCY: 'true'
-        # Tests that require large downloads over the networks are skipped in CI.
-        # Here we make sure, that they are still run on a regular basis.
-        SKLEARN_SKIP_NETWORK_TESTS: '0'
 
 - template: build_tools/azure/posix-docker.yml
   # Experimental CPython branch without the Global Interpreter Lock:
@@ -127,10 +124,10 @@ jobs:
     vmImage: ubuntu-22.04
   variables:
     # Need to match Python version and Emscripten version for the correct
-    # Pyodide version. For example, for Pyodide version 0.24.1, see
-    # https://github.com/pyodide/pyodide/blob/0.24.1/Makefile.envs
-    PYODIDE_VERSION: '0.24.1'
-    EMSCRIPTEN_VERSION: '3.1.45'
+    # Pyodide version. For example, for Pyodide version 0.25.0, see
+    # https://github.com/pyodide/pyodide/blob/0.25.0/Makefile.envs
+    PYODIDE_VERSION: '0.25.0'
+    EMSCRIPTEN_VERSION: '3.1.46'
     PYTHON_VERSION: '3.11.3'
 
   dependsOn: [git_commit, linting]
@@ -171,8 +168,11 @@ jobs:
         DISTRIB: 'conda'
         LOCK_FILE: './build_tools/azure/pylatest_conda_forge_mkl_linux-64_conda.lock'
         COVERAGE: 'true'
-        BUILD_WITH_MESON: 'true'
         SKLEARN_TESTS_GLOBAL_RANDOM_SEED: '42'  # default global random seed
+        # Tests that require large downloads over the networks are skipped in CI.
+        # Here we make sure, that they are still run on a regular basis.
+        ${{ if eq(variables['Build.Reason'], 'Schedule') }}:
+          SKLEARN_SKIP_NETWORK_TESTS: '0'
 
 # Check compilation with Ubuntu 22.04 LTS (Jammy Jellyfish) and scipy from conda-forge
 # By default the CI is sequential, where `Ubuntu_Jammy_Jellyfish` runs first and
@@ -195,7 +195,7 @@ jobs:
       pymin_conda_forge_openblas_ubuntu_2204:
         DISTRIB: 'conda'
         LOCK_FILE: './build_tools/azure/pymin_conda_forge_openblas_ubuntu_2204_linux-64_conda.lock'
-        CHECK_WARNINGS: 'true'
+        SKLEARN_WARNINGS_AS_ERRORS: '1'
         COVERAGE: 'false'
         SKLEARN_TESTS_GLOBAL_RANDOM_SEED: '0'  # non-default seed
 
@@ -243,18 +243,20 @@ jobs:
         SKLEARN_ENABLE_DEBUG_CYTHON_DIRECTIVES: '1'
         SKLEARN_RUN_FLOAT32_TESTS: '1'
         SKLEARN_TESTS_GLOBAL_RANDOM_SEED: '2'  # non-default seed
+        BUILD_WITH_SETUPTOOLS: 'true'
       # Linux environment to test the latest available dependencies.
       # It runs tests requiring lightgbm, pandas and PyAMG.
       pylatest_pip_openblas_pandas:
         DISTRIB: 'conda-pip-latest'
         LOCK_FILE: './build_tools/azure/pylatest_pip_openblas_pandas_linux-64_conda.lock'
         CHECK_PYTEST_SOFT_DEPENDENCY: 'true'
-        CHECK_WARNINGS: 'true'
+        SKLEARN_WARNINGS_AS_ERRORS: '1'
         SKLEARN_TESTS_GLOBAL_RANDOM_SEED: '3'  # non-default seed
         # disable pytest-xdist to have 1 job where OpenMP and BLAS are not single
         # threaded because by default the tests configuration (sklearn/conftest.py)
         # makes sure that they are single threaded in each xdist subprocess.
         PYTEST_XDIST_VERSION: 'none'
+        PIP_BUILD_ISOLATION: 'true'
 
 - template: build_tools/azure/posix-docker.yml
   parameters:
@@ -315,7 +317,7 @@ jobs:
       pymin_conda_forge_mkl:
         DISTRIB: 'conda'
         LOCK_FILE: ./build_tools/azure/pymin_conda_forge_mkl_win-64_conda.lock
-        CHECK_WARNINGS: 'true'
+        SKLEARN_WARNINGS_AS_ERRORS: '1'
         # The Azure Windows runner is typically much slower than other CI
         # runners due to the lack of compiler cache. Running the tests with
         # coverage enabled make them run extra slower. Since very few parts of
