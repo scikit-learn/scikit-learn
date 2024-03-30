@@ -681,9 +681,12 @@ class SimpleImputer(_BaseImputer):
                 "instead."
             )
 
-        n_features_missing = len(self.indicator_.features_)
-        non_empty_feature_count = X.shape[1] - n_features_missing
-        X_original = X[:, :non_empty_feature_count].copy()
+        n_original_columns = X.shape[1] - len(self.indicator_.features_)
+        X_original, indicator_mask = np.hsplit(X.copy(), [n_original_columns])
+        missing_mask = np.zeros(X_original.shape, dtype=bool)
+        missing_mask[:, self.indicator_.features_] = indicator_mask
+        X_original[missing_mask] = self.missing_values
+
         if not self.keep_empty_features:
             return np.insert(X_original, self._removals_index, self._removals, axis=1)
         return X_original
