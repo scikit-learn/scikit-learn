@@ -1043,39 +1043,7 @@ class ScoreCutModelSelector:
 
         self._check_fitted()
 
-        # apply the favorability rank fn correctly to the parameter sets
-        favorability_ranks = favorability_rank_fn(self.cv_results_["params"])
-
-        # generate a list of parameter sets with their corresponding favorability ranks
-        ranked_params = list(zip(self.cv_results_["params"], favorability_ranks))
-
-        # sort the list of tuples by rank
-        ranked_params.sort(key=lambda x: x[1])
-
-        # filter ranked parameters by the performance window
-        filtered_ranked_params = [
-            (params, rank)
-            for params, rank in ranked_params
-            if self.min_cut_
-            <= self.cv_results_["mean_test_score"][
-                self.cv_results_["params"].index(params)
-            ]
-            <= self.max_cut_
-        ]
-
-        # if no parameters are within the performance window, raise a warning, and
-        # return the best performing model
-        if not filtered_ranked_params:
-            warnings.warn(
-                "No alternative models found within the sliced performance window."
-            )
-            return self._best_score_idx
-
-        # identify the most favorable configuration within the performance window
-        most_favorable_params, _ = filtered_ranked_params[0]
-        self.favorable_best_index_ = self.cv_results_["params"].index(
-            most_favorable_params
-        )
+        self.favorable_best_index_ = self._select_best_favorable(favorability_rank_fn)
 
         print(
             f"Original best index: {self._best_score_idx}\nOriginal best "

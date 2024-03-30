@@ -795,4 +795,4 @@ def test_favorability_ranker_invalid_params_type():
     with pytest.raises(ValueError) as exc_info:
         ranker(params_invalid)
 
-    assert "params must be either a list of dictionaries or a " in str(exc_info.value)
+    assert "`params` must be either a list of dictionaries or a " in str(exc_info.value)
