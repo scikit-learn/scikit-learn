@@ -1,7 +1,7 @@
 """
-===============================================================
-Post-tuning decision threshold based on cost-sensitive learning
-===============================================================
+==============================================================
+Post-tuning the decision threshold for cost-sensitive learning
+==============================================================
 
 Once a classifier is trained, the output of the :term:`predict` method outputs class
 label predictions corresponding to a thresholding of either the :term:`decision
@@ -14,12 +14,15 @@ Here, we use the "Statlog" German credit dataset [1]_ to illustrate a use case.
 In this dataset, the task is to predict whether a person has a "good" or "bad" credit.
 In addition, a cost-matrix is provided that specifies the cost of
 misclassification. Specifically, misclassifying a "bad" credit as "good" is five
-times more costly than misclassifying a "good" credit as "bad".
+times more costly on average than misclassifying a "good" credit as "bad".
 
 We use the :class:`~sklearn.model_selection.TunedThresholdClassifier` to select the
 cut-off point of the decision function that minimizes the provided business
 cost.
 
+In the second part of the example, we further extend this approach by
+considering the problem of fraud detection in credit card transactions: in this
+case, the business metric depends on the amount of each individual transaction.
 .. topic:: References
 
     .. [1] "Statlog (German Credit Data) Data Set", UCI Machine Learning Repository,
@@ -29,7 +32,7 @@ cost.
     .. [2] `Charles Elkan, "The Foundations of Cost-Sensitive Learning",
        International joint conference on artificial intelligence.
        Vol. 17. No. 1. Lawrence Erlbaum Associates Ltd, 2001.
-       <https://cseweb.ucsd.edu//~elkan/rescale.pdf>`_
+       <https://cseweb.ucsd.edu/~elkan/rescale.pdf>`_
 """
 
 # %%
@@ -89,9 +92,10 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, stratify=y, random_sta
 # In this section, we define a set of metrics that we use later. To see
 # the effect of tuning the cut-off point, we evaluate the predictive model using
 # the Receiver Operating Characteristic (ROC) curve and the Precision-Recall curve.
-# The values reported on these plots are therefore the true positive rate (TPR) and
-# the false positive rate (FPR) for the ROC curve and the precision and recall for the
-# Precision-Recall curve.
+# The values reported on these plots are therefore the true positive rate (TPR),
+# also known as the recall or the sensitivity, and the false positive rate (FPR),
+# also known as the specificity, for the ROC curve and the precision and recall for
+# the Precision-Recall curve.
 #
 # From these four metrics, scikit-learn does not provide a scorer for the FPR. We
 # therefore need to define a small custom function to compute it.
@@ -125,17 +129,42 @@ scoring = {
 }
 
 # %%
-# In addition, the original research [1]_ defines a business metric. They provide a
-# cost-matrix which encodes that predicting a "bad" credit as "good" is 5 times more
-# costly than the opposite. We define a python function that weight the confusion
-# matrix and return the overall cost.
+# In addition, the original research [1]_ defines a custom business metric. We
+# call a "business metric" any metric function that aims at quantifying how the
+# predictions (correct or wrong) might impact the business value of deploying a
+# given machine learning model in a specific application context. For our
+# credit prediction task, the authors provide a custom cost-matrix which
+# encodes that classifying a a "bad" credit as "good" is 5 times more costly on
+# average than the opposite: it is less costly for the financing institution to
+# not grant a credit to a potential customer that will not default (and
+# therefore miss a good customer that would have otherwise both reimbursed the
+# credit and payed interests) than to grant a credit to a customer that will
+# default.
+#
+# We define a python function that weight the confusion matrix and return the
+# overall cost.
 import numpy as np
 
 
 def gain_cost_score(y, y_pred, neg_label, pos_label):
     cm = confusion_matrix(y, y_pred, labels=[neg_label, pos_label])
-    cost_matrix = np.array([[0, -1], [-5, 0]])
-    return np.sum(cm * cost_matrix)
+    # The rows of the confusion matrix hold the counts of observed classes
+    # while the columns hold counts of predicted classes. Recall that here
+    # we consider "bad" as the positive class (second row and column).
+    # Scikit-learn model selection tools expect that we follow a convention
+    # that "higher" means "better", hence the following gain matrix assigns
+    # negative gains (costs) to the two kinds of prediction errors:
+    # - a gain of -1 for each false positive ("good" credit labeled as "bad"),
+    # - a gain of -5 for each false negative ("bad" credit labeled as "good"),
+    # The true positives and true negatives are assigned null gains in this
+    # metric.
+    gain_matrix = np.array(
+        [
+            [0, -1],  # -1 gain for false positives
+            [-5, 0],  # -5 gain for false negatives
+        ]
+    )
+    return np.sum(cm * gain_matrix)
 
 
 scoring["cost_gain"] = make_scorer(
@@ -206,12 +235,13 @@ _ = fig.suptitle("Evaluation of the vanilla GBDT model")
 #
 # Here, the different cut-off points correspond to different levels of posterior
 # probability estimates ranging between 0 and 1. By default, `model.predict` uses a
-# cut-off point at a probability estimate of 0.5. The metrics for such cut-off point are
-# reported with the blue dot on the curves: it corresponds to the statistical
+# cut-off point at a probability estimate of 0.5. The metrics for such a cut-off point
+# are reported with the blue dot on the curves: it corresponds to the statistical
 # performance of the model when using `model.predict`.
 #
 # However, we recall that the original aim was to minimize the cost (or maximize the
-# gain) by the business metric. We can compute the value of the business metric:
+# gain) as defined by the business metric. We can compute the value of the business
+# metric:
 print(f"Business defined metric: {scoring['cost_gain'](model, X_test, y_test)}")
 
 # %%
@@ -241,6 +271,7 @@ tuned_model = TunedThresholdClassifier(
     store_cv_results=True,  # necessary to inspect all results
 )
 tuned_model.fit(X_train, y_train)
+print(f"{tuned_model.best_threshold_=:0.2f}")
 
 # %%
 # We plot the ROC and Precision-Recall curves for the vanilla model and the tuned model.
@@ -254,7 +285,7 @@ names = ("Vanilla GBDT", "Tuned GBDT")
 for idx, (est, linestyle, marker, color, name) in enumerate(
     zip((model, tuned_model), linestyles, markerstyles, colors, names)
 ):
-    decision_threshold = getattr(est, "decision_threshold_", 0.5)
+    decision_threshold = getattr(est, "best_threshold_", 0.5)
     PrecisionRecallDisplay.from_estimator(
         est,
         X_test,
@@ -328,22 +359,25 @@ _ = fig.suptitle("Comparison of the cut-off point for the vanilla and tuned GBDT
 # different. To understand why the tuned model has chosen this cut-off point, we can
 # look at the right-hand side plot that plots the objective score that is our exactly
 # the same as our business metric. We see that the optimum threshold corresponds to the
-# maximum of the objective score.
+# maximum of the objective score. This maximum is reached for a decision threshold
+# much lower than 0.5: the tuned model enjoys a much higher recall at the cost of
+# of significantly lower precision: the tuned model is much more eager to
+# predict the "bad" class label to larger fraction of individuals.
 #
 # We can now check if choosing this cut-off point leads to a better score on the testing
 # set:
 print(f"Business defined metric: {scoring['cost_gain'](tuned_model, X_test, y_test)}")
 
 # %%
-# We observe that the decision generalized on the testing set leading to a better
-# business score.
+# We observe that tuning the decision threshold almost improves our business gains
+# by factor of 2.
 #
 # .. _tunedthresholdclassifier_no_cv:
 #
 # Consideration regarding model refitting and cross-validation
 # ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 #
-# In the above experiment, we use the default setting of the
+# In the above experiment, we used the default setting of the
 # :class:`~sklearn.model_selection.TunedThresholdClassifier`. In particular, the cut-off
 # point is tuned using a 5-fold stratified cross-validation. Also, the
 # underlying predictive model is refitted on the entire training data once the
@@ -356,7 +390,7 @@ print(f"Business defined metric: {scoring['cost_gain'](tuned_model, X_test, y_te
 # can try to do such experiment.
 model.fit(X_train, y_train)
 tuned_model.set_params(cv="prefit", refit=False).fit(X_train, y_train)
-
+print(f"{tuned_model.best_threshold_=:0.2f}")
 
 # %%
 # Then, we evaluate our model with the same approach as before:
@@ -369,7 +403,7 @@ names = ("Vanilla GBDT", "Tuned GBDT")
 for idx, (est, linestyle, marker, color, name) in enumerate(
     zip((model, tuned_model), linestyles, markerstyles, colors, names)
 ):
-    decision_threshold = getattr(est, "decision_threshold_", 0.5)
+    decision_threshold = getattr(est, "best_threshold_", 0.5)
     PrecisionRecallDisplay.from_estimator(
         est,
         X_test,
@@ -434,21 +468,22 @@ axs[2].set_title("Objective score as a function of the decision threshold")
 _ = fig.suptitle("Tuned GBDT model without refitting and using the entire dataset")
 
 # %%
-# We observe the that the optimum cut-off point is different than in the previous
-# experiment. If we look at the right-hand side plot, we observe that the objective
-# score has large plateau with a minimum cost (around 0). This behavior is symptomatic
-# of an overfitting. Because we disable cross-validation, we tuned the cut-off point on
-# the same set as the model was trained on, and this is the reason for the observed
-# overfitting.
+# We observe the that the optimum cut-off point is different from the one found
+# in the previous experiment. If we look at the right-hand side plot, we
+# observe that the business gain has large plateau of near-optimal 0 gain for a
+# large span of decision thresholds. This behavior is symptomatic of an
+# overfitting. Because we disable cross-validation, we tuned the cut-off point
+# on the same set as the model was trained on, and this is the reason for the
+# observed overfitting.
 #
 # This option should therefore be used with caution. One needs to make sure that the
-# data providing at fitting time to the
+# data provided at fitting time to the
 # :class:`~sklearn.model_selection.TunedThresholdClassifier` is not the same as the data
 # used to train the underlying classifier. This could happen sometimes when the idea is
 # just to tune the predictive model on a completely new validation set without a costly
 # complete refit.
 #
-# In the case that cross-validation is too costly, a potential alternative is to use a
+# When cross-validation is too costly, a potential alternative is to use a
 # single train-test split by providing a floating number in range `[0, 1]` to the `cv`
 # parameter. It splits the data into a training and testing set. Let's explore this
 # option:
@@ -544,8 +579,8 @@ _ = fig.suptitle("Tuned GBDT model without refitting and using the entire datase
 # -------------------------------------------------------------
 #
 # As stated in [2]_, gains and costs are generally not constant in real-world problems.
-# In this section, we use a similar example as in [2]_ by using credit cards
-# records.
+# In this section, we use a similar example as in [2]_ for the problem of
+# detecting fraud in credit card transaction records.
 #
 # The credit card dataset
 # ^^^^^^^^^^^^^^^^^^^^^^^
@@ -669,13 +704,16 @@ print(
 #
 # Let's now create a predictive model using a logistic regression without tuning the
 # decision threshold.
-from sklearn.linear_model import LogisticRegression
+from sklearn.linear_model import LogisticRegressionCV
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 
-model = make_pipeline(StandardScaler(), LogisticRegression(random_state=42)).fit(
-    data_train, target_train
-)
+model = make_pipeline(
+    StandardScaler(),
+    LogisticRegressionCV(
+        random_state=42, Cs=np.logspace(-6, 6, 13), scoring="roc_auc"
+    ),
+).fit(data_train, target_train)
 
 print(
     "Benefit/cost of our logistic regression: "
@@ -721,8 +759,16 @@ print(
 )
 
 # %%
-# We observe that tuning the decision threshold increases the profit of our model.
+# We observe that tuning the decision threshold increases the expected profit of
+# deploying our model as estimated by the business metric. 
 # Eventually, the balanced accuracy also increased. Note that it might not always be
 # the case because the statistical metric is not necessarily a surrogate of the
 # business metric. It is therefore important, whenever possible, optimize the decision
 # threshold with respect to the business metric.
+#
+# Finally, the estimate of the business metric itself can be unreliable, in
+# particular when the number of data points in the minority class is so small.
+# Any business impact estimated by cross-validation of a business metric on
+# historical data (offline evaluation) should ideally be confirmed by A/B testing
+# on live data (online evaluation). Note however that A/B testing models is
+# beyond the scope of the scikit-learn library itself.
