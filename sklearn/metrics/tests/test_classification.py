@@ -3100,3 +3100,51 @@ def test_d2_log_loss_score():
     err = "The labels array needs to contain at least two"
     with pytest.raises(ValueError, match=err):
         d2_log_loss_score(y_true, y_pred, labels=labels)
+
+    # Some tests with sample weights
+
+    # check if poor predictions for character values gives a relatively
+    # low value for the d2 score when sample weights are also given.
+    y_true = ["h", "d", "c", "c"]
+    sample_weight = [1.0, 0.5, 0.5, 1.0]
+    y_pred = np.array(
+        [
+            [0.6, 0.3, 0.1],
+            [0.5, 0.2, 0.3],
+            [0.3, 0.4, 0.3],
+            [0.4, 0.5, 0.1],
+        ]
+    )
+    d2_score = d2_log_loss_score(y_true, y_pred, sample_weight=sample_weight)
+    assert d2_score < 0
+
+    # check if good predictions for character values gives a relatively
+    # higher d2 score when sample weights are also given.
+    y_true = ["orange", "strawberry", "apple", "apple"]
+    sample_weight = [3, 2, 1, 4]
+    y_pred = np.array(
+        [
+            [0.1, 0.8, 0.1],
+            [0.1, 0.1, 0.8],
+            [0.8, 0.1, 0.1],
+            [0.8, 0.1, 0.1],
+        ]
+    )
+    d2_score = d2_log_loss_score(y_true, y_pred, sample_weight=sample_weight)
+    assert 0.5 < d2_score < 1.0
+
+    # check if simply using the average of the classes as the predictions
+    # gives a d2 score of 0 where the y_true values are characters and "okay"
+    # has a relatively higher proportion, when sample weights are also given.
+    y_true = ["low", "neutral", "high", "high"]
+    sample_weight = [2, 2, 2, 2]
+    y_pred = np.array(
+        [
+            [0.5, 0.25, 0.25],
+            [0.5, 0.25, 0.25],
+            [0.5, 0.25, 0.25],
+            [0.5, 0.25, 0.25],
+        ]
+    )
+    d2_score = d2_log_loss_score(y_true, y_pred, sample_weight=sample_weight)
+    assert d2_score == 0

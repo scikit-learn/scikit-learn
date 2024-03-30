@@ -3297,7 +3297,7 @@ def brier_score_loss(
     },
     prefer_skip_nested_validation=True,
 )
-def d2_log_loss_score(y_true, y_pred, *, sample_weight=None, eps="auto", labels=None):
+def d2_log_loss_score(y_true, y_pred, *, sample_weight=None, labels=None):
     """
     :math:`D^2` score function, fraction of log loss explained.
 
@@ -3307,12 +3307,10 @@ def d2_log_loss_score(y_true, y_pred, *, sample_weight=None, eps="auto", labels=
 
     Read more in the :ref:`User Guide <d2_score>`.
 
-    .. versionadded:: 1.5
-
     Parameters
     ----------
     y_true : array-like or label indicator matrix
-        Ground truth (correct) labels for n_samples samples.
+        The actuals labels for the n_samples samples.
 
     y_pred : array-like of float, shape = (n_samples, n_classes) or (n_samples,)
         Predicted probabilities, as returned by a classifier's
@@ -3325,26 +3323,10 @@ def d2_log_loss_score(y_true, y_pred, *, sample_weight=None, eps="auto", labels=
     sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
 
-    eps : float or "auto", default="auto"
-        Log loss is undefined for p=0 or p=1, so probabilities are
-        clipped to `max(eps, min(1 - eps, p))`. The default will depend on the
-        data type of `y_pred` and is set to `np.finfo(y_pred.dtype).eps`.
-
-        .. versionadded:: 1.2
-
-        .. versionchanged:: 1.2
-           The default value changed from `1e-15` to `"auto"` that is
-           equivalent to `np.finfo(y_pred.dtype).eps`.
-
-        .. deprecated:: 1.3
-           `eps` is deprecated in 1.3 and will be removed in 1.5.
-
     labels : array-like, default=None
         If not provided, labels will be inferred from y_true. If ``labels``
         is ``None`` and ``y_pred`` has shape (n_samples,) the labels are
         assumed to be binary and are inferred from ``y_true``.
-
-        .. versionadded:: 0.18
 
     Returns
     -------
@@ -3374,22 +3356,26 @@ def d2_log_loss_score(y_true, y_pred, *, sample_weight=None, eps="auto", labels=
     numerator = log_loss(
         y_true=y_true,
         y_pred=y_pred,
-        eps=eps,
         normalize=False,
         sample_weight=sample_weight,
         labels=labels,
     )
 
     # Proportion of labels in the dataset
-    y_values, counts = np.unique(y_true, return_counts=True)
-    y_prob = counts / len(y_true)
+    if sample_weight is not None:
+        weights = np.asarray(sample_weight)
+    else:
+        weights = np.ones(shape=len(y_true), dtype=np.int64)
+
+    _, y_value_indices = np.unique(y_true, return_inverse=True)
+    counts = np.bincount(y_value_indices, weights=weights)
+    y_prob = counts / weights.sum()
     y_pred_null = np.tile(y_prob, (len(y_true), 1))
 
     # log loss of the null model
     denominator = log_loss(
         y_true=y_true,
         y_pred=y_pred_null,
-        eps=eps,
         normalize=False,
         sample_weight=sample_weight,
         labels=labels,
