@@ -38,7 +38,7 @@ def test_one_hot_encoder_sparse_dense():
     assert_array_equal(X_trans_sparse.toarray(), X_trans_dense)
 
 
-@pytest.mark.parametrize("handle_unknown", ["ignore", "infrequent_if_exist"])
+@pytest.mark.parametrize("handle_unknown", ["ignore", "infrequent_if_exist", "warn"])
 def test_one_hot_encoder_handle_unknown(handle_unknown):
     X = np.array([[0, 2, 1], [1, 0, 3], [1, 0, 2]])
     X2 = np.array([[4, 1, 1]])
@@ -62,7 +62,7 @@ def test_one_hot_encoder_handle_unknown(handle_unknown):
     assert_allclose(X2, X2_passed)
 
 
-@pytest.mark.parametrize("handle_unknown", ["ignore", "infrequent_if_exist"])
+@pytest.mark.parametrize("handle_unknown", ["ignore", "infrequent_if_exist", "warn"])
 def test_one_hot_encoder_handle_unknown_strings(handle_unknown):
     X = np.array(["11111111", "22", "333", "4444"]).reshape((-1, 1))
     X2 = np.array(["55555", "22"]).reshape((-1, 1))
@@ -267,7 +267,7 @@ def test_one_hot_encoder(X):
     assert_allclose(Xtr.toarray(), [[0, 1, 1, 0, 1], [1, 0, 0, 1, 1]])
 
 
-@pytest.mark.parametrize("handle_unknown", ["ignore", "infrequent_if_exist"])
+@pytest.mark.parametrize("handle_unknown", ["ignore", "infrequent_if_exist", "warn"])
 @pytest.mark.parametrize("sparse_", [False, True])
 @pytest.mark.parametrize("drop", [None, "first"])
 def test_one_hot_encoder_inverse(handle_unknown, sparse_, drop):
@@ -442,7 +442,7 @@ def test_one_hot_encoder_categories(X, cat_exp, cat_dtype):
             assert np.issubdtype(res.dtype, cat_dtype)
 
 
-@pytest.mark.parametrize("handle_unknown", ["ignore", "infrequent_if_exist"])
+@pytest.mark.parametrize("handle_unknown", ["ignore", "infrequent_if_exist", "warn"])
 @pytest.mark.parametrize(
     "X, X2, cats, cat_dtype",
     [
@@ -1461,7 +1461,7 @@ def test_ohe_missing_value_support_pandas():
     assert_allclose(Xtr, expected_df_trans)
 
 
-@pytest.mark.parametrize("handle_unknown", ["infrequent_if_exist", "ignore"])
+@pytest.mark.parametrize("handle_unknown", ["ignore", "infrequent_if_exist", "warn"])
 @pytest.mark.parametrize("pd_nan_type", ["pd.NA", "np.nan"])
 def test_ohe_missing_value_support_pandas_categorical(pd_nan_type, handle_unknown):
     # checks pandas dataframe with categorical features
@@ -1493,7 +1493,7 @@ def test_ohe_missing_value_support_pandas_categorical(pd_nan_type, handle_unknow
     assert np.isnan(ohe.categories_[0][-1])
 
 
-@pytest.mark.parametrize("handle_unknown", ["ignore", "infrequent_if_exist"])
+@pytest.mark.parametrize("handle_unknown", ["ignore", "infrequent_if_exist", "warn"])
 def test_ohe_drop_first_handle_unknown_ignore_warns(handle_unknown):
     """Check drop='first' and handle_unknown='ignore'/'infrequent_if_exist'
     during transform."""
@@ -1531,7 +1531,7 @@ def test_ohe_drop_first_handle_unknown_ignore_warns(handle_unknown):
     assert_array_equal(X_inv, np.array([["a", 0]], dtype=object))
 
 
-@pytest.mark.parametrize("handle_unknown", ["ignore", "infrequent_if_exist"])
+@pytest.mark.parametrize("handle_unknown", ["ignore", "infrequent_if_exist", "warn"])
 def test_ohe_drop_if_binary_handle_unknown_ignore_warns(handle_unknown):
     """Check drop='if_binary' and handle_unknown='ignore' during transform."""
     X = [["a", 0], ["b", 2], ["b", 1]]
@@ -1568,7 +1568,7 @@ def test_ohe_drop_if_binary_handle_unknown_ignore_warns(handle_unknown):
     assert_array_equal(X_inv, np.array([["a", None]], dtype=object))
 
 
-@pytest.mark.parametrize("handle_unknown", ["ignore", "infrequent_if_exist"])
+@pytest.mark.parametrize("handle_unknown", ["ignore", "infrequent_if_exist", "warn"])
 def test_ohe_drop_first_explicit_categories(handle_unknown):
     """Check drop='first' and handle_unknown='ignore'/'infrequent_if_exist'
     during fit with categories passed in."""

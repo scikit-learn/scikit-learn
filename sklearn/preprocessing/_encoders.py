@@ -558,10 +558,9 @@ class OneHotEncoder(_BaseEncoder):
           `handle_unknown='ignore'`. Infrequent categories exist based on
           `min_frequency` and `max_categories`. Read more in the
           :ref:`User Guide <encoder_infrequent_categories>`.
-        - 'warn' : When an unknown category is encountered during
-          transform a warnining will be issued and the resulting one-hot encoded
-          columns for this feature will be all zeros. In the inverse transform,
-          an unknown category will be denoted as None.
+        - 'warn' : When an unknown category is encountered during transform
+          a warning is issued, and the encoding then proceeds as described for
+          `handle_unknown="infrequent_if_exist"`.
 
         .. versionchanged:: 1.1
             `'infrequent_if_exist'` was added to automatically handle unknown
@@ -1025,14 +1024,16 @@ class OneHotEncoder(_BaseEncoder):
         # validation of X happens in _check_X called by _transform
         if self.handle_unknown == "warn":
             warn_on_unknown = True
+            handle_unknown = "infrequent_if_exist"
         else:
             warn_on_unknown = self.drop is not None and self.handle_unknown in {
                 "ignore",
                 "infrequent_if_exist",
             }
+            handle_unknown = self.handle_unknown
         X_int, X_mask = self._transform(
             X,
-            handle_unknown=self.handle_unknown,
+            handle_unknown=handle_unknown,
             force_all_finite="allow-nan",
             warn_on_unknown=warn_on_unknown,
         )
@@ -1147,8 +1148,8 @@ class OneHotEncoder(_BaseEncoder):
             labels = np.asarray(sub.argmax(axis=1)).flatten()
             X_tr[:, i] = cats_wo_dropped[labels]
 
-            if self.handle_unknown in ("ignore", "warn") or (
-                self.handle_unknown == "infrequent_if_exist"
+            if self.handle_unknown in ("ignore") or (
+                self.handle_unknown in ("infrequent_if_exist", "warn")
                 and infrequent_indices[i] is None
             ):
                 unknown = np.asarray(sub.sum(axis=1) == 0).flatten()
