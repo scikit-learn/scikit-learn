@@ -159,7 +159,7 @@ def test_pca_sparse_fit_transform(global_random_seed, sparse_container):
     assert_allclose(pca_fit.transform(X2), pca_fit_transform.transform(X2), rtol=2e-9)
 
 
-@pytest.mark.parametrize("svd_solver", ["randomized", "full", "auto"])
+@pytest.mark.parametrize("svd_solver", ["randomized", "full"])
 @pytest.mark.parametrize("sparse_container", CSR_CONTAINERS + CSC_CONTAINERS)
 def test_sparse_pca_solver_error(global_random_seed, svd_solver, sparse_container):
     random_state = np.random.RandomState(global_random_seed)
@@ -177,6 +177,24 @@ def test_sparse_pca_solver_error(global_random_seed, svd_solver, sparse_containe
     )
     with pytest.raises(TypeError, match=error_msg_pattern):
         pca.fit(X)
+
+
+@pytest.mark.parametrize("sparse_container", CSR_CONTAINERS + CSC_CONTAINERS)
+def test_sparse_pca_auto_arpack_singluar_values_consistency(
+    global_random_seed, sparse_container
+):
+    """Check that "auto" and "arpack" solvers are equivalent for sparse inputs."""
+    random_state = np.random.RandomState(global_random_seed)
+    X = sparse_container(
+        sp.sparse.random(
+            SPARSE_M,
+            SPARSE_N,
+            random_state=random_state,
+        )
+    )
+    pca_arpack = PCA(n_components=10, svd_solver="arpack").fit(X)
+    pca_auto = PCA(n_components=10, svd_solver="auto").fit(X)
+    assert_allclose(pca_arpack.singular_values_, pca_auto.singular_values_, rtol=5e-3)
 
 
 def test_no_empty_slice_warning():
@@ -957,7 +975,7 @@ def test_pca_mle_array_api_compliance(
 
 def test_array_api_error_and_warnings_on_unsupported_params():
     pytest.importorskip("array_api_compat")
-    xp = pytest.importorskip("numpy.array_api")
+    xp = pytest.importorskip("array_api_strict")
     iris_xp = xp.asarray(iris.data)
 
     pca = PCA(n_components=2, svd_solver="arpack", random_state=0)

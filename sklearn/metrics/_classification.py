@@ -38,7 +38,11 @@ from ..utils import (
     check_consistent_length,
     column_or_1d,
 )
-from ..utils._array_api import _union1d, _weighted_sum, get_namespace
+from ..utils._array_api import (
+    _average,
+    _union1d,
+    get_namespace,
+)
 from ..utils._param_validation import (
     Hidden,
     Interval,
@@ -175,7 +179,7 @@ def accuracy_score(y_true, y_pred, *, normalize=True, sample_weight=None):
 
     Returns
     -------
-    score : float
+    score : float or int
         If ``normalize == True``, return the fraction of correctly
         classified samples (float), else returns the number of correctly
         classified samples (int).
@@ -192,11 +196,6 @@ def accuracy_score(y_true, y_pred, *, normalize=True, sample_weight=None):
         two sets of samples.
     zero_one_loss : Compute the Zero-one classification loss. By default, the
         function will return the percentage of imperfectly predicted subsets.
-
-    Notes
-    -----
-    In binary classification, this function is equal to the `jaccard_score`
-    function.
 
     Examples
     --------
@@ -224,7 +223,7 @@ def accuracy_score(y_true, y_pred, *, normalize=True, sample_weight=None):
     else:
         score = y_true == y_pred
 
-    return _weighted_sum(score, sample_weight, normalize)
+    return float(_average(score, weights=sample_weight, normalize=normalize))
 
 
 @validate_params(
@@ -2618,7 +2617,7 @@ def classification_report(
 
     # labelled micro average
     micro_is_accuracy = (y_type == "multiclass" or y_type == "binary") and (
-        not labels_given or (set(labels) == set(unique_labels(y_true, y_pred)))
+        not labels_given or (set(labels) >= set(unique_labels(y_true, y_pred)))
     )
 
     if target_names is not None and len(labels) != len(target_names):
@@ -2809,7 +2808,7 @@ def hamming_loss(y_true, y_pred, *, sample_weight=None):
         return n_differences / (y_true.shape[0] * y_true.shape[1] * weight_average)
 
     elif y_type in ["binary", "multiclass"]:
-        return _weighted_sum(y_true != y_pred, sample_weight, normalize=True)
+        return float(_average(y_true != y_pred, weights=sample_weight, normalize=True))
     else:
         raise ValueError("{0} is not supported".format(y_type))
 
@@ -2994,7 +2993,7 @@ def log_loss(
     y_pred = y_pred / y_pred_sum[:, np.newaxis]
     loss = -xlogy(transformed_labels, y_pred).sum(axis=1)
 
-    return _weighted_sum(loss, sample_weight, normalize)
+    return float(_average(loss, weights=sample_weight, normalize=normalize))
 
 
 @validate_params(

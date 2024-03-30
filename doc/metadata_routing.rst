@@ -274,6 +274,10 @@ Meta-estimators and functions supporting metadata routing:
 
 - :class:`sklearn.calibration.CalibratedClassifierCV`
 - :class:`sklearn.compose.ColumnTransformer`
+- :class:`sklearn.ensemble.VotingClassifier`
+- :class:`sklearn.ensemble.VotingRegressor`
+- :class:`sklearn.ensemble.BaggingClassifier`
+- :class:`sklearn.ensemble.BaggingRegressor`
 - :class:`sklearn.feature_selection.SelectFromModel`
 - :class:`sklearn.impute.IterativeImputer`
 - :class:`sklearn.linear_model.ElasticNetCV`
@@ -283,6 +287,9 @@ Meta-estimators and functions supporting metadata routing:
 - :class:`sklearn.linear_model.LogisticRegressionCV`
 - :class:`sklearn.linear_model.MultiTaskElasticNetCV`
 - :class:`sklearn.linear_model.MultiTaskLassoCV`
+- :class:`sklearn.linear_model.RANSACRegressor`
+- :class:`sklearn.linear_model.RidgeClassifierCV`
+- :class:`sklearn.linear_model.RidgeCV`
 - :class:`sklearn.model_selection.GridSearchCV`
 - :class:`sklearn.model_selection.HalvingGridSearchCV`
 - :class:`sklearn.model_selection.HalvingRandomSearchCV`
@@ -298,6 +305,7 @@ Meta-estimators and functions supporting metadata routing:
 - :class:`sklearn.multioutput.MultiOutputRegressor`
 - :class:`sklearn.linear_model.OrthogonalMatchingPursuitCV`
 - :class:`sklearn.multioutput.RegressorChain`
+- :class:`sklearn.pipeline.FeatureUnion`
 - :class:`sklearn.pipeline.Pipeline`
 
 Meta-estimators and tools not supporting metadata routing yet:
@@ -306,20 +314,14 @@ Meta-estimators and tools not supporting metadata routing yet:
 - :class:`sklearn.covariance.GraphicalLassoCV`
 - :class:`sklearn.ensemble.AdaBoostClassifier`
 - :class:`sklearn.ensemble.AdaBoostRegressor`
-- :class:`sklearn.ensemble.BaggingClassifier`
-- :class:`sklearn.ensemble.BaggingRegressor`
 - :class:`sklearn.ensemble.StackingClassifier`
 - :class:`sklearn.ensemble.StackingRegressor`
-- :class:`sklearn.ensemble.VotingClassifier`
-- :class:`sklearn.ensemble.VotingRegressor`
 - :class:`sklearn.feature_selection.RFE`
 - :class:`sklearn.feature_selection.RFECV`
 - :class:`sklearn.feature_selection.SequentialFeatureSelector`
+- :class:`sklearn.impute.IterativeImputer`
 - :class:`sklearn.linear_model.RANSACRegressor`
-- :class:`sklearn.linear_model.RidgeClassifierCV`
-- :class:`sklearn.linear_model.RidgeCV`
 - :class:`sklearn.model_selection.learning_curve`
 - :class:`sklearn.model_selection.permutation_test_score`
 - :class:`sklearn.model_selection.validation_curve`
-- :class:`sklearn.pipeline.FeatureUnion`
 - :class:`sklearn.semi_supervised.SelfTrainingClassifier`
