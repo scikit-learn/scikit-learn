@@ -1157,14 +1157,14 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
 
     def _sk_visual_block_(self):
         if hasattr(self, "best_estimator_"):
-            key, estimator = "best_estimator_: ", self.best_estimator_
+            key, estimator = "best_estimator_", self.best_estimator_
         else:
-            key, estimator = "", self.estimator
+            key, estimator = "estimator", self.estimator
 
         return _VisualBlock(
             "parallel",
             [estimator],
-            names=[f"{key}{estimator.__class__.__name__}"],
+            names=[f"{key}: {estimator.__class__.__name__}"],
             name_details=[str(estimator)],
         )
 
