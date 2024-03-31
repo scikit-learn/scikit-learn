@@ -113,8 +113,6 @@ def _parallel_build_estimators(
     estimators = []
     estimators_features = []
 
-    request_or_router = get_routing_for_object(ensemble.estimator_)
-
     # TODO: (slep6) remove if condition for unrouted sample_weight when metadata
     # routing can't be disabled.
     support_sample_weight = has_fit_parameter(ensemble.estimator_, "sample_weight")
@@ -164,9 +162,14 @@ def _parallel_build_estimators(
         # Note: Row sampling can be achieved either through setting sample_weight or
         # by indexing. The former is more efficient. Therefore, use this method
         # if possible, otherwise use indexing.
-        if (
-            _routing_enabled() and request_or_router.consumes("fit", ("sample_weight",))
-        ) or (not _routing_enabled() and support_sample_weight):
+        if _routing_enabled():
+            request_or_router = get_routing_for_object(ensemble.estimator_)
+            consumes_sample_weight = request_or_router.consumes(
+                "fit", ("sample_weight",)
+            )
+        else:
+            consumes_sample_weight = support_sample_weight
+        if consumes_sample_weight:
             # Draw sub samples, using sample weights, and then fit
             curr_sample_weight = _check_sample_weight(
                 fit_params_.pop("sample_weight", None), X
