@@ -1399,7 +1399,9 @@ def test_ridgecv_alphas_zero(cv, Estimator):
 
     ridge_est = Estimator(alphas=alphas, cv=cv)
     if cv is None:
-        with pytest.raises(ValueError, match=r"alphas\[0\] == 0.0, must be in the range \(0.0, inf\)."):
+        with pytest.raises(
+            ValueError, match=r"alphas\[0\] == 0.0, must be in the range \(0.0, inf\)."
+        ):
             ridge_est.fit(X, y)
     else:
         ridge_est.fit(X, y)
@@ -1504,9 +1506,10 @@ def test_ridgecv_int_alphas():
     "params, err_type, err_msg",
     [
         (
-            {"alphas": (1, -1, -100)}, 
-            ValueError, 
-            r"alphas\[1\] == -1, must be in the range \(0.0, inf\)."),
+            {"alphas": (1, -1, -100)},
+            ValueError,
+            r"alphas\[1\] == -1, must be in the range \(0.0, inf\).",
+        ),
         (
             {"alphas": (-0.1, -1.0, -10.0)},
             ValueError,

@@ -1301,9 +1301,7 @@ def test_check_scalar_valid(x):
             2,
             None,
             "neither",
-            ValueError(
-                "test_name9 == 2, must be in the range (2, inf)."
-            )
+            ValueError("test_name9 == 2, must be in the range (2, inf)."),
         ),
         (
             4,
@@ -1312,10 +1310,8 @@ def test_check_scalar_valid(x):
             None,
             4,
             "neither",
-            ValueError(
-                "test_name10 == 4, must be in the range (-inf, 4)."
-            )
-        )
+            ValueError("test_name10 == 4, must be in the range (-inf, 4)."),
+        ),
     ],
 )
 def test_check_scalar_invalid(

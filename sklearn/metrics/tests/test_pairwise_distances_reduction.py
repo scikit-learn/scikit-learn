@@ -943,7 +943,9 @@ def test_radius_neighbors_factory_method_wrong_usages():
     ):
         RadiusNeighbors.compute(X=X, Y=Y.astype(np.int32), radius=radius, metric=metric)
 
-    with pytest.raises(ValueError, match="radius == -1.0, must be in the range \[0, inf\)."):
+    with pytest.raises(
+        ValueError, match="radius == -1.0, must be in the range \[0, inf\)."
+    ):
         RadiusNeighbors.compute(X=X, Y=Y, radius=-1, metric=metric)
 
     with pytest.raises(ValueError, match="Unrecognized metric"):
@@ -1048,7 +1050,9 @@ def test_radius_neighbors_classmode_factory_method_wrong_usages():
             outlier_label=None,
         )
 
-    with pytest.raises(ValueError, match="radius == -1.0, must be in the range \[0, inf\)."):
+    with pytest.raises(
+        ValueError, match="radius == -1.0, must be in the range \[0, inf\)."
+    ):
         RadiusNeighborsClassMode.compute(
             X=X,
             Y=Y,
