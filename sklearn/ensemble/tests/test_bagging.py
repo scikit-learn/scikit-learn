@@ -15,6 +15,8 @@ from sklearn.base import BaseEstimator
 from sklearn.datasets import load_diabetes, load_iris, make_hastie_10_2
 from sklearn.dummy import DummyClassifier, DummyRegressor
 from sklearn.ensemble import (
+    AdaBoostClassifier,
+    AdaBoostRegressor,
     BaggingClassifier,
     BaggingRegressor,
     HistGradientBoostingClassifier,
@@ -956,3 +958,16 @@ def test_bagging_with_metadata_routing(model):
     """Make sure that metadata routing works with non-default estimator."""
     with sklearn.config_context(enable_metadata_routing=True):
         model.fit(iris.data, iris.target)
+
+
+@pytest.mark.parametrize(
+    "model",
+    [
+        BaggingClassifier(estimator=AdaBoostClassifier(n_estimators=1), n_estimators=1),
+        BaggingRegressor(estimator=AdaBoostRegressor(n_estimators=1), n_estimators=1),
+    ],
+)
+def test_bagging_without_support_metadata_routing(model):
+    """Make sure that we get still use an estimator that does not implement the
+    metadata routing."""
+    model.fit(iris.data, iris.target)
