@@ -835,7 +835,9 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
 
     def _get_estimator(self):
         """Resolve which estimator to return (default is DecisionTreeClassifier)"""
-        return self.estimator or DecisionTreeClassifier()
+        if self.estimator is None:
+            return DecisionTreeClassifier()
+        return self.estimator
 
     def _set_oob_score(self, X, y):
         n_samples = y.shape[0]
@@ -1337,4 +1339,6 @@ class BaggingRegressor(RegressorMixin, BaseBagging):
 
     def _get_estimator(self):
         """Resolve which estimator to return (default is DecisionTreeClassifier)"""
-        return self.estimator or DecisionTreeRegressor()
+        if self.estimator is None:
+            return DecisionTreeRegressor()
+        return self.estimator

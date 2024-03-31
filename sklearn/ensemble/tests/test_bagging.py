@@ -10,6 +10,7 @@ import joblib
 import numpy as np
 import pytest
 
+import sklearn
 from sklearn.base import BaseEstimator
 from sklearn.datasets import load_diabetes, load_iris, make_hastie_10_2
 from sklearn.dummy import DummyClassifier, DummyRegressor
@@ -18,6 +19,8 @@ from sklearn.ensemble import (
     BaggingRegressor,
     HistGradientBoostingClassifier,
     HistGradientBoostingRegressor,
+    RandomForestClassifier,
+    RandomForestRegressor,
 )
 from sklearn.feature_selection import SelectKBest
 from sklearn.linear_model import LogisticRegression, Perceptron
@@ -936,3 +939,20 @@ def test_bagging_get_estimators_indices():
 def test_bagging_allow_nan_tag(bagging, expected_allow_nan):
     """Check that bagging inherits allow_nan tag."""
     assert bagging._get_tags()["allow_nan"] == expected_allow_nan
+
+
+@pytest.mark.parametrize(
+    "model",
+    [
+        BaggingClassifier(
+            estimator=RandomForestClassifier(n_estimators=1), n_estimators=1
+        ),
+        BaggingRegressor(
+            estimator=RandomForestRegressor(n_estimators=1), n_estimators=1
+        ),
+    ],
+)
+def test_bagging_with_metadata_routing(model):
+    """Make sure that metadata routing works with non-default estimator."""
+    with sklearn.config_context(enable_metadata_routing=True):
+        model.fit(iris.data, iris.target)
