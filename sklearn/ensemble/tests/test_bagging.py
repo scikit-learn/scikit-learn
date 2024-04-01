@@ -968,6 +968,6 @@ def test_bagging_with_metadata_routing(model):
     ],
 )
 def test_bagging_without_support_metadata_routing(model):
-    """Make sure that we get still use an estimator that does not implement the
+    """Make sure that we still can use an estimator that does not implement the
     metadata routing."""
     model.fit(iris.data, iris.target)
