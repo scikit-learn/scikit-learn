@@ -1,4 +1,4 @@
-from sklearn.utils._typedefs cimport (
+from ...utils._typedefs cimport (
     float32_t, float64_t, int32_t, intp_t, uint8_t, uint16_t, uint32_t
 )
 
@@ -39,6 +39,7 @@ cdef packed struct node_struct:
     # The index of the corresponding bitsets in the Predictor's bitset arrays.
     # Only used if is_categorical is True
     unsigned int bitset_idx
+
 
 cpdef enum MonotonicConstraint:
     NO_CST = 0

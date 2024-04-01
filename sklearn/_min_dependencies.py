@@ -20,6 +20,7 @@ dependent_packages = {
     "joblib": (JOBLIB_MIN_VERSION, "install"),
     "threadpoolctl": (THREADPOOLCTL_MIN_VERSION, "install"),
     "cython": (CYTHON_MIN_VERSION, "build"),
+    "meson-python": ("0.15.0", "build"),
     "matplotlib": ("3.3.4", "benchmark, docs, examples, tests"),
     "scikit-image": ("0.17.2", "docs, examples, tests"),
     "pandas": ("1.1.5", "benchmark, docs, examples, tests"),
@@ -44,7 +45,7 @@ dependent_packages = {
     "plotly": ("5.14.0", "docs, examples"),
     # XXX: Pin conda-lock to the latest released version (needs manual update
     # from time to time)
-    "conda-lock": ("2.4.2", "maintenance"),
+    "conda-lock": ("2.5.6", "maintenance"),
 }
 
 

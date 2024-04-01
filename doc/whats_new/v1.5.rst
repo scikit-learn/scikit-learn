@@ -22,6 +22,15 @@ Version 1.5.0
 
 **In Development**
 
+Changed models
+--------------
+
+- |Efficiency| The subsampling in :class:`preprocessing.QuantileTransformer` is now
+  more efficient for dense arrays but the fitted quantiles and the results of
+  `transform` may be slightly different than before (keeping the same statistical
+  properties).
+  :pr:`27344` by :user:`Xuefeng Xu <xuefeng-xu>`.
+
 Support for Array API
 ---------------------
 
@@ -125,6 +134,17 @@ Changelog
   being explicitly set as well.
   :pr:`28483` by :user:`Stefanie Senger <StefanieSenger>`.
 
+:mod:`sklearn.cross_decomposition`
+..................................
+
+- |API| Deprecates `Y` in favor of `y` in the methods fit, transform and inverse_transform of:
+  :class:`cross_decomposition.PLSRegression`.
+  :class:`cross_decomposition.PLSCanonical`,
+  :class:`cross_decomposition.CCA`,
+  and :class:`cross_decomposition.PLSSVD`.
+  `Y` will be removed in version 1.7.
+  :pr:`28604` by :user:`David Leon <davidleon123>`
+
 :mod:`sklearn.datasets`
 .......................
 
@@ -188,6 +208,11 @@ Changelog
   :pr:`28085` by :user:`Neto Menoci <netomenoci>` and
   :user:`Florin Andrei <FlorinAndrei>`.
 
+- |Enhancement| The `cv_results_` attribute of :class:`feature_selection.RFECV` has
+  a new key, `n_features`, containing an array with the number of features selected
+  at each step.
+  :pr:`28670` by :user:`Miguel Silva <miguelcsilva>`.
+
 :mod:`sklearn.impute`
 .....................
 
@@ -234,6 +259,11 @@ Changelog
 :mod:`sklearn.metrics`
 ......................
 
+- |Feature| :func:`metrics.pairwise_distances` accepts calculating pairwise distances
+  for non-numeric arrays as well. This is supported through custom metrics only.
+  :pr:`27456` by :user:`Venkatachalam N <venkyyuvy>`, :user:`Kshitij Mathur <Kshitij68>`
+  and :user:`Julian Libiseller-Egger <julibeg>`.
+
 - |Efficiency| Improve efficiency of functions :func:`~metrics.brier_score_loss`,
   :func:`~metrics.calibration_curve`, :func:`~metrics.det_curve`,
   :func:`~metrics.precision_recall_curve`,
@@ -264,6 +294,12 @@ Changelog
   returns masked arrays of the appropriate NumPy dtype, as opposed to always returning
   dtype ``object``. :pr:`28352` by :user:`Marco Gorelli<MarcoGorelli>`.
 
+- |Fix| :func:`sklearn.model_selection.train_test_score` works with Array API inputs.
+  Previously indexing was not handled correctly leading to exceptions when using strict
+  implementations of the Array API like CuPY.
+  :pr:`28407` by `Tim Head <betatim>`.
+
+
 :mod:`sklearn.multioutput`
 ..........................
 
@@ -287,7 +323,7 @@ Changelog
   :func:`preprocessing.quantile_transform` now supports disabling
   subsampling explicitly.
   :pr:`27636` by :user:`Ralph Urlus <rurlus>`.
-  
+
 :mod:`sklearn.tree`
 ...................
 

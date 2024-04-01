@@ -4,6 +4,7 @@ from cython.parallel import prange
 from libc.math cimport isnan
 import numpy as np
 
+from ...utils._typedefs cimport intp_t, uint8_t, uint16_t
 from .common cimport BinnedData
 from .common cimport Bitsets
 from .common cimport X_DTYPE_C
@@ -12,7 +13,6 @@ from .common import Y_DTYPE
 from .common cimport X_BINNED_DTYPE_C
 from .common cimport node_struct
 from ._bitset cimport in_bitset
-from sklearn.utils._typedefs cimport intp_t, uint8_t, uint16_t
 
 
 ctypedef fused X_BINNED_PREDICT:
