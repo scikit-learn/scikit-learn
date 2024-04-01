@@ -631,10 +631,10 @@ def test_estimator_does_not_support_feature_names():
 @pytest.mark.parametrize(
     "error, err_msg, max_features",
     (
-        [ValueError, "max_features == 10, must be in the range \[0, 4\].", 10],
+        [ValueError, r"max_features == 10, must be in the range \[0, 4\].", 10],
         [
             ValueError,
-            "max_features == 5, must be in the range \[0, 4\].",
+            r"max_features == 5, must be in the range \[0, 4\].",
             lambda x: x.shape[1] + 1,
         ],
     ),
