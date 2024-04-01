@@ -560,8 +560,15 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
         y : array-like of shape (n_samples,) or (n_samples, n_targets)
             Target values. Will be cast to X's dtype if necessary.
 
-        sample_weight : array-like of shape (n_samples,), default=None
-            Individual weights for each sample.
+        sample_weight : array-like of shape (n_samples,), int, float or None (default)
+
+            The options are:
+
+            - `array-like`: should contain the individual weight of each sample.
+            - `None`: all samples have a weight equal to 1.
+            - `int` or `float`: all samples have a weight equal to the value \
+provided. Since there is no difference in the relative weight between samples, it is \
+equal to the case where `sample_weight=None`.
 
             .. versionadded:: 0.17
                parameter *sample_weight* support to LinearRegression.
