@@ -963,7 +963,10 @@ def test_bagging_with_metadata_routing(model):
 @pytest.mark.parametrize(
     "model",
     [
-        BaggingClassifier(estimator=AdaBoostClassifier(n_estimators=1), n_estimators=1),
+        BaggingClassifier(
+            estimator=AdaBoostClassifier(n_estimators=1, algorithm="SAMME"),
+            n_estimators=1,
+        ),
         BaggingRegressor(estimator=AdaBoostRegressor(n_estimators=1), n_estimators=1),
     ],
 )
