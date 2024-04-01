@@ -464,8 +464,6 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
         - If metric is "precomputed", X is assumed to be a distance matrix and
           must be square.
 
-        - If metric is "cosine", algorithm must be "brute" or "auto".
-
     metric_params : dict, default=None
         Arguments passed to the distance metric.
 
