@@ -5,7 +5,6 @@
 cimport cython
 from cython.parallel import prange
 from libc.string cimport memset
-cimport numpy as cnp
 
 import numpy as np
 
@@ -15,8 +14,6 @@ from .common cimport hist_struct
 from .common cimport Histograms
 from .common cimport X_BINNED_DTYPE_FUSED_C
 from .common cimport G_H_DTYPE_C
-
-cnp.import_array()
 
 
 # Notes:
