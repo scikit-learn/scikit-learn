@@ -38,7 +38,6 @@ from ..utils._array_api import (
     _average,
     _find_matching_floating_dtype,
     device,
-    _is_numpy_namespace,
     get_namespace,
 )
 from ..utils._param_validation import Hidden, Interval, StrOptions, validate_params
@@ -1278,13 +1277,12 @@ def _mean_tweedie_deviance(y_true, y_pred, sample_weight, power):
     """Mean Tweedie deviance regression loss."""
     xp, _ = get_namespace(y_true, y_pred)
     p = power
-    pow_f = np.power if _is_numpy_namespace(xp) else xp.pow
     if p < 0:
         # 'Extreme stable', y any real number, y_pred > 0
         dev = 2 * (
-            pow_f(xp.where(y_true > 0, y_true, 0), 2 - p) / ((1 - p) * (2 - p))
-            - y_true * pow_f(y_pred, 1 - p) / (1 - p)
-            + pow_f(y_pred, 2 - p) / (2 - p)
+            xp.pow(xp.where(y_true > 0, y_true, 0), 2 - p) / ((1 - p) * (2 - p))
+            - y_true * xp.pow(y_pred, 1 - p) / (1 - p)
+            + xp.pow(y_pred, 2 - p) / (2 - p)
         )
     elif p == 0:
         # Normal distribution, y and y_pred any real number
@@ -1297,9 +1295,9 @@ def _mean_tweedie_deviance(y_true, y_pred, sample_weight, power):
         dev = 2 * (xp.log(y_pred / y_true) + y_true / y_pred - 1)
     else:
         dev = 2 * (
-            pow_f(y_true, 2 - p) / ((1 - p) * (2 - p))
-            - y_true * pow_f(y_pred, 1 - p) / (1 - p)
-            + pow_f(y_pred, 2 - p) / (2 - p)
+            xp.pow(y_true, 2 - p) / ((1 - p) * (2 - p))
+            - y_true * xp.pow(y_pred, 1 - p) / (1 - p)
+            + xp.pow(y_pred, 2 - p) / (2 - p)
         )
     if sample_weight is None:
         return xp.mean(dev)
