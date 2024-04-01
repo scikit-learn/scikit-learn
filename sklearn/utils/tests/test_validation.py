@@ -74,6 +74,7 @@ from sklearn.utils.validation import (
     _is_polars_df,
     _num_features,
     _num_samples,
+    _to_object_array,
     assert_all_finite,
     check_consistent_length,
     check_is_fitted,
@@ -2070,3 +2071,11 @@ def test_check_array_dia_to_int32_indexed_csr_csc_coo(sparse_container, output_f
     else:  # output_format in ["csr", "csc"]
         assert X_checked.indices.dtype == np.int32
         assert X_checked.indptr.dtype == np.int32
+
+
+@pytest.mark.parametrize("sequence", [[np.array(1), np.array(2)], [[1, 2], [3, 4]]])
+def test_to_object_array(sequence):
+    out = _to_object_array(sequence)
+    assert isinstance(out, np.ndarray)
+    assert out.dtype.kind == "O"
+    assert out.ndim == 1
