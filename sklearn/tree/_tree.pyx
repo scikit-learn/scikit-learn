@@ -615,7 +615,7 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
 
         splitter.node_reset(start, end, &weighted_n_node_samples)
 
-        # best-first splits do not track the number of constants when adding a split node
+        # reset n_constant_features for this specific split before beginning split search
         parent_record.n_constant_features = 0
 
         if is_first:
