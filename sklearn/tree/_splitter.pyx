@@ -11,25 +11,21 @@
 #
 # License: BSD 3 clause
 
-cimport numpy as cnp
-
-from ._criterion cimport Criterion
-
+from cython cimport final
+from libc.math cimport isnan
 from libc.stdlib cimport qsort
 from libc.string cimport memcpy
-from libc.math cimport isnan
-from cython cimport final
 
-import numpy as np
-
-from scipy.sparse import issparse
-
+from ._criterion cimport Criterion
 from ._utils cimport log
 from ._utils cimport rand_int
 from ._utils cimport rand_uniform
 from ._utils cimport RAND_R_MAX
+from ..utils._typedefs cimport int8_t
 
-cnp.import_array()
+import numpy as np
+from scipy.sparse import issparse
+
 
 cdef float64_t INFINITY = np.inf
 
@@ -64,7 +60,7 @@ cdef class Splitter:
         intp_t min_samples_leaf,
         float64_t min_weight_leaf,
         object random_state,
-        const cnp.int8_t[:] monotonic_cst,
+        const int8_t[:] monotonic_cst,
     ):
         """
         Parameters
@@ -88,7 +84,7 @@ cdef class Splitter:
         random_state : object
             The user inputted random state to be used for pseudo-randomness
 
-        monotonic_cst : const cnp.int8_t[:]
+        monotonic_cst : const int8_t[:]
             Monotonicity constraints
 
         """
@@ -305,7 +301,7 @@ cdef inline int node_split_best(
     SplitRecord* split,
     intp_t* n_constant_features,
     bint with_monotonic_cst,
-    const cnp.int8_t[:] monotonic_cst,
+    const int8_t[:] monotonic_cst,
     float64_t lower_bound,
     float64_t upper_bound,
 ) except -1 nogil:
@@ -685,7 +681,7 @@ cdef inline int node_split_random(
     SplitRecord* split,
     intp_t* n_constant_features,
     bint with_monotonic_cst,
-    const cnp.int8_t[:] monotonic_cst,
+    const int8_t[:] monotonic_cst,
     float64_t lower_bound,
     float64_t upper_bound,
 ) except -1 nogil:

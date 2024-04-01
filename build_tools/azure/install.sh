@@ -126,17 +126,23 @@ scikit_learn_install() {
         export LDFLAGS="$LDFLAGS -Wl,--sysroot=/"
     fi
 
-    if [[ "$BUILD_WITH_MESON" == "true" ]]; then
-        make dev-meson
+    if [[ "$BUILD_WITH_SETUPTOOLS" == "true" ]]; then
+        python setup.py develop
     elif [[ "$PIP_BUILD_ISOLATION" == "true" ]]; then
         # Check that pip can automatically build scikit-learn with the build
         # dependencies specified in pyproject.toml using an isolated build
         # environment:
-        pip install --verbose --editable .
+        pip install --verbose .
     else
+        if [[ "$UNAMESTR" == "MINGW64"* ]]; then
+           # Needed on Windows CI to compile with Visual Studio compiler
+           # otherwise Meson detects a MINGW64 platform and use MINGW64
+           # toolchain
+           ADDITIONAL_PIP_OPTIONS='-Csetup-args=--vsenv'
+        fi
         # Use the pre-installed build dependencies and build directly in the
         # current environment.
-        python setup.py develop
+        pip install --verbose --no-build-isolation --editable . $ADDITIONAL_PIP_OPTIONS
     fi
 
     ccache -s || echo "ccache not installed, skipping ccache statistics"

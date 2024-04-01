@@ -160,13 +160,9 @@ def test_check_estimator_generate_only():
     assert isgenerator(all_instance_gen_checks)
 
 
-def test_configure():
-    # Smoke test `python setup.py config` command run at the root of the
+def test_setup_py_check():
+    # Smoke test `python setup.py check` command run at the root of the
     # scikit-learn source tree.
-    # This test requires Cython which is not necessarily there when running
-    # the tests of an installed version of scikit-learn or when scikit-learn
-    # is installed in editable mode by pip build isolation enabled.
-    pytest.importorskip("Cython")
     cwd = os.getcwd()
     setup_path = Path(sklearn.__file__).parent.parent
     setup_filename = os.path.join(setup_path, "setup.py")
@@ -175,7 +171,7 @@ def test_configure():
     try:
         os.chdir(setup_path)
         old_argv = sys.argv
-        sys.argv = ["setup.py", "config"]
+        sys.argv = ["setup.py", "check"]
 
         with warnings.catch_warnings():
             # The configuration spits out warnings when not finding
