@@ -44,6 +44,7 @@ from scipy.sparse import csgraph, issparse
 from ...base import BaseEstimator, ClusterMixin, _fit_context
 from ...metrics import pairwise_distances
 from ...metrics._dist_metrics import DistanceMetric
+from ...metrics.pairwise import _VALID_METRICS
 from ...neighbors import BallTree, KDTree, NearestNeighbors
 from ...utils._param_validation import Interval, StrOptions
 from ...utils.validation import _allclose_dense_sparse, _assert_all_finite
@@ -648,7 +649,10 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
             None,
             Interval(Integral, left=1, right=None, closed="left"),
         ],
-        "metric": [StrOptions(FAST_METRICS | {"precomputed", "cosine"}), callable],
+        "metric": [
+            StrOptions(FAST_METRICS | set(_VALID_METRICS) | {"precomputed"}),
+            callable,
+        ],
         "metric_params": [dict, None],
         "alpha": [Interval(Real, left=0, right=None, closed="neither")],
         # TODO(1.6): Remove "kdtree" and "balltree"  option
@@ -723,12 +727,6 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
         if self.metric == "precomputed" and self.store_centers is not None:
             raise ValueError(
                 "Cannot store centers when using a precomputed distance matrix."
-            )
-
-        if self.metric == "cosine" and self.algorithm not in ["brute", "auto"]:
-            raise ValueError(
-                "The 'cosine' metric is only supported with the 'brute' and 'auto'"
-                " algorithms."
             )
 
         self._metric_params = self.metric_params or {}
