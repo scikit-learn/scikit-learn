@@ -17,12 +17,12 @@ dependencies:
   - pytest<8
   - pytest-xdist
   - pillow
-  - setuptools
+  - pip
+  - ninja
+  - meson-python
   - pytest-cov
   - coverage
   - ccache
-  - meson-python
-  - pip
   - dask
   - pytorch=1.13
   - pytorch-cpu
