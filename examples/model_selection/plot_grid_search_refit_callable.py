@@ -8,14 +8,14 @@ accurate model, while minimizing the number of PCA components [1].
 
 Based on the handwritten digits dataset and a Support Vector Classifier estimator,
 the first figure shows the trade-off between cross-validated score and the number of
-PCA components, when using a 1 standard-error rule to refine model selection with
+PCA components, when using a 1 standard-error rule to constrain model selection with
 `GridSearchCV`. Under these constraints, the balanced case is when n_components=12 and
 accuracy=0.90, which falls into the range within 1 standard error of the best accuracy
 score.
 
 Based on the Diabetes dataset and a Gradient Boosted Regressor, the second figure
 shows the trade-off between cross-validated score and the number of tree estimators,
-when using a signed rank sum rule with an alpha-level of 0.05 to refine model
+when using a signed rank sum rule with an alpha-level of 0.05 to constrain model
 selection with `RandomizedSearchCV`. Under these constraints, the balanced case is when
 n_estimators=150 and R2=0.41, which is "not significantly different" from the best R2
 score, but is nevertheless a more parsimonious model.
@@ -225,7 +225,7 @@ simplest_score = ss.favorable_best_score_
 simplest_params = ss.favorable_best_params_
 simplest_n_estimators = simplest_params["n_estimators"]
 
-# Show the effect on train-test deviance of using model refinement.
+# Show the effect on train-test deviance of using constrained model selection
 simplest_best_estimator = deepcopy(original_best_estimator)
 simplest_best_estimator = original_best_estimator.set_params(**simplest_params)
 simplest_best_estimator.fit(X_train, y_train)

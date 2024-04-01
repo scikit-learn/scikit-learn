@@ -1,7 +1,7 @@
 import typing
 
 from ._plot import LearningCurveDisplay, ValidationCurveDisplay
-from ._refine import (
+from ._refit import (
     FavorabilityRanker,
     FixedWindowSlicer,
     PercentileSlicer,

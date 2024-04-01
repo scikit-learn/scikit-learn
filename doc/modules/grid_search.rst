@@ -663,15 +663,15 @@ the search.
 
 .. _refit_constraints:
 
-Model refinement
-----------------
+Constrained Model selection
+---------------------------
 
-Model refinement methods expand the user's level of control over the hyper-parameter
-optimization process by constraining it to find a balance between the rote performance
+Constrained model selection methods expand the user's level of control over the
+hyper-parameter optimization process by seeking a balance between the rote performance
 of a model (e.g., its accuracy, R2 score, or multi-metric criteria) and its
 \"favorability\" (e.g., simplicity, computational efficiency, interpretability).
-Formally, model refinement can be framed as a constrained optimization problem with
-three key components:
+Formally, constrained model selection can be framed as a special case of hyperparameter
+optimization with three key components:
 
 1. **Performance Metric Score** (:math:`P`): A function that evaluates the performance
 of a model, :math:`m`, on a given dataset. This is the objective function that a
@@ -687,7 +687,7 @@ standard error of the best score) or a similar concept.
 favorability of a model based on specified criteria. The criteria might include model
 complexity, interpretability, or other user-defined measures.
 
-Given these components, the model refinement problem can be expressed as follows:
+Given these components, constrained model selection can be expressed as follows:
 
 The goal is to select a model, :math:`m^*`, from a set of candidate models,
 :math:`\mathcal{M}`, such that :math:`m^*` optimizes a weighted combination of
@@ -707,9 +707,9 @@ where:
 
 - :math:`\delta` is a threshold that defines the allowable slack in performance to consider a model's favorability.
 
-Scikit-Learn provides two mechanisms for model refinement that can be easily extended
-to each of these scenarios using a common set of semantics. The first is *after*
-conducting a SearchCV -- by fitting a
+Scikit-Learn provides two mechanisms for constrained model selection that can be easily
+extended to each of these scenarios using a common set of semantics. The first is
+*after* conducting a SearchCV -- by fitting a
 :class:`~sklearn.model_selection.ScoreCutModelSelector` instance, together with a
 :class:`~sklearn.model_selection.FavorabilityRanker` instance, to the ``cv_results_``
 attribute of a fitted instance of ``GridSearchCV``, ``RandomizedSearchCV``,  or
@@ -717,18 +717,18 @@ attribute of a fitted instance of ``GridSearchCV``, ``RandomizedSearchCV``,  or
 the ``refit`` parameter in a ``GridSearchCV``, ``RandomizedSearchCV``, or
 ``RandomizedSearchCV`` instance to a callable function
 :func:`~sklearn.model_selection.promote` with an accompanying
-:class:`~sklearn.model_selection.FavorabilityRanker` instance. In either case, the model
-refinement process comprises two steps, respectively: (i) specifying a rule for
-defining a margin of model performance, wherein hyper-parameter optimization is relaxed
-to accommodate for secondary model favorability objectives; and (ii) specifying a
-ranking of hyper-parameter values, for each searched hyperparameter, whose
+:class:`~sklearn.model_selection.FavorabilityRanker` instance. In either case, the
+constrained model selection process comprises two steps, respectively: (i) specifying a
+rule for defining a margin of model performance, wherein hyper-parameter optimization
+is relaxed to accommodate for secondary model favorability objectives; and (ii)
+specifying a ranking of hyper-parameter values, for each searched hyperparameter, whose
 corresponding model performance falls within the margin defined by (i).
 
 The slack constraint, :math:`S(P(m^*), P(m))`, could be defined in various ways and
 with varying degrees of leniency depending on the application. For example, in the case
 of refitting a SearchCV object with the simplest best-performing model, one common
 constraint to use is the "One Standard Error Rule" (1-SE) (see the
-:class:`~sklearn.model_selection._refine.StandardErrorSlicer`). 1-SE has traditionally
+:class:`~sklearn.model_selection._refit.StandardErrorSlicer`). 1-SE has traditionally
 been used to identify the most parsimonious model whose cross-validated performance is
 not more than 1 standard error worse than the best CV performance. In this scenario,
 :math:`\delta` would be set to the standard error of the best model's performance, and
