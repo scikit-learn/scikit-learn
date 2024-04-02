@@ -69,6 +69,18 @@ cdef class BaseTree:
     cdef int _resize(self, intp_t capacity) except -1 nogil
     cdef int _resize_c(self, intp_t capacity=*) except -1 nogil
 
+    cdef int _update_node(
+        self,
+        intp_t parent,
+        bint is_left,
+        bint is_leaf,
+        SplitRecord* split_node,
+        float64_t impurity,
+        intp_t n_node_samples,
+        float64_t weighted_n_node_samples,
+        unsigned char missing_go_to_left
+    ) except -1 nogil
+
     # Python API methods: These are methods exposed to Python
     cpdef cnp.ndarray apply(self, object X)
     cdef cnp.ndarray _apply_dense(self, object X)

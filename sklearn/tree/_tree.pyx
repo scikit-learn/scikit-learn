@@ -422,10 +422,10 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
                                (split.improvement + EPSILON <
                                 min_impurity_decrease))
 
-                node_id = tree._add_node(parent, is_left, is_leaf, split_ptr,
-                                         parent_record.impurity,
-                                         n_node_samples, weighted_n_node_samples,
-                                         split.missing_go_to_left)
+                node_id = tree._update_node(parent, is_left, is_leaf, split_ptr,
+                                            parent_record.impurity,
+                                            n_node_samples, weighted_n_node_samples,
+                                            split.missing_go_to_left)
 
                 if node_id == INTPTR_MAX:
                     rc = -1
@@ -1172,6 +1172,50 @@ cdef class BaseTree:
             node.missing_go_to_left = missing_go_to_left
 
         self.node_count += 1
+
+        return node_id
+
+    cdef inline int _update_node(
+        self,
+        intp_t parent,
+        bint is_left,
+        bint is_leaf,
+        SplitRecord* split_node,
+        float64_t impurity,
+        intp_t n_node_samples,
+        float64_t weighted_n_node_samples,
+        unsigned char missing_go_to_left
+    ) except -1 nogil:
+        """Update a node on the tree.
+
+        The updated node remains on the same position.
+        
+        Returns (intp_t)(-1) on error.
+        """
+        cdef intp_t node_id
+        if is_left:
+            node_id = self.nodes[parent].left_child
+        else:
+            node_id = self.nodes[parent].right_child
+
+        if node_id >= self.capacity:
+            if self._resize_c() != 0:
+                return INTPTR_MAX
+
+        cdef Node* node = &self.nodes[node_id]
+        node.impurity = impurity
+        node.n_node_samples = n_node_samples
+        node.weighted_n_node_samples = weighted_n_node_samples
+
+        if is_leaf:
+            if self._set_leaf_node(split_node, node, node_id) != 1:
+                with gil:
+                    raise RuntimeError
+        else:
+            if self._set_split_node(split_node, node, node_id) != 1:
+                with gil:
+                    raise RuntimeError
+            node.missing_go_to_left = missing_go_to_left
 
         return node_id
 
