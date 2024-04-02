@@ -52,6 +52,7 @@ docs = [
     "sphinx-prompt>=1.3.0",
     "sphinxext-opengraph>=0.4.2",
     "plotly>=5.14.0",
+    "polars>=0.19.12"
 ]
 examples = [
     "matplotlib>=3.3.4",
