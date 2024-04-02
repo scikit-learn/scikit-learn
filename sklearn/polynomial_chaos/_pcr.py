@@ -221,7 +221,7 @@ class PolynomialChaosRegressor(BaseEstimator, RegressorMixin):
         """
         # check input features
         self.feature_names_in_ = _get_feature_names(X)
-        X, y = check_X_y(X, y)
+        X, y = check_X_y(X, y, multi_output=True)
         self.n_features_in_ = X.shape[1]
 
         # cannot perform regression with less than 2 data points
@@ -279,8 +279,17 @@ class PolynomialChaosRegressor(BaseEstimator, RegressorMixin):
             )
 
         # scale outputs
-        self.output_mean_ = np.mean(y) if self.scale_outputs else 0
-        self.output_std_ = np.std(y) if self.scale_outputs else 1
+        self.n_features_out_ = 1 if y.ndim == 1 else y.shape[1]
+        self.output_mean_ = (
+            np.mean(y, axis=0)
+            if self.scale_outputs
+            else np.full(self.n_features_out_, 0)
+        )
+        self.output_std_ = (
+            np.std(y, axis=0)
+            if self.scale_outputs
+            else np.full(self.n_features_out_, 1)
+        )
         y = y - self.output_mean_
         y = y / self.output_std_
 
@@ -329,7 +338,7 @@ class PolynomialChaosRegressor(BaseEstimator, RegressorMixin):
         y : ndarray of shape (n_samples,)
             Polynomial Chaos predictions in query points.
         """
-        # check if this estiamtor is fitted
+        # check if this estimator is fitted
         check_is_fitted(self)
 
         # check input features
@@ -390,7 +399,7 @@ class PolynomialChaosRegressor(BaseEstimator, RegressorMixin):
 
         Returns
         -------
-        sensitivity_index : float
+        sensitivity_index : (n_outputs, )
             The joint sensitivity index for the given set of input features.
         """
         check_is_fitted(self)
@@ -416,14 +425,16 @@ class PolynomialChaosRegressor(BaseEstimator, RegressorMixin):
             raise ValueError(f"this model has only {self.n_features_in_} features")
 
         # actually compute the joint sensitivity index
-        joint_sens = 0
+        joint_sens = np.zeros(self.n_features_out_)
         for j, index in enumerate(self.multiindices_):
             if np.sum(index != 0) == len(idcs) and all(i > 0 for i in index[idcs]):
                 joint_sens += (
-                    self.output_std_**2 * self.coef_[j] ** 2 * self.norms_[j] ** 2
+                    self.output_std_**2
+                    * np.atleast_2d(self.coef_)[:, j] ** 2
+                    * self.norms_[j] ** 2
                 )
 
-        return joint_sens / self.var()
+        return np.divide(joint_sens.T, self.var()).T
 
     def main_sens(self):
         r"""Return the main sensitivity indices.
@@ -448,11 +459,11 @@ class PolynomialChaosRegressor(BaseEstimator, RegressorMixin):
 
         Returns
         -------
-        sensitivity_indices : array-like
+        sensitivity_indices : array-like (n_outputs, n_features)
             The main-effectt Sobol  sensitivity indices for all input features.
         """
         check_is_fitted(self)
-        return [self.joint_sens(i) for i in range(self.n_features_in_)]
+        return np.vstack([self.joint_sens(i) for i in range(self.n_features_in_)]).T
 
     def total_sens(self):
         r"""Return the total sensitivity indices.
@@ -477,17 +488,21 @@ class PolynomialChaosRegressor(BaseEstimator, RegressorMixin):
 
         Returns
         -------
-        sensitivity_indices : array-like
-            The total-effectt Sobol  sensitivity indices for all input features.
+        sensitivity_indices : array-like (n_outputs, n_features)
+            The total-effectt Sobol sensitivity indices for all input features.
         """
         check_is_fitted(self)
-        t = np.zeros(self.n_features_in_)
+        total_sens = np.zeros((self.n_features_out_, self.n_features_in_))
         for i in range(self.n_features_in_):
             for j, index in enumerate(self.multiindices_):
-                if not index[i] > 0:
+                if index[i] == 0:
                     continue
-                t[i] += self.output_std_**2 * self.coef_[j] ** 2 * self.norms_[j] ** 2
-        return list(t / self.var())
+                total_sens[:, i] += (
+                    self.output_std_**2
+                    * np.atleast_2d(self.coef_)[:, j] ** 2
+                    * self.norms_[j] ** 2
+                )
+        return np.divide(total_sens.T, self.var()).T
 
     def mean(self):
         r"""Return the approximation for the mean of the model output.
@@ -506,13 +521,16 @@ class PolynomialChaosRegressor(BaseEstimator, RegressorMixin):
 
         Returns
         -------
-        mean : float
+        mean : array-like (n_outputs, )
             The approximation for the mean of the model output.
         """
         check_is_fitted(self)
         for j, index in enumerate(self.multiindices_):
             if np.all(index == 0):
-                return self.coef_[j] * self.output_std_ + self.output_mean_
+                return (
+                    np.atleast_2d(self.coef_)[:, j] * self.output_std_
+                    + self.output_mean_
+                )
         return 0
 
     def var(self):
@@ -532,12 +550,16 @@ class PolynomialChaosRegressor(BaseEstimator, RegressorMixin):
 
         Returns
         -------
-        var : float
+        var : array-like (n_outputs, )
             The approximation for the variance of the model output.
         """
         check_is_fitted(self)
         var = 0
         for j, index in enumerate(self.multiindices_):
             if np.any(index > 0):
-                var += self.output_std_**2 * self.coef_[j] ** 2 * self.norms_[j] ** 2
+                var += (
+                    self.output_std_**2
+                    * np.atleast_2d(self.coef_)[:, j] ** 2
+                    * self.norms_[j] ** 2
+                )
         return var

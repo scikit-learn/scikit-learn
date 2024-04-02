@@ -252,7 +252,7 @@ def test_friedman1():
         uniform(-1, 2), degree=5, solver=solver, scale_outputs=False
     )
     pce.fit(X, y)
-    assert sum(np.array(pce.main_sens()) > 0.001) == 5  # 5 important features
+    assert np.sum(pce.main_sens() > 0.001) == 5  # 5 important features
 
 
 # Check mean and var of distributions
@@ -331,6 +331,34 @@ def test_joint_sens_inputs():
     with pytest.raises(ValueError, match="feature names"):
         pce.fit(X, y)
         pce.joint_sens("feature0")
+
+
+# Test multi output fit
+def test_multi_output_fit():
+    X = np.atleast_2d([1.0, 3.0, 5.0, 6.0, 7.0, 8.0]).T
+    y1 = (X * np.sin(X)).ravel()
+    y2 = (X * np.cos(X)).ravel()
+    Y = np.vstack([y1, y2]).T
+    pce = PolynomialChaosRegressor(degree=5)
+    pce.fit(X, Y)
+    y_fit = pce.predict(X)
+    assert np.linalg.norm(Y - y_fit) < 1e-12
+
+
+# Test multi output statistics
+def test_multi_output_statistics():
+    X = np.atleast_2d([1.0, 3.0, 5.0, 6.0, 7.0, 8.0]).T
+    y1 = (X * np.sin(X)).ravel()
+    y2 = (X * np.cos(X)).ravel()
+    Y = np.vstack([y1, y2]).T
+    pce = PolynomialChaosRegressor(degree=5)
+
+    for j, y in enumerate([y1, y2]):
+        print(np.sum(pce.fit(X, Y).main_sens()[j] - pce.fit(X, y).main_sens()))
+
+    pce.fit(X, Y)
+    y_fit = pce.predict(X)
+    assert np.linalg.norm(Y - y_fit) < 1e-12
 
 
 ###############################################################################
@@ -446,7 +474,7 @@ def test_ishigami(degree, N, main, total):
         assert abs(pce.joint_sens(*idcs) - main[j]) < 1e-4
 
     for j, tot in enumerate(total):
-        assert abs(pce.total_sens()[j] - tot) < 1e-4
+        assert abs(pce.total_sens()[0, j] - tot) < 1e-4
 
 
 def test_ishigami_analytically():
@@ -475,7 +503,7 @@ def test_sobol_order_2():
 
     exact = [0.6170, 0.3229, 0.0473, 0.0140, 0.0122, 0.0129, 0.0055, 0.0057]
     for j, sens in enumerate(exact):
-        assert abs(pce.total_sens()[j] - sens) < 1e-4
+        assert abs(pce.total_sens()[0, j] - sens) < 1e-4
 
 
 # Example 3 from Sudret (2008)
@@ -566,4 +594,4 @@ def test_sobol(degree, N, main, total, tol):
         assert abs(pce.joint_sens(*idcs) - main[j]) < tol
 
     for j, tot in enumerate(total):
-        assert abs(pce.total_sens()[j] - tot) < tol
+        assert abs(pce.total_sens()[0, j] - tot) < tol
