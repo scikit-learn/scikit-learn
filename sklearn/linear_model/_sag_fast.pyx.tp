@@ -27,7 +27,7 @@ dtypes = [('64', 'double', 'np.float64'),
 """SAG and SAGA implementation"""
 
 import numpy as np
-from libc.math cimport fabs, exp, log
+from libc.math cimport exp, fabs, isfinite, log
 from libc.time cimport time, time_t
 
 from ._sgd_fast cimport LossFunction
@@ -37,14 +37,6 @@ from ..utils._seq_dataset cimport SequentialDataset32, SequentialDataset64
 
 from libc.stdio cimport printf
 
-
-{{for name_suffix, c_type, np_type in dtypes}}
-
-cdef extern from "_sgd_fast_helpers.h":
-    bint skl_isfinite{{name_suffix}}({{c_type}}) nogil
-
-
-{{endfor}}
 
 {{for name_suffix, c_type, np_type in dtypes}}
 
@@ -85,7 +77,7 @@ cdef {{c_type}} _logsumexp{{name_suffix}}({{c_type}}* arr, int n_classes) noexce
 {{for name_suffix, c_type, np_type in dtypes}}
 
 cdef class MultinomialLogLoss{{name_suffix}}:
-    cdef {{c_type}} _loss(self, {{c_type}}* prediction, {{c_type}} y, int n_classes,
+    cdef {{c_type}} _loss(self, {{c_type}} y, {{c_type}}* prediction, int n_classes,
                       {{c_type}} sample_weight) noexcept nogil:
         r"""Multinomial Logistic regression loss.
 
@@ -100,11 +92,11 @@ cdef class MultinomialLogLoss{{name_suffix}}:
 
         Parameters
         ----------
-        prediction : pointer to a np.ndarray[{{c_type}}] of shape (n_classes,)
-            Prediction of the multinomial classifier, for current sample.
-
         y : {{c_type}}, between 0 and n_classes - 1
             Indice of the correct class for current sample (i.e. label encoded).
+
+        prediction : pointer to a np.ndarray[{{c_type}}] of shape (n_classes,)
+            Prediction of the multinomial classifier, for current sample.
 
         n_classes : integer
             Total number of classes.
@@ -129,7 +121,7 @@ cdef class MultinomialLogLoss{{name_suffix}}:
         loss = (logsumexp_prediction - prediction[int(y)]) * sample_weight
         return loss
 
-    cdef void dloss(self, {{c_type}}* prediction, {{c_type}} y, int n_classes,
+    cdef void dloss(self, {{c_type}} y, {{c_type}}* prediction, int n_classes,
                      {{c_type}} sample_weight, {{c_type}}* gradient_ptr) noexcept nogil:
         r"""Multinomial Logistic regression gradient of the loss.
 
@@ -414,9 +406,9 @@ def sag{{name_suffix}}(
 
                 # compute the gradient for this sample, given the prediction
                 if multinomial:
-                    multiloss.dloss(&prediction[0], y, n_classes, sample_weight, &gradient[0])
+                    multiloss.dloss(y, &prediction[0], n_classes, sample_weight, &gradient[0])
                 else:
-                    gradient[0] = loss.dloss(prediction[0], y) * sample_weight
+                    gradient[0] = loss.dloss(y, prediction[0]) * sample_weight
 
                 # L2 regularization by simply rescaling the weights
                 wscale *= wscale_update
@@ -458,7 +450,7 @@ def sag{{name_suffix}}(
                                  num_seen * intercept_decay)
 
                         # check to see that the intercept is not inf or NaN
-                        if not skl_isfinite{{name_suffix}}(intercept_array[class_ind]):
+                        if not isfinite(intercept_array[class_ind]):
                             status = -1
                             break
                     # Break from the n_samples outer loop if an error happened
@@ -668,7 +660,7 @@ cdef int lagged_update{{name_suffix}}(
                 weights[idx] -= cum_sum * sum_gradient[idx]
                 if reset:
                     weights[idx] *= wscale
-                    if not skl_isfinite{{name_suffix}}(weights[idx]):
+                    if not isfinite(weights[idx]):
                         # returning here does not require the gil as the return
                         # type is a C integer
                         return -1
@@ -704,7 +696,7 @@ cdef int lagged_update{{name_suffix}}(
                 if reset:
                     weights[idx] *= wscale
                     # check to see that the weight is not inf or NaN
-                    if not skl_isfinite{{name_suffix}}(weights[idx]):
+                    if not isfinite(weights[idx]):
                         return -1
         if reset:
             feature_hist[feature_ind] = sample_itr % n_samples
@@ -835,10 +827,10 @@ def _multinomial_grad_loss_all_samples(
             )
 
             # compute the gradient for this sample, given the prediction
-            multiloss.dloss(&prediction[0], y, n_classes, sample_weight, &gradient[0])
+            multiloss.dloss(y, &prediction[0], n_classes, sample_weight, &gradient[0])
 
             # compute the loss for this sample, given the prediction
-            sum_loss += multiloss._loss(&prediction[0], y, n_classes, sample_weight)
+            sum_loss += multiloss._loss(y, &prediction[0], n_classes, sample_weight)
 
             # update the sum of the gradient
             for j in range(xnnz):

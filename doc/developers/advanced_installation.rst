@@ -77,10 +77,11 @@ feature, code or documentation improvement).
 
      conda activate sklearn-env
 
-#. **Alternative to conda:** If you run Linux or similar, you can instead use
-   your system's Python provided it is recent enough (3.8 or higher
-   at the time of writing). In this case, we recommend to create a dedicated
-   virtualenv_ and install the scikit-learn build dependencies with pip:
+#. **Alternative to conda:** You can use alternative installations of Python
+   provided they are recent enough (3.9 or higher at the time of writing).
+   Here is an example on how to create a build environment for a Linux system's
+   Python. Build dependencies are installed with `pip` in a dedicated virtualenv_
+   to avoid disrupting other Python programs installed on the system:
 
    .. prompt:: bash $
 
@@ -200,6 +201,80 @@ It is however preferred to use pip.
 
 On Unix-like systems, you can equivalently type ``make in`` from the top-level
 folder. Have a look at the ``Makefile`` for additional utilities.
+
+.. _building_with_meson:
+
+Building with Meson
+-------------------
+
+Support for Meson is experimental, in scikit-learn 1.5.0.dev0.
+`Open an issue <https://github.com/scikit-learn/scikit-learn/issues/new>`__ if
+you encounter any problems!
+
+Make sure you have `meson-python` and `ninja` installed, either with `conda`:
+
+.. code-block:: bash
+
+    conda install -c conda-forge meson-python ninja -y
+
+or with pip:
+
+.. code-block:: bash
+
+    pip install meson-python ninja
+
+Simplest way to build with Meson
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+To build scikit-learn, the simplest way is to run:
+
+.. code-block:: bash
+
+    make dev-meson
+
+You need to do it once after this you can run your code that imports `sklearn`
+and it will recompile as needed.
+
+In case you want to go back to using setuptools:
+
+.. code-block:: bash
+
+    make clean-meson
+
+More advanced way to build with Meson
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+If you can not use `make`, want to do it yourself or understand what goes in
+behind the scenes, you can build scikit-learn with the following `pip` command:
+
+.. code-block:: bash
+
+    pip install --editable . \
+        --verbose --no-build-isolation \
+        --config-settings editable-verbose=true
+
+If you want to go back to using `setuptools`:
+
+.. code-block:: bash
+
+    pip uninstall -y scikit-learn
+
+Note `--config-settings editable-verbose=true` is advised to avoid surprises.
+meson-python implements editable install by recompiling when doing `import
+sklearn`. Even changing python files involves copying files to the Meson build
+directory. You will see the meson output when that happens, rather than
+potentially waiting a while and wondering what is taking so long. Bonus: that
+means you only have to do the `pip install` once, after that your code will
+recompile when doing `import sklearn`.
+
+Other places that may be worth looking at:
+
+- `pandas setup doc
+  <https://pandas.pydata.org/docs/development/contributing_environment.html#step-3-build-and-install-pandas>`_:
+  pandas has a similar setup as ours (no spin or dev.py)
+- `scipy Meson doc
+  <https://scipy.github.io/devdocs/building/understanding_meson.html>`_ gives
+  more background about how Meson works behind the scenes
 
 .. _platform_specific_instructions:
 

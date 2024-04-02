@@ -1082,8 +1082,12 @@ class MetadataRouter:
 
     def __iter__(self):
         if self._self_request:
-            yield "$self_request", RouterMappingPair(
-                mapping=MethodMapping.from_str("one-to-one"), router=self._self_request
+            yield (
+                "$self_request",
+                RouterMappingPair(
+                    mapping=MethodMapping.from_str("one-to-one"),
+                    router=self._self_request,
+                ),
             )
         for name, route_mapping in self._route_mappings.items():
             yield (name, route_mapping)
@@ -1232,7 +1236,7 @@ class RequestMethod:
 
     def __get__(self, instance, owner):
         # we would want to have a method which accepts only the expected args
-        def func(**kw):
+        def func(*args, **kw):
             """Updates the request for provided parameters
 
             This docstring is overwritten below.
@@ -1247,19 +1251,36 @@ class RequestMethod:
 
             if self.validate_keys and (set(kw) - set(self.keys)):
                 raise TypeError(
-                    f"Unexpected args: {set(kw) - set(self.keys)}. Accepted arguments"
-                    f" are: {set(self.keys)}"
+                    f"Unexpected args: {set(kw) - set(self.keys)} in {self.name}. "
+                    f"Accepted arguments are: {set(self.keys)}"
                 )
 
-            requests = instance._get_metadata_request()
+            # This makes it possible to use the decorated method as an unbound method,
+            # for instance when monkeypatching.
+            # https://github.com/scikit-learn/scikit-learn/issues/28632
+            if instance is None:
+                _instance = args[0]
+                args = args[1:]
+            else:
+                _instance = instance
+
+            # Replicating python's behavior when positional args are given other than
+            # `self`, and `self` is only allowed if this method is unbound.
+            if args:
+                raise TypeError(
+                    f"set_{self.name}_request() takes 0 positional argument but"
+                    f" {len(args)} were given"
+                )
+
+            requests = _instance._get_metadata_request()
             method_metadata_request = getattr(requests, self.name)
 
             for prop, alias in kw.items():
                 if alias is not UNCHANGED:
                     method_metadata_request.add_request(param=prop, alias=alias)
-            instance._metadata_request = requests
+            _instance._metadata_request = requests
 
-            return instance
+            return _instance
 
         # Now we set the relevant attributes of the function so that it seems
         # like a normal method to the end user, with known expected arguments.
@@ -1425,23 +1446,21 @@ class _MetadataRequester:
         # ``vars`` doesn't report the parent class attributes. We go through
         # the reverse of the MRO so that child classes have precedence over
         # their parents.
-        defaults = dict()
+        substr = "__metadata_request__"
         for base_class in reversed(inspect.getmro(cls)):
-            base_defaults = {
-                attr: value
-                for attr, value in vars(base_class).items()
-                if "__metadata_request__" in attr
-            }
-            defaults.update(base_defaults)
-        defaults = dict(sorted(defaults.items()))
-
-        for attr, value in defaults.items():
-            # we don't check for attr.startswith() since python prefixes attrs
-            # starting with __ with the `_ClassName`.
-            substr = "__metadata_request__"
-            method = attr[attr.index(substr) + len(substr) :]
-            for prop, alias in value.items():
-                getattr(requests, method).add_request(param=prop, alias=alias)
+            for attr, value in vars(base_class).items():
+                if substr not in attr:
+                    continue
+                # we don't check for attr.startswith() since python prefixes attrs
+                # starting with __ with the `_ClassName`.
+                method = attr[attr.index(substr) + len(substr) :]
+                for prop, alias in value.items():
+                    # Here we add request values specified via those class attributes
+                    # to the `MetadataRequest` object. Adding a request which already
+                    # exists will override the previous one. Since we go through the
+                    # MRO in reverse order, the one specified by the lowest most classes
+                    # in the inheritance tree are the ones which take effect.
+                    getattr(requests, method).add_request(param=prop, alias=alias)
 
         return requests
 
@@ -1524,13 +1543,13 @@ def process_routing(_obj, _method, /, **kwargs):
         corresponding methods or corresponding child objects. The object names
         are those defined in `obj.get_metadata_routing()`.
     """
-    if not _routing_enabled() and not kwargs:
+    if not kwargs:
         # If routing is not enabled and kwargs are empty, then we don't have to
         # try doing any routing, we can simply return a structure which returns
         # an empty dict on routed_params.ANYTHING.ANY_METHOD.
         class EmptyRequest:
             def get(self, name, default=None):
-                return default if default else {}
+                return Bunch(**{method: dict() for method in METHODS})
 
             def __getitem__(self, name):
                 return Bunch(**{method: dict() for method in METHODS})
