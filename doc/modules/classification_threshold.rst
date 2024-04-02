@@ -6,21 +6,27 @@
 Tuning the decision threshold for class prediction
 ==================================================
 
-Classifiers are predictive models: they use statistical learning to predict categorical
-outcomes. The predictions of a classifier are, ideally, the probabilities of the class
-labels or, more generally, scores for each sample with a higher score meaning higher
-probability for the corresponding class. Scores are obtained from :term:`predict_proba`
-or :term:`decision_function`. The former returns posterior probability estimates for
-each class, while the latter returns a decision score for each class.
+Classification is best divided into two parts:
 
-In binary classification, a decision rule or action is then defined by thresholding the
-scores, leading to the prediction of a single class label for each sample. Those labels
-are obtained with :term:`predict`.
+* the statistical problem of learning a model to predict, ideally, class probabilities;
+* the decision problem to take concrete action based on those probability predictions.
 
-For binary classification in scikit-learn, class labels predictions are obtained by
-hard-coded cut-off rules: a positive class is predicted when the posterior probability
-is greater than 0.5 (obtained with :term:`predict_proba`) or if the decision score is
-greater than 0 (obtained with :term:`decision_function`).
+Let's take a straightforward example related weather forecasting: the first point is
+related to answering "what is the chance of rain tomorrow?" while the second point is
+related to answering "should I take an umbrella tomorrow?".
+
+When it comes to the scikit-learn API, the first point is addressed providing scores
+using :term:`predict_proba` or :term:`decision_function`. The former returns posterior
+probability estimates for each class, while the latter returns a decision score for each
+class.
+
+The decision corresponding to the labels are obtained with :term:`predict`. In binary
+classification, a decision rule or action is then defined by thresholding the scores,
+leading to the prediction of a single class label for each sample. For binary
+classification in scikit-learn, class labels predictions are obtained by hard-coded
+cut-off rules: a positive class is predicted when the posterior probability is greater
+than 0.5 (obtained with :term:`predict_proba`) or if the decision score is greater than
+0 (obtained with :term:`decision_function`).
 
 Here, we show an example that illustrates the relation between posterior
 probability estimates and class labels::
