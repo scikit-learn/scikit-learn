@@ -347,7 +347,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                     )
 
                 self.n_classes_ = np.array(self.n_classes_, dtype=np.intp)
-
+                self._n_classes_ = self.n_classes_
             if getattr(y, "dtype", None) != DOUBLE or not y.flags.contiguous:
                 y = np.ascontiguousarray(y, dtype=DOUBLE)
 
@@ -377,6 +377,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             min_samples_split = max(2, min_samples_split)
         min_samples_split = max(min_samples_split, 2 * min_samples_leaf)
         self.min_samples_split_ = min_samples_split
+        self.min_samples_leaf_ = min_samples_leaf
 
         if isinstance(self.max_features, str):
             if self.max_features == "sqrt":
@@ -411,6 +412,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             min_weight_leaf = self.min_weight_fraction_leaf * n_samples
         else:
             min_weight_leaf = self.min_weight_fraction_leaf * np.sum(sample_weight)
+        self.min_weight_leaf_ = min_weight_leaf
 
         # build the actual tree now with the parameters
         self = self._build_tree(
@@ -521,6 +523,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                 # Since self.monotonic_cst encodes constraints on probabilities of the
                 # *positive class*, all signs must be flipped.
                 monotonic_cst *= -1
+        self.monotonic_cst_ = monotonic_cst
 
         if not isinstance(self.splitter, BaseSplitter):
             splitter = SPLITTERS[self.splitter](
@@ -544,7 +547,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
 
         # Use BestFirst if max_leaf_nodes given; use DepthFirst otherwise
         if max_leaf_nodes < 0:
-            self.builder_ = DepthFirstTreeBuilder(
+            builder = DepthFirstTreeBuilder(
                 splitter,
                 min_samples_split,
                 min_samples_leaf,
@@ -554,7 +557,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                 self.store_leaf_values,
             )
         else:
-            self.builder_ = BestFirstTreeBuilder(
+            builder = BestFirstTreeBuilder(
                 splitter,
                 min_samples_split,
                 min_samples_leaf,
@@ -564,9 +567,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                 self.min_impurity_decrease,
                 self.store_leaf_values,
             )
-        self.builder_.build(
-            self.tree_, X, y, sample_weight, missing_values_in_feature_mask
-        )
+        builder.build(self.tree_, X, y, sample_weight, missing_values_in_feature_mask)
 
         if self.n_outputs_ == 1 and is_classifier(self):
             self.n_classes_ = self.n_classes_[0]
@@ -1128,11 +1129,17 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
         :ref:`sphx_glr_auto_examples_tree_plot_unveil_tree_structure.py`
         for basic usage of these attributes.
 
-    builder_ : TreeBuilder instance
-        The underlying TreeBuilder object.
-
     min_samples_split_ : float
         The minimum number of samples needed to split a node in the tree building.
+
+    min_weight_leaf_ : float
+        The minimum number of weighted samples in a leaf.
+
+    min_samples_leaf_ : int
+        The minimum number of samples needed for a leaf node.
+
+    monotonic_cst_ : array-like of int of shape (n_features,)
+        The monotonicity constraints enforced on each feature.
 
     See Also
     --------
@@ -1369,8 +1376,68 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
             y = np.ascontiguousarray(y, dtype=DOUBLE)
 
         # Update tree
-        self.builder_.initialize_node_queue(self.tree_, X, y, sample_weight)
-        self.builder_.build(self.tree_, X, y, sample_weight)
+        max_leaf_nodes = -1 if self.max_leaf_nodes is None else self.max_leaf_nodes
+        min_samples_split = self.min_samples_split_
+        min_samples_leaf = self.min_samples_leaf_
+        min_weight_leaf = self.min_weight_leaf_
+        # set decision-tree model parameters
+        max_depth = np.iinfo(np.int32).max if self.max_depth is None else self.max_depth
+
+        monotonic_cst = self.monotonic_cst_
+
+        # Build tree
+        # Note: this reconstructs the builder with the same state it had during the
+        # initial fit. This is necessary because the builder is not saved as part
+        # of the class, and thus the state may be lost if pickled/unpickled.
+        n_samples = X.shape[0]
+        criterion = self.criterion
+        if not isinstance(criterion, BaseCriterion):
+            if is_classifier(self):
+                criterion = CRITERIA_CLF[self.criterion](
+                    self.n_outputs_, self._n_classes_
+                )
+            else:
+                criterion = CRITERIA_REG[self.criterion](self.n_outputs_, n_samples)
+        else:
+            # Make a deepcopy in case the criterion has mutable attributes that
+            # might be shared and modified concurrently during parallel fitting
+            criterion = copy.deepcopy(criterion)
+
+        random_state = check_random_state(self.random_state)
+        SPLITTERS = SPARSE_SPLITTERS if issparse(X) else DENSE_SPLITTERS
+        splitter = SPLITTERS[self.splitter](
+            criterion,
+            self.max_features_,
+            min_samples_leaf,
+            min_weight_leaf,
+            random_state,
+            monotonic_cst,
+        )
+
+        # Use BestFirst if max_leaf_nodes given; use DepthFirst otherwise
+        if max_leaf_nodes < 0:
+            builder = DepthFirstTreeBuilder(
+                splitter,
+                min_samples_split,
+                min_samples_leaf,
+                min_weight_leaf,
+                max_depth,
+                self.min_impurity_decrease,
+                self.store_leaf_values,
+            )
+        else:
+            builder = BestFirstTreeBuilder(
+                splitter,
+                min_samples_split,
+                min_samples_leaf,
+                min_weight_leaf,
+                max_depth,
+                max_leaf_nodes,
+                self.min_impurity_decrease,
+                self.store_leaf_values,
+            )
+        builder.initialize_node_queue(self.tree_, X, y, sample_weight)
+        builder.build(self.tree_, X, y, sample_weight)
 
         self._prune_tree()
 
@@ -1637,11 +1704,17 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
         :ref:`sphx_glr_auto_examples_tree_plot_unveil_tree_structure.py`
         for basic usage of these attributes.
 
-    builder_ : TreeBuilder instance
-        The underlying TreeBuilder object.
-
     min_samples_split_ : float
         The minimum number of samples needed to split a node in the tree building.
+
+    min_weight_leaf_ : float
+        The minimum number of weighted samples in a leaf.
+
+    monotonic_cst_ : array-like of int of shape (n_features,)
+        The monotonicity constraints enforced on each feature.
+
+    min_samples_leaf_ : int
+        The minimum number of samples needed for a leaf node.
 
     See Also
     --------
@@ -2022,11 +2095,17 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
         :ref:`sphx_glr_auto_examples_tree_plot_unveil_tree_structure.py`
         for basic usage of these attributes.
 
-    builder_ : TreeBuilder instance
-        The underlying TreeBuilder object.
-
     min_samples_split_ : float
         The minimum number of samples needed to split a node in the tree building.
+
+    min_weight_leaf_ : float
+        The minimum number of weighted samples in a leaf.
+
+    monotonic_cst_ : array-like of int of shape (n_features,)
+        The monotonicity constraints enforced on each feature.
+
+    min_samples_leaf_ : int
+        The minimum number of samples needed for a leaf node.
 
     See Also
     --------
@@ -2290,11 +2369,17 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
         :ref:`sphx_glr_auto_examples_tree_plot_unveil_tree_structure.py`
         for basic usage of these attributes.
 
-    builder_ : TreeBuilder instance
-        The underlying TreeBuilder object.
-
     min_samples_split_ : float
         The minimum number of samples needed to split a node in the tree building.
+
+    min_weight_leaf_ : float
+        The minimum number of weighted samples in a leaf.
+
+    monotonic_cst_ : array-like of int of shape (n_features,)
+        The monotonicity constraints enforced on each feature.
+
+    min_samples_leaf_ : int
+        The minimum number of samples needed for a leaf node.
 
     See Also
     --------
