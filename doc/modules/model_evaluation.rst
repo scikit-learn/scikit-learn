@@ -160,22 +160,16 @@ the :func:`fbeta_score` function::
     ...                     scoring=ftwo_scorer, cv=5)
 
 ==============================================     ==================================
-Function                                           Comment
+Function                                           User settable parameter name
 ==============================================     ==================================
 **Classification**
 :func:`metrics.fbeta_score`                        implements parameter ``beta``
-:func:`metrics.hamming_loss`
-:func:`metrics.zero_one_loss`
 
 **Regression**      
-:func:`metrics.root_mean_squared_log_error`
-:func:`metrics.mean_poisson_deviance`
-:func:`metrics.mean_gamma_deviance`
 :func:`metrics.mean_tweedie_deviance`              implements parameter ``power``
 :func:`metrics.mean_pinball_loss`                  implements parameter ``alpha``
 :func:`metrics.d2_tweedie_score`                   implements parameter ``power``
 :func:`metrics.d2_pinball_score`                   implements parameter ``alpha``
-:func:`metrics.d2_absolute_error_score`            
 ==============================================     ==================================
 
 |details-start|
