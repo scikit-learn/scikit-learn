@@ -19,7 +19,6 @@ from libcpp.vector cimport vector
 
 from ..utils._typedefs cimport float32_t, float64_t, intp_t, int32_t, uint32_t
 
-from ._utils cimport UINT32_t
 from ._splitter cimport SplitRecord, Splitter
 
 
@@ -35,6 +34,14 @@ cdef struct Node:
     float64_t weighted_n_node_samples    # Weighted number of samples at the node
     unsigned char missing_go_to_left     # Whether features have missing values
 
+cdef struct ParentInfo:
+    # Structure to store information about the parent of a node
+    # This is passed to the splitter, to provide information about the previous split
+
+    float64_t lower_bound           # the lower bound of the parent's impurity
+    float64_t upper_bound           # the upper bound of the parent's impurity
+    float64_t impurity              # the impurity of the parent
+    intp_t n_constant_features      # the number of constant features found in parent
 
 cdef class BaseTree:
 
@@ -44,7 +51,7 @@ cdef class BaseTree:
     cdef public intp_t node_count        # Counter for node IDs
     cdef public intp_t capacity          # Capacity of tree, in terms of nodes
     cdef Node* nodes                     # Array of nodes
-    cdef float64_t* value                   # (capacity, n_outputs, max_n_classes) array of values
+    cdef float64_t* value                # (capacity, n_outputs, max_n_classes) array of values
     cdef intp_t value_stride             # = n_outputs * max_n_classes
 
     # Methods
