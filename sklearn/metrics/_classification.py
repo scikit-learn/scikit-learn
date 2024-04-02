@@ -1348,6 +1348,12 @@ def fbeta_score(
     averaged depending on the `average` parameter. Use `labels` specify the set of
     labels to calculate F-beta score for.
 
+    F-beta score is not implemented as a named scorer that can be
+    passed to the `scoring` parameter directly; :func:`make_scorer`
+    needs to be used first instead to create a callable object to then
+    pass to the `scoring` parameter, e.g. like: ``fbeta_scorer =
+    make_scorer(fbeta_score, beta=2)``
+
     Read more in the :ref:`User Guide <precision_recall_f_measure_metrics>`.
 
     Parameters
@@ -1463,6 +1469,7 @@ def fbeta_score(
     >>> fbeta_score(y_true, y_pred_empty,
     ...             average="macro", zero_division=np.nan, beta=0.5)
     0.12...
+
     """
 
     _, _, f, _ = precision_recall_fscore_support(
