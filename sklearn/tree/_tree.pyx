@@ -408,7 +408,7 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
                 if not is_leaf:
                     splitter.node_split(
                         &parent_record,
-                        &split,
+                        split_ptr,
                     )
 
                     # assign local copy of SplitRecord to assign
