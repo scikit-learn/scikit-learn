@@ -21,7 +21,7 @@ engineering.
 #
 # We start by loading the data from the OpenML repository
 # as a pandas dataframe. This will be replaced with Polars
-# after `fetch_openml` will add a native support for it.
+# once `fetch_openml` adds a native support for it.
 # We convert to Polars for feature engineering, as it automatically caches
 # common subexpressions which are reused in multiple expressions
 # (like `pl.col("count").shift(1)` below). See
@@ -281,8 +281,7 @@ scores_df.select(
 # %%
 # Even if the score distributions overlap due to the variance in the dataset,
 # it is true that the average RMSE is lower when `loss="squared_error"`, whereas
-# the average MAPE is lower when `loss="absolute_error"` as expected
-# (the same is true for the quantile 50). That is
+# the average MAPE is lower when `loss="absolute_error"` as expected. That is
 # also the case for the Mean Pinball Loss with the quantiles 5 and 95. The score
 # corresponding to the 50 quantile loss is overlapping with the score obtained
 # by minimizing other loss functions, which is also the case for the MAE.
