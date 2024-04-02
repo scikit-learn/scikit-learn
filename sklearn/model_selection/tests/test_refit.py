@@ -94,33 +94,57 @@ def test_ScoreCutModelSelector_methods(grid_search_simulated):
 
     ss = ScoreCutModelSelector(cv_results)
 
-    # Test that the _get_splits method extracts the correct subgrid
+    # test that the _get_splits method extracts the correct subgrid
     assert len(ss._get_splits()) == n_splits
 
-    # Test that the _n_folds property returns the correct number of folds
+    # test that the _n_folds property returns the correct number of folds
     assert ss._n_folds == n_splits
 
-    # Test that the _score_grid property returns the correct subgrid of scores
+    # test that the _score_grid property returns the correct subgrid of scores
     assert ss._score_grid.shape == (6, n_splits)
 
-    # Test that the _cv_means property returns the correct array of mean scores
+    # test that the _cv_means property returns the correct array of mean scores
     assert ss._cv_means.shape == (6,)
 
-    # Test that the _lowest_score_idx property returns the correct index
+    # test that the _lowest_score_idx property returns the correct index
     assert ss._lowest_score_idx == 5
 
-    # Test that the _best_score_idx property returns the correct index
+    # test that the _best_score_idx property returns the correct index
     assert ss._best_score_idx == 0
 
-    assert ss._apply_thresh(0.93, 0.96) == (0.93, 0.96)
+    cv_results_constrained = ss.cv_results_constrained_
+    constrained_results, performance_mask, min_cut, max_cut = ss._apply_thresh(
+        0.93, 0.96, cv_results_constrained
+    )
+    assert constrained_results == cv_results_constrained
+    assert np.array_equal(
+        performance_mask, np.array([True, True, True, True, True, False])
+    )
+    assert min_cut == 0.93
+    assert max_cut == 0.96
 
-    # Omit min_thresh
-    assert ss._apply_thresh(None, 0.99) == (0.4803921568627451, 0.99)
+    # omit min_thresh
+    constrained_results, performance_mask, min_cut, max_cut = ss._apply_thresh(
+        None, 0.99, cv_results_constrained
+    )
+    assert constrained_results == cv_results_constrained
+    assert np.array_equal(
+        performance_mask, np.array([True, True, True, True, True, True])
+    )
+    assert min_cut == 0.4803921568627451
+    assert max_cut == 0.99
 
-    # Omit max_thresh
-    assert ss._apply_thresh(0.80, None) == (0.8, 0.9583333333333334)
+    # omit max_thresh
+    constrained_results, performance_mask, min_cut, max_cut = ss._apply_thresh(
+        0.80, None, cv_results_constrained
+    )
+    assert constrained_results == cv_results_constrained
+    assert np.array_equal(
+        performance_mask, np.array([True, True, True, True, True, False])
+    )
+    assert min_cut == 0.8
+    assert max_cut == 0.9583333333333334
 
-    # Test that the fit method returns the correct score cuts
     assert ss.fit(StandardErrorSlicer(sigma=1)) == (
         0.9243126424613448,
         0.9923540242053219,
@@ -154,7 +178,8 @@ def test_ScoreCutModelSelector_errors(grid_search_simulated):
 
     with pytest.raises(ValueError):
         ss = ScoreCutModelSelector(cv_results)
-        assert ss._apply_thresh(0.98, 0.99) == 1
+        cv_results_constrained = ss.cv_results_constrained_
+        assert ss._apply_thresh(0.98, 0.99, cv_results_constrained) == 1
 
     with pytest.raises(TypeError):
         ss = ScoreCutModelSelector(cv_results)
@@ -164,6 +189,14 @@ def test_ScoreCutModelSelector_errors(grid_search_simulated):
         ss = ScoreCutModelSelector(cv_results)
         ss.fit(StandardErrorSlicer(sigma=1))
         assert ss.transform("Not_a_rule") == 1
+
+    with pytest.raises(ValueError) as exc_info:
+        ss = ScoreCutModelSelector(cv_results)
+        cv_results_constrained = ss.cv_results_constrained_
+        ss._apply_thresh(0.99, 0.98, cv_results_constrained)
+    assert "min_cut (0.99) must be less than or equal to max_cut (0.98)." in str(
+        exc_info.value
+    )
 
     del cv_results["params"]
     ss = ScoreCutModelSelector(cv_results)
@@ -630,6 +663,16 @@ def test_favorability_ranker():
     expected_ranks = [3, 2, 1]
     assert ranker(params_with_callable) == expected_ranks
 
+    # params as a dictionary
+    params_dict = {
+        "param1": [10, 5, 1],
+        "param2": ["low", "medium", "high"],
+        "param3": scipy.stats.norm(loc=0, scale=1),
+    }
+
+    expected_ranks_dict = [7, 8, 9, 4, 5, 6, 1, 2, 3]
+    assert ranker(params_dict) == expected_ranks_dict
+
     assert (
         repr(ranker)
         == "FavorabilityRanker({'param1': (True, 1.0), 'param2': (['low', 'medium',"
@@ -653,6 +696,13 @@ def test_favorability_ranker_validation():
     # invalid second element in rule (not a float)
     with pytest.raises(TypeError):
         FavorabilityRanker({"param": (True, "not_a_float")})
+
+    # negative weight for a hyperparameter
+    with pytest.raises(ValueError) as exc_info:
+        FavorabilityRanker({"param": (True, -1.0)})
+    assert "Weight for hyperparameter param must be non-negative." in str(
+        exc_info.value
+    )
 
 
 def test_favorability_ranker_process_parameter_values():
@@ -711,6 +761,7 @@ def test_favorability_ranker_with_distribution_handling_corrected():
     ranks = ranker([params])
     assert isinstance(ranks, list), "Expected output to be a list"
     assert len(ranks) == 1, "Expected a single rank output for a single parameter set"
+    assert ranks[0] == 1, "Expected rank to be 1"
 
 
 def test_favorability_ranker_with_categorical_combinations():
@@ -718,19 +769,15 @@ def test_favorability_ranker_with_categorical_combinations():
         "param2": (["a", "b", "c"], 1.0),
     }
 
-    # Correcting the test to reflect how FavorabilityRanker expects its input
-    params = [
-        {"param2": value}  # Each value is treated as a separate parameter set
-        for value in ["a", "b", "c"]
-    ]
+    params = [{"param2": value} for value in ["a", "b", "c"]]
 
     ranker = FavorabilityRanker(favorability_rules)
 
-    # Directly use the list of parameter dictionaries without additional wrapping
     ranks = ranker(params)
 
     assert isinstance(ranks, list), "Ranks should be a list"
     assert len(ranks) == len(params), "Should produce a rank for each parameter set"
+    assert ranks == [1, 2, 3], "Expected ranks to be [1, 2, 3]"
 
 
 def test_favorability_ranker_unsupported_value_error():

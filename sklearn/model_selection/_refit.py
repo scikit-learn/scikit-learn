@@ -468,6 +468,11 @@ class FavorabilityRanker:
                     f" {hyperparam} must be a float."
                 )
 
+            if rule[1] < 0:
+                raise ValueError(
+                    f"Weight for hyperparameter {hyperparam} must be non-negative."
+                )
+
     def _process_parameter_values(self, value: Any, rule: Tuple[Any, float]) -> Any:
         """Parses a single hyperparameter value, for a variety of data types."""
         if (
@@ -803,32 +808,11 @@ class ScoreCutModelSelector:
         self,
         min_cut: Optional[float],
         max_cut: Optional[float],
-    ) -> Tuple[Optional[float], Optional[float]]:
-        """Apply a performance threshold to the `_score_grid`.
-
-        Parameters
-        ----------
-        min_cut : float
-            The minimum performance threshold indicated by the ``score_slice_fn``.
-        max_cut : float
-            The maximum performance threshold indicated by the ``score_slice_fn``.
-
-        Returns
-        -------
-        min_cut : float
-            The minimum performance threshold applied to the `_score_grid`.
-        max_cut : float
-            The maximum performance threshold applied to the `_score_grid`.
-
-        Raises
-        ------
-        ValueError
-            If no valid grid columns remain within the boundaries of the specified
-            performance window.
-        """
-
+        cv_results_constrained: Dict,
+    ) -> Tuple[Dict, np.ndarray, Optional[float], Optional[float]]:
+        """Apply a performance threshold to the `_score_grid`."""
         # initialize a mask for the overall performance
-        np.zeros(len(self._score_grid), dtype=bool)
+        _performance_mask = np.zeros(len(self._score_grid), dtype=bool)
 
         # extract the overall performance
         if not min_cut:
@@ -836,14 +820,20 @@ class ScoreCutModelSelector:
         if not max_cut:
             max_cut = float(np.nanmax(self._cv_means))
 
+        if min_cut > max_cut:
+            raise ValueError(
+                f"min_cut ({min_cut}) must be less than or equal to max_cut"
+                f" ({max_cut})."
+            )
+
         # mask all grid columns that are outside the performance window
-        self.performance_mask = np.where(
+        _performance_mask = np.where(
             (self._cv_means >= float(min_cut)) & (self._cv_means <= float(max_cut)),
             True,
             False,
         )
 
-        if np.sum(self.performance_mask) == 0:
+        if np.sum(_performance_mask) == 0:
             raise ValueError(
                 "No valid grid columns remain within the boundaries of the specified"
                 " performance window. \nMin: {min_cut}\nMax: {max_cut}\nMeans across"
@@ -852,82 +842,117 @@ class ScoreCutModelSelector:
 
         # for each hyperparameter in the grid, mask all grid columns that are outside
         # of the performance window
-        for hyperparam in self.cv_results_constrained_["params"][0].keys():
-            self.cv_results_constrained_[f"param_{hyperparam}"].mask = (
-                ~self.performance_mask
+        for hyperparam in cv_results_constrained["params"][0].keys():
+            cv_results_constrained[f"param_{hyperparam}"] = np.ma.masked_array(
+                cv_results_constrained[f"param_{hyperparam}"],
+                mask=~_performance_mask,
             )
-        return min_cut, max_cut
 
-    def _select_best_favorable(self, favorability_rank_fn: Callable) -> int:
-        """Selects the most favorably ranked model within the trimmed performance
-        window. If multiple models are tied for highest rank, the model with the
-        highest overall performance is selected.
+        return cv_results_constrained, _performance_mask, min_cut, max_cut
 
-        Parameters
-        ----------
-        favorability_rank_fn : callable
-            A callable that consumes a hyperparameter grid in the form of a list of
-            hyperparameter dictionaries and returns a list of integers indicating
-            the favorability ranks for each model candidate, sorted from least to most
-            favorable. For example, a valid ``favorability_rank_fn`` might
-            consume [{"reduce_dim__n_components": [6, 8, 10, 12, 14, 16, 18]}]
-            and return [0, 1, 2, 3, 4, 5, 6].
-        """
-
-        # apply the favorability function to the hyperparameter grid and add the ensuing
-        # favorability ranks to the constrained cv_results dict
-        self.cv_results_constrained_["favorability_rank"] = np.array(
-            favorability_rank_fn(self.cv_results_constrained_["params"])
+    def _apply_favorability_ranks(
+        self, favorability_rank_fn: Callable, cv_results_constrained: Dict
+    ) -> Dict:
+        """Apply the favorability function to the hyperparameter grid."""
+        cv_results_constrained = cv_results_constrained.copy()
+        cv_results_constrained["favorability_rank"] = np.array(
+            favorability_rank_fn(cv_results_constrained["params"])
         )
+        return cv_results_constrained
 
-        most_favorable_surviving_rank = np.nanmin(
-            self.cv_results_constrained_["favorability_rank"][self.performance_mask]
-        )
+    def _get_most_favorable_surviving_rank(
+        self, cv_results_constrained: Dict, _performance_mask: np.ndarray
+    ) -> int:
+        """Get the most favorable surviving rank within trimmed performance window."""
+        return np.nanmin(cv_results_constrained["favorability_rank"][_performance_mask])
 
-        # check if multiple models are tied for most favorable within the trimmed
-        # performance
-        tied_mostfavorable = (
+    def _check_tied_most_favorable(
+        self,
+        cv_results_constrained: Dict,
+        _performance_mask: np.ndarray,
+        most_favorable_surviving_rank: int,
+    ) -> bool:
+        """Check if multiple models are tied for most favorable within the trimmed
+        performance window."""
+        return (
             np.sum(
-                self.cv_results_constrained_["favorability_rank"][self.performance_mask]
+                cv_results_constrained["favorability_rank"][_performance_mask]
                 == most_favorable_surviving_rank
             )
             > 1
         )
 
-        # if only one model is definitively most favorable, return its index
-        if not tied_mostfavorable:
-            # Return the index of the most favorable model within the performance window
-            return int(
-                np.where(
-                    self.cv_results_constrained_["favorability_rank"]
-                    == most_favorable_surviving_rank
-                )[0][0]
-            )
+    def _get_most_favorable_index(
+        self, cv_results_constrained: Dict, most_favorable_surviving_rank: int
+    ) -> int:
+        """Return the index of the most favorable model within the trimmed performance
+        window."""
+        return int(
+            np.where(
+                cv_results_constrained["favorability_rank"]
+                == most_favorable_surviving_rank
+            )[0][0]
+        )
 
-        # mask performance mask to only include the multiple models tied for the
-        # most favorable favorability
-        performance_mask_mostfavorable = np.where(
-            self.cv_results_constrained_["favorability_rank"]
+    def _get_mostfavorable_mask(
+        self, cv_results_constrained: Dict, most_favorable_surviving_rank: int
+    ) -> np.ndarray:
+        """Get the performance mask for the most favorable models."""
+        return np.where(
+            cv_results_constrained["favorability_rank"]
             == most_favorable_surviving_rank,
             True,
             False,
         )
-        # among multiple equally simple models within the trimmed performance
-        # window, find the lowest surviving test performamce rank (i.e. the
-        # highest-performing model overall).
-        lowest_surviving_rank = np.nanmin(
-            self.cv_results_constrained_["rank_test_score"][
-                performance_mask_mostfavorable
-            ]
-        )
 
-        # return the index of the lowest surviving rank among equally simple models,
-        # which will equate to the index of the best-performing most favorable model
-        # that is not meaningfully different from the globally best-performing model.
+    def _get_lowest_surviving_rank(
+        self, cv_results_constrained: Dict, mostfavorable_mask: np.ndarray
+    ) -> int:
+        """Get the lowest surviving test performance rank among the most favorable
+        models."""
+        return np.nanmin(cv_results_constrained["rank_test_score"][mostfavorable_mask])
+
+    def _get_best_most_favorable_index(
+        self, cv_results_constrained: Dict, lowest_surviving_rank: int
+    ) -> int:
+        """Return the index of the best-performing most favorable model."""
         return int(
             np.where(
-                self.cv_results_constrained_["rank_test_score"] == lowest_surviving_rank
+                cv_results_constrained["rank_test_score"] == lowest_surviving_rank
             )[0][0]
+        )
+
+    def _select_best_favorable(
+        self,
+        favorability_rank_fn: Callable,
+        cv_results_constrained: Dict,
+        _performance_mask: np.ndarray,
+    ) -> int:
+        """Selects the most favorably ranked model within the trimmed performance
+        window."""
+        cv_results_constrained = self._apply_favorability_ranks(
+            favorability_rank_fn, cv_results_constrained
+        )
+        most_favorable_surviving_rank = self._get_most_favorable_surviving_rank(
+            cv_results_constrained, _performance_mask
+        )
+        tied_mostfavorable = self._check_tied_most_favorable(
+            cv_results_constrained, _performance_mask, most_favorable_surviving_rank
+        )
+
+        if not tied_mostfavorable:
+            return self._get_most_favorable_index(
+                cv_results_constrained, most_favorable_surviving_rank
+            )
+
+        _mostfavorable_mask = self._get_mostfavorable_mask(
+            cv_results_constrained, most_favorable_surviving_rank
+        )
+        lowest_surviving_rank = self._get_lowest_surviving_rank(
+            cv_results_constrained, _mostfavorable_mask
+        )
+        return self._get_best_most_favorable_index(
+            cv_results_constrained, lowest_surviving_rank
         )
 
     def fit(
@@ -1006,7 +1031,17 @@ class ScoreCutModelSelector:
         self.min_cut_, self.max_cut_ = score_slice_fn(**fit_params)
         print(f"Min: {self.min_cut_}\nMax: {self.max_cut_}")
 
-        return self._apply_thresh(self.min_cut_, self.max_cut_)
+        cv_results_constrained = self.cv_results_.copy()
+        (
+            cv_results_constrained,
+            _performance_mask,
+            self.min_cut_,
+            self.max_cut_,
+        ) = self._apply_thresh(self.min_cut_, self.max_cut_, cv_results_constrained)
+        self.cv_results_constrained_ = cv_results_constrained
+        self._performance_mask = _performance_mask
+
+        return self.min_cut_, self.max_cut_
 
     def transform(self, favorability_rank_fn: Callable) -> int:
         """promotes the most favorable model within the constrained cut-window of
@@ -1043,7 +1078,11 @@ class ScoreCutModelSelector:
 
         self._check_fitted()
 
-        self.favorable_best_index_ = self._select_best_favorable(favorability_rank_fn)
+        cv_results_constrained = self.cv_results_constrained_.copy()
+        _performance_mask = self._performance_mask.copy()
+        self.favorable_best_index_ = self._select_best_favorable(
+            favorability_rank_fn, cv_results_constrained, _performance_mask
+        )
 
         print(
             f"Original best index: {self._best_score_idx}\nOriginal best "
