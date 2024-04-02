@@ -117,9 +117,9 @@ Function                               Parameter  Example usage
 :func:`metrics.fbeta_score`            ``beta``   ``make_scorer(fbeta_score, beta=2)``
 
 **Regression**
-:func:`metrics.mean_tweedie_deviance`  ``power``  ``make_scorer(mean_tweedie_deviance, power=1)``
+:func:`metrics.mean_tweedie_deviance`  ``power``  ``make_scorer(mean_tweedie_deviance, power=1.5)``
 :func:`metrics.mean_pinball_loss`      ``alpha``  ``make_scorer(mean_pinball_loss, alpha=0.95)``
-:func:`metrics.d2_tweedie_score`       ``power``  ``make_scorer(d2_tweedie_score, power=1)``
+:func:`metrics.d2_tweedie_score`       ``power``  ``make_scorer(d2_tweedie_score, power=1.5)``
 :func:`metrics.d2_pinball_score`       ``alpha``  ``make_scorer(d2_pinball_score, alpha=0.95)``
 =====================================  =========  ==============================================
 
