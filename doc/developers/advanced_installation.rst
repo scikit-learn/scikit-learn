@@ -184,26 +184,6 @@ If you want to build a stable version, you can ``git checkout <VERSION>``
 to get the code for that particular version, or download an zip archive of
 the version from github.
 
-.. _editable_mode:
-
-Editable mode
--------------
-
-If you run the development version, it is cumbersome to reinstall the package
-each time you update the sources. Therefore it is recommended that you install
-in with the ``pip install -v --no-use-pep517 --no-build-isolation -e .`` command,
-which allows you to edit the code in-place. This builds the extension in place and
-creates a link to the development directory (see `the pip docs
-<https://pip.pypa.io/en/stable/topics/local-project-installs/#editable-installs>`_).
-
-As the doc above explains, this is fundamentally similar to using the command
-``python setup.py develop``. (see `the setuptool docs
-<https://setuptools.pypa.io/en/latest/userguide/development_mode.html>`_).
-It is however preferred to use pip.
-
-On Unix-like systems, you can equivalently type ``make in`` from the top-level
-folder. Have a look at the ``Makefile`` for additional utilities.
-
 .. _platform_specific_instructions:
 
 Platform-specific instructions
