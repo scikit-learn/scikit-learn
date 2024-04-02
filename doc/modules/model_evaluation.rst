@@ -103,6 +103,25 @@ Scoring                                Function                                 
 'neg_mean_absolute_percentage_error'   :func:`metrics.mean_absolute_percentage_error`
 ====================================   ==============================================     ==================================
 
+The following metrics functions are not implemented as named
+scorers. They cannot be passed to the ``scoring`` parameters; instead
+their callable needs to be passed to :func:`make_scorer` together with the
+value of the user-settable parameters. See :ref:`scoring` for more
+details on :func:`make_scorer` usage.
+
+==============================================     ==================================
+Function                                           User-settable parameter name
+==============================================     ==================================
+**Classification**
+:func:`metrics.fbeta_score`                        ``beta``
+
+**Regression**
+:func:`metrics.mean_tweedie_deviance`              ``power``
+:func:`metrics.mean_pinball_loss`                  ``alpha``
+:func:`metrics.d2_tweedie_score`                   ``power``
+:func:`metrics.d2_pinball_score`                   ``alpha``
+==============================================     ==================================
+
 
 Usage examples:
 
@@ -159,18 +178,6 @@ the :func:`fbeta_score` function::
     >>> grid = GridSearchCV(LinearSVC(dual="auto"), param_grid={'C': [1, 10]},
     ...                     scoring=ftwo_scorer, cv=5)
 
-==============================================     ==================================
-Function                                           User settable parameter name
-==============================================     ==================================
-**Classification**
-:func:`metrics.fbeta_score`                        implements parameter ``beta``
-
-**Regression**      
-:func:`metrics.mean_tweedie_deviance`              implements parameter ``power``
-:func:`metrics.mean_pinball_loss`                  implements parameter ``alpha``
-:func:`metrics.d2_tweedie_score`                   implements parameter ``power``
-:func:`metrics.d2_pinball_score`                   implements parameter ``alpha``
-==============================================     ==================================
 
 |details-start|
 **Custom scorer objects**
