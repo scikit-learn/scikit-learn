@@ -121,7 +121,7 @@ Function                               Parameter  Example usage
 :func:`metrics.mean_pinball_loss`      ``alpha``  ``make_scorer(mean_pinball_loss, alpha=0.95)``
 :func:`metrics.d2_tweedie_score`       ``power``  ``make_scorer(d2_tweedie_score, power=1)``
 :func:`metrics.d2_pinball_score`       ``alpha``  ``make_scorer(d2_pinball_score, alpha=0.95)``
-=====================================  =========  ===============================================
+=====================================  =========  ==============================================
 
 
 Usage examples:
