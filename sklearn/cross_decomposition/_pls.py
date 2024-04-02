@@ -23,6 +23,7 @@ from ..base import (
 from ..exceptions import ConvergenceWarning
 from ..utils import check_array, check_consistent_length
 from ..utils._param_validation import Interval, StrOptions
+from ..utils.deprecation import _deprecate_X_in_inverse_transform
 from ..utils.extmath import svd_flip
 from ..utils.fixes import parse_version, sp_version
 from ..utils.validation import FLOAT_DTYPES, check_is_fitted
@@ -440,14 +441,21 @@ class _PLS(
 
         return x_scores
 
-    def inverse_transform(self, X, y=None, Y=None):
+    def inverse_transform(self, Xt, y=None, X=None, Y=None):
         """Transform data back to its original space.
 
         Parameters
         ----------
+        Xt : array-like of shape (n_samples, n_components)
+            New data, where `n_samples` is the number of samples
+            and `n_components` is the number of pls components.
+
         X : array-like of shape (n_samples, n_components)
             New data, where `n_samples` is the number of samples
             and `n_components` is the number of pls components.
+
+            .. deprecated:: 1.5
+                `X` is deprecated in 1.5 and will be removed in 1.7. Use `Xt` instead.
 
         y : array-like of shape (n_samples,) or (n_samples, n_components)
             New target, where `n_samples` is the number of samples
@@ -472,12 +480,13 @@ class _PLS(
         -----
         This transformation will only be exact if `n_components=n_features`.
         """
+        Xt = _deprecate_X_in_inverse_transform(Xt, X)
         y = _deprecate_Y_when_optional(y, Y)
 
         check_is_fitted(self)
-        X = check_array(X, input_name="X", dtype=FLOAT_DTYPES)
+        Xt = check_array(Xt, input_name="Xt", dtype=FLOAT_DTYPES)
         # From pls space to original space
-        X_reconstructed = np.matmul(X, self.x_loadings_.T)
+        X_reconstructed = np.matmul(Xt, self.x_loadings_.T)
         # Denormalize
         X_reconstructed *= self._x_std
         X_reconstructed += self._x_mean
