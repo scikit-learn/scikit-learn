@@ -6,20 +6,21 @@
 Tuning the decision threshold for class prediction
 ==================================================
 
-Classifiers are predictive models: they use statistical learning to predict categorical outcomes.
-The predictions of a classifier are, ideally, the probabilities of the class labels or, more generally, scores for each sample with a higher score meaning higher probability for the corresponding class.
-Scores are obtained from :term:`predict_proba` or
-:term:`decision_function`. The former returns posterior probability estimates for each
-class, while the latter returns a decision score for each class.
+Classifiers are predictive models: they use statistical learning to predict categorical
+outcomes. The predictions of a classifier are, ideally, the probabilities of the class
+labels or, more generally, scores for each sample with a higher score meaning higher
+probability for the corresponding class. Scores are obtained from :term:`predict_proba`
+or :term:`decision_function`. The former returns posterior probability estimates for
+each class, while the latter returns a decision score for each class.
 
-In binary classification, a decision rule or action is
-then defined by thresholding the scores, leading to the prediction of a single class label for each
-sample. Those labels are obtained with :term:`predict`.
+In binary classification, a decision rule or action is then defined by thresholding the
+scores, leading to the prediction of a single class label for each sample. Those labels
+are obtained with :term:`predict`.
 
-For binary classification in scikit-learn, class labels predictions are obtained by hard-coded cut-off rules:
-a positive class is predicted when the posterior probability is greater than 0.5 (obtained with
-:term:`predict_proba`) or if the decision score is greater than 0 (obtained with
-:term:`decision_function`).
+For binary classification in scikit-learn, class labels predictions are obtained by
+hard-coded cut-off rules: a positive class is predicted when the posterior probability
+is greater than 0.5 (obtained with :term:`predict_proba`) or if the decision score is
+greater than 0 (obtained with :term:`decision_function`).
 
 Here, we show an example that illustrates the relation between posterior
 probability estimates and class labels::
@@ -36,17 +37,20 @@ probability estimates and class labels::
     >>> classifier.predict(X[:4])
     array([0, 0, 1, 1])
 
-While these hard-coded rules might at first seem reasonable as default behavior, they are most certainly
-not ideal for most use cases. Let's illustrate with an example.
+While these hard-coded rules might at first seem reasonable as default behavior, they
+are most certainly not ideal for most use cases. Let's illustrate with an example.
 
-Let's consider a scenario where a predictive model is being deployed to assist physicians
-in detecting tumors. In this setting, physicians will be most likely interested in
-identifying all patients with cancer and not missing anyone with cancer so that they can provide them with the
-right treatment. In other words, physicians prioritize achieving a high recall rate. This emphasis on recall comes, of course, with the trade-off of potentially more
-false-positive predictions, reducing the precision of the model. That is a risk
-physicians are willing to take because the cost of a missed cancer is much higher than the cost of further diagnostic tests. Consequently, when it comes to deciding whether to classify
-a patient as having cancer or not, it may be more beneficial to classify them as
-positive for cancer when the posterior probability estimate is much lower than 0.5.
+Let's consider a scenario where a predictive model is being deployed to assist
+physicians in detecting tumors. In this setting, physicians will be most likely
+interested in identifying all patients with cancer and not missing anyone with cancer so
+that they can provide them with the right treatment. In other words, physicians
+prioritize achieving a high recall rate. This emphasis on recall comes, of course, with
+the trade-off of potentially more false-positive predictions, reducing the precision of
+the model. That is a risk physicians are willing to take because the cost of a missed
+cancer is much higher than the cost of further diagnostic tests. Consequently, when it
+comes to deciding whether to classify a patient as having cancer or not, it may be more
+beneficial to classify them as positive for cancer when the posterior probability
+estimate is much lower than 0.5.
 
 Post-tuning the decision threshold
 ==================================

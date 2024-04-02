@@ -710,9 +710,7 @@ from sklearn.preprocessing import StandardScaler
 
 model = make_pipeline(
     StandardScaler(),
-    LogisticRegressionCV(
-        random_state=42, Cs=np.logspace(-6, 6, 13), scoring="roc_auc"
-    ),
+    LogisticRegressionCV(random_state=42, Cs=np.logspace(-6, 6, 13), scoring="roc_auc"),
 ).fit(data_train, target_train)
 
 print(
@@ -760,7 +758,7 @@ print(
 
 # %%
 # We observe that tuning the decision threshold increases the expected profit of
-# deploying our model as estimated by the business metric. 
+# deploying our model as estimated by the business metric.
 # Eventually, the balanced accuracy also increased. Note that it might not always be
 # the case because the statistical metric is not necessarily a surrogate of the
 # business metric. It is therefore important, whenever possible, optimize the decision
