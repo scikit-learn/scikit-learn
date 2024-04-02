@@ -119,52 +119,46 @@ parameter. Using less bins acts as a form of regularization. It is generally
 recommended to use as many bins as possible (255), which is the default.
 
 The ``l2_regularization`` parameter acts as a regularizer for the loss function,
-and corresponds to :math:`\lambda` in the following regularized objective (see
-equation (2) of [XGBoost]_):
+and corresponds to :math:`\lambda` in the following expression (see equation (2)
+in [XGBoost]_):
 
 .. math::
 
-      \mathcal{L}(\phi) =  \sum_i l(\hat{y}_i, y_i) + \sum_k \Omega(f_k) \\
-      \text{where} ~ \Omega(f_k) = \gamma T_k  + \frac12 \lambda ||w_k||^2
+    \mathcal{L}(\phi) =  \sum_i l(\hat{y}_i, y_i) + \frac12 \sum_k \lambda ||w_k||^2
 
-Here :math:`\mathrm{loss}` is the loss function (actually only half of it for
-all but pinball loss and absolute error); :math:`T_k` is the number of leaves in
-the tree; :math:`f_k` corresponds to the k-th tree in the ensemble of trees
-(such that :math:`\hat{y}_i=h(\sum_k f_k(x_i))` with inverse link function
-:math:`h`); and :math:`w_k` is a vector of length :math:`T_k` containing the
-leaf weights.
+|details-start|
+**Details on `l2_regularization`**:
+|details-split|
 
-Notice that :math:`\gamma` penalizes the number of leaves (which makes it a
-smooth version of `max_leaf_nodes` and is not implemented in scikit-learn),
+It is important to notice that the term :math:`\mathrm{loss}` describes only
+half of the actual loss function for all types except for the pinball loss and
+absolute error.
+
+The index :math:`k` refers to the k-th tree in the ensemble of trees. In the
+case of regression and binary classification, gradient boosting models grow one
+tree per iteration, then :math:`k` runs up to `max_iter`. In the case of
+multi-class classification problems, the maximal value of the index :math:`k` is
+`n_classes` :math:`\times` `max_iter`.
+
+If :math:`T_k` denotes the number of leaves in the k-th tree, then :math:`w_k`
+is a vector of length :math:`T_k`, which contains the leaf values of the form
+`w = -sum_gradient / (sum_hessian + l2_regularization)` (see equation (5)
+in [XGBoost]_).
+
+The leaf values :math:`w_k` are then a continuous value corresponding to the
+loss function to use in the boosting process. Those values contribute to the
+model's prediction for a given input that ends up in a given leaf. The final
+prediction is the sum of the base prediction and the contributions from each
+tree. The result of that sum is then transformed by the inverse link function
+depending on the choice of the loss function (see
+:ref:`gradient_boosting_formulation`).
+
+Notice that the original paper [XGBoost]_ introduces a term :math:`\gamma\sum_k
+T_k` that penalizes the number of leaves (making it a smooth version of
+`max_leaf_nodes`) not presented here as it is not implemented in scikit-learn;
 whereas :math:`\lambda` penalizes the magnitude of the individual tree
 predictions before being rescaled by the learning rate (See
 :ref:`gradient_boosting_shrinkage`).
-
-|details-start|
-**Leaf weights in regression and classification**:
-|details-split|
-
-**Regression**: In the case of regression, the leaf weight is a continuous value
-that contributes to the model's prediction for a given input that ends up in a
-given leaf. The final prediction is the sum of the base prediction and the
-contributions from each tree. The result of that sum is then transformed by the
-inverse link function depending on the choice of the loss function, e.g. the
-exponential function is applied if the loss of the regressor is the Poisson
-loss.
-
-As regression gradient boosting models grow one tree per iteration, then
-:math:`k` goes from 1 to `max_iter`.
-
-**Classification**: For classification, the leaf weight is a continuous value
-corresponding to the loss function to use in the boosting process. For binary
-classification, the gradient boosting model fits one tree per iteration (similar
-to regression) and uses the logistic sigmoid function (expit) to compute the
-predicted positive class probability. For multi-class classification, the model
-fits one tree per boosting iteration and per class and uses the softmax function
-as inverse link function to compute the predicted probabilities of the classes.
-
-The total number of trees in the ensemble (and then the maximal value of the
-index :math:`k`) is `n_classes` :math:`\times` `max_iter`.
 
 |details-end|
 
@@ -640,6 +634,8 @@ training error.
 The parameter ``max_leaf_nodes`` corresponds to the variable ``J`` in the
 chapter on gradient boosting in [Friedman2001]_ and is related to the parameter
 ``interaction.depth`` in R's gbm package where ``max_leaf_nodes == interaction.depth + 1`` .
+
+.. _gradient_boosting_formulation:
 
 Mathematical formulation
 ^^^^^^^^^^^^^^^^^^^^^^^^
