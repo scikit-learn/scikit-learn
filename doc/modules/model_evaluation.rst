@@ -136,13 +136,13 @@ measuring a prediction error given ground truth and prediction:
 - functions ending with ``_score`` return a value to
   maximize, the higher the better.
 
-- functions ending with ``_error`` or ``_loss`` return a
+- functions ending with ``_error``, ``_loss``, or ``_deviance`` return a
   value to minimize, the lower the better.  When converting
   into a scorer object using :func:`make_scorer`, set
   the ``greater_is_better`` parameter to ``False`` (``True`` by default; see the
   parameter description below).
 
-Metrics available for various machine learning tasks are detailed in sections
+Metrics available for various machine learning tasks are detailed in the table
 below.
 
 Many metrics are not given names to be used as ``scoring`` values,
@@ -163,6 +163,24 @@ the :func:`fbeta_score` function::
     >>> grid = GridSearchCV(LinearSVC(dual="auto"), param_grid={'C': [1, 10]},
     ...                     scoring=ftwo_scorer, cv=5)
 
+==============================================     ==================================
+Function                                           Comment
+==============================================     ==================================
+**Classification**
+:func:`metrics.fbeta_score`                        implements parameter ``beta``
+:func:`metrics.hamming_loss`
+:func:`metrics.zero_one_loss`
+
+**Regression**      
+:func:`metrics.root_mean_squared_log_error`
+:func:`metrics.mean_poisson_deviance`
+:func:`metrics.mean_gamma_deviance`
+:func:`metrics.mean_tweedie_deviance`              implements parameter ``power``
+:func:`metrics.mean_pinball_loss`                  implements parameter ``alpha``
+:func:`metrics.d2_tweedie_score`                   implements parameter ``power``
+:func:`metrics.d2_pinball_score`                   implements parameter ``alpha``
+:func:`metrics.d2_absolute_error_score`            
+==============================================     ==================================
 
 |details-start|
 **Custom scorer objects**
