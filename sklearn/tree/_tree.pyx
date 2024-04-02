@@ -435,7 +435,11 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
                 # inspection and interpretation
                 splitter.node_value(tree.value + node_id * tree.value_stride)
                 if splitter.with_monotonic_cst:
-                    splitter.clip_node_value(tree.value + node_id * tree.value_stride, parent_record.lower_bound, parent_record.upper_bound)
+                    splitter.clip_node_value(
+                        tree.value + node_id * tree.value_stride,
+                        parent_record.lower_bound,
+                        parent_record.upper_bound
+                    )
 
                 if not is_leaf:
                     if (
@@ -560,8 +564,11 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
                 # inspection and interpretation
                 splitter.node_value(tree.value + node_id * tree.value_stride)
                 if splitter.with_monotonic_cst:
-                    splitter.clip_node_value(tree.value + node_id * tree.value_stride,
-                                             parent_record.lower_bound, parent_record.upper_bound)
+                    splitter.clip_node_value(
+                        tree.value + node_id * tree.value_stride,
+                        parent_record.lower_bound,
+                        parent_record.upper_bound
+                    )
 
                 if not is_leaf:
                     if (
