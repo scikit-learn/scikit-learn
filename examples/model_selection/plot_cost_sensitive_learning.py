@@ -9,7 +9,7 @@ function` or the :term:`predict_proba` output. For a binary classifier, the defa
 threshold is defined as a posterior probability estimate of 0.5 or a decision score of
 0.0.
 
-However, this default strategy may not be optimal for the task at hand.
+However, this default strategy is most likely not optimal for the task at hand.
 Here, we use the "Statlog" German credit dataset [1]_ to illustrate a use case.
 In this dataset, the task is to predict whether a person has a "good" or "bad" credit.
 In addition, a cost-matrix is provided that specifies the cost of
@@ -699,7 +699,7 @@ print(
 # %%
 # This is not a surprise that the balanced accuracy is at 0.5 for both classifiers.
 # However, we need to be careful in the rest of the evaluation: we potentially can
-# obtain a model with a decent balanced accuracy but that does not make any profit.
+# obtain a model with a decent balanced accuracy that does not make any profit.
 # In this case, the model would be useless for our business.
 #
 # Let's now create a predictive model using a logistic regression without tuning the

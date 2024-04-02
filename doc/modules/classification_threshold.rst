@@ -2,23 +2,23 @@
 
 .. _tunedthresholdclassifier:
 
-======================================================
-Tuning cut-off decision threshold for class prediction
-======================================================
+==================================================
+Tuning the decision threshold for class prediction
+==================================================
 
-Classifiers are predictive models: they use statistical learning to predict outcomes.
-The outcomes of a classifier are scores for each sample in relation to each class and
-categorical prediction (class label). Scores are obtained from :term:`predict_proba` or
+Classifiers are predictive models: they use statistical learning to predict categorical outcomes.
+The predictions of a classifier are, ideally, the probabilities of the class labels or, more generally, scores for each sample with a higher score meaning higher probability for the corresponding class.
+Scores are obtained from :term:`predict_proba` or
 :term:`decision_function`. The former returns posterior probability estimates for each
-class, while the latter returns a decision score for each class. The decision score is a
-measure of how strongly the sample is predicted to belong to the positive class (e.g.,
-the distance to the decision boundary). In binary classification, a decision rule is
-then defined by thresholding the scores, leading to a single class label for each
+class, while the latter returns a decision score for each class.
+
+In binary classification, a decision rule or action is
+then defined by thresholding the scores, leading to the prediction of a single class label for each
 sample. Those labels are obtained with :term:`predict`.
 
-For binary classification in scikit-learn, class labels are obtained by associating the
-positive class with posterior probability estimates greater than 0.5 (obtained with
-:term:`predict_proba`) or decision scores greater than 0 (obtained with
+For binary classification in scikit-learn, class labels predictions are obtained by hard-coded cut-off rules:
+a positive class is predicted when the posterior probability is greater than 0.5 (obtained with
+:term:`predict_proba`) or if the decision score is greater than 0 (obtained with
 :term:`decision_function`).
 
 Here, we show an example that illustrates the relation between posterior
@@ -36,19 +36,17 @@ probability estimates and class labels::
     >>> classifier.predict(X[:4])
     array([0, 0, 1, 1])
 
-While these approaches are reasonable as default behaviors, they are not ideal for
-all cases. Let's illustrate with an example.
+While these hard-coded rules might at first seem reasonable as default behavior, they are most certainly
+not ideal for most use cases. Let's illustrate with an example.
 
-Let's consider a scenario where a predictive model is being deployed to assist medical
-doctors in detecting tumors. In this setting, doctors will be most likely interested in
-correctly identifying all patients with cancer so that they can provide them with the
-right treatment. In other words, doctors prioritize achieving a high recall rate,
-meaning they want to identify all cases of cancer without missing any patients who have
-it. This emphasis on recall comes, of course, with the trade-off of potentially more
-false-positive predictions, reducing the precision of the model, but that is a risk
-doctors are willing to take. Consequently, when it comes to deciding whether to classify
+Let's consider a scenario where a predictive model is being deployed to assist physicians
+in detecting tumors. In this setting, physicians will be most likely interested in
+identifying all patients with cancer and not missing anyone with cancer so that they can provide them with the
+right treatment. In other words, physicians prioritize achieving a high recall rate. This emphasis on recall comes, of course, with the trade-off of potentially more
+false-positive predictions, reducing the precision of the model. That is a risk
+physicians are willing to take because the cost of a missed cancer is much higher than the cost of further diagnostic tests. Consequently, when it comes to deciding whether to classify
 a patient as having cancer or not, it may be more beneficial to classify them as
-positive for cancer when the posterior probability estimate is lower than 0.5.
+positive for cancer when the posterior probability estimate is much lower than 0.5.
 
 Post-tuning the decision threshold
 ==================================
