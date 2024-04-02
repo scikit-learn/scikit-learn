@@ -114,3 +114,17 @@ def _is_deprecated(func):
         [c.cell_contents for c in closures if isinstance(c.cell_contents, str)]
     )
     return is_deprecated
+
+
+def _deprecate_X_in_inverse_transform(Xt, X):
+    if Xt is not None and X is not None:
+        raise ValueError("Cannot use both `X` and `Xt`. Use `Xt` only.")
+
+    if X is not None:
+        warnings.warn(
+            "Passing `X` is deprecated and will be removed in 1.7. Use `Xt` instead.",
+            FutureWarning,
+        )
+        Xt = X
+
+    return Xt
