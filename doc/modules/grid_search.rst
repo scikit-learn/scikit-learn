@@ -683,7 +683,7 @@ the model selection process, allowing for a trade-off between performance and
 favorability by defining an allowable margin of error in performance (e.g., within one
 standard error of the best score) or a similar concept.
 
-3. **Favorability Score** (:math:`F`): A user-defined function that evaluates the
+3. **Favorability Score** (:math:`F`): A function that evaluates the
 favorability of a model based on specified criteria. The criteria might include model
 complexity, interpretability, or other user-defined measures.
 
