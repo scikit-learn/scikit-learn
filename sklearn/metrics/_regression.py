@@ -36,7 +36,6 @@ from scipy.special import xlogy
 from ..exceptions import UndefinedMetricWarning
 from ..utils._array_api import (
     _average,
-    _compute_shape,
     _find_matching_floating_dtype,
     device,
     get_namespace,
@@ -880,14 +879,11 @@ def _assemble_r2_explained_variance(
         # (note: even if denominator is zero, thus avoiding NaN scores)
         output_scores = xp.ones([n_outputs], device=device, dtype=dtype)
         # Non-zero Numerator and Non-zero Denominator: use the formula
-        valid_mask = nonzero_denominator & nonzero_numerator
+        valid_score = nonzero_denominator & nonzero_numerator
 
-        # Note: need to compute shape, since indexing will produce unknown
-        # shape for lazy array API implementations
-        valid_scores = 1 - (numerator[valid_mask] / denominator[valid_mask])
-        valid_scores = _compute_shape(valid_scores)
-
-        output_scores[valid_mask] = valid_scores
+        output_scores[valid_score] = 1 - (
+            numerator[valid_score] / denominator[valid_score]
+        )
 
         # Non-zero Numerator and Zero Denominator:
         # arbitrary set to 0.0 to avoid -inf scores

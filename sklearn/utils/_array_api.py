@@ -778,16 +778,6 @@ def _atol_for_type(dtype):
     return numpy.finfo(dtype).eps * 100
 
 
-def _compute_shape(arr):
-    """
-    When arr has a null shape, force computation on its shape
-    """
-    if hasattr(arr, "compute_chunk_sizes"):
-        # Dask case
-        arr.compute_chunk_sizes()
-    return arr
-
-
 def indexing_dtype(xp):
     """Return a platform-specific integer dtype suitable for indexing.
 

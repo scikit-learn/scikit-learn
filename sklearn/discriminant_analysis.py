@@ -26,7 +26,7 @@ from .base import (
 from .covariance import empirical_covariance, ledoit_wolf, shrunk_covariance
 from .linear_model._base import LinearClassifierMixin
 from .preprocessing import StandardScaler
-from .utils._array_api import _compute_shape, _expit, device, get_namespace, size
+from .utils._array_api import _expit, device, get_namespace, size
 from .utils._param_validation import HasMethods, Interval, StrOptions
 from .utils.extmath import softmax
 from .utils.multiclass import check_classification_targets, unique_labels
@@ -113,16 +113,6 @@ def _class_means(X, y):
     """
     xp, is_array_api_compliant = get_namespace(X)
     classes, y = xp.unique_inverse(y)
-    # Force lazy array api backends to call compute
-    if hasattr(classes, "persist"):
-        classes = _compute_shape(classes)
-        y = _compute_shape(y)
-        # We get a ValueError: no field named inverse later on if we don't
-        # compute right now
-        # Probably a dask bug
-        # (the error is also kinda flaky)
-        if hasattr(y, "compute"):
-            y = y.compute()
     means = xp.zeros((classes.shape[0], X.shape[1]), device=device(X), dtype=X.dtype)
 
     if is_array_api_compliant:
@@ -526,7 +516,6 @@ class LinearDiscriminantAnalysis(
             Xg = X[y == group]
             Xc.append(Xg - self.means_[idx, :])
 
-        self.priors_ = _compute_shape(self.priors_)
         self.xbar_ = self.priors_ @ self.means_
 
         Xc = xp.concat(Xc, axis=0)
@@ -564,7 +553,7 @@ class LinearDiscriminantAnalysis(
                 : self._max_components
             ]
 
-        rank = int(xp.sum(xp.astype(S > self.tol * S[0], xp.int32)))
+        rank = xp.sum(xp.astype(S > self.tol * S[0], xp.int32))
         self.scalings_ = scalings @ Vt.T[:, :rank]
         coef = (self.means_ - self.xbar_) @ self.scalings_
         self.intercept_ = -0.5 * xp.sum(coef**2, axis=1) + xp.log(self.priors_)
@@ -602,11 +591,7 @@ class LinearDiscriminantAnalysis(
         X, y = self._validate_data(
             X, y, ensure_min_samples=2, dtype=[xp.float64, xp.float32]
         )
-        X = _compute_shape(X)
-        # This operation could result in nan shape for lazy backends
-        # so realize by calling np.asarray
         self.classes_ = unique_labels(y)
-        self.classes_ = _compute_shape(self.classes_)
         n_samples, _ = X.shape
         n_classes = self.classes_.shape[0]
 
@@ -616,7 +601,6 @@ class LinearDiscriminantAnalysis(
             )
 
         if self.priors is None:  # estimate priors from sample
-            y = _compute_shape(y)
             _, cnts = xp.unique_counts(y)  # non-negative ints
             self.priors_ = xp.astype(cnts, X.dtype) / float(y.shape[0])
         else:
@@ -631,7 +615,6 @@ class LinearDiscriminantAnalysis(
 
         # Maximum number of components no matter what n_components is
         # specified:
-
         max_components = min(n_classes - 1, X.shape[1])
 
         if self.n_components is None:
@@ -752,15 +735,7 @@ class LinearDiscriminantAnalysis(
             # smallest_normal was introduced in NumPy 1.22
             smallest_normal = info.tiny
 
-        xp, _ = get_namespace(prediction)
-        # Some Array API libraries don't support inplace operations
-        # prediction[prediction == 0.0] += smallest_normal
-        # is the equivalent code
-        prediction = xp.where(
-            prediction == 0.0,
-            xp.asarray(smallest_normal, dtype=prediction.dtype),
-            prediction,
-        )
+        prediction[prediction == 0.0] += smallest_normal
         return xp.log(prediction)
 
     def decision_function(self, X):

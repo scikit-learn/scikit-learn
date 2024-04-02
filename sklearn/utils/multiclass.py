@@ -13,7 +13,7 @@ from itertools import chain
 import numpy as np
 from scipy.sparse import issparse
 
-from ..utils._array_api import _compute_shape, get_namespace
+from ..utils._array_api import get_namespace
 from ..utils.fixes import VisibleDeprecationWarning
 from .validation import _assert_all_finite, check_array
 
@@ -177,7 +177,6 @@ def is_multilabel(y):
                 # see NEP 34
                 y = check_array(y, dtype=object, **check_y_kwargs)
 
-    y = _compute_shape(y)
     if not (hasattr(y, "shape") and y.ndim == 2 and y.shape[1] > 1):
         return False
 
@@ -192,7 +191,6 @@ def is_multilabel(y):
         )
     else:
         labels = xp.unique_values(y)
-        labels = _compute_shape(labels)
 
         return labels.shape[0] < 3 and (
             xp.isdtype(y.dtype, ("bool", "signed integer", "unsigned integer"))
