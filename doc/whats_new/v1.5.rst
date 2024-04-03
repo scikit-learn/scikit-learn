@@ -336,7 +336,7 @@ Changelog
 ....................
 
 - |API| :func:`utils.tosequence` is deprecated and will be removed in version 1.7.
-  :pr:`28762` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
+  :pr:`287623` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
 .. rubric:: Code and documentation contributors
 
