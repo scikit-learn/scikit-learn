@@ -521,17 +521,3 @@ When setting these environment variables, it is advised to first check their
 
 In addition, since Scikit-learn uses OpenMP, you need to include the appropriate OpenMP
 flag of your compiler into the ``CFLAGS`` and ``CPPFLAGS`` environment variables.
-
-Parallel builds
-===============
-
-It is possible to build scikit-learn compiled extensions in parallel by setting
-and environment variable as follows before calling the ``pip install`` or
-``python setup.py build_ext`` commands::
-
-    export SKLEARN_BUILD_PARALLEL=3
-    pip install -v --no-use-pep517 --no-build-isolation -e .
-
-On a machine with 2 CPU cores, it can be beneficial to use a parallelism level
-of 3 to overlap IO bound tasks (reading and writing files on disk) with CPU
-bound tasks (actually compiling).
