@@ -267,26 +267,24 @@ class PolynomialChaosRegressor(BaseEstimator, RegressorMixin):
         if self.solver is None:
             solver = LinearRegression(fit_intercept=False)
         else:
-            # force solvers to have 'fit_intercept=False'
+            if not isinstance(self.solver, BaseEstimator):
+                raise ValueError(
+                    "solver must be an instance of 'sklearn.BaseEstimator', got"
+                    f" '{type(self.solver)}'"
+                )
             if (isinstance(self.solver, LinearModel) and self.solver.fit_intercept) or (
                 isinstance(self.solver, MultiOutputRegressor)
                 and self.solver.estimator.fit_intercept
             ):
                 raise ValueError("make sure to set 'fit_intercept=False' in solver")
             else:
-                if isinstance(self.solver, BaseEstimator):
-                    warn(
-                        (
-                            "cannot explicitly check the value of 'fit_intercept' in"
-                            " solver, please ensure 'fit_intercept=False'"
-                        ),
-                        UserWarning,
-                    )
-                else:
-                    raise ValueError(
-                        "solver must be an 'sklearn.BaseEstimator', got"
-                        f" '{type(self.solver)}'"
-                    )
+                warn(
+                    (
+                        "cannot explicitly check the value of 'fit_intercept' in"
+                        " solver, please ensure 'fit_intercept=False'"
+                    ),
+                    UserWarning,
+                )
             solver = clone(self.solver)
 
         # check outputs
