@@ -33,6 +33,13 @@ classifiers=[
   "Programming Language :: Python :: Implementation :: PyPy",
 ]
 
+[project.urls]
+HomePage = "https://scikit-learn.org"
+Repository = "https://github.com/scikit-learn/scikit-learn"
+DownloadURL = "https://pypi.org/project/scikit-learn/#files"
+Issues = "https://github.com/scikit-learn/scikit-learn/issues"
+Changelog = "https://scikit-learn.org/stable/whats_new"
+
 [project.optional-dependencies]
 build = ["numpy>=1.19.5", "scipy>=1.6.0", "cython>=3.0.9", "meson-python>=0.15.0"]
 install = ["numpy>=1.19.5", "scipy>=1.6.0", "joblib>=1.2.0", "threadpoolctl>=2.0.0"]
