@@ -11,6 +11,7 @@ from numbers import Integral
 import numpy as np
 from joblib import effective_n_jobs
 
+import warnings
 from ..base import BaseEstimator, MetaEstimatorMixin, _fit_context, clone, is_classifier
 from ..metrics import check_scoring
 from ..model_selection import check_cv
@@ -288,6 +289,15 @@ class RFE(_RoutingNotSupportedMixin, SelectorMixin, MetaEstimatorMixin, BaseEsti
             n_features_to_select = self.n_features_to_select
         else:  # float
             n_features_to_select = int(n_features * self.n_features_to_select)
+
+        if n_features_to_select > n_features:
+            warnings.warn(
+                (
+                    "features_to_select shouldn't be greater than the number of"
+                    " available features"
+                ),
+                UserWarning,
+            )
 
         if 0.0 < self.step < 1.0:
             step = int(max(1, self.step * n_features))

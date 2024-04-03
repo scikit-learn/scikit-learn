@@ -24,6 +24,7 @@ from sklearn.svm import SVC, SVR, LinearSVR
 from sklearn.utils import check_random_state
 from sklearn.utils._testing import ignore_warnings
 from sklearn.utils.fixes import CSR_CONTAINERS
+import warnings
 
 
 class MockClassifier:
@@ -649,3 +650,46 @@ def test_rfe_estimator_attribute_error():
         rfe.fit(iris.data, iris.target).decision_function(iris.data)
     assert isinstance(exec_info.value.__cause__, AttributeError)
     assert inner_msg in str(exec_info.value.__cause__)
+
+
+@pytest.mark.parametrize("ClsRFE", [RFE, RFECV])
+def test_rfe_n_features_to_select_warning(ClsRFE):
+    """Check if the correct warning is raised when trying to initialize a RFE
+    object with a n_features_to_select attribute larger than the number of
+    features present in the X variable that is passed to the fit method
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/28725
+    """
+    X, y = make_classification(
+        n_samples=1000, n_features=20, n_redundant=0, n_classes=2, random_state=0
+    )
+
+    # Catch the warning
+    with warnings.catch_warnings(record=True) as w:
+        # Determine the correct parameter name based on the estimator
+        if issubclass(ClsRFE, RFECV):
+            parameter_name = "min_features_to_select"
+        elif issubclass(ClsRFE, RFE):
+            parameter_name = "n_features_to_select"
+        else:
+            raise ValueError("Unsupported estimator")
+
+        # Create RFE/RFECV with n_features_to_select/min_features_to_select
+        # larger than the number of features present in the X variable
+        rfe = ClsRFE(
+            estimator=LogisticRegression(random_state=0),
+            **{parameter_name: 21},
+            step=2,
+        )
+        rfe.fit(X=X, y=y)
+
+        # Check if any UserWarning was raised
+        assert any(issubclass(warning.category, UserWarning) for warning in w)
+        # Check if the warning message is correct
+        assert any(
+            "features_to_select shouldn't be greater than the number of available"
+            " features"
+            in str(warning.message)
+            for warning in w
+        )
