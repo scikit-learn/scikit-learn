@@ -148,6 +148,7 @@ cdef class Splitter(BaseSplitter):
         float64_t min_weight_leaf,
         object random_state,
         const int8_t[:] monotonic_cst,
+        bint missing_car,
         *argv
     ):
         """
@@ -173,8 +174,17 @@ cdef class Splitter(BaseSplitter):
             The user inputted random state to be used for pseudo-randomness
 
         monotonic_cst : const int8_t[:]
-            Monotonicity constraints
+            Indicates the monotonicity constraint to enforce on each feature.
+            - 1: monotonic increase
+            - 0: no constraint
+            - -1: monotonic decrease
 
+            If monotonic_cst is None, no constraints are applied.
+
+        missing_car : bool
+            Indicates if the missing-values should be assumed as missing completely
+            at random. If that is the case, the missing values will be randomly
+            assigned to the left or right child of the split.
         """
         self.criterion = criterion
 
@@ -187,14 +197,18 @@ cdef class Splitter(BaseSplitter):
         self.random_state = random_state
         self.monotonic_cst = monotonic_cst
         self.with_monotonic_cst = monotonic_cst is not None
+        self.missing_car = missing_car
 
     def __reduce__(self):
-        return (type(self), (self.criterion,
-                             self.max_features,
-                             self.min_samples_leaf,
-                             self.min_weight_leaf,
-                             self.random_state,
-                             self.monotonic_cst.base if self.monotonic_cst is not None else None), self.__getstate__())
+        return (type(self), (
+            self.criterion,
+            self.max_features,
+            self.min_samples_leaf,
+            self.min_weight_leaf,
+            self.random_state,
+            self.monotonic_cst.base if self.monotonic_cst is not None else None,
+            self.missing_car,
+        ), self.__getstate__())
 
     cdef int init(
         self,
@@ -562,10 +576,13 @@ cdef inline intp_t node_split_best(
         # The second search will have all the missing values going to the left node.
         # If there are no missing values, then we search only once for the most
         # optimal split.
-        n_searches = 2 if has_missing else 1
+        n_searches = 2 if has_missing and not self.missing_car else 1
 
         for i in range(n_searches):
-            missing_go_to_left = i == 1
+            if self.missing_car:
+                missing_go_to_left = rand_int(0, 2, random_state)
+            else:
+                missing_go_to_left = i == 1
             criterion.missing_go_to_left = missing_go_to_left
             criterion.reset()
 
@@ -645,26 +662,18 @@ cdef inline intp_t node_split_best(
 
         # Evaluate when there are missing values and all missing values goes
         # to the right node and non-missing values goes to the left node.
-        if has_missing:
-            n_left, n_right = end - start - n_missing, n_missing
-            p = end - n_missing
-            missing_go_to_left = 0
-
-            if not (n_left < min_samples_leaf or n_right < min_samples_leaf):
-                criterion.missing_go_to_left = missing_go_to_left
-                criterion.update(p)
-
-                if not ((criterion.weighted_n_left < min_weight_leaf) or
-                        (criterion.weighted_n_right < min_weight_leaf)):
-                    current_proxy_improvement = criterion.proxy_impurity_improvement()
-
-                    if current_proxy_improvement > best_proxy_improvement:
-                        best_proxy_improvement = current_proxy_improvement
-                        current_split.threshold = INFINITY
-                        current_split.missing_go_to_left = missing_go_to_left
-                        current_split.n_missing = n_missing
-                        current_split.pos = p
-                        best_split = current_split
+        if has_missing and not self.missing_car:
+            evaluate_missing_values_to_right(
+                start,
+                end,
+                n_missing,
+                min_samples_leaf,
+                min_weight_leaf,
+                criterion,
+                current_split,
+                best_split,
+                best_proxy_improvement
+            )
 
     # Reorganize into samples[start:best_split.pos] + samples[best_split.pos:end]
     if best_split.pos < end:
@@ -704,6 +713,41 @@ cdef inline intp_t node_split_best(
     parent_record.n_constant_features = n_total_constants
     split[0] = best_split
     return 0
+
+
+cdef inline void evaluate_missing_values_to_right(
+    intp_t start,
+    intp_t end,
+    intp_t n_missing,
+    intp_t min_samples_leaf,
+    double min_weight_leaf,
+    BaseCriterion criterion,
+    SplitRecord current_split,
+    SplitRecord best_split,
+    double best_proxy_improvement
+) nogil:
+    cdef intp_t n_left, n_right, p
+    cdef intp_t missing_go_to_left = 0
+
+    n_left = end - start - n_missing
+    n_right = n_missing
+    p = end - n_missing
+
+    if not (n_left < min_samples_leaf or n_right < min_samples_leaf):
+        criterion.missing_go_to_left = missing_go_to_left
+        criterion.update(p)
+
+        if not ((criterion.weighted_n_left < min_weight_leaf) or
+                (criterion.weighted_n_right < min_weight_leaf)):
+            current_proxy_improvement = criterion.proxy_impurity_improvement()
+
+            if current_proxy_improvement > best_proxy_improvement:
+                best_proxy_improvement = current_proxy_improvement
+                current_split.threshold = INFINITY
+                current_split.missing_go_to_left = missing_go_to_left
+                current_split.n_missing = n_missing
+                current_split.pos = p
+                best_split = current_split
 
 
 # Sort n-element arrays pointed to by feature_values and samples, simultaneously,
