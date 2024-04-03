@@ -9,7 +9,7 @@ from sklearn.callback import ProgressBar
 from sklearn.utils._optional_dependencies import check_rich_support
 from sklearn.utils._testing import SkipTest
 
-from ._utils import Estimator, WhileEstimator, MetaEstimator
+from ._utils import Estimator, MetaEstimator, WhileEstimator
 
 
 @pytest.mark.parametrize("n_jobs", [1, 2])

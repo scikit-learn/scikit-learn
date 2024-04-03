@@ -17,8 +17,8 @@ class TaskNode:
         The maximum number of its children. 0 means it's a leaf.
         None means the number of children is not known in advance.
 
-    idx : int, default=0
-        The index of this node among its siblings.
+    idx : int, default=None
+        The index of this node among its siblings. None means this is the root.
 
     parent : TaskNode instance, default=None
         The parent node. None means this is the root.
@@ -38,7 +38,7 @@ class TaskNode:
         estimator_name,
         name="fit",
         max_subtasks=0,
-        idx=0,
+        idx=None,
         parent=None,
     ):
         # estimator_name and name are tuples because an estimator can be
@@ -58,7 +58,20 @@ class TaskNode:
         # order of the idx du to parallelism.
         self.children = {}
 
-    def _add_child(self, name, max_subtasks, idx):
+    def _add_child(self, *, name, max_subtasks, idx):
+        if idx in self.children:
+            raise ValueError(
+                f"Child of task node {self.name} of estimator {self.estimator_name} "
+                f"with index {idx} already exists."
+            )
+
+        if len(self.children) == self.max_subtasks:
+            raise ValueError(
+                f"Cannot add child to task node {self.name} of estimator "
+                f"{self.estimator_name} because it already has its maximum "
+                f"number of children ({self.max_subtasks})."
+            )
+
         child = TaskNode(
             estimator_name=self.estimator_name[-1],
             name=name,

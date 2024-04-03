@@ -42,6 +42,15 @@ def test_set_callbacks_error(callbacks):
         estimator._set_callbacks(callbacks)
 
 
+def test_init_callback_context():
+    """Sanity check for the `_init_callback_context` method."""
+    estimator = Estimator()
+    callback_ctx = estimator._init_callback_context()
+
+    assert hasattr(estimator, "_callback_fit_context")
+    assert hasattr(callback_ctx, "callbacks")
+
+
 def test_propagate_callbacks():
     """Sanity check for the `_propagate_callbacks` method."""
     not_propagated_callback = TestingCallback()
