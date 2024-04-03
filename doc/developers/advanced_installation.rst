@@ -113,13 +113,14 @@ feature, code or documentation improvement).
 
 .. note::
 
-    Note `--config-settings editable-verbose=true` is recommended to avoid surprises
-    when you `import sklearn`. meson-python implements editable installs by recompiling
-    when executing `import sklearn`. With the recommended setting you will see a message
-    when this happens, rather than potentially waiting a while and wondering what is
-    taking so long. Bonus: this means you only have to do the `pip install` once, after
-    that your code will automatically recompile, also for cython code.
-
+    `--config-settings editable-verbose=true` is optional but recommended
+    to avoid surprises when you import `sklearn`. `meson-python` implements
+    editable installs by rebuilding `sklearn` when executing `import sklearn`.
+    With the recommended setting you will see a message when this happens,
+    rather than potentially waiting without feed-back and wondering
+    what is taking so long. Bonus: this means you only have to run the `pip
+    install` command once, `sklearn` will automatically be rebuilt when
+    importing `sklearn`.
 
 Dependencies
 ------------
