@@ -51,7 +51,7 @@ Support for building with Meson
 -------------------------------
 
 Meson is now supported as a build backend, see :ref:`Building from source
-<editable_mode>` for more details.
+<install_bleeding_edge>` for more details.
 
 :pr:`28040` by :user:`Loïc Estève <lesteve>`
 

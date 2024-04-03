@@ -37,7 +37,6 @@ Note that first uninstalling scikit-learn might be required to be able to
 install nightly builds of scikit-learn.
 
 .. _install_bleeding_edge:
-.. _editable_mode:
 
 Building from source
 ====================
@@ -94,7 +93,7 @@ feature, code or documentation improvement).
    for :ref:`compiler_windows`, :ref:`compiler_macos`, :ref:`compiler_linux`
    and :ref:`compiler_freebsd`.
 
-#. Build the project with pip in :ref:`editable_mode`:
+#. Build the project with pip:
 
    .. prompt:: bash $
 
@@ -116,8 +115,7 @@ feature, code or documentation improvement).
 
     Note `--config-settings editable-verbose=true` is recommended to avoid surprises
     when you `import sklearn`. meson-python implements editable installs by recompiling
-    when executing `import sklearn`. Even changing Python files involves copying files
-    to the Meson build directory. With the recommended setting you will see a message
+    when executing `import sklearn`. With the recommended setting you will see a message
     when this happens, rather than potentially waiting a while and wondering what is
     taking so long. Bonus: this means you only have to do the `pip install` once, after
     that your code will automatically recompile, also for cython code.
