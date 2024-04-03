@@ -198,7 +198,7 @@ ADAPTERS_MANAGER.register(PolarsAdapter())
 
 
 def _get_adapter_from_container(container):
-    """Get the adapter that nows how to handle such container.
+    """Get the adapter that knows how to handle such container.
 
     See :class:`sklearn.utils._set_output.ContainerAdapterProtocol` for more
     details.

@@ -17,6 +17,7 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.preprocessing import scale
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.utils._testing import (
+    _convert_container,
     assert_allclose,
     assert_array_equal,
 )
@@ -468,8 +469,8 @@ def test_string_target(pyplot):
     )
 
 
-@pytest.mark.parametrize("df_module_name", ["pandas", "polars"])
-def test_dataframe_support(pyplot, df_module_name):
+@pytest.mark.parametrize("constructor_name", ["pandas", "polars"])
+def test_dataframe_support(pyplot, constructor_name):
     """Check that passing a dataframe at fit and to the Display does not
     raise warnings.
 
@@ -477,8 +478,9 @@ def test_dataframe_support(pyplot, df_module_name):
     * https://github.com/scikit-learn/scikit-learn/issues/23311
     * https://github.com/scikit-learn/scikit-learn/issues/28717
     """
-    df_module = pytest.importorskip(df_module_name)
-    df = df_module.DataFrame({"col_x": X[:, 0], "col_y": X[:, 1]})
+    df = _convert_container(
+        X, constructor_name=constructor_name, columns_name=["col_x", "col_y"]
+    )
     estimator = LogisticRegression().fit(df, y)
 
     with warnings.catch_warnings():
