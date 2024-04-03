@@ -53,7 +53,7 @@ class Estimator(BaseEstimator):
         for i in range(self.max_iter):
             subcontext = callback_ctx.subcontext(idx=i)
 
-            time.sleep(0.05)  # Computation intensive task
+            time.sleep(0.001)  # Computation intensive task
 
             if subcontext.eval_on_fit_iter_end(
                 estimator=self,
@@ -80,7 +80,7 @@ class WhileEstimator(BaseEstimator):
         while True:
             subcontext = callback_ctx.subcontext(idx=i)
 
-            time.sleep(0.05)  # Computation intensive task
+            time.sleep(0.001)  # Computation intensive task
 
             if subcontext.eval_on_fit_iter_end(
                 estimator=self,
