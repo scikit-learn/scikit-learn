@@ -272,11 +272,17 @@ class PolynomialChaosRegressor(BaseEstimator, RegressorMixin):
                     "solver must be an instance of 'sklearn.BaseEstimator', got"
                     f" '{type(self.solver)}'"
                 )
-            if (isinstance(self.solver, LinearModel) and self.solver.fit_intercept) or (
-                isinstance(self.solver, MultiOutputRegressor)
-                and self.solver.estimator.fit_intercept
+            if isinstance(self.solver, LinearModel) or isinstance(
+                self.solver, MultiOutputRegressor
             ):
-                raise ValueError("make sure to set 'fit_intercept=False' in solver")
+                if (
+                    isinstance(self.solver, LinearModel) and self.solver.fit_intercept
+                ) or (
+                    isinstance(self.solver, MultiOutputRegressor)
+                    and self.solver.estimator.fit_intercept
+                ):
+                    raise ValueError("make sure to set 'fit_intercept=False' in solver")
+
             else:
                 warn(
                     (
@@ -292,9 +298,9 @@ class PolynomialChaosRegressor(BaseEstimator, RegressorMixin):
         if y.ndim == 2 and y.shape[1] == 1:
             warn(
                 (
-                    "a column-vector 'y' was passed when a 1d array was"
-                    " expected, please change the shape of 'y' to "
-                    "(n_samples,), for example using 'y.ravel()' or 'y.flatten()'"
+                    "A column-vector y was passed when a 1d array was"
+                    " expected. Please change the shape of y to "
+                    "(n_samples, ), for example using ravel()."
                 ),
                 DataConversionWarning,
                 stacklevel=2,
