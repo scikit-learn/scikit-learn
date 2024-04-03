@@ -12,6 +12,7 @@ from sklearn.datasets import load_iris, make_classification
 from sklearn.decomposition import PCA
 from sklearn.decomposition._pca import _assess_dimension, _infer_dimension
 from sklearn.utils._array_api import (
+    _array_api_skips,
     _atol_for_type,
     _convert_to_numpy,
     yield_namespace_device_dtype_combinations,
@@ -891,9 +892,7 @@ def check_array_api_get_precision(name, estimator, array_namespace, device, dtyp
 def test_pca_array_api_compliance(
     estimator, check, array_namespace, device, dtype_name
 ):
-    # Dask doesn't implement slogdet from the Array API
-    # which is used in score/score_samples
-    skip_methods = {"dask.array": ["score", "score_samples"]}
+    skip_methods = _array_api_skips["PCA"]
     name = estimator.__class__.__name__
     kwargs = {}
     if check is check_array_api_input_and_values:

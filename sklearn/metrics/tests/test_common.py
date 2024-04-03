@@ -54,6 +54,7 @@ from sklearn.metrics._base import _average_binary_score
 from sklearn.preprocessing import LabelBinarizer
 from sklearn.utils import shuffle
 from sklearn.utils._array_api import (
+    _array_api_skips,
     _atol_for_type,
     _convert_to_numpy,
     yield_namespace_device_dtype_combinations,
@@ -1736,6 +1737,11 @@ def test_metrics_pos_label_error_str(metric, y_pred_threshold, dtype_y_str):
 def check_array_api_metric(
     metric, array_namespace, device, dtype_name, y_true_np, y_pred_np, sample_weight
 ):
+    if _array_api_skips.get(metric.__name__, {}).get(array_namespace) == "all":
+        pytest.skip(
+            f"{array_namespace} is not array-API compliant for {metric.__name__}"
+        )
+
     xp = _array_api_for_tests(array_namespace, device)
 
     y_true_xp = xp.asarray(y_true_np, device=device)

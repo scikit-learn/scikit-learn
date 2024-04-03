@@ -313,3 +313,19 @@ def print_changed_only_false():
     set_config(print_changed_only=False)
     yield
     set_config(print_changed_only=True)  # reset to default
+
+
+@pytest.fixture
+def skip_dask_array_api_compliance(request):
+    """
+    Xfails an array API compliance test for dask.
+    (i.e. when the array_namespace fixture yields 'dask.array')
+    """
+    array_namespace = request.getfixturevalue("array_namespace")
+    if array_namespace == "dask.array":
+        pytest.skip(
+            reason=(
+                "Estimator/method does not work because of dask array API compliance"
+                " issues"
+            )
+        )

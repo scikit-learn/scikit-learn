@@ -10,9 +10,19 @@ import scipy.special as special
 from .._config import get_config
 from .fixes import parse_version
 
-# Dictionary listing the methods to skip
-# testing for, for a certain array api namespace
-_array_api_skip_methods = {"PCA": {"dask.array": ["score", "score_samples"]}}
+# Dictionary listing the methods/estimators to skip
+# testing for a certain array api namespace
+
+# use "all" to skip all testing for an estimator/method
+# for a namespace (not just specific methods)
+# (see the dask.array skip in LinearDiscriminantAnalysis for an example of this)
+_array_api_skips = {
+    # Dask doesn't implement slogdet from the Array API
+    # which is used in score/score_samples
+    "PCA": {"dask.array": ["score", "score_samples"]},
+    "LinearDiscriminantAnalysis": {"dask.array": "all"},
+    "r2_score": {"dask.array": "all"},
+}
 
 _NUMPY_NAMESPACE_NAMES = {"numpy", "array_api_compat.numpy"}
 
