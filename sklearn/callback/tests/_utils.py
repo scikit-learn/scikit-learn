@@ -1,9 +1,10 @@
 # License: BSD 3 clause
 # Authors: the scikit-learn developers
 
+import time
+
 from sklearn.base import BaseEstimator, _fit_context, clone
-from sklearn.callback import BaseCallback, CallbackPropagatorMixin
-from sklearn.callback._base import _eval_callbacks_on_fit_iter_end
+from sklearn.callback import BaseCallback
 from sklearn.utils.parallel import Parallel, delayed
 
 
@@ -43,18 +44,20 @@ class Estimator(BaseEstimator):
 
     @_fit_context(prefer_skip_nested_validation=False)
     def fit(self, X, y):
-        root = self._eval_callbacks_on_fit_begin(
-            tree_structure=[
-                {"stage": "fit", "n_children": self.max_iter},
-                {"stage": "iter", "n_children": None},
-            ],
+        callback_ctx = self._init_callback_context().eval_on_fit_begin(
+            estimator=self,
+            max_subtasks=self.max_iter,
             data={"X_train": X, "y_train": y},
         )
 
         for i in range(self.max_iter):
-            if _eval_callbacks_on_fit_iter_end(
+            subcontext = callback_ctx.subcontext(idx=i)
+
+            time.sleep(0.05)  # Computation intensive task
+
+            if subcontext.eval_on_fit_iter_end(
                 estimator=self,
-                node=root.children[i],
+                data={"X_train": X, "y_train": y},
             ):
                 break
 
@@ -63,7 +66,37 @@ class Estimator(BaseEstimator):
         return self
 
 
-class MetaEstimator(BaseEstimator, CallbackPropagatorMixin):
+class WhileEstimator(BaseEstimator):
+    _parameter_constraints: dict = {}
+
+    @_fit_context(prefer_skip_nested_validation=False)
+    def fit(self, X, y):
+        callback_ctx = self._init_callback_context().eval_on_fit_begin(
+            estimator=self, max_subtasks=None, data={"X_train": X, "y_train": y}
+        )
+
+        i = 0
+
+        while True:
+            subcontext = callback_ctx.subcontext(idx=i)
+
+            time.sleep(0.05)  # Computation intensive task
+
+            if subcontext.eval_on_fit_iter_end(
+                estimator=self,
+                data={"X_train": X, "y_train": y},
+            ):
+                break
+
+            if i == 20:
+                break
+
+            i += 1
+
+        return self
+
+
+class MetaEstimator(BaseEstimator):
     _parameter_constraints: dict = {}
 
     def __init__(
@@ -77,29 +110,34 @@ class MetaEstimator(BaseEstimator, CallbackPropagatorMixin):
 
     @_fit_context(prefer_skip_nested_validation=False)
     def fit(self, X, y):
-        root = self._eval_callbacks_on_fit_begin(
-            tree_structure=[
-                {"stage": "fit", "n_children": self.n_outer},
-                {"stage": "outer", "n_children": self.n_inner},
-                {"stage": "inner", "n_children": None},
-            ],
-            data={"X_train": X, "y_train": y},
+        callback_ctx = self._init_callback_context().eval_on_fit_begin(
+            estimator=self, max_subtasks=self.n_outer, data={"X_train": X, "y_train": y}
         )
 
         Parallel(n_jobs=self.n_jobs, prefer=self.prefer)(
-            delayed(_func)(self, self.estimator, X, y, node)
-            for _, node in enumerate(root.children)
+            delayed(_func)(i, self, self.estimator, X, y, callback_ctx=callback_ctx)
+            for i in range(self.n_outer)
         )
 
         return self
 
 
-def _func(meta_estimator, inner_estimator, X, y, parent_node):
-    for _, node in enumerate(parent_node.children):
+def _func(outer_idx, meta_estimator, inner_estimator, X, y, *, callback_ctx):
+    outer_ctx = callback_ctx.subcontext(
+        task="outer", max_subtasks=meta_estimator.n_inner, idx=outer_idx
+    )
+
+    for i in range(meta_estimator.n_inner):
         est = clone(inner_estimator)
-        meta_estimator._propagate_callbacks(est, parent_node=node)
+        inner_ctx = outer_ctx.subcontext(task="inner", idx=i, sub_estimator=est)
         est.fit(X, y)
 
-        _eval_callbacks_on_fit_iter_end(estimator=meta_estimator, node=node)
+        inner_ctx.eval_on_fit_iter_end(
+            estimator=meta_estimator,
+            data={"X_train": X, "y_train": y},
+        )
 
-    _eval_callbacks_on_fit_iter_end(estimator=meta_estimator, node=parent_node)
+    outer_ctx.eval_on_fit_iter_end(
+        estimator=meta_estimator,
+        data={"X_train": X, "y_train": y},
+    )

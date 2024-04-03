@@ -21,10 +21,11 @@ class ProgressBar(BaseCallback):
         self.progress_monitor = _RichProgressMonitor(queue=self._queue)
         self.progress_monitor.start()
 
-    def on_fit_iter_end(self, *, estimator, node, **kwargs):
-        self._queue.put(node)
+    def on_fit_iter_end(self, *, task_node, **kwargs):
+        self._queue.put(task_node)
 
-    def on_fit_end(self):
+    def on_fit_end(self, *, task_node):
+        self._queue.put(task_node)
         self._queue.put(None)
         self.progress_monitor.join()
 
@@ -55,7 +56,7 @@ class _RichProgressMonitor(Thread):
     """Thread monitoring the progress of an estimator with rich based display.
 
     The display is a list of nested rich tasks using `rich.Progress`. There is one for
-    each non-leaf node in the computation tree of the estimator.
+    each non-leaf node in the task tree of the estimator.
 
     Parameters
     ----------
@@ -75,103 +76,123 @@ class _RichProgressMonitor(Thread):
                 finished_style=Style(color="cyan"),
             ),
             TextColumn("[bright_magenta]{task.percentage:>3.0f}%"),
-            TimeRemainingColumn(),
+            TimeRemainingColumn(elapsed_when_finished=True),
             auto_refresh=False,
         )
 
         # Holds the root of the tree of rich tasks (i.e. progress bars) that will be
         # created dynamically as the computation tree of the estimator is traversed.
-        self.root_task = None
+        self.root_rich_task = None
 
         with self.progress_ctx:
-            while node := self.queue.get():
-                self._update_task_tree(node)
+            while task_node := self.queue.get():
+                self._update_task_tree(task_node)
                 self._update_tasks()
                 self.progress_ctx.refresh()
 
-    def _update_task_tree(self, node):
+    def _update_task_tree(self, task_node):
         """Update the tree of tasks from a new node."""
-        curr_task, parent_task = None, None
+        curr_rich_task, parent_task = None, None
 
-        for curr_node in node.path:
+        for curr_node in task_node.path:
             if curr_node.parent is None:  # root node
-                if self.root_task is None:
-                    self.root_task = TaskNode(curr_node, progress_ctx=self.progress_ctx)
-                curr_task = self.root_task
+                if self.root_rich_task is None:
+                    self.root_rich_task = RichTaskNode(
+                        curr_node, progress_ctx=self.progress_ctx
+                    )
+                curr_rich_task = self.root_rich_task
             elif curr_node.idx not in parent_task.children:
-                curr_task = TaskNode(
+                curr_rich_task = RichTaskNode(
                     curr_node, progress_ctx=self.progress_ctx, parent=parent_task
                 )
-                parent_task.children[curr_node.idx] = curr_task
+                parent_task.children[curr_node.idx] = curr_rich_task
             else:  # task already exists
-                curr_task = parent_task.children[curr_node.idx]
-            parent_task = curr_task
+                curr_rich_task = parent_task.children[curr_node.idx]
+            parent_task = curr_rich_task
 
-        # Mark the deepest task as finished (this is the one corresponding the
+        # Mark the deepest task as finished (this is the one corresponding to the
         # computation node that we just get from the queue).
-        curr_task.finished = True
+        curr_rich_task.finished = True
 
     def _update_tasks(self):
         """Loop through the tasks in their display order and update their progress."""
         self.progress_ctx._ordered_tasks = []
 
-        for task_node in self.root_task:
-            task = self.progress_ctx.tasks[task_node.task_id]
+        for rich_task_node in self.root_rich_task:
+            task = self.progress_ctx.tasks[rich_task_node.task_id]
 
-            if task_node.parent is not None and task_node.parent.finished:
-                # If the parent task is finished, then mark the current task as
-                # finished. It can happen if an estimator doesn't reach its max number
-                # of iterations (e.g. early stopping).
-                completed = task.total
+            total = task.total
+
+            if rich_task_node.finished:
+                # It's possible that a task finishes without reaching its total
+                # (e.g. early stopping). We mark it as 100% completed.
+
+                if task.total is None:
+                    # Indeterminate task is finished. Set total to an arbitrary
+                    # value to render its completion as 100%.
+                    completed = total = 1
+                else:
+                    completed = total
             else:
-                completed = sum(t.finished for t in task_node.children.values())
-
-            if completed == task.total:
-                task_node.finished = True
+                completed = sum(t.finished for t in rich_task_node.children.values())
 
             self.progress_ctx.update(
-                task_node.task_id, completed=completed, refresh=False
+                rich_task_node.task_id, completed=completed, total=total, refresh=False
             )
             self.progress_ctx._ordered_tasks.append(task)
 
 
-class TaskNode:
+class RichTaskNode:
     """A node in the tree of rich tasks.
 
     Parameters
     ----------
-    node : `ComputationNode` instance
-        The computation node this task corresponds to.
+    task_node : `TaskNode` instance
+        The task node of an estimator this task corresponds to.
 
     progress_ctx : `rich.Progress` instance
         The progress context to which this task belongs.
 
-    parent : `TaskNode` instance
+    parent : `RichTaskNode` instance
         The parent of this task.
+
+    Attributes
+    ----------
+    finished : bool
+        Whether the task is finished.
+
+    task_id : int
+        The ID of the task in the Progress context.
+
+    children : dict
+        A mapping from the index of a child to the child node `{idx: RichTaskNode}`.
+        For a leaf, it's an empty dictionary.
     """
 
-    def __init__(self, node, progress_ctx, parent=None):
-        self.node_idx = node.idx
+    def __init__(self, task_node, progress_ctx, parent=None):
+        self.node_idx = task_node.idx
         self.parent = parent
         self.children = {}
         self.finished = False
 
-        if node.n_children is not None:
-            description = self._format_task_description(node)
-            self.task_id = progress_ctx.add_task(description, total=node.n_children)
+        if task_node.max_subtasks != 0:
+            description = self._format_task_description(task_node)
+            self.task_id = progress_ctx.add_task(
+                description, total=task_node.max_subtasks
+            )
 
-    def _format_task_description(self, node):
-        """Return a formatted description for the task of the node."""
+    def _format_task_description(self, task_node):
+        """Return a formatted description for the task."""
         colors = ["bright_magenta", "cyan", "dark_orange"]
 
-        indent = f"{'  ' * (node.depth)}"
-        style = f"[{colors[(node.depth)%len(colors)]}]"
+        indent = f"{'  ' * (task_node.depth)}"
+        style = f"[{colors[(task_node.depth)%len(colors)]}]"
 
-        description = f"{node.estimator_name[0]} - {node.stage[0]}"
-        if node.parent is not None:
-            description += f" #{node.idx}"
-        if len(node.estimator_name) == 2:
-            description += f" | {node.estimator_name[1]} - {node.stage[1]}"
+        description = f"{task_node.estimator_name[0]} - {task_node.name[0]}"
+        if task_node.parent is not None:
+            description += f" #{task_node.idx}"
+        if len(task_node.estimator_name) == 2:
+            description += f" | {task_node.estimator_name[1]} - {task_node.name[1]}"
 
         return f"{style}{indent}{description}"
 

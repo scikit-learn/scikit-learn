@@ -15,8 +15,7 @@ import numpy as np
 
 from . import __version__
 from ._config import config_context, get_config
-from .callback import BaseCallback, build_computation_tree
-from .callback._base import default_data
+from .callback import BaseCallback, CallbackContext
 from .exceptions import InconsistentVersionWarning
 from .utils import _IS_32BIT
 from .utils._estimator_html_repr import _HTMLDocumentationLinkMixin, estimator_html_repr
@@ -698,60 +697,20 @@ class BaseEstimator(_HTMLDocumentationLinkMixin, _MetadataRequester):
 
         return self
 
-    def _eval_callbacks_on_fit_begin(self, *, tree_structure, data):
-        """Evaluate the `on_fit_begin` method of the callbacks.
-
-        The computation tree is also built at this point.
-
-        This method should be called after all data and parameters validation.
-
-        Parameters
-        ----------
-        tree_structure : list of dict
-            A description of the nested steps of computation of the estimator to build
-            the computation tree. It's a list of dict with keys "stage" and
-            "n_children".
-
-        data : dict
-            Dictionary containing the training and validation data. The keys are
-            "X_train", "y_train", "sample_weight_train", "X_val", "y_val",
-            "sample_weight_val". The values are the corresponding data. If a key is
-            missing, the corresponding value is None.
+    def _init_callback_context(self):
+        """Initialize the callback context for the estimator.
 
         Returns
         -------
-        root : ComputationNode instance
-            The root of the computation tree.
+        callback_fit_ctx : CallbackContext
+            The callback context for the estimator.
         """
-        self._computation_tree = build_computation_tree(
-            estimator_name=self.__class__.__name__,
-            tree_structure=tree_structure,
-            parent=getattr(self, "_parent_node", None),
+
+        self._callback_fit_ctx = CallbackContext(
+            callbacks=getattr(self, "_skl_callbacks", []),
         )
 
-        if not hasattr(self, "_skl_callbacks"):
-            return self._computation_tree
-
-        # Only call the on_fit_begin method of callbacks that are not
-        # propagated from a meta-estimator.
-        for callback in self._skl_callbacks:
-            if not callback._is_propagated(estimator=self):
-                callback.on_fit_begin(estimator=self, data={**default_data, **data})
-
-        return self._computation_tree
-
-    def _eval_callbacks_on_fit_end(self):
-        """Evaluate the `on_fit_end` method of the callbacks."""
-        if not hasattr(self, "_skl_callbacks") or not hasattr(
-            self, "_computation_tree"
-        ):
-            return
-
-        # Only call the on_fit_end method of callbacks that are not
-        # propagated from a meta-estimator.
-        for callback in self._skl_callbacks:
-            if not callback._is_propagated(estimator=self):
-                callback.on_fit_end()
+        return self._callback_fit_ctx
 
     @property
     def _repr_html_(self):
@@ -1558,7 +1517,7 @@ def _fit_context(*, prefer_skip_nested_validation):
                 try:
                     return fit_method(estimator, *args, **kwargs)
                 finally:
-                    estimator._eval_callbacks_on_fit_end()
+                    estimator._callback_fit_ctx.eval_on_fit_end()
 
         return wrapper
 
