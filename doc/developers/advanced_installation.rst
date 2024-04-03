@@ -232,11 +232,13 @@ Please be aware that the path above might be different from user to user. The
 aim is to point to the "vcvarsall.bat" file that will set the necessary
 environment variables in the current command prompt.
 
-Finally, build scikit-learn from this command prompt:
+Finally, build scikit-learn with this command prompt:
 
 .. prompt:: bash $
 
-    pip install -v --no-use-pep517 --no-build-isolation -e .
+    pip install --editable . \
+        --verbose --no-build-isolation \
+        --config-settings editable-verbose=true
 
 .. _compiler_macos:
 
@@ -275,7 +277,7 @@ scikit-learn from source:
 .. prompt:: bash $
 
     conda create -n sklearn-dev -c conda-forge python numpy scipy cython \
-        joblib threadpoolctl pytest compilers llvm-openmp
+        joblib threadpoolctl pytest compilers llvm-openmp meson-python ninja
 
 It is not always necessary but it is safer to open a new prompt before
 activating the newly created conda environment.
@@ -284,7 +286,9 @@ activating the newly created conda environment.
 
     conda activate sklearn-dev
     make clean
-    pip install -v --no-use-pep517 --no-build-isolation -e .
+    pip install --editable . \
+        --verbose --no-build-isolation \
+        --config-settings editable-verbose=true
 
 .. note::
 
@@ -358,7 +362,9 @@ Finally, build scikit-learn in verbose mode (to check for the presence of the
 .. prompt:: bash $
 
     make clean
-    pip install -v --no-use-pep517 --no-build-isolation -e .
+    pip install --editable . \
+        --verbose --no-build-isolation \
+        --config-settings editable-verbose=true
 
 .. _compiler_linux:
 
@@ -384,7 +390,9 @@ then proceed as usual:
 .. prompt:: bash $
 
     pip3 install cython
-    pip3 install --verbose --editable .
+    pip3 install --editable . \
+        --verbose --no-build-isolation \
+        --config-settings editable-verbose=true
 
 Cython and the pre-compiled wheels for the runtime dependencies (numpy, scipy
 and joblib) should automatically be installed in
@@ -416,7 +424,7 @@ in the user folder using conda:
 .. prompt:: bash $
 
     conda create -n sklearn-dev -c conda-forge python numpy scipy cython \
-        joblib threadpoolctl pytest compilers
+        joblib threadpoolctl pytest compilers meson-python ninja
 
 It is not always necessary but it is safer to open a new prompt before
 activating the newly created conda environment.
@@ -424,7 +432,9 @@ activating the newly created conda environment.
 .. prompt:: bash $
 
     conda activate sklearn-dev
-    pip install -v --no-use-pep517 --no-build-isolation -e .
+    pip install --editable . \
+        --verbose --no-build-isolation \
+        --config-settings editable-verbose=true
 
 .. _compiler_freebsd:
 
@@ -453,7 +463,9 @@ Finally, build the package using the standard command:
 
 .. prompt:: bash $
 
-    pip install -v --no-use-pep517 --no-build-isolation -e .
+    pip install --editable . \
+        --verbose --no-build-isolation \
+        --config-settings editable-verbose=true
 
 For the upcoming FreeBSD 12.1 and 11.3 versions, OpenMP will be included in
 the base system and these steps will not be necessary.
@@ -476,7 +488,9 @@ The following command will build scikit-learn using your default C/C++ compiler.
 
 .. prompt:: bash $
 
-    pip install --verbose --editable .
+    pip install --editable . \
+        --verbose --no-build-isolation \
+        --config-settings editable-verbose=true
 
 If you want to build scikit-learn with another compiler handled by ``setuptools``,
 use the following command:
