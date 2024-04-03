@@ -47,6 +47,12 @@ See :ref:`array_api` for more details.
 
 **Classes:**
 
+**Libraries:**
+
+- ``dask.array`` is now experimentally supported as an array API backend.
+  Some methods and estimators may not work with dask.
+  :pr:`28588` by :user:`Thomas Li <lithomas1>`
+
 Support for building with Meson
 -------------------------------
 
