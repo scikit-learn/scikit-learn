@@ -332,6 +332,12 @@ Changelog
   given the split condition.
   :pr:`28552` by :user:`Adam Li <adam2392>`.
 
+:mod:`sklearn.utils`
+....................
+
+- |API| :data:`utils.IS_PYPY` is deprecated and will be removed in version 1.7.
+  :pr:`28768` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
+
 .. rubric:: Code and documentation contributors
 
 Thanks to everyone who has contributed to the maintenance and improvement of

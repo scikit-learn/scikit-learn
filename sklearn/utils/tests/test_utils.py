@@ -157,3 +157,9 @@ def test__is_polars_df():
             self.schema = ["a", "b"]
 
     assert not _is_polars_df(LooksLikePolars())
+
+
+# TODO(1.7): remove
+def test_is_pypy_deprecated():
+    with pytest.warns(FutureWarning, match="IS_PYPY is deprecated"):
+        from sklearn.utils import IS_PYPY  # noqa
