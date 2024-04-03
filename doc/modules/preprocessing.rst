@@ -1178,7 +1178,7 @@ Generating polynomial features
 Often it's useful to add complexity to a model by considering nonlinear
 features of the input data. We show two possibilities that are both based on
 polynomials: The first one uses pure polynomials, the second one uses splines,
-i.e. piecewise polynomials. See also 
+i.e. piecewise polynomials. See also
 :ref:`generating_orthogonal_polynomial_features` for a similar approach based
 on orthogonal polynomials.
 
@@ -1313,6 +1313,7 @@ Interestingly, a :class:`SplineTransformer` of ``degree=0`` is the same as
       BMC Med Res Methodol 19, 46 (2019).
 
 |details-end|
+
 .. _generating_orthogonal_polynomial_features:
 
 Generating orthogonal polynomial features
@@ -1335,7 +1336,7 @@ Consider the sequence of *Legendre* orthogonal polynomials
 
 We can transform input features to higher-order orthogonal polynomials, including
 interaction terms, using :class:`OrthogonalPolynomialFeatures`::
-    
+
     >>> import numpy as np
     >>> from sklearn.preprocessing import OrthogonalPolynomialFeatures
     >>> X = np.linspace(0, 1, num=6).reshape(3, 2)
@@ -1364,7 +1365,7 @@ using custom multiindex sets.
 Predefined multiindex set shapes
 --------------------------------
 
-In a first approach, :class:`OrthogonalPolynomialFeatures` take a combination of 
+In a first approach, :class:`OrthogonalPolynomialFeatures` take a combination of
 a ``degree``, a ``truncation`` rule, and optional ``weights``.
 
     >>> import numpy as np
@@ -1375,17 +1376,17 @@ a ``degree``, a ``truncation`` rule, and optional ``weights``.
     >>> a = np.zeros((5, 5), dtype=int)
     >>> for m in poly.multiindices_:
     ...     a[m[0], m[1]] = 1
-    ... 
+    ...
     >>> for row in a[::-1]:
     ...     for x in row:
     ...             print("x" if x else " ", end=" ")
     ...     print()
-    ... 
-    x          
-    x          
-    x x        
-    x x        
-    x x x 
+    ...
+    x
+    x
+    x x
+    x x
+    x x x
 
 There are 4 different types of predefined multiindex set shapes:
 
@@ -1399,7 +1400,7 @@ There are 4 different types of predefined multiindex set shapes:
   :math:`k` is the degree of the index set.
 - `total_degree`\ : the indices :math:`\boldsymbol{\ell} = \{\ell_j\}_{j=1}^d` in
   this index set satisfy
-    
+
     .. math::
         \sum_{j=1}^d \frac{\ell_j}{w_j} < k
 
@@ -1407,7 +1408,7 @@ There are 4 different types of predefined multiindex set shapes:
     the index set.
 - `hyperbolic_cross`\ : the indices :math:`\boldsymbol{\ell} =
   \{\ell_j\}_{j=1}^d` in this index set satisfy
-    
+
     .. math::
         \prod_{j=1}^d \left(\frac{\ell_j}{w_j} + 1\right) - 1 < k
 
@@ -1415,13 +1416,13 @@ There are 4 different types of predefined multiindex set shapes:
     the index set.
 - `Zaremba_cross`\ : the indices :math:`\boldsymbol{\ell} = \{\ell_j\}_{j=1}^d`
   in this index set satisfy
-    
+
     .. math::
         \prod_{j=1}^d \max\left(\frac{\ell_j}{w_j}, 1\right) < k
 
     where :math:`w_j` is the :math:`j`\ th weight and :math:`k` is the degree of
     the index set.
-    
+
 The weights allow us to select certain preferential features where higher-degree
 polynomials should be used. Below is an illustration of the (unweighted) multiindex set
 shapes for `degree=6`.
