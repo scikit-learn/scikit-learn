@@ -92,7 +92,7 @@ D = 1 / (3 * (1 + a) ** 2)
 V = prod(D + 1) - 1
 S = D / V
 df = DataFrame(
-    {"predicted": pce.main_sens(), "exact": S},
+    {"predicted": pce.main_sens().flatten(), "exact": S},
     index=[f"S{j}" for j in range(dimension)],
 )
 df["predicted"].plot.bar()

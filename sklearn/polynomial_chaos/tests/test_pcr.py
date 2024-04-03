@@ -354,11 +354,12 @@ def test_multi_output_statistics():
     pce = PolynomialChaosRegressor(degree=5)
 
     for j, y in enumerate([y1, y2]):
-        print(np.sum(pce.fit(X, Y).main_sens()[j] - pce.fit(X, y).main_sens()))
-
-    pce.fit(X, Y)
-    y_fit = pce.predict(X)
-    assert np.linalg.norm(Y - y_fit) < 1e-12
+        assert np.sum(pce.fit(X, Y).mean()[j] - pce.fit(X, y).mean()) < 1e-12
+        assert np.sum(pce.fit(X, Y).var()[j] - pce.fit(X, y).var()) < 1e-12
+        assert np.sum(pce.fit(X, Y).main_sens()[j] - pce.fit(X, y).main_sens()) < 1e-12
+        assert (
+            np.sum(pce.fit(X, Y).total_sens()[j] - pce.fit(X, y).total_sens()) < 1e-12
+        )
 
 
 ###############################################################################

@@ -125,7 +125,7 @@ S1 = (b * np.pi**4 / 5 + b**2 * np.pi**8 / 50 + 1 / 2) / var
 S2 = (a**2 / 8) / var
 S3 = 0
 df = DataFrame(
-    {"predicted": pce.main_sens(), "exact": [S1, S2, S3]},
+    {"predicted": pce.main_sens().flatten(), "exact": [S1, S2, S3]},
     index=["S1", "S2", "S3"],
 )
 df["predicted"].plot.bar()
@@ -150,7 +150,7 @@ S1_t = (1 / 2 * (1 + b * np.pi**4 / 5) ** 2 + 8 * b**2 * np.pi**8 / 225) / var
 S2_t = (a**2 / 8) / var
 S3_t = (8 * b**2 * np.pi**8 / 225) / var
 df = DataFrame(
-    {"predicted": pce.total_sens(), "exact": [S1_t, S2_t, S3_t]},
+    {"predicted": pce.total_sens().flatten(), "exact": [S1_t, S2_t, S3_t]},
     index=["S1_t", "S2_t", "S3_t"],
 )
 df["predicted"].plot.bar()

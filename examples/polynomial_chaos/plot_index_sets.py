@@ -68,9 +68,9 @@ from matplotlib.ticker import MaxNLocator
 
 def plot_coefficients(pce, ax, s=600):
     cmap = plt.get_cmap("Spectral_r")
-    cmi = min(np.abs(pce.coef_))
-    cma = max(np.abs(pce.coef_))
-    for idx, c in zip(pce.multiindices_, np.abs(pce.coef_)):
+    cmi = min(np.abs(pce.coef_.flatten()))
+    cma = max(np.abs(pce.coef_.flatten()))
+    for idx, c in zip(pce.multiindices_, np.abs(pce.coef_.flatten())):
         ax.scatter(*idx, color=cmap((c - cmi) / (cma - cmi)), marker="s", s=s)
     norm = Normalize(vmin=cmi, vmax=cma)
     plt.colorbar(

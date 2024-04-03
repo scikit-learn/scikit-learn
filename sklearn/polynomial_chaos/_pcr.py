@@ -4,6 +4,8 @@
 # License: BSD 3 clause
 
 # import statements
+from warnings import warn
+
 import numpy as np
 
 # qualified import statements
@@ -11,6 +13,7 @@ from scipy.stats import uniform
 
 # sklearn imports
 from ..base import BaseEstimator, RegressorMixin, _fit_context, clone
+from ..exceptions import DataConversionWarning
 from ..linear_model._base import LinearRegression
 from ..pipeline import Pipeline
 from ..preprocessing._orthogonal import OrthogonalPolynomialFeatures
@@ -117,13 +120,16 @@ class PolynomialChaosRegressor(BaseEstimator, RegressorMixin):
     n_features_in_ : int
         Number of features seen during :term:`fit`.
 
+    n_outputs_ : int
+        Number of outputs seen during :term:`fit`.
+
     norms_ : array-like of shape (n_terms,)
         The norm of each polynomial basis terms.
 
-    output_mean_ : float
+    output_mean_ : array-like of shape (n_outputs_,)
         The mean of the output (when `scale_outputs = True`).
 
-    output_std_ : float
+    output_std_ : array-like of shape (n_outputs_,)
         The standard deviation of the output (when `scale_outputs = True`).
 
     pipeline_ : sklearn.pipeline.Pipeline
@@ -221,7 +227,7 @@ class PolynomialChaosRegressor(BaseEstimator, RegressorMixin):
         """
         # check input features
         self.feature_names_in_ = _get_feature_names(X)
-        X, y = check_X_y(X, y, multi_output=True)
+        X, y = check_X_y(X, y, multi_output=True, y_numeric=True)
         self.n_features_in_ = X.shape[1]
 
         # cannot perform regression with less than 2 data points
@@ -264,6 +270,20 @@ class PolynomialChaosRegressor(BaseEstimator, RegressorMixin):
                 raise ValueError("make sure to set 'fit_intercept=False' in solver")
             solver = clone(self.solver)
 
+        # check outputs
+        y = np.atleast_1d(y)
+        if y.ndim == 2 and y.shape[1] == 1:
+            warn(
+                (
+                    "A column-vector y was passed when a 1d array was"
+                    " expected. Please change the shape of y to "
+                    "(n_samples,), for example using ravel()."
+                ),
+                DataConversionWarning,
+                stacklevel=2,
+            )
+        self.n_outputs_ = 1 if y.ndim == 1 else y.shape[1]
+
         # get orthogonal polynomials for each distribution
         self.polynomials_ = list()
         for distribution in self.distributions_:
@@ -279,16 +299,11 @@ class PolynomialChaosRegressor(BaseEstimator, RegressorMixin):
             )
 
         # scale outputs
-        self.n_features_out_ = 1 if y.ndim == 1 else y.shape[1]
         self.output_mean_ = (
-            np.mean(y, axis=0)
-            if self.scale_outputs
-            else np.full(self.n_features_out_, 0)
+            np.mean(y, axis=0) if self.scale_outputs else np.full(self.n_outputs_, 0)
         )
         self.output_std_ = (
-            np.std(y, axis=0)
-            if self.scale_outputs
-            else np.full(self.n_features_out_, 1)
+            np.std(y, axis=0) if self.scale_outputs else np.full(self.n_outputs_, 1)
         )
         y = y - self.output_mean_
         y = y / self.output_std_
@@ -335,7 +350,7 @@ class PolynomialChaosRegressor(BaseEstimator, RegressorMixin):
 
         Returns
         -------
-        y : ndarray of shape (n_samples,)
+        y : ndarray of shape (n_samples,) or (n_samples, n_outputs)
             Polynomial Chaos predictions in query points.
         """
         # check if this estimator is fitted
@@ -354,7 +369,7 @@ class PolynomialChaosRegressor(BaseEstimator, RegressorMixin):
             )
 
         y_fit = self.pipeline_.predict(X_scaled)
-        return y_fit * self.output_std_ + self.output_mean_
+        return np.squeeze(y_fit * self.output_std_ + self.output_mean_)
 
     def joint_sens(self, *features):
         r"""Return the joint sensivitivity indices.
@@ -399,7 +414,7 @@ class PolynomialChaosRegressor(BaseEstimator, RegressorMixin):
 
         Returns
         -------
-        sensitivity_index : (n_outputs, )
+        sensitivity_index : (n_outputs,)
             The joint sensitivity index for the given set of input features.
         """
         check_is_fitted(self)
@@ -425,7 +440,7 @@ class PolynomialChaosRegressor(BaseEstimator, RegressorMixin):
             raise ValueError(f"this model has only {self.n_features_in_} features")
 
         # actually compute the joint sensitivity index
-        joint_sens = np.zeros(self.n_features_out_)
+        joint_sens = np.zeros(self.n_outputs_)
         for j, index in enumerate(self.multiindices_):
             if np.sum(index != 0) == len(idcs) and all(i > 0 for i in index[idcs]):
                 joint_sens += (
@@ -492,7 +507,7 @@ class PolynomialChaosRegressor(BaseEstimator, RegressorMixin):
             The total-effectt Sobol sensitivity indices for all input features.
         """
         check_is_fitted(self)
-        total_sens = np.zeros((self.n_features_out_, self.n_features_in_))
+        total_sens = np.zeros((self.n_outputs_, self.n_features_in_))
         for i in range(self.n_features_in_):
             for j, index in enumerate(self.multiindices_):
                 if index[i] == 0:
@@ -521,7 +536,7 @@ class PolynomialChaosRegressor(BaseEstimator, RegressorMixin):
 
         Returns
         -------
-        mean : array-like (n_outputs, )
+        mean : array-like (n_outputs,)
             The approximation for the mean of the model output.
         """
         check_is_fitted(self)
@@ -550,7 +565,7 @@ class PolynomialChaosRegressor(BaseEstimator, RegressorMixin):
 
         Returns
         -------
-        var : array-like (n_outputs, )
+        var : array-like (n_outputs,)
             The approximation for the variance of the model output.
         """
         check_is_fitted(self)
