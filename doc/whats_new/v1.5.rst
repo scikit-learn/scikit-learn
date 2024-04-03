@@ -333,7 +333,7 @@ Changelog
   :pr:`28552` by :user:`Adam Li <adam2392>`.
 
 :mod:`sklearn.utils`
-...................
+....................
 
 - |Fix| :func:`multiclass._ovr_decision_function`
   now calcultes properly sum_of_confidences when confidences are provided as
