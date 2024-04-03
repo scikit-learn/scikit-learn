@@ -332,6 +332,14 @@ Changelog
   given the split condition.
   :pr:`28552` by :user:`Adam Li <adam2392>`.
 
+:mod:`sklearn.utils`
+...................
+
+- |Fix| :func:`multiclass._ovr_decision_function`
+  now calcultes properly sum_of_confidences when confidences are provided as
+  predicted probabilities.
+  :pr:`28739` by :user:`Luís Calado <LC1243>`.
+
 .. rubric:: Code and documentation contributors
 
 Thanks to everyone who has contributed to the maintenance and improvement of

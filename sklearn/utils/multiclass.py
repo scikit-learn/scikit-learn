@@ -508,7 +508,7 @@ def class_distribution(y, sample_weight=None):
     return (classes, n_classes, class_prior)
 
 
-def _ovr_decision_function(predictions, confidences, n_classes):
+def _ovr_decision_function(predictions, confidences, n_classes, probabilities_indexes):
     """Compute a continuous, tie-breaking OvR decision function from OvO.
 
     It is important to include a continuous value, not only votes,
@@ -526,6 +526,10 @@ def _ovr_decision_function(predictions, confidences, n_classes):
     n_classes : int
         Number of classes. n_classifiers must be
         ``n_classes * (n_classes - 1 ) / 2``.
+
+    probabilities_indexes: list of int with a maximum size of n_classes
+        Contains the indexes of the binary classifiers for which confidences
+        were provided as predicted probabilities.
     """
     n_samples = predictions.shape[0]
     votes = np.zeros((n_samples, n_classes))
@@ -537,7 +541,7 @@ def _ovr_decision_function(predictions, confidences, n_classes):
             # Handle confidences as probabilities
             # if probabilities are >= 0.5, (j is more probable) we should increase
             # the sum of confidences of j and decrease the sum of confidences of i
-            if np.max(confidences) <= 1.0 and np.min(confidences) >= 0:
+            if k in probabilities_indexes:
                 sum_of_confidences[confidences[:, k] >= 0.5, i] -= confidences[
                     confidences[:, k] >= 0.5, k
                 ]

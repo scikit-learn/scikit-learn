@@ -569,7 +569,11 @@ def test_ovr_decision_function():
 
     n_classes = 3
 
-    dec_values = _ovr_decision_function(predictions, confidences, n_classes)
+    probabilities_indexes = []
+
+    dec_values = _ovr_decision_function(
+        predictions, confidences, n_classes, probabilities_indexes
+    )
 
     # check that the decision values are within 0.5 range of the votes
     votes = np.array([[1, 0, 2], [1, 1, 1], [1, 0, 2], [1, 0, 2]])
@@ -589,7 +593,7 @@ def test_ovr_decision_function():
     # assert subset invariance.
     dec_values_one = [
         _ovr_decision_function(
-            np.array([predictions[i]]), np.array([confidences[i]]), n_classes
+            np.array([predictions[i]]), np.array([confidences[i]]), n_classes, []
         )[0]
         for i in range(4)
     ]
@@ -613,7 +617,11 @@ def test_ovr_decision_function_confidence_prob():
 
     n_classes = 3
 
-    dec_values = _ovr_decision_function(predictions, confidences, n_classes)
+    probabilities_indexes = list(range(n_classes))
+
+    dec_values = _ovr_decision_function(
+        predictions, confidences, n_classes, probabilities_indexes
+    )
 
     votes = np.array([[1, 0, 2], [1, 1, 1], [0, 2, 1], [1, 0, 2], [1, 1, 1]])
 
@@ -632,7 +640,10 @@ def test_ovr_decision_function_confidence_prob():
 
     dec_values_one = [
         _ovr_decision_function(
-            np.array([predictions[i]]), np.array([confidences[i]]), n_classes
+            np.array([predictions[i]]),
+            np.array([confidences[i]]),
+            n_classes,
+            probabilities_indexes,
         )[0]
         for i in range(5)
     ]
