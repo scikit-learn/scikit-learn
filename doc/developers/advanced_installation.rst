@@ -37,6 +37,7 @@ Note that first uninstalling scikit-learn might be required to be able to
 install nightly builds of scikit-learn.
 
 .. _install_bleeding_edge:
+.. _editable_mode:
 
 Building from source
 ====================
