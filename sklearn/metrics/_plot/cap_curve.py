@@ -1,5 +1,11 @@
-from ...utils._plotting import _BinaryClassifierCurveDisplayMixin
 import numpy as np
+import matplotlib.pyplot as plt
+
+from sklearn.datasets import make_classification
+from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import train_test_split
+
+from ...utils._plotting import _BinaryClassifierCurveDisplayMixin
 
 
 class CumulativeAccuracyDisplay(_BinaryClassifierCurveDisplayMixin):
@@ -40,8 +46,14 @@ class CumulativeAccuracyDisplay(_BinaryClassifierCurveDisplayMixin):
         Figure containing the curve.
     """
 
-    def __init__(self, *, cumulative_true_positives, cumulative_total, estimator_name=None, pos_label=None):
-        import numpy as np
+    def __init__(
+        self,
+        *,
+        cumulative_true_positives,
+        cumulative_total,
+        estimator_name=None,
+        pos_label=None,
+    ):
         self.estimator_name = estimator_name
         self.cumulative_true_positives = cumulative_true_positives
         self.cumulative_total = cumulative_total
@@ -51,7 +63,10 @@ class CumulativeAccuracyDisplay(_BinaryClassifierCurveDisplayMixin):
         self,
         ax=None,
         *,
+        normalize_scale=False,
         name=None,
+        plot_chance_level=False,
+        chance_level_kw=None,
         **kwargs,
     ):
         """Plot visualization.
@@ -75,12 +90,38 @@ class CumulativeAccuracyDisplay(_BinaryClassifierCurveDisplayMixin):
         display : :class:`~sklearn.metrics.CumulativeAccuracyDisplay`
             Object that stores computed values.
         """
+
         self.ax_, self.figure_, name = self._validate_plot_params(ax=ax, name=name)
+
+        if normalize_scale:
+            self.cumulative_true_positives = (
+                self.cumulative_true_positives / self.cumulative_true_positives[-1]
+            )
+            self.cumulative_total = self.cumulative_total / self.cumulative_total[-1]
+            self.ax_.set_xlim(0, 1)
+            self.ax_.set_ylim(0, 1)
 
         line_kwargs = {"label": name} if name is not None else {}
         line_kwargs.update(**kwargs)
 
-        (self.line_,) = self.ax_.plot(self.cumulative_total, self.cumulative_true_positives, **line_kwargs)
+        chance_level_line_kw = {
+            "label": "Random Prediction",
+            "color": "k",
+            "linestyle": "--",
+        }
+        if chance_level_kw is not None:
+            chance_level_line_kw.update(**chance_level_kw)
+
+        (self.line_,) = self.ax_.plot(
+            self.cumulative_total, self.cumulative_true_positives, **line_kwargs
+        )
+
+        if plot_chance_level:
+            (self.chance_level_,) = self.ax_.plot(
+                (0, 1), (0, 1), **chance_level_line_kw
+            )
+        else:
+            self.chance_level_ = None
 
         xlabel = "Total Cases Examined"
         ylabel = "Cumulative True Positives"
@@ -99,11 +140,14 @@ class CumulativeAccuracyDisplay(_BinaryClassifierCurveDisplayMixin):
         *,
         sample_weight=None,
         pos_label=None,
+        normalize_scale=False,
+        plot_chance_level=False,
         name=None,
         ax=None,
         **kwargs,
     ):
-        """Plot CAP curve given the true and predicted values.
+        """Plot CAP curve, also known as Gain or Lift Curve,
+            given the true and predicted values.
 
         Parameters
         ----------
@@ -138,14 +182,14 @@ class CumulativeAccuracyDisplay(_BinaryClassifierCurveDisplayMixin):
         display : :class:`~sklearn.metrics.CumulativeAccuracyDisplay`
             Object that stores computed values.
         """
-        # Validate and prepare data
+        # validate and prepare data
         if pos_label is None:
             pos_label = 1
         if sample_weight is None:
             sample_weight = np.ones_like(y_true, dtype=float)
 
         # ensure y_true is boolean for positive class identification
-        y_bool = (y_true == pos_label)
+        y_bool = y_true == pos_label
 
         # sort predictions and true values based on the predictions
         sorted_indices = np.argsort(y_pred)[::-1]
@@ -163,8 +207,13 @@ class CumulativeAccuracyDisplay(_BinaryClassifierCurveDisplayMixin):
             pos_label=pos_label,
         )
 
-        return viz.plot(ax=ax, name=name, **kwargs)
-    
+        return viz.plot(
+            ax=ax,
+            name=name,
+            normalize_scale=normalize_scale,
+            plot_chance_level=plot_chance_level,
+            **kwargs,
+        )
 
     @classmethod
     def from_estimator(
@@ -176,11 +225,14 @@ class CumulativeAccuracyDisplay(_BinaryClassifierCurveDisplayMixin):
         sample_weight=None,
         response_method="auto",
         pos_label=None,
+        normalize_scale=False,
+        plot_chance_level=False,
         name=None,
         ax=None,
         **kwargs,
     ):
-        """Create a CAP Curve display from an estimator.
+        """Create a CAP Curve, also known as Gain or Lift Curve,
+            display from an estimator.
 
         Parameters
         ----------
@@ -222,7 +274,7 @@ class CumulativeAccuracyDisplay(_BinaryClassifierCurveDisplayMixin):
         display : :class:`~sklearn.metrics.CumulativeAccuracyDisplay`
             The CAP Curve display.
         """
-        
+
         # validate and prepare the prediction scores
         if response_method == "auto":
             if hasattr(estimator, "predict_proba"):
@@ -230,11 +282,14 @@ class CumulativeAccuracyDisplay(_BinaryClassifierCurveDisplayMixin):
             elif hasattr(estimator, "decision_function"):
                 response_method = "decision_function"
             else:
-                raise ValueError("Estimator does not have a predict_proba or decision_function method.")
+                raise ValueError(
+                    "Estimator does not have a predict_proba or decision_function"
+                    " method."
+                )
 
         if response_method == "predict_proba":
             probabilities = estimator.predict_proba(X)
-            
+
             # assuming positive class is the second column
             if pos_label is None:
                 pos_label = 1
@@ -251,6 +306,8 @@ class CumulativeAccuracyDisplay(_BinaryClassifierCurveDisplayMixin):
             y_pred=y_pred,
             sample_weight=sample_weight,
             name=name,
+            normalize_scale=normalize_scale,
+            plot_chance_level=plot_chance_level,
             ax=ax,
             pos_label=pos_label,
             **kwargs,
@@ -258,17 +315,20 @@ class CumulativeAccuracyDisplay(_BinaryClassifierCurveDisplayMixin):
 
 
 
-import matplotlib.pyplot as plt
-from sklearn.datasets import make_classification
-from sklearn.model_selection import train_test_split
-from sklearn.linear_model import LogisticRegression
 
 X, y = make_classification(n_samples=1000, n_features=20, n_classes=2, random_state=42)
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.2, random_state=42
+)
 clf = LogisticRegression(max_iter=1000)
 clf.fit(X_train, y_train)
 y_scores = clf.decision_function(X_test)
 
-CumulativeAccuracyDisplay.from_predictions(y_test, y_scores, name='Logistic Regression')
-plt.title('CAP Curve using from_predictions')
+CumulativeAccuracyDisplay.from_predictions(
+    y_test,
+    y_scores,
+    normalize_scale=True,
+    plot_chance_level=True,
+    name="Logistic Regression",
+)
 plt.show()
