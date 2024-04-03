@@ -64,7 +64,7 @@ feature, code or documentation improvement).
 
    If you installed Python with conda, we recommend to create a dedicated
    `conda environment`_ with all the build dependencies of scikit-learn
-   (namely NumPy_, SciPy_, Cython_, Meson_ and Ninja_):
+   (namely NumPy_, SciPy_, Cython_, meson-python_ and Ninja_):
 
    .. prompt:: bash $
 
@@ -472,7 +472,7 @@ the base system and these steps will not be necessary.
 
 .. _OpenMP: https://en.wikipedia.org/wiki/OpenMP
 .. _Cython: https://cython.org
-.. _Meson: https://mesonbuild.com/
+.. _meson-python: https://mesonbuild.com/meson-python
 .. _Ninja: https://ninja-build.org/
 .. _NumPy: https://numpy.org
 .. _SciPy: https://www.scipy.org
