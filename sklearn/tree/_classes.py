@@ -466,7 +466,6 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         random_state : int
             Random seed.
         """
-
         n_samples = X.shape[0]
 
         # Build tree
@@ -572,6 +571,75 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         if self.n_outputs_ == 1 and is_classifier(self):
             self.n_classes_ = self.n_classes_[0]
             self.classes_ = self.classes_[0]
+
+        self._prune_tree()
+        return self
+
+    def _update_tree(self, X, y, sample_weight):
+        # Update tree
+        max_leaf_nodes = -1 if self.max_leaf_nodes is None else self.max_leaf_nodes
+        min_samples_split = self.min_samples_split_
+        min_samples_leaf = self.min_samples_leaf_
+        min_weight_leaf = self.min_weight_leaf_
+        # set decision-tree model parameters
+        max_depth = np.iinfo(np.int32).max if self.max_depth is None else self.max_depth
+
+        monotonic_cst = self.monotonic_cst_
+
+        # Build tree
+        # Note: this reconstructs the builder with the same state it had during the
+        # initial fit. This is necessary because the builder is not saved as part
+        # of the class, and thus the state may be lost if pickled/unpickled.
+        n_samples = X.shape[0]
+        criterion = self.criterion
+        if not isinstance(criterion, BaseCriterion):
+            if is_classifier(self):
+                criterion = CRITERIA_CLF[self.criterion](
+                    self.n_outputs_, self._n_classes_
+                )
+            else:
+                criterion = CRITERIA_REG[self.criterion](self.n_outputs_, n_samples)
+        else:
+            # Make a deepcopy in case the criterion has mutable attributes that
+            # might be shared and modified concurrently during parallel fitting
+            criterion = copy.deepcopy(criterion)
+
+        random_state = check_random_state(self.random_state)
+
+        SPLITTERS = SPARSE_SPLITTERS if issparse(X) else DENSE_SPLITTERS
+        splitter = SPLITTERS[self.splitter](
+            criterion,
+            self.max_features_,
+            min_samples_leaf,
+            min_weight_leaf,
+            random_state,
+            monotonic_cst,
+        )
+
+        # Use BestFirst if max_leaf_nodes given; use DepthFirst otherwise
+        if max_leaf_nodes < 0:
+            builder = DepthFirstTreeBuilder(
+                splitter,
+                min_samples_split,
+                min_samples_leaf,
+                min_weight_leaf,
+                max_depth,
+                self.min_impurity_decrease,
+                self.store_leaf_values,
+            )
+        else:
+            builder = BestFirstTreeBuilder(
+                splitter,
+                min_samples_split,
+                min_samples_leaf,
+                min_weight_leaf,
+                max_depth,
+                max_leaf_nodes,
+                self.min_impurity_decrease,
+                self.store_leaf_values,
+            )
+        builder.initialize_node_queue(self.tree_, X, y, sample_weight)
+        builder.build(self.tree_, X, y, sample_weight)
 
         self._prune_tree()
         return self
@@ -1375,71 +1443,7 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
         if getattr(y, "dtype", None) != DOUBLE or not y.flags.contiguous:
             y = np.ascontiguousarray(y, dtype=DOUBLE)
 
-        # Update tree
-        max_leaf_nodes = -1 if self.max_leaf_nodes is None else self.max_leaf_nodes
-        min_samples_split = self.min_samples_split_
-        min_samples_leaf = self.min_samples_leaf_
-        min_weight_leaf = self.min_weight_leaf_
-        # set decision-tree model parameters
-        max_depth = np.iinfo(np.int32).max if self.max_depth is None else self.max_depth
-
-        monotonic_cst = self.monotonic_cst_
-
-        # Build tree
-        # Note: this reconstructs the builder with the same state it had during the
-        # initial fit. This is necessary because the builder is not saved as part
-        # of the class, and thus the state may be lost if pickled/unpickled.
-        n_samples = X.shape[0]
-        criterion = self.criterion
-        if not isinstance(criterion, BaseCriterion):
-            if is_classifier(self):
-                criterion = CRITERIA_CLF[self.criterion](
-                    self.n_outputs_, self._n_classes_
-                )
-            else:
-                criterion = CRITERIA_REG[self.criterion](self.n_outputs_, n_samples)
-        else:
-            # Make a deepcopy in case the criterion has mutable attributes that
-            # might be shared and modified concurrently during parallel fitting
-            criterion = copy.deepcopy(criterion)
-
-        random_state = check_random_state(self.random_state)
-        SPLITTERS = SPARSE_SPLITTERS if issparse(X) else DENSE_SPLITTERS
-        splitter = SPLITTERS[self.splitter](
-            criterion,
-            self.max_features_,
-            min_samples_leaf,
-            min_weight_leaf,
-            random_state,
-            monotonic_cst,
-        )
-
-        # Use BestFirst if max_leaf_nodes given; use DepthFirst otherwise
-        if max_leaf_nodes < 0:
-            builder = DepthFirstTreeBuilder(
-                splitter,
-                min_samples_split,
-                min_samples_leaf,
-                min_weight_leaf,
-                max_depth,
-                self.min_impurity_decrease,
-                self.store_leaf_values,
-            )
-        else:
-            builder = BestFirstTreeBuilder(
-                splitter,
-                min_samples_split,
-                min_samples_leaf,
-                min_weight_leaf,
-                max_depth,
-                max_leaf_nodes,
-                self.min_impurity_decrease,
-                self.store_leaf_values,
-            )
-        builder.initialize_node_queue(self.tree_, X, y, sample_weight)
-        builder.build(self.tree_, X, y, sample_weight)
-
-        self._prune_tree()
+        self._update_tree(X, y, sample_weight)
 
         return self
 
