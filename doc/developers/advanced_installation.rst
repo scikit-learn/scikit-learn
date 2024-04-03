@@ -64,11 +64,11 @@ feature, code or documentation improvement).
 
    If you installed Python with conda, we recommend to create a dedicated
    `conda environment`_ with all the build dependencies of scikit-learn
-   (namely NumPy_, SciPy_, Cython_ and Meson_):
+   (namely NumPy_, SciPy_, Cython_, Meson_ and Ninja_):
 
    .. prompt:: bash $
 
-     conda create -n sklearn-env -c conda-forge python=3.9 numpy scipy cython meson-python
+     conda create -n sklearn-env -c conda-forge python=3.9 numpy scipy cython meson-python ninja
 
    It is not always necessary but it is safer to open a new prompt before
    activating the newly created conda environment.
@@ -87,7 +87,7 @@ feature, code or documentation improvement).
 
      python3 -m venv sklearn-env
      source sklearn-env/bin/activate
-     pip install wheel numpy scipy cython meson-python
+     pip install wheel numpy scipy cython meson-python ninja
 
 #. Install a compiler with OpenMP_ support for your platform. See instructions
    for :ref:`compiler_windows`, :ref:`compiler_macos`, :ref:`compiler_linux`
