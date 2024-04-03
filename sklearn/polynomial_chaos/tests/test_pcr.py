@@ -8,6 +8,7 @@ from numpy.polynomial.legendre import legroots
 from scipy.stats import beta, expon, norm, uniform
 
 # sklearn imports
+from sklearn.base import BaseEstimator
 from sklearn.datasets import make_friedman1
 from sklearn.linear_model import (
     ElasticNetCV,
@@ -16,6 +17,7 @@ from sklearn.linear_model import (
     OrthogonalMatchingPursuitCV,
 )
 from sklearn.model_selection import GridSearchCV, KFold
+from sklearn.multioutput import MultiOutputRegressor
 from sklearn.polynomial_chaos import PolynomialChaosRegressor
 from sklearn.utils import check_random_state
 
@@ -333,7 +335,7 @@ def test_joint_sens_inputs():
         pce.joint_sens("feature0")
 
 
-# Test multi output fit
+# Test multioutput fit
 def test_multi_output_fit():
     X = np.atleast_2d([1.0, 3.0, 5.0, 6.0, 7.0, 8.0]).T
     y1 = (X * np.sin(X)).ravel()
@@ -345,13 +347,13 @@ def test_multi_output_fit():
     assert np.linalg.norm(Y - y_fit) < 1e-12
 
 
-# Test multi output statistics
+# Test multioutput statistics
 def test_multi_output_statistics():
     X = np.atleast_2d([1.0, 3.0, 5.0, 6.0, 7.0, 8.0]).T
     y1 = (X * np.sin(X)).ravel()
     y2 = (X * np.cos(X)).ravel()
     Y = np.vstack([y1, y2]).T
-    pce = PolynomialChaosRegressor(degree=5)
+    pce = PolynomialChaosRegressor(degree=2)
 
     for j, y in enumerate([y1, y2]):
         assert np.sum(pce.fit(X, Y).mean()[j] - pce.fit(X, y).mean()) < 1e-12
@@ -360,6 +362,38 @@ def test_multi_output_statistics():
         assert (
             np.sum(pce.fit(X, Y).total_sens()[j] - pce.fit(X, y).total_sens()) < 1e-12
         )
+
+
+# Verify input checking for solver with multioutput
+def test_solver_multioutput():
+    X = np.atleast_2d([1.0, 3.0, 5.0, 6.0, 7.0, 8.0]).T
+    y1 = (X * np.sin(X)).ravel()
+    y2 = (X * np.cos(X)).ravel()
+    Y = np.vstack([y1, y2]).T
+
+    with pytest.raises(ValueError, match="fit_intercept=False"):
+        pce = PolynomialChaosRegressor(solver=LassoCV())
+        pce.fit(X, y1)
+
+    with pytest.raises(ValueError, match="fit_intercept=False"):
+        pce = PolynomialChaosRegressor(solver=MultiOutputRegressor(LassoCV()))
+        pce.fit(X, Y)
+
+    class DummySolver(BaseEstimator):
+        def fit(self, X, y):
+            self.coef_ = 0
+
+    with pytest.warns(UserWarning, match="fit_intercept=False"):
+        pce = PolynomialChaosRegressor(solver=DummySolver())
+        pce.fit(X, Y)
+
+    class DumbDummySolver(BaseEstimator):
+        def fit(self, X, y):
+            pass
+
+    with pytest.raises(ValueError, match="'coef_'"):
+        pce = PolynomialChaosRegressor(solver=DumbDummySolver())
+        pce.fit(X, Y)
 
 
 ###############################################################################

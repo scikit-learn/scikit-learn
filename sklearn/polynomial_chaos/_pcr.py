@@ -14,7 +14,8 @@ from scipy.stats import uniform
 # sklearn imports
 from ..base import BaseEstimator, RegressorMixin, _fit_context, clone
 from ..exceptions import DataConversionWarning
-from ..linear_model._base import LinearRegression
+from ..linear_model._base import LinearModel, LinearRegression
+from ..multioutput import MultiOutputRegressor
 from ..pipeline import Pipeline
 from ..preprocessing._orthogonal import OrthogonalPolynomialFeatures
 from ..utils._orthogonal_polynomial import Polynomial
@@ -265,9 +266,27 @@ class PolynomialChaosRegressor(BaseEstimator, RegressorMixin):
         # check solver
         if self.solver is None:
             solver = LinearRegression(fit_intercept=False)
-        else:  # isinstance(self.solver, LinearModel)
-            if self.solver.fit_intercept:  # force solvers to have fit_intercept
+        else:
+            # force solvers to have 'fit_intercept=False'
+            if (isinstance(self.solver, LinearModel) and self.solver.fit_intercept) or (
+                isinstance(self.solver, MultiOutputRegressor)
+                and self.solver.estimator.fit_intercept
+            ):
                 raise ValueError("make sure to set 'fit_intercept=False' in solver")
+            else:
+                if isinstance(self.solver, BaseEstimator):
+                    warn(
+                        (
+                            "cannot explicitly check the value of 'fit_intercept' in"
+                            " solver, please ensure 'fit_intercept=False'"
+                        ),
+                        UserWarning,
+                    )
+                else:
+                    raise ValueError(
+                        "solver must be an 'sklearn.BaseEstimator', got"
+                        f" '{type(self.solver)}'"
+                    )
             solver = clone(self.solver)
 
         # check outputs
@@ -275,9 +294,9 @@ class PolynomialChaosRegressor(BaseEstimator, RegressorMixin):
         if y.ndim == 2 and y.shape[1] == 1:
             warn(
                 (
-                    "A column-vector y was passed when a 1d array was"
-                    " expected. Please change the shape of y to "
-                    "(n_samples,), for example using ravel()."
+                    "a column-vector 'y' was passed when a 1d array was"
+                    " expected, please change the shape of 'y' to "
+                    "(n_samples,), for example using 'y.ravel()' or 'y.flatten()'"
                 ),
                 DataConversionWarning,
                 stacklevel=2,
@@ -328,10 +347,27 @@ class PolynomialChaosRegressor(BaseEstimator, RegressorMixin):
             # solve for coefficients
             self.pipeline_.fit(X_scaled, y)
 
-            # for convenient access to multiindices, norms and coefficients
+            # convenient access to multiindices and norms
             self.multiindices_ = self.pipeline_["basis"].multiindices_
             self.norms_ = self.pipeline_["basis"].norms_
-            self.coef_ = self.pipeline_["solver"].coef_
+
+            # convenient access to coefficients
+            if hasattr(self.pipeline_["solver"], "coef_"):
+                self.coef_ = self.pipeline_["solver"].coef_
+            elif hasattr(self.pipeline_["solver"], "estimators_"):
+                self.coef_ = np.vstack(
+                    [
+                        estimator.coef_
+                        for estimator in self.pipeline_["solver"].estimators_
+                    ]
+                )
+            else:
+                raise ValueError(
+                    "unable to access coefficients from solver, please make sure"
+                    " the solver is a 'LinearModel' with a 'coef_' attribute, or a"
+                    " 'MultiOutputRegressor' with an estimator that has a 'coef_'"
+                    " attribute"
+                )
 
             # do not update multiindices in last iteration
             if iter < max_iter - 1:
