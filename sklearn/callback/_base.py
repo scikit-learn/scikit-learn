@@ -72,7 +72,7 @@ class BaseCallback(ABC):
     @abstractmethod
     def on_fit_end(self, task_node):
         """Method called at the end of the fit method of the estimator.
-        
+
         Parameters
         ----------
         task_node : TaskNode instance
