@@ -14,7 +14,7 @@ class BaseCallback(ABC):
         Parameters
         ----------
         estimator : estimator instance
-            The estimator the callback is set on.
+            The estimator the callback is registered on.
 
         data : dict
             Dictionary containing the training and validation data. The possible
@@ -70,11 +70,14 @@ class BaseCallback(ABC):
         """
 
     @abstractmethod
-    def on_fit_end(self, task_node):
+    def on_fit_end(self, estimator, task_node):
         """Method called at the end of the fit method of the estimator.
 
         Parameters
         ----------
+        estimator : estimator instance
+            The estimator the callback is registered on.
+
         task_node : TaskNode instance
             The task node corresponding to the whole `fit` task. This is usually the
             root of the task tree of the estimator but it can be an intermediate node

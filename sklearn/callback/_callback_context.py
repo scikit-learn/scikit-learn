@@ -5,56 +5,70 @@ from ._task_tree import TaskNode
 
 
 class CallbackContext:
-    def __init__(self, callbacks):
+    def __init__(
+        self,
+        callbacks,
+        estimator_name="",
+        task_name="",
+        task_id=0,
+        max_tasks=1,
+        parent_task_node=None,
+        parent_estimator_task_node=None,
+    ):
         self.callbacks = callbacks
+        self.estimator_name = estimator_name
 
-    def eval_on_fit_begin(self, *, estimator, max_subtasks=0, data):
         self.task_node = TaskNode(
-            estimator_name=estimator.__class__.__name__,
-            name="fit",
-            max_subtasks=max_subtasks,
+            task_name=task_name,
+            task_id=task_id,
+            max_tasks=max_tasks,
+            estimator_name=self.estimator_name,
         )
 
-        parent_task_node = getattr(estimator, "_parent_task_node", None)
         if parent_task_node is not None:
-            self.task_node._merge_with(parent_task_node)
+            # This task is a subtask of another task of a same estimator
+            parent_task_node._add_child(self.task_node)
+        elif parent_estimator_task_node is not None:
+            # This task is the root task of the estimator which itself corresponds to
+            # a leaf task of a meta-estimator. Both tasks actually represent the same
+            # task so we merge both task nodes into a single task node, attaching the
+            # task tree of the sub-estimator to the task tree of the meta-estimator on
+            # the way.
+            self.task_node._merge_with(parent_estimator_task_node)
 
+    def subcontext(self, task_name="", task_id=0, max_tasks=1):
+        return CallbackContext(
+            callbacks=self.callbacks,
+            estimator_name=self.estimator_name,
+            task_name=task_name,
+            task_id=task_id,
+            max_tasks=max_tasks,
+            parent_task_node=self.task_node,
+        )
+
+    def eval_on_fit_begin(self, estimator, *, data):
         for callback in self.callbacks:
             # Only call the on_fit_begin method of callbacks that are not
             # propagated from a meta-estimator.
-            if not (callback.auto_propagate and parent_task_node is not None):
+            if not (callback.auto_propagate and self.task_node.parent is not None):
                 callback.on_fit_begin(estimator, data=data)
 
         return self
 
-    def eval_on_fit_iter_end(self, **kwargs):
+    def eval_on_fit_iter_end(self, estimator, **kwargs):
         return any(
-            callback.on_fit_iter_end(task_node=self.task_node, **kwargs)
+            callback.on_fit_iter_end(estimator, self.task_node, **kwargs)
             for callback in self.callbacks
         )
 
-    def eval_on_fit_end(self):
+    def eval_on_fit_end(self, estimator):
         for callback in self.callbacks:
             # Only call the on_fit_end method of callbacks that are not
             # propagated from a meta-estimator.
             if not (callback.auto_propagate and self.task_node.parent is not None):
-                callback.on_fit_end(task_node=self.task_node)
+                callback.on_fit_end(estimator, task_node=self.task_node)
 
-    def subcontext(self, task="", max_subtasks=0, idx=0, sub_estimator=None):
-        sub_ctx = CallbackContext(callbacks=self.callbacks)
-
-        sub_ctx.task_node = self.task_node._add_child(
-            name=task,
-            max_subtasks=max_subtasks,
-            idx=idx,
-        )
-
-        if sub_estimator is not None:
-            sub_ctx._propagate_callbacks(sub_estimator=sub_estimator)
-
-        return sub_ctx
-
-    def _propagate_callbacks(self, sub_estimator):
+    def propagate_callbacks(self, sub_estimator):
         bad_callbacks = [
             callback.__class__.__name__
             for callback in getattr(sub_estimator, "_skl_callbacks", [])
@@ -76,8 +90,10 @@ class CallbackContext:
         if not callbacks_to_propagate:
             return
 
-        sub_estimator._parent_task_node = self.task_node
+        sub_estimator._parent_estimator_task_node = self.task_node
 
         sub_estimator._set_callbacks(
             getattr(sub_estimator, "_skl_callbacks", []) + callbacks_to_propagate
         )
+
+        return self

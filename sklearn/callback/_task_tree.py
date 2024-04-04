@@ -7,89 +7,93 @@ class TaskNode:
 
     Parameters
     ----------
+    task_name : str
+        The name of the task this node represents.
+
+    task_id : int
+        The index of this node among its siblings. None means this is the root.
+        An identifier for this task that distinguishes it from its siblings.
+
+    max_tasks : int or None
+        The maximum number of its siblings. 0 means it's a leaf.
+        None means the maximum number of siblings is not known in advance.
+
     estimator_name : str
         The name of the estimator this task node belongs to.
 
-    name : str, default=None
-        The name of the task this node represents.
-
-    max_subtasks : int or None, default=0
-        The maximum number of its children. 0 means it's a leaf.
-        None means the number of children is not known in advance.
-
-    idx : int, default=None
-        The index of this node among its siblings. None means this is the root.
-
-    parent : TaskNode instance, default=None
-        The parent node. None means this is the root.
-
-        Note that the root task of an estimator can become an intermediate node
-        of a meta-estimator.
-
     Attributes
     ----------
-    children : dict
-        A mapping from the index of a child to the child node `{idx: TaskNode}`.
+    parent : TaskNode instance or None
+        The parent node. None means this is the root.
+
+        Note that it's dynamic since the root task of an estimator can become an
+        intermediate node of a meta-estimator.
+
+    children_map : dict
+        A mapping from the task_id of a child to the child node `{task_id: TaskNode}`.
         For a leaf, it's an empty dictionary.
+
+    max_subtasks : int or None
+        The maximum number of subtasks of this node. 0 means it's a leaf. None
+        means the maximum number of subtasks is not known in advance.
+
+    prev_estimator_name : str or None
+        The estimator name of the node this node was merged with. None if was not
+        merged with another node.
+
+    prev_task_name : str
+        The task name of the node this node was merged with. None if was not
+        merged with another node.
     """
 
-    def __init__(
-        self,
-        estimator_name,
-        name="fit",
-        max_subtasks=0,
-        idx=None,
-        parent=None,
-    ):
-        # estimator_name and name are tuples because an estimator can be
-        # a sub-estimator of a meta-estimator. In that case, the root of the task
-        # tree of the sub-estimator and a leaf of the task tree of the
-        # meta-estimator correspond to the same computation step. Therefore, both
-        # nodes are merged into a single node, retaining the information of both.
-        self.estimator_name = (estimator_name,)
-        self.name = (name,)
+    def __init__(self, *, task_name, task_id, max_tasks, estimator_name):
+        self.task_name = task_name
+        self.task_id = task_id
+        self.max_tasks = max_tasks
+        self.estimator_name = estimator_name
 
-        self.max_subtasks = max_subtasks
-        self.idx = idx
-        self.parent = parent
+        self.parent = None
+        self.children_map = {}
+        self.max_subtasks = 0
 
-        # Children stored in a dict indexed by their idx for easy access because the
-        # order in which self.children is populated is not guaranteed to follow the
-        # order of the idx du to parallelism.
-        self.children = {}
+        # When an estimator is a sub-estimator of a meta-estimator, the root task of
+        # the estimator is merged with the corresponding leaf task of the
+        # meta-estimator because both correspond to the same computation step.
+        # The root task of the estimator takes the place of the leaf task of the
+        # meta-estimator in the task tree but we keep the information about the
+        # leaf task it was merged with to fully describe the merged node.
+        self.prev_estimator_name = None
+        self.prev_task_name = None
 
-    def _add_child(self, *, name, max_subtasks, idx):
-        if idx in self.children:
+    def _add_child(self, task_node):
+        if task_node.task_id in self.children_map:
             raise ValueError(
-                f"Child of task node {self.name} of estimator {self.estimator_name} "
-                f"with index {idx} already exists."
+                f"Task node {self.task_name} of estimator {self.estimator_name} "
+                f"already has a child with task_id={task_node.task_id}."
             )
 
-        if len(self.children) == self.max_subtasks:
+        if len(self.children_map) == task_node.max_tasks:
             raise ValueError(
-                f"Cannot add child to task node {self.name} of estimator "
+                f"Cannot add child to task node {self.task_name} of estimator "
                 f"{self.estimator_name} because it already has its maximum "
-                f"number of children ({self.max_subtasks})."
+                f"number of children ({task_node.max_tasks})."
             )
 
-        child = TaskNode(
-            estimator_name=self.estimator_name[-1],
-            name=name,
-            max_subtasks=max_subtasks,
-            idx=idx,
-            parent=self,
-        )
-        self.children[idx] = child
-
-        return child
+        self.children_map[task_node.task_id] = task_node
+        self.max_subtasks = task_node.max_tasks
+        task_node.parent = self
 
     def _merge_with(self, task_node):
+        # Set the parent of the sub-estimator's root task node to the parent
+        # of the meta-estimator's leaf task node
         self.parent = task_node.parent
-        self.idx = task_node.idx
-        task_node.parent.children[self.idx] = self
+        self.task_id = task_node.task_id
+        self.max_tasks = task_node.max_tasks
+        task_node.parent.children_map[self.task_id] = self
 
-        self.name = task_node.name + self.name
-        self.estimator_name = task_node.estimator_name + self.estimator_name
+        # Keep information about the node it was merged with
+        self.prev_task_name = task_node.task_name
+        self.prev_estimator_name = task_node.estimator_name
 
     @property
     def depth(self):
@@ -104,5 +108,5 @@ class TaskNode:
     def __iter__(self):
         """Pre-order depth-first traversal"""
         yield self
-        for node in self.children.values():
-            yield from node
+        for task_node in self.children_map.values():
+            yield from task_node

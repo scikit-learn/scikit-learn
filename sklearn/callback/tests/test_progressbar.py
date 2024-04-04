@@ -22,7 +22,7 @@ def test_progressbar(n_jobs, prefer, InnerEstimator, capsys):
     est = InnerEstimator()
     meta_est = MetaEstimator(est, n_jobs=n_jobs, prefer=prefer)
     meta_est._set_callbacks(ProgressBar())
-    meta_est.fit(None, None)
+    meta_est.fit()
 
     captured = capsys.readouterr()
 
@@ -30,7 +30,10 @@ def test_progressbar(n_jobs, prefer, InnerEstimator, capsys):
     for i in range(4):
         assert re.search(rf"MetaEstimator - outer #{i}", captured.out)
     for i in range(3):
-        assert re.search(rf"MetaEstimator - inner #{i} | Estimator - fit", captured.out)
+        assert re.search(
+            rf"MetaEstimator - inner #{i} | {est.__class__.__name__} - fit",
+            captured.out,
+        )
 
     # Check that all bars are 100% complete
     assert re.search(r"100%", captured.out)

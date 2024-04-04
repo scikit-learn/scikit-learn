@@ -16,15 +16,15 @@ class ProgressBar(BaseCallback):
     def __init__(self):
         check_rich_support("Progressbar")
 
-    def on_fit_begin(self, estimator, data):
+    def on_fit_begin(self, estimator, *, data):
         self._queue = Manager().Queue()
         self.progress_monitor = _RichProgressMonitor(queue=self._queue)
         self.progress_monitor.start()
 
-    def on_fit_iter_end(self, *, task_node, **kwargs):
+    def on_fit_iter_end(self, estimator, task_node, **kwargs):
         self._queue.put(task_node)
 
-    def on_fit_end(self, *, task_node):
+    def on_fit_end(self, estimator, task_node):
         self._queue.put(task_node)
         self._queue.put(None)
         self.progress_monitor.join()
@@ -92,7 +92,7 @@ class _RichProgressMonitor(Thread):
 
     def _update_task_tree(self, task_node):
         """Update the tree of tasks from a new node."""
-        curr_rich_task, parent_task = None, None
+        curr_rich_task, parent_rich_task = None, None
 
         for curr_node in task_node.path:
             if curr_node.parent is None:  # root node
@@ -101,14 +101,14 @@ class _RichProgressMonitor(Thread):
                         curr_node, progress_ctx=self.progress_ctx
                     )
                 curr_rich_task = self.root_rich_task
-            elif curr_node.idx not in parent_task.children:
+            elif curr_node.task_id not in parent_rich_task.children:
                 curr_rich_task = RichTaskNode(
-                    curr_node, progress_ctx=self.progress_ctx, parent=parent_task
+                    curr_node, progress_ctx=self.progress_ctx, parent=parent_rich_task
                 )
-                parent_task.children[curr_node.idx] = curr_rich_task
+                parent_rich_task.children[curr_node.task_id] = curr_rich_task
             else:  # task already exists
-                curr_rich_task = parent_task.children[curr_node.idx]
-            parent_task = curr_rich_task
+                curr_rich_task = parent_rich_task.children[curr_node.task_id]
+            parent_rich_task = curr_rich_task
 
         # Mark the deepest task as finished (this is the one corresponding to the
         # computation node that we just get from the queue).
@@ -170,7 +170,6 @@ class RichTaskNode:
     """
 
     def __init__(self, task_node, progress_ctx, parent=None):
-        self.node_idx = task_node.idx
         self.parent = parent
         self.children = {}
         self.finished = False
@@ -188,13 +187,15 @@ class RichTaskNode:
         indent = f"{'  ' * (task_node.depth)}"
         style = f"[{colors[(task_node.depth)%len(colors)]}]"
 
-        description = f"{task_node.estimator_name[0]} - {task_node.name[0]}"
-        if task_node.parent is not None:
-            description += f" #{task_node.idx}"
-        if len(task_node.estimator_name) == 2:
-            description += f" | {task_node.estimator_name[1]} - {task_node.name[1]}"
+        task_desc = f"{task_node.estimator_name} - {task_node.task_name}"
+        id_mark = f" #{task_node.task_id}" if task_node.parent is not None else ""
+        prev_task_desc = (
+            f"{task_node.prev_estimator_name} - {task_node.prev_task_name} | "
+            if task_node.prev_estimator_name is not None
+            else ""
+        )
 
-        return f"{style}{indent}{description}"
+        return f"{style}{indent}{prev_task_desc}{task_desc}{id_mark}"
 
     def __iter__(self):
         """Pre-order depth-first traversal, excluding leaves."""

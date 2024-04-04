@@ -697,17 +697,30 @@ class BaseEstimator(_HTMLDocumentationLinkMixin, _MetadataRequester):
 
         return self
 
-    def _init_callback_context(self):
+    def _init_callback_context(self, task_name="fit"):
         """Initialize the callback context for the estimator.
+
+        Parameters
+        ----------
+        task_name : str, default='fit'
+            The name of the root task.
 
         Returns
         -------
         callback_fit_ctx : CallbackContext
             The callback context for the estimator.
         """
+        # We don't initialize the callback context during _set_callbacks but in fit
+        # because in the future we might want to have callbacks in predict/transform
+        # which would require their own context.
 
         self._callback_fit_ctx = CallbackContext(
             callbacks=getattr(self, "_skl_callbacks", []),
+            estimator_name=self.__class__.__name__,
+            task_name=task_name,
+            parent_estimator_task_node=getattr(
+                self, "_parent_estimator_task_node", None
+            ),
         )
 
         return self._callback_fit_ctx
@@ -1517,7 +1530,7 @@ def _fit_context(*, prefer_skip_nested_validation):
                 try:
                     return fit_method(estimator, *args, **kwargs)
                 finally:
-                    estimator._callback_fit_ctx.eval_on_fit_end()
+                    estimator._callback_fit_ctx.eval_on_fit_end(estimator=estimator)
 
         return wrapper
 
