@@ -1,9 +1,4 @@
 import numpy as np
-import matplotlib.pyplot as plt
-
-from sklearn.datasets import make_classification
-from sklearn.linear_model import LogisticRegression
-from sklearn.model_selection import train_test_split
 
 from ...utils._plotting import _BinaryClassifierCurveDisplayMixin
 
@@ -146,8 +141,10 @@ class CumulativeAccuracyDisplay(_BinaryClassifierCurveDisplayMixin):
         ax=None,
         **kwargs,
     ):
-        """Plot CAP curve, also known as Gain or Lift Curve,
-            given the true and predicted values.
+        """Plot the Cumulative Accuracy Profile.
+
+        This is also known as a Gain or Lift Curve for classification, and a Lorenz
+        curve for regression with a positively valued target.
 
         Parameters
         ----------
@@ -231,8 +228,10 @@ class CumulativeAccuracyDisplay(_BinaryClassifierCurveDisplayMixin):
         ax=None,
         **kwargs,
     ):
-        """Create a CAP Curve, also known as Gain or Lift Curve,
-            display from an estimator.
+        """Create the Cumulative Accuracy Profile.
+
+        This is also known as a Gain or Lift Curve for classification, and a Lorenz
+        curve for regression with a positively valued target.
 
         Parameters
         ----------
@@ -312,23 +311,3 @@ class CumulativeAccuracyDisplay(_BinaryClassifierCurveDisplayMixin):
             pos_label=pos_label,
             **kwargs,
         )
-
-
-
-
-X, y = make_classification(n_samples=1000, n_features=20, n_classes=2, random_state=42)
-X_train, X_test, y_train, y_test = train_test_split(
-    X, y, test_size=0.2, random_state=42
-)
-clf = LogisticRegression(max_iter=1000)
-clf.fit(X_train, y_train)
-y_scores = clf.decision_function(X_test)
-
-CumulativeAccuracyDisplay.from_predictions(
-    y_test,
-    y_scores,
-    normalize_scale=True,
-    plot_chance_level=True,
-    name="Logistic Regression",
-)
-plt.show()
