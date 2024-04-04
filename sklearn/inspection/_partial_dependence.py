@@ -550,16 +550,16 @@ def partial_dependence(
         For classical regression and binary classification `n_outputs==1`.
         `n_values_feature_j` corresponds to the size `grid_values[j]`.
 
-    Notes
-    -----
-    For regressors the averaged predictions returned by `'brute'` method differ
-    from the results returned `'recursive'` method. For classifiers
-    the same results are guaranteed when `response_method='decision_function'`.
-
     See Also
     --------
     PartialDependenceDisplay.from_estimator : Plot Partial Dependence.
     PartialDependenceDisplay : Partial Dependence visualization.
+
+    Notes
+    -----
+    For regressors the averaged predictions returned by `'brute'` method differ
+    from the results returned by `'recursive'` method. For classifiers
+    the same results are guaranteed when `response_method='decision_function'`.
 
     Examples
     --------
