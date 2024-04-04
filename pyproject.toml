@@ -34,11 +34,11 @@ classifiers=[
 ]
 
 [project.urls]
-HomePage = "https://scikit-learn.org"
-Repository = "https://github.com/scikit-learn/scikit-learn"
-DownloadURL = "https://pypi.org/project/scikit-learn/#files"
-Issues = "https://github.com/scikit-learn/scikit-learn/issues"
-Changelog = "https://scikit-learn.org/stable/whats_new"
+homepage = "https://scikit-learn.org"
+source = "https://github.com/scikit-learn/scikit-learn"
+download = "https://pypi.org/project/scikit-learn/#files"
+tracker = "https://github.com/scikit-learn/scikit-learn/issues"
+"release notes" = "https://scikit-learn.org/stable/whats_new"
 
 [project.optional-dependencies]
 build = ["numpy>=1.19.5", "scipy>=1.6.0", "cython>=3.0.9", "meson-python>=0.15.0"]
