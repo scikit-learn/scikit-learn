@@ -1348,12 +1348,6 @@ def fbeta_score(
     averaged depending on the `average` parameter. Use `labels` specify the set of
     labels to calculate F-beta score for.
 
-    F-beta score is not implemented as a named scorer that can be
-    passed to the `scoring` parameter directly; :func:`make_scorer`
-    needs to be used first instead to create a callable object to then
-    pass to the `scoring` parameter, e.g. like: ``fbeta_scorer =
-    make_scorer(fbeta_score, beta=2)``
-
     Read more in the :ref:`User Guide <precision_recall_f_measure_metrics>`.
 
     Parameters
@@ -1443,6 +1437,11 @@ def fbeta_score(
     returns 0.0 and raises ``UndefinedMetricWarning``. This behavior can be
     modified by setting ``zero_division``.
 
+    F-beta score is not implemented as a named scorer that can be
+    passed to the `scoring` parameter directly; :func:`make_scorer`
+    needs to be used first instead to create a callable object to then
+    pass to the `scoring` parameter, see examples for details.
+
     References
     ----------
     .. [1] R. Baeza-Yates and B. Ribeiro-Neto (2011).
@@ -1470,6 +1469,16 @@ def fbeta_score(
     ...             average="macro", zero_division=np.nan, beta=0.5)
     0.12...
 
+    In order to use :func:`fbeta_scorer` as a scorer, a callable
+    scorer objects needs to be created first with :func:`make_scorer`,
+    passing the value for the `beta` parameter.
+
+    >>> from sklearn.metrics import fbeta_score, make_scorer
+    >>> ftwo_scorer = make_scorer(fbeta_score, beta=2)
+    >>> from sklearn.model_selection import GridSearchCV
+    >>> from sklearn.svm import LinearSVC
+    >>> grid = GridSearchCV(LinearSVC(dual="auto"), param_grid={'C': [1, 10]},
+    ...                     scoring=ftwo_scorer, cv=5)
     """
 
     _, _, f, _ = precision_recall_fscore_support(
