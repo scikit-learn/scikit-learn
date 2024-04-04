@@ -538,6 +538,7 @@ def test_check_array_api_input():
             "BrokenArrayAPI",
             BrokenArrayAPI(),
             array_namespace="array_api_strict",
+            skips={},
             check_values=True,
         )
 
