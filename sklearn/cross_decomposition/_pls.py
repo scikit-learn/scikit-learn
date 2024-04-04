@@ -441,7 +441,7 @@ class _PLS(
 
         return x_scores
 
-    def inverse_transform(self, Xt, y=None, X=None, Y=None):
+    def inverse_transform(self, Xt=None, y=None, X=None, Y=None):
         """Transform data back to its original space.
 
         Parameters
@@ -450,16 +450,16 @@ class _PLS(
             New data, where `n_samples` is the number of samples
             and `n_components` is the number of pls components.
 
+        y : array-like of shape (n_samples,) or (n_samples, n_components)
+            New target, where `n_samples` is the number of samples
+            and `n_components` is the number of pls components.
+
         X : array-like of shape (n_samples, n_components)
             New data, where `n_samples` is the number of samples
             and `n_components` is the number of pls components.
 
             .. deprecated:: 1.5
                 `X` is deprecated in 1.5 and will be removed in 1.7. Use `Xt` instead.
-
-        y : array-like of shape (n_samples,) or (n_samples, n_components)
-            New target, where `n_samples` is the number of samples
-            and `n_components` is the number of pls components.
 
         Y : array-like of shape (n_samples, n_components)
             New target, where `n_samples` is the number of samples

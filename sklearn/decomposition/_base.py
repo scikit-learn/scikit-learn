@@ -156,7 +156,7 @@ class _BasePCA(
             X_transformed /= xp.sqrt(self.explained_variance_)
         return X_transformed
 
-    def inverse_transform(self, Xt, X=None):
+    def inverse_transform(self, Xt=None, X=None):
         """Transform data back to its original space.
 
         In other words, return an input `X_original` whose transform would be Xt.
