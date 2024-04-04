@@ -2,6 +2,7 @@
 Testing Recursive feature elimination
 """
 
+import warnings
 from operator import attrgetter
 
 import numpy as np
@@ -24,7 +25,6 @@ from sklearn.svm import SVC, SVR, LinearSVR
 from sklearn.utils import check_random_state
 from sklearn.utils._testing import ignore_warnings
 from sklearn.utils.fixes import CSR_CONTAINERS
-import warnings
 
 
 class MockClassifier:

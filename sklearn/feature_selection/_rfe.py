@@ -6,12 +6,12 @@
 
 """Recursive feature elimination for feature ranking"""
 
+import warnings
 from numbers import Integral
 
 import numpy as np
 from joblib import effective_n_jobs
 
-import warnings
 from ..base import BaseEstimator, MetaEstimatorMixin, _fit_context, clone, is_classifier
 from ..metrics import check_scoring
 from ..model_selection import check_cv
