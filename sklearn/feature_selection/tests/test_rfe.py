@@ -688,8 +688,8 @@ def test_rfe_n_features_to_select_warning(ClsRFE):
         assert any(issubclass(warning.category, UserWarning) for warning in w)
         # Check if the warning message is correct
         assert any(
-            "features_to_select shouldn't be greater than the number of available"
-            " features"
+            "n_features_to_select must not exceed available features."
+            " Falling back to select all n_features."
             in str(warning.message)
             for warning in w
         )
