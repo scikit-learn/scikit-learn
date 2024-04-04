@@ -104,26 +104,6 @@ Scoring                                Function                                 
 'neg_mean_absolute_percentage_error'   :func:`metrics.mean_absolute_percentage_error`
 ====================================   ==============================================     ==================================
 
-The following metrics functions are not implemented as named
-scorers. They cannot be passed to the ``scoring`` parameters; instead
-their callable needs to be passed to :func:`make_scorer` together with the
-value of the user-settable parameters. See :ref:`scoring` for more
-details on :func:`make_scorer` usage.
-
-=====================================  =========  ==============================================
-Function                               Parameter  Example usage
-=====================================  =========  ==============================================
-**Classification**
-:func:`metrics.fbeta_score`            ``beta``   ``make_scorer(fbeta_score, beta=2)``
-
-**Regression**
-:func:`metrics.mean_tweedie_deviance`  ``power``  ``make_scorer(mean_tweedie_deviance, power=1.5)``
-:func:`metrics.mean_pinball_loss`      ``alpha``  ``make_scorer(mean_pinball_loss, alpha=0.95)``
-:func:`metrics.d2_tweedie_score`       ``power``  ``make_scorer(d2_tweedie_score, power=1.5)``
-:func:`metrics.d2_pinball_score`       ``alpha``  ``make_scorer(d2_pinball_score, alpha=0.95)``
-=====================================  =========  ==============================================
-
-
 Usage examples:
 
     >>> from sklearn import svm, datasets
@@ -146,24 +126,25 @@ Usage examples:
 Defining your scoring strategy from metric functions
 -----------------------------------------------------
 
-The module :mod:`sklearn.metrics` also exposes a set of simple functions
-measuring a prediction error given ground truth and prediction:
-
-- functions ending with ``_score`` return a value to
-  maximize, the higher the better.
-
-- functions ending with ``_error``, ``_loss``, or ``_deviance`` return a
-  value to minimize, the lower the better.  When converting
-  into a scorer object using :func:`make_scorer`, set
-  the ``greater_is_better`` parameter to ``False`` (``True`` by default; see the
-  parameter description below).
-
-Many metrics are not given names to be used as ``scoring`` values,
+The following metrics functions are not implemented as named scorers,
 sometimes because they require additional parameters, such as
-:func:`fbeta_score`. In such cases, you need to generate an appropriate
-scoring object.  The simplest way to generate a callable object for scoring
-is by using :func:`make_scorer`. That function converts metrics
-into callables that can be used for model evaluation.
+:func:`fbeta_score`. They cannot be passed to the ``scoring``
+parameters; instead their callable needs to be passed to
+:func:`make_scorer` together with the value of the user-settable
+parameters.
+
+=====================================  =========  ==============================================
+Function                               Parameter  Example usage
+=====================================  =========  ==============================================
+**Classification**
+:func:`metrics.fbeta_score`            ``beta``   ``make_scorer(fbeta_score, beta=2)``
+
+**Regression**
+:func:`metrics.mean_tweedie_deviance`  ``power``  ``make_scorer(mean_tweedie_deviance, power=1.5)``
+:func:`metrics.mean_pinball_loss`      ``alpha``  ``make_scorer(mean_pinball_loss, alpha=0.95)``
+:func:`metrics.d2_tweedie_score`       ``power``  ``make_scorer(d2_tweedie_score, power=1.5)``
+:func:`metrics.d2_pinball_score`       ``alpha``  ``make_scorer(d2_pinball_score, alpha=0.95)``
+=====================================  =========  ==============================================
 
 One typical use case is to wrap an existing metric function from the library
 with non-default values for its parameters, such as the ``beta`` parameter for
@@ -175,6 +156,18 @@ the :func:`fbeta_score` function::
     >>> from sklearn.svm import LinearSVC
     >>> grid = GridSearchCV(LinearSVC(dual="auto"), param_grid={'C': [1, 10]},
     ...                     scoring=ftwo_scorer, cv=5)
+
+The module :mod:`sklearn.metrics` also exposes a set of simple functions
+measuring a prediction error given ground truth and prediction:
+
+- functions ending with ``_score`` return a value to
+  maximize, the higher the better.
+
+- functions ending with ``_error``, ``_loss``, or ``_deviance`` return a
+  value to minimize, the lower the better.  When converting
+  into a scorer object using :func:`make_scorer`, set
+  the ``greater_is_better`` parameter to ``False`` (``True`` by default; see the
+  parameter description below).
 
 
 |details-start|
