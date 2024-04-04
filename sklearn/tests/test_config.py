@@ -201,3 +201,25 @@ def test_config_array_api_dispatch_error_numpy(monkeypatch):
 
     with pytest.raises(ImportError, match="NumPy must be 1.21 or newer"):
         set_config(array_api_dispatch=True)
+
+
+def test_array_api_compat_too_old(monkeypatch):
+    orig_import = builtins.__import__
+
+    def mocked_import(name, *args, **kwargs):
+        if name == "array_api_compat":
+
+            class _MockArrayAPICompat:
+                __version__ = "1.4.0"
+
+            return _MockArrayAPICompat()
+        return orig_import(name, *args, **kwargs)
+
+    monkeypatch.setattr(builtins, "__import__", mocked_import)
+
+    with pytest.raises(ImportError, match="array-api-compat must be 1.5.1 or newer"):
+        with config_context(array_api_dispatch=True):
+            pass
+
+    with pytest.raises(ImportError, match="array-api-compat must be 1.5.1 or newer"):
+        set_config(array_api_dispatch=True)

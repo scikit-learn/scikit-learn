@@ -877,10 +877,10 @@ def check_array_api_input(
     name,
     estimator_orig,
     array_namespace,
+    skips,
     device=None,
     dtype_name="float64",
     check_values=False,
-    skips={},
 ):
     """Check that the estimator can work consistently with the Array API
 
@@ -889,8 +889,11 @@ def check_array_api_input(
 
     When check_values is True, it also checks that calling the estimator on the
     array_api Array gives the same results as ndarrays.
+
+    skips is a dictionary mapping the name of the array_namespace to skip to
+    the names of the methods to skip (for estimators), or the string "all"
+    (to skip all methods for this estimator)
     """
-    print(name)
     if skips.get(array_namespace) == "all":
         raise SkipTest(f"{array_namespace} is not array-API compliant for {name}")
 
