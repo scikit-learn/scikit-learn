@@ -721,4 +721,4 @@ def test_label_encoder_array_api_compliance(
     estimator, check, array_namespace, device, dtype
 ):
     name = estimator.__class__.__name__
-    check(name, estimator, array_namespace, device=device, dtype=dtype)
+    check(name, estimator, array_namespace, device=device, dtype_name=dtype)
