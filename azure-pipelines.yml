@@ -126,9 +126,8 @@ jobs:
     # Need to match Python version and Emscripten version for the correct
     # Pyodide version. For example, for Pyodide version 0.25.0, see
     # https://github.com/pyodide/pyodide/blob/0.25.0/Makefile.envs
-    PYODIDE_VERSION: '0.25.0'
+    PYODIDE_VERSION: '0.25.1'
     EMSCRIPTEN_VERSION: '3.1.46'
-    PYTHON_VERSION: '3.11.3'
 
   dependsOn: [git_commit, linting]
   condition: |
