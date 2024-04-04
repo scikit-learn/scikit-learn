@@ -400,20 +400,16 @@ class FixedWindowSlicer(BaseScoreSlicer):
 class FavorabilityRanker:
     """The FavorabilityRanker class provides a mechanism for ranking hyperparameters
     based on user-specified favorability rules. Favorability can be defined in terms
-    of numerical lower-is-better, a specific order for categorical variables, or
-    proximity to a statistical measure for distributions.
+    of numerical lower-is-better, or a specific order for categorical variables.
 
     Parameters
     ----------
     favorability_rules : dict
         A dictionary mapping hyperparameter names to a tuple where the first
         element is either a boolean indicating that lower numerical values are
-        more favorable, a list of strings indicating the order of favorability for
-        categorical variables, or a string specifying a statistical measure for
-        distributions ('mean' or 'median'). The second element is a float
-        indicating the relative importance of the hyperparameter.
-    seed : int, optional
-        An optional random seed for consistent random sampling.
+        more favorable, or a list of strings indicating the order of favorability for
+        categorical variables. The second element is a float indicating the relative
+        importance of the hyperparameter among all hyperparameters in the grid.
 
     Examples
     --------
@@ -423,25 +419,23 @@ class FavorabilityRanker:
     ...     'reduce_dim__n_components': (True, 1.0),
     ...     'classify__degree': (True, 1.0),
     ...     'classify__kernel': (['linear', 'rbf'], 1.0),
-    ...     'classify__C': ('median', 0.25),
     ... }
     >>> fr = FavorabilityRanker(favorability_rules)
     >>> params = {
     ...     'reduce_dim__n_components': [6, 2, 8],
     ...     'classify__degree': [2, 3, 1],
     ...     'classify__kernel': ['rbf', 'linear'],
-    ...     'classify__C': stats.loguniform(loc=0, a=1e-10, b=1e3),
     ... }
     >>> ranks = fr(params)
+    >>> ranks
+    [17, 5, 14, 2, 11, 8, 16, 4, 13, 1, 18, 10, 7, 6, 15, 12, 3, 9]
     """
 
     def __init__(
         self,
         favorability_rules: Dict[str, Tuple[Union[bool, List], float]],
-        seed: Optional[int] = None,
     ):
         self.favorability_rules = favorability_rules
-        self.seed = seed
         self._validate_favorability_rules()
 
     def _validate_favorability_rules(self):
@@ -473,38 +467,14 @@ class FavorabilityRanker:
                     f"Weight for hyperparameter {hyperparam} must be non-negative."
                 )
 
-    def _process_parameter_values(self, value: Any, rule: Tuple[Any, float]) -> Any:
+    def _process_parameter_values(self, value: Any) -> Any:
         """Parses a single hyperparameter value, for a variety of data types."""
-        if (
-            hasattr(value, "dist")
-            and (
-                isinstance(value.dist, stats.rv_continuous)
-                or isinstance(value.dist, stats.rv_discrete)
-            )
-            and hasattr(value, "args")
-            and hasattr(value, "kwds")
-        ):
-            distribution_property = rule[0]
-
-            if distribution_property == "mean":
-                return value.mean()
-            elif distribution_property == "median":
-                return value.median()
-            elif distribution_property.startswith("percentile_"):
-                percentile = float(distribution_property.split("_")[1])
-                return value.ppf(percentile / 100)
-            else:
-                raise ValueError(
-                    f"Unsupported distribution property: {distribution_property}"
-                )
-        elif callable(value):
-            return value(self.seed)
-        elif isinstance(value, (int, float, str, np.number)):
+        if isinstance(value, (int, float, str, np.number)):
             return value
         else:
             raise ValueError(
-                "FavorabilityRanker only supports numeric, string, or distribution "
-                "objects. The provided value {value} is not supported."
+                "FavorabilityRanker only supports numeric or string values for "
+                f"hyperparameters. The provided value {value} is not supported."
             )
 
     def __call__(self, params: Union[List[Dict], Dict]) -> List[int]:
@@ -529,7 +499,7 @@ class FavorabilityRanker:
             for hyperparam, rule in self.favorability_rules.items():
                 if hyperparam in param_set:
                     hyperparam_value = self._process_parameter_values(
-                        param_set[hyperparam], rule
+                        param_set[hyperparam]
                     )
 
                     is_numeric = isinstance(hyperparam_value, (int, float, np.number))
@@ -566,25 +536,30 @@ class FavorabilityRanker:
 
         # check if 'params' is a list of dictionaries or a single dictionary
         if isinstance(params, list):
-            # if it's a list, process each set of parameters separately
+            # if it's a list, process each dictionary separately in the order they
+            # appear in the list
             favorability_scores = [calculate_favorability_score(p) for p in params]
         elif isinstance(params, dict):
-            # generate a grid of param combinations and
-            # process them as though they were a list of dictionaries
+            # if it's a single dictionary with hyperparameters as keys and values as
+            # lists of hyperparameter values, generate all unique combinations of
+            # hyperparameter values and calculate the favorability score for each
+            from sklearn.model_selection import ParameterGrid
+
+            # convert the params dictionary to a cleaned dictionary of lists, where each
+            # key is a hyperparameter and each value is a list of hyperparameter
+            # values, all of which are numeric or categorical, to be ranked.
             processed_params = {}
             for key, value in params.items():
-                rule = self.favorability_rules.get(key, (None, 0))
                 processed_params[key] = (
-                    [self._process_parameter_values(v, rule) for v in value]
+                    [self._process_parameter_values(v) for v in value]
                     if isinstance(value, list)
-                    else [self._process_parameter_values(value, rule)]
+                    else [self._process_parameter_values(value)]
                 )
-            combinations = [
-                dict(zip(processed_params.keys(), v))
-                for v in itertools.product(*processed_params.values())
-            ]
+
+            # generate a ParameterGrid object from the processed_params dictionary
             favorability_scores = [
-                calculate_favorability_score(p) for p in combinations
+                calculate_favorability_score(p)
+                for p in list(ParameterGrid(processed_params))
             ]
         else:
             raise ValueError(

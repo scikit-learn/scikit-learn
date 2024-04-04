@@ -738,7 +738,7 @@ not more than 1 standard error worse than the best CV performance. In this scena
   S(P(m^*), P(m)) = |P(m^*) - P(m)|
 
 The benefit of constraining a SearchCV by a user-defined ranking of model complexity
-within a 1-SE performance margin, is that it can help to promote more generalizeable
+within a 1-SE performance margin, is that it can help to promote more generalizable
 models, since those with the highest rote performance can be more prone to overfit
 (Breiman et al., 1984). Although it is easy to demonstrate the value of 1-SE (e.g. see
 :ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_refit_callable.py`),

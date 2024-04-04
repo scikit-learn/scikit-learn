@@ -1,6 +1,5 @@
 import numpy as np
 import pytest
-import scipy.stats
 from _pytest.mark.structures import ParameterSet
 
 from sklearn.datasets import make_classification
@@ -619,64 +618,105 @@ def test_fixed_window_slicer(generate_fit_params):
 
 
 def test_favorability_ranker():
-    rng = 42
-
     ranker = FavorabilityRanker(
         {
             "param1": (True, 1.0),
             "param2": (["low", "medium", "high"], 1.0),
-            "param3": ("mean", 1.0),
+            "param3": (False, 1.0),
         },
-        seed=rng,
     )
 
-    params = [
-        {"param1": 10, "param2": "low", "param3": 0.5},
-        {"param1": 5, "param2": "medium", "param3": 1.5},
-        {"param1": 1, "param2": "high", "param3": 2.5},
+    expected_ranks = [
+        9,
+        6,
+        3,
+        18,
+        15,
+        12,
+        27,
+        24,
+        21,
+        36,
+        33,
+        30,
+        8,
+        5,
+        2,
+        17,
+        14,
+        11,
+        26,
+        23,
+        20,
+        35,
+        32,
+        29,
+        7,
+        4,
+        1,
+        16,
+        13,
+        10,
+        25,
+        22,
+        19,
+        34,
+        31,
+        28,
     ]
 
-    assert ranker(params) == [3, 2, 1]
-
-    def param_generator(seed_or_rng):
-        rng = np.random.default_rng(seed_or_rng)
-        return rng.choice([10, 5, 1])
-
-    params_with_callable = [
-        {
-            "param1": lambda rng: param_generator(rng),
-            "param2": "high",
-            "param3": scipy.stats.norm(loc=0, scale=1),
-        },
-        {
-            "param1": lambda rng: param_generator(rng),
-            "param2": "medium",
-            "param3": scipy.stats.norm(loc=1, scale=1),
-        },
-        {
-            "param1": lambda rng: param_generator(rng),
-            "param2": "low",
-            "param3": scipy.stats.norm(loc=2, scale=1),
-        },
-    ]
-
-    expected_ranks = [3, 2, 1]
-    assert ranker(params_with_callable) == expected_ranks
-
-    # params as a dictionary
     params_dict = {
-        "param1": [10, 5, 1],
-        "param2": ["low", "medium", "high"],
-        "param3": scipy.stats.norm(loc=0, scale=1),
+        "param1": [10, 15, 20, 25],
+        "param2": ["high", "medium", "low"],
+        "param3": [0.001, 0.01, 0.1],
     }
 
-    expected_ranks_dict = [7, 8, 9, 4, 5, 6, 1, 2, 3]
-    assert ranker(params_dict) == expected_ranks_dict
+    params_list = [
+        {"param1": 10, "param2": "high", "param3": 0.001},
+        {"param1": 10, "param2": "high", "param3": 0.01},
+        {"param1": 10, "param2": "high", "param3": 0.1},
+        {"param1": 10, "param2": "medium", "param3": 0.001},
+        {"param1": 10, "param2": "medium", "param3": 0.01},
+        {"param1": 10, "param2": "medium", "param3": 0.1},
+        {"param1": 10, "param2": "low", "param3": 0.001},
+        {"param1": 10, "param2": "low", "param3": 0.01},
+        {"param1": 10, "param2": "low", "param3": 0.1},
+        {"param1": 15, "param2": "high", "param3": 0.001},
+        {"param1": 15, "param2": "high", "param3": 0.01},
+        {"param1": 15, "param2": "high", "param3": 0.1},
+        {"param1": 15, "param2": "medium", "param3": 0.001},
+        {"param1": 15, "param2": "medium", "param3": 0.01},
+        {"param1": 15, "param2": "medium", "param3": 0.1},
+        {"param1": 15, "param2": "low", "param3": 0.001},
+        {"param1": 15, "param2": "low", "param3": 0.01},
+        {"param1": 15, "param2": "low", "param3": 0.1},
+        {"param1": 20, "param2": "high", "param3": 0.001},
+        {"param1": 20, "param2": "high", "param3": 0.01},
+        {"param1": 20, "param2": "high", "param3": 0.1},
+        {"param1": 20, "param2": "medium", "param3": 0.001},
+        {"param1": 20, "param2": "medium", "param3": 0.01},
+        {"param1": 20, "param2": "medium", "param3": 0.1},
+        {"param1": 20, "param2": "low", "param3": 0.001},
+        {"param1": 20, "param2": "low", "param3": 0.01},
+        {"param1": 20, "param2": "low", "param3": 0.1},
+        {"param1": 25, "param2": "high", "param3": 0.001},
+        {"param1": 25, "param2": "high", "param3": 0.01},
+        {"param1": 25, "param2": "high", "param3": 0.1},
+        {"param1": 25, "param2": "medium", "param3": 0.001},
+        {"param1": 25, "param2": "medium", "param3": 0.01},
+        {"param1": 25, "param2": "medium", "param3": 0.1},
+        {"param1": 25, "param2": "low", "param3": 0.001},
+        {"param1": 25, "param2": "low", "param3": 0.01},
+        {"param1": 25, "param2": "low", "param3": 0.1},
+    ]
+
+    assert ranker(params_list) == expected_ranks
+    assert ranker(params_dict) == expected_ranks
 
     assert (
         repr(ranker)
         == "FavorabilityRanker({'param1': (True, 1.0), 'param2': (['low', 'medium',"
-        " 'high'], 1.0), 'param3': ('mean', 1.0)})"
+        " 'high'], 1.0), 'param3': (False, 1.0)})"
     )
 
 
@@ -703,65 +743,6 @@ def test_favorability_ranker_validation():
     assert "Weight for hyperparameter param must be non-negative." in str(
         exc_info.value
     )
-
-
-def test_favorability_ranker_process_parameter_values():
-    ranker = FavorabilityRanker(
-        {
-            "param_continuous_mean": ("mean", 1.0),
-            "param_continuous_median": ("median", 1.0),
-            "param_continuous_percentile": ("percentile_75", 1.0),
-        },
-    )
-
-    params = {
-        "param_continuous_mean": scipy.stats.norm(loc=0, scale=1),
-        "param_continuous_median": scipy.stats.norm(loc=0, scale=1),
-        "param_continuous_percentile": scipy.stats.norm(loc=0, scale=1),
-    }
-
-    # expects: mean, median, and 75th percentile of a normal dist
-    expected_values = {
-        "param_continuous_mean": 0.0,
-        "param_continuous_median": 0.0,
-        "param_continuous_percentile": scipy.stats.norm(loc=0, scale=1).ppf(0.75),
-    }
-
-    processed_values = {}
-    for key, value in params.items():
-        processed_res = ranker._process_parameter_values(
-            value, ranker.favorability_rules[key]
-        )
-        processed_values[key] = processed_res
-
-    for key in processed_values:
-        assert np.isclose(processed_values[key], expected_values[key]), (
-            f"Processed value {processed_values[key]} does not match expected value"
-            f" {expected_values[key]}"
-        )
-
-    # test case where `distribution_property` is not a supported one
-    with pytest.raises(ValueError):
-        ranker._process_parameter_values(scipy.stats.norm(loc=0, scale=1), "foo")
-
-
-def test_favorability_ranker_with_distribution_handling_corrected():
-    favorability_rules = {
-        "param1": ("mean", 1.0),
-        "param2": (["low", "medium", "high"], 1.0),
-    }
-
-    params = {
-        "param1": scipy.stats.norm(loc=0, scale=1),
-        "param2": "medium",
-    }
-
-    ranker = FavorabilityRanker(favorability_rules)
-
-    ranks = ranker([params])
-    assert isinstance(ranks, list), "Expected output to be a list"
-    assert len(ranks) == 1, "Expected a single rank output for a single parameter set"
-    assert ranks[0] == 1, "Expected rank to be 1"
 
 
 def test_favorability_ranker_with_categorical_combinations():
@@ -792,8 +773,8 @@ def test_favorability_ranker_unsupported_value_error():
     with pytest.raises(
         ValueError,
         match=(
-            "FavorabilityRanker only supports numeric, "
-            "string, or distribution objects. The provided value .* is not "
+            "FavorabilityRanker only supports numeric or "
+            "string values for hyperparameters. The provided value .* is not "
             "supported."
         ),
     ):
@@ -843,3 +824,48 @@ def test_favorability_ranker_invalid_params_type():
         ranker(params_invalid)
 
     assert "`params` must be either a list of dictionaries or a " in str(exc_info.value)
+
+
+def test_favorability_ranker_consistency():
+    favorability_rules = {
+        "param1": (True, 1.0),
+        "param2": (["a", "b", "c"], 1.0),
+    }
+
+    # Test case 1
+    params1 = {
+        "param1": [1, 2, 3],
+        "param2": ["a", "b", "c"],
+    }
+
+    # Test case 2 (different order of keys)
+    params2 = {
+        "param1": [1, 2, 3],
+        "param2": ["a", "b", "c"],
+    }
+
+    # Test case 3 (different order of values)
+    params3 = {
+        "param1": [3, 1, 2],
+        "param2": ["c", "a", "b"],
+    }
+
+    # Test case 4 (additional parameter)
+    params4 = {
+        "param1": [1, 2, 3],
+        "param2": ["a", "b", "c"],
+        "param4": [4, 5, 6],
+    }
+
+    ranker = FavorabilityRanker(favorability_rules)
+
+    ranks1 = ranker(params1)
+    ranks2 = ranker(params2)
+    ranks3 = ranker(params3)
+    ranks4 = ranker(params4)
+
+    assert ranks1 == ranks2, "Ranks should be consistent across different key orders"
+    assert ranks1 != ranks3, "Ranks should be different when value orders differ"
+    assert (
+        ranks1 != ranks4
+    ), "Ranks should be different when additional parameters are present"
