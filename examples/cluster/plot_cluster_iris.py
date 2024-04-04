@@ -7,12 +7,12 @@ The plot shows:
 
 - top left: What a K-means algorithm would yield using 8 clusters.
 
-- top right: What the effect of a bad initialization is
+- top right: What using three clusters would deliver.
+
+- bottom left: What the effect of a bad initialization is
   on the classification process: By setting n_init to only 1
   (default is 10), the amount of times that the algorithm will
   be run with different centroid seeds is reduced.
-
-- bottom left: What using eight clusters would deliver.
 
 - bottom right: The ground truth.
 
@@ -39,8 +39,8 @@ X = iris.data
 y = iris.target
 
 estimators = [
-    ("k_means_iris_8", KMeans(n_clusters=8, n_init="auto")),
-    ("k_means_iris_3", KMeans(n_clusters=3, n_init="auto")),
+    ("k_means_iris_8", KMeans(n_clusters=8)),
+    ("k_means_iris_3", KMeans(n_clusters=3)),
     ("k_means_iris_bad_init", KMeans(n_clusters=3, n_init=1, init="random")),
 ]
 
@@ -73,8 +73,7 @@ for name, label in [("Setosa", 0), ("Versicolour", 1), ("Virginica", 2)]:
         horizontalalignment="center",
         bbox=dict(alpha=0.2, edgecolor="w", facecolor="w"),
     )
-# Reorder the labels to have colors matching the cluster results
-y = np.choose(y, [1, 2, 0]).astype(float)
+
 ax.scatter(X[:, 3], X[:, 0], X[:, 2], c=y, edgecolor="k")
 
 ax.xaxis.set_ticklabels([])

@@ -10,14 +10,19 @@ import joblib
 import numpy as np
 import pytest
 
+import sklearn
 from sklearn.base import BaseEstimator
 from sklearn.datasets import load_diabetes, load_iris, make_hastie_10_2
 from sklearn.dummy import DummyClassifier, DummyRegressor
 from sklearn.ensemble import (
+    AdaBoostClassifier,
+    AdaBoostRegressor,
     BaggingClassifier,
     BaggingRegressor,
     HistGradientBoostingClassifier,
     HistGradientBoostingRegressor,
+    RandomForestClassifier,
+    RandomForestRegressor,
 )
 from sklearn.feature_selection import SelectKBest
 from sklearn.linear_model import LogisticRegression, Perceptron
@@ -924,63 +929,6 @@ def test_bagging_get_estimators_indices():
     assert_array_equal(clf.estimators_[0]._sample_indices, clf.estimators_samples_[0])
 
 
-# TODO(1.4): remove in 1.4
-@pytest.mark.parametrize(
-    "Bagging, Estimator",
-    [
-        (BaggingClassifier, DecisionTreeClassifier),
-        (BaggingRegressor, DecisionTreeRegressor),
-    ],
-)
-def test_base_estimator_argument_deprecated(Bagging, Estimator):
-    X = np.array([[1, 2], [3, 4]])
-    y = np.array([1, 0])
-    model = Bagging(base_estimator=Estimator(), n_estimators=10)
-
-    warn_msg = (
-        "`base_estimator` was renamed to `estimator` in version 1.2 and "
-        "will be removed in 1.4."
-    )
-    with pytest.warns(FutureWarning, match=warn_msg):
-        model.fit(X, y)
-
-
-# TODO(1.4): remove in 1.4
-@pytest.mark.parametrize(
-    "Bagging",
-    [BaggingClassifier, BaggingClassifier],
-)
-def test_base_estimator_property_deprecated(Bagging):
-    X = np.array([[1, 2], [3, 4]])
-    y = np.array([1, 0])
-    model = Bagging()
-    model.fit(X, y)
-
-    warn_msg = (
-        "Attribute `base_estimator_` was deprecated in version 1.2 and "
-        "will be removed in 1.4. Use `estimator_` instead."
-    )
-    with pytest.warns(FutureWarning, match=warn_msg):
-        model.base_estimator_
-
-
-# TODO(1.4): remove
-def test_deprecated_base_estimator_has_decision_function():
-    """Check that `BaggingClassifier` delegate to classifier with
-    `decision_function`."""
-    iris = load_iris()
-    X, y = iris.data, iris.target
-    clf = BaggingClassifier(base_estimator=SVC())
-    assert hasattr(clf, "decision_function")
-    warn_msg = (
-        "`base_estimator` was renamed to `estimator` in version 1.2 and "
-        "will be removed in 1.4."
-    )
-    with pytest.warns(FutureWarning, match=warn_msg):
-        y_decision = clf.fit(X, y).decision_function(X)
-    assert y_decision.shape == (150, 3)
-
-
 @pytest.mark.parametrize(
     "bagging, expected_allow_nan",
     [
@@ -993,3 +941,36 @@ def test_deprecated_base_estimator_has_decision_function():
 def test_bagging_allow_nan_tag(bagging, expected_allow_nan):
     """Check that bagging inherits allow_nan tag."""
     assert bagging._get_tags()["allow_nan"] == expected_allow_nan
+
+
+@pytest.mark.parametrize(
+    "model",
+    [
+        BaggingClassifier(
+            estimator=RandomForestClassifier(n_estimators=1), n_estimators=1
+        ),
+        BaggingRegressor(
+            estimator=RandomForestRegressor(n_estimators=1), n_estimators=1
+        ),
+    ],
+)
+def test_bagging_with_metadata_routing(model):
+    """Make sure that metadata routing works with non-default estimator."""
+    with sklearn.config_context(enable_metadata_routing=True):
+        model.fit(iris.data, iris.target)
+
+
+@pytest.mark.parametrize(
+    "model",
+    [
+        BaggingClassifier(
+            estimator=AdaBoostClassifier(n_estimators=1, algorithm="SAMME"),
+            n_estimators=1,
+        ),
+        BaggingRegressor(estimator=AdaBoostRegressor(n_estimators=1), n_estimators=1),
+    ],
+)
+def test_bagging_without_support_metadata_routing(model):
+    """Make sure that we still can use an estimator that does not implement the
+    metadata routing."""
+    model.fit(iris.data, iris.target)

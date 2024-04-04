@@ -4,8 +4,8 @@ from typing import NamedTuple
 
 import numpy as np
 
-from . import is_scalar_nan
 from ._array_api import _convert_to_numpy, _isin, _setdiff1d, device, get_namespace
+from ._missing import is_scalar_nan
 
 
 def _unique(values, *, return_inverse=False, return_counts=False):

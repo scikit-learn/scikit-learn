@@ -9,6 +9,7 @@ from sklearn.datasets import make_classification
 from sklearn.utils._testing import assert_allclose
 from sklearn.utils.fixes import CSC_CONTAINERS, CSR_CONTAINERS, LIL_CONTAINERS
 from sklearn.utils.sparsefuncs import (
+    _implicit_column_offset,
     count_nonzero,
     csc_median_axis_0,
     incr_mean_variance_axis,
@@ -794,6 +795,7 @@ def test_min_max(
         dtype=dtype,
     )
     X_sparse = sparse_format(X)
+
     if large_indices:
         X_sparse.indices = X_sparse.indices.astype("int64")
         X_sparse.indptr = X_sparse.indptr.astype("int64")
@@ -943,3 +945,54 @@ def test_csr_row_norms(dtype):
     assert norms.dtype == dtype
     rtol = 1e-6 if dtype == np.float32 else 1e-7
     assert_allclose(norms, scipy_norms, rtol=rtol)
+
+
+@pytest.fixture(scope="module", params=CSR_CONTAINERS + CSC_CONTAINERS)
+def centered_matrices(request):
+    """Returns equivalent tuple[sp.linalg.LinearOperator, np.ndarray]."""
+    sparse_container = request.param
+
+    random_state = np.random.default_rng(42)
+
+    X_sparse = sparse_container(
+        sp.random(500, 100, density=0.1, format="csr", random_state=random_state)
+    )
+    X_dense = X_sparse.toarray()
+    mu = np.asarray(X_sparse.mean(axis=0)).ravel()
+
+    X_sparse_centered = _implicit_column_offset(X_sparse, mu)
+    X_dense_centered = X_dense - mu
+
+    return X_sparse_centered, X_dense_centered
+
+
+def test_implicit_center_matmat(global_random_seed, centered_matrices):
+    X_sparse_centered, X_dense_centered = centered_matrices
+    rng = np.random.default_rng(global_random_seed)
+    Y = rng.standard_normal((X_dense_centered.shape[1], 50))
+    assert_allclose(X_dense_centered @ Y, X_sparse_centered.matmat(Y))
+    assert_allclose(X_dense_centered @ Y, X_sparse_centered @ Y)
+
+
+def test_implicit_center_matvec(global_random_seed, centered_matrices):
+    X_sparse_centered, X_dense_centered = centered_matrices
+    rng = np.random.default_rng(global_random_seed)
+    y = rng.standard_normal(X_dense_centered.shape[1])
+    assert_allclose(X_dense_centered @ y, X_sparse_centered.matvec(y))
+    assert_allclose(X_dense_centered @ y, X_sparse_centered @ y)
+
+
+def test_implicit_center_rmatmat(global_random_seed, centered_matrices):
+    X_sparse_centered, X_dense_centered = centered_matrices
+    rng = np.random.default_rng(global_random_seed)
+    Y = rng.standard_normal((X_dense_centered.shape[0], 50))
+    assert_allclose(X_dense_centered.T @ Y, X_sparse_centered.rmatmat(Y))
+    assert_allclose(X_dense_centered.T @ Y, X_sparse_centered.T @ Y)
+
+
+def test_implit_center_rmatvec(global_random_seed, centered_matrices):
+    X_sparse_centered, X_dense_centered = centered_matrices
+    rng = np.random.default_rng(global_random_seed)
+    y = rng.standard_normal(X_dense_centered.shape[0])
+    assert_allclose(X_dense_centered.T @ y, X_sparse_centered.rmatvec(y))
+    assert_allclose(X_dense_centered.T @ y, X_sparse_centered.T @ y)

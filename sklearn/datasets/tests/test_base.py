@@ -1,9 +1,14 @@
+import io
 import os
 import shutil
 import tempfile
 import warnings
 from functools import partial
+from importlib import resources
+from pathlib import Path
 from pickle import dumps, loads
+from unittest.mock import Mock
+from urllib.error import HTTPError
 
 import numpy as np
 import pytest
@@ -22,13 +27,24 @@ from sklearn.datasets import (
     load_wine,
 )
 from sklearn.datasets._base import (
+    RemoteFileMetadata,
+    _fetch_remote,
     load_csv_data,
     load_gzip_compressed_csv_data,
 )
 from sklearn.datasets.tests.test_common import check_as_frame
 from sklearn.preprocessing import scale
 from sklearn.utils import Bunch
-from sklearn.utils.fixes import _is_resource
+
+
+class _DummyPath:
+    """Minimal class that implements the os.PathLike interface."""
+
+    def __init__(self, path):
+        self.path = path
+
+    def __fspath__(self):
+        return self.path
 
 
 def _remove_dir(path):
@@ -67,13 +83,18 @@ def test_category_dir_2(load_files_root):
     _remove_dir(test_category_dir2)
 
 
-def test_data_home(data_home):
+@pytest.mark.parametrize("path_container", [None, Path, _DummyPath])
+def test_data_home(path_container, data_home):
     # get_data_home will point to a pre-existing folder
+    if path_container is not None:
+        data_home = path_container(data_home)
     data_home = get_data_home(data_home=data_home)
     assert data_home == data_home
     assert os.path.exists(data_home)
 
     # clear_data_home will delete both the content and the folder it-self
+    if path_container is not None:
+        data_home = path_container(data_home)
     clear_data_home(data_home=data_home)
     assert not os.path.exists(data_home)
 
@@ -275,7 +296,8 @@ def test_loader(loader_func, data_shape, target_shape, n_target, has_descr, file
         assert "data_module" in bunch
         assert all(
             [
-                f in bunch and _is_resource(bunch["data_module"], bunch[f])
+                f in bunch
+                and (resources.files(bunch["data_module"]) / bunch[f]).is_file()
                 for f in filenames
             ]
         )
@@ -346,3 +368,26 @@ def test_load_boston_error():
     msg = "cannot import name 'non_existing_function' from 'sklearn.datasets'"
     with pytest.raises(ImportError, match=msg):
         from sklearn.datasets import non_existing_function  # noqa
+
+
+def test_fetch_remote_raise_warnings_with_invalid_url(monkeypatch):
+    """Check retry mechanism in _fetch_remote."""
+
+    url = "https://scikit-learn.org/this_file_does_not_exist.tar.gz"
+    invalid_remote_file = RemoteFileMetadata("invalid_file", url, None)
+    urlretrieve_mock = Mock(
+        side_effect=HTTPError(
+            url=url, code=404, msg="Not Found", hdrs=None, fp=io.BytesIO()
+        )
+    )
+    monkeypatch.setattr("sklearn.datasets._base.urlretrieve", urlretrieve_mock)
+
+    with pytest.warns(UserWarning, match="Retry downloading") as record:
+        with pytest.raises(HTTPError, match="HTTP Error 404"):
+            _fetch_remote(invalid_remote_file, n_retries=3, delay=0)
+
+        assert urlretrieve_mock.call_count == 4
+
+        for r in record:
+            assert str(r.message) == f"Retry downloading from url: {url}"
+        assert len(record) == 3

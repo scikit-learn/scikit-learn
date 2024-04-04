@@ -15,8 +15,12 @@ import numpy as np
 from sklearn.neighbors._base import _check_precomputed
 
 from ..base import ClassifierMixin, _fit_context
-from ..metrics._pairwise_distances_reduction import ArgKminClassMode
+from ..metrics._pairwise_distances_reduction import (
+    ArgKminClassMode,
+    RadiusNeighborsClassMode,
+)
 from ..utils._param_validation import StrOptions
+from ..utils.arrayfuncs import _all_with_any_reduction_axis_1
 from ..utils.extmath import weighted_mode
 from ..utils.fixes import _mode
 from ..utils.validation import _is_arraylike, _num_samples, check_is_fitted
@@ -278,6 +282,12 @@ class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
         n_outputs = len(classes_)
         n_queries = _num_samples(X)
         weights = _get_weights(neigh_dist, self.weights)
+        if weights is not None and _all_with_any_reduction_axis_1(weights, value=0):
+            raise ValueError(
+                "All neighbors of some sample is getting zero weights. "
+                "Please modify 'weights' to avoid this case if you are "
+                "using a user-defined function."
+            )
 
         y_pred = np.empty((n_queries, n_outputs), dtype=classes_[0].dtype)
         for k, classes_k in enumerate(classes_):
@@ -369,6 +379,12 @@ class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
         weights = _get_weights(neigh_dist, self.weights)
         if weights is None:
             weights = np.ones_like(neigh_ind)
+        elif _all_with_any_reduction_axis_1(weights, value=0):
+            raise ValueError(
+                "All neighbors of some sample is getting zero weights. "
+                "Please modify 'weights' to avoid this case if you are "
+                "using a user-defined function."
+            )
 
         all_rows = np.arange(n_queries)
         probabilities = []
@@ -382,7 +398,6 @@ class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
 
             # normalize 'votes' into real [0,1] probabilities
             normalizer = proba_k.sum(axis=1)[:, np.newaxis]
-            normalizer[normalizer == 0.0] = 1.0
             proba_k /= normalizer
 
             probabilities.append(proba_k)
@@ -470,6 +485,10 @@ class RadiusNeighborsClassifier(RadiusNeighborsMixin, ClassifierMixin, Neighbors
           or list of manual labels if multi-output is used.
         - 'most_frequent' : assign the most frequent label of y to outliers.
         - None : when any outlier is detected, ValueError will be raised.
+
+        The outlier label should be selected from among the unique 'Y' labels.
+        If it is specified with a different value a warning will be raised and
+        all class probabilities of outliers will be assigned to be 0.
 
     metric_params : dict, default=None
         Additional keyword arguments for the metric function.
@@ -714,8 +733,38 @@ class RadiusNeighborsClassifier(RadiusNeighborsMixin, ClassifierMixin, Neighbors
             The class probabilities of the input samples. Classes are ordered
             by lexicographic order.
         """
-
+        check_is_fitted(self, "_fit_method")
         n_queries = _num_samples(X)
+
+        metric, metric_kwargs = _adjusted_metric(
+            metric=self.metric, metric_kwargs=self.metric_params, p=self.p
+        )
+
+        if (
+            self.weights == "uniform"
+            and self._fit_method == "brute"
+            and not self.outputs_2d_
+            and RadiusNeighborsClassMode.is_usable_for(X, self._fit_X, metric)
+        ):
+            probabilities = RadiusNeighborsClassMode.compute(
+                X=X,
+                Y=self._fit_X,
+                radius=self.radius,
+                weights=self.weights,
+                Y_labels=self._y,
+                unique_Y_labels=self.classes_,
+                outlier_label=self.outlier_label,
+                metric=metric,
+                metric_kwargs=metric_kwargs,
+                strategy="parallel_on_X",
+                # `strategy="parallel_on_X"` has in practice be shown
+                # to be more efficient than `strategy="parallel_on_Y``
+                # on many combination of datasets.
+                # Hence, we choose to enforce it here.
+                # For more information, see:
+                # https://github.com/scikit-learn/scikit-learn/pull/26828/files#r1282398471  # noqa
+            )
+            return probabilities
 
         neigh_dist, neigh_ind = self.radius_neighbors(X)
         outlier_mask = np.zeros(n_queries, dtype=bool)

@@ -64,6 +64,7 @@ from sklearn.utils.estimator_checks import (
     check_requires_y_none,
     set_random_state,
 )
+from sklearn.utils.fixes import CSR_CONTAINERS, SPARRAY_PRESENT
 from sklearn.utils.metaestimators import available_if
 from sklearn.utils.validation import check_array, check_is_fitted, check_X_y
 
@@ -206,9 +207,17 @@ class NoCheckinPredict(BaseBadClassifier):
 
 
 class NoSparseClassifier(BaseBadClassifier):
+    def __init__(self, raise_for_type=None):
+        # raise_for_type : str, expects "sparse_array" or "sparse_matrix"
+        self.raise_for_type = raise_for_type
+
     def fit(self, X, y):
         X, y = self._validate_data(X, y, accept_sparse=["csr", "csc"])
-        if sp.issparse(X):
+        if self.raise_for_type == "sparse_array":
+            correct_type = isinstance(X, sp.sparray)
+        elif self.raise_for_type == "sparse_matrix":
+            correct_type = isinstance(X, sp.spmatrix)
+        if correct_type:
             raise ValueError("Nonsensical Error")
         return self
 
@@ -356,6 +365,13 @@ class OneClassSampleErrorClassifier(BaseBadClassifier):
 
 
 class LargeSparseNotSupportedClassifier(BaseEstimator):
+    """Estimator that claims to support large sparse data
+    (accept_large_sparse=True), but doesn't"""
+
+    def __init__(self, raise_for_type=None):
+        # raise_for_type : str, expects "sparse_array" or "sparse_matrix"
+        self.raise_for_type = raise_for_type
+
     def fit(self, X, y):
         X, y = self._validate_data(
             X,
@@ -365,11 +381,15 @@ class LargeSparseNotSupportedClassifier(BaseEstimator):
             multi_output=True,
             y_numeric=True,
         )
-        if sp.issparse(X):
-            if X.getformat() == "coo":
+        if self.raise_for_type == "sparse_array":
+            correct_type = isinstance(X, sp.sparray)
+        elif self.raise_for_type == "sparse_matrix":
+            correct_type = isinstance(X, sp.spmatrix)
+        if correct_type:
+            if X.format == "coo":
                 if X.row.dtype == "int64" or X.col.dtype == "int64":
                     raise ValueError("Estimator doesn't support 64-bit indices")
-            elif X.getformat() in ["csc", "csr"]:
+            elif X.format in ["csc", "csr"]:
                 assert "int64" not in (
                     X.indices.dtype,
                     X.indptr.dtype,
@@ -379,6 +399,9 @@ class LargeSparseNotSupportedClassifier(BaseEstimator):
 
 
 class SparseTransformer(BaseEstimator):
+    def __init__(self, sparse_container=None):
+        self.sparse_container = sparse_container
+
     def fit(self, X, y=None):
         self.X_shape_ = self._validate_data(X).shape
         return self
@@ -390,7 +413,7 @@ class SparseTransformer(BaseEstimator):
         X = check_array(X)
         if X.shape[1] != self.X_shape_[1]:
             raise ValueError("Bad number of features")
-        return sp.csr_matrix(X)
+        return self.sparse_container(X)
 
 
 class EstimatorInconsistentForPandas(BaseEstimator):
@@ -506,15 +529,15 @@ def test_check_array_api_input():
     except ModuleNotFoundError:
         raise SkipTest("array_api_compat is required to run this test")
     try:
-        importlib.import_module("numpy.array_api")
+        importlib.import_module("array_api_strict")
     except ModuleNotFoundError:  # pragma: nocover
-        raise SkipTest("numpy.array_api is required to run this test")
+        raise SkipTest("array-api-strict is required to run this test")
 
     with raises(AssertionError, match="Not equal to tolerance"):
         check_array_api_input(
             "BrokenArrayAPI",
             BrokenArrayAPI(),
-            array_namespace="numpy.array_api",
+            array_namespace="array_api_strict",
             check_values=True,
         )
 
@@ -630,11 +653,15 @@ def test_check_estimator():
     )
     with raises(AssertionError, match=msg):
         check_estimator(NotInvariantPredict())
-    # check for sparse matrix input handling
+    # check for sparse data input handling
     name = NoSparseClassifier.__name__
     msg = "Estimator %s doesn't seem to fail gracefully on sparse data" % name
     with raises(AssertionError, match=msg):
-        check_estimator(NoSparseClassifier())
+        check_estimator(NoSparseClassifier("sparse_matrix"))
+
+    if SPARRAY_PRESENT:
+        with raises(AssertionError, match=msg):
+            check_estimator(NoSparseClassifier("sparse_array"))
 
     # check for classifiers reducing to less than two classes via sample weights
     name = OneClassSampleErrorClassifier.__name__
@@ -652,15 +679,20 @@ def test_check_estimator():
         r"support \S{3}_64 matrix, and is not failing gracefully.*"
     )
     with raises(AssertionError, match=msg):
-        check_estimator(LargeSparseNotSupportedClassifier())
+        check_estimator(LargeSparseNotSupportedClassifier("sparse_matrix"))
+
+    if SPARRAY_PRESENT:
+        with raises(AssertionError, match=msg):
+            check_estimator(LargeSparseNotSupportedClassifier("sparse_array"))
 
     # does error on binary_only untagged estimator
     msg = "Only 2 classes are supported"
     with raises(ValueError, match=msg):
         check_estimator(UntaggedBinaryClassifier())
 
-    # non-regression test for estimators transforming to sparse data
-    check_estimator(SparseTransformer())
+    for csr_container in CSR_CONTAINERS:
+        # non-regression test for estimators transforming to sparse data
+        check_estimator(SparseTransformer(sparse_container=csr_container))
 
     # doesn't error on actual estimator
     check_estimator(LogisticRegression())
@@ -916,18 +948,19 @@ def test_check_classifiers_multilabel_output_format_predict_proba():
         def predict_proba(self, X):
             return self.response_output
 
-    # 1. unknown output type
-    clf = MultiLabelClassifierPredictProba(response_output=sp.csr_matrix(y_test))
-    err_msg = (
-        "Unknown returned type .*csr_matrix.* by "
-        r"MultiLabelClassifierPredictProba.predict_proba. A list or a Numpy "
-        r"array is expected."
-    )
-    with raises(ValueError, match=err_msg):
-        check_classifiers_multilabel_output_format_predict_proba(
-            clf.__class__.__name__,
-            clf,
+    for csr_container in CSR_CONTAINERS:
+        # 1. unknown output type
+        clf = MultiLabelClassifierPredictProba(response_output=csr_container(y_test))
+        err_msg = (
+            f"Unknown returned type .*{csr_container.__name__}.* by "
+            r"MultiLabelClassifierPredictProba.predict_proba. A list or a Numpy "
+            r"array is expected."
         )
+        with raises(ValueError, match=err_msg):
+            check_classifiers_multilabel_output_format_predict_proba(
+                clf.__class__.__name__,
+                clf,
+            )
     # 2. for list output
     # 2.1. inconsistent length
     clf = MultiLabelClassifierPredictProba(response_output=y_test.tolist())

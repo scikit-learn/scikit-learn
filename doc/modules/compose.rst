@@ -17,11 +17,12 @@ would have a `transform` method and behave like a transformer. If the last step
 provides a `predict` method, then the pipeline would expose that method, and
 given a data :term:`X`, use all steps except the last to transform the data,
 and then give that transformed data to the `predict` method of the last step of
-the pipeline. `Pipeline` is often used in combination with :ref:`Column
-Transformer <column_transformer>` or :ref:`FeatureUnion <feature_union>` which
-concatenate the output of transformers into a composite feature space.
-:ref:`TransformedTargetRegressor <transformed_target_regressor>` deals with
-transforming the :term:`target` (i.e. log-transform :term:`y`).
+the pipeline. The class :class:`Pipeline` is often used in combination with
+:ref:`ColumnTransformer <column_transformer>` or
+:ref:`FeatureUnion <feature_union>` which concatenate the output of transformers
+into a composite feature space.
+:ref:`TransformedTargetRegressor <transformed_target_regressor>`
+deals with transforming the :term:`target` (i.e. log-transform :term:`y`).
 
 .. _pipeline:
 

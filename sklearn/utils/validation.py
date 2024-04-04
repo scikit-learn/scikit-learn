@@ -1,4 +1,7 @@
-"""Utilities for input validation"""
+"""
+The :mod:`sklearn.utils.validation` module includes functions to validate
+input and parameters within scikit-learn estimators.
+"""
 
 # Authors: Olivier Grisel
 #          Gael Varoquaux
@@ -24,7 +27,7 @@ import scipy.sparse as sp
 from .. import get_config as _get_config
 from ..exceptions import DataConversionWarning, NotFittedError, PositiveSpectrumWarning
 from ..utils._array_api import _asarray_with_order, _is_numpy_namespace, get_namespace
-from ..utils.fixes import ComplexWarning
+from ..utils.fixes import ComplexWarning, _preserve_dia_indices_dtype
 from ._isfinite import FiniteStatus, cy_isfinite
 from .fixes import _object_dtype_isnan
 
@@ -197,6 +200,18 @@ def assert_all_finite(
         if `input_name` is "X" and the data has NaN values and
         allow_nan is False, the error message will link to the imputer
         documentation.
+
+    Examples
+    --------
+    >>> from sklearn.utils import assert_all_finite
+    >>> import numpy as np
+    >>> array = np.array([1, np.inf, np.nan, 4])
+    >>> try:
+    ...     assert_all_finite(array)
+    ...     print("Test passed: Array contains only finite values.")
+    ... except ValueError:
+    ...     print("Test failed: Array contains non-finite values.")
+    Test failed: Array contains non-finite values.
     """
     _assert_all_finite(
         X.data if sp.issparse(X) else X,
@@ -241,6 +256,14 @@ def as_float_array(X, *, copy=True, force_all_finite=True):
     -------
     XT : {ndarray, sparse matrix}
         An array of type float.
+
+    Examples
+    --------
+    >>> from sklearn.utils import as_float_array
+    >>> import numpy as np
+    >>> array = np.array([0, 0, 1, 2, 2], dtype=np.int64)
+    >>> as_float_array(array)
+    array([0., 0., 1., 2., 2.])
     """
     if isinstance(X, np.matrix) or (
         not isinstance(X, np.ndarray) and not sp.issparse(X)
@@ -267,12 +290,25 @@ def as_float_array(X, *, copy=True, force_all_finite=True):
 
 def _is_arraylike(x):
     """Returns whether the input is array-like."""
+    if sp.issparse(x):
+        return False
+
     return hasattr(x, "__len__") or hasattr(x, "shape") or hasattr(x, "__array__")
 
 
 def _is_arraylike_not_scalar(array):
     """Return True if array is array-like and not a scalar"""
     return _is_arraylike(array) and not np.isscalar(array)
+
+
+def _use_interchange_protocol(X):
+    """Use interchange protocol for non-pandas dataframes that follow the protocol.
+
+    Note: at this point we chose not to use the interchange API on pandas dataframe
+    to ensure strict behavioral backward compatibility with older versions of
+    scikit-learn.
+    """
+    return not _is_pandas_df(X) and hasattr(X, "__dataframe__")
 
 
 def _num_features(X):
@@ -335,6 +371,9 @@ def _num_samples(x):
         # Don't get num_samples from an ensembles length!
         raise TypeError(message)
 
+    if _use_interchange_protocol(x):
+        return x.__dataframe__().num_rows()
+
     if not hasattr(x, "__len__") and not hasattr(x, "shape"):
         if hasattr(x, "__array__"):
             x = np.asarray(x)
@@ -379,6 +418,12 @@ def check_memory(memory):
     ------
     ValueError
         If ``memory`` is not joblib.Memory-like.
+
+    Examples
+    --------
+    >>> from sklearn.utils.validation import check_memory
+    >>> check_memory("caching_dir")
+    Memory(location=caching_dir/joblib)
     """
     if memory is None or isinstance(memory, str):
         memory = joblib.Memory(location=memory, verbose=0)
@@ -400,6 +445,13 @@ def check_consistent_length(*arrays):
     ----------
     *arrays : list or tuple of input objects.
         Objects that will be checked for consistent length.
+
+    Examples
+    --------
+    >>> from sklearn.utils.validation import check_consistent_length
+    >>> a = [1, 2, 3]
+    >>> b = [2, 3, 4]
+    >>> check_consistent_length(a, b)
     """
 
     lengths = [_num_samples(X) for X in arrays if X is not None]
@@ -448,6 +500,17 @@ def indexable(*iterables):
     result : list of {ndarray, sparse matrix, dataframe} or None
         Returns a list containing indexable arrays (i.e. NumPy array,
         sparse matrix, or dataframe) or `None`.
+
+    Examples
+    --------
+    >>> from sklearn.utils import indexable
+    >>> from scipy.sparse import csr_matrix
+    >>> import numpy as np
+    >>> iterables = [
+    ...     [1, 2, 3], np.array([2, 3, 4]), None, csr_matrix([[5], [6], [7]])
+    ... ]
+    >>> indexable(*iterables)
+    [[1, 2, 3], array([2, 3, 4]), None, <3x1 sparse matrix ...>]
     """
 
     result = [_make_indexable(X) for X in iterables]
@@ -456,7 +519,7 @@ def indexable(*iterables):
 
 
 def _ensure_sparse_format(
-    spmatrix,
+    sparse_container,
     accept_sparse,
     dtype,
     copy,
@@ -465,13 +528,13 @@ def _ensure_sparse_format(
     estimator_name=None,
     input_name="",
 ):
-    """Convert a sparse matrix to a given format.
+    """Convert a sparse container to a given format.
 
-    Checks the sparse format of spmatrix and converts if necessary.
+    Checks the sparse format of `sparse_container` and converts if necessary.
 
     Parameters
     ----------
-    spmatrix : sparse matrix
+    sparse_container : sparse matrix or array
         Input to validate and convert.
 
     accept_sparse : str, bool or list/tuple of str
@@ -515,68 +578,81 @@ def _ensure_sparse_format(
 
     Returns
     -------
-    spmatrix_converted : sparse matrix.
-        Matrix that is ensured to have an allowed type.
+    sparse_container_converted : sparse matrix or array
+        Sparse container (matrix/array) that is ensured to have an allowed type.
     """
     if dtype is None:
-        dtype = spmatrix.dtype
+        dtype = sparse_container.dtype
 
     changed_format = False
+    sparse_container_type_name = type(sparse_container).__name__
 
     if isinstance(accept_sparse, str):
         accept_sparse = [accept_sparse]
 
     # Indices dtype validation
-    _check_large_sparse(spmatrix, accept_large_sparse)
+    _check_large_sparse(sparse_container, accept_large_sparse)
 
     if accept_sparse is False:
+        padded_input = " for " + input_name if input_name else ""
         raise TypeError(
-            "A sparse matrix was passed, but dense "
-            "data is required. Use X.toarray() to "
-            "convert to a dense numpy array."
+            f"Sparse data was passed{padded_input}, but dense data is required. "
+            "Use '.toarray()' to convert to a dense numpy array."
         )
     elif isinstance(accept_sparse, (list, tuple)):
         if len(accept_sparse) == 0:
             raise ValueError(
-                "When providing 'accept_sparse' "
-                "as a tuple or list, it must contain at "
+                "When providing 'accept_sparse' as a tuple or list, it must contain at "
                 "least one string value."
             )
         # ensure correct sparse format
-        if spmatrix.format not in accept_sparse:
+        if sparse_container.format not in accept_sparse:
             # create new with correct sparse
-            spmatrix = spmatrix.asformat(accept_sparse[0])
+            sparse_container = sparse_container.asformat(accept_sparse[0])
             changed_format = True
     elif accept_sparse is not True:
         # any other type
         raise ValueError(
-            "Parameter 'accept_sparse' should be a string, "
-            "boolean or list of strings. You provided "
-            "'accept_sparse={}'.".format(accept_sparse)
+            "Parameter 'accept_sparse' should be a string, boolean or list of strings."
+            f" You provided 'accept_sparse={accept_sparse}'."
         )
 
-    if dtype != spmatrix.dtype:
+    if dtype != sparse_container.dtype:
         # convert dtype
-        spmatrix = spmatrix.astype(dtype)
+        sparse_container = sparse_container.astype(dtype)
     elif copy and not changed_format:
         # force copy
-        spmatrix = spmatrix.copy()
+        sparse_container = sparse_container.copy()
 
     if force_all_finite:
-        if not hasattr(spmatrix, "data"):
+        if not hasattr(sparse_container, "data"):
             warnings.warn(
-                "Can't check %s sparse matrix for nan or inf." % spmatrix.format,
+                f"Can't check {sparse_container.format} sparse matrix for nan or inf.",
                 stacklevel=2,
             )
         else:
             _assert_all_finite(
-                spmatrix.data,
+                sparse_container.data,
                 allow_nan=force_all_finite == "allow-nan",
                 estimator_name=estimator_name,
                 input_name=input_name,
             )
 
-    return spmatrix
+    # TODO: Remove when the minimum version of SciPy supported is 1.12
+    # With SciPy sparse arrays, conversion from DIA format to COO, CSR, or BSR
+    # triggers the use of `np.int64` indices even if the data is such that it could
+    # be more efficiently represented with `np.int32` indices.
+    # https://github.com/scipy/scipy/issues/19245 Since not all scikit-learn
+    # algorithms support large indices, the following code downcasts to `np.int32`
+    # indices when it's safe to do so.
+    if changed_format:
+        # accept_sparse is specified to a specific format and a conversion occurred
+        requested_sparse_format = accept_sparse[0]
+        _preserve_dia_indices_dtype(
+            sparse_container, sparse_container_type_name, requested_sparse_format
+        )
+
+    return sparse_container
 
 
 def _ensure_no_complex_data(array):
@@ -747,6 +823,14 @@ def check_array(
     -------
     array_converted : object
         The converted and validated array.
+
+    Examples
+    --------
+    >>> from sklearn.utils.validation import check_array
+    >>> X = [[1, 2, 3], [4, 5, 6]]
+    >>> X_checked = check_array(X)
+    >>> X_checked
+    array([[1, 2, 3], [4, 5, 6]])
     """
     if isinstance(array, np.matrix):
         raise TypeError(
@@ -773,6 +857,8 @@ def check_array(
     # DataFrame), and store them. If not, store None.
     dtypes_orig = None
     pandas_requires_conversion = False
+    # track if we have a Series-like object to raise a better error message
+    type_if_series = None
     if hasattr(array, "dtypes") and hasattr(array.dtypes, "__array__"):
         # throw warning if columns are sparse. If all columns are sparse, then
         # array.sparse exists and sparsity will be preserved (later).
@@ -802,6 +888,7 @@ def check_array(
         array, "dtype"
     ):
         # array is a pandas series
+        type_if_series = type(array)
         pandas_requires_conversion = _pandas_dtype_needs_early_conversion(array.dtype)
         if isinstance(array.dtype, np.dtype):
             dtype_orig = array.dtype
@@ -837,9 +924,6 @@ def check_array(
         array = array.astype(new_dtype)
         # Since we converted here, we do not need to convert again later
         dtype = None
-
-    if dtype is not None and _is_numpy_namespace(xp):
-        dtype = np.dtype(dtype)
 
     if force_all_finite not in (True, False, "allow-nan"):
         raise ValueError(
@@ -936,12 +1020,22 @@ def check_array(
                 )
             # If input is 1D raise error
             if array.ndim == 1:
-                raise ValueError(
-                    "Expected 2D array, got 1D array instead:\narray={}.\n"
-                    "Reshape your data either using array.reshape(-1, 1) if "
-                    "your data has a single feature or array.reshape(1, -1) "
-                    "if it contains a single sample.".format(array)
-                )
+                # If input is a Series-like object (eg. pandas Series or polars Series)
+                if type_if_series is not None:
+                    msg = (
+                        f"Expected a 2-dimensional container but got {type_if_series} "
+                        "instead. Pass a DataFrame containing a single row (i.e. "
+                        "single sample) or a single column (i.e. single feature) "
+                        "instead."
+                    )
+                else:
+                    msg = (
+                        f"Expected 2D array, got 1D array instead:\narray={array}.\n"
+                        "Reshape your data either using array.reshape(-1, 1) if "
+                        "your data has a single feature or array.reshape(1, -1) "
+                        "if it contains a single sample."
+                    )
+                raise ValueError(msg)
 
         if dtype_numeric and hasattr(array.dtype, "kind") and array.dtype.kind in "USV":
             raise ValueError(
@@ -992,6 +1086,18 @@ def check_array(
                 " a minimum of %d is required%s."
                 % (n_features, array.shape, ensure_min_features, context)
             )
+
+    # With an input pandas dataframe or series, we know we can always make the
+    # resulting array writeable:
+    # - if copy=True, we have already made a copy so it is fine to make the
+    #   array writeable
+    # - if copy=False, the caller is telling us explicitly that we can do
+    #   in-place modifications
+    # See https://pandas.pydata.org/docs/dev/user_guide/copy_on_write.html#read-only-numpy-arrays
+    # for more details about pandas copy-on-write mechanism, that is enabled by
+    # default in pandas 3.0.0.dev.
+    if _is_pandas_df_or_series(array_orig) and hasattr(array, "flags"):
+        array.flags.writeable = True
 
     return array
 
@@ -1134,6 +1240,19 @@ def check_X_y(
 
     y_converted : object
         The converted and validated y.
+
+    Examples
+    --------
+    >>> from sklearn.utils.validation import check_X_y
+    >>> X = [[1, 2], [3, 4], [5, 6]]
+    >>> y = [1, 2, 3]
+    >>> X, y = check_X_y(X, y)
+    >>> X
+    array([[1, 2],
+          [3, 4],
+          [5, 6]])
+    >>> y
+    array([1, 2, 3])
     """
     if y is None:
         if estimator is None:
@@ -1215,6 +1334,12 @@ def column_or_1d(y, *, dtype=None, warn=False):
     ------
     ValueError
         If `y` is not a 1D array or a 2D array with a single row or column.
+
+    Examples
+    --------
+    >>> from sklearn.utils.validation import column_or_1d
+    >>> column_or_1d([1, 1])
+    array([1, 1])
     """
     xp, _ = get_namespace(y)
     y = check_array(
@@ -1262,6 +1387,12 @@ def check_random_state(seed):
     -------
     :class:`numpy:numpy.random.RandomState`
         The random state object based on `seed` parameter.
+
+    Examples
+    --------
+    >>> from sklearn.utils.validation import check_random_state
+    >>> check_random_state(42)
+    RandomState(MT19937) at 0x...
     """
     if seed is None or seed is np.random:
         return np.random.mtrand._rand
@@ -1329,6 +1460,21 @@ def check_symmetric(array, *, tol=1e-10, raise_warning=True, raise_exception=Fal
         Symmetrized version of the input array, i.e. the average of array
         and array.transpose(). If sparse, then duplicate entries are first
         summed and zeros are eliminated.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.utils.validation import check_symmetric
+    >>> symmetric_array = np.array([[0, 1, 2], [1, 0, 1], [2, 1, 0]])
+    >>> check_symmetric(symmetric_array)
+    array([[0, 1, 2],
+           [1, 0, 1],
+           [2, 1, 0]])
+    >>> from scipy.sparse import csr_matrix
+    >>> sparse_symmetric_array = csr_matrix(symmetric_array)
+    >>> check_symmetric(sparse_symmetric_array)
+    <3x3 sparse matrix of type '<class 'numpy.int64'>'
+        with 6 stored elements in Compressed Sparse Row format>
     """
     if (array.ndim != 2) or (array.shape[0] != array.shape[1]):
         raise ValueError(
@@ -1410,8 +1556,10 @@ def check_is_fitted(estimator, attributes=None, *, msg=None, all_or_any=all):
     raises a NotFittedError with the given message.
 
     If an estimator does not set any attributes with a trailing underscore, it
-    can define a ``__sklearn_is_fitted__`` method returning a boolean to specify if the
-    estimator is fitted or not.
+    can define a ``__sklearn_is_fitted__`` method returning a boolean to
+    specify if the estimator is fitted or not. See
+    :ref:`sphx_glr_auto_examples_developing_estimators_sklearn_is_fitted.py`
+    for an example on how to use the API.
 
     Parameters
     ----------
@@ -1446,6 +1594,21 @@ def check_is_fitted(estimator, attributes=None, *, msg=None, all_or_any=all):
 
     NotFittedError
         If the attributes are not found.
+
+    Examples
+    --------
+    >>> from sklearn.linear_model import LogisticRegression
+    >>> from sklearn.utils.validation import check_is_fitted
+    >>> from sklearn.exceptions import NotFittedError
+    >>> lr = LogisticRegression()
+    >>> try:
+    ...     check_is_fitted(lr)
+    ... except NotFittedError as exc:
+    ...     print(f"Model is not fitted yet.")
+    Model is not fitted yet.
+    >>> lr.fit([[1, 2], [1, 3]], [1, 0])
+    LogisticRegression()
+    >>> check_is_fitted(lr)
     """
     if isclass(estimator):
         raise TypeError("{} is a class, not an instance.".format(estimator))
@@ -1546,6 +1709,12 @@ def check_scalar(
     ValueError
         If the parameter's value violates the given bounds.
         If `min_val`, `max_val` and `include_boundaries` are inconsistent.
+
+    Examples
+    --------
+    >>> from sklearn.utils.validation import check_scalar
+    >>> check_scalar(10, "x", int, min_val=1, max_val=20)
+    10
     """
 
     def type_name(t):
@@ -1909,11 +2078,11 @@ def _check_response_method(estimator, response_method):
     estimator : estimator instance
         Classifier or regressor to check.
 
-    response_method : {"predict_proba", "decision_function", "predict"} or \
-            list of such str
+    response_method : {"predict_proba", "predict_log_proba", "decision_function",
+            "predict"} or list of such str
         Specifies the response method to use get prediction from an estimator
-        (i.e. :term:`predict_proba`, :term:`decision_function` or
-        :term:`predict`). Possible choices are:
+        (i.e. :term:`predict_proba`, :term:`predict_log_proba`,
+        :term:`decision_function` or :term:`predict`). Possible choices are:
         - if `str`, it corresponds to the name to the method to return;
         - if a list of `str`, it provides the method names in order of
           preference. The method returned corresponds to the first method in
@@ -1969,8 +2138,10 @@ def _check_method_params(X, params, indices=None):
 
     method_params_validated = {}
     for param_key, param_value in params.items():
-        if not _is_arraylike(param_value) or _num_samples(param_value) != _num_samples(
-            X
+        if (
+            not _is_arraylike(param_value)
+            and not sp.issparse(param_value)
+            or _num_samples(param_value) != _num_samples(X)
         ):
             # Non-indexable pass-through (for now for backward-compatibility).
             # https://github.com/scikit-learn/scikit-learn/issues/15805
@@ -1986,16 +2157,40 @@ def _check_method_params(X, params, indices=None):
     return method_params_validated
 
 
+def _is_pandas_df_or_series(X):
+    """Return True if the X is a pandas dataframe or series."""
+    try:
+        pd = sys.modules["pandas"]
+    except KeyError:
+        return False
+    return isinstance(X, (pd.DataFrame, pd.Series))
+
+
 def _is_pandas_df(X):
     """Return True if the X is a pandas dataframe."""
-    if hasattr(X, "columns") and hasattr(X, "iloc"):
-        # Likely a pandas DataFrame, we explicitly check the type to confirm.
-        try:
-            pd = sys.modules["pandas"]
-        except KeyError:
-            return False
-        return isinstance(X, pd.DataFrame)
-    return False
+    try:
+        pd = sys.modules["pandas"]
+    except KeyError:
+        return False
+    return isinstance(X, pd.DataFrame)
+
+
+def _is_polars_df_or_series(X):
+    """Return True if the X is a polars dataframe or series."""
+    try:
+        pl = sys.modules["polars"]
+    except KeyError:
+        return False
+    return isinstance(X, (pl.DataFrame, pl.Series))
+
+
+def _is_polars_df(X):
+    """Return True if the X is a polars dataframe."""
+    try:
+        pl = sys.modules["polars"]
+    except KeyError:
+        return False
+    return isinstance(X, pl.DataFrame)
 
 
 def _get_feature_names(X):
@@ -2258,24 +2453,58 @@ def _check_pos_label_consistency(pos_label, y_true):
     # classes.dtype.kind in ('O', 'U', 'S') is required to avoid
     # triggering a FutureWarning by calling np.array_equal(a, b)
     # when elements in the two arrays are not comparable.
-    classes = np.unique(y_true)
-    if pos_label is None and (
-        classes.dtype.kind in "OUS"
-        or not (
+    if pos_label is None:
+        # Compute classes only if pos_label is not specified:
+        classes = np.unique(y_true)
+        if classes.dtype.kind in "OUS" or not (
             np.array_equal(classes, [0, 1])
             or np.array_equal(classes, [-1, 1])
             or np.array_equal(classes, [0])
             or np.array_equal(classes, [-1])
             or np.array_equal(classes, [1])
-        )
-    ):
-        classes_repr = ", ".join([repr(c) for c in classes.tolist()])
-        raise ValueError(
-            f"y_true takes value in {{{classes_repr}}} and pos_label is not "
-            "specified: either make y_true take value in {0, 1} or "
-            "{-1, 1} or pass pos_label explicitly."
-        )
-    elif pos_label is None:
+        ):
+            classes_repr = ", ".join([repr(c) for c in classes.tolist()])
+            raise ValueError(
+                f"y_true takes value in {{{classes_repr}}} and pos_label is not "
+                "specified: either make y_true take value in {0, 1} or "
+                "{-1, 1} or pass pos_label explicitly."
+            )
         pos_label = 1
 
     return pos_label
+
+
+def _to_object_array(sequence):
+    """Convert sequence to a 1-D NumPy array of object dtype.
+
+    numpy.array constructor has a similar use but it's output
+    is ambiguous. It can be 1-D NumPy array of object dtype if
+    the input is a ragged array, but if the input is a list of
+    equal length arrays, then the output is a 2D numpy.array.
+    _to_object_array solves this ambiguity by guarantying that
+    the output is a 1-D NumPy array of objects for any input.
+
+    Parameters
+    ----------
+    sequence : array-like of shape (n_elements,)
+        The sequence to be converted.
+
+    Returns
+    -------
+    out : ndarray of shape (n_elements,), dtype=object
+        The converted sequence into a 1-D NumPy array of object dtype.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.utils.validation import _to_object_array
+    >>> _to_object_array([np.array([0]), np.array([1])])
+    array([array([0]), array([1])], dtype=object)
+    >>> _to_object_array([np.array([0]), np.array([1, 2])])
+    array([array([0]), array([1, 2])], dtype=object)
+    >>> _to_object_array([np.array([0]), np.array([1, 2])])
+    array([array([0]), array([1, 2])], dtype=object)
+    """
+    out = np.empty(len(sequence), dtype=object)
+    out[:] = sequence
+    return out
