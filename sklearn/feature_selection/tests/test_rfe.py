@@ -672,8 +672,6 @@ def test_rfe_n_features_to_select_warning(ClsRFE):
             parameter_name = "min_features_to_select"
         elif issubclass(ClsRFE, RFE):
             parameter_name = "n_features_to_select"
-        else:
-            raise ValueError("Unsupported estimator")
 
         # Create RFE/RFECV with n_features_to_select/min_features_to_select
         # larger than the number of features present in the X variable
