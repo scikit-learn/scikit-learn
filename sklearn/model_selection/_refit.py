@@ -557,6 +557,9 @@ class FavorabilityRanker:
                 )
 
             # generate a ParameterGrid object from the processed_params dictionary
+            # we opt to use ParameterGrid here to ensure that the order of the
+            # hyperparameters is preserved in the output and is consistent with
+            # the order as it is handled in the searchCV objects
             favorability_scores = [
                 calculate_favorability_score(p)
                 for p in list(ParameterGrid(processed_params))
@@ -566,8 +569,7 @@ class FavorabilityRanker:
                 "`params` must be either a list of dictionaries or a single dictionary"
             )
 
-        ranks = [x + 1 for x in np.argsort(favorability_scores)]
-        return ranks
+        return [x + 1 for x in np.argsort(favorability_scores.copy())]
 
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}({self.favorability_rules})"
@@ -1145,9 +1147,10 @@ def promote(score_slice_fn: Callable, favorability_rank_fn: Callable) -> Callabl
     >>> X, y = load_digits(return_X_y=True)
     >>> pipe = Pipeline([
     ...      ("reduce_dim", PCA(random_state=42)),
-    ...      ("classify", LinearSVC(dual='auto', random_state=42, C=0.01)),
+    ...      ("classify", LinearSVC(dual='auto', random_state=42)),
     ... ])
-    >>> param_grid = {"reduce_dim__n_components": [6, 8, 10, 12, 14, 16, 18]}
+    >>> param_grid = {"reduce_dim__n_components": [6, 8, 10, 12, 14, 16, 18],
+    ... "classify__C": [0.0001, 0.001, 0.01, 1, 10]}
     >>> favorability_rules = {
     ...     'reduce_dim__n_components': (True, 1.0),  # Lower is simpler and
     ...                                        # more favorable
@@ -1162,16 +1165,16 @@ def promote(score_slice_fn: Callable, favorability_rank_fn: Callable) -> Callabl
     ...     favorability_rank_fn=FavorabilityRanker(favorability_rules)),
     ... )
     >>> fitted = search.fit(X, y)
-    Min: 0.8898918397688278
-    Max: 0.9186844524007791
-    Original best index: 6
-    Original best params: {'reduce_dim__n_components': 18}
-    Original best score: 0.9042881460848035
-    Promoted best index: 3
-    Promoted best params: {'reduce_dim__n_components': 12}
-    Promoted best score: 0.8926121943670691
+    Min: 0.9026227177726542
+    Max: 0.9304475391137588
+    Original best index: 27
+    Original best params: {'classify__C': 1, 'reduce_dim__n_components': 18}
+    Original best score: 0.9165351284432065
+    Promoted best index: 33
+    Promoted best params: {'classify__C': 10, 'reduce_dim__n_components': 16}
+    Promoted best score: 0.9048529866914269
     >>> fitted.best_params_
-    {'reduce_dim__n_components': 12}
+    {'classify__C': 10, 'reduce_dim__n_components': 16}
     """
     if not callable(score_slice_fn) or not callable(favorability_rank_fn):
         raise TypeError(
