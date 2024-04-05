@@ -290,8 +290,8 @@ class RFE(_RoutingNotSupportedMixin, SelectorMixin, MetaEstimatorMixin, BaseEsti
             if n_features_to_select > n_features:
                 warnings.warn(
                     (
-                        "n_features_to_select must not exceed available features."
-                        " Falling back to select all n_features."
+                        f"Found {n_features_to_select=} > {n_features=}. There will be"
+                        " no feature selection and all features will be kept."
                     ),
                     UserWarning,
                 )
@@ -738,6 +738,15 @@ class RFECV(RFE):
 
         # Build an RFE object, which will evaluate and score each possible
         # feature count, down to self.min_features_to_select
+        n_features = X.shape[1]
+        if self.min_features_to_select > n_features:
+            warnings.warn(
+                (
+                    f"Found {self.min_features_to_select=} > {n_features=}. There will"
+                    " be no feature selection and all features will be kept."
+                ),
+                UserWarning,
+            )
         rfe = RFE(
             estimator=self.estimator,
             n_features_to_select=self.min_features_to_select,
@@ -763,16 +772,23 @@ class RFECV(RFE):
         else:
             parallel = Parallel(n_jobs=self.n_jobs)
             func = delayed(_rfe_single_fit)
-
-        scores_features = parallel(
-            func(rfe, self.estimator, X, y, train, test, scorer)
-            for train, test in cv.split(X, y, groups)
-        )
+        with warnings.catch_warnings():
+            warnings.filterwarnings(
+                "ignore",
+                category=UserWarning,
+                message=(
+                    r"Found (\S+) > (\S+). There will be no feature selection and all"
+                    r" features will be kept."
+                ),
+            )
+            scores_features = parallel(
+                func(rfe, self.estimator, X, y, train, test, scorer)
+                for train, test in cv.split(X, y, groups)
+            )
         scores, step_n_features = zip(*scores_features)
 
         step_n_features_rev = np.array(step_n_features[0])[::-1]
         scores = np.array(scores)
-
         # Reverse order such that lowest number of features is selected in case of tie.
         scores_sum_rev = np.sum(scores, axis=0)[::-1]
         n_features_to_select = step_n_features_rev[np.argmax(scores_sum_rev)]

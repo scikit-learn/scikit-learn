@@ -2,7 +2,6 @@
 Testing Recursive feature elimination
 """
 
-import warnings
 from operator import attrgetter
 
 import numpy as np
@@ -652,8 +651,28 @@ def test_rfe_estimator_attribute_error():
     assert inner_msg in str(exec_info.value.__cause__)
 
 
-@pytest.mark.parametrize("ClsRFE", [RFE, RFECV])
-def test_rfe_n_features_to_select_warning(ClsRFE):
+@pytest.mark.parametrize(
+    "ClsRFE, param, warning_msg",
+    [
+        (
+            RFE,
+            "n_features_to_select",
+            (
+                "Found n_features_to_select=21 > n_features=20."
+                " There will be no feature selection and all features will be kept."
+            ),
+        ),
+        (
+            RFECV,
+            "min_features_to_select",
+            (
+                "Found self.min_features_to_select=21 > n_features=20."
+                " There will be no feature selection and all features will be kept."
+            ),
+        ),
+    ],
+)
+def test_rfe_n_features_to_select_warning(ClsRFE, param, warning_msg):
     """Check if the correct warning is raised when trying to initialize a RFE
     object with a n_features_to_select attribute larger than the number of
     features present in the X variable that is passed to the fit method
@@ -661,33 +680,16 @@ def test_rfe_n_features_to_select_warning(ClsRFE):
     Non-regression test for:
     https://github.com/scikit-learn/scikit-learn/issues/28725
     """
-    X, y = make_classification(
-        n_samples=1000, n_features=20, n_redundant=0, n_classes=2, random_state=0
-    )
+    X, y = make_classification(n_features=20, random_state=0)
 
-    # Catch the warning
-    with warnings.catch_warnings(record=True) as w:
-        # Determine the correct parameter name based on the estimator
-        if issubclass(ClsRFE, RFECV):
-            parameter_name = "min_features_to_select"
-        elif issubclass(ClsRFE, RFE):
-            parameter_name = "n_features_to_select"
-
+    with pytest.warns(UserWarning, match=f"{param}=21 > n_features=20") as record:
         # Create RFE/RFECV with n_features_to_select/min_features_to_select
         # larger than the number of features present in the X variable
         rfe = ClsRFE(
             estimator=LogisticRegression(random_state=0),
-            **{parameter_name: 21},
-            step=2,
+            **{param: 21},
         )
         rfe.fit(X=X, y=y)
 
-        # Check if any UserWarning was raised
-        assert any(issubclass(warning.category, UserWarning) for warning in w)
         # Check if the warning message is correct
-        assert any(
-            "n_features_to_select must not exceed available features."
-            " Falling back to select all n_features."
-            in str(warning.message)
-            for warning in w
-        )
+        assert any(warning_msg in str(warning.message) for warning in record)
