@@ -746,11 +746,6 @@ Changelog
   proportional to the number of coefficients (`n_features * n_classes`).
   :pr:`27417` by :user:`Christian Lorentzen <lorentzenchr>`.
 
-- |Enhancement| Solver `"newton-cg"` in :class:`linear_model.LogisticRegression` and
-  :class:`linear_model.LogisticRegressionCV` now emits information when `verbose` is
-  set to positive values.
-  :pr:`27526` by :user:`Christian Lorentzen <lorentzenchr>`.
-
 - |Fix| Ensure that the `sigma_` attribute of
   :class:`linear_model.ARDRegression` and :class:`linear_model.BayesianRidge`
   always has a `float32` dtype when fitted on `float32` data, even with the
