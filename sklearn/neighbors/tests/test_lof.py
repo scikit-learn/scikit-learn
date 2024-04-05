@@ -359,3 +359,36 @@ def test_lof_dtype_equivalence(algorithm, novelty, contamination):
             y_pred_32 = getattr(lof_32, method)(X_32)
             y_pred_64 = getattr(lof_64, method)(X_64)
             assert_allclose(y_pred_32, y_pred_64, atol=0.0002)
+
+
+def test_lof_duplicate_samples():
+    """
+    Check that outliers are correct when the data has duplicate values
+
+    Test for: https://github.com/scikit-learn/scikit-learn/issues/27839
+    """
+
+    rng = np.random.default_rng(0)
+
+    # 100 times the number of elements of the example shown in the issue
+    x = rng.permutation(
+        np.hstack(
+            [
+                [0.1] * 1000,  # constant values
+                np.linspace(0.1, 0.3, num=3000),
+                rng.random(500) * 100,  # the clear outliers
+            ]
+        )
+    )
+    X = x.reshape(-1, 1)
+
+    lof = neighbors.LocalOutlierFactor(n_neighbors=5, contamination=0.1)
+    outliers = lof.fit_predict(X)
+
+    indices = np.where(outliers == -1)
+
+    outliers = X[indices]
+
+    # Check that only values outside of the [0.1, 0.3] range are selected
+    for outlier in outliers:
+        assert outlier < 0.1 or outlier > 0.3
