@@ -156,7 +156,7 @@ def _cg(fhess_p, fgrad, maxiter, tol, verbose=0):
             # See https://arxiv.org/abs/1803.02924, Algo 1 Capped Conjugate Gradient.
             if is_verbose:
                 print(
-                    "  Inner CG solver iteration {i} stopped with\n"
+                    f"  Inner CG solver iteration {i} stopped with\n"
                     f"    tiny_|p| = eps * ||p||^2, eps = {eps}, "
                     f"squred L2 norm ||p||^2 = {psupi_norm2}\n"
                     f"    curvature <= tiny_|p|: {curv} <= {eps * psupi_norm2}"
@@ -166,7 +166,7 @@ def _cg(fhess_p, fgrad, maxiter, tol, verbose=0):
             if i > 0:
                 if is_verbose:
                     print(
-                        "  Inner CG solver iteration {i} stopped with negative "
+                        f"  Inner CG solver iteration {i} stopped with negative "
                         f"curvature, curvature = {curv}"
                     )
                 break
@@ -311,10 +311,13 @@ def _newton_cg(
 
     if warn and k >= maxiter:
         warnings.warn(
-            "newton-cg failed to converge. Increase the number of iterations.",
+            (
+                f"newton-cg failed to converge at loss = {old_fval}. Increase the"
+                " number of iterations."
+            ),
             ConvergenceWarning,
         )
-    if is_verbose:
+    elif is_verbose:
         print(f"  Solver did converge at loss = {old_fval}.")
     return xk, k
 

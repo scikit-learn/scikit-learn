@@ -75,7 +75,7 @@ def test_newton_cg_verbosity(capsys, verbose):
         # Set up a badly scaled singular Hessian with a completely wrong starting
         # position. This should trigger 2nd line search check
         A = np.array([[1.0, 2], [2, 4]]) * 1e30  # collinear columns
-        b = np.array([1, 2], dtype=float)
+        b = np.array([1.0, 2.0])
         # Note that scipy.optimize._linesearch LineSearchWarning inherits from
         # RuntimeWarning, but we do not want to import from non public APIs.
         with pytest.warns(RuntimeWarning):
@@ -98,7 +98,7 @@ def test_newton_cg_verbosity(capsys, verbose):
 
         # Set up a badly conditioned Hessian that leads to tiny curvature.
         # X.T @ X have singular values array([1.00000400e+01, 1.00008192e-11])
-        A = np.array([[1.0, 2], [1, 2 + 1e-15]], dtype=float)
+        A = np.array([[1.0, 2], [1, 2 + 1e-15]])
         b = np.array([-2.0, 1])
         with pytest.warns(ConvergenceWarning):
             _newton_cg(
