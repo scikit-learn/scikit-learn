@@ -652,27 +652,9 @@ def test_rfe_estimator_attribute_error():
 
 
 @pytest.mark.parametrize(
-    "ClsRFE, param, warning_msg",
-    [
-        (
-            RFE,
-            "n_features_to_select",
-            (
-                "Found n_features_to_select=21 > n_features=20."
-                " There will be no feature selection and all features will be kept."
-            ),
-        ),
-        (
-            RFECV,
-            "min_features_to_select",
-            (
-                "Found self.min_features_to_select=21 > n_features=20."
-                " There will be no feature selection and all features will be kept."
-            ),
-        ),
-    ],
+    "ClsRFE, param", [(RFE, "n_features_to_select"), (RFECV, "min_features_to_select")]
 )
-def test_rfe_n_features_to_select_warning(ClsRFE, param, warning_msg):
+def test_rfe_n_features_to_select_warning(ClsRFE, param):
     """Check if the correct warning is raised when trying to initialize a RFE
     object with a n_features_to_select attribute larger than the number of
     features present in the X variable that is passed to the fit method
@@ -682,7 +664,7 @@ def test_rfe_n_features_to_select_warning(ClsRFE, param, warning_msg):
     """
     X, y = make_classification(n_features=20, random_state=0)
 
-    with pytest.warns(UserWarning, match=f"{param}=21 > n_features=20") as record:
+    with pytest.warns(UserWarning, match=f"{param}=21 > n_features=20"):
         # Create RFE/RFECV with n_features_to_select/min_features_to_select
         # larger than the number of features present in the X variable
         rfe = ClsRFE(
@@ -690,6 +672,3 @@ def test_rfe_n_features_to_select_warning(ClsRFE, param, warning_msg):
             **{param: 21},
         )
         rfe.fit(X=X, y=y)
-
-        # Check if the warning message is correct
-        assert any(warning_msg in str(warning.message) for warning in record)

@@ -742,14 +742,15 @@ class RFECV(RFE):
         if self.min_features_to_select > n_features:
             warnings.warn(
                 (
-                    f"Found {self.min_features_to_select=} > {n_features=}. There will"
-                    " be no feature selection and all features will be kept."
+                    f"Found min_features_to_select={self.min_features_to_select} > "
+                    f"{n_features=}. There will be no feature selection and all "
+                    "features will be kept."
                 ),
                 UserWarning,
             )
         rfe = RFE(
             estimator=self.estimator,
-            n_features_to_select=self.min_features_to_select,
+            n_features_to_select=min(self.min_features_to_select, n_features),
             importance_getter=self.importance_getter,
             step=self.step,
             verbose=self.verbose,
