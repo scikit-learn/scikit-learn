@@ -18,7 +18,7 @@ For a short description of the main highlights of the release, please refer to
 Version 1.4.2
 =============
 
-**April 2024**
+**TBA 2024**
 
 This release only includes support for numpy 2.
 
