@@ -275,7 +275,7 @@ def _newton_cg(
         if is_verbose:
             print(f"Newton-CG iter = {k}")
             print("  Check Convergence")
-            print(f"    1. max |gradient| {max_absgrad} <= {tol}")
+            print(f"    max |gradient| {max_absgrad} <= {tol}")
         if max_absgrad <= tol:
             break
 
