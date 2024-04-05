@@ -16,10 +16,11 @@ dependencies:
     - matplotlib
     - pandas
     - pyamg
-    - pytest
-    - pytest-xdist==2.5.0
+    - pytest<8
+    - pytest-xdist
     - pillow
-    - setuptools
+    - ninja
+    - meson-python
     - pytest-cov
     - coverage
     - sphinx

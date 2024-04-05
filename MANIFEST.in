@@ -1,4 +1,6 @@
 include *.rst
+include *.build
+recursive-include sklearn *.build
 recursive-include doc *
 recursive-include examples *
 recursive-include sklearn *.c *.cpp *.h *.pyx *.pxd *.pxi *.tp
