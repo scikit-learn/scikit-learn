@@ -508,11 +508,14 @@ def generate_multilabel_dataset_with_correlations():
     return X, Y_multi
 
 
-def test_classifier_chain_fit_and_predict_with_linear_svc():
+@pytest.mark.parametrize("chain_method", ["predict", "decision_function"])
+def test_classifier_chain_fit_and_predict_with_linear_svc(chain_method):
     # Fit classifier chain and verify predict performance using LinearSVC
     X, Y = generate_multilabel_dataset_with_correlations()
-    classifier_chain = ClassifierChain(LinearSVC(dual="auto"))
-    classifier_chain.fit(X, Y)
+    classifier_chain = ClassifierChain(
+        LinearSVC(dual="auto"),
+        chain_method=chain_method,
+    ).fit(X, Y)
 
     Y_pred = classifier_chain.predict(X)
     assert Y_pred.shape == Y.shape
@@ -530,12 +533,10 @@ def test_classifier_chain_fit_and_predict_with_sparse_data(csr_container):
     X, Y = generate_multilabel_dataset_with_correlations()
     X_sparse = csr_container(X)
 
-    classifier_chain = ClassifierChain(LogisticRegression())
-    classifier_chain.fit(X_sparse, Y)
+    classifier_chain = ClassifierChain(LogisticRegression()).fit(X_sparse, Y)
     Y_pred_sparse = classifier_chain.predict(X_sparse)
 
-    classifier_chain = ClassifierChain(LogisticRegression())
-    classifier_chain.fit(X, Y)
+    classifier_chain = ClassifierChain(LogisticRegression()).fit(X, Y)
     Y_pred_dense = classifier_chain.predict(X)
 
     assert_array_equal(Y_pred_sparse, Y_pred_dense)
@@ -564,26 +565,41 @@ def test_classifier_chain_vs_independent_models():
     )
 
 
+@pytest.mark.parametrize(
+    "chain_method",
+    ["predict", "predict_proba", "predict_log_proba", "decision_function"],
+)
 @pytest.mark.parametrize("response_method", ["predict_proba", "predict_log_proba"])
-def test_base_chain_fit_and_predict(response_method):
-    # Fit base chain and verify predict performance
+def test_classifier_chain_fit_and_predict(chain_method, response_method):
+    # Fit classifier chain and verify predict performance
     X, Y = generate_multilabel_dataset_with_correlations()
-    chains = [RegressorChain(Ridge()), ClassifierChain(LogisticRegression())]
-    for chain in chains:
-        chain.fit(X, Y)
-        Y_pred = chain.predict(X)
-        assert Y_pred.shape == Y.shape
-        assert [c.coef_.size for c in chain.estimators_] == list(
-            range(X.shape[1], X.shape[1] + Y.shape[1])
-        )
+    chain = ClassifierChain(LogisticRegression(), chain_method=chain_method)
+    chain.fit(X, Y)
+    Y_pred = chain.predict(X)
+    assert Y_pred.shape == Y.shape
+    assert [c.coef_.size for c in chain.estimators_] == list(
+        range(X.shape[1], X.shape[1] + Y.shape[1])
+    )
 
-    Y_prob = getattr(chains[1], response_method)(X)
+    Y_prob = getattr(chain, response_method)(X)
     if response_method == "predict_log_proba":
         Y_prob = np.exp(Y_prob)
     Y_binary = Y_prob >= 0.5
     assert_array_equal(Y_binary, Y_pred)
 
-    assert isinstance(chains[1], ClassifierMixin)
+    assert isinstance(chain, ClassifierMixin)
+
+
+def test_regressor_chain_fit_and_predict():
+    # Fit regressor chain and verify Y and estimator coefficients shape
+    X, Y = generate_multilabel_dataset_with_correlations()
+    chain = RegressorChain(Ridge())
+    chain.fit(X, Y)
+    Y_pred = chain.predict(X)
+    assert Y_pred.shape == Y.shape
+    assert [c.coef_.size for c in chain.estimators_] == list(
+        range(X.shape[1], X.shape[1] + Y.shape[1])
+    )
 
 
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
@@ -619,24 +635,37 @@ def test_base_chain_random_order():
             assert_array_almost_equal(est1.coef_, est2.coef_)
 
 
-def test_base_chain_crossval_fit_and_predict():
+@pytest.mark.parametrize(
+    "chain_type, chain_method",
+    [
+        ("classifier", "predict"),
+        ("classifier", "predict_proba"),
+        ("classifier", "predict_log_proba"),
+        ("classifier", "decision_function"),
+        ("regressor", ""),
+    ],
+)
+def test_base_chain_crossval_fit_and_predict(chain_type, chain_method):
     # Fit chain with cross_val_predict and verify predict
     # performance
     X, Y = generate_multilabel_dataset_with_correlations()
 
-    for chain in [ClassifierChain(LogisticRegression()), RegressorChain(Ridge())]:
-        chain.fit(X, Y)
-        chain_cv = clone(chain).set_params(cv=3)
-        chain_cv.fit(X, Y)
-        Y_pred_cv = chain_cv.predict(X)
-        Y_pred = chain.predict(X)
+    if chain_type == "classifier":
+        chain = ClassifierChain(LogisticRegression(), chain_method=chain_method)
+    else:
+        chain = RegressorChain(Ridge())
+    chain.fit(X, Y)
+    chain_cv = clone(chain).set_params(cv=3)
+    chain_cv.fit(X, Y)
+    Y_pred_cv = chain_cv.predict(X)
+    Y_pred = chain.predict(X)
 
-        assert Y_pred_cv.shape == Y_pred.shape
-        assert not np.all(Y_pred == Y_pred_cv)
-        if isinstance(chain, ClassifierChain):
-            assert jaccard_score(Y, Y_pred_cv, average="samples") > 0.4
-        else:
-            assert mean_squared_error(Y, Y_pred_cv) < 0.25
+    assert Y_pred_cv.shape == Y_pred.shape
+    assert not np.all(Y_pred == Y_pred_cv)
+    if isinstance(chain, ClassifierChain):
+        assert jaccard_score(Y, Y_pred_cv, average="samples") > 0.4
+    else:
+        assert mean_squared_error(Y, Y_pred_cv) < 0.25
 
 
 @pytest.mark.parametrize(
@@ -737,7 +766,9 @@ def test_classifier_chain_tuple_order(order_type):
     y = [[3, 2], [2, 3], [3, 2]]
     order = order_type([1, 0])
 
-    chain = ClassifierChain(RandomForestClassifier(), order=order)
+    chain = ClassifierChain(
+        RandomForestClassifier(n_estimators=2, random_state=0), order=order
+    )
 
     chain.fit(X, y)
     X_test = [[1.5, 2.5, 3.5]]

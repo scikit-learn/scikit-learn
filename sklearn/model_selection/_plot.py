@@ -2,7 +2,7 @@ import warnings
 
 import numpy as np
 
-from ..utils import check_matplotlib_support
+from ..utils._optional_dependencies import check_matplotlib_support
 from ..utils._plotting import _interval_max_min_ratio, _validate_score_name
 from ._validation import learning_curve, validation_curve
 
