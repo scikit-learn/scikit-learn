@@ -14,19 +14,29 @@
 
 from libc.string cimport memcpy
 from libc.string cimport memset
-from libc.math cimport fabs, INFINITY
+from libc.math cimport INFINITY, fabs, isnan
 
 import numpy as np
 cimport numpy as cnp
 cnp.import_array()
-
-from scipy.special.cython_special cimport xlogy
 
 from ._utils cimport log
 from ._utils cimport WeightedMedianCalculator
 
 # EPSILON is used in the Poisson criterion
 cdef float64_t EPSILON = 10 * np.finfo('double').eps
+
+
+cdef inline float64_t xlogy(float64_t x, float64_t y) noexcept nogil:
+    """Computes x * log(y)."""
+    # Same as
+    #     from scipy.special.cython_special cimport xlogy
+    # But importing it prohibits inlining.
+    if x == 0 and not isnan(y):
+        return 0
+    else:
+        return x * log(y)
+
 
 cdef class Criterion:
     """Interface for impurity criteria.
