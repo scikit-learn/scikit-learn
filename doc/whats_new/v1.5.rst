@@ -332,6 +332,12 @@ Changelog
   given the split condition.
   :pr:`28552` by :user:`Adam Li <adam2392>`.
 
+:mod:`sklearn.utils`
+....................
+
+- |API| :func:`utils.tosequence` is deprecated and will be removed in version 1.7.
+  :pr:`28763` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
+
 .. rubric:: Code and documentation contributors
 
 Thanks to everyone who has contributed to the maintenance and improvement of
