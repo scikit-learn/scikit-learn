@@ -158,7 +158,7 @@ class _BasePCA(
     def inverse_transform(self, X):
         """Transform data back to its original space.
 
-        In other words, return an input `X_original` whose transform would be Xt.
+        In other words, return an input `X_original` whose transform would be X.
 
         Parameters
         ----------

@@ -12,6 +12,7 @@ import numpy as np
 from ..base import BaseEstimator, TransformerMixin, _fit_context
 from ..utils import resample
 from ..utils._param_validation import Hidden, Interval, Options, StrOptions
+from ..utils.deprecation import _deprecate_Xt_in_inverse_transform
 from ..utils.stats import _weighted_percentile
 from ..utils.validation import (
     _check_feature_names_in,
@@ -405,7 +406,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
             self._encoder.dtype = dtype_init
         return Xt_enc
 
-    def inverse_transform(self, Xt):
+    def inverse_transform(self, X=None, Xt=None):
         """
         Transform discretized data back to original feature space.
 
@@ -414,8 +415,14 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
+        X : array-like of shape (n_samples, n_features)
+            Transformed data in the binned space.
+
         Xt : array-like of shape (n_samples, n_features)
             Transformed data in the binned space.
+
+            .. deprecated:: 1.5
+                `Xt` was deprecated in 1.5 and will be removed in 1.7. Use `X` instead.
 
         Returns
         -------
@@ -424,10 +431,12 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
         """
         check_is_fitted(self)
 
-        if "onehot" in self.encode:
-            Xt = self._encoder.inverse_transform(Xt)
+        X = _deprecate_Xt_in_inverse_transform(X, Xt)
 
-        Xinv = check_array(Xt, copy=True, dtype=(np.float64, np.float32))
+        if "onehot" in self.encode:
+            X = self._encoder.inverse_transform(X)
+
+        Xinv = check_array(X, copy=True, dtype=(np.float64, np.float32))
         n_features = self.n_bins_.shape[0]
         if Xinv.shape[1] != n_features:
             raise ValueError(

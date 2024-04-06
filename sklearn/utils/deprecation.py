@@ -116,6 +116,7 @@ def _is_deprecated(func):
     return is_deprecated
 
 
+# TODO: remove in 1.7
 def _deprecate_Xt_in_inverse_transform(X, Xt):
     if X is not None and Xt is not None:
         raise ValueError("Cannot use both `X` and `Xt`. Use `X` only.")

@@ -5,13 +5,13 @@ agglomeration.
 # Author: V. Michel, A. Gramfort
 # License: BSD 3 clause
 
-import warnings
 
 import numpy as np
 from scipy.sparse import issparse
 
 from ..base import TransformerMixin
 from ..utils import metadata_routing
+from ..utils.deprecation import _deprecate_Xt_in_inverse_transform
 from ..utils.validation import check_is_fitted
 
 ###############################################################################
@@ -62,19 +62,20 @@ class AgglomerationTransform(TransformerMixin):
             nX = np.array(nX).T
         return nX
 
-    def inverse_transform(self, Xt=None, Xred=None):
+    def inverse_transform(self, X=None, Xt=None, Xred=None):
         """
         Inverse the transformation and return a vector of size `n_features`.
 
         Parameters
         ----------
+        X : array-like of shape (n_samples, n_clusters) or (n_clusters,)
+            The values to be assigned to each cluster of samples.
+
         Xt : array-like of shape (n_samples, n_clusters) or (n_clusters,)
             The values to be assigned to each cluster of samples.
 
-        Xred : deprecated
-            Use `Xt` instead.
-
-            .. deprecated:: 1.3
+            .. deprecated:: 1.5
+                `Xt` was deprecated in 1.5 and will be removed in 1.7. Use `X` instead.
 
         Returns
         -------
@@ -82,23 +83,9 @@ class AgglomerationTransform(TransformerMixin):
             A vector of size `n_samples` with the values of `Xred` assigned to
             each of the cluster of samples.
         """
-        if Xt is None and Xred is None:
-            raise TypeError("Missing required positional argument: Xt")
-
-        if Xred is not None and Xt is not None:
-            raise ValueError("Please provide only `Xt`, and not `Xred`.")
-
-        if Xred is not None:
-            warnings.warn(
-                (
-                    "Input argument `Xred` was renamed to `Xt` in v1.3 and will be"
-                    " removed in v1.5."
-                ),
-                FutureWarning,
-            )
-            Xt = Xred
-
         check_is_fitted(self)
 
+        X = _deprecate_Xt_in_inverse_transform(X, Xt)
+
         unil, inverse = np.unique(self.labels_, return_inverse=True)
-        return Xt[..., inverse]
+        return X[..., inverse]

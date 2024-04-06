@@ -35,6 +35,7 @@ from ..metrics._scorer import (
 from ..utils import Bunch, check_random_state
 from ..utils._param_validation import HasMethods, Interval, StrOptions
 from ..utils._tags import _safe_tags
+from ..utils.deprecation import _deprecate_Xt_in_inverse_transform
 from ..utils.metadata_routing import (
     MetadataRouter,
     MethodMapping,
@@ -637,7 +638,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         return self.best_estimator_.transform(X)
 
     @available_if(_estimator_has("inverse_transform"))
-    def inverse_transform(self, Xt):
+    def inverse_transform(self, X=None, Xt=None):
         """Call inverse_transform on the estimator with the best found params.
 
         Only available if the underlying estimator implements
@@ -645,9 +646,16 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
 
         Parameters
         ----------
+        X : indexable, length n_samples
+            Must fulfill the input assumptions of the
+            underlying estimator.
+
         Xt : indexable, length n_samples
             Must fulfill the input assumptions of the
             underlying estimator.
+
+            .. deprecated:: 1.5
+                `Xt` was deprecated in 1.5 and will be removed in 1.7. Use `X` instead.
 
         Returns
         -------
@@ -656,7 +664,8 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             estimator with the best found parameters.
         """
         check_is_fitted(self)
-        return self.best_estimator_.inverse_transform(Xt)
+        X = _deprecate_Xt_in_inverse_transform(X, Xt)
+        return self.best_estimator_.inverse_transform(X)
 
     @property
     def n_features_in_(self):
