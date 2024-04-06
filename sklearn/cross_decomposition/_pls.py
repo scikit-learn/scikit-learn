@@ -184,8 +184,74 @@ def _deprecate_Y_when_required(y, Y):
     return _deprecate_Y_when_optional(y, Y)
 
 class ReducedRankRegression(Ridge):
+    """Reduced rank regression.
+
+    ReducedRankRegression enforces a low-rank constraint on the beta coefficients. If beta is
+    a [p x q] matrix in the case of normal regression, reduced rank regression enforces rank(beta) <= rank
+    where rank < min(p,q). This constraint is based on the assumption that X and Y are related by a smaller
+    number of latent factors, instead of the full space spanned by the coefficients of normal linear regression.
+    Reduced rank regression can also act as a form of regularization.
+
+    This implementation is built on top of sklearn.linear_model.Ridge. Thus, a ridge penalty can also be specified
+    if additional regularization is desired.
+
+    Parameters
+    ----------
+    rank : int, default=2
+        The rank of the regression components. Should be in `[1, n_targets]`.
+
+    alpha : float, default=0
+        Regularization strength if an additional ridge penalty is desired. Must be a non-negative float.
+
+    ridge_params_dict : dict, default=None
+        A dictionary of parameters to pass to the Ridge constructor. See sklearn.linear_model.Ridge for more details.
+
+    Attributes
+    ----------
+    coef_ : ndarray of shape (n_features,) or (n_targets, n_features)
+        Weight vector(s).
+
+    intercept_ : float or ndarray of shape (n_targets,)
+        Independent term in decision function. Set to 0.0 if
+        ``fit_intercept = False``.
+
+    n_iter_ : None or ndarray of shape (n_targets,)
+        Actual number of iterations for each target. Available only for
+        sag and lsqr solvers. Other solvers will return None.
+
+
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+    See Also
+    --------
+    PLSRegression : Partial Least Squares regression.
+
+    Examples
+    --------
+    >>> from sklearn.cross_decomposition import ReducedRankRegression
+    >>> X = [[0., 0., 1.], [1.,0.,0.], [2.,2.,2.], [2.,5.,4.]]
+    >>> y = [[0.1, -0.2], [0.9, 1.1], [6.2, 5.9], [11.9, 12.3]]
+    >>> rrr = ReducedRankRegression(rank=2)
+    >>> rrr.fit(X, y)
+    ReducedRankRegression()
+    >>> Y_pred = rrr.predict(X)
+    """
+
     from ..decomposition import PCA
-    def __init__(self, rank='full', alpha=0, ridge_params_dict=None): # default full rank
+
+    _parameter_constraints: dict = {
+    "rank": [Interval(Integral, 1, None, closed="left")],
+    "alpha": [Interval(Real, 0, None, closed="left"), np.ndarray],
+    "ridge_params_dict": ["dict"],
+    }
+
+    def __init__(self, rank=2, alpha=0, ridge_params_dict=None): # default full rank
         if ridge_params_dict is None:
             ridge_params_dict = dict(alpha=alpha) # default no regularization - equivlent to OLS
         super().__init__(**ridge_params_dict)
@@ -195,16 +261,9 @@ class ReducedRankRegression(Ridge):
     def fit(self, X, y, sample_weight=None):
         assert y.ndim > 1, "There must be more than one target variable to use ReducedRankRegression. If only one target variable is required, use LinearRegression, Ridge, or Lasso instead."
         assert y.shape[1] > 1, "There must be more than one target variable to use ReducedRankRegression. If only one target variable is required, use LinearRegression, Ridge, or Lasso instead."
-
-        if self.rank == 'full':
-            rank = y.shape[1]
-        elif self.rank >= 1: # TODO: handle rank between 0 and 1, find the rank that explains a certain percent of variance like sklearn.decomposition.PCA
-            assert isinstance(self.rank, (int, np.integer)), "if rank >= 1, it must be an integer"
-            rank = self.rank 
-
         beta_ridge = super().fit(X, y, sample_weight=sample_weight).coef_.T
         y_hat_ridge = super().predict(X) 
-        pca = PCA(n_components=rank)
+        pca = PCA(n_components=self.rank)
         pca.fit(y_hat_ridge)
         beta_proj = beta_ridge @ pca.components_.T # the encoding matrix (projects predictors from full space to space spanned by first n ranks)
         beta_rrr = beta_proj @ pca.components_ # the reconstituted reduced rank regression matrix (same size as b_ridge)
