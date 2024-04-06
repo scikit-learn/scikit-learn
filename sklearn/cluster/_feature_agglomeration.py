@@ -24,9 +24,9 @@ class AgglomerationTransform(TransformerMixin):
     """
 
     # This prevents ``set_split_inverse_transform`` to be generated for the
-    # non-standard ``Xred`` arg on ``inverse_transform``.
-    # TODO(1.5): remove when Xred is removed for inverse_transform.
-    __metadata_request__inverse_transform = {"Xred": metadata_routing.UNUSED}
+    # non-standard ``Xt`` arg on ``inverse_transform``.
+    # TODO(1.7): remove when Xt is removed for inverse_transform.
+    __metadata_request__inverse_transform = {"Xt": metadata_routing.UNUSED}
 
     def transform(self, X):
         """
@@ -62,7 +62,7 @@ class AgglomerationTransform(TransformerMixin):
             nX = np.array(nX).T
         return nX
 
-    def inverse_transform(self, X=None, Xt=None, Xred=None):
+    def inverse_transform(self, X=None, Xt=None):
         """
         Inverse the transformation and return a vector of size `n_features`.
 
