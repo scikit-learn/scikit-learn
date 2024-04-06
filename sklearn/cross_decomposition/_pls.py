@@ -21,13 +21,14 @@ from ..base import (
     _fit_context,
 )
 from ..exceptions import ConvergenceWarning
+from ..linear_model import Ridge
 from ..utils import check_array, check_consistent_length
 from ..utils._param_validation import Interval, StrOptions
 from ..utils.extmath import svd_flip
 from ..utils.fixes import parse_version, sp_version
 from ..utils.validation import FLOAT_DTYPES, check_is_fitted
 
-__all__ = ["PLSCanonical", "PLSRegression", "PLSSVD"]
+__all__ = ["PLSCanonical", "PLSRegression", "PLSSVD", "ReducedRankRegression"]
 
 
 if sp_version >= parse_version("1.7"):
@@ -182,6 +183,36 @@ def _deprecate_Y_when_required(y, Y):
         raise ValueError("y is required.")
     return _deprecate_Y_when_optional(y, Y)
 
+class ReducedRankRegression(Ridge):
+    from ..decomposition import PCA
+    def __init__(self, rank='full', alpha=0, ridge_params_dict=None): # default full rank
+        if ridge_params_dict is None:
+            ridge_params_dict = dict(alpha=alpha) # default no regularization - equivlent to OLS
+        super().__init__(**ridge_params_dict)
+        self.ridge_params_dict = ridge_params_dict
+        self.rank = rank
+
+    def fit(self, X, y, sample_weight=None):
+        assert y.ndim > 1, "There must be more than one target variable to use ReducedRankRegression. If only one target variable is required, use LinearRegression, Ridge, or Lasso instead."
+        assert y.shape[1] > 1, "There must be more than one target variable to use ReducedRankRegression. If only one target variable is required, use LinearRegression, Ridge, or Lasso instead."
+
+        if self.rank == 'full':
+            rank = y.shape[1]
+        elif self.rank >= 1: # TODO: handle rank between 0 and 1, find the rank that explains a certain percent of variance like sklearn.decomposition.PCA
+            assert isinstance(self.rank, (int, np.integer)), "if rank >= 1, it must be an integer"
+            rank = self.rank 
+
+        beta_ridge = super().fit(X, y, sample_weight=sample_weight).coef_.T
+        y_hat_ridge = super().predict(X) 
+        pca = PCA(n_components=rank)
+        pca.fit(y_hat_ridge)
+        beta_proj = beta_ridge @ pca.components_.T # the encoding matrix (projects predictors from full space to space spanned by first n ranks)
+        beta_rrr = beta_proj @ pca.components_ # the reconstituted reduced rank regression matrix (same size as b_ridge)
+
+        self.coef_ = beta_rrr.T
+        self.encoder_ = beta_proj
+        self.decoder_ = pca.components_
+        return self
 
 class _PLS(
     ClassNamePrefixFeaturesOutMixin,
