@@ -20,6 +20,7 @@ from ..base import (
     TransformerMixin,
     _fit_context,
 )
+from ..decomposition import PCA
 from ..exceptions import ConvergenceWarning
 from ..linear_model import Ridge
 from ..utils import check_array, check_consistent_length
@@ -243,12 +244,11 @@ class ReducedRankRegression(Ridge):
     >>> Y_pred = rrr.predict(X)
     """
 
-    from ..decomposition import PCA
 
     _parameter_constraints: dict = {
     "rank": [Interval(Integral, 1, None, closed="left")],
     "alpha": [Interval(Real, 0, None, closed="left"), np.ndarray],
-    "ridge_params_dict": ["dict"],
+    #"ridge_params_dict": ["dict"], # TODO: add validation for Ridge parameters dict argument?
     }
 
     def __init__(self, rank=2, alpha=0, ridge_params_dict=None): # default full rank
