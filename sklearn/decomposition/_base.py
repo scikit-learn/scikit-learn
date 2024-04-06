@@ -16,7 +16,6 @@ from scipy.sparse import issparse
 
 from ..base import BaseEstimator, ClassNamePrefixFeaturesOutMixin, TransformerMixin
 from ..utils._array_api import _add_to_diagonal, device, get_namespace
-from ..utils.deprecation import _deprecate_X_in_inverse_transform
 from ..utils.sparsefuncs import _implicit_column_offset
 from ..utils.validation import check_is_fitted
 
@@ -156,23 +155,16 @@ class _BasePCA(
             X_transformed /= xp.sqrt(self.explained_variance_)
         return X_transformed
 
-    def inverse_transform(self, Xt=None, X=None):
+    def inverse_transform(self, X):
         """Transform data back to its original space.
 
         In other words, return an input `X_original` whose transform would be Xt.
 
         Parameters
         ----------
-        Xt : array-like of shape (n_samples, n_components)
-            New data, where `n_samples` is the number of samples
-            and `n_components` is the number of components.
-
         X : array-like of shape (n_samples, n_components)
             New data, where `n_samples` is the number of samples
             and `n_components` is the number of components.
-
-            .. deprecated:: 1.5
-                `X` is deprecated in 1.5 and will be removed in 1.7. Use `Xt` instead.
 
         Returns
         -------
@@ -185,17 +177,15 @@ class _BasePCA(
         If whitening is enabled, inverse_transform will compute the
         exact inverse operation, which includes reversing whitening.
         """
-        Xt = _deprecate_X_in_inverse_transform(Xt, X)
-
-        xp, _ = get_namespace(Xt)
+        xp, _ = get_namespace(X)
 
         if self.whiten:
             scaled_components = (
                 xp.sqrt(self.explained_variance_[:, np.newaxis]) * self.components_
             )
-            return Xt @ scaled_components + self.mean_
+            return X @ scaled_components + self.mean_
         else:
-            return Xt @ self.components_ + self.mean_
+            return X @ self.components_ + self.mean_
 
     @property
     def _n_features_out(self):
