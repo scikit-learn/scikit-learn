@@ -116,15 +116,16 @@ def _is_deprecated(func):
     return is_deprecated
 
 
-def _deprecate_X_in_inverse_transform(Xt, X):
-    if Xt is not None and X is not None:
-        raise ValueError("Cannot use both `X` and `Xt`. Use `Xt` only.")
+def _deprecate_Xt_in_inverse_transform(X, Xt):
+    if X is not None and Xt is not None:
+        raise ValueError("Cannot use both `X` and `Xt`. Use `X` only.")
 
-    if X is not None:
+    if Xt is not None:
         warnings.warn(
-            "Passing `X` is deprecated and will be removed in 1.7. Use `Xt` instead.",
+            "Passing `Xt` is deprecated and will be removed in 1.7. Use `X` instead.",
             FutureWarning,
         )
-        Xt = X
 
-    return Xt
+        X = Xt
+
+    return X
