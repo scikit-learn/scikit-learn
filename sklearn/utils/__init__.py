@@ -86,6 +86,8 @@ _IS_32BIT = 8 * struct.calcsize("P") == 32
 _IS_WASM = platform.machine() in ["wasm32", "wasm64"]
 
 
+# TODO(1.7): remove tosequence
+@deprecated("tosequence was deprecated in 1.5 and will be removed in 1.7")
 def tosequence(x):
     """Cast iterable x to a Sequence, avoiding a copy if possible.
 
