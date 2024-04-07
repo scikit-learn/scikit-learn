@@ -898,28 +898,32 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         Algorithm to use in the optimization problem. Default is 'lbfgs'.
         To choose a solver, you might want to consider the following aspects:
 
-            - For small datasets, 'liblinear' is a good choice, whereas 'sag'
-              and 'saga' are faster for large ones;
-            - For multiclass problems, only 'newton-cg', 'sag', 'saga' and
-              'lbfgs' handle multinomial loss;
-            - 'liblinear' is limited to one-versus-rest schemes.
-            - 'newton-cholesky' is a good choice for `n_samples` >> `n_features`,
-              especially with one-hot encoded categorical features with rare
-              categories. Note that it is limited to binary classification and the
-              one-versus-rest reduction for multiclass classification. Be aware that
-              the memory usage of this solver has a quadratic dependency on
-              `n_features` because it explicitly computes the Hessian matrix.
+        - For small datasets, 'liblinear' is a good choice, whereas 'sag'
+          and 'saga' are faster for large ones;
+        - For multiclass problems, only 'newton-cg', 'sag', 'saga' and
+          'lbfgs' handle multinomial loss;
+        - 'liblinear' is limited to one-versus-rest schemes.
+        - 'newton-cholesky' is a good choice for `n_samples` >> `n_features`,
+          especially with one-hot encoded categorical features with rare
+          categories. Note that it is limited to binary classification and the
+          one-versus-rest reduction for multiclass classification. Be aware that
+          the memory usage of this solver has a quadratic dependency on
+          `n_features` because it explicitly computes the Hessian matrix.
 
         .. warning::
-           The choice of the algorithm depends on the penalty chosen.
-           Supported penalties by solver:
+           The choice of the algorithm depends on the penalty chosen and on
+           (multinomial) multiclass support:
 
-           - 'lbfgs'           -   ['l2', None]
-           - 'liblinear'       -   ['l1', 'l2']
-           - 'newton-cg'       -   ['l2', None]
-           - 'newton-cholesky' -   ['l2', None]
-           - 'sag'             -   ['l2', None]
-           - 'saga'            -   ['elasticnet', 'l1', 'l2', None]
+           ================= ============================== ======================
+           solver            penalty                        multinomial multiclass
+           ================= ============================== ======================
+           'lbfgs'           'l2', None                     yes
+           liblinear'        'l1', 'l2'                     no
+           newton-cg'        'l2', None                     yes
+           'newton-cholesky' 'l2', None                     no
+           'sag'             'l2', None                     yes
+           'saga'            'elasticnet', 'l1', 'l2', None yes
+           ================= ============================== ======================
 
         .. note::
            'sag' and 'saga' fast convergence is only guaranteed on features
