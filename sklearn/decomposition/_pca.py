@@ -1,5 +1,4 @@
-""" Principal Component Analysis.
-"""
+"""Principal Component Analysis."""
 
 # Author: Alexandre Gramfort <alexandre.gramfort@inria.fr>
 #         Olivier Grisel <olivier.grisel@ensta.org>
@@ -130,12 +129,16 @@ class PCA(_BasePCA):
     SVD by the method of Halko et al. 2009, depending on the shape of the input
     data and the number of components to extract.
 
-    It can also use the scipy.sparse.linalg ARPACK implementation of the
-    truncated SVD.
+    With sparse inputs, the ARPACK implementation of the truncated SVD can be
+    used (i.e. through :func:`scipy.sparse.linalg.svds`). Alternatively, one
+    may consider :class:`TruncatedSVD` where the data are not centered.
 
     Notice that this class only supports sparse inputs for some solvers such as
     "arpack" and "covariance_eigh". See :class:`TruncatedSVD` for an
     alternative with sparse data.
+
+    For a usage example, see
+    :ref:`sphx_glr_auto_examples_decomposition_plot_pca_iris.py`
 
     Read more in the :ref:`User Guide <PCA>`.
 
@@ -487,13 +490,12 @@ class PCA(_BasePCA):
         xp, is_array_api_compliant = get_namespace(X)
 
         # Raise an error for sparse input and unsupported svd_solver
-        if issparse(X) and self.svd_solver not in ["arpack", "covariance_eigh"]:
+        if issparse(X) and self.svd_solver not in ["auto", "arpack", "covariance_eigh"]:
             raise TypeError(
                 'PCA only support sparse inputs with the "arpack" and'
                 f' "covariance_eigh" solvers, while "{self.svd_solver}" was passed. See'
                 " TruncatedSVD for a possible alternative."
             )
-        # Raise an error for non-Numpy input and arpack solver.
         if self.svd_solver == "arpack" and is_array_api_compliant:
             raise ValueError(
                 "PCA with svd_solver='arpack' is not supported for Array API inputs."
@@ -512,18 +514,18 @@ class PCA(_BasePCA):
             ensure_2d=True,
             copy=False,
         )
+        self._fit_svd_solver = self.svd_solver
+        if self._fit_svd_solver == "auto" and issparse(X):
+            self._fit_svd_solver = "arpack"
 
-        # Handle n_components==None
         if self.n_components is None:
-            if self.svd_solver != "arpack":
+            if self._fit_svd_solver != "arpack":
                 n_components = min(X.shape)
             else:
                 n_components = min(X.shape) - 1
         else:
             n_components = self.n_components
 
-        # Handle svd_solver
-        self._fit_svd_solver = self.svd_solver
         if self._fit_svd_solver == "auto":
             # Tall and skinny problems are best handled by precomputing the
             # covariance matrix.
@@ -534,7 +536,7 @@ class PCA(_BasePCA):
                 self._fit_svd_solver = "full"
             elif 1 <= n_components < 0.8 * min(X.shape):
                 self._fit_svd_solver = "randomized"
-            # This is also the case of n_components in (0,1)
+            # This is also the case of n_components in (0, 1)
             else:
                 self._fit_svd_solver = "full"
 

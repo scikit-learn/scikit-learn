@@ -9,8 +9,8 @@ estimator, as a chain of transforms and estimators.
 #         Lars Buitinck
 # License: BSD
 
-from collections import defaultdict
-from itertools import islice
+from collections import Counter, defaultdict
+from itertools import chain, islice
 
 import numpy as np
 from scipy import sparse
@@ -18,7 +18,7 @@ from scipy import sparse
 from .base import TransformerMixin, _fit_context, clone
 from .exceptions import NotFittedError
 from .preprocessing import FunctionTransformer
-from .utils import Bunch, _print_elapsed_time
+from .utils import Bunch
 from .utils._estimator_html_repr import _VisualBlock
 from .utils._metadata_requests import METHODS
 from .utils._param_validation import HasMethods, Hidden
@@ -27,13 +27,12 @@ from .utils._set_output import (
     _safe_set_output,
 )
 from .utils._tags import _safe_tags
+from .utils._user_interface import _print_elapsed_time
 from .utils.metadata_routing import (
     MetadataRouter,
     MethodMapping,
     _raise_for_params,
-    _raise_for_unsupported_routing,
     _routing_enabled,
-    _RoutingNotSupportedMixin,
     process_routing,
 )
 from .utils.metaestimators import _BaseComposition, available_if
@@ -1319,7 +1318,7 @@ def _fit_one(transformer, X, y, weight, message_clsname="", message=None, params
         return transformer.fit(X, y, **params["fit"])
 
 
-class FeatureUnion(_RoutingNotSupportedMixin, TransformerMixin, _BaseComposition):
+class FeatureUnion(TransformerMixin, _BaseComposition):
     """Concatenates results of multiple transformer objects.
 
     This estimator applies a list of transformer objects in parallel to the
@@ -1367,6 +1366,14 @@ class FeatureUnion(_RoutingNotSupportedMixin, TransformerMixin, _BaseComposition
     verbose : bool, default=False
         If True, the time elapsed while fitting each transformer will be
         printed as it is completed.
+
+    verbose_feature_names_out : bool, default=True
+        If True, :meth:`get_feature_names_out` will prefix all feature names
+        with the name of the transformer that generated that feature.
+        If False, :meth:`get_feature_names_out` will not prefix any feature
+        names and will error if feature names are not unique.
+
+        .. versionadded:: 1.5
 
     Attributes
     ----------
@@ -1418,12 +1425,19 @@ class FeatureUnion(_RoutingNotSupportedMixin, TransformerMixin, _BaseComposition
     _required_parameters = ["transformer_list"]
 
     def __init__(
-        self, transformer_list, *, n_jobs=None, transformer_weights=None, verbose=False
+        self,
+        transformer_list,
+        *,
+        n_jobs=None,
+        transformer_weights=None,
+        verbose=False,
+        verbose_feature_names_out=True,
     ):
         self.transformer_list = transformer_list
         self.n_jobs = n_jobs
         self.transformer_weights = transformer_weights
         self.verbose = verbose
+        self.verbose_feature_names_out = verbose_feature_names_out
 
     def set_output(self, *, transform=None):
         """Set the output container when `"transform"` and `"fit_transform"` are called.
@@ -1554,17 +1568,68 @@ class FeatureUnion(_RoutingNotSupportedMixin, TransformerMixin, _BaseComposition
         feature_names_out : ndarray of str objects
             Transformed feature names.
         """
-        feature_names = []
+        # List of tuples (name, feature_names_out)
+        transformer_with_feature_names_out = []
         for name, trans, _ in self._iter():
             if not hasattr(trans, "get_feature_names_out"):
                 raise AttributeError(
                     "Transformer %s (type %s) does not provide get_feature_names_out."
                     % (str(name), type(trans).__name__)
                 )
-            feature_names.extend(
-                [f"{name}__{f}" for f in trans.get_feature_names_out(input_features)]
+            feature_names_out = trans.get_feature_names_out(input_features)
+            transformer_with_feature_names_out.append((name, feature_names_out))
+
+        return self._add_prefix_for_feature_names_out(
+            transformer_with_feature_names_out
+        )
+
+    def _add_prefix_for_feature_names_out(self, transformer_with_feature_names_out):
+        """Add prefix for feature names out that includes the transformer names.
+
+        Parameters
+        ----------
+        transformer_with_feature_names_out : list of tuples of (str, array-like of str)
+            The tuple consistent of the transformer's name and its feature names out.
+
+        Returns
+        -------
+        feature_names_out : ndarray of shape (n_features,), dtype=str
+            Transformed feature names.
+        """
+        if self.verbose_feature_names_out:
+            # Prefix the feature names out with the transformers name
+            names = list(
+                chain.from_iterable(
+                    (f"{name}__{i}" for i in feature_names_out)
+                    for name, feature_names_out in transformer_with_feature_names_out
+                )
             )
-        return np.asarray(feature_names, dtype=object)
+            return np.asarray(names, dtype=object)
+
+        # verbose_feature_names_out is False
+        # Check that names are all unique without a prefix
+        feature_names_count = Counter(
+            chain.from_iterable(s for _, s in transformer_with_feature_names_out)
+        )
+        top_6_overlap = [
+            name for name, count in feature_names_count.most_common(6) if count > 1
+        ]
+        top_6_overlap.sort()
+        if top_6_overlap:
+            if len(top_6_overlap) == 6:
+                # There are more than 5 overlapping names, we only show the 5
+                # of the feature names
+                names_repr = str(top_6_overlap[:5])[:-1] + ", ...]"
+            else:
+                names_repr = str(top_6_overlap)
+            raise ValueError(
+                f"Output feature names: {names_repr} are not unique. Please set "
+                "verbose_feature_names_out=True to add prefixes to feature names"
+            )
+
+        return np.concatenate(
+            [name for _, name in transformer_with_feature_names_out],
+        )
 
     def fit(self, X, y=None, **fit_params):
         """Fit all transformers using X.
@@ -1578,15 +1643,34 @@ class FeatureUnion(_RoutingNotSupportedMixin, TransformerMixin, _BaseComposition
             Targets for supervised learning.
 
         **fit_params : dict, default=None
-            Parameters to pass to the fit method of the estimator.
+            - If `enable_metadata_routing=False` (default):
+              Parameters directly passed to the `fit` methods of the
+              sub-transformers.
+
+            - If `enable_metadata_routing=True`:
+              Parameters safely routed to the `fit` methods of the
+              sub-transformers. See :ref:`Metadata Routing User Guide
+              <metadata_routing>` for more details.
+
+            .. versionchanged:: 1.5
+                `**fit_params` can be routed via metadata routing API.
 
         Returns
         -------
         self : object
             FeatureUnion class instance.
         """
-        _raise_for_unsupported_routing(self, "fit", **fit_params)
-        transformers = self._parallel_func(X, y, fit_params, _fit_one)
+        if _routing_enabled():
+            routed_params = process_routing(self, "fit", **fit_params)
+        else:
+            # TODO(SLEP6): remove when metadata routing cannot be disabled.
+            routed_params = Bunch()
+            for name, _ in self.transformer_list:
+                routed_params[name] = Bunch(fit={})
+                routed_params[name].fit = fit_params
+
+        transformers = self._parallel_func(X, y, _fit_one, routed_params)
+
         if not transformers:
             # All transformers are None
             return self
@@ -1594,7 +1678,7 @@ class FeatureUnion(_RoutingNotSupportedMixin, TransformerMixin, _BaseComposition
         self._update_transformer_list(transformers)
         return self
 
-    def fit_transform(self, X, y=None, **fit_params):
+    def fit_transform(self, X, y=None, **params):
         """Fit all transformers, transform the data and concatenate results.
 
         Parameters
@@ -1605,8 +1689,18 @@ class FeatureUnion(_RoutingNotSupportedMixin, TransformerMixin, _BaseComposition
         y : array-like of shape (n_samples, n_outputs), default=None
             Targets for supervised learning.
 
-        **fit_params : dict, default=None
-            Parameters to pass to the fit method of the estimator.
+        **params : dict, default=None
+            - If `enable_metadata_routing=False` (default):
+              Parameters directly passed to the `fit` methods of the
+              sub-transformers.
+
+            - If `enable_metadata_routing=True`:
+              Parameters safely routed to the `fit` methods of the
+              sub-transformers. See :ref:`Metadata Routing User Guide
+              <metadata_routing>` for more details.
+
+            .. versionchanged:: 1.5
+                `**params` can now be routed via metadata routing API.
 
         Returns
         -------
@@ -1615,7 +1709,21 @@ class FeatureUnion(_RoutingNotSupportedMixin, TransformerMixin, _BaseComposition
             The `hstack` of results of transformers. `sum_n_components` is the
             sum of `n_components` (output dimension) over transformers.
         """
-        results = self._parallel_func(X, y, fit_params, _fit_transform_one)
+        if _routing_enabled():
+            routed_params = process_routing(self, "fit_transform", **params)
+        else:
+            # TODO(SLEP6): remove when metadata routing cannot be disabled.
+            routed_params = Bunch()
+            for name, obj in self.transformer_list:
+                if hasattr(obj, "fit_transform"):
+                    routed_params[name] = Bunch(fit_transform={})
+                    routed_params[name].fit_transform = params
+                else:
+                    routed_params[name] = Bunch(fit={})
+                    routed_params[name] = Bunch(transform={})
+                    routed_params[name].fit = params
+
+        results = self._parallel_func(X, y, _fit_transform_one, routed_params)
         if not results:
             # All transformers are None
             return np.zeros((X.shape[0], 0))
@@ -1630,14 +1738,12 @@ class FeatureUnion(_RoutingNotSupportedMixin, TransformerMixin, _BaseComposition
             return None
         return "(step %d of %d) Processing %s" % (idx, total, name)
 
-    def _parallel_func(self, X, y, fit_params, func):
+    def _parallel_func(self, X, y, func, routed_params):
         """Runs func in parallel on X and y"""
         self.transformer_list = list(self.transformer_list)
         self._validate_transformers()
         self._validate_transformer_weights()
         transformers = list(self._iter())
-
-        params = Bunch(fit=fit_params, fit_transform=fit_params)
 
         return Parallel(n_jobs=self.n_jobs)(
             delayed(func)(
@@ -1647,12 +1753,12 @@ class FeatureUnion(_RoutingNotSupportedMixin, TransformerMixin, _BaseComposition
                 weight,
                 message_clsname="FeatureUnion",
                 message=self._log_message(name, idx, len(transformers)),
-                params=params,
+                params=routed_params[name],
             )
             for idx, (name, transformer, weight) in enumerate(transformers, 1)
         )
 
-    def transform(self, X):
+    def transform(self, X, **params):
         """Transform X separately by each transformer, concatenate results.
 
         Parameters
@@ -1660,18 +1766,32 @@ class FeatureUnion(_RoutingNotSupportedMixin, TransformerMixin, _BaseComposition
         X : iterable or array-like, depending on transformers
             Input data to be transformed.
 
+        **params : dict, default=None
+
+            Parameters routed to the `transform` method of the sub-transformers via the
+            metadata routing API. See :ref:`Metadata Routing User Guide
+            <metadata_routing>` for more details.
+
+            .. versionadded:: 1.5
+
         Returns
         -------
-        X_t : array-like or sparse matrix of \
-                shape (n_samples, sum_n_components)
+        X_t : array-like or sparse matrix of shape (n_samples, sum_n_components)
             The `hstack` of results of transformers. `sum_n_components` is the
             sum of `n_components` (output dimension) over transformers.
         """
-        # TODO(SLEP6): accept **params here in `transform` and route it to the
-        # underlying estimators.
-        params = Bunch(transform={})
+        _raise_for_params(params, self, "transform")
+
+        if _routing_enabled():
+            routed_params = process_routing(self, "transform", **params)
+        else:
+            # TODO(SLEP6): remove when metadata routing cannot be disabled.
+            routed_params = Bunch()
+            for name, _ in self.transformer_list:
+                routed_params[name] = Bunch(transform={})
+
         Xs = Parallel(n_jobs=self.n_jobs)(
-            delayed(_transform_one)(trans, X, None, weight, params)
+            delayed(_transform_one)(trans, X, None, weight, routed_params[name])
             for name, trans, weight in self._iter()
         )
         if not Xs:
@@ -1726,6 +1846,35 @@ class FeatureUnion(_RoutingNotSupportedMixin, TransformerMixin, _BaseComposition
         if not isinstance(name, str):
             raise KeyError("Only string keys are supported")
         return self.named_transformers[name]
+
+    def get_metadata_routing(self):
+        """Get metadata routing of this object.
+
+        Please check :ref:`User Guide <metadata_routing>` on how the routing
+        mechanism works.
+
+        .. versionadded:: 1.5
+
+        Returns
+        -------
+        routing : MetadataRouter
+            A :class:`~sklearn.utils.metadata_routing.MetadataRouter` encapsulating
+            routing information.
+        """
+        router = MetadataRouter(owner=self.__class__.__name__)
+
+        for name, transformer in self.transformer_list:
+            router.add(
+                **{name: transformer},
+                method_mapping=MethodMapping()
+                .add(caller="fit", callee="fit")
+                .add(caller="fit_transform", callee="fit_transform")
+                .add(caller="fit_transform", callee="fit")
+                .add(caller="fit_transform", callee="transform")
+                .add(caller="transform", callee="transform"),
+            )
+
+        return router
 
 
 def make_union(*transformers, n_jobs=None, verbose=False):

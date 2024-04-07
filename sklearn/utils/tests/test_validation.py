@@ -74,6 +74,7 @@ from sklearn.utils.validation import (
     _is_polars_df,
     _num_features,
     _num_samples,
+    _to_object_array,
     assert_all_finite,
     check_consistent_length,
     check_is_fitted,
@@ -303,6 +304,21 @@ def test_check_array_force_all_finite_object_unsafe_casting(
     # raise an error irrespective of the force_all_finite parameter.
     with pytest.raises(ValueError, match=err_msg):
         check_array(X, dtype=int, force_all_finite=force_all_finite)
+
+
+def test_check_array_series_err_msg():
+    """
+    Check that we raise a proper error message when passing a Series and we expect a
+    2-dimensional container.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/27498
+    """
+    pd = pytest.importorskip("pandas")
+    ser = pd.Series([1, 2, 3])
+    msg = f"Expected a 2-dimensional container but got {type(ser)} instead."
+    with pytest.raises(ValueError, match=msg):
+        check_array(ser, ensure_2d=True)
 
 
 @ignore_warnings
@@ -641,11 +657,13 @@ def X_64bit(request):
     X = sp.rand(20, 10, format=request.param)
 
     if request.param == "coo":
-        if hasattr(X, "indices"):
-            # for scipy >= 1.13 .indices is a new attribute and is a tuple. The
+        if hasattr(X, "coords"):
+            # for scipy >= 1.13 .coords is a new attribute and is a tuple. The
             # .col and .row attributes do not seem to be able to change the
             # dtype, for more details see https://github.com/scipy/scipy/pull/18530/
-            X.indices = tuple(v.astype("int64") for v in X.indices)
+            # and https://github.com/scipy/scipy/pull/20003 where .indices was
+            # renamed to .coords
+            X.coords = tuple(v.astype("int64") for v in X.coords)
         else:
             # scipy < 1.13
             X.row = X.row.astype("int64")
@@ -1615,7 +1633,6 @@ def test_check_pandas_sparse_invalid(ntype1, ntype2):
     "ntype1, ntype2, expected_subtype",
     [
         ("double", "longdouble", np.floating),
-        ("float16", "half", np.floating),
         ("single", "float32", np.floating),
         ("double", "float64", np.floating),
         ("int8", "byte", np.integer),
@@ -1956,7 +1973,7 @@ def test_pandas_array_returns_ndarray(input_values):
 
 
 @skip_if_array_api_compat_not_configured
-@pytest.mark.parametrize("array_namespace", ["numpy.array_api", "cupy.array_api"])
+@pytest.mark.parametrize("array_namespace", ["array_api_strict", "cupy.array_api"])
 def test_check_array_array_api_has_non_finite(array_namespace):
     """Checks that Array API arrays checks non-finite correctly."""
     xp = pytest.importorskip(array_namespace)
@@ -2036,3 +2053,11 @@ def test_check_array_dia_to_int32_indexed_csr_csc_coo(sparse_container, output_f
     else:  # output_format in ["csr", "csc"]
         assert X_checked.indices.dtype == np.int32
         assert X_checked.indptr.dtype == np.int32
+
+
+@pytest.mark.parametrize("sequence", [[np.array(1), np.array(2)], [[1, 2], [3, 4]]])
+def test_to_object_array(sequence):
+    out = _to_object_array(sequence)
+    assert isinstance(out, np.ndarray)
+    assert out.dtype.kind == "O"
+    assert out.ndim == 1

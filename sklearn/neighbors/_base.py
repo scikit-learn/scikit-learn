@@ -26,7 +26,6 @@ from ..metrics._pairwise_distances_reduction import (
 )
 from ..metrics.pairwise import PAIRWISE_DISTANCE_FUNCTIONS
 from ..utils import (
-    _to_object_array,
     check_array,
     gen_even_slices,
 )
@@ -34,7 +33,7 @@ from ..utils._param_validation import Interval, StrOptions, validate_params
 from ..utils.fixes import parse_version, sp_base_version
 from ..utils.multiclass import check_classification_targets
 from ..utils.parallel import Parallel, delayed
-from ..utils.validation import check_is_fitted, check_non_negative
+from ..utils.validation import _to_object_array, check_is_fitted, check_non_negative
 from ._ball_tree import BallTree
 from ._kd_tree import KDTree
 
@@ -224,6 +223,20 @@ def sort_graph_by_row_values(graph, copy=False, warn_when_not_sorted=True):
     graph : sparse matrix of shape (n_samples, n_samples)
         Distance matrix to other samples, where only non-zero elements are
         considered neighbors. Matrix is in CSR format.
+
+    Examples
+    --------
+    >>> from scipy.sparse import csr_matrix
+    >>> from sklearn.neighbors import sort_graph_by_row_values
+    >>> X = csr_matrix(
+    ...     [[0., 3., 1.],
+    ...      [3., 0., 2.],
+    ...      [1., 2., 0.]])
+    >>> X.data
+    array([3., 1., 3., 2., 1., 2.])
+    >>> X_ = sort_graph_by_row_values(X)
+    >>> X_.data
+    array([1., 3., 2., 3., 1., 2.])
     """
     if graph.format == "csr" and _is_sorted_by_data(graph):
         return graph
