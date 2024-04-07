@@ -121,6 +121,9 @@ def _deprecate_Xt_in_inverse_transform(X, Xt):
     if X is not None and Xt is not None:
         raise ValueError("Cannot use both `X` and `Xt`. Use `X` only.")
 
+    if X is None and Xt is None:
+        raise ValueError("Missing required positional argument: 'X'.")
+
     if Xt is not None:
         warnings.warn(
             "Passing `Xt` is deprecated and will be removed in 1.7. Use `X` instead.",
