@@ -586,6 +586,7 @@ def test_hdbscan_cosine_metric_valid_algorithm(valid_algo):
     """
     Tests that HDBSCAN works with the "cosine" metric when the algorithm is set
     to "brute" or "auto".
+    Non-regression test for gh-28631
     """
     HDBSCAN(metric="cosine", algorithm=valid_algo).fit_predict(X)
 

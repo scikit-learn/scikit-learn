@@ -114,9 +114,6 @@ Changelog
   :class:`~cluster.OPTICS` to avoid in-place modification of the sparse matrix.
   :pr:`28491` by :user:`Thanh Lam Dang <lamdang2k>`.
 
-- |Fix| Enabled `HDBSCAN` to use _VALID_METRICS from metrics.pairwise as distance metric parameter.
-  :pr:`28664` by :user:`Manideep Yenugula <myenugula>`.
-
 :mod:`sklearn.compose`
 ......................
 

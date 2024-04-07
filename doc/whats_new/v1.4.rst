@@ -149,6 +149,10 @@ Changelog
   larger than the number of non-duplicate samples.
   :pr:`28165` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
+- |Fix| :class:`cluster.HDBSCAN` now supports all metrics supported by
+  :func:`sklearn.metrics.pairwise_distances` when `algorithm="brute"` or `"auto"`.
+  :pr:`28664` by :user:`Manideep Yenugula <myenugula>`.
+
 :mod:`sklearn.compose`
 ......................
 
