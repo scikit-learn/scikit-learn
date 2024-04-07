@@ -924,6 +924,48 @@ class _SigmoidCalibration(RegressorMixin, BaseEstimator):
     },
     prefer_skip_nested_validation=True,
 )
+def calibration_stats(
+    y_true,
+    y_prob,
+    *,
+    pos_label=None,
+    n_bins=5,
+    strategy="uniform",
+):
+    y_true = column_or_1d(y_true)
+    y_prob = column_or_1d(y_prob)
+    check_consistent_length(y_true, y_prob)
+    pos_label = _check_pos_label_consistency(pos_label, y_true)
+
+    if y_prob.min() < 0 or y_prob.max() > 1:
+        raise ValueError("y_prob has values outside [0, 1].")
+
+    labels = np.unique(y_true)
+    if len(labels) > 2:
+        raise ValueError(
+            f"Only binary classification is supported. Provided labels {labels}."
+        )
+    y_true = y_true == pos_label
+
+    if strategy == "quantile":  # Determine bin edges by distribution of data
+        quantiles = np.linspace(0, 1, n_bins + 1)
+        bins = np.percentile(y_prob, quantiles * 100)
+    elif strategy == "uniform":
+        bins = np.linspace(0.0, 1.0, n_bins + 1)
+    else:
+        raise ValueError(
+            "Invalid entry to 'strategy' input. Strategy "
+            "must be either 'quantile' or 'uniform'."
+        )
+
+    binids = np.searchsorted(bins[1:-1], y_prob)
+
+    bin_sums = np.bincount(binids, weights=y_prob, minlength=len(bins))
+    bin_true = np.bincount(binids, weights=y_true, minlength=len(bins))
+    bin_total = np.bincount(binids, minlength=len(bins))
+
+    return bin_sums, bin_true, bin_total
+    
 def calibration_curve(
     y_true,
     y_prob,
@@ -996,37 +1038,10 @@ def calibration_curve(
     >>> prob_pred
     array([0.2  , 0.525, 0.85 ])
     """
-    y_true = column_or_1d(y_true)
-    y_prob = column_or_1d(y_prob)
-    check_consistent_length(y_true, y_prob)
-    pos_label = _check_pos_label_consistency(pos_label, y_true)
 
-    if y_prob.min() < 0 or y_prob.max() > 1:
-        raise ValueError("y_prob has values outside [0, 1].")
-
-    labels = np.unique(y_true)
-    if len(labels) > 2:
-        raise ValueError(
-            f"Only binary classification is supported. Provided labels {labels}."
-        )
-    y_true = y_true == pos_label
-
-    if strategy == "quantile":  # Determine bin edges by distribution of data
-        quantiles = np.linspace(0, 1, n_bins + 1)
-        bins = np.percentile(y_prob, quantiles * 100)
-    elif strategy == "uniform":
-        bins = np.linspace(0.0, 1.0, n_bins + 1)
-    else:
-        raise ValueError(
-            "Invalid entry to 'strategy' input. Strategy "
-            "must be either 'quantile' or 'uniform'."
-        )
-
-    binids = np.searchsorted(bins[1:-1], y_prob)
-
-    bin_sums = np.bincount(binids, weights=y_prob, minlength=len(bins))
-    bin_true = np.bincount(binids, weights=y_true, minlength=len(bins))
-    bin_total = np.bincount(binids, minlength=len(bins))
+    bin_sums, bin_true, bin_total = calibration_stats(
+        y_true, y_prob, pos_label=pos_label, n_bins=n_bins, strategy=strategy
+    )
 
     nonzero = bin_total != 0
     prob_true = bin_true[nonzero] / bin_total[nonzero]
