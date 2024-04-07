@@ -958,7 +958,11 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
             Default changed from 'ovr' to 'auto' in 0.22.
         .. deprecated:: 1.5
            ``multi_class`` was deprecated in version 1.5 and will be removed in 1.7.
-           Use `sklearn.multiclass.OneVsRestClassifier(LogisticRegression())` instead.
+           From then on, the recommended 'multinomial' will always be used for
+           `n_classes >= 3`.
+           Solvers that do not support 'multinomial' will raise an error.
+           Use `sklearn.multiclass.OneVsRestClassifier(LogisticRegression())` if you
+           still want to use OvR.
 
     verbose : int, default=0
         For the liblinear and lbfgs solvers set verbose to any positive
@@ -1215,7 +1219,15 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         check_classification_targets(y)
         self.classes_ = np.unique(y)
 
-        if self.multi_class != "deprecated":
+        if self.multi_class == "multinomial":
+            warnings.warn(
+                (
+                    "'multi_class' was deprecated in version 1.5 and will be removed in"
+                    " 1.7. From then on, it will always use 'multinomial'."
+                ),
+                FutureWarning,
+            )
+        elif self.multi_class != "deprecated":
             warnings.warn(
                 (
                     "'multi_class' was deprecated in version 1.5 and will be removed in"
