@@ -31,6 +31,13 @@ Changed models
   properties).
   :pr:`27344` by :user:`Xuefeng Xu <xuefeng-xu>`.
 
+- |Enhancement| :class:`decomposition.PCA`, :class:`decomposition.SparsePCA` and
+  :class:`decomposition.TruncatedSVD` now set the sign of the `components_`
+  attribute based on the components values instead of using the transformed
+  data as reference. This change is needed to be able to offer consistent
+  component signs across all `PCA` solvers, including the new
+  `svd_solver="covariance_eigh"` option introduced in this release.
+
 Support for Array API
 ---------------------
 
@@ -100,22 +107,6 @@ more details.
   ``fit`` and ``fit_transform`` methods and route metadata to the underlying
   transformers' ``fit`` and ``fit_transform``. :pr:`28205` by :user:`Stefanie
   Senger <StefanieSenger>`.
-
-
-Changed models
---------------
-
-The following estimators and functions, when fit with the same data and
-parameters, may produce different models from the previous version. This often
-occurs due to changes in the modelling logic (bug fixes or enhancements), or in
-random sampling procedures.
-
-- |Enhancement| :class:`decomposition.PCA`, :class:`decomposition.SparsePCA` and
-  :class:`decomposition.TruncatedSVD` now set the sign of the `components_`
-  attribute based on the components values instead of using the transformed
-  data as reference. This change is needed to be able to offer consistent
-  component signs across all `PCA` solvers, including the new
-  `svd_solver="covariance_eigh"` option introduced in this release.
 
 Changelog
 ---------
