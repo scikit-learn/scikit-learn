@@ -143,11 +143,7 @@ class _BasePCA(
         X = self._validate_data(
             X, dtype=[xp.float64, xp.float32], accept_sparse=("csr", "csc"), reset=False
         )
-        return self._transform(
-            X,
-            xp=xp,
-            x_is_centered=False,
-        )
+        return self._transform(X, xp=xp, x_is_centered=False)
 
     def _transform(self, X, xp, x_is_centered=False):
         X_transformed = X @ self.components_.T

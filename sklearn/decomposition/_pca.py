@@ -482,7 +482,7 @@ class PCA(_BasePCA):
                 U *= S[: self.n_components_]
 
             return U
-        else:
+        else:  # solver="covariance_eigh" does not compute U at fit time.
             return self._transform(X, xp, x_is_centered=x_is_centered)
 
     def _fit(self, X):
@@ -505,7 +505,7 @@ class PCA(_BasePCA):
         # support sparse input data and the `covariance_eigh` solver are
         # written in a way to avoid the need for any inplace modification of
         # the input data contrary to the other solvers. Forcing a copy here
-        # would be wasteful when using  large datasets. The copy will happen
+        # would be wasteful when using large datasets. The copy will happen
         # later, only if needed, once the solver negotiation below is done.
         X = self._validate_data(
             X,
