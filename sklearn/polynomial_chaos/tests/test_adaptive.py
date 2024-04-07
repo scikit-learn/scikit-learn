@@ -52,3 +52,15 @@ def test_old_active_split():
     y = np.prod((3 * X**2 + 1) / 2, axis=1)
     pce.fit(X, y, max_iter=2)
     assert not np.any(pce.strategy_.old[0])  # (0, 0, ..., 0) is in old set
+
+
+# Check adaptive construction for multioutput
+def test_adaptive_construction_with_multioutput():
+    X = np.atleast_2d([1.0, 3.0, 5.0, 6.0, 7.0, 8.0]).T
+    y1 = (X * np.sin(X)).ravel()
+    y2 = (X * np.cos(X)).ravel()
+    Y = np.vstack([y1, y2]).T
+    pce = PolynomialChaosRegressor(degree=1)
+    pce.fit(X, Y, max_iter=10)
+    y_fit = pce.predict(X)
+    assert np.linalg.norm(Y - y_fit) < 1e-12
