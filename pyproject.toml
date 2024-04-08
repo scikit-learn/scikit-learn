@@ -3,6 +3,9 @@ name = "scikit-learn"
 version = "1.5.dev0"
 description = "A set of python modules for machine learning and data mining"
 readme = "README.rst"
+maintainers = [
+    {name = "scikit-learn developers", email="scikit-learn@python.org"},
+]
 dependencies = [
   "numpy>=1.19.5",
   "scipy>=1.6.0",
@@ -33,8 +36,15 @@ classifiers=[
   "Programming Language :: Python :: Implementation :: PyPy",
 ]
 
+[project.urls]
+homepage = "https://scikit-learn.org"
+source = "https://github.com/scikit-learn/scikit-learn"
+download = "https://pypi.org/project/scikit-learn/#files"
+tracker = "https://github.com/scikit-learn/scikit-learn/issues"
+"release notes" = "https://scikit-learn.org/stable/whats_new"
+
 [project.optional-dependencies]
-build = ["numpy>=1.19.5", "scipy>=1.6.0", "cython>=3.0.9", "meson-python>=0.15.0"]
+build = ["numpy>=1.19.5", "scipy>=1.6.0", "cython>=3.0.10", "meson-python>=0.15.0"]
 install = ["numpy>=1.19.5", "scipy>=1.6.0", "joblib>=1.2.0", "threadpoolctl>=2.0.0"]
 benchmark = ["matplotlib>=3.3.4", "pandas>=1.1.5", "memory_profiler>=0.57.0"]
 docs = [
@@ -84,7 +94,7 @@ build-backend = "mesonpy"
 # Minimum requirements for the build system to execute.
 requires = [
     "meson-python>=0.15.0",
-    "Cython>=3.0.9",
+    "Cython>=3.0.10",
     "numpy>=1.25",
     "scipy>=1.6.0",
 ]
