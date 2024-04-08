@@ -252,6 +252,11 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
     1
     >>> calibrated_clf.predict_proba([[-0.5, 0.5]])
     array([[0.936..., 0.063...]])
+
+    For more examples of usage, see:
+    :ref:`sphx_glr_auto_examples_calibration_plot_calibration.py`,
+    :ref:`sphx_glr_auto_examples_calibration_plot_calibration_curve.py`, and
+    :ref:`sphx_glr_auto_examples_calibration_plot_calibration_multiclass.py`.
     """
 
     _parameter_constraints: dict = {
@@ -1400,6 +1405,9 @@ class CalibrationDisplay(_BinaryClassifierCurveDisplayMixin):
         >>> y_prob = clf.predict_proba(X_test)[:, 1]
         >>> disp = CalibrationDisplay.from_predictions(y_test, y_prob)
         >>> plt.show()
+
+        For another example of usage, see:
+        :ref:`sphx_glr_auto_examples_calibration_plot_compare_calibration.py`.
         """
         pos_label_validated, name = cls._validate_from_predictions_params(
             y_true, y_prob, sample_weight=None, pos_label=pos_label, name=name
