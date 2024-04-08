@@ -145,9 +145,11 @@ is a vector of length :math:`T_k`, which contains the leaf values of the form `w
 = -sum_gradient / (sum_hessian + l2_regularization)` (see equation (5) in
 [XGBoost]_).
 
-The leaf values :math:`w_k` are then a continuous value corresponding to the
-loss function to use in the boosting process. Those values contribute to the
-model's prediction for a given input that ends up the corresponding leaf. The
+The leaf values :math:`w_k` are derived by dividing the sum of the gradients of
+the loss function by the combined sum of hessians. Adding the regularization to
+the denominator penalizes the leaves with small hessians (flat regions),
+resulting in smaller updates. Those :math:`w_k` values contribute then to the
+model's prediction for a given input that ends up in the corresponding leaf. The
 final prediction is the sum of the base prediction and the contributions from
 each tree. The result of that sum is then transformed by the inverse link
 function depending on the choice of the loss function (see
