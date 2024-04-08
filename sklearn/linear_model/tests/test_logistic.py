@@ -2197,8 +2197,12 @@ def test_passing_params_without_enabling_metadata_routing():
 # TODO(1.7): remove
 def test_multi_class_deprecated():
     """Check `multi_class` parameter deprecated."""
-    X, y = make_classification(n_classes=3, n_samples=10, n_informative=6)
+    X, y = make_classification(n_classes=3, n_samples=50, n_informative=6)
     lr = LogisticRegression(multi_class="ovr")
     msg = "'multi_class' was deprecated"
     with pytest.warns(FutureWarning, match=msg):
         lr.fit(X, y)
+
+    lrCV = LogisticRegressionCV(multi_class="ovr")
+    with pytest.warns(FutureWarning, match=msg):
+        lrCV.fit(X, y)
