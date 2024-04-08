@@ -94,6 +94,8 @@ def __getattr__(name):
     raise AttributeError(f"module {__name__} has no attribute {name}")
 
 
+# TODO(1.7): remove tosequence
+@deprecated("tosequence was deprecated in 1.5 and will be removed in 1.7")
 def tosequence(x):
     """Cast iterable x to a Sequence, avoiding a copy if possible.
 
