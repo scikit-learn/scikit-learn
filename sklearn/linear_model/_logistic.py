@@ -1223,6 +1223,7 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         check_classification_targets(y)
         self.classes_ = np.unique(y)
 
+        multi_class = self.multi_class
         if self.multi_class == "multinomial":
             warnings.warn(
                 (
@@ -1241,8 +1242,8 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
             )
         else:
             # Set to old default value.
-            self.multi_class = "auto"
-        multi_class = _check_multi_class(self.multi_class, solver, len(self.classes_))
+            multi_class = "auto"
+        multi_class = _check_multi_class(multi_class, solver, len(self.classes_))
 
         if solver == "liblinear":
             if effective_n_jobs(self.n_jobs) != 1:
@@ -1400,7 +1401,7 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         check_is_fitted(self)
 
         ovr = self.multi_class in ["ovr", "warn"] or (
-            self.multi_class == "auto"
+            self.multi_class in ["auto", "deprecated"]
             and (
                 self.classes_.size <= 2
                 or self.solver in ("liblinear", "newton-cholesky")
