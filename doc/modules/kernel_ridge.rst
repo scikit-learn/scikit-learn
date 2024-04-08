@@ -55,6 +55,9 @@ dense model.
    :target: ../auto_examples/miscellaneous/plot_kernel_ridge_regression.html
    :align: center
 
+.. topic:: Examples
+
+    * :ref:`sphx_glr_auto_examples_miscellaneous_plot_kernel_ridge_regression.py`
 
 .. topic:: References:
 

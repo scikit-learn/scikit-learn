@@ -16,7 +16,6 @@ import numpy as np
 from . import __version__
 from ._config import config_context, get_config
 from .exceptions import InconsistentVersionWarning
-from .utils import _IS_32BIT
 from .utils._estimator_html_repr import _HTMLDocumentationLinkMixin, estimator_html_repr
 from .utils._metadata_requests import _MetadataRequester, _routing_enabled
 from .utils._param_validation import validate_parameter_constraints
@@ -24,6 +23,7 @@ from .utils._set_output import _SetOutputMixin
 from .utils._tags import (
     _DEFAULT_TAGS,
 )
+from .utils.fixes import _IS_32BIT
 from .utils.validation import (
     _check_feature_names_in,
     _check_y,
