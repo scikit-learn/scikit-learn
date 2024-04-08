@@ -146,7 +146,7 @@ scoring = {
 import numpy as np
 
 
-def gain_cost_score(y, y_pred, neg_label, pos_label):
+def credit_gain_score(y, y_pred, neg_label, pos_label):
     cm = confusion_matrix(y, y_pred, labels=[neg_label, pos_label])
     # The rows of the confusion matrix hold the counts of observed classes
     # while the columns hold counts of predicted classes. Recall that here
@@ -168,7 +168,7 @@ def gain_cost_score(y, y_pred, neg_label, pos_label):
 
 
 scoring["cost_gain"] = make_scorer(
-    gain_cost_score, neg_label=neg_label, pos_label=pos_label
+    credit_gain_score, neg_label=neg_label, pos_label=pos_label
 )
 # %%
 # Vanilla predictive model
