@@ -130,9 +130,9 @@ in [XGBoost]_):
 **Details on l2 regularization**:
 |details-split|
 
-It is important to notice that the loss term :math:`l(\hat{y}_i, y_i)` describes only
-half of the actual loss function except for the pinball loss and
-absolute error.
+It is important to notice that the loss term :math:`l(\hat{y}_i, y_i)` describes
+only half of the actual loss function except for the pinball loss and absolute
+error.
 
 The index :math:`k` refers to the k-th tree in the ensemble of trees. In the
 case of regression and binary classification, gradient boosting models grow one
@@ -141,16 +141,16 @@ multiclass classification problems, the maximal value of the index :math:`k` is
 `n_classes` :math:`\times` `max_iter`.
 
 If :math:`T_k` denotes the number of leaves in the k-th tree, then :math:`w_k`
-is a vector of length :math:`T_k`, which contains the leaf values of the form
-`w = -sum_gradient / (sum_hessian + l2_regularization)` (see equation (5)
-in [XGBoost]_).
+is a vector of length :math:`T_k`, which contains the leaf values of the form `w
+= -sum_gradient / (sum_hessian + l2_regularization)` (see equation (5) in
+[XGBoost]_).
 
 The leaf values :math:`w_k` are then a continuous value corresponding to the
 loss function to use in the boosting process. Those values contribute to the
-model's prediction for a given input that ends up the corresponding leaf. The final
-prediction is the sum of the base prediction and the contributions from each
-tree. The result of that sum is then transformed by the inverse link function
-depending on the choice of the loss function (see
+model's prediction for a given input that ends up the corresponding leaf. The
+final prediction is the sum of the base prediction and the contributions from
+each tree. The result of that sum is then transformed by the inverse link
+function depending on the choice of the loss function (see
 :ref:`gradient_boosting_formulation`).
 
 Notice that the original paper [XGBoost]_ introduces a term :math:`\gamma\sum_k
