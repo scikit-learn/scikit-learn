@@ -127,17 +127,17 @@ in [XGBoost]_):
     \mathcal{L}(\phi) =  \sum_i l(\hat{y}_i, y_i) + \frac12 \sum_k \lambda ||w_k||^2
 
 |details-start|
-**Details on `l2_regularization`**:
+**Details on l2 regularization**:
 |details-split|
 
-It is important to notice that the term :math:`\mathrm{loss}` describes only
-half of the actual loss function for all types except for the pinball loss and
+It is important to notice that the loss term :math:`l(\hat{y}_i, y_i)` describes only
+half of the actual loss function except for the pinball loss and
 absolute error.
 
 The index :math:`k` refers to the k-th tree in the ensemble of trees. In the
 case of regression and binary classification, gradient boosting models grow one
 tree per iteration, then :math:`k` runs up to `max_iter`. In the case of
-multi-class classification problems, the maximal value of the index :math:`k` is
+multiclass classification problems, the maximal value of the index :math:`k` is
 `n_classes` :math:`\times` `max_iter`.
 
 If :math:`T_k` denotes the number of leaves in the k-th tree, then :math:`w_k`
@@ -147,7 +147,7 @@ in [XGBoost]_).
 
 The leaf values :math:`w_k` are then a continuous value corresponding to the
 loss function to use in the boosting process. Those values contribute to the
-model's prediction for a given input that ends up in a given leaf. The final
+model's prediction for a given input that ends up the corresponding leaf. The final
 prediction is the sum of the base prediction and the contributions from each
 tree. The result of that sum is then transformed by the inverse link function
 depending on the choice of the loss function (see
@@ -157,8 +157,8 @@ Notice that the original paper [XGBoost]_ introduces a term :math:`\gamma\sum_k
 T_k` that penalizes the number of leaves (making it a smooth version of
 `max_leaf_nodes`) not presented here as it is not implemented in scikit-learn;
 whereas :math:`\lambda` penalizes the magnitude of the individual tree
-predictions before being rescaled by the learning rate (See
-:ref:`gradient_boosting_shrinkage`).
+predictions before being rescaled by the learning rate, see
+:ref:`gradient_boosting_shrinkage`.
 
 |details-end|
 
