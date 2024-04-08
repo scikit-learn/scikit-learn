@@ -318,7 +318,7 @@ Changelog
 :mod:`sklearn.multioutput`
 ..........................
 
-- |Enhancement| `chain_method` parameter added to `:class:``multioutput.ClassifierChain`.
+- |Enhancement| `chain_method` parameter added to `:class:`multioutput.ClassifierChain`.
   :pr:`27700` by :user:`Lucy Liu <lucyleeow>`.
 
 :mod:`sklearn.neighbors`
