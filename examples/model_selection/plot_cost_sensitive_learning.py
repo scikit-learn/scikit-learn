@@ -591,13 +591,9 @@ credit_card.frame.info()
 # The dataset contains information about credit card records from which some are
 # fraudulent and others are legitimate. The goal is therefore to predict whether or
 # not a credit card record is fraudulent.
-#
-# In addition, we have extra information regarding the amount of each card transaction.
-# This information is used to define the business metric later.
-columns_to_drop = ["Class", "Amount"]
+columns_to_drop = ["Class"]
 data = credit_card.frame.drop(columns=columns_to_drop)
 target = credit_card.frame["Class"].astype(int)
-amount = credit_card.frame["Amount"].to_numpy()
 
 # %%
 # First, we check the class distribution of the datasets.
@@ -605,10 +601,17 @@ target.value_counts(normalize=True)
 
 # %%
 # The dataset is highly imbalanced with fraudulent transaction representing only 0.17%
-# of the data. Additionally, we check the distribution of the amount of the fraudulent
-# transactions.
+# of the data. Since we are interested in training a machine learning model, we should
+# also make sure that we have enough samples in the minority class to train the model.
+target.value_counts()
+
+# %%
+# We observe that we have around 500 samples that is on the low end of the number of
+# samples required to train a machine learning model. In addition of the target
+# distribution, we check the distribution of the amount of the
+# fraudulent transactions.
 fraud = target == 1
-amount_fraud = amount[fraud]
+amount_fraud = data["Amount"][fraud]
 _, ax = plt.subplots()
 ax.hist(amount_fraud, bins=100)
 ax.set_title("Amount of fraud transaction")
@@ -648,6 +651,16 @@ def business_metric(y_true, y_pred, amount):
 # :ref:`metadata routing <metadata_routing>` to take into account this information.
 sklearn.set_config(enable_metadata_routing=True)
 business_scorer = make_scorer(business_metric).set_score_request(amount=True)
+
+# %%
+# So at this stage, we observe that the amount of the transaction is used twice: once
+# as a feature to train our predictive model and once as a metadata to compute the
+# the business metric and thus the statistical performance of our model. When used as a
+# feature, we are only required to have a column in `data` that contains the amount of
+# each transaction. To use this information as metadata, we need to have an external
+# variable that we can pass to the scorer or the model that internally routes this
+# metadata to the scorer. So let's create this variable.
+amount = credit_card.frame["Amount"].to_numpy()
 
 # %%
 # We first start to train a dummy classifier to have some baseline results.
