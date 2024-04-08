@@ -165,6 +165,7 @@ def test_is_pypy_deprecated():
     with pytest.warns(FutureWarning, match="IS_PYPY is deprecated"):
         from sklearn.utils import IS_PYPY  # noqa
 
+
 # TODO(1.7): remove
 def test_tosequence_deprecated():
     with pytest.warns(FutureWarning, match="tosequence was deprecated in 1.5"):
