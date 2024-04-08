@@ -777,7 +777,7 @@ def test_metadata_routing_error_for_voting_estimators(Estimator, Child):
 
     error_message = (
         "[sample_weight, metadata] are passed but are not explicitly set as requested"
-        f" or not for {Child.__name__}.fit"
+        f" or not requested for {Child.__name__}.fit"
     )
 
     with pytest.raises(ValueError, match=re.escape(error_message)):
