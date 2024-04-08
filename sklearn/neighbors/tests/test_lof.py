@@ -365,6 +365,8 @@ def test_lof_duplicate_samples():
     """
     Check that outliers are correct when the data has duplicate values
 
+    Edge case: also checks that LocalOutlierFactor doesn't create memory errors
+
     Test for: https://github.com/scikit-learn/scikit-learn/issues/27839
     """
 
@@ -382,8 +384,8 @@ def test_lof_duplicate_samples():
     )
     X = x.reshape(-1, 1)
 
-    lof = neighbors.LocalOutlierFactor(n_neighbors=5, contamination=0.1)
-    outliers = lof.fit_predict(X)
+    lof_x = neighbors.LocalOutlierFactor(n_neighbors=5, contamination=0.1)
+    outliers = lof_x.fit_predict(X)
 
     indices = np.where(outliers == -1)
 
@@ -392,3 +394,22 @@ def test_lof_duplicate_samples():
     # Check that only values outside of the [0.1, 0.3] range are selected
     for outlier in outliers:
         assert outlier < 0.1 or outlier > 0.3
+
+    # This data could create a 10000 by 10000 array to detect outliers
+    # Which occupies 800 MB of data
+    y = rng.permutation(
+        np.hstack(
+            [
+                [0.1] * 10000,  # constant values
+                np.linspace(0.1, 0.3, num=1000),
+                rng.random(10000) * 100,  # the clear outliers
+            ]
+        )
+    )
+    Y = y.reshape(-1, 1)
+
+    lof_y = neighbors.LocalOutlierFactor(n_neighbors=5, contamination=0.1)
+    lof_y.fit_predict(Y)
+
+    # For second case, check neighbors value wasn't altered
+    assert lof_y.n_neighbors == 5
