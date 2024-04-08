@@ -149,8 +149,8 @@ import numpy as np
 def credit_gain_score(y, y_pred, neg_label, pos_label):
     cm = confusion_matrix(y, y_pred, labels=[neg_label, pos_label])
     # The rows of the confusion matrix hold the counts of observed classes
-    # while the columns hold counts of predicted classes. Recall that here
-    # we consider "bad" as the positive class (second row and column).
+    # while the columns hold counts of predicted classes. Recall that here we
+    # consider "bad" as the positive class (second row and column).
     # Scikit-learn model selection tools expect that we follow a convention
     # that "higher" means "better", hence the following gain matrix assigns
     # negative gains (costs) to the two kinds of prediction errors:
@@ -158,6 +158,11 @@ def credit_gain_score(y, y_pred, neg_label, pos_label):
     # - a gain of -5 for each false negative ("bad" credit labeled as "good"),
     # The true positives and true negatives are assigned null gains in this
     # metric.
+    #
+    # Note that theoretically, given that our model is calibrated and our data
+    # set representative and large enough, we do not need to tune the
+    # threshold, but can safely set it to the cost ration 1/5, as stated by Eq.
+    # (2) in Elkan paper [2]_.
     gain_matrix = np.array(
         [
             [0, -1],  # -1 gain for false positives
