@@ -357,6 +357,9 @@ Changelog
 :mod:`sklearn.utils`
 ....................
 
+- |API| :func:`utils.tosequence` is deprecated and will be removed in version 1.7.
+  :pr:`28763` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
+
 - |Fix| :func:`~utils._safe_indexing` now works correctly for polars DataFrame when
   `axis=0` and supports indexing polars Series.
   :pr:`28521` by :user:`Yao Xiao <Charlie-XIAO>`.
