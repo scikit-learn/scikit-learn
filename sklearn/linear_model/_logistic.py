@@ -918,8 +918,8 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
            solver            penalty                        multinomial multiclass
            ================= ============================== ======================
            'lbfgs'           'l2', None                     yes
-           liblinear'        'l1', 'l2'                     no
-           newton-cg'        'l2', None                     yes
+           'liblinear'       'l1', 'l2'                     no
+           'newton-cg'       'l2', None                     yes
            'newton-cholesky' 'l2', None                     no
            'sag'             'l2', None                     yes
            'saga'            'elasticnet', 'l1', 'l2', None yes
@@ -1535,8 +1535,8 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
            solver            penalty                        multinomial multiclass
            ================= ============================== ======================
            'lbfgs'           'l2'                           yes
-           liblinear'        'l1', 'l2'                     no
-           newton-cg'        'l2'                           yes
+           'liblinear'       'l1', 'l2'                     no
+           'newton-cg'       'l2'                           yes
            'newton-cholesky' 'l2',                          no
            'sag'             'l2',                          yes
            'saga'            'elasticnet', 'l1', 'l2'       yes
