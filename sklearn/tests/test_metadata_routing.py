@@ -1074,6 +1074,7 @@ def test_unsetmetadatapassederror_correct_for_composite_methods():
     with pytest.raises(UnsetMetadataPassedError, match=msg):
         pipe.fit_transform(X, y, metadata="blah")
 
+
 def test_unbound_set_methods_work():
     """Tests that if the set_{method}_request is unbound, it still works.
 
