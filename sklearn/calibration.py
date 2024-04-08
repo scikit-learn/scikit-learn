@@ -1285,6 +1285,10 @@ class CalibrationDisplay(_BinaryClassifierCurveDisplayMixin):
         LogisticRegression(random_state=0)
         >>> disp = CalibrationDisplay.from_estimator(clf, X_test, y_test)
         >>> plt.show()
+
+
+        For another example of usage, see:
+        :ref:`sphx_glr_auto_examples_calibration_plot_compare_calibration.py`.
         """
         y_prob, pos_label, name = cls._validate_and_get_response_values(
             estimator,
@@ -1405,9 +1409,6 @@ class CalibrationDisplay(_BinaryClassifierCurveDisplayMixin):
         >>> y_prob = clf.predict_proba(X_test)[:, 1]
         >>> disp = CalibrationDisplay.from_predictions(y_test, y_prob)
         >>> plt.show()
-
-        For another example of usage, see:
-        :ref:`sphx_glr_auto_examples_calibration_plot_compare_calibration.py`.
         """
         pos_label_validated, name = cls._validate_from_predictions_params(
             y_true, y_prob, sample_weight=None, pos_label=pos_label, name=name
