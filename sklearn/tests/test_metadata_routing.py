@@ -1031,3 +1031,37 @@ def test_no_metadata_always_works():
         NotImplementedError, match="Estimator has not implemented metadata routing yet."
     ):
         MetaRegressor(estimator=Estimator()).fit(X, y, metadata=my_groups)
+
+
+def test_unbound_set_methods_work():
+    """Tests that if the set_{method}_request is unbound, it still works.
+
+    Also test that passing positional arguments to the set_{method}_request fails
+    with the right TypeError message.
+
+    Non-regression test for https://github.com/scikit-learn/scikit-learn/issues/28632
+    """
+
+    class A(BaseEstimator):
+        def fit(self, X, y, sample_weight=None):
+            return self
+
+    error_message = re.escape(
+        "set_fit_request() takes 0 positional argument but 1 were given"
+    )
+
+    # Test positional arguments error before making the descriptor method unbound.
+    with pytest.raises(TypeError, match=error_message):
+        A().set_fit_request(True)
+
+    # This somehow makes the descriptor method unbound, which results in the `instance`
+    # argument being None, and instead `self` being passed as a positional argument
+    # to the descriptor method.
+    A.set_fit_request = A.set_fit_request
+
+    # This should pass as usual
+    A().set_fit_request(sample_weight=True)
+
+    # Test positional arguments error after making the descriptor method unbound.
+    with pytest.raises(TypeError, match=error_message):
+        A().set_fit_request(True)

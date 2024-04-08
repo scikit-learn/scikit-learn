@@ -113,8 +113,6 @@ def _parallel_build_estimators(
     estimators = []
     estimators_features = []
 
-    request_or_router = get_routing_for_object(ensemble.estimator_)
-
     # TODO: (slep6) remove if condition for unrouted sample_weight when metadata
     # routing can't be disabled.
     support_sample_weight = has_fit_parameter(ensemble.estimator_, "sample_weight")
@@ -164,9 +162,14 @@ def _parallel_build_estimators(
         # Note: Row sampling can be achieved either through setting sample_weight or
         # by indexing. The former is more efficient. Therefore, use this method
         # if possible, otherwise use indexing.
-        if (
-            _routing_enabled() and request_or_router.consumes("fit", ("sample_weight",))
-        ) or (not _routing_enabled() and support_sample_weight):
+        if _routing_enabled():
+            request_or_router = get_routing_for_object(ensemble.estimator_)
+            consumes_sample_weight = request_or_router.consumes(
+                "fit", ("sample_weight",)
+            )
+        else:
+            consumes_sample_weight = support_sample_weight
+        if consumes_sample_weight:
             # Draw sub samples, using sample weights, and then fit
             curr_sample_weight = _check_sample_weight(
                 fit_params_.pop("sample_weight", None), X
@@ -635,6 +638,9 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
     def _get_estimator(self):
         """Resolve which estimator to return."""
 
+    def _more_tags(self):
+        return {"allow_nan": _safe_tags(self._get_estimator(), "allow_nan")}
+
 
 class BaggingClassifier(ClassifierMixin, BaseBagging):
     """A Bagging classifier.
@@ -835,7 +841,9 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
 
     def _get_estimator(self):
         """Resolve which estimator to return (default is DecisionTreeClassifier)"""
-        return self.estimator or DecisionTreeClassifier()
+        if self.estimator is None:
+            return DecisionTreeClassifier()
+        return self.estimator
 
     def _set_oob_score(self, X, y):
         n_samples = y.shape[0]
@@ -1058,14 +1066,6 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
         decisions = sum(all_decisions) / self.n_estimators
 
         return decisions
-
-    def _more_tags(self):
-        if self.estimator is None:
-            estimator = DecisionTreeClassifier()
-        else:
-            estimator = self.estimator
-
-        return {"allow_nan": _safe_tags(estimator, "allow_nan")}
 
 
 class BaggingRegressor(RegressorMixin, BaseBagging):
@@ -1328,13 +1328,8 @@ class BaggingRegressor(RegressorMixin, BaseBagging):
         self.oob_prediction_ = predictions
         self.oob_score_ = r2_score(y, predictions)
 
-    def _more_tags(self):
-        if self.estimator is None:
-            estimator = DecisionTreeRegressor()
-        else:
-            estimator = self.estimator
-        return {"allow_nan": _safe_tags(estimator, "allow_nan")}
-
     def _get_estimator(self):
         """Resolve which estimator to return (default is DecisionTreeClassifier)"""
-        return self.estimator or DecisionTreeRegressor()
+        if self.estimator is None:
+            return DecisionTreeRegressor()
+        return self.estimator
