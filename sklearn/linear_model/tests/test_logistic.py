@@ -35,6 +35,7 @@ from sklearn.model_selection import (
     cross_val_score,
     train_test_split,
 )
+from sklearn.multiclass import OneVsRestClassifier
 from sklearn.preprocessing import LabelEncoder, StandardScaler, scale
 from sklearn.svm import l1_min_c
 from sklearn.utils import _IS_32BIT, compute_class_weight, shuffle
@@ -148,10 +149,8 @@ def test_predict_3_classes(csr_container):
     "clf",
     [
         LogisticRegression(C=len(iris.data), solver="liblinear", multi_class="ovr"),
-        LogisticRegression(C=len(iris.data), solver="lbfgs", multi_class="multinomial"),
-        LogisticRegression(
-            C=len(iris.data), solver="newton-cg", multi_class="multinomial"
-        ),
+        LogisticRegression(C=len(iris.data), solver="lbfgs"),
+        LogisticRegression(C=len(iris.data), solver="newton-cg"),
         LogisticRegression(
             C=len(iris.data), solver="sag", tol=1e-2, multi_class="ovr", random_state=42
         ),
@@ -251,18 +250,14 @@ def test_multinomial_binary(solver):
     target = (iris.target > 0).astype(np.intp)
     target = np.array(["setosa", "not-setosa"])[target]
 
-    clf = LogisticRegression(
-        solver=solver, multi_class="multinomial", random_state=42, max_iter=2000
-    )
+    clf = LogisticRegression(solver=solver, random_state=42, max_iter=2000)
     clf.fit(iris.data, target)
 
     assert clf.coef_.shape == (1, iris.data.shape[1])
     assert clf.intercept_.shape == (1,)
     assert_array_equal(clf.predict(iris.data), target)
 
-    mlr = LogisticRegression(
-        solver=solver, multi_class="multinomial", random_state=42, fit_intercept=False
-    )
+    mlr = LogisticRegression(solver=solver, random_state=42, fit_intercept=False)
     mlr.fit(iris.data, target)
     pred = clf.classes_[np.argmax(clf.predict_log_proba(iris.data), axis=1)]
     assert np.mean(pred == target) > 0.9
@@ -571,10 +566,10 @@ def test_multinomial_logistic_regression_string_inputs():
     # For numerical labels, let y values be taken from set (-1, 0, 1)
     y = np.array(y) - 1
     # Test for string labels
-    lr = LogisticRegression(multi_class="multinomial")
-    lr_cv = LogisticRegressionCV(multi_class="multinomial", Cs=3)
-    lr_str = LogisticRegression(multi_class="multinomial")
-    lr_cv_str = LogisticRegressionCV(multi_class="multinomial", Cs=3)
+    lr = LogisticRegression()
+    lr_cv = LogisticRegressionCV(Cs=3)
+    lr_str = LogisticRegression()
+    lr_cv_str = LogisticRegressionCV(Cs=3)
 
     lr.fit(X_ref, y)
     lr_cv.fit(X_ref, y)
@@ -592,9 +587,9 @@ def test_multinomial_logistic_regression_string_inputs():
     assert sorted(np.unique(lr_cv_str.predict(X_ref))) == ["bar", "baz", "foo"]
 
     # Make sure class weights can be given with string labels
-    lr_cv_str = LogisticRegression(
-        class_weight={"bar": 1, "baz": 2, "foo": 0}, multi_class="multinomial"
-    ).fit(X_ref, y_str)
+    lr_cv_str = LogisticRegression(class_weight={"bar": 1, "baz": 2, "foo": 0}).fit(
+        X_ref, y_str
+    )
     assert sorted(np.unique(lr_cv_str.predict(X_ref))) == ["bar", "baz"]
 
 
@@ -655,7 +650,6 @@ def test_ovr_multinomial_iris():
         max_iter = 500 if solver in ["sag", "saga"] else 30
         clf_multi = LogisticRegressionCV(
             solver=solver,
-            multi_class="multinomial",
             max_iter=max_iter,
             random_state=42,
             tol=1e-3 if solver in ["sag", "saga"] else 1e-2,
@@ -878,12 +872,8 @@ def test_logistic_regression_class_weights():
     class_weight_dict = _compute_class_weight_dictionary(y)
 
     for solver in solvers:
-        clf1 = LogisticRegression(
-            solver=solver, multi_class="multinomial", class_weight="balanced"
-        )
-        clf2 = LogisticRegression(
-            solver=solver, multi_class="multinomial", class_weight=class_weight_dict
-        )
+        clf1 = LogisticRegression(solver=solver, class_weight="balanced")
+        clf2 = LogisticRegression(solver=solver, class_weight=class_weight_dict)
         clf1.fit(X, y)
         clf2.fit(X, y)
         assert_array_almost_equal(clf1.coef_, clf2.coef_, decimal=4)
@@ -922,10 +912,8 @@ def test_logistic_regression_multinomial():
 
     # 'lbfgs' is used as a referenced
     solver = "lbfgs"
-    ref_i = LogisticRegression(solver=solver, multi_class="multinomial", tol=1e-6)
-    ref_w = LogisticRegression(
-        solver=solver, multi_class="multinomial", fit_intercept=False, tol=1e-6
-    )
+    ref_i = LogisticRegression(solver=solver, tol=1e-6)
+    ref_w = LogisticRegression(solver=solver, fit_intercept=False, tol=1e-6)
     ref_i.fit(X, y)
     ref_w.fit(X, y)
     assert ref_i.coef_.shape == (n_classes, n_features)
@@ -933,14 +921,12 @@ def test_logistic_regression_multinomial():
     for solver in ["sag", "saga", "newton-cg"]:
         clf_i = LogisticRegression(
             solver=solver,
-            multi_class="multinomial",
             random_state=42,
             max_iter=2000,
             tol=1e-7,
         )
         clf_w = LogisticRegression(
             solver=solver,
-            multi_class="multinomial",
             random_state=42,
             max_iter=2000,
             tol=1e-7,
@@ -961,7 +947,7 @@ def test_logistic_regression_multinomial():
     # folds, it need not be exactly the same.
     for solver in ["lbfgs", "newton-cg", "sag", "saga"]:
         clf_path = LogisticRegressionCV(
-            solver=solver, max_iter=2000, tol=1e-6, multi_class="multinomial", Cs=[1.0]
+            solver=solver, max_iter=2000, tol=1e-6, Cs=[1.0]
         )
         clf_path.fit(X, y)
         assert_allclose(clf_path.coef_, ref_i.coef_, rtol=1e-2)
@@ -1134,10 +1120,10 @@ def test_logreg_predict_proba_multinomial():
 
     # Predicted probabilities using the true-entropy loss should give a
     # smaller loss than those using the ovr method.
-    clf_multi = LogisticRegression(multi_class="multinomial", solver="lbfgs")
+    clf_multi = LogisticRegression(solver="lbfgs")
     clf_multi.fit(X, y)
     clf_multi_loss = log_loss(y, clf_multi.predict_proba(X))
-    clf_ovr = LogisticRegression(multi_class="ovr", solver="lbfgs")
+    clf_ovr = OneVsRestClassifier(LogisticRegression(solver="lbfgs"))
     clf_ovr.fit(X, y)
     clf_ovr_loss = log_loss(y, clf_ovr.predict_proba(X))
     assert clf_ovr_loss > clf_multi_loss
@@ -1414,12 +1400,8 @@ def test_warm_start_converge_LR():
     rng = np.random.RandomState(0)
     X = np.concatenate((rng.randn(100, 2) + [1, 1], rng.randn(100, 2)))
     y = np.array([1] * 100 + [-1] * 100)
-    lr_no_ws = LogisticRegression(
-        multi_class="multinomial", solver="sag", warm_start=False, random_state=0
-    )
-    lr_ws = LogisticRegression(
-        multi_class="multinomial", solver="sag", warm_start=True, random_state=0
-    )
+    lr_no_ws = LogisticRegression(solver="sag", warm_start=False, random_state=0)
+    lr_ws = LogisticRegression(solver="sag", warm_start=True, random_state=0)
 
     lr_no_ws_loss = log_loss(y, lr_no_ws.fit(X, y).predict_proba(X))
     for i in range(5):
@@ -2005,7 +1987,6 @@ def test_multinomial_identifiability_on_iris(fit_intercept):
     clf = LogisticRegression(
         C=len(iris.data),
         solver="lbfgs",
-        multi_class="multinomial",
         fit_intercept=fit_intercept,
     )
     # Scaling X to ease convergence.

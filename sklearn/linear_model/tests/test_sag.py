@@ -272,7 +272,6 @@ def test_classifier_matching():
             C=1.0 / alpha / n_samples,
             max_iter=n_iter,
             random_state=10,
-            multi_class="ovr",
         )
         clf.fit(X, y)
 
@@ -371,7 +370,6 @@ def test_sag_pobj_matches_logistic_regression(csr_container):
         C=1.0 / alpha / n_samples,
         max_iter=max_iter,
         random_state=10,
-        multi_class="ovr",
     )
     clf2 = clone(clf1)
     clf3 = LogisticRegression(
@@ -380,7 +378,6 @@ def test_sag_pobj_matches_logistic_regression(csr_container):
         C=1.0 / alpha / n_samples,
         max_iter=max_iter,
         random_state=10,
-        multi_class="ovr",
     )
 
     clf1.fit(X, y)
@@ -619,7 +616,6 @@ def test_sag_classifier_computed_correctly(csr_container):
         tol=tol,
         random_state=77,
         fit_intercept=fit_intercept,
-        multi_class="ovr",
     )
     clf2 = clone(clf1)
 
@@ -780,7 +776,6 @@ def test_binary_classifier_class_weight(csr_container):
         tol=tol,
         random_state=77,
         fit_intercept=fit_intercept,
-        multi_class="ovr",
         class_weight=class_weight,
     )
     clf2 = clone(clf1)
