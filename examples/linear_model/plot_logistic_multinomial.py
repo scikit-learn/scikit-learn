@@ -54,11 +54,8 @@ for multi_class in ("multinomial", "ovr"):
     xmin, xmax = plt.xlim()
     ymin, ymax = plt.ylim()
     if multi_class == "ovr":
-        coef = np.asarray([est.coef_ for est in clf.estimators_]).reshape(
-            clf.n_classes_, None
-        )
-        intercept_ = coef[:, -1]
-        coef = coef[:, :-1]
+        coef = np.concatenate([est.coef_ for est in clf.estimators_])
+        intercept_ = coef = np.concatenate([est.intercept_ for est in clf.estimators_])
     else:
         coef = clf.coef_
         intercept = clf.intercept_
