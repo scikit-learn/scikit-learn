@@ -35,9 +35,10 @@ from sklearn.metrics import get_scorer, mean_gamma_deviance, mean_poisson_devian
 from sklearn.model_selection import cross_val_score, train_test_split
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import KBinsDiscretizer, MinMaxScaler, OneHotEncoder
-from sklearn.utils import _IS_32BIT, shuffle
+from sklearn.utils import shuffle
 from sklearn.utils._openmp_helpers import _openmp_effective_n_threads
 from sklearn.utils._testing import _convert_container
+from sklearn.utils.fixes import _IS_32BIT
 
 n_threads = _openmp_effective_n_threads()
 
