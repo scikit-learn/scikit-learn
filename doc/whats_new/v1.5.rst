@@ -223,8 +223,8 @@ Changelog
 :mod:`sklearn.inspection`
 .........................
 
-- |Fix| :meth:`inspection.DecisionBoundaryDisplay.from_estimator` no longer warns about
-  missing feature names when provided a `polars.DataFrame`.
+- |Fix| :meth:`inspection.DecisionBoundaryDisplay.from_estimator` no longer
+  warns about missing feature names when provided a `polars.DataFrame`.
   :pr:`28718` by :user:`Patrick Wang <patrickkwang>`.
 
 :mod:`sklearn.linear_model`
