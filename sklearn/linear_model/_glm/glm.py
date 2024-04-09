@@ -2,10 +2,6 @@
 Generalized Linear Models with Exponential Dispersion Family
 """
 
-# Author: Christian Lorentzen <lorentzen.ch@gmail.com>
-# some parts and tricks stolen from other sklearn files.
-# License: BSD 3 clause
-
 from numbers import Integral, Real
 
 import numpy as np

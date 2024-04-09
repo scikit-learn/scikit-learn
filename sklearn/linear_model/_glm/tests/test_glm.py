@@ -1,7 +1,3 @@
-# Authors: Christian Lorentzen <lorentzen.ch@gmail.com>
-#
-# License: BSD 3 clause
-
 import itertools
 import warnings
 from functools import partial

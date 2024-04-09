@@ -2,9 +2,6 @@
 Newton solver for Generalized Linear Models
 """
 
-# Author: Christian Lorentzen <lorentzen.ch@gmail.com>
-# License: BSD 3 clause
-
 import warnings
 from abc import ABC, abstractmethod
 

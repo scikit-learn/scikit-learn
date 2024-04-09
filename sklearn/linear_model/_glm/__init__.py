@@ -1,5 +1,3 @@
-# License: BSD 3 clause
-
 from .glm import (
     GammaRegressor,
     PoissonRegressor,
