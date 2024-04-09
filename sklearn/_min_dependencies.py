@@ -8,7 +8,7 @@ SCIPY_MIN_VERSION = "1.6.0"
 JOBLIB_MIN_VERSION = "1.2.0"
 THREADPOOLCTL_MIN_VERSION = "2.0.0"
 PYTEST_MIN_VERSION = "7.1.2"
-CYTHON_MIN_VERSION = "3.0.9"
+CYTHON_MIN_VERSION = "3.0.10"
 
 
 # 'build' and 'install' is included to have structured metadata for CI.
@@ -32,7 +32,7 @@ dependent_packages = {
     "black": ("23.3.0", "tests"),
     "mypy": ("1.3", "tests"),
     "pyamg": ("4.0.0", "tests"),
-    "polars": ("0.19.12", "tests"),
+    "polars": ("0.19.12", "docs, tests"),
     "pyarrow": ("12.0.0", "tests"),
     "sphinx": ("6.0.0", "docs"),
     "sphinx-copybutton": ("0.5.2", "docs"),

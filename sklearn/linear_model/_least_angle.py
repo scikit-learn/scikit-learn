@@ -273,7 +273,7 @@ def lars_path_gram(
 
     (1 / (2 * n_samples)) * ||y - Xw||^2_2 + alpha * ||w||_1
 
-    in the case of method='lars', the objective function is only known in
+    in the case of method='lar', the objective function is only known in
     the form of an implicit equation (see discussion in [1])
 
     Read more in the :ref:`User Guide <least_angle_regression>`.
@@ -432,7 +432,7 @@ def _lars_path_solver(
 
     (1 / (2 * n_samples)) * ||y - Xw||^2_2 + alpha * ||w||_1
 
-    in the case of method='lars', the objective function is only known in
+    in the case of method='lar', the objective function is only known in
     the form of an implicit equation (see discussion in [1])
 
     Read more in the :ref:`User Guide <least_angle_regression>`.

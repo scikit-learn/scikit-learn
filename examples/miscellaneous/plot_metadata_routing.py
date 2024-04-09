@@ -620,6 +620,11 @@ for w in record:
     print(w.message)
 
 # %%
+# In the end, we disable the configuration flag for metadata routing:
+
+set_config(enable_metadata_routing=False)
+
+# %%
 # Third Party Development and scikit-learn Dependency
 # ---------------------------------------------------
 #
