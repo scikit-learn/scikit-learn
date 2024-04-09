@@ -98,6 +98,9 @@ def _line_search_wolfe12(
         ret = line_search_wolfe2(
             f, fprime, xk, pk, gfk, old_fval, old_old_fval, **kwargs
         )
+        if is_verbose:
+            _not_ = "not " if ret[0] is None else ""
+            print("    wolfe2 line search was " + _not_ + "successful")
 
     if ret[0] is None:
         raise _LineSearchError()
@@ -272,11 +275,12 @@ def _newton_cg(
 
         absgrad = np.abs(fgrad)
         max_absgrad = np.max(absgrad)
+        check = max_absgrad <= tol
         if is_verbose:
             print(f"Newton-CG iter = {k}")
             print("  Check Convergence")
-            print(f"    max |gradient| {max_absgrad} <= {tol}")
-        if max_absgrad <= tol:
+            print(f"    max |gradient| <= tol: {max_absgrad} <= {tol} {check}")
+        if check:
             break
 
         maggrad = np.sum(absgrad)

@@ -54,7 +54,7 @@ def test_newton_cg_verbosity(capsys, verbose):
         msg = [
             "Newton-CG iter = 1",
             "Check Convergence",
-            "1. max |gradient|",
+            "max |gradient|",
             "Solver did converge at loss = ",
         ]
         for m in msg:
