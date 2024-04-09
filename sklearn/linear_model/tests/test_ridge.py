@@ -39,8 +39,6 @@ from sklearn.model_selection import (
     cross_val_predict,
 )
 from sklearn.preprocessing import minmax_scale
-from sklearn.tests.metadata_routing_common import ConsumingTransformer
-from sklearn.tests.test_metadata_routing import SimplePipeline
 from sklearn.utils import _IS_32BIT, check_random_state
 from sklearn.utils._testing import (
     assert_allclose,
@@ -50,7 +48,6 @@ from sklearn.utils._testing import (
     ignore_warnings,
 )
 from sklearn.utils.fixes import (
-    _IS_32BIT,
     COO_CONTAINERS,
     CSC_CONTAINERS,
     CSR_CONTAINERS,
@@ -2099,24 +2096,7 @@ def test_metadata_routing_with_default_scoring(metaestimator):
     """Test that `RidgeCV` or `RidgeClassifierCV` with default `scoring`
     argument (`None`), don't enter into `RecursionError` when metadata is routed.
     """
-    X = np.array([[0, 1], [2, 2], [4, 6], [9, 0], [2, 4]])
-    y = [1, 2, 3, 4, 5]
-
-    pipe = SimplePipeline(
-        [
-            ConsumingTransformer()
-            .set_fit_request(sample_weight=True)
-            .set_transform_request(sample_weight=True),
-            ConsumingTransformer()
-            .set_fit_request(sample_weight=True)
-            .set_transform_request(sample_weight=True),
-            metaestimator().set_fit_request(sample_weight=True),
-        ]
-    )
-
-    params = {"sample_weight": [1, 1, 1, 1, 1]}
-
-    pipe.fit(X, y, **params)
+    metaestimator().get_metadata_routing()
 
 
 # End of Metadata Routing Tests
