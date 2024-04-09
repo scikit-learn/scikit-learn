@@ -80,7 +80,8 @@ are not yet supported, for instance some loss functions.
 
 .. topic:: Examples:
 
- * :ref:`sphx_glr_auto_examples_inspection_plot_partial_dependence.py`
+  * :ref:`sphx_glr_auto_examples_inspection_plot_partial_dependence.py`
+  * :ref:`sphx_glr_auto_examples_ensemble_plot_forest_hist_grad_boosting_comparison.py`
 
 Usage
 ^^^^^
@@ -114,11 +115,54 @@ The size of the trees can be controlled through the ``max_leaf_nodes``,
 ``max_depth``, and ``min_samples_leaf`` parameters.
 
 The number of bins used to bin the data is controlled with the ``max_bins``
-parameter. Using less bins acts as a form of regularization. It is
-generally recommended to use as many bins as possible (256), which is the default.
+parameter. Using less bins acts as a form of regularization. It is generally
+recommended to use as many bins as possible (255), which is the default.
 
-The ``l2_regularization`` parameter is a regularizer on the loss function and
-corresponds to :math:`\lambda` in equation (2) of [XGBoost]_.
+The ``l2_regularization`` parameter acts as a regularizer for the loss function,
+and corresponds to :math:`\lambda` in the following expression (see equation (2)
+in [XGBoost]_):
+
+.. math::
+
+    \mathcal{L}(\phi) =  \sum_i l(\hat{y}_i, y_i) + \frac12 \sum_k \lambda ||w_k||^2
+
+|details-start|
+**Details on l2 regularization**:
+|details-split|
+
+It is important to notice that the loss term :math:`l(\hat{y}_i, y_i)` describes
+only half of the actual loss function except for the pinball loss and absolute
+error.
+
+The index :math:`k` refers to the k-th tree in the ensemble of trees. In the
+case of regression and binary classification, gradient boosting models grow one
+tree per iteration, then :math:`k` runs up to `max_iter`. In the case of
+multiclass classification problems, the maximal value of the index :math:`k` is
+`n_classes` :math:`\times` `max_iter`.
+
+If :math:`T_k` denotes the number of leaves in the k-th tree, then :math:`w_k`
+is a vector of length :math:`T_k`, which contains the leaf values of the form `w
+= -sum_gradient / (sum_hessian + l2_regularization)` (see equation (5) in
+[XGBoost]_).
+
+The leaf values :math:`w_k` are derived by dividing the sum of the gradients of
+the loss function by the combined sum of hessians. Adding the regularization to
+the denominator penalizes the leaves with small hessians (flat regions),
+resulting in smaller updates. Those :math:`w_k` values contribute then to the
+model's prediction for a given input that ends up in the corresponding leaf. The
+final prediction is the sum of the base prediction and the contributions from
+each tree. The result of that sum is then transformed by the inverse link
+function depending on the choice of the loss function (see
+:ref:`gradient_boosting_formulation`).
+
+Notice that the original paper [XGBoost]_ introduces a term :math:`\gamma\sum_k
+T_k` that penalizes the number of leaves (making it a smooth version of
+`max_leaf_nodes`) not presented here as it is not implemented in scikit-learn;
+whereas :math:`\lambda` penalizes the magnitude of the individual tree
+predictions before being rescaled by the learning rate, see
+:ref:`gradient_boosting_shrinkage`.
+
+|details-end|
 
 Note that **early-stopping is enabled by default if the number of samples is
 larger than 10,000**. The early-stopping behaviour is controlled via the
@@ -128,6 +172,8 @@ using an arbitrary :term:`scorer`, or just the training or validation loss.
 Note that for technical reasons, using a callable as a scorer is significantly slower
 than using the loss. By default, early-stopping is performed if there are at least
 10,000 samples in the training set, using the validation loss.
+
+.. _nan_support_hgbt:
 
 Missing values support
 ^^^^^^^^^^^^^^^^^^^^^^
@@ -166,6 +212,10 @@ whether the feature value is missing or not::
 If no missing values were encountered for a given feature during training,
 then samples with missing values are mapped to whichever child has the most
 samples.
+
+.. topic:: Examples:
+
+  * :ref:`sphx_glr_auto_examples_ensemble_plot_hgbt_regression.py`
 
 .. _sw_hgbdt:
 
@@ -252,7 +302,11 @@ the most samples (just like for continuous features). When predicting,
 categories that were not seen during fit time will be treated as missing
 values.
 
-**Split finding with categorical features**: The canonical way of considering
+|details-start|
+**Split finding with categorical features**:
+|details-split|
+
+The canonical way of considering
 categorical splits in a tree is to consider
 all of the :math:`2^{K - 1} - 1` partitions, where :math:`K` is the number of
 categories. This can quickly become prohibitive when :math:`K` is large.
@@ -266,6 +320,8 @@ formal proof). As a result, only :math:`K - 1` splits need to be considered
 instead of :math:`2^{K - 1} - 1`. The initial sorting is a
 :math:`\mathcal{O}(K \log(K))` operation, leading to a total complexity of
 :math:`\mathcal{O}(K \log(K) + K)`, instead of :math:`\mathcal{O}(2^K)`.
+
+|details-end|
 
 .. topic:: Examples:
 
@@ -325,6 +381,7 @@ Also, monotonic constraints are not supported for multiclass classification.
 .. topic:: Examples:
 
   * :ref:`sphx_glr_auto_examples_ensemble_plot_monotonic_constraints.py`
+  * :ref:`sphx_glr_auto_examples_ensemble_plot_hgbt_regression.py`
 
 .. _interaction_cst_hgbt:
 
@@ -444,8 +501,9 @@ The usage and the parameters of :class:`GradientBoostingClassifier` and
 :class:`GradientBoostingRegressor` are described below. The 2 most important
 parameters of these estimators are `n_estimators` and `learning_rate`.
 
-Classification
-^^^^^^^^^^^^^^^
+|details-start|
+**Classification**
+|details-split|
 
 :class:`GradientBoostingClassifier` supports both binary and multi-class
 classification.
@@ -482,8 +540,11 @@ depth via ``max_depth`` or by setting the number of leaf nodes via
    :class:`HistGradientBoostingClassifier` as an alternative to
    :class:`GradientBoostingClassifier` .
 
-Regression
-^^^^^^^^^^^
+|details-end|
+
+|details-start|
+**Regression**
+|details-split|
 
 :class:`GradientBoostingRegressor` supports a number of
 :ref:`different loss functions <gradient_boosting_loss>`
@@ -523,6 +584,8 @@ to determine the optimal number of trees (i.e. ``n_estimators``) by early stoppi
    :target: ../auto_examples/ensemble/plot_gradient_boosting_regression.html
    :align: center
    :scale: 75
+
+|details-end|
 
 .. topic:: Examples:
 
@@ -574,14 +637,17 @@ The parameter ``max_leaf_nodes`` corresponds to the variable ``J`` in the
 chapter on gradient boosting in [Friedman2001]_ and is related to the parameter
 ``interaction.depth`` in R's gbm package where ``max_leaf_nodes == interaction.depth + 1`` .
 
+.. _gradient_boosting_formulation:
+
 Mathematical formulation
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
 We first present GBRT for regression, and then detail the classification
 case.
 
-Regression
-...........
+|details-start|
+**Regression**
+|details-split|
 
 GBRT regressors are additive models whose prediction :math:`\hat{y}_i` for a
 given input :math:`x_i` is of the following form:
@@ -663,8 +729,11 @@ space.
   update is loss-dependent: for the absolute error loss, the value of
   a leaf is updated to the median of the samples in that leaf.
 
-Classification
-..............
+|details-end|
+
+|details-start|
+**Classification**
+|details-split|
 
 Gradient boosting for classification is very similar to the regression case.
 However, the sum of the trees :math:`F_M(x_i) = \sum_m h_m(x_i)` is not
@@ -685,6 +754,8 @@ still a regressor, not a classifier. This is because the sub-estimators are
 trained to predict (negative) *gradients*, which are always continuous
 quantities.
 
+|details-end|
+
 .. _gradient_boosting_loss:
 
 Loss Functions
@@ -693,7 +764,9 @@ Loss Functions
 The following loss functions are supported and can be specified using
 the parameter ``loss``:
 
-* Regression
+|details-start|
+**Regression**
+|details-split|
 
   * Squared error (``'squared_error'``): The natural choice for regression
     due to its superior computational properties. The initial model is
@@ -710,7 +783,12 @@ the parameter ``loss``:
     can be used to create prediction intervals
     (see :ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_quantile.py`).
 
-* Classification
+|details-end|
+
+
+|details-start|
+**Classification**
+|details-split|
 
   * Binary log-loss (``'log-loss'``): The binomial
     negative log-likelihood loss function for binary classification. It provides
@@ -727,6 +805,8 @@ the parameter ``loss``:
     as :class:`AdaBoostClassifier`. Less robust to mislabeled
     examples than ``'log-loss'``; can only be used for binary
     classification.
+
+|details-end|
 
 .. _gradient_boosting_shrinkage:
 
@@ -1356,8 +1436,28 @@ Vector Machine, a Decision Tree, and a K-nearest neighbor classifier::
     :align: center
     :scale: 75%
 
-Using the `VotingClassifier` with `GridSearchCV`
-------------------------------------------------
+Usage
+-----
+
+In order to predict the class labels based on the predicted
+class-probabilities (scikit-learn estimators in the VotingClassifier
+must support ``predict_proba`` method)::
+
+   >>> eclf = VotingClassifier(
+   ...     estimators=[('lr', clf1), ('rf', clf2), ('gnb', clf3)],
+   ...     voting='soft'
+   ... )
+
+Optionally, weights can be provided for the individual classifiers::
+
+   >>> eclf = VotingClassifier(
+   ...     estimators=[('lr', clf1), ('rf', clf2), ('gnb', clf3)],
+   ...     voting='soft', weights=[2,5,1]
+   ... )
+
+|details-start|
+**Using the `VotingClassifier` with `GridSearchCV`**
+|details-split|
 
 The :class:`VotingClassifier` can also be used together with
 :class:`~sklearn.model_selection.GridSearchCV` in order to tune the
@@ -1377,24 +1477,7 @@ hyperparameters of the individual estimators::
    >>> grid = GridSearchCV(estimator=eclf, param_grid=params, cv=5)
    >>> grid = grid.fit(iris.data, iris.target)
 
-Usage
------
-
-In order to predict the class labels based on the predicted
-class-probabilities (scikit-learn estimators in the VotingClassifier
-must support ``predict_proba`` method)::
-
-   >>> eclf = VotingClassifier(
-   ...     estimators=[('lr', clf1), ('rf', clf2), ('gnb', clf3)],
-   ...     voting='soft'
-   ... )
-
-Optionally, weights can be provided for the individual classifiers::
-
-   >>> eclf = VotingClassifier(
-   ...     estimators=[('lr', clf1), ('rf', clf2), ('gnb', clf3)],
-   ...     voting='soft', weights=[2,5,1]
-   ... )
+|details-end|
 
 .. _voting_regressor:
 

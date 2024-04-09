@@ -1413,7 +1413,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
     See glossary entry for :term:`cross-validation estimator`.
 
     This class implements logistic regression using liblinear, newton-cg, sag
-    of lbfgs optimizer. The newton-cg, sag and lbfgs solvers support only L2
+    or lbfgs optimizer. The newton-cg, sag and lbfgs solvers support only L2
     regularization with primal formulation. The liblinear solver supports both
     L1 and L2 regularization, with a dual formulation only for the L2 penalty.
     Elastic-Net penalty is only supported by the saga solver.

@@ -45,14 +45,15 @@ def _find_binning_thresholds(col_data, max_bins):
     missing_mask = np.isnan(col_data)
     if missing_mask.any():
         col_data = col_data[~missing_mask]
-    col_data = np.ascontiguousarray(col_data, dtype=X_DTYPE)
-    distinct_values = np.unique(col_data)
+    # The data will be sorted anyway in np.unique and again in percentile, so we do it
+    # here. Sorting also returns a contiguous array.
+    col_data = np.sort(col_data)
+    distinct_values = np.unique(col_data).astype(X_DTYPE)
     if len(distinct_values) <= max_bins:
         midpoints = distinct_values[:-1] + distinct_values[1:]
         midpoints *= 0.5
     else:
-        # We sort again the data in this case. We could compute
-        # approximate midpoint percentiles using the output of
+        # We could compute approximate midpoint percentiles using the output of
         # np.unique(col_data, return_counts) instead but this is more
         # work and the performance benefit will be limited because we
         # work on a fixed-size subsample of the full data.

@@ -147,6 +147,10 @@ class _MultimetricScorer:
                     scores[name] = format_exc()
         return scores
 
+    def __repr__(self):
+        scorers = ", ".join([f'"{s}"' for s in self._scorers])
+        return f"MultiMetricScorer({scorers})"
+
     def _use_cache(self, estimator):
         """Return True if using a cache is beneficial, thus when a response method will
         be called several time.
@@ -880,26 +884,44 @@ for name, metric in [
 
 @validate_params(
     {
-        "estimator": [HasMethods("fit")],
-        "scoring": [StrOptions(set(get_scorer_names())), callable, None],
+        "estimator": [HasMethods("fit"), None],
+        "scoring": [
+            StrOptions(set(get_scorer_names())),
+            callable,
+            list,
+            set,
+            tuple,
+            dict,
+            None,
+        ],
         "allow_none": ["boolean"],
     },
     prefer_skip_nested_validation=True,
 )
-def check_scoring(estimator, scoring=None, *, allow_none=False):
+def check_scoring(estimator=None, scoring=None, *, allow_none=False):
     """Determine scorer from user options.
 
     A TypeError will be thrown if the estimator cannot be scored.
 
     Parameters
     ----------
-    estimator : estimator object implementing 'fit'
-        The object to use to fit the data.
+    estimator : estimator object implementing 'fit' or None, default=None
+        The object to use to fit the data. If `None`, then this function may error
+        depending on `allow_none`.
 
-    scoring : str or callable, default=None
-        A string (see model evaluation documentation) or
-        a scorer callable object / function with signature
-        ``scorer(estimator, X, y)``.
+    scoring : str, callable, list, tuple, or dict, default=None
+        Scorer to use. If `scoring` represents a single score, one can use:
+
+        - a single string (see :ref:`scoring_parameter`);
+        - a callable (see :ref:`scoring`) that returns a single value.
+
+        If `scoring` represents multiple scores, one can use:
+
+        - a list or tuple of unique strings;
+        - a callable returning a dictionary where the keys are the metric
+          names and the values are the metric scorers;
+        - a dictionary with metric names as keys and callables a values.
+
         If None, the provided estimator object's `score` method is used.
 
     allow_none : bool, default=False
@@ -911,6 +933,17 @@ def check_scoring(estimator, scoring=None, *, allow_none=False):
     scoring : callable
         A scorer callable object / function with signature
         ``scorer(estimator, X, y)``.
+
+    Examples
+    --------
+    >>> from sklearn.datasets import load_iris
+    >>> from sklearn.metrics import check_scoring
+    >>> from sklearn.tree import DecisionTreeClassifier
+    >>> X, y = load_iris(return_X_y=True)
+    >>> classifier = DecisionTreeClassifier(max_depth=2).fit(X, y)
+    >>> scorer = check_scoring(classifier, scoring='accuracy')
+    >>> scorer(classifier, X, y)
+    0.96...
     """
     if isinstance(scoring, str):
         return get_scorer(scoring)
@@ -931,6 +964,9 @@ def check_scoring(estimator, scoring=None, *, allow_none=False):
                 "to a scorer." % scoring
             )
         return get_scorer(scoring)
+    if isinstance(scoring, (list, tuple, set, dict)):
+        scorers = _check_multimetric_scoring(estimator, scoring=scoring)
+        return _MultimetricScorer(scorers=scorers)
     if scoring is None:
         if hasattr(estimator, "score"):
             return _PassthroughScorer(estimator)

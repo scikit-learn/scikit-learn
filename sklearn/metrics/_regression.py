@@ -34,6 +34,12 @@ import numpy as np
 from scipy.special import xlogy
 
 from ..exceptions import UndefinedMetricWarning
+from ..utils._array_api import (
+    _average,
+    _find_matching_floating_dtype,
+    device,
+    get_namespace,
+)
 from ..utils._param_validation import Hidden, Interval, StrOptions, validate_params
 from ..utils.stats import _weighted_percentile
 from ..utils.validation import (
@@ -65,7 +71,7 @@ __ALL__ = [
 ]
 
 
-def _check_reg_targets(y_true, y_pred, multioutput, dtype="numeric"):
+def _check_reg_targets(y_true, y_pred, multioutput, dtype="numeric", xp=None):
     """Check that y_true and y_pred belong to the same regression task.
 
     Parameters
@@ -99,15 +105,17 @@ def _check_reg_targets(y_true, y_pred, multioutput, dtype="numeric"):
         just the corresponding argument if ``multioutput`` is a
         correct keyword.
     """
+    xp, _ = get_namespace(y_true, y_pred, multioutput, xp=xp)
+
     check_consistent_length(y_true, y_pred)
     y_true = check_array(y_true, ensure_2d=False, dtype=dtype)
     y_pred = check_array(y_pred, ensure_2d=False, dtype=dtype)
 
     if y_true.ndim == 1:
-        y_true = y_true.reshape((-1, 1))
+        y_true = xp.reshape(y_true, (-1, 1))
 
     if y_pred.ndim == 1:
-        y_pred = y_pred.reshape((-1, 1))
+        y_pred = xp.reshape(y_pred, (-1, 1))
 
     if y_true.shape[1] != y_pred.shape[1]:
         raise ValueError(
@@ -855,9 +863,10 @@ def median_absolute_error(
 
 
 def _assemble_r2_explained_variance(
-    numerator, denominator, n_outputs, multioutput, force_finite
+    numerator, denominator, n_outputs, multioutput, force_finite, xp, device
 ):
     """Common part used by explained variance score and :math:`R^2` score."""
+    dtype = numerator.dtype
 
     nonzero_denominator = denominator != 0
 
@@ -868,12 +877,14 @@ def _assemble_r2_explained_variance(
         nonzero_numerator = numerator != 0
         # Default = Zero Numerator = perfect predictions. Set to 1.0
         # (note: even if denominator is zero, thus avoiding NaN scores)
-        output_scores = np.ones([n_outputs])
+        output_scores = xp.ones([n_outputs], device=device, dtype=dtype)
         # Non-zero Numerator and Non-zero Denominator: use the formula
         valid_score = nonzero_denominator & nonzero_numerator
+
         output_scores[valid_score] = 1 - (
             numerator[valid_score] / denominator[valid_score]
         )
+
         # Non-zero Numerator and Zero Denominator:
         # arbitrary set to 0.0 to avoid -inf scores
         output_scores[nonzero_numerator & ~nonzero_denominator] = 0.0
@@ -887,7 +898,7 @@ def _assemble_r2_explained_variance(
             avg_weights = None
         elif multioutput == "variance_weighted":
             avg_weights = denominator
-            if not np.any(nonzero_denominator):
+            if not xp.any(nonzero_denominator):
                 # All weights are zero, np.average would raise a ZeroDiv error.
                 # This only happens when all y are constant (or 1-element long)
                 # Since weights are all equal, fall back to uniform weights.
@@ -895,7 +906,10 @@ def _assemble_r2_explained_variance(
     else:
         avg_weights = multioutput
 
-    return np.average(output_scores, weights=avg_weights)
+    result = _average(output_scores, weights=avg_weights)
+    if result.size == 1:
+        return float(result)
+    return result
 
 
 @validate_params(
@@ -1033,6 +1047,9 @@ def explained_variance_score(
         n_outputs=y_true.shape[1],
         multioutput=multioutput,
         force_finite=force_finite,
+        xp=get_namespace(y_true)[0],
+        # TODO: update once Array API support is added to explained_variance_score.
+        device=None,
     )
 
 
@@ -1177,8 +1194,14 @@ def r2_score(
     >>> r2_score(y_true, y_pred, force_finite=False)
     -inf
     """
-    y_type, y_true, y_pred, multioutput = _check_reg_targets(
-        y_true, y_pred, multioutput
+    input_arrays = [y_true, y_pred, sample_weight, multioutput]
+    xp, _ = get_namespace(*input_arrays)
+    device_ = device(*input_arrays)
+
+    dtype = _find_matching_floating_dtype(y_true, y_pred, sample_weight, xp=xp)
+
+    _, y_true, y_pred, multioutput = _check_reg_targets(
+        y_true, y_pred, multioutput, dtype=dtype, xp=xp
     )
     check_consistent_length(y_true, y_pred, sample_weight)
 
@@ -1188,15 +1211,16 @@ def r2_score(
         return float("nan")
 
     if sample_weight is not None:
-        sample_weight = column_or_1d(sample_weight)
-        weight = sample_weight[:, np.newaxis]
+        sample_weight = column_or_1d(sample_weight, dtype=dtype)
+        weight = sample_weight[:, None]
     else:
         weight = 1.0
 
-    numerator = (weight * (y_true - y_pred) ** 2).sum(axis=0, dtype=np.float64)
-    denominator = (
-        weight * (y_true - np.average(y_true, axis=0, weights=sample_weight)) ** 2
-    ).sum(axis=0, dtype=np.float64)
+    numerator = xp.sum(weight * (y_true - y_pred) ** 2, axis=0)
+    denominator = xp.sum(
+        weight * (y_true - _average(y_true, axis=0, weights=sample_weight, xp=xp)) ** 2,
+        axis=0,
+    )
 
     return _assemble_r2_explained_variance(
         numerator=numerator,
@@ -1204,6 +1228,8 @@ def r2_score(
         n_outputs=y_true.shape[1],
         multioutput=multioutput,
         force_finite=force_finite,
+        xp=xp,
+        device=device_,
     )
 
 
