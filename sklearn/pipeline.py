@@ -18,7 +18,7 @@ from scipy import sparse
 from .base import TransformerMixin, _fit_context, clone
 from .exceptions import NotFittedError
 from .preprocessing import FunctionTransformer
-from .utils import Bunch, _print_elapsed_time
+from .utils import Bunch
 from .utils._estimator_html_repr import _VisualBlock
 from .utils._metadata_requests import METHODS
 from .utils._param_validation import HasMethods, Hidden
@@ -27,6 +27,7 @@ from .utils._set_output import (
     _safe_set_output,
 )
 from .utils._tags import _safe_tags
+from .utils._user_interface import _print_elapsed_time
 from .utils.metadata_routing import (
     MetadataRouter,
     MethodMapping,
