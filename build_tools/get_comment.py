@@ -117,7 +117,7 @@ def get_message(log_file, repo, pr_number, sha, run_id, details, versions):
         end="Problems detected by ruff",
         title="`ruff`",
         message=(
-            "`ruff` detected issues. Please run `ruff --fix --show-source .` "
+            "`ruff` detected issues. Please run `ruff --fix --output-format=full .` "
             "locally, fix the remaining issues, and push the changes. "
             "Here you can see the detected issues. Note that the installed "
             f"`ruff` version is `ruff={versions['ruff']}`."
