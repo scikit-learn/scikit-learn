@@ -62,9 +62,7 @@ from ..utils._param_validation import (
     generate_invalid_param_val,
     make_constraint,
 )
-from ..utils.fixes import SPARSE_ARRAY_PRESENT, parse_version, sp_version
-from ..utils.validation import check_is_fitted
-from . import IS_PYPY, shuffle
+from . import shuffle
 from ._missing import is_scalar_nan
 from ._param_validation import Interval
 from ._tags import (
@@ -86,7 +84,8 @@ from ._testing import (
     raises,
     set_random_state,
 )
-from .validation import _num_samples, has_fit_parameter
+from .fixes import _IS_PYPY, SPARSE_ARRAY_PRESENT, parse_version, sp_version
+from .validation import _num_samples, check_is_fitted, has_fit_parameter
 
 REGRESSION_DATASET = None
 CROSS_DECOMPOSITION = ["PLSCanonical", "PLSRegression", "CCA", "PLSSVD"]
@@ -3296,7 +3295,7 @@ def check_no_attributes_set_in_init(name, estimator_orig):
         return
 
     init_params = _get_args(type(estimator).__init__)
-    if IS_PYPY:
+    if _IS_PYPY:
         # __init__ signature has additional objects in PyPy
         for key in ["obj"]:
             if key in init_params:
@@ -4003,8 +4002,8 @@ def check_n_features_in_after_fitting(name, estimator_orig):
     if "warm_start" in estimator.get_params():
         estimator.set_params(warm_start=False)
 
-    n_samples = 150
-    X = rng.normal(size=(n_samples, 8))
+    n_samples = 10
+    X = rng.normal(size=(n_samples, 4))
     X = _enforce_estimator_tags_X(estimator, X)
 
     if is_regressor(estimator):

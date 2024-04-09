@@ -124,9 +124,9 @@ jobs:
     vmImage: ubuntu-22.04
   variables:
     # Need to match Python version and Emscripten version for the correct
-    # Pyodide version. For example, for Pyodide version 0.25.0, see
-    # https://github.com/pyodide/pyodide/blob/0.25.0/Makefile.envs
-    PYODIDE_VERSION: '0.25.0'
+    # Pyodide version. For example, for Pyodide version 0.25.1, see
+    # https://github.com/pyodide/pyodide/blob/0.25.1/Makefile.envs
+    PYODIDE_VERSION: '0.25.1'
     EMSCRIPTEN_VERSION: '3.1.46'
     PYTHON_VERSION: '3.11.3'
 
@@ -168,7 +168,6 @@ jobs:
         DISTRIB: 'conda'
         LOCK_FILE: './build_tools/azure/pylatest_conda_forge_mkl_linux-64_conda.lock'
         COVERAGE: 'true'
-        BUILD_WITH_MESON: 'true'
         SKLEARN_TESTS_GLOBAL_RANDOM_SEED: '42'  # default global random seed
         # Tests that require large downloads over the networks are skipped in CI.
         # Here we make sure, that they are still run on a regular basis.
@@ -244,6 +243,7 @@ jobs:
         SKLEARN_ENABLE_DEBUG_CYTHON_DIRECTIVES: '1'
         SKLEARN_RUN_FLOAT32_TESTS: '1'
         SKLEARN_TESTS_GLOBAL_RANDOM_SEED: '2'  # non-default seed
+        BUILD_WITH_SETUPTOOLS: 'true'
       # Linux environment to test the latest available dependencies.
       # It runs tests requiring lightgbm, pandas and PyAMG.
       pylatest_pip_openblas_pandas:
