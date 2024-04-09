@@ -22,7 +22,7 @@ from sklearn.experimental import (
 )
 from sklearn.linear_model import LogisticRegression
 from sklearn.preprocessing import FunctionTransformer
-from sklearn.utils import IS_PYPY, all_estimators
+from sklearn.utils import all_estimators
 from sklearn.utils._testing import (
     _get_func_name,
     check_docstring_parameters,
@@ -34,7 +34,7 @@ from sklearn.utils.estimator_checks import (
     _enforce_estimator_tags_X,
     _enforce_estimator_tags_y,
 )
-from sklearn.utils.fixes import parse_version, sp_version
+from sklearn.utils.fixes import _IS_PYPY, parse_version, sp_version
 
 # walk_packages() ignores DeprecationWarnings, now we need to ignore
 # FutureWarnings
@@ -75,7 +75,7 @@ _METHODS_IGNORE_NONE_Y = [
 # Python 3.7
 @pytest.mark.filterwarnings("ignore::FutureWarning")
 @pytest.mark.filterwarnings("ignore::DeprecationWarning")
-@pytest.mark.skipif(IS_PYPY, reason="test segfaults on PyPy")
+@pytest.mark.skipif(_IS_PYPY, reason="test segfaults on PyPy")
 def test_docstring_parameters():
     # Test module docstring formatting
 
@@ -241,6 +241,9 @@ def test_fit_docstring_attributes(name, Estimator):
     # of fitted attributes. This should be invariant to whether it has converged or not.
     if "max_iter" in est.get_params():
         est.set_params(max_iter=2)
+        # min value for `TSNE` is 250
+        if Estimator.__name__ == "TSNE":
+            est.set_params(max_iter=250)
 
     if "random_state" in est.get_params():
         est.set_params(random_state=0)

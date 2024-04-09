@@ -27,8 +27,9 @@ from sklearn._loss.loss import (
     HuberLoss,
     PinballLoss,
 )
-from sklearn.utils import _IS_WASM, assert_all_finite
+from sklearn.utils import assert_all_finite
 from sklearn.utils._testing import create_memmap_backed_data, skip_if_32bit
+from sklearn.utils.fixes import _IS_WASM
 
 ALL_LOSSES = list(_LOSSES.values())
 

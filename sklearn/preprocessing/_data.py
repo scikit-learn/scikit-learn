@@ -22,7 +22,7 @@ from ..base import (
     TransformerMixin,
     _fit_context,
 )
-from ..utils import _array_api, check_array
+from ..utils import _array_api, check_array, resample
 from ..utils._array_api import get_namespace
 from ..utils._param_validation import Interval, Options, StrOptions, validate_params
 from ..utils.extmath import _incremental_mean_and_var, row_norms
@@ -2560,10 +2560,14 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
         matrix are discarded to compute the quantile statistics. If False,
         these entries are treated as zeros.
 
-    subsample : int, default=10_000
+    subsample : int or None, default=10_000
         Maximum number of samples used to estimate the quantiles for
         computational efficiency. Note that the subsampling procedure may
         differ for value-identical sparse and dense matrices.
+        Disable subsampling by setting `subsample=None`.
+
+        .. versionadded:: 1.5
+           The option `None` to disable subsampling was added.
 
     random_state : int, RandomState instance or None, default=None
         Determines random number generation for subsampling and smoothing
@@ -2629,7 +2633,7 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
         "n_quantiles": [Interval(Integral, 1, None, closed="left")],
         "output_distribution": [StrOptions({"uniform", "normal"})],
         "ignore_implicit_zeros": ["boolean"],
-        "subsample": [Interval(Integral, 1, None, closed="left")],
+        "subsample": [Interval(Integral, 1, None, closed="left"), None],
         "random_state": ["random_state"],
         "copy": ["boolean"],
     }
@@ -2668,15 +2672,13 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
         n_samples, n_features = X.shape
         references = self.references_ * 100
 
-        self.quantiles_ = []
-        for col in X.T:
-            if self.subsample < n_samples:
-                subsample_idx = random_state.choice(
-                    n_samples, size=self.subsample, replace=False
-                )
-                col = col.take(subsample_idx, mode="clip")
-            self.quantiles_.append(np.nanpercentile(col, references))
-        self.quantiles_ = np.transpose(self.quantiles_)
+        if self.subsample is not None and self.subsample < n_samples:
+            # Take a subsample of `X`
+            X = resample(
+                X, replace=False, n_samples=self.subsample, random_state=random_state
+            )
+
+        self.quantiles_ = np.nanpercentile(X, references, axis=0)
         # Due to floating-point precision error in `np.nanpercentile`,
         # make sure that quantiles are monotonically increasing.
         # Upstream issue in numpy:
@@ -2699,7 +2701,7 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
         self.quantiles_ = []
         for feature_idx in range(n_features):
             column_nnz_data = X.data[X.indptr[feature_idx] : X.indptr[feature_idx + 1]]
-            if len(column_nnz_data) > self.subsample:
+            if self.subsample is not None and len(column_nnz_data) > self.subsample:
                 column_subsample = self.subsample * len(column_nnz_data) // n_samples
                 if self.ignore_implicit_zeros:
                     column_data = np.zeros(shape=column_subsample, dtype=X.dtype)
@@ -2748,7 +2750,7 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
         self : object
            Fitted transformer.
         """
-        if self.n_quantiles > self.subsample:
+        if self.subsample is not None and self.n_quantiles > self.subsample:
             raise ValueError(
                 "The number of quantiles cannot be greater than"
                 " the number of samples used. Got {} quantiles"
@@ -3005,10 +3007,14 @@ def quantile_transform(
         matrix are discarded to compute the quantile statistics. If False,
         these entries are treated as zeros.
 
-    subsample : int, default=1e5
+    subsample : int or None, default=1e5
         Maximum number of samples used to estimate the quantiles for
         computational efficiency. Note that the subsampling procedure may
         differ for value-identical sparse and dense matrices.
+        Disable subsampling by setting `subsample=None`.
+
+        .. versionadded:: 1.5
+           The option `None` to disable subsampling was added.
 
     random_state : int, RandomState instance or None, default=None
         Determines random number generation for subsampling and smoothing
