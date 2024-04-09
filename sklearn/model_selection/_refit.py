@@ -477,6 +477,46 @@ class FavorabilityRanker:
                 f"hyperparameters. The provided value {value} is not supported."
             )
 
+    @staticmethod
+    def calculate_favorability_score(
+        param_set: Dict, favorability_rules: Dict, process_parameter_values: Callable
+    ) -> float:
+        favorability_score = 0
+        for hyperparam, rule in favorability_rules.items():
+            if hyperparam in param_set:
+                hyperparam_value = process_parameter_values(param_set[hyperparam])
+
+                is_numeric = isinstance(hyperparam_value, (int, float, np.number))
+
+                # numerical
+                if isinstance(rule[0], bool):
+                    lower_is_favorable, weight = rule
+                    if not is_numeric:
+                        raise TypeError(
+                            f"Expected numeric value for {hyperparam}, "
+                            f"got {type(hyperparam_value)}"
+                        )
+                    if lower_is_favorable:
+                        score_component = hyperparam_value
+                    else:
+                        score_component = (
+                            0 if hyperparam_value == 0 else 1 / hyperparam_value
+                        )
+                    favorability_score += weight * score_component
+
+                # categorical
+                elif isinstance(rule[0], list):
+                    rule_values, weight = rule
+                    if hyperparam_value in rule_values:
+                        score_component = rule_values.index(hyperparam_value)
+                        favorability_score += weight * score_component
+                    else:
+                        raise ValueError(
+                            f"Hyperparameter {hyperparam} must be one of {rule_values}."
+                        )
+
+        return favorability_score
+
     def __call__(self, params: Union[List[Dict], Dict]) -> List[int]:
         """
         Ranks the provided hyperparameter set based on the specified favorability rules.
@@ -494,51 +534,18 @@ class FavorabilityRanker:
             hyperparameter values in the parameter grid.
         """
 
-        def calculate_favorability_score(param_set):
-            favorability_score = 0
-            for hyperparam, rule in self.favorability_rules.items():
-                if hyperparam in param_set:
-                    hyperparam_value = self._process_parameter_values(
-                        param_set[hyperparam]
-                    )
-
-                    is_numeric = isinstance(hyperparam_value, (int, float, np.number))
-
-                    # numerical
-                    if isinstance(rule[0], bool):
-                        lower_is_favorable, weight = rule
-                        if not is_numeric:
-                            raise TypeError(
-                                f"Expected numeric value for {hyperparam}, "
-                                f"got {type(hyperparam_value)}"
-                            )
-                        if lower_is_favorable:
-                            score_component = hyperparam_value
-                        else:
-                            score_component = (
-                                0 if hyperparam_value == 0 else 1 / hyperparam_value
-                            )
-                        favorability_score += weight * score_component
-
-                    # categorical
-                    elif isinstance(rule[0], list):
-                        rule_values, weight = rule
-                        if hyperparam_value in rule_values:
-                            score_component = rule_values.index(hyperparam_value)
-                            favorability_score += weight * score_component
-                        else:
-                            raise ValueError(
-                                f"Hyperparameter {hyperparam} "
-                                f"must be one of {rule_values}."
-                            )
-
-            return favorability_score
-
         # check if 'params' is a list of dictionaries or a single dictionary
         if isinstance(params, list):
             # if it's a list, process each dictionary separately in the order they
             # appear in the list
-            favorability_scores = [calculate_favorability_score(p) for p in params]
+            favorability_scores = [
+                self.calculate_favorability_score(
+                    p,
+                    self.favorability_rules,
+                    lambda x: self._process_parameter_values(x),
+                )
+                for p in params
+            ]
         elif isinstance(params, dict):
             # if it's a single dictionary with hyperparameters as keys and values as
             # lists of hyperparameter values, generate all unique combinations of
@@ -561,7 +568,11 @@ class FavorabilityRanker:
             # hyperparameters is preserved in the output and is consistent with
             # the order as it is handled in the searchCV objects
             favorability_scores = [
-                calculate_favorability_score(p)
+                self.calculate_favorability_score(
+                    p,
+                    self.favorability_rules,
+                    lambda x: self._process_parameter_values(x),
+                )
                 for p in list(ParameterGrid(processed_params))
             ]
         else:
@@ -569,7 +580,7 @@ class FavorabilityRanker:
                 "`params` must be either a list of dictionaries or a single dictionary"
             )
 
-        return [x + 1 for x in np.argsort(favorability_scores.copy())]
+        return [x + 1 for x in np.argsort(favorability_scores)]
 
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}({self.favorability_rules})"
