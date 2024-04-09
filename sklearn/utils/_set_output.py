@@ -120,10 +120,11 @@ class ContainerAdapterProtocol(Protocol):
             Copy of the container.
         """
 
-    def replace_column(self, X, col_idx, col):
-        """Replace a column at the given index.
+    def set_column(self, X, col_idx, col):
+        """Set a column at the given index.
 
-        Note that this is an in-place operation.
+        Note that this is an in-place operation that replaces the original column at
+        that index.
 
         Parameters
         ----------
@@ -131,10 +132,10 @@ class ContainerAdapterProtocol(Protocol):
             Container to modify.
 
         col_idx : int
-            Index of the column to be replaced.
+            Index of the column to be set.
 
         col : Series (from container_lib)
-            The column to replace.
+            The column to set.
         """
 
 
@@ -182,7 +183,7 @@ class PandasAdapter:
     def copy(self, X):
         return X.copy()
 
-    def replace_column(self, X, col_idx, col):
+    def set_column(self, X, col_idx, col):
         # pandas may match the indices of `X` and `col` on certain platforms, but we
         # want the column replacement to behave as if `col` is an array without index,
         # so we reset the index of `col` in the first place
@@ -223,7 +224,7 @@ class PolarsAdapter:
     def copy(self, X):
         return X.clone()
 
-    def replace_column(self, X, col_idx, col):
+    def set_column(self, X, col_idx, col):
         X.replace_column(col_idx, col)
 
 

@@ -223,9 +223,9 @@ Changelog
 :mod:`sklearn.inspection`
 .........................
 
-- |Fix| :func:`~inspection.permutation_importance` no longer warns about missing
-  feature names when the estimator is fitted on a polars DataFrame and `X` is also a
-  polars dataframe. :pr:`28513` by :user:`Yao Xiao <Charlie-XIAO>`.
+- |Fix| :func:`inspection.permutation_importance` no longer warns about missing feature
+  names when the estimator is fitted on a polars DataFrame and `X` is also a polars
+  dataframe. :pr:`28513` by :user:`Yao Xiao <Charlie-XIAO>`.
 
 :mod:`sklearn.linear_model`
 ...........................

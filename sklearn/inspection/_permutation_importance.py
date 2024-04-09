@@ -73,7 +73,7 @@ def _calculate_permutation_scores(
                 _safe_indexing(X_permuted, col_idx, axis=1),
                 shuffling_idx,
             )
-            adapter.replace_column(X_permuted, col_idx, col)
+            adapter.set_column(X_permuted, col_idx, col)
         else:
             X_permuted[:, col_idx] = X_permuted[shuffling_idx, col_idx]
         scores.append(_weights_scorer(scorer, estimator, X_permuted, y, sample_weight))
