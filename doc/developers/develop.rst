@@ -54,7 +54,7 @@ multiple interfaces):
 
 :Transformer:
 
-    For modifying the data in a supervised or unsupervised way (e.g. by adding, changing, 
+    For modifying the data in a supervised or unsupervised way (e.g. by adding, changing,
     or removing columns, but not by adding or removing rows). Implements::
 
       new_data = transformer.transform(data)
@@ -349,7 +349,7 @@ The parameter `deep` will control whether or not the parameters of the
     subestimator__intercept_scaling -> 1
     subestimator__l1_ratio -> None
     subestimator__max_iter -> 100
-    subestimator__multi_class -> auto
+    subestimator__multi_class -> deprecated
     subestimator__n_jobs -> None
     subestimator__penalty -> l2
     subestimator__random_state -> None
