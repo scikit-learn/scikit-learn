@@ -827,7 +827,7 @@ class MultiLabelBinarizer(TransformerMixin, BaseEstimator, auto_wrap_output_keys
         class_mapping[:] = tmp
         self.classes_, inverse = np.unique(class_mapping, return_inverse=True)
         # ensure yt.indices keeps its current dtype
-        yt.indices = np.array(inverse[yt.indices], dtype=yt.indices.dtype, copy=False)
+        yt.indices = np.asarray(inverse[yt.indices], dtype=yt.indices.dtype)
 
         if not self.sparse_output:
             yt = yt.toarray()
