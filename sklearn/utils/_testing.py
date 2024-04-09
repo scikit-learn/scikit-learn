@@ -758,7 +758,7 @@ def _convert_container(
         - "series" and "index" requires 1D container
 
     constructor_type : {"list", "tuple", "slice", "array", "dataframe", "series", \
-                        "index"}
+            "index"}
         The type of the returned container.
 
     dtype : dtype, default=None
@@ -889,18 +889,8 @@ def _convert_container_to_array(container, sparse_container, sparse_format):
             f"Invalid {sparse_format=}; expected one of {supported_sparse_formats}"
         )
 
-    if sparse_container == "array":
-        if sparse_format == "csr":
-            container = sp.sparse.csr_array(container)
-        else:  # csc
-            container = sp.sparse.csc_array(container)
-    else:  # matrix
-        if sparse_format == "csr":
-            container = sp.sparse.csr_matrix(container)
-        else:  # csc
-            container = sp.sparse.csc_matrix(container)
-
-    return container
+    sparse_constructor = getattr(sp.sparse, f"{sparse_format}_{sparse_container}")
+    return sparse_constructor(container)
 
 
 def _convert_container_to_dataframe(
