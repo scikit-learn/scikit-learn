@@ -23,10 +23,11 @@ import numpy as np
 import scipy.sparse as sp
 
 from .. import __version__
-from ..utils import IS_PYPY, check_array
+from ..utils import check_array
 from ..utils._param_validation import HasMethods, Interval, StrOptions, validate_params
+from ..utils.fixes import _IS_PYPY
 
-if not IS_PYPY:
+if not _IS_PYPY:
     from ._svmlight_format_fast import (
         _dump_svmlight_file,
         _load_svmlight_file,
