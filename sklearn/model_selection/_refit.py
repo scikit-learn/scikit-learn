@@ -102,14 +102,18 @@ class StandardErrorSlicer(BaseScoreSlicer):
 
     Raises
     ------
+    TypeError
+        If ``sigma`` is not an integer.
     ValueError
-        If sigma is not a positive integer.
+        If ``sigma`` is less than 1.
     """
 
     def __init__(self, sigma: int = 1):
         self.sigma = sigma
-        if not isinstance(self.sigma, int) or self.sigma < 1:
-            raise ValueError("sigma must be a positive integer.")
+        if not isinstance(self.sigma, int):
+            raise TypeError("sigma must be an integer.")
+        if self.sigma < 1:
+            raise ValueError("sigma must be positive.")
 
     def __call__(
         self,
@@ -167,14 +171,18 @@ class PercentileSlicer(BaseScoreSlicer):
 
     Raises
     ------
+    TypeError
+        If ``eta`` is not a float.
     ValueError
-        If eta is not a float between 0 and 1.
+        If ``eta`` is not between 0 and 1.
     """
 
     def __init__(self, eta: float = 0.68):
         self.eta = eta
-        if not isinstance(self.eta, float) or self.eta < 0 or self.eta > 1:
-            raise ValueError("eta must be a float between 0 and 1.")
+        if not isinstance(self.eta, float):
+            raise TypeError("eta must be a float.")
+        if self.eta < 0 or self.eta > 1:
+            raise ValueError("eta must be between 0 and 1.")
 
     def __call__(
         self,
@@ -243,8 +251,10 @@ class WilcoxonSlicer(BaseScoreSlicer):
 
     Raises
     ------
+    TypeError
+        If ``alpha`` is not a float.
     ValueError
-        If ``alpha`` is not a float between 0 and 1.
+        If ``alpha`` is not between 0 and 1.
     """
 
     def __init__(
@@ -254,8 +264,10 @@ class WilcoxonSlicer(BaseScoreSlicer):
         zero_method: str = "zsplit",
     ):
         self.alpha = alpha
-        if not isinstance(self.alpha, float) or self.alpha < 0 or self.alpha > 1:
-            raise ValueError("alpha must be a float between 0 and 1.")
+        if not isinstance(self.alpha, float):
+            raise TypeError("alpha must be a float.")
+        if self.alpha < 0 or self.alpha > 1:
+            raise ValueError("alpha must be between 0 and 1.")
         self.alternative = alternative
         self.zero_method = zero_method
 
@@ -428,17 +440,20 @@ class FavorabilityRanker:
     ... }
     >>> ranks = fr(params)
     >>> ranks
-    [17, 5, 14, 2, 11, 8, 16, 4, 13, 1, 18, 10, 7, 6, 15, 12, 3, 9]
+    [17, 5, 14, 2, 11, 8, 16, 4, 13, 1, 10, 18, 6, 7, 15, 3, 12, 9]
     """
 
     def __init__(
         self,
         favorability_rules: Dict[str, Tuple[Union[bool, List], float]],
     ):
-        self.favorability_rules = favorability_rules
+        self.favorability_rules = {
+            k: favorability_rules[k] for k in sorted(favorability_rules)
+        }
         self._validate_favorability_rules()
 
     def _validate_favorability_rules(self):
+        """Validates the favorability rules provided by the user."""
         for hyperparam, rule in self.favorability_rules.items():
             if not isinstance(hyperparam, str):
                 raise TypeError(f"Hyperparameter {hyperparam} must be a string.")
@@ -467,7 +482,7 @@ class FavorabilityRanker:
                     f"Weight for hyperparameter {hyperparam} must be non-negative."
                 )
 
-    def _process_parameter_values(self, value: Any) -> Any:
+    def _parse_param_values(self, value: Any) -> Any:
         """Parses a single hyperparameter value, for a variety of data types."""
         if isinstance(value, (int, float, str, np.number)):
             return value
@@ -478,13 +493,37 @@ class FavorabilityRanker:
             )
 
     @staticmethod
-    def calculate_favorability_score(
-        param_set: Dict, favorability_rules: Dict, process_parameter_values: Callable
+    def get_favorability_score(
+        param_set: Dict, favorability_rules: Dict, parse_param_values: Callable
     ) -> float:
+        """
+        Calculates the favorability score for a given hyperparameter set.
+
+        Parameters
+        ----------
+        param_set : Dict
+            A dictionary of hyperparameters and their values.
+        favorability_rules : Dict
+            A dictionary mapping hyperparameter names to their favorability rules. Each
+            entry in the dictionary corresponds to a hyperparameter and its rule, which
+            can either be a boolean indicating whether a lower numerical value is more
+            favorable or a list of categorical values sorted by their favorability.
+        parse_param_values : Callable
+            A function that parses hyperparameter values, ensuring they are in a format
+            suitable for favorability calculation. This can involve converting data
+            types or handling special cases.
+
+        Returns
+        -------
+        float
+            The calculated favorability score for the given set of hyperparameters.
+            This score is used to rank the hyperparameter sets in terms of their
+            favorability according to the specified rules.
+        """
         favorability_score = 0
         for hyperparam, rule in favorability_rules.items():
             if hyperparam in param_set:
-                hyperparam_value = process_parameter_values(param_set[hyperparam])
+                hyperparam_value = parse_param_values(param_set[hyperparam])
 
                 is_numeric = isinstance(hyperparam_value, (int, float, np.number))
 
@@ -539,10 +578,10 @@ class FavorabilityRanker:
             # if it's a list, process each dictionary separately in the order they
             # appear in the list
             favorability_scores = [
-                self.calculate_favorability_score(
+                self.get_favorability_score(
                     p,
                     self.favorability_rules,
-                    lambda x: self._process_parameter_values(x),
+                    lambda x: self._parse_param_values(x),
                 )
                 for p in params
             ]
@@ -555,12 +594,13 @@ class FavorabilityRanker:
             # convert the params dictionary to a cleaned dictionary of lists, where each
             # key is a hyperparameter and each value is a list of hyperparameter
             # values, all of which are numeric or categorical, to be ranked.
+            sorted_params = {k: params[k] for k in sorted(params)}
             processed_params = {}
-            for key, value in params.items():
+            for key, value in sorted_params.items():
                 processed_params[key] = (
-                    [self._process_parameter_values(v) for v in value]
+                    [self._parse_param_values(v) for v in value]
                     if isinstance(value, list)
-                    else [self._process_parameter_values(value)]
+                    else [self._parse_param_values(value)]
                 )
 
             # generate a ParameterGrid object from the processed_params dictionary
@@ -568,10 +608,10 @@ class FavorabilityRanker:
             # hyperparameters is preserved in the output and is consistent with
             # the order as it is handled in the searchCV objects
             favorability_scores = [
-                self.calculate_favorability_score(
+                self.get_favorability_score(
                     p,
                     self.favorability_rules,
-                    lambda x: self._process_parameter_values(x),
+                    lambda x: self._parse_param_values(x),
                 )
                 for p in list(ParameterGrid(processed_params))
             ]
@@ -580,7 +620,7 @@ class FavorabilityRanker:
                 "`params` must be either a list of dictionaries or a single dictionary"
             )
 
-        return [x + 1 for x in np.argsort(favorability_scores)]
+        return [x + 1 for x in np.argsort(favorability_scores, kind="stable")]
 
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}({self.favorability_rules})"
