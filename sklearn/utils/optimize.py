@@ -8,6 +8,7 @@ product. If the function call is very expensive (e.g. for logistic
 regression with large design matrix), this approach gives very
 significant speedups.
 """
+
 # This is a modified file from scipy.optimize
 # Original authors: Travis Oliphant, Eric Jones
 # Modifications by Gael Varoquaux, Mathieu Blondel and Tom Dupre la Tour

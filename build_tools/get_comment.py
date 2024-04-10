@@ -88,8 +88,7 @@ def get_message(log_file, repo, pr_number, sha, run_id, details, versions):
             "https://scikit-learn.org/dev/developers/contributing.html"
             "#how-to-contribute)) and push the changes. If you already have done "
             "that, please send an empty commit with `git commit --allow-empty` "
-            "and push the changes to trigger the CI.\n\n"
-            + sub_text
+            "and push the changes to trigger the CI.\n\n" + sub_text
         )
 
     message = ""

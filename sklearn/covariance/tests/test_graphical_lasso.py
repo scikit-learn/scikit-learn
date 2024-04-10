@@ -1,5 +1,5 @@
-""" Test the graphical_lasso module.
-"""
+"""Test the graphical_lasso module."""
+
 import sys
 from io import StringIO
 

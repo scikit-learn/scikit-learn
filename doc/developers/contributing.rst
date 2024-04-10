@@ -257,7 +257,7 @@ how to set up your git repository:
 
    .. prompt:: bash $
 
-        pip install pytest pytest-cov ruff mypy numpydoc black==23.3.0
+        pip install pytest pytest-cov ruff mypy numpydoc black==24.3.0
 
 .. _upstream:
 

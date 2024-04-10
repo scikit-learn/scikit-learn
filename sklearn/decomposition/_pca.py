@@ -1,5 +1,4 @@
-""" Principal Component Analysis.
-"""
+"""Principal Component Analysis."""
 
 # Author: Alexandre Gramfort <alexandre.gramfort@inria.fr>
 #         Olivier Grisel <olivier.grisel@ensta.org>
