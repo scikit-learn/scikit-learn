@@ -2,6 +2,7 @@
 Least Angle Regression algorithm. See the documentation on the
 Generalized Linear Model for a complete discussion.
 """
+
 # Author: Fabian Pedregosa <fabian.pedregosa@inria.fr>
 #         Alexandre Gramfort <alexandre.gramfort@inria.fr>
 #         Gael Varoquaux
@@ -1737,8 +1738,7 @@ class LarsCV(Lars):
         if hasattr(Gram, "__array__"):
             warnings.warn(
                 'Parameter "precompute" cannot be an array in '
-                '%s. Automatically switch to "auto" instead.'
-                % self.__class__.__name__
+                '%s. Automatically switch to "auto" instead.' % self.__class__.__name__
             )
             Gram = "auto"
 

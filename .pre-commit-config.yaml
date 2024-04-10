@@ -12,7 +12,7 @@ repos:
     -   id: ruff
         args: ["--fix", "--output-format=full"]
 -   repo: https://github.com/psf/black
-    rev: 23.3.0
+    rev: 24.3.0
     hooks:
     -   id: black
 -   repo: https://github.com/pre-commit/mirrors-mypy

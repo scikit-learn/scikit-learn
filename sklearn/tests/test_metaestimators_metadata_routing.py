@@ -356,6 +356,13 @@ METAESTIMATORS: list = [
         "cv_name": "cv",
         "cv_routing_methods": ["fit"],
     },
+    {
+        "metaestimator": GraphicalLassoCV,
+        "X": X,
+        "y": y,
+        "cv_name": "cv",
+        "cv_routing_methods": ["fit"],
+    },
 ]
 """List containing all metaestimators to be tested and their settings
 
@@ -397,7 +404,6 @@ METAESTIMATOR_IDS = [str(row["metaestimator"].__name__) for row in METAESTIMATOR
 UNSUPPORTED_ESTIMATORS = [
     AdaBoostClassifier(),
     AdaBoostRegressor(),
-    GraphicalLassoCV(),
     RFE(ConsumingClassifier()),
     RFECV(ConsumingClassifier()),
     SelfTrainingClassifier(ConsumingClassifier()),
