@@ -15,6 +15,7 @@ CYTHON_MIN_VERSION = "3.0.9"
 # It will NOT be included in setup's extras_require
 # The values are (version_spec, comma separated tags)
 dependent_packages = {
+    "array-api-compat": ("1.5.1", "tests"),
     "numpy": (NUMPY_MIN_VERSION, "build, install"),
     "scipy": (SCIPY_MIN_VERSION, "build, install"),
     "joblib": (JOBLIB_MIN_VERSION, "install"),

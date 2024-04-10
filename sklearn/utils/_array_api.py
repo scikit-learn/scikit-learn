@@ -8,6 +8,7 @@ import numpy
 import scipy.special as special
 
 from .._config import get_config
+from .._min_dependencies import dependent_packages
 from .fixes import parse_version
 
 # Dictionary listing the methods/estimators to skip
@@ -93,7 +94,7 @@ def _check_array_api_dispatch(array_api_dispatch):
                 " specification"
             )
         array_api_compat_version = parse_version(array_api_compat.__version__)
-        min_array_api_compat_version = "1.5.1"
+        min_array_api_compat_version = dependent_packages["array-api-compat"][0]
         if array_api_compat_version < parse_version(min_array_api_compat_version):
             raise ImportError(
                 f"array-api-compat must be {min_array_api_compat_version} or newer to"
