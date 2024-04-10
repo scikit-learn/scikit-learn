@@ -80,11 +80,11 @@ cdef intp_t _TREE_UNDEFINED = TREE_UNDEFINED
 cdef Node dummy
 NODE_DTYPE = np.asarray(<Node[:1]>(&dummy)).dtype
 
-cdef inline void _init_parent_record(ParentInfo* self) noexcept nogil:
-    self.n_constant_features = 0
-    self.impurity = INFINITY
-    self.lower_bound = -INFINITY
-    self.upper_bound = INFINITY
+cdef inline void _init_parent_record(ParentInfo* record) noexcept nogil:
+    record.n_constant_features = 0
+    record.impurity = INFINITY
+    record.lower_bound = -INFINITY
+    record.upper_bound = INFINITY
 
 # =============================================================================
 # TreeBuilder
