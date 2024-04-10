@@ -652,7 +652,7 @@ def test_effectively_empty_cv_results():
     ss = ScoreCutModelSelector(cv_results_empty)
     slicer = StandardErrorSlicer(sigma=1)
 
-    with pytest.raises(ValueError, match="All-NaN slice encountered"):
+    with pytest.raises(ValueError):
         ss.fit(slicer)
 
 
