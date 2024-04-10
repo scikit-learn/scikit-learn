@@ -1,6 +1,7 @@
 """
 Testing for the partial dependence module.
 """
+
 import warnings
 
 import numpy as np

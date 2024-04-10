@@ -1,4 +1,5 @@
 """Test the validation module"""
+
 import os
 import re
 import sys

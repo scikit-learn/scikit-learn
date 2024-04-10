@@ -1,4 +1,4 @@
-""" Distributor init file
+"""Distributor init file
 
 Distributors: you can add custom code here to support particular distributions
 of scikit-learn.
