@@ -397,7 +397,7 @@ def test_whitening(global_random_seed):
         # Since the data is rank deficient, some components are pure noise. We
         # should not expect those dimensions to carry any signal and their
         # values might be arbitrarily changed by implementation details of the
-        # internal SVD solver. We therefore mask them out before comparison.
+        # internal SVD solver. We therefore filter them out before comparison.
         stable_mask = pca.explained_variance_ratio_ > 1e-12
 
         Xt_pca = pca.transform(X)
