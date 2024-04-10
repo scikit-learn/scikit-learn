@@ -29,8 +29,9 @@ explicitly as explained in the following.
     are known to work with scikit-learn's estimators.
 
     `dask.array` support is incomplete at the time of writing: some methods and
-    estimators many not work while we work out a way to handle Dask's lazy evaluation
+    estimators may not work while we work out a way to handle Dask's lazy evaluation
     semantics in a library-agnostic way.
+
 Example usage
 =============
 
