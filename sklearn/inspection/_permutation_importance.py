@@ -16,7 +16,7 @@ from ..utils._param_validation import (
     StrOptions,
     validate_params,
 )
-from ..utils._set_output import ADAPTERS_MANAGER
+from ..utils._set_output import _get_adapter_from_container
 from ..utils.parallel import Parallel, delayed
 from ..utils.validation import _is_pandas_df, _is_polars_df
 
@@ -269,10 +269,8 @@ def permutation_importance(
     >>> result.importances_std
     array([0.2211..., 0.       , 0.       ])
     """
-    if _is_pandas_df(X):
-        adapter = ADAPTERS_MANAGER.adapters["pandas"]
-    elif _is_polars_df(X):
-        adapter = ADAPTERS_MANAGER.adapters["polars"]
+    if _is_pandas_df(X) or _is_polars_df(X):
+        adapter = _get_adapter_from_container(X)
     else:
         adapter = None
         X = check_array(X, force_all_finite="allow-nan", dtype=None)
