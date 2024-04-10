@@ -197,11 +197,6 @@ def accuracy_score(y_true, y_pred, *, normalize=True, sample_weight=None):
     zero_one_loss : Compute the Zero-one classification loss. By default, the
         function will return the percentage of imperfectly predicted subsets.
 
-    Notes
-    -----
-    In binary classification, this function is equal to the `jaccard_score`
-    function.
-
     Examples
     --------
     >>> from sklearn.metrics import accuracy_score
@@ -588,8 +583,7 @@ def multilabel_confusion_matrix(
                 raise ValueError(
                     "All labels must be in [0, n labels) for "
                     "multilabel targets. "
-                    "Got %d < 0"
-                    % np.min(labels)
+                    "Got %d < 0" % np.min(labels)
                 )
 
         if n_labels is not None:

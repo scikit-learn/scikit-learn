@@ -1,4 +1,5 @@
 """Tests for Incremental PCA."""
+
 import warnings
 
 import numpy as np
