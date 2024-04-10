@@ -613,11 +613,15 @@ class PCA(_BasePCA):
             C /= n_samples - 1
             eigenvals, eigenvecs = xp.linalg.eigh(C)
 
-            # The following can happen when X is a scipy sparse matrix.
-            if isinstance(eigenvals, np.matrix):
-                eigenvals = np.asarray(eigenvals).ravel()
-            if isinstance(eigenvecs, np.matrix):
-                eigenvecs = np.asarray(eigenvecs)
+            # When X is a scipy sparse matrix, the following two datastructures
+            # are returned as instances of the soft-deprecated numpy.matrix
+            # class. Note that this problem does not occur when X is a scipy
+            # sparse array (or another other kind of supported array).
+            # TODO: remove the following two lines when scikit-learn only
+            # depends on scipy versions that no longer support scipy.sparse
+            # matrices.
+            eigenvals = xp.reshape(xp.asarray(eigenvals), (-1,))
+            eigenvecs = xp.asarray(eigenvecs)
 
             eigenvals = xp.flip(eigenvals, axis=0)
             eigenvecs = xp.flip(eigenvecs, axis=1)
