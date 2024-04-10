@@ -198,12 +198,13 @@ class PCA(_BasePCA):
             Precompute the covariance matrix (on centered data), run a
             classical eigenvalue decomposition on the covariance matrix
             typically using LAPACK and select the components by postprocessing.
-            This solver is very efficient for n_samples >> n_features and small n_features.
-            It is, however, not tractable otherwise for large n_features (large memory footprint required to
-            materialize the covariance matrix). Also note that compared to the
-            "full" solver, this solver effectively doubles the condition number
-            and is therefore less numerical stable (e.g. on input data with a
-            large range of singular values).
+            This solver is very efficient for n_samples >> n_features and small
+            n_features. It is, however, not tractable otherwise for large
+            n_features (large memory footprint required to materialize the
+            covariance matrix). Also note that compared to the "full" solver,
+            this solver effectively doubles the condition number and is
+            therefore less numerical stable (e.g. on input data with a large
+            range of singular values).
         "arpack" :
             Run SVD truncated to `n_components` calling ARPACK solver via
             `scipy.sparse.linalg.svds`. It requires strictly
@@ -600,7 +601,8 @@ class PCA(_BasePCA):
             # memory efficient for our use case when `n_samples >> n_features`:
             # `numpy.cov` centers a copy of the data before computing the
             # matrix product instead of subtracting a small `(n_features,
-            # n_features)` square matrix from the gram matrix X.T @ X, as we do below.
+            # n_features)` square matrix from the gram matrix X.T @ X, as we do
+            # below.
             x_is_centered = False
             C = X.T @ X
             C -= (
@@ -627,8 +629,8 @@ class PCA(_BasePCA):
             eigenvals[eigenvals < 0.0] = 0.0
             explained_variance_ = eigenvals
 
-            # Re-construct SVD of centered X indirectly and make it consistent with the
-            # other solvers.
+            # Re-construct SVD of centered X indirectly and make it consistent
+            # with the other solvers.
             S = xp.sqrt(eigenvals * (n_samples - 1))
             Vt = eigenvecs.T
             U = None
@@ -682,8 +684,9 @@ class PCA(_BasePCA):
         # Assign a copy of the result of the truncation of the components in
         # order to:
         # - release the memory used by the discarded components,
-        # - ensure that the kept components are allocated contiguously in memory
-        #   to make the transform method faster by leveraging cache locality.
+        # - ensure that the kept components are allocated contiguously in
+        #   memory to make the transform method faster by leveraging cache
+        #   locality.
         self.components_ = xp.asarray(components_[:n_components, :], copy=True)
 
         # We do the same for the other arrays for the sake of consistency.
