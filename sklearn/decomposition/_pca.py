@@ -183,13 +183,13 @@ class PCA(_BasePCA):
     svd_solver : {'auto', 'full', 'covariance_eigh', 'arpack', 'randomized'},\
             default='auto'
         "auto" :
-            The solver is selected by a default policy based on `X.shape` and
+            The solver is selected by a default 'auto' policy is based on `X.shape` and
             `n_components`: if the input data has fewer than 1000 features and
             more than 10 times as many samples, then the "covariance_eigh"
             solver is used. Otherwise, if the input data is larger than 500x500
             and the number of components to extract is lower than 80% of the
             smallest dimension of the data, then the more efficient
-            "randomized" method is enabled. Otherwise the exact "full" SVD is
+            "randomized" method is selected. Otherwise the exact "full" SVD is
             computed and optionally truncated afterwards.
         "full" :
             Run exact full SVD calling the standard LAPACK solver via
@@ -198,8 +198,8 @@ class PCA(_BasePCA):
             Precompute the covariance matrix (on centered data), run a
             classical eigenvalue decomposition on the covariance matrix
             typically using LAPACK and select the components by postprocessing.
-            This solver is very efficient when the number of features is small
-            and not tractable otherwise (large memory footprint required to
+            This solver is very efficient for n_samples >> n_features and small n_features.
+            It is, however, not tractable otherwise for large n_features (large memory footprint required to
             materialize the covariance matrix). Also note that compared to the
             "full" solver, this solver effectively doubles the condition number
             and is therefore less numerical stable (e.g. on input data with a
@@ -501,11 +501,11 @@ class PCA(_BasePCA):
                 "PCA with svd_solver='arpack' is not supported for Array API inputs."
             )
 
-        # Validate the data, without ever forcing a copy as any solvers that
-        # support sparse input data and the `covariance_eigh` solver are
+        # Validate the data, without ever forcing a copy as any solver that
+        # supports sparse input data and the `covariance_eigh` solver are
         # written in a way to avoid the need for any inplace modification of
-        # the input data contrary to the other solvers. Forcing a copy here
-        # would be wasteful when using large datasets. The copy will happen
+        # the input data contrary to the other solvers.
+        # The copy will happen
         # later, only if needed, once the solver negotiation below is done.
         X = self._validate_data(
             X,
@@ -587,7 +587,7 @@ class PCA(_BasePCA):
 
         else:
             assert self._fit_svd_solver == "covariance_eigh"
-            # In the following, we center the covariance matrix C a-posteriori
+            # In the following, we center the covariance matrix C afterwards
             # (without centering the data X first) to avoid an unnecessary copy
             # of X. Note that the mean_ attribute is still needed to center
             # test data in the transform method.
@@ -600,7 +600,7 @@ class PCA(_BasePCA):
             # memory efficient for our use case when `n_samples >> n_features`:
             # `numpy.cov` centers a copy of the data before computing the
             # matrix product instead of subtracting a small `(n_features,
-            # n_features)` square matrix, a posteriori, as we do below.
+            # n_features)` square matrix from the gram matrix X.T @ X, as we do below.
             x_is_centered = False
             C = X.T @ X
             C -= (
@@ -627,7 +627,7 @@ class PCA(_BasePCA):
             eigenvals[eigenvals < 0.0] = 0.0
             explained_variance_ = eigenvals
 
-            # Re-construct synthetic SVD components to be consistent with the
+            # Re-construct SVD of centered X indirectly and make it consistent with the
             # other solvers.
             S = xp.sqrt(eigenvals * (n_samples - 1))
             Vt = eigenvecs.T
