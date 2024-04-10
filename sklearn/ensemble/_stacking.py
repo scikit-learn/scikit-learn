@@ -677,7 +677,7 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
     # cycle; pop it from `fit_params` before the `_raise_for_params` check and
     # reinsert afterwards, for backwards compatibility
     @_deprecate_positional_args(version="1.7")
-    def fit(self, X, y, sample_weight=None, **fit_params):
+    def fit(self, X, y, *, sample_weight=None, **fit_params):
         """Fit the estimators.
 
         Parameters
@@ -1009,7 +1009,7 @@ class StackingRegressor(RegressorMixin, _BaseStacking):
     # cycle; pop it from `fit_params` before the `_raise_for_params` check and
     # reinsert afterwards, for backwards compatibility
     @_deprecate_positional_args(version="1.7")
-    def fit(self, X, y, sample_weight=None, **fit_params):
+    def fit(self, X, y, *, sample_weight=None, **fit_params):
         """Fit the estimators.
 
         Parameters
