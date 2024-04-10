@@ -31,9 +31,10 @@ from .base import (
     is_classifier,
 )
 from .model_selection import cross_val_predict
-from .utils import Bunch, _print_elapsed_time, check_random_state
+from .utils import Bunch, check_random_state
 from .utils._param_validation import HasMethods, StrOptions
 from .utils._response import _get_response_values
+from .utils._user_interface import _print_elapsed_time
 from .utils.metadata_routing import (
     MetadataRouter,
     MethodMapping,
