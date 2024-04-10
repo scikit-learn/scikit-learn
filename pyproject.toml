@@ -73,6 +73,7 @@ examples = [
     "plotly>=5.14.0",
 ]
 tests = [
+    "array-api-compat>=1.5.1",
     "matplotlib>=3.3.4",
     "scikit-image>=0.17.2",
     "pandas>=1.1.5",
