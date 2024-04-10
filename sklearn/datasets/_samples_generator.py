@@ -1466,7 +1466,6 @@ def make_low_rank_matrix(
         "n_features": [Interval(Integral, 1, None, closed="left")],
         "n_nonzero_coefs": [Interval(Integral, 1, None, closed="left")],
         "random_state": ["random_state"],
-        "data_transposed": ["boolean", Hidden(StrOptions({"deprecated"}))],
     },
     prefer_skip_nested_validation=True,
 )
@@ -1477,13 +1476,12 @@ def make_sparse_coded_signal(
     n_features,
     n_nonzero_coefs,
     random_state=None,
-    data_transposed="deprecated",
 ):
     """Generate a signal as a sparse combination of dictionary elements.
 
-    Returns a matrix `Y = DX`, such that `D` is of shape `(n_features, n_components)`,
-    `X` is of shape `(n_components, n_samples)` and each column of `X` has exactly
-    `n_nonzero_coefs` non-zero elements.
+    Returns matrices `Y`, `D` and `X` such that `Y = XD` where `X` is of shape
+    `(n_samples, n_components)`, `D` is of shape `(n_components, n_features)`, and
+    each row of `X` has exactly `n_nonzero_coefs` non-zero elements.
 
     Read more in the :ref:`User Guide <sample_generators>`.
 
@@ -1506,33 +1504,17 @@ def make_sparse_coded_signal(
         for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
 
-    data_transposed : bool, default=False
-        By default, Y, D and X are not transposed.
-
-        .. versionadded:: 1.1
-
-        .. versionchanged:: 1.3
-            Default value changed from True to False.
-
-        .. deprecated:: 1.3
-            `data_transposed` is deprecated and will be removed in 1.5.
-
     Returns
     -------
-    data : ndarray of shape (n_features, n_samples) or (n_samples, n_features)
-        The encoded signal (Y). The shape is `(n_samples, n_features)` if
-        `data_transposed` is False, otherwise it's `(n_features, n_samples)`.
+    data : ndarray of shape (n_samples, n_features)
+        The encoded signal (Y).
 
-    dictionary : ndarray of shape (n_features, n_components) or \
-            (n_components, n_features)
-        The dictionary with normalized components (D). The shape is
-        `(n_components, n_features)` if `data_transposed` is False, otherwise it's
-        `(n_features, n_components)`.
+    dictionary : ndarray of shape (n_components, n_features)
+        The dictionary with normalized components (D).
 
-    code : ndarray of shape (n_components, n_samples) or (n_samples, n_components)
+    code : ndarray of shape (n_samples, n_components)
         The sparse code such that each column of this matrix has exactly
-        n_nonzero_coefs non-zero items (X). The shape is `(n_samples, n_components)`
-        if `data_transposed` is False, otherwise it's `(n_components, n_samples)`.
+        n_nonzero_coefs non-zero items (X).
 
     Examples
     --------
@@ -1568,19 +1550,8 @@ def make_sparse_coded_signal(
     # encode signal
     Y = np.dot(D, X)
 
-    # TODO(1.5) remove data_transposed
-    # raise warning if data_transposed is not passed explicitly
-    if data_transposed != "deprecated":
-        warnings.warn(
-            "data_transposed was deprecated in version 1.3 and will be removed in 1.5.",
-            FutureWarning,
-        )
-    else:
-        data_transposed = False
-
-    # transpose if needed
-    if not data_transposed:
-        Y, D, X = Y.T, D.T, X.T
+    # Transpose to have shapes consistent with the rest of the API
+    Y, D, X = Y.T, D.T, X.T
 
     return map(np.squeeze, (Y, D, X))
 
