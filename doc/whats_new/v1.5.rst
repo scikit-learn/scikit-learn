@@ -31,11 +31,11 @@ Changed models
   properties).
   :pr:`27344` by :user:`Xuefeng Xu <xuefeng-xu>`.
 
-- |Enhancement| :class:`decomposition.PCA`, :class:`decomposition.SparsePCA` and
-  :class:`decomposition.TruncatedSVD` now set the sign of the `components_`
-  attribute based on the component values instead of using the transformed
-  data as reference. This change is needed to be able to offer consistent
-  component signs across all `PCA` solvers, including the new
+- |Enhancement| :class:`decomposition.PCA`, :class:`decomposition.SparsePCA`
+  and :class:`decomposition.TruncatedSVD` now set the sign of the `components_`
+  attribute based on the component values instead of using the transformed data
+  as reference. This change is needed to be able to offer consistent component
+  signs across all `PCA` solvers, including the new
   `svd_solver="covariance_eigh"` option introduced in this release.
 
 Support for Array API
@@ -191,9 +191,9 @@ Changelog
 - |Enhancement| :class:`decomposition.PCA` now supports a new solver option
   named `svd_solver="covariance_eigh"` which offers an order of magnitude
   speed-up and reduced memory usage for datasets with a large number of data
-  points and a small number of features (say, `n_samples >> 1000 > n_features`). The
-  `svd_solver="auto"` option has been updated to use the new solver
-  automatically for such datasets. This solver also accepts sparse input
+  points and a small number of features (say, `n_samples >> 1000 >
+  n_features`). The `svd_solver="auto"` option has been updated to use the new
+  solver automatically for such datasets. This solver also accepts sparse input
   data.
   :pr:`27491` by :user:`Olivier Grisel <ogrisel>`.
 
