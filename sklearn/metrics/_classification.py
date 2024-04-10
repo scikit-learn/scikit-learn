@@ -583,8 +583,7 @@ def multilabel_confusion_matrix(
                 raise ValueError(
                     "All labels must be in [0, n labels) for "
                     "multilabel targets. "
-                    "Got %d < 0"
-                    % np.min(labels)
+                    "Got %d < 0" % np.min(labels)
                 )
 
         if n_labels is not None:

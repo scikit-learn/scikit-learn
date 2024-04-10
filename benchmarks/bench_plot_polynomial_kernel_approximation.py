@@ -38,6 +38,7 @@ Programming (pp. 693-703). Springer, Berlin, Heidelberg.
 (https://people.cs.rutgers.edu/~farach/pubs/FrequentStream.pdf)
 
 """
+
 # Author: Daniel Lopez-Sanchez <lope@usal.es>
 # License: BSD 3 clause
 

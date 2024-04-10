@@ -86,6 +86,10 @@ more details.
   :class:`model_selection.GridSearchCV` object or the underlying scorer.
   :pr:`27560` by :user:`Omar Salman <OmarManzoor>`.
 
+- |Feature| :class:`GraphicalLassoCV` now supports metadata routing in it's
+  `fit` method and routes metadata to the CV splitter.
+  :pr:`27566` by :user:`Omar Salman <OmarManzoor>`.
+
 - |Feature| :class:`linear_model.RANSACRegressor` now supports metadata routing
   in its ``fit``, ``score`` and ``predict`` methods and route metadata to its
   underlying estimator's' ``fit``, ``score`` and ``predict`` methods.
@@ -249,6 +253,13 @@ Changelog
 - |Enhancement| :class:`impute.SimpleImputer` now supports custom strategies
   by passing a function in place of a strategy name.
   :pr:`28053` by :user:`Mark Elliot <mark-thm>`.
+
+:mod:`sklearn.inspection`
+.........................
+
+- |Fix| :meth:`inspection.DecisionBoundaryDisplay.from_estimator` no longer
+  warns about missing feature names when provided a `polars.DataFrame`.
+  :pr:`28718` by :user:`Patrick Wang <patrickkwang>`.
 
 :mod:`sklearn.linear_model`
 ...........................

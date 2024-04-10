@@ -1,5 +1,4 @@
-"""Truncated SVD for sparse matrices, aka latent semantic analysis (LSA).
-"""
+"""Truncated SVD for sparse matrices, aka latent semantic analysis (LSA)."""
 
 # Author: Lars Buitinck
 #         Olivier Grisel <olivier.grisel@ensta.org>

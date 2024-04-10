@@ -1,4 +1,5 @@
 """Bisecting K-means clustering."""
+
 # Author: Michal Krawczyk <mkrwczyk.1@gmail.com>
 
 import warnings
