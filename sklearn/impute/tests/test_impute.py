@@ -1409,62 +1409,140 @@ def test_imputation_order(order, idx_order):
         assert idx == idx_order
 
 
-@pytest.mark.parametrize("missing_value", [-1, np.nan])
-def test_simple_imputation_inverse_transform(missing_value):
-    # Test inverse_transform feature for np.nan
-    X_1 = np.array(
-        [
-            [9, missing_value, 3, -1],
-            [4, -1, 5, 4],
-            [6, 7, missing_value, -1],
-            [8, 9, 0, missing_value],
-        ]
-    )
-
-    X_2 = np.array(
-        [
-            [5, 4, 2, 1],
-            [2, 1, missing_value, 3],
-            [9, missing_value, 7, 1],
-            [6, 4, 2, missing_value],
-        ]
-    )
-
-    X_3 = np.array(
-        [
-            [1, missing_value, 5, 9],
-            [missing_value, 4, missing_value, missing_value],
-            [2, missing_value, 7, missing_value],
-            [missing_value, 3, missing_value, 8],
-        ]
-    )
-
-    X_4 = np.array(
-        [
-            [1, 1, 1, 3],
-            [missing_value, 2, missing_value, 1],
-            [2, 3, 3, 4],
-            [missing_value, 4, missing_value, 2],
-        ]
-    )
-
+@pytest.mark.parametrize(
+    argnames=["array", "missing_values", "keep_empty_features"],
+    argvalues=[
+        *[
+            [
+                np.array(
+                    [
+                        [9, missing_value, 3, -1],
+                        [4, -1, 5, 4],
+                        [6, 7, missing_value, -1],
+                        [8, 9, 0, missing_value],
+                    ]
+                ),
+                missing_value,
+                keep_empty_features,
+            ]
+            for missing_value, keep_empty_features in product(
+                (np.nan, -1), (True, False)
+            )
+        ],
+        *[
+            [
+                np.array(
+                    [
+                        [5, 4, 2, 1],
+                        [2, 1, missing_value, 3],
+                        [9, missing_value, 7, 1],
+                        [6, 4, 2, missing_value],
+                    ]
+                ),
+                missing_value,
+                keep_empty_features,
+            ]
+            for missing_value, keep_empty_features in product(
+                (np.nan, -1), (True, False)
+            )
+        ],
+        *[
+            [
+                np.array(
+                    [
+                        [1, missing_value, 5, 9],
+                        [missing_value, 4, missing_value, missing_value],
+                        [2, missing_value, 7, missing_value],
+                        [missing_value, 3, missing_value, 8],
+                    ]
+                ),
+                missing_value,
+                keep_empty_features,
+            ]
+            for missing_value, keep_empty_features in product(
+                (np.nan, -1), (True, False)
+            )
+        ],
+        *[
+            [
+                np.array(
+                    [
+                        [1, 1, 1, 3],
+                        [missing_value, 2, missing_value, 1],
+                        [2, 3, 3, 4],
+                        [missing_value, 4, missing_value, 2],
+                    ]
+                ),
+                missing_value,
+                keep_empty_features,
+            ]
+            for missing_value, keep_empty_features in product(
+                (np.nan, -1), (True, False)
+            )
+        ],
+        *[
+            [
+                np.array(
+                    [
+                        [missing_value, 12, 13, 14],
+                        [missing_value, 22, 23, 24],
+                        [missing_value, 32, 33, 34],
+                        [missing_value, 42, 43, 44],
+                    ]
+                ),
+                missing_value,
+                keep_empty_features,
+            ]
+            for missing_value, keep_empty_features in product(
+                (np.nan, -1), (True, False)
+            )
+        ],
+        *[
+            [
+                np.array(
+                    [
+                        [missing_value, 12, missing_value, 14],
+                        [missing_value, 22, missing_value, 24],
+                        [missing_value, 32, missing_value, 34],
+                        [missing_value, 42, missing_value, 44],
+                    ]
+                ),
+                missing_value,
+                keep_empty_features,
+            ]
+            for missing_value, keep_empty_features in product(
+                (np.nan, -1), (True, False)
+            )
+        ],
+        *[
+            [
+                np.array(
+                    [
+                        [missing_value, 12, 13, missing_value, missing_value, 16],
+                        [missing_value, 22, 23, missing_value, missing_value, 26],
+                        [missing_value, 32, 33, missing_value, missing_value, 36],
+                        [missing_value, 42, 43, missing_value, missing_value, 46],
+                    ]
+                ),
+                missing_value,
+                keep_empty_features,
+            ]
+            for missing_value, keep_empty_features in product(
+                (np.nan, -1), (True, False)
+            )
+        ],
+    ],
+)
+def test_simple_imputation_inverse_transform(
+    array, missing_values, keep_empty_features
+):
     imputer = SimpleImputer(
-        missing_values=missing_value, strategy="mean", add_indicator=True
+        missing_values=missing_values,
+        keep_empty_features=keep_empty_features,
+        add_indicator=True,
     )
-
-    X_1_trans = imputer.fit_transform(X_1)
-    X_1_inv_trans = imputer.inverse_transform(X_1_trans)
-
-    X_2_trans = imputer.transform(X_2)  # test on new data
-    X_2_inv_trans = imputer.inverse_transform(X_2_trans)
-
-    assert_array_equal(X_1_inv_trans, X_1)
-    assert_array_equal(X_2_inv_trans, X_2)
-
-    for X in [X_3, X_4]:
-        X_trans = imputer.fit_transform(X)
-        X_inv_trans = imputer.inverse_transform(X_trans)
-        assert_array_equal(X_inv_trans, X)
+    imputer.fit(array)
+    assert_array_equal(array, imputer.inverse_transform(imputer.transform(array)))
 
 
 @pytest.mark.parametrize("missing_value", [-1, np.nan])

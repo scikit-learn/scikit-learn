@@ -220,6 +220,11 @@ Changelog
   by passing a function in place of a strategy name.
   :pr:`28053` by :user:`Mark Elliot <mark-thm>`.
 
+- |Fix| The `inverse_transform` method of :class:`impute.SimpleImputer` now
+  reconstructs the original array, putting back any features removed during
+  `transform`.
+  :pr:`28729` by :user:`Miguel Silva <miguelcsilva>`.
+
 :mod:`sklearn.linear_model`
 ...........................
 

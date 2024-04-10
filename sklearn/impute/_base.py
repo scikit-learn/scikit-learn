@@ -438,6 +438,10 @@ class SimpleImputer(_BaseImputer):
                 X, self.strategy, self.missing_values, fill_value
             )
 
+        if not self.keep_empty_features:
+            self._removals_mask = _get_mask(self.statistics_, np.nan)
+            self._removals = X[:, self._removals_mask]
+
         return self
 
     def _sparse_fit(self, X, strategy, missing_values, fill_value):
@@ -676,27 +680,29 @@ class SimpleImputer(_BaseImputer):
                 "instead."
             )
 
-        n_features_missing = len(self.indicator_.features_)
-        non_empty_feature_count = X.shape[1] - n_features_missing
-        array_imputed = X[:, :non_empty_feature_count].copy()
-        missing_mask = X[:, non_empty_feature_count:].astype(bool)
+        X = X.copy()
+        n_original_columns = X.shape[1] - len(self.indicator_.features_)
 
-        n_features_original = len(self.statistics_)
-        shape_original = (X.shape[0], n_features_original)
-        X_original = np.zeros(shape_original)
-        X_original[:, self.indicator_.features_] = missing_mask
-        full_mask = X_original.astype(bool)
+        if not self.keep_empty_features:
+            n_original_columns += np.count_nonzero(self._removals_mask)
+            removals_mask_with_indicator = np.concatenate(
+                [
+                    self._removals_mask,
+                    np.zeros(len(self.indicator_.features_), dtype=bool),
+                ]
+            )
+            X_reconstructed = np.empty(
+                (X.shape[0], removals_mask_with_indicator.shape[0])
+            )
+            X_reconstructed[:, removals_mask_with_indicator] = self._removals
+            X_reconstructed[:, ~removals_mask_with_indicator] = X
+            X = X_reconstructed
 
-        imputed_idx, original_idx = 0, 0
-        while imputed_idx < len(array_imputed.T):
-            if not np.all(X_original[:, original_idx]):
-                X_original[:, original_idx] = array_imputed.T[imputed_idx]
-                imputed_idx += 1
-                original_idx += 1
-            else:
-                original_idx += 1
+        X_original, indicator_mask = np.hsplit(X, [n_original_columns])
 
-        X_original[full_mask] = self.missing_values
+        missing_mask = np.zeros(X_original.shape, dtype=bool)
+        missing_mask[:, self.indicator_.features_] = indicator_mask
+        X_original[missing_mask] = self.missing_values
         return X_original
 
     def _more_tags(self):
