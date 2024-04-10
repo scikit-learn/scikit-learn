@@ -2364,7 +2364,8 @@ class _BaseRidgeCV(LinearModel):
         return router
 
     def _get_scorer(self):
-        return check_scoring(self, scoring=self.scoring, allow_none=True)
+        if self.scoring is not None:
+            return check_scoring(self, scoring=self.scoring, allow_none=True)
 
 
 class RidgeCV(MultiOutputMixin, RegressorMixin, _BaseRidgeCV):

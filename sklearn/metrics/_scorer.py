@@ -970,10 +970,10 @@ def check_scoring(estimator=None, scoring=None, *, allow_none=False):
         scorers = _check_multimetric_scoring(estimator, scoring=scoring)
         return _MultimetricScorer(scorers=scorers)
     if scoring is None:
-        if allow_none:
-            return None
-        elif hasattr(estimator, "score"):
+        if hasattr(estimator, "score"):
             return _PassthroughScorer(estimator)
+        elif allow_none:
+            return None
         else:
             raise TypeError(
                 "If no scoring is specified, the estimator passed should "
