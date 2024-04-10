@@ -1739,7 +1739,7 @@ def check_array_api_metric(
 ):
     if _array_api_skips.get(metric.__name__, {}).get(array_namespace) == "all":
         pytest.skip(
-            f"{array_namespace} is not array-API compliant for {metric.__name__}"
+            f"{array_namespace} is not Array API compliant for {metric.__name__}"
         )
 
     xp = _array_api_for_tests(array_namespace, device)

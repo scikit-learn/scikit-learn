@@ -20,6 +20,7 @@ _array_api_skips = {
     # Dask doesn't implement slogdet from the Array API
     # which is used in score/score_samples
     "PCA": {"dask.array": ["score", "score_samples"]},
+    # Lazy evaluation semantics: value-dependent shape item value (nan):
     "LinearDiscriminantAnalysis": {"dask.array": "all"},
     "r2_score": {"dask.array": "all"},
 }

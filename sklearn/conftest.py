@@ -320,6 +320,11 @@ def skip_dask_array_api_compliance(request):
     """
     Xfails an array API compliance test for dask.
     (i.e. when the array_namespace fixture yields 'dask.array')
+
+    When using this fixture, please insert a comment to explain what particular
+    aspect of Dask is preventing the tests to pass, e.g. missing module level
+    function or array level method, value-dependent shape item values or array
+    assignments with a value-dependent boolean mask.
     """
     array_namespace = request.getfixturevalue("array_namespace")
     if array_namespace == "dask.array":

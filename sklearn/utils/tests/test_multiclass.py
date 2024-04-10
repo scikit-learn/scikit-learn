@@ -380,7 +380,7 @@ def test_is_multilabel():
             ), f"is_multilabel({example!r}) should be {dense_exp}"
 
 
-@skip_dask
+@skip_dask  # lazy evaluation semantics for value-dependent shape values 
 @pytest.mark.parametrize(
     "array_namespace, device, dtype_name",
     yield_namespace_device_dtype_combinations(),

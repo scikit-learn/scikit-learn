@@ -895,7 +895,7 @@ def check_array_api_input(
     (to skip all methods for this estimator)
     """
     if skips.get(array_namespace) == "all":
-        raise SkipTest(f"{array_namespace} is not array-API compliant for {name}")
+        raise SkipTest(f"{array_namespace} is not Array API compliant for {name}")
 
     xp = _array_api_for_tests(array_namespace, device)
 
@@ -963,7 +963,7 @@ def check_array_api_input(
         method = getattr(est, method_name, None)
         if method is None or method_name in methods_to_skip:
             raise SkipTest(
-                f"{array_namespace} is not array-API compliant for method"
+                f"{array_namespace} is not Array API compliant for method"
                 f" {method_name} of {name}"
             )
 
