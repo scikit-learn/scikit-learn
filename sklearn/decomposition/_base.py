@@ -148,11 +148,11 @@ class _BasePCA(
     def _transform(self, X, xp, x_is_centered=False):
         X_transformed = X @ self.components_.T
         if not x_is_centered:
-            # Apply the centering a posteriori for dense data so as to avoid a
-            # copy of X or mutating the data passed by the caller.
-            # This also works for sparse X without having to wrap it into a
-            # linear operator a priori.
-            X_transformed = X @ self.components_.T
+            # Apply the centering after the projection.
+            # For dense X this avoids copying or mutating the data passed by
+            # the caller.
+            # For sparse X it keeps sparsity and avoids having to wrap X into
+            # a linear operator.
             X_transformed -= xp.reshape(self.mean_, (1, -1)) @ self.components_.T
         if self.whiten:
             # For some solvers (such as "arpack" and "covariance_eigh"), on

@@ -33,7 +33,7 @@ Changed models
 
 - |Enhancement| :class:`decomposition.PCA`, :class:`decomposition.SparsePCA` and
   :class:`decomposition.TruncatedSVD` now set the sign of the `components_`
-  attribute based on the components values instead of using the transformed
+  attribute based on the component values instead of using the transformed
   data as reference. This change is needed to be able to offer consistent
   component signs across all `PCA` solvers, including the new
   `svd_solver="covariance_eigh"` option introduced in this release.
@@ -175,7 +175,7 @@ Changelog
 - |Efficiency| :class:`decomposition.PCA` with `svd_solver="full"` now assigns
   a contiguous `components_` attribute instead of an non-contiguous slice of
   the singular vectors. When `n_components << n_features`, this can save some
-  memory and more importantly help speed-up subsequent calls to the `transform`
+  memory and, more importantly, help speed-up subsequent calls to the `transform`
   method by more than an order of magnitude by leveraging cache locality of
   BLAS GEMM on contiguous arrays.
   :pr:`27491` by :user:`Olivier Grisel <ogrisel>`.
@@ -187,7 +187,7 @@ Changelog
 - |Enhancement| :class:`decomposition.PCA` now supports a new solver option
   named `svd_solver="covariance_eigh"` which offers an order of magnitude
   speed-up and reduced memory usage for datasets with a large number of data
-  points and a small number of features (say, less than 1000). The
+  points and a small number of features (say, `n_samples >> 1000 > n_features`). The
   `svd_solver="auto"` option has been updated to use the new solver
   automatically for such datasets. This solver also accepts sparse input
   data.
@@ -196,7 +196,7 @@ Changelog
 - |Fix| :class:`decomposition.PCA` fit with `svd_solver="arpack"`,
   `whiten=True` and a value for `n_components` that is larger than the rank of
   the training set, no longer returns infinite values when transforming
-  held-out data.
+  hold-out data.
   :pr:`27491` by :user:`Olivier Grisel <ogrisel>`.
 
 :mod:`sklearn.dummy`
