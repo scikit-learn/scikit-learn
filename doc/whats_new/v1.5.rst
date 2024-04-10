@@ -79,6 +79,10 @@ more details.
   :class:`model_selection.GridSearchCV` object or the underlying scorer.
   :pr:`27560` by :user:`Omar Salman <OmarManzoor>`.
 
+- |Feature| :class:`GraphicalLassoCV` now supports metadata routing in it's
+  `fit` method and routes metadata to the CV splitter.
+  :pr:`27566` by :user:`Omar Salman <OmarManzoor>`.
+
 - |Feature| :class:`linear_model.RANSACRegressor` now supports metadata routing
   in its ``fit``, ``score`` and ``predict`` methods and route metadata to its
   underlying estimator's' ``fit``, ``score`` and ``predict`` methods.
