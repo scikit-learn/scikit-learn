@@ -10,6 +10,8 @@ at which the fix is no longer needed.
 #
 # License: BSD 3 clause
 
+import platform
+import struct
 
 import numpy as np
 import scipy
@@ -21,6 +23,10 @@ import sklearn
 
 from ..externals._packaging.version import parse as parse_version
 from .deprecation import deprecated
+
+_IS_PYPY = platform.python_implementation() == "PyPy"
+_IS_32BIT = 8 * struct.calcsize("P") == 32
+_IS_WASM = platform.machine() in ["wasm32", "wasm64"]
 
 np_version = parse_version(np.__version__)
 np_base_version = parse_version(np_version.base_version)
@@ -275,14 +281,17 @@ except ImportError:
     from scipy.integrate import trapz as trapezoid  # type: ignore  # noqa
 
 
-# TODO: Remove when Pandas > 2.2 is the minimum supported version
+# TODO: Adapt when Pandas > 2.2 is the minimum supported version
 def pd_fillna(pd, frame):
     pd_version = parse_version(pd.__version__).base_version
     if parse_version(pd_version) < parse_version("2.2"):
         frame = frame.fillna(value=np.nan)
     else:
+        infer_objects_kwargs = (
+            {} if parse_version(pd_version) >= parse_version("3") else {"copy": False}
+        )
         with pd.option_context("future.no_silent_downcasting", True):
-            frame = frame.fillna(value=np.nan).infer_objects(copy=False)
+            frame = frame.fillna(value=np.nan).infer_objects(**infer_objects_kwargs)
     return frame
 
 
