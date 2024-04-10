@@ -317,47 +317,15 @@ class LocalOutlierFactor(KNeighborsMixin, OutlierMixin, NeighborsBase):
                 self.negative_outlier_factor_, 100.0 * self.contamination
             )
 
-        # DEV: Assign false to manually handle the duplicate values
-        handle_duplicates = True
-
         """
         Verify if negative_outlier_factor_ values are within acceptable range
         Novelty must also be false to detect outliers
         """
-        if (
-            np.min(self.negative_outlier_factor_) < -1e7
-            and handle_duplicates
-            and not self.novelty
-        ):
-            # Raises error in case of 1D sparse array
-            check_array(X, accept_sparse=False)
-
-            # Gets the most frequent element in the array
-            unique_elements, duplicates = np.unique(X, return_counts=True)
-            max_duplicates = duplicates.max()
-
-            # DEV: Memory usage limit, can raise with risk of Memory Errors
-            memory_limit = 1e8  # Bytes
-
-            # Size needed to recalculate knn with new n_neighbors
-            kneighbors_array_memory = (max_duplicates + 1) * n_samples * 8  # Bytes
-
-            """
-            Check if number of duplicates is higher than neighbors
-            Check memory usage, as it can raise error for really large datasets
-            """
-            if (
-                max_duplicates >= self.n_neighbors
-                and kneighbors_array_memory < memory_limit
-            ):
-                self.n_neighbors = max_duplicates + 1
-
-                warnings.warn(
-                    "Duplicate values are leading to incorrect results. "
-                    "Increasing number of neighbors."
-                )
-                # Redoes the fitting with the new number of neighbors
-                return self.fit(X)
+        if np.min(self.negative_outlier_factor_) < -1e7 and not self.novelty:
+            warnings.warn(
+                "Duplicate values are leading to incorrect results. "
+                "Increase the number of neighbors for more accurate results."
+            )
 
         return self
 
