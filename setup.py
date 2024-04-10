@@ -597,6 +597,7 @@ def setup_package():
         package_data={
             "": ["*.csv", "*.gz", "*.txt", "*.pxd", "*.rst", "*.jpg", "*.css"]
         },
+        entry_points={"pytest11": ["sklearn_plugin_testing = sklearn._engine.testing"]},
         zip_safe=False,  # the package can run out of an .egg file
         extras_require={
             key: min_deps.tag_to_packages[key]

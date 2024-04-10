@@ -18,10 +18,12 @@ from numbers import Integral, Real
 import numpy as np
 import scipy.sparse as sp
 
+from .._engine import convert_attributes
 from ..base import (
     BaseEstimator,
     ClassNamePrefixFeaturesOutMixin,
     ClusterMixin,
+    EngineAwareMixin,
     TransformerMixin,
     _fit_context,
 )
@@ -280,15 +282,196 @@ def _kmeans_plusplus(
 # K-means batch estimation by EM (expectation maximization)
 
 
-def _tolerance(X, tol):
-    """Return a tolerance which is dependent on the dataset."""
-    if tol == 0:
-        return 0
-    if sp.issparse(X):
-        variances = mean_variance_axis(X, axis=0)[1]
-    else:
-        variances = np.var(X, axis=0)
-    return np.mean(variances) * tol
+class _IgnoreParam:
+    pass
+
+
+class KMeansCythonEngine:
+    """Cython-based implementation of the core k-means routines
+
+    This implementation is meant to be swappable by alternative implementations
+    in third-party packages via the sklearn_engines entry-point and the
+    `engine_provider` kwarg of `sklearn.config_context`.
+
+    TODO: see URL for more details.
+    """
+
+    @staticmethod
+    def convert_to_sklearn_types(name, value):
+        """Convert estimator attributes to scikit-learn types.
+
+        Users can configure whether estimator attributes should be stored
+        using engine native types or scikit-learn types. This function is
+        used to convert attributes from engine to scikit-learn native types.
+
+        Scikit-learn native types are ndarrays and basic Python types. There
+        is no need to convert these.
+
+        Parameters
+        ----------
+        name : str
+            Name of the attribute being converted.
+
+        value
+            Value of the attribute being converted.
+
+        Returns
+        --------
+        converted
+            Attribute value converted to a scikit-learn native type.
+        """
+        # XXX Maybe a bit useless as it should never get called, but it
+        # does demonstrate the API
+        return value
+
+    def __init__(self, estimator):
+        self.estimator = estimator
+
+    def accepts(self, X, y=None, sample_weight=None):
+        """Determine if input data and hyper-parameters are supported by
+        this engine.
+
+        Determine if this engine can handle the hyper-parameters of the
+        estimator as well as the input data. If not, return `False`. This
+        method is called during engine selection where each enabled engine
+        is tried in the user defined order.
+
+        Should fail as quickly as possible.
+        """
+        # The default engine accepts everything
+        return True
+
+    def prepare_fit(self, X, y=None, sample_weight=None):
+        estimator = self.estimator
+
+        X = estimator._validate_data(
+            X,
+            accept_sparse="csr",
+            dtype=[np.float64, np.float32],
+            order="C",
+            copy=estimator.copy_x,
+            accept_large_sparse=False,
+        )
+        # this sets estimator _algorithm implicitly
+        # XXX: shall we explose this logic as part of then engine API?
+        # or is the current API flexible enough?
+        estimator._check_params_vs_input(X)
+
+        # TODO: delegate rng and sample weight checks to engine
+        random_state = check_random_state(estimator.random_state)
+        sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
+
+        # Also store the number of threads on the estimator to be reused at
+        # prediction time XXX: shall we wrap engine-specific private fit
+        # attributes in a predict context dict set as attribute on the
+        # estimator?
+        estimator._n_threads = self._n_threads = _openmp_effective_n_threads()
+
+        # Validate init array
+        init = estimator.init
+        init_is_array_like = _is_arraylike_not_scalar(init)
+        if init_is_array_like:
+            init = check_array(init, dtype=X.dtype, copy=True, order="C")
+            estimator._validate_center_shape(X, init)
+
+        # subtract of mean of x for more accurate distance computations
+        if not sp.issparse(X):
+            X_mean = X.mean(axis=0)
+            # The copy was already done above
+            X -= X_mean
+
+            if init_is_array_like:
+                init -= X_mean
+
+            self.X_mean = X_mean
+
+        # precompute squared norms of data points
+        x_squared_norms = row_norms(X, squared=True)
+
+        if estimator._algorithm == "elkan":
+            kmeans_single = _kmeans_single_elkan
+        else:
+            kmeans_single = _kmeans_single_lloyd
+            estimator._check_mkl_vcomp(X, X.shape[0])
+
+        self.x_squared_norms = x_squared_norms
+        self.kmeans_single_func = kmeans_single
+        self.random_state = random_state
+        self.tol = self.scale_tolerance(X, estimator.tol)
+        self.init = init
+        return X, y, sample_weight
+
+    def init_centroids(self, X, sample_weight):
+        # XXX: the actual implementation of the centroids init should also be
+        # moved to the engine.
+        return self.estimator._init_centroids(
+            X,
+            x_squared_norms=self.x_squared_norms,
+            init=self.init,
+            random_state=self.random_state,
+            sample_weight=sample_weight,
+        )
+
+    def scale_tolerance(self, X, tol):
+        """Return a tolerance which is dependent on the dataset."""
+        if tol == 0:
+            return 0
+        if sp.issparse(X):
+            _, variances = mean_variance_axis(X, axis=0)
+        else:
+            variances = np.var(X, axis=0)
+        return np.mean(variances) * tol
+
+    def unshift_centers(self, X, best_centers):
+        if not sp.issparse(X):
+            if not self.estimator.copy_x:
+                X += self.X_mean
+            best_centers += self.X_mean
+
+    def is_same_clustering(self, labels, best_labels, n_clusters):
+        return _is_same_clustering(labels, best_labels, n_clusters)
+
+    def count_distinct_clusters(self, cluster_labels):
+        """Count the number of unique centers"""
+        return len(set(cluster_labels))
+
+    def kmeans_single(self, X, sample_weight, centers_init):
+        return self.kmeans_single_func(
+            X,
+            sample_weight,
+            centers_init,
+            max_iter=self.estimator.max_iter,
+            tol=self.tol,
+            n_threads=self._n_threads,
+            verbose=self.estimator.verbose,
+        )
+
+    def prepare_prediction(self, X, sample_weight):
+        X = self.estimator._check_test_data(X)
+        sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
+        return X, sample_weight
+
+    def get_labels(self, X, sample_weight):
+        labels, _ = _labels_inertia_threadpool_limit(
+            X,
+            sample_weight,
+            self.estimator.cluster_centers_,
+            n_threads=self.estimator._n_threads,
+        )
+
+        return labels
+
+    def prepare_transform(self, X):
+        return self.estimator._check_test_data(X)
+
+    def get_euclidean_distances(self, X):
+        return euclidean_distances(X, self.estimator.cluster_centers_)
+
+    def get_score(self, X, sample_weight):
+        _, scores = _labels_inertia_threadpool_limit(
+            X, sample_weight, self.estimator.cluster_centers_, self.estimator._n_threads
+        )
+        return scores
 
 
 @validate_params(
@@ -880,9 +1063,6 @@ class _BaseKMeans(
                 f"n_samples={X.shape[0]} should be >= n_clusters={self.n_clusters}."
             )
 
-        # tol
-        self._tol = _tolerance(X, self.tol)
-
         # n-init
         if self.n_init == "auto":
             if isinstance(self.init, str) and self.init == "k-means++":
@@ -1210,7 +1390,7 @@ class _BaseKMeans(
         }
 
 
-class KMeans(_BaseKMeans):
+class KMeans(_BaseKMeans, EngineAwareMixin):
     """K-Means clustering.
 
     Read more in the :ref:`User Guide <k_means>`.
@@ -1401,6 +1581,9 @@ class KMeans(_BaseKMeans):
         "algorithm": [StrOptions({"lloyd", "elkan"})],
     }
 
+    _engine_name = "kmeans"
+    _default_engine = KMeansCythonEngine
+
     def __init__(
         self,
         n_clusters=8,
@@ -1450,6 +1633,7 @@ class KMeans(_BaseKMeans):
             f" variable OMP_NUM_THREADS={n_active_threads}."
         )
 
+    @convert_attributes
     @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y=None, sample_weight=None):
         """Compute k-means clustering.
@@ -1478,69 +1662,27 @@ class KMeans(_BaseKMeans):
         self : object
             Fitted estimator.
         """
-        X = self._validate_data(
+        engine = self._get_engine(X, y, sample_weight, reset=True)
+
+        X, y, sample_weight = engine.prepare_fit(
             X,
-            accept_sparse="csr",
-            dtype=[np.float64, np.float32],
-            order="C",
-            copy=self.copy_x,
-            accept_large_sparse=False,
+            y=y,
+            sample_weight=sample_weight,
         )
-
-        self._check_params_vs_input(X)
-
-        random_state = check_random_state(self.random_state)
-        sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
-        self._n_threads = _openmp_effective_n_threads()
-
-        # Validate init array
-        init = self.init
-        init_is_array_like = _is_arraylike_not_scalar(init)
-        if init_is_array_like:
-            init = check_array(init, dtype=X.dtype, copy=True, order="C")
-            self._validate_center_shape(X, init)
-
-        # subtract of mean of x for more accurate distance computations
-        if not sp.issparse(X):
-            X_mean = X.mean(axis=0)
-            # The copy was already done above
-            X -= X_mean
-
-            if init_is_array_like:
-                init -= X_mean
-
-        # precompute squared norms of data points
-        x_squared_norms = row_norms(X, squared=True)
-
-        if self._algorithm == "elkan":
-            kmeans_single = _kmeans_single_elkan
-        else:
-            kmeans_single = _kmeans_single_lloyd
-            self._check_mkl_vcomp(X, X.shape[0])
 
         best_inertia, best_labels = None, None
 
         for i in range(self._n_init):
             # Initialize centers
-            centers_init = self._init_centroids(
-                X,
-                x_squared_norms=x_squared_norms,
-                init=init,
-                random_state=random_state,
-                sample_weight=sample_weight,
-            )
+            centers_init = engine.init_centroids(X, sample_weight)
             if self.verbose:
                 print("Initialization complete")
 
             # run a k-means once
-            labels, inertia, centers, n_iter_ = kmeans_single(
+            labels, inertia, centers, n_iter_ = engine.kmeans_single(
                 X,
                 sample_weight,
                 centers_init,
-                max_iter=self.max_iter,
-                verbose=self.verbose,
-                tol=self._tol,
-                n_threads=self._n_threads,
             )
 
             # determine if these results are the best so far
@@ -1550,19 +1692,17 @@ class KMeans(_BaseKMeans):
             # permuted labels, due to rounding errors)
             if best_inertia is None or (
                 inertia < best_inertia
-                and not _is_same_clustering(labels, best_labels, self.n_clusters)
+                and not engine.is_same_clustering(labels, best_labels, self.n_clusters)
             ):
                 best_labels = labels
                 best_centers = centers
                 best_inertia = inertia
                 best_n_iter = n_iter_
 
-        if not sp.issparse(X):
-            if not self.copy_x:
-                X += X_mean
-            best_centers += X_mean
+        engine.unshift_centers(X, best_centers)
 
-        distinct_clusters = len(set(best_labels))
+        distinct_clusters = engine.count_distinct_clusters(best_labels)
+
         if distinct_clusters < self.n_clusters:
             warnings.warn(
                 "Number of distinct clusters ({}) found smaller than "
@@ -1578,6 +1718,127 @@ class KMeans(_BaseKMeans):
         self.inertia_ = best_inertia
         self.n_iter_ = best_n_iter
         return self
+
+    def predict(self, X, sample_weight="deprecated"):
+        """Predict the closest cluster each sample in X belongs to.
+
+        In the vector quantization literature, `cluster_centers_` is called
+        the code book and each value returned by `predict` is the index of
+        the closest code in the code book.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+            New data to predict.
+
+        sample_weight : array-like of shape (n_samples,), default=None
+            The weights for each observation in X. If None, all observations
+            are assigned equal weight.
+
+            .. deprecated:: 1.3
+               The parameter `sample_weight` is deprecated in version 1.3
+               and will be removed in 1.5.
+
+        Returns
+        -------
+        labels : ndarray of shape (n_samples,)
+            Index of the cluster each sample belongs to.
+        """
+        check_is_fitted(self)
+        engine = self._get_engine(X, sample_weight=sample_weight)
+        if isinstance(sample_weight, str) and sample_weight == "deprecated":
+            # Caller left the default value of sample_weight unchanged.
+            sample_weight = None
+        else:
+            # Caller explicitly passed sample_weight, so we warn.
+            warnings.warn(
+                (
+                    "'sample_weight' was deprecated in version 1.3 and "
+                    "will be removed in 1.5."
+                ),
+                FutureWarning,
+            )
+        X, sample_weight = engine.prepare_prediction(X, sample_weight)
+        return engine.get_labels(X, sample_weight)
+
+    def fit_transform(self, X, y=None, sample_weight=None):
+        """Compute clustering and transform X to cluster-distance space.
+
+        Equivalent to fit(X).transform(X), but more efficiently implemented.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+            New data to transform.
+
+        y : Ignored
+            Not used, present here for API consistency by convention.
+
+        sample_weight : array-like of shape (n_samples,), default=None
+            The weights for each observation in X. If None, all observations
+            are assigned equal weight.
+
+        Returns
+        -------
+        X_new : ndarray of shape (n_samples, n_clusters)
+            X transformed in the new space.
+        """
+        self.fit(X, sample_weight=sample_weight)
+        engine = self._get_engine(X, y=y, sample_weight=sample_weight)
+        return self._transform(X, engine)
+
+    def transform(self, X):
+        """Transform X to a cluster-distance space.
+
+        In the new space, each dimension is the distance to the cluster
+        centers. Note that even if X is sparse, the array returned by
+        `transform` will typically be dense.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+            New data to transform.
+
+        Returns
+        -------
+        X_new : ndarray of shape (n_samples, n_clusters)
+            X transformed in the new space.
+        """
+        check_is_fitted(self)
+        engine = self._get_engine(X)
+        X = engine.prepare_transform(X)
+        return self._transform(X, engine)
+
+    def _transform(self, X, engine):
+        """Guts of transform method; no input validation."""
+        return engine.get_euclidean_distances(X)
+
+    def score(self, X, y=None, sample_weight=None):
+        """Opposite of the value of X on the K-means objective.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+            New data.
+
+        y : Ignored
+            Not used, present here for API consistency by convention.
+
+        sample_weight : array-like of shape (n_samples,), default=None
+            The weights for each observation in X. If None, all observations
+            are assigned equal weight.
+
+        Returns
+        -------
+        score : float
+            Opposite of the value of X on the K-means objective.
+        """
+        check_is_fitted(self)
+        engine = self._get_engine(X, y=y, sample_weight=sample_weight)
+
+        X, sample_weight = engine.prepare_prediction(X, sample_weight)
+
+        return -engine.get_score(X, sample_weight)
 
 
 def _mini_batch_step(
@@ -1938,6 +2199,15 @@ class MiniBatchKMeans(_BaseKMeans):
 
     def _check_params_vs_input(self, X):
         super()._check_params_vs_input(X, default_n_init=3)
+
+        if self.tol > 0:
+            if sp.issparse(X):
+                _, variances = mean_variance_axis(X, axis=0)
+            else:
+                variances = np.var(X, axis=0)
+            self._tol = np.mean(variances) * self.tol
+        else:
+            self._tol = 0.0
 
         self._batch_size = min(self.batch_size, X.shape[0])
 
