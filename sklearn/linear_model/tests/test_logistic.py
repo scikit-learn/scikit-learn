@@ -865,22 +865,28 @@ def test_logistic_regression_class_weights():
     # Multinomial case: remove 90% of class 0
     X = X_iris[45:, :]
     y = iris.target[45:]
-    solvers = ("lbfgs", "newton-cg")
     class_weight_dict = _compute_class_weight_dictionary(y)
 
-    for solver in solvers:
+    for solver in set(SOLVERS) - set(["liblinear", "newton-cholesky"]):
         clf1 = LogisticRegression(solver=solver, class_weight="balanced")
         clf2 = LogisticRegression(solver=solver, class_weight=class_weight_dict)
         clf1.fit(X, y)
         clf2.fit(X, y)
-        assert_array_almost_equal(clf1.coef_, clf2.coef_, decimal=4)
+        assert len(clf1.classes_) == 3
+        assert_allclose(clf1.coef_, clf2.coef_, rtol=1e-4)
+        # Same as appropriate sample_weight.
+        sw = np.ones(X.shape[0])
+        for c in clf1.classes_:
+            sw[y == c] *= class_weight_dict[c]
+        clf3 = LogisticRegression(solver=solver).fit(X, y, sample_weight=sw)
+        assert_allclose(clf3.coef_, clf2.coef_, rtol=1e-4)
 
     # Binary case: remove 90% of class 0 and 100% of class 2
     X = X_iris[45:100, :]
     y = iris.target[45:100]
     class_weight_dict = _compute_class_weight_dictionary(y)
 
-    for solver in set(SOLVERS):
+    for solver in SOLVERS:
         clf1 = LogisticRegression(solver=solver, class_weight="balanced")
         clf2 = LogisticRegression(solver=solver, class_weight=class_weight_dict)
         clf1.fit(X, y)
