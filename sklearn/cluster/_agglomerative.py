@@ -7,6 +7,7 @@ Authors : Vincent Michel, Bertrand Thirion, Alexandre Gramfort,
           Gael Varoquaux
 License: BSD 3 clause
 """
+
 import warnings
 from heapq import heapify, heappop, heappush, heappushpop
 from numbers import Integral, Real

@@ -2,6 +2,7 @@
 
 It allows to make uniform checks and validation.
 """
+
 import numpy as np
 
 from ..base import is_classifier

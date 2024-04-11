@@ -1,6 +1,7 @@
 """
 Testing for the partial dependence module.
 """
+
 import warnings
 
 import numpy as np
@@ -37,8 +38,8 @@ from sklearn.preprocessing import (
 )
 from sklearn.tree import DecisionTreeRegressor
 from sklearn.tree.tests.test_tree import assert_is_subtree
-from sklearn.utils import _IS_32BIT
 from sklearn.utils._testing import assert_allclose, assert_array_equal
+from sklearn.utils.fixes import _IS_32BIT
 from sklearn.utils.validation import check_random_state
 
 # toy sample

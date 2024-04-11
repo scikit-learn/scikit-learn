@@ -703,9 +703,7 @@ def test_incremental_weighted_mean_and_variance_simple(rng, dtype):
     mean, var, _ = _incremental_mean_and_var(X, 0, 0, 0, sample_weight=sample_weight)
 
     expected_mean = np.average(X, weights=sample_weight, axis=0)
-    expected_var = (
-        np.average(X**2, weights=sample_weight, axis=0) - expected_mean**2
-    )
+    expected_var = np.average(X**2, weights=sample_weight, axis=0) - expected_mean**2
     assert_almost_equal(mean, expected_mean)
     assert_almost_equal(var, expected_var)
 
