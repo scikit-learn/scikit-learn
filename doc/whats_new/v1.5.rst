@@ -347,6 +347,8 @@ Changelog
 
 - |Enhancement| :term:`CV splitters <CV splitter>` that ignores the group parameter now
   raises a warning when groups are passed in to :term:`split`. :pr:`28210` by
+  `Thomas Fan`_.
+
 - |Fix| the ``cv_results_`` attribute (of :class:`model_selection.GridSearchCV`) now
   returns masked arrays of the appropriate NumPy dtype, as opposed to always returning
   dtype ``object``. :pr:`28352` by :user:`Marco Gorelli<MarcoGorelli>`.
@@ -354,12 +356,19 @@ Changelog
 - |Fix| :func:`sklearn.model_selection.train_test_score` works with Array API inputs.
   Previously indexing was not handled correctly leading to exceptions when using strict
   implementations of the Array API like CuPY.
-  :pr:`28407` by `Tim Head <betatim>`.
+  :pr:`28407` by :user:`Tim Head <betatim>`.
+
+- |Enhancement| The HTML diagram representation of
+  :class:`~model_selection.GridSearchCV`,
+  :class:`~model_selection.RandomizedSearchCV`,
+  :class:`~model_selection.HalvingGridSearchCV`, and
+  :class:`~model_selection.HalvingRandomSearchCV` will show the best estimator when
+  `refit=True`. :pr:`28722` by :user:`Yao Xiao <Charlie-XIAO>` and `Thomas Fan`_.
 
 :mod:`sklearn.multioutput`
 ..........................
 
-- |Enhancement| `chain_method` parameter added to `:class:`multioutput.ClassifierChain`.
+- |Enhancement| `chain_method` parameter added to :class:`multioutput.ClassifierChain`.
   :pr:`27700` by :user:`Lucy Liu <lucyleeow>`.
 
 :mod:`sklearn.neighbors`
