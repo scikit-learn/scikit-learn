@@ -214,7 +214,7 @@ class PCA(_BasePCA):
 
         .. versionadded:: 0.18.0
 
-        .. versionchanged:: 1.4
+        .. versionchanged:: 1.5
             Added the 'covariance_eigh' solver.
 
     tol : float, default=0.0
