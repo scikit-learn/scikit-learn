@@ -773,19 +773,10 @@ class RFECV(RFE):
         else:
             parallel = Parallel(n_jobs=self.n_jobs)
             func = delayed(_rfe_single_fit)
-        with warnings.catch_warnings():
-            warnings.filterwarnings(
-                "ignore",
-                category=UserWarning,
-                message=(
-                    r"Found (\S+) > (\S+). There will be no feature selection and all"
-                    r" features will be kept."
-                ),
-            )
-            scores_features = parallel(
-                func(rfe, self.estimator, X, y, train, test, scorer)
-                for train, test in cv.split(X, y, groups)
-            )
+        scores_features = parallel(
+            func(rfe, self.estimator, X, y, train, test, scorer)
+            for train, test in cv.split(X, y, groups)
+        )
         scores, step_n_features = zip(*scores_features)
 
         step_n_features_rev = np.array(step_n_features[0])[::-1]

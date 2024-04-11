@@ -658,9 +658,6 @@ def test_rfe_n_features_to_select_warning(ClsRFE, param):
     """Check if the correct warning is raised when trying to initialize a RFE
     object with a n_features_to_select attribute larger than the number of
     features present in the X variable that is passed to the fit method
-
-    Non-regression test for:
-    https://github.com/scikit-learn/scikit-learn/issues/28725
     """
     X, y = make_classification(n_features=20, random_state=0)
 
