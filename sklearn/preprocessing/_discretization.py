@@ -64,7 +64,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
 
         .. versionadded:: 0.24
 
-    subsample : int or None, default='200_000'
+    subsample : int or None, default=200_000
         Maximum number of samples, used to fit the model, for computational
         efficiency.
         `subsample=None` means that all the training samples are used when
