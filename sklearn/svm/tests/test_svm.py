@@ -4,7 +4,6 @@ Testing for Support Vector Machine module (sklearn.svm)
 TODO: remove hard coded numerical results when possible
 """
 
-import re
 
 import numpy as np
 import pytest
@@ -1396,18 +1395,6 @@ def test_n_iter_libsvm(estimator, expected_n_iter_type, dataset):
     if estimator in [svm.SVC, svm.NuSVC]:
         n_classes = len(np.unique(y))
         assert n_iter.shape == (n_classes * (n_classes - 1) // 2,)
-
-
-# TODO(1.5): Remove
-@pytest.mark.parametrize("Estimator", [LinearSVR, LinearSVC])
-def test_dual_auto_deprecation_warning(Estimator):
-    svm = Estimator()
-    msg = (
-        "The default value of `dual` will change from `True` to `'auto'` in"
-        " 1.5. Set the value of `dual` explicitly to suppress the warning."
-    )
-    with pytest.warns(FutureWarning, match=re.escape(msg)):
-        svm.fit(X, Y)
 
 
 @pytest.mark.parametrize("loss", ["squared_hinge", "squared_epsilon_insensitive"])
