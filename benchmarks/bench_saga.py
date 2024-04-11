@@ -3,6 +3,7 @@
 Benchmarks of sklearn SAGA vs lightning SAGA vs Liblinear. Shows the gain
 in using multinomial logistic regression in term of learning time.
 """
+
 import json
 import os
 import time

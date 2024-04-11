@@ -31,6 +31,7 @@ efficiency in gradient boosting.
 License: BSD 3 clause
 
 """
+
 # %%
 # Data Preparation
 # ----------------

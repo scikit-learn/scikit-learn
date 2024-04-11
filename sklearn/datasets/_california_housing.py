@@ -18,6 +18,7 @@ Pace, R. Kelley and Ronald Barry, Sparse Spatial Autoregressions,
 Statistics and Probability Letters, 33 (1997) 291-297.
 
 """
+
 # Authors: Peter Prettenhofer
 # License: BSD 3 clause
 
