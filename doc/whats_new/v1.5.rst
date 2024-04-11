@@ -264,6 +264,11 @@ Changelog
 :mod:`sklearn.linear_model`
 ...........................
 
+- |API| Parameter `multi_class` was deprecated in
+:class:`linear_model.LogisticRegression` and :class:`linear_model.LogisticRegressionCV`.
+`multi_class` will be removed in 1.7.
+:pr:`28703` by :user:`Christian Lorentzen <lorentzenchr>`.
+
 - |Fix| :class:`linear_model.ElasticNet`, :class:`linear_model.ElasticNetCV`,
   :class:`linear_model.Lasso` and :class:`linear_model.LassoCV` now explicitly don't
   accept large sparse data formats. :pr:`27576` by :user:`Stefanie Senger
