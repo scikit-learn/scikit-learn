@@ -187,18 +187,6 @@ class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble, metaclass=ABCM
         y : array-like of shape (n_samples,)
             Target values.
 
-        sample_weight : array-like of shape (n_samples,) or default=None
-            Sample weights. If None, then samples are equally weighted.
-            Note that this is supported only if all underlying estimators
-            support sample weights.
-
-            .. versionchanged:: 0.23
-               when not None, `sample_weight` is passed to all underlying
-               estimators
-
-            .. deprecated:: 1.5
-                `sample_weight` is deprecated in 1.5 and will be removed in 1.7.
-
         **fit_params : dict
             Dict of metadata, potentially containing sample_weight as a
             key-value pair. If sample_weight is not existing, then samples are
@@ -572,7 +560,7 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
     -----
     When `predict_proba` is used by each estimator (i.e. most of the time for
     `stack_method='auto'` or specifically for `stack_method='predict_proba'`),
-    The first column predicted by each estimator will be dropped in the case
+    the first column predicted by each estimator will be dropped in the case
     of a binary classification problem. Indeed, both feature will be perfectly
     collinear.
 
@@ -1063,7 +1051,11 @@ class StackingRegressor(RegressorMixin, _BaseStacking):
         """
         return self._transform(X)
 
-    def fit_transform(self, X, y, sample_weight=None, **fit_params):
+    # TODO(1.7): remove `sample_weight` from the signature after deprecation
+    # cycle; pop it from `fit_params` before the `_raise_for_params` check and
+    # reinsert afterwards, for backwards compatibility
+    @_deprecate_positional_args(version="1.7")
+    def fit_transform(self, X, y, *, sample_weight=None, **fit_params):
         """Fit the estimators and return the predictions for X for each estimator.
 
         Parameters
