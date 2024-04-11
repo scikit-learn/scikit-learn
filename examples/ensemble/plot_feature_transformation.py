@@ -20,7 +20,6 @@ high-dimensional categorical embedding of the data.
 
 """
 
-
 # Author: Tim Head <betatim@gmail.com>
 #
 # License: BSD 3 clause

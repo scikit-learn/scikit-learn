@@ -4,7 +4,6 @@ import numpy as np
 import pytest
 from numpy.testing import assert_array_equal
 
-from sklearn.base import BaseEstimator
 from sklearn.datasets import load_iris, make_blobs
 from sklearn.ensemble import StackingClassifier
 from sklearn.exceptions import NotFittedError
@@ -14,6 +13,8 @@ from sklearn.neighbors import KNeighborsClassifier
 from sklearn.semi_supervised import SelfTrainingClassifier
 from sklearn.svm import SVC
 from sklearn.tree import DecisionTreeClassifier
+
+from sklearn.tests.metadata_routing_common import SimpleEstimator
 
 # Author: Oliver Rausch <rauscho@ethz.ch>
 # License: BSD 3 clause
@@ -349,42 +350,6 @@ def test_self_training_estimator_attribute_error():
 # Test that metadata is routed correctly for pipelines
 # ====================================================
 
-
-class SimpleEstimator(BaseEstimator):
-    classes_ = [0, 1, 2]
-
-    # This class is used in this section for testing routing in the pipeline.
-    # This class should have every set_{method}_request
-    def fit(self, X, y, sample_weight=None, prop=None):
-        # assert sample_weight is not None
-        # assert prop is not None
-        return self
-
-    def fit_predict(self, X, y, sample_weight=None, prop=None):
-        assert sample_weight is not None
-        assert prop is not None
-
-    def predict(self, X, sample_weight=None, prop=None):
-        assert sample_weight is not None
-        assert prop is not None
-
-    def predict_proba(self, X, sample_weight=None, prop=None):
-        assert sample_weight is not None
-        assert prop is not None
-
-    def predict_log_proba(self, X, sample_weight=None, prop=None):
-        assert sample_weight is not None
-        assert prop is not None
-
-    def decision_function(self, X, sample_weight=None, prop=None):
-        assert sample_weight is not None
-        assert prop is not None
-
-    def score(self, X, y, sample_weight=None, prop=None):
-        assert sample_weight is not None
-        assert prop is not None
-
-
 SIMPLE_METHODS = [
     "fit",
     "predict",
@@ -435,18 +400,18 @@ def test_metadata_routing_for_self_training_classifier(method):
 def test_routing_passed_metadata_not_supported(method):
     """Test that the right error message is raised when metadata is passed while
     not supported when `enable_metadata_routing=False`."""
+    est = SelfTrainingClassifier(base_estimator=SimpleEstimator())
+    with pytest.raises(
+        ValueError, match="is only supported if enable_metadata_routing=True"
+    ):
+        est.fit([[1], [1]], [1, 1], sample_weight=[1], prop="a")
 
     est = SelfTrainingClassifier(base_estimator=SimpleEstimator())
     with pytest.raises(
         ValueError, match="is only supported if enable_metadata_routing=True"
     ):
-        est.fit([[1], [1]], [1, 1], sample_weight=[1])
-
-    est = SelfTrainingClassifier(base_estimator=SimpleEstimator())
-    est.fit([[1], [1]], [1, 1])
-    with pytest.raises(
-        ValueError, match="is only supported if enable_metadata_routing=True"
-    ):
+        # make sure that the estimator thinks it is already fitted
+        est.fitted_params_ = True
         getattr(est, method)([[1]], sample_weight=[1], prop="a")
 
 

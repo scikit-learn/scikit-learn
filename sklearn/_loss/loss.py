@@ -5,6 +5,7 @@ It is not part of the public API.
 Specific losses are used for regression, binary classification or multiclass
 classification.
 """
+
 # Goals:
 # - Provide a common private module for loss functions/classes.
 # - To be used in:

@@ -1,6 +1,7 @@
 """
 Test the pipeline module.
 """
+
 import itertools
 import re
 import shutil
@@ -37,6 +38,7 @@ from sklearn.tests.metadata_routing_common import (
     ConsumingTransformer,
     _Registry,
     check_recorded_metadata,
+    SimpleEstimator,
 )
 from sklearn.utils._metadata_requests import COMPOSITE_METHODS, METHODS
 from sklearn.utils._testing import (
@@ -1795,51 +1797,6 @@ def test_feature_union_feature_names_in_():
 # =====================================================================
 
 
-class SimpleEstimator(BaseEstimator):
-    # This class is used in this section for testing routing in the pipeline.
-    # This class should have every set_{method}_request
-    def fit(self, X, y, sample_weight=None, prop=None):
-        assert sample_weight is not None
-        assert prop is not None
-        return self
-
-    def fit_transform(self, X, y, sample_weight=None, prop=None):
-        assert sample_weight is not None
-        assert prop is not None
-
-    def fit_predict(self, X, y, sample_weight=None, prop=None):
-        assert sample_weight is not None
-        assert prop is not None
-
-    def predict(self, X, sample_weight=None, prop=None):
-        assert sample_weight is not None
-        assert prop is not None
-
-    def predict_proba(self, X, sample_weight=None, prop=None):
-        assert sample_weight is not None
-        assert prop is not None
-
-    def predict_log_proba(self, X, sample_weight=None, prop=None):
-        assert sample_weight is not None
-        assert prop is not None
-
-    def decision_function(self, X, sample_weight=None, prop=None):
-        assert sample_weight is not None
-        assert prop is not None
-
-    def score(self, X, y, sample_weight=None, prop=None):
-        assert sample_weight is not None
-        assert prop is not None
-
-    def transform(self, X, sample_weight=None, prop=None):
-        assert sample_weight is not None
-        assert prop is not None
-
-    def inverse_transform(self, X, sample_weight=None, prop=None):
-        assert sample_weight is not None
-        assert prop is not None
-
-
 @pytest.mark.usefixtures("enable_slep006")
 # split and partial_fit not relevant for pipelines
 @pytest.mark.parametrize("method", sorted(set(METHODS) - {"split", "partial_fit"}))
@@ -1915,7 +1872,7 @@ def test_metadata_routing_error_for_pipeline(method):
     pipeline = Pipeline([("estimator", est)])
     error_message = (
         "[sample_weight, prop] are passed but are not explicitly set as requested"
-        f" or not for SimpleEstimator.{method}"
+        f" or not requested for SimpleEstimator.{method}"
     )
     with pytest.raises(ValueError, match=re.escape(error_message)):
         try:
@@ -1975,7 +1932,7 @@ def test_feature_union_metadata_routing_error():
 
     error_message = (
         "[sample_weight, metadata] are passed but are not explicitly set as requested"
-        f" or not for {ConsumingTransformer.__name__}.fit"
+        f" or not requested for {ConsumingTransformer.__name__}.fit"
     )
 
     with pytest.raises(UnsetMetadataPassedError, match=re.escape(error_message)):
@@ -1995,7 +1952,7 @@ def test_feature_union_metadata_routing_error():
 
     error_message = (
         "[sample_weight, metadata] are passed but are not explicitly set as requested "
-        f"or not for {ConsumingTransformer.__name__}.transform"
+        f"or not requested for {ConsumingTransformer.__name__}.transform"
     )
 
     with pytest.raises(UnsetMetadataPassedError, match=re.escape(error_message)):
