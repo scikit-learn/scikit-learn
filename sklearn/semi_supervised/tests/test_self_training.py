@@ -346,7 +346,7 @@ def test_self_training_estimator_attribute_error():
     assert inner_msg in str(exec_info.value.__cause__)
 
 
-# Test that metadata is routed correctly for pipelines
+# Test that metadata is routed correctly for SelfTrainingClassifier
 # ====================================================
 
 
