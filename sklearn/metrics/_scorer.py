@@ -410,11 +410,24 @@ def get_scorer(scoring):
     return scorer
 
 
-class _PassthroughScorer:
-    # TODO: document the usage of this class, especially within the `check_scoring`
-    # function below.
+class _PassthroughScorer(_MetadataRequester):
+    # Passes scoring of estimator's `score` method back to estimator if scoring
+    # is `None`.
+
     def __init__(self, estimator):
         self._estimator = estimator
+        if hasattr(estimator, "set_score_request"):
+            self.set_score_request = estimator.set_score_request
+
+        requests = MetadataRequest(owner=self._estimator.__class__.__name__)
+        try:
+            requests.score = estimator._metadata_request.score
+        except AttributeError:
+            requests.score = estimator._get_default_requests().score
+        except:  # noqa: E722
+            pass
+
+        self._metadata_request = requests
 
     def __call__(self, estimator, *args, **kwargs):
         """Method that wraps estimator.score"""
@@ -434,13 +447,7 @@ class _PassthroughScorer:
             A :class:`~utils.metadata_routing.MetadataRouter` encapsulating
             routing information.
         """
-        # This scorer doesn't do any validation or routing, it only exposes the
-        # requests of the given estimator. This object behaves as a consumer
-        # rather than a router. Ideally it only exposes the score requests to
-        # the parent object; however, that requires computing the routing for
-        # meta-estimators, which would be more time consuming than simply
-        # returning the child object's requests.
-        return get_routing_for_object(self._estimator)
+        return get_routing_for_object(self._metadata_request)
 
 
 def _check_multimetric_scoring(estimator, scoring):
