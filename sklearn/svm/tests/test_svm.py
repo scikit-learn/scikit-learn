@@ -3,6 +3,7 @@ Testing for Support Vector Machine module (sklearn.svm)
 
 TODO: remove hard coded numerical results when possible
 """
+
 import re
 
 import numpy as np

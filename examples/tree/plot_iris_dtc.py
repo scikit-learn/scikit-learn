@@ -14,6 +14,7 @@ the training samples.
 
 We also show the tree structure of a model built on all of the features.
 """
+
 # %%
 # First load the copy of the Iris dataset shipped with scikit-learn:
 from sklearn.datasets import load_iris

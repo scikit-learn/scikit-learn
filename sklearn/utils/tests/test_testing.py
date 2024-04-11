@@ -9,7 +9,6 @@ from scipy import sparse
 
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 from sklearn.tree import DecisionTreeClassifier
-from sklearn.utils import _IS_WASM
 from sklearn.utils._testing import (
     TempMemmap,
     _convert_container,
@@ -31,6 +30,7 @@ from sklearn.utils._testing import (
 )
 from sklearn.utils.deprecation import deprecated
 from sklearn.utils.fixes import (
+    _IS_WASM,
     CSC_CONTAINERS,
     CSR_CONTAINERS,
     parse_version,

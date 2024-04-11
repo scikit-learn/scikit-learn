@@ -18,55 +18,9 @@ For a short description of the main highlights of the release, please refer to
 Version 1.4.2
 =============
 
-**TBA 2024**
+**April 2024**
 
-Metadata Routing
-----------------
-
-- |FIX| Fix an issue when resolving default routing requests set via class
-  attributes.
-  :pr:`28435` by `Adrin Jalali`_.
-
-- |FIX| Fix an issue when `set_{method}_request` methods are used as unbound
-  methods, which can happen if one tries to decorate them.
-  :pr:`28651` by `Adrin Jalali`_.
-
-Changelog
----------
-
-:mod:`sklearn.metrics`
-......................
-
-- |Fix|:class:`metrics.classification_report` now shows only accuracy and not
-  micro-average when input is a subset of labels.
-  :pr:`28399` by :user:`Vineet Joshi <vjoshi253>`.
-
-- |Fix| Fix OpenBLAS 0.3.26 dead-lock on Windows in pairwise distances
-  computation. This is likely to affect neighbor-based algorithms.
-  :pr:`28692` by :user:`Loïc Estève <lesteve>`.
-
-:mod:`sklearn.mixture`
-......................
-
-- |Fix| The `converged_` attribute of :class:`mixture.GaussianMixture` and
-  :class:`mixture.BayesianGaussianMixture` now reflects the convergence status of
-  the best fit whereas it was previously `True` if any of the fits converged.
-  :pr:`26837` by :user:`Krsto Proroković <krstopro>`.
-
-:mod:`sklearn.neighbors`
-........................
-
-- |Fix| Fixes :class:`neighbors.NeighborhoodComponentsAnalysis` such that
-  `get_feature_names_out` returns the correct number of feature names.
-  :pr:`28306` by :user:`Brendan Lu <brendanlu>`.
-
-:mod:`sklearn.utils`
-....................
-
-- |Fix| :func:`~utils._safe_indexing` now works correctly for polars DataFrame when
-  `axis=0` and supports indexing polars Series.
-  :pr:`28521` by :user:`Yao Xiao <Charlie-XIAO>`.
-
+This release only includes support for numpy 2.
 
 .. _changes_1_4_1:
 

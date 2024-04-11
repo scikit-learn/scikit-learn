@@ -50,8 +50,8 @@ See :ref:`array_api` for more details.
 Support for building with Meson
 -------------------------------
 
-Meson is now supported as a build backend, see :ref:`Building with Meson
-<building_with_meson>` for more details.
+Meson is now supported as a build backend, see :ref:`Building from source
+<install_bleeding_edge>` for more details.
 
 :pr:`28040` by :user:`Loïc Estève <lesteve>`
 
@@ -79,12 +79,9 @@ more details.
   :class:`model_selection.GridSearchCV` object or the underlying scorer.
   :pr:`27560` by :user:`Omar Salman <OmarManzoor>`.
 
-Metadata Routing
-----------------
-
-The following models now support metadata routing in one or more or their
-methods. Refer to the :ref:`Metadata Routing User Guide <metadata_routing>` for
-more details.
+- |Feature| :class:`GraphicalLassoCV` now supports metadata routing in it's
+  `fit` method and routes metadata to the CV splitter.
+  :pr:`27566` by :user:`Omar Salman <OmarManzoor>`.
 
 - |Feature| :class:`linear_model.RANSACRegressor` now supports metadata routing
   in its ``fit``, ``score`` and ``predict`` methods and route metadata to its
@@ -101,6 +98,13 @@ more details.
   transformers' ``fit`` and ``fit_transform``. :pr:`28205` by :user:`Stefanie
   Senger <StefanieSenger>`.
 
+- |Fix| Fix an issue when resolving default routing requests set via class
+  attributes.
+  :pr:`28435` by `Adrin Jalali`_.
+
+- |Fix| Fix an issue when `set_{method}_request` methods are used as unbound
+  methods, which can happen if one tries to decorate them.
+  :pr:`28651` by `Adrin Jalali`_.
 
 Changelog
 ---------
@@ -220,6 +224,13 @@ Changelog
   by passing a function in place of a strategy name.
   :pr:`28053` by :user:`Mark Elliot <mark-thm>`.
 
+:mod:`sklearn.inspection`
+.........................
+
+- |Fix| :meth:`inspection.DecisionBoundaryDisplay.from_estimator` no longer
+  warns about missing feature names when provided a `polars.DataFrame`.
+  :pr:`28718` by :user:`Patrick Wang <patrickkwang>`.
+
 :mod:`sklearn.linear_model`
 ...........................
 
@@ -277,6 +288,14 @@ Changelog
 - |Feature| :func:`sklearn.metrics.check_scoring` now returns a multi-metric scorer
   when `scoring` as a `dict`, `set`, `tuple`, or `list`. :pr:`28360` by `Thomas Fan`_.
 
+- |Fix|:class:`metrics.classification_report` now shows only accuracy and not
+  micro-average when input is a subset of labels.
+  :pr:`28399` by :user:`Vineet Joshi <vjoshi253>`.
+
+- |Fix| Fix OpenBLAS 0.3.26 dead-lock on Windows in pairwise distances
+  computation. This is likely to affect neighbor-based algorithms.
+  :pr:`28692` by :user:`Loïc Estève <lesteve>`.
+
 - |API| :func:`metrics.precision_recall_curve` deprecated the keyword argument `probas_pred`
   in favor of `y_score`. `probas_pred` will be removed in version 1.7.
   :pr:`28092` by :user:`Adam Li <adam2392>`.
@@ -284,6 +303,14 @@ Changelog
 - |API| :func:`metrics.brier_score_loss` deprecated the keyword argument `y_prob`
   in favor of `y_proba`. `y_prob` will be removed in version 1.7.
   :pr:`28092` by :user:`Adam Li <adam2392>`.
+
+:mod:`sklearn.mixture`
+......................
+
+- |Fix| The `converged_` attribute of :class:`mixture.GaussianMixture` and
+  :class:`mixture.BayesianGaussianMixture` now reflects the convergence status of
+  the best fit whereas it was previously `True` if any of the fits converged.
+  :pr:`26837` by :user:`Krsto Proroković <krstopro>`.
 
 :mod:`sklearn.model_selection`
 ..............................
@@ -299,12 +326,18 @@ Changelog
   implementations of the Array API like CuPY.
   :pr:`28407` by `Tim Head <betatim>`.
 
-
 :mod:`sklearn.multioutput`
 ..........................
 
-- |Enhancement| `chain_method` parameter added to `:class:``multioutput.ClassifierChain`.
+- |Enhancement| `chain_method` parameter added to `:class:`multioutput.ClassifierChain`.
   :pr:`27700` by :user:`Lucy Liu <lucyleeow>`.
+
+:mod:`sklearn.neighbors`
+........................
+
+- |Fix| Fixes :class:`neighbors.NeighborhoodComponentsAnalysis` such that
+  `get_feature_names_out` returns the correct number of feature names.
+  :pr:`28306` by :user:`Brendan Lu <brendanlu>`.
 
 :mod:`sklearn.pipeline`
 .......................
@@ -331,6 +364,19 @@ Changelog
   show a "True/False" label to indicate the directionality the samples traverse
   given the split condition.
   :pr:`28552` by :user:`Adam Li <adam2392>`.
+
+:mod:`sklearn.utils`
+....................
+
+- |API| :data:`utils.IS_PYPY` is deprecated and will be removed in version 1.7.
+  :pr:`28768` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
+
+- |API| :func:`utils.tosequence` is deprecated and will be removed in version 1.7.
+  :pr:`28763` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
+
+- |Fix| :func:`~utils._safe_indexing` now works correctly for polars DataFrame when
+  `axis=0` and supports indexing polars Series.
+  :pr:`28521` by :user:`Yao Xiao <Charlie-XIAO>`.
 
 .. rubric:: Code and documentation contributors
 
