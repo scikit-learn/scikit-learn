@@ -1,3 +1,5 @@
+"""Isotonic regression for obtaining monotonic fit to data."""
+
 # Authors: Fabian Pedregosa <fabian@fseoane.net>
 #          Alexandre Gramfort <alexandre.gramfort@inria.fr>
 #          Nelle Varoquaux <nelle.varoquaux@gmail.com>

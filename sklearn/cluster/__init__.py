@@ -1,7 +1,4 @@
-"""
-The :mod:`sklearn.cluster` module gathers popular unsupervised clustering
-algorithms.
-"""
+"""Popular unsupervised clustering algorithms."""
 
 from ._affinity_propagation import AffinityPropagation, affinity_propagation
 from ._agglomerative import (

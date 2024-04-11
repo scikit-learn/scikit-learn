@@ -1,6 +1,4 @@
-"""
-The :mod:`sklearn.utils` module includes various utilities.
-"""
+"""Various utilities to help with development."""
 
 import numbers
 import platform

@@ -1,6 +1,4 @@
-"""
-The :mod:`sklearn.manifold` module implements data embedding techniques.
-"""
+"""Data embedding techniques."""
 
 from ._isomap import Isomap
 from ._locally_linear import LocallyLinearEmbedding, locally_linear_embedding

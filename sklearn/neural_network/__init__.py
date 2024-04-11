@@ -1,7 +1,4 @@
-"""
-The :mod:`sklearn.neural_network` module includes models based on neural
-networks.
-"""
+"""Models based on neural networks."""
 
 # License: BSD 3 clause
 
