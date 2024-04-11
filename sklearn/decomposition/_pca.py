@@ -564,9 +564,12 @@ class PCA(_BasePCA):
             )
 
         self.mean_ = xp.mean(X, axis=0)
-        if isinstance(self.mean_, np.matrix):
-            # This can happen when X is a scipy sparse matrix.
-            self.mean_ = np.asarray(self.mean_).ravel()
+        # When X is a scipy sparse matrix, self.mean_ is a numpy matrix, so we need
+        # to transform it to a 1D array. Note that this is not the case when X
+        # is a scipy sparse array.
+        # TODO: remove the following two lines when scikit-learn only depends
+        # on scipy versions that no longer support scipy.sparse matrices.
+        self.mean_ = xp.reshape(xp.asarray(self.mean_), (-1,))
 
         if self._fit_svd_solver == "full":
             X_centered = xp.asarray(X, copy=True) if self.copy else X
