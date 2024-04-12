@@ -1,5 +1,5 @@
-""" Test the graphical_lasso module.
-"""
+"""Test the graphical_lasso module."""
+
 import sys
 from io import StringIO
 
@@ -16,6 +16,7 @@ from sklearn.covariance import (
     graphical_lasso,
 )
 from sklearn.datasets import make_sparse_spd_matrix
+from sklearn.model_selection import GroupKFold
 from sklearn.utils import check_random_state
 from sklearn.utils._testing import (
     _convert_container,
@@ -254,22 +255,12 @@ def test_graphical_lasso_cv_scores():
         X
     )
 
-    cv_results = cov.cv_results_
-    # alpha and one for each split
-
-    total_alphas = n_refinements * n_alphas + 1
-    keys = ["alphas"]
-    split_keys = [f"split{i}_test_score" for i in range(splits)]
-    for key in keys + split_keys:
-        assert key in cv_results
-        assert len(cv_results[key]) == total_alphas
-
-    cv_scores = np.asarray([cov.cv_results_[key] for key in split_keys])
-    expected_mean = cv_scores.mean(axis=0)
-    expected_std = cv_scores.std(axis=0)
-
-    assert_allclose(cov.cv_results_["mean_test_score"], expected_mean)
-    assert_allclose(cov.cv_results_["std_test_score"], expected_std)
+    _assert_graphical_lasso_cv_scores(
+        cov=cov,
+        n_splits=splits,
+        n_refinements=n_refinements,
+        n_alphas=n_alphas,
+    )
 
 
 # TODO(1.5): remove in 1.5
@@ -284,3 +275,58 @@ def test_graphical_lasso_cov_init_deprecation():
     emp_cov = empirical_covariance(X)
     with pytest.warns(FutureWarning, match="cov_init parameter is deprecated"):
         graphical_lasso(emp_cov, alpha=0.1, cov_init=emp_cov)
+
+
+@pytest.mark.usefixtures("enable_slep006")
+def test_graphical_lasso_cv_scores_with_routing(global_random_seed):
+    """Check that `GraphicalLassoCV` internally dispatches metadata to
+    the splitter.
+    """
+    splits = 5
+    n_alphas = 5
+    n_refinements = 3
+    true_cov = np.array(
+        [
+            [0.8, 0.0, 0.2, 0.0],
+            [0.0, 0.4, 0.0, 0.0],
+            [0.2, 0.0, 0.3, 0.1],
+            [0.0, 0.0, 0.1, 0.7],
+        ]
+    )
+    rng = np.random.RandomState(global_random_seed)
+    X = rng.multivariate_normal(mean=[0, 0, 0, 0], cov=true_cov, size=300)
+    n_samples = X.shape[0]
+    groups = rng.randint(0, 5, n_samples)
+    params = {"groups": groups}
+    cv = GroupKFold(n_splits=splits)
+    cv.set_split_request(groups=True)
+
+    cov = GraphicalLassoCV(cv=cv, alphas=n_alphas, n_refinements=n_refinements).fit(
+        X, **params
+    )
+
+    _assert_graphical_lasso_cv_scores(
+        cov=cov,
+        n_splits=splits,
+        n_refinements=n_refinements,
+        n_alphas=n_alphas,
+    )
+
+
+def _assert_graphical_lasso_cv_scores(cov, n_splits, n_refinements, n_alphas):
+    cv_results = cov.cv_results_
+    # alpha and one for each split
+
+    total_alphas = n_refinements * n_alphas + 1
+    keys = ["alphas"]
+    split_keys = [f"split{i}_test_score" for i in range(n_splits)]
+    for key in keys + split_keys:
+        assert key in cv_results
+        assert len(cv_results[key]) == total_alphas
+
+    cv_scores = np.asarray([cov.cv_results_[key] for key in split_keys])
+    expected_mean = cv_scores.mean(axis=0)
+    expected_std = cv_scores.std(axis=0)
+
+    assert_allclose(cov.cv_results_["mean_test_score"], expected_mean)
+    assert_allclose(cov.cv_results_["std_test_score"], expected_std)

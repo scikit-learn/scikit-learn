@@ -254,14 +254,14 @@ inspect the original instance such as::
 
     >>> from sklearn.datasets import load_digits
     >>> X_digits, y_digits = load_digits(return_X_y=True)
-    >>> pca1 = PCA()
+    >>> pca1 = PCA(n_components=10)
     >>> svm1 = SVC()
     >>> pipe = Pipeline([('reduce_dim', pca1), ('clf', svm1)])
     >>> pipe.fit(X_digits, y_digits)
-    Pipeline(steps=[('reduce_dim', PCA()), ('clf', SVC())])
+    Pipeline(steps=[('reduce_dim', PCA(n_components=10)), ('clf', SVC())])
     >>> # The pca instance can be inspected directly
-    >>> print(pca1.components_)
-        [[-1.77484909e-19  ... 4.07058917e-18]]
+    >>> pca1.components_.shape
+    (10, 64)
 
 
 Enabling caching triggers a clone of the transformers before fitting.
@@ -274,15 +274,15 @@ Instead, use the attribute ``named_steps`` to inspect estimators within
 the pipeline::
 
     >>> cachedir = mkdtemp()
-    >>> pca2 = PCA()
+    >>> pca2 = PCA(n_components=10)
     >>> svm2 = SVC()
     >>> cached_pipe = Pipeline([('reduce_dim', pca2), ('clf', svm2)],
     ...                        memory=cachedir)
     >>> cached_pipe.fit(X_digits, y_digits)
     Pipeline(memory=...,
-             steps=[('reduce_dim', PCA()), ('clf', SVC())])
-    >>> print(cached_pipe.named_steps['reduce_dim'].components_)
-        [[-1.77484909e-19  ... 4.07058917e-18]]
+             steps=[('reduce_dim', PCA(n_components=10)), ('clf', SVC())])
+    >>> cached_pipe.named_steps['reduce_dim'].components_.shape
+    (10, 64)
     >>> # Remove the cache directory
     >>> rmtree(cachedir)
 

@@ -2,6 +2,7 @@
 Several basic tests for hierarchical clustering procedures
 
 """
+
 # Authors: Vincent Michel, 2010, Gael Varoquaux 2012,
 #          Matteo Visconti di Oleggio Castello 2014
 # License: BSD 3 clause

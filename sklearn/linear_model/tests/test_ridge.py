@@ -40,7 +40,7 @@ from sklearn.model_selection import (
     cross_val_predict,
 )
 from sklearn.preprocessing import minmax_scale
-from sklearn.utils import _IS_32BIT, check_random_state
+from sklearn.utils import check_random_state
 from sklearn.utils._array_api import (
     _NUMPY_NAMESPACE_NAMES,
     _atol_for_type,
@@ -61,6 +61,7 @@ from sklearn.utils.estimator_checks import (
     check_array_api_input_and_values,
 )
 from sklearn.utils.fixes import (
+    _IS_32BIT,
     COO_CONTAINERS,
     CSC_CONTAINERS,
     CSR_CONTAINERS,
