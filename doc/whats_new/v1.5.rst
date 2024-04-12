@@ -22,6 +22,18 @@ Version 1.5.0
 
 **In Development**
 
+Security
+--------
+
+- |Fix| :class:`feature_extraction.text.CountVectorizer` and
+  :class:`feature_extraction.text.TfidfVectorizer` no longer store discarded
+  tokens from the training set in their `stop_words_` attribute. This attribute
+  would hold too frequent (above `max_df`) but also too rare tokens (below
+  `min_df`). This fixes a potential security issue (data leak) if the discarded
+  rare tokens hold sensitive information from the training set without the
+  model developer's knowledge.
+  :pr:`28823` by :user:`Olivier Grisel <ogrisel>`.
+
 Changed models
 --------------
 
