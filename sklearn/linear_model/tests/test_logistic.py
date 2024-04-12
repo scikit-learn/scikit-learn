@@ -404,7 +404,7 @@ def test_consistency_path():
             )
 
     # test for fit_intercept=True
-    for solver in set(SOLVERS) - set(["liblinear"]):
+    for solver in set(SOLVERS):
         Cs = [1e3]
         coefs, Cs, _ = f(_logistic_regression_path)(
             X,

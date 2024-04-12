@@ -98,7 +98,7 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
             Additionaly, this is numerically more stable for ill-conditioned X compared
             to `newton-cholesky`.
 
-            .. versionadded:: 1.3
+            .. versionadded:: 1.5
 
     max_iter : int, default=100
         The maximal number of iterations for the solver.
@@ -528,7 +528,7 @@ class PoissonRegressor(_GeneralizedLinearRegressor):
             Additionaly, this is numerically more stable for ill-conditioned X compared
             to `newton-cholesky`.
 
-            .. versionadded:: 1.3
+            .. versionadded:: 1.5
 
     max_iter : int, default=100
         The maximal number of iterations for the solver.
