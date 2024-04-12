@@ -2,8 +2,6 @@
 Testing for the partial dependence module.
 """
 
-import warnings
-
 import numpy as np
 import pytest
 
@@ -913,34 +911,6 @@ def test_partial_dependence_sample_weight_with_recursion():
         partial_dependence(
             est, X, features=[0], method="recursion", sample_weight=sample_weight
         )
-
-
-# TODO(1.5): Remove when bunch values is deprecated in 1.5
-def test_partial_dependence_bunch_values_deprecated():
-    """Test that deprecation warning is raised when values is accessed."""
-
-    est = LogisticRegression()
-    (X, y), _ = binary_classification_data
-    est.fit(X, y)
-
-    pdp_avg = partial_dependence(est, X=X, features=[1, 2], kind="average")
-
-    msg = (
-        "Key: 'values', is deprecated in 1.3 and will be "
-        "removed in 1.5. Please use 'grid_values' instead"
-    )
-
-    with warnings.catch_warnings():
-        # Does not raise warnings with "grid_values"
-        warnings.simplefilter("error", FutureWarning)
-        grid_values = pdp_avg["grid_values"]
-
-    with pytest.warns(FutureWarning, match=msg):
-        # Warns for "values"
-        values = pdp_avg["values"]
-
-    # "values" and "grid_values" are the same object
-    assert values is grid_values
 
 
 def test_mixed_type_categorical():
