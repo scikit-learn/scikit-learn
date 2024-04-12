@@ -13,6 +13,7 @@ import numpy as np
 import pytest
 from scipy.stats import bernoulli, expon, uniform
 
+from sklearn import config_context
 from sklearn.base import BaseEstimator, ClassifierMixin, is_classifier
 from sklearn.cluster import KMeans
 from sklearn.datasets import (
@@ -20,6 +21,7 @@ from sklearn.datasets import (
     make_classification,
     make_multilabel_classification,
 )
+from sklearn.dummy import DummyClassifier
 from sklearn.ensemble import HistGradientBoostingClassifier
 from sklearn.exceptions import FitFailedWarning
 from sklearn.experimental import enable_halving_search_cv  # noqa
@@ -27,6 +29,7 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.impute import SimpleImputer
 from sklearn.linear_model import (
     LinearRegression,
+    LogisticRegression,
     Ridge,
     SGDClassifier,
 )
@@ -60,6 +63,7 @@ from sklearn.model_selection.tests.common import OneTimeSplitter
 from sklearn.naive_bayes import ComplementNB
 from sklearn.neighbors import KernelDensity, KNeighborsClassifier, LocalOutlierFactor
 from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import StandardScaler
 from sklearn.svm import SVC, LinearSVC
 from sklearn.tests.metadata_routing_common import (
     ConsumingScorer,
@@ -2521,6 +2525,34 @@ def test_search_with_2d_array():
     expected_data = np.empty(3, dtype=object)
     expected_data[:] = [(1, 2), (1, 2), (1, 1)]
     np.testing.assert_array_equal(result.data, expected_data)
+
+
+def test_search_html_repr():
+    """Test different HTML representations for GridSearchCV."""
+    X, y = make_classification(random_state=42)
+
+    pipeline = Pipeline([("scale", StandardScaler()), ("clf", DummyClassifier())])
+    param_grid = {"clf": [DummyClassifier(), LogisticRegression()]}
+
+    # Unfitted shows the original pipeline
+    search_cv = GridSearchCV(pipeline, param_grid=param_grid, refit=False)
+    with config_context(display="diagram"):
+        repr_html = search_cv._repr_html_()
+        assert "<pre>DummyClassifier()</pre>" in repr_html
+
+    # Fitted with `refit=False` shows the original pipeline
+    search_cv.fit(X, y)
+    with config_context(display="diagram"):
+        repr_html = search_cv._repr_html_()
+        assert "<pre>DummyClassifier()</pre>" in repr_html
+
+    # Fitted with `refit=True` shows the best estimator
+    search_cv = GridSearchCV(pipeline, param_grid=param_grid, refit=True)
+    search_cv.fit(X, y)
+    with config_context(display="diagram"):
+        repr_html = search_cv._repr_html_()
+        assert "<pre>DummyClassifier()</pre>" not in repr_html
+        assert "<pre>LogisticRegression()</pre>" in repr_html
 
 
 # Metadata Routing Tests

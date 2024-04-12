@@ -19,6 +19,7 @@ This example was inspired by the `XGBoost documentation
 <https://xgboost.readthedocs.io/en/latest/tutorials/monotonic.html>`_.
 
 """
+
 # %%
 import matplotlib.pyplot as plt
 import numpy as np
