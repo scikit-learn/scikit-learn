@@ -8,9 +8,9 @@ import warnings
 
 import numpy as np
 import pytest
+from joblib import parallel_backend
 from numpy.testing import assert_allclose
 from scipy import sparse
-from joblib import parallel_backend
 
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.compose import (
@@ -2450,7 +2450,7 @@ def test_column_transformer_error_with_duplicated_columns(dataframe_lib):
 
 def test_column_transformer_auto_memmap():
     """Check that ColumnTransformer works in parallel with joblib's auto-memmapping.
-    
+
     non-regression test for issue #28781
     """
     X = np.random.RandomState(0).uniform(size=(3, 4))

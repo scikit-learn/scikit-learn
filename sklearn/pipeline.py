@@ -1294,7 +1294,14 @@ def _transform_one(transformer, X, y, weight, columns=None, params=None):
 
 
 def _fit_transform_one(
-    transformer, X, y, weight, columns=None, message_clsname="", message=None, params=None
+    transformer,
+    X,
+    y,
+    weight,
+    columns=None,
+    message_clsname="",
+    message=None,
+    params=None,
 ):
     """
     Fits ``transformer`` to ``X`` and ``y``. The transformed result is returned
