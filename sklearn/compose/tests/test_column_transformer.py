@@ -10,6 +10,7 @@ import numpy as np
 import pytest
 from numpy.testing import assert_allclose
 from scipy import sparse
+from joblib import parallel_backend
 
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.compose import (
@@ -2445,6 +2446,26 @@ def test_column_transformer_error_with_duplicated_columns(dataframe_lib):
     )
     with pytest.raises(ValueError, match=err_msg):
         transformer.fit_transform(df)
+
+
+def test_column_transformer_auto_memmap():
+    """Check that ColumnTransformer works in parallel with joblib's auto-memmapping.
+    
+    non-regression test for issue #28781
+    """
+    X = np.random.RandomState(0).uniform(size=(3, 4))
+
+    scaler = StandardScaler(copy=False)
+
+    transformer = ColumnTransformer(
+        transformers=[("scaler", scaler, [0])],
+        n_jobs=2,
+    )
+
+    with parallel_backend("loky", max_nbytes=1):
+        Xt = transformer.fit_transform(X)
+
+    assert_allclose(Xt, StandardScaler().fit_transform(X[:, [0]]))
 
 
 # Metadata Routing Tests
