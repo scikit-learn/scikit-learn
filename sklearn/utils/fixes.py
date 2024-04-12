@@ -3,6 +3,7 @@
 If you add content to this file, please give the version of the package
 at which the fix is no longer needed.
 """
+
 # Authors: Emmanuelle Gouillart <emmanuelle.gouillart@normalesup.org>
 #          Gael Varoquaux <gael.varoquaux@normalesup.org>
 #          Fabian Pedregosa <fpedregosa@acm.org>
@@ -10,6 +11,8 @@ at which the fix is no longer needed.
 #
 # License: BSD 3 clause
 
+import platform
+import struct
 
 import numpy as np
 import scipy
@@ -21,6 +24,10 @@ import sklearn
 
 from ..externals._packaging.version import parse as parse_version
 from .deprecation import deprecated
+
+_IS_PYPY = platform.python_implementation() == "PyPy"
+_IS_32BIT = 8 * struct.calcsize("P") == 32
+_IS_WASM = platform.machine() in ["wasm32", "wasm64"]
 
 np_version = parse_version(np.__version__)
 np_base_version = parse_version(np_version.base_version)

@@ -1,8 +1,8 @@
 cluster_extension_metadata = {
   '_dbscan_inner':
-    {'sources': ['_dbscan_inner.pyx'],'override_options': ['cython_language=cpp']},
+    {'sources': ['_dbscan_inner.pyx'], 'override_options': ['cython_language=cpp']},
   '_hierarchical_fast':
-    {'sources': ['_hierarchical_fast.pyx'], 'override_options': ['cython_language=cpp']},
+    {'sources': ['_hierarchical_fast.pyx'] + metrics_cython_tree, 'override_options': ['cython_language=cpp']},
   '_k_means_common':
     {'sources': ['_k_means_common.pyx']},
   '_k_means_lloyd':

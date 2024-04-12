@@ -26,14 +26,13 @@ from sklearn.feature_extraction.text import (
 from sklearn.model_selection import GridSearchCV, cross_val_score, train_test_split
 from sklearn.pipeline import Pipeline
 from sklearn.svm import LinearSVC
-from sklearn.utils import _IS_WASM, IS_PYPY
 from sklearn.utils._testing import (
     assert_allclose_dense_sparse,
     assert_almost_equal,
     fails_if_pypy,
     skip_if_32bit,
 )
-from sklearn.utils.fixes import CSC_CONTAINERS, CSR_CONTAINERS
+from sklearn.utils.fixes import _IS_PYPY, _IS_WASM, CSC_CONTAINERS, CSR_CONTAINERS
 
 JUNK_FOOD_DOCS = (
     "the pizza pizza beer copyright",
@@ -1069,7 +1068,7 @@ def test_pickling_vectorizer():
         copy = pickle.loads(s)
         assert type(copy) == orig.__class__
         assert copy.get_params() == orig.get_params()
-        if IS_PYPY and isinstance(orig, HashingVectorizer):
+        if _IS_PYPY and isinstance(orig, HashingVectorizer):
             continue
         else:
             assert_allclose_dense_sparse(
@@ -1347,7 +1346,7 @@ def test_vectorizers_invalid_ngram_range(vec):
         f"Invalid value for ngram_range={invalid_range} "
         "lower boundary larger than the upper boundary."
     )
-    if isinstance(vec, HashingVectorizer) and IS_PYPY:
+    if isinstance(vec, HashingVectorizer) and _IS_PYPY:
         pytest.xfail(reason="HashingVectorizer is not supported on PyPy")
 
     with pytest.raises(ValueError, match=message):
@@ -1462,7 +1461,7 @@ def test_stop_word_validation_custom_preprocessor(Estimator):
     ],
 )
 def test_callable_analyzer_error(Estimator, input_type, err_type, err_msg):
-    if issubclass(Estimator, HashingVectorizer) and IS_PYPY:
+    if issubclass(Estimator, HashingVectorizer) and _IS_PYPY:
         pytest.xfail("HashingVectorizer is not supported on PyPy")
     data = ["this is text, not file or filename"]
     with pytest.raises(err_type, match=err_msg):
@@ -1495,7 +1494,7 @@ def test_callable_analyzer_reraise_error(tmpdir, Estimator):
     def analyzer(doc):
         raise Exception("testing")
 
-    if issubclass(Estimator, HashingVectorizer) and IS_PYPY:
+    if issubclass(Estimator, HashingVectorizer) and _IS_PYPY:
         pytest.xfail("HashingVectorizer is not supported on PyPy")
 
     f = tmpdir.join("file.txt")
