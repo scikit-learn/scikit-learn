@@ -756,21 +756,11 @@ def test_feature_names():
 @pytest.mark.parametrize("Vectorizer", (CountVectorizer, TfidfVectorizer))
 def test_vectorizer_max_features(Vectorizer):
     expected_vocabulary = {"burger", "beer", "salad", "pizza"}
-    expected_stop_words = {
-        "celeri",
-        "tomato",
-        "copyright",
-        "coke",
-        "sparkling",
-        "water",
-        "the",
-    }
 
     # test bounded number of extracted features
     vectorizer = Vectorizer(max_df=0.6, max_features=4)
     vectorizer.fit(ALL_FOOD_DOCS)
     assert set(vectorizer.vocabulary_) == expected_vocabulary
-    assert vectorizer.stop_words_ == expected_stop_words
 
 
 def test_count_vectorizer_max_features():
@@ -805,21 +795,16 @@ def test_vectorizer_max_df():
     vect.fit(test_data)
     assert "a" in vect.vocabulary_.keys()
     assert len(vect.vocabulary_.keys()) == 6
-    assert len(vect.stop_words_) == 0
 
     vect.max_df = 0.5  # 0.5 * 3 documents -> max_doc_count == 1.5
     vect.fit(test_data)
     assert "a" not in vect.vocabulary_.keys()  # {ae} ignored
     assert len(vect.vocabulary_.keys()) == 4  # {bcdt} remain
-    assert "a" in vect.stop_words_
-    assert len(vect.stop_words_) == 2
 
     vect.max_df = 1
     vect.fit(test_data)
     assert "a" not in vect.vocabulary_.keys()  # {ae} ignored
     assert len(vect.vocabulary_.keys()) == 4  # {bcdt} remain
-    assert "a" in vect.stop_words_
-    assert len(vect.stop_words_) == 2
 
 
 def test_vectorizer_min_df():
@@ -828,21 +813,16 @@ def test_vectorizer_min_df():
     vect.fit(test_data)
     assert "a" in vect.vocabulary_.keys()
     assert len(vect.vocabulary_.keys()) == 6
-    assert len(vect.stop_words_) == 0
 
     vect.min_df = 2
     vect.fit(test_data)
     assert "c" not in vect.vocabulary_.keys()  # {bcdt} ignored
     assert len(vect.vocabulary_.keys()) == 2  # {ae} remain
-    assert "c" in vect.stop_words_
-    assert len(vect.stop_words_) == 4
 
     vect.min_df = 0.8  # 0.8 * 3 documents -> min_doc_count == 2.4
     vect.fit(test_data)
     assert "c" not in vect.vocabulary_.keys()  # {bcdet} ignored
     assert len(vect.vocabulary_.keys()) == 1  # {a} remains
-    assert "c" in vect.stop_words_
-    assert len(vect.stop_words_) == 5
 
 
 def test_count_binary_occurrences():
@@ -1153,28 +1133,6 @@ def test_countvectorizer_vocab_dicts_when_pickling():
         assert_array_equal(
             cv.get_feature_names_out(), unpickled_cv.get_feature_names_out()
         )
-
-
-def test_stop_words_removal():
-    # Ensure that deleting the stop_words_ attribute doesn't affect transform
-
-    fitted_vectorizers = (
-        TfidfVectorizer().fit(JUNK_FOOD_DOCS),
-        CountVectorizer(preprocessor=strip_tags).fit(JUNK_FOOD_DOCS),
-        CountVectorizer(strip_accents=strip_eacute).fit(JUNK_FOOD_DOCS),
-    )
-
-    for vect in fitted_vectorizers:
-        vect_transform = vect.transform(JUNK_FOOD_DOCS).toarray()
-
-        vect.stop_words_ = None
-        stop_None_transform = vect.transform(JUNK_FOOD_DOCS).toarray()
-
-        delattr(vect, "stop_words_")
-        stop_del_transform = vect.transform(JUNK_FOOD_DOCS).toarray()
-
-        assert_array_equal(stop_None_transform, vect_transform)
-        assert_array_equal(stop_del_transform, vect_transform)
 
 
 def test_pickling_transformer():

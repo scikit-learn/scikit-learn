@@ -1079,15 +1079,6 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
         True if a fixed vocabulary of term to indices mapping
         is provided by the user.
 
-    stop_words_ : set
-        Terms that were ignored because they either:
-
-          - occurred in too many documents (`max_df`)
-          - occurred in too few documents (`min_df`)
-          - were cut off by feature selection (`max_features`).
-
-        This is only available if no vocabulary was given.
-
     See Also
     --------
     HashingVectorizer : Convert a collection of text documents to a
@@ -1095,12 +1086,6 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
 
     TfidfVectorizer : Convert a collection of raw documents to a matrix
         of TF-IDF features.
-
-    Notes
-    -----
-    The ``stop_words_`` attribute can get large and increase the model size
-    when pickling. This attribute is provided only for introspection and can
-    be safely removed using delattr or set to None before pickling.
 
     Examples
     --------
@@ -1240,19 +1225,17 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
             mask = new_mask
 
         new_indices = np.cumsum(mask) - 1  # maps old indices to new
-        removed_terms = set()
         for term, old_index in list(vocabulary.items()):
             if mask[old_index]:
                 vocabulary[term] = new_indices[old_index]
             else:
                 del vocabulary[term]
-                removed_terms.add(term)
         kept_indices = np.where(mask)[0]
         if len(kept_indices) == 0:
             raise ValueError(
                 "After pruning, no terms remain. Try a lower min_df or a higher max_df."
             )
-        return X[:, kept_indices], removed_terms
+        return X[:, kept_indices]
 
     def _count_vocab(self, raw_documents, fixed_vocab):
         """Create sparse feature matrix, and vocabulary where fixed_vocab=False"""
@@ -1397,7 +1380,7 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
                 raise ValueError("max_df corresponds to < documents than min_df")
             if max_features is not None:
                 X = self._sort_features(X, vocabulary)
-            X, self.stop_words_ = self._limit_features(
+            X = self._limit_features(
                 X, vocabulary, max_doc_count, min_doc_count, max_features
             )
             if max_features is None:
@@ -1911,27 +1894,12 @@ class TfidfVectorizer(CountVectorizer):
         The inverse document frequency (IDF) vector; only defined
         if ``use_idf`` is True.
 
-    stop_words_ : set
-        Terms that were ignored because they either:
-
-          - occurred in too many documents (`max_df`)
-          - occurred in too few documents (`min_df`)
-          - were cut off by feature selection (`max_features`).
-
-        This is only available if no vocabulary was given.
-
     See Also
     --------
     CountVectorizer : Transforms text into a sparse matrix of n-gram counts.
 
     TfidfTransformer : Performs the TF-IDF transformation from a provided
         matrix of counts.
-
-    Notes
-    -----
-    The ``stop_words_`` attribute can get large and increase the model size
-    when pickling. This attribute is provided only for introspection and can
-    be safely removed using delattr or set to None before pickling.
 
     Examples
     --------
