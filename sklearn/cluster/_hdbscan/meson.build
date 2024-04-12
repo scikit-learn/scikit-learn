@@ -1,5 +1,5 @@
 cluster_hdbscan_extension_metadata = {
-  '_linkage': {'sources': ['_linkage.pyx'] + metrics_cython_tree},
+  '_linkage': {'sources': ['_linkage.pyx', metrics_cython_tree]},
   '_reachability': {'sources': ['_reachability.pyx']},
   '_tree': {'sources': ['_tree.pyx']}
 }
