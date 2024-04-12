@@ -123,6 +123,7 @@ def test_newton_cg_verbosity(capsys, verbose):
         b = np.array([-2.0, 1])
         with pytest.warns(RuntimeWarning):
             _newton_cg(
+                # Note the wrong sign in the hessian product.
                 grad_hess=lambda x: (A @ x - b, lambda z: -A @ z),
                 func=lambda x: 0.5 * x @ A @ x - b @ x,
                 grad=lambda x: A @ x - b,
@@ -133,6 +134,25 @@ def test_newton_cg_verbosity(capsys, verbose):
         captured = capsys.readouterr()
         msg = [
             "Inner CG solver iteration 0 fell back to steepest descent",
+        ]
+        for m in msg:
+            assert m in captured.out
+
+        A = np.diag([1e-3, 1, 1e3])
+        b = np.array([-2.0, 1, 2.0])
+        with pytest.warns(ConvergenceWarning):
+            _newton_cg(
+                grad_hess=lambda x: (A @ x - b, lambda z: A @ z),
+                func=lambda x: 0.5 * x @ A @ x - b @ x,
+                grad=lambda x: A @ x - b,
+                x0=np.ones_like(b),
+                verbose=verbose,
+                maxiter=2,
+                maxinner=1,
+            )
+        captured = capsys.readouterr()
+        msg = [
+            "Inner CG solver stopped reaching maxiter=1",
         ]
         for m in msg:
             assert m in captured.out
