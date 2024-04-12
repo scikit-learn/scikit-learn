@@ -60,49 +60,6 @@ def yield_namespace_device_dtype_combinations(include_numpy_namespaces=True):
             yield array_namespace, None, None
 
 
-def yield_namespace_device_int_dtype_combinations():
-    """Yield supported namespace, device, int dtype tuples for testing.
-
-    Use this to test that an estimator works with all combinations.
-
-    Returns
-    -------
-    array_namespace : str
-        The name of the Array API namespace.
-
-    device : str
-        The name of the device on which to allocate the arrays. Can be None to
-        indicate that the default value should be used.
-
-    dtype : str
-        The name of the int data type to use for arrays. Can be None to
-        indicate that the default value should be used.
-    """
-    for array_namespace in [
-        "numpy",
-        "array_api_strict",
-        "cupy",
-        "cupy.array_api",
-        "torch",
-    ]:
-        if array_namespace == "torch":
-            for device, dtype in itertools.product(
-                ("cpu", "cuda", "mps"), ("int16", "int32", "int64", "uint8")
-            ):
-                yield array_namespace, device, dtype
-        else:
-            for dtype in (
-                "int16",
-                "int32",
-                "int64",
-                "uint8",
-                "uint16",
-                "uint32",
-                "uint64",
-            ):
-                yield array_namespace, None, dtype
-
-
 def _check_array_api_dispatch(array_api_dispatch):
     """Check that array_api_compat is installed and NumPy version is compatible.
 
@@ -325,9 +282,10 @@ class _ArrayAPIWrapper:
         return isdtype(dtype, kind, xp=self._namespace)
 
     def searchsorted(self, a, v, *, side="left", sorter=None):
-        # Temporary workaround needed as long as searchsorted is not part
-        # of the Array API spec:
-        # https://github.com/data-apis/array-api/issues/688
+        # Temporary workaround needed as long as searchsorted is not widely
+        # adopted by implementers of the Array API spec. This is a quite
+        # recent addition to the spec:
+        # https://data-apis.org/array-api/latest/API_specification/generated/array_api.searchsorted.html # noqa
         if hasattr(self._namespace, "searchsorted"):
             return self._namespace.searchsorted(a, v, side=side, sorter=sorter)
 
@@ -911,7 +869,11 @@ def _in1d(ar1, ar2, xp, assume_unique=False, invert=False):
     second array.
 
     Returns a boolean array the same length as `ar1` that is True
-    where an element of `ar1` is in `ar2` and False otherwise
+    where an element of `ar1` is in `ar2` and False otherwise.
+
+    This function has been adapted using the original implementation
+    present in numpy:
+    https://github.com/numpy/numpy/blob/v1.26.0/numpy/lib/arraysetops.py#L524-L758
     """
 
     # This code is run to make the code significantly faster

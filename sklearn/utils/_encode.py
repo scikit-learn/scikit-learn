@@ -4,7 +4,13 @@ from typing import NamedTuple
 
 import numpy as np
 
-from ._array_api import _convert_to_numpy, _isin, _setdiff1d, device, get_namespace
+from ._array_api import (
+    _is_numpy_namespace,
+    _isin,
+    _setdiff1d,
+    device,
+    get_namespace,
+)
 from ._missing import is_scalar_nan
 
 
@@ -221,12 +227,17 @@ def _encode(values, *, uniques, check_unknown=True):
         Encoded values
     """
     xp, is_array_api_compliant = get_namespace(values, uniques)
-    if is_array_api_compliant:
-        dtype_kind = _convert_to_numpy(values, xp).dtype.kind
+    if is_array_api_compliant and not _is_numpy_namespace(xp=xp):
+        try:
+            dtype = values.dtype
+            dtype_kind = dtype.kind if hasattr(dtype, "kind") else dtype
+            numeric_dtype = xp.isdtype(dtype=dtype, kind=dtype_kind)
+        except ValueError:
+            numeric_dtype = False
     else:
-        dtype_kind = values.dtype.kind
+        numeric_dtype = values.dtype.kind not in "OUS"
 
-    if dtype_kind in "OUS":
+    if not numeric_dtype:
         try:
             return _map_to_integer(values, uniques)
         except KeyError as e:
@@ -266,12 +277,17 @@ def _check_unknown(values, known_values, return_mask=False):
     """
     xp, is_array_api_compliant = get_namespace(values, known_values)
     valid_mask = None
-    if is_array_api_compliant:
-        dtype_kind = _convert_to_numpy(values, xp).dtype.kind
+    if is_array_api_compliant and not _is_numpy_namespace(xp=xp):
+        try:
+            dtype = values.dtype
+            dtype_kind = dtype.kind if hasattr(dtype, "kind") else dtype
+            numeric_dtype = xp.isdtype(dtype=dtype, kind=dtype_kind)
+        except ValueError:
+            numeric_dtype = False
     else:
-        dtype_kind = values.dtype.kind
+        numeric_dtype = values.dtype.kind not in "OUS"
 
-    if dtype_kind in "OUS":
+    if not numeric_dtype:
         values_set = set(values)
         values_set, missing_in_values = _extract_missing(values_set)
 

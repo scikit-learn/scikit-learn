@@ -24,7 +24,6 @@ from sklearn.utils._array_api import (
     indexing_dtype,
     supported_float_dtypes,
     yield_namespace_device_dtype_combinations,
-    yield_namespace_device_int_dtype_combinations,
 )
 from sklearn.utils._testing import (
     _array_api_for_tests,
@@ -489,19 +488,19 @@ def test_indexing_dtype(namespace, _device, _dtype):
 
 
 @pytest.mark.parametrize(
-    "array_namespace, device, _", yield_namespace_device_int_dtype_combinations()
+    "array_namespace, device, _", yield_namespace_device_dtype_combinations()
 )
 @pytest.mark.parametrize("invert", [True, False])
 @pytest.mark.parametrize("assume_unique", [True, False])
 @pytest.mark.parametrize("element_size", [6, 10, 14])
-@pytest.mark.parametrize("int_dtype", ["int32", "int64", "uint8"])
+@pytest.mark.parametrize("int_dtype", ["int16", "int32", "int64", "uint8"])
 def test_isin(
     array_namespace, device, _, invert, assume_unique, element_size, int_dtype
 ):
-    xp, device, dtype = _array_api_for_tests(array_namespace, device, int_dtype)
+    xp = _array_api_for_tests(array_namespace, device)
     r = element_size // 2
-    element = 2 * numpy.arange(element_size).reshape((r, 2)).astype(dtype)
-    test_elements = numpy.array(np.arange(14), dtype=dtype)
+    element = 2 * numpy.arange(element_size).reshape((r, 2)).astype(int_dtype)
+    test_elements = numpy.array(np.arange(14), dtype=int_dtype)
     element_xp = xp.asarray(element, device=device)
     test_elements_xp = xp.asarray(test_elements, device=device)
     expected = numpy.isin(
