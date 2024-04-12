@@ -22,7 +22,7 @@ from sklearn.experimental import (
 )
 from sklearn.linear_model import LogisticRegression
 from sklearn.preprocessing import FunctionTransformer
-from sklearn.utils import IS_PYPY, all_estimators
+from sklearn.utils import all_estimators
 from sklearn.utils._testing import (
     _get_func_name,
     check_docstring_parameters,
@@ -34,7 +34,7 @@ from sklearn.utils.estimator_checks import (
     _enforce_estimator_tags_X,
     _enforce_estimator_tags_y,
 )
-from sklearn.utils.fixes import parse_version, sp_version
+from sklearn.utils.fixes import _IS_PYPY, parse_version, sp_version
 
 # walk_packages() ignores DeprecationWarnings, now we need to ignore
 # FutureWarnings
@@ -75,7 +75,7 @@ _METHODS_IGNORE_NONE_Y = [
 # Python 3.7
 @pytest.mark.filterwarnings("ignore::FutureWarning")
 @pytest.mark.filterwarnings("ignore::DeprecationWarning")
-@pytest.mark.skipif(IS_PYPY, reason="test segfaults on PyPy")
+@pytest.mark.skipif(_IS_PYPY, reason="test segfaults on PyPy")
 def test_docstring_parameters():
     # Test module docstring formatting
 
@@ -224,10 +224,6 @@ def test_fit_docstring_attributes(name, Estimator):
     elif Estimator.__name__ == "TSNE":
         # default raises an error, perplexity must be less than n_samples
         est.set_params(perplexity=2)
-
-    # TODO(1.5): TO BE REMOVED for 1.5 (avoid FutureWarning)
-    if Estimator.__name__ in ("LinearSVC", "LinearSVR"):
-        est.set_params(dual="auto")
 
     # TODO(1.6): remove (avoid FutureWarning)
     if Estimator.__name__ in ("NMF", "MiniBatchNMF"):

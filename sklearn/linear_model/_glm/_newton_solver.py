@@ -534,8 +534,7 @@ class NewtonCholeskySolver(NewtonSolver):
                 "Further options are to use another solver or to avoid such situation "
                 "in the first place. Possible remedies are removing collinear features"
                 " of X or increasing the penalization strengths.\n"
-                "The original Linear Algebra message was:\n"
-                + str(e),
+                "The original Linear Algebra message was:\n" + str(e),
                 scipy.linalg.LinAlgWarning,
             )
             # Possible causes:
@@ -1073,8 +1072,7 @@ class NewtonLSMRSolver(NewtonSolver):
 
         if self.use_fallback_lbfgs_solve:
             warnings.warn(
-                msg
-                + "It will now resort to lbfgs instead.\n"
+                msg + "It will now resort to lbfgs instead.\n"
                 "This may be caused by singular or very ill-conditioned Hessian "
                 "matrix. "
                 "Further options are to use another solver or to avoid such situation "

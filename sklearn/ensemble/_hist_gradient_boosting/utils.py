@@ -1,4 +1,5 @@
 """This module contains utility routines."""
+
 from ...base import is_classifier
 from .binning import _BinMapper
 

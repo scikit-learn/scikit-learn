@@ -1,6 +1,7 @@
 """
 Loss functions for linear models with raw_prediction = X @ coef
 """
+
 import warnings
 
 import numpy as np

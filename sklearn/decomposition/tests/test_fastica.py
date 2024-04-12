@@ -1,6 +1,7 @@
 """
 Test the fastica algorithm.
 """
+
 import itertools
 import os
 import warnings

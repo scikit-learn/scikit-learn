@@ -37,9 +37,9 @@ from sklearn.model_selection import (
 )
 from sklearn.preprocessing import LabelEncoder, StandardScaler, scale
 from sklearn.svm import l1_min_c
-from sklearn.utils import _IS_32BIT, compute_class_weight, shuffle
+from sklearn.utils import compute_class_weight, shuffle
 from sklearn.utils._testing import ignore_warnings, skip_if_no_parallel
-from sklearn.utils.fixes import COO_CONTAINERS, CSR_CONTAINERS
+from sklearn.utils.fixes import _IS_32BIT, COO_CONTAINERS, CSR_CONTAINERS
 
 pytestmark = pytest.mark.filterwarnings(
     "error::sklearn.exceptions.ConvergenceWarning:sklearn.*"
