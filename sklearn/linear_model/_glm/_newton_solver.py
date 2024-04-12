@@ -15,7 +15,7 @@ import scipy.optimize
 from ..._loss.loss import HalfSquaredError
 from ...exceptions import ConvergenceWarning
 from ...utils.optimize import _check_optimize_result
-from .._linear_loss import LinearModelLoss
+from .._linear_loss import LinearModelLoss, Multinomial_LDL_Decomposition
 
 
 class NewtonSolver(ABC):
@@ -25,12 +25,26 @@ class NewtonSolver(ABC):
     iteration aims at finding the Newton step which is done by the inner solver. With
     Hessian H, gradient g and coefficients coef, one step solves:
 
-        H @ coef_newton = -g
+        H @ coef_newton = -G
 
-    For our GLM / LinearModelLoss, we have gradient g and Hessian H:
+    For our GLM / LinearModelLoss, we have gradient G and Hessian H:
 
-        g = X.T @ loss.gradient + l2_reg_strength * coef
-        H = X.T @ diag(loss.hessian) @ X + l2_reg_strength * identity
+        G = X.T @ g + l2_reg_strength * P @ coef_old
+        H = X.T @ diag(h) @ X + l2_reg_strength * P
+        g = loss.gradient = pointwise gradient
+        h = loss.hessian = pointwise hessian
+        P = penalty matrix in 1/2 w @ P @ w,
+            for a pure L2 penalty without intercept it equals the identity matrix.
+
+    stemming from the 2nd order Taylor series of the objective:
+
+        loss(coef_old) + g @ X @ coef_newton
+        + 1/2 * coef_newton @ X.T @ diag(h) @ X @ coef_newton
+        + 1/2 * l2_reg_strength * coef @ P @ coef
+        = loss(coef_old) + 1/2 * l2_reg_strength * coef_old @ P @ coef_old
+        + G @ coef_newton + 1/2 * coef_newton @ H @ coef_newton
+
+    where we have coef = coef_old + coef_newton.
 
     Backtracking line search updates coef = coef_old + t * coef_newton for some t in
     (0, 1].
@@ -138,8 +152,6 @@ class NewtonSolver(ABC):
     def setup(self, X, y, sample_weight):
         """Precomputations
 
-        If None, initializes:
-            - self.coef
         Sets:
             - self.raw_prediction
             - self.loss_value
@@ -178,9 +190,10 @@ class NewtonSolver(ABC):
             - self.coef
             - self.converged
         """
+        # Note that LinearModelLoss expects coef.ravel(order"F") for multiclass case.
         opt_res = scipy.optimize.minimize(
             self.linear_loss.loss_gradient,
-            self.coef,
+            self.coef.ravel(order="F"),
             method="L-BFGS-B",
             jac=True,
             options={
@@ -194,6 +207,11 @@ class NewtonSolver(ABC):
         )
         self.n_iter_ = _check_optimize_result("lbfgs", opt_res)
         self.coef = opt_res.x
+        if self.linear_loss.base_loss.is_multiclass:
+            # No test case was found (yet) where NewtonLSMRSolver ends up in this code
+            # path. Note that NewtonCholeskySolver does not support muliclass problems.
+            n_classes = self.linear_loss.base_loss.n_classes
+            self.coef = self.coef.reshape((n_classes, -1), order="F")
         self.converged = opt_res.status == 0
 
     def line_search(self, X, y, sample_weight):
@@ -299,6 +317,10 @@ class NewtonSolver(ABC):
 
         self.raw_prediction = raw
 
+    def compute_d2(self, X, sample_weight):
+        """Compute square of Newton decrement."""
+        return self.coef_newton @ self.hessian @ self.coef_newton
+
     def check_convergence(self, X, y, sample_weight):
         """Check for convergence.
 
@@ -306,6 +328,16 @@ class NewtonSolver(ABC):
         """
         if self.verbose:
             print("  Check Convergence")
+            loss_value = self.linear_loss.loss(
+                coef=self.coef,
+                X=X,
+                y=y,
+                sample_weight=sample_weight,
+                l2_reg_strength=self.l2_reg_strength,
+                n_threads=self.n_threads,
+            )
+            print(f"    loss = {loss_value}.")
+
         # Note: Checking maximum relative change of coefficient <= tol is a bad
         # convergence criterion because even a large step could have brought us close
         # to the true minimum.
@@ -324,7 +356,7 @@ class NewtonSolver(ABC):
         #       d = sqrt(grad @ hessian^-1 @ grad)
         #         = sqrt(coef_newton @ hessian @ coef_newton)
         #    See Boyd, Vanderberghe (2009) "Convex Optimization" Chapter 9.5.1.
-        d2 = self.coef_newton @ self.hessian @ self.coef_newton
+        d2 = self.compute_d2(X, sample_weight=sample_weight)
         if self.verbose:
             print(f"    2. Newton decrement {0.5 * d2} <= {self.tol}")
         if 0.5 * d2 > self.tol:
@@ -522,3 +554,555 @@ class NewtonCholeskySolver(NewtonSolver):
                 )
             self.use_fallback_lbfgs_solve = True
             return
+
+
+class NewtonLSMRSolver(NewtonSolver):
+    """LSMR based inexact Newton solver.
+
+    The inner solver uses LSMR [1] after the Newton update is cast into the iteratively
+    reweighted least squares (IRLS) formulation. This means
+
+        H @ coef_newton = -G
+
+    with
+
+        G = X.T @ g + l2_reg_strength * P @ coef
+        H = X.T @ diag(h) @ X + l2_reg_strength * P
+        g = loss.gradient = pointwise gradient
+        h = loss.hessian = pointwise hessian
+        P = penalty matrix in 1/2 w @ P @ w,
+            for a pure L2 penalty without intercept it equals the identity matrix.
+
+    is cast as a least squares problem
+
+        min ||A @ coef_newton - b||_2^2
+
+    with
+
+        A = [                    sqrt(h) * X]
+            [sqrt(l2_reg_strength) * sqrt(P)]
+        b = [                                - g / sqrt(h)]
+            [- sqrt(l2_reg_strength) * sqrt(P) @ self.coef]
+
+    Notes:
+    - A is a square root of H: H = A'A
+    - A and b form G: G = -A'b
+    - The normal equation of this least squares problem, A'A coef_newton = A'b, is
+      again H @ coef_newton = -G.
+
+    After the Newton iteration, and neglecting line search, the new coefficient is
+    self.coef += coef_newton.
+
+    Note that this solver can naturally deal with sparse X.
+
+    References
+    ----------
+    .. [1] :arxiv:`Fong & Saunders "LSMR: An iterative algorithm for sparse
+           least-squares problems" <1006.0758>`
+           See also
+           https://docs.scipy.org/doc/scipy/reference/generated/scipy.sparse.linalg.lsmr.html
+
+    """  # noqa: E501
+
+    def setup(self, X, y, sample_weight):
+        """Setup.
+
+        Additionally to super().setup(), also sets:
+            - self.g = pointwise gradient
+            - self.h = pointwise hessian
+            - self.gradient
+            - self.sqrt_P = sqrt(l2_reg_strength) * sqrt(P)
+            - self.A_norm
+            - self.r_norm
+            - self.atol
+            - self.lsmr_iter
+            - self.sw_sum
+            - self.sqrt_sw_sum
+        """
+        super().setup(X=X, y=y, sample_weight=sample_weight)
+        (
+            self.g,
+            self.h,
+        ) = self.linear_loss.base_loss.init_gradient_and_hessian(
+            n_samples=X.shape[0], dtype=X.dtype
+        )
+        n_samples, n_features = X.shape
+        # For a general (symmetric) penalty matrix P, we can use any square root of it,
+        # e.g. the Cholesky decomposition. For the simple L2-penalty, we can use the
+        # identity matrix and handle the intercept separately.
+        # We use a 1-d array of shape (n_features,) instead of a 2-d diagonal array to
+        # save memory. We also simply omit the zero at the end for the intercept.
+        # For the multiclass case, we use the same 1-d array of shape (n_features,) and
+        # do not store n_classes copies of it.
+        self.sqrt_P = np.full(
+            shape=n_features, fill_value=np.sqrt(self.l2_reg_strength), dtype=X.dtype
+        )
+
+        # In the inner_solve with LSMR, we set atol ~ 1 / (||A|| * ||r||) with the
+        # Frobenius norm ||A||, see below. We track this in every iteration with
+        # self.A_norm and self.r_norm. For the first call of inner_solve, we need an
+        # initial estimation of ||A||. We assume h = 1 and get
+        #   ||A||^2 = ||X||^2 + sqrt(l2_reg_strength) ||sqrt(P)||^2
+        # if scipy.sparse.issparse(X):
+        #     self.A_norm = scipy.sparse.linalg.norm(X) ** 2
+        # else:
+        #     self.A_norm = scipy.linalg.norm(X) ** 2
+        # self.A_norm += scipy.linalg.norm(self.sqrt_P) ** 2
+        # self.A_norm = np.sqrt(self.A_norm)
+        #
+        # Another, even simpler choice is ||A|| = 1 which likely understimates
+        # ||A|| because ||X|| > 1 is very likely for typical (e.g. standardized) X.
+        # Underestimating ||A|| means overestimating atol ~ 1 / ||A||, which means the
+        # first iteration stops earlier. This is usually a good thing!
+        # Note: For n_featues > n_samples and no regularization, it seems that a higher
+        # starting A_norm is better which forces more initial LSMR iterations. We could
+        # even condider to make it dependent on log(l2_reg_strength).
+        self.A_norm = max(1, n_features / n_samples)
+        if n_features > n_samples and self.l2_reg_strength < 1e-7:
+            # We are in or close to an unpenalized underparametrized setting, where a
+            # large first LSMR iteration is beneficial.
+            # The multiplicative term is 1 <= term <= 50, log(1e-22) ~ -50
+            self.A_norm *= 1 - np.log((self.l2_reg_strength + 1e-22) * 1e7)
+        self.r_norm = 1
+        self.atol = 0
+        self.lsmr_iter = 0  # number of total LSMR iterations
+        self.sw_sum = n_samples if sample_weight is None else np.sum(sample_weight)
+        self.sqrt_sw_sum = np.sqrt(self.sw_sum)
+
+    def update_gradient_hessian(self, X, y, sample_weight):
+        """Update gradient and hessian.
+
+        Update pointwise gradient and hessian, self.g and self.h,
+        as well as the full gradient, self.gradient.
+        """
+        n_samples, n_features = X.shape
+        if not self.linear_loss.base_loss.is_multiclass:
+            self.linear_loss.base_loss.gradient_hessian(
+                y_true=y,
+                raw_prediction=self.raw_prediction,  # this was updated in line_search
+                sample_weight=sample_weight,
+                gradient_out=self.g,
+                hessian_out=self.h,
+                n_threads=self.n_threads,
+            )
+            self.g /= self.sw_sum
+            self.h /= self.sw_sum
+
+            # See LinearModelLoss.gradient_hessian
+            # For non-canonical link functions and far away from the optimum, the
+            # pointwise hessian can be negative. We take care that 75% ot the hessian
+            # entries are positive.
+            self.hessian_warning = np.mean(self.h <= 0) > 0.25
+            self.h = np.abs(self.h)
+
+            # This duplicates a bit of code from LinearModelLoss.gradient.
+            weights, _ = self.linear_loss.weight_intercept(self.coef)
+            self.gradient = np.empty_like(self.coef, dtype=self.coef.dtype)
+            self.gradient[:n_features] = X.T @ self.g + self.l2_reg_strength * weights
+            if self.linear_loss.fit_intercept:
+                self.gradient[-1] = self.g.sum()
+        else:
+            # Here we may safely assume HalfMultinomialLoss.
+            # We use self.h to store the predicted probabilities instead of the hessian
+            self.linear_loss.base_loss.gradient_proba(
+                y_true=y,
+                raw_prediction=self.raw_prediction,  # this was updated in line_search
+                sample_weight=sample_weight,
+                gradient_out=self.g,
+                proba_out=self.h,
+                n_threads=self.n_threads,
+            )
+            self.g /= self.sw_sum
+            # Note: Multinomial hessian is always non-negative.
+
+            # This duplicates a bit of code from LinearModelLoss.gradient.
+            n_classes = self.linear_loss.base_loss.n_classes
+            n_dof = n_features + int(self.linear_loss.fit_intercept)
+            weights, _ = self.linear_loss.weight_intercept(self.coef)
+            self.gradient = np.empty((n_classes, n_dof), dtype=weights.dtype, order="F")
+            # self.g.shape = (n_samples, n_classes)
+            self.gradient[:, :n_features] = (
+                self.g.T @ X + self.l2_reg_strength * weights
+            )
+            if self.linear_loss.fit_intercept:
+                self.gradient[:, -1] = self.g.sum(axis=0)
+
+    def compute_A_b(self, X, y, sample_weight):
+        """Compute A and b for IRLS formulation.
+
+        Returns
+        -------
+        A : LinearOperator of shape (n_samples + n_features, n_dof) or \
+            (n_samples + n_features) * n_classes, n_dof * n_classes)
+            For the multiclass case, `A @ x` expects `x = coef.ravel(order="C")` for
+            `coef.shape = (n_classes, n_dof)`, and `A.T @ x` expects
+            `x = b.ravel(order="F")` for `b.shape=(n_samples + n_features, n_classes)`.
+
+        b : ndarray of shape (n_samples + n_features) or \
+            ((n_samples + n_features) * n_classes)
+        """
+        n_samples, n_features = X.shape
+
+        if not self.linear_loss.base_loss.is_multiclass:
+            n_classes = 1
+            sqrt_h = np.sqrt(self.h)
+
+            b = np.r_[-self.g / sqrt_h, -self.sqrt_P * self.coef[:n_features]]
+
+            if self.linear_loss.fit_intercept:
+                n_dof = n_features + 1
+
+                def matvec(x):
+                    # A @ x with intercept
+                    # We assume self.sqrt_P to be 1-d array of shape (n_features,),
+                    # representing a diagonal matrix.
+                    return np.r_[sqrt_h * (X @ x[:-1] + x[-1]), self.sqrt_P * x[:-1]]
+
+                def rmatvec(x):
+                    # A.T @ x with intercept
+                    return np.r_[
+                        X.T @ (sqrt_h * x[:n_samples]) + self.sqrt_P * x[n_samples:],
+                        sqrt_h @ x[:n_samples],
+                    ]
+
+            else:
+                n_dof = n_features
+
+                def matvec(x):
+                    # A @ x without intercept
+                    return np.r_[sqrt_h * (X @ x), self.sqrt_P * x]
+
+                def rmatvec(x):
+                    # A.T @ x without intercept
+                    return X.T @ (sqrt_h * x[:n_samples]) + self.sqrt_P * x[n_samples:]
+
+        else:
+            # Here we may safely assume HalfMultinomialLoss.
+            n_classes = self.linear_loss.base_loss.n_classes
+            p = self.h  # probability array of shape (n_samples, n_classes)
+            # We need a square root of X' h X with pointwise hessian h. Note that h is
+            # a priori a 4-dimensional matrix (n_samples ** 2, n_classes ** 2) and is
+            # diagonal in n_samples ** 2, i.e. effectively a 3-dimensional matrix.
+            # To accomplish this, we need the Cholesky or LDL' decomposition of h
+            #   h = diag(p) - p' p
+            # or with indices i and j for classes
+            #   h_ij = p_i * delta_ij - p_i * p_j
+            # This holds for every single point (n_sample). To tackle this, we use the
+            # class Multinomial_LDL_Decomposition, which provides further details.
+            #
+            # We have h = L D L' with lower triangular L having unit diagonal and
+            # diagonal D. This gives
+            #   C = sqrt(D) L' X
+            #   X' h X = C' C
+            # and C is our searched for square root in
+            #   A = [                              C]
+            #       [sqrt(l2_reg_strength) * sqrt(P)]
+            #   b = [                          -(L sqrt(D))^(-1) g]
+            #       [- sqrt(l2_reg_strength) * sqrt(P) @ self.coef]
+
+            # Note again
+            # self.g.shape = p.shape = (n_samples, n_classes)
+            # self.coef.shape = (n_classes, n_dof)
+            # sqrt(h) becomes sqrt(D) L'
+            LDL = Multinomial_LDL_Decomposition(proba=p)
+            self.LDL = LDL  # store it for compute_d2
+
+            # We need "g/sqrt(h)" such that g = L sqrt(D) "g/sqrt(h)", i.e.
+            # "g/sqrt(h)" = 1/sqrt(D) L^-1 @ g.
+            # Note that L^-1 is again lower triangular.
+            g_over_h = self.g.copy()  # F-contiguous, shape (n_samples, n_classes)
+            LDL.inverse_L_sqrt_D_matmul(g_over_h)
+            if sample_weight is not None:
+                # Sample weights sw enter the hessian multiplicatively, i.e. sw * h.
+                # They can be dealt with by adding them to D, which means sqrt(sw)
+                # to sqrt(D) in every place.
+                sqrt_sw = np.sqrt(sample_weight) / self.sqrt_sw_sum
+                g_over_h /= sqrt_sw[:, None]
+            else:
+                sqrt_sw = 1 / self.sqrt_sw_sum
+                g_over_h *= self.sqrt_sw_sum
+
+            # For ravelled results we use the convention that all values for the same
+            # class are in sequence. For n_classes = 2, the ravelled b looks like
+            #   [            -g_over_h[:, 0]]    n_samples elements of class 0
+            #   [-self.sqrt_P * coef.T[:, 0]]    n_features elements of class 0
+            #   [            -g_over_h[:, 1]]    n_samples elements of class 1
+            #   [-self.sqrt_P * coef.T[:, 1]]    n_features elements of class 1
+            # Note that this convention is different from
+            # LinearModelLoss.gradient_hessian_product which expects raveled coef to
+            # to have all classes in sequence.
+            b = np.r_[
+                -g_over_h,
+                -self.sqrt_P[:, None] * self.coef[:, :n_features].T,
+            ].ravel(order="F")
+
+            # Note on performance:
+            # X @ coef.T returns a C-contiguous array, but due to slicing along the
+            # first axis (along samples like x[:, i]), sqrt_D_Lt_matmul is more
+            # efficient for F-contiguous arrays. The output of X @ c can be made
+            # F-contigous by (c.T @ X.T).T.
+
+            if self.linear_loss.fit_intercept:
+                n_dof = n_features + 1
+
+                def matvec(x):
+                    # A @ x with or without intercept
+                    # We assume self.sqrt_P to be 1-d array of shape (n_features,),
+                    # representing a diagonal matrix.
+                    coef = x.reshape((n_classes, -1), order="C")
+                    # C_coef = sqrt(D) L' X coef
+                    # C_coef = X @ coef[:, :-1].T + coef[:, -1]  # C-contiguous
+                    # F-contiguous version, see note above:
+                    C_coef = (coef[:, :-1] @ X.T + coef[:, -1].T[:, None]).T
+                    LDL.sqrt_D_Lt_matmul(C_coef)
+                    # C_coef.shape = (n_samples, n_classes)
+                    if sample_weight is not None:
+                        C_coef *= sqrt_sw[:, None]
+                    else:
+                        C_coef *= sqrt_sw
+                    # For n_classes = 2, the ravelled result looks like
+                    #   [         C_Coef[:, 0]]    n_samples elements of class 0
+                    #   [sqrt_P * coef.T[:, 0]]    n_features elements of class 0
+                    #   [         C_Coef[:, 1]]    n_samples elements of class 1
+                    #   [sqrt_P * coef.T[:, 1]]    n_features elements of class 1
+                    return np.r_[
+                        C_coef,
+                        self.sqrt_P[:, None] * coef[:, :n_features].T,
+                    ].ravel(order="F")
+
+                def rmatvec(x):
+                    # A.T @ x with intercept
+                    # Ct_y = X' L sqrt(D) y
+                    x = x.reshape((-1, n_classes), order="F")
+                    y = x[:n_samples, :]  # y is neither C nor F-contiguous
+                    y = y.copy(order="F")
+                    if sample_weight is not None:
+                        y *= sqrt_sw[:, None]
+                    else:
+                        y *= sqrt_sw
+                    L_sqrtD_y = LDL.L_sqrt_D_matmul(y)
+                    Ct_y = X.T @ L_sqrtD_y  # shape = (n_features, n_classes)
+                    return np.r_[
+                        Ct_y + self.sqrt_P[:, None] * x[n_samples:, :],
+                        np.sum(L_sqrtD_y, axis=0)[None, :],
+                    ].ravel(order="F")
+
+            else:
+                n_dof = n_features
+
+                def matvec(x):
+                    # A @ x without intercept
+                    coef = x.reshape((n_classes, -1), order="C")
+                    # C_coef = sqrt(D) L' X coef
+                    # C_coef = X @ coef.T  # C-contiguous
+                    # F-contiguous version, see note above:
+                    C_coef = (coef @ X.T).T
+                    LDL.sqrt_D_Lt_matmul(C_coef)
+                    if sample_weight is not None:
+                        C_coef *= sqrt_sw[:, None]
+                    else:
+                        C_coef *= sqrt_sw
+                    return np.r_[
+                        C_coef,
+                        self.sqrt_P[:, None] * coef.T,
+                    ].ravel(order="F")
+
+                def rmatvec(x):
+                    # A.T @ x without intercept
+                    # Ct_y = X' L sqrt(D) y
+                    x = x.reshape((-1, n_classes), order="F")
+                    y = x[:n_samples, :]  # y is neither C nor F-contiguous
+                    y = y.copy(order="F")
+                    if sample_weight is not None:
+                        y *= sqrt_sw[:, None]
+                    else:
+                        y *= sqrt_sw
+                    L_sqrtD_y = LDL.L_sqrt_D_matmul(y)
+                    Ct_y = X.T @ L_sqrtD_y  # shape = (n_features, n_classes)
+                    return (Ct_y + self.sqrt_P[:, None] * x[n_samples:, :]).ravel(
+                        order="F"
+                    )
+
+        # Note that initializing LinearOperator seems to have some surprisingly sizable
+        # overhead.
+        A = scipy.sparse.linalg.LinearOperator(
+            shape=((n_samples + n_features) * n_classes, n_dof * n_classes),
+            matvec=matvec,
+            rmatvec=rmatvec,
+        )
+
+        return A, b
+
+    def inner_solve(self, X, y, sample_weight):
+        """Compute Newton step.
+
+        Sets:
+            - self.coef_newton via LSMR
+              As LSMR is an iterative method, NewtonLSMRSolver is an inexact Newton
+              method.
+            - self.gradient_times_newton
+            - self.lsmr_iter
+            - self.A_norm
+            - self.r_norm
+            - self.atol
+
+        A_norm and r_norm are used for the inner tolerance used in LSMR.
+        """
+        n_samples, n_features = X.shape
+        if not self.linear_loss.base_loss.is_multiclass:
+            n_classes = 1
+        else:
+            n_classes = self.linear_loss.base_loss.n_classes
+        A, b = self.compute_A_b(X, y, sample_weight)
+        # The choice of atol in LSMR is essential for stability and for computation
+        # time. For n_samples > n_features, we most certainly have a least squares
+        # problem (no solution to the linear equation A x = b), such that the following
+        # stopping criterion with residual r = b - A x and x = coef_newton applies:
+        #   ||A' r|| = ||H x + G|| <= atol * ||A|| * ||r||.
+        # For inexact Newton solvers, res = H x + G is called the residual and one
+        # usually chooses, see Eq. 7.3 Nocedal & Wright 2nd ed, a stopping criterion
+        #   ||res|| = ||A' r|| <= eta * ||G||
+        # with a forcing sequence 0 < eta < 1 (eta_k for iteration k).
+        # As for our Newton conjugate gradient solver "_newton_cg", we set
+        #   eta = min(0.5, np.sqrt(||G||))
+        # which establishes a superlinear rate of convergence.
+        # Fortunately, we get approximations of the Frobenius norm of A and the norm of
+        # r, ||A|| and ||r|| respectively, for free by LSMR such that we can set
+        #   atol = eta * ||G|| / (||A|| * ||r||)
+        # This results in our desired stopping criterion
+        #   ||res|| = ||A' r|| <= eta * ||G||
+        # at least approximately, as we have to use ||A|| and ||r|| from the last and
+        # not the current iteration.
+        #
+        # In the case of perfect interpolation, n_features >= n_samples, we might have
+        # an exact solution to A x = b. LSMR then uses the stopping criterion
+        #   ||r|| <= atol * ||A|| * ||x|| + btol * ||b||.
+        # Note that
+        #   ||b||^2 = ||g / sqrt(h)||^2 + l2_reg_strength * x0 @ P @ x0
+        # and
+        #   1/2 * ||r||^2 = 1/2 * x @ H @ x + G @ x + 1/2 * ||b||^2
+        # Here, x is the solution of Ax=b, i.e. x=coef_newton, and, neglecting line
+        # search, coef = x + x0. Thus, 1/2 ||r||^2 is just the Taylor series of the
+        # objective with the zero order term loss(x0) replaced by
+        # 1/2 * ||g/sqrt(h)||^2.
+        #
+        # We set btol to the strict self.tol to help cases of collinearity in X when
+        # there is (almost) no L2 penalty.
+        norm_G = scipy.linalg.norm(self.gradient)
+        eta = min(0.5, np.sqrt(norm_G))
+        # Note that norm_G might not be decreasing from Newton iteration to iteration.
+        # This means we are still not close to the minimum and it is good when artol
+        # is then loose enough.
+        if self.verbose >= 3:
+            print(f"    norm(gradient) = {norm_G}")
+        # Avoid division by 0 by adding tiny 1e-16.
+        atol = eta * norm_G / (self.A_norm * self.r_norm + 1e-16)
+        # Avoid that atol gets tiny too fast.
+        if atol < self.atol / 10:
+            atol = self.atol / 10 * np.sqrt(atol * 10 / self.atol)
+        self.atol = atol
+        if self.verbose >= 3:
+            print(f"    {self.A_norm=} {self.r_norm=} {eta=} {atol=}")
+        result = scipy.sparse.linalg.lsmr(
+            A,
+            b,
+            damp=0,
+            atol=atol,
+            btol=self.tol,
+            maxiter=max(n_samples, n_features) * n_classes,  # default is min(A.shape)
+            # default conlim = 1e8, for compatible systems 1e12 is still reasonable,
+            # see LSMR documentation
+            conlim=1e12,
+            show=self.verbose >= 3,
+        )
+        # We store the estimated Frobenius norm of A and norm of residual r in
+        # self.A_norm and self.r_norm for tolerance of next iteration.
+        (
+            self.coef_newton,
+            istop,
+            itn,
+            self.r_norm,
+            normar,
+            self.A_norm,
+            conda,
+            normx,
+        ) = result
+        self.lsmr_iter += itn
+        if self.verbose >= 2:
+            print(f"  Inner iterations in LSMR = {itn}, total = {self.lsmr_iter}")
+        if self.coef.dtype == np.float32:
+            self.coef_newton = self.coef_newton.astype(np.float32)
+        if not self.linear_loss.base_loss.is_multiclass:
+            self.gradient_times_newton = self.gradient @ self.coef_newton
+        else:
+            self.coef_newton = self.coef_newton.reshape((n_classes, -1), order="C")
+            # Center result such that sum over classes equals zero.
+            # Note: The L2 penalty guarantees that coef_newton step is centered, i.e.
+            # np.mean(self.coef_newton, axis=0) = 0.
+            # But for the intercept term self.coef_newton[:, -1] this is less clear.
+            # Nevertheless, all tests pass without the following line.
+            # self.coef_newton -= np.mean(self.coef_newton, axis=0)
+
+            self.gradient_times_newton = self.gradient.ravel(
+                order="F"
+            ) @ self.coef_newton.ravel(order="F")
+
+        # In the first Newton iteraton, we tolerate istop == 7 and other things. We
+        # just got started and are therefore forgiving.
+        if self.iteration == 1:
+            return
+        # Note: We could detect too large steps by comparing norm(coef_newton) = normx
+        # with norm(gradient) or with the already available condition number of A, e.g.
+        # conda.
+        if istop == 7:
+            self.use_fallback_lbfgs_solve = True
+            msg = (
+                f"The inner solver of {self.__class__.__name__} reached "
+                f"maxiter={itn} before the other stopping conditions were "
+                f"satisfied at iteration #{self.iteration}. "
+            )
+        elif istop in (3, 6):
+            self.use_fallback_lbfgs_solve = True
+            msg = (
+                f"The inner solver of {self.__class__.__name__} complained that the "
+                f"condition number of A (A'A = Hessian), conda={conda}, seems to be "
+                "greater than the given limit conlim=1e8 at iteration "
+                f"#{self.iteration}."
+            )
+
+        if self.use_fallback_lbfgs_solve:
+            warnings.warn(
+                msg + "It will now resort to lbfgs instead.\n"
+                "This may be caused by singular or very ill-conditioned Hessian "
+                "matrix. "
+                "Further options are to use another solver or to avoid such situation "
+                "in the first place. Possible remedies are removing collinear features"
+                "of X or increasing the penalization strengths.",
+                ConvergenceWarning,
+            )
+            if self.verbose:
+                print(
+                    "  The inner solver had problems to converge and resorts to lbfgs."
+                )
+            self.use_fallback_lbfgs_solve = True
+            return
+
+    def compute_d2(self, X, sample_weight):
+        """Compute square of Newton decrement."""
+        weights, intercept, raw_prediction = self.linear_loss.weight_intercept_raw(
+            self.coef_newton, X
+        )
+        if not self.linear_loss.base_loss.is_multiclass:
+            d2 = np.sum(raw_prediction * self.h * raw_prediction)
+        else:
+            d = self.LDL.sqrt_D_Lt_matmul(raw_prediction)
+            if sample_weight is not None:
+                d *= sample_weight[:, None]
+            d = d.ravel(order="F")
+            d2 = d @ d
+        d2 += 2 * self.linear_loss.l2_penalty(weights, self.l2_reg_strength)
+        return d2
+
+    def finalize(self, X, y, sample_weight):
+        if hasattr(self, "LDL"):
+            delattr(self, "LDL")
