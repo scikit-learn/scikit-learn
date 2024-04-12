@@ -3290,7 +3290,6 @@ def brier_score_loss(
     {
         "y_true": ["array-like"],
         "y_pred": ["array-like"],
-        "eps": [StrOptions({"auto"}), Interval(Real, 0, 1, closed="both")],
         "sample_weight": ["array-like", None],
         "labels": ["array-like", None],
     },
@@ -3339,12 +3338,10 @@ def d2_log_loss_score(y_true, y_pred, *, sample_weight=None, labels=None):
     Like R^2, D^2 score may be negative (it need not actually be the square of
     a quantity D).
 
-    This metric is not well-defined for single samples and will return a NaN
+    This metric is not well-defined for a single sample and will return a NaN
     value if n_samples is less than two.
     """
-    y_pred = check_array(
-        y_pred, ensure_2d=False, dtype=[np.float64, np.float32, np.float16]
-    )
+    y_pred = check_array(y_pred, ensure_2d=False, dtype="numeric")
     check_consistent_length(y_pred, y_true, sample_weight)
     if _num_samples(y_pred) < 2:
         msg = "D^2 score is not well-defined with less than two samples."
