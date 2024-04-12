@@ -32,6 +32,12 @@ Security
   `min_df`). This fixes a potential security issue (data leak) if the discarded
   rare tokens hold sensitive information from the training set without the
   model developer's knowledge.
+
+  Note: users of those classes are encouraged to either retrain their pipelines
+  with the new scikit-learn version or to manually clear the `stop_words_`
+  attribute from previously trained instances of those transformers. This
+  attribute was designed only for model inspection purposes and has no impact
+  on the behavior of the transformers.
   :pr:`28823` by :user:`Olivier Grisel <ogrisel>`.
 
 Changed models
