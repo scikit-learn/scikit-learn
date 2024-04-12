@@ -1,7 +1,7 @@
 # utils is cimported from other subpackages so this is needed for the cimport
 # to work
 utils_cython_tree = [
-  # We add the root cython tree to make sure sklearn/__init__.py is copied
+  # We add sklearn_root_cython_tree to make sure sklearn/__init__.py is copied
   # early in the build
   sklearn_root_cython_tree,
   fs.copyfile('__init__.py'),
