@@ -17,7 +17,7 @@ cluster_extension_metadata = {
 foreach ext_name, ext_dict : cluster_extension_metadata
   py.extension_module(
     ext_name,
-    ext_dict.get('sources') + utils_cython_tree,
+    [ext_dict.get('sources'), utils_cython_tree],
     dependencies: [np_dep, openmp_dep],
     override_options : ext_dict.get('override_options', []),
     cython_args: cython_args,
