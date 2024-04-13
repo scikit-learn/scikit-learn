@@ -1156,7 +1156,7 @@ def test_logreg_predict_proba_multinomial():
     [
         (
             "newton-cg",
-            "newton-cg failed to converge. Increase the number of iterations.",
+            "newton-cg failed to converge.* Increase the number of iterations.",
         ),
         (
             "liblinear",

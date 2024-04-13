@@ -59,7 +59,7 @@ gh = Github(args.bot_github_token)
 issue_repo = gh.get_repo(args.issue_repo)
 dt_now = datetime.now(tz=timezone.utc)
 date_str = dt_now.strftime("%b %d, %Y")
-title_query = "CI failed on {args.ci_name}"
+title_query = f"CI failed on {args.ci_name}"
 title = f"⚠️ {title_query} (last failure: {date_str}) ⚠️"
 
 
