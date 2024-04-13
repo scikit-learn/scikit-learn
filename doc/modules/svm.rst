@@ -520,6 +520,7 @@ is advised to use :class:`~sklearn.model_selection.GridSearchCV` with
 
  * :ref:`sphx_glr_auto_examples_svm_plot_rbf_parameters.py`
  * :ref:`sphx_glr_auto_examples_svm_plot_svm_nonlinear.py`
+ * :ref:`sphx_glr_auto_examples_svm_plot_svm_scale_c.py`
 
 Custom Kernels
 --------------
