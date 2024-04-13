@@ -2,6 +2,7 @@
 The :mod:`sklearn.pipeline` module implements utilities to build a composite
 estimator, as a chain of transforms and estimators.
 """
+
 # Author: Edouard Duchesnay
 #         Gael Varoquaux
 #         Virgile Fritsch
@@ -18,7 +19,7 @@ from scipy import sparse
 from .base import TransformerMixin, _fit_context, clone
 from .exceptions import NotFittedError
 from .preprocessing import FunctionTransformer
-from .utils import Bunch, _print_elapsed_time
+from .utils import Bunch
 from .utils._estimator_html_repr import _VisualBlock
 from .utils._metadata_requests import METHODS
 from .utils._param_validation import HasMethods, Hidden
@@ -27,6 +28,7 @@ from .utils._set_output import (
     _safe_set_output,
 )
 from .utils._tags import _safe_tags
+from .utils._user_interface import _print_elapsed_time
 from .utils.metadata_routing import (
     MetadataRouter,
     MethodMapping,
@@ -1410,12 +1412,12 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
     ...                       ("svd", TruncatedSVD(n_components=2))])
     >>> X = [[0., 1., 3], [2., 2., 5]]
     >>> union.fit_transform(X)
-    array([[ 1.5       ,  3.0...,  0.8...],
-           [-1.5       ,  5.7..., -0.4...]])
+    array([[-1.5       ,  3.0..., -0.8...],
+           [ 1.5       ,  5.7...,  0.4...]])
     >>> # An estimator's parameter can be set using '__' syntax
     >>> union.set_params(svd__n_components=1).fit_transform(X)
-    array([[ 1.5       ,  3.0...],
-           [-1.5       ,  5.7...]])
+    array([[-1.5       ,  3.0...],
+           [ 1.5       ,  5.7...]])
 
     For a more detailed example of usage, see
     :ref:`sphx_glr_auto_examples_compose_plot_feature_union.py`.

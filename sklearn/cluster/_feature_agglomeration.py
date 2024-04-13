@@ -2,6 +2,7 @@
 Feature agglomeration. Base classes and functions for performing feature
 agglomeration.
 """
+
 # Author: V. Michel, A. Gramfort
 # License: BSD 3 clause
 
