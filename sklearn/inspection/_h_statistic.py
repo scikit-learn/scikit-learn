@@ -92,9 +92,9 @@ def h_statistic(
     sample_weight=None,
     eps=1e-10,
 ):
-    """Friedman and Popescu's H-statistic of pairwise interaction strength.
+    """Friedman's and Popescu's H-statistic of pairwise interaction strength.
 
-    Calculates Friedman and Popescu's H-statistic of interaction strength
+    Calculates Friedman's and Popescu's H-statistic of interaction strength
     for each feature pair j, k, see [FRI]_. The statistic is defined as::
 
         H_jk^2 = Numerator_jk / Denominator_jk, where
@@ -107,7 +107,7 @@ def h_statistic(
 
     It equals the proportion of effect variability between two features that cannot
     be explained by their main effects. When there is no interaction, the value is
-    precisely 0. The numerator (or its square root) provides an absolute measure
+    exactly 0. The numerator (or its square root) provides an absolute measure
     of interaction strength, enabling direct comparison across feature pairs.
 
     The computational complexity of the function is :math:`O(p^2 n^2)`,
@@ -122,7 +122,7 @@ def h_statistic(
     estimator : object
         An estimator that has already been :term:`fitted`.
 
-    X : ndarray or DataFrame, shape (n_observations, n_features)
+    X : {array-like or dataframe} of shape (n_samples, n_features)
         Data for which :term:`estimator` is able to calculate predictions.
 
     features : array-like of {int, str}, default=None
@@ -162,7 +162,7 @@ def h_statistic(
             Take square-root to get values on the scale of the predictions.
 
         denominator_pairwise : ndarray of shape (n_pairs, ) or (n_pairs, output_dim)
-            Denominator of pairwise H-squared statistic (not of particular interest).
+            Denominator of pairwise H-squared statistic. Used for appropriate normalization of H.
 
     References
     ----------
@@ -198,6 +198,15 @@ def h_statistic(
     """
     check_is_fitted(estimator)
 
+    if not (is_classifier(estimator) or is_regressor(estimator)):
+        raise ValueError("'estimator' must be a fitted regressor or classifier.")
+
+    if is_classifier(estimator) and isinstance(estimator.classes_[0], np.ndarray):
+        raise ValueError("Multiclass-multioutput estimators are not supported")
+    # Use check_array only on lists and other non-array-likes / sparse. Do not
+    # convert DataFrame into a NumPy array.
+    if not (hasattr(X, "__array__") or sparse.issparse(X)):
+        X = check_array(X, force_all_finite="allow-nan", dtype=object)
     if sample_weight is not None:
         sample_weight = _check_sample_weight(sample_weight, X)
 

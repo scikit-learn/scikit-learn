@@ -63,7 +63,6 @@ def test_h_statistic_additive_classification():
     expected_length = M_FEAT * (M_FEAT - 1) / 2
 
     assert result.h_squared_pairwise.shape == (expected_length, N_CLASSES)
-    print(result)
     assert_allclose(result.h_squared_pairwise, 0)
 
 
