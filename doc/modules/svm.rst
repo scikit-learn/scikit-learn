@@ -134,7 +134,7 @@ function of shape ``(n_samples, n_classes)``.
     >>> clf.fit(X, Y)
     SVC(decision_function_shape='ovo')
     >>> dec = clf.decision_function([[1]])
-    >>> dec.shape[1] # 4 classes: 4*3/2 = 6
+    >>> dec.shape[1] # 6 classes: 4*3/2 = 6
     6
     >>> clf.decision_function_shape = "ovr"
     >>> dec = clf.decision_function([[1]])
@@ -144,9 +144,9 @@ function of shape ``(n_samples, n_classes)``.
 On the other hand, :class:`LinearSVC` implements "one-vs-the-rest"
 multi-class strategy, thus training `n_classes` models.
 
-    >>> lin_clf = svm.LinearSVC(dual="auto")
+    >>> lin_clf = svm.LinearSVC()
     >>> lin_clf.fit(X, Y)
-    LinearSVC(dual='auto')
+    LinearSVC()
     >>> dec = lin_clf.decision_function([[1]])
     >>> dec.shape[1]
     4

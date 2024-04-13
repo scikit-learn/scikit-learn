@@ -14,7 +14,9 @@ dependencies:
   - threadpoolctl
   - matplotlib
   - pyamg
-  - pytest
+  - pytest<8
   - pytest-xdist
-  - setuptools
+  - pip
+  - ninja
+  - meson-python
   - ccache

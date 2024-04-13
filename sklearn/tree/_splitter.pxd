@@ -8,11 +8,10 @@
 # License: BSD 3 clause
 
 # See _splitter.pyx for details.
-cimport numpy as cnp
-
 from ._criterion cimport Criterion
+from ._tree cimport ParentInfo
 
-from ..utils._typedefs cimport float32_t, float64_t, intp_t, int32_t, uint32_t
+from ..utils._typedefs cimport float32_t, float64_t, intp_t, int8_t, int32_t, uint32_t
 
 
 cdef struct SplitRecord:
@@ -28,7 +27,7 @@ cdef struct SplitRecord:
     float64_t lower_bound     # Lower bound on value of both children for monotonicity
     float64_t upper_bound     # Upper bound on value of both children for monotonicity
     unsigned char missing_go_to_left  # Controls if missing values go to the left node.
-    intp_t n_missing       # Number of missing values for the feature being split on
+    intp_t n_missing            # Number of missing values for the feature being split on
 
 cdef class Splitter:
     # The splitter searches in the input space for a feature and a threshold
@@ -62,7 +61,7 @@ cdef class Splitter:
     #   -1: monotonic decrease
     #    0: no constraint
     #   +1: monotonic increase
-    cdef const cnp.int8_t[:] monotonic_cst
+    cdef const int8_t[:] monotonic_cst
     cdef bint with_monotonic_cst
     cdef const float64_t[:] sample_weight
 
@@ -100,11 +99,8 @@ cdef class Splitter:
 
     cdef int node_split(
         self,
-        float64_t impurity,   # Impurity of the node
+        ParentInfo* parent,
         SplitRecord* split,
-        intp_t* n_constant_features,
-        float64_t lower_bound,
-        float64_t upper_bound,
     ) except -1 nogil
 
     cdef void node_value(self, float64_t* dest) noexcept nogil
