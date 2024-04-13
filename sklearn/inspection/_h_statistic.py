@@ -13,6 +13,13 @@ from ..utils import (
     _safe_indexing,
     check_array,
 )
+from ..utils._param_validation import (
+    HasMethods,
+    Integral,
+    Interval,
+    Real,
+    validate_params,
+)
 from ..utils.random import sample_without_replacement
 from ..utils.validation import _check_sample_weight, check_is_fitted
 
@@ -93,6 +100,21 @@ def _calculate_pd_over_data(estimator, X, feature_indices, sample_weight=None):
     return pd_values - column_means
 
 
+@validate_params(
+    {
+        "estimator": [
+            HasMethods(["fit", "predict"]),
+            HasMethods(["fit", "predict_proba"]),
+        ],
+        "X": ["array-like", "sparse matrix"],
+        "features": ["array-like", list, None],
+        "sample_weight": ["array-like", None],
+        "n_max": [Interval(Integral, 1, None, closed="left")],
+        "random_state": ["random_state"],
+        "eps": [Interval(Real, 0, None, closed="left")],
+    },
+    prefer_skip_nested_validation=True,
+)
 def h_statistic(
     estimator,
     X,
@@ -202,7 +224,7 @@ def h_statistic(
     >>> # For features (8, 2), 3.4% of the joint effect variability comes from
     >>> # their interaction. These two features also have strongest absolute
     >>> # interaction, see "numerator_pairwise":
-    >>> # {'feature_pair': [(3, 8), (3, 2), (8, 2)],
+    >>> # {'feature_pairs': [(3, 8), (3, 2), (8, 2)],
     >>> # 'h_squared_pairwise': array([0.00985985, 0.00927104, 0.03439926]),
     >>> # 'numerator_pairwise': array([ 1.2955532 ,  1.2419687 , 11.13358385]),
     >>> # 'denominator_pairwise': array([131.39690331, 133.96210997, 323.6576595 ])}
