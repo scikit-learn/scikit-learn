@@ -5,6 +5,7 @@ cluster analysis results. There are two forms of evaluation:
 - supervised, which uses a ground truth class values for each sample.
 - unsupervised, which does not and measures the 'quality' of the model itself.
 """
+
 from ._bicluster import consensus_score
 from ._supervised import (
     adjusted_mutual_info_score,

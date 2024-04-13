@@ -8,6 +8,7 @@ Locally Linear Embedding (LLE), on the classic Swiss Roll dataset.
 Then, we will explore how they both deal with the addition of a hole
 in the data.
 """
+
 # %%
 # Swiss Roll
 # ---------------------------------------------------

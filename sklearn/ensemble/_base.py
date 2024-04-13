@@ -10,8 +10,9 @@ import numpy as np
 from joblib import effective_n_jobs
 
 from ..base import BaseEstimator, MetaEstimatorMixin, clone, is_classifier, is_regressor
-from ..utils import Bunch, _print_elapsed_time, check_random_state
+from ..utils import Bunch, check_random_state
 from ..utils._tags import _safe_tags
+from ..utils._user_interface import _print_elapsed_time
 from ..utils.metadata_routing import _routing_enabled
 from ..utils.metaestimators import _BaseComposition
 
