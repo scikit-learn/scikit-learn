@@ -1,11 +1,18 @@
-"""Friedman and Popescu's H-Statistic"""
+"""Friedman's and Popescu's H-Statistic"""
 
 import itertools
 
 import numpy as np
+from scipy import sparse
 
 from ..base import is_classifier, is_regressor
-from ..utils import Bunch, _get_column_indices, _safe_assign, _safe_indexing
+from ..utils import (
+    Bunch,
+    _get_column_indices,
+    _safe_assign,
+    _safe_indexing,
+    check_array,
+)
 from ..utils.random import sample_without_replacement
 from ..utils.validation import _check_sample_weight, check_is_fitted
 
@@ -13,15 +20,19 @@ from ..utils.validation import _check_sample_weight, check_is_fitted
 def _calculate_pd_brute_fast(estimator, X, feature_indices, grid, sample_weight=None):
     """Fast version of _calculate_partial_dependence_brute()
 
-    Returns np.array of size (n_grid, ) or (n_ngrid, output_dimension).
+    Returns np.array of size (n_grid, ) or (n_ngrid, output_dim).
     """
 
     if is_regressor(estimator):
-        pred_fun = estimator.predict
-    elif is_classifier(estimator) and hasattr(estimator, "predict_proba"):
-        pred_fun = estimator.predict_proba
-    else:
-        raise ValueError("The estimator has no predict or predict_proba method.")
+        if hasattr(estimator, "predict"):
+            pred_fun = estimator.predict
+        else:
+            raise ValueError("The regressor has no predict() method.")
+    elif is_classifier(estimator):
+        if hasattr(estimator, "predict_proba"):
+            pred_fun = estimator.predict_proba
+        else:
+            raise ValueError("The classifier has no predict_proba() method.")
 
     # X is stacked n_grid times, and grid columns are replaced by replicated grid
     n = X.shape[0]
@@ -48,7 +59,7 @@ def _calculate_pd_brute_fast(estimator, X, feature_indices, grid, sample_weight=
 def _calculate_pd_over_data(estimator, X, feature_indices, sample_weight=None):
     """Calculates centered partial dependence over the data distribution.
 
-    It returns a numpy array of size (n, ) or (n, output_dimension).
+    It returns a numpy array of size (n, ) or (n, output_dim).
     """
 
     # Select grid columns and remove duplicates (will compensate below)
@@ -85,11 +96,11 @@ def _calculate_pd_over_data(estimator, X, feature_indices, sample_weight=None):
 def h_statistic(
     estimator,
     X,
-    *,
     features=None,
+    *,
+    sample_weight=None,
     n_max=500,
     random_state=None,
-    sample_weight=None,
     eps=1e-10,
 ):
     """Friedman's and Popescu's H-statistic of pairwise interaction strength.
@@ -110,8 +121,8 @@ def h_statistic(
     exactly 0. The numerator (or its square root) provides an absolute measure
     of interaction strength, enabling direct comparison across feature pairs.
 
-    The computational complexity of the function is :math:`O(p^2 n^2)`,
-    where :math:`p` denotes the number of features considered. The size of `n` is
+    The computational complexity of the function is `O(p^2 n^2)`,
+    where `p` denotes the number of features considered. The size of `n` is
     automatically controlled via `n_max=500`, while it is the user's responsibility
     to select only a subset of *important* features. It is crucial to focus on important
     features because for weak predictors, the denominator might be small, and
@@ -129,15 +140,15 @@ def h_statistic(
         List of feature names or column indices used to calculate pairwise statistics.
         The default, None, will use all column indices of X.
 
+    sample_weight : array-like of shape (n_samples,), default=None
+        Sample weights used in calculating partial dependencies.
+
     n_max : int, default=500
         The number of rows to draw without replacement from X (and `sample_weight`).
 
     random_state : int, RandomState instance, default=None
         Pseudo-random number generator used for subsampling via `n_max`.
         See :term:`Glossary <random_state>`.
-
-    sample_weight : array-like of shape (n_samples,), default=None
-        Sample weights used in calculating partial dependencies.
 
     eps : float, default=1e-10
         Threshold below which numerator values are set to 0.
@@ -147,7 +158,7 @@ def h_statistic(
     result : :class:`~sklearn.utils.Bunch`
         Dictionary-like object, with the following attributes.
 
-        feature_pair : list of length n_feature_pairs
+        feature_pairs : list of length n_feature_pairs
             The list contains tuples of feature pairs (indices) in the same order
             as all pairwise statistics.
 
@@ -162,7 +173,8 @@ def h_statistic(
             Take square-root to get values on the scale of the predictions.
 
         denominator_pairwise : ndarray of shape (n_pairs, ) or (n_pairs, output_dim)
-            Denominator of pairwise H-squared statistic. Used for appropriate normalization of H.
+            Denominator of pairwise H-squared statistic. Used for appropriate
+            normalization of H.
 
     References
     ----------
@@ -203,10 +215,12 @@ def h_statistic(
 
     if is_classifier(estimator) and isinstance(estimator.classes_[0], np.ndarray):
         raise ValueError("Multiclass-multioutput estimators are not supported")
+
     # Use check_array only on lists and other non-array-likes / sparse. Do not
     # convert DataFrame into a NumPy array.
     if not (hasattr(X, "__array__") or sparse.issparse(X)):
         X = check_array(X, force_all_finite="allow-nan", dtype=object)
+
     if sample_weight is not None:
         sample_weight = _check_sample_weight(sample_weight, X)
 
@@ -230,10 +244,10 @@ def h_statistic(
 
     # CALCULATIONS
     pd_univariate = []
-    for ind in feature_indices:
+    for idx in feature_indices:
         pd_univariate.append(
             _calculate_pd_over_data(
-                estimator, X=X, feature_indices=[ind], sample_weight=sample_weight
+                estimator, X=X, feature_indices=[idx], sample_weight=sample_weight
             )
         )
 
@@ -262,7 +276,7 @@ def h_statistic(
     h2_stat = np.divide(num, denom, out=np.zeros_like(num), where=denom > 0)
 
     return Bunch(
-        feature_pair=list(itertools.combinations(features, 2)),
+        feature_pairs=list(itertools.combinations(features, 2)),
         h_squared_pairwise=h2_stat,
         numerator_pairwise=num,
         denominator_pairwise=denom,

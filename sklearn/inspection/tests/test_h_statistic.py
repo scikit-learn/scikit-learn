@@ -25,17 +25,17 @@ from sklearn.linear_model import LinearRegression
 @pytest.mark.parametrize("sample_weight", [None, "ones"])
 def test_h_statistic_additive_regression(est, features, n_max, sample_weight):
     # Checks that additive regressions get statistics of 0.
-    M_FEAT = 4
+    N_FEAT = 4
     N = 200
-    X, y = make_regression(n_samples=N, n_features=M_FEAT, random_state=0)
+    X, y = make_regression(n_samples=N, n_features=N_FEAT, random_state=0)
     w = np.ones(N) if sample_weight == "ones" else None
 
     model = est.fit(X, y, sample_weight=w)
     result = h_statistic(
-        model, X, features=features, random_state=1, n_max=n_max, sample_weight=w
+        model, X, features=features, sample_weight=w, n_max=n_max, random_state=1
     )
 
-    m = M_FEAT if features is None else len(features)
+    m = N_FEAT if features is None else len(features)
     expected_length = m * (m - 1) / 2
 
     assert result.h_squared_pairwise.shape == (expected_length,)
@@ -46,12 +46,12 @@ def test_h_statistic_additive_classification():
     # Checks that additive classification gets statistics of 0. The presence
     # of link functions (especially for GradientBoosting with more than 2 classes)
     # would make further tests tricky.
-    M_FEAT = 4
+    N_FEAT = 4
     N_CLASSES = 4
     X, y = make_classification(
         n_samples=200,
-        n_features=M_FEAT,
-        n_informative=M_FEAT,
+        n_features=N_FEAT,
+        n_informative=N_FEAT,
         n_redundant=0,
         n_classes=N_CLASSES,
         random_state=0,
@@ -60,7 +60,7 @@ def test_h_statistic_additive_classification():
     model.fit(X, y)
     result = h_statistic(model, X, random_state=1)
 
-    expected_length = M_FEAT * (M_FEAT - 1) / 2
+    expected_length = N_FEAT * (N_FEAT - 1) / 2
 
     assert result.h_squared_pairwise.shape == (expected_length, N_CLASSES)
     assert_allclose(result.h_squared_pairwise, 0)
@@ -78,14 +78,14 @@ def test_h_statistic_additive_classification():
 @pytest.mark.parametrize("sample_weight", [None, "ones"])
 def test_h_statistic_regression(est, features, n_max, sample_weight):
     # Tests that models with interactions will produce (some) positive values.
-    M_FEAT = 4
+    N_FEAT = 4
     N = 200
-    X, y = make_regression(n_samples=N, n_features=M_FEAT, random_state=0)
+    X, y = make_regression(n_samples=N, n_features=N_FEAT, random_state=0)
     w = np.ones(N) if sample_weight == "ones" else None
 
     model = est.fit(X, y, sample_weight=w)
     result = h_statistic(
-        model, X, features=features, random_state=1, n_max=n_max, sample_weight=w
+        model, X, features=features, sample_weight=w, n_max=n_max, random_state=1
     )
 
     assert any(result.h_squared_pairwise > 1e-5)
@@ -105,13 +105,13 @@ def test_h_statistic_equivalence_array_dataframe(n_max, sample_weight):
     # Numpy
     model_np = RandomForestRegressor(random_state=0, max_depth=4, n_estimators=20)
     model_np.fit(X, y, sample_weight=w)
-    result_np = h_statistic(model_np, X, random_state=1, n_max=n_max, sample_weight=w)
+    result_np = h_statistic(model_np, X, sample_weight=w, n_max=n_max, random_state=1)
 
     # Pandas
     model_pd = clone(model_np)
     model_pd.fit(X_df, y, sample_weight=w)
     result_pd = h_statistic(
-        model_pd, X_df, random_state=1, n_max=n_max, sample_weight=w
+        model_pd, X_df, sample_weight=w, n_max=n_max, random_state=1
     )
 
     assert_allclose(result_np.h_squared_pairwise, result_pd.h_squared_pairwise)
