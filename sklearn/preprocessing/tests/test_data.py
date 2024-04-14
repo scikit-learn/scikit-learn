@@ -12,7 +12,7 @@ import numpy.linalg as la
 import pytest
 from scipy import sparse, stats
 
-from sklearn import datasets
+from sklearn import config_context, datasets
 from sklearn.base import clone
 from sklearn.exceptions import NotFittedError
 from sklearn.metrics.pairwise import linear_kernel
@@ -44,6 +44,7 @@ from sklearn.utils._array_api import (
     yield_namespace_device_dtype_combinations,
 )
 from sklearn.utils._testing import (
+    _array_api_for_tests,
     _convert_container,
     assert_allclose,
     assert_allclose_dense_sparse,
@@ -1992,6 +1993,16 @@ def test_binarizer(constructor):
     if constructor in CSC_CONTAINERS:
         with pytest.raises(ValueError):
             binarizer.transform(constructor(X))
+
+
+@pytest.mark.parametrize(
+    "array_namespace, device, dtype_name", yield_namespace_device_dtype_combinations()
+)
+def test_binarizer_array_api_int(array_namespace, device, dtype_name):
+    xp = _array_api_for_tests(array_namespace, device)
+    with config_context(array_api_dispatch=True):
+        X = xp.reshape(xp.asarray([0, 1, 2, 3, 4]), (-1, 1))
+        Binarizer().fit_transform(X)
 
 
 def test_center_kernel():
