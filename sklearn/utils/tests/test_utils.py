@@ -8,6 +8,7 @@ from sklearn.utils import (
     column_or_1d,
     deprecated,
     safe_mask,
+    tosequence,
 )
 from sklearn.utils._missing import is_scalar_nan
 from sklearn.utils._testing import assert_array_equal, assert_no_warnings
@@ -157,3 +158,15 @@ def test__is_polars_df():
             self.schema = ["a", "b"]
 
     assert not _is_polars_df(LooksLikePolars())
+
+
+# TODO(1.7): remove
+def test_is_pypy_deprecated():
+    with pytest.warns(FutureWarning, match="IS_PYPY is deprecated"):
+        from sklearn.utils import IS_PYPY  # noqa
+
+
+# TODO(1.7): remove
+def test_tosequence_deprecated():
+    with pytest.warns(FutureWarning, match="tosequence was deprecated in 1.5"):
+        tosequence([1, 2, 3])

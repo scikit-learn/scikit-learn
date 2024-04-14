@@ -222,7 +222,7 @@ class NaivelyCalibratedLinearSVC(LinearSVC):
 # %%
 
 lr = LogisticRegression(C=1.0)
-svc = NaivelyCalibratedLinearSVC(max_iter=10_000, dual="auto")
+svc = NaivelyCalibratedLinearSVC(max_iter=10_000)
 svc_isotonic = CalibratedClassifierCV(svc, cv=2, method="isotonic")
 svc_sigmoid = CalibratedClassifierCV(svc, cv=2, method="sigmoid")
 
