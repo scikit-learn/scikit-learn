@@ -1054,6 +1054,34 @@ def calibration_curve(
 def expected_calibration_error(
     y_true, y_prob, *, pos_label=None, n_bins=5, strategy="uniform"
 ):
+    """
+    Compute the Expected Calibration Error (ECE).
+
+    The method assumes the inputs come from a binary classifier, and
+    discretize the [0, 1] interval into bins.
+
+    The ECE is defined as the expected value of the difference between the
+    predicted probability and the true probability in each bin. It's a summary
+    of the calibration curve, and a lower ECE indicates better calibration.
+
+    Parameters
+    ----------
+    y_true : array-like of shape (n_samples,)
+        True targets.
+    y_prob : array-like of shape (n_samples,)
+        Probabilities of the positive class.
+    pos_label : int, float, bool or str, default=None
+        The label of the positive class.
+    n_bins : int, default=5
+        Number of bins to discretize the [0, 1] interval.
+    strategy : {'uniform', 'quantile'}, default='uniform'
+        Strategy used to define the widths of the bins.
+
+    Returns
+    -------
+    ece : float
+        The Expected Calibration Error (ECE).
+    """
     bin_sums, bin_true, bin_total = calibration_stats(
         y_true, y_prob, pos_label=pos_label, n_bins=n_bins, strategy=strategy
     )
