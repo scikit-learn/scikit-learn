@@ -45,6 +45,10 @@ See :ref:`array_api` for more details.
   :pr:`27904` by :user:`Eric Lindgren <elindgren>`, `Franck Charras <fcharras>`,
   `Olivier Grisel <ogrisel>` and `Tim Head <betatim>`.
 
+- :func:`sklearn.metrics.mean_tweedie_deviance` now supports Array API compatible
+  inputs.
+  :pr:`28106` by :user:`Thomas Li <lithomas1>`
+
 **Classes:**
 
 Support for building with Meson
@@ -284,10 +288,6 @@ Changelog
 - |API| :func:`metrics.brier_score_loss` deprecated the keyword argument `y_prob`
   in favor of `y_proba`. `y_prob` will be removed in version 1.7.
   :pr:`28092` by :user:`Adam Li <adam2392>`.
- 
-- |Enhancement| :func:`sklearn.metrics.mean_tweedie_deviance` now supports Array API compatible
-  inputs.
-  :pr:`28106` by :user:`Thomas Li <lithomas1>`
 
 :mod:`sklearn.model_selection`
 ..............................
