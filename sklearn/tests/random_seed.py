@@ -8,6 +8,7 @@ variable for insrtuctions on how to use this fixture.
 
 https://scikit-learn.org/dev/computing/parallelism.html#sklearn-tests-global-random-seed
 """
+
 from os import environ
 from random import Random
 

@@ -61,7 +61,7 @@ from sklearn.preprocessing import (
     StandardScaler,
 )
 from sklearn.semi_supervised import LabelPropagation, LabelSpreading
-from sklearn.utils import _IS_WASM, IS_PYPY, all_estimators
+from sklearn.utils import all_estimators
 from sklearn.utils._tags import _DEFAULT_TAGS, _safe_tags
 from sklearn.utils._testing import (
     SkipTest,
@@ -87,6 +87,7 @@ from sklearn.utils.estimator_checks import (
     check_transformer_get_feature_names_out_pandas,
     parametrize_with_checks,
 )
+from sklearn.utils.fixes import _IS_PYPY, _IS_WASM
 
 
 def test_all_estimator_no_base_class():
@@ -221,7 +222,7 @@ def test_import_all_consistency():
         # Avoid test suite depending on setuptools
         if "sklearn._build_utils" in modname:
             continue
-        if IS_PYPY and (
+        if _IS_PYPY and (
             "_svmlight_format_io" in modname
             or "feature_extraction._hashing_fast" in modname
         ):
@@ -255,11 +256,13 @@ def test_all_tests_are_importable():
     # Ensure that for each contentful subpackage, there is a test directory
     # within it that is also a subpackage (i.e. a directory with __init__.py)
 
-    HAS_TESTS_EXCEPTIONS = re.compile(r"""(?x)
+    HAS_TESTS_EXCEPTIONS = re.compile(
+        r"""(?x)
                                       \.externals(\.|$)|
                                       \.tests(\.|$)|
                                       \._
-                                      """)
+                                      """
+    )
     resource_modules = {
         "sklearn.datasets.data",
         "sklearn.datasets.descr",

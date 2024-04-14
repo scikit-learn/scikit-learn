@@ -1,6 +1,7 @@
 """
 Utilities useful during the build.
 """
+
 # author: Andy Mueller, Gael Varoquaux
 # license: BSD
 
