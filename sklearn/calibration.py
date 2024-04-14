@@ -965,7 +965,8 @@ def calibration_stats(
     bin_total = np.bincount(binids, minlength=len(bins))
 
     return bin_sums, bin_true, bin_total
-    
+
+
 def calibration_curve(
     y_true,
     y_prob,
@@ -1048,6 +1049,23 @@ def calibration_curve(
     prob_pred = bin_sums[nonzero] / bin_total[nonzero]
 
     return prob_true, prob_pred
+
+
+def expected_calibration_error(
+    y_true, y_prob, *, pos_label=None, n_bins=5, strategy="uniform"
+):
+    bin_sums, bin_true, bin_total = calibration_stats(
+        y_true, y_prob, pos_label=pos_label, n_bins=n_bins, strategy=strategy
+    )
+
+    nonzero = bin_total != 0
+    prob_true = bin_true[nonzero] / bin_total[nonzero]
+    prob_pred = bin_sums[nonzero] / bin_total[nonzero]
+
+    # ece = np.abs(prob_pred - prob_true).dot(bin_total[nonzero]) / y_true.size
+    ece = (bin_total[nonzero] * np.abs(prob_pred - prob_true)).sum() / bin_total.sum()
+
+    return ece
 
 
 class CalibrationDisplay(_BinaryClassifierCurveDisplayMixin):
