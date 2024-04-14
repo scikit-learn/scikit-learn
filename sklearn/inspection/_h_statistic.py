@@ -1,4 +1,4 @@
-"""Friedman's and Popescu's H-Statistic"""
+"""Friedman and Popescu's H-Statistic"""
 
 import itertools
 
@@ -125,9 +125,9 @@ def h_statistic(
     random_state=None,
     eps=1e-10,
 ):
-    """Friedman's and Popescu's H-statistic of pairwise interaction strength.
+    """Friedman and Popescu's H-statistic of pairwise interaction strength.
 
-    Calculates Friedman's and Popescu's H-statistic of interaction strength
+    Calculates Friedman and Popescu's H-statistic of interaction strength
     for each feature pair j, k, see [FRI]_. The statistic is defined as::
 
         H_jk^2 = Numerator_jk / Denominator_jk, where
