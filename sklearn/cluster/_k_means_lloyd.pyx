@@ -6,7 +6,6 @@ from libc.stdlib cimport malloc, calloc, free
 from libc.string cimport memset
 from libc.float cimport DBL_MAX, FLT_MAX
 
-from .. import _sklearn_threadpool_controller
 from ..utils._openmp_helpers cimport omp_lock_t
 from ..utils._openmp_helpers cimport omp_init_lock
 from ..utils._openmp_helpers cimport omp_destroy_lock
@@ -21,9 +20,6 @@ from ._k_means_common cimport _relocate_empty_clusters_sparse
 from ._k_means_common cimport _average_centers, _center_shift
 
 
-# Threadpoolctl context to limit the number of threads in second level of
-# nested parallelism (i.e. BLAS) to avoid oversubscription.
-@_sklearn_threadpool_controller.wrap(limits=1, user_api="blas")
 def lloyd_iter_chunked_dense(
         const floating[:, ::1] X,            # IN
         const floating[::1] sample_weight,   # IN
