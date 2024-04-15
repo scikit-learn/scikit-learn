@@ -164,9 +164,7 @@ def test_predict_3_classes(csr_container):
             multi_class="ovr",
             random_state=42,
         ),
-        LogisticRegression(
-            C=len(iris.data), solver="newton-cholesky", multi_class="ovr"
-        ),
+        LogisticRegression(C=len(iris.data), solver="newton-cholesky"),
     ],
 )
 def test_predict_iris(clf):
@@ -203,8 +201,8 @@ def test_predict_iris(clf):
 def test_check_solver_option(LR):
     X, y = iris.data, iris.target
 
-    # only 'liblinear' and 'newton-cholesky' solver
-    for solver in ["liblinear", "newton-cholesky"]:
+    # only 'liblinear' solver
+    for solver in ["liblinear"]:
         msg = f"Solver {solver} does not support a multinomial backend."
         lr = LR(solver=solver, multi_class="multinomial")
         with pytest.raises(ValueError, match=msg):
@@ -700,30 +698,36 @@ def test_logistic_regression_solvers():
         )
 
 
-def test_logistic_regression_solvers_multiclass():
+@pytest.mark.parametrize("multi_class", ["ovr", "multinomial"])
+def test_logistic_regression_solvers_multiclass(multi_class):
     """Test solvers converge to the same result for multiclass problems."""
     X, y = make_classification(
         n_samples=20, n_features=20, n_informative=10, n_classes=3, random_state=0
     )
-    tol = 1e-8
+    tol = 1e-7
     params = dict(fit_intercept=False, tol=tol, random_state=42)
 
     # Override max iteration count for specific solvers to allow for
     # proper convergence.
     solver_max_iter = {"sag": 10_000, "saga": 10_000}
 
+    if multi_class == "multinomial":
+        supported_solvers = set(SOLVERS) - set(["liblinear"])
+    else:
+        supported_solvers = SOLVERS
+
     regressors = {
         solver: LogisticRegression(
             solver=solver, max_iter=solver_max_iter.get(solver, 100), **params
         ).fit(X, y)
-        for solver in set(SOLVERS) - set(["liblinear", "newton-cholesky"])
+        for solver in supported_solvers
     }
 
     for solver_1, solver_2 in itertools.combinations(regressors, r=2):
         assert_allclose(
             regressors[solver_1].coef_,
             regressors[solver_2].coef_,
-            rtol=5e-3 if solver_2 == "saga" else 1e-3,
+            rtol=5e-3 if (solver_1 == "saga" or solver_2 == "saga") else 1e-3,
             err_msg=f"{solver_1} vs {solver_2}",
         )
 
@@ -1247,8 +1251,8 @@ def test_max_iter(max_iter, multi_class, solver, message):
     X, y_bin = iris.data, iris.target.copy()
     y_bin[y_bin == 2] = 0
 
-    if solver in ("liblinear", "newton-cholesky") and multi_class == "multinomial":
-        pytest.skip("'multinomial' is not supported by liblinear and newton-cholesky")
+    if solver in ("liblinear",) and multi_class == "multinomial":
+        pytest.skip("'multinomial' is not supported by liblinear")
     if solver == "newton-cholesky" and max_iter > 1:
         pytest.skip("solver newton-cholesky might converge very fast")
 
@@ -1304,7 +1308,7 @@ def test_n_iter(solver):
     assert clf_cv.n_iter_.shape == (n_classes, n_cv_fold, n_Cs)
 
     # multinomial case
-    if solver in ("liblinear", "newton-cholesky"):
+    if solver in ("liblinear",):
         # This solver only supports one-vs-rest multiclass classification.
         return
 
@@ -1410,7 +1414,7 @@ def test_dtype_match(solver, multi_class, fit_intercept, csr_container):
     # Test that np.float32 input data is not cast to np.float64 when possible
     # and that the output is approximately the same no matter the input format.
 
-    if solver in ("liblinear", "newton-cholesky") and multi_class == "multinomial":
+    if solver == "liblinear" and multi_class == "multinomial":
         pytest.skip(f"Solver={solver} does not support multinomial logistic.")
 
     out32_type = np.float64 if solver == "liblinear" else np.float32
@@ -1888,7 +1892,7 @@ def test_logistic_regression_path_coefs_multinomial():
 @pytest.mark.parametrize("solver", SOLVERS)
 def test_logistic_regression_multi_class_auto(est, solver):
     # check multi_class='auto' => multi_class='ovr'
-    # iff binary y or liblinear or newton-cholesky
+    # iff binary y or liblinear
 
     def fit(X, y, **kw):
         return clone(est).set_params(**kw).fit(X, y)
@@ -1904,7 +1908,7 @@ def test_logistic_regression_multi_class_auto(est, solver):
     assert_allclose(est_auto_bin.predict_proba(X2), est_ovr_bin.predict_proba(X2))
 
     est_auto_multi = fit(X, y_multi, multi_class="auto", solver=solver)
-    if solver in ("liblinear", "newton-cholesky"):
+    if solver == "liblinear":
         est_ovr_multi = fit(X, y_multi, multi_class="ovr", solver=solver)
         assert_allclose(est_auto_multi.coef_, est_ovr_multi.coef_)
         assert_allclose(
@@ -2085,7 +2089,7 @@ def test_multinomial_identifiability_on_iris(fit_intercept):
     # axis=0 is sum over classes
     assert_allclose(clf.coef_.sum(axis=0), 0, atol=1e-10)
     if fit_intercept:
-        clf.intercept_.sum(axis=0) == pytest.approx(0, abs=1e-15)
+        assert clf.intercept_.sum(axis=0) == pytest.approx(0, abs=1e-13)
 
 
 # TODO(1.7): remove filterwarnings after the deprecation of multi_class
