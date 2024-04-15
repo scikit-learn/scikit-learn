@@ -10,15 +10,14 @@ from numbers import Integral
 import numpy as np
 
 from ..base import BaseEstimator, TransformerMixin, _fit_context
-from ..utils import _safe_indexing
-from ..utils._param_validation import Hidden, Interval, Options, StrOptions
+from ..utils import resample
+from ..utils._param_validation import Interval, Options, StrOptions
 from ..utils.stats import _weighted_percentile
 from ..utils.validation import (
     _check_feature_names_in,
     _check_sample_weight,
     check_array,
     check_is_fitted,
-    check_random_state,
 )
 from ._encoders import OneHotEncoder
 
@@ -65,10 +64,9 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
 
         .. versionadded:: 0.24
 
-    subsample : int or None, default='warn'
+    subsample : int or None, default=200_000
         Maximum number of samples, used to fit the model, for computational
-        efficiency. Defaults to 200_000 when `strategy='quantile'` and to `None`
-        when `strategy='uniform'` or `strategy='kmeans'`.
+        efficiency.
         `subsample=None` means that all the training samples are used when
         computing the quantiles that determine the binning thresholds.
         Since quantile computation relies on sorting each column of `X` and
@@ -148,7 +146,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
     ...      [ 0, 3, -2,  0.5],
     ...      [ 1, 4, -1,    2]]
     >>> est = KBinsDiscretizer(
-    ...     n_bins=3, encode='ordinal', strategy='uniform', subsample=None
+    ...     n_bins=3, encode='ordinal', strategy='uniform'
     ... )
     >>> est.fit(X)
     KBinsDiscretizer(...)
@@ -178,11 +176,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
         "encode": [StrOptions({"onehot", "onehot-dense", "ordinal"})],
         "strategy": [StrOptions({"uniform", "quantile", "kmeans"})],
         "dtype": [Options(type, {np.float64, np.float32}), None],
-        "subsample": [
-            Interval(Integral, 1, None, closed="left"),
-            None,
-            Hidden(StrOptions({"warn"})),
-        ],
+        "subsample": [Interval(Integral, 1, None, closed="left"), None],
         "random_state": ["random_state"],
     }
 
@@ -193,7 +187,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
         encode="onehot",
         strategy="quantile",
         dtype=None,
-        subsample="warn",
+        subsample=200_000,
         random_state=None,
     ):
         self.n_bins = n_bins
@@ -244,24 +238,14 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
                 f"{self.strategy!r} instead."
             )
 
-        if self.strategy in ("uniform", "kmeans") and self.subsample == "warn":
-            warnings.warn(
-                (
-                    "In version 1.5 onwards, subsample=200_000 "
-                    "will be used by default. Set subsample explicitly to "
-                    "silence this warning in the mean time. Set "
-                    "subsample=None to disable subsampling explicitly."
-                ),
-                FutureWarning,
+        if self.subsample is not None and n_samples > self.subsample:
+            # Take a subsample of `X`
+            X = resample(
+                X,
+                replace=False,
+                n_samples=self.subsample,
+                random_state=self.random_state,
             )
-
-        subsample = self.subsample
-        if subsample == "warn":
-            subsample = 200000 if self.strategy == "quantile" else None
-        if subsample is not None and n_samples > subsample:
-            rng = check_random_state(self.random_state)
-            subsample_idx = rng.choice(n_samples, size=subsample, replace=False)
-            X = _safe_indexing(X, subsample_idx)
 
         n_features = X.shape[1]
         n_bins = self._validate_n_bins(n_features)
