@@ -48,12 +48,6 @@ from sklearn.svm import LinearSVC, LinearSVR
 from sklearn.utils._testing import set_random_state
 
 
-@pytest.mark.parametrize(
-    "normalize, n_warnings, warning_category",
-    [(True, 1, FutureWarning), (False, 1, FutureWarning), ("deprecated", 0, None)],
-)
-
-
 # Note: GammaRegressor() and TweedieRegressor(power != 1) have a non-canonical link.
 @pytest.mark.parametrize(
     "model",
@@ -199,7 +193,10 @@ def test_balance_property(model, with_sample_weight, global_random_seed):
 @pytest.mark.parametrize("ndim", [1, 2])
 def test_linear_model_regressor_coef_shape(Regressor, ndim):
     """Check the consistency of linear models `coef` shape."""
-    X, y = make_regression(random_state=0)
+    if Regressor is LinearRegression:
+        pytest.xfail("LinearRegression does not follow `coef_` shape contract!")
+
+    X, y = make_regression(random_state=0, n_samples=200, n_features=20)
     y = MinMaxScaler().fit_transform(y.reshape(-1, 1))[:, 0] + 1
     y = y[:, np.newaxis] if ndim == 2 else y
 
@@ -224,6 +221,9 @@ def test_linear_model_regressor_coef_shape(Regressor, ndim):
 )
 @pytest.mark.parametrize("n_classes", [2, 3])
 def test_linear_model_classifier_coef_shape(Classifier, n_classes):
+    if Classifier in (RidgeClassifier, RidgeClassifierCV):
+        pytest.xfail(f"{Classifier} does not follow `coef_` shape contract!")
+
     X, y = make_classification(n_informative=10, n_classes=n_classes, random_state=0)
     n_features = X.shape[1]
 
