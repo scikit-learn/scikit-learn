@@ -128,7 +128,7 @@ Changelog
     where 123455 is the *pull request* number, not the issue number.
 
 :mod:`sklearn.calibration`
-.........................
+..........................
 
 - |Fix| Fixed a regression in :class:`calibration.CalibratedClassifierCV` where
   an error was wrongly raised with string targets. 
