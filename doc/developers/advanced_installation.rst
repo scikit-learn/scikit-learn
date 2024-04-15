@@ -26,10 +26,15 @@ Installing a nightly build is the quickest way to:
 
 - check whether a bug you encountered has been fixed since the last release.
 
+You can install the nightly build of scikit-learn using the `scientific-python-nightly-wheels`
+index from the PyPI registry of `anaconda.org`:
+
 .. prompt:: bash $
 
-  pip install --pre --extra-index https://pypi.anaconda.org/scipy-wheels-nightly/simple scikit-learn
+  pip install --pre --extra-index https://pypi.anaconda.org/scientific-python-nightly-wheels/simple scikit-learn
 
+Note that first uninstalling scikit-learn might be required to be able to
+install nightly builds of scikit-learn.
 
 .. _install_bleeding_edge:
 
@@ -47,43 +52,75 @@ feature, code or documentation improvement).
 
    .. prompt:: bash $
 
-        git clone git://github.com/scikit-learn/scikit-learn.git  # add --depth 1 if your connection is slow
-        cd scikit-learn
+     git clone git://github.com/scikit-learn/scikit-learn.git  # add --depth 1 if your connection is slow
+     cd scikit-learn
 
    If you plan on submitting a pull-request, you should clone from your fork
    instead.
+
+#. Install a recent version of Python (3.9 is recommended at the time of writing)
+   for instance using Miniforge3_. Miniforge provides a conda-based distribution
+   of Python and the most popular scientific libraries.
+
+   If you installed Python with conda, we recommend to create a dedicated
+   `conda environment`_ with all the build dependencies of scikit-learn
+   (namely NumPy_, SciPy_, Cython_, meson-python_ and Ninja_):
+
+   .. prompt:: bash $
+
+     conda create -n sklearn-env -c conda-forge python=3.9 numpy scipy cython meson-python ninja
+
+   It is not always necessary but it is safer to open a new prompt before
+   activating the newly created conda environment.
+
+   .. prompt:: bash $
+
+     conda activate sklearn-env
+
+#. **Alternative to conda:** You can use alternative installations of Python
+   provided they are recent enough (3.9 or higher at the time of writing).
+   Here is an example on how to create a build environment for a Linux system's
+   Python. Build dependencies are installed with `pip` in a dedicated virtualenv_
+   to avoid disrupting other Python programs installed on the system:
+
+   .. prompt:: bash $
+
+     python3 -m venv sklearn-env
+     source sklearn-env/bin/activate
+     pip install wheel numpy scipy cython meson-python ninja
 
 #. Install a compiler with OpenMP_ support for your platform. See instructions
    for :ref:`compiler_windows`, :ref:`compiler_macos`, :ref:`compiler_linux`
    and :ref:`compiler_freebsd`.
 
-#. Optional (but recommended): create and activate a dedicated virtualenv_
-   or `conda environment`_.
-
-#. Install Cython_ and build the project with pip in :ref:`editable_mode`:
+#. Build the project with pip:
 
    .. prompt:: bash $
 
-        pip install cython
-        pip install --verbose --no-build-isolation --editable .
+     pip install --editable . \
+        --verbose --no-build-isolation \
+        --config-settings editable-verbose=true
 
 #. Check that the installed scikit-learn has a version number ending with
    `.dev0`:
 
    .. prompt:: bash $
 
-    python -c "import sklearn; sklearn.show_versions()"
+     python -c "import sklearn; sklearn.show_versions()"
 
 #. Please refer to the :ref:`developers_guide` and :ref:`pytest_tips` to run
    the tests on the module of your choice.
 
 .. note::
 
-    You will have to run the ``pip install --no-build-isolation --editable .``
-    command every time the source code of a Cython file is updated
-    (ending in `.pyx` or `.pxd`). Use the ``--no-build-isolation`` flag to
-    avoid compiling the whole project each time, only the files you have
-    modified.
+    `--config-settings editable-verbose=true` is optional but recommended
+    to avoid surprises when you import `sklearn`. `meson-python` implements
+    editable installs by rebuilding `sklearn` when executing `import sklearn`.
+    With the recommended setting you will see a message when this happens,
+    rather than potentially waiting without feed-back and wondering
+    what is taking so long. Bonus: this means you only have to run the `pip
+    install` command once, `sklearn` will automatically be rebuilt when
+    importing `sklearn`.
 
 Dependencies
 ------------
@@ -94,19 +131,11 @@ Runtime dependencies
 Scikit-learn requires the following dependencies both at build time and at
 runtime:
 
-- Python (>= 3.7),
+- Python (>= 3.8),
 - NumPy (>= |NumpyMinVersion|),
 - SciPy (>= |ScipyMinVersion|),
 - Joblib (>= |JoblibMinVersion|),
 - threadpoolctl (>= |ThreadpoolctlMinVersion|).
-
-Those dependencies are **automatically installed by pip** if they were missing
-when building scikit-learn from source.
-
-.. note::
-
-   For running on PyPy, PyPy3-v5.10+, Numpy 1.14.0+, and scipy 1.1.0+
-   are required. For PyPy, only installation instructions with pip apply.
 
 Build dependencies
 ~~~~~~~~~~~~~~~~~~
@@ -133,8 +162,8 @@ Building Scikit-learn also requires:
    (before cythonization) will force the build to fail if OpenMP is not
    supported.
 
-Since version 0.21, scikit-learn automatically detects and use the linear
-algebrea library used by SciPy **at runtime**. Scikit-learn has therefore no
+Since version 0.21, scikit-learn automatically detects and uses the linear
+algebra library used by SciPy **at runtime**. Scikit-learn has therefore no
 build dependency on BLAS/LAPACK implementations such as OpenBlas, Atlas, Blis
 or MKL.
 
@@ -155,26 +184,6 @@ If you want to build a stable version, you can ``git checkout <VERSION>``
 to get the code for that particular version, or download an zip archive of
 the version from github.
 
-.. _editable_mode:
-
-Editable mode
--------------
-
-If you run the development version, it is cumbersome to reinstall the package
-each time you update the sources. Therefore it is recommended that you install
-in with the ``pip install --no-build-isolation --editable .`` command, which
-allows you to edit the code in-place. This builds the extension in place and
-creates a link to the development directory (see `the pip docs
-<https://pip.pypa.io/en/stable/reference/pip_install/#editable-installs>`_).
-
-This is fundamentally similar to using the command ``python setup.py develop``
-(see `the setuptool docs
-<https://setuptools.readthedocs.io/en/latest/setuptools.html#development-mode>`_).
-It is however preferred to use pip.
-
-On Unix-like systems, you can equivalently type ``make in`` from the top-level
-folder. Have a look at the ``Makefile`` for additional utilities.
-
 .. _platform_specific_instructions:
 
 Platform-specific instructions
@@ -188,14 +197,14 @@ to build scikit-learn Cython extensions for each supported platform.
 Windows
 -------
 
-First, install `Build Tools for Visual Studio 2019
-<https://visualstudio.microsoft.com/downloads/>`_.
+First, download the `Build Tools for Visual Studio 2019 installer
+<https://aka.ms/vs/17/release/vs_buildtools.exe>`_.
 
-.. warning::
+Run the downloaded `vs_buildtools.exe` file, during the installation you will
+need to make sure you select "Desktop development with C++", similarly to this
+screenshot:
 
-    You DO NOT need to install Visual Studio 2019. You only need the "Build
-    Tools for Visual Studio 2019", under "All downloads" -> "Tools for Visual
-    Studio 2019".
+.. image:: ../images/visual-studio-build-tools-selection.png
 
 Secondly, find out if you are running 64-bit or 32-bit Python. The building
 command depends on the architecture of the Python interpreter. You can check
@@ -209,10 +218,13 @@ console:
 For 64-bit Python, configure the build environment by running the following
 commands in ``cmd`` or an Anaconda Prompt (if you use Anaconda):
 
-    ::
+.. sphinx-prompt 1.3.0 (used in doc-min-dependencies CI task) does not support `batch` prompt type,
+.. so we work around by using a known prompt type and an explicit prompt text.
+..
+.. prompt:: bash C:\>
 
-      $ SET DISTUTILS_USE_SDK=1
-      $ "C:\Program Files (x86)\Microsoft Visual Studio\2019\BuildTools\VC\Auxiliary\Build\vcvarsall.bat" x64
+    SET DISTUTILS_USE_SDK=1
+    "C:\Program Files (x86)\Microsoft Visual Studio\2019\BuildTools\VC\Auxiliary\Build\vcvarsall.bat" x64
 
 Replace ``x64`` by ``x86`` to build for 32-bit Python.
 
@@ -220,11 +232,13 @@ Please be aware that the path above might be different from user to user. The
 aim is to point to the "vcvarsall.bat" file that will set the necessary
 environment variables in the current command prompt.
 
-Finally, build scikit-learn from this command prompt:
+Finally, build scikit-learn with this command prompt:
 
 .. prompt:: bash $
 
-    pip install --verbose --no-build-isolation --editable .
+    pip install --editable . \
+        --verbose --no-build-isolation \
+        --config-settings editable-verbose=true
 
 .. _compiler_macos:
 
@@ -263,10 +277,18 @@ scikit-learn from source:
 .. prompt:: bash $
 
     conda create -n sklearn-dev -c conda-forge python numpy scipy cython \
-        joblib threadpoolctl pytest compilers llvm-openmp
+        joblib threadpoolctl pytest compilers llvm-openmp meson-python ninja
+
+It is not always necessary but it is safer to open a new prompt before
+activating the newly created conda environment.
+
+.. prompt:: bash $
+
     conda activate sklearn-dev
     make clean
-    pip install --verbose --no-build-isolation --editable .
+    pip install --editable . \
+        --verbose --no-build-isolation \
+        --config-settings editable-verbose=true
 
 .. note::
 
@@ -340,7 +362,9 @@ Finally, build scikit-learn in verbose mode (to check for the presence of the
 .. prompt:: bash $
 
     make clean
-    pip install --verbose --no-build-isolation --editable .
+    pip install --editable . \
+        --verbose --no-build-isolation \
+        --config-settings editable-verbose=true
 
 .. _compiler_linux:
 
@@ -366,7 +390,9 @@ then proceed as usual:
 .. prompt:: bash $
 
     pip3 install cython
-    pip3 install --verbose --editable .
+    pip3 install --editable . \
+        --verbose --no-build-isolation \
+        --config-settings editable-verbose=true
 
 Cython and the pre-compiled wheels for the runtime dependencies (numpy, scipy
 and joblib) should automatically be installed in
@@ -376,7 +402,7 @@ isolation from the Python packages installed via the system packager. When
 using an isolated environment, ``pip3`` should be replaced by ``pip`` in the
 above commands.
 
-When precompiled wheels of the runtime dependencies are not avalaible for your
+When precompiled wheels of the runtime dependencies are not available for your
 architecture (e.g. ARM), you can install the system versions:
 
 .. prompt:: bash $
@@ -398,9 +424,17 @@ in the user folder using conda:
 .. prompt:: bash $
 
     conda create -n sklearn-dev -c conda-forge python numpy scipy cython \
-        joblib threadpoolctl pytest compilers
+        joblib threadpoolctl pytest compilers meson-python ninja
+
+It is not always necessary but it is safer to open a new prompt before
+activating the newly created conda environment.
+
+.. prompt:: bash $
+
     conda activate sklearn-dev
-    pip install --verbose --no-build-isolation --editable .
+    pip install --editable . \
+        --verbose --no-build-isolation \
+        --config-settings editable-verbose=true
 
 .. _compiler_freebsd:
 
@@ -429,29 +463,37 @@ Finally, build the package using the standard command:
 
 .. prompt:: bash $
 
-    pip install --verbose --no-build-isolation --editable .
+    pip install --editable . \
+        --verbose --no-build-isolation \
+        --config-settings editable-verbose=true
 
 For the upcoming FreeBSD 12.1 and 11.3 versions, OpenMP will be included in
 the base system and these steps will not be necessary.
 
 .. _OpenMP: https://en.wikipedia.org/wiki/OpenMP
 .. _Cython: https://cython.org
+.. _meson-python: https://mesonbuild.com/meson-python
+.. _Ninja: https://ninja-build.org/
+.. _NumPy: https://numpy.org
+.. _SciPy: https://www.scipy.org
 .. _Homebrew: https://brew.sh
 .. _virtualenv: https://docs.python.org/3/tutorial/venv.html
 .. _conda environment: https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html
+.. _Miniforge3: https://github.com/conda-forge/miniforge#miniforge3
 
 Alternative compilers
 =====================
 
-The command:
+The following command will build scikit-learn using your default C/C++ compiler.
 
 .. prompt:: bash $
 
-    pip install --verbose --editable .
+    pip install --editable . \
+        --verbose --no-build-isolation \
+        --config-settings editable-verbose=true
 
-will build scikit-learn using your default C/C++ compiler. If you want to build
-scikit-learn with another compiler handled by ``distutils`` or by
-``numpy.distutils``, use the following command:
+If you want to build scikit-learn with another compiler handled by ``setuptools``,
+use the following command:
 
 .. prompt:: bash $
 
@@ -463,62 +505,19 @@ To see the list of available compilers run:
 
     python setup.py build_ext --help-compiler
 
-If your compiler is not listed here, you can specify it via the ``CC`` and
-``LDSHARED`` environment variables (does not work on windows):
+If your compiler is not listed here, you can specify it through some environment
+variables (does not work on windows). This `section
+<https://setuptools.pypa.io/en/stable/userguide/ext_modules.html#compiler-and-linker-options>`_
+of the setuptools documentation explains in details which environment variables
+are used by ``setuptools``, and at which stage of the compilation, to set the
+compiler and linker options.
 
-.. prompt:: bash $
+When setting these environment variables, it is advised to first check their
+``sysconfig`` counterparts variables and adapt them to your compiler. For instance::
 
-    CC=<compiler> LDSHARED="<compiler> -shared" python setup.py build_ext -i
+    import sysconfig
+    print(sysconfig.get_config_var('CC'))
+    print(sysconfig.get_config_var('LDFLAGS'))
 
-Building with Intel C Compiler (ICC) using oneAPI on Linux
-----------------------------------------------------------
-
-Intel provides access to all of its oneAPI toolkits and packages through a
-public APT repository. First you need to get and install the public key of this
-repository:
-
-.. prompt:: bash $
-
-    wget https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB
-    sudo apt-key add GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB
-    rm GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB
-
-Then, add the oneAPI repository to your APT repositories:
-
-.. prompt:: bash $
-
-    sudo add-apt-repository "deb https://apt.repos.intel.com/oneapi all main"
-    sudo apt-get update
-
-Install ICC, packaged under the name
-``intel-oneapi-compiler-dpcpp-cpp-and-cpp-classic``:
-
-.. prompt:: bash $
-
-    sudo apt-get install intel-oneapi-compiler-dpcpp-cpp-and-cpp-classic
-
-Before using ICC, you need to set up environment variables:
-
-.. prompt:: bash $
-
-    source /opt/intel/oneapi/setvars.sh
-
-Finally, you can build scikit-learn. For example on Linux x86_64:
-
-.. prompt:: bash $
-
-    python setup.py build_ext --compiler=intelem -i build_clib --compiler=intelem
-
-Parallel builds
-===============
-
-It is possible to build scikit-learn compiled extensions in parallel by setting
-and environment variable as follows before calling the ``pip install`` or
-``python setup.py build_ext`` commands::
-
-    export SKLEARN_BUILD_PARALLEL=3
-    pip install --verbose --no-build-isolation --editable .
-
-On a machine with 2 CPU cores, it can be beneficial to use a parallelism level
-of 3 to overlap IO bound tasks (reading and writing files on disk) with CPU
-bound tasks (actually compiling).
+In addition, since Scikit-learn uses OpenMP, you need to include the appropriate OpenMP
+flag of your compiler into the ``CFLAGS`` and ``CPPFLAGS`` environment variables.

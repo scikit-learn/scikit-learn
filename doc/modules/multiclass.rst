@@ -102,6 +102,7 @@ can provide additional strategies beyond what is built-in:
   - :class:`neural_network.MLPClassifier`
   - :class:`neighbors.RadiusNeighborsClassifier`
   - :class:`ensemble.RandomForestClassifier`
+  - :class:`linear_model.RidgeClassifier`
   - :class:`linear_model.RidgeClassifierCV`
 
 
@@ -146,35 +147,35 @@ Target format
 Valid :term:`multiclass` representations for
 :func:`~sklearn.utils.multiclass.type_of_target` (`y`) are:
 
-  - 1d or column vector containing more than two discrete values. An
-    example of a vector ``y`` for 4 samples:
+- 1d or column vector containing more than two discrete values. An
+  example of a vector ``y`` for 4 samples:
 
-      >>> import numpy as np
-      >>> y = np.array(['apple', 'pear', 'apple', 'orange'])
-      >>> print(y)
-      ['apple' 'pear' 'apple' 'orange']
+    >>> import numpy as np
+    >>> y = np.array(['apple', 'pear', 'apple', 'orange'])
+    >>> print(y)
+    ['apple' 'pear' 'apple' 'orange']
 
-  - Dense or sparse :term:`binary` matrix of shape ``(n_samples, n_classes)``
-    with a single sample per row, where each column represents one class. An
-    example of both a dense and sparse :term:`binary` matrix ``y`` for 4
-    samples, where the columns, in order, are apple, orange, and pear:
+- Dense or sparse :term:`binary` matrix of shape ``(n_samples, n_classes)``
+  with a single sample per row, where each column represents one class. An
+  example of both a dense and sparse :term:`binary` matrix ``y`` for 4
+  samples, where the columns, in order, are apple, orange, and pear:
 
-      >>> import numpy as np
-      >>> from sklearn.preprocessing import LabelBinarizer
-      >>> y = np.array(['apple', 'pear', 'apple', 'orange'])
-      >>> y_dense = LabelBinarizer().fit_transform(y)
-      >>> print(y_dense)
-        [[1 0 0]
-         [0 0 1]
-         [1 0 0]
-         [0 1 0]]
-      >>> from scipy import sparse
-      >>> y_sparse = sparse.csr_matrix(y_dense)
-      >>> print(y_sparse)
-          (0, 0)	1
-          (1, 2)	1
-          (2, 0)	1
-          (3, 1)	1
+    >>> import numpy as np
+    >>> from sklearn.preprocessing import LabelBinarizer
+    >>> y = np.array(['apple', 'pear', 'apple', 'orange'])
+    >>> y_dense = LabelBinarizer().fit_transform(y)
+    >>> print(y_dense)
+    [[1 0 0]
+     [0 0 1]
+     [1 0 0]
+     [0 1 0]]
+    >>> from scipy import sparse
+    >>> y_sparse = sparse.csr_matrix(y_dense)
+    >>> print(y_sparse)
+      (0, 0)	1
+      (1, 2)	1
+      (2, 0)	1
+      (3, 1)	1
 
 For more information about :class:`~sklearn.preprocessing.LabelBinarizer`,
 refer to :ref:`preprocessing_targets`.
@@ -295,7 +296,7 @@ used. It is a percentage of the total number of classes.
 A number between 0 and 1 will require fewer classifiers than
 one-vs-the-rest. In theory, ``log2(n_classes) / n_classes`` is sufficient to
 represent each class unambiguously. However, in practice, it may not lead to
-good accuracy since ``log2(n_classes)`` is much smaller than n_classes.
+good accuracy since ``log2(n_classes)`` is much smaller than `n_classes`.
 
 A number greater than 1 will require more classifiers than
 one-vs-the-rest. In this case, some classifiers will in theory correct for
@@ -310,8 +311,7 @@ Below is an example of multiclass learning using Output-Codes::
   >>> from sklearn.multiclass import OutputCodeClassifier
   >>> from sklearn.svm import LinearSVC
   >>> X, y = datasets.load_iris(return_X_y=True)
-  >>> clf = OutputCodeClassifier(LinearSVC(random_state=0),
-  ...                            code_size=2, random_state=0)
+  >>> clf = OutputCodeClassifier(LinearSVC(random_state=0), code_size=2, random_state=0)
   >>> clf.fit(X, y).predict(X)
   array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
          0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -400,33 +400,11 @@ to be able to estimate a series of target functions (f1,f2,f3...,fn)
 that are trained on a single X predictor matrix to predict a series
 of responses (y1,y2,y3...,yn).
 
-Below is an example of multilabel classification:
-
-    >>> from sklearn.datasets import make_classification
-    >>> from sklearn.multioutput import MultiOutputClassifier
-    >>> from sklearn.ensemble import RandomForestClassifier
-    >>> from sklearn.utils import shuffle
-    >>> import numpy as np
-    >>> X, y1 = make_classification(n_samples=10, n_features=100, n_informative=30, n_classes=3, random_state=1)
-    >>> y2 = shuffle(y1, random_state=1)
-    >>> y3 = shuffle(y1, random_state=2)
-    >>> Y = np.vstack((y1, y2, y3)).T
-    >>> n_samples, n_features = X.shape # 10,100
-    >>> n_outputs = Y.shape[1] # 3
-    >>> n_classes = 3
-    >>> forest = RandomForestClassifier(random_state=1)
-    >>> multi_target_forest = MultiOutputClassifier(forest, n_jobs=-1)
-    >>> multi_target_forest.fit(X, Y).predict(X)
-    array([[2, 2, 0],
-           [1, 2, 1],
-           [2, 1, 0],
-           [0, 0, 2],
-           [0, 2, 1],
-           [0, 0, 2],
-           [1, 1, 0],
-           [1, 1, 1],
-           [0, 0, 2],
-           [2, 0, 0]])
+You can find a usage example for
+:class:`~sklearn.multioutput.MultiOutputClassifier`
+as part of the section on :ref:`multiclass_multioutput_classification`
+since it is a generalization of multilabel classification to
+multiclass outputs instead of binary outputs.
 
 .. _classifierchain:
 
@@ -487,6 +465,36 @@ as a special case. Multitask classification is similar to the multioutput
 classification task with different model formulations. For more information,
 see the relevant estimator documentation.
 
+Below is an example of multiclass-multioutput classification:
+
+    >>> from sklearn.datasets import make_classification
+    >>> from sklearn.multioutput import MultiOutputClassifier
+    >>> from sklearn.ensemble import RandomForestClassifier
+    >>> from sklearn.utils import shuffle
+    >>> import numpy as np
+    >>> X, y1 = make_classification(n_samples=10, n_features=100,
+    ...                             n_informative=30, n_classes=3,
+    ...                             random_state=1)
+    >>> y2 = shuffle(y1, random_state=1)
+    >>> y3 = shuffle(y1, random_state=2)
+    >>> Y = np.vstack((y1, y2, y3)).T
+    >>> n_samples, n_features = X.shape # 10,100
+    >>> n_outputs = Y.shape[1] # 3
+    >>> n_classes = 3
+    >>> forest = RandomForestClassifier(random_state=1)
+    >>> multi_target_forest = MultiOutputClassifier(forest, n_jobs=2)
+    >>> multi_target_forest.fit(X, Y).predict(X)
+    array([[2, 2, 0],
+           [1, 2, 1],
+           [2, 1, 0],
+           [0, 0, 2],
+           [0, 2, 1],
+           [0, 0, 2],
+           [1, 1, 0],
+           [1, 1, 1],
+           [0, 0, 2],
+           [2, 0, 0]])
+
 .. warning::
     At present, no metric in :mod:`sklearn.metrics`
     supports the multiclass-multioutput classification task.
@@ -520,11 +528,42 @@ using data obtained at a certain location. Each sample would be data
 obtained at one location and both wind speed and direction would be
 output for each sample.
 
+The following regressors natively support multioutput regression:
+
+  - :class:`cross_decomposition.CCA`
+  - :class:`tree.DecisionTreeRegressor`
+  - :class:`dummy.DummyRegressor`
+  - :class:`linear_model.ElasticNet`
+  - :class:`tree.ExtraTreeRegressor`
+  - :class:`ensemble.ExtraTreesRegressor`
+  - :class:`gaussian_process.GaussianProcessRegressor`
+  - :class:`neighbors.KNeighborsRegressor`
+  - :class:`kernel_ridge.KernelRidge`
+  - :class:`linear_model.Lars`
+  - :class:`linear_model.Lasso`
+  - :class:`linear_model.LassoLars`
+  - :class:`linear_model.LinearRegression`
+  - :class:`multioutput.MultiOutputRegressor`
+  - :class:`linear_model.MultiTaskElasticNet`
+  - :class:`linear_model.MultiTaskElasticNetCV`
+  - :class:`linear_model.MultiTaskLasso`
+  - :class:`linear_model.MultiTaskLassoCV`
+  - :class:`linear_model.OrthogonalMatchingPursuit`
+  - :class:`cross_decomposition.PLSCanonical`
+  - :class:`cross_decomposition.PLSRegression`
+  - :class:`linear_model.RANSACRegressor`
+  - :class:`neighbors.RadiusNeighborsRegressor`
+  - :class:`ensemble.RandomForestRegressor`
+  - :class:`multioutput.RegressorChain`
+  - :class:`linear_model.Ridge`
+  - :class:`linear_model.RidgeCV`
+  - :class:`compose.TransformedTargetRegressor`
+
 Target format
 -------------
 
 A valid representation of :term:`multioutput` `y` is a dense matrix of shape
-``(n_samples, n_classes)`` of floats. A column wise concatenation of
+``(n_samples, n_output)`` of floats. A column wise concatenation of
 :term:`continuous` variables. An example of ``y`` for 3 samples:
 
   >>> y = np.array([[31.4, 94], [40.5, 109], [25.0, 30]])

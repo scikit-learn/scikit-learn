@@ -28,5 +28,15 @@ User Guide
    data_transforms.rst
    datasets.rst
    computing.rst
-   modules/model_persistence.rst
+   model_persistence.rst
    common_pitfalls.rst
+   dispatching.rst
+
+Under Development
+-----------------
+
+.. toctree::
+   :numbered:
+   :maxdepth: 1
+
+   metadata_routing.rst
