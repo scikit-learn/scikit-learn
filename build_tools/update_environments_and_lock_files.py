@@ -141,7 +141,7 @@ build_metadata_list = [
         "folder": "build_tools/azure",
         "platform": "osx-64",
         "channel": "defaults",
-        "conda_dependencies": remove_from(common_dependencies, ["cython"]) + ["ccache"],
+        "conda_dependencies": remove_from(common_dependencies, ["cython", "threadpoolctl"]) + ["ccache"],
         "package_constraints": {
             "blas": "[build=mkl]",
             # scipy 1.12.x crashes on this platform (https://github.com/scipy/scipy/pull/20086)
@@ -161,7 +161,7 @@ build_metadata_list = [
         "platform": "linux-64",
         "channel": "defaults",
         "conda_dependencies": remove_from(
-            common_dependencies, ["pandas", "cython", "pip", "ninja", "meson-python"]
+            common_dependencies, ["pandas", "cython", "threadpoolctl", "pip", "ninja", "meson-python"]
         )
         + ["ccache"],
         "package_constraints": {
