@@ -95,6 +95,17 @@ class Pipeline(_BaseComposition):
         must define `fit`. All non-last steps must also define `transform`. See
         :ref:`Combining Estimators <combining_estimators>` for more details.
 
+    transform_input : list of str, default=None
+        This enables transforming some input arguments to ``fit`` (other than ``X``)
+        to be transformed by the steps of the pipeline up to the step which requires
+        them. Requirement is defined via :ref:`metadata routing <metadata_routing>`.
+        This can be used to pass a validation set through the pipeline for instance.
+
+        See the example TBD for more details.
+
+        You can only set this if metadata routing is enabled, which you
+        can enable using ``sklearn.set_config(enable_metadata_routing=True)``.
+
     memory : str or object with the joblib.Memory interface, default=None
         Used to cache the fitted transformers of the pipeline. The last step
         will never be cached, even if it is a transformer. By default, no
@@ -162,12 +173,14 @@ class Pipeline(_BaseComposition):
 
     _parameter_constraints: dict = {
         "steps": [list, Hidden(tuple)],
+        "transform_input": [list, None],
         "memory": [None, str, HasMethods(["cache"])],
         "verbose": ["boolean"],
     }
 
-    def __init__(self, steps, *, memory=None, verbose=False):
+    def __init__(self, steps, *, transform_input=None, memory=None, verbose=False):
         self.steps = steps
+        self.transform_input = transform_input
         self.memory = memory
         self.verbose = verbose
 
@@ -409,7 +422,7 @@ class Pipeline(_BaseComposition):
                 cloned_transformer,
                 X,
                 y,
-                None,
+                weight=None,
                 message_clsname="Pipeline",
                 message=self._log_message(step_idx),
                 params=routed_params[name],
@@ -1288,7 +1301,14 @@ def _transform_one(transformer, X, y, weight, params):
 
 
 def _fit_transform_one(
-    transformer, X, y, weight, message_clsname="", message=None, params=None
+    transformer,
+    X,
+    y,
+    weight,
+    message_clsname="",
+    message=None,
+    params=None,
+    to_transform=None,
 ):
     """
     Fits ``transformer`` to ``X`` and ``y``. The transformed result is returned
@@ -1296,8 +1316,20 @@ def _fit_transform_one(
     be multiplied by ``weight``.
 
     ``params`` needs to be of the form ``process_routing()["step_name"]``.
+
+    ``to_transform`` is a dict of {arg: value} for input parameters to be
+    transformed along ``X``.
     """
     params = params or {}
+    to_transform = to_transform or {}
+    if weight is not None and to_transform:
+        # This should never happen! "to_transform" is used in Pipeline, while
+        # weight is used in ColumnTransformer and/or FeatureUnion.
+        raise ValueError(
+            "Cannot apply weight and transform parameters simultaneously. "
+            "Got weight={}, to_transform={}".format(weight, to_transform)
+        )
+
     with _print_elapsed_time(message_clsname, message):
         if hasattr(transformer, "fit_transform"):
             res = transformer.fit_transform(X, y, **params.get("fit_transform", {}))
@@ -1305,10 +1337,13 @@ def _fit_transform_one(
             res = transformer.fit(X, y, **params.get("fit", {})).transform(
                 X, **params.get("transform", {})
             )
+        transformed = dict()
+        for param, value in to_transform.items():
+            transformed[param] = transformer.transform(value)
 
     if weight is None:
-        return res, transformer
-    return res * weight, transformer
+        return res, transformed, transformer
+    return res * weight, transformed, transformer
 
 
 def _fit_one(transformer, X, y, weight, message_clsname="", message=None, params=None):
