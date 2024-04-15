@@ -6,9 +6,9 @@ import pickle
 import re
 import warnings
 
+import joblib
 import numpy as np
 import pytest
-from joblib import parallel_backend
 from numpy.testing import assert_allclose
 from scipy import sparse
 
@@ -37,7 +37,7 @@ from sklearn.utils._testing import (
     assert_almost_equal,
     assert_array_equal,
 )
-from sklearn.utils.fixes import CSR_CONTAINERS
+from sklearn.utils.fixes import CSR_CONTAINERS, parse_version
 
 
 class Trans(TransformerMixin, BaseEstimator):
@@ -2448,6 +2448,10 @@ def test_column_transformer_error_with_duplicated_columns(dataframe_lib):
         transformer.fit_transform(df)
 
 
+@pytest.mark.skipif(
+    parse_version(joblib.__version__) < parse_version("1.3"),
+    reason="requires joblib >= 1.3",
+)
 def test_column_transformer_auto_memmap():
     """Check that ColumnTransformer works in parallel with joblib's auto-memmapping.
 
@@ -2462,7 +2466,7 @@ def test_column_transformer_auto_memmap():
         n_jobs=2,
     )
 
-    with parallel_backend("loky", max_nbytes=1):
+    with joblib.parallel_backend("loky", max_nbytes=1):
         Xt = transformer.fit_transform(X)
 
     assert_allclose(Xt, StandardScaler().fit_transform(X[:, [0]]))
