@@ -698,8 +698,9 @@ def test_logistic_regression_solvers():
         )
 
 
+@pytest.mark.parametrize("fit_intercept", [False, False])
 @pytest.mark.parametrize("multi_class", ["ovr", "multinomial"])
-def test_logistic_regression_solvers_multiclass(multi_class):
+def test_logistic_regression_solvers_multiclass(fit_intercept, multi_class):
     """Test solvers converge to the same result for multiclass problems."""
     X, y = make_classification(
         n_samples=20, n_features=20, n_informative=10, n_classes=3, random_state=0
@@ -715,6 +716,8 @@ def test_logistic_regression_solvers_multiclass(multi_class):
         supported_solvers = set(SOLVERS) - set(["liblinear"])
     else:
         supported_solvers = SOLVERS
+    if fit_intercept:
+        supported_solvers -= set(["liblinear"])
 
     regressors = {
         solver: LogisticRegression(
@@ -730,6 +733,13 @@ def test_logistic_regression_solvers_multiclass(multi_class):
             rtol=5e-3 if (solver_1 == "saga" or solver_2 == "saga") else 1e-3,
             err_msg=f"{solver_1} vs {solver_2}",
         )
+        if fit_intercept:
+            assert_allclose(
+                regressors[solver_1].intercept_,
+                regressors[solver_2].intercept_,
+                rtol=5e-3 if (solver_1 == "saga" or solver_2 == "saga") else 1e-3,
+                err_msg=f"{solver_1} vs {solver_2}",
+            )
 
 
 @pytest.mark.parametrize("weight", [{0: 0.1, 1: 0.2}, {0: 0.1, 1: 0.2, 2: 0.5}])

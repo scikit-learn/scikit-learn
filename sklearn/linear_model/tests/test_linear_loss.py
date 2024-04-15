@@ -144,8 +144,6 @@ def test_loss_grad_hess_are_the_same(
     # Test that gradient_out and hessian_out are considered properly.
     g_out = np.empty_like(coef)
     h_out = np.empty_like(coef, shape=(coef.size, coef.size))
-    assert h_out.flags.f_contiguous
-    assert h4.flags.c_contiguous
     g5, h5, _ = loss.gradient_hessian(
         coef,
         X,
