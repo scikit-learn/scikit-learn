@@ -60,6 +60,25 @@ np_dep = declare_dependency(include_directories: inc_np)
 openmp_dep = dependency('OpenMP', language: 'c', required: false)
 
 if not openmp_dep.found()
+  warn_about_missing_openmp = true
+  # On Apple Clang avoid a misleading warning if compiler variables are set.
+  # See https://github.com/scikit-learn/scikit-learn/issues/28710 for more
+  # details
+  if host_machine.system() == 'darwin' and cc.get_id() == 'clang'
+    compiler_env_vars_with_openmp = run_command(py,
+      [
+        '-c',
+        '''
+import os
+
+compiler_env_vars_to_check = ["CPPFLAGS", "CFLAGS", "CXXFLAGS"]
+
+compiler_env_vars_with_openmp = [var for var in compiler_env_vars_to_check if "-fopenmp" in os.getenv(var, "")]
+print(compiler_env_vars_with_openmp)
+'''], check: true).stdout().strip()
+      warn_about_missing_openmp = compiler_env_vars_with_openmp == '[]'
+  endif
+  if warn_about_missing_openmp
     warning(
 '''
                 ***********
@@ -84,6 +103,13 @@ It seems that scikit-learn cannot be built with OpenMP.
 
                     ***
 ''')
+  else
+    warning(
+'''Looks like you set compiler environment variables to enable OpenMP support,
+check the output of "import sklearn; sklearn.show_versions()" after the build
+to make sure that scikit-learn was actually built with OpenMP support
+''')
+  endif
 endif
 
 # For now, we keep supporting SKLEARN_ENABLE_DEBUG_CYTHON_DIRECTIVES variable
@@ -127,7 +153,6 @@ custom_target('write_built_with_meson_file',
     install: true,
     install_dir: py.get_install_dir() / 'sklearn'
 )
-# endif
 
 extensions = ['_isotonic']
 
