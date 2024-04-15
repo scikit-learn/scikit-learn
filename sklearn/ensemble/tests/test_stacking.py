@@ -958,7 +958,7 @@ def test_metadata_routing_for_stacking_estimators(Estimator, Child, prop):
                 Child(registry=_Registry()).set_fit_request(**{prop: True}),
             ),
         ],
-        final_estimator=Child(registry=_Registry()),
+        final_estimator=Child(registry=_Registry()).set_predict_request(**{prop: True}),
     )
 
     est.fit(
@@ -968,11 +968,15 @@ def test_metadata_routing_for_stacking_estimators(Estimator, Child, prop):
         X_iris, y_iris, **{prop: sample_weight if prop == "sample_weight" else metadata}
     )
 
+    est.predict(
+        X_iris, **{prop: sample_weight if prop == "sample_weight" else metadata}
+    )
+
+    if prop == "sample_weight":
+        kwargs = {prop: sample_weight}
+    else:
+        kwargs = {prop: metadata}
     for estimator in est.estimators:
-        if prop == "sample_weight":
-            kwargs = {prop: sample_weight}
-        else:
-            kwargs = {prop: metadata}
         # access sub-estimator in (name, est) with estimator[1]:
         registry = estimator[1].registry
         assert len(registry)
@@ -980,6 +984,13 @@ def test_metadata_routing_for_stacking_estimators(Estimator, Child, prop):
             check_recorded_metadata(
                 obj=sub_est, method="fit", split_params=(prop), **kwargs
             )
+    # access final_estimator:
+    registry = est.final_estimator_.registry
+    assert len(registry)
+    for sub_est in registry:
+        check_recorded_metadata(
+            obj=sub_est, method="predict", split_params=(prop), **kwargs
+        )
 
 
 @pytest.mark.usefixtures("enable_slep006")

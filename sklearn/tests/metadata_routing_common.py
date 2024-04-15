@@ -256,7 +256,7 @@ class ConsumingClassifier(ClassifierMixin, BaseEstimator):
         record_metadata_not_default(
             self, "predict", sample_weight=sample_weight, metadata=metadata
         )
-        return np.zeros(shape=(len(X),))
+        return np.zeros(shape=(len(X),), dtype="int8")
 
     def predict_proba(self, X, sample_weight="default", metadata="default"):
         record_metadata_not_default(

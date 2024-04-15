@@ -422,6 +422,12 @@ class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble, metaclass=ABCM
                 **{name: estimator},
                 method_mapping=MethodMapping().add(callee="fit", caller="fit"),
             )
+
+        router.add(
+            final_estimator_=self.final_estimator_,
+            method_mapping=MethodMapping().add(caller="predict", callee="predict"),
+        )
+
         return router
 
 
@@ -736,12 +742,33 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
             with `return_std` or `return_cov`. Be aware that it will only
             account for uncertainty in the final estimator.
 
+            - If `enable_metadata_routing=False` (default):
+              Parameters directly passed to the `predict` method of the
+              `final_estimator`-
+
+            - If `enable_metadata_routing=True`:
+              Parameters safely routed to the `predict` method of the
+             `final_estimator`. See :ref:`Metadata Routing User Guide
+              <metadata_routing>` for more details.
+
+            .. versionchanged:: 1.5
+                `**predict_params` can be routed via metadata routing API.
+
+
         Returns
         -------
         y_pred : ndarray of shape (n_samples,) or (n_samples, n_output)
             Predicted targets.
         """
-        y_pred = super().predict(X, **predict_params)
+        if _routing_enabled():
+            routed_params = process_routing(self, "predict", **predict_params)
+        else:
+            # TODO(SLEP6): remove when metadata routing cannot be disabled.
+            routed_params = Bunch()
+            routed_params.final_estimator_ = Bunch(predict={})
+            routed_params.final_estimator_.predict = predict_params
+
+        y_pred = super().predict(X, **routed_params.final_estimator_["predict"])
         if isinstance(self._label_encoder, list):
             # Handle the multilabel-indicator case
             y_pred = np.array(
@@ -1091,6 +1118,52 @@ class StackingRegressor(RegressorMixin, _BaseStacking):
         if sample_weight is not None:
             fit_params["sample_weight"] = sample_weight
         return super().fit_transform(X, y, **fit_params)
+
+    @available_if(_estimator_has("predict"))
+    def predict(self, X, **predict_params):
+        """Predict target for X.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+            Training vectors, where `n_samples` is the number of samples and
+            `n_features` is the number of features.
+
+        **predict_params : dict of str -> obj
+            Parameters to the `predict` called by the `final_estimator`. Note
+            that this may be used to return uncertainties from some estimators
+            with `return_std` or `return_cov`. Be aware that it will only
+            account for uncertainty in the final estimator.
+
+            - If `enable_metadata_routing=False` (default):
+              Parameters directly passed to the `predict` method of the
+              `final_estimator`-
+
+            - If `enable_metadata_routing=True`:
+              Parameters safely routed to the `predict` method of the
+             `final_estimator`. See :ref:`Metadata Routing User Guide
+              <metadata_routing>` for more details.
+
+            .. versionchanged:: 1.5
+                `**predict_params` can be routed via metadata routing API.
+
+
+        Returns
+        -------
+        y_pred : ndarray of shape (n_samples,) or (n_samples, n_output)
+            Predicted targets.
+        """
+        if _routing_enabled():
+            routed_params = process_routing(self, "predict", **predict_params)
+        else:
+            # TODO(SLEP6): remove when metadata routing cannot be disabled.
+            routed_params = Bunch()
+            routed_params.final_estimator_ = Bunch(predict={})
+            routed_params.final_estimator_.predict = predict_params
+
+        y_pred = super().predict(X, **routed_params.final_estimator_["predict"])
+
+        return y_pred
 
     def _sk_visual_block_(self):
         # If final_estimator's default changes then this should be
