@@ -145,7 +145,7 @@ else:
 
     # Set a global controller that can be used to locally limit the number of
     # threads without looping through all shared libraries every time.
-    sklearn._sklearn_threadpool_controller = ThreadpoolController()
+    _sklearn_threadpool_controller = ThreadpoolController()
 
 
 def setup_module(module):
