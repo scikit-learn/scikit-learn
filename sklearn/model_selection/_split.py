@@ -850,6 +850,16 @@ class StratifiedKFold(_BaseKFold):
                 UserWarning,
             )
         y = check_array(y, input_name="y", ensure_2d=False, dtype=None)
+        n_classes = np.unique(y).size
+        if n_classes < 2:
+            warnings.warn(
+                (
+                    "Only one class present in y. StratifiedKFold is designed to be"
+                    " used with data that contains two or more classes. Consider using"
+                    " KFold instead."
+                ),
+                UserWarning,
+            )
         return super().split(X, y, groups)
 
 
@@ -998,6 +1008,15 @@ class StratifiedGroupKFold(GroupsConsumerMixin, _BaseKFold):
                 UserWarning,
             )
         n_classes = len(y_cnt)
+        if n_classes < 2:
+            warnings.warn(
+                (
+                    "Only one class present in y. StratifiedGroupKFold is designed to"
+                    " be used with data that contains two or more classes. The"
+                    " single-class scenario might not be suitable for stratified folds."
+                ),
+                UserWarning,
+            )
 
         _, groups_inv, groups_cnt = np.unique(
             groups, return_inverse=True, return_counts=True
@@ -2330,6 +2349,16 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
                 UserWarning,
             )
         y = check_array(y, input_name="y", ensure_2d=False, dtype=None)
+        n_classes = np.unique(y).size
+        if n_classes < 2:
+            warnings.warn(
+                (
+                    "Only one class present in y. StratifiedShuffleSplit is designed to"
+                    " be used with data that contains two or more classes. Consider"
+                    " using ShuffleSplit instead."
+                ),
+                UserWarning,
+            )
         return super().split(X, y, groups)
 
 
@@ -2789,7 +2818,8 @@ def train_test_split(
         test = np.arange(n_train, n_train + n_test)
 
     else:
-        if stratify is not None:
+        n_classes = len(np.unique(stratify))
+        if stratify is not None and n_classes > 1:
             CVClass = StratifiedShuffleSplit
         else:
             CVClass = ShuffleSplit

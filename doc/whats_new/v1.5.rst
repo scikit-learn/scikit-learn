@@ -127,6 +127,14 @@ Changelog
     :pr:`123456` by :user:`Joe Bloggs <joeongithub>`.
     where 123455 is the *pull request* number, not the issue number.
 
+:mod:`sklearn.model_selection`
+...............................
+
+- |Enhancement| Added warnings in `StratifiedKFold`, `StratifiedGroupKFold`,
+  and `StratifiedShuffleSplit` when only a single class is present in the target
+  variable, guiding users towards more suitable cross-validation strategies for
+  their dataset. :pr:`28628` by :user:`Manideep Yenugula <myenugula>`.
+
 :mod:`sklearn.cluster`
 ......................
 

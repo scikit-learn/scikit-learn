@@ -906,9 +906,9 @@ def test_preserve_feature_names(Estimator):
     rng = np.random.RandomState(0)
 
     X = pd.DataFrame(data=rng.randn(10, 2), columns=["colname_a", "colname_b"])
-    y = pd.Series(data=np.full(10, 1), name="colname_y")
+    y = pd.Series(data=np.concatenate([np.full(5, 1), np.full(5, 2)]), name="colname_y")
 
-    model = Estimator(early_stopping=True, validation_fraction=0.2)
+    model = Estimator(early_stopping=True, validation_fraction=0.2, max_iter=1000)
 
     with warnings.catch_warnings():
         warnings.simplefilter("error", UserWarning)
