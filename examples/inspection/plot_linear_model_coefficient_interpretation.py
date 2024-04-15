@@ -334,13 +334,6 @@ plt.subplots_adjust(left=0.3)
 # increase in hourly wage for each year of education. The actual causal effect
 # might be lower because of this confounding.
 #
-# Another problem when thinking about causality is that it may not make sense
-# to think about the causal effect of certain variables. In our example, while
-# it is perfectly valid to compare mean differences in WAGE based on race, it
-# does not make sense to think about the causal effect of race because (as far
-# as we know) it isn't possible to change one's race. Paul Holland coined the
-# phrase "no causation without manipulation" to reflect this idea.
-#
 # Checking the variability of the coefficients
 # --------------------------------------------
 #
