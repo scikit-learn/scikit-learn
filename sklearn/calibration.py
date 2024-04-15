@@ -388,9 +388,7 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
                 n_folds = self.cv.n_splits
             else:
                 n_folds = None
-            if n_folds and np.any(
-                [np.sum(y == class_) < n_folds for class_ in self.classes_]
-            ):
+            if n_folds and np.any(np.unique(y, return_counts=True)[1] < n_folds):
                 raise ValueError(
                     f"Requesting {n_folds}-fold "
                     "cross-validation but provided less than "
