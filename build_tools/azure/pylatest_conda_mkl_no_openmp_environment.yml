@@ -25,3 +25,4 @@ dependencies:
   - pip
   - pip:
     - cython
+    - threadpoolctl

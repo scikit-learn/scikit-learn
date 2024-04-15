@@ -3,7 +3,7 @@
 # build_tools/update_environments_and_lock_files.py
 cython==3.0.10  # min
 joblib==1.2.0  # min
-threadpoolctl==2.2.0
+threadpoolctl==3.1.0
 pytest==7.1.2  # min
 pytest-cov==2.9.0  # min
 ninja

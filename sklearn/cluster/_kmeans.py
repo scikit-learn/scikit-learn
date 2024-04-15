@@ -18,6 +18,7 @@ from numbers import Integral, Real
 import numpy as np
 import scipy.sparse as sp
 
+from .. import _sklearn_threadpool_controller
 from ..base import (
     BaseEstimator,
     ClassNamePrefixFeaturesOutMixin,
@@ -31,7 +32,6 @@ from ..utils import check_array, check_random_state
 from ..utils._openmp_helpers import _openmp_effective_n_threads
 from ..utils._param_validation import Interval, StrOptions, validate_params
 from ..utils.extmath import row_norms, stable_cumsum
-from ..utils.fixes import threadpool_info, threadpool_limits
 from ..utils.sparsefuncs import mean_variance_axis
 from ..utils.sparsefuncs_fast import assign_rows_csr
 from ..utils.validation import (
@@ -697,59 +697,56 @@ def _kmeans_single_lloyd(
 
     strict_convergence = False
 
-    # Threadpoolctl context to limit the number of threads in second level of
-    # nested parallelism (i.e. BLAS) to avoid oversubscription.
-    with threadpool_limits(limits=1, user_api="blas"):
-        for i in range(max_iter):
-            lloyd_iter(
-                X,
-                sample_weight,
-                centers,
-                centers_new,
-                weight_in_clusters,
-                labels,
-                center_shift,
-                n_threads,
-            )
+    for i in range(max_iter):
+        lloyd_iter(
+            X,
+            sample_weight,
+            centers,
+            centers_new,
+            weight_in_clusters,
+            labels,
+            center_shift,
+            n_threads,
+        )
 
+        if verbose:
+            inertia = _inertia(X, sample_weight, centers, labels, n_threads)
+            print(f"Iteration {i}, inertia {inertia}.")
+
+        centers, centers_new = centers_new, centers
+
+        if np.array_equal(labels, labels_old):
+            # First check the labels for strict convergence.
             if verbose:
-                inertia = _inertia(X, sample_weight, centers, labels, n_threads)
-                print(f"Iteration {i}, inertia {inertia}.")
-
-            centers, centers_new = centers_new, centers
-
-            if np.array_equal(labels, labels_old):
-                # First check the labels for strict convergence.
+                print(f"Converged at iteration {i}: strict convergence.")
+            strict_convergence = True
+            break
+        else:
+            # No strict convergence, check for tol based convergence.
+            center_shift_tot = (center_shift**2).sum()
+            if center_shift_tot <= tol:
                 if verbose:
-                    print(f"Converged at iteration {i}: strict convergence.")
-                strict_convergence = True
+                    print(
+                        f"Converged at iteration {i}: center shift "
+                        f"{center_shift_tot} within tolerance {tol}."
+                    )
                 break
-            else:
-                # No strict convergence, check for tol based convergence.
-                center_shift_tot = (center_shift**2).sum()
-                if center_shift_tot <= tol:
-                    if verbose:
-                        print(
-                            f"Converged at iteration {i}: center shift "
-                            f"{center_shift_tot} within tolerance {tol}."
-                        )
-                    break
 
-            labels_old[:] = labels
+        labels_old[:] = labels
 
-        if not strict_convergence:
-            # rerun E-step so that predicted labels match cluster centers
-            lloyd_iter(
-                X,
-                sample_weight,
-                centers,
-                centers,
-                weight_in_clusters,
-                labels,
-                center_shift,
-                n_threads,
-                update_centers=False,
-            )
+    if not strict_convergence:
+        # rerun E-step so that predicted labels match cluster centers
+        lloyd_iter(
+            X,
+            sample_weight,
+            centers,
+            centers,
+            weight_in_clusters,
+            labels,
+            center_shift,
+            n_threads,
+            update_centers=False,
+        )
 
     inertia = _inertia(X, sample_weight, centers, labels, n_threads)
 
@@ -824,16 +821,6 @@ def _labels_inertia(X, sample_weight, centers, n_threads=1, return_inertia=True)
         return labels, inertia
 
     return labels
-
-
-def _labels_inertia_threadpool_limit(
-    X, sample_weight, centers, n_threads=1, return_inertia=True
-):
-    """Same as _labels_inertia but in a threadpool_limits context."""
-    with threadpool_limits(limits=1, user_api="blas"):
-        result = _labels_inertia(X, sample_weight, centers, n_threads, return_inertia)
-
-    return result
 
 
 class _BaseKMeans(
@@ -926,7 +913,7 @@ class _BaseKMeans(
 
         n_active_threads = int(np.ceil(n_samples / CHUNK_SIZE))
         if n_active_threads < self._n_threads:
-            modules = threadpool_info()
+            modules = _sklearn_threadpool_controller.info()
             has_vcomp = "vcomp" in [module["prefix"] for module in modules]
             has_mkl = ("mkl", "intel") in [
                 (module["internal_api"], module.get("threading_layer", None))
@@ -1110,7 +1097,7 @@ class _BaseKMeans(
         else:
             sample_weight = _check_sample_weight(None, X, dtype=X.dtype)
 
-        labels = _labels_inertia_threadpool_limit(
+        labels = _labels_inertia(
             X,
             sample_weight,
             self.cluster_centers_,
@@ -1195,7 +1182,7 @@ class _BaseKMeans(
         X = self._check_test_data(X)
         sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
 
-        _, scores = _labels_inertia_threadpool_limit(
+        _, scores = _labels_inertia(
             X, sample_weight, self.cluster_centers_, self._n_threads
         )
         return -scores
@@ -1645,8 +1632,6 @@ def _mini_batch_step(
         the centers.
     """
     # Perform label assignment to nearest centers
-    # For better efficiency, it's better to run _mini_batch_step in a
-    # threadpool_limit context than using _labels_inertia_threadpool_limit here
     labels, inertia = _labels_inertia(X, sample_weight, centers, n_threads=n_threads)
 
     # Update centers according to the labels
@@ -2135,7 +2120,7 @@ class MiniBatchKMeans(_BaseKMeans):
             )
 
             # Compute inertia on a validation set.
-            _, inertia = _labels_inertia_threadpool_limit(
+            _, inertia = _labels_inertia(
                 X_valid,
                 sample_weight_valid,
                 cluster_centers,
@@ -2164,38 +2149,37 @@ class MiniBatchKMeans(_BaseKMeans):
 
         n_steps = (self.max_iter * n_samples) // self._batch_size
 
-        with threadpool_limits(limits=1, user_api="blas"):
-            # Perform the iterative optimization until convergence
-            for i in range(n_steps):
-                # Sample a minibatch from the full dataset
-                minibatch_indices = random_state.randint(0, n_samples, self._batch_size)
+        # Perform the iterative optimization until convergence
+        for i in range(n_steps):
+            # Sample a minibatch from the full dataset
+            minibatch_indices = random_state.randint(0, n_samples, self._batch_size)
 
-                # Perform the actual update step on the minibatch data
-                batch_inertia = _mini_batch_step(
-                    X=X[minibatch_indices],
-                    sample_weight=sample_weight[minibatch_indices],
-                    centers=centers,
-                    centers_new=centers_new,
-                    weight_sums=self._counts,
-                    random_state=random_state,
-                    random_reassign=self._random_reassign(),
-                    reassignment_ratio=self.reassignment_ratio,
-                    verbose=self.verbose,
-                    n_threads=self._n_threads,
-                )
+            # Perform the actual update step on the minibatch data
+            batch_inertia = _mini_batch_step(
+                X=X[minibatch_indices],
+                sample_weight=sample_weight[minibatch_indices],
+                centers=centers,
+                centers_new=centers_new,
+                weight_sums=self._counts,
+                random_state=random_state,
+                random_reassign=self._random_reassign(),
+                reassignment_ratio=self.reassignment_ratio,
+                verbose=self.verbose,
+                n_threads=self._n_threads,
+            )
 
-                if self._tol > 0.0:
-                    centers_squared_diff = np.sum((centers_new - centers) ** 2)
-                else:
-                    centers_squared_diff = 0
+            if self._tol > 0.0:
+                centers_squared_diff = np.sum((centers_new - centers) ** 2)
+            else:
+                centers_squared_diff = 0
 
-                centers, centers_new = centers_new, centers
+            centers, centers_new = centers_new, centers
 
-                # Monitor convergence and do early stopping if necessary
-                if self._mini_batch_convergence(
-                    i, n_steps, n_samples, centers_squared_diff, batch_inertia
-                ):
-                    break
+            # Monitor convergence and do early stopping if necessary
+            if self._mini_batch_convergence(
+                i, n_steps, n_samples, centers_squared_diff, batch_inertia
+            ):
+                break
 
         self.cluster_centers_ = centers
         self._n_features_out = self.cluster_centers_.shape[0]
@@ -2204,7 +2188,7 @@ class MiniBatchKMeans(_BaseKMeans):
         self.n_iter_ = int(np.ceil(((i + 1) * self._batch_size) / n_samples))
 
         if self.compute_labels:
-            self.labels_, self.inertia_ = _labels_inertia_threadpool_limit(
+            self.labels_, self.inertia_ = _labels_inertia(
                 X,
                 sample_weight,
                 self.cluster_centers_,
@@ -2290,22 +2274,21 @@ class MiniBatchKMeans(_BaseKMeans):
             # Initialize number of samples seen since last reassignment
             self._n_since_last_reassign = 0
 
-        with threadpool_limits(limits=1, user_api="blas"):
-            _mini_batch_step(
-                X,
-                sample_weight=sample_weight,
-                centers=self.cluster_centers_,
-                centers_new=self.cluster_centers_,
-                weight_sums=self._counts,
-                random_state=self._random_state,
-                random_reassign=self._random_reassign(),
-                reassignment_ratio=self.reassignment_ratio,
-                verbose=self.verbose,
-                n_threads=self._n_threads,
-            )
+        _mini_batch_step(
+            X,
+            sample_weight=sample_weight,
+            centers=self.cluster_centers_,
+            centers_new=self.cluster_centers_,
+            weight_sums=self._counts,
+            random_state=self._random_state,
+            random_reassign=self._random_reassign(),
+            reassignment_ratio=self.reassignment_ratio,
+            verbose=self.verbose,
+            n_threads=self._n_threads,
+        )
 
         if self.compute_labels:
-            self.labels_, self.inertia_ = _labels_inertia_threadpool_limit(
+            self.labels_, self.inertia_ = _labels_inertia(
                 X,
                 sample_weight,
                 self.cluster_centers_,

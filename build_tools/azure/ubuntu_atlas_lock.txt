@@ -34,7 +34,7 @@ pytest==7.4.4
     #   pytest-xdist
 pytest-xdist==3.5.0
     # via -r build_tools/azure/ubuntu_atlas_requirements.txt
-threadpoolctl==2.0.0
+threadpoolctl==3.1.0
     # via -r build_tools/azure/ubuntu_atlas_requirements.txt
 tomli==2.0.1
     # via

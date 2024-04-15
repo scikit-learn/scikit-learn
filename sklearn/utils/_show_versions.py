@@ -9,8 +9,9 @@ adapted from :func:`pandas.show_versions`
 import platform
 import sys
 
+from threadpoolctl import threadpool_info
+
 from .. import __version__
-from ..utils.fixes import threadpool_info
 from ._openmp_helpers import _openmp_parallelism_enabled
 
 

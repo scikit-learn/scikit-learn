@@ -80,6 +80,8 @@ else:
     # It is necessary to do this prior to importing show_versions as the
     # later is linked to the OpenMP runtime to make it possible to introspect
     # it and importing it first would fail if the OpenMP dll cannot be found.
+    from threadpoolctl import ThreadpoolController
+
     from . import (
         __check_build,  # noqa: F401
         _distributor_init,  # noqa: F401
@@ -140,6 +142,10 @@ else:
         _BUILT_WITH_MESON = True
     except ModuleNotFoundError:
         pass
+
+    # Set a global controller that can be used to locally limit the number of
+    # threads without looping through all shared libraries every time.
+    sklearn._sklearn_threadpool_controller = ThreadpoolController()
 
 
 def setup_module(module):

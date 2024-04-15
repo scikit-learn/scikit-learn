@@ -151,7 +151,7 @@ build_metadata_list = [
         },
         # TODO: put cython back to conda dependencies when required version is
         # available on the main channel
-        "pip_dependencies": ["cython"],
+        "pip_dependencies": ["cython", "threadpoolctl"],
     },
     {
         "name": "pymin_conda_defaults_openblas",
@@ -170,12 +170,11 @@ build_metadata_list = [
             "numpy": "1.21",  # the min version is not available on the defaults channel
             "scipy": "1.7",  # the min version has some low level crashes
             "matplotlib": "min",
-            "threadpoolctl": "2.2.0",
             "cython": "min",
         },
         # TODO: put cython back to conda dependencies when required version is
         # available on the main channel
-        "pip_dependencies": ["cython"],
+        "pip_dependencies": ["cython", "threadpoolctl"],
     },
     {
         "name": "pymin_conda_forge_openblas_ubuntu_2204",
@@ -381,7 +380,7 @@ build_metadata_list = [
         ],
         "package_constraints": {
             "joblib": "min",
-            "threadpoolctl": "2.2.0",
+            "threadpoolctl": "3.1.0",
             "pytest": "min",
             "pytest-cov": "min",
             # no pytest-xdist because it causes issue on 32bit

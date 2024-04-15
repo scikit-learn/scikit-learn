@@ -17,7 +17,7 @@ from ._kmeans import (
     _BaseKMeans,
     _kmeans_single_elkan,
     _kmeans_single_lloyd,
-    _labels_inertia_threadpool_limit,
+    _labels_inertia,
 )
 
 
@@ -504,7 +504,7 @@ class BisectingKMeans(_BaseKMeans):
         if hasattr(self, "_X_mean"):
             centers += self._X_mean
 
-        cluster_labels = _labels_inertia_threadpool_limit(
+        cluster_labels = _labels_inertia(
             X,
             sample_weight,
             centers,
