@@ -145,6 +145,10 @@ Changelog
   being explicitly set as well.
   :pr:`28483` by :user:`Stefanie Senger <StefanieSenger>`.
 
+- |Fix| Fixed an bug in :class:`compose.ColumnTransformer` with `n_jobs > 1`, where the
+  intermediate selected columns were passed to the transformers as read-only arrays.
+  :pr:`28822` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
+
 :mod:`sklearn.cross_decomposition`
 ..................................
 
