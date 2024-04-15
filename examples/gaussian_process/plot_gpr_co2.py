@@ -4,7 +4,7 @@ Forecasting of CO2 level on Mona Loa dataset using Gaussian process regression (
 ====================================================================================
 
 This example is based on Section 5.4.3 of "Gaussian Processes for Machine
-Learning" [RW2006]_. It illustrates an example of complex kernel engineering
+Learning" [1]_. It illustrates an example of complex kernel engineering
 and hyperparameter optimization using gradient ascent on the
 log-marginal-likelihood. The data consists of the monthly average atmospheric
 CO2 concentrations (in parts per million by volume (ppm)) collected at the
@@ -12,12 +12,11 @@ Mauna Loa Observatory in Hawaii, between 1958 and 2001. The objective is to
 model the CO2 concentration as a function of the time :math:`t` and extrapolate
 for years after 2001.
 
-.. topic: References
+.. rubric:: References
 
-    .. [RW2006] `Rasmussen, Carl Edward.
-       "Gaussian processes in machine learning."
-       Summer school on machine learning. Springer, Berlin, Heidelberg, 2003
-       <http://www.gaussianprocess.org/gpml/chapters/RW.pdf>`_.
+.. [1] `Rasmussen, Carl Edward. "Gaussian processes in machine learning."
+    Summer school on machine learning. Springer, Berlin, Heidelberg, 2003
+    <http://www.gaussianprocess.org/gpml/chapters/RW.pdf>`_.
 """
 
 print(__doc__)

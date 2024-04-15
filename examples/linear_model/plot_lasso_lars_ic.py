@@ -16,12 +16,12 @@ the best model.
     of the two approaches, you can refer to the following example:
     :ref:`sphx_glr_auto_examples_linear_model_plot_lasso_model_selection.py`.
 
-.. topic:: References
+.. rubric:: References
 
-    .. [ZHT2007] :arxiv:`Zou, Hui, Trevor Hastie, and Robert Tibshirani.
-       "On the degrees of freedom of the lasso."
-       The Annals of Statistics 35.5 (2007): 2173-2192.
-       <0712.0881>`
+.. [ZHT2007] :arxiv:`Zou, Hui, Trevor Hastie, and Robert Tibshirani.
+    "On the degrees of freedom of the lasso."
+    The Annals of Statistics 35.5 (2007): 2173-2192.
+    <0712.0881>`
 """
 
 # Author: Alexandre Gramfort

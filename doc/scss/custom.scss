@@ -81,22 +81,37 @@ code.literal {
   li.toctree-l4 {
     margin-left: 15px;
   }
+}
 
-  // Override the pydata-sphinx-theme styling of .. topic:: directives
-  div.topic,
-  aside.topic {
-    background-color: transparent;
-    border: none;
-    padding: 0;
-    box-shadow: none !important;
+/* Dropdowns (sphinx-design) */
 
-    p {
-      color: var(--pst-color-text-base) !important;
+details.sd-dropdown {
+  &:hover > summary.sd-summary-title > a.headerlink {
+    visibility: visible;
+  }
+
+  > summary.sd-summary-title {
+    > a.headerlink {
+      font-size: 1rem;
     }
 
-    ul.simple {
-      padding-left: 2rem;
+    // See `js/scripts/dropdown.js`: this is styling the "expand/collapse all" button
+    > button.sk-toggle-all {
+      color: var(--pst-sd-dropdown-color);
+      top: 0.9rem !important;
+      right: 3rem !important;
+      pointer-events: auto !important;
+      display: none;
+      border: none;
+      background: transparent;
     }
+  }
+
+  &[open] > summary.sd-summary-title:hover > .sd-summary-up.sk-toggle-all,
+  &:not([open])
+    > summary.sd-summary-title:hover
+    > .sd-summary-down.sk-toggle-all {
+    display: block;
   }
 }
 

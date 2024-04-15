@@ -87,11 +87,11 @@ represented as tf-idf vectors.
 can produce normalized vectors, in which case :func:`cosine_similarity`
 is equivalent to :func:`linear_kernel`, only slower.)
 
-.. topic:: References:
+.. rubric:: References
 
-    * C.D. Manning, P. Raghavan and H. Schütze (2008). Introduction to
-      Information Retrieval. Cambridge University Press.
-      https://nlp.stanford.edu/IR-book/html/htmledition/the-vector-space-model-for-scoring-1.html
+* C.D. Manning, P. Raghavan and H. Schütze (2008). Introduction to
+  Information Retrieval. Cambridge University Press.
+  https://nlp.stanford.edu/IR-book/html/htmledition/the-vector-space-model-for-scoring-1.html
 
 .. _linear_kernel:
 
@@ -222,10 +222,10 @@ which is a distance between discrete probability distributions.
 
 The chi squared kernel is most commonly used on histograms (bags) of visual words.
 
-.. topic:: References:
+.. rubric:: References
 
-    * Zhang, J. and Marszalek, M. and Lazebnik, S. and Schmid, C.
-      Local features and kernels for classification of texture and object
-      categories: A comprehensive study
-      International Journal of Computer Vision 2007
-      https://hal.archives-ouvertes.fr/hal-00171412/document
+* Zhang, J. and Marszalek, M. and Lazebnik, S. and Schmid, C.
+  Local features and kernels for classification of texture and object
+  categories: A comprehensive study
+  International Journal of Computer Vision 2007
+  https://hal.archives-ouvertes.fr/hal-00171412/document
