@@ -298,6 +298,11 @@ class NewtonSolver(ABC):
             return
 
         self.raw_prediction = raw
+        if is_verbose:
+            print(
+                f"    line search successful after {i+1} iterations with "
+                f"loss={self.loss_value}."
+            )
 
     def check_convergence(self, X, y, sample_weight):
         """Check for convergence.
@@ -310,14 +315,16 @@ class NewtonSolver(ABC):
         # convergence criterion because even a large step could have brought us close
         # to the true minimum.
         # coef_step = self.coef - self.coef_old
-        # check = np.max(np.abs(coef_step) / np.maximum(1, np.abs(self.coef_old)))
+        # change = np.max(np.abs(coef_step) / np.maximum(1, np.abs(self.coef_old)))
+        # check = change <= tol
 
         # 1. Criterion: maximum |gradient| <= tol
         #    The gradient was already updated in line_search()
-        check = np.max(np.abs(self.gradient))
+        g_max_abs = np.max(np.abs(self.gradient))
+        check = g_max_abs <= self.tol
         if self.verbose:
-            print(f"    1. max |gradient| {check} <= {self.tol}")
-        if check > self.tol:
+            print(f"    1. max |gradient| {g_max_abs} <= {self.tol} {check}")
+        if not check:
             return
 
         # 2. Criterion: For Newton decrement d, check 1/2 * d^2 <= tol
@@ -325,9 +332,10 @@ class NewtonSolver(ABC):
         #         = sqrt(coef_newton @ hessian @ coef_newton)
         #    See Boyd, Vanderberghe (2009) "Convex Optimization" Chapter 9.5.1.
         d2 = self.coef_newton @ self.hessian @ self.coef_newton
+        check = 0.5 * d2 <= self.tol
         if self.verbose:
-            print(f"    2. Newton decrement {0.5 * d2} <= {self.tol}")
-        if 0.5 * d2 > self.tol:
+            print(f"    2. Newton decrement {0.5 * d2} <= {self.tol} {check}")
+        if not check:
             return
 
         if self.verbose:
@@ -498,7 +506,7 @@ class NewtonCholeskySolver(NewtonSolver):
             warnings.warn(
                 f"The inner solver of {self.__class__.__name__} stumbled upon a "
                 "singular or very ill-conditioned Hessian matrix at iteration "
-                f"#{self.iteration}. It will now resort to lbfgs instead.\n"
+                f"{self.iteration}. It will now resort to lbfgs instead.\n"
                 "Further options are to use another solver or to avoid such situation "
                 "in the first place. Possible remedies are removing collinear features"
                 " of X or increasing the penalization strengths.\n"
