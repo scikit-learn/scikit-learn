@@ -1276,7 +1276,8 @@ When there are more than two labels, the value of the MCC will no longer range
 between -1 and +1. Instead the minimum value will be somewhere between -1 and 0
 depending on the number and distribution of ground true labels. The maximum
 value is always +1.
-For additional information, see [WikipediaMCC2021]_ [Matthews1975]_ [Jurman2012]_ [Chicco2020]_ [Chicco2021]_
+For additional information, see [WikipediaMCC2021]_ [Matthews1975]_ [Jurman2012]_
+[Chicco2020]_.
 
 Here is a small example illustrating the usage of the :func:`matthews_corrcoef`
 function:
@@ -1286,14 +1287,14 @@ function:
     >>> y_pred = [+1, -1, +1, +1]
     >>> matthews_corrcoef(y_true, y_pred)
     -0.33...
-    
+
 .. topic:: References:
 
   .. [WikipediaMCC2021] Wikipedia contributors. Detection error tradeoff.
      Wikipedia, The Free Encyclopedia. April 21, 2021, 12:21 CEST.
      Available at: https://en.wikipedia.org/wiki/Matthews_correlation_coefficient.
      Accessed April 21, 2021.
-     
+
   .. [Matthews1975] B. W. Matthews,
      `Comparison of the predicted and observed secondary structure of T4 phage lysozyme
      <https://doi.org/10.1016/0005-2795(75)90109-9>`_,
@@ -1305,14 +1306,10 @@ function:
      PLoS One, 2012.
 
   .. [Chicco2020] D. Chicco, G. Jurman,
-     `The advantages of the Matthews correlation coefficient (MCC) over F1 score and accuracy in binary classification evaluation
+     `The advantages of the Matthews correlation coefficient (MCC) over F1 score and
+     accuracy in binary classification evaluation
      <https://doi.org/10.1186/s12864-019-6413-7>`_,
      BMC Genomics, 2020.
-
-  .. [Chicco2021] D. Chicco, N. Toetsch G. Jurman,
-     `The Matthews correlation coefficient (MCC) is more reliable than balanced accuracy, bookmaker informedness, and markedness in two-class confusion matrix evaluation
-     <https://doi.org/10.1186/s13040-021-00244-z>`_,
-     BioData Mining, 2021.
 
 .. _multilabel_confusion_matrix:
 
