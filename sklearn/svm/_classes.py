@@ -78,6 +78,9 @@ class LinearSVC(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
     C : float, default=1.0
         Regularization parameter. The strength of the regularization is
         inversely proportional to C. Must be strictly positive.
+        For an intuitive visualization of the effects of scaling
+        the regularization parameter C, see
+        :ref:`sphx_glr_auto_examples_svm_plot_svm_scale_c.py`.
 
     multi_class : {'ovr', 'crammer_singer'}, default='ovr'
         Determines the multi-class strategy if `y` contains more than
@@ -639,7 +642,9 @@ class SVC(BaseSVC):
     C : float, default=1.0
         Regularization parameter. The strength of the regularization is
         inversely proportional to C. Must be strictly positive. The penalty
-        is a squared l2 penalty.
+        is a squared l2 penalty. For an intuitive visualization of the effects
+        of scaling the regularization parameter C, see
+        :ref:`sphx_glr_auto_examples_svm_plot_svm_scale_c.py`.
 
     kernel : {'linear', 'poly', 'rbf', 'sigmoid', 'precomputed'} or callable,  \
         default='rbf'
@@ -1215,7 +1220,9 @@ class SVR(RegressorMixin, BaseLibSVM):
     C : float, default=1.0
         Regularization parameter. The strength of the regularization is
         inversely proportional to C. Must be strictly positive.
-        The penalty is a squared l2 penalty.
+        The penalty is a squared l2. For an intuitive visualization of the
+        effects of scaling the regularization parameter C, see
+        :ref:`sphx_glr_auto_examples_svm_plot_svm_scale_c.py`.
 
     epsilon : float, default=0.1
          Epsilon in the epsilon-SVR model. It specifies the epsilon-tube
@@ -1385,7 +1392,9 @@ class NuSVR(RegressorMixin, BaseLibSVM):
         default 0.5 will be taken.
 
     C : float, default=1.0
-        Penalty parameter C of the error term.
+        Penalty parameter C of the error term. For an intuitive visualization
+        of the effects of scaling the regularization parameter C, see
+        :ref:`sphx_glr_auto_examples_svm_plot_svm_scale_c.py`.
 
     kernel : {'linear', 'poly', 'rbf', 'sigmoid', 'precomputed'} or callable,  \
         default='rbf'
