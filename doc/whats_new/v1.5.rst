@@ -268,6 +268,11 @@ Changelog
 :mod:`sklearn.linear_model`
 ...........................
 
+- |Enhancement| Solver `"newton-cg"` in :class:`linear_model.LogisticRegression` and
+  :class:`linear_model.LogisticRegressionCV` now emits information when `verbose` is
+  set to positive values.
+  :pr:`27526` by :user:`Christian Lorentzen <lorentzenchr>`.
+
 - |Fix| :class:`linear_model.ElasticNet`, :class:`linear_model.ElasticNetCV`,
   :class:`linear_model.Lasso` and :class:`linear_model.LassoCV` now explicitly don't
   accept large sparse data formats. :pr:`27576` by :user:`Stefanie Senger

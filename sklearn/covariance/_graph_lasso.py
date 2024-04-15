@@ -222,7 +222,6 @@ def alpha_max(emp_cov):
 @validate_params(
     {
         "emp_cov": ["array-like"],
-        "cov_init": ["array-like", None],
         "return_costs": ["boolean"],
         "return_n_iter": ["boolean"],
     },
@@ -232,7 +231,6 @@ def graphical_lasso(
     emp_cov,
     alpha,
     *,
-    cov_init=None,
     mode="cd",
     tol=1e-4,
     enet_tol=1e-4,
@@ -258,14 +256,6 @@ def graphical_lasso(
         The regularization parameter: the higher alpha, the more
         regularization, the sparser the inverse covariance.
         Range is (0, inf].
-
-    cov_init : array of shape (n_features, n_features), default=None
-        The initial guess for the covariance. If None, then the empirical
-        covariance is used.
-
-        .. deprecated:: 1.3
-           `cov_init` is deprecated in 1.3 and will be removed in 1.5.
-           It currently has no effect.
 
     mode : {'cd', 'lars'}, default='cd'
         The Lasso solver to use: coordinate descent or LARS. Use LARS for
@@ -347,16 +337,6 @@ def graphical_lasso(
            [ 0.21...,  0.22..., -0.08...],
            [-0.20..., -0.08...,  0.23...]])
     """
-
-    if cov_init is not None:
-        warnings.warn(
-            (
-                "The cov_init parameter is deprecated in 1.3 and will be removed in "
-                "1.5. It does not have any effect."
-            ),
-            FutureWarning,
-        )
-
     model = GraphicalLasso(
         alpha=alpha,
         mode=mode,
