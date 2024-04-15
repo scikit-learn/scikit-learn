@@ -20,8 +20,8 @@ NY, USA: Springer New York Inc..
 
 # Author: Wenhao Zhang <wenhaoz@ucla.edu>
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 
 from sklearn.datasets import load_digits
 from sklearn.decomposition import PCA

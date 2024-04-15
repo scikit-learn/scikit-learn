@@ -1,3 +1,4 @@
+import argparse
 import os
 import subprocess
 
@@ -18,12 +19,47 @@ def get_commit_message():
     else:
         commit_message = build_source_version_message
 
+    # Sanitize the commit message to avoid introducing a vulnerability: a PR
+    # submitter could include the "##vso" special marker in their commit
+    # message to attempt to obfuscate the injection of arbitrary commands in
+    # the Azure pipeline.
+    #
+    # This can be a problem if the PR reviewers do not pay close enough
+    # attention to the full commit message prior to clicking the merge button
+    # and as a result make the inject code run in a protected branch with
+    # elevated access to CI secrets. On a protected branch, Azure
+    # already sanitizes `BUILD_SOURCEVERSIONMESSAGE`, but the message
+    # will still be sanitized here out of precaution.
+    commit_message = commit_message.replace("##vso", "..vso")
+
     return commit_message
 
 
-if __name__ == "__main__":
-    # set the environment variable to be propagated to other steps
-    commit_message = get_commit_message()
-    print(f"##vso[task.setvariable variable=message;isOutput=true]{commit_message}")
+def parsed_args():
+    parser = argparse.ArgumentParser(
+        description=(
+            "Show commit message that triggered the build in Azure DevOps pipeline"
+        )
+    )
+    parser.add_argument(
+        "--only-show-message",
+        action="store_true",
+        default=False,
+        help=(
+            "Only print commit message. Useful for direct use in scripts rather than"
+            " setting output variable of the Azure job"
+        ),
+    )
+    return parser.parse_args()
 
-    print(f"commit message: {commit_message}")  # helps debugging
+
+if __name__ == "__main__":
+    args = parsed_args()
+    commit_message = get_commit_message()
+
+    if args.only_show_message:
+        print(commit_message)
+    else:
+        # set the environment variable to be propagated to other steps
+        print(f"##vso[task.setvariable variable=message;isOutput=true]{commit_message}")
+        print(f"commit message: {commit_message}")  # helps debugging

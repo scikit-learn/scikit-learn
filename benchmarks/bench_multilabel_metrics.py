@@ -3,25 +3,24 @@
 A comparison of multilabel target formats and metrics over them
 """
 
-from timeit import timeit
-from functools import partial
-import itertools
 import argparse
+import itertools
 import sys
+from functools import partial
+from timeit import timeit
 
 import matplotlib.pyplot as plt
-import scipy.sparse as sp
 import numpy as np
+import scipy.sparse as sp
 
 from sklearn.datasets import make_multilabel_classification
 from sklearn.metrics import (
-    f1_score,
     accuracy_score,
+    f1_score,
     hamming_loss,
     jaccard_similarity_score,
 )
 from sklearn.utils._testing import ignore_warnings
-
 
 METRICS = {
     "f1": partial(f1_score, average="micro"),
@@ -34,8 +33,8 @@ METRICS = {
 FORMATS = {
     "sequences": lambda y: [list(np.flatnonzero(s)) for s in y],
     "dense": lambda y: y,
-    "csr": lambda y: sp.csr_matrix(y),
-    "csc": lambda y: sp.csc_matrix(y),
+    "csr": sp.csr_matrix,
+    "csc": sp.csc_matrix,
 }
 
 

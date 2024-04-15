@@ -44,11 +44,12 @@ between their scores.
 
 """
 
-from sklearn.datasets import load_iris
-from matplotlib import pyplot as plt
-from sklearn.svm import SVC
-from sklearn.model_selection import GridSearchCV, cross_val_score, KFold
 import numpy as np
+from matplotlib import pyplot as plt
+
+from sklearn.datasets import load_iris
+from sklearn.model_selection import GridSearchCV, KFold, cross_val_score
+from sklearn.svm import SVC
 
 # Number of random trials
 NUM_TRIALS = 30
@@ -70,7 +71,6 @@ nested_scores = np.zeros(NUM_TRIALS)
 
 # Loop for each trial
 for i in range(NUM_TRIALS):
-
     # Choose cross-validation techniques for the inner and outer loops,
     # independently of the dataset.
     # E.g "GroupKFold", "LeaveOneOut", "LeaveOneGroupOut", etc.

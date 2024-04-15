@@ -8,27 +8,18 @@ from math import log
 import numpy as np
 import pytest
 
-
-from sklearn.utils._testing import assert_array_almost_equal
-from sklearn.utils._testing import assert_almost_equal
-from sklearn.utils._testing import assert_array_less
-from sklearn.utils import check_random_state
-from sklearn.linear_model import BayesianRidge, ARDRegression
-from sklearn.linear_model import Ridge
 from sklearn import datasets
+from sklearn.linear_model import ARDRegression, BayesianRidge, Ridge
+from sklearn.utils import check_random_state
+from sklearn.utils._testing import (
+    _convert_container,
+    assert_almost_equal,
+    assert_array_almost_equal,
+    assert_array_less,
+)
 from sklearn.utils.extmath import fast_logdet
 
 diabetes = datasets.load_diabetes()
-
-
-def test_n_iter():
-    """Check value of n_iter."""
-    X = np.array([[1], [2], [6], [8], [10]])
-    y = np.array([1, 2, 6, 8, 10])
-    clf = BayesianRidge(n_iter=0)
-    msg = "n_iter should be greater than or equal to 1."
-    with pytest.raises(ValueError, match=msg):
-        clf.fit(X, y)
 
 
 def test_bayesian_ridge_scores():
@@ -83,7 +74,7 @@ def test_bayesian_ridge_score_values():
         alpha_2=alpha_2,
         lambda_1=lambda_1,
         lambda_2=lambda_2,
-        n_iter=1,
+        max_iter=1,
         fit_intercept=False,
         compute_score=True,
     )
@@ -184,7 +175,7 @@ def test_update_of_sigma_in_ard():
     # of the ARDRegression algorithm. See issue #10128.
     X = np.array([[1, 0], [0, 0]])
     y = np.array([0, 0])
-    clf = ARDRegression(n_iter=1)
+    clf = ARDRegression(max_iter=1)
     clf.fit(X, y)
     # With the inputs above, ARDRegression prunes both of the two coefficients
     # in the first iteration. Hence, the expected shape of `sigma_` is (0, 0).
@@ -205,12 +196,11 @@ def test_toy_ard_object():
     assert_array_almost_equal(clf.predict(test), [1, 3, 4], 2)
 
 
-@pytest.mark.parametrize("seed", range(100))
 @pytest.mark.parametrize("n_samples, n_features", ((10, 100), (100, 10)))
-def test_ard_accuracy_on_easy_problem(seed, n_samples, n_features):
+def test_ard_accuracy_on_easy_problem(global_random_seed, n_samples, n_features):
     # Check that ARD converges with reasonable accuracy on an easy problem
     # (Github issue #14055)
-    X = np.random.RandomState(seed=seed).normal(size=(250, 3))
+    X = np.random.RandomState(global_random_seed).normal(size=(250, 3))
     y = X[:, 1]
 
     regressor = ARDRegression()
@@ -220,7 +210,8 @@ def test_ard_accuracy_on_easy_problem(seed, n_samples, n_features):
     assert abs_coef_error < 1e-10
 
 
-def test_return_std():
+@pytest.mark.parametrize("constructor_name", ["array", "dataframe"])
+def test_return_std(constructor_name):
     # Test return_std option for both Bayesian regressors
     def f(X):
         return np.dot(X, w) + b
@@ -236,7 +227,10 @@ def test_return_std():
     b = 1.0
 
     X = np.random.random((n_train, d))
+    X = _convert_container(X, constructor_name)
+
     X_test = np.random.random((n_test, d))
+    X_test = _convert_container(X_test, constructor_name)
 
     for decimal, noise_mult in enumerate([1, 0.1, 0.01]):
         y = f_noise(X, noise_mult)
@@ -252,13 +246,12 @@ def test_return_std():
         assert_array_almost_equal(y_std2, noise_mult, decimal=decimal)
 
 
-@pytest.mark.parametrize("seed", range(10))
-def test_update_sigma(seed):
+def test_update_sigma(global_random_seed):
     # make sure the two update_sigma() helpers are equivalent. The woodbury
     # formula is used when n_samples < n_features, and the other one is used
     # otherwise.
 
-    rng = np.random.RandomState(seed)
+    rng = np.random.RandomState(global_random_seed)
 
     # set n_samples == n_features to avoid instability issues when inverting
     # the matrices. Using the woodbury formula would be unstable when
@@ -275,18 +268,6 @@ def test_update_sigma(seed):
     sigma_woodbury = reg._update_sigma_woodbury(X, alpha, lmbda, keep_lambda)
 
     np.testing.assert_allclose(sigma, sigma_woodbury)
-
-
-# FIXME: 'normalize' to be removed in 1.2 in LinearRegression
-@pytest.mark.filterwarnings("ignore:'normalize' was deprecated")
-def test_ard_regression_predict_normalize_true():
-    """Check that we can predict with `normalize=True` and `return_std=True`.
-    Non-regression test for:
-    https://github.com/scikit-learn/scikit-learn/issues/18605
-    """
-    clf = ARDRegression(normalize=True)
-    clf.fit([[0, 0], [1, 1], [2, 2]], [0, 1, 2])
-    clf.predict([[1, 1]], return_std=True)
 
 
 @pytest.mark.parametrize("dtype", [np.float32, np.float64])

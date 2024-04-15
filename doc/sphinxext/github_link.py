@@ -1,9 +1,9 @@
-from operator import attrgetter
 import inspect
-import subprocess
 import os
+import subprocess
 import sys
 from functools import partial
+from operator import attrgetter
 
 REVISION_CMD = "git rev-parse --short HEAD"
 
@@ -26,10 +26,10 @@ def _linkcode_resolve(domain, info, package, url_fmt, revision):
     >>> _linkcode_resolve('py', {'module': 'tty',
     ...                          'fullname': 'setraw'},
     ...                   package='tty',
-    ...                   url_fmt='http://hg.python.org/cpython/file/'
+    ...                   url_fmt='https://hg.python.org/cpython/file/'
     ...                           '{revision}/Lib/{package}/{path}#L{lineno}',
     ...                   revision='xxxx')
-    'http://hg.python.org/cpython/file/xxxx/Lib/tty/tty.py#L18'
+    'https://hg.python.org/cpython/file/xxxx/Lib/tty/tty.py#L18'
     """
 
     if revision is None:

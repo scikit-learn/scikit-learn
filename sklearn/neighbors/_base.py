@@ -1,4 +1,5 @@
 """Base and mixin classes for nearest neighbors."""
+
 # Authors: Jake Vanderplas <vanderplas@astro.washington.edu>
 #          Fabian Pedregosa <fabian.pedregosa@inria.fr>
 #          Alexandre Gramfort <alexandre.gramfort@inria.fr>
@@ -6,75 +7,70 @@
 #          Multi-output support by Arnaud Joly <a.joly@ulg.ac.be>
 #
 # License: BSD 3 clause (C) INRIA, University of Amsterdam
-from functools import partial
-
+import itertools
+import numbers
 import warnings
 from abc import ABCMeta, abstractmethod
-import numbers
+from functools import partial
+from numbers import Integral, Real
 
 import numpy as np
+from joblib import effective_n_jobs
 from scipy.sparse import csr_matrix, issparse
-from joblib import Parallel, effective_n_jobs
 
-from ._ball_tree import BallTree
-from ._kd_tree import KDTree
-from ..base import BaseEstimator, MultiOutputMixin
-from ..base import is_classifier
-from ..metrics import pairwise_distances_chunked
-from ..metrics.pairwise import PAIRWISE_DISTANCE_FUNCTIONS
+from ..base import BaseEstimator, MultiOutputMixin, is_classifier
+from ..exceptions import DataConversionWarning, EfficiencyWarning
+from ..metrics import DistanceMetric, pairwise_distances_chunked
 from ..metrics._pairwise_distances_reduction import (
-    PairwiseDistancesArgKmin,
-    PairwiseDistancesRadiusNeighborhood,
+    ArgKmin,
+    RadiusNeighbors,
 )
+from ..metrics.pairwise import PAIRWISE_DISTANCE_FUNCTIONS
 from ..utils import (
     check_array,
     gen_even_slices,
-    _to_object_array,
 )
+from ..utils._param_validation import Interval, StrOptions, validate_params
+from ..utils.fixes import parse_version, sp_base_version
 from ..utils.multiclass import check_classification_targets
-from ..utils.validation import check_is_fitted
-from ..utils.validation import check_non_negative
-from ..utils.fixes import delayed, sp_version
-from ..utils.fixes import parse_version
-from ..exceptions import DataConversionWarning, EfficiencyWarning
+from ..utils.parallel import Parallel, delayed
+from ..utils.validation import _to_object_array, check_is_fitted, check_non_negative
+from ._ball_tree import BallTree
+from ._kd_tree import KDTree
+
+SCIPY_METRICS = [
+    "braycurtis",
+    "canberra",
+    "chebyshev",
+    "correlation",
+    "cosine",
+    "dice",
+    "hamming",
+    "jaccard",
+    "mahalanobis",
+    "minkowski",
+    "rogerstanimoto",
+    "russellrao",
+    "seuclidean",
+    "sokalmichener",
+    "sokalsneath",
+    "sqeuclidean",
+    "yule",
+]
+if sp_base_version < parse_version("1.11"):
+    # Deprecated in SciPy 1.9 and removed in SciPy 1.11
+    SCIPY_METRICS += ["kulsinski"]
+if sp_base_version < parse_version("1.9"):
+    # Deprecated in SciPy 1.0 and removed in SciPy 1.9
+    SCIPY_METRICS += ["matching"]
 
 VALID_METRICS = dict(
     ball_tree=BallTree.valid_metrics,
     kd_tree=KDTree.valid_metrics,
     # The following list comes from the
     # sklearn.metrics.pairwise doc string
-    brute=sorted(
-        set(PAIRWISE_DISTANCE_FUNCTIONS).union(
-            [
-                "braycurtis",
-                "canberra",
-                "chebyshev",
-                "correlation",
-                "cosine",
-                "dice",
-                "hamming",
-                "jaccard",
-                "kulsinski",
-                "mahalanobis",
-                "matching",
-                "minkowski",
-                "rogerstanimoto",
-                "russellrao",
-                "seuclidean",
-                "sokalmichener",
-                "sokalsneath",
-                "sqeuclidean",
-                "yule",
-            ]
-        )
-    ),
+    brute=sorted(set(PAIRWISE_DISTANCE_FUNCTIONS).union(SCIPY_METRICS)),
 )
-
-# TODO: Remove filterwarnings in 1.3 when wminkowski is removed
-if sp_version < parse_version("1.8.0.dev0"):
-    # Before scipy 1.8.0.dev0, wminkowski was the key to use
-    # the weighted minkowski metric.
-    VALID_METRICS["brute"].append("wminkowski")
 
 VALID_METRICS_SPARSE = dict(
     ball_tree=[],
@@ -83,26 +79,17 @@ VALID_METRICS_SPARSE = dict(
 )
 
 
-def _check_weights(weights):
-    """Check to make sure weights are valid"""
-    if weights not in (None, "uniform", "distance") and not callable(weights):
-        raise ValueError(
-            "weights not recognized: should be 'uniform', "
-            "'distance', or a callable function"
-        )
-
-    return weights
-
-
 def _get_weights(dist, weights):
     """Get the weights from an array of distances and a parameter ``weights``.
+
+    Assume weights have already been validated.
 
     Parameters
     ----------
     dist : ndarray
         The input distances.
 
-    weights : {'uniform', 'distance' or a callable}
+    weights : {'uniform', 'distance'}, callable or None
         The kind of weighting used.
 
     Returns
@@ -112,7 +99,8 @@ def _get_weights(dist, weights):
     """
     if weights in (None, "uniform"):
         return None
-    elif weights == "distance":
+
+    if weights == "distance":
         # if user attempts to classify a point that was zero distance from one
         # or more training points, those training points are weighted as 1.0
         # and the other points as 0.0
@@ -132,13 +120,9 @@ def _get_weights(dist, weights):
             inf_row = np.any(inf_mask, axis=1)
             dist[inf_row] = inf_mask[inf_row]
         return dist
-    elif callable(weights):
+
+    if callable(weights):
         return weights(dist)
-    else:
-        raise ValueError(
-            "weights not recognized: should be 'uniform', "
-            "'distance', or a callable function"
-        )
 
 
 def _is_sorted_by_data(graph):
@@ -201,31 +185,107 @@ def _check_precomputed(X):
     copied = graph.format != "csr"
     graph = check_array(graph, accept_sparse="csr")
     check_non_negative(graph, whom="precomputed distance matrix.")
+    graph = sort_graph_by_row_values(graph, copy=not copied, warn_when_not_sorted=True)
 
-    if not _is_sorted_by_data(graph):
+    return graph
+
+
+@validate_params(
+    {
+        "graph": ["sparse matrix"],
+        "copy": ["boolean"],
+        "warn_when_not_sorted": ["boolean"],
+    },
+    prefer_skip_nested_validation=True,
+)
+def sort_graph_by_row_values(graph, copy=False, warn_when_not_sorted=True):
+    """Sort a sparse graph such that each row is stored with increasing values.
+
+    .. versionadded:: 1.2
+
+    Parameters
+    ----------
+    graph : sparse matrix of shape (n_samples, n_samples)
+        Distance matrix to other samples, where only non-zero elements are
+        considered neighbors. Matrix is converted to CSR format if not already.
+
+    copy : bool, default=False
+        If True, the graph is copied before sorting. If False, the sorting is
+        performed inplace. If the graph is not of CSR format, `copy` must be
+        True to allow the conversion to CSR format, otherwise an error is
+        raised.
+
+    warn_when_not_sorted : bool, default=True
+        If True, a :class:`~sklearn.exceptions.EfficiencyWarning` is raised
+        when the input graph is not sorted by row values.
+
+    Returns
+    -------
+    graph : sparse matrix of shape (n_samples, n_samples)
+        Distance matrix to other samples, where only non-zero elements are
+        considered neighbors. Matrix is in CSR format.
+
+    Examples
+    --------
+    >>> from scipy.sparse import csr_matrix
+    >>> from sklearn.neighbors import sort_graph_by_row_values
+    >>> X = csr_matrix(
+    ...     [[0., 3., 1.],
+    ...      [3., 0., 2.],
+    ...      [1., 2., 0.]])
+    >>> X.data
+    array([3., 1., 3., 2., 1., 2.])
+    >>> X_ = sort_graph_by_row_values(X)
+    >>> X_.data
+    array([1., 3., 2., 3., 1., 2.])
+    """
+    if graph.format == "csr" and _is_sorted_by_data(graph):
+        return graph
+
+    if warn_when_not_sorted:
         warnings.warn(
-            "Precomputed sparse input was not sorted by data.", EfficiencyWarning
+            (
+                "Precomputed sparse input was not sorted by row values. Use the"
+                " function sklearn.neighbors.sort_graph_by_row_values to sort the input"
+                " by row values, with warn_when_not_sorted=False to remove this"
+                " warning."
+            ),
+            EfficiencyWarning,
         )
-        if not copied:
-            graph = graph.copy()
 
+    if graph.format not in ("csr", "csc", "coo", "lil"):
+        raise TypeError(
+            f"Sparse matrix in {graph.format!r} format is not supported due to "
+            "its handling of explicit zeros"
+        )
+    elif graph.format != "csr":
+        if not copy:
+            raise ValueError(
+                "The input graph is not in CSR format. Use copy=True to allow "
+                "the conversion to CSR format."
+            )
+        graph = graph.asformat("csr")
+    elif copy:  # csr format with copy=True
+        graph = graph.copy()
+
+    row_nnz = np.diff(graph.indptr)
+    if row_nnz.max() == row_nnz.min():
         # if each sample has the same number of provided neighbors
-        row_nnz = np.diff(graph.indptr)
-        if row_nnz.max() == row_nnz.min():
-            n_samples = graph.shape[0]
-            distances = graph.data.reshape(n_samples, -1)
+        n_samples = graph.shape[0]
+        distances = graph.data.reshape(n_samples, -1)
 
-            order = np.argsort(distances, kind="mergesort")
-            order += np.arange(n_samples)[:, None] * row_nnz[0]
-            order = order.ravel()
-            graph.data = graph.data[order]
-            graph.indices = graph.indices[order]
+        order = np.argsort(distances, kind="mergesort")
+        order += np.arange(n_samples)[:, None] * row_nnz[0]
+        order = order.ravel()
+        graph.data = graph.data[order]
+        graph.indices = graph.indices[order]
 
-        else:
-            for start, stop in zip(graph.indptr, graph.indptr[1:]):
-                order = np.argsort(graph.data[start:stop], kind="mergesort")
-                graph.data[start:stop] = graph.data[start:stop][order]
-                graph.indices[start:stop] = graph.indices[start:stop][order]
+    else:
+        for start, stop in zip(graph.indptr, graph.indptr[1:]):
+            order = np.argsort(graph.data[start:stop], kind="mergesort")
+            graph.data[start:stop] = graph.data[start:stop][order]
+            graph.indices[start:stop] = graph.indices[start:stop][order]
+
     return graph
 
 
@@ -332,6 +392,17 @@ def _radius_neighbors_from_graph(graph, radius, return_distance):
 class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
     """Base class for nearest neighbors estimators."""
 
+    _parameter_constraints: dict = {
+        "n_neighbors": [Interval(Integral, 1, None, closed="left"), None],
+        "radius": [Interval(Real, 0, None, closed="both"), None],
+        "algorithm": [StrOptions({"auto", "ball_tree", "kd_tree", "brute"})],
+        "leaf_size": [Interval(Integral, 1, None, closed="left")],
+        "p": [Interval(Real, 0, None, closed="right"), None],
+        "metric": [StrOptions(set(itertools.chain(*VALID_METRICS.values()))), callable],
+        "metric_params": [dict, None],
+        "n_jobs": [Integral, None],
+    }
+
     @abstractmethod
     def __init__(
         self,
@@ -344,7 +415,6 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         metric_params=None,
         n_jobs=None,
     ):
-
         self.n_neighbors = n_neighbors
         self.radius = radius
         self.algorithm = algorithm
@@ -355,13 +425,14 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         self.n_jobs = n_jobs
 
     def _check_algorithm_metric(self):
-        if self.algorithm not in ["auto", "brute", "kd_tree", "ball_tree"]:
-            raise ValueError("unrecognized algorithm: '%s'" % self.algorithm)
-
         if self.algorithm == "auto":
             if self.metric == "precomputed":
                 alg_check = "brute"
-            elif callable(self.metric) or self.metric in VALID_METRICS["ball_tree"]:
+            elif (
+                callable(self.metric)
+                or self.metric in VALID_METRICS["ball_tree"]
+                or isinstance(self.metric, DistanceMetric)
+            ):
                 alg_check = "ball_tree"
             else:
                 alg_check = "brute"
@@ -374,10 +445,11 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                 raise ValueError(
                     "kd_tree does not support callable metric '%s'"
                     "Function call overhead will result"
-                    "in very poor performance."
-                    % self.metric
+                    "in very poor performance." % self.metric
                 )
-        elif self.metric not in VALID_METRICS[alg_check]:
+        elif self.metric not in VALID_METRICS[alg_check] and not isinstance(
+            self.metric, DistanceMetric
+        ):
             raise ValueError(
                 "Metric '%s' not valid. Use "
                 "sorted(sklearn.neighbors.VALID_METRICS['%s']) "
@@ -388,18 +460,14 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         if self.metric_params is not None and "p" in self.metric_params:
             if self.p is not None:
                 warnings.warn(
-                    "Parameter p is found in metric_params. "
-                    "The corresponding parameter from __init__ "
-                    "is ignored.",
+                    (
+                        "Parameter p is found in metric_params. "
+                        "The corresponding parameter from __init__ "
+                        "is ignored."
+                    ),
                     SyntaxWarning,
                     stacklevel=3,
                 )
-            effective_p = self.metric_params["p"]
-        else:
-            effective_p = self.p
-
-        if self.metric in ["wminkowski", "minkowski"] and effective_p < 1:
-            raise ValueError("p must be greater or equal to one for minkowski metric")
 
     def _fit(self, X, y=None):
         if self._get_tags()["requires_y"]:
@@ -413,10 +481,12 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                 if y.ndim == 1 or y.ndim == 2 and y.shape[1] == 1:
                     if y.ndim != 1:
                         warnings.warn(
-                            "A column-vector y was passed when a "
-                            "1d array was expected. Please change "
-                            "the shape of y to (n_samples,), for "
-                            "example using ravel().",
+                            (
+                                "A column-vector y was passed when a "
+                                "1d array was expected. Please change "
+                                "the shape of y to (n_samples,), for "
+                                "example using ravel()."
+                            ),
                             DataConversionWarning,
                             stacklevel=2,
                         )
@@ -428,7 +498,10 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
 
                 check_classification_targets(y)
                 self.classes_ = []
-                self._y = np.empty(y.shape, dtype=int)
+                # Using `dtype=np.intp` is necessary since `np.bincount`
+                # (called in _classification.py) fails when dealing
+                # with a float64 array on 32bit systems.
+                self._y = np.empty(y.shape, dtype=np.intp)
                 for k in range(self._y.shape[1]):
                     classes, self._y[:, k] = np.unique(y[:, k], return_inverse=True)
                     self.classes_.append(classes)
@@ -450,7 +523,7 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             self.effective_metric_params_ = self.metric_params.copy()
 
         effective_p = self.effective_metric_params_.get("p", self.p)
-        if self.metric in ["wminkowski", "minkowski"]:
+        if self.metric == "minkowski":
             self.effective_metric_params_["p"] = effective_p
 
         self.effective_metric_ = self.metric
@@ -458,11 +531,8 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         if self.metric == "minkowski":
             p = self.effective_metric_params_.pop("p", 2)
             w = self.effective_metric_params_.pop("w", None)
-            if p < 1:
-                raise ValueError(
-                    "p must be greater or equal to one for minkowski metric"
-                )
-            elif p == 1 and w is None:
+
+            if p == 1 and w is None:
                 self.effective_metric_ = "manhattan"
             elif p == 2 and w is None:
                 self.effective_metric_ = "euclidean"
@@ -512,9 +582,11 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             if self.algorithm not in ("auto", "brute"):
                 warnings.warn("cannot use tree with sparse input: using brute force")
 
-            if self.effective_metric_ not in VALID_METRICS_SPARSE[
-                "brute"
-            ] and not callable(self.effective_metric_):
+            if (
+                self.effective_metric_ not in VALID_METRICS_SPARSE["brute"]
+                and not callable(self.effective_metric_)
+                and not isinstance(self.effective_metric_, DistanceMetric)
+            ):
                 raise ValueError(
                     "Metric '%s' not valid for sparse input. "
                     "Use sorted(sklearn.neighbors."
@@ -547,17 +619,15 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             else:
                 if (
                     self.effective_metric_ == "minkowski"
+                    and self.effective_metric_params_["p"] < 1
+                ):
+                    self._fit_method = "brute"
+                elif (
+                    self.effective_metric_ == "minkowski"
                     and self.effective_metric_params_.get("w") is not None
                 ):
-                    # Be consistent with scipy 1.8 conventions: in scipy 1.8,
-                    # 'wminkowski' was removed in favor of passing a
-                    # weight vector directly to 'minkowski'.
-                    #
-                    # 'wminkowski' is not part of valid metrics for KDTree but
-                    # the 'minkowski' without weights is.
-                    #
-                    # Hence, we detect this case and choose BallTree
-                    # which supports 'wminkowski'.
+                    # 'minkowski' with weights is not supported by KDTree but is
+                    # supported byBallTree.
                     self._fit_method = "ball_tree"
                 elif self.effective_metric_ in VALID_METRICS["kd_tree"]:
                     self._fit_method = "kd_tree"
@@ -568,6 +638,28 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                     self._fit_method = "ball_tree"
                 else:
                     self._fit_method = "brute"
+
+        if (
+            self.effective_metric_ == "minkowski"
+            and self.effective_metric_params_["p"] < 1
+        ):
+            # For 0 < p < 1 Minkowski distances aren't valid distance
+            # metric as they do not satisfy triangular inequality:
+            # they are semi-metrics.
+            # algorithm="kd_tree" and algorithm="ball_tree" can't be used because
+            # KDTree and BallTree require a proper distance metric to work properly.
+            # However, the brute-force algorithm supports semi-metrics.
+            if self._fit_method == "brute":
+                warnings.warn(
+                    "Mind that for 0 < p < 1, Minkowski metrics are not distance"
+                    " metrics. Continuing the execution with `algorithm='brute'`."
+                )
+            else:  # self._fit_method in ("kd_tree", "ball_tree")
+                raise ValueError(
+                    f'algorithm="{self._fit_method}" does not support 0 < p < 1 for '
+                    "the Minkowski metric. To resolve this problem either "
+                    'set p >= 1 or algorithm="brute".'
+                )
 
         if self._fit_method == "ball_tree":
             self._tree = BallTree(
@@ -595,17 +687,6 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             )
         elif self._fit_method == "brute":
             self._tree = None
-        else:
-            raise ValueError("algorithm = '%s' not recognized" % self.algorithm)
-
-        if self.n_neighbors is not None:
-            if self.n_neighbors <= 0:
-                raise ValueError("Expected n_neighbors > 0. Got %d" % self.n_neighbors)
-            elif not isinstance(self.n_neighbors, numbers.Integral):
-                raise TypeError(
-                    "n_neighbors does not take %s value, enter integer value"
-                    % type(self.n_neighbors)
-                )
 
         return self
 
@@ -674,9 +755,8 @@ class KNeighborsMixin:
 
         Parameters
         ----------
-        X : array-like, shape (n_queries, n_features), \
-            or (n_queries, n_indexed) if metric == 'precomputed', \
-                default=None
+        X : {array-like, sparse matrix}, shape (n_queries, n_features), \
+            or (n_queries, n_indexed) if metric == 'precomputed', default=None
             The query point or points.
             If not provided, neighbors of each indexed point are returned.
             In this case, the query point is not considered its own neighbor.
@@ -746,21 +826,27 @@ class KNeighborsMixin:
 
         n_samples_fit = self.n_samples_fit_
         if n_neighbors > n_samples_fit:
+            if query_is_train:
+                n_neighbors -= 1  # ok to modify inplace because an error is raised
+                inequality_str = "n_neighbors < n_samples_fit"
+            else:
+                inequality_str = "n_neighbors <= n_samples_fit"
             raise ValueError(
-                "Expected n_neighbors <= n_samples, "
-                " but n_samples = %d, n_neighbors = %d" % (n_samples_fit, n_neighbors)
+                f"Expected {inequality_str}, but "
+                f"n_neighbors = {n_neighbors}, n_samples_fit = {n_samples_fit}, "
+                f"n_samples = {X.shape[0]}"  # include n_samples for common tests
             )
 
         n_jobs = effective_n_jobs(self.n_jobs)
         chunked_results = None
         use_pairwise_distances_reductions = (
             self._fit_method == "brute"
-            and PairwiseDistancesArgKmin.is_usable_for(
+            and ArgKmin.is_usable_for(
                 X if X is not None else self._fit_X, self._fit_X, self.effective_metric_
             )
         )
         if use_pairwise_distances_reductions:
-            results = PairwiseDistancesArgKmin.compute(
+            results = ArgKmin.compute(
                 X=X,
                 Y=self._fit_X,
                 k=n_neighbors,
@@ -778,9 +864,13 @@ class KNeighborsMixin:
             )
 
         elif self._fit_method == "brute":
-            # TODO: should no longer be needed once PairwiseDistancesArgKmin
-            # is extended to accept sparse and/or float32 inputs.
+            # Joblib-based backend, which is used when user-defined callable
+            # are passed for metric.
 
+            # This won't be used in the future once PairwiseDistancesReductions
+            # support:
+            #   - DistanceMetrics which work on supposedly binary data
+            #   - CSR-dense and dense-CSR case if 'euclidean' in metric.
             reduce_func = partial(
                 self._kneighbors_reduce_func,
                 n_neighbors=n_neighbors,
@@ -808,8 +898,7 @@ class KNeighborsMixin:
             if issparse(X):
                 raise ValueError(
                     "%s does not work with sparse matrices. Densify the data, "
-                    "or set algorithm='brute'"
-                    % self._fit_method
+                    "or set algorithm='brute'" % self._fit_method
                 )
             chunked_results = Parallel(n_jobs, prefer="threads")(
                 delayed(_tree_query_parallel_helper)(
@@ -862,9 +951,8 @@ class KNeighborsMixin:
 
         Parameters
         ----------
-        X : array-like of shape (n_queries, n_features), \
-                or (n_queries, n_indexed) if metric == 'precomputed', \
-                default=None
+        X : {array-like, sparse matrix} of shape (n_queries, n_features), \
+            or (n_queries, n_indexed) if metric == 'precomputed', default=None
             The query point or points.
             If not provided, neighbors of each indexed point are returned.
             In this case, the query point is not considered its own neighbor.
@@ -926,8 +1014,8 @@ class KNeighborsMixin:
 
         else:
             raise ValueError(
-                'Unsupported mode, must be one of "connectivity" '
-                'or "distance" but got "%s" instead' % mode
+                'Unsupported mode, must be one of "connectivity", '
+                f'or "distance" but got "{mode}" instead'
             )
 
         n_queries = A_ind.shape[0]
@@ -1007,7 +1095,7 @@ class RadiusNeighborsMixin:
 
         Parameters
         ----------
-        X : array-like of (n_samples, n_features), default=None
+        X : {array-like, sparse matrix} of (n_samples, n_features), default=None
             The query point or points.
             If not provided, neighbors of each indexed point are returned.
             In this case, the query point is not considered its own neighbor.
@@ -1088,13 +1176,13 @@ class RadiusNeighborsMixin:
 
         use_pairwise_distances_reductions = (
             self._fit_method == "brute"
-            and PairwiseDistancesRadiusNeighborhood.is_usable_for(
+            and RadiusNeighbors.is_usable_for(
                 X if X is not None else self._fit_X, self._fit_X, self.effective_metric_
             )
         )
 
         if use_pairwise_distances_reductions:
-            results = PairwiseDistancesRadiusNeighborhood.compute(
+            results = RadiusNeighbors.compute(
                 X=X,
                 Y=self._fit_X,
                 radius=radius,
@@ -1113,9 +1201,13 @@ class RadiusNeighborsMixin:
             )
 
         elif self._fit_method == "brute":
-            # TODO: should no longer be needed once we have Cython-optimized
-            # implementation for radius queries, with support for sparse and/or
-            # float32 inputs.
+            # Joblib-based backend, which is used when user-defined callable
+            # are passed for metric.
+
+            # This won't be used in the future once PairwiseDistancesReductions
+            # support:
+            #   - DistanceMetrics which work on supposedly binary data
+            #   - CSR-dense and dense-CSR case if 'euclidean' in metric.
 
             # for efficiency, use squared euclidean distances
             if self.effective_metric_ == "euclidean":
@@ -1160,8 +1252,7 @@ class RadiusNeighborsMixin:
             if issparse(X):
                 raise ValueError(
                     "%s does not work with sparse matrices. Densify the data, "
-                    "or set algorithm='brute'"
-                    % self._fit_method
+                    "or set algorithm='brute'" % self._fit_method
                 )
 
             n_jobs = effective_n_jobs(self.n_jobs)
@@ -1212,7 +1303,7 @@ class RadiusNeighborsMixin:
 
         Parameters
         ----------
-        X : array-like of shape (n_samples, n_features), default=None
+        X : {array-like, sparse matrix} of shape (n_samples, n_features), default=None
             The query point or points.
             If not provided, neighbors of each indexed point are returned.
             In this case, the query point is not considered its own neighbor.
@@ -1279,7 +1370,7 @@ class RadiusNeighborsMixin:
         else:
             raise ValueError(
                 'Unsupported mode, must be one of "connectivity", '
-                'or "distance" but got %s instead' % mode
+                f'or "distance" but got "{mode}" instead'
             )
 
         n_queries = A_ind.shape[0]

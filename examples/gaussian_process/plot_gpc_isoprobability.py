@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 =================================================================
 Iso-probability lines for Gaussian Processes classification (GPC)
@@ -15,12 +14,12 @@ the predicted probabilities.
 # License: BSD 3 clause
 
 import numpy as np
-
-from matplotlib import pyplot as plt
 from matplotlib import cm
+from matplotlib import pyplot as plt
 
 from sklearn.gaussian_process import GaussianProcessClassifier
-from sklearn.gaussian_process.kernels import DotProduct, ConstantKernel as C
+from sklearn.gaussian_process.kernels import ConstantKernel as C
+from sklearn.gaussian_process.kernels import DotProduct
 
 # A few constants
 lim = 8

@@ -130,8 +130,10 @@ distances between all points.  Isomap can be performed with the object
    :align: center
    :scale: 50
 
-Complexity
-----------
+|details-start|
+**Complexity**
+|details-split|
+
 The Isomap algorithm comprises three stages:
 
 1. **Nearest neighbor search.**  Isomap uses
@@ -162,6 +164,8 @@ The overall complexity of Isomap is
 * :math:`k` : number of nearest neighbors
 * :math:`d` : output dimension
 
+|details-end|
+
 .. topic:: References:
 
    * `"A global geometric framework for nonlinear dimensionality reduction"
@@ -187,8 +191,9 @@ Locally linear embedding can be performed with function
    :align: center
    :scale: 50
 
-Complexity
-----------
+|details-start|
+**Complexity**
+|details-split|
 
 The standard LLE algorithm comprises three stages:
 
@@ -208,6 +213,8 @@ The overall complexity of standard LLE is
 * :math:`D` : input dimension
 * :math:`k` : number of nearest neighbors
 * :math:`d` : output dimension
+
+|details-end|
 
 .. topic:: References:
 
@@ -241,8 +248,9 @@ It requires ``n_neighbors > n_components``.
    :align: center
    :scale: 50
 
-Complexity
-----------
+|details-start|
+**Complexity**
+|details-split|
 
 The MLLE algorithm comprises three stages:
 
@@ -265,10 +273,12 @@ The overall complexity of MLLE is
 * :math:`k` : number of nearest neighbors
 * :math:`d` : output dimension
 
+|details-end|
+
 .. topic:: References:
 
    * `"MLLE: Modified Locally Linear Embedding Using Multiple Weights"
-     <http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.70.382>`_
+     <https://citeseerx.ist.psu.edu/doc_view/pid/0b060fdbd92cbcc66b383bcaa9ba5e5e624d7ee3>`_
      Zhang, Z. & Wang, J.
 
 
@@ -291,8 +301,9 @@ It requires ``n_neighbors > n_components * (n_components + 3) / 2``.
    :align: center
    :scale: 50
 
-Complexity
-----------
+|details-start|
+**Complexity**
+|details-split|
 
 The HLLE algorithm comprises three stages:
 
@@ -312,6 +323,8 @@ The overall complexity of standard HLLE is
 * :math:`D` : input dimension
 * :math:`k` : number of nearest neighbors
 * :math:`d` : output dimension
+
+|details-end|
 
 .. topic:: References:
 
@@ -335,8 +348,9 @@ preserving local distances. Spectral embedding can be  performed with the
 function :func:`spectral_embedding` or its object-oriented counterpart
 :class:`SpectralEmbedding`.
 
-Complexity
-----------
+|details-start|
+**Complexity**
+|details-split|
 
 The Spectral Embedding (Laplacian Eigenmaps) algorithm comprises three stages:
 
@@ -357,6 +371,8 @@ The overall complexity of spectral embedding is
 * :math:`D` : input dimension
 * :math:`k` : number of nearest neighbors
 * :math:`d` : output dimension
+
+|details-end|
 
 .. topic:: References:
 
@@ -383,8 +399,9 @@ tangent spaces to learn the embedding.  LTSA can be performed with function
    :align: center
    :scale: 50
 
-Complexity
-----------
+|details-start|
+**Complexity**
+|details-split|
 
 The LTSA algorithm comprises three stages:
 
@@ -403,6 +420,8 @@ The overall complexity of standard LTSA is
 * :math:`D` : input dimension
 * :math:`k` : number of nearest neighbors
 * :math:`d` : output dimension
+
+|details-end|
 
 .. topic:: References:
 
@@ -427,7 +446,7 @@ distances in a geometric spaces. The data can be ratings of similarity between
 objects, interaction frequencies of molecules, or trade indices between
 countries.
 
-There exists two types of MDS algorithm: metric and non metric. In the
+There exists two types of MDS algorithm: metric and non metric. In
 scikit-learn, the class :class:`MDS` implements both. In Metric MDS, the input
 similarity matrix arises from a metric (and thus respects the triangular
 inequality), the distances between output two points are then set to be as
@@ -448,8 +467,9 @@ the similarities chosen in some optimal ways. The objective, called the
 stress, is then defined by :math:`\sum_{i < j} d_{ij}(X) - \hat{d}_{ij}(X)`
 
 
-Metric MDS
-----------
+|details-start|
+**Metric MDS**
+|details-split|
 
 The simplest metric :class:`MDS` model, called *absolute MDS*, disparities are defined by
 :math:`\hat{d}_{ij} = S_{ij}`. With absolute MDS, the value :math:`S_{ij}`
@@ -458,24 +478,42 @@ should then correspond exactly to the distance between point :math:`i` and
 
 Most commonly, disparities are set to :math:`\hat{d}_{ij} = b S_{ij}`.
 
-Nonmetric MDS
--------------
+|details-end|
+
+|details-start|
+**Nonmetric MDS**
+|details-split|
 
 Non metric :class:`MDS` focuses on the ordination of the data. If
-:math:`S_{ij} < S_{jk}`, then the embedding should enforce :math:`d_{ij} <
-d_{jk}`. A simple algorithm to enforce that is to use a monotonic regression
-of :math:`d_{ij}` on :math:`S_{ij}`, yielding disparities :math:`\hat{d}_{ij}`
-in the same order as :math:`S_{ij}`.
+:math:`S_{ij} > S_{jk}`, then the embedding should enforce :math:`d_{ij} <
+d_{jk}`. For this reason, we discuss it in terms of dissimilarities
+(:math:`\delta_{ij}`) instead of similarities (:math:`S_{ij}`). Note that
+dissimilarities can easily be obtained from similarities through a simple
+transform, e.g. :math:`\delta_{ij}=c_1-c_2 S_{ij}` for some real constants
+:math:`c_1, c_2`. A simple algorithm to enforce proper ordination is to use a
+monotonic regression of :math:`d_{ij}` on :math:`\delta_{ij}`, yielding
+disparities :math:`\hat{d}_{ij}` in the same order as :math:`\delta_{ij}`.
 
 A trivial solution to this problem is to set all the points on the origin. In
-order to avoid that, the disparities :math:`\hat{d}_{ij}` are normalized.
+order to avoid that, the disparities :math:`\hat{d}_{ij}` are normalized. Note
+that since we only care about relative ordering, our objective should be
+invariant to simple translation and scaling, however the stress used in metric
+MDS is sensitive to scaling. To address this, non-metric MDS may use a
+normalized stress, known as Stress-1 defined as
 
+.. math::
+    \sqrt{\frac{\sum_{i < j} (d_{ij} - \hat{d}_{ij})^2}{\sum_{i < j} d_{ij}^2}}.
+
+The use of normalized Stress-1 can be enabled by setting `normalized_stress=True`,
+however it is only compatible with the non-metric MDS problem and will be ignored
+in the metric case.
 
 .. figure:: ../auto_examples/manifold/images/sphx_glr_plot_mds_001.png
    :target: ../auto_examples/manifold/plot_mds.html
    :align: center
    :scale: 60
 
+|details-end|
 
 .. topic:: References:
 
@@ -484,11 +522,11 @@ order to avoid that, the disparities :math:`\hat{d}_{ij}` are normalized.
     Borg, I.; Groenen P. Springer Series in Statistics (1997)
 
   * `"Nonmetric multidimensional scaling: a numerical method"
-    <https://link.springer.com/article/10.1007%2FBF02289694>`_
+    <http://cda.psych.uiuc.edu/psychometrika_highly_cited_articles/kruskal_1964b.pdf>`_
     Kruskal, J. Psychometrika, 29 (1964)
 
   * `"Multidimensional scaling by optimizing goodness of fit to a nonmetric hypothesis"
-    <https://link.springer.com/article/10.1007%2FBF02289565>`_
+    <http://cda.psych.uiuc.edu/psychometrika_highly_cited_articles/kruskal_1964a.pdf>`_
     Kruskal, J. Psychometrika, 29, (1964)
 
 .. _t_sne:
@@ -537,8 +575,10 @@ The disadvantages to using t-SNE are roughly:
    :align: center
    :scale: 50
 
-Optimizing t-SNE
-----------------
+|details-start|
+**Optimizing t-SNE**
+|details-split|
+
 The main purpose of t-SNE is visualization of high-dimensional data. Hence,
 it works best when the data will be embedded on two or three dimensions.
 
@@ -587,8 +627,11 @@ but less accurate results.
 provides a good discussion of the effects of the various parameters, as well
 as interactive plots to explore the effects of different parameters.
 
-Barnes-Hut t-SNE
-----------------
+|details-end|
+
+|details-start|
+**Barnes-Hut t-SNE**
+|details-split|
 
 The Barnes-Hut t-SNE that has been implemented here is usually much slower than
 other manifold learning algorithms. The optimization is quite difficult
@@ -601,7 +644,7 @@ Barnes-Hut method improves on the exact method where t-SNE complexity is
   or less. The 2D case is typical when building visualizations.
 * Barnes-Hut only works with dense input data. Sparse data matrices can only be
   embedded with the exact method or can be approximated by a dense low rank
-  projection for instance using :class:`~sklearn.decomposition.TruncatedSVD`
+  projection for instance using :class:`~sklearn.decomposition.PCA`
 * Barnes-Hut is an approximation of the exact method. The approximation is
   parameterized with the angle parameter, therefore the angle parameter is
   unused when method="exact"
@@ -624,11 +667,12 @@ imply that the data cannot be correctly classified by a supervised model. It
 might be the case that 2 dimensions are not high enough to accurately represent
 the internal structure of the data.
 
+|details-end|
 
 .. topic:: References:
 
   * `"Visualizing High-Dimensional Data Using t-SNE"
-    <http://jmlr.org/papers/v9/vandermaaten08a.html>`_
+    <https://jmlr.org/papers/v9/vandermaaten08a.html>`_
     van der Maaten, L.J.P.; Hinton, G. Journal of Machine Learning Research
     (2008)
 

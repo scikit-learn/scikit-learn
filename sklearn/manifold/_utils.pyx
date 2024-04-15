@@ -1,21 +1,18 @@
-from libc cimport math
-cimport cython
 import numpy as np
-cimport numpy as np
-from libc.stdio cimport printf
 
-np.import_array()
+from libc cimport math
+from libc.math cimport INFINITY
 
-
-cdef extern from "numpy/npy_math.h":
-    float NPY_INFINITY
+from ..utils._typedefs cimport float32_t, float64_t
 
 
 cdef float EPSILON_DBL = 1e-8
 cdef float PERPLEXITY_TOLERANCE = 1e-5
 
-cpdef np.ndarray[np.float32_t, ndim=2] _binary_search_perplexity(
-        np.ndarray[np.float32_t, ndim=2] sqdistances,
+
+# TODO: have this function support float32 and float64 and preserve inputs' dtypes.
+def _binary_search_perplexity(
+        const float32_t[:, :] sqdistances,
         float desired_perplexity,
         int verbose):
     """Binary search for sigmas of conditional Gaussians.
@@ -25,7 +22,7 @@ cpdef np.ndarray[np.float32_t, ndim=2] _binary_search_perplexity(
 
     Parameters
     ----------
-    sqdistances : array-like, shape (n_samples, n_neighbors)
+    sqdistances : ndarray of shape (n_samples, n_neighbors), dtype=np.float32
         Distances between training samples and their k nearest neighbors.
         When using the exact method, this is a square (n_samples, n_samples)
         distance matrix. The TSNE default metric is "euclidean" which is
@@ -39,7 +36,7 @@ cpdef np.ndarray[np.float32_t, ndim=2] _binary_search_perplexity(
 
     Returns
     -------
-    P : array, shape (n_samples, n_samples)
+    P : ndarray of shape (n_samples, n_samples), dtype=np.float64
         Probabilities of conditional Gaussian distributions p_i|j.
     """
     # Maximum number of binary search steps
@@ -61,16 +58,16 @@ cpdef np.ndarray[np.float32_t, ndim=2] _binary_search_perplexity(
     cdef double entropy
     cdef double sum_Pi
     cdef double sum_disti_Pi
-    cdef long i, j, k, l
+    cdef long i, j, l
 
     # This array is later used as a 32bit array. It has multiple intermediate
     # floating point additions that benefit from the extra precision
-    cdef np.ndarray[np.float64_t, ndim=2] P = np.zeros(
+    cdef float64_t[:, :] P = np.zeros(
         (n_samples, n_neighbors), dtype=np.float64)
 
     for i in range(n_samples):
-        beta_min = -NPY_INFINITY
-        beta_max = NPY_INFINITY
+        beta_min = -INFINITY
+        beta_max = INFINITY
         beta = 1.0
 
         # Binary search of precision for i-th conditional distribution
@@ -100,13 +97,13 @@ cpdef np.ndarray[np.float32_t, ndim=2] _binary_search_perplexity(
 
             if entropy_diff > 0.0:
                 beta_min = beta
-                if beta_max == NPY_INFINITY:
+                if beta_max == INFINITY:
                     beta *= 2.0
                 else:
                     beta = (beta + beta_max) / 2.0
             else:
                 beta_max = beta
-                if beta_min == -NPY_INFINITY:
+                if beta_min == -INFINITY:
                     beta /= 2.0
                 else:
                     beta = (beta + beta_min) / 2.0
@@ -120,4 +117,4 @@ cpdef np.ndarray[np.float32_t, ndim=2] _binary_search_perplexity(
     if verbose:
         print("[t-SNE] Mean sigma: %f"
               % np.mean(math.sqrt(n_samples / beta_sum)))
-    return P
+    return np.asarray(P)

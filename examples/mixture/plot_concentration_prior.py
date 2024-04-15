@@ -32,10 +32,10 @@ tends to divide natural clusters into unnecessary sub-components.
 # Author: Thierry Guillemot <thierry.guillemot.work@gmail.com>
 # License: BSD 3 clause
 
-import numpy as np
 import matplotlib as mpl
-import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
+import matplotlib.pyplot as plt
+import numpy as np
 
 from sklearn.mixture import BayesianGaussianMixture
 
@@ -50,7 +50,7 @@ def plot_ellipses(ax, weights, means, covars):
         # eigenvector normalization
         eig_vals = 2 * np.sqrt(2) * np.sqrt(eig_vals)
         ell = mpl.patches.Ellipse(
-            means[n], eig_vals[0], eig_vals[1], 180 + angle, edgecolor="black"
+            means[n], eig_vals[0], eig_vals[1], angle=180 + angle, edgecolor="black"
         )
         ell.set_clip_box(ax.bbox)
         ell.set_alpha(weights[n])

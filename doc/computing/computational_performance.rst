@@ -39,10 +39,11 @@ machine learning toolkit is the latency at which predictions can be made in a
 production environment.
 
 The main factors that influence the prediction latency are
-  1. Number of features
-  2. Input data representation and sparsity
-  3. Model complexity
-  4. Feature extraction
+
+1. Number of features
+2. Input data representation and sparsity
+3. Model complexity
+4. Feature extraction
 
 A last major parameter is also the possibility to do predictions in bulk or
 one-at-a-time mode.
@@ -195,7 +196,7 @@ support vectors.
 .. centered:: |nusvr_model_complexity|
 
 For :mod:`sklearn.ensemble` of trees (e.g. RandomForest, GBT,
-ExtraTrees etc) the number of trees and their depth play the most
+ExtraTrees, etc.) the number of trees and their depth play the most
 important role. Latency and throughput should scale linearly with the number
 of trees. In this case we used directly the ``n_estimators`` parameter of
 :class:`~ensemble.GradientBoostingRegressor`.
@@ -224,9 +225,9 @@ files, tokenizing the text and hashing it into a common vector space) is
 taking 100 to 500 times more time than the actual prediction code, depending on
 the chosen model.
 
- .. |prediction_time| image::  ../auto_examples/applications/images/sphx_glr_plot_out_of_core_classification_004.png
-    :target: ../auto_examples/applications/plot_out_of_core_classification.html
-    :scale: 80
+.. |prediction_time| image::  ../auto_examples/applications/images/sphx_glr_plot_out_of_core_classification_004.png
+  :target: ../auto_examples/applications/plot_out_of_core_classification.html
+  :scale: 80
 
 .. centered:: |prediction_time|
 
@@ -278,21 +279,20 @@ BLAS implementation and lead to orders of magnitude speedup over a
 non-optimized BLAS.
 
 You can display the BLAS / LAPACK implementation used by your NumPy / SciPy /
-scikit-learn install with the following commands::
+scikit-learn install with the following command::
 
-    from numpy.distutils.system_info import get_info
-    print(get_info('blas_opt'))
-    print(get_info('lapack_opt'))
+    python -c "import sklearn; sklearn.show_versions()"
 
 Optimized BLAS / LAPACK implementations include:
- - Atlas (need hardware specific tuning by rebuilding on the target machine)
- - OpenBLAS
- - MKL
- - Apple Accelerate and vecLib frameworks (OSX only)
 
-More information can be found on the `Scipy install page <https://docs.scipy.org/doc/numpy/user/install.html>`_
+- Atlas (need hardware specific tuning by rebuilding on the target machine)
+- OpenBLAS
+- MKL
+- Apple Accelerate and vecLib frameworks (OSX only)
+
+More information can be found on the `NumPy install page <https://numpy.org/install/>`_
 and in this
-`blog post <http://danielnouri.org/notes/2012/12/19/libblas-and-liblapack-issues-and-speed,-with-scipy-and-ubuntu/>`_
+`blog post <https://danielnouri.org/notes/2012/12/19/libblas-and-liblapack-issues-and-speed,-with-scipy-and-ubuntu/>`_
 from Daniel Nouri which has some nice step by step install instructions for
 Debian / Ubuntu.
 
@@ -366,5 +366,5 @@ sufficient to not generate the relevant features, leaving their columns empty.
 Links
 ......
 
-  - :ref:`scikit-learn developer performance documentation <performance-howto>`
-  - `Scipy sparse matrix formats documentation <https://docs.scipy.org/doc/scipy/reference/sparse.html>`_
+- :ref:`scikit-learn developer performance documentation <performance-howto>`
+- `Scipy sparse matrix formats documentation <https://docs.scipy.org/doc/scipy/reference/sparse.html>`_

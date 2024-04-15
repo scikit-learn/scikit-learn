@@ -1,4 +1,4 @@
-# flake8: noqa
+# ruff: noqa
 """
 =======================================
 Release Highlights for scikit-learn 1.0
@@ -15,7 +15,7 @@ do our best to keep this pattern.
 This release includes some new key features as well as many improvements and
 bug fixes. We detail below a few of the major features of this release. **For
 an exhaustive list of all the changes**, please refer to the :ref:`release
-notes <changes_1_0>`.
+notes <release_notes_1_0>`.
 
 To install the latest version (with pip)::
 
@@ -154,7 +154,7 @@ scalar.feature_names_in_
 
 # %%
 # The support of :term:`get_feature_names_out` is available for transformers
-# that already had :term:`get_feature_names` and transformers with a one-to-one
+# that already had `get_feature_names` and transformers with a one-to-one
 # correspondence between input and output such as
 # :class:`~preprocessing.StandardScaler`. :term:`get_feature_names_out` support
 # will be added to all other transformers in future releases. Additionally,

@@ -77,11 +77,11 @@ evaluated and the best combination is retained.
     - See :ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_digits.py` for an example of
       Grid Search computation on the digits dataset.
 
-    - See :ref:`sphx_glr_auto_examples_model_selection_grid_search_text_feature_extraction.py` for an example
+    - See :ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_text_feature_extraction.py` for an example
       of Grid Search coupling parameters from a text documents feature
       extractor (n-gram count vectorizer and TF-IDF transformer) with a
       classifier (here a linear SVM trained with SGD with either elastic
-      net or L2 penalty) using a :class:`pipeline.Pipeline` instance.
+      net or L2 penalty) using a :class:`~sklearn.pipeline.Pipeline` instance.
 
     - See :ref:`sphx_glr_auto_examples_model_selection_plot_nested_cross_validation_iris.py`
       for an example of Grid Search within a cross validation loop on the iris
@@ -128,32 +128,29 @@ discrete choices (which will be sampled uniformly) can be specified::
 
 This example uses the ``scipy.stats`` module, which contains many useful
 distributions for sampling parameters, such as ``expon``, ``gamma``,
-``uniform`` or ``randint``.
+``uniform``, ``loguniform`` or ``randint``.
 
 In principle, any function can be passed that provides a ``rvs`` (random
 variate sample) method to sample a value. A call to the ``rvs`` function should
 provide independent random samples from possible parameter values on
 consecutive calls.
 
-    .. warning::
+.. warning::
 
-        The distributions in ``scipy.stats`` prior to version scipy 0.16
-        do not allow specifying a random state. Instead, they use the global
-        numpy random state, that can be seeded via ``np.random.seed`` or set
-        using ``np.random.set_state``. However, beginning scikit-learn 0.18,
-        the :mod:`sklearn.model_selection` module sets the random state provided
-        by the user if scipy >= 0.16 is also available.
+    The distributions in ``scipy.stats`` prior to version scipy 0.16
+    do not allow specifying a random state. Instead, they use the global
+    numpy random state, that can be seeded via ``np.random.seed`` or set
+    using ``np.random.set_state``. However, beginning scikit-learn 0.18,
+    the :mod:`sklearn.model_selection` module sets the random state provided
+    by the user if scipy >= 0.16 is also available.
 
 For continuous parameters, such as ``C`` above, it is important to specify
 a continuous distribution to take full advantage of the randomization. This way,
 increasing ``n_iter`` will always lead to a finer search.
 
-A continuous log-uniform random variable is available through
-:class:`~sklearn.utils.fixes.loguniform`. This is a continuous version of
-log-spaced parameters. For example to specify ``C`` above, ``loguniform(1,
-100)`` can be used instead of ``[1, 10, 100]`` or ``np.logspace(0, 2,
-num=1000)``. This is an alias to SciPy's `stats.reciprocal
-<https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.reciprocal.html>`_.
+A continuous log-uniform random variable is the continuous version of
+a log-spaced parameter. For example to specify the equivalent of ``C`` from above,
+``loguniform(1, 100)`` can be used instead of ``[1, 10, 100]``.
 
 Mirroring the example above in grid search, we can specify a continuous random
 variable that is log-uniformly distributed between ``1e0`` and ``1e3``::
@@ -433,7 +430,7 @@ ways:
   :class:`HalvingGridSearchCV`;
 - by setting `n_candidates='exhaust'`.
 
-Both options are mutally exclusive: using `min_resources='exhaust'` requires
+Both options are mutually exclusive: using `min_resources='exhaust'` requires
 knowing the number of candidates, and symmetrically `n_candidates='exhaust'`
 requires knowing `min_resources`.
 
@@ -602,20 +599,20 @@ parameters of composite or nested estimators such as
   >>> from sklearn.datasets import make_moons
   >>> X, y = make_moons()
   >>> calibrated_forest = CalibratedClassifierCV(
-  ...    base_estimator=RandomForestClassifier(n_estimators=10))
+  ...    estimator=RandomForestClassifier(n_estimators=10))
   >>> param_grid = {
-  ...    'base_estimator__max_depth': [2, 4, 6, 8]}
+  ...    'estimator__max_depth': [2, 4, 6, 8]}
   >>> search = GridSearchCV(calibrated_forest, param_grid, cv=5)
   >>> search.fit(X, y)
   GridSearchCV(cv=5,
                estimator=CalibratedClassifierCV(...),
-               param_grid={'base_estimator__max_depth': [2, 4, 6, 8]})
+               param_grid={'estimator__max_depth': [2, 4, 6, 8]})
 
 Here, ``<estimator>`` is the parameter name of the nested estimator,
-in this case ``base_estimator``.
+in this case ``estimator``.
 If the meta-estimator is constructed as a collection of estimators as in
 `pipeline.Pipeline`, then ``<estimator>`` refers to the name of the estimator,
-see :ref:`pipeline_nested_parameters`.  In practice, there can be several
+see :ref:`pipeline_nested_parameters`. In practice, there can be several
 levels of nesting::
 
   >>> from sklearn.pipeline import Pipeline
@@ -625,7 +622,7 @@ levels of nesting::
   ...    ('model', calibrated_forest)])
   >>> param_grid = {
   ...    'select__k': [1, 2],
-  ...    'model__base_estimator__max_depth': [2, 4, 6, 8]}
+  ...    'model__estimator__max_depth': [2, 4, 6, 8]}
   >>> search = GridSearchCV(pipe, param_grid, cv=5).fit(X, y)
 
 Please refer to :ref:`pipeline` for performing parameter searches over
@@ -660,8 +657,8 @@ Robustness to failure
 Some parameter settings may result in a failure to ``fit`` one or more folds
 of the data.  By default, this will cause the entire search to fail, even if
 some parameter settings could be fully evaluated. Setting ``error_score=0``
-(or `=np.NaN`) will make the procedure robust to such failure, issuing a
-warning and setting the score for that fold to 0 (or `NaN`), but completing
+(or `=np.nan`) will make the procedure robust to such failure, issuing a
+warning and setting the score for that fold to 0 (or `nan`), but completing
 the search.
 
 .. _alternative_cv:

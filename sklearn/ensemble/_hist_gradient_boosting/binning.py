@@ -5,18 +5,19 @@ BinMapper is used for mapping a real-valued dataset into integer-valued bins.
 Bin thresholds are computed with the quantiles so that each bin contains
 approximately the same number of samples.
 """
+
 # Author: Nicolas Hug
 
 import numpy as np
 
-from ...utils import check_random_state, check_array
 from ...base import BaseEstimator, TransformerMixin
-from ...utils.validation import check_is_fitted
-from ...utils.fixes import percentile
+from ...utils import check_array, check_random_state
 from ...utils._openmp_helpers import _openmp_effective_n_threads
+from ...utils.fixes import percentile
+from ...utils.validation import check_is_fitted
 from ._binning import _map_to_bins
-from .common import X_DTYPE, X_BINNED_DTYPE, ALMOST_INF, X_BITSET_INNER_DTYPE
 from ._bitset import set_bitset_memoryview
+from .common import ALMOST_INF, X_BINNED_DTYPE, X_BITSET_INNER_DTYPE, X_DTYPE
 
 
 def _find_binning_thresholds(col_data, max_bins):
@@ -45,14 +46,15 @@ def _find_binning_thresholds(col_data, max_bins):
     missing_mask = np.isnan(col_data)
     if missing_mask.any():
         col_data = col_data[~missing_mask]
-    col_data = np.ascontiguousarray(col_data, dtype=X_DTYPE)
-    distinct_values = np.unique(col_data)
+    # The data will be sorted anyway in np.unique and again in percentile, so we do it
+    # here. Sorting also returns a contiguous array.
+    col_data = np.sort(col_data)
+    distinct_values = np.unique(col_data).astype(X_DTYPE)
     if len(distinct_values) <= max_bins:
         midpoints = distinct_values[:-1] + distinct_values[1:]
         midpoints *= 0.5
     else:
-        # We sort again the data in this case. We could compute
-        # approximate midpoint percentiles using the output of
+        # We could compute approximate midpoint percentiles using the output of
         # np.unique(col_data, return_counts) instead but this is more
         # work and the performance benefit will be limited because we
         # work on a fixed-size subsample of the full data.
@@ -144,7 +146,7 @@ class _BinMapper(TransformerMixin, BaseEstimator):
     missing_values_bin_idx_ : np.uint8
         The index of the bin where missing values are mapped. This is a
         constant across all features. This corresponds to the last bin, and
-        it is always equal to ``n_bins - 1``. Note that if ``n_bins_missing_``
+        it is always equal to ``n_bins - 1``. Note that if ``n_bins_non_missing_``
         is less than ``n_bins - 1`` for a given feature, then there are
         empty (and unused) bins.
     """
@@ -275,7 +277,12 @@ class _BinMapper(TransformerMixin, BaseEstimator):
         n_threads = _openmp_effective_n_threads(self.n_threads)
         binned = np.zeros_like(X, dtype=X_BINNED_DTYPE, order="F")
         _map_to_bins(
-            X, self.bin_thresholds_, self.missing_values_bin_idx_, n_threads, binned
+            X,
+            self.bin_thresholds_,
+            self.is_categorical_,
+            self.missing_values_bin_idx_,
+            n_threads,
+            binned,
         )
         return binned
 

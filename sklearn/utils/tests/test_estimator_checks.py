@@ -2,63 +2,71 @@
 # build_tools/azure/test_pytest_soft_dependency.sh on these
 # tests to make sure estimator_checks works without pytest.
 
-import unittest
+import importlib
 import sys
+import unittest
 import warnings
+from numbers import Integral, Real
 
+import joblib
 import numpy as np
 import scipy.sparse as sp
-import joblib
 
-from sklearn.base import BaseEstimator, ClassifierMixin
+from sklearn import config_context, get_config
+from sklearn.base import BaseEstimator, ClassifierMixin, OutlierMixin
+from sklearn.cluster import MiniBatchKMeans
 from sklearn.datasets import make_multilabel_classification
-from sklearn.utils import deprecated
+from sklearn.decomposition import PCA
+from sklearn.ensemble import ExtraTreesClassifier
+from sklearn.exceptions import ConvergenceWarning, SkipTestWarning
+from sklearn.linear_model import (
+    LinearRegression,
+    LogisticRegression,
+    MultiTaskElasticNet,
+    SGDClassifier,
+)
+from sklearn.mixture import GaussianMixture
+from sklearn.neighbors import KNeighborsRegressor
+from sklearn.svm import SVC, NuSVC
+from sklearn.utils import _array_api, all_estimators, deprecated
+from sklearn.utils._param_validation import Interval, StrOptions
 from sklearn.utils._testing import (
-    raises,
-    ignore_warnings,
     MinimalClassifier,
     MinimalRegressor,
     MinimalTransformer,
     SkipTest,
+    ignore_warnings,
+    raises,
 )
-
-from sklearn.utils.validation import check_is_fitted, check_X_y
-from sklearn.ensemble import ExtraTreesClassifier
-from sklearn.linear_model import LinearRegression, SGDClassifier
-from sklearn.mixture import GaussianMixture
-from sklearn.cluster import MiniBatchKMeans
-from sklearn.decomposition import PCA
-from sklearn.linear_model import MultiTaskElasticNet, LogisticRegression
-from sklearn.svm import SVC, NuSVC
-from sklearn.neighbors import KNeighborsRegressor
-from sklearn.utils.validation import check_array
-from sklearn.utils import all_estimators
-from sklearn.exceptions import SkipTestWarning
-from sklearn.utils.metaestimators import available_if
-
 from sklearn.utils.estimator_checks import (
     _NotAnArray,
     _set_checking_parameters,
+    _yield_all_checks,
+    check_array_api_input,
     check_class_weight_balanced_linear_classifier,
     check_classifier_data_not_an_array,
     check_classifiers_multilabel_output_format_decision_function,
     check_classifiers_multilabel_output_format_predict,
     check_classifiers_multilabel_output_format_predict_proba,
     check_dataframe_column_names_consistency,
+    check_decision_proba_consistency,
     check_estimator,
     check_estimator_get_tags_default_keys,
     check_estimators_unfitted,
-    check_fit_score_takes_y,
-    check_no_attributes_set_in_init,
-    check_regressor_data_not_an_array,
-    check_requires_y_none,
-    check_outlier_corruption,
-    set_random_state,
     check_fit_check_is_fitted,
+    check_fit_score_takes_y,
     check_methods_sample_order_invariance,
     check_methods_subset_invariance,
-    _yield_all_checks,
+    check_no_attributes_set_in_init,
+    check_outlier_contamination,
+    check_outlier_corruption,
+    check_regressor_data_not_an_array,
+    check_requires_y_none,
+    set_random_state,
 )
+from sklearn.utils.fixes import CSR_CONTAINERS, SPARRAY_PRESENT
+from sklearn.utils.metaestimators import available_if
+from sklearn.utils.validation import check_array, check_is_fitted, check_X_y
 
 
 class CorrectNotFittedError(ValueError):
@@ -199,9 +207,17 @@ class NoCheckinPredict(BaseBadClassifier):
 
 
 class NoSparseClassifier(BaseBadClassifier):
+    def __init__(self, raise_for_type=None):
+        # raise_for_type : str, expects "sparse_array" or "sparse_matrix"
+        self.raise_for_type = raise_for_type
+
     def fit(self, X, y):
         X, y = self._validate_data(X, y, accept_sparse=["csr", "csc"])
-        if sp.issparse(X):
+        if self.raise_for_type == "sparse_array":
+            correct_type = isinstance(X, sp.sparray)
+        elif self.raise_for_type == "sparse_matrix":
+            correct_type = isinstance(X, sp.spmatrix)
+        if correct_type:
             raise ValueError("Nonsensical Error")
         return self
 
@@ -311,7 +327,51 @@ class NotInvariantSampleOrder(BaseEstimator):
         return X[:, 0]
 
 
+class OneClassSampleErrorClassifier(BaseBadClassifier):
+    """Classifier allowing to trigger different behaviors when `sample_weight` reduces
+    the number of classes to 1."""
+
+    def __init__(self, raise_when_single_class=False):
+        self.raise_when_single_class = raise_when_single_class
+
+    def fit(self, X, y, sample_weight=None):
+        X, y = check_X_y(
+            X, y, accept_sparse=("csr", "csc"), multi_output=True, y_numeric=True
+        )
+
+        self.has_single_class_ = False
+        self.classes_, y = np.unique(y, return_inverse=True)
+        n_classes_ = self.classes_.shape[0]
+        if n_classes_ < 2 and self.raise_when_single_class:
+            self.has_single_class_ = True
+            raise ValueError("normal class error")
+
+        # find the number of class after trimming
+        if sample_weight is not None:
+            if isinstance(sample_weight, np.ndarray) and len(sample_weight) > 0:
+                n_classes_ = np.count_nonzero(np.bincount(y, sample_weight))
+            if n_classes_ < 2:
+                self.has_single_class_ = True
+                raise ValueError("Nonsensical Error")
+
+        return self
+
+    def predict(self, X):
+        check_is_fitted(self)
+        X = check_array(X)
+        if self.has_single_class_:
+            return np.zeros(X.shape[0])
+        return np.ones(X.shape[0])
+
+
 class LargeSparseNotSupportedClassifier(BaseEstimator):
+    """Estimator that claims to support large sparse data
+    (accept_large_sparse=True), but doesn't"""
+
+    def __init__(self, raise_for_type=None):
+        # raise_for_type : str, expects "sparse_array" or "sparse_matrix"
+        self.raise_for_type = raise_for_type
+
     def fit(self, X, y):
         X, y = self._validate_data(
             X,
@@ -321,11 +381,15 @@ class LargeSparseNotSupportedClassifier(BaseEstimator):
             multi_output=True,
             y_numeric=True,
         )
-        if sp.issparse(X):
-            if X.getformat() == "coo":
+        if self.raise_for_type == "sparse_array":
+            correct_type = isinstance(X, sp.sparray)
+        elif self.raise_for_type == "sparse_matrix":
+            correct_type = isinstance(X, sp.spmatrix)
+        if correct_type:
+            if X.format == "coo":
                 if X.row.dtype == "int64" or X.col.dtype == "int64":
                     raise ValueError("Estimator doesn't support 64-bit indices")
-            elif X.getformat() in ["csc", "csr"]:
+            elif X.format in ["csc", "csr"]:
                 assert "int64" not in (
                     X.indices.dtype,
                     X.indptr.dtype,
@@ -335,6 +399,9 @@ class LargeSparseNotSupportedClassifier(BaseEstimator):
 
 
 class SparseTransformer(BaseEstimator):
+    def __init__(self, sparse_container=None):
+        self.sparse_container = sparse_container
+
     def fit(self, X, y=None):
         self.X_shape_ = self._validate_data(X).shape
         return self
@@ -346,7 +413,7 @@ class SparseTransformer(BaseEstimator):
         X = check_array(X)
         if X.shape[1] != self.X_shape_[1]:
             raise ValueError("Bad number of features")
-        return sp.csr_matrix(X)
+        return self.sparse_container(X)
 
 
 class EstimatorInconsistentForPandas(BaseEstimator):
@@ -399,6 +466,17 @@ class EstimatorMissingDefaultTags(BaseEstimator):
         return tags
 
 
+class RequiresPositiveXRegressor(LinearRegression):
+    def fit(self, X, y):
+        X, y = self._validate_data(X, y, multi_output=True)
+        if (X < 0).any():
+            raise ValueError("negative X values not supported!")
+        return super().fit(X, y)
+
+    def _more_tags(self):
+        return {"requires_positive_X": True}
+
+
 class RequiresPositiveYRegressor(LinearRegression):
     def fit(self, X, y):
         X, y = self._validate_data(X, y, multi_output=True)
@@ -428,6 +506,40 @@ class PartialFitChecksName(BaseEstimator):
         self._validate_data(X, y, reset=reset)
         self._fitted = True
         return self
+
+
+class BrokenArrayAPI(BaseEstimator):
+    """Make different predictions when using Numpy and the Array API"""
+
+    def fit(self, X, y):
+        return self
+
+    def predict(self, X):
+        enabled = get_config()["array_api_dispatch"]
+        xp, _ = _array_api.get_namespace(X)
+        if enabled:
+            return xp.asarray([1, 2, 3])
+        else:
+            return np.array([3, 2, 1])
+
+
+def test_check_array_api_input():
+    try:
+        importlib.import_module("array_api_compat")
+    except ModuleNotFoundError:
+        raise SkipTest("array_api_compat is required to run this test")
+    try:
+        importlib.import_module("array_api_strict")
+    except ModuleNotFoundError:  # pragma: nocover
+        raise SkipTest("array-api-strict is required to run this test")
+
+    with raises(AssertionError, match="Not equal to tolerance"):
+        check_array_api_input(
+            "BrokenArrayAPI",
+            BrokenArrayAPI(),
+            array_namespace="array_api_strict",
+            check_values=True,
+        )
 
 
 def test_not_an_array_array_function():
@@ -541,11 +653,25 @@ def test_check_estimator():
     )
     with raises(AssertionError, match=msg):
         check_estimator(NotInvariantPredict())
-    # check for sparse matrix input handling
+    # check for sparse data input handling
     name = NoSparseClassifier.__name__
     msg = "Estimator %s doesn't seem to fail gracefully on sparse data" % name
     with raises(AssertionError, match=msg):
-        check_estimator(NoSparseClassifier())
+        check_estimator(NoSparseClassifier("sparse_matrix"))
+
+    if SPARRAY_PRESENT:
+        with raises(AssertionError, match=msg):
+            check_estimator(NoSparseClassifier("sparse_array"))
+
+    # check for classifiers reducing to less than two classes via sample weights
+    name = OneClassSampleErrorClassifier.__name__
+    msg = (
+        f"{name} failed when fitted on one label after sample_weight "
+        "trimming. Error message is not explicit, it should have "
+        "'class'."
+    )
+    with raises(AssertionError, match=msg):
+        check_estimator(OneClassSampleErrorClassifier())
 
     # Large indices test on bad estimator
     msg = (
@@ -553,15 +679,20 @@ def test_check_estimator():
         r"support \S{3}_64 matrix, and is not failing gracefully.*"
     )
     with raises(AssertionError, match=msg):
-        check_estimator(LargeSparseNotSupportedClassifier())
+        check_estimator(LargeSparseNotSupportedClassifier("sparse_matrix"))
+
+    if SPARRAY_PRESENT:
+        with raises(AssertionError, match=msg):
+            check_estimator(LargeSparseNotSupportedClassifier("sparse_array"))
 
     # does error on binary_only untagged estimator
     msg = "Only 2 classes are supported"
     with raises(ValueError, match=msg):
         check_estimator(UntaggedBinaryClassifier())
 
-    # non-regression test for estimators transforming to sparse data
-    check_estimator(SparseTransformer())
+    for csr_container in CSR_CONTAINERS:
+        # non-regression test for estimators transforming to sparse data
+        check_estimator(SparseTransformer(sparse_container=csr_container))
 
     # doesn't error on actual estimator
     check_estimator(LogisticRegression())
@@ -570,6 +701,7 @@ def test_check_estimator():
 
     # doesn't error on binary_only tagged estimator
     check_estimator(TaggedBinaryClassifier())
+    check_estimator(RequiresPositiveXRegressor())
 
     # Check regressor with requires_positive_y estimator tag
     msg = "negative y values not supported!"
@@ -610,22 +742,20 @@ def test_check_estimator_clones():
         ExtraTreesClassifier,
         MiniBatchKMeans,
     ]:
-        with ignore_warnings(category=FutureWarning):
-            # when 'est = SGDClassifier()'
+        # without fitting
+        with ignore_warnings(category=ConvergenceWarning):
             est = Estimator()
             _set_checking_parameters(est)
             set_random_state(est)
-            # without fitting
             old_hash = joblib.hash(est)
             check_estimator(est)
         assert old_hash == joblib.hash(est)
 
-        with ignore_warnings(category=FutureWarning):
-            # when 'est = SGDClassifier()'
+        # with fitting
+        with ignore_warnings(category=ConvergenceWarning):
             est = Estimator()
             _set_checking_parameters(est)
             set_random_state(est)
-            # with fitting
             est.fit(iris.data + 10, iris.target)
             old_hash = joblib.hash(est)
             check_estimator(est)
@@ -653,6 +783,10 @@ def test_check_no_attributes_set_in_init():
         def __init__(self, you_should_set_this_=None):
             pass
 
+    class ConformantEstimatorClassAttribute(BaseEstimator):
+        # making sure our __metadata_request__* class attributes are okay!
+        __metadata_request__fit = {"foo": True}
+
     msg = (
         "Estimator estimator_name should not set any"
         " attribute apart from parameters during init."
@@ -670,6 +804,19 @@ def test_check_no_attributes_set_in_init():
     with raises(AttributeError, match=msg):
         check_no_attributes_set_in_init(
             "estimator_name", NonConformantEstimatorNoParamSet()
+        )
+
+    # a private class attribute is okay!
+    check_no_attributes_set_in_init(
+        "estimator_name", ConformantEstimatorClassAttribute()
+    )
+    # also check if cloning an estimator which has non-default set requests is
+    # fine. Setting a non-default value via `set_{method}_request` sets the
+    # private _metadata_request instance attribute which is copied in `clone`.
+    with config_context(enable_metadata_routing=True):
+        check_no_attributes_set_in_init(
+            "estimator_name",
+            ConformantEstimatorClassAttribute().set_fit_request(foo=True),
         )
 
 
@@ -801,18 +948,19 @@ def test_check_classifiers_multilabel_output_format_predict_proba():
         def predict_proba(self, X):
             return self.response_output
 
-    # 1. unknown output type
-    clf = MultiLabelClassifierPredictProba(response_output=sp.csr_matrix(y_test))
-    err_msg = (
-        "Unknown returned type .*csr_matrix.* by "
-        r"MultiLabelClassifierPredictProba.predict_proba. A list or a Numpy "
-        r"array is expected."
-    )
-    with raises(ValueError, match=err_msg):
-        check_classifiers_multilabel_output_format_predict_proba(
-            clf.__class__.__name__,
-            clf,
+    for csr_container in CSR_CONTAINERS:
+        # 1. unknown output type
+        clf = MultiLabelClassifierPredictProba(response_output=csr_container(y_test))
+        err_msg = (
+            f"Unknown returned type .*{csr_container.__name__}.* by "
+            r"MultiLabelClassifierPredictProba.predict_proba. A list or a Numpy "
+            r"array is expected."
         )
+        with raises(ValueError, match=err_msg):
+            check_classifiers_multilabel_output_format_predict_proba(
+                clf.__class__.__name__,
+                clf,
+            )
     # 2. for list output
     # 2.1. inconsistent length
     clf = MultiLabelClassifierPredictProba(response_output=y_test.tolist())
@@ -1058,19 +1206,6 @@ def test_check_requires_y_none():
     assert not [r.message for r in record]
 
 
-# TODO: Remove in 1.3 when Estimator is removed
-def test_deprecated_Estimator_check_estimator():
-    err_msg = "'Estimator' was deprecated in favor of"
-    with warnings.catch_warnings():
-        warnings.simplefilter("error", FutureWarning)
-        with raises(FutureWarning, match=err_msg, may_pass=True):
-            check_estimator(Estimator=NuSVC())
-
-    err_msg = "Either estimator or Estimator should be passed"
-    with raises(ValueError, match=err_msg, may_pass=False):
-        check_estimator()
-
-
 def test_non_deterministic_estimator_skip_tests():
     # check estimators with non_deterministic tag set to True
     # will skip certain tests, refer to issue #22313 for details
@@ -1086,3 +1221,67 @@ def test_non_deterministic_estimator_skip_tests():
         all_tests = list(_yield_all_checks(Estimator()))
         assert check_methods_sample_order_invariance not in all_tests
         assert check_methods_subset_invariance not in all_tests
+
+
+def test_check_outlier_contamination():
+    """Check the test for the contamination parameter in the outlier detectors."""
+
+    # Without any parameter constraints, the estimator will early exit the test by
+    # returning None.
+    class OutlierDetectorWithoutConstraint(OutlierMixin, BaseEstimator):
+        """Outlier detector without parameter validation."""
+
+        def __init__(self, contamination=0.1):
+            self.contamination = contamination
+
+        def fit(self, X, y=None, sample_weight=None):
+            return self  # pragma: no cover
+
+        def predict(self, X, y=None):
+            return np.ones(X.shape[0])
+
+    detector = OutlierDetectorWithoutConstraint()
+    assert check_outlier_contamination(detector.__class__.__name__, detector) is None
+
+    # Now, we check that with the parameter constraints, the test should only be valid
+    # if an Interval constraint with bound in [0, 1] is provided.
+    class OutlierDetectorWithConstraint(OutlierDetectorWithoutConstraint):
+        _parameter_constraints = {"contamination": [StrOptions({"auto"})]}
+
+    detector = OutlierDetectorWithConstraint()
+    err_msg = "contamination constraints should contain a Real Interval constraint."
+    with raises(AssertionError, match=err_msg):
+        check_outlier_contamination(detector.__class__.__name__, detector)
+
+    # Add a correct interval constraint and check that the test passes.
+    OutlierDetectorWithConstraint._parameter_constraints["contamination"] = [
+        Interval(Real, 0, 0.5, closed="right")
+    ]
+    detector = OutlierDetectorWithConstraint()
+    check_outlier_contamination(detector.__class__.__name__, detector)
+
+    incorrect_intervals = [
+        Interval(Integral, 0, 1, closed="right"),  # not an integral interval
+        Interval(Real, -1, 1, closed="right"),  # lower bound is negative
+        Interval(Real, 0, 2, closed="right"),  # upper bound is greater than 1
+        Interval(Real, 0, 0.5, closed="left"),  # lower bound include 0
+    ]
+
+    err_msg = r"contamination constraint should be an interval in \(0, 0.5\]"
+    for interval in incorrect_intervals:
+        OutlierDetectorWithConstraint._parameter_constraints["contamination"] = [
+            interval
+        ]
+        detector = OutlierDetectorWithConstraint()
+        with raises(AssertionError, match=err_msg):
+            check_outlier_contamination(detector.__class__.__name__, detector)
+
+
+def test_decision_proba_tie_ranking():
+    """Check that in case with some probabilities ties, we relax the
+    ranking comparison with the decision function.
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/24025
+    """
+    estimator = SGDClassifier(loss="log_loss")
+    check_decision_proba_consistency("SGDClassifier", estimator)

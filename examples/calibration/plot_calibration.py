@@ -22,6 +22,7 @@ cluster with heterogeneous labels. This results in a significantly improved
 Brier score.
 
 """
+
 # Authors:
 # Mathieu Blondel <mathieu@mblondel.org>
 # Alexandre Gramfort <alexandre.gramfort@telecom-paristech.fr>
@@ -91,8 +92,8 @@ print("With sigmoid calibration: %1.3f" % clf_sigmoid_score)
 # %%
 # Plot data and the predicted probabilities
 # -----------------------------------------
-from matplotlib import cm
 import matplotlib.pyplot as plt
+from matplotlib import cm
 
 plt.figure()
 y_unique = np.unique(y)

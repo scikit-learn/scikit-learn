@@ -54,8 +54,8 @@ multiple interfaces):
 
 :Transformer:
 
-    For filtering or modifying the data, in a supervised or unsupervised
-    way, implements::
+    For modifying the data in a supervised or unsupervised way (e.g. by adding, changing, 
+    or removing columns, but not by adding or removing rows). Implements::
 
       new_data = transformer.transform(data)
 
@@ -370,9 +370,10 @@ While when `deep=False`, the output will be::
     my_extra_param -> random
     subestimator -> LogisticRegression()
 
-The ``set_params`` on the other hand takes as input a dict of the form
-``'parameter': value`` and sets the parameter of the estimator using this dict.
-Return value must be estimator itself.
+On the other hand, ``set_params`` takes the parameters of ``__init__``
+as keyword arguments, unpacks them into a dict of the form
+``'parameter': value`` and sets the parameters of the estimator using this dict.
+Return value must be the estimator itself.
 
 While the ``get_params`` mechanism is not essential (see :ref:`cloning` below),
 the ``set_params`` function is necessary as it is used to set parameters during
@@ -413,7 +414,7 @@ trailing ``_`` is used to check if the estimator has been fitted.
 
 Cloning
 -------
-For use with the :mod:`model_selection` module,
+For use with the :mod:`~sklearn.model_selection` module,
 an estimator must support the ``base.clone`` function to replicate an estimator.
 This can be done by providing a ``get_params`` method.
 If ``get_params`` is present, then ``clone(estimator)`` will be an instance of
@@ -423,6 +424,31 @@ the result of ``estimator.get_params()``.
 Objects that do not provide this method will be deep-copied
 (using the Python standard function ``copy.deepcopy``)
 if ``safe=False`` is passed to ``clone``.
+
+Estimators can customize the behavior of :func:`base.clone` by defining a
+`__sklearn_clone__` method. `__sklearn_clone__` must return an instance of the
+estimator. `__sklearn_clone__` is useful when an estimator needs to hold on to
+some state when :func:`base.clone` is called on the estimator. For example, a
+frozen meta-estimator for transformers can be defined as follows::
+
+    class FrozenTransformer(BaseEstimator):
+        def __init__(self, fitted_transformer):
+            self.fitted_transformer = fitted_transformer
+
+        def __getattr__(self, name):
+            # `fitted_transformer`'s attributes are now accessible
+            return getattr(self.fitted_transformer, name)
+
+        def __sklearn_clone__(self):
+            return self
+
+        def fit(self, X, y):
+            # Fitting does not change the state of the estimator
+            return self
+
+        def fit_transform(self, X, y=None):
+            # fit_transform only transforms the data
+            return self.fitted_transformer.transform(X, y)
 
 Pipeline compatibility
 ----------------------
@@ -482,7 +508,7 @@ independent term is stored in ``intercept_``.  ``sklearn.linear_model._base``
 contains a few base classes and mixins that implement common linear model
 patterns.
 
-The :mod:`sklearn.utils.multiclass` module contains useful functions
+The :mod:`~sklearn.utils.multiclass` module contains useful functions
 for working with multiclass and multilabel problems.
 
 .. _estimator_tags:
@@ -507,7 +533,10 @@ general only be determined at runtime.
 The current set of estimator tags are:
 
 allow_nan (default=False)
-    whether the estimator supports data with missing values encoded as np.NaN
+    whether the estimator supports data with missing values encoded as np.nan
+
+array_api_support (default=False)
+    whether the estimator supports Array API compatible inputs.
 
 binary_only (default=False)
     whether estimator supports binary classification but lacks multi-class
@@ -539,7 +568,7 @@ pairwise (default=False)
     or a cross validation procedure that extracts a sub-sample of data intended
     for a pairwise estimator, where the data needs to be indexed on both axes.
     Specifically, this tag is used by
-    :func:`~sklearn.utils.metaestimators._safe_split` to slice rows and
+    `sklearn.utils.metaestimators._safe_split` to slice rows and
     columns.
 
 preserves_dtype (default=``[np.float64]``)
@@ -552,8 +581,9 @@ preserves_dtype (default=``[np.float64]``)
 
 poor_score (default=False)
     whether the estimator fails to provide a "reasonable" test-set score, which
-    currently for regression is an R2 of 0.5 on a subset of the boston housing
-    dataset, and for classification an accuracy of 0.83 on
+    currently for regression is an R2 of 0.5 on ``make_regression(n_samples=200,
+    n_features=10, n_informative=1, bias=5.0, noise=20, random_state=42)``, and
+    for classification an accuracy of 0.83 on
     ``make_blobs(n_samples=300, random_state=0)``. These datasets and values
     are based on current estimators in sklearn and might be replaced by
     something more systematic.
@@ -634,6 +664,99 @@ instantiated with an instance of ``LogisticRegression`` (or
 of these two models is somewhat idiosyncratic but both should provide robust
 closed-form solutions.
 
+.. _developer_api_set_output:
+
+Developer API for `set_output`
+==============================
+
+With
+`SLEP018 <https://scikit-learn-enhancement-proposals.readthedocs.io/en/latest/slep018/proposal.html>`__,
+scikit-learn introduces the `set_output` API for configuring transformers to
+output pandas DataFrames. The `set_output` API is automatically defined if the
+transformer defines :term:`get_feature_names_out` and subclasses
+:class:`base.TransformerMixin`. :term:`get_feature_names_out` is used to get the
+column names of pandas output.
+
+:class:`base.OneToOneFeatureMixin` and
+:class:`base.ClassNamePrefixFeaturesOutMixin` are helpful mixins for defining
+:term:`get_feature_names_out`. :class:`base.OneToOneFeatureMixin` is useful when
+the transformer has a one-to-one correspondence between input features and output
+features, such as :class:`~preprocessing.StandardScaler`.
+:class:`base.ClassNamePrefixFeaturesOutMixin` is useful when the transformer
+needs to generate its own feature names out, such as :class:`~decomposition.PCA`.
+
+You can opt-out of the `set_output` API by setting `auto_wrap_output_keys=None`
+when defining a custom subclass::
+
+    class MyTransformer(TransformerMixin, BaseEstimator, auto_wrap_output_keys=None):
+
+        def fit(self, X, y=None):
+            return self
+        def transform(self, X, y=None):
+            return X
+        def get_feature_names_out(self, input_features=None):
+            ...
+
+The default value for `auto_wrap_output_keys` is `("transform",)`, which automatically
+wraps `fit_transform` and `transform`. The `TransformerMixin` uses the
+`__init_subclass__` mechanism to consume `auto_wrap_output_keys` and pass all other
+keyword arguments to it's super class. Super classes' `__init_subclass__` should
+**not** depend on `auto_wrap_output_keys`.
+
+For transformers that return multiple arrays in `transform`, auto wrapping will
+only wrap the first array and not alter the other arrays.
+
+See :ref:`sphx_glr_auto_examples_miscellaneous_plot_set_output.py`
+for an example on how to use the API.
+
+.. _developer_api_check_is_fitted:
+
+Developer API for `check_is_fitted`
+===================================
+
+By default :func:`~sklearn.utils.validation.check_is_fitted` checks if there
+are any attributes in the instance with a trailing underscore, e.g. `coef_`.
+An estimator can change the behavior by implementing a `__sklearn_is_fitted__`
+method taking no input and returning a boolean. If this method exists,
+:func:`~sklearn.utils.validation.check_is_fitted` simply returns its output.
+
+See :ref:`sphx_glr_auto_examples_developing_estimators_sklearn_is_fitted.py`
+for an example on how to use the API.
+
+Developer API for HTML representation
+=====================================
+
+.. warning::
+
+    The HTML representation API is experimental and the API is subject to change.
+
+Estimators inheriting from :class:`~sklearn.base.BaseEstimator` display
+a HTML representation of themselves in interactive programming
+environments such as Jupyter notebooks. For instance, we can display this HTML
+diagram::
+
+    from sklearn.base import BaseEstimator
+
+    BaseEstimator()
+
+The raw HTML representation is obtained by invoking the function
+:func:`~sklearn.utils.estimator_html_repr` on an estimator instance.
+
+To customize the URL linking to an estimator's documentation (i.e. when clicking on the
+"?" icon), override the `_doc_link_module` and `_doc_link_template` attributes. In
+addition, you can provide a `_doc_link_url_param_generator` method. Set
+`_doc_link_module` to the name of the (top level) module that contains your estimator.
+If the value does not match the top level module name, the HTML representation will not
+contain a link to the documentation. For scikit-learn estimators this is set to
+`"sklearn"`.
+
+The `_doc_link_template` is used to construct the final URL. By default, it can contain
+two variables: `estimator_module` (the full name of the module containing the estimator)
+and `estimator_name` (the class name of the estimator). If you need more variables you
+should implement the `_doc_link_url_param_generator` method which should return a
+dictionary of the variables and their values. This dictionary will be used to render the
+`_doc_link_template`.
+
 .. _coding-guidelines:
 
 Coding guidelines
@@ -677,7 +800,8 @@ In addition, we add the following guidelines:
   find bugs in scikit-learn.
 
 * Use the `numpy docstring standard
-  <https://numpydoc.readthedocs.io/en/latest/format.html#numpydoc-docstring-guide>`_ in all your docstrings.
+  <https://numpydoc.readthedocs.io/en/latest/format.html#docstring-standard>`_
+  in all your docstrings.
 
 
 A good example of code that we like can be found `here
@@ -779,7 +903,7 @@ Numerical assertions in tests
 -----------------------------
 
 When asserting the quasi-equality of arrays of continuous values,
-do use :func:`sklearn.utils._testing.assert_allclose`.
+do use `sklearn.utils._testing.assert_allclose`.
 
 The relative tolerance is automatically inferred from the provided arrays
 dtypes (for float32 and float64 dtypes in particular) but you can override
@@ -789,4 +913,4 @@ When comparing arrays of zero-elements, please do provide a non-zero value for
 the absolute tolerance via ``atol``.
 
 For more information, please refer to the docstring of
-:func:`sklearn.utils._testing.assert_allclose`.
+`sklearn.utils._testing.assert_allclose`.

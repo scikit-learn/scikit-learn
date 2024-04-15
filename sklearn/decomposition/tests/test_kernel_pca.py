@@ -1,23 +1,23 @@
-import numpy as np
-import scipy.sparse as sp
-import pytest
 import warnings
 
-from sklearn.utils._testing import (
-    assert_array_almost_equal,
-    assert_array_equal,
-    assert_allclose,
-)
+import numpy as np
+import pytest
 
+import sklearn
+from sklearn.datasets import load_iris, make_blobs, make_circles
 from sklearn.decomposition import PCA, KernelPCA
-from sklearn.datasets import make_circles
-from sklearn.datasets import make_blobs
 from sklearn.exceptions import NotFittedError
 from sklearn.linear_model import Perceptron
+from sklearn.metrics.pairwise import rbf_kernel
+from sklearn.model_selection import GridSearchCV
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
-from sklearn.model_selection import GridSearchCV
-from sklearn.metrics.pairwise import rbf_kernel
+from sklearn.utils._testing import (
+    assert_allclose,
+    assert_array_almost_equal,
+    assert_array_equal,
+)
+from sklearn.utils.fixes import CSR_CONTAINERS
 from sklearn.utils.validation import _check_psd_eigenvalues
 
 
@@ -65,12 +65,6 @@ def test_kernel_pca():
             if inv:
                 X_pred2 = kpca.inverse_transform(X_pred_transformed)
                 assert X_pred2.shape == X_pred.shape
-
-
-def test_kernel_pca_invalid_solver():
-    """Check that kPCA raises an error if the solver parameter is invalid"""
-    with pytest.raises(ValueError):
-        KernelPCA(eigen_solver="unknown").fit(np.random.randn(10, 10))
 
 
 def test_kernel_pca_invalid_parameters():
@@ -123,15 +117,16 @@ def test_kernel_pca_deterministic_output():
         assert_allclose(transformed_X, np.tile(transformed_X[0, :], 20).reshape(20, 2))
 
 
-def test_kernel_pca_sparse():
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_kernel_pca_sparse(csr_container):
     """Test that kPCA works on a sparse data input.
 
     Same test as ``test_kernel_pca except inverse_transform`` since it's not
     implemented for sparse matrices.
     """
     rng = np.random.RandomState(0)
-    X_fit = sp.csr_matrix(rng.random_sample((5, 4)))
-    X_pred = sp.csr_matrix(rng.random_sample((2, 4)))
+    X_fit = csr_container(rng.random_sample((5, 4)))
+    X_pred = csr_container(rng.random_sample((2, 4)))
 
     for eigen_solver in ("auto", "arpack", "randomized"):
         for kernel in ("linear", "rbf", "poly"):
@@ -202,16 +197,6 @@ def test_kernel_pca_n_components():
             shape = kpca.fit(X_fit).transform(X_pred).shape
 
             assert shape == (2, c)
-
-
-@pytest.mark.parametrize("n_components", [-1, 0])
-def test_kernal_pca_too_few_components(n_components):
-    rng = np.random.RandomState(0)
-    X_fit = rng.random_sample((5, 4))
-    kpca = KernelPCA(n_components=n_components)
-    msg = "n_components.* must be >= 1"
-    with pytest.raises(ValueError, match=msg):
-        kpca.fit(X_fit)
 
 
 def test_remove_zero_eig():
@@ -324,18 +309,6 @@ def test_kernel_pca_precomputed_non_symmetric(solver):
     # comparison between the non-centered and centered versions
     assert_array_equal(kpca.eigenvectors_, kpca_c.eigenvectors_)
     assert_array_equal(kpca.eigenvalues_, kpca_c.eigenvalues_)
-
-
-def test_kernel_pca_invalid_kernel():
-    """Tests that using an invalid kernel name raises a ValueError
-
-    An invalid kernel name should raise a ValueError at fit time.
-    """
-    rng = np.random.RandomState(0)
-    X_fit = rng.random_sample((2, 4))
-    kpca = KernelPCA(kernel="tototiti")
-    with pytest.raises(ValueError):
-        kpca.fit(X_fit)
 
 
 def test_gridsearch_pipeline():
@@ -544,24 +517,6 @@ def test_32_64_decomposition_shape():
     assert kpca.fit_transform(X).shape == kpca.fit_transform(X.astype(np.float32)).shape
 
 
-# TODO: Remove in 1.2
-def test_kernel_pca_lambdas_deprecated():
-    kp = KernelPCA()
-    kp.eigenvalues_ = None
-    msg = r"Attribute `lambdas_` was deprecated in version 1\.0"
-    with pytest.warns(FutureWarning, match=msg):
-        kp.lambdas_
-
-
-# TODO: Remove in 1.2
-def test_kernel_pca_alphas_deprecated():
-    kp = KernelPCA(kernel="precomputed")
-    kp.eigenvectors_ = None
-    msg = r"Attribute `alphas_` was deprecated in version 1\.0"
-    with pytest.warns(FutureWarning, match=msg):
-        kp.alphas_
-
-
 def test_kernel_pca_feature_names_out():
     """Check feature names out for KernelPCA."""
     X, *_ = make_blobs(n_samples=100, n_features=4, random_state=0)
@@ -569,3 +524,43 @@ def test_kernel_pca_feature_names_out():
 
     names = kpca.get_feature_names_out()
     assert_array_equal([f"kernelpca{i}" for i in range(2)], names)
+
+
+def test_kernel_pca_inverse_correct_gamma():
+    """Check that gamma is set correctly when not provided.
+
+    Non-regression test for #26280
+    """
+    rng = np.random.RandomState(0)
+    X = rng.random_sample((5, 4))
+
+    kwargs = {
+        "n_components": 2,
+        "random_state": rng,
+        "fit_inverse_transform": True,
+        "kernel": "rbf",
+    }
+
+    expected_gamma = 1 / X.shape[1]
+    kpca1 = KernelPCA(gamma=None, **kwargs).fit(X)
+    kpca2 = KernelPCA(gamma=expected_gamma, **kwargs).fit(X)
+
+    assert kpca1.gamma_ == expected_gamma
+    assert kpca2.gamma_ == expected_gamma
+
+    X1_recon = kpca1.inverse_transform(kpca1.transform(X))
+    X2_recon = kpca2.inverse_transform(kpca1.transform(X))
+
+    assert_allclose(X1_recon, X2_recon)
+
+
+def test_kernel_pca_pandas_output():
+    """Check that KernelPCA works with pandas output when the solver is arpack.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/27579
+    """
+    pytest.importorskip("pandas")
+    X, _ = load_iris(as_frame=True, return_X_y=True)
+    with sklearn.config_context(transform_output="pandas"):
+        KernelPCA(n_components=2, eigen_solver="arpack").fit_transform(X)

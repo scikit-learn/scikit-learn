@@ -3,13 +3,15 @@
 # Authors: Mathieu Blondel <mathieu@mblondel.org>
 #          Jan Hendrik Metzen <jhm@informatik.uni-bremen.de>
 # License: BSD 3 clause
+from numbers import Real
 
 import numpy as np
 
-from .base import BaseEstimator, RegressorMixin, MultiOutputMixin
-from .metrics.pairwise import pairwise_kernels
+from .base import BaseEstimator, MultiOutputMixin, RegressorMixin, _fit_context
 from .linear_model._ridge import _solve_cholesky_kernel
-from .utils.validation import check_is_fitted, _check_sample_weight
+from .metrics.pairwise import PAIRWISE_KERNEL_FUNCTIONS, pairwise_kernels
+from .utils._param_validation import Interval, StrOptions
+from .utils.validation import _check_sample_weight, check_is_fitted
 
 
 class KernelRidge(MultiOutputMixin, RegressorMixin, BaseEstimator):
@@ -49,7 +51,7 @@ class KernelRidge(MultiOutputMixin, RegressorMixin, BaseEstimator):
 
     kernel : str or callable, default="linear"
         Kernel mapping used internally. This parameter is directly passed to
-        :class:`~sklearn.metrics.pairwise.pairwise_kernel`.
+        :class:`~sklearn.metrics.pairwise.pairwise_kernels`.
         If `kernel` is a string, it must be one of the metrics
         in `pairwise.PAIRWISE_KERNEL_FUNCTIONS` or "precomputed".
         If `kernel` is "precomputed", X is assumed to be a kernel matrix.
@@ -74,7 +76,7 @@ class KernelRidge(MultiOutputMixin, RegressorMixin, BaseEstimator):
         Zero coefficient for polynomial and sigmoid kernels.
         Ignored by other kernels.
 
-    kernel_params : mapping of str to any, default=None
+    kernel_params : dict, default=None
         Additional parameters (keyword arguments) for kernel function passed
         as callable object.
 
@@ -129,6 +131,18 @@ class KernelRidge(MultiOutputMixin, RegressorMixin, BaseEstimator):
     KernelRidge(alpha=1.0)
     """
 
+    _parameter_constraints: dict = {
+        "alpha": [Interval(Real, 0, None, closed="left"), "array-like"],
+        "kernel": [
+            StrOptions(set(PAIRWISE_KERNEL_FUNCTIONS.keys()) | {"precomputed"}),
+            callable,
+        ],
+        "gamma": [Interval(Real, 0, None, closed="left"), None],
+        "degree": [Interval(Real, 0, None, closed="left")],
+        "coef0": [Interval(Real, None, None, closed="neither")],
+        "kernel_params": [dict, None],
+    }
+
     def __init__(
         self,
         alpha=1,
@@ -156,6 +170,7 @@ class KernelRidge(MultiOutputMixin, RegressorMixin, BaseEstimator):
     def _more_tags(self):
         return {"pairwise": self.kernel == "precomputed"}
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y, sample_weight=None):
         """Fit Kernel Ridge regression model.
 

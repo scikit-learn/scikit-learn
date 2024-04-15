@@ -107,5 +107,5 @@ for g in parsed_groups:
             )
         )
 
-outfile = open(sys.argv[1].replace(".svg", ".html"), "w")
-outfile.write("\n".join(out))
+with open(sys.argv[1].replace(".svg", ".html"), "w") as f:
+    f.write("\n".join(out))

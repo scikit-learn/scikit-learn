@@ -33,7 +33,7 @@ need not be stored) and storing feature names in addition to values.
 :class:`DictVectorizer` implements what is called one-of-K or "one-hot"
 coding for categorical (aka nominal, discrete) features. Categorical
 features are "attribute-value" pairs where the value is restricted
-to a list of discrete of possibilities without ordering (e.g. topic
+to a list of discrete possibilities without ordering (e.g. topic
 identifiers, types of objects, tags, names...).
 
 In the following, "city" is a categorical attribute while "temperature"
@@ -206,8 +206,9 @@ Note the use of a generator comprehension,
 which introduces laziness into the feature extraction:
 tokens are only processed on demand from the hasher.
 
-Implementation details
-----------------------
+|details-start|
+**Implementation details**
+|details-split|
 
 :class:`FeatureHasher` uses the signed 32-bit variant of MurmurHash3.
 As a result (and because of limitations in ``scipy.sparse``),
@@ -223,15 +224,17 @@ Since a simple modulo is used to transform the hash function to a column index,
 it is advisable to use a power of two as the ``n_features`` parameter;
 otherwise the features will not be mapped evenly to the columns.
 
+.. topic:: References:
+
+  * `MurmurHash3 <https://github.com/aappleby/smhasher>`_.
+
+|details-end|
 
 .. topic:: References:
 
  * Kilian Weinberger, Anirban Dasgupta, John Langford, Alex Smola and
    Josh Attenberg (2009). `Feature hashing for large scale multitask learning
    <https://alex.smola.org/papers/2009/Weinbergeretal09.pdf>`_. Proc. ICML.
-
- * `MurmurHash3 <https://github.com/aappleby/smhasher>`_.
-
 
 .. _text_feature_extraction:
 
@@ -396,7 +399,7 @@ last document::
 .. _stop_words:
 
 Using stop words
-................
+----------------
 
 Stop words are words like "and", "the", "him", which are presumed to be
 uninformative in representing the content of a text, and which may be
@@ -425,6 +428,7 @@ identify and warn about some kinds of inconsistencies.
                `"Stop Word Lists in Free Open-source Software Packages"
                <https://aclweb.org/anthology/W18-2502>`__.
                In *Proc. Workshop for NLP Open Source Software*.
+
 
 .. _tfidf:
 
@@ -489,6 +493,10 @@ class::
 
 Again please see the :ref:`reference documentation
 <text_feature_extraction_ref>` for the details on all the parameters.
+
+|details-start|
+**Numeric example of a tf-idf matrix**
+|details-split|
 
 Let's take an example with the following counts. The first term is present
 100% of the time hence not very interesting. The two other features only
@@ -607,8 +615,9 @@ As usual the best way to adjust the feature extraction parameters
 is to use a cross-validated grid search, for instance by pipelining the
 feature extractor with a classifier:
 
- * :ref:`sphx_glr_auto_examples_model_selection_grid_search_text_feature_extraction.py`
+* :ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_text_feature_extraction.py`
 
+|details-end|
 
 Decoding text files
 -------------------
@@ -636,6 +645,10 @@ by setting the ``decode_error`` parameter to either ``"ignore"``
 or ``"replace"``. See the documentation for the Python function
 ``bytes.decode`` for more details
 (type ``help(bytes.decode)`` at the Python prompt).
+
+|details-start|
+**Troubleshooting decoding text**
+|details-split|
 
 If you are having trouble decoding text, here are some things to try:
 
@@ -690,6 +703,7 @@ About Unicode <https://www.joelonsoftware.com/articles/Unicode.html>`_.
 
 .. _`ftfy`: https://github.com/LuminosoInsight/python-ftfy
 
+|details-end|
 
 Applications and examples
 -------------------------
@@ -701,18 +715,18 @@ In particular in a **supervised setting** it can be successfully combined
 with fast and scalable linear models to train **document classifiers**,
 for instance:
 
- * :ref:`sphx_glr_auto_examples_text_plot_document_classification_20newsgroups.py`
+* :ref:`sphx_glr_auto_examples_text_plot_document_classification_20newsgroups.py`
 
 In an **unsupervised setting** it can be used to group similar documents
 together by applying clustering algorithms such as :ref:`k_means`:
 
-  * :ref:`sphx_glr_auto_examples_text_plot_document_clustering.py`
+* :ref:`sphx_glr_auto_examples_text_plot_document_clustering.py`
 
 Finally it is possible to discover the main topics of a corpus by
 relaxing the hard assignment constraint of clustering, for instance by
 using :ref:`NMF`:
 
-  * :ref:`sphx_glr_auto_examples_applications_plot_topics_extraction_with_nmf_lda.py`
+* :ref:`sphx_glr_auto_examples_applications_plot_topics_extraction_with_nmf_lda.py`
 
 
 Limitations of the Bag of Words representation
@@ -846,7 +860,7 @@ Note that the dimensionality does not affect the CPU training time of
 algorithms which operate on CSR matrices (``LinearSVC(dual=True)``,
 ``Perceptron``, ``SGDClassifier``, ``PassiveAggressive``) but it does for
 algorithms that work with CSC matrices (``LinearSVC(dual=False)``, ``Lasso()``,
-etc).
+etc.).
 
 Let's try again with the default setting::
 
@@ -870,8 +884,9 @@ The :class:`HashingVectorizer` also comes with the following limitations:
   model. A :class:`TfidfTransformer` can be appended to it in a pipeline if
   required.
 
-Performing out-of-core scaling with HashingVectorizer
-------------------------------------------------------
+|details-start|
+**Performing out-of-core scaling with HashingVectorizer**
+|details-split|
 
 An interesting development of using a :class:`HashingVectorizer` is the ability
 to perform `out-of-core`_ scaling. This means that we can learn from data that
@@ -890,6 +905,8 @@ time is often limited by the CPU time one wants to spend on the task.
 For a full-fledged example of out-of-core scaling in a text classification
 task see :ref:`sphx_glr_auto_examples_applications_plot_out_of_core_classification.py`.
 
+|details-end|
+
 Customizing the vectorizer classes
 ----------------------------------
 
@@ -906,19 +923,19 @@ to the vectorizer constructor::
 
 In particular we name:
 
-  * ``preprocessor``: a callable that takes an entire document as input (as a
-    single string), and returns a possibly transformed version of the document,
-    still as an entire string. This can be used to remove HTML tags, lowercase
-    the entire document, etc.
+* ``preprocessor``: a callable that takes an entire document as input (as a
+  single string), and returns a possibly transformed version of the document,
+  still as an entire string. This can be used to remove HTML tags, lowercase
+  the entire document, etc.
 
-  * ``tokenizer``: a callable that takes the output from the preprocessor
-    and splits it into tokens, then returns a list of these.
+* ``tokenizer``: a callable that takes the output from the preprocessor
+  and splits it into tokens, then returns a list of these.
 
-  * ``analyzer``: a callable that replaces the preprocessor and tokenizer.
-    The default analyzers all call the preprocessor and tokenizer, but custom
-    analyzers will skip this. N-gram extraction and stop word filtering take
-    place at the analyzer level, so a custom analyzer may have to reproduce
-    these steps.
+* ``analyzer``: a callable that replaces the preprocessor and tokenizer.
+  The default analyzers all call the preprocessor and tokenizer, but custom
+  analyzers will skip this. N-gram extraction and stop word filtering take
+  place at the analyzer level, so a custom analyzer may have to reproduce
+  these steps.
 
 (Lucene users might recognize these names, but be aware that scikit-learn
 concepts may not map one-to-one onto Lucene concepts.)
@@ -928,59 +945,65 @@ parameters it is possible to derive from the class and override the
 ``build_preprocessor``, ``build_tokenizer`` and ``build_analyzer``
 factory methods instead of passing custom functions.
 
+|details-start|
+**Tips and tricks**
+|details-split|
+
 Some tips and tricks:
 
-  * If documents are pre-tokenized by an external package, then store them in
-    files (or strings) with the tokens separated by whitespace and pass
-    ``analyzer=str.split``
-  * Fancy token-level analysis such as stemming, lemmatizing, compound
-    splitting, filtering based on part-of-speech, etc. are not included in the
-    scikit-learn codebase, but can be added by customizing either the
-    tokenizer or the analyzer.
-    Here's a ``CountVectorizer`` with a tokenizer and lemmatizer using
-    `NLTK <https://www.nltk.org/>`_::
+* If documents are pre-tokenized by an external package, then store them in
+  files (or strings) with the tokens separated by whitespace and pass
+  ``analyzer=str.split``
+* Fancy token-level analysis such as stemming, lemmatizing, compound
+  splitting, filtering based on part-of-speech, etc. are not included in the
+  scikit-learn codebase, but can be added by customizing either the
+  tokenizer or the analyzer.
+  Here's a ``CountVectorizer`` with a tokenizer and lemmatizer using
+  `NLTK <https://www.nltk.org/>`_::
 
-        >>> from nltk import word_tokenize          # doctest: +SKIP
-        >>> from nltk.stem import WordNetLemmatizer # doctest: +SKIP
-        >>> class LemmaTokenizer:
-        ...     def __init__(self):
-        ...         self.wnl = WordNetLemmatizer()
-        ...     def __call__(self, doc):
-        ...         return [self.wnl.lemmatize(t) for t in word_tokenize(doc)]
-        ...
-        >>> vect = CountVectorizer(tokenizer=LemmaTokenizer())  # doctest: +SKIP
+      >>> from nltk import word_tokenize          # doctest: +SKIP
+      >>> from nltk.stem import WordNetLemmatizer # doctest: +SKIP
+      >>> class LemmaTokenizer:
+      ...     def __init__(self):
+      ...         self.wnl = WordNetLemmatizer()
+      ...     def __call__(self, doc):
+      ...         return [self.wnl.lemmatize(t) for t in word_tokenize(doc)]
+      ...
+      >>> vect = CountVectorizer(tokenizer=LemmaTokenizer())  # doctest: +SKIP
 
-    (Note that this will not filter out punctuation.)
+  (Note that this will not filter out punctuation.)
 
 
-    The following example will, for instance, transform some British spelling
-    to American spelling::
+  The following example will, for instance, transform some British spelling
+  to American spelling::
 
-        >>> import re
-        >>> def to_british(tokens):
-        ...     for t in tokens:
-        ...         t = re.sub(r"(...)our$", r"\1or", t)
-        ...         t = re.sub(r"([bt])re$", r"\1er", t)
-        ...         t = re.sub(r"([iy])s(e$|ing|ation)", r"\1z\2", t)
-        ...         t = re.sub(r"ogue$", "og", t)
-        ...         yield t
-        ...
-        >>> class CustomVectorizer(CountVectorizer):
-        ...     def build_tokenizer(self):
-        ...         tokenize = super().build_tokenizer()
-        ...         return lambda doc: list(to_british(tokenize(doc)))
-        ...
-        >>> print(CustomVectorizer().build_analyzer()(u"color colour"))
-        [...'color', ...'color']
+      >>> import re
+      >>> def to_british(tokens):
+      ...     for t in tokens:
+      ...         t = re.sub(r"(...)our$", r"\1or", t)
+      ...         t = re.sub(r"([bt])re$", r"\1er", t)
+      ...         t = re.sub(r"([iy])s(e$|ing|ation)", r"\1z\2", t)
+      ...         t = re.sub(r"ogue$", "og", t)
+      ...         yield t
+      ...
+      >>> class CustomVectorizer(CountVectorizer):
+      ...     def build_tokenizer(self):
+      ...         tokenize = super().build_tokenizer()
+      ...         return lambda doc: list(to_british(tokenize(doc)))
+      ...
+      >>> print(CustomVectorizer().build_analyzer()(u"color colour"))
+      [...'color', ...'color']
 
-    for other styles of preprocessing; examples include stemming, lemmatization,
-    or normalizing numerical tokens, with the latter illustrated in:
+  for other styles of preprocessing; examples include stemming, lemmatization,
+  or normalizing numerical tokens, with the latter illustrated in:
 
-     * :ref:`sphx_glr_auto_examples_bicluster_plot_bicluster_newsgroups.py`
+  * :ref:`sphx_glr_auto_examples_bicluster_plot_bicluster_newsgroups.py`
 
 
 Customizing the vectorizer can also be useful when handling Asian languages
 that do not use an explicit word separator such as whitespace.
+
+|details-end|
 
 .. _image_feature_extraction:
 
@@ -995,7 +1018,7 @@ Patch extraction
 The :func:`extract_patches_2d` function extracts patches from an image stored
 as a two-dimensional array, or three-dimensional with color information along
 the third axis. For rebuilding an image from all its patches, use
-:func:`reconstruct_from_patches_2d`. For example let use generate a 4x4 pixel
+:func:`reconstruct_from_patches_2d`. For example let us generate a 4x4 pixel
 picture with 3 color channels (e.g. in RGB format)::
 
     >>> import numpy as np
@@ -1033,7 +1056,7 @@ on overlapping areas::
 
 The :class:`PatchExtractor` class works in the same way as
 :func:`extract_patches_2d`, only it supports multiple images as input. It is
-implemented as an estimator, so it can be used in pipelines. See::
+implemented as a scikit-learn transformer, so it can be used in pipelines. See::
 
     >>> five_images = np.arange(5 * 4 * 4 * 3).reshape(5, 4, 4, 3)
     >>> patches = image.PatchExtractor(patch_size=(2, 2)).transform(five_images)
