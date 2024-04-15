@@ -1,10 +1,9 @@
-from libc cimport math
 import numpy as np
-cimport numpy as cnp
 
+from libc cimport math
+from libc.math cimport INFINITY
 
-cdef extern from "numpy/npy_math.h":
-    float NPY_INFINITY
+from ..utils._typedefs cimport float32_t, float64_t
 
 
 cdef float EPSILON_DBL = 1e-8
@@ -13,7 +12,7 @@ cdef float PERPLEXITY_TOLERANCE = 1e-5
 
 # TODO: have this function support float32 and float64 and preserve inputs' dtypes.
 def _binary_search_perplexity(
-        const cnp.float32_t[:, :] sqdistances,
+        const float32_t[:, :] sqdistances,
         float desired_perplexity,
         int verbose):
     """Binary search for sigmas of conditional Gaussians.
@@ -63,12 +62,12 @@ def _binary_search_perplexity(
 
     # This array is later used as a 32bit array. It has multiple intermediate
     # floating point additions that benefit from the extra precision
-    cdef cnp.float64_t[:, :] P = np.zeros(
+    cdef float64_t[:, :] P = np.zeros(
         (n_samples, n_neighbors), dtype=np.float64)
 
     for i in range(n_samples):
-        beta_min = -NPY_INFINITY
-        beta_max = NPY_INFINITY
+        beta_min = -INFINITY
+        beta_max = INFINITY
         beta = 1.0
 
         # Binary search of precision for i-th conditional distribution
@@ -98,13 +97,13 @@ def _binary_search_perplexity(
 
             if entropy_diff > 0.0:
                 beta_min = beta
-                if beta_max == NPY_INFINITY:
+                if beta_max == INFINITY:
                     beta *= 2.0
                 else:
                     beta = (beta + beta_max) / 2.0
             else:
                 beta_max = beta
-                if beta_min == -NPY_INFINITY:
+                if beta_min == -INFINITY:
                     beta /= 2.0
                 else:
                     beta = (beta + beta_min) / 2.0

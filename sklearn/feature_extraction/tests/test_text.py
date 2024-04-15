@@ -5,6 +5,7 @@ from collections import defaultdict
 from collections.abc import Mapping
 from functools import partial
 from io import StringIO
+from itertools import product
 
 import numpy as np
 import pytest
@@ -25,13 +26,13 @@ from sklearn.feature_extraction.text import (
 from sklearn.model_selection import GridSearchCV, cross_val_score, train_test_split
 from sklearn.pipeline import Pipeline
 from sklearn.svm import LinearSVC
-from sklearn.utils import IS_PYPY
 from sklearn.utils._testing import (
     assert_allclose_dense_sparse,
     assert_almost_equal,
     fails_if_pypy,
     skip_if_32bit,
 )
+from sklearn.utils.fixes import _IS_PYPY, _IS_WASM, CSC_CONTAINERS, CSR_CONTAINERS
 
 JUNK_FOOD_DOCS = (
     "the pizza pizza beer copyright",
@@ -473,6 +474,13 @@ def test_tf_idf_smoothing():
     assert (tfidf >= 0).all()
 
 
+@pytest.mark.xfail(
+    _IS_WASM,
+    reason=(
+        "no floating point exceptions, see"
+        " https://github.com/numpy/numpy/pull/21895#issuecomment-1311525881"
+    ),
+)
 def test_tfidf_no_smoothing():
     X = [[1, 1, 1], [1, 1, 0], [1, 0, 0]]
     tr = TfidfTransformer(smooth_idf=False, norm="l2")
@@ -928,7 +936,7 @@ def test_count_vectorizer_pipeline_grid_selection():
         data, target, test_size=0.2, random_state=0
     )
 
-    pipeline = Pipeline([("vect", CountVectorizer()), ("svc", LinearSVC(dual="auto"))])
+    pipeline = Pipeline([("vect", CountVectorizer()), ("svc", LinearSVC())])
 
     parameters = {
         "vect__ngram_range": [(1, 1), (1, 2)],
@@ -964,7 +972,7 @@ def test_vectorizer_pipeline_grid_selection():
         data, target, test_size=0.1, random_state=0
     )
 
-    pipeline = Pipeline([("vect", TfidfVectorizer()), ("svc", LinearSVC(dual="auto"))])
+    pipeline = Pipeline([("vect", TfidfVectorizer()), ("svc", LinearSVC())])
 
     parameters = {
         "vect__ngram_range": [(1, 1), (1, 2)],
@@ -998,7 +1006,7 @@ def test_vectorizer_pipeline_cross_validation():
     # label junk food as -1, the others as +1
     target = [-1] * len(JUNK_FOOD_DOCS) + [1] * len(NOTJUNK_FOOD_DOCS)
 
-    pipeline = Pipeline([("vect", TfidfVectorizer()), ("svc", LinearSVC(dual="auto"))])
+    pipeline = Pipeline([("vect", TfidfVectorizer()), ("svc", LinearSVC())])
 
     cv_scores = cross_val_score(pipeline, data, target, cv=3)
     assert_array_equal(cv_scores, [1.0, 1.0, 1.0])
@@ -1060,7 +1068,7 @@ def test_pickling_vectorizer():
         copy = pickle.loads(s)
         assert type(copy) == orig.__class__
         assert copy.get_params() == orig.get_params()
-        if IS_PYPY and isinstance(orig, HashingVectorizer):
+        if _IS_PYPY and isinstance(orig, HashingVectorizer):
             continue
         else:
             assert_allclose_dense_sparse(
@@ -1284,10 +1292,13 @@ def test_tfidf_transformer_type(X_dtype):
     assert X_trans.dtype == X.dtype
 
 
-def test_tfidf_transformer_sparse():
+@pytest.mark.parametrize(
+    "csc_container, csr_container", product(CSC_CONTAINERS, CSR_CONTAINERS)
+)
+def test_tfidf_transformer_sparse(csc_container, csr_container):
     X = sparse.rand(10, 20000, dtype=np.float64, random_state=42)
-    X_csc = sparse.csc_matrix(X)
-    X_csr = sparse.csr_matrix(X)
+    X_csc = csc_container(X)
+    X_csr = csr_container(X)
 
     X_trans_csc = TfidfTransformer().fit_transform(X_csc)
     X_trans_csr = TfidfTransformer().fit_transform(X_csr)
@@ -1335,7 +1346,7 @@ def test_vectorizers_invalid_ngram_range(vec):
         f"Invalid value for ngram_range={invalid_range} "
         "lower boundary larger than the upper boundary."
     )
-    if isinstance(vec, HashingVectorizer) and IS_PYPY:
+    if isinstance(vec, HashingVectorizer) and _IS_PYPY:
         pytest.xfail(reason="HashingVectorizer is not supported on PyPy")
 
     with pytest.raises(ValueError, match=message):
@@ -1385,7 +1396,8 @@ def test_vectorizer_stop_words_inconsistent():
 
 
 @skip_if_32bit
-def test_countvectorizer_sort_features_64bit_sparse_indices():
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_countvectorizer_sort_features_64bit_sparse_indices(csr_container):
     """
     Check that CountVectorizer._sort_features preserves the dtype of its sparse
     feature matrix.
@@ -1395,7 +1407,7 @@ def test_countvectorizer_sort_features_64bit_sparse_indices():
     for more details.
     """
 
-    X = sparse.csr_matrix((5, 5), dtype=np.int64)
+    X = csr_container((5, 5), dtype=np.int64)
 
     # force indices and indptr to int64.
     INDICES_DTYPE = np.int64
@@ -1449,7 +1461,7 @@ def test_stop_word_validation_custom_preprocessor(Estimator):
     ],
 )
 def test_callable_analyzer_error(Estimator, input_type, err_type, err_msg):
-    if issubclass(Estimator, HashingVectorizer) and IS_PYPY:
+    if issubclass(Estimator, HashingVectorizer) and _IS_PYPY:
         pytest.xfail("HashingVectorizer is not supported on PyPy")
     data = ["this is text, not file or filename"]
     with pytest.raises(err_type, match=err_msg):
@@ -1482,7 +1494,7 @@ def test_callable_analyzer_reraise_error(tmpdir, Estimator):
     def analyzer(doc):
         raise Exception("testing")
 
-    if issubclass(Estimator, HashingVectorizer) and IS_PYPY:
+    if issubclass(Estimator, HashingVectorizer) and _IS_PYPY:
         pytest.xfail("HashingVectorizer is not supported on PyPy")
 
     f = tmpdir.join("file.txt")
@@ -1640,3 +1652,24 @@ def test_vectorizers_do_not_have_set_output(Estimator):
     """Check that vectorizers do not define set_output."""
     est = Estimator()
     assert not hasattr(est, "set_output")
+
+
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_tfidf_transformer_copy(csr_container):
+    """Check the behaviour of TfidfTransformer.transform with the copy parameter."""
+    X = sparse.rand(10, 20000, dtype=np.float64, random_state=42)
+    X_csr = csr_container(X)
+
+    # keep a copy of the original matrix for later comparison
+    X_csr_original = X_csr.copy()
+
+    transformer = TfidfTransformer().fit(X_csr)
+
+    X_transform = transformer.transform(X_csr, copy=True)
+    assert_allclose_dense_sparse(X_csr, X_csr_original)
+    assert X_transform is not X_csr
+
+    X_transform = transformer.transform(X_csr, copy=False)
+    assert X_transform is X_csr
+    with pytest.raises(AssertionError):
+        assert_allclose_dense_sparse(X_csr, X_csr_original)

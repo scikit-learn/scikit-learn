@@ -2,6 +2,10 @@
 
 .. currentmodule:: sklearn
 
+============
+Version 0.16
+============
+
 .. _changes_0_16_1:
 
 Version 0.16.1
@@ -192,7 +196,7 @@ Enhancements
   Blanchard <dan-blanchard>`.
 
 - :class:`model_selection.GridSearchCV` and
-  :class:`model.selection.RandomizedSearchCV` can now be configured to work
+  :class:`model_selection.RandomizedSearchCV` can now be configured to work
   with estimators that may fail and raise errors on individual folds. This
   option is controlled by the `error_score` parameter. This does not affect
   errors raised on re-fit. By :user:`Michal Romaniuk <romaniukm>`.

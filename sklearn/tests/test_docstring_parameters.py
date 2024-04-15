@@ -4,6 +4,7 @@
 
 import importlib
 import inspect
+import os
 import warnings
 from inspect import signature
 from pkgutil import walk_packages
@@ -21,7 +22,7 @@ from sklearn.experimental import (
 )
 from sklearn.linear_model import LogisticRegression
 from sklearn.preprocessing import FunctionTransformer
-from sklearn.utils import IS_PYPY, all_estimators
+from sklearn.utils import all_estimators
 from sklearn.utils._testing import (
     _get_func_name,
     check_docstring_parameters,
@@ -33,14 +34,14 @@ from sklearn.utils.estimator_checks import (
     _enforce_estimator_tags_X,
     _enforce_estimator_tags_y,
 )
-from sklearn.utils.fixes import parse_version, sp_version
+from sklearn.utils.fixes import _IS_PYPY, parse_version, sp_version
 
 # walk_packages() ignores DeprecationWarnings, now we need to ignore
 # FutureWarnings
 with warnings.catch_warnings():
     warnings.simplefilter("ignore", FutureWarning)
     # mypy error: Module has no attribute "__path__"
-    sklearn_path = sklearn.__path__  # type: ignore  # mypy issue #1422
+    sklearn_path = [os.path.dirname(sklearn.__file__)]
     PUBLIC_MODULES = set(
         [
             pckg[1]
@@ -56,6 +57,7 @@ _DOCSTRING_IGNORES = [
     "sklearn.pipeline.make_union",
     "sklearn.utils.extmath.safe_sparse_dot",
     "sklearn.utils._joblib",
+    "HalfBinomialLoss",
 ]
 
 # Methods where y param should be ignored if y=None by default
@@ -73,7 +75,7 @@ _METHODS_IGNORE_NONE_Y = [
 # Python 3.7
 @pytest.mark.filterwarnings("ignore::FutureWarning")
 @pytest.mark.filterwarnings("ignore::DeprecationWarning")
-@pytest.mark.skipif(IS_PYPY, reason="test segfaults on PyPy")
+@pytest.mark.skipif(_IS_PYPY, reason="test segfaults on PyPy")
 def test_docstring_parameters():
     # Test module docstring formatting
 
@@ -153,29 +155,6 @@ def test_docstring_parameters():
         raise AssertionError("Docstring Error:\n" + msg)
 
 
-@ignore_warnings(category=FutureWarning)
-def test_tabs():
-    # Test that there are no tabs in our source files
-    for importer, modname, ispkg in walk_packages(sklearn.__path__, prefix="sklearn."):
-        if IS_PYPY and (
-            "_svmlight_format_io" in modname
-            or "feature_extraction._hashing_fast" in modname
-        ):
-            continue
-
-        # because we don't import
-        mod = importlib.import_module(modname)
-
-        try:
-            source = inspect.getsource(mod)
-        except IOError:  # user probably should have run "make clean"
-            continue
-        assert "\t" not in source, (
-            '"%s" has tabs, please remove them ',
-            "or add it to the ignore list" % modname,
-        )
-
-
 def _construct_searchcv_instance(SearchCV):
     return SearchCV(LogisticRegression(), {"C": [0.1, 1]})
 
@@ -200,6 +179,9 @@ def _construct_sparse_coder(Estimator):
 
 
 @ignore_warnings(category=sklearn.exceptions.ConvergenceWarning)
+# TODO(1.6): remove "@pytest.mark.filterwarnings" as SAMME.R will be removed
+# and substituted with the SAMME algorithm as a default
+@pytest.mark.filterwarnings("ignore:The SAMME.R algorithm")
 @pytest.mark.parametrize("name, Estimator", all_estimators())
 def test_fit_docstring_attributes(name, Estimator):
     pytest.importorskip("numpydoc")
@@ -243,23 +225,6 @@ def test_fit_docstring_attributes(name, Estimator):
         # default raises an error, perplexity must be less than n_samples
         est.set_params(perplexity=2)
 
-    # TODO(1.4): TO BE REMOVED for 1.4 (avoid FutureWarning)
-    if Estimator.__name__ in ("KMeans", "MiniBatchKMeans"):
-        est.set_params(n_init="auto")
-
-    # TODO(1.4): TO BE REMOVED for 1.5 (avoid FutureWarning)
-    if Estimator.__name__ in ("LinearSVC", "LinearSVR"):
-        est.set_params(dual="auto")
-
-    # TODO(1.4): TO BE REMOVED for 1.4 (avoid FutureWarning)
-    if Estimator.__name__ in (
-        "MultinomialNB",
-        "ComplementNB",
-        "BernoulliNB",
-        "CategoricalNB",
-    ):
-        est.set_params(force_alpha=True)
-
     # TODO(1.6): remove (avoid FutureWarning)
     if Estimator.__name__ in ("NMF", "MiniBatchNMF"):
         est.set_params(n_components="auto")
@@ -268,14 +233,13 @@ def test_fit_docstring_attributes(name, Estimator):
         solver = "highs" if sp_version >= parse_version("1.6.0") else "interior-point"
         est.set_params(solver=solver)
 
-    # TODO(1.4): TO BE REMOVED for 1.4 (avoid FutureWarning)
-    if Estimator.__name__ == "MDS":
-        est.set_params(normalized_stress="auto")
-
     # Low max iter to speed up tests: we are only interested in checking the existence
     # of fitted attributes. This should be invariant to whether it has converged or not.
     if "max_iter" in est.get_params():
         est.set_params(max_iter=2)
+        # min value for `TSNE` is 250
+        if Estimator.__name__ == "TSNE":
+            est.set_params(max_iter=250)
 
     if "random_state" in est.get_params():
         est.set_params(random_state=0)

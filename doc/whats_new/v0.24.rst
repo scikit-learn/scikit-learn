@@ -2,6 +2,17 @@
 
 .. currentmodule:: sklearn
 
+.. _release_notes_0_24:
+
+============
+Version 0.24
+============
+
+For a short description of the main highlights of the release, please refer to
+:ref:`sphx_glr_auto_examples_release_highlights_plot_release_highlights_0_24_0.py`.
+
+.. include:: changelog_legend.inc
+
 .. _changes_0_24_2:
 
 Version 0.24.2
@@ -190,14 +201,6 @@ Version 0.24.0
 ==============
 
 **December 2020**
-
-For a short description of the main highlights of the release, please
-refer to
-:ref:`sphx_glr_auto_examples_release_highlights_plot_release_highlights_0_24_0.py`.
-
-.. include:: changelog_legend.inc
-
-Put the changes in their relevant module.
 
 Changed models
 --------------
@@ -402,8 +405,8 @@ Changelog
 - |Enhancement| :class:`decomposition.NMF` now supports the optional parameter
   `regularization`, which can take the values `None`, 'components',
   'transformation' or 'both', in accordance with
-  :func:`decomposition.NMF.non_negative_factorization`.
-  :pr:`17414` by :user:`Bharat Raghunathan <Bharat123rox>`.
+  `decomposition.NMF.non_negative_factorization`.
+  :pr:`17414` by :user:`Bharat Raghunathan <bharatr21>`.
 
 - |Fix| :class:`decomposition.KernelPCA` behaviour is now more consistent
   between 32-bits and 64-bits data input when the kernel has small positive
@@ -1008,8 +1011,7 @@ Miscellaneous
   when `print_changed_only=True`, especially with meta-estimators.
   :pr:`18508` by :user:`Nathan C. <Xethan>`.
 
-Code and Documentation Contributors
------------------------------------
+.. rubric:: Code and documentation contributors
 
 Thanks to everyone who has contributed to the maintenance and improvement of
 the project since version 0.23, including:

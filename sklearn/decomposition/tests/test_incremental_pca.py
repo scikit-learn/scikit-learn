@@ -1,10 +1,10 @@
 """Tests for Incremental PCA."""
+
 import warnings
 
 import numpy as np
 import pytest
-from numpy.testing import assert_array_equal
-from scipy import sparse
+from numpy.testing import assert_allclose, assert_array_equal
 
 from sklearn import datasets
 from sklearn.decomposition import PCA, IncrementalPCA
@@ -13,6 +13,7 @@ from sklearn.utils._testing import (
     assert_almost_equal,
     assert_array_almost_equal,
 )
+from sklearn.utils.fixes import CSC_CONTAINERS, CSR_CONTAINERS, LIL_CONTAINERS
 
 iris = datasets.load_iris()
 
@@ -45,14 +46,14 @@ def test_incremental_pca():
 
 
 @pytest.mark.parametrize(
-    "matrix_class", [sparse.csc_matrix, sparse.csr_matrix, sparse.lil_matrix]
+    "sparse_container", CSC_CONTAINERS + CSR_CONTAINERS + LIL_CONTAINERS
 )
-def test_incremental_pca_sparse(matrix_class):
+def test_incremental_pca_sparse(sparse_container):
     # Incremental PCA on sparse arrays.
     X = iris.data
     pca = PCA(n_components=2)
     pca.fit_transform(X)
-    X_sparse = matrix_class(X)
+    X_sparse = sparse_container(X)
     batch_size = X_sparse.shape[0] // 3
     ipca = IncrementalPCA(n_components=2, batch_size=batch_size)
 
@@ -383,25 +384,38 @@ def test_singular_values():
     assert_array_almost_equal(ipca.singular_values_, [3.142, 2.718, 1.0], 14)
 
 
-def test_whitening():
+def test_whitening(global_random_seed):
     # Test that PCA and IncrementalPCA transforms match to sign flip.
     X = datasets.make_low_rank_matrix(
-        1000, 10, tail_strength=0.0, effective_rank=2, random_state=1999
+        1000, 10, tail_strength=0.0, effective_rank=2, random_state=global_random_seed
     )
-    prec = 3
-    n_samples, n_features = X.shape
+    atol = 1e-3
     for nc in [None, 9]:
         pca = PCA(whiten=True, n_components=nc).fit(X)
         ipca = IncrementalPCA(whiten=True, n_components=nc, batch_size=250).fit(X)
 
+        # Since the data is rank deficient, some components are pure noise. We
+        # should not expect those dimensions to carry any signal and their
+        # values might be arbitrarily changed by implementation details of the
+        # internal SVD solver. We therefore filter them out before comparison.
+        stable_mask = pca.explained_variance_ratio_ > 1e-12
+
         Xt_pca = pca.transform(X)
         Xt_ipca = ipca.transform(X)
-        assert_almost_equal(np.abs(Xt_pca), np.abs(Xt_ipca), decimal=prec)
+        assert_allclose(
+            np.abs(Xt_pca)[:, stable_mask],
+            np.abs(Xt_ipca)[:, stable_mask],
+            atol=atol,
+        )
+
+        # The noisy dimensions are in the null space of the inverse transform,
+        # so they are not influencing the reconstruction. We therefore don't
+        # need to apply the mask here.
         Xinv_ipca = ipca.inverse_transform(Xt_ipca)
         Xinv_pca = pca.inverse_transform(Xt_pca)
-        assert_almost_equal(X, Xinv_ipca, decimal=prec)
-        assert_almost_equal(X, Xinv_pca, decimal=prec)
-        assert_almost_equal(Xinv_pca, Xinv_ipca, decimal=prec)
+        assert_allclose(X, Xinv_ipca, atol=atol)
+        assert_allclose(X, Xinv_pca, atol=atol)
+        assert_allclose(Xinv_pca, Xinv_ipca, atol=atol)
 
 
 def test_incremental_pca_partial_fit_float_division():

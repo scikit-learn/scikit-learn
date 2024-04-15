@@ -2,6 +2,7 @@
 HDBSCAN: Hierarchical Density-Based Spatial Clustering
          of Applications with Noise
 """
+
 # Authors: Leland McInnes <leland.mcinnes@gmail.com>
 #          Steve Astels <sastels@gmail.com>
 #          John Healy <jchealy@gmail.com>
@@ -41,7 +42,7 @@ from warnings import warn
 import numpy as np
 from scipy.sparse import csgraph, issparse
 
-from ...base import BaseEstimator, ClusterMixin
+from ...base import BaseEstimator, ClusterMixin, _fit_context
 from ...metrics import pairwise_distances
 from ...metrics._dist_metrics import DistanceMetric
 from ...neighbors import BallTree, KDTree, NearestNeighbors
@@ -104,15 +105,11 @@ def _brute_mst(mutual_reachability, min_samples):
     if not issparse(mutual_reachability):
         return mst_from_mutual_reachability(mutual_reachability)
 
-    # Check connected component on mutual reachability
-    # If more than one component, it means that even if the distance matrix X
-    # has one component, there exists with less than `min_samples` neighbors
-    if (
-        csgraph.connected_components(
-            mutual_reachability, directed=False, return_labels=False
-        )
-        > 1
-    ):
+    # Check if the mutual reachability matrix has any rows which have
+    # less than `min_samples` non-zero elements.
+    indptr = mutual_reachability.indptr
+    num_points = mutual_reachability.shape[0]
+    if any((indptr[i + 1] - indptr[i]) < min_samples for i in range(num_points)):
         raise ValueError(
             f"There exists points with fewer than {min_samples} neighbors. Ensure"
             " your distance matrix has non-zero values for at least"
@@ -120,11 +117,23 @@ def _brute_mst(mutual_reachability, min_samples):
             " graph), or specify a `max_distance` in `metric_params` to use when"
             " distances are missing."
         )
+    # Check connected component on mutual reachability.
+    # If more than one connected component is present,
+    # it means that the graph is disconnected.
+    n_components = csgraph.connected_components(
+        mutual_reachability, directed=False, return_labels=False
+    )
+    if n_components > 1:
+        raise ValueError(
+            f"Sparse mutual reachability matrix has {n_components} connected"
+            " components. HDBSCAN cannot be perfomed on a disconnected graph. Ensure"
+            " that the sparse distance matrix has only one connected component."
+        )
 
     # Compute the minimum spanning tree for the sparse graph
     sparse_min_spanning_tree = csgraph.minimum_spanning_tree(mutual_reachability)
     rows, cols = sparse_min_spanning_tree.nonzero()
-    mst = np.core.records.fromarrays(
+    mst = np.rec.fromarrays(
         [rows, cols, sparse_min_spanning_tree.data],
         dtype=MST_edge_dtype,
     )
@@ -197,7 +206,7 @@ def _hdbscan_brute(
         The number of jobs to use for computing the pairwise distances. This
         works by breaking down the pairwise matrix into n_jobs even slices and
         computing them in parallel. This parameter is passed directly to
-        :func:`~sklearn.metrics.pairwise.pairwise_distances`.
+        :func:`~sklearn.metrics.pairwise_distances`.
 
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
@@ -296,14 +305,14 @@ def _hdbscan_prims(
     metric : str or callable, default='euclidean'
         The metric to use when calculating distance between instances in a
         feature array. `metric` must be one of the options allowed by
-        :func:`~sklearn.metrics.pairwise.pairwise_distances` for its metric
+        :func:`~sklearn.metrics.pairwise_distances` for its metric
         parameter.
 
     n_jobs : int, default=None
         The number of jobs to use for computing the pairwise distances. This
         works by breaking down the pairwise matrix into n_jobs even slices and
         computing them in parallel. This parameter is passed directly to
-        :func:`~sklearn.metrics.pairwise.pairwise_distances`.
+        :func:`~sklearn.metrics.pairwise_distances`.
 
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
@@ -449,7 +458,7 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
         feature array.
 
         - If metric is a string or callable, it must be one of
-          the options allowed by :func:`~sklearn.metrics.pairwise.pairwise_distances`
+          the options allowed by :func:`~sklearn.metrics.pairwise_distances`
           for its metric parameter.
 
         - If metric is "precomputed", X is assumed to be a distance matrix and
@@ -586,6 +595,14 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
     OPTICS : Ordering Points To Identify the Clustering Structure.
     Birch : Memory-efficient, online-learning algorithm.
 
+    Notes
+    -----
+    The `min_samples` parameter includes the point itself, whereas the implementation in
+    `scikit-learn-contrib/hdbscan <https://github.com/scikit-learn-contrib/hdbscan>`_
+    does not. To get the same results in both versions, the value of `min_samples` here
+    must be 1 greater than the value used in `scikit-learn-contrib/hdbscan
+    <https://github.com/scikit-learn-contrib/hdbscan>`_.
+
     References
     ----------
 
@@ -680,6 +697,10 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
         self.store_centers = store_centers
         self.copy = copy
 
+    @_fit_context(
+        # HDBSCAN.metric is not validated yet
+        prefer_skip_nested_validation=False
+    )
     def fit(self, X, y=None):
         """Find clusters based on hierarchical density-based clustering.
 
@@ -698,7 +719,11 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
         self : object
             Returns self.
         """
-        self._validate_params()
+        if self.metric == "precomputed" and self.store_centers is not None:
+            raise ValueError(
+                "Cannot store centers when using a precomputed distance matrix."
+            )
+
         self._metric_params = self.metric_params or {}
         if self.metric != "precomputed":
             # Non-precomputed matrices may contain non-finite values.

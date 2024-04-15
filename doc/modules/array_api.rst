@@ -25,7 +25,7 @@ At this stage, this support is **considered experimental** and must be enabled
 explicitly as explained in the following.
 
 .. note::
-    Currently, only `cupy.array_api`, `numpy.array_api`, `cupy`, and `PyTorch`
+    Currently, only `cupy.array_api`, `array-api-strict`, `cupy`, and `PyTorch`
     are known to work with scikit-learn's estimators.
 
 Example usage
@@ -96,7 +96,17 @@ Estimators
 - :class:`decomposition.PCA` (with `svd_solver="full"`,
   `svd_solver="randomized"` and `power_iteration_normalizer="QR"`)
 - :class:`discriminant_analysis.LinearDiscriminantAnalysis` (with `solver="svd"`)
+- :class:`preprocessing.KernelCenterer`
+- :class:`preprocessing.MaxAbsScaler`
 - :class:`preprocessing.MinMaxScaler`
+- :class:`preprocessing.Normalizer`
+
+Metrics
+-------
+
+- :func:`sklearn.metrics.accuracy_score`
+- :func:`sklearn.metrics.r2_score`
+- :func:`sklearn.metrics.zero_one_loss`
 
 Tools
 -----
@@ -105,6 +115,22 @@ Tools
 
 Coverage is expected to grow over time. Please follow the dedicated `meta-issue on GitHub
 <https://github.com/scikit-learn/scikit-learn/issues/22352>`_ to track progress.
+
+Type of return values and fitted attributes
+-------------------------------------------
+
+When calling functions or methods with Array API compatible inputs, the
+convention is to return array values of the same array container type and
+device as the input data.
+
+Similarly, when an estimator is fitted with Array API compatible inputs, the
+fitted attributes will be arrays from the same library as the input and stored
+on the same device. The `predict` and `transform` method subsequently expect
+inputs from the same array library and device as the data passed to the `fit`
+method.
+
+Note however that scoring functions that return scalar values return Python
+scalars (typically a `float` instance) instead of an array scalar value.
 
 Common estimator checks
 =======================
@@ -124,8 +150,8 @@ automatically skipped. Therefore it's important to run the tests with the
 
 .. prompt:: bash $
 
-    $ pip install array-api-compat  # and other libraries as needed
-    $ pytest -k "array_api" -v
+    pip install array-api-compat  # and other libraries as needed
+    pytest -k "array_api" -v
 
 Note on MPS device support
 --------------------------
@@ -142,7 +168,7 @@ To enable the MPS support in PyTorch, set the environment variable
 
 .. prompt:: bash $
 
-    $ PYTORCH_ENABLE_MPS_FALLBACK=1 pytest -k "array_api" -v
+    PYTORCH_ENABLE_MPS_FALLBACK=1 pytest -k "array_api" -v
 
 At the time of writing all scikit-learn tests should pass, however, the
 computational speed is not necessarily better than with the CPU device.

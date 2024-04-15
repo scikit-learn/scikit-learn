@@ -16,7 +16,10 @@ from ..metrics import check_scoring
 from ..model_selection import check_cv
 from ..model_selection._validation import _score
 from ..utils._param_validation import HasMethods, Interval, RealNotInt
-from ..utils._tags import _safe_tags
+from ..utils.metadata_routing import (
+    _raise_for_unsupported_routing,
+    _RoutingNotSupportedMixin,
+)
 from ..utils.metaestimators import _safe_split, available_if
 from ..utils.parallel import Parallel, delayed
 from ..utils.validation import check_is_fitted
@@ -25,11 +28,12 @@ from ._base import SelectorMixin, _get_feature_importances
 
 def _rfe_single_fit(rfe, estimator, X, y, train, test, scorer):
     """
-    Return the score for a fit across one fold.
+    Return the score and n_features per step for a fit across one fold.
     """
     X_train, y_train = _safe_split(estimator, X, y, train)
     X_test, y_test = _safe_split(estimator, X, y, test, train)
-    return rfe._fit(
+
+    rfe._fit(
         X_train,
         y_train,
         lambda estimator, features: _score(
@@ -40,23 +44,31 @@ def _rfe_single_fit(rfe, estimator, X, y, train, test, scorer):
             scorer,
             score_params=None,
         ),
-    ).scores_
+    )
+
+    return rfe.step_scores_, rfe.step_n_features_
 
 
 def _estimator_has(attr):
     """Check if we can delegate a method to the underlying estimator.
 
-    First, we check the first fitted estimator if available, otherwise we
-    check the unfitted estimator.
+    First, we check the fitted `estimator_` if available, otherwise we check the
+    unfitted `estimator`. We raise the original `AttributeError` if `attr` does
+    not exist. This function is used together with `available_if`.
     """
-    return lambda self: (
-        hasattr(self.estimator_, attr)
-        if hasattr(self, "estimator_")
-        else hasattr(self.estimator, attr)
-    )
+
+    def check(self):
+        if hasattr(self, "estimator_"):
+            getattr(self.estimator_, attr)
+        else:
+            getattr(self.estimator, attr)
+
+        return True
+
+    return check
 
 
-class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
+class RFE(_RoutingNotSupportedMixin, SelectorMixin, MetaEstimatorMixin, BaseEstimator):
     """Feature ranking with recursive feature elimination.
 
     Given an external estimator that assigns weights to features (e.g., the
@@ -251,21 +263,20 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
         self : object
             Fitted estimator.
         """
+        _raise_for_unsupported_routing(self, "fit", **fit_params)
         return self._fit(X, y, **fit_params)
 
     def _fit(self, X, y, step_score=None, **fit_params):
-        # Parameter step_score controls the calculation of self.scores_
-        # step_score is not exposed to users
-        # and is used when implementing RFECV
-        # self.scores_ will not be calculated when calling _fit through fit
+        # Parameter step_score controls the calculation of self.step_scores_
+        # step_score is not exposed to users and is used when implementing RFECV
+        # self.step_scores_ will not be calculated when calling _fit through fit
 
-        tags = self._get_tags()
         X, y = self._validate_data(
             X,
             y,
             accept_sparse="csc",
             ensure_min_features=2,
-            force_all_finite=not tags.get("allow_nan", True),
+            force_all_finite=False,
             multi_output=True,
         )
 
@@ -287,7 +298,8 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
         ranking_ = np.ones(n_features, dtype=int)
 
         if step_score:
-            self.scores_ = []
+            self.step_n_features_ = []
+            self.step_scores_ = []
 
         # Elimination
         while np.sum(support_) > n_features_to_select:
@@ -319,7 +331,8 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
             # because 'estimator' must use features
             # that have not been eliminated yet
             if step_score:
-                self.scores_.append(step_score(estimator, features))
+                self.step_n_features_.append(len(features))
+                self.step_scores_.append(step_score(estimator, features))
             support_[features[ranks][:threshold]] = False
             ranking_[np.logical_not(support_)] += 1
 
@@ -330,7 +343,8 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
 
         # Compute step score when only n_features_to_select features left
         if step_score:
-            self.scores_.append(step_score(self.estimator_, features))
+            self.step_n_features_.append(len(features))
+            self.step_scores_.append(step_score(self.estimator_, features))
         self.n_features_ = support_.sum()
         self.support_ = support_
         self.ranking_ = ranking_
@@ -446,16 +460,28 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
         return self.estimator_.predict_log_proba(self.transform(X))
 
     def _more_tags(self):
-        return {
+        tags = {
             "poor_score": True,
-            "allow_nan": _safe_tags(self.estimator, key="allow_nan"),
             "requires_y": True,
+            "allow_nan": True,
         }
+
+        # Adjust allow_nan if estimator explicitly defines `allow_nan`.
+        if hasattr(self.estimator, "_get_tags"):
+            tags["allow_nan"] = self.estimator._get_tags()["allow_nan"]
+
+        return tags
 
 
 class RFECV(RFE):
     """Recursive feature elimination with cross-validation to select features.
 
+    The number of features selected is tuned automatically by fitting an :class:`RFE`
+    selector on the different cross-validation splits (provided by the `cv` parameter).
+    The performance of the :class:`RFE` selector are evaluated using `scorer` for
+    different number of selected features and aggregated together. Finally, the scores
+    are averaged across folds and the number of features selected is set to the number
+    of features that maximize the cross-validation score.
     See glossary entry for :term:`cross-validation estimator`.
 
     Read more in the :ref:`User Guide <rfe>`.
@@ -545,7 +571,11 @@ class RFECV(RFE):
         The fitted estimator used to select features.
 
     cv_results_ : dict of ndarrays
-        A dict with keys:
+        All arrays (values of the dictionary) are sorted in ascending order
+        by the number of features used (i.e., the first element of the array
+        represents the models that used the least number of features, while the
+        last element represents the models that used all available features).
+        This dictionary contains the following keys:
 
         split(k)_test_score : ndarray of shape (n_subsets_of_features,)
             The cross-validation scores across (k)th fold.
@@ -555,6 +585,9 @@ class RFECV(RFE):
 
         std_test_score : ndarray of shape (n_subsets_of_features,)
             Standard deviation of scores over the folds.
+
+        n_features : ndarray of shape (n_subsets_of_features,)
+            Number of features used at each step.
 
         .. versionadded:: 1.0
 
@@ -680,25 +713,19 @@ class RFECV(RFE):
         self : object
             Fitted estimator.
         """
-        tags = self._get_tags()
+        _raise_for_unsupported_routing(self, "fit", groups=groups)
         X, y = self._validate_data(
             X,
             y,
             accept_sparse="csr",
             ensure_min_features=2,
-            force_all_finite=not tags.get("allow_nan", True),
+            force_all_finite=False,
             multi_output=True,
         )
 
         # Initialization
         cv = check_cv(self.cv, y, classifier=is_classifier(self.estimator))
         scorer = check_scoring(self.estimator, scoring=self.scoring)
-        n_features = X.shape[1]
-
-        if 0.0 < self.step < 1.0:
-            step = int(max(1, self.step * n_features))
-        else:
-            step = int(self.step)
 
         # Build an RFE object, which will evaluate and score each possible
         # feature count, down to self.min_features_to_select
@@ -728,18 +755,18 @@ class RFECV(RFE):
             parallel = Parallel(n_jobs=self.n_jobs)
             func = delayed(_rfe_single_fit)
 
-        scores = parallel(
+        scores_features = parallel(
             func(rfe, self.estimator, X, y, train, test, scorer)
             for train, test in cv.split(X, y, groups)
         )
+        scores, step_n_features = zip(*scores_features)
 
+        step_n_features_rev = np.array(step_n_features[0])[::-1]
         scores = np.array(scores)
-        scores_sum = np.sum(scores, axis=0)
-        scores_sum_rev = scores_sum[::-1]
-        argmax_idx = len(scores_sum) - np.argmax(scores_sum_rev) - 1
-        n_features_to_select = max(
-            n_features - (argmax_idx * step), self.min_features_to_select
-        )
+
+        # Reverse order such that lowest number of features is selected in case of tie.
+        scores_sum_rev = np.sum(scores, axis=0)[::-1]
+        n_features_to_select = step_n_features_rev[np.argmax(scores_sum_rev)]
 
         # Re-execute an elimination with best_k over the whole set
         rfe = RFE(
@@ -761,11 +788,10 @@ class RFECV(RFE):
 
         # reverse to stay consistent with before
         scores_rev = scores[:, ::-1]
-        self.cv_results_ = {}
-        self.cv_results_["mean_test_score"] = np.mean(scores_rev, axis=0)
-        self.cv_results_["std_test_score"] = np.std(scores_rev, axis=0)
-
-        for i in range(scores.shape[0]):
-            self.cv_results_[f"split{i}_test_score"] = scores_rev[i]
-
+        self.cv_results_ = {
+            "mean_test_score": np.mean(scores_rev, axis=0),
+            "std_test_score": np.std(scores_rev, axis=0),
+            **{f"split{i}_test_score": scores_rev[i] for i in range(scores.shape[0])},
+            "n_features": step_n_features_rev,
+        }
         return self

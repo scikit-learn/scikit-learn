@@ -96,44 +96,44 @@ Citing scikit-learn
 If you use scikit-learn in a scientific publication, we would appreciate
 citations to the following paper:
 
-  `Scikit-learn: Machine Learning in Python
-  <https://jmlr.csail.mit.edu/papers/v12/pedregosa11a.html>`_, Pedregosa
-  *et al.*, JMLR 12, pp. 2825-2830, 2011.
+`Scikit-learn: Machine Learning in Python
+<https://jmlr.csail.mit.edu/papers/v12/pedregosa11a.html>`_, Pedregosa
+*et al.*, JMLR 12, pp. 2825-2830, 2011.
 
-  Bibtex entry::
+Bibtex entry::
 
-    @article{scikit-learn,
-     title={Scikit-learn: Machine Learning in {P}ython},
-     author={Pedregosa, F. and Varoquaux, G. and Gramfort, A. and Michel, V.
-             and Thirion, B. and Grisel, O. and Blondel, M. and Prettenhofer, P.
-             and Weiss, R. and Dubourg, V. and Vanderplas, J. and Passos, A. and
-             Cournapeau, D. and Brucher, M. and Perrot, M. and Duchesnay, E.},
-     journal={Journal of Machine Learning Research},
-     volume={12},
-     pages={2825--2830},
-     year={2011}
-    }
+  @article{scikit-learn,
+    title={Scikit-learn: Machine Learning in {P}ython},
+    author={Pedregosa, F. and Varoquaux, G. and Gramfort, A. and Michel, V.
+            and Thirion, B. and Grisel, O. and Blondel, M. and Prettenhofer, P.
+            and Weiss, R. and Dubourg, V. and Vanderplas, J. and Passos, A. and
+            Cournapeau, D. and Brucher, M. and Perrot, M. and Duchesnay, E.},
+    journal={Journal of Machine Learning Research},
+    volume={12},
+    pages={2825--2830},
+    year={2011}
+  }
 
 If you want to cite scikit-learn for its API or design, you may also want to consider the
 following paper:
 
-  :arxiv:`API design for machine learning software: experiences from the scikit-learn
-  project <1309.0238>`, Buitinck *et al.*, 2013.
+:arxiv:`API design for machine learning software: experiences from the scikit-learn
+project <1309.0238>`, Buitinck *et al.*, 2013.
 
-  Bibtex entry::
+Bibtex entry::
 
-    @inproceedings{sklearn_api,
-      author    = {Lars Buitinck and Gilles Louppe and Mathieu Blondel and
-                   Fabian Pedregosa and Andreas Mueller and Olivier Grisel and
-                   Vlad Niculae and Peter Prettenhofer and Alexandre Gramfort
-                   and Jaques Grobler and Robert Layton and Jake VanderPlas and
-                   Arnaud Joly and Brian Holt and Ga{\"{e}}l Varoquaux},
-      title     = {{API} design for machine learning software: experiences from the scikit-learn
-                   project},
-      booktitle = {ECML PKDD Workshop: Languages for Data Mining and Machine Learning},
-      year      = {2013},
-      pages = {108--122},
-    }
+  @inproceedings{sklearn_api,
+    author    = {Lars Buitinck and Gilles Louppe and Mathieu Blondel and
+                  Fabian Pedregosa and Andreas Mueller and Olivier Grisel and
+                  Vlad Niculae and Peter Prettenhofer and Alexandre Gramfort
+                  and Jaques Grobler and Robert Layton and Jake VanderPlas and
+                  Arnaud Joly and Brian Holt and Ga{\"{e}}l Varoquaux},
+    title     = {{API} design for machine learning software: experiences from the scikit-learn
+                  project},
+    booktitle = {ECML PKDD Workshop: Languages for Data Mining and Machine Learning},
+    year      = {2013},
+    pages = {108--122},
+  }
 
 Artwork
 -------
@@ -154,79 +154,26 @@ The project would like to thank the following funders.
 
 ...................................
 
+
 .. raw:: html
 
    <div class="sk-sponsor-div">
    <div class="sk-sponsor-div-box">
 
-The `Members <https://scikit-learn.fondation-inria.fr/en/home/#sponsors>`_ of
-the `Scikit-Learn Consortium at Inria Foundation
-<https://scikit-learn.fondation-inria.fr/en/home/>`_  fund Olivier
-Grisel, Guillaume Lemaitre, and Jérémie du Boisberranger.
+`:probabl. <https://probabl.ai>`_ funds Adrin Jalali, Arturo Amor,
+François Goupil, Guillaume Lemaitre, Jérémie du Boisberranger, Olivier Grisel, and
+Stefanie Senger.
 
 .. raw:: html
 
    </div>
 
-.. |msn| image:: images/microsoft.png
-   :width: 100pt
-   :target: https://www.microsoft.com/
-
-.. |bcg| image:: images/bcg.png
-   :width: 100pt
-   :target: https://www.bcg.com/beyond-consulting/bcg-gamma/default.aspx
-
-.. |axa| image:: images/axa.png
-   :width: 50pt
-   :target: https://www.axa.fr/
-
-.. |bnp| image:: images/bnp.png
-   :width: 150pt
-   :target: https://www.bnpparibascardif.com/
-
-.. |fujitsu| image:: images/fujitsu.png
-   :width: 100pt
-   :target: https://www.fujitsu.com/global/
-
-.. |dataiku| image:: images/dataiku.png
-   :width: 70pt
-   :target: https://www.dataiku.com/
-
-.. |aphp| image:: images/logo_APHP_text.png
-   :width: 150pt
-   :target: https://aphp.fr/
-
-.. |inria| image:: images/inria-logo.jpg
-   :width: 100pt
-   :target: https://www.inria.fr
-
-
-.. raw:: html
-
    <div class="sk-sponsor-div-box">
 
-.. table::
-   :class: sk-sponsor-table align-default
-
-   +---------+----------+
-   |       |bcg|        |
-   +---------+----------+
-   |                    |
-   +---------+----------+
-   |  |axa|  |   |bnp|  |
-   +---------+----------+
-   ||fujitsu||  |msn|   |
-   +---------+----------+
-   |                    |
-   +---------+----------+
-   |     |dataiku|      |
-   +---------+----------+
-   |       |aphp|       |
-   +---------+----------+
-   |                    |
-   +---------+----------+
-   |       |inria|      |
-   +---------+----------+
+.. image:: images/probabl.png
+   :width: 75pt
+   :align: center
+   :target: https://probabl.ai
 
 .. raw:: html
 
@@ -240,7 +187,85 @@ Grisel, Guillaume Lemaitre, and Jérémie du Boisberranger.
    <div class="sk-sponsor-div">
    <div class="sk-sponsor-div-box">
 
-`Hugging Face <https://huggingface.co/>`_ funds Adrin Jalali since 2022.
+The `Members <https://scikit-learn.fondation-inria.fr/en/home/#sponsors>`_ of
+the `Scikit-Learn Consortium at Inria Foundation
+<https://scikit-learn.fondation-inria.fr/en/home/>`_ help at maintaining and
+improving the project through their financial support.
+
+.. raw:: html
+
+   </div>
+
+.. |chanel| image:: images/chanel.png
+   :width: 55pt
+   :target: https://www.chanel.com
+
+.. |axa| image:: images/axa.png
+   :width: 40pt
+   :target: https://www.axa.fr/
+
+.. |bnp| image:: images/bnp.png
+   :width: 120pt
+   :target: https://www.bnpparibascardif.com/
+
+.. |dataiku| image:: images/dataiku.png
+   :width: 55pt
+   :target: https://www.dataiku.com/
+
+.. |hf| image:: images/huggingface_logo-noborder.png
+   :width: 55pt
+   :target: https://huggingface.co
+
+.. |nvidia| image:: images/nvidia.png
+   :width: 55pt
+   :target: https://www.nvidia.com
+
+.. |inria| image:: images/inria-logo.jpg
+   :width: 75pt
+   :target: https://www.inria.fr
+
+
+.. raw:: html
+
+   <div class="sk-sponsor-div-box">
+
+.. table::
+   :class: sk-sponsor-table
+
+   +----------+-----------+
+   |       |chanel|       |
+   +----------+-----------+
+   |                      |
+   +----------+-----------+
+   |  |axa|   |    |bnp|  |
+   +----------+-----------+
+   |                      |
+   +----------+-----------+
+   | |nvidia| |    |hf|   |
+   +----------+-----------+
+   |                      |
+   +----------+-----------+
+   |       |dataiku|      |
+   +----------+-----------+
+   |                      |
+   +----------+-----------+
+   |        |inria|       |
+   +----------+-----------+
+
+.. raw:: html
+
+   </div>
+   </div>
+
+..........
+
+.. raw:: html
+
+   <div class="sk-sponsor-div">
+   <div class="sk-sponsor-div-box">
+
+`NVidia <https://nvidia.com>`_ funds Tim Head since 2022
+and is part of the scikit-learn consortium at Inria.
 
 .. raw:: html
 
@@ -248,17 +273,17 @@ Grisel, Guillaume Lemaitre, and Jérémie du Boisberranger.
 
    <div class="sk-sponsor-div-box">
 
-.. image:: images/huggingface_logo-noborder.png
+.. image:: images/nvidia.png
    :width: 55pt
    :align: center
-   :target: https://huggingface.co/
+   :target: https://nvidia.com
 
 .. raw:: html
 
    </div>
    </div>
 
-...........
+..........
 
 .. raw:: html
 
@@ -290,7 +315,7 @@ Grisel, Guillaume Lemaitre, and Jérémie du Boisberranger.
    <div class="sk-sponsor-div">
    <div class="sk-sponsor-div-box">
 
-`Quansight Labs <https://labs.quansight.org>`_ funds Thomas J. Fan since 2021.
+`Quansight Labs <https://labs.quansight.org>`_ funds Lucy Liu since 2022.
 
 .. raw:: html
 
@@ -310,6 +335,32 @@ Grisel, Guillaume Lemaitre, and Jérémie du Boisberranger.
 
 Past Sponsors
 .............
+
+.. raw:: html
+
+   <div class="sk-sponsor-div">
+   <div class="sk-sponsor-div-box">
+
+`Quansight Labs <https://labs.quansight.org>`_ funded Meekail Zain in 2022 and 2023 and,
+funded Thomas J. Fan from 2021 to 2023.
+
+.. raw:: html
+
+   </div>
+
+   <div class="sk-sponsor-div-box">
+
+.. image:: images/quansight-labs.png
+   :width: 100pt
+   :align: center
+   :target: https://labs.quansight.org
+
+.. raw:: html
+
+   </div>
+   </div>
+
+...........
 
 .. raw:: html
 
@@ -572,6 +623,31 @@ The `NeuroDebian <http://neuro.debian.net>`_ project providing `Debian
 <https://www.debian.org/>`_ packaging and contributions is supported by
 `Dr. James V. Haxby <http://haxbylab.dartmouth.edu/>`_ (`Dartmouth
 College <https://pbs.dartmouth.edu/>`_).
+
+...................
+
+The following organizations funded the scikit-learn consortium at Inria in
+the past:
+
+.. |msn| image:: images/microsoft.png
+   :width: 100pt
+   :target: https://www.microsoft.com/
+
+.. |bcg| image:: images/bcg.png
+   :width: 100pt
+   :target: https://www.bcg.com/beyond-consulting/bcg-gamma/default.aspx
+
+.. |fujitsu| image:: images/fujitsu.png
+   :width: 100pt
+   :target: https://www.fujitsu.com/global/
+
+.. |aphp| image:: images/logo_APHP_text.png
+   :width: 150pt
+   :target: https://aphp.fr/
+
+
+|bcg| |msn| |fujitsu| |aphp|
+
 
 Sprints
 -------

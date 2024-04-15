@@ -82,7 +82,9 @@ or changes to dependencies or supported versions, it must be backed by a
 using the `SLEP template <https://scikit-learn-enhancement-proposals.readthedocs.io/en/latest/slep_template.html>`_
 and follows the decision-making process outlined in :ref:`governance`.
 
-.. topic:: Contributing to related projects
+|details-start|
+**Contributing to related projects**
+|details-split|
 
    Scikit-learn thrives in an ecosystem of several related projects, which also
    may have relevant issues to work on, including smaller projects such as:
@@ -104,6 +106,7 @@ and follows the decision-making process outlined in :ref:`governance`.
    Helping these projects may help Scikit-learn too.
    See also :ref:`related_projects`.
 
+|details-end|
 
 Submitting a bug report or a feature request
 ============================================
@@ -254,7 +257,7 @@ how to set up your git repository:
 
    .. prompt:: bash $
 
-        pip install pytest pytest-cov ruff mypy numpydoc black==23.3.0
+        pip install pytest pytest-cov ruff mypy numpydoc black==24.3.0
 
 .. _upstream:
 
@@ -291,7 +294,7 @@ The next steps now describe the process of modifying code and submitting a PR:
 
 9. Create a feature branch to hold your development changes:
 
-    .. prompt:: bash $
+   .. prompt:: bash $
 
         git checkout -b my_feature
 
@@ -330,18 +333,6 @@ The next steps now describe the process of modifying code and submitting a PR:
     instructions to create a pull request from your fork. This will send an
     email to the committers. You may want to consider sending an email to the
     mailing list for more visibility.
-
-.. note::
-
-    If you are modifying a Cython module, you have to re-compile after
-    modifications and before testing them:
-
-    .. prompt:: bash $
-
-        pip install -v --no-use-pep517 --no-build-isolation -e .
-
-    Use the ``--no-build-isolation`` flag to avoid compiling the whole project
-    each time, only the files you have modified.
 
 It is often helpful to keep your local feature branch synchronized with the
 latest changes of the main scikit-learn repository:
@@ -529,25 +520,25 @@ Continuous Integration (CI)
 Please note that if one of the following markers appear in the latest commit
 message, the following actions are taken.
 
-    ====================== ===================
-    Commit Message Marker  Action Taken by CI
-    ---------------------- -------------------
-    [ci skip]              CI is skipped completely
-    [cd build]             CD is run (wheels and source distribution are built)
-    [cd build gh]          CD is run only for GitHub Actions
-    [cd build cirrus]      CD is run only for Cirrus CI
-    [lint skip]            Azure pipeline skips linting
-    [scipy-dev]            Build & test with our dependencies (numpy, scipy, etc.) development builds
-    [nogil]                Build & test with the nogil experimental branches of CPython, Cython, NumPy, SciPy, ...
-    [pypy]                 Build & test with PyPy
-    [pyodide]              Build & test with Pyodide
-    [azure parallel]       Run Azure CI jobs in parallel
-    [cirrus arm]           Run Cirrus CI ARM test
-    [float32]              Run float32 tests by setting `SKLEARN_RUN_FLOAT32_TESTS=1`. See :ref:`environment_variable` for more details
-    [doc skip]             Docs are not built
-    [doc quick]            Docs built, but excludes example gallery plots
-    [doc build]            Docs built including example gallery plots (very long)
-    ====================== ===================
+====================== ===================
+Commit Message Marker  Action Taken by CI
+---------------------- -------------------
+[ci skip]              CI is skipped completely
+[cd build]             CD is run (wheels and source distribution are built)
+[cd build gh]          CD is run only for GitHub Actions
+[cd build cirrus]      CD is run only for Cirrus CI
+[lint skip]            Azure pipeline skips linting
+[scipy-dev]            Build & test with our dependencies (numpy, scipy, etc.) development builds
+[nogil]                Build & test with the nogil experimental branches of CPython, Cython, NumPy, SciPy, ...
+[pypy]                 Build & test with PyPy
+[pyodide]              Build & test with Pyodide
+[azure parallel]       Run Azure CI jobs in parallel
+[cirrus arm]           Run Cirrus CI ARM test
+[float32]              Run float32 tests by setting `SKLEARN_RUN_FLOAT32_TESTS=1`. See :ref:`environment_variable` for more details
+[doc skip]             Docs are not built
+[doc quick]            Docs built, but excludes example gallery plots
+[doc build]            Docs built including example gallery plots (very long)
+====================== ===================
 
 Note that, by default, the documentation is built but only the examples
 that are directly modified by the pull request are executed.
@@ -713,30 +704,30 @@ We are glad to accept any sort of documentation:
 
   In general have the following in mind:
 
-    * Use Python basic types. (``bool`` instead of ``boolean``)
-    * Use parenthesis for defining shapes: ``array-like of shape (n_samples,)``
-      or ``array-like of shape (n_samples, n_features)``
-    * For strings with multiple options, use brackets: ``input: {'log',
-      'squared', 'multinomial'}``
-    * 1D or 2D data can be a subset of ``{array-like, ndarray, sparse matrix,
-      dataframe}``. Note that ``array-like`` can also be a ``list``, while
-      ``ndarray`` is explicitly only a ``numpy.ndarray``.
-    * Specify ``dataframe`` when "frame-like" features are being used, such as
-      the column names.
-    * When specifying the data type of a list, use ``of`` as a delimiter: ``list
-      of int``. When the parameter supports arrays giving details about the
-      shape and/or data type and a list of such arrays, you can use one of
-      ``array-like of shape (n_samples,) or list of such arrays``.
-    * When specifying the dtype of an ndarray, use e.g. ``dtype=np.int32`` after
-      defining the shape: ``ndarray of shape (n_samples,), dtype=np.int32``. You
-      can specify multiple dtype as a set: ``array-like of shape (n_samples,),
-      dtype={np.float64, np.float32}``. If one wants to mention arbitrary
-      precision, use `integral` and `floating` rather than the Python dtype
-      `int` and `float`. When both `int` and `floating` are supported, there is
-      no need to specify the dtype.
-    * When the default is ``None``, ``None`` only needs to be specified at the
-      end with ``default=None``. Be sure to include in the docstring, what it
-      means for the parameter or attribute to be ``None``.
+  * Use Python basic types. (``bool`` instead of ``boolean``)
+  * Use parenthesis for defining shapes: ``array-like of shape (n_samples,)``
+    or ``array-like of shape (n_samples, n_features)``
+  * For strings with multiple options, use brackets: ``input: {'log',
+    'squared', 'multinomial'}``
+  * 1D or 2D data can be a subset of ``{array-like, ndarray, sparse matrix,
+    dataframe}``. Note that ``array-like`` can also be a ``list``, while
+    ``ndarray`` is explicitly only a ``numpy.ndarray``.
+  * Specify ``dataframe`` when "frame-like" features are being used, such as
+    the column names.
+  * When specifying the data type of a list, use ``of`` as a delimiter: ``list
+    of int``. When the parameter supports arrays giving details about the
+    shape and/or data type and a list of such arrays, you can use one of
+    ``array-like of shape (n_samples,) or list of such arrays``.
+  * When specifying the dtype of an ndarray, use e.g. ``dtype=np.int32`` after
+    defining the shape: ``ndarray of shape (n_samples,), dtype=np.int32``. You
+    can specify multiple dtype as a set: ``array-like of shape (n_samples,),
+    dtype={np.float64, np.float32}``. If one wants to mention arbitrary
+    precision, use `integral` and `floating` rather than the Python dtype
+    `int` and `float`. When both `int` and `floating` are supported, there is
+    no need to specify the dtype.
+  * When the default is ``None``, ``None`` only needs to be specified at the
+    end with ``default=None``. Be sure to include in the docstring, what it
+    means for the parameter or attribute to be ``None``.
 
 * Add "See Also" in docstrings for related classes/functions.
 
@@ -809,15 +800,15 @@ details, and give intuition to the reader on what the algorithm does.
 
 * Information that can be hidden by default using dropdowns is:
 
-    * low hierarchy sections such as `References`, `Properties`, etc. (see for
-      instance the subsections in :ref:`det_curve`);
+  * low hierarchy sections such as `References`, `Properties`, etc. (see for
+    instance the subsections in :ref:`det_curve`);
 
-    * in-depth mathematical details;
+  * in-depth mathematical details;
 
-    * narrative that is use-case specific;
+  * narrative that is use-case specific;
 
-    * in general, narrative that may only interest users that want to go beyond
-      the pragmatics of a given tool.
+  * in general, narrative that may only interest users that want to go beyond
+    the pragmatics of a given tool.
 
 * Do not use dropdowns for the low level section `Examples`, as it should stay
   visible to all users. Make sure that the `Examples` section comes right after
@@ -922,7 +913,7 @@ Building the documentation requires installing some additional packages:
 .. prompt:: bash $
 
     pip install sphinx sphinx-gallery numpydoc matplotlib Pillow pandas \
-                scikit-image packaging seaborn sphinx-prompt \
+                polars scikit-image packaging seaborn sphinx-prompt \
                 sphinxext-opengraph sphinx-copybutton plotly pooch
 
 To build the documentation, you need to be in the ``doc`` folder:
@@ -971,7 +962,7 @@ To build the PDF manual, run:
    versions of Sphinx as possible, the different versions tend to
    behave slightly differently. To get the best results, you should
    use the same version as the one we used on CircleCI. Look at this
-   `GitHub search <https://github.com/search?q=repo%3Ascikit-learn%2Fscikit-learn+sphinx+path%3Abuild_tools%2Fcircle%2Fdoc_environment.yml&type=code>`_
+   `GitHub search <https://github.com/search?q=repo%3Ascikit-learn%2Fscikit-learn+%2F%5C%2Fsphinx-%5B0-9.%5D%2B%2F+path%3Abuild_tools%2Fcircle%2Fdoc_linux-64_conda.lock&type=code>`_
    to know the exact version.
 
 
@@ -1006,9 +997,9 @@ subpackages. For a more detailed `pytest` workflow, please refer to the
 
 We expect code coverage of new features to be at least around 90%.
 
-
-Writing matplotlib related tests
---------------------------------
+|details-start|
+**Writing matplotlib related tests**
+|details-split|
 
 Test fixtures ensure that a set of tests will be executing with the appropriate
 initialization and cleanup. The scikit-learn test suite implements a fixture
@@ -1027,8 +1018,11 @@ argument::
     def test_requiring_mpl_fixture(pyplot):
         # you can now safely use matplotlib
 
-Workflow to improve test coverage
----------------------------------
+|details-end|
+
+|details-start|
+**Workflow to improve test coverage**
+|details-split|
 
 To test code coverage, you need to install the `coverage
 <https://pypi.org/project/coverage/>`_ package in addition to pytest.
@@ -1040,6 +1034,8 @@ To test code coverage, you need to install the `coverage
     write or adapt a test specifically for these lines.
 
 3. Loop.
+
+|details-end|
 
 .. _monitoring_performances:
 
@@ -1234,7 +1230,7 @@ to ``zero_one`` and call ``zero_one_loss`` from that function::
 
 If an attribute is to be deprecated,
 use the decorator ``deprecated`` on a property. Please note that the
-``property`` decorator should be placed before the ``deprecated``
+``deprecated`` decorator should be placed before the ``property``
 decorator for the docstrings to be rendered properly.
 E.g., renaming an attribute ``labels_`` to ``classes_`` can be done as::
 
@@ -1369,6 +1365,10 @@ up this process by providing your feedback.
   retraction. Regarding docs: typos, grammar issues and disambiguations are
   better addressed immediately.
 
+|details-start|
+**Important aspects to be covered in any code review**
+|details-split|
+
 Here are a few important aspects that need to be covered in any code review,
 from high-level questions to a more detailed check-list.
 
@@ -1418,10 +1418,13 @@ from high-level questions to a more detailed check-list.
 
 :ref:`saved_replies` includes some frequent comments that reviewers may make.
 
+|details-end|
+
 .. _communication:
 
-Communication Guidelines
-------------------------
+|details-start|
+**Communication Guidelines**
+|details-split|
 
 Reviewing open pull requests (PRs) helps move the project forward. It is a
 great way to get familiar with the codebase and should motivate the
@@ -1449,6 +1452,8 @@ contributor to keep involved in the project. [1]_
 
 .. [1] Adapted from the numpy `communication guidelines
        <https://numpy.org/devdocs/dev/reviewer_guidelines.html#communication-guidelines>`_.
+
+|details-end|
 
 Reading the existing code base
 ==============================

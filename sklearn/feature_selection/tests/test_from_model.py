@@ -18,6 +18,7 @@ from sklearn.linear_model import (
     ElasticNetCV,
     Lasso,
     LassoCV,
+    LinearRegression,
     LogisticRegression,
     PassiveAggressiveClassifier,
     SGDClassifier,
@@ -407,7 +408,7 @@ def test_partial_fit():
 
 
 def test_calling_fit_reinitializes():
-    est = LinearSVC(dual="auto", random_state=0)
+    est = LinearSVC(random_state=0)
     transformer = SelectFromModel(estimator=est)
     transformer.fit(data, y)
     transformer.set_params(estimator__C=100)
@@ -661,3 +662,23 @@ def test_partial_fit_validate_feature_names(as_frame):
         assert_array_equal(selector.feature_names_in_, X.columns)
     else:
         assert not hasattr(selector, "feature_names_in_")
+
+
+def test_from_model_estimator_attribute_error():
+    """Check that we raise the proper AttributeError when the estimator
+    does not implement the `partial_fit` method, which is decorated with
+    `available_if`.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/28108
+    """
+    # `LinearRegression` does not implement 'partial_fit' and should raise an
+    # AttributeError
+    from_model = SelectFromModel(estimator=LinearRegression())
+
+    outer_msg = "This 'SelectFromModel' has no attribute 'partial_fit'"
+    inner_msg = "'LinearRegression' object has no attribute 'partial_fit'"
+    with pytest.raises(AttributeError, match=outer_msg) as exec_info:
+        from_model.fit(data, y).partial_fit(data)
+    assert isinstance(exec_info.value.__cause__, AttributeError)
+    assert inner_msg in str(exec_info.value.__cause__)

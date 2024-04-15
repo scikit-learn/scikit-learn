@@ -133,3 +133,26 @@ def test_float32_float64_equivalence(csr_container):
 
     assert_allclose(km32.cluster_centers_, km64.cluster_centers_)
     assert_array_equal(km32.labels_, km64.labels_)
+
+
+@pytest.mark.parametrize("algorithm", ("lloyd", "elkan"))
+def test_no_crash_on_empty_bisections(algorithm):
+    # Non-regression test for:
+    # https://github.com/scikit-learn/scikit-learn/issues/27081
+    rng = np.random.RandomState(0)
+    X_train = rng.rand(3000, 10)
+    bkm = BisectingKMeans(n_clusters=10, algorithm=algorithm).fit(X_train)
+
+    # predict on scaled data to trigger pathologic case
+    # where the inner mask leads to empty bisections.
+    X_test = 50 * rng.rand(100, 10)
+    labels = bkm.predict(X_test)  # should not crash with idiv by 0
+    assert np.isin(np.unique(labels), np.arange(10)).all()
+
+
+def test_one_feature():
+    # Check that no error is raised when there is only one feature
+    # Non-regression test for:
+    # https://github.com/scikit-learn/scikit-learn/issues/27236
+    X = np.random.normal(size=(128, 1))
+    BisectingKMeans(bisecting_strategy="biggest_inertia", random_state=0).fit(X)

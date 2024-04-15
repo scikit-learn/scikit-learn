@@ -13,6 +13,7 @@ sklearn/**/*.html
 
 dist/
 MANIFEST
+doc/sg_execution_times.rst
 doc/_build/
 doc/auto_examples/
 doc/modules/generated/
@@ -53,11 +54,15 @@ nips2010_pdf/
 examples/cluster/joblib
 reuters/
 benchmarks/bench_covertype_data/
+benchmarks/HIGGS.csv.gz
+bench_pca_solvers.csv
 
 *.prefs
 .pydevproject
 .idea
 .vscode
+# used by pyenv
+.python-version
 
 *.c
 *.cpp
@@ -99,6 +104,7 @@ sklearn/metrics/_pairwise_distances_reduction/_middle_term_computer.pxd
 sklearn/metrics/_pairwise_distances_reduction/_middle_term_computer.pyx
 sklearn/metrics/_pairwise_distances_reduction/_radius_neighbors.pxd
 sklearn/metrics/_pairwise_distances_reduction/_radius_neighbors.pyx
+sklearn/metrics/_pairwise_distances_reduction/_radius_neighbors_classmode.pyx
 sklearn/neighbors/_ball_tree.pyx
 sklearn/neighbors/_binary_tree.pxi
 sklearn/neighbors/_kd_tree.pyx

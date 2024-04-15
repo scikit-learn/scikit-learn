@@ -33,9 +33,9 @@ DISTNAME = "scikit-learn"
 DESCRIPTION = "A set of python modules for machine learning and data mining"
 with open("README.rst") as f:
     LONG_DESCRIPTION = f.read()
-MAINTAINER = "Andreas Mueller"
-MAINTAINER_EMAIL = "amueller@ais.uni-bonn.de"
-URL = "http://scikit-learn.org"
+MAINTAINER = "scikit-learn developers"
+MAINTAINER_EMAIL = "scikit-learn@python.org"
+URL = "https://scikit-learn.org"
 DOWNLOAD_URL = "https://pypi.org/project/scikit-learn/#files"
 LICENSE = "new BSD"
 PROJECT_URLS = {
@@ -174,7 +174,7 @@ def check_package_status(package, min_version):
     instructions = (
         "Installation instructions are available on the "
         "scikit-learn website: "
-        "http://scikit-learn.org/stable/install.html\n"
+        "https://scikit-learn.org/stable/install.html\n"
     )
 
     if package_status["up_to_date"] is False:
@@ -201,7 +201,7 @@ extension_config = {
         {"sources": ["_loss.pyx.tp"]},
     ],
     "cluster": [
-        {"sources": ["_dbscan_inner.pyx"], "language": "c++", "include_np": True},
+        {"sources": ["_dbscan_inner.pyx"], "language": "c++"},
         {"sources": ["_hierarchical_fast.pyx"], "language": "c++", "include_np": True},
         {"sources": ["_k_means_common.pyx"], "include_np": True},
         {"sources": ["_k_means_lloyd.pyx"], "include_np": True},
@@ -221,43 +221,42 @@ extension_config = {
         }
     ],
     "decomposition": [
-        {"sources": ["_online_lda_fast.pyx"], "include_np": True},
+        {"sources": ["_online_lda_fast.pyx"]},
         {"sources": ["_cdnmf_fast.pyx"], "include_np": True},
     ],
     "ensemble": [
         {"sources": ["_gradient_boosting.pyx"], "include_np": True},
     ],
     "ensemble._hist_gradient_boosting": [
-        {"sources": ["_gradient_boosting.pyx"], "include_np": True},
-        {"sources": ["histogram.pyx"], "include_np": True},
-        {"sources": ["splitting.pyx"], "include_np": True},
-        {"sources": ["_binning.pyx"], "include_np": True},
-        {"sources": ["_predictor.pyx"], "include_np": True},
-        {"sources": ["_bitset.pyx"], "include_np": True},
-        {"sources": ["common.pyx"], "include_np": True},
-        {"sources": ["utils.pyx"], "include_np": True},
+        {"sources": ["_gradient_boosting.pyx"]},
+        {"sources": ["histogram.pyx"]},
+        {"sources": ["splitting.pyx"]},
+        {"sources": ["_binning.pyx"]},
+        {"sources": ["_predictor.pyx"]},
+        {"sources": ["_bitset.pyx"]},
+        {"sources": ["common.pyx"]},
     ],
     "feature_extraction": [
         {"sources": ["_hashing_fast.pyx"], "language": "c++", "include_np": True},
     ],
     "linear_model": [
-        {"sources": ["_cd_fast.pyx"], "include_np": True},
-        {"sources": ["_sgd_fast.pyx.tp"], "include_np": True},
-        {"sources": ["_sag_fast.pyx.tp"], "include_np": True},
+        {"sources": ["_cd_fast.pyx"]},
+        {"sources": ["_sgd_fast.pyx.tp"]},
+        {"sources": ["_sag_fast.pyx.tp"]},
     ],
     "manifold": [
-        {"sources": ["_utils.pyx"], "include_np": True},
+        {"sources": ["_utils.pyx"]},
         {"sources": ["_barnes_hut_tsne.pyx"], "include_np": True},
     ],
     "metrics": [
-        {"sources": ["_pairwise_fast.pyx"], "include_np": True},
+        {"sources": ["_pairwise_fast.pyx"]},
         {
             "sources": ["_dist_metrics.pyx.tp", "_dist_metrics.pxd.tp"],
             "include_np": True,
         },
     ],
     "metrics.cluster": [
-        {"sources": ["_expected_mutual_info_fast.pyx"], "include_np": True},
+        {"sources": ["_expected_mutual_info_fast.pyx"]},
     ],
     "metrics._pairwise_distances_reduction": [
         {
@@ -295,12 +294,17 @@ extension_config = {
             "include_np": True,
             "extra_compile_args": ["-std=c++11"],
         },
+        {
+            "sources": ["_radius_neighbors_classmode.pyx.tp"],
+            "language": "c++",
+            "include_np": True,
+            "extra_compile_args": ["-std=c++11"],
+        },
     ],
     "preprocessing": [
         {"sources": ["_csr_polynomial_expansion.pyx"]},
         {
             "sources": ["_target_encoder_fast.pyx"],
-            "include_np": True,
             "language": "c++",
             "extra_compile_args": ["-std=c++11"],
         },
@@ -315,7 +319,6 @@ extension_config = {
     "svm": [
         {
             "sources": ["_newrand.pyx"],
-            "include_np": True,
             "include_dirs": [join("src", "newrand")],
             "language": "c++",
             # Use C++11 random number generator fix
@@ -336,7 +339,6 @@ extension_config = {
             ],
             "libraries": ["libsvm-skl"],
             "extra_link_args": ["-lstdc++"],
-            "include_np": True,
         },
         {
             "sources": ["_liblinear.pyx"],
@@ -346,7 +348,6 @@ extension_config = {
                 join("src", "newrand"),
                 join("..", "utils"),
             ],
-            "include_np": True,
             "depends": [
                 join("src", "liblinear", "tron.h"),
                 join("src", "liblinear", "linear.h"),
@@ -362,7 +363,6 @@ extension_config = {
                 join("src", "libsvm"),
                 join("src", "newrand"),
             ],
-            "include_np": True,
             "depends": [
                 join("src", "libsvm", "svm.h"),
                 join("src", "newrand", "newrand.h"),
@@ -383,23 +383,18 @@ extension_config = {
         {"sources": ["_utils.pyx"], "include_np": True, "optimization_level": "O3"},
     ],
     "utils": [
-        {"sources": ["sparsefuncs_fast.pyx"], "include_np": True},
+        {"sources": ["sparsefuncs_fast.pyx"]},
         {"sources": ["_cython_blas.pyx"]},
         {"sources": ["arrayfuncs.pyx"]},
         {
             "sources": ["murmurhash.pyx", join("src", "MurmurHash3.cpp")],
             "include_dirs": ["src"],
-            "include_np": True,
         },
         {"sources": ["_fast_dict.pyx"], "language": "c++"},
         {"sources": ["_openmp_helpers.pyx"]},
-        {"sources": ["_seq_dataset.pyx.tp", "_seq_dataset.pxd.tp"], "include_np": True},
-        {
-            "sources": ["_weight_vector.pyx.tp", "_weight_vector.pxd.tp"],
-            "include_np": True,
-        },
-        {"sources": ["_random.pyx"], "include_np": True},
-        {"sources": ["_logistic_sigmoid.pyx"], "include_np": True},
+        {"sources": ["_seq_dataset.pyx.tp", "_seq_dataset.pxd.tp"]},
+        {"sources": ["_weight_vector.pyx.tp", "_weight_vector.pxd.tp"]},
+        {"sources": ["_random.pyx"]},
         {"sources": ["_typedefs.pyx"]},
         {"sources": ["_heap.pyx"]},
         {"sources": ["_sorting.pyx"]},
@@ -561,8 +556,8 @@ def configure_extension_modules():
 
 
 def setup_package():
-    python_requires = ">=3.8"
-    required_python_version = (3, 8)
+    python_requires = ">=3.9"
+    required_python_version = (3, 9)
 
     metadata = dict(
         name=DISTNAME,
@@ -589,17 +584,19 @@ def setup_package():
             "Operating System :: Unix",
             "Operating System :: MacOS",
             "Programming Language :: Python :: 3",
-            "Programming Language :: Python :: 3.8",
             "Programming Language :: Python :: 3.9",
             "Programming Language :: Python :: 3.10",
             "Programming Language :: Python :: 3.11",
+            "Programming Language :: Python :: 3.12",
             "Programming Language :: Python :: Implementation :: CPython",
             "Programming Language :: Python :: Implementation :: PyPy",
         ],
         cmdclass=cmdclass,
         python_requires=python_requires,
         install_requires=min_deps.tag_to_packages["install"],
-        package_data={"": ["*.csv", "*.gz", "*.txt", "*.pxd", "*.rst", "*.jpg"]},
+        package_data={
+            "": ["*.csv", "*.gz", "*.txt", "*.pxd", "*.rst", "*.jpg", "*.css"]
+        },
         zip_safe=False,  # the package can run out of an .egg file
         extras_require={
             key: min_deps.tag_to_packages[key]
