@@ -256,6 +256,11 @@ Changelog
 :mod:`sklearn.linear_model`
 ...........................
 
+- |Enhancement| The `solver="newton-cholesky"` in
+  :class:`linear_model.LogisticRegression` and
+  :class:`linear_model.LogisticRegressionCV` is extended to support the full
+  multinomial loss in a multiclass setting.
+
 - |Fix| :class:`linear_model.LogisticRegressionCV` corrects sample weight handling
   for the calculation of test scores.
   :pr:`29419` by :user:`Shruti Nath <snath-xoc>`.
