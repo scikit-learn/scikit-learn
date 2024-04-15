@@ -423,8 +423,13 @@ class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble, metaclass=ABCM
                 method_mapping=MethodMapping().add(callee="fit", caller="fit"),
             )
 
+        try:
+            final_estimator_ = self.final_estimator_
+        except AttributeError:
+            final_estimator_ = self.final_estimator
+
         router.add(
-            final_estimator_=self.final_estimator_,
+            final_estimator_=final_estimator_,
             method_mapping=MethodMapping().add(caller="predict", callee="predict"),
         )
 

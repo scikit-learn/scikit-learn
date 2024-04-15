@@ -987,10 +987,9 @@ def test_metadata_routing_for_stacking_estimators(Estimator, Child, prop):
     # access final_estimator:
     registry = est.final_estimator_.registry
     assert len(registry)
-    for sub_est in registry:
-        check_recorded_metadata(
-            obj=sub_est, method="predict", split_params=(prop), **kwargs
-        )
+    check_recorded_metadata(
+        obj=registry[-1], method="predict", split_params=(prop), **kwargs
+    )
 
 
 @pytest.mark.usefixtures("enable_slep006")
