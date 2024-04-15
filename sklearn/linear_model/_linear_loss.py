@@ -475,6 +475,19 @@ class LinearModelLoss:
                 msg = "Parameter gradient_out must be F-contiguous."
                 raise ValueError(msg)
             grad = gradient_out
+        # Allocate hessian.
+        n = coef.size  # for multinomial this equals n_dof * n_classes
+        if hessian_out is None:
+            hess = np.empty((n, n), dtype=weights.dtype)
+        else:
+            hess = hessian_out
+            if hess.shape != (n, n):
+                raise ValueError(
+                    f"hessian_out is required to have shape ({n, n}); got "
+                    f"{hessian_out.shape=}."
+                )
+            if not hess.flags.c_contiguous and not hess.flags.f_contiguous:
+                raise ValueError("hessian_out is required to be contiguous.")
 
         if not self.base_loss.is_multiclass:
             grad_pointwise, hess_pointwise = self.base_loss.gradient_hessian(
@@ -496,12 +509,6 @@ class LinearModelLoss:
             if self.fit_intercept:
                 grad[-1] = grad_pointwise.sum()
 
-            # hessian
-            if hessian_out is None:
-                hess = np.empty(shape=(n_dof, n_dof), dtype=weights.dtype)
-            else:
-                hess = hessian_out
-
             if hessian_warning:
                 # Exit early without computing the hessian.
                 return grad, hess, hessian_warning
@@ -514,7 +521,8 @@ class LinearModelLoss:
             if l2_reg_strength > 0:
                 # The L2 penalty enters the Hessian on the diagonal only. To add those
                 # terms, we use a flattened view of the array.
-                hess.reshape(-1)[
+                order = "C" if hess.flags.c_contiguous else "F"
+                hess.reshape(-1, order=order)[
                     : (n_features * n_dof) : (n_dof + 1)
                 ] += l2_reg_strength
 
@@ -584,20 +592,6 @@ class LinearModelLoss:
             # is the first feature, x0, for all classes. In our implementation, we
             # still want to take advantage of BLAS "X.T @ X". Therefore, we have some
             # index/slicing battle to fight.
-            if hessian_out is None:
-                hess = np.empty(
-                    (n_dof * n_classes, n_dof * n_classes), dtype=weights.dtype
-                )
-            else:
-                hess = hessian_out
-                if hess.shape != (n_dof * n_classes, n_dof * n_classes):
-                    n = n_dof * n_classes
-                    raise ValueError(
-                        "hessian_out is required to have shape "
-                        f"(n_dof * n_classes, n_dof * n_classes) = ({n, n}); got"
-                        f"{hessian_out.shape=}."
-                    )
-
             if sample_weight is not None:
                 sw = sample_weight / sw_sum
             else:
@@ -651,7 +645,8 @@ class LinearModelLoss:
 
             if l2_reg_strength > 0:
                 # See above in the non multiclass case.
-                hess.reshape(-1)[
+                order = "C" if hess.flags.c_contiguous else "F"
+                hess.reshape(-1, order=order)[
                     : (n_classes**2 * n_features * n_dof) : (n_classes * n_dof + 1)
                 ] += l2_reg_strength
 

@@ -115,6 +115,7 @@ def test_loss_grad_hess_are_the_same(
     X, y, coef = random_X_y_coef(
         linear_model_loss=loss, n_samples=10, n_features=5, seed=42
     )
+    X_old, y_old, coef_old = X.copy(), y.copy(), coef.copy()
 
     if sample_weight == "range":
         sample_weight = np.linspace(1, y.shape[0], num=y.shape[0])
@@ -142,7 +143,9 @@ def test_loss_grad_hess_are_the_same(
     assert_allclose(h4 @ g4.ravel(order="F"), h3(g3).ravel(order="F"))
     # Test that gradient_out and hessian_out are considered properly.
     g_out = np.empty_like(coef)
-    h_out = np.empty_like((coef.size, coef.size))
+    h_out = np.empty_like(coef, shape=(coef.size, coef.size))
+    assert h_out.flags.f_contiguous
+    assert h4.flags.c_contiguous
     g5, h5, _ = loss.gradient_hessian(
         coef,
         X,
@@ -152,27 +155,29 @@ def test_loss_grad_hess_are_the_same(
         gradient_out=g_out,
         hessian_out=h_out,
     )
-    assert g5 is g_out
-    assert h5 is h_out
+    assert np.shares_memory(g5, g_out)
+    assert np.shares_memory(h5, h_out)
+    assert_allclose(g5, g_out)
+    assert_allclose(h5, h_out)
     assert_allclose(g1, g5)
     assert_allclose(h5, h4)
 
     # same for sparse X
-    X = csr_container(X)
+    Xs = csr_container(X)
     l1_sp = loss.loss(
-        coef, X, y, sample_weight=sample_weight, l2_reg_strength=l2_reg_strength
+        coef, Xs, y, sample_weight=sample_weight, l2_reg_strength=l2_reg_strength
     )
     g1_sp = loss.gradient(
-        coef, X, y, sample_weight=sample_weight, l2_reg_strength=l2_reg_strength
+        coef, Xs, y, sample_weight=sample_weight, l2_reg_strength=l2_reg_strength
     )
     l2_sp, g2_sp = loss.loss_gradient(
-        coef, X, y, sample_weight=sample_weight, l2_reg_strength=l2_reg_strength
+        coef, Xs, y, sample_weight=sample_weight, l2_reg_strength=l2_reg_strength
     )
     g3_sp, h3_sp = loss.gradient_hessian_product(
-        coef, X, y, sample_weight=sample_weight, l2_reg_strength=l2_reg_strength
+        coef, Xs, y, sample_weight=sample_weight, l2_reg_strength=l2_reg_strength
     )
     g4_sp, h4_sp, _ = loss.gradient_hessian(
-        coef, X, y, sample_weight=sample_weight, l2_reg_strength=l2_reg_strength
+        coef, Xs, y, sample_weight=sample_weight, l2_reg_strength=l2_reg_strength
     )
     assert_allclose(l1, l1_sp)
     assert_allclose(l1, l2_sp)
@@ -182,6 +187,12 @@ def test_loss_grad_hess_are_the_same(
     assert_allclose(h3(g1), h3_sp(g1_sp))
     assert_allclose(g1, g4_sp)
     assert_allclose(h4, h4_sp)
+
+    # X, y and coef should not have changed
+    assert_allclose(X, X_old)
+    assert_allclose(Xs.toarray(), X_old)
+    assert_allclose(y, y_old)
+    assert_allclose(coef, coef_old)
 
 
 @pytest.mark.parametrize("base_loss", LOSSES)
