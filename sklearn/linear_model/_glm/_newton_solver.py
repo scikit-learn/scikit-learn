@@ -453,8 +453,20 @@ class NewtonCholeskySolver(NewtonSolver):
         n_dof = X.shape[1]
         if self.linear_loss.fit_intercept:
             n_dof += 1
+        if self.linear_loss.base_loss.is_multiclass:
+            # Easier with ravelled arrays, e.g., for scipy.linalg.solve.
+            # As with LinearModelLoss, we always are contiguous in n_classes.
+            self.coef = self.coef.ravel(order="F")
+        # Note, the computation of gradient in LinearModelLoss follows the shape of
+        # coef.
         self.gradient = np.empty_like(self.coef)
-        self.hessian = np.empty_like(self.coef, shape=(n_dof, n_dof))
+        # But the hessian is always 2d.
+        n = self.coef.size
+        self.hessian = np.empty_like(self.coef, shape=(n, n))
+        # To help case distinctions.
+        self.is_multinomial_with_intercept = (
+            self.linear_loss.base_loss.is_multiclass and self.linear_loss.fit_intercept
+        )
 
     def update_gradient_hessian(self, X, y, sample_weight):
         _, _, self.hessian_warning = self.linear_loss.gradient_hessian(
@@ -488,6 +500,20 @@ class NewtonCholeskySolver(NewtonSolver):
             return
 
         try:
+            if self.is_multinomial_with_intercept:
+                # The multinomial loss is overparametrized for each unpenalized
+                # feature, i.e., at least the intercept. We could remove one of the
+                # intercepts and choose the intercept of the last class = coef[-1].
+                # This would then need updates of the projected/constrainted gradient
+                # and hessian.
+                # Instead, we do some magic by just adding an L2 penalty to the
+                # intercept, too. For more details, see
+                # Zhu, Ji and Trevor J. Hastie. "Classification of gene microarrays by
+                # penalized logistic regression". Biostatistics 5 3 (2004): 427-43.
+                # https://doi.org/10.1093/biostatistics/kxg046
+                n_classes = self.linear_loss.base_loss.n_classes
+                self.hessian.reshape(-1)[-n_classes:] += 1
+
             with warnings.catch_warnings():
                 warnings.simplefilter("error", scipy.linalg.LinAlgWarning)
                 self.coef_newton = scipy.linalg.solve(
