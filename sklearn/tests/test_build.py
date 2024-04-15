@@ -1,6 +1,7 @@
 import os
-import pytest
 import textwrap
+
+import pytest
 
 from sklearn import __version__
 from sklearn.utils._openmp_helpers import _openmp_parallelism_enabled
@@ -27,6 +28,7 @@ def test_openmp_parallelism_enabled():
 
         You can skip this test by setting the environment variable
         SKLEARN_SKIP_OPENMP_TEST to any value.
-        """).format(base_url)
+        """
+    ).format(base_url)
 
     assert _openmp_parallelism_enabled(), err_msg

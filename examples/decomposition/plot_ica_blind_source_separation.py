@@ -13,16 +13,14 @@ at recovering our `instruments` since the related signals reflect
 non-Gaussian processes.
 
 """
-print(__doc__)
+
+# %%
+# Generate sample data
+# --------------------
 
 import numpy as np
-import matplotlib.pyplot as plt
 from scipy import signal
 
-from sklearn.decomposition import FastICA, PCA
-
-# #############################################################################
-# Generate sample data
 np.random.seed(0)
 n_samples = 2000
 time = np.linspace(0, 8, n_samples)
@@ -39,8 +37,14 @@ S /= S.std(axis=0)  # Standardize data
 A = np.array([[1, 1, 1], [0.5, 2, 1.0], [1.5, 1.0, 2.0]])  # Mixing matrix
 X = np.dot(S, A.T)  # Generate observations
 
+# %%
+# Fit ICA and PCA models
+# ----------------------
+
+from sklearn.decomposition import PCA, FastICA
+
 # Compute ICA
-ica = FastICA(n_components=3)
+ica = FastICA(n_components=3, whiten="arbitrary-variance")
 S_ = ica.fit_transform(X)  # Reconstruct signals
 A_ = ica.mixing_  # Get estimated mixing matrix
 
@@ -51,17 +55,22 @@ assert np.allclose(X, np.dot(S_, A_.T) + ica.mean_)
 pca = PCA(n_components=3)
 H = pca.fit_transform(X)  # Reconstruct signals based on orthogonal components
 
-# #############################################################################
+# %%
 # Plot results
+# ------------
+
+import matplotlib.pyplot as plt
 
 plt.figure()
 
 models = [X, S, S_, H]
-names = ['Observations (mixed signal)',
-         'True Sources',
-         'ICA recovered signals', 
-         'PCA recovered signals']
-colors = ['red', 'steelblue', 'orange']
+names = [
+    "Observations (mixed signal)",
+    "True Sources",
+    "ICA recovered signals",
+    "PCA recovered signals",
+]
+colors = ["red", "steelblue", "orange"]
 
 for ii, (model, name) in enumerate(zip(models, names), 1):
     plt.subplot(4, 1, ii)

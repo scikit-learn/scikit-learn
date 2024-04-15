@@ -1,20 +1,14 @@
+import numpy as np
 import pytest
 
-import numpy as np
-import scipy.sparse as sp
-
 from sklearn.datasets import make_regression
-from sklearn.linear_model import Ridge
 from sklearn.kernel_ridge import KernelRidge
+from sklearn.linear_model import Ridge
 from sklearn.metrics.pairwise import pairwise_kernels
-from sklearn.utils._testing import ignore_warnings
-
-from sklearn.utils._testing import assert_array_almost_equal
-
+from sklearn.utils._testing import assert_array_almost_equal, ignore_warnings
+from sklearn.utils.fixes import CSC_CONTAINERS, CSR_CONTAINERS
 
 X, y = make_regression(n_features=10, random_state=0)
-Xcsr = sp.csr_matrix(X)
-Xcsc = sp.csc_matrix(X)
 Y = np.array([y, y]).T
 
 
@@ -24,17 +18,15 @@ def test_kernel_ridge():
     assert_array_almost_equal(pred, pred2)
 
 
-def test_kernel_ridge_csr():
-    pred = Ridge(alpha=1, fit_intercept=False,
-                 solver="cholesky").fit(Xcsr, y).predict(Xcsr)
-    pred2 = KernelRidge(kernel="linear", alpha=1).fit(Xcsr, y).predict(Xcsr)
-    assert_array_almost_equal(pred, pred2)
-
-
-def test_kernel_ridge_csc():
-    pred = Ridge(alpha=1, fit_intercept=False,
-                 solver="cholesky").fit(Xcsc, y).predict(Xcsc)
-    pred2 = KernelRidge(kernel="linear", alpha=1).fit(Xcsc, y).predict(Xcsc)
+@pytest.mark.parametrize("sparse_container", [*CSR_CONTAINERS, *CSC_CONTAINERS])
+def test_kernel_ridge_sparse(sparse_container):
+    X_sparse = sparse_container(X)
+    pred = (
+        Ridge(alpha=1, fit_intercept=False, solver="cholesky")
+        .fit(X_sparse, y)
+        .predict(X_sparse)
+    )
+    pred2 = KernelRidge(kernel="linear", alpha=1).fit(X_sparse, y).predict(X_sparse)
     assert_array_almost_equal(pred, pred2)
 
 
@@ -67,12 +59,13 @@ def test_kernel_ridge_sample_weights():
     K = np.dot(X, X.T)  # precomputed kernel
     sw = np.random.RandomState(0).rand(X.shape[0])
 
-    pred = Ridge(alpha=1,
-                 fit_intercept=False).fit(X, y, sample_weight=sw).predict(X)
-    pred2 = KernelRidge(kernel="linear",
-                        alpha=1).fit(X, y, sample_weight=sw).predict(X)
-    pred3 = KernelRidge(kernel="precomputed",
-                        alpha=1).fit(K, y, sample_weight=sw).predict(K)
+    pred = Ridge(alpha=1, fit_intercept=False).fit(X, y, sample_weight=sw).predict(X)
+    pred2 = KernelRidge(kernel="linear", alpha=1).fit(X, y, sample_weight=sw).predict(X)
+    pred3 = (
+        KernelRidge(kernel="precomputed", alpha=1)
+        .fit(K, y, sample_weight=sw)
+        .predict(K)
+    )
     assert_array_almost_equal(pred, pred2)
     assert_array_almost_equal(pred, pred3)
 
@@ -85,11 +78,3 @@ def test_kernel_ridge_multi_output():
     pred3 = KernelRidge(kernel="linear", alpha=1).fit(X, y).predict(X)
     pred3 = np.array([pred3, pred3]).T
     assert_array_almost_equal(pred2, pred3)
-
-
-# TODO: Remove in 1.1
-def test_kernel_ridge_pairwise_is_deprecated():
-    k_ridge = KernelRidge(kernel='precomputed')
-    msg = r"Attribute _pairwise was deprecated in version 0\.24"
-    with pytest.warns(FutureWarning, match=msg):
-        k_ridge._pairwise

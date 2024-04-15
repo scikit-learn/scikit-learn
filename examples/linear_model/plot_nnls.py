@@ -6,10 +6,12 @@ Non-negative least squares
 In this example, we fit a linear model with positive constraints on the
 regression coefficients and compare the estimated coefficients to a classic
 linear regression.
+
 """
-print(__doc__)
-import numpy as np
+
 import matplotlib.pyplot as plt
+import numpy as np
+
 from sklearn.metrics import r2_score
 
 # %%
@@ -24,7 +26,7 @@ true_coef[true_coef < 0] = 0
 y = np.dot(X, true_coef)
 
 # Add some noise
-y += 5 * np.random.normal(size=(n_samples, ))
+y += 5 * np.random.normal(size=(n_samples,))
 
 # %%
 # Split the data in train set and test set
@@ -62,6 +64,6 @@ low_x, high_x = ax.get_xlim()
 low_y, high_y = ax.get_ylim()
 low = max(low_x, low_y)
 high = min(high_x, high_y)
-ax.plot([low, high], [low, high], ls="--", c=".3", alpha=.5)
+ax.plot([low, high], [low, high], ls="--", c=".3", alpha=0.5)
 ax.set_xlabel("OLS regression coefficients", fontweight="bold")
 ax.set_ylabel("NNLS regression coefficients", fontweight="bold")
