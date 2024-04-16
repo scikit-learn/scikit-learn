@@ -20,8 +20,7 @@ from ..base import (
 )
 from ..utils import _array_api, check_array, resample
 from ..utils._array_api import (
-    _modify_in_place_if_numpy, device, get_namespace,
-    get_namespace, supported_float_dtypes, size, counter_dtype)
+    _modify_in_place_if_numpy, device, get_namespace, size)
 from ..utils._param_validation import Interval, Options, StrOptions, validate_params
 from ..utils.extmath import _incremental_mean_and_var, row_norms
 from ..utils.sparsefuncs import (
@@ -954,7 +953,7 @@ class StandardScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         # incr_mean_variance_axis and _incremental_variance_axis
         dtype = xp.int64 if sample_weight is None else X.dtype
         if not hasattr(self, "n_samples_seen_"):
-            self.n_samples_seen_ = xp.zeros(n_features, dtype=dtype)
+            self.n_samples_seen_ = xp.zeros(n_features, dtype=dtype, device=device(X))
         elif size(self.n_samples_seen_) == 1:
             self.n_samples_seen_ = xp.repeat(self.n_samples_seen_, X.shape[1])
             self.n_samples_seen_ = xp.astype(self.n_samples_seen_, dtype, copy=False)
