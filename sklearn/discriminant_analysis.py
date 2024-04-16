@@ -734,7 +734,7 @@ class QuadraticDiscriminantAnalysis(ClassifierMixin, BaseEstimator):
     tol : float, default=1.0e-4
         Absolute threshold for the covariance matrix to be considered rank
         deficient after applying some regularization (see `reg_param`) to each `Sk` where `Sk`
-        represents covariance matrix for kth class. This parameter does not
+        represents covariance matrix for k-th class. This parameter does not
         affect the predictions. It controls when a warning is raised when the
         covariance matrix is not full rank.
 
