@@ -24,7 +24,7 @@ foreach name: name_list
   )
   py.extension_module(
     name,
-    [pyx, neighbors_cython_tree],
+    [pyx, neighbors_cython_tree, utils_cython_tree],
     dependencies: [np_dep],
     cython_args: cython_args,
     subdir: 'sklearn/neighbors',
@@ -42,7 +42,7 @@ neighbors_extension_metadata = {
 foreach ext_name, ext_dict : neighbors_extension_metadata
   py.extension_module(
     ext_name,
-    ext_dict.get('sources'),
+    [ext_dict.get('sources'), utils_cython_tree],
     dependencies: ext_dict.get('dependencies'),
     override_options : ext_dict.get('override_options', []),
     cython_args: cython_args,
