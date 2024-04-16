@@ -672,9 +672,9 @@ Kernels
    :toctree: generated/
    :template: function.rst
 
+   inspection.h_statistic
    inspection.partial_dependence
    inspection.permutation_importance
-   inspection.h_statistic
 
 Plotting
 --------
