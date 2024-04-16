@@ -78,7 +78,7 @@ def yield_namespace_device_dtype_combinations(include_numpy_namespaces=True):
     ):
         if array_namespace == "torch":
             for device, dtype in itertools.product(
-                ("cpu", "cuda"), ("float64", "float32")
+                ("cpu", "cuda"), ("float64", "float32", "float16")
             ):
                 yield array_namespace, device, dtype
             yield array_namespace, "mps", "float32"
@@ -223,10 +223,49 @@ def _union1d(a, b, xp):
 
 
 def isdtype(dtype, kind, *, xp):
-    """Returns a boolean indicating whether a provided dtype is of type "kind".
+    """Return a boolean indicating whether a provided dtype is of type "kind".
 
     Included in the v2022.12 of the Array API spec.
     https://data-apis.org/array-api/latest/API_specification/generated/array_api.isdtype.html
+
+    Parameters
+    ----------
+    dtype : dtype
+        The input dtype (e.g. ``np.float32``, ``torch.int16``, ``xp.complex64``)
+
+    kind : str or dtype or tuple[str | dtype]
+        Data type kind.
+
+        - If ``kind`` is a dtype, then a boolean is returned if ``dtype`` is equal to
+          ``dtype``.
+        - If ``kind`` is a string, ``dtype`` is checked to be included in a set of
+          dtypes determined by ``kind``. ``kind`` must be one of:
+
+          - "bool": boolean data types (i.e. ``bool``).
+          - "signed integer": signed integer data types (e.g. ``int8``, ``int16``).
+          - "unsigned integer": unsigned integer data types (e.g. ``uint8``,
+            ``uint16``).
+          - "integral": integer data types. Shorthand for
+            ``("signed integer", "unsigned integer")``.
+          - "real floating": real-valued floating-point data types (i.e., ``float32``,
+            ``float64``). This will include ``float16`` if the array namespace ``xp``
+            supports it.
+          - "complex floating": complex floating-point data types (e.g. ``complex64``,
+            ``complex128``).
+          - "numeric": numeric data types. Shorthand for ``("integral",
+            "real floating", "complex floating")``. Note this excludes the ``bool``
+            data type.
+        - If ``kind`` is a tuple, the tuple is a union of dtypes and/or kinds, and a
+          boolean is returned if the input ``dtype`` is either equal to a specified
+          dtype or belongs to at least one specified data type kind.
+
+    xp: module
+        The array namespace to which ``dtype`` belongs.
+
+    Returns
+    -------
+    flag : bool
+        True if ``dtype`` is of type ``kind``, and False otherwise.
     """
     if isinstance(kind, tuple):
         return any(_isdtype_single(dtype, k, xp=xp) for k in kind)
