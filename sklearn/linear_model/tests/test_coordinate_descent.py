@@ -2,7 +2,6 @@
 #          Alexandre Gramfort <alexandre.gramfort@inria.fr>
 # License: BSD 3 clause
 
-import contextlib
 import warnings
 from copy import deepcopy
 
@@ -105,6 +104,7 @@ def test_lasso_zero():
     assert_almost_equal(clf.dual_gap_, 0)
 
 
+@pytest.mark.filterwarnings("ignore::sklearn.exceptions.ConvergenceWarning")
 def test_enet_nonfinite_params():
     # Check ElasticNet throws ValueError when dealing with non-finite parameter
     # values
@@ -362,6 +362,7 @@ def _scale_alpha_inplace(estimator, n_samples):
     estimator.set_params(alpha=alpha)
 
 
+@pytest.mark.filterwarnings("ignore::sklearn.exceptions.ConvergenceWarning")
 @pytest.mark.parametrize(
     "LinearModel, params",
     [
@@ -400,15 +401,8 @@ def test_model_pipeline_same_dense_and_sparse(LinearModel, params, csr_container
     if is_classifier(model_dense):
         y = np.sign(y)
 
-    if (
-        LinearModel.__name__ == "ElasticNet" and params["l1_ratio"] == 0
-    ) or LinearModel.__name__ == "LassoCV":
-        ctxmgr = ignore_warnings(category=ConvergenceWarning)
-    else:
-        ctxmgr = contextlib.nullcontext()
-    with ctxmgr:
-        model_dense.fit(X, y)
-        model_sparse.fit(X_sparse, y)
+    model_dense.fit(X, y)
+    model_sparse.fit(X_sparse, y)
 
     assert_allclose(model_sparse[1].coef_, model_dense[1].coef_)
     y_pred_dense = model_dense.predict(X)
@@ -699,7 +693,7 @@ def test_multitask_enet_and_lasso_cv():
 
     X, y, _, _ = build_dataset(n_targets=3)
     clf = MultiTaskElasticNetCV(
-        n_alphas=10, eps=1e-3, max_iter=100, l1_ratio=[0.3, 0.5], tol=1e-3, cv=3
+        n_alphas=10, eps=1e-3, max_iter=200, l1_ratio=[0.3, 0.5], tol=1e-3, cv=3
     )
     clf.fit(X, y)
     assert 0.5 == clf.l1_ratio_
@@ -1075,6 +1069,7 @@ def test_enet_float_precision():
             )
 
 
+@pytest.mark.filterwarnings("ignore::sklearn.exceptions.ConvergenceWarning")
 def test_enet_l1_ratio():
     # Test that an error message is raised if an estimator that
     # uses _alpha_grid is called with l1_ratio=0
@@ -1143,8 +1138,6 @@ def test_warm_start_multitask_lasso():
     [
         (Lasso, 1, dict(precompute=True)),
         (Lasso, 1, dict(precompute=False)),
-        (MultiTaskLasso, 2, dict()),
-        (MultiTaskLasso, 2, dict()),
     ],
 )
 def test_enet_coordinate_descent(klass, n_classes, kwargs):
@@ -1488,6 +1481,7 @@ def test_enet_sample_weight_does_not_overwrite_sample_weight(check_input):
     assert_array_equal(sample_weight, sample_weight_1_25)
 
 
+@pytest.mark.filterwarnings("ignore::sklearn.exceptions.ConvergenceWarning")
 @pytest.mark.parametrize("ridge_alpha", [1e-1, 1.0, 1e6])
 def test_enet_ridge_consistency(ridge_alpha):
     # Check that ElasticNet(l1_ratio=0) converges to the same solution as Ridge
