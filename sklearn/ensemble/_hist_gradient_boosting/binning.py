@@ -5,6 +5,7 @@ BinMapper is used for mapping a real-valued dataset into integer-valued bins.
 Bin thresholds are computed with the quantiles so that each bin contains
 approximately the same number of samples.
 """
+
 # Author: Nicolas Hug
 
 import numpy as np

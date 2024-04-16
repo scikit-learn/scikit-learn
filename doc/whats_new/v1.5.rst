@@ -31,6 +31,13 @@ Changed models
   properties).
   :pr:`27344` by :user:`Xuefeng Xu <xuefeng-xu>`.
 
+- |Enhancement| :class:`decomposition.PCA`, :class:`decomposition.SparsePCA`
+  and :class:`decomposition.TruncatedSVD` now set the sign of the `components_`
+  attribute based on the component values instead of using the transformed data
+  as reference. This change is needed to be able to offer consistent component
+  signs across all `PCA` solvers, including the new
+  `svd_solver="covariance_eigh"` option introduced in this release.
+
 Support for Array API
 ---------------------
 
@@ -78,6 +85,10 @@ more details.
   their `fit` method and route metadata to the underlying
   :class:`model_selection.GridSearchCV` object or the underlying scorer.
   :pr:`27560` by :user:`Omar Salman <OmarManzoor>`.
+
+- |Feature| :class:`GraphicalLassoCV` now supports metadata routing in it's
+  `fit` method and routes metadata to the CV splitter.
+  :pr:`27566` by :user:`Omar Salman <OmarManzoor>`.
 
 - |Feature| :class:`linear_model.RANSACRegressor` now supports metadata routing
   in its ``fit``, ``score`` and ``predict`` methods and route metadata to its
@@ -165,9 +176,32 @@ Changelog
 :mod:`sklearn.decomposition`
 ............................
 
+- |Efficiency| :class:`decomposition.PCA` with `svd_solver="full"` now assigns
+  a contiguous `components_` attribute instead of an non-contiguous slice of
+  the singular vectors. When `n_components << n_features`, this can save some
+  memory and, more importantly, help speed-up subsequent calls to the `transform`
+  method by more than an order of magnitude by leveraging cache locality of
+  BLAS GEMM on contiguous arrays.
+  :pr:`27491` by :user:`Olivier Grisel <ogrisel>`.
+
 - |Enhancement| :class:`~decomposition.PCA` now automatically selects the ARPACK solver
   for sparse inputs when `svd_solver="auto"` instead of raising an error.
   :pr:`28498` by :user:`Thanh Lam Dang <lamdang2k>`.
+
+- |Enhancement| :class:`decomposition.PCA` now supports a new solver option
+  named `svd_solver="covariance_eigh"` which offers an order of magnitude
+  speed-up and reduced memory usage for datasets with a large number of data
+  points and a small number of features (say, `n_samples >> 1000 >
+  n_features`). The `svd_solver="auto"` option has been updated to use the new
+  solver automatically for such datasets. This solver also accepts sparse input
+  data.
+  :pr:`27491` by :user:`Olivier Grisel <ogrisel>`.
+
+- |Fix| :class:`decomposition.PCA` fit with `svd_solver="arpack"`,
+  `whiten=True` and a value for `n_components` that is larger than the rank of
+  the training set, no longer returns infinite values when transforming
+  hold-out data.
+  :pr:`27491` by :user:`Olivier Grisel <ogrisel>`.
 
 :mod:`sklearn.dummy`
 ....................
@@ -220,8 +254,20 @@ Changelog
   by passing a function in place of a strategy name.
   :pr:`28053` by :user:`Mark Elliot <mark-thm>`.
 
+:mod:`sklearn.inspection`
+.........................
+
+- |Fix| :meth:`inspection.DecisionBoundaryDisplay.from_estimator` no longer
+  warns about missing feature names when provided a `polars.DataFrame`.
+  :pr:`28718` by :user:`Patrick Wang <patrickkwang>`.
+
 :mod:`sklearn.linear_model`
 ...........................
+
+- |Enhancement| Solver `"newton-cg"` in :class:`linear_model.LogisticRegression` and
+  :class:`linear_model.LogisticRegressionCV` now emits information when `verbose` is
+  set to positive values.
+  :pr:`27526` by :user:`Christian Lorentzen <lorentzenchr>`.
 
 - |Fix| :class:`linear_model.ElasticNet`, :class:`linear_model.ElasticNetCV`,
   :class:`linear_model.Lasso` and :class:`linear_model.LassoCV` now explicitly don't
@@ -306,6 +352,8 @@ Changelog
 
 - |Enhancement| :term:`CV splitters <CV splitter>` that ignores the group parameter now
   raises a warning when groups are passed in to :term:`split`. :pr:`28210` by
+  `Thomas Fan`_.
+
 - |Fix| the ``cv_results_`` attribute (of :class:`model_selection.GridSearchCV`) now
   returns masked arrays of the appropriate NumPy dtype, as opposed to always returning
   dtype ``object``. :pr:`28352` by :user:`Marco Gorelli<MarcoGorelli>`.
@@ -313,12 +361,19 @@ Changelog
 - |Fix| :func:`sklearn.model_selection.train_test_score` works with Array API inputs.
   Previously indexing was not handled correctly leading to exceptions when using strict
   implementations of the Array API like CuPY.
-  :pr:`28407` by `Tim Head <betatim>`.
+  :pr:`28407` by :user:`Tim Head <betatim>`.
+
+- |Enhancement| The HTML diagram representation of
+  :class:`~model_selection.GridSearchCV`,
+  :class:`~model_selection.RandomizedSearchCV`,
+  :class:`~model_selection.HalvingGridSearchCV`, and
+  :class:`~model_selection.HalvingRandomSearchCV` will show the best estimator when
+  `refit=True`. :pr:`28722` by :user:`Yao Xiao <Charlie-XIAO>` and `Thomas Fan`_.
 
 :mod:`sklearn.multioutput`
 ..........................
 
-- |Enhancement| `chain_method` parameter added to `:class:`multioutput.ClassifierChain`.
+- |Enhancement| `chain_method` parameter added to :class:`multioutput.ClassifierChain`.
   :pr:`27700` by :user:`Lucy Liu <lucyleeow>`.
 
 :mod:`sklearn.neighbors`

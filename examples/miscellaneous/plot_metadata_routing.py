@@ -20,6 +20,7 @@ underlying estimator.
 
 First a few imports and some random data for the rest of the script.
 """
+
 # %%
 
 import warnings

@@ -1,6 +1,7 @@
 """
 Test the pipeline module.
 """
+
 import itertools
 import re
 import shutil
@@ -1915,7 +1916,7 @@ def test_metadata_routing_error_for_pipeline(method):
     pipeline = Pipeline([("estimator", est)])
     error_message = (
         "[sample_weight, prop] are passed but are not explicitly set as requested"
-        f" or not for SimpleEstimator.{method}"
+        f" or not requested for SimpleEstimator.{method}"
     )
     with pytest.raises(ValueError, match=re.escape(error_message)):
         try:
@@ -1975,7 +1976,7 @@ def test_feature_union_metadata_routing_error():
 
     error_message = (
         "[sample_weight, metadata] are passed but are not explicitly set as requested"
-        f" or not for {ConsumingTransformer.__name__}.fit"
+        f" or not requested for {ConsumingTransformer.__name__}.fit"
     )
 
     with pytest.raises(UnsetMetadataPassedError, match=re.escape(error_message)):
@@ -1995,7 +1996,7 @@ def test_feature_union_metadata_routing_error():
 
     error_message = (
         "[sample_weight, metadata] are passed but are not explicitly set as requested "
-        f"or not for {ConsumingTransformer.__name__}.transform"
+        f"or not requested for {ConsumingTransformer.__name__}.transform"
     )
 
     with pytest.raises(UnsetMetadataPassedError, match=re.escape(error_message)):

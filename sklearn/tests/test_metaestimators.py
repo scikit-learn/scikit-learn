@@ -1,4 +1,5 @@
 """Common tests for metaestimators"""
+
 import functools
 from inspect import signature
 

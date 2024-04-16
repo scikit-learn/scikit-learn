@@ -221,9 +221,7 @@ def make_classification(
         msg = "n_classes({}) * n_clusters_per_class({}) must be"
         msg += " smaller or equal 2**n_informative({})={}"
         raise ValueError(
-            msg.format(
-                n_classes, n_clusters_per_class, n_informative, 2**n_informative
-            )
+            msg.format(n_classes, n_clusters_per_class, n_informative, 2**n_informative)
         )
 
     if weights is not None:
