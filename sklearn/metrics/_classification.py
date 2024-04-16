@@ -2822,9 +2822,7 @@ def hamming_loss(y_true, y_pred, *, sample_weight=None):
     },
     prefer_skip_nested_validation=True,
 )
-def log_loss(
-    y_true, y_pred, *, normalize=True, sample_weight=None, labels=None
-):
+def log_loss(y_true, y_pred, *, normalize=True, sample_weight=None, labels=None):
     r"""Log loss, aka logistic loss or cross-entropy loss.
 
     This is the loss function used in (multinomial) logistic regression
