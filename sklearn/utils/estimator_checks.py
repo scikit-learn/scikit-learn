@@ -1044,6 +1044,7 @@ def check_array_api_input(
     device=None,
     dtype_name="float64",
     check_values=False,
+    sample_weight=False,
 ):
     """Check that the estimator can work consistently with the Array API
 
@@ -1052,6 +1053,8 @@ def check_array_api_input(
 
     When check_values is True, it also checks that calling the estimator on the
     array_api Array gives the same results as ndarrays.
+
+    When sample_weight is True, dummy sample weights are passed to the fit call.
     """
     xp = _array_api_for_tests(array_namespace, device)
 
@@ -1065,8 +1068,15 @@ def check_array_api_input(
 
     X_xp = xp.asarray(X, device=device)
     y_xp = xp.asarray(y, device=device)
+    fit_kwargs = {}
+    fit_kwargs_xp = {}
+    if sample_weight:
+        fit_kwargs["sample_weight"] = np.ones(X.shape[0], dtype=X.dtype)
+        fit_kwargs_xp["sample_weight"] = xp.asarray(
+            fit_kwargs["sample_weight"], device=device
+        )
 
-    est.fit(X, y)
+    est.fit(X, y, **fit_kwargs)
 
     array_attributes = {
         key: value for key, value in vars(est).items() if isinstance(value, np.ndarray)
@@ -1074,7 +1084,7 @@ def check_array_api_input(
 
     est_xp = clone(est)
     with config_context(array_api_dispatch=True):
-        est_xp.fit(X_xp, y_xp)
+        est_xp.fit(X_xp, y_xp, **fit_kwargs_xp)
         input_ns = get_namespace(X_xp)[0].__name__
 
     # Fitted attributes which are arrays must have the same
@@ -1220,6 +1230,7 @@ def check_array_api_input_and_values(
     array_namespace,
     device=None,
     dtype_name="float64",
+    sample_weight=False,
 ):
     return check_array_api_input(
         name,
@@ -1228,6 +1239,7 @@ def check_array_api_input_and_values(
         device=device,
         dtype_name=dtype_name,
         check_values=True,
+        sample_weight=sample_weight,
     )
 
 

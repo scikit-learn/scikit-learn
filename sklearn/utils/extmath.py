@@ -12,7 +12,14 @@ from scipy import linalg, sparse
 
 from ..utils._param_validation import Interval, StrOptions, validate_params
 from ._array_api import (
-    _average, _is_numpy_namespace, _nanmean, device, get_namespace, isdtype)
+    _average,
+    _nanmean,
+    _is_numpy_namespace,
+    device,
+    get_namespace,
+    isdtype,
+    max_precision_float_dtype,
+)
 from .sparsefuncs_fast import csr_row_norms
 from .validation import check_array, check_random_state
 
@@ -991,16 +998,16 @@ def make_nonnegative(X, min_value=0):
 # as it is in case the float overflows
 def _safe_accumulator_op(op, x, *args, **kwargs):
     """
-    This function provides numpy accumulator functions with a float64 dtype
-    when used on a floating point input. This prevents accumulator overflow on
-    smaller floating point dtypes.
+    This function provides array accumulator functions with a maximum floating
+    precision dtype, usually float64, when used on a floating point input. This
+    prevents accumulator overflow on smaller floating point dtypes.
 
     Parameters
     ----------
     op : function
-        A numpy accumulator function such as np.mean or np.sum.
-    x : ndarray
-        A numpy array to apply the accumulator function.
+        An array accumulator function such as np.mean or np.sum.
+    x : array
+        An array-api-compatible array to apply the accumulator function.
     *args : positional arguments
         Positional arguments passed to the accumulator function after the
         input x.
@@ -1013,11 +1020,17 @@ def _safe_accumulator_op(op, x, *args, **kwargs):
         The output of the accumulator function passed to this function.
     """
     xp, _ = get_namespace(x)
-    if isdtype(x.dtype, "real floating", xp=xp) and xp.finfo(x.dtype).bits < 64:
-        result = op(x, *args, **kwargs, dtype=xp.float64)
-    else:
-        result = op(x, *args, **kwargs)
-    return result
+    if isdtype(x.dtype, "real floating", xp=xp):
+        # Promote all dtypes, electing not to make copies if no dtype change is needed.
+        #  Normally we can rely on type promotion in `op`, but it isn't reliable for
+        #  float16 inputs.
+        target_dtype = max_precision_float_dtype(xp, device=device(x))
+        x = xp.astype(x, target_dtype, copy=False)
+        args = [
+            (xp.astype(arg, target_dtype, copy=False) if hasattr(arg, "dtype") else arg)
+            for arg in args
+        ]
+    return op(x, *args, **kwargs)
 
 
 def _incremental_mean_and_var(
@@ -1075,10 +1088,15 @@ def _incremental_mean_and_var(
     `utils.sparsefuncs.incr_mean_variance_axis` and
     `utils.sparsefuncs_fast.incr_mean_variance_axis0`
     """
-    xp, _ = get_namespace(X)
     # old = stats until now
     # new = the current increment
     # updated = the aggregated stats
+    if not hasattr(X, "dtype"):
+        X = np.asarray(X)
+    xp, _ = get_namespace(X)
+    # Promoting int -> float is not guaranteed by the array-api, so we cast manually.
+    # (Also, last_sample_count may be a python scalar)
+    last_sample_count = xp.asarray(last_sample_count, dtype=xp.float64)
     last_sum = last_mean * last_sample_count
     X_nan_mask = xp.isnan(X)
     if xp.any(X_nan_mask):
@@ -1089,15 +1107,19 @@ def _incremental_mean_and_var(
         # equivalent to np.nansum(X * sample_weight, axis=0)
         # safer because np.float64(X*W) != np.float64(X)*np.float64(W)
         new_sum = _safe_accumulator_op(
-            xp.matmul, sample_weight, xp.where(X_nan_mask, 0, X)
+            xp.matmul,
+            sample_weight,
+            xp.where(X_nan_mask, xp.asarray(0, dtype=X.dtype), X),
         )
         new_sample_count = _safe_accumulator_op(
-            xp.sum, sample_weight[:, None] * (~X_nan_mask), axis=0
+            xp.sum,
+            sample_weight[:, None] * xp.astype(~X_nan_mask, sample_weight.dtype),
+            axis=0,
         )
     else:
         new_sum = _safe_accumulator_op(sum_op, X, axis=0)
         n_samples = X.shape[0]
-        new_sample_count = n_samples - xp.sum(X_nan_mask, axis=0)
+        new_sample_count = n_samples - xp.sum(xp.astype(X_nan_mask, X.dtype), axis=0)
 
     updated_sample_count = last_sample_count + new_sample_count
 
@@ -1112,11 +1134,15 @@ def _incremental_mean_and_var(
             # equivalent to np.nansum((X-T)**2 * sample_weight, axis=0)
             # safer because np.float64(X*W) != np.float64(X)*np.float64(W)
             correction = _safe_accumulator_op(
-                xp.matmul, sample_weight, xp.where(X_nan_mask, 0, temp)
+                xp.matmul,
+                sample_weight,
+                xp.where(X_nan_mask, xp.asarray(0, dtype=temp.dtype), temp),
             )
             temp **= 2
             new_unnormalized_variance = _safe_accumulator_op(
-                xp.matmul, sample_weight, xp.where(X_nan_mask, 0, temp)
+                xp.matmul,
+                sample_weight,
+                xp.where(X_nan_mask, xp.asarray(0, dtype=temp.dtype), temp),
             )
         else:
             correction = _safe_accumulator_op(sum_op, temp, axis=0)

@@ -710,7 +710,6 @@ def test_standard_check_array_of_inverse_transform():
         Normalizer(norm="l1"),
         Normalizer(norm="l2"),
         Normalizer(norm="max"),
-        StandardScaler(),
     ],
     ids=_get_check_estimator_ids,
 )
@@ -719,6 +718,30 @@ def test_scaler_array_api_compliance(
 ):
     name = estimator.__class__.__name__
     check(name, estimator, array_namespace, device=device, dtype_name=dtype_name)
+
+
+@pytest.mark.parametrize(
+    "array_namespace, device, dtype_name", yield_namespace_device_dtype_combinations()
+)
+@pytest.mark.parametrize(
+    "check",
+    [check_array_api_input_and_values],
+    ids=_get_check_estimator_ids,
+)
+@pytest.mark.parametrize("sample_weight", [True, None])
+def test_standard_scaler_api_compliance(
+    check, sample_weight, array_namespace, device, dtype_name
+):
+    estimator = StandardScaler()
+    name = estimator.__class__.__name__
+    check(
+        name,
+        estimator,
+        array_namespace,
+        device=device,
+        dtype_name=dtype_name,
+        sample_weight=sample_weight,
+    )
 
 
 def test_min_max_scaler_iris():
