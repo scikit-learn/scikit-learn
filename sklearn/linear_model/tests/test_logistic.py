@@ -698,32 +698,24 @@ def test_logistic_regression_solvers():
         )
 
 
-@pytest.mark.parametrize("fit_intercept", [False, False])
-@pytest.mark.parametrize("multi_class", ["ovr", "multinomial"])
-def test_logistic_regression_solvers_multiclass(fit_intercept, multi_class):
+@pytest.mark.parametrize("fit_intercept", [False, True])
+def test_logistic_regression_solvers_multiclass(fit_intercept):
     """Test solvers converge to the same result for multiclass problems."""
     X, y = make_classification(
         n_samples=20, n_features=20, n_informative=10, n_classes=3, random_state=0
     )
-    tol = 1e-7
-    params = dict(fit_intercept=False, tol=tol, random_state=42)
+    tol = 1e-8
+    params = dict(fit_intercept=fit_intercept, tol=tol, random_state=42)
 
     # Override max iteration count for specific solvers to allow for
     # proper convergence.
-    solver_max_iter = {"sag": 10_000, "saga": 10_000}
-
-    if multi_class == "multinomial":
-        supported_solvers = set(SOLVERS) - set(["liblinear"])
-    else:
-        supported_solvers = SOLVERS
-    if fit_intercept:
-        supported_solvers -= set(["liblinear"])
+    solver_max_iter = {"lbfgs": 200, "sag": 10_000, "saga": 10_000}
 
     regressors = {
         solver: LogisticRegression(
             solver=solver, max_iter=solver_max_iter.get(solver, 100), **params
         ).fit(X, y)
-        for solver in supported_solvers
+        for solver in set(SOLVERS) - set(["liblinear"])
     }
 
     for solver_1, solver_2 in itertools.combinations(regressors, r=2):
