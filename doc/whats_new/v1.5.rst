@@ -346,6 +346,10 @@ Changelog
   in favor of `y_proba`. `y_prob` will be removed in version 1.7.
   :pr:`28092` by :user:`Adam Li <adam2392>`.
 
+- |API| For classifiers and classification metrics, labels encoded as bytes
+  is deprecated and will raise an error in v1.6.
+  :pr:`18555` by :user:`Kaushik Amar Das <cozek>`.
+
 :mod:`sklearn.mixture`
 ......................
 
@@ -424,6 +428,11 @@ Changelog
 
 - |API| :func:`utils.tosequence` is deprecated and will be removed in version 1.7.
   :pr:`28763` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
+
+- |API| Raise informative warning message in :func:`type_of_target` when
+  represented as bytes. For classifiers and classification metrics, labels encoded
+  as bytes is deprecated and will raise an error in v1.6.
+  :pr:`18555` by :user:`Kaushik Amar Das <cozek>`.
 
 - |Fix| :func:`~utils._safe_indexing` now works correctly for polars DataFrame when
   `axis=0` and supports indexing polars Series.
