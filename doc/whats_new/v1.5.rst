@@ -432,7 +432,7 @@ Changelog
 - |API| :class:`utils.parallel_backend` and :func:`utils.register_parallel_backend` are
   deprecated and will be removed in version 1.7. Use `joblib.parallel_backend` and
   `joblib.register_parallel_backend` instead.
-  :pr:`28846` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
+  :pr:`28847` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
 - |API| Raise informative warning message in :func:`type_of_target` when
   represented as bytes. For classifiers and classification metrics, labels encoded
