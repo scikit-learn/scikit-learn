@@ -2816,7 +2816,6 @@ def hamming_loss(y_true, y_pred, *, sample_weight=None):
     {
         "y_true": ["array-like"],
         "y_pred": ["array-like"],
-        "eps": [StrOptions({"auto"}), Interval(Real, 0, 1, closed="both")],
         "normalize": ["boolean"],
         "sample_weight": ["array-like", None],
         "labels": ["array-like", None],
@@ -2824,7 +2823,7 @@ def hamming_loss(y_true, y_pred, *, sample_weight=None):
     prefer_skip_nested_validation=True,
 )
 def log_loss(
-    y_true, y_pred, *, eps="auto", normalize=True, sample_weight=None, labels=None
+    y_true, y_pred, *, normalize=True, sample_weight=None, labels=None
 ):
     r"""Log loss, aka logistic loss or cross-entropy loss.
 
@@ -2854,20 +2853,6 @@ def log_loss(
         positive class. The labels in ``y_pred`` are assumed to be
         ordered alphabetically, as done by
         :class:`~sklearn.preprocessing.LabelBinarizer`.
-
-    eps : float or "auto", default="auto"
-        Log loss is undefined for p=0 or p=1, so probabilities are
-        clipped to `max(eps, min(1 - eps, p))`. The default will depend on the
-        data type of `y_pred` and is set to `np.finfo(y_pred.dtype).eps`.
-
-        .. versionadded:: 1.2
-
-        .. versionchanged:: 1.2
-           The default value changed from `1e-15` to `"auto"` that is
-           equivalent to `np.finfo(y_pred.dtype).eps`.
-
-        .. deprecated:: 1.3
-           `eps` is deprecated in 1.3 and will be removed in 1.5.
 
     normalize : bool, default=True
         If true, return the mean loss per sample.
@@ -2907,18 +2892,6 @@ def log_loss(
     y_pred = check_array(
         y_pred, ensure_2d=False, dtype=[np.float64, np.float32, np.float16]
     )
-    if eps == "auto":
-        eps = np.finfo(y_pred.dtype).eps
-    else:
-        # TODO: Remove user defined eps in 1.5
-        warnings.warn(
-            (
-                "Setting the eps parameter is deprecated and will "
-                "be removed in 1.5. Instead eps will always have"
-                "a default value of `np.finfo(y_pred.dtype).eps`."
-            ),
-            FutureWarning,
-        )
 
     check_consistent_length(y_pred, y_true, sample_weight)
     lb = LabelBinarizer()
@@ -2949,15 +2922,21 @@ def log_loss(
             1 - transformed_labels, transformed_labels, axis=1
         )
 
-    # Clipping
-    y_pred = np.clip(y_pred, eps, 1 - eps)
-
     # If y_pred is of single dimension, assume y_true to be binary
     # and then check.
     if y_pred.ndim == 1:
         y_pred = y_pred[:, np.newaxis]
     if y_pred.shape[1] == 1:
         y_pred = np.append(1 - y_pred, y_pred, axis=1)
+
+    # Make sure y_pred is normalized
+    y_pred_sum = y_pred.sum(axis=1)
+    if not np.allclose(y_pred_sum, 1, rtol=1e-15):
+        raise ValueError("The y_pred values do not sum to one.")
+
+    # Clipping
+    eps = np.finfo(y_pred.dtype).eps
+    y_pred = np.clip(y_pred, eps, 1 - eps)
 
     # Check if dimensions are consistent.
     transformed_labels = check_array(transformed_labels)
@@ -2979,17 +2958,6 @@ def log_loss(
                 "labels: {0}".format(lb.classes_)
             )
 
-    # Renormalize
-    y_pred_sum = y_pred.sum(axis=1)
-    if not np.isclose(y_pred_sum, 1, rtol=1e-15, atol=5 * eps).all():
-        warnings.warn(
-            (
-                "The y_pred values do not sum to one. Starting from 1.5 this"
-                "will result in an error."
-            ),
-            UserWarning,
-        )
-    y_pred = y_pred / y_pred_sum[:, np.newaxis]
     loss = -xlogy(transformed_labels, y_pred).sum(axis=1)
 
     return float(_average(loss, weights=sample_weight, normalize=normalize))

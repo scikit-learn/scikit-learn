@@ -639,6 +639,9 @@ def test_sample_order_invariance_multilabel_and_multioutput():
     y_pred = random_state.randint(0, 2, size=(20, 25))
     y_score = random_state.normal(size=y_true.shape)
 
+    # Some metrics (e.g. log_loss) require y_score to be probabilities (sum to 1)
+    y_score /= y_score.sum(axis=1)[:, np.newaxis]
+
     y_true_shuffle, y_pred_shuffle, y_score_shuffle = shuffle(
         y_true, y_pred, y_score, random_state=0
     )
@@ -1566,7 +1569,10 @@ def test_multilabel_sample_weight_invariance(name):
     )
     y_true = np.vstack([ya, yb])
     y_pred = np.vstack([ya, ya])
-    y_score = random_state.randint(1, 4, size=y_true.shape)
+    y_score = random_state.normal(size=y_true.shape)
+
+    # Some metrics (e.g. log_loss) require y_score to be probabilities (sum to 1)
+    y_score /= y_score.sum(axis=1)[:, np.newaxis]
 
     metric = ALL_METRICS[name]
     if name in THRESHOLDED_METRICS:
@@ -1630,6 +1636,9 @@ def test_thresholded_multilabel_multioutput_permutations_invariance(name):
     n_samples, n_classes = 20, 4
     y_true = random_state.randint(0, 2, size=(n_samples, n_classes))
     y_score = random_state.normal(size=y_true.shape)
+
+    # Some metrics (e.g. log_loss) require y_score to be probabilities (sum to 1)
+    y_score /= y_score.sum(axis=1)[:, np.newaxis]
 
     # Makes sure all samples have at least one label. This works around errors
     # when running metrics where average="sample"
