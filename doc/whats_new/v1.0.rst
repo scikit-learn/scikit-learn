@@ -661,7 +661,7 @@ Changelog
 
 - |Fix| :class:`discriminant_analysis.QuadraticDiscriminantAnalysis`
   will now cause `LinAlgWarning` in case of collinear variables. These errors
-  can be silenced using the 'reg_param' attribute.
+  can be silenced using the `reg_param` attribute.
   :pr:`19731` by :user:`Alihan Zihna <azihna>`.
 
 - |Fix| Propreties that are decorated with :func:`utils.deprecated` correctly
