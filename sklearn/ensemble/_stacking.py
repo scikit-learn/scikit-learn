@@ -749,12 +749,11 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
 
             - If `enable_metadata_routing=False` (default):
               Parameters directly passed to the `predict` method of the
-              `final_estimator`-
+              `final_estimator`.
 
-            - If `enable_metadata_routing=True`:
-              Parameters safely routed to the `predict` method of the
-             `final_estimator`. See :ref:`Metadata Routing User Guide
-              <metadata_routing>` for more details.
+            - If `enable_metadata_routing=True`: Parameters safely routed to
+              the `predict` method of the `final_estimator`. See :ref:`Metadata
+              Routing User Guide <metadata_routing>` for more details.
 
             .. versionchanged:: 1.5
                 `**predict_params` can be routed via metadata routing API.
@@ -1142,12 +1141,11 @@ class StackingRegressor(RegressorMixin, _BaseStacking):
 
             - If `enable_metadata_routing=False` (default):
               Parameters directly passed to the `predict` method of the
-              `final_estimator`-
+              `final_estimator`.
 
-            - If `enable_metadata_routing=True`:
-              Parameters safely routed to the `predict` method of the
-             `final_estimator`. See :ref:`Metadata Routing User Guide
-              <metadata_routing>` for more details.
+            - If `enable_metadata_routing=True`: Parameters safely routed to
+              the `predict` method of the `final_estimator`. See :ref:`Metadata
+              Routing User Guide <metadata_routing>` for more details.
 
             .. versionchanged:: 1.5
                 `**predict_params` can be routed via metadata routing API.
