@@ -274,6 +274,11 @@ Changelog
   accept large sparse data formats. :pr:`27576` by :user:`Stefanie Senger
   <StefanieSenger>`.
 
+- |Fix| In :class:`linear_model.Ridge` and :class:`linear_model.RidgeCV`, after `fit`,
+  the `coef_` attribute is now of shape `(n_samples,)` like other linear models.
+  :pr:`19746` by :user:`Maxwell Liu<MaxwellLZH>`, `Guillaume Lemaitre`_, and `Adrin
+  Jalali`_.
+
 - |API| :class:`linear_model.RidgeCV` and :class:`linear_model.RidgeClassifierCV`
   will now allow `alpha=0` when `cv != None`, which is consistent with
   :class:`linear_model.Ridge` and :class:`linear_model.RidgeClassifier`.
