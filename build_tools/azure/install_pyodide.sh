@@ -11,7 +11,7 @@ cd -
 
 pip install pyodide-build==$PYODIDE_VERSION pyodide-cli
 
-pyodide build
+pyodide build -Csetup-args="--cross-file=$PWD/build_tools/azure/emscripten.meson.cross"
 
 ls -ltrh dist
 

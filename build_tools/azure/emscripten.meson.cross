@@ -1,0 +1,15 @@
+# compiler paths are omitted intentionally so we can override the compiler using environment variables
+[binaries]
+exe_wrapper = 'node'
+pkgconfig = 'pkg-config'
+
+[properties]
+needs_exe_wrapper = true
+skip_sanity_check = true
+longdouble_format = 'IEEE_QUAD_LE' # for numpy
+
+[host_machine]
+system = 'emscripten'
+cpu_family = 'wasm32'
+cpu = 'wasm'
+endian = 'little'
