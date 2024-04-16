@@ -612,17 +612,7 @@ def test_qda_regularization():
     with pytest.warns(linalg.LinAlgWarning, match=msg):
         y_pred = clf.fit(X2, y6)
 
-    # XXX: RuntimeWarning is also raised at predict time because of divisions
-    # by zero when the model is fit with a constant feature and without
-    # regularization: should this be considered a bug? Either by the fit-time
-    # message more informative, raising and exception instead of a warning in
-    # this case or somehow changing predict to avoid division by zero.
-    with (
-        pytest.warns(RuntimeWarning, match="divide by zero encountered in log"),
-        pytest.warns(RuntimeWarning, match="divide by zero encountered in power"),
-        pytest.warns(RuntimeWarning, match="invalid value encountered in multiply"),
-    ):
-        y_pred = clf.predict(X2)
+    y_pred = clf.predict(X2)
     assert np.any(y_pred != y6)
 
     # Adding a little regularization fixes the fit time error.
