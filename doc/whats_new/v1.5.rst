@@ -127,6 +127,13 @@ Changelog
     :pr:`123456` by :user:`Joe Bloggs <joeongithub>`.
     where 123455 is the *pull request* number, not the issue number.
 
+:mod:`sklearn.calibration`
+..........................
+
+- |Fix| Fixed a regression in :class:`calibration.CalibratedClassifierCV` where
+  an error was wrongly raised with string targets. 
+  :pr:`28843` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
+
 :mod:`sklearn.cluster`
 ......................
 
