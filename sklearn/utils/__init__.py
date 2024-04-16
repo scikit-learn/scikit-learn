@@ -42,13 +42,16 @@ from .validation import (
     indexable,
 )
 
-# Do not deprecate parallel_backend and register_parallel_backend as they are
-# needed to tune `scikit-learn` behavior and have different effect if called
-# from the vendored version or or the site-package version. The other are
-# utilities that are independent of scikit-learn so they are not part of
-# scikit-learn public API.
-parallel_backend = _joblib.parallel_backend
-register_parallel_backend = _joblib.register_parallel_backend
+# TODO(1.7): remove parallel_backend and register_parallel_backend
+msg = "deprecated in 1.5 to be removed in 1.7. Use joblib.{} instead."
+register_parallel_backend = deprecated(msg)(_joblib.register_parallel_backend)
+
+
+# if a class, deprecated will change the object in _joblib module so we need to subclass
+@deprecated(msg)
+class parallel_backend(_joblib.parallel_backend):
+    pass
+
 
 __all__ = [
     "murmurhash3_32",
