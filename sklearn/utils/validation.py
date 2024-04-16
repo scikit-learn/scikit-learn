@@ -18,8 +18,16 @@ import scipy.sparse as sp
 
 from .. import get_config as _get_config
 from ..exceptions import DataConversionWarning, NotFittedError, PositiveSpectrumWarning
-from ..utils._array_api import _asarray_with_order, _is_numpy_namespace, get_namespace
 from ..utils.deprecation import _deprecate_force_all_finite
+from ..utils._array_api import (
+    _asarray_with_order,
+    _is_numpy_namespace,
+    device,
+    get_namespace,
+    isdtype,
+    max_precision_float_dtype,
+    supported_float_dtypes,
+)
 from ..utils.fixes import ComplexWarning, _preserve_dia_indices_dtype
 from ._isfinite import FiniteStatus, cy_isfinite
 from ._tags import get_tags
@@ -2132,16 +2140,17 @@ def _check_sample_weight(
     """Validate sample weights.
 
     Note that passing sample_weight=None will output an array of ones.
-    Therefore, in some cases, you may want to protect the call with:
-    if sample_weight is not None:
-        sample_weight = _check_sample_weight(...)
+    Therefore, in some cases, you may want to protect the call with::
+
+        if sample_weight is not None:
+            sample_weight = _check_sample_weight(...)
 
     Parameters
     ----------
-    sample_weight : {ndarray, Number or None}, shape (n_samples,)
+    sample_weight : {array, Number or None}, shape (n_samples,)
         Input sample weights.
 
-    X : {ndarray, list, sparse matrix}
+    X : {array, list, sparse matrix}
         Input data.
 
     ensure_non_negative : bool, default=False,
@@ -2152,9 +2161,10 @@ def _check_sample_weight(
     dtype : dtype, default=None
         dtype of the validated `sample_weight`.
         If None, and the input `sample_weight` is an array, the dtype of the
-        input is preserved; otherwise an array with the default numpy dtype
-        is be allocated.  If `dtype` is not one of `float32`, `float64`,
-        `None`, the output will be of dtype `float64`.
+        input is preserved; otherwise an array with the default dtype
+        is allocated.  If `dtype` is not `None` or of the "real floating" kind,
+        the output will be the maximum precision floating-point dtype for the
+        array namespace.
 
     copy : bool, default=False
         If True, a copy of sample_weight will be created.
@@ -2166,16 +2176,20 @@ def _check_sample_weight(
     """
     n_samples = _num_samples(X)
 
-    if dtype is not None and dtype not in [np.float32, np.float64]:
-        dtype = np.float64
+    if isinstance(X, (list, tuple)):
+        X = np.asarray(X)  # Coerce X to a numpy array if it's a list.
+    xp, _ = get_namespace(X)
+
+    if dtype is not None and not isdtype(dtype, "real floating", xp=xp):
+        dtype = max_precision_float_dtype(xp, device=device(X))
 
     if sample_weight is None:
-        sample_weight = np.ones(n_samples, dtype=dtype)
+        sample_weight = xp.ones(n_samples, dtype=dtype, device=device(X))
     elif isinstance(sample_weight, numbers.Number):
-        sample_weight = np.full(n_samples, sample_weight, dtype=dtype)
+        sample_weight = xp.full(n_samples, sample_weight, dtype=dtype, device=device(X))
     else:
         if dtype is None:
-            dtype = [np.float64, np.float32]
+            dtype = supported_float_dtypes(xp)
         sample_weight = check_array(
             sample_weight,
             accept_sparse=False,
@@ -2188,7 +2202,7 @@ def _check_sample_weight(
         if sample_weight.ndim != 1:
             raise ValueError("Sample weights must be 1D array or scalar")
 
-        if sample_weight.shape != (n_samples,):
+        if tuple(sample_weight.shape) != (n_samples,):
             raise ValueError(
                 "sample_weight.shape == {}, expected {}!".format(
                     sample_weight.shape, (n_samples,)

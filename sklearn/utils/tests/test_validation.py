@@ -34,7 +34,16 @@ from sklearn.utils import (
     check_X_y,
     deprecated,
 )
-from sklearn.utils._array_api import yield_namespace_device_dtype_combinations
+from sklearn.utils._array_api import (
+    _convert_to_numpy,
+    _is_numpy_namespace,
+    get_namespace,
+    max_precision_float_dtype,
+    yield_namespace_device_dtype_combinations,
+)
+from sklearn.utils._array_api import (
+    device as array_device,
+)
 from sklearn.utils._mocking import (
     MockDataFrame,
     _MockEstimatorOnOffPrediction,
@@ -1627,6 +1636,84 @@ def test_check_sample_weight():
     err_msg = "Negative values in data passed to `sample_weight`"
     with pytest.raises(ValueError, match=err_msg):
         _check_sample_weight(sample_weight, X, ensure_non_negative=True)
+
+
+@pytest.mark.parametrize(
+    "array_namespace, device, dtype_name", yield_namespace_device_dtype_combinations()
+)
+def test_check_sample_weight_array_api(array_namespace, device, dtype_name):
+    xp = _array_api_for_tests(array_namespace, device)
+
+    def get_X(shape=(5, 1), dtype=None):
+        return xp.asarray(
+            np.ones(shape).astype(dtype or dtype_name, copy=False), device=device
+        )
+
+    # check array order
+    if _is_numpy_namespace(xp):
+        sample_weight = np.ones(10)[::2]
+        assert not sample_weight.flags["C_CONTIGUOUS"]
+        sample_weight = _check_sample_weight(sample_weight, X=np.ones((5, 1)))
+        assert sample_weight.flags["C_CONTIGUOUS"]
+
+    # check None input
+    with config_context(array_api_dispatch=True):
+        x = get_X((5, 2))
+        sample_weight = _check_sample_weight(None, X=x)
+        assert get_namespace(sample_weight)[0] == get_namespace(x)[0]
+        assert array_device(sample_weight) == array_device(x)
+    assert_allclose(_convert_to_numpy(sample_weight, xp=xp), np.ones(5))
+
+    # check numbers input
+    with config_context(array_api_dispatch=True):
+        x = get_X((5, 2))
+        sample_weight = _check_sample_weight(2.0, X=x)
+        assert get_namespace(sample_weight)[0] == get_namespace(x)[0]
+        assert array_device(sample_weight) == array_device(x)
+    assert_allclose(_convert_to_numpy(sample_weight, xp=xp), 2 * np.ones(5))
+
+    # check wrong number of dimensions
+    with (
+        pytest.raises(ValueError, match="Sample weights must be 1D array or scalar"),
+        config_context(array_api_dispatch=True),
+    ):
+        _check_sample_weight(get_X((2, 4)), X=get_X((2, 2)))
+
+    # check incorrect n_samples
+    if "torch" in xp.__name__:
+        msg = r"sample_weight.shape == torch.Size\(\[4\]\), expected \(2,\)!"
+    else:
+        msg = r"sample_weight.shape == \(4,\), expected \(2,\)!"
+    with pytest.raises(ValueError, match=msg), config_context(array_api_dispatch=True):
+        _check_sample_weight(get_X(4), X=get_X((2, 2)))
+
+    # float32 dtype is preserved
+    X = get_X((5, 2))
+    sample_weight = get_X(5, dtype="float32")
+    with config_context(array_api_dispatch=True):
+        sample_weight = _check_sample_weight(sample_weight, X)
+        assert get_namespace(sample_weight)[0] == get_namespace(X)[0]
+        assert array_device(sample_weight) == array_device(X)
+    assert sample_weight.dtype == xp.float32
+
+    # int dtype will be converted to float64 (float32 on "mps" device) instead
+    X = get_X((5, 2), dtype=int)
+    with config_context(array_api_dispatch=True):
+        sample_weight = _check_sample_weight(None, X, dtype=X.dtype)
+        assert get_namespace(sample_weight)[0] == get_namespace(X)[0]
+        assert array_device(sample_weight) == array_device(X)
+    assert sample_weight.dtype == max_precision_float_dtype(xp, device=device)
+
+    # check negative weight when only_non_negative=True
+    X = get_X((5, 2))
+    sample_weight = get_X(_num_samples(X))
+    sample_weight[-1] = -10
+    err_msg = "Negative values in data passed to `sample_weight`"
+    with (
+        pytest.raises(ValueError, match=err_msg),
+        config_context(array_api_dispatch=True),
+    ):
+        _check_sample_weight(sample_weight, X, only_non_negative=True)
 
 
 @pytest.mark.parametrize("toarray", [np.array, sp.csr_matrix, sp.csc_matrix])

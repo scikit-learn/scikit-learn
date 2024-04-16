@@ -283,6 +283,33 @@ def supported_float_dtypes(xp):
         return (xp.float64, xp.float32)
 
 
+def max_precision_float_dtype(xp, *, device=None):
+    """Get the maximum precision real-floating type for the namespace and device.
+
+    Parameters
+    ----------
+    xp: module
+        Array namespace.
+
+    device: str or None
+        Optional device to use for dtype selection. If ``None``, then the maximum
+        precision in the namespace is returned.
+
+    Returns
+    -------
+    dtype: dtype
+        The maximum precision real-floating data type supported by the namespace
+        and device.
+    """
+    # N.B. Yanked from pull/27232
+    # TODO: Update to use `__array_namespace__info__()` from array-api v2023.12
+    #       when that becomes more widespread.
+    if xp.__name__ in {"array_api_compat.torch", "torch"} and device == "mps":
+        return xp.float32
+
+    return xp.float64
+
+
 def ensure_common_namespace_device(reference, *arrays):
     """Ensure that all arrays use the same namespace and device as reference.
 
