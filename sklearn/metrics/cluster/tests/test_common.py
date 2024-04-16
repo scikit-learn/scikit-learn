@@ -1,24 +1,24 @@
 from functools import partial
 from itertools import chain
 
-import pytest
 import numpy as np
+import pytest
 
-from sklearn.metrics.cluster import adjusted_mutual_info_score
-from sklearn.metrics.cluster import adjusted_rand_score
-from sklearn.metrics.cluster import rand_score
-from sklearn.metrics.cluster import completeness_score
-from sklearn.metrics.cluster import fowlkes_mallows_score
-from sklearn.metrics.cluster import homogeneity_score
-from sklearn.metrics.cluster import mutual_info_score
-from sklearn.metrics.cluster import normalized_mutual_info_score
-from sklearn.metrics.cluster import v_measure_score
-from sklearn.metrics.cluster import silhouette_score
-from sklearn.metrics.cluster import calinski_harabasz_score
-from sklearn.metrics.cluster import davies_bouldin_score
-
+from sklearn.metrics.cluster import (
+    adjusted_mutual_info_score,
+    adjusted_rand_score,
+    calinski_harabasz_score,
+    completeness_score,
+    davies_bouldin_score,
+    fowlkes_mallows_score,
+    homogeneity_score,
+    mutual_info_score,
+    normalized_mutual_info_score,
+    rand_score,
+    silhouette_score,
+    v_measure_score,
+)
 from sklearn.utils._testing import assert_allclose
-
 
 # Dictionaries of metrics
 # ------------------------
@@ -190,7 +190,7 @@ def test_format_invariance(metric_name):
         score_1 = metric(X, y_true)
         assert score_1 == metric(X.astype(float), y_true)
         y_true_gen = generate_formats(y_true)
-        for (y_true_fmt, fmt_name) in y_true_gen:
+        for y_true_fmt, fmt_name in y_true_gen:
             assert score_1 == metric(X, y_true_fmt)
 
 
@@ -214,6 +214,6 @@ def test_inf_nan_input(metric_name, metric_func):
     else:
         X = np.random.randint(10, size=(2, 10))
         invalids = [(X, [np.inf, np.inf]), (X, [np.nan, np.nan]), (X, [np.nan, np.inf])]
-    with pytest.raises(ValueError, match="contains NaN, infinity"):
+    with pytest.raises(ValueError, match=r"contains (NaN|infinity)"):
         for args in invalids:
             metric_func(*args)

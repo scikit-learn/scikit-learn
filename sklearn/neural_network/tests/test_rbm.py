@@ -1,18 +1,18 @@
-import sys
 import re
-import pytest
+import sys
+from io import StringIO
 
 import numpy as np
-from scipy.sparse import csc_matrix, csr_matrix, lil_matrix
-from sklearn.utils._testing import (
-    assert_almost_equal,
-    assert_array_equal,
-    assert_allclose,
-)
+import pytest
 
 from sklearn.datasets import load_digits
-from io import StringIO
 from sklearn.neural_network import BernoulliRBM
+from sklearn.utils._testing import (
+    assert_allclose,
+    assert_almost_equal,
+    assert_array_equal,
+)
+from sklearn.utils.fixes import CSC_CONTAINERS, CSR_CONTAINERS, LIL_CONTAINERS
 from sklearn.utils.validation import assert_all_finite
 
 Xdigits, _ = load_digits(return_X_y=True)
@@ -62,30 +62,31 @@ def test_transform():
     assert_array_equal(Xt1, Xt2)
 
 
-def test_small_sparse():
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_small_sparse(csr_container):
     # BernoulliRBM should work on small sparse matrices.
-    X = csr_matrix(Xdigits[:4])
+    X = csr_container(Xdigits[:4])
     BernoulliRBM().fit(X)  # no exception
 
 
-def test_small_sparse_partial_fit():
-    for sparse in [csc_matrix, csr_matrix]:
-        X_sparse = sparse(Xdigits[:100])
-        X = Xdigits[:100].copy()
+@pytest.mark.parametrize("sparse_container", CSC_CONTAINERS + CSR_CONTAINERS)
+def test_small_sparse_partial_fit(sparse_container):
+    X_sparse = sparse_container(Xdigits[:100])
+    X = Xdigits[:100].copy()
 
-        rbm1 = BernoulliRBM(
-            n_components=64, learning_rate=0.1, batch_size=10, random_state=9
-        )
-        rbm2 = BernoulliRBM(
-            n_components=64, learning_rate=0.1, batch_size=10, random_state=9
-        )
+    rbm1 = BernoulliRBM(
+        n_components=64, learning_rate=0.1, batch_size=10, random_state=9
+    )
+    rbm2 = BernoulliRBM(
+        n_components=64, learning_rate=0.1, batch_size=10, random_state=9
+    )
 
-        rbm1.partial_fit(X_sparse)
-        rbm2.partial_fit(X)
+    rbm1.partial_fit(X_sparse)
+    rbm2.partial_fit(X)
 
-        assert_almost_equal(
-            rbm1.score_samples(X).mean(), rbm2.score_samples(X).mean(), decimal=0
-        )
+    assert_almost_equal(
+        rbm1.score_samples(X).mean(), rbm2.score_samples(X).mean(), decimal=0
+    )
 
 
 def test_sample_hiddens():
@@ -100,7 +101,10 @@ def test_sample_hiddens():
     assert_almost_equal(h, hs, decimal=1)
 
 
-def test_fit_gibbs():
+@pytest.mark.parametrize("csc_container", CSC_CONTAINERS)
+def test_fit_gibbs(csc_container):
+    # XXX: this test is very seed-dependent! It probably needs to be rewritten.
+
     # Gibbs on the RBM hidden layer should be able to recreate [[0], [1]]
     # from the same input
     rng = np.random.RandomState(42)
@@ -112,17 +116,11 @@ def test_fit_gibbs():
         rbm1.components_, np.array([[0.02649814], [0.02009084]]), decimal=4
     )
     assert_almost_equal(rbm1.gibbs(X), X)
-    return rbm1
 
-
-def test_fit_gibbs_sparse():
     # Gibbs on the RBM hidden layer should be able to recreate [[0], [1]] from
     # the same input even when the input is sparse, and test against non-sparse
-    rbm1 = test_fit_gibbs()
     rng = np.random.RandomState(42)
-    from scipy.sparse import csc_matrix
-
-    X = csc_matrix([[0.0], [1.0]])
+    X = csc_container([[0.0], [1.0]])
     rbm2 = BernoulliRBM(n_components=2, batch_size=2, n_iter=42, random_state=rng)
     rbm2.fit(X)
     assert_almost_equal(
@@ -144,7 +142,8 @@ def test_gibbs_smoke():
     assert np.all((X_sampled != X_sampled2).max(axis=1))
 
 
-def test_score_samples():
+@pytest.mark.parametrize("lil_containers", LIL_CONTAINERS)
+def test_score_samples(lil_containers):
     # Test score_samples (pseudo-likelihood) method.
     # Assert that pseudo-likelihood is computed without clipping.
     # See Fabian's blog, http://bit.ly/1iYefRk
@@ -159,7 +158,7 @@ def test_score_samples():
     rbm1.random_state = 42
     d_score = rbm1.score_samples(X)
     rbm1.random_state = 42
-    s_score = rbm1.score_samples(lil_matrix(X))
+    s_score = rbm1.score_samples(lil_containers(X))
     assert_almost_equal(d_score, s_score)
 
     # Test numerical stability (#2785): would previously generate infinities
@@ -178,13 +177,13 @@ def test_rbm_verbose():
         sys.stdout = old_stdout
 
 
-def test_sparse_and_verbose():
+@pytest.mark.parametrize("csc_container", CSC_CONTAINERS)
+def test_sparse_and_verbose(csc_container):
     # Make sure RBM works with sparse input when verbose=True
     old_stdout = sys.stdout
     sys.stdout = StringIO()
-    from scipy.sparse import csc_matrix
 
-    X = csc_matrix([[0.0], [1.0]])
+    X = csc_container([[0.0], [1.0]])
     rbm = BernoulliRBM(
         n_components=2, batch_size=2, n_iter=1, random_state=42, verbose=True
     )
@@ -238,3 +237,15 @@ def test_convergence_dtype_consistency():
     )
     assert_allclose(rbm_64.components_, rbm_32.components_, rtol=1e-03, atol=0)
     assert_allclose(rbm_64.h_samples_, rbm_32.h_samples_)
+
+
+@pytest.mark.parametrize("method", ["fit", "partial_fit"])
+def test_feature_names_out(method):
+    """Check `get_feature_names_out` for `BernoulliRBM`."""
+    n_components = 10
+    rbm = BernoulliRBM(n_components=n_components)
+    getattr(rbm, method)(Xdigits)
+
+    names = rbm.get_feature_names_out()
+    expected_names = [f"bernoullirbm{i}" for i in range(n_components)]
+    assert_array_equal(expected_names, names)

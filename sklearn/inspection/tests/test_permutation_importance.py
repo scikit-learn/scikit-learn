@@ -1,37 +1,37 @@
-import pytest
 import numpy as np
-
+import pytest
 from numpy.testing import assert_allclose
 
 from sklearn.compose import ColumnTransformer
-from sklearn.datasets import load_diabetes
-from sklearn.datasets import load_iris
-from sklearn.datasets import make_classification
-from sklearn.datasets import make_regression
+from sklearn.datasets import (
+    load_diabetes,
+    load_iris,
+    make_classification,
+    make_regression,
+)
 from sklearn.dummy import DummyClassifier
-from sklearn.ensemble import RandomForestRegressor
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.linear_model import LinearRegression
-from sklearn.linear_model import LogisticRegression
+from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
 from sklearn.impute import SimpleImputer
 from sklearn.inspection import permutation_importance
-from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LinearRegression, LogisticRegression
 from sklearn.metrics import (
     get_scorer,
     mean_squared_error,
     r2_score,
 )
+from sklearn.model_selection import train_test_split
 from sklearn.pipeline import make_pipeline
-from sklearn.preprocessing import KBinsDiscretizer
-from sklearn.preprocessing import OneHotEncoder
-from sklearn.preprocessing import StandardScaler
-from sklearn.preprocessing import scale
+from sklearn.preprocessing import KBinsDiscretizer, OneHotEncoder, StandardScaler, scale
 from sklearn.utils import parallel_backend
 from sklearn.utils._testing import _convert_container
 
 
 @pytest.mark.parametrize("n_jobs", [1, 2])
-def test_permutation_importance_correlated_feature_regression(n_jobs):
+@pytest.mark.parametrize("max_samples", [0.5, 1.0])
+@pytest.mark.parametrize("sample_weight", [None, "ones"])
+def test_permutation_importance_correlated_feature_regression(
+    n_jobs, max_samples, sample_weight
+):
     # Make sure that feature highly correlated to the target have a higher
     # importance
     rng = np.random.RandomState(42)
@@ -42,11 +42,19 @@ def test_permutation_importance_correlated_feature_regression(n_jobs):
 
     X = np.hstack([X, y_with_little_noise])
 
+    weights = np.ones_like(y) if sample_weight == "ones" else sample_weight
     clf = RandomForestRegressor(n_estimators=10, random_state=42)
     clf.fit(X, y)
 
     result = permutation_importance(
-        clf, X, y, n_repeats=n_repeats, random_state=rng, n_jobs=n_jobs
+        clf,
+        X,
+        y,
+        sample_weight=weights,
+        n_repeats=n_repeats,
+        random_state=rng,
+        n_jobs=n_jobs,
+        max_samples=max_samples,
     )
 
     assert result.importances.shape == (X.shape[1], n_repeats)
@@ -57,7 +65,10 @@ def test_permutation_importance_correlated_feature_regression(n_jobs):
 
 
 @pytest.mark.parametrize("n_jobs", [1, 2])
-def test_permutation_importance_correlated_feature_regression_pandas(n_jobs):
+@pytest.mark.parametrize("max_samples", [0.5, 1.0])
+def test_permutation_importance_correlated_feature_regression_pandas(
+    n_jobs, max_samples
+):
     pd = pytest.importorskip("pandas")
 
     # Make sure that feature highly correlated to the target have a higher
@@ -77,7 +88,13 @@ def test_permutation_importance_correlated_feature_regression_pandas(n_jobs):
     clf.fit(X, y)
 
     result = permutation_importance(
-        clf, X, y, n_repeats=n_repeats, random_state=rng, n_jobs=n_jobs
+        clf,
+        X,
+        y,
+        n_repeats=n_repeats,
+        random_state=rng,
+        n_jobs=n_jobs,
+        max_samples=max_samples,
     )
 
     assert result.importances.shape == (X.shape[1], n_repeats)
@@ -88,7 +105,8 @@ def test_permutation_importance_correlated_feature_regression_pandas(n_jobs):
 
 
 @pytest.mark.parametrize("n_jobs", [1, 2])
-def test_robustness_to_high_cardinality_noisy_feature(n_jobs, seed=42):
+@pytest.mark.parametrize("max_samples", [0.5, 1.0])
+def test_robustness_to_high_cardinality_noisy_feature(n_jobs, max_samples, seed=42):
     # Permutation variable importance should not be affected by the high
     # cardinality bias of traditional feature importances, especially when
     # computed on a held-out test set:
@@ -137,7 +155,13 @@ def test_robustness_to_high_cardinality_noisy_feature(n_jobs, seed=42):
     # Let's check that permutation-based feature importances do not have this
     # problem.
     r = permutation_importance(
-        clf, X_test, y_test, n_repeats=n_repeats, random_state=rng, n_jobs=n_jobs
+        clf,
+        X_test,
+        y_test,
+        n_repeats=n_repeats,
+        random_state=rng,
+        n_jobs=n_jobs,
+        max_samples=max_samples,
     )
 
     assert r.importances.shape == (X.shape[1], n_repeats)
@@ -224,7 +248,7 @@ def test_permutation_importance_linear_regresssion():
     lr = LinearRegression().fit(X, y)
 
     # this relationship can be computed in closed form
-    expected_importances = 2 * lr.coef_ ** 2
+    expected_importances = 2 * lr.coef_**2
     results = permutation_importance(
         lr, X, y, n_repeats=50, scoring="neg_mean_squared_error"
     )
@@ -233,14 +257,16 @@ def test_permutation_importance_linear_regresssion():
     )
 
 
-def test_permutation_importance_equivalence_sequential_parallel():
+@pytest.mark.parametrize("max_samples", [500, 1.0])
+def test_permutation_importance_equivalence_sequential_parallel(max_samples):
     # regression test to make sure that sequential and parallel calls will
     # output the same results.
+    # Also tests that max_samples equal to number of samples is equivalent to 1.0
     X, y = make_regression(n_samples=500, n_features=10, random_state=0)
     lr = LinearRegression().fit(X, y)
 
     importance_sequential = permutation_importance(
-        lr, X, y, n_repeats=5, random_state=0, n_jobs=1
+        lr, X, y, n_repeats=5, random_state=0, n_jobs=1, max_samples=max_samples
     )
 
     # First check that the problem is structured enough and that the model is
@@ -273,7 +299,8 @@ def test_permutation_importance_equivalence_sequential_parallel():
 
 
 @pytest.mark.parametrize("n_jobs", [None, 1, 2])
-def test_permutation_importance_equivalence_array_dataframe(n_jobs):
+@pytest.mark.parametrize("max_samples", [0.5, 1.0])
+def test_permutation_importance_equivalence_array_dataframe(n_jobs, max_samples):
     # This test checks that the column shuffling logic has the same behavior
     # both a dataframe and a simple numpy array.
     pd = pytest.importorskip("pandas")
@@ -302,7 +329,7 @@ def test_permutation_importance_equivalence_array_dataframe(n_jobs):
     X_df[new_col_idx] = cat_column
     assert X_df[new_col_idx].dtype == cat_column.dtype
 
-    # Stich an aribtrary index to the dataframe:
+    # Stich an arbitrary index to the dataframe:
     X_df.index = np.arange(len(X_df)).astype(str)
 
     rf = RandomForestRegressor(n_estimators=5, max_depth=3, random_state=0)
@@ -310,7 +337,13 @@ def test_permutation_importance_equivalence_array_dataframe(n_jobs):
 
     n_repeats = 3
     importance_array = permutation_importance(
-        rf, X, y, n_repeats=n_repeats, random_state=0, n_jobs=n_jobs
+        rf,
+        X,
+        y,
+        n_repeats=n_repeats,
+        random_state=0,
+        n_jobs=n_jobs,
+        max_samples=max_samples,
     )
 
     # First check that the problem is structured enough and that the model is
@@ -322,7 +355,13 @@ def test_permutation_importance_equivalence_array_dataframe(n_jobs):
     # Now check that importances computed on dataframe matche the values
     # of those computed on the array with the same data.
     importance_dataframe = permutation_importance(
-        rf, X_df, y, n_repeats=n_repeats, random_state=0, n_jobs=n_jobs
+        rf,
+        X_df,
+        y,
+        n_repeats=n_repeats,
+        random_state=0,
+        n_jobs=n_jobs,
+        max_samples=max_samples,
     )
     assert_allclose(
         importance_array["importances"], importance_dataframe["importances"]
@@ -398,9 +437,7 @@ def test_permutation_importance_sample_weight():
     # the second half of the samples approaches to infinity, the ratio of
     # the two features importance should equal to 2 on expectation (when using
     # mean absolutes error as the loss function).
-    w = np.hstack(
-        [np.repeat(10.0 ** 10, n_half_samples), np.repeat(1.0, n_half_samples)]
-    )
+    w = np.hstack([np.repeat(10.0**10, n_half_samples), np.repeat(1.0, n_half_samples)])
     lr.fit(x, y, w)
     pi = permutation_importance(
         lr,
@@ -485,3 +522,19 @@ def test_permutation_importance_multi_metric(list_single_scorer, multi_scorer):
         )
 
         assert_allclose(multi_result.importances, single_result.importances)
+
+
+def test_permutation_importance_max_samples_error():
+    """Check that a proper error message is raised when `max_samples` is not
+    set to a valid input value.
+    """
+    X = np.array([(1.0, 2.0, 3.0, 4.0)]).T
+    y = np.array([0, 1, 0, 1])
+
+    clf = LogisticRegression()
+    clf.fit(X, y)
+
+    err_msg = r"max_samples must be <= n_samples"
+
+    with pytest.raises(ValueError, match=err_msg):
+        permutation_importance(clf, X, y, max_samples=5)

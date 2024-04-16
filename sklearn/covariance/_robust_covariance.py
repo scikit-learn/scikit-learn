@@ -4,19 +4,23 @@ Robust location and covariance estimators.
 Here are implemented estimators that are resistant to outliers.
 
 """
+
 # Author: Virgile Fritsch <virgile.fritsch@inria.fr>
 #
 # License: BSD 3 clause
 
 import warnings
-import numbers
+from numbers import Integral, Real
+
 import numpy as np
 from scipy import linalg
 from scipy.stats import chi2
 
-from . import empirical_covariance, EmpiricalCovariance
+from ..base import _fit_context
+from ..utils import check_array, check_random_state
+from ..utils._param_validation import Interval
 from ..utils.extmath import fast_logdet
-from ..utils import check_random_state, check_array
+from ._empirical_covariance import EmpiricalCovariance, empirical_covariance
 
 
 # Minimum Covariance Determinant
@@ -71,7 +75,7 @@ def c_step(
     random_state : int, RandomState instance or None, default=None
         Determines the pseudo random number generator for shuffling the data.
         Pass an int for reproducible results across multiple function calls.
-        See :term: `Glossary <random_state>`.
+        See :term:`Glossary <random_state>`.
 
     Returns
     -------
@@ -269,7 +273,7 @@ def select_candidates(
     random_state : int, RandomState instance or None, default=None
         Determines the pseudo random number generator for shuffling the data.
         Pass an int for reproducible results across multiple function calls.
-        See :term: `Glossary <random_state>`.
+        See :term:`Glossary <random_state>`.
 
     See Also
     ---------
@@ -296,7 +300,7 @@ def select_candidates(
     """
     random_state = check_random_state(random_state)
 
-    if isinstance(n_trials, numbers.Integral):
+    if isinstance(n_trials, Integral):
         run_from_estimates = False
     elif isinstance(n_trials, tuple):
         run_from_estimates = True
@@ -357,7 +361,7 @@ def fast_mcd(
     cov_computation_method=empirical_covariance,
     random_state=None,
 ):
-    """Estimates the Minimum Covariance Determinant matrix.
+    """Estimate the Minimum Covariance Determinant matrix.
 
     Read more in the :ref:`User Guide <robust_covariance>`.
 
@@ -370,8 +374,8 @@ def fast_mcd(
         The proportion of points to be included in the support of the raw
         MCD estimate. Default is `None`, which implies that the minimum
         value of `support_fraction` will be used within the algorithm:
-        `(n_sample + n_features + 1) / 2`. This parameter must be in the
-        range (0, 1).
+        `(n_samples + n_features + 1) / 2 * n_samples`. This parameter must be
+        in the range (0, 1).
 
     cov_computation_method : callable, \
             default=:func:`sklearn.covariance.empirical_covariance`
@@ -381,7 +385,7 @@ def fast_mcd(
     random_state : int, RandomState instance or None, default=None
         Determines the pseudo random number generator for shuffling the data.
         Pass an int for reproducible results across multiple function calls.
-        See :term: `Glossary <random_state>`.
+        See :term:`Glossary <random_state>`.
 
     Returns
     -------
@@ -604,13 +608,13 @@ class MinCovDet(EmpiricalCovariance):
         The proportion of points to be included in the support of the raw
         MCD estimate. Default is None, which implies that the minimum
         value of support_fraction will be used within the algorithm:
-        `(n_sample + n_features + 1) / 2`. The parameter must be in the range
-        (0, 1).
+        `(n_samples + n_features + 1) / 2 * n_samples`. The parameter must be
+        in the range (0, 1].
 
     random_state : int, RandomState instance or None, default=None
         Determines the pseudo random number generator for shuffling the data.
         Pass an int for reproducible results across multiple function calls.
-        See :term: `Glossary <random_state>`.
+        See :term:`Glossary <random_state>`.
 
     Attributes
     ----------
@@ -647,6 +651,12 @@ class MinCovDet(EmpiricalCovariance):
         Number of features seen during :term:`fit`.
 
         .. versionadded:: 0.24
+
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
 
     See Also
     --------
@@ -692,6 +702,11 @@ class MinCovDet(EmpiricalCovariance):
     array([0.0813... , 0.0427...])
     """
 
+    _parameter_constraints: dict = {
+        **EmpiricalCovariance._parameter_constraints,
+        "support_fraction": [Interval(Real, 0, 1, closed="right"), None],
+        "random_state": ["random_state"],
+    }
     _nonrobust_covariance = staticmethod(empirical_covariance)
 
     def __init__(
@@ -707,6 +722,7 @@ class MinCovDet(EmpiricalCovariance):
         self.support_fraction = support_fraction
         self.random_state = random_state
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y=None):
         """Fit a Minimum Covariance Determinant with the FastMCD algorithm.
 

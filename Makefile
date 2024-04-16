@@ -23,6 +23,12 @@ in: inplace # just a shortcut
 inplace:
 	$(PYTHON) setup.py build_ext -i
 
+dev-meson:
+	pip install --verbose --no-build-isolation --editable . --config-settings editable-verbose=true
+
+clean-meson:
+	pip uninstall -y scikit-learn
+
 test-code: in
 	$(PYTEST) --showlocals -v sklearn --durations=20
 test-sphinxext:
@@ -61,8 +67,4 @@ doc-noplot: inplace
 	$(MAKE) -C doc html-noplot
 
 code-analysis:
-	flake8 sklearn | grep -v __init__ | grep -v external
-	pylint -E -i y sklearn/ -d E1103,E0611,E1101
-
-flake8-diff:
-	git diff upstream/main -u -- "*.py" | flake8 --diff
+	build_tools/linting.sh

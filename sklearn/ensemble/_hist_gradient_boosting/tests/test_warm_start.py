@@ -1,16 +1,14 @@
 import numpy as np
-from numpy.testing import assert_array_equal
-from numpy.testing import assert_allclose
-
 import pytest
+from numpy.testing import assert_allclose, assert_array_equal
 
 from sklearn.base import clone
 from sklearn.datasets import make_classification, make_regression
-
-from sklearn.ensemble import HistGradientBoostingRegressor
-from sklearn.ensemble import HistGradientBoostingClassifier
+from sklearn.ensemble import (
+    HistGradientBoostingClassifier,
+    HistGradientBoostingRegressor,
+)
 from sklearn.metrics import check_scoring
-
 
 X_classification, y_classification = make_classification(random_state=0)
 X_regression, y_regression = make_regression(random_state=0)
@@ -19,8 +17,8 @@ X_regression, y_regression = make_regression(random_state=0)
 def _assert_predictor_equal(gb_1, gb_2, X):
     """Assert that two HistGBM instances are identical."""
     # Check identical nodes for each tree
-    for (pred_ith_1, pred_ith_2) in zip(gb_1._predictors, gb_2._predictors):
-        for (predictor_1, predictor_2) in zip(pred_ith_1, pred_ith_2):
+    for pred_ith_1, pred_ith_2 in zip(gb_1._predictors, gb_2._predictors):
+        for predictor_1, predictor_2 in zip(pred_ith_1, pred_ith_2):
             assert_array_equal(predictor_1.nodes, predictor_2.nodes)
 
     # Check identical predictions

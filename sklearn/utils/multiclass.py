@@ -1,34 +1,36 @@
+"""
+The :mod:`sklearn.utils.multiclass` module includes utilities to handle
+multiclass/multioutput target in classifiers.
+"""
+
 # Author: Arnaud Joly, Joel Nothman, Hamzeh Alsalhi
 #
 # License: BSD 3 clause
-"""
-Multi-class / multi-label utility function
-==========================================
-
-"""
+import warnings
 from collections.abc import Sequence
 from itertools import chain
-import warnings
-
-from scipy.sparse import issparse
-from scipy.sparse.base import spmatrix
-from scipy.sparse import dok_matrix
-from scipy.sparse import lil_matrix
 
 import numpy as np
+from scipy.sparse import issparse
 
-from .validation import check_array, _assert_all_finite
+from ..utils._array_api import get_namespace
+from ..utils.fixes import VisibleDeprecationWarning
+from .validation import _assert_all_finite, check_array
 
 
 def _unique_multiclass(y):
-    if hasattr(y, "__array__"):
-        return np.unique(np.asarray(y))
+    xp, is_array_api_compliant = get_namespace(y)
+    if hasattr(y, "__array__") or is_array_api_compliant:
+        return xp.unique_values(xp.asarray(y))
     else:
         return set(y)
 
 
 def _unique_indicator(y):
-    return np.arange(check_array(y, accept_sparse=["csr", "csc", "coo"]).shape[1])
+    xp, _ = get_namespace(y)
+    return xp.arange(
+        check_array(y, input_name="y", accept_sparse=["csr", "csc", "coo"]).shape[1]
+    )
 
 
 _FN_UNIQUE_LABELS = {
@@ -53,6 +55,7 @@ def unique_labels(*ys):
     Parameters
     ----------
     *ys : array-likes
+        Label values.
 
     Returns
     -------
@@ -69,6 +72,7 @@ def unique_labels(*ys):
     >>> unique_labels([1, 2, 10], [5, 11])
     array([ 1,  2,  5, 10, 11])
     """
+    xp, is_array_api_compliant = get_namespace(*ys)
     if not ys:
         raise ValueError("No argument has been passed.")
     # Check that we don't mix label format
@@ -101,17 +105,24 @@ def unique_labels(*ys):
     if not _unique_labels:
         raise ValueError("Unknown label type: %s" % repr(ys))
 
-    ys_labels = set(chain.from_iterable(_unique_labels(y) for y in ys))
+    if is_array_api_compliant:
+        # array_api does not allow for mixed dtypes
+        unique_ys = xp.concat([_unique_labels(y) for y in ys])
+        return xp.unique_values(unique_ys)
 
+    ys_labels = set(chain.from_iterable((i for i in _unique_labels(y)) for y in ys))
     # Check that we don't mix string type with number type
     if len(set(isinstance(label, str) for label in ys_labels)) > 1:
         raise ValueError("Mix of label input types (string and number)")
 
-    return np.array(sorted(ys_labels))
+    return xp.asarray(sorted(ys_labels))
 
 
 def _is_integral_float(y):
-    return y.dtype.kind == "f" and np.all(y.astype(int) == y)
+    xp, is_array_api_compliant = get_namespace(y)
+    return xp.isdtype(y.dtype, "real floating") and bool(
+        xp.all(xp.astype((xp.astype(y, xp.int64)), y.dtype) == y)
+    )
 
 
 def is_multilabel(y):
@@ -142,37 +153,48 @@ def is_multilabel(y):
     >>> is_multilabel(np.array([[1, 0, 0]]))
     True
     """
-    if hasattr(y, "__array__") or isinstance(y, Sequence):
+    xp, is_array_api_compliant = get_namespace(y)
+    if hasattr(y, "__array__") or isinstance(y, Sequence) or is_array_api_compliant:
         # DeprecationWarning will be replaced by ValueError, see NEP 34
         # https://numpy.org/neps/nep-0034-infer-dtype-is-object.html
+        check_y_kwargs = dict(
+            accept_sparse=True,
+            allow_nd=True,
+            force_all_finite=False,
+            ensure_2d=False,
+            ensure_min_samples=0,
+            ensure_min_features=0,
+        )
         with warnings.catch_warnings():
-            warnings.simplefilter("error", np.VisibleDeprecationWarning)
+            warnings.simplefilter("error", VisibleDeprecationWarning)
             try:
-                y = np.asarray(y)
-            except np.VisibleDeprecationWarning:
+                y = check_array(y, dtype=None, **check_y_kwargs)
+            except (VisibleDeprecationWarning, ValueError) as e:
+                if str(e).startswith("Complex data not supported"):
+                    raise
+
                 # dtype=object should be provided explicitly for ragged arrays,
                 # see NEP 34
-                y = np.array(y, dtype=object)
+                y = check_array(y, dtype=object, **check_y_kwargs)
 
     if not (hasattr(y, "shape") and y.ndim == 2 and y.shape[1] > 1):
         return False
 
     if issparse(y):
-        if isinstance(y, (dok_matrix, lil_matrix)):
+        if y.format in ("dok", "lil"):
             y = y.tocsr()
+        labels = xp.unique_values(y.data)
         return (
             len(y.data) == 0
-            or np.unique(y.data).size == 1
-            and (
-                y.dtype.kind in "biu"
-                or _is_integral_float(np.unique(y.data))  # bool, int, uint
-            )
+            or (labels.size == 1 or (labels.size == 2) and (0 in labels))
+            and (y.dtype.kind in "biu" or _is_integral_float(labels))  # bool, int, uint
         )
     else:
-        labels = np.unique(y)
+        labels = xp.unique_values(y)
 
-        return len(labels) < 3 and (
-            y.dtype.kind in "biu" or _is_integral_float(labels)  # bool, int, uint
+        return labels.shape[0] < 3 and (
+            xp.isdtype(y.dtype, ("bool", "signed integer", "unsigned integer"))
+            or _is_integral_float(labels)
         )
 
 
@@ -186,8 +208,9 @@ def check_classification_targets(y):
     Parameters
     ----------
     y : array-like
+        Target values.
     """
-    y_type = type_of_target(y)
+    y_type = type_of_target(y, input_name="y")
     if y_type not in [
         "binary",
         "multiclass",
@@ -195,10 +218,14 @@ def check_classification_targets(y):
         "multilabel-indicator",
         "multilabel-sequences",
     ]:
-        raise ValueError("Unknown label type: %r" % y_type)
+        raise ValueError(
+            f"Unknown label type: {y_type}. Maybe you are trying to fit a "
+            "classifier, which expects discrete classes on a "
+            "regression target with continuous values."
+        )
 
 
-def type_of_target(y):
+def type_of_target(y, input_name=""):
     """Determine the type of data indicated by the target.
 
     Note that this type is the most specific type that can be inferred.
@@ -212,7 +239,14 @@ def type_of_target(y):
 
     Parameters
     ----------
-    y : array-like
+    y : {array-like, sparse matrix}
+        Target values. If a sparse matrix, `y` is expected to be a
+        CSR/CSC matrix.
+
+    input_name : str, default=""
+        The data name used to construct the error message.
+
+        .. versionadded:: 1.1.0
 
     Returns
     -------
@@ -238,6 +272,7 @@ def type_of_target(y):
 
     Examples
     --------
+    >>> from sklearn.utils.multiclass import type_of_target
     >>> import numpy as np
     >>> type_of_target([0.1, 0.6])
     'continuous'
@@ -262,9 +297,12 @@ def type_of_target(y):
     >>> type_of_target(np.array([[0, 1], [1, 1]]))
     'multilabel-indicator'
     """
+    xp, is_array_api_compliant = get_namespace(y)
     valid = (
-        isinstance(y, (Sequence, spmatrix)) or hasattr(y, "__array__")
-    ) and not isinstance(y, str)
+        (isinstance(y, Sequence) or issparse(y) or hasattr(y, "__array__"))
+        and not isinstance(y, str)
+        or is_array_api_compliant
+    )
 
     if not valid:
         raise ValueError(
@@ -280,21 +318,48 @@ def type_of_target(y):
 
     # DeprecationWarning will be replaced by ValueError, see NEP 34
     # https://numpy.org/neps/nep-0034-infer-dtype-is-object.html
-    with warnings.catch_warnings():
-        warnings.simplefilter("error", np.VisibleDeprecationWarning)
-        try:
-            y = np.asarray(y)
-        except np.VisibleDeprecationWarning:
-            # dtype=object should be provided explicitly for ragged arrays,
-            # see NEP 34
-            y = np.asarray(y, dtype=object)
+    # We therefore catch both deprecation (NumPy < 1.24) warning and
+    # value error (NumPy >= 1.24).
+    check_y_kwargs = dict(
+        accept_sparse=True,
+        allow_nd=True,
+        force_all_finite=False,
+        ensure_2d=False,
+        ensure_min_samples=0,
+        ensure_min_features=0,
+    )
 
-    # The old sequence of sequences format
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", VisibleDeprecationWarning)
+        if not issparse(y):
+            try:
+                y = check_array(y, dtype=None, **check_y_kwargs)
+            except (VisibleDeprecationWarning, ValueError) as e:
+                if str(e).startswith("Complex data not supported"):
+                    raise
+
+                # dtype=object should be provided explicitly for ragged arrays,
+                # see NEP 34
+                y = check_array(y, dtype=object, **check_y_kwargs)
+
     try:
+        # TODO(1.7): Change to ValueError when byte labels is deprecated.
+        # labels in bytes format
+        first_row_or_val = y[[0], :] if issparse(y) else y[0]
+        if isinstance(first_row_or_val, bytes):
+            warnings.warn(
+                (
+                    "Support for labels represented as bytes is deprecated in v1.5 and"
+                    " will error in v1.7. Convert the labels to a string or integer"
+                    " format."
+                ),
+                FutureWarning,
+            )
+        # The old sequence of sequences format
         if (
-            not hasattr(y[0], "__array__")
-            and isinstance(y[0], Sequence)
-            and not isinstance(y[0], str)
+            not hasattr(first_row_or_val, "__array__")
+            and isinstance(first_row_or_val, Sequence)
+            and not isinstance(first_row_or_val, str)
         ):
             raise ValueError(
                 "You appear to be using a legacy multi-label data"
@@ -307,25 +372,40 @@ def type_of_target(y):
         pass
 
     # Invalid inputs
-    if y.ndim > 2 or (y.dtype == object and len(y) and not isinstance(y.flat[0], str)):
-        return "unknown"  # [[[1, 2]]] or [obj_1] and not ["label_1"]
+    if y.ndim not in (1, 2):
+        # Number of dimension greater than 2: [[[1, 2]]]
+        return "unknown"
+    if not min(y.shape):
+        # Empty ndarray: []/[[]]
+        if y.ndim == 1:
+            # 1-D empty array: []
+            return "binary"  # []
+        # 2-D empty array: [[]]
+        return "unknown"
+    if not issparse(y) and y.dtype == object and not isinstance(y.flat[0], str):
+        # [obj_1] and not ["label_1"]
+        return "unknown"
 
-    if y.ndim == 2 and y.shape[1] == 0:
-        return "unknown"  # [[]]
-
+    # Check if multioutput
     if y.ndim == 2 and y.shape[1] > 1:
         suffix = "-multioutput"  # [[1, 2], [1, 2]]
     else:
         suffix = ""  # [1, 2, 3] or [[1], [2], [3]]
 
-    # check float and contains non-integer float values
-    if y.dtype.kind == "f" and np.any(y != y.astype(int)):
+    # Check float and contains non-integer float values
+    if xp.isdtype(y.dtype, "real floating"):
         # [.1, .2, 3] or [[.1, .2, 3]] or [[1., .2]] and not [1., 2., 3.]
-        _assert_all_finite(y)
-        return "continuous" + suffix
+        data = y.data if issparse(y) else y
+        if xp.any(data != xp.astype(data, int)):
+            _assert_all_finite(data, input_name=input_name)
+            return "continuous" + suffix
 
-    if (len(np.unique(y)) > 2) or (y.ndim >= 2 and len(y[0]) > 1):
-        return "multiclass" + suffix  # [1, 2, 3] or [[1., 2., 3]] or [[1, 2]]
+    # Check multiclass
+    if issparse(first_row_or_val):
+        first_row_or_val = first_row_or_val.data
+    if xp.unique_values(y).shape[0] > 2 or (y.ndim == 2 and len(first_row_or_val) > 1):
+        # [1, 2, 3] or [[1., 2., 3]] or [[1, 2]]
+        return "multiclass" + suffix
     else:
         return "binary"  # [1, 2] or [["a"], ["b"]]
 
@@ -386,7 +466,6 @@ def class_distribution(y, sample_weight=None):
 
     class_prior : list of size n_outputs of ndarray of size (n_classes,)
         Class distribution of each column.
-
     """
     classes = []
     n_classes = []

@@ -55,20 +55,22 @@ Non-Parametric Function Induction in Semi-Supervised Learning. AISTAT 2005
 # Authors: Clay Woolam <clay@woolam.org>
 #          Utkarsh Upadhyay <mail@musicallyut.in>
 # License: BSD
-from abc import ABCMeta, abstractmethod
-
 import warnings
+from abc import ABCMeta, abstractmethod
+from numbers import Integral, Real
+
 import numpy as np
 from scipy import sparse
-from scipy.sparse import csgraph
 
-from ..base import BaseEstimator, ClassifierMixin
+from ..base import BaseEstimator, ClassifierMixin, _fit_context
+from ..exceptions import ConvergenceWarning
 from ..metrics.pairwise import rbf_kernel
 from ..neighbors import NearestNeighbors
+from ..utils._param_validation import Interval, StrOptions
 from ..utils.extmath import safe_sparse_dot
+from ..utils.fixes import laplacian as csgraph_laplacian
 from ..utils.multiclass import check_classification_targets
 from ..utils.validation import check_is_fitted
-from ..exceptions import ConvergenceWarning
 
 
 class BaseLabelPropagation(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
@@ -105,6 +107,16 @@ class BaseLabelPropagation(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
          for more details.
     """
 
+    _parameter_constraints: dict = {
+        "kernel": [StrOptions({"knn", "rbf"}), callable],
+        "gamma": [Interval(Real, 0, None, closed="left")],
+        "n_neighbors": [Interval(Integral, 0, None, closed="neither")],
+        "alpha": [None, Interval(Real, 0, 1, closed="neither")],
+        "max_iter": [Interval(Integral, 0, None, closed="neither")],
+        "tol": [Interval(Real, 0, None, closed="left")],
+        "n_jobs": [None, Integral],
+    }
+
     def __init__(
         self,
         kernel="rbf",
@@ -116,7 +128,6 @@ class BaseLabelPropagation(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
         tol=1e-3,
         n_jobs=None,
     ):
-
         self.max_iter = max_iter
         self.tol = tol
 
@@ -152,13 +163,6 @@ class BaseLabelPropagation(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
                 return self.kernel(X, X)
             else:
                 return self.kernel(X, y)
-        else:
-            raise ValueError(
-                "%s is not a valid kernel. Only rbf and knn"
-                " or an explicit function "
-                " are supported at this time."
-                % self.kernel
-            )
 
     @abstractmethod
     def _build_graph(self):
@@ -167,7 +171,7 @@ class BaseLabelPropagation(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
         )
 
     def predict(self, X):
-        """Performs inductive inference across the model.
+        """Perform inductive inference across the model.
 
         Parameters
         ----------
@@ -179,6 +183,10 @@ class BaseLabelPropagation(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
         y : ndarray of shape (n_samples,)
             Predictions for input data.
         """
+        # Note: since `predict` does not accept semi-supervised labels as input,
+        # `fit(X, y).predict(X) != fit(X, y).transduction_`.
+        # Hence, `fit_predict` is not implemented.
+        # See https://github.com/scikit-learn/scikit-learn/pull/24898
         probas = self.predict_proba(X)
         return self.classes_[np.argmax(probas, axis=1)].ravel()
 
@@ -222,27 +230,37 @@ class BaseLabelPropagation(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
         probabilities /= normalizer
         return probabilities
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y):
-        """Fit a semi-supervised label propagation model based
+        """Fit a semi-supervised label propagation model to X.
 
-        All the input data is provided matrix X (labeled and unlabeled)
-        and corresponding label matrix y with a dedicated marker value for
-        unlabeled samples.
+        The input samples (labeled and unlabeled) are provided by matrix X,
+        and target labels are provided by matrix y. We conventionally apply the
+        label -1 to unlabeled samples in matrix y in a semi-supervised
+        classification.
 
         Parameters
         ----------
-        X : array-like of shape (n_samples, n_features)
-            A matrix of shape (n_samples, n_samples) will be created from this.
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+            Training data, where `n_samples` is the number of samples
+            and `n_features` is the number of features.
 
         y : array-like of shape (n_samples,)
-            `n_labeled_samples` (unlabeled points are marked as -1)
-            All unlabeled samples will be transductively assigned labels.
+            Target class values with unlabeled points marked as -1.
+            All unlabeled samples will be transductively assigned labels
+            internally, which are stored in `transduction_`.
 
         Returns
         -------
         self : object
+            Returns the instance itself.
         """
-        X, y = self._validate_data(X, y)
+        X, y = self._validate_data(
+            X,
+            y,
+            accept_sparse=["csr", "csc"],
+            reset=True,
+        )
         self.X_ = X
         check_classification_targets(y)
 
@@ -257,14 +275,6 @@ class BaseLabelPropagation(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
 
         n_samples, n_classes = len(y), len(classes)
 
-        alpha = self.alpha
-        if self._variant == "spreading" and (
-            alpha is None or alpha <= 0.0 or alpha >= 1.0
-        ):
-            raise ValueError(
-                "alpha=%s is invalid: it must be inside the open interval (0, 1)"
-                % alpha
-            )
         y = np.asarray(y)
         unlabeled = y == -1
 
@@ -279,12 +289,12 @@ class BaseLabelPropagation(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
             y_static[unlabeled] = 0
         else:
             # LabelSpreading
-            y_static *= 1 - alpha
+            y_static *= 1 - self.alpha
 
         l_previous = np.zeros((self.X_.shape[0], n_classes))
 
         unlabeled = unlabeled[:, np.newaxis]
-        if sparse.isspmatrix(graph_matrix):
+        if sparse.issparse(graph_matrix):
             graph_matrix = graph_matrix.tocsr()
 
         for self.n_iter_ in range(self.max_iter):
@@ -306,7 +316,7 @@ class BaseLabelPropagation(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
             else:
                 # clamp
                 self.label_distributions_ = (
-                    np.multiply(alpha, self.label_distributions_) + y_static
+                    np.multiply(self.alpha, self.label_distributions_) + y_static
                 )
         else:
             warnings.warn(
@@ -326,7 +336,7 @@ class BaseLabelPropagation(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
 
 
 class LabelPropagation(BaseLabelPropagation):
-    """Label Propagation classifier
+    """Label Propagation classifier.
 
     Read more in the :ref:`User Guide <label_propagation>`.
 
@@ -359,7 +369,7 @@ class LabelPropagation(BaseLabelPropagation):
 
     Attributes
     ----------
-    X_ : ndarray of shape (n_samples, n_features)
+    X_ : {array-like, sparse matrix} of shape (n_samples, n_features)
         Input array.
 
     classes_ : ndarray of shape (n_classes,)
@@ -369,15 +379,31 @@ class LabelPropagation(BaseLabelPropagation):
         Categorical distribution for each item.
 
     transduction_ : ndarray of shape (n_samples)
-        Label assigned to each item via the transduction.
+        Label assigned to each item during :term:`fit`.
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
     n_iter_ : int
         Number of iterations run.
+
+    See Also
+    --------
+    LabelSpreading : Alternate label propagation strategy more robust to noise.
+
+    References
+    ----------
+    Xiaojin Zhu and Zoubin Ghahramani. Learning from labeled and unlabeled data
+    with label propagation. Technical Report CMU-CALD-02-107, Carnegie Mellon
+    University, 2002 http://pages.cs.wisc.edu/~jerryzhu/pub/CMU-CALD-02-107.pdf
 
     Examples
     --------
@@ -392,19 +418,12 @@ class LabelPropagation(BaseLabelPropagation):
     >>> labels[random_unlabeled_points] = -1
     >>> label_prop_model.fit(iris.data, labels)
     LabelPropagation(...)
-
-    References
-    ----------
-    Xiaojin Zhu and Zoubin Ghahramani. Learning from labeled and unlabeled data
-    with label propagation. Technical Report CMU-CALD-02-107, Carnegie Mellon
-    University, 2002 http://pages.cs.wisc.edu/~jerryzhu/pub/CMU-CALD-02-107.pdf
-
-    See Also
-    --------
-    LabelSpreading : Alternate label propagation strategy more robust to noise.
     """
 
     _variant = "propagation"
+
+    _parameter_constraints: dict = {**BaseLabelPropagation._parameter_constraints}
+    _parameter_constraints.pop("alpha")
 
     def __init__(
         self,
@@ -436,18 +455,36 @@ class LabelPropagation(BaseLabelPropagation):
             self.nn_fit = None
         affinity_matrix = self._get_kernel(self.X_)
         normalizer = affinity_matrix.sum(axis=0)
-        if sparse.isspmatrix(affinity_matrix):
+        if sparse.issparse(affinity_matrix):
             affinity_matrix.data /= np.diag(np.array(normalizer))
         else:
             affinity_matrix /= normalizer[:, np.newaxis]
         return affinity_matrix
 
     def fit(self, X, y):
+        """Fit a semi-supervised label propagation model to X.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+            Training data, where `n_samples` is the number of samples
+            and `n_features` is the number of features.
+
+        y : array-like of shape (n_samples,)
+            Target class values with unlabeled points marked as -1.
+            All unlabeled samples will be transductively assigned labels
+            internally, which are stored in `transduction_`.
+
+        Returns
+        -------
+        self : object
+            Returns the instance itself.
+        """
         return super().fit(X, y)
 
 
 class LabelSpreading(BaseLabelPropagation):
-    """LabelSpreading model for semi-supervised learning
+    """LabelSpreading model for semi-supervised learning.
 
     This model is similar to the basic Label Propagation algorithm,
     but uses affinity matrix based on the normalized graph Laplacian
@@ -501,15 +538,31 @@ class LabelSpreading(BaseLabelPropagation):
         Categorical distribution for each item.
 
     transduction_ : ndarray of shape (n_samples,)
-        Label assigned to each item via the transduction.
+        Label assigned to each item during :term:`fit`.
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
     n_iter_ : int
         Number of iterations run.
+
+    See Also
+    --------
+    LabelPropagation : Unregularized graph based semi-supervised learning.
+
+    References
+    ----------
+    `Dengyong Zhou, Olivier Bousquet, Thomas Navin Lal, Jason Weston,
+    Bernhard Schoelkopf. Learning with local and global consistency (2004)
+    <https://citeseerx.ist.psu.edu/doc_view/pid/d74c37aabf2d5cae663007cbd8718175466aea8c>`_
 
     Examples
     --------
@@ -524,19 +577,12 @@ class LabelSpreading(BaseLabelPropagation):
     >>> labels[random_unlabeled_points] = -1
     >>> label_prop_model.fit(iris.data, labels)
     LabelSpreading(...)
-
-    References
-    ----------
-    Dengyong Zhou, Olivier Bousquet, Thomas Navin Lal, Jason Weston,
-    Bernhard Schoelkopf. Learning with local and global consistency (2004)
-    http://citeseer.ist.psu.edu/viewdoc/summary?doi=10.1.1.115.3219
-
-    See Also
-    --------
-    LabelPropagation : Unregularized graph based semi-supervised learning.
     """
 
     _variant = "spreading"
+
+    _parameter_constraints: dict = {**BaseLabelPropagation._parameter_constraints}
+    _parameter_constraints["alpha"] = [Interval(Real, 0, 1, closed="neither")]
 
     def __init__(
         self,
@@ -549,7 +595,6 @@ class LabelSpreading(BaseLabelPropagation):
         tol=1e-3,
         n_jobs=None,
     ):
-
         # this one has different base parameters
         super().__init__(
             kernel=kernel,
@@ -568,9 +613,9 @@ class LabelSpreading(BaseLabelPropagation):
             self.nn_fit = None
         n_samples = self.X_.shape[0]
         affinity_matrix = self._get_kernel(self.X_)
-        laplacian = csgraph.laplacian(affinity_matrix, normed=True)
+        laplacian = csgraph_laplacian(affinity_matrix, normed=True)
         laplacian = -laplacian
-        if sparse.isspmatrix(laplacian):
+        if sparse.issparse(laplacian):
             diag_mask = laplacian.row == laplacian.col
             laplacian.data[diag_mask] = 0.0
         else:

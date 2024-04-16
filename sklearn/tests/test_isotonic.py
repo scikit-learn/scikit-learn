@@ -1,27 +1,26 @@
-import warnings
-import numpy as np
-import pickle
 import copy
+import pickle
+import warnings
 
+import numpy as np
 import pytest
+from scipy.special import expit
 
+import sklearn
 from sklearn.datasets import make_regression
 from sklearn.isotonic import (
-    check_increasing,
-    isotonic_regression,
     IsotonicRegression,
     _make_unique,
-)
-
-from sklearn.utils.validation import check_array
-from sklearn.utils._testing import (
-    assert_allclose,
-    assert_array_equal,
-    assert_array_almost_equal,
+    check_increasing,
+    isotonic_regression,
 )
 from sklearn.utils import shuffle
-
-from scipy.special import expit
+from sklearn.utils._testing import (
+    assert_allclose,
+    assert_array_almost_equal,
+    assert_array_equal,
+)
+from sklearn.utils.validation import check_array
 
 
 def test_permutation_invariance():
@@ -42,9 +41,9 @@ def test_check_increasing_small_number_of_samples():
     x = [0, 1, 2]
     y = [1, 1.1, 1.05]
 
-    with pytest.warns(None) as record:
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", UserWarning)
         is_increasing = check_increasing(x, y)
-    assert len(record) == 0
 
     assert is_increasing
 
@@ -54,9 +53,9 @@ def test_check_increasing_up():
     y = [0, 1.5, 2.77, 8.99, 8.99, 50]
 
     # Check that we got increasing=True and no warnings
-    with pytest.warns(None) as record:
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", UserWarning)
         is_increasing = check_increasing(x, y)
-    assert len(record) == 0
 
     assert is_increasing
 
@@ -66,9 +65,9 @@ def test_check_increasing_up_extreme():
     y = [0, 1, 2, 3, 4, 5]
 
     # Check that we got increasing=True and no warnings
-    with pytest.warns(None) as record:
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", UserWarning)
         is_increasing = check_increasing(x, y)
-    assert len(record) == 0
 
     assert is_increasing
 
@@ -78,9 +77,9 @@ def test_check_increasing_down():
     y = [0, -1.5, -2.77, -8.99, -8.99, -50]
 
     # Check that we got increasing=False and no warnings
-    with pytest.warns(None) as record:
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", UserWarning)
         is_increasing = check_increasing(x, y)
-    assert len(record) == 0
 
     assert not is_increasing
 
@@ -90,9 +89,9 @@ def test_check_increasing_down_extreme():
     y = [0, -1, -2, -3, -4, -5]
 
     # Check that we got increasing=False and no warnings
-    with pytest.warns(None) as record:
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", UserWarning)
         is_increasing = check_increasing(x, y)
-    assert len(record) == 0
 
     assert not is_increasing
 
@@ -336,7 +335,7 @@ def test_isotonic_regression_oob_raise():
     ir.fit(x, y)
 
     # Check that an exception is thrown
-    msg = "A value in x_new is below the interpolation range"
+    msg = "in x_new is below the interpolation range"
     with pytest.raises(ValueError, match=msg):
         ir.predict([min(x) - 10, max(x) + 10])
 
@@ -369,36 +368,6 @@ def test_isotonic_regression_oob_nan():
     # Predict from  training and test x and check that we have two NaNs.
     y1 = ir.predict([min(x) - 10, max(x) + 10])
     assert sum(np.isnan(y1)) == 2
-
-
-def test_isotonic_regression_oob_bad():
-    # Set y and x
-    y = np.array([3, 7, 5, 9, 8, 7, 10])
-    x = np.arange(len(y))
-
-    # Create model and fit
-    ir = IsotonicRegression(increasing="auto", out_of_bounds="xyz")
-
-    # Make sure that we throw an error for bad out_of_bounds value
-    msg = "The argument ``out_of_bounds`` must be in 'nan', 'clip', 'raise'; got xyz"
-    with pytest.raises(ValueError, match=msg):
-        ir.fit(x, y)
-
-
-def test_isotonic_regression_oob_bad_after():
-    # Set y and x
-    y = np.array([3, 7, 5, 9, 8, 7, 10])
-    x = np.arange(len(y))
-
-    # Create model and fit
-    ir = IsotonicRegression(increasing="auto", out_of_bounds="raise")
-
-    # Make sure that we throw an error for bad out_of_bounds value in transform
-    ir.fit(x, y)
-    ir.out_of_bounds = "xyz"
-    msg = "The argument ``out_of_bounds`` must be in 'nan', 'clip', 'raise'; got xyz"
-    with pytest.raises(ValueError, match=msg):
-        ir.transform(x)
 
 
 def test_isotonic_regression_pickle():
@@ -495,7 +464,7 @@ def test_fast_predict():
     # affect out-of-sample predictions:
     # https://github.com/scikit-learn/scikit-learn/pull/6206
     rng = np.random.RandomState(123)
-    n_samples = 10 ** 3
+    n_samples = 10**3
     # X values over the -10,10 range
     X_train = 20.0 * rng.rand(n_samples) - 10
     y_train = (
@@ -626,7 +595,7 @@ def test_isotonic_thresholds(increasing):
     # the data is already strictly monotonic which is not the case with
     # this random data)
     assert X_thresholds.shape[0] < X.shape[0]
-    assert np.in1d(X_thresholds, X).all()
+    assert np.isin(X_thresholds, X).all()
 
     # Output thresholds lie in the range of the training set:
     assert y_thresholds.max() <= y.max()
@@ -695,3 +664,39 @@ def test_isotonic_regression_sample_weight_not_overwritten():
 
     IsotonicRegression().fit(X, y, sample_weight=sample_weight_fit)
     assert_allclose(sample_weight_fit, sample_weight_original)
+
+
+@pytest.mark.parametrize("shape", ["1d", "2d"])
+def test_get_feature_names_out(shape):
+    """Check `get_feature_names_out` for `IsotonicRegression`."""
+    X = np.arange(10)
+    if shape == "2d":
+        X = X.reshape(-1, 1)
+    y = np.arange(10)
+
+    iso = IsotonicRegression().fit(X, y)
+    names = iso.get_feature_names_out()
+    assert isinstance(names, np.ndarray)
+    assert names.dtype == object
+    assert_array_equal(["isotonicregression0"], names)
+
+
+def test_isotonic_regression_output_predict():
+    """Check that `predict` does return the expected output type.
+
+    We need to check that `transform` will output a DataFrame and a NumPy array
+    when we set `transform_output` to `pandas`.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/25499
+    """
+    pd = pytest.importorskip("pandas")
+    X, y = make_regression(n_samples=10, n_features=1, random_state=42)
+    regressor = IsotonicRegression()
+    with sklearn.config_context(transform_output="pandas"):
+        regressor.fit(X, y)
+        X_trans = regressor.transform(X)
+        y_pred = regressor.predict(X)
+
+    assert isinstance(X_trans, pd.DataFrame)
+    assert isinstance(y_pred, np.ndarray)

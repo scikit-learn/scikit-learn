@@ -1,11 +1,10 @@
 import argparse
 from time import time
 
-from sklearn.preprocessing import KBinsDiscretizer
 from sklearn.datasets import make_classification
 from sklearn.ensemble import HistGradientBoostingClassifier
 from sklearn.ensemble._hist_gradient_boosting.utils import get_equivalent_estimator
-
+from sklearn.preprocessing import KBinsDiscretizer
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--n-leaf-nodes", type=int, default=31)
@@ -58,7 +57,7 @@ print(f"Number of samples: {n_samples}")
 
 is_categorical = [True] * n_features
 est = HistGradientBoostingClassifier(
-    loss="binary_crossentropy",
+    loss="log_loss",
     learning_rate=lr,
     max_iter=n_trees,
     max_bins=max_bins,
@@ -73,7 +72,7 @@ fit(est, X, y, "sklearn")
 predict(est, X)
 
 if args.lightgbm:
-    est = get_equivalent_estimator(est, lib="lightgbm")
+    est = get_equivalent_estimator(est, lib="lightgbm", n_classes=2)
     est.set_params(max_cat_to_onehot=1)  # dont use OHE
     categorical_features = list(range(n_features))
     fit(est, X, y, "lightgbm", categorical_feature=categorical_features)

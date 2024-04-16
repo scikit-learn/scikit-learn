@@ -13,18 +13,18 @@ web page of Sam Roweis:
 # Copyright (c) 2011 David Warde-Farley <wardefar at iro dot umontreal dot ca>
 # License: BSD 3 clause
 
-from os.path import dirname, exists, join
-from os import makedirs, remove
+from numbers import Integral, Real
+from os import PathLike, makedirs, remove
+from os.path import exists
 
-import numpy as np
-from scipy.io.matlab import loadmat
 import joblib
+import numpy as np
+from scipy.io import loadmat
 
+from ..utils import Bunch, check_random_state
+from ..utils._param_validation import Interval, validate_params
 from . import get_data_home
-from ._base import _fetch_remote
-from ._base import RemoteFileMetadata
-from ._base import _pkl_filepath
-from ..utils import check_random_state, Bunch
+from ._base import RemoteFileMetadata, _fetch_remote, _pkl_filepath, load_descr
 
 # The original data can be found at:
 # https://cs.nyu.edu/~roweis/data/olivettifaces.mat
@@ -35,6 +35,18 @@ FACES = RemoteFileMetadata(
 )
 
 
+@validate_params(
+    {
+        "data_home": [str, PathLike, None],
+        "shuffle": ["boolean"],
+        "random_state": ["random_state"],
+        "download_if_missing": ["boolean"],
+        "return_X_y": ["boolean"],
+        "n_retries": [Interval(Integral, 1, None, closed="left")],
+        "delay": [Interval(Real, 0.0, None, closed="neither")],
+    },
+    prefer_skip_nested_validation=True,
+)
 def fetch_olivetti_faces(
     *,
     data_home=None,
@@ -42,6 +54,8 @@ def fetch_olivetti_faces(
     random_state=0,
     download_if_missing=True,
     return_X_y=False,
+    n_retries=3,
+    delay=1.0,
 ):
     """Load the Olivetti faces data-set from AT&T (classification).
 
@@ -58,7 +72,7 @@ def fetch_olivetti_faces(
 
     Parameters
     ----------
-    data_home : str, default=None
+    data_home : str or path-like, default=None
         Specify another download and cache folder for the datasets. By default
         all scikit-learn data is stored in '~/scikit_learn_data' subfolders.
 
@@ -72,7 +86,7 @@ def fetch_olivetti_faces(
         See :term:`Glossary <random_state>`.
 
     download_if_missing : bool, default=True
-        If False, raise a IOError if the data is not locally available
+        If False, raise an OSError if the data is not locally available
         instead of trying to download the data from the source site.
 
     return_X_y : bool, default=False
@@ -80,6 +94,16 @@ def fetch_olivetti_faces(
         below for more information about the `data` and `target` object.
 
         .. versionadded:: 0.22
+
+    n_retries : int, default=3
+        Number of retries when HTTP errors are encountered.
+
+        .. versionadded:: 1.5
+
+    delay : float, default=1.0
+        Number of seconds between retries.
+
+        .. versionadded:: 1.5
 
     Returns
     -------
@@ -100,7 +124,20 @@ def fetch_olivetti_faces(
             Description of the modified Olivetti Faces Dataset.
 
     (data, target) : tuple if `return_X_y=True`
+        Tuple with the `data` and `target` objects described above.
+
         .. versionadded:: 0.22
+
+    Examples
+    --------
+    >>> from sklearn.datasets import fetch_olivetti_faces
+    >>> olivetti_faces = fetch_olivetti_faces()
+    >>> olivetti_faces.data.shape
+    (400, 4096)
+    >>> olivetti_faces.target.shape
+    (400,)
+    >>> olivetti_faces.images.shape
+    (400, 64, 64)
     """
     data_home = get_data_home(data_home=data_home)
     if not exists(data_home):
@@ -108,10 +145,12 @@ def fetch_olivetti_faces(
     filepath = _pkl_filepath(data_home, "olivetti.pkz")
     if not exists(filepath):
         if not download_if_missing:
-            raise IOError("Data not found and `download_if_missing` is False")
+            raise OSError("Data not found and `download_if_missing` is False")
 
         print("downloading Olivetti faces from %s to %s" % (FACES.url, data_home))
-        mat_path = _fetch_remote(FACES, dirname=data_home)
+        mat_path = _fetch_remote(
+            FACES, dirname=data_home, n_retries=n_retries, delay=delay
+        )
         mfile = loadmat(file_name=mat_path)
         # delete raw .mat data
         remove(mat_path)
@@ -137,9 +176,7 @@ def fetch_olivetti_faces(
         target = target[order]
     faces_vectorized = faces.reshape(len(faces), -1)
 
-    module_path = dirname(__file__)
-    with open(join(module_path, "descr", "olivetti_faces.rst")) as rst_file:
-        fdescr = rst_file.read()
+    fdescr = load_descr("olivetti_faces.rst")
 
     if return_X_y:
         return faces_vectorized, target

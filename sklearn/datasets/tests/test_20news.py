@@ -1,23 +1,26 @@
 """Test the 20news downloader, if the data is available,
 or if specifically requested via environment variable
-(e.g. for travis cron job)."""
+(e.g. for CI jobs)."""
+
 from functools import partial
 from unittest.mock import patch
 
-import pytest
-
 import numpy as np
+import pytest
 import scipy.sparse as sp
 
-from sklearn.datasets.tests.test_common import check_as_frame
-from sklearn.datasets.tests.test_common import check_pandas_dependency_message
-from sklearn.datasets.tests.test_common import check_return_X_y
-from sklearn.utils._testing import assert_allclose_dense_sparse
+from sklearn.datasets.tests.test_common import (
+    check_as_frame,
+    check_pandas_dependency_message,
+    check_return_X_y,
+)
 from sklearn.preprocessing import normalize
+from sklearn.utils._testing import assert_allclose_dense_sparse
 
 
 def test_20news(fetch_20newsgroups_fxt):
     data = fetch_20newsgroups_fxt(subset="all", shuffle=False)
+    assert data.DESCR.startswith(".. _20newsgroups_dataset:")
 
     # Extract a reduced dataset
     data2cats = fetch_20newsgroups_fxt(
@@ -62,17 +65,19 @@ def test_20news_length_consistency(fetch_20newsgroups_fxt):
 def test_20news_vectorized(fetch_20newsgroups_vectorized_fxt):
     # test subset = train
     bunch = fetch_20newsgroups_vectorized_fxt(subset="train")
-    assert sp.isspmatrix_csr(bunch.data)
+    assert sp.issparse(bunch.data) and bunch.data.format == "csr"
     assert bunch.data.shape == (11314, 130107)
     assert bunch.target.shape[0] == 11314
     assert bunch.data.dtype == np.float64
+    assert bunch.DESCR.startswith(".. _20newsgroups_dataset:")
 
     # test subset = test
     bunch = fetch_20newsgroups_vectorized_fxt(subset="test")
-    assert sp.isspmatrix_csr(bunch.data)
+    assert sp.issparse(bunch.data) and bunch.data.format == "csr"
     assert bunch.data.shape == (7532, 130107)
     assert bunch.target.shape[0] == 7532
     assert bunch.data.dtype == np.float64
+    assert bunch.DESCR.startswith(".. _20newsgroups_dataset:")
 
     # test return_X_y option
     fetch_func = partial(fetch_20newsgroups_vectorized_fxt, subset="test")
@@ -80,10 +85,11 @@ def test_20news_vectorized(fetch_20newsgroups_vectorized_fxt):
 
     # test subset = all
     bunch = fetch_20newsgroups_vectorized_fxt(subset="all")
-    assert sp.isspmatrix_csr(bunch.data)
+    assert sp.issparse(bunch.data) and bunch.data.format == "csr"
     assert bunch.data.shape == (11314 + 7532, 130107)
     assert bunch.target.shape[0] == 11314 + 7532
     assert bunch.data.dtype == np.float64
+    assert bunch.DESCR.startswith(".. _20newsgroups_dataset:")
 
 
 def test_20news_normalization(fetch_20newsgroups_vectorized_fxt):

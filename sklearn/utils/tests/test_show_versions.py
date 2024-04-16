@@ -1,7 +1,6 @@
-from sklearn.utils._show_versions import _get_sys_info
-from sklearn.utils._show_versions import _get_deps_info
-from sklearn.utils._show_versions import show_versions
+from sklearn.utils._show_versions import _get_deps_info, _get_sys_info, show_versions
 from sklearn.utils._testing import ignore_warnings
+from sklearn.utils.fixes import threadpool_info
 
 
 def test_get_sys_info():
@@ -34,3 +33,7 @@ def test_show_versions(capsys):
 
     assert "python" in out
     assert "numpy" in out
+
+    info = threadpool_info()
+    if info:
+        assert "threadpoolctl info:" in out

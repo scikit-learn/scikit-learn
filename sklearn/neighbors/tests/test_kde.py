@@ -1,20 +1,24 @@
+import joblib
 import numpy as np
-
 import pytest
 
-from sklearn.utils._testing import assert_allclose
-from sklearn.neighbors import KernelDensity, KDTree, NearestNeighbors
+from sklearn.datasets import make_blobs
+from sklearn.exceptions import NotFittedError
+from sklearn.model_selection import GridSearchCV
+from sklearn.neighbors import KDTree, KernelDensity, NearestNeighbors
 from sklearn.neighbors._ball_tree import kernel_norm
 from sklearn.pipeline import make_pipeline
-from sklearn.datasets import make_blobs
-from sklearn.model_selection import GridSearchCV
 from sklearn.preprocessing import StandardScaler
-from sklearn.exceptions import NotFittedError
-import joblib
+from sklearn.utils._testing import assert_allclose
 
 
 # XXX Duplicated in test_neighbors_tree, test_kde
 def compute_kernel_slow(Y, X, kernel, h):
+    if h == "scott":
+        h = X.shape[0] ** (-1 / (X.shape[1] + 4))
+    elif h == "silverman":
+        h = (X.shape[0] * (X.shape[1] + 2) / 4) ** (-1 / (X.shape[1] + 4))
+
     d = np.sqrt(((Y[:, None, :] - X) ** 2).sum(-1))
     norm = kernel_norm(h, X.shape[1], kernel) / X.shape[0]
 
@@ -46,7 +50,7 @@ def check_results(kernel, bandwidth, atol, rtol, X, Y, dens_true):
 @pytest.mark.parametrize(
     "kernel", ["gaussian", "tophat", "epanechnikov", "exponential", "linear", "cosine"]
 )
-@pytest.mark.parametrize("bandwidth", [0.01, 0.1, 1])
+@pytest.mark.parametrize("bandwidth", [0.01, 0.1, 1, "scott", "silverman"])
 def test_kernel_density(kernel, bandwidth):
     n_samples, n_features = (100, 3)
 
@@ -107,11 +111,12 @@ def test_kde_algorithm_metric_choice(algorithm, metric):
     X = rng.randn(10, 2)  # 2 features required for haversine dist.
     Y = rng.randn(10, 2)
 
+    kde = KernelDensity(algorithm=algorithm, metric=metric)
+
     if algorithm == "kd_tree" and metric not in KDTree.valid_metrics:
-        with pytest.raises(ValueError):
-            KernelDensity(algorithm=algorithm, metric=metric)
+        with pytest.raises(ValueError, match="invalid metric"):
+            kde.fit(X)
     else:
-        kde = KernelDensity(algorithm=algorithm, metric=metric)
         kde.fit(X)
         y_dens = kde.score_samples(Y)
         assert y_dens.shape == Y.shape[:1]
@@ -125,17 +130,7 @@ def test_kde_score(n_samples=100, n_features=3):
     # Y = rng.random_sample((n_samples, n_features))
 
 
-def test_kde_badargs():
-    with pytest.raises(ValueError):
-        KernelDensity(algorithm="blah")
-    with pytest.raises(ValueError):
-        KernelDensity(bandwidth=0)
-    with pytest.raises(ValueError):
-        KernelDensity(kernel="blah")
-    with pytest.raises(ValueError):
-        KernelDensity(metric="blah")
-    with pytest.raises(ValueError):
-        KernelDensity(algorithm="kd_tree", metric="blah")
+def test_kde_sample_weights_error():
     kde = KernelDensity()
     with pytest.raises(ValueError):
         kde.fit(np.random.random((200, 10)), sample_weight=np.random.random((200, 10)))
@@ -203,17 +198,6 @@ def test_kde_sample_weights():
                     assert_allclose(scores_scaled_weight, scores_weight)
 
 
-def test_sample_weight_invalid():
-    # Check sample weighting raises errors.
-    kde = KernelDensity()
-    data = np.reshape([1.0, 2.0, 3.0], (-1, 1))
-
-    sample_weight = [0.1, -0.2, 0.3]
-    expected_err = "sample_weight must have positive values"
-    with pytest.raises(ValueError, match=expected_err):
-        kde.fit(data, sample_weight=sample_weight)
-
-
 @pytest.mark.parametrize("sample_weight", [None, [0.1, 0.2, 0.3]])
 def test_pickling(tmpdir, sample_weight):
     # Make sure that predictions are the same before and after pickling. Used
@@ -245,3 +229,24 @@ def test_check_is_fitted(method):
 
     with pytest.raises(NotFittedError):
         getattr(kde, method)(X)
+
+
+@pytest.mark.parametrize("bandwidth", ["scott", "silverman", 0.1])
+def test_bandwidth(bandwidth):
+    n_samples, n_features = (100, 3)
+    rng = np.random.RandomState(0)
+    X = rng.randn(n_samples, n_features)
+    kde = KernelDensity(bandwidth=bandwidth).fit(X)
+    samp = kde.sample(100)
+    kde_sc = kde.score_samples(X)
+    assert X.shape == samp.shape
+    assert kde_sc.shape == (n_samples,)
+
+    # Test that the attribute self.bandwidth_ has the expected value
+    if bandwidth == "scott":
+        h = X.shape[0] ** (-1 / (X.shape[1] + 4))
+    elif bandwidth == "silverman":
+        h = (X.shape[0] * (X.shape[1] + 2) / 4) ** (-1 / (X.shape[1] + 4))
+    else:
+        h = bandwidth
+    assert kde.bandwidth_ == pytest.approx(h)

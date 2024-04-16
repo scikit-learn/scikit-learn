@@ -4,31 +4,29 @@
 # License: BSD 3 clause
 
 from abc import ABCMeta, abstractmethod
-import numbers
 from typing import List
 
 import numpy as np
-
 from joblib import effective_n_jobs
 
-from ..base import clone
-from ..base import is_classifier, is_regressor
-from ..base import BaseEstimator
-from ..base import MetaEstimatorMixin
-from ..tree import DecisionTreeRegressor, ExtraTreeRegressor
-from ..utils import Bunch, _print_elapsed_time
-from ..utils import check_random_state
+from ..base import BaseEstimator, MetaEstimatorMixin, clone, is_classifier, is_regressor
+from ..utils import Bunch, check_random_state
+from ..utils._tags import _safe_tags
+from ..utils._user_interface import _print_elapsed_time
+from ..utils.metadata_routing import _routing_enabled
 from ..utils.metaestimators import _BaseComposition
 
 
 def _fit_single_estimator(
-    estimator, X, y, sample_weight=None, message_clsname=None, message=None
+    estimator, X, y, fit_params, message_clsname=None, message=None
 ):
     """Private function used to fit an estimator within a job."""
-    if sample_weight is not None:
+    # TODO(SLEP6): remove if condition for unrouted sample_weight when metadata
+    # routing can't be disabled.
+    if not _routing_enabled() and "sample_weight" in fit_params:
         try:
             with _print_elapsed_time(message_clsname, message):
-                estimator.fit(X, y, sample_weight=sample_weight)
+                estimator.fit(X, y, sample_weight=fit_params["sample_weight"])
         except TypeError as exc:
             if "unexpected keyword argument 'sample_weight'" in str(exc):
                 raise TypeError(
@@ -39,7 +37,7 @@ def _fit_single_estimator(
             raise
     else:
         with _print_elapsed_time(message_clsname, message):
-            estimator.fit(X, y)
+            estimator.fit(X, y, **fit_params)
     return estimator
 
 
@@ -89,7 +87,7 @@ class BaseEnsemble(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
 
     Parameters
     ----------
-    base_estimator : object
+    estimator : object
         The base estimator from which the ensemble is built.
 
     n_estimators : int, default=10
@@ -101,7 +99,7 @@ class BaseEnsemble(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
 
     Attributes
     ----------
-    base_estimator_ : estimator
+    estimator_ : estimator
         The base estimator from which the ensemble is grown.
 
     estimators_ : list of estimators
@@ -112,60 +110,40 @@ class BaseEnsemble(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
     _required_parameters: List[str] = []
 
     @abstractmethod
-    def __init__(self, base_estimator, *, n_estimators=10, estimator_params=tuple()):
+    def __init__(
+        self,
+        estimator=None,
+        *,
+        n_estimators=10,
+        estimator_params=tuple(),
+    ):
         # Set parameters
-        self.base_estimator = base_estimator
+        self.estimator = estimator
         self.n_estimators = n_estimators
         self.estimator_params = estimator_params
 
-        # Don't instantiate estimators now! Parameters of base_estimator might
+        # Don't instantiate estimators now! Parameters of estimator might
         # still change. Eg., when grid-searching with the nested object syntax.
         # self.estimators_ needs to be filled by the derived classes in fit.
 
     def _validate_estimator(self, default=None):
-        """Check the estimator and the n_estimator attribute.
+        """Check the base estimator.
 
-        Sets the base_estimator_` attributes.
+        Sets the `estimator_` attributes.
         """
-        if not isinstance(self.n_estimators, numbers.Integral):
-            raise ValueError(
-                "n_estimators must be an integer, got {0}.".format(
-                    type(self.n_estimators)
-                )
-            )
-
-        if self.n_estimators <= 0:
-            raise ValueError(
-                "n_estimators must be greater than zero, got {0}.".format(
-                    self.n_estimators
-                )
-            )
-
-        if self.base_estimator is not None:
-            self.base_estimator_ = self.base_estimator
+        if self.estimator is not None:
+            self.estimator_ = self.estimator
         else:
-            self.base_estimator_ = default
-
-        if self.base_estimator_ is None:
-            raise ValueError("base_estimator cannot be None")
+            self.estimator_ = default
 
     def _make_estimator(self, append=True, random_state=None):
-        """Make and configure a copy of the `base_estimator_` attribute.
+        """Make and configure a copy of the `estimator_` attribute.
 
         Warning: This method should be used to properly instantiate new
         sub-estimators.
         """
-        estimator = clone(self.base_estimator_)
+        estimator = clone(self.estimator_)
         estimator.set_params(**{p: getattr(self, p) for p in self.estimator_params})
-
-        # TODO: Remove in v1.2
-        # criterion "mse" and "mae" would cause warnings in every call to
-        # DecisionTreeRegressor.fit(..)
-        if isinstance(estimator, (DecisionTreeRegressor, ExtraTreeRegressor)):
-            if getattr(estimator, "criterion", None) == "mse":
-                estimator.set_params(criterion="squared_error")
-            elif getattr(estimator, "criterion", None) == "mae":
-                estimator.set_params(criterion="absolute_error")
 
         if random_state is not None:
             _set_random_states(estimator, random_state)
@@ -239,10 +217,10 @@ class _BaseHeterogeneousEnsemble(
         self.estimators = estimators
 
     def _validate_estimators(self):
-        if self.estimators is None or len(self.estimators) == 0:
+        if len(self.estimators) == 0:
             raise ValueError(
-                "Invalid 'estimators' attribute, 'estimators' should be a list"
-                " of (string, estimator) tuples."
+                "Invalid 'estimators' attribute, 'estimators' should be a "
+                "non-empty list of (string, estimator) tuples."
             )
         names, estimators = zip(*self.estimators)
         # defined by MetaEstimatorMixin
@@ -312,3 +290,16 @@ class _BaseHeterogeneousEnsemble(
             names mapped to their values.
         """
         return super()._get_params("estimators", deep=deep)
+
+    def _more_tags(self):
+        try:
+            allow_nan = all(
+                _safe_tags(est[1])["allow_nan"] if est[1] != "drop" else True
+                for est in self.estimators
+            )
+        except Exception:
+            # If `estimators` does not comply with our API (list of tuples) then it will
+            # fail. In this case, we assume that `allow_nan` is False but the parameter
+            # validation will raise an error during `fit`.
+            allow_nan = False
+        return {"preserves_dtype": [], "allow_nan": allow_nan}

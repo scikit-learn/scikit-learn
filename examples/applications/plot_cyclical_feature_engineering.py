@@ -12,6 +12,7 @@ the :class:`sklearn.preprocessing.SplineTransformer` class and its
 `extrapolation="periodic"` option.
 
 """
+
 # %%
 # Data exploration on the Bike Sharing Demand dataset
 # ---------------------------------------------------
@@ -32,9 +33,8 @@ df = bike_sharing.frame
 # demand around the middle of the days:
 import matplotlib.pyplot as plt
 
-
 fig, ax = plt.subplots(figsize=(12, 4))
-average_week_demand = df.groupby(["weekday", "hour"]).mean()["count"]
+average_week_demand = df.groupby(["weekday", "hour"])["count"].mean()
 average_week_demand.plot(ax=ax)
 _ = ax.set(
     title="Average hourly bike demand during the week",
@@ -50,7 +50,7 @@ _ = ax.set(
 # a hourly basis:
 df["count"].max()
 
-# %% [markdown]
+# %%
 #
 # Let us rescale the target variable (number of hourly bike rentals) to predict
 # a relative demand so that the mean absolute error is more easily interpreted
@@ -59,14 +59,15 @@ df["count"].max()
 # .. note::
 #
 #     The fit method of the models used in this notebook all minimize the
-#     mean squared error to estimate the conditional mean instead of the mean
-#     absolute error that would fit an estimator of the conditional median.
+#     mean squared error to estimate the conditional mean.
+#     The absolute error, however, would estimate the conditional median.
 #
-#     When reporting performance measure on the test set in the discussion, we
-#     instead choose to focus on the mean absolute error that is more
-#     intuitive than the (root) mean squared error. Note however that the best
-#     models for one metric are also the best for the other in this study.
-y = df["count"] / 1000
+#     Nevertheless, when reporting performance measures on the test set in
+#     the discussion, we choose to focus on the mean absolute error instead
+#     of the (root) mean squared error because it is more intuitive to
+#     interpret. Note, however, that in this study the best models for one
+#     metric are also the best ones in terms of the other metric.
+y = df["count"] / df["count"].max()
 
 # %%
 fig, ax = plt.subplots(figsize=(12, 4))
@@ -103,7 +104,13 @@ X["weather"].value_counts()
 # train machine learning models with cross validation. Instead, we simplify the
 # representation by collapsing those into the `"rain"` category.
 #
-X["weather"].replace(to_replace="heavy_rain", value="rain", inplace=True)
+X["weather"] = (
+    X["weather"]
+    .astype(object)
+    .replace(to_replace="heavy_rain", value="rain")
+    .astype("category")
+)
+
 # %%
 X["weather"].value_counts()
 
@@ -164,67 +171,52 @@ X.iloc[train_4]
 # -----------------
 #
 # Gradient Boosting Regression with decision trees is often flexible enough to
-# efficiently handle heteorogenous tabular data with a mix of categorical and
+# efficiently handle heterogeneous tabular data with a mix of categorical and
 # numerical features as long as the number of samples is large enough.
 #
-# Here, we do minimal ordinal encoding for the categorical variables and then
-# let the model know that it should treat those as categorical variables by
-# using a dedicated tree splitting rule. Since we use an ordinal encoder, we
-# pass the list of categorical values explicitly to use a logical order when
-# encoding the categories as integer instead of the lexicographical order. This
-# also has the added benefit of preventing any issue with unknown categories
-# when using cross-validation.
+# Here, we use the modern
+# :class:`~sklearn.ensemble.HistGradientBoostingRegressor` with native support
+# for categorical features. Therefore, we only need to set
+# `categorical_features="from_dtype"` such that features with categorical dtype
+# are considered categorical features. For reference, we extract the categorical
+# features from the dataframe based on the dtype. The internal trees use a dedicated
+# tree splitting rule for these features.
 #
-# The numerical variable need no preprocessing and, for the sake of simplicity,
+# The numerical variables need no preprocessing and, for the sake of simplicity,
 # we only try the default hyper-parameters for this model:
-from sklearn.pipeline import make_pipeline
-from sklearn.preprocessing import OrdinalEncoder
 from sklearn.compose import ColumnTransformer
 from sklearn.ensemble import HistGradientBoostingRegressor
 from sklearn.model_selection import cross_validate
+from sklearn.pipeline import make_pipeline
 
-
-categorical_columns = [
-    "weather",
-    "season",
-    "holiday",
-    "workingday",
-]
-categories = [
-    ["clear", "misty", "rain"],
-    ["spring", "summer", "fall", "winter"],
-    ["False", "True"],
-    ["False", "True"],
-]
-ordinal_encoder = OrdinalEncoder(categories=categories)
-
-
-gbrt_pipeline = make_pipeline(
-    ColumnTransformer(
-        transformers=[
-            ("categorical", ordinal_encoder, categorical_columns),
-        ],
-        remainder="passthrough",
-    ),
-    HistGradientBoostingRegressor(
-        categorical_features=range(4),
-    ),
-)
+gbrt = HistGradientBoostingRegressor(categorical_features="from_dtype", random_state=42)
+categorical_columns = X.columns[X.dtypes == "category"]
+print("Categorical features:", categorical_columns.tolist())
 
 # %%
 #
 # Lets evaluate our gradient boosting model with the mean absolute error of the
-# relative demand averaged accross our 5 time-based cross-validation splits:
+# relative demand averaged across our 5 time-based cross-validation splits:
+import numpy as np
 
 
-def evaluate(model, X, y, cv):
+def evaluate(model, X, y, cv, model_prop=None, model_step=None):
     cv_results = cross_validate(
         model,
         X,
         y,
-        cv=ts_cv,
+        cv=cv,
         scoring=["neg_mean_absolute_error", "neg_root_mean_squared_error"],
+        return_estimator=model_prop is not None,
     )
+    if model_prop is not None:
+        if model_step is not None:
+            values = [
+                getattr(m[model_step], model_prop) for m in cv_results["estimator"]
+            ]
+        else:
+            values = [getattr(m, model_prop) for m in cv_results["estimator"]]
+        print(f"Mean model.{model_prop} = {np.mean(values)}")
     mae = -cv_results["test_neg_mean_absolute_error"]
     rmse = -cv_results["test_neg_root_mean_squared_error"]
     print(
@@ -233,9 +225,11 @@ def evaluate(model, X, y, cv):
     )
 
 
-evaluate(gbrt_pipeline, X, y, cv=ts_cv)
+evaluate(gbrt, X, y, cv=ts_cv, model_prop="n_iter_")
 
 # %%
+# We see that we set `max_iter` large enough such that early stopping took place.
+#
 # This model has an average error around 4 to 5% of the maximum demand. This is
 # quite good for a first trial without any hyper-parameter tuning! We just had
 # to make the categorical variables explicit. Note that the time related
@@ -243,7 +237,7 @@ evaluate(gbrt_pipeline, X, y, cv=ts_cv)
 # of a problem for tree-based models as they can learn a non-monotonic
 # relationship between ordinal input features and the target.
 #
-# This is not the case for linear regression model as we will see in the
+# This is not the case for linear regression models as we will see in the
 # following.
 #
 # Naive linear regression
@@ -251,15 +245,12 @@ evaluate(gbrt_pipeline, X, y, cv=ts_cv)
 #
 # As usual for linear models, categorical variables need to be one-hot encoded.
 # For consistency, we scale the numerical features to the same 0-1 range using
-# class:`sklearn.preprocessing.MinMaxScaler`, although in this case it does not
+# :class:`~sklearn.preprocessing.MinMaxScaler`, although in this case it does not
 # impact the results much because they are already on comparable scales:
-from sklearn.preprocessing import OneHotEncoder
-from sklearn.preprocessing import MinMaxScaler
 from sklearn.linear_model import RidgeCV
-import numpy as np
+from sklearn.preprocessing import MinMaxScaler, OneHotEncoder
 
-
-one_hot_encoder = OneHotEncoder(handle_unknown="ignore", sparse=False)
+one_hot_encoder = OneHotEncoder(handle_unknown="ignore", sparse_output=False)
 alphas = np.logspace(-6, 6, 25)
 naive_linear_pipeline = make_pipeline(
     ColumnTransformer(
@@ -272,23 +263,28 @@ naive_linear_pipeline = make_pipeline(
 )
 
 
-evaluate(naive_linear_pipeline, X, y, cv=ts_cv)
+evaluate(
+    naive_linear_pipeline, X, y, cv=ts_cv, model_prop="alpha_", model_step="ridgecv"
+)
 
 
 # %%
+# It is affirmative to see that the selected `alpha_` is in our specified
+# range.
 #
 # The performance is not good: the average error is around 14% of the maximum
 # demand. This is more than three times higher than the average error of the
-# gradient boosting model. We can suspect that the naive original encoding of
-# the periodic time-related features might prevent the linear regression model
-# to properly leverage the time information: linear regression does not model
-# non-monotonic relationships between the input features and the target.
-# Non-linear terms have to be engineered in the input.
+# gradient boosting model. We can suspect that the naive original encoding
+# (merely min-max scaled) of the periodic time-related features might prevent
+# the linear regression model to properly leverage the time information: linear
+# regression does not automatically model non-monotonic relationships between
+# the input features and the target. Non-linear terms have to be engineered in
+# the input.
 #
 # For example, the raw numerical encoding of the `"hour"` feature prevents the
 # linear model from recognizing that an increase of hour in the morning from 6
 # to 8 should have a strong positive impact on the number of bike rentals while
-# a increase of similar magnitude in the evening from 18 to 20 should have a
+# an increase of similar magnitude in the evening from 18 to 20 should have a
 # strong negative impact on the predicted number of bike rentals.
 #
 # Time-steps as categories
@@ -296,8 +292,8 @@ evaluate(naive_linear_pipeline, X, y, cv=ts_cv)
 #
 # Since the time features are encoded in a discrete manner using integers (24
 # unique values in the "hours" feature), we could decide to treat those as
-# categorical variables and ignore any assumption implied by the ordering of
-# the hour values using a one-hot encoding.
+# categorical variables using a one-hot encoding and thereby ignore any
+# assumption implied by the ordering of the hour values.
 #
 # Using one-hot encoding for the time features gives the linear model a lot
 # more flexibility as we introduce one additional feature per discrete time
@@ -317,8 +313,8 @@ evaluate(one_hot_linear_pipeline, X, y, cv=ts_cv)
 
 # %%
 # The average error rate of this model is 10% which is much better than using
-# the original ordinal encoding of the time feature, confirming our intuition
-# that the linear regression model benefit from the added flexibility to not
+# the original (ordinal) encoding of the time feature, confirming our intuition
+# that the linear regression model benefits from the added flexibility to not
 # treat time progression in a monotonic manner.
 #
 # However, this introduces a very large number of new features. If the time of
@@ -330,7 +326,7 @@ evaluate(one_hot_linear_pipeline, X, y, cv=ts_cv)
 # benefitting from the non-monotonic expressivity advantages of one-hot
 # encoding.
 #
-# Finally, we also observe than one-hot encoding completely ignores the
+# Finally, we also observe that one-hot encoding completely ignores the
 # ordering of the hour levels while this could be an interesting inductive bias
 # to preserve to some level. In the following we try to explore smooth,
 # non-monotonic encoding that locally preserves the relative ordering of time
@@ -340,7 +336,7 @@ evaluate(one_hot_linear_pipeline, X, y, cv=ts_cv)
 # ----------------------
 #
 # As a first attempt, we can try to encode each of those periodic features
-# using a sine and cosine transform with the matching period.
+# using a sine and cosine transformation with the matching period.
 #
 # Each ordinal time feature is transformed into 2 features that together encode
 # equivalent information in a non-monotonic way, and more importantly without
@@ -375,11 +371,15 @@ _ = plt.title("Trigonometric encoding for the 'hour' feature")
 #
 # Let's use a 2D scatter plot with the hours encoded as colors to better see
 # how this representation maps the 24 hours of the day to a 2D space, akin to
-# some sort of 24 hour version of an analog clock. Note that the "25th" hour is
-# mapped back to the 1st hour because of the periodic nature of the sine/cosine
-# representation.
+# some sort of a 24 hour version of an analog clock. Note that the "25th" hour
+# is mapped back to the 1st hour because of the periodic nature of the
+# sine/cosine representation.
 fig, ax = plt.subplots(figsize=(7, 5))
 sp = ax.scatter(hour_df["hour_sin"], hour_df["hour_cos"], c=hour_df["hour"])
+ax.set(
+    xlabel="sin(hour)",
+    ylabel="cos(hour)",
+)
 _ = fig.colorbar(sp)
 
 # %%
@@ -416,7 +416,8 @@ evaluate(cyclic_cossin_linear_pipeline, X, y, cv=ts_cv)
 #
 # We can try an alternative encoding of the periodic time-related features
 # using spline transformations with a large enough number of splines, and as a
-# result a larger number of expanded features:
+# result a larger number of expanded features compared to the sine/cosine
+# transformation:
 from sklearn.preprocessing import SplineTransformer
 
 
@@ -481,8 +482,8 @@ evaluate(cyclic_spline_linear_pipeline, X, y, cv=ts_cv)
 # ~10% of the maximum demand, which is similar to what we observed with the
 # one-hot encoded features.
 #
-# Qualitative analysis of the impact of features on linear models predictions
-# ---------------------------------------------------------------------------
+# Qualitative analysis of the impact of features on linear model predictions
+# --------------------------------------------------------------------------
 #
 # Here, we want to visualize the impact of the feature engineering choices on
 # the time related shape of the predictions.
@@ -535,13 +536,13 @@ _ = ax.legend()
 # %%
 # We can draw the following conclusions from the above plot:
 #
-# - the **raw ordinal time-related features** are problematic because they do
+# - The **raw ordinal time-related features** are problematic because they do
 #   not capture the natural periodicity: we observe a big jump in the
 #   predictions at the end of each day when the hour features goes from 23 back
 #   to 0. We can expect similar artifacts at the end of each week or each year.
 #
-# - as expected, the **trigonometric features** (sine and cosine) do not have
-#   these discontinuities at midnight but the linear regression model fails to
+# - As expected, the **trigonometric features** (sine and cosine) do not have
+#   these discontinuities at midnight, but the linear regression model fails to
 #   leverage those features to properly model intra-day variations.
 #   Using trigonometric features for higher harmonics or additional
 #   trigonometric features for the natural period with different phases could
@@ -553,7 +554,7 @@ _ = ax.legend()
 #   `extrapolation="periodic"` option enforces a smooth representation between
 #   `hour=23` and `hour=0`.
 #
-# - the **one-hot encoded features** behave similarly to the periodic
+# - The **one-hot encoded features** behave similarly to the periodic
 #   spline-based features but are more spiky: for instance they can better
 #   model the morning peak during the week days since this peak lasts shorter
 #   than an hour. However, we will see in the following that what can be an
@@ -588,25 +589,24 @@ cyclic_spline_linear_pipeline[:-1].transform(X).shape
 # under-estimate the commuting-related events during the working days.
 #
 # These systematic prediction errors reveal a form of under-fitting and can be
-# explained by the lack of non-additive modeling of the interactions between
-# features (in this case "workingday" and features derived from "hours"). This
-# issue will be addressed in the following section.
+# explained by the lack of interactions terms between features, e.g.
+# "workingday" and features derived from "hours". This issue will be addressed
+# in the following section.
 
 # %%
 # Modeling pairwise interactions with splines and polynomial features
 # -------------------------------------------------------------------
 #
-# Linear models alone cannot model interaction effects between input features.
-# It does not help that some features are marginally non-linear as is the case
-# with features constructed by `SplineTransformer` (or one-hot encoding or
-# binning).
+# Linear models do not automatically capture interaction effects between input
+# features. It does not help that some features are marginally non-linear as is
+# the case with features constructed by `SplineTransformer` (or one-hot
+# encoding or binning).
 #
 # However, it is possible to use the `PolynomialFeatures` class on coarse
-# grained splined encoded hours to model the "workingday"/"hours" interaction
+# grained spline encoded hours to model the "workingday"/"hours" interaction
 # explicitly without introducing too many new variables:
-from sklearn.preprocessing import PolynomialFeatures
 from sklearn.pipeline import FeatureUnion
-
+from sklearn.preprocessing import PolynomialFeatures
 
 hour_workday_interaction = make_pipeline(
     ColumnTransformer(
@@ -620,7 +620,7 @@ hour_workday_interaction = make_pipeline(
 
 # %%
 # Those features are then combined with the ones already computed in the
-# previous spline-base pipeline. We can observe a nice performance improvemnt
+# previous spline-base pipeline. We can observe a nice performance improvement
 # by modeling this pairwise interaction explicitly:
 
 cyclic_spline_interactions_pipeline = make_pipeline(
@@ -640,19 +640,18 @@ evaluate(cyclic_spline_interactions_pipeline, X, y, cv=ts_cv)
 #
 # The previous analysis highlighted the need to model the interactions between
 # `"workingday"` and `"hours"`. Another example of a such a non-linear
-# interactions that we would like to model could be the impact of the rain that
+# interaction that we would like to model could be the impact of the rain that
 # might not be the same during the working days and the week-ends and holidays
 # for instance.
 #
 # To model all such interactions, we could either use a polynomial expansion on
-# all marginal features at once, after their spline-based expansion. However
+# all marginal features at once, after their spline-based expansion. However,
 # this would create a quadratic number of features which can cause overfitting
 # and computational tractability issues.
 #
-# Alternatively we can use the Nyström method to compute an approximate
+# Alternatively, we can use the Nyström method to compute an approximate
 # polynomial kernel expansion. Let us try the latter:
 from sklearn.kernel_approximation import Nystroem
-
 
 cyclic_spline_poly_pipeline = make_pipeline(
     cyclic_spline_transformer,
@@ -664,7 +663,7 @@ evaluate(cyclic_spline_poly_pipeline, X, y, cv=ts_cv)
 # %%
 #
 # We observe that this model can almost rival the performance of the gradient
-# boosted trees with an average error around 6% of the maximum demand.
+# boosted trees with an average error around 5% of the maximum demand.
 #
 # Note that while the final step of this pipeline is a linear regression model,
 # the intermediate steps such as the spline feature extraction and the Nyström
@@ -689,17 +688,17 @@ evaluate(one_hot_poly_pipeline, X, y, cv=ts_cv)
 
 
 # %%
-# While one-hot features were competitive with spline-based features when using
-# linear models, this is no longer the case when using a low-rank approximation
-# of a non-linear kernel: this can be explained by the fact that spline
-# features are smoother and allow the kernel approximation to find a more
-# expressive decision function.
+# While one-hot encoded features were competitive with spline-based features
+# when using linear models, this is no longer the case when using a low-rank
+# approximation of a non-linear kernel: this can be explained by the fact that
+# spline features are smoother and allow the kernel approximation to find a
+# more expressive decision function.
 #
 # Let us now have a qualitative look at the predictions of the kernel models
 # and of the gradient boosted trees that should be able to better model
 # non-linear interactions between features:
-gbrt_pipeline.fit(X.iloc[train_0], y.iloc[train_0])
-gbrt_predictions = gbrt_pipeline.predict(X.iloc[test_0])
+gbrt.fit(X.iloc[train_0], y.iloc[train_0])
+gbrt_predictions = gbrt.predict(X.iloc[test_0])
 
 one_hot_poly_pipeline.fit(X.iloc[train_0], y.iloc[train_0])
 one_hot_poly_predictions = one_hot_poly_pipeline.predict(X.iloc[test_0])
@@ -743,13 +742,13 @@ _ = ax.legend()
 # since, by default, decision trees are allowed to grow beyond a depth of 2
 # levels.
 #
-# Here we can observe that the combinations of spline features and non-linear
+# Here, we can observe that the combinations of spline features and non-linear
 # kernels works quite well and can almost rival the accuracy of the gradient
 # boosting regression trees.
 #
-# On the contrary, one-hot time features do not perform that well with the low
-# rank kernel model. In particular they significantly over-estimate the low
-# demand hours more than the competing models.
+# On the contrary, one-hot encoded time features do not perform that well with
+# the low rank kernel model. In particular, they significantly over-estimate
+# the low demand hours more than the competing models.
 #
 # We also observe that none of the models can successfully predict some of the
 # peak rentals at the rush hours during the working days. It is possible that
@@ -758,36 +757,47 @@ _ = ax.legend()
 # to the geographical repartition of the fleet at any point in time or the
 # fraction of bikes that are immobilized because they need servicing.
 #
-# Let us finally get a more quantative look at the prediction errors of those
+# Let us finally get a more quantitative look at the prediction errors of those
 # three models using the true vs predicted demand scatter plots:
-fig, axes = plt.subplots(ncols=3, figsize=(12, 4), sharey=True)
-fig.suptitle("Non-linear regression models")
+from sklearn.metrics import PredictionErrorDisplay
+
+fig, axes = plt.subplots(nrows=2, ncols=3, figsize=(13, 7), sharex=True, sharey="row")
+fig.suptitle("Non-linear regression models", y=1.0)
 predictions = [
     one_hot_poly_predictions,
     cyclic_spline_poly_predictions,
     gbrt_predictions,
 ]
 labels = [
-    "One hot + polynomial kernel",
-    "Splines + polynomial kernel",
-    "Gradient Boosted Trees",
+    "One hot +\npolynomial kernel",
+    "Splines +\npolynomial kernel",
+    "Gradient Boosted\nTrees",
 ]
-for ax, pred, label in zip(axes, predictions, labels):
-    ax.scatter(y.iloc[test_0].values, pred, alpha=0.3, label=label)
-    ax.plot([0, 1], [0, 1], "--", label="Perfect model")
-    ax.set(
-        xlim=(0, 1),
-        ylim=(0, 1),
-        xlabel="True demand",
-        ylabel="Predicted demand",
-    )
-    ax.legend()
-
-
+plot_kinds = ["actual_vs_predicted", "residual_vs_predicted"]
+for axis_idx, kind in enumerate(plot_kinds):
+    for ax, pred, label in zip(axes[axis_idx], predictions, labels):
+        disp = PredictionErrorDisplay.from_predictions(
+            y_true=y.iloc[test_0],
+            y_pred=pred,
+            kind=kind,
+            scatter_kwargs={"alpha": 0.3},
+            ax=ax,
+        )
+        ax.set_xticks(np.linspace(0, 1, num=5))
+        if axis_idx == 0:
+            ax.set_yticks(np.linspace(0, 1, num=5))
+            ax.legend(
+                ["Best model", label],
+                loc="upper center",
+                bbox_to_anchor=(0.5, 1.3),
+                ncol=2,
+            )
+        ax.set_aspect("equal", adjustable="box")
+plt.show()
 # %%
 # This visualization confirms the conclusions we draw on the previous plot.
 #
-# All models under-estimate the high demand events (working days rush hours),
+# All models under-estimate the high demand events (working day rush hours),
 # but gradient boosting a bit less so. The low demand events are well predicted
 # on average by gradient boosting while the one-hot polynomial regression
 # pipeline seems to systematically over-estimate demand in that regime. Overall
@@ -800,9 +810,10 @@ for ax, pred, label in zip(axes, predictions, labels):
 # We note that we could have obtained slightly better results for kernel models
 # by using more components (higher rank kernel approximation) at the cost of
 # longer fit and prediction durations. For large values of `n_components`, the
-# performance of the one-hot features would even match the spline features.
+# performance of the one-hot encoded features would even match the spline
+# features.
 #
-# The `Nystroem` + `RidgeCV` classifier could also have been replaced by
+# The `Nystroem` + `RidgeCV` regressor could also have been replaced by
 # :class:`~sklearn.neural_network.MLPRegressor` with one or two hidden layers
 # and we would have obtained quite similar results.
 #
@@ -814,7 +825,7 @@ for ax, pred, label in zip(axes, predictions, labels):
 # flexibility.
 #
 # Finally, in this notebook we used `RidgeCV` because it is very efficient from
-# a computational point of view. However it models the target variable as a
+# a computational point of view. However, it models the target variable as a
 # Gaussian random variable with constant variance. For positive regression
 # problems, it is likely that using a Poisson or Gamma distribution would make
 # more sense. This could be achieved by using

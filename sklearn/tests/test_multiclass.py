@@ -1,43 +1,52 @@
-import numpy as np
-import scipy.sparse as sp
-import pytest
-
 from re import escape
 
-from sklearn.utils._testing import assert_array_equal
-from sklearn.utils._testing import assert_almost_equal
-from sklearn.utils._testing import ignore_warnings
-from sklearn.utils._mocking import CheckingClassifier
-from sklearn.multiclass import OneVsRestClassifier
-from sklearn.multiclass import OneVsOneClassifier
-from sklearn.multiclass import OutputCodeClassifier
-from sklearn.utils.multiclass import check_classification_targets, type_of_target
+import numpy as np
+import pytest
+import scipy.sparse as sp
+from numpy.testing import assert_allclose
+
+from sklearn import datasets, svm
+from sklearn.datasets import load_breast_cancer
+from sklearn.exceptions import NotFittedError
+from sklearn.impute import SimpleImputer
+from sklearn.linear_model import (
+    ElasticNet,
+    Lasso,
+    LinearRegression,
+    LogisticRegression,
+    Perceptron,
+    Ridge,
+    SGDClassifier,
+)
+from sklearn.metrics import precision_score, recall_score
+from sklearn.model_selection import GridSearchCV, cross_val_score
+from sklearn.multiclass import (
+    OneVsOneClassifier,
+    OneVsRestClassifier,
+    OutputCodeClassifier,
+)
+from sklearn.naive_bayes import MultinomialNB
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.pipeline import Pipeline, make_pipeline
+from sklearn.svm import SVC, LinearSVC
+from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.utils import (
     check_array,
     shuffle,
 )
-
-from sklearn.metrics import precision_score
-from sklearn.metrics import recall_score
-
-from sklearn.svm import LinearSVC, SVC
-from sklearn.naive_bayes import MultinomialNB
-from sklearn.linear_model import (
-    LinearRegression,
-    Lasso,
-    ElasticNet,
-    Ridge,
-    Perceptron,
-    LogisticRegression,
-    SGDClassifier,
+from sklearn.utils._mocking import CheckingClassifier
+from sklearn.utils._testing import assert_almost_equal, assert_array_equal
+from sklearn.utils.fixes import (
+    COO_CONTAINERS,
+    CSC_CONTAINERS,
+    CSR_CONTAINERS,
+    DOK_CONTAINERS,
+    LIL_CONTAINERS,
 )
-from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
-from sklearn.model_selection import GridSearchCV, cross_val_score
-from sklearn.pipeline import Pipeline, make_pipeline
-from sklearn.impute import SimpleImputer
-from sklearn import svm
-from sklearn.exceptions import NotFittedError
-from sklearn import datasets
+from sklearn.utils.multiclass import check_classification_targets, type_of_target
+
+msg = "The default value for `force_alpha` will change"
+pytestmark = pytest.mark.filterwarnings(f"ignore:{msg}:FutureWarning")
 
 iris = datasets.load_iris()
 rng = np.random.RandomState(0)
@@ -158,52 +167,49 @@ def test_ovr_ovo_regressor():
     assert np.mean(pred == iris.target) > 0.9
 
 
-def test_ovr_fit_predict_sparse():
-    for sparse in [
-        sp.csr_matrix,
-        sp.csc_matrix,
-        sp.coo_matrix,
-        sp.dok_matrix,
-        sp.lil_matrix,
-    ]:
-        base_clf = MultinomialNB(alpha=1)
+@pytest.mark.parametrize(
+    "sparse_container",
+    CSR_CONTAINERS + CSC_CONTAINERS + COO_CONTAINERS + DOK_CONTAINERS + LIL_CONTAINERS,
+)
+def test_ovr_fit_predict_sparse(sparse_container):
+    base_clf = MultinomialNB(alpha=1)
 
-        X, Y = datasets.make_multilabel_classification(
-            n_samples=100,
-            n_features=20,
-            n_classes=5,
-            n_labels=3,
-            length=50,
-            allow_unlabeled=True,
-            random_state=0,
-        )
+    X, Y = datasets.make_multilabel_classification(
+        n_samples=100,
+        n_features=20,
+        n_classes=5,
+        n_labels=3,
+        length=50,
+        allow_unlabeled=True,
+        random_state=0,
+    )
 
-        X_train, Y_train = X[:80], Y[:80]
-        X_test = X[80:]
+    X_train, Y_train = X[:80], Y[:80]
+    X_test = X[80:]
 
-        clf = OneVsRestClassifier(base_clf).fit(X_train, Y_train)
-        Y_pred = clf.predict(X_test)
+    clf = OneVsRestClassifier(base_clf).fit(X_train, Y_train)
+    Y_pred = clf.predict(X_test)
 
-        clf_sprs = OneVsRestClassifier(base_clf).fit(X_train, sparse(Y_train))
-        Y_pred_sprs = clf_sprs.predict(X_test)
+    clf_sprs = OneVsRestClassifier(base_clf).fit(X_train, sparse_container(Y_train))
+    Y_pred_sprs = clf_sprs.predict(X_test)
 
-        assert clf.multilabel_
-        assert sp.issparse(Y_pred_sprs)
-        assert_array_equal(Y_pred_sprs.toarray(), Y_pred)
+    assert clf.multilabel_
+    assert sp.issparse(Y_pred_sprs)
+    assert_array_equal(Y_pred_sprs.toarray(), Y_pred)
 
-        # Test predict_proba
-        Y_proba = clf_sprs.predict_proba(X_test)
+    # Test predict_proba
+    Y_proba = clf_sprs.predict_proba(X_test)
 
-        # predict assigns a label if the probability that the
-        # sample has the label is greater than 0.5.
-        pred = Y_proba > 0.5
-        assert_array_equal(pred, Y_pred_sprs.toarray())
+    # predict assigns a label if the probability that the
+    # sample has the label is greater than 0.5.
+    pred = Y_proba > 0.5
+    assert_array_equal(pred, Y_pred_sprs.toarray())
 
-        # Test decision_function
-        clf = svm.SVC()
-        clf_sprs = OneVsRestClassifier(clf).fit(X_train, sparse(Y_train))
-        dec_pred = (clf_sprs.decision_function(X_test) > 0).astype(int)
-        assert_array_equal(dec_pred, clf_sprs.predict(X_test).toarray())
+    # Test decision_function
+    clf = svm.SVC()
+    clf_sprs = OneVsRestClassifier(clf).fit(X_train, sparse_container(Y_train))
+    dec_pred = (clf_sprs.decision_function(X_test) > 0).astype(int)
+    assert_array_equal(dec_pred, clf_sprs.predict(X_test).toarray())
 
 
 def test_ovr_always_present():
@@ -473,63 +479,6 @@ def test_ovr_pipeline():
     assert_array_equal(ovr.predict(iris.data), ovr_pipe.predict(iris.data))
 
 
-# TODO: Remove this test in version 1.1
-# when the coef_ attribute is removed
-@ignore_warnings(category=FutureWarning)
-def test_ovr_coef_():
-    for base_classifier in [
-        SVC(kernel="linear", random_state=0),
-        LinearSVC(random_state=0),
-    ]:
-        # SVC has sparse coef with sparse input data
-
-        ovr = OneVsRestClassifier(base_classifier)
-        for X in [iris.data, sp.csr_matrix(iris.data)]:
-            # test with dense and sparse coef
-            ovr.fit(X, iris.target)
-            shape = ovr.coef_.shape
-            assert shape[0] == n_classes
-            assert shape[1] == iris.data.shape[1]
-            # don't densify sparse coefficients
-            assert sp.issparse(ovr.estimators_[0].coef_) == sp.issparse(ovr.coef_)
-
-
-# TODO: Remove this test in version 1.1
-# when the coef_ attribute is removed
-@ignore_warnings(category=FutureWarning)
-def test_ovr_coef_exceptions():
-    # Not fitted exception!
-    ovr = OneVsRestClassifier(LinearSVC(random_state=0))
-
-    with pytest.raises(NotFittedError):
-        ovr.coef_
-
-    # Doesn't have coef_ exception!
-    ovr = OneVsRestClassifier(DecisionTreeClassifier())
-    ovr.fit(iris.data, iris.target)
-    msg = "Base estimator doesn't have a coef_ attribute"
-    with pytest.raises(AttributeError, match=msg):
-        ovr.coef_
-
-
-# TODO: Remove this test in version 1.1 when
-# the coef_ and intercept_ attributes are removed
-def test_ovr_deprecated_coef_intercept():
-    ovr = OneVsRestClassifier(SVC(kernel="linear"))
-    ovr = ovr.fit(iris.data, iris.target)
-
-    msg = (
-        r"Attribute `{0}` was deprecated in version 0.24 "
-        r"and will be removed in 1.1 \(renaming of 0.26\). If you observe "
-        r"this warning while using RFE or SelectFromModel, "
-        r"use the importance_getter parameter instead."
-    )
-
-    for att in ["coef_", "intercept_"]:
-        with pytest.warns(FutureWarning, match=msg.format(att)):
-            getattr(ovr, att)
-
-
 def test_ovo_exceptions():
     ovo = OneVsOneClassifier(LinearSVC(random_state=0))
     with pytest.raises(NotFittedError):
@@ -775,17 +724,13 @@ def test_ecoc_float_y():
     with pytest.raises(ValueError, match=msg):
         ovo.fit(X, y)
 
-    ovo = OutputCodeClassifier(LinearSVC(), code_size=-1)
-    msg = "code_size should be greater than 0, got -1"
-    with pytest.raises(ValueError, match=msg):
-        ovo.fit(X, y)
 
-
-def test_ecoc_delegate_sparse_base_estimator():
+@pytest.mark.parametrize("csc_container", CSC_CONTAINERS)
+def test_ecoc_delegate_sparse_base_estimator(csc_container):
     # Non-regression test for
     # https://github.com/scikit-learn/scikit-learn/issues/17218
     X, y = iris.data, iris.target
-    X_sp = sp.csc_matrix(X)
+    X_sp = csc_container(X)
 
     # create an estimator that does not support sparse input
     base_estimator = CheckingClassifier(
@@ -794,11 +739,11 @@ def test_ecoc_delegate_sparse_base_estimator():
     )
     ecoc = OutputCodeClassifier(base_estimator, random_state=0)
 
-    with pytest.raises(TypeError, match="A sparse matrix was passed"):
+    with pytest.raises(TypeError, match="Sparse data was passed"):
         ecoc.fit(X_sp, y)
 
     ecoc.fit(X, y)
-    with pytest.raises(TypeError, match="A sparse matrix was passed"):
+    with pytest.raises(TypeError, match="Sparse data was passed"):
         ecoc.predict(X_sp)
 
     # smoke test to check when sparse input should be supported
@@ -824,17 +769,73 @@ def test_pairwise_indices():
         )
 
 
-@ignore_warnings(category=FutureWarning)
-def test_pairwise_attribute():
-    clf_precomputed = svm.SVC(kernel="precomputed")
-    clf_notprecomputed = svm.SVC()
+def test_pairwise_n_features_in():
+    """Check the n_features_in_ attributes of the meta and base estimators
 
-    for MultiClassClassifier in [OneVsRestClassifier, OneVsOneClassifier]:
-        ovr_false = MultiClassClassifier(clf_notprecomputed)
-        assert not ovr_false._pairwise
+    When the training data is a regular design matrix, everything is intuitive.
+    However, when the training data is a precomputed kernel matrix, the
+    multiclass strategy can resample the kernel matrix of the underlying base
+    estimator both row-wise and column-wise and this has a non-trivial impact
+    on the expected value for the n_features_in_ of both the meta and the base
+    estimators.
+    """
+    X, y = iris.data, iris.target
 
-        ovr_true = MultiClassClassifier(clf_precomputed)
-        assert ovr_true._pairwise
+    # Remove the last sample to make the classes not exactly balanced and make
+    # the test more interesting.
+    assert y[-1] == 0
+    X = X[:-1]
+    y = y[:-1]
+
+    # Fitting directly on the design matrix:
+    assert X.shape == (149, 4)
+
+    clf_notprecomputed = svm.SVC(kernel="linear").fit(X, y)
+    assert clf_notprecomputed.n_features_in_ == 4
+
+    ovr_notprecomputed = OneVsRestClassifier(clf_notprecomputed).fit(X, y)
+    assert ovr_notprecomputed.n_features_in_ == 4
+    for est in ovr_notprecomputed.estimators_:
+        assert est.n_features_in_ == 4
+
+    ovo_notprecomputed = OneVsOneClassifier(clf_notprecomputed).fit(X, y)
+    assert ovo_notprecomputed.n_features_in_ == 4
+    assert ovo_notprecomputed.n_classes_ == 3
+    assert len(ovo_notprecomputed.estimators_) == 3
+    for est in ovo_notprecomputed.estimators_:
+        assert est.n_features_in_ == 4
+
+    # When working with precomputed kernels we have one "feature" per training
+    # sample:
+    K = X @ X.T
+    assert K.shape == (149, 149)
+
+    clf_precomputed = svm.SVC(kernel="precomputed").fit(K, y)
+    assert clf_precomputed.n_features_in_ == 149
+
+    ovr_precomputed = OneVsRestClassifier(clf_precomputed).fit(K, y)
+    assert ovr_precomputed.n_features_in_ == 149
+    assert ovr_precomputed.n_classes_ == 3
+    assert len(ovr_precomputed.estimators_) == 3
+    for est in ovr_precomputed.estimators_:
+        assert est.n_features_in_ == 149
+
+    # This becomes really interesting with OvO and precomputed kernel together:
+    # internally, OvO will drop the samples of the classes not part of the pair
+    # of classes under consideration for a given binary classifier. Since we
+    # use a precomputed kernel, it will also drop the matching columns of the
+    # kernel matrix, and therefore we have fewer "features" as result.
+    #
+    # Since class 0 has 49 samples, and class 1 and 2 have 50 samples each, a
+    # single OvO binary classifier works with a sub-kernel matrix of shape
+    # either (99, 99) or (100, 100).
+    ovo_precomputed = OneVsOneClassifier(clf_precomputed).fit(K, y)
+    assert ovo_precomputed.n_features_in_ == 149
+    assert ovr_precomputed.n_classes_ == 3
+    assert len(ovr_precomputed.estimators_) == 3
+    assert ovo_precomputed.estimators_[0].n_features_in_ == 99  # class 0 vs class 1
+    assert ovo_precomputed.estimators_[1].n_features_in_ == 99  # class 0 vs class 2
+    assert ovo_precomputed.estimators_[2].n_features_in_ == 100  # class 1 vs class 2
 
 
 @pytest.mark.parametrize(
@@ -851,32 +852,26 @@ def test_pairwise_tag(MultiClassClassifier):
     assert ovr_true._get_tags()["pairwise"]
 
 
-# TODO: Remove in 1.1
 @pytest.mark.parametrize(
     "MultiClassClassifier", [OneVsRestClassifier, OneVsOneClassifier]
 )
-def test_pairwise_deprecated(MultiClassClassifier):
-    clf_precomputed = svm.SVC(kernel="precomputed")
-    ov_clf = MultiClassClassifier(clf_precomputed)
-    msg = r"Attribute `_pairwise` was deprecated in version 0\.24"
-    with pytest.warns(FutureWarning, match=msg):
-        ov_clf._pairwise
-
-
-def test_pairwise_cross_val_score():
+def test_pairwise_cross_val_score(MultiClassClassifier):
     clf_precomputed = svm.SVC(kernel="precomputed")
     clf_notprecomputed = svm.SVC(kernel="linear")
 
     X, y = iris.data, iris.target
 
-    for MultiClassClassifier in [OneVsRestClassifier, OneVsOneClassifier]:
-        ovr_false = MultiClassClassifier(clf_notprecomputed)
-        ovr_true = MultiClassClassifier(clf_precomputed)
+    multiclass_clf_notprecomputed = MultiClassClassifier(clf_notprecomputed)
+    multiclass_clf_precomputed = MultiClassClassifier(clf_precomputed)
 
-        linear_kernel = np.dot(X, X.T)
-        score_precomputed = cross_val_score(ovr_true, linear_kernel, y)
-        score_linear = cross_val_score(ovr_false, X, y)
-        assert_array_equal(score_precomputed, score_linear)
+    linear_kernel = np.dot(X, X.T)
+    score_not_precomputed = cross_val_score(
+        multiclass_clf_notprecomputed, X, y, error_score="raise"
+    )
+    score_precomputed = cross_val_score(
+        multiclass_clf_precomputed, linear_kernel, y, error_score="raise"
+    )
+    assert_array_equal(score_precomputed, score_not_precomputed)
 
 
 @pytest.mark.parametrize(
@@ -896,3 +891,58 @@ def test_support_missing_values(MultiClassClassifier):
     lr = make_pipeline(SimpleImputer(), LogisticRegression(random_state=rng))
 
     MultiClassClassifier(lr).fit(X, y).score(X, y)
+
+
+@pytest.mark.parametrize("make_y", [np.ones, np.zeros])
+def test_constant_int_target(make_y):
+    """Check that constant y target does not raise.
+
+    Non-regression test for #21869
+    """
+    X = np.ones((10, 2))
+    y = make_y((10, 1), dtype=np.int32)
+    ovr = OneVsRestClassifier(LogisticRegression())
+
+    ovr.fit(X, y)
+    y_pred = ovr.predict_proba(X)
+    expected = np.zeros((X.shape[0], 2))
+    expected[:, 0] = 1
+    assert_allclose(y_pred, expected)
+
+
+def test_ovo_consistent_binary_classification():
+    """Check that ovo is consistent with binary classifier.
+
+    Non-regression test for #13617.
+    """
+    X, y = load_breast_cancer(return_X_y=True)
+
+    clf = KNeighborsClassifier(n_neighbors=8, weights="distance")
+    ovo = OneVsOneClassifier(clf)
+
+    clf.fit(X, y)
+    ovo.fit(X, y)
+
+    assert_array_equal(clf.predict(X), ovo.predict(X))
+
+
+def test_multiclass_estimator_attribute_error():
+    """Check that we raise the proper AttributeError when the final estimator
+    does not implement the `partial_fit` method, which is decorated with
+    `available_if`.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/28108
+    """
+    iris = datasets.load_iris()
+
+    # LogisticRegression does not implement 'partial_fit' and should raise an
+    # AttributeError
+    clf = OneVsRestClassifier(estimator=LogisticRegression(random_state=42))
+
+    outer_msg = "This 'OneVsRestClassifier' has no attribute 'partial_fit'"
+    inner_msg = "'LogisticRegression' object has no attribute 'partial_fit'"
+    with pytest.raises(AttributeError, match=outer_msg) as exec_info:
+        clf.partial_fit(iris.data, iris.target)
+    assert isinstance(exec_info.value.__cause__, AttributeError)
+    assert inner_msg in str(exec_info.value.__cause__)

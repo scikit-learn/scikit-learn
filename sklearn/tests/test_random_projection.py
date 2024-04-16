@@ -1,22 +1,28 @@
 import functools
-from typing import List, Any
+import warnings
+from typing import Any, List
 
 import numpy as np
-import scipy.sparse as sp
 import pytest
+import scipy.sparse as sp
 
+from sklearn.exceptions import DataDimensionalityWarning, NotFittedError
 from sklearn.metrics import euclidean_distances
-
-from sklearn.random_projection import johnson_lindenstrauss_min_dim
-from sklearn.random_projection import _gaussian_random_matrix
-from sklearn.random_projection import _sparse_random_matrix
-from sklearn.random_projection import SparseRandomProjection
-from sklearn.random_projection import GaussianRandomProjection
-
-from sklearn.utils._testing import assert_array_equal
-from sklearn.utils._testing import assert_almost_equal
-from sklearn.utils._testing import assert_array_almost_equal
-from sklearn.exceptions import DataDimensionalityWarning
+from sklearn.random_projection import (
+    GaussianRandomProjection,
+    SparseRandomProjection,
+    _gaussian_random_matrix,
+    _sparse_random_matrix,
+    johnson_lindenstrauss_min_dim,
+)
+from sklearn.utils._testing import (
+    assert_allclose,
+    assert_allclose_dense_sparse,
+    assert_almost_equal,
+    assert_array_almost_equal,
+    assert_array_equal,
+)
+from sklearn.utils.fixes import COO_CONTAINERS
 
 all_sparse_random_matrix: List[Any] = [_sparse_random_matrix]
 all_dense_random_matrix: List[Any] = [_gaussian_random_matrix]
@@ -24,14 +30,23 @@ all_random_matrix = all_sparse_random_matrix + all_dense_random_matrix
 
 all_SparseRandomProjection: List[Any] = [SparseRandomProjection]
 all_DenseRandomProjection: List[Any] = [GaussianRandomProjection]
-all_RandomProjection = set(all_SparseRandomProjection + all_DenseRandomProjection)
+all_RandomProjection = all_SparseRandomProjection + all_DenseRandomProjection
 
 
-# Make some random data with uniformly located non zero entries with
-# Gaussian distributed values
-def make_sparse_random_data(n_samples, n_features, n_nonzeros):
-    rng = np.random.RandomState(0)
-    data_coo = sp.coo_matrix(
+def make_sparse_random_data(
+    coo_container,
+    n_samples,
+    n_features,
+    n_nonzeros,
+    random_state=None,
+    sparse_format="csr",
+):
+    """Make some random data with uniformly located non zero entries with
+    Gaussian distributed values; `sparse_format` can be `"csr"` (default) or
+    `None` (in which case a dense array is returned).
+    """
+    rng = np.random.RandomState(random_state)
+    data_coo = coo_container(
         (
             rng.randn(n_nonzeros),
             (
@@ -41,7 +56,10 @@ def make_sparse_random_data(n_samples, n_features, n_nonzeros):
         ),
         shape=(n_samples, n_features),
     )
-    return data_coo.toarray(), data_coo.tocsr()
+    if sparse_format is not None:
+        return data_coo.asformat(sparse_format)
+    else:
+        return data_coo.toarray()
 
 
 def densify(matrix):
@@ -53,7 +71,6 @@ def densify(matrix):
 
 n_samples, n_features = (10, 1000)
 n_nonzeros = int(n_samples * n_features / 100.0)
-data, data_csr = make_sparse_random_data(n_samples, n_features, n_nonzeros)
 
 
 ###############################################################################
@@ -62,7 +79,12 @@ data, data_csr = make_sparse_random_data(n_samples, n_features, n_nonzeros)
 
 
 @pytest.mark.parametrize(
-    "n_samples, eps", [(100, 1.1), (100, 0.0), (100, -0.1), (0, 0.5)]
+    "n_samples, eps",
+    [
+        ([100, 110], [0.9, 1.1]),
+        ([90, 100], [0.1, 0.0]),
+        ([50, -40], [0.1, 0.2]),
+    ],
 )
 def test_invalid_jl_domain(n_samples, eps):
     with pytest.raises(ValueError):
@@ -203,28 +225,39 @@ def test_sparse_random_matrix():
 ###############################################################################
 
 
-@pytest.mark.parametrize("density", [1.1, 0, -0.1])
-def test_sparse_random_projection_transformer_invalid_density(density):
-    for RandomProjection in all_SparseRandomProjection:
-        with pytest.raises(ValueError):
-            RandomProjection(density=density).fit(data)
-
-
-@pytest.mark.parametrize("n_components, fit_data", [("auto", [[0, 1, 2]]), (-10, data)])
-def test_random_projection_transformer_invalid_input(n_components, fit_data):
+def test_random_projection_transformer_invalid_input():
+    n_components = "auto"
+    fit_data = [[0, 1, 2]]
     for RandomProjection in all_RandomProjection:
         with pytest.raises(ValueError):
             RandomProjection(n_components=n_components).fit(fit_data)
 
 
-def test_try_to_transform_before_fit():
+@pytest.mark.parametrize("coo_container", COO_CONTAINERS)
+def test_try_to_transform_before_fit(coo_container, global_random_seed):
+    data = make_sparse_random_data(
+        coo_container,
+        n_samples,
+        n_features,
+        n_nonzeros,
+        random_state=global_random_seed,
+        sparse_format=None,
+    )
     for RandomProjection in all_RandomProjection:
-        with pytest.raises(ValueError):
+        with pytest.raises(NotFittedError):
             RandomProjection(n_components="auto").transform(data)
 
 
-def test_too_many_samples_to_find_a_safe_embedding():
-    data, _ = make_sparse_random_data(1000, 100, 1000)
+@pytest.mark.parametrize("coo_container", COO_CONTAINERS)
+def test_too_many_samples_to_find_a_safe_embedding(coo_container, global_random_seed):
+    data = make_sparse_random_data(
+        coo_container,
+        n_samples=1000,
+        n_features=100,
+        n_nonzeros=1000,
+        random_state=global_random_seed,
+        sparse_format=None,
+    )
 
     for RandomProjection in all_RandomProjection:
         rp = RandomProjection(n_components="auto", eps=0.1)
@@ -237,8 +270,16 @@ def test_too_many_samples_to_find_a_safe_embedding():
             rp.fit(data)
 
 
-def test_random_projection_embedding_quality():
-    data, _ = make_sparse_random_data(8, 5000, 15000)
+@pytest.mark.parametrize("coo_container", COO_CONTAINERS)
+def test_random_projection_embedding_quality(coo_container):
+    data = make_sparse_random_data(
+        coo_container,
+        n_samples=8,
+        n_features=5000,
+        n_nonzeros=15000,
+        random_state=0,
+        sparse_format=None,
+    )
     eps = 0.2
 
     original_distances = euclidean_distances(data, squared=True)
@@ -267,28 +308,54 @@ def test_random_projection_embedding_quality():
         assert 1 - eps < distances_ratio.min()
 
 
-def test_SparseRandomProj_output_representation():
+@pytest.mark.parametrize("coo_container", COO_CONTAINERS)
+def test_SparseRandomProj_output_representation(coo_container):
+    dense_data = make_sparse_random_data(
+        coo_container,
+        n_samples,
+        n_features,
+        n_nonzeros,
+        random_state=0,
+        sparse_format=None,
+    )
+    sparse_data = make_sparse_random_data(
+        coo_container,
+        n_samples,
+        n_features,
+        n_nonzeros,
+        random_state=0,
+        sparse_format="csr",
+    )
     for SparseRandomProj in all_SparseRandomProjection:
         # when using sparse input, the projected data can be forced to be a
         # dense numpy array
         rp = SparseRandomProj(n_components=10, dense_output=True, random_state=0)
-        rp.fit(data)
-        assert isinstance(rp.transform(data), np.ndarray)
-
-        sparse_data = sp.csr_matrix(data)
+        rp.fit(dense_data)
+        assert isinstance(rp.transform(dense_data), np.ndarray)
         assert isinstance(rp.transform(sparse_data), np.ndarray)
 
         # the output can be left to a sparse matrix instead
         rp = SparseRandomProj(n_components=10, dense_output=False, random_state=0)
-        rp = rp.fit(data)
+        rp = rp.fit(dense_data)
         # output for dense input will stay dense:
-        assert isinstance(rp.transform(data), np.ndarray)
+        assert isinstance(rp.transform(dense_data), np.ndarray)
 
         # output for sparse output will be sparse:
         assert sp.issparse(rp.transform(sparse_data))
 
 
-def test_correct_RandomProjection_dimensions_embedding():
+@pytest.mark.parametrize("coo_container", COO_CONTAINERS)
+def test_correct_RandomProjection_dimensions_embedding(
+    coo_container, global_random_seed
+):
+    data = make_sparse_random_data(
+        coo_container,
+        n_samples,
+        n_features,
+        n_nonzeros,
+        random_state=global_random_seed,
+        sparse_format=None,
+    )
     for RandomProjection in all_RandomProjection:
         rp = RandomProjection(n_components="auto", random_state=0, eps=0.5).fit(data)
 
@@ -330,24 +397,52 @@ def test_correct_RandomProjection_dimensions_embedding():
             assert 85 < rp.components_.nnz  # close to 1% density
 
 
-def test_warning_n_components_greater_than_n_features():
+@pytest.mark.parametrize("coo_container", COO_CONTAINERS)
+def test_warning_n_components_greater_than_n_features(
+    coo_container, global_random_seed
+):
     n_features = 20
-    data, _ = make_sparse_random_data(5, n_features, int(n_features / 4))
+    n_samples = 5
+    n_nonzeros = int(n_features / 4)
+    data = make_sparse_random_data(
+        coo_container,
+        n_samples,
+        n_features,
+        n_nonzeros,
+        random_state=global_random_seed,
+        sparse_format=None,
+    )
 
     for RandomProjection in all_RandomProjection:
         with pytest.warns(DataDimensionalityWarning):
             RandomProjection(n_components=n_features + 1).fit(data)
 
 
-def test_works_with_sparse_data():
+@pytest.mark.parametrize("coo_container", COO_CONTAINERS)
+def test_works_with_sparse_data(coo_container, global_random_seed):
     n_features = 20
-    data, _ = make_sparse_random_data(5, n_features, int(n_features / 4))
+    n_samples = 5
+    n_nonzeros = int(n_features / 4)
+    dense_data = make_sparse_random_data(
+        coo_container,
+        n_samples,
+        n_features,
+        n_nonzeros,
+        random_state=global_random_seed,
+        sparse_format=None,
+    )
+    sparse_data = make_sparse_random_data(
+        coo_container,
+        n_samples,
+        n_features,
+        n_nonzeros,
+        random_state=global_random_seed,
+        sparse_format="csr",
+    )
 
     for RandomProjection in all_RandomProjection:
-        rp_dense = RandomProjection(n_components=3, random_state=1).fit(data)
-        rp_sparse = RandomProjection(n_components=3, random_state=1).fit(
-            sp.csr_matrix(data)
-        )
+        rp_dense = RandomProjection(n_components=3, random_state=1).fit(dense_data)
+        rp_sparse = RandomProjection(n_components=3, random_state=1).fit(sparse_data)
         assert_array_almost_equal(
             densify(rp_dense.components_), densify(rp_sparse.components_)
         )
@@ -359,3 +454,131 @@ def test_johnson_lindenstrauss_min_dim():
     Regression test for #17111: before #19374, 32-bit systems would fail.
     """
     assert johnson_lindenstrauss_min_dim(100, eps=1e-5) == 368416070986
+
+
+@pytest.mark.parametrize("coo_container", COO_CONTAINERS)
+@pytest.mark.parametrize("random_projection_cls", all_RandomProjection)
+def test_random_projection_feature_names_out(
+    coo_container, random_projection_cls, global_random_seed
+):
+    data = make_sparse_random_data(
+        coo_container,
+        n_samples,
+        n_features,
+        n_nonzeros,
+        random_state=global_random_seed,
+        sparse_format=None,
+    )
+    random_projection = random_projection_cls(n_components=2)
+    random_projection.fit(data)
+    names_out = random_projection.get_feature_names_out()
+    class_name_lower = random_projection_cls.__name__.lower()
+    expected_names_out = np.array(
+        [f"{class_name_lower}{i}" for i in range(random_projection.n_components_)],
+        dtype=object,
+    )
+
+    assert_array_equal(names_out, expected_names_out)
+
+
+@pytest.mark.parametrize("coo_container", COO_CONTAINERS)
+@pytest.mark.parametrize("n_samples", (2, 9, 10, 11, 1000))
+@pytest.mark.parametrize("n_features", (2, 9, 10, 11, 1000))
+@pytest.mark.parametrize("random_projection_cls", all_RandomProjection)
+@pytest.mark.parametrize("compute_inverse_components", [True, False])
+def test_inverse_transform(
+    coo_container,
+    n_samples,
+    n_features,
+    random_projection_cls,
+    compute_inverse_components,
+    global_random_seed,
+):
+    n_components = 10
+
+    random_projection = random_projection_cls(
+        n_components=n_components,
+        compute_inverse_components=compute_inverse_components,
+        random_state=global_random_seed,
+    )
+
+    X_dense = make_sparse_random_data(
+        coo_container,
+        n_samples,
+        n_features,
+        n_nonzeros=n_samples * n_features // 100 + 1,
+        random_state=global_random_seed,
+        sparse_format=None,
+    )
+    X_csr = make_sparse_random_data(
+        coo_container,
+        n_samples,
+        n_features,
+        n_nonzeros=n_samples * n_features // 100 + 1,
+        random_state=global_random_seed,
+        sparse_format="csr",
+    )
+
+    for X in [X_dense, X_csr]:
+        with warnings.catch_warnings():
+            warnings.filterwarnings(
+                "ignore",
+                message=(
+                    "The number of components is higher than the number of features"
+                ),
+                category=DataDimensionalityWarning,
+            )
+            projected = random_projection.fit_transform(X)
+
+        if compute_inverse_components:
+            assert hasattr(random_projection, "inverse_components_")
+            inv_components = random_projection.inverse_components_
+            assert inv_components.shape == (n_features, n_components)
+
+        projected_back = random_projection.inverse_transform(projected)
+        assert projected_back.shape == X.shape
+
+        projected_again = random_projection.transform(projected_back)
+        if hasattr(projected, "toarray"):
+            projected = projected.toarray()
+        assert_allclose(projected, projected_again, rtol=1e-7, atol=1e-10)
+
+
+@pytest.mark.parametrize("random_projection_cls", all_RandomProjection)
+@pytest.mark.parametrize(
+    "input_dtype, expected_dtype",
+    (
+        (np.float32, np.float32),
+        (np.float64, np.float64),
+        (np.int32, np.float64),
+        (np.int64, np.float64),
+    ),
+)
+def test_random_projection_dtype_match(
+    random_projection_cls, input_dtype, expected_dtype
+):
+    # Verify output matrix dtype
+    rng = np.random.RandomState(42)
+    X = rng.rand(25, 3000)
+    rp = random_projection_cls(random_state=0)
+    transformed = rp.fit_transform(X.astype(input_dtype))
+
+    assert rp.components_.dtype == expected_dtype
+    assert transformed.dtype == expected_dtype
+
+
+@pytest.mark.parametrize("random_projection_cls", all_RandomProjection)
+def test_random_projection_numerical_consistency(random_projection_cls):
+    # Verify numerical consistency among np.float32 and np.float64
+    atol = 1e-5
+    rng = np.random.RandomState(42)
+    X = rng.rand(25, 3000)
+    rp_32 = random_projection_cls(random_state=0)
+    rp_64 = random_projection_cls(random_state=0)
+
+    projection_32 = rp_32.fit_transform(X.astype(np.float32))
+    projection_64 = rp_64.fit_transform(X.astype(np.float64))
+
+    assert_allclose(projection_64, projection_32, atol=atol)
+
+    assert_allclose_dense_sparse(rp_32.components_, rp_64.components_)

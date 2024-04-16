@@ -3,18 +3,18 @@ regression (:ref:`least_angle_regression`)
 
 The input data is mostly low rank but is a fat infinite tail.
 """
+
 import gc
 import sys
 from time import time
 
 import numpy as np
 
-from sklearn.linear_model import lars_path, lars_path_gram, orthogonal_mp
 from sklearn.datasets import make_sparse_coded_signal
+from sklearn.linear_model import lars_path, lars_path_gram, orthogonal_mp
 
 
 def compute_bench(samples_range, features_range):
-
     it = 0
 
     results = dict()
@@ -27,7 +27,7 @@ def compute_bench(samples_range, features_range):
     for i_s, n_samples in enumerate(samples_range):
         for i_f, n_features in enumerate(features_range):
             it += 1
-            n_informative = n_features / 10
+            n_informative = n_features // 10
             print("====================")
             print("Iteration %03d of %03d" % (it, max_it))
             print("====================")
@@ -50,7 +50,7 @@ def compute_bench(samples_range, features_range):
             print("n_samples: %d" % n_samples)
             print("n_features: %d" % n_features)
             y, X, _ = make_sparse_coded_signal(**dataset_kwargs)
-            X = np.asfortranarray(X)
+            X = np.asfortranarray(X.T)
 
             gc.collect()
             print("benchmarking lars_path (with Gram):", end="")

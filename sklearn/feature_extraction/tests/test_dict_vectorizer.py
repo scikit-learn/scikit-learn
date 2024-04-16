@@ -3,13 +3,13 @@
 # License: BSD 3 clause
 
 from random import Random
+
 import numpy as np
-import scipy.sparse as sp
-from numpy.testing import assert_array_equal
-from numpy.testing import assert_allclose
-
 import pytest
+import scipy.sparse as sp
+from numpy.testing import assert_allclose, assert_array_equal
 
+from sklearn.exceptions import NotFittedError
 from sklearn.feature_extraction import DictVectorizer
 from sklearn.feature_selection import SelectKBest, chi2
 
@@ -31,7 +31,9 @@ def test_dictvectorizer(sparse, dtype, sort, iterable):
 
     if sparse:
         # CSR matrices can't be compared for equality
-        assert_array_equal(X.A, v.transform(iter(D) if iterable else D).A)
+        assert_array_equal(
+            X.toarray(), v.transform(iter(D) if iterable else D).toarray()
+        )
     else:
         assert_array_equal(X, v.transform(iter(D) if iterable else D))
 
@@ -51,7 +53,7 @@ def test_feature_selection():
         sel = SelectKBest(chi2, k=2).fit(X, [0, 1])
 
         v.restrict(sel.get_support(indices=indices), indices=indices)
-        assert v.get_feature_names() == ["useful1", "useful2"]
+        assert_array_equal(v.get_feature_names_out(), ["useful1", "useful2"])
 
 
 def test_one_of_k():
@@ -67,7 +69,7 @@ def test_one_of_k():
     D_out = v.inverse_transform(X)
     assert D_out[0] == {"version=1": 1, "ham": 2}
 
-    names = v.get_feature_names()
+    names = v.get_feature_names_out()
     assert "version=2" in names
     assert "version" not in names
 
@@ -92,9 +94,9 @@ def test_iterable_value():
     D_out = v.inverse_transform(X)
     assert D_out[0] == {"version=1": 2, "version=2": 1, "ham": 2}
 
-    names = v.get_feature_names()
+    names = v.get_feature_names_out()
 
-    assert names == D_names
+    assert_array_equal(names, D_names)
 
 
 def test_iterable_not_string_error():
@@ -141,16 +143,14 @@ def test_unseen_or_no_features():
             X = X.toarray()
         assert_array_equal(X, np.zeros((1, 2)))
 
-        try:
+        with pytest.raises(ValueError, match="empty"):
             v.transform([])
-        except ValueError as e:
-            assert "empty" in str(e)
 
 
-def test_deterministic_vocabulary():
+def test_deterministic_vocabulary(global_random_seed):
     # Generate equal dictionaries with different memory layouts
     items = [("%03d" % i, i) for i in range(1000)]
-    rng = Random(42)
+    rng = Random(global_random_seed)
     d_sorted = dict(items)
     rng.shuffle(items)
     d_shuffled = dict(items)
@@ -209,3 +209,54 @@ def test_dictvectorizer_dense_sparse_equivalence():
     expected_inverse = [{"category=thriller": 1.0}]
     assert dense_inverse_transform == expected_inverse
     assert sparse_inverse_transform == expected_inverse
+
+
+def test_dict_vectorizer_unsupported_value_type():
+    """Check that we raise an error when the value associated to a feature
+    is not supported.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/19489
+    """
+
+    class A:
+        pass
+
+    vectorizer = DictVectorizer(sparse=True)
+    X = [{"foo": A()}]
+    err_msg = "Unsupported value Type"
+    with pytest.raises(TypeError, match=err_msg):
+        vectorizer.fit_transform(X)
+
+
+def test_dict_vectorizer_get_feature_names_out():
+    """Check that integer feature names are converted to strings in
+    feature_names_out."""
+
+    X = [{1: 2, 3: 4}, {2: 4}]
+    dv = DictVectorizer(sparse=False).fit(X)
+
+    feature_names = dv.get_feature_names_out()
+    assert isinstance(feature_names, np.ndarray)
+    assert feature_names.dtype == object
+    assert_array_equal(feature_names, ["1", "2", "3"])
+
+
+@pytest.mark.parametrize(
+    "method, input",
+    [
+        ("transform", [{1: 2, 3: 4}, {2: 4}]),
+        ("inverse_transform", [{1: 2, 3: 4}, {2: 4}]),
+        ("restrict", [True, False, True]),
+    ],
+)
+def test_dict_vectorizer_not_fitted_error(method, input):
+    """Check that unfitted DictVectorizer instance raises NotFittedError.
+
+    This should be part of the common test but currently they test estimator accepting
+    text input.
+    """
+    dv = DictVectorizer(sparse=False)
+
+    with pytest.raises(NotFittedError):
+        getattr(dv, method)(input)
