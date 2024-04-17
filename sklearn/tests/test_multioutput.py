@@ -337,7 +337,7 @@ def test_multi_output_classification():
 
 def test_multiclass_multioutput_estimator():
     # test to check meta of meta estimators
-    svc = LinearSVC(dual="auto", random_state=0)
+    svc = LinearSVC(random_state=0)
     multi_class_svc = OneVsRestClassifier(svc)
     multi_target_svc = MultiOutputClassifier(multi_class_svc)
 
@@ -442,7 +442,7 @@ def test_multi_output_classification_partial_fit_sample_weights():
 def test_multi_output_exceptions():
     # NotFittedError when fit is not done but score, predict and
     # and predict_proba are called
-    moc = MultiOutputClassifier(LinearSVC(dual="auto", random_state=0))
+    moc = MultiOutputClassifier(LinearSVC(random_state=0))
     with pytest.raises(NotFittedError):
         moc.score(X, y)
 
@@ -478,7 +478,7 @@ def test_multi_output_delegate_predict_proba():
     assert hasattr(moc, "predict_proba")
 
     # A base estimator without `predict_proba` should raise an AttributeError
-    moc = MultiOutputClassifier(LinearSVC(dual="auto"))
+    moc = MultiOutputClassifier(LinearSVC())
     assert not hasattr(moc, "predict_proba")
 
     outer_msg = "'MultiOutputClassifier' has no attribute 'predict_proba'"
@@ -513,7 +513,7 @@ def test_classifier_chain_fit_and_predict_with_linear_svc(chain_method):
     # Fit classifier chain and verify predict performance using LinearSVC
     X, Y = generate_multilabel_dataset_with_correlations()
     classifier_chain = ClassifierChain(
-        LinearSVC(dual="auto"),
+        LinearSVC(),
         chain_method=chain_method,
     ).fit(X, Y)
 

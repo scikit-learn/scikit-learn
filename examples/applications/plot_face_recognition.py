@@ -11,6 +11,7 @@ The dataset used in this example is a preprocessed excerpt of the
 .. _LFW: http://vis-www.cs.umass.edu/lfw/
 
 """
+
 # %%
 from time import time
 

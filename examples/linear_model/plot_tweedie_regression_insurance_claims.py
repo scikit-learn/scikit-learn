@@ -241,7 +241,7 @@ column_trans = ColumnTransformer(
     [
         (
             "binned_numeric",
-            KBinsDiscretizer(n_bins=10, subsample=int(2e5), random_state=0),
+            KBinsDiscretizer(n_bins=10, random_state=0),
             ["VehAge", "DrivAge"],
         ),
         (

@@ -55,6 +55,7 @@ examples/cluster/joblib
 reuters/
 benchmarks/bench_covertype_data/
 benchmarks/HIGGS.csv.gz
+bench_pca_solvers.csv
 
 *.prefs
 .pydevproject

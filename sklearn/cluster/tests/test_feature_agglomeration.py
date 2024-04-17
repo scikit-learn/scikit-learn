@@ -1,6 +1,7 @@
 """
 Tests for sklearn.cluster._feature_agglomeration
 """
+
 # Authors: Sergul Aydore 2017
 import warnings
 

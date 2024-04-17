@@ -15,7 +15,9 @@ from sklearn.base import (
     BaseEstimator,
     clone,
 )
+from sklearn.exceptions import UnsetMetadataPassedError
 from sklearn.linear_model import LinearRegression
+from sklearn.pipeline import Pipeline
 from sklearn.tests.metadata_routing_common import (
     ConsumingClassifier,
     ConsumingRegressor,
@@ -68,7 +70,13 @@ def enable_slep006():
 
 
 class SimplePipeline(BaseEstimator):
-    """A very simple pipeline, assuming the last step is always a predictor."""
+    """A very simple pipeline, assuming the last step is always a predictor.
+
+    Parameters
+    ----------
+    steps : iterable of objects
+        An iterable of transformers with the last step being a predictor.
+    """
 
     def __init__(self, steps):
         self.steps = steps
@@ -295,7 +303,7 @@ def test_simple_metadata_routing():
     clf = WeightedMetaClassifier(estimator=ConsumingClassifier())
     err_message = (
         "[sample_weight] are passed but are not explicitly set as requested or"
-        " not for ConsumingClassifier.fit"
+        " not requested for ConsumingClassifier.fit"
     )
     with pytest.raises(ValueError, match=re.escape(err_message)):
         clf.fit(X, y, sample_weight=my_weights)
@@ -1031,6 +1039,40 @@ def test_no_metadata_always_works():
         NotImplementedError, match="Estimator has not implemented metadata routing yet."
     ):
         MetaRegressor(estimator=Estimator()).fit(X, y, metadata=my_groups)
+
+
+def test_unsetmetadatapassederror_correct():
+    """Test that UnsetMetadataPassedError raises the correct error message when
+    set_{method}_request is not set in nested cases."""
+    weighted_meta = WeightedMetaClassifier(estimator=ConsumingClassifier())
+    pipe = SimplePipeline([weighted_meta])
+    msg = re.escape(
+        "[metadata] are passed but are not explicitly set as requested or not requested"
+        " for ConsumingClassifier.fit, which is used within WeightedMetaClassifier.fit."
+        " Call `ConsumingClassifier.set_fit_request({metadata}=True/False)` for each"
+        " metadata you want to request/ignore."
+    )
+
+    with pytest.raises(UnsetMetadataPassedError, match=msg):
+        pipe.fit(X, y, metadata="blah")
+
+
+def test_unsetmetadatapassederror_correct_for_composite_methods():
+    """Test that UnsetMetadataPassedError raises the correct error message when
+    composite metadata request methods are not set in nested cases."""
+    consuming_transformer = ConsumingTransformer()
+    pipe = Pipeline([("consuming_transformer", consuming_transformer)])
+
+    msg = re.escape(
+        "[metadata] are passed but are not explicitly set as requested or not requested"
+        " for ConsumingTransformer.fit_transform, which is used within"
+        " Pipeline.fit_transform. Call"
+        " `ConsumingTransformer.set_fit_request({metadata}=True/False)"
+        ".set_transform_request({metadata}=True/False)`"
+        " for each metadata you want to request/ignore."
+    )
+    with pytest.raises(UnsetMetadataPassedError, match=msg):
+        pipe.fit_transform(X, y, metadata="blah")
 
 
 def test_unbound_set_methods_work():
