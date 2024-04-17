@@ -1006,8 +1006,8 @@ def _safe_accumulator_op(op, x, *args, **kwargs):
     ----------
     op : function
         An array accumulator function such as np.mean or np.sum.
-    x : array
-        An array-api-compatible array to apply the accumulator function.
+    x : array-api compatible array
+        An array-api compatible array to which the accumulator function is applied.
     *args : positional arguments
         Positional arguments passed to the accumulator function after the
         input x.
@@ -1067,12 +1067,12 @@ def _incremental_mean_and_var(
 
     Returns
     -------
-    updated_mean : ndarray of shape (n_features,)
+    updated_mean : array of shape (n_features,)
 
-    updated_variance : ndarray of shape (n_features,)
+    updated_variance : array of shape (n_features,)
         None if last_variance was None.
 
-    updated_sample_count : ndarray of shape (n_features,)
+    updated_sample_count : array of shape (n_features,)
 
     Notes
     -----
