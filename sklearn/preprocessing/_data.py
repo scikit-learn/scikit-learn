@@ -771,7 +771,7 @@ class StandardScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
 
     Attributes
     ----------
-    scale_ : ndarray of shape (n_features,) or None
+    scale_ : array of shape (n_features,) or None
         Per feature relative scaling of the data to achieve zero mean and unit
         variance. Generally this is calculated using `np.sqrt(var_)`. If a
         variance is zero, we can't achieve unit variance, and the data is left
@@ -781,11 +781,11 @@ class StandardScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         .. versionadded:: 0.17
            *scale_*
 
-    mean_ : ndarray of shape (n_features,) or None
+    mean_ : array of shape (n_features,) or None
         The mean value for each feature in the training set.
         Equal to ``None`` when ``with_mean=False`` and ``with_std=False``.
 
-    var_ : ndarray of shape (n_features,) or None
+    var_ : array of shape (n_features,) or None
         The variance for each feature in the training set. Used to compute
         `scale_`. Equal to ``None`` when ``with_mean=False`` and
         ``with_std=False``.
@@ -1057,7 +1057,7 @@ class StandardScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
 
         Returns
         -------
-        X_tr : {ndarray, sparse matrix} of shape (n_samples, n_features)
+        X_tr : {array, sparse matrix} of shape (n_samples, n_features)
             Transformed array.
         """
         xp, _ = get_namespace(X)
@@ -1138,6 +1138,7 @@ class StandardScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         tags.input_tags.allow_nan = True
         tags.input_tags.sparse = not self.with_mean
         tags.transformer_tags.preserves_dtype = ["float64", "float32"]
+        tags.array_api_support = True
         return tags
 
 
