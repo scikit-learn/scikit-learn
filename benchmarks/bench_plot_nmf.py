@@ -1,6 +1,7 @@
 """
 Benchmarks of Non-Negative Matrix Factorization
 """
+
 # Authors: Tom Dupre la Tour (benchmark)
 #          Chih-Jen Linn (original projected gradient NMF implementation)
 #          Anthony Di Franco (projected gradient, Python and NumPy port)
@@ -258,8 +259,7 @@ class _PGNMF(NMF):
         if not isinstance(self.max_iter, numbers.Integral) or self.max_iter < 0:
             raise ValueError(
                 "Maximum number of iterations must be a positive "
-                "integer; got (max_iter=%r)"
-                % self.max_iter
+                "integer; got (max_iter=%r)" % self.max_iter
             )
         if not isinstance(self.tol, numbers.Number) or self.tol < 0:
             raise ValueError(
@@ -305,8 +305,7 @@ class _PGNMF(NMF):
         if n_iter == self.max_iter and self.tol > 0:
             warnings.warn(
                 "Maximum number of iteration %d reached. Increase it"
-                " to improve convergence."
-                % self.max_iter,
+                " to improve convergence." % self.max_iter,
                 ConvergenceWarning,
             )
 

@@ -1,8 +1,5 @@
 import numbers
-import os
 import pickle
-import shutil
-import tempfile
 from copy import deepcopy
 from functools import partial
 from unittest.mock import Mock
@@ -166,28 +163,17 @@ def _make_estimators(X_train, y_train, y_ml_train):
     )
 
 
-X_mm, y_mm, y_ml_mm = None, None, None
-ESTIMATORS = None
-TEMP_FOLDER = None
-
-
-def setup_module():
-    # Create some memory mapped data
-    global X_mm, y_mm, y_ml_mm, TEMP_FOLDER, ESTIMATORS
-    TEMP_FOLDER = tempfile.mkdtemp(prefix="sklearn_test_score_objects_")
+@pytest.fixture(scope="module")
+def memmap_data_and_estimators(tmp_path_factory):
+    temp_folder = tmp_path_factory.mktemp("sklearn_test_score_objects")
     X, y = make_classification(n_samples=30, n_features=5, random_state=0)
     _, y_ml = make_multilabel_classification(n_samples=X.shape[0], random_state=0)
-    filename = os.path.join(TEMP_FOLDER, "test_data.pkl")
+    filename = temp_folder / "test_data.pkl"
     joblib.dump((X, y, y_ml), filename)
     X_mm, y_mm, y_ml_mm = joblib.load(filename, mmap_mode="r")
-    ESTIMATORS = _make_estimators(X_mm, y_mm, y_ml_mm)
+    estimators = _make_estimators(X_mm, y_mm, y_ml_mm)
 
-
-def teardown_module():
-    global X_mm, y_mm, y_ml_mm, TEMP_FOLDER, ESTIMATORS
-    # GC closes the mmap file descriptors
-    X_mm, y_mm, y_ml_mm, ESTIMATORS = None, None, None, None
-    shutil.rmtree(TEMP_FOLDER)
+    yield X_mm, y_mm, y_ml_mm, estimators
 
 
 class EstimatorWithFit(BaseEstimator):
@@ -290,7 +276,7 @@ def test_check_scoring_and_check_multimetric_scoring(scoring):
     # To make sure the check_scoring is correctly applied to the constituent
     # scorers
 
-    estimator = LinearSVC(dual="auto", random_state=0)
+    estimator = LinearSVC(random_state=0)
     estimator.fit([[1], [2], [3]], [1, 1, 0])
 
     scorers = _check_multimetric_scoring(estimator, scoring)
@@ -351,12 +337,12 @@ def test_check_scoring_gridsearchcv():
     # test that check_scoring works on GridSearchCV and pipeline.
     # slightly redundant non-regression test.
 
-    grid = GridSearchCV(LinearSVC(dual="auto"), param_grid={"C": [0.1, 1]}, cv=3)
+    grid = GridSearchCV(LinearSVC(), param_grid={"C": [0.1, 1]}, cv=3)
     scorer = check_scoring(grid, scoring="f1")
     assert isinstance(scorer, _Scorer)
     assert scorer._response_method == "predict"
 
-    pipe = make_pipeline(LinearSVC(dual="auto"))
+    pipe = make_pipeline(LinearSVC())
     scorer = check_scoring(pipe, scoring="f1")
     assert isinstance(scorer, _Scorer)
     assert scorer._response_method == "predict"
@@ -398,7 +384,7 @@ def test_classification_binary_scores(scorer_name, metric):
     # binary classification.
     X, y = make_blobs(random_state=0, centers=2)
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
-    clf = LinearSVC(dual="auto", random_state=0)
+    clf = LinearSVC(random_state=0)
     clf.fit(X_train, y_train)
 
     score = get_scorer(scorer_name)(clf, X_test, y_test)
@@ -448,7 +434,7 @@ def test_custom_scorer_pickling():
     # test that custom scorer can be pickled
     X, y = make_blobs(random_state=0, centers=2)
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
-    clf = LinearSVC(dual="auto", random_state=0)
+    clf = LinearSVC(random_state=0)
     clf.fit(X_train, y_train)
 
     scorer = make_scorer(fbeta_score, beta=2)
@@ -546,7 +532,7 @@ def test_thresholded_scorers_multilabel_indicator_data():
     assert_almost_equal(score1, score2)
 
     # Multilabel decision function
-    clf = OneVsRestClassifier(LinearSVC(dual="auto", random_state=0))
+    clf = OneVsRestClassifier(LinearSVC(random_state=0))
     clf.fit(X_train, y_train)
     score1 = get_scorer("roc_auc")(clf, X_test, y_test)
     score2 = roc_auc_score(y_test, clf.decision_function(X_test))
@@ -688,10 +674,11 @@ def test_regression_scorer_sample_weight():
 
 
 @pytest.mark.parametrize("name", get_scorer_names())
-def test_scorer_memmap_input(name):
+def test_scorer_memmap_input(name, memmap_data_and_estimators):
     # Non-regression test for #6147: some score functions would
     # return singleton memmap when computed on memmap data instead of scalar
     # float values.
+    X_mm, y_mm, y_ml_mm, estimators = memmap_data_and_estimators
 
     if name in REQUIRE_POSITIVE_Y_SCORERS:
         y_mm_1 = _require_positive_y(y_mm)
@@ -701,7 +688,7 @@ def test_scorer_memmap_input(name):
 
     # UndefinedMetricWarning for P / R scores
     with ignore_warnings():
-        scorer, estimator = get_scorer(name), ESTIMATORS[name]
+        scorer, estimator = get_scorer(name), estimators[name]
         if name in MULTILABEL_ONLY_SCORERS:
             score = scorer(estimator, X_mm, y_ml_mm_1)
         else:
@@ -1490,3 +1477,78 @@ def test_make_scorer_deprecation(deprecated_params, new_params, warn_msg):
     assert deprecated_roc_auc_scorer(classifier, X, y) == pytest.approx(
         roc_auc_scorer(classifier, X, y)
     )
+
+
+@pytest.mark.parametrize("pass_estimator", [True, False])
+def test_get_scorer_multimetric(pass_estimator):
+    """Check that check_scoring is compatible with multi-metric configurations."""
+    X, y = make_classification(n_samples=150, n_features=10, random_state=0)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
+    clf = LogisticRegression(random_state=0)
+
+    if pass_estimator:
+        check_scoring_ = check_scoring
+    else:
+        check_scoring_ = partial(check_scoring, clf)
+
+    clf.fit(X_train, y_train)
+
+    y_pred = clf.predict(X_test)
+    y_proba = clf.predict_proba(X_test)
+
+    expected_results = {
+        "r2": r2_score(y_test, y_pred),
+        "roc_auc": roc_auc_score(y_test, y_proba[:, 1]),
+        "accuracy": accuracy_score(y_test, y_pred),
+    }
+
+    for container in [set, list, tuple]:
+        scoring = check_scoring_(scoring=container(["r2", "roc_auc", "accuracy"]))
+        result = scoring(clf, X_test, y_test)
+
+        assert result.keys() == expected_results.keys()
+        for name in result:
+            assert result[name] == pytest.approx(expected_results[name])
+
+    def double_accuracy(y_true, y_pred):
+        return 2 * accuracy_score(y_true, y_pred)
+
+    custom_scorer = make_scorer(double_accuracy, response_method="predict")
+
+    # dict with different names
+    dict_scoring = check_scoring_(
+        scoring={
+            "my_r2": "r2",
+            "my_roc_auc": "roc_auc",
+            "double_accuracy": custom_scorer,
+        }
+    )
+    dict_result = dict_scoring(clf, X_test, y_test)
+    assert len(dict_result) == 3
+    assert dict_result["my_r2"] == pytest.approx(expected_results["r2"])
+    assert dict_result["my_roc_auc"] == pytest.approx(expected_results["roc_auc"])
+    assert dict_result["double_accuracy"] == pytest.approx(
+        2 * expected_results["accuracy"]
+    )
+
+
+def test_multimetric_scorer_repr():
+    """Check repr for multimetric scorer"""
+    multi_metric_scorer = check_scoring(scoring=["accuracy", "r2"])
+
+    assert str(multi_metric_scorer) == 'MultiMetricScorer("accuracy", "r2")'
+
+
+@pytest.mark.parametrize("enable_metadata_routing", [True, False])
+def test_metadata_routing_multimetric_metadata_routing(enable_metadata_routing):
+    """Test multimetric scorer works with and without metadata routing enabled when
+    there is no actual metadata to pass.
+
+    Non-regression test for https://github.com/scikit-learn/scikit-learn/issues/28256
+    """
+    X, y = make_classification(n_samples=50, n_features=10, random_state=0)
+    estimator = EstimatorWithFitAndPredict().fit(X, y)
+
+    multimetric_scorer = _MultimetricScorer(scorers={"acc": get_scorer("accuracy")})
+    with config_context(enable_metadata_routing=enable_metadata_routing):
+        multimetric_scorer(estimator, X, y)

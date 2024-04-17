@@ -36,16 +36,16 @@ different means.
 
 The advantages of Stochastic Gradient Descent are:
 
-    + Efficiency.
++ Efficiency.
 
-    + Ease of implementation (lots of opportunities for code tuning).
++ Ease of implementation (lots of opportunities for code tuning).
 
 The disadvantages of Stochastic Gradient Descent include:
 
-    + SGD requires a number of hyperparameters such as the regularization
-      parameter and the number of iterations.
++ SGD requires a number of hyperparameters such as the regularization
+  parameter and the number of iterations.
 
-    + SGD is sensitive to feature scaling.
++ SGD is sensitive to feature scaling.
 
 .. warning::
 
@@ -111,12 +111,12 @@ the coefficients and the input sample, plus the intercept) is given by
 The concrete loss function can be set via the ``loss``
 parameter. :class:`SGDClassifier` supports the following loss functions:
 
-  * ``loss="hinge"``: (soft-margin) linear Support Vector Machine,
-  * ``loss="modified_huber"``: smoothed hinge loss,
-  * ``loss="log_loss"``: logistic regression,
-  * and all regression losses below. In this case the target is encoded as -1
-    or 1, and the problem is treated as a regression problem. The predicted
-    class then correspond to the sign of the predicted target.
+* ``loss="hinge"``: (soft-margin) linear Support Vector Machine,
+* ``loss="modified_huber"``: smoothed hinge loss,
+* ``loss="log_loss"``: logistic regression,
+* and all regression losses below. In this case the target is encoded as -1
+  or 1, and the problem is treated as a regression problem. The predicted
+  class then correspond to the sign of the predicted target.
 
 Please refer to the :ref:`mathematical section below
 <sgd_mathematical_formulation>` for formulas.
@@ -136,10 +136,10 @@ Using ``loss="log_loss"`` or ``loss="modified_huber"`` enables the
 The concrete penalty can be set via the ``penalty`` parameter.
 SGD supports the following penalties:
 
-  * ``penalty="l2"``: L2 norm penalty on ``coef_``.
-  * ``penalty="l1"``: L1 norm penalty on ``coef_``.
-  * ``penalty="elasticnet"``: Convex combination of L2 and L1;
-    ``(1 - l1_ratio) * L2 + l1_ratio * L1``.
+* ``penalty="l2"``: L2 norm penalty on ``coef_``.
+* ``penalty="l1"``: L1 norm penalty on ``coef_``.
+* ``penalty="elasticnet"``: Convex combination of L2 and L1;
+  ``(1 - l1_ratio) * L2 + l1_ratio * L1``.
 
 The default setting is ``penalty="l2"``. The L1 penalty leads to sparse
 solutions, driving most coefficients to zero. The Elastic Net [#5]_ solves
@@ -211,9 +211,9 @@ samples (> 10.000), for other problems we recommend :class:`Ridge`,
 The concrete loss function can be set via the ``loss``
 parameter. :class:`SGDRegressor` supports the following loss functions:
 
-  * ``loss="squared_error"``: Ordinary least squares,
-  * ``loss="huber"``: Huber loss for robust regression,
-  * ``loss="epsilon_insensitive"``: linear Support Vector Regression.
+* ``loss="squared_error"``: Ordinary least squares,
+* ``loss="huber"``: Huber loss for robust regression,
+* ``loss="epsilon_insensitive"``: linear Support Vector Regression.
 
 Please refer to the :ref:`mathematical section below
 <sgd_mathematical_formulation>` for formulas.
@@ -327,14 +327,14 @@ Stopping criterion
 The classes :class:`SGDClassifier` and :class:`SGDRegressor` provide two
 criteria to stop the algorithm when a given level of convergence is reached:
 
-  * With ``early_stopping=True``, the input data is split into a training set
-    and a validation set. The model is then fitted on the training set, and the
-    stopping criterion is based on the prediction score (using the `score`
-    method) computed on the validation set. The size of the validation set
-    can be changed with the parameter ``validation_fraction``.
-  * With ``early_stopping=False``, the model is fitted on the entire input data
-    and the stopping criterion is based on the objective function computed on
-    the training data.
+* With ``early_stopping=True``, the input data is split into a training set
+  and a validation set. The model is then fitted on the training set, and the
+  stopping criterion is based on the prediction score (using the `score`
+  method) computed on the validation set. The size of the validation set
+  can be changed with the parameter ``validation_fraction``.
+* With ``early_stopping=False``, the model is fitted on the entire input data
+  and the stopping criterion is based on the objective function computed on
+  the training data.
 
 In both cases, the criterion is evaluated once by epoch, and the algorithm stops
 when the criterion does not improve ``n_iter_no_change`` times in a row. The
@@ -345,45 +345,45 @@ stops in any case after a maximum number of iteration ``max_iter``.
 Tips on Practical Use
 =====================
 
-  * Stochastic Gradient Descent is sensitive to feature scaling, so it
-    is highly recommended to scale your data. For example, scale each
-    attribute on the input vector X to [0,1] or [-1,+1], or standardize
-    it to have mean 0 and variance 1. Note that the *same* scaling must be
-    applied to the test vector to obtain meaningful results. This can be easily
-    done using :class:`~sklearn.preprocessing.StandardScaler`::
+* Stochastic Gradient Descent is sensitive to feature scaling, so it
+  is highly recommended to scale your data. For example, scale each
+  attribute on the input vector X to [0,1] or [-1,+1], or standardize
+  it to have mean 0 and variance 1. Note that the *same* scaling must be
+  applied to the test vector to obtain meaningful results. This can be easily
+  done using :class:`~sklearn.preprocessing.StandardScaler`::
 
-      from sklearn.preprocessing import StandardScaler
-      scaler = StandardScaler()
-      scaler.fit(X_train)  # Don't cheat - fit only on training data
-      X_train = scaler.transform(X_train)
-      X_test = scaler.transform(X_test)  # apply same transformation to test data
+    from sklearn.preprocessing import StandardScaler
+    scaler = StandardScaler()
+    scaler.fit(X_train)  # Don't cheat - fit only on training data
+    X_train = scaler.transform(X_train)
+    X_test = scaler.transform(X_test)  # apply same transformation to test data
 
-      # Or better yet: use a pipeline!
-      from sklearn.pipeline import make_pipeline
-      est = make_pipeline(StandardScaler(), SGDClassifier())
-      est.fit(X_train)
-      est.predict(X_test)
+    # Or better yet: use a pipeline!
+    from sklearn.pipeline import make_pipeline
+    est = make_pipeline(StandardScaler(), SGDClassifier())
+    est.fit(X_train)
+    est.predict(X_test)
 
-    If your attributes have an intrinsic scale (e.g. word frequencies or
-    indicator features) scaling is not needed.
+  If your attributes have an intrinsic scale (e.g. word frequencies or
+  indicator features) scaling is not needed.
 
-  * Finding a reasonable regularization term :math:`\alpha` is
-    best done using automatic hyper-parameter search, e.g.
-    :class:`~sklearn.model_selection.GridSearchCV` or
-    :class:`~sklearn.model_selection.RandomizedSearchCV`, usually in the
-    range ``10.0**-np.arange(1,7)``.
+* Finding a reasonable regularization term :math:`\alpha` is
+  best done using automatic hyper-parameter search, e.g.
+  :class:`~sklearn.model_selection.GridSearchCV` or
+  :class:`~sklearn.model_selection.RandomizedSearchCV`, usually in the
+  range ``10.0**-np.arange(1,7)``.
 
-  * Empirically, we found that SGD converges after observing
-    approximately 10^6 training samples. Thus, a reasonable first guess
-    for the number of iterations is ``max_iter = np.ceil(10**6 / n)``,
-    where ``n`` is the size of the training set.
+* Empirically, we found that SGD converges after observing
+  approximately 10^6 training samples. Thus, a reasonable first guess
+  for the number of iterations is ``max_iter = np.ceil(10**6 / n)``,
+  where ``n`` is the size of the training set.
 
-  * If you apply SGD to features extracted using PCA we found that
-    it is often wise to scale the feature values by some constant `c`
-    such that the average L2 norm of the training data equals one.
+* If you apply SGD to features extracted using PCA we found that
+  it is often wise to scale the feature values by some constant `c`
+  such that the average L2 norm of the training data equals one.
 
-  * We found that Averaged SGD works best with a larger number of features
-    and a higher eta0
+* We found that Averaged SGD works best with a larger number of features
+  and a higher eta0.
 
 .. topic:: References:
 
@@ -454,12 +454,12 @@ misclassification error (Zero-one loss) as shown in the Figure below.
 Popular choices for the regularization term :math:`R` (the `penalty`
 parameter) include:
 
-   - L2 norm: :math:`R(w) := \frac{1}{2} \sum_{j=1}^{m} w_j^2 = ||w||_2^2`,
-   - L1 norm: :math:`R(w) := \sum_{j=1}^{m} |w_j|`, which leads to sparse
-     solutions.
-   - Elastic Net: :math:`R(w) := \frac{\rho}{2} \sum_{j=1}^{n} w_j^2 +
-     (1-\rho) \sum_{j=1}^{m} |w_j|`, a convex combination of L2 and L1, where
-     :math:`\rho` is given by ``1 - l1_ratio``.
+- L2 norm: :math:`R(w) := \frac{1}{2} \sum_{j=1}^{m} w_j^2 = ||w||_2^2`,
+- L1 norm: :math:`R(w) := \sum_{j=1}^{m} |w_j|`, which leads to sparse
+  solutions.
+- Elastic Net: :math:`R(w) := \frac{\rho}{2} \sum_{j=1}^{n} w_j^2 +
+  (1-\rho) \sum_{j=1}^{m} |w_j|`, a convex combination of L2 and L1, where
+  :math:`\rho` is given by ``1 - l1_ratio``.
 
 The Figure below shows the contours of the different regularization terms
 in a 2-dimensional parameter space (:math:`m=2`) when :math:`R(w) = 1`.

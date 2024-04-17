@@ -389,15 +389,12 @@ def k_means(
         `copy_x` is False. If the original data is sparse, but not in CSR format,
         a copy will be made even if `copy_x` is False.
 
-    algorithm : {"lloyd", "elkan", "auto", "full"}, default="lloyd"
+    algorithm : {"lloyd", "elkan"}, default="lloyd"
         K-means algorithm to use. The classical EM-style algorithm is `"lloyd"`.
         The `"elkan"` variation can be more efficient on some datasets with
         well-defined clusters, by using the triangle inequality. However it's
         more memory intensive due to the allocation of an extra array of shape
         `(n_samples, n_clusters)`.
-
-        `"auto"` and `"full"` are deprecated and they will be removed in
-        Scikit-Learn 1.3. They are both aliases for `"lloyd"`.
 
         .. versionchanged:: 0.18
             Added Elkan algorithm
@@ -425,6 +422,23 @@ def k_means(
     best_n_iter : int
         Number of iterations corresponding to the best results.
         Returned only if `return_n_iter` is set to True.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.cluster import k_means
+    >>> X = np.array([[1, 2], [1, 4], [1, 0],
+    ...               [10, 2], [10, 4], [10, 0]])
+    >>> centroid, label, inertia = k_means(
+    ...     X, n_clusters=2, n_init="auto", random_state=0
+    ... )
+    >>> centroid
+    array([[10.,  2.],
+           [ 1.,  2.]])
+    >>> label
+    array([1, 1, 1, 0, 0, 0], dtype=int32)
+    >>> inertia
+    16.0
     """
     est = KMeans(
         n_clusters=n_clusters,
@@ -1056,7 +1070,7 @@ class _BaseKMeans(
         """
         return self.fit(X, sample_weight=sample_weight).labels_
 
-    def predict(self, X, sample_weight="deprecated"):
+    def predict(self, X):
         """Predict the closest cluster each sample in X belongs to.
 
         In the vector quantization literature, `cluster_centers_` is called
@@ -1068,14 +1082,6 @@ class _BaseKMeans(
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
             New data to predict.
 
-        sample_weight : array-like of shape (n_samples,), default=None
-            The weights for each observation in X. If None, all observations
-            are assigned equal weight.
-
-            .. deprecated:: 1.3
-               The parameter `sample_weight` is deprecated in version 1.3
-               and will be removed in 1.5.
-
         Returns
         -------
         labels : ndarray of shape (n_samples,)
@@ -1084,17 +1090,9 @@ class _BaseKMeans(
         check_is_fitted(self)
 
         X = self._check_test_data(X)
-        if not (isinstance(sample_weight, str) and sample_weight == "deprecated"):
-            warnings.warn(
-                (
-                    "'sample_weight' was deprecated in version 1.3 and "
-                    "will be removed in 1.5."
-                ),
-                FutureWarning,
-            )
-            sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
-        else:
-            sample_weight = _check_sample_weight(None, X, dtype=X.dtype)
+
+        # sample weights are not used by predict but cython helpers expect an array
+        sample_weight = np.ones(X.shape[0], dtype=X.dtype)
 
         labels = _labels_inertia_threadpool_limit(
             X,
@@ -1208,6 +1206,9 @@ class KMeans(_BaseKMeans):
         The number of clusters to form as well as the number of
         centroids to generate.
 
+        For an example of how to choose an optimal value for `n_clusters` refer to
+        :ref:`sphx_glr_auto_examples_cluster_plot_kmeans_silhouette_analysis.py`.
+
     init : {'k-means++', 'random'}, callable or array-like of shape \
             (n_clusters, n_features), default='k-means++'
         Method for initialization:
@@ -1274,15 +1275,12 @@ class KMeans(_BaseKMeans):
         copy_x is False. If the original data is sparse, but not in CSR format,
         a copy will be made even if copy_x is False.
 
-    algorithm : {"lloyd", "elkan", "auto", "full"}, default="lloyd"
+    algorithm : {"lloyd", "elkan"}, default="lloyd"
         K-means algorithm to use. The classical EM-style algorithm is `"lloyd"`.
         The `"elkan"` variation can be more efficient on some datasets with
         well-defined clusters, by using the triangle inequality. However it's
         more memory intensive due to the allocation of an extra array of shape
         `(n_samples, n_clusters)`.
-
-        `"auto"` and `"full"` are deprecated and they will be removed in
-        Scikit-Learn 1.3. They are both aliases for `"lloyd"`.
 
         .. versionchanged:: 0.18
             Added Elkan algorithm
@@ -1364,14 +1362,27 @@ class KMeans(_BaseKMeans):
     >>> kmeans.cluster_centers_
     array([[10.,  2.],
            [ 1.,  2.]])
+
+    For a more detailed example of K-Means using the iris dataset see
+    :ref:`sphx_glr_auto_examples_cluster_plot_cluster_iris.py`.
+
+    For examples of common problems with K-Means and how to address them see
+    :ref:`sphx_glr_auto_examples_cluster_plot_kmeans_assumptions.py`.
+
+    For an example of how to use K-Means to perform color quantization see
+    :ref:`sphx_glr_auto_examples_cluster_plot_color_quantization.py`.
+
+    For a demonstration of how K-Means can be used to cluster text documents see
+    :ref:`sphx_glr_auto_examples_text_plot_document_clustering.py`.
+
+    For a comparison between K-Means and MiniBatchKMeans refer to example
+    :ref:`sphx_glr_auto_examples_cluster_plot_mini_batch_kmeans.py`.
     """
 
     _parameter_constraints: dict = {
         **_BaseKMeans._parameter_constraints,
         "copy_x": ["boolean"],
-        "algorithm": [
-            StrOptions({"lloyd", "elkan", "auto", "full"}, deprecated={"auto", "full"})
-        ],
+        "algorithm": [StrOptions({"lloyd", "elkan"})],
     }
 
     def __init__(
@@ -1404,15 +1415,6 @@ class KMeans(_BaseKMeans):
         super()._check_params_vs_input(X, default_n_init=10)
 
         self._algorithm = self.algorithm
-        if self._algorithm in ("auto", "full"):
-            warnings.warn(
-                (
-                    f"algorithm='{self._algorithm}' is deprecated, it will be "
-                    "removed in 1.3. Using 'lloyd' instead."
-                ),
-                FutureWarning,
-            )
-            self._algorithm = "lloyd"
         if self._algorithm == "elkan" and self.n_clusters == 1:
             warnings.warn(
                 (

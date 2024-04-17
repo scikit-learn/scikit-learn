@@ -79,7 +79,7 @@ def load_mtpl2(n_samples=None):
     df_sev = df_sev.groupby("IDpol").sum()
 
     df = df_freq.join(df_sev, how="left")
-    df["ClaimAmount"].fillna(0, inplace=True)
+    df["ClaimAmount"] = df["ClaimAmount"].fillna(0)
 
     # unquote string fields
     for column_name in df.columns[df.dtypes.values == object]:
@@ -241,7 +241,7 @@ column_trans = ColumnTransformer(
     [
         (
             "binned_numeric",
-            KBinsDiscretizer(n_bins=10, subsample=int(2e5), random_state=0),
+            KBinsDiscretizer(n_bins=10, random_state=0),
             ["VehAge", "DrivAge"],
         ),
         (

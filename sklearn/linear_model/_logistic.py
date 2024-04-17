@@ -477,7 +477,14 @@ def _logistic_regression_path(
             l2_reg_strength = 1.0 / (C * sw_sum)
             args = (X, target, sample_weight, l2_reg_strength, n_threads)
             w0, n_iter_i = _newton_cg(
-                hess, func, grad, w0, args=args, maxiter=max_iter, tol=tol
+                grad_hess=hess,
+                func=func,
+                grad=grad,
+                x0=w0,
+                args=args,
+                maxiter=max_iter,
+                tol=tol,
+                verbose=verbose,
             )
         elif solver == "newton-cholesky":
             l2_reg_strength = 1.0 / (C * sw_sum)
@@ -1246,8 +1253,7 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
             raise ValueError(
                 "This solver needs samples of at least 2 classes"
                 " in the data, but the data contains only one"
-                " class: %r"
-                % classes_[0]
+                " class: %r" % classes_[0]
             )
 
         if len(self.classes_) == 2:
@@ -1413,7 +1419,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
     See glossary entry for :term:`cross-validation estimator`.
 
     This class implements logistic regression using liblinear, newton-cg, sag
-    of lbfgs optimizer. The newton-cg, sag and lbfgs solvers support only L2
+    or lbfgs optimizer. The newton-cg, sag and lbfgs solvers support only L2
     regularization with primal formulation. The liblinear solver supports both
     L1 and L2 regularization, with a dual formulation only for the L2 penalty.
     Elastic-Net penalty is only supported by the saga solver.
@@ -1787,8 +1793,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
             ):
                 raise ValueError(
                     "l1_ratios must be a list of numbers between "
-                    "0 and 1; got (l1_ratios=%r)"
-                    % self.l1_ratios
+                    "0 and 1; got (l1_ratios=%r)" % self.l1_ratios
                 )
             l1_ratios_ = self.l1_ratios
         else:
@@ -1856,8 +1861,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
             raise ValueError(
                 "This solver needs samples of at least 2 classes"
                 " in the data, but the data contains only one"
-                " class: %r"
-                % classes[0]
+                " class: %r" % classes[0]
             )
 
         if n_classes == 2:

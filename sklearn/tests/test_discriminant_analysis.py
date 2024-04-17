@@ -11,7 +11,7 @@ from sklearn.discriminant_analysis import (
     _cov,
 )
 from sklearn.preprocessing import StandardScaler
-from sklearn.utils import _IS_WASM, check_random_state
+from sklearn.utils import check_random_state
 from sklearn.utils._testing import (
     _convert_container,
     assert_allclose,
@@ -19,6 +19,7 @@ from sklearn.utils._testing import (
     assert_array_almost_equal,
     assert_array_equal,
 )
+from sklearn.utils.fixes import _IS_WASM
 
 # Data is just 6 separable points in the plane
 X = np.array([[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]], dtype="f")

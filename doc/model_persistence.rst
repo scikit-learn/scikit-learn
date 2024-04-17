@@ -55,10 +55,14 @@ with::
    available `here
    <https://joblib.readthedocs.io/en/latest/persistence.html>`_.
 
+|details-start|
+**InconsistentVersionWarning**
+|details-split|
+
 When an estimator is unpickled with a scikit-learn version that is inconsistent
 with the version the estimator was pickled with, a
 :class:`~sklearn.exceptions.InconsistentVersionWarning` is raised. This warning
-can be caught to obtain the original version the estimator was pickled with:
+can be caught to obtain the original version the estimator was pickled with::
 
   from sklearn.exceptions import InconsistentVersionWarning
   warnings.simplefilter("error", InconsistentVersionWarning)
@@ -67,6 +71,8 @@ can be caught to obtain the original version the estimator was pickled with:
       est = pickle.loads("model_from_prevision_version.pickle")
   except InconsistentVersionWarning as w:
       print(w.original_sklearn_version)
+
+|details-end|
 
 .. _persistence_limitations:
 
@@ -112,7 +118,13 @@ A more secure format: `skops`
 `skops <https://skops.readthedocs.io/en/stable/>`__ provides a more secure
 format via the :mod:`skops.io` module. It avoids using :mod:`pickle` and only
 loads files which have types and references to functions which are trusted
-either by default or by the user. The API is very similar to ``pickle``, and
+either by default or by the user.
+
+|details-start|
+**Using skops**
+|details-split|
+
+The API is very similar to ``pickle``, and
 you can persist your models as explain in the `docs
 <https://skops.readthedocs.io/en/stable/persistence.html>`__ using
 :func:`skops.io.dump` and :func:`skops.io.dumps`::
@@ -135,6 +147,8 @@ If you trust the source of the file / object, you can pass ``trusted=True``::
 
 Please report issues and feature requests related to this format on the `skops
 issue tracker <https://github.com/skops-dev/skops/issues>`__.
+
+|details-end|
 
 Interoperable formats
 ---------------------

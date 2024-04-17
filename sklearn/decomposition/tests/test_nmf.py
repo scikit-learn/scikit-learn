@@ -32,7 +32,7 @@ def test_convergence_warning(Estimator, solver):
     )
     A = np.ones((2, 2))
     with pytest.warns(ConvergenceWarning, match=convergence_warning):
-        Estimator(max_iter=1, **solver).fit(A)
+        Estimator(max_iter=1, n_components="auto", **solver).fit(A)
 
 
 def test_initialize_nn_output():

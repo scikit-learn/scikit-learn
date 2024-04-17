@@ -2,6 +2,7 @@
 Tests for HDBSCAN clustering algorithm
 Based on the DBSCAN test code
 """
+
 import numpy as np
 import pytest
 from scipy import stats
@@ -304,7 +305,7 @@ def test_hdbscan_centers(algorithm):
     accurate to the data.
     """
     centers = [(0.0, 0.0), (3.0, 3.0)]
-    H, _ = make_blobs(n_samples=1000, random_state=0, centers=centers, cluster_std=0.5)
+    H, _ = make_blobs(n_samples=2000, random_state=0, centers=centers, cluster_std=0.5)
     hdb = HDBSCAN(store_centers="both").fit(H)
 
     for center, centroid, medoid in zip(centers, hdb.centroids_, hdb.medoids_):

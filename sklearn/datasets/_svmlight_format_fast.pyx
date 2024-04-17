@@ -131,7 +131,7 @@ ctypedef fused int_or_longlong:
 
 
 def get_dense_row_string(
-    int_or_float[:, :] X,
+    const int_or_float[:, :] X,
     Py_ssize_t[:] x_inds,
     double_or_longlong[:] x_vals,
     Py_ssize_t row,

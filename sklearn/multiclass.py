@@ -181,12 +181,19 @@ def _estimators_has(attr):
     """Check if self.estimator or self.estimators_[0] has attr.
 
     If `self.estimators_[0]` has the attr, then its safe to assume that other
-    values has it too. This function is used together with `avaliable_if`.
+    estimators have it too. We raise the original `AttributeError` if `attr`
+    does not exist. This function is used together with `available_if`.
     """
-    return lambda self: (
-        hasattr(self.estimator, attr)
-        or (hasattr(self, "estimators_") and hasattr(self.estimators_[0], attr))
-    )
+
+    def check(self):
+        if hasattr(self, "estimators_"):
+            getattr(self.estimators_[0], attr)
+        else:
+            getattr(self.estimator, attr)
+
+        return True
+
+    return check
 
 
 class OneVsRestClassifier(
@@ -434,12 +441,6 @@ class OneVsRestClassifier(
         )
 
         if _check_partial_fit_first_call(self, classes):
-            if not hasattr(self.estimator, "partial_fit"):
-                raise ValueError(
-                    ("Base estimator {0}, doesn't have partial_fit method").format(
-                        self.estimator
-                    )
-                )
             self.estimators_ = [clone(self.estimator) for _ in range(self.n_classes_)]
 
             # A sparse LabelBinarizer, with sparse_output=True, has been
@@ -737,7 +738,7 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
     >>> X_train, X_test, y_train, y_test = train_test_split(
     ...     X, y, test_size=0.33, shuffle=True, random_state=0)
     >>> clf = OneVsOneClassifier(
-    ...     LinearSVC(dual="auto", random_state=0)).fit(X_train, y_train)
+    ...     LinearSVC(random_state=0)).fit(X_train, y_train)
     >>> clf.predict(X_test[:10])
     array([2, 1, 0, 2, 0, 2, 0, 1, 1, 1])
     """

@@ -1,4 +1,5 @@
 """Test the validation module"""
+
 import os
 import re
 import sys
@@ -43,6 +44,7 @@ from sklearn.metrics import (
     precision_score,
     r2_score,
 )
+from sklearn.metrics._scorer import _MultimetricScorer
 from sklearn.model_selection import (
     GridSearchCV,
     GroupKFold,
@@ -2323,7 +2325,9 @@ def three_params_scorer(i, j, k):
         ),
         (
             True,
-            {"sc1": three_params_scorer, "sc2": three_params_scorer},
+            _MultimetricScorer(
+                scorers={"sc1": three_params_scorer, "sc2": three_params_scorer}
+            ),
             3,
             (1, 3),
             (0, 1),
@@ -2332,7 +2336,9 @@ def three_params_scorer(i, j, k):
         ),
         (
             False,
-            {"sc1": three_params_scorer, "sc2": three_params_scorer},
+            _MultimetricScorer(
+                scorers={"sc1": three_params_scorer, "sc2": three_params_scorer}
+            ),
             10,
             (1, 3),
             (0, 1),
@@ -2397,7 +2403,7 @@ def test_callable_multimetric_confusion_matrix_cross_validate():
         return {"tn": cm[0, 0], "fp": cm[0, 1], "fn": cm[1, 0], "tp": cm[1, 1]}
 
     X, y = make_classification(n_samples=40, n_features=4, random_state=42)
-    est = LinearSVC(dual="auto", random_state=42)
+    est = LinearSVC(random_state=42)
     est.fit(X, y)
     cv_results = cross_validate(est, X, y, cv=5, scoring=custom_scorer)
 
@@ -2517,7 +2523,7 @@ def test_groups_with_routing_validation(cv_method):
 def test_passed_unrequested_metadata(cv_method):
     """Check that we raise an error when passing metadata that is not
     requested."""
-    err_msg = re.escape("['metadata'] are passed to cross validation")
+    err_msg = re.escape("but are not explicitly set as requested or not requested")
     with pytest.raises(ValueError, match=err_msg):
         cv_method(
             estimator=ConsumingClassifier(),

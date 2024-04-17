@@ -41,6 +41,9 @@ class KernelPCA(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator
     components to extract. It can also use a randomized truncated SVD by the
     method proposed in [3]_, see `eigen_solver`.
 
+    For a usage example, see
+    :ref:`sphx_glr_auto_examples_decomposition_plot_kernel_pca.py`.
+
     Read more in the :ref:`User Guide <kernel_PCA>`.
 
     Parameters
@@ -363,9 +366,7 @@ class KernelPCA(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator
         )
 
         # flip eigenvectors' sign to enforce deterministic output
-        self.eigenvectors_, _ = svd_flip(
-            self.eigenvectors_, np.zeros_like(self.eigenvectors_).T
-        )
+        self.eigenvectors_, _ = svd_flip(u=self.eigenvectors_, v=None)
 
         # sort eigenvectors in descending order
         indices = self.eigenvalues_.argsort()[::-1]

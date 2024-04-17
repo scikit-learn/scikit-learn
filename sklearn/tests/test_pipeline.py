@@ -1,6 +1,7 @@
 """
 Test the pipeline module.
 """
+
 import itertools
 import re
 import shutil
@@ -21,7 +22,7 @@ from sklearn.ensemble import (
     RandomForestClassifier,
     RandomTreesEmbedding,
 )
-from sklearn.exceptions import NotFittedError
+from sklearn.exceptions import NotFittedError, UnsetMetadataPassedError
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.feature_selection import SelectKBest, f_classif
 from sklearn.impute import SimpleImputer
@@ -33,7 +34,9 @@ from sklearn.pipeline import FeatureUnion, Pipeline, make_pipeline, make_union
 from sklearn.preprocessing import FunctionTransformer, StandardScaler
 from sklearn.svm import SVC
 from sklearn.tests.metadata_routing_common import (
+    ConsumingNoFitTransformTransformer,
     ConsumingTransformer,
+    _Registry,
     check_recorded_metadata,
 )
 from sklearn.utils._metadata_requests import COMPOSITE_METHODS, METHODS
@@ -388,11 +391,14 @@ def test_score_samples_on_pipeline_without_score_samples():
     # step of the pipeline does not have score_samples defined.
     pipe = make_pipeline(LogisticRegression())
     pipe.fit(X, y)
-    with pytest.raises(
-        AttributeError,
-        match="'LogisticRegression' object has no attribute 'score_samples'",
-    ):
+
+    inner_msg = "'LogisticRegression' object has no attribute 'score_samples'"
+    outer_msg = "'Pipeline' has no attribute 'score_samples'"
+    with pytest.raises(AttributeError, match=outer_msg) as exec_info:
         pipe.score_samples(X)
+
+    assert isinstance(exec_info.value.__cause__, AttributeError)
+    assert inner_msg in str(exec_info.value.__cause__)
 
 
 def test_pipeline_methods_preprocessing_svm():
@@ -454,9 +460,12 @@ def test_fit_predict_on_pipeline_without_fit_predict():
     pca = PCA(svd_solver="full")
     pipe = Pipeline([("scaler", scaler), ("pca", pca)])
 
-    msg = "'PCA' object has no attribute 'fit_predict'"
-    with pytest.raises(AttributeError, match=msg):
+    outer_msg = "'Pipeline' has no attribute 'fit_predict'"
+    inner_msg = "'PCA' object has no attribute 'fit_predict'"
+    with pytest.raises(AttributeError, match=outer_msg) as exec_info:
         getattr(pipe, "fit_predict")
+    assert isinstance(exec_info.value.__cause__, AttributeError)
+    assert inner_msg in str(exec_info.value.__cause__)
 
 
 def test_fit_predict_with_intermediate_fit_params():
@@ -784,9 +793,12 @@ def test_set_pipeline_step_passthrough(passthrough):
     assert_array_equal([[exp]], pipeline.fit_transform(X, y))
     assert_array_equal(X, pipeline.inverse_transform([[exp]]))
 
-    msg = "'str' object has no attribute 'predict'"
-    with pytest.raises(AttributeError, match=msg):
+    inner_msg = "'str' object has no attribute 'predict'"
+    outer_msg = "This 'Pipeline' has no attribute 'predict'"
+    with pytest.raises(AttributeError, match=outer_msg) as exec_info:
         getattr(pipeline, "predict")
+    assert isinstance(exec_info.value.__cause__, AttributeError)
+    assert inner_msg in str(exec_info.value.__cause__)
 
     # Check 'passthrough' step at construction time
     exp = 2 * 5
@@ -1129,10 +1141,8 @@ def test_set_feature_union_passthrough():
     )
 
 
-def test_feature_union_passthrough_get_feature_names_out():
-    """Check that get_feature_names_out works with passthrough without
-    passing input_features.
-    """
+def test_feature_union_passthrough_get_feature_names_out_true():
+    """Check feature_names_out for verbose_feature_names_out=True (default)"""
     X = iris.data
     pca = PCA(n_components=2, svd_solver="randomized", random_state=0)
 
@@ -1149,6 +1159,73 @@ def test_feature_union_passthrough_get_feature_names_out():
         ],
         ft.get_feature_names_out(),
     )
+
+
+def test_feature_union_passthrough_get_feature_names_out_false():
+    """Check feature_names_out for verbose_feature_names_out=False"""
+    X = iris.data
+    pca = PCA(n_components=2, svd_solver="randomized", random_state=0)
+
+    ft = FeatureUnion(
+        [("pca", pca), ("passthrough", "passthrough")], verbose_feature_names_out=False
+    )
+    ft.fit(X)
+    assert_array_equal(
+        [
+            "pca0",
+            "pca1",
+            "x0",
+            "x1",
+            "x2",
+            "x3",
+        ],
+        ft.get_feature_names_out(),
+    )
+
+
+def test_feature_union_passthrough_get_feature_names_out_false_errors():
+    """Check get_feature_names_out and non-verbose names and colliding names."""
+    pd = pytest.importorskip("pandas")
+    X = pd.DataFrame([[1, 2], [2, 3]], columns=["a", "b"])
+
+    select_a = FunctionTransformer(
+        lambda X: X[["a"]], feature_names_out=lambda self, _: np.asarray(["a"])
+    )
+    union = FeatureUnion(
+        [("t1", StandardScaler()), ("t2", select_a)],
+        verbose_feature_names_out=False,
+    )
+    union.fit(X)
+
+    msg = re.escape(
+        "Output feature names: ['a'] are not unique. "
+        "Please set verbose_feature_names_out=True to add prefixes to feature names"
+    )
+
+    with pytest.raises(ValueError, match=msg):
+        union.get_feature_names_out()
+
+
+def test_feature_union_passthrough_get_feature_names_out_false_errors_overlap_over_5():
+    """Check get_feature_names_out with non-verbose names and >= 5 colliding names."""
+    pd = pytest.importorskip("pandas")
+    X = pd.DataFrame([list(range(10))], columns=[f"f{i}" for i in range(10)])
+
+    union = FeatureUnion(
+        [("t1", "passthrough"), ("t2", "passthrough")],
+        verbose_feature_names_out=False,
+    )
+
+    union.fit(X)
+
+    msg = re.escape(
+        "Output feature names: ['f0', 'f1', 'f2', 'f3', 'f4', ...] "
+        "are not unique. Please set verbose_feature_names_out=True to add prefixes to"
+        " feature names"
+    )
+
+    with pytest.raises(ValueError, match=msg):
+        union.get_feature_names_out()
 
 
 def test_step_name_validation():
@@ -1457,7 +1534,7 @@ def test_n_features_in_feature_union():
 
 def test_feature_union_fit_params():
     # Regression test for issue: #15117
-    class Dummy(TransformerMixin, BaseEstimator):
+    class DummyTransformer(TransformerMixin, BaseEstimator):
         def fit(self, X, y=None, **fit_params):
             if fit_params != {"a": 0}:
                 raise ValueError
@@ -1467,7 +1544,7 @@ def test_feature_union_fit_params():
             return X
 
     X, y = iris.data, iris.target
-    t = FeatureUnion([("dummy0", Dummy()), ("dummy1", Dummy())])
+    t = FeatureUnion([("dummy0", DummyTransformer()), ("dummy1", DummyTransformer())])
     with pytest.raises(ValueError):
         t.fit(X, y)
 
@@ -1476,6 +1553,30 @@ def test_feature_union_fit_params():
 
     t.fit(X, y, a=0)
     t.fit_transform(X, y, a=0)
+
+
+def test_feature_union_fit_params_without_fit_transform():
+    # Test that metadata is passed correctly to underlying transformers that don't
+    # implement a `fit_transform` method when SLEP6 is not enabled.
+
+    class DummyTransformer(ConsumingNoFitTransformTransformer):
+        def fit(self, X, y=None, **fit_params):
+            if fit_params != {"metadata": 1}:
+                raise ValueError
+            return self
+
+    X, y = iris.data, iris.target
+    t = FeatureUnion(
+        [
+            ("nofittransform0", DummyTransformer()),
+            ("nofittransform1", DummyTransformer()),
+        ]
+    )
+
+    with pytest.raises(ValueError):
+        t.fit_transform(X, y, metadata=0)
+
+    t.fit_transform(X, y, metadata=1)
 
 
 def test_pipeline_missing_values_leniency():
@@ -1691,8 +1792,8 @@ def test_feature_union_feature_names_in_():
     assert not hasattr(union, "feature_names_in_")
 
 
-# Test that metadata is routed correctly for pipelines
-# ====================================================
+# Test that metadata is routed correctly for pipelines and FeatureUnion
+# =====================================================================
 
 
 class SimpleEstimator(BaseEstimator):
@@ -1815,7 +1916,7 @@ def test_metadata_routing_error_for_pipeline(method):
     pipeline = Pipeline([("estimator", est)])
     error_message = (
         "[sample_weight, prop] are passed but are not explicitly set as requested"
-        f" or not for SimpleEstimator.{method}"
+        f" or not requested for SimpleEstimator.{method}"
     )
     with pytest.raises(ValueError, match=re.escape(error_message)):
         try:
@@ -1861,6 +1962,99 @@ def test_pipeline_with_no_last_step(last_step):
     """
     pipe = Pipeline([("trs", FunctionTransformer()), ("estimator", last_step)])
     assert pipe.fit([[1]], [1]).transform([[1], [2], [3]]) == [[1], [2], [3]]
+
+
+@pytest.mark.usefixtures("enable_slep006")
+def test_feature_union_metadata_routing_error():
+    """Test that the right error is raised when metadata is not requested."""
+    X = np.array([[0, 1], [2, 2], [4, 6]])
+    y = [1, 2, 3]
+    sample_weight, metadata = [1, 1, 1], "a"
+
+    # test lacking set_fit_request
+    feature_union = FeatureUnion([("sub_transformer", ConsumingTransformer())])
+
+    error_message = (
+        "[sample_weight, metadata] are passed but are not explicitly set as requested"
+        f" or not requested for {ConsumingTransformer.__name__}.fit"
+    )
+
+    with pytest.raises(UnsetMetadataPassedError, match=re.escape(error_message)):
+        feature_union.fit(X, y, sample_weight=sample_weight, metadata=metadata)
+
+    # test lacking set_transform_request
+    feature_union = FeatureUnion(
+        [
+            (
+                "sub_transformer",
+                ConsumingTransformer().set_fit_request(
+                    sample_weight=True, metadata=True
+                ),
+            )
+        ]
+    )
+
+    error_message = (
+        "[sample_weight, metadata] are passed but are not explicitly set as requested "
+        f"or not requested for {ConsumingTransformer.__name__}.transform"
+    )
+
+    with pytest.raises(UnsetMetadataPassedError, match=re.escape(error_message)):
+        feature_union.fit(
+            X, y, sample_weight=sample_weight, metadata=metadata
+        ).transform(X, sample_weight=sample_weight, metadata=metadata)
+
+
+@pytest.mark.usefixtures("enable_slep006")
+def test_feature_union_get_metadata_routing_without_fit():
+    """Test that get_metadata_routing() works regardless of the Child's
+    consumption of any metadata."""
+    feature_union = FeatureUnion([("sub_transformer", ConsumingTransformer())])
+    feature_union.get_metadata_routing()
+
+
+@pytest.mark.usefixtures("enable_slep006")
+@pytest.mark.parametrize(
+    "transformer", [ConsumingTransformer, ConsumingNoFitTransformTransformer]
+)
+def test_feature_union_metadata_routing(transformer):
+    """Test that metadata is routed correctly for FeatureUnion."""
+    X = np.array([[0, 1], [2, 2], [4, 6]])
+    y = [1, 2, 3]
+    sample_weight, metadata = [1, 1, 1], "a"
+
+    feature_union = FeatureUnion(
+        [
+            (
+                "sub_trans1",
+                transformer(registry=_Registry())
+                .set_fit_request(sample_weight=True, metadata=True)
+                .set_transform_request(sample_weight=True, metadata=True),
+            ),
+            (
+                "sub_trans2",
+                transformer(registry=_Registry())
+                .set_fit_request(sample_weight=True, metadata=True)
+                .set_transform_request(sample_weight=True, metadata=True),
+            ),
+        ]
+    )
+
+    kwargs = {"sample_weight": sample_weight, "metadata": metadata}
+    feature_union.fit(X, y, **kwargs)
+    feature_union.fit_transform(X, y, **kwargs)
+    feature_union.fit(X, y, **kwargs).transform(X, **kwargs)
+
+    for transformer in feature_union.transformer_list:
+        # access sub-transformer in (name, trans) with transformer[1]
+        registry = transformer[1].registry
+        assert len(registry)
+        for sub_trans in registry:
+            check_recorded_metadata(
+                obj=sub_trans,
+                method="fit",
+                **kwargs,
+            )
 
 
 # End of routing tests
