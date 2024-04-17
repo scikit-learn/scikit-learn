@@ -50,7 +50,9 @@ def yield_namespaces(include_numpy_namespaces=True):
         yield array_namespace
 
 
-def yield_namespace_device_dtype_combinations(include_numpy_namespaces=True):
+def yield_namespace_device_dtype_combinations(
+    include_numpy_namespaces=True, include_float16=False
+):
     """Yield supported namespace, device, dtype tuples for testing.
 
     Use this to test that an estimator works with all combinations.
@@ -59,6 +61,9 @@ def yield_namespace_device_dtype_combinations(include_numpy_namespaces=True):
     ----------
     include_numpy_namespaces : bool, default=True
         If True, also yield numpy namespaces.
+
+    include_float16: bool, default=False
+        If True, yield float16 dtypes with torch namespaces.
 
     Returns
     -------
@@ -77,9 +82,10 @@ def yield_namespace_device_dtype_combinations(include_numpy_namespaces=True):
         include_numpy_namespaces=include_numpy_namespaces
     ):
         if array_namespace == "torch":
-            for device, dtype in itertools.product(
-                ("cpu", "cuda"), ("float64", "float32", "float16")
-            ):
+            dtypes = ("float64", "float32")
+            if include_float16:
+                dtypes = (*dtypes, "float16")
+            for device, dtype in itertools.product(("cpu", "cuda"), dtypes):
                 yield array_namespace, device, dtype
             yield array_namespace, "mps", "float32"
         else:
