@@ -758,7 +758,6 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
             .. versionchanged:: 1.5
                 `**predict_params` can be routed via metadata routing API.
 
-
         Returns
         -------
         y_pred : ndarray of shape (n_samples,) or (n_samples, n_output)
@@ -1149,7 +1148,6 @@ class StackingRegressor(RegressorMixin, _BaseStacking):
 
             .. versionchanged:: 1.5
                 `**predict_params` can be routed via metadata routing API.
-
 
         Returns
         -------
