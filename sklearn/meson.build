@@ -141,7 +141,9 @@ py.extension_module(
 
 # Need for Cython cimports across subpackages to work, i.e. avoid errors like
 # relative cimport from non-package directory is not allowed
-fs.copyfile('__init__.py')
+sklearn_root_cython_tree = [
+  fs.copyfile('__init__.py')
+]
 
 sklearn_dir = py.get_install_dir() / 'sklearn'
 

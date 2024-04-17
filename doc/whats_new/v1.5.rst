@@ -127,6 +127,13 @@ Changelog
     :pr:`123456` by :user:`Joe Bloggs <joeongithub>`.
     where 123455 is the *pull request* number, not the issue number.
 
+:mod:`sklearn.calibration`
+..........................
+
+- |Fix| Fixed a regression in :class:`calibration.CalibratedClassifierCV` where
+  an error was wrongly raised with string targets. 
+  :pr:`28843` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
+
 :mod:`sklearn.cluster`
 ......................
 
@@ -339,6 +346,10 @@ Changelog
   in favor of `y_proba`. `y_prob` will be removed in version 1.7.
   :pr:`28092` by :user:`Adam Li <adam2392>`.
 
+- |API| For classifiers and classification metrics, labels encoded as bytes
+  is deprecated and will raise an error in v1.6.
+  :pr:`18555` by :user:`Kaushik Amar Das <cozek>`.
+
 :mod:`sklearn.mixture`
 ......................
 
@@ -417,6 +428,16 @@ Changelog
 
 - |API| :func:`utils.tosequence` is deprecated and will be removed in version 1.7.
   :pr:`28763` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
+
+- |API| :class:`utils.parallel_backend` and :func:`utils.register_parallel_backend` are
+  deprecated and will be removed in version 1.7. Use `joblib.parallel_backend` and
+  `joblib.register_parallel_backend` instead.
+  :pr:`28847` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
+
+- |API| Raise informative warning message in :func:`type_of_target` when
+  represented as bytes. For classifiers and classification metrics, labels encoded
+  as bytes is deprecated and will raise an error in v1.6.
+  :pr:`18555` by :user:`Kaushik Amar Das <cozek>`.
 
 - |Fix| :func:`~utils._safe_indexing` now works correctly for polars DataFrame when
   `axis=0` and supports indexing polars Series.

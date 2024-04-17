@@ -51,6 +51,7 @@ with warnings.catch_warnings():
     )
 
 # functions to ignore args / docstring of
+# TODO(1.7): remove "sklearn.utils._joblib"
 _DOCSTRING_IGNORES = [
     "sklearn.utils.deprecation.load_mlcomp",
     "sklearn.pipeline.make_pipeline",
