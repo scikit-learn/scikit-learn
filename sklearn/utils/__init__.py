@@ -3,7 +3,6 @@ The :mod:`sklearn.utils` module includes various utilities.
 """
 
 import warnings
-from collections import UserList
 from collections.abc import Sequence
 
 import numpy as np
