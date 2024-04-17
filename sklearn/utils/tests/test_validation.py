@@ -1639,7 +1639,8 @@ def test_check_sample_weight():
 
 
 @pytest.mark.parametrize(
-    "array_namespace, device, dtype_name", yield_namespace_device_dtype_combinations()
+    "array_namespace, device, dtype_name",
+    yield_namespace_device_dtype_combinations(include_float16=True),
 )
 def test_check_sample_weight_array_api(array_namespace, device, dtype_name):
     xp = _array_api_for_tests(array_namespace, device)
