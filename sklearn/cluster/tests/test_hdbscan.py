@@ -2,6 +2,7 @@
 Tests for HDBSCAN clustering algorithm
 Based on the DBSCAN test code
 """
+
 import numpy as np
 import pytest
 from scipy import stats

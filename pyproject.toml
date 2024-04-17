@@ -3,6 +3,9 @@ name = "scikit-learn"
 version = "1.5.dev0"
 description = "A set of python modules for machine learning and data mining"
 readme = "README.rst"
+maintainers = [
+    {name = "scikit-learn developers", email="scikit-learn@python.org"},
+]
 dependencies = [
   "numpy>=1.19.5",
   "scipy>=1.6.0",
@@ -32,6 +35,13 @@ classifiers=[
   "Programming Language :: Python :: Implementation :: CPython",
   "Programming Language :: Python :: Implementation :: PyPy",
 ]
+
+[project.urls]
+homepage = "https://scikit-learn.org"
+source = "https://github.com/scikit-learn/scikit-learn"
+download = "https://pypi.org/project/scikit-learn/#files"
+tracker = "https://github.com/scikit-learn/scikit-learn/issues"
+"release notes" = "https://scikit-learn.org/stable/whats_new"
 
 [project.optional-dependencies]
 build = ["numpy>=1.19.5", "scipy>=1.6.0", "cython>=3.0.10", "meson-python>=0.15.0"]
@@ -69,8 +79,8 @@ tests = [
     "pytest>=7.1.2",
     "pytest-cov>=2.9.0",
     "ruff>=0.2.1",
-    "black>=23.3.0",
-    "mypy>=1.3",
+    "black>=24.3.0",
+    "mypy>=1.9",
     "pyamg>=4.0.0",
     "polars>=0.19.12",
     "pyarrow>=12.0.0",
@@ -193,3 +203,9 @@ exclude= '''
   | sklearn/metrics/_pairwise_distances_reduction/_radius_neighbors.pyx
 )
 '''
+
+[tool.check-sdist]
+# These settings should match .gitattributes
+sdist-only = []
+git-only = [".*", "asv_benchmarks", "azure-pipelines.yml", "benchmarks", "build_tools", "maint_tools"]
+default-ignore = false

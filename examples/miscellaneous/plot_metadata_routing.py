@@ -20,6 +20,7 @@ underlying estimator.
 
 First a few imports and some random data for the rest of the script.
 """
+
 # %%
 
 import warnings
@@ -618,6 +619,11 @@ with warnings.catch_warnings(record=True) as record:
     MetaRegressor(estimator=ExampleRegressor()).fit(X, y, sample_weight=my_weights)
 for w in record:
     print(w.message)
+
+# %%
+# In the end, we disable the configuration flag for metadata routing:
+
+set_config(enable_metadata_routing=False)
 
 # %%
 # Third Party Development and scikit-learn Dependency

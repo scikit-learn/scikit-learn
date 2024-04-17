@@ -3,6 +3,7 @@ Utility methods to print system info for debugging
 
 adapted from :func:`pandas.show_versions`
 """
+
 # License: BSD 3 clause
 
 import platform

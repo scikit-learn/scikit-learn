@@ -1,11 +1,11 @@
-name: "Check Manifest"
+name: "Check sdist"
 
 on:
   schedule:
     - cron: '0 0 * * *'
 
 jobs:
-  check-manifest:
+  check-sdist:
     # Don't run on forks
     if: github.repository == 'scikit-learn/scikit-learn'
 
@@ -19,15 +19,15 @@ jobs:
         # scipy and cython are required to build sdist
         run: |
           python -m pip install --upgrade pip
-          pip install check-manifest scipy cython
+          pip install check-sdist
       - run: |
-          check-manifest -v
+          check-sdist --inject-junk
 
   update-tracker:
     uses: ./.github/workflows/update_tracking_issue.yml
     if: ${{ always() }}
-    needs: [check-manifest]
+    needs: [check-sdist]
     with:
-      job_status: ${{ needs.check-manifest.result }}
+      job_status: ${{ needs.check-sdist.result }}
     secrets:
       BOT_GITHUB_TOKEN: ${{ secrets.BOT_GITHUB_TOKEN }}
