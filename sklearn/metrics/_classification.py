@@ -2929,7 +2929,7 @@ def log_loss(y_true, y_pred, *, normalize=True, sample_weight=None, labels=None)
 
     # Make sure y_pred is normalized
     y_pred_sum = y_pred.sum(axis=1)
-    if not np.allclose(y_pred_sum, 1, rtol=1e-15):
+    if not np.allclose(y_pred_sum, 1):
         raise ValueError("The y_pred values do not sum to one.")
 
     # Clipping
