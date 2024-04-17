@@ -932,7 +932,6 @@ class Pipeline(_BaseComposition):
             .. deprecated:: 1.5
                 `Xt` was deprecated in 1.5 and will be removed in 1.7. Use `X` instead.
 
-
         **params : dict of str -> object
             Parameters requested and accepted by steps. Each step must have
             requested certain metadata for these parameters to be forwarded to
