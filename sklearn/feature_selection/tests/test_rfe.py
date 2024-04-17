@@ -664,8 +664,5 @@ def test_rfe_n_features_to_select_warning(ClsRFE, param):
     with pytest.warns(UserWarning, match=f"{param}=21 > n_features=20"):
         # Create RFE/RFECV with n_features_to_select/min_features_to_select
         # larger than the number of features present in the X variable
-        rfe = ClsRFE(
-            estimator=LogisticRegression(random_state=0),
-            **{param: 21},
-        )
-        rfe.fit(X=X, y=y)
+        clsrfe = ClsRFE(estimator=LogisticRegression(), **{param: 21})
+        clsrfe.fit(X, y)

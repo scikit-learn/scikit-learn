@@ -773,6 +773,7 @@ class RFECV(RFE):
         else:
             parallel = Parallel(n_jobs=self.n_jobs)
             func = delayed(_rfe_single_fit)
+
         scores_features = parallel(
             func(rfe, self.estimator, X, y, train, test, scorer)
             for train, test in cv.split(X, y, groups)
@@ -781,6 +782,7 @@ class RFECV(RFE):
 
         step_n_features_rev = np.array(step_n_features[0])[::-1]
         scores = np.array(scores)
+
         # Reverse order such that lowest number of features is selected in case of tie.
         scores_sum_rev = np.sum(scores, axis=0)[::-1]
         n_features_to_select = step_n_features_rev[np.argmax(scores_sum_rev)]
