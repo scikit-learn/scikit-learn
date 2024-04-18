@@ -1,5 +1,4 @@
-"""Utilities for the neural network modules
-"""
+"""Utilities for the neural network modules"""
 
 # Author: Issam H. Laradji <issam.laradji@gmail.com>
 # License: BSD 3 clause

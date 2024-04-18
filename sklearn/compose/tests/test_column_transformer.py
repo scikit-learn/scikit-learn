@@ -2545,7 +2545,7 @@ def test_metadata_routing_error_for_column_transformer(method):
 
     error_message = (
         "[sample_weight, metadata] are passed but are not explicitly set as requested"
-        f" or not for ConsumingTransformer.{method}"
+        f" or not requested for ConsumingTransformer.{method}"
     )
     with pytest.raises(ValueError, match=re.escape(error_message)):
         if method == "transform":

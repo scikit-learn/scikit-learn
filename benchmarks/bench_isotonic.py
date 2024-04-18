@@ -10,6 +10,7 @@ with matplotlib.
 This allows the scaling of the algorithm with the problem size to be
 visualized and understood.
 """
+
 import argparse
 import gc
 from datetime import datetime
