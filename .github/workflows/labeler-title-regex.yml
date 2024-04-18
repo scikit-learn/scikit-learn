@@ -13,6 +13,7 @@ permissions:
 jobs:
 
   labeler:
+    if: github.repository == 'scikit-learn/scikit-learn'
     runs-on: ubuntu-20.04
     steps:
     - uses: actions/checkout@v3

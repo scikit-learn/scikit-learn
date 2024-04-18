@@ -13,10 +13,10 @@ permissions:
 jobs:
   triage:
     runs-on: ubuntu-latest
+    if: github.repository == 'scikit-learn/scikit-learn'
     steps:
     - uses: thomasjpfan/labeler@v2.5.1
       continue-on-error: true
-      if: github.repository == 'scikit-learn/scikit-learn'
       with:
         repo-token: "${{ secrets.GITHUB_TOKEN }}"
         max-labels: "3"
@@ -24,10 +24,10 @@ jobs:
 
   triage_file_extensions:
     runs-on: ubuntu-latest
+    if: github.repository == 'scikit-learn/scikit-learn'
     steps:
     - uses: thomasjpfan/labeler@v2.5.1
       continue-on-error: true
-      if: github.repository == 'scikit-learn/scikit-learn'
       with:
         repo-token: "${{ secrets.GITHUB_TOKEN }}"
         configuration-path: ".github/labeler-file-extensions.yml"

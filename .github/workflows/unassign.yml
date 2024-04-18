@@ -13,6 +13,7 @@ permissions:
 jobs:
   one:
     runs-on: ubuntu-latest
+    if: github.repository == 'scikit-learn/scikit-learn'
     steps:
       - name:
         if: github.event.issue.state == 'open'

@@ -25,7 +25,7 @@ jobs:
   # Check whether to build the wheels and the source tarball
   check_build_trigger:
     name: Check build trigger
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     if: github.repository == 'scikit-learn/scikit-learn'
     outputs:
       build: ${{ steps.check_build_trigger.outputs.build }}
@@ -178,12 +178,13 @@ jobs:
 
       - name: Store artifacts
         uses: actions/upload-artifact@v3
+        if: ${{success() && github.repository == 'scikit-learn/scikit-learn'}}
         with:
           path: wheelhouse/*.whl
 
   update-tracker:
     uses: ./.github/workflows/update_tracking_issue.yml
-    if: ${{ always() }}
+    if: ${{ always() && github.repository == 'scikit-learn/scikit-learn'}}
     needs: [build_wheels]
     with:
       job_status: ${{ needs.build_wheels.result }}
@@ -193,7 +194,7 @@ jobs:
   # Build the source distribution under Linux
   build_sdist:
     name: Source distribution
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     needs: check_build_trigger
     if: needs.check_build_trigger.outputs.build
 
@@ -224,7 +225,7 @@ jobs:
   # Upload the wheels and the source distribution
   upload_anaconda:
     name: Upload to Anaconda
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     environment: upload_anaconda
     needs: [build_wheels, build_sdist]
     # The artifacts cannot be uploaded on PRs
