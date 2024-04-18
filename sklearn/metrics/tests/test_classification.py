@@ -2689,7 +2689,7 @@ def test_log_loss_eps(dtype):
     https://github.com/scikit-learn/scikit-learn/issues/24315
     """
     y_true = np.array([0, 1], dtype=dtype)
-    y_pred = y_true.copy()
+    y_pred = np.array([1, 0], dtype=dtype)
 
     loss = log_loss(y_true, y_pred)
     assert np.isfinite(loss)
