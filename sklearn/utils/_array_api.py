@@ -316,17 +316,6 @@ def _isdtype_single(dtype, kind, *, xp):
 def supported_float_dtypes(xp):
     """Supported floating point types for the namespace.
 
-    Notes
-    -----
-    `float16` is not officially part of the Array API spec at the
-    time of writing but scikit-learn estimators and functions can choose
-    to accept it when xp.float16 is defined.
-
-    Additionally, some devices available within a namespace may not support
-    all floating-point types that the namespace provides.
-
-    https://data-apis.org/array-api/latest/API_specification/data_types.html
-
     Parameters
     ----------
     xp : module
@@ -341,6 +330,17 @@ def supported_float_dtypes(xp):
     See Also
     --------
     max_precision_float_dtype : Maximum float dtype for a namespace/device pair.
+
+    Notes
+    -----
+    `float16` is not officially part of the Array API spec at the
+    time of writing but scikit-learn estimators and functions can choose
+    to accept it when xp.float16 is defined.
+
+    Additionally, some devices available within a namespace may not support
+    all floating-point types that the namespace provides.
+
+    https://data-apis.org/array-api/latest/API_specification/data_types.html
     """
     # TODO: Update to use `__array_namespace__info__()` from array-api v2023.12
     #       when/if that becomes more widespread.
