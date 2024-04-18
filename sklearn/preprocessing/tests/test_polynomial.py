@@ -519,14 +519,14 @@ def test_spline_transformer_handles_missing_values(knots, extrapolation, sparse_
         )
         spline.fit_transform(X_nan)
 
-    # check correct results for handle_missing="constant", remark: check only
+    # check correct results for handle_missing="zeros", remark: check only
     # for knots="uniform", since for "quantile" the metrics are calculated
     # differently with nan present and a different result is thus expected
     spline = SplineTransformer(
         degree=2,
         n_knots=3,
         knots="uniform",
-        handle_missing="constant",
+        handle_missing="zeros",
         extrapolation=extrapolation,
         sparse_output=sparse_output,
     )

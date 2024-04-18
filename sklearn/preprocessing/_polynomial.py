@@ -643,11 +643,11 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
         Order of output array in the dense case. `'F'` order is faster to compute, but
         may slow down subsequent estimators.
 
-    handle_missing : {'error', 'constant'}, default='error'
+    handle_missing : {'error', 'zeros'}, default='error'
         Specifies the way missing values are handled.
 
         - 'error' : Raise an error if np.nan values are present during :meth:`fit`
-        - 'constant' :  Encode the splines from missing values as 0.
+        - 'zeros' :  Encode the splines from missing values as 0s.
 
         .. versionadded:: 1.5
 
@@ -718,7 +718,7 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
         ],
         "include_bias": ["boolean"],
         "order": [StrOptions({"C", "F"})],
-        "handle_missing": [StrOptions({"error", "constant"})],
+        "handle_missing": [StrOptions({"error", "zeros"})],
         "sparse_output": ["boolean"],
     }
 
