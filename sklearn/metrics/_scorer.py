@@ -419,7 +419,7 @@ class _PassthroughScorer(_MetadataRequester):
         if hasattr(estimator, "set_score_request"):
             self.set_score_request = estimator.set_score_request
 
-        requests = MetadataRequest(owner=self._estimator.__class__.__name__)
+        requests = get_routing_for_object(self._estimator)
         try:
             requests.score = estimator._metadata_request.score
         except AttributeError:
