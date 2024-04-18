@@ -423,9 +423,10 @@ class _PassthroughScorer(_MetadataRequester):
         try:
             requests.score = estimator._metadata_request.score
         except AttributeError:
-            requests.score = estimator._get_default_requests().score
-        except:  # noqa: E722
-            pass
+            try:
+                requests.score = estimator._get_default_requests().score
+            except AttributeError:
+                pass
 
         self._metadata_request = requests
 
