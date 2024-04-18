@@ -237,7 +237,7 @@ def isdtype(dtype, kind, *, xp):
     Parameters
     ----------
     dtype : dtype
-        The input dtype (e.g. ``np.float32``, ``torch.int16``, ``xp.complex64``)
+        The input dtype (e.g. ``np.float32``, ``torch.int16``, ``xp.complex64``).
 
     kind : str or dtype or tuple[str | dtype]
         Data type kind.
@@ -265,7 +265,7 @@ def isdtype(dtype, kind, *, xp):
           boolean is returned if the input ``dtype`` is either equal to a specified
           dtype or belongs to at least one specified data type kind.
 
-    xp: module
+    xp : module
         The array namespace to which ``dtype`` belongs.
 
     Returns
@@ -316,12 +316,34 @@ def _isdtype_single(dtype, kind, *, xp):
 def supported_float_dtypes(xp):
     """Supported floating point types for the namespace.
 
-    Note: float16 is not officially part of the Array API spec at the
+    Notes
+    -----
+    `float16` is not officially part of the Array API spec at the
     time of writing but scikit-learn estimators and functions can choose
     to accept it when xp.float16 is defined.
 
+    Additionally, some devices available within a namespace may not support
+    all floating-point types that the namespace provides.
+
     https://data-apis.org/array-api/latest/API_specification/data_types.html
+
+    Parameters
+    ----------
+    xp : module
+        Array namespace to inspect.
+
+    Returns
+    -------
+    tuple[data-types, ...]
+        Tuple of real floating data types supported by the provided array namespace,
+        ordered from the highest precision to lowest.
+
+    See Also
+    --------
+    max_precision_float_dtype : Maximum float dtype for a namespace/device pair.
     """
+    # TODO: Update to use `__array_namespace__info__()` from array-api v2023.12
+    #       when/if that becomes more widespread.
     if hasattr(xp, "float16"):
         return (xp.float64, xp.float32, xp.float16)
     else:
@@ -333,22 +355,26 @@ def max_precision_float_dtype(xp, *, device=None):
 
     Parameters
     ----------
-    xp: module
+    xp : module
         Array namespace.
 
-    device: str or None
-        Optional device to use for dtype selection. If ``None``, then the maximum
+    device : str, optional=None
+        Device to use for dtype selection. If ``None``, then the maximum
         precision in the namespace is returned.
 
     Returns
     -------
-    dtype: dtype
+    dtype: data-type
         The maximum precision real-floating data type supported by the namespace
         and device.
+
+    See Also
+    --------
+    supported_float_dtypes : All supported real floating dtypes for a namespace.
     """
     # N.B. Yanked from pull/27232
     # TODO: Update to use `__array_namespace__info__()` from array-api v2023.12
-    #       when that becomes more widespread.
+    #       when/if that becomes more widespread.
     if xp.__name__ in {"array_api_compat.torch", "torch"} and device == "mps":
         return xp.float32
 
