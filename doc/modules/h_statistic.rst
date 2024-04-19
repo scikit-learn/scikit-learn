@@ -120,7 +120,7 @@ time, we select the top 6 predictors via permutation importance, leading to 15 p
     >>> m = 6
     >>> imp = permutation_importance(est, X, y, random_state=0)
     >>> top_m = np.argsort(imp.importances_mean)[-m:]
-    >>> h_statistic(est, X=X, features=top_m, random_state=4)
+    >>> H = h_statistic(est, X=X, features=top_m, random_state=4)
 
 Then, we plot the statistics:
 
