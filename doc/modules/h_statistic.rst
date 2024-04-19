@@ -132,18 +132,12 @@ Then, we plot the statistics:
     >>> H_df = pd.DataFrame(H).set_index("feature_pairs")
     >>>
     >>> # H-squared (for interpretation)
-    >>> (
-    >>>     H_df["h_squared_pairwise"]
-    >>>     .sort_values()
-    >>>     .plot.barh(xlabel="Normalized $H^2$", ax=axes[0])
-    >>> )
-    >>>
+    >>> H_df["h_squared_pairwise"].sort_values().plot.barh(
+    >>>     xlabel="Normalized $H^2$", ax=axes[0])
+    >>> 
     >>> # Square-root of numerator (for comparison)
-    >>> (
-    >>>     np.sqrt(H_df["numerator_pairwise"])
-    >>>     .sort_values()
-    >>>     .plot.barh(xlabel="Unnormalized $H$", ax=axes[1])
-    >>> )
+    >>> np.sqrt(H_df["numerator_pairwise"]).sort_values().plot.barh(
+    >>>     xlabel="Unnormalized $H$", ax=axes[1])
 
 .. image:: ../images/friedmans_h_statistic.png
    :align: center
