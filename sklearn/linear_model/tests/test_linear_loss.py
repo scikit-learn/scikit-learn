@@ -440,3 +440,52 @@ def test_multinomial_hessian_3_classes(sample_weight):
     )
     assert_allclose(hess_expected, hess_expected.T)
     assert_allclose(hess, hess_expected)
+
+
+def test_linear_loss_gradient_hessian_raises_wrong_out_parameters():
+    """Test that wrong gradient_out and hessian_out raises errors."""
+    n_samples, n_features, n_classes = 5, 2, 3
+    loss = LinearModelLoss(base_loss=HalfBinomialLoss(), fit_intercept=False)
+    X = np.ones((n_samples, n_features))
+    y = np.ones(n_samples)
+    coef = loss.init_zero_coef(X)
+    gradient_out = np.zeros(1)
+    with pytest.raises(
+        ValueError, match="gradient_out is required to have shape coef.shape"
+    ):
+        loss.gradient_hessian(
+            coef=coef,
+            X=X,
+            y=y,
+            gradient_out=gradient_out,
+            hessian_out=None,
+        )
+    hessian_out = np.zeros(1)
+    with pytest.raises(ValueError, match="hessian_out is required to have shape"):
+        loss.gradient_hessian(
+            coef=coef,
+            X=X,
+            y=y,
+            gradient_out=None,
+            hessian_out=hessian_out,
+        )
+
+    loss = LinearModelLoss(base_loss=HalfMultinomialLoss(), fit_intercept=False)
+    coef = loss.init_zero_coef(X)
+    gradient_out = np.zeros((2 * n_classes, n_features))[::2]
+    with pytest.raises(ValueError, match="gradient_out must be F-contiguous"):
+        loss.gradient_hessian(
+            coef=coef,
+            X=X,
+            y=y,
+            gradient_out=gradient_out,
+        )
+    hessian_out = np.zeros((2 * n_classes * n_features, n_classes * n_features))[::2]
+    with pytest.raises(ValueError, match="hessian_out must be contiguous"):
+        loss.gradient_hessian(
+            coef=coef,
+            X=X,
+            y=y,
+            gradient_out=None,
+            hessian_out=hessian_out,
+        )

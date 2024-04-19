@@ -467,27 +467,34 @@ class LinearModelLoss:
         else:
             weights, intercept = self.weight_intercept(coef)
         sw_sum = n_samples if sample_weight is None else np.sum(sample_weight)
+
         # Allocate gradient.
         if gradient_out is None:
             grad = np.empty_like(coef, dtype=weights.dtype, order="F")
+        elif gradient_out.shape != coef.shape:
+            raise ValueError(
+                f"gradient_out is required to have shape coef.shape = {coef.shape}; "
+                f"got {gradient_out.shape}."
+            )
+        elif self.base_loss.is_multiclass and not gradient_out.flags.f_contiguous:
+            raise ValueError("gradient_out must be F-contiguous.")
         else:
-            if not gradient_out.flags["F_CONTIGUOUS"]:
-                msg = "Parameter gradient_out must be F-contiguous."
-                raise ValueError(msg)
             grad = gradient_out
         # Allocate hessian.
         n = coef.size  # for multinomial this equals n_dof * n_classes
         if hessian_out is None:
             hess = np.empty((n, n), dtype=weights.dtype)
+        elif hessian_out.shape != (n, n):
+            raise ValueError(
+                f"hessian_out is required to have shape ({n, n}); got "
+                f"{hessian_out.shape=}."
+            )
+        elif self.base_loss.is_multiclass and (
+            not hessian_out.flags.c_contiguous and not hessian_out.flags.f_contiguous
+        ):
+            raise ValueError("hessian_out must be contiguous.")
         else:
             hess = hessian_out
-            if hess.shape != (n, n):
-                raise ValueError(
-                    f"hessian_out is required to have shape ({n, n}); got "
-                    f"{hessian_out.shape=}."
-                )
-            if not hess.flags.c_contiguous and not hess.flags.f_contiguous:
-                raise ValueError("hessian_out is required to be contiguous.")
 
         if not self.base_loss.is_multiclass:
             grad_pointwise, hess_pointwise = self.base_loss.gradient_hessian(
