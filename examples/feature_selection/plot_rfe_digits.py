@@ -12,12 +12,14 @@ a digit classification task.
 
 """  # noqa: E501
 
+import warnings
+
 import matplotlib.pyplot as plt
+
 from sklearn.datasets import load_digits
 from sklearn.feature_selection import RFE
 from sklearn.linear_model import LogisticRegression
 from sklearn.pipeline import Pipeline
-import warnings
 
 warnings.filterwarnings("ignore")
 
