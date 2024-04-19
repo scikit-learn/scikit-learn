@@ -103,7 +103,7 @@ def _sample_func(x, y=1):
     pass
 
 
-class EstimatorStub:
+class CallableEstimator:
     """Dummy development stub for an estimator.
     
     This is to make sure a callable estimator passes common tests.
