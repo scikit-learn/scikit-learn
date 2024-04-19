@@ -7,10 +7,18 @@ from scipy import linalg, sparse
 from scipy.linalg import eigh
 from scipy.sparse.linalg import eigsh
 
+from sklearn._config import config_context
 from sklearn.datasets import make_low_rank_matrix, make_sparse_spd_matrix
 from sklearn.utils import gen_batches
 from sklearn.utils._arpack import _init_arpack_v0
+from sklearn.utils._array_api import (
+    _convert_to_numpy,
+    max_precision_float_dtype,
+    yield_namespace_device_dtype_combinations,
+)
+from sklearn.utils._array_api import device as array_device
 from sklearn.utils._testing import (
+    _array_api_for_tests,
     assert_allclose,
     assert_allclose_dense_sparse,
     assert_almost_equal,
@@ -676,16 +684,54 @@ def rng():
 
 
 @pytest.mark.parametrize("dtype", [np.float32, np.float64])
-def test_incremental_weighted_mean_and_variance_simple(rng, dtype):
+@pytest.mark.parametrize("as_list", (True, False))
+def test_incremental_weighted_mean_and_variance_simple(rng, dtype, as_list):
     mult = 10
     X = rng.rand(1000, 20).astype(dtype) * mult
     sample_weight = rng.rand(X.shape[0]) * mult
-    mean, var, _ = _incremental_mean_and_var(X, 0, 0, 0, sample_weight=sample_weight)
+    mean, var, _ = _incremental_mean_and_var(
+        X.tolist() if as_list else X, 0, 0, 0, sample_weight=sample_weight
+    )
 
     expected_mean = np.average(X, weights=sample_weight, axis=0)
     expected_var = np.average(X**2, weights=sample_weight, axis=0) - expected_mean**2
     assert_almost_equal(mean, expected_mean)
     assert_almost_equal(var, expected_var)
+
+
+@pytest.mark.parametrize(
+    "array_namespace, device, dtype", yield_namespace_device_dtype_combinations()
+)
+def test_incremental_weighted_mean_and_variance_array_api(
+    rng, array_namespace, device, dtype
+):
+    xp = _array_api_for_tests(array_namespace, device)
+
+    mult = 10
+    X = rng.rand(1000, 20).astype(dtype) * mult
+    sample_weight = rng.rand(X.shape[0]) * mult
+    mean, var, _ = _incremental_mean_and_var(X, 0, 0, 0, sample_weight=sample_weight)
+
+    X_xp = xp.asarray(X, device=device)
+    sample_weight_xp = xp.asarray(sample_weight, device=device)
+
+    with config_context(array_api_dispatch=True):
+        mean_xp, var_xp, _ = _incremental_mean_and_var(
+            X_xp, 0, 0, 0, sample_weight=sample_weight_xp
+        )
+
+    # Should the returned dtype be the max precision? Or the same precision
+    # as X?
+    assert array_device(mean_xp) == array_device(X_xp)
+    assert mean_xp.dtype == max_precision_float_dtype(xp, device=device)
+    assert array_device(var_xp) == array_device(X_xp)
+    assert var_xp.dtype == max_precision_float_dtype(xp, device=device)
+
+    mean_xp = _convert_to_numpy(mean_xp, xp=xp)
+    var_xp = _convert_to_numpy(var_xp, xp=xp)
+
+    assert_almost_equal(mean, mean_xp)
+    assert_almost_equal(var, var_xp)
 
 
 @pytest.mark.parametrize("mean", [0, 1e7, -1e7])
