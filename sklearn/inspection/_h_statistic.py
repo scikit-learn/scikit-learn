@@ -214,7 +214,7 @@ def h_statistic(
     >>> m = 3
     >>> imp = permutation_importance(est, X, y, random_state=0)
     >>> top_m = np.argsort(imp.importances_mean)[-m:]
-    >>> h_statistic(est, X=X, features=top_m, random_state=4)
+    >>> H = h_statistic(est, X=X, features=top_m, random_state=4)
 
     >>> # For features (8, 2), 3.4% of the joint effect variability comes from
     >>> # their interaction. These two features also have strongest absolute
