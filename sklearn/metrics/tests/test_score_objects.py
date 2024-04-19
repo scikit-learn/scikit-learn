@@ -1294,6 +1294,19 @@ def test_PassthroughScorer_metadata_request():
 
 
 @pytest.mark.usefixtures("enable_slep006")
+def test_PassthroughScorer_set_score_request():
+    """Test that _PassthroughScorer.set_score_request adds the correct metadata request
+    on itself."""
+    meta_est = GridSearchCV(estimator=LinearSVC(), param_grid={"C": [0.1, 1]})
+
+    # make a `_PassthroughScorer` with `check_scoring`:
+    scorer = check_scoring(meta_est, None)
+    scorer.set_score_request(sample_weight=True)
+
+    assert str(scorer.get_metadata_routing()) == str(scorer._metadata_request)
+
+
+@pytest.mark.usefixtures("enable_slep006")
 def test_multimetric_scoring_metadata_routing():
     # Test that _MultimetricScorer properly routes metadata.
     def score1(y_true, y_pred):
