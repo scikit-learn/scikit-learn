@@ -150,7 +150,7 @@ class CallableEstimator:
                 "solver='newton-cg',warm_start=True)"
             ),
         ),
-        (EstimatorStub(), "EstimatorStub"),
+        (EstimatorStub(), "CallableEstimator"),
     ],
 )
 def test_get_check_estimator_ids(val, expected):
