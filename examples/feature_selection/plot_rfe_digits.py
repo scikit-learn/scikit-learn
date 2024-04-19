@@ -24,7 +24,7 @@ from sklearn.datasets import load_digits
 from sklearn.feature_selection import RFE
 from sklearn.linear_model import LogisticRegression
 from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import MinMaxScaler
 
 # Load the digits dataset
 digits = load_digits()
@@ -33,7 +33,7 @@ y = digits.target
 
 pipe = Pipeline(
     [
-        ("scaler", StandardScaler()),
+        ("scaler", MinMaxScaler()),
         ("rfe", RFE(estimator=LogisticRegression(), n_features_to_select=1, step=1)),
     ]
 )
