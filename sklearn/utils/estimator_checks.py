@@ -9,7 +9,7 @@ import warnings
 from contextlib import nullcontext
 from copy import deepcopy
 from functools import partial, wraps
-from inspect import signature
+from inspect import isfunction, signature
 from numbers import Integral, Real
 
 import joblib
@@ -405,13 +405,11 @@ def _get_check_estimator_ids(obj):
     --------
     check_estimator
     """
-    if callable(obj):
-        if not isinstance(obj, partial):
-            return obj.__name__
-
+    if isfunction(obj):
+        return obj.__name__
+    if isinstance(obj, partial):
         if not obj.keywords:
             return obj.func.__name__
-
         kwstring = ",".join(["{}={}".format(k, v) for k, v in obj.keywords.items()])
         return "{}({})".format(obj.func.__name__, kwstring)
     if hasattr(obj, "get_params"):

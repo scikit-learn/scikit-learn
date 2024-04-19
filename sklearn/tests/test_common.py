@@ -103,6 +103,31 @@ def _sample_func(x, y=1):
     pass
 
 
+class EstimatorStub:
+    """Dummy development stub for an estimator."""
+
+    def get_params(self, *, deep=True):
+        return {}
+
+    def set_params(self, **kwargs):
+        pass
+
+    def fit(self, X, y=None):
+        return self
+
+    def fit_transform(self, X, y=None):
+        return self.fit(X, y).transform(X)
+
+    def transform(self, X):
+        return X
+
+    def __call__(self, X):
+        return self.transform(X)
+
+    def __str__(self):
+        return type(self).__name__
+
+
 @pytest.mark.parametrize(
     "val, expected",
     [
@@ -122,6 +147,7 @@ def _sample_func(x, y=1):
                 "solver='newton-cg',warm_start=True)"
             ),
         ),
+        (EstimatorStub(), "EstimatorStub"),
     ],
 )
 def test_get_check_estimator_ids(val, expected):
