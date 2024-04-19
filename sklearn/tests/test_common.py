@@ -105,7 +105,7 @@ def _sample_func(x, y=1):
 
 class CallableEstimator:
     """Dummy development stub for an estimator.
-    
+
     This is to make sure a callable estimator passes common tests.
     """
 
@@ -150,7 +150,7 @@ class CallableEstimator:
                 "solver='newton-cg',warm_start=True)"
             ),
         ),
-        (EstimatorStub(), "CallableEstimator"),
+        (CallableEstimator(), "CallableEstimator"),
     ],
 )
 def test_get_check_estimator_ids(val, expected):
