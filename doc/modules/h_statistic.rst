@@ -108,44 +108,45 @@ Let's calculate pairwise H-statistics from a boosted trees model of diabetes dat
 There are :math:`p = 10` features, leading to 45 pairwise interactions. To save
 time, we select the top 6 predictors via permutation importance, leading to 15 pairs.
 
-  >>> import numpy as np
-  >>> from sklearn.ensemble import HistGradientBoostingRegressor
-  >>> from sklearn.inspection import permutation_importance, h_statistic
-  >>> from sklearn.datasets import load_diabetes
-
-  >>> X, y = load_diabetes(return_X_y=True)
-  >>> est = HistGradientBoostingRegressor(max_iter=100, max_depth=4).fit(X, y)
-
-  >>> # Get Friedman's H-squared for top m=6 predictors
-  >>> m = 6
-  >>> imp = permutation_importance(est, X, y, random_state=0)
-  >>> top_m = np.argsort(imp.importances_mean)[-m:]
-  >>> H = h_statistic(est, X=X, features=top_m, random_state=4)
+    >>> import numpy as np
+    >>> from sklearn.ensemble import HistGradientBoostingRegressor
+    >>> from sklearn.inspection import permutation_importance, h_statistic
+    >>> from sklearn.datasets import load_diabetes
+  
+    >>> # Fit model
+    >>> X, y = load_diabetes(return_X_y=True)
+    >>> est = HistGradientBoostingRegressor(max_iter=100, max_depth=4).fit(X, y)
+  
+    >>> # Get Friedman's H-squared for top m=6 predictors
+    >>> m = 6
+    >>> imp = permutation_importance(est, X, y, random_state=0)
+    >>> top_m = np.argsort(imp.importances_mean)[-m:]
+    >>> H = h_statistic(est, X=X, features=top_m, random_state=4)
 
 Then, we print the statistics, sorted by relative importance:
 
-  >>> print(" Pair       H^2  Unnormalized H")
-  >>> for i in np.argsort(H["h_squared_pairwise"])[::-1]:
-  ...     print(f"{str(H['feature_pairs'][i]):<11}"
-  ...     f"{H['h_squared_pairwise'][i]:.3f}"
-  ...     f"    {np.sqrt(H['numerator_pairwise'][i]):.3f}")
-
- Pair       H^2  Unnormalized H
-(1, 0)     0.155    3.947
-(0, 9)     0.059    2.097
-(0, 3)     0.054    3.279
-(3, 2)     0.043    6.952
-(9, 3)     0.037    2.805
-(1, 3)     0.028    2.367
-(9, 8)     0.022    4.866
-(2, 8)     0.021    6.524
-(0, 2)     0.019    3.341
-(3, 8)     0.015    4.622
-(1, 2)     0.010    2.558
-(0, 8)     0.009    2.803
-(9, 2)     0.006    1.942
-(1, 8)     0.002    1.234
-(1, 9)     0.002    0.453
+    >>> print(" Pair       H^2  Unnormalized H")
+    >>> for i in np.argsort(H["h_squared_pairwise"])[::-1]:
+    ...     print(f"{str(H['feature_pairs'][i]):<11}"
+    ...     f"{H['h_squared_pairwise'][i]:.3f}"
+    ...     f"    {np.sqrt(H['numerator_pairwise'][i]):.3f}")
+    ...
+   Pair       H^2  Unnormalized H
+  (1, 0)     0.155    3.947
+  (0, 9)     0.059    2.097
+  (0, 3)     0.054    3.279
+  (3, 2)     0.043    6.952
+  (9, 3)     0.037    2.805
+  (1, 3)     0.028    2.367
+  (9, 8)     0.022    4.866
+  (2, 8)     0.021    6.524
+  (0, 2)     0.019    3.341
+  (3, 8)     0.015    4.622
+  (1, 2)     0.010    2.558
+  (0, 8)     0.009    2.803
+  (9, 2)     0.006    1.942
+  (1, 8)     0.002    1.234
+  (1, 9)     0.002    0.453
 
 The column ``H^2`` shows that the interaction between features 0 and 1
 explains 15.5% of their joint effect variability. For the other pairs, it is
