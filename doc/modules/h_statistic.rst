@@ -108,51 +108,53 @@ Let's calculate pairwise H-statistics from a boosted trees model of diabetes dat
 There are :math:`p = 10` features, leading to 45 pairwise interactions. To save
 time, we select the top 6 predictors via permutation importance, leading to 15 pairs.
 
-    >>> import numpy as np
-    >>> from sklearn.ensemble import HistGradientBoostingRegressor
-    >>> from sklearn.inspection import permutation_importance, h_statistic
-    >>> from sklearn.datasets import load_diabetes
-    >>>
-    >>> X, y = load_diabetes(return_X_y=True)
-    >>> est = HistGradientBoostingRegressor(max_iter=100, max_depth=4).fit(X, y)
-    >>>
-    >>> # Get Friedman's H-squared for top m=6 predictors
-    >>> m = 6
-    >>> imp = permutation_importance(est, X, y, random_state=0)
-    >>> top_m = np.argsort(imp.importances_mean)[-m:]
-    >>> H = h_statistic(est, X=X, features=top_m, random_state=4)
+  >>> import numpy as np
+  >>> from sklearn.ensemble import HistGradientBoostingRegressor
+  >>> from sklearn.inspection import permutation_importance, h_statistic
+  >>> from sklearn.datasets import load_diabetes
 
-Then, we plot the statistics:
+  >>> X, y = load_diabetes(return_X_y=True)
+  >>> est = HistGradientBoostingRegressor(max_iter=100, max_depth=4).fit(X, y)
 
-    >>> import pandas as pd
-    >>> import matplotlib.pyplot as plt
-    >>>
-    >>> fig, axes = plt.subplots(1, 2, figsize=(8, 4), layout="tight")
-    >>>
-    >>> H_df = pd.DataFrame(H).set_index("feature_pairs")
-    >>>
-    >>> # H-squared (for interpretation)
-    >>> H2 = H_df["h_squared_pairwise"].sort_values()
-    >>> _ = H2.plot.barh(xlabel="Normalized $H^2$", ax=axes[0])
-    >>> 
-    >>> # Square-root of numerator (for comparison)
-    >>> H_num = np.sqrt(H_df["numerator_pairwise"]).sort_values()
-    >>> _ = H_num.plot.barh(xlabel="Unnormalized $H$", ax=axes[1])
+  >>> # Get Friedman's H-squared for top m=6 predictors
+  >>> m = 6
+  >>> imp = permutation_importance(est, X, y, random_state=0)
+  >>> top_m = np.argsort(imp.importances_mean)[-m:]
+  >>> H = h_statistic(est, X=X, features=top_m, random_state=4)
 
-.. image:: ../images/friedmans_h_statistic.png
-   :align: center
+Then, we print the statistics, sorted by relative importance:
 
-The left plot shows that the interaction between features 0 and 1 explains
-about 15% of their joint effect variability. For the other interactions, its
-5% or less.
+  >>> print(" Pair       H^2  Unnormalized H")
+  >>> for i in np.argsort(H["h_squared_pairwise"])[::-1]:
+  ...     print(f"{str(H['feature_pairs'][i]):<11}"
+  ...     f"{H['h_squared_pairwise'][i]:.3f}"
+  ...     f"    {np.sqrt(H['numerator_pairwise'][i]):.3f}")
 
-The right plot shows :math:`\sqrt{A_{jk}}`. These values are all on the same
-scale and thus can be directly compared: The *strongest* interaction occurs between
-feature 2 and 3, even if it explains less than 5% of the joint effect variability.
-This happens because features 8 > 2 > 3 are the most important features according to
-permutation importance. Thus, a relatively weak interaction between the two very important
-features 2 and 3 is still stronger als the strong relative interaction strength
-between two quite unimportant features.
+ Pair       H^2  Unnormalized H
+(1, 0)     0.155    3.947
+(0, 9)     0.059    2.097
+(0, 3)     0.054    3.279
+(3, 2)     0.043    6.952
+(9, 3)     0.037    2.805
+(1, 3)     0.028    2.367
+(9, 8)     0.022    4.866
+(2, 8)     0.021    6.524
+(0, 2)     0.019    3.341
+(3, 8)     0.015    4.622
+(1, 2)     0.010    2.558
+(0, 8)     0.009    2.803
+(9, 2)     0.006    1.942
+(1, 8)     0.002    1.234
+(1, 9)     0.002    0.453
+
+The column ``H^2`` shows that the interaction between features 0 and 1
+explains 15.5% of their joint effect variability. For the other pairs, it is
+clearly less. The column ``Unnormalized H`` (:math:`\sqrt{A_{jk}}`) additionally 
+shows that the interaction between features 2 and 3 is the largest in absolute terms.
+The reason for this is that these features belong to the most important predictors.
+Their weak relative interaction is still stronger than the strong relative interaction
+between features 0 and 1. Thus, it often makes sense to study both normalized and
+unnormalized statistics.
 
 Limitations
 ===========
