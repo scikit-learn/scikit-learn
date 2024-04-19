@@ -123,7 +123,7 @@ def h_statistic(
     """Friedman and Popescu's H-statistic of pairwise interaction strength.
 
     Calculates Friedman and Popescu's H-statistic of interaction strength
-    for each feature pair j, k, see [FRI]_. The statistic is defined as::
+    for each feature pair j, k, see [FRI]_. The statistic is defined as:
 
         H_jk^2 = Numerator_jk / Denominator_jk, where
 
@@ -221,9 +221,8 @@ def h_statistic(
     >>> # interaction, see "numerator_pairwise":
     >>> # {'feature_pairs': [(3, 8), (3, 2), (8, 2)],
     >>> # 'h_squared_pairwise': array([0.00985985, 0.00927104, 0.03439926]),
-    >>> # 'numerator_pairwise': array([ 1.2955532 ,  1.2419687 , 11.13358385]),
-    >>> # 'denominator_pairwise': array([131.39690331, 133.96210997, 323.6576595 ])}
-
+    >>> # 'numerator_pairwise': array([1.2955532, 1.2419687, 11.13358385]),
+    >>> # 'denominator_pairwise': array([131.39690331, 133.96210997, 323.6576595])}
     """
     check_is_fitted(estimator)
 
