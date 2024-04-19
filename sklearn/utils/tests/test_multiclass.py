@@ -598,7 +598,7 @@ def test_ovr_decision_function():
     assert_allclose(dec_values, dec_values_one, atol=1e-6)
 
 
-# TODO(1.6): Change to ValueError when byte labels is deprecated.
+# TODO(1.7): Change to ValueError when byte labels is deprecated.
 @pytest.mark.parametrize("input_type", ["list", "array"])
 def test_labels_in_bytes_format(input_type):
     # check that we raise an error with bytes encoded labels

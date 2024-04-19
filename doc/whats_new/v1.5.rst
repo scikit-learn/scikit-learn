@@ -351,7 +351,7 @@ Changelog
   :pr:`28092` by :user:`Adam Li <adam2392>`.
 
 - |API| For classifiers and classification metrics, labels encoded as bytes
-  is deprecated and will raise an error in v1.6.
+  is deprecated and will raise an error in v1.7.
   :pr:`18555` by :user:`Kaushik Amar Das <cozek>`.
 
 :mod:`sklearn.mixture`
@@ -440,7 +440,7 @@ Changelog
 
 - |API| Raise informative warning message in :func:`type_of_target` when
   represented as bytes. For classifiers and classification metrics, labels encoded
-  as bytes is deprecated and will raise an error in v1.6.
+  as bytes is deprecated and will raise an error in v1.7.
   :pr:`18555` by :user:`Kaushik Amar Das <cozek>`.
 
 - |Fix| :func:`~utils._safe_indexing` now works correctly for polars DataFrame when
