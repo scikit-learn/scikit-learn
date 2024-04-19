@@ -4,6 +4,7 @@
 
 cimport cython
 from cython.parallel import prange
+from libc.string cimport memset
 
 import numpy as np
 
@@ -196,12 +197,9 @@ cdef class HistogramBuilder:
                 self.ordered_hessians[:n_samples]
             unsigned char hessians_are_constant = \
                 self.hessians_are_constant
-            unsigned int bin_idx = 0
 
-        for bin_idx in range(self.n_bins):
-            histograms[feature_idx, bin_idx].sum_gradients = 0.
-            histograms[feature_idx, bin_idx].sum_hessians = 0.
-            histograms[feature_idx, bin_idx].count = 0
+        # Set histograms to zero.
+        memset(&histograms[feature_idx, 0], 0, self.n_bins * sizeof(hist_struct))
 
         if root_node:
             if hessians_are_constant:

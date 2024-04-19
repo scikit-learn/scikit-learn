@@ -14,7 +14,7 @@ get information about the working environment.
 # that are accessible to everybody and reusable in various contexts:
 # machine-learning as a versatile tool for science and engineering.
 #
-# See http://scikit-learn.org for complete documentation.
+# See https://scikit-learn.org for complete documentation.
 
 import logging
 import os

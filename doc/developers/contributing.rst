@@ -82,7 +82,9 @@ or changes to dependencies or supported versions, it must be backed by a
 using the `SLEP template <https://scikit-learn-enhancement-proposals.readthedocs.io/en/latest/slep_template.html>`_
 and follows the decision-making process outlined in :ref:`governance`.
 
-.. topic:: Contributing to related projects
+|details-start|
+**Contributing to related projects**
+|details-split|
 
    Scikit-learn thrives in an ecosystem of several related projects, which also
    may have relevant issues to work on, including smaller projects such as:
@@ -104,6 +106,7 @@ and follows the decision-making process outlined in :ref:`governance`.
    Helping these projects may help Scikit-learn too.
    See also :ref:`related_projects`.
 
+|details-end|
 
 Submitting a bug report or a feature request
 ============================================
@@ -254,7 +257,7 @@ how to set up your git repository:
 
    .. prompt:: bash $
 
-        pip install pytest pytest-cov ruff mypy numpydoc black==23.3.0
+        pip install pytest pytest-cov ruff mypy numpydoc black==24.3.0
 
 .. _upstream:
 
@@ -330,18 +333,6 @@ The next steps now describe the process of modifying code and submitting a PR:
     instructions to create a pull request from your fork. This will send an
     email to the committers. You may want to consider sending an email to the
     mailing list for more visibility.
-
-.. note::
-
-    If you are modifying a Cython module, you have to re-compile after
-    modifications and before testing them:
-
-    .. prompt:: bash $
-
-        pip install -v --no-use-pep517 --no-build-isolation -e .
-
-    Use the ``--no-build-isolation`` flag to avoid compiling the whole project
-    each time, only the files you have modified.
 
 It is often helpful to keep your local feature branch synchronized with the
 latest changes of the main scikit-learn repository:
@@ -922,7 +913,7 @@ Building the documentation requires installing some additional packages:
 .. prompt:: bash $
 
     pip install sphinx sphinx-gallery numpydoc matplotlib Pillow pandas \
-                scikit-image packaging seaborn sphinx-prompt \
+                polars scikit-image packaging seaborn sphinx-prompt \
                 sphinxext-opengraph sphinx-copybutton plotly pooch
 
 To build the documentation, you need to be in the ``doc`` folder:
@@ -1006,9 +997,9 @@ subpackages. For a more detailed `pytest` workflow, please refer to the
 
 We expect code coverage of new features to be at least around 90%.
 
-
-Writing matplotlib related tests
---------------------------------
+|details-start|
+**Writing matplotlib related tests**
+|details-split|
 
 Test fixtures ensure that a set of tests will be executing with the appropriate
 initialization and cleanup. The scikit-learn test suite implements a fixture
@@ -1027,8 +1018,11 @@ argument::
     def test_requiring_mpl_fixture(pyplot):
         # you can now safely use matplotlib
 
-Workflow to improve test coverage
----------------------------------
+|details-end|
+
+|details-start|
+**Workflow to improve test coverage**
+|details-split|
 
 To test code coverage, you need to install the `coverage
 <https://pypi.org/project/coverage/>`_ package in addition to pytest.
@@ -1040,6 +1034,8 @@ To test code coverage, you need to install the `coverage
     write or adapt a test specifically for these lines.
 
 3. Loop.
+
+|details-end|
 
 .. _monitoring_performances:
 
@@ -1234,7 +1230,7 @@ to ``zero_one`` and call ``zero_one_loss`` from that function::
 
 If an attribute is to be deprecated,
 use the decorator ``deprecated`` on a property. Please note that the
-``property`` decorator should be placed before the ``deprecated``
+``deprecated`` decorator should be placed before the ``property``
 decorator for the docstrings to be rendered properly.
 E.g., renaming an attribute ``labels_`` to ``classes_`` can be done as::
 
@@ -1369,6 +1365,10 @@ up this process by providing your feedback.
   retraction. Regarding docs: typos, grammar issues and disambiguations are
   better addressed immediately.
 
+|details-start|
+**Important aspects to be covered in any code review**
+|details-split|
+
 Here are a few important aspects that need to be covered in any code review,
 from high-level questions to a more detailed check-list.
 
@@ -1418,10 +1418,13 @@ from high-level questions to a more detailed check-list.
 
 :ref:`saved_replies` includes some frequent comments that reviewers may make.
 
+|details-end|
+
 .. _communication:
 
-Communication Guidelines
-------------------------
+|details-start|
+**Communication Guidelines**
+|details-split|
 
 Reviewing open pull requests (PRs) helps move the project forward. It is a
 great way to get familiar with the codebase and should motivate the
@@ -1449,6 +1452,8 @@ contributor to keep involved in the project. [1]_
 
 .. [1] Adapted from the numpy `communication guidelines
        <https://numpy.org/devdocs/dev/reviewer_guidelines.html#communication-guidelines>`_.
+
+|details-end|
 
 Reading the existing code base
 ==============================

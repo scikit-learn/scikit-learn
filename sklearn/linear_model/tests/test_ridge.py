@@ -39,7 +39,7 @@ from sklearn.model_selection import (
     cross_val_predict,
 )
 from sklearn.preprocessing import minmax_scale
-from sklearn.utils import _IS_32BIT, check_random_state
+from sklearn.utils import check_random_state
 from sklearn.utils._testing import (
     assert_allclose,
     assert_almost_equal,
@@ -48,6 +48,7 @@ from sklearn.utils._testing import (
     ignore_warnings,
 )
 from sklearn.utils.fixes import (
+    _IS_32BIT,
     COO_CONTAINERS,
     CSC_CONTAINERS,
     CSR_CONTAINERS,
@@ -71,7 +72,7 @@ iris = datasets.load_iris()
 X_iris, y_iris = iris.data, iris.target
 
 
-def _accuracy_callable(y_test, y_pred):
+def _accuracy_callable(y_test, y_pred, **kwargs):
     return np.mean(y_test == y_pred)
 
 
@@ -1174,7 +1175,7 @@ def test_ridge_regression_custom_scoring(sparse_container, cv):
     # check that custom scoring is working as expected
     # check the tie breaking strategy (keep the first alpha tried)
 
-    def _dummy_score(y_test, y_pred):
+    def _dummy_score(y_test, y_pred, **kwargs):
         return 0.42
 
     X = X_iris if sparse_container is None else sparse_container(X_iris)
@@ -1381,6 +1382,28 @@ def test_ridgecv_alphas_conversion(Estimator):
 
     ridge_est.fit(X, y)
     assert_array_equal(ridge_est.alphas, np.asarray(alphas))
+
+
+@pytest.mark.parametrize("cv", [None, 3])
+@pytest.mark.parametrize("Estimator", [RidgeCV, RidgeClassifierCV])
+def test_ridgecv_alphas_zero(cv, Estimator):
+    """Check alpha=0.0 raises error only when `cv=None`."""
+    rng = np.random.RandomState(0)
+    alphas = (0.0, 1.0, 10.0)
+
+    n_samples, n_features = 5, 5
+    if Estimator is RidgeCV:
+        y = rng.randn(n_samples)
+    else:
+        y = rng.randint(0, 2, n_samples)
+    X = rng.randn(n_samples, n_features)
+
+    ridge_est = Estimator(alphas=alphas, cv=cv)
+    if cv is None:
+        with pytest.raises(ValueError, match=r"alphas\[0\] == 0.0, must be > 0.0."):
+            ridge_est.fit(X, y)
+    else:
+        ridge_est.fit(X, y)
 
 
 def test_ridgecv_sample_weight():

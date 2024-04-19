@@ -23,7 +23,7 @@ else
 fi
 
 echo -e "### Running ruff ###\n"
-ruff check --show-source .
+ruff check --output-format=full .
 status=$?
 if [[ $status -eq 0 ]]
 then
@@ -56,7 +56,7 @@ else
 fi
 
 # For docstrings and warnings of deprecated attributes to be rendered
-# properly, the property decorator must come before the deprecated decorator
+# properly, the `deprecated` decorator must come before the `property` decorator
 # (else they are treated as functions)
 
 echo -e "### Checking for bad deprecation order ###\n"
@@ -64,7 +64,7 @@ bad_deprecation_property_order=`git grep -A 10 "@property"  -- "*.py" | awk '/@p
 
 if [ ! -z "$bad_deprecation_property_order" ]
 then
-    echo "property decorator should come before deprecated decorator"
+    echo "deprecated decorator should come before property decorator"
     echo "found the following occurrences:"
     echo $bad_deprecation_property_order
     echo -e "\nProblems detected by deprecation order check\n"
@@ -89,7 +89,7 @@ else
 fi
 
 # Check for joblib.delayed and joblib.Parallel imports
-
+# TODO(1.7): remove ":!sklearn/utils/_joblib.py"
 echo -e "### Checking for joblib imports ###\n"
 joblib_status=0
 joblib_delayed_import="$(git grep -l -A 10 -E "joblib import.+delayed" -- "*.py" ":!sklearn/utils/_joblib.py" ":!sklearn/utils/parallel.py")"

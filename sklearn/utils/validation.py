@@ -290,6 +290,9 @@ def as_float_array(X, *, copy=True, force_all_finite=True):
 
 def _is_arraylike(x):
     """Returns whether the input is array-like."""
+    if sp.issparse(x):
+        return False
+
     return hasattr(x, "__len__") or hasattr(x, "shape") or hasattr(x, "__array__")
 
 
@@ -2135,8 +2138,10 @@ def _check_method_params(X, params, indices=None):
 
     method_params_validated = {}
     for param_key, param_value in params.items():
-        if not _is_arraylike(param_value) or _num_samples(param_value) != _num_samples(
-            X
+        if (
+            not _is_arraylike(param_value)
+            and not sp.issparse(param_value)
+            or _num_samples(param_value) != _num_samples(X)
         ):
             # Non-indexable pass-through (for now for backward-compatibility).
             # https://github.com/scikit-learn/scikit-learn/issues/15805
@@ -2168,6 +2173,15 @@ def _is_pandas_df(X):
     except KeyError:
         return False
     return isinstance(X, pd.DataFrame)
+
+
+def _is_polars_df_or_series(X):
+    """Return True if the X is a polars dataframe or series."""
+    try:
+        pl = sys.modules["polars"]
+    except KeyError:
+        return False
+    return isinstance(X, (pl.DataFrame, pl.Series))
 
 
 def _is_polars_df(X):
@@ -2458,3 +2472,39 @@ def _check_pos_label_consistency(pos_label, y_true):
         pos_label = 1
 
     return pos_label
+
+
+def _to_object_array(sequence):
+    """Convert sequence to a 1-D NumPy array of object dtype.
+
+    numpy.array constructor has a similar use but it's output
+    is ambiguous. It can be 1-D NumPy array of object dtype if
+    the input is a ragged array, but if the input is a list of
+    equal length arrays, then the output is a 2D numpy.array.
+    _to_object_array solves this ambiguity by guarantying that
+    the output is a 1-D NumPy array of objects for any input.
+
+    Parameters
+    ----------
+    sequence : array-like of shape (n_elements,)
+        The sequence to be converted.
+
+    Returns
+    -------
+    out : ndarray of shape (n_elements,), dtype=object
+        The converted sequence into a 1-D NumPy array of object dtype.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.utils.validation import _to_object_array
+    >>> _to_object_array([np.array([0]), np.array([1])])
+    array([array([0]), array([1])], dtype=object)
+    >>> _to_object_array([np.array([0]), np.array([1, 2])])
+    array([array([0]), array([1, 2])], dtype=object)
+    >>> _to_object_array([np.array([0]), np.array([1, 2])])
+    array([array([0]), array([1, 2])], dtype=object)
+    """
+    out = np.empty(len(sequence), dtype=object)
+    out[:] = sequence
+    return out

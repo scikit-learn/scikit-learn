@@ -33,6 +33,7 @@ from ..metrics._scorer import (
     get_scorer_names,
 )
 from ..utils import Bunch, check_random_state
+from ..utils._estimator_html_repr import _VisualBlock
 from ..utils._param_validation import HasMethods, Interval, StrOptions
 from ..utils._tags import _safe_tags
 from ..utils.metadata_routing import (
@@ -484,8 +485,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         if self.scorer_ is None:
             raise ValueError(
                 "No score function explicitly defined, "
-                "and the estimator doesn't provide one %s"
-                % self.best_estimator_
+                "and the estimator doesn't provide one %s" % self.best_estimator_
             )
         if isinstance(self.scorer_, dict):
             if self.multimetric_:
@@ -1073,27 +1073,29 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
 
         _store("fit_time", out["fit_time"])
         _store("score_time", out["score_time"])
-        # Use one MaskedArray and mask all the places where the param is not
-        # applicable for that candidate. Use defaultdict as each candidate may
-        # not contain all the params
-        param_results = defaultdict(
-            partial(
-                MaskedArray,
-                np.empty(
-                    n_candidates,
-                ),
-                mask=True,
-                dtype=object,
-            )
-        )
+        param_results = defaultdict(dict)
         for cand_idx, params in enumerate(candidate_params):
             for name, value in params.items():
-                # An all masked empty array gets created for the key
-                # `"param_%s" % name` at the first occurrence of `name`.
-                # Setting the value at an index also unmasks that index
                 param_results["param_%s" % name][cand_idx] = value
+        for key, param_result in param_results.items():
+            param_list = list(param_result.values())
+            try:
+                arr_dtype = np.result_type(*param_list)
+            except TypeError:
+                arr_dtype = object
+            if len(param_list) == n_candidates and arr_dtype != object:
+                # Exclude `object` else the numpy constructor might infer a list of
+                # tuples to be a 2d array.
+                results[key] = MaskedArray(param_list, mask=False, dtype=arr_dtype)
+            else:
+                # Use one MaskedArray and mask all the places where the param is not
+                # applicable for that candidate (which may not contain all the params).
+                ma = MaskedArray(np.empty(n_candidates), mask=True, dtype=arr_dtype)
+                for index, value in param_result.items():
+                    # Setting the value at an index unmasks that index
+                    ma[index] = value
+                results[key] = ma
 
-        results.update(param_results)
         # Store a list of param dicts at the key 'params'
         results["params"] = candidate_params
 
@@ -1151,6 +1153,19 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             method_mapping=MethodMapping().add(caller="fit", callee="split"),
         )
         return router
+
+    def _sk_visual_block_(self):
+        if hasattr(self, "best_estimator_"):
+            key, estimator = "best_estimator_", self.best_estimator_
+        else:
+            key, estimator = "estimator", self.estimator
+
+        return _VisualBlock(
+            "parallel",
+            [estimator],
+            names=[f"{key}: {estimator.__class__.__name__}"],
+            name_details=[str(estimator)],
+        )
 
 
 class GridSearchCV(BaseSearchCV):

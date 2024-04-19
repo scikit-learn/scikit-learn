@@ -69,7 +69,7 @@ from collections import OrderedDict
 
 from .._config import get_config
 from ..base import BaseEstimator
-from . import is_scalar_nan
+from ._missing import is_scalar_nan
 
 
 class KeyValTuple(tuple):

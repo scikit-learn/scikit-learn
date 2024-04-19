@@ -193,9 +193,14 @@ This method has the same order of complexity as
 Setting the regularization parameter: leave-one-out Cross-Validation
 --------------------------------------------------------------------
 
-:class:`RidgeCV` implements ridge regression with built-in
-cross-validation of the alpha parameter. The object works in the same way
-as GridSearchCV except that it defaults to Leave-One-Out Cross-Validation::
+:class:`RidgeCV` and :class:`RidgeClassifierCV` implement ridge
+regression/classification with built-in cross-validation of the alpha parameter.
+They work in the same way as :class:`~sklearn.model_selection.GridSearchCV` except
+that it defaults to efficient Leave-One-Out :term:`cross-validation`.
+When using the default :term:`cross-validation`, alpha cannot be 0 due to the
+formulation used to calculate Leave-One-Out error. See [RL2007]_ for details.
+
+Usage example::
 
     >>> import numpy as np
     >>> from sklearn import linear_model
@@ -211,16 +216,13 @@ cross-validation with :class:`~sklearn.model_selection.GridSearchCV`, for
 example `cv=10` for 10-fold cross-validation, rather than Leave-One-Out
 Cross-Validation.
 
-|details-start|
-**References**
-|details-split|
+.. topic:: References:
 
-* "Notes on Regularized Least Squares", Rifkin & Lippert (`technical report
-  <http://cbcl.mit.edu/publications/ps/MIT-CSAIL-TR-2007-025.pdf>`_,
-  `course slides
-  <https://www.mit.edu/~9.520/spring07/Classes/rlsslides.pdf>`_).
 
-|details-end|
+  .. [RL2007] "Notes on Regularized Least Squares", Rifkin & Lippert (`technical report
+    <http://cbcl.mit.edu/publications/ps/MIT-CSAIL-TR-2007-025.pdf>`_,
+    `course slides
+    <https://www.mit.edu/~9.520/spring07/Classes/rlsslides.pdf>`_).
 
 .. _lasso:
 
@@ -683,7 +685,7 @@ orthogonal matching pursuit can approximate the optimum solution vector with a
 fixed number of non-zero elements:
 
 .. math::
-    \underset{w}{\operatorname{arg\,min\,}}  ||y - Xw||_2^2 \text{ subject to } ||w||_0 \leq n_{\text{nonzero\_coefs}}
+    \underset{w}{\operatorname{arg\,min\,}}  ||y - Xw||_2^2 \text{ subject to } ||w||_0 \leq n_{\text{nonzero_coefs}}
 
 Alternatively, orthogonal matching pursuit can target a specific error instead
 of a specific number of non-zero coefficients. This can be expressed as:
@@ -946,13 +948,16 @@ following cost function:
 .. math::
     :name: regularized-logistic-loss
 
-    \min_{w} C \sum_{i=1}^n s_i \left(-y_i \log(\hat{p}(X_i)) - (1 - y_i) \log(1 - \hat{p}(X_i))\right) + r(w),
+    \min_{w} \frac{1}{S}\sum_{i=1}^n s_i
+    \left(-y_i \log(\hat{p}(X_i)) - (1 - y_i) \log(1 - \hat{p}(X_i))\right)
+    + \frac{r(w)}{S C}\,,
 
 where :math:`{s_i}` corresponds to the weights assigned by the user to a
 specific training sample (the vector :math:`s` is formed by element-wise
-multiplication of the class weights and sample weights).
+multiplication of the class weights and sample weights),
+and the sum :math:`S = \sum_{i=1}^n s_i`.
 
-We currently provide four choices for the regularization term  :math:`r(w)`  via
+We currently provide four choices for the regularization term  :math:`r(w)` via
 the `penalty` argument:
 
 +----------------+-------------------------------------------------+
@@ -1008,10 +1013,17 @@ a matrix of coefficients :math:`W` where each row vector :math:`W_k` corresponds
 
 The objective for the optimization becomes
 
-.. math:: \min_W -C \sum_{i=1}^n \sum_{k=0}^{K-1} [y_i = k] \log(\hat{p}_k(X_i)) + r(W).
+.. math::
+  \min_W -\frac{1}{S}\sum_{i=1}^n \sum_{k=0}^{K-1} s_{ik} [y_i = k] \log(\hat{p}_k(X_i))
+  + \frac{r(W)}{S C}\,.
 
 Where :math:`[P]` represents the Iverson bracket which evaluates to :math:`0`
-if :math:`P` is false, otherwise it evaluates to :math:`1`. We currently provide four choices
+if :math:`P` is false, otherwise it evaluates to :math:`1`.
+
+Again, :math:`s_{ik}` are the weights assigned by the user (multiplication of sample
+weights and class weights) with their sum :math:`S = \sum_{i=1}^n \sum_{k=0}^{K-1} s_{ik}`.
+
+We currently provide four choices
 for the regularization term :math:`r(W)` via the `penalty` argument, where :math:`m`
 is the number of features:
 
@@ -1534,10 +1546,10 @@ Each iteration performs the following steps:
 
 1. Select ``min_samples`` random samples from the original data and check
    whether the set of data is valid (see ``is_data_valid``).
-2. Fit a model to the random subset (``base_estimator.fit``) and check
+2. Fit a model to the random subset (``estimator.fit``) and check
    whether the estimated model is valid (see ``is_model_valid``).
 3. Classify all data as inliers or outliers by calculating the residuals
-   to the estimated model (``base_estimator.predict(X) - y``) - all data
+   to the estimated model (``estimator.predict(X) - y``) - all data
    samples with absolute residuals smaller than or equal to the
    ``residual_threshold`` are considered as inliers.
 4. Save fitted model as best model if number of inlier samples is

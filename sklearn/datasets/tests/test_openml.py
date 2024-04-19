@@ -1,4 +1,5 @@
 """Test the openml loader."""
+
 import gzip
 import json
 import os
@@ -21,7 +22,8 @@ from sklearn.datasets._openml import (
     _open_openml_url,
     _retry_with_clean_cache,
 )
-from sklearn.utils import Bunch, check_pandas_support
+from sklearn.utils import Bunch
+from sklearn.utils._optional_dependencies import check_pandas_support
 from sklearn.utils._testing import (
     SkipTest,
     assert_allclose,
@@ -1456,8 +1458,7 @@ def test_fetch_openml_cache(monkeypatch, gzip_response, tmpdir):
         raise ValueError(
             "This mechanism intends to test correct cache"
             "handling. As such, urlopen should never be "
-            "accessed. URL: %s"
-            % request.get_full_url()
+            "accessed. URL: %s" % request.get_full_url()
         )
 
     data_id = 61

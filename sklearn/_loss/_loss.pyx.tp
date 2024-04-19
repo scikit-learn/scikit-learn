@@ -765,9 +765,8 @@ cdef inline double_pair cgrad_hess_half_binomial(
         gh.val1 = ((1 - y_true) - y_true * gh.val2) / (1 + gh.val2)  # gradient
         gh.val2 = gh.val2 / (1 + gh.val2)**2                         # hessian
     else:
-        gh.val2 = exp(raw_prediction)
+        gh.val2 = exp(raw_prediction)  # = 1. order Taylor in exp(raw_prediction)
         gh.val1 = gh.val2 - y_true
-        gh.val2 *= (1 - gh.val2)
     return gh
 
 

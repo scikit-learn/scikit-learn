@@ -34,7 +34,7 @@ X_r, y_r = load_diabetes(return_X_y=True)
             StackingClassifier(
                 estimators=[
                     ("lr", LogisticRegression()),
-                    ("svm", LinearSVC(dual="auto")),
+                    ("svm", LinearSVC()),
                     ("rf", RandomForestClassifier(n_estimators=5, max_depth=3)),
                 ],
                 cv=2,
@@ -45,7 +45,7 @@ X_r, y_r = load_diabetes(return_X_y=True)
             VotingClassifier(
                 estimators=[
                     ("lr", LogisticRegression()),
-                    ("svm", LinearSVC(dual="auto")),
+                    ("svm", LinearSVC()),
                     ("rf", RandomForestClassifier(n_estimators=5, max_depth=3)),
                 ]
             ),
@@ -55,7 +55,7 @@ X_r, y_r = load_diabetes(return_X_y=True)
             StackingRegressor(
                 estimators=[
                     ("lr", LinearRegression()),
-                    ("svm", LinearSVR(dual="auto")),
+                    ("svm", LinearSVR()),
                     ("rf", RandomForestRegressor(n_estimators=5, max_depth=3)),
                 ],
                 cv=2,
@@ -66,7 +66,7 @@ X_r, y_r = load_diabetes(return_X_y=True)
             VotingRegressor(
                 estimators=[
                     ("lr", LinearRegression()),
-                    ("svm", LinearSVR(dual="auto")),
+                    ("svm", LinearSVR()),
                     ("rf", RandomForestRegressor(n_estimators=5, max_depth=3)),
                 ]
             ),

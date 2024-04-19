@@ -33,7 +33,8 @@ from ...metrics import check_scoring
 from ...metrics._scorer import _SCORERS
 from ...model_selection import train_test_split
 from ...preprocessing import FunctionTransformer, LabelEncoder, OrdinalEncoder
-from ...utils import check_random_state, compute_sample_weight, is_scalar_nan, resample
+from ...utils import check_random_state, compute_sample_weight, resample
+from ...utils._missing import is_scalar_nan
 from ...utils._openmp_helpers import _openmp_effective_n_threads
 from ...utils._param_validation import Hidden, Interval, RealNotInt, StrOptions
 from ...utils.multiclass import check_classification_targets
@@ -1429,6 +1430,8 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
     assigned to the left or right child consequently. If no missing values
     were encountered for a given feature during training, then samples with
     missing values are mapped to whichever child has the most samples.
+    See :ref:`sphx_glr_auto_examples_ensemble_plot_hgbt_regression.py` for a
+    usecase example of this feature.
 
     This implementation is inspired by
     `LightGBM <https://github.com/Microsoft/LightGBM>`_.
@@ -1480,7 +1483,8 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         than a few hundred samples, it is recommended to lower this value
         since only very shallow trees would be built.
     l2_regularization : float, default=0
-        The L2 regularization parameter. Use ``0`` for no regularization (default).
+        The L2 regularization parameter penalizing leaves with small hessians.
+        Use ``0`` for no regularization (default).
     max_features : float, default=1.0
         Proportion of randomly chosen features in each and every node split.
         This is a form of regularization, smaller values make the trees weaker
@@ -1856,7 +1860,8 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
         than a few hundred samples, it is recommended to lower this value
         since only very shallow trees would be built.
     l2_regularization : float, default=0
-        The L2 regularization parameter. Use ``0`` for no regularization (default).
+        The L2 regularization parameter penalizing leaves with small hessians.
+        Use ``0`` for no regularization (default).
     max_features : float, default=1.0
         Proportion of randomly chosen features in each and every node split.
         This is a form of regularization, smaller values make the trees weaker
