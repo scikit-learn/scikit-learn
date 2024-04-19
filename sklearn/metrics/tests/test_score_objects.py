@@ -1289,7 +1289,7 @@ def test_PassthroughScorer_metadata_request():
     # Test that _PassthroughScorer doesn't change estimator's routing.
     assert_request_equal(
         scorer.get_metadata_routing(),
-        {"fit": {"sample_weight": True}, "score": {"sample_weight": "alias"}},
+        {"score": {"sample_weight": "alias"}},
     )
 
 
