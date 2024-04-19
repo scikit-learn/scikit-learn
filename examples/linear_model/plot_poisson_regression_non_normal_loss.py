@@ -1,3 +1,5 @@
+# Authors: The scikit-learn developers
+# License: BSD 3 clause
 """
 ======================================
 Poisson regression and non-normal loss
