@@ -125,13 +125,12 @@ time, we select the top 6 predictors via permutation importance, leading to 15 p
 
 Then, we print the statistics, sorted by relative importance:
 
-    >>> print(" Pair       H^2  Unnormalized H")
     >>> for i in np.argsort(H["h_squared_pairwise"])[::-1]:
     ...     print(f"{str(H['feature_pairs'][i]):<11}"
     ...     f"{H['h_squared_pairwise'][i]:.3f}"
     ...     f"    {np.sqrt(H['numerator_pairwise'][i]):.3f}")
     ...
-    Pair       H^2  Unnormalized H
+    # Pair      H^2  Unnormalized H
     (1, 0)     0.155    3.947
     (0, 9)     0.059    2.097
     (0, 3)     0.054    3.279
