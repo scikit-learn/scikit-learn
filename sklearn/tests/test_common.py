@@ -104,7 +104,10 @@ def _sample_func(x, y=1):
 
 
 class EstimatorStub:
-    """Dummy development stub for an estimator."""
+    """Dummy development stub for an estimator.
+    
+    This is to make sure a callable estimator passes common tests.
+    """
 
     def get_params(self, *, deep=True):
         return {}
