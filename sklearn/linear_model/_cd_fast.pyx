@@ -7,7 +7,6 @@
 # License: BSD 3 clause
 
 from libc.math cimport fabs
-cimport numpy as cnp
 import numpy as np
 
 from cython cimport floating
@@ -21,8 +20,6 @@ from ..utils._cython_blas cimport ColMajor, Trans, NoTrans
 from ..utils._typedefs cimport uint32_t
 from ..utils._random cimport our_rand_r
 
-
-cnp.import_array()
 
 # The following two functions are shamelessly copied from the tree code.
 

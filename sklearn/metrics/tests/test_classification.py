@@ -2486,8 +2486,7 @@ def test_recall_warnings(zero_division):
         )
         if zero_division == "warn":
             assert (
-                str(record.pop().message)
-                == "Recall is ill-defined and "
+                str(record.pop().message) == "Recall is ill-defined and "
                 "being set to 0.0 due to no true samples."
                 " Use `zero_division` parameter to control"
                 " this behavior."
@@ -2498,8 +2497,7 @@ def test_recall_warnings(zero_division):
         recall_score([0, 0], [0, 0])
         if zero_division == "warn":
             assert (
-                str(record.pop().message)
-                == "Recall is ill-defined and "
+                str(record.pop().message) == "Recall is ill-defined and "
                 "being set to 0.0 due to no true samples."
                 " Use `zero_division` parameter to control"
                 " this behavior."
@@ -2518,8 +2516,7 @@ def test_precision_warnings(zero_division):
         )
         if zero_division == "warn":
             assert (
-                str(record.pop().message)
-                == "Precision is ill-defined and "
+                str(record.pop().message) == "Precision is ill-defined and "
                 "being set to 0.0 due to no predicted samples."
                 " Use `zero_division` parameter to control"
                 " this behavior."
@@ -2530,8 +2527,7 @@ def test_precision_warnings(zero_division):
         precision_score([0, 0], [0, 0])
         if zero_division == "warn":
             assert (
-                str(record.pop().message)
-                == "Precision is ill-defined and "
+                str(record.pop().message) == "Precision is ill-defined and "
                 "being set to 0.0 due to no predicted samples."
                 " Use `zero_division` parameter to control"
                 " this behavior."
@@ -2576,8 +2572,7 @@ def test_fscore_warnings(zero_division):
             )
             if zero_division == "warn":
                 assert (
-                    str(record.pop().message)
-                    == "F-score is ill-defined and "
+                    str(record.pop().message) == "F-score is ill-defined and "
                     "being set to 0.0 due to no true nor predicted "
                     "samples. Use `zero_division` parameter to "
                     "control this behavior."

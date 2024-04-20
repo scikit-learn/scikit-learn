@@ -61,7 +61,7 @@ from sklearn.preprocessing import (
     StandardScaler,
 )
 from sklearn.semi_supervised import LabelPropagation, LabelSpreading
-from sklearn.utils import _IS_WASM, IS_PYPY, all_estimators
+from sklearn.utils import all_estimators
 from sklearn.utils._tags import _DEFAULT_TAGS, _safe_tags
 from sklearn.utils._testing import (
     SkipTest,
@@ -87,6 +87,7 @@ from sklearn.utils.estimator_checks import (
     check_transformer_get_feature_names_out_pandas,
     parametrize_with_checks,
 )
+from sklearn.utils.fixes import _IS_PYPY, _IS_WASM
 
 
 def test_all_estimator_no_base_class():
@@ -160,13 +161,9 @@ def test_check_estimator_generate_only():
     assert isgenerator(all_instance_gen_checks)
 
 
-def test_configure():
-    # Smoke test `python setup.py config` command run at the root of the
+def test_setup_py_check():
+    # Smoke test `python setup.py check` command run at the root of the
     # scikit-learn source tree.
-    # This test requires Cython which is not necessarily there when running
-    # the tests of an installed version of scikit-learn or when scikit-learn
-    # is installed in editable mode by pip build isolation enabled.
-    pytest.importorskip("Cython")
     cwd = os.getcwd()
     setup_path = Path(sklearn.__file__).parent.parent
     setup_filename = os.path.join(setup_path, "setup.py")
@@ -175,7 +172,7 @@ def test_configure():
     try:
         os.chdir(setup_path)
         old_argv = sys.argv
-        sys.argv = ["setup.py", "config"]
+        sys.argv = ["setup.py", "check"]
 
         with warnings.catch_warnings():
             # The configuration spits out warnings when not finding
@@ -225,7 +222,7 @@ def test_import_all_consistency():
         # Avoid test suite depending on setuptools
         if "sklearn._build_utils" in modname:
             continue
-        if IS_PYPY and (
+        if _IS_PYPY and (
             "_svmlight_format_io" in modname
             or "feature_extraction._hashing_fast" in modname
         ):
@@ -259,11 +256,13 @@ def test_all_tests_are_importable():
     # Ensure that for each contentful subpackage, there is a test directory
     # within it that is also a subpackage (i.e. a directory with __init__.py)
 
-    HAS_TESTS_EXCEPTIONS = re.compile(r"""(?x)
+    HAS_TESTS_EXCEPTIONS = re.compile(
+        r"""(?x)
                                       \.externals(\.|$)|
                                       \.tests(\.|$)|
                                       \._
-                                      """)
+                                      """
+    )
     resource_modules = {
         "sklearn.datasets.data",
         "sklearn.datasets.descr",

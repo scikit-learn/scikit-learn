@@ -403,7 +403,7 @@ class MethodMetadataRequest:
                 "warning, or to True to consume and use the metadata."
             )
 
-    def _route_params(self, params):
+    def _route_params(self, params, parent, caller):
         """Prepare the given parameters to be passed to the method.
 
         The output of this method can be used directly as the input to the
@@ -413,6 +413,12 @@ class MethodMetadataRequest:
         ----------
         params : dict
             A dictionary of provided metadata.
+
+        parent : object
+            Parent class object, that routes the metadata.
+
+        caller : str
+            Method from the parent class object, where the metadata is routed from.
 
         Returns
         -------
@@ -434,12 +440,26 @@ class MethodMetadataRequest:
             elif alias in args:
                 res[prop] = args[alias]
         if unrequested:
+            if self.method in COMPOSITE_METHODS:
+                callee_methods = COMPOSITE_METHODS[self.method]
+            else:
+                callee_methods = [self.method]
+            set_requests_on = "".join(
+                [
+                    f".set_{method}_request({{metadata}}=True/False)"
+                    for method in callee_methods
+                ]
+            )
+            message = (
+                f"[{', '.join([key for key in unrequested])}] are passed but are not"
+                " explicitly set as requested or not requested for"
+                f" {self.owner}.{self.method}, which is used within"
+                f" {parent}.{caller}. Call `{self.owner}"
+                + set_requests_on
+                + "` for each metadata you want to request/ignore."
+            )
             raise UnsetMetadataPassedError(
-                message=(
-                    f"[{', '.join([key for key in unrequested])}] are passed but are"
-                    " not explicitly set as requested or not for"
-                    f" {self.owner}.{self.method}"
-                ),
+                message=message,
                 unrequested_params=unrequested,
                 routed_params=res,
             )
@@ -591,7 +611,7 @@ class MetadataRequest:
         """
         return getattr(self, method)._get_param_names(return_alias=return_alias)
 
-    def _route_params(self, *, method, params):
+    def _route_params(self, *, params, method, parent, caller):
         """Prepare the given parameters to be passed to the method.
 
         The output of this method can be used directly as the input to the
@@ -599,12 +619,18 @@ class MetadataRequest:
 
         Parameters
         ----------
+        params : dict
+            A dictionary of provided metadata.
+
         method : str
             The name of the method for which the parameters are requested and
             routed.
 
-        params : dict
-            A dictionary of provided metadata.
+        parent : object
+            Parent class object, that routes the metadata.
+
+        caller : str
+            Method from the parent class object, where the metadata is routed from.
 
         Returns
         -------
@@ -612,7 +638,9 @@ class MetadataRequest:
             A :class:`~sklearn.utils.Bunch` of {prop: value} which can be given to the
             corresponding method.
         """
-        return getattr(self, method)._route_params(params=params)
+        return getattr(self, method)._route_params(
+            params=params, parent=parent, caller=caller
+        )
 
     def _check_warnings(self, *, method, params):
         """Check whether metadata is passed which is marked as WARN.
@@ -938,7 +966,7 @@ class MetadataRouter:
                     )
         return res
 
-    def _route_params(self, *, params, method):
+    def _route_params(self, *, params, method, parent, caller):
         """Prepare the given parameters to be passed to the method.
 
         This is used when a router is used as a child object of another router.
@@ -950,12 +978,18 @@ class MetadataRouter:
 
         Parameters
         ----------
+        params : dict
+            A dictionary of provided metadata.
+
         method : str
             The name of the method for which the parameters are requested and
             routed.
 
-        params : dict
-            A dictionary of provided metadata.
+        parent : object
+            Parent class object, that routes the metadata.
+
+        caller : str
+            Method from the parent class object, where the metadata is routed from.
 
         Returns
         -------
@@ -965,7 +999,14 @@ class MetadataRouter:
         """
         res = Bunch()
         if self._self_request:
-            res.update(self._self_request._route_params(params=params, method=method))
+            res.update(
+                self._self_request._route_params(
+                    params=params,
+                    method=method,
+                    parent=parent,
+                    caller=caller,
+                )
+            )
 
         param_names = self._get_param_names(
             method=method, return_alias=True, ignore_self_request=True
@@ -1026,7 +1067,10 @@ class MetadataRouter:
             for _callee, _caller in mapping:
                 if _caller == caller:
                     res[name][_callee] = router._route_params(
-                        params=params, method=_callee
+                        params=params,
+                        method=_callee,
+                        parent=self.owner,
+                        caller=caller,
                     )
         return res
 
@@ -1059,7 +1103,7 @@ class MetadataRouter:
         if extra_keys:
             raise TypeError(
                 f"{self.owner}.{method} got unexpected argument(s) {extra_keys}, which"
-                " are not requested metadata in any object."
+                " are not routed to any object."
             )
 
     def _serialize(self):
@@ -1236,7 +1280,7 @@ class RequestMethod:
 
     def __get__(self, instance, owner):
         # we would want to have a method which accepts only the expected args
-        def func(**kw):
+        def func(*args, **kw):
             """Updates the request for provided parameters
 
             This docstring is overwritten below.
@@ -1255,15 +1299,32 @@ class RequestMethod:
                     f"Accepted arguments are: {set(self.keys)}"
                 )
 
-            requests = instance._get_metadata_request()
+            # This makes it possible to use the decorated method as an unbound method,
+            # for instance when monkeypatching.
+            # https://github.com/scikit-learn/scikit-learn/issues/28632
+            if instance is None:
+                _instance = args[0]
+                args = args[1:]
+            else:
+                _instance = instance
+
+            # Replicating python's behavior when positional args are given other than
+            # `self`, and `self` is only allowed if this method is unbound.
+            if args:
+                raise TypeError(
+                    f"set_{self.name}_request() takes 0 positional argument but"
+                    f" {len(args)} were given"
+                )
+
+            requests = _instance._get_metadata_request()
             method_metadata_request = getattr(requests, self.name)
 
             for prop, alias in kw.items():
                 if alias is not UNCHANGED:
                     method_metadata_request.add_request(param=prop, alias=alias)
-            instance._metadata_request = requests
+            _instance._metadata_request = requests
 
-            return instance
+            return _instance
 
         # Now we set the relevant attributes of the function so that it seems
         # like a normal method to the end user, with known expected arguments.

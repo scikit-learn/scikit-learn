@@ -26,20 +26,16 @@ dtypes = [
 }}
 """SGD implementation"""
 
-from cython cimport floating
 import numpy as np
 from time import time
 
-from libc.math cimport exp, log, pow, fabs, INFINITY
-cimport numpy as cnp
-cdef extern from "_sgd_fast_helpers.h":
-    bint skl_isfinite32(float) nogil
-    bint skl_isfinite64(double) nogil
+from cython cimport floating
+from libc.math cimport exp, fabs, isfinite, log, pow, INFINITY
 
+from ..utils._typedefs cimport uint32_t
 from ..utils._weight_vector cimport WeightVector32, WeightVector64
 from ..utils._seq_dataset cimport SequentialDataset32, SequentialDataset64
 
-cnp.import_array()
 
 cdef extern from *:
     """
@@ -415,7 +411,7 @@ def _plain_sgd{{name_suffix}}(
     int fit_intercept,
     int verbose,
     bint shuffle,
-    cnp.uint32_t seed,
+    uint32_t seed,
     double weight_pos,
     double weight_neg,
     int learning_rate,
@@ -476,7 +472,7 @@ def _plain_sgd{{name_suffix}}(
         The weight of the positive class.
     weight_neg : float
         The weight of the negative class.
-    seed : cnp.uint32_t
+    seed : uint32_t
         Seed of the pseudorandom number generator used to shuffle the data.
     learning_rate : int
         The learning rate:
@@ -675,8 +671,7 @@ def _plain_sgd{{name_suffix}}(
                           % (time() - t_start))
 
             # floating-point under-/overflow check.
-            if (not skl_isfinite(intercept)
-                or any_nonfinite(&weights[0], n_features)):
+            if (not isfinite(intercept) or any_nonfinite(weights)):
                 infinity = True
                 break
 
@@ -729,16 +724,9 @@ def _plain_sgd{{name_suffix}}(
 {{endfor}}
 
 
-cdef inline bint skl_isfinite(floating w) noexcept nogil:
-    if floating is float:
-        return skl_isfinite32(w)
-    else:
-        return skl_isfinite64(w)
-
-
-cdef inline bint any_nonfinite(const floating *w, int n) noexcept nogil:
-    for i in range(n):
-        if not skl_isfinite(w[i]):
+cdef inline bint any_nonfinite(const floating[::1] w) noexcept nogil:
+    for i in range(w.shape[0]):
+        if not isfinite(w[i]):
             return True
     return 0
 

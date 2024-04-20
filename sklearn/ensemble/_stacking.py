@@ -556,7 +556,7 @@ class StackingClassifier(_RoutingNotSupportedMixin, ClassifierMixin, _BaseStacki
     >>> estimators = [
     ...     ('rf', RandomForestClassifier(n_estimators=10, random_state=42)),
     ...     ('svr', make_pipeline(StandardScaler(),
-    ...                           LinearSVC(dual="auto", random_state=42)))
+    ...                           LinearSVC(random_state=42)))
     ... ]
     >>> clf = StackingClassifier(
     ...     estimators=estimators, final_estimator=LogisticRegression()
@@ -900,7 +900,7 @@ class StackingRegressor(_RoutingNotSupportedMixin, RegressorMixin, _BaseStacking
     >>> X, y = load_diabetes(return_X_y=True)
     >>> estimators = [
     ...     ('lr', RidgeCV()),
-    ...     ('svr', LinearSVR(dual="auto", random_state=42))
+    ...     ('svr', LinearSVR(random_state=42))
     ... ]
     >>> reg = StackingRegressor(
     ...     estimators=estimators,

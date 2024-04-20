@@ -1,6 +1,9 @@
 # utils is cimported from other subpackages so this is needed for the cimport
 # to work
 utils_cython_tree = [
+  # We add sklearn_root_cython_tree to make sure sklearn/__init__.py is copied
+  # early in the build
+  sklearn_root_cython_tree,
   fs.copyfile('__init__.py'),
   fs.copyfile('_cython_blas.pxd'),
   fs.copyfile('_heap.pxd'),
@@ -13,17 +16,16 @@ utils_cython_tree = [
 
 utils_extension_metadata = {
   'sparsefuncs_fast':
-    {'sources': ['sparsefuncs_fast.pyx'], 'dependencies': [np_dep]},
+    {'sources': ['sparsefuncs_fast.pyx']},
   '_cython_blas': {'sources': ['_cython_blas.pyx']},
   'arrayfuncs': {'sources': ['arrayfuncs.pyx']},
   'murmurhash': {
       'sources': ['murmurhash.pyx', 'src' / 'MurmurHash3.cpp'],
-      'dependencies': [np_dep]
   },
   '_fast_dict':
     {'sources': ['_fast_dict.pyx'], 'override_options': ['cython_language=cpp']},
   '_openmp_helpers': {'sources': ['_openmp_helpers.pyx'], 'dependencies': [openmp_dep]},
-  '_random': {'sources': ['_random.pyx'], 'dependencies': [np_dep]},
+  '_random': {'sources': ['_random.pyx']},
   '_typedefs': {'sources': ['_typedefs.pyx']},
   '_heap': {'sources': ['_heap.pyx']},
   '_sorting': {'sources': ['_sorting.pyx']},
@@ -36,7 +38,7 @@ utils_extension_metadata = {
 foreach ext_name, ext_dict : utils_extension_metadata
   py.extension_module(
     ext_name,
-    ext_dict.get('sources') + utils_cython_tree,
+    [ext_dict.get('sources'), utils_cython_tree],
     dependencies: ext_dict.get('dependencies', []),
     override_options : ext_dict.get('override_options', []),
     cython_args: cython_args,
@@ -64,8 +66,7 @@ foreach name: util_extension_names
   )
   py.extension_module(
     name,
-    [pxd, pyx] + utils_cython_tree,
-    dependencies: [np_dep],
+    [pxd, pyx, utils_cython_tree],
     cython_args: cython_args,
     subdir: 'sklearn/utils',
     install: true

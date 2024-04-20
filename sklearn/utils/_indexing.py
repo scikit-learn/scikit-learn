@@ -6,6 +6,7 @@ from itertools import compress, islice
 import numpy as np
 from scipy.sparse import issparse
 
+from ._array_api import _is_numpy_namespace, get_namespace
 from ._param_validation import Interval, validate_params
 from .extmath import _approximate_mode
 from .validation import (
@@ -21,6 +22,9 @@ from .validation import (
 
 def _array_indexing(array, key, key_dtype, axis):
     """Index an array or scipy.sparse consistently across NumPy version."""
+    xp, is_array_api = get_namespace(array)
+    if is_array_api:
+        return xp.take(array, key, axis=axis)
     if issparse(array) and key_dtype == "bool":
         key = np.asarray(key)
     if isinstance(key, tuple):
@@ -147,10 +151,22 @@ def _determine_key_type(key, accept_slice=True):
             raise ValueError(err_msg)
         return key_type.pop()
     if hasattr(key, "dtype"):
-        try:
-            return array_dtype_to_str[key.dtype.kind]
-        except KeyError:
-            raise ValueError(err_msg)
+        xp, is_array_api = get_namespace(key)
+        # NumPy arrays are special-cased in their own branch because the Array API
+        # cannot handle object/string-based dtypes that are often used to index
+        # columns of dataframes by names.
+        if is_array_api and not _is_numpy_namespace(xp):
+            if xp.isdtype(key.dtype, "bool"):
+                return "bool"
+            elif xp.isdtype(key.dtype, "integral"):
+                return "int"
+            else:
+                raise ValueError(err_msg)
+        else:
+            try:
+                return array_dtype_to_str[key.dtype.kind]
+            except KeyError:
+                raise ValueError(err_msg)
     raise ValueError(err_msg)
 
 
