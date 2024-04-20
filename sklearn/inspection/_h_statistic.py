@@ -207,6 +207,7 @@ def h_statistic(
     >>> from sklearn.inspection import permutation_importance, h_statistic
     >>> from sklearn.datasets import load_diabetes
     >>>
+    >>> # Fit model
     >>> X, y = load_diabetes(return_X_y=True)
     >>> est = HistGradientBoostingRegressor(max_iter=5, max_depth=2).fit(X, y)
     >>>
@@ -215,14 +216,15 @@ def h_statistic(
     >>> imp = permutation_importance(est, X, y, random_state=0)
     >>> top_m = np.argsort(imp.importances_mean)[-m:]
     >>> H = h_statistic(est, X=X, features=top_m, random_state=4)
+    >>> H
+    {'feature_pairs': [(3, 8), (3, 2), (8, 2)],
+     'h_squared_pairwise': array([0.00985985, 0.00927104, 0.03439926]),
+     'numerator_pairwise': array([ 1.2955532 ,  1.2419687 , 11.13358385]),
+     'denominator_pairwise': array([131.39690331, 133.96210997, 323.6576595 ])}
 
-    >>> # For features (8, 2), 3.4% of the joint effect variability comes from
-    >>> # their interaction. These two features also have strongest absolute
-    >>> # interaction, see "numerator_pairwise":
-    >>> # {'feature_pairs': [(3, 8), (3, 2), (8, 2)],
-    >>> # 'h_squared_pairwise': array([0.00985985, 0.00927104, 0.03439926]),
-    >>> # 'numerator_pairwise': array([1.2955532, 1.2419687, 11.13358385]),
-    >>> # 'denominator_pairwise': array([131.39690331, 133.96210997, 323.6576595])}
+    >>> # Interpretation: For features (8, 2), 3.4% of the joint effect variability
+    >>> # comes from their interaction. These two features also have strongest absolute
+    >>> # interaction across pairs ("numerator_pairwise").
     """
     check_is_fitted(estimator)
 

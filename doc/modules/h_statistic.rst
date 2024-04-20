@@ -24,8 +24,7 @@ The H-statistic of two features is the proportion of effect variability of the
 two features coming from their pairwise interaction. 
 Effect variability is measured via partial dependence.
 
-Partial dependence
-------------------
+**Partial dependence**
 
 Let :math:`F: \mathbb{R}^p \to \mathbb{R}` denote the prediction function that 
 maps the :math:`p`-dimensional feature vector :math:`\mathbf x = (x_1, \dots, x_p)`
@@ -45,8 +44,7 @@ dependence function
 where :math:`\mathbf x_{i\setminus s}`, :math:`i = 1, \dots, n`, 
 are the observed values of :math:`\mathbf x_{\setminus s}` in some "background" dataset.
 
-Pairwise H-statistic
---------------------
+**Pairwise H-statistic**
 
 Following [F2008]_, if there are no interaction effects between features
 :math:`x_j` and :math:`x_k`, their two-dimensional partial dependence function
@@ -123,38 +121,31 @@ time, we select the top 6 predictors via permutation importance, leading to 15 p
     >>> top_m = np.argsort(imp.importances_mean)[-m:]
     >>> H = h_statistic(est, X=X, features=top_m, random_state=4)
 
-Then, we print the statistics, sorted by relative importance:
+Then, we plot all :math:`H_{jk}^2` and :math:`\sqrt{A_{jk}}` statistics:
 
-    >>> for i in np.argsort(H["h_squared_pairwise"])[::-1]:
-    ...     print(f"{str(H['feature_pairs'][i]):<11}"
-    ...     f"{H['h_squared_pairwise'][i]:.3f}"
-    ...     f"    {np.sqrt(H['numerator_pairwise'][i]):.3f}")
-    ...
-    # Pair      H^2  Unnormalized H
-    (1, 0)     0.155    3.947
-    (0, 9)     0.059    2.097
-    (0, 3)     0.054    3.279
-    (3, 2)     0.043    6.952
-    (9, 3)     0.037    2.805
-    (1, 3)     0.028    2.367
-    (9, 8)     0.022    4.866
-    (2, 8)     0.021    6.524
-    (0, 2)     0.019    3.341
-    (3, 8)     0.015    4.622
-    (1, 2)     0.010    2.558
-    (0, 8)     0.009    2.803
-    (9, 2)     0.006    1.942
-    (1, 8)     0.002    1.234
-    (1, 9)     0.002    0.453
+    >>> import matplotlib.pyplot as plt
+    >>> 
+    >>> fig, axes = plt.subplots(1, 2, figsize=(8, 4), layout="tight")
+    >>> 
+    >>> bar_labels = np.array([str(pair) for pair in H["feature_pairs"]])
+    >>> stats = (H["h_squared_pairwise"], np.sqrt(H["numerator_pairwise"]))
+    >>> 
+    >>> for ax, stat, name in zip(axes, stats, ("$H^2$", "Unnormalized $H$")):
+    >>>    idx = np.argsort(stat)
+    >>>    ax.barh(bar_labels[idx], stat[idx], color="orange")
+    >>>    ax.set(xlabel=name, title=name)
 
-The column ``H^2`` shows that the interaction between features 0 and 1
-explains 15.5% of their joint effect variability. For the other pairs, it is
-clearly less. The column ``Unnormalized H`` (:math:`\sqrt{A_{jk}}`) additionally 
-shows that the interaction between features 2 and 3 is the largest in absolute terms.
-The reason for this is that these features belong to the most important predictors.
-Their weak relative interaction is still stronger than the strong relative interaction
-between features 0 and 1. Thus, it often makes sense to study both normalized and
-unnormalized statistics.
+.. image:: ../images/h_statistic.png
+   :align: center
+
+**The left plot** shows that the interaction between features 0 and 1
+explains about 16% of their joint effect variability. For the other pairs, it is
+clearly less. **The right plot** additionally shows that the interaction between
+features 2 and 3 is the largest in absolute terms. The reason for this is that
+these features belong to the most important predictors.
+Their weak relative interaction is still stronger than the strong relative
+interaction between features 0 and 1.
+Thus, it often makes sense to study both normalized and unnormalized statistics.
 
 Limitations
 ===========
