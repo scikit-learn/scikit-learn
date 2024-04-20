@@ -2600,8 +2600,7 @@ def test_specificity_warnings(zero_division):
         )
         if zero_division == "warn":
             assert (
-                str(record.pop().message)
-                == "Tnr is ill-defined and "
+                str(record.pop().message) == "Tnr is ill-defined and "
                 "being set to 0.0 due to no negatives samples."
                 " Use `zero_division` parameter to control"
                 " this behavior."
@@ -2611,8 +2610,7 @@ def test_specificity_warnings(zero_division):
 
         specificity_score([1, 1], [1, 1])
         assert (
-            str(record.pop().message)
-            == "Tnr is ill-defined and "
+            str(record.pop().message) == "Tnr is ill-defined and "
             "being set to 0.0 due to no negatives samples."
             " Use `zero_division` parameter to control"
             " this behavior."
