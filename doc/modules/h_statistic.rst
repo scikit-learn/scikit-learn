@@ -131,9 +131,9 @@ Then, we plot all :math:`H_{jk}^2` and :math:`\sqrt{A_{jk}}` statistics:
     >>> stats = (H["h_squared_pairwise"], np.sqrt(H["numerator_pairwise"]))
     >>> 
     >>> for ax, stat, name in zip(axes, stats, ("$H^2$", "Unnormalized $H$")):
-    >>>    idx = np.argsort(stat)
-    >>>    ax.barh(bar_labels[idx], stat[idx], color="orange")
-    >>>    ax.set(xlabel=name, title=name)
+    >>>     idx = np.argsort(stat)
+    >>>     ax.barh(bar_labels[idx], stat[idx], color="orange")
+    >>>     ax.set(xlabel=name, title=name)
 
 .. image:: ../images/h_statistic.png
    :align: center
