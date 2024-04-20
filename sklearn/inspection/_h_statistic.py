@@ -206,12 +206,8 @@ def h_statistic(
     >>> from sklearn.ensemble import HistGradientBoostingRegressor
     >>> from sklearn.inspection import permutation_importance, h_statistic
     >>> from sklearn.datasets import load_diabetes
-    >>>
-    >>> # Fit model
     >>> X, y = load_diabetes(return_X_y=True)
     >>> est = HistGradientBoostingRegressor(max_iter=5, max_depth=2).fit(X, y)
-    >>>
-    >>> # Get Friedman's H-squared for top m=3 predictors
     >>> m = 3
     >>> imp = permutation_importance(est, X, y, random_state=0)
     >>> top_m = np.argsort(imp.importances_mean)[-m:]

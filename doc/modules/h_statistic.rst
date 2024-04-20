@@ -110,11 +110,11 @@ time, we select the top 6 predictors via permutation importance, leading to 15 p
     >>> from sklearn.ensemble import HistGradientBoostingRegressor
     >>> from sklearn.inspection import permutation_importance, h_statistic
     >>> from sklearn.datasets import load_diabetes
-  
+
     >>> # Fit model
     >>> X, y = load_diabetes(return_X_y=True)
     >>> est = HistGradientBoostingRegressor(max_iter=100, max_depth=4).fit(X, y)
-  
+
     >>> # Get Friedman's H-squared for top m=6 predictors
     >>> m = 6
     >>> imp = permutation_importance(est, X, y, random_state=0)
@@ -124,16 +124,17 @@ time, we select the top 6 predictors via permutation importance, leading to 15 p
 Then, we plot all :math:`H_{jk}^2` and :math:`\sqrt{A_{jk}}` statistics:
 
     >>> import matplotlib.pyplot as plt
-    >>> 
-    >>> fig, axes = plt.subplots(1, 2, figsize=(8, 4), layout="tight")
-    >>> 
+    >>>
+    >>> fig, axes = plt.subplots(1, 2, figsize=(8, 4))
+    >>>
     >>> bar_labels = np.array([str(pair) for pair in H["feature_pairs"]])
     >>> stats = (H["h_squared_pairwise"], np.sqrt(H["numerator_pairwise"]))
-    >>> 
+    >>>
     >>> for ax, stat, name in zip(axes, stats, ("$H^2$", "Unnormalized $H$")):
-    >>>     idx = np.argsort(stat)
-    >>>     ax.barh(bar_labels[idx], stat[idx], color="orange")
-    >>>     ax.set(xlabel=name, title=name)
+    ...     idx = np.argsort(stat)
+    ...     ax.barh(bar_labels[idx], stat[idx], color="orange")
+    ...     ax.set(xlabel=name, title=name)
+    >>> _ = fig.tight_layout()
 
 .. image:: ../images/h_statistic.png
    :align: center
