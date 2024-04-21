@@ -724,9 +724,9 @@ def _nan_to_num(X, *, xp=None, copy=True, nan=0.0, posinf=None, neginf=None):
         inf_mask = xp.isinf(d)
         posinf_mask = xp.logical_and(inf_mask, d > 0)
         neginf_mask = xp.logical_xor(inf_mask, posinf_mask)
-        d = xp.where(nan_mask, xp.asarray(nan), d)
-        d = xp.where(posinf_mask, xp.asarray(maxf), d)
-        d = xp.where(neginf_mask, xp.asarray(minf), d)
+        d[nan_mask] = xp.asarray(nan)
+        d[posinf_mask] = xp.asarray(maxf)
+        d[neginf_mask] = xp.asarray(minf)
     return X[()] if isscaler else X
 
 
