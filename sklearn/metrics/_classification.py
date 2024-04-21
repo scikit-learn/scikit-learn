@@ -400,11 +400,11 @@ def confusion_matrix(
 
     with np.errstate(all="ignore"):
         if normalize == "true":
-            cm /= xp.sum(cm, axis=1, keepdims=True)
+            cm = cm / xp.sum(cm, axis=1, keepdims=True)
         elif normalize == "pred":
-            cm /= xp.sum(cm, axis=0, keepdims=True)
+            cm = cm / xp.sum(cm, axis=0, keepdims=True)
         elif normalize == "all":
-            cm /= xp.sum(cm)
+            cm = cm / xp.sum(cm)
         cm = _nan_to_num(cm, xp=xp)
 
     if cm.shape == (1, 1):
