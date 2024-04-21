@@ -521,14 +521,19 @@ def get_namespace(*arrays, remove_none=True, remove_types=(str,), xp=None):
     # message in case it is missing.
     import array_api_compat
 
-    namespace, is_array_api_compliant = array_api_compat.get_namespace(*arrays), True
+    # Convert lists and tuple to numpy arrays.
+    arrays = [
+        numpy.array(arr) if isinstance(arr, (list, tuple)) else arr for arr in arrays
+    ]
+
+    namespace = array_api_compat.get_namespace(*arrays)
 
     # These namespaces need additional wrapping to smooth out small differences
     # between implementations
     if namespace.__name__ in {"cupy.array_api"}:
         namespace = _ArrayAPIWrapper(namespace)
 
-    return namespace, is_array_api_compliant
+    return namespace, True
 
 
 def _expit(X, xp=None):
@@ -688,6 +693,41 @@ def _nanmax(X, axis=None, xp=None):
         if xp.any(mask):
             X = xp.where(mask, xp.asarray(xp.nan), X)
         return X
+
+
+def _nan_to_num(X, *, xp=None, copy=True, nan=0.0, posinf=None, neginf=None):
+    """Port of np.nan_to_num for array-api"""
+    xp, _ = get_namespace(X, xp=None)
+    # import array_api_strict as xp
+    X = xp.asarray(X, copy=copy)
+    dtype = X.dtype
+    isscaler = X.ndim == 0
+
+    iscomplex = isdtype(dtype, "complex floating", xp=xp)
+
+    # If the input isn't floating, then no changes are made.
+    if not (isdtype(dtype, "real floating", xp=xp) or iscomplex):
+        return X[()] if isscaler else X
+
+    dest = (xp.real(X), xp.imag(X)) if iscomplex else (X,)
+    dtype_info = xp.finfo(X.dtype)
+    maxf, minf = dtype_info.max, dtype_info.min
+
+    if posinf is not None:
+        maxf = posinf
+
+    if neginf is not None:
+        minf = neginf
+
+    for d in dest:
+        nan_mask = xp.isnan(d)
+        inf_mask = xp.isinf(d)
+        posinf_mask = xp.logical_and(inf_mask, d > 0)
+        neginf_mask = xp.logical_xor(inf_mask, posinf_mask)
+        d = xp.where(nan_mask, xp.asarray(nan), d)
+        d = xp.where(posinf_mask, xp.asarray(maxf), d)
+        d = xp.where(neginf_mask, xp.asarray(minf), d)
+    return X[()] if isscaler else X
 
 
 def _asarray_with_order(array, dtype=None, order=None, copy=None, *, xp=None):
