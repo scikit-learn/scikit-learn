@@ -9,7 +9,7 @@ from scipy import linalg
 from scipy.spatial.distance import hamming as sp_hamming
 from scipy.stats import bernoulli
 
-from sklearn import datasets, svm
+from sklearn import config_context, datasets, svm
 from sklearn.datasets import make_multilabel_classification
 from sklearn.exceptions import UndefinedMetricWarning
 from sklearn.metrics import (
@@ -40,7 +40,18 @@ from sklearn.model_selection import cross_val_score
 from sklearn.preprocessing import LabelBinarizer, label_binarize
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.utils._mocking import MockDataFrame
-from sklearn.utils._testing import (
+from sklearn.utils.extmath import _nanaverage
+from sklearn.utils.fixes import CSC_CONTAINERS, CSR_CONTAINERS
+from sklearn.utils.validation import check_random_state
+
+from ...utils._array_api import (
+    _check_common_namespace_device,
+    _convert_to_numpy,
+    _is_numpy_namespace,
+    yield_namespace_device_combinations,
+)
+from ...utils._testing import (
+    _array_api_for_tests,
     assert_allclose,
     assert_almost_equal,
     assert_array_almost_equal,
@@ -48,9 +59,6 @@ from sklearn.utils._testing import (
     assert_no_warnings,
     ignore_warnings,
 )
-from sklearn.utils.extmath import _nanaverage
-from sklearn.utils.fixes import CSC_CONTAINERS, CSR_CONTAINERS
-from sklearn.utils.validation import check_random_state
 
 ###############################################################################
 # Utilities for testing
@@ -480,12 +488,21 @@ def test_precision_recall_f_unused_pos_label():
         )
 
 
-def test_confusion_matrix_binary():
+@pytest.mark.parametrize("namespace, device", yield_namespace_device_combinations())
+def test_confusion_matrix_binary(namespace, device):
+    xp = _array_api_for_tests(namespace, device)
+
     # Test confusion matrix - binary classification case
     y_true, y_pred, _ = make_prediction(binary=True)
 
+    y_true = xp.asarray(y_true, device=device)
+    y_pred = xp.asarray(y_pred, device=device)
+
     def test(y_true, y_pred):
-        cm = confusion_matrix(y_true, y_pred)
+        with config_context(array_api_dispatch=True):
+            cm = confusion_matrix(y_true, y_pred)
+            _check_common_namespace_device(y_true, y_pred, cm)
+            cm = _convert_to_numpy(cm, xp=xp)
         assert_array_equal(cm, [[22, 3], [8, 17]])
 
         tp, fp, fn, tn = cm.flatten()
@@ -498,7 +515,9 @@ def test_confusion_matrix_binary():
         assert_array_almost_equal(mcc, 0.57, decimal=2)
 
     test(y_true, y_pred)
-    test([str(y) for y in y_true], [str(y) for y in y_pred])
+
+    if _is_numpy_namespace(xp):
+        test([str(y) for y in y_true], [str(y) for y in y_pred])
 
 
 def test_multilabel_confusion_matrix_binary():

@@ -358,7 +358,7 @@ def confusion_matrix(
     # If labels are not consecutive integers starting from zero, then
     # y_true and y_pred must be converted into index form
     need_index_conversion = not (
-        isdtype(labels.dtype, ("bool", "integral"), xp=xp)
+        xp.isdtype(labels.dtype, ("bool", "integral"))
         and xp.all(
             labels
             == xp.arange(n_labels, dtype=labels.dtype, device=array_device(labels))

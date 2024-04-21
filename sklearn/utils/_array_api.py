@@ -60,6 +60,20 @@ def yield_namespace_device_dtype_combinations(include_numpy_namespaces=True):
             yield array_namespace, None, None
 
 
+def yield_namespace_device_combinations(include_numpy_namespaces=True):
+    """Yield all combinations of array namespaces and their valid devices."""
+
+    for namespace in ("numpy", "array_api_strict", "cupy", "cupy.array_api", "torch"):
+        if not include_numpy_namespaces and namespace in _NUMPY_NAMESPACE_NAMES:
+            continue
+        if namespace == "torch":
+            yield namespace, "cpu"
+            yield namespace, "cuda"
+            yield namespace, "mps"
+        else:
+            yield namespace, None
+
+
 def _check_array_api_dispatch(array_api_dispatch):
     """Check that array_api_compat is installed and NumPy version is compatible.
 
@@ -253,6 +267,12 @@ def ensure_common_namespace_device(reference, *arrays):
         return [xp.asarray(a, device=device_) for a in arrays]
     else:
         return arrays
+
+
+def _check_common_namespace_device(*arrays):
+    """Check that all arrays use the same namespace and device."""
+    get_namespace(*arrays)  # Throws on multiple namespaces.
+    device(*arrays)  # Throws on multiple devices.
 
 
 class _ArrayAPIWrapper:
