@@ -1282,10 +1282,9 @@ def test_PassthroughScorer_metadata_request():
     underlying score method.
     """
     scorer = _PassthroughScorer(
-        estimator=LinearSVC()
-        .set_score_request(sample_weight="alias")
-        .set_fit_request(sample_weight=True)
+        estimator=LinearSVC().set_score_request(sample_weight="alias")
     )
+
     # Test that _PassthroughScorer doesn't change estimator's routing.
     assert_request_equal(
         scorer.get_metadata_routing(),
@@ -1297,13 +1296,20 @@ def test_PassthroughScorer_metadata_request():
 def test_PassthroughScorer_set_score_request():
     """Test that _PassthroughScorer.set_score_request adds the correct metadata request
     on itself."""
-    meta_est = GridSearchCV(estimator=LinearSVC(), param_grid={"C": [0.1, 1]})
-
     # make a `_PassthroughScorer` with `check_scoring`:
-    scorer = check_scoring(meta_est, None)
-    scorer.set_score_request(sample_weight=True)
+    scorer = check_scoring(LogisticRegression(), None)
+    scorer.set_score_request(sample_weight="my_weights")
+    assert scorer.get_metadata_routing().score.requests["sample_weight"] == "my_weights"
 
-    assert str(scorer.get_metadata_routing()) == str(scorer._metadata_request)
+
+def test_PassthroughScorer_set_score_request_raises_without_routing_enabled():
+    """Test that _PassthroughScorer.set_score_request raises if metadata routing is
+    disabled."""
+    scorer = check_scoring(LogisticRegression(), None)
+    msg = "This method is only available when metadata routing is enabled."
+
+    with pytest.raises(RuntimeError, match=msg):
+        scorer.set_score_request(sample_weight="my_weights")
 
 
 @pytest.mark.usefixtures("enable_slep006")
