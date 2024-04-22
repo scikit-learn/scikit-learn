@@ -3,14 +3,14 @@
 Recursive feature elimination
 =============================
 
-
-This example demonstrates how :class:~sklearn.feature_selection.RFE can be used
-to determine the importance of individual pixels when classifying handwritten digits.
-RFE is a method that recursively removes the least significant features and retrains
-the model, allowing us to rank features by their importance. the most important features
-are assigned rank 1 and the higher ranking_, the less important. This ranking is also
-encoded by the shades of blue. Ranking map is annotated with pixel numbers for clarity.
-As expected, pixels in the center of the image are more predictive than pixels close to the edges.
+This example demonstrates how Recursive Feature Elimination
+(:class:`~sklearn.feature_selection.RFE`) can be used to determine the
+importance of individual pixels for classifying handwritten digits.
+:class:`~sklearn.feature_selection.RFE` recursively removes the least
+significant features, assigning ranks based on their importance, where higher
+`ranking_` values denote lower importance. The ranking is visualized using both
+shades of blue and pixel annotations for clarity. As expected, pixels positioned
+at the center of the image tend to be more predictive than those near the edges.
 
 .. note::
 
