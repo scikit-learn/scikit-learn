@@ -354,7 +354,7 @@ Changelog
   is deprecated and will raise an error in v1.7.
   :pr:`18555` by :user:`Kaushik Amar Das <cozek>`.
 
-- |Feature| :func:`metrics.d2_log_loss_score` has been added and this
+- |Feature| :func:`metrics.d2_log_loss_score` has been added which
   calculates the D^2 score for the log loss.
   :pr:`28351` by :user:`Omar Salman <OmarManzoor>`.
 

@@ -3328,7 +3328,7 @@ def d2_log_loss_score(y_true, y_pred, *, sample_weight=None, labels=None):
 
     Returns
     -------
-    z : float or ndarray of floats
+    d2 : float or ndarray of floats
         The D^2 score.
 
     Notes

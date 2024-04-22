@@ -2865,14 +2865,6 @@ Here are some usage examples of the :func:`d2_log_loss_score` function::
   ... ]
   >>> d2_log_loss_score(y_true, y_pred)
   -0.552...
-  >>> y_true = [0, 0, 1, 1]
-  >>> y_pred = [0.5, 0.5, 0.5, 0.5]
-  >>> d2_log_loss_score(y_true, y_pred)
-  0.0
-  >>> y_true = [0, 0, 1, 1]
-  >>> y_pred = [0.8, 0.8, 0.2, 0.2]
-  >>> d2_log_loss_score(y_true, y_pred)
-  -1.321...
 
 |details-end|
 
