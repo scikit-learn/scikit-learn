@@ -39,7 +39,7 @@ from sklearn.model_selection import (
     cross_val_predict,
 )
 from sklearn.preprocessing import minmax_scale
-from sklearn.utils import _IS_32BIT, check_random_state
+from sklearn.utils import check_random_state
 from sklearn.utils._testing import (
     assert_allclose,
     assert_almost_equal,
@@ -48,6 +48,7 @@ from sklearn.utils._testing import (
     ignore_warnings,
 )
 from sklearn.utils.fixes import (
+    _IS_32BIT,
     COO_CONTAINERS,
     CSC_CONTAINERS,
     CSR_CONTAINERS,

@@ -1,4 +1,5 @@
 """Unsupervised nearest neighbors learner"""
+
 from ..base import _fit_context
 from ._base import KNeighborsMixin, NeighborsBase, RadiusNeighborsMixin
 

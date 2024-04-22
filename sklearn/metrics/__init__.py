@@ -3,7 +3,6 @@ The :mod:`sklearn.metrics` module includes score functions, performance metrics
 and pairwise metrics and distance computations.
 """
 
-
 from . import cluster
 from ._classification import (
     accuracy_score,
