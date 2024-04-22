@@ -1088,3 +1088,14 @@ def test_float32_predict_proba(data):
     calibrator = CalibratedClassifierCV(model)
     # Does not raise an error
     calibrator.fit(*data)
+
+
+def test_error_less_class_samples_than_folds():
+    """Check that CalibratedClassifierCV works with string targets.
+
+    non-regression test for issue #28841.
+    """
+    X = np.random.normal(size=(20, 3))
+    y = ["a"] * 10 + ["b"] * 10
+
+    CalibratedClassifierCV(cv=3).fit(X, y)

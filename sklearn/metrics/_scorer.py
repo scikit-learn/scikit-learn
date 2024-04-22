@@ -45,6 +45,7 @@ from . import (
     balanced_accuracy_score,
     brier_score_loss,
     class_likelihood_ratios,
+    d2_absolute_error_score,
     explained_variance_score,
     f1_score,
     jaccard_score,
@@ -727,6 +728,7 @@ neg_mean_poisson_deviance_scorer = make_scorer(
 neg_mean_gamma_deviance_scorer = make_scorer(
     mean_gamma_deviance, greater_is_better=False
 )
+d2_absolute_error_scorer = make_scorer(d2_absolute_error_score)
 
 # Standard Classification Scores
 accuracy_scorer = make_scorer(accuracy_score)
@@ -819,6 +821,7 @@ _SCORERS = dict(
     neg_root_mean_squared_log_error=neg_root_mean_squared_log_error_scorer,
     neg_mean_poisson_deviance=neg_mean_poisson_deviance_scorer,
     neg_mean_gamma_deviance=neg_mean_gamma_deviance_scorer,
+    d2_absolute_error_score=d2_absolute_error_scorer,
     accuracy=accuracy_scorer,
     top_k_accuracy=top_k_accuracy_scorer,
     roc_auc=roc_auc_scorer,
