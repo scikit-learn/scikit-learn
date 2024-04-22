@@ -862,6 +862,49 @@ def test_stacking_classifier_base_regressor():
     assert clf.score(X_test, y_test) > 0.8
 
 
+def test_stacking_regressor_singleoutput_but_2d():
+    """Check that a stacking regressor with a single output but 2D target works"""
+    cv = 2
+    acceptable_relative_tolerance = 1e-10
+    acceptable_aboslute_tolerance = 1e-10
+
+    X_train = np.hstack([np.arange(5)] * cv).reshape(-1, 1)
+    y_train = (2 * X_train + 1).reshape(-1, 1)
+
+    estimator1 = LinearRegression(fit_intercept=True)
+    estimator2 = DummyRegressor(strategy="constant", constant=0)
+    final_estimator = Ridge(alpha=1e-12, fit_intercept=False, random_state=42)
+
+    reg = StackingRegressor(
+        estimators=[("lr", estimator1), ("dr", estimator2)],
+        final_estimator=final_estimator,
+        cv=KFold(n_splits=cv, shuffle=False),
+        passthrough=False,
+    )
+
+    reg.fit(X_train, y_train)
+    # predict
+    y_pred = reg.predict(X_train)
+    # NOTE: In this case the estimator can predict almost exactly the target
+    assert_allclose(
+        y_pred,
+        # NOTE: when the target is 2D but with a single output,
+        #       the predictions are 1D because of column_or_1d
+        y_train.flatten(),
+        rtol=acceptable_relative_tolerance,
+        atol=acceptable_aboslute_tolerance,
+    )
+    # transform
+    X_trans = reg.transform(X_train)
+    # NOTE: The result of transform is the horizontal stack of the predictions
+    assert_allclose(
+        X_trans,
+        np.hstack([y_train, np.zeros(y_train.shape)]),
+        rtol=acceptable_relative_tolerance,
+        atol=acceptable_aboslute_tolerance,
+    )
+
+
 def test_stacking_regressor_multioutput():
     """Check that a stacking regressor with multioutput works"""
     cv = 2

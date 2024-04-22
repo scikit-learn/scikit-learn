@@ -967,12 +967,9 @@ class StackingRegressor(_RoutingNotSupportedMixin, RegressorMixin, _BaseStacking
             Returns a fitted instance.
         """
         _raise_for_unsupported_routing(self, "fit", sample_weight=sample_weight)
-        try:
-            # Single Target
+        y = self._validate_data(y=y, multi_output=True)
+        if y.ndim == 2 and y.shape[1] == 1:
             y = column_or_1d(y, warn=True)
-        except ValueError:
-            # Multioutput target.
-            y = self._validate_data(X="no_validation", y=y, multi_output=True)
         return super().fit(X, y, sample_weight)
 
     def transform(self, X):
