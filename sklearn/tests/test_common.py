@@ -111,7 +111,7 @@ class CallableEstimator(BaseEstimator):
     """
 
     def __call__(self):
-        pass
+        pass  # pragma: nocover
 
 
 @pytest.mark.parametrize(
