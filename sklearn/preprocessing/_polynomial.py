@@ -647,7 +647,7 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
         Specifies the way missing values are handled.
 
         - 'error' : Raise an error if np.nan values are present during :meth:`fit`
-        - 'zeros' :  Encode the splines from missing values as 0s.
+        - 'zeros' : Encode missing values as splines with value `0`.
 
         .. versionadded:: 1.5
 

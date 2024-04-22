@@ -407,7 +407,6 @@ Changelog
   that generated that feature. If `False`, `get_feature_names_out` will not
   prefix any feature names and will error if feature names are not unique.
   :pr:`25991` by :user:`Jiawei Zhang <jiawei-zhang-a>`.
-  
 :mod:`sklearn.preprocessing`
 ............................
 - |Enhancement| :class:`preprocessing.SplineTransformer` can now handle missing
