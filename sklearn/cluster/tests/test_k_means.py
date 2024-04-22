@@ -1,4 +1,5 @@
 """Testing for K-means"""
+
 import re
 import sys
 from io import StringIO
@@ -198,19 +199,6 @@ def test_kmeans_convergence(algorithm, global_random_seed):
     ).fit(X)
 
     assert km.n_iter_ < max_iter
-
-
-@pytest.mark.parametrize("Estimator", [KMeans, MiniBatchKMeans])
-def test_predict_sample_weight_deprecation_warning(Estimator):
-    X = np.random.rand(100, 2)
-    sample_weight = np.random.uniform(size=100)
-    kmeans = Estimator()
-    kmeans.fit(X, sample_weight=sample_weight)
-    warn_msg = (
-        "'sample_weight' was deprecated in version 1.3 and will be removed in 1.5."
-    )
-    with pytest.warns(FutureWarning, match=warn_msg):
-        kmeans.predict(X, sample_weight=sample_weight)
 
 
 @pytest.mark.parametrize("X_csr", X_as_any_csr)

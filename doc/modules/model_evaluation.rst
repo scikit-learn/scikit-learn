@@ -102,11 +102,8 @@ Scoring                                Function                                 
 'neg_mean_poisson_deviance'            :func:`metrics.mean_poisson_deviance`
 'neg_mean_gamma_deviance'              :func:`metrics.mean_gamma_deviance`
 'neg_mean_absolute_percentage_error'   :func:`metrics.mean_absolute_percentage_error`
-'d2_absolute_error_score'              :func:`metrics.d2_absolute_error_score`
-'d2_pinball_score'                     :func:`metrics.d2_pinball_score`
-'d2_tweedie_score'                     :func:`metrics.d2_tweedie_score`
+'d2_absolute_error_score' 	           :func:`metrics.d2_absolute_error_score`
 ====================================   ==============================================     ==================================
-
 
 Usage examples:
 
@@ -130,27 +127,25 @@ Usage examples:
 Defining your scoring strategy from metric functions
 -----------------------------------------------------
 
-The module :mod:`sklearn.metrics` also exposes a set of simple functions
-measuring a prediction error given ground truth and prediction:
-
-- functions ending with ``_score`` return a value to
-  maximize, the higher the better.
-
-- functions ending with ``_error`` or ``_loss`` return a
-  value to minimize, the lower the better.  When converting
-  into a scorer object using :func:`make_scorer`, set
-  the ``greater_is_better`` parameter to ``False`` (``True`` by default; see the
-  parameter description below).
-
-Metrics available for various machine learning tasks are detailed in sections
-below.
-
-Many metrics are not given names to be used as ``scoring`` values,
+The following metrics functions are not implemented as named scorers,
 sometimes because they require additional parameters, such as
-:func:`fbeta_score`. In such cases, you need to generate an appropriate
-scoring object.  The simplest way to generate a callable object for scoring
-is by using :func:`make_scorer`. That function converts metrics
-into callables that can be used for model evaluation.
+:func:`fbeta_score`. They cannot be passed to the ``scoring``
+parameters; instead their callable needs to be passed to
+:func:`make_scorer` together with the value of the user-settable
+parameters.
+
+=====================================  =========  ==============================================
+Function                               Parameter  Example usage
+=====================================  =========  ==============================================
+**Classification**
+:func:`metrics.fbeta_score`            ``beta``   ``make_scorer(fbeta_score, beta=2)``
+
+**Regression**
+:func:`metrics.mean_tweedie_deviance`  ``power``  ``make_scorer(mean_tweedie_deviance, power=1.5)``
+:func:`metrics.mean_pinball_loss`      ``alpha``  ``make_scorer(mean_pinball_loss, alpha=0.95)``
+:func:`metrics.d2_tweedie_score`       ``power``  ``make_scorer(d2_tweedie_score, power=1.5)``
+:func:`metrics.d2_pinball_score`       ``alpha``  ``make_scorer(d2_pinball_score, alpha=0.95)``
+=====================================  =========  ==============================================
 
 One typical use case is to wrap an existing metric function from the library
 with non-default values for its parameters, such as the ``beta`` parameter for
@@ -160,8 +155,20 @@ the :func:`fbeta_score` function::
     >>> ftwo_scorer = make_scorer(fbeta_score, beta=2)
     >>> from sklearn.model_selection import GridSearchCV
     >>> from sklearn.svm import LinearSVC
-    >>> grid = GridSearchCV(LinearSVC(dual="auto"), param_grid={'C': [1, 10]},
+    >>> grid = GridSearchCV(LinearSVC(), param_grid={'C': [1, 10]},
     ...                     scoring=ftwo_scorer, cv=5)
+
+The module :mod:`sklearn.metrics` also exposes a set of simple functions
+measuring a prediction error given ground truth and prediction:
+
+- functions ending with ``_score`` return a value to
+  maximize, the higher the better.
+
+- functions ending with ``_error``, ``_loss``, or ``_deviance`` return a
+  value to minimize, the lower the better.  When converting
+  into a scorer object using :func:`make_scorer`, set
+  the ``greater_is_better`` parameter to ``False`` (``True`` by default; see the
+  parameter description below).
 
 
 |details-start|
@@ -301,7 +308,7 @@ parameter:
     >>> from sklearn.metrics import confusion_matrix
     >>> # A sample toy binary classification dataset
     >>> X, y = datasets.make_classification(n_classes=2, random_state=0)
-    >>> svm = LinearSVC(dual="auto", random_state=0)
+    >>> svm = LinearSVC(random_state=0)
     >>> def confusion_matrix_scorer(clf, X, y):
     ...      y_pred = clf.predict(X)
     ...      cm = confusion_matrix(y, y_pred)
@@ -1141,9 +1148,9 @@ with a svm classifier in a binary class problem::
   >>> from sklearn.metrics import hinge_loss
   >>> X = [[0], [1]]
   >>> y = [-1, 1]
-  >>> est = svm.LinearSVC(dual="auto", random_state=0)
+  >>> est = svm.LinearSVC(random_state=0)
   >>> est.fit(X, y)
-  LinearSVC(dual='auto', random_state=0)
+  LinearSVC(random_state=0)
   >>> pred_decision = est.decision_function([[-2], [3], [0.5]])
   >>> pred_decision
   array([-2.18...,  2.36...,  0.09...])
@@ -1156,9 +1163,9 @@ with a svm classifier in a multiclass problem::
   >>> X = np.array([[0], [1], [2], [3]])
   >>> Y = np.array([0, 1, 2, 3])
   >>> labels = np.array([0, 1, 2, 3])
-  >>> est = svm.LinearSVC(dual="auto")
+  >>> est = svm.LinearSVC()
   >>> est.fit(X, Y)
-  LinearSVC(dual='auto')
+  LinearSVC()
   >>> pred_decision = est.decision_function([[-1], [2], [3]])
   >>> y_true = [0, 2, 3]
   >>> hinge_loss(y_true, pred_decision, labels=labels)
