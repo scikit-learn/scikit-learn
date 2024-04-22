@@ -102,6 +102,10 @@ more details.
   methods, which can happen if one tries to decorate them.
   :pr:`28651` by `Adrin Jalali`_.
 
+- |FIX| Prevent a `RecursionError` when estimators with the default `scoring`
+  param (`None`) route metadata. :pr:`28712` by :user:`Stefanie Senger
+  <StefanieSenger>`.
+
 Changelog
 ---------
 
@@ -247,11 +251,6 @@ Changelog
   :class:`linear_model.SGDClassifier`, :class:`linear_model.SGDRegressor` and
   :class:`linear_model.SGDOneClassSVM`. Pass `average=False` instead.
   :pr:`28582` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
-
-- |FIX| Prevent a `RecursionError` when :class:`~linear_model.RidgeCV` or
-  :class:`~linear_model.RidgeClassifierCV` with the default `scoring` param
-  (`None`) route metadata. :pr:`28712` by :user:`Stefanie Senger
-  <StefanieSenger>`.
 
 :mod:`sklearn.manifold`
 .......................
