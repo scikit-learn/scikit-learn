@@ -417,12 +417,14 @@ class _PassthroughScorer(_MetadataRequester):
     def __init__(self, estimator):
         self._estimator = estimator
 
-        requests = MetadataRequest(owner=self._estimator.__class__.__name__)
+        requests = MetadataRequest(owner=self.__class__.__name__)
         try:
             requests.score = estimator._metadata_request.score
+            requests.score.owner = self.__class__.__name__
         except AttributeError:
             try:
                 requests.score = estimator._get_default_requests().score
+                requests.score.owner = self.__class__.__name__
             except AttributeError:
                 pass
 
