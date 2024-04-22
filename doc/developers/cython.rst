@@ -145,11 +145,11 @@ from `cython.parallel`.
 Types
 ~~~~~
 
-Cython code requires to use explicit types. This is one of the reasons to get good
-performance boosts. In order to avoid code duplication, we have a central place
+Cython code requires to use explicit types. This is one of the reasons you get a
+performance boost. In order to avoid code duplication, we have a central place
 for the most used types in
 `sklearn/utils/_typedefs.pyd <https://github.com/scikit-learn/scikit-learn/blob/main/sklearn/utils/_typedefs.pyd>`_.
-Ideally you start by having a look there and simpliy `cimport`, for example
+Ideally you start by having a look there and `cimport` types you need, for example
 
 .. code-block:: cython
 
