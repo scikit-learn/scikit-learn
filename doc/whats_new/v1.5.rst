@@ -131,6 +131,10 @@ more details.
   methods, which can happen if one tries to decorate them.
   :pr:`28651` by `Adrin Jalali`_.
 
+- |FIX| Prevent a `RecursionError` when estimators with the default `scoring`
+  param (`None`) route metadata. :pr:`28712` by :user:`Stefanie Senger
+  <StefanieSenger>`.
+
 Changelog
 ---------
 

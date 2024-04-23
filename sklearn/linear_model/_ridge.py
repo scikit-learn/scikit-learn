@@ -2394,12 +2394,10 @@ class RidgeCV(MultiOutputMixin, RegressorMixin, _BaseRidgeCV):
         (i.e. data is expected to be centered).
 
     scoring : str, callable, default=None
-        A string (see model evaluation documentation) or
-        a scorer callable object / function with signature
-        ``scorer(estimator, X, y)``.
-        If None, the negative mean squared error if cv is 'auto' or None
-        (i.e. when using leave-one-out cross-validation), and r2 score
-        otherwise.
+        A string (see :ref:`scoring_parameter`) or a scorer callable object /
+        function with signature ``scorer(estimator, X, y)``. If None, the
+        negative mean squared error if cv is 'auto' or None (i.e. when using
+        leave-one-out cross-validation), and r2 score otherwise.
 
     cv : int, cross-validation generator or an iterable, default=None
         Determines the cross-validation splitting strategy.
@@ -2570,9 +2568,8 @@ class RidgeClassifierCV(_RidgeClassifierMixin, _BaseRidgeCV):
         (i.e. data is expected to be centered).
 
     scoring : str, callable, default=None
-        A string (see model evaluation documentation) or
-        a scorer callable object / function with signature
-        ``scorer(estimator, X, y)``.
+        A string (see :ref:`scoring_parameter`) or a scorer callable object /
+        function with signature ``scorer(estimator, X, y)``.
 
     cv : int, cross-validation generator or an iterable, default=None
         Determines the cross-validation splitting strategy.
