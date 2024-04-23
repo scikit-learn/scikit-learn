@@ -110,48 +110,44 @@ which is more computationally efficient than sequentially calling
 :func:`permutation_importance` several times with a different scorer, as it
 reuses model predictions.
 
-|details-start|
-**Example of permutation feature importance using multiple scorers**
-|details-split|
+.. dropdown:: Example of permutation feature importance using multiple scorers
 
-In the example below we use a list of metrics, but more input formats are
-possible, as documented in :ref:`multimetric_scoring`.
+  In the example below we use a list of metrics, but more input formats are
+  possible, as documented in :ref:`multimetric_scoring`.
 
-  >>> scoring = ['r2', 'neg_mean_absolute_percentage_error', 'neg_mean_squared_error']
-  >>> r_multi = permutation_importance(
-  ...     model, X_val, y_val, n_repeats=30, random_state=0, scoring=scoring)
-  ...
-  >>> for metric in r_multi:
-  ...     print(f"{metric}")
-  ...     r = r_multi[metric]
-  ...     for i in r.importances_mean.argsort()[::-1]:
-  ...         if r.importances_mean[i] - 2 * r.importances_std[i] > 0:
-  ...             print(f"    {diabetes.feature_names[i]:<8}"
-  ...                   f"{r.importances_mean[i]:.3f}"
-  ...                   f" +/- {r.importances_std[i]:.3f}")
-  ...
-  r2
-      s5      0.204 +/- 0.050
-      bmi     0.176 +/- 0.048
-      bp      0.088 +/- 0.033
-      sex     0.056 +/- 0.023
-  neg_mean_absolute_percentage_error
-      s5      0.081 +/- 0.020
-      bmi     0.064 +/- 0.015
-      bp      0.029 +/- 0.010
-  neg_mean_squared_error
-      s5      1013.866 +/- 246.445
-      bmi     872.726 +/- 240.298
-      bp      438.663 +/- 163.022
-      sex     277.376 +/- 115.123
+    >>> scoring = ['r2', 'neg_mean_absolute_percentage_error', 'neg_mean_squared_error']
+    >>> r_multi = permutation_importance(
+    ...     model, X_val, y_val, n_repeats=30, random_state=0, scoring=scoring)
+    ...
+    >>> for metric in r_multi:
+    ...     print(f"{metric}")
+    ...     r = r_multi[metric]
+    ...     for i in r.importances_mean.argsort()[::-1]:
+    ...         if r.importances_mean[i] - 2 * r.importances_std[i] > 0:
+    ...             print(f"    {diabetes.feature_names[i]:<8}"
+    ...                   f"{r.importances_mean[i]:.3f}"
+    ...                   f" +/- {r.importances_std[i]:.3f}")
+    ...
+    r2
+        s5      0.204 +/- 0.050
+        bmi     0.176 +/- 0.048
+        bp      0.088 +/- 0.033
+        sex     0.056 +/- 0.023
+    neg_mean_absolute_percentage_error
+        s5      0.081 +/- 0.020
+        bmi     0.064 +/- 0.015
+        bp      0.029 +/- 0.010
+    neg_mean_squared_error
+        s5      1013.866 +/- 246.445
+        bmi     872.726 +/- 240.298
+        bp      438.663 +/- 163.022
+        sex     277.376 +/- 115.123
 
-The ranking of the features is approximately the same for different metrics even
-if the scales of the importance values are very different. However, this is not
-guaranteed and different metrics might lead to significantly different feature
-importances, in particular for models trained for imbalanced classification problems,
-for which **the choice of the classification metric can be critical**.
-
-|details-end|
+  The ranking of the features is approximately the same for different metrics even
+  if the scales of the importance values are very different. However, this is not
+  guaranteed and different metrics might lead to significantly different feature
+  importances, in particular for models trained for imbalanced classification problems,
+  for which **the choice of the classification metric can be critical**.
 
 Outline of the permutation importance algorithm
 -----------------------------------------------
@@ -228,12 +224,12 @@ keep one feature from each cluster.
 For more details on such strategy, see the example
 :ref:`sphx_glr_auto_examples_inspection_plot_permutation_importance_multicollinear.py`.
 
-.. topic:: Examples:
+.. rubric:: Examples
 
-  * :ref:`sphx_glr_auto_examples_inspection_plot_permutation_importance.py`
-  * :ref:`sphx_glr_auto_examples_inspection_plot_permutation_importance_multicollinear.py`
+* :ref:`sphx_glr_auto_examples_inspection_plot_permutation_importance.py`
+* :ref:`sphx_glr_auto_examples_inspection_plot_permutation_importance_multicollinear.py`
 
-.. topic:: References:
+.. rubric:: References
 
-   .. [1] L. Breiman, :doi:`"Random Forests" <10.1023/A:1010933404324>`,
-      Machine Learning, 45(1), 5-32, 2001.
+.. [1] L. Breiman, :doi:`"Random Forests" <10.1023/A:1010933404324>`,
+  Machine Learning, 45(1), 5-32, 2001.

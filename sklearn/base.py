@@ -1,4 +1,4 @@
-"""Base classes for all estimators."""
+"""Base classes for all estimators and various utility functions."""
 
 # Author: Gael Varoquaux <gael.varoquaux@normalesup.org>
 # License: BSD 3 clause

@@ -56,7 +56,7 @@ dense model.
    :align: center
 
 
-.. topic:: References:
+.. rubric:: References
 
-    .. [M2012] "Machine Learning: A Probabilistic Perspective"
-      Murphy, K. P. - chapter 14.4.3, pp. 492-493, The MIT Press, 2012
+.. [M2012] "Machine Learning: A Probabilistic Perspective"
+   Murphy, K. P. - chapter 14.4.3, pp. 492-493, The MIT Press, 2012
