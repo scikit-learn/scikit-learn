@@ -9,7 +9,7 @@ import warnings
 from contextlib import nullcontext
 from copy import deepcopy
 from functools import partial, wraps
-from inspect import signature
+from inspect import isfunction, signature
 from numbers import Integral, Real
 
 import joblib
@@ -405,13 +405,11 @@ def _get_check_estimator_ids(obj):
     --------
     check_estimator
     """
-    if callable(obj):
-        if not isinstance(obj, partial):
-            return obj.__name__
-
+    if isfunction(obj):
+        return obj.__name__
+    if isinstance(obj, partial):
         if not obj.keywords:
             return obj.func.__name__
-
         kwstring = ",".join(["{}={}".format(k, v) for k, v in obj.keywords.items()])
         return "{}({})".format(obj.func.__name__, kwstring)
     if hasattr(obj, "get_params"):
@@ -1460,8 +1458,7 @@ def check_dont_overwrite_parameters(name, estimator_orig):
         " the fit method."
         " Estimators are only allowed to add private attributes"
         " either started with _ or ended"
-        " with _ but %s added"
-        % ", ".join(attrs_added_by_fit)
+        " with _ but %s added" % ", ".join(attrs_added_by_fit)
     )
 
     # check that fit doesn't change any public attribute
@@ -1476,8 +1473,7 @@ def check_dont_overwrite_parameters(name, estimator_orig):
         " the fit method. Estimators are only allowed"
         " to change attributes started"
         " or ended with _, but"
-        " %s changed"
-        % ", ".join(attrs_changed_by_fit)
+        " %s changed" % ", ".join(attrs_changed_by_fit)
     )
 
 
@@ -2926,8 +2922,7 @@ def check_supervised_y_2d(name, estimator_orig):
         assert len(w) > 0, msg
         assert (
             "DataConversionWarning('A column-vector y"
-            " was passed when a 1d array was expected"
-            in msg
+            " was passed when a 1d array was expected" in msg
         )
     assert_allclose(y_pred.ravel(), y_pred_2d.ravel())
 
