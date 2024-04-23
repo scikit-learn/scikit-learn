@@ -41,10 +41,9 @@ class NearestCentroid(ClassifierMixin, BaseEstimator):
         If `metric="manhattan"`, the centroid is the feature-wise median, which
         minimizes the sum of L1 distances.
 
-        .. deprecated:: 1.3
-            Support for metrics other than `euclidean` and `manhattan` and for
-            callables was deprecated in version 1.3 and will be removed in
-            version 1.5.
+        .. versionchanged:: 1.5
+            All metrics but `euclidean` and `manhattan` were deprecated and now raise
+            an error.
 
         .. versionchanged:: 0.19
             `metric='precomputed'` was deprecated and now raises an error
@@ -99,8 +98,6 @@ class NearestCentroid(ClassifierMixin, BaseEstimator):
     >>> print(clf.predict([[-0.8, -1]]))
     [1]
     """
-
-    _valid_metrics = set(_VALID_METRICS) - {"mahalanobis", "seuclidean", "wminkowski"}
 
     _parameter_constraints: dict = {
         "metric": [StrOptions({"manhattan", "euclidean"})],
