@@ -279,9 +279,8 @@ approach can be summarized as follows:
   While `pickle` can be used to easily save and load scikit-learn models,
   unpickling of untrusted data might lead to security issues.
 * `joblib`: Efficient storage and memory mapping techniques make it faster
-  for serializing and deserializing large numpy arrays. However, care must be
-  taken when loading untrusted data as it can lead to the execution of
-  arbitrary Python code, which may be malicious.
+  when working with large machine learning models or large numpy arrays. However,
+  it may trigger the execution of malicious code while loading untrusted data.
 * `skops`: Trained scikit-learn models can be easily shared and put into
   production using `skops`. It is more secure compared to alternate approaches
   as it allows users to load data from trusted sources. It however, does not
