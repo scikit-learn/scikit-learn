@@ -230,7 +230,7 @@ class NewtonSolver(ABC):
         is_verbose = self.verbose >= 2
         if is_verbose:
             print("  Backtracking Line Search")
-            print(f"    eps=10 * finfo.eps={eps}")
+            print(f"    eps=16 * finfo.eps={eps}")
 
         for i in range(21):  # until and including t = beta**20 ~ 1e-6
             self.coef = self.coef_old + t * self.coef_newton

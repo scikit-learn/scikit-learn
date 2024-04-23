@@ -1,5 +1,6 @@
 import warnings
 
+import joblib
 import numpy as np
 import pytest
 
@@ -7,11 +8,13 @@ from sklearn.utils import (
     check_random_state,
     column_or_1d,
     deprecated,
+    parallel_backend,
+    register_parallel_backend,
     safe_mask,
     tosequence,
 )
 from sklearn.utils._missing import is_scalar_nan
-from sklearn.utils._testing import assert_array_equal, assert_no_warnings
+from sklearn.utils._testing import assert_array_equal
 from sklearn.utils.fixes import CSR_CONTAINERS
 from sklearn.utils.validation import _is_polars_df
 
@@ -136,19 +139,6 @@ def dummy_func():
     pass
 
 
-def test_deprecation_joblib_api(tmpdir):
-    # Only parallel_backend and register_parallel_backend are not deprecated in
-    # sklearn.utils
-    from sklearn.utils import parallel_backend, register_parallel_backend
-
-    assert_no_warnings(parallel_backend, "loky", None)
-    assert_no_warnings(register_parallel_backend, "failing", None)
-
-    from sklearn.utils._joblib import joblib
-
-    del joblib.parallel.BACKENDS["failing"]
-
-
 def test__is_polars_df():
     """Check that _is_polars_df return False for non-dataframe objects."""
 
@@ -170,3 +160,14 @@ def test_is_pypy_deprecated():
 def test_tosequence_deprecated():
     with pytest.warns(FutureWarning, match="tosequence was deprecated in 1.5"):
         tosequence([1, 2, 3])
+
+
+# TODO(1.7): remove
+def test_parallel_backend_deprecated():
+    with pytest.warns(FutureWarning, match="parallel_backend is deprecated"):
+        parallel_backend("loky", None)
+
+    with pytest.warns(FutureWarning, match="register_parallel_backend is deprecated"):
+        register_parallel_backend("a_backend", None)
+
+    del joblib.parallel.BACKENDS["a_backend"]

@@ -19,7 +19,7 @@ from scipy import sparse
 from .base import TransformerMixin, _fit_context, clone
 from .exceptions import NotFittedError
 from .preprocessing import FunctionTransformer
-from .utils import Bunch
+from .utils import Bunch, _safe_indexing
 from .utils._estimator_html_repr import _VisualBlock
 from .utils._metadata_requests import METHODS
 from .utils._param_validation import HasMethods, Hidden
@@ -1258,7 +1258,7 @@ def make_pipeline(*steps, memory=None, verbose=False):
     return Pipeline(_name_estimators(steps), memory=memory, verbose=verbose)
 
 
-def _transform_one(transformer, X, y, weight, params):
+def _transform_one(transformer, X, y, weight, columns=None, params=None):
     """Call transform and apply weight to output.
 
     Parameters
@@ -1275,11 +1275,17 @@ def _transform_one(transformer, X, y, weight, params):
     weight : float
         Weight to be applied to the output of the transformation.
 
+    columns : str, array-like of str, int, array-like of int, array-like of bool, slice
+        Columns to select before transforming.
+
     params : dict
         Parameters to be passed to the transformer's ``transform`` method.
 
         This should be of the form ``process_routing()["step_name"]``.
     """
+    if columns is not None:
+        X = _safe_indexing(X, columns, axis=1)
+
     res = transformer.transform(X, **params.transform)
     # if we have a weight for this transformer, multiply output
     if weight is None:
@@ -1288,7 +1294,14 @@ def _transform_one(transformer, X, y, weight, params):
 
 
 def _fit_transform_one(
-    transformer, X, y, weight, message_clsname="", message=None, params=None
+    transformer,
+    X,
+    y,
+    weight,
+    columns=None,
+    message_clsname="",
+    message=None,
+    params=None,
 ):
     """
     Fits ``transformer`` to ``X`` and ``y``. The transformed result is returned
@@ -1297,6 +1310,9 @@ def _fit_transform_one(
 
     ``params`` needs to be of the form ``process_routing()["step_name"]``.
     """
+    if columns is not None:
+        X = _safe_indexing(X, columns, axis=1)
+
     params = params or {}
     with _print_elapsed_time(message_clsname, message):
         if hasattr(transformer, "fit_transform"):
@@ -1412,12 +1428,12 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
     ...                       ("svd", TruncatedSVD(n_components=2))])
     >>> X = [[0., 1., 3], [2., 2., 5]]
     >>> union.fit_transform(X)
-    array([[ 1.5       ,  3.0...,  0.8...],
-           [-1.5       ,  5.7..., -0.4...]])
+    array([[-1.5       ,  3.0..., -0.8...],
+           [ 1.5       ,  5.7...,  0.4...]])
     >>> # An estimator's parameter can be set using '__' syntax
     >>> union.set_params(svd__n_components=1).fit_transform(X)
-    array([[ 1.5       ,  3.0...],
-           [-1.5       ,  5.7...]])
+    array([[-1.5       ,  3.0...],
+           [ 1.5       ,  5.7...]])
 
     For a more detailed example of usage, see
     :ref:`sphx_glr_auto_examples_compose_plot_feature_union.py`.
@@ -1792,7 +1808,7 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
                 routed_params[name] = Bunch(transform={})
 
         Xs = Parallel(n_jobs=self.n_jobs)(
-            delayed(_transform_one)(trans, X, None, weight, routed_params[name])
+            delayed(_transform_one)(trans, X, None, weight, params=routed_params[name])
             for name, trans, weight in self._iter()
         )
         if not Xs:
