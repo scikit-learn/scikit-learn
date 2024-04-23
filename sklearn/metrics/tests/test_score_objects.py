@@ -65,6 +65,7 @@ from sklearn.utils._testing import (
 from sklearn.utils.metadata_routing import MetadataRouter
 
 REGRESSION_SCORERS = [
+    "d2_absolute_error_score",
     "explained_variance",
     "r2",
     "neg_mean_absolute_error",
