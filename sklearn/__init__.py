@@ -73,6 +73,12 @@ if __SKLEARN_SETUP__:
     # We are not importing the rest of scikit-learn during the build
     # process, as it may not be compiled yet
 else:
+    # Import numpy, scipy to make sure that the BLAS libs are loaded before
+    # creating the ThreadpoolController. (OpenMP is loaded by importing show_versions)
+    import numpy  # noqa
+    import scipy.linalg  # noqa
+    from threadpoolctl import ThreadpoolController
+
     # `_distributor_init` allows distributors to run custom init code.
     # For instance, for the Windows wheel, this is used to pre-load the
     # vcomp shared library runtime for OpenMP embedded in the sklearn/.libs
@@ -80,12 +86,11 @@ else:
     # It is necessary to do this prior to importing show_versions as the
     # later is linked to the OpenMP runtime to make it possible to introspect
     # it and importing it first would fail if the OpenMP dll cannot be found.
-    from threadpoolctl import ThreadpoolController
-
     from . import (
         __check_build,  # noqa: F401
         _distributor_init,  # noqa: F401
     )
+
     from .base import clone
     from .utils._show_versions import show_versions
 
@@ -145,6 +150,8 @@ else:
 
     # Set a global controller that can be used to locally limit the number of
     # threads without looping through all shared libraries every time.
+    # This instantitation should not happen earlier because it needs all BLAS and
+    # OpenMP libs to be loaded first.
     _sklearn_threadpool_controller = ThreadpoolController()
 
 

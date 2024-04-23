@@ -152,8 +152,8 @@ build_metadata_list = [
             # channel.
             "scipy": "<1.12",
         },
-        # TODO: put cython back to conda dependencies when required version is
-        # available on the main channel
+        # TODO: put cython and threadpoolctl back to conda dependencies when required
+        # version is available on the main channel
         "pip_dependencies": ["cython", "threadpoolctl"],
     },
     {
@@ -176,8 +176,8 @@ build_metadata_list = [
             "matplotlib": "min",
             "cython": "min",
         },
-        # TODO: put cython back to conda dependencies when required version is
-        # available on the main channel
+        # TODO: put cython and threadpoolctl back to conda dependencies when required
+        # version is available on the main channel
         "pip_dependencies": ["cython", "threadpoolctl"],
     },
     {
