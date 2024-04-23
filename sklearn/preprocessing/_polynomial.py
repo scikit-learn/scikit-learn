@@ -764,8 +764,7 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
             if sample_weight is None:
                 knots = np.nanpercentile(X, percentiles, axis=0)
             else:
-                # if we use np.nanpercentile above, then nan values also should
-                # be excluded from _weighted_percentile
+                # TODO: exclude possible nan values from _weighted_percentile:
                 knots = np.array(
                     [
                         _weighted_percentile(X, sample_weight, percentile)
@@ -791,14 +790,6 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
             )
 
         return knots
-
-    def _fit_indicator(self, X):
-        """Fit a MissingIndicator."""
-        # import here because of CircularImportError
-        from sklearn.impute._base import MissingIndicator
-
-        indicator = MissingIndicator(missing_values=np.nan, error_on_new=False)
-        return indicator._fit(X, precomputed=True)
 
     def get_feature_names_out(self, input_features=None):
         """Get output feature names for transformation.
@@ -1004,7 +995,9 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
         degree = self.degree
 
         # get indicator for nan values
-        nan_indicator = self._fit_indicator(_get_mask(X, np.nan))
+        nan_indicator = _get_mask(X, np.nan)
+        if sparse.issparse(nan_indicator):
+            nan_indicator.eliminate_zeros()
 
         # TODO: Remove this condition, once scipy 1.10 is the minimum version.
         #       Only scipy => 1.10 supports design_matrix(.., extrapolate=..).
@@ -1178,7 +1171,8 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
                 # replace any indicated values with 0 as a workaround to
                 # BSpline.design_matrix() raising when X is sparse and np.nan values are
                 # present
-                XBS_sparse[nan_indicator] = 0
+                extended_nan_indicator = np.repeat(nan_indicator, n_splines / 2, axis=1)
+                XBS_sparse[extended_nan_indicator] = 0
                 output_list.append(XBS_sparse)
 
         if use_sparse:
