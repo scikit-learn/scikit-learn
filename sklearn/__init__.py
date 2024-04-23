@@ -74,7 +74,10 @@ if __SKLEARN_SETUP__:
     # process, as it may not be compiled yet
 else:
     # Import numpy, scipy to make sure that the BLAS libs are loaded before
-    # creating the ThreadpoolController. (OpenMP is loaded by importing show_versions)
+    # creating the ThreadpoolController. They would be imported just after
+    # when importing utils anyway. This makes it explicit and robust to changes
+    # in utils.
+    # (OpenMP is loaded by importing show_versions right after this block)
     import numpy  # noqa
     import scipy.linalg  # noqa
     from threadpoolctl import ThreadpoolController
@@ -152,7 +155,7 @@ else:
     # threads without looping through all shared libraries every time.
     # This instantitation should not happen earlier because it needs all BLAS and
     # OpenMP libs to be loaded first.
-    _sklearn_threadpool_controller = ThreadpoolController()
+    _threadpool_controller = ThreadpoolController()
 
 
 def setup_module(module):

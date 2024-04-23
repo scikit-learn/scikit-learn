@@ -391,7 +391,7 @@ def _in_unstable_openblas_configuration():
     import numpy  # noqa
     import scipy  # noqa
 
-    modules_info = sklearn._sklearn_threadpool_controller.info()
+    modules_info = sklearn._threadpool_controller.info()
 
     open_blas_used = any(info["internal_api"] == "openblas" for info in modules_info)
     if not open_blas_used:
