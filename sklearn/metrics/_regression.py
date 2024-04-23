@@ -1300,7 +1300,7 @@ def _mean_tweedie_deviance(y_true, y_pred, sample_weight, power):
             - y_true * xp.pow(y_pred, 1 - p) / (1 - p)
             + xp.pow(y_pred, 2 - p) / (2 - p)
         )
-    return _array_api._average(dev, weights=sample_weight)
+    return float(_array_api._average(dev, weights=sample_weight))
 
 
 @validate_params(
