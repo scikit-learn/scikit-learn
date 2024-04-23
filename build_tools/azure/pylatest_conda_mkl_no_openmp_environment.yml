@@ -9,7 +9,6 @@ dependencies:
   - blas[build=mkl]
   - scipy<1.12
   - joblib
-  - threadpoolctl
   - matplotlib
   - pandas
   - pyamg
@@ -25,3 +24,4 @@ dependencies:
   - pip
   - pip:
     - cython
+    - threadpoolctl
