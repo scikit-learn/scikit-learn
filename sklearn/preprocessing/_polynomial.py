@@ -1039,14 +1039,15 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
                         spl.t[n] - spl.t[spl.k]
                     )
                 else:
-                    x = X[:, i].copy()  # copy to avoid inplace operation
+                    x = X[:, i]
 
                 if use_sparse:
                     # as a workaround to BSpline.design_matrix() raising when X is
                     # sparse and np.nan values are present, we temporarily substitute
                     # the nan values by some value from within the original feature
                     # space:
-                    x[nan_indicator[:, i]] = np.nanmean(x)
+                    x = x.copy()
+                    x[nan_indicator[:, i]] = np.nanmin(x)
                     XBS_sparse = BSpline.design_matrix(
                         x, spl.t, spl.k, **kwargs_extrapolate
                     )
@@ -1171,8 +1172,8 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
                 # replace any indicated values with 0 as a workaround to
                 # BSpline.design_matrix() raising when X is sparse and np.nan values are
                 # present
-                extended_nan_indicator = np.repeat(nan_indicator, n_splines / 2, axis=1)
-                XBS_sparse[extended_nan_indicator] = 0
+                feature_nan_mask = np.repeat(nan_indicator[:, [i]], n_splines, axis=1)
+                XBS_sparse[feature_nan_mask] = 0
                 output_list.append(XBS_sparse)
 
         if use_sparse:
