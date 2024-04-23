@@ -19,7 +19,7 @@ from scipy import sparse
 from .base import TransformerMixin, _fit_context, clone
 from .exceptions import NotFittedError
 from .preprocessing import FunctionTransformer
-from .utils import Bunch
+from .utils import Bunch, _safe_indexing
 from .utils._estimator_html_repr import _VisualBlock
 from .utils._metadata_requests import METHODS
 from .utils._param_validation import HasMethods, Hidden
@@ -178,7 +178,7 @@ class Pipeline(_BaseComposition):
 
         Parameters
         ----------
-        transform : {"default", "pandas"}, default=None
+        transform : {"default", "pandas", "polars"}, default=None
             Configure output of `transform` and `fit_transform`.
 
             - `"default"`: Default output format of a transformer
@@ -1258,7 +1258,7 @@ def make_pipeline(*steps, memory=None, verbose=False):
     return Pipeline(_name_estimators(steps), memory=memory, verbose=verbose)
 
 
-def _transform_one(transformer, X, y, weight, params):
+def _transform_one(transformer, X, y, weight, columns=None, params=None):
     """Call transform and apply weight to output.
 
     Parameters
@@ -1275,11 +1275,17 @@ def _transform_one(transformer, X, y, weight, params):
     weight : float
         Weight to be applied to the output of the transformation.
 
+    columns : str, array-like of str, int, array-like of int, array-like of bool, slice
+        Columns to select before transforming.
+
     params : dict
         Parameters to be passed to the transformer's ``transform`` method.
 
         This should be of the form ``process_routing()["step_name"]``.
     """
+    if columns is not None:
+        X = _safe_indexing(X, columns, axis=1)
+
     res = transformer.transform(X, **params.transform)
     # if we have a weight for this transformer, multiply output
     if weight is None:
@@ -1288,7 +1294,14 @@ def _transform_one(transformer, X, y, weight, params):
 
 
 def _fit_transform_one(
-    transformer, X, y, weight, message_clsname="", message=None, params=None
+    transformer,
+    X,
+    y,
+    weight,
+    columns=None,
+    message_clsname="",
+    message=None,
+    params=None,
 ):
     """
     Fits ``transformer`` to ``X`` and ``y``. The transformed result is returned
@@ -1297,6 +1310,9 @@ def _fit_transform_one(
 
     ``params`` needs to be of the form ``process_routing()["step_name"]``.
     """
+    if columns is not None:
+        X = _safe_indexing(X, columns, axis=1)
+
     params = params or {}
     with _print_elapsed_time(message_clsname, message):
         if hasattr(transformer, "fit_transform"):
@@ -1447,11 +1463,12 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
 
         Parameters
         ----------
-        transform : {"default", "pandas"}, default=None
+        transform : {"default", "pandas", "polars"}, default=None
             Configure output of `transform` and `fit_transform`.
 
             - `"default"`: Default output format of a transformer
             - `"pandas"`: DataFrame output
+            - `"polars"`: Polars output
             - `None`: Transform configuration is unchanged
 
         Returns
@@ -1792,7 +1809,7 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
                 routed_params[name] = Bunch(transform={})
 
         Xs = Parallel(n_jobs=self.n_jobs)(
-            delayed(_transform_one)(trans, X, None, weight, routed_params[name])
+            delayed(_transform_one)(trans, X, None, weight, params=routed_params[name])
             for name, trans, weight in self._iter()
         )
         if not Xs:

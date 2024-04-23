@@ -18,7 +18,7 @@ from scipy import sparse
 from ..base import TransformerMixin, _fit_context, clone
 from ..pipeline import _fit_transform_one, _name_estimators, _transform_one
 from ..preprocessing import FunctionTransformer
-from ..utils import Bunch, _safe_indexing
+from ..utils import Bunch
 from ..utils._estimator_html_repr import _VisualBlock
 from ..utils._indexing import _get_column_indices
 from ..utils._metadata_requests import METHODS
@@ -314,7 +314,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
 
         Parameters
         ----------
-        transform : {"default", "pandas"}, default=None
+        transform : {"default", "pandas", "polars"}, default=None
             Configure output of `transform` and `fit_transform`.
 
             - `"default"`: Default output format of a transformer
@@ -389,7 +389,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
 
     def _iter(self, fitted, column_as_labels, skip_drop, skip_empty_columns):
         """
-        Generate (name, trans, column, weight) tuples.
+        Generate (name, trans, columns, weight) tuples.
 
 
         Parameters
@@ -794,7 +794,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         )
         try:
             jobs = []
-            for idx, (name, trans, column, weight) in enumerate(transformers, start=1):
+            for idx, (name, trans, columns, weight) in enumerate(transformers, start=1):
                 if func is _fit_transform_one:
                     if trans == "passthrough":
                         output_config = _get_output_config("transform", self)
@@ -813,9 +813,10 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
                 jobs.append(
                     delayed(func)(
                         transformer=clone(trans) if not fitted else trans,
-                        X=_safe_indexing(X, column, axis=1),
+                        X=X,
                         y=y,
                         weight=weight,
+                        columns=columns,
                         **extra_args,
                         params=routed_params[name],
                     )

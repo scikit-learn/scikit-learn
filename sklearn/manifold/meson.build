@@ -1,6 +1,6 @@
 py.extension_module(
   '_utils',
-  '_utils.pyx',
+  ['_utils.pyx', utils_cython_tree],
   cython_args: cython_args,
   subdir: 'sklearn/manifold',
   install: true
