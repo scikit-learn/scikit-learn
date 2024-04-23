@@ -93,7 +93,6 @@ else:
         __check_build,  # noqa: F401
         _distributor_init,  # noqa: F401
     )
-
     from .base import clone
     from .utils._show_versions import show_versions
 
