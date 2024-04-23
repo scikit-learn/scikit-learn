@@ -12,8 +12,6 @@ from numbers import Real
 import numpy as np
 from scipy import sparse as sp
 
-from sklearn.metrics.pairwise import _VALID_METRICS
-
 from ..base import BaseEstimator, ClassifierMixin, _fit_context
 from ..metrics.pairwise import pairwise_distances_argmin
 from ..preprocessing import LabelEncoder
