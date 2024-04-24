@@ -902,13 +902,14 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
           and 'saga' are faster for large ones;
         - For multiclass problems, only 'newton-cg', 'sag', 'saga' and
           'lbfgs' handle multinomial loss;
-        - 'liblinear' is limited to one-versus-rest schemes.
+        - 'liblinear' and 'newton-cholesky' can only handle binary classification
+          by default. To apply a one-versus-rest scheme for the multiclass setting
+          one can wrapt it with the `OneVsRestClassifier`.
         - 'newton-cholesky' is a good choice for `n_samples` >> `n_features`,
           especially with one-hot encoded categorical features with rare
-          categories. Note that it is limited to binary classification and the
-          one-versus-rest reduction for multiclass classification. Be aware that
-          the memory usage of this solver has a quadratic dependency on
-          `n_features` because it explicitly computes the Hessian matrix.
+          categories. Be aware that the memory usage of this solver has a quadratic
+          dependency on `n_features` because it explicitly computes the Hessian
+          matrix.
 
         .. warning::
            The choice of the algorithm depends on the penalty chosen and on
@@ -1224,7 +1225,7 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         self.classes_ = np.unique(y)
 
         multi_class = self.multi_class
-        if self.multi_class == "multinomial":
+        if self.multi_class in ("multinomial", "auto"):
             warnings.warn(
                 (
                     "'multi_class' was deprecated in version 1.5 and will be removed in"
@@ -1232,7 +1233,7 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
                 ),
                 FutureWarning,
             )
-        elif self.multi_class != "deprecated":
+        elif self.multi_class == "ovr":
             warnings.warn(
                 (
                     "'multi_class' was deprecated in version 1.5 and will be removed in"
@@ -1512,19 +1513,20 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         Algorithm to use in the optimization problem. Default is 'lbfgs'.
         To choose a solver, you might want to consider the following aspects:
 
-            - For small datasets, 'liblinear' is a good choice, whereas 'sag'
-              and 'saga' are faster for large ones;
-            - For multiclass problems, only 'newton-cg', 'sag', 'saga' and
-              'lbfgs' handle multinomial loss;
-            - 'liblinear' might be slower in :class:`LogisticRegressionCV`
-              because it does not handle warm-starting. 'liblinear' is
-              limited to one-versus-rest schemes.
-            - 'newton-cholesky' is a good choice for `n_samples` >> `n_features`,
-              especially with one-hot encoded categorical features with rare
-              categories. Note that it is limited to binary classification and the
-              one-versus-rest reduction for multiclass classification. Be aware that
-              the memory usage of this solver has a quadratic dependency on
-              `n_features` because it explicitly computes the Hessian matrix.
+        - For small datasets, 'liblinear' is a good choice, whereas 'sag'
+          and 'saga' are faster for large ones;
+        - For multiclass problems, only 'newton-cg', 'sag', 'saga' and
+          'lbfgs' handle multinomial loss;
+        - 'liblinear' might be slower in :class:`LogisticRegressionCV`
+          because it does not handle warm-starting.
+        - 'liblinear' and 'newton-cholesky' can only handle binary classification
+          by default. To apply a one-versus-rest scheme for the multiclass setting
+          one can wrapt it with the `OneVsRestClassifier`.
+        - 'newton-cholesky' is a good choice for `n_samples` >> `n_features`,
+          especially with one-hot encoded categorical features with rare
+          categories. Be aware that the memory usage of this solver has a quadratic
+          dependency on `n_features` because it explicitly computes the Hessian
+          matrix.
 
         .. warning::
            The choice of the algorithm depends on the penalty chosen and on
@@ -1868,7 +1870,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         encoded_labels = label_encoder.transform(label_encoder.classes_)
 
         multi_class = self.multi_class
-        if self.multi_class == "multinomial":
+        if self.multi_class in ("multinomial", "auto"):
             warnings.warn(
                 (
                     "'multi_class' was deprecated in version 1.5 and will be removed in"
@@ -1876,7 +1878,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
                 ),
                 FutureWarning,
             )
-        elif self.multi_class != "deprecated":
+        elif self.multi_class == "ovr":
             warnings.warn(
                 (
                     "'multi_class' was deprecated in version 1.5 and will be removed in"
