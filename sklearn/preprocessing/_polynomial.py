@@ -1000,7 +1000,7 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
             nan_indicator.eliminate_zeros()
 
         # TODO: Remove this condition, once scipy 1.10 is the minimum version.
-        #       Only scipy => 1.10 supports design_matrix(.., extrapolate=..).
+        #       Only scipy >= 1.10 supports design_matrix(.., extrapolate=..).
         #       The default (implicit in scipy < 1.10) is extrapolate=False.
         scipy_1_10 = sp_version >= parse_version("1.10.0")
         # Note: self.bsplines_[0].extrapolate is True for extrapolation in
@@ -1200,13 +1200,14 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
                     " transformer to produce fewer than 2^31 output features"
                 )
             XBS = sparse.hstack(output_list, format="csr")
-        elif self.sparse_output:
-            # TODO: Remove once scipy 1.10 is the minimum version. See comments above.
-            XBS = sparse.csr_matrix(XBS)
         else:
             # replace any indicated values with 0
             extended_nan_indicator = np.repeat(nan_indicator, n_splines, axis=1)
             XBS[extended_nan_indicator] = 0
+            if self.sparse_output:
+                # TODO: Remove once scipy 1.10 is the minimum version.
+                # See comments above.
+                XBS = sparse.csr_matrix(XBS)
 
         if self.include_bias:
             return XBS
