@@ -622,7 +622,7 @@ def _ridge_regression(
 
     has_sw = sample_weight is not None
 
-    solver = _solver_auto_set(solver, positive, return_intercept, X_is_sparse, xp)
+    solver = resolve_solver(solver, positive, return_intercept, X_is_sparse, xp)
 
     if is_numpy_namespace and not X_is_sparse:
         X = np.asarray(X)
@@ -827,13 +827,13 @@ def _ridge_regression(
     return (*res, solver) if return_solver else res
 
 
-def _solver_auto_set(solver, positive, return_intercept, is_sparse, xp):
+def resolve_solver(solver, positive, return_intercept, is_sparse, xp):
     if solver != "auto":
         return solver
 
     is_numpy_namespace = _is_numpy_namespace(xp)
 
-    auto_solver_np = _solver_auto_set_np(positive, return_intercept, is_sparse)
+    auto_solver_np = resolve_solver_for_numpy(positive, return_intercept, is_sparse)
     if is_numpy_namespace:
         return auto_solver_np
 
@@ -860,7 +860,7 @@ def _solver_auto_set(solver, positive, return_intercept, is_sparse, xp):
     return solver
 
 
-def _solver_auto_set_np(positive, return_intercept, is_sparse):
+def resolve_solver_for_numpy(positive, return_intercept, is_sparse):
     if positive:
         return "lbfgs"
 
