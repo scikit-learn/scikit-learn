@@ -5,9 +5,9 @@ from functools import partial
 
 import numpy as np
 import pytest
-import threadpoolctl
 from scipy.spatial.distance import cdist
 
+from sklearn import _threadpool_controller
 from sklearn.metrics import euclidean_distances, pairwise_distances
 from sklearn.metrics._pairwise_distances_reduction import (
     ArgKmin,
@@ -1200,7 +1200,7 @@ def test_n_threads_agnosticism(
         **compute_parameters,
     )
 
-    with threadpoolctl.threadpool_limits(limits=1, user_api="openmp"):
+    with _threadpool_controller.limit(limits=1, user_api="openmp"):
         dist, indices = Dispatcher.compute(
             X,
             Y,

@@ -22,6 +22,24 @@ Version 1.5.0
 
 **In Development**
 
+Security
+--------
+
+- |Fix| :class:`feature_extraction.text.CountVectorizer` and
+  :class:`feature_extraction.text.TfidfVectorizer` no longer store discarded
+  tokens from the training set in their `stop_words_` attribute. This attribute
+  would hold too frequent (above `max_df`) but also too rare tokens (below
+  `min_df`). This fixes a potential security issue (data leak) if the discarded
+  rare tokens hold sensitive information from the training set without the
+  model developer's knowledge.
+
+  Note: users of those classes are encouraged to either retrain their pipelines
+  with the new scikit-learn version or to manually clear the `stop_words_`
+  attribute from previously trained instances of those transformers. This
+  attribute was designed only for model inspection purposes and has no impact
+  on the behavior of the transformers.
+  :pr:`28823` by :user:`Olivier Grisel <ogrisel>`.
+
 Changed models
 --------------
 
@@ -124,6 +142,10 @@ more details.
   methods, which can happen if one tries to decorate them.
   :pr:`28651` by `Adrin Jalali`_.
 
+- |FIX| Prevent a `RecursionError` when estimators with the default `scoring`
+  param (`None`) route metadata. :pr:`28712` by :user:`Stefanie Senger
+  <StefanieSenger>`.
+
 Changelog
 ---------
 
@@ -166,6 +188,10 @@ Changelog
   if only `inverse_func` is provided without `func` (that would default to identity)
   being explicitly set as well.
   :pr:`28483` by :user:`Stefanie Senger <StefanieSenger>`.
+
+- |Fix| Fixed an bug in :class:`compose.ColumnTransformer` with `n_jobs > 1`, where the
+  intermediate selected columns were passed to the transformers as read-only arrays.
+  :pr:`28822` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
 :mod:`sklearn.cross_decomposition`
 ..................................
@@ -362,7 +388,7 @@ Changelog
   :pr:`28092` by :user:`Adam Li <adam2392>`.
 
 - |API| For classifiers and classification metrics, labels encoded as bytes
-  is deprecated and will raise an error in v1.6.
+  is deprecated and will raise an error in v1.7.
   :pr:`18555` by :user:`Kaushik Amar Das <cozek>`.
 
 :mod:`sklearn.mixture`
@@ -451,7 +477,7 @@ Changelog
 
 - |API| Raise informative warning message in :func:`type_of_target` when
   represented as bytes. For classifiers and classification metrics, labels encoded
-  as bytes is deprecated and will raise an error in v1.6.
+  as bytes is deprecated and will raise an error in v1.7.
   :pr:`18555` by :user:`Kaushik Amar Das <cozek>`.
 
 - |Fix| :func:`~utils._safe_indexing` now works correctly for polars DataFrame when
