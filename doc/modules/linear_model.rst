@@ -184,10 +184,6 @@ Ridge Complexity
 This method has the same order of complexity as
 :ref:`ordinary_least_squares`.
 
-.. topic:: Examples:
-
-  * :ref:`sphx_glr_auto_examples_linear_model_plot_bayesian_ridge_curvefit.py`
-
 .. FIXME:
 .. Not completely true: OLS is solved by an SVD, while Ridge is solved by
 .. the method of normal equations (Cholesky), there is a big flop difference
