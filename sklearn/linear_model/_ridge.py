@@ -788,7 +788,6 @@ def _ridge_regression(
                 coef[i] = coef_
             n_iter[i] = n_iter_
 
-        intercept = xp.asarray(intercept)
         if intercept.shape[0] == 1:
             intercept = intercept[0]
 
