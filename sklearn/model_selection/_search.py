@@ -663,8 +663,8 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             Result of the `inverse_transform` function for `Xt` based on the
             estimator with the best found parameters.
         """
-        check_is_fitted(self)
         X = _deprecate_Xt_in_inverse_transform(X, Xt)
+        check_is_fitted(self)
         return self.best_estimator_.inverse_transform(X)
 
     @property

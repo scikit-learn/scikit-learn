@@ -63,7 +63,7 @@ class AgglomerationTransform(TransformerMixin):
             nX = np.array(nX).T
         return nX
 
-    def inverse_transform(self, X=None, Xt=None):
+    def inverse_transform(self, X=None, *, Xt=None):
         """
         Inverse the transformation and return a vector of size `n_features`.
 
@@ -84,9 +84,9 @@ class AgglomerationTransform(TransformerMixin):
             A vector of size `n_samples` with the values of `Xred` assigned to
             each of the cluster of samples.
         """
-        check_is_fitted(self)
-
         X = _deprecate_Xt_in_inverse_transform(X, Xt)
+
+        check_is_fitted(self)
 
         unil, inverse = np.unique(self.labels_, return_inverse=True)
         return X[..., inverse]

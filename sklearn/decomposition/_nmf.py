@@ -1311,7 +1311,7 @@ class _BaseNMF(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator,
         self.fit_transform(X, **params)
         return self
 
-    def inverse_transform(self, X=None, Xt=None):
+    def inverse_transform(self, X=None, *, Xt=None):
         """Transform data back to its original space.
 
         .. versionadded:: 0.18

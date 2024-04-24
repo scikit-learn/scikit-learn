@@ -70,14 +70,12 @@ def test_inverse_transform_Xt_deprecation():
     with pytest.raises(TypeError, match="Missing required positional argument"):
         est.inverse_transform()
 
-    with pytest.raises(ValueError, match="Cannot use both `X` and `Xt`. Use `X` only."):
+    with pytest.raises(ValueError, match="Cannot use both X and Xt. Use X only."):
         est.inverse_transform(X=X, Xt=X)
 
     with warnings.catch_warnings(record=True):
         warnings.simplefilter("error")
         est.inverse_transform(X)
 
-    with pytest.warns(
-        FutureWarning, match="Passing `Xt` is deprecated and will be removed in 1.7"
-    ):
+    with pytest.warns(FutureWarning, match="Xt was renamed X in version 1.5"):
         est.inverse_transform(Xt=X)

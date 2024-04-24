@@ -11,7 +11,7 @@ import numpy as np
 
 from ..base import BaseEstimator, TransformerMixin, _fit_context
 from ..utils import resample
-from ..utils._param_validation import Hidden, Interval, Options, StrOptions
+from ..utils._param_validation import Interval, Options, StrOptions
 from ..utils.deprecation import _deprecate_Xt_in_inverse_transform
 from ..utils.stats import _weighted_percentile
 from ..utils.validation import (
@@ -390,7 +390,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
             self._encoder.dtype = dtype_init
         return Xt_enc
 
-    def inverse_transform(self, X=None, Xt=None):
+    def inverse_transform(self, X=None, *, Xt=None):
         """
         Transform discretized data back to original feature space.
 
@@ -413,9 +413,9 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
         Xinv : ndarray, dtype={np.float32, np.float64}
             Data in the original feature space.
         """
-        check_is_fitted(self)
-
         X = _deprecate_Xt_in_inverse_transform(X, Xt)
+
+        check_is_fitted(self)
 
         if "onehot" in self.encode:
             X = self._encoder.inverse_transform(X)

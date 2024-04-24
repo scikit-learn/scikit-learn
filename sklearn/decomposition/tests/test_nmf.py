@@ -934,10 +934,11 @@ def test_minibatch_nmf_verbose():
 
 
 # TODO(1.7): remove this test
-def test_NMF_inverse_transform_Xt_deprecation():
-    rng = np.random.mtrand.RandomState(42)
+@pytest.mark.parametrize("Estimator", [NMF, MiniBatchNMF])
+def test_NMF_inverse_transform_Xt_deprecation(Estimator):
+    rng = np.random.RandomState(42)
     A = np.abs(rng.randn(6, 5))
-    est = NMF(
+    est = Estimator(
         n_components=3,
         init="random",
         random_state=0,
@@ -948,16 +949,14 @@ def test_NMF_inverse_transform_Xt_deprecation():
     with pytest.raises(TypeError, match="Missing required positional argument"):
         est.inverse_transform()
 
-    with pytest.raises(ValueError, match="Please provide only"):
+    with pytest.raises(ValueError, match="Cannot use both X and Xt. Use X only"):
         est.inverse_transform(X=X, Xt=X)
 
     with warnings.catch_warnings(record=True):
         warnings.simplefilter("error")
         est.inverse_transform(X)
 
-    with pytest.warns(
-        FutureWarning, match="Passing `Xt` is deprecated and will be removed"
-    ):
+    with pytest.warns(FutureWarning, match="Xt was renamed X in version 1.5"):
         est.inverse_transform(Xt=X)
 
 
