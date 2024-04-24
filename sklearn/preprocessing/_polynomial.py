@@ -859,8 +859,10 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
         if self.handle_missing == "error":
             if np.isnan(X).any():
                 raise ValueError(
-                    "'X' contains np.nan values, which is conflicting with"
-                    " handle_missing='error'."
+                    "SplineTransformer object has `handle_missing='error'` set by "
+                    "default and `X` contains missing values (np.nan). Set "
+                    "handle_missing='zeros' to encode missing values as splines with "
+                    "value `0` or ensure no missing values in `X`."
                 )
 
         if isinstance(self.knots, str):

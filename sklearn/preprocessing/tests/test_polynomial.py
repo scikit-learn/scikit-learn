@@ -506,9 +506,7 @@ def test_spline_transformer_handles_missing_values(knots, extrapolation, sparse_
     X = np.array([[1, 1], [2, 2], [3, 3], [4, 4]])
 
     # check correct error message for handle_missing="error"
-    msg = (
-        "'X' contains np.nan values, which is conflicting with handle_missing='error'."
-    )
+    msg = "SplineTransformer object has `handle_missing='error'` set by default and `X`"
     with raises(ValueError, match=msg):
         spline = SplineTransformer(
             degree=2,
