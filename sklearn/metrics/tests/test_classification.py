@@ -2676,9 +2676,9 @@ def test_log_loss():
 
     # ensure labels work when len(np.unique(y_true)) != y_pred.shape[1]
     y_true = [1, 2, 2]
-    y_score2 = [[0.1, 0.6, 0.3], [0.2, 0.5, 0.3], [0.4, 0.5, 0.1]]
+    y_score2 = [[0.7, 0.1, 0.2], [0.2, 0.7, 0.1], [0.1, 0.7, 0.2]]
     loss = log_loss(y_true, y_score2, labels=[1, 2, 3])
-    assert_allclose(loss, 1.2296264)
+    assert_allclose(loss, -np.log(0.7))
 
 
 @pytest.mark.parametrize("dtype", [np.float64, np.float32, np.float16])
@@ -2695,13 +2695,28 @@ def test_log_loss_eps(dtype):
     assert np.isfinite(loss)
 
 
-def test_log_loss_not_probabilities_warning():
+@pytest.mark.parametrize("dtype", [np.float64, np.float32, np.float16])
+def test_log_loss_not_probabilities_warning(dtype):
     """Check that log_loss raises a warning when y_pred values don't sum to 1."""
     y_true = np.array([0, 1, 1, 0])
-    y_pred = np.array([[0.2, 0.7], [0.6, 0.3], [0.4, 0.7], [0.8, 0.3]])
+    y_pred = np.array([[0.2, 0.7], [0.6, 0.3], [0.4, 0.7], [0.8, 0.3]], dtype=dtype)
 
     with pytest.warns(UserWarning, match="The y_pred values do not sum to one."):
         log_loss(y_true, y_pred)
+
+
+@pytest.mark.parametrize(
+    "y_true, y_pred",
+    [
+        ([0, 1, 0], [0, 1, 0]),
+        ([0, 1, 0], [[1, 0], [0, 1], [1, 0]]),
+        ([0, 1, 2], [[1, 0, 0], [0, 1, 0], [0, 0, 1]]),
+    ],
+)
+def test_log_loss_perfect_predictions(y_true, y_pred):
+    """Check that log_loss returns 0 for perfect predictions."""
+    # Because of the clipping, the result is not exactly 0
+    assert log_loss(y_true, y_pred) == pytest.approx(0)
 
 
 def test_log_loss_pandas_input():
@@ -2719,7 +2734,7 @@ def test_log_loss_pandas_input():
         # y_pred dataframe, y_true series
         y_true, y_pred = TrueInputType(y_tr), PredInputType(y_pr)
         loss = log_loss(y_true, y_pred)
-        assert_almost_equal(loss, 0.7469410, decimal=6)
+        assert_allclose(loss, 0.7469410)
 
 
 def test_brier_score_loss():

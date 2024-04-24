@@ -2853,7 +2853,7 @@ def log_loss(y_true, y_pred, *, normalize=True, sample_weight=None, labels=None)
         :class:`~sklearn.preprocessing.LabelBinarizer`.
 
         `y_pred` values are clipped to `[eps, 1-eps]` where `eps` is the machine
-        precsion for y_pred's dtype.
+        precision for y_pred's dtype.
 
     normalize : bool, default=True
         If true, return the mean loss per sample.
