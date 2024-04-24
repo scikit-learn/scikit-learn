@@ -1306,14 +1306,11 @@ def test_array_api_error_and_warnings_for_solver_parameter(array_namespace):
 
     ridge = Ridge()
     expected_msg = (
-        f"Using Array API dispatch to namespace {xp.__name__} with "
-        "`solver='auto'`will result in using the solver 'svd'. "
-        "Results might be different than when Array API dispatch is "
-        "disabled, or when a numpy-like namespace is used, in which case "
-        "the preferred solver would be 'cholesky'. Set "
-        "`solver='svd'` to suppress this warning."
+        f"Using Array API dispatch to namespace {xp.__name__} with `solver='auto'` "
+        "will result in using the solver 'svd'. The results may differ from those "
+        "when using a Numpy array, because in that case the preferred solver would "
+        "be cholesky. Set `solver='svd'` to suppress this warning."
     )
-
     with pytest.warns(UserWarning, match=expected_msg):
         with config_context(array_api_dispatch=True):
             ridge.fit(X_iris_xp, y_iris_xp)

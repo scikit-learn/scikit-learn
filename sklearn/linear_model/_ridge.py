@@ -850,10 +850,9 @@ def resolve_solver(solver, positive, return_intercept, is_sparse, xp):
         warnings.warn(
             f"Using Array API dispatch to namespace {xp.__name__} with "
             f"`solver='auto'` will result in using the solver '{solver}'. "
-            "Results might be different than when Array API dispatch is "
-            "disabled, or when a numpy-like namespace is used, in which case "
-            f"the preferred solver would be '{auto_solver_np}'. Set "
-            f"`solver='{solver}'` to suppress this warning."
+            "The results may differ from those when using a Numpy array, "
+            f"because in that case the preferred solver would be {auto_solver_np}. "
+            f"Set `solver='{solver}'` to suppress this warning."
         )
 
     return solver
