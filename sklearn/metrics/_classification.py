@@ -2852,6 +2852,9 @@ def log_loss(y_true, y_pred, *, normalize=True, sample_weight=None, labels=None)
         ordered alphabetically, as done by
         :class:`~sklearn.preprocessing.LabelBinarizer`.
 
+        `y_pred` values are clipped to `[eps, 1-eps]` where `eps` is the machine
+        precsion for y_pred's dtype.
+
     normalize : bool, default=True
         If true, return the mean loss per sample.
         Otherwise, return the sum of the per-sample losses.
@@ -2927,13 +2930,17 @@ def log_loss(y_true, y_pred, *, normalize=True, sample_weight=None, labels=None)
     if y_pred.shape[1] == 1:
         y_pred = np.append(1 - y_pred, y_pred, axis=1)
 
+    eps = np.finfo(y_pred.dtype).eps
+
     # Make sure y_pred is normalized
     y_pred_sum = y_pred.sum(axis=1)
-    if not np.allclose(y_pred_sum, 1):
-        raise ValueError("The y_pred values do not sum to one.")
+    if not np.allclose(y_pred_sum, 1, rtol=np.sqrt(eps)):
+        warnings.warn(
+            "The y_pred values do not sum to one. Make sure to pass probabilities.",
+            UserWarning,
+        )
 
     # Clipping
-    eps = np.finfo(y_pred.dtype).eps
     y_pred = np.clip(y_pred, eps, 1 - eps)
 
     # Check if dimensions are consistent.

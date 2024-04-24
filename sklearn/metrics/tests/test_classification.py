@@ -2695,12 +2695,12 @@ def test_log_loss_eps(dtype):
     assert np.isfinite(loss)
 
 
-def test_log_loss_not_probabilities_error():
-    """Check that log_loss raises an error when y_pred values don't sum to 1."""
+def test_log_loss_not_probabilities_warning():
+    """Check that log_loss raises a warning when y_pred values don't sum to 1."""
     y_true = np.array([0, 1, 1, 0])
     y_pred = np.array([[0.2, 0.7], [0.6, 0.3], [0.4, 0.7], [0.8, 0.3]])
 
-    with pytest.raises(ValueError, match="The y_pred values do not sum to one."):
+    with pytest.warns(UserWarning, match="The y_pred values do not sum to one."):
         log_loss(y_true, y_pred)
 
 
