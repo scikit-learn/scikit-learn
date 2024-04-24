@@ -6,7 +6,7 @@
 #
 cython==3.0.10
     # via -r build_tools/azure/ubuntu_atlas_requirements.txt
-exceptiongroup==1.2.0
+exceptiongroup==1.2.1
     # via pytest
 execnet==2.1.1
     # via pytest-xdist
@@ -16,17 +16,18 @@ joblib==1.2.0
     # via -r build_tools/azure/ubuntu_atlas_requirements.txt
 meson==1.4.0
     # via meson-python
-meson-python==0.15.0
+meson-python==0.16.0
     # via -r build_tools/azure/ubuntu_atlas_requirements.txt
 ninja==1.11.1.1
     # via -r build_tools/azure/ubuntu_atlas_requirements.txt
 packaging==24.0
     # via
+    #   meson-python
     #   pyproject-metadata
     #   pytest
-pluggy==1.4.0
+pluggy==1.5.0
     # via pytest
-pyproject-metadata==0.7.1
+pyproject-metadata==0.8.0
     # via meson-python
 pytest==7.4.4
     # via
@@ -34,7 +35,7 @@ pytest==7.4.4
     #   pytest-xdist
 pytest-xdist==3.5.0
     # via -r build_tools/azure/ubuntu_atlas_requirements.txt
-threadpoolctl==2.0.0
+threadpoolctl==3.1.0
     # via -r build_tools/azure/ubuntu_atlas_requirements.txt
 tomli==2.0.1
     # via

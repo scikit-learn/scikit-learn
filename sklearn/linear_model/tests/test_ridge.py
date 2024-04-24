@@ -2085,3 +2085,20 @@ def test_ridge_sample_weight_consistency(
     assert_allclose(reg1.coef_, reg2.coef_)
     if fit_intercept:
         assert_allclose(reg1.intercept_, reg2.intercept_)
+
+
+# Metadata Routing Tests
+# ======================
+
+
+@pytest.mark.usefixtures("enable_slep006")
+@pytest.mark.parametrize("metaestimator", [RidgeCV, RidgeClassifierCV])
+def test_metadata_routing_with_default_scoring(metaestimator):
+    """Test that `RidgeCV` or `RidgeClassifierCV` with default `scoring`
+    argument (`None`), don't enter into `RecursionError` when metadata is routed.
+    """
+    metaestimator().get_metadata_routing()
+
+
+# End of Metadata Routing Tests
+# =============================
