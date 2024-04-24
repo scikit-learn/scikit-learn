@@ -542,11 +542,6 @@ Changelog
   fitted ``transformers_`` attribute.
   :pr:`27204` by `Adrin Jalali`_.
 
-- |API| :class:`~compose.ColumnTransformer` can now expose the "remainder"
-  columns in the fitted `transformers_` attribute as column names or boolean
-  masks, rather than column indices. :pr:`27657` by :user:`Jérôme Dockès
-  <jeromedockes>`.
-
 :mod:`sklearn.datasets`
 .......................
 

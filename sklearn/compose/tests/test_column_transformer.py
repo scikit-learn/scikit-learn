@@ -942,30 +942,27 @@ def test_column_transformer_remainder():
     assert ct.remainder == "drop"
 
 
-# TODO this should be updated when the default for force_int_remainder_cols
-# changes to False as then the warning will change: it will warn about the
-# deprecation of the parameter not a change in its default value.
+# TODO(1.7): check for deprecated force_int_remainder_cols
+# TODO(1.9): remove force_int but keep the test
+@pytest.mark.parametrize(
+    "cols1, cols2",
+    [
+        ([0], [False, True, False]),  # mix types
+        ([0], [1]),  # ints
+        (lambda x: [0], lambda x: [1]),  # callables
+    ],
+)
 @pytest.mark.parametrize("force_int", [False, True])
-def test_column_transformer_remainder_dtypes(force_int):
-    """Check that remainder columns dtype matches the inputs unless `force_int == True`.
-
-    By default the remainder columns in transformers_ are stored as indices. If
-    `force_int_remainder_cols == False`, they are stored as column names if all
-    inputs used column names, and as boolean masks if all inputs used boolean
-    masks. In a future version, this will become the default behavior.
-
-    If `force_int_remainder_cols == True` _and_ the user accesses the items
-    inside of the remainder columns list, a `FutureWarning` is shown to warn
-    about the future change.
+def test_column_transformer_remainder_dtypes_ints(force_int, cols1, cols2):
+    """Check that the remainder columns are always stored as indices when
+    other columns are not all specified as column names or masks, regardless of
+    `force_int_remainder_cols`.
     """
-    warning_pattern = "force_int_remainder_cols=False"
-
     X = np.ones((1, 3))
 
-    # if inputs mix formats always store remainder columns as indices
     ct = make_column_transformer(
-        (Trans(), [0]),
-        (Trans(), [False, True, False]),
+        (Trans(), cols1),
+        (Trans(), cols2),
         remainder="passthrough",
         force_int_remainder_cols=force_int,
     )
@@ -974,76 +971,53 @@ def test_column_transformer_remainder_dtypes(force_int):
         ct.fit_transform(X)
         assert ct.transformers_[-1][-1][0] == 2
 
-    # if inputs are indices store remainder columns as indices
-    ct = make_column_transformer(
-        (Trans(), [0]),
-        (Trans(), [1]),
-        remainder="passthrough",
-        force_int_remainder_cols=force_int,
-    )
-    with warnings.catch_warnings():
-        warnings.simplefilter("error")
-        ct.fit_transform(X)
-        assert ct.transformers_[-1][-1][0] == 2
 
-    # if inputs are callables store remainder columns as indices
-    ct = make_column_transformer(
-        (Trans(), lambda x: [0]),
-        (Trans(), lambda x: [1]),
-        remainder="passthrough",
-        force_int_remainder_cols=force_int,
-    )
-    with warnings.catch_warnings():
-        warnings.simplefilter("error")
-        ct.fit_transform(X)
-        assert ct.transformers_[-1][-1][0] == 2
+# TODO(1.7): check for deprecated force_int_remainder_cols
+# TODO(1.9): remove force_int but keep the test
+@pytest.mark.parametrize(
+    "force_int, cols1, cols2, expected_cols",
+    [
+        (True, ["A"], ["B"], [2]),
+        (False, ["A"], ["B"], ["C"]),
+        (True, [True, False, False], [False, True, False], [2]),
+        (False, [True, False, False], [False, True, False], [False, False, True]),
+    ],
+)
+def test_column_transformer_remainder_dtypes(force_int, cols1, cols2, expected_cols):
+    """Check that the remainder columns format matches the format of the other
+    columns when they're all strings or masks, unless `force_int = True`.
+    """
+    X = np.ones((1, 3))
 
-    # if inputs are masks store remainder columns as masks, unless
-    # force_int_remainder_cols is True
-    ct = make_column_transformer(
-        (Trans(), [True, False, False]),
-        (Trans(), [False, True, False]),
-        remainder="passthrough",
-        force_int_remainder_cols=force_int,
-    )
-    with warnings.catch_warnings():
-        warnings.simplefilter("error")
-        ct.fit_transform(X)
-    if force_int:
-        # If we forced using ints and we access the remainder columns a warning
-        # is shown
-        with pytest.warns(FutureWarning, match=warning_pattern):
-            col = ct.transformers_[-1][-1][0]
-    else:
-        with warnings.catch_warnings():
-            warnings.simplefilter("error")
-            col = ct.transformers_[-1][-1][0]
-    assert col == 2 if force_int else [False, False, True]
-
-    pd = pytest.importorskip("pandas")
-    X = pd.DataFrame(X, columns=["A", "B", "C"])
+    if isinstance(cols1[0], str):
+        pd = pytest.importorskip("pandas")
+        X = pd.DataFrame(X, columns=["A", "B", "C"])
 
     # if inputs are column names store remainder columns as column names unless
     # force_int_remainder_cols is True
     ct = make_column_transformer(
-        (Trans(), ["A"]),
-        (Trans(), ["B"]),
+        (Trans(), cols1),
+        (Trans(), cols2),
         remainder="passthrough",
         force_int_remainder_cols=force_int,
     )
     with warnings.catch_warnings():
         warnings.simplefilter("error")
         ct.fit_transform(X)
+
     if force_int:
-        # If we forced using ints and we access the remainder columns a warning
-        # is shown
-        with pytest.warns(FutureWarning, match=warning_pattern):
-            col = ct.transformers_[-1][-1][0]
+        # If we forced using ints and we access the remainder columns a warning is shown
+        match = "The format of the columns of the 'remainder' transformer"
+        cols = ct.transformers_[-1][-1]
+        with pytest.warns(FutureWarning, match=match):
+            cols[0]
     else:
         with warnings.catch_warnings():
             warnings.simplefilter("error")
-            col = ct.transformers_[-1][-1][0]
-    assert col == 2 if force_int else ["C"]
+            cols = ct.transformers_[-1][-1]
+            cols[0]
+
+    assert cols == expected_cols
 
 
 def test_remainder_list_repr():
@@ -1055,58 +1029,16 @@ def test_remainder_list_repr():
     mock.text.assert_called_once_with("[0, 1]")
 
 
-# TODO this should be updated when the default for force_int_remainder_cols
-# changes to False as then the warning will change: it will warn about the
-# deprecation of the parameter not a change in its default value.
-def test_column_transformer_remainder_warnings():
-    """Redundant test to highlight the cases where a warning is shown.
-
-    Warnings are shown if:
-    - force_int_remainder_cols is True
-    - and the dtype would be different if force_int_remainder_cols were False
-    - and some items of the remainder columns list ie in transformers_[-1][-1]
-        are accessed.
-    """
-    X = np.ones((1, 3))
-    ct = make_column_transformer(
-        (Trans(), [0]),
-        remainder="passthrough",
-        force_int_remainder_cols=True,
-    )
-    with warnings.catch_warnings():
-        warnings.simplefilter("error")
-        ct.fit_transform(X)
-        # Inputs use ints so this would be int anyway, no warning.
-        list(ct.transformers_[-1][-1])
-
-    ct = make_column_transformer(
-        (Trans(), [True, False, False]),
-        remainder="passthrough",
-        force_int_remainder_cols=False,
-    )
-    with warnings.catch_warnings():
-        warnings.simplefilter("error")
-        ct.fit_transform(X)
-        # We don't force int so we get no warning.
-        list(ct.transformers_[-1][-1])
-
-    ct = make_column_transformer(
-        (Trans(), [True, False, False]),
-        remainder="passthrough",
-        force_int_remainder_cols=True,
-    )
-    with warnings.catch_warnings():
-        warnings.simplefilter("error")
-        ct.fit_transform(X)
-    with pytest.warns(FutureWarning, match="force_int_remainder_cols=False"):
-        # We force int and would get bool if we didn't, so we get a warning.
-        list(ct.transformers_[-1][-1])
-
-
 @pytest.mark.parametrize(
-    "key", [[0], np.array([0]), slice(0, 1), np.array([True, False])]
+    "key, expected_cols",
+    [
+        ([0], [1]),
+        (np.array([0]), [1]),
+        (slice(0, 1), [1]),
+        (np.array([True, False]), [False, True]),
+    ],
 )
-def test_column_transformer_remainder_numpy(key):
+def test_column_transformer_remainder_numpy(key, expected_cols):
     # test different ways that columns are specified with passthrough
     X_array = np.array([[0, 1, 2], [2, 4, 6]]).T
     X_res_both = X_array
@@ -1121,24 +1053,24 @@ def test_column_transformer_remainder_numpy(key):
     assert len(ct.transformers_) == 2
     assert ct.transformers_[-1][0] == "remainder"
     assert isinstance(ct.transformers_[-1][1], FunctionTransformer)
-    assert list(ct.transformers_[-1][2]) in [[1], [False, True]]
+    assert ct.transformers_[-1][2] == expected_cols
 
 
 @pytest.mark.parametrize(
-    "key",
+    "key, expected_cols",
     [
-        [0],
-        slice(0, 1),
-        np.array([True, False]),
-        ["first"],
-        "pd-index",
-        np.array(["first"]),
-        np.array(["first"], dtype=object),
-        slice(None, "first"),
-        slice("first", "first"),
+        ([0], [1]),
+        (slice(0, 1), [1]),
+        (np.array([True, False]), [False, True]),
+        (["first"], ["second"]),
+        ("pd-index", ["second"]),
+        (np.array(["first"]), ["second"]),
+        (np.array(["first"], dtype=object), ["second"]),
+        (slice(None, "first"), ["second"]),
+        (slice("first", "first"), ["second"]),
     ],
 )
-def test_column_transformer_remainder_pandas(key):
+def test_column_transformer_remainder_pandas(key, expected_cols):
     # test different ways that columns are specified with passthrough
     pd = pytest.importorskip("pandas")
     if isinstance(key, str) and key == "pd-index":
@@ -1158,13 +1090,19 @@ def test_column_transformer_remainder_pandas(key):
     assert len(ct.transformers_) == 2
     assert ct.transformers_[-1][0] == "remainder"
     assert isinstance(ct.transformers_[-1][1], FunctionTransformer)
-    assert list(ct.transformers_[-1][2]) in [[1], ["second"], [False, True]]
+    assert ct.transformers_[-1][2] == expected_cols
 
 
 @pytest.mark.parametrize(
-    "key", [[0], np.array([0]), slice(0, 1), np.array([True, False, False])]
+    "key, expected_cols",
+    [
+        ([0], [1, 2]),
+        (np.array([0]), [1, 2]),
+        (slice(0, 1), [1, 2]),
+        (np.array([True, False, False]), [False, True, True]),
+    ],
 )
-def test_column_transformer_remainder_transformer(key):
+def test_column_transformer_remainder_transformer(key, expected_cols):
     X_array = np.array([[0, 1, 2], [2, 4, 6], [8, 6, 4]]).T
     X_res_both = X_array.copy()
 
@@ -1182,7 +1120,7 @@ def test_column_transformer_remainder_transformer(key):
     assert len(ct.transformers_) == 2
     assert ct.transformers_[-1][0] == "remainder"
     assert isinstance(ct.transformers_[-1][1], DoubleTrans)
-    assert list(ct.transformers_[-1][2]) in [[1, 2], [False, True, True]]
+    assert ct.transformers_[-1][2] == expected_cols
 
 
 def test_column_transformer_no_remaining_remainder_transformer():

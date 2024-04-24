@@ -143,6 +143,8 @@ def _determine_key_type(key, accept_slice=True):
         if key_start_type is not None:
             return key_start_type
         return key_stop_type
+    # TODO(1.9) remove UserList when the force_int_remainder_cols param
+    # of ColumnTransformer is removed
     if isinstance(key, (list, tuple, UserList)):
         unique_key = set(key)
         key_type = {_determine_key_type(elt) for elt in unique_key}

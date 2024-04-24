@@ -154,16 +154,11 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
             in the `transformers_` fitted attribute, you do not need to set
             this parameter.
 
-        .. versionadded:: 1.4
+        .. versionadded:: 1.5
 
-        .. versionchanged:: 1.6
+        .. versionchanged:: 1.7
            The default value for `force_int_remainder_cols` will change from
-           `True` to `False` in version 1.6.
-
-        .. versionchanged:: 1.8
-           The parameter `force_int_remainder_cols` will be removed in version
-           1.8; and starting with version 1.8 the remainder columns will
-           never be forced to be `int`.
+           `True` to `False` in version 1.7.
 
     Attributes
     ----------
@@ -179,7 +174,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         ``len(transformers_)==len(transformers)+1``, otherwise
         ``len(transformers_)==len(transformers)``.
 
-        .. versionchanged:: 1.4
+        .. versionchanged:: 1.5
             If there are remaining columns and `force_int_remainder_cols` is
             True, the remaining columns are always represented by their
             positional indices in the input `X` (as in older versions). If
@@ -455,12 +450,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
             - weight : the weight of the transformer
         """
         if fitted:
-            # We want the warning about the future change of the remainder
-            # columns dtype to be shown only when a user accesses them
-            # directly, not when they are used by the ColumnTransformer itself.
-            # We disable warnings here; they are enabled when setting
-            # self.transformers_.
-            transformers = _with_dtype_warning_enabled_set_to(False, self.transformers_)
+            transformers = self.transformers_
         else:
             # interleave the validated column specifiers
             transformers = [
@@ -469,10 +459,15 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
             ]
             # add transformer tuple for remainder
             if self._remainder[2]:
-                transformers = chain(
-                    transformers,
-                    _with_dtype_warning_enabled_set_to(False, [self._remainder]),
-                )
+                transformers = chain(transformers, [self._remainder])
+
+        # We want the warning about the future change of the remainder
+        # columns dtype to be shown only when a user accesses them
+        # directly, not when they are used by the ColumnTransformer itself.
+        # We disable warnings here; they are enabled when setting
+        # self.transformers_.
+        transformers = _with_dtype_warning_enabled_set_to(False, transformers)
+
         get_weight = (self.transformer_weights or {}).get
 
         for name, trans, columns in transformers:
@@ -1428,16 +1423,11 @@ def make_column_transformer(
             in the :attr:`ColumnTransformer.transformers_` fitted attribute,
             you do not need to set this parameter.
 
-        .. versionadded:: 1.4
+        .. versionadded:: 1.5
 
-        .. versionchanged:: 1.6
+        .. versionchanged:: 1.7
            The default value for `force_int_remainder_cols` will change from
-           `True` to `False` in version 1.6.
-
-        .. versionchanged:: 1.8
-           The parameter `force_int_remainder_cols` will be removed in version
-           1.8; and starting with version 1.8 the remainder columns will
-           never be forced to be `int`.
+           `True` to `False` in version 1.7.
 
     Returns
     -------
@@ -1628,14 +1618,17 @@ class _RemainderColsList(UserList):
             # non-default future_dtype
             None: "a different type depending on the ColumnTransformer inputs",
         }.get(self.future_dtype, self.future_dtype)
+
+        # TODO(1.7) Update the warning to say that the old behavior will be
+        # removed in 1.9.
         warnings.warn(
             (
-                "The format of the columns of the 'remainder' transformer in"
-                " ColumnTransformer.transformers_ will change in a future version, to"
-                " match the format of the other transformers.\n  At the moment the"
-                " remainder columns are stored as indices (of type int).  With the same"
-                " ColumnTransformer configuration, in the future they will be stored as"
-                f" {future_dtype_description}.\n  To use the new behavior now and"
+                "\nThe format of the columns of the 'remainder' transformer in"
+                " ColumnTransformer.transformers_ will change in version 1.7 to"
+                " match the format of the other transformers.\nAt the moment the"
+                " remainder columns are stored as indices (of type int). With the same"
+                " ColumnTransformer configuration, in the future they will be stored"
+                f" as {future_dtype_description}.\nTo use the new behavior now and"
                 " suppress this warning, use"
                 " ColumnTransformer(force_int_remainder_cols=False).\n"
             ),
