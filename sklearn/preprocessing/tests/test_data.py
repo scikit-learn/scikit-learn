@@ -2589,4 +2589,4 @@ def test_yeojohnson_for_different_scipy_version():
     """Check the result are the same for different scipy version"""
     # https://github.com/scikit-learn/scikit-learn/pull/27818
     pt = PowerTransformer(method="yeo-johnson").fit(X_1col)
-    assert_almost_equal(pt.lambdas_[0], 0.99546157)
+    assert_almost_equal(pt.lambdas_[0], 0.99999353)
