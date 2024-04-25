@@ -573,7 +573,6 @@ class TunedThresholdClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimato
         """
         _raise_for_params(params, self, None)
 
-        self._validate_params()
         X, y = indexable(X, y)
 
         y_type = type_of_target(y, input_name="y")

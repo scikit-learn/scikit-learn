@@ -11,8 +11,8 @@ Classification is best divided into two parts:
 * the statistical problem of learning a model to predict, ideally, class probabilities;
 * the decision problem to take concrete action based on those probability predictions.
 
-Let's take a straightforward example related weather forecasting: the first point is
-related to answering "what is the chance of rain tomorrow?" while the second point is
+Let's take a straightforward example related to weather forecasting: the first point is
+related to answering "what is the chance that it will rain tomorrow?" while the second point is
 related to answering "should I take an umbrella tomorrow?".
 
 When it comes to the scikit-learn API, the first point is addressed providing scores
@@ -46,8 +46,8 @@ probability estimates and class labels::
 While these hard-coded rules might at first seem reasonable as default behavior, they
 are most certainly not ideal for most use cases. Let's illustrate with an example.
 
-Let's consider a scenario where a predictive model is being deployed to assist
-physicians in detecting tumors. In this setting, physicians will be most likely
+Consider a scenario where a predictive model is being deployed to assist
+physicians in detecting tumors. In this setting, physicians will most likely be
 interested in identifying all patients with cancer and not missing anyone with cancer so
 that they can provide them with the right treatment. In other words, physicians
 prioritize achieving a high recall rate. This emphasis on recall comes, of course, with
