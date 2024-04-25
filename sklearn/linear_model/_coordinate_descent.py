@@ -859,10 +859,8 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
     If so, then additionally check whether the dual gap is smaller than `tol` times
     :math:`||y||_2^2 / n_{\text{samples}}`.
 
-    For an example,
-    see :ref:`examples/linear_model/plot_elastic_net_precomputed_gram_matrix_with_we\
-    ighted_samples <sphx_glr_auto_examples_linear_model_plot_elastic_net_precomput\
-    ed_gram_matrix_with_weighted_samples>`.
+    For an example, see
+    :ref:`sphx_glr_auto_examples_linear_model_plot_elastic_net_precomputed_gram_matrix_with_weighted_samples.py`.
 
     Examples
     --------
