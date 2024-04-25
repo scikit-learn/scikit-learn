@@ -1644,7 +1644,13 @@ def test_nearest_neighbors_validate_params():
     + DISTANCE_METRIC_OBJS,
 )
 def test_neighbors_metrics(
-    global_dtype, global_random_seed, metric, n_samples=20, n_features=3, n_query_pts=2, n_neighbors=5
+    global_dtype,
+    global_random_seed,
+    metric,
+    n_samples=20,
+    n_features=3,
+    n_query_pts=2,
+    n_neighbors=5,
 ):
     rng = np.random.RandomState(global_random_seed)
 
@@ -1699,8 +1705,8 @@ def test_neighbors_metrics(
         brute_dst, brute_idx = results["brute"]
         ball_tree_dst, ball_tree_idx = results["ball_tree"]
 
-        # The returned distances are always in float64 regardless of the input dtype
-        # We need to adjust the tolerance w.r.t the input dtype
+        # The returned distances are always in float64 regardless of the input dtype
+        # We need to adjust the tolerance w.r.t the input dtype
         rtol = 1e-7 if global_dtype == np.float64 else 1e-4
 
         assert_allclose(brute_dst, ball_tree_dst, rtol=rtol)
