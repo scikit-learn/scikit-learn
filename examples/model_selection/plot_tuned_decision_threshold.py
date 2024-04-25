@@ -35,13 +35,13 @@ target.value_counts()
 # are not encoded as 0 and 1, we will store which label we consider to be the negative
 # class and which one we consider to be the positive class: "tested_negative" will be
 # considered the negative class and "tested_positive" the positive class.
-#
-# We can also observe that this binary problem is slightly imbalanced where we have
-# around twice more samples from the negative class than from the positive class. When
-# it comes to evaluation, we should consider this aspect to interpret the results.
 neg_label, pos_label = target.value_counts().index
 
 # %%
+# We can also observe that this binary problem is slightly imbalanced where we have
+# around twice more samples from the negative class than from the positive class. When
+# it comes to evaluation, we should consider this aspect to interpret the results.
+#
 # Our vanilla classifier
 # ----------------------
 #
@@ -59,6 +59,12 @@ model
 # accuracy to report the performance of our model. The balanced accuracy is a metric
 # that is less sensitive to class imbalance and will allow us to put the accuracy
 # score in perspective.
+#
+# Cross-validation allows us to study the variance of the decision threshold across
+# different splits of the data. However, the dataset is rather small and it would be
+# detrimental to use more than 5 folds to evaluate the dispersion. Therefore, we use
+# a :class:`~sklearn.model_selection.RepeatedStratifiedKFold` where we apply several
+# repetitions of 5-fold cross-validation.
 import pandas as pd
 
 from sklearn.model_selection import RepeatedStratifiedKFold, cross_validate
@@ -187,12 +193,12 @@ _ = ax.set_title(
 # could imagine that the decision of our predictive model will be reviewed by a medical
 # doctor. In this case, this doctor will only accept a ratio of false positive lower
 # than a given value. Therefore, we are interested in maximizing the true positive rate
-# while having a a false positive rate lower than this value.
+# while having a false positive rate lower than this value.
 #
 # The :class:`~sklearn.model_selection.TunedThresholdClassifier` allows to tune the
-# decision threshold with such specification. We should how to proceed using a single
-# cross-validation split to display the Receiver Operating Characteristic (ROC) curves
-# to get intuition on the problem.
+# decision threshold with such specification. We illustrate this strategy together with
+# a single train-test split split to display the Receiver Operating Characteristic (ROC)
+# curves to get better intuitions.
 #
 # First, we split the data into a training and testing set.
 
