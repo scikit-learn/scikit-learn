@@ -1149,7 +1149,7 @@ def _multiclass_clf_curve(y_true, y_score, labels=None, sample_weight=None):
         "y_score": ["array-like", Hidden(None)],
         "pos_label": [Real, str, "boolean", None],
         "average": [
-            StrOptions({"micro", "macro", "samples", "weighted", "binary"}),
+            StrOptions({"micro", "macro", "weighted"}),
             None,
         ],
         "labels": ["array-like", None],
