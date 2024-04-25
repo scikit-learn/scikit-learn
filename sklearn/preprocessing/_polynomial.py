@@ -1044,15 +1044,25 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
                     x = X[:, i]
 
                 if use_sparse:
-                    # as a workaround to BSpline.design_matrix() raising when X is
-                    # sparse and np.nan values are present, we temporarily substitute
-                    # the nan values by some value from within the original feature
-                    # space:
-                    x = x.copy()
-                    x[nan_indicator[:, i]] = np.nanmin(x)
-                    XBS_sparse = BSpline.design_matrix(
-                        x, spl.t, spl.k, **kwargs_extrapolate
-                    )
+                    x = x.copy()  # copy to avoid inplace operation
+                    # we leave the nan values out of bsplining and make them into 0s
+                    # right away, since BSpline.design_matrix() would raise on the nans
+                    # when X is sparse:
+                    design_matrix = [
+                        (
+                            BSpline.design_matrix(
+                                ele, spl.t, spl.k, **kwargs_extrapolate
+                            )
+                            if not np.isnan(ele)
+                            else [0] * n_splines
+                        )
+                        for ele in x
+                    ]
+                    design_matrix_csr = [
+                        sparse.csr_matrix(arr) for arr in design_matrix
+                    ]
+                    XBS_sparse = sparse.vstack(design_matrix_csr)
+
                     if self.extrapolation == "periodic":
                         # See the construction of coef in fit. We need to add the last
                         # degree spline basis function to the first degree ones and
@@ -1171,11 +1181,6 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
 
             if use_sparse:
                 XBS_sparse = XBS_sparse.tocsr()
-                # replace any indicated values with 0 as a workaround to
-                # BSpline.design_matrix() raising when X is sparse and np.nan values are
-                # present
-                feature_nan_mask = np.repeat(nan_indicator[:, [i]], n_splines, axis=1)
-                XBS_sparse[feature_nan_mask] = 0
                 output_list.append(XBS_sparse)
 
         if use_sparse:
