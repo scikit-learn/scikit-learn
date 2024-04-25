@@ -36,9 +36,9 @@ target.value_counts()
 # class and which one we consider to be the positive class: "tested_negative" will be
 # considered the negative class and "tested_positive" the positive class.
 #
-# We can also observe that this binary problem is slightly imbalanced where we have around
-# twice more samples from the negative class than from the positive class. When it
-# comes to evaluation, we should consider this aspect to interpret the results.
+# We can also observe that this binary problem is slightly imbalanced where we have
+# around twice more samples from the negative class than from the positive class. When
+# it comes to evaluation, we should consider this aspect to interpret the results.
 neg_label, pos_label = target.value_counts().index
 
 # %%
