@@ -16,6 +16,7 @@ the lower the better.
 #          Joel Nothman <joel.nothman@gmail.com>
 #          Noel Dawe <noel@dawe.me>
 #          Michal Karbownik <michakarbownik@gmail.com>
+#          Isac Arnekvist <isac.arnekvist@gmail.com>
 # License: BSD 3 clause
 
 
