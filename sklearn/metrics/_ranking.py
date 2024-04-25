@@ -1382,7 +1382,7 @@ def precision_recall_curve(
 
     # reverse the outputs so recall is decreasing
     sl = slice(None, None, -1)
-    return (np.hstack((precision[sl], 1)), np.hstack((recall[sl], 0)), thresholds[sl])
+    return np.hstack((precision[sl], 1)), np.hstack((recall[sl], 0)), thresholds[sl]
 
 
 @validate_params(
