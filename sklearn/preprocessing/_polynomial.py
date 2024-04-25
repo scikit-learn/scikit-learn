@@ -971,21 +971,20 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
     def _make_design_matrix(
         self, ele, bsplines, extrapolation, degree, **kwargs_extrapolate
     ):
-        # return bspline design matrix per feature
+        """Return bspline design matrix per feature."""
         design_matrix = BSpline.design_matrix(
             ele, bsplines.t, bsplines.k, **kwargs_extrapolate
-        )
+        ).tolil()  # converting to lil to encounter
+        # scipy.sparse._base.SparseEfficiencyWarning
+
         if extrapolation == "periodic":
             # See the construction of coef in fit. We need to add the last
             # degree spline basis function to the first degree ones and
             # then drop the last ones.
-            # Note: See comment about SparseEfficiencyWarning below.
-            design_matrix = design_matrix.tolil()
             design_matrix[:, :degree] += design_matrix[:, -degree:]
             design_matrix = design_matrix[:, :-degree]
-            return design_matrix
-        else:
-            return design_matrix
+
+        return design_matrix
 
     def transform(self, X):
         """Transform each feature data to B-splines.
@@ -1089,6 +1088,9 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
 
                 else:
                     XBS[:, (i * n_splines) : ((i + 1) * n_splines)] = spl(x)
+                    # replace any indicated values with 0:
+                    extended_nan_indicator = np.repeat(nan_indicator, n_splines, axis=1)
+                    XBS[extended_nan_indicator] = 0
 
             else:  # extrapolation in ("constant", "linear")
                 xmin, xmax = spl.t[degree], spl.t[-degree - 1]
@@ -1224,14 +1226,6 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
                     " transformer to produce fewer than 2^31 output features"
                 )
             XBS = sparse.hstack(output_list, format="csr")
-        else:
-            # replace any indicated values with 0
-            extended_nan_indicator = np.repeat(nan_indicator, n_splines, axis=1)
-            XBS[extended_nan_indicator] = 0
-            if self.sparse_output:
-                # TODO: Remove once scipy 1.10 is the minimum version.
-                # See comments above.
-                XBS = sparse.csr_matrix(XBS)
 
         if self.include_bias:
             return XBS
