@@ -1,7 +1,7 @@
 """
-==================================================
-Post-tuning the cut-off point of decision function
-==================================================
+======================================================
+Post-hoc tuning the cut-off point of decision function
+======================================================
 
 Once a binary classifier is trained, the :term:`predict` method outputs class label
 predictions corresponding to a thresholding of either the :term:`decision_function` or

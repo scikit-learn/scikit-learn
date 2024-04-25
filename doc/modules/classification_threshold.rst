@@ -64,31 +64,31 @@ Post-tuning the decision threshold
 One solution to address the problem stated in the introduction is to tune the decision
 threshold of the classifier once the model has been trained. The
 :class:`~sklearn.model_selection.TunedThresholdClassifier` tunes this threshold using an
-internal cross-validation. The optimum threshold is chosen to maximize a given metric
-with or without constraints.
+internal cross-validation. The optimum threshold is chosen to maximize a given metric.
 
-The following image illustrates the tuning of the cut-off point for a gradient boosting
-classifier. While the vanilla and tuned classifiers provide the same Receiver Operating
-Characteristic (ROC) and Precision-Recall curves, and thus the same
-:term:`predict_proba` outputs, the class label predictions differ because of the tuned
+The following image illustrates the tuning of the decision threshold for a gradient
+boosting classifier. While the vanilla and tuned classifiers provide the same
+:term:`predict_proba` outputs and thus the same Receiver Operating Characteristic (ROC)
+and Precision-Recall curves, the class label predictions differ because of the tuned
 decision threshold. The vanilla classifier predicts the class of interest for a
 posterior probability greater than 0.5 while the tuned classifier predicts the class of
-interest for a very low probability (around 0.02). This cut-off point optimizes a
+interest for a very low probability (around 0.02). This decision threshold optimizes a
 utility metric defined by the business (in this case an insurance company).
 
 .. figure:: ../auto_examples/model_selection/images/sphx_glr_plot_cost_sensitive_learning_002.png
    :target: ../auto_examples/model_selection/plot_cost_sensitive_learning.html
    :align: center
 
-Options to tune the cut-off point
----------------------------------
+Options to tune the decision threshold
+--------------------------------------
 
-The cut-off point can be tuned through different strategies controlled by the parameter
-`objective_metric`.
+The decision threshold can be tuned through different strategies controlled by the
+parameter `objective_metric`.
 
 One way to tune the threshold is by maximizing a pre-defined scikit-learn metric. These
 metrics can be found by calling the function :func:`~sklearn.metrics.get_scorer_names`.
-In this example, we maximize the balanced accuracy.
+By default, the balanced accuracy is the metric used but be aware that one should choose
+a meaningful metric for their use case.
 
 .. note::
 
@@ -99,23 +99,19 @@ In this example, we maximize the balanced accuracy.
     :func:`~sklearn.metrics.make_scorer`. Refer to :ref:`scoring` to get
     information to define your own scoring function. For instance, we show how to pass
     the information to the scorer that the label of interest is `0` when maximizing the
-    :func:`~sklearn.metrics.f1_score`:
+    :func:`~sklearn.metrics.f1_score`::
 
         >>> from sklearn.linear_model import LogisticRegression
-        >>> from sklearn.model_selection import (
-        ...     TunedThresholdClassifier, train_test_split
-        ... )
+        >>> from sklearn.model_selection import TunedThresholdClassifier
         >>> from sklearn.metrics import make_scorer, f1_score
         >>> X, y = make_classification(
-        ...    n_samples=1_000, weights=[0.1, 0.9], random_state=0)
-        >>> X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
+        ...   n_samples=1_000, weights=[0.1, 0.9], random_state=0)
         >>> pos_label = 0
         >>> scorer = make_scorer(f1_score, pos_label=pos_label)
         >>> base_model = LogisticRegression()
-        >>> model = TunedThresholdClassifier(base_model, objective_metric=scorer).fit(
-        ...     X_train, y_train)
-        >>> scorer(model, X_test, y_test)
-        0.79...
+        >>> model = TunedThresholdClassifier(base_model, objective_metric=scorer)
+        >>> scorer(model.fit(X, y), X, y)
+        0.88...
         >>> # compare it with the internal score found by cross-validation
         >>> model.best_score_
         0.86...
@@ -140,19 +136,20 @@ Important notes regarding the internal cross-validation
 -------------------------------------------------------
 
 By default :class:`~sklearn.model_selection.TunedThresholdClassifier` uses a 5-fold
-stratified cross-validation to tune the cut-off point. The parameter `cv` allows to
+stratified cross-validation to tune the decision threshold. The parameter `cv` allows to
 control the cross-validation strategy. It is possible to bypass cross-validation by
-setting `cv="prefit"` and providing a fitted classifier. In this case, the cut-off point
-is tuned on the data provided to the `fit` method.
+setting `cv="prefit"` and providing a fitted classifier. In this case, the decision
+threshold is tuned on the data provided to the `fit` method.
 
 However, you should be extremely careful when using this option. You should never use
-the same data for training the classifier and tuning the cut-off point due to the risk
-of overfitting. Refer to the following example section for more details (cf.
+the same data for training the classifier and tuning the decision threshold due to the
+risk of overfitting. Refer to the following example section for more details (cf.
 :ref:`tunedthresholdclassifier_no_cv`). If you have limited resources, consider using a
 float number for `cv` to limit to an internal single train-test split.
 
 The option `cv="prefit"` should only be used when the provided classifier was already
-trained, and you just want to find the best cut-off using a new validation set.
+trained, and you just want to find the best decision threshold using a new validation
+set.
 
 Manually setting the decision threshold
 ---------------------------------------
