@@ -13,6 +13,15 @@ from ..utils.extmath import squared_norm
 
 def sandwich_dot(X, W):
     """Compute the sandwich product X.T @ diag(W) @ X."""
+    # TODO: This "sandwich product" is the main computational bottleneck for solvers
+    # that use the full hessian matrix. Here, thread parallelism would pay-off the
+    # most.
+    # While a dedicated Cython routine could exploit the symmetry, it is very hard to
+    # beat BLAS GEMM, even thought the latter cannot exploit the symmetry, unless one
+    # pays the price of a taking square roots and implements
+    #    sqrtWX = sqrt(W)[: None] * X
+    #    return np.dot(sqrtWX.T, sqrtWX)
+    # which (might) detect the symmetry and use BLAS SYRK under the hood.
     n_samples = X.shape[0]
     if sparse.issparse(X):
         return (
@@ -520,9 +529,6 @@ class LinearModelLoss:
                 # Exit early without computing the hessian.
                 return grad, hess, hessian_warning
 
-            # TODO: This "sandwich product", X' diag(W) X, is the main computational
-            # bottleneck for solvers. A dedicated Cython routine might improve it
-            # exploiting the symmetry (as opposed to, e.g., BLAS gemm).
             hess[:n_features, :n_features] = sandwich_dot(X, hess_pointwise)
 
             if l2_reg_strength > 0:
