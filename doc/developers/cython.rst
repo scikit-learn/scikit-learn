@@ -141,3 +141,16 @@ must be ``cimported`` from this module and not from the OpenMP library directly:
 
 The parallel loop, `prange`, is already protected by cython and can be used directly
 from `cython.parallel`.
+
+Types
+~~~~~
+
+Cython code requires to use explicit types. This is one of the reasons you get a
+performance boost. In order to avoid code duplication, we have a central place
+for the most used types in
+`sklearn/utils/_typedefs.pyd <https://github.com/scikit-learn/scikit-learn/blob/main/sklearn/utils/_typedefs.pyd>`_.
+Ideally you start by having a look there and `cimport` types you need, for example
+
+.. code-block:: cython
+
+    from sklear.utils._typedefs cimport float32, float64
