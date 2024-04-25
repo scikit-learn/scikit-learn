@@ -1026,22 +1026,28 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
         else:
             XBS = np.zeros((n_samples, n_out), dtype=dtype, order=self.order)
 
+        def _make_design_matrix(ele, periodic=False, degree=None):
+            # return bspline design matrix per feature
+            design_matrix = BSpline.design_matrix(
+                ele, spl.t, spl.k, **kwargs_extrapolate
+            )
+            if periodic:
+                # See the construction of coef in fit. We need to add the last
+                # degree spline basis function to the first degree ones and
+                # then drop the last ones.
+                # Note: See comment about SparseEfficiencyWarning below.
+                design_matrix = design_matrix.tolil()
+                design_matrix[:, :degree] += design_matrix[:, -degree:]
+                design_matrix = design_matrix[:, :-degree]
+                return design_matrix
+            else:
+                return design_matrix
+
         for i in range(n_features):
             spl = self.bsplines_[i]
 
-            if self.extrapolation in ("continue", "error", "periodic"):
-                if self.extrapolation == "periodic":
-                    # With periodic extrapolation we map x to the segment
-                    # [spl.t[k], spl.t[n]].
-                    # This is equivalent to BSpline(.., extrapolate="periodic")
-                    # for scipy>=1.0.0.
-                    n = spl.t.size - spl.k - 1
-                    # Assign to new array to avoid inplace operation
-                    x = spl.t[spl.k] + (X[:, i] - spl.t[spl.k]) % (
-                        spl.t[n] - spl.t[spl.k]
-                    )
-                else:
-                    x = X[:, i]
+            if self.extrapolation in ("continue", "error"):
+                x = X[:, i]
 
                 if use_sparse:
                     x = x.copy()  # copy to avoid inplace operation
@@ -1050,9 +1056,7 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
                     # when X is sparse:
                     design_matrix = [
                         (
-                            BSpline.design_matrix(
-                                ele, spl.t, spl.k, **kwargs_extrapolate
-                            )
+                            _make_design_matrix(ele)
                             if not np.isnan(ele)
                             else [0] * n_splines
                         )
@@ -1063,16 +1067,39 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
                     ]
                     XBS_sparse = sparse.vstack(design_matrix_csr)
 
-                    if self.extrapolation == "periodic":
-                        # See the construction of coef in fit. We need to add the last
-                        # degree spline basis function to the first degree ones and
-                        # then drop the last ones.
-                        # Note: See comment about SparseEfficiencyWarning below.
-                        XBS_sparse = XBS_sparse.tolil()
-                        XBS_sparse[:, :degree] += XBS_sparse[:, -degree:]
-                        XBS_sparse = XBS_sparse[:, :-degree]
                 else:
                     XBS[:, (i * n_splines) : ((i + 1) * n_splines)] = spl(x)
+
+            elif self.extrapolation == "periodic":
+                # With periodic extrapolation we map x to the segment
+                # [spl.t[k], spl.t[n]].
+                # This is equivalent to BSpline(.., extrapolate="periodic")
+                # for scipy>=1.0.0.
+                n = spl.t.size - spl.k - 1
+                # Assign to new array to avoid inplace operation
+                x = spl.t[spl.k] + (X[:, i] - spl.t[spl.k]) % (spl.t[n] - spl.t[spl.k])
+
+                if use_sparse:
+                    x = x.copy()  # copy to avoid inplace operation
+                    # we leave the nan values out of bsplining and make them into 0s
+                    # right away, since BSpline.design_matrix() would raise on the nans
+                    # when X is sparse:
+                    design_matrix = [
+                        (
+                            _make_design_matrix(ele, periodic=True, degree=degree)
+                            if not np.isnan(ele)
+                            else [0] * n_splines
+                        )
+                        for ele in x
+                    ]
+                    design_matrix_csr = [
+                        sparse.csr_matrix(arr) for arr in design_matrix
+                    ]
+                    XBS_sparse = sparse.vstack(design_matrix_csr)
+
+                else:
+                    XBS[:, (i * n_splines) : ((i + 1) * n_splines)] = spl(x)
+
             else:  # extrapolation in ("constant", "linear")
                 xmin, xmax = spl.t[degree], spl.t[-degree - 1]
                 # spline values at boundaries
