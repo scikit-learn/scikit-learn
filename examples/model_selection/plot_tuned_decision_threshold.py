@@ -3,10 +3,11 @@
 Post-tuning the cut-off point of decision function
 ==================================================
 
-Once a binary classifier is trained, the :term:`predict` method outputs class
-label predictions corresponding to a thresholding of either the :term:`decision_function` or the :term:`predict_proba` output. The default
-threshold is defined as a posterior probability estimate of 0.5 or a decision score of
-0.0. However, this default strategy may not be optimal for the task at hand.
+Once a binary classifier is trained, the :term:`predict` method outputs class label
+predictions corresponding to a thresholding of either the :term:`decision_function` or
+the :term:`predict_proba` output. The default threshold is defined as a posterior
+probability estimate of 0.5 or a decision score of 0.0. However, this default strategy
+may not be optimal for the task at hand.
 
 This example shows how to use the
 :class:`~sklearn.model_selection.TunedThresholdClassifier` to tune the decision
@@ -30,10 +31,10 @@ data, target = diabetes.data, diabetes.target
 target.value_counts()
 
 # %%
-# We can see that we are dealing with a binary classification problem. Since the labels are
-# not encoded as 0 and 1, we will store which label we consider to be the negative class
-# and which one we consider to be the positive class: "tested_negative" will be considered
-# the negative class and "tested_positive" the positive class.
+# We can see that we are dealing with a binary classification problem. Since the labels
+# are not encoded as 0 and 1, we will store which label we consider to be the negative
+# class and which one we consider to be the positive class: "tested_negative" will be
+# considered the negative class and "tested_positive" the positive class.
 #
 # We can also observe that this binary problem is slightly imbalanced where we have around
 # twice more samples from the negative class than from the positive class. When it
@@ -84,18 +85,18 @@ cv_results_vanilla_model = pd.DataFrame(
 cv_results_vanilla_model[cv_scores].aggregate(["mean", "std"]).T
 
 # %%
-# Our predictive model succeeds to grasp the relationship between the data and the target.
-# The training and testing scores are close to each other, meaning that our predictive
-# model is not overfitting. We can also observe that the balanced accuracy is lower than
-# the accuracy, due to the class imbalance previously mentioned.
+# Our predictive model succeeds to grasp the relationship between the data and the
+# target. The training and testing scores are close to each other, meaning that our
+# predictive model is not overfitting. We can also observe that the balanced accuracy is
+# lower than the accuracy, due to the class imbalance previously mentioned.
 #
-# For this classifier, we let the decision threshold, used convert the probability of the positive
-# class into a class prediction, to its default value: 0.5. However, this threshold might not be
-# optimal. If our interest is to maximize the balanced accuracy, we should select
-# another threshold that would maximize this metric.
+# For this classifier, we let the decision threshold, used convert the probability of
+# the positive class into a class prediction, to its default value: 0.5. However, this
+# threshold might not be optimal. If our interest is to maximize the balanced accuracy,
+# we should select another threshold that would maximize this metric.
 #
-# The :class:`~sklearn.model_selection.TunedThresholdClassifier` meta-estimator allows to tune the
-# decision threshold of a classifier given a metric of interest.
+# The :class:`~sklearn.model_selection.TunedThresholdClassifier` meta-estimator allows
+# to tune the decision threshold of a classifier given a metric of interest.
 #
 # Tuning the decision threshold
 # -----------------------------
@@ -184,9 +185,9 @@ _ = ax.set_title(
 # In some cases, we do not want to only maximize a given metric but instead to maximize
 # a metric while satisfying a constraint on another metric. In the current example, we
 # could imagine that the decision of our predictive model will be reviewed by a medical
-# doctor. In this case, this doctor will only accept a ratio of false positive lower than a given value.
-# Therefore, we are interested in maximizing the true positive rate while having a
-# a false positive rate lower than this value.
+# doctor. In this case, this doctor will only accept a ratio of false positive lower
+# than a given value. Therefore, we are interested in maximizing the true positive rate
+# while having a a false positive rate lower than this value.
 #
 # The :class:`~sklearn.model_selection.TunedThresholdClassifier` allows to tune the
 # decision threshold with such specification. We should how to proceed using a single
