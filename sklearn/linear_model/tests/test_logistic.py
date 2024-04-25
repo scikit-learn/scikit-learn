@@ -740,7 +740,7 @@ def test_logistic_regression_solvers_multiclass(fit_intercept):
 def test_logistic_regression_solvers_multiclass_unpenalized(
     fit_intercept, global_random_seed
 ):
-    """ "Test and compare solvers results for unpenalized multinomial multiclass"""
+    """Test and compare solver results for unpenalized multinomial multiclass."""
     # Our use of numpy.random.multinomial requires numpy >= 1.22
     pytest.importorskip("numpy", minversion="1.22.0")
     # We want to avoid perfect separation.
@@ -787,6 +787,7 @@ def test_logistic_regression_solvers_multiclass_unpenalized(
         for solver in set(SOLVERS) - set(["liblinear"])
     }
     for solver in regressors.keys():
+        # See the docstring of test_multinomial_identifiability_on_iris for reference.
         assert_allclose(
             regressors[solver].coef_.sum(axis=0), 0, atol=1e-10, err_msg=solver
         )

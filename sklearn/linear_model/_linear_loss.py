@@ -458,7 +458,7 @@ class LinearModelLoss:
             Hessian matrix.
 
         hessian_warning : bool
-            True if pointwise hessian has more than half of its elements non-positive.
+            True if pointwise hessian has more than 25% of its elements non-positive.
         """
         (n_samples, n_features), n_classes = X.shape, self.base_loss.n_classes
         n_dof = n_features + int(self.fit_intercept)
@@ -569,9 +569,10 @@ class LinearModelLoss:
             #
             #   hess = X' @ h @ X
             #
-            # Here, h is a priori a 4-dimensional matrix
-            # (n_samples ** 2, n_classes ** 2) and is diagonal in n_samples ** 2, i.e.
-            # effectively a 3-dimensional matrix (n_samples, n_classes ** 2).
+            # Here, h is a priori a 4-dimensional matrix of shape
+            # (n_samples, n_samples, n_classes, n_classes). It is diagonal its first
+            # two dimensions (the ones with n_samples), i.e. it is
+            # effectively a 3-dimensional matrix (n_samples, n_classes, n_classes).
             #
             #   h = diag(p) - p' p
             #
@@ -592,7 +593,7 @@ class LinearModelLoss:
             #          (X' @ diag(h20) @ X, X' @ diag(h12), X' @ diag(h22))
             #
             # Now coef of shape (n_classes * n_dof) is contiguous in n_classes.
-            # Therefore, we want the hessian to follow this convention, i.e.
+            # Therefore, we want the hessian to follow this convention, too, i.e.
             #     hess[:n_classes, :n_classes] = (x0' @ h00 @ x0, x0' @ h10 @ x0, ..)
             #                                    (x0' @ h10 @ x0, x0' @ h11 @ x0, ..)
             #                                    (x0' @ h20 @ x0, x0' @ h12 @ x0, ..)
@@ -657,6 +658,7 @@ class LinearModelLoss:
                     : (n_classes**2 * n_features * n_dof) : (n_classes * n_dof + 1)
                 ] += l2_reg_strength
 
+            # The pointwise hessian is always non-negative for the multinomial loss.
             hessian_warning = False
 
         return grad, hess, hessian_warning
