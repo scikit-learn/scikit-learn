@@ -969,7 +969,7 @@ def _macro_averaged_precision_recall_curve(tps, fps, pos_instances):
 
     predicted_positives = tps + fps
 
-    # Sum over the classes, keep the threshould dimension (0)
+    # Sum over the classes, keep the threshold dimension (0)
     precision = np.ones_like(tps)
     np.divide(
         tps,
