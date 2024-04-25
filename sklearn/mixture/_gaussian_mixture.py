@@ -652,7 +652,7 @@ class GaussianMixture(BaseMixture):
             (n_components, n_features, n_features) if 'full'
 
     converged_ : bool
-        True when convergence was reached in fit(), False otherwise.
+        True when convergence of the best fit of EM was reached, False otherwise.
 
     n_iter_ : int
         Number of step used by the best fit of EM to reach the convergence.
@@ -754,6 +754,19 @@ class GaussianMixture(BaseMixture):
                 n_features,
             )
 
+    def _initialize_parameters(self, X, random_state):
+        # If all the initial parameters are all provided, then there is no need to run
+        # the initialization.
+        compute_resp = (
+            self.weights_init is None
+            or self.means_init is None
+            or self.precisions_init is None
+        )
+        if compute_resp:
+            super()._initialize_parameters(X, random_state)
+        else:
+            self._initialize(X, None)
+
     def _initialize(self, X, resp):
         """Initialization of the Gaussian mixture parameters.
 
@@ -764,11 +777,13 @@ class GaussianMixture(BaseMixture):
         resp : array-like of shape (n_samples, n_components)
         """
         n_samples, _ = X.shape
-
-        weights, means, covariances = _estimate_gaussian_parameters(
-            X, resp, self.reg_covar, self.covariance_type
-        )
-        weights /= n_samples
+        weights, means, covariances = None, None, None
+        if resp is not None:
+            weights, means, covariances = _estimate_gaussian_parameters(
+                X, resp, self.reg_covar, self.covariance_type
+            )
+            if self.weights_init is None:
+                weights /= n_samples
 
         self.weights_ = weights if self.weights_init is None else self.weights_init
         self.means_ = means if self.means_init is None else self.means_init

@@ -1,5 +1,5 @@
-""" Non-negative matrix factorization.
-"""
+"""Non-negative matrix factorization."""
+
 # Author: Vlad Niculae
 #         Lars Buitinck
 #         Mathieu Blondel <mathieu@mblondel.org>
@@ -126,7 +126,7 @@ def _beta_divergence(X, W, H, beta, square_root=False):
         if sp.issparse(X):
             norm_X = np.dot(X.data, X.data)
             norm_WH = trace_dot(np.linalg.multi_dot([W.T, W, H]), H)
-            cross_prod = trace_dot((X * H.T), W)
+            cross_prod = trace_dot((X @ H.T), W)
             res = (norm_X + norm_WH - 2.0 * cross_prod) / 2.0
         else:
             res = squared_norm(X - np.dot(W, H)) / 2.0
@@ -1327,7 +1327,7 @@ class _BaseNMF(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator,
 
         Returns
         -------
-        X : {ndarray, sparse matrix} of shape (n_samples, n_features)
+        X : ndarray of shape (n_samples, n_features)
             Returns a data matrix of the original shape.
         """
         if Xt is None and W is None:
@@ -1769,8 +1769,7 @@ class NMF(_BaseNMF):
         if n_iter == self.max_iter and self.tol > 0:
             warnings.warn(
                 "Maximum number of iterations %d reached. Increase "
-                "it to improve convergence."
-                % self.max_iter,
+                "it to improve convergence." % self.max_iter,
                 ConvergenceWarning,
             )
 

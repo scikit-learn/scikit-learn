@@ -320,6 +320,19 @@ def fastica(
     .. [1] A. Hyvarinen and E. Oja, "Fast Independent Component Analysis",
            Algorithms and Applications, Neural Networks, 13(4-5), 2000,
            pp. 411-430.
+
+    Examples
+    --------
+    >>> from sklearn.datasets import load_digits
+    >>> from sklearn.decomposition import fastica
+    >>> X, _ = load_digits(return_X_y=True)
+    >>> K, W, S = fastica(X, n_components=7, random_state=0, whiten='unit-variance')
+    >>> K.shape
+    (7, 64)
+    >>> W.shape
+    (7, 7)
+    >>> S.shape
+    (1797, 7)
     """
     est = FastICA(
         n_components=n_components,

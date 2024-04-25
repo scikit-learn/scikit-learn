@@ -14,6 +14,7 @@ implementation_specific_values = [
 
 }}
 from libcpp.vector cimport vector
+from libcpp.algorithm cimport fill
 
 from ...utils._cython_blas cimport (
   BLAS_Order,
@@ -24,13 +25,6 @@ from ...utils._cython_blas cimport (
   _gemm,
 )
 from ...utils._typedefs cimport float64_t, float32_t, int32_t, intp_t
-
-# TODO: change for `libcpp.algorithm.fill` once Cython 3 is used
-# Introduction in Cython:
-#
-# https://github.com/cython/cython/blob/05059e2a9b89bf6738a7750b905057e5b1e3fe2e/Cython/Includes/libcpp/algorithm.pxd#L50 #noqa
-cdef extern from "<algorithm>" namespace "std" nogil:
-    void fill[Iter, T](Iter first, Iter last, const T& value) except + #noqa
 
 import numpy as np
 from scipy.sparse import issparse, csr_matrix
@@ -82,7 +76,7 @@ cdef void _middle_term_sparse_dense_{{name_suffix}}(
     intp_t Y_end,
     bint c_ordered_middle_term,
     float64_t * dist_middle_terms,
-) nogil:
+) noexcept nogil:
     # This routine assumes that dist_middle_terms is a pointer to the first element
     # of a buffer filled with zeros of length at least equal to n_X × n_Y, conceptually
     # representing a 2-d C-ordered of F-ordered array.

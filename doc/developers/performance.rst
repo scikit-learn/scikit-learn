@@ -46,31 +46,31 @@ Sometimes however an algorithm cannot be expressed efficiently in simple
 vectorized Numpy code. In this case, the recommended strategy is the
 following:
 
-  1. **Profile** the Python implementation to find the main bottleneck and
-     isolate it in a **dedicated module level function**. This function
-     will be reimplemented as a compiled extension module.
+1. **Profile** the Python implementation to find the main bottleneck and
+   isolate it in a **dedicated module level function**. This function
+   will be reimplemented as a compiled extension module.
 
-  2. If there exists a well maintained BSD or MIT **C/C++** implementation
-     of the same algorithm that is not too big, you can write a
-     **Cython wrapper** for it and include a copy of the source code
-     of the library in the scikit-learn source tree: this strategy is
-     used for the classes :class:`svm.LinearSVC`, :class:`svm.SVC` and
-     :class:`linear_model.LogisticRegression` (wrappers for liblinear
-     and libsvm).
+2. If there exists a well maintained BSD or MIT **C/C++** implementation
+   of the same algorithm that is not too big, you can write a
+   **Cython wrapper** for it and include a copy of the source code
+   of the library in the scikit-learn source tree: this strategy is
+   used for the classes :class:`svm.LinearSVC`, :class:`svm.SVC` and
+   :class:`linear_model.LogisticRegression` (wrappers for liblinear
+   and libsvm).
 
-  3. Otherwise, write an optimized version of your Python function using
-     **Cython** directly. This strategy is used
-     for the :class:`linear_model.ElasticNet` and
-     :class:`linear_model.SGDClassifier` classes for instance.
+3. Otherwise, write an optimized version of your Python function using
+   **Cython** directly. This strategy is used
+   for the :class:`linear_model.ElasticNet` and
+   :class:`linear_model.SGDClassifier` classes for instance.
 
-  4. **Move the Python version of the function in the tests** and use
-     it to check that the results of the compiled extension are consistent
-     with the gold standard, easy to debug Python version.
+4. **Move the Python version of the function in the tests** and use
+   it to check that the results of the compiled extension are consistent
+   with the gold standard, easy to debug Python version.
 
-  5. Once the code is optimized (not simple bottleneck spottable by
-     profiling), check whether it is possible to have **coarse grained
-     parallelism** that is amenable to **multi-processing** by using the
-     ``joblib.Parallel`` class.
+5. Once the code is optimized (not simple bottleneck spottable by
+   profiling), check whether it is possible to have **coarse grained
+   parallelism** that is amenable to **multi-processing** by using the
+   ``joblib.Parallel`` class.
 
 When using Cython, use either
 
@@ -187,7 +187,7 @@ us install ``line_profiler`` and wire it to IPython:
 
   pip install line_profiler
 
-- **Under IPython 0.13+**, first create a configuration profile:
+**Under IPython 0.13+**, first create a configuration profile:
 
 .. prompt:: bash $
 
@@ -265,7 +265,7 @@ install the latest version:
 
 Then, setup the magics in a manner similar to ``line_profiler``.
 
-- **Under IPython 0.11+**, first create a configuration profile:
+**Under IPython 0.11+**, first create a configuration profile:
 
 .. prompt:: bash $
 

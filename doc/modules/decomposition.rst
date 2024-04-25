@@ -53,6 +53,7 @@ data based on the amount of variance it explains. As such it implements a
 
 .. topic:: Examples:
 
+    * :ref:`sphx_glr_auto_examples_decomposition_plot_pca_iris.py`
     * :ref:`sphx_glr_auto_examples_decomposition_plot_pca_vs_lda.py`
     * :ref:`sphx_glr_auto_examples_decomposition_plot_pca_vs_fa_model_selection.py`
 
@@ -71,11 +72,11 @@ exactly match the results of :class:`PCA` while processing the data in a
 minibatch fashion. :class:`IncrementalPCA` makes it possible to implement
 out-of-core Principal Component Analysis either by:
 
- * Using its ``partial_fit`` method on chunks of data fetched sequentially
-   from the local hard drive or a network database.
+* Using its ``partial_fit`` method on chunks of data fetched sequentially
+  from the local hard drive or a network database.
 
- * Calling its fit method on a sparse matrix or a memory mapped file using
-   ``numpy.memmap``.
+* Calling its fit method on a memory mapped file using
+  ``numpy.memmap``.
 
 :class:`IncrementalPCA` only stores estimates of component and noise variances,
 in order update ``explained_variance_ratio_`` incrementally. This is why
@@ -319,6 +320,11 @@ is eigendecomposed in the Kernel PCA fitting process has an effective rank that
 is much smaller than its size. This is a situation where approximate
 eigensolvers can provide speedup with very low precision loss.
 
+
+|details-start|
+**Eigensolvers**
+|details-split|
+
 The optional parameter ``eigen_solver='randomized'`` can be used to
 *significantly* reduce the computation time when the number of requested
 ``n_components`` is small compared with the number of samples. It relies on
@@ -343,6 +349,7 @@ is extremely small. It is enabled by default when the desired number of
 components is less than 10 (strict) and the number of samples is more than 200
 (strict). See :class:`KernelPCA` for details.
 
+
 .. topic:: References:
 
     * *dense* solver:
@@ -351,19 +358,21 @@ components is less than 10 (strict) and the number of samples is more than 200
 
     * *randomized* solver:
 
-        * Algorithm 4.3 in
-          :arxiv:`"Finding structure with randomness: Stochastic
-          algorithms for constructing approximate matrix decompositions" <0909.4061>`
-          Halko, et al. (2009)
+      * Algorithm 4.3 in
+        :arxiv:`"Finding structure with randomness: Stochastic
+        algorithms for constructing approximate matrix decompositions" <0909.4061>`
+        Halko, et al. (2009)
 
-        * :arxiv:`"An implementation of a randomized algorithm
-          for principal component analysis" <1412.3510>`
-          A. Szlam et al. (2014)
+      * :arxiv:`"An implementation of a randomized algorithm
+        for principal component analysis" <1412.3510>`
+        A. Szlam et al. (2014)
 
     * *arpack* solver:
       `scipy.sparse.linalg.eigsh documentation
       <https://docs.scipy.org/doc/scipy/reference/generated/scipy.sparse.linalg.eigsh.html>`_
       R. B. Lehoucq, D. C. Sorensen, and C. Yang, (1998)
+
+|details-end|
 
 
 .. _LSA:
@@ -374,6 +383,16 @@ Truncated singular value decomposition and latent semantic analysis
 :class:`TruncatedSVD` implements a variant of singular value decomposition
 (SVD) that only computes the :math:`k` largest singular values,
 where :math:`k` is a user-specified parameter.
+
+:class:`TruncatedSVD` is very similar to :class:`PCA`, but differs
+in that the matrix :math:`X` does not need to be centered.
+When the columnwise (per-feature) means of :math:`X`
+are subtracted from the feature values,
+truncated SVD on the resulting matrix is equivalent to PCA.
+
+|details-start|
+**About truncated SVD and latent semantic analysis (LSA)**
+|details-split|
 
 When truncated SVD is applied to term-document matrices
 (as returned by :class:`~sklearn.feature_extraction.text.CountVectorizer` or
@@ -415,15 +434,6 @@ To also transform a test set :math:`X`, we multiply it with :math:`V_k`:
     We present LSA in a different way that matches the scikit-learn API better,
     but the singular values found are the same.
 
-:class:`TruncatedSVD` is very similar to :class:`PCA`, but differs
-in that the matrix :math:`X` does not need to be centered.
-When the columnwise (per-feature) means of :math:`X`
-are subtracted from the feature values,
-truncated SVD on the resulting matrix is equivalent to PCA.
-In practical terms, this means
-that the :class:`TruncatedSVD` transformer accepts ``scipy.sparse``
-matrices without the need to densify them,
-as densifying may fill up memory even for medium-sized document collections.
 
 While the :class:`TruncatedSVD` transformer
 works with any feature matrix,
@@ -433,6 +443,8 @@ In particular, sublinear scaling and inverse document frequency
 should be turned on (``sublinear_tf=True, use_idf=True``)
 to bring the feature values closer to a Gaussian distribution,
 compensating for LSA's erroneous assumptions about textual data.
+
+|details-end|
 
 .. topic:: Examples:
 
@@ -444,6 +456,7 @@ compensating for LSA's erroneous assumptions about textual data.
     *Introduction to Information Retrieval*, Cambridge University Press,
     chapter 18: `Matrix decompositions & latent semantic indexing
     <https://nlp.stanford.edu/IR-book/pdf/18lsi.pdf>`_
+
 
 
 .. _DictionaryLearning:
@@ -623,7 +636,7 @@ does not fit into the memory.
    computationally efficient and implements on-line learning with a
    ``partial_fit`` method.
 
-    Example: :ref:`sphx_glr_auto_examples_cluster_plot_dict_face_patches.py`
+   Example: :ref:`sphx_glr_auto_examples_cluster_plot_dict_face_patches.py`
 
 .. currentmodule:: sklearn.decomposition
 
@@ -887,6 +900,10 @@ Note that this definition is not valid if :math:`\beta \in (0; 1)`, yet it can
 be continuously extended to the definitions of :math:`d_{KL}` and :math:`d_{IS}`
 respectively.
 
+|details-start|
+**NMF implemented solvers**
+|details-split|
+
 :class:`NMF` implements two solvers, using Coordinate Descent ('cd') [5]_, and
 Multiplicative Update ('mu') [6]_. The 'mu' solver can optimize every
 beta-divergence, including of course the Frobenius norm (:math:`\beta=2`), the
@@ -899,6 +916,8 @@ values of :math:`\beta`. Note also that with a negative (or 0, i.e.
 The 'cd' solver can only optimize the Frobenius norm. Due to the
 underlying non-convexity of NMF, the different solvers may converge to
 different minima, even when optimizing the same distance function.
+
+|details-end|
 
 NMF is best used with the ``fit_transform`` method, which returns the matrix W.
 The matrix H is stored into the fitted model in the ``components_`` attribute;
@@ -913,6 +932,8 @@ stored components::
     >>> H = model.components_
     >>> X_new = np.array([[1, 0], [1, 6.1], [1, 0], [1, 4], [3.2, 1], [0, 4]])
     >>> W_new = model.transform(X_new)
+
+
 
 .. topic:: Examples:
 
@@ -987,10 +1008,10 @@ The graphical model of LDA is a three-level generative model:
 Note on notations presented in the graphical model above, which can be found in
 Hoffman et al. (2013):
 
-  * The corpus is a collection of :math:`D` documents.
-  * A document is a sequence of :math:`N` words.
-  * There are :math:`K` topics in the corpus.
-  * The boxes represent repeated sampling.
+* The corpus is a collection of :math:`D` documents.
+* A document is a sequence of :math:`N` words.
+* There are :math:`K` topics in the corpus.
+* The boxes represent repeated sampling.
 
 In the graphical model, each node is a random variable and has a role in the
 generative process. A shaded node indicates an observed variable and an unshaded
@@ -1000,25 +1021,29 @@ of topics in the corpus and the distribution of words in the documents.
 The goal of LDA is to use the observed words to infer the hidden topic
 structure.
 
+|details-start|
+**Details on modeling text corpora**
+|details-split|
+
 When modeling text corpora, the model assumes the following generative process
 for a corpus with :math:`D` documents and :math:`K` topics, with :math:`K`
 corresponding to `n_components` in the API:
 
-  1. For each topic :math:`k \in K`, draw :math:`\beta_k \sim
-     \mathrm{Dirichlet}(\eta)`. This provides a distribution over the words,
-     i.e. the probability of a word appearing in topic :math:`k`.
-     :math:`\eta` corresponds to `topic_word_prior`.
+1. For each topic :math:`k \in K`, draw :math:`\beta_k \sim
+   \mathrm{Dirichlet}(\eta)`. This provides a distribution over the words,
+   i.e. the probability of a word appearing in topic :math:`k`.
+   :math:`\eta` corresponds to `topic_word_prior`.
 
-  2. For each document :math:`d \in D`, draw the topic proportions
-     :math:`\theta_d \sim \mathrm{Dirichlet}(\alpha)`. :math:`\alpha`
-     corresponds to `doc_topic_prior`.
+2. For each document :math:`d \in D`, draw the topic proportions
+   :math:`\theta_d \sim \mathrm{Dirichlet}(\alpha)`. :math:`\alpha`
+   corresponds to `doc_topic_prior`.
 
-  3. For each word :math:`i` in document :math:`d`:
+3. For each word :math:`i` in document :math:`d`:
 
-    a. Draw the topic assignment :math:`z_{di} \sim \mathrm{Multinomial}
-       (\theta_d)`
-    b. Draw the observed word :math:`w_{ij} \sim \mathrm{Multinomial}
-       (\beta_{z_{di}})`
+   a. Draw the topic assignment :math:`z_{di} \sim \mathrm{Multinomial}
+      (\theta_d)`
+   b. Draw the observed word :math:`w_{ij} \sim \mathrm{Multinomial}
+      (\beta_{z_{di}})`
 
 For parameter estimation, the posterior distribution is:
 
@@ -1039,6 +1064,8 @@ Lower Bound (ELBO):
 Maximizing ELBO is equivalent to minimizing the Kullback-Leibler(KL) divergence
 between :math:`q(z,\theta,\beta)` and the true posterior
 :math:`p(z, \theta, \beta |w, \alpha, \eta)`.
+
+|details-end|
 
 :class:`LatentDirichletAllocation` implements the online variational Bayes
 algorithm and supports both online and batch update methods.

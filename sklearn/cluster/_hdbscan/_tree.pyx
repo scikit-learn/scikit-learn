@@ -36,6 +36,8 @@ import cython
 
 import numpy as np
 
+cnp.import_array()
+
 cdef extern from "numpy/arrayobject.h":
     intp_t * PyArray_SHAPE(cnp.PyArrayObject *)
 

@@ -3,7 +3,6 @@ The :mod:`sklearn.metrics` module includes score functions, performance metrics
 and pairwise metrics and distance computations.
 """
 
-
 from . import cluster
 from ._classification import (
     accuracy_score,
@@ -62,6 +61,8 @@ from ._regression import (
     mean_tweedie_deviance,
     median_absolute_error,
     r2_score,
+    root_mean_squared_error,
+    root_mean_squared_log_error,
 )
 from ._scorer import check_scoring, get_scorer, get_scorer_names, make_scorer
 from .cluster import (
@@ -166,6 +167,8 @@ __all__ = [
     "RocCurveDisplay",
     "roc_auc_score",
     "roc_curve",
+    "root_mean_squared_log_error",
+    "root_mean_squared_error",
     "get_scorer_names",
     "silhouette_samples",
     "silhouette_score",

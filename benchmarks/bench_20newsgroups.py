@@ -21,7 +21,7 @@ ESTIMATORS = {
     "extra_trees": ExtraTreesClassifier(max_features="sqrt", min_samples_split=10),
     "logistic_regression": LogisticRegression(),
     "naive_bayes": MultinomialNB(),
-    "adaboost": AdaBoostClassifier(n_estimators=10),
+    "adaboost": AdaBoostClassifier(n_estimators=10, algorithm="SAMME"),
 }
 
 

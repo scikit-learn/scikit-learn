@@ -49,7 +49,7 @@ def predict(est, data_test, target_test):
     print(f"predicted in {toc - tic:.3f}s, ROC AUC: {roc_auc:.4f}, ACC: {acc :.4f}")
 
 
-data = fetch_openml(data_id=179, as_frame=True, parser="pandas")  # adult dataset
+data = fetch_openml(data_id=179, as_frame=True)  # adult dataset
 X, y = data.data, data.target
 
 # Ordinal encode the categories to use the native support available in HGBDT

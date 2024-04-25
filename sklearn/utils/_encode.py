@@ -4,7 +4,7 @@ from typing import NamedTuple
 
 import numpy as np
 
-from . import is_scalar_nan
+from ._missing import is_scalar_nan
 
 
 def _unique(values, *, return_inverse=False, return_counts=False):
@@ -296,7 +296,7 @@ def _check_unknown(values, known_values, return_mask=False):
         diff = np.setdiff1d(unique_values, known_values, assume_unique=True)
         if return_mask:
             if diff.size:
-                valid_mask = np.in1d(values, known_values)
+                valid_mask = np.isin(values, known_values)
             else:
                 valid_mask = np.ones(len(values), dtype=bool)
 

@@ -26,7 +26,7 @@ import numpy as np
 
 from sklearn.compose import ColumnTransformer
 from sklearn.datasets import fetch_20newsgroups
-from sklearn.decomposition import TruncatedSVD
+from sklearn.decomposition import PCA
 from sklearn.feature_extraction import DictVectorizer
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics import classification_report
@@ -141,7 +141,7 @@ pipeline = Pipeline(
                         Pipeline(
                             [
                                 ("tfidf", TfidfVectorizer()),
-                                ("best", TruncatedSVD(n_components=50)),
+                                ("best", PCA(n_components=50, svd_solver="arpack")),
                             ]
                         ),
                         1,
