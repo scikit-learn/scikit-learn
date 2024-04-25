@@ -860,8 +860,9 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
     :math:`||y||_2^2 / n_{\text{samples}}`.
 
     For an example,
-    see :ref:`examples/linear_model/plot_elastic_net_precomputed_gram_matrix_with_weighted_samples
-    <sphx_glr_auto_examples_linear_model_plot_elastic_net_precomputed_gram_matrix_with_weighted_samples>`.
+    see :ref:`examples/linear_model/plot_elastic_net_precomputed_gram_matrix_with_we\
+    ighted_samples <sphx_glr_auto_examples_linear_model_plot_elastic_net_precomput\
+    ed_gram_matrix_with_weighted_samples>`.
 
     Examples
     --------
