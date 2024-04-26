@@ -13,6 +13,20 @@ from sklearn.inspection import h_statistic
 from sklearn.linear_model import LinearRegression
 
 
+class Deterministic(RegressorMixin):
+    """Create estimator from deteministic prediction function"""
+
+    def __init__(self, pred_fun):
+        self._pred_fun = pred_fun
+        self.is_fitted_ = True
+
+    def fit(self, *args, **kwargs):
+        return self
+
+    def predict(self, X):
+        return self._pred_fun(X)
+
+
 @pytest.mark.parametrize(
     "est",
     (
@@ -24,7 +38,7 @@ from sklearn.linear_model import LinearRegression
 @pytest.mark.parametrize("n_max", [500, 50])
 @pytest.mark.parametrize("sample_weight", [None, "ones"])
 def test_h_statistic_additive_regression(est, features, n_max, sample_weight):
-    # Checks that additive regressions get statistics of 0.
+    """Checks that additive regressions get statistics of 0."""
     N_FEAT = 4
     N = 200
     X, y = make_regression(n_samples=N, n_features=N_FEAT, random_state=0)
@@ -42,10 +56,37 @@ def test_h_statistic_additive_regression(est, features, n_max, sample_weight):
     assert_allclose(result.h_squared_pairwise, 0)
 
 
+@pytest.mark.parametrize(
+    "est",
+    (
+        RandomForestRegressor(random_state=0, max_depth=4, n_estimators=20),
+        HistGradientBoostingRegressor(random_state=0, max_iter=20),
+    ),
+)
+@pytest.mark.parametrize("features", [None, [0, 1, 2]])
+@pytest.mark.parametrize("n_max", [500, 50])
+@pytest.mark.parametrize("sample_weight", [None, "ones"])
+def test_h_statistic_regression(est, features, n_max, sample_weight):
+    """Tests that models with interactions will produce (some) positive values."""
+    N_FEAT = 4
+    N = 200
+    X, y = make_regression(n_samples=N, n_features=N_FEAT, random_state=0)
+    w = np.ones(N) if sample_weight == "ones" else None
+
+    model = est.fit(X, y, sample_weight=w)
+    result = h_statistic(
+        model, X, features=features, sample_weight=w, n_max=n_max, random_state=1
+    )
+
+    assert any(result.h_squared_pairwise > 1e-5)
+
+
 def test_h_statistic_additive_classification():
-    # Checks that additive classification gets statistics of 0. The presence
-    # of link functions (especially for GradientBoosting with more than 2 classes)
-    # would make further tests tricky.
+    """Checks that additive classification gets statistics of 0.
+
+    The presence of link functions (especially for GradientBoosting with
+    more than 2 classes) would make further tests tricky.
+    """
     N_FEAT = 4
     N_CLASSES = 4
     X, y = make_classification(
@@ -66,35 +107,10 @@ def test_h_statistic_additive_classification():
     assert_allclose(result.h_squared_pairwise, 0)
 
 
-@pytest.mark.parametrize(
-    "est",
-    (
-        RandomForestRegressor(random_state=0, max_depth=4, n_estimators=20),
-        HistGradientBoostingRegressor(random_state=0, max_iter=20),
-    ),
-)
-@pytest.mark.parametrize("features", [None, [0, 1, 2]])
-@pytest.mark.parametrize("n_max", [500, 50])
-@pytest.mark.parametrize("sample_weight", [None, "ones"])
-def test_h_statistic_regression(est, features, n_max, sample_weight):
-    # Tests that models with interactions will produce (some) positive values.
-    N_FEAT = 4
-    N = 200
-    X, y = make_regression(n_samples=N, n_features=N_FEAT, random_state=0)
-    w = np.ones(N) if sample_weight == "ones" else None
-
-    model = est.fit(X, y, sample_weight=w)
-    result = h_statistic(
-        model, X, features=features, sample_weight=w, n_max=n_max, random_state=1
-    )
-
-    assert any(result.h_squared_pairwise > 1e-5)
-
-
 @pytest.mark.parametrize("sample_weight", [None, "ones"])
 @pytest.mark.parametrize("n_max", [500, 50])
 def test_h_statistic_equivalence_array_dataframe(n_max, sample_weight):
-    # Checks that index operations give the same for numpy arrays or dataframes.
+    """Checks that index operations give the same for numpy arrays or dataframes."""
     pd = pytest.importorskip("pandas")
 
     N = 200
@@ -118,7 +134,7 @@ def test_h_statistic_equivalence_array_dataframe(n_max, sample_weight):
 
 
 def test_h_statistic_reflect_interaction_constraints():
-    # Checks that interaction constraints are reflected.
+    """Checks that interaction constraints are reflected."""
     X, y = make_regression(n_samples=200, n_features=4, random_state=0)
 
     model = HistGradientBoostingRegressor(
@@ -132,9 +148,11 @@ def test_h_statistic_reflect_interaction_constraints():
 
 
 def test_h_statistic_matches_other_implementations():
-    # Checks for one specific example that the result matches the one from two
-    # independent R packages ({iml} of Christoph Molnar, {hstats} of Michael Mayer).
-    # The latter also allows for sample weights.
+    """Check against other implementations
+
+    Check for one specific example that the result matches the one from two
+    independent R packages ({iml} of Christoph Molnar, {hstats} of Michael Mayer).
+    The latter also allows for sample weights.
     # X <- data.frame(x1 = c(1, 1, 1, 2), x2 = c(0, 0, 2, 1), x3 = c(2, 2, 1, 4))
     # pred_fun <- function(model, newdata)
     #   newdata[, 1] + newdata[, 2] * sqrt(newdata[, 3])
@@ -147,16 +165,7 @@ def test_h_statistic_matches_other_implementations():
     # library(hstats)  # 1.1.2
     # h2_pairwise(hstats(X = X, pred_fun = pred_fun))           # x2:x3 -> 0.078125
     # h2_pairwise(hstats(X = X, pred_fun = pred_fun, w = 0:3))  # weights -> 0.1010093
-    class Deterministic(RegressorMixin):
-        def __init__(self, pred_fun):
-            self._pred_fun = pred_fun
-            self.is_fitted_ = True
-
-        def fit(self, *args, **kwargs):
-            return self
-
-        def predict(self, X):
-            return self._pred_fun(X)
+    """
 
     X = np.array([[1, 1, 1, 2], [0, 0, 2, 1], [2, 2, 1, 4]]).T
 
@@ -168,3 +177,38 @@ def test_h_statistic_matches_other_implementations():
         h_statistic(model, X=X, sample_weight=range(4)).h_squared_pairwise[2],
         0.1010093,
     )
+
+
+def test_h_statistic_matches_analytic_result():
+    """Check against analytic result
+
+    By definition of the H-squared, a model consisting of an interaction
+    and without main effects would result in a value of 1.
+    """
+
+    X = np.array([[1, 1, -1, -1], [1, -1, 1, -1]]).T
+
+    # Model consistent of pure interaction (and zero main effects)
+    model = Deterministic(lambda X: X[:, 0] * X[:, 1])
+
+    assert_allclose(h_statistic(model, X=X).h_squared_pairwise[0], 1)
+
+
+@pytest.mark.parametrize("sample_weight", [None, "ones"])
+@pytest.mark.parametrize("n_max", [500, 50])
+def test_h_statistic_does_not_change_pandas_input(n_max, sample_weight):
+    """Checks that pandas data is unchanged by the function call."""
+    pd = pytest.importorskip("pandas")
+
+    N = 200
+    X, y = make_regression(n_samples=N, n_features=4, random_state=0)
+    X_df = pd.DataFrame(X)
+    X_df_orig = X_df.copy()
+    w = np.ones(N) if sample_weight == "ones" else None
+
+    # Pandas
+    model = RandomForestRegressor(random_state=0, max_depth=4, n_estimators=20)
+    model.fit(X_df, y, sample_weight=w)
+    _ = h_statistic(model, X_df, sample_weight=w, n_max=n_max, random_state=1)
+
+    pd.testing.assert_frame_equal(X_df, X_df_orig)
