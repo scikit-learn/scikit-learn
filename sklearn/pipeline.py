@@ -590,7 +590,9 @@ class Pipeline(_BaseComposition):
         with _print_elapsed_time("Pipeline", self._log_message(len(self.steps) - 1)):
             if last_step == "passthrough":
                 return Xt
-            last_step_params = routed_params[self.steps[-1][0]]
+            last_step_params = self._get_step_params(
+                step_idx=len(self) - 1, params=routed_params[self.steps[-1][0]]
+            )
             if hasattr(last_step, "fit_transform"):
                 return last_step.fit_transform(
                     Xt, y, **last_step_params["fit_transform"]

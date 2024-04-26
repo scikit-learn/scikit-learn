@@ -1835,6 +1835,7 @@ def test_transform_input_pipeline():
     )
 
     pipe.fit(X, y, expected_fit_param=expected_fit_param)
+    pipe.fit_transform(X, y, expected_fit_param=expected_fit_param)
 
 
 def test_transform_input_no_slep6():
