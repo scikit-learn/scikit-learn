@@ -393,6 +393,32 @@ class Pipeline(_BaseComposition):
                 fit_params_steps[step]["fit_predict"][param] = pval
             return fit_params_steps
 
+    def _get_step_params(self, *, step_idx, params):
+        """Get params (metadata) for step `name`.
+
+        This transforms the metadata up to this step if required, which is
+        indicated by the `transform_input` parameter.
+
+        If a param in `params` is included in the `transform_input` list, it
+        will be transformed.
+        """
+        if self.transform_input is None or params is None or step_idx == 0:
+            return params
+
+        step_params = dict()
+        transformed = dict()  # used to transform each param once
+        for method, method_params in params.items():
+            step_params[method] = Bunch()
+            for param_name, param_value in method_params.items():
+                if param_name in self.transform_input:
+                    # transform the parameter
+                    if param_name not in transformed:
+                        transformed[param_name] = self[:step_idx].transform(param_value)
+                    step_params[method][param_name] = transformed[param_name]
+                else:
+                    step_params[method][param_name] = param_value
+        return step_params
+
     # Estimator interface
 
     def _fit(self, X, y=None, routed_params=None):
@@ -418,6 +444,10 @@ class Pipeline(_BaseComposition):
             else:
                 cloned_transformer = clone(transformer)
             # Fit or load from cache the current transformer
+            step_params = self._get_step_params(
+                step_idx=step_idx, params=routed_params[name]
+            )
+
             X, fitted_transformer = fit_transform_one_cached(
                 cloned_transformer,
                 X,
@@ -425,7 +455,7 @@ class Pipeline(_BaseComposition):
                 weight=None,
                 message_clsname="Pipeline",
                 message=self._log_message(step_idx),
-                params=routed_params[name],
+                params=step_params,
             )
             # Replace the transformer of the step with the fitted
             # transformer. This is necessary when loading the transformer
@@ -480,11 +510,20 @@ class Pipeline(_BaseComposition):
         self : object
             Pipeline with fitted steps.
         """
+        if not _routing_enabled() and self.transform_input is not None:
+            raise ValueError(
+                "The `transform_input` parameter can only be set if metadata "
+                "routing is enabled. You can enable metadata routing using "
+                "`sklearn.set_config(enable_metadata_routing=True)`."
+            )
+
         routed_params = self._check_method_params(method="fit", props=params)
         Xt = self._fit(X, y, routed_params)
         with _print_elapsed_time("Pipeline", self._log_message(len(self.steps) - 1)):
             if self._final_estimator != "passthrough":
-                last_step_params = routed_params[self.steps[-1][0]]
+                last_step_params = self._get_step_params(
+                    step_idx=len(self) - 1, params=routed_params[self.steps[-1][0]]
+                )
                 self._final_estimator.fit(Xt, y, **last_step_params["fit"])
 
         return self
@@ -1223,7 +1262,7 @@ def _name_estimators(estimators):
     return list(zip(names, estimators))
 
 
-def make_pipeline(*steps, memory=None, verbose=False):
+def make_pipeline(*steps, memory=None, transform_input=None, verbose=False):
     """Construct a :class:`Pipeline` from the given estimators.
 
     This is a shorthand for the :class:`Pipeline` constructor; it does not
@@ -1244,6 +1283,17 @@ def make_pipeline(*steps, memory=None, verbose=False):
         pipeline cannot be inspected directly. Use the attribute ``named_steps``
         or ``steps`` to inspect estimators within the pipeline. Caching the
         transformers is advantageous when fitting is time consuming.
+
+    transform_input : list of str, default=None
+        This enables transforming some input arguments to ``fit`` (other than ``X``)
+        to be transformed by the steps of the pipeline up to the step which requires
+        them. Requirement is defined via :ref:`metadata routing <metadata_routing>`.
+        This can be used to pass a validation set through the pipeline for instance.
+
+        See the example TBD for more details.
+
+        You can only set this if metadata routing is enabled, which you
+        can enable using ``sklearn.set_config(enable_metadata_routing=True)``.
 
     verbose : bool, default=False
         If True, the time elapsed while fitting each step will be printed as it
@@ -1268,7 +1318,12 @@ def make_pipeline(*steps, memory=None, verbose=False):
     Pipeline(steps=[('standardscaler', StandardScaler()),
                     ('gaussiannb', GaussianNB())])
     """
-    return Pipeline(_name_estimators(steps), memory=memory, verbose=verbose)
+    return Pipeline(
+        _name_estimators(steps),
+        transform_input=transform_input,
+        memory=memory,
+        verbose=verbose,
+    )
 
 
 def _transform_one(transformer, X, y, weight, columns=None, params=None):
@@ -1315,7 +1370,6 @@ def _fit_transform_one(
     message_clsname="",
     message=None,
     params=None,
-    to_transform=None,
 ):
     """
     Fits ``transformer`` to ``X`` and ``y``. The transformed result is returned
@@ -1323,23 +1377,11 @@ def _fit_transform_one(
     be multiplied by ``weight``.
 
     ``params`` needs to be of the form ``process_routing()["step_name"]``.
-
-    ``to_transform`` is a dict of {arg: value} for input parameters to be
-    transformed along ``X``.
     """
     if columns is not None:
         X = _safe_indexing(X, columns, axis=1)
 
     params = params or {}
-    to_transform = to_transform or {}
-    if weight is not None and to_transform:
-        # This should never happen! "to_transform" is used in Pipeline, while
-        # weight is used in ColumnTransformer and/or FeatureUnion.
-        raise ValueError(
-            "Cannot apply weight and transform parameters simultaneously. "
-            "Got weight={}, to_transform={}".format(weight, to_transform)
-        )
-
     with _print_elapsed_time(message_clsname, message):
         if hasattr(transformer, "fit_transform"):
             res = transformer.fit_transform(X, y, **params.get("fit_transform", {}))
@@ -1347,13 +1389,10 @@ def _fit_transform_one(
             res = transformer.fit(X, y, **params.get("fit", {})).transform(
                 X, **params.get("transform", {})
             )
-        transformed = dict()
-        for param, value in to_transform.items():
-            transformed[param] = transformer.transform(value)
 
     if weight is None:
-        return res, transformed, transformer
-    return res * weight, transformed, transformer
+        return res, transformer
+    return res * weight, transformer
 
 
 def _fit_one(transformer, X, y, weight, message_clsname="", message=None, params=None):

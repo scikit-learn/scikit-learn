@@ -334,7 +334,8 @@ def test_pipeline_raise_set_params_error():
     # expected error message
     error_msg = re.escape(
         "Invalid parameter 'fake' for estimator Pipeline(steps=[('cls',"
-        " LinearRegression())]). Valid parameters are: ['memory', 'steps', 'verbose']."
+        " LinearRegression())]). Valid parameters are: ['memory', 'steps',"
+        " 'transform_input', 'verbose']."
     )
     with pytest.raises(ValueError, match=error_msg):
         pipe.set_params(fake="nope")
@@ -759,6 +760,7 @@ def test_set_pipeline_step_passthrough(passthrough):
         "memory": None,
         "m2__mult": 2,
         "last__mult": 5,
+        "transform_input": None,
         "verbose": False,
     }
 
@@ -1790,6 +1792,62 @@ def test_feature_union_feature_names_in_():
     union = FeatureUnion([("pass", "passthrough")])
     union.fit(X_array)
     assert not hasattr(union, "feature_names_in_")
+
+
+# transform_input tests
+# =====================
+
+
+class IncTransformer(BaseEstimator, TransformerMixin):
+    """Transformer that increments the input by 1."""
+
+    def __init__(self, expected_fit_param=None, metadata_expected=True):
+        self.expected_fit_param = expected_fit_param
+        self.metadata_expected = metadata_expected
+
+    def fit(self, X, y=None, expected_fit_param=None):
+        if self.metadata_expected:
+            assert_array_equal(expected_fit_param, self.expected_fit_param)
+        return self
+
+    def transform(self, X):
+        return X + 1
+
+
+@pytest.mark.usefixtures("enable_slep006")
+def test_transform_input_pipeline():
+    """Test that with transform_input, data is correctly transformed for each step."""
+    X = np.array([[1, 2], [3, 4]])
+    y = np.array([0, 1])
+    expected_fit_param = np.array([[1, 2]])
+    pipe = make_pipeline(
+        IncTransformer(expected_fit_param=expected_fit_param).set_fit_request(
+            expected_fit_param=True
+        ),
+        IncTransformer().set_fit_request(expected_fit_param=False),
+        IncTransformer(expected_fit_param=expected_fit_param + 2).set_fit_request(
+            expected_fit_param=True
+        ),
+        IncTransformer(expected_fit_param=expected_fit_param + 3).set_fit_request(
+            expected_fit_param=True
+        ),
+        transform_input=["expected_fit_param"],
+    )
+
+    pipe.fit(X, y, expected_fit_param=expected_fit_param)
+
+
+def test_transform_input_no_slep6():
+    """Make sure the right error is raised if slep6 is not enabled."""
+    X = np.array([[1, 2], [3, 4]])
+    y = np.array([0, 1])
+    msg = "The `transform_input` parameter can only be set if metadata"
+    with pytest.raises(ValueError, match=msg):
+        make_pipeline(DummyTransf(), transform_input=["blah"]).fit(X, y)
+
+
+# end of transform_input tests
+# =============================
 
 
 # Test that metadata is routed correctly for pipelines and FeatureUnion
