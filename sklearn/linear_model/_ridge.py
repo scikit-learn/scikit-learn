@@ -32,6 +32,13 @@ from ..utils import (
     column_or_1d,
     compute_sample_weight,
 )
+from ..utils._array_api import (
+    _is_numpy_namespace,
+    _ravel,
+    device,
+    get_namespace,
+    get_namespace_and_device,
+)
 from ..utils._param_validation import Interval, StrOptions, validate_params
 from ..utils.extmath import row_norms, safe_sparse_dot
 from ..utils.fixes import _sparse_linalg_cg
@@ -277,15 +284,16 @@ def _solve_cholesky_kernel(K, y, alpha, sample_weight=None, copy=False):
         return dual_coefs.T
 
 
-def _solve_svd(X, y, alpha):
-    U, s, Vt = linalg.svd(X, full_matrices=False)
+def _solve_svd(X, y, alpha, xp=None):
+    xp, _ = get_namespace(X, xp=xp)
+    U, s, Vt = xp.linalg.svd(X, full_matrices=False)
     idx = s > 1e-15  # same default value as scipy.linalg.pinv
-    s_nnz = s[idx][:, np.newaxis]
-    UTy = np.dot(U.T, y)
-    d = np.zeros((s.size, alpha.size), dtype=X.dtype)
+    s_nnz = s[idx][:, None]
+    UTy = U.T @ y
+    d = xp.zeros((s.shape[0], alpha.shape[0]), dtype=X.dtype, device=device(X))
     d[idx] = s_nnz / (s_nnz**2 + alpha)
     d_UT_y = d * UTy
-    return np.dot(Vt.T, d_UT_y).T
+    return (Vt.T @ d_UT_y).T
 
 
 def _solve_lbfgs(
@@ -600,28 +608,29 @@ def _ridge_regression(
     random_state=None,
     return_n_iter=False,
     return_intercept=False,
+    return_solver=False,
     X_scale=None,
     X_offset=None,
     check_input=True,
     fit_intercept=False,
 ):
+    xp, is_array_api_compliant, device_ = get_namespace_and_device(
+        X, y, sample_weight, X_scale, X_offset
+    )
+    is_numpy_namespace = _is_numpy_namespace(xp)
+    X_is_sparse = sparse.issparse(X)
+
     has_sw = sample_weight is not None
 
-    if solver == "auto":
-        if positive:
-            solver = "lbfgs"
-        elif return_intercept:
-            # sag supports fitting intercept directly
-            solver = "sag"
-        elif not sparse.issparse(X):
-            solver = "cholesky"
-        else:
-            solver = "sparse_cg"
+    solver = resolve_solver(solver, positive, return_intercept, X_is_sparse, xp)
 
-    if solver not in ("sparse_cg", "cholesky", "svd", "lsqr", "sag", "saga", "lbfgs"):
+    if is_numpy_namespace and not X_is_sparse:
+        X = np.asarray(X)
+
+    if not is_numpy_namespace and solver != "svd":
         raise ValueError(
-            "Known solvers are 'sparse_cg', 'cholesky', 'svd'"
-            " 'lsqr', 'sag', 'saga' or 'lbfgs'. Got %s." % solver
+            f"Array API dispatch to namespace {xp.__name__} only supports "
+            f"solver 'svd'. Got '{solver}'."
         )
 
     if positive and solver != "lbfgs":
@@ -645,8 +654,8 @@ def _ridge_regression(
         )
 
     if check_input:
-        _dtype = [np.float64, np.float32]
-        _accept_sparse = _get_valid_accept_sparse(sparse.issparse(X), solver)
+        _dtype = [xp.float64, xp.float32]
+        _accept_sparse = _get_valid_accept_sparse(X_is_sparse, solver)
         X = check_array(X, accept_sparse=_accept_sparse, dtype=_dtype, order="C")
         y = check_array(y, dtype=X.dtype, ensure_2d=False, order=None)
     check_consistent_length(X, y)
@@ -658,7 +667,7 @@ def _ridge_regression(
 
     ravel = False
     if y.ndim == 1:
-        y = y.reshape(-1, 1)
+        y = xp.reshape(y, (-1, 1))
         ravel = True
 
     n_samples_, n_targets = y.shape
@@ -679,7 +688,7 @@ def _ridge_regression(
 
     # Some callers of this method might pass alpha as single
     # element array which already has been validated.
-    if alpha is not None and not isinstance(alpha, np.ndarray):
+    if alpha is not None and not isinstance(alpha, type(xp.asarray([0.0]))):
         alpha = check_scalar(
             alpha,
             "alpha",
@@ -689,15 +698,17 @@ def _ridge_regression(
         )
 
     # There should be either 1 or n_targets penalties
-    alpha = np.asarray(alpha, dtype=X.dtype).ravel()
-    if alpha.size not in [1, n_targets]:
+    alpha = _ravel(xp.asarray(alpha, device=device_, dtype=X.dtype), xp=xp)
+    if alpha.shape[0] not in [1, n_targets]:
         raise ValueError(
             "Number of targets and number of penalties do not correspond: %d != %d"
-            % (alpha.size, n_targets)
+            % (alpha.shape[0], n_targets)
         )
 
-    if alpha.size == 1 and n_targets > 1:
-        alpha = np.repeat(alpha, n_targets)
+    if alpha.shape[0] == 1 and n_targets > 1:
+        alpha = xp.full(
+            shape=(n_targets,), fill_value=alpha[0], dtype=alpha.dtype, device=device_
+        )
 
     n_iter = None
     if solver == "sparse_cg":
@@ -779,7 +790,6 @@ def _ridge_regression(
 
         if intercept.shape[0] == 1:
             intercept = intercept[0]
-        coef = np.asarray(coef)
 
     elif solver == "lbfgs":
         coef = _solve_lbfgs(
@@ -795,22 +805,71 @@ def _ridge_regression(
         )
 
     if solver == "svd":
-        if sparse.issparse(X):
+        if X_is_sparse:
             raise TypeError("SVD solver does not support sparse inputs currently")
-        coef = _solve_svd(X, y, alpha)
+        coef = _solve_svd(X, y, alpha, xp)
 
     if ravel:
-        # When y was passed as a 1d-array, we flatten the coefficients.
-        coef = coef.ravel()
+        coef = _ravel(coef)
+
+    coef = xp.asarray(coef)
 
     if return_n_iter and return_intercept:
-        return coef, n_iter, intercept
+        res = coef, n_iter, intercept
     elif return_intercept:
-        return coef, intercept
+        res = coef, intercept
     elif return_n_iter:
-        return coef, n_iter
+        res = coef, n_iter
     else:
-        return coef
+        res = coef
+
+    return (*res, solver) if return_solver else res
+
+
+def resolve_solver(solver, positive, return_intercept, is_sparse, xp):
+    if solver != "auto":
+        return solver
+
+    is_numpy_namespace = _is_numpy_namespace(xp)
+
+    auto_solver_np = resolve_solver_for_numpy(positive, return_intercept, is_sparse)
+    if is_numpy_namespace:
+        return auto_solver_np
+
+    if positive:
+        raise ValueError(
+            "The solvers that support positive fitting do not support "
+            f"Array API dispatch to namespace {xp.__name__}. Please "
+            "either disable Array API dispatch, or use a numpy-like "
+            "namespace, or set `positive=False`."
+        )
+
+    # At the moment, Array API dispatch only supports the "svd" solver.
+    solver = "svd"
+    if solver != auto_solver_np:
+        warnings.warn(
+            f"Using Array API dispatch to namespace {xp.__name__} with "
+            f"`solver='auto'` will result in using the solver '{solver}'. "
+            "The results may differ from those when using a Numpy array, "
+            f"because in that case the preferred solver would be {auto_solver_np}. "
+            f"Set `solver='{solver}'` to suppress this warning."
+        )
+
+    return solver
+
+
+def resolve_solver_for_numpy(positive, return_intercept, is_sparse):
+    if positive:
+        return "lbfgs"
+
+    if return_intercept:
+        # sag supports fitting intercept directly
+        return "sag"
+
+    if not is_sparse:
+        return "cholesky"
+
+    return "sparse_cg"
 
 
 class _BaseRidge(LinearModel, metaclass=ABCMeta):
@@ -852,6 +911,8 @@ class _BaseRidge(LinearModel, metaclass=ABCMeta):
         self.random_state = random_state
 
     def fit(self, X, y, sample_weight=None):
+        xp, is_array_api_compliant = get_namespace(X, y, sample_weight)
+
         if self.solver == "lbfgs" and not self.positive:
             raise ValueError(
                 "'lbfgs' solver can be used only when positive=True. "
@@ -903,7 +964,7 @@ class _BaseRidge(LinearModel, metaclass=ABCMeta):
         )
 
         if solver == "sag" and sparse.issparse(X) and self.fit_intercept:
-            self.coef_, self.n_iter_, self.intercept_ = _ridge_regression(
+            self.coef_, self.n_iter_, self.intercept_, self.solver_ = _ridge_regression(
                 X,
                 y,
                 alpha=self.alpha,
@@ -915,6 +976,7 @@ class _BaseRidge(LinearModel, metaclass=ABCMeta):
                 random_state=self.random_state,
                 return_n_iter=True,
                 return_intercept=True,
+                return_solver=True,
                 check_input=False,
             )
             # add the offset which was subtracted by _preprocess_data
@@ -928,7 +990,7 @@ class _BaseRidge(LinearModel, metaclass=ABCMeta):
                 # for dense matrices or when intercept is set to 0
                 params = {}
 
-            self.coef_, self.n_iter_ = _ridge_regression(
+            self.coef_, self.n_iter_, self.solver_ = _ridge_regression(
                 X,
                 y,
                 alpha=self.alpha,
@@ -940,6 +1002,7 @@ class _BaseRidge(LinearModel, metaclass=ABCMeta):
                 random_state=self.random_state,
                 return_n_iter=True,
                 return_intercept=False,
+                return_solver=True,
                 check_input=False,
                 fit_intercept=self.fit_intercept,
                 **params,
@@ -1095,6 +1158,12 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
 
         .. versionadded:: 1.0
 
+    solver_ : str
+        The solver that was used at fit time by the computational
+        routines.
+
+        .. versionadded:: 1.5
+
     See Also
     --------
     RidgeClassifier : Ridge classifier.
@@ -1168,15 +1237,19 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
             Fitted estimator.
         """
         _accept_sparse = _get_valid_accept_sparse(sparse.issparse(X), self.solver)
+        xp, _ = get_namespace(X, y, sample_weight)
         X, y = self._validate_data(
             X,
             y,
             accept_sparse=_accept_sparse,
-            dtype=[np.float64, np.float32],
+            dtype=[xp.float64, xp.float32],
             multi_output=True,
             y_numeric=True,
         )
         return super().fit(X, y, sample_weight=sample_weight)
+
+    def _more_tags(self):
+        return {"array_api_support": True}
 
 
 class _RidgeClassifierMixin(LinearClassifierMixin):
@@ -1402,6 +1475,12 @@ class RidgeClassifier(_RidgeClassifierMixin, _BaseRidge):
         has feature names that are all strings.
 
         .. versionadded:: 1.0
+
+    solver_ : str
+        The solver that was used at fit time by the computational
+        routines.
+
+        .. versionadded:: 1.5
 
     See Also
     --------
@@ -2394,12 +2473,10 @@ class RidgeCV(MultiOutputMixin, RegressorMixin, _BaseRidgeCV):
         (i.e. data is expected to be centered).
 
     scoring : str, callable, default=None
-        A string (see model evaluation documentation) or
-        a scorer callable object / function with signature
-        ``scorer(estimator, X, y)``.
-        If None, the negative mean squared error if cv is 'auto' or None
-        (i.e. when using leave-one-out cross-validation), and r2 score
-        otherwise.
+        A string (see :ref:`scoring_parameter`) or a scorer callable object /
+        function with signature ``scorer(estimator, X, y)``. If None, the
+        negative mean squared error if cv is 'auto' or None (i.e. when using
+        leave-one-out cross-validation), and r2 score otherwise.
 
     cv : int, cross-validation generator or an iterable, default=None
         Determines the cross-validation splitting strategy.
@@ -2570,9 +2647,8 @@ class RidgeClassifierCV(_RidgeClassifierMixin, _BaseRidgeCV):
         (i.e. data is expected to be centered).
 
     scoring : str, callable, default=None
-        A string (see model evaluation documentation) or
-        a scorer callable object / function with signature
-        ``scorer(estimator, X, y)``.
+        A string (see :ref:`scoring_parameter`) or a scorer callable object /
+        function with signature ``scorer(estimator, X, y)``.
 
     cv : int, cross-validation generator or an iterable, default=None
         Determines the cross-validation splitting strategy.
