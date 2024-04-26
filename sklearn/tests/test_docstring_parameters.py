@@ -51,6 +51,7 @@ with warnings.catch_warnings():
     )
 
 # functions to ignore args / docstring of
+# TODO(1.7): remove "sklearn.utils._joblib"
 _DOCSTRING_IGNORES = [
     "sklearn.utils.deprecation.load_mlcomp",
     "sklearn.pipeline.make_pipeline",
@@ -224,10 +225,6 @@ def test_fit_docstring_attributes(name, Estimator):
     elif Estimator.__name__ == "TSNE":
         # default raises an error, perplexity must be less than n_samples
         est.set_params(perplexity=2)
-
-    # TODO(1.5): TO BE REMOVED for 1.5 (avoid FutureWarning)
-    if Estimator.__name__ in ("LinearSVC", "LinearSVR"):
-        est.set_params(dual="auto")
 
     # TODO(1.6): remove (avoid FutureWarning)
     if Estimator.__name__ in ("NMF", "MiniBatchNMF"):
