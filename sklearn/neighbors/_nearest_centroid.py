@@ -164,7 +164,7 @@ class NearestCentroid(ClassifierMixin, BaseEstimator):
                     self.centroids_[cur_class] = np.median(X[center_mask], axis=0)
                 else:
                     self.centroids_[cur_class] = csc_median_axis_0(X[center_mask])
-            else:  # metric==euclidean
+            else:  # metric == "euclidean"
                 self.centroids_[cur_class] = X[center_mask].mean(axis=0)
 
         if self.shrink_threshold:
