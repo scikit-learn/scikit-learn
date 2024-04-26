@@ -40,8 +40,8 @@ class NearestCentroid(ClassifierMixin, BaseEstimator):
         minimizes the sum of L1 distances.
 
         .. versionchanged:: 1.5
-            All metrics but `"euclidean"` and `"manhattan"` were deprecated and now raise
-            an error.
+            All metrics but `"euclidean"` and `"manhattan"` were deprecated and
+            now raise an error.
 
         .. versionchanged:: 0.19
             `metric='precomputed'` was deprecated and now raises an error
