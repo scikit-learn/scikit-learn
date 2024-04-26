@@ -515,7 +515,6 @@ def test_isotonic_dtype(dtype):
         ).dtype
 
         res = isotonic_regression(y_np, sample_weight=sample_weight)
-        print(f"{res.dtype=}")
         assert res.dtype == expected_dtype
 
         X = np.arange(len(y)).astype(dtype)
