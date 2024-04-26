@@ -139,7 +139,7 @@ def h_statistic(
     automatically controlled via `n_max=500`, while it is the user's responsibility
     to select only a subset of *important* features. It is crucial to focus on important
     features because for weak predictors, the denominator might be small, and
-    even a weak interaction could result in a high Friedman's H^2, sometimes exceeding 1.
+    even a weak interaction could result in a high Friedman's H, sometimes exceeding 1.
 
     Parameters
     ----------
