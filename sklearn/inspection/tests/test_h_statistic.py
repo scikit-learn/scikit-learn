@@ -58,7 +58,7 @@ def test_h_statistic_regression(est, is_additive, features, n_max, sample_weight
     m = N_FEAT if features is None else len(features)
     expected_length = m * (m - 1) / 2
 
-    assert result.h_squared_pairwise.shape == (expected_length,)
+    assert result.h_squared_pairwise.shape == (expected_length, 1)
     if is_additive:
         assert_allclose(result.h_squared_pairwise, 0)
     else:
@@ -108,7 +108,7 @@ def test_h_statistic_binary_classification_shape():
 
     expected_length = N_FEAT * (N_FEAT - 1) / 2
 
-    assert result.h_squared_pairwise.shape == (expected_length,)
+    assert result.h_squared_pairwise.shape == (expected_length, 1)
 
 
 @pytest.mark.parametrize("sample_weight", [None, "ones"])

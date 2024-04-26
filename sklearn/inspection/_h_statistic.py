@@ -24,7 +24,7 @@ def _calculate_pd_brute_fast(
 ):
     """Fast version of _calculate_partial_dependence_brute()
 
-    Returns np.array of size (n_grid, ) or (n_ngrid, output_dim).
+    Returns np.array of size (n_grid, output_dim).
     """
 
     # X is stacked n_grid times, and grid columns are replaced by replicated grid
@@ -35,17 +35,20 @@ def _calculate_pd_brute_fast(
     grid_stacked = _safe_indexing(grid, np.repeat(np.arange(n_grid), n), axis=0)
     _safe_assign(X_stacked, values=grid_stacked, column_indexer=feature_indices)
 
-    # Predict on stacked data. Pick positive class probs for binary classification
     preds = pred_fun(X_stacked)
+
+    # Drop reduntant 0 class in binary classification
     if reduce_binary:
         preds = preds[:, 1]
 
     # Partial dependences are averages per grid block
-    pd_values = [
-        np.average(Z, axis=0, weights=sample_weight) for Z in np.split(preds, n_grid)
-    ]
+    pd_values = np.average(
+        preds.reshape(n_grid, preds.shape[0] // n_grid, -1),
+        axis=1,
+        weights=sample_weight,
+    )
 
-    return np.array(pd_values)
+    return pd_values
 
 
 def _calculate_pd_over_data(
@@ -53,7 +56,7 @@ def _calculate_pd_over_data(
 ):
     """Calculates centered partial dependence over the data distribution.
 
-    It returns a numpy array of size (n, ) or (n, output_dim).
+    It returns a numpy array of size (n, output_dim).
     """
 
     # Select grid columns and remove duplicates (will compensate below)
@@ -126,8 +129,8 @@ def h_statistic(
           functions centered to mean 0,
         - and the sums run over 1 <= i <= n, where n is the sample size.
 
-    It equals the proportion of effect variability between two features that cannot
-    be explained by their main effects. When there is no interaction, the value is
+    It equals the proportion of effect variability between two features unexplained
+    by their main effects. When there is no interaction, the value is
     exactly 0. The numerator (or its square root) provides an absolute measure
     of interaction strength, enabling direct comparison across feature pairs.
 
@@ -136,12 +139,12 @@ def h_statistic(
     automatically controlled via `n_max=500`, while it is the user's responsibility
     to select only a subset of *important* features. It is crucial to focus on important
     features because for weak predictors, the denominator might be small, and
-    even a weak interaction could result in a high Friedman's H, sometimes exceeding 1.
+    even a weak interaction could result in a high Friedman's H^2, sometimes exceeding 1.
 
     Parameters
     ----------
     estimator : object
-        An estimator that has already been :term:`fitted`.
+        A fitted estimator.
 
     X : {array-like or dataframe} of shape (n_samples, n_features)
         Data for which :term:`estimator` is able to calculate predictions.
@@ -166,23 +169,25 @@ def h_statistic(
     Returns
     -------
     result : :class:`~sklearn.utils.Bunch`
-        Dictionary-like object, with the following attributes.
+        Dictionary-like object, with the attributes listed below. Note that
+        `output_dim` equals the number of values predicted per observation.
+        For single-output regression and binary classification, `output_dim` is 1.
 
         feature_pairs : list of length n_feature_pairs
             The list contains tuples of feature pairs (indices) in the same order
             as all pairwise statistics.
 
-        h_squared_pairwise : ndarray of shape (n_pairs, ) or (n_pairs, output_dim)
+        h_squared_pairwise : ndarray of shape (n_pairs, output_dim)
             Pairwise H-squared statistic. Useful to see which feature pair has
             strongest relative interation (relative with respect to joint effect).
             Calculated as numerator_pairwise / denominator_pairwise.
 
-        numerator_pairwise : ndarray of shape (n_pairs, ) or (n_pairs, output_dim)
+        numerator_pairwise : ndarray of shape (n_pairs, output_dim)
             Numerator of pairwise H-squared statistic.
             Useful to see which feature pair has strongest absolute interaction.
             Take square-root to get values on the scale of the predictions.
 
-        denominator_pairwise : ndarray of shape (n_pairs, ) or (n_pairs, output_dim)
+        denominator_pairwise : ndarray of shape (n_pairs, output_dim)
             Denominator of pairwise H-squared statistic. Used for appropriate
             normalization of H.
 
@@ -206,10 +211,16 @@ def h_statistic(
     >>> top_m = np.argsort(imp.importances_mean)[-m:]
     >>> H = h_statistic(est, X=X, features=top_m, random_state=4)
     >>> H
-    {'feature_pairs': [(3, 8), (3, 2), (8, 2)],
-     'h_squared_pairwise': array([0.00985985, 0.00927104, 0.03439926]),
-     'numerator_pairwise': array([ 1.2955532 ,  1.2419687 , 11.13358385]),
-     'denominator_pairwise': array([131.39690331, 133.96210997, 323.6576595 ])}
+    feature_pairs': [(3, 8), (3, 2), (8, 2)],
+     'h_squared_pairwise': array([[0.00985985],
+             [0.00927104],
+             [0.03439926]]),
+     'numerator_pairwise': array([[ 1.2955532 ],
+             [ 1.2419687 ],
+             [11.13358385]]),
+     'denominator_pairwise': array([[131.39690331],
+             [133.96210997],
+             [323.6576595 ]])}
 
     >>> # Interpretation: For features (8, 2), 3.4% of the joint effect variability
     >>> # comes from their interaction. These two features also have strongest absolute
@@ -270,10 +281,15 @@ def h_statistic(
             )
         )
 
-    num = []
-    denom = []
+    n_features = len(features)
+    n_pairs = int(n_features * (n_features - 1) / 2)
+    output_dim = pd_univariate[0].shape[1]
+    output_shape = (n_pairs, output_dim)
 
-    for j, k in itertools.combinations(range(len(feature_indices)), 2):
+    num = np.empty(output_shape)
+    denom = np.empty(output_shape)
+
+    for i, (j, k) in enumerate(itertools.combinations(range(n_features), 2)):
         pd_bivariate = _calculate_pd_over_data(
             pred_fun,
             X=X,
@@ -281,18 +297,14 @@ def h_statistic(
             sample_weight=sample_weight,
             reduce_binary=reduce_binary,
         )
-        num.append(
-            np.average(
-                (pd_bivariate - pd_univariate[j] - pd_univariate[k]) ** 2,
-                axis=0,
-                weights=sample_weight,
-            )
+        num[i] = np.average(
+            (pd_bivariate - pd_univariate[j] - pd_univariate[k]) ** 2,
+            axis=0,
+            weights=sample_weight,
         )
-        denom.append(np.average(pd_bivariate**2, axis=0, weights=sample_weight))
+        denom[i] = np.average(pd_bivariate**2, axis=0, weights=sample_weight)
 
-    num = np.array(num)
     num[np.abs(num) < eps] = 0  # Round small numerators to 0
-    denom = np.array(denom)
     h2_stat = np.divide(num, denom, out=np.zeros_like(num), where=denom > 0)
 
     return Bunch(
