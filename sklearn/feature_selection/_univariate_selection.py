@@ -5,8 +5,6 @@
 # License: BSD 3 clause
 
 
-from __future__ import division
-
 import warnings
 from numbers import Integral, Real
 
@@ -391,7 +389,7 @@ def info_gain(X, y, aggregate="max"):
     y : array-like, shape = (n_samples,)
         Target vector (class labels).
 
-    aggregate : string
+    aggregate : string, optional
         Method to aggregate class-specific scores to a global score, one of
         "mean" (default), "max", "sum".
 
@@ -451,7 +449,7 @@ def info_gain_ratio(X, y, aggregate="max"):
     y : array-like, shape = (n_samples,)
         Target vector (class labels).
 
-    aggregate : string
+    aggregate : string, optional
         Method to aggregate class-specific scores to a global score, one of
         "mean" (default), "max", "sum".
 

@@ -3,40 +3,31 @@ Tests for info_gain
 """
 
 import numpy as np
+from numpy.testing import assert_almost_equal, assert_equal
 from scipy.sparse import coo_matrix, csr_matrix
 
 from sklearn.feature_selection import SelectKBest, info_gain, info_gain_ratio
-
 from sklearn.utils.testing import assert_raises_regex
-from numpy.testing import assert_equal, assert_almost_equal
 
 # Feature 0 is highly informative for class 1;
 # feature 1 is the same everywhere;
 # feature 2 is a bit informative for class 2.
-X = [[2, 1, 2],
-     [9, 1, 1],
-     [6, 1, 2],
-     [0, 1, 2]]
+X = [[2, 1, 2], [9, 1, 1], [6, 1, 2], [0, 1, 2]]
 y = [0, 1, 1, 0]
-
-
-def mk_info_gain(k):
-    """Make k-best IG selector"""
-    return SelectKBest(info_gain, k=k)
 
 
 def test_info_gain_csr():
     # Test IG feature extraction
 
     Xsp = csr_matrix(X, dtype=np.float)
-    scores = mk_info_gain(k=2).fit(Xsp, y)
+    scores = SelectKBest(info_gain, k=2).fit(Xsp, y)
     assert_equal(sorted(scores.get_support(indices=True)), [0, 2])
     Xtrans = scores.transform(Xsp)
     assert_equal(Xtrans.shape, [Xsp.shape[0], 2])
 
     # == doesn't work on scipy.sparse matrices
     Xtrans = Xtrans.toarray()
-    Xtrans2 = mk_info_gain(k=2).fit_transform(Xsp, y).toarray()
+    Xtrans2 = SelectKBest(info_gain, k=2).fit_transform(Xsp, y).toarray()
     assert_equal(Xtrans, Xtrans2)
 
 
@@ -44,7 +35,7 @@ def test_info_gain_coo():
     # Check that ig works with a COO matrix
     # (as returned by CountVectorizer, DictVectorizer)
     Xcoo = coo_matrix(X)
-    mk_info_gain(k=2).fit_transform(Xcoo, y)
+    SelectKBest(info_gain, k=2).fit_transform(Xcoo, y)
     # if we got here without an exception, we're safe
 
 
@@ -52,21 +43,22 @@ def test_info_gain_dense():
     # Check IG works with a dense matrix
 
     Xden = np.array(X)
-    scores = mk_info_gain(k=2).fit(Xden, y)
+    scores = SelectKBest(info_gain, k=2).fit(Xden, y)
     assert_equal(sorted(scores.get_support(indices=True)), [0, 2])
 
     Xtrans = scores.transform(Xden)
     assert_equal(Xtrans.shape, [Xden.shape[0], 2])
 
-    Xtrans2 = mk_info_gain(k=2).fit_transform(Xden, y)
+    Xtrans2 = SelectKBest(info_gain, k=2).fit_transform(Xden, y)
     assert_equal(Xtrans, Xtrans2)
 
 
 def test_info_gain_negative():
     # Check for proper error on negative numbers in the input X.
     X, y = [[0, 1], [-1e-20, 1]], [0, 1]
-    assert_raises_regex(ValueError, "Input X must be non-negative.", info_gain,
-                        csr_matrix(X), y)
+    assert_raises_regex(
+        ValueError, "Input X must be non-negative.", info_gain, csr_matrix(X), y
+    )
 
 
 def test_expected_value_info_gain():
