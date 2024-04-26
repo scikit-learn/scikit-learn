@@ -19,22 +19,13 @@ from ..utils.random import sample_without_replacement
 from ..utils.validation import _check_sample_weight, check_is_fitted
 
 
-def _calculate_pd_brute_fast(estimator, X, feature_indices, grid, sample_weight=None):
+def _calculate_pd_brute_fast(
+    pred_fun, X, feature_indices, grid, sample_weight=None, reduce_binary=False
+):
     """Fast version of _calculate_partial_dependence_brute()
 
     Returns np.array of size (n_grid, ) or (n_ngrid, output_dim).
     """
-
-    if is_regressor(estimator):
-        if hasattr(estimator, "predict"):
-            pred_fun = estimator.predict
-        else:
-            raise ValueError("The regressor has no predict() method.")
-    elif is_classifier(estimator):
-        if hasattr(estimator, "predict_proba"):
-            pred_fun = estimator.predict_proba
-        else:
-            raise ValueError("The classifier has no predict_proba() method.")
 
     # X is stacked n_grid times, and grid columns are replaced by replicated grid
     n = X.shape[0]
@@ -46,18 +37,20 @@ def _calculate_pd_brute_fast(estimator, X, feature_indices, grid, sample_weight=
 
     # Predict on stacked data. Pick positive class probs for binary classification
     preds = pred_fun(X_stacked)
-    if is_classifier(estimator) and preds.shape[1] == 2:
+    if reduce_binary:
         preds = preds[:, 1]
 
     # Partial dependences are averages per grid block
-    pd_values = np.fromiter(
-        [np.average(Z, axis=0, weights=sample_weight) for Z in np.split(preds, n_grid)]
-    )
+    pd_values = [
+        np.average(Z, axis=0, weights=sample_weight) for Z in np.split(preds, n_grid)
+    ]
 
-    return pd_values
+    return np.array(pd_values)
 
 
-def _calculate_pd_over_data(estimator, X, feature_indices, sample_weight=None):
+def _calculate_pd_over_data(
+    pred_fun, X, feature_indices, sample_weight=None, reduce_binary=False
+):
     """Calculates centered partial dependence over the data distribution.
 
     It returns a numpy array of size (n, ) or (n, output_dim).
@@ -78,11 +71,12 @@ def _calculate_pd_over_data(estimator, X, feature_indices, sample_weight=None):
         compressed_grid = False
 
     pd_values = _calculate_pd_brute_fast(
-        estimator,
+        pred_fun,
         X=X,
         feature_indices=feature_indices,
         grid=grid,
         sample_weight=sample_weight,
+        reduce_binary=reduce_binary,
     )
 
     if compressed_grid:
@@ -221,13 +215,23 @@ def h_statistic(
     >>> # comes from their interaction. These two features also have strongest absolute
     >>> # interaction across pairs ("numerator_pairwise").
     """
+    reduce_binary = False  # In binary classification, we only retain second class probs
+
     check_is_fitted(estimator)
 
-    if not (is_classifier(estimator) or is_regressor(estimator)):
-        raise ValueError("'estimator' must be a fitted regressor or classifier.")
-
-    if is_classifier(estimator) and isinstance(estimator.classes_[0], np.ndarray):
-        raise ValueError("Multiclass-multioutput estimators are not supported")
+    if is_regressor(estimator):
+        pred_fun = getattr(estimator, "predict", None)
+        if pred_fun is None:
+            raise ValueError("The regressor has no predict() method.")
+    elif is_classifier(estimator):
+        if isinstance(estimator.classes_[0], np.ndarray):
+            raise ValueError("Multiclass-multioutput estimators are not supported")
+        reduce_binary = len(estimator.classes_) == 2
+        pred_fun = getattr(estimator, "predict_proba", None)
+        if pred_fun is None:
+            raise ValueError("The classifier has no predict_proba() method.")
+    else:
+        raise ValueError("'estimator' must be a regressor or classifier.")
 
     # Use check_array only on lists and other non-array-likes / sparse. Do not
     # convert DataFrame into a NumPy array.
@@ -258,7 +262,11 @@ def h_statistic(
     for idx in feature_indices:
         pd_univariate.append(
             _calculate_pd_over_data(
-                estimator, X=X, feature_indices=[idx], sample_weight=sample_weight
+                pred_fun,
+                X=X,
+                feature_indices=[idx],
+                sample_weight=sample_weight,
+                reduce_binary=reduce_binary,
             )
         )
 
@@ -267,10 +275,11 @@ def h_statistic(
 
     for j, k in itertools.combinations(range(len(feature_indices)), 2):
         pd_bivariate = _calculate_pd_over_data(
-            estimator,
+            pred_fun,
             X=X,
             feature_indices=feature_indices[[j, k]],
             sample_weight=sample_weight,
+            reduce_binary=reduce_binary,
         )
         num.append(
             np.average(

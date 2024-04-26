@@ -28,17 +28,23 @@ class Deterministic(RegressorMixin):
 
 
 @pytest.mark.parametrize(
-    "est",
+    ["est", "is_additive"],
     (
-        LinearRegression(),
-        HistGradientBoostingRegressor(random_state=0, max_depth=1, max_iter=20),
+        [LinearRegression(), True],
+        [HistGradientBoostingRegressor(random_state=0, max_depth=1, max_iter=20), True],
+        [RandomForestRegressor(random_state=0, max_depth=4, n_estimators=20), False],
+        [HistGradientBoostingRegressor(random_state=0, max_iter=20), False],
     ),
 )
 @pytest.mark.parametrize("features", [None, [0, 1, 2]])
 @pytest.mark.parametrize("n_max", [500, 50])
 @pytest.mark.parametrize("sample_weight", [None, "ones"])
-def test_h_statistic_additive_regression(est, features, n_max, sample_weight):
-    """Checks that additive regressions get statistics of 0."""
+def test_h_statistic_regression(est, is_additive, features, n_max, sample_weight):
+    """Checks on regression.
+
+    Additive regression models should get statistics of 0, while non-additive
+    models should get a value > 0.
+    """
     N_FEAT = 4
     N = 200
     X, y = make_regression(n_samples=N, n_features=N_FEAT, random_state=0)
@@ -53,32 +59,10 @@ def test_h_statistic_additive_regression(est, features, n_max, sample_weight):
     expected_length = m * (m - 1) / 2
 
     assert result.h_squared_pairwise.shape == (expected_length,)
-    assert_allclose(result.h_squared_pairwise, 0)
-
-
-@pytest.mark.parametrize(
-    "est",
-    (
-        RandomForestRegressor(random_state=0, max_depth=4, n_estimators=20),
-        HistGradientBoostingRegressor(random_state=0, max_iter=20),
-    ),
-)
-@pytest.mark.parametrize("features", [None, [0, 1, 2]])
-@pytest.mark.parametrize("n_max", [500, 50])
-@pytest.mark.parametrize("sample_weight", [None, "ones"])
-def test_h_statistic_regression(est, features, n_max, sample_weight):
-    """Tests that models with interactions will produce (some) positive values."""
-    N_FEAT = 4
-    N = 200
-    X, y = make_regression(n_samples=N, n_features=N_FEAT, random_state=0)
-    w = np.ones(N) if sample_weight == "ones" else None
-
-    model = est.fit(X, y, sample_weight=w)
-    result = h_statistic(
-        model, X, features=features, sample_weight=w, n_max=n_max, random_state=1
-    )
-
-    assert any(result.h_squared_pairwise > 1e-5)
+    if is_additive:
+        assert_allclose(result.h_squared_pairwise, 0)
+    else:
+        assert any(result.h_squared_pairwise > 1e-5)
 
 
 def test_h_statistic_additive_classification():
@@ -105,6 +89,26 @@ def test_h_statistic_additive_classification():
 
     assert result.h_squared_pairwise.shape == (expected_length, N_CLASSES)
     assert_allclose(result.h_squared_pairwise, 0)
+
+
+def test_h_statistic_binary_classification_shape():
+    """Checks that 0 class is dropped from binary classification."""
+    N_FEAT = 4
+    X, y = make_classification(
+        n_samples=200,
+        n_features=N_FEAT,
+        n_informative=N_FEAT,
+        n_redundant=0,
+        n_classes=2,
+        random_state=0,
+    )
+    model = RandomForestClassifier(n_estimators=20, random_state=0, max_depth=3)
+    model.fit(X, y)
+    result = h_statistic(model, X, random_state=1)
+
+    expected_length = N_FEAT * (N_FEAT - 1) / 2
+
+    assert result.h_squared_pairwise.shape == (expected_length,)
 
 
 @pytest.mark.parametrize("sample_weight", [None, "ones"])
