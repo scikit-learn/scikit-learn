@@ -1071,10 +1071,8 @@ def _multiclass_clf_curve(y_true, y_score, labels=None, sample_weight=None):
     if labels is None:  # Infer labels from y_true
         if y_true.ndim == 2:
             labels = np.arange(y_true.shape[1])
-        elif y_true.ndim == 1:
+        else:  # y_true.ndim == 1:
             labels = np.sort(np.unique(y_true)).tolist()
-        else:
-            raise ValueError("y_true must have 1 or 2 dimensions.")
 
     if len(labels) != y_score.shape[1]:
         raise ValueError(
@@ -1095,7 +1093,7 @@ def _multiclass_clf_curve(y_true, y_score, labels=None, sample_weight=None):
             raise ValueError("y_true should be 1-d or one hot encoded 2-d matrix")
 
     # Special case if we are actually sent a binary case, in which case
-    # `label_binarize` return a 1-d array
+    # `label_binarize` return a 2-d array with a single column
     if y_true.shape[1] == 1:
         y_true = np.concatenate([1 - y_true, y_true], axis=1)
 
@@ -1375,12 +1373,10 @@ def precision_recall_curve(
             precision, recall = _macro_averaged_precision_recall_curve(
                 tps, fps, pos_instances
             )
-        elif average == "weighted":
+        else:  # average == "weighted"
             precision, recall = _weighted_averaged_precision_recall_curve(
                 tps, fps, pos_instances
             )
-        else:
-            raise ValueError("average should be one of 'micro', 'macro', or 'weighted'")
 
     # reverse the outputs so recall is decreasing
     sl = slice(None, None, -1)

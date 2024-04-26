@@ -28,6 +28,7 @@ from sklearn.metrics._ranking import (
     _binary_clf_curve,
     _dcg_sample_scores,
     _macro_averaged_precision_recall_curve,
+    _max_score_1d,
     _micro_averaged_precision_recall_curve,
     _multiclass_clf_curve,
     _ndcg_sample_scores,
@@ -903,6 +904,17 @@ def test_binary_clf_curve_zero_sample_weight(curve_func):
         assert_allclose(arr_1, arr_2)
 
 
+def test_max_score_1d():
+    y = _max_score_1d([0, 1, 2])
+    assert_allclose(y, [0, 1, 2])
+
+    y = _max_score_1d([[0, 1], [2, 1]])
+    assert_allclose(y, [1, 2])
+
+    with pytest.raises(ValueError, match="y_score must have 1 or 2 dimensions."):
+        _max_score_1d([[[1]]])
+
+
 @pytest.mark.parametrize("labels", [None, ["a", "b", "c"]])
 @pytest.mark.parametrize("sample_weight", [None, [1, 1, 1, 1]])
 @pytest.mark.parametrize("onehot_labels", [False, True])
@@ -936,6 +948,46 @@ def test_multiclass_clf_curve(labels, sample_weight, onehot_labels):
 
     # Check that fps[-1, :] contains the total number of negatives
     assert_allclose(fps[-1, :], [1, 0, 0])
+
+
+def test_multiclass_clf_curve_binary():
+    """
+    Label binarize responds with 1-d array in the binary case, which could
+    break the _multiclass_clf_curve function.
+    """
+    y_true = [0, 1]
+    y_score = [
+        [1.0, 0.0],
+        [0.0, 1.0],
+    ]
+    fps, tps, ps, thresholds = _multiclass_clf_curve(y_true, y_score)
+    assert_allclose(thresholds, [1])
+    assert_allclose(ps, [1, 1])  # Class counts
+    assert_allclose(fps, [[0, 0]])  # No false positives
+    assert_allclose(tps, [[1, 1]])  # All true positives
+
+
+def test_multiclass_clf_curve_raises():
+    # Check number of labels match
+    y_true = [0]
+    y_score = [[0.1, 0.2, 0.7]]
+    labels = [0, 1]
+    with pytest.raises(
+        ValueError,
+        match=(
+            "Number of observed or provided labels does not equal the "
+            "number of columns in 'y_score'"
+        ),
+    ):
+        _multiclass_clf_curve(y_true, y_score, labels=labels)
+
+    # Check y_true is one-hot
+    y_true = [[1, 1], [0, 0]]
+    y_score = [[0.3, 0.7], [0.5, 0.5]]
+    with pytest.raises(
+        ValueError, match="y_true should be 1-d or one hot encoded 2-d matrix"
+    ):
+        _multiclass_clf_curve(y_true, y_score)
 
 
 @pytest.mark.parametrize("labels", [None, ["a", "b", "c"]])
@@ -996,6 +1048,14 @@ def test_clf_curve_overlap(global_random_seed):
         assert_allclose(fps, fps_[:, i])
         assert_allclose(tps, tps_[:, i])
         assert_allclose(thresholds, thresholds_)
+
+
+def test_micro_average_no_positives():
+    tps = [[0, 0, 0], [0, 0, 0]]
+    fps = [[0, 0, 0], [0, 0, 0]]
+    pos_instances = [0, 0, 0]
+    with pytest.raises(ValueError, match="No positive instances provided"):
+        _micro_averaged_precision_recall_curve(tps, fps, pos_instances)
 
 
 def test_micro_averaged_pr_curve_helper():
@@ -1362,6 +1422,16 @@ def test_multiclass_precision_recall(drop_intermediate, sample_weight, average):
     assert recall[-1] == 0
     if average == "micro":
         assert_allclose(recall, np.linspace(1.0, 0.0, n_thresholds + 1))
+
+
+def test_multiclass_precision_recall_unsupported_target_type():
+    y_true = [0.1, 0.2, 0.3]
+    y_score = [
+        [0.1, 0.0, 0.0],
+    ]
+    err_msg = "Cannot determine if this is a binary or multiclass problem"
+    with pytest.raises(ValueError, match=err_msg):
+        precision_recall_curve(y_true, y_score)
 
 
 def test_average_precision_constant_values():
