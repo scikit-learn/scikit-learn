@@ -343,7 +343,7 @@ def _get_fc_counts(X, y):
     fc_count : array, shape = (n_features, n_classes)
     total: int
     """
-    X = check_array(X, accept_sparse=["csr", "coo"])
+    X = check_array(X, accept_sparse=["csc"])
     if np.any((X.data if issparse(X) else X) < 0):
         raise ValueError("Input X must be non-negative.")
 
@@ -351,10 +351,10 @@ def _get_fc_counts(X, y):
     if Y.shape[1] == 1:
         Y = np.append(1 - Y, Y, axis=1)
 
-    fc_count = safe_sparse_dot(Y.T, X)  # n_classes * n_features
-    total = fc_count.sum(axis=0).reshape(1, -1).sum()
     f_count = X.sum(axis=0).reshape(1, -1)
     c_count = safe_sparse_dot(Y.T, X.sum(axis=1)).reshape(-1, 1)
+    fc_count = safe_sparse_dot(Y.T, X)  # n_classes * n_features
+    total = fc_count.sum(axis=0).reshape(1, -1).sum()
 
     return f_count, c_count, fc_count, total
 

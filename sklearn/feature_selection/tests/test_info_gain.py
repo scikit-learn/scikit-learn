@@ -7,7 +7,7 @@ from numpy.testing import assert_almost_equal, assert_equal
 from scipy.sparse import coo_matrix, csr_matrix
 
 from sklearn.feature_selection import SelectKBest, info_gain, info_gain_ratio
-from sklearn.utils.testing import assert_raises_regex
+from sklearn.utils._testing import assert_raises_regex
 
 # Feature 0 is highly informative for class 1;
 # feature 1 is the same everywhere;
@@ -19,16 +19,14 @@ y = [0, 1, 1, 0]
 def test_info_gain_csr():
     # Test IG feature extraction
 
-    Xsp = csr_matrix(X, dtype=np.float)
+    Xsp = csr_matrix(X, dtype=float)
     scores = SelectKBest(info_gain, k=2).fit(Xsp, y)
     assert_equal(sorted(scores.get_support(indices=True)), [0, 2])
     Xtrans = scores.transform(Xsp)
     assert_equal(Xtrans.shape, [Xsp.shape[0], 2])
 
-    # == doesn't work on scipy.sparse matrices
-    Xtrans = Xtrans.toarray()
-    Xtrans2 = SelectKBest(info_gain, k=2).fit_transform(Xsp, y).toarray()
-    assert_equal(Xtrans, Xtrans2)
+    Xtrans2 = SelectKBest(info_gain, k=2).fit_transform(Xsp, y)
+    assert_equal(Xtrans.toarray(), Xtrans2.toarray())
 
 
 def test_info_gain_coo():
@@ -41,7 +39,6 @@ def test_info_gain_coo():
 
 def test_info_gain_dense():
     # Check IG works with a dense matrix
-
     Xden = np.array(X)
     scores = SelectKBest(info_gain, k=2).fit(Xden, y)
     assert_equal(sorted(scores.get_support(indices=True)), [0, 2])
@@ -111,8 +108,7 @@ def test_expected_value_info_gain():
 
     # Expected global max score for f1: max (0.25614, 0.25614)
 
-    Xsp = csr_matrix(X, dtype=np.float)
-    scores, probs = info_gain(Xsp, y)
+    scores, probs = info_gain(X, y)
     assert_almost_equal(scores[0], 0.25614, decimal=5)
 
 
@@ -120,25 +116,32 @@ def test_expected_value_info_gain_ratio():
     # Check calculation of an expected value of IGR
 
     # two instances, three features, two classes
-    X, y = [[1, 5, 9], [9, 5, 1]], [0, 1]
+    X, y = [[11, 5, 9], [9, 5, 1]], [0, 1]
 
-    # Entropy of c1: -0.5 * log(0.5) = 0.5
-    # Entropy of c2: -0.5 * log(0.5) = 0.5
+    # Counts:
+    # f1: 20
+    # f2: 10
+    # f3: 10
+    # c1: 25
+    # c2: 15
+    # total: 40
+
+    # Entropy of c1: 0.67807191 * log(0.625) = 0.42379
+    # Entropy of c2: 1.4150375 * log(0.375) = 0.53063
 
     # Class-specific IG scores, calculated as in
     # `test_expected_value_info_gain`:
     # IG (f1, c1),
-    # -0.07739 + 0.2544 + 0.22652 + -0.14739 = 0.25614
+    # -0.07739 + 0.2544 + 0.22652 + -0.14739 = 0.0174
     # Normalize:
-    # 0.25614 / (0.5 + 0.5) = 0.25614
+    # 0.0174 / (0.42379 + 0.53063) = 0.01823
 
     # IG (f1, c2):
-    # -0.07739 + 0.2544 + 0.22652 + -0.14739 = 0.25614
+    # -0.07739 + 0.2544 + 0.22652 + -0.14739 = 0.0174
     # Normalize:
-    # 0.25614 / (0.5 + 0.5) = 0.25614
+    # 0.0174 / (0.53063 + 0.42379) = 0.01823
 
-    # Expected global max score for f1: max (0.25614, 0.25614)
+    # Expected global max score for f1: max (0.01823, 0.01823)
 
-    Xsp = csr_matrix(X, dtype=np.float)
-    scores, probs = info_gain_ratio(Xsp, y)
-    assert_almost_equal(scores[0], 0.25614, decimal=5)
+    scores, probs = info_gain_ratio(X, y)
+    assert_almost_equal(scores[0], 0.01823, decimal=5)
