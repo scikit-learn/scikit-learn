@@ -3,91 +3,160 @@
 #          Lars Buitinck
 # License: BSD 3 clause
 
-import pickle
 import numpy as np
-import math
+import pytest
 
-from sklearn.utils.testing import assert_equal
-from sklearn.utils.testing import assert_false
-from sklearn.utils.testing import assert_true
-from sklearn.utils.testing import assert_almost_equal
-from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_array_almost_equal
-
-from sklearn.utils.fixes import divide, expit
-from sklearn.utils.fixes import astype
-from sklearn.utils.fixes import MaskedArray
-from sklearn.utils.fixes import norm
+from sklearn.utils._testing import assert_array_equal
+from sklearn.utils.fixes import _object_dtype_isnan, _smallest_admissible_index_dtype
 
 
-def test_expit():
-    # Check numerical stability of expit (logistic function).
+@pytest.mark.parametrize("dtype, val", ([object, 1], [object, "a"], [float, 1]))
+def test_object_dtype_isnan(dtype, val):
+    X = np.array([[val, np.nan], [np.nan, val]], dtype=dtype)
 
-    # Simulate our previous Cython implementation, based on
-    #http://fa.bianp.net/blog/2013/numerical-optimizers-for-logistic-regression
-    assert_almost_equal(expit(1000.), 1. / (1. + np.exp(-1000.)), decimal=16)
-    assert_almost_equal(expit(-1000.), np.exp(-1000.) / (1. + np.exp(-1000.)),
-                        decimal=16)
+    expected_mask = np.array([[False, True], [True, False]])
 
-    x = np.arange(10)
-    out = np.zeros_like(x, dtype=np.float32)
-    assert_array_almost_equal(expit(x), expit(x, out=out))
+    mask = _object_dtype_isnan(X)
+
+    assert_array_equal(mask, expected_mask)
 
 
-def test_divide():
-    assert_equal(divide(.6, 1), .600000000000)
+@pytest.mark.parametrize(
+    "params, expected_dtype",
+    [
+        ({}, np.int32),  # default behaviour
+        ({"maxval": np.iinfo(np.int32).max}, np.int32),
+        ({"maxval": np.iinfo(np.int32).max + 1}, np.int64),
+    ],
+)
+def test_smallest_admissible_index_dtype_max_val(params, expected_dtype):
+    """Check the behaviour of `smallest_admissible_index_dtype` depending only on the
+    `max_val` parameter.
+    """
+    assert _smallest_admissible_index_dtype(**params) == expected_dtype
 
 
-def test_astype_copy_memory():
-    a_int32 = np.ones(3, np.int32)
+@pytest.mark.parametrize(
+    "params, expected_dtype",
+    [
+        # Arrays dtype is int64 and thus should not be downcasted to int32 without
+        # checking the content of providing maxval.
+        ({"arrays": np.array([1, 2], dtype=np.int64)}, np.int64),
+        # One of the array is int64 and should not be downcasted to int32
+        # for the same reasons.
+        (
+            {
+                "arrays": (
+                    np.array([1, 2], dtype=np.int32),
+                    np.array([1, 2], dtype=np.int64),
+                )
+            },
+            np.int64,
+        ),
+        # Both arrays are already int32: we can just keep this dtype.
+        (
+            {
+                "arrays": (
+                    np.array([1, 2], dtype=np.int32),
+                    np.array([1, 2], dtype=np.int32),
+                )
+            },
+            np.int32,
+        ),
+        # Arrays should be upcasted to at least int32 precision.
+        ({"arrays": np.array([1, 2], dtype=np.int8)}, np.int32),
+        # Check that `maxval` takes precedence over the arrays and thus upcast to
+        # int64.
+        (
+            {
+                "arrays": np.array([1, 2], dtype=np.int32),
+                "maxval": np.iinfo(np.int32).max + 1,
+            },
+            np.int64,
+        ),
+    ],
+)
+def test_smallest_admissible_index_dtype_without_checking_contents(
+    params, expected_dtype
+):
+    """Check the behaviour of `smallest_admissible_index_dtype` using the passed
+    arrays but without checking the contents of the arrays.
+    """
+    assert _smallest_admissible_index_dtype(**params) == expected_dtype
 
-    # Check that dtype conversion works
-    b_float32 = astype(a_int32, dtype=np.float32, copy=False)
-    assert_equal(b_float32.dtype, np.float32)
 
-    # Changing dtype forces a copy even if copy=False
-    assert_false(np.may_share_memory(b_float32, a_int32))
+@pytest.mark.parametrize(
+    "params, expected_dtype",
+    [
+        # empty arrays should always be converted to int32 indices
+        (
+            {
+                "arrays": (np.array([], dtype=np.int64), np.array([], dtype=np.int64)),
+                "check_contents": True,
+            },
+            np.int32,
+        ),
+        # arrays respecting np.iinfo(np.int32).min < x < np.iinfo(np.int32).max should
+        # be converted to int32,
+        (
+            {"arrays": np.array([1], dtype=np.int64), "check_contents": True},
+            np.int32,
+        ),
+        # otherwise, it should be converted to int64. We need to create a uint32
+        # arrays to accommodate a value > np.iinfo(np.int32).max
+        (
+            {
+                "arrays": np.array([np.iinfo(np.int32).max + 1], dtype=np.uint32),
+                "check_contents": True,
+            },
+            np.int64,
+        ),
+        # maxval should take precedence over the arrays contents and thus upcast to
+        # int64.
+        (
+            {
+                "arrays": np.array([1], dtype=np.int32),
+                "check_contents": True,
+                "maxval": np.iinfo(np.int32).max + 1,
+            },
+            np.int64,
+        ),
+        # when maxval is small, but check_contents is True and the contents
+        # require np.int64, we still require np.int64 indexing in the end.
+        (
+            {
+                "arrays": np.array([np.iinfo(np.int32).max + 1], dtype=np.uint32),
+                "check_contents": True,
+                "maxval": 1,
+            },
+            np.int64,
+        ),
+    ],
+)
+def test_smallest_admissible_index_dtype_by_checking_contents(params, expected_dtype):
+    """Check the behaviour of `smallest_admissible_index_dtype` using the dtype of the
+    arrays but as well the contents.
+    """
+    assert _smallest_admissible_index_dtype(**params) == expected_dtype
 
-    # Check that copy can be skipped if requested dtype match
-    c_int32 = astype(a_int32, dtype=np.int32, copy=False)
-    assert_true(c_int32 is a_int32)
 
-    # Check that copy can be forced, and is the case by default:
-    d_int32 = astype(a_int32, dtype=np.int32, copy=True)
-    assert_false(np.may_share_memory(d_int32, a_int32))
-
-    e_int32 = astype(a_int32, dtype=np.int32)
-    assert_false(np.may_share_memory(e_int32, a_int32))
-
-
-def test_masked_array_obj_dtype_pickleable():
-    marr = MaskedArray([1, None, 'a'], dtype=object)
-
-    for mask in (True, False, [0, 1, 0]):
-        marr.mask = mask
-        marr_pickled = pickle.loads(pickle.dumps(marr))
-        assert_array_equal(marr.data, marr_pickled.data)
-        assert_array_equal(marr.mask, marr_pickled.mask)
-
-
-def test_norm():
-    X = np.array([[-2, 4, 5],
-                  [1, 3, -4],
-                  [0, 0, 8],
-                  [0, 0, 0]]).astype(float)
-
-    # Test various axis and order
-    assert_equal(math.sqrt(135), norm(X))
-    assert_array_equal(
-        np.array([math.sqrt(5), math.sqrt(25), math.sqrt(105)]),
-        norm(X, axis=0)
-    )
-    assert_array_equal(np.array([3, 7, 17]), norm(X, axis=0, ord=1))
-    assert_array_equal(np.array([2, 4, 8]), norm(X, axis=0, ord=np.inf))
-    assert_array_equal(np.array([0, 0, 0]), norm(X, axis=0, ord=-np.inf))
-    assert_array_equal(np.array([11, 8, 8, 0]), norm(X, axis=1, ord=1))
-
-    # Test shapes
-    assert_equal((), norm(X).shape)
-    assert_equal((3,), norm(X, axis=0).shape)
-    assert_equal((4,), norm(X, axis=1).shape)
+@pytest.mark.parametrize(
+    "params, err_type, err_msg",
+    [
+        (
+            {"maxval": np.iinfo(np.int64).max + 1},
+            ValueError,
+            "is to large to be represented as np.int64",
+        ),
+        (
+            {"arrays": np.array([1, 2], dtype=np.float64)},
+            ValueError,
+            "Array dtype float64 is not supported",
+        ),
+        ({"arrays": [1, 2]}, TypeError, "Arrays should be of type np.ndarray"),
+    ],
+)
+def test_smallest_admissible_index_dtype_error(params, err_type, err_msg):
+    """Check that we raise the proper error message."""
+    with pytest.raises(err_type, match=err_msg):
+        _smallest_admissible_index_dtype(**params)

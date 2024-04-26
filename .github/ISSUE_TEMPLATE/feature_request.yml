@@ -1,0 +1,25 @@
+name: Feature request
+description: Suggest a new algorithm, enhancement to an existing algorithm, etc.
+labels: ['New Feature', 'Needs Triage']
+
+body:
+- type: markdown
+  attributes:
+    value: >
+      #### If you want to propose a new algorithm, please refer first to the [scikit-learn inclusion criterion](https://scikit-learn.org/stable/faq.html#what-are-the-inclusion-criteria-for-new-algorithms).
+- type: textarea
+  attributes:
+    label: Describe the workflow you want to enable
+  validations:
+    required: true
+- type: textarea
+  attributes:
+    label: Describe your proposed solution
+  validations:
+    required: true
+- type: textarea
+  attributes:
+    label: Describe alternatives you've considered, if relevant
+- type: textarea
+  attributes:
+    label: Additional context

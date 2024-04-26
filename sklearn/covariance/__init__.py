@@ -6,29 +6,39 @@ Covariance estimation is closely related to the theory of Gaussian Graphical
 Models.
 """
 
-from .empirical_covariance_ import empirical_covariance, EmpiricalCovariance, \
-    log_likelihood
-from .shrunk_covariance_ import shrunk_covariance, ShrunkCovariance, \
-    ledoit_wolf, ledoit_wolf_shrinkage, \
-    LedoitWolf, oas, OAS
-from .robust_covariance import fast_mcd, MinCovDet
-from .graph_lasso_ import graph_lasso, GraphLasso, GraphLassoCV
-from .outlier_detection import EllipticEnvelope
+from ._elliptic_envelope import EllipticEnvelope
+from ._empirical_covariance import (
+    EmpiricalCovariance,
+    empirical_covariance,
+    log_likelihood,
+)
+from ._graph_lasso import GraphicalLasso, GraphicalLassoCV, graphical_lasso
+from ._robust_covariance import MinCovDet, fast_mcd
+from ._shrunk_covariance import (
+    OAS,
+    LedoitWolf,
+    ShrunkCovariance,
+    ledoit_wolf,
+    ledoit_wolf_shrinkage,
+    oas,
+    shrunk_covariance,
+)
 
-
-__all__ = ['EllipticEnvelope',
-           'EmpiricalCovariance',
-           'GraphLasso',
-           'GraphLassoCV',
-           'LedoitWolf',
-           'MinCovDet',
-           'OAS',
-           'ShrunkCovariance',
-           'empirical_covariance',
-           'fast_mcd',
-           'graph_lasso',
-           'ledoit_wolf',
-           'ledoit_wolf_shrinkage',
-           'log_likelihood',
-           'oas',
-           'shrunk_covariance']
+__all__ = [
+    "EllipticEnvelope",
+    "EmpiricalCovariance",
+    "GraphicalLasso",
+    "GraphicalLassoCV",
+    "LedoitWolf",
+    "MinCovDet",
+    "OAS",
+    "ShrunkCovariance",
+    "empirical_covariance",
+    "fast_mcd",
+    "graphical_lasso",
+    "ledoit_wolf",
+    "ledoit_wolf_shrinkage",
+    "log_likelihood",
+    "oas",
+    "shrunk_covariance",
+]

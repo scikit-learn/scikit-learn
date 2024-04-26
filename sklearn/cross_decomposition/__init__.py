@@ -1,2 +1,3 @@
-from .pls_ import *
-from .cca_ import *
+from ._pls import CCA, PLSSVD, PLSCanonical, PLSRegression
+
+__all__ = ["PLSCanonical", "PLSRegression", "PLSSVD", "CCA"]

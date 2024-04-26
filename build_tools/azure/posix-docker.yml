@@ -1,0 +1,133 @@
+parameters:
+  name: ''
+  vmImage: ''
+  matrix: []
+  dependsOn: []
+  condition: ne(variables['Build.Reason'], 'Schedule')
+
+jobs:
+- job: ${{ parameters.name }}
+  dependsOn: ${{ parameters.dependsOn }}
+  condition: ${{ parameters.condition }}
+  timeoutInMinutes: 120
+  pool:
+    vmImage: ${{ parameters.vmImage }}
+  variables:
+    VIRTUALENV: 'testvenv'
+    TEST_DIR: '$(Agent.WorkFolder)/tmp_folder'
+    JUNITXML: 'test-data.xml'
+    SKLEARN_SKIP_NETWORK_TESTS: '1'
+    PYTEST_XDIST_VERSION: 'latest'
+    COVERAGE: 'false'
+    # Set in azure-pipelines.yml
+    DISTRIB: ''
+    DOCKER_CONTAINER: ''
+    CREATE_ISSUE_ON_TRACKER: 'true'
+    CCACHE_DIR: $(Pipeline.Workspace)/ccache
+    CCACHE_COMPRESS: '1'
+  strategy:
+    matrix:
+      ${{ insert }}: ${{ parameters.matrix }}
+
+  steps:
+    - task: UsePythonVersion@0
+      inputs:
+        versionSpec: '3.9'
+        addToPath: false
+      name: pyTools
+      displayName: Select python version to run CI python scripts
+    - bash: $(pyTools.pythonLocation)/bin/python build_tools/azure/get_selected_tests.py
+      displayName: Check selected tests for all random seeds
+      condition: eq(variables['Build.Reason'], 'PullRequest')
+    - task: Cache@2
+      inputs:
+        key: '"ccache-v1" | "$(Agent.JobName)" | "$(Build.BuildNumber)"'
+        restoreKeys: |
+          "ccache-v1" | "$(Agent.JobName)"
+        path: $(CCACHE_DIR)
+      displayName: ccache
+      continueOnError: true
+    - script: >
+        mkdir -p $CCACHE_DIR
+    # Container is detached and sleeping, allowing steps to run commands
+    # in the container. The TEST_DIR is mapped allowing the host to access
+    # the JUNITXML file
+    - script: >
+        docker container run --rm
+        --volume $TEST_DIR:/temp_dir
+        --volume $BUILD_REPOSITORY_LOCALPATH:/repo_localpath
+        --volume $PWD:/io
+        --volume $CCACHE_DIR:/ccache
+        -w /io
+        --detach
+        --name skcontainer
+        -e BUILD_SOURCESDIRECTORY=/io
+        -e TEST_DIR=/temp_dir
+        -e CCACHE_DIR=/ccache
+        -e BUILD_REPOSITORY_LOCALPATH=/repo_localpath
+        -e COVERAGE
+        -e DISTRIB
+        -e LOCK_FILE
+        -e JUNITXML
+        -e VIRTUALENV
+        -e PYTEST_XDIST_VERSION
+        -e SKLEARN_SKIP_NETWORK_TESTS
+        -e SELECTED_TESTS
+        -e CCACHE_COMPRESS
+        -e BUILD_SOURCEVERSIONMESSAGE
+        -e BUILD_REASON
+        $DOCKER_CONTAINER
+        sleep 1000000
+      displayName: 'Start container'
+    - script: >
+        docker exec skcontainer ./build_tools/azure/install.sh
+      displayName: 'Install'
+    - script: >
+        docker exec skcontainer ./build_tools/azure/test_script.sh
+      displayName: 'Test Library'
+    - script: >
+        docker exec skcontainer ./build_tools/azure/combine_coverage_reports.sh
+      condition: and(succeeded(), eq(variables['COVERAGE'], 'true'),
+                     eq(variables['SELECTED_TESTS'], ''))
+      displayName: 'Combine coverage'
+    - task: PublishTestResults@2
+      inputs:
+        testResultsFiles: '$(TEST_DIR)/$(JUNITXML)'
+        testRunTitle: ${{ format('{0}-$(Agent.JobName)', parameters.name) }}
+      displayName: 'Publish Test Results'
+      condition: succeededOrFailed()
+    - script: >
+        docker container stop skcontainer
+      displayName: 'Stop container'
+      condition: always()
+    - bash: |
+        set -ex
+        if [[ $(BOT_GITHUB_TOKEN) == "" ]]; then
+          echo "GitHub Token is not set. Issue tracker will not be updated."
+          exit
+        fi
+
+        LINK_TO_RUN="https://dev.azure.com/$BUILD_REPOSITORY_NAME/_build/results?buildId=$BUILD_BUILDID&view=logs&j=$SYSTEM_JOBID"
+        CI_NAME="$SYSTEM_JOBIDENTIFIER"
+        ISSUE_REPO="$BUILD_REPOSITORY_NAME"
+
+        $(pyTools.pythonLocation)/bin/pip install defusedxml PyGithub
+        $(pyTools.pythonLocation)/bin/python maint_tools/update_tracking_issue.py \
+          $(BOT_GITHUB_TOKEN) \
+          $CI_NAME \
+          $ISSUE_REPO \
+          $LINK_TO_RUN \
+          --junit-file $JUNIT_FILE \
+          --auto-close false
+      displayName: 'Update issue tracker'
+      env:
+        JUNIT_FILE: $(TEST_DIR)/$(JUNITXML)
+      condition: and(succeededOrFailed(), eq(variables['CREATE_ISSUE_ON_TRACKER'], 'true'),
+                     eq(variables['Build.Reason'], 'Schedule'))
+    - bash: bash build_tools/azure/upload_codecov.sh
+      condition: and(succeeded(), eq(variables['COVERAGE'], 'true'),
+                     eq(variables['SELECTED_TESTS'], ''))
+      displayName: 'Upload To Codecov'
+      retryCountOnTaskFailure: 5
+      env:
+        CODECOV_TOKEN: $(CODECOV_TOKEN)

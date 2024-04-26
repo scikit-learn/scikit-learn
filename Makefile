@@ -4,16 +4,11 @@
 
 PYTHON ?= python
 CYTHON ?= cython
-NOSETESTS ?= nosetests
+PYTEST ?= pytest
 CTAGS ?= ctags
 
 # skip doctests on 32bit python
 BITS := $(shell python -c 'import struct; print(8 * struct.calcsize("P"))')
-
-ifeq ($(BITS),32)
-  NOSETESTS:=$(NOSETESTS) -c setup32.cfg
-endif
-
 
 all: clean inplace test
 
@@ -28,20 +23,29 @@ in: inplace # just a shortcut
 inplace:
 	$(PYTHON) setup.py build_ext -i
 
+dev-meson:
+	pip install --verbose --no-build-isolation --editable . --config-settings editable-verbose=true
+
+clean-meson:
+	pip uninstall -y scikit-learn
+
 test-code: in
-	$(NOSETESTS) -s -v sklearn
+	$(PYTEST) --showlocals -v sklearn --durations=20
 test-sphinxext:
-	$(NOSETESTS) -s -v doc/sphinxext/
+	$(PYTEST) --showlocals -v doc/sphinxext/
 test-doc:
 ifeq ($(BITS),64)
-	$(NOSETESTS) -s -v doc/*.rst doc/modules/ doc/datasets/ \
-	doc/developers doc/tutorial/basic doc/tutorial/statistical_inference \
-	doc/tutorial/text_analytics
+	$(PYTEST) $(shell find doc -name '*.rst' | sort)
 endif
+test-code-parallel: in
+	$(PYTEST) -n auto --showlocals -v sklearn --durations=20
 
 test-coverage:
 	rm -rf coverage .coverage
-	$(NOSETESTS) -s -v --with-coverage sklearn
+	$(PYTEST) sklearn --showlocals -v --cov=sklearn --cov-report=html:coverage
+test-coverage-parallel:
+	rm -rf coverage .coverage .coverage.*
+	$(PYTEST) sklearn -n auto --showlocals -v --cov=sklearn --cov-report=html:coverage
 
 test: test-code test-sphinxext test-doc
 
@@ -63,8 +67,4 @@ doc-noplot: inplace
 	$(MAKE) -C doc html-noplot
 
 code-analysis:
-	flake8 sklearn | grep -v __init__ | grep -v external
-	pylint -E -i y sklearn/ -d E1103,E0611,E1101
-
-flake8-diff:
-	./build_tools/travis/flake8_diff.sh
+	build_tools/linting.sh

@@ -1,8 +1,5 @@
 """
-Graph utilities and algorithms
-
-Graphs are represented with their adjacency matrices, preferably using
-sparse matrices.
+The :mod:`sklearn.utils.graph` module includes graph utilities and algorithms.
 """
 
 # Authors: Aric Hagberg <hagberg@lanl.gov>
@@ -13,28 +10,41 @@ sparse matrices.
 import numpy as np
 from scipy import sparse
 
-from .validation import check_array
-from .graph_shortest_path import graph_shortest_path
+from ..metrics.pairwise import pairwise_distances
+from ._param_validation import Integral, Interval, validate_params
 
 
 ###############################################################################
 # Path and connected component analysis.
 # Code adapted from networkx
-
-def single_source_shortest_path_length(graph, source, cutoff=None):
-    """Return the shortest path length from source to all reachable nodes.
-
-    Returns a dictionary of shortest path lengths keyed by target.
+@validate_params(
+    {
+        "graph": ["array-like", "sparse matrix"],
+        "source": [Interval(Integral, 0, None, closed="left")],
+        "cutoff": [Interval(Integral, 0, None, closed="left"), None],
+    },
+    prefer_skip_nested_validation=True,
+)
+def single_source_shortest_path_length(graph, source, *, cutoff=None):
+    """Return the length of the shortest path from source to all reachable nodes.
 
     Parameters
     ----------
-    graph : sparse matrix or 2D array (preferably LIL matrix)
-        Adjacency matrix of the graph
-    source : node label
-       Starting node for path
-    cutoff : integer, optional
-        Depth to stop the search - only
-        paths of length <= cutoff are returned.
+    graph : {array-like, sparse matrix} of shape (n_nodes, n_nodes)
+        Adjacency matrix of the graph. Sparse matrix of format LIL is
+        preferred.
+
+    source : int
+       Start node for path.
+
+    cutoff : int, default=None
+        Depth to stop the search - only paths of length <= cutoff are returned.
+
+    Returns
+    -------
+    paths : dict
+        Reachable end nodes mapped to length of path from source,
+        i.e. `{end: path_length}`.
 
     Examples
     --------
@@ -42,27 +52,27 @@ def single_source_shortest_path_length(graph, source, cutoff=None):
     >>> import numpy as np
     >>> graph = np.array([[ 0, 1, 0, 0],
     ...                   [ 1, 0, 1, 0],
-    ...                   [ 0, 1, 0, 1],
-    ...                   [ 0, 0, 1, 0]])
-    >>> list(sorted(single_source_shortest_path_length(graph, 0).items()))
-    [(0, 0), (1, 1), (2, 2), (3, 3)]
+    ...                   [ 0, 1, 0, 0],
+    ...                   [ 0, 0, 0, 0]])
+    >>> single_source_shortest_path_length(graph, 0)
+    {0: 0, 1: 1, 2: 2}
     >>> graph = np.ones((6, 6))
-    >>> list(sorted(single_source_shortest_path_length(graph, 2).items()))
+    >>> sorted(single_source_shortest_path_length(graph, 2).items())
     [(0, 1), (1, 1), (2, 0), (3, 1), (4, 1), (5, 1)]
     """
-    if sparse.isspmatrix(graph):
+    if sparse.issparse(graph):
         graph = graph.tolil()
     else:
         graph = sparse.lil_matrix(graph)
-    seen = {}                   # level (number of hops) when seen in BFS
-    level = 0                   # the current level
-    next_level = [source]       # dict of nodes to check at next level
+    seen = {}  # level (number of hops) when seen in BFS
+    level = 0  # the current level
+    next_level = [source]  # dict of nodes to check at next level
     while next_level:
-        this_level = next_level     # advance to next level
-        next_level = set()          # and start a new list (fringe)
+        this_level = next_level  # advance to next level
+        next_level = set()  # and start a new list (fringe)
         for v in this_level:
             if v not in seen:
-                seen[v] = level     # set the level of vertex v
+                seen[v] = level  # set the level of vertex v
                 next_level.update(graph.rows[v])
         if cutoff is not None and cutoff <= level:
             break
@@ -70,115 +80,87 @@ def single_source_shortest_path_length(graph, source, cutoff=None):
     return seen  # return all path lengths as dictionary
 
 
-if hasattr(sparse, 'connected_components'):
-    connected_components = sparse.connected_components
-else:
-    from .sparsetools import connected_components
+def _fix_connected_components(
+    X,
+    graph,
+    n_connected_components,
+    component_labels,
+    mode="distance",
+    metric="euclidean",
+    **kwargs,
+):
+    """Add connections to sparse graph to connect unconnected components.
 
-
-###############################################################################
-# Graph laplacian
-def graph_laplacian(csgraph, normed=False, return_diag=False):
-    """ Return the Laplacian matrix of a directed graph.
-
-    For non-symmetric graphs the out-degree is used in the computation.
+    For each pair of unconnected components, compute all pairwise distances
+    from one component to the other, and add a connection on the closest pair
+    of samples. This is a hacky way to get a graph with a single connected
+    component, which is necessary for example to compute a shortest path
+    between all pairs of samples in the graph.
 
     Parameters
     ----------
-    csgraph : array_like or sparse matrix, 2 dimensions
-        compressed-sparse graph, with shape (N, N).
-    normed : bool, optional
-        If True, then compute normalized Laplacian.
-    return_diag : bool, optional
-        If True, then return diagonal as well as laplacian.
+    X : array of shape (n_samples, n_features) or (n_samples, n_samples)
+        Features to compute the pairwise distances. If `metric =
+        "precomputed"`, X is the matrix of pairwise distances.
+
+    graph : sparse matrix of shape (n_samples, n_samples)
+        Graph of connection between samples.
+
+    n_connected_components : int
+        Number of connected components, as computed by
+        `scipy.sparse.csgraph.connected_components`.
+
+    component_labels : array of shape (n_samples)
+        Labels of connected components, as computed by
+        `scipy.sparse.csgraph.connected_components`.
+
+    mode : {'connectivity', 'distance'}, default='distance'
+        Type of graph matrix: 'connectivity' corresponds to the connectivity
+        matrix with ones and zeros, and 'distance' corresponds to the distances
+        between neighbors according to the given metric.
+
+    metric : str
+        Metric used in `sklearn.metrics.pairwise.pairwise_distances`.
+
+    kwargs : kwargs
+        Keyword arguments passed to
+        `sklearn.metrics.pairwise.pairwise_distances`.
 
     Returns
     -------
-    lap : ndarray
-        The N x N laplacian matrix of graph.
-    diag : ndarray
-        The length-N diagonal of the laplacian matrix.
-        diag is returned only if return_diag is True.
-
-    Notes
-    -----
-    The Laplacian matrix of a graph is sometimes referred to as the
-    "Kirchoff matrix" or the "admittance matrix", and is useful in many
-    parts of spectral graph theory.  In particular, the eigen-decomposition
-    of the laplacian matrix can give insight into many properties of the graph.
-
-    For non-symmetric directed graphs, the laplacian is computed using the
-    out-degree of each node.
+    graph : sparse matrix of shape (n_samples, n_samples)
+        Graph of connection between samples, with a single connected component.
     """
-    if csgraph.ndim != 2 or csgraph.shape[0] != csgraph.shape[1]:
-        raise ValueError('csgraph must be a square matrix or array')
+    if metric == "precomputed" and sparse.issparse(X):
+        raise RuntimeError(
+            "_fix_connected_components with metric='precomputed' requires the "
+            "full distance matrix in X, and does not work with a sparse "
+            "neighbors graph."
+        )
 
-    if normed and (np.issubdtype(csgraph.dtype, np.int)
-                   or np.issubdtype(csgraph.dtype, np.uint)):
-        csgraph = check_array(csgraph, dtype=np.float64, accept_sparse=True)
+    for i in range(n_connected_components):
+        idx_i = np.flatnonzero(component_labels == i)
+        Xi = X[idx_i]
+        for j in range(i):
+            idx_j = np.flatnonzero(component_labels == j)
+            Xj = X[idx_j]
 
-    if sparse.isspmatrix(csgraph):
-        return _laplacian_sparse(csgraph, normed=normed,
-                                 return_diag=return_diag)
-    else:
-        return _laplacian_dense(csgraph, normed=normed,
-                                return_diag=return_diag)
+            if metric == "precomputed":
+                D = X[np.ix_(idx_i, idx_j)]
+            else:
+                D = pairwise_distances(Xi, Xj, metric=metric, **kwargs)
 
+            ii, jj = np.unravel_index(D.argmin(axis=None), D.shape)
+            if mode == "connectivity":
+                graph[idx_i[ii], idx_j[jj]] = 1
+                graph[idx_j[jj], idx_i[ii]] = 1
+            elif mode == "distance":
+                graph[idx_i[ii], idx_j[jj]] = D[ii, jj]
+                graph[idx_j[jj], idx_i[ii]] = D[ii, jj]
+            else:
+                raise ValueError(
+                    "Unknown mode=%r, should be one of ['connectivity', 'distance']."
+                    % mode
+                )
 
-def _laplacian_sparse(graph, normed=False, return_diag=False):
-    n_nodes = graph.shape[0]
-    if not graph.format == 'coo':
-        lap = (-graph).tocoo()
-    else:
-        lap = -graph.copy()
-    diag_mask = (lap.row == lap.col)
-    if not diag_mask.sum() == n_nodes:
-        # The sparsity pattern of the matrix has holes on the diagonal,
-        # we need to fix that
-        diag_idx = lap.row[diag_mask]
-        diagonal_holes = list(set(range(n_nodes)).difference(diag_idx))
-        new_data = np.concatenate([lap.data, np.ones(len(diagonal_holes))])
-        new_row = np.concatenate([lap.row, diagonal_holes])
-        new_col = np.concatenate([lap.col, diagonal_holes])
-        lap = sparse.coo_matrix((new_data, (new_row, new_col)),
-                                shape=lap.shape)
-        diag_mask = (lap.row == lap.col)
-
-    lap.data[diag_mask] = 0
-    w = -np.asarray(lap.sum(axis=1)).squeeze()
-    if normed:
-        w = np.sqrt(w)
-        w_zeros = (w == 0)
-        w[w_zeros] = 1
-        lap.data /= w[lap.row]
-        lap.data /= w[lap.col]
-        lap.data[diag_mask] = (1 - w_zeros[lap.row[diag_mask]]).astype(
-            lap.data.dtype)
-    else:
-        lap.data[diag_mask] = w[lap.row[diag_mask]]
-
-    if return_diag:
-        return lap, w
-    return lap
-
-
-def _laplacian_dense(graph, normed=False, return_diag=False):
-    n_nodes = graph.shape[0]
-    lap = -np.asarray(graph)  # minus sign leads to a copy
-
-    # set diagonal to zero
-    lap.flat[::n_nodes + 1] = 0
-    w = -lap.sum(axis=0)
-    if normed:
-        w = np.sqrt(w)
-        w_zeros = (w == 0)
-        w[w_zeros] = 1
-        lap /= w
-        lap /= w[:, np.newaxis]
-        lap.flat[::n_nodes + 1] = (1 - w_zeros).astype(lap.dtype)
-    else:
-        lap.flat[::n_nodes + 1] = w.astype(lap.dtype)
-
-    if return_diag:
-        return lap, w
-    return lap
+    return graph
