@@ -149,7 +149,7 @@ Changelog
 ..........................
 
 - |Fix| Fixed a regression in :class:`calibration.CalibratedClassifierCV` where
-  an error was wrongly raised with string targets. 
+  an error was wrongly raised with string targets.
   :pr:`28843` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
 :mod:`sklearn.cluster`
@@ -337,6 +337,10 @@ Changelog
 
 :mod:`sklearn.metrics`
 ......................
+
+- |Feature| :func:`metrics.precision_recall_curve` now works with multiclass predictions
+  and labels, with the possibility to specify the average strategy.
+  :pr:`28890` by :user:`Isac Arnekvist <isacarnekvist>`.
 
 - |Feature| :func:`metrics.pairwise_distances` accepts calculating pairwise distances
   for non-numeric arrays as well. This is supported through custom metrics only.
