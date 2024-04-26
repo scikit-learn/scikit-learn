@@ -1196,19 +1196,21 @@ def precision_recall_curve(
     Parameters
     ----------
     y_true : array-like of shape (n_samples,)
-        True binary labels. If labels are not either {-1, 1} or {0, 1}, then
-        pos_label should be explicitly given.
+        True labels. For binary classification, labels should be either {-1, 1}
+        or {0, 1}, or pos_label should be explicitly given.
 
     y_score : array-like of shape (n_samples,) or (n_samples, n_classes)
         Target scores that are either probability estimates or non-thresholded
         measure of decisions (as returned by `decision_function` on some
-        classifiers). For binary classification, y_score is assumed to be the
-        score of the positive class.
+        classifiers). For binary classification, y_score is assumed to be 1-d and
+        contain the score of the positive class. For multiclass classification,
+        y_score must be a 2D array with shape (n_samples, n_classes).
 
     pos_label : int, float, bool or str, default=None
         The label of the positive class.
         When ``pos_label=None``, if y_true is in {-1, 1} or {0, 1},
         ``pos_label`` is set to 1, otherwise an error will be raised.
+        Ignored if multiclass.
 
     average : {'micro', 'macro', 'weighted'}, default='macro'
         How to compute precisions and recall for the multiclass setting.
