@@ -510,6 +510,7 @@ class TunedThresholdClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstima
     <BLANKLINE>
     """
 
+    _required_parameters = ["estimator"]
     _parameter_constraints: dict = {
         "estimator": [
             HasMethods(["fit", "predict_proba"]),
