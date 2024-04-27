@@ -55,7 +55,30 @@ def _threshold_scores_to_class_labels(y_score, threshold, classes, pos_label):
 
 
 class _CurveScorer(_BaseScorer):
-    """Scorer taking a continuous response and output a score for each threshold."""
+    """Scorer taking a continuous response and output a score for each threshold.
+
+    Parameters
+    ----------
+    score_func : callable
+        The score function to use. It will be called as
+        `score_func(y_true, y_pred, **kwargs)`.
+
+    sign : int
+        Either 1 or -1 to returns the score with `sign * score_func(estimator, X, y)`.
+        Thus, `sign` defined if higher scores are better or worse.
+
+    n_thresholds : int or array-like
+        Related to the number of decision thresholds for which we want to compute the
+        score. If an integer, it will be used to generate `n_thresholds` thresholds
+        uniformly distributed between the minimum and maximum predicted scores. If an
+        array-like, it will be used as the thresholds.
+
+    kwargs : dict
+        Additional parameters to pass to the score function.
+
+    response_method : str
+        The method to call on the estimator to get the response values.
+    """
 
     def __init__(self, score_func, sign, kwargs, n_thresholds, response_method):
         super().__init__(
@@ -103,6 +126,10 @@ class _CurveScorer(_BaseScorer):
 
         Parameters
         ----------
+        method_caller : callable
+            Returns predictions given an estimator, method name, and other
+            arguments, potentially caching results.
+
         estimator : object
             Trained estimator to use for scoring.
 
