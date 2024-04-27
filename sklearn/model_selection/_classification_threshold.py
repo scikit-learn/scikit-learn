@@ -141,7 +141,7 @@ class _CurveScorer(_BaseScorer):
             * self._score_func(
                 y_true,
                 _threshold_scores_to_class_labels(
-                    y_score, th, estimator.classes_, self._get_pos_label()
+                    y_score, th, estimator.classes_, pos_label
                 ),
                 **scoring_kwargs,
             )

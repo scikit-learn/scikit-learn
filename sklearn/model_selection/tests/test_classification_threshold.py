@@ -98,7 +98,7 @@ def test_curve_scorer_pos_label(global_random_seed):
         recall_score,
         sign=1,
         response_method="predict_proba",
-        n_thresholds=1_000,
+        n_thresholds=10,
         kwargs={"pos_label": 1},
     )
     scores_pos_label_1, thresholds_pos_label_1 = curve_scorer(estimator, X, y)
@@ -107,18 +107,21 @@ def test_curve_scorer_pos_label(global_random_seed):
         recall_score,
         sign=1,
         response_method="predict_proba",
-        n_thresholds=1_000,
+        n_thresholds=10,
         kwargs={"pos_label": 0},
     )
     scores_pos_label_0, thresholds_pos_label_0 = curve_scorer(estimator, X, y)
 
     # If `pos_label` is not forwarded to the curve_scorer, the thresholds will be equal.
     # Make sure that this is not the case.
-    # assert not (thresholds_pos_label_1 == thresholds_pos_label_0).all()
-    # Since we have an imbalanced problem, the thresholds should represent higher
-    # probabilities level when `pos_label=0` than with `pos_label=1`.
-    assert np.sum(thresholds_pos_label_1 < 0.15) > 2 / 3 * n_samples
-    assert np.sum(thresholds_pos_label_0 > 0.85) > 2 / 3 * n_samples
+    assert not (thresholds_pos_label_1 == thresholds_pos_label_0).all()
+    # The min-max range for the thresholds is defined by the probabilities of the
+    # `pos_label` class (the column of `predict_proba`).
+    y_pred = estimator.predict_proba(X)
+    assert thresholds_pos_label_0.min() == pytest.approx(y_pred.min(axis=0)[0])
+    assert thresholds_pos_label_0.max() == pytest.approx(y_pred.max(axis=0)[0])
+    assert thresholds_pos_label_1.min() == pytest.approx(y_pred.min(axis=0)[1])
+    assert thresholds_pos_label_1.max() == pytest.approx(y_pred.max(axis=0)[1])
 
     # The recall cannot be negative and `pos_label=1` should have a higher recall
     # since there is less samples to be considered.
