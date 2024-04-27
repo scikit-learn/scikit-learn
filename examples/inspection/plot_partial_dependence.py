@@ -36,9 +36,9 @@ bike sharing dataset. The example is inspired by [1]_.
        Individual Conditional Expectation". Journal of Computational and
        Graphical Statistics, 24(1): 44-65 <1309.6392>`
 
-.. [4] `Friedman, J. H. and Popescu, B. E. (2008).
+.. [4] Friedman, J. H. and Popescu, B. E. (2008).
        "Predictive Learning via Rule Ensembles".
-       The Annals of Applied Statistics, 2(3), 916-954, 2008.`_
+       The Annals of Applied Statistics, 2(3), 916-954, 2008.
 """
 
 # %%
