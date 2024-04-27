@@ -178,7 +178,6 @@ def test_fit_and_score_over_thresholds_curve_scorers(curve_scorer, score_method)
         train_idx=train_idx,
         val_idx=val_idx,
         curve_scorer=curve_scorer,
-        score_method=score_method,
         score_params={},
     )
 
@@ -194,7 +193,7 @@ def test_fit_and_score_over_thresholds_curve_scorers(curve_scorer, score_method)
 
 
 @pytest.mark.parametrize(
-    "curve_scorer, score_method, expected_score",
+    "curve_scorer, expected_score",
     [
         (
             _CurveScorer(
@@ -204,34 +203,27 @@ def test_fit_and_score_over_thresholds_curve_scorers(curve_scorer, score_method)
                 n_thresholds=2,
                 kwargs={},
             ),
-            "balanced_accuracy",
             [0.5, 1.0],
         ),
         (
             make_scorer(roc_curve, response_method="predict_proba"),
-            "max_tnr_at_tpr_constraint",
             [[0.0, 1.0], [1.0, 1.0]],
         ),
         (
             make_scorer(roc_curve, response_method="predict_proba"),
-            "max_tpr_at_tnr_constraint",
             [[0.0, 1.0], [1.0, 1.0]],
         ),
         (
             make_scorer(precision_recall_curve, response_method="predict_proba"),
-            "max_precision_at_recall_constraint",
             [[0.5, 1.0], [1.0, 1.0]],
         ),
         (
             make_scorer(precision_recall_curve, response_method="predict_proba"),
-            "max_recall_at_precision_constraint",
             [[0.5, 1.0], [1.0, 1.0]],
         ),
     ],
 )
-def test_fit_and_score_over_thresholds_prefit(
-    curve_scorer, score_method, expected_score
-):
+def test_fit_and_score_over_thresholds_prefit(curve_scorer, expected_score):
     """Check the behaviour with a prefit classifier."""
     X, y = make_classification(n_samples=100, random_state=0)
 
@@ -248,7 +240,6 @@ def test_fit_and_score_over_thresholds_prefit(
             train_idx=train_idx,
             val_idx=val_idx,
             curve_scorer=curve_scorer,
-            score_method=score_method,
             score_params={},
         )
 
@@ -265,7 +256,6 @@ def test_fit_and_score_over_thresholds_prefit(
         train_idx=train_idx,
         val_idx=val_idx,
         curve_scorer=curve_scorer,
-        score_method=score_method,
         score_params={},
     )
     assert_array_equal(np.argsort(thresholds), np.arange(len(thresholds)))
@@ -274,37 +264,22 @@ def test_fit_and_score_over_thresholds_prefit(
 
 @pytest.mark.usefixtures("enable_slep006")
 @pytest.mark.parametrize(
-    "curve_scorer, score_method",
+    "curve_scorer",
     [
-        (
-            _CurveScorer(
-                score_func=balanced_accuracy_score,
-                sign=1,
-                response_method="predict_proba",
-                n_thresholds=10,
-                kwargs={},
-            ),
-            "balanced_accuracy",
+        _CurveScorer(
+            score_func=balanced_accuracy_score,
+            sign=1,
+            response_method="predict_proba",
+            n_thresholds=10,
+            kwargs={},
         ),
-        (
-            make_scorer(roc_curve, response_method="predict_proba"),
-            "max_tnr_at_tpr_constraint",
-        ),
-        (
-            make_scorer(roc_curve, response_method="predict_proba"),
-            "max_tpr_at_tnr_constraint",
-        ),
-        (
-            make_scorer(precision_recall_curve, response_method="predict_proba"),
-            "max_precision_at_recall_constraint",
-        ),
-        (
-            make_scorer(precision_recall_curve, response_method="predict_proba"),
-            "max_recall_at_precision_constraint",
-        ),
+        make_scorer(roc_curve, response_method="predict_proba"),
+        make_scorer(roc_curve, response_method="predict_proba"),
+        make_scorer(precision_recall_curve, response_method="predict_proba"),
+        make_scorer(precision_recall_curve, response_method="predict_proba"),
     ],
 )
-def test_fit_and_score_over_thresholds_sample_weight(curve_scorer, score_method):
+def test_fit_and_score_over_thresholds_sample_weight(curve_scorer):
     """Check that we dispatch the sample-weight to fit and score the classifier."""
     X, y = load_iris(return_X_y=True)
     X, y = X[:100], y[:100]  # only 2 classes
@@ -326,7 +301,6 @@ def test_fit_and_score_over_thresholds_sample_weight(curve_scorer, score_method)
         train_idx=train_repeated_idx,
         val_idx=val_repeated_idx,
         curve_scorer=curve_scorer,
-        score_method=score_method,
         score_params={},
     )
 
@@ -339,7 +313,6 @@ def test_fit_and_score_over_thresholds_sample_weight(curve_scorer, score_method)
         train_idx=train_idx,
         val_idx=val_idx,
         curve_scorer=curve_scorer.set_score_request(sample_weight=True),
-        score_method=score_method,
         score_params={"sample_weight": sample_weight},
     )
 
@@ -349,40 +322,23 @@ def test_fit_and_score_over_thresholds_sample_weight(curve_scorer, score_method)
 
 @pytest.mark.usefixtures("enable_slep006")
 @pytest.mark.parametrize(
-    "curve_scorer, score_method",
+    "curve_scorer",
     [
-        (
-            _CurveScorer(
-                score_func=balanced_accuracy_score,
-                sign=1,
-                response_method="predict_proba",
-                n_thresholds=10,
-                kwargs={},
-            ),
-            "balanced_accuracy",
+        _CurveScorer(
+            score_func=balanced_accuracy_score,
+            sign=1,
+            response_method="predict_proba",
+            n_thresholds=10,
+            kwargs={},
         ),
-        (
-            make_scorer(roc_curve, response_method="predict_proba"),
-            "max_tnr_at_tpr_constraint",
-        ),
-        (
-            make_scorer(roc_curve, response_method="predict_proba"),
-            "max_tpr_at_tnr_constraint",
-        ),
-        (
-            make_scorer(precision_recall_curve, response_method="predict_proba"),
-            "max_precision_at_recall_constraint",
-        ),
-        (
-            make_scorer(precision_recall_curve, response_method="predict_proba"),
-            "max_recall_at_precision_constraint",
-        ),
+        make_scorer(roc_curve, response_method="predict_proba"),
+        make_scorer(roc_curve, response_method="predict_proba"),
+        make_scorer(precision_recall_curve, response_method="predict_proba"),
+        make_scorer(precision_recall_curve, response_method="predict_proba"),
     ],
 )
 @pytest.mark.parametrize("fit_params_type", ["list", "array"])
-def test_fit_and_score_over_thresholds_fit_params(
-    curve_scorer, score_method, fit_params_type
-):
+def test_fit_and_score_over_thresholds_fit_params(curve_scorer, fit_params_type):
     """Check that we pass `fit_params` to the classifier when calling `fit`."""
     X, y = make_classification(n_samples=100, random_state=0)
     fit_params = {
@@ -402,7 +358,6 @@ def test_fit_and_score_over_thresholds_fit_params(
         train_idx=train_idx,
         val_idx=val_idx,
         curve_scorer=curve_scorer,
-        score_method=score_method,
         score_params={},
     )
 

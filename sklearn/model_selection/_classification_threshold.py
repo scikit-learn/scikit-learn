@@ -203,7 +203,6 @@ def _fit_and_score_over_thresholds(
     train_idx,
     val_idx,
     curve_scorer,
-    score_method,
     score_params,
 ):
     """Fit a classifier and compute the scores for different decision thresholds.
@@ -242,10 +241,6 @@ def _fit_and_score_over_thresholds(
         * otherwise, the curve scorer will output a single score value for each
           threshold.
 
-    score_method : str or callable
-        The scoring method to use. Used to detect if we compute TPR/TNR or precision/
-        recall.
-
     score_params : dict
         Parameters to pass to the `score` method of the underlying scorer.
 
@@ -271,29 +266,31 @@ def _fit_and_score_over_thresholds(
         X_val, y_val, score_params_val = X, y, score_params
         check_is_fitted(classifier, "classes_")
 
-    if isinstance(score_method, str):
-        if score_method in {"max_tpr_at_tnr_constraint", "max_tnr_at_tpr_constraint"}:
-            fpr, tpr, potential_thresholds = curve_scorer(
-                classifier, X_val, y_val, **score_params_val
-            )
-            # For fpr=0/tpr=0, the threshold is set to `np.inf`. We need to remove it.
-            fpr, tpr, potential_thresholds = fpr[1:], tpr[1:], potential_thresholds[1:]
-            # thresholds are in decreasing order
-            return potential_thresholds[::-1], ((1 - fpr)[::-1], tpr[::-1])
-        elif score_method in {
-            "max_precision_at_recall_constraint",
-            "max_recall_at_precision_constraint",
-        }:
-            precision, recall, potential_thresholds = curve_scorer(
-                classifier, X_val, y_val, **score_params_val
-            )
-            # thresholds are in increasing order
-            # the last element of the precision and recall is not associated with any
-            # threshold and should be discarded
-            return potential_thresholds, (precision[:-1], recall[:-1])
-    scores, potential_thresholds = curve_scorer(
-        classifier, X_val, y_val, **score_params_val
-    )
+    if curve_scorer is roc_curve or (
+        isinstance(curve_scorer, _BaseScorer) and curve_scorer._score_func is roc_curve
+    ):
+        fpr, tpr, potential_thresholds = curve_scorer(
+            classifier, X_val, y_val, **score_params_val
+        )
+        # For fpr=0/tpr=0, the threshold is set to `np.inf`. We need to remove it.
+        fpr, tpr, potential_thresholds = fpr[1:], tpr[1:], potential_thresholds[1:]
+        # thresholds are in decreasing order
+        return potential_thresholds[::-1], ((1 - fpr)[::-1], tpr[::-1])
+    elif curve_scorer is precision_recall_curve or (
+        isinstance(curve_scorer, _BaseScorer)
+        and curve_scorer._score_func is precision_recall_curve
+    ):
+        precision, recall, potential_thresholds = curve_scorer(
+            classifier, X_val, y_val, **score_params_val
+        )
+        # thresholds are in increasing order
+        # the last element of the precision and recall is not associated with any
+        # threshold and should be discarded
+        return potential_thresholds, (precision[:-1], recall[:-1])
+    else:
+        scores, potential_thresholds = curve_scorer(
+            classifier, X_val, y_val, **score_params_val
+        )
     return potential_thresholds, scores
 
 
@@ -707,7 +704,6 @@ class TunedThresholdClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstima
                     train_idx=train_idx,
                     val_idx=val_idx,
                     curve_scorer=self._curve_scorer,
-                    score_method=self.objective_metric,
                     score_params=routed_params.scorer.score,
                 )
                 for train_idx, val_idx in splits
