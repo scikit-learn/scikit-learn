@@ -38,7 +38,7 @@ bike sharing dataset. The example is inspired by [1]_.
 
 .. [4] `Friedman, J. H. and Popescu, B. E. (2008).
        "Predictive Learning via Rule Ensembles".
-       The Annals of Applied Statistics, 2(3), 916-954, 2008.`
+       The Annals of Applied Statistics, 2(3), 916-954, 2008.`_
 """
 
 # %%
