@@ -15,14 +15,22 @@ partial dependence plots (PDP). But how to figure out between *which feature pai
 the strongest interactions occur?
 
 One approach is to study pairwise H-statistics, introduced by Friedman and Popescu
-in [F2008]_.
+in [F2008]_. The H-statistic of two features provides the proportion of effect
+variability of the two features coming from their pairwise interaction.
 
-The statistic
-=============
+The figure below shows H-statistics and their unnormalized counterparts for
+the bike sharing dataset, with a
+:class:`~sklearn.ensemble.HistGradientBoostingRegressor`:
 
-The H-statistic of two features is the proportion of effect variability of the 
-two features coming from their pairwise interaction. 
-Effect variability is measured via partial dependence.
+.. figure:: ../auto_examples/inspection/images/sphx_glr_plot_partial_dependence_007.png
+   :target: ../auto_examples/inspection/plot_partial_dependence.html
+   :align: center
+   :scale: 70
+
+The statistics have been compured for the five most important features.
+
+Mathematical definition
+=======================
 
 **Partial dependence**
 
@@ -99,56 +107,6 @@ Therefore, our implementation randomly selects ``n_max = 500`` rows from the pro
 Furthermore, if the number of features :math:`p` is large, use some feature importance measure
 to select the most important features and pass them via the ``features=None`` argument.
 
-Example
-=======
-
-Let's calculate pairwise H-statistics from a boosted trees model of diabetes data.
-There are :math:`p = 10` features, leading to 45 pairwise interactions. To save
-time, we select the top 6 predictors via permutation importance, leading to 15 pairs.
-
-    >>> import numpy as np
-    >>> from sklearn.ensemble import HistGradientBoostingRegressor
-    >>> from sklearn.inspection import permutation_importance, h_statistic
-    >>> from sklearn.datasets import load_diabetes
-
-    >>> # Fit model
-    >>> X, y = load_diabetes(return_X_y=True)
-    >>> est = HistGradientBoostingRegressor(max_iter=100, max_depth=4).fit(X, y)
-
-    >>> # Get Friedman's H-squared for top m=6 predictors
-    >>> m = 6
-    >>> imp = permutation_importance(est, X, y, random_state=0)
-    >>> top_m = np.argsort(imp.importances_mean)[-m:]
-    >>> H = h_statistic(est, X=X, features=top_m, random_state=4)
-
-Then, we plot all :math:`H_{jk}^2` and :math:`\sqrt{A_{jk}}` statistics:
-
-    >>> import matplotlib.pyplot as plt
-    >>>
-    >>> fig, axes = plt.subplots(1, 2, figsize=(8, 4))
-    >>>
-    >>> bar_labels = np.array([str(pair) for pair in H["feature_pairs"]])
-    >>> stats = (H["h_squared_pairwise"], np.sqrt(H["numerator_pairwise"]))
-    >>>
-    >>> for ax, stat, name in zip(axes, stats, ("$H^2$", "Unnormalized $H$")):
-    ...     stat = stat.ravel()
-    ...     idx = np.argsort(stat)
-    ...     ax.barh(bar_labels[idx], stat[idx], color="orange")
-    ...     ax.set(xlabel=name, title=name)
-    >>> _ = fig.tight_layout()
-
-.. image:: ../images/h_statistic.png
-   :align: center
-
-**The left plot** shows that the interaction between features 0 and 1
-explains about 16% of their joint effect variability. For the other pairs, it is
-clearly less. **The right plot** additionally shows that the interaction between
-features 2 and 3 is the largest in absolute terms. The reason for this is that
-these features belong to the most important predictors.
-Their weak relative interaction is still stronger than the strong relative
-interaction between features 0 and 1.
-Thus, it often makes sense to study both normalized and unnormalized statistics.
-
 Limitations
 ===========
 
@@ -160,6 +118,10 @@ Limitations
 2. Due to their computational complexity, H-statistics are usually evaluated on
    relatively small subsets of the data. Consequently, the estimates are
    typically not very robust.
+
+.. topic:: Examples:
+
+ * :ref:`sphx_glr_auto_examples_inspection_plot_partial_dependence.py`
 
 .. topic:: References
 
