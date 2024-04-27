@@ -259,6 +259,8 @@ def h_statistic(
         X = _safe_indexing(X, row_indices, axis=0)
         if sample_weight is not None:
             sample_weight = _safe_indexing(sample_weight, row_indices, axis=0)
+    else:
+        X = X.copy()
 
     if features is None:
         features = feature_indices = np.arange(X.shape[1])
