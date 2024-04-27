@@ -22,7 +22,7 @@ The figure below shows H-statistics and their unnormalized counterparts for
 the bike sharing dataset, with a
 :class:`~sklearn.ensemble.HistGradientBoostingRegressor`:
 
-.. figure:: ../auto_examples/inspection/images/sphx_glr_plot_partial_dependence_007.png
+.. figure:: ../auto_examples/inspection/images/sphx_glr_plot_partial_dependence_010.png
    :target: ../auto_examples/inspection/plot_partial_dependence.html
    :align: center
    :scale: 70

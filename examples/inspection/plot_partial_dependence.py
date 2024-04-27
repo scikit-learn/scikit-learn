@@ -36,9 +36,9 @@ bike sharing dataset. The example is inspired by [1]_.
        Individual Conditional Expectation". Journal of Computational and
        Graphical Statistics, 24(1): 44-65 <1309.6392>`
 
-.. [4] Friedman, J. H. and Popescu, B. E. (2008).
+.. [4] `Friedman, J. H. and Popescu, B. E. (2008).
        "Predictive Learning via Rule Ensembles".
-       The Annals of Applied Statistics, 2(3), 916-954, 2008.
+       The Annals of Applied Statistics, 2(3), 916-954, 2008.`
 """
 
 # %%
@@ -595,15 +595,12 @@ print("Select five important features and crunch H-statistics...")
 from sklearn.inspection import h_statistic, permutation_importance
 
 tic = time()
-
 imp = permutation_importance(hgbdt_model, X=X_train, y=y_train, random_state=0)
 features = X_train.columns[np.argsort(imp.importances_mean)][-5:]
 
 H = h_statistic(hgbdt_model, X=X_train, features=features, random_state=0)
 
 print(f"done in {time() - tic:.3f}s")
-
-import matplotlib.pyplot as plt
 
 fig, axes = plt.subplots(1, 2, figsize=(8, 4))
 bar_labels = np.array([str(pair) for pair in H["feature_pairs"]])
@@ -617,11 +614,8 @@ for ax, stat, name in zip(axes, stats, ("$H^2$", "Unnormalized $H$")):
 _ = fig.tight_layout()
 
 # %%
-
 # **The left plot** shows that the interaction between 'workingday' and 'hour'
 # explains about 8% of their joint effect variability. For the other pairs, it is
 # less than 5%. **The right plot** additionally shows that the interaction between
 # 'workingday' and 'hour' is also largest in absolute terms (on the scale of the
 # predictions).
-
-# %%
