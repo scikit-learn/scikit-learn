@@ -153,7 +153,7 @@ class _CurveScorer(_BaseScorer):
 def _estimator_has(attr):
     """Check if we can delegate a method to the underlying estimator.
 
-    First, we check the first fitted estimator if available, otherwise we
+    First, we check the fitted estimator if available, otherwise we
     check the unfitted estimator.
     """
 
@@ -179,8 +179,7 @@ def _fit_and_score_over_thresholds(
     score_method,
     score_params,
 ):
-    """Fit a classifier and compute the scores for different decision thresholds
-    representing a curve.
+    """Fit a classifier and compute the scores for different decision thresholds.
 
     Parameters
     ----------
@@ -271,7 +270,7 @@ class TunedThresholdClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimato
     This estimator post-tunes the decision threshold (cut-off point) that is
     used for converting posterior probability estimates (i.e. output of
     `predict_proba`) or decision scores (i.e. output of `decision_function`)
-    into a class label. The tuning is done by maximizing a binary metric,
+    into a class label. The tuning is done by optimizing a binary metric,
     potentially constrained by a another metric.
 
     Read more in the :ref:`User Guide <tunedthresholdclassifier>`.
@@ -396,8 +395,8 @@ class TunedThresholdClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimato
         The new decision threshold.
 
     best_score_ : float or None
-        The score of the objective metric maximized associated with the decision
-        threshold found. If `strategy="constant"`, `best_score_` is None.
+        The optimal score of the objective metric, evaluated at `best_threshold_`.
+        If `strategy="constant"`, `best_score_` is None.
 
     constrained_score_ : float or None
         When `objective_metric` is one of `"max_tpr_at_tnr_constraint"`,
@@ -548,8 +547,8 @@ class TunedThresholdClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimato
         self.store_cv_results = store_cv_results
 
     @_fit_context(
-        # estimators in TunedThresholdClassifier.estimator is not validated yet
-        prefer_skip_nested_validation=True
+        # TunedThresholdClassifier.estimator is not validated yet
+        prefer_skip_nested_validation=False
     )
     def fit(self, X, y, **params):
         """Fit the classifier and post-tune the decision threshold.
