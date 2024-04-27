@@ -54,7 +54,9 @@ def test_curve_scorer():
     scores, thresholds = curve_scorer(estimator, X, y)
 
     assert thresholds.shape == scores.shape
-    # check that the thresholds are probability with extreme values close to 0 and 1
+    # check that the thresholds are probability with extreme values close to 0 and 1.
+    # they are not exactly 0 and 1 because they are the extremum of the
+    # `estimator.predict_proba(X)` values.
     assert 0 <= thresholds.min() <= 0.01
     assert 0.99 <= thresholds.max() <= 1
     # balanced accuracy should be between 0.5 and 1 when it is not adjusted
