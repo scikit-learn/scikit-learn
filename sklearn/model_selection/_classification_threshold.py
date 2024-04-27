@@ -294,6 +294,34 @@ def _fit_and_score_over_thresholds(
     return potential_thresholds, scores
 
 
+def _mean_interpolated_score(target_thresholds, cv_thresholds, cv_scores):
+    """Compute the mean interpolated score across folds by defining common thresholds.
+
+    Parameters
+    ----------
+    target_thresholds : ndarray of shape (n_thresholds,)
+        The thresholds to use to compute the mean score.
+
+    cv_thresholds : ndarray of shape (n_folds, n_thresholds_fold)
+        The thresholds used to compute the scores for each fold.
+
+    cv_scores : ndarray of shape (n_folds, n_thresholds_fold)
+        The scores computed for each threshold for each fold.
+
+    Returns
+    -------
+    mean_score : ndarray of shape (n_thresholds,)
+        The mean score across all folds for each target threshold.
+    """
+    return np.mean(
+        [
+            np.interp(target_thresholds, split_thresholds, split_score)
+            for split_thresholds, split_score in zip(cv_thresholds, cv_scores)
+        ],
+        axis=0,
+    )
+
+
 class TunedThresholdClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator):
     """Decision threshold tuning for binary classification.
 
@@ -730,15 +758,6 @@ class TunedThresholdClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstima
             )
         else:
             decision_thresholds = np.asarray(self.n_thresholds)
-
-        def _mean_interpolated_score(target_thresholds, cv_thresholds, cv_scores):
-            return np.mean(
-                [
-                    np.interp(target_thresholds, split_thresholds, split_score)
-                    for split_thresholds, split_score in zip(cv_thresholds, cv_scores)
-                ],
-                axis=0,
-            )
 
         if constraint_value is None:  # find best score that is the highest value
             objective_scores = _mean_interpolated_score(
