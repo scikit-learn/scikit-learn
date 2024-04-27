@@ -16,7 +16,7 @@ In addition, a cost-matrix is provided that specifies the cost of
 misclassification. Specifically, misclassifying a "bad" credit as "good" is five
 times more costly on average than misclassifying a "good" credit as "bad".
 
-We use the :class:`~sklearn.model_selection.TunedThresholdClassifier` to select the
+We use the :class:`~sklearn.model_selection.TunedThresholdClassifierCV` to select the
 cut-off point of the decision function that minimizes the provided business
 cost.
 
@@ -40,7 +40,7 @@ case, the business metric depends on the amount of each individual transaction.
 # -----------------------------------------------------
 #
 # In this first section, we illustrate the use of the
-# :class:`~sklearn.model_selection.TunedThresholdClassifier` in a setting of
+# :class:`~sklearn.model_selection.TunedThresholdClassifierCV` in a setting of
 # cost-sensitive learning when the gains and costs associated to each entry of the
 # confusion matrix are constant. We use the problematic presented in [2]_ using the
 # "Statlog" German credit dataset [1]_.
@@ -253,23 +253,24 @@ print(f"Business defined metric: {scoring['cost_gain'](model, X_test, y_test)}")
 # At this stage we don't know if any other cut-off can lead to a greater gain. To find
 # the optimal one, we need to compute the cost-gain using the business metric for all
 # possible cut-off points and choose the best. This strategy can be quite tedious to
-# implement by hand, but the :class:`~sklearn.model_selection.TunedThresholdClassifier`
-# class is here to help us. It automatically computes the cost-gain for all possible
-# cut-off points and optimizes for the `objective_metric`.
+# implement by hand, but the
+# :class:`~sklearn.model_selection.TunedThresholdClassifierCV` class is here to help us.
+# It automatically computes the cost-gain for all possible cut-off points and optimizes
+# for the `objective_metric`.
 #
 # .. _cost_sensitive_learning_example:
 #
 # Tuning the cut-off point
 # ^^^^^^^^^^^^^^^^^^^^^^^^
 #
-# We use :class:`~sklearn.model_selection.TunedThresholdClassifier` to tune the cut-off
-# point. We need to provide the business metric to optimize as well as the
-# positive label. Internally, the optimum cut-off point is chosen such that it
-# maximizes the business metric via cross-validation. By default a 5-fold
-# stratified cross-validation is used.
-from sklearn.model_selection import TunedThresholdClassifier
+# We use :class:`~sklearn.model_selection.TunedThresholdClassifierCV` to tune the
+# cut-off point. We need to provide the business metric to optimize as well as the
+# positive label. Internally, the optimum cut-off point is chosen such that it maximizes
+# the business metric via cross-validation. By default a 5-fold stratified
+# cross-validation is used.
+from sklearn.model_selection import TunedThresholdClassifierCV
 
-tuned_model = TunedThresholdClassifier(
+tuned_model = TunedThresholdClassifierCV(
     estimator=model,
     pos_label=pos_label,
     objective_metric=scoring["cost_gain"],
@@ -377,16 +378,16 @@ print(f"Business defined metric: {scoring['cost_gain'](tuned_model, X_test, y_te
 # We observe that tuning the decision threshold almost improves our business gains
 # by factor of 2.
 #
-# .. _tunedthresholdclassifier_no_cv:
+# .. _TunedThresholdClassifierCV_no_cv:
 #
 # Consideration regarding model refitting and cross-validation
 # ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 #
 # In the above experiment, we used the default setting of the
-# :class:`~sklearn.model_selection.TunedThresholdClassifier`. In particular, the cut-off
-# point is tuned using a 5-fold stratified cross-validation. Also, the
-# underlying predictive model is refitted on the entire training data once the
-# cut-off point is chosen.
+# :class:`~sklearn.model_selection.TunedThresholdClassifierCV`. In particular, the
+# cut-off point is tuned using a 5-fold stratified cross-validation. Also, the
+# underlying predictive model is refitted on the entire training data once the cut-off
+# point is chosen.
 #
 # These two strategies can be changed by providing the `refit` and `cv` parameters.
 # For instance, one could provide a fitted `estimator` and set `cv="prefit"`, in which
@@ -483,10 +484,10 @@ _ = fig.suptitle("Tuned GBDT model without refitting and using the entire datase
 #
 # This option should therefore be used with caution. One needs to make sure that the
 # data provided at fitting time to the
-# :class:`~sklearn.model_selection.TunedThresholdClassifier` is not the same as the data
-# used to train the underlying classifier. This could happen sometimes when the idea is
-# just to tune the predictive model on a completely new validation set without a costly
-# complete refit.
+# :class:`~sklearn.model_selection.TunedThresholdClassifierCV` is not the same as the
+# data used to train the underlying classifier. This could happen sometimes when the
+# idea is just to tune the predictive model on a completely new validation set without a
+# costly complete refit.
 #
 # When cross-validation is too costly, a potential alternative is to use a
 # single train-test split by providing a floating number in range `[0, 1]` to the `cv`
@@ -748,9 +749,9 @@ print(
 #
 # Now the question is: is our model optimum for the type of decision that we want to do?
 # Up to now, we did not optimize the decision threshold. We use the
-# :class:`~sklearn.model_selection.TunedThresholdClassifier` to optimize the decision
+# :class:`~sklearn.model_selection.TunedThresholdClassifierCV` to optimize the decision
 # given our business scorer.
-tuned_model = TunedThresholdClassifier(
+tuned_model = TunedThresholdClassifierCV(
     estimator=model,
     objective_metric=business_scorer,
     n_thresholds=100,
@@ -760,7 +761,7 @@ tuned_model = TunedThresholdClassifier(
 # %%
 # Since our business scorer requires the amount of each transaction, we need to pass
 # this information in the `fit` method. The
-# :class:`~sklearn.model_selection.TunedThresholdClassifier` is in charge of
+# :class:`~sklearn.model_selection.TunedThresholdClassifierCV` is in charge of
 # automatically dispatching this metadata to the underlying scorer.
 tuned_model.fit(data_train, target_train, amount=amount_train)
 

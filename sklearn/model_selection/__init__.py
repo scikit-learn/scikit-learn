@@ -1,6 +1,6 @@
 import typing
 
-from ._classification_threshold import TunedThresholdClassifier
+from ._classification_threshold import TunedThresholdClassifierCV
 from ._plot import LearningCurveDisplay, ValidationCurveDisplay
 from ._search import GridSearchCV, ParameterGrid, ParameterSampler, RandomizedSearchCV
 from ._split import (
@@ -64,7 +64,7 @@ __all__ = [
     "StratifiedKFold",
     "StratifiedGroupKFold",
     "StratifiedShuffleSplit",
-    "TunedThresholdClassifier",
+    "TunedThresholdClassifierCV",
     "check_cv",
     "cross_val_predict",
     "cross_val_score",

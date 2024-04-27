@@ -1,6 +1,6 @@
 .. currentmodule:: sklearn.model_selection
 
-.. _tunedthresholdclassifier:
+.. _TunedThresholdClassifierCV:
 
 ==================================================
 Tuning the decision threshold for class prediction
@@ -63,7 +63,7 @@ Post-tuning the decision threshold
 
 One solution to address the problem stated in the introduction is to tune the decision
 threshold of the classifier once the model has been trained. The
-:class:`~sklearn.model_selection.TunedThresholdClassifier` tunes this threshold using an
+:class:`~sklearn.model_selection.TunedThresholdClassifierCV` tunes this threshold using an
 internal cross-validation. The optimum threshold is chosen to maximize a given metric.
 
 The following image illustrates the tuning of the decision threshold for a gradient
@@ -102,14 +102,14 @@ a meaningful metric for their use case.
     :func:`~sklearn.metrics.f1_score`::
 
         >>> from sklearn.linear_model import LogisticRegression
-        >>> from sklearn.model_selection import TunedThresholdClassifier
+        >>> from sklearn.model_selection import TunedThresholdClassifierCV
         >>> from sklearn.metrics import make_scorer, f1_score
         >>> X, y = make_classification(
         ...   n_samples=1_000, weights=[0.1, 0.9], random_state=0)
         >>> pos_label = 0
         >>> scorer = make_scorer(f1_score, pos_label=pos_label)
         >>> base_model = LogisticRegression()
-        >>> model = TunedThresholdClassifier(base_model, objective_metric=scorer)
+        >>> model = TunedThresholdClassifierCV(base_model, objective_metric=scorer)
         >>> scorer(model.fit(X, y), X, y)
         0.88...
         >>> # compare it with the internal score found by cross-validation
@@ -135,7 +135,7 @@ you can use the `pos_label` parameter to indicate the label of the class of inte
 Important notes regarding the internal cross-validation
 -------------------------------------------------------
 
-By default :class:`~sklearn.model_selection.TunedThresholdClassifier` uses a 5-fold
+By default :class:`~sklearn.model_selection.TunedThresholdClassifierCV` uses a 5-fold
 stratified cross-validation to tune the decision threshold. The parameter `cv` allows to
 control the cross-validation strategy. It is possible to bypass cross-validation by
 setting `cv="prefit"` and providing a fitted classifier. In this case, the decision
@@ -144,7 +144,7 @@ threshold is tuned on the data provided to the `fit` method.
 However, you should be extremely careful when using this option. You should never use
 the same data for training the classifier and tuning the decision threshold due to the
 risk of overfitting. Refer to the following example section for more details (cf.
-:ref:`tunedthresholdclassifier_no_cv`). If you have limited resources, consider using a
+:ref:`TunedThresholdClassifierCV_no_cv`). If you have limited resources, consider using a
 float number for `cv` to limit to an internal single train-test split.
 
 The option `cv="prefit"` should only be used when the provided classifier was already
@@ -156,7 +156,7 @@ Manually setting the decision threshold
 
 The previous sections discussed strategies to find an optimal decision threshold. It is
 also possible to manually set the decision threshold in
-:class`~sklearn.model_selection.TunedThresholdClassifier` by setting the parameter
+:class`~sklearn.model_selection.TunedThresholdClassifierCV` by setting the parameter
 `strategy` to `"constant"` and providing the desired threshold using the parameter
 `constant_threshold`.
 

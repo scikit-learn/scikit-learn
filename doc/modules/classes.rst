@@ -1257,7 +1257,7 @@ Model post-fit tuning
    :toctree: generated/
    :template: class.rst
 
-   model_selection.TunedThresholdClassifier
+   model_selection.TunedThresholdClassifierCV
 
 Model validation
 ----------------

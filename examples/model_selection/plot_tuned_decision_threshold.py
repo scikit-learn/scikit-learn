@@ -10,7 +10,7 @@ probability estimate of 0.5 or a decision score of 0.0. However, this default st
 may not be optimal for the task at hand.
 
 This example shows how to use the
-:class:`~sklearn.model_selection.TunedThresholdClassifier` to tune the decision
+:class:`~sklearn.model_selection.TunedThresholdClassifierCV` to tune the decision
 threshold, depending on a metric of interest as well as under a specific constraints.
 """
 
@@ -101,18 +101,18 @@ cv_results_vanilla_model[cv_scores].aggregate(["mean", "std"]).T
 # threshold might not be optimal. If our interest is to maximize the balanced accuracy,
 # we should select another threshold that would maximize this metric.
 #
-# The :class:`~sklearn.model_selection.TunedThresholdClassifier` meta-estimator allows
+# The :class:`~sklearn.model_selection.TunedThresholdClassifierCV` meta-estimator allows
 # to tune the decision threshold of a classifier given a metric of interest.
 #
 # Tuning the decision threshold
 # -----------------------------
 #
-# We create a :class:`~sklearn.model_selection.TunedThresholdClassifier` and
+# We create a :class:`~sklearn.model_selection.TunedThresholdClassifierCV` and
 # configure it to maximize the balanced accuracy. We evaluate the model using the same
 # cross-validation strategy as previously.
-from sklearn.model_selection import TunedThresholdClassifier
+from sklearn.model_selection import TunedThresholdClassifierCV
 
-tuned_model = TunedThresholdClassifier(
+tuned_model = TunedThresholdClassifierCV(
     estimator=model, objective_metric="balanced_accuracy"
 )
 cv_results_tuned_model = pd.DataFrame(
@@ -195,7 +195,7 @@ _ = ax.set_title(
 # than a given value. Therefore, we are interested in maximizing the true positive rate
 # while having a false positive rate lower than this value.
 #
-# The :class:`~sklearn.model_selection.TunedThresholdClassifier` allows to tune the
+# The :class:`~sklearn.model_selection.TunedThresholdClassifierCV` allows to tune the
 # decision threshold with such specification. We illustrate this strategy together with
 # a single train-test split split to display the Receiver Operating Characteristic (ROC)
 # curves to get better intuitions.
@@ -287,11 +287,11 @@ _ = disp.ax_.set_title("ROC curves")
 # might be interested to have a low FPR instead, let say lower than 5%. For this level
 # of FPR, he would like our predictive model to maximize the TPR.
 #
-# The :class:`~sklearn.model_selection.TunedThresholdClassifier` allows to specify such
-# constraint by providing the name of the metric and the constraint value. Here, we use
-# `max_tpr_at_tnr_constraint` which is exactly what we want. Since the true negative
-# rate (TNR) is equal to 1 - FPR, we can rewrite the constraint value as
-# `1 - 0.05 = 0.95`.
+# The :class:`~sklearn.model_selection.TunedThresholdClassifierCV` allows to specify
+# such constraint by providing the name of the metric and the constraint value. Here, we
+# use `max_tpr_at_tnr_constraint` which is exactly what we want. Since the true negative
+# rate (TNR) is equal to 1 - FPR, we can rewrite the constraint value as `1 - 0.05 =
+# 0.95`.
 
 # %%
 constraint_value = 0.95

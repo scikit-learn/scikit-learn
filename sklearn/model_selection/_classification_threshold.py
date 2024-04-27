@@ -264,7 +264,7 @@ def _fit_and_score_over_thresholds(
     return potential_thresholds, scores
 
 
-class TunedThresholdClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimator):
+class TunedThresholdClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator):
     """Decision threshold tuning for binary classification.
 
     This estimator post-tunes the decision threshold (cut-off point) that is
@@ -273,7 +273,7 @@ class TunedThresholdClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimato
     into a class label. The tuning is done by optimizing a binary metric,
     potentially constrained by a another metric.
 
-    Read more in the :ref:`User Guide <tunedthresholdclassifier>`.
+    Read more in the :ref:`User Guide <TunedThresholdClassifierCV>`.
 
     .. versionadded:: 1.5
 
@@ -358,11 +358,11 @@ class TunedThresholdClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimato
         .. warning::
             Using `cv="prefit"` and passing the same dataset for fitting `estimator`
             and tuning the cut-off point is subject to undesired overfitting. You can
-            refer to :ref:`tunedthresholdclassifier_no_cv` for an example.
+            refer to :ref:`TunedThresholdClassifierCV_no_cv` for an example.
 
             This option should only be used when the set used to fit `estimator` is
             different from the one used to tune the cut-off point (by calling
-            :meth:`TunedThresholdClassifier.fit`).
+            :meth:`TunedThresholdClassifierCV.fit`).
 
     refit : bool, default=True
         Whether or not to refit the classifier on the entire training set once
@@ -440,7 +440,7 @@ class TunedThresholdClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimato
     >>> from sklearn.datasets import make_classification
     >>> from sklearn.ensemble import RandomForestClassifier
     >>> from sklearn.metrics import classification_report
-    >>> from sklearn.model_selection import TunedThresholdClassifier, train_test_split
+    >>> from sklearn.model_selection import TunedThresholdClassifierCV, train_test_split
     >>> X, y = make_classification(
     ...     n_samples=1_000, weights=[0.9, 0.1], class_sep=0.8, random_state=42
     ... )
@@ -458,7 +458,7 @@ class TunedThresholdClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimato
        macro avg       0.87      0.72      0.77       250
     weighted avg       0.93      0.93      0.92       250
     <BLANKLINE>
-    >>> classifier_tuned = TunedThresholdClassifier(
+    >>> classifier_tuned = TunedThresholdClassifierCV(
     ...     classifier, objective_metric="max_precision_at_recall_constraint",
     ...     constraint_value=0.7,
     ... ).fit(X_train, y_train)
@@ -547,7 +547,7 @@ class TunedThresholdClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimato
         self.store_cv_results = store_cv_results
 
     @_fit_context(
-        # TunedThresholdClassifier.estimator is not validated yet
+        # TunedThresholdClassifierCV.estimator is not validated yet
         prefer_skip_nested_validation=False
     )
     def fit(self, X, y, **params):
@@ -917,7 +917,7 @@ class TunedThresholdClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimato
                 "check_sample_weights_invariance": (
                     "Due to the cross-validation and sample ordering, removing a sample"
                     " is not strictly equal to putting is weight to zero. Specific unit"
-                    " tests are added for TunedThresholdClassifier specifically."
+                    " tests are added for TunedThresholdClassifierCV specifically."
                 ),
             },
         }
