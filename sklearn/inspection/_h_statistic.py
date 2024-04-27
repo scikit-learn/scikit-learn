@@ -30,9 +30,8 @@ def _calculate_pd_brute_fast(
     # X is stacked n_grid times, and grid columns are replaced by replicated grid
     n = X.shape[0]
     n_grid = grid.shape[0]
-    X_eval = X.copy()
 
-    X_stacked = _safe_indexing(X_eval, np.tile(np.arange(n), n_grid), axis=0)
+    X_stacked = _safe_indexing(X, np.tile(np.arange(n), n_grid), axis=0)
     grid_stacked = _safe_indexing(grid, np.repeat(np.arange(n_grid), n), axis=0)
     _safe_assign(X_stacked, values=grid_stacked, column_indexer=feature_indices)
 
@@ -259,8 +258,6 @@ def h_statistic(
         X = _safe_indexing(X, row_indices, axis=0)
         if sample_weight is not None:
             sample_weight = _safe_indexing(sample_weight, row_indices, axis=0)
-    else:
-        X = X.copy()
 
     if features is None:
         features = feature_indices = np.arange(X.shape[1])
