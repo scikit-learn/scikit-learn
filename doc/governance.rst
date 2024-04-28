@@ -50,13 +50,26 @@ nominated, there will be a vote by the current core contributors. Voting on new
 members is one of the few activities that takes place on the project's private
 mailing list. While it is expected that most votes will be unanimous, a
 two-thirds majority of the cast votes is enough. The vote needs to be open for
-at least 1 week.
+at least 2 weeks.
 
-Core contributors that have not contributed to the project, corresponding to
-their role, in the past 12 months will be asked if they want to become emeritus
-members and recant their rights until they become active again. The list of
-members, active and emeritus (with dates at which they became active) is public
-on the scikit-learn website.
+If a core contributor becomes inactive in the project for a period of one year, they
+will be considered for removal from the core contributors. Before removal, inactive
+members will be approached to see if they plan on returning to active participation.
+If not, they will be removed immediately upon a core contributors' vote. If they plan
+on returning to active participation soon, they will be given a grace period of one
+year. If they don't return to active participation within that time period they will be
+removed by vote of the core contributors without further grace period. All former core
+contributors can be considered for membership again at any time in the future, like any
+other project contributor. Retired core contributors will be listed on the project
+website as emeritus member to acknowledging the period during which they were active as
+core contributor.
+
+The Council reserves the right to eject current members of the core contributors, if
+they are deemed to be actively harmful to the project's well-being, and attempts at
+communication and conflict resolution have failed.
+
+The list of members of the core contributors, active and emeritus is public on the
+scikit-learn website.
 
 The following teams form the core contributors group.
 
