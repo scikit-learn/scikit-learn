@@ -1,5 +1,6 @@
-import warnings
 import inspect
+import warnings
+
 import numpy as np
 
 _DEFAULT_TAGS = {

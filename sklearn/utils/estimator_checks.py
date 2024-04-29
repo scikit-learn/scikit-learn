@@ -3475,12 +3475,11 @@ def check_parameters_default_constructible(name, Estimator):
         init_params = init_params[len(getattr(estimator, "_required_parameters", [])) :]
 
         for init_param in init_params:
-            assert init_param.default != init_param.empty, (
-                "parameter %s for %s has no default value"
-                % (
-                    init_param.name,
-                    type(estimator).__name__,
-                )
+            assert (
+                init_param.default != init_param.empty
+            ), "parameter %s for %s has no default value" % (
+                init_param.name,
+                type(estimator).__name__,
             )
             allowed_types = {
                 str,
