@@ -234,8 +234,8 @@ def chi2(X, y):
     --------
     f_classif : ANOVA F-value between label/feature for classification tasks.
     f_regression : F-value between label/feature for regression tasks.
-    info_gain : Information Gain
-    info_gain_ratio : Information Gain Ratio
+    info_gain : Information Gain.
+    info_gain_ratio : Information Gain Ratio.
 
     Notes
     -----
@@ -362,57 +362,59 @@ def _get_fc_counts(X, y):
 def info_gain(X, y, aggregate="max"):
     """Compute an Information Gain score for each feature in the data.
 
-    The score can be used to weight features by informativeness or select the
-    most informative features for training and evaluating a classifier.
+    The score can be used to weight features by informativeness or select the most
+    informative features for training and evaluating a classifier.
 
-    IG [1] measures the number of bits of information obtained about the
-    presence or absence of a class by knowing the presence or absence of the
-    feature. IG of a feature is thus local to each class. This implementation
-    outputs a global IG score, by averaging, summing or taking the max values
-    of the feature's scores over all classes.
+    Information Gain [1] measures the number of bits of information obtained about the
+    presence or absence of a class by knowing the presence or absence of the feature. IG
+    of a feature is thus local to each class. This implementation outputs a global IG
+    score, by averaging, summing or taking the max values of the feature's scores over
+    all classes.
 
     .. math::
 
-        \\begin{equation}
-        IG(f,c) = \\sum_{d \\in \\{c, \\overline{c} \\}} \\sum_{g \\in \\
+        \\begin{equation} IG(f,c) = \\sum_{d \\in \\{c, \\overline{c} \\}} \\sum_{g \\in
+        \\
             \\{f, \\overline{f} \\}} p(g,d) log\\frac{p(g,d)}{p(g)p(d)}
         \\end{equation}
 
-    The IG-based feature selection is commonly used for text classification (
-    e.g. [2] and [3]).
+    The IG-based feature selection is commonly used for text classification ( e.g. [2]
+    and [3]).
 
     Parameters
     ----------
-    X : {array-like, sparse matrix}, shape = (n_samples, n_features_in)
+    X : {array-like, sparse matrix} of shape (n_samples, n_features_in)
         Sample vectors.
 
-    y : array-like, shape = (n_samples,)
+    y : array-like of shape (n_samples,)
         Target vector (class labels).
 
-    aggregate : string, optional
-        Method to aggregate class-specific scores to a global score, one of
-        "mean" (default), "max", "sum".
+    aggregate : str, {"mean", "max", "sum"}, default="max"
+        Method to aggregate class-specific scores to a global score.
 
     Returns
     -------
-    scores : array, shape = (n_features,)
+    scores : array of shape (n_features,)
+        Information Gain scores.
 
-    See also
+    See Also
     --------
-    info_gain_ratio : Information Gain Ratio
+    info_gain_ratio : Information Gain Ratio.
 
     References
     ----------
-    .. [1] J.R. Quinlan. 1993. C4.5: Programs for Machine Learning. San Mateo,
-    CA: Morgan Kaufmann.
+    .. [1] J.R. Quinlan. 1993. C4.5: Programs for Machine Learning. San Mateo, CA:
+        Morgan Kaufmann.
 
-    .. [2] Y. Yang and J.O. Pedersen. 1997. `A comparative study on feature
-    selection in text categorization. Proceedings of ICML'97, pp. 412-420.
-    <http://citeseer.ist.psu.edu/viewdoc/summary?doi=10.1.1.32.9956>`_
+    .. [2] Y. Yang and J.O. Pedersen. 1997. `A comparative study on feature selection in
+           text
+           categorization. Proceedings of ICML'97, pp. 412-420.
+           <http://citeseer.ist.psu.edu/viewdoc/summary?doi=10.1.1.32.9956>`_
 
-    .. [3] F. Sebastiani. 2002. `Machine Learning in Automatic Text
-    Categorization. ACM Computing Surveys (CSUR).
-    <http://nmis.isti.cnr.it/sebastiani/Publications/ACMCS02.pdf>`_
+    .. [3] F. Sebastiani. 2002. `Machine Learning in Automatic Text Categorization. ACM
+           Computing
+           Surveys (CSUR).
+           <http://nmis.isti.cnr.it/sebastiani/Publications/ACMCS02.pdf>`_
     """
 
     return _info_gain(X, y, aggregate)
@@ -421,21 +423,20 @@ def info_gain(X, y, aggregate="max"):
 def info_gain_ratio(X, y, aggregate="max"):
     """Compute an Information Gain Ratio score for each feature in the data.
 
-    The score can be used to weight features by informativeness or select the
-    most informative features for training and evaluating a classifier.
+    The score can be used to weight features by informativeness or select the most
+    informative features for training and evaluating a classifier.
 
-    Information Gain measures the number of bits of information obtained about
-    the presence or absence of a class by knowing the presence or absence of
-    the feature. Information Gain Ratio [1] aims to overcome one disadvantage
-    of IG which is the fact that IG grows not only with the increase of
-    dependence between `f` and `c`, but also with the increase of their
-    entropy. IGR removes this factor by normalizing IG by the entropy of the
-    class:
+    Information Gain measures the number of bits of information obtained about the
+    presence or absence of a class by knowing the presence or absence of the feature.
+    Information Gain Ratio [1] aims to overcome one disadvantage of IG which is the fact
+    that IG grows not only with the increase of dependence between `f` and `c`, but also
+    with the increase of their entropy. IGR removes this factor by normalizing IG by the
+    entropy of the class:
 
     .. math::
 
-        \\begin{equation}
-        GR(f,c) = \\frac{IG(f,c)}{-\\sum_{d \\in \\{c,\\overline{c}\\}} \\
+        \\begin{equation} GR(f,c) = \\frac{IG(f,c)}{-\\sum_{d \\in
+        \\{c,\\overline{c}\\}} \\
             p(d) log p(d)}
         \\end{equation}
 
@@ -443,29 +444,30 @@ def info_gain_ratio(X, y, aggregate="max"):
 
     Parameters
     ----------
-    X : {array-like, sparse matrix}, shape = (n_samples, n_features_in)
+    X : {array-like, sparse matrix} of shape (n_samples, n_features_in)
         Sample vectors.
 
-    y : array-like, shape = (n_samples,)
+    y : array-like of shape (n_samples,)
         Target vector (class labels).
 
-    aggregate : string, optional
-        Method to aggregate class-specific scores to a global score, one of
-        "mean" (default), "max", "sum".
+    aggregate : str, {"mean", "max", "sum"}, default="max"
+        Method to aggregate class-specific scores to a global score.
 
     Returns
     -------
-    scores : array, shape = (n_features,)
+    scores : array of shape (n_features,)
+        Information Gain Ratio scores.
 
-    See also
+    See Also
     --------
-    info_gain : Information Gain
+    info_gain : Information Gain.
 
     References
     ----------
-    .. [1] F. Debole and F. Sebastiani. 2003. `Supervised Term Weighting
-    for Automated Text Categorization. Proceedings of the 2003 ACM Symposium on
-    Applied Computing. <http://dl.acm.org/citation.cfm?id=952688>`_
+    .. [1] F. Debole and F. Sebastiani. 2003. `Supervised Term Weighting for Automated
+           Text
+           Categorization. Proceedings of the 2003 ACM Symposium on Applied Computing.
+           <http://dl.acm.org/citation.cfm?id=952688>`_
     """
 
     return _info_gain(X, y, aggregate, ratio=True)

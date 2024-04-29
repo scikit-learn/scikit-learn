@@ -158,7 +158,7 @@ Changelog
 ..........................
 
 - |Fix| Fixed a regression in :class:`calibration.CalibratedClassifierCV` where
-  an error was wrongly raised with string targets. 
+  an error was wrongly raised with string targets.
   :pr:`28843` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
 :mod:`sklearn.cluster`
@@ -293,6 +293,10 @@ Changelog
   a new key, `n_features`, containing an array with the number of features selected
   at each step.
   :pr:`28670` by :user:`Miguel Silva <miguelcsilva>`.
+
+- |Feature| :func:`~feature_selection.info_gain` and
+  :func:`~feature_selection.info_gain_ratio` can now be used for
+  univariate feature selection. :pr:`28905` by :user:`Viktor Pekar <vpekar>`.
 
 :mod:`sklearn.impute`
 .....................
