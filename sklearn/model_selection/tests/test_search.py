@@ -2565,7 +2565,7 @@ def test_inverse_transform_Xt_deprecation(SearchCV):
     with pytest.raises(TypeError, match="Missing required positional argument"):
         search.inverse_transform()
 
-    with pytest.raises(ValueError, match="Cannot use both X and Xt. Use X only"):
+    with pytest.raises(TypeError, match="Cannot use both X and Xt. Use X only"):
         search.inverse_transform(X=X2, Xt=X2)
 
     with warnings.catch_warnings(record=True):

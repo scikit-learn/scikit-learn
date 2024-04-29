@@ -489,7 +489,7 @@ def test_KBD_inverse_transform_Xt_deprecation():
     with pytest.raises(TypeError, match="Missing required positional argument"):
         kbd.inverse_transform()
 
-    with pytest.raises(ValueError, match="Cannot use both X and Xt. Use X only"):
+    with pytest.raises(TypeError, match="Cannot use both X and Xt. Use X only"):
         kbd.inverse_transform(X=X, Xt=X)
 
     with warnings.catch_warnings(record=True):
