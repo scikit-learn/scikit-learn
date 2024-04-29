@@ -32,7 +32,7 @@ people, all across the world. A few teams, listed below, have central
 roles, however a complete list of contributors can be found `on github
 <https://github.com/scikit-learn/scikit-learn/graphs/contributors>`__.
 
-Core developer team
+Core Developer Team
 ....................
 
 The following people are currently core developers, in charge of
