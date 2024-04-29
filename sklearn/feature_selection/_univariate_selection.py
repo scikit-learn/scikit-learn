@@ -628,8 +628,9 @@ class SelectPercentile(_BaseFilter):
             mask[kept_ties] = True
         return mask
 
-    def _more_tags(self):
-        return {"requires_y": False}
+    def __sklearn_tags__(self):
+        more_tags = {"requires_y": False}
+        return {**super().__sklearn_tags__(), **more_tags}
 
 
 class SelectKBest(_BaseFilter):
@@ -737,8 +738,9 @@ class SelectKBest(_BaseFilter):
             mask[np.argsort(scores, kind="mergesort")[-self.k :]] = 1
             return mask
 
-    def _more_tags(self):
-        return {"requires_y": False}
+    def __sklearn_tags__(self):
+        more_tags = {"requires_y": False}
+        return {**super().__sklearn_tags__(), **more_tags}
 
 
 class SelectFpr(_BaseFilter):

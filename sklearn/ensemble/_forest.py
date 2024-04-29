@@ -714,11 +714,12 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
         """
         return [sample_indices for sample_indices in self._get_estimators_indices()]
 
-    def _more_tags(self):
+    def __sklearn_tags__(self):
         # Only the criterion is required to determine if the tree supports
         # missing values
         estimator = type(self.estimator)(criterion=self.criterion)
-        return {"allow_nan": _safe_tags(estimator, key="allow_nan")}
+        more_tags = {"allow_nan": _safe_tags(estimator, key="allow_nan")}
+        return {**super().__sklearn_tags__(), **more_tags}
 
 
 def _accumulate_prediction(predict, X, out, lock):
@@ -855,8 +856,7 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
                     raise ValueError(
                         "Valid presets for class_weight include "
                         '"balanced" and "balanced_subsample".'
-                        'Given "%s".'
-                        % self.class_weight
+                        'Given "%s".' % self.class_weight
                     )
                 if self.warm_start:
                     warn(

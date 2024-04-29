@@ -525,7 +525,8 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
         else:
             return feature_names
 
-    def _more_tags(self):
-        return {
+    def __sklearn_tags__(self):
+        more_tags = {
             "requires_y": True,
         }
+        return {**super().__sklearn_tags__(), **more_tags}

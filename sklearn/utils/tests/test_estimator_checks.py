@@ -457,8 +457,9 @@ class RequiresPositiveXRegressor(LinearRegression):
             raise ValueError("negative X values not supported!")
         return super().fit(X, y)
 
-    def _more_tags(self):
-        return {"requires_positive_X": True}
+    def __sklearn_tags__(self):
+        more_tags = {"requires_positive_X": True}
+        return {**super().__sklearn_tags__(), **more_tags}
 
 
 class RequiresPositiveYRegressor(LinearRegression):

@@ -456,8 +456,8 @@ class RFE(_RoutingNotSupportedMixin, SelectorMixin, MetaEstimatorMixin, BaseEsti
             "allow_nan": True,
         }
         # Adjust allow_nan if estimator explicitly defines `allow_nan`.
-        if (
-            hasattr(self.estimator, "__sklearn_tags__") or hasattr(self.estimator, "_get_tags"):
+        if hasattr(self.estimator, "__sklearn_tags__") or hasattr(
+            self.estimator, "_get_tags"
         ):
             more_tags["allow_nan"] = _safe_tags(self.estimator, "allow_nan")
 

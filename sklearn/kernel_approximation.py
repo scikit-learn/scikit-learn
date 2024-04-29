@@ -411,8 +411,9 @@ class RBFSampler(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimato
         projection *= (2.0 / self.n_components) ** 0.5
         return projection
 
-    def _more_tags(self):
-        return {"preserves_dtype": [np.float64, np.float32]}
+    def __sklearn_tags__(self):
+        more_tags = {"preserves_dtype": [np.float64, np.float32]}
+        return {**super().__sklearn_tags__(), **more_tags}
 
 
 class SkewedChi2Sampler(
@@ -569,8 +570,9 @@ class SkewedChi2Sampler(
         projection *= np.sqrt(2.0) / np.sqrt(self.n_components)
         return projection
 
-    def _more_tags(self):
-        return {"preserves_dtype": [np.float64, np.float32]}
+    def __sklearn_tags__(self):
+        more_tags = {"preserves_dtype": [np.float64, np.float32]}
+        return {**super().__sklearn_tags__(), **more_tags}
 
 
 class AdditiveChi2Sampler(TransformerMixin, BaseEstimator):

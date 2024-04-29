@@ -279,7 +279,7 @@ def test_fit_docstring_attributes(name, Estimator):
         est.fit(y)
     elif "2dlabels" in est.__sklearn_tags__()["X_types"]:
         est.fit(np.c_[y, y])
-    elif "3darray" in est._get_tags()["X_types"]:
+    elif "3darray" in est.__sklearn_tags__()["X_types"]:
         est.fit(X[np.newaxis, ...], y)
     else:
         est.fit(X, y)

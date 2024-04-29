@@ -2046,7 +2046,7 @@ class Normalizer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
     def __sklearn_tags__(self):
         more_tags = {"stateless": True, "array_api_support": True}
         return {**super().__sklearn_tags__(), **more_tags}
-=======
+
 
 @validate_params(
     {

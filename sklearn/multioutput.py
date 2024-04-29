@@ -1026,7 +1026,7 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
         )
         return router
 
-    def _more_tags(self):
+    def __sklearn_tags__(self):
         more_tags = {"_skip_test": True, "multioutput_only": True}
         return {**super().__sklearn_tags__(), **more_tags}
 

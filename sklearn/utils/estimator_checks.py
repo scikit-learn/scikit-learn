@@ -4431,7 +4431,7 @@ def check_param_validation(name, estimator_orig):
 def check_set_output_transform(name, transformer_orig):
     # Check transformer.set_output with the default configuration does not
     # change the transform output.
-    tags = transformer_orig._get_tags()
+    tags = _safe_tags(transformer_orig)
     if "2darray" not in tags["X_types"] or tags["no_validation"]:
         return
 
@@ -4619,7 +4619,7 @@ def _check_set_output_transform_dataframe(
         or a global context by using the `with config_context(...)`
     """
     # Check transformer.set_output configures the output of transform="pandas".
-    tags = transformer_orig._get_tags()
+    tags = _safe_tags(transformer_orig)
     if "2darray" not in tags["X_types"] or tags["no_validation"]:
         return
 
