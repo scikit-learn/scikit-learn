@@ -11,23 +11,22 @@ Model persistence
 After training a scikit-learn model, it is desirable to have a way to persist
 the model for future use without having to retrain. Based on your use-case,
 there are a few different ways to persist a scikit-learn model, and here we
-help you decide which suits you best. In order to make a decision, you need to
-answer the following questions:
+help you decide which one suits you best. In order to make a decision, you need
+to answer the following questions:
 
-1. Do you need the python object after persistence, or do you only need to
+1. Do you need the Python object after persistence, or do you only need to
    persist in order to serve the model and get predictions out of it?
 
-If the answer to the above question is that you only need to serve the model
-and no further investigation on the python object itself is required, then
-:ref:`ONNX <onnx_persistence>` might be the best fit for you. Note that not all
-models are supported by ONNX.
+If you only need to serve the model and no further investigation on the Python
+object itself is required, then :ref:`ONNX <onnx_persistence>` might be the
+best fit for you. Note that not all models are supported by ONNX.
 
 2. In case ONNX is not suitable for your use-case, do you absolutely trust the
    source of the model, or are there any security concerns regarding where the
    persisted model comes from?
 
 If you have security concerns, then you should consider using :ref:`skops.io
-<skops_persistence>` which gives you back the python object, but unlike
+<skops_persistence>` which gives you back the Python object, but unlike
 `pickle` based persistence solutions, loading the persisted model doesn't
 automatically allow arbitrary code execution. Note that this requires manual
 investigation of the persisted file, which :mod:`skops.io` allows you to do.
@@ -44,7 +43,7 @@ is not a major concern for you, then you can use the built-in :mod:`pickle`
 module.
 
 4. Did you try :mod:`pickle` or :mod:`joblib` and found that the model cannot
-   be persisted? This can happen for instance when you have user defined
+   be persisted? It can happen for instance when you have user defined
    functions in your model.
 
 If yes, then you can use `cloudpickle`_ which can serialize certain objects
@@ -83,12 +82,13 @@ persist and plan to serve the model:
   even require `python` to be installed.
 
 - :mod:`skops.io`, :mod:`pickle`, :mod:`joblib`, `cloudpickle`_: You need a
-  python environment with the appropriate dependencies installed to load the
+  Python environment with the appropriate dependencies installed to load the
   model and get predictions from it. This environment should have the same
-  packages and the same versions as the environment where the model was
+  **packages** and the same **versions** as the environment where the model was
   trained. Note that none of these methods support loading a model trained with
   a different version of scikit-learn, and possibly different versions of other
-  dependencies such as `numpy` and `scipy`.
+  dependencies such as `numpy` and `scipy`. However, in most cases you should
+  be able to load your persisted model on a different hardware.
 
 
 .. _onnx_persistence:
@@ -98,7 +98,7 @@ ONNX
 
 `ONNX`, or `Open Neural Network Exchange <https://onnx.ai/>`__ format is best
 suitable in use-cases where one needs to persist the model and then use the
-persisted artifact to get predictions without the need to load the python
+persisted artifact to get predictions without the need to load the Python
 object itself. It is also useful in cases where the serving environment needs
 to be lean and minimal, since the `ONNX` runtime does not require `python`.
 
@@ -170,7 +170,7 @@ come with slight variations:
   functions.
 
 |details-start|
-**Using ``pickle``, ``joblib``, or ``cloudpickle``**
+**Using** ``pickle``, ``joblib``, **or** ``cloudpickle``
 |details-split|
 
 Depending on your use-case, you can choose one of these three methods to
@@ -212,7 +212,7 @@ In order to rebuild a similar model with future versions of scikit-learn,
 additional metadata should be saved along the pickled model:
 
 * The training data, e.g. a reference to an immutable snapshot
-* The python source code used to generate the model
+* The Python source code used to generate the model
 * The versions of scikit-learn and its dependencies
 * The cross validation score obtained on the training data
 
