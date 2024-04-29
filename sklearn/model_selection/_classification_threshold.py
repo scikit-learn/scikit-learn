@@ -723,7 +723,7 @@ class TunedThresholdClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstima
         cv_thresholds, cv_scores = zip(
             *Parallel(n_jobs=self.n_jobs)(
                 delayed(_fit_and_score_over_thresholds)(
-                    classifier,
+                    clone(classifier) if cv != "prefit" else classifier,
                     X,
                     y,
                     fit_params=routed_params.estimator.fit,
