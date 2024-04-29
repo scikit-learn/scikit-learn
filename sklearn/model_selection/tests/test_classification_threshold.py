@@ -458,28 +458,22 @@ def test_tuned_threshold_classifier_without_constraint_value(response_method):
     assert model.cv_results_["scores"].shape == (n_thresholds,)
 
 
-@pytest.mark.parametrize(
-    "metrics",
-    [
-        ("max_tpr_at_tnr_constraint", "max_tnr_at_tpr_constraint"),
-        ("max_tnr_at_tpr_constraint", "max_tpr_at_tnr_constraint"),
-    ],
-)
-def test_tuned_threshold_classifier_limit_metric_tradeoff(metrics):
-    """Check that an objective value of 0 give opposite predictions with tnr/tpr and
-    precision/recall.
+def test_tuned_threshold_classifier_limit_metric_tradeoff():
+    """Check that max TPR lead to opposite prediction of max TNR when constraint is
+    set to 0.0.
     """
     X, y = load_breast_cancer(return_X_y=True)
     estimator = make_pipeline(StandardScaler(), LogisticRegression())
     model = TunedThresholdClassifierCV(
         estimator=estimator,
-        objective_metric=metrics[0],
+        objective_metric="max_tpr_at_tnr_constraint",
         constraint_value=0,
     )
     y_pred_1 = model.fit(X, y).predict(X)
-    model.set_params(objective_metric=metrics[1])
+    model.set_params(objective_metric="max_tnr_at_tpr_constraint")
     y_pred_2 = (~model.fit(X, y).predict(X).astype(bool)).astype(int)
-    assert np.mean(y_pred_1 == y_pred_2) > 0.98
+    # check that we have opposite predictions with a slight tolerance
+    assert np.mean(y_pred_1 == y_pred_2) > 0.99
 
 
 def test_tuned_threshold_classifier_metric_with_parameter():
