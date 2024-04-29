@@ -776,9 +776,9 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
         Whether to use a precomputed Gram matrix to speed up
         calculations. The Gram matrix can also be passed as argument.
         For sparse input this option is always ``False`` to preserve sparsity.
-        For an example, see
-        :ref:`examples/linear_model/plot_elastic_net_precomputed_gram_matrix_with_weighted_samples.py
-        <sphx_glr_auto_examples_linear_model_plot_elastic_net_precomputed_gram_matrix_with_weighted_samples.py>`.
+        Check :ref:`an example on how to use a precomputed Gram Matrix in ElasticNet
+        <sphx_glr_auto_examples_linear_model_plot_elastic_net_precomputed_gram_matrix_with_weighted_samples.py>`
+        for details.```
 
     max_iter : int, default=1000
         The maximum number of iterations.
