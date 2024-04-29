@@ -83,6 +83,11 @@ See :ref:`array_api` for more details.
 
 **Classes:**
 
+- :class:`linear_model.Ridge` now supports the Array API for the `svd` solver.
+  See :ref:`array_api` for more details.
+  :pr:`27800` by :user:`Franck Charras <fcharras>`, :user:`Olivier Grisel <ogrisel>`
+  and :user:`Tim Head <betatim>`.
+
 Support for building with Meson
 -------------------------------
 
@@ -188,6 +193,11 @@ Changelog
   if only `inverse_func` is provided without `func` (that would default to identity)
   being explicitly set as well.
   :pr:`28483` by :user:`Stefanie Senger <StefanieSenger>`.
+
+- |Enhancement| :class:`compose.ColumnTransformer` can now expose the "remainder"
+  columns in the fitted `transformers_` attribute as column names or boolean
+  masks, rather than column indices.
+  :pr:`27657` by :user:`Jérôme Dockès <jeromedockes>`.
 
 - |Fix| Fixed an bug in :class:`compose.ColumnTransformer` with `n_jobs > 1`, where the
   intermediate selected columns were passed to the transformers as read-only arrays.

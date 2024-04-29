@@ -14,9 +14,11 @@ from sklearn.utils._array_api import (
     _average,
     _convert_to_numpy,
     _estimator_with_converted_arrays,
+    _is_numpy_namespace,
     _nanmax,
     _nanmin,
     _NumPyAPIWrapper,
+    _ravel,
     device,
     get_namespace,
     indexing_dtype,
@@ -346,6 +348,26 @@ def test_nan_reductions(library, X, reduction, expected):
 
     result = _convert_to_numpy(result, xp)
     assert_allclose(result, expected)
+
+
+@pytest.mark.parametrize(
+    "namespace, _device, _dtype", yield_namespace_device_dtype_combinations()
+)
+def test_ravel(namespace, _device, _dtype):
+    xp = _array_api_for_tests(namespace, _device)
+
+    array = [[1, 2, 3], [4, 5, 6], [7, 8, 9], [10, 11, 12]]
+    array_xp = xp.asarray(array, device=_device)
+    with config_context(array_api_dispatch=True):
+        result = _ravel(array_xp)
+
+    result = _convert_to_numpy(result, xp)
+    expected = numpy.ravel(array, order="C")
+
+    assert_allclose(expected, result)
+
+    if _is_numpy_namespace(xp):
+        assert numpy.asarray(result).flags["C_CONTIGUOUS"]
 
 
 @skip_if_array_api_compat_not_configured

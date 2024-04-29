@@ -43,7 +43,7 @@ https://repo.anaconda.com/pkgs/main/osx-64/coverage-7.2.2-py312h6c40b1e_0.conda#
 https://repo.anaconda.com/pkgs/main/noarch/cycler-0.11.0-pyhd3eb1b0_0.conda#f5e365d2cdb66d547eb8c3ab93843aab
 https://repo.anaconda.com/pkgs/main/noarch/execnet-1.9.0-pyhd3eb1b0_0.conda#f895937671af67cebb8af617494b3513
 https://repo.anaconda.com/pkgs/main/noarch/iniconfig-1.1.1-pyhd3eb1b0_0.tar.bz2#e40edff2c5708f342cef43c7f280c507
-https://repo.anaconda.com/pkgs/main/osx-64/joblib-1.2.0-py312hecd8cb5_0.conda#aeeb33f85c1e6776700b67a4762d2e6d
+https://repo.anaconda.com/pkgs/main/osx-64/joblib-1.4.0-py312hecd8cb5_0.conda#0af12a3a87d9c8051ae6ba2ed2c3882a
 https://repo.anaconda.com/pkgs/main/osx-64/kiwisolver-1.4.4-py312hcec6c5f_0.conda#2ba6561ddd1d05936fe74f5d118ce7dd
 https://repo.anaconda.com/pkgs/main/osx-64/lcms2-2.12-hf1fd2bf_0.conda#697aba7a3308226df7a93ccfeae16ffa
 https://repo.anaconda.com/pkgs/main/osx-64/mkl-service-2.4.0-py312h6c40b1e_1.conda#b1ef860be9043b35c5e8d9388b858514
@@ -53,7 +53,7 @@ https://repo.anaconda.com/pkgs/main/osx-64/packaging-23.2-py312hecd8cb5_0.conda#
 https://repo.anaconda.com/pkgs/main/osx-64/pluggy-1.0.0-py312hecd8cb5_1.conda#647fada22f1697691fdee90b52c99bcb
 https://repo.anaconda.com/pkgs/main/osx-64/pyparsing-3.0.9-py312hecd8cb5_0.conda#d85cf2b81c6d9326a57a6418e14db258
 https://repo.anaconda.com/pkgs/main/noarch/python-tzdata-2023.3-pyhd3eb1b0_0.conda#479c037de0186d114b9911158427624e
-https://repo.anaconda.com/pkgs/main/osx-64/pytz-2023.3.post1-py312hecd8cb5_0.conda#2636382c9a424f69cbc36b1c5dc1f2fc
+https://repo.anaconda.com/pkgs/main/osx-64/pytz-2024.1-py312hecd8cb5_0.conda#2b28ec0e0d07f5c0c701f75200b1e8b6
 https://repo.anaconda.com/pkgs/main/osx-64/setuptools-68.2.2-py312hecd8cb5_0.conda#64235f0c451427d86808c70c1c31cb8b
 https://repo.anaconda.com/pkgs/main/noarch/six-1.16.0-pyhd3eb1b0_1.conda#34586824d411d36af2fa40e799c172d0
 https://repo.anaconda.com/pkgs/main/noarch/toml-0.10.2-pyhd3eb1b0_0.conda#cda05f5f6d8509529d1a2743288d197a
