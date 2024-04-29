@@ -1016,8 +1016,6 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
 
         # get indicator for nan values
         nan_indicator = _get_mask(X, np.nan)
-        if sparse.issparse(nan_indicator):
-            nan_indicator.eliminate_zeros()
 
         # TODO: Remove this condition, once scipy 1.10 is the minimum version.
         #       Only scipy >= 1.10 supports design_matrix(.., extrapolate=..).
@@ -1059,7 +1057,7 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
                     x = spl.t[spl.k] + (X[:, i] - spl.t[spl.k]) % (
                         spl.t[n] - spl.t[spl.k]
                     )
-                else:
+                else:  # self.extrapolation in ("continue", "error")
                     x = X[:, i]
 
                 if use_sparse:
@@ -1099,6 +1097,7 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
                 # spline values at boundaries
                 f_min, f_max = spl(xmin), spl(xmax)
                 mask = (xmin <= X[:, i]) & (X[:, i] <= xmax)
+
                 if use_sparse:
                     mask_inv = ~mask
                     x = X[:, i].copy()
@@ -1113,6 +1112,7 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
                     if np.any(mask_inv):
                         XBS_sparse = XBS_sparse.tolil()
                         XBS_sparse[mask_inv, :] = 0
+
                 else:
                     XBS[mask, (i * n_splines) : ((i + 1) * n_splines)] = spl(X[mask, i])
 
