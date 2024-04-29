@@ -175,10 +175,9 @@ build_metadata_list = [
             "scipy": "1.7",  # the min version has some low level crashes
             "matplotlib": "min",
             "cython": "min",
+            "joblib": "min",
+            "threadpoolctl": "min",
         },
-        # TODO: put cython and threadpoolctl back to conda dependencies when required
-        # version is available on the main channel
-        "pip_dependencies": ["cython", "threadpoolctl"],
     },
     {
         "name": "pymin_conda_forge_openblas_ubuntu_2204",
