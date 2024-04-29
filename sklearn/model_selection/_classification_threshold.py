@@ -673,9 +673,9 @@ class TunedThresholdClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstima
                     " or 'max_recall_at_precision_constraint', `constraint_value` must "
                     "be provided. Got None instead."
                 )
-            constraint_value = self.constraint_value
+            constrained_metric = True
         else:
-            constraint_value = None  # ignore the constraint value
+            constrained_metric = False
 
         routed_params = process_routing(self, "fit", **params)
         self._curve_scorer = self._get_curve_scorer()
@@ -756,7 +756,7 @@ class TunedThresholdClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstima
         else:
             decision_thresholds = np.asarray(self.n_thresholds)
 
-        if constraint_value is None:  # find best score that is the highest value
+        if not constrained_metric:  # find best score that is the highest value
             objective_scores = _mean_interpolated_score(
                 decision_thresholds, cv_thresholds, cv_scores
             )
@@ -783,7 +783,7 @@ class TunedThresholdClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstima
 
             def _get_best_idx(constrained_score, maximized_score):
                 """Find the index of the best score constrained by another score."""
-                mask = constrained_score >= constraint_value
+                mask = constrained_score >= self.constraint_value
                 mask_idx = maximized_score[mask].argmax()
                 return np.flatnonzero(mask)[mask_idx]
 
