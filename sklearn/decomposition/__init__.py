@@ -5,25 +5,28 @@ this module can be regarded as dimensionality reduction techniques.
 """
 
 
-from ._nmf import NMF, non_negative_factorization
-from ._pca import PCA
-from ._incremental_pca import IncrementalPCA
-from ._kernel_pca import KernelPCA
-from ._sparse_pca import SparsePCA, MiniBatchSparsePCA
-from ._truncated_svd import TruncatedSVD
-from ._fastica import FastICA, fastica
+from ..utils.extmath import randomized_svd
 from ._dict_learning import (
-    dict_learning,
-    dict_learning_online,
-    sparse_encode,
     DictionaryLearning,
     MiniBatchDictionaryLearning,
     SparseCoder,
+    dict_learning,
+    dict_learning_online,
+    sparse_encode,
 )
 from ._factor_analysis import FactorAnalysis
-from ..utils.extmath import randomized_svd
+from ._fastica import FastICA, fastica
+from ._incremental_pca import IncrementalPCA
+from ._kernel_pca import KernelPCA
 from ._lda import LatentDirichletAllocation
-
+from ._nmf import (
+    NMF,
+    MiniBatchNMF,
+    non_negative_factorization,
+)
+from ._pca import PCA
+from ._sparse_pca import MiniBatchSparsePCA, SparsePCA
+from ._truncated_svd import TruncatedSVD
 
 __all__ = [
     "DictionaryLearning",
@@ -31,6 +34,7 @@ __all__ = [
     "IncrementalPCA",
     "KernelPCA",
     "MiniBatchDictionaryLearning",
+    "MiniBatchNMF",
     "MiniBatchSparsePCA",
     "NMF",
     "PCA",

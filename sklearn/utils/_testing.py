@@ -10,57 +10,52 @@
 #          Giorgio Patrini
 #          Thierry Guillemot
 # License: BSD 3 clause
+import atexit
+import contextlib
+import functools
+import importlib
+import inspect
 import os
 import os.path as op
-import inspect
-import warnings
-import sys
-import functools
-import tempfile
-from subprocess import check_output, STDOUT, CalledProcessError
-from subprocess import TimeoutExpired
 import re
-import contextlib
+import shutil
+import sys
+import tempfile
+import unittest
+import warnings
 from collections.abc import Iterable
-
-import scipy as sp
 from functools import wraps
 from inspect import signature
-
-import shutil
-import atexit
-import unittest
+from subprocess import STDOUT, CalledProcessError, TimeoutExpired, check_output
 from unittest import TestCase
 
-# WindowsError only exist on Windows
-try:
-    WindowsError
-except NameError:
-    WindowsError = None
-
-from numpy.testing import assert_allclose
-from numpy.testing import assert_almost_equal
-from numpy.testing import assert_approx_equal
-from numpy.testing import assert_array_equal
-from numpy.testing import assert_array_almost_equal
-from numpy.testing import assert_array_less
-import numpy as np
 import joblib
+import numpy as np
+import scipy as sp
+from numpy.testing import assert_allclose as np_assert_allclose
+from numpy.testing import (
+    assert_almost_equal,
+    assert_approx_equal,
+    assert_array_almost_equal,
+    assert_array_equal,
+    assert_array_less,
+    assert_no_warnings,
+)
 
 import sklearn
 from sklearn.utils import (
-    IS_PYPY,
     _IS_32BIT,
-    deprecated,
+    IS_PYPY,
     _in_unstable_openblas_configuration,
 )
+from sklearn.utils._array_api import _check_array_api_dispatch
+from sklearn.utils.fixes import parse_version, sp_version
 from sklearn.utils.multiclass import check_classification_targets
 from sklearn.utils.validation import (
     check_array,
     check_is_fitted,
     check_X_y,
 )
-
 
 __all__ = [
     "assert_raises",
@@ -72,6 +67,7 @@ __all__ = [
     "assert_approx_equal",
     "assert_allclose",
     "assert_run_python_script",
+    "assert_no_warnings",
     "SkipTest",
 ]
 
@@ -85,163 +81,6 @@ assert_raises_regex = _dummy.assertRaisesRegex
 # assert_raises_regex but lets keep the backward compat in scikit-learn with
 # the old name for now
 assert_raises_regexp = assert_raises_regex
-
-
-# TODO: Remove in 1.2
-@deprecated(  # type: ignore
-    "`assert_warns` is deprecated in 1.0 and will be removed in 1.2."
-    "Use `pytest.warns` instead."
-)
-def assert_warns(warning_class, func, *args, **kw):
-    """Test that a certain warning occurs.
-
-    .. deprecated:: 1.0
-        `assert_warns` is deprecated in 1.0 and will be removed in 1.2.
-        Use `pytest.warns` instead.
-
-    Parameters
-    ----------
-    warning_class : the warning class
-        The class to test for, e.g. UserWarning.
-
-    func : callable
-        Callable object to trigger warnings.
-
-    *args : the positional arguments to `func`.
-
-    **kw : the keyword arguments to `func`
-
-    Returns
-    -------
-    result : the return value of `func`
-
-    """
-    with warnings.catch_warnings(record=True) as w:
-        # Cause all warnings to always be triggered.
-        warnings.simplefilter("always")
-        # Trigger a warning.
-        result = func(*args, **kw)
-        if hasattr(np, "FutureWarning"):
-            # Filter out numpy-specific warnings in numpy >= 1.9
-            w = [e for e in w if e.category is not np.VisibleDeprecationWarning]
-
-        # Verify some things
-        if not len(w) > 0:
-            raise AssertionError("No warning raised when calling %s" % func.__name__)
-
-        found = any(warning.category is warning_class for warning in w)
-        if not found:
-            raise AssertionError(
-                "%s did not give warning: %s( is %s)"
-                % (func.__name__, warning_class, w)
-            )
-    return result
-
-
-# TODO: Remove in 1.2
-@deprecated(  # type: ignore
-    "`assert_warns_message` is deprecated in 1.0 and will be removed in 1.2."
-    "Use `pytest.warns` instead."
-)
-def assert_warns_message(warning_class, message, func, *args, **kw):
-    # very important to avoid uncontrolled state propagation
-    """Test that a certain warning occurs and with a certain message.
-
-    .. deprecated:: 1.0
-        `assert_warns_message` is deprecated in 1.0 and will be removed in 1.2.
-        Use `pytest.warns` instead.
-
-    Parameters
-    ----------
-    warning_class : the warning class
-        The class to test for, e.g. UserWarning.
-
-    message : str or callable
-        The message or a substring of the message to test for. If callable,
-        it takes a string as the argument and will trigger an AssertionError
-        if the callable returns `False`.
-
-    func : callable
-        Callable object to trigger warnings.
-
-    *args : the positional arguments to `func`.
-
-    **kw : the keyword arguments to `func`.
-
-    Returns
-    -------
-    result : the return value of `func`
-
-    """
-    with warnings.catch_warnings(record=True) as w:
-        # Cause all warnings to always be triggered.
-        warnings.simplefilter("always")
-        if hasattr(np, "FutureWarning"):
-            # Let's not catch the numpy internal DeprecationWarnings
-            warnings.simplefilter("ignore", np.VisibleDeprecationWarning)
-        # Trigger a warning.
-        result = func(*args, **kw)
-        # Verify some things
-        if not len(w) > 0:
-            raise AssertionError("No warning raised when calling %s" % func.__name__)
-
-        found = [issubclass(warning.category, warning_class) for warning in w]
-        if not any(found):
-            raise AssertionError(
-                "No warning raised for %s with class %s"
-                % (func.__name__, warning_class)
-            )
-
-        message_found = False
-        # Checks the message of all warnings belong to warning_class
-        for index in [i for i, x in enumerate(found) if x]:
-            # substring will match, the entire message with typo won't
-            msg = w[index].message  # For Python 3 compatibility
-            msg = str(msg.args[0] if hasattr(msg, "args") else msg)
-            if callable(message):  # add support for certain tests
-                check_in_message = message
-            else:
-
-                def check_in_message(msg):
-                    return message in msg
-
-            if check_in_message(msg):
-                message_found = True
-                break
-
-        if not message_found:
-            raise AssertionError(
-                "Did not receive the message you expected ('%s') for <%s>, got: '%s'"
-                % (message, func.__name__, msg)
-            )
-
-    return result
-
-
-# To remove when we support numpy 1.7
-def assert_no_warnings(func, *args, **kw):
-    """
-    Parameters
-    ----------
-    func
-    *args
-    **kw
-    """
-    # very important to avoid uncontrolled state propagation
-    with warnings.catch_warnings(record=True) as w:
-        warnings.simplefilter("always")
-
-        result = func(*args, **kw)
-        if hasattr(np, "FutureWarning"):
-            # Filter out numpy-specific warnings in numpy >= 1.9
-            w = [e for e in w if e.category is not np.VisibleDeprecationWarning]
-
-        if len(w) > 0:
-            raise AssertionError(
-                "Got warnings when calling %s: [%s]"
-                % (func.__name__, ", ".join(str(warning) for warning in w))
-            )
-    return result
 
 
 def ignore_warnings(obj=None, category=Warning):
@@ -387,6 +226,79 @@ def assert_raise_message(exceptions, message, function, *args, **kwargs):
         raise AssertionError("%s not raised by %s" % (names, function.__name__))
 
 
+def assert_allclose(
+    actual, desired, rtol=None, atol=0.0, equal_nan=True, err_msg="", verbose=True
+):
+    """dtype-aware variant of numpy.testing.assert_allclose
+
+    This variant introspects the least precise floating point dtype
+    in the input argument and automatically sets the relative tolerance
+    parameter to 1e-4 float32 and use 1e-7 otherwise (typically float64
+    in scikit-learn).
+
+    `atol` is always left to 0. by default. It should be adjusted manually
+    to an assertion-specific value in case there are null values expected
+    in `desired`.
+
+    The aggregate tolerance is `atol + rtol * abs(desired)`.
+
+    Parameters
+    ----------
+    actual : array_like
+        Array obtained.
+    desired : array_like
+        Array desired.
+    rtol : float, optional, default=None
+        Relative tolerance.
+        If None, it is set based on the provided arrays' dtypes.
+    atol : float, optional, default=0.
+        Absolute tolerance.
+    equal_nan : bool, optional, default=True
+        If True, NaNs will compare equal.
+    err_msg : str, optional, default=''
+        The error message to be printed in case of failure.
+    verbose : bool, optional, default=True
+        If True, the conflicting values are appended to the error message.
+
+    Raises
+    ------
+    AssertionError
+        If actual and desired are not equal up to specified precision.
+
+    See Also
+    --------
+    numpy.testing.assert_allclose
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.utils._testing import assert_allclose
+    >>> x = [1e-5, 1e-3, 1e-1]
+    >>> y = np.arccos(np.cos(x))
+    >>> assert_allclose(x, y, rtol=1e-5, atol=0)
+    >>> a = np.full(shape=10, fill_value=1e-5, dtype=np.float32)
+    >>> assert_allclose(a, 1e-5)
+    """
+    dtypes = []
+
+    actual, desired = np.asanyarray(actual), np.asanyarray(desired)
+    dtypes = [actual.dtype, desired.dtype]
+
+    if rtol is None:
+        rtols = [1e-4 if dtype == np.float32 else 1e-7 for dtype in dtypes]
+        rtol = max(rtols)
+
+    np_assert_allclose(
+        actual,
+        desired,
+        rtol=rtol,
+        atol=atol,
+        equal_nan=equal_nan,
+        err_msg=err_msg,
+        verbose=verbose,
+    )
+
+
 def assert_allclose_dense_sparse(x, y, rtol=1e-07, atol=1e-9, err_msg=""):
     """Assert allclose for sparse and dense data.
 
@@ -446,12 +358,15 @@ def set_random_state(estimator, random_state=0):
 
 
 try:
+    _check_array_api_dispatch(True)
+    ARRAY_API_COMPAT_FUNCTIONAL = True
+except ImportError:
+    ARRAY_API_COMPAT_FUNCTIONAL = False
+
+try:
     import pytest
 
     skip_if_32bit = pytest.mark.skipif(_IS_32BIT, reason="skipped on 32bit platforms")
-    skip_travis = pytest.mark.skipif(
-        os.environ.get("TRAVIS") == "true", reason="skip on travis"
-    )
     fails_if_pypy = pytest.mark.xfail(IS_PYPY, reason="not compatible with PyPy")
     fails_if_unstable_openblas = pytest.mark.xfail(
         _in_unstable_openblas_configuration(),
@@ -459,6 +374,10 @@ try:
     )
     skip_if_no_parallel = pytest.mark.skipif(
         not joblib.parallel.mp, reason="joblib is in serial mode"
+    )
+    skip_if_array_api_compat_not_configured = pytest.mark.skipif(
+        not ARRAY_API_COMPAT_FUNCTIONAL,
+        reason="requires array_api_compat installed and a new enough version of NumPy",
     )
 
     #  Decorator for tests involving both BLAS calls and multiprocessing.
@@ -502,7 +421,7 @@ def _delete_folder(folder_path, warn=False):
             # This can fail under windows,
             #  but will succeed when called by atexit
             shutil.rmtree(folder_path)
-    except WindowsError:
+    except OSError:
         if warn:
             warnings.warn("Could not delete temporary folder %s" % folder_path)
 
@@ -529,36 +448,19 @@ class TempMemmap:
         _delete_folder(self.temp_folder)
 
 
-def create_memmap_backed_data(data, mmap_mode="r", return_folder=False, aligned=False):
+def create_memmap_backed_data(data, mmap_mode="r", return_folder=False):
     """
     Parameters
     ----------
     data
     mmap_mode : str, default='r'
     return_folder :  bool, default=False
-    aligned : bool, default=False
-        If True, if input is a single numpy array and if the input array is aligned,
-        the memory mapped array will also be aligned. This is a workaround for
-        https://github.com/joblib/joblib/issues/563.
     """
     temp_folder = tempfile.mkdtemp(prefix="sklearn_testing_")
     atexit.register(functools.partial(_delete_folder, temp_folder, warn=True))
-    if aligned:
-        if isinstance(data, np.ndarray) and data.flags.aligned:
-            # https://numpy.org/doc/stable/reference/generated/numpy.memmap.html
-            filename = op.join(temp_folder, "data.dat")
-            fp = np.memmap(filename, dtype=data.dtype, mode="w+", shape=data.shape)
-            fp[:] = data[:]  # write data to memmap array
-            fp.flush()
-            memmap_backed_data = np.memmap(
-                filename, dtype=data.dtype, mode=mmap_mode, shape=data.shape
-            )
-        else:
-            raise ValueError("If aligned=True, input must be a single numpy array.")
-    else:
-        filename = op.join(temp_folder, "data.pkl")
-        joblib.dump(data, filename)
-        memmap_backed_data = joblib.load(filename, mmap_mode=mmap_mode)
+    filename = op.join(temp_folder, "data.pkl")
+    joblib.dump(data, filename)
+    memmap_backed_data = joblib.load(filename, mmap_mode=mmap_mode)
     result = (
         memmap_backed_data if not return_folder else (memmap_backed_data, temp_folder)
     )
@@ -818,7 +720,14 @@ def assert_run_python_script(source_code, timeout=60):
         os.unlink(source_file)
 
 
-def _convert_container(container, constructor_name, columns_name=None, dtype=None):
+def _convert_container(
+    container,
+    constructor_name,
+    columns_name=None,
+    dtype=None,
+    minversion=None,
+    categorical_feature_names=None,
+):
     """Convert a given container to a specific array-like with a dtype.
 
     Parameters
@@ -834,6 +743,10 @@ def _convert_container(container, constructor_name, columns_name=None, dtype=Non
     dtype : dtype, default=None
         Force the dtype of the container. Does not apply to `"slice"`
         container.
+    minversion : str, default=None
+        Minimum version for package to install.
+    categorical_feature_names : list of str, default=None
+        List of column names to cast to categorical dtype.
 
     Returns
     -------
@@ -853,21 +766,58 @@ def _convert_container(container, constructor_name, columns_name=None, dtype=Non
         return np.asarray(container, dtype=dtype)
     elif constructor_name == "sparse":
         return sp.sparse.csr_matrix(container, dtype=dtype)
-    elif constructor_name == "dataframe":
-        pd = pytest.importorskip("pandas")
-        return pd.DataFrame(container, columns=columns_name, dtype=dtype)
+    elif constructor_name in ("pandas", "dataframe"):
+        pd = pytest.importorskip("pandas", minversion=minversion)
+        result = pd.DataFrame(container, columns=columns_name, dtype=dtype, copy=False)
+        if categorical_feature_names is not None:
+            for col_name in categorical_feature_names:
+                result[col_name] = result[col_name].astype("category")
+        return result
+    elif constructor_name == "pyarrow":
+        pa = pytest.importorskip("pyarrow", minversion=minversion)
+        array = np.asarray(container)
+        if columns_name is None:
+            columns_name = [f"col{i}" for i in range(array.shape[1])]
+        data = {name: array[:, i] for i, name in enumerate(columns_name)}
+        result = pa.Table.from_pydict(data)
+        if categorical_feature_names is not None:
+            for col_idx, col_name in enumerate(result.column_names):
+                if col_name in categorical_feature_names:
+                    result = result.set_column(
+                        col_idx, col_name, result.column(col_name).dictionary_encode()
+                    )
+        return result
+    elif constructor_name == "polars":
+        pl = pytest.importorskip("polars", minversion=minversion)
+        result = pl.DataFrame(container, schema=columns_name, orient="row")
+        if categorical_feature_names is not None:
+            for col_name in categorical_feature_names:
+                result = result.with_columns(pl.col(col_name).cast(pl.Categorical))
+        return result
     elif constructor_name == "series":
-        pd = pytest.importorskip("pandas")
+        pd = pytest.importorskip("pandas", minversion=minversion)
         return pd.Series(container, dtype=dtype)
     elif constructor_name == "index":
-        pd = pytest.importorskip("pandas")
+        pd = pytest.importorskip("pandas", minversion=minversion)
         return pd.Index(container, dtype=dtype)
     elif constructor_name == "slice":
         return slice(container[0], container[1])
     elif constructor_name == "sparse_csr":
         return sp.sparse.csr_matrix(container, dtype=dtype)
+    elif constructor_name == "sparse_csr_array":
+        if sp_version >= parse_version("1.8"):
+            return sp.sparse.csr_array(container, dtype=dtype)
+        raise ValueError(
+            f"sparse_csr_array is only available with scipy>=1.8.0, got {sp_version}"
+        )
     elif constructor_name == "sparse_csc":
         return sp.sparse.csc_matrix(container, dtype=dtype)
+    elif constructor_name == "sparse_csc_array":
+        if sp_version >= parse_version("1.8"):
+            return sp.sparse.csc_array(container, dtype=dtype)
+        raise ValueError(
+            f"sparse_csc_array is only available with scipy>=1.8.0, got {sp_version}"
+        )
 
 
 def raises(expected_exc_type, match=None, may_pass=False, err_msg=None):
@@ -1078,3 +1028,55 @@ class MinimalTransformer:
 
     def fit_transform(self, X, y=None):
         return self.fit(X, y).transform(X, y)
+
+
+def _array_api_for_tests(array_namespace, device):
+    try:
+        if array_namespace == "numpy.array_api":
+            # FIXME: once it is not experimental anymore
+            with ignore_warnings(category=UserWarning):
+                # UserWarning: numpy.array_api submodule is still experimental.
+                array_mod = importlib.import_module(array_namespace)
+        else:
+            array_mod = importlib.import_module(array_namespace)
+    except ModuleNotFoundError:
+        raise SkipTest(
+            f"{array_namespace} is not installed: not checking array_api input"
+        )
+    try:
+        import array_api_compat  # noqa
+    except ImportError:
+        raise SkipTest(
+            "array_api_compat is not installed: not checking array_api input"
+        )
+
+    # First create an array using the chosen array module and then get the
+    # corresponding (compatibility wrapped) array namespace based on it.
+    # This is because `cupy` is not the same as the compatibility wrapped
+    # namespace of a CuPy array.
+    xp = array_api_compat.get_namespace(array_mod.asarray(1))
+    if (
+        array_namespace == "torch"
+        and device == "cuda"
+        and not xp.backends.cuda.is_built()
+    ):
+        raise SkipTest("PyTorch test requires cuda, which is not available")
+    elif array_namespace == "torch" and device == "mps":
+        if os.getenv("PYTORCH_ENABLE_MPS_FALLBACK") != "1":
+            # For now we need PYTORCH_ENABLE_MPS_FALLBACK=1 for all estimators to work
+            # when using the MPS device.
+            raise SkipTest(
+                "Skipping MPS device test because PYTORCH_ENABLE_MPS_FALLBACK is not "
+                "set."
+            )
+        if not xp.backends.mps.is_built():
+            raise SkipTest(
+                "MPS is not available because the current PyTorch install was not "
+                "built with MPS enabled."
+            )
+    elif array_namespace in {"cupy", "cupy.array_api"}:  # pragma: nocover
+        import cupy
+
+        if cupy.cuda.runtime.getDeviceCount() == 0:
+            raise SkipTest("CuPy test requires cuda, which is not available")
+    return xp

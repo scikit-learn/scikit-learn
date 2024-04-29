@@ -15,12 +15,11 @@ stationary kernels often obtain better results.
 #
 # License: BSD 3 clause
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 
 from sklearn.gaussian_process import GaussianProcessClassifier
 from sklearn.gaussian_process.kernels import RBF, DotProduct
-
 
 xx, yy = np.meshgrid(np.linspace(-3, 3, 50), np.linspace(-3, 3, 50))
 rng = np.random.RandomState(0)
@@ -29,7 +28,7 @@ Y = np.logical_xor(X[:, 0] > 0, X[:, 1] > 0)
 
 # fit the model
 plt.figure(figsize=(10, 5))
-kernels = [1.0 * RBF(length_scale=1.0), 1.0 * DotProduct(sigma_0=1.0) ** 2]
+kernels = [1.0 * RBF(length_scale=1.15), 1.0 * DotProduct(sigma_0=1.0) ** 2]
 for i, kernel in enumerate(kernels):
     clf = GaussianProcessClassifier(kernel=kernel, warm_start=True).fit(X, Y)
 

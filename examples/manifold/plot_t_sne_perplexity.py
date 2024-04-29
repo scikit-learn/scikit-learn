@@ -27,12 +27,13 @@ those effects.
 # Author: Narine Kokhlikyan <narine@slice.com>
 # License: BSD
 
-import numpy as np
-import matplotlib.pyplot as plt
-
-from matplotlib.ticker import NullFormatter
-from sklearn import manifold, datasets
 from time import time
+
+import matplotlib.pyplot as plt
+import numpy as np
+from matplotlib.ticker import NullFormatter
+
+from sklearn import datasets, manifold
 
 n_samples = 150
 n_components = 2
@@ -62,7 +63,6 @@ for i, perplexity in enumerate(perplexities):
         init="random",
         random_state=0,
         perplexity=perplexity,
-        learning_rate="auto",
         n_iter=300,
     )
     Y = tsne.fit_transform(X)
@@ -130,7 +130,6 @@ for i, perplexity in enumerate(perplexities):
         init="random",
         random_state=0,
         perplexity=perplexity,
-        learning_rate="auto",
         n_iter=400,
     )
     Y = tsne.fit_transform(X)

@@ -94,9 +94,9 @@ Regressions in 0.19.0 fixed in 0.19.1:
   longer accepted ``X`` as a list. :issue:`9600` by :user:`Rasul Kerimov
   <CoderINusE>`.
 
-- Fixed handling of :func:`cross_val_predict` for binary classification with
-  ``method='decision_function'``. :issue:`9593` by :user:`Reiichiro Nakano
-  <reiinakano>` and core devs.
+- Fixed handling of :func:`model_selection.cross_val_predict` for binary
+  classification with ``method='decision_function'``. :issue:`9593` by
+  :user:`Reiichiro Nakano <reiinakano>` and core devs.
 
 - Fix regression in :class:`pipeline.Pipeline` where it no longer accepted
   ``steps`` as a tuple. :issue:`9604` by :user:`Joris Van den Bossche
@@ -119,7 +119,7 @@ Regressions in 0.19.0 fixed in 0.19.1:
 Enhancements
 ............
 
-- Our test suite and :func:`utils.estimator_checks.check_estimators` can now be
+- Our test suite and :func:`utils.estimator_checks.check_estimator` can now be
   run without Nose installed. :issue:`9697` by :user:`Joan Massich <massich>`.
 
 - To improve usability of version 0.19's :class:`pipeline.Pipeline`
@@ -362,11 +362,11 @@ Linear, kernelized and related models
 
 Other predictors
 
-- Custom metrics for the :mod:`neighbors` binary trees now have
+- Custom metrics for the :mod:`sklearn.neighbors` binary trees now have
   fewer constraints: they must take two 1d-arrays and return a float.
   :issue:`6288` by `Jake Vanderplas`_.
 
-- ``algorithm='auto`` in :mod:`neighbors` estimators now chooses the most
+- ``algorithm='auto`` in :mod:`sklearn.neighbors` estimators now chooses the most
   appropriate algorithm for all input types and metrics. :issue:`9145` by
   :user:`Herilalaina Rakotoarison <herilalaina>` and :user:`Reddy Chinthala
   <preddy5>`.
@@ -396,7 +396,7 @@ Decomposition, manifold learning and clustering
 
 - Memory usage enhancements: Prevent cast from float32 to float64 in
   :class:`decomposition.PCA` and
-  :func:`decomposition.randomized_svd_low_rank`.
+  `decomposition.randomized_svd_low_rank`.
   :issue:`9067` by `Raghav RV`_.
 
 Preprocessing and feature selection
@@ -409,7 +409,7 @@ Preprocessing and feature selection
   with ``center=True``. :issue:`8065` by :user:`Daniel LeJeune <acadiansith>`.
 
 - Small performance improvement to n-gram creation in
-  :mod:`feature_extraction.text` by binding methods for loops and
+  :mod:`sklearn.feature_extraction.text` by binding methods for loops and
   special-casing unigrams. :issue:`7567` by :user:`Jaye Doepke <jtdoepke>`
 
 - Relax assumption on the data for the
@@ -486,12 +486,12 @@ Metrics
 
 Miscellaneous
 
-- :func:`utils.check_estimator` now attempts to ensure that methods
+- :func:`utils.estimator_checks.check_estimator` now attempts to ensure that methods
   transform, predict, etc.  do not set attributes on the estimator.
   :issue:`7533` by :user:`Ekaterina Krivich <kiote>`.
 
 - Added type checking to the ``accept_sparse`` parameter in
-  :mod:`utils.validation` methods. This parameter now accepts only boolean,
+  :mod:`sklearn.utils.validation` methods. This parameter now accepts only boolean,
   string, or list/tuple of strings. ``accept_sparse=None`` is deprecated and
   should be replaced by ``accept_sparse=False``.
   :issue:`7880` by :user:`Josh Karnofsky <jkarno>`.
@@ -570,7 +570,7 @@ Linear, kernelized and related models
   the same result as the LassoLars implementation available
   in R (lars library). :issue:`7849` by :user:`Jair Montoya Martinez <jmontoyam>`.
 
-- Fixed a bug in :class:`linear_model.RandomizedLasso`,
+- Fixed a bug in `linear_model.RandomizedLasso`,
   :class:`linear_model.Lars`, :class:`linear_model.LassoLars`,
   :class:`linear_model.LarsCV` and :class:`linear_model.LassoLarsCV`,
   where the parameter ``precompute`` was not used consistently across
@@ -611,7 +611,7 @@ Linear, kernelized and related models
 
 Other predictors
 
-- Fix :class:`semi_supervised.BaseLabelPropagation` to correctly implement
+- Fix `semi_supervised.BaseLabelPropagation` to correctly implement
   ``LabelPropagation`` and ``LabelSpreading`` as done in the referenced
   papers. :issue:`9239`
   by :user:`Andre Ambrosio Boechat <boechat107>`, :user:`Utkarsh Upadhyay
@@ -642,7 +642,7 @@ Decomposition, manifold learning and clustering
 
 - Fixed the implementation of ``explained_variance_``
   in :class:`decomposition.PCA`,
-  :class:`decomposition.RandomizedPCA` and
+  `decomposition.RandomizedPCA` and
   :class:`decomposition.IncrementalPCA`.
   :issue:`9105` by `Hanmin Qin <https://github.com/qinhanmin2014>`_.
 
@@ -674,13 +674,13 @@ Decomposition, manifold learning and clustering
 - Fixed improper scaling in :class:`cross_decomposition.PLSRegression`
   with ``scale=True``. :issue:`7819` by :user:`jayzed82 <jayzed82>`.
 
-- :class:`cluster.bicluster.SpectralCoclustering` and
-  :class:`cluster.bicluster.SpectralBiclustering` ``fit`` method conforms
+- :class:`cluster.SpectralCoclustering` and
+  :class:`cluster.SpectralBiclustering` ``fit`` method conforms
   with API by accepting ``y`` and returning the object.  :issue:`6126`,
   :issue:`7814` by :user:`Laurent Direr <ldirer>` and :user:`Maniteja
   Nandana <maniteja123>`.
 
-- Fix bug where :mod:`mixture` ``sample`` methods did not return as many
+- Fix bug where :mod:`sklearn.mixture` ``sample`` methods did not return as many
   samples as requested. :issue:`7702` by :user:`Levi John Wolf <ljwolf>`.
 
 - Fixed the shrinkage implementation in :class:`neighbors.NearestCentroid`.
@@ -698,8 +698,8 @@ Preprocessing and feature selection
   selected fewer features than it should.
   :issue:`7490` by :user:`Peng Meng <mpjlu>`.
 
-- Fixed a bug where :class:`linear_model.RandomizedLasso` and
-  :class:`linear_model.RandomizedLogisticRegression` breaks for
+- Fixed a bug where `linear_model.RandomizedLasso` and
+  `linear_model.RandomizedLogisticRegression` breaks for
   sparse input. :issue:`8259` by :user:`Aman Dalmia <dalmia>`.
 
 - Fix a bug where :class:`feature_extraction.FeatureHasher`
@@ -715,14 +715,14 @@ Preprocessing and feature selection
 
 Model evaluation and meta-estimators
 
-- Fixed a bug where :func:`model_selection.BaseSearchCV.inverse_transform`
+- Fixed a bug where `model_selection.BaseSearchCV.inverse_transform`
   returns ``self.best_estimator_.transform()`` instead of
   ``self.best_estimator_.inverse_transform()``.
   :issue:`8344` by :user:`Akshay Gupta <Akshay0724>` and :user:`Rasmus Eriksson <MrMjauh>`.
 
 - Added ``classes_`` attribute to :class:`model_selection.GridSearchCV`,
-  :class:`model_selection.RandomizedSearchCV`,  :class:`grid_search.GridSearchCV`,
-  and  :class:`grid_search.RandomizedSearchCV` that matches the ``classes_``
+  :class:`model_selection.RandomizedSearchCV`,  `grid_search.GridSearchCV`,
+  and  `grid_search.RandomizedSearchCV` that matches the ``classes_``
   attribute of ``best_estimator_``. :issue:`7661` and :issue:`8295`
   by :user:`Alyssa Batula <abatula>`, :user:`Dylan Werner-Meier <unautre>`,
   and :user:`Stephen Hoover <stephen-hoover>`.
@@ -760,7 +760,7 @@ Metrics
   (`#7356 <https://github.com/scikit-learn/scikit-learn/pull/7356>`_). By
   :user:`Nick Dingwall <ndingwall>` and `Gael Varoquaux`_.
 
-- Fix a bug in :func:`metrics.classification._check_targets`
+- Fix a bug in `metrics.classification._check_targets`
   which would return ``'binary'`` if ``y_true`` and ``y_pred`` were
   both ``'binary'`` but the union of ``y_true`` and ``y_pred`` was
   ``'multiclass'``. :issue:`8377` by `Loic Esteve`_.
@@ -784,7 +784,7 @@ Miscellaneous
   incorrect result when ``n_samples`` is odd.
   :issue:`8198` by :user:`Josh Levy <levy5674>`.
 
-- Some ``fetch_`` functions in :mod:`datasets` were ignoring the
+- Some ``fetch_`` functions in :mod:`sklearn.datasets` were ignoring the
   ``download_if_missing`` keyword. :issue:`7944` by :user:`Ralf Gommers <rgommers>`.
 
 - Fix estimators to accept a ``sample_weight`` parameter of type
@@ -795,7 +795,7 @@ Miscellaneous
   raising an exception if instability is identified. :issue:`7376` and
   :issue:`7331` by `Joel Nothman`_ and :user:`yangarbiter`.
 
-- Fix a bug where :meth:`base.BaseEstimator.__getstate__`
+- Fix a bug where `base.BaseEstimator.__getstate__`
   obstructed pickling customizations of child-classes, when used in a
   multiple inheritance context.
   :issue:`8316` by :user:`Holger Peters <HolgerPeters>`.
@@ -837,7 +837,7 @@ Linear, kernelized and related models
 
 Other predictors
 
-- :class:`neighbors.LSHForest` has been deprecated and will be
+- `neighbors.LSHForest` has been deprecated and will be
   removed in 0.21 due to poor performance.
   :issue:`9078` by :user:`Laurent Direr <ldirer>`.
 
@@ -884,8 +884,8 @@ Preprocessing and feature selection
   ``alternate_sign``.
   :issue:`7565` by :user:`Roman Yurchak <rth>`.
 
-- :class:`linear_model.RandomizedLogisticRegression`,
-  and :class:`linear_model.RandomizedLasso` have been deprecated and will
+- `linear_model.RandomizedLogisticRegression`,
+  and `linear_model.RandomizedLasso` have been deprecated and will
   be removed in version 0.21.
   :issue:`8995` by :user:`Ramana.S <sentient07>`.
 
@@ -944,7 +944,7 @@ Miscellaneous
 
 - SciPy >= 0.13.3 and NumPy >= 1.8.2 are now the minimum supported versions
   for scikit-learn. The following backported functions in
-  :mod:`utils` have been removed or deprecated accordingly.
+  :mod:`sklearn.utils` have been removed or deprecated accordingly.
   :issue:`8854` and :issue:`8874` by :user:`Naoya Kanai <naoyak>`
 
 - The ``store_covariances`` and ``covariances_`` parameters of
@@ -994,7 +994,7 @@ Miscellaneous
 
 - Ensure that estimators' attributes ending with ``_`` are not set
   in the constructor but only in the ``fit`` method. Most notably,
-  ensemble estimators (deriving from :class:`ensemble.BaseEnsemble`)
+  ensemble estimators (deriving from `ensemble.BaseEnsemble`)
   now only have ``self.estimators_`` available after ``fit``.
   :issue:`7464` by `Lars Buitinck`_ and `Loic Esteve`_.
 

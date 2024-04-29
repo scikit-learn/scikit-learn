@@ -5,16 +5,18 @@
 # License: BSD 3 clause
 
 
-import numpy as np
 import warnings
+from numbers import Integral, Real
 
+import numpy as np
 from scipy import special, stats
 from scipy.sparse import issparse
 
-from ..base import BaseEstimator
+from ..base import BaseEstimator, _fit_context
 from ..preprocessing import LabelBinarizer
-from ..utils import as_float_array, check_array, check_X_y, safe_sqr, safe_mask
-from ..utils.extmath import safe_sparse_dot, row_norms
+from ..utils import as_float_array, check_array, check_X_y, safe_mask, safe_sqr
+from ..utils._param_validation import Interval, StrOptions, validate_params
+from ..utils.extmath import row_norms, safe_sparse_dot
 from ..utils.validation import check_is_fitted
 from ._base import SelectorMixin
 
@@ -39,7 +41,7 @@ def _clean_nans(scores):
 # Contrary to the scipy.stats.f_oneway implementation it does not
 # copy the data while keeping the inputs unchanged.
 def f_oneway(*args):
-    """Performs a 1-way ANOVA.
+    """Perform a 1-way ANOVA.
 
     The one-way ANOVA tests the null hypothesis that 2 or more groups have
     the same population mean. The test is applied to samples from two or
@@ -50,7 +52,7 @@ def f_oneway(*args):
     Parameters
     ----------
     *args : {array-like, sparse matrix}
-        sample1, sample2... The sample measurements should be given as
+        Sample1, sample2... The sample measurements should be given as
         arguments.
 
     Returns
@@ -81,13 +83,11 @@ def f_oneway(*args):
 
     References
     ----------
-
     .. [1] Lowry, Richard.  "Concepts and Applications of Inferential
            Statistics". Chapter 14.
-           http://faculty.vassar.edu/lowry/ch14pt1.html
+           http://vassarstats.net/textbook
 
     .. [2] Heiman, G.W.  Research Methods in Statistics. 2002.
-
     """
     n_classes = len(args)
     args = [as_float_array(a) for a in args]
@@ -117,6 +117,13 @@ def f_oneway(*args):
     return f, prob
 
 
+@validate_params(
+    {
+        "X": ["array-like", "sparse matrix"],
+        "y": ["array-like"],
+    },
+    prefer_skip_nested_validation=True,
+)
 def f_classif(X, y):
     """Compute the ANOVA F-value for the provided sample.
 
@@ -127,7 +134,7 @@ def f_classif(X, y):
     X : {array-like, sparse matrix} of shape (n_samples, n_features)
         The set of regressors that will be tested sequentially.
 
-    y : ndarray of shape (n_samples,)
+    y : array-like of shape (n_samples,)
         The target vector.
 
     Returns
@@ -167,12 +174,19 @@ def _chisquare(f_obs, f_exp):
     return chisq, special.chdtrc(k - 1, chisq)
 
 
+@validate_params(
+    {
+        "X": ["array-like", "sparse matrix"],
+        "y": ["array-like"],
+    },
+    prefer_skip_nested_validation=True,
+)
 def chi2(X, y):
     """Compute chi-squared stats between each non-negative feature and class.
 
-    This score can be used to select the n_features features with the
+    This score can be used to select the `n_features` features with the
     highest values for the test chi-squared statistic from X, which must
-    contain only non-negative features such as booleans or frequencies
+    contain only **non-negative features** such as booleans or frequencies
     (e.g., term counts in document classification), relative to the classes.
 
     Recall that the chi-square test measures dependence between stochastic
@@ -198,20 +212,20 @@ def chi2(X, y):
     p_values : ndarray of shape (n_features,)
         P-values for each feature.
 
-    Notes
-    -----
-    Complexity of this algorithm is O(n_classes * n_features).
-
     See Also
     --------
     f_classif : ANOVA F-value between label/feature for classification tasks.
     f_regression : F-value between label/feature for regression tasks.
+
+    Notes
+    -----
+    Complexity of this algorithm is O(n_classes * n_features).
     """
 
     # XXX: we might want to do some of the following in logspace instead for
     # numerical stability.
     # Converting X to float allows getting better performance for the
-    # safe_sparse_dot call made bellow.
+    # safe_sparse_dot call made below.
     X = check_array(X, accept_sparse="csr", dtype=(np.float64, np.float32))
     if np.any((X.data if issparse(X) else X) < 0):
         raise ValueError("Input X must be non-negative.")
@@ -239,6 +253,15 @@ def chi2(X, y):
     return _chisquare(observed, expected)
 
 
+@validate_params(
+    {
+        "X": ["array-like", "sparse matrix"],
+        "y": ["array-like"],
+        "center": ["boolean"],
+        "force_finite": ["boolean"],
+    },
+    prefer_skip_nested_validation=True,
+)
 def r_regression(X, y, *, center=True, force_finite=True):
     """Compute Pearson's r for each features and the target.
 
@@ -287,7 +310,7 @@ def r_regression(X, y, *, center=True, force_finite=True):
     See Also
     --------
     f_regression: Univariate linear regression tests returning f-statistic
-        and p-values
+        and p-values.
     mutual_info_regression: Mutual information for a continuous target.
     f_classif: ANOVA F-value between label/feature for classification tasks.
     chi2: Chi-squared stats of non-negative features for classification tasks.
@@ -300,10 +323,13 @@ def r_regression(X, y, *, center=True, force_finite=True):
     # need not center X
     if center:
         y = y - np.mean(y)
-        if issparse(X):
-            X_means = X.mean(axis=0).getA1()
-        else:
-            X_means = X.mean(axis=0)
+        # TODO: for Scipy <= 1.10, `isspmatrix(X)` returns `True` for sparse arrays.
+        # Here, we check the output of the `.mean` operation that returns a `np.matrix`
+        # for sparse matrices while a `np.array` for dense and sparse arrays.
+        # We can reconsider using `isspmatrix` when the minimum version is
+        # SciPy >= 1.11
+        X_means = X.mean(axis=0)
+        X_means = X_means.getA1() if isinstance(X_means, np.matrix) else X_means
         # Compute the scaled standard deviations via moments
         X_norms = np.sqrt(row_norms(X.T, squared=True) - n_samples * X_means**2)
     else:
@@ -322,6 +348,15 @@ def r_regression(X, y, *, center=True, force_finite=True):
     return correlation_coefficient
 
 
+@validate_params(
+    {
+        "X": ["array-like", "sparse matrix"],
+        "y": ["array-like"],
+        "center": ["boolean"],
+        "force_finite": ["boolean"],
+    },
+    prefer_skip_nested_validation=True,
+)
 def f_regression(X, y, *, center=True, force_finite=True):
     """Univariate linear regression tests returning F-statistic and p-values.
 
@@ -374,7 +409,7 @@ def f_regression(X, y, *, center=True, force_finite=True):
           `np.nan` values in the F-statistic and p-value. When
           `force_finite=True`, the F-statistic is set to `0.0` and the
           associated p-value is set to `1.0`.
-        - when the a feature in `X` is perfectly correlated (or
+        - when a feature in `X` is perfectly correlated (or
           anti-correlated) with the target `y`. In this case, the F-statistic
           is expected to be `np.inf`. When `force_finite=True`, the F-statistic
           is set to `np.finfo(dtype).max` and the associated p-value is set to
@@ -440,10 +475,13 @@ class _BaseFilter(SelectorMixin, BaseEstimator):
         (scores, pvalues) or a single array with scores.
     """
 
+    _parameter_constraints: dict = {"score_func": [callable]}
+
     def __init__(self, score_func):
         self.score_func = score_func
 
-    def fit(self, X, y):
+    @_fit_context(prefer_skip_nested_validation=True)
+    def fit(self, X, y=None):
         """Run score function on (X, y) and get the appropriate features.
 
         Parameters
@@ -451,23 +489,20 @@ class _BaseFilter(SelectorMixin, BaseEstimator):
         X : array-like of shape (n_samples, n_features)
             The training input samples.
 
-        y : array-like of shape (n_samples,)
+        y : array-like of shape (n_samples,) or None
             The target values (class labels in classification, real numbers in
-            regression).
+            regression). If the selector is unsupervised then `y` can be set to `None`.
 
         Returns
         -------
         self : object
             Returns the instance itself.
         """
-        X, y = self._validate_data(
-            X, y, accept_sparse=["csr", "csc"], multi_output=True
-        )
-
-        if not callable(self.score_func):
-            raise TypeError(
-                "The score function should be a callable, %s (%s) was passed."
-                % (self.score_func, type(self.score_func))
+        if y is None:
+            X = self._validate_data(X, accept_sparse=["csr", "csc"])
+        else:
+            X, y = self._validate_data(
+                X, y, accept_sparse=["csr", "csc"], multi_output=True
             )
 
         self._check_params(X, y)
@@ -550,6 +585,9 @@ class SelectPercentile(_BaseFilter):
     Ties between features with equal scores will be broken in an unspecified
     way.
 
+    This filter supports unsupervised feature selection that only requests `X` for
+    computing the scores.
+
     Examples
     --------
     >>> from sklearn.datasets import load_digits
@@ -562,15 +600,14 @@ class SelectPercentile(_BaseFilter):
     (1797, 7)
     """
 
+    _parameter_constraints: dict = {
+        **_BaseFilter._parameter_constraints,
+        "percentile": [Interval(Real, 0, 100, closed="both")],
+    }
+
     def __init__(self, score_func=f_classif, *, percentile=10):
         super().__init__(score_func=score_func)
         self.percentile = percentile
-
-    def _check_params(self, X, y):
-        if not 0 <= self.percentile <= 100:
-            raise ValueError(
-                "percentile should be >=0, <=100; got %r" % self.percentile
-            )
 
     def _get_support_mask(self):
         check_is_fitted(self)
@@ -590,6 +627,9 @@ class SelectPercentile(_BaseFilter):
             kept_ties = ties[: max_feats - mask.sum()]
             mask[kept_ties] = True
         return mask
+
+    def _more_tags(self):
+        return {"requires_y": False}
 
 
 class SelectKBest(_BaseFilter):
@@ -650,6 +690,9 @@ class SelectKBest(_BaseFilter):
     Ties between features with equal scores will be broken in an unspecified
     way.
 
+    This filter supports unsupervised feature selection that only requests `X` for
+    computing the scores.
+
     Examples
     --------
     >>> from sklearn.datasets import load_digits
@@ -662,15 +705,20 @@ class SelectKBest(_BaseFilter):
     (1797, 20)
     """
 
+    _parameter_constraints: dict = {
+        **_BaseFilter._parameter_constraints,
+        "k": [StrOptions({"all"}), Interval(Integral, 0, None, closed="left")],
+    }
+
     def __init__(self, score_func=f_classif, *, k=10):
         super().__init__(score_func=score_func)
         self.k = k
 
     def _check_params(self, X, y):
-        if not (self.k == "all" or 0 <= self.k <= X.shape[1]):
-            raise ValueError(
-                "k should be >=0, <= n_features = %d; got %r. "
-                "Use k='all' to return all features." % (X.shape[1], self.k)
+        if not isinstance(self.k, str) and self.k > X.shape[1]:
+            warnings.warn(
+                f"k={self.k} is greater than n_features={X.shape[1]}. "
+                "All the features will be returned."
             )
 
     def _get_support_mask(self):
@@ -688,6 +736,9 @@ class SelectKBest(_BaseFilter):
             # megafeature on x86-64).
             mask[np.argsort(scores, kind="mergesort")[-self.k :]] = 1
             return mask
+
+    def _more_tags(self):
+        return {"requires_y": False}
 
 
 class SelectFpr(_BaseFilter):
@@ -755,6 +806,11 @@ class SelectFpr(_BaseFilter):
     (569, 16)
     """
 
+    _parameter_constraints: dict = {
+        **_BaseFilter._parameter_constraints,
+        "alpha": [Interval(Real, 0, 1, closed="both")],
+    }
+
     def __init__(self, score_func=f_classif, *, alpha=5e-2):
         super().__init__(score_func=score_func)
         self.alpha = alpha
@@ -809,7 +865,7 @@ class SelectFdr(_BaseFilter):
     mutual_info_classif : Mutual information for a discrete target.
     chi2 : Chi-squared stats of non-negative features for classification tasks.
     f_regression : F-value between label/feature for regression tasks.
-    mutual_info_regression : Mutual information for a contnuous target.
+    mutual_info_regression : Mutual information for a continuous target.
     SelectPercentile : Select features based on percentile of the highest
         scores.
     SelectKBest : Select features based on the k highest scores.
@@ -833,6 +889,11 @@ class SelectFdr(_BaseFilter):
     >>> X_new.shape
     (569, 16)
     """
+
+    _parameter_constraints: dict = {
+        **_BaseFilter._parameter_constraints,
+        "alpha": [Interval(Real, 0, 1, closed="both")],
+    }
 
     def __init__(self, score_func=f_classif, *, alpha=5e-2):
         super().__init__(score_func=score_func)
@@ -911,6 +972,11 @@ class SelectFwe(_BaseFilter):
     (569, 15)
     """
 
+    _parameter_constraints: dict = {
+        **_BaseFilter._parameter_constraints,
+        "alpha": [Interval(Real, 0, 1, closed="both")],
+    }
+
     def __init__(self, score_func=f_classif, *, alpha=5e-2):
         super().__init__(score_func=score_func)
         self.alpha = alpha
@@ -924,6 +990,7 @@ class SelectFwe(_BaseFilter):
 ######################################################################
 # Generic filter
 ######################################################################
+
 
 # TODO this class should fit on either p-values or scores,
 # depending on the mode.
@@ -940,9 +1007,10 @@ class GenericUnivariateSelect(_BaseFilter):
         a single array scores.
 
     mode : {'percentile', 'k_best', 'fpr', 'fdr', 'fwe'}, default='percentile'
-        Feature selection mode.
+        Feature selection mode. Note that the `'percentile'` and `'kbest'`
+        modes are supporting unsupervised feature selection (when `y` is `None`).
 
-    param : float or int depending on the feature selection mode, default=1e-5
+    param : "all", float or int, default=1e-5
         Parameter of the corresponding mode.
 
     Attributes
@@ -999,6 +1067,12 @@ class GenericUnivariateSelect(_BaseFilter):
         "fwe": SelectFwe,
     }
 
+    _parameter_constraints: dict = {
+        **_BaseFilter._parameter_constraints,
+        "mode": [StrOptions(set(_selection_modes.keys()))],
+        "param": [Interval(Real, 0, None, closed="left"), StrOptions({"all"})],
+    }
+
     def __init__(self, score_func=f_classif, *, mode="percentile", param=1e-5):
         super().__init__(score_func=score_func)
         self.mode = mode
@@ -1020,12 +1094,6 @@ class GenericUnivariateSelect(_BaseFilter):
         return {**super().__sklearn_tags__(), **more_tags}
 
     def _check_params(self, X, y):
-        if self.mode not in self._selection_modes:
-            raise ValueError(
-                "The mode passed should be one of %s, %r, (type %s) was passed."
-                % (self._selection_modes.keys(), self.mode, type(self.mode))
-            )
-
         self._make_selector()._check_params(X, y)
 
     def _get_support_mask(self):

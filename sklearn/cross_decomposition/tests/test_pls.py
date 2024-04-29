@@ -1,20 +1,22 @@
-import pytest
-import numpy as np
-from numpy.testing import assert_array_almost_equal, assert_array_equal, assert_allclose
+import warnings
 
-from sklearn.datasets import load_linnerud
+import numpy as np
+import pytest
+from numpy.testing import assert_allclose, assert_array_almost_equal, assert_array_equal
+
+from sklearn.cross_decomposition import CCA, PLSSVD, PLSCanonical, PLSRegression
 from sklearn.cross_decomposition._pls import (
     _center_scale_xy,
     _get_first_singular_vectors_power_method,
     _get_first_singular_vectors_svd,
     _svd_flip_1d,
 )
-from sklearn.cross_decomposition import CCA
-from sklearn.cross_decomposition import PLSSVD, PLSRegression, PLSCanonical
-from sklearn.datasets import make_regression
+from sklearn.datasets import load_linnerud, make_regression
+from sklearn.ensemble import VotingRegressor
+from sklearn.exceptions import ConvergenceWarning
+from sklearn.linear_model import LinearRegression
 from sklearn.utils import check_random_state
 from sklearn.utils.extmath import svd_flip
-from sklearn.exceptions import ConvergenceWarning
 
 
 def assert_matrix_orthogonal(M):
@@ -351,7 +353,6 @@ def test_convergence_fail():
         pls_nipals.fit(X, Y)
 
 
-@pytest.mark.filterwarnings("ignore:.*`scores_` was deprecated")  # 1.1
 @pytest.mark.parametrize("Est", (PLSSVD, PLSRegression, PLSCanonical))
 def test_attibutes_shapes(Est):
     # Make sure attributes are of the correct shape depending on n_components
@@ -467,77 +468,48 @@ def test_scale_and_stability(Est, X, Y):
     assert_allclose(Y_s_score, Y_score, atol=1e-4)
 
 
-@pytest.mark.parametrize("Est", (PLSSVD, PLSCanonical, CCA))
-@pytest.mark.parametrize(
-    "n_components, err_type, err_msg",
-    [
-        (0, ValueError, "n_components == 0, must be >= 1."),
-        (4, ValueError, "n_components == 4, must be <= 3."),
-        (
-            2.0,
-            TypeError,
-            "n_components must be an instance of int",
-        ),
-    ],
-)
-def test_n_components_bounds(Est, n_components, err_type, err_msg):
-    """Check the validation of `n_components` for `PLS` regressors."""
+@pytest.mark.parametrize("Estimator", (PLSSVD, PLSRegression, PLSCanonical, CCA))
+def test_n_components_upper_bounds(Estimator):
+    """Check the validation of `n_components` upper bounds for `PLS` regressors."""
     rng = np.random.RandomState(0)
     X = rng.randn(10, 5)
     Y = rng.randn(10, 3)
-    est = Est(n_components=n_components)
-    with pytest.raises(err_type, match=err_msg):
-        est.fit(X, Y)
-
-
-@pytest.mark.parametrize(
-    "n_components, err_type, err_msg",
-    [
-        (0, ValueError, "n_components == 0, must be >= 1."),
-        (6, ValueError, "n_components == 6, must be <= 5."),
-        (
-            2.0,
-            TypeError,
-            "n_components must be an instance of int",
-        ),
-    ],
-)
-def test_n_components_bounds_pls_regression(n_components, err_type, err_msg):
-    """Check the validation of `n_components` for `PLSRegression`."""
-    rng = np.random.RandomState(0)
-    X = rng.randn(10, 5)
-    Y = rng.randn(10, 3)
-    est = PLSRegression(n_components=n_components)
-    with pytest.raises(err_type, match=err_msg):
+    est = Estimator(n_components=10)
+    err_msg = "`n_components` upper bound is .*. Got 10 instead. Reduce `n_components`."
+    with pytest.raises(ValueError, match=err_msg):
         est.fit(X, Y)
 
 
 @pytest.mark.parametrize("n_samples, n_features", [(100, 10), (100, 200)])
-@pytest.mark.parametrize("seed", range(10))
-def test_singular_value_helpers(n_samples, n_features, seed):
+def test_singular_value_helpers(n_samples, n_features, global_random_seed):
     # Make sure SVD and power method give approximately the same results
-    X, Y = make_regression(n_samples, n_features, n_targets=5, random_state=seed)
+    X, Y = make_regression(
+        n_samples, n_features, n_targets=5, random_state=global_random_seed
+    )
     u1, v1, _ = _get_first_singular_vectors_power_method(X, Y, norm_y_weights=True)
     u2, v2 = _get_first_singular_vectors_svd(X, Y)
 
     _svd_flip_1d(u1, v1)
     _svd_flip_1d(u2, v2)
 
-    rtol = 1e-1
-    assert_allclose(u1, u2, rtol=rtol)
-    assert_allclose(v1, v2, rtol=rtol)
+    rtol = 1e-3
+    # Setting atol because some coordinates are very close to zero
+    assert_allclose(u1, u2, atol=u2.max() * rtol)
+    assert_allclose(v1, v2, atol=v2.max() * rtol)
 
 
-def test_one_component_equivalence():
+def test_one_component_equivalence(global_random_seed):
     # PLSSVD, PLSRegression and PLSCanonical should all be equivalent when
     # n_components is 1
-    X, Y = make_regression(100, 10, n_targets=5, random_state=0)
+    X, Y = make_regression(100, 10, n_targets=5, random_state=global_random_seed)
     svd = PLSSVD(n_components=1).fit(X, Y).transform(X)
     reg = PLSRegression(n_components=1).fit(X, Y).transform(X)
     canonical = PLSCanonical(n_components=1).fit(X, Y).transform(X)
 
-    assert_allclose(svd, reg, rtol=1e-2)
-    assert_allclose(svd, canonical, rtol=1e-2)
+    rtol = 1e-3
+    # Setting atol because some entries are very close to zero
+    assert_allclose(svd, reg, atol=reg.max() * rtol)
+    assert_allclose(svd, canonical, atol=canonical.max() * rtol)
 
 
 def test_svd_flip_1d():
@@ -555,16 +527,18 @@ def test_svd_flip_1d():
     assert_allclose(v, [-1, -2, -3])
 
 
-def test_loadings_converges():
+def test_loadings_converges(global_random_seed):
     """Test that CCA converges. Non-regression test for #19549."""
-    X, y = make_regression(n_samples=200, n_features=20, n_targets=20, random_state=20)
+    X, y = make_regression(
+        n_samples=200, n_features=20, n_targets=20, random_state=global_random_seed
+    )
 
     cca = CCA(n_components=10, max_iter=500)
 
-    with pytest.warns(None) as record:
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", ConvergenceWarning)
+
         cca.fit(X, y)
-    # ConvergenceWarning should not be raised
-    assert not [w.message for w in record]
 
     # Loadings converges to reasonable values
     assert np.all(np.abs(cca.x_loadings_) < 1)
@@ -585,6 +559,43 @@ def test_pls_constant_y():
     assert_allclose(pls.x_rotations_, 0)
 
 
+@pytest.mark.parametrize("PLSEstimator", [PLSRegression, PLSCanonical, CCA])
+def test_pls_coef_shape(PLSEstimator):
+    """Check the shape of `coef_` attribute.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/12410
+    """
+    d = load_linnerud()
+    X = d.data
+    Y = d.target
+
+    pls = PLSEstimator(copy=True).fit(X, Y)
+
+    n_targets, n_features = Y.shape[1], X.shape[1]
+    assert pls.coef_.shape == (n_targets, n_features)
+
+
+@pytest.mark.parametrize("scale", [True, False])
+@pytest.mark.parametrize("PLSEstimator", [PLSRegression, PLSCanonical, CCA])
+def test_pls_prediction(PLSEstimator, scale):
+    """Check the behaviour of the prediction function."""
+    d = load_linnerud()
+    X = d.data
+    Y = d.target
+
+    pls = PLSEstimator(copy=True, scale=scale).fit(X, Y)
+    Y_pred = pls.predict(X, copy=True)
+
+    y_mean = Y.mean(axis=0)
+    X_trans = X - X.mean(axis=0)
+    if scale:
+        X_trans /= X.std(axis=0, ddof=1)
+
+    assert_allclose(pls.intercept_, y_mean)
+    assert_allclose(Y_pred, X_trans @ pls.coef_.T + pls.intercept_)
+
+
 @pytest.mark.parametrize("Klass", [CCA, PLSSVD, PLSRegression, PLSCanonical])
 def test_pls_feature_names_out(Klass):
     """Check `get_feature_names_out` cross_decomposition module."""
@@ -599,3 +610,37 @@ def test_pls_feature_names_out(Klass):
         dtype=object,
     )
     assert_array_equal(names_out, expected_names_out)
+
+
+@pytest.mark.parametrize("Klass", [CCA, PLSSVD, PLSRegression, PLSCanonical])
+def test_pls_set_output(Klass):
+    """Check `set_output` in cross_decomposition module."""
+    pd = pytest.importorskip("pandas")
+    X, Y = load_linnerud(return_X_y=True, as_frame=True)
+
+    est = Klass().set_output(transform="pandas").fit(X, Y)
+    X_trans, y_trans = est.transform(X, Y)
+    assert isinstance(y_trans, np.ndarray)
+    assert isinstance(X_trans, pd.DataFrame)
+    assert_array_equal(X_trans.columns, est.get_feature_names_out())
+
+
+def test_pls_regression_fit_1d_y():
+    """Check that when fitting with 1d `y`, prediction should also be 1d.
+
+    Non-regression test for Issue #26549.
+    """
+    X = np.array([[1, 1], [2, 4], [3, 9], [4, 16], [5, 25], [6, 36]])
+    y = np.array([2, 6, 12, 20, 30, 42])
+    expected = y.copy()
+
+    plsr = PLSRegression().fit(X, y)
+    y_pred = plsr.predict(X)
+    assert y_pred.shape == expected.shape
+
+    # Check that it works in VotingRegressor
+    lr = LinearRegression().fit(X, y)
+    vr = VotingRegressor([("lr", lr), ("plsr", plsr)])
+    y_pred = vr.fit(X, y).predict(X)
+    assert y_pred.shape == expected.shape
+    assert_allclose(y_pred, expected)

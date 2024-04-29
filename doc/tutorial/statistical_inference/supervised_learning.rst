@@ -133,7 +133,7 @@ Linear model: from regression to sparsity
 .. topic:: Diabetes dataset
 
     The diabetes dataset consists of 10 physiological variables (age,
-    sex, weight, blood pressure) measure on 442 patients, and an
+    sex, weight, blood pressure) measured on 442 patients, and an
     indication of disease progression after one year::
 
         >>> diabetes_X, diabetes_y = datasets.load_diabetes(return_X_y=True)
@@ -309,7 +309,7 @@ informative features and set non-informative ones, like feature 2 to 0. Ridge
 regression will decrease their contribution, but not set them to zero. Another
 penalization approach, called :ref:`lasso` (least absolute shrinkage and
 selection operator), can set some coefficients to zero. Such methods are
-called **sparse method** and sparsity can be seen as an
+called **sparse methods** and sparsity can be seen as an
 application of Occam's razor: *prefer simpler models*.
 
 ::
@@ -465,7 +465,7 @@ Linear kernel
 
     >>> svc = svm.SVC(kernel='linear')
 
-.. image:: /auto_examples/svm/images/sphx_glr_plot_svm_kernels_001.png
+.. image:: /auto_examples/svm/images/sphx_glr_plot_svm_kernels_002.png
    :target: ../../auto_examples/svm/plot_svm_kernels.html
 
 Polynomial kernel
@@ -477,7 +477,7 @@ Polynomial kernel
     ...               degree=3)
     >>> # degree: polynomial degree
 
-.. image:: /auto_examples/svm/images/sphx_glr_plot_svm_kernels_002.png
+.. image:: /auto_examples/svm/images/sphx_glr_plot_svm_kernels_003.png
    :target: ../../auto_examples/svm/plot_svm_kernels.html
 
 RBF kernel (Radial Basis Function)
@@ -489,7 +489,17 @@ RBF kernel (Radial Basis Function)
     >>> # gamma: inverse of size of
     >>> # radial kernel
 
-.. image:: /auto_examples/svm/images/sphx_glr_plot_svm_kernels_003.png
+.. image:: /auto_examples/svm/images/sphx_glr_plot_svm_kernels_004.png
+   :target: ../../auto_examples/svm/plot_svm_kernels.html
+
+Sigmoid kernel
+^^^^^^^^^^^^^^
+
+::
+
+    >>> svc = svm.SVC(kernel='sigmoid')
+
+.. image:: /auto_examples/svm/images/sphx_glr_plot_svm_kernels_005.png
    :target: ../../auto_examples/svm/plot_svm_kernels.html
 
 

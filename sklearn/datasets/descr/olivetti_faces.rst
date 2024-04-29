@@ -9,7 +9,7 @@ April 1994 at AT&T Laboratories Cambridge. The
 fetching / caching function that downloads the data
 archive from AT&T.
 
-.. _This dataset contains a set of face images: http://www.cl.cam.ac.uk/research/dtg/attarchive/facedatabase.html
+.. _This dataset contains a set of face images: https://cam-orl.co.uk/facedatabase.html
 
 As described on the original website:
 

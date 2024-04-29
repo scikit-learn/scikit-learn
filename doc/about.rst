@@ -32,21 +32,28 @@ and maintenance:
 
 Please do not email the authors directly to ask for assistance or report issues.
 Instead, please see `What's the best way to ask questions about scikit-learn
-<http://scikit-learn.org/stable/faq.html#what-s-the-best-way-to-get-help-on-scikit-learn-usage>`_
+<https://scikit-learn.org/stable/faq.html#what-s-the-best-way-to-get-help-on-scikit-learn-usage>`_
 in the FAQ.
 
 .. seealso::
 
    :ref:`How you can contribute to the project <contributing>`
 
-Triage Team
------------
+Documentation Team
+------------------
+
+The following people help with documenting the project:
+
+.. include:: documentation_team.rst
+
+Contributor Experience Team
+---------------------------
 
 The following people are active contributors who also help with
 :ref:`triaging issues <bug_triaging>`, PRs, and general
 maintenance:
 
-.. include:: triage_team.rst
+.. include:: contributor_experience_team.rst
 
 Communication Team
 ------------------
@@ -65,6 +72,21 @@ longer active in the project:
 
 .. include:: authors_emeritus.rst
 
+Emeritus Communication Team
+---------------------------
+
+The following people have been active in the communication team in the
+past, but no longer have communication responsibilities:
+
+.. include:: communication_team_emeritus.rst
+
+Emeritus Contributor Experience Team
+------------------------------------
+
+The following people have been active in the contributor experience team in the
+past:
+
+.. include:: contributor_experience_team_emeritus.rst
 
 .. _citing-scikit-learn:
 
@@ -75,7 +97,7 @@ If you use scikit-learn in a scientific publication, we would appreciate
 citations to the following paper:
 
   `Scikit-learn: Machine Learning in Python
-  <http://jmlr.csail.mit.edu/papers/v12/pedregosa11a.html>`_, Pedregosa
+  <https://jmlr.csail.mit.edu/papers/v12/pedregosa11a.html>`_, Pedregosa
   *et al.*, JMLR 12, pp. 2825-2830, 2011.
 
   Bibtex entry::
@@ -139,20 +161,16 @@ The project would like to thank the following funders.
 
 The `Members <https://scikit-learn.fondation-inria.fr/en/home/#sponsors>`_ of
 the `Scikit-Learn Consortium at Inria Foundation
-<https://scikit-learn.fondation-inria.fr/en/home/>`_  fund Olivier
-Grisel, Guillaume Lemaitre, and Jérémie du Boisberranger.
+<https://scikit-learn.fondation-inria.fr/en/home/>`_  fund Arturo Amor,
+François Goupil, Guillaume Lemaitre, Jérémie du Boisberranger, and Olivier Grisel.
 
 .. raw:: html
 
    </div>
 
-.. |msn| image:: images/microsoft.png
-   :width: 100pt
-   :target: https://www.microsoft.com/
-
-.. |bcg| image:: images/bcg.png
-   :width: 100pt
-   :target: https://www.bcg.com/beyond-consulting/bcg-gamma/default.aspx
+.. |chanel| image:: images/chanel.png
+   :width: 70pt
+   :target: https://www.chanel.com
 
 .. |axa| image:: images/axa.png
    :width: 50pt
@@ -162,17 +180,17 @@ Grisel, Guillaume Lemaitre, and Jérémie du Boisberranger.
    :width: 150pt
    :target: https://www.bnpparibascardif.com/
 
-.. |fujitsu| image:: images/fujitsu.png
-   :width: 100pt
-   :target: https://www.fujitsu.com/global/
-
 .. |dataiku| image:: images/dataiku.png
    :width: 70pt
    :target: https://www.dataiku.com/
 
-.. |aphp| image:: images/logo_APHP_text.png
-   :width: 150pt
-   :target: https://aphp.fr/
+.. |hf| image:: images/huggingface_logo-noborder.png
+   :width: 70pt
+   :target: https://huggingface.co
+
+.. |nvidia| image:: images/nvidia.png
+   :width: 70pt
+   :target: https://www.nvidia.com
 
 .. |inria| image:: images/inria-logo.jpg
    :width: 100pt
@@ -186,51 +204,25 @@ Grisel, Guillaume Lemaitre, and Jérémie du Boisberranger.
 .. table::
    :class: sk-sponsor-table align-default
 
-   +---------+----------+
-   |       |bcg|        |
-   +---------+----------+
-   |                    |
-   +---------+----------+
-   |  |axa|  |   |bnp|  |
-   +---------+----------+
-   ||fujitsu||  |msn|   |
-   +---------+----------+
-   |                    |
-   +---------+----------+
-   |     |dataiku|      |
-   +---------+----------+
-   |       |aphp|       |
-   +---------+----------+
-   |                    |
-   +---------+----------+
-   |       |inria|      |
-   +---------+----------+
-
-.. raw:: html
-
-   </div>
-   </div>
-
-........
-
-.. raw:: html
-
-   <div class="sk-sponsor-div">
-   <div class="sk-sponsor-div-box">
-
-`The University of Sydney <https://sydney.edu.au/>`_ funds Joel Nothman since
-July 2017.
-
-.. raw:: html
-
-   </div>
-
-   <div class="sk-sponsor-div-box">
-
-.. image:: images/sydney-primary.jpeg
-   :width: 100pt
-   :align: center
-   :target: https://sydney.edu.au/
+   +----------+-----------+
+   |       |chanel|       |
+   +----------+-----------+
+   |                      |
+   +----------+-----------+
+   |  |axa|   |    |bnp|  |
+   +----------+-----------+
+   |                      |
+   +----------+-----------+
+   | |nvidia| |    |hf|   |
+   +----------+-----------+
+   |                      |
+   +----------+-----------+
+   |       |dataiku|      |
+   +----------+-----------+
+   |                      |
+   +----------+-----------+
+   |        |inria|       |
+   +----------+-----------+
 
 .. raw:: html
 
@@ -244,7 +236,35 @@ July 2017.
    <div class="sk-sponsor-div">
    <div class="sk-sponsor-div-box">
 
-`Hugging Face <https://huggingface.co/>`_ funds Adrin Jalali since 2022.
+`NVidia <https://nvidia.com>`_ funds Tim Head since 2022
+and is part of the scikit-learn consortium at Inria.
+
+.. raw:: html
+
+   </div>
+
+   <div class="sk-sponsor-div-box">
+
+.. image:: images/nvidia.png
+   :width: 55pt
+   :align: center
+   :target: https://nvidia.com
+
+.. raw:: html
+
+   </div>
+   </div>
+
+
+..........
+
+.. raw:: html
+
+   <div class="sk-sponsor-div">
+   <div class="sk-sponsor-div-box">
+
+`Hugging Face <https://huggingface.co/>`_ funded Adrin Jalali in 2022,
+2023 and is part of the scikit-learn consortium at Inria.
 
 .. raw:: html
 
@@ -294,7 +314,8 @@ July 2017.
    <div class="sk-sponsor-div">
    <div class="sk-sponsor-div-box">
 
-`Quansight Labs <https://labs.quansight.org>`_ funds Thomas J. Fan since 2021.
+`Quansight Labs <https://labs.quansight.org>`_ funds Lucy Liu and
+Meekail Zain since 2022 and funded Thomas J. Fan from 2021 to 2023.
 
 .. raw:: html
 
@@ -333,6 +354,32 @@ Past Sponsors
    :width: 50pt
    :align: center
    :target: https://www.columbia.edu/
+
+.. raw:: html
+
+   </div>
+   </div>
+
+........
+
+.. raw:: html
+
+   <div class="sk-sponsor-div">
+   <div class="sk-sponsor-div-box">
+
+`The University of Sydney <https://sydney.edu.au/>`_ funded Joel Nothman
+(2017-2021).
+
+.. raw:: html
+
+   </div>
+
+   <div class="sk-sponsor-div-box">
+
+.. image:: images/sydney-primary.jpeg
+   :width: 100pt
+   :align: center
+   :target: https://sydney.edu.au/
 
 .. raw:: html
 
@@ -402,7 +449,7 @@ full-time. It also hosts coding sprints and other events.
    <div class="sk-sponsor-div-box">
 
 `Paris-Saclay Center for Data Science
-<https://www.datascience-paris-saclay.fr/>`_
+<http://www.datascience-paris-saclay.fr/>`_
 funded one year for a developer to work on the project full-time
 (2014-2015), 50% of the time of Guillaume Lemaitre (2016-2017) and 50% of the
 time of Joris van den Bossche (2017-2018).
@@ -415,7 +462,7 @@ time of Joris van den Bossche (2017-2018).
 .. image:: images/cds-logo.png
    :width: 100pt
    :align: center
-   :target: https://www.datascience-paris-saclay.fr/
+   :target: http://www.datascience-paris-saclay.fr/
 
 .. raw:: html
 
@@ -530,7 +577,7 @@ Hug to work full-time on scikit-learn in 2020.
 ......................
 
 The following students were sponsored by `Google
-<https://developers.google.com/open-source/>`_ to work on scikit-learn through
+<https://opensource.google/>`_ to work on scikit-learn through
 the `Google Summer of Code <https://en.wikipedia.org/wiki/Google_Summer_of_Code>`_
 program.
 
@@ -551,6 +598,31 @@ The `NeuroDebian <http://neuro.debian.net>`_ project providing `Debian
 `Dr. James V. Haxby <http://haxbylab.dartmouth.edu/>`_ (`Dartmouth
 College <https://pbs.dartmouth.edu/>`_).
 
+...................
+
+The following organizations funded the scikit-learn consortium at Inria in
+the past:
+
+.. |msn| image:: images/microsoft.png
+   :width: 100pt
+   :target: https://www.microsoft.com/
+
+.. |bcg| image:: images/bcg.png
+   :width: 100pt
+   :target: https://www.bcg.com/beyond-consulting/bcg-gamma/default.aspx
+
+.. |fujitsu| image:: images/fujitsu.png
+   :width: 100pt
+   :target: https://www.fujitsu.com/global/
+
+.. |aphp| image:: images/logo_APHP_text.png
+   :width: 150pt
+   :target: https://aphp.fr/
+
+
+|bcg| |msn| |fujitsu| |aphp|
+
+
 Sprints
 -------
 
@@ -566,7 +638,7 @@ The 2013 International Paris Sprint was made possible thanks to the support of
 `Télécom Paristech <https://www.telecom-paristech.fr/>`_, `tinyclues
 <https://www.tinyclues.com/>`_, the `French Python Association
 <https://www.afpy.org/>`_ and the `Fonds de la Recherche Scientifique
-<https://www.frs-fnrs.be/-fnrs>`_.
+<https://www.frs-fnrs.be>`_.
 
 ..............
 
@@ -578,9 +650,15 @@ Donating to the project
 .......................
 
 If you are interested in donating to the project or to one of our code-sprints,
-you can use the *Paypal* button below or the `NumFOCUS Donations Page
-<https://www.numfocus.org/support-numfocus.html>`_ (if you use the latter,
-please indicate that you are donating for the scikit-learn project).
+please donate via the `NumFOCUS Donations Page
+<https://numfocus.org/donate-to-scikit-learn>`_.
+
+.. raw :: html
+
+   <div style="text-align: center;">
+   <a class="btn btn-warning btn-big sk-donate-btn mb-1" href="https://numfocus.org/donate-to-scikit-learn">Help us, <strong>donate!</strong></a>
+   </div>
+   </br>
 
 All donations will be handled by `NumFOCUS
 <https://numfocus.org/>`_, a non-profit-organization which is
@@ -594,13 +672,6 @@ The received donations for the scikit-learn project mostly will go towards
 covering travel-expenses for code sprints, as well as towards the organization
 budget of the project [#f1]_.
 
-.. raw :: html
-
-   </br></br>
-   <div style="text-align: center;">
-   <a class="btn btn-warning btn-big sk-donate-btn mb-1" href="https://numfocus.org/donate-to-scikit-learn">Help us, <strong>donate!</strong></a>
-   </div>
-   </br>
 
 .. rubric:: Notes
 
@@ -612,7 +683,7 @@ Infrastructure support
 ----------------------
 
 - We would also like to thank `Microsoft Azure
-  <https://azure.microsoft.com/en-us/>`_, `Travis Cl <https://travis-ci.org/>`_,
+  <https://azure.microsoft.com/en-us/>`_, `Cirrus Cl <https://cirrus-ci.org>`_,
   `CircleCl <https://circleci.com/>`_ for free CPU time on their Continuous
   Integration servers, and `Anaconda Inc. <https://www.anaconda.com>`_ for the
   storage they provide for our staging and nightly builds.

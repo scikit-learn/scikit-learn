@@ -189,8 +189,8 @@ Model Selection Enhancements and API Changes
 - **The model_selection module**
 
   The new module :mod:`sklearn.model_selection`, which groups together the
-  functionalities of formerly :mod:`sklearn.cross_validation`,
-  :mod:`sklearn.grid_search` and :mod:`sklearn.learning_curve`, introduces new
+  functionalities of formerly `sklearn.cross_validation`,
+  `sklearn.grid_search` and `sklearn.learning_curve`, introduces new
   possibilities such as nested cross-validation and better manipulation of
   parameter searches with Pandas.
 
@@ -202,7 +202,7 @@ Model Selection Enhancements and API Changes
   The new cross-validation splitters, defined in the
   :mod:`sklearn.model_selection`, are no longer initialized with any
   data-dependent parameters such as ``y``. Instead they expose a
-  :func:`split` method that takes in the data and yields a generator for the
+  `split` method that takes in the data and yields a generator for the
   different splits.
 
   This change makes it possible to use the cross-validation splitters to
@@ -258,7 +258,7 @@ Model Selection Enhancements and API Changes
 
 - **Fit parameter labels renamed to groups**
 
-  The ``labels`` parameter in the :func:`split` method of the newly renamed
+  The ``labels`` parameter in the `split` method of the newly renamed
   splitters :class:`model_selection.GroupKFold`,
   :class:`model_selection.LeaveOneGroupOut`,
   :class:`model_selection.LeavePGroupsOut`,
@@ -314,7 +314,7 @@ Other estimators
   for sounder results. :issue:`7295` by :user:`Wei Xue <xuewei4d>` and
   :user:`Thierry Guillemot <tguillemot>`.
 
-- Class :class:`decomposition.RandomizedPCA` is now factored into :class:`decomposition.PCA`
+- Class `decomposition.RandomizedPCA` is now factored into :class:`decomposition.PCA`
   and it is available calling with parameter ``svd_solver='randomized'``.
   The default number of ``n_iter`` for ``'randomized'`` has changed to 4. The old
   behavior of PCA is recovered by ``svd_solver='full'``. An additional solver
@@ -337,11 +337,11 @@ Other estimators
 
 Model selection and evaluation
 
-- Added :func:`metrics.cluster.fowlkes_mallows_score`, the Fowlkes Mallows
+- Added :func:`metrics.fowlkes_mallows_score`, the Fowlkes Mallows
   Index which measures the similarity of two clusterings of a set of points
   By :user:`Arnaud Fouchet <afouchet>` and :user:`Thierry Guillemot <tguillemot>`.
 
-- Added :func:`metrics.calinski_harabaz_score`, which computes the Calinski
+- Added `metrics.calinski_harabaz_score`, which computes the Calinski
   and Harabaz score to evaluate the resulting clustering of a set of points.
   By :user:`Arnaud Fouchet <afouchet>` and :user:`Thierry Guillemot <tguillemot>`.
 
@@ -384,7 +384,7 @@ Trees and ensembles
   :issue:`6667` by :user:`Nelson Liu <nelson-liu>`.
 
 - The memory footprint is reduced (sometimes greatly) for
-  :class:`ensemble.bagging.BaseBagging` and classes that inherit from it,
+  `ensemble.bagging.BaseBagging` and classes that inherit from it,
   i.e, :class:`ensemble.BaggingClassifier`,
   :class:`ensemble.BaggingRegressor`, and :class:`ensemble.IsolationForest`,
   by dynamically generating attribute ``estimators_samples_`` only when it is
@@ -462,7 +462,7 @@ Model evaluation and meta-estimators
 
 - Added support for substituting or disabling :class:`pipeline.Pipeline`
   and :class:`pipeline.FeatureUnion` components using the ``set_params``
-  interface that powers :mod:`sklearn.grid_search`.
+  interface that powers `sklearn.grid_search`.
   See :ref:`sphx_glr_auto_examples_compose_plot_compare_reduction.py`
   By `Joel Nothman`_ and :user:`Robert McGibbon <rmcgibbo>`.
 
@@ -489,7 +489,7 @@ Metrics
   :user:`Mads Jensen <indianajensen>` and :user:`Nelson Liu <nelson-liu>`.
 
 - Support sparse contingency matrices in cluster evaluation
-  (:mod:`metrics.cluster.supervised`) to scale to a large number of
+  (`metrics.cluster.supervised`) to scale to a large number of
   clusters.
   :issue:`7419` by :user:`Gregory Stupp <stuppie>` and `Joel Nothman`_.
 
@@ -512,22 +512,22 @@ Miscellaneous
   C/C++ files. By :user:`Arthur Mensch <arthurmensch>`.
 
 - Reduce the memory usage for 32-bit float input arrays of
-  :func:`utils.sparse_func.mean_variance_axis` and
-  :func:`utils.sparse_func.incr_mean_variance_axis` by supporting cython
+  `utils.sparse_func.mean_variance_axis` and
+  `utils.sparse_func.incr_mean_variance_axis` by supporting cython
   fused types. By :user:`YenChen Lin <yenchenlin>`.
 
-- The :func:`ignore_warnings` now accept a category argument to ignore only
+- The `ignore_warnings` now accept a category argument to ignore only
   the warnings of a specified type. By :user:`Thierry Guillemot <tguillemot>`.
 
 - Added parameter ``return_X_y`` and return type ``(data, target) : tuple`` option to
-  :func:`load_iris` dataset
+  :func:`datasets.load_iris` dataset
   :issue:`7049`,
-  :func:`load_breast_cancer` dataset
+  :func:`datasets.load_breast_cancer` dataset
   :issue:`7152`,
-  :func:`load_digits` dataset,
-  :func:`load_diabetes` dataset,
-  :func:`load_linnerud` dataset,
-  :func:`load_boston` dataset
+  :func:`datasets.load_digits` dataset,
+  :func:`datasets.load_diabetes` dataset,
+  :func:`datasets.load_linnerud` dataset,
+  `datasets.load_boston` dataset
   :issue:`7154` by
   :user:`Manvendra Singh<manu-chroma>`.
 
@@ -584,7 +584,7 @@ Linear, kernelized and related models
 
 Decomposition, manifold learning and clustering
 
-- :class:`decomposition.RandomizedPCA` default number of `iterated_power` is 4 instead of 3.
+- `decomposition.RandomizedPCA` default number of `iterated_power` is 4 instead of 3.
   :issue:`5141` by :user:`Giorgio Patrini <giorgiop>`.
 
 - :func:`utils.extmath.randomized_svd` performs 4 power iterations by default, instead or 0.
@@ -595,15 +595,15 @@ Decomposition, manifold learning and clustering
   :issue:`5299` by :user:`Giorgio Patrini<giorgiop>`.
 
 - Whiten/non-whiten inconsistency between components of :class:`decomposition.PCA`
-  and :class:`decomposition.RandomizedPCA` (now factored into PCA, see the
+  and `decomposition.RandomizedPCA` (now factored into PCA, see the
   New features) is fixed. `components_` are stored with no whitening.
   :issue:`5299` by :user:`Giorgio Patrini <giorgiop>`.
 
 - Fixed bug in :func:`manifold.spectral_embedding` where diagonal of unnormalized
   Laplacian matrix was incorrectly set to 1. :issue:`4995` by :user:`Peter Fischer <yanlend>`.
 
-- Fixed incorrect initialization of :func:`utils.arpack.eigsh` on all
-  occurrences. Affects :class:`cluster.bicluster.SpectralBiclustering`,
+- Fixed incorrect initialization of `utils.arpack.eigsh` on all
+  occurrences. Affects `cluster.bicluster.SpectralBiclustering`,
   :class:`decomposition.KernelPCA`, :class:`manifold.LocallyLinearEmbedding`,
   and :class:`manifold.SpectralEmbedding` (:issue:`5012`). By
   :user:`Peter Fischer <yanlend>`.
@@ -614,7 +614,7 @@ Decomposition, manifold learning and clustering
 
 Preprocessing and feature selection
 
-- :func:`preprocessing.data._transform_selected` now always passes a copy
+- `preprocessing.data._transform_selected` now always passes a copy
   of ``X`` to transform function when ``copy=True`` (:issue:`7194`). By `Caio
   Oliveira <https://github.com/caioaao>`_.
 
@@ -633,8 +633,8 @@ Model evaluation and meta-estimators
   return splits of size ``train_size`` and ``test_size`` in all cases
   (:issue:`6472`). By `Andreas Müller`_.
 
-- Cross-validation of :class:`OneVsOneClassifier` and
-  :class:`OneVsRestClassifier` now works with precomputed kernels.
+- Cross-validation of :class:`multiclass.OneVsOneClassifier` and
+  :class:`multiclass.OneVsRestClassifier` now works with precomputed kernels.
   :issue:`7350` by :user:`Russell Smith <rsmith54>`.
 
 - Fix incomplete ``predict_proba`` method delegation from
@@ -654,7 +654,7 @@ Metrics
 - Fix bug where expected and adjusted mutual information were incorrect if
   cluster contingency cells exceeded ``2**16``. By `Joel Nothman`_.
 
-- :func:`metrics.pairwise.pairwise_distances` now converts arrays to
+- :func:`metrics.pairwise_distances` now converts arrays to
   boolean arrays when required in ``scipy.spatial.distance``.
   :issue:`5460` by `Tom Dupre la Tour`_.
 
@@ -667,7 +667,7 @@ Metrics
 
 Miscellaneous
 
-- :func:`model_selection.tests._search._check_param_grid` now works correctly with all types
+- `model_selection.tests._search._check_param_grid` now works correctly with all types
   that extends/implements `Sequence` (except string), including range (Python 3.x) and xrange
   (Python 2.x). :issue:`7323` by Viacheslav Kovalevskyi.
 
@@ -698,7 +698,7 @@ Linear, kernelized and related models
 
 Decomposition, manifold learning and clustering
 
-- The old :class:`mixture.DPGMM` is deprecated in favor of the new
+- The old `mixture.DPGMM` is deprecated in favor of the new
   :class:`mixture.BayesianGaussianMixture` (with the parameter
   ``weight_concentration_prior_type='dirichlet_process'``).
   The new class solves the computational
@@ -706,7 +706,7 @@ Decomposition, manifold learning and clustering
   Dirichlet process prior faster than before.
   :issue:`7295` by :user:`Wei Xue <xuewei4d>` and :user:`Thierry Guillemot <tguillemot>`.
 
-- The old :class:`mixture.VBGMM` is deprecated in favor of the new
+- The old `mixture.VBGMM` is deprecated in favor of the new
   :class:`mixture.BayesianGaussianMixture` (with the parameter
   ``weight_concentration_prior_type='dirichlet_distribution'``).
   The new class solves the computational
@@ -714,15 +714,15 @@ Decomposition, manifold learning and clustering
   mixture faster than before.
   :issue:`6651` by :user:`Wei Xue <xuewei4d>` and :user:`Thierry Guillemot <tguillemot>`.
 
-- The old :class:`mixture.GMM` is deprecated in favor of the new
+- The old `mixture.GMM` is deprecated in favor of the new
   :class:`mixture.GaussianMixture`. The new class computes the Gaussian mixture
   faster than before and some of computational problems have been solved.
   :issue:`6666` by :user:`Wei Xue <xuewei4d>` and :user:`Thierry Guillemot <tguillemot>`.
 
 Model evaluation and meta-estimators
 
-- The :mod:`sklearn.cross_validation`, :mod:`sklearn.grid_search` and
-  :mod:`sklearn.learning_curve` have been deprecated and the classes and
+- The `sklearn.cross_validation`, `sklearn.grid_search` and
+  `sklearn.learning_curve` have been deprecated and the classes and
   functions have been reorganized into the :mod:`sklearn.model_selection`
   module. Ref :ref:`model_selection_changes` for more information.
   :issue:`4294` by `Raghav RV`_.
@@ -747,7 +747,7 @@ Model evaluation and meta-estimators
   :class:`model_selection.GroupShuffleSplit`,
   :class:`model_selection.LeaveOneGroupOut`
   and :class:`model_selection.LeavePGroupsOut` respectively.
-  Also the parameter ``labels`` in the :func:`split` method of the newly
+  Also the parameter ``labels`` in the `split` method of the newly
   renamed splitters :class:`model_selection.LeaveOneGroupOut` and
   :class:`model_selection.LeavePGroupsOut` is renamed to
   ``groups``. Additionally in :class:`model_selection.LeavePGroupsOut`,
@@ -813,4 +813,3 @@ Hauck, trevorstephens, Tue Vo, Varun, Varun Jewalikar, Viacheslav, Vighnesh
 Birodkar, Vikram, Villu Ruusmann, Vinayak Mehta, walter, waterponey, Wenhua
 Yang, Wenjian Huang, Will Welch, wyseguy7, xyguo, yanlend, Yaroslav Halchenko,
 yelite, Yen, YenChenLin, Yichuan Liu, Yoav Ram, Yoshiki, Zheng RuiFeng, zivori, Óscar Nájera
-

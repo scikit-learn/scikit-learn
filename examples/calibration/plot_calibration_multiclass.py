@@ -31,6 +31,7 @@ class of an instance (red: class 1, green: class 2, blue: class 3).
 # License: BSD Style.
 
 import numpy as np
+
 from sklearn.datasets import make_blobs
 
 np.random.seed(0)
@@ -198,7 +199,7 @@ _ = plt.legend(loc="best")
 # the true class is 'green') generally point towards the green vertex. This
 # results in fewer over-confident, 0 predicted probabilities and at the same
 # time an increase in the predicted probabilities of the correct class.
-# Thus, the calibrated classifier produces more accurate predicted probablities
+# Thus, the calibrated classifier produces more accurate predicted probabilities
 # that incur a lower :ref:`log loss <log_loss>`
 #
 # We can show this objectively by comparing the :ref:`log loss <log_loss>` of

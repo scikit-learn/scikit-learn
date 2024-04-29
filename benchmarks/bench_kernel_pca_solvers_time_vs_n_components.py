@@ -39,13 +39,12 @@ of components (this takes more time).
 
 import time
 
-import numpy as np
 import matplotlib.pyplot as plt
-
+import numpy as np
 from numpy.testing import assert_array_almost_equal
-from sklearn.decomposition import KernelPCA
-from sklearn.datasets import make_circles
 
+from sklearn.datasets import make_circles
+from sklearn.decomposition import KernelPCA
 
 print(__doc__)
 
@@ -82,7 +81,6 @@ a_time = np.empty((len(n_compo_range), n_iter)) * np.nan
 r_time = np.empty((len(n_compo_range), n_iter)) * np.nan
 # loop
 for j, n_components in enumerate(n_compo_range):
-
     n_components = int(n_components)
     print("Performing kPCA with n_components = %i" % n_components)
 

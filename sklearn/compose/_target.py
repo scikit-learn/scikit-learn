@@ -6,17 +6,24 @@ import warnings
 
 import numpy as np
 
-from ..base import BaseEstimator, RegressorMixin, clone
-from ..utils.validation import check_is_fitted
-from ..utils._tags import _safe_tags
-from ..utils import check_array, _safe_indexing
-from ..preprocessing import FunctionTransformer
+from ..base import BaseEstimator, RegressorMixin, _fit_context, clone
 from ..exceptions import NotFittedError
+from ..preprocessing import FunctionTransformer
+from ..utils import _safe_indexing, check_array
+from ..utils._param_validation import HasMethods
+from ..utils._tags import _safe_tags
+from ..utils.metadata_routing import (
+    _raise_for_unsupported_routing,
+    _RoutingNotSupportedMixin,
+)
+from ..utils.validation import check_is_fitted
 
 __all__ = ["TransformedTargetRegressor"]
 
 
-class TransformedTargetRegressor(RegressorMixin, BaseEstimator):
+class TransformedTargetRegressor(
+    _RoutingNotSupportedMixin, RegressorMixin, BaseEstimator
+):
     """Meta-estimator to regress on a transformed target.
 
     Useful for applying a non-linear transformation to the target `y` in
@@ -107,9 +114,6 @@ class TransformedTargetRegressor(RegressorMixin, BaseEstimator):
     to be used by scikit-learn transformers. At the time of prediction, the
     output will be reshaped to a have the same number of dimensions as `y`.
 
-    See :ref:`examples/compose/plot_transformed_target.py
-    <sphx_glr_auto_examples_compose_plot_transformed_target.py>`.
-
     Examples
     --------
     >>> import numpy as np
@@ -125,7 +129,18 @@ class TransformedTargetRegressor(RegressorMixin, BaseEstimator):
     1.0
     >>> tt.regressor_.coef_
     array([2.])
+
+    For a more detailed example use case refer to
+    :ref:`sphx_glr_auto_examples_compose_plot_transformed_target.py`.
     """
+
+    _parameter_constraints: dict = {
+        "regressor": [HasMethods(["fit", "predict"]), None],
+        "transformer": [HasMethods("transform"), None],
+        "func": [callable, None],
+        "inverse_func": [callable, None],
+        "check_inverse": ["boolean"],
+    }
 
     def __init__(
         self,
@@ -179,13 +194,19 @@ class TransformedTargetRegressor(RegressorMixin, BaseEstimator):
             y_sel_t = self.transformer_.transform(y_sel)
             if not np.allclose(y_sel, self.transformer_.inverse_transform(y_sel_t)):
                 warnings.warn(
-                    "The provided functions or transformer are"
-                    " not strictly inverse of each other. If"
-                    " you are sure you want to proceed regardless"
-                    ", set 'check_inverse=False'",
+                    (
+                        "The provided functions or transformer are"
+                        " not strictly inverse of each other. If"
+                        " you are sure you want to proceed regardless"
+                        ", set 'check_inverse=False'"
+                    ),
                     UserWarning,
                 )
 
+    @_fit_context(
+        # TransformedTargetRegressor.regressor/transformer are not validated yet.
+        prefer_skip_nested_validation=False
+    )
     def fit(self, X, y, **fit_params):
         """Fit the model according to the given training data.
 
@@ -207,6 +228,12 @@ class TransformedTargetRegressor(RegressorMixin, BaseEstimator):
         self : object
             Fitted estimator.
         """
+        _raise_for_unsupported_routing(self, "fit", **fit_params)
+        if y is None:
+            raise ValueError(
+                f"This {self.__class__.__name__} estimator "
+                "requires y to be passed, but the target y is None."
+            )
         y = check_array(
             y,
             input_name="y",

@@ -1,6 +1,7 @@
 import os
-import pytest
 import textwrap
+
+import pytest
 
 from sklearn import __version__
 from sklearn.utils._openmp_helpers import _openmp_parallelism_enabled
@@ -14,8 +15,7 @@ def test_openmp_parallelism_enabled():
         pytest.skip("test explicitly skipped (SKLEARN_SKIP_OPENMP_TEST)")
 
     base_url = "dev" if __version__.endswith(".dev0") else "stable"
-    err_msg = textwrap.dedent(
-        """
+    err_msg = textwrap.dedent("""
         This test fails because scikit-learn has been built without OpenMP.
         This is not recommended since some estimators will run in sequential
         mode instead of leveraging thread-based parallelism.
@@ -27,7 +27,6 @@ def test_openmp_parallelism_enabled():
 
         You can skip this test by setting the environment variable
         SKLEARN_SKIP_OPENMP_TEST to any value.
-        """
-    ).format(base_url)
+        """).format(base_url)
 
     assert _openmp_parallelism_enabled(), err_msg

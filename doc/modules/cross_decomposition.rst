@@ -28,7 +28,7 @@ PLS draws similarities with `Principal Component Regression
 <https://en.wikipedia.org/wiki/Principal_component_regression>`_ (PCR), where
 the samples are first projected into a lower-dimensional subspace, and the
 targets `y` are predicted using `transformed(X)`. One issue with PCR is that
-the dimensionality reduction is unsupervized, and may lose some important
+the dimensionality reduction is unsupervised, and may lose some important
 variables: PCR would keep the features with the most variance, but it's
 possible that features with a small variances are relevant from predicting
 the target. In a way, PLS allows for the same kind of dimensionality
@@ -185,7 +185,7 @@ targets is greater than the number of samples.
 
    .. [1] `A survey of Partial Least Squares (PLS) methods, with emphasis on
       the two-block case
-      <https://www.stat.washington.edu/research/reports/2000/tr371.pdf>`_
+      <https://stat.uw.edu/sites/default/files/files/reports/2000/tr371.pdf>`_
       JA Wegelin
 
 .. topic:: Examples:

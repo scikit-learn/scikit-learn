@@ -33,9 +33,8 @@ df = bike_sharing.frame
 # demand around the middle of the days:
 import matplotlib.pyplot as plt
 
-
 fig, ax = plt.subplots(figsize=(12, 4))
-average_week_demand = df.groupby(["weekday", "hour"]).mean()["count"]
+average_week_demand = df.groupby(["weekday", "hour"])["count"].mean()
 average_week_demand.plot(ax=ax)
 _ = ax.set(
     title="Average hourly bike demand during the week",
@@ -60,14 +59,14 @@ df["count"].max()
 # .. note::
 #
 #     The fit method of the models used in this notebook all minimize the
-#     mean squared error to estimate the conditional mean instead of the mean
-#     absolute error that would fit an estimator of the conditional median.
+#     mean squared error to estimate the conditional mean.
+#     The absolute error, however, would estimate the conditional median.
 #
-#     When reporting performance measure on the test set in the discussion, we
-#     instead choose to focus on the mean absolute error that is more
-#     intuitive than the (root) mean squared error. Note, however, that the
-#     best models for one metric are also the best for the other in this
-#     study.
+#     Nevertheless, when reporting performance measures on the test set in
+#     the discussion, we choose to focus on the mean absolute error instead
+#     of the (root) mean squared error because it is more intuitive to
+#     interpret. Note, however, that in this study the best models for one
+#     metric are also the best ones in terms of the other metric.
 y = df["count"] / df["count"].max()
 
 # %%
@@ -166,67 +165,52 @@ X.iloc[train_4]
 # -----------------
 #
 # Gradient Boosting Regression with decision trees is often flexible enough to
-# efficiently handle heteorogenous tabular data with a mix of categorical and
+# efficiently handle heterogeneous tabular data with a mix of categorical and
 # numerical features as long as the number of samples is large enough.
 #
-# Here, we do minimal ordinal encoding for the categorical variables and then
-# let the model know that it should treat those as categorical variables by
-# using a dedicated tree splitting rule. Since we use an ordinal encoder, we
-# pass the list of categorical values explicitly to use a logical order when
-# encoding the categories as integers instead of the lexicographical order.
-# This also has the added benefit of preventing any issue with unknown
-# categories when using cross-validation.
+# Here, we use the modern
+# :class:`~sklearn.ensemble.HistGradientBoostingRegressor` with native support
+# for categorical features. Therefore, we only need to set
+# `categorical_features="from_dtype"` such that features with categorical dtype
+# are considered categorical features. For reference, we extract the categorical
+# features from the dataframe based on the dtype. The internal trees use a dedicated
+# tree splitting rule for these features.
 #
 # The numerical variables need no preprocessing and, for the sake of simplicity,
 # we only try the default hyper-parameters for this model:
-from sklearn.pipeline import make_pipeline
-from sklearn.preprocessing import OrdinalEncoder
 from sklearn.compose import ColumnTransformer
 from sklearn.ensemble import HistGradientBoostingRegressor
 from sklearn.model_selection import cross_validate
+from sklearn.pipeline import make_pipeline
 
-
-categorical_columns = [
-    "weather",
-    "season",
-    "holiday",
-    "workingday",
-]
-categories = [
-    ["clear", "misty", "rain"],
-    ["spring", "summer", "fall", "winter"],
-    ["False", "True"],
-    ["False", "True"],
-]
-ordinal_encoder = OrdinalEncoder(categories=categories)
-
-
-gbrt_pipeline = make_pipeline(
-    ColumnTransformer(
-        transformers=[
-            ("categorical", ordinal_encoder, categorical_columns),
-        ],
-        remainder="passthrough",
-    ),
-    HistGradientBoostingRegressor(
-        categorical_features=range(4),
-    ),
-)
+gbrt = HistGradientBoostingRegressor(categorical_features="from_dtype", random_state=42)
+categorical_columns = X.columns[X.dtypes == "category"]
+print("Categorical features:", categorical_columns.tolist())
 
 # %%
 #
 # Lets evaluate our gradient boosting model with the mean absolute error of the
 # relative demand averaged across our 5 time-based cross-validation splits:
+import numpy as np
 
 
-def evaluate(model, X, y, cv):
+def evaluate(model, X, y, cv, model_prop=None, model_step=None):
     cv_results = cross_validate(
         model,
         X,
         y,
         cv=cv,
         scoring=["neg_mean_absolute_error", "neg_root_mean_squared_error"],
+        return_estimator=model_prop is not None,
     )
+    if model_prop is not None:
+        if model_step is not None:
+            values = [
+                getattr(m[model_step], model_prop) for m in cv_results["estimator"]
+            ]
+        else:
+            values = [getattr(m, model_prop) for m in cv_results["estimator"]]
+        print(f"Mean model.{model_prop} = {np.mean(values)}")
     mae = -cv_results["test_neg_mean_absolute_error"]
     rmse = -cv_results["test_neg_root_mean_squared_error"]
     print(
@@ -235,9 +219,11 @@ def evaluate(model, X, y, cv):
     )
 
 
-evaluate(gbrt_pipeline, X, y, cv=ts_cv)
+evaluate(gbrt, X, y, cv=ts_cv, model_prop="n_iter_")
 
 # %%
+# We see that we set `max_iter` large enough such that early stopping took place.
+#
 # This model has an average error around 4 to 5% of the maximum demand. This is
 # quite good for a first trial without any hyper-parameter tuning! We just had
 # to make the categorical variables explicit. Note that the time related
@@ -253,15 +239,12 @@ evaluate(gbrt_pipeline, X, y, cv=ts_cv)
 #
 # As usual for linear models, categorical variables need to be one-hot encoded.
 # For consistency, we scale the numerical features to the same 0-1 range using
-# class:`sklearn.preprocessing.MinMaxScaler`, although in this case it does not
+# :class:`~sklearn.preprocessing.MinMaxScaler`, although in this case it does not
 # impact the results much because they are already on comparable scales:
-from sklearn.preprocessing import OneHotEncoder
-from sklearn.preprocessing import MinMaxScaler
 from sklearn.linear_model import RidgeCV
-import numpy as np
+from sklearn.preprocessing import MinMaxScaler, OneHotEncoder
 
-
-one_hot_encoder = OneHotEncoder(handle_unknown="ignore", sparse=False)
+one_hot_encoder = OneHotEncoder(handle_unknown="ignore", sparse_output=False)
 alphas = np.logspace(-6, 6, 25)
 naive_linear_pipeline = make_pipeline(
     ColumnTransformer(
@@ -274,10 +257,14 @@ naive_linear_pipeline = make_pipeline(
 )
 
 
-evaluate(naive_linear_pipeline, X, y, cv=ts_cv)
+evaluate(
+    naive_linear_pipeline, X, y, cv=ts_cv, model_prop="alpha_", model_step="ridgecv"
+)
 
 
 # %%
+# It is affirmative to see that the selected `alpha_` is in our specified
+# range.
 #
 # The performance is not good: the average error is around 14% of the maximum
 # demand. This is more than three times higher than the average error of the
@@ -612,9 +599,8 @@ cyclic_spline_linear_pipeline[:-1].transform(X).shape
 # However, it is possible to use the `PolynomialFeatures` class on coarse
 # grained spline encoded hours to model the "workingday"/"hours" interaction
 # explicitly without introducing too many new variables:
-from sklearn.preprocessing import PolynomialFeatures
 from sklearn.pipeline import FeatureUnion
-
+from sklearn.preprocessing import PolynomialFeatures
 
 hour_workday_interaction = make_pipeline(
     ColumnTransformer(
@@ -628,7 +614,7 @@ hour_workday_interaction = make_pipeline(
 
 # %%
 # Those features are then combined with the ones already computed in the
-# previous spline-base pipeline. We can observe a nice performance improvemnt
+# previous spline-base pipeline. We can observe a nice performance improvement
 # by modeling this pairwise interaction explicitly:
 
 cyclic_spline_interactions_pipeline = make_pipeline(
@@ -660,7 +646,6 @@ evaluate(cyclic_spline_interactions_pipeline, X, y, cv=ts_cv)
 # Alternatively, we can use the Nyström method to compute an approximate
 # polynomial kernel expansion. Let us try the latter:
 from sklearn.kernel_approximation import Nystroem
-
 
 cyclic_spline_poly_pipeline = make_pipeline(
     cyclic_spline_transformer,
@@ -706,8 +691,8 @@ evaluate(one_hot_poly_pipeline, X, y, cv=ts_cv)
 # Let us now have a qualitative look at the predictions of the kernel models
 # and of the gradient boosted trees that should be able to better model
 # non-linear interactions between features:
-gbrt_pipeline.fit(X.iloc[train_0], y.iloc[train_0])
-gbrt_predictions = gbrt_pipeline.predict(X.iloc[test_0])
+gbrt.fit(X.iloc[train_0], y.iloc[train_0])
+gbrt_predictions = gbrt.predict(X.iloc[test_0])
 
 one_hot_poly_pipeline.fit(X.iloc[train_0], y.iloc[train_0])
 one_hot_poly_predictions = one_hot_poly_pipeline.predict(X.iloc[test_0])
@@ -766,32 +751,43 @@ _ = ax.legend()
 # to the geographical repartition of the fleet at any point in time or the
 # fraction of bikes that are immobilized because they need servicing.
 #
-# Let us finally get a more quantative look at the prediction errors of those
+# Let us finally get a more quantitative look at the prediction errors of those
 # three models using the true vs predicted demand scatter plots:
-fig, axes = plt.subplots(ncols=3, figsize=(12, 4), sharey=True)
-fig.suptitle("Non-linear regression models")
+from sklearn.metrics import PredictionErrorDisplay
+
+fig, axes = plt.subplots(nrows=2, ncols=3, figsize=(13, 7), sharex=True, sharey="row")
+fig.suptitle("Non-linear regression models", y=1.0)
 predictions = [
     one_hot_poly_predictions,
     cyclic_spline_poly_predictions,
     gbrt_predictions,
 ]
 labels = [
-    "One hot + polynomial kernel",
-    "Splines + polynomial kernel",
-    "Gradient Boosted Trees",
+    "One hot +\npolynomial kernel",
+    "Splines +\npolynomial kernel",
+    "Gradient Boosted\nTrees",
 ]
-for ax, pred, label in zip(axes, predictions, labels):
-    ax.scatter(y.iloc[test_0].values, pred, alpha=0.3, label=label)
-    ax.plot([0, 1], [0, 1], "--", label="Perfect model")
-    ax.set(
-        xlim=(0, 1),
-        ylim=(0, 1),
-        xlabel="True demand",
-        ylabel="Predicted demand",
-    )
-    ax.legend()
-
-
+plot_kinds = ["actual_vs_predicted", "residual_vs_predicted"]
+for axis_idx, kind in enumerate(plot_kinds):
+    for ax, pred, label in zip(axes[axis_idx], predictions, labels):
+        disp = PredictionErrorDisplay.from_predictions(
+            y_true=y.iloc[test_0],
+            y_pred=pred,
+            kind=kind,
+            scatter_kwargs={"alpha": 0.3},
+            ax=ax,
+        )
+        ax.set_xticks(np.linspace(0, 1, num=5))
+        if axis_idx == 0:
+            ax.set_yticks(np.linspace(0, 1, num=5))
+            ax.legend(
+                ["Best model", label],
+                loc="upper center",
+                bbox_to_anchor=(0.5, 1.3),
+                ncol=2,
+            )
+        ax.set_aspect("equal", adjustable="box")
+plt.show()
 # %%
 # This visualization confirms the conclusions we draw on the previous plot.
 #
