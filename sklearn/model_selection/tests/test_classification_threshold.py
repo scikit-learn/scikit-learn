@@ -181,13 +181,13 @@ def test_fit_and_score_over_thresholds_curve_scorers(curve_scorer, score_method)
         score_params={},
     )
 
+    assert np.all(thresholds[:-1] <= thresholds[1:])
+
     if score_method.startswith("max_"):
-        assert_array_equal(np.argsort(thresholds), np.arange(len(thresholds)))
         assert isinstance(scores, tuple) and len(scores) == 2
         for sc in scores:
             assert np.logical_and(sc >= 0, sc <= 1).all()
     else:
-        assert_array_equal(np.argsort(thresholds), np.arange(len(thresholds)))
         assert isinstance(scores, np.ndarray)
         assert np.logical_and(scores >= 0, scores <= 1).all()
 
