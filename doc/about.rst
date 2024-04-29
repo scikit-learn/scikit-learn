@@ -22,11 +22,21 @@ Governance
 The decision making process and governance structure of scikit-learn is laid
 out in the :ref:`governance document <governance>`.
 
-Authors
--------
+.. _authors:
 
-The following people are currently core contributors to scikit-learn's development
-and maintenance:
+The people behind scikit-learn
+-------------------------------
+
+Scikit-learn is a community project, developed by a large group of
+people, all across the world. A few teams, listed below, have central
+roles, however a complete list of contributors can be found `on github
+<https://github.com/scikit-learn/scikit-learn/graphs/contributors>`__.
+
+Core developer team
+....................
+
+The following people are currently core developers, in charge of
+consolidating scikit-learn's development and maintenance:
 
 .. include:: authors.rst
 
@@ -40,14 +50,14 @@ in the FAQ.
    :ref:`How you can contribute to the project <contributing>`
 
 Documentation Team
-------------------
+...................
 
 The following people help with documenting the project:
 
 .. include:: documentation_team.rst
 
 Contributor Experience Team
----------------------------
+............................
 
 The following people are active contributors who also help with
 :ref:`triaging issues <bug_triaging>`, PRs, and general
@@ -56,7 +66,7 @@ maintenance:
 .. include:: contributor_experience_team.rst
 
 Communication Team
-------------------
+...................
 
 The following people help with :ref:`communication around scikit-learn
 <communication_team>`.
