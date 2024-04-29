@@ -778,7 +778,7 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
         For sparse input this option is always ``False`` to preserve sparsity.
         Check :ref:`an example on how to use a precomputed Gram Matrix in ElasticNet
         <sphx_glr_auto_examples_linear_model_plot_elastic_net_precomputed_gram_matrix_with_weighted_samples.py>`
-        for details.```
+        for details.
 
     max_iter : int, default=1000
         The maximum number of iterations.
