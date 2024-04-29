@@ -927,7 +927,7 @@ def test_tuned_threshold_classifier_cv_float():
     ],
 )
 def test_tuned_threshold_classifier_error_missing_constraint(objective_metric):
-    """Check that we raise an informative error when using a objective metric requested
+    """Check that we raise an informative error when using a objective metric requesting
     a constraint but no `constraint_value` is provided."""
     X, y = make_classification(random_state=0)
     estimator = LogisticRegression()
