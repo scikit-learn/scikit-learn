@@ -808,7 +808,7 @@ class _NotAnArray:
     def __init__(self, data):
         self.data = np.asarray(data)
 
-    def __array__(self, dtype=None):
+    def __array__(self, dtype=None, copy=None):
         return self.data
 
     def __array_function__(self, func, types, args, kwargs):

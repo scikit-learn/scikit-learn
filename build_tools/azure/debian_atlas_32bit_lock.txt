@@ -6,7 +6,7 @@
 #
 attrs==23.2.0
     # via pytest
-coverage==7.4.4
+coverage==7.5.0
     # via pytest-cov
 cython==3.0.10
     # via -r build_tools/azure/debian_atlas_32bit_requirements.txt
@@ -37,7 +37,7 @@ pytest==7.1.2
     #   pytest-cov
 pytest-cov==2.9.0
     # via -r build_tools/azure/debian_atlas_32bit_requirements.txt
-threadpoolctl==2.2.0
+threadpoolctl==3.1.0
     # via -r build_tools/azure/debian_atlas_32bit_requirements.txt
 tomli==2.0.1
     # via

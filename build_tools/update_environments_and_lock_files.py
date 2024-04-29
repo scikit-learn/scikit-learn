@@ -141,7 +141,10 @@ build_metadata_list = [
         "folder": "build_tools/azure",
         "platform": "osx-64",
         "channel": "defaults",
-        "conda_dependencies": remove_from(common_dependencies, ["cython"]) + ["ccache"],
+        "conda_dependencies": remove_from(
+            common_dependencies, ["cython", "threadpoolctl"]
+        )
+        + ["ccache"],
         "package_constraints": {
             "blas": "[build=mkl]",
             # scipy 1.12.x crashes on this platform (https://github.com/scipy/scipy/pull/20086)
@@ -149,9 +152,9 @@ build_metadata_list = [
             # channel.
             "scipy": "<1.12",
         },
-        # TODO: put cython back to conda dependencies when required version is
-        # available on the main channel
-        "pip_dependencies": ["cython"],
+        # TODO: put cython and threadpoolctl back to conda dependencies when required
+        # version is available on the main channel
+        "pip_dependencies": ["cython", "threadpoolctl"],
     },
     {
         "name": "pymin_conda_defaults_openblas",
@@ -161,7 +164,8 @@ build_metadata_list = [
         "platform": "linux-64",
         "channel": "defaults",
         "conda_dependencies": remove_from(
-            common_dependencies, ["pandas", "cython", "pip", "ninja", "meson-python"]
+            common_dependencies,
+            ["pandas", "cython", "threadpoolctl", "pip", "ninja", "meson-python"],
         )
         + ["ccache"],
         "package_constraints": {
@@ -170,12 +174,11 @@ build_metadata_list = [
             "numpy": "1.21",  # the min version is not available on the defaults channel
             "scipy": "1.7",  # the min version has some low level crashes
             "matplotlib": "min",
-            "threadpoolctl": "2.2.0",
             "cython": "min",
         },
-        # TODO: put cython back to conda dependencies when required version is
-        # available on the main channel
-        "pip_dependencies": ["cython"],
+        # TODO: put cython and threadpoolctl back to conda dependencies when required
+        # version is available on the main channel
+        "pip_dependencies": ["cython", "threadpoolctl"],
     },
     {
         "name": "pymin_conda_forge_openblas_ubuntu_2204",
@@ -381,7 +384,7 @@ build_metadata_list = [
         ],
         "package_constraints": {
             "joblib": "min",
-            "threadpoolctl": "2.2.0",
+            "threadpoolctl": "3.1.0",
             "pytest": "min",
             "pytest-cov": "min",
             # no pytest-xdist because it causes issue on 32bit

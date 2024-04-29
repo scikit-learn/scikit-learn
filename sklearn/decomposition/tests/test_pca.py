@@ -34,15 +34,18 @@ SPARSE_M, SPARSE_N = 1000, 300  # arbitrary
 SPARSE_MAX_COMPONENTS = min(SPARSE_M, SPARSE_N)
 
 
-def _check_fitted_pca_close(pca1, pca2, rtol):
-    assert_allclose(pca1.components_, pca2.components_, rtol=rtol)
-    assert_allclose(pca1.explained_variance_, pca2.explained_variance_, rtol=rtol)
-    assert_allclose(pca1.singular_values_, pca2.singular_values_, rtol=rtol)
-    assert_allclose(pca1.mean_, pca2.mean_, rtol=rtol)
-    assert_allclose(pca1.n_components_, pca2.n_components_, rtol=rtol)
-    assert_allclose(pca1.n_samples_, pca2.n_samples_, rtol=rtol)
-    assert_allclose(pca1.noise_variance_, pca2.noise_variance_, rtol=rtol)
-    assert_allclose(pca1.n_features_in_, pca2.n_features_in_, rtol=rtol)
+def _check_fitted_pca_close(pca1, pca2, rtol=1e-7, atol=1e-12):
+    assert_allclose(pca1.components_, pca2.components_, rtol=rtol, atol=atol)
+    assert_allclose(
+        pca1.explained_variance_, pca2.explained_variance_, rtol=rtol, atol=atol
+    )
+    assert_allclose(pca1.singular_values_, pca2.singular_values_, rtol=rtol, atol=atol)
+    assert_allclose(pca1.mean_, pca2.mean_, rtol=rtol, atol=atol)
+    assert_allclose(pca1.noise_variance_, pca2.noise_variance_, rtol=rtol, atol=atol)
+
+    assert pca1.n_components_ == pca2.n_components_
+    assert pca1.n_samples_ == pca2.n_samples_
+    assert pca1.n_features_in_ == pca2.n_features_in_
 
 
 @pytest.mark.parametrize("svd_solver", PCA_SOLVERS)
@@ -75,9 +78,12 @@ def test_pca(svd_solver, n_components):
 def test_pca_sparse(
     global_random_seed, svd_solver, sparse_container, n_components, density, scale
 ):
-    # Make sure any tolerance changes pass with SKLEARN_TESTS_GLOBAL_RANDOM_SEED="all"
-    rtol = 5e-07
-    transform_rtol = 3e-05
+    """Check that the results are the same for sparse and dense input."""
+
+    # Set atol in addition of the default rtol to account for the very wide range of
+    # result values (1e-8 to 1e0).
+    atol = 1e-12
+    transform_atol = 1e-10
 
     random_state = np.random.default_rng(global_random_seed)
     X = sparse_container(
@@ -108,7 +114,7 @@ def test_pca_sparse(
     pcad.fit(Xd)
 
     # Fitted attributes equality
-    _check_fitted_pca_close(pca, pcad, rtol=rtol)
+    _check_fitted_pca_close(pca, pcad, atol=atol)
 
     # Test transform
     X2 = sparse_container(
@@ -121,8 +127,8 @@ def test_pca_sparse(
     )
     X2d = X2.toarray()
 
-    assert_allclose(pca.transform(X2), pca.transform(X2d), rtol=transform_rtol)
-    assert_allclose(pca.transform(X2), pcad.transform(X2d), rtol=transform_rtol)
+    assert_allclose(pca.transform(X2), pca.transform(X2d), atol=transform_atol)
+    assert_allclose(pca.transform(X2), pcad.transform(X2d), atol=transform_atol)
 
 
 @pytest.mark.parametrize("sparse_container", CSR_CONTAINERS + CSC_CONTAINERS)
@@ -153,10 +159,10 @@ def test_pca_sparse_fit_transform(global_random_seed, sparse_container):
     pca_fit.fit(X)
     transformed_X = pca_fit_transform.fit_transform(X)
 
-    _check_fitted_pca_close(pca_fit, pca_fit_transform, rtol=1e-10)
-    assert_allclose(transformed_X, pca_fit_transform.transform(X), rtol=2e-9)
-    assert_allclose(transformed_X, pca_fit.transform(X), rtol=2e-9)
-    assert_allclose(pca_fit.transform(X2), pca_fit_transform.transform(X2), rtol=2e-9)
+    _check_fitted_pca_close(pca_fit, pca_fit_transform)
+    assert_allclose(transformed_X, pca_fit_transform.transform(X))
+    assert_allclose(transformed_X, pca_fit.transform(X))
+    assert_allclose(pca_fit.transform(X2), pca_fit_transform.transform(X2))
 
 
 @pytest.mark.parametrize("svd_solver", ["randomized", "full"])
