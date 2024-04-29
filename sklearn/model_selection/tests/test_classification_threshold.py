@@ -874,6 +874,39 @@ def test_tuned_threshold_classifier_n_thresholds_array():
     assert_allclose(tuned_model.cv_results_["thresholds"], n_thresholds)
 
 
+@pytest.mark.parametrize(
+    "params",
+    [
+        {"strategy": "constant", "constant_threshold": 0.5},
+        {"strategy": "optimum"},
+        {"objective_metric": "max_tpr_at_tnr_constraint", "constraint_value": 0.5},
+        {"objective_metric": "max_tnr_at_tpr_constraint", "constraint_value": 0.5},
+        {
+            "objective_metric": "max_precision_at_recall_constraint",
+            "constraint_value": 0.5,
+        },
+        {
+            "objective_metric": "max_recall_at_precision_constraint",
+            "constraint_value": 0.5,
+        },
+    ],
+)
+@pytest.mark.parametrize("store_cv_results", [True, False])
+def test_tuned_threshold_classifier_store_cv_results(params, store_cv_results):
+    """Check that if `cv_results_` exists depending on `store_cv_results`."""
+    X, y = make_classification(random_state=0)
+    estimator = LogisticRegression()
+    tuned_model = TunedThresholdClassifierCV(
+        estimator,
+        store_cv_results=store_cv_results,
+        **params,
+    ).fit(X, y)
+    if store_cv_results:
+        assert hasattr(tuned_model, "cv_results_")
+    else:
+        assert not hasattr(tuned_model, "cv_results_")
+
+
 def test_tuned_threshold_classifier_cv_float():
     """Check the behaviour when `cv` is set to a float."""
     X, y = make_classification(random_state=0)
