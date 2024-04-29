@@ -56,6 +56,17 @@ Changed models
   signs across all `PCA` solvers, including the new
   `svd_solver="covariance_eigh"` option introduced in this release.
 
+Changes impacting many modules
+------------------------------
+
+- |API| The name of the input of the `inverse_transform` method of estimators has been
+  standardized to `X`. As a consequence, `Xt` is deprecated and will be removed in
+  version 1.7 in the following estimators: :class:`cluster.FeatureAgglomeration`,
+  :class:`decomposition.MiniBatchNMF`, :class:`decomposition.NMF`,
+  :class:`model_selection.GridSearchCV`, :class:`model_selection.RandomizedSearchCV`,
+  :class:`pipeline.Pipeline` and :class:`preprocessing.KBinsDiscretizer`.
+  :pr:`28756` by :user:`Will Dean <wd60622>`.
+
 Support for Array API
 ---------------------
 
