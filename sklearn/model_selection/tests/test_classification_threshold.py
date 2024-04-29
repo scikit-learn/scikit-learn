@@ -54,7 +54,7 @@ def test_curve_scorer():
     scores, thresholds = curve_scorer(estimator, X, y)
 
     assert thresholds.shape == scores.shape
-    # check that the thresholds are probability with extreme values close to 0 and 1.
+    # check that the thresholds are probabilities with extreme values close to 0 and 1.
     # they are not exactly 0 and 1 because they are the extremum of the
     # `estimator.predict_proba(X)` values.
     assert 0 <= thresholds.min() <= 0.01
@@ -114,8 +114,7 @@ def test_curve_scorer_pos_label(global_random_seed):
     )
     scores_pos_label_0, thresholds_pos_label_0 = curve_scorer(estimator, X, y)
 
-    # If `pos_label` is not forwarded to the curve_scorer, the thresholds will be equal.
-    # Make sure that this is not the case.
+    # Since `pos_label` is forwarded to the curve_scorer, the thresholds are not equal.
     assert not (thresholds_pos_label_1 == thresholds_pos_label_0).all()
     # The min-max range for the thresholds is defined by the probabilities of the
     # `pos_label` class (the column of `predict_proba`).
@@ -258,7 +257,7 @@ def test_fit_and_score_over_thresholds_prefit(curve_scorer, expected_score):
         curve_scorer=curve_scorer,
         score_params={},
     )
-    assert_array_equal(np.argsort(thresholds), np.arange(len(thresholds)))
+    assert np.all(thresholds[:-1] <= thresholds[1:])
     assert_allclose(scores, expected_score)
 
 
