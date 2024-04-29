@@ -16,8 +16,8 @@ from ..utils import (
     check_array,
     check_random_state,
     gen_batches,
-    get_chunk_n_rows,
 )
+from ..utils._chunking import get_chunk_n_rows
 from ..utils._param_validation import Interval, RealNotInt, StrOptions
 from ..utils.validation import _num_samples, check_is_fitted
 from ._bagging import BaseBagging
@@ -232,9 +232,7 @@ class IsolationForest(OutlierMixin, BaseBagging):
         warm_start=False,
     ):
         super().__init__(
-            estimator=ExtraTreeRegressor(
-                max_features=1, splitter="random", random_state=random_state
-            ),
+            estimator=None,
             # here above max_features has no links with self.max_features
             bootstrap=bootstrap,
             bootstrap_features=False,
@@ -248,6 +246,14 @@ class IsolationForest(OutlierMixin, BaseBagging):
         )
 
         self.contamination = contamination
+
+    def _get_estimator(self):
+        return ExtraTreeRegressor(
+            # here max_features has no links with self.max_features
+            max_features=1,
+            splitter="random",
+            random_state=self.random_state,
+        )
 
     def _set_oob_score(self, X, y):
         raise NotImplementedError("OOB score not supported by iforest")

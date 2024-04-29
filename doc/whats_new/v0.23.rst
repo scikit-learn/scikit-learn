@@ -2,6 +2,17 @@
 
 .. currentmodule:: sklearn
 
+.. _release_notes_0_23:
+
+============
+Version 0.23
+============
+
+For a short description of the main highlights of the release, please refer to
+:ref:`sphx_glr_auto_examples_release_highlights_plot_release_highlights_0_23_0.py`.
+
+.. include:: changelog_legend.inc
+
 .. _changes_0_23_2:
 
 Version 0.23.2
@@ -152,12 +163,6 @@ Version 0.23.0
 
 **May 12 2020**
 
-For a short description of the main highlights of the release, please
-refer to
-:ref:`sphx_glr_auto_examples_release_highlights_plot_release_highlights_0_23_0.py`.
-
-
-.. include:: changelog_legend.inc
 
 Enforcing keyword-only arguments
 --------------------------------
@@ -811,8 +816,7 @@ Miscellaneous
   always possible to quickly inspect the parameters of any estimator using
   `est.get_params(deep=False)`. :pr:`17061` by `Nicolas Hug`_.
 
-Code and Documentation Contributors
------------------------------------
+.. rubric:: Code and documentation contributors
 
 Thanks to everyone who has contributed to the maintenance and improvement of the
 project since version 0.22, including:

@@ -528,6 +528,25 @@ def enet_path(
     For an example, see
     :ref:`examples/linear_model/plot_lasso_coordinate_descent_path.py
     <sphx_glr_auto_examples_linear_model_plot_lasso_coordinate_descent_path.py>`.
+
+    Examples
+    --------
+    >>> from sklearn.linear_model import enet_path
+    >>> from sklearn.datasets import make_regression
+    >>> X, y, true_coef = make_regression(
+    ...    n_samples=100, n_features=5, n_informative=2, coef=True, random_state=0
+    ... )
+    >>> true_coef
+    array([ 0.        ,  0.        ,  0.        , 97.9..., 45.7...])
+    >>> alphas, estimated_coef, _ = enet_path(X, y, n_alphas=3)
+    >>> alphas.shape
+    (3,)
+    >>> estimated_coef
+     array([[ 0.        ,  0.78...,  0.56...],
+            [ 0.        ,  1.12...,  0.61...],
+            [-0.        , -2.12..., -1.12...],
+            [ 0.        , 23.04..., 88.93...],
+            [ 0.        , 10.63..., 41.56...]])
     """
     X_offset_param = params.pop("X_offset", None)
     X_scale_param = params.pop("X_scale", None)
@@ -906,8 +925,11 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
 
         Parameters
         ----------
-        X : {ndarray, sparse matrix} of (n_samples, n_features)
+        X : {ndarray, sparse matrix, sparse array} of (n_samples, n_features)
             Data.
+
+            Note that large sparse matrices and arrays requiring `int64`
+            indices are not accepted.
 
         y : ndarray of shape (n_samples,) or (n_samples, n_targets)
             Target. Will be cast to X's dtype if necessary.
@@ -958,6 +980,7 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
                 accept_sparse="csc",
                 order="F",
                 dtype=[np.float64, np.float32],
+                accept_large_sparse=False,
                 copy=X_copied,
                 multi_output=True,
                 y_numeric=True,
@@ -1532,7 +1555,8 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Training data. Pass directly as Fortran-contiguous data
             to avoid unnecessary memory duplication. If y is mono-output,
-            X can be sparse.
+            X can be sparse. Note that large sparse matrices and arrays
+            requiring `int64` indices are not accepted.
 
         y : array-like of shape (n_samples,) or (n_samples, n_targets)
             Target values.
@@ -1582,7 +1606,10 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
             # csr. We also want to allow y to be 64 or 32 but check_X_y only
             # allows to convert for 64.
             check_X_params = dict(
-                accept_sparse="csc", dtype=[np.float64, np.float32], copy=False
+                accept_sparse="csc",
+                dtype=[np.float64, np.float32],
+                copy=False,
+                accept_large_sparse=False,
             )
             X, y = self._validate_data(
                 X, y, validate_separately=(check_X_params, check_y_params)

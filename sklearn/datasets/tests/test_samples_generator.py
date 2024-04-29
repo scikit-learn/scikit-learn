@@ -33,7 +33,6 @@ from sklearn.utils._testing import (
     assert_almost_equal,
     assert_array_almost_equal,
     assert_array_equal,
-    ignore_warnings,
 )
 from sklearn.utils.validation import assert_all_finite
 
@@ -136,7 +135,7 @@ def test_make_classification_informative_features():
 
             # Cluster by sign, viewed as strings to allow uniquing
             signs = np.sign(X)
-            signs = signs.view(dtype="|S{0}".format(signs.strides[0]))
+            signs = signs.view(dtype="|S{0}".format(signs.strides[0])).ravel()
             unique_signs, cluster_index = np.unique(signs, return_inverse=True)
 
             assert (
@@ -498,41 +497,6 @@ def test_make_sparse_coded_signal():
         assert len(np.flatnonzero(row)) == 3, "Non-zero coefs mismatch"
     assert_allclose(Y, X @ D)
     assert_allclose(np.sqrt((D**2).sum(axis=1)), np.ones(D.shape[0]))
-
-
-# TODO(1.5): remove
-@ignore_warnings(category=FutureWarning)
-def test_make_sparse_coded_signal_transposed():
-    Y, D, X = make_sparse_coded_signal(
-        n_samples=5,
-        n_components=8,
-        n_features=10,
-        n_nonzero_coefs=3,
-        random_state=0,
-        data_transposed=True,
-    )
-    assert Y.shape == (10, 5), "Y shape mismatch"
-    assert D.shape == (10, 8), "D shape mismatch"
-    assert X.shape == (8, 5), "X shape mismatch"
-    for col in X.T:
-        assert len(np.flatnonzero(col)) == 3, "Non-zero coefs mismatch"
-    assert_allclose(Y, D @ X)
-    assert_allclose(np.sqrt((D**2).sum(axis=0)), np.ones(D.shape[1]))
-
-
-# TODO(1.5): remove
-def test_make_sparse_code_signal_deprecation_warning():
-    """Check the message for future deprecation."""
-    warn_msg = "data_transposed was deprecated in version 1.3"
-    with pytest.warns(FutureWarning, match=warn_msg):
-        make_sparse_coded_signal(
-            n_samples=1,
-            n_components=1,
-            n_features=1,
-            n_nonzero_coefs=1,
-            random_state=0,
-            data_transposed=True,
-        )
 
 
 def test_make_sparse_uncorrelated():

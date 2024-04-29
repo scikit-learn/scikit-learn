@@ -208,7 +208,13 @@ def test_standard_scaler_dtype(add_sample_weight, sparse_container):
     else:
         sample_weight = None
     with_mean = True
-    for dtype in [np.float16, np.float32, np.float64]:
+    if sparse_container is not None:
+        # scipy sparse containers do not support float16, see
+        # https://github.com/scipy/scipy/issues/7408 for more details.
+        supported_dtype = [np.float64, np.float32]
+    else:
+        supported_dtype = [np.float64, np.float32, np.float16]
+    for dtype in supported_dtype:
         X = rng.randn(n_samples, n_features).astype(dtype)
         if sparse_container is not None:
             X = sparse_container(X)
@@ -1375,6 +1381,19 @@ def test_quantile_transform_subsampling():
     # each random subsampling yield a unique approximation to the expected
     # linspace CDF
     assert len(np.unique(inf_norm_arr)) == len(inf_norm_arr)
+
+
+def test_quantile_transform_subsampling_disabled():
+    """Check the behaviour of `QuantileTransformer` when `subsample=None`."""
+    X = np.random.RandomState(0).normal(size=(200, 1))
+
+    n_quantiles = 5
+    transformer = QuantileTransformer(n_quantiles=n_quantiles, subsample=None).fit(X)
+
+    expected_references = np.linspace(0, 1, n_quantiles)
+    assert_allclose(transformer.references_, expected_references)
+    expected_quantiles = np.quantile(X.ravel(), expected_references)
+    assert_allclose(transformer.quantiles_.ravel(), expected_quantiles)
 
 
 @pytest.mark.parametrize("csc_container", CSC_CONTAINERS)

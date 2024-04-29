@@ -2,6 +2,7 @@
 HDBSCAN: Hierarchical Density-Based Spatial Clustering
          of Applications with Noise
 """
+
 # Authors: Leland McInnes <leland.mcinnes@gmail.com>
 #          Steve Astels <sastels@gmail.com>
 #          John Healy <jchealy@gmail.com>
@@ -44,6 +45,7 @@ from scipy.sparse import csgraph, issparse
 from ...base import BaseEstimator, ClusterMixin, _fit_context
 from ...metrics import pairwise_distances
 from ...metrics._dist_metrics import DistanceMetric
+from ...metrics.pairwise import _VALID_METRICS
 from ...neighbors import BallTree, KDTree, NearestNeighbors
 from ...utils._param_validation import Interval, StrOptions
 from ...utils.validation import _allclose_dense_sparse, _assert_all_finite
@@ -594,6 +596,14 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
     OPTICS : Ordering Points To Identify the Clustering Structure.
     Birch : Memory-efficient, online-learning algorithm.
 
+    Notes
+    -----
+    The `min_samples` parameter includes the point itself, whereas the implementation in
+    `scikit-learn-contrib/hdbscan <https://github.com/scikit-learn-contrib/hdbscan>`_
+    does not. To get the same results in both versions, the value of `min_samples` here
+    must be 1 greater than the value used in `scikit-learn-contrib/hdbscan
+    <https://github.com/scikit-learn-contrib/hdbscan>`_.
+
     References
     ----------
 
@@ -638,7 +648,10 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
             None,
             Interval(Integral, left=1, right=None, closed="left"),
         ],
-        "metric": [StrOptions(FAST_METRICS | {"precomputed"}), callable],
+        "metric": [
+            StrOptions(FAST_METRICS | set(_VALID_METRICS) | {"precomputed"}),
+            callable,
+        ],
         "metric_params": [dict, None],
         "alpha": [Interval(Real, left=0, right=None, closed="neither")],
         # TODO(1.6): Remove "kdtree" and "balltree"  option

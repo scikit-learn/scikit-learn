@@ -1,6 +1,7 @@
 """
 This file contains preprocessing tools based on polynomials.
 """
+
 import collections
 from itertools import chain, combinations
 from itertools import combinations_with_replacement as combinations_w_r

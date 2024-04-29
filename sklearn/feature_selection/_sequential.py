@@ -1,6 +1,7 @@
 """
 Sequential feature selection
 """
+
 from numbers import Integral, Real
 
 import numpy as np

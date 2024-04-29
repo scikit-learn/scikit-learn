@@ -1595,7 +1595,7 @@ def test_max_samples_boundary_classifiers(name):
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
 def test_forest_y_sparse(csr_container):
     X = [[1, 2, 3]]
-    y = csr_container([4, 5, 6])
+    y = csr_container([[4, 5, 6]])
     est = RandomForestClassifier()
     msg = "sparse multilabel-indicator for y is not supported."
     with pytest.raises(ValueError, match=msg):

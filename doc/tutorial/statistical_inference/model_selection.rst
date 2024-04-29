@@ -98,7 +98,7 @@ scoring method.
     ...                 scoring='precision_macro')
     array([0.96578289, 0.92708922, 0.96681476, 0.96362897, 0.93192644])
 
-   **Cross-validation generators**
+**Cross-validation generators**
 
 
 .. list-table::
@@ -185,15 +185,52 @@ scoring method.
     estimator with a linear kernel as a function of parameter ``C`` (use a
     logarithmic grid of points, from 1 to 10).
 
-        .. literalinclude:: ../../auto_examples/exercises/plot_cv_digits.py
-            :lines: 13-23
+    ::
 
-    .. image:: /auto_examples/exercises/images/sphx_glr_plot_cv_digits_001.png
-        :target: ../../auto_examples/exercises/plot_cv_digits.html
+        >>> import numpy as np
+        >>> from sklearn import datasets, svm
+        >>> from sklearn.model_selection import cross_val_score
+        >>> X, y = datasets.load_digits(return_X_y=True)
+        >>> svc = svm.SVC(kernel="linear")
+        >>> C_s = np.logspace(-10, 0, 10)
+        >>> scores = list()
+        >>> scores_std = list()
+
+    |details-start|
+    **Solution**
+    |details-split|
+
+    .. plot::
+        :context: close-figs
         :align: center
-        :scale: 90
 
-    **Solution:** :ref:`sphx_glr_auto_examples_exercises_plot_cv_digits.py`
+        import numpy as np
+        from sklearn import datasets, svm
+        from sklearn.model_selection import cross_val_score
+        X, y = datasets.load_digits(return_X_y=True)
+        svc = svm.SVC(kernel="linear")
+        C_s = np.logspace(-10, 0, 10)
+        scores = list()
+        scores_std = list()
+        for C in C_s:
+            svc.C = C
+            this_scores = cross_val_score(svc, X, y, n_jobs=1)
+            scores.append(np.mean(this_scores))
+            scores_std.append(np.std(this_scores))
+
+        import matplotlib.pyplot as plt
+
+        plt.figure()
+        plt.semilogx(C_s, scores)
+        plt.semilogx(C_s, np.array(scores) + np.array(scores_std), "b--")
+        plt.semilogx(C_s, np.array(scores) - np.array(scores_std), "b--")
+        locs, labels = plt.yticks()
+        plt.yticks(locs, list(map(lambda x: "%g" % x, locs)))
+        plt.ylabel("CV score")
+        plt.xlabel("Parameter C")
+        plt.ylim(0, 1.1)
+        plt.show()
+    |details-end|
 
 Grid-search and cross-validated estimators
 ============================================
