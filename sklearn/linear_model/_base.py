@@ -33,7 +33,14 @@ from ..base import (
     _fit_context,
 )
 from ..utils import check_array, check_random_state
-from ..utils._array_api import get_namespace, indexing_dtype
+from ..utils._array_api import (
+    _asarray_with_order,
+    _average,
+    get_namespace,
+    get_namespace_and_device,
+    indexing_dtype,
+    supported_float_dtypes,
+)
 from ..utils._seq_dataset import (
     ArrayDataset32,
     ArrayDataset64,
@@ -43,7 +50,7 @@ from ..utils._seq_dataset import (
 from ..utils.extmath import safe_sparse_dot
 from ..utils.parallel import Parallel, delayed
 from ..utils.sparsefuncs import mean_variance_axis
-from ..utils.validation import FLOAT_DTYPES, _check_sample_weight, check_is_fitted
+from ..utils.validation import _check_sample_weight, check_is_fitted
 
 # TODO: bayesian_ridge_regression and bayesian_regression_ard
 # should be squashed into its respective objects.
@@ -155,43 +162,51 @@ def _preprocess_data(
         Always an array of ones. TODO: refactor the code base to make it
         possible to remove this unused variable.
     """
+    xp, _, device_ = get_namespace_and_device(X, y, sample_weight)
+    n_samples, n_features = X.shape
+    X_is_sparse = sp.issparse(X)
+
     if isinstance(sample_weight, numbers.Number):
         sample_weight = None
     if sample_weight is not None:
-        sample_weight = np.asarray(sample_weight)
+        sample_weight = xp.asarray(sample_weight)
 
     if check_input:
-        X = check_array(X, copy=copy, accept_sparse=["csr", "csc"], dtype=FLOAT_DTYPES)
+        X = check_array(
+            X, copy=copy, accept_sparse=["csr", "csc"], dtype=supported_float_dtypes(xp)
+        )
         y = check_array(y, dtype=X.dtype, copy=copy_y, ensure_2d=False)
     else:
-        y = y.astype(X.dtype, copy=copy_y)
+        y = xp.astype(y, X.dtype, copy=copy_y)
         if copy:
-            if sp.issparse(X):
+            if X_is_sparse:
                 X = X.copy()
             else:
-                X = X.copy(order="K")
+                X = _asarray_with_order(X, order="K", copy=True, xp=xp)
+
+    dtype_ = X.dtype
 
     if fit_intercept:
-        if sp.issparse(X):
+        if X_is_sparse:
             X_offset, X_var = mean_variance_axis(X, axis=0, weights=sample_weight)
         else:
-            X_offset = np.average(X, axis=0, weights=sample_weight)
+            X_offset = _average(X, axis=0, weights=sample_weight, xp=xp)
 
-            X_offset = X_offset.astype(X.dtype, copy=False)
+            X_offset = xp.astype(X_offset, X.dtype, copy=False)
             X -= X_offset
 
-        y_offset = np.average(y, axis=0, weights=sample_weight)
+        y_offset = _average(y, axis=0, weights=sample_weight, xp=xp)
         y -= y_offset
     else:
-        X_offset = np.zeros(X.shape[1], dtype=X.dtype)
+        X_offset = xp.zeros(n_features, dtype=X.dtype, device=device_)
         if y.ndim == 1:
-            y_offset = X.dtype.type(0)
+            y_offset = xp.asarray(0.0, dtype=dtype_, device=device_)
         else:
-            y_offset = np.zeros(y.shape[1], dtype=X.dtype)
+            y_offset = xp.zeros(y.shape[1], dtype=dtype_, device=device_)
 
     # XXX: X_scale is no longer needed. It is an historic artifact from the
     # time where linear model exposed the normalize parameter.
-    X_scale = np.ones(X.shape[1], dtype=X.dtype)
+    X_scale = xp.ones(n_features, dtype=X.dtype, device=device_)
     return X, y, X_offset, y_offset, X_scale
 
 
@@ -224,8 +239,9 @@ def _rescale_data(X, y, sample_weight, inplace=False):
     """
     # Assume that _validate_data and _check_sample_weight have been called by
     # the caller.
+    xp, _ = get_namespace(X, y, sample_weight)
     n_samples = X.shape[0]
-    sample_weight_sqrt = np.sqrt(sample_weight)
+    sample_weight_sqrt = xp.sqrt(sample_weight)
 
     if sp.issparse(X) or sp.issparse(y):
         sw_matrix = sparse.dia_matrix(
@@ -236,9 +252,9 @@ def _rescale_data(X, y, sample_weight, inplace=False):
         X = safe_sparse_dot(sw_matrix, X)
     else:
         if inplace:
-            X *= sample_weight_sqrt[:, np.newaxis]
+            X *= sample_weight_sqrt[:, None]
         else:
-            X = X * sample_weight_sqrt[:, np.newaxis]
+            X = X * sample_weight_sqrt[:, None]
 
     if sp.issparse(y):
         y = safe_sparse_dot(sw_matrix, y)
@@ -247,12 +263,12 @@ def _rescale_data(X, y, sample_weight, inplace=False):
             if y.ndim == 1:
                 y *= sample_weight_sqrt
             else:
-                y *= sample_weight_sqrt[:, np.newaxis]
+                y *= sample_weight_sqrt[:, None]
         else:
             if y.ndim == 1:
                 y = y * sample_weight_sqrt
             else:
-                y = y * sample_weight_sqrt[:, np.newaxis]
+                y = y * sample_weight_sqrt[:, None]
     return X, y, sample_weight_sqrt
 
 
@@ -267,7 +283,11 @@ class LinearModel(BaseEstimator, metaclass=ABCMeta):
         check_is_fitted(self)
 
         X = self._validate_data(X, accept_sparse=["csr", "csc", "coo"], reset=False)
-        return safe_sparse_dot(X, self.coef_.T, dense_output=True) + self.intercept_
+        coef_ = self.coef_
+        if coef_.ndim == 1:
+            return X @ coef_ + self.intercept_
+        else:
+            return X @ coef_.T + self.intercept_
 
     def predict(self, X):
         """
@@ -287,11 +307,22 @@ class LinearModel(BaseEstimator, metaclass=ABCMeta):
 
     def _set_intercept(self, X_offset, y_offset, X_scale):
         """Set the intercept_"""
+
+        xp, _ = get_namespace(X_offset, y_offset, X_scale)
+
         if self.fit_intercept:
             # We always want coef_.dtype=X.dtype. For instance, X.dtype can differ from
             # coef_.dtype if warm_start=True.
-            self.coef_ = np.divide(self.coef_, X_scale, dtype=X_scale.dtype)
-            self.intercept_ = y_offset - np.dot(X_offset, self.coef_.T)
+            coef_ = xp.astype(self.coef_, X_scale.dtype, copy=False)
+            coef_ = self.coef_ = xp.divide(coef_, X_scale)
+
+            if coef_.ndim == 1:
+                intercept_ = y_offset - X_offset @ coef_
+            else:
+                intercept_ = y_offset - X_offset @ coef_.T
+
+            self.intercept_ = intercept_
+
         else:
             self.intercept_ = 0.0
 
