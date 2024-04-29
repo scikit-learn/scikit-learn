@@ -654,9 +654,8 @@ def test_tuned_threshold_classifier_response_method_curve_scorer_with_constraint
     assert model.cv_results_["maximized_scores"].shape == (n_thresholds,)
 
     if response_method in ("auto", "predict_proba"):
-        # "auto" will fall back  in priority on `predict_proba` if `estimator`
-        # supports it.
-        # we expect the decision threshold to be in [0, 1]
+        # "auto" will fall back in priority on `predict_proba` if `estimator`
+        # supports it. We expect the decision threshold to be in [0, 1]
         if objective_metric in (
             "max_tnr_at_tpr_constraint",
             "max_precision_at_recall_constraint",
@@ -665,8 +664,9 @@ def test_tuned_threshold_classifier_response_method_curve_scorer_with_constraint
         else:  # "max_tpr_at_tnr_constraint" or "max_recall_at_precision_constraint"
             assert 0 <= model.best_threshold_ <= 0.5
     else:  # "decision_function"
-        # we expect the decision function to be centered in 0.0 and to be larger than
-        # -1 and 1.
+        # We expect the decision function to be centered in 0.0 and to be larger than
+        # -1 and 1. We therefore check that the threshold is positive in one case and
+        # negative in the other.
         if objective_metric in (
             "max_tnr_at_tpr_constraint",
             "max_precision_at_recall_constraint",
