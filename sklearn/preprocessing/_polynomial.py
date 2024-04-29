@@ -1091,6 +1091,8 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
                     # replace any indicated values with 0:
                     extended_nan_indicator = np.repeat(nan_indicator, n_splines, axis=1)
                     XBS[extended_nan_indicator] = 0
+                    if self.sparse_output:
+                        XBS = sparse.csr_matrix(XBS)
 
             else:  # extrapolation in ("constant", "linear")
                 xmin, xmax = spl.t[degree], spl.t[-degree - 1]
