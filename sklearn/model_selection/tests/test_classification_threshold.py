@@ -228,21 +228,7 @@ def test_fit_and_score_over_thresholds_prefit(curve_scorer, expected_score):
 
     # `train_idx is None` to indicate that the classifier is prefit
     train_idx, val_idx = None, np.arange(50, 100)
-    classifier = DecisionTreeClassifier(random_state=0)
-
-    with pytest.raises(NotFittedError):
-        _fit_and_score_over_thresholds(
-            classifier,
-            X,
-            y,
-            fit_params={},
-            train_idx=train_idx,
-            val_idx=val_idx,
-            curve_scorer=curve_scorer,
-            score_params={},
-        )
-
-    classifier.fit(X, y)
+    classifier = DecisionTreeClassifier(random_state=0).fit(X, y)
     # make sure that the classifier memorized the full dataset such that
     # we get perfect predictions and thus match the expected score
     assert classifier.score(X[val_idx], y[val_idx]) == pytest.approx(1.0)

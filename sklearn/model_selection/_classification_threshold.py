@@ -35,7 +35,6 @@ from ..utils.parallel import Parallel, delayed
 from ..utils.validation import (
     _check_method_params,
     _num_samples,
-    check_consistent_length,
     check_is_fitted,
     indexable,
 )
@@ -254,7 +253,6 @@ def _fit_and_score_over_thresholds(
         The scores computed for each decision threshold. When TPR/TNR or precision/
         recall are computed, `scores` is a tuple of two arrays.
     """
-    check_consistent_length(X, y)
 
     if train_idx is not None:
         X_train, X_val = _safe_indexing(X, train_idx), _safe_indexing(X, val_idx)
@@ -264,7 +262,6 @@ def _fit_and_score_over_thresholds(
         classifier.fit(X_train, y_train, **fit_params_train)
     else:  # prefit estimator, only a validation set is provided
         X_val, y_val, score_params_val = X, y, score_params
-        check_is_fitted(classifier, "classes_")
 
     if curve_scorer is roc_curve or (
         isinstance(curve_scorer, _BaseScorer) and curve_scorer._score_func is roc_curve
