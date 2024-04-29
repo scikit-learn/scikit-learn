@@ -15,7 +15,6 @@ set the amount of regularization, i.e. how to choose the bias-variance
 trade-off.
 """
 
-
 # %%
 # Generate sample data
 # --------------------

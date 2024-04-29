@@ -27,10 +27,22 @@ from scipy.stats import rankdata
 from ..base import BaseEstimator, MetaEstimatorMixin, _fit_context, clone, is_classifier
 from ..exceptions import NotFittedError
 from ..metrics import check_scoring
-from ..metrics._scorer import _check_multimetric_scoring, get_scorer_names
-from ..utils import check_random_state
+from ..metrics._scorer import (
+    _check_multimetric_scoring,
+    _MultimetricScorer,
+    get_scorer_names,
+)
+from ..utils import Bunch, check_random_state
+from ..utils._estimator_html_repr import _VisualBlock
 from ..utils._param_validation import HasMethods, Interval, StrOptions
 from ..utils._tags import _safe_tags
+from ..utils.metadata_routing import (
+    MetadataRouter,
+    MethodMapping,
+    _raise_for_params,
+    _routing_enabled,
+    process_routing,
+)
 from ..utils.metaestimators import available_if
 from ..utils.parallel import Parallel, delayed
 from ..utils.random import sample_without_replacement
@@ -429,7 +441,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             },
         }
 
-    def score(self, X, y=None):
+    def score(self, X, y=None, **params):
         """Return the score on the given data, if the estimator has been refit.
 
         This uses the score defined by ``scoring`` where provided, and the
@@ -446,6 +458,14 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             Target relative to X for classification or regression;
             None for unsupervised learning.
 
+        **params : dict
+            Parameters to be passed to the underlying scorer(s).
+
+            ..versionadded:: 1.4
+                Only available if `enable_metadata_routing=True`. See
+                :ref:`Metadata Routing User Guide <metadata_routing>` for more
+                details.
+
         Returns
         -------
         score : float
@@ -454,21 +474,28 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         """
         _check_refit(self, "score")
         check_is_fitted(self)
+
+        _raise_for_params(params, self, "score")
+
+        if _routing_enabled():
+            score_params = process_routing(self, "score", **params).scorer["score"]
+        else:
+            score_params = dict()
+
         if self.scorer_ is None:
             raise ValueError(
                 "No score function explicitly defined, "
-                "and the estimator doesn't provide one %s"
-                % self.best_estimator_
+                "and the estimator doesn't provide one %s" % self.best_estimator_
             )
         if isinstance(self.scorer_, dict):
             if self.multimetric_:
                 scorer = self.scorer_[self.refit]
             else:
                 scorer = self.scorer_
-            return scorer(self.best_estimator_, X, y)
+            return scorer(self.best_estimator_, X, y, **score_params)
 
         # callable
-        score = self.scorer_(self.best_estimator_, X, y)
+        score = self.scorer_(self.best_estimator_, X, y, **score_params)
         if self.multimetric_:
             score = score[self.refit]
         return score
@@ -754,11 +781,54 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             best_index = results[f"rank_test_{refit_metric}"].argmin()
         return best_index
 
+    def _get_scorers(self):
+        """Get the scorer(s) to be used.
+
+        This is used in ``fit`` and ``get_metadata_routing``.
+
+        Returns
+        -------
+        scorers, refit_metric
+        """
+        refit_metric = "score"
+
+        if callable(self.scoring):
+            scorers = self.scoring
+        elif self.scoring is None or isinstance(self.scoring, str):
+            scorers = check_scoring(self.estimator, self.scoring)
+        else:
+            scorers = _check_multimetric_scoring(self.estimator, self.scoring)
+            self._check_refit_for_multimetric(scorers)
+            refit_metric = self.refit
+            scorers = _MultimetricScorer(
+                scorers=scorers, raise_exc=(self.error_score == "raise")
+            )
+
+        return scorers, refit_metric
+
+    def _get_routed_params_for_fit(self, params):
+        """Get the parameters to be used for routing.
+
+        This is a method instead of a snippet in ``fit`` since it's used twice,
+        here in ``fit``, and in ``HalvingRandomSearchCV.fit``.
+        """
+        if _routing_enabled():
+            routed_params = process_routing(self, "fit", **params)
+        else:
+            params = params.copy()
+            groups = params.pop("groups", None)
+            routed_params = Bunch(
+                estimator=Bunch(fit=params),
+                splitter=Bunch(split={"groups": groups}),
+                scorer=Bunch(score={}),
+            )
+        return routed_params
+
     @_fit_context(
         # *SearchCV.estimator is not validated yet
         prefer_skip_nested_validation=False
     )
-    def fit(self, X, y=None, *, groups=None, **fit_params):
+    def fit(self, X, y=None, **params):
         """Run fit with all sets of parameters.
 
         Parameters
@@ -773,13 +843,9 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             Target relative to X for classification or regression;
             None for unsupervised learning.
 
-        groups : array-like of shape (n_samples,), default=None
-            Group labels for the samples used while splitting the dataset into
-            train/test set. Only used in conjunction with a "Group" :term:`cv`
-            instance (e.g., :class:`~sklearn.model_selection.GroupKFold`).
-
-        **fit_params : dict of str -> object
-            Parameters passed to the `fit` method of the estimator.
+        **params : dict of str -> object
+            Parameters passed to the ``fit`` method of the estimator, the scorer,
+            and the CV splitter.
 
             If a fit parameter is an array-like whose length is equal to
             `num_samples` then it will be split across CV groups along with `X`
@@ -792,22 +858,15 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             Instance of fitted estimator.
         """
         estimator = self.estimator
-        refit_metric = "score"
+        scorers, refit_metric = self._get_scorers()
 
-        if callable(self.scoring):
-            scorers = self.scoring
-        elif self.scoring is None or isinstance(self.scoring, str):
-            scorers = check_scoring(self.estimator, self.scoring)
-        else:
-            scorers = _check_multimetric_scoring(self.estimator, self.scoring)
-            self._check_refit_for_multimetric(scorers)
-            refit_metric = self.refit
+        X, y = indexable(X, y)
+        params = _check_method_params(X, params=params)
 
-        X, y, groups = indexable(X, y, groups)
-        fit_params = _check_method_params(X, params=fit_params)
+        routed_params = self._get_routed_params_for_fit(params)
 
         cv_orig = check_cv(self.cv, y, classifier=is_classifier(estimator))
-        n_splits = cv_orig.get_n_splits(X, y, groups)
+        n_splits = cv_orig.get_n_splits(X, y, **routed_params.splitter.split)
 
         base_estimator = clone(self.estimator)
 
@@ -815,9 +874,8 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
 
         fit_and_score_kwargs = dict(
             scorer=scorers,
-            fit_params=fit_params,
-            # TODO(SLEP6): pass score params along
-            score_params=None,
+            fit_params=routed_params.estimator.fit,
+            score_params=routed_params.scorer.score,
             return_train_score=self.return_train_score,
             return_n_test_samples=True,
             return_times=True,
@@ -857,7 +915,8 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
                         **fit_and_score_kwargs,
                     )
                     for (cand_idx, parameters), (split_idx, (train, test)) in product(
-                        enumerate(candidate_params), enumerate(cv.split(X, y, groups))
+                        enumerate(candidate_params),
+                        enumerate(cv.split(X, y, **routed_params.splitter.split)),
                     )
                 )
 
@@ -935,9 +994,9 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
 
             refit_start_time = time.time()
             if y is not None:
-                self.best_estimator_.fit(X, y, **fit_params)
+                self.best_estimator_.fit(X, y, **routed_params.estimator.fit)
             else:
-                self.best_estimator_.fit(X, **fit_params)
+                self.best_estimator_.fit(X, **routed_params.estimator.fit)
             refit_end_time = time.time()
             self.refit_time_ = refit_end_time - refit_start_time
 
@@ -945,7 +1004,10 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
                 self.feature_names_in_ = self.best_estimator_.feature_names_in_
 
         # Store the only scorer not as a dict for single metric evaluation
-        self.scorer_ = scorers
+        if isinstance(scorers, _MultimetricScorer):
+            self.scorer_ = scorers._scorers
+        else:
+            self.scorer_ = scorers
 
         self.cv_results_ = results
         self.n_splits_ = n_splits
@@ -1011,27 +1073,29 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
 
         _store("fit_time", out["fit_time"])
         _store("score_time", out["score_time"])
-        # Use one MaskedArray and mask all the places where the param is not
-        # applicable for that candidate. Use defaultdict as each candidate may
-        # not contain all the params
-        param_results = defaultdict(
-            partial(
-                MaskedArray,
-                np.empty(
-                    n_candidates,
-                ),
-                mask=True,
-                dtype=object,
-            )
-        )
+        param_results = defaultdict(dict)
         for cand_idx, params in enumerate(candidate_params):
             for name, value in params.items():
-                # An all masked empty array gets created for the key
-                # `"param_%s" % name` at the first occurrence of `name`.
-                # Setting the value at an index also unmasks that index
                 param_results["param_%s" % name][cand_idx] = value
+        for key, param_result in param_results.items():
+            param_list = list(param_result.values())
+            try:
+                arr_dtype = np.result_type(*param_list)
+            except TypeError:
+                arr_dtype = object
+            if len(param_list) == n_candidates and arr_dtype != object:
+                # Exclude `object` else the numpy constructor might infer a list of
+                # tuples to be a 2d array.
+                results[key] = MaskedArray(param_list, mask=False, dtype=arr_dtype)
+            else:
+                # Use one MaskedArray and mask all the places where the param is not
+                # applicable for that candidate (which may not contain all the params).
+                ma = MaskedArray(np.empty(n_candidates), mask=True, dtype=arr_dtype)
+                for index, value in param_result.items():
+                    # Setting the value at an index unmasks that index
+                    ma[index] = value
+                results[key] = ma
 
-        results.update(param_results)
         # Store a list of param dicts at the key 'params'
         results["params"] = candidate_params
 
@@ -1056,6 +1120,52 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
                 )
 
         return results
+
+    def get_metadata_routing(self):
+        """Get metadata routing of this object.
+
+        Please check :ref:`User Guide <metadata_routing>` on how the routing
+        mechanism works.
+
+        .. versionadded:: 1.4
+
+        Returns
+        -------
+        routing : MetadataRouter
+            A :class:`~sklearn.utils.metadata_routing.MetadataRouter` encapsulating
+            routing information.
+        """
+        router = MetadataRouter(owner=self.__class__.__name__)
+        router.add(
+            estimator=self.estimator,
+            method_mapping=MethodMapping().add(caller="fit", callee="fit"),
+        )
+
+        scorer, _ = self._get_scorers()
+        router.add(
+            scorer=scorer,
+            method_mapping=MethodMapping()
+            .add(caller="score", callee="score")
+            .add(caller="fit", callee="score"),
+        )
+        router.add(
+            splitter=self.cv,
+            method_mapping=MethodMapping().add(caller="fit", callee="split"),
+        )
+        return router
+
+    def _sk_visual_block_(self):
+        if hasattr(self, "best_estimator_"):
+            key, estimator = "best_estimator_", self.best_estimator_
+        else:
+            key, estimator = "estimator", self.estimator
+
+        return _VisualBlock(
+            "parallel",
+            [estimator],
+            names=[f"{key}: {estimator.__class__.__name__}"],
+            name_details=[str(estimator)],
+        )
 
 
 class GridSearchCV(BaseSearchCV):

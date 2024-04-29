@@ -34,11 +34,12 @@ def get_openmp_flag():
 
 def check_openmp_support():
     """Check whether OpenMP test code can be compiled and run"""
-    if "PYODIDE_PACKAGE_ABI" in os.environ:
+    if "PYODIDE" in os.environ:
         # Pyodide doesn't support OpenMP
         return False
 
-    code = textwrap.dedent("""\
+    code = textwrap.dedent(
+        """\
         #include <omp.h>
         #include <stdio.h>
         int main(void) {
@@ -46,7 +47,8 @@ def check_openmp_support():
         printf("nthreads=%d\\n", omp_get_num_threads());
         return 0;
         }
-        """)
+        """
+    )
 
     extra_preargs = os.getenv("LDFLAGS", None)
     if extra_preargs is not None:
@@ -94,7 +96,8 @@ def check_openmp_support():
                 "Failed to build scikit-learn with OpenMP support"
             ) from openmp_exception
         else:
-            message = textwrap.dedent("""
+            message = textwrap.dedent(
+                """
 
                                 ***********
                                 * WARNING *
@@ -117,7 +120,8 @@ def check_openmp_support():
                   parallelism.
 
                                     ***
-                """)
+                """
+            )
             warnings.warn(message)
 
     return openmp_supported

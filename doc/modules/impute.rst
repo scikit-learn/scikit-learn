@@ -87,6 +87,8 @@ string values or pandas categoricals when using the ``'most_frequent'`` or
      ['a' 'y']
      ['b' 'y']]
 
+For another example on usage, see :ref:`sphx_glr_auto_examples_impute_plot_missing_values.py`.
+
 .. _iterative_imputer:
 
 
@@ -176,9 +178,9 @@ cannot be achieved by a single call to ``transform``.
 References
 ----------
 
-.. [1] Stef van Buuren, Karin Groothuis-Oudshoorn (2011). "mice: Multivariate
+.. [1] `Stef van Buuren, Karin Groothuis-Oudshoorn (2011). "mice: Multivariate
    Imputation by Chained Equations in R". Journal of Statistical Software 45:
-   1-67.
+   1-67. <https://www.jstatsoft.org/article/view/v045i03>`_
 
 .. [2] Roderick J A Little and Donald B Rubin (1986). "Statistical Analysis
    with Missing Data". John Wiley & Sons, Inc., New York, NY, USA.
@@ -220,12 +222,15 @@ neighbors of samples with missing values::
            [5.5, 6. , 5. ],
            [8. , 8. , 7. ]])
 
+For another example on usage, see :ref:`sphx_glr_auto_examples_impute_plot_missing_values.py`.
+
 .. topic:: References
 
-  .. [OL2001] Olga Troyanskaya, Michael Cantor, Gavin Sherlock, Pat Brown,
+  .. [OL2001] `Olga Troyanskaya, Michael Cantor, Gavin Sherlock, Pat Brown,
       Trevor Hastie, Robert Tibshirani, David Botstein and Russ B. Altman,
       Missing value estimation methods for DNA microarrays, BIOINFORMATICS
       Vol. 17 no. 6, 2001 Pages 520-525.
+      <https://academic.oup.com/bioinformatics/article/17/6/520/272365>`_
 
 Keeping the number of features constant
 =======================================

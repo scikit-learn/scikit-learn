@@ -258,8 +258,8 @@ leaf_size : positive int, default=40
 metric : str or DistanceMetric64 object, default='minkowski'
     Metric to use for distance computation. Default is "minkowski", which
     results in the standard Euclidean distance when p = 2.
-    A list of valid metrics for {BinaryTree} is given by
-    :attr:`{BinaryTree}.valid_metrics`.
+    A list of valid metrics for {BinaryTree} is given by the attribute
+    `valid_metrics`.
     See the documentation of `scipy.spatial.distance
     <https://docs.scipy.org/doc/scipy/reference/spatial.distance.html>`_ and
     the metrics listed in :class:`~sklearn.metrics.pairwise.distance_metrics` for
@@ -1482,7 +1482,7 @@ cdef class BinaryTree{{name_suffix}}:
             raise ValueError("query data dimension must "
                              "match training data dimension")
         Xarr_np = X.reshape((-1, n_features))
-        cdef {{INPUT_DTYPE_t}}[:, ::1] Xarr = Xarr_np
+        cdef const {{INPUT_DTYPE_t}}[:, ::1] Xarr = Xarr_np
 
         log_density_arr = np.zeros(Xarr.shape[0], dtype={{INPUT_DTYPE}})
         cdef {{INPUT_DTYPE_t}}[::1] log_density = log_density_arr

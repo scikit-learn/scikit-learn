@@ -184,7 +184,7 @@ plot_training_data_with_decision_boundary("linear")
 # (`gamma`) controls the influence of each individual training sample on the
 # decision boundary and :math:`{r}` is the bias term (`coef0`) that shifts the
 # data up or down. Here, we use the default value for the degree of the
-# polynomal in the kernel funcion (`degree=3`). When `coef0=0` (the default),
+# polynomial in the kernel function (`degree=3`). When `coef0=0` (the default),
 # the data is only transformed, but no additional dimension is added. Using a
 # polynomial kernel is equivalent to creating
 # :class:`~sklearn.preprocessing.PolynomialFeatures` and then fitting a

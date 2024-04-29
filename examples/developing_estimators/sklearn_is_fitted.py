@@ -8,7 +8,7 @@ checking whether an estimator object has been fitted or not. This method is
 typically implemented in custom estimator classes that are built on top of
 scikit-learn's base classes like `BaseEstimator` or its subclasses.
 
-Developers should use :func:`~sklearn.sklearn.utils.validation.check_is_fitted`
+Developers should use :func:`~sklearn.utils.validation.check_is_fitted`
 at the beginning of all methods except `fit`. If they need to customize or
 speed-up the check, they can implement the `__sklearn_is_fitted__` method as
 shown below.

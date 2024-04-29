@@ -11,19 +11,23 @@ import gzip
 import hashlib
 import os
 import shutil
+import time
+import warnings
 from collections import namedtuple
+from importlib import resources
 from numbers import Integral
 from os import environ, listdir, makedirs
 from os.path import expanduser, isdir, join, splitext
 from pathlib import Path
+from urllib.error import URLError
 from urllib.request import urlretrieve
 
 import numpy as np
 
 from ..preprocessing import scale
-from ..utils import Bunch, check_pandas_support, check_random_state
+from ..utils import Bunch, check_random_state
+from ..utils._optional_dependencies import check_pandas_support
 from ..utils._param_validation import Interval, StrOptions, validate_params
-from ..utils.fixes import _contents, _open_binary, _open_text, _read_text
 
 DATA_MODULE = "sklearn.datasets.data"
 DESCR_MODULE = "sklearn.datasets.descr"
@@ -57,12 +61,20 @@ def get_data_home(data_home=None) -> str:
     ----------
     data_home : str or path-like, default=None
         The path to scikit-learn data directory. If `None`, the default path
-        is `~/sklearn_learn_data`.
+        is `~/scikit_learn_data`.
 
     Returns
     -------
     data_home: str
         The path to scikit-learn data directory.
+
+    Examples
+    --------
+    >>> import os
+    >>> from sklearn.datasets import get_data_home
+    >>> data_home_path = get_data_home()
+    >>> os.path.exists(data_home_path)
+    True
     """
     if data_home is None:
         data_home = environ.get("SCIKIT_LEARN_DATA", join("~", "scikit_learn_data"))
@@ -84,7 +96,12 @@ def clear_data_home(data_home=None):
     ----------
     data_home : str or path-like, default=None
         The path to scikit-learn data directory. If `None`, the default path
-        is `~/sklearn_learn_data`.
+        is `~/scikit_learn_data`.
+
+    Examples
+    --------
+    >>> from sklearn.datasets import clear_data_home
+    >>> clear_data_home()  # doctest: +SKIP
     """
     data_home = get_data_home(data_home)
     shutil.rmtree(data_home)
@@ -233,6 +250,12 @@ def load_files(
             The full description of the dataset.
         filenames: ndarray
             The filenames holding the dataset.
+
+    Examples
+    --------
+    >>> from sklearn.datasets import load_files
+    >>> container_path = "./"
+    >>> load_files(container_path)  # doctest: +SKIP
     """
 
     target = []
@@ -300,6 +323,7 @@ def load_csv_data(
     data_module=DATA_MODULE,
     descr_file_name=None,
     descr_module=DESCR_MODULE,
+    encoding="utf-8",
 ):
     """Loads `data_file_name` from `data_module with `importlib.resources`.
 
@@ -339,8 +363,14 @@ def load_csv_data(
     descr : str, optional
         Description of the dataset (the content of `descr_file_name`).
         Only returned if `descr_file_name` is not None.
+
+    encoding : str, optional
+        Text encoding of the CSV file.
+
+        .. versionadded:: 1.4
     """
-    with _open_text(data_module, data_file_name) as csv_file:
+    data_path = resources.files(data_module) / data_file_name
+    with data_path.open("r", encoding="utf-8") as csv_file:
         data_file = csv.reader(csv_file)
         temp = next(data_file)
         n_samples = int(temp[0])
@@ -413,7 +443,8 @@ def load_gzip_compressed_csv_data(
         Description of the dataset (the content of `descr_file_name`).
         Only returned if `descr_file_name` is not None.
     """
-    with _open_binary(data_module, data_file_name) as compressed_file:
+    data_path = resources.files(data_module) / data_file_name
+    with data_path.open("rb") as compressed_file:
         compressed_file = gzip.open(compressed_file, mode="rt", encoding=encoding)
         data = np.loadtxt(compressed_file, **kwargs)
 
@@ -425,7 +456,7 @@ def load_gzip_compressed_csv_data(
         return data, descr
 
 
-def load_descr(descr_file_name, *, descr_module=DESCR_MODULE):
+def load_descr(descr_file_name, *, descr_module=DESCR_MODULE, encoding="utf-8"):
     """Load `descr_file_name` from `descr_module` with `importlib.resources`.
 
     Parameters
@@ -440,14 +471,19 @@ def load_descr(descr_file_name, *, descr_module=DESCR_MODULE):
         Module where `descr_file_name` lives. See also :func:`load_descr`.
         The default  is `'sklearn.datasets.descr'`.
 
+    encoding : str, default="utf-8"
+        Name of the encoding that `descr_file_name` will be decoded with.
+        The default is 'utf-8'.
+
+        .. versionadded:: 1.4
+
     Returns
     -------
     fdescr : str
         Content of `descr_file_name`.
     """
-    fdescr = _read_text(descr_module, descr_file_name)
-
-    return fdescr
+    path = resources.files(descr_module) / descr_file_name
+    return path.read_text(encoding=encoding)
 
 
 @validate_params(
@@ -1078,6 +1114,15 @@ def load_diabetes(*, return_X_y=False, as_frame=False, scaled=True):
         representing the features and/or target of a given sample.
 
         .. versionadded:: 0.18
+
+    Examples
+    --------
+    >>> from sklearn.datasets import load_diabetes
+    >>> diabetes = load_diabetes()
+    >>> diabetes.target[:3]
+    array([151.,  75., 141.])
+    >>> diabetes.data.shape
+    (442, 10)
     """
     data_filename = "diabetes_data_raw.csv.gz"
     target_filename = "diabetes_target.csv.gz"
@@ -1189,17 +1234,29 @@ def load_linnerud(*, return_X_y=False, as_frame=False):
         features in `X` and a target in `y` of a given sample.
 
         .. versionadded:: 0.18
+
+    Examples
+    --------
+    >>> from sklearn.datasets import load_linnerud
+    >>> linnerud = load_linnerud()
+    >>> linnerud.data.shape
+    (20, 3)
+    >>> linnerud.target.shape
+    (20, 3)
     """
     data_filename = "linnerud_exercise.csv"
     target_filename = "linnerud_physiological.csv"
 
+    data_module_path = resources.files(DATA_MODULE)
     # Read header and data
-    with _open_text(DATA_MODULE, data_filename) as f:
+    data_path = data_module_path / data_filename
+    with data_path.open("r", encoding="utf-8") as f:
         header_exercise = f.readline().split()
         f.seek(0)  # reset file obj
         data_exercise = np.loadtxt(f, skiprows=1)
 
-    with _open_text(DATA_MODULE, target_filename) as f:
+    target_path = data_module_path / target_filename
+    with target_path.open("r", encoding="utf-8") as f:
         header_physiological = f.readline().split()
         f.seek(0)  # reset file obj
         data_physiological = np.loadtxt(f, skiprows=1)
@@ -1277,13 +1334,19 @@ def load_sample_images():
     descr = load_descr("README.txt", descr_module=IMAGES_MODULE)
 
     filenames, images = [], []
-    for filename in sorted(_contents(IMAGES_MODULE)):
-        if filename.endswith(".jpg"):
-            filenames.append(filename)
-            with _open_binary(IMAGES_MODULE, filename) as image_file:
-                pil_image = Image.open(image_file)
-                image = np.asarray(pil_image)
-            images.append(image)
+
+    jpg_paths = sorted(
+        resource
+        for resource in resources.files(IMAGES_MODULE).iterdir()
+        if resource.is_file() and resource.match("*.jpg")
+    )
+
+    for path in jpg_paths:
+        filenames.append(str(path))
+        with path.open("rb") as image_file:
+            pil_image = Image.open(image_file)
+            image = np.asarray(pil_image)
+        images.append(image)
 
     return Bunch(images=images, filenames=filenames, DESCR=descr)
 
@@ -1365,7 +1428,7 @@ def _sha256(path):
     return sha256hash.hexdigest()
 
 
-def _fetch_remote(remote, dirname=None):
+def _fetch_remote(remote, dirname=None, n_retries=3, delay=1):
     """Helper function to download a remote dataset into path
 
     Fetch a dataset pointed by remote's url, save into path using remote's
@@ -1381,6 +1444,16 @@ def _fetch_remote(remote, dirname=None):
     dirname : str
         Directory to save the file to.
 
+    n_retries : int, default=3
+        Number of retries when HTTP errors are encountered.
+
+        .. versionadded:: 1.5
+
+    delay : int, default=1
+        Number of seconds between retries.
+
+        .. versionadded:: 1.5
+
     Returns
     -------
     file_path: str
@@ -1388,7 +1461,18 @@ def _fetch_remote(remote, dirname=None):
     """
 
     file_path = remote.filename if dirname is None else join(dirname, remote.filename)
-    urlretrieve(remote.url, file_path)
+    while True:
+        try:
+            urlretrieve(remote.url, file_path)
+            break
+        except (URLError, TimeoutError):
+            if n_retries == 0:
+                # If no more retries are left, re-raise the caught exception.
+                raise
+            warnings.warn(f"Retry downloading from url: {remote.url}")
+            n_retries -= 1
+            time.sleep(delay)
+
     checksum = _sha256(file_path)
     if remote.checksum != checksum:
         raise OSError(

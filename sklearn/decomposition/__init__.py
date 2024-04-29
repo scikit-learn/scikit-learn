@@ -4,7 +4,6 @@ algorithms, including among others PCA, NMF or ICA. Most of the algorithms of
 this module can be regarded as dimensionality reduction techniques.
 """
 
-
 from ..utils.extmath import randomized_svd
 from ._dict_learning import (
     DictionaryLearning,

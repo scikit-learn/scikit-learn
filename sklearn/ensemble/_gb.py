@@ -20,6 +20,7 @@ The module structure is the following:
 #          Arnaud Joly, Jacob Schreiber
 # License: BSD 3 clause
 
+import math
 import warnings
 from abc import ABCMeta, abstractmethod
 from numbers import Integral, Real
@@ -64,11 +65,23 @@ _LOSSES.update(
 
 def _safe_divide(numerator, denominator):
     """Prevents overflow and division by zero."""
-    with np.errstate(divide="raise"):
-        try:
-            return numerator / denominator
-        except FloatingPointError:
-            return 0.0
+    # This is used for classifiers where the denominator might become zero exatly.
+    # For instance for log loss, HalfBinomialLoss, if proba=0 or proba=1 exactly, then
+    # denominator = hessian = 0, and we should set the node value in the line search to
+    # zero as there is no improvement of the loss possible.
+    # For numerical safety, we do this already for extremely tiny values.
+    if abs(denominator) < 1e-150:
+        return 0.0
+    else:
+        # Cast to Python float to trigger Python errors, e.g. ZeroDivisionError,
+        # without relying on `np.errstate` that is not supported by Pyodide.
+        result = float(numerator) / float(denominator)
+        # Cast to Python float to trigger a ZeroDivisionError without relying
+        # on `np.errstate` that is not supported by Pyodide.
+        result = float(numerator) / float(denominator)
+        if math.isinf(result):
+            warnings.warn("overflow encountered in _safe_divide", RuntimeWarning)
+        return result
 
 
 def _init_raw_predictions(X, estimator, loss, use_predict_proba):
@@ -81,7 +94,7 @@ def _init_raw_predictions(X, estimator, loss, use_predict_proba):
     estimator : object
         The estimator to use to compute the predictions.
     loss : BaseLoss
-        An instace of a loss function class.
+        An instance of a loss function class.
     use_predict_proba : bool
         Whether estimator.predict_proba is used instead of estimator.predict.
 
@@ -235,7 +248,9 @@ def _update_terminal_regions(
 
         # update each leaf (= perform line search)
         for leaf in np.nonzero(tree.children_left == TREE_LEAF)[0]:
-            indices = np.nonzero(terminal_regions == leaf)[0]  # of terminal regions
+            indices = np.nonzero(masked_terminal_regions == leaf)[
+                0
+            ]  # of terminal regions
             y_ = y.take(indices, axis=0)
             sw = None if sample_weight is None else sample_weight[indices]
             update = compute_update(y_, indices, neg_gradient, raw_prediction, k)
@@ -627,7 +642,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
             locals())``. If the callable returns ``True`` the fitting procedure
             is stopped. The monitor can be used for various things such as
             computing held-out estimates, early stopping, model introspect, and
-            snapshoting.
+            snapshotting.
 
         Returns
         -------
@@ -725,8 +740,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
                         if (
                             "pass parameters to specific steps of "
                             "your pipeline using the "
-                            "stepname__parameter"
-                            in str(e)
+                            "stepname__parameter" in str(e)
                         ):  # pipeline
                             raise ValueError(msg) from e
                         else:  # regular estimator whose input checking failed
@@ -1027,10 +1041,10 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
 
         Parameters
         ----------
-        grid : ndarray of shape (n_samples, n_target_features)
+        grid : ndarray of shape (n_samples, n_target_features), dtype=np.float32
             The grid points on which the partial dependence should be
             evaluated.
-        target_features : ndarray of shape (n_target_features,)
+        target_features : ndarray of shape (n_target_features,), dtype=np.intp
             The set of target features for which the partial dependence
             should be evaluated.
 
@@ -1044,8 +1058,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
             warnings.warn(
                 "Using recursion method with a non-constant init predictor "
                 "will lead to incorrect partial dependence values. "
-                "Got init=%s."
-                % self.init,
+                "Got init=%s." % self.init,
                 UserWarning,
             )
         grid = np.asarray(grid, dtype=DTYPE, order="C")
@@ -1053,6 +1066,8 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         averaged_predictions = np.zeros(
             (n_trees_per_stage, grid.shape[0]), dtype=np.float64, order="C"
         )
+        target_features = np.asarray(target_features, dtype=np.intp, order="C")
+
         for stage in range(n_estimators):
             for k in range(n_trees_per_stage):
                 tree = self.estimators_[stage, k].tree_
@@ -1274,6 +1289,8 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
         improving in all of the previous ``n_iter_no_change`` numbers of
         iterations. The split is stratified.
         Values must be in the range `[1, inf)`.
+        See
+        :ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_early_stopping.py`.
 
         .. versionadded:: 0.20
 
@@ -1883,6 +1900,8 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
         improving in all of the previous ``n_iter_no_change`` numbers of
         iterations.
         Values must be in the range `[1, inf)`.
+        See
+        :ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_early_stopping.py`.
 
         .. versionadded:: 0.20
 
