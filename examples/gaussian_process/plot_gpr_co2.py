@@ -45,8 +45,9 @@ co2.frame.head()
 # it along with the CO2 column.
 import polars as pl
 
-co2_data = pl.DataFrame({col: co2.frame[col].to_numpy() for col in co2.frame.columns})
-co2_data = co2_data.select(pl.date("year", "month", "day"), "co2")
+co2_data = pl.DataFrame(co2.frame[["year", "month", "day", "co2"]]).select(
+    pl.date("year", "month", "day"), "co2"
+)
 co2_data.head()
 
 # %%
