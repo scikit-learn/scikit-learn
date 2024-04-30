@@ -58,20 +58,17 @@ members and recant their rights until they become active again. The list of
 members, active and emeritus (with dates at which they became active) is public
 on the scikit-learn website.
 
-The following teams form the core contributors group.
+The following teams form the core contributors group:
 
+* **Contributor Experience Team**
+  The contributor experience team improves the experience of contributors by
+  helping with the triage of issues and pull requests, as well as noticing any
+  repeating patterns where people might struggle, and to help with improving
+  those aspects of the project.
 
-Contributor Experience Team
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-The contributor experience team improves the experience of contributors by
-helping with the triage of issues and pull requests, as well as noticing any
-repeating patterns where people might struggle, and to help with improving
-those aspects of the project.
-
-To this end, they have the required permissions on github to label and close
-issues. :ref:`Their work <bug_triaging>` is crucial to improve the
-communication in the project and limit the crowding of the issue tracker:
+  To this end, they have the required permissions on github to label and close
+  issues. :ref:`Their work <bug_triaging>` is crucial to improve the
+  communication in the project and limit the crowding of the issue tracker.
 
   .. _communication_team:
 
