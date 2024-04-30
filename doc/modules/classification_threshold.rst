@@ -12,8 +12,8 @@ Classification is best divided into two parts:
 * the decision problem to take concrete action based on those probability predictions.
 
 Let's take a straightforward example related to weather forecasting: the first point is
-related to answering "what is the chance that it will rain tomorrow?" while the second point is
-related to answering "should I take an umbrella tomorrow?".
+related to answering "what is the chance that it will rain tomorrow?" while the second
+point is related to answering "should I take an umbrella tomorrow?".
 
 When it comes to the scikit-learn API, the first point is addressed providing scores
 using :term:`predict_proba` or :term:`decision_function`. The former returns posterior
@@ -63,8 +63,9 @@ Post-tuning the decision threshold
 
 One solution to address the problem stated in the introduction is to tune the decision
 threshold of the classifier once the model has been trained. The
-:class:`~sklearn.model_selection.TunedThresholdClassifierCV` tunes this threshold using an
-internal cross-validation. The optimum threshold is chosen to maximize a given metric.
+:class:`~sklearn.model_selection.TunedThresholdClassifierCV` tunes this threshold using
+an internal cross-validation. The optimum threshold is chosen to maximize a given
+metric.
 
 The following image illustrates the tuning of the decision threshold for a gradient
 boosting classifier. While the vanilla and tuned classifiers provide the same
@@ -144,21 +145,21 @@ threshold is tuned on the data provided to the `fit` method.
 However, you should be extremely careful when using this option. You should never use
 the same data for training the classifier and tuning the decision threshold due to the
 risk of overfitting. Refer to the following example section for more details (cf.
-:ref:`TunedThresholdClassifierCV_no_cv`). If you have limited resources, consider using a
-float number for `cv` to limit to an internal single train-test split.
+:ref:`TunedThresholdClassifierCV_no_cv`). If you have limited resources, consider using
+a float number for `cv` to limit to an internal single train-test split.
 
 The option `cv="prefit"` should only be used when the provided classifier was already
 trained, and you just want to find the best decision threshold using a new validation
 set.
 
+.. _FixedThresholdClassifier:
+
 Manually setting the decision threshold
 ---------------------------------------
 
 The previous sections discussed strategies to find an optimal decision threshold. It is
-also possible to manually set the decision threshold in
-:class`~sklearn.model_selection.TunedThresholdClassifierCV` by setting the parameter
-`strategy` to `"constant"` and providing the desired threshold using the parameter
-`constant_threshold`.
+also possible to manually set the decision threshold using the class
+:class:`~sklearn.model_selection.FixedThresholdClassifier`.
 
 Examples
 --------

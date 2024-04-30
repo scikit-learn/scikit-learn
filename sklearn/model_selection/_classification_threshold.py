@@ -41,6 +41,194 @@ from ..utils.validation import (
 from ._split import StratifiedShuffleSplit, check_cv
 
 
+def _estimator_has(attr):
+    """Check if we can delegate a method to the underlying estimator.
+
+    First, we check the fitted estimator if available, otherwise we
+    check the unfitted estimator.
+    """
+
+    def check(self):
+        if hasattr(self, "estimator_"):
+            getattr(self.estimator_, attr)
+        else:
+            getattr(self.estimator, attr)
+        return True
+
+    return check
+
+
+class BaseThresholdClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimator):
+    """Base class for classifiers that set a non-default decision threshold.
+
+    In this base class, we define the following interface:
+
+    - the validation of common parameters in `fit`;
+    - the different prediction methods that can be used with the classifier.
+
+    .. versionadded:: 1.5
+
+    Parameters
+    ----------
+    estimator : estimator instance
+        The classifier, fitted or not, for which we want to optimize
+        the decision threshold used during `predict`.
+
+    pos_label : int, float, bool or str, default=None
+        The label of the positive class. Used when `objective_metric` is
+        `"max_tnr_at_tpr_constraint"`"`, `"max_tpr_at_tnr_constraint"`, or a dictionary.
+        When `pos_label=None`, if `y_true` is in `{-1, 1}` or `{0, 1}`,
+        `pos_label` is set to 1, otherwise an error will be raised. When using a
+        scorer, `pos_label` can be passed as a keyword argument to
+        :func:`~sklearn.metrics.make_scorer`.
+
+    response_method : {"auto", "decision_function", "predict_proba"}, default="auto"
+        Methods by the classifier `base_estimator` corresponding to the
+        decision function for which we want to find a threshold. It can be:
+
+        * if `"auto"`, it will try to invoke, for each classifier,
+          `"predict_proba"` or `"decision_function"` in that order.
+        * otherwise, one of `"predict_proba"` or `"decision_function"`.
+          If the method is not implemented by the classifier, it will raise an
+          error.
+    """
+
+    _required_parameters = ["estimator"]
+    _parameter_constraints: dict = {
+        "estimator": [
+            HasMethods(["fit", "predict_proba"]),
+            HasMethods(["fit", "decision_function"]),
+        ],
+        "pos_label": [Real, str, "boolean", None],
+        "response_method": [StrOptions({"auto", "predict_proba", "decision_function"})],
+    }
+
+    def __init__(self, estimator, *, pos_label=None, response_method="auto"):
+        self.estimator = estimator
+        self.pos_label = pos_label
+        self.response_method = response_method
+
+    @_fit_context(
+        # *ThresholdClassifier*.estimator is not validated yet
+        prefer_skip_nested_validation=False
+    )
+    def fit(self, X, y, **params):
+        """Fit the classifier.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+            Training data.
+
+        y : array-like of shape (n_samples,)
+            Target values.
+
+        **params : dict
+            Parameters to pass to the `fit` method of the underlying
+            classifier and to the `objective_metric` scorer.
+
+        Returns
+        -------
+        self : object
+            Returns an instance of self.
+        """
+        _raise_for_params(params, self, None)
+
+        X, y = indexable(X, y)
+
+        y_type = type_of_target(y, input_name="y")
+        if y_type != "binary":
+            raise ValueError(
+                f"Only binary classification is supported. Unknown label type: {y_type}"
+            )
+
+        if self.response_method == "auto":
+            self._response_method = ["predict_proba", "decision_function"]
+        else:
+            self._response_method = self.response_method
+
+        self._fit(X, y, **params)
+
+        if hasattr(self.estimator_, "n_features_in_"):
+            self.n_features_in_ = self.estimator_.n_features_in_
+        if hasattr(self.estimator_, "feature_names_in_"):
+            self.feature_names_in_ = self.estimator_.feature_names_in_
+
+        return self
+
+    @property
+    def classes_(self):
+        """Classes labels."""
+        return self.estimator_.classes_
+
+    @available_if(_estimator_has("predict_proba"))
+    def predict_proba(self, X):
+        """Predict class probabilities for `X` using the fitted estimator.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+            Training vectors, where `n_samples` is the number of samples and
+            `n_features` is the number of features.
+
+        Returns
+        -------
+        probabilities : ndarray of shape (n_samples, n_classes)
+            The class probabilities of the input samples.
+        """
+        check_is_fitted(self, "estimator_")
+        return self.estimator_.predict_proba(X)
+
+    @available_if(_estimator_has("predict_log_proba"))
+    def predict_log_proba(self, X):
+        """Predict logarithm class probabilities for `X` using the fitted estimator.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+            Training vectors, where `n_samples` is the number of samples and
+            `n_features` is the number of features.
+
+        Returns
+        -------
+        log_probabilities : ndarray of shape (n_samples, n_classes)
+            The logarithm class probabilities of the input samples.
+        """
+        check_is_fitted(self, "estimator_")
+        return self.estimator_.predict_log_proba(X)
+
+    @available_if(_estimator_has("decision_function"))
+    def decision_function(self, X):
+        """Decision function for samples in `X` using the fitted estimator.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+            Training vectors, where `n_samples` is the number of samples and
+            `n_features` is the number of features.
+
+        Returns
+        -------
+        decisions : ndarray of shape (n_samples,)
+            The decision function computed the fitted estimator.
+        """
+        check_is_fitted(self, "estimator_")
+        return self.estimator_.decision_function(X)
+
+    def _more_tags(self):
+        return {
+            "binary_only": True,
+            "_xfail_checks": {
+                "check_classifiers_train": "Threshold at probability 0.5 does not hold",
+                "check_sample_weights_invariance": (
+                    "Due to the cross-validation and sample ordering, removing a sample"
+                    " is not strictly equal to putting is weight to zero. Specific unit"
+                    " tests are added for TunedThresholdClassifierCV specifically."
+                ),
+            },
+        }
+
+
 def _threshold_scores_to_class_labels(y_score, threshold, classes, pos_label):
     """Threshold `y_score` and return the associated class labels."""
     if pos_label is None:
@@ -51,6 +239,185 @@ def _threshold_scores_to_class_labels(y_score, threshold, classes, pos_label):
         map_thresholded_score_to_label = np.array([neg_label_idx, pos_label_idx])
 
     return classes[map_thresholded_score_to_label[(y_score >= threshold).astype(int)]]
+
+
+class FixedThresholdClassifier(BaseThresholdClassifier):
+    """Classifier that manually sets the decision threshold.
+
+    This classifier allows to change the default decision threshold used for
+    converting posterior probability estimates (i.e. output of `predict_proba`) or
+    decision scores (i.e. output of `decision_function`) into a class label.
+
+    Here, the threshold is not optimized and is set to a constant value.
+
+    Read more in the :ref:`User Guide <FixedThresholdClassifier>`.
+
+    .. versionadded:: 1.5
+
+    Parameters
+    ----------
+    estimator : estimator instance
+        The classifier, fitted or not, for which we want to optimize
+        the decision threshold used during `predict`.
+
+    threshold : {"auto"} or float, default="auto"
+        The decision threshold to use when converting posterior probability estimates
+        (i.e. output of `predict_proba`) or decision scores (i.e. output of
+        `decision_function`) into a class label. When `"auto"`, the threshold is set
+        to 0.5 if `predict_proba` is used as `response_method`, otherwise it is set to
+        0 (i.e. the default threshold for `decision_function`).
+
+    pos_label : int, float, bool or str, default=None
+        The label of the positive class. Used to process the output of the
+        `response_method` method. When `pos_label=None`, if `y_true` is in `{-1, 1}` or
+        `{0, 1}`, `pos_label` is set to 1, otherwise an error will be raised.
+
+    response_method : {"auto", "decision_function", "predict_proba"}, default="auto"
+        Methods by the classifier `estimator` corresponding to the
+        decision function for which we want to find a threshold. It can be:
+
+        * if `"auto"`, it will try to invoke `"predict_proba"` or `"decision_function"`
+          in that order.
+        * otherwise, one of `"predict_proba"` or `"decision_function"`.
+          If the method is not implemented by the classifier, it will raise an
+          error.
+
+    Attributes
+    ----------
+    estimator_ : estimator instance
+        The fitted classifier used when predicting.
+
+    classes_ : ndarray of shape (n_classes,)
+        The class labels.
+
+    n_features_in_ : int
+        Number of features seen during :term:`fit`. Only defined if the
+        underlying estimator exposes such an attribute when fit.
+
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Only defined if the
+        underlying estimator exposes such an attribute when fit.
+
+    See Also
+    --------
+    sklearn.model_selection.TunedThresholdClassifierCV : Classifier that post-tunes
+        the decision threshold based on some metrics and using cross-validation.
+    sklearn.calibration.CalibratedClassifierCV : Estimator that calibrates
+        probabilities.
+
+    Examples
+    --------
+    >>> from sklearn.datasets import make_classification
+    >>> from sklearn.linear_model import LogisticRegression
+    >>> from sklearn.metrics import confusion_matrix
+    >>> from sklearn.model_selection import FixedThresholdClassifier, train_test_split
+    >>> X, y = make_classification(
+    ...     n_samples=1_000, weights=[0.9, 0.1], class_sep=0.8, random_state=42
+    ... )
+    >>> X_train, X_test, y_train, y_test = train_test_split(
+    ...     X, y, stratify=y, random_state=42
+    ... )
+    >>> classifier = LogisticRegression(random_state=0).fit(X_train, y_train)
+    >>> print(confusion_matrix(y_test, classifier.predict(X_test)))
+    [[217   7]
+     [ 19   7]]
+    >>> classifier_other_threshold = FixedThresholdClassifier(
+    ...     classifier, threshold=0.1, response_method="predict_proba"
+    ... ).fit(X_train, y_train)
+    >>> print(confusion_matrix(y_test, classifier_other_threshold.predict(X_test)))
+    [[184  40]
+     [  6  20]]
+    """
+
+    _parameter_constraints: dict = {
+        **BaseThresholdClassifier._parameter_constraints,
+        "threshold": [Real],
+    }
+
+    def __init__(
+        self,
+        estimator,
+        *,
+        threshold=0.5,
+        pos_label=None,
+        response_method="auto",
+    ):
+        super().__init__(
+            estimator=estimator, pos_label=pos_label, response_method=response_method
+        )
+        self.threshold = threshold
+
+    def _fit(self, X, y, **params):
+        """Fit the classifier.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+            Training data.
+
+        y : array-like of shape (n_samples,)
+            Target values.
+
+        **params : dict
+            Parameters to pass to the `fit` method of the underlying
+            classifier and to the `objective_metric` scorer.
+
+        Returns
+        -------
+        self : object
+            Returns an instance of self.
+        """
+        self.estimator_ = clone(self.estimator).fit(X, y, **params)
+        return self
+
+    def predict(self, X):
+        """Predict the target of new samples.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+            The samples, as accepted by `estimator.predict`.
+
+        Returns
+        -------
+        class_labels : ndarray of shape (n_samples,)
+            The predicted class.
+        """
+        check_is_fitted(self, "estimator_")
+        y_score, _, response_method_used = _get_response_values_binary(
+            self.estimator_,
+            X,
+            self._response_method,
+            pos_label=self.pos_label,
+            return_response_method_used=True,
+        )
+
+        if self.threshold == "auto":
+            decision_threshold = 0.5 if response_method_used == "predict_proba" else 0.0
+        else:
+            decision_threshold = self.threshold
+
+        return _threshold_scores_to_class_labels(
+            y_score, decision_threshold, self.classes_, self.pos_label
+        )
+
+    def get_metadata_routing(self):
+        """Get metadata routing of this object.
+
+        Please check :ref:`User Guide <metadata_routing>` on how the routing
+        mechanism works.
+
+        Returns
+        -------
+        routing : MetadataRouter
+            A :class:`~sklearn.utils.metadata_routing.MetadataRouter` encapsulating
+            routing information.
+        """
+        router = MetadataRouter(owner=self.__class__.__name__).add(
+            estimator=self.estimator,
+            method_mapping=MethodMapping().add(callee="fit", caller="fit"),
+        )
+        return router
 
 
 class _CurveScorer(_BaseScorer):
@@ -174,23 +541,6 @@ class _CurveScorer(_BaseScorer):
             for th in potential_thresholds
         ]
         return np.array(score_thresholds), potential_thresholds
-
-
-def _estimator_has(attr):
-    """Check if we can delegate a method to the underlying estimator.
-
-    First, we check the fitted estimator if available, otherwise we
-    check the unfitted estimator.
-    """
-
-    def check(self):
-        if hasattr(self, "estimator_"):
-            getattr(self.estimator_, attr)
-        else:
-            getattr(self.estimator, attr)
-        return True
-
-    return check
 
 
 def _fit_and_score_over_thresholds(
@@ -319,8 +669,8 @@ def _mean_interpolated_score(target_thresholds, cv_thresholds, cv_scores):
     )
 
 
-class TunedThresholdClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator):
-    """Decision threshold tuning for binary classification.
+class TunedThresholdClassifierCV(BaseThresholdClassifier):
+    """Classifier that post-tunes the decision threshold using cross-validation.
 
     This estimator post-tunes the decision threshold (cut-off point) that is
     used for converting posterior probability estimates (i.e. output of
@@ -337,13 +687,6 @@ class TunedThresholdClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstima
     estimator : estimator instance
         The classifier, fitted or not, for which we want to optimize
         the decision threshold used during `predict`.
-
-    strategy : {"optimum", "constant"}, default="optimum"
-        The strategy to use for tuning the decision threshold:
-
-        * `"optimum"`: the decision threshold is tuned to optimize the objective
-            metric;
-        * `"constant"`: the decision threshold is set to `constant_value`.
 
     objective_metric : {"max_tpr_at_tnr_constraint", "max_tnr_at_tpr_constraint", \
             "max_precision_at_recall_constraint, "max_recall_at_precision_constraint"} \
@@ -368,9 +711,6 @@ class TunedThresholdClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstima
         `"max_tnr_at_tpr_constraint"`, `"max_tpr_at_tnr_constraint"`,
         `"max_precision_at_recall_constraint"`, or
         `"max_recall_at_precision_constraint"`.
-
-    constant_threshold : float, default=0.5
-        The constant threshold to use when `strategy` is `"constant"`.
 
     pos_label : int, float, bool or str, default=None
         The label of the positive class. Used when `objective_metric` is
@@ -451,22 +791,19 @@ class TunedThresholdClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstima
 
     best_score_ : float or None
         The optimal score of the objective metric, evaluated at `best_threshold_`.
-        If `strategy="constant"`, `best_score_` is None.
 
     constrained_score_ : float or None
         When `objective_metric` is one of `"max_tpr_at_tnr_constraint"`,
         `"max_tnr_at_tpr_constraint"`, `"max_precision_at_recall_constraint"`,
         `"max_recall_at_precision_constraint"`, it will corresponds to the score of the
         metric which is constrained. It should be close to `constraint_value`. If
-        `objective_metric` is not one of the above or when `strategy="constant",
-        `constrained_score_` is None.
+        `objective_metric` is not one of the above, `constrained_score_` is None.
 
     cv_results_ : dict or None
         A dictionary containing the scores and thresholds computed during the
         cross-validation process. Only exist if `store_cv_results=True`.
-        The keys are different depending on the `objective_metric` and `strategy` used:
+        The keys are different depending on the `objective_metric` used:
 
-        * when `strategy="constant"`, `cv_results_` is None;
         * when `objective_metric` is one of `"max_tpr_at_tnr_constraint"`,
           `"max_tnr_at_tpr_constraint"`, `"max_precision_at_recall_constraint"`,
           `"max_recall_at_precision_constraint"`, the keys are `"thresholds"`,
@@ -487,6 +824,8 @@ class TunedThresholdClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstima
 
     See Also
     --------
+    sklearn.model_selection.FixedThresholdClassifier : Classifier that uses a
+        constant threshold.
     sklearn.calibration.CalibratedClassifierCV : Estimator that calibrates
         probabilities.
 
@@ -535,13 +874,8 @@ class TunedThresholdClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstima
     <BLANKLINE>
     """
 
-    _required_parameters = ["estimator"]
     _parameter_constraints: dict = {
-        "estimator": [
-            HasMethods(["fit", "predict_proba"]),
-            HasMethods(["fit", "decision_function"]),
-        ],
-        "strategy": [StrOptions({"optimum", "constant"})],
+        **BaseThresholdClassifier._parameter_constraints,
         "objective_metric": [
             StrOptions(
                 set(get_scorer_names())
@@ -556,9 +890,6 @@ class TunedThresholdClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstima
             MutableMapping,
         ],
         "constraint_value": [Real, None],
-        "constant_threshold": [Real],
-        "pos_label": [Real, str, "boolean", None],
-        "response_method": [StrOptions({"auto", "predict_proba", "decision_function"})],
         "n_thresholds": [Interval(Integral, 1, None, closed="left"), "array-like"],
         "cv": [
             "cv_object",
@@ -575,10 +906,8 @@ class TunedThresholdClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstima
         self,
         estimator,
         *,
-        strategy="optimum",
         objective_metric="balanced_accuracy",
         constraint_value=None,
-        constant_threshold=0.5,
         pos_label=None,
         response_method="auto",
         n_thresholds=100,
@@ -588,13 +917,11 @@ class TunedThresholdClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstima
         random_state=None,
         store_cv_results=False,
     ):
-        self.estimator = estimator
-        self.strategy = strategy
+        super().__init__(
+            estimator=estimator, response_method=response_method, pos_label=pos_label
+        )
         self.objective_metric = objective_metric
         self.constraint_value = constraint_value
-        self.constant_threshold = constant_threshold
-        self.pos_label = pos_label
-        self.response_method = response_method
         self.n_thresholds = n_thresholds
         self.cv = cv
         self.refit = refit
@@ -602,11 +929,7 @@ class TunedThresholdClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstima
         self.random_state = random_state
         self.store_cv_results = store_cv_results
 
-    @_fit_context(
-        # TunedThresholdClassifierCV.estimator is not validated yet
-        prefer_skip_nested_validation=False
-    )
-    def fit(self, X, y, **params):
+    def _fit(self, X, y, **params):
         """Fit the classifier and post-tune the decision threshold.
 
         Parameters
@@ -626,16 +949,6 @@ class TunedThresholdClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstima
         self : object
             Returns an instance of self.
         """
-        _raise_for_params(params, self, None)
-
-        X, y = indexable(X, y)
-
-        y_type = type_of_target(y, input_name="y")
-        if y_type != "binary":
-            raise ValueError(
-                f"Only binary classification is supported. Unknown label type: {y_type}"
-            )
-
         if isinstance(self.cv, Real) and 0 < self.cv < 1:
             cv = StratifiedShuffleSplit(
                 n_splits=1, test_size=self.cv, random_state=self.random_state
@@ -654,11 +967,6 @@ class TunedThresholdClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstima
             cv = check_cv(self.cv, y=y, classifier=True)
             if self.refit is False and cv.get_n_splits() > 1:
                 raise ValueError("When cv has several folds, refit cannot be False.")
-
-        if self.response_method == "auto":
-            self._response_method = ["predict_proba", "decision_function"]
-        else:
-            self._response_method = self.response_method
 
         if isinstance(self.objective_metric, str) and self.objective_metric in {
             "max_tpr_at_tnr_constraint",
@@ -706,19 +1014,6 @@ class TunedThresholdClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstima
                 )
 
             self.estimator_.fit(X_train, y_train, **fit_params_train)
-
-        if hasattr(self.estimator_, "n_features_in_"):
-            self.n_features_in_ = self.estimator_.n_features_in_
-        if hasattr(self.estimator_, "feature_names_in_"):
-            self.feature_names_in_ = self.estimator_.feature_names_in_
-
-        if self.strategy == "constant":
-            # early exit when we don't need to find the optimal threshold
-            self.best_threshold_ = self.constant_threshold
-            self.best_score_, self.constrained_score_ = None, None
-            if self.store_cv_results:
-                self.cv_results_ = None
-            return self
 
         cv_thresholds, cv_scores = zip(
             *Parallel(n_jobs=self.n_jobs)(
@@ -809,11 +1104,6 @@ class TunedThresholdClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstima
 
         return self
 
-    @property
-    def classes_(self):
-        """Classes labels."""
-        return self.estimator_.classes_
-
     def predict(self, X):
         """Predict the target of new samples.
 
@@ -824,76 +1114,21 @@ class TunedThresholdClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstima
 
         Returns
         -------
-        C : ndarray of shape (n_samples,)
+        class_labels : ndarray of shape (n_samples,)
             The predicted class.
         """
         check_is_fitted(self, "estimator_")
-        if self.strategy == "optimum":
-            # `pos_label` has been validated and is stored in the scorer
-            pos_label = self._curve_scorer._get_pos_label()
-        else:
-            pos_label = self.pos_label
+        pos_label = self._curve_scorer._get_pos_label()
         y_score, _ = _get_response_values_binary(
-            self.estimator_, X, self._response_method, pos_label=pos_label
+            self.estimator_,
+            X,
+            self._response_method,
+            pos_label=pos_label,
         )
 
         return _threshold_scores_to_class_labels(
             y_score, self.best_threshold_, self.classes_, pos_label
         )
-
-    @available_if(_estimator_has("predict_proba"))
-    def predict_proba(self, X):
-        """Predict class probabilities for `X` using the fitted estimator.
-
-        Parameters
-        ----------
-        X : {array-like, sparse matrix} of shape (n_samples, n_features)
-            Training vectors, where `n_samples` is the number of samples and
-            `n_features` is the number of features.
-
-        Returns
-        -------
-        probabilities : ndarray of shape (n_samples, n_classes)
-            The class probabilities of the input samples.
-        """
-        check_is_fitted(self, "estimator_")
-        return self.estimator_.predict_proba(X)
-
-    @available_if(_estimator_has("predict_log_proba"))
-    def predict_log_proba(self, X):
-        """Predict logarithm class probabilities for `X` using the fitted estimator.
-
-        Parameters
-        ----------
-        X : {array-like, sparse matrix} of shape (n_samples, n_features)
-            Training vectors, where `n_samples` is the number of samples and
-            `n_features` is the number of features.
-
-        Returns
-        -------
-        log_probabilities : ndarray of shape (n_samples, n_classes)
-            The logarithm class probabilities of the input samples.
-        """
-        check_is_fitted(self, "estimator_")
-        return self.estimator_.predict_log_proba(X)
-
-    @available_if(_estimator_has("decision_function"))
-    def decision_function(self, X):
-        """Decision function for samples in `X` using the fitted estimator.
-
-        Parameters
-        ----------
-        X : {array-like, sparse matrix} of shape (n_samples, n_features)
-            Training vectors, where `n_samples` is the number of samples and
-            `n_features` is the number of features.
-
-        Returns
-        -------
-        decisions : ndarray of shape (n_samples,)
-            The decision function computed the fitted estimator.
-        """
-        check_is_fitted(self, "estimator_")
-        return self.estimator_.decision_function(X)
 
     def get_metadata_routing(self):
         """Get metadata routing of this object.
@@ -954,16 +1189,3 @@ class TunedThresholdClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstima
                 scoring, self._response_method, self.n_thresholds, self.pos_label
             )
         return curve_scorer
-
-    def _more_tags(self):
-        return {
-            "binary_only": True,
-            "_xfail_checks": {
-                "check_classifiers_train": "Threshold at probability 0.5 does not hold",
-                "check_sample_weights_invariance": (
-                    "Due to the cross-validation and sample ordering, removing a sample"
-                    " is not strictly equal to putting is weight to zero. Specific unit"
-                    " tests are added for TunedThresholdClassifierCV specifically."
-                ),
-            },
-        }

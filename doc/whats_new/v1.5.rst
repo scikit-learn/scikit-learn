@@ -307,6 +307,8 @@ Changelog
 - |MajorFeature| :class:`model_selection.TunedThresholdClassifierCV` finds
   the decision threshold of a binary classifier that maximizes a
   classification metric through cross-validation.
+  :class:`model_selection.FixedThresholdClassifier` is an alternative when one wants
+  to use a fixed decision threshold without any tuning scheme.
   :pr:`26120` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 - |Enhancement| :term:`CV splitters <CV splitter>` that ignores the group parameter now
