@@ -20,7 +20,11 @@ from sklearn.preprocessing._csr_polynomial_expansion import (
     _get_sizeof_LARGEST_INT_t,
 )
 from sklearn.utils._mask import _get_mask
-from sklearn.utils._testing import assert_array_almost_equal, raises
+from sklearn.utils._testing import (
+    assert_allclose_dense_sparse,
+    assert_array_almost_equal,
+    raises,
+)
 from sklearn.utils.fixes import (
     CSC_CONTAINERS,
     CSR_CONTAINERS,
@@ -491,6 +495,18 @@ def test_spline_transformer_n_features_out(
     assert splt.transform(X).shape[1] == splt.n_features_out_
 
 
+def test_spline_transformer_raises_with_sample_weight_and_missing_values():
+    """Test that SplineTransformer raises the correct error message when sample_weight
+    is passed and missing values are present in X."""
+    X_nan = np.array([[1, 1], [2, 2], [3, 3], [np.nan, 5], [4, 4]])
+    sample_weight = [1, 1, 1, 1, 1]
+    spline = SplineTransformer(knots="quantile", handle_missing="zeros")
+
+    msg = "Passing `sample_weight` to SplineTransformer when there are"
+    with raises(NotImplementedError, match=msg):
+        spline.fit(X_nan, sample_weight=sample_weight)
+
+
 @pytest.mark.skipif(
     sp_version < parse_version("1.8.0"),
     reason="The option `sparse_output` is available as of scipy 1.8.0",
@@ -502,8 +518,8 @@ def test_spline_transformer_n_features_out(
 @pytest.mark.parametrize("sparse_output", [False, True])
 def test_spline_transformer_handles_missing_values(knots, extrapolation, sparse_output):
     """Test that SplineTransformer handles missing values correctly."""
-    X_nan = np.array([[1, 1], [2, 2], [3, 3], [np.nan, 4], [4, 4]])
-    X = np.array([[1, 1], [2, 2], [3, 3], [4, 4]])
+    X_nan = np.array([[1, 1], [2, 2], [3, 3], [np.nan, 5], [4, 4]])
+    X = np.array([[1, 1], [2, 2], [3, 3], [4, 5], [4, 4]])
 
     # check correct error message for handle_missing="error"
     msg = "SplineTransformer object has `handle_missing='error'` set by default and `X`"
@@ -530,47 +546,41 @@ def test_spline_transformer_handles_missing_values(knots, extrapolation, sparse_
     )
 
     # check for generic invariants
-    X_nan_fit_transformed = spline.fit_transform(X_nan)
-    if sparse.issparse(X_nan_fit_transformed):
-        X_nan_fit_transformed = X_nan_fit_transformed.toarray()
-    assert (X_nan_fit_transformed >= 0).all()
-    assert (X_nan_fit_transformed <= 1).all()
+    X_nan_transform = spline.fit_transform(X_nan)
+    if sparse.issparse(X_nan_transform):
+        X_nan_transform = X_nan_transform.toarray()
+    assert (X_nan_transform >= 0).all()
+    assert (X_nan_transform <= 1).all()
 
+    # check `fit_transform` does the same as `fit` and `then` transform
+    X_nan_transform = spline.fit_transform(X_nan)
     X_nan_fit_then_transformed = spline.fit(X_nan).transform(X_nan)
-    if sparse.issparse(X_nan_fit_then_transformed):
-        X_nan_fit_then_transformed = X_nan_fit_then_transformed.toarray()
-    assert_allclose(X_nan_fit_transformed, X_nan_fit_then_transformed)
-
-    # check that B-splines sum to one * n_features also with nan values present in X
-    # assert_allclose(
-    #    X_nan_fit_transformed.sum(axis=1), np.ones(X_nan.shape[0]) * X_nan.shape[1]
-    # )
+    assert_allclose_dense_sparse(X_nan_transform, X_nan_fit_then_transformed)
 
     # check that transform works as expected when the passed data has not the same
     # shape as the training set array:
     X_transformed_same_shape = spline.fit_transform(X_nan)[::2]
-    if sparse.issparse(X_transformed_same_shape):
-        X_transformed_same_shape = X_transformed_same_shape.toarray()
     X_transformed_different_shapes = spline.fit(X_nan).transform(X_nan[::2])
-    if sparse.issparse(X_transformed_different_shapes):
-        X_transformed_different_shapes = X_transformed_different_shapes.toarray()
-    assert_allclose(X_transformed_same_shape, X_transformed_different_shapes)
+    assert_allclose_dense_sparse(
+        X_transformed_same_shape, X_transformed_different_shapes
+    )
+
+    # prepare mask for nan values
+    mask = _get_mask(X_nan, np.nan)
+    extended_mask = np.repeat(mask, spline.bsplines_[0].c.shape[1], axis=1)
+
+    # check that the masked values are 0s
+    assert (X_nan_transform[extended_mask] == 0).all()
 
     # check that additional nan values don't change the calculation of the other splines
-    mask = _get_mask(X_nan, np.nan)
-    X_transform = spline.fit_transform(X)
-    X_nan_transform_without_extra = X_nan_fit_transformed[~mask[:, 0], :]
-
-    if sparse.issparse(X_transform):
-        X_transform = X_transform.toarray()
-    if sparse.issparse(X_nan_transform_without_extra):
-        X_nan_transform_without_extra = X_nan_transform_without_extra.toarray()
-
-    # this assertion only holds as long as no np.nan value constructs the min or max
-    # value of the data space (in this case, SplineTransformer's stats would be
+    # note: this assertion only holds as long as no np.nan value constructs the min or
+    # max value of the data space (in this case, SplineTransformer's stats would be
     # calculated based on the other values and thus differ from another
     # SplineTransformer fit on the whole range)
-    assert np.array_equal(X_transform, X_nan_transform_without_extra)
+    X_transform = spline.fit_transform(X)
+    assert_allclose_dense_sparse(
+        X_transform[~extended_mask], X_nan_transform[~extended_mask]
+    )
 
 
 @pytest.mark.parametrize(

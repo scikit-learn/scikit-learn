@@ -765,6 +765,12 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
                 knots = np.nanpercentile(X, percentiles, axis=0)
             else:
                 # TODO: exclude possible nan values from _weighted_percentile:
+                if np.any(_get_mask(X, np.nan)):
+                    raise NotImplementedError(
+                        "Passing `sample_weight` to SplineTransformer when there are "
+                        "also np.nan values present in `X`, is currently not "
+                        "implemented."
+                    )
                 knots = np.array(
                     [
                         _weighted_percentile(X, sample_weight, percentile)
@@ -1096,13 +1102,14 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
                 xmin, xmax = spl.t[degree], spl.t[-degree - 1]
                 # spline values at boundaries
                 f_min, f_max = spl(xmin), spl(xmax)
+                # values outside of the feature space during `fit` and nan values get
+                # masked out:
                 mask = (xmin <= X[:, i]) & (X[:, i] <= xmax)
 
                 if use_sparse:
                     mask_inv = ~mask
                     x = X[:, i].copy()
-                    # Set some arbitrary values outside boundary that will be reassigned
-                    # later.
+                    # Set some arbitrary values that will be reassigned later:
                     x[mask_inv] = spl.t[self.degree]
                     XBS_sparse = BSpline.design_matrix(x, spl.t, spl.k)
                     # Note: Without converting to lil_matrix we would get:
