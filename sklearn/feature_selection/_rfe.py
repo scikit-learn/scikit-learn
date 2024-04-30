@@ -6,6 +6,7 @@
 
 """Recursive feature elimination for feature ranking"""
 
+import warnings
 from numbers import Integral
 
 import numpy as np
@@ -286,6 +287,14 @@ class RFE(_RoutingNotSupportedMixin, SelectorMixin, MetaEstimatorMixin, BaseEsti
             n_features_to_select = n_features // 2
         elif isinstance(self.n_features_to_select, Integral):  # int
             n_features_to_select = self.n_features_to_select
+            if n_features_to_select > n_features:
+                warnings.warn(
+                    (
+                        f"Found {n_features_to_select=} > {n_features=}. There will be"
+                        " no feature selection and all features will be kept."
+                    ),
+                    UserWarning,
+                )
         else:  # float
             n_features_to_select = int(n_features * self.n_features_to_select)
 
@@ -729,9 +738,19 @@ class RFECV(RFE):
 
         # Build an RFE object, which will evaluate and score each possible
         # feature count, down to self.min_features_to_select
+        n_features = X.shape[1]
+        if self.min_features_to_select > n_features:
+            warnings.warn(
+                (
+                    f"Found min_features_to_select={self.min_features_to_select} > "
+                    f"{n_features=}. There will be no feature selection and all "
+                    "features will be kept."
+                ),
+                UserWarning,
+            )
         rfe = RFE(
             estimator=self.estimator,
-            n_features_to_select=self.min_features_to_select,
+            n_features_to_select=min(self.min_features_to_select, n_features),
             importance_getter=self.importance_getter,
             step=self.step,
             verbose=self.verbose,

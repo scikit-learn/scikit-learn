@@ -1,6 +1,6 @@
 py.extension_module(
   '_online_lda_fast',
-  '_online_lda_fast.pyx',
+  ['_online_lda_fast.pyx', utils_cython_tree],
   cython_args: cython_args,
   subdir: 'sklearn/decomposition',
   install: true
