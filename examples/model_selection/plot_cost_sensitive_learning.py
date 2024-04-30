@@ -624,6 +624,9 @@ ax.set_title("Amount of fraud transaction")
 _ = ax.set_xlabel("Amount ($)")
 
 # %%
+# Addressing the problem with a business metric
+# ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+#
 # Now, we create the business metric that depends on the amount of each transaction. We
 # define the cost matrix similarly to [2]_. Accepting a legitimate transaction provides
 # a gain of 2% of the amount of the transaction. However, accepting a fraudulent
@@ -747,6 +750,9 @@ print(
 # that our model is beating the baseline in terms of profit and it would be already
 # beneficial to use it instead of ignoring the fraud detection problem.
 #
+# Tuning the decision threshold
+# ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+#
 # Now the question is: is our model optimum for the type of decision that we want to do?
 # Up to now, we did not optimize the decision threshold. We use the
 # :class:`~sklearn.model_selection.TunedThresholdClassifierCV` to optimize the decision
@@ -789,3 +795,37 @@ print(
 # historical data (offline evaluation) should ideally be confirmed by A/B testing
 # on live data (online evaluation). Note however that A/B testing models is
 # beyond the scope of the scikit-learn library itself.
+#
+# Manually setting the decision threshold instead of tuning it
+# ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+#
+# In the previous example, we used the
+# :class:`~sklearn.model_selection.TunedThresholdClassifierCV` to find the optimal
+# decision threshold. However, in some cases, we might have some prior knowledge about
+# the problem at hand and we might be happy to set the decision threshold manually.
+#
+# The class :class:`~sklearn.model_selection.FixedThresholdClassifier` allows us to
+# manually set the decision threshold. At prediction time, it behave as the previous
+# tuned model but no search is performed during the fitting process.
+#
+# Here, we will reuse the decision threshold found in the previous section to create a
+# new model and check that it gives the same results.
+from sklearn.model_selection import FixedThresholdClassifier
+
+model_fixed_threshold = FixedThresholdClassifier(
+    estimator=model, threshold=tuned_model.best_threshold_
+).fit(data_train, target_train)
+
+# %%
+business_score = business_scorer(
+    model_fixed_threshold, data_test, target_test, amount=amount_test
+)
+print(f"Benefit/cost of our logistic regression: ${business_score:,.2f}")
+print(
+    "Balanced accuracy of our logistic regression: "
+    f"{balanced_accuracy_scorer(model_fixed_threshold, data_test, target_test):.3f}"
+)
+
+# %%
+# We observe that we obtained the exact same results but the fitting process was much
+# faster since we did not perform any search.
