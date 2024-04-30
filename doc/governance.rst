@@ -75,7 +75,7 @@ communication in the project and limit the crowding of the issue tracker:
 
   .. _communication_team:
 
-* **Communication team**
+* **Communication Team**
   Members of the communication team help with outreach and communication
   for scikit-learn. The goal of the team is to develop public awareness of
   scikit-learn, of its features and usage, as well as branding.
