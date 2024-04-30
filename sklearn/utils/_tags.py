@@ -26,7 +26,7 @@ _DEFAULT_TAGS = {
 }
 
 
-# TODO(1.3) Remove `_more_tags` support
+# TODO(1.7) Remove `_more_tags` support
 def _walk_mro_more_tags(estimator):
     collected_tags = {}
     for base_class in reversed(inspect.getmro(estimator.__class__)):
@@ -68,7 +68,7 @@ def _safe_tags(estimator, key=None):
         tags_provider = "__sklearn_tags__()"
         tags = estimator.__sklearn_tags__()
     elif hasattr(estimator, "_get_tags"):
-        # TODO(1.3) Remove `_get_tags` support
+        # TODO(1.7) Remove `_get_tags` support
         warnings.warn(
             "_get_tags() was deprecated in 1.1 support will be removed in 1.3. "
             "Please use __sklearn_tags__ instead.",
@@ -77,7 +77,7 @@ def _safe_tags(estimator, key=None):
         tags_provider = "_get_tags()"
         tags = estimator._get_tags()
     elif hasattr(estimator, "_more_tags"):
-        # TODO(1.3) Remove `_more_tags` support
+        # TODO(1.7) Remove `_more_tags` support
         warnings.warn(
             "_more_tags() was deprecated in 1.1 support will be removed in 1.3. "
             "Please use __sklearn_tags__ instead.",

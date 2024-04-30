@@ -31,7 +31,7 @@ def test_safe_tags_error(estimator, err_msg):
         _safe_tags(estimator, key="xxx")
 
 
-# TODO(1.3) Remove FutureWarning when `_more_tags is not supported
+# TODO(1.7) Remove FutureWarning when `_more_tags is not supported
 @pytest.mark.filterwarnings("ignore::FutureWarning")
 @pytest.mark.parametrize(
     "estimator, key, expected_results",
@@ -51,7 +51,7 @@ def test_safe_tags_no_get_tags(estimator, key, expected_results):
     assert _safe_tags(estimator, key=key) == expected_results
 
 
-# TODO(1.3) Remove `_more_tags` and `_get_tags` support
+# TODO(1.7) Remove `_more_tags` and `_get_tags` support
 def test_safe_tags_raises_warning():
     """Check safe_tags raises warnings for _more_tags and _get_tags."""
 

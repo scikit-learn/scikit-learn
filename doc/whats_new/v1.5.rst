@@ -67,6 +67,9 @@ Changes impacting many modules
   :class:`pipeline.Pipeline` and :class:`preprocessing.KBinsDiscretizer`.
   :pr:`28756` by :user:`Will Dean <wd60622>`.
 
+- |Enhancement| `__sklearn_tags__` was introduced for setting tags in estimators.
+  :pr:`22606` by `Thomas Fan`_.
+
 Support for Array API
 ---------------------
 
@@ -169,7 +172,7 @@ Changelog
 ..........................
 
 - |Fix| Fixed a regression in :class:`calibration.CalibratedClassifierCV` where
-  an error was wrongly raised with string targets. 
+  an error was wrongly raised with string targets.
   :pr:`28843` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
 :mod:`sklearn.cluster`

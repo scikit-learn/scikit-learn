@@ -1231,7 +1231,7 @@ def test_non_deterministic_estimator_skip_tests():
         assert check_methods_subset_invariance not in all_tests
 
 
-# TODO(1.3) Remove `_more_tags` and `_get_tags` support
+# TODO(1.7) Remove `_more_tags` and `_get_tags` support
 def test_check_estimator_tags_deprecated():
     """Check deprecation warnings are raised."""
 

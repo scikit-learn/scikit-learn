@@ -346,8 +346,6 @@ Changelog
   error message when setting invalid hyper-parameters with `set_params`.
   :pr:`21542` by :user:`Olivier Grisel <ogrisel>`.
 
-- |Enhancement| `__sklearn_tags__` was introduced for setting tags in estimators.
-  :pr:`22606` by `Thomas Fan`_.
 - |Enhancement| Removes random unique identifiers in the HTML representation.
   With this change, jupyter notebooks are reproducible as long as the cells are
   run in the same order. :pr:`23098` by `Thomas Fan`_.
