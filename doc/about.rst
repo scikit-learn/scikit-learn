@@ -66,7 +66,7 @@ maintenance:
 .. include:: contributor_experience_team.rst
 
 Communication Team
-...................
+..................
 
 The following people help with :ref:`communication around scikit-learn
 <communication_team>`.
