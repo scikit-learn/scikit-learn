@@ -37,6 +37,8 @@ from ..base import (
     is_classifier,
     is_regressor,
 )
+from ..dummy import DummyRegressor
+from ..exceptions import ConvergenceWarning
 from ..metrics import accuracy_score, r2_score
 from ..tree import DecisionTreeClassifier, DecisionTreeRegressor
 from ..utils import _safe_indexing, check_random_state
@@ -1014,6 +1016,13 @@ class AdaBoostRegressor(_RoutingNotSupportedMixin, RegressorMixin, BaseWeightBoo
         Pass an int for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
 
+    no_improvement : {'reset_weights', 'stop', 'warn', 'continue'}, default='warn'
+        Determines a strategy when an error rate is increasing during training.
+        - `reset_weights` resets sample weights and continues training.
+        - `stop` finish training like as early stopping.
+        - `warn` shows warning messages and continues training.
+        - `continue` (or any other argument) ignores an error rate's increasing.
+
     Attributes
     ----------
     estimator_ : estimator
@@ -1081,6 +1090,7 @@ class AdaBoostRegressor(_RoutingNotSupportedMixin, RegressorMixin, BaseWeightBoo
     _parameter_constraints: dict = {
         **BaseWeightBoosting._parameter_constraints,
         "loss": [StrOptions({"linear", "square", "exponential"})],
+        "no_improvement": [StrOptions({"reset_weights", "stop", "warn", "continue"})],
     }
 
     def __init__(
@@ -1091,6 +1101,7 @@ class AdaBoostRegressor(_RoutingNotSupportedMixin, RegressorMixin, BaseWeightBoo
         learning_rate=1.0,
         loss="linear",
         random_state=None,
+        no_improvement="warn",
     ):
         super().__init__(
             estimator=estimator,
@@ -1101,6 +1112,7 @@ class AdaBoostRegressor(_RoutingNotSupportedMixin, RegressorMixin, BaseWeightBoo
 
         self.loss = loss
         self.random_state = random_state
+        self.no_improvement = no_improvement
 
     def _validate_estimator(self):
         """Check the estimator and set the estimator_ attribute."""
@@ -1197,10 +1209,53 @@ class AdaBoostRegressor(_RoutingNotSupportedMixin, RegressorMixin, BaseWeightBoo
         # Boost weight using AdaBoost.R2 alg
         estimator_weight = self.learning_rate * np.log(1.0 / beta)
 
-        if not iboost == self.n_estimators - 1:
+        if iboost == 0:
+            update_weight_method = "update"
+        elif iboost == self.n_estimators - 1:
+            update_weight_method = "do_nothing"
+        else:
+            if not hasattr(self, "baseline"):
+                if X.ndim == 2:
+                    baseline_estimator = DecisionTreeRegressor(max_depth=1)
+                else:
+                    baseline_estimator = DummyRegressor()
+                baseline_estimator.fit(X_, y_)
+                y_predict = baseline_estimator.predict(X)
+                error_vect = np.abs(y_predict - y)
+                baseline = error_vect.mean()
+                error_max = error_vect.max()
+                if error_max != 0:
+                    baseline /= error_max
+                self.baseline = baseline
+
+            if self.baseline < estimator_error:
+                if self.no_improvement == "reset_weights":
+                    update_weight_method = "reset"
+                elif self.no_improvement == "stop":
+                    return None, None, None
+                elif self.no_improvement == "warn":
+                    update_weight_method = "update"
+                    warnings.warn(
+                        (
+                            "The estimator is too weak. "
+                            "Please consider hyper-parameter tuning for "
+                            "the estimators."
+                        ),
+                        ConvergenceWarning,
+                    )
+                else:
+                    update_weight_method = "update"
+            else:
+                update_weight_method = "update"
+
+        if update_weight_method == "update":
             sample_weight[sample_mask] *= np.power(
                 beta, (1.0 - masked_error_vector) * self.learning_rate
             )
+        elif update_weight_method == "reset":
+            sample_weight = [1] * len(sample_weight)
+        elif update_weight_method == "do_nothing":
+            pass
 
         return sample_weight, estimator_weight, estimator_error
 

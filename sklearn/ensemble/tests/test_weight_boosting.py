@@ -7,11 +7,12 @@ import pytest
 
 from sklearn import datasets
 from sklearn.base import BaseEstimator, clone
+from sklearn.datasets import fetch_california_housing
 from sklearn.dummy import DummyClassifier, DummyRegressor
 from sklearn.ensemble import AdaBoostClassifier, AdaBoostRegressor
 from sklearn.ensemble._weight_boosting import _samme_proba
 from sklearn.linear_model import LinearRegression
-from sklearn.model_selection import GridSearchCV, train_test_split
+from sklearn.model_selection import GridSearchCV, cross_val_score, train_test_split
 from sklearn.svm import SVC, SVR
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.utils import shuffle
@@ -628,6 +629,82 @@ def test_adaboost_negative_weight_error(model, X, y):
     err_msg = "Negative values in data passed to `sample_weight`"
     with pytest.raises(ValueError, match=err_msg):
         model.fit(X, y, sample_weight=sample_weight)
+
+
+def test_adaboost_regressor_reset_weights():
+    # Please refer to https://github.com/scikit-learn/scikit-learn/issues/20443
+
+    np.random.seed(0)
+    data, target = fetch_california_housing(return_X_y=True)
+    idx = np.random.choice(len(data), 1000, replace=False)
+    data, target = data[idx], target[idx]
+    adaboost_10 = AdaBoostRegressor(
+        learning_rate=1.0,
+        estimator=DecisionTreeRegressor(max_depth=3),
+        n_estimators=10,
+        no_improvement="continue",
+        random_state=0,
+    )
+    adaboost_500 = AdaBoostRegressor(
+        learning_rate=1.0,
+        estimator=DecisionTreeRegressor(max_depth=3),
+        n_estimators=500,
+        no_improvement="continue",
+        random_state=0,
+    )
+
+    # We usually assume a model with large n_estimators should be
+    # better than the small ones.
+    mae_10 = -cross_val_score(
+        adaboost_10, data, target, cv=5, scoring="neg_mean_absolute_error"
+    ).mean()
+    mae_500 = -cross_val_score(
+        adaboost_500, data, target, cv=5, scoring="neg_mean_absolute_error"
+    ).mean()
+
+    # But we saw an unexpected result.
+    assert mae_10 < mae_500
+
+    # Then we are going to resolve it by reset weights
+    # if we see errors increase during training.
+    adaboost_10.set_params(no_improvement="reset_weights")
+    adaboost_500.set_params(no_improvement="reset_weights")
+
+    mae_10 = -cross_val_score(
+        adaboost_10, data, target, cv=5, scoring="neg_mean_absolute_error"
+    ).mean()
+    mae_500 = -cross_val_score(
+        adaboost_500, data, target, cv=5, scoring="neg_mean_absolute_error"
+    ).mean()
+
+    # We got an expected result.
+    assert mae_10 > mae_500
+
+    # With no_improvement="stop", iterations are stopped similarly to early stopping.
+    # After the iteration where training stops,
+    # the remaining estimator_weights_ will be zero.
+    adaboost_500_rw = AdaBoostRegressor(
+        learning_rate=1.0,
+        estimator=DecisionTreeRegressor(max_depth=3),
+        n_estimators=500,
+        no_improvement="reset_weights",
+        random_state=0,
+    )
+    adaboost_500_rw.fit(data, target)
+
+    adaboost_500_stop = AdaBoostRegressor(
+        learning_rate=1.0,
+        estimator=DecisionTreeRegressor(max_depth=3),
+        n_estimators=500,
+        no_improvement="stop",
+        random_state=0,
+    )
+
+    adaboost_500_stop.fit(data, target)
+
+    n_nonzero_weights = np.count_nonzero(adaboost_500_rw.estimator_weights_)
+    n_nonzero_weights_with_stop = np.count_nonzero(adaboost_500_stop.estimator_weights_)
+    assert n_nonzero_weights > n_nonzero_weights_with_stop
 
 
 def test_adaboost_numerically_stable_feature_importance_with_small_weights():
