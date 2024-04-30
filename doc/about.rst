@@ -34,7 +34,7 @@ github
 <https://github.com/scikit-learn/scikit-learn/graphs/contributors>`__.
 
 Maintainers Team
-....................
+................
 
 The following people are currently maintainers, in charge of
 consolidating scikit-learn's development and maintenance:
