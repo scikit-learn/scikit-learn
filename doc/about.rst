@@ -33,7 +33,7 @@ roles, however a more complete list of contributors can be found `on
 github
 <https://github.com/scikit-learn/scikit-learn/graphs/contributors>`__.
 
-Core Developer Team
+Maintainers Team
 ....................
 
 The following people are currently maintainers, in charge of
