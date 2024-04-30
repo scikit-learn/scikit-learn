@@ -2251,6 +2251,7 @@ def test_ridge_cv_values_deprecated():
         ridge.fit(X, y)
         ridge.cv_values_
 
+
 # Metadata Routing Tests
 # ======================
 
