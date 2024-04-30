@@ -1,5 +1,4 @@
-"""Orthogonal matching pursuit algorithms
-"""
+"""Orthogonal matching pursuit algorithms"""
 
 # Author: Vlad Niculae
 #
