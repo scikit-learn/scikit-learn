@@ -367,7 +367,8 @@ class FixedThresholdClassifier(BaseThresholdClassifier):
         self : object
             Returns an instance of self.
         """
-        self.estimator_ = clone(self.estimator).fit(X, y, **params)
+        routed_params = process_routing(self, "fit", **params)
+        self.estimator_ = clone(self.estimator).fit(X, y, **routed_params.estimator.fit)
         return self
 
     def predict(self, X):
