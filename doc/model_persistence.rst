@@ -21,9 +21,10 @@ If you only need to serve the model and no further investigation on the Python
 object itself is required, then :ref:`ONNX <onnx_persistence>` might be the
 best fit for you. Note that not all models are supported by ONNX.
 
-2. In case ONNX is not suitable for your use-case, do you absolutely trust the
-   source of the model, or are there any security concerns regarding where the
-   persisted model comes from?
+In case ONNX is not suitable for your use-case, the next question is:
+
+2. Do you absolutely trust the source of the model, or are there any security
+   concerns regarding where the persisted model comes from?
 
 If you have security concerns, then you should consider using :ref:`skops.io
 <skops_persistence>` which gives you back the Python object, but unlike
@@ -87,8 +88,9 @@ persist and plan to serve the model:
   **packages** and the same **versions** as the environment where the model was
   trained. Note that none of these methods support loading a model trained with
   a different version of scikit-learn, and possibly different versions of other
-  dependencies such as `numpy` and `scipy`. However, in most cases you should
-  be able to load your persisted model on a different hardware.
+  dependencies such as `numpy` and `scipy`. Another concern would be running
+  the persisted model on a different hardware, and in most cases you should be
+  able to load your persisted model on a different hardware.
 
 
 .. _onnx_persistence:
@@ -113,6 +115,31 @@ not all scikit-learn models are supported, and it is limited to the core
 scikit-learn and does not support most third party estimators. One can write a
 custom converter for third party or custom estimators, but the documentation to
 do that is sparse and it might be challenging to do so.
+
+|details-start|
+**Using skops**
+|details-split|
+
+To convert the model to `ONNX` format, you need to give the converter some
+information about the input as well, about which you can read more `here
+<http://onnx.ai/sklearn-onnx/index.html>`__::
+
+    from skl2onnx import to_onnx
+    onx = to_onnx(clf, X[:1].astype(numpy.float32), target_opset=12)
+    with open("filename.onnx", "wb") as f:
+        f.write(onx.SerializeToString())
+
+You can load the model in Python and use the `ONNX` runtime to get
+predictions::
+
+    from onnxruntime import InferenceSession
+    with open("filename.onnx", "rb") as f:
+        onx = f.read()
+    sess = InferenceSession(onx, providers=["CPUExecutionProvider"])
+    pred_ort = sess.run(None, {"X": X_test.astype(numpy.float32)})[0]
+
+
+|details-end|
 
 .. _skops_persistence:
 
@@ -161,13 +188,16 @@ issue tracker <https://github.com/skops-dev/skops/issues>`__.
 These three modules / packages, use the `pickle` protocol under the hood, but
 come with slight variations:
 
-- :mod:`pickle` is the native Python serialization module. It can serialize and
-  deserialize any Python object, including custom Python classes and objects.
+- :mod:`pickle` is a module from the Python Standard Library. It can serialize
+  and  deserialize any Python object, including custom Python classes and
+  objects.
 - :mod:`joblib` is more efficient than `pickle` when working with large machine
   learning models or large numpy arrays.
-- `cloudpickle`_ can serialize certain objects which cannot be serialized
-  by :mod:`pickle` or :mod:`joblib`, such as user defined functions and lambda
-  functions.
+- `cloudpickle`_ can serialize certain objects which cannot be serialized by
+  :mod:`pickle` or :mod:`joblib`, such as user defined functions and lambda
+  functions. This can happen for instance, when using a
+  :class:`~sklearn.preprocessing.FunctionTransformer` and using a custom
+  function to transform the data.
 
 |details-start|
 **Using** ``pickle``, ``joblib``, **or** ``cloudpickle``
@@ -195,7 +225,7 @@ Security & Maintainability Limitations
 
 :mod:`pickle` (and :mod:`joblib` and :mod:`clouldpickle` by extension), has
 many documented security vulnerabilities and should only be used if the
-artifact is coming from a trusted and verified source.
+artifact, i.e. the pickle-file, is coming from a trusted and verified source.
 
 Also note that arbitrary computations can be represented using the `ONNX`
 format, and therefore a sandbox used to serve models using `ONNX` also needs to
@@ -206,7 +236,8 @@ different version of scikit-learn. While using :mod:`skops.io`, :mod:`joblib`,
 :mod:`pickle`, or `cloudpickle`_, models saved using one version of
 scikit-learn might load in other versions, however, this is entirely
 unsupported and inadvisable. It should also be kept in mind that operations
-performed on such data could give different and unexpected results.
+performed on such data could give different and unexpected results, or even
+crash your Python process.
 
 In order to rebuild a similar model with future versions of scikit-learn,
 additional metadata should be saved along the pickled model:
@@ -220,12 +251,13 @@ This should make it possible to check that the cross-validation score is in the
 same range as before.
 
 Aside for a few exceptions, persisted models should be portable across
-architectures assuming the same versions of dependencies and Python are used.
-If you encounter an estimator that is not portable please open an issue on
-GitHub. Persisted models are often deployed in production using containers
-like Docker, in order to freeze the environment and dependencies.
+operating systems and hardware architectures assuming the same versions of
+dependencies and Python are used. If you encounter an estimator that is not
+portable, please open an issue on GitHub. Persisted models are often deployed
+in production using containers like Docker, in order to freeze the environment
+and dependencies.
 
-If you want to know more about these issues please refer to these talks:
+If you want to know more about these issues, please refer to these talks:
 
 - `Adrin Jalali: Let's exploit pickle, and skops to the rescue! | PyData
   Amsterdam 2023 <https://www.youtube.com/watch?v=9w_H5OSTO9A>`__.
@@ -242,8 +274,16 @@ If the versions of the dependencies used may differ from training to
 production, it may result in unexpected behaviour and errors while using the
 trained model. To prevent such situations it is recommended to use the same
 dependencies and versions in both the training and production environment.
-These transitive dependencies can be pinned with the help of `pip`, `mamba`,
-`conda`, `poetry`, `conda-lock`, `pixi`, etc.
+These transitive dependencies can be pinned with the help of package management
+tools like `pip`, `mamba`, `conda`, `poetry`, `conda-lock`, `pixi`, etc.
+
+It is not always possible to load an model trained with older versions of the
+scikit-learn library and its dependencies in an updated software environment.
+Instead, you might need to retrain the model with the new versions of the all
+the libraries. So when training a model, it is important to record the training
+recipe (e.g. a Python script) and training set information, and metadata about
+all the dependencies to be able to automatically reconstruct the same training
+environment for the updated software.
 
 |details-start|
 **InconsistentVersionWarning**
@@ -269,11 +309,10 @@ Serving the model artifact
 ..........................
 
 The last step after training a scikit-learn model is serving the model.
-Once the trained model is successfully loaded it can be served to manage
+Once the trained model is successfully loaded, it can be served to manage
 different prediction requests. This can involve deploying the model as a
 web service using containerization, or other model deployment strategies,
-according to the specifications. In the next sections, we will explore
-different approaches to persist a trained scikit-learn model.
+according to the specifications.
 
 
 Summarizing the key points
@@ -282,26 +321,29 @@ Summarizing the key points
 Based on the different approaches for model persistence, the key points for
 each approach can be summarized as follows:
 
-* `ONNX`: It provides a uniform format for persisting any machine learning
-  or deep learning model (other than scikit-learn) and is useful
-  for model inference. It can however, result in compatibility issues with
+* `ONNX`: It provides a uniform format for persisting any machine learning or
+  deep learning model (other than scikit-learn) and is useful for model
+  inference (predictions). It can however, result in compatibility issues with
   different frameworks.
 * :mod:`skops.io`: Trained scikit-learn models can be easily shared and put
-  into production using :mod:`skops.io`. It is more secure compared `pickle`
-  based alternate approaches as it does not load arbitrary code unless
-  explicitly asked by the user.
-* :mod:`joblib`: Efficient storage and memory mapping techniques make it faster
-  when working with large machine learning models or large numpy arrays.
-  However, it may trigger the execution of malicious code while loading
-  untrusted data.
+  into production using :mod:`skops.io`. It is more secure compared to
+  alternate approaches based on :mod:`pickle` because it does not load
+  arbitrary code unless explicitly asked for by the user.
+* :mod:`joblib`: Efficient memory mapping techniques make it faster when using
+  the same persisted model in multiple Python processes. It also gives easy
+  shortcuts to compress and decompress the persisted object without the need
+  for extra code. However, it may trigger the execution of malicious code while
+  untrusted data as any other pickle-based persistence mechanism.
 * :mod:`pickle`: It is native to Python and any Python object can be serialized
   and deserialized using :mod:`pickle`, including custom Python classes and
   objects. While :mod:`pickle` can be used to easily save and load scikit-learn
   models, it may trigger the execution of malicious code while loading
   untrusted data.
-* `cloudpickle`_: It is slower than :mod:`pickle` and :mod:`joblib`, and
-  is more insecure than :mod:`pickle` and :mod:`joblib` since it can serialize
+* `cloudpickle`_: It is slower than :mod:`pickle` and :mod:`joblib`, and is
+  more insecure than :mod:`pickle` and :mod:`joblib` since it can serialize
   arbitrary code. However, in certain cases it might be a last resort to
-  persist certain models.
+  persist certain models. Note that this is discouraged by `cloudpickle`_
+  itself since there are no forward compatibility guarantees and you might need
+  the same version of `cloudpickle`_ to load the persisted model.
 
 .. _cloudpickle: https://github.com/cloudpipe/cloudpickle
