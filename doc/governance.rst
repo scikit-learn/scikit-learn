@@ -85,7 +85,6 @@ communication in the project and limit the crowding of the issue tracker:
   repository and other relevant accounts and platforms.
 
 * **Documentation team**
-
   Members of the documentation team engage with the documentation of the project
   among other things. They might also be involved in other aspects of the
   project, but their reviews on documentation contributions are considered
@@ -95,7 +94,6 @@ communication in the project and limit the crowding of the issue tracker:
   repository.
 
 * **Maintainers**
-
   Maintainers are community members who have shown that they are dedicated to the
   continued development of the project through ongoing engagement with the
   community. They have shown they can be trusted to maintain scikit-learn with
