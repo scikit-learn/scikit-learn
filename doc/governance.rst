@@ -84,7 +84,7 @@ communication in the project and limit the crowding of the issue tracker:
   and produce materials. They also have the required rights to our blog
   repository and other relevant accounts and platforms.
 
-* **Documentation team**
+* **Documentation Team**
   Members of the documentation team engage with the documentation of the project
   among other things. They might also be involved in other aspects of the
   project, but their reviews on documentation contributions are considered
