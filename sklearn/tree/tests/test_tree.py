@@ -1615,19 +1615,6 @@ def test_public_apply_sparse_trees(name):
     check_public_apply_sparse(name)
 
 
-@pytest.mark.parametrize('Cls',
-                         (DecisionTreeRegressor, DecisionTreeClassifier))
-@pytest.mark.parametrize('presort', ['auto', True, False])
-def test_presort_deprecated(Cls, presort):
-    # TODO: remove in v0.24
-    X = np.zeros((10, 10))
-    y = np.r_[[0] * 5, [1] * 5]
-    tree = Cls(presort=presort)
-    with pytest.warns(DeprecationWarning,
-                      match="The parameter 'presort' is deprecated "):
-        tree.fit(X, y)
-
-
 def test_decision_path_hardcoded():
     X = iris.data
     y = iris.target
