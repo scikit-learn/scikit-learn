@@ -352,7 +352,7 @@ Changelog
   :class:`linear_model.SGDOneClassSVM`. Pass `average=False` instead.
   :pr:`28582` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
-- |API| `store_cv_values` and `cv_values_` and  deprecated in favor of
+- |API| `store_cv_values` and `cv_values_` deprecated in favor of
   `store_cv_results` and `cv_results_` in `RidgeCV` and `RidgeClassifierCV`.
   :pr:`28915` by :user:`Lucy Liu <lucyleeow>`.
 
