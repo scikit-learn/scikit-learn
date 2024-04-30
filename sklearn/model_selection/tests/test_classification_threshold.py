@@ -978,3 +978,16 @@ def test_fixed_threshold_classifier(response_method, threshold, pos_label):
             getattr(model.estimator_, method)(X),
             getattr(logistic_regression, method)(X),
         )
+
+
+@pytest.mark.usefixtures("enable_slep006")
+def test_fixed_threshold_classifier_metadata_routing():
+    """Check that everything works with metadata routing."""
+    X, y = make_classification(random_state=0)
+    sample_weight = np.ones_like(y)
+    sample_weight[::2] = 2
+    classifier = LogisticRegression().set_fit_request(sample_weight=True)
+    classifier.fit(X, y, sample_weight=sample_weight)
+    classifier_default_threshold = FixedThresholdClassifier(estimator=clone(classifier))
+    classifier_default_threshold.fit(X, y, sample_weight=sample_weight)
+    assert_allclose(classifier_default_threshold.estimator_.coef_, classifier.coef_)
