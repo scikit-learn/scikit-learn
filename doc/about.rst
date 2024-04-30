@@ -50,7 +50,7 @@ in the FAQ.
    :ref:`How you can contribute to the project <contributing>`
 
 Documentation Team
-...................
+..................
 
 The following people help with documenting the project:
 
