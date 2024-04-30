@@ -32,6 +32,7 @@ from ..utils._param_validation import (
     StrOptions,
     validate_params,
 )
+from ..utils.deprecation import _deprecate_Xt_in_inverse_transform
 from ..utils.extmath import randomized_svd, safe_sparse_dot, squared_norm
 from ..utils.validation import (
     check_is_fitted,
@@ -1310,44 +1311,32 @@ class _BaseNMF(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator,
         self.fit_transform(X, **params)
         return self
 
-    def inverse_transform(self, Xt=None, W=None):
+    def inverse_transform(self, X=None, *, Xt=None):
         """Transform data back to its original space.
 
         .. versionadded:: 0.18
 
         Parameters
         ----------
+        X : {ndarray, sparse matrix} of shape (n_samples, n_components)
+            Transformed data matrix.
+
         Xt : {ndarray, sparse matrix} of shape (n_samples, n_components)
             Transformed data matrix.
 
-        W : deprecated
-            Use `Xt` instead.
-
-            .. deprecated:: 1.3
+            .. deprecated:: 1.5
+                `Xt` was deprecated in 1.5 and will be removed in 1.7. Use `X` instead.
 
         Returns
         -------
         X : ndarray of shape (n_samples, n_features)
             Returns a data matrix of the original shape.
         """
-        if Xt is None and W is None:
-            raise TypeError("Missing required positional argument: Xt")
 
-        if W is not None and Xt is not None:
-            raise ValueError("Please provide only `Xt`, and not `W`.")
-
-        if W is not None:
-            warnings.warn(
-                (
-                    "Input argument `W` was renamed to `Xt` in v1.3 and will be removed"
-                    " in v1.5."
-                ),
-                FutureWarning,
-            )
-            Xt = W
+        X = _deprecate_Xt_in_inverse_transform(X, Xt)
 
         check_is_fitted(self)
-        return Xt @ self.components_
+        return X @ self.components_
 
     @property
     def _n_features_out(self):
