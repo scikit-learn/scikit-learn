@@ -57,7 +57,7 @@ The following people help with documenting the project:
 .. include:: documentation_team.rst
 
 Contributor Experience Team
-............................
+...........................
 
 The following people are active contributors who also help with
 :ref:`triaging issues <bug_triaging>`, PRs, and general
