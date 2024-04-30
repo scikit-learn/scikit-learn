@@ -36,7 +36,7 @@ github
 Core Developer Team
 ....................
 
-The following people are currently core developers, in charge of
+The following people are currently maintainers, in charge of
 consolidating scikit-learn's development and maintenance:
 
 .. include:: authors.rst
