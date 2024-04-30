@@ -22,10 +22,9 @@ from ..utils.deprecation import _deprecate_force_all_finite
 from ..utils._array_api import (
     _asarray_with_order,
     _is_numpy_namespace,
-    device,
+    default_precision_float_dtype,
     get_namespace,
-    isdtype,
-    max_precision_float_dtype,
+    get_namespace_and_device,
     supported_float_dtypes,
 )
 from ..utils.fixes import ComplexWarning, _preserve_dia_indices_dtype
@@ -2162,8 +2161,8 @@ def _check_sample_weight(
         dtype of the validated `sample_weight`.
         If None, and the input `sample_weight` is an array, the dtype of the
         input is preserved; otherwise an array with the default dtype
-        is allocated.  If `dtype` is not `None` or of the "real floating" kind,
-        the output will be the maximum precision floating-point dtype for the
+        is allocated.  If `dtype` is not `None` and not of the "real floating" kind,
+        the output will be the default precision floating-point dtype for the
         array namespace.
 
     copy : bool, default=False
@@ -2178,15 +2177,16 @@ def _check_sample_weight(
 
     if isinstance(X, (list, tuple)):
         X = np.asarray(X)  # Coerce X to a numpy array if it's a list.
-    xp, _ = get_namespace(X)
+    xp, _, X_device = get_namespace_and_device(X)
 
-    if dtype is not None and not isdtype(dtype, "real floating", xp=xp):
-        dtype = max_precision_float_dtype(xp, device=device(X))
+    if dtype is not None and not xp.isdtype(dtype, "real floating"):
+        # Promote integer weights to the default float dtype of the namespace.
+        dtype = default_precision_float_dtype(xp, device=X_device)
 
     if sample_weight is None:
-        sample_weight = xp.ones(n_samples, dtype=dtype, device=device(X))
+        sample_weight = xp.ones(n_samples, dtype=dtype, device=X_device)
     elif isinstance(sample_weight, numbers.Number):
-        sample_weight = xp.full(n_samples, sample_weight, dtype=dtype, device=device(X))
+        sample_weight = xp.full(n_samples, sample_weight, dtype=dtype, device=X_device)
     else:
         if dtype is None:
             dtype = supported_float_dtypes(xp)

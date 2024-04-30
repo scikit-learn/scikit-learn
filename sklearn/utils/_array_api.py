@@ -7,6 +7,7 @@ import itertools
 import math
 import os
 from functools import wraps
+from typing import Any, Tuple
 
 import numpy
 import scipy
@@ -242,8 +243,8 @@ def isdtype(dtype, kind, *, xp):
     kind : str or dtype or tuple[str | dtype]
         Data type kind.
 
-        - If ``kind`` is a dtype, then a boolean is returned if ``dtype`` is equal to
-          ``dtype``.
+        - If ``kind`` is a dtype, then ``dtype`` is compared to the dtype specified
+          by ``kind``.
         - If ``kind`` is a string, ``dtype`` is checked to be included in a set of
           dtypes determined by ``kind``. ``kind`` must be one of:
 
@@ -261,9 +262,9 @@ def isdtype(dtype, kind, *, xp):
           - "numeric": numeric data types. Shorthand for ``("integral",
             "real floating", "complex floating")``. Note this excludes the ``bool``
             data type.
-        - If ``kind`` is a tuple, the tuple is a union of dtypes and/or kinds, and a
-          boolean is returned if the input ``dtype`` is either equal to a specified
-          dtype or belongs to at least one specified data type kind.
+        - If ``kind`` is a tuple, the tuple is a union of dtypes and/or kinds, and
+          ``dtype`` is checked to be either equal to a specified dtype or
+          belongs to at least one specified data type kind.
 
     xp : module
         The array namespace to which ``dtype`` belongs.
@@ -272,6 +273,15 @@ def isdtype(dtype, kind, *, xp):
     -------
     flag : bool
         True if ``dtype`` is of type ``kind``, and False otherwise.
+
+    Notes
+    -----
+    Consumers outside the `utils._array_api` module should use `xp.isdtype` instead,
+    which will behave correctly for array namespaces which define a different
+    set of valid data types
+
+    E.g., `torch` does not have the standard ``uint16`` data type, but does include
+    the non-standard ``bfloat16`` data type.
     """
     if isinstance(kind, tuple):
         return any(_isdtype_single(dtype, k, xp=xp) for k in kind)
@@ -313,13 +323,17 @@ def _isdtype_single(dtype, kind, *, xp):
         return dtype == kind
 
 
-def supported_float_dtypes(xp):
-    """Supported floating point types for the namespace.
+def supported_float_dtypes(xp, *, device=None):
+    """Supported floating point types for the namespace/device pair.
 
     Parameters
     ----------
     xp : module
         Array namespace to inspect.
+
+    device: str, default=None
+        Device to use for dtype selection. If ``None``, then a default device
+        is assumed.
 
     Returns
     -------
@@ -344,10 +358,16 @@ def supported_float_dtypes(xp):
     """
     # TODO: Update to use `__array_namespace__info__()` from array-api v2023.12
     #       when/if that becomes more widespread.
-    if hasattr(xp, "float16"):
-        return (xp.float64, xp.float32, xp.float16)
+    if xp.__name__ in {"array_api_compat.torch", "torch"} and device == "mps":
+        # N.B. Yanked from pull/27232
+        dtypes = (xp.float32,)
     else:
-        return (xp.float64, xp.float32)
+        dtypes = (xp.float64, xp.float32)
+
+    if hasattr(xp, "float16"):
+        return (*dtypes, xp.float16)
+
+    return dtypes
 
 
 def max_precision_float_dtype(xp, *, device=None):
@@ -358,7 +378,7 @@ def max_precision_float_dtype(xp, *, device=None):
     xp : module
         Array namespace.
 
-    device : str, optional=None
+    device : str, default=None
         Device to use for dtype selection. If ``None``, then the maximum
         precision in the namespace is returned.
 
@@ -372,13 +392,31 @@ def max_precision_float_dtype(xp, *, device=None):
     --------
     supported_float_dtypes : All supported real floating dtypes for a namespace.
     """
-    # N.B. Yanked from pull/27232
-    # TODO: Update to use `__array_namespace__info__()` from array-api v2023.12
-    #       when/if that becomes more widespread.
-    if xp.__name__ in {"array_api_compat.torch", "torch"} and device == "mps":
-        return xp.float32
+    return supported_float_dtypes(xp, device=device)[0]
 
-    return xp.float64
+
+def default_precision_float_dtype(xp, *, device=None):
+    """Get the default precision real-floating type for the namespace/device pair.
+
+    Parameters
+    ----------
+    xp : module
+        Array namespace.
+
+    device : str, default=None
+        Device to use for dtype selection. If ``None``, then the default
+        precision for the default device is returned.
+
+    Returns
+    -------
+    dtype: data-type
+        The default precision real-floating data type for the namespace and device.
+
+    See Also
+    --------
+    supported_float_dtypes : All supported real floating dtypes for a namespace.
+    """
+    return xp.asarray(1.0, device=device).dtype
 
 
 def ensure_common_namespace_device(reference, *arrays):
@@ -592,7 +630,9 @@ def _remove_non_arrays(*arrays, remove_none=True, remove_types=(str,)):
     return filtered_arrays
 
 
-def get_namespace(*arrays, remove_none=True, remove_types=(str,), xp=None):
+def get_namespace(
+    *arrays, remove_none=True, remove_types=(str,), xp=None
+) -> Tuple[Any, bool]:
     """Get namespace of arrays.
 
     Introspect `arrays` arguments and return their common Array API compatible
@@ -685,7 +725,9 @@ def get_namespace(*arrays, remove_none=True, remove_types=(str,), xp=None):
     return namespace, is_array_api_compliant
 
 
-def get_namespace_and_device(*array_list, remove_none=True, remove_types=(str,)):
+def get_namespace_and_device(
+        *array_list, remove_none=True, remove_types=(str,), xp=None
+) -> Tuple[Any, bool, Any]:
     """Combination into one single function of `get_namespace` and `device`.
 
     Parameters
@@ -716,7 +758,7 @@ def get_namespace_and_device(*array_list, remove_none=True, remove_types=(str,))
 
     skip_remove_kwargs = dict(remove_none=False, remove_types=[])
 
-    xp, is_array_api = get_namespace(*array_list, **skip_remove_kwargs)
+    xp, is_array_api = get_namespace(*array_list, xp=xp, **skip_remove_kwargs)
     arrays_device = device(*array_list, **skip_remove_kwargs)
     if is_array_api:
         return xp, is_array_api, arrays_device
@@ -912,6 +954,19 @@ def _nanmean(X, axis=None, xp=None):
         total = xp.sum(xp.where(mask, xp.asarray(0.0, device=device(X)), X), axis=axis)
         count = xp.sum(xp.astype(xp.logical_not(mask), X.dtype), axis=axis)
         return total / count
+
+
+def _nansum(X, axis=None, xp=None, keepdims=False, dtype=None):
+    # TODO: refactor once nan-aware reductions are standardized:
+    # https://github.com/data-apis/array-api/issues/621
+    xp, _, X_device = get_namespace_and_device(X, xp=xp)
+
+    if _is_numpy_namespace(xp):
+        return xp.asarray(numpy.nansum(X, axis=axis, keepdims=keepdims, dtype=dtype))
+
+    mask = xp.isnan(X)
+    masked_arr = xp.where(mask, xp.asarray(0, device=X_device, dtype=X.dtype), X)
+    return xp.sum(masked_arr, axis=axis, keepdims=keepdims, dtype=dtype)
 
 
 def _asarray_with_order(

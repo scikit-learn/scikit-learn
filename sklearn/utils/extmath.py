@@ -15,9 +15,10 @@ from ._array_api import (
     _average,
     _nanmean,
     _is_numpy_namespace,
+    _nansum,
     device,
     get_namespace,
-    isdtype,
+    get_namespace_and_device,
     max_precision_float_dtype,
 )
 from .sparsefuncs_fast import csr_row_norms
@@ -1019,12 +1020,12 @@ def _safe_accumulator_op(op, x, *args, **kwargs):
     result
         The output of the accumulator function passed to this function.
     """
-    xp, _ = get_namespace(x)
-    if isdtype(x.dtype, "real floating", xp=xp):
+    xp, _, x_device = get_namespace_and_device(x)
+    if xp.isdtype(x.dtype, "real floating"):
         # Promote all dtypes, electing not to make copies if no dtype change is needed.
         #  Normally we can rely on type promotion in `op`, but it isn't reliable for
         #  float16 inputs.
-        target_dtype = max_precision_float_dtype(xp, device=device(x))
+        target_dtype = max_precision_float_dtype(xp, device=x_device)
         x = xp.astype(x, target_dtype, copy=False)
         args = [
             (xp.astype(arg, target_dtype, copy=False) if hasattr(arg, "dtype") else arg)
@@ -1093,14 +1094,15 @@ def _incremental_mean_and_var(
     # updated = the aggregated stats
     if not hasattr(X, "dtype"):
         X = np.asarray(X)
-    xp, _ = get_namespace(X)
+    xp, _, X_device = get_namespace_and_device(X)
+    max_float_dtype = max_precision_float_dtype(xp, device=X_device)
     # Promoting int -> float is not guaranteed by the array-api, so we cast manually.
     # (Also, last_sample_count may be a python scalar)
-    last_sample_count = xp.asarray(last_sample_count, dtype=xp.float64)
+    last_sample_count = xp.asarray(last_sample_count, dtype=max_float_dtype)
     last_sum = last_mean * last_sample_count
     X_nan_mask = xp.isnan(X)
     if xp.any(X_nan_mask):
-        sum_op = xp.nansum
+        sum_op = _nansum
     else:
         sum_op = xp.sum
     if sample_weight is not None:
