@@ -693,8 +693,8 @@ class TunedThresholdClassifierCV(BaseThresholdClassifier):
             , str, dict or callable, default="balanced_accuracy"
         The objective metric to be optimized. Can be one of:
 
-        * a string associated to a scoring function (see model evaluation
-          documentation);
+        * a string associated to a scoring function for binary classification
+          (see model evaluation documentation);
         * a scorer callable object created with :func:`~sklearn.metrics.make_scorer`;
         * `"max_tnr_at_tpr_constraint"`: find the decision threshold for a true
           positive ratio (TPR) of `constraint_value`;
