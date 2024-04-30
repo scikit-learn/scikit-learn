@@ -29,7 +29,8 @@ The people behind scikit-learn
 
 Scikit-learn is a community project, developed by a large group of
 people, all across the world. A few teams, listed below, have central
-roles, however a complete list of contributors can be found `on github
+roles, however a more complete list of contributors can be found `on
+github
 <https://github.com/scikit-learn/scikit-learn/graphs/contributors>`__.
 
 Core Developer Team
