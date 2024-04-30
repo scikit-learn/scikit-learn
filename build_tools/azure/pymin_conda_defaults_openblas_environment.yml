@@ -9,7 +9,6 @@ dependencies:
   - blas[build=openblas]
   - scipy=1.7
   - joblib
-  - threadpoolctl=2.2.0
   - matplotlib=3.3.4  # min
   - pyamg
   - pytest<8
@@ -21,3 +20,4 @@ dependencies:
   - pip
   - pip:
     - cython==3.0.10  # min
+    - threadpoolctl
