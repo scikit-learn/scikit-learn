@@ -1,6 +1,5 @@
 """Tools to support array_api."""
 
-import itertools
 import math
 from functools import wraps
 
@@ -45,6 +44,17 @@ def yield_namespaces(include_numpy_namespaces=True):
         yield array_namespace
 
 
+def yield_namespace_device_combinations(include_numpy_namespaces=True):
+    """Yield all combinations of array namespaces and their valid devices."""
+    for namespace in yield_namespaces(include_numpy_namespaces):
+        if namespace == "torch":
+            yield namespace, "cpu"
+            yield namespace, "cuda"
+            yield namespace, "mps"
+        else:
+            yield namespace, None
+
+
 def yield_namespace_device_dtype_combinations(include_numpy_namespaces=True):
     """Yield supported namespace, device, dtype tuples for testing.
 
@@ -68,31 +78,17 @@ def yield_namespace_device_dtype_combinations(include_numpy_namespaces=True):
         The name of the data type to use for arrays. Can be None to indicate
         that the default value should be used.
     """
-    for array_namespace in yield_namespaces(
-        include_numpy_namespaces=include_numpy_namespaces
+    for array_namespace, array_device in yield_namespace_device_combinations(
+        include_numpy_namespaces
     ):
         if array_namespace == "torch":
-            for device, dtype in itertools.product(
-                ("cpu", "cuda"), ("float64", "float32")
-            ):
-                yield array_namespace, device, dtype
-            yield array_namespace, "mps", "float32"
+            if array_device == "mps":
+                yield array_namespace, array_device, "float32"
+            else:
+                yield array_namespace, array_device, "float64"
+                yield array_namespace, array_device, "float32"
         else:
             yield array_namespace, None, None
-
-
-def yield_namespace_device_combinations(include_numpy_namespaces=True):
-    """Yield all combinations of array namespaces and their valid devices."""
-
-    for namespace in ("numpy", "array_api_strict", "cupy", "cupy.array_api", "torch"):
-        if not include_numpy_namespaces and namespace in _NUMPY_NAMESPACE_NAMES:
-            continue
-        if namespace == "torch":
-            yield namespace, "cpu"
-            yield namespace, "cuda"
-            yield namespace, "mps"
-        else:
-            yield namespace, None
 
 
 def _check_array_api_dispatch(array_api_dispatch):
@@ -749,16 +745,16 @@ def _nanmax(X, axis=None, xp=None):
 
 def _nan_to_num(X, *, xp=None, copy=True, nan=0.0, posinf=None, neginf=None):
     """Port of np.nan_to_num for array-api"""
-    xp, _ = get_namespace(X, xp=None)
+    xp, _ = get_namespace(X, xp=xp)
     # import array_api_strict as xp
     X = xp.asarray(X, copy=copy)
     dtype = X.dtype
     isscaler = X.ndim == 0
 
-    iscomplex = isdtype(dtype, "complex floating", xp=xp)
+    iscomplex = xp.isdtype(dtype, "complex floating")
 
     # If the input isn't floating, then no changes are made.
-    if not (isdtype(dtype, "real floating", xp=xp) or iscomplex):
+    if not (xp.isdtype(dtype, "real floating") or iscomplex):
         return X[()] if isscaler else X
 
     dest = (xp.real(X), xp.imag(X)) if iscomplex else (X,)
