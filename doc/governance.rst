@@ -93,7 +93,7 @@ communication in the project and limit the crowding of the issue tracker:
   To this end, they have permissions to merge pull requests in scikit-learn's
   repository.
 
-* **Maintainers**
+* **Maintainers Team**
   Maintainers are community members who have shown that they are dedicated to the
   continued development of the project through ongoing engagement with the
   community. They have shown they can be trusted to maintain scikit-learn with
