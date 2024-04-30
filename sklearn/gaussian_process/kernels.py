@@ -1,7 +1,4 @@
-"""
-The :mod:`sklearn.gaussian_process.kernels` module implements a set of kernels that
-can be combined by operators and used in Gaussian processes.
-"""
+"""A set of kernels that can be combined by operators and used in Gaussian processes."""
 
 # Kernels for Gaussian process regression and classification.
 #

@@ -24,6 +24,7 @@ from sklearn.utils._testing import turn_warnings_into_errors
 # directory, add these directories to sys.path here. If the directory
 # is relative to the documentation root, use os.path.abspath to make it
 # absolute, like shown here.
+sys.path.insert(0, os.path.abspath("."))
 sys.path.insert(0, os.path.abspath("sphinxext"))
 
 import jinja2
@@ -65,8 +66,11 @@ extensions = [
     "sphinx_design",
     # See sphinxext/
     "allow_nan_estimators",
+    "autoshortsummary",
     "doi_role",
+    "dropdown_anchors",
     "move_gallery_links",
+    "override_pst_pagetoc",
     "sphinx_issues",
 ]
 
@@ -100,8 +104,12 @@ plot_include_source = True
 plot_html_show_formats = False
 plot_html_show_source_link = False
 
-# this is needed for some reason...
-# see https://github.com/numpy/numpydoc/issues/69
+# We do not need the table of class members because `sphinxext/override_pst_pagetoc.py`
+# will show them in the secondary sidebar
+numpydoc_show_class_members = False
+numpydoc_show_inherited_class_members = False
+
+# We want in-page toc of class members instead of a separate page for each entry
 numpydoc_class_members_toctree = False
 
 
@@ -114,8 +122,6 @@ if os.environ.get("NO_MATHJAX"):
 else:
     extensions.append("sphinx.ext.mathjax")
     mathjax_path = "https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"
-
-autodoc_default_options = {"members": True, "inherited-members": True}
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["templates"]
@@ -316,7 +322,7 @@ html_extra_path = ["versions.json"]
 
 # Additional JS files
 html_js_files = [
-    "scripts/details-permalink.js",
+    "scripts/dropdown.js",
     "scripts/version-switcher.js",
 ]
 
@@ -338,10 +344,22 @@ def add_js_css_files(app, pagename, templatename, context, doctree):
     should be used for the ones that are used by multiple pages. All page-specific
     JS and CSS files should be added here instead.
     """
-    if pagename == "index":
+    if pagename == "api/index":
+        # External: jQuery and DataTables
+        app.add_js_file("https://code.jquery.com/jquery-3.7.0.js")
+        app.add_js_file("https://cdn.datatables.net/2.0.0/js/dataTables.min.js")
+        app.add_css_file(
+            "https://cdn.datatables.net/2.0.0/css/dataTables.dataTables.min.css"
+        )
+        # Internal: API search intialization and styling
+        app.add_js_file("scripts/api-search.js")
+        app.add_css_file("styles/api-search.css")
+    elif pagename == "index":
         app.add_css_file("styles/index.css")
     elif pagename == "install":
         app.add_css_file("styles/install.css")
+    elif pagename.startswith("modules/generated/"):
+        app.add_css_file("styles/api.css")
 
 
 # If false, no module index is generated.
@@ -395,6 +413,7 @@ redirects = {
     "documentation": "index",
     "contents": "index",
     "preface": "index",
+    "modules/classes": "api/index",
     "auto_examples/feature_selection/plot_permutation_test_for_classification": (
         "auto_examples/model_selection/plot_permutation_tests_for_classification"
     ),
@@ -431,28 +450,6 @@ html_context["is_devrelease"] = parsed_version.is_devrelease
 # Not showing the search summary makes the search page load faster.
 html_show_search_summary = True
 
-
-# The "summary-anchor" IDs will be overwritten via JavaScript to be unique.
-# See `doc/js/scripts/details-permalink.js`.
-rst_prolog = """
-.. |details-start| raw:: html
-
-    <details id="summary-anchor">
-    <summary class="btn btn-light">
-
-.. |details-split| raw:: html
-
-    <span class="tooltiptext">Click for more details</span>
-    <a class="headerlink" href="#summary-anchor" title="Permalink to this heading">¶</a>
-    </summary>
-    <div class="card">
-
-.. |details-end| raw:: html
-
-    </div>
-    </details>
-
-"""
 
 # -- Options for LaTeX output ------------------------------------------------
 latex_elements = {
@@ -759,7 +756,7 @@ def setup(app):
     # triggered just before the HTML for an individual page is created
     app.connect("html-page-context", add_js_css_files)
 
-    # to hide/show the prompt in code examples:
+    # to hide/show the prompt in code examples
     app.connect("build-finished", make_carousel_thumbs)
     app.connect("build-finished", filter_search_index)
 
@@ -886,7 +883,10 @@ else:
         "https://github.com/": {"Authorization": f"token {github_token}"},
     }
 
+
 # -- Convert .rst.template files to .rst ---------------------------------------
+
+from api_reference import API_REFERENCE, DEPRECATED_API_REFERENCE
 
 from sklearn._min_dependencies import dependent_packages
 
@@ -911,7 +911,41 @@ rst_templates = [
         "min_dependency_substitutions",
         {"dependent_packages": dependent_packages},
     ),
+    (
+        "api/index",
+        "api/index",
+        {
+            "API_REFERENCE": sorted(API_REFERENCE.items(), key=lambda x: x[0]),
+            "DEPRECATED_API_REFERENCE": sorted(
+                DEPRECATED_API_REFERENCE.items(), key=lambda x: x[0], reverse=True
+            ),
+        },
+    ),
 ]
+
+# Convert each module API reference page
+for module in API_REFERENCE:
+    rst_templates.append(
+        (
+            "api/module",
+            f"api/{module}",
+            {"module": module, "module_info": API_REFERENCE[module]},
+        )
+    )
+
+# Convert the deprecated API reference page (if there exists any)
+if DEPRECATED_API_REFERENCE:
+    rst_templates.append(
+        (
+            "api/deprecated",
+            "api/deprecated",
+            {
+                "DEPRECATED_API_REFERENCE": sorted(
+                    DEPRECATED_API_REFERENCE.items(), key=lambda x: x[0], reverse=True
+                )
+            },
+        )
+    )
 
 for rst_template_name, rst_target_name, kwargs in rst_templates:
     # Read the corresponding template file into jinja2
