@@ -37,8 +37,8 @@ from sklearn.utils import (
 from sklearn.utils._array_api import (
     _convert_to_numpy,
     _is_numpy_namespace,
+    default_precision_float_dtype,
     get_namespace,
-    max_precision_float_dtype,
     yield_namespace_device_dtype_combinations,
 )
 from sklearn.utils._array_api import (
@@ -1697,13 +1697,13 @@ def test_check_sample_weight_array_api(array_namespace, device, dtype_name):
         assert array_device(sample_weight) == array_device(X)
     assert sample_weight.dtype == xp.float32
 
-    # int dtype will be converted to float64 (float32 on "mps" device) instead
+    # int dtype will be converted to the default float dtype.
     X = get_X((5, 2), dtype=int)
     with config_context(array_api_dispatch=True):
         sample_weight = _check_sample_weight(None, X, dtype=X.dtype)
         assert get_namespace(sample_weight)[0] == get_namespace(X)[0]
         assert array_device(sample_weight) == array_device(X)
-    assert sample_weight.dtype == max_precision_float_dtype(xp, device=device)
+    assert sample_weight.dtype == default_precision_float_dtype(xp, device=device)
 
     # check negative weight when only_non_negative=True
     X = get_X((5, 2))
