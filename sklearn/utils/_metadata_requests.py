@@ -399,8 +399,10 @@ class MethodMetadataRequest:
             warn(
                 f"Support for {param} has recently been added to this class. "
                 "To maintain backward compatibility, it is ignored now. "
-                "You can set the request value to False to silence this "
-                "warning, or to True to consume and use the metadata."
+                f"Using `set_{self.method}_request({param}={{True, False}})` "
+                "on this method of the class, you can set the request value "
+                "to False to silence this warning, or to True to consume and "
+                "use the metadata."
             )
 
     def _route_params(self, params, parent, caller):
@@ -1031,9 +1033,8 @@ class MetadataRouter:
     def route_params(self, *, caller, params):
         """Return the input parameters requested by child objects.
 
-        The output of this method is a bunch, which includes the inputs for all
-        methods of each child object that are used in the router's `caller`
-        method.
+        The output of this method is a bunch, which includes the metadata for all
+        methods of each child object that is used in the router's `caller` method.
 
         If the router is also a consumer, it also checks for warnings of
         `self`'s/consumer's requested metadata.
@@ -1052,7 +1053,7 @@ class MetadataRouter:
         -------
         params : Bunch
             A :class:`~sklearn.utils.Bunch` of the form
-            ``{"object_name": {"method_name": {prop: value}}}`` which can be
+            ``{"object_name": {"method_name": {params: value}}}`` which can be
             used to pass the required metadata to corresponding methods or
             corresponding child objects.
         """
@@ -1159,12 +1160,12 @@ def get_routing_for_object(obj=None):
     Parameters
     ----------
     obj : object
+        - If the object provides a `get_metadata_routing` method, return a copy
+            of the output of that method.
         - If the object is already a
             :class:`~sklearn.utils.metadata_routing.MetadataRequest` or a
             :class:`~sklearn.utils.metadata_routing.MetadataRouter`, return a copy
             of that.
-        - If the object provides a `get_metadata_routing` method, return a copy
-            of the output of that method.
         - Returns an empty :class:`~sklearn.utils.metadata_routing.MetadataRequest`
             otherwise.
 
@@ -1557,9 +1558,10 @@ def process_routing(_obj, _method, /, **kwargs):
     This function is used inside a router's method, e.g. :term:`fit`,
     to validate the metadata and handle the routing.
 
-    Assuming this signature: ``fit(self, X, y, sample_weight=None, **fit_params)``,
+    Assuming this signature of a router's fit method:
+    ``fit(self, X, y, sample_weight=None, **fit_params)``,
     a call to this function would be:
-    ``process_routing(self, sample_weight=sample_weight, **fit_params)``.
+    ``process_routing(self, "fit", sample_weight=sample_weight, **fit_params)``.
 
     Note that if routing is not enabled and ``kwargs`` is empty, then it
     returns an empty routing where ``process_routing(...).ANYTHING.ANY_METHOD``
@@ -1582,8 +1584,10 @@ def process_routing(_obj, _method, /, **kwargs):
     Returns
     -------
     routed_params : Bunch
+        A :class:`~utils.Bunch` of the form ``{"object_name": {"method_name":
+        {params: value}}}`` which can be used to pass the required metadata to
         A :class:`~sklearn.utils.Bunch` of the form ``{"object_name": {"method_name":
-        {prop: value}}}`` which can be used to pass the required metadata to
+        {params: value}}}`` which can be used to pass the required metadata to
         corresponding methods or corresponding child objects. The object names
         are those defined in `obj.get_metadata_routing()`.
     """

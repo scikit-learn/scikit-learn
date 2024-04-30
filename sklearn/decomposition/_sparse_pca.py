@@ -325,7 +325,7 @@ class SparsePCA(_BaseSparsePCA):
             return_n_iter=True,
         )
         # flip eigenvectors' sign to enforce deterministic output
-        code, dictionary = svd_flip(code, dictionary, u_based_decision=False)
+        code, dictionary = svd_flip(code, dictionary, u_based_decision=True)
         self.components_ = code.T
         components_norm = np.linalg.norm(self.components_, axis=1)[:, np.newaxis]
         components_norm[components_norm == 0] = 1
