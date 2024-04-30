@@ -1248,7 +1248,7 @@ Hyper-parameter optimizers
    model_selection.RandomizedSearchCV
    model_selection.HalvingRandomSearchCV
 
-Model post-fit tuning
+Post-fit model tuning
 ---------------------
 
 .. currentmodule:: sklearn
