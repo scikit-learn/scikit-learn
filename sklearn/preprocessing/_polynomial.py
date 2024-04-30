@@ -974,24 +974,6 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
         self.n_features_out_ = n_out - n_features * (1 - self.include_bias)
         return self
 
-    def _make_design_matrix(
-        self, ele, bsplines, extrapolation, degree, **kwargs_extrapolate
-    ):
-        """Return bspline design matrix per feature."""
-        design_matrix = BSpline.design_matrix(
-            ele, bsplines.t, bsplines.k, **kwargs_extrapolate
-        ).tolil()  # converting to lil to encounter
-        # scipy.sparse._base.SparseEfficiencyWarning
-
-        if extrapolation == "periodic":
-            # See the construction of coef in fit. We need to add the last
-            # degree spline basis function to the first degree ones and
-            # then drop the last ones.
-            design_matrix[:, :degree] += design_matrix[:, -degree:]
-            design_matrix = design_matrix[:, :-degree]
-
-        return design_matrix
-
     def transform(self, X):
         """Transform each feature data to B-splines.
 
@@ -1071,30 +1053,33 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
                     # we leave the nan values out of bsplining and make them into 0s
                     # right away, since BSpline.design_matrix() would raise on the nans
                     # when X is sparse:
-                    design_matrix = [
-                        (
-                            self._make_design_matrix(
-                                ele,
-                                spl,
-                                self.extrapolation,
-                                degree,
-                                **kwargs_extrapolate,
-                            )
-                            if not np.isnan(ele)
-                            else [0] * n_splines
-                        )
-                        for ele in x
-                    ]
-                    design_matrix_csr = [
-                        sparse.csr_matrix(arr) for arr in design_matrix
-                    ]
-                    XBS_sparse = sparse.vstack(design_matrix_csr)
+
+                    x[nan_indicator[:, i]] = np.nanmin(x)
+                    XBS_sparse = BSpline.design_matrix(
+                        x, spl.t, spl.k, **kwargs_extrapolate
+                    )
+
+                    if self.extrapolation == "periodic":
+                        # See the construction of coef in fit. We need to add the last
+                        # degree spline basis function to the first degree ones and
+                        # then drop the last ones.
+                        XBS_sparse = XBS_sparse.tolil()
+                        XBS_sparse[:, :degree] += XBS_sparse[:, -degree:]
+                        XBS_sparse = XBS_sparse[:, :-degree]
+
+                    # replace any indicated values with 0:
+                    extended_nan_indicator = np.repeat(
+                        nan_indicator[:, [i]], n_splines, axis=1
+                    )
+                    XBS_sparse[extended_nan_indicator] = 0
 
                 else:
                     XBS[:, (i * n_splines) : ((i + 1) * n_splines)] = spl(x)
                     # replace any indicated values with 0:
                     extended_nan_indicator = np.repeat(nan_indicator, n_splines, axis=1)
                     XBS[extended_nan_indicator] = 0
+                    # adjust format of XBS to sparse, for scipy versions < 1.10.0:
+                    # TODO: Remove once scipy 1.10 is the minimum version:
                     if self.sparse_output:
                         XBS = sparse.csr_matrix(XBS)
 
