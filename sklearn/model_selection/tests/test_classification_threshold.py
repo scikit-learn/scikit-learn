@@ -8,6 +8,7 @@ from sklearn.datasets import (
     make_classification,
     make_multilabel_classification,
 )
+from sklearn.dummy import DummyClassifier
 from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.exceptions import NotFittedError
 from sklearn.linear_model import LogisticRegression
@@ -909,6 +910,18 @@ def test_tuned_threshold_classifier_error_missing_constraint(objective_metric):
         estimator, objective_metric=objective_metric
     )
     with pytest.raises(ValueError, match="`constraint_value` must be provided"):
+        tuned_model.fit(X, y)
+
+
+def test_tuned_threshold_classifier_error_constant_predictor():
+    """Check that we raise a ValueError if the underlying classifier returns constant
+    probabilities such that we cannot find any threshold.
+    """
+    X, y = make_classification(random_state=0)
+    estimator = DummyClassifier(strategy="constant", constant=1)
+    tuned_model = TunedThresholdClassifierCV(estimator, response_method="predict_proba")
+    err_msg = "The provided estimator makes constant predictions"
+    with pytest.raises(ValueError, match=err_msg):
         tuned_model.fit(X, y)
 
 
