@@ -115,7 +115,7 @@ Estimators
 - :class:`preprocessing.MaxAbsScaler`
 - :class:`preprocessing.MinMaxScaler`
 - :class:`preprocessing.Normalizer`
-- :class:`preprocessing.StandardScaler`
+- :class:`preprocessing.StandardScaler` (see :ref:`device_support_for_float64`)
 
 Meta-estimators
 ---------------
@@ -241,7 +241,8 @@ Note on device support for ``float64``
 
 Certain operations within scikit-learn will automatically perform operations
 on floating-point values with `float64` precision to prevent overflows and ensure
-correctness (e.g., :func:`metrics.pairwise.euclidean_distances`). However,
+correctness (e.g., :func:`metrics.pairwise.euclidean_distances`,
+:class:`preprocessing.StandardScaler`). However,
 certain combinations of array namespaces and devices, such as `PyTorch on MPS`
 (see :ref:`mps_support`) do not support the `float64` data type. In these cases,
 scikit-learn will revert to using the `float32` data type instead. This can result in
