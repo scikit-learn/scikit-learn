@@ -434,9 +434,9 @@ class _CurveScorer(_BaseScorer):
     kwargs : dict
         Additional parameters to pass to the score function.
 
-    n_thresholds : int or array-like
+    thresholds : int or array-like
         Related to the number of decision thresholds for which we want to compute the
-        score. If an integer, it will be used to generate `n_thresholds` thresholds
+        score. If an integer, it will be used to generate `thresholds` thresholds
         uniformly distributed between the minimum and maximum predicted scores. If an
         array-like, it will be used as the thresholds.
 
@@ -444,17 +444,17 @@ class _CurveScorer(_BaseScorer):
         The method to call on the estimator to get the response values.
     """
 
-    def __init__(self, score_func, sign, kwargs, n_thresholds, response_method):
+    def __init__(self, score_func, sign, kwargs, thresholds, response_method):
         super().__init__(
             score_func=score_func,
             sign=sign,
             kwargs=kwargs,
             response_method=response_method,
         )
-        self._n_thresholds = n_thresholds
+        self._thresholds = thresholds
 
     @classmethod
-    def from_scorer(cls, scorer, response_method, n_thresholds, pos_label):
+    def from_scorer(cls, scorer, response_method, thresholds, pos_label):
         """Create a continuous scorer from a normal scorer."""
         # add `pos_label` if requested by the scorer function
         scorer_kwargs = {**scorer._kwargs}
@@ -478,7 +478,7 @@ class _CurveScorer(_BaseScorer):
             score_func=scorer._score_func,
             sign=scorer._sign,
             response_method=response_method,
-            n_thresholds=n_thresholds,
+            thresholds=thresholds,
             kwargs=scorer_kwargs,
         )
         # transfer the metadata request
@@ -509,10 +509,10 @@ class _CurveScorer(_BaseScorer):
 
         Returns
         -------
-        scores : ndarray of shape (n_thresholds,)
+        scores : ndarray of shape (thresholds,)
             The scores associated to each threshold.
 
-        potential_thresholds : ndarray of shape (n_thresholds,)
+        potential_thresholds : ndarray of shape (thresholds,)
             The potential thresholds used to compute the scores.
         """
         pos_label = self._get_pos_label()
@@ -521,12 +521,12 @@ class _CurveScorer(_BaseScorer):
         )
 
         scoring_kwargs = {**self._kwargs, **kwargs}
-        if isinstance(self._n_thresholds, Integral):
+        if isinstance(self._thresholds, Integral):
             potential_thresholds = np.linspace(
-                np.min(y_score), np.max(y_score), self._n_thresholds
+                np.min(y_score), np.max(y_score), self._thresholds
             )
         else:
-            potential_thresholds = np.asarray(self._n_thresholds)
+            potential_thresholds = np.asarray(self._thresholds)
         score_thresholds = [
             self._sign
             * self._score_func(
@@ -593,11 +593,11 @@ def _fit_and_score_over_thresholds(
 
     Returns
     -------
-    potential_thresholds : ndarray of shape (n_thresholds,)
+    potential_thresholds : ndarray of shape (thresholds,)
         The decision thresholds used to compute the scores. They are returned in
         ascending order.
 
-    scores : ndarray of shape (n_thresholds,) or tuple of such arrays
+    scores : ndarray of shape (thresholds,) or tuple of such arrays
         The scores computed for each decision threshold. When TPR/TNR or precision/
         recall are computed, `scores` is a tuple of two arrays.
     """
@@ -644,18 +644,18 @@ def _mean_interpolated_score(target_thresholds, cv_thresholds, cv_scores):
 
     Parameters
     ----------
-    target_thresholds : ndarray of shape (n_thresholds,)
+    target_thresholds : ndarray of shape (thresholds,)
         The thresholds to use to compute the mean score.
 
-    cv_thresholds : ndarray of shape (n_folds, n_thresholds_fold)
+    cv_thresholds : ndarray of shape (n_folds, thresholds_fold)
         The thresholds used to compute the scores for each fold.
 
-    cv_scores : ndarray of shape (n_folds, n_thresholds_fold)
+    cv_scores : ndarray of shape (n_folds, thresholds_fold)
         The scores computed for each threshold for each fold.
 
     Returns
     -------
-    mean_score : ndarray of shape (n_thresholds,)
+    mean_score : ndarray of shape (thresholds,)
         The mean score across all folds for each target threshold.
     """
     return np.mean(
@@ -728,7 +728,7 @@ class TunedThresholdClassifierCV(BaseThresholdClassifier):
           If the method is not implemented by the classifier, it will raise an
           error.
 
-    n_thresholds : int or array-like, default=100
+    thresholds : int or array-like, default=100
         The number of decision threshold to use when discretizing the output of the
         classifier `method`. Pass an array-like to manually specify the thresholds
         to use.
@@ -888,7 +888,7 @@ class TunedThresholdClassifierCV(BaseThresholdClassifier):
             MutableMapping,
         ],
         "constraint_value": [Real, None],
-        "n_thresholds": [Interval(Integral, 1, None, closed="left"), "array-like"],
+        "thresholds": [Interval(Integral, 1, None, closed="left"), "array-like"],
         "cv": [
             "cv_object",
             StrOptions({"prefit"}),
@@ -908,7 +908,7 @@ class TunedThresholdClassifierCV(BaseThresholdClassifier):
         constraint_value=None,
         pos_label=None,
         response_method="auto",
-        n_thresholds=100,
+        thresholds=100,
         cv=None,
         refit=True,
         n_jobs=None,
@@ -920,7 +920,7 @@ class TunedThresholdClassifierCV(BaseThresholdClassifier):
         )
         self.objective_metric = objective_metric
         self.constraint_value = constraint_value
-        self.n_thresholds = n_thresholds
+        self.thresholds = thresholds
         self.cv = cv
         self.refit = refit
         self.n_jobs = n_jobs
@@ -1042,35 +1042,35 @@ class TunedThresholdClassifierCV(BaseThresholdClassifier):
         max_threshold = max(
             split_thresholds.max() for split_thresholds in cv_thresholds
         )
-        if isinstance(self.n_thresholds, Integral):
-            decision_thresholds = np.linspace(
-                min_threshold, max_threshold, num=self.n_thresholds
+        if isinstance(self.thresholds, Integral):
+            decisiothresholds = np.linspace(
+                min_threshold, max_threshold, num=self.thresholds
             )
         else:
-            decision_thresholds = np.asarray(self.n_thresholds)
+            decisiothresholds = np.asarray(self.thresholds)
 
         if not constrained_metric:  # find best score that is the highest value
             objective_scores = _mean_interpolated_score(
-                decision_thresholds, cv_thresholds, cv_scores
+                decisiothresholds, cv_thresholds, cv_scores
             )
             best_idx = objective_scores.argmax()
             self.best_score_ = objective_scores[best_idx]
-            self.best_threshold_ = decision_thresholds[best_idx]
+            self.best_threshold_ = decisiothresholds[best_idx]
             self.constrained_score_ = None
             if self.store_cv_results:
                 self.cv_results_ = {
-                    "thresholds": decision_thresholds,
+                    "thresholds": decisiothresholds,
                     "scores": objective_scores,
                 }
         else:
             if "tpr" in self.objective_metric:  # tpr/tnr
                 mean_tnr, mean_tpr = [
-                    _mean_interpolated_score(decision_thresholds, cv_thresholds, sc)
+                    _mean_interpolated_score(decisiothresholds, cv_thresholds, sc)
                     for sc in zip(*cv_scores)
                 ]
             else:  # precision/recall
                 mean_precision, mean_recall = [
-                    _mean_interpolated_score(decision_thresholds, cv_thresholds, sc)
+                    _mean_interpolated_score(decisiothresholds, cv_thresholds, sc)
                     for sc in zip(*cv_scores)
                 ]
 
@@ -1092,10 +1092,10 @@ class TunedThresholdClassifierCV(BaseThresholdClassifier):
             best_idx = _get_best_idx(constrained_scores, maximized_scores)
             self.best_score_ = maximized_scores[best_idx]
             self.constrained_score_ = constrained_scores[best_idx]
-            self.best_threshold_ = decision_thresholds[best_idx]
+            self.best_threshold_ = decisiothresholds[best_idx]
             if self.store_cv_results:
                 self.cv_results_ = {
-                    "thresholds": decision_thresholds,
+                    "thresholds": decisiothresholds,
                     "constrained_scores": constrained_scores,
                     "maximized_scores": maximized_scores,
                 }
@@ -1184,6 +1184,6 @@ class TunedThresholdClassifierCV(BaseThresholdClassifier):
         else:
             scoring = check_scoring(self.estimator, scoring=self.objective_metric)
             curve_scorer = _CurveScorer.from_scorer(
-                scoring, self._response_method, self.n_thresholds, self.pos_label
+                scoring, self._response_method, self.thresholds, self.pos_label
             )
         return curve_scorer

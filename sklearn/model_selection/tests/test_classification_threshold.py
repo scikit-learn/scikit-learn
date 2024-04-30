@@ -51,7 +51,7 @@ def test_curve_scorer():
         balanced_accuracy_score,
         sign=1,
         response_method="predict_proba",
-        n_thresholds=10,
+        thresholds=10,
         kwargs={},
     )
     scores, thresholds = curve_scorer(estimator, X, y)
@@ -70,7 +70,7 @@ def test_curve_scorer():
         balanced_accuracy_score,
         sign=1,
         response_method="predict_proba",
-        n_thresholds=10,
+        thresholds=10,
         kwargs={"adjusted": True},
     )
     scores, thresholds = curve_scorer(estimator, X, y)
@@ -83,7 +83,7 @@ def test_curve_scorer():
         balanced_accuracy_score,
         sign=-1,
         response_method="predict_proba",
-        n_thresholds=10,
+        thresholds=10,
         kwargs={"adjusted": True},
     )
     scores, thresholds = curve_scorer(estimator, X, y)
@@ -103,7 +103,7 @@ def test_curve_scorer_pos_label(global_random_seed):
         recall_score,
         sign=1,
         response_method="predict_proba",
-        n_thresholds=10,
+        thresholds=10,
         kwargs={"pos_label": 1},
     )
     scores_pos_label_1, thresholds_pos_label_1 = curve_scorer(estimator, X, y)
@@ -112,7 +112,7 @@ def test_curve_scorer_pos_label(global_random_seed):
         recall_score,
         sign=1,
         response_method="predict_proba",
-        n_thresholds=10,
+        thresholds=10,
         kwargs={"pos_label": 0},
     )
     scores_pos_label_0, thresholds_pos_label_0 = curve_scorer(estimator, X, y)
@@ -142,7 +142,7 @@ def test_curve_scorer_pos_label(global_random_seed):
                 score_func=balanced_accuracy_score,
                 sign=1,
                 response_method="predict_proba",
-                n_thresholds=10,
+                thresholds=10,
                 kwargs={},
             ),
             "balanced_accuracy",
@@ -202,7 +202,7 @@ def test_fit_and_score_over_thresholds_curve_scorers(curve_scorer, score_method)
                 score_func=balanced_accuracy_score,
                 sign=1,
                 response_method="predict_proba",
-                n_thresholds=2,
+                thresholds=2,
                 kwargs={},
             ),
             [0.5, 1.0],
@@ -258,7 +258,7 @@ def test_fit_and_score_over_thresholds_prefit(curve_scorer, expected_score):
             score_func=balanced_accuracy_score,
             sign=1,
             response_method="predict_proba",
-            n_thresholds=10,
+            thresholds=10,
             kwargs={},
         ),
         make_scorer(roc_curve, response_method="predict_proba"),
@@ -316,7 +316,7 @@ def test_fit_and_score_over_thresholds_sample_weight(curve_scorer):
             score_func=balanced_accuracy_score,
             sign=1,
             response_method="predict_proba",
-            n_thresholds=10,
+            thresholds=10,
             kwargs={},
         ),
         make_scorer(roc_curve, response_method="predict_proba"),
@@ -443,19 +443,19 @@ def test_tuned_threshold_classifier_without_constraint_value(response_method):
     y = np.hstack([y[indices_neg], y[indices_pos]])
 
     lr = make_pipeline(StandardScaler(), LogisticRegression()).fit(X, y)
-    n_thresholds = 100
+    thresholds = 100
     model = TunedThresholdClassifierCV(
         estimator=lr,
         objective_metric="balanced_accuracy",
         response_method=response_method,
-        n_thresholds=n_thresholds,
+        thresholds=thresholds,
         store_cv_results=True,
     )
     score_optimized = balanced_accuracy_score(y, model.fit(X, y).predict(X))
     score_baseline = balanced_accuracy_score(y, lr.predict(X))
     assert score_optimized > score_baseline
-    assert model.cv_results_["thresholds"].shape == (n_thresholds,)
-    assert model.cv_results_["scores"].shape == (n_thresholds,)
+    assert model.cv_results_["thresholds"].shape == (thresholds,)
+    assert model.cv_results_["scores"].shape == (thresholds,)
 
 
 def test_tuned_threshold_classifier_limit_metric_tradeoff():
@@ -528,7 +528,7 @@ def test_tuned_threshold_classifier_with_string_targets(response_method, metric)
         constraint_value=0.9,
         pos_label="cancer",
         response_method=response_method,
-        n_thresholds=100,
+        thresholds=100,
     ).fit(X, y)
     assert_array_equal(model.classes_, np.sort(classes))
     y_pred = model.predict(X)
@@ -636,19 +636,19 @@ def test_tuned_threshold_classifier_response_method_curve_scorer_with_constraint
     X, y = make_classification(n_samples=100, random_state=global_random_seed)
     classifier = LogisticRegression()
 
-    n_thresholds = 100
+    thresholds = 100
     model = TunedThresholdClassifierCV(
         classifier,
         objective_metric=objective_metric,
         constraint_value=constraint_value,
         response_method=response_method,
-        n_thresholds=n_thresholds,
+        thresholds=thresholds,
         store_cv_results=True,
     )
     model.fit(X, y)
-    assert model.cv_results_["thresholds"].shape == (n_thresholds,)
-    assert model.cv_results_["constrained_scores"].shape == (n_thresholds,)
-    assert model.cv_results_["maximized_scores"].shape == (n_thresholds,)
+    assert model.cv_results_["thresholds"].shape == (thresholds,)
+    assert model.cv_results_["constrained_scores"].shape == (thresholds,)
+    assert model.cv_results_["maximized_scores"].shape == (thresholds,)
 
     if response_method in ("auto", "predict_proba"):
         # "auto" will fall back in priority on `predict_proba` if `estimator`
@@ -809,26 +809,26 @@ def test_tuned_threshold_classifier_pos_label_single_metric(pos_label, metric_ty
         cv="prefit",
         refit=False,
         pos_label=pos_label,
-        n_thresholds=500,
+        thresholds=500,
     ).fit(X, y)
 
     precision = precision_score(y, model.predict(X), pos_label=pos_label)
     assert precision == pytest.approx(model.best_score_, abs=1e-3)
 
 
-def test_tuned_threshold_classifier_n_thresholds_array():
-    """Check that we can pass an array to `n_thresholds` and it is used as candidate
+def test_tuned_threshold_classifier_thresholds_array():
+    """Check that we can pass an array to `thresholds` and it is used as candidate
     threshold internally."""
     X, y = make_classification(random_state=0)
     estimator = LogisticRegression()
-    n_thresholds = np.linspace(0, 1, 11)
+    thresholds = np.linspace(0, 1, 11)
     tuned_model = TunedThresholdClassifierCV(
         estimator,
-        n_thresholds=n_thresholds,
+        thresholds=thresholds,
         response_method="predict_proba",
         store_cv_results=True,
     ).fit(X, y)
-    assert_allclose(tuned_model.cv_results_["thresholds"], n_thresholds)
+    assert_allclose(tuned_model.cv_results_["thresholds"], thresholds)
 
 
 @pytest.mark.parametrize(

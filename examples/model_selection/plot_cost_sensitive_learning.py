@@ -760,7 +760,7 @@ print(
 tuned_model = TunedThresholdClassifierCV(
     estimator=model,
     objective_metric=business_scorer,
-    n_thresholds=100,
+    thresholds=100,
     n_jobs=2,
 )
 
