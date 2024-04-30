@@ -169,7 +169,7 @@ Changelog
 ..........................
 
 - |Fix| Fixed a regression in :class:`calibration.CalibratedClassifierCV` where
-  an error was wrongly raised with string targets. 
+  an error was wrongly raised with string targets.
   :pr:`28843` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
 :mod:`sklearn.cluster`
@@ -354,8 +354,10 @@ Changelog
 
 - |API| Parameter `multi_class` was deprecated in
   :class:`linear_model.LogisticRegression` and
-  :class:`linear_model.LogisticRegressionCV`.
-  `multi_class` will be removed in 1.7.
+  :class:`linear_model.LogisticRegressionCV`. `multi_class` will be removed in 1.7,
+  and internally, for 3 and more classes, it will always use multinomial.
+  If you still want to use the one-vs-rest scheme, you can use
+  `OneVsRestClassifier(LogisticRegression(..))`.
   :pr:`28703` by :user:`Christian Lorentzen <lorentzenchr>`.
 
 :mod:`sklearn.manifold`

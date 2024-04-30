@@ -1231,12 +1231,14 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         check_classification_targets(y)
         self.classes_ = np.unique(y)
 
+        # TODO(1.7) remove multi_class
         multi_class = self.multi_class
         if self.multi_class in ("multinomial", "auto"):
             warnings.warn(
                 (
                     "'multi_class' was deprecated in version 1.5 and will be removed in"
                     " 1.7. From then on, it will always use 'multinomial'."
+                    " Leave it to its default value to avoid this warning."
                 ),
                 FutureWarning,
             )
@@ -1245,6 +1247,7 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
                 (
                     "'multi_class' was deprecated in version 1.5 and will be removed in"
                     " 1.7. Use OneVsRestClassifier(LogisticRegression(..)) instead."
+                    " Leave it to its default value to avoid this warning."
                 ),
                 FutureWarning,
             )
@@ -1876,12 +1879,14 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         classes = self.classes_ = label_encoder.classes_
         encoded_labels = label_encoder.transform(label_encoder.classes_)
 
+        # TODO(1.7) remove multi_class
         multi_class = self.multi_class
         if self.multi_class in ("multinomial", "auto"):
             warnings.warn(
                 (
                     "'multi_class' was deprecated in version 1.5 and will be removed in"
                     " 1.7. From then on, it will always use 'multinomial'."
+                    " Leave it to its default value to avoid this warning."
                 ),
                 FutureWarning,
             )
@@ -1890,6 +1895,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
                 (
                     "'multi_class' was deprecated in version 1.5 and will be removed in"
                     " 1.7. Use OneVsRestClassifier(LogisticRegressionCV(..)) instead."
+                    " Leave it to its default value to avoid this warning."
                 ),
                 FutureWarning,
             )
