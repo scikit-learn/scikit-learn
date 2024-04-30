@@ -71,43 +71,39 @@ those aspects of the project.
 
 To this end, they have the required permissions on github to label and close
 issues. :ref:`Their work <bug_triaging>` is crucial to improve the
-communication in the project and limit the crowding of the issue tracker.
+communication in the project and limit the crowding of the issue tracker:
 
-.. _communication_team:
+  .. _communication_team:
 
-Communication team
-~~~~~~~~~~~~~~~~~~
+* **Communication team**
+  Members of the communication team help with outreach and communication
+  for scikit-learn. The goal of the team is to develop public awareness of
+  scikit-learn, of its features and usage, as well as branding.
 
-Members of the communication team help with outreach and communication
-for scikit-learn. The goal of the team is to develop public awareness of
-scikit-learn, of its features and usage, as well as branding.
+  For this, they can operate the scikit-learn accounts on various social networks
+  and produce materials. They also have the required rights to our blog
+  repository and other relevant accounts and platforms.
 
-For this, they can operate the scikit-learn accounts on various social networks
-and produce materials. They also have the required rights to our blog
-repository and other relevant accounts and platforms.
+* **Documentation team**
 
-Documentation team
-~~~~~~~~~~~~~~~~~~
+  Members of the documentation team engage with the documentation of the project
+  among other things. They might also be involved in other aspects of the
+  project, but their reviews on documentation contributions are considered
+  authoritative, and can merge such contributions.
 
-Members of the documentation team engage with the documentation of the project
-among other things. They might also be involved in other aspects of the
-project, but their reviews on documentation contributions are considered
-authoritative, and can merge such contributions.
+  To this end, they have permissions to merge pull requests in scikit-learn's
+  repository.
 
-To this end, they have permissions to merge pull requests in scikit-learn's
-repository.
+* **Maintainers**
 
-Maintainers
-~~~~~~~~~~~
-
-Maintainers are community members who have shown that they are dedicated to the
-continued development of the project through ongoing engagement with the
-community. They have shown they can be trusted to maintain scikit-learn with
-care. Being a maintainer allows contributors to more easily carry on with their
-project related activities by giving them direct access to the project's
-repository. Maintainers are expected to review code contributions, merge
-approved pull requests, cast votes for and against merging a pull-request,
-and to be involved in deciding major changes to the API.
+  Maintainers are community members who have shown that they are dedicated to the
+  continued development of the project through ongoing engagement with the
+  community. They have shown they can be trusted to maintain scikit-learn with
+  care. Being a maintainer allows contributors to more easily carry on with their
+  project related activities by giving them direct access to the project's
+  repository. Maintainers are expected to review code contributions, merge
+  approved pull requests, cast votes for and against merging a pull-request,
+  and to be involved in deciding major changes to the API.
 
 Technical Committee
 -------------------
