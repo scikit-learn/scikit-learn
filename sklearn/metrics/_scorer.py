@@ -204,14 +204,11 @@ class _BaseScorer(_MetadataRequester):
         Either 1 or -1 to returns the score with `sign * score_func(estimator, X, y)`.
         Thus, `sign` defined if higher scores are better or worse.
 
-    n_thresholds : int or array-like
-        Related to the number of decision thresholds for which we want to compute the
-        score. If an integer, it will be used to generate `n_thresholds` thresholds
-        uniformly distributed between the minimum and maximum predicted scores. If an
-        array-like, it will be used as the thresholds.
-
     kwargs : dict
         Additional parameters to pass to the score function.
+
+    response_method : str
+        The method to call on the estimator to get the response values.
     """
 
     def __init__(self, score_func, sign, kwargs, response_method="predict"):

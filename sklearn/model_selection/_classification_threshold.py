@@ -58,6 +58,18 @@ def _estimator_has(attr):
     return check
 
 
+def _threshold_scores_to_class_labels(y_score, threshold, classes, pos_label):
+    """Threshold `y_score` and return the associated class labels."""
+    if pos_label is None:
+        map_thresholded_score_to_label = np.array([0, 1])
+    else:
+        pos_label_idx = np.flatnonzero(classes == pos_label)[0]
+        neg_label_idx = np.flatnonzero(classes != pos_label)[0]
+        map_thresholded_score_to_label = np.array([neg_label_idx, pos_label_idx])
+
+    return classes[map_thresholded_score_to_label[(y_score >= threshold).astype(int)]]
+
+
 class BaseThresholdClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimator):
     """Base class for classifiers that set a non-default decision threshold.
 
@@ -75,15 +87,12 @@ class BaseThresholdClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimator
         the decision threshold used during `predict`.
 
     pos_label : int, float, bool or str, default=None
-        The label of the positive class. Used when `objective_metric` is
-        `"max_tnr_at_tpr_constraint"`"`, `"max_tpr_at_tnr_constraint"`, or a dictionary.
-        When `pos_label=None`, if `y_true` is in `{-1, 1}` or `{0, 1}`,
-        `pos_label` is set to 1, otherwise an error will be raised. When using a
-        scorer, `pos_label` can be passed as a keyword argument to
-        :func:`~sklearn.metrics.make_scorer`.
+        The label of the positive class. Used to process the output of the
+        `response_method` method. When `pos_label=None`, if `y_true` is in `{-1, 1}` or
+        `{0, 1}`, `pos_label` is set to 1, otherwise an error will be raised.
 
     response_method : {"auto", "decision_function", "predict_proba"}, default="auto"
-        Methods by the classifier `base_estimator` corresponding to the
+        Methods by the classifier `estimator` corresponding to the
         decision function for which we want to find a threshold. It can be:
 
         * if `"auto"`, it will try to invoke, for each classifier,
@@ -229,18 +238,6 @@ class BaseThresholdClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimator
         }
 
 
-def _threshold_scores_to_class_labels(y_score, threshold, classes, pos_label):
-    """Threshold `y_score` and return the associated class labels."""
-    if pos_label is None:
-        map_thresholded_score_to_label = np.array([0, 1])
-    else:
-        pos_label_idx = np.flatnonzero(classes == pos_label)[0]
-        neg_label_idx = np.flatnonzero(classes != pos_label)[0]
-        map_thresholded_score_to_label = np.array([neg_label_idx, pos_label_idx])
-
-    return classes[map_thresholded_score_to_label[(y_score >= threshold).astype(int)]]
-
-
 class FixedThresholdClassifier(BaseThresholdClassifier):
     """Classifier that manually sets the decision threshold.
 
@@ -331,14 +328,14 @@ class FixedThresholdClassifier(BaseThresholdClassifier):
 
     _parameter_constraints: dict = {
         **BaseThresholdClassifier._parameter_constraints,
-        "threshold": [Real],
+        "threshold": [StrOptions({"auto"}), Real],
     }
 
     def __init__(
         self,
         estimator,
         *,
-        threshold=0.5,
+        threshold="auto",
         pos_label=None,
         response_method="auto",
     ):
@@ -434,14 +431,14 @@ class _CurveScorer(_BaseScorer):
         Either 1 or -1 to returns the score with `sign * score_func(estimator, X, y)`.
         Thus, `sign` defined if higher scores are better or worse.
 
+    kwargs : dict
+        Additional parameters to pass to the score function.
+
     n_thresholds : int or array-like
         Related to the number of decision thresholds for which we want to compute the
         score. If an integer, it will be used to generate `n_thresholds` thresholds
         uniformly distributed between the minimum and maximum predicted scores. If an
         array-like, it will be used as the thresholds.
-
-    kwargs : dict
-        Additional parameters to pass to the score function.
 
     response_method : str
         The method to call on the estimator to get the response values.
@@ -722,7 +719,7 @@ class TunedThresholdClassifierCV(BaseThresholdClassifier):
         :func:`~sklearn.metrics.make_scorer`.
 
     response_method : {"auto", "decision_function", "predict_proba"}, default="auto"
-        Methods by the classifier `base_estimator` corresponding to the
+        Methods by the classifier `estimator` corresponding to the
         decision function for which we want to find a threshold. It can be:
 
         * if `"auto"`, it will try to invoke, for each classifier,

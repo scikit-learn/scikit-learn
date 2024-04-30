@@ -921,10 +921,21 @@ def test_fixed_threshold_classifier_equivalence_default(response_method):
     """
     X, y = make_classification(random_state=0)
     classifier = LogisticRegression().fit(X, y)
-    classifier_default_threshold = FixedThresholdClassifier(estimator=clone(classifier))
+    classifier_default_threshold = FixedThresholdClassifier(
+        estimator=clone(classifier), response_method=response_method
+    )
     classifier_default_threshold.fit(X, y)
 
-    assert_allclose(classifier.predict(X), classifier_default_threshold.predict(X))
+    # emulate the response method that should take into account the `pos_label`
+    if response_method in ("auto", "predict_proba"):
+        y_score = classifier_default_threshold.predict_proba(X)[:, 1]
+        threshold = 0.5
+    else:  # response_method == "decision_function"
+        y_score = classifier_default_threshold.decision_function(X)
+        threshold = 0.0
+
+    y_pred_lr = (y_score >= threshold).astype(int)
+    assert_allclose(classifier_default_threshold.predict(X), y_pred_lr)
 
 
 @pytest.mark.parametrize(
