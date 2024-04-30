@@ -54,7 +54,7 @@ multiple interfaces):
 
 :Transformer:
 
-    For modifying the data in a supervised or unsupervised way (e.g. by adding, changing, 
+    For modifying the data in a supervised or unsupervised way (e.g. by adding, changing,
     or removing columns, but not by adding or removing rows). Implements::
 
       new_data = transformer.transform(data)
@@ -538,19 +538,16 @@ allow_nan (default=False)
 array_api_support (default=False)
     whether the estimator supports Array API compatible inputs.
 
-binary_only (default=False)
-    whether estimator supports binary classification but lacks multi-class
-    classification support.
-
-multilabel (default=False)
-    whether the estimator supports multilabel output
-
-multioutput (default=False)
-    whether a regressor supports multi-target outputs or a classifier supports
-    multi-class multi-output.
-
-multioutput_only (default=False)
-    whether estimator supports only multi-output classification or regression.
+target_type (default=["multiclass", "single-output"])
+    the supported target types of the estimator, which can be a subset of:
+        - 'binary': binary classification. All estimators supporting
+          'multi-class' also support 'binary'; classifiers only;
+        - 'multi-class': multiclass classification
+        - 'multi-label': multilabel output
+        - 'multi-output': multi-output regression or classification, i.e. `y`
+          has shape `(n_samples, n_outputs)`
+        - 'single-output': single-output regression or classification, i.e. `y`
+          has shape `(n_samples,)`
 
 no_validation (default=False)
     whether the estimator skips input-validation. This is only meant for

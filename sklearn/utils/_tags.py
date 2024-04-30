@@ -8,14 +8,11 @@ _DEFAULT_TAGS = {
     "X_types": ["2darray"],
     "poor_score": False,
     "no_validation": False,
-    "multioutput": False,
     "allow_nan": False,
     "stateless": False,
-    "multilabel": False,
     "_skip_test": False,
     "_xfail_checks": False,
-    "multioutput_only": False,
-    "binary_only": False,
+    "target_type": ["single-output", "multi-class"],
     "requires_fit": True,
     "preserves_dtype": [np.float64],
     "requires_y": False,
@@ -66,3 +63,22 @@ def _safe_tags(estimator, key=None):
             )
         return tags[key]
     return tags
+
+
+def binary_only(estimator):
+    """Check whether estimator is binary classification only.
+
+    An estimator is a binary only classifier if the "target_type" tag is set to
+    ["binary"].
+    """
+    return _safe_tags(estimator, "target_type") == ["binary"]
+
+
+def multioutput_only(estimator):
+    """Check whether estimator is multi-output only.
+
+    An estimator is a multi-output only estimator if the "target_type" tag does
+    not include "single-output".
+    """
+    target_type = _safe_tags(estimator, "target_type")
+    return "single-output" not in target_type and "multi-output" in target_type

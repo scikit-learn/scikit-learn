@@ -1690,7 +1690,7 @@ class LarsCV(Lars):
         )
 
     def _more_tags(self):
-        return {"multioutput": False}
+        return {"target_type": ["single-output"]}
 
     @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y, **params):
@@ -2212,7 +2212,7 @@ class LassoLarsIC(LassoLars):
         self.noise_variance = noise_variance
 
     def _more_tags(self):
-        return {"multioutput": False}
+        return {"target_type": ["single-output"]}
 
     @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y, copy_X=None):

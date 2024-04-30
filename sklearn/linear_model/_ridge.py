@@ -1335,7 +1335,7 @@ class _RidgeClassifierMixin(LinearClassifierMixin):
         return self._label_binarizer.classes_
 
     def _more_tags(self):
-        return {"multilabel": True}
+        return {"target_type": ["multi-class", "multi-label"]}
 
 
 class RidgeClassifier(_RidgeClassifierMixin, _BaseRidge):
@@ -2812,7 +2812,7 @@ class RidgeClassifierCV(_RidgeClassifierMixin, _BaseRidgeCV):
 
     def _more_tags(self):
         return {
-            "multilabel": True,
+            "target_type": ["multi-class", "multi-label"],
             "_xfail_checks": {
                 "check_sample_weights_invariance": (
                     "zero sample_weight is not equivalent to removing samples"

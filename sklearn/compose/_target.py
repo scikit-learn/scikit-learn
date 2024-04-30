@@ -332,7 +332,7 @@ class TransformedTargetRegressor(
 
         return {
             "poor_score": True,
-            "multioutput": _safe_tags(regressor, key="multioutput"),
+            "target_type": _safe_tags(regressor, key="target_type"),
         }
 
     @property

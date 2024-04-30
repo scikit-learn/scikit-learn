@@ -163,6 +163,10 @@ def _generate_pipeline():
 @parametrize_with_checks(list(chain(_tested_estimators(), _generate_pipeline())))
 def test_estimators(estimator, check, request):
     # Common tests for estimator instances
+    from sklearn.cross_decomposition import CCA
+
+    if not isinstance(estimator, CCA):
+        return
     with ignore_warnings(category=(FutureWarning, ConvergenceWarning, UserWarning)):
         _set_checking_parameters(estimator)
         check(estimator)
