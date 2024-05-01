@@ -189,6 +189,11 @@ def _is_numpy_namespace(xp):
     return xp.__name__ in _NUMPY_NAMESPACE_NAMES
 
 
+def _is_torch_namespace(xp):
+    """Return True if xp is backed by PyTorch."""
+    return "torch" in xp.__name__
+
+
 def _union1d(a, b, xp):
     if _is_numpy_namespace(xp):
         return xp.asarray(numpy.union1d(a, b))
@@ -242,7 +247,7 @@ def _isdtype_single(dtype, kind, *, xp):
         return dtype == kind
 
 
-def supported_float_dtypes(xp):
+def supported_float_dtypes(xp, *, device=None):
     """Supported floating point types for the namespace.
 
     Note: float16 is not officially part of the Array API spec at the
@@ -251,10 +256,20 @@ def supported_float_dtypes(xp):
 
     https://data-apis.org/array-api/latest/API_specification/data_types.html
     """
-    if hasattr(xp, "float16"):
-        return (xp.float64, xp.float32, xp.float16)
+    if _is_torch_namespace(xp) and device == "mps":
+        dtypes = (xp.float32,)
     else:
-        return (xp.float64, xp.float32)
+        dtypes = (xp.float64, xp.float32)
+
+    if hasattr(xp, "float16"):
+        return (*dtypes, xp.float16)
+
+    return dtypes
+
+
+def max_precision_float_dtype(xp, *, device=None):
+    """Maximum floating point precision supported by the namespace/device pair."""
+    return supported_float_dtypes(xp, device=device)[0]
 
 
 def ensure_common_namespace_device(reference, *arrays):
@@ -770,6 +785,56 @@ def _nan_to_num(X, *, xp=None, copy=True, nan=0.0, posinf=None, neginf=None):
         d[posinf_mask] = xp.asarray(maxf)
         d[neginf_mask] = xp.asarray(minf)
     return X[()] if isscaler else X
+
+
+def _intersect1d(ar1, ar2, *, xp=None, assume_unique=False, return_indices=False):
+    """Port of np.intersect1d for array api."""
+    xp, _ = get_namespace(ar1, ar2, xp=xp)
+
+    if return_indices and _is_torch_namespace(xp):
+        # Seems like torch is the only array namespaces in array-api-compat
+        #  which doesn't support getting indices - tough.
+        msg = (
+            "Cannot return indices with the torch backend yet. See" " array_api_compat."
+        )
+        raise NotImplementedError(msg)
+
+    if not assume_unique:
+        if return_indices:
+            ar1_unique_data = xp.unique_all(ar1)
+            ar1 = ar1_unique_data.values
+            ind1 = ar1_unique_data.indices
+
+            ar2_unique_data = xp.unique_all(ar2)
+            ar2 = ar2_unique_data.values
+            ind2 = ar2_unique_data.indices
+        else:
+            ar1 = xp.unique_values(ar1)
+            ar2 = xp.unique_values(ar2)
+    else:
+        ar1 = _ravel(ar1, xp=xp)
+        ar2 = _ravel(ar2, xp=xp)
+
+    aux = xp.concat((ar1, ar2))
+    if return_indices:
+        aux_sort_indices = xp.argsort(aux, stable=True)
+        aux = aux[aux_sort_indices]
+    else:
+        aux = xp.sort(aux, stable=False)
+
+    mask = aux[1:] == aux[:-1]
+    int1d = aux[1:][mask]
+
+    if return_indices:
+        ar1_indices = aux_sort_indices[:-1][mask]
+        ar2_indices = aux_sort_indices[1:][mask] - size(ar1)
+        if not assume_unique:
+            ar1_indices = ind1[ar1_indices]
+            ar2_indices = ind2[ar2_indices]
+
+        return int1d, ar1_indices, ar2_indices
+
+    return int1d
 
 
 def _asarray_with_order(

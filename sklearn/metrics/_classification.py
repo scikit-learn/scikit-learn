@@ -40,14 +40,13 @@ from ..utils import (
 )
 from ..utils._array_api import (
     _average,
+    _intersect1d,
     _is_numpy_namespace,
     _nan_to_num,
     _union1d,
     get_namespace,
+    get_namespace_and_device,
     size,
-)
-from ..utils._array_api import (
-    device as array_device,
 )
 from ..utils._param_validation import (
     Hidden,
@@ -328,29 +327,27 @@ def confusion_matrix(
     (0, 2, 1, 1)
     """
     y_type, y_true, y_pred = _check_targets(y_true, y_pred)
-    xp, _ = get_namespace(y_true, y_pred)
+    xp, _, device = get_namespace_and_device(y_true, y_pred)
     if y_type not in ("binary", "multiclass"):
         raise ValueError("%s is not supported" % y_type)
 
     if labels is None:
         labels = unique_labels(y_true, y_pred)
     else:
-        # TODO(charlesjhill): update this.
-        labels = np.asarray(labels)
-        n_labels = labels.size
+        n_labels = size(labels)
         if n_labels == 0:
             raise ValueError("'labels' should contains at least one label.")
-        elif size(y_true) == 0:
-            return np.zeros((n_labels, n_labels), dtype=int)
-        elif len(np.intersect1d(y_true, labels)) == 0:
+
+        if size(y_true) == 0:
+            return xp.zeros((n_labels, n_labels), dtype=xp.int32, device=device)
+
+        if size(_intersect1d(y_true, labels, xp=xp)) == 0:
             raise ValueError("At least one label specified must be in y_true")
 
     if sample_weight is None:
-        sample_weight = xp.ones(
-            y_true.shape[0], dtype=xp.int64, device=array_device(y_true)
-        )
+        sample_weight = xp.ones(y_true.shape[0], dtype=xp.int64, device=device)
     else:
-        sample_weight = xp.asarray(sample_weight)
+        sample_weight = xp.asarray(sample_weight, device=device)
 
     check_consistent_length(y_true, y_pred, sample_weight)
 
@@ -359,18 +356,16 @@ def confusion_matrix(
     # y_true and y_pred must be converted into index form
     need_index_conversion = not (
         xp.isdtype(labels.dtype, ("bool", "integral"))
-        and xp.all(
-            labels
-            == xp.arange(n_labels, dtype=labels.dtype, device=array_device(labels))
-        )
+        and xp.all(labels == xp.arange(n_labels, dtype=labels.dtype, device=device))
         and xp.min(y_true) >= 0
         and xp.min(y_pred) >= 0
     )
     if need_index_conversion:
-        # TODO(charlesjhill): Keep device the same?
         label_to_ind = {y: x for x, y in enumerate(labels)}
-        y_pred = xp.asarray([label_to_ind.get(x, n_labels + 1) for x in y_pred])
-        y_true = xp.asarray([label_to_ind.get(x, n_labels + 1) for x in y_true])
+        mapped_preds = [label_to_ind.get(x, n_labels + 1) for x in y_pred]
+        mapped_truth = [label_to_ind.get(x, n_labels + 1) for x in y_true]
+        y_pred = xp.asarray(mapped_preds, device=device)
+        y_true = xp.asarray(mapped_truth, device=device)
 
     # intersect y_pred, y_true with labels, eliminate items not in labels
     ind = xp.logical_and(y_pred < n_labels, y_true < n_labels)
@@ -384,7 +379,6 @@ def confusion_matrix(
     if xp.isdtype(sample_weight.dtype, ("bool", "integral")):
         dtype = xp.int64
     else:
-        # TODO(charlesjhill): Can't use float64 for "torch on mps".
         dtype = xp.float64
 
     if _is_numpy_namespace(xp):
@@ -395,7 +389,7 @@ def confusion_matrix(
         ).toarray()
     else:
         # Harder and slower way.
-        cm = xp.zeros((n_labels, n_labels), dtype=dtype, device=array_device(y_true))
+        cm = xp.zeros((n_labels, n_labels), dtype=dtype, device=device)
         for r, c, weight in zip(y_true, y_pred, sample_weight):
             cm[r, c] += weight
 
