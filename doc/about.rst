@@ -39,7 +39,7 @@ Maintainers Team
 The following people are currently maintainers, in charge of
 consolidating scikit-learn's development and maintenance:
 
-.. include:: authors.rst
+.. include:: maintainers.rst
 
 Please do not email the authors directly to ask for assistance or report issues.
 Instead, please see `What's the best way to ask questions about scikit-learn
@@ -81,7 +81,7 @@ Emeritus Core Developers
 The following people have been active contributors in the past, but are no
 longer active in the project:
 
-.. include:: authors_emeritus.rst
+.. include:: maintainers_emeritus.rst
 
 Emeritus Communication Team
 ---------------------------
