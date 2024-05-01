@@ -6,6 +6,7 @@ import itertools
 import re
 import shutil
 import time
+import warnings
 from tempfile import mkdtemp
 
 import joblib
@@ -1790,6 +1791,26 @@ def test_feature_union_feature_names_in_():
     union = FeatureUnion([("pass", "passthrough")])
     union.fit(X_array)
     assert not hasattr(union, "feature_names_in_")
+
+
+# TODO(1.7): remove this test
+def test_pipeline_inverse_transform_Xt_deprecation():
+    X = np.random.RandomState(0).normal(size=(10, 5))
+    pipe = Pipeline([("pca", PCA(n_components=2))])
+    X = pipe.fit_transform(X)
+
+    with pytest.raises(TypeError, match="Missing required positional argument"):
+        pipe.inverse_transform()
+
+    with pytest.raises(TypeError, match="Cannot use both X and Xt. Use X only"):
+        pipe.inverse_transform(X=X, Xt=X)
+
+    with warnings.catch_warnings(record=True):
+        warnings.simplefilter("error")
+        pipe.inverse_transform(X)
+
+    with pytest.warns(FutureWarning, match="Xt was renamed X in version 1.5"):
+        pipe.inverse_transform(Xt=X)
 
 
 # Test that metadata is routed correctly for pipelines and FeatureUnion

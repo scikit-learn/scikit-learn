@@ -29,6 +29,7 @@ from .utils._set_output import (
 )
 from .utils._tags import _safe_tags
 from .utils._user_interface import _print_elapsed_time
+from .utils.deprecation import _deprecate_Xt_in_inverse_transform
 from .utils.metadata_routing import (
     MetadataRouter,
     MethodMapping,
@@ -909,18 +910,27 @@ class Pipeline(_BaseComposition):
         return all(hasattr(t, "inverse_transform") for _, _, t in self._iter())
 
     @available_if(_can_inverse_transform)
-    def inverse_transform(self, Xt, **params):
+    def inverse_transform(self, X=None, *, Xt=None, **params):
         """Apply `inverse_transform` for each step in a reverse order.
 
         All estimators in the pipeline must support `inverse_transform`.
 
         Parameters
         ----------
+        X : array-like of shape (n_samples, n_transformed_features)
+            Data samples, where ``n_samples`` is the number of samples and
+            ``n_features`` is the number of features. Must fulfill
+            input requirements of last step of pipeline's
+            ``inverse_transform`` method.
+
         Xt : array-like of shape (n_samples, n_transformed_features)
             Data samples, where ``n_samples`` is the number of samples and
             ``n_features`` is the number of features. Must fulfill
             input requirements of last step of pipeline's
             ``inverse_transform`` method.
+
+            .. deprecated:: 1.5
+                `Xt` was deprecated in 1.5 and will be removed in 1.7. Use `X` instead.
 
         **params : dict of str -> object
             Parameters requested and accepted by steps. Each step must have
@@ -940,15 +950,15 @@ class Pipeline(_BaseComposition):
         """
         _raise_for_params(params, self, "inverse_transform")
 
+        X = _deprecate_Xt_in_inverse_transform(X, Xt)
+
         # we don't have to branch here, since params is only non-empty if
         # enable_metadata_routing=True.
         routed_params = process_routing(self, "inverse_transform", **params)
         reverse_iter = reversed(list(self._iter()))
         for _, name, transform in reverse_iter:
-            Xt = transform.inverse_transform(
-                Xt, **routed_params[name].inverse_transform
-            )
-        return Xt
+            X = transform.inverse_transform(X, **routed_params[name].inverse_transform)
+        return X
 
     @available_if(_final_estimator_has("score"))
     def score(self, X, y=None, sample_weight=None, **params):
