@@ -2333,13 +2333,13 @@ class _BaseRidgeCV(LinearModel):
             if self.store_cv_results is not None:
                 raise ValueError(
                     "Both 'store_cv_values' and 'store_cv_results' were set. "
-                    "'store_cv_values' was deprecated in version 1.5 and will be "
+                    "'store_cv_values' is deprecated in version 1.5 and will be "
                     "removed in 1.7. To avoid this error, only set 'store_cv_results'."
                 )
             warnings.warn(
                 (
-                    "'store_cv_values' was renamed to 'store_cv_results' in version "
-                    " 1.5 and will be removed in 1.7."
+                    "'store_cv_values' is deprecated in version 1.5 and will be "
+                    "removed in 1.7. Use 'store_cv_results' instead."
                 ),
                 FutureWarning,
             )
@@ -2475,7 +2475,7 @@ class _BaseRidgeCV(LinearModel):
     # mypy error: Decorated property not supported
     @deprecated(  # type: ignore
         "Attribute `cv_values_` is deprecated in version 1.5 and will be removed "
-        "in 1.7."
+        "in 1.7. Use `cv_results_` instead."
     )
     @property
     def cv_values_(self):
@@ -2551,6 +2551,15 @@ class RidgeCV(MultiOutputMixin, RegressorMixin, _BaseRidgeCV):
         .. versionchanged:: 1.5
             Parameter name changed from `store_cv_values` to `store_cv_results`.
 
+    alpha_per_target : bool, default=False
+        Flag indicating whether to optimize the alpha value (picked from the
+        `alphas` parameter list) for each target separately (for multi-output
+        settings: multiple prediction targets). When set to `True`, after
+        fitting, the `alpha_` attribute will contain a value for each target.
+        When set to `False`, a single alpha is used for all targets.
+
+        .. versionadded:: 0.24
+
     store_cv_values : bool
         Flag indicating if the cross-validation values corresponding to
         each alpha should be stored in the ``cv_values_`` attribute (see
@@ -2560,15 +2569,6 @@ class RidgeCV(MultiOutputMixin, RegressorMixin, _BaseRidgeCV):
         .. deprecated:: 1.5
             `store_cv_values` is deprecated in version 1.5 in favor of
             `store_cv_results` and will be removed in version 1.7.
-
-    alpha_per_target : bool, default=False
-        Flag indicating whether to optimize the alpha value (picked from the
-        `alphas` parameter list) for each target separately (for multi-output
-        settings: multiple prediction targets). When set to `True`, after
-        fitting, the `alpha_` attribute will contain a value for each target.
-        When set to `False`, a single alpha is used for all targets.
-
-        .. versionadded:: 0.24
 
     Attributes
     ----------
@@ -2582,13 +2582,6 @@ class RidgeCV(MultiOutputMixin, RegressorMixin, _BaseRidgeCV):
 
         .. versionchanged:: 1.5
             `cv_values_` changed to `cv_results_`.
-
-    cv_values_ : ndarray of shape (n_samples, n_alphas) or \
-            shape (n_samples, n_targets, n_alphas), optional
-
-        .. deprecated:: 1.5
-            `cv_values_` is deprecated in version 1.5 in favor of
-            `cv_results_` and will be removed in version 1.7.
 
     coef_ : ndarray of shape (n_features) or (n_targets, n_features)
         Weight vector(s).
@@ -2758,12 +2751,6 @@ class RidgeClassifierCV(_RidgeClassifierMixin, _BaseRidgeCV):
 
         .. versionchanged:: 1.5
             `cv_values_` changed to `cv_results_`.
-
-    cv_values_ : ndarray of shape (n_samples, n_targets, n_alphas), optional
-
-        .. deprecated:: 1.5
-            `cv_values_` is deprecated in version 1.5 in favor of
-            `cv_results_` and will be removed in version 1.7.
 
     coef_ : ndarray of shape (1, n_features) or (n_targets, n_features)
         Coefficient of the features in the decision function.
