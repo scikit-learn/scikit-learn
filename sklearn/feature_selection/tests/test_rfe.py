@@ -464,7 +464,7 @@ def test_rfe_wrapped_estimator(importance_getter, selector, expected_n_features)
     # Non-regression test for
     # https://github.com/scikit-learn/scikit-learn/issues/15312
     X, y = make_friedman1(n_samples=50, n_features=10, random_state=0)
-    estimator = LinearSVR(dual="auto", random_state=0)
+    estimator = LinearSVR(random_state=0)
 
     log_estimator = TransformedTargetRegressor(
         regressor=estimator, func=np.log, inverse_func=np.exp
@@ -486,7 +486,7 @@ def test_rfe_wrapped_estimator(importance_getter, selector, expected_n_features)
 @pytest.mark.parametrize("Selector", [RFE, RFECV])
 def test_rfe_importance_getter_validation(importance_getter, err_type, Selector):
     X, y = make_friedman1(n_samples=50, n_features=10, random_state=42)
-    estimator = LinearSVR(dual="auto")
+    estimator = LinearSVR()
     log_estimator = TransformedTargetRegressor(
         regressor=estimator, func=np.log, inverse_func=np.exp
     )
@@ -649,3 +649,20 @@ def test_rfe_estimator_attribute_error():
         rfe.fit(iris.data, iris.target).decision_function(iris.data)
     assert isinstance(exec_info.value.__cause__, AttributeError)
     assert inner_msg in str(exec_info.value.__cause__)
+
+
+@pytest.mark.parametrize(
+    "ClsRFE, param", [(RFE, "n_features_to_select"), (RFECV, "min_features_to_select")]
+)
+def test_rfe_n_features_to_select_warning(ClsRFE, param):
+    """Check if the correct warning is raised when trying to initialize a RFE
+    object with a n_features_to_select attribute larger than the number of
+    features present in the X variable that is passed to the fit method
+    """
+    X, y = make_classification(n_features=20, random_state=0)
+
+    with pytest.warns(UserWarning, match=f"{param}=21 > n_features=20"):
+        # Create RFE/RFECV with n_features_to_select/min_features_to_select
+        # larger than the number of features present in the X variable
+        clsrfe = ClsRFE(estimator=LogisticRegression(), **{param: 21})
+        clsrfe.fit(X, y)

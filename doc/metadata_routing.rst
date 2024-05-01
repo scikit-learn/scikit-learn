@@ -245,8 +245,10 @@ should be passed to the estimator's scorer or not::
     ...     ).fit(X, y, sample_weight=my_weights)
     ... except ValueError as e:
     ...     print(e)
-    [sample_weight] are passed but are not explicitly set as requested or not for
-    LogisticRegression.score
+    [sample_weight] are passed but are not explicitly set as requested or not
+    requested for LogisticRegression.score, which is used within GridSearchCV.fit.
+    Call `LogisticRegression.set_score_request({metadata}=True/False)` for each metadata
+    you want to request/ignore.
 
 The issue can be fixed by explicitly setting the request value::
 
@@ -274,6 +276,7 @@ Meta-estimators and functions supporting metadata routing:
 
 - :class:`sklearn.calibration.CalibratedClassifierCV`
 - :class:`sklearn.compose.ColumnTransformer`
+- :class:`sklearn.covariance.GraphicalLassoCV`
 - :class:`sklearn.ensemble.VotingClassifier`
 - :class:`sklearn.ensemble.VotingRegressor`
 - :class:`sklearn.ensemble.BaggingClassifier`
@@ -311,7 +314,6 @@ Meta-estimators and functions supporting metadata routing:
 Meta-estimators and tools not supporting metadata routing yet:
 
 - :class:`sklearn.compose.TransformedTargetRegressor`
-- :class:`sklearn.covariance.GraphicalLassoCV`
 - :class:`sklearn.ensemble.AdaBoostClassifier`
 - :class:`sklearn.ensemble.AdaBoostRegressor`
 - :class:`sklearn.ensemble.StackingClassifier`
