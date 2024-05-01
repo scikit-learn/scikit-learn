@@ -44,7 +44,6 @@ from ..utils._array_api import (
     _nan_to_num,
     _union1d,
     get_namespace,
-    isdtype,
     size,
 )
 from ..utils._array_api import (
@@ -336,6 +335,7 @@ def confusion_matrix(
     if labels is None:
         labels = unique_labels(y_true, y_pred)
     else:
+        # TODO(charlesjhill): update this.
         labels = np.asarray(labels)
         n_labels = labels.size
         if n_labels == 0:
@@ -367,6 +367,7 @@ def confusion_matrix(
         and xp.min(y_pred) >= 0
     )
     if need_index_conversion:
+        # TODO(charlesjhill): Keep device the same?
         label_to_ind = {y: x for x, y in enumerate(labels)}
         y_pred = xp.asarray([label_to_ind.get(x, n_labels + 1) for x in y_pred])
         y_true = xp.asarray([label_to_ind.get(x, n_labels + 1) for x in y_true])
@@ -380,12 +381,12 @@ def confusion_matrix(
         sample_weight = sample_weight[ind]
 
     # Choose the accumulator dtype to always have high precision
-    if isdtype(sample_weight.dtype, ("bool", "integral"), xp=xp):
+    if xp.isdtype(sample_weight.dtype, ("bool", "integral")):
         dtype = xp.int64
     else:
-        dtype = xp.float64  # can't use float64 for "torch on mps".
+        # TODO(charlesjhill): Can't use float64 for "torch on mps".
+        dtype = xp.float64
 
-    # This will be a challenge to do in a "friendly" way.
     if _is_numpy_namespace(xp):
         cm = coo_matrix(
             (sample_weight, (y_true, y_pred)),

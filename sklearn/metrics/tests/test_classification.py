@@ -45,9 +45,9 @@ from sklearn.utils.fixes import CSC_CONTAINERS, CSR_CONTAINERS
 from sklearn.utils.validation import check_random_state
 
 from ...utils._array_api import (
-    _check_common_namespace_device,
     _convert_to_numpy,
     _is_numpy_namespace,
+    get_namespace_and_device,
     yield_namespace_device_combinations,
 )
 from ...utils._testing import (
@@ -501,7 +501,7 @@ def test_confusion_matrix_binary(namespace, device):
     def test(y_true, y_pred):
         with config_context(array_api_dispatch=True):
             cm = confusion_matrix(y_true, y_pred)
-            _check_common_namespace_device(y_true, y_pred, cm)
+            _ = get_namespace_and_device(y_true, y_pred, cm)
             cm = _convert_to_numpy(cm, xp=xp)
         assert_array_equal(cm, [[22, 3], [8, 17]])
 

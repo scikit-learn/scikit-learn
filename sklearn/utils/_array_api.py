@@ -286,12 +286,6 @@ def ensure_common_namespace_device(reference, *arrays):
         return arrays
 
 
-def _check_common_namespace_device(*arrays):
-    """Check that all arrays use the same namespace and device."""
-    get_namespace(*arrays)  # Throws on multiple namespaces.
-    device(*arrays)  # Throws on multiple devices.
-
-
 class _ArrayAPIWrapper:
     """sklearn specific Array API compatibility wrapper
 
