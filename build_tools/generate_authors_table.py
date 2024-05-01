@@ -214,7 +214,9 @@ if __name__ == "__main__":
         documentation_team,
     ) = get_contributors()
 
-    with open(REPO_FOLDER / "doc" / "maintainers.rst", "w+", encoding="utf-8") as rst_file:
+    with open(
+        REPO_FOLDER / "doc" / "maintainers.rst", "w+", encoding="utf-8"
+    ) as rst_file:
         rst_file.write(generate_table(core_devs))
 
     with open(

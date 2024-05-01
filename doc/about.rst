@@ -22,6 +22,9 @@ Governance
 The decision making process and governance structure of scikit-learn is laid
 out in the :ref:`governance document <governance>`.
 
+.. The "author" anchors below is there to ensure that old html links (in
+   the form of "about.html#author" still work)
+
 .. _authors:
 
 The people behind scikit-learn
