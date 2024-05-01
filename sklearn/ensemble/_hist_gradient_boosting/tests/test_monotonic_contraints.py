@@ -433,3 +433,13 @@ def test_bounded_value_min_gain_to_split():
         upper_bound=children_upper_bound,
     )
     assert split_info.gain > min_gain_to_split
+
+
+def test_with_monotonic_cst_and_categorical_features():
+    # Non-regression test for #28898
+    X = np.arange(9).reshape(3, 3)
+    y = np.array([0, 1, 0])
+    hist = HistGradientBoostingClassifier(
+        monotonic_cst=[1, 0, -1], categorical_features=[False, True, False]
+    )
+    hist.fit(X, y)
