@@ -33,6 +33,10 @@ def _calculate_pd_brute_fast(
 
     X_stacked = _safe_indexing(X, np.tile(np.arange(n), n_grid), axis=0)
     grid_stacked = _safe_indexing(grid, np.repeat(np.arange(n_grid), n), axis=0)
+
+    if hasattr(X, "iloc"):  # pandas<2 does not allow "values" to have repeated indices
+        grid_stacked = grid_stacked.reset_index(drop=True)
+
     _safe_assign(X_stacked, values=grid_stacked, column_indexer=feature_indices)
 
     preds = pred_fun(X_stacked)
