@@ -596,11 +596,13 @@ print(
 # decision threshold.
 from sklearn.linear_model import LogisticRegressionCV
 from sklearn.pipeline import make_pipeline
-from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import RobustScaler
 
 model = make_pipeline(
-    StandardScaler(),
-    LogisticRegressionCV(random_state=42, Cs=np.logspace(-6, 6, 13), scoring="roc_auc"),
+    RobustScaler(quantile_range=(5, 95)),
+    LogisticRegressionCV(
+        random_state=42, Cs=np.logspace(-6, 6, 13), scoring="neg_log_loss"
+    ),
 ).fit(data_train, target_train)
 
 print(
