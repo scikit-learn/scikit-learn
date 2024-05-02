@@ -281,79 +281,87 @@ print(f"{tuned_model.best_threshold_=:0.2f}")
 
 # %%
 # We plot the ROC and Precision-Recall curves for the vanilla model and the tuned model.
-# Also we plot the cut-off points that would be used by each model.
-fig, axs = plt.subplots(nrows=1, ncols=3, figsize=(21, 6))
+# Also we plot the cut-off points that would be used by each model. Because, we are
+# reusing the same code later, we define a function that generates the plots.
 
-linestyles = ("dashed", "dotted")
-markerstyles = ("o", ">")
-colors = ("tab:blue", "tab:orange")
-names = ("Vanilla GBDT", "Tuned GBDT")
-for idx, (est, linestyle, marker, color, name) in enumerate(
-    zip((model, tuned_model), linestyles, markerstyles, colors, names)
-):
-    decision_threshold = getattr(est, "best_threshold_", 0.5)
-    PrecisionRecallDisplay.from_estimator(
-        est,
-        X_test,
-        y_test,
-        pos_label=pos_label,
-        linestyle=linestyle,
-        color=color,
-        ax=axs[0],
-        name=name,
+
+def plot_roc_pr_curves(vanilla_model, tuned_model, *, title):
+    fig, axs = plt.subplots(nrows=1, ncols=3, figsize=(21, 6))
+
+    linestyles = ("dashed", "dotted")
+    markerstyles = ("o", ">")
+    colors = ("tab:blue", "tab:orange")
+    names = ("Vanilla GBDT", "Tuned GBDT")
+    for idx, (est, linestyle, marker, color, name) in enumerate(
+        zip((vanilla_model, tuned_model), linestyles, markerstyles, colors, names)
+    ):
+        decision_threshold = getattr(est, "best_threshold_", 0.5)
+        PrecisionRecallDisplay.from_estimator(
+            est,
+            X_test,
+            y_test,
+            pos_label=pos_label,
+            linestyle=linestyle,
+            color=color,
+            ax=axs[0],
+            name=name,
+        )
+        axs[0].plot(
+            scoring["recall"](est, X_test, y_test),
+            scoring["precision"](est, X_test, y_test),
+            marker,
+            markersize=10,
+            color=color,
+            label=f"Cut-off point at probability of {decision_threshold:.2f}",
+        )
+        RocCurveDisplay.from_estimator(
+            est,
+            X_test,
+            y_test,
+            pos_label=pos_label,
+            linestyle=linestyle,
+            color=color,
+            ax=axs[1],
+            name=name,
+            plot_chance_level=idx == 1,
+        )
+        axs[1].plot(
+            scoring["fpr"](est, X_test, y_test),
+            scoring["tpr"](est, X_test, y_test),
+            marker,
+            markersize=10,
+            color=color,
+            label=f"Cut-off point at probability of {decision_threshold:.2f}",
+        )
+
+    axs[0].set_title("Precision-Recall curve")
+    axs[0].legend()
+    axs[1].set_title("ROC curve")
+    axs[1].legend()
+
+    axs[2].plot(
+        tuned_model.cv_results_["thresholds"],
+        tuned_model.cv_results_["scores"],
+        color="tab:orange",
     )
-    axs[0].plot(
-        scoring["recall"](est, X_test, y_test),
-        scoring["precision"](est, X_test, y_test),
-        marker,
+    axs[2].plot(
+        tuned_model.best_threshold_,
+        tuned_model.best_score_,
+        "o",
         markersize=10,
-        color=color,
-        label=f"Cut-off point at probability of {decision_threshold:.2f}",
+        color="tab:orange",
+        label="Optimal cut-off point for the business metric",
     )
-    RocCurveDisplay.from_estimator(
-        est,
-        X_test,
-        y_test,
-        pos_label=pos_label,
-        linestyle=linestyle,
-        color=color,
-        ax=axs[1],
-        name=name,
-        plot_chance_level=idx == 1,
-    )
-    axs[1].plot(
-        scoring["fpr"](est, X_test, y_test),
-        scoring["tpr"](est, X_test, y_test),
-        marker,
-        markersize=10,
-        color=color,
-        label=f"Cut-off point at probability of {decision_threshold:.2f}",
-    )
+    axs[2].legend()
+    axs[2].set_xlabel("Decision threshold (probability)")
+    axs[2].set_ylabel("Objective score (using cost-matrix)")
+    axs[2].set_title("Objective score as a function of the decision threshold")
+    fig.suptitle(title)
 
-axs[0].set_title("Precision-Recall curve")
-axs[0].legend()
-axs[1].set_title("ROC curve")
-axs[1].legend()
 
-axs[2].plot(
-    tuned_model.cv_results_["thresholds"],
-    tuned_model.cv_results_["scores"],
-    color="tab:orange",
-)
-axs[2].plot(
-    tuned_model.best_threshold_,
-    tuned_model.best_score_,
-    "o",
-    markersize=10,
-    color="tab:orange",
-    label="Optimal cut-off point for the business metric",
-)
-axs[2].legend()
-axs[2].set_xlabel("Decision threshold (probability)")
-axs[2].set_ylabel("Objective score (using cost-matrix)")
-axs[2].set_title("Objective score as a function of the decision threshold")
-
-_ = fig.suptitle("Comparison of the cut-off point for the vanilla and tuned GBDT model")
+# %%
+title = "Comparison of the cut-off point for the vanilla and tuned GBDT model"
+plot_roc_pr_curves(model, tuned_model, title=title)
 
 # %%
 # The first remark is that both classifiers have exactly the same ROC and
@@ -400,78 +408,8 @@ print(f"{tuned_model.best_threshold_=:0.2f}")
 
 # %%
 # Then, we evaluate our model with the same approach as before:
-fig, axs = plt.subplots(nrows=1, ncols=3, figsize=(21, 6))
-
-linestyles = ("dashed", "dotted")
-markerstyles = ("o", ">")
-colors = ("tab:blue", "tab:orange")
-names = ("Vanilla GBDT", "Tuned GBDT")
-for idx, (est, linestyle, marker, color, name) in enumerate(
-    zip((model, tuned_model), linestyles, markerstyles, colors, names)
-):
-    decision_threshold = getattr(est, "best_threshold_", 0.5)
-    PrecisionRecallDisplay.from_estimator(
-        est,
-        X_test,
-        y_test,
-        pos_label=pos_label,
-        linestyle=linestyle,
-        color=color,
-        ax=axs[0],
-        name=name,
-    )
-    axs[0].plot(
-        scoring["recall"](est, X_test, y_test),
-        scoring["precision"](est, X_test, y_test),
-        marker,
-        markersize=10,
-        color=color,
-        label=f"Cut-off point at probability of {decision_threshold:.2f}",
-    )
-    RocCurveDisplay.from_estimator(
-        est,
-        X_test,
-        y_test,
-        pos_label=pos_label,
-        linestyle=linestyle,
-        color=color,
-        ax=axs[1],
-        name=name,
-        plot_chance_level=idx == 1,
-    )
-    axs[1].plot(
-        scoring["fpr"](est, X_test, y_test),
-        scoring["tpr"](est, X_test, y_test),
-        marker,
-        markersize=10,
-        color=color,
-        label=f"Cut-off point at probability of {decision_threshold:.2f}",
-    )
-
-axs[0].set_title("Precision-Recall curve")
-axs[0].legend()
-axs[1].set_title("ROC curve")
-axs[1].legend()
-
-axs[2].plot(
-    tuned_model.cv_results_["thresholds"],
-    tuned_model.cv_results_["scores"],
-    color="tab:orange",
-)
-axs[2].plot(
-    tuned_model.best_threshold_,
-    tuned_model.best_score_,
-    "o",
-    markersize=10,
-    color="tab:orange",
-    label="Optimal cut-off point for the business metric",
-)
-axs[2].legend()
-axs[2].set_xlabel("Decision threshold (probability)")
-axs[2].set_ylabel("Objective score (using cost-matrix)")
-axs[2].set_title("Objective score as a function of the decision threshold")
-
-_ = fig.suptitle("Tuned GBDT model without refitting and using the entire dataset")
+title = "Tuned GBDT model without refitting and using the entire dataset"
+plot_roc_pr_curves(model, tuned_model, title=title)
 
 # %%
 # We observe the that the optimum cut-off point is different from the one found
@@ -496,78 +434,8 @@ _ = fig.suptitle("Tuned GBDT model without refitting and using the entire datase
 tuned_model.set_params(cv=0.75).fit(X_train, y_train)
 
 # %%
-fig, axs = plt.subplots(nrows=1, ncols=3, figsize=(21, 6))
-
-linestyles = ("dashed", "dotted")
-markerstyles = ("o", ">")
-colors = ("tab:blue", "tab:orange")
-names = ("Vanilla GBDT", "Tuned GBDT")
-for idx, (est, linestyle, marker, color, name) in enumerate(
-    zip((model, tuned_model), linestyles, markerstyles, colors, names)
-):
-    decision_threshold = getattr(est, "best_threshold_", 0.5)
-    PrecisionRecallDisplay.from_estimator(
-        est,
-        X_test,
-        y_test,
-        pos_label=pos_label,
-        linestyle=linestyle,
-        color=color,
-        ax=axs[0],
-        name=name,
-    )
-    axs[0].plot(
-        scoring["recall"](est, X_test, y_test),
-        scoring["precision"](est, X_test, y_test),
-        marker,
-        markersize=10,
-        color=color,
-        label=f"Cut-off point at probability of {decision_threshold:.2f}",
-    )
-    RocCurveDisplay.from_estimator(
-        est,
-        X_test,
-        y_test,
-        pos_label=pos_label,
-        linestyle=linestyle,
-        color=color,
-        ax=axs[1],
-        name=name,
-        plot_chance_level=idx == 1,
-    )
-    axs[1].plot(
-        scoring["fpr"](est, X_test, y_test),
-        scoring["tpr"](est, X_test, y_test),
-        marker,
-        markersize=10,
-        color=color,
-        label=f"Cut-off point at probability of {decision_threshold:.2f}",
-    )
-
-axs[0].set_title("Precision-Recall curve")
-axs[0].legend()
-axs[1].set_title("ROC curve")
-axs[1].legend()
-
-axs[2].plot(
-    tuned_model.cv_results_["thresholds"],
-    tuned_model.cv_results_["scores"],
-    color="tab:orange",
-)
-axs[2].plot(
-    tuned_model.best_threshold_,
-    tuned_model.best_score_,
-    "o",
-    markersize=10,
-    color="tab:orange",
-    label="Optimal cut-off point for the business metric",
-)
-axs[2].legend()
-axs[2].set_xlabel("Decision threshold (probability)")
-axs[2].set_ylabel("Objective score (using cost-matrix)")
-axs[2].set_title("Objective score as a function of the decision threshold")
-
-_ = fig.suptitle("Tuned GBDT model without refitting and using the entire dataset")
+title = "Tuned GBDT model without refitting and using the entire dataset"
+plot_roc_pr_curves(model, tuned_model, title=title)
 
 # %%
 # Regarding the cut-off point, we observe that the optimum is similar to the multiple
