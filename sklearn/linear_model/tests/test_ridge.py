@@ -5,7 +5,8 @@ import numpy as np
 import pytest
 from scipy import linalg
 
-from sklearn import datasets
+from sklearn import config_context, datasets
+from sklearn.base import clone
 from sklearn.datasets import (
     make_classification,
     make_low_rank_matrix,
@@ -40,12 +41,24 @@ from sklearn.model_selection import (
 )
 from sklearn.preprocessing import minmax_scale
 from sklearn.utils import check_random_state
+from sklearn.utils._array_api import (
+    _NUMPY_NAMESPACE_NAMES,
+    _atol_for_type,
+    _convert_to_numpy,
+    yield_namespace_device_dtype_combinations,
+    yield_namespaces,
+)
 from sklearn.utils._testing import (
     assert_allclose,
     assert_almost_equal,
     assert_array_almost_equal,
     assert_array_equal,
     ignore_warnings,
+)
+from sklearn.utils.estimator_checks import (
+    _array_api_for_tests,
+    _get_check_estimator_ids,
+    check_array_api_input_and_values,
 )
 from sklearn.utils.fixes import (
     _IS_32BIT,
@@ -193,6 +206,8 @@ def test_ridge_regression(solver, fit_intercept, ols_ridge_dataset, global_rando
     assert model.intercept_ == pytest.approx(intercept)
     assert_allclose(model.coef_, coef)
     assert model.score(X, y) == pytest.approx(R2_Ridge)
+
+    assert model.solver_ == solver
 
 
 @pytest.mark.parametrize("solver", SOLVERS)
@@ -1201,6 +1216,130 @@ def _test_tolerance(sparse_container):
     assert score >= score2
 
 
+def check_array_api_attributes(name, estimator, array_namespace, device, dtype_name):
+    xp = _array_api_for_tests(array_namespace, device)
+
+    X_iris_np = X_iris.astype(dtype_name)
+    y_iris_np = y_iris.astype(dtype_name)
+
+    X_iris_xp = xp.asarray(X_iris_np, device=device)
+    y_iris_xp = xp.asarray(y_iris_np, device=device)
+
+    estimator.fit(X_iris_np, y_iris_np)
+    coef_np = estimator.coef_
+    intercept_np = estimator.intercept_
+
+    with config_context(array_api_dispatch=True):
+        estimator_xp = clone(estimator).fit(X_iris_xp, y_iris_xp)
+        coef_xp = estimator_xp.coef_
+        assert coef_xp.shape == (4,)
+        assert coef_xp.dtype == X_iris_xp.dtype
+
+        assert_allclose(
+            _convert_to_numpy(coef_xp, xp=xp),
+            coef_np,
+            atol=_atol_for_type(dtype_name),
+        )
+        intercept_xp = estimator_xp.intercept_
+        assert intercept_xp.shape == ()
+        assert intercept_xp.dtype == X_iris_xp.dtype
+
+        assert_allclose(
+            _convert_to_numpy(intercept_xp, xp=xp),
+            intercept_np,
+            atol=_atol_for_type(dtype_name),
+        )
+
+
+@pytest.mark.parametrize(
+    "array_namespace, device, dtype_name", yield_namespace_device_dtype_combinations()
+)
+@pytest.mark.parametrize(
+    "check",
+    [check_array_api_input_and_values, check_array_api_attributes],
+    ids=_get_check_estimator_ids,
+)
+@pytest.mark.parametrize(
+    "estimator",
+    [Ridge(solver="svd")],
+    ids=_get_check_estimator_ids,
+)
+def test_ridge_array_api_compliance(
+    estimator, check, array_namespace, device, dtype_name
+):
+    name = estimator.__class__.__name__
+    check(name, estimator, array_namespace, device=device, dtype_name=dtype_name)
+
+
+@pytest.mark.parametrize(
+    "array_namespace", yield_namespaces(include_numpy_namespaces=False)
+)
+def test_array_api_error_and_warnings_for_solver_parameter(array_namespace):
+    xp = _array_api_for_tests(array_namespace, device=None)
+
+    X_iris_xp = xp.asarray(X_iris[:5])
+    y_iris_xp = xp.asarray(y_iris[:5])
+
+    available_solvers = Ridge._parameter_constraints["solver"][0].options
+    for solver in available_solvers - {"auto", "svd"}:
+        ridge = Ridge(solver=solver, positive=solver == "lbfgs")
+        expected_msg = (
+            f"Array API dispatch to namespace {xp.__name__} only supports "
+            f"solver 'svd'. Got '{solver}'."
+        )
+
+        with pytest.raises(ValueError, match=expected_msg):
+            with config_context(array_api_dispatch=True):
+                ridge.fit(X_iris_xp, y_iris_xp)
+
+    ridge = Ridge(solver="auto", positive=True)
+    expected_msg = (
+        "The solvers that support positive fitting do not support "
+        f"Array API dispatch to namespace {xp.__name__}. Please "
+        "either disable Array API dispatch, or use a numpy-like "
+        "namespace, or set `positive=False`."
+    )
+
+    with pytest.raises(ValueError, match=expected_msg):
+        with config_context(array_api_dispatch=True):
+            ridge.fit(X_iris_xp, y_iris_xp)
+
+    ridge = Ridge()
+    expected_msg = (
+        f"Using Array API dispatch to namespace {xp.__name__} with `solver='auto'` "
+        "will result in using the solver 'svd'. The results may differ from those "
+        "when using a Numpy array, because in that case the preferred solver would "
+        "be cholesky. Set `solver='svd'` to suppress this warning."
+    )
+    with pytest.warns(UserWarning, match=expected_msg):
+        with config_context(array_api_dispatch=True):
+            ridge.fit(X_iris_xp, y_iris_xp)
+
+
+@pytest.mark.parametrize("array_namespace", sorted(_NUMPY_NAMESPACE_NAMES))
+def test_array_api_numpy_namespace_no_warning(array_namespace):
+    xp = _array_api_for_tests(array_namespace, device=None)
+
+    X_iris_xp = xp.asarray(X_iris[:5])
+    y_iris_xp = xp.asarray(y_iris[:5])
+
+    ridge = Ridge()
+    expected_msg = (
+        "Results might be different than when Array API dispatch is "
+        "disabled, or when a numpy-like namespace is used"
+    )
+
+    with warnings.catch_warnings():
+        warnings.filterwarnings("error", message=expected_msg, category=UserWarning)
+        with config_context(array_api_dispatch=True):
+            ridge.fit(X_iris_xp, y_iris_xp)
+
+    # All numpy namespaces are compatible with all solver, in particular
+    # solvers that support `positive=True` (like 'lbfgs') should work.
+    with config_context(array_api_dispatch=True):
+        Ridge(solver="auto", positive=True).fit(X_iris_xp, y_iris_xp)
+
+
 @pytest.mark.parametrize(
     "test_func",
     (
@@ -2085,3 +2224,20 @@ def test_ridge_sample_weight_consistency(
     assert_allclose(reg1.coef_, reg2.coef_)
     if fit_intercept:
         assert_allclose(reg1.intercept_, reg2.intercept_)
+
+
+# Metadata Routing Tests
+# ======================
+
+
+@pytest.mark.usefixtures("enable_slep006")
+@pytest.mark.parametrize("metaestimator", [RidgeCV, RidgeClassifierCV])
+def test_metadata_routing_with_default_scoring(metaestimator):
+    """Test that `RidgeCV` or `RidgeClassifierCV` with default `scoring`
+    argument (`None`), don't enter into `RecursionError` when metadata is routed.
+    """
+    metaestimator().get_metadata_routing()
+
+
+# End of Metadata Routing Tests
+# =============================

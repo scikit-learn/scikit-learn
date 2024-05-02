@@ -2624,62 +2624,37 @@ def test_log_loss():
     )
     loss = log_loss(y_true, y_pred)
     loss_true = -np.mean(bernoulli.logpmf(np.array(y_true) == "yes", y_pred[:, 1]))
-    assert_almost_equal(loss, loss_true)
+    assert_allclose(loss, loss_true)
 
     # multiclass case; adapted from http://bit.ly/RJJHWA
     y_true = [1, 0, 2]
     y_pred = [[0.2, 0.7, 0.1], [0.6, 0.2, 0.2], [0.6, 0.1, 0.3]]
     loss = log_loss(y_true, y_pred, normalize=True)
-    assert_almost_equal(loss, 0.6904911)
+    assert_allclose(loss, 0.6904911)
 
     # check that we got all the shapes and axes right
     # by doubling the length of y_true and y_pred
     y_true *= 2
     y_pred *= 2
     loss = log_loss(y_true, y_pred, normalize=False)
-    assert_almost_equal(loss, 0.6904911 * 6, decimal=6)
-
-    user_warning_msg = "y_pred values do not sum to one"
-    # check eps and handling of absolute zero and one probabilities
-    y_pred = np.asarray(y_pred) > 0.5
-    with pytest.warns(FutureWarning):
-        loss = log_loss(y_true, y_pred, normalize=True, eps=0.1)
-    with pytest.warns(UserWarning, match=user_warning_msg):
-        assert_almost_equal(loss, log_loss(y_true, np.clip(y_pred, 0.1, 0.9)))
-
-    # binary case: check correct boundary values for eps = 0
-    with pytest.warns(FutureWarning):
-        assert log_loss([0, 1], [0, 1], eps=0) == 0
-    with pytest.warns(FutureWarning):
-        assert log_loss([0, 1], [0, 0], eps=0) == np.inf
-    with pytest.warns(FutureWarning):
-        assert log_loss([0, 1], [1, 1], eps=0) == np.inf
-
-    # multiclass case: check correct boundary values for eps = 0
-    with pytest.warns(FutureWarning):
-        assert log_loss([0, 1, 2], [[1, 0, 0], [0, 1, 0], [0, 0, 1]], eps=0) == 0
-    with pytest.warns(FutureWarning):
-        assert (
-            log_loss([0, 1, 2], [[0, 0.5, 0.5], [0, 1, 0], [0, 0, 1]], eps=0) == np.inf
-        )
+    assert_allclose(loss, 0.6904911 * 6)
 
     # raise error if number of classes are not equal.
     y_true = [1, 0, 2]
-    y_pred = [[0.2, 0.7], [0.6, 0.5], [0.4, 0.1]]
+    y_pred = [[0.3, 0.7], [0.6, 0.4], [0.4, 0.6]]
     with pytest.raises(ValueError):
         log_loss(y_true, y_pred)
 
     # case when y_true is a string array object
     y_true = ["ham", "spam", "spam", "ham"]
-    y_pred = [[0.2, 0.7], [0.6, 0.5], [0.4, 0.1], [0.7, 0.2]]
-    with pytest.warns(UserWarning, match=user_warning_msg):
-        loss = log_loss(y_true, y_pred)
-    assert_almost_equal(loss, 1.0383217, decimal=6)
+    y_pred = [[0.3, 0.7], [0.6, 0.4], [0.4, 0.6], [0.7, 0.3]]
+    loss = log_loss(y_true, y_pred)
+    assert_allclose(loss, 0.7469410)
 
     # test labels option
 
     y_true = [2, 2]
-    y_pred = [[0.2, 0.7], [0.6, 0.5]]
+    y_pred = [[0.2, 0.8], [0.6, 0.4]]
     y_score = np.array([[0.1, 0.9], [0.1, 0.9]])
     error_str = (
         r"y_true contains only one label \(2\). Please provide "
@@ -2688,50 +2663,66 @@ def test_log_loss():
     with pytest.raises(ValueError, match=error_str):
         log_loss(y_true, y_pred)
 
-    y_pred = [[0.2, 0.7], [0.6, 0.5], [0.2, 0.3]]
-    error_str = "Found input variables with inconsistent numbers of samples: [3, 2]"
-    (ValueError, error_str, log_loss, y_true, y_pred)
+    y_pred = [[0.2, 0.8], [0.6, 0.4], [0.7, 0.3]]
+    error_str = r"Found input variables with inconsistent numbers of samples: \[3, 2\]"
+    with pytest.raises(ValueError, match=error_str):
+        log_loss(y_true, y_pred)
 
     # works when the labels argument is used
 
     true_log_loss = -np.mean(np.log(y_score[:, 1]))
     calculated_log_loss = log_loss(y_true, y_score, labels=[1, 2])
-    assert_almost_equal(calculated_log_loss, true_log_loss)
+    assert_allclose(calculated_log_loss, true_log_loss)
 
     # ensure labels work when len(np.unique(y_true)) != y_pred.shape[1]
     y_true = [1, 2, 2]
-    y_score2 = [[0.2, 0.7, 0.3], [0.6, 0.5, 0.3], [0.3, 0.9, 0.1]]
-    with pytest.warns(UserWarning, match=user_warning_msg):
-        loss = log_loss(y_true, y_score2, labels=[1, 2, 3])
-    assert_almost_equal(loss, 1.0630345, decimal=6)
+    y_score2 = [[0.7, 0.1, 0.2], [0.2, 0.7, 0.1], [0.1, 0.7, 0.2]]
+    loss = log_loss(y_true, y_score2, labels=[1, 2, 3])
+    assert_allclose(loss, -np.log(0.7))
 
 
-def test_log_loss_eps_auto(global_dtype):
-    """Check the behaviour of `eps="auto"` that changes depending on the input
-    array dtype.
+@pytest.mark.parametrize("dtype", [np.float64, np.float32, np.float16])
+def test_log_loss_eps(dtype):
+    """Check the behaviour internal eps that changes depending on the input dtype.
+
     Non-regression test for:
     https://github.com/scikit-learn/scikit-learn/issues/24315
     """
-    y_true = np.array([0, 1], dtype=global_dtype)
-    y_pred = y_true.copy()
+    y_true = np.array([0, 1], dtype=dtype)
+    y_pred = np.array([1, 0], dtype=dtype)
 
-    loss = log_loss(y_true, y_pred, eps="auto")
+    loss = log_loss(y_true, y_pred)
     assert np.isfinite(loss)
 
 
-def test_log_loss_eps_auto_float16():
-    """Check the behaviour of `eps="auto"` for np.float16"""
-    y_true = np.array([0, 1], dtype=np.float16)
-    y_pred = y_true.copy()
+@pytest.mark.parametrize("dtype", [np.float64, np.float32, np.float16])
+def test_log_loss_not_probabilities_warning(dtype):
+    """Check that log_loss raises a warning when y_pred values don't sum to 1."""
+    y_true = np.array([0, 1, 1, 0])
+    y_pred = np.array([[0.2, 0.7], [0.6, 0.3], [0.4, 0.7], [0.8, 0.3]], dtype=dtype)
 
-    loss = log_loss(y_true, y_pred, eps="auto")
-    assert np.isfinite(loss)
+    with pytest.warns(UserWarning, match="The y_pred values do not sum to one."):
+        log_loss(y_true, y_pred)
+
+
+@pytest.mark.parametrize(
+    "y_true, y_pred",
+    [
+        ([0, 1, 0], [0, 1, 0]),
+        ([0, 1, 0], [[1, 0], [0, 1], [1, 0]]),
+        ([0, 1, 2], [[1, 0, 0], [0, 1, 0], [0, 0, 1]]),
+    ],
+)
+def test_log_loss_perfect_predictions(y_true, y_pred):
+    """Check that log_loss returns 0 for perfect predictions."""
+    # Because of the clipping, the result is not exactly 0
+    assert log_loss(y_true, y_pred) == pytest.approx(0)
 
 
 def test_log_loss_pandas_input():
     # case when input is a pandas series and dataframe gh-5715
     y_tr = np.array(["ham", "spam", "spam", "ham"])
-    y_pr = np.array([[0.2, 0.7], [0.6, 0.5], [0.4, 0.1], [0.7, 0.2]])
+    y_pr = np.array([[0.3, 0.7], [0.6, 0.4], [0.4, 0.6], [0.7, 0.3]])
     types = [(MockDataFrame, MockDataFrame)]
     try:
         from pandas import DataFrame, Series
@@ -2742,9 +2733,8 @@ def test_log_loss_pandas_input():
     for TrueInputType, PredInputType in types:
         # y_pred dataframe, y_true series
         y_true, y_pred = TrueInputType(y_tr), PredInputType(y_pr)
-        with pytest.warns(UserWarning, match="y_pred values do not sum to one"):
-            loss = log_loss(y_true, y_pred)
-        assert_almost_equal(loss, 1.0383217, decimal=6)
+        loss = log_loss(y_true, y_pred)
+        assert_allclose(loss, 0.7469410)
 
 
 def test_brier_score_loss():
