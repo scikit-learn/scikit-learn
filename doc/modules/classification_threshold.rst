@@ -118,8 +118,9 @@ a meaningful metric for their use case.
         0.86...
 
 A second strategy aims to maximize one metric while imposing constraints on another
-metric. There are four pre-defined options, two use the Receiver Operating
-Characteristic (ROC) statistics and two use the Precision-Recall statistics.
+metric. There are four pre-defined options that can be provided to `objective_metric`
+parameter, two use the Receiver Operating Characteristic (ROC) statistics and two use
+the Precision-Recall statistics.
 
 - `"max_tpr_at_tnr_constraint"`: maximizes the True Positive Rate (TPR) such that the
   True Negative Rate (TNR) is the closest to a given value.
