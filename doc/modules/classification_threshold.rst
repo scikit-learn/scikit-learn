@@ -16,20 +16,20 @@ related to answering "what is the chance that it will rain tomorrow?" while the 
 point is related to answering "should I take an umbrella tomorrow?".
 
 When it comes to the scikit-learn API, the first point is addressed providing scores
-using :term:`predict_proba` or :term:`decision_function`. The former returns posterior
-probability estimates for each class, while the latter returns a decision score for each
-class.
+using :term:`predict_proba` or :term:`decision_function`. The former returns conditional
+probability estimates :math:`P(y|X)` for each class, while the latter returns a decision
+score for each class.
 
 The decision corresponding to the labels are obtained with :term:`predict`. In binary
 classification, a decision rule or action is then defined by thresholding the scores,
 leading to the prediction of a single class label for each sample. For binary
 classification in scikit-learn, class labels predictions are obtained by hard-coded
-cut-off rules: a positive class is predicted when the posterior probability is greater
-than 0.5 (obtained with :term:`predict_proba`) or if the decision score is greater than
-0 (obtained with :term:`decision_function`).
+cut-off rules: a positive class is predicted when the conditional probability
+:math:`P(y|X)` is greater than 0.5 (obtained with :term:`predict_proba`) or if the
+decision score is greater than 0 (obtained with :term:`decision_function`).
 
-Here, we show an example that illustrates the relation between posterior
-probability estimates and class labels::
+Here, we show an example that illustrates the relation between conditional
+probability estimates :math:`P(y|X)` and class labels::
 
     >>> from sklearn.datasets import make_classification
     >>> from sklearn.tree import DecisionTreeClassifier
@@ -55,7 +55,7 @@ the trade-off of potentially more false-positive predictions, reducing the preci
 the model. That is a risk physicians are willing to take because the cost of a missed
 cancer is much higher than the cost of further diagnostic tests. Consequently, when it
 comes to deciding whether to classify a patient as having cancer or not, it may be more
-beneficial to classify them as positive for cancer when the posterior probability
+beneficial to classify them as positive for cancer when the conditional probability
 estimate is much lower than 0.5.
 
 Post-tuning the decision threshold
@@ -72,9 +72,9 @@ boosting classifier. While the vanilla and tuned classifiers provide the same
 :term:`predict_proba` outputs and thus the same Receiver Operating Characteristic (ROC)
 and Precision-Recall curves, the class label predictions differ because of the tuned
 decision threshold. The vanilla classifier predicts the class of interest for a
-posterior probability greater than 0.5 while the tuned classifier predicts the class of
-interest for a very low probability (around 0.02). This decision threshold optimizes a
-utility metric defined by the business (in this case an insurance company).
+conditional probability greater than 0.5 while the tuned classifier predicts the class
+of interest for a very low probability (around 0.02). This decision threshold optimizes
+a utility metric defined by the business (in this case an insurance company).
 
 .. figure:: ../auto_examples/model_selection/images/sphx_glr_plot_cost_sensitive_learning_002.png
    :target: ../auto_examples/model_selection/plot_cost_sensitive_learning.html
