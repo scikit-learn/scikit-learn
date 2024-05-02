@@ -2837,6 +2837,9 @@ of D² with the log loss, see :ref:`log_loss`, i.e.:
 
   \text{dev}(y, \hat{y}) = \text{log_loss}(y, \hat{y}).
 
+The :math:`y_{\text{null}}` for the :func:`log_loss` is the per-class
+proportion.
+
 Here are some usage examples of the :func:`d2_log_loss_score` function::
 
   >>> from sklearn.metrics import d2_log_loss_score

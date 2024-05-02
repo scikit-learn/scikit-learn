@@ -53,7 +53,11 @@ from ..utils._param_validation import (
 from ..utils.extmath import _nanaverage
 from ..utils.multiclass import type_of_target, unique_labels
 from ..utils.sparsefuncs import count_nonzero
-from ..utils.validation import _check_pos_label_consistency, _num_samples
+from ..utils.validation import (
+    _check_pos_label_consistency,
+    _check_sample_weight,
+    _num_samples,
+)
 
 
 def _check_zero_division(zero_division):
@@ -3305,12 +3309,14 @@ def d2_log_loss_score(y_true, y_pred, *, sample_weight=None, labels=None):
 
     Read more in the :ref:`User Guide <d2_score>`.
 
+    .. versionadded:: 1.5
+
     Parameters
     ----------
     y_true : array-like or label indicator matrix
         The actuals labels for the n_samples samples.
 
-    y_pred : array-like of float, shape = (n_samples, n_classes) or (n_samples,)
+    y_pred : array-like of shape (n_samples, n_classes) or (n_samples,)
         Predicted probabilities, as returned by a classifier's
         predict_proba method. If ``y_pred.shape = (n_samples,)``
         the probabilities provided are assumed to be that of the
@@ -3358,10 +3364,7 @@ def d2_log_loss_score(y_true, y_pred, *, sample_weight=None, labels=None):
     )
 
     # Proportion of labels in the dataset
-    if sample_weight is not None:
-        weights = np.asarray(sample_weight)
-    else:
-        weights = np.ones(shape=len(y_true), dtype=np.int64)
+    weights = _check_sample_weight(sample_weight, y_true)
 
     _, y_value_indices = np.unique(y_true, return_inverse=True)
     counts = np.bincount(y_value_indices, weights=weights)
