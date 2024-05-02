@@ -3257,3 +3257,233 @@ def brier_score_loss(
             raise
     y_true = np.array(y_true == pos_label, int)
     return np.average((y_true - y_proba) ** 2, weights=sample_weight)
+
+
+@validate_params(
+    {
+        "y_true": ["array-like"],
+        "y_prob": ["array-like"],
+        "pos_label": [Real, str, "boolean", None],
+    },
+    prefer_skip_nested_validation=True,
+)
+def ecce_mad_loss(y_true, y_prob, *, pos_label=None):
+    """Compute the ECCE-MAD loss according to [1].
+
+    The smaller the ECCE-MAD, the better, hence the naming with "loss".
+    They are based on the cumulative differences between the actual outcomes
+    and the estimated probabilities. It has been shown that the empirical cumulative
+    calibration errors (ECCE) are fully, non-parametric and uniquely, fully specified,
+    statistically powerful and reliable. And not only that, but also without any
+    specific trade-off concerning binning. As indicated, they are a calibration metric
+    that does not depend on binning or graphical methods such as reliability diagrams,
+    making them ideal for process automation when a calibrated model is needed.
+    They are more appropiate to assess calibration than the previous state-of-art ECE.
+
+    The ECCE-MAD metric is appropriate for assessing the probability calibration
+    of classifiers with binary outcomes (that can be structured as true or false)
+    Which label is considered to be the positive label is controlled via the parameter
+    `pos_label`, which defaults to the greater label unless `y_true` is all 0 or all -1,
+    in which case `pos_label` defaults to 1.
+
+    Read more in the :ref:`User Guide <ecce_loss>`.
+
+    Parameters
+    ----------
+    y_true : array-like of shape (n_samples,)
+        True targets.
+
+    y_prob : array-like of shape (n_samples,)
+        Probabilities of the positive class.
+
+    pos_label : int, float, bool or str, default=None
+        Label of the positive class. `pos_label` will be inferred in the
+        following manner:
+
+        * if `y_true` in {-1, 1} or {0, 1}, `pos_label` defaults to 1;
+        * else if `y_true` contains string, an error will be raised and
+          `pos_label` should be explicitly specified;
+        * otherwise, `pos_label` defaults to the greater label,
+          i.e. `np.unique(y_true)[-1]`.
+
+    Returns
+    -------
+    score : float
+        ECCE-MAD loss.
+
+    References
+    ----------
+    .. [1] Imanol Arrieta-Ibarra, Paman Gujral, Jonathan Tannen, Mark Tygert, and
+           Cherie Xu. "Metrics of calibration for probabilistic predictions". J. Mach.
+           Learn. Res., 23(1), jan 2022. ISSN 1532-4435.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.metrics import ecce_mad_loss
+    >>> y_true = np.array([0, 1, 1, 0])
+    >>> y_true_categorical = np.array(["spam", "ham", "ham", "spam"])
+    >>> y_prob = np.array([0.1, 0.9, 0.8, 0.3])
+    >>> ecce_mad_loss(y_true, y_prob)
+    0.1...
+    >>> ecce_mad_loss(y_true, 1-y_prob, pos_label=0)
+    0.07499999999999998...
+    >>> ecce_mad_loss(y_true_categorical, y_prob, pos_label="ham")
+    0.1...
+    >>> ecce_mad_loss(y_true, np.array(y_prob) > 0.5)
+    0.0
+    """
+    y_true = column_or_1d(y_true)
+    y_prob = column_or_1d(y_prob)
+    assert_all_finite(y_true)
+    assert_all_finite(y_prob)
+    check_consistent_length(y_true, y_prob)
+
+    y_type = type_of_target(y_true, input_name="y_true")
+    if y_type != "binary":
+        raise ValueError(
+            "Only binary classification is supported. The type of the target "
+            f"is {y_type}."
+        )
+
+    if y_prob.max() > 1:
+        raise ValueError("y_prob contains values greater than 1.")
+    if y_prob.min() < 0:
+        raise ValueError("y_prob contains values less than 0.")
+
+    try:
+        pos_label = _check_pos_label_consistency(pos_label, y_true)
+    except ValueError:
+        classes = np.unique(y_true)
+        if classes.dtype.kind not in ("O", "U", "S"):
+            # for backward compatibility, if classes are not string then
+            # `pos_label` will correspond to the greater label
+            pos_label = classes[-1]
+        # else dropped because we are not fully aware how it can be executed.
+
+    y_true = np.array(y_true == pos_label, int)
+
+    # new:
+    sort_idxs = np.argsort(y_prob)
+    y_prob_sorted = y_prob[sort_idxs]
+    y_true_sorted = y_true[sort_idxs]
+
+    diffs = 1 / len(y_prob) * (y_true_sorted - y_prob_sorted)
+    cum_diffs = np.cumsum(diffs)
+
+    return max(np.abs(cum_diffs))
+
+
+@validate_params(
+    {
+        "y_true": ["array-like"],
+        "y_prob": ["array-like"],
+        "pos_label": [Real, str, "boolean", None],
+    },
+    prefer_skip_nested_validation=True,
+)
+def ecce_r_loss(y_true, y_prob, *, pos_label=None):
+    """Compute the ECCE-R loss according to [1].
+
+    The smaller the ECCE-R, the better, hence the naming with "loss".
+    They are based on the cumulative differences between the actual outcomes
+    and the estimated probabilities. It has been shown that the empirical cumulative
+    calibration errors (ECCE) are fully, non-parametric and uniquely, fully specified,
+    statistically powerful and reliable. And not only that, but also without any
+    specific trade-off concerning binning. As indicated, they are a calibration metric
+    that does not depend on binning or graphical methods such as reliability diagrams,
+    making them ideal for process automation when a calibrated model is needed.
+    They are more appropiate to assess calibration than the previous state-of-art ECE.
+
+    The ECCE-R metric is appropriate for assessing the probability calibration
+    of classifiers with binary outcomes (that can be structured as true or false)
+    Which label is considered to be the positive label is controlled via the parameter
+    `pos_label`, which defaults to the greater label unless `y_true` is all 0 or all -1,
+    in which case `pos_label` defaults to 1.
+
+    Read more in the :ref:`User Guide <ecce_loss>`.
+
+    Parameters
+    ----------
+    y_true : array-like of shape (n_samples,)
+        True targets.
+
+    y_prob : array-like of shape (n_samples,)
+        Probabilities of the positive class.
+
+    pos_label : int, float, bool or str, default=None
+        Label of the positive class. `pos_label` will be inferred in the
+        following manner:
+
+        * if `y_true` in {-1, 1} or {0, 1}, `pos_label` defaults to 1;
+        * else if `y_true` contains string, an error will be raised and
+          `pos_label` should be explicitly specified;
+        * otherwise, `pos_label` defaults to the greater label,
+          i.e. `np.unique(y_true)[-1]`.
+
+    Returns
+    -------
+    score : float
+        ECCE-R loss.
+
+    References
+    ----------
+    .. [1] Imanol Arrieta-Ibarra, Paman Gujral, Jonathan Tannen, Mark Tygert,
+           and Cherie Xu. "Metrics of calibration for probabilistic predictions".
+           J. Mach. Learn. Res., 23(1), jan 2022. ISSN 1532-4435.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.metrics import ecce_r_loss
+    >>> y_true = np.array([0, 1, 1, 0])
+    >>> y_true_categorical = np.array(["spam", "ham", "ham", "spam"])
+    >>> y_prob = np.array([0.1, 0.9, 0.8, 0.3])
+    >>> ecce_r_loss(y_true, y_prob)
+    0.075...
+    >>> ecce_r_loss(y_true, 1-y_prob, pos_label=0)
+    0.1...
+    >>> ecce_r_loss(y_true_categorical, y_prob, pos_label="ham")
+    0.075...
+    >>> ecce_r_loss(y_true, np.array(y_prob) > 0.5)
+    0.0
+    """
+    y_true = column_or_1d(y_true)
+    y_prob = column_or_1d(y_prob)
+    assert_all_finite(y_true)
+    assert_all_finite(y_prob)
+    check_consistent_length(y_true, y_prob)
+
+    y_type = type_of_target(y_true, input_name="y_true")
+    if y_type != "binary":
+        raise ValueError(
+            "Only binary classification is supported. The type of the target "
+            f"is {y_type}."
+        )
+
+    if y_prob.max() > 1:
+        raise ValueError("y_prob contains values greater than 1.")
+    if y_prob.min() < 0:
+        raise ValueError("y_prob contains values less than 0.")
+
+    try:
+        pos_label = _check_pos_label_consistency(pos_label, y_true)
+    except ValueError:
+        classes = np.unique(y_true)
+        if classes.dtype.kind not in ("O", "U", "S"):
+            # for backward compatibility, if classes are not string then
+            # `pos_label` will correspond to the greater label
+            pos_label = classes[-1]
+            # else dropped because we are not fully aware how it can be executed.
+
+    y_true = np.array(y_true == pos_label, int)
+
+    # new:
+    sort_idxs = np.argsort(y_prob)
+    y_prob_sorted = y_prob[sort_idxs]
+    y_true_sorted = y_true[sort_idxs]
+
+    diffs = 1 / len(y_prob) * (y_true_sorted - y_prob_sorted)
+    cum_diffs = np.cumsum(diffs)
+
+    return max(cum_diffs) - min(cum_diffs)

@@ -21,6 +21,8 @@ from sklearn.metrics import (
     classification_report,
     cohen_kappa_score,
     confusion_matrix,
+    ecce_mad_loss,
+    ecce_r_loss,
     f1_score,
     fbeta_score,
     hamming_loss,
@@ -2772,6 +2774,121 @@ def test_brier_score_loss():
     assert_almost_equal(brier_score_loss(["foo"], [0.4], pos_label="foo"), 0.36)
 
 
+def test_ecce_losses():
+    # Check ecce_r and ecce_mad functions
+    y_pred = np.array(
+        [
+            0.10529251,
+            0.03491448,
+            0.02115821,
+            0.6561689,
+            0.01774543,
+            0.3792231,
+            0.00705452,
+            0.05154681,
+            0.7255118,
+            0.325928,
+            0.208332,
+            0.07252348,
+            0.38617417,
+            0.3765612,
+            0.27100423,
+            0.03260393,
+            0.5483106,
+            0.16531402,
+            0.33072174,
+            0.01932693,
+            0.82342917,
+            0.07807349,
+            0.14270112,
+            0.11011302,
+            0.5749281,
+            0.7374097,
+            0.7106595,
+        ]
+    )
+    y_true = np.array(
+        [
+            0,
+            0,
+            0,
+            1,
+            0,
+            1,
+            0,
+            0,
+            1,
+            0,
+            1,
+            0,
+            0,
+            1,
+            0,
+            0,
+            0,
+            1,
+            0,
+            0,
+            1,
+            0,
+            0,
+            0,
+            1,
+            1,
+            1,
+        ]
+    )
+
+    true_score_mad = 0.0773062909849816
+    true_score_r = 0.10297495568240131
+
+    assert_almost_equal(ecce_mad_loss(y_true, y_pred), true_score_mad)
+    assert_almost_equal(ecce_r_loss(y_true, y_pred), true_score_r)
+    assert_almost_equal(ecce_mad_loss(2 * y_true, y_pred), true_score_mad)
+    assert_almost_equal(ecce_r_loss(2 * y_true, y_pred), true_score_r)
+    # check if pos_label can be inferred
+    # Check ValueErrors - ecce_mad
+    with pytest.raises(ValueError):
+        ecce_mad_loss(y_true, y_pred[1:])
+    with pytest.raises(ValueError):
+        ecce_mad_loss(y_true, y_pred + 1.0)
+    with pytest.raises(ValueError):
+        ecce_mad_loss(y_true, y_pred - 1.0)
+
+    # Check ValueErrors - ecce_r
+    with pytest.raises(ValueError):
+        ecce_r_loss(y_true, y_pred[1:])
+    with pytest.raises(ValueError):
+        ecce_r_loss(y_true, y_pred + 1.0)
+    with pytest.raises(ValueError):
+        ecce_r_loss(y_true, y_pred - 1.0)
+
+    # ensure to raise an error for multiclass y_true
+    y_true = np.array([0, 1, 2, 0])
+    y_pred = np.array([0.8, 0.6, 0.4, 0.2])
+    error_message = (
+        "Only binary classification is supported. The type of the target is multiclass"
+    )
+    with pytest.raises(ValueError, match=error_message):
+        ecce_mad_loss(y_true, y_pred)
+    with pytest.raises(ValueError, match=error_message):
+        ecce_r_loss(y_true, y_pred)
+
+    # calculate correctly when there's only one class in y_true - ecce_mad
+    assert_almost_equal(ecce_mad_loss([-1], [0.4]), 0.4)
+    assert_almost_equal(ecce_mad_loss([0], [0.4]), 0.4)
+    assert_almost_equal(ecce_mad_loss([1], [0.4]), 0.6)
+    assert_almost_equal(ecce_mad_loss(["foo"], [0.4], pos_label="bar"), 0.4)
+    assert_almost_equal(ecce_mad_loss(["foo"], [0.4], pos_label="foo"), 0.6)
+
+    # calculate correctly when there's only one class in y_true - ecce_r
+    assert_almost_equal(ecce_r_loss([-1], [0.4]), 0)
+    assert_almost_equal(ecce_r_loss([0], [0.4]), 0)
+    assert_almost_equal(ecce_r_loss([1], [0.4]), 0)
+    assert_almost_equal(ecce_r_loss(["foo"], [0.4], pos_label="bar"), 0)
+    assert_almost_equal(ecce_r_loss(["foo"], [0.4], pos_label="foo"), 0)
+
+
 def test_balanced_accuracy_score_unseen():
     msg = "y_pred contains classes not in y_true"
     with pytest.warns(UserWarning, match=msg):
@@ -2809,6 +2926,8 @@ def test_balanced_accuracy_score(y_true, y_pred):
         precision_score,
         recall_score,
         brier_score_loss,
+        ecce_mad_loss,
+        ecce_r_loss,
     ],
 )
 @pytest.mark.parametrize(
@@ -2823,7 +2942,7 @@ def test_classification_metric_pos_label_types(metric, classes):
     rng = np.random.RandomState(42)
     n_samples, pos_label = 10, classes[-1]
     y_true = rng.choice(classes, size=n_samples, replace=True)
-    if metric is brier_score_loss:
+    if metric in [brier_score_loss, ecce_mad_loss, ecce_r_loss]:
         # brier score loss requires probabilities
         y_pred = rng.uniform(size=n_samples)
     else:

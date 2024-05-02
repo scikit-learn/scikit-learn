@@ -978,6 +978,8 @@ details.
    metrics.average_precision_score
    metrics.balanced_accuracy_score
    metrics.brier_score_loss
+   metrics.ecce_mad_loss
+   metrics.ecce_r_loss
    metrics.class_likelihood_ratios
    metrics.classification_report
    metrics.cohen_kappa_score

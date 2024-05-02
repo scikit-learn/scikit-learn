@@ -804,6 +804,10 @@ Changelog
   found in `y_true` and `y_pred`.
   :pr:`27650` by :user:`Lucy Liu <lucyleeow>`.
 
+- |Enhancement| :func:`metrics.ecce_r_loss` and :func:`metrics.ecce_mad_loss` are
+  available automatically assessing calibration of models that estimate probability.
+  :pr:`27997` by :user:`Edgar Bahilo <edgBR>` and :user:`Abel Sancarlos<Abel-24pal>`.
+
 - |Fix| computing pairwise distances with :func:`metrics.pairwise.euclidean_distances`
   no longer raises an exception when `X` is provided as a `float64` array and
   `X_norm_squared` as a `float32` array.

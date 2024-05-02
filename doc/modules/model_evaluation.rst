@@ -63,6 +63,8 @@ Scoring                                Function                                 
 'top_k_accuracy'                       :func:`metrics.top_k_accuracy_score`
 'average_precision'                    :func:`metrics.average_precision_score`
 'neg_brier_score'                      :func:`metrics.brier_score_loss`
+'neg_ecce_r_score'                     :func:`metrics.ecce_r_loss`
+'neg_ecce_mad_score'                   :func:`metrics.ecce_mad_loss`
 'f1'                                   :func:`metrics.f1_score`                           for binary targets
 'f1_micro'                             :func:`metrics.f1_score`                           micro-averaged
 'f1_macro'                             :func:`metrics.f1_score`                           macro-averaged
@@ -1985,6 +1987,80 @@ see the example below.
     Statistics in medicine, 16(9), 981-991.
 
 |details-end|
+
+.. _ecce_loss:
+
+ECCE losses
+----------------
+
+Reliability diagrams are an extremely useful visual tool. However, reliable metrics to assess 
+calibration are also highly demanded, for instance,  for an automatic model selection based 
+on this assessment.
+
+Scikit-learn provides the ECCE metrics to assess calibration :func:`~sklearn.metrics.ecce_r_loss`
+and the :func:`~sklearn.metrics.ecce_mad_loss`.
+
+Consider the following general setting. Suppose we have :math:`n` observations 
+:math:`y_1, y_2, \dots, y_n` of the outcomes of independent Bernoulli trials 
+with corresponding predicted probabilities of success, say :math:`\tilde{y}_1, \dots, \tilde{y}_n`. 
+For our purposes, each :math:`\tilde{y}_k` is the classifier's probabilistic 
+score and the :math:`y_k` can be regarded as the binary class label. In addition, 
+let's consider that the samples are sorted (preserving the pairing of :math:`y_k` 
+with :math:`\tilde{y}_k` for every :math:`k`) such that :math:`\tilde{y}_1 < \tilde{y}_2 < \cdots < \tilde{y}_n`.
+The cumulative differences are:
+
+.. math::
+  C_k = \frac{1}{n} \sum_{j=1}^{k} (y_j - \tilde{y}_j)
+  
+for :math:`k = 1, 2,\dots, n`
+Then, the maximum absolute deviation of the empirical cumulative calibration error (ECCE-MAD) is:
+
+.. math::
+  \text{ECCE-MAD} = \max_{1 \leq k \leq n} \mid C_k \mid 
+
+and the range of the empirical cumulative calibration error (ECCE-R) is:
+
+.. math::
+    \text{ECCE-R} = \max_{1 \leq k \leq n} C_k - \min_{1 \leq k \leq n} C_k
+
+where :math:`C_k` is defined in the first equation of this section and :math:`C_0=0`.
+
+The following advantages motivate the choice of the ECCEs over other metrics based on binning. First, ECCEs yield trustworthy 
+results needing a lower numbers of observations than the metrics based on binning such as the ECE metrics.
+Furthermore, ECCE metrics do not need to set any parameters such as the number of bins removing the trade-off between statistical
+confidence and power for the methodologies based on binnning. Moreover, choosing among the possible binnings can be confusing,
+yet makes all the difference [Ibarra2022]_ [Sancarlos2023]_. This does ECCE metrics more convenient and robust for an automatic solution. In addition, 
+alternative metrics such as the Brier score could be used to assess how well a classifier is calibrated, 
+but they come with serious limitations and drawbacks. In fact, a lower Brier score loss does not necessarily mean a better 
+calibration, thus not being appropiate if your main goal is to find the best probability estimator [Bella2012_2]_ [Flach2008_2]_ [Sancarlos2023]_. 
+Below is an example of how the ECCE metrics can automatically select correctly the best calibrated model as we have
+seen in the reliability diagrams.
+
+.. topic:: Example:
+
+  * See :ref:`sphx_glr_auto_examples_calibration_plot_compare_calibration.py`
+    for an example of this losses usage to d trustworthy and robust calibration assessment of probability estimates
+    of classifiers.
+
+.. topic:: References:
+
+  .. [Ibarra2022] Imanol Arrieta-Ibarra, Paman Gujral, Jonathan Tannen, Mark Tygert, and Cherie Xu., `Metrics of calibration for probabilistic predictions
+    <https://www.jmlr.org/papers/volume23/22-0658/22-0658.pdf>`_,
+    J. Mach. Learn. Res. Vol. 23. (2022)
+
+  .. [Bella2012_2] Bella, Ferri, Hernández-Orallo, and Ramírez-Quintana
+    `"Calibration of Machine Learning Models"
+    <http://dmip.webs.upv.es/papers/BFHRHandbook2010.pdf>`_
+    in Khosrow-Pour, M. "Machine learning: concepts, methodologies, tools
+    and applications." Hershey, PA: Information Science Reference (2012).
+
+  .. [Flach2008_2] Flach, Peter, and Edson Matsubara. `"On classification, ranking,
+    and probability estimation." <https://drops.dagstuhl.de/opus/volltexte/2008/1382/>`_
+    Dagstuhl Seminar Proceedings. Schloss Dagstuhl-Leibniz-Zentrum fr Informatik (2008).
+
+  .. [Sancarlos2023] Abel Sancarlos, Edgar Bahilo, Pablo Mozo, Lukas Norman, Obaid Ur Rehma and Mihails Anufrijevs, 
+    `"Towards a data-driven debt collection strategy based on an advanced machine learning framework." <https://arxiv.org/pdf/2311.06292.pdf>`_,
+    (2023)
 
 .. _multilabel_ranking_metrics:
 
