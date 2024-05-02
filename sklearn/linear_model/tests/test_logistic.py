@@ -248,20 +248,26 @@ def test_elasticnet_l1_ratio_err_helpful(LR):
         model.fit(np.array([[1, 2], [3, 4]]), np.array([0, 1]))
 
 
+# TODO(1.7): remove whole test with deprecation of multi_class
+@pytest.mark.filterwarnings("ignore:.*'multi_class' was deprecated.*:FutureWarning")
 @pytest.mark.parametrize("solver", ["lbfgs", "newton-cg", "sag", "saga"])
 def test_multinomial_binary(solver):
     # Test multinomial LR on a binary problem.
     target = (iris.target > 0).astype(np.intp)
     target = np.array(["setosa", "not-setosa"])[target]
 
-    clf = LogisticRegression(solver=solver, random_state=42, max_iter=2000)
+    clf = LogisticRegression(
+        solver=solver, multi_class="multinomial", random_state=42, max_iter=2000
+    )
     clf.fit(iris.data, target)
 
     assert clf.coef_.shape == (1, iris.data.shape[1])
     assert clf.intercept_.shape == (1,)
     assert_array_equal(clf.predict(iris.data), target)
 
-    mlr = LogisticRegression(solver=solver, random_state=42, fit_intercept=False)
+    mlr = LogisticRegression(
+        solver=solver, multi_class="multinomial", random_state=42, fit_intercept=False
+    )
     mlr.fit(iris.data, target)
     pred = clf.classes_[np.argmax(clf.predict_log_proba(iris.data), axis=1)]
     assert np.mean(pred == target) > 0.9
