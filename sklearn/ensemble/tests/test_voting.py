@@ -7,7 +7,7 @@ import pytest
 
 from sklearn import datasets
 from sklearn.base import BaseEstimator, ClassifierMixin, clone
-from sklearn.datasets import make_multilabel_classification
+from sklearn.datasets import make_multilabel_classification, make_regression
 from sklearn.dummy import DummyRegressor
 from sklearn.ensemble import (
     RandomForestClassifier,

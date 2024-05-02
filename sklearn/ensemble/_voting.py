@@ -13,11 +13,11 @@ This module contains:
 #
 # License: BSD 3 clause
 
-import numbers
 from abc import abstractmethod
 from numbers import Integral
 
 import numpy as np
+
 from ..base import (
     ClassifierMixin,
     RegressorMixin,
@@ -44,7 +44,6 @@ from ..utils.validation import (
     _check_feature_names_in,
     _deprecate_positional_args,
     check_is_fitted,
-    column_or_1d,
 )
 from ._base import _BaseHeterogeneousEnsemble, _fit_single_estimator
 
@@ -692,7 +691,6 @@ class VotingRegressor(RegressorMixin, _BaseVoting):
             Fitted estimator.
         """
         _raise_for_params(fit_params, self, "fit")
-        y = column_or_1d(y, warn=True)
         if sample_weight is not None:
             fit_params["sample_weight"] = sample_weight
         return super().fit(X, y, **fit_params)
