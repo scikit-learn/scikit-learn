@@ -212,7 +212,12 @@ Changelog
   :class:`cross_decomposition.CCA`,
   and :class:`cross_decomposition.PLSSVD`.
   `Y` will be removed in version 1.7.
-  :pr:`28604` by :user:`David Leon <davidleon123>`
+  :pr:`28604` by :user:`David Leon <davidleon123>`.
+
+- |Fix| The `coef_` fitted attribute of :class:`cross_decomposition.PLSRegression`
+  now takes into account both the scale of `X` and `Y` when `scale=True`. Note that
+  the previous predicted values were not affected by this bug.
+  :pr:`28612` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 :mod:`sklearn.datasets`
 .......................
