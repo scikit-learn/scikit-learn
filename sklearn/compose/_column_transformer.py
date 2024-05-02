@@ -139,8 +139,17 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         If False, :meth:`ColumnTransformer.get_feature_names_out` will not
         prefix any feature names and will error if feature names are not
         unique.
+        If Callable[[str, str], str], :meth:`ColumnTransformer.get_feature_names_out`
+        will rename all the features using the name of the transformer. The
+        first argument of the callable is the transformer name and the
+        second argument is the feature name. The returned string will be the
+        new feature name.
 
         .. versionadded:: 1.0
+
+        .. versionchanged:: 1.X
+            `verbose_feature_names_out` can be a callable.
+
 
     force_int_remainder_cols : bool, default=True
         Force the columns of the last entry of `transformers_`, which
@@ -654,11 +663,17 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         feature_names_out : ndarray of shape (n_features,), dtype=str
             Transformed feature names.
         """
-        if self.verbose_feature_names_out:
+        feature_names_out_callable = None
+        if callable(self.verbose_feature_names_out):
+            feature_names_out_callable = self.verbose_feature_names_out
+        elif self.verbose_feature_names_out is True:
+            feature_names_out_callable = _feature_names_out
+
+        if feature_names_out_callable is not None:
             # Prefix the feature names out with the transformers name
             names = list(
                 chain.from_iterable(
-                    (f"{name}__{i}" for i in feature_names_out)
+                    (feature_names_out_callable(name, i) for i in feature_names_out)
                     for name, feature_names_out in transformer_with_feature_names_out
                 )
             )
@@ -1650,3 +1665,7 @@ def _with_dtype_warning_enabled_set_to(warning_enabled, transformers):
             )
         result.append((name, trans, columns))
     return result
+
+
+def _feature_names_out(transformer_name: str, feature_name: str) -> str:
+    return f"{transformer_name}__{feature_name}"
