@@ -282,12 +282,16 @@ the correct interface more easily.
     in the scikit-learn-contrib
     `project template <https://github.com/scikit-learn-contrib/project-template/blob/master/skltemplate/_template.py>`__.
 
+    It is particularly important to notice that mixins should be "on the left" while
+    the ``BaseEstimator`` should be "on the right" in the inheritance list for proper
+    MRO.
+
       >>> import numpy as np
       >>> from sklearn.base import BaseEstimator, ClassifierMixin
       >>> from sklearn.utils.validation import check_X_y, check_array, check_is_fitted
       >>> from sklearn.utils.multiclass import unique_labels
       >>> from sklearn.metrics import euclidean_distances
-      >>> class TemplateClassifier(BaseEstimator, ClassifierMixin):
+      >>> class TemplateClassifier(ClassifierMixin, BaseEstimator):
       ...
       ...     def __init__(self, demo_param='demo'):
       ...         self.demo_param = demo_param
