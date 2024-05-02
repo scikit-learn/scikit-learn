@@ -18,13 +18,16 @@ from sklearn.base import (
     TransformerMixin,
     clone,
     is_classifier,
+    is_regressor,
+    is_clusterer,
 )
+from sklearn.cluster import KMeans
 from sklearn.decomposition import PCA
 from sklearn.exceptions import InconsistentVersionWarning
 from sklearn.model_selection import GridSearchCV
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
-from sklearn.svm import SVC
+from sklearn.svm import SVC, SVR
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.utils._mocking import MockDataFrame
 from sklearn.utils._set_output import _get_output_config
@@ -260,11 +263,51 @@ def test_get_params():
 
 
 def test_is_classifier():
+    # classifier cases
     svc = SVC()
     assert is_classifier(svc)
     assert is_classifier(GridSearchCV(svc, {"C": [0.1, 1]}))
     assert is_classifier(Pipeline([("svc", svc)]))
     assert is_classifier(Pipeline([("svc_cv", GridSearchCV(svc, {"C": [0.1, 1]}))]))
+
+    # non-classifier cases
+    svr = SVR()
+    assert not is_classifier(svr)
+    assert not is_classifier(GridSearchCV(svr, {"C": [0.1, 1]}))
+    assert not is_classifier(Pipeline([("svr", svr)]))
+    assert not is_classifier(Pipeline([("svr_cv", GridSearchCV(svr, {"C": [0.1, 1]}))]))
+
+
+def test_is_regressor():
+    # regressor cases
+    svr = SVR()
+    assert is_regressor(svr)
+    assert is_regressor(GridSearchCV(svr, {"C": [0.1, 1]}))
+    assert is_regressor(Pipeline([("svr", svr)]))
+    assert is_regressor(Pipeline([("svr_cv", GridSearchCV(svr, {"C": [0.1, 1]}))]))
+
+    # non-regressor cases
+    svc = SVC()
+    assert not is_regressor(svc)
+    assert not is_regressor(GridSearchCV(svc, {"C": [0.1, 1]}))
+    assert not is_regressor(Pipeline([("svc", svc)]))
+    assert not is_regressor(Pipeline([("svc_cv", GridSearchCV(svc, {"C": [0.1, 1]}))]))
+
+
+def test_is_clusterer():
+    # clusterer cases
+    kmeans = KMeans()
+    assert is_clusterer(kmeans)
+    assert is_clusterer(GridSearchCV(kmeans, {"n_clusters": [3, 8]}))
+    assert is_clusterer(Pipeline([("kmeans", kmeans)]))
+    assert is_clusterer(Pipeline([("kmeans_cv", GridSearchCV(kmeans, {"n_clusters": [3, 8]}))]))
+
+    # non-clusterer cases
+    svc = SVC()
+    assert not is_clusterer(svc)
+    assert not is_clusterer(GridSearchCV(svc, {"C": [0.1, 1]}))
+    assert not is_clusterer(Pipeline([("svc", svc)]))
+    assert not is_clusterer(Pipeline([("svc_cv", GridSearchCV(svc, {"C": [0.1, 1]}))]))
 
 
 def test_set_params():
