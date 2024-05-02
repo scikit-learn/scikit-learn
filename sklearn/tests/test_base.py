@@ -300,7 +300,9 @@ def test_is_clusterer():
     assert is_clusterer(kmeans)
     assert is_clusterer(GridSearchCV(kmeans, {"n_clusters": [3, 8]}))
     assert is_clusterer(Pipeline([("kmeans", kmeans)]))
-    assert is_clusterer(Pipeline([("kmeans_cv", GridSearchCV(kmeans, {"n_clusters": [3, 8]}))]))
+    assert is_clusterer(
+        Pipeline([("kmeans_cv", GridSearchCV(kmeans, {"n_clusters": [3, 8]}))])
+    )
 
     # non-clusterer cases
     svc = SVC()
