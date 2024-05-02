@@ -2188,3 +2188,14 @@ def test_multi_class_deprecated():
     lrCV = LogisticRegressionCV(multi_class="ovr")
     with pytest.warns(FutureWarning, match=msg):
         lrCV.fit(X, y)
+
+    # Special warning for "binary multinomial"
+    X, y = make_classification(n_classes=2, n_samples=50, n_informative=6)
+    lr = LogisticRegression(multi_class="multinomial")
+    msg = "'multi_class' was deprecated.*binary problems"
+    with pytest.warns(FutureWarning, match=msg):
+        lr.fit(X, y)
+
+    lrCV = LogisticRegressionCV(multi_class="multinomial")
+    with pytest.warns(FutureWarning, match=msg):
+        lrCV.fit(X, y)

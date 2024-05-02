@@ -1233,7 +1233,17 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
 
         # TODO(1.7) remove multi_class
         multi_class = self.multi_class
-        if self.multi_class in ("multinomial", "auto"):
+        if self.multi_class == "multinomial" and len(self.classes_) == 2:
+            warnings.warn(
+                (
+                    "'multi_class' was deprecated in version 1.5 and will be removed in"
+                    " 1.7. From then on, binary problems will be fit as proper binary "
+                    " logistic regression models (as if multi_class='ovr' were set)."
+                    " Leave it to its default value to avoid this warning."
+                ),
+                FutureWarning,
+            )
+        elif self.multi_class in ("multinomial", "auto"):
             warnings.warn(
                 (
                     "'multi_class' was deprecated in version 1.5 and will be removed in"
@@ -1881,7 +1891,17 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
 
         # TODO(1.7) remove multi_class
         multi_class = self.multi_class
-        if self.multi_class in ("multinomial", "auto"):
+        if self.multi_class == "multinomial" and len(self.classes_) == 2:
+            warnings.warn(
+                (
+                    "'multi_class' was deprecated in version 1.5 and will be removed in"
+                    " 1.7. From then on, binary problems will be fit as proper binary "
+                    " logistic regression models (as if multi_class='ovr' were set)."
+                    " Leave it to its default value to avoid this warning."
+                ),
+                FutureWarning,
+            )
+        elif self.multi_class in ("multinomial", "auto"):
             warnings.warn(
                 (
                     "'multi_class' was deprecated in version 1.5 and will be removed in"
