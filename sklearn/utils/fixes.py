@@ -18,12 +18,10 @@ import numpy as np
 import scipy
 import scipy.sparse.linalg
 import scipy.stats
-import threadpoolctl
 
 import sklearn
 
 from ..externals._packaging.version import parse as parse_version
-from .deprecation import deprecated
 
 _IS_PYPY = platform.python_implementation() == "PyPy"
 _IS_32BIT = 8 * struct.calcsize("P") == 32
@@ -96,52 +94,6 @@ if np_version < parse_version("1.22"):
     percentile = _percentile
 else:  # >= 1.22
     from numpy import percentile  # type: ignore  # noqa
-
-
-# compatibility fix for threadpoolctl >= 3.0.0
-# since version 3 it's possible to setup a global threadpool controller to avoid
-# looping through all loaded shared libraries each time.
-# the global controller is created during the first call to threadpoolctl.
-def _get_threadpool_controller():
-    if not hasattr(threadpoolctl, "ThreadpoolController"):
-        return None
-
-    if not hasattr(sklearn, "_sklearn_threadpool_controller"):
-        sklearn._sklearn_threadpool_controller = threadpoolctl.ThreadpoolController()
-
-    return sklearn._sklearn_threadpool_controller
-
-
-def threadpool_limits(limits=None, user_api=None):
-    controller = _get_threadpool_controller()
-    if controller is not None:
-        return controller.limit(limits=limits, user_api=user_api)
-    else:
-        return threadpoolctl.threadpool_limits(limits=limits, user_api=user_api)
-
-
-threadpool_limits.__doc__ = threadpoolctl.threadpool_limits.__doc__
-
-
-def threadpool_info():
-    controller = _get_threadpool_controller()
-    if controller is not None:
-        return controller.info()
-    else:
-        return threadpoolctl.threadpool_info()
-
-
-threadpool_info.__doc__ = threadpoolctl.threadpool_info.__doc__
-
-
-@deprecated(
-    "The function `delayed` has been moved from `sklearn.utils.fixes` to "
-    "`sklearn.utils.parallel`. This import path will be removed in 1.5."
-)
-def delayed(function):
-    from sklearn.utils.parallel import delayed
-
-    return delayed(function)
 
 
 # TODO: Remove when SciPy 1.11 is the minimum supported version
@@ -439,7 +391,7 @@ def _in_unstable_openblas_configuration():
     import numpy  # noqa
     import scipy  # noqa
 
-    modules_info = threadpool_info()
+    modules_info = sklearn._threadpool_controller.info()
 
     open_blas_used = any(info["internal_api"] == "openblas" for info in modules_info)
     if not open_blas_used:

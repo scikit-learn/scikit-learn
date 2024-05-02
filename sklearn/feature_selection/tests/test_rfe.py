@@ -649,3 +649,20 @@ def test_rfe_estimator_attribute_error():
         rfe.fit(iris.data, iris.target).decision_function(iris.data)
     assert isinstance(exec_info.value.__cause__, AttributeError)
     assert inner_msg in str(exec_info.value.__cause__)
+
+
+@pytest.mark.parametrize(
+    "ClsRFE, param", [(RFE, "n_features_to_select"), (RFECV, "min_features_to_select")]
+)
+def test_rfe_n_features_to_select_warning(ClsRFE, param):
+    """Check if the correct warning is raised when trying to initialize a RFE
+    object with a n_features_to_select attribute larger than the number of
+    features present in the X variable that is passed to the fit method
+    """
+    X, y = make_classification(n_features=20, random_state=0)
+
+    with pytest.warns(UserWarning, match=f"{param}=21 > n_features=20"):
+        # Create RFE/RFECV with n_features_to_select/min_features_to_select
+        # larger than the number of features present in the X variable
+        clsrfe = ClsRFE(estimator=LogisticRegression(), **{param: 21})
+        clsrfe.fit(X, y)
